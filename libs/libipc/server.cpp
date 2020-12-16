@@ -17,6 +17,9 @@ void Server::initialize() {
             auto client = Endpoint::create(shared_from_this());
             client->set_socket(move(client_socket));
             client->set_dispatcher(m_dispatcher);
+            client->on_disconnect = [this](auto& client) {
+                m_dispatcher->handle_error(client);
+            };
             m_clients.add(move(client));
         }
     };

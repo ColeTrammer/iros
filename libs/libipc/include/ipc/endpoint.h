@@ -2,6 +2,7 @@
 
 #include <eventloop/unix_socket.h>
 #include <ipc/message.h>
+#include <liim/function.h>
 #include <liim/maybe.h>
 
 namespace IPC {
@@ -52,9 +53,11 @@ public:
         return wait_for_response<R>();
     }
 
+    Function<void(Endpoint&)> on_disconnect;
+
 private:
     void handle_messages();
-    void read_from_socket();
+    bool read_from_socket();
     bool send_impl(const Message& message);
     UniquePtr<Message> wait_for_response_impl(uint32_t type);
 

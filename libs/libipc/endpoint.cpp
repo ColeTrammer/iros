@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <errno.h>
 #include <ipc/endpoint.h>
 #include <ipc/message_dispatcher.h>
 #include <ipc/stream.h>
@@ -14,15 +15,18 @@ void Endpoint::set_socket(SharedPtr<App::UnixSocket> socket) {
     m_socket = move(socket);
     if (m_socket) {
         m_socket->on_ready_to_read = [this](auto&) {
-            read_from_socket();
-            handle_messages();
+            auto protector = shared_from_this();
+            if (read_from_socket()) {
+                handle_messages();
+            }
         };
     }
 }
 
-void Endpoint::read_from_socket() {
+bool Endpoint::read_from_socket() {
     char buffer[BUFSIZ];
     bool again = true;
+    errno = 0;
     ssize_t ret;
     while (again && (ret = read(m_socket->fd(), buffer, sizeof(buffer))) >= static_cast<ssize_t>(sizeof(Message))) {
         again = m_socket->nonblocking();
@@ -36,6 +40,14 @@ void Endpoint::read_from_socket() {
         memcpy(message, raw_message, raw_message->size);
         m_messages.add(UniquePtr<Message>(message));
     }
+
+    if (ret <= 0 && errno != EAGAIN) {
+        if (on_disconnect) {
+            on_disconnect(*this);
+        }
+        return false;
+    }
+    return true;
 }
 
 UniquePtr<Message> Endpoint::wait_for_response_impl(uint32_t type) {
@@ -51,7 +63,9 @@ UniquePtr<Message> Endpoint::wait_for_response_impl(uint32_t type) {
                 return ret;
             }
         }
-        read_from_socket();
+        if (!read_from_socket()) {
+            return nullptr;
+        }
     }
 }
 
