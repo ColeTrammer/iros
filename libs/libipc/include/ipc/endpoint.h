@@ -53,6 +53,8 @@ public:
         return wait_for_response<R>();
     }
 
+    SharedPtr<App::UnixSocket> socket() { return m_socket; }
+
     Function<void(Endpoint&)> on_disconnect;
 
 private:

@@ -29,6 +29,7 @@ Server::~Server() {}
 
 void Server::kill_client(Endpoint& client) {
     auto ptr = client.shared_from_this();
+    m_socket->remove_child(client.socket());
     m_clients.remove_element(ptr);
     remove_child(ptr);
 }

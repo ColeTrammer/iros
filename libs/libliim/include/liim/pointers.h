@@ -201,6 +201,8 @@ public:
         return *this;
     }
 
+    int ref_count() const { return m_control_block ? m_control_block->ref_count() : 0; }
+
     T* get() {
         if (!m_control_block) {
             return nullptr;
