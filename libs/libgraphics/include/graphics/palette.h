@@ -6,7 +6,9 @@
 #define ENUMERATE_COLOR_TYPES                                         \
     __ENUMERATE_COLOR_TYPE(Background, background, ColorValue::Black) \
     __ENUMERATE_COLOR_TYPE(Text, text, ColorValue::White)             \
-    __ENUMERATE_COLOR_TYPE(Outline, outline, ColorValue::White)
+    __ENUMERATE_COLOR_TYPE(Outline, outline, ColorValue::White)       \
+    __ENUMERATE_COLOR_TYPE(Hover, hover, ColorValue::LightGray)       \
+    __ENUMERATE_COLOR_TYPE(Selected, selected, ColorValue::DarkGray)
 
 class Palette {
 public:
