@@ -75,11 +75,11 @@ void TableView::render() {
         ry += 21;
 
         if (hovered_index().row() == r) {
-            renderer.fill_rect({ rect().x(), rect().y() + ry, rect().width(), 21 }, ColorValue::LightGray);
+            renderer.fill_rect({ rect().x(), rect().y() + ry, rect().width(), 21 }, palette()->color(Palette::Hover));
         }
 
         if (is_selected({ r, 0 })) {
-            renderer.fill_rect({ rect().x(), rect().y() + ry, rect().width(), 21 }, ColorValue::DarkGray);
+            renderer.fill_rect({ rect().x(), rect().y() + ry, rect().width(), 21 }, palette()->color(Palette::Selected));
         }
 
         for (auto c = 0; c < col_count; c++) {

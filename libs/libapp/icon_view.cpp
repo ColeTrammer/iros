@@ -23,10 +23,10 @@ void IconView::render() {
             renderer.render_text(item.name, text_rect, text_color(), TextAlign::Center, font());
         }
         if (hovered_index() == ModelIndex { r, m_name_column }) {
-            renderer.draw_rect(item.rect, ColorValue::White);
+            renderer.draw_rect(item.rect, palette()->color(Palette::Hover));
         }
         if (is_selected(ModelIndex { r, m_name_column })) {
-            renderer.draw_rect(item.rect, ColorValue::LightGray);
+            renderer.draw_rect(item.rect, palette()->color(Palette::Selected));
         }
     }
 

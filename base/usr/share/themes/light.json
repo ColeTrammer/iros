@@ -3,6 +3,8 @@
     "palette": {
         "background": "#F0F0F0",
         "text": "#000000",
-        "outline": "#444444"
+        "outline": "#444444",
+        "hover": "#E0E0E0",
+        "selected": "#808080"
     }
 }
