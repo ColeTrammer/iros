@@ -157,7 +157,8 @@ void WindowManager::draw() {
             renderer.draw_line({ window->rect().x(), window->rect().y() + 21 },
                                { window->rect().x() + window->rect().width() - 1, window->rect().y() + 21 },
                                palette()->color(Palette::Outline));
-            renderer.fill_circle(window->close_button_x(), window->close_button_y(), window->close_button_radius(), ColorValue::White);
+            renderer.fill_circle(window->close_button_x(), window->close_button_y(), window->close_button_radius(),
+                                 palette()->color(Palette::Text));
 
             invalidate_rect({ window->rect().x(), window->rect().y(), window->rect().width(), 22 });
             invalidate_rect({ window->rect().x(), window->rect().y() + 22, 1, window->rect().height() });
