@@ -45,7 +45,6 @@ void TableView::render() {
 
     Renderer renderer(*window()->pixels());
     renderer.fill_rect(rect(), background_color());
-    renderer.draw_rect(rect(), outline_color());
 
     auto row_count = model()->row_count();
     auto col_count = model()->col_count();
@@ -91,10 +90,11 @@ void TableView::render() {
     }
 
     ry = 0;
-    for (int i = 0; i < row_count; i++) {
+    for (int i = 0; i <= row_count; i++) {
         ry += 21;
         renderer.draw_line({ rect().x(), rect().y() + ry }, { rect().x() + rect().width() - 1, rect().y() + ry }, outline_color());
     }
+    renderer.draw_rect(rect(), outline_color());
 }
 
 ModelIndex TableView::index_at_position(int wx, int wy) {
