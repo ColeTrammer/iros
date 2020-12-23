@@ -63,11 +63,11 @@ syscall_sysret_entry:
     cmpq %rcx, (%rsp)
     jne use_iret
 
+    # Restore user space flags
+    mov 16(%rsp), %r11
+
     # Restore user space rsp 
     mov 24(%rsp), %rsp
-
-    # Re-enable IRQs for userspace
-    sti
 
     sysretq
 
