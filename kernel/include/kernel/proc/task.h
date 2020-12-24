@@ -172,6 +172,8 @@ static inline void __wait_cancel(struct task *task) {
 }
 
 static inline int __wait_prepare(struct task *task, bool interruptible) {
+    disable_preemption();
+
     task->wait_interruptible = interruptible;
     task_set_state_to_waiting(task);
 

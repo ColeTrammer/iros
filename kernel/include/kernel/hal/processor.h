@@ -109,6 +109,7 @@ static inline void disable_preemption(void) {
 
 static inline void enable_preemption(void) {
     struct processor *processor = get_current_processor();
+    assert(processor->preemption_disabled_count != 0);
     processor->preemption_disabled_count--;
     sched_maybe_yield();
 }
