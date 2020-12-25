@@ -107,11 +107,14 @@ static inline void disable_preemption(void) {
     processor->preemption_disabled_count++;
 }
 
-static inline void enable_preemption(void) {
+static inline void __enable_preemption(void) {
     struct processor *processor = get_current_processor();
     assert(processor->preemption_disabled_count != 0);
     processor->preemption_disabled_count--;
-    sched_maybe_yield();
 }
 
+static inline void enable_preemption(void) {
+    __enable_preemption();
+    sched_maybe_yield();
+}
 #endif /* _KERNEL_HAL_HAL_H */

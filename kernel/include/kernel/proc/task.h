@@ -190,9 +190,8 @@ static inline int __wait_prepare(struct task *task, bool interruptible) {
 }
 
 static inline int __wait_do() {
-    int ret = kernel_yield();
-    enable_preemption();
-    return ret;
+    __enable_preemption();
+    return kernel_yield();
 }
 
 #define wait_prepare(task)               __wait_prepare(task, false)
@@ -230,8 +229,8 @@ static inline int __wait_do() {
                 spin_unlock_no_irq_restore(&(wq)->lock);                                                          \
             }                                                                                                     \
             __queue_task = false;                                                                                 \
+            __enable_preemption();                                                                                \
             __ret = do_block;                                                                                     \
-            enable_preemption();                                                                                  \
             if (__ret) {                                                                                          \
                 break;                                                                                            \
             }                                                                                                     \

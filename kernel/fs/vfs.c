@@ -2189,8 +2189,7 @@ static int fs_do_sys_poll(struct poll_entry *entries, int count, const struct ti
 
         wq_queue = false;
         if (timeout) {
-            ret = time_wakeup_after(CLOCK_MONOTONIC, timeout);
-            enable_preemption();
+            ret = __time_wakeup_after(CLOCK_MONOTONIC, timeout);
             if (!ret && timeout->tv_sec == 0 && timeout->tv_nsec == 0) {
                 break;
             }
