@@ -750,6 +750,7 @@ void task_do_sig(struct task *task, int signum) {
             if (task->sched_state == EXITING) {
                 break;
             }
+            // FIXME: we cant take a mutex if this is called from the scheduler
             mutex_lock(&task->process->lock);
             exit_process(task->process, NULL);
             proc_set_process_state(task->process, PS_TERMINATED, signum, true);
