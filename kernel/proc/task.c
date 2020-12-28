@@ -752,9 +752,10 @@ void task_do_sig(struct task *task, int signum) {
             }
             // FIXME: we cant take a mutex if this is called from the scheduler
             mutex_lock(&task->process->lock);
-            exit_process(task->process, NULL);
+            exit_process(task->process, task);
             proc_set_process_state(task->process, PS_TERMINATED, signum, true);
             mutex_unlock(&task->process->lock);
+            task_exit(task);
             break;
         case STOP:
             if (task->sched_state == STOPPED) {
