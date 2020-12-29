@@ -184,7 +184,7 @@ void WindowManager::draw() {
     };
 
     for (auto& rect : m_dirty_rects) {
-        renderer.fill_rect(rect, ColorValue::DarkGray);
+        renderer.fill_rect(rect, m_desktop_color);
     }
 
     for (auto& window : m_window_stack) {

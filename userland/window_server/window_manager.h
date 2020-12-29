@@ -98,5 +98,7 @@ private:
     Point m_window_move_initial_location;
     Point m_window_move_origin;
 
+    Color m_desktop_color { ColorValue::DarkGray };
+
     bool m_drawing { false };
 };
