@@ -184,7 +184,11 @@ void WindowManager::draw() {
     };
 
     for (auto& rect : m_dirty_rects) {
-        renderer.fill_rect(rect, m_desktop_color);
+        if (m_desktop_background) {
+            renderer.draw_bitmap(*m_desktop_background, rect, rect);
+        } else {
+            renderer.fill_rect(rect, m_desktop_color);
+        }
     }
 
     for (auto& window : m_window_stack) {

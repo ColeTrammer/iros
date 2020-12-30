@@ -1,5 +1,6 @@
 #pragma once
 
+#include <graphics/bitmap.h>
 #include <graphics/palette.h>
 #include <graphics/rect_set.h>
 #include <liim/function.h>
@@ -99,6 +100,7 @@ private:
     Point m_window_move_origin;
 
     Color m_desktop_color { ColorValue::DarkGray };
+    SharedPtr<Bitmap> m_desktop_background;
 
     bool m_drawing { false };
 };
