@@ -193,7 +193,7 @@ static void lapic_timer_setup_interval_timer(struct hw_timer *self, int channel_
             .vector = LOCAL_APIC_TIMER_IRQ,
         }
             .raw_value;
-    local_apic->divide_configuration_register = 0b1011;
+    local_apic->divide_configuration_register = 0b0011;
     local_apic->initial_count_register = ticks;
 }
 
@@ -218,7 +218,7 @@ static void lapic_timer_setup_one_shot_timer(struct hw_timer *self, int channel_
             .vector = LOCAL_APIC_TIMER_IRQ,
         }
             .raw_value;
-    local_apic->divide_configuration_register = 0b1011;
+    local_apic->divide_configuration_register = 0b0011;
     local_apic->initial_count_register = ticks;
 }
 
@@ -241,7 +241,7 @@ static void lapic_timer_calibrate(struct hw_timer *self, struct hw_timer *refere
     struct acpi_info *info = acpi_get_info();
     volatile struct local_apic *local_apic = create_phys_addr_mapping(info->local_apic_address);
 
-    local_apic->divide_configuration_register = 0b1011;
+    local_apic->divide_configuration_register = 0b0011;
 
     uint64_t save = disable_interrupts_save();
     reference->ops->setup_one_shot_timer(reference, 0, (struct timespec) { .tv_nsec = 10 * 1000000 }, lapic_do_wakeup);
