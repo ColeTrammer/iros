@@ -35,10 +35,8 @@ My second attempt to create an OS
 
 # TODO
 
--   Networking (TCP resending)
 -   configuration/startup files
 -   pthreads like library (conditions, barriers, cancellation, rdwrlock, scheduling)
--   try to write in C++ instead of C
 -   USB subsystem
 -   improved SMP handling
 -   more advanced scheduler
