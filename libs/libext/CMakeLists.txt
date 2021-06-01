@@ -27,6 +27,9 @@ set(SOURCES
 
 add_os_library(libext ext TRUE)
 target_link_libraries(libext PUBLIC parser_headers libliim)
+if (${NATIVE_BUILD})
+    target_link_libraries(libext PUBLIC rt)
+endif()
 target_include_directories(libext PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 
 add_dependencies(libext generate-mode-parser)
