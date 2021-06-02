@@ -13,7 +13,8 @@ pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 int done = 1;
 
 // Thread function
-void* foo() {
+void *foo(void *arg) {
+    (void) arg;
 
     // acquire a lock
     pthread_mutex_lock(&lock);

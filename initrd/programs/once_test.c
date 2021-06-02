@@ -1,10 +1,11 @@
+#include <assert.h>
 #include <pthread.h>
 #include <unistd.h>
 
 static pthread_once_t once = PTHREAD_ONCE_INIT;
 
 void do_thing(void) {
-    write(1, "DOING THING\n", 12);
+    assert(write(1, "DOING THING\n", 12));
 }
 
 void *do_stuff(void *ignore) {
@@ -12,7 +13,7 @@ void *do_stuff(void *ignore) {
 
     pthread_once(&once, do_thing);
 
-    write(1, "OTHER THING\n", 12);
+    assert(write(1, "OTHER THING\n", 12));
 
     return NULL;
 }

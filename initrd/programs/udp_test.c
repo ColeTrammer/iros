@@ -4,6 +4,7 @@
 
 // Header Files
 #include <arpa/inet.h> //inet_addr , inet_ntoa , ntohs etc
+#include <assert.h>
 #include <netinet/in.h>
 #include <stdio.h>      //printf
 #include <stdlib.h>     //malloc
@@ -90,7 +91,7 @@ int main() {
 
     // Get the hostname from the terminal
     printf("Enter Hostname to Lookup : ");
-    scanf("%s", hostname);
+    assert(scanf("%s", hostname) == 1);
 
     // Now get the ip of this hostname , A record
     ngethostbyname(hostname, T_A);

@@ -14,7 +14,7 @@ void print_usage_and_exit(const char *s) {
 
 int main(int argc, char **argv) {
     signal(SIGALRM, [](int) {
-        write(STDOUT_FILENO, "Hello from alarm\n", 17);
+        assert(write(STDOUT_FILENO, "Hello from alarm\n", 17));
     });
 
     bool do_wait = false;
@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
 
     if (!do_wait) {
         alarm(2);
-        write(STDOUT_FILENO, "Registered\n", 11);
+        assert(write(STDOUT_FILENO, "Registered\n", 11));
         execl("/proc/self/exe", argv[0], "-w", NULL);
         perror("alarm_test: execl");
         return 127;
@@ -39,16 +39,16 @@ int main(int argc, char **argv) {
         sigfillset(&set);
         sigdelset(&set, SIGALRM);
 
-        write(STDOUT_FILENO, "Waiting\n", 8);
+        assert(write(STDOUT_FILENO, "Waiting\n", 8));
         assert(sigsuspend(&set) == -1);
-        assert(errno = EINTR);
-        write(STDOUT_FILENO, "After\n", 6);
+        assert(errno == EINTR);
+        assert(write(STDOUT_FILENO, "After\n", 6));
 
         // Test alarm cancelling
         alarm(1);
         alarm(0);
 
-        write(STDOUT_FILENO, "Cancelled\n", 10);
+        assert(write(STDOUT_FILENO, "Cancelled\n", 10));
         sleep(2);
         return 0;
     }

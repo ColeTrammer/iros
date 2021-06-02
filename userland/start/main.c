@@ -76,7 +76,7 @@ void spawn_process(char **argv, uid_t uid, gid_t gid, bool redirect, bool synchr
     if (synchronize) {
         char c;
         close(fd[1]);
-        read(fd[0], &c, 1);
+        assert(read(fd[0], &c, 1) == 1);
         close(fd[0]);
     }
 }
@@ -109,13 +109,12 @@ int main(int argc, char **argv) {
     }
 
     // Device setup should be done via a separate program.
-    symlink("/proc/self/fd", "/dev/fd");
-    symlink("/proc/self/fd/0", "/dev/stdin");
-    symlink("/proc/self/fd/1", "/dev/stdout");
-    symlink("/proc/self/fd/2", "/dev/stderr");
-    symlink("urandom", "/dev/random");
-    chown("/dev/fb0", 0, 14);
-    chmod("dev/fb0", 0660);
+    if (symlink("/proc/self/fd", "/dev/fd") || symlink("/proc/self/fd/0", "/dev/stdin") || symlink("/proc/self/fd/1", "/dev/stdout") ||
+        symlink("/proc/self/fd/2", "/dev/stderr") || symlink("urandom", "/dev/random") || chown("/dev/fb0", 0, 14) ||
+        chmod("dev/fb0", 0660)) {
+        perror("start");
+        return 1;
+    }
 
     char *dhcp_client_args[] = { "/bin/dhcp_client", NULL };
     spawn_process(dhcp_client_args, 0, 0, false, false);

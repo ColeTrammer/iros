@@ -16,7 +16,7 @@ int main() {
             return 1;
         }
 
-        write(STDOUT_FILENO, "done\n", 5);
+        fputs("done\n", stderr);
 
         assert(ret == 1);
         assert(FD_ISSET(STDIN_FILENO, &set));

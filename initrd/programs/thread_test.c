@@ -11,7 +11,7 @@
 void *do_stuff(void *ignore) {
     (void) ignore;
 
-    write(STDOUT_FILENO, "Hello from a new thread\n", 24);
+    assert(write(STDOUT_FILENO, "Hello from a new thread\n", 24));
 
     return NULL;
 }

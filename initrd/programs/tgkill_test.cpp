@@ -8,7 +8,7 @@ static pthread_t child;
 int main() {
     signal(SIGUSR1, [](int) {
         assert(pthread_self() == child);
-        write(1, "HELLO\n", 6);
+        assert(write(1, "HELLO\n", 6));
         pthread_exit(NULL);
     });
 

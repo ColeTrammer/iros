@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -5,7 +6,7 @@
 
 int main() {
     signal(SIGSEGV, [](int n) {
-        write(1, "Page faulted...\n", 16);
+        assert(write(1, "Page faulted...\n", 16));
         _exit(128 + n);
     });
 

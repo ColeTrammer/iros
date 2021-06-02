@@ -34,6 +34,6 @@ int main() {
 
     pause();
 
-    write(2, "done\n", 5);
+    fputs("done\n", stderr);
     return 0;
 }

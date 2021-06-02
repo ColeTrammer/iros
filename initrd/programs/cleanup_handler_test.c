@@ -5,7 +5,7 @@
 static void do_thing(void *arg) {
     assert(arg == NULL);
 
-    write(1, "HELLO\n", 6);
+    assert(write(1, "HELLO\n", 6));
 }
 
 int main() {

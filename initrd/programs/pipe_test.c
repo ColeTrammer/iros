@@ -9,7 +9,10 @@ int main() {
     char *cat2_args[] = { "cat", NULL };
 
     int fds[2];
-    pipe(fds);
+    if (pipe(fds) < 0) {
+        perror("pipe_test");
+        return 1;
+    }
 
     pid_t ret = fork();
     if (ret < 0) {

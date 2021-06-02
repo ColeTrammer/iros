@@ -9,11 +9,11 @@ int main() {
         [](void*) -> void* {
             pthread_cleanup_push(
                 [](void*) {
-                    write(1, "CL\n", 3);
+                    assert(write(1, "CL\n", 3));
                 },
                 nullptr);
             while (1) {
-                write(1, "CD\n", 3);
+                assert(write(1, "CD\n", 3));
                 pthread_testcancel();
                 asm volatile("" ::: "memory");
             }

@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <pthread.h>
+#include <stdio.h>
 #include <unistd.h>
 
 int main() {
@@ -12,7 +13,7 @@ int main() {
     pthread_create(
         &id, &attr,
         [](void*) -> void* {
-            write(1, "ABC\n", 4);
+            puts("ABC");
             return nullptr;
         },
         nullptr);

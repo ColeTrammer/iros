@@ -17,7 +17,7 @@ int main() {
     memset((void *) ((uintptr_t) addr + 0x3000), 0xAA, 0x2000);
 
     signal(SIGSEGV, [](int) {
-        write(1, "munmap worked!\n", 15);
+        assert(write(1, "munmap worked!\n", 15));
         _exit(0);
     });
 

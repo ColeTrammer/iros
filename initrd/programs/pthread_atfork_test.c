@@ -3,6 +3,7 @@
 
 #define _UNIX03_THREADS 1
 
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
@@ -21,47 +22,47 @@ int fd_p;
 
 void prep1(void) {
     char buff[80] = "prep1\n";
-    write(4, buff, sizeof(buff));
+    assert(write(4, buff, sizeof(buff)));
 }
 
 void prep2(void) {
     char buff[80] = "prep2\n";
-    write(4, buff, sizeof(buff));
+    assert(write(4, buff, sizeof(buff)));
 }
 
 void prep3(void) {
     char buff[80] = "prep3\n";
-    write(4, buff, sizeof(buff));
+    assert(write(4, buff, sizeof(buff)));
 }
 
 void parent1(void) {
     char buff[80] = "parent1\n";
-    write(4, buff, sizeof(buff));
+    assert(write(4, buff, sizeof(buff)));
 }
 
 void parent2(void) {
     char buff[80] = "parent2\n";
-    write(4, buff, sizeof(buff));
+    assert(write(4, buff, sizeof(buff)));
 }
 
 void parent3(void) {
     char buff[80] = "parent3\n";
-    write(4, buff, sizeof(buff));
+    assert(write(4, buff, sizeof(buff)));
 }
 
 void child1(void) {
     char buff[80] = "child1\n";
-    write(3, buff, sizeof(buff));
+    assert(write(3, buff, sizeof(buff)));
 }
 
 void child2(void) {
     char buff[80] = "child2\n";
-    write(3, buff, sizeof(buff));
+    assert(write(3, buff, sizeof(buff)));
 }
 
 void child3(void) {
     char buff[80] = "child3\n";
-    write(3, buff, sizeof(buff));
+    assert(write(3, buff, sizeof(buff)));
 }
 
 void *thread1(void *arg) {

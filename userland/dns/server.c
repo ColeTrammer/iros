@@ -91,7 +91,9 @@ int start_server() {
                 *((in_addr_t *) response->response) = mapping->ip.s_addr;
                 syslog(LOG_INFO, "Mapping succeeded: %s", inet_ntoa(mapping->ip));
             }
-            write(client_fd, response_buffer, sizeof(response_buffer));
+            if (write(client_fd, response_buffer, sizeof(response_buffer)) < 0) {
+                syslog(LOG_ERR, "Failed to write to client: %m");
+            }
 
             if (!was_known) {
                 free(mapping->name);
@@ -122,7 +124,9 @@ int start_server() {
                 response->success = 1;
                 memcpy(response->response, result->name, name_len);
             }
-            write(client_fd, response_buffer, sizeof(response_buffer));
+            if (write(client_fd, response_buffer, sizeof(response_buffer)) < 0) {
+                syslog(LOG_ERR, "Failed to write to client: %m");
+            }
 
             if (!was_known) {
                 free(result->name);

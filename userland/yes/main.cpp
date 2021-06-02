@@ -13,7 +13,10 @@ int main(int argc, char **argv) {
     }
 
     for (;;) {
-        write(STDOUT_FILENO, to_print.string(), to_print.size());
+        if (write(STDOUT_FILENO, to_print.string(), to_print.size()) < 0) {
+            perror("yes");
+            return 1;
+        }
     }
 
     return 0;

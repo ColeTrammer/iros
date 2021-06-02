@@ -5,7 +5,7 @@
 
 int main() {
     signal(SIGINT, [](int) {
-        write(2, "\n", 1);
+        assert(write(2, "\n", 1));
     });
 
     sigset_t mask;

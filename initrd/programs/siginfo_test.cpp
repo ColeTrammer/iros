@@ -23,6 +23,6 @@ int main() {
 
     pause();
 
-    write(2, "returned\n", 9);
+    fputs("returned\n", stderr);
     return 0;
 }
