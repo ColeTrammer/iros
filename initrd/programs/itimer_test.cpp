@@ -11,7 +11,8 @@ int main() {
     EventLoop loop;
     EventLoop::register_signal_handler(SIGALRM, [&] {
         printf("SIGALRM\n");
-        if (++x == 5) {
+        x = x + 1;
+        if (x == 5) {
             loop.set_should_exit(true);
         }
     });
@@ -29,7 +30,7 @@ int main() {
     x = 0;
     signal(SIGPROF, [](auto) {
         printf("SIGPROF\n");
-        ++x;
+        x = x + 1;
     });
     if (setitimer(ITIMER_PROF, &val, nullptr) < 0) {
         perror("itimer_test: setitimer");
@@ -50,7 +51,7 @@ int main() {
     x = 0;
     signal(SIGVTALRM, [](auto) {
         printf("SIGVTALRM\n");
-        ++x;
+        x = x + 1;
     });
     sigset_t set;
     sigprocmask(0, 0, &set);
