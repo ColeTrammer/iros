@@ -1,0 +1,121 @@
+diff --git a/bfd/config.bfd b/bfd/config.bfd
+index e7b55b0d..50af21cd 100644
+--- a/bfd/config.bfd
++++ b/bfd/config.bfd
+@@ -573,6 +573,18 @@ case "${targ}" in
+     targ_selvecs="x86_64_elf64_sol2_vec l1om_elf64_vec k1om_elf64_vec iamcu_elf32_vec i386_coff_vec i386_pei_vec x86_64_pe_vec x86_64_pei_vec"
+     want64=true
+     ;;
++#endif
++  i[3-7]86-*-os_2*)
++    targ_defvec=i386_elf32_vec
++    targ_selvecs=
++    targ64_selvecs=x86_64_elf64_vec
++    ;;
++#ifdef BFD64
++  x86_64-*-os_2*)
++    targ_defvec=x86_64_elf64_vec
++    targ_selvecs=i386_elf32_vec
++    want64=true
++    ;;
+ #endif
+   i[3-7]86-*-nto*)
+     targ_defvec=i386_elf32_vec
+diff --git a/config.sub b/config.sub
+index b0f84923..4868ed5f 100755
+--- a/config.sub
++++ b/config.sub
+@@ -1694,7 +1694,7 @@ case $os in
+ 	# Each alternative MUST end in a * to match a version number.
+ 	gnu* | android* | bsd* | mach* | minix* | genix* | ultrix* | irix* \
+ 	     | *vms* | esix* | aix* | cnk* | sunos | sunos[34]* \
+-	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* \
++	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* | os_2* \
+ 	     | sym* |  plan9* | psp* | sim* | xray* | os68k* | v88r* \
+ 	     | hiux* | abug | nacl* | netware* | windows* \
+ 	     | os9* | macos* | osx* | ios* \
+diff --git a/gas/configure.tgt b/gas/configure.tgt
+index 6f46e0a6..b8c03747 100644
+--- a/gas/configure.tgt
++++ b/gas/configure.tgt
+@@ -235,6 +235,7 @@ case ${generic_target} in
+   i386-*-lynxos*)			fmt=elf em=lynx ;;
+   i386-*-redox*)			fmt=elf ;;
+   i386-*-solaris*)			fmt=elf em=solaris ;;
++  i386-*-os_2*)			fmt=elf em=gnu ;;
+   i386-*-freebsd* \
+   | i386-*-kfreebsd*-gnu)		fmt=elf em=freebsd ;;
+   i386-*-msdosdjgpp* \
+diff --git a/ld/Makefile.am b/ld/Makefile.am
+index 2c9a4873..d806ec37 100644
+--- a/ld/Makefile.am
++++ b/ld/Makefile.am
+@@ -288,6 +288,7 @@ ALL_EMULATION_SOURCES = \
+ 	eelf_i386_fbsd.c \
+ 	eelf_i386_ldso.c \
+ 	eelf_i386_sol2.c \
++	eelf_i386_os_2.c \
+ 	eelf_i386_vxworks.c \
+ 	eelf_iamcu.c \
+ 	eelf_s390.c \
+@@ -457,6 +458,7 @@ ALL_64_EMULATION_SOURCES = \
+ 	eelf_x86_64_cloudabi.c \
+ 	eelf_x86_64_fbsd.c \
+ 	eelf_x86_64_sol2.c \
++	eelf_x86_64_os_2.c \
+ 	ehppa64linux.c \
+ 	ei386pep.c \
+ 	emmo.c
+diff --git a/ld/configure.tgt b/ld/configure.tgt
+index 0c780b24..886186ac 100644
+--- a/ld/configure.tgt
++++ b/ld/configure.tgt
+@@ -334,6 +334,15 @@ i[3-7]86-*-solaris2*)	targ_emul=elf_i386_sol2
+ 			targ_extra_emuls="elf_i386_ldso elf_i386 elf_iamcu elf_x86_64_sol2 elf_x86_64 elf_l1om elf_k1om"
+ 			targ_extra_libpath=$targ_extra_emuls
+ 			;;
++i[3-7]86-*-os_2*)
++			targ_emul=elf_i386_os_2
++			targ_extra_emuls=elf_i386
++			targ64_extra_emuls="elf_x86_64_os_2 elf_x86_64"
++			;;
++x86_64-*-os_2*)
++			targ_emul=elf_x86_64_os_2
++			targ_extra_emuls="elf_i386_os_2 elf_x86_64 elf_i386"
++			;;
+ i[3-7]86-*-unixware)	targ_emul=elf_i386
+ 			targ_extra_emuls=elf_iamcu
+ 			;;
+diff --git a/libtool.m4 b/libtool.m4
+index e993b621..e7414e51 100644
+--- a/libtool.m4
++++ b/libtool.m4
+@@ -2571,6 +2571,17 @@ rdos*)
+   dynamic_linker=no
+   ;;
+ 
++os_2*)
++  version_type=linux
++  need_lib_prefix=no
++  need_version=no
++  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
++  soname_spec='${libname}${release}${shared_ext}$major'
++  shlibpath_var=LD_LIBRARY_PATH
++  shlibpath_overrides_runpath=yes
++  hardcode_into_libs=yes
++  ;;
++
+ solaris*)
+   version_type=linux
+   need_lib_prefix=no
+@@ -3121,6 +3132,10 @@ solaris*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
+ 
++os_2*)
++  lt_cv_deplibs_check_method=pass_all
++  ;;
++
+ sysv5* | sco3.2v5* | sco5v6* | unixware* | OpenUNIX* | sysv4*uw2*)
+   lt_cv_deplibs_check_method=pass_all
+   ;;
