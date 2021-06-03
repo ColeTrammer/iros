@@ -1,8 +1,95 @@
-file (GLOB INITRD_PROGRAMS "programs/*.c*" "programs/*.S")
+set(INITRD_PROGRAMS
+    alarm_test.cpp
+    aligned_alloc_test.c
+    barrier_test.c
+    broken.cpp
+    cancel_test.cpp
+    cleanup_handler_test.c
+    cond_test.c
+    detached_thread_test.cpp
+    dlopen_test.c
+    event_loop_timer_test.cpp
+    execve_waitpid_test.c
+    fault_test.c
+    fread_test.c
+    fwrite.c
+    getcpuclockid_test.c
+    getopt_test.c
+    getrusage_test.c
+    glob_test.c
+    graphics_test.cpp
+    guess.c
+    hash_map_test.cpp
+    if_test.c
+    ipc_test.cpp
+    itimer_test.cpp
+    json_test.cpp
+    linked_list_test_a.cpp
+    local_socket_client_test.c
+    local_socket_server_test.c
+    map_shared_test.c
+    mmap_file_test.c
+    mmap_test.cpp
+    mprotect_test.c
+    mutex_test.c
+    netdb_test.c
+    nftw_test.c
+    once_test.c
+    orphan_test.c
+    pipe_test.c
+    png_test.cpp
+    poll_test.c
+    protections_test.c
+    pthread_atfork_test.c
+    pthread_attr_test.c
+    queue_test.c
+    rect_set_test.cpp
+    regex_test.c
+    rwlock_test.c
+    scanf_test.c
+    sched_stress_test.c
+    select_test.c
+    sem_test.c
+    serial.c
+    set_jump_test.c
+    shared_memory_test.c
+    sigaltstack_test.cpp
+    siginfo_test.cpp
+    sigqueue_test.cpp
+    sigset_test.c
+    sigsuspend_test_a.cpp
+    smart_pointer_test.cpp
+    socket_pair_test.c
+    stack_trace_test.c
+    strcasecmp_test.c
+    string_test.cpp
+    strtoken_test.c
+    syscall_sysret_test.S
+    syslog_test.c
+    tcp_server_test_a.c
+    tcp_test_a.c
+    tcp_test_b.c
+    test.c
+    test_cpp_a.cpp
+    tgkill_test.cpp
+    threaded_execve.c
+    thread_specific_data_test.cpp
+    thread_test.c
+    timer_overrun_test.c
+    timer_test.cpp
+    times_test.c
+    tls_test.c
+    tmpnam_test.c
+    udp_test.c
+    vector_test.cpp
+    vm_internet_test.c
+    waitpid_test.c
+    we_test.c
+)
 
 foreach (SOURCE ${INITRD_PROGRAMS})
     get_filename_component(PROGRAM_NAME ${SOURCE} NAME_WE)
-    set(SOURCES ${SOURCE})
+    set(SOURCES programs/${SOURCE})
     add_os_executable(${PROGRAM_NAME} boot/initrd)
     set(PRIVATE_INITRD_TARGETS ${PRIVATE_INITRD_TARGETS} ${PROGRAM_NAME})
 endforeach()
