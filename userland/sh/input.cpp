@@ -554,14 +554,14 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
         memset(buffer + buffer_min_index, ' ', buffer_length - buffer_min_index);
 
         if (buffer_index - buffer_min_index > 0) {
-            char f_buf[20];
-            snprintf(f_buf, 20, "\033[%luD", buffer_index - buffer_min_index);
-            write(fileno(tty), f_buf, strlen(f_buf));
+            char f_buf[32];
+            snprintf(f_buf, sizeof(f_buf) - 1, "\033[%luD", buffer_index - buffer_min_index);
+            fwrite(f_buf, 1, strlen(f_buf), stderr);
         }
 
-        write(fileno(tty), "\033[s", 3);
-        write(fileno(tty), buffer + buffer_min_index, buffer_length - buffer_min_index);
-        write(fileno(tty), "\033[u", 3);
+        fwrite("\033[s", 1, 3, stderr);
+        fwrite(buffer + buffer_min_index, 1, buffer_length - buffer_min_index, stderr);
+        fwrite("\033[u", 1, 3, stderr);
 
         if (hist_index >= history_length) {
             if (!line_save) {
@@ -574,7 +574,7 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
             strncpy(buffer, history[hist_index], buffer_max);
         }
 
-        write(fileno(tty), buffer, strlen(buffer));
+        fwrite(buffer, 1, strlen(buffer), stderr);
         buffer_length = strlen(buffer);
         if (new_buffer_index == -1) {
             buffer_index = buffer_length;
@@ -584,9 +584,9 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
         buffer_min_index = 0;
 
         if (buffer_length - buffer_index > 0) {
-            char f_buf[20];
-            snprintf(f_buf, 20, "\033[%luD", buffer_length - buffer_index);
-            write(fileno(tty), f_buf, strlen(f_buf));
+            char f_buf[32];
+            snprintf(f_buf, sizeof(f_buf) - 1, "\033[%luD", buffer_length - buffer_index);
+            fwrite(f_buf, 1, strlen(f_buf), stderr);
         }
     };
 
@@ -652,11 +652,11 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
 
                     fprintf(stderr, "%c", '\n');
                     print_ps1_prompt();
-                    write(fileno(tty), buffer, buffer_length);
+                    fwrite(buffer, 1, buffer_length, stderr);
                     if (buffer_length != buffer_index) {
-                        char f_buf[20];
-                        snprintf(f_buf, 19, "\033[%luD", buffer_length - buffer_index);
-                        write(fileno(tty), f_buf, strlen(f_buf));
+                        char f_buf[32];
+                        snprintf(f_buf, sizeof(f_buf) - 1, "\033[%luD", buffer_length - buffer_index);
+                        fwrite(f_buf, 1, strlen(f_buf), stderr);
                     }
                     goto cleanup_suggestions;
                 }
@@ -690,21 +690,21 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
             memcpy(buffer + suggestions->index, suggestion_buffer, suggestions->length);
 
             if (buffer_index - suggestions->index > 0) {
-                char f_buf[20];
-                snprintf(f_buf, 20, "\033[%luD", buffer_index - suggestions->index);
-                write(fileno(tty), f_buf, strlen(f_buf));
+                char f_buf[32];
+                snprintf(f_buf, sizeof(f_buf) - 1, "\033[%luD", buffer_index - suggestions->index);
+                fwrite(f_buf, 1, strlen(f_buf), stderr);
             }
 
             if (buffer_length != buffer_index) {
-                write(fileno(tty), buffer + suggestions->index, suggestions->length + buffer_length - buffer_index);
+                fwrite(buffer + suggestions->index, 1, suggestions->length + buffer_length - buffer_index, stderr);
                 buffer_index += suggestions->length;
                 buffer_length += suggestions->length;
 
-                char f_buf[20];
-                snprintf(f_buf, 20, "\033[%luD", buffer_length - buffer_index);
-                write(fileno(tty), f_buf, strlen(f_buf));
+                char f_buf[32];
+                snprintf(f_buf, sizeof(f_buf) - 1, "\033[%luD", buffer_length - buffer_index);
+                fwrite(f_buf, 1, strlen(f_buf), stderr);
             } else {
-                write(fileno(tty), suggestion_buffer, suggestions->length);
+                fwrite(suggestion_buffer, 1, suggestions->length, stderr);
                 buffer_index = buffer_length = suggestions->index + suggestions->length;
             }
 
@@ -728,13 +728,13 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
 
         // Control L
         if (c == ('L' & 0x1F)) {
-            write(fileno(tty), "\033[1;1H\033[2J", 10);
+            fwrite("\033[1;1H\033[2J", 1, 10, stderr);
             print_ps1_prompt();
-            write(fileno(tty), buffer, buffer_length);
+            fwrite(buffer, 1, buffer_length, stderr);
             if (buffer_length != buffer_index) {
-                char f_buf[20];
-                snprintf(f_buf, 19, "\033[%luD", buffer_length - buffer_index);
-                write(fileno(tty), f_buf, strlen(f_buf));
+                char f_buf[32];
+                snprintf(f_buf, sizeof(f_buf) - 1, "\033[%luD", buffer_length - buffer_index);
+                fwrite(f_buf, 1, strlen(f_buf), stderr);
             }
             continue;
         }
@@ -750,9 +750,9 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                 dprintf(fileno(tty), "(%sreverse-i-search)`%.*s': %.*s", failed ? "failed " : "", view.size(), view.vector(),
                         static_cast<int>(buffer_length), buffer);
                 if (buffer_length - buffer_index > 0) {
-                    char f_buf[20];
+                    char f_buf[32];
                     snprintf(f_buf, sizeof(f_buf) - 1, "\033[%luD", buffer_length - buffer_index);
-                    write(fileno(tty), f_buf, strlen(f_buf));
+                    fwrite(f_buf, 1, strlen(f_buf), stderr);
                 }
             };
 
@@ -769,9 +769,7 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                     if (errno == EINTR) {
                         break;
                     } else {
-                        free(line_save);
-                        free(buffer);
-                        return InputResult::Eof;
+                        goto error;
                     }
                 }
 
@@ -811,11 +809,11 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
 
             clear_line();
             print_ps1_prompt();
-            write(fileno(tty), buffer, buffer_length);
+            fwrite(buffer, 1, buffer_length, stderr);
             if (buffer_length - buffer_index > 0) {
-                char f_buf[20];
+                char f_buf[32];
                 snprintf(f_buf, sizeof(f_buf) - 1, "\033[%luD", buffer_length - buffer_index);
-                write(fileno(tty), f_buf, strlen(f_buf));
+                fwrite(f_buf, 1, strlen(f_buf), stderr);
             }
             continue;
         }
@@ -830,9 +828,9 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                 buffer[buffer_length - 1] = ' ';
 
                 buffer_index--;
-                write(fileno(tty), "\033[1D\033[s", 7);
-                write(fileno(tty), buffer + buffer_index, buffer_length - buffer_index);
-                write(fileno(tty), "\033[u", 3);
+                fwrite("\033[1D\033[s", 1, 7, stderr);
+                fwrite(buffer + buffer_index, 1, buffer_length - buffer_index, stderr);
+                fwrite("\033[u", 1, 3, stderr);
                 buffer[buffer_length--] = '\0';
             }
 
@@ -841,7 +839,9 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
 
         // Terminal escape sequences
         if (c == '\033') {
-            read(fileno(tty), &c, 1);
+            if (read(fileno(tty), &c, 1) <= 0) {
+                goto error;
+            }
 
             switch (c) {
                 case 'd':
@@ -852,10 +852,14 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                     continue;
             }
 
-            read(fileno(tty), &c, 1);
+            if (read(fileno(tty), &c, 1) <= 0) {
+                goto error;
+            }
             if (isdigit(c)) {
                 char last;
-                read(fileno(tty), &last, 1);
+                if (read(fileno(tty), &last, 1) <= 0) {
+                    goto error;
+                }
                 if (last == '~') {
                     switch (c) {
                         case '3':
@@ -864,9 +868,9 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                                 memmove(buffer + buffer_index, buffer + buffer_index + 1, buffer_length - buffer_index);
                                 buffer[buffer_length - 1] = ' ';
 
-                                write(fileno(tty), "\033[s", 3);
-                                write(fileno(tty), buffer + buffer_index, buffer_length - buffer_index);
-                                write(fileno(tty), "\033[u", 3);
+                                fwrite("\033[s", 1, 3, stderr);
+                                fwrite(buffer + buffer_index, 1, buffer_length - buffer_index, stderr);
+                                fwrite("\033[u", 1, 3, stderr);
 
                                 buffer[buffer_length--] = '\0';
                             }
@@ -878,13 +882,17 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                     continue;
                 }
 
-                read(fileno(tty), &last, 1);
+                if (read(fileno(tty), &last, 1) <= 0) {
+                    goto error;
+                }
                 if (last != '5') {
                     continue;
                 }
 
                 char d;
-                read(fileno(tty), &d, 1);
+                if (read(fileno(tty), &d, 1) <= 0) {
+                    goto error;
+                }
                 if (d != '~' && c == '1') {
                     switch (d) {
                         case 'C': {
@@ -899,7 +907,7 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                                 buffer_index = index;
                                 char buf[50] = { 0 };
                                 snprintf(buf, 49, "\033[%luC", delta);
-                                write(fileno(tty), buf, strlen(buf));
+                                fwrite(buf, 1, strlen(buf), stderr);
                             }
                             continue;
                         }
@@ -916,7 +924,7 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                                 buffer_index = index;
                                 char buf[50] = { 0 };
                                 snprintf(buf, 49, "\033[%luD", delta);
-                                write(fileno(tty), buf, strlen(buf));
+                                fwrite(buf, 1, strlen(buf), stderr);
                             }
                             continue;
                         }
@@ -935,9 +943,9 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                                 memmove(buffer + buffer_index, buffer + buffer_index + 1, buffer_length - buffer_index);
                                 buffer[buffer_length - 1] = ' ';
 
-                                write(fileno(tty), "\033[s", 3);
-                                write(fileno(tty), buffer + buffer_index, buffer_length - buffer_index);
-                                write(fileno(tty), "\033[u", 3);
+                                fwrite("\033[s", 1, 3, stderr);
+                                fwrite(buffer + buffer_index, 1, buffer_length - buffer_index, stderr);
+                                fwrite("\033[u", 1, 3, stderr);
 
                                 buffer[buffer_length--] = '\0';
                             }
@@ -966,14 +974,14 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                     // Right arrow
                     if (buffer_index < buffer_length) {
                         buffer_index++;
-                        write(fileno(tty), "\033[1C", 4);
+                        fwrite("\033[1C", 1, 4, stderr);
                     }
                     break;
                 case 'D':
                     // Left arrow
                     if (buffer_index > buffer_min_index) {
                         buffer_index--;
-                        write(fileno(tty), "\033[1D", 4);
+                        fwrite("\033[1D", 1, 4, stderr);
                     }
                     break;
                 case 'H': {
@@ -983,7 +991,7 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                         buffer_index = buffer_min_index;
                         char buf[50] = { 0 };
                         snprintf(buf, 49, "\033[%luD", delta);
-                        write(fileno(tty), buf, strlen(buf));
+                        fwrite(buf, 1, strlen(buf), stderr);
                     }
                     break;
                 }
@@ -994,7 +1002,7 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                         buffer_index = buffer_length;
                         char buf[50] = { 0 };
                         snprintf(buf, 49, "\033[%luC", delta);
-                        write(fileno(tty), buf, strlen(buf));
+                        fwrite(buf, 1, strlen(buf), stderr);
                     }
                     break;
                 }
@@ -1012,9 +1020,9 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                 buffer[buffer_length - 1] = ' ';
 
                 buffer_index--;
-                write(fileno(tty), "\033[1D\033[s", 7);
-                write(fileno(tty), buffer + buffer_index, buffer_length - buffer_index);
-                write(fileno(tty), "\033[u", 3);
+                fwrite("\033[1D\033[s", 1, 7, stderr);
+                fwrite(buffer + buffer_index, 1, buffer_length - buffer_index, stderr);
+                fwrite("\033[u", 1, 3, stderr);
                 buffer[buffer_length--] = '\0';
             }
 
@@ -1036,10 +1044,10 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
                     buffer[buffer_index] = '\0';
                     break;
                 case LineStatus::Done:
-                    write(fileno(tty), "\n", 1);
+                    fwrite("\n", 1, 1, stderr);
                     goto tty_input_done;
                 case LineStatus::Error:
-                    write(fileno(tty), "\n", 1);
+                    fwrite("\n", 1, 1, stderr);
                     g_line = String::wrap_malloced_chars(buffer);
                     return InputResult::Error;
                 default:
@@ -1049,7 +1057,7 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
 
             // The line was not finished
             buffer_min_index = buffer_index;
-            write(fileno(tty), "\n> ", 3);
+            fwrite("\n> ", 1, 3, stderr);
             continue;
         }
 
@@ -1061,9 +1069,9 @@ static InputResult get_tty_input(FILE *tty, ShValue *value) {
             buffer_length++;
 
             // Make sure to save and restore the cursor position
-            write(fileno(tty), "\033[s", 3);
-            write(fileno(tty), buffer + buffer_index, buffer_length - buffer_index);
-            write(fileno(tty), "\033[u\033[1C", 7);
+            fwrite("\033[s", 1, 3, stderr);
+            fwrite(buffer + buffer_index, 1, buffer_length - buffer_index, stderr);
+            fwrite("\033[u\033[1C", 1, 7, stderr);
             buffer_index++;
         }
     }
@@ -1082,6 +1090,11 @@ tty_input_done:
 
     free(buffer);
     return InputResult::Empty;
+
+error:
+    free(line_save);
+    free(buffer);
+    return InputResult::Eof;
 }
 
 static InputResult get_file_input(FILE *file, ShValue *value) {
