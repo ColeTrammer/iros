@@ -5,6 +5,12 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#define FP_INFINITE  1
+#define FP_NAN       2
+#define FP_NORMAL    3
+#define FP_SUBNORMAL 4
+#define FP_ZERO      5
+
 #define isfinite(x) __builtin_isfinite(x)
 
 double acos(double x);
