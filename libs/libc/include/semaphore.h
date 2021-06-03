@@ -24,9 +24,9 @@ struct __sem {
 };
 
 #ifdef __libc_internal
-__attribute__((visibility("internal"))) struct __lock __sem_open_lock;
-__attribute__((visibility("internal"))) struct __sem *__sem_open_head;
-__attribute__((visibility("internal"))) struct __sem *__sem_open_tail;
+__attribute__((visibility("internal"))) extern struct __lock __sem_open_lock;
+__attribute__((visibility("internal"))) extern struct __sem *__sem_open_head;
+__attribute__((visibility("internal"))) extern struct __sem *__sem_open_tail;
 __attribute__((visibility("internal"))) int __sem_wait(struct __sem *__restrict s, const struct timespec *__restrict timeout, int try_only);
 #endif /* __libc_internal */
 
