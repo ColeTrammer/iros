@@ -1,0 +1,14 @@
+diff --git a/Modules/CMakePlatformId.h.in b/Modules/CMakePlatformId.h.in
+index 1dc12c06..6cf50e3b 100644
+--- a/Modules/CMakePlatformId.h.in
++++ b/Modules/CMakePlatformId.h.in
+@@ -65,6 +65,9 @@
+ #elif defined(__osf) || defined(__osf__)
+ # define PLATFORM_ID "OSF1"
+ 
++#elif defined(__os_2__)
++# define PLATFORM_ID "OS_2"
++
+ #elif defined(_SCO_SV) || defined(SCO_SV) || defined(sco_sv)
+ # define PLATFORM_ID "SCO_SV"
+ 
