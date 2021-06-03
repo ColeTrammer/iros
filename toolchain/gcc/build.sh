@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 ROOT="${ROOT:-$PWD/../..}"
 TARGET=`$ROOT/default-host.sh`
 VERSION="11.1.0"
@@ -52,8 +54,5 @@ fi
 
 cd "$BUILD_DIR"
 make all-gcc -j5
-make all-target-libgcc -j5
-make install-gcc install-target-libgcc 
-
-cp "$ROOT/toolchain/cross/$TARGET/lib/libgcc_s.so.*" -t "$ROOT/base/usr/lib"
+make install-gcc
 cd ..

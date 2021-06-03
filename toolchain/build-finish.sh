@@ -3,5 +3,5 @@
 set -e
 
 cd gcc
-./build-libstdc++.sh
+./build-libs.sh
 cd ..

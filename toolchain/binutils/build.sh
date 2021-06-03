@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 ROOT="${ROOT:-$PWD/../..}"
 TARGET=`$ROOT/default-host.sh`
 VERSION="2.36.1"
@@ -8,7 +10,9 @@ DOWNLOAD_DEST=binutils.tar.gz
 SRC="binutils-$VERSION"
 BUILD_DIR="build-binutils"
 
-export CC=gcc
+unset CC
+unset CXX
+unset AS
 
 if [ ! -e $DOWNLOAD_DEST ]; then
     curl -L "$DOWNLOAD_URL" -o "$DOWNLOAD_DEST"
