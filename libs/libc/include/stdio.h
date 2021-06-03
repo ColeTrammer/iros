@@ -73,12 +73,12 @@ FILE *__stdio_allocate_stream(int fd, int flags);
 #define __stdio_log(ignore, s, ...) ((void) 0)
 #else
 extern int __should_log;
-#define __stdio_log(stream, s, ...)                        \
-    do {                                                   \
-        if (__should_log && stream != stderr) {            \
-            fprintf(stderr, s __VA_OPT__(, ) __VA_ARGS__); \
-            fputc('\n', stderr);                           \
-        }                                                  \
+#define __stdio_log(stream, s, ...)             \
+    do {                                        \
+        if (__should_log && stream != stderr) { \
+            fprintf(stderr, s, ##__VA_ARGS__);  \
+            fputc('\n', stderr);                \
+        }                                       \
     } while (0)
 #endif /* NDEBUG */
 

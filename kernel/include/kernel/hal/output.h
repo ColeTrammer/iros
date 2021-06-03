@@ -17,7 +17,7 @@ void debug_log_assertion(const char *msg, const char *file, int line, const char
 #endif /* vdebug_log */
 
 #ifndef debug_log
-#define debug_log(msg, ...) debug_log_internal(__func__, msg __VA_OPT__(, ) __VA_ARGS__)
+#define debug_log(msg, ...) debug_log_internal(__func__, msg, ##__VA_ARGS__)
 #endif /* debug_log */
 
 #endif /* _KERNEL_HAL_OUTPUT_H */

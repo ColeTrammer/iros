@@ -22,16 +22,16 @@
 #define LOADER_PRIVATE                          __attribute__((visibility("internal")))
 #define LOADER_HIDDEN_EXPORT(func, export_name) extern __typeof__(func) export_name __attribute((weak, alias("" #func)))
 #ifndef loader_log
-#define loader_log(m, ...) dprintf(2, m "\n" __VA_OPT__(, ) __VA_ARGS__)
+#define loader_log(m, ...) dprintf(2, m "\n", ##__VA_ARGS__)
 #endif /* loader_log */
 #ifndef loader_err
-#define loader_err(m, ...)                                \
-    do {                                                  \
-        if (ran_program && &__dl_has_error != NULL) {     \
-            __dl_set_error(m __VA_OPT__(, ) __VA_ARGS__); \
-        } else {                                          \
-            loader_log(m __VA_OPT__(, ) __VA_ARGS__);     \
-        }                                                 \
+#define loader_err(m, ...)                            \
+    do {                                              \
+        if (ran_program && &__dl_has_error != NULL) { \
+            __dl_set_error(m, ##__VA_ARGS__);         \
+        } else {                                      \
+            loader_log(m, ##__VA_ARGS__);             \
+        }                                             \
     } while (0)
 #endif /* loader_err */
 

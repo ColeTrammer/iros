@@ -71,9 +71,9 @@
 #define __MESSAGE_FIELD_SERIALIZER(type, name)         stream << this->name;
 #define __MESSAGE_FIELD_DESERIALIZER(type, name)       stream >> this->name;
 
-#define __MESSAGE_DECL(...)                    __EVAL(__RECURSIVE_ITER(__MESSAGE_FIELD_DECL __VA_OPT__(, ) __VA_ARGS__))
-#define __MESSAGE_SERIALIZATION_SIZE_BODY(...) __EVAL(__RECURSIVE_ITER(__MESSAGE_FIELD_SERIALIZATION_SIZE __VA_OPT__(, ) __VA_ARGS__))
-#define __MESSAGE_SERIALIZER_BODY(...)         __EVAL(__RECURSIVE_ITER(__MESSAGE_FIELD_SERIALIZER __VA_OPT__(, ) __VA_ARGS__))
+#define __MESSAGE_DECL(...)                    __EVAL(__RECURSIVE_ITER(__MESSAGE_FIELD_DECL, ##__VA_ARGS__))
+#define __MESSAGE_SERIALIZATION_SIZE_BODY(...) __EVAL(__RECURSIVE_ITER(__MESSAGE_FIELD_SERIALIZATION_SIZE, ##__VA_ARGS__))
+#define __MESSAGE_SERIALIZER_BODY(...)         __EVAL(__RECURSIVE_ITER(__MESSAGE_FIELD_SERIALIZER, ##__VA_ARGS__))
 #define __MESSAGE_SERIALIZER(n, ...)                   \
     uint32_t serialization_size() const {              \
         uint32_t ret = 2 * sizeof(uint32_t);           \
@@ -87,7 +87,7 @@
         return !stream.error();                        \
     }
 
-#define __MESSAGE_DESERIALIZER_BODY(...) __EVAL(__RECURSIVE_ITER(__MESSAGE_FIELD_DESERIALIZER __VA_OPT__(, ) __VA_ARGS__))
+#define __MESSAGE_DESERIALIZER_BODY(...) __EVAL(__RECURSIVE_ITER(__MESSAGE_FIELD_DESERIALIZER, ##__VA_ARGS__))
 #define __MESSAGE_DESERIALIZER(n, ...)                \
     bool deserialize(IPC::Stream& stream) {           \
         uint32_t size;                                \
@@ -107,8 +107,7 @@
 #define __MESSAGE_BEGIN(n) \
     struct n {             \
         static constexpr Type message_type() { return Type::n; }
-#define __MESSAGE_BODY(n, ...) \
-    __MESSAGE_DECL(__VA_ARGS__) __MESSAGE_SERIALIZER(n __VA_OPT__(, ) __VA_ARGS__) __MESSAGE_DESERIALIZER(n __VA_OPT__(, ) __VA_ARGS__)
+#define __MESSAGE_BODY(n, ...) __MESSAGE_DECL(__VA_ARGS__) __MESSAGE_SERIALIZER(n, ##__VA_ARGS__) __MESSAGE_DESERIALIZER(n, ##__VA_ARGS__)
 #define __MESSAGE_END(n) \
     }                    \
     ;                    \
@@ -132,15 +131,15 @@
         break;                          \
     }
 
-#define __IPC_MESSAGE_TYPES(...)                                                             \
-    enum class Type : uint32_t {                                                             \
-        __EVAL__(__RECURSIVE_ITER_(__MESSAGE_TYPE __VA_OPT__(, ) __VA_ARGS__)) MessageCount, \
+#define __IPC_MESSAGE_TYPES(...)                                                 \
+    enum class Type : uint32_t {                                                 \
+        __EVAL__(__RECURSIVE_ITER_(__MESSAGE_TYPE, ##__VA_ARGS__)) MessageCount, \
     };
-#define __IPC_MESSAGES(...) __EVAL__(__RECURSIVE_ITER_(__MESSAGE __VA_OPT__(, ) __VA_ARGS__))
+#define __IPC_MESSAGES(...) __EVAL__(__RECURSIVE_ITER_(__MESSAGE, ##__VA_ARGS__))
 #define __IPC_DISPATCHER(...)                                                                   \
     class MessageDispatcher : public IPC::MessageDispatcher {                                   \
     public:                                                                                     \
-        __EVAL__(__RECURSIVE_ITER_(__DISPATCHER_DECL __VA_OPT__(, ) __VA_ARGS__))               \
+        __EVAL__(__RECURSIVE_ITER_(__DISPATCHER_DECL, ##__VA_ARGS__))                           \
         virtual void handle_incoming_data(IPC::Endpoint& endpoint, IPC::Stream& stream) final { \
             uint32_t size;                                                                      \
             uint32_t type;                                                                      \
@@ -156,7 +155,7 @@
             }                                                                                   \
             stream.rewind();                                                                    \
             switch (static_cast<Type>(type)) {                                                  \
-                __EVAL__(__RECURSIVE_ITER_(__DISPATCHER __VA_OPT__(, ) __VA_ARGS__))            \
+                __EVAL__(__RECURSIVE_ITER_(__DISPATCHER, ##__VA_ARGS__))                        \
                 default:                                                                        \
                     handle_error(endpoint);                                                     \
                     return;                                                                     \

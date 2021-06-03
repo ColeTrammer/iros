@@ -71,7 +71,7 @@ static __attribute__((unused)) int __do_logging;
             __do_logging = 5;                                      \
         }                                                          \
         if (__do_logging == 5) {                                   \
-            fprintf(__serial_out, s __VA_OPT__(, ) __VA_ARGS__);   \
+            fprintf(__serial_out, s, ##__VA_ARGS__);               \
         }                                                          \
     } while (0)
 #endif /* __malloc_debug */

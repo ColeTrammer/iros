@@ -18,11 +18,11 @@ static bool interactive;
 static bool recursive;
 static bool verbose;
 
-#define cp_log(m, ...)                                     \
-    do {                                                   \
-        if (verbose) {                                     \
-            fprintf(stderr, m __VA_OPT__(, ) __VA_ARGS__); \
-        }                                                  \
+#define cp_log(m, ...)                         \
+    do {                                       \
+        if (verbose) {                         \
+            fprintf(stderr, m, ##__VA_ARGS__); \
+        }                                      \
     } while (0)
 
 static bool any_failed;
