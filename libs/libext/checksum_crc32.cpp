@@ -18,7 +18,7 @@ static constexpr decltype(auto) build_crc32_table(uint32_t polynomial) {
     return table;
 }
 
-static constexpr decltype(auto) crc32_table = build_crc32_table(0xEDB88320U);
+static constexpr auto crc32_table = build_crc32_table(0xEDB88320U);
 static_assert(crc32_table[0] == 0);
 static_assert(crc32_table[1] == 0x77073096);
 static_assert(crc32_table[2] == 0xEE0E612C);
