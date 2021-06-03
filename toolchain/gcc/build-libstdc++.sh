@@ -2,9 +2,9 @@
 
 set -e
 
-# Variables
-export ROOT="${ROOT:-$PWD/../..}"
-export TARGET=`$ROOT/default-host.sh`
+ROOT="${ROOT:-$PWD/../..}"
+TARGET=`$ROOT/default-host.sh`
+BUILD_DIR="build-gcc"
 
 unset CC
 unset CXX
@@ -18,11 +18,8 @@ die() {
 
 cmake --build "$OS_2_BUILD_DIR" --target install-libc
 
-cd build-gcc
-
+cd "$BUILD_DIR"
 make all-target-libstdc++-v3 -j5
 make install-target-libstdc++-v3
-
-cp "$ROOT/toolchain/cross/x86_64-os_2/lib/libstdc++.so.6.0.27" "$ROOT/base/usr/lib"
-
+cp "$ROOT/toolchain/cross/x86_64-os_2/lib/libstdc++.so.*" -t "$ROOT/base/usr/lib"
 cd ..

@@ -2,10 +2,16 @@
 
 set -e
 
-cd binutils-2.34
+mkdir -p cross
+
+cd cmake
 ./build.sh
 cd ..
 
-cd gcc-9.2.0
+cd binutils
+./build.sh
+cd ..
+
+cd gcc
 ./build.sh
 cd ..
