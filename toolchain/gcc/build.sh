@@ -39,7 +39,6 @@ fi
 if [ ! -d "$BUILD_DIR" ]; then
     mkdir -p "$BUILD_DIR"
     cd "$BUILD_DIR"
-    export gcc_cv_initfini_array=yes
     "../$SRC/configure" \
         --target="$TARGET" \
         --prefix="$ROOT/toolchain/cross" \

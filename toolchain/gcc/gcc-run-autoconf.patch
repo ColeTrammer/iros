@@ -52,7 +52,7 @@ index 504f64102..1be51708c 100755
    --includedir=DIR        C header files [PREFIX/include]
    --oldincludedir=DIR     C header files for non-gcc [/usr/include]
 diff --git a/gcc/configure b/gcc/configure
-index e8ecb3b02..47ebcf50d 100755
+index e8ecb3b02..318651a74 100755
 --- a/gcc/configure
 +++ b/gcc/configure
 @@ -911,6 +911,7 @@ infodir
@@ -214,6 +214,15 @@ index e8ecb3b02..47ebcf50d 100755
  solaris*)
    version_type=linux
    need_lib_prefix=no
+@@ -30979,7 +31017,7 @@ case "$target" in
+       gcc_cv_target_dl_iterate_phdr=no
+     fi
+     ;;
+-  *-linux-musl*)
++  *-linux-musl* | *-*-os_2*)
+     gcc_cv_target_dl_iterate_phdr=yes
+     ;;
+ esac
 diff --git a/gnattools/configure b/gnattools/configure
 index c2d755b72..7b3dfacee 100755
 --- a/gnattools/configure
