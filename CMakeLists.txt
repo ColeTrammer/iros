@@ -1,10 +1,10 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.20.3)
 project(os_2 C CXX ASM)
 
-set(ARCH $ENV{ARCH} CACHE STRING "architecture for the os")
-set(TARGET_OS $ENV{TARGET_OS} CACHE STRING "target operating system for build")
+set(ARCH ${CMAKE_SYSTEM_PROCESSOR} CACHE STRING "architecture for the os")
+set(TARGET_OS ${CMAKE_SYSTEM_NAME} CACHE STRING "target operating system for build")
 set(ROOT ${CMAKE_CURRENT_SOURCE_DIR})
-if (${TARGET_OS} STREQUAL os_2)
+if (${TARGET_OS} STREQUAL OS_2)
     set(NATIVE_BUILD FALSE)
 else()
     set(NATIVE_BUILD TRUE)
@@ -39,7 +39,7 @@ if (${NATIVE_BUILD})
     set(NATIVE_PARSER parser)
 else()
     set(CMAKE_INSTALL_PREFIX ${SYSROOT})
-    set(NATIVE_DIR $ENV{OS_2_NATIVE_DIR} CACHE STRING "directory of native cmake build")
+    set(NATIVE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/native CACHE STRING "directory of native cmake build")
     set(NATIVE_INITRD ${NATIVE_DIR}/gen/initrd/initrd)
     set(NATIVE_PARSER ${NATIVE_DIR}/gen/parser/parser)
     set(DL_LIB libdl)
@@ -48,73 +48,13 @@ else()
     include_directories(libs/libc/include)
 endif()
 
-function(install_headers)
-    install(
-        DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
-        DESTINATION "usr/include"
-        FILES_MATCHING PATTERN "*.h"
-    )
-endfunction()
-
-function(add_all_targets)
-    foreach(TARGET ${TARGETS})
-        add_subdirectory(${TARGET})
-    endforeach()
-endfunction()
-
-function(add_os_headers name)
-    add_library(${name} INTERFACE)
-    target_include_directories(${name} INTERFACE include)
-    install_headers()
-endfunction()
-
-function(add_os_static_library target_name short_name has_headers)
-    add_library(${target_name} STATIC ${SOURCES})
-    install(TARGETS ${target_name} ARCHIVE DESTINATION usr/lib)
-    if (${has_headers})
-        target_include_directories(${target_name} PUBLIC include)
-        install_headers()
-    endif()
-    target_compile_definitions(${target_name} PRIVATE __is_static)
-    set_target_properties(${target_name} PROPERTIES OUTPUT_NAME ${short_name})
-endfunction()
-
-function(add_os_library target_name short_name has_headers)
-    add_library(${target_name} SHARED ${SOURCES})
-    install(TARGETS ${target_name} LIBRARY DESTINATION usr/lib)
-    if (${has_headers})
-        target_include_directories(${target_name} PUBLIC include)
-        install_headers()
-    endif()
-    target_compile_definitions(${target_name} PRIVATE __is_shared)
-    set_target_properties(${target_name} PROPERTIES OUTPUT_NAME ${short_name})
-endfunction()
-
-function(add_os_executable name dest_dir)
-    add_executable(${name} ${SOURCES})
-    if (NOT ${NATIVE_BUILD})
-        add_dependencies(${name} bootstrap-core-libs)
-        target_link_options(${name} PRIVATE "-Wl,-rpath-link" "${ROOT}/base/usr/lib") # Make the linker stop complaining about libgcc_s.so
-    endif()
-    install(TARGETS ${name} RUNTIME DESTINATION ${dest_dir})
-endfunction()
-
-function(add_os_static_executable name dest_dir)
-    add_executable(${name} ${SOURCES})
-    if (NOT ${NATIVE_BUILD})
-        add_dependencies(${name} bootstrap-core-libs)
-        target_link_libraries(${name} PRIVATE libc_static)
-    endif()
-    target_link_options(${name} PRIVATE "-static")
-    install(TARGETS ${name} RUNTIME DESTINATION ${dest_dir})
-endfunction()
+include(cmake/functions.cmake)
 
 add_subdirectory(libs)
 add_subdirectory(gen)
 add_subdirectory(userland)
 add_subdirectory(initrd)
 add_subdirectory(kernel)
-set(ALL_TARGETS ${LIBS_TARGETS} ${GEN_TARGETS} ${USERLAND_TARGETS} ${INITRD_TARGETS} ${BOOT_TARGETS} ${KERNEL_TARGETS})
 
 if (NOT ${NATIVE_BUILD})
     add_custom_target(
@@ -150,7 +90,7 @@ if (NOT ${NATIVE_BUILD})
         COMMAND /bin/echo "set timeout=0" >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND grub-file --is-x86-multiboot2 ${ISODIR}/boot/kernel
         COMMAND grub-mkrescue -o ${ROOT}/os_2.iso ${ISODIR}
-        DEPENDS generate-initrd ${ALL_TARGETS} install-all
+        DEPENDS generate-initrd kernel
     )
 
     add_custom_target(
@@ -158,7 +98,6 @@ if (NOT ${NATIVE_BUILD})
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND sudo ./makeimg.sh
         USES_TERMINAL
-        DEPENDS install-all
     )
 
     add_custom_target(
@@ -178,16 +117,20 @@ if (NOT ${NATIVE_BUILD})
     add_custom_target(
         frun
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target install
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target os_2.img
         COMMAND ./qemu.sh
         USES_TERMINAL
-        DEPENDS os_2.iso os_2.img
+        DEPENDS os_2.iso
     )
 
     add_custom_target(
         bfrun
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target install
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target os_2.img
         COMMAND ./bochs.sh
         USES_TERMINAL
-        DEPENDS os_2.iso os_2.img
+        DEPENDS os_2.iso
     )
 endif()

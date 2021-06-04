@@ -88,5 +88,4 @@ if (NOT ${NATIVE_BUILD})
     target_link_libraries(kernel libk kernel_headers)
 
     install(TARGETS kernel RUNTIME DESTINATION boot)
-    set(KERNEL_TARGETS kernel PARENT_SCOPE)
 endif()

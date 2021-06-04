@@ -73,4 +73,3 @@ set(TARGETS
 )
 
 add_all_targets()
-set(USERLAND_TARGETS ${TARGETS} PARENT_SCOPE)
