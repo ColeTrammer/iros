@@ -131,9 +131,12 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
         }
     }
 
+    size_t phdr_region_size = ALIGN_UP(elf_header->e_phnum * elf_header->e_phentsize, PAGE_SIZE);
+
     // Loading an interpreter
     if (elf_header->e_type == ET_DYN) {
-        size_t size = (text_start != (uintptr_t) -1 ? (text_end - text_start) : 0) + (data_end >= data_start ? (data_end - data_start) : 0);
+        size_t size = (text_start != (uintptr_t) -1 ? (text_end - text_start) : 0) +
+                      (data_end >= data_start ? (data_end - data_start) : 0) + phdr_region_size;
         struct vm_region *first = get_current_task()->process->process_memory;
         assert(first->start - PAGE_SIZE >= size);
         offset = first->start - size;
@@ -171,6 +174,28 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
         tls_region->vm_object = object;
         tls_region->vm_object_offset = 0;
         vm_map_region_with_object(tls_region);
+    }
+
+    size_t phdr_region_start = data_end + offset + tls_size;
+
+#ifdef ELF64_DEBUG
+    debug_log("Creating PHDR region: [ %#.16lX, %lu ]\n", phdr_region_start, phdr_region_size);
+#endif /* ELF64_DEBUG */
+
+    struct vm_region *phdr_region =
+        map_region((void *) phdr_region_start, phdr_region_size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, VM_PROCESS_ROD);
+    struct vm_object *object = vm_create_anon_object(phdr_region_size);
+    phdr_region->vm_object = object;
+    phdr_region->vm_object_offset = 0;
+    vm_map_region_with_object(phdr_region);
+    memcpy((void *) phdr_region_start, program_headers, elf_header->e_phnum * elf_header->e_phentsize);
+
+    if (elf_header->e_type == ET_EXEC) {
+        info->program_phdr_start = (void *) phdr_region_start;
+        info->program_phdr_count = elf_header->e_phnum;
+    } else {
+        info->loader_phdr_start = (void *) phdr_region_start;
+        info->loader_phdr_count = elf_header->e_phnum;
     }
 
     for (int i = 0; i < elf_header->e_phnum; i++) {

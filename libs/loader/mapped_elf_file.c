@@ -271,8 +271,10 @@ struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file, co
     }
 
     struct dynamic_elf_object *obj = loader_malloc(sizeof(struct dynamic_elf_object));
-    *obj =
-        build_dynamic_elf_object(base + dyn_table_offset, dyn_count, base, total_size, (uintptr_t) base, tls_module_id, full_path, global);
+    void *phdr_start = loader_malloc(count * sizeof(Elf64_Phdr));
+    memcpy(phdr_start, program_header_table(file), count * sizeof(Elf64_Phdr));
+    *obj = build_dynamic_elf_object(base + dyn_table_offset, dyn_count, base, total_size, (uintptr_t) base, phdr_start, count,
+                                    tls_module_id, full_path, global);
 
 #ifdef LOADER_DEBUG
     loader_log("loaded `%s' at %p", object_name(obj), base);

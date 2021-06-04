@@ -1,4 +1,5 @@
 #include <elf.h>
+#include <link.h>
 #include <stdatomic.h>
 #include <sys/param.h>
 
@@ -9,7 +10,8 @@
 static void do_call_fini_functions(struct dynamic_elf_object *obj);
 
 struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynamic_table, size_t dynamic_count, uint8_t *base, size_t size,
-                                                   size_t relocation_offset, size_t tls_module_id, const char *full_path, bool global) {
+                                                   size_t relocation_offset, void *phdr_start, size_t phdr_count, size_t tls_module_id,
+                                                   const char *full_path, bool global) {
     struct dynamic_elf_object self = { 0 };
     self.full_path = loader_malloc(strlen(full_path) + 1);
     strcpy(self.full_path, full_path);
@@ -17,6 +19,8 @@ struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynamic_tabl
     self.raw_data = base;
     self.raw_data_size = size;
     self.relocation_offset = relocation_offset;
+    self.phdr_start = phdr_start;
+    self.phdr_count = phdr_count;
     self.global = global;
     self.ref_count = 1;
     for (size_t i = 0; i < dynamic_count; i++) {
@@ -146,6 +150,9 @@ void destroy_dynamic_elf_object(struct dynamic_elf_object *self) {
     loader_free(self->dependencies);
 
     loader_free(self->full_path);
+
+    // NOTE: If this object was the program of the loader, this could not be freed. However, only dlopen'ed objects can be destroyed.
+    loader_free(self->phdr_start);
 
     if (self->tls_module_id) {
         remove_tls_record(self->tls_module_id);
@@ -503,3 +510,24 @@ struct dynamic_elf_object *get_dynamic_object_tail(void) {
     return dynamic_object_tail;
 }
 LOADER_HIDDEN_EXPORT(get_dynamic_object_tail, __loader_get_dynamic_object_tail);
+
+int iter_phdr(int (*iter)(struct dl_phdr_info *info, size_t size, void *closure), void *closure) {
+    int ret = 0;
+    for (struct dynamic_elf_object *obj = dynamic_object_head; obj; obj = obj->next) {
+        void *tls_addr = NULL;
+        if (obj->tls_module_id != 0) {
+            tls_addr = tls_records[obj->tls_module_id - 1].tls_image;
+        }
+        struct dl_phdr_info info = {
+            .dlpi_addr = obj->relocation_offset,
+            .dlpi_name = obj == dynamic_object_head ? "" : obj->full_path,
+            .dlpi_phdr = obj->phdr_start,
+            .dlpi_phnum = obj->phdr_count,
+            .dlpi_tls_modid = obj->tls_module_id,
+            .dlpi_tls_data = tls_addr,
+        };
+        ret = iter(&info, sizeof(info), closure);
+    }
+    return ret;
+}
+LOADER_HIDDEN_EXPORT(iter_phdr, __loader_iter_phdr);

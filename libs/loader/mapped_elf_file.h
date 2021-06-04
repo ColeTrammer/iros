@@ -2,12 +2,10 @@
 #define _MAPPED_ELF_FILE_H 1
 
 #include <bits/mapped_elf_file.h>
+#include <elf.h>
 
 #include "loader.h"
 
-struct Elf64_Ehdr;
-struct Elf64_Phdr;
-struct Elf64_Shdr;
 struct dynamic_elf_object;
 
 struct mapped_elf_file build_mapped_elf_file(const char *file) LOADER_PRIVATE;

@@ -7,6 +7,7 @@ set(INITRD_PROGRAMS
     cleanup_handler_test.c
     cond_test.c
     detached_thread_test.cpp
+    dl_iter_test.cpp
     dlopen_test.c
     event_loop_timer_test.cpp
     execve_waitpid_test.c

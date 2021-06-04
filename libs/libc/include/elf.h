@@ -7,6 +7,8 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#define ElfW(X) Elf64_##X
+
 typedef uint32_t Elf32_Addr;
 typedef uint32_t Elf32_Off;
 typedef uint16_t Elf32_Half;

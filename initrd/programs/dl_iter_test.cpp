@@ -1,0 +1,24 @@
+#include <link.h>
+#include <stddef.h>
+#include <stdio.h>
+
+int main() {
+    return dl_iterate_phdr(
+        [](auto* info, auto, auto) {
+            printf("Name `%s' (%d phdrs) [%#.16lX]\n", info->dlpi_name, info->dlpi_phnum, info->dlpi_addr);
+            for (int i = 0; i < info->dlpi_phnum; i++) {
+                auto* phdr = &info->dlpi_phdr[i];
+                const char* type = (phdr->p_type == PT_LOAD)      ? "PT_LOAD"
+                                   : (phdr->p_type == PT_DYNAMIC) ? "PT_DYNAMIC"
+                                   : (phdr->p_type == PT_INTERP)  ? "PT_INTERP"
+                                   : (phdr->p_type == PT_NOTE)    ? "PT_NOTE"
+                                   : (phdr->p_type == PT_INTERP)  ? "PT_INTERP"
+                                   : (phdr->p_type == PT_PHDR)    ? "PT_PHDR"
+                                   : (phdr->p_type == PT_TLS)     ? "PT_TLS"
+                                                                  : "UNKNOWN";
+                printf("  <%d>: [%#.16lX] (%12lu) %#X; %s\n", i, info->dlpi_addr + phdr->p_vaddr, phdr->p_memsz, phdr->p_flags, type);
+            }
+            return 0;
+        },
+        nullptr);
+}

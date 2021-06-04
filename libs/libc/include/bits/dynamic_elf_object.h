@@ -10,6 +10,8 @@
 extern "C" {
 #endif /* __cplusplus */
 
+struct dl_phdr_info;
+
 struct dynamic_elf_object;
 union dynamic_elf_object_dependency {
     size_t string_table_offset;
@@ -50,6 +52,8 @@ struct dynamic_elf_object {
     union dynamic_elf_object_dependency *dependencies;
     size_t dependencies_size;
     size_t dependencies_max;
+    void *phdr_start;
+    size_t phdr_count;
     size_t ref_count;
     bool global : 1;
     bool dependencies_were_loaded : 1;
@@ -78,6 +82,7 @@ struct symbol_lookup_result __loader_do_symbol_lookup(const char *s, const struc
 struct symbol_lookup_result __loader_do_addr_lookup(void *addr) __attribute__((weak));
 struct dynamic_elf_object *__loader_get_dynamic_object_head(void) __attribute__((weak));
 struct dynamic_elf_object *__loader_get_dynamic_object_tail(void) __attribute__((weak));
+int __loader_iter_phdr(int (*iter)(struct dl_phdr_info *info, size_t size, void *closure), void *closure) __attribute__((weak));
 
 #ifdef __cplusplus
 }

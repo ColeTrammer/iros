@@ -47,10 +47,14 @@ struct initial_process_info {
     unsigned long program_dynamic_size;
     unsigned long program_offset;
     unsigned long program_size;
+    void *program_phdr_start;
+    size_t program_phdr_count;
     unsigned long loader_dynamic_start;
     unsigned long loader_dynamic_size;
     unsigned long loader_offset;
     unsigned long loader_size;
+    void *loader_phdr_start;
+    size_t loader_phdr_count;
     int has_interpreter;
     int num_processors;
 };

@@ -135,6 +135,7 @@ else()
         grp/setgroups.c
         libgen/basename.c
         libgen/dirname.c
+        link/dl_iterate_phdr.c
         locale/locale.c
         net/if/if_freenameindex.c
         net/if/if_indextoname.c
