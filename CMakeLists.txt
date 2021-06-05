@@ -117,20 +117,21 @@ if (NOT ${NATIVE_BUILD})
     add_custom_target(
         frun
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR}
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target install
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target os_2.iso
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target os_2.img
         COMMAND ./qemu.sh
         USES_TERMINAL
-        DEPENDS os_2.iso
     )
 
     add_custom_target(
         bfrun
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target install
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target os_2.iso
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target os_2.img
         COMMAND ./bochs.sh
         USES_TERMINAL
-        DEPENDS os_2.iso
     )
 endif()
