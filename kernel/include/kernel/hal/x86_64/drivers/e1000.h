@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include <kernel/hal/x86_64/drivers/pci.h>
+#include <kernel/hal/hw_device.h>
 
 #define E1000_CTRL_REG     0x0000
 #define E1000_STATUS_REG   0x0008
@@ -106,6 +107,8 @@ struct e1000_transmit_desc {
 } __attribute__((packed));
 
 struct e1000_data {
+    struct hw_device hw_device;
+
     uintptr_t mem_io_phys_base;
     uint16_t io_port_base;
 

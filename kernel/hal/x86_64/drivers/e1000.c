@@ -194,6 +194,13 @@ void init_intel_e1000(struct pci_configuration *config) {
     assert(config->bar[1] & 1);    // Port base
 
     struct e1000_data *data = calloc(1, sizeof(struct e1000_data));
+    init_hw_device(&data->hw_device, "E1000 Network Card", root_hw_device(),
+                   hw_device_id_pci((struct pci_device_id) {
+                       .device_id = config->device_id,
+                       .vendor_id = config->vendor_id,
+                   }),
+                   NULL, NULL);
+    data->hw_device.status = HW_STATUS_ACTIVE;
     data->mem_io_phys_base = (uintptr_t) create_phys_addr_mapping(config->bar[0]);
     data->io_port_base = config->bar[1] & ~1;
 
