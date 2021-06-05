@@ -28,7 +28,6 @@ set(KERNEL_ARCH_SOURCES
     ${KERNEL_HALDIR}/drivers/io_apic.c
     ${KERNEL_HALDIR}/drivers/keyboard.c
     ${KERNEL_HALDIR}/drivers/mouse.c
-    ${KERNEL_HALDIR}/drivers/pci.c
     ${KERNEL_HALDIR}/drivers/pic.c
     ${KERNEL_HALDIR}/drivers/pit.c
     ${KERNEL_HALDIR}/drivers/ps2.c
@@ -37,6 +36,7 @@ set(KERNEL_ARCH_SOURCES
     ${KERNEL_HALDIR}/drivers/vga.c
     ${KERNEL_HALDIR}/drivers/vmware_back_door.c
     ${KERNEL_HALDIR}/acpi.c
+    ${KERNEL_HALDIR}/arch_pci.c
     ${KERNEL_HALDIR}/gdt.c
     ${KERNEL_HALDIR}/hal.c
     ${KERNEL_HALDIR}/idt.c

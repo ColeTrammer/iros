@@ -24,6 +24,7 @@ if (NOT ${NATIVE_BUILD})
         hal/isa_driver.c
         hal/mbr.c
         hal/partition.c
+        hal/pci.c
         hal/processor.c
         hal/ptmx.c
         irqs/irqs.c

@@ -4,15 +4,10 @@
 #include <stdint.h>
 
 #include <kernel/arch/x86_64/asm_utils.h>
+#include <kernel/hal/pci.h>
 
 #define PCI_CONFIG_ADDRESS 0xCF8
 #define PCI_CONFIG_DATA    0xCFC
-
-#define PCI_BUS_MAX  256
-#define PCI_SLOT_MAX 32
-#define PCI_FUNC_MAX 8
-
-#define PCI_MULTI_FUNCTION_FLAG 0x80
 
 #define PCI_CLASS_MASS_STORAGE      0x1
 #define PCI_SUBCLASS_IDE_CONTROLLER 0x1

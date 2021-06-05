@@ -4,6 +4,7 @@
 #include <kernel/hal/hw_device.h>
 #include <kernel/hal/irqs.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/pci.h>
 #include <kernel/hal/processor.h>
 #include <kernel/util/init.h>
 
@@ -77,6 +78,7 @@ bool kernel_use_graphics(void) {
 }
 
 void enumerate_devices(void) {
+    enumerate_pci_devices();
     enumerate_isa_devices();
     init_virtual_devices();
 }
