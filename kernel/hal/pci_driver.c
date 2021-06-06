@@ -7,6 +7,7 @@
 #define PCI_CLASS_BRIDGE 0x06
 
 #define PCI_BRIDGE_HOST       0x00
+#define PCI_BRIDGE_ISA        0x01
 #define PCI_BRIDGE_PCI_TO_PCI 0x04
 
 static struct pci_device *pci_default_create(struct hw_device *parent, struct pci_device_location location, struct pci_device_id id,
@@ -15,18 +16,30 @@ static struct pci_device *pci_default_create(struct hw_device *parent, struct pc
 
     if (info.class_code == PCI_CLASS_BRIDGE && info.subclass_code == PCI_BRIDGE_HOST) {
         init_hw_device(&device->hw_device, "PCI Host Bridge", parent, hw_device_id_pci(id), NULL, NULL);
+        device->hw_device.status = HW_STATUS_ACTIVE;
 
         debug_log("Discovered PCI Host Bridge: [ %#.4X, %#.4X ]\n", id.vendor_id, id.device_id);
         device->is_host_bridge = true;
+
         enumerate_pci_bus(&device->hw_device, location.func);
+        return device;
+    }
+
+    if (info.class_code == PCI_CLASS_BRIDGE && info.subclass_code == PCI_BRIDGE_ISA) {
+        init_hw_device(&device->hw_device, "PCI ISA Bridge", parent, hw_device_id_pci(id), NULL, NULL);
+        device->hw_device.status = HW_STATUS_ACTIVE;
+
+        debug_log("Discovered PCI ISA Bridge: [ %#.4X, %#.4X ]\n", id.vendor_id, id.device_id);
         return device;
     }
 
     if (info.class_code == PCI_CLASS_BRIDGE && info.subclass_code == PCI_BRIDGE_PCI_TO_PCI) {
         init_hw_device(&device->hw_device, "PCI to PCI Bridge", parent, hw_device_id_pci(id), NULL, NULL);
+        device->hw_device.status = HW_STATUS_ACTIVE;
 
         uint8_t secondary_bus = pci_config_read8(location, PCI_CONFIG_SECONDARY_BUS_NUMBER);
         debug_log("Discovered PCI to PCI Bridge: [ %#.4X, %#.4X, %u ]\n", id.vendor_id, id.device_id, secondary_bus);
+
         enumerate_pci_bus(&device->hw_device, secondary_bus);
         return device;
     }
