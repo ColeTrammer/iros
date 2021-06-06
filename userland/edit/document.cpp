@@ -320,7 +320,7 @@ void Document::move_cursor_down(MovementMode mode) {
 
 void Document::move_cursor_up(MovementMode mode) {
     int cursor_row = m_panel.cursor_row();
-    if (cursor_row == 0 && m_row_offset == 0) {
+    if (cursor_row + m_row_offset == 0) {
         move_cursor_to_line_start(mode);
         return;
     }
