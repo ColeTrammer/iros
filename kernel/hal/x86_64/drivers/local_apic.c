@@ -273,7 +273,7 @@ void init_local_apic(void) {
     volatile struct local_apic *local_apic = create_phys_addr_mapping(info->local_apic_address);
     local_apic->spurious_interrupt_vector_register = 0x1FF;
 
-    if (0 && !lapic_timer) {
+    if (!lapic_timer) {
         lapic_timer = create_hw_timer("APIC Timer", root_hw_device(), hw_device_id_isa(),
                                       HW_TIMER_SINGLE_SHOT | HW_TIMER_INTERVAL | HW_TIMER_PER_CPU | HW_TIMER_NEEDS_CALIBRATION, 0,
                                       &lapic_timer_ops, processor_count());
