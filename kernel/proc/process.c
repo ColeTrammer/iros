@@ -307,6 +307,11 @@ void proc_consume_wait_info(struct process *parent, struct process *child, enum 
 }
 
 void proc_set_process_state(struct process *process, enum process_state state, int info, bool terminated_bc_signal) {
+    // PID 1 has no parent, so its events should just be ignored.
+    if (process->pid == 1) {
+        return;
+    }
+
     struct process *parent = proc_get_parent(process);
     struct sigaction parent_signal_disposition = parent->sig_state[SIGCHLD];
 
