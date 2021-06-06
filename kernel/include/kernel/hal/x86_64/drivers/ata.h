@@ -37,6 +37,16 @@
 #define ATA_DEVICE_CONTROL_OFFSET 0
 #define ATA_DRIVE_ADDRESS_OFFSET  1
 
+#define ATA_BUS_MASTER_COMMAND_OFFSET 0
+#define ATA_BUS_MASTER_STATUS_OFFSET  2
+#define ATA_BUS_MASTER_PRD_OFFSET     4
+
+#define ATA_BUS_MASTER_COMMAND_START (1 << 0)
+#define ATA_BUS_MASTER_COMMAND_WRITE (1 << 3)
+
+#define ATA_BUS_MASTER_STATUS_DID_IRQ (1 << 2)
+#define ATA_BUS_MASTER_STATUS_ERROR   (1 << 1)
+
 #define ATA_DEVICE_CONTROL_DISABLE_IRQS (1 << 1)
 #define ATA_DEVICE_CONTROL_RESET_BIT    (1 << 2)
 
@@ -71,29 +81,10 @@
 
 #define ATA_PRD_END 0x8000U
 
-struct vm_region;
-
-struct ata_port_info {
-    uint16_t io_base;
-    uint16_t control_base;
-    uint16_t irq;
-    uint16_t bus_mastering_base;
-    bool is_slave : 1;
-    bool use_dma : 1;
-};
-
 struct ata_physical_range_descriptor {
     uint32_t phys_addr;
     uint16_t size;
     uint16_t flag;
 } __attribute__((packed));
-
-struct ata_device_data {
-    struct hw_device hw_device;
-    struct ata_port_info *port_info;
-    struct ata_physical_range_descriptor prdt[1];
-    struct vm_region *dma_region;
-    struct wait_queue wait_queue;
-};
 
 #endif /* _KERNEL_HAL_X86_64_DRIVERS_ATA_PIO_H */

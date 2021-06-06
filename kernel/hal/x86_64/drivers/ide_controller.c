@@ -30,8 +30,14 @@ static struct pci_device *ide_create(struct hw_device *parent, struct pci_device
     debug_log("Detected IDE Controller: [ %#.2X, %#.4X, %#.4X, %#.4X, %#.4X, %#.4X ]\n", info.programming_interface, channel0_io_base,
               channel0_command_base, channel1_io_base, channel1_command_base, ide_bus_master_base);
 
-    controller->channels[0] = ide_create_channel(controller, channel0_io_base, channel0_command_base, ide_bus_master_base);
-    controller->channels[1] = ide_create_channel(controller, channel1_io_base, channel1_command_base, ide_bus_master_base + 8);
+    if (!!(info.programming_interface & IDE_CONTROLLER_IF_BUS_MASTER_SUPPORTED)) {
+        pci_enable_bus_mastering(location);
+    }
+
+    controller->channels[0] = ide_create_channel(controller, channel0_io_base, channel0_command_base, ide_bus_master_base,
+                                                 EXTERNAL_IRQ_OFFSET + IDE_CONTROLLER_IRQ0);
+    controller->channels[1] = ide_create_channel(controller, channel1_io_base, channel1_command_base, ide_bus_master_base + 8,
+                                                 EXTERNAL_IRQ_OFFSET + IDE_CONTROLLER_IRQ1);
 
     return &controller->pci_device;
 }

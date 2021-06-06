@@ -18,6 +18,9 @@
 #define IDE_CONTROLLER_CHANNEL1_DEFAULT_IO_BASE      0x170
 #define IDE_CONTROLLER_CHANNEL1_DEFAULT_COMMAND_BASE 0x376
 
+#define IDE_CONTROLLER_IRQ0 14
+#define IDE_CONTROLLER_IRQ1 15
+
 struct ide_controller {
     struct pci_device pci_device;
     struct ide_channel *channels[2];

@@ -3,13 +3,17 @@
 
 #include <kernel/hal/block.h>
 #include <kernel/hal/hw_device.h>
+#include <kernel/hal/x86_64/drivers/ata.h>
 
 struct ide_channel;
+struct vm_region;
 
 struct ata_drive {
     struct hw_device hw_device;
     struct ide_channel *channel;
     struct block_device *block_device;
+    struct ata_physical_range_descriptor prdt[1];
+    struct vm_region *dma_region;
     bool supports_lba_48;
     int drive;
 };
