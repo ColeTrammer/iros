@@ -16,6 +16,8 @@ struct pci_driver {
     const char *name;
     struct pci_device_id *device_id_table;
     size_t device_id_count;
+    struct pci_device_info *device_info_table;
+    size_t device_info_count;
     struct pci_driver_ops *ops;
     struct list_node list;
     bool is_default;

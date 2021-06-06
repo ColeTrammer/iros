@@ -75,7 +75,7 @@ void pci_unregister_driver(struct pci_driver *driver) {
     list_remove(&driver->list);
 }
 
-struct pci_driver *pci_find_driver(struct pci_device_id id, struct pci_device_info) {
+struct pci_driver *pci_find_driver(struct pci_device_id id, struct pci_device_info info) {
     struct pci_driver *default_driver = NULL;
     list_for_each_entry(&pci_drivers, driver, struct pci_driver, list) {
         if (driver->is_default) {
@@ -84,6 +84,13 @@ struct pci_driver *pci_find_driver(struct pci_device_id id, struct pci_device_in
 
         for (size_t i = 0; i < driver->device_id_count; i++) {
             if (memcmp(&id, &driver->device_id_table[i], sizeof(id)) == 0) {
+                return driver;
+            }
+        }
+
+        for (size_t i = 0; i < driver->device_info_count; i++) {
+            struct pci_device_info target = driver->device_info_table[i];
+            if (info.class_code == target.class_code && info.subclass_code == target.subclass_code) {
                 return driver;
             }
         }
