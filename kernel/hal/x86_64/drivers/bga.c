@@ -6,6 +6,7 @@
 
 #include <kernel/fs/dev.h>
 #include <kernel/hal/output.h>
+#include <kernel/hal/pci_driver.h>
 #include <kernel/hal/x86_64/drivers/bga.h>
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/phys_vm_object.h>
@@ -24,7 +25,10 @@ static intptr_t bga_mmap(struct fs_device *device, void *addr, size_t len, int p
 
 static struct bga_data data = { 0 };
 
-struct fs_device_ops bga_ops = { .ioctl = bga_ioctl, .mmap = bga_mmap };
+struct fs_device_ops bga_ops = {
+    .ioctl = bga_ioctl,
+    .mmap = bga_mmap,
+};
 
 struct fs_device bga_device = {
     .name = "fb0",
@@ -95,9 +99,30 @@ static intptr_t bga_mmap(struct fs_device *device, void *addr, size_t len, int p
     return (intptr_t) region->start;
 }
 
-void init_bga(struct pci_configuration *config) {
-    debug_log("Detected bga device: [ %#.8X ]\n", config->bar[0] & ~0xF);
+static struct pci_device *bga_create(struct hw_device *parent, struct pci_device_location location, struct pci_device_id id,
+                                     struct pci_device_info info) {
+    data.frame_buffer = pci_config_read32(location, PCI_CONFIG_BAR(0)) & ~0xF;
+    debug_log("Detected bga device: [ %#.16lX ]\n", data.frame_buffer);
 
-    data.frame_buffer = config->bar[0] & ~0xF;
-    dev_register(&bga_device);
+    struct pci_device *device = create_pci_device(location, info);
+    init_hw_device(&device->hw_device, "BGA Graphics Card", parent, hw_device_id_pci(id), &bga_device, NULL);
+    device->hw_device.status = HW_STATUS_ACTIVE;
+    return device;
 }
+
+static struct pci_device_id bga_device_ids[] = {
+    { .vendor_id = 0x1234, .device_id = 0x1111 },
+};
+
+static struct pci_driver_ops bga_pci_ops = {
+    .create = bga_create,
+};
+
+static struct pci_driver bga_driver = {
+    .name = "BGA Driver",
+    .device_id_table = bga_device_ids,
+    .device_id_count = sizeof(bga_device_ids) / sizeof(bga_device_ids[0]),
+    .ops = &bga_pci_ops,
+};
+
+PCI_DRIVER_INIT(bga_driver);

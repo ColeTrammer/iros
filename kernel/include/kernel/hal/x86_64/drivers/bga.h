@@ -2,7 +2,6 @@
 #define _KERNEL_HAL_X86_64_DRIVERS_BGA_H 1
 
 #include <kernel/arch/x86_64/asm_utils.h>
-#include <kernel/hal/x86_64/drivers/pci.h>
 
 #define BGA_INDEX_ID          0
 #define BGA_INDEX_X_RES       1
@@ -33,7 +32,5 @@ static inline void bga_write(uint16_t index, uint16_t val) {
     outw(BGA_INDEX_PORT, index);
     outw(BGA_DATA_PORT, val);
 }
-
-void init_bga(struct pci_configuration *config);
 
 #endif /* _KERNEL_HAL_X86_64_DRIVERS_BGA_H */

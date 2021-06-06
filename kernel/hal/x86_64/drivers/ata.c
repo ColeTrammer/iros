@@ -16,7 +16,6 @@
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
 #include <kernel/hal/x86_64/drivers/ata.h>
-#include <kernel/hal/x86_64/drivers/pci.h>
 #include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/hal/x86_64/drivers/serial.h>
 #include <kernel/irqs/handlers.h>
@@ -415,14 +414,14 @@ static struct block_device_ops ata_ops = {
     .sync_page = block_generic_sync_page,
 };
 
-static struct block_device_ops ata_dma_ops = {
+__attribute__((used)) static struct block_device_ops ata_dma_ops = {
     .read = ata_read_sectors_dma,
     .write = ata_write_sectors_dma,
     .read_page = ata_read_page_dma,
     .sync_page = ata_sync_page_dma,
 };
 
-static bool ata_handle_irq(struct irq_context *context) {
+__attribute__((used)) static bool ata_handle_irq(struct irq_context *context) {
     struct ata_device_data *data = context->closure;
 
     uint8_t status = inb(data->port_info->io_base + ATA_STATUS_OFFSET);
@@ -445,20 +444,6 @@ static void ata_init_device(struct hw_device *parent, struct ata_port_info *info
     blksize_t block_size = ATA_SECTOR_SIZE;
     blkcnt_t block_count = identity[60] | (identity[61] << 16);
     struct block_device_ops *op = &ata_ops;
-
-    struct pci_configuration pci_config;
-    if (pci_config_for_class(PCI_CLASS_MASS_STORAGE, PCI_SUBCLASS_IDE_CONTROLLER, &pci_config)) {
-        pci_enable_bus_mastering(&pci_config);
-        uint32_t base = pci_config.bar[4] & 0xFFFC;
-        data->port_info->bus_mastering_base = base;
-        data->port_info->use_dma = true;
-        data->dma_region = vm_allocate_dma_region(PAGE_SIZE * DMA_BUFFER_PAGES);
-        op = &ata_dma_ops;
-
-        register_irq_handler(create_irq_handler(ata_handle_irq, IRQ_HANDLER_EXTERNAL, data), info->irq + EXTERNAL_IRQ_OFFSET);
-
-        debug_log("found pic for ata (so will use dma): [ %#.8X ]\n", base);
-    }
 
     struct block_device *block_device = create_block_device(block_count, block_size, block_device_info_none(BLOCK_TYPE_DISK), op, data);
     char name[16];

@@ -6,8 +6,8 @@
 #include <string.h>
 
 #include <kernel/hal/output.h>
+#include <kernel/hal/pci_driver.h>
 #include <kernel/hal/x86_64/drivers/e1000.h>
-#include <kernel/hal/x86_64/drivers/pic.h>
 #include <kernel/irqs/handlers.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/vm_allocator.h>
@@ -186,25 +186,25 @@ static struct irq_handler e1000_handler = {
     .flags = IRQ_HANDLER_EXTERNAL,
 };
 
-void init_intel_e1000(struct pci_configuration *config) {
-    debug_log("Found intel e1000 netword card: [ %u ]\n", config->interrupt_line);
-    pci_enable_bus_mastering(config);
+static struct pci_device *e1000_create(struct hw_device *parent, struct pci_device_location location, struct pci_device_id id,
+                                       struct pci_device_info info) {
+    uint8_t interrupt_line = pci_config_read8(location, PCI_CONFIG_INTERRUPT_LINE);
+    debug_log("Found intel e1000 netword card: [ %u ]\n", interrupt_line);
+    pci_enable_bus_mastering(location);
 
-    assert(!(config->bar[0] & 1)); // Mem base
-    assert(config->bar[1] & 1);    // Port base
+    uint32_t bar0 = pci_config_read32(location, PCI_CONFIG_BAR(0)); // Mem base
+    uint32_t bar1 = pci_config_read32(location, PCI_CONFIG_BAR(1)); // Port base
+    assert(!(bar0 & 1));
+    assert(bar1 & 1);
 
     struct e1000_data *data = calloc(1, sizeof(struct e1000_data));
-    init_hw_device(&data->hw_device, "E1000 Network Card", root_hw_device(),
-                   hw_device_id_pci((struct pci_device_id) {
-                       .device_id = config->device_id,
-                       .vendor_id = config->vendor_id,
-                   }),
-                   NULL, NULL);
-    data->hw_device.status = HW_STATUS_ACTIVE;
-    data->mem_io_phys_base = (uintptr_t) create_phys_addr_mapping(config->bar[0]);
-    data->io_port_base = config->bar[1] & ~1;
+    init_pci_device(&data->pci_device, location, info);
+    init_hw_device(&data->pci_device.hw_device, "E1000 Network Card", parent, hw_device_id_pci(id), NULL, NULL);
+    data->pci_device.hw_device.status = HW_STATUS_ACTIVE;
+    data->mem_io_phys_base = (uintptr_t) create_phys_addr_mapping(bar0);
+    data->io_port_base = bar1 & ~1;
 
-    debug_log("IO Bases: [ %#X, %#X ]\n", config->bar[0], data->io_port_base);
+    debug_log("IO Bases: [ %#X, %#X ]\n", bar0, data->io_port_base);
 
     assert(has_eeprom(data));
     debug_log("Has EEPROM: [ %s ]\n", "true");
@@ -224,7 +224,25 @@ void init_intel_e1000(struct pci_configuration *config) {
     write_command(data, E1000_CTRL_IMASK, (1 << 2) | (1 << 7));
     read_command(data, 0xC0);
 
-    register_irq_handler(&e1000_handler, config->interrupt_line + EXTERNAL_IRQ_OFFSET);
+    register_irq_handler(&e1000_handler, interrupt_line + EXTERNAL_IRQ_OFFSET);
 
     interface = net_create_network_interface("e1000", NETWORK_INTERFACE_ETHERNET, e1000_get_link_layer_address(data), &e1000_ops, data);
+    return &data->pci_device;
 }
+
+static struct pci_driver_ops e1000_pci_ops = {
+    .create = e1000_create,
+};
+
+static struct pci_device_id e1000_device_ids[] = {
+    { 0x8086, 0x100E },
+};
+
+static struct pci_driver e1000_driver = {
+    .name = "E1000 Network Card Driver",
+    .device_id_table = e1000_device_ids,
+    .device_id_count = sizeof(e1000_device_ids) / sizeof(e1000_device_ids[0]),
+    .ops = &e1000_pci_ops,
+};
+
+PCI_DRIVER_INIT(e1000_driver);

@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-#include <kernel/hal/x86_64/drivers/pci.h>
 #include <kernel/hal/hw_device.h>
 
 #define E1000_CTRL_REG     0x0000
@@ -107,7 +106,7 @@ struct e1000_transmit_desc {
 } __attribute__((packed));
 
 struct e1000_data {
-    struct hw_device hw_device;
+    struct pci_device pci_device;
 
     uintptr_t mem_io_phys_base;
     uint16_t io_port_base;
@@ -123,7 +122,5 @@ struct e1000_data {
     int current_rx;
     int current_tx;
 };
-
-void init_intel_e1000(struct pci_configuration *config);
 
 #endif /* _KERNEL_HAL_X86_64_DRIVERS_E1000_H */
