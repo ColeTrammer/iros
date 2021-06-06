@@ -4,18 +4,6 @@
 #include <kernel/hal/hw_device.h>
 #include <kernel/proc/wait_queue.h>
 
-#define ATA1_IO_BASE      0x1F0
-#define ATA1_CONTROL_BASE 0x3F6
-
-#define ATA2_IO_BASE      0x170
-#define ATA2_CONTROL_BASE 0x376
-
-#define ATA3_IO_BASE      0x1E8
-#define ATA3_CONTROL_BASE 0x3E6
-
-#define ATA4_IO_BASE      0x168
-#define ATA4_CONTROL_BASE 0x366
-
 #define ATA1_IRQ 14
 #define ATA2_IRQ 15
 #define ATA3_IRQ 14
@@ -54,6 +42,7 @@
 
 #define ATA_DRIVE_SELECT_BIT 4
 #define ATA_DRIVE_ALWAYS_1   0xA0
+#define ATA_DRIVE_LBA_MODE   (1 << 6)
 
 #define ATA_ERROR_AMNF  (1 << 0)
 #define ATA_ERROR_TKZNF (1 << 1)

@@ -22,9 +22,10 @@ set(KERNEL_ARCH_SOURCES
     ${KERNEL_ARCHDIR}/sched/__kernel_yield.S
     ${KERNEL_ARCHDIR}/sched/arch_task_sched.c
     ${KERNEL_HALDIR}/drivers/local_apic.c
-    ${KERNEL_HALDIR}/drivers/ata.c
+    ${KERNEL_HALDIR}/drivers/ata_drive.c
     ${KERNEL_HALDIR}/drivers/bga.c
     ${KERNEL_HALDIR}/drivers/e1000.c
+    ${KERNEL_HALDIR}/drivers/ide_channel.c
     ${KERNEL_HALDIR}/drivers/ide_controller.c
     ${KERNEL_HALDIR}/drivers/io_apic.c
     ${KERNEL_HALDIR}/drivers/keyboard.c
