@@ -25,6 +25,7 @@ set(KERNEL_ARCH_SOURCES
     ${KERNEL_HALDIR}/drivers/ata.c
     ${KERNEL_HALDIR}/drivers/bga.c
     ${KERNEL_HALDIR}/drivers/e1000.c
+    ${KERNEL_HALDIR}/drivers/ide_controller.c
     ${KERNEL_HALDIR}/drivers/io_apic.c
     ${KERNEL_HALDIR}/drivers/keyboard.c
     ${KERNEL_HALDIR}/drivers/mouse.c
