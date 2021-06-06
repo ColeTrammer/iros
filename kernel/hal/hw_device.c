@@ -104,9 +104,24 @@ void remove_hw_device(struct hw_device *device) {
     remove_hw_device_without_parent(device);
 }
 
+int show_hw_device_id(struct hw_device_id id, char *buffer, size_t buffer_length) {
+    const char *type = hw_type_to_string(id.type);
+    switch (id.type) {
+        case HW_TYPE_PS2:
+            return snprintf(buffer, buffer_length, "%s <%#.2X:%#.2X>", type, id.ps2_id.byte0, id.ps2_id.byte1);
+        case HW_TYPE_PCI:
+            return snprintf(buffer, buffer_length, "%s <%#.4X:%#.4X>", type, id.pci_id.vendor_id, id.pci_id.device_id);
+        case HW_TYPE_NONE:
+        case HW_TYPE_ISA:
+        default:
+            return snprintf(buffer, buffer_length, "%s", type);
+    }
+}
+
 int show_hw_device(struct hw_device *device, char *buffer, size_t buffer_length) {
-    return snprintf(buffer, buffer_length, "%s (%s) [%s]", device->name, hw_type_to_string(device->id.type),
-                    hw_status_to_string(device->status));
+    char buf[64];
+    show_hw_device_id(device->id, buf, sizeof(buf));
+    return snprintf(buffer, buffer_length, "%s (%s) [%s]", device->name, buf, hw_status_to_string(device->status));
 }
 
 const char *hw_type_to_string(enum hw_device_type type) {

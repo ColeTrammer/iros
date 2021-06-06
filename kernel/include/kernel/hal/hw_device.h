@@ -63,6 +63,7 @@ struct hw_device *create_hw_device(const char *name, struct hw_device *parent, s
 void init_hw_device(struct hw_device *device, const char *name, struct hw_device *parent, struct hw_device_id id,
                     struct fs_device *fs_device, void (*destructor)(struct hw_device *device));
 void drop_hw_device(struct hw_device *device);
+int show_hw_device_id(struct hw_device_id id, char *buffer, size_t buffer_length);
 int show_hw_device(struct hw_device *device, char *buffer, size_t buffer_length);
 void remove_hw_device(struct hw_device *device);
 struct hw_device *bump_hw_device(struct hw_device *device);
