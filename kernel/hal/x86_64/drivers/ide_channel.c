@@ -62,6 +62,7 @@ static bool ide_channel_irq(struct irq_context *context) {
     if (!!(ata_status & ATA_STATUS_ERR) || !!(ata_status & ATA_STATUS_DF) || !!(status & ATA_BUS_MASTER_STATUS_ERROR)) {
         channel->error_from_irq = true;
     }
+    ata_clear_bus_master_status(channel->location);
     wake_up_all(&channel->wait_queue);
     return true;
 }
