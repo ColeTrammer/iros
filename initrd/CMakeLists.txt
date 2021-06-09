@@ -15,6 +15,7 @@ set(INITRD_PROGRAMS
     fread_test.c
     fwrite.c
     getcpuclockid_test.c
+    getopt_long_test.c
     getopt_test.c
     getrusage_test.c
     glob_test.c
