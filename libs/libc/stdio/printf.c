@@ -299,6 +299,10 @@ static int printf_internal(bool (*print)(void *obj, const char *s, size_t len), 
             }
 #endif /* !defined(__is_libk) && !defined(__is_loader) */
 
+            if (!str) {
+                str = "(null)";
+            }
+
             format++;
             size_t len = strlen(str);
             if (len > (unsigned int) width)
