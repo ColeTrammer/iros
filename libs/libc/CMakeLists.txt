@@ -122,6 +122,10 @@ else()
         fcntl/open.c
         fcntl/openat.c
         ftw/ftw.c
+        getopt/__do_getopt.c
+        getopt/getopt.c
+        getopt/getopt_long.c
+        getopt/getopt_long_only.c
         grp/endgrent.c
         grp/getgrent.c
         grp/getgrent_r.c
@@ -370,7 +374,6 @@ else()
         unistd/gethostname.c
         unistd/getlogin_r.c
         unistd/getlogin.c
-        unistd/getopt.c
         unistd/getpagesize.c
         unistd/getpgid.c
         unistd/getpgrp.c
