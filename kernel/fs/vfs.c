@@ -1672,7 +1672,7 @@ int fs_mount(const char *source, const char *target, const char *type, unsigned 
         }
     }
 
-    return fs_do_mount(device, target, type, flags, data);
+    return fs_do_mount(dev_fs_device_to_block_device(device), target, type, flags, data);
 }
 
 int fs_umount(const char *) {
@@ -1683,7 +1683,7 @@ int fs_umount(const char *) {
     return -ENOSYS;
 }
 
-int fs_do_mount(struct fs_device *device, const char *target, const char *type, unsigned long, const void *) {
+int fs_do_mount(struct block_device *device, const char *target, const char *type, unsigned long flags, const void *data) {
     debug_log("Mounting FS: [ %s, %s ]\n", type, target);
 
     struct file_system *file_system = fs_file_system_from_name(type);
@@ -1710,9 +1710,9 @@ int fs_do_mount(struct fs_device *device, const char *target, const char *type, 
         goto finish_mount;
     }
 
-    struct super_block *super_block = file_system->mount(file_system, device);
-    if (!super_block) {
-        ret = -EINVAL;
+    struct super_block *super_block;
+    ret = file_system->mount(device, flags, data, &super_block);
+    if (ret < 0) {
         goto finish_mount;
     }
 
@@ -2349,10 +2349,11 @@ struct file_system *fs_file_system_from_name(const char *name) {
     return NULL;
 }
 
-static int try_mount_root(struct file_system *file_system, struct fs_device *device) {
-    struct super_block *super_block = file_system->mount(file_system, device);
-    if (!super_block) {
-        return -EIO;
+static int try_mount_root(struct file_system *file_system, struct block_device *device) {
+    struct super_block *super_block;
+    int ret = file_system->mount(device, 0, NULL, &super_block);
+    if (ret < 0) {
+        return ret;
     }
 
     struct mount *mount = calloc(1, sizeof(*mount));
@@ -2429,7 +2430,7 @@ int fs_mount_root(struct fs_root_desc desc) {
     }
 
     if (fs) {
-        int ret = try_mount_root(fs, device->device);
+        int ret = try_mount_root(fs, device);
         if (ret < 0) {
             debug_log("Fatal Error: Cannot mount root file system: [ %s ]\n", strerror(-ret));
         }
@@ -2439,7 +2440,7 @@ int fs_mount_root(struct fs_root_desc desc) {
 
     fs_for_each_file_system(iter) {
         if (fs_id_matches_file_system(device->info.filesystem_type_id, iter)) {
-            int ret = try_mount_root(iter, device->device);
+            int ret = try_mount_root(iter, device);
             if (ret < 0) {
                 debug_log("Fatal Error: Cannot mount root file system: [ %s ]\n", strerror(-ret));
             }

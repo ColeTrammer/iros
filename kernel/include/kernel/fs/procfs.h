@@ -4,11 +4,13 @@
 #include <stdbool.h>
 #include <sys/types.h>
 
+struct block_device;
 struct fs_device;
 struct file;
 struct file_system;
 struct inode;
 struct process;
+struct super_block;
 struct tnode;
 
 struct procfs_buffer {
@@ -29,7 +31,7 @@ struct inode *procfs_lookup(struct inode *inode, const char *name);
 struct file *procfs_open(struct inode *inode, int flags, int *error);
 int procfs_read_all(struct inode *inode, void *buffer);
 ssize_t procfs_read(struct file *file, off_t offset, void *buffer, size_t len);
-struct super_block *procfs_mount(struct file_system *fs, struct fs_device *device);
+int procfs_mount(struct block_device *device, unsigned long flags, const void *data, struct super_block **super_block_p);
 
 void procfs_register_process(struct process *process);
 void procfs_unregister_process(struct process *process);

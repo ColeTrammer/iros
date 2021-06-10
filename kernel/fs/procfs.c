@@ -754,15 +754,12 @@ PROCFS_ENSURE_ALIGNMENT static void procfs_create_base_directory_structure(struc
     }
 }
 
-struct super_block *procfs_mount(struct file_system *current_fs, struct fs_device *device) {
-    assert(current_fs != NULL);
+int procfs_mount(struct block_device *device, unsigned long, const void *, struct super_block **super_block_p) {
     assert(!device);
 
-    super_block.fsid = root->fsid;
-    super_block.op = NULL;
-    super_block.root = root;
-    super_block.block_size = PAGE_SIZE;
-    return &super_block;
+    *super_block_p = &super_block;
+
+    return 0;
 }
 
 static void init_procfs() {
@@ -770,6 +767,11 @@ static void init_procfs() {
     root->dirent_cache = fs_create_dirent_cache();
     struct procfs_data *root_data = root->private_data;
     PROCFS_MAKE_DYNAMIC(root_data);
+
+    super_block.fsid = root->fsid;
+    super_block.op = NULL;
+    super_block.root = root;
+    super_block.block_size = PAGE_SIZE;
 
     register_fs(&fs);
 }

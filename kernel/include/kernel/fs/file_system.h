@@ -7,13 +7,12 @@
 #include <kernel/util/list.h>
 
 struct block_device;
-struct fs_device;
 
 struct file_system {
     char name[8];
     unsigned int flags;
-    struct super_block *(*mount)(struct file_system *self, struct fs_device *block_device);
-    int (*determine_fsid)(struct file_system *self, struct block_device *block_device, struct block_device_id *result);
+    int (*mount)(struct block_device *block_device, unsigned long flags, const void *data, struct super_block **super_block);
+    int (*determine_fsid)(struct block_device *block_device, struct block_device_id *result);
     struct list_node list;
     struct block_device_id *id_table;
     size_t id_count;

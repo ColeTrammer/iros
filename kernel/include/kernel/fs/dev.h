@@ -62,8 +62,12 @@ int dev_ioctl(struct file *file, unsigned long request, void *argp);
 intptr_t dev_mmap(void *addr, size_t len, int prot, int flags, struct file *file, off_t offset);
 blksize_t dev_block_size(struct fs_device *device);
 blkcnt_t dev_block_count(struct fs_device *device);
-struct super_block *dev_mount(struct file_system *fs, struct fs_device *device);
+int dev_mount(struct block_device *device, unsigned long flags, const void *data, struct super_block **super_block);
 
 #define dev_poll_wait(dev, flags, timeout) fs_poll_wait(&(dev)->file_state, &(dev)->lock, flags, timeout)
+
+static inline struct block_device *dev_fs_device_to_block_device(struct fs_device *device) {
+    return device->private;
+}
 
 #endif /* _KERNEL_FS_DEV_H */

@@ -105,11 +105,14 @@ int initrd_read_all(struct inode *inode, void *buffer) {
     return 0;
 }
 
-struct super_block *initrd_mount(struct file_system *current_fs, struct fs_device *device) {
-    (void) current_fs;
+int initrd_mount(struct block_device *, unsigned long, const void *, struct super_block **super_block_p) {
+    *super_block_p = &super_block;
+    return 0;
+}
+
+static void init_initrd() {
     struct vm_region *initrd = find_vm_region(VM_INITRD);
     assert(initrd != NULL);
-    assert(!device);
 
     initrd_start = initrd->start;
     num_files = *((int64_t *) initrd_start);
@@ -130,10 +133,6 @@ struct super_block *initrd_mount(struct file_system *current_fs, struct fs_devic
         fs_put_dirent_cache(root->dirent_cache, inode, entry[i].name, strlen(entry[i].name));
     }
 
-    return &super_block;
-}
-
-static void init_initrd() {
     register_fs(&fs);
 }
 INIT_FUNCTION(init_initrd, fs);

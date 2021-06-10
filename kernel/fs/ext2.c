@@ -1773,9 +1773,7 @@ int ext2_rename(struct tnode *tnode, struct tnode *new_parent, const char *new_n
     return __ext2_unlink(tnode, false);
 }
 
-int ext2_determine_fsid(struct file_system *fs, struct block_device *block_device, struct block_device_id *result) {
-    (void) fs;
-
+int ext2_determine_fsid(struct block_device *block_device, struct block_device_id *result) {
     mutex_lock(&block_device->device->lock);
     struct phys_page *page = block_device->op->read_page(block_device, 0);
     mutex_unlock(&block_device->device->lock);
@@ -1790,20 +1788,21 @@ int ext2_determine_fsid(struct file_system *fs, struct block_device *block_devic
     return 0;
 }
 
-struct super_block *ext2_mount(struct file_system *current_fs, struct fs_device *device) {
-    (void) current_fs;
-    assert(device);
+int ext2_mount(struct block_device *device, unsigned long, const void *, struct super_block **super_block_p) {
+    if (!device) {
+        return -ENODEV;
+    }
 
     struct inode *root = calloc(1, sizeof(struct inode));
     struct super_block *super_block = calloc(1, sizeof(struct super_block));
     struct ext2_sb_data *data = calloc(1, sizeof(struct ext2_sb_data));
 
-    super_block->fsid = device->device_number;
+    super_block->fsid = device->device->device_number;
     super_block->op = &s_op;
     super_block->root = root;
     init_mutex(&super_block->super_block_lock);
     super_block->block_size = EXT2_SUPER_BLOCK_SIZE; // Set this as defulat for first read
-    super_block->device = device;
+    super_block->device = device->device;
     super_block->private_data = data;
     super_block->flags = 0;
     data->block_group_map = hash_create_hash_map(block_group_hash, block_group_equals, block_group_key);
@@ -1812,7 +1811,7 @@ struct super_block *ext2_mount(struct file_system *current_fs, struct fs_device 
     if (__ext2_read_blocks(super_block, raw_super_block, EXT2_SUPER_BLOCK_OFFSET / EXT2_SUPER_BLOCK_SIZE, 1) != 1) {
         debug_log("Ext2 Read Error: [ Super Block ]\n");
         ext2_free_blocks(raw_super_block);
-        return NULL;
+        return -EINVAL;
     }
 
     data->sb = raw_super_block;
@@ -1840,7 +1839,7 @@ struct super_block *ext2_mount(struct file_system *current_fs, struct fs_device 
         debug_log("Ext2 Read Error: [ Block Group Descriptor Table ]\n");
         ext2_free_blocks(raw_super_block);
         ext2_free_blocks(raw_block_group_descriptor_table);
-        return NULL;
+        return -EINVAL;
     }
 
     data->blk_desc_table = raw_block_group_descriptor_table;
@@ -1858,7 +1857,9 @@ struct super_block *ext2_mount(struct file_system *current_fs, struct fs_device 
     init_file_state(&root->file_state, true, true);
 
     ext2_sync_raw_super_block_with_virtual_super_block(super_block);
-    return super_block;
+
+    *super_block_p = super_block;
+    return 0;
 }
 
 static void init_ext2() {

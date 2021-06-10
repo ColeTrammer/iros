@@ -57,7 +57,7 @@ struct block_device *create_and_register_partition_device(struct block_device *r
     mutex_unlock(&root_device->device->lock);
     fs_for_each_file_system(fs) {
         if (fs_id_matches_file_system(info.filesystem_type_id, fs)) {
-            if (!fs->determine_fsid(fs, block_device, &block_device->info.filesystem_id)) {
+            if (!fs->determine_fsid(block_device, &block_device->info.filesystem_id)) {
                 goto done;
             }
         }

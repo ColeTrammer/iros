@@ -334,8 +334,7 @@ void tmp_on_inode_destruction(struct inode *inode) {
     }
 }
 
-struct super_block *tmp_mount(struct file_system *current_fs, struct fs_device *device) {
-    assert(current_fs != NULL);
+int tmp_mount(struct block_device *device, unsigned long, const void *, struct super_block **super_block) {
     assert(!device);
 
     struct super_block *sb = calloc(1, sizeof(struct super_block));
@@ -348,7 +347,9 @@ struct super_block *tmp_mount(struct file_system *current_fs, struct fs_device *
     struct inode *root = fs_create_inode(sb, tmp_get_next_index(), 0, 0, S_IFDIR | 0777, 0, &tmp_dir_i_op, NULL);
 
     sb->root = root;
-    return sb;
+
+    *super_block = sb;
+    return 0;
 }
 
 static void init_tmpfs() {

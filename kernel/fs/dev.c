@@ -206,10 +206,9 @@ blkcnt_t dev_block_count(struct fs_device *device) {
     return device->ops->block_count(device);
 }
 
-struct super_block *dev_mount(struct file_system *fs, struct fs_device *device) {
-    (void) fs;
-    (void) device;
-    return devfs_super_block;
+int dev_mount(struct block_device *, unsigned long, const void *, struct super_block **super_block) {
+    *super_block = devfs_super_block;
+    return 0;
 }
 
 static struct file_system devfs = {
@@ -219,7 +218,7 @@ static struct file_system devfs = {
 
 static void init_dev() {
     device_map = hash_create_hash_map(device_hash, device_equals, device_key);
-    devfs_super_block = tmp_mount(&devfs, NULL);
+    assert(tmp_mount(NULL, 0, NULL, &devfs_super_block) == 0);
     register_fs(&devfs);
 }
 INIT_FUNCTION(init_dev, fs);
