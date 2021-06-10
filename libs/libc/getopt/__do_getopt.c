@@ -193,7 +193,7 @@ int __do_getopt(int argc, char *const argv[], const char *optstring, const struc
         }
 
         int next_arg = -1;
-        for (int i = optind + 1; i < argc - 1; i++) {
+        for (int i = optind + 1; i < argc; i++) {
             if (is_short_opt(argv[i], mode) || (is_long_opt(argv[i], mode))) {
                 next_arg = i;
                 break;
