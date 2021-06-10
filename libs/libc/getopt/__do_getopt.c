@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <bits/do_getopt.h>
 #include <getopt.h>
 #include <stdbool.h>
@@ -191,12 +192,20 @@ int __do_getopt(int argc, char *const argv[], const char *optstring, const struc
             return -1;
         }
 
-        char *temp = argv[optind];
-        for (int i = optind; i < argc - 1; i++) {
-            ((char **) argv)[i] = argv[i + 1];
+        int next_arg = -1;
+        for (int i = optind + 1; i < argc - 1; i++) {
+            if (is_short_opt(argv[i], mode) || (is_long_opt(argv[i], mode))) {
+                next_arg = i;
+                break;
+            }
         }
 
-        ((char **) argv)[argc - 1] = temp;
+        assert(next_arg != -1);
+        char *temp = ((char **) argv)[next_arg];
+        for (int i = next_arg; i > optind; i--) {
+            ((char **) argv)[i] = ((char **) argv)[i - 1];
+        }
+        ((char **) argv)[optind] = temp;
     }
 
     return -1;
