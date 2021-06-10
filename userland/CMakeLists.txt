@@ -45,6 +45,7 @@ set(TARGETS
     mkdir
     mkfifo
     mknod
+    mount
     mv
     paste
     ping
