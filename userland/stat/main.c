@@ -13,6 +13,8 @@ const char *type_to_string(mode_t mode) {
         return "fifo special file";
     } else if (S_ISLNK(mode)) {
         return "symbolic link";
+    } else if (S_ISDIR(mode)) {
+        return "directory";
     } else if (S_ISREG(mode)) {
         return "regular file";
     } else {
