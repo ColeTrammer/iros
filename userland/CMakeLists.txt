@@ -65,6 +65,7 @@ set(TARGETS
     touch
     true
     tty
+    umount
     uname
     uniq
     which
