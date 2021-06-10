@@ -2027,6 +2027,18 @@ SYS_CALL(setitimer) {
     SYS_RETURN(time_setitimer(which, nvalp, ovalp));
 }
 
+SYS_CALL(mount) {
+    SYS_BEGIN();
+
+    SYS_RETURN(-ENOSYS);
+}
+
+SYS_CALL(umount) {
+    SYS_BEGIN();
+
+    SYS_RETURN(-ENOSYS);
+}
+
 SYS_CALL(invalid_system_call) {
     SYS_BEGIN();
     SYS_RETURN(-ENOSYS);

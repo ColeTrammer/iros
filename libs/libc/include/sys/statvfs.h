@@ -4,6 +4,7 @@
 #include <bits/fsblkcnt_t.h>
 #include <bits/fsfilcnt_t.h>
 
+// NOTE: these should have the same values as the flags in sys/mount.h
 #define ST_RDONLY 1
 #define ST_NOSUID 2
 

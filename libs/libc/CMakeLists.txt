@@ -280,6 +280,8 @@ else()
         sys/ioctl/ioctl.c
         sys/mman/mlock.c
         sys/mman/mman.c
+        sys/mount/mount.c
+        sys/mount/umount.c
         sys/os_2/create_task.c
         sys/os_2/disable_profiling.c
         sys/os_2/enable_profiling.c
