@@ -2030,13 +2030,21 @@ SYS_CALL(setitimer) {
 SYS_CALL(mount) {
     SYS_BEGIN();
 
-    SYS_RETURN(-ENOSYS);
+    SYS_PARAM1_VALIDATE(const char *, source, validate_path, -1);
+    SYS_PARAM2_VALIDATE(const char *, target, validate_path, -1);
+    SYS_PARAM3_VALIDATE(const char *, type, validate_string, -1);
+    SYS_PARAM4(unsigned long, flags);
+    SYS_PARAM5(const void *, data);
+
+    SYS_RETURN(fs_mount(source, target, type, flags, data));
 }
 
 SYS_CALL(umount) {
     SYS_BEGIN();
 
-    SYS_RETURN(-ENOSYS);
+    SYS_PARAM1_VALIDATE(const char *, target, validate_path, -1);
+
+    SYS_RETURN(fs_umount(target));
 }
 
 SYS_CALL(invalid_system_call) {

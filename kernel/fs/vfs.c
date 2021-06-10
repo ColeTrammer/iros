@@ -8,6 +8,7 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <sys/mount.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
@@ -1692,13 +1693,46 @@ struct list_node *fs_file_system_list(void) {
     return &file_systems;
 }
 
-int fs_mount(struct fs_device *device, const char *path, const char *type) {
-    debug_log("Mounting FS: [ %s, %s ]\n", type, path);
+int fs_mount(const char *source, const char *target, const char *type, unsigned long flags, const void *data) {
+    if (get_current_process()->euid != 0) {
+        return -EPERM;
+    }
+
+    struct fs_device *device = NULL;
+    if (strcmp(source, "") != 0) {
+        struct tnode *tnode;
+        int ret = iname(source, 0, &tnode);
+        if (ret < 0) {
+            return ret;
+        }
+
+        dev_t device_id = tnode->inode->device_id;
+        drop_tnode(tnode);
+
+        device = dev_get_device(device_id);
+        if (!device || !(device->mode & S_IFBLK)) {
+            return -ENXIO;
+        }
+    }
+
+    return fs_do_mount(device, target, type, flags, data);
+}
+
+int fs_umount(const char *) {
+    if (get_current_process()->euid != 0) {
+        return -EPERM;
+    }
+
+    return -ENOSYS;
+}
+
+int fs_do_mount(struct fs_device *device, const char *target, const char *type, unsigned long, const void *) {
+    debug_log("Mounting FS: [ %s, %s ]\n", type, target);
 
     fs_for_each_file_system(file_system) {
         if (strcmp(file_system->name, type) == 0) {
             struct mount *mount = malloc(sizeof(struct mount));
-            if (strcmp(path, "/") == 0) {
+            if (strcmp(target, "/") == 0) {
                 mount->name = "/";
                 mount->next = NULL;
                 mount->device = device;
@@ -1727,8 +1761,8 @@ int fs_mount(struct fs_device *device, const char *path, const char *type) {
                 return 0;
             }
 
-            char *path_copy = malloc(strlen(path) + 1);
-            strcpy(path_copy, path);
+            char *path_copy = malloc(strlen(target) + 1);
+            strcpy(path_copy, target);
 
             /* Needs to find parent of the path, so we can mount the fs on it */
             if (path_copy[strlen(path_copy) - 1] == '/') {
@@ -2427,7 +2461,7 @@ struct file_system *fs_file_system_from_name(const char *name) {
 }
 
 int fs_mount_initrd(void) {
-    int ret = fs_mount(NULL, "/", "initrd");
+    int ret = fs_do_mount(NULL, "/", "initrd", MS_RDONLY, NULL);
     if (ret) {
         debug_log("Fatal Error: Cannot mount initrd: [ %s ]\n", strerror(-ret));
     }
@@ -2478,7 +2512,7 @@ int fs_mount_root(struct fs_root_desc desc) {
     }
 
     if (fs) {
-        int ret = fs_mount(device->device, "/", fs->name);
+        int ret = fs_do_mount(device->device, "/", fs->name, 0, NULL);
         if (ret) {
             debug_log("Fatal Error: Cannot mount root file system: [ %s ]\n", strerror(-ret));
         }
@@ -2487,7 +2521,7 @@ int fs_mount_root(struct fs_root_desc desc) {
 
     fs_for_each_file_system(iter) {
         if (fs_id_matches_file_system(device->info.filesystem_type_id, iter)) {
-            int ret = fs_mount(device->device, "/", iter->name);
+            int ret = fs_do_mount(device->device, "/", iter->name, 0, NULL);
             if (!ret) {
                 return 0;
             }

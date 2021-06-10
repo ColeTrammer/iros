@@ -89,7 +89,9 @@ int fs_link(const char *oldpath, const char *newpath);
 int fs_utimensat(struct tnode *base, const char *path, const struct timespec *times, int flags);
 int fs_fstatvfs(struct file *file, struct statvfs *buf);
 int fs_statvfs(const char *path, struct statvfs *buf);
-int fs_mount(struct fs_device *device, const char *path, const char *type);
+int fs_do_mount(struct fs_device *device, const char *target, const char *type, unsigned long flags, const void *data);
+int fs_mount(const char *source, const char *target, const char *type, unsigned long flags, const void *data);
+int fs_umount(const char *target);
 struct list_node *fs_file_system_list(void);
 
 intptr_t fs_default_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset);
