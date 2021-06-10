@@ -1,19 +1,16 @@
 #ifndef _KERNEL_FS_MOUNT_H
 #define _KERNEL_FS_MOUNT_H 1
 
-#include <sys/types.h>
+#include <kernel/util/list.h>
 
-#include <kernel/fs/file_system.h>
-#include <kernel/fs/super_block.h>
-
-struct fs_device;
+struct file_system;
+struct super_block;
 
 struct mount {
-    struct fs_device *device;
-    const char *name;
+    char *name;
     struct file_system *fs;
     struct super_block *super_block;
-    struct mount *next;
+    struct list_node list;
 };
 
 #endif /* _KERNEL_FS_MOUNT_H */

@@ -79,8 +79,7 @@ struct inode {
     /* Unique inode identifier (for the filesystem) */
     ino_t index;
 
-    /* Listens file systems mounted directly below this inode */
-    struct mount *mounts;
+    struct mount *mount;
 
     struct file_state file_state;
 

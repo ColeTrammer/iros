@@ -227,6 +227,18 @@ struct tnode *fs_root(void) {
     return t_root;
 }
 
+bool fs_is_mount_point(struct inode *inode) {
+    return !!inode->mount;
+}
+
+static struct inode *maybe_cross_mount_point(struct inode *inode) {
+    if (!inode->mount) {
+        return inode;
+    }
+
+    return inode->mount->super_block->root;
+}
+
 static int do_iname(const char *_path, int flags, struct tnode *t_root, struct tnode *t_parent, struct tnode **result, int *depth) {
     if (*depth >= 25) {
         return -ELOOP;
@@ -331,21 +343,6 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
             *last_slash = '\0';
         }
 
-        /* Checks mounts first so that we don't do uneccessary disk IO */
-        struct mount *mount = parent->inode->mounts;
-        while (mount != NULL) {
-            assert(mount->name);
-            assert(mount->super_block);
-            assert(mount->super_block->root);
-
-            if (strcmp(mount->name, path + 1) == 0) {
-                parent = create_tnode(mount->name, parent, mount->super_block->root);
-                goto vfs_loop_end;
-            }
-
-            mount = mount->next;
-        }
-
         /* Check using lookup */
         assert(parent->inode);
         assert(parent->inode->i_op);
@@ -360,6 +357,8 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
             parent = NULL;
             break;
         }
+
+        inode = maybe_cross_mount_point(inode);
         parent = create_tnode(path + 1, parent, inode);
 
     vfs_loop_end:
@@ -680,25 +679,6 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
     struct cached_dirent *tnode = fs_lookup_in_cache_with_index(inode->dirent_cache, file->position - 2);
 
     if (!tnode) {
-        /* Traverse mount points as well */
-        size_t num = fs_get_dirent_cache_size(inode->dirent_cache) + 2;
-        size_t mount_index = file->position - num;
-        size_t i = 0;
-        struct mount *mount = inode->mounts;
-        while (mount != NULL) {
-            if (i++ == mount_index) {
-                file->position++;
-
-                entry->d_ino = mount->super_block->root->index;
-                strcpy(entry->d_name, mount->name);
-
-                mutex_unlock(&inode->lock);
-                return (ssize_t) len;
-            }
-
-            mount = mount->next;
-        }
-
         mutex_unlock(&inode->lock);
         return 0;
     }
@@ -714,6 +694,8 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
 }
 
 ssize_t fs_read(struct file *file, void *buffer, size_t len) {
+    assert(file);
+    assert(file->f_op);
     if (!(file->abilities & FS_FILE_CAN_READ)) {
         return -EBADF;
     }
@@ -722,8 +704,6 @@ ssize_t fs_read(struct file *file, void *buffer, size_t len) {
         return 0;
     }
 
-    assert(file);
-    assert(file->f_op);
     if (file->f_op->read) {
         if (file->abilities & FS_FILE_CANT_SEEK) {
             return file->f_op->read(file, 0, buffer, len);
@@ -1064,18 +1044,6 @@ struct tnode *fs_mkdir(const char *_path, mode_t mode, int *error) {
         return NULL;
     }
 
-    struct mount *mount = tparent->inode->mounts;
-    while (mount != NULL) {
-        if (strcmp(mount->name, last_slash + 1) == 0) {
-            free(path);
-            drop_tnode(tparent);
-            *error = -EEXIST;
-            return NULL;
-        }
-
-        mount = mount->next;
-    }
-
     tparent->inode->i_op->lookup(tparent->inode, NULL);
     if (fs_lookup_in_cache(tparent->inode->dirent_cache, last_slash + 1) != NULL) {
         free(path);
@@ -1156,18 +1124,6 @@ struct tnode *fs_mknod(const char *_path, mode_t mode, dev_t device, int *error)
         free(path);
         *error = -ENOTDIR;
         return NULL;
-    }
-
-    struct mount *mount = tparent->inode->mounts;
-    while (mount != NULL) {
-        if (strcmp(mount->name, last_slash + 1) == 0) {
-            free(path);
-            drop_tnode(tparent);
-            *error = -EEXIST;
-            return NULL;
-        }
-
-        mount = mount->next;
     }
 
     tparent->inode->i_op->lookup(tparent->inode, NULL);
@@ -1277,10 +1233,6 @@ int fs_unlink(const char *path, bool ignore_permission_checks) {
 static bool dir_empty(struct inode *inode) {
     assert(inode);
     assert(inode->flags & FS_DIR);
-    if (inode->mounts != NULL) {
-        /* Should send EBUSY not ENOTEMPTY */
-        return false;
-    }
 
     inode->i_op->lookup(inode, NULL);
     return fs_get_dirent_cache_size(inode->dirent_cache) == 0;
@@ -1304,6 +1256,11 @@ int fs_rmdir(const char *path) {
     if (parent && !fs_can_write_inode(parent)) {
         drop_tnode(tnode);
         return -EACCES;
+    }
+
+    if (fs_is_mount_point(tnode->inode)) {
+        drop_tnode(tnode);
+        return -EBUSY;
     }
 
     if (!dir_empty(tnode->inode)) {
@@ -1729,93 +1686,47 @@ int fs_umount(const char *) {
 int fs_do_mount(struct fs_device *device, const char *target, const char *type, unsigned long, const void *) {
     debug_log("Mounting FS: [ %s, %s ]\n", type, target);
 
-    fs_for_each_file_system(file_system) {
-        if (strcmp(file_system->name, type) == 0) {
-            struct mount *mount = malloc(sizeof(struct mount));
-            if (strcmp(target, "/") == 0) {
-                mount->name = "/";
-                mount->next = NULL;
-                mount->device = device;
-                mount->fs = file_system;
-                mount->super_block = file_system->mount(file_system, mount->device);
-                assert(mount->super_block);
-
-                /* For now, when mounting as / when there is already something mounted,
-                   we will just move things around instead of unmounting what was
-                   already there */
-                if (root != NULL) {
-                    mount->super_block->root->mounts = root;
-                    root->next = root->super_block->root->mounts;
-                    root->super_block->root->mounts = NULL;
-
-                    root->name = root->fs->name;
-                }
-
-                root = mount;
-
-                if (t_root) {
-                    drop_tnode(t_root);
-                }
-                t_root = create_root_tnode(mount->super_block->root);
-
-                return 0;
-            }
-
-            char *path_copy = malloc(strlen(target) + 1);
-            strcpy(path_copy, target);
-
-            /* Needs to find parent of the path, so we can mount the fs on it */
-            if (path_copy[strlen(path_copy) - 1] == '/') {
-                path_copy[strlen(path_copy) - 1] = '\0';
-            }
-
-            char *parent_end = strrchr(path_copy, '/');
-            *parent_end = '\0';
-
-            struct tnode *mount_on;
-
-            /* Means we are mounting to root */
-            if (strlen(path_copy) == 0) {
-                mount_on = bump_tnode(fs_root());
-            } else {
-                int ret = iname(path_copy, 0, &mount_on);
-                if (ret < 0) {
-                    free(path_copy);
-                    return ret;
-                }
-            }
-
-            if (mount_on == NULL || !(mount_on->inode->flags & FS_DIR)) {
-                free(path_copy);
-                drop_tnode(mount_on);
-                return -ENOTDIR;
-            }
-
-            struct mount **list = &mount_on->inode->mounts;
-            while (*list != NULL) {
-                list = &(*list)->next;
-            }
-            *list = mount;
-
-            char *name = malloc(strlen(parent_end + 1) + 1);
-            strcpy(name, parent_end + 1);
-
-            mount->name = name;
-            mount->fs = file_system;
-            mount->next = NULL;
-            mount->device = device;
-            mount->super_block = file_system->mount(file_system, mount->device);
-            assert(mount->super_block);
-
-            free(path_copy);
-            drop_tnode(mount_on);
-            return 0;
-        }
+    struct file_system *file_system = fs_file_system_from_name(type);
+    if (!file_system) {
+        return -ENODEV;
     }
 
-    /* Should instead error because fs type is not found */
-    assert(false);
-    return -1;
+    struct tnode *t_mount_point;
+    int ret = iname(target, 0, &t_mount_point);
+    if (ret < 0) {
+        return ret;
+    }
+
+    struct inode *mount_point = t_mount_point->inode;
+
+    mutex_lock(&mount_point->lock);
+    if (fs_is_mount_point(mount_point)) {
+        ret = -EBUSY;
+        goto finish_mount;
+    }
+
+    if (!(mount_point->flags & FS_DIR)) {
+        ret = -ENOTDIR;
+        goto finish_mount;
+    }
+
+    struct super_block *super_block = file_system->mount(file_system, device);
+    if (!super_block) {
+        ret = -EINVAL;
+        goto finish_mount;
+    }
+
+    struct mount *mount = calloc(1, sizeof(struct mount));
+    mount->fs = file_system;
+    mount->name = get_tnode_path(t_mount_point);
+    mount->super_block = super_block;
+
+    mount_point->mount = mount;
+
+finish_mount:
+    mutex_unlock(&mount_point->lock);
+    drop_tnode(t_mount_point);
+    return ret;
 }
 
 bool fs_can_read_inode_impl(struct inode *inode, uid_t uid, gid_t gid) {
@@ -2023,17 +1934,6 @@ int fs_symlink(const char *target, const char *linkpath) {
         }
     }
 
-    struct mount *mount = tparent->inode->mounts;
-    while (mount != NULL) {
-        if (strcmp(mount->name, last_slash + 1) == 0) {
-            free(path);
-            drop_tnode(tparent);
-            return -EEXIST;
-        }
-
-        mount = mount->next;
-    }
-
     if (!fs_can_write_inode(tparent->inode)) {
         drop_tnode(tparent);
         free(path);
@@ -2102,17 +2002,6 @@ int fs_link(const char *oldpath, const char *newpath) {
             free(path);
             return ret;
         }
-    }
-
-    struct mount *mount = tparent->inode->mounts;
-    while (mount != NULL) {
-        if (strcmp(mount->name, last_slash + 1) == 0) {
-            free(path);
-            drop_tnode(tparent);
-            return -EEXIST;
-        }
-
-        mount = mount->next;
     }
 
     if (!fs_can_write_inode(tparent->inode)) {
@@ -2460,12 +2349,33 @@ struct file_system *fs_file_system_from_name(const char *name) {
     return NULL;
 }
 
-int fs_mount_initrd(void) {
-    int ret = fs_do_mount(NULL, "/", "initrd", MS_RDONLY, NULL);
-    if (ret) {
-        debug_log("Fatal Error: Cannot mount initrd: [ %s ]\n", strerror(-ret));
+static int try_mount_root(struct file_system *file_system, struct fs_device *device) {
+    struct super_block *super_block = file_system->mount(file_system, device);
+    if (!super_block) {
+        return -EIO;
     }
-    return ret;
+
+    struct mount *mount = calloc(1, sizeof(*mount));
+    mount->fs = file_system;
+    mount->name = strdup("/");
+    mount->super_block = super_block->root->super_block;
+
+    root = mount;
+    t_root = create_root_tnode(super_block->root);
+
+    return 0;
+}
+
+int fs_mount_initrd(void) {
+    struct file_system *initrd = fs_file_system_from_name("initrd");
+    assert(initrd);
+
+    return try_mount_root(initrd, NULL);
+}
+
+static void free_mount(struct mount *mount) {
+    free(mount->name);
+    free(mount);
 }
 
 int fs_mount_root(struct fs_root_desc desc) {
@@ -2506,25 +2416,35 @@ int fs_mount_root(struct fs_root_desc desc) {
         }
     }
 
+    // Destroy to old initrd root.
+    free_mount(root);
+    drop_tnode(t_root);
+
+    root = NULL;
+    t_root = NULL;
+
     if (!device) {
         debug_log("Fatal Error: Could not find root device\n");
         return -ENODEV;
     }
 
     if (fs) {
-        int ret = fs_do_mount(device->device, "/", fs->name, 0, NULL);
-        if (ret) {
+        int ret = try_mount_root(fs, device->device);
+        if (ret < 0) {
             debug_log("Fatal Error: Cannot mount root file system: [ %s ]\n", strerror(-ret));
         }
+
         return ret;
     }
 
     fs_for_each_file_system(iter) {
         if (fs_id_matches_file_system(device->info.filesystem_type_id, iter)) {
-            int ret = fs_do_mount(device->device, "/", iter->name, 0, NULL);
-            if (!ret) {
-                return 0;
+            int ret = try_mount_root(iter, device->device);
+            if (ret < 0) {
+                debug_log("Fatal Error: Cannot mount root file system: [ %s ]\n", strerror(-ret));
             }
+
+            return ret;
         }
     }
 

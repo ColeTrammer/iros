@@ -115,6 +115,7 @@ bool fs_can_execute_inode_impl(struct inode *inode, uid_t uid, gid_t gid);
 bool fs_can_read_inode(struct inode *inode);
 bool fs_can_write_inode(struct inode *inode);
 bool fs_can_execute_inode(struct inode *inode);
+bool fs_is_mount_point(struct inode *inode);
 
 void register_fs(struct file_system *fs);
 int fs_mount_initrd(void);

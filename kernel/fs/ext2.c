@@ -809,7 +809,6 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
         inode->mode = mode;
         inode->uid = get_current_task()->process->euid;
         inode->gid = get_current_task()->process->egid;
-        inode->mounts = NULL;
         inode->private_data = NULL;
         inode->ref_count = 2; // One for the vfs and one for us
         inode->size = 0;
@@ -1852,7 +1851,6 @@ struct super_block *ext2_mount(struct file_system *current_fs, struct fs_device 
     root->index = EXT2_ROOT_INODE;
     init_mutex(&root->lock);
     root->mode = S_IFDIR | 0777;
-    root->mounts = NULL;
     root->private_data = NULL;
     root->ref_count = 2;
     root->size = 0;

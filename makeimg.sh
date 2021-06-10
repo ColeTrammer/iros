@@ -40,6 +40,10 @@ ln -s grep mnt/bin/rgrep
 ln -s chown mnt/bin/chgrp
 
 mkdir mnt/dev
+mkdir mnt/initrd
+mkdir mnt/proc
+mkdir mnt/tmp
+
 mknod mnt/dev/null c 1 1 -m 666
 mknod mnt/dev/zero c 1 2 -m 666
 mknod mnt/dev/full c 1 3 -m 666
