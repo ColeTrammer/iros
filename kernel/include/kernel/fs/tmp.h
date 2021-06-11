@@ -20,6 +20,7 @@ int tmp_unlink(struct tnode *tnode);
 int tmp_rmdir(struct tnode *tnode);
 intptr_t tmp_mmap(void *addr, size_t len, int prot, int flags, struct inode *inode, off_t offset);
 int tmp_mount(struct block_device *device, unsigned long flags, const void *data, struct super_block **super_block);
+int tmp_umount(struct super_block *super_block);
 int tmp_chmod(struct inode *inode, mode_t mode);
 int tmp_chown(struct inode *inode, uid_t uid, gid_t gid);
 int tmp_utimes(struct inode *inode, const struct timespec *times);

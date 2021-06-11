@@ -37,6 +37,7 @@ static dev_t tmp_fs_id = 0x210;
 static struct file_system fs = {
     .name = "tmpfs",
     .mount = &tmp_mount,
+    .umount = &tmp_umount,
 };
 
 static struct super_block_operations s_op = {
@@ -349,6 +350,13 @@ int tmp_mount(struct block_device *device, unsigned long, const void *, struct s
     sb->root = root;
 
     *super_block = sb;
+    return 0;
+}
+
+int tmp_umount(struct super_block *super_block) {
+    drop_inode_reference(super_block->root);
+    free(super_block);
+
     return 0;
 }
 

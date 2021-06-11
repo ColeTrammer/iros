@@ -63,6 +63,7 @@ intptr_t dev_mmap(void *addr, size_t len, int prot, int flags, struct file *file
 blksize_t dev_block_size(struct fs_device *device);
 blkcnt_t dev_block_count(struct fs_device *device);
 int dev_mount(struct block_device *device, unsigned long flags, const void *data, struct super_block **super_block);
+int dev_umount(struct super_block *super_block);
 
 #define dev_poll_wait(dev, flags, timeout) fs_poll_wait(&(dev)->file_state, &(dev)->lock, flags, timeout)
 

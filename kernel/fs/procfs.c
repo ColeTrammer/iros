@@ -69,6 +69,7 @@ static struct inode *root;
 static struct file_system fs = {
     .name = "procfs",
     .mount = &procfs_mount,
+    .umount = &procfs_umount,
 };
 
 static struct inode_operations procfs_i_op = {
@@ -759,6 +760,10 @@ int procfs_mount(struct block_device *device, unsigned long, const void *, struc
 
     *super_block_p = &super_block;
 
+    return 0;
+}
+
+int procfs_umount(struct super_block *) {
     return 0;
 }
 

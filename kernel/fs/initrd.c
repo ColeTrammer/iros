@@ -36,6 +36,7 @@ static ino_t inode_count = 1;
 static struct file_system fs = {
     .name = "initrd",
     .mount = &initrd_mount,
+    .umount = &initrd_umount,
 };
 
 static struct inode_operations initrd_i_op = {
@@ -107,6 +108,10 @@ int initrd_read_all(struct inode *inode, void *buffer) {
 
 int initrd_mount(struct block_device *, unsigned long, const void *, struct super_block **super_block_p) {
     *super_block_p = &super_block;
+    return 0;
+}
+
+int initrd_umount(struct super_block *) {
     return 0;
 }
 

@@ -882,6 +882,10 @@ void register_fs(struct file_system *fs) {
     assert(fs);
 
     debug_log("Registering file system: [ %s ]\n", fs->name);
+
+    assert(fs->mount);
+    assert(fs->umount);
+
     list_append(&file_systems, &fs->list);
 }
 
@@ -1680,12 +1684,41 @@ int fs_mount(const char *source, const char *target, const char *type, unsigned 
     return fs_do_mount(device, target, type, flags, data);
 }
 
-int fs_umount(const char *) {
+static void free_mount(struct mount *mount) {
+    free(mount->name);
+    free(mount);
+}
+
+int fs_umount(const char *target) {
     if (get_current_process()->euid != 0) {
         return -EPERM;
     }
 
-    return -ENOSYS;
+    debug_log("Unmount: [ %s ]\n", target);
+
+    struct tnode *tnode;
+    int ret = iname(target, INAME_DONT_FOLLOW_TRAILING_MOUNT_POINT, &tnode);
+    if (ret < 0) {
+        return ret;
+    }
+
+    struct inode *inode = tnode->inode;
+    if (!fs_is_mount_point(inode)) {
+        return -EINVAL;
+    }
+
+    // FIXME: don't allow you to umount() a busy mount point.
+
+    struct mount *mount = inode->mount;
+    ret = mount->fs->umount(mount->super_block);
+    if (ret < 0) {
+        return ret;
+    }
+
+    atomic_store(&inode->mount, NULL);
+    free_mount(mount);
+
+    return 0;
 }
 
 int fs_do_mount(struct block_device *device, const char *target, const char *type, unsigned long flags, const void *data) {
@@ -2379,11 +2412,6 @@ int fs_mount_initrd(void) {
     return try_mount_root(initrd, NULL);
 }
 
-static void free_mount(struct mount *mount) {
-    free(mount->name);
-    free(mount);
-}
-
 int fs_mount_root(struct fs_root_desc desc) {
     struct block_device *device = NULL;
     struct file_system *fs = NULL;
@@ -2423,6 +2451,7 @@ int fs_mount_root(struct fs_root_desc desc) {
     }
 
     // Destroy to old initrd root.
+    assert(root->fs->umount(root->super_block) == 0);
     free_mount(root);
     drop_tnode(t_root);
 

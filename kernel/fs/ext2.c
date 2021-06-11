@@ -46,6 +46,7 @@ static struct block_device_id ext2_fs_ids[] = {
 static struct file_system fs = {
     .name = "ext2",
     .mount = &ext2_mount,
+    .umount = &ext2_umount,
     .determine_fsid = &ext2_determine_fsid,
     .id_table = ext2_fs_ids,
     .id_count = sizeof(ext2_fs_ids) / sizeof(ext2_fs_ids[0]),
@@ -1859,6 +1860,32 @@ int ext2_mount(struct block_device *device, unsigned long, const void *, struct 
     ext2_sync_raw_super_block_with_virtual_super_block(super_block);
 
     *super_block_p = super_block;
+    return 0;
+}
+
+static void free_blk_grp(struct hash_entry *entry, void *map) {
+    struct ext2_block_group *grp = hash_table_entry(entry, struct ext2_block_group);
+
+    ext2_free_blocks(grp->blk_desc);
+    ext2_free_blocks(grp->block_bitmap.bitmap);
+    ext2_free_blocks(grp->inode_bitmap.bitmap);
+
+    __hash_del(map, &grp->index);
+    free(grp);
+}
+
+int ext2_umount(struct super_block *super_block) {
+    struct ext2_sb_data *data = super_block->private_data;
+
+    drop_inode_reference(super_block->private_data);
+
+    ext2_free_blocks(data->sb);
+    ext2_free_blocks(data->blk_desc_table);
+    hash_for_each(data->block_group_map, free_blk_grp, NULL);
+    hash_free_hash_map(data->block_group_map);
+
+    free(data);
+    free(super_block);
     return 0;
 }
 

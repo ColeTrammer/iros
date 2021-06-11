@@ -211,9 +211,14 @@ int dev_mount(struct block_device *, unsigned long, const void *, struct super_b
     return 0;
 }
 
+int dev_umount(struct super_block *) {
+    return 0;
+}
+
 static struct file_system devfs = {
     .name = "devfs",
     .mount = dev_mount,
+    .umount = dev_umount,
 };
 
 static void init_dev() {

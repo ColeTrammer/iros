@@ -12,6 +12,7 @@ struct file_system {
     char name[8];
     unsigned int flags;
     int (*mount)(struct block_device *block_device, unsigned long flags, const void *data, struct super_block **super_block);
+    int (*umount)(struct super_block *super_block);
     int (*determine_fsid)(struct block_device *block_device, struct block_device_id *result);
     struct list_node list;
     struct block_device_id *id_table;

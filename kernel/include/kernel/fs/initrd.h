@@ -20,5 +20,6 @@ ssize_t initrd_read(struct file *file, off_t offset, void *buffer, size_t len);
 ssize_t initrd_iread(struct inode *inode, void *buffer, size_t len, off_t offset);
 int initrd_read_all(struct inode *inode, void *buffer);
 int initrd_mount(struct block_device *block_device, unsigned long flags, const void *data, struct super_block **super_block_p);
+int initrd_umount(struct super_block *super_block);
 
 #endif /* _KERNEL_FS_INITRD_H */
