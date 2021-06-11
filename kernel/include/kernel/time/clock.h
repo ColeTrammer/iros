@@ -72,9 +72,10 @@ static inline __attribute__((always_inline)) struct timespec time_sub(struct tim
     return t1;
 }
 
-static inline __attribute__((always_inline)) long time_divide(struct timespec time, long frequency) {
-    long a = time.tv_sec * 1000000000 + time.tv_nsec;
-    return ALIGN_UP(a, frequency) / frequency;
+static inline __attribute__((always_inline)) long time_divide(long frequency, struct timespec interval) {
+    long ns = interval.tv_sec * 1000000000 + interval.tv_nsec;
+    long frequency_interval = 1000000000 / ns;
+    return frequency / frequency_interval;
 }
 
 static inline __attribute__((always_inline)) void time_inc_clock(struct clock *clock, struct timespec amt, bool kernel_time) {

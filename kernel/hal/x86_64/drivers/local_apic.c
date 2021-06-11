@@ -173,8 +173,7 @@ bool handle_lapic_timer_interrupt(struct irq_context *context) {
 
 static void lapic_timer_setup_interval_timer(struct hw_timer *self, int channel_index, long frequency, int irq_flags,
                                              hw_timer_callback_t callback) {
-    struct timespec interval = (struct timespec) { .tv_nsec = 1000000000 / frequency };
-    unsigned long ticks = time_divide(interval, self->base_frequency);
+    unsigned long ticks = self->base_frequency / frequency;
     assert(ticks <= UINT32_MAX);
 
     struct hw_timer_channel *channel = &self->channels[channel_index];
@@ -189,7 +188,7 @@ static void lapic_timer_setup_interval_timer(struct hw_timer *self, int channel_
 
     local_apic->lvt_timer_register.raw_value =
         (struct local_apic_timer_lvt) {
-            .mode = LOCAL_APIC_TIMER_MODE_ONE_SHOT,
+            .mode = LOCAL_APIC_TIMER_MODE_PERIODIC,
             .vector = LOCAL_APIC_TIMER_IRQ,
         }
             .raw_value;
@@ -199,7 +198,7 @@ static void lapic_timer_setup_interval_timer(struct hw_timer *self, int channel_
 
 static void lapic_timer_setup_one_shot_timer(struct hw_timer *self, int channel_index, struct timespec delay,
                                              hw_timer_callback_t callback) {
-    unsigned long ticks = time_divide(delay, self->base_frequency);
+    unsigned long ticks = time_divide(self->base_frequency, delay);
     assert(ticks <= UINT32_MAX);
 
     struct hw_timer_channel *channel = &self->channels[channel_index];
@@ -244,7 +243,8 @@ static void lapic_timer_calibrate(struct hw_timer *self, struct hw_timer *refere
     local_apic->divide_configuration_register = 0b0011;
 
     uint64_t save = disable_interrupts_save();
-    reference->ops->setup_one_shot_timer(reference, 0, (struct timespec) { .tv_nsec = 10 * 1000000 }, lapic_do_wakeup);
+    struct timespec interval = { .tv_nsec = 10 * 1000000 };
+    reference->ops->setup_one_shot_timer(reference, 0, interval, lapic_do_wakeup);
 
     local_apic->initial_count_register = 0xFFFFFFFFU;
     wait_simple(get_current_task(), &lapic_timer_wq);

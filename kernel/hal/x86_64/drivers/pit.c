@@ -41,7 +41,7 @@ static void pit_setup_interval_timer(struct hw_timer *self, int channel_index, l
 }
 
 static void pit_setup_one_shot_timer(struct hw_timer *self, int channel_index, struct timespec delay, hw_timer_callback_t callback) {
-    unsigned long ticks = time_divide(delay, PIT_BASE_RATE);
+    unsigned long ticks = time_divide(PIT_BASE_RATE, delay);
     assert(ticks <= UINT16_MAX);
 
     struct hw_timer_channel *channel = &self->channels[channel_index];
