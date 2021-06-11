@@ -73,6 +73,7 @@ if (NOT ${NATIVE_BUILD})
         sched/task_sched.c
         time/clock.c
         time/timer.c
+        util/bitset.c
         util/hash_map.c
         util/mutex.c
         util/random.c

@@ -13,64 +13,45 @@
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/proc/stats.h>
 #include <kernel/proc/task.h>
+#include <kernel/util/bitset.h>
 #include <kernel/util/spinlock.h>
 
 // #define PAGE_FRAME_ALLOCATOR_DEBUG
 
-static uintptr_t page_bitmap[PAGE_BITMAP_SIZE / sizeof(uintptr_t)];
+static uintptr_t page_bitset_storage[PAGE_BITMAP_SIZE / sizeof(uintptr_t)];
+static struct bitset page_bitset;
 static spinlock_t bitmap_lock = SPINLOCK_INITIALIZER;
 
 struct phys_page_stats g_phys_page_stats = { 0 };
 
-static bool get_bit(uintptr_t bit_index) {
-    return page_bitmap[bit_index / (8 * sizeof(uintptr_t))] & (1UL << (bit_index % (8 * sizeof(uintptr_t))));
-}
-
-static void set_bit(uintptr_t bit_index, bool value) {
-    if (value) {
-        page_bitmap[bit_index / (8 * sizeof(uintptr_t))] |= (1UL << (bit_index % (8 * sizeof(uintptr_t))));
-    } else {
-        page_bitmap[bit_index / (8 * sizeof(uintptr_t))] &= ~(1UL << (bit_index % (8 * sizeof(uintptr_t))));
-    }
-}
-
 void mark_used(uintptr_t phys_addr_start, uintptr_t length) {
     uintptr_t num_pages = NUM_PAGES(phys_addr_start, phys_addr_start + length);
     uintptr_t bit_index_base = phys_addr_start / PAGE_SIZE;
-    for (uintptr_t i = 0; i < num_pages; i++) {
-        set_bit(bit_index_base + i, true);
-    }
+    bitset_set_bit_sequence(&page_bitset, bit_index_base, num_pages);
 }
 
 void mark_available(uintptr_t phys_addr_start, uintptr_t length) {
     uintptr_t num_pages = NUM_PAGES(phys_addr_start, phys_addr_start + length);
     uintptr_t bit_index_base = phys_addr_start / PAGE_SIZE;
-    for (uintptr_t i = 0; i < num_pages; i++) {
-        set_bit(bit_index_base + i, false);
-    }
+    bitset_clear_bit_sequence(&page_bitset, bit_index_base, num_pages);
 }
 
 static uintptr_t try_get_next_phys_page(struct process *process) {
     spin_lock(&bitmap_lock);
-    for (uintptr_t i = 0; i < PAGE_BITMAP_SIZE / sizeof(uintptr_t); i++) {
-        if (~page_bitmap[i]) {
-            uintptr_t bit_index = i * 8 * sizeof(uintptr_t);
-            while (get_bit(bit_index)) {
-                bit_index++;
-            }
-            set_bit(bit_index, true);
 
-            g_phys_page_stats.phys_memory_allocated += PAGE_SIZE;
+    uintptr_t page_index;
+    if (bitset_find_first_free_bit(&page_bitset, &page_index) == 0) {
+        bitset_set_bit(&page_bitset, page_index);
+        g_phys_page_stats.phys_memory_allocated += PAGE_SIZE;
+        spin_unlock(&bitmap_lock);
 
-            spin_unlock(&bitmap_lock);
-
-            process->resident_memory += PAGE_SIZE;
+        process->resident_memory += PAGE_SIZE;
 #ifdef PAGE_FRAME_ALLOCATOR_DEBUG
-            debug_log("allocated: [ %#.16lX ]\n", bit_index * PAGE_SIZE);
+        debug_log("allocated: [ %#.16lX ]\n", bit_index * PAGE_SIZE);
 #endif /* PAGE_FRAME_ALLOCATOR_DEBUG */
-            return bit_index * PAGE_SIZE;
-        }
+        return page_index * PAGE_SIZE;
     }
+
     spin_unlock(&bitmap_lock);
     return 0;
 }
@@ -98,31 +79,11 @@ uintptr_t get_contiguous_pages(size_t pages) {
     uintptr_t ret = 0;
     spin_lock(&bitmap_lock);
 
-    size_t start = 0;
-try_again:
-    for (size_t i = start; i < PAGE_BITMAP_SIZE / sizeof(uintptr_t); i++) {
-        if (~page_bitmap[i]) {
-            uintptr_t bit_index = i * 8 * sizeof(uintptr_t);
-            while (get_bit(bit_index)) {
-                bit_index++;
-            }
-
-            bit_index++;
-            for (size_t consecutive_pages = 1; consecutive_pages < pages; consecutive_pages++) {
-                if (get_bit(bit_index++)) {
-                    start = i + 1;
-                    goto try_again;
-                }
-            }
-
-            for (size_t i = bit_index - pages; i < bit_index; i++) {
-                set_bit(i, true);
-            }
-            ret = (bit_index - pages) * PAGE_SIZE;
-
-            g_phys_page_stats.phys_memory_allocated += pages * PAGE_SIZE;
-            break;
-        }
+    size_t bit_start;
+    if (bitset_find_first_free_bit_sequence(&page_bitset, pages, &bit_start) == 0) {
+        bitset_set_bit_sequence(&page_bitset, bit_start, pages);
+        ret = bit_start * PAGE_SIZE;
+        g_phys_page_stats.phys_memory_allocated += pages * PAGE_SIZE;
     }
 
     spin_unlock(&bitmap_lock);
@@ -136,7 +97,7 @@ void free_phys_page(uintptr_t phys_addr, struct process *process) {
 
     spin_lock(&bitmap_lock);
 
-    set_bit(phys_addr / PAGE_SIZE, false);
+    bitset_clear_bit(&page_bitset, phys_addr / PAGE_SIZE);
     if (process && process->resident_memory >= PAGE_SIZE) {
         process->resident_memory -= PAGE_SIZE;
     }
@@ -150,7 +111,8 @@ uintptr_t initrd_phys_end;
 
 void init_page_frame_allocator(uint32_t *multiboot_info) {
     // Everything starts off allocated (reserved). Only usable segments (according to the bootloader) are made available.
-    memset(page_bitmap, 0xFF, sizeof(page_bitmap));
+    memset(page_bitset_storage, 0xFF, sizeof(page_bitset_storage));
+    init_bitset(&page_bitset, page_bitset_storage, sizeof(page_bitset_storage), sizeof(page_bitset_storage) * CHAR_BIT);
 
     debug_log("multiboot_info: [ %p ]\n", multiboot_info);
     assert((uintptr_t) multiboot_info < 0x400000ULL);
