@@ -11,6 +11,7 @@ struct mount {
     char *name;
     struct file_system *fs;
     struct super_block *super_block;
+    struct mount *parent;
     struct list_node list;
     int busy_count;
 };
@@ -18,7 +19,7 @@ struct mount {
 void fs_decrement_mount_busy_count(struct mount *mount);
 struct mount *fs_increment_mount_busy_count(struct mount *mount);
 
-struct mount *fs_create_mount(struct super_block *super_block, struct file_system *file_system, char *name);
+struct mount *fs_create_mount(struct super_block *super_block, struct file_system *file_system, struct mount *parent, char *name);
 void fs_free_mount(struct mount *mount);
 
 void fs_for_each_mount(void (*cb)(struct mount *mount, void *closure), void *closure);

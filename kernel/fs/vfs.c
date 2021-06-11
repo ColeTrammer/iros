@@ -260,10 +260,12 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct m
 
     struct tnode *parent;
     if (_path[0] != '/') {
-        parent = bump_tnode(t_parent);
         path--;
+        parent = bump_tnode(t_parent);
+        *current_mount = t_parent->mount;
     } else {
         parent = bump_tnode(t_root);
+        *current_mount = t_root->mount;
     }
 
     char *last_slash = strchr(path + 1, '/');
@@ -457,7 +459,7 @@ int iname_with_base(struct tnode *base, const char *_path, int flags, struct tno
     }
 
     int depth_storage = 0;
-    struct mount *mount_storage = root;
+    struct mount *mount_storage = NULL;
     return do_iname(_path, flags, t_root, &mount_storage, base, result, &depth_storage);
 }
 
@@ -1762,7 +1764,7 @@ int fs_do_mount(struct block_device *device, const char *target, const char *typ
         goto finish_mount;
     }
 
-    mount_point->mount = fs_create_mount(super_block, file_system, get_tnode_path(t_mount_point));
+    mount_point->mount = fs_create_mount(super_block, file_system, t_mount_point->mount, get_tnode_path(t_mount_point));
 
 finish_mount:
     mutex_unlock(&mount_point->lock);
@@ -2397,7 +2399,7 @@ static int try_mount_root(struct file_system *file_system, struct block_device *
         return ret;
     }
 
-    root = fs_create_mount(super_block, file_system, strdup("/"));
+    root = fs_create_mount(super_block, file_system, NULL, strdup("/"));
     t_root = create_root_tnode(super_block->root, root);
 
     return 0;

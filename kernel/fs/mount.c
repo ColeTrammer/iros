@@ -33,11 +33,14 @@ struct mount *fs_increment_mount_busy_count(struct mount *mount) {
     return mount;
 }
 
-struct mount *fs_create_mount(struct super_block *super_block, struct file_system *file_system, char *name) {
+struct mount *fs_create_mount(struct super_block *super_block, struct file_system *file_system, struct mount *parent, char *name) {
     struct mount *mount = calloc(1, sizeof(*mount));
     mount->name = name;
     mount->fs = file_system;
     mount->super_block = super_block;
+    if (parent) {
+        mount->parent = fs_increment_mount_busy_count(parent);
+    }
 
     fs_register_mount(mount);
 
@@ -46,6 +49,10 @@ struct mount *fs_create_mount(struct super_block *super_block, struct file_syste
 
 void fs_free_mount(struct mount *mount) {
     fs_unregister_mount(mount);
+
+    if (mount->parent) {
+        fs_decrement_mount_busy_count(mount->parent);
+    }
     free(mount->name);
     free(mount);
 }
