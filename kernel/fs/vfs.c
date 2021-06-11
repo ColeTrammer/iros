@@ -1658,6 +1658,27 @@ struct list_node *fs_file_system_list(void) {
     return &file_systems;
 }
 
+static struct list_node mounts_list = INIT_LIST(mounts_list);
+static spinlock_t mounts_list_lock = SPINLOCK_INITIALIZER;
+
+void fs_for_each_mount(void (*cb)(struct mount *mount, void *closure), void *closure) {
+    spin_lock(&mounts_list_lock);
+    list_for_each_entry_safe(&mounts_list, mount, struct mount, list) { cb(mount, closure); }
+    spin_unlock(&mounts_list_lock);
+}
+
+void fs_register_mount(struct mount *mount) {
+    spin_lock(&mounts_list_lock);
+    list_append(&mounts_list, &mount->list);
+    spin_unlock(&mounts_list_lock);
+}
+
+void fs_unregister_mount(struct mount *mount) {
+    spin_lock(&mounts_list_lock);
+    list_remove(&mount->list);
+    spin_unlock(&mounts_list_lock);
+}
+
 int fs_mount(const char *source, const char *target, const char *type, unsigned long flags, const void *data) {
     if (get_current_process()->euid != 0) {
         return -EPERM;
@@ -1685,6 +1706,7 @@ int fs_mount(const char *source, const char *target, const char *type, unsigned 
 }
 
 static void free_mount(struct mount *mount) {
+    fs_unregister_mount(mount);
     free(mount->name);
     free(mount);
 }
@@ -1758,6 +1780,7 @@ int fs_do_mount(struct block_device *device, const char *target, const char *typ
     mount->fs = file_system;
     mount->name = get_tnode_path(t_mount_point);
     mount->super_block = super_block;
+    fs_register_mount(mount);
 
     mount_point->mount = mount;
 
@@ -2398,6 +2421,7 @@ static int try_mount_root(struct file_system *file_system, struct block_device *
     mount->fs = file_system;
     mount->name = strdup("/");
     mount->super_block = super_block->root->super_block;
+    fs_register_mount(mount);
 
     root = mount;
     t_root = create_root_tnode(super_block->root);

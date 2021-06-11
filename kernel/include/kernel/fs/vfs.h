@@ -126,6 +126,10 @@ struct file_system *fs_file_system_from_name(const char *s);
 size_t fs_file_size(struct file *file);
 char *get_tnode_path(struct tnode *tnode);
 
+void fs_for_each_mount(void (*cb)(struct mount *mount, void *closure), void *closure);
+void fs_register_mount(struct mount *mount);
+void fs_unregister_mount(struct mount *mount);
+
 struct tnode *fs_get_tnode_for_file(struct file *file);
 
 static inline int fs_mode_to_flags(mode_t mode) {

@@ -577,6 +577,23 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_meminfo(struct procfs
     return (struct procfs_buffer) { buffer, length };
 }
 
+static void do_print_mount(struct mount *mount, void *_buf) {
+    struct procfs_buffer *buf = _buf;
+    buf->size += snprintf(buf->buffer + buf->size, buf->buffer ? PAGE_SIZE - buf->size : 0,
+                          "TYPE: %s\n"
+                          "PATH: %s\n"
+                          "FSID: %ld\n\n",
+                          mount->fs->name, mount->name, mount->super_block->fsid);
+}
+
+PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_mounts(struct procfs_data *, struct process *, bool need_buffer) {
+    char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
+
+    struct procfs_buffer buf = { buffer, 0 };
+    fs_for_each_mount(do_print_mount, &buf);
+    return buf;
+}
+
 PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_cpus(struct procfs_data *data __attribute__((unused)),
                                                                 struct process *process __attribute__((unused)), bool need_buffer) {
     char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
@@ -733,6 +750,10 @@ PROCFS_ENSURE_ALIGNMENT static void procfs_create_base_directory_structure(struc
         data = cpus_inode->private_data;
         PROCFS_MAKE_DYNAMIC(data);
 
+        struct inode *mounts_inode = procfs_create_inode(PROCFS_FILE_MODE, 0, 0, NULL, procfs_mounts);
+        data = mounts_inode->private_data;
+        PROCFS_MAKE_DYNAMIC(data);
+
         struct inode *kheap_inode = procfs_create_inode(PROCFS_FILE_MODE, 0, 0, NULL, procfs_kheap);
         data = kheap_inode->private_data;
         PROCFS_MAKE_DYNAMIC(data);
@@ -746,6 +767,7 @@ PROCFS_ENSURE_ALIGNMENT static void procfs_create_base_directory_structure(struc
         fs_put_dirent_cache(parent->dirent_cache, devtree_inode, "devtree", strlen("devtree"));
         fs_put_dirent_cache(parent->dirent_cache, filesystems_inode, "filesystems", strlen("filesystems"));
         fs_put_dirent_cache(parent->dirent_cache, hwtimers_inode, "hwtimers", strlen("hwtimers"));
+        fs_put_dirent_cache(parent->dirent_cache, mounts_inode, "mounts", strlen("mounts"));
         fs_put_dirent_cache(parent->dirent_cache, self_inode, "self", strlen("self"));
         fs_put_dirent_cache(parent->dirent_cache, sched_inode, "sched", strlen("sched"));
         fs_put_dirent_cache(parent->dirent_cache, kheap_inode, "kheap", strlen("kheap"));
