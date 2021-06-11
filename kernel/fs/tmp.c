@@ -88,6 +88,12 @@ ino_t tmp_get_next_index(void) {
     return next;
 }
 
+static void tmp_did_add_inode(struct super_block *super_block, struct inode *inode) {
+    mutex_lock(&super_block->super_block_lock);
+    list_append(super_block->private_data, &inode->sb_list);
+    mutex_unlock(&super_block->super_block_lock);
+}
+
 static ssize_t tmp_do_write(struct inode *inode, off_t offset, const void *buffer, size_t len) {
     mutex_lock(&inode->lock);
     struct vm_region *kernel_region = inode->private_data;
@@ -128,6 +134,9 @@ struct inode *tmp_mknod(struct tnode *tparent, const char *name, mode_t mode, de
 
     inode->device_id = device;
     tparent->inode->modify_time = time_read_clock(CLOCK_REALTIME);
+
+    tmp_did_add_inode(inode->super_block, inode);
+
     return inode;
 }
 
@@ -199,6 +208,8 @@ struct inode *tmp_mkdir(struct tnode *tparent, const char *name, mode_t mode, in
     struct inode *inode = fs_create_inode(tparent->inode->super_block, tmp_get_next_index(), get_current_task()->process->euid,
                                           get_current_task()->process->egid, mode, 0, &tmp_dir_i_op, NULL);
     tparent->inode->modify_time = time_read_clock(CLOCK_REALTIME);
+
+    tmp_did_add_inode(inode->super_block, inode);
 
     *error = 0;
     return inode;
@@ -342,10 +353,12 @@ int tmp_mount(struct block_device *device, unsigned long, const void *, struct s
     sb->block_size = PAGE_SIZE;
     sb->fsid = tmp_fs_id++;
     sb->op = &s_op;
-    sb->private_data = NULL;
+    sb->private_data = calloc(1, sizeof(struct list_node));
+    init_list(sb->private_data);
     init_mutex(&sb->super_block_lock);
 
     struct inode *root = fs_create_inode(sb, tmp_get_next_index(), 0, 0, S_IFDIR | 0777, 0, &tmp_dir_i_op, NULL);
+    tmp_did_add_inode(sb, root);
 
     sb->root = root;
 
@@ -354,7 +367,10 @@ int tmp_mount(struct block_device *device, unsigned long, const void *, struct s
 }
 
 int tmp_umount(struct super_block *super_block) {
-    drop_inode_reference(super_block->root);
+    struct list_node *all_inodes = super_block->private_data;
+    list_for_each_entry_safe(all_inodes, inode, struct inode, sb_list) { drop_inode_reference(inode); }
+
+    free(super_block->private_data);
     free(super_block);
 
     return 0;

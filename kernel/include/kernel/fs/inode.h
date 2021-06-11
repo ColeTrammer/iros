@@ -104,6 +104,9 @@ struct inode {
     // Linked list of "dirty" inodes whose metadata must be written to disk
     struct list_node dirty_inodes;
 
+    // Linked list for use by the super block.
+    struct list_node sb_list;
+
     mutex_t lock;
 
     void *private_data;
