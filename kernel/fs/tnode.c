@@ -9,22 +9,22 @@
 
 // #define TNODE_REF_COUNT_DEBUG
 
-struct tnode *create_root_tnode(struct inode *inode) {
+struct tnode *create_root_tnode(struct inode *inode, struct mount *root) {
     assert(inode);
 
     struct tnode *tnode = malloc(sizeof(struct tnode));
     assert(tnode);
 
-    tnode->inode = inode;
+    tnode->inode = bump_inode_reference(inode);
+    tnode->mount = fs_increment_mount_busy_count(root);
     tnode->parent = NULL;
     tnode->name = strdup("/");
     tnode->ref_count = 1;
-    bump_inode_reference(inode);
 
     return tnode;
 }
 
-struct tnode *create_tnode(const char *name_to_copy, struct tnode *parent, struct inode *inode) {
+struct tnode *create_tnode(const char *name_to_copy, struct tnode *parent, struct inode *inode, struct mount *mount) {
     assert(name_to_copy);
     assert(inode);
 
@@ -32,8 +32,8 @@ struct tnode *create_tnode(const char *name_to_copy, struct tnode *parent, struc
     assert(tnode);
 
     tnode->parent = parent;
-    tnode->inode = inode;
-    bump_inode_reference(inode);
+    tnode->inode = bump_inode_reference(inode);
+    tnode->mount = fs_increment_mount_busy_count(mount);
     tnode->name = strdup(name_to_copy);
     tnode->ref_count = 1;
 
@@ -58,6 +58,8 @@ void drop_tnode(struct tnode *tnode) {
 
         struct inode *inode = tnode->inode;
         struct tnode *parent = tnode->parent;
+
+        fs_decrement_mount_busy_count(tnode->mount);
 
         free(tnode->name);
         free(tnode);

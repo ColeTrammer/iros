@@ -231,15 +231,19 @@ bool fs_is_mount_point(struct inode *inode) {
     return !!inode->mount;
 }
 
-static struct inode *maybe_cross_mount_point(struct inode *inode) {
+static struct inode *maybe_cross_mount_point(struct inode *inode, struct mount **mount_if_present) {
     if (!inode->mount) {
         return inode;
     }
 
+    if (mount_if_present) {
+        *mount_if_present = inode->mount;
+    }
     return inode->mount->super_block->root;
 }
 
-static int do_iname(const char *_path, int flags, struct tnode *t_root, struct tnode *t_parent, struct tnode **result, int *depth) {
+static int do_iname(const char *_path, int flags, struct tnode *t_root, struct mount **current_mount, struct tnode *t_parent,
+                    struct tnode **result, int *depth) {
     if (*depth >= 25) {
         return -ELOOP;
     }
@@ -301,7 +305,7 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
             (*depth)++;
             struct tnode *parent_to_pass = bump_tnode(parent->parent);
             drop_tnode(parent);
-            ret = do_iname(link_path, flags | INAME_TAKE_OWNERSHIP_OF_PATH, t_root, parent_to_pass, &parent, depth);
+            ret = do_iname(link_path, flags | INAME_TAKE_OWNERSHIP_OF_PATH, t_root, current_mount, parent_to_pass, &parent, depth);
             drop_tnode(parent_to_pass);
             if (ret < 0) {
                 free(save_path);
@@ -361,9 +365,9 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
         bool trailing_component = !last_slash || last_slash[1] == '\0';
 
         if (!trailing_component || !(flags & INAME_DONT_FOLLOW_TRAILING_MOUNT_POINT)) {
-            inode = maybe_cross_mount_point(inode);
+            inode = maybe_cross_mount_point(inode, current_mount);
         }
-        parent = create_tnode(path + 1, parent, inode);
+        parent = create_tnode(path + 1, parent, inode, *current_mount);
 
     vfs_loop_end:
         path = last_slash;
@@ -424,7 +428,7 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
     (*depth)++;
     struct tnode *parent_to_pass = bump_tnode(parent->parent);
     drop_tnode(parent);
-    ret = do_iname(sym_path, flags | INAME_TAKE_OWNERSHIP_OF_PATH, t_root, parent_to_pass, result, depth);
+    ret = do_iname(sym_path, flags | INAME_TAKE_OWNERSHIP_OF_PATH, t_root, current_mount, parent_to_pass, result, depth);
     drop_tnode(parent_to_pass);
 
     return ret;
@@ -453,7 +457,8 @@ int iname_with_base(struct tnode *base, const char *_path, int flags, struct tno
     }
 
     int depth_storage = 0;
-    return do_iname(_path, flags, t_root, base, result, &depth_storage);
+    struct mount *mount_storage = root;
+    return do_iname(_path, flags, t_root, &mount_storage, base, result, &depth_storage);
 }
 
 static int do_truncate(struct inode *inode, off_t length) {
@@ -661,7 +666,7 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
         return -EINVAL;
     }
 
-    struct inode *inode = maybe_cross_mount_point(fs_file_inode(file));
+    struct inode *inode = maybe_cross_mount_point(fs_file_inode(file), NULL);
 
     struct dirent *entry = (struct dirent *) buffer;
     if (file->position == 0) {
@@ -1080,7 +1085,7 @@ struct tnode *fs_mkdir(const char *_path, mode_t mode, int *error) {
 
     fs_put_dirent_cache(tparent->inode->dirent_cache, inode, last_slash + 1, strlen(last_slash + 1));
 
-    struct tnode *tnode = create_tnode(last_slash + 1, tparent, inode);
+    struct tnode *tnode = create_tnode(last_slash + 1, tparent, inode, tparent->mount);
     free(path);
     return tnode;
 }
@@ -1162,7 +1167,7 @@ struct tnode *fs_mknod(const char *_path, mode_t mode, dev_t device, int *error)
 
     fs_put_dirent_cache(tparent->inode->dirent_cache, inode, last_slash + 1, strlen(last_slash + 1));
 
-    struct tnode *tnode = create_tnode(last_slash + 1, tparent, inode);
+    struct tnode *tnode = create_tnode(last_slash + 1, tparent, inode, tparent->mount);
     free(path);
     return tnode;
 }
@@ -1658,27 +1663,6 @@ struct list_node *fs_file_system_list(void) {
     return &file_systems;
 }
 
-static struct list_node mounts_list = INIT_LIST(mounts_list);
-static spinlock_t mounts_list_lock = SPINLOCK_INITIALIZER;
-
-void fs_for_each_mount(void (*cb)(struct mount *mount, void *closure), void *closure) {
-    spin_lock(&mounts_list_lock);
-    list_for_each_entry_safe(&mounts_list, mount, struct mount, list) { cb(mount, closure); }
-    spin_unlock(&mounts_list_lock);
-}
-
-void fs_register_mount(struct mount *mount) {
-    spin_lock(&mounts_list_lock);
-    list_append(&mounts_list, &mount->list);
-    spin_unlock(&mounts_list_lock);
-}
-
-void fs_unregister_mount(struct mount *mount) {
-    spin_lock(&mounts_list_lock);
-    list_remove(&mount->list);
-    spin_unlock(&mounts_list_lock);
-}
-
 int fs_mount(const char *source, const char *target, const char *type, unsigned long flags, const void *data) {
     if (get_current_process()->euid != 0) {
         return -EPERM;
@@ -1705,12 +1689,6 @@ int fs_mount(const char *source, const char *target, const char *type, unsigned 
     return fs_do_mount(device, target, type, flags, data);
 }
 
-static void free_mount(struct mount *mount) {
-    fs_unregister_mount(mount);
-    free(mount->name);
-    free(mount);
-}
-
 int fs_umount(const char *target) {
     if (get_current_process()->euid != 0) {
         return -EPERM;
@@ -1726,21 +1704,29 @@ int fs_umount(const char *target) {
 
     struct inode *inode = tnode->inode;
     if (!fs_is_mount_point(inode)) {
-        return -EINVAL;
+        ret = -EINVAL;
+        goto finish_umount;
     }
 
-    // FIXME: don't allow you to umount() a busy mount point.
-
     struct mount *mount = inode->mount;
+
+    // FIXME: every with atomic access, this is still very racey.
+    if (atomic_load(&mount->busy_count) > 0) {
+        ret = -EBUSY;
+        goto finish_umount;
+    }
+
     ret = mount->fs->umount(mount->super_block);
     if (ret < 0) {
         return ret;
     }
 
     atomic_store(&inode->mount, NULL);
-    free_mount(mount);
+    fs_free_mount(mount);
 
-    return 0;
+finish_umount:
+    drop_tnode(tnode);
+    return ret;
 }
 
 int fs_do_mount(struct block_device *device, const char *target, const char *type, unsigned long flags, const void *data) {
@@ -1776,13 +1762,7 @@ int fs_do_mount(struct block_device *device, const char *target, const char *typ
         goto finish_mount;
     }
 
-    struct mount *mount = calloc(1, sizeof(struct mount));
-    mount->fs = file_system;
-    mount->name = get_tnode_path(t_mount_point);
-    mount->super_block = super_block;
-    fs_register_mount(mount);
-
-    mount_point->mount = mount;
+    mount_point->mount = fs_create_mount(super_block, file_system, get_tnode_path(t_mount_point));
 
 finish_mount:
     mutex_unlock(&mount_point->lock);
@@ -2417,14 +2397,8 @@ static int try_mount_root(struct file_system *file_system, struct block_device *
         return ret;
     }
 
-    struct mount *mount = calloc(1, sizeof(*mount));
-    mount->fs = file_system;
-    mount->name = strdup("/");
-    mount->super_block = super_block->root->super_block;
-    fs_register_mount(mount);
-
-    root = mount;
-    t_root = create_root_tnode(super_block->root);
+    root = fs_create_mount(super_block, file_system, strdup("/"));
+    t_root = create_root_tnode(super_block->root, root);
 
     return 0;
 }
@@ -2476,7 +2450,7 @@ int fs_mount_root(struct fs_root_desc desc) {
 
     // Destroy to old initrd root.
     assert(root->fs->umount(root->super_block) == 0);
-    free_mount(root);
+    fs_free_mount(root);
     drop_tnode(t_root);
 
     root = NULL;

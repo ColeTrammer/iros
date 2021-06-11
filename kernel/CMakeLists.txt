@@ -10,6 +10,7 @@ if (NOT ${NATIVE_BUILD})
         fs/disk_sync.c
         fs/ext2.c
         fs/initrd.c
+        fs/mount.c
         fs/pipe.c
         fs/procfs.c
         fs/tmp.c
