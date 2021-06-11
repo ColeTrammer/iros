@@ -7,7 +7,7 @@
 
 #include <kernel/fs/file_system.h>
 #include <kernel/fs/tnode.h>
-#include <kernel/util/hash_map.h>
+#include <kernel/util/bitset.h>
 #include <kernel/util/uuid.h>
 
 #define EXT2_SUPER_BLOCK_OFFSET 1024
@@ -140,29 +140,19 @@ struct raw_dirent {
 
 #define EXT2_NEXT_DIRENT(dirent) ((struct raw_dirent *) (((uintptr_t)(dirent)) + (dirent)->size))
 
-struct ext2_sb_data {
-    struct ext2_raw_super_block *sb;
-    struct raw_block_group_descriptor *blk_desc_table;
-    struct hash_map *block_group_map;
-    size_t num_block_groups;
-};
-
-struct ext2_block_bitmap {
-    uint64_t *bitmap;
-    size_t num_bits;
-};
-
-struct ext2_inode_bitmap {
-    uint64_t *bitmap;
-    size_t num_bits;
-};
-
 struct ext2_block_group {
     size_t index;
     struct raw_block_group_descriptor *blk_desc;
-    struct ext2_block_bitmap block_bitmap;
-    struct ext2_inode_bitmap inode_bitmap;
-    struct hash_entry hash;
+    struct bitset block_bitset;
+    struct bitset inode_bitset;
+    bool initialized;
+};
+
+struct ext2_sb_data {
+    struct ext2_raw_super_block *sb;
+    struct raw_block_group_descriptor *blk_desc_table;
+    struct ext2_block_group *block_groups;
+    size_t num_block_groups;
 };
 
 struct inode *ext2_lookup(struct inode *inode, const char *name);

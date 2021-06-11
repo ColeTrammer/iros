@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <kernel/util/bitset.h>
@@ -12,7 +13,15 @@ void init_bitset(struct bitset *bitset, void *data, size_t data_bytes, size_t bi
     assert(bit_count <= data_bytes * CHAR_BIT);
 }
 
+void init_owned_bitset(struct bitset *bitset, void *data, size_t data_bytes, size_t bit_count) {
+    init_bitset(bitset, data, data_bytes, bit_count);
+    bitset->owned = true;
+}
+
 void kill_bitset(struct bitset *bitset) {
+    if (bitset->owned) {
+        free(bitset->data);
+    }
     memset(bitset, 0, sizeof(*bitset));
 }
 

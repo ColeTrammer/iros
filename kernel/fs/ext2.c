@@ -101,8 +101,6 @@ static struct file_operations ext2_dir_f_op = {
     .poll_finish = inode_poll_finish,
 };
 
-HASH_DEFINE_FUNCTIONS(block_group, struct ext2_block_group, size_t, index)
-
 /* Allocate space to read blocks (eventually should probably not use malloc and instead another mechanism) */
 static void *ext2_allocate_blocks(struct super_block *sb, blkcnt_t num_blocks) {
     void *ret = malloc(num_blocks * sb->block_size);
@@ -151,55 +149,48 @@ static size_t ext2_get_inode_table_index(struct super_block *sb, uint32_t inode_
     return (inode_id - 1) % data->sb->num_inodes_in_block_group;
 }
 
+static int init_block_usage_bitmap(struct super_block *sb, struct ext2_block_group *group) {
+    struct ext2_sb_data *data = sb->private_data;
+    ssize_t num_blocks = (data->sb->num_blocks_in_block_group + sb->block_size - 1) / sb->block_size;
+
+    void *blocks = ext2_allocate_blocks(sb, num_blocks);
+    if (ext2_read_blocks(sb, blocks, group->blk_desc->block_usage_bitmap_block_address, num_blocks) != num_blocks) {
+        debug_log("Ext2 Read block usage bitmap failed: [ %lu ]\n", group->index);
+        ext2_free_blocks(blocks);
+        return -EIO;
+    }
+    init_owned_bitset(&group->block_bitset, blocks, num_blocks * sb->block_size, data->sb->num_blocks_in_block_group);
+    return 0;
+}
+
+static int init_inode_usage_bitmap(struct super_block *sb, struct ext2_block_group *group) {
+    struct ext2_sb_data *data = sb->private_data;
+    ssize_t num_blocks = (data->sb->num_inodes_in_block_group + sb->block_size - 1) / sb->block_size;
+
+    void *blocks = ext2_allocate_blocks(sb, num_blocks);
+    if (ext2_read_blocks(sb, blocks, group->blk_desc->inode_usage_bitmap_block_address, num_blocks) != num_blocks) {
+        debug_log("Ext2 Read inode usage bitmap failed: [ %lu ]\n", group->index);
+        ext2_free_blocks(blocks);
+        return -EIO;
+    }
+    init_owned_bitset(&group->inode_bitset, blocks, num_blocks * sb->block_size, data->sb->num_inodes_in_block_group);
+    return 0;
+}
+
 /* Gets block group object for a given block group index */
 static struct ext2_block_group *ext2_get_block_group(struct super_block *super_block, size_t index) {
     struct ext2_sb_data *data = super_block->private_data;
-    struct ext2_block_group *group = hash_get_entry(data->block_group_map, &index, struct ext2_block_group);
-    if (!group) {
-        group = calloc(1, sizeof(struct ext2_block_group));
+    struct ext2_block_group *group = &data->block_groups[index];
+    if (!group->initialized) {
         group->index = index;
         group->blk_desc = data->blk_desc_table + index;
-        hash_put(data->block_group_map, &group->hash);
+        group->initialized = true;
+
+        assert(init_block_usage_bitmap(super_block, group) == 0);
+        assert(init_inode_usage_bitmap(super_block, group) == 0);
     }
 
     return group;
-}
-
-/* Gets block usage bitmap for a given block group index */
-static struct ext2_block_bitmap *ext2_get_block_usage_bitmap(struct super_block *sb, size_t index) {
-    struct ext2_sb_data *data = sb->private_data;
-    assert(index < data->num_block_groups);
-
-    struct ext2_block_group *group = ext2_get_block_group(sb, index);
-
-    if (!group->block_bitmap.bitmap) {
-        ssize_t num_blocks = (data->sb->num_blocks_in_block_group + sb->block_size - 1) / sb->block_size;
-        group->block_bitmap.num_bits = data->sb->num_blocks_in_block_group;
-        group->block_bitmap.bitmap = ext2_allocate_blocks(sb, num_blocks);
-        if (ext2_read_blocks(sb, group->block_bitmap.bitmap, group->blk_desc->block_usage_bitmap_block_address, num_blocks) != num_blocks) {
-            debug_log("Ext2 Read block usage bitmap failed: [ %lu ]\n", index);
-            ext2_free_blocks(group->block_bitmap.bitmap);
-            return NULL;
-        }
-    }
-
-    return &group->block_bitmap;
-}
-
-/* Finds the next open block in a particular block group bitmap */
-static int64_t ext2_find_open_block_in_bitmap(struct ext2_block_bitmap *bitmap) {
-    for (size_t i = 0; i < bitmap->num_bits / sizeof(uint64_t); i++) {
-        /* Means at least one bit is unset */
-        if (~bitmap->bitmap[i]) {
-            for (uint64_t test = 0; test < 64; test++) {
-                if (!(bitmap->bitmap[i] & (1UL << test))) {
-                    return i * sizeof(uint64_t) * 8 + test;
-                }
-            }
-        }
-    }
-
-    return -1;
 }
 
 /* Syncs block group specified by blk_grp_index */
@@ -255,24 +246,23 @@ int ext2_sync_super_block(struct super_block *sb) {
 static int ext2_set_block_allocated(struct super_block *super_block, uint32_t index) {
     index--;
     struct ext2_sb_data *data = super_block->private_data;
-    struct ext2_block_bitmap *bitmap = ext2_get_block_usage_bitmap(super_block, index / data->sb->num_blocks_in_block_group);
+    struct ext2_block_group *block_group = ext2_get_block_group(super_block, index / data->sb->num_blocks_in_block_group);
     size_t rel_offset = index % data->sb->num_blocks_in_block_group;
-    size_t off_64 = rel_offset / sizeof(uint64_t) / 8;
-    size_t off_bit = rel_offset % (sizeof(uint64_t) * 8);
-    bitmap->bitmap[off_64] |= 1UL << off_bit;
 
-    size_t block_off = off_64 * sizeof(uint64_t) / super_block->block_size;
-    ssize_t ret = ext2_write_blocks(super_block, bitmap->bitmap + (block_off * super_block->block_size / sizeof(uint64_t)),
-                                    ((struct ext2_sb_data *) super_block->private_data)
-                                            ->blk_desc_table[index / data->sb->num_blocks_in_block_group]
-                                            .block_usage_bitmap_block_address +
-                                        block_off,
-                                    1);
+    bitset_set_bit(&block_group->block_bitset, rel_offset);
+
+    size_t block_off = (rel_offset / 8) * sizeof(uint64_t) / super_block->block_size;
+    ssize_t ret =
+        ext2_write_blocks(super_block, bitset_data(&block_group->block_bitset) + (block_off * super_block->block_size / sizeof(uint64_t)),
+                          ((struct ext2_sb_data *) super_block->private_data)
+                                  ->blk_desc_table[index / data->sb->num_blocks_in_block_group]
+                                  .block_usage_bitmap_block_address +
+                              block_off,
+                          1);
     if (ret != 1) {
         return (int) ret;
     }
 
-    struct ext2_block_group *block_group = ext2_get_block_group(super_block, index / data->sb->num_blocks_in_block_group);
     block_group->blk_desc->num_unallocated_blocks--;
     ret = ext2_sync_block_group(super_block, index / data->sb->num_blocks_in_block_group);
 
@@ -289,25 +279,24 @@ static int ext2_set_block_allocated(struct super_block *super_block, uint32_t in
 static int ext2_free_block(struct super_block *super_block, uint32_t index, bool sync_bookkeeping_fields) {
     index--;
     struct ext2_sb_data *data = super_block->private_data;
-    struct ext2_block_bitmap *bitmap = ext2_get_block_usage_bitmap(super_block, index / data->sb->num_blocks_in_block_group);
+    struct ext2_block_group *block_group = ext2_get_block_group(super_block, index / data->sb->num_blocks_in_block_group);
     size_t rel_offset = index % data->sb->num_blocks_in_block_group;
-    size_t off_64 = rel_offset / sizeof(uint64_t) / 8;
-    size_t off_bit = rel_offset % (sizeof(uint64_t) * 8);
-    bitmap->bitmap[off_64] &= ~(1UL << off_bit);
 
-    size_t block_off = off_64 * sizeof(uint64_t) / super_block->block_size;
-    ssize_t ret = ext2_write_blocks(super_block, bitmap->bitmap + (block_off * super_block->block_size / sizeof(uint64_t)),
-                                    ((struct ext2_sb_data *) super_block->private_data)
-                                            ->blk_desc_table[index / data->sb->num_blocks_in_block_group]
-                                            .block_usage_bitmap_block_address +
-                                        block_off,
-                                    1);
+    bitset_clear_bit(&block_group->block_bitset, rel_offset);
+
+    size_t block_off = (rel_offset / 8) * sizeof(uint64_t) / super_block->block_size;
+    ssize_t ret =
+        ext2_write_blocks(super_block, bitset_data(&block_group->block_bitset) + (block_off * super_block->block_size / sizeof(uint64_t)),
+                          ((struct ext2_sb_data *) super_block->private_data)
+                                  ->blk_desc_table[index / data->sb->num_blocks_in_block_group]
+                                  .block_usage_bitmap_block_address +
+                              block_off,
+                          1);
     if (ret != 1) {
         return (int) ret;
     }
 
     if (sync_bookkeeping_fields) {
-        struct ext2_block_group *block_group = ext2_get_block_group(super_block, index / data->sb->num_blocks_in_block_group);
         block_group->blk_desc->num_unallocated_blocks--;
         ret = ext2_sync_block_group(super_block, index / data->sb->num_blocks_in_block_group);
 
@@ -325,7 +314,10 @@ static int ext2_free_block(struct super_block *super_block, uint32_t index, bool
 /* Find an open block (using usage bitmap), starting with the one specified by blk_grp_index */
 static uint32_t ext2_find_open_block(struct super_block *sb, size_t blk_grp_index) {
     struct ext2_sb_data *data = sb->private_data;
-    int64_t ret = ext2_find_open_block_in_bitmap(ext2_get_block_usage_bitmap(sb, blk_grp_index));
+    struct ext2_block_group *group = ext2_get_block_group(sb, blk_grp_index);
+
+    size_t block_index;
+    int ret = bitset_find_first_free_bit(&group->block_bitset, &block_index);
     if (ret < 0) {
         size_t save_blk_grp_index = blk_grp_index;
         for (blk_grp_index = 0; blk_grp_index < data->num_block_groups; blk_grp_index++) {
@@ -333,8 +325,7 @@ static uint32_t ext2_find_open_block(struct super_block *sb, size_t blk_grp_inde
                 continue;
             }
 
-            ret = ext2_find_open_block_in_bitmap(ext2_get_block_usage_bitmap(sb, blk_grp_index));
-
+            ret = bitset_find_first_free_bit(&group->block_bitset, &block_index);
             if (ret >= 0) {
                 break;
             }
@@ -345,69 +336,33 @@ static uint32_t ext2_find_open_block(struct super_block *sb, size_t blk_grp_inde
         return 0;
     }
 
-    ret += data->sb->num_blocks_in_block_group * blk_grp_index + 1;
+    block_index += data->sb->num_blocks_in_block_group * blk_grp_index + 1;
 #ifdef EXT2_DEBUG
-    debug_log("Allocated block index: [ %ld ]\n", ret);
+    debug_log("Allocated block index: [ %ld ]\n", block_index);
 #endif /* EXT2_DEBUG */
-    return (uint32_t) ret;
+    return block_index;
 }
 
 /* Gets inode usage bitmap for a given block group index */
-static struct ext2_inode_bitmap *ext2_get_inode_usage_bitmap(struct super_block *sb, size_t index) {
-    struct ext2_sb_data *data = sb->private_data;
-    assert(index < data->num_block_groups);
-
-    struct ext2_block_group *group = ext2_get_block_group(sb, index);
-
-    if (!group->inode_bitmap.bitmap) {
-        ssize_t num_blocks = (data->sb->num_inodes_in_block_group + sb->block_size - 1) / sb->block_size;
-        group->inode_bitmap.num_bits = data->sb->num_inodes_in_block_group;
-        group->inode_bitmap.bitmap = ext2_allocate_blocks(sb, num_blocks);
-        if (ext2_read_blocks(sb, group->inode_bitmap.bitmap, group->blk_desc->inode_usage_bitmap_block_address, num_blocks) != num_blocks) {
-            debug_log("Ext2 Read block usage bitmap failed: [ %lu ]\n", index);
-            ext2_free_blocks(group->inode_bitmap.bitmap);
-            return NULL;
-        }
-    }
-    return &group->inode_bitmap;
-}
-
-/* Finds the next open inode in a particular block group bitmap */
-static int64_t ext2_find_open_inode_in_bitmap(struct ext2_inode_bitmap *bitmap) {
-    for (size_t i = 0; i < bitmap->num_bits / sizeof(uint64_t); i++) {
-        /* Means at least one bit is unset */
-        if (~bitmap->bitmap[i]) {
-            for (uint64_t test = 0; test < 64; test++) {
-                if (!(bitmap->bitmap[i] & (1UL << test))) {
-                    return i * sizeof(uint64_t) * 8 + test;
-                }
-            }
-        }
-    }
-
-    return -1;
-}
-
-/* Sets a inode index as allocated */
 static int ext2_set_inode_allocated(struct super_block *super_block, uint32_t index) {
-    struct ext2_inode_bitmap *bitmap = ext2_get_inode_usage_bitmap(super_block, ext2_get_block_group_from_inode(super_block, index));
+    struct ext2_sb_data *data = super_block->private_data;
+    struct ext2_block_group *block_group = ext2_get_block_group(super_block, index / data->sb->num_blocks_in_block_group);
     size_t rel_offset = ext2_get_inode_table_index(super_block, index);
-    size_t off_64 = rel_offset / sizeof(uint64_t) / 8;
-    size_t off_bit = rel_offset % (sizeof(uint64_t) * 8);
-    bitmap->bitmap[off_64] |= 1UL << off_bit;
 
-    size_t block_off = off_64 * sizeof(uint64_t) / super_block->block_size;
-    ssize_t ret = ext2_write_blocks(super_block, bitmap->bitmap + (block_off * super_block->block_size / sizeof(uint64_t)),
-                                    ((struct ext2_sb_data *) super_block->private_data)
-                                            ->blk_desc_table[ext2_get_block_group_from_inode(super_block, index)]
-                                            .inode_usage_bitmap_block_address +
-                                        block_off,
-                                    1);
+    bitset_set_bit(&block_group->inode_bitset, rel_offset);
+
+    size_t block_off = (rel_offset / 8) * sizeof(uint64_t) / super_block->block_size;
+    ssize_t ret =
+        ext2_write_blocks(super_block, bitset_data(&block_group->inode_bitset) + (block_off * super_block->block_size / sizeof(uint64_t)),
+                          ((struct ext2_sb_data *) super_block->private_data)
+                                  ->blk_desc_table[ext2_get_block_group_from_inode(super_block, index)]
+                                  .inode_usage_bitmap_block_address +
+                              block_off,
+                          1);
     if (ret != 1) {
         return (int) ret;
     }
 
-    struct ext2_block_group *block_group = ext2_get_block_group(super_block, ext2_get_block_group_from_inode(super_block, index));
     block_group->blk_desc->num_unallocated_inodes--;
     ret = ext2_sync_block_group(super_block, ext2_get_block_group_from_inode(super_block, index));
 
@@ -423,19 +378,20 @@ static int ext2_set_inode_allocated(struct super_block *super_block, uint32_t in
 
 /* Frees an inode index in the inode bitmap */
 static int ext2_free_inode(struct super_block *super_block, uint32_t index, bool sync_bookkeeping_fields) {
-    struct ext2_inode_bitmap *bitmap = ext2_get_inode_usage_bitmap(super_block, ext2_get_block_group_from_inode(super_block, index));
+    struct ext2_sb_data *data = super_block->private_data;
+    struct ext2_block_group *block_group = ext2_get_block_group(super_block, index / data->sb->num_blocks_in_block_group);
     size_t rel_offset = ext2_get_inode_table_index(super_block, index);
-    size_t off_64 = rel_offset / sizeof(uint64_t) / 8;
-    size_t off_bit = rel_offset % (sizeof(uint64_t) * 8);
-    bitmap->bitmap[off_64] &= ~(1UL << off_bit);
 
-    size_t block_off = off_64 * sizeof(uint64_t) / super_block->block_size;
-    ssize_t ret = ext2_write_blocks(super_block, bitmap->bitmap + (block_off * super_block->block_size / sizeof(uint64_t)),
-                                    ((struct ext2_sb_data *) super_block->private_data)
-                                            ->blk_desc_table[ext2_get_block_group_from_inode(super_block, index)]
-                                            .inode_usage_bitmap_block_address +
-                                        block_off,
-                                    1);
+    bitset_clear_bit(&block_group->inode_bitset, rel_offset);
+
+    size_t block_off = (rel_offset / 8) * sizeof(uint64_t) / super_block->block_size;
+    ssize_t ret =
+        ext2_write_blocks(super_block, bitset_data(&block_group->inode_bitset) + (block_off * super_block->block_size / sizeof(uint64_t)),
+                          ((struct ext2_sb_data *) super_block->private_data)
+                                  ->blk_desc_table[ext2_get_block_group_from_inode(super_block, index)]
+                                  .inode_usage_bitmap_block_address +
+                              block_off,
+                          1);
     if (ret != 1) {
         return (int) ret;
     }
@@ -460,7 +416,10 @@ static int ext2_free_inode(struct super_block *super_block, uint32_t index, bool
 /* Find an open inode (using usage bitmap), starting with the one specified by blk_grp_index */
 static uint32_t ext2_find_open_inode(struct super_block *sb, size_t blk_grp_index) {
     struct ext2_sb_data *data = sb->private_data;
-    int64_t ret = ext2_find_open_inode_in_bitmap(ext2_get_inode_usage_bitmap(sb, blk_grp_index));
+    struct ext2_block_group *group = ext2_get_block_group(sb, blk_grp_index);
+
+    size_t inode_index;
+    int ret = bitset_find_first_free_bit(&group->inode_bitset, &inode_index);
     if (ret < 0) {
         size_t save_blk_grp_index = blk_grp_index;
         for (blk_grp_index = 0; blk_grp_index < data->num_block_groups; blk_grp_index++) {
@@ -468,8 +427,7 @@ static uint32_t ext2_find_open_inode(struct super_block *sb, size_t blk_grp_inde
                 continue;
             }
 
-            ret = ext2_find_open_inode_in_bitmap(ext2_get_inode_usage_bitmap(sb, blk_grp_index));
-
+            ret = bitset_find_first_free_bit(&group->inode_bitset, &inode_index);
             if (ret >= 0) {
                 break;
             }
@@ -480,11 +438,11 @@ static uint32_t ext2_find_open_inode(struct super_block *sb, size_t blk_grp_inde
         return 0;
     }
 
-    ret += data->sb->num_inodes_in_block_group * blk_grp_index + 1;
+    inode_index += data->sb->num_inodes_in_block_group * blk_grp_index + 1;
 #ifdef EXT2_DEBUG
-    debug_log("Allocated inode index: [ %ld ]\n", ret);
+    debug_log("Allocated inode index: [ %ld ]\n", inode_index);
 #endif /* EXT2_DEBUG */
-    return (uint32_t) ret;
+    return (uint32_t) inode_index;
 }
 
 /* Gets the raw inode from index */
@@ -1806,7 +1764,6 @@ int ext2_mount(struct block_device *device, unsigned long, const void *, struct 
     super_block->device = device->device;
     super_block->private_data = data;
     super_block->flags = 0;
-    data->block_group_map = hash_create_hash_map(block_group_hash, block_group_equals, block_group_key);
 
     struct ext2_raw_super_block *raw_super_block = ext2_allocate_blocks(super_block, 1);
     if (__ext2_read_blocks(super_block, raw_super_block, EXT2_SUPER_BLOCK_OFFSET / EXT2_SUPER_BLOCK_SIZE, 1) != 1) {
@@ -1818,6 +1775,7 @@ int ext2_mount(struct block_device *device, unsigned long, const void *, struct 
     data->sb = raw_super_block;
     data->num_block_groups =
         (raw_super_block->num_blocks + raw_super_block->num_blocks_in_block_group - 1) / raw_super_block->num_blocks_in_block_group;
+    data->block_groups = calloc(data->num_block_groups, sizeof(struct ext2_block_group));
     super_block->block_size = 1024 << raw_super_block->shifted_blck_size;
 
     char uuid_string[UUID_STRING_MAX];
@@ -1863,17 +1821,6 @@ int ext2_mount(struct block_device *device, unsigned long, const void *, struct 
     return 0;
 }
 
-static void free_blk_grp(struct hash_entry *entry, void *map) {
-    struct ext2_block_group *grp = hash_table_entry(entry, struct ext2_block_group);
-
-    ext2_free_blocks(grp->blk_desc);
-    ext2_free_blocks(grp->block_bitmap.bitmap);
-    ext2_free_blocks(grp->inode_bitmap.bitmap);
-
-    __hash_del(map, &grp->index);
-    free(grp);
-}
-
 int ext2_umount(struct super_block *super_block) {
     struct ext2_sb_data *data = super_block->private_data;
 
@@ -1881,8 +1828,14 @@ int ext2_umount(struct super_block *super_block) {
 
     ext2_free_blocks(data->sb);
     ext2_free_blocks(data->blk_desc_table);
-    hash_for_each(data->block_group_map, free_blk_grp, data->block_group_map);
-    hash_free_hash_map(data->block_group_map);
+
+    for (size_t i = 0; i < data->num_block_groups; i++) {
+        if (data->block_groups[i].initialized) {
+            kill_bitset(&data->block_groups[i].block_bitset);
+            kill_bitset(&data->block_groups[i].inode_bitset);
+        }
+    }
+    free(data->block_groups);
 
     free(data);
     free(super_block);

@@ -11,9 +11,11 @@ struct bitset {
     bitset_word_t *data;
     size_t data_bytes;
     size_t bit_count;
+    bool owned;
 };
 
 void init_bitset(struct bitset *bitset, void *data, size_t data_bytes, size_t bit_count);
+void init_owned_bitset(struct bitset *bitset, void *data, size_t data_bytes, size_t bit_count);
 void kill_bitset(struct bitset *bitset);
 
 bool bitset_get_bit(const struct bitset *bitset, size_t bit);
@@ -29,6 +31,10 @@ void bitset_write_bit_sequence(struct bitset *bitset, size_t bit_start, size_t l
 
 int bitset_find_first_free_bit(const struct bitset *bitset, size_t *bit);
 int bitset_find_first_free_bit_sequence(const struct bitset *bitset, size_t length, size_t *bit_start);
+
+static inline void *bitset_data(struct bitset *bitset) {
+    return bitset->data;
+}
 
 static inline size_t bitset_bit_count(const struct bitset *bitset) {
     return bitset->bit_count;
