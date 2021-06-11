@@ -1881,7 +1881,7 @@ int ext2_umount(struct super_block *super_block) {
 
     ext2_free_blocks(data->sb);
     ext2_free_blocks(data->blk_desc_table);
-    hash_for_each(data->block_group_map, free_blk_grp, NULL);
+    hash_for_each(data->block_group_map, free_blk_grp, data->block_group_map);
     hash_free_hash_map(data->block_group_map);
 
     free(data);
