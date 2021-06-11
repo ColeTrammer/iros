@@ -358,7 +358,11 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct t
             break;
         }
 
-        inode = maybe_cross_mount_point(inode);
+        bool trailing_component = !last_slash || last_slash[1] == '\0';
+
+        if (!trailing_component || !(flags & INAME_DONT_FOLLOW_TRAILING_MOUNT_POINT)) {
+            inode = maybe_cross_mount_point(inode);
+        }
         parent = create_tnode(path + 1, parent, inode);
 
     vfs_loop_end:
@@ -657,7 +661,7 @@ static ssize_t default_dir_read(struct file *file, void *buffer, size_t len) {
         return -EINVAL;
     }
 
-    struct inode *inode = fs_file_inode(file);
+    struct inode *inode = maybe_cross_mount_point(fs_file_inode(file));
 
     struct dirent *entry = (struct dirent *) buffer;
     if (file->position == 0) {
@@ -1655,7 +1659,7 @@ int fs_mount(const char *source, const char *target, const char *type, unsigned 
         return -EPERM;
     }
 
-    struct fs_device *device = NULL;
+    struct block_device *device = NULL;
     if (strcmp(source, "") != 0) {
         struct tnode *tnode;
         int ret = iname(source, 0, &tnode);
@@ -1666,13 +1670,14 @@ int fs_mount(const char *source, const char *target, const char *type, unsigned 
         dev_t device_id = tnode->inode->device_id;
         drop_tnode(tnode);
 
-        device = dev_get_device(device_id);
-        if (!device || !(device->mode & S_IFBLK)) {
+        struct fs_device *fs_device = dev_get_device(device_id);
+        if (!fs_device || !(fs_device->mode & S_IFBLK)) {
             return -ENXIO;
         }
+        device = dev_fs_device_to_block_device(fs_device);
     }
 
-    return fs_do_mount(dev_fs_device_to_block_device(device), target, type, flags, data);
+    return fs_do_mount(device, target, type, flags, data);
 }
 
 int fs_umount(const char *) {
@@ -1692,7 +1697,7 @@ int fs_do_mount(struct block_device *device, const char *target, const char *typ
     }
 
     struct tnode *t_mount_point;
-    int ret = iname(target, 0, &t_mount_point);
+    int ret = iname(target, INAME_DONT_FOLLOW_TRAILING_MOUNT_POINT, &t_mount_point);
     if (ret < 0) {
         return ret;
     }

@@ -24,6 +24,7 @@ struct super_block;
 #define INAME_DONT_FOLLOW_TRAILING_SYMLINK            1
 #define INAME_TAKE_OWNERSHIP_OF_PATH                  2
 #define INAME_CHECK_PERMISSIONS_WITH_REAL_UID_AND_GID 4
+#define INAME_DONT_FOLLOW_TRAILING_MOUNT_POINT        8
 
 enum fs_root_desc_type {
     FS_ROOT_TYPE_FS_NAME,
