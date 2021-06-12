@@ -119,7 +119,7 @@ struct raw_inode {
     uint32_t dir_acl;
     uint32_t faddr;
     uint8_t os_specific_2[12];
-} __attribute__((packed));
+} __attribute__((packed)) __attribute__((aligned(sizeof(uint32_t))));
 
 struct raw_dirent {
     uint32_t ino;
@@ -154,6 +154,24 @@ struct ext2_sb_data {
     struct ext2_block_group *block_groups;
     size_t num_block_groups;
 };
+
+struct ext2_block_iterator {
+    struct super_block *super_block;
+    struct inode *inode;
+    struct raw_inode *raw_inode;
+    uint32_t *indirect[3];
+    uint32_t indexes[3];
+    uint32_t limits[3];
+    size_t byte_offset;
+    int level;
+    bool at_indirect : 1;
+    bool write_mode : 1;
+};
+
+void ext2_init_block_iterator(struct ext2_block_iterator *iter, struct inode *inode, bool write_mode);
+int ext2_block_iterator_set_byte_offset(struct ext2_block_iterator *iter, off_t offset);
+int ext2_block_iterator_next(struct ext2_block_iterator *iter, uint32_t *block);
+void ext2_kill_block_iterator(struct ext2_block_iterator *iter);
 
 struct inode *ext2_lookup(struct inode *inode, const char *name);
 struct file *ext2_open(struct inode *inode, int flags, int *error);

@@ -445,6 +445,116 @@ static uint32_t ext2_find_open_inode(struct super_block *sb, size_t blk_grp_inde
     return (uint32_t) inode_index;
 }
 
+void ext2_init_block_iterator(struct ext2_block_iterator *iter, struct inode *inode, bool write_mode) {
+    memset(iter, 0, sizeof(*iter));
+    iter->limits[0] = EXT2_SINGLY_INDIRECT_BLOCK_INDEX;
+    iter->inode = inode;
+    iter->raw_inode = inode->private_data;
+    iter->super_block = inode->super_block;
+    iter->write_mode = write_mode;
+}
+
+void ext2_kill_block_iterator(struct ext2_block_iterator *iter) {
+    for (uint32_t i = 0; i < 3; i++) {
+        if (iter->indirect[i]) {
+            ext2_free_blocks(iter->indirect[i]);
+        }
+    }
+    memset(iter, 0, sizeof(*iter));
+}
+
+int ext2_block_iterator_set_byte_offset(struct ext2_block_iterator *, off_t) {
+    return -EIO;
+}
+
+int ext2_block_iterator_next(struct ext2_block_iterator *iter, uint32_t *block_out) {
+restart:
+    for (; iter->write_mode || iter->byte_offset < iter->inode->size;) {
+        for (int level = iter->level; level >= 0; level--) {
+            bool finished_level = true;
+            for (int i = 0; i <= level; i++) {
+                if (iter->indexes[i] < iter->limits[i]) {
+                    finished_level = false;
+                    break;
+                }
+            }
+
+            if (finished_level) {
+                // This means, for example, the singly indirect block that is part of doubly indirect block has been exhausted.
+                if (level < iter->level) {
+                    // Since this level's indirect block is done, a new one must be fetched from a block with a higher level of indirection.
+                    unsigned int indirect_block = iter->indirect[level + 1][iter->indexes[level + 1]++];
+                    if (indirect_block == 0) {
+                        if (!iter->write_mode) {
+                            return 0;
+                        }
+
+                        assert(false);
+                    }
+
+                    if (ext2_read_blocks(iter->super_block, iter->indirect[level], indirect_block, 1) < 0) {
+                        return -EIO;
+                    }
+                    iter->indexes[level] = 0;
+                    continue;
+                }
+
+                // No more levels
+                if (level == 3) {
+                    return 0;
+                }
+
+                // We need to start iterating the next level.
+                for (level = !iter->at_indirect ? 0 : level + 1; level < 3; level++) {
+                    unsigned int new_indirect_block = iter->raw_inode->block[EXT2_SINGLY_INDIRECT_BLOCK_INDEX + level];
+                    if (new_indirect_block == 0) {
+                        if (!iter->write_mode) {
+                            return 0;
+                        }
+
+                        assert(false);
+                    }
+
+                    if (!iter->indirect[level]) {
+                        iter->indirect[level] = ext2_allocate_blocks(iter->super_block, 1);
+                    }
+
+                    if (ext2_read_blocks(iter->super_block, iter->indirect[level], new_indirect_block, 1) < 0) {
+                        return -EIO;
+                    }
+
+                    iter->level = level;
+                    iter->limits[level] = iter->super_block->block_size / sizeof(uint32_t);
+                    iter->indexes[level] = 0;
+                    iter->at_indirect = 1;
+                    goto restart;
+                }
+
+                // There were no more indirect blocks.
+                return 0;
+            }
+        }
+
+        uint32_t *block_array = !iter->at_indirect ? iter->raw_inode->block : iter->indirect[0];
+        uint32_t current_block = block_array[iter->indexes[0]++];
+        iter->byte_offset += iter->super_block->block_size;
+        if (current_block == 0) {
+            if (!iter->write_mode) {
+                return 0;
+            }
+
+            assert(false);
+        }
+
+        if (current_block != 0) {
+            *block_out = current_block;
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 /* Gets the raw inode from index */
 static struct raw_inode *ext2_get_raw_inode(struct super_block *sb, uint32_t index) {
     struct ext2_sb_data *sb_data = sb->private_data;
@@ -496,76 +606,57 @@ static void ext2_update_tnode_list(struct inode *inode) {
         return;
     }
 
-    struct raw_inode *raw_inode = inode->private_data;
-    assert(raw_inode);
+    struct ext2_block_iterator iter;
+    ext2_init_block_iterator(&iter, inode, false);
 
-    struct raw_dirent *raw_dirent_table = ext2_allocate_blocks(inode->super_block, 1);
-    if (ext2_read_blocks(inode->super_block, raw_dirent_table, raw_inode->block[0], 1) != 1) {
-        debug_log("Ext2 Read Error: [ %llu ]\n", inode->index);
-        mutex_unlock(&inode->lock);
-        return;
-    }
-
-    size_t block_no = 0;
-    struct raw_dirent *dirent = raw_dirent_table;
-
-    for (; block_no * inode->super_block->block_size < inode->size;) {
-        if (dirent->ino == 0 || dirent->type == EXT2_DIRENT_TYPE_UNKNOWN) {
-            goto get_next_dirent;
+    void *raw_dirent_table = ext2_allocate_blocks(inode->super_block, 1);
+    uint32_t block_index;
+    int ret;
+    while ((ret = ext2_block_iterator_next(&iter, &block_index)) == 1) {
+        if (ext2_read_blocks(inode->super_block, raw_dirent_table, block_index, 1) < 0) {
+            goto finish_update_tnode_list;
         }
 
-        struct inode *inode_to_add;
-
-        if ((dirent->name[0] == '.' && dirent->name_length == 1) ||
-            (dirent->name[0] == '.' && dirent->name[1] == '.' && dirent->name[2] == '\0')) {
-            goto get_next_dirent;
-        }
-
-        inode_to_add = calloc(1, sizeof(struct inode));
-        inode_to_add->fsid = inode->fsid;
-        inode_to_add->index = dirent->ino;
-        inode_to_add->i_op = dirent->type == EXT2_DIRENT_TYPE_DIRECTORY ? &ext2_dir_i_op : &ext2_i_op;
-        inode_to_add->super_block = inode->super_block;
-        inode_to_add->flags = dirent->type == EXT2_DIRENT_TYPE_REGULAR                                                        ? FS_FILE
-                              : dirent->type == EXT2_DIRENT_TYPE_SOCKET                                                       ? FS_SOCKET
-                              : dirent->type == EXT2_DIRENT_TYPE_SYMBOLIC_LINK                                                ? FS_LINK
-                              : (dirent->type == EXT2_DIRENT_TYPE_BLOCK || dirent->type == EXT2_DIRENT_TYPE_CHARACTER_DEVICE) ? FS_DEVICE
-                              : dirent->type == EXT2_DIRENT_TYPE_FIFO                                                         ? FS_FIFO
-                                                                                                                              : FS_DIR;
-        inode_to_add->ref_count = 2; // One for the vfs and one for us
-        init_file_state(&inode_to_add->file_state, !!inode->size,
-                        !!((inode->flags & FS_DIR) | (inode->flags & FS_FILE) | (inode->flags & FS_LINK)));
-        init_mutex(&inode_to_add->lock);
-
-        fs_put_dirent_cache(inode->dirent_cache, inode_to_add, dirent->name, dirent->name_length);
-
-    get_next_dirent:
-        dirent = EXT2_NEXT_DIRENT(dirent);
-        if ((uintptr_t) dirent >= ((uintptr_t) raw_dirent_table) + inode->super_block->block_size) {
-            if ((uintptr_t) dirent - (uintptr_t) raw_dirent_table >= inode->size) {
-                break;
+        uint32_t byte_offset = 0;
+        for (struct raw_dirent *dirent = raw_dirent_table; byte_offset < inode->super_block->block_size;
+             dirent = raw_dirent_table + byte_offset) {
+            if (dirent->ino == 0 || dirent->type == EXT2_DIRENT_TYPE_UNKNOWN) {
+                goto next_dirent;
             }
 
-            ext2_free_blocks(raw_dirent_table);
-            block_no++;
-
-            /* Can't read the indirect blocks */
-            if (block_no >= EXT2_SINGLY_INDIRECT_BLOCK_INDEX) {
-                raw_dirent_table = ext2_allocate_blocks(inode->super_block, 1);
-                break;
+            if ((dirent->name[0] == '.' && dirent->name_length == 1) ||
+                (dirent->name[0] == '.' && dirent->name[1] == '.' && dirent->name[2] == '\0')) {
+                goto next_dirent;
             }
 
-            raw_dirent_table = ext2_allocate_blocks(inode->super_block, 1);
-            if (ext2_read_blocks(inode->super_block, raw_dirent_table, raw_inode->block[block_no], 1) != 1) {
-                break;
-            }
+            struct inode *inode_to_add;
+            inode_to_add = calloc(1, sizeof(struct inode));
+            inode_to_add->fsid = inode->fsid;
+            inode_to_add->index = dirent->ino;
+            inode_to_add->i_op = dirent->type == EXT2_DIRENT_TYPE_DIRECTORY ? &ext2_dir_i_op : &ext2_i_op;
+            inode_to_add->super_block = inode->super_block;
+            inode_to_add->flags = dirent->type == EXT2_DIRENT_TYPE_REGULAR         ? FS_FILE
+                                  : dirent->type == EXT2_DIRENT_TYPE_SOCKET        ? FS_SOCKET
+                                  : dirent->type == EXT2_DIRENT_TYPE_SYMBOLIC_LINK ? FS_LINK
+                                  : (dirent->type == EXT2_DIRENT_TYPE_BLOCK || dirent->type == EXT2_DIRENT_TYPE_CHARACTER_DEVICE)
+                                      ? FS_DEVICE
+                                  : dirent->type == EXT2_DIRENT_TYPE_FIFO ? FS_FIFO
+                                                                          : FS_DIR;
+            inode_to_add->ref_count = 2; // One for the vfs and one for us
+            init_file_state(&inode_to_add->file_state, !!inode->size,
+                            !!((inode->flags & FS_DIR) | (inode->flags & FS_FILE) | (inode->flags & FS_LINK)));
+            init_mutex(&inode_to_add->lock);
 
-            dirent = raw_dirent_table;
+            fs_put_dirent_cache(inode->dirent_cache, inode_to_add, dirent->name, dirent->name_length);
+
+        next_dirent:
+            byte_offset += dirent->size;
         }
     }
 
+finish_update_tnode_list:
+    ext2_kill_block_iterator(&iter);
     mutex_unlock(&inode->lock);
-
     ext2_free_blocks(raw_dirent_table);
 }
 
