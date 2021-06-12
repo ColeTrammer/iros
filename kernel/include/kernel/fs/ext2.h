@@ -169,7 +169,7 @@ struct ext2_block_iterator {
 };
 
 void ext2_init_block_iterator(struct ext2_block_iterator *iter, struct inode *inode, bool write_mode);
-int ext2_block_iterator_set_byte_offset(struct ext2_block_iterator *iter, off_t offset);
+int ext2_block_iterator_set_block_offset(struct ext2_block_iterator *iter, size_t offset);
 int ext2_block_iterator_next(struct ext2_block_iterator *iter, uint32_t *block);
 void ext2_kill_block_iterator(struct ext2_block_iterator *iter);
 
