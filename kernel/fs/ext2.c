@@ -252,13 +252,12 @@ static int ext2_set_block_allocated(struct super_block *super_block, uint32_t in
     bitset_set_bit(&block_group->block_bitset, rel_offset);
 
     size_t block_off = (rel_offset / 8) * sizeof(uint64_t) / super_block->block_size;
-    ssize_t ret =
-        ext2_write_blocks(super_block, bitset_data(&block_group->block_bitset) + (block_off * super_block->block_size / sizeof(uint64_t)),
-                          ((struct ext2_sb_data *) super_block->private_data)
-                                  ->blk_desc_table[index / data->sb->num_blocks_in_block_group]
-                                  .block_usage_bitmap_block_address +
-                              block_off,
-                          1);
+    ssize_t ret = ext2_write_blocks(super_block, bitset_data(&block_group->block_bitset) + (block_off * super_block->block_size),
+                                    ((struct ext2_sb_data *) super_block->private_data)
+                                            ->blk_desc_table[index / data->sb->num_blocks_in_block_group]
+                                            .block_usage_bitmap_block_address +
+                                        block_off,
+                                    1);
     if (ret != 1) {
         return (int) ret;
     }
@@ -285,13 +284,12 @@ static int ext2_free_block(struct super_block *super_block, uint32_t index, bool
     bitset_clear_bit(&block_group->block_bitset, rel_offset);
 
     size_t block_off = (rel_offset / 8) * sizeof(uint64_t) / super_block->block_size;
-    ssize_t ret =
-        ext2_write_blocks(super_block, bitset_data(&block_group->block_bitset) + (block_off * super_block->block_size / sizeof(uint64_t)),
-                          ((struct ext2_sb_data *) super_block->private_data)
-                                  ->blk_desc_table[index / data->sb->num_blocks_in_block_group]
-                                  .block_usage_bitmap_block_address +
-                              block_off,
-                          1);
+    ssize_t ret = ext2_write_blocks(super_block, bitset_data(&block_group->block_bitset) + (block_off * super_block->block_size),
+                                    ((struct ext2_sb_data *) super_block->private_data)
+                                            ->blk_desc_table[index / data->sb->num_blocks_in_block_group]
+                                            .block_usage_bitmap_block_address +
+                                        block_off,
+                                    1);
     if (ret != 1) {
         return (int) ret;
     }
@@ -352,13 +350,12 @@ static int ext2_set_inode_allocated(struct super_block *super_block, uint32_t in
     bitset_set_bit(&block_group->inode_bitset, rel_offset);
 
     size_t block_off = (rel_offset / 8) * sizeof(uint64_t) / super_block->block_size;
-    ssize_t ret =
-        ext2_write_blocks(super_block, bitset_data(&block_group->inode_bitset) + (block_off * super_block->block_size / sizeof(uint64_t)),
-                          ((struct ext2_sb_data *) super_block->private_data)
-                                  ->blk_desc_table[ext2_get_block_group_from_inode(super_block, index)]
-                                  .inode_usage_bitmap_block_address +
-                              block_off,
-                          1);
+    ssize_t ret = ext2_write_blocks(super_block, bitset_data(&block_group->inode_bitset) + (block_off * super_block->block_size),
+                                    ((struct ext2_sb_data *) super_block->private_data)
+                                            ->blk_desc_table[ext2_get_block_group_from_inode(super_block, index)]
+                                            .inode_usage_bitmap_block_address +
+                                        block_off,
+                                    1);
     if (ret != 1) {
         return (int) ret;
     }
@@ -385,13 +382,12 @@ static int ext2_free_inode(struct super_block *super_block, uint32_t index, bool
     bitset_clear_bit(&block_group->inode_bitset, rel_offset);
 
     size_t block_off = (rel_offset / 8) * sizeof(uint64_t) / super_block->block_size;
-    ssize_t ret =
-        ext2_write_blocks(super_block, bitset_data(&block_group->inode_bitset) + (block_off * super_block->block_size / sizeof(uint64_t)),
-                          ((struct ext2_sb_data *) super_block->private_data)
-                                  ->blk_desc_table[ext2_get_block_group_from_inode(super_block, index)]
-                                  .inode_usage_bitmap_block_address +
-                              block_off,
-                          1);
+    ssize_t ret = ext2_write_blocks(super_block, bitset_data(&block_group->inode_bitset) + (block_off * super_block->block_size),
+                                    ((struct ext2_sb_data *) super_block->private_data)
+                                            ->blk_desc_table[ext2_get_block_group_from_inode(super_block, index)]
+                                            .inode_usage_bitmap_block_address +
+                                        block_off,
+                                    1);
     if (ret != 1) {
         return (int) ret;
     }
