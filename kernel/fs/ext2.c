@@ -657,6 +657,8 @@ restart:
         uint32_t *block_array = !iter->at_indirect ? iter->raw_inode->block : iter->indirect[0];
         uint32_t *current_block = &block_array[iter->indexes[0]++];
         iter->byte_offset += iter->super_block->block_size;
+
+        bool new_block = false;
         if (*current_block == 0) {
             if (!iter->write_mode) {
                 return 0;
@@ -673,8 +675,11 @@ restart:
             if (ret < 0) {
                 return ret;
             }
+
+            new_block = true;
         }
 
+        info->new_block = new_block;
         info->block_index = *current_block;
         info->indirect = iter->at_indirect;
         info->level = iter->level;
@@ -968,107 +973,83 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
         ext2_update_inode(parent, true);
     }
 
-    struct raw_inode *parent_raw_inode = parent->private_data;
-    struct raw_dirent *raw_dirent_table = ext2_allocate_blocks(parent->super_block, 1);
-    ssize_t ret = ext2_read_blocks(parent->super_block, raw_dirent_table, parent_raw_inode->block[0], 1);
-    if (ret != 1) {
-        /* We're screwed at this point */
-        debug_log("Ext2 read error (reading dirents): [ %llu ]\n", parent->index);
-        *error = (int) ret;
-        ext2_free_blocks(raw_dirent_table);
-        free(inode);
-        return NULL;
-    }
-
-    size_t block_no = 0;
-    size_t padded_name_len = strlen(name) % 4 == 0 ? strlen(name) : strlen(name) + 4 - (strlen(name) % 4);
+    size_t name_len = strlen(name);
+    size_t padded_name_len = ALIGN_UP(name_len, 4);
     size_t new_dirent_size = sizeof(struct raw_dirent) + padded_name_len;
-    struct raw_dirent *dirent = raw_dirent_table;
-    for (;;) {
-        /* We are at the last dirent */
-        if (((uintptr_t) EXT2_NEXT_DIRENT(dirent)) - ((uintptr_t) raw_dirent_table) + (block_no * parent->super_block->block_size) >=
-            parent->size) {
-            size_t dirent_actual_size =
-                sizeof(struct raw_dirent) +
-                (dirent->name_length % 4 == 0 ? dirent->name_length : dirent->name_length + 4 - (dirent->name_length % 4));
+    uint8_t new_dirent_type = S_ISREG(mode)    ? EXT2_DIRENT_TYPE_REGULAR
+                              : S_ISDIR(mode)  ? EXT2_DIRENT_TYPE_DIRECTORY
+                              : S_ISLNK(mode)  ? EXT2_DIRENT_TYPE_SYMBOLIC_LINK
+                              : S_ISBLK(mode)  ? EXT2_DIRENT_TYPE_BLOCK
+                              : S_ISCHR(mode)  ? EXT2_DIRENT_TYPE_CHARACTER_DEVICE
+                              : S_ISFIFO(mode) ? EXT2_DIRENT_TYPE_FIFO
+                                               : EXT2_DIRENT_TYPE_SOCKET;
 
-            if (parent->super_block->block_size - ((uintptr_t) dirent + dirent_actual_size - (uintptr_t) raw_dirent_table) >=
-                new_dirent_size) {
-                dirent->size = dirent_actual_size;
-                dirent = (struct raw_dirent *) ((uintptr_t) dirent + dirent_actual_size);
+    struct ext2_block_iterator iter;
+    ext2_init_block_iterator(&iter, parent, true);
+
+    void *raw_dirent_table = ext2_allocate_blocks(inode->super_block, 1);
+    struct ext2_data_block_info info;
+    int ret = 0;
+    while ((ret = ext2_block_iterator_next_info(&iter, &info)) == 1) {
+        if (info.new_block) {
+            memset(raw_dirent_table, 0, inode->super_block->block_size);
+
+            struct raw_dirent *new_dirent = raw_dirent_table;
+            new_dirent->ino = index;
+            new_dirent->name_length = name_len;
+            new_dirent->size = inode->super_block->block_size;
+            new_dirent->type = new_dirent_type;
+            memcpy(new_dirent->name, name, name_len);
+
+            if (ext2_write_blocks(inode->super_block, raw_dirent_table, info.block_index, 1) < 0) {
+                ret = -EIO;
+            }
+            break;
+        }
+
+        if (ext2_read_blocks(inode->super_block, raw_dirent_table, info.block_index, 1) < 0) {
+            ret = -EIO;
+            goto finish_write_dirent;
+        }
+
+        uint32_t byte_offset = 0;
+        for (struct raw_dirent *dirent = raw_dirent_table; byte_offset < inode->super_block->block_size;
+             dirent = raw_dirent_table + byte_offset) {
+            uint16_t actual_dirent_size = sizeof(struct raw_dirent) + ALIGN_UP(dirent->name_length, 4);
+            uint16_t available_space = dirent->ino == 0 ? dirent->size : (dirent->size - actual_dirent_size);
+            if (new_dirent_size < available_space) {
+                if (dirent->ino != 0) {
+                    dirent->size = actual_dirent_size;
+                    dirent = ((void *) dirent) + actual_dirent_size;
+                }
+
+                memset(dirent, 0, available_space);
+
+                dirent->ino = index;
+                dirent->name_length = name_len;
+                dirent->size = available_space;
+                dirent->type = new_dirent_type;
+                memcpy(dirent->name, name, name_len);
+
+                if (ext2_write_blocks(inode->super_block, raw_dirent_table, info.block_index, 1) < 0) {
+                    ret = -EIO;
+                }
                 break;
-            } else {
-                /* Need to allocate new block */
-                assert(block_no < EXT2_SINGLY_INDIRECT_BLOCK_INDEX);
-                block_no++;
-                ext2_free_blocks(raw_dirent_table);
-                raw_dirent_table = dirent = ext2_allocate_blocks(parent->super_block, 1);
-
-                size_t block_index =
-                    ext2_find_open_block(parent->super_block, ext2_get_block_group_from_inode(parent->super_block, parent->index));
-                parent_raw_inode->block[block_no] = block_index;
-                parent->size += parent->super_block->block_size;
-                ext2_set_block_allocated(parent->super_block, block_index);
-                parent->modify_time = time_read_clock(CLOCK_REALTIME);
-                fs_mark_inode_as_dirty(parent);
-            }
-        }
-
-        dirent = EXT2_NEXT_DIRENT(dirent);
-
-        if ((uintptr_t) dirent >= ((uintptr_t) raw_dirent_table) + parent->super_block->block_size) {
-            ext2_free_blocks(raw_dirent_table);
-            block_no++;
-
-            /* Can't read the indirect blocks */
-            if (block_no >= EXT2_SINGLY_INDIRECT_BLOCK_INDEX) {
-                assert(false);
             }
 
-            raw_dirent_table = ext2_allocate_blocks(parent->super_block, 1);
-            if (ext2_read_blocks(parent->super_block, raw_dirent_table, parent_raw_inode->block[block_no], 1) != 1) {
-                debug_log("Ext2 read error (reading dirents): [ %llu ]\n", parent->index);
-                *error = -EIO;
-                ext2_free_blocks(raw_dirent_table);
-                free(inode);
-                return NULL;
-            }
-
-            dirent = raw_dirent_table;
+            byte_offset += dirent->size;
         }
     }
 
-#ifdef EXT2_DEBUG
-    debug_log("Adding inode to dir: [ %u, %s ]\n", index, tparent->name);
-#endif /* EXT2_DEBUG */
-
-    /* We have found the right dirent */
-    dirent->ino = index;
-    memcpy(dirent->name, name, strlen(name));
-    dirent->name_length = strlen(name);
-    dirent->size = parent->super_block->block_size - ((uintptr_t) dirent - (uintptr_t) raw_dirent_table);
-    dirent->type = S_ISREG(mode)    ? EXT2_DIRENT_TYPE_REGULAR
-                   : S_ISDIR(mode)  ? EXT2_DIRENT_TYPE_DIRECTORY
-                   : S_ISLNK(mode)  ? EXT2_DIRENT_TYPE_SYMBOLIC_LINK
-                   : S_ISBLK(mode)  ? EXT2_DIRENT_TYPE_BLOCK
-                   : S_ISCHR(mode)  ? EXT2_DIRENT_TYPE_CHARACTER_DEVICE
-                   : S_ISFIFO(mode) ? EXT2_DIRENT_TYPE_FIFO
-                                    : EXT2_DIRENT_TYPE_SOCKET;
-    memset((void *) (((uintptr_t) dirent) + sizeof(struct dirent) + dirent->name_length), 0,
-           parent->super_block->block_size -
-               (((uintptr_t) dirent) + sizeof(struct dirent) + dirent->name_length - (uintptr_t) raw_dirent_table));
-
-    ret = ext2_write_blocks(parent->super_block, raw_dirent_table, parent_raw_inode->block[block_no], 1);
-    if (ret != 1) {
-        debug_log("Ext2 write error (reading dirents): [ %llu ]\n", parent->index);
-        *error = -EIO;
-        ext2_free_blocks(raw_dirent_table);
-        free(inode);
-        return NULL;
-    }
-
+finish_write_dirent:
+    ext2_kill_block_iterator(&iter);
     ext2_free_blocks(raw_dirent_table);
 
+    *error = ret;
+    if (ret < 0) {
+        free(inode);
+        return NULL;
+    }
     return inode;
 }
 

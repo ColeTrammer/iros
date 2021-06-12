@@ -162,6 +162,7 @@ struct ext2_data_block_info {
     uint32_t *indirect_block_data[3];
     int level;
     bool indirect : 1;
+    bool new_block : 1;
 };
 
 struct ext2_block_iterator {
