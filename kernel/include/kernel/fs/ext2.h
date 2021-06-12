@@ -162,6 +162,7 @@ struct ext2_block_iterator {
     uint32_t *indirect[3];
     uint32_t indexes[3];
     uint32_t limits[3];
+    uint32_t block_indices[3];
     size_t byte_offset;
     int level;
     bool at_indirect : 1;
