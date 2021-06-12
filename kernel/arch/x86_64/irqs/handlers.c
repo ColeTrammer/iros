@@ -43,6 +43,7 @@ static bool handle_divide_by_zero(struct irq_context *context) {
 
     dump_registers_to_screen();
     debug_log("\n\033[31m%s\033[0m\n", "Divide by Zero Error");
+    kernel_stack_trace(task_state->stack_state.rip, task_state->cpu_state.rbp);
     abort();
     return true;
 }
