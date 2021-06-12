@@ -5,6 +5,7 @@
 #include <sys/mman.h>
 
 #include <kernel/fs/dev.h>
+#include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/pci_driver.h>
 #include <kernel/hal/x86_64/drivers/bga.h>
@@ -101,6 +102,10 @@ static intptr_t bga_mmap(struct fs_device *device, void *addr, size_t len, int p
 
 static struct pci_device *bga_create(struct hw_device *parent, struct pci_device_location location, struct pci_device_id id,
                                      struct pci_device_info info) {
+    if (!kernel_use_graphics()) {
+        return NULL;
+    }
+
     data.frame_buffer = pci_config_read32(location, PCI_CONFIG_BAR(0)) & ~0xF;
     debug_log("Detected bga device: [ %#.16lX ]\n", data.frame_buffer);
 
