@@ -1,6 +1,7 @@
 #include <app/app.h>
 #include <app/box_layout.h>
 #include <app/window.h>
+#include <edit/document.h>
 #include <liim/string_view.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,7 +10,6 @@
 #ifdef __os_2__
 #include "app_panel.h"
 #endif /* __os_2__ */
-#include "document.h"
 #include "terminal_panel.h"
 
 void print_usage_and_exit(const char* s) {

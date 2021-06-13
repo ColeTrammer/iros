@@ -1,7 +1,6 @@
 #include <assert.h>
-
-#include "line.h"
-#include "panel.h"
+#include <edit/line.h>
+#include <edit/panel.h>
 
 LineSplitResult Line::split_at(int position) {
     StringView first = StringView(contents().string(), contents().string() + position - 1);
@@ -135,12 +134,12 @@ void Line::clear_syntax_highlighting() {
 void Line::render(Panel& panel, int col_offset, int row_in_panel) const {
     int col_position = 0;
     int line_index = index_of_col_position(col_offset);
-    while (line_index < length() && col_position < panel.cols()) {
+    while (line_index < length() && col_position < panel.cols_at_row(row_in_panel)) {
         char c = char_at(line_index);
         auto metadata = metadata_at(line_index);
         if (c == '\t') {
             int num_spaces = tab_width - ((col_position + col_offset) % tab_width);
-            for (int i = 0; col_position < panel.cols() && i < num_spaces; i++) {
+            for (int i = 0; col_position < panel.cols_at_row(row_in_panel) && i < num_spaces; i++) {
                 panel.set_text_at(row_in_panel, col_position++, ' ', metadata);
             }
         } else {
@@ -150,7 +149,7 @@ void Line::render(Panel& panel, int col_offset, int row_in_panel) const {
         line_index++;
     }
 
-    for (; col_position < panel.cols(); col_position++) {
+    for (; col_position < panel.cols_at_row(row_in_panel); col_position++) {
         panel.set_text_at(row_in_panel, col_position, ' ', CharacterMetadata());
     }
 }

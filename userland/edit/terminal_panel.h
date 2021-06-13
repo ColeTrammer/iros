@@ -1,13 +1,13 @@
 #pragma once
 
 #include <app/mouse_press_tracker.h>
+#include <edit/mouse_event.h>
+#include <edit/panel.h>
 #include <liim/hash_map.h>
 #include <liim/maybe.h>
 #include <liim/variant.h>
 #include <liim/vector.h>
 #include <time.h>
-
-#include "panel.h"
 
 class TerminalPanel final : public Panel {
 public:
@@ -15,7 +15,7 @@ public:
     virtual ~TerminalPanel() override;
 
     virtual int rows() const override { return m_rows; }
-    virtual int cols() const override;
+    virtual int cols_at_row(int) const override { return cols(); };
 
     virtual void clear() override;
     virtual void set_text_at(int row, int col, char c, CharacterMetadata metadata) override;
@@ -68,6 +68,7 @@ private:
     Maybe<String> enter_prompt(const String& message, String starting_text = "");
 
     int index(int row, int col) const { return row * cols() + col; }
+    int cols() const;
 
     Vector<Info> m_screen_info;
     Vector<bool> m_dirty_rows;

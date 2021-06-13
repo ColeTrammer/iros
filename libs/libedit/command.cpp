@@ -1,6 +1,6 @@
-#include "command.h"
-#include "document.h"
-#include "panel.h"
+#include <edit/command.h>
+#include <edit/document.h>
+#include <edit/panel.h>
 
 Command::Command(Document& document) : m_document(document) {}
 

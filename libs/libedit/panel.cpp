@@ -1,5 +1,5 @@
-#include "panel.h"
-#include "document.h"
+#include <edit/document.h>
+#include <edit/panel.h>
 
 Panel::Panel() {}
 

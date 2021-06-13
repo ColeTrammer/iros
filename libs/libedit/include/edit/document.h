@@ -21,7 +21,7 @@ enum class DeleteCharMode { Backspace, Delete };
 
 enum class SwapDirection { Up, Down };
 
-enum class LineMode { Single, Multiple };
+enum class InputMode { Document, InputText };
 
 class Document {
 public:
@@ -43,7 +43,7 @@ public:
         StateSnapshot state;
     };
 
-    Document(Vector<Line> lines, String name, Panel& panel, LineMode mode);
+    Document(Vector<Line> lines, String name, Panel& panel, InputMode mode);
     ~Document();
 
     void display() const;
@@ -59,7 +59,10 @@ public:
     void save();
     void quit();
 
-    bool single_line_mode() const { return m_line_mode == LineMode::Single; }
+    bool input_text_mode() const { return m_input_mode == InputMode::InputText; }
+    bool submittable() const { return m_submittable; }
+
+    void set_submittable(bool b) { m_submittable = b; }
 
     String content_string() const;
 
@@ -231,7 +234,8 @@ private:
     Vector<Line> m_lines;
     String m_name;
     Panel& m_panel;
-    LineMode m_line_mode { LineMode::Multiple };
+    InputMode m_input_mode { InputMode::Document };
+    bool m_submittable { false };
 
     Vector<UniquePtr<Command>> m_command_stack;
     int m_command_stack_index { 0 };

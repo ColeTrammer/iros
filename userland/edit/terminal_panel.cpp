@@ -8,10 +8,10 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include "document.h"
-#include "document_type.h"
-#include "key_press.h"
-#include "mouse_event.h"
+#include <edit/document.h>
+#include <edit/document_type.h>
+#include <edit/key_press.h>
+#include <edit/mouse_event.h>
 #include "terminal_panel.h"
 
 static termios s_original_termios;
@@ -231,7 +231,7 @@ void TerminalPanel::compute_cols_needed_for_line_numbers() {
     if (auto* doc = document()) {
         if (doc->show_line_numbers()) {
             int num_lines = doc->num_lines();
-            if (num_lines == 0 || doc->single_line_mode()) {
+            if (num_lines == 0 || doc->input_text_mode()) {
                 m_cols_needed_for_line_numbers = 0;
                 return;
             }

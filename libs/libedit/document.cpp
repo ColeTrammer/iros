@@ -1,15 +1,14 @@
+#include <edit/command.h>
+#include <edit/document.h>
+#include <edit/key_press.h>
+#include <edit/mouse_event.h>
+#include <edit/panel.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
-
-#include "command.h"
-#include "document.h"
-#include "key_press.h"
-#include "mouse_event.h"
-#include "panel.h"
 
 static inline int isword(int c) {
     return isalnum(c) || c == '_';
@@ -36,7 +35,7 @@ UniquePtr<Document> Document::create_from_stdin(const String& path, Panel& panel
         ret = Document::create_empty(panel);
         ret->set_name(path);
     } else {
-        ret = make_unique<Document>(move(lines), path, panel, LineMode::Multiple);
+        ret = make_unique<Document>(move(lines), path, panel, InputMode::Document);
     }
 
     assert(freopen("/dev/tty", "r+", stdin));
@@ -48,7 +47,7 @@ UniquePtr<Document> Document::create_from_file(const String& path, Panel& panel)
     if (!file) {
         if (errno == ENOENT) {
             panel.send_status_message(String::format("new file: `%s'", path.string()));
-            return make_unique<Document>(Vector<Line>(), path, panel, LineMode::Multiple);
+            return make_unique<Document>(Vector<Line>(), path, panel, InputMode::Document);
         }
         panel.send_status_message(String::format("error accessing file: `%s': `%s'", path.string(), strerror(errno)));
         return Document::create_empty(panel);
@@ -73,7 +72,7 @@ UniquePtr<Document> Document::create_from_file(const String& path, Panel& panel)
         panel.send_status_message(String::format("error reading file: `%s'", path.string()));
         ret = Document::create_empty(panel);
     } else {
-        ret = make_unique<Document>(move(lines), path, panel, LineMode::Multiple);
+        ret = make_unique<Document>(move(lines), path, panel, InputMode::Document);
     }
 
     if (fclose(file)) {
@@ -84,20 +83,21 @@ UniquePtr<Document> Document::create_from_file(const String& path, Panel& panel)
 }
 
 UniquePtr<Document> Document::create_empty(Panel& panel) {
-    return make_unique<Document>(Vector<Line>(), "", panel, LineMode::Multiple);
+    return make_unique<Document>(Vector<Line>(), "", panel, InputMode::Document);
 }
 
 UniquePtr<Document> Document::create_single_line(Panel& panel, String text) {
     Vector<Line> lines;
     lines.add(Line(move(text)));
-    auto ret = make_unique<Document>(move(lines), "", panel, LineMode::Single);
+    auto ret = make_unique<Document>(move(lines), "", panel, InputMode::InputText);
+    ret->set_submittable(true);
     ret->set_show_line_numbers(false);
     ret->move_cursor_to_line_end();
     return ret;
 }
 
-Document::Document(Vector<Line> lines, String name, Panel& panel, LineMode mode)
-    : m_lines(move(lines)), m_name(move(name)), m_panel(panel), m_line_mode(mode) {
+Document::Document(Vector<Line> lines, String name, Panel& panel, InputMode mode)
+    : m_lines(move(lines)), m_name(move(name)), m_panel(panel), m_input_mode(mode) {
     if (m_lines.empty()) {
         m_lines.add(Line(""));
     }
@@ -107,7 +107,7 @@ Document::Document(Vector<Line> lines, String name, Panel& panel, LineMode mode)
 Document::~Document() {}
 
 String Document::content_string() const {
-    if (single_line_mode()) {
+    if (input_text_mode() && num_lines() == 1) {
         return m_lines.first().contents();
     }
 
@@ -467,8 +467,8 @@ void Document::scroll_cursor_into_view() {
 
     if (m_panel.cursor_col() < 0) {
         scroll_left(-m_panel.cursor_col());
-    } else if (m_panel.cursor_col() >= m_panel.cols()) {
-        scroll_right(m_panel.cursor_col() - m_panel.cols() + 1);
+    } else if (m_panel.cursor_col() >= m_panel.cols_at_row(m_panel.cursor_row())) {
+        scroll_right(m_panel.cursor_col() - m_panel.cols_at_row(m_panel.cursor_row()) + 1);
     }
 }
 
@@ -766,7 +766,7 @@ void Document::remove_line(int index) {
     int last_row_index = m_lines.size();
     int row_in_panel = last_row_index - m_row_offset;
     if (row_in_panel >= 0 && row_in_panel < m_panel.rows()) {
-        for (int c = 0; c < m_panel.cols(); c++) {
+        for (int c = 0; c < m_panel.cols_at_row(row_in_panel); c++) {
             m_panel.set_text_at(row_in_panel, c, ' ', {});
         }
     }
@@ -792,7 +792,7 @@ void Document::rotate_lines_down(int start, int end) {
 void Document::copy() {
     if (m_selection.empty()) {
         String contents = line_at_cursor().contents();
-        if (!single_line_mode()) {
+        if (!input_text_mode()) {
             contents += "\n";
         }
         m_panel.set_clipboard_contents(move(contents), true);
@@ -805,7 +805,7 @@ void Document::copy() {
 void Document::cut() {
     if (m_selection.empty()) {
         auto contents = line_at_cursor().contents();
-        if (!single_line_mode()) {
+        if (!input_text_mode()) {
             contents += "\n";
         }
         m_panel.set_clipboard_contents(move(contents), true);
@@ -824,7 +824,7 @@ void Document::paste() {
         return;
     }
 
-    if (!single_line_mode() && m_selection.empty() && is_whole_line) {
+    if (!input_text_mode() && m_selection.empty() && is_whole_line) {
         text_to_insert.remove_index(text_to_insert.size() - 1);
         push_command<InsertLineCommand>(text_to_insert);
     } else {
@@ -846,7 +846,7 @@ void Document::notify_panel_size_changed() {
         move_cursor_up();
     }
 
-    while (m_panel.cursor_col() >= m_panel.cols()) {
+    while (m_panel.cursor_col() >= m_panel.cols_at_row(m_panel.cursor_row())) {
         move_cursor_left();
     }
 
@@ -948,7 +948,7 @@ void Document::save() {
 }
 
 void Document::quit() {
-    if (m_document_was_modified && !single_line_mode()) {
+    if (m_document_was_modified && !input_text_mode()) {
         auto result = m_panel.prompt("Quit without saving? ");
         if (!result.has_value() || (result.value() != "y" && result.value() != "yes")) {
             return;
@@ -1168,12 +1168,12 @@ void Document::notify_key_pressed(KeyPress press) {
                 go_to_line();
                 break;
             case 'L':
-                if (!single_line_mode()) {
+                if (!input_text_mode()) {
                     set_show_line_numbers(!m_show_line_numbers);
                 }
                 break;
             case 'O':
-                if (!single_line_mode()) {
+                if (!input_text_mode()) {
                     m_panel.do_open_prompt();
                 }
                 break;
@@ -1182,7 +1182,7 @@ void Document::notify_key_pressed(KeyPress press) {
                 quit();
                 break;
             case 'S':
-                if (!single_line_mode()) {
+                if (!input_text_mode()) {
                     save();
                 }
                 break;
@@ -1250,9 +1250,9 @@ void Document::notify_key_pressed(KeyPress press) {
             delete_char(DeleteCharMode::Delete);
             break;
         case KeyPress::Key::Enter:
-            if (!single_line_mode()) {
+            if (!submittable() || &line_at_cursor() != &last_line()) {
                 split_line_at_cursor();
-            } else if (on_submit) {
+            } else if (submittable() && on_submit) {
                 on_submit();
             }
             break;

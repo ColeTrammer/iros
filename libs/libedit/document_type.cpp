@@ -1,16 +1,15 @@
 #include <assert.h>
 #include <clanguage/clexer.h>
 #include <clanguage/cpplexer.h>
+#include <edit/character_metadata.h>
+#include <edit/document.h>
+#include <edit/document_type.h>
+#include <edit/line.h>
 #include <liim/string.h>
 #include <liim/string_view.h>
 #include <sh/sh_lexer.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "character_metadata.h"
-#include "document.h"
-#include "document_type.h"
-#include "line.h"
 
 void update_document_type(Document& document) {
     auto path = document.name();

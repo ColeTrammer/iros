@@ -3,14 +3,14 @@
 #include <app/text_label.h>
 #include <app/window.h>
 #include <clipboard/connection.h>
+#include <edit/document.h>
+#include <edit/key_press.h>
+#include <edit/mouse_event.h>
 #include <eventloop/event.h>
 #include <graphics/bitmap.h>
 #include <graphics/renderer.h>
 
 #include "app_panel.h"
-#include "document.h"
-#include "key_press.h"
-#include "mouse_event.h"
 
 SearchWidget::SearchWidget() {}
 
