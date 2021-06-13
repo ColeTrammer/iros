@@ -24,6 +24,7 @@ set(TARGETS
     libsh
     libsharedtest
     libsharedtest2
+    libtinput
 )
 
 add_all_targets()
