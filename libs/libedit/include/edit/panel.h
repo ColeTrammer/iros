@@ -14,6 +14,7 @@ class String;
 
 }
 
+class Suggestions;
 struct KeyPress;
 
 class Panel {
@@ -39,6 +40,9 @@ public:
     virtual void set_cursor(int row, int col) = 0;
     virtual int cursor_row() const = 0;
     virtual int cursor_col() const = 0;
+
+    virtual Suggestions get_suggestions() const;
+    virtual void handle_suggestions(const Suggestions&) {}
 
     virtual void notify_line_count_changed() {}
     virtual void notify_now_is_a_good_time_to_draw_cursor() {}

@@ -1,5 +1,7 @@
 #include <edit/document.h>
 #include <edit/panel.h>
+#include <liim/string.h>
+#include <liim/vector.h>
 
 Panel::Panel() {}
 
@@ -12,6 +14,10 @@ void Panel::set_document(UniquePtr<Document> document) {
 
     m_document = move(document);
     document_did_change();
+}
+
+Suggestions Panel::get_suggestions() const {
+    return {};
 }
 
 Panel::RenderingInfo Panel::rendering_info_for_metadata(const CharacterMetadata& metadata) const {

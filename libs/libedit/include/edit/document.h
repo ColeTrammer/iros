@@ -7,6 +7,7 @@
 #include "document_type.h"
 #include "line.h"
 #include "selection.h"
+#include "suggestions.h"
 
 class Command;
 struct KeyPress;
@@ -22,6 +23,8 @@ enum class DeleteCharMode { Backspace, Delete };
 enum class SwapDirection { Up, Down };
 
 enum class InputMode { Document, InputText };
+
+enum class AutoCompleteMode { Never, Always };
 
 class Document {
 public:
@@ -64,7 +67,10 @@ public:
 
     void set_submittable(bool b) { m_submittable = b; }
 
+    void set_auto_complete_mode(AutoCompleteMode mode) { m_auto_complete_mode = mode; }
+
     String content_string() const;
+    size_t cursor_index_in_content_string() const;
 
     bool convert_tabs_to_spaces() const { return m_convert_tabs_to_spaces; }
     void set_convert_tabs_to_spaces(bool b) { m_convert_tabs_to_spaces = b; }
@@ -235,6 +241,7 @@ private:
     String m_name;
     Panel& m_panel;
     InputMode m_input_mode { InputMode::Document };
+    AutoCompleteMode m_auto_complete_mode { AutoCompleteMode::Never };
     bool m_submittable { false };
 
     Vector<UniquePtr<Command>> m_command_stack;

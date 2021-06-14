@@ -114,9 +114,25 @@ String Document::content_string() const {
     String ret;
     for (auto& line : m_lines) {
         ret += line.contents();
-        ret += "\n";
+        if (!input_text_mode() || &line != &last_line()) {
+            ret += "\n";
+        }
     }
     return ret;
+}
+
+size_t Document::cursor_index_in_content_string() const {
+    if (input_text_mode() && num_lines() == 1) {
+        return cursor_col_position();
+    }
+
+    size_t index = 0;
+    for (int i = 0; i < cursor_row_position(); i++) {
+        index += m_lines[i].length() + 1;
+    }
+
+    index += cursor_col_position();
+    return index;
 }
 
 void Document::display_if_needed() const {
@@ -1262,6 +1278,20 @@ void Document::notify_key_pressed(KeyPress press) {
             if (on_escape_press) {
                 on_escape_press();
             }
+            break;
+        case '\t':
+            if (m_auto_complete_mode == AutoCompleteMode::Always) {
+                auto suggestions = m_panel.get_suggestions();
+                if (suggestions.suggestion_count() == 1) {
+                    auto suggestion = suggestions.suggestion_list()[0];
+                    insert_text_at_cursor(
+                        String(suggestion.string() + suggestions.suggestion_offset(), suggestion.size() - suggestions.suggestion_offset()));
+                } else if (suggestions.suggestion_count() > 1) {
+                    m_panel.handle_suggestions(suggestions);
+                }
+                break;
+            }
+            insert_char(press.key);
             break;
         default:
             if (isascii(press.key)) {
