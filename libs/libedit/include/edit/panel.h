@@ -51,6 +51,7 @@ public:
     void set_cursor_col(int col) { set_cursor(cursor_row(), col); }
 
     void set_document(UniquePtr<Document> document);
+    UniquePtr<Document> take_document();
 
     Document* document() { return m_document.get(); }
     const Document* document() const { return m_document.get(); }

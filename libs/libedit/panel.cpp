@@ -16,6 +16,16 @@ void Panel::set_document(UniquePtr<Document> document) {
     document_did_change();
 }
 
+UniquePtr<Document> Panel::take_document() {
+    if (!m_document) {
+        return nullptr;
+    }
+
+    auto document = move(m_document);
+    document_did_change();
+    return document;
+}
+
 Suggestions Panel::get_suggestions() const {
     return {};
 }
