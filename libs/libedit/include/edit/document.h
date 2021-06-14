@@ -50,6 +50,8 @@ public:
     Document(Vector<Line> lines, String name, Panel& panel, InputMode mode);
     ~Document();
 
+    void copy_settings_from(const Document& other);
+
     void display() const;
     void display_if_needed() const;
 

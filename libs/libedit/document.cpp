@@ -117,6 +117,18 @@ Document::Document(Vector<Line> lines, String name, Panel& panel, InputMode mode
 
 Document::~Document() {}
 
+void Document::copy_settings_from(const Document& other) {
+    m_type = other.m_type;
+    m_input_mode = other.m_input_mode;
+    m_submittable = other.m_submittable;
+
+    m_auto_complete_mode = other.m_auto_complete_mode;
+    m_preview_auto_complete = other.m_preview_auto_complete;
+    m_convert_tabs_to_spaces = other.m_convert_tabs_to_spaces;
+
+    set_show_line_numbers(other.show_line_numbers());
+}
+
 String Document::content_string() const {
     if (input_text_mode() && num_lines() == 1) {
         return m_lines.first().contents();
