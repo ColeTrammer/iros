@@ -30,6 +30,7 @@ class Document {
 public:
     static UniquePtr<Document> create_from_stdin(const String& path, Panel& panel);
     static UniquePtr<Document> create_from_file(const String& path, Panel& panel);
+    static UniquePtr<Document> create_from_text(Panel& panel, const String& text);
     static UniquePtr<Document> create_empty(Panel& panel);
     static UniquePtr<Document> create_single_line(Panel& panel, String text = "");
 

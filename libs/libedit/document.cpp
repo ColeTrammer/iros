@@ -82,6 +82,17 @@ UniquePtr<Document> Document::create_from_file(const String& path, Panel& panel)
     return ret;
 }
 
+UniquePtr<Document> Document::create_from_text(Panel& panel, const String& text) {
+    auto lines_view = text.split_view('\n');
+
+    Vector<Line> lines(lines_view.size());
+    for (auto& line_view : lines_view) {
+        lines.add(String(line_view));
+    }
+
+    return make_unique<Document>(move(lines), "", panel, InputMode::InputText);
+}
+
 UniquePtr<Document> Document::create_empty(Panel& panel) {
     return make_unique<Document>(Vector<Line>(), "", panel, InputMode::Document);
 }
