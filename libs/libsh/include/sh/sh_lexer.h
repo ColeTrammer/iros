@@ -118,15 +118,20 @@ public:
 
     virtual void advance() override { m_current_pos++; }
 
-private:
-    static bool is_io_redirect(ShTokenType type) {
-        return type == ShTokenType::LESSGREAT || type == ShTokenType::LessThan || type == ShTokenType::GreaterThan ||
-               type == ShTokenType::GREATAND || type == ShTokenType::LESSGREAT || type == ShTokenType::DGREAT ||
-               type == ShTokenType::DLESS || type == ShTokenType::DLESSDASH;
-    }
-
     bool would_be_first_word_of_command(int start_index = -1) const {
-        for (int i = start_index == -1 ? m_tokens.size() - 1 : start_index - 1; i >= 0; i--) {
+        if (start_index == -1) {
+            start_index = m_tokens.size();
+        }
+
+        if (start_index > 0 && is_io_redirect(m_tokens[start_index - 1].type())) {
+            return false;
+        }
+
+        for (int i = start_index - 1; i >= 0; i--) {
+            if (m_tokens[i].type() == ShTokenType::In) {
+                return false;
+            }
+
             if (m_tokens[i].type() != ShTokenType::WORD) {
                 return true;
             } else if (i > 0 && is_io_redirect(m_tokens[i - 1].type())) {
@@ -138,6 +143,14 @@ private:
         }
 
         return true;
+    }
+
+private:
+    static bool is_io_redirect(ShTokenType type) {
+        return type == ShTokenType::LESSGREAT || type == ShTokenType::LessThan || type == ShTokenType::GreaterThan ||
+               type == ShTokenType::GREATAND || type == ShTokenType::LESSGREAT || type == ShTokenType::DGREAT ||
+               type == ShTokenType::DLESS || type == ShTokenType::DLESSDASH || type == ShTokenType::TLESS || type == ShTokenType::LESSAND ||
+               type == ShTokenType::CLOBBER;
     }
 
     int peek() const {

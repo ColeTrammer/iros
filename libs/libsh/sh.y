@@ -7,6 +7,7 @@
 %token  NEWLINE
 %token  IO_NUMBER
 %token  COMMENT
+%token  HERE_END
 
 
 /* The following are the operators (see XBD Operator)
@@ -193,10 +194,8 @@ io_file          : '<'       filename
                  ;
 filename         : WORD                      /* Apply rule 2 */
                  ;
-io_here          : DLESS     here_end
-                 | DLESSDASH here_end
-                 ;
-here_end         : WORD                      /* Apply rule 3 */
+io_here          : DLESS     HERE_END
+                 | DLESSDASH HERE_END
                  ;
 newline_list     :              NEWLINE
                  | newline_list NEWLINE

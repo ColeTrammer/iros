@@ -276,7 +276,7 @@ bool ShLexer::lex(LexComments lex_comments) {
                         }
 
                         StringView here_document(m_input_stream + here_document_start, m_input_stream + line_start - 1);
-                        m_tokens.add({ ShTokenType::WORD, { here_document, row_save, col_save } });
+                        m_tokens.add({ ShTokenType::HERE_END, { here_document, row_save, col_save } });
                         m_tokens.last().value().create_io_redirect(STDIN_FILENO, ShValue::IoRedirect::Type::HereDocument, here_document,
                                                                    here_document_quoted);
                         set_resume_position();

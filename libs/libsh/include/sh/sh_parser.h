@@ -91,13 +91,6 @@ public:
         return word.create_io_redirect(STDIN_FILENO, ShValue::IoRedirect::Type::HereString, word.text());
     }
 
-    virtual ShValue reduce_here_end$word(ShValue& word) override {
-        assert(word.has_io_redirect());
-        assert(word.io_redirect().type == ShValue::IoRedirect::Type::HereDocument);
-
-        return word;
-    }
-
     virtual ShValue reduce_io_here$dless_here_end(ShValue&, ShValue& here_document) override {
         assert(here_document.has_io_redirect());
         assert(here_document.io_redirect().type == ShValue::IoRedirect::Type::HereDocument);
