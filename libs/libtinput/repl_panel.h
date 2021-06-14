@@ -34,6 +34,9 @@ public:
 
     virtual void set_cursor(int row, int col) override;
 
+    virtual Suggestions get_suggestions() const override;
+    virtual void handle_suggestions(const Suggestions& suggestions) override;
+
     virtual int cursor_col() const { return m_cursor_col; }
     virtual int cursor_row() const { return m_cursor_row; }
 
@@ -87,6 +90,7 @@ private:
     int m_visible_cursor_row { 0 };
     int m_visible_cursor_col { 0 };
     int m_exit_code { 0 };
+    int m_consecutive_tabs { 0 };
     bool m_should_exit { false };
     bool m_quit_by_interrupt { false };
     bool m_quit_by_eof { false };

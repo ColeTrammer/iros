@@ -98,9 +98,11 @@ ReplPanel::~ReplPanel() {
 }
 
 void ReplPanel::clear() {
-    draw_cursor();
     m_screen_info.clear();
-    m_screen_info.resize(cols_at_row(0) + (m_rows - 1) + cols_at_row(1));
+    m_screen_info.resize(cols_at_row(0) + (m_rows - 1) * cols_at_row(1));
+    for (auto& b : m_dirty_rows) {
+        b = true;
+    }
     flush();
 }
 
@@ -327,6 +329,10 @@ void ReplPanel::flush_row(int row) {
 void ReplPanel::do_open_prompt() {}
 
 void ReplPanel::flush() {
+    if (m_should_exit) {
+        return;
+    }
+
     fputs("\033[?25l\r", stdout);
     m_visible_cursor_col = 0;
 
@@ -578,6 +584,57 @@ Vector<Variant<KeyPress, MouseEvent>> ReplPanel::read_input() {
     return R::create_from_single_element(T { K { 0, ch } });
 }
 
+Suggestions ReplPanel::get_suggestions() const {
+    auto content_string = document()->content_string();
+    auto cursor_index = document()->cursor_index_in_content_string();
+    auto suggestions_object = m_repl.get_suggestions(content_string, cursor_index);
+
+    auto& suggestions = suggestions_object.suggestion_list();
+    if (suggestions_object.suggestion_count() <= 1) {
+        return suggestions_object;
+    }
+
+    ::qsort(suggestions.vector(), suggestions.size(), sizeof(suggestions[0]), [](const void* p1, const void* p2) {
+        const auto* s1 = reinterpret_cast<const String*>(p1);
+        const auto* s2 = reinterpret_cast<const String*>(p2);
+        return strcmp(s1->string(), s2->string());
+    });
+
+    size_t i;
+    for (i = suggestions_object.suggestion_offset(); i < suggestions.first().size() && i < suggestions.last().size(); i++) {
+        if (suggestions.first()[i] != suggestions.last()[i]) {
+            break;
+        }
+    }
+
+    if (i == suggestions_object.suggestion_offset()) {
+        return suggestions_object;
+    }
+
+    auto new_suggestions = Vector<String>::create_from_single_element({ suggestions.first().string(), i });
+    return { suggestions_object.suggestion_offset(), move(new_suggestions) };
+}
+
+void ReplPanel::handle_suggestions(const Suggestions& suggestions) {
+    if (++m_consecutive_tabs >= 2) {
+        if (m_visible_cursor_row < rows() - 1) {
+            printf("\033[%dB", rows() - 1 - m_visible_cursor_row);
+        }
+        printf("\r\n");
+        for (auto& suggestion : suggestions.suggestion_list()) {
+            printf("%s ", suggestion.string());
+        }
+        printf("\r\n");
+        fflush(stdout);
+
+        m_visible_cursor_row = 0;
+        m_visible_cursor_col = 0;
+
+        clear();
+        document()->display();
+    }
+}
+
 int ReplPanel::enter() {
     document()->on_submit = [&] {
         auto input_text = document()->content_string();
@@ -587,6 +644,7 @@ int ReplPanel::enter() {
             document()->move_cursor_to_document_end();
             draw_cursor();
             printf("\r\n");
+            fflush(stdout);
             quit();
             return;
         }
@@ -634,6 +692,10 @@ int ReplPanel::enter() {
                             break;
                         }
                         continue;
+                    }
+
+                    if (key_event.key != '\t') {
+                        m_consecutive_tabs = 0;
                     }
 
                     document->notify_key_pressed(ev.as<KeyPress>());

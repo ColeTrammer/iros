@@ -16,6 +16,8 @@ InputResult Repl::get_input() {
         ReplPanel panel(*this);
         auto document = Document::create_single_line(panel);
         document->set_type(get_input_type());
+        document->set_auto_complete_mode(AutoCompleteMode::Always);
+        document->set_preview_auto_complete(true);
         panel.set_document(move(document));
         panel.enter();
 
@@ -42,7 +44,7 @@ String Repl::get_secondary_prompt() const {
     return "> ";
 }
 
-Vector<String> Repl::get_suggestions(const String &, size_t) const {
+Suggestions Repl::get_suggestions(const String &, size_t) const {
     return {};
 }
 

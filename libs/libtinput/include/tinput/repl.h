@@ -3,6 +3,8 @@
 #include <edit/document_type.h>
 #include <liim/string.h>
 
+class Suggestions;
+
 namespace TInput {
 
 enum class InputResult {
@@ -29,7 +31,7 @@ public:
     virtual DocumentType get_input_type() const { return DocumentType::Text; }
     virtual String get_main_prompt() const;
     virtual String get_secondary_prompt() const;
-    virtual Vector<String> get_suggestions(const String& input, size_t cursor_index) const;
+    virtual Suggestions get_suggestions(const String& input, size_t cursor_index) const;
 
 private:
     String m_input;
