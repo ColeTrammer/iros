@@ -234,7 +234,8 @@ static void highlight_c(Document& document) {
     }
 }
 
-static int sh_flags_for_token_type(ShTokenType type) {
+static int sh_flags_for_token_type(ShLexer& lexer, int index) {
+    auto type = lexer.tokens()[index].type();
     switch (type) {
         case ShTokenType::Ampersand:
         case ShTokenType::Bang:
@@ -255,6 +256,7 @@ static int sh_flags_for_token_type(ShTokenType type) {
         case ShTokenType::Rbrace:
         case ShTokenType::RightParenthesis:
         case ShTokenType::Semicolon:
+        case ShTokenType::GreaterThan:
         case ShTokenType::TLESS:
             return CharacterMetadata::Flags::SyntaxOperator;
         case ShTokenType::NAME:
@@ -277,8 +279,15 @@ static int sh_flags_for_token_type(ShTokenType type) {
         case ShTokenType::Until:
         case ShTokenType::While:
             return CharacterMetadata::Flags::SyntaxKeyword;
-        case ShTokenType::ASSIGNMENT_WORD:
+        case ShTokenType::HERE_END:
+            return CharacterMetadata::Flags::SyntaxString;
         case ShTokenType::WORD:
+            if (lexer.would_be_first_word_of_command(index)) {
+                return CharacterMetadata::Flags::SyntaxImportant;
+            }
+            return 0;
+        case ShTokenType::ASSIGNMENT_WORD:
+        case ShTokenType::NEWLINE:
         default:
             return 0;
     }
@@ -310,11 +319,15 @@ static void highlight_sh(Document& document) {
         return t1->value().position() - t2->value().position();
     };
 
+    while (lexer.peek_next_token_type() != ShTokenType::End) {
+        lexer.advance();
+    }
+
     qsort(const_cast<ShLexer::Token*>(lexer.tokens().vector()), lexer.tokens().size(), sizeof(ShLexer::Token), do_sort);
 
     int line_index = 0;
     int index_into_line = 0;
-    int flags = sh_flags_for_token_type(lexer.tokens()[0].type());
+    int flags = sh_flags_for_token_type(lexer, 0);
     for (int i = 1; i <= lexer.tokens().size(); i++) {
         int end_line = document.num_lines() - 1;
         int end_position = document.last_line().length();
@@ -342,7 +355,7 @@ static void highlight_sh(Document& document) {
         }
 
         if (i != lexer.tokens().size()) {
-            flags = sh_flags_for_token_type(lexer.tokens()[i].type());
+            flags = sh_flags_for_token_type(lexer, i);
         }
     }
 }

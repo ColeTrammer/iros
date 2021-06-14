@@ -11,7 +11,8 @@ public:
         SyntaxNumber = 32,
         SyntaxKeyword = 64,
         SyntaxComment = 128,
-        AutoCompletePreview = 256,
+        SyntaxImportant = 256,
+        AutoCompletePreview = 512,
     };
 
     CharacterMetadata() {}

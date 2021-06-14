@@ -67,6 +67,10 @@ Panel::RenderingInfo Panel::rendering_info_for_metadata(const CharacterMetadata&
         info.fg = VGA_COLOR_GREEN;
     }
 
+    if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxImportant) {
+        info.bold = true;
+    }
+
     if (metadata.highlighted() && metadata.selected()) {
         info.fg = VGA_COLOR_YELLOW;
         info.bg = VGA_COLOR_DARK_GREY;
