@@ -7,6 +7,8 @@
 
 namespace TInput {
 
+Repl::Repl() : m_history(make_unique<History>()) {}
+
 Repl::~Repl() {}
 
 InputResult Repl::get_input() {
@@ -21,15 +23,20 @@ InputResult Repl::get_input() {
         panel.set_document(move(document));
         panel.enter();
 
-        if (panel.quit_by_interrupt()) {
-            continue;
-        }
-
         if (panel.quit_by_eof()) {
             return InputResult::Eof;
         }
 
-        m_input = panel.document()->content_string();
+        auto input_text = panel.document()->content_string();
+        if (!input_text.is_empty()) {
+            history().add(input_text);
+        }
+
+        if (panel.quit_by_interrupt()) {
+            continue;
+        }
+
+        m_input = move(input_text);
         break;
     }
 

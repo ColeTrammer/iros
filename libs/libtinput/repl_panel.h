@@ -74,9 +74,19 @@ private:
     int prompt_cols_at_row(int row) const;
     const String& prompt_at_row(int row) const;
 
+    Vector<UniquePtr<Document>>& ensure_history_documents();
+    void put_history_document(UniquePtr<Document> document, int history_index);
+    UniquePtr<Document> take_history_document(int history_index);
+
+    void move_history_up();
+    void move_history_down();
+
     Repl& m_repl;
     String m_main_prompt;
     String m_secondary_prompt;
+    Vector<UniquePtr<Document>> m_history_documents;
+    int m_history_index { -1 };
+
     Vector<Info> m_screen_info;
     Vector<bool> m_dirty_rows;
     mutable String m_prev_clipboard_contents;

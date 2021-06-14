@@ -189,6 +189,27 @@ String ReplPanel::string_for_metadata(CharacterMetadata metadata) const {
 
 void ReplPanel::document_did_change() {
     if (document()) {
+        document()->on_submit = [this] {
+            auto input_text = document()->content_string();
+            auto input_status = m_repl.get_input_status(input_text);
+
+            if (input_status == InputStatus::Finished) {
+                document()->move_cursor_to_document_end();
+                draw_cursor();
+                printf("\r\n");
+                fflush(stdout);
+                quit();
+                return;
+            }
+
+            set_coordinates(rows() + 1, max_cols());
+            document()->insert_line(Line(""), document()->num_lines());
+            document()->move_cursor_to_document_end();
+        };
+
+        m_cursor_row = 0;
+        m_cursor_col = 0;
+
         clear();
         notify_line_count_changed();
         document()->display();
@@ -196,6 +217,10 @@ void ReplPanel::document_did_change() {
 }
 
 void ReplPanel::quit() {
+    if (m_history_index != -1) {
+        m_repl.history().pop();
+    }
+
     m_should_exit = true;
     m_exit_code = 1;
 }
@@ -635,25 +660,65 @@ void ReplPanel::handle_suggestions(const Suggestions& suggestions) {
     }
 }
 
+Vector<UniquePtr<Document>>& ReplPanel::ensure_history_documents() {
+    if (m_history_documents.empty()) {
+        m_history_documents.resize(m_repl.history().size());
+    }
+    return m_history_documents;
+}
+
+void ReplPanel::put_history_document(UniquePtr<Document> document, int index) {
+    ensure_history_documents()[index] = move(document);
+}
+
+UniquePtr<Document> ReplPanel::take_history_document(int index) {
+    auto& documents = ensure_history_documents();
+    if (documents[index]) {
+        return move(documents[index]);
+    }
+
+    auto& new_document_text = m_repl.history().item(index);
+    return Document::create_from_text(*this, new_document_text);
+}
+
+void ReplPanel::move_history_up() {
+    if (m_history_index == 0) {
+        return;
+    }
+
+    if (m_history_index == -1) {
+        m_history_index = m_repl.history().size();
+        m_repl.history().add(document()->content_string());
+    }
+
+    auto current_document = take_document();
+    auto new_document = take_history_document(m_history_index - 1);
+    new_document->copy_settings_from(*current_document);
+    put_history_document(move(current_document), m_history_index);
+
+    set_document(move(new_document));
+    document()->move_cursor_to_document_end();
+
+    m_history_index--;
+}
+
+void ReplPanel::move_history_down() {
+    if (m_history_index == -1 || m_history_index == m_repl.history().size() - 1) {
+        return;
+    }
+
+    auto current_document = take_document();
+    auto new_document = take_history_document(m_history_index + 1);
+    new_document->copy_settings_from(*current_document);
+    put_history_document(move(current_document), m_history_index);
+
+    set_document(move(new_document));
+    document()->move_cursor_to_document_end();
+
+    m_history_index++;
+}
+
 int ReplPanel::enter() {
-    document()->on_submit = [&] {
-        auto input_text = document()->content_string();
-        auto input_status = m_repl.get_input_status(input_text);
-
-        if (input_status == InputStatus::Finished) {
-            document()->move_cursor_to_document_end();
-            draw_cursor();
-            printf("\r\n");
-            fflush(stdout);
-            quit();
-            return;
-        }
-
-        set_coordinates(rows() + 1, max_cols());
-        document()->insert_line(Line(""), document()->num_lines());
-        document()->move_cursor_to_document_end();
-    };
-
     fd_set set;
     for (;;) {
         FD_ZERO(&set);
@@ -692,6 +757,16 @@ int ReplPanel::enter() {
                             break;
                         }
                         continue;
+                    }
+
+                    if (key_event.key == KeyPress::UpArrow && document->cursor_row_position() == 0) {
+                        move_history_up();
+                        break;
+                    }
+
+                    if (key_event.key == KeyPress::DownArrow && document->cursor_row_position() == document->num_lines() - 1) {
+                        move_history_down();
+                        break;
                     }
 
                     if (key_event.key != '\t') {
