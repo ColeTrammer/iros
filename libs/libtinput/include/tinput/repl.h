@@ -1,5 +1,6 @@
 #pragma once
 
+#include <edit/document_type.h>
 #include <liim/string.h>
 
 namespace TInput {
@@ -25,6 +26,7 @@ public:
 
     virtual InputStatus get_input_status(const String& input) const = 0;
 
+    virtual DocumentType get_input_type() const { return DocumentType::Text; }
     virtual String get_main_prompt() const;
     virtual String get_secondary_prompt() const;
     virtual Vector<String> get_suggestions(const String& input, size_t cursor_index) const;

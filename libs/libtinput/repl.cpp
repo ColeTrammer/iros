@@ -15,6 +15,7 @@ InputResult Repl::get_input() {
     for (;;) {
         ReplPanel panel(*this);
         auto document = Document::create_single_line(panel);
+        document->set_type(get_input_type());
         panel.set_document(move(document));
         panel.enter();
 
