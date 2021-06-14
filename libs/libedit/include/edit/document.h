@@ -69,6 +69,9 @@ public:
 
     void set_auto_complete_mode(AutoCompleteMode mode) { m_auto_complete_mode = mode; }
 
+    bool preview_auto_complete() const { return m_preview_auto_complete; }
+    void set_preview_auto_complete(bool b) { m_preview_auto_complete = b; }
+
     String content_string() const;
     size_t cursor_index_in_content_string() const;
 
@@ -131,6 +134,8 @@ public:
     void merge_lines(int l1, int l2);
 
     void set_was_modified(bool b) { m_document_was_modified = b; }
+
+    void finish_key_press();
 
     Snapshot snapshot() const;
     void restore(Snapshot snapshot);
@@ -241,8 +246,10 @@ private:
     String m_name;
     Panel& m_panel;
     InputMode m_input_mode { InputMode::Document };
-    AutoCompleteMode m_auto_complete_mode { AutoCompleteMode::Never };
     bool m_submittable { false };
+
+    AutoCompleteMode m_auto_complete_mode { AutoCompleteMode::Never };
+    bool m_preview_auto_complete { false };
 
     Vector<UniquePtr<Command>> m_command_stack;
     int m_command_stack_index { 0 };

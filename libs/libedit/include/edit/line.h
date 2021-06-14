@@ -7,6 +7,7 @@
 
 constexpr int tab_width = 4;
 
+class Document;
 struct LineSplitResult;
 class Panel;
 
@@ -46,7 +47,7 @@ public:
 
     void clear_syntax_highlighting();
 
-    void render(Panel& panel, int col_offset, int row_in_panel) const;
+    void render(Document& document, Panel& panel, int col_offset, int row_in_panel) const;
 
 private:
     String m_contents;

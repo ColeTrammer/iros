@@ -142,8 +142,9 @@ void Document::display_if_needed() const {
 }
 
 void Document::display() const {
+    auto& document = const_cast<Document&>(*this);
     for (int line_num = m_row_offset; line_num < m_lines.size() && line_num - m_row_offset < m_panel.rows(); line_num++) {
-        m_lines[line_num].render(const_cast<Document&>(*this).panel(), m_col_offset, line_num - m_row_offset);
+        m_lines[line_num].render(document, document.panel(), m_col_offset, line_num - m_row_offset);
     }
     m_panel.flush();
     m_needs_display = false;
@@ -1118,6 +1119,18 @@ bool Document::notify_mouse_event(MouseEvent event) {
     return handled;
 }
 
+void Document::finish_key_press() {
+    if (preview_auto_complete()) {
+        set_needs_display();
+    }
+
+    if (needs_display()) {
+        display();
+    } else {
+        m_panel.notify_now_is_a_good_time_to_draw_cursor();
+    }
+}
+
 void Document::notify_key_pressed(KeyPress press) {
     if (press.modifiers & KeyPress::Modifier::Alt) {
         switch (press.key) {
@@ -1129,12 +1142,6 @@ void Document::notify_key_pressed(KeyPress press) {
                 break;
             default:
                 break;
-        }
-
-        if (needs_display()) {
-            display();
-        } else {
-            m_panel.notify_now_is_a_good_time_to_draw_cursor();
         }
         return;
     }
@@ -1218,11 +1225,7 @@ void Document::notify_key_pressed(KeyPress press) {
                 break;
         }
 
-        if (needs_display()) {
-            display();
-        } else {
-            m_panel.notify_now_is_a_good_time_to_draw_cursor();
-        }
+        finish_key_press();
         return;
     }
 
@@ -1300,9 +1303,5 @@ void Document::notify_key_pressed(KeyPress press) {
             break;
     }
 
-    if (needs_display()) {
-        display();
-    } else {
-        m_panel.notify_now_is_a_good_time_to_draw_cursor();
-    }
+    finish_key_press();
 }

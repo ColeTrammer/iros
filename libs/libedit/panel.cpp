@@ -62,5 +62,9 @@ Panel::RenderingInfo Panel::rendering_info_for_metadata(const CharacterMetadata&
         info.bg = VGA_COLOR_DARK_GREY;
     }
 
+    if (metadata.auto_complete_preview()) {
+        info.fg = VGA_COLOR_DARK_GREY;
+    }
+
     return info;
 }

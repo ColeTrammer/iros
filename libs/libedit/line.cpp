@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <edit/document.h>
 #include <edit/line.h>
 #include <edit/panel.h>
 
@@ -131,7 +132,7 @@ void Line::clear_syntax_highlighting() {
     }
 }
 
-void Line::render(Panel& panel, int col_offset, int row_in_panel) const {
+void Line::render(Document& document, Panel& panel, int col_offset, int row_in_panel) const {
     int col_position = 0;
     int line_index = index_of_col_position(col_offset);
     while (line_index < length() && col_position < panel.cols_at_row(row_in_panel)) {
@@ -147,6 +148,22 @@ void Line::render(Panel& panel, int col_offset, int row_in_panel) const {
         }
 
         line_index++;
+
+        if (document.preview_auto_complete() && row_in_panel == panel.cursor_row() && col_position == panel.cursor_col()) {
+            auto suggestions = panel.get_suggestions();
+            if (suggestions.suggestion_count() == 1) {
+                auto& text = suggestions.suggestion_list().first();
+                int length_to_write = text.size() - suggestions.suggestion_offset();
+                CharacterMetadata preview_metadata(CharacterMetadata::Flags::AutoCompletePreview);
+                for (int i = 0; col_position < panel.cols_at_row(row_in_panel) && i < length_to_write; i++) {
+                    panel.set_text_at(row_in_panel, col_position++, text[suggestions.suggestion_offset() + i], preview_metadata);
+                }
+
+                if (col_position >= panel.cols_at_row(row_in_panel)) {
+                    break;
+                }
+            }
+        }
     }
 
     for (; col_position < panel.cols_at_row(row_in_panel); col_position++) {

@@ -11,6 +11,7 @@ public:
         SyntaxNumber = 32,
         SyntaxKeyword = 64,
         SyntaxComment = 128,
+        AutoCompletePreview = 256,
     };
 
     CharacterMetadata() {}
@@ -44,7 +45,9 @@ public:
         clear_syntax_highlighting();
         m_flags |= flags;
     }
-    int syntax_highlighting() const { return m_flags & (~(Flags::Highlighted | Flags::Selected)); }
+    int syntax_highlighting() const { return m_flags & (~(Flags::Highlighted | Flags::Selected | Flags::AutoCompletePreview)); }
+
+    int auto_complete_preview() const { return m_flags & Flags::AutoCompletePreview; }
 
 private:
     int m_flags { 0 };
