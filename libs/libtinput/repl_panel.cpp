@@ -214,7 +214,24 @@ void ReplPanel::notify_line_count_changed() {
 }
 
 static int string_print_width(const String& string) {
-    return string.size();
+    // NOTE: naively handle TTY escape sequences as matching the regex \033(.*)[:alpha:]
+    //       also UTF-8 characters are ignored.
+
+    int count = 0;
+    for (size_t i = 0; i < string.size(); i++) {
+        if (string[i] != '\033') {
+            count++;
+            continue;
+        }
+
+        for (i = i + 1; i < string.size(); i++) {
+            if (isalpha(string[i])) {
+                break;
+            }
+        }
+    }
+
+    return count;
 }
 
 int ReplPanel::cols_at_row(int row) const {
