@@ -174,6 +174,8 @@ public:
 
     void clear_search();
 
+    void set_input_mode(InputMode mode) { m_input_mode = mode; }
+
     DocumentType type() const { return m_type; }
     void set_type(DocumentType type);
 

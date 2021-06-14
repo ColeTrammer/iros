@@ -118,13 +118,13 @@ Document::Document(Vector<Line> lines, String name, Panel& panel, InputMode mode
 Document::~Document() {}
 
 void Document::copy_settings_from(const Document& other) {
-    m_type = other.m_type;
-    m_input_mode = other.m_input_mode;
-    m_submittable = other.m_submittable;
+    set_input_mode(other.m_input_mode);
+    set_submittable(other.m_submittable);
+    set_type(other.m_type);
 
-    m_auto_complete_mode = other.m_auto_complete_mode;
-    m_preview_auto_complete = other.m_preview_auto_complete;
-    m_convert_tabs_to_spaces = other.m_convert_tabs_to_spaces;
+    set_auto_complete_mode(other.m_auto_complete_mode);
+    set_preview_auto_complete(other.m_preview_auto_complete);
+    set_convert_tabs_to_spaces(other.m_convert_tabs_to_spaces);
 
     set_show_line_numbers(other.show_line_numbers());
 }
