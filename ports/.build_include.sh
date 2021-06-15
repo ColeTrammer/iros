@@ -36,7 +36,7 @@ function_exists() {
 }
 
 builtin_exists() {
-    TYPE_TARGET="$1 is a shell function"
+    TYPE_RESULT="$(type $1 | head -n 1)"
     TYPE_TARGET="$1 is a shell builtin"
     [ "$TYPE_TARGET" = "$TYPE_RESULT" ]
 }
