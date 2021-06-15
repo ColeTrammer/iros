@@ -280,191 +280,161 @@ String ShRepl::get_main_prompt() const {
     return prompt;
 }
 
-static char *scandir_match_string = NULL;
-
-static int scandir_filter(const struct dirent *d) {
-    assert(scandir_match_string);
-    if (d->d_name[0] == '.' && scandir_match_string[0] != '.') {
-        return false;
-    }
-    return strstr(d->d_name, scandir_match_string) == d->d_name;
-}
-
-static int suggestion_compar(const void *a, const void *b) {
-    return strcmp(((const struct suggestion *) a)->suggestion, ((const struct suggestion *) b)->suggestion);
-}
-
-static void init_suggestion(struct suggestion *suggestions, size_t at, size_t suggestion_index, const char *name, const char *post) {
-    suggestions[at].length = strlen(name) + strlen(post);
-    suggestions[at].index = suggestion_index;
-    suggestions[at].suggestion = (char *) malloc(suggestions[at].length + 1);
-    strcpy(suggestions[at].suggestion, name);
-    strcat(suggestions[at].suggestion, post);
-}
-
-static struct suggestion *get_path_suggestions(char *line, int *num_suggestions, bool at_end) {
-    char *path_var = getenv("PATH");
-    if (path_var == NULL) {
-        return NULL;
+const Vector<ShRepl::Dirent> &ShRepl::ensure_directory_entries(const String &directory_in) const {
+    String directory = directory_in;
+    if (directory.is_empty()) {
+        directory = "./";
     }
 
-    char *path_copy = strdup(path_var);
-    char *search_path = strtok(path_copy, ":");
-    struct suggestion *suggestions = NULL;
-    while (search_path != NULL) {
-        scandir_match_string = line;
-        struct dirent **list;
-        int num_found = scandir(search_path, &list, scandir_filter, alphasort);
+    auto *result = m_cached_directories.get(directory);
+    if (result) {
+        return *result;
+    }
 
-        if (num_found > 0) {
-            suggestions = (struct suggestion *) realloc(suggestions, ((*num_suggestions) + num_found) * sizeof(struct suggestion));
+    dirent **raw_dirents = nullptr;
+    int count = scandir(directory.string(), &raw_dirents, nullptr, nullptr);
 
-            for (int i = 0; i < num_found; i++) {
-                init_suggestion(suggestions, (*num_suggestions) + i, 0, list[i]->d_name, at_end ? " " : "");
-                free(list[i]);
+    Vector<Dirent> dirents;
+    for (int i = 0; i < count; i++) {
+        auto *dirent = raw_dirents[i];
+
+        auto full_path = String::format("%s%s", directory.string(), dirent->d_name);
+        struct stat st;
+        if (::stat(full_path.string(), &st) < 0) {
+            continue;
+        }
+
+        auto name = String(dirent->d_name);
+        if (S_ISDIR(st.st_mode)) {
+            name += String('/');
+        }
+        dirents.add({ move(name), st.st_mode });
+    }
+    m_cached_directories.put(directory, move(dirents));
+    return *m_cached_directories.get(directory);
+}
+
+Suggestions ShRepl::suggest_executable(const String &prefix, const StringView &current, size_t suggestions_offset) const {
+    auto *path_env = getenv("PATH");
+    if (!path_env) {
+        return {};
+    }
+
+    Vector<String> matches;
+
+    String path_string = path_env;
+    auto directories = path_string.split_view(':');
+    for (auto &directory : directories) {
+        auto directory_with_slash = String(directory);
+        directory_with_slash += String('/');
+        auto &dirents = ensure_directory_entries(directory_with_slash);
+        for (auto &dirent : dirents) {
+            if (!S_ISREG(dirent.mode) || !(dirent.mode & S_IXUSR)) {
+                continue;
             }
 
-            (*num_suggestions) += num_found;
-            free(list);
+            if (dirent.name.view().starts_with(prefix.view())) {
+                if (!current.starts_with(dirent.name.view())) {
+                    String name = dirent.name;
+                    name += String(' ');
+                    matches.add(move(name));
+                }
+            }
         }
-
-        search_path = strtok(NULL, ":");
     }
 
-    // Check builtins
-    struct builtin_op *builtins = get_builtins();
+    builtin_op *builtins = get_builtins();
     for (size_t i = 0; i < NUM_BUILTINS; i++) {
-        if (strstr(builtins[i].name, line) == builtins[i].name) {
-            suggestions = (struct suggestion *) realloc(suggestions, ((*num_suggestions) + 1) * sizeof(struct suggestion));
-
-            init_suggestion(suggestions, *num_suggestions, 0, builtins[i].name, " ");
-
-            (*num_suggestions)++;
+        auto builtin_name = String(builtins[i].name);
+        if (builtin_name.view().starts_with(prefix.view())) {
+            if (!current.starts_with(builtin_name.view())) {
+                builtin_name += String(' ');
+                matches.add(move(builtin_name));
+            }
         }
     }
 
-    free(path_copy);
-    qsort(suggestions, *num_suggestions, sizeof(struct suggestion), suggestion_compar);
-    return suggestions;
+    return Suggestions(suggestions_offset, move(matches));
 }
 
-static struct suggestion *get_suggestions(char *line, int *num_suggestions, int *position, bool at_end) {
-    *num_suggestions = 0;
+Suggestions ShRepl::suggest_path_for(const String &input, const StringView &current_path, size_t suggestions_offset,
+                                     bool should_be_executable) const {
+    String directory = "";
+    String component = input;
 
-    char *last_space = strrchr(line, ' ');
-    bool is_first_word = last_space == NULL;
-    if (is_first_word) {
-        last_space = line - 1;
+    const char *last_slash = strrchr(input.string(), '/');
+    if (last_slash) {
+        directory = { input.string(), static_cast<size_t>(last_slash - input.string() + 1) };
+        component = String(last_slash + 1);
     }
-    *position = (line + strlen(line)) - last_space - 1;
 
-    char *to_match_start = last_space + 1;
-    char *to_match = strdup(to_match_start);
-
-    char *last_slash = strrchr(to_match, '/');
-    char *dirname;
-    char *currname;
-    bool relative_to_root = false;
-    if (last_slash == NULL) {
-        if (is_first_word) {
-            free(to_match);
-            return get_path_suggestions(line, num_suggestions, at_end);
+    auto &directory_entries = ensure_directory_entries(directory);
+    Vector<String> matches;
+    for (auto &dirent : directory_entries) {
+        if (should_be_executable && !(dirent.mode & S_IXUSR)) {
+            continue;
         }
 
-        dirname = (char *) ".";
-        currname = to_match;
-    } else if (last_slash == to_match) {
-        dirname = (char *) "/";
-        currname = to_match + 1;
-        relative_to_root = true;
-    } else {
-        *last_slash = '\0';
-        dirname = to_match;
-        currname = last_slash + 1;
-    }
-
-    scandir_match_string = currname;
-    struct dirent **list;
-    *num_suggestions = scandir(dirname, &list, scandir_filter, alphasort);
-    if (*num_suggestions <= 0) {
-        free(to_match);
-        return NULL;
-    }
-
-    struct suggestion *suggestions = (struct suggestion *) malloc(*num_suggestions * sizeof(struct suggestion));
-
-    for (ssize_t i = 0; i < (ssize_t) *num_suggestions; i++) {
-        struct stat stat_struct;
-        char *path;
-        if (relative_to_root) {
-            path = static_cast<char *>(malloc(strlen(list[i]->d_name) + 2));
-            strcpy(stpcpy(path, "/"), list[i]->d_name);
-        } else {
-            path = static_cast<char *>(malloc(strlen(dirname) + strlen(list[i]->d_name) + 2));
-            stpcpy(stpcpy(stpcpy(path, dirname), "/"), list[i]->d_name);
+        if (dirent.name.view().starts_with(component.view())) {
+            auto full_path = String::format("%s%s", directory.string(), dirent.name.string());
+            if (!current_path.starts_with(full_path.view())) {
+                auto component = dirent.name;
+                if (!S_ISDIR(dirent.mode)) {
+                    component += String(' ');
+                }
+                matches.add(move(component));
+            }
         }
-
-        if (stat(path, &stat_struct)) {
-            goto suggestions_skip_entry;
-        }
-
-        if (is_first_word && !(stat_struct.st_mode & S_IXUSR)) {
-            goto suggestions_skip_entry;
-        }
-
-        free(path);
-        init_suggestion(suggestions, (size_t) i, 0, list[i]->d_name, S_ISDIR(stat_struct.st_mode) ? "/" : at_end ? " " : "");
-
-        if (last_slash == NULL) {
-            suggestions[i].index = to_match_start - line;
-        } else if (relative_to_root) {
-            suggestions[i].index = to_match_start - line + 1;
-        } else {
-            suggestions[i].index = to_match_start - line + (currname - dirname);
-        }
-        free(list[i]);
-        continue;
-
-    suggestions_skip_entry:
-        free(path);
-        (*num_suggestions)--;
-        memmove(list + i, list + i + 1, ((*num_suggestions) - i) * sizeof(struct dirent *));
-        i--;
-        continue;
     }
 
-    free(list);
-    free(to_match);
-    return suggestions;
-}
-
-static void free_suggestions(struct suggestion *suggestions, size_t num_suggestions) {
-    if (num_suggestions == 0 || suggestions == NULL) {
-        return;
-    }
-
-    for (size_t i = 0; i < num_suggestions; i++) {
-        free(suggestions[i].suggestion);
-    }
-
-    free(suggestions);
+    return Suggestions(suggestions_offset - directory.size(), move(matches));
 }
 
 Suggestions ShRepl::get_suggestions(const String &input, size_t position) const {
-    String copy(input);
-    copy[position] = '\0';
+    ShLexer lexer(input.string(), input.size());
+    lexer.lex(LexComments::Yes);
 
-    int location;
-    int suggestion_count;
-    auto *suggestions = ::get_suggestions(copy.string(), &suggestion_count, &location, input.size() == position);
-
-    Vector<String> result;
-    for (int i = 0; i < suggestion_count; i++) {
-        result.add({ suggestions[i].suggestion, suggestions[i].length });
+    while (lexer.peek_next_token_type() != ShTokenType::End) {
+        lexer.advance();
     }
 
-    free_suggestions(suggestions, suggestion_count);
-    return Suggestions(location, move(result));
+    const ShLexer::Token *desired_token = nullptr;
+    auto *desired_position = input.string() + position - 1;
+    int desired_token_index = lexer.tokens().size();
+    for (auto &token : lexer.tokens()) {
+        assert(token.value().has_text());
+        auto *start = token.value().text().start();
+        auto *end = token.value().text().end();
+        if (desired_position >= start && desired_position <= end) {
+            desired_token_index = &token - lexer.tokens().vector();
+            desired_token = &token;
+        }
+
+        if (desired_position < start) {
+            desired_token_index = &token - lexer.tokens().vector();
+            break;
+        }
+    }
+
+    if (desired_token && desired_token->type() != ShTokenType::WORD) {
+        return {};
+    }
+
+    String current_text_before_cursor;
+    StringView current_text("");
+    size_t suggestions_offset = 0;
+    if (desired_token) {
+        suggestions_offset = static_cast<size_t>(desired_position + 1 - desired_token->value().text().start());
+        current_text = desired_token->value().text();
+        current_text_before_cursor = { desired_token->value().text().start(),
+                                       static_cast<size_t>((input.string() + position) - desired_token->value().text().start()) };
+    }
+
+    bool should_be_executable = lexer.would_be_first_word_of_command(desired_token_index);
+    if (should_be_executable && !current_text.index_of('/').has_value()) {
+        return suggest_executable(current_text_before_cursor, current_text, suggestions_offset);
+    }
+    return suggest_path_for(current_text_before_cursor, current_text, suggestions_offset, should_be_executable);
 }
 
 void ShRepl::did_get_input(const String &input) {
@@ -494,6 +464,7 @@ bool ShRepl::force_stop_input() const {
 
 void ShRepl::did_end_input() {
     command_pop_position_params();
+    m_cached_directories.clear();
 }
 
 static String history_file() {
