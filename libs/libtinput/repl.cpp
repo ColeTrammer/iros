@@ -1,9 +1,6 @@
-#include <edit/document.h>
-#include <errno.h>
+#include <edit/suggestions.h>
+#include <tinput/input_source.h>
 #include <tinput/repl.h>
-#include <unistd.h>
-
-#include "repl_panel.h"
 
 namespace TInput {
 
@@ -11,34 +8,21 @@ Repl::Repl(UniquePtr<History> history) : m_history(move(history)) {}
 
 Repl::~Repl() {}
 
-InputResult Repl::get_input() {
-    m_input.clear();
+void Repl::enter(InputSource& input_source) {
+    did_begin_input();
 
-    for (;;) {
-        ReplPanel panel(*this);
-        auto document = Document::create_single_line(panel);
-        document->set_type(get_input_type());
-        document->set_auto_complete_mode(AutoCompleteMode::Always);
-        document->set_preview_auto_complete(true);
-        panel.set_document(move(document));
-        panel.enter();
+    while (!force_stop_input()) {
+        did_begin_loop_iteration();
 
-        if (panel.quit_by_eof()) {
-            return InputResult::Eof;
+        auto result = input_source.get_input();
+        if (result == InputResult::Error || result == InputResult::Eof) {
+            break;
         }
 
-        if (panel.quit_by_interrupt()) {
-            continue;
-        }
-
-        auto input_text = panel.document()->content_string();
-        history().add(input_text);
-
-        m_input = move(input_text);
-        break;
+        did_get_input(input_source.input_text());
     }
 
-    return InputResult::Success;
+    did_end_input();
 }
 
 String Repl::get_main_prompt() const {
@@ -49,8 +33,7 @@ String Repl::get_secondary_prompt() const {
     return "> ";
 }
 
-Suggestions Repl::get_suggestions(const String &, size_t) const {
+Suggestions Repl::get_suggestions(const String&, size_t) const {
     return {};
 }
-
 }

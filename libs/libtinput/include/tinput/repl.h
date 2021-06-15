@@ -2,21 +2,14 @@
 
 #include <edit/document_type.h>
 #include <liim/pointers.h>
-#include <liim/string.h>
 #include <tinput/history.h>
 
 class Suggestions;
 
 namespace TInput {
 
+class InputSource;
 class History;
-
-enum class InputResult {
-    Eof,
-    Empty,
-    Error,
-    Success,
-};
 
 enum class InputStatus {
     Incomplete,
@@ -28,11 +21,10 @@ public:
     explicit Repl(UniquePtr<History> history);
     virtual ~Repl();
 
-    InputResult get_input();
-    const String& input_string() const { return m_input; }
-
     History& history() { return *m_history; }
     const History& history() const { return *m_history; }
+
+    void enter(InputSource& input_source);
 
     virtual InputStatus get_input_status(const String& input) const = 0;
 
@@ -41,8 +33,15 @@ public:
     virtual String get_secondary_prompt() const;
     virtual Suggestions get_suggestions(const String& input, size_t cursor_index) const;
 
+protected:
+    virtual void did_get_input(const String& input) = 0;
+
+    virtual bool force_stop_input() const { return false; }
+    virtual void did_begin_loop_iteration() {}
+    virtual void did_begin_input() {}
+    virtual void did_end_input() {}
+
 private:
-    String m_input;
     UniquePtr<History> m_history;
 };
 
