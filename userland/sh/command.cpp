@@ -383,7 +383,7 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
         execvp(we.we_wordv[0], we.we_wordv);
 
     abort_command:
-        perror("Shell");
+        fprintf(stderr, "%s: %s\n", we.we_wordv[0], strerror(errno));
         _exit(127);
     } else if (pid < 0) {
         wordfree(&we);
