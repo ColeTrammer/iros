@@ -438,7 +438,8 @@ Suggestions ShRepl::get_suggestions(const String &input, size_t position) const 
 }
 
 void ShRepl::did_get_input(const String &input) {
-    ShLexer lexer(input.string(), input.size());
+    g_line = make_shared<String>(input);
+    ShLexer lexer(g_line->string(), g_line->size());
     if (!lexer.lex()) {
         return;
     }
@@ -450,12 +451,12 @@ void ShRepl::did_get_input(const String &input) {
         return;
     }
 
-    g_line = make_shared<String>(input);
     command_run(const_cast<ShValue::Program &>(parser.result().program()));
 }
 
 void ShRepl::did_begin_loop_iteration() {
     m_cached_directories.clear();
+    g_line = nullptr;
     job_check_updates(true);
 }
 

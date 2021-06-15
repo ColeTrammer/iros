@@ -2,7 +2,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <fnmatch.h>
-#include <functional>
 #include <liim/function.h>
 #include <liim/hash_map.h>
 #include <liim/linked_list.h>
@@ -40,6 +39,7 @@ struct FunctionBody {
 
 HashMap<String, String> g_aliases;
 HashMap<String, FunctionBody> g_functions;
+extern SharedPtr<String> g_line;
 
 static int do_command_subst(char* s);
 
@@ -560,8 +560,6 @@ static pid_t __do_case_clause(ShValue::CaseClause& case_clause) {
     set_exit_status(0);
     return 0;
 }
-
-extern SharedPtr<String> g_line;
 
 static pid_t __do_function_definition(ShValue::FunctionDefinition& command, ShValue::List::Combinator mode, bool* was_builtin,
                                       pid_t to_set_pgid, bool in_subshell) {
