@@ -17,6 +17,9 @@
 #include <sys/utsname.h>
 #include <sys/wait.h>
 #include <termios.h>
+#include <tinput/file_input_source.h>
+#include <tinput/string_input_source.h>
+#include <tinput/terminal_input_source.h>
 #include <unistd.h>
 
 #include "builtin.h"
@@ -25,23 +28,12 @@
 #include "job.h"
 #include "sh_state.h"
 
-static sigjmp_buf env;
-static volatile sig_atomic_t jump_active = 0;
 static struct termios saved_termios;
 
 static void restore_termios() {
     if (isatty(STDIN_FILENO)) {
         tcsetattr(STDIN_FILENO, TCSAFLUSH, &saved_termios);
     }
-}
-
-static void on_int(int signo) {
-    assert(signo == SIGINT);
-    if (!jump_active) {
-        return;
-    }
-
-    siglongjmp(env, 1);
 }
 
 struct passwd* user_passwd;
@@ -62,20 +54,18 @@ int main(int argc, char** argv) {
     setenv("SHELL", user_passwd->pw_shell, 1);
     setenv("HOME", user_passwd->pw_dir, 1);
 
-    struct input_source input_source;
+    ShRepl repl;
 
     // Respect -c
     int arg_index = 1;
-    bool input_resolved = false;
+    UniquePtr<TInput::InputSource> input_source;
+    bool string_input = false;
     if (argc > 1 && strcmp(argv[1], "-c") == 0) {
-        input_source.mode = INPUT_STRING;
+        string_input = true;
         arg_index++;
-        input_resolved = true;
     } else if (argc > 1 && strcmp(argv[1], "-s") == 0) {
-        input_source.mode = INPUT_FILE;
-        input_source.source.file = stdin;
+        input_source = make_unique<TInput::FileInputSource>(repl, stdin);
         arg_index++;
-        input_resolved = true;
     }
 
     for (; arg_index < argc; arg_index++) {
@@ -100,20 +90,21 @@ int main(int argc, char** argv) {
     }
 
     if (arg_index >= argc) {
-        if (!input_resolved) {
-            input_source.mode = INPUT_TTY;
-            input_source.source.tty = stdin;
+        if (string_input) {
+            fprintf(stderr, "Invalid args\n");
+            return 1;
+        }
 
+        if (!input_source) {
             ShState::the().set_interactive(true);
             ShState::the().set_notify(true);
             ShState::the().set_vi(true);
             command_init_special_vars(argv[0]);
-        } else if (input_source.mode == INPUT_STRING) {
-            fprintf(stderr, "Invalid args\n");
-            return 1;
+
+            input_source = make_unique<TInput::TerminalInputSource>(repl);
         }
-    } else if (input_resolved && input_source.mode == INPUT_STRING) {
-        input_source.source.string_input_source = input_create_string_input_source(argv[arg_index]);
+    } else if (string_input) {
+        input_source = make_unique<TInput::StringInputSource>(repl, argv[arg_index]);
 
         arg_index++;
         if (arg_index >= argc) {
@@ -121,10 +112,9 @@ int main(int argc, char** argv) {
         } else {
             command_init_special_vars(argv[arg_index++]);
         }
-    } else if (!input_resolved) {
-        input_source.mode = INPUT_FILE;
-        input_source.source.file = fopen(argv[arg_index], "r");
-        if (!input_source.source.file) {
+    } else if (!input_source) {
+        input_source = TInput::FileInputSource::create_from_path(repl, argv[arg_index]);
+        if (!input_source) {
             perror("sh");
             return 1;
         }
@@ -138,10 +128,6 @@ int main(int argc, char** argv) {
 
     if (isatty(STDOUT_FILENO)) {
         struct sigaction to_set;
-        to_set.sa_handler = &on_int;
-        to_set.sa_flags = 0;
-        sigaction(SIGINT, &to_set, NULL);
-
         to_set.sa_flags = 0;
         to_set.sa_handler = SIG_IGN;
         sigaction(SIGTTOU, &to_set, NULL);
@@ -163,34 +149,12 @@ int main(int argc, char** argv) {
                 op_dot(args);
             }
         }
-
-        char* base = user_passwd->pw_dir;
-        char* hist_file_name = (char*) ".sh_hist";
-        char* hist_file = reinterpret_cast<char*>(malloc(strlen(base) + strlen(hist_file_name) + 2));
-        strcpy(hist_file, base);
-        strcat(hist_file, "/");
-        strcat(hist_file, hist_file_name);
-
-        setenv("HISTFILE", hist_file, 0);
-        setenv("HISTSIZE", "100", 0);
-
-        // setenv makes a copy
-        free(hist_file);
-
-        init_history();
-        atexit(write_history);
     }
 
-    if (sigsetjmp(env, 1) == 1) {
-        fprintf(stderr, "^C%c", '\n');
-        if (line_save) {
-            free(line_save);
-        }
-        if (buffer) {
-            free(buffer);
-        }
-    }
-    jump_active = 1;
+    repl.enter(*input_source);
 
-    return do_command_from_source(&input_source);
+    if (ShState::the().option_interactive()) {
+        puts("exit");
+    }
+    return 0;
 }

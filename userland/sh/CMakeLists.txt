@@ -8,7 +8,7 @@ set(SOURCES
 )
 
 add_os_executable(sh bin)
-target_link_libraries(sh libsh libext)
+target_link_libraries(sh libsh libext libtinput)
 
 if (${NATIVE_BUILD})
     target_compile_definitions(sh PRIVATE USERLAND_NATIVE)

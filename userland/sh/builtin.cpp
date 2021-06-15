@@ -16,6 +16,7 @@
 #include <sys/times.h>
 #include <sys/wait.h>
 #include <time.h>
+#include <tinput/file_input_source.h>
 #include <unistd.h>
 
 #ifndef USERLAND_NATIVE
@@ -219,7 +220,7 @@ static int op_history(char **argv) {
         return 0;
     }
 
-    print_history();
+    ShRepl::the().history().print_history();
     return 0;
 }
 
@@ -269,11 +270,10 @@ int op_dot(char **argv) {
         return 2;
     }
 
-    struct input_source source;
-    source.mode = INPUT_FILE;
-    source.source.file = fopen(argv[1], "r");
-    if (!source.source.file) {
-        fprintf(stderr, "%s: Failed to open file `%s'\n", argv[0], argv[1]);
+    auto path = String(argv[1]);
+    auto input_source = TInput::FileInputSource::create_from_path(ShRepl::the(), path);
+    if (!input_source) {
+        fprintf(stderr, "%s: Failed to open file `%s'\n", argv[0], path.string());
         return 1;
     }
 
@@ -284,9 +284,9 @@ int op_dot(char **argv) {
     command_push_position_params(PositionArgs(argv + 2, i - 2));
 
     inc_exec_depth_count();
-    int ret = do_command_from_source(&source);
+    ShRepl::the().enter(*input_source);
     dec_exec_depth_count();
-    return ret;
+    return get_last_exit_status();
 }
 
 extern HashMap<String, String> g_aliases;
@@ -459,8 +459,7 @@ static int op_test(char **argv) {
     }
 
     int argc = 0;
-    while (argv[++argc]) {
-    }
+    while (argv[++argc]) {}
 
     if (strcmp(argv[0], "[") == 0) {
         if (strcmp(argv[argc - 1], "]") != 0) {

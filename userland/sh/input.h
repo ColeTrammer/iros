@@ -1,48 +1,29 @@
-#ifndef _INPUT_H
-#define _INPUT_H 1
+#pragma once
 
 #include <liim/pointers.h>
 #include <sh/sh_token.h>
 #include <stdio.h>
+#include <tinput/repl.h>
 
-extern char *buffer;
-extern char *line_save;
+class ShRepl final : public TInput::Repl {
+public:
+    static ShRepl& the();
 
-enum input_mode { INPUT_TTY, INPUT_FILE, INPUT_STRING };
+    ShRepl();
+    virtual ~ShRepl() override;
 
-enum class InputResult {
-    Eof,
-    Empty,
-    Error,
-    Success,
+private:
+    virtual void did_get_input(const String& input) override;
+    virtual void did_begin_loop_iteration() override;
+    virtual void did_end_input() override;
+    virtual bool force_stop_input() const override;
+
+    virtual TInput::InputStatus get_input_status(const String& input) const override;
+    virtual DocumentType get_input_type() const override { return DocumentType::ShellScript; }
+    virtual String get_main_prompt() const override;
+    virtual String get_secondary_prompt() const override { return "> "; }
+    virtual Suggestions get_suggestions(const String& input, size_t position) const override;
 };
-
-struct string_input_source {
-    char *string;
-    size_t offset;
-    size_t max;
-};
-
-struct input_source {
-    enum input_mode mode;
-    union {
-        FILE *tty;
-        FILE *file;
-        struct string_input_source *string_input_source;
-    } source;
-};
-
-struct string_input_source *input_create_string_input_source(char *s);
-
-InputResult input_get_line(struct input_source *source, ShValue *command);
-void input_cleanup(struct input_source *source);
-int do_command_from_source(struct input_source *source);
-
-void init_history();
-void print_history();
-void write_history();
 
 void __refreshcwd();
-char *__getcwd();
-
-#endif /* _INPUT_H */
+char* __getcwd();

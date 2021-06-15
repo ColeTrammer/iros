@@ -790,15 +790,17 @@ public:
 #endif
     virtual void on_error(ShTokenType type) override {
         if (peek_token_type() != ShTokenType::End) {
-            fprintf(stderr, "\nUnexpected token: `%s` <%s> (state %d)", token_type_to_string(type),
-                    String(this->current_token().text()).string(), this->current_state());
+            m_error_message = String::format("Unexpected token: `%s` <%s> (state %d)", token_type_to_string(type),
+                                             String(this->current_token().text()).string(), this->current_state());
         } else {
             m_needs_more_tokens = true;
         }
     }
 
+    const String& error_message() const { return m_error_message; }
     bool needs_more_tokens() const { return m_needs_more_tokens; }
 
 private:
+    String m_error_message;
     bool m_needs_more_tokens { false };
 };
