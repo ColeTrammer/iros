@@ -737,6 +737,8 @@ int ReplPanel::enter() {
                 if (ev.is<KeyPress>()) {
                     auto key_event = ev.as<KeyPress>();
                     if (key_event.key == 'C' && key_event.modifiers == KeyPress::Modifier::Control) {
+                        document->set_preview_auto_complete(false);
+                        document->display();
                         printf("^C\r\n");
                         fflush(stdout);
                         set_quit_by_interrupt();
