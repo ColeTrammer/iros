@@ -455,6 +455,7 @@ void ShRepl::did_get_input(const String &input) {
 }
 
 void ShRepl::did_begin_loop_iteration() {
+    m_cached_directories.clear();
     job_check_updates(true);
 }
 
@@ -464,7 +465,6 @@ bool ShRepl::force_stop_input() const {
 
 void ShRepl::did_end_input() {
     command_pop_position_params();
-    m_cached_directories.clear();
 }
 
 static String history_file() {
