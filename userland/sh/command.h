@@ -60,6 +60,11 @@ private:
     LinkedList<String> strings;
 };
 
+struct FunctionBody {
+    ShValue::CompoundCommand compound_command;
+    SharedPtr<String> for_posterity;
+};
+
 int command_run(ShValue::Program& program);
 
 void command_init_special_vars(char* arg_zero);

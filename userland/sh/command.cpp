@@ -32,11 +32,6 @@
 #include "job.h"
 #include "sh_state.h"
 
-struct FunctionBody {
-    ShValue::CompoundCommand compound_command;
-    SharedPtr<String> for_posterity;
-};
-
 HashMap<String, String> g_aliases;
 HashMap<String, FunctionBody> g_functions;
 extern SharedPtr<String> g_line;

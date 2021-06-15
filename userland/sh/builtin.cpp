@@ -31,6 +31,9 @@
 #include "job.h"
 #include "sh_state.h"
 
+extern HashMap<String, String> g_aliases;
+extern HashMap<String, FunctionBody> g_functions;
+
 static int op_exit(char **args) {
     int status = 0;
     if (args[1] != NULL) {
@@ -288,8 +291,6 @@ int op_dot(char **argv) {
     dec_exec_depth_count();
     return get_last_exit_status();
 }
-
-extern HashMap<String, String> g_aliases;
 
 static String sh_escape(const String &string) {
     // FIXME: should escape the literal `'` with `'\''`
@@ -847,6 +848,34 @@ static int op_umask(char **argv) {
     return 0;
 }
 
+static int op_type(char **argv) {
+    while (*++argv) {
+        auto word = String(*argv);
+
+        auto *alias = g_aliases.get(word);
+        if (alias) {
+            printf("%s is aliased to `%s'\n", word.string(), alias->string());
+            continue;
+        }
+
+        auto *function = g_functions.get(word);
+        if (function) {
+            printf("%s is a shell function\n", word.string());
+            puts(function->for_posterity->string());
+            continue;
+        }
+
+        auto *builtin = builtin_find_op(word.string());
+        if (builtin) {
+            printf("%s is a shell builtin\n", word.string());
+            continue;
+        }
+
+        printf("%s is %s\n", word.string(), word.string());
+    }
+    return 0;
+}
+
 static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "exit", op_exit, true },       { "cd", op_cd, true },         { "echo", op_echo, false },
     { "export", op_export, true },   { "unset", op_unset, true },   { "jobs", op_jobs, true },
@@ -858,7 +887,7 @@ static struct builtin_op builtin_ops[NUM_BUILTINS] = {
     { "exec", op_exec, true },       { "set", op_set, true },       { "[", op_test, true },
     { "test", op_test, true },       { "eval", op_eval, true },     { "time", op_time, false },
     { "pushd", op_pushd, true },     { "popd", op_popd, true },     { "dirs", op_dirs, true },
-    { "read", op_read, true },       { "umask", op_umask, true }
+    { "read", op_read, true },       { "umask", op_umask, true },   { "type", op_type, false },
 };
 
 struct builtin_op *get_builtins() {
