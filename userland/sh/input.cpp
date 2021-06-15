@@ -455,6 +455,7 @@ void ShRepl::did_get_input(const String &input) {
 }
 
 void ShRepl::did_begin_loop_iteration() {
+    history().set_should_write_history(ShState::the().option_interactive());
     m_cached_directories.clear();
     g_line = nullptr;
     job_check_updates(true);
@@ -493,8 +494,6 @@ ShRepl &ShRepl::the() {
 
 ShRepl::ShRepl() : Repl(make_unique<TInput::History>(history_file(), history_size())) {
     s_the = this;
-
-    history().set_should_write_history(ShState::the().option_interactive());
 }
 
 ShRepl::~ShRepl() {}
