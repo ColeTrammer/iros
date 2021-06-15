@@ -149,7 +149,8 @@ void Line::render(Document& document, Panel& panel, int col_offset, int row_in_p
 
         line_index++;
 
-        if (document.preview_auto_complete() && row_in_panel == panel.cursor_row() && col_position == panel.cursor_col()) {
+        if (document.preview_auto_complete() && document.selection().empty() && row_in_panel == panel.cursor_row() &&
+            col_position == panel.cursor_col()) {
             auto suggestions = panel.get_suggestions();
             if (suggestions.suggestion_count() == 1) {
                 auto& text = suggestions.suggestion_list().first();
