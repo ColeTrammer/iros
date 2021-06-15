@@ -17,6 +17,7 @@ public:
     int size() const { return m_history.size(); }
     const String& item(int index) const { return m_history[index]; }
 
+    void print_history();
     void read_history();
     void write_history();
 

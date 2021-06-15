@@ -13,6 +13,12 @@ History::~History() {
     write_history();
 }
 
+void History::print_history() {
+    for (int i = 0; i < size(); i++) {
+        printf("%*d %s\n", 4, i + 1, item(i).string());
+    }
+}
+
 void History::read_history() {
     char* line = nullptr;
     size_t line_max = 0;
