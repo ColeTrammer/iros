@@ -197,7 +197,8 @@ void ReplPanel::document_did_change() {
 
             if (input_status == InputStatus::Finished) {
                 document()->move_cursor_to_document_end();
-                draw_cursor();
+                document()->set_preview_auto_complete(false);
+                document()->display();
                 printf("\r\n");
                 fflush(stdout);
                 quit();
