@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <tinput/history.h>
 
 namespace TInput {
@@ -13,8 +14,8 @@ History::~History() {
 }
 
 void History::read_history() {
-    char* line;
-    size_t line_max;
+    char* line = nullptr;
+    size_t line_max = 0;
 
     auto* file = fopen(m_path.string(), "r");
     if (!file) {
@@ -42,6 +43,7 @@ void History::read_history() {
 
     add(move(current_item));
 
+    free(line);
     fclose(file);
 }
 
