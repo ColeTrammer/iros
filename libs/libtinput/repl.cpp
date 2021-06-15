@@ -7,7 +7,7 @@
 
 namespace TInput {
 
-Repl::Repl() : m_history(make_unique<History>()) {}
+Repl::Repl(UniquePtr<History> history) : m_history(move(history)) {}
 
 Repl::~Repl() {}
 
@@ -28,9 +28,7 @@ InputResult Repl::get_input() {
         }
 
         auto input_text = panel.document()->content_string();
-        if (!input_text.is_empty()) {
-            history().add(input_text);
-        }
+        history().add(input_text);
 
         if (panel.quit_by_interrupt()) {
             continue;

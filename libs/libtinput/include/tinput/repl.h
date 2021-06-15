@@ -25,7 +25,7 @@ enum class InputStatus {
 
 class Repl {
 public:
-    Repl();
+    explicit Repl(UniquePtr<History> history);
     virtual ~Repl();
 
     InputResult get_input();

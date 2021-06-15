@@ -1,4 +1,5 @@
 set(SOURCES
+    history.cpp
     repl_panel.cpp
     repl.cpp
 )
