@@ -71,6 +71,8 @@ ReplPanel::ReplPanel(Repl& repl) : m_repl(repl) {
     m_main_prompt = repl.get_main_prompt();
     m_secondary_prompt = repl.get_secondary_prompt();
 
+    m_history_index = m_repl.history().size();
+
     if (!s_raw_mode_enabled) {
         enable_raw_mode();
     }
@@ -217,10 +219,6 @@ void ReplPanel::document_did_change() {
 }
 
 void ReplPanel::quit() {
-    if (m_history_index != -1) {
-        m_repl.history().pop();
-    }
-
     m_should_exit = true;
     m_exit_code = 1;
 }
@@ -662,7 +660,7 @@ void ReplPanel::handle_suggestions(const Suggestions& suggestions) {
 
 Vector<UniquePtr<Document>>& ReplPanel::ensure_history_documents() {
     if (m_history_documents.empty()) {
-        m_history_documents.resize(m_repl.history().size());
+        m_history_documents.resize(m_repl.history().size() + 1);
     }
     return m_history_documents;
 }
@@ -686,11 +684,6 @@ void ReplPanel::move_history_up() {
         return;
     }
 
-    if (m_history_index == -1) {
-        m_history_index = m_repl.history().size();
-        m_repl.history().add(document()->content_string());
-    }
-
     auto current_document = take_document();
     auto new_document = take_history_document(m_history_index - 1);
     new_document->copy_settings_from(*current_document);
@@ -703,7 +696,7 @@ void ReplPanel::move_history_up() {
 }
 
 void ReplPanel::move_history_down() {
-    if (m_history_index == -1 || m_history_index == m_repl.history().size() - 1) {
+    if (m_history_index == m_repl.history().size()) {
         return;
     }
 
