@@ -27,12 +27,12 @@ InputResult Repl::get_input() {
             return InputResult::Eof;
         }
 
-        auto input_text = panel.document()->content_string();
-        history().add(input_text);
-
         if (panel.quit_by_interrupt()) {
             continue;
         }
+
+        auto input_text = panel.document()->content_string();
+        history().add(input_text);
 
         m_input = move(input_text);
         break;
