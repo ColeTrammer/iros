@@ -10,7 +10,9 @@ History::History(String path, int history_max) : m_history(history_max), m_histo
 }
 
 History::~History() {
-    write_history();
+    if (should_write_history()) {
+        write_history();
+    }
 }
 
 void History::print_history() {

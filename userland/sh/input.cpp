@@ -21,6 +21,7 @@
 #include "command.h"
 #include "input.h"
 #include "job.h"
+#include "sh_state.h"
 
 enum class LineStatus { Done, Continue, EscapedNewline, Error };
 
@@ -520,6 +521,8 @@ ShRepl &ShRepl::the() {
 
 ShRepl::ShRepl() : Repl(make_unique<TInput::History>(history_file(), history_size())) {
     s_the = this;
+
+    history().set_should_write_history(ShState::the().option_interactive());
 }
 
 ShRepl::~ShRepl() {}

@@ -21,10 +21,13 @@ public:
     void read_history();
     void write_history();
 
+    bool should_write_history() const { return m_should_write_history; }
+    void set_should_write_history(bool b) { m_should_write_history = b; }
+
 private:
     Vector<String> m_history;
     int m_history_max;
     String m_path;
+    bool m_should_write_history { true };
 };
-
 }
