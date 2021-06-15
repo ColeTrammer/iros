@@ -296,9 +296,7 @@ static int sh_flags_for_token_type(ShLexer& lexer, int index) {
 static void highlight_sh(Document& document) {
     auto contents = document.content_string();
     ShLexer lexer(contents.string(), contents.size());
-    if (!lexer.lex(LexComments::Yes)) {
-        return;
-    }
+    lexer.lex(LexComments::Yes);
 
     if (lexer.tokens().empty()) {
         return;
