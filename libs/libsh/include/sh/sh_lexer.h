@@ -17,7 +17,7 @@ class ShLexer final : public GenericLexer<ShTokenType, ShValue> {
 public:
     using Token = GenericToken<ShTokenType, ShValue>;
 
-    ShLexer(char* input_stream, size_t length)
+    ShLexer(const char* input_stream, size_t length)
         : GenericLexer<ShTokenType, ShValue>(), m_input_stream(input_stream), m_input_length(length) {}
     virtual ~ShLexer();
 
@@ -273,14 +273,14 @@ private:
         }
     }
 
-    char* m_input_stream { nullptr };
+    const char* m_input_stream { nullptr };
     size_t m_input_length { 0 };
     size_t m_position { 0 };
     size_t m_current_row { 0 };
     size_t m_current_col { 0 };
     size_t m_current_token_row { 0 };
     size_t m_current_token_col { 0 };
-    char* m_current_token_start { nullptr };
+    const char* m_current_token_start { nullptr };
     size_t m_resume_row { 0 };
     size_t m_resume_col { 0 };
     size_t m_resume_pos { 0 };
