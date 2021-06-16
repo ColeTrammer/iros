@@ -6,6 +6,7 @@ set(INITRD_PROGRAMS
     cancel_test.cpp
     cleanup_handler_test.c
     cond_test.c
+    coroutine_test.cpp
     detached_thread_test.cpp
     dl_iter_test.cpp
     dlopen_test.c
@@ -102,6 +103,7 @@ target_link_libraries(barrier_test ${PTHREAD_LIB})
 target_link_libraries(cancel_test ${PTHREAD_LIB})
 target_link_libraries(cleanup_handler_test ${PTHREAD_LIB})
 target_link_libraries(cond_test ${PTHREAD_LIB})
+target_link_libraries(coroutine_test libliim)
 target_link_libraries(detached_thread_test ${PTHREAD_LIB})
 target_link_libraries(dlopen_test ${DL_LIB} ${PTHREAD_LIB})
 target_link_options(dlopen_test PRIVATE -rdynamic)
