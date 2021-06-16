@@ -1,11 +1,11 @@
 #include <liim/generator.h>
 #include <stdio.h>
 
-static Generator<int> do_thing() {
+static PureGenerator<int> do_thing() {
     for (int i = 0; i < 5; i++) {
         co_yield i;
     }
-    co_return -1;
+    co_return;
 }
 
 int main() {
