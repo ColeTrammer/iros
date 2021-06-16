@@ -38,7 +38,9 @@ static void update_panel_sizes() {
 
     winsize sz;
     assert(ioctl(STDOUT_FILENO, TIOCGWINSZ, &sz) == 0);
-    s_main_panel->set_coordinates(1, sz.ws_col);
+
+    auto* document = s_main_panel->document();
+    s_main_panel->set_coordinates(document ? document->num_lines() : 1, sz.ws_row, sz.ws_col);
 }
 
 static void enable_raw_mode() {
@@ -81,13 +83,28 @@ ReplPanel::ReplPanel(Repl& repl) : m_repl(repl) {
     update_panel_sizes();
 }
 
-void ReplPanel::set_coordinates(int rows, int cols) {
-    m_rows = rows;
-    m_max_cols = cols;
-    m_screen_info.resize(cols_at_row(0) + (rows - 1) * cols_at_row(1));
+void ReplPanel::set_coordinates(int rows, int max_rows, int max_cols) {
+    m_rows = min(max_rows, rows);
+    m_max_rows = max_rows;
+    m_max_cols = max_cols;
+    m_screen_info.resize(cols_at_row(0) + (m_rows - 1) * cols_at_row(1));
     m_dirty_rows.resize(m_rows);
     for (auto& b : m_dirty_rows) {
         b = true;
+    }
+
+    m_cursor_row = min(m_cursor_row, m_rows - 1);
+    m_cursor_col = min(m_cursor_col, cols_at_row(m_cursor_row));
+
+    if (m_absolute_row_position != -1) {
+        int old_row_position = m_absolute_row_position;
+        if (old_row_position >= max_rows) {
+            m_absolute_row_position = max(0, m_rows - document()->num_lines());
+        }
+
+        printf("\033[%d;%dH", m_absolute_row_position + 1, 1);
+        m_visible_cursor_row = 0;
+        m_visible_cursor_col = 0;
     }
 
     if (auto* doc = document()) {
@@ -205,9 +222,10 @@ void ReplPanel::document_did_change() {
                 return;
             }
 
-            set_coordinates(rows() + 1, max_cols());
             document()->insert_line(Line(""), document()->num_lines());
             document()->move_cursor_to_document_end();
+            document()->scroll_cursor_into_view();
+            document()->display_if_needed();
         };
 
         m_cursor_row = 0;
@@ -235,7 +253,10 @@ int ReplPanel::index(int row, int col) const {
 void ReplPanel::notify_line_count_changed() {
     if (document()->num_lines() != m_rows) {
         int new_rows = document()->num_lines();
-        set_coordinates(new_rows, max_cols());
+        if (m_absolute_row_position + new_rows > max_rows()) {
+            m_absolute_row_position -= (m_absolute_row_position + new_rows) - max_rows();
+        }
+        set_coordinates(new_rows, max_rows(), max_cols());
     }
 }
 
@@ -692,6 +713,8 @@ void ReplPanel::move_history_up() {
 
     set_document(move(new_document));
     document()->move_cursor_to_document_end();
+    document()->scroll_cursor_into_view();
+    document()->display_if_needed();
 
     m_history_index--;
 }
@@ -708,11 +731,35 @@ void ReplPanel::move_history_down() {
 
     set_document(move(new_document));
     document()->move_cursor_to_document_end();
+    document()->scroll_cursor_into_view();
+    document()->display_if_needed();
 
     m_history_index++;
 }
 
+void ReplPanel::get_absolute_row_position() {
+    m_absolute_row_position = -1;
+
+    printf("\033[6n");
+    fflush(stdout);
+
+    char buffer[65];
+    if (read(STDOUT_FILENO, buffer, sizeof(buffer) - 1) < 0) {
+        return;
+    }
+
+    int row;
+    int col;
+    if (sscanf(buffer, "\033%d;%dR", &row, &col) < 2) {
+        return;
+    }
+
+    m_absolute_row_position = row - 1;
+}
+
 int ReplPanel::enter() {
+    get_absolute_row_position();
+
     fd_set set;
     for (;;) {
         FD_ZERO(&set);

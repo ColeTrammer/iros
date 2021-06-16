@@ -886,6 +886,7 @@ void Document::notify_panel_size_changed() {
         move_cursor_up();
     }
 
+    clamp_cursor_to_line_end();
     while (m_panel.cursor_col() >= m_panel.cols_at_row(m_panel.cursor_row())) {
         move_cursor_left();
     }
