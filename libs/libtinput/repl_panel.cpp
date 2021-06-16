@@ -254,7 +254,9 @@ void ReplPanel::notify_line_count_changed() {
     if (document()->num_lines() != m_rows) {
         int new_rows = document()->num_lines();
         if (m_absolute_row_position + new_rows > max_rows()) {
-            m_absolute_row_position -= (m_absolute_row_position + new_rows) - max_rows();
+            auto lines_to_scroll = (m_absolute_row_position + new_rows) - max_rows();
+            m_absolute_row_position -= lines_to_scroll;
+            printf("\033[%dS", lines_to_scroll);
         }
         set_coordinates(new_rows, max_rows(), max_cols());
     }
@@ -744,13 +746,21 @@ void ReplPanel::get_absolute_row_position() {
     fflush(stdout);
 
     char buffer[65];
+    fd_set set;
+    FD_ZERO(&set);
+    FD_SET(STDOUT_FILENO, &set);
+
+    if (select(2, &set, nullptr, nullptr, nullptr) < 0) {
+        return;
+    }
+
     if (read(STDOUT_FILENO, buffer, sizeof(buffer) - 1) < 0) {
         return;
     }
 
     int row;
     int col;
-    if (sscanf(buffer, "\033%d;%dR", &row, &col) < 2) {
+    if (sscanf(buffer, "\033[%d;%dR", &row, &col) < 2) {
         return;
     }
 
