@@ -507,6 +507,26 @@ void TTY::handle_escape_sequence() {
                 }
                 return;
             }
+            case 'S': {
+                int to_scroll = args.get_or(0, 1);
+                int row_save = m_cursor_row;
+                for (int i = 0; i < to_scroll; i++) {
+                    m_cursor_row = m_row_count;
+                    scroll_down_if_needed();
+                }
+                m_cursor_row = row_save;
+                return;
+            }
+            case 'T': {
+                int to_scroll = args.get_or(0, 1);
+                int row_save = m_cursor_row;
+                for (int i = 0; i < to_scroll; i++) {
+                    m_cursor_row = -1;
+                    scroll_up_if_needed();
+                }
+                m_cursor_row = row_save;
+                return;
+            }
             case 'X': {
                 int chars_to_erase = max(1, args.get_or(0, 1));
                 for (int i = m_cursor_col; i < chars_to_erase && i < m_col_count; i++) {
