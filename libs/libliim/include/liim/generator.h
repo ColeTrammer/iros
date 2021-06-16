@@ -27,6 +27,7 @@ public:
 
     struct Promise {
         T value;
+        bool has_value { false };
 
         Generator get_return_object() { return Generator(Handle::from_promise(*this)); }
 
@@ -35,9 +36,15 @@ public:
         void unhandled_exception() {}
         SupsendAlways yield_value(T v) {
             this->value = move(v);
+            has_value = true;
             return {};
         }
-        void return_void() {}
+        SupsendAlways return_value(T v) {
+            this->value = move(v);
+            has_value = true;
+            return {};
+        }
+        void return_void() { has_value = false; }
     };
 
     Handle handle() { return m_handle; }
@@ -46,7 +53,7 @@ public:
 
     bool finished() {
         maybe_get_value();
-        return m_handle.done();
+        return !m_has_value && m_handle.done();
     }
 
     int operator()() {
@@ -59,12 +66,12 @@ private:
     Generator(Handle handle) : m_handle(handle) {}
 
     void maybe_get_value() {
-        if (m_has_value) {
+        if (m_has_value || m_handle.done()) {
             return;
         }
 
         m_handle();
-        m_has_value = true;
+        m_has_value = m_handle.promise().has_value;
     }
 
     Handle m_handle;
