@@ -337,6 +337,10 @@ static int do_iname(const char *_path, int flags, struct tnode *t_root, struct m
         }
 
         if (path[1] == '.' && path[2] == '.' && (path[3] == '/' || path[3] == '\0')) {
+            if (parent == t_root) {
+                goto vfs_loop_end;
+            }
+
             /* Simply go to parent */
             struct tnode *next = bump_tnode(parent->parent);
             drop_tnode(parent);
