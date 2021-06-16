@@ -549,6 +549,79 @@ Vector<Variant<KeyPress, MouseEvent>> ReplPanel::read_input() {
                 return R::create_from_single_element(T { K { KeyPress::Modifier::Alt, KeyPress::Key::Escape } });
             }
 
+            if (escape_buffer[1] == '<') {
+                // SGR encoded mouse events (enabled with DECSET 1006)
+                // Information from https://github.com/chromium/hterm/blob/master/doc/ControlSequences.md#sgr
+                size_t escape_buffer_length = 2;
+                for (;;) {
+                    ret = read(STDIN_FILENO, &escape_buffer[escape_buffer_length++], 1);
+                    if (escape_buffer[escape_buffer_length - 1] == 'M' || escape_buffer[escape_buffer_length - 1] == 'm') {
+                        break;
+                    }
+                    if (ret <= 0) {
+                        return {};
+                    }
+                }
+
+                int cb;
+                int cx;
+                int cy;
+                if (sscanf(escape_buffer, "[<%d;%d;%d", &cb, &cx, &cy) != 3) {
+                    return {};
+                }
+                bool mouse_down = escape_buffer[escape_buffer_length - 1] == 'M';
+
+                auto left = MOUSE_NO_CHANGE;
+                auto right = MOUSE_NO_CHANGE;
+                auto scroll_state = SCROLL_NONE;
+                switch (cb & ~0b11100 /* ignore modifiers for now */) {
+                    case 0:
+                        // Left mouse button
+                        if (mouse_down) {
+                            left = MOUSE_DOWN;
+                        } else {
+                            left = MOUSE_UP;
+                        }
+                        break;
+                    case 1:
+                        // Middle mouse button (ignored for now)
+                        break;
+                    case 2:
+                        // Right mouse button
+                        if (mouse_down) {
+                            right = MOUSE_DOWN;
+                        } else {
+                            right = MOUSE_UP;
+                        }
+                        break;
+                    case 32:
+                    case 33:
+                    case 34:
+                        // Mouse move.
+                        break;
+                    case 64:
+                        // Scroll up
+                        scroll_state = SCROLL_UP;
+                        break;
+                    case 65:
+                        // Scroll down
+                        scroll_state = SCROLL_DOWN;
+                        break;
+                }
+
+                auto type = m_mouse_press_tracker.notify_mouse_event(left, right, cx - 1, cy - 1, scroll_state);
+
+                MouseEvent ev;
+                ev.left = left != MOUSE_NO_CHANGE ? (MouseEvent::Press) type : MouseEvent::Press::None;
+                ev.right = right != MOUSE_NO_CHANGE ? (MouseEvent::Press) type : MouseEvent::Press::None;
+                ev.index_of_line =
+                    clamp(document()->index_of_line_at_position(cy - m_absolute_row_position - 1), 0, document()->num_lines() - 1);
+                ev.index_into_line = document()->index_into_line(ev.index_of_line, cx - prompt_cols_at_row(ev.index_of_line) - 1);
+                ev.z = scroll_state == SCROLL_UP ? -1 : scroll_state == SCROLL_DOWN ? 1 : 0;
+                ev.down = m_mouse_press_tracker.buttons_down();
+                return R::create_from_single_element(T { ev });
+            }
+
             if (isalpha(escape_buffer[1])) {
                 return xterm_sequence_to_key(escape_buffer[1], 0);
             }
