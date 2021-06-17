@@ -1,6 +1,7 @@
 #pragma once
 
 #include <liim/fixed_array.h>
+#include <liim/generator.h>
 #include <liim/maybe.h>
 #include <liim/string.h>
 #include <liim/vector.h>
@@ -132,6 +133,30 @@ struct GZipData {
     Maybe<String> comment;
     time_t time_last_modified;
     Vector<uint8_t> decompressed_data;
+};
+
+class DeflateEncoder {
+public:
+    DeflateEncoder();
+    ~DeflateEncoder();
+
+    void set_output_buffer(uint8_t* buffer, size_t length);
+    StreamResult stream_data(const uint8_t* data, size_t length);
+
+private:
+    Generator<StreamResult> encode();
+
+    Generator<StreamResult> write_bits(uint32_t bits, uint8_t bit_count);
+    Generator<StreamResult> write_bytes(const uint8_t* bytes, size_t byte_count);
+
+    Generator<StreamResult> m_encoder;
+    const uint8_t* m_input_buffer { nullptr };
+    size_t m_input_buffer_length { 0 };
+    size_t m_input_buffer_offset { 0 };
+    uint8_t* m_output_buffer { nullptr };
+    size_t m_output_length { 0 };
+    size_t m_output_bit_offset { 0 };
+    size_t m_output_byte_offset { 0 };
 };
 
 Maybe<GZipData> read_gzip_path(const String& path);
