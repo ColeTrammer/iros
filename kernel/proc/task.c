@@ -755,7 +755,7 @@ void task_do_sig(struct task *task, int signum) {
             exit_process(task->process, task);
             proc_set_process_state(task->process, PS_TERMINATED, signum, true);
             mutex_unlock(&task->process->lock);
-            task_exit(task);
+            task_set_state_to_exiting(task);
             break;
         case STOP:
             if (task->sched_state == STOPPED) {
