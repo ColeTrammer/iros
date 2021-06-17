@@ -8,7 +8,7 @@
 namespace LIIM {
 class ByteBuffer {
 public:
-    ByteBuffer(size_t capacity = 0) : m_data(nullptr) { ensure_capacity(capacity); }
+    explicit ByteBuffer(size_t capacity = 0) : m_data(nullptr) { ensure_capacity(capacity); }
     ByteBuffer(const ByteBuffer& other) = delete;
     ByteBuffer(ByteBuffer&& other)
         : m_data(exchange(other.m_data, nullptr))
