@@ -49,7 +49,7 @@ public:
         return m_data[index];
     }
 
-    void reset_size(size_t size = 0) {
+    void set_size(size_t size) {
         assert(size < capacity());
         m_data_size = size;
     }
@@ -98,7 +98,7 @@ private:
     size_t m_data_capacity { 0 };
 };
 
-void swap(ByteBuffer& a, ByteBuffer& b) {
+inline void swap(ByteBuffer& a, ByteBuffer& b) {
     a.swap(b);
 }
 }
