@@ -1,11 +1,15 @@
 #include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
+#include <mntent.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <termios.h>
@@ -107,6 +111,26 @@ int main(int argc, char **argv) {
                 break;
         }
     }
+
+    // Mounting file systmes should be done via a separate program.
+    FILE *mounts = setmntent("/etc/fstab", "r");
+    if (!mounts) {
+        perror("start");
+        return 1;
+    }
+
+    struct mntent *mntent;
+    while ((mntent = getmntent(mounts))) {
+        if (strcmp(mntent->mnt_fsname, "none") == 0) {
+            mntent->mnt_fsname = "";
+        }
+        mkdir(mntent->mnt_dir, 0777);
+        if (mount(mntent->mnt_fsname, mntent->mnt_dir, mntent->mnt_type, 0, mntent->mnt_opts)) {
+            fprintf(stderr, "Failed to mount `%s' on `%s' :%s\n", mntent->mnt_fsname, mntent->mnt_dir, strerror(errno));
+        }
+    }
+
+    endmntent(mounts);
 
     // Device setup should be done via a separate program.
     if (symlink("/proc/self/fd", "/dev/fd") || symlink("/proc/self/fd/0", "/dev/stdin") || symlink("/proc/self/fd/1", "/dev/stdout") ||
