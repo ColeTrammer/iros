@@ -286,7 +286,7 @@ uintptr_t create_clone_process_paging_structure(struct process *process) {
     pml4[MAX_PML4_ENTRIES - 1] = old_pml4[MAX_PML4_ENTRIES - 1];
 
     uint64_t old_cr3 = get_cr3();
-    disable_preemption();
+    uint64_t irq_save = disable_interrupts_save();
 
     load_cr3(pml4_addr);
 
@@ -299,7 +299,7 @@ uintptr_t create_clone_process_paging_structure(struct process *process) {
     }
 
     load_cr3(old_cr3);
-    enable_preemption();
+    interrupts_restore(irq_save);
     return pml4_addr;
 }
 
