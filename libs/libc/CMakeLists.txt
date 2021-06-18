@@ -141,6 +141,9 @@ else()
         libgen/dirname.c
         link/dl_iterate_phdr.c
         locale/locale.c
+        mntent/endmntent.c
+        mntent/getmntent.c
+        mntent/setmntent.c
         net/if/if_freenameindex.c
         net/if/if_indextoname.c
         net/if/if_nameindex.c
