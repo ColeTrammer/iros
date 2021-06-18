@@ -1,5 +1,7 @@
 #pragma once
 
+#include <liim/byte_buffer.h>
+#include <liim/byte_io.h>
 #include <liim/fixed_array.h>
 #include <liim/generator.h>
 #include <liim/maybe.h>
@@ -135,13 +137,18 @@ struct GZipData {
     Vector<uint8_t> decompressed_data;
 };
 
+enum class FlushMode {
+    NoFlush,
+    BlockFlush,
+    StreamFlush,
+};
+
 class DeflateEncoder {
 public:
-    DeflateEncoder();
+    DeflateEncoder(ByteWriter& writer);
     ~DeflateEncoder();
 
-    void set_output_buffer(uint8_t* buffer, size_t length);
-    StreamResult stream_data(const uint8_t* data, size_t length);
+    StreamResult stream_data(Span<const uint8_t> input, FlushMode mode);
 
 private:
     Generator<StreamResult> encode();
@@ -150,13 +157,9 @@ private:
     Generator<StreamResult> write_bytes(const uint8_t* bytes, size_t byte_count);
 
     Generator<StreamResult> m_encoder;
-    const uint8_t* m_input_buffer { nullptr };
-    size_t m_input_buffer_length { 0 };
-    size_t m_input_buffer_offset { 0 };
-    uint8_t* m_output_buffer { nullptr };
-    size_t m_output_length { 0 };
-    size_t m_output_bit_offset { 0 };
-    size_t m_output_byte_offset { 0 };
+    FlushMode m_flush_mode { FlushMode::NoFlush };
+    ByteReader m_reader;
+    ByteWriter& m_writer;
 };
 
 Maybe<GZipData> read_gzip_path(const String& path);

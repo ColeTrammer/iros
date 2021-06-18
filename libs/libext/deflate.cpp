@@ -549,70 +549,65 @@ GetCodeLength18 : {
 }
 }
 
-DeflateEncoder::DeflateEncoder() : m_encoder(encode()) {}
+DeflateEncoder::DeflateEncoder(ByteWriter& writer) : m_encoder(encode()), m_writer(writer) {}
 
 DeflateEncoder::~DeflateEncoder() {}
 
-void DeflateEncoder::set_output_buffer(uint8_t* buffer, size_t length) {
-    m_output_buffer = buffer;
-    m_output_length = length;
-    m_output_bit_offset = 0;
-    m_output_byte_offset = 0;
-}
-
-StreamResult DeflateEncoder::stream_data(const uint8_t* data, size_t length) {
-    m_input_buffer = data;
-    m_input_buffer_length = length;
-    m_input_buffer_offset = 0;
+StreamResult DeflateEncoder::stream_data(Span<const uint8_t> input, FlushMode mode) {
+    m_reader.set_data(input);
+    m_flush_mode = mode;
     return m_encoder();
 }
 
 Generator<StreamResult> DeflateEncoder::write_bits(uint32_t bits, uint8_t bit_count) {
     for (uint8_t i = 0; i < bit_count;) {
-        if (m_output_byte_offset >= m_output_length) {
+        if (!m_writer.write_bit(!!(bits & (1U << i)))) {
             co_yield StreamResult::NeedsMoreData;
             continue;
         }
-
-        uint8_t bit_to_write = 1 << m_output_bit_offset;
-        uint8_t bit = bits & (1U << i++);
-        if (bit) {
-            m_output_buffer[m_output_byte_offset] |= bit_to_write;
-        } else {
-            m_output_buffer[m_output_byte_offset] &= ~bit_to_write;
-        }
-
-        if (++m_output_bit_offset == CHAR_BIT) {
-            m_output_bit_offset = 0;
-            m_output_byte_offset++;
-        }
+        i++;
     }
 }
 
 Generator<StreamResult> DeflateEncoder::write_bytes(const uint8_t* bytes, size_t byte_count) {
-    if (m_output_bit_offset != 0) {
-        m_output_bit_offset = 0;
-        m_output_byte_offset++;
-    }
-
     for (size_t i = 0; i < byte_count;) {
-        if (m_output_byte_offset >= m_output_length) {
+        if (!m_writer.write_byte(bytes[i])) {
             co_yield StreamResult::NeedsMoreData;
             continue;
         }
-
-        m_output_buffer[m_output_byte_offset++] = bytes[i++];
+        i++;
     }
 }
 
 Generator<StreamResult> DeflateEncoder::encode() {
-    co_yield write_bits(0b001, 3);
+    for (;;) {
+        while (!m_reader.finished()) {
+            uint16_t byte_count = INT16_MAX;
+            uint16_t byte_count_complement = 0;
 
-    uint16_t header[2] = { (uint16_t) m_input_buffer_length, (uint16_t) ~((uint16_t) m_input_buffer_length) };
-    co_yield write_bytes((const uint8_t*) header, sizeof(header));
+            bool last_block = false;
+            if (m_reader.bytes_remaining() <= INT16_MAX) {
+                byte_count = m_reader.bytes_remaining();
+                byte_count_complement = ~byte_count;
+                last_block = m_flush_mode == FlushMode::StreamFlush;
+            }
 
-    co_yield write_bytes(m_input_buffer, m_input_buffer_length);
+            co_yield write_bits(last_block, 1);
+            co_yield write_bits(0b00, 2);
 
-    co_yield StreamResult::Success;
+            uint16_t header[2] = { byte_count, byte_count_complement };
+            co_yield write_bytes((const uint8_t*) header, sizeof(header));
+
+            co_yield write_bytes(m_reader.data() + m_reader.byte_offset(), byte_count);
+            m_reader.set_byte_offset(m_reader.byte_offset() + byte_count);
+
+            if (last_block) {
+                co_yield StreamResult::Success;
+                co_return;
+            }
+        }
+
+        co_yield StreamResult::NeedsMoreData;
+    }
 }
 }
