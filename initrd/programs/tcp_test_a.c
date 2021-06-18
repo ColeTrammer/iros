@@ -16,7 +16,7 @@ int main() {
     struct sockaddr_in conn = { 0 };
     conn.sin_family = AF_INET;
     conn.sin_port = htons(80);
-    conn.sin_addr.s_addr = inet_addr("50.87.248.178");
+    conn.sin_addr.s_addr = inet_addr("50.87.222.88");
     // conn.sin_addr.s_addr = inet_addr("172.105.70.201");
     // conn.sin_addr.s_addr = INADDR_LOOBACK;
 
