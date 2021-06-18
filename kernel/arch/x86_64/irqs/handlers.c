@@ -107,6 +107,12 @@ static bool handle_page_fault(struct irq_context *context) {
     uintptr_t address = get_cr2();
 
     struct task *current = get_current_task();
+    bool is_kernel = current->kernel_task || current->in_kernel;
+    if (!is_kernel) {
+        current->in_kernel = true;
+        current->sched_state = RUNNING_UNINTERRUPTIBLE;
+    }
+
     // In this case we just need to map in a region that's allocation was put off by the kernel
     struct vm_region *vm_region = find_user_vm_region_by_addr(address);
 
@@ -118,6 +124,10 @@ static bool handle_page_fault(struct irq_context *context) {
     if (vm_region && !(error_code & 1) && address != vm_region->end && !(vm_region->flags & VM_PROT_NONE) && !(vm_region->flags & VM_COW)) {
         // Return if we can handle the fault
         if (!vm_handle_fault_in_region(vm_region, address)) {
+            if (!is_kernel) {
+                current->in_kernel = false;
+                current->sched_state = RUNNING_INTERRUPTIBLE;
+            }
             return true;
         }
     }
@@ -128,15 +138,22 @@ static bool handle_page_fault(struct irq_context *context) {
         debug_log("handling cow fault: [ %#.16lX ]\n", address);
 #endif /* PAGE_FAULT_DEBUG */
         if (!vm_handle_cow_fault_in_region(vm_region, address)) {
+            if (!is_kernel) {
+                current->in_kernel = false;
+                current->sched_state = RUNNING_INTERRUPTIBLE;
+            }
             return true;
         }
     }
 
-    bool is_kernel = current->kernel_task || current->in_kernel;
     debug_log(
         "\n\033[32mProcess \033[37m(\033[34m %d:%d \033[37m): \033[1;31mCRASH (page fault)\033[0;37m: [ %#.16lX, %#.16lX, %#.16lX, %u ]\n",
         current->process->pid, current->tid, address, task_state->stack_state.rip, task_state->stack_state.rsp, error_code);
     if (!is_kernel) {
+        if (!is_kernel) {
+            current->in_kernel = false;
+            current->sched_state = RUNNING_INTERRUPTIBLE;
+        }
         memcpy(&current->arch_task.task_state, task_state, sizeof(struct task_state));
         spin_lock(&current->sig_lock);
         task_do_sig(current, SIGSEGV);
