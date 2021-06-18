@@ -1172,6 +1172,7 @@ SYS_CALL(os_mutex) {
     SYS_PARAM6_VALIDATE(unsigned int *, to_wait, validate_write_or_null, sizeof(unsigned int));
 
     struct task *current = get_current_task();
+    struct wait_queue_entry wait_queue_entry = { .task = current };
 
     unsigned int *to_aquire = __protected;
     struct user_mutex *to_unlock = NULL;
@@ -1187,14 +1188,16 @@ SYS_CALL(os_mutex) {
             }
 
             disable_interrupts();
-            add_to_user_mutex_queue(um, current);
+            add_to_user_mutex_queue(um, &wait_queue_entry);
             task_set_state_to_waiting(current);
             current->wait_interruptible = 1;
             if (to_unlock) {
                 unlock_user_mutex(to_unlock);
             }
             unlock_user_mutex(um);
-            SYS_RETURN(kernel_yield());
+            int ret = kernel_yield();
+            wait_queue_dequeue_entry(&um->wait_queue, &wait_queue_entry, __func__);
+            SYS_RETURN(ret);
         }
         case MUTEX_WAKE_AND_SET: {
             struct user_mutex *um = get_user_mutex_locked_with_waiters_or_else_write_value(__protected, to_place & ~MUTEX_WAITERS);

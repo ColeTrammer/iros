@@ -105,12 +105,11 @@ void unlock_user_mutex(struct user_mutex *um) {
     spin_unlock(&um->wait_queue.lock);
 }
 
-void add_to_user_mutex_queue(struct user_mutex *m, struct task *task) {
-    struct wait_queue_entry entry = { .task = task };
-    __wait_queue_enqueue_entry(&m->wait_queue, &entry, __func__);
+void add_to_user_mutex_queue(struct user_mutex *m, struct wait_queue_entry *entry) {
+    __wait_queue_enqueue_entry(&m->wait_queue, entry, __func__);
 
 #ifdef USER_MUTEX_DEBUG
-    debug_log("Adding to queue: [ %d:%d ]\n", task->process->pid, task->tid);
+    debug_log("Adding to queue: [ %d:%d ]\n", entry->task->process->pid, entry->task->tid);
 #endif /* USER_MUTEX_DEBUG */
 }
 
