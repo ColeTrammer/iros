@@ -1,6 +1,7 @@
 #pragma once
 
 #include <assert.h>
+#include <liim/span.h>
 #include <liim/traits.h>
 #include <liim/utilities.h>
 #include <stdint.h>
@@ -147,6 +148,9 @@ public:
 
     int size() const { return m_size; }
     int capacity() const { return m_capacity; }
+
+    Span<T> span() { return { vector(), static_cast<size_t>(size()) }; }
+    Span<const T> span() const { return { vector(), static_cast<size_t>(size()) }; }
 
     void add(const T& t) {
         if (!m_vector || m_size >= m_capacity) {

@@ -34,6 +34,9 @@ public:
     size_t size() const { return m_data_size; }
     size_t capacity() const { return m_data_capacity; }
 
+    Span<uint8_t> span() { return { data(), size() }; }
+    Span<const uint8_t> span() const { return { data(), size() }; }
+
     uint8_t* begin() { return data(); }
     uint8_t* end() { return data() + size(); }
 

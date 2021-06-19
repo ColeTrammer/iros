@@ -32,10 +32,16 @@ public:
         assert(count <= m_size);
         return Span(m_data + (m_size - count), count);
     }
+    constexpr Span after(size_t count) const {
+        assert(count <= m_size);
+        return Span(m_data + count, m_size - count);
+    }
     constexpr Span subspan(size_t index, size_t count) const {
         assert(index + count <= m_size);
         return Span(m_data + index, count);
     }
+
+    constexpr operator Span<const T>() { return { data(), size() }; }
 
 private:
     T* m_data { nullptr };
