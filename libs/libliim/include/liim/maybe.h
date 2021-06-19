@@ -64,6 +64,14 @@ public:
     }
 
     bool has_value() const { return m_has_value; }
+    bool operator!() const { return !m_has_value; }
+    operator bool() const { return m_has_value; }
+
+    T& operator*() { return value(); }
+    const T& operator*() const { return value(); }
+
+    T* operator->() { return &value(); }
+    const T* operator->() const { return &value(); }
 
     T& value() {
         assert(m_has_value);
