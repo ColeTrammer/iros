@@ -53,7 +53,7 @@ public:
     }
 
     void set_size(size_t size) {
-        assert(size < capacity());
+        assert(size <= capacity());
         m_data_size = size;
     }
 
