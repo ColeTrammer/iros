@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <ext/file.h>
 #include <ext/gzip.h>
 #include <ext/mapped_file.h>
 #include <stdio.h>
@@ -27,27 +28,37 @@ int main(int argc, char** argv) {
         print_usage_and_exit(*argv);
     }
 
-    String path = argv[1];
+    String path = argv[optind];
 
-    ByteWriter output_writer(0x4000);
-    Ext::GZipEncoder encoder(output_writer);
+    ByteWriter writer;
+    Ext::GZipEncoder encoder(writer);
 
     encoder.set_name(path);
     encoder.set_time_last_modified(0);
 
-    auto file = Ext::MappedFile::create(path, PROT_READ, MAP_SHARED);
+    auto file = Ext::File::create(path, "r");
     if (!file) {
-        fprintf(stderr, "%s: failed to open file `%s': %s", *argv, path.string(), strerror(errno));
+        fprintf(stderr, "compress: failed to open file `%s': %s\n", path.string(), strerror(errno));
         return 1;
     }
 
-    auto result = encoder.stream_data({ file->data(), file->size() }, Ext::StreamFlushMode::StreamFlush);
-    if (result != Ext::StreamResult::Success) {
-        fprintf(stderr, "%s: failed to compress file `%s'", *argv, path.string());
+    auto stream_data = [&](const ByteBuffer& buffer) -> bool {
+        auto flush_mode = buffer.empty() ? Ext::StreamFlushMode::StreamFlush : Ext::StreamFlushMode::NoFlush;
+        auto result = encoder.stream_data(buffer.span(), flush_mode);
+        if (result == Ext::StreamResult::Error || result == Ext::StreamResult::NeedsMoreOutputSpace) {
+            fprintf(stderr, "compress: failed to compress `%s'\n", path.string());
+            exit(1);
+        }
+
+        return true;
+    };
+
+    ByteBuffer input_buffer;
+    if (!file->read_all_streamed(input_buffer, move(stream_data))) {
+        fprintf(stderr, "compress: failed to read file `%s': %s\n", path.string(), strerror(errno));
         return 1;
     }
 
-    fwrite(output_writer.data(), 1, output_writer.buffer_size(), stdout);
-
+    fwrite(writer.data(), 1, writer.buffer_size(), stdout);
     return 0;
 }
