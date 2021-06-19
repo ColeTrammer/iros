@@ -24,6 +24,7 @@ set(TARGETS
     clipboard_server
     cmp
     comm
+    compress
     cp
     cut
     date
