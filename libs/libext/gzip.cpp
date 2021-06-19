@@ -117,7 +117,7 @@ Generator<StreamResult> GZipDecoder::decode() {
 Generator<StreamResult> GZipDecoder::read_bytes(Span<uint8_t> bytes) {
     for (size_t i = 0; i < bytes.size();) {
         auto maybe_byte = m_reader.next_byte();
-        if (!maybe_byte.has_value()) {
+        if (!maybe_byte) {
             co_yield StreamResult::NeedsMoreInput;
             continue;
         }
@@ -129,7 +129,7 @@ Generator<StreamResult> GZipDecoder::read_bytes(Span<uint8_t> bytes) {
 Generator<StreamResult> GZipDecoder::read_string(String& string) {
     for (;;) {
         auto maybe_byte = m_reader.next_byte();
-        if (!maybe_byte.value()) {
+        if (!maybe_byte) {
             co_yield StreamResult::NeedsMoreInput;
             continue;
         }
