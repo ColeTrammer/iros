@@ -581,30 +581,28 @@ Generator<StreamResult> DeflateEncoder::write_bytes(const uint8_t* bytes, size_t
 
 Generator<StreamResult> DeflateEncoder::encode() {
     for (;;) {
-        while (!m_reader.finished()) {
-            uint16_t byte_count = INT16_MAX;
-            uint16_t byte_count_complement = 0;
+        uint16_t byte_count = INT16_MAX;
+        uint16_t byte_count_complement = 0;
 
-            bool last_block = false;
-            if (m_reader.bytes_remaining() <= INT16_MAX) {
-                byte_count = m_reader.bytes_remaining();
-                byte_count_complement = ~byte_count;
-                last_block = m_flush_mode == StreamFlushMode::StreamFlush;
-            }
+        bool last_block = false;
+        if (m_reader.bytes_remaining() <= INT16_MAX) {
+            byte_count = m_reader.bytes_remaining();
+            byte_count_complement = ~byte_count;
+            last_block = m_flush_mode == StreamFlushMode::StreamFlush;
+        }
 
-            co_yield write_bits(last_block, 1);
-            co_yield write_bits(0b00, 2);
+        co_yield write_bits(last_block, 1);
+        co_yield write_bits(0b00, 2);
 
-            uint16_t header[2] = { byte_count, byte_count_complement };
-            co_yield write_bytes((const uint8_t*) header, sizeof(header));
+        uint16_t header[2] = { byte_count, byte_count_complement };
+        co_yield write_bytes((const uint8_t*) header, sizeof(header));
 
-            co_yield write_bytes(m_reader.data() + m_reader.byte_offset(), byte_count);
-            m_reader.set_byte_offset(m_reader.byte_offset() + byte_count);
+        co_yield write_bytes(m_reader.data() + m_reader.byte_offset(), byte_count);
+        m_reader.set_byte_offset(m_reader.byte_offset() + byte_count);
 
-            if (last_block) {
-                co_yield StreamResult::Success;
-                co_return;
-            }
+        if (last_block) {
+            co_yield StreamResult::Success;
+            co_return;
         }
 
         co_yield StreamResult::NeedsMoreInput;
