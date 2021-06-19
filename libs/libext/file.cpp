@@ -31,6 +31,10 @@ bool File::close() {
 }
 
 bool File::read(ByteBuffer& buffer) {
+    if (buffer.capacity() == 0) {
+        buffer.ensure_capacity(BUFSIZ);
+    }
+
     auto current_size = buffer.size();
     auto nread = fread(buffer.data() + current_size, 1, buffer.capacity() - current_size, m_file);
     if (ferror(m_file)) {
