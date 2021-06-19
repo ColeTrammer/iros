@@ -72,33 +72,44 @@ public:
     }
 
     bool write_bit(bool bit) {
-        maybe_increase_capacity();
-
-        if (m_bit_offset == 0) {
-            m_buffer.set_size(m_byte_offset + 1);
-            m_buffer[m_byte_offset] = 0;
+        if (m_bit_offset == 8) {
+            if (!commit_bits()) {
+                return false;
+            }
         }
 
-        auto& byte = buffer()[m_byte_offset];
         if (bit) {
-            byte |= (1U << m_bit_offset);
+            m_bit_buffer |= (1U << m_bit_offset);
         } else {
-            byte &= ~(1U << m_bit_offset);
+            m_bit_buffer &= ~(1U << m_bit_offset);
         }
 
-        if (++m_bit_offset == 8) {
-            m_bit_offset = 0;
-            m_byte_offset++;
-        }
+        m_bit_offset++;
         return true;
     }
 
     bool write_byte(uint8_t byte) {
-        if (m_bit_offset) {
-            m_bit_offset = 0;
-            m_byte_offset++;
+        if (m_bit_offset > 0) {
+            if (!commit_bits()) {
+                return false;
+            }
         }
 
+        return write_byte_impl(byte);
+    }
+
+private:
+    bool commit_bits() {
+        assert(m_bit_offset > 0);
+        if (!write_byte_impl(m_bit_buffer)) {
+            return false;
+        }
+        m_bit_offset = 0;
+        m_bit_buffer = 0;
+        return true;
+    }
+
+    bool write_byte_impl(uint8_t byte) {
         maybe_increase_capacity();
         buffer().set_size(m_byte_offset + 1);
 
@@ -106,7 +117,6 @@ public:
         return true;
     }
 
-private:
     void maybe_increase_capacity() {
         if (m_byte_offset >= buffer_capacity()) {
             buffer().ensure_capacity(max(0x1000LU, 2 * buffer_capacity()));
@@ -116,6 +126,7 @@ private:
     ByteBuffer m_buffer;
     size_t m_byte_offset { 0 };
     size_t m_bit_offset { 0 };
+    uint8_t m_bit_buffer { 0 };
 };
 
 template<typename T>
