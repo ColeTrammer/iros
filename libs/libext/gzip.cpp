@@ -1,3 +1,4 @@
+#include <ext/checksum.h>
 #include <ext/deflate.h>
 #include <ext/mapped_file.h>
 #include <stdio.h>
@@ -12,6 +13,85 @@ enum GZipFlags {
     FNAME = 8,
     FCOMMENT = 16,
 };
+
+GZipEncoder::GZipEncoder(ByteWriter& writer) : m_encoder(encode()), m_writer(writer), m_deflate_encoder(writer) {}
+
+GZipEncoder ::~GZipEncoder() {}
+
+StreamResult GZipEncoder::stream_data(Span<const uint8_t> input, FlushMode mode) {
+    m_input = input;
+    m_flush_mode = mode;
+    return m_encoder();
+}
+
+Generator<StreamResult> GZipEncoder::write_bytes(const uint8_t* bytes, size_t byte_count) {
+    for (size_t i = 0; i < byte_count;) {
+        if (!m_writer.write_byte(bytes[i])) {
+            co_yield StreamResult::NeedsMoreData;
+            continue;
+        }
+        i++;
+    }
+}
+
+Generator<StreamResult> GZipEncoder::encode() {
+    struct [[gnu::packed]] GZipHeader {
+        uint8_t id1;
+        uint8_t id2;
+        uint8_t compression_method;
+        uint8_t flags;
+        uint32_t time_last_modified;
+        uint8_t extra_flags;
+        uint8_t os_field;
+    };
+
+    uint8_t flags = (m_gzip_data.comment.has_value() ? GZipFlags::FCOMMENT : 0) | (m_gzip_data.name.has_value() ? GZipFlags::FNAME : 0);
+    GZipHeader header = {
+        .id1 = 0x1F,
+        .id2 = 0x8B,
+        .compression_method = 8,
+        .flags = flags,
+        .time_last_modified = (uint32_t) m_gzip_data.time_last_modified,
+        .extra_flags = 0,
+        .os_field = 3,
+    };
+
+    co_yield write_bytes((const uint8_t*) &header, sizeof(header));
+
+    if (flags & GZipFlags::FNAME) {
+        co_yield write_bytes((const uint8_t*) m_gzip_data.name.value().string(), m_gzip_data.name.value().size() + 1);
+    }
+
+    if (flags & GZipFlags::FCOMMENT) {
+        co_yield write_bytes((const uint8_t*) m_gzip_data.comment.value().string(), m_gzip_data.comment.value().size() + 1);
+    }
+
+    uint32_t crc32 = 0;
+    uint32_t total_size = 0;
+
+    for (;;) {
+        total_size += m_input.size();
+        crc32 = compute_partial_crc32_checksum(m_input.data(), m_input.size(), crc32);
+
+        auto result = m_deflate_encoder.stream_data(m_input, m_flush_mode);
+        if (result == StreamResult::Error) {
+            co_yield result;
+            co_return;
+        }
+
+        if (result == StreamResult::NeedsMoreData) {
+            co_yield result;
+            continue;
+        }
+
+        break;
+    }
+
+    co_yield write_bytes((const uint8_t*) &crc32, sizeof(crc32));
+    co_yield write_bytes((const uint8_t*) &total_size, sizeof(total_size));
+
+    co_yield StreamResult::Success;
+}
 
 Maybe<GZipData> read_gzip_path(const String& path) {
     auto file_mapping = MappedFile::create(path, PROT_READ, MAP_SHARED);
