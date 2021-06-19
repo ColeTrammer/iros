@@ -8,11 +8,11 @@
 extern "C" {
 #endif /* __cplusplus */
 
-uint32_t compute_partial_crc32_checksum(void *data, size_t num_bytes, uint32_t crc);
-uint32_t compute_crc32_checksum(void *data, size_t num_bytes);
+uint32_t compute_partial_crc32_checksum(const void *data, size_t num_bytes, uint32_t crc);
+uint32_t compute_crc32_checksum(const void *data, size_t num_bytes);
 
-uint16_t compute_partial_internet_checksum(void *packet, size_t num_bytes, uint16_t start);
-uint16_t compute_internet_checksum(void *data, size_t bytes);
+uint16_t compute_partial_internet_checksum(const void *packet, size_t num_bytes, uint16_t start);
+uint16_t compute_internet_checksum(const void *data, size_t bytes);
 
 #ifdef __cplusplus
 }

@@ -25,16 +25,16 @@ static_assert(crc32_table[2] == 0xEE0E612C);
 static_assert(crc32_table[3] == 0x990951BA);
 
 extern "C" {
-uint32_t compute_partial_crc32_checksum(void* data, size_t num_bytes, uint32_t start) {
+uint32_t compute_partial_crc32_checksum(const void* data, size_t num_bytes, uint32_t start) {
     uint32_t sum = ~start;
     for (size_t i = 0; i < num_bytes; i++) {
-        uint8_t index = (sum ^ ((uint8_t*) data)[i]) & 0xFF;
+        uint8_t index = (sum ^ ((const uint8_t*) data)[i]) & 0xFF;
         sum = (sum >> 8) ^ crc32_table[index];
     }
     return ~sum;
 }
 
-uint32_t compute_crc32_checksum(void* data, size_t num_bytes) {
+uint32_t compute_crc32_checksum(const void* data, size_t num_bytes) {
     return compute_partial_crc32_checksum(data, num_bytes, 0);
 }
 }
