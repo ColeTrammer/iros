@@ -1,7 +1,7 @@
 #include <arpa/inet.h>
 #include <ext/checksum.h>
-#include <ext/deflate.h>
 #include <ext/mapped_file.h>
+#include <ext/zlib_stream.h>
 #include <graphics/png.h>
 #include <limits.h>
 #include <stdlib.h>

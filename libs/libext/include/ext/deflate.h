@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ext/stream.h>
 #include <liim/byte_buffer.h>
 #include <liim/byte_io.h>
 #include <liim/fixed_array.h>
@@ -11,13 +12,6 @@
 #include <sys/types.h>
 
 namespace Ext {
-
-enum class StreamResult {
-    Success,
-    Error,
-    NeedsMoreData,
-};
-
 struct Symbol {
     uint16_t symbol;
     uint16_t encoded_length;
@@ -103,52 +97,12 @@ private:
     bool m_in_get { false };
 };
 
-class ZLibStreamDecoder {
-public:
-    StreamResult stream_data(uint8_t* data, size_t data_len);
-
-    Vector<uint8_t>& decompressed_data() { return m_deflate_stream.decompressed_data(); }
-    const Vector<uint8_t>& decompressed_data() const { return m_deflate_stream.decompressed_data(); }
-
-private:
-    enum class State {
-        OnCMF,
-        OnFLG,
-        OnDICTID,
-        OnDeflateData,
-        OnAdler32,
-    };
-
-    DeflateDecoder m_deflate_stream;
-    State m_state { State::OnCMF };
-    size_t m_offset { 0 };
-    uint8_t m_compression_method { 0 };
-    uint8_t m_flags { 0 };
-    bool m_in_get { false };
-    uint8_t m_bytes_to_get { 0 };
-    uint32_t m_get_buffer { 0 };
-};
-
-struct GZipData {
-    Maybe<Vector<uint8_t>> extra_data;
-    Maybe<String> name;
-    Maybe<String> comment;
-    time_t time_last_modified;
-    Vector<uint8_t> decompressed_data;
-};
-
-enum class FlushMode {
-    NoFlush,
-    BlockFlush,
-    StreamFlush,
-};
-
 class DeflateEncoder {
 public:
     DeflateEncoder(ByteWriter& writer);
     ~DeflateEncoder();
 
-    StreamResult stream_data(Span<const uint8_t> input, FlushMode mode);
+    StreamResult stream_data(Span<const uint8_t> input, StreamFlushMode mode);
 
 private:
     Generator<StreamResult> encode();
@@ -157,35 +111,8 @@ private:
     Generator<StreamResult> write_bytes(const uint8_t* bytes, size_t byte_count);
 
     Generator<StreamResult> m_encoder;
-    FlushMode m_flush_mode { FlushMode::NoFlush };
+    StreamFlushMode m_flush_mode { StreamFlushMode::NoFlush };
     ByteReader m_reader;
     ByteWriter& m_writer;
 };
-
-class GZipEncoder {
-public:
-    GZipEncoder(ByteWriter& writer);
-    ~GZipEncoder();
-
-    void set_name(String name) { m_gzip_data.name = move(name); }
-    void set_comment(String comment) { m_gzip_data.comment = move(comment); }
-    void set_time_last_modified(time_t time) { m_gzip_data.time_last_modified = time; }
-
-    StreamResult stream_data(Span<const uint8_t> input, FlushMode mode);
-
-private:
-    Generator<StreamResult> encode();
-
-    Generator<StreamResult> write_bytes(const uint8_t* bytes, size_t byte_count);
-
-    Generator<StreamResult> m_encoder;
-    FlushMode m_flush_mode { FlushMode::NoFlush };
-    Span<const uint8_t> m_input;
-    ByteWriter& m_writer;
-    DeflateEncoder m_deflate_encoder;
-    GZipData m_gzip_data;
-};
-
-Maybe<GZipData> read_gzip_path(const String& path);
-
 }

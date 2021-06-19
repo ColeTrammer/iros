@@ -7,14 +7,14 @@ int main() {
 
     ByteWriter writer;
     Ext::DeflateEncoder encoder(writer);
-    auto result = encoder.stream_data({ data, sizeof(data) }, Ext::FlushMode::StreamFlush);
+    auto result = encoder.stream_data({ data, sizeof(data) }, Ext::StreamFlushMode::StreamFlush);
     if (result == Ext::StreamResult::Error) {
         fprintf(stderr, "Error encoding data\n");
         return 1;
     }
 
     printf("Encoded: '%s'\n", (char*) data);
-    assert(result != Ext::StreamResult::NeedsMoreData);
+    assert(result != Ext::StreamResult::NeedsMoreInput);
 
     Ext::DeflateDecoder decoder;
     result = decoder.stream_data(writer.data(), writer.buffer_size());

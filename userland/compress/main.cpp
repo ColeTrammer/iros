@@ -1,5 +1,5 @@
 #include <errno.h>
-#include <ext/deflate.h>
+#include <ext/gzip.h>
 #include <ext/mapped_file.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    auto result = encoder.stream_data({ file->data(), file->size() }, Ext::FlushMode::StreamFlush);
+    auto result = encoder.stream_data({ file->data(), file->size() }, Ext::StreamFlushMode::StreamFlush);
     if (result != Ext::StreamResult::Success) {
         fprintf(stderr, "%s: failed to compress file `%s'", *argv, path.string());
         return 1;

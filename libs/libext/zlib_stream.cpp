@@ -1,4 +1,4 @@
-#include <ext/deflate.h>
+#include <ext/zlib_stream.h>
 
 namespace Ext {
 
@@ -42,7 +42,7 @@ GetCMF : {
     m_state = State::OnCMF;
     auto cmf = get(1);
     if (!cmf.has_value()) {
-        return StreamResult::NeedsMoreData;
+        return StreamResult::NeedsMoreInput;
     }
     m_compression_method = cmf.value();
 
@@ -59,7 +59,7 @@ GetFLG : {
     m_state = State::OnFLG;
     auto flg = get(1);
     if (!flg.has_value()) {
-        return StreamResult::NeedsMoreData;
+        return StreamResult::NeedsMoreInput;
     }
     m_flags = flg.value();
 }
@@ -74,7 +74,7 @@ GetDICTID : {
     m_state = State::OnDICTID;
     auto dictid = get(4);
     if (!dictid.has_value()) {
-        return StreamResult::NeedsMoreData;
+        return StreamResult::NeedsMoreInput;
     }
 }
 
@@ -91,7 +91,7 @@ GetAdler32 : {
     m_state = State::OnAdler32;
     auto adler32 = get(4);
     if (!adler32.has_value()) {
-        return StreamResult::NeedsMoreData;
+        return StreamResult::NeedsMoreInput;
     }
 
     // FIXME: Check the ADLER32 value

@@ -222,7 +222,7 @@ GetBlockIsLast : {
     m_state = State::OnBlockIsLast;
     auto is_last_block = get(1);
     if (!is_last_block.has_value()) {
-        return StreamResult::NeedsMoreData;
+        return StreamResult::NeedsMoreInput;
     }
     m_is_last_block = is_last_block.value();
 }
@@ -265,7 +265,7 @@ GetNoCompressionLen : {
 
     auto len = get(16);
     if (!len.has_value()) {
-        return StreamResult::NeedsMoreData;
+        return StreamResult::NeedsMoreInput;
     }
     m_no_compression_len = len.value();
 }
@@ -274,7 +274,7 @@ GetNoCompressionNLen : {
     m_state = State::OnNoCompressionNLen;
     auto nlen = get(16);
     if (!nlen.has_value()) {
-        return StreamResult::NeedsMoreData;
+        return StreamResult::NeedsMoreInput;
     }
 }
 
@@ -285,7 +285,7 @@ GetNoCompressionData : {
     for (; m_i < m_no_compression_len; m_i++) {
         auto byte = get(8);
         if (!byte.has_value()) {
-            return StreamResult::NeedsMoreData;
+            return StreamResult::NeedsMoreInput;
         }
         m_decompressed_data.add(byte.value());
     }
@@ -296,7 +296,7 @@ GetLiteral : {
     m_state = State::OnLiteral;
     auto value = decode(m_literal_tree);
     if (!value.has_value()) {
-        return StreamResult::NeedsMoreData;
+        return StreamResult::NeedsMoreInput;
     }
 
 #ifdef DEFLATE_DEBUG
@@ -320,7 +320,7 @@ GetLengthExtraBits : {
     auto descriptor = compressed_length_codes[m_length_code];
     auto extra_data = get(descriptor.extra_bits);
     if (!extra_data.has_value()) {
-        return StreamResult::NeedsMoreData;
+        return StreamResult::NeedsMoreInput;
     }
 
     m_length = descriptor.offset + extra_data.value();
@@ -330,7 +330,7 @@ GetDistanceCode : {
     m_state = State::OnDistanceCode;
     auto distance_code = decode(m_distance_tree);
     if (!distance_code.has_value()) {
-        return StreamResult::NeedsMoreData;
+        return StreamResult::NeedsMoreInput;
     }
 
 #ifdef DEFLATE_DEBUG
@@ -345,7 +345,7 @@ GetDistanceExtraBits : {
     auto dst_descriptor = compressed_distance_codes[m_distance_code];
     auto extra_distance = get(dst_descriptor.extra_bits);
     if (!extra_distance.has_value()) {
-        return StreamResult::NeedsMoreData;
+        return StreamResult::NeedsMoreInput;
     }
 
     auto distance = dst_descriptor.offset + extra_distance.value();
@@ -371,7 +371,7 @@ GetHLit : {
     m_state = State::OnHLit;
     auto hlit = get(5);
     if (!hlit.has_value()) {
-        return StreamResult::NeedsMoreData;
+        return StreamResult::NeedsMoreInput;
     }
     m_hlit = hlit.value();
 }
@@ -380,7 +380,7 @@ GetHDist : {
     m_state = State::OnHDist;
     auto hdist = get(5);
     if (!hdist.has_value()) {
-        return StreamResult::NeedsMoreData;
+        return StreamResult::NeedsMoreInput;
     }
     m_hdist = hdist.value();
 }
@@ -389,7 +389,7 @@ GetHCLen : {
     m_state = State::OnHCLen;
     auto hclen = get(4);
     if (!hclen.has_value()) {
-        return StreamResult::NeedsMoreData;
+        return StreamResult::NeedsMoreInput;
     }
     m_hclen = hclen.value();
 #ifdef DEFLATE_DEBUG
@@ -409,7 +409,7 @@ GetCodeLengthSymbol : {
     for (; m_i < m_hclen + hclen_offset; m_i++) {
         auto len = get(3);
         if (!len.has_value()) {
-            return StreamResult::NeedsMoreData;
+            return StreamResult::NeedsMoreInput;
         }
 
         auto index = code_length_alphabet_order_mapping[m_i];
@@ -479,7 +479,7 @@ GetLiteralAndDistanceSymbols : {
 
     auto value = decode(m_length_codes_tree.array());
     if (!value.has_value()) {
-        return StreamResult::NeedsMoreData;
+        return StreamResult::NeedsMoreInput;
     }
 
 #ifdef DEFLATE_DEBUG
@@ -511,7 +511,7 @@ GetCodeLength16 : {
     m_state = State::OnCodeLength16;
     auto repetitions = get(2);
     if (!repetitions.has_value()) {
-        return StreamResult::NeedsMoreData;
+        return StreamResult::NeedsMoreInput;
     }
 
     for (size_t j = 0; j < repetitions.value() + 3UL; j++) {
@@ -524,7 +524,7 @@ GetCodeLength17 : {
     m_state = State::OnCodeLength17;
     auto repetitions = get(3);
     if (!repetitions.has_value()) {
-        return StreamResult::NeedsMoreData;
+        return StreamResult::NeedsMoreInput;
     }
 
     for (size_t j = 0; j < repetitions.value() + 3UL; j++) {
@@ -538,7 +538,7 @@ GetCodeLength18 : {
     m_state = State::OnCodeLength18;
     auto repetitions = get(7);
     if (!repetitions.has_value()) {
-        return StreamResult::NeedsMoreData;
+        return StreamResult::NeedsMoreInput;
     }
 
     for (size_t j = 0; j < repetitions.value() + 11UL; j++) {
@@ -553,7 +553,7 @@ DeflateEncoder::DeflateEncoder(ByteWriter& writer) : m_encoder(encode()), m_writ
 
 DeflateEncoder::~DeflateEncoder() {}
 
-StreamResult DeflateEncoder::stream_data(Span<const uint8_t> input, FlushMode mode) {
+StreamResult DeflateEncoder::stream_data(Span<const uint8_t> input, StreamFlushMode mode) {
     m_reader.set_data(input);
     m_flush_mode = mode;
     return m_encoder();
@@ -562,7 +562,7 @@ StreamResult DeflateEncoder::stream_data(Span<const uint8_t> input, FlushMode mo
 Generator<StreamResult> DeflateEncoder::write_bits(uint32_t bits, uint8_t bit_count) {
     for (uint8_t i = 0; i < bit_count;) {
         if (!m_writer.write_bit(!!(bits & (1U << i)))) {
-            co_yield StreamResult::NeedsMoreData;
+            co_yield StreamResult::NeedsMoreInput;
             continue;
         }
         i++;
@@ -572,7 +572,7 @@ Generator<StreamResult> DeflateEncoder::write_bits(uint32_t bits, uint8_t bit_co
 Generator<StreamResult> DeflateEncoder::write_bytes(const uint8_t* bytes, size_t byte_count) {
     for (size_t i = 0; i < byte_count;) {
         if (!m_writer.write_byte(bytes[i])) {
-            co_yield StreamResult::NeedsMoreData;
+            co_yield StreamResult::NeedsMoreInput;
             continue;
         }
         i++;
@@ -589,7 +589,7 @@ Generator<StreamResult> DeflateEncoder::encode() {
             if (m_reader.bytes_remaining() <= INT16_MAX) {
                 byte_count = m_reader.bytes_remaining();
                 byte_count_complement = ~byte_count;
-                last_block = m_flush_mode == FlushMode::StreamFlush;
+                last_block = m_flush_mode == StreamFlushMode::StreamFlush;
             }
 
             co_yield write_bits(last_block, 1);
@@ -607,7 +607,7 @@ Generator<StreamResult> DeflateEncoder::encode() {
             }
         }
 
-        co_yield StreamResult::NeedsMoreData;
+        co_yield StreamResult::NeedsMoreInput;
     }
 }
 }

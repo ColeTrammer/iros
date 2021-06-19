@@ -1,5 +1,5 @@
 #include <ext/checksum.h>
-#include <ext/deflate.h>
+#include <ext/gzip.h>
 #include <ext/mapped_file.h>
 #include <stdio.h>
 #include <sys/mman.h>
@@ -18,7 +18,7 @@ GZipEncoder::GZipEncoder(ByteWriter& writer) : m_encoder(encode()), m_writer(wri
 
 GZipEncoder ::~GZipEncoder() {}
 
-StreamResult GZipEncoder::stream_data(Span<const uint8_t> input, FlushMode mode) {
+StreamResult GZipEncoder::stream_data(Span<const uint8_t> input, StreamFlushMode mode) {
     m_input = input;
     m_flush_mode = mode;
     return m_encoder();
@@ -27,7 +27,7 @@ StreamResult GZipEncoder::stream_data(Span<const uint8_t> input, FlushMode mode)
 Generator<StreamResult> GZipEncoder::write_bytes(const uint8_t* bytes, size_t byte_count) {
     for (size_t i = 0; i < byte_count;) {
         if (!m_writer.write_byte(bytes[i])) {
-            co_yield StreamResult::NeedsMoreData;
+            co_yield StreamResult::NeedsMoreInput;
             continue;
         }
         i++;
@@ -79,7 +79,7 @@ Generator<StreamResult> GZipEncoder::encode() {
             co_return;
         }
 
-        if (result == StreamResult::NeedsMoreData) {
+        if (result == StreamResult::NeedsMoreInput) {
             co_yield result;
             continue;
         }
