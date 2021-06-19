@@ -2,11 +2,32 @@
 
 namespace Ext {
 struct GZipData {
-    Maybe<Vector<uint8_t>> extra_data;
+    Maybe<ByteBuffer> extra_data;
     Maybe<String> name;
     Maybe<String> comment;
     time_t time_last_modified;
-    Vector<uint8_t> decompressed_data;
+};
+
+class GZipDecoder {
+public:
+    GZipDecoder(ByteWriter& writer);
+    ~GZipDecoder();
+
+    const GZipData& member_data() const { return m_member_data; }
+
+    StreamResult stream_data(Span<const uint8_t> input);
+
+private:
+    Generator<StreamResult> decode();
+
+    Generator<StreamResult> read_bytes(Span<uint8_t> bytes);
+    Generator<StreamResult> read_string(String& string);
+
+    Generator<StreamResult> m_decoder;
+    ByteWriter& m_writer;
+    ByteReader m_reader;
+    DeflateDecoder m_deflate_decoder;
+    GZipData m_member_data;
 };
 
 class GZipEncoder {
@@ -32,6 +53,4 @@ private:
     DeflateEncoder m_deflate_encoder;
     GZipData m_gzip_data;
 };
-
-Maybe<GZipData> read_gzip_path(const String& path);
 }
