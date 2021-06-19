@@ -13,11 +13,17 @@ public:
 
     const uint8_t* data() const { return m_data.data(); }
 
+    size_t bytes_total() const { return m_data.size(); }
     size_t byte_offset() const { return m_byte_offset; }
     size_t bytes_remaining() const { return m_data.size() - byte_offset(); }
     bool finished() const { return bytes_remaining() == 0; }
 
     void reset() { m_byte_offset = 0; }
+
+    void advance(size_t offset) {
+        m_byte_offset += offset;
+        assert(byte_offset() <= bytes_total());
+    }
 
     void set_data(Span<const uint8_t> data) {
         reset();
