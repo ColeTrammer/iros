@@ -19,6 +19,7 @@ set(SOURCES
     checksum_crc32.cpp
     checksum_internet.cpp
     deflate.cpp
+    file.cpp
     gzip.cpp
     mapped_file.cpp
     parse_mode.cpp
