@@ -117,7 +117,19 @@ private:
     size_t m_byte_offset { 0 };
     size_t m_bit_offset { 0 };
 };
+
+template<typename T>
+static inline Span<const uint8_t> as_readonly_bytes(const T& value) {
+    return { reinterpret_cast<const uint8_t*>(&value), sizeof(value) };
 }
 
+template<typename T>
+static inline Span<uint8_t> as_writable_bytes(T& value) {
+    return { reinterpret_cast<uint8_t*>(&value), sizeof(value) };
+}
+}
+
+using LIIM::as_readonly_bytes;
+using LIIM::as_writable_bytes;
 using LIIM::ByteReader;
 using LIIM::ByteWriter;
