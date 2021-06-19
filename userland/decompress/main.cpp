@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
         auto result = decoder.stream_data(buffer.span());
         if (result == Ext::StreamResult::Error || result == Ext::StreamResult::NeedsMoreOutputSpace) {
             fprintf(stderr, "decompress: failed to decompress `%s'\n", path.string());
-            return false;
+            exit(1);
         }
 
         if (result == Ext::StreamResult::Success) {
@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
         return true;
     };
 
-    ByteBuffer input_buffer(BUFSIZ);
+    ByteBuffer input_buffer;
     if (!file->read_all_streamed(input_buffer, move(stream_data))) {
         fprintf(stderr, "decompress: failed to read file `%s': %s\n", path.string(), strerror(file->error()));
         return 1;
