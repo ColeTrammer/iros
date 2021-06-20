@@ -142,11 +142,23 @@ static inline Span<const uint8_t> as_readonly_bytes(const T& value) {
 }
 
 template<typename T>
+static inline Span<const uint8_t> array_as_readonly_bytes(const T* array, size_t items) {
+    return { reinterpret_cast<const uint8_t*>(array), sizeof(T) * items };
+}
+
+template<typename T>
 static inline Span<uint8_t> as_writable_bytes(T& value) {
     return { reinterpret_cast<uint8_t*>(&value), sizeof(value) };
 }
+
+template<typename T>
+static inline Span<uint8_t> array_as_writable_bytes(T* array, size_t items) {
+    return { reinterpret_cast<uint8_t*>(array), sizeof(T) * items };
+}
 }
 
+using LIIM::array_as_readonly_bytes;
+using LIIM::array_as_writable_bytes;
 using LIIM::as_readonly_bytes;
 using LIIM::as_writable_bytes;
 using LIIM::ByteReader;
