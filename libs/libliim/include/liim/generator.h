@@ -110,8 +110,13 @@ public:
         void return_void() { returned = true; }
     };
 
+    Generator(Generator&& other)
+        : m_root_handle(exchange(other.m_root_handle, nullptr))
+        , m_child_handle(exchange(other.m_child_handle, nullptr))
+        , m_has_value(exchange(other.m_has_value, false)) {}
+
     ~Generator() {
-        if (*m_child_handle) {
+        if (m_child_handle && *m_child_handle) {
             m_child_handle->destroy();
         }
         if (m_root_handle) {
