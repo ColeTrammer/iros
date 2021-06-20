@@ -16,6 +16,7 @@ add_custom_target(generate-mode-parser DEPENDS ${GENERATED_FILES})
 
 set(SOURCES
     ${GENERATED_FILES}
+    checksum_adler32.cpp
     checksum_crc32.cpp
     checksum_internet.cpp
     deflate.cpp
