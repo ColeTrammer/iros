@@ -1,6 +1,7 @@
 #pragma once
 
-#include <ext/stream.h>
+#include <ext/stream_decoder.h>
+#include <ext/stream_encoder.h>
 #include <liim/byte_buffer.h>
 #include <liim/byte_io.h>
 #include <liim/fixed_array.h>
@@ -97,27 +98,12 @@ private:
     bool m_in_get { false };
 };
 
-class DeflateEncoder {
+class DeflateEncoder final : public StreamEncoder {
 public:
     DeflateEncoder();
-    ~DeflateEncoder();
-
-    void set_output(Span<uint8_t> output) { m_writer.set_output(output); }
-    void did_flush_output() { m_writer.set_offset(0); }
-    const ByteWriter& writer() const { return m_writer; }
-
-    StreamResult stream_data(Span<const uint8_t> input, StreamFlushMode mode);
-    StreamResult resume();
+    virtual ~DeflateEncoder() override;
 
 private:
     Generator<StreamResult> encode();
-
-    Generator<StreamResult> write_bits(uint32_t bits, uint8_t bit_count);
-    Generator<StreamResult> write_bytes(const uint8_t* bytes, size_t byte_count);
-
-    Generator<StreamResult> m_encoder;
-    StreamFlushMode m_flush_mode { StreamFlushMode::NoFlush };
-    ByteReader m_reader;
-    ByteWriter m_writer;
 };
 }

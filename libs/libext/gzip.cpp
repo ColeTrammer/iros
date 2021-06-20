@@ -28,18 +28,9 @@ enum GZipFlags {
     FCOMMENT = 16,
 };
 
-GZipDecoder::GZipDecoder() : m_decoder(decode()) {}
+GZipDecoder::GZipDecoder() : StreamDecoder(decode()) {}
 
 GZipDecoder::~GZipDecoder() {}
-
-StreamResult GZipDecoder::stream_data(Span<const uint8_t> input) {
-    m_reader.set_data(input);
-    return resume();
-}
-
-StreamResult GZipDecoder::resume() {
-    return m_decoder();
-}
 
 Generator<StreamResult> GZipDecoder::decode() {
     GZipHeader header;
@@ -64,13 +55,13 @@ Generator<StreamResult> GZipDecoder::decode() {
 
     if (header.flags & GZipFlags::FNAME) {
         String name;
-        co_yield read_string(name);
+        co_yield read_null_terminated_string(name);
         m_member_data.name = move(name);
     }
 
     if (header.flags & GZipFlags::FCOMMENT) {
         String comment;
-        co_yield read_string(comment);
+        co_yield read_null_terminated_string(comment);
         m_member_data.comment = move(comment);
     }
 
@@ -83,13 +74,13 @@ Generator<StreamResult> GZipDecoder::decode() {
     uint32_t computed_crc32 = 0;
     uint32_t computed_total_size = 0;
     for (;;) {
-        auto result = m_deflate_decoder.stream_data((uint8_t*) m_reader.data() + m_reader.byte_offset(), m_reader.bytes_remaining());
+        auto result = m_deflate_decoder.stream_data((uint8_t*) reader().data() + reader().byte_offset(), reader().bytes_remaining());
         if (result == StreamResult::Error) {
             co_yield result;
             co_return;
         }
 
-        m_reader.advance(m_deflate_decoder.last_byte_offset());
+        reader().advance(m_deflate_decoder.last_byte_offset());
         if (result == StreamResult::NeedsMoreInput || result == StreamResult::NeedsMoreOutputSpace) {
             co_yield result;
             continue;
@@ -118,68 +109,9 @@ Generator<StreamResult> GZipDecoder::decode() {
     co_yield StreamResult::Success;
 }
 
-Generator<StreamResult> GZipDecoder::write_bytes(Span<const uint8_t> bytes) {
-    for (size_t i = 0; i < bytes.size();) {
-        if (!m_writer.write_byte(bytes[i])) {
-            co_yield StreamResult::NeedsMoreOutputSpace;
-            continue;
-        }
-        i++;
-    }
-}
-
-Generator<StreamResult> GZipDecoder::read_bytes(Span<uint8_t> bytes) {
-    for (size_t i = 0; i < bytes.size();) {
-        auto maybe_byte = m_reader.next_byte();
-        if (!maybe_byte) {
-            co_yield StreamResult::NeedsMoreInput;
-            continue;
-        }
-
-        bytes[i++] = maybe_byte.value();
-    }
-}
-
-Generator<StreamResult> GZipDecoder::read_string(String& string) {
-    for (;;) {
-        auto maybe_byte = m_reader.next_byte();
-        if (!maybe_byte) {
-            co_yield StreamResult::NeedsMoreInput;
-            continue;
-        }
-
-        auto byte = maybe_byte.value();
-        if (byte == '\0') {
-            break;
-        }
-
-        string += String(byte);
-    }
-}
-
-GZipEncoder::GZipEncoder() : m_encoder(encode()) {}
+GZipEncoder::GZipEncoder() : StreamEncoder(encode()) {}
 
 GZipEncoder::~GZipEncoder() {}
-
-StreamResult GZipEncoder::stream_data(Span<const uint8_t> input, StreamFlushMode mode) {
-    m_input = input;
-    m_flush_mode = mode;
-    return resume();
-}
-
-StreamResult GZipEncoder::resume() {
-    return m_encoder();
-}
-
-Generator<StreamResult> GZipEncoder::write_bytes(Span<const uint8_t> bytes) {
-    for (size_t i = 0; i < bytes.size();) {
-        if (!m_writer.write_byte(bytes[i])) {
-            co_yield StreamResult::NeedsMoreOutputSpace;
-            continue;
-        }
-        i++;
-    }
-}
 
 Generator<StreamResult> GZipEncoder::encode() {
     uint8_t flags = (m_gzip_data.comment.has_value() ? GZipFlags::FCOMMENT : 0) | (m_gzip_data.name.has_value() ? GZipFlags::FNAME : 0);
@@ -207,13 +139,13 @@ Generator<StreamResult> GZipEncoder::encode() {
     uint32_t total_size = 0;
 
     for (;;) {
-        total_size += m_input.size();
-        crc32 = compute_partial_crc32_checksum(m_input.data(), m_input.size(), crc32);
+        total_size += reader().bytes_total();
+        crc32 = compute_partial_crc32_checksum(reader().data(), reader().bytes_total(), crc32);
 
         for (;;) {
-            m_deflate_encoder.set_output(m_writer.span_available());
-            auto result = m_deflate_encoder.stream_data(m_input, m_flush_mode);
-            m_writer.advance(m_deflate_encoder.writer().bytes_written());
+            m_deflate_encoder.set_output(writer().span_available());
+            auto result = m_deflate_encoder.stream_data(reader().span_remaining(), flush_mode());
+            writer().advance(m_deflate_encoder.writer().bytes_written());
             switch (result) {
                 case StreamResult::Error:
                     co_yield result;

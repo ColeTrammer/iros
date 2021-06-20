@@ -549,39 +549,9 @@ GetCodeLength18 : {
 }
 }
 
-DeflateEncoder::DeflateEncoder() : m_encoder(encode()) {}
+DeflateEncoder::DeflateEncoder() : StreamEncoder(encode()) {}
 
 DeflateEncoder::~DeflateEncoder() {}
-
-StreamResult DeflateEncoder::stream_data(Span<const uint8_t> input, StreamFlushMode mode) {
-    m_reader.set_data(input);
-    m_flush_mode = mode;
-    return resume();
-}
-
-StreamResult DeflateEncoder::resume() {
-    return m_encoder();
-}
-
-Generator<StreamResult> DeflateEncoder::write_bits(uint32_t bits, uint8_t bit_count) {
-    for (uint8_t i = 0; i < bit_count;) {
-        if (!m_writer.write_bit(!!(bits & (1U << i)))) {
-            co_yield StreamResult::NeedsMoreOutputSpace;
-            continue;
-        }
-        i++;
-    }
-}
-
-Generator<StreamResult> DeflateEncoder::write_bytes(const uint8_t* bytes, size_t byte_count) {
-    for (size_t i = 0; i < byte_count;) {
-        if (!m_writer.write_byte(bytes[i])) {
-            co_yield StreamResult::NeedsMoreOutputSpace;
-            continue;
-        }
-        i++;
-    }
-}
 
 Generator<StreamResult> DeflateEncoder::encode() {
     for (;;) {
@@ -589,20 +559,20 @@ Generator<StreamResult> DeflateEncoder::encode() {
         uint16_t byte_count_complement = 0;
 
         bool last_block = false;
-        if (m_reader.bytes_remaining() <= INT16_MAX) {
-            byte_count = m_reader.bytes_remaining();
+        if (reader().bytes_remaining() <= INT16_MAX) {
+            byte_count = reader().bytes_remaining();
             byte_count_complement = ~byte_count;
-            last_block = m_flush_mode == StreamFlushMode::StreamFlush;
+            last_block = flush_mode() == StreamFlushMode::StreamFlush;
         }
 
         co_yield write_bits(last_block, 1);
         co_yield write_bits(0b00, 2);
 
         uint16_t header[2] = { byte_count, byte_count_complement };
-        co_yield write_bytes((const uint8_t*) header, sizeof(header));
+        co_yield write_bytes(array_as_readonly_bytes(header, sizeof(header) / sizeof(header[0])));
 
-        co_yield write_bytes(m_reader.data() + m_reader.byte_offset(), byte_count);
-        m_reader.set_byte_offset(m_reader.byte_offset() + byte_count);
+        co_yield write_bytes({ reader().data() + reader().byte_offset(), byte_count });
+        reader().set_byte_offset({ reader().byte_offset() + byte_count });
 
         if (last_block) {
             co_yield StreamResult::Success;
