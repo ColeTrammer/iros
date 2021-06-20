@@ -549,20 +549,24 @@ GetCodeLength18 : {
 }
 }
 
-DeflateEncoder::DeflateEncoder(ByteWriter& writer) : m_encoder(encode()), m_writer(writer) {}
+DeflateEncoder::DeflateEncoder() : m_encoder(encode()) {}
 
 DeflateEncoder::~DeflateEncoder() {}
 
 StreamResult DeflateEncoder::stream_data(Span<const uint8_t> input, StreamFlushMode mode) {
     m_reader.set_data(input);
     m_flush_mode = mode;
+    return resume();
+}
+
+StreamResult DeflateEncoder::resume() {
     return m_encoder();
 }
 
 Generator<StreamResult> DeflateEncoder::write_bits(uint32_t bits, uint8_t bit_count) {
     for (uint8_t i = 0; i < bit_count;) {
         if (!m_writer.write_bit(!!(bits & (1U << i)))) {
-            co_yield StreamResult::NeedsMoreInput;
+            co_yield StreamResult::NeedsMoreOutputSpace;
             continue;
         }
         i++;
@@ -572,7 +576,7 @@ Generator<StreamResult> DeflateEncoder::write_bits(uint32_t bits, uint8_t bit_co
 Generator<StreamResult> DeflateEncoder::write_bytes(const uint8_t* bytes, size_t byte_count) {
     for (size_t i = 0; i < byte_count;) {
         if (!m_writer.write_byte(bytes[i])) {
-            co_yield StreamResult::NeedsMoreInput;
+            co_yield StreamResult::NeedsMoreOutputSpace;
             continue;
         }
         i++;

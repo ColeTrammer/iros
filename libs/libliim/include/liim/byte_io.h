@@ -18,6 +18,8 @@ public:
     size_t bytes_remaining() const { return m_data.size() - byte_offset(); }
     bool finished() const { return bytes_remaining() == 0; }
 
+    Span<const uint8_t> span_remaining() const { return m_data.after(byte_offset()); }
+
     void reset() { m_byte_offset = 0; }
 
     void advance(size_t offset) {
@@ -54,21 +56,31 @@ private:
 
 class ByteWriter {
 public:
-    ByteWriter(size_t capacity = 0) : m_buffer(capacity) {}
+    ByteWriter() {}
 
-    ByteBuffer& buffer() { return m_buffer; }
-    const ByteBuffer& buffer() const { return m_buffer; }
+    bool full() const { return space_available() == 0; }
+    size_t capacity() const { return m_output.size(); }
+    size_t bytes_written() const { return m_byte_offset; }
+    size_t space_available() const { return capacity() - bytes_written(); }
+    uint8_t* data() const { return m_output.data(); }
 
-    size_t buffer_size() const { return m_buffer.size(); }
-    size_t buffer_capacity() const { return m_buffer.capacity(); }
+    Span<uint8_t> span_available() const { return m_output.after(bytes_written()); }
 
-    uint8_t* data() { return m_buffer.data(); }
-    const uint8_t* data() const { return m_buffer.data(); }
+    void set_output(Span<uint8_t> output) {
+        m_byte_offset = 0;
+        m_output = output;
+    }
+
+    void advance(size_t count) { set_offset(m_byte_offset + count); }
+
+    void set_offset(size_t offset) {
+        assert(m_byte_offset <= capacity());
+        m_byte_offset = offset;
+    }
 
     void reset() {
         m_byte_offset = 0;
         m_bit_offset = 0;
-        m_buffer.set_size(0);
     }
 
     bool write_bit(bool bit) {
@@ -110,20 +122,15 @@ private:
     }
 
     bool write_byte_impl(uint8_t byte) {
-        maybe_increase_capacity();
-        buffer().set_size(m_byte_offset + 1);
+        if (full()) {
+            return false;
+        }
 
         data()[m_byte_offset++] = byte;
         return true;
     }
 
-    void maybe_increase_capacity() {
-        if (m_byte_offset >= buffer_capacity()) {
-            buffer().ensure_capacity(max(0x1000LU, 2 * buffer_capacity()));
-        }
-    }
-
-    ByteBuffer m_buffer;
+    Span<uint8_t> m_output;
     size_t m_byte_offset { 0 };
     size_t m_bit_offset { 0 };
     uint8_t m_bit_buffer { 0 };

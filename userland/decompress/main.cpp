@@ -33,16 +33,37 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    ByteWriter writer;
-    Ext::GZipDecoder decoder(writer);
+    ByteBuffer output_buffer(BUFSIZ);
+    Ext::GZipDecoder decoder;
+
+    output_buffer.set_size(output_buffer.capacity());
+    decoder.set_output(output_buffer.span());
+
+    auto output_file = make_unique<Ext::File>(stdout);
+
+    auto flush_output_buffer = [&] {
+        output_buffer.set_size(decoder.writer().bytes_written());
+        if (!output_file->write(output_buffer)) {
+            fprintf(stderr, "compress: failed to write to file `%s': %s\n", "stdout", strerror(file->error()));
+            exit(1);
+        }
+        decoder.did_flush_output();
+        output_buffer.set_size(output_buffer.capacity());
+    };
 
     auto stream_data = [&](const ByteBuffer& buffer) -> bool {
         auto result = decoder.stream_data(buffer.span());
-        if (result == Ext::StreamResult::Error || result == Ext::StreamResult::NeedsMoreOutputSpace) {
+        while (result == Ext::StreamResult::NeedsMoreOutputSpace) {
+            flush_output_buffer();
+            result = decoder.resume();
+        }
+
+        if (result == Ext::StreamResult::Error) {
             fprintf(stderr, "decompress: failed to decompress `%s'\n", path.string());
             exit(1);
         }
 
+        flush_output_buffer();
         if (result == Ext::StreamResult::Success) {
             return false;
         }
@@ -55,7 +76,5 @@ int main(int argc, char** argv) {
         fprintf(stderr, "decompress: failed to read file `%s': %s\n", path.string(), strerror(file->error()));
         return 1;
     }
-
-    fwrite(writer.data(), 1, writer.buffer_size(), stdout);
     return 0;
 }

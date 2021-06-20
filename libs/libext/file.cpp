@@ -49,7 +49,7 @@ bool File::read(ByteBuffer& buffer) {
 
 bool File::write(ByteBuffer& buffer) {
     auto current_size = buffer.size();
-    auto nwritten = fread(buffer.data() + current_size, 1, buffer.capacity() - current_size, m_file);
+    auto nwritten = fwrite(buffer.data(), 1, buffer.size(), m_file);
     if (ferror(m_file)) {
         m_error = errno;
         clearerr(m_file);

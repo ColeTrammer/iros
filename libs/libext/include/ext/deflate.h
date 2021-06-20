@@ -99,10 +99,15 @@ private:
 
 class DeflateEncoder {
 public:
-    DeflateEncoder(ByteWriter& writer);
+    DeflateEncoder();
     ~DeflateEncoder();
 
+    void set_output(Span<uint8_t> output) { m_writer.set_output(output); }
+    void did_flush_output() { m_writer.set_offset(0); }
+    const ByteWriter& writer() const { return m_writer; }
+
     StreamResult stream_data(Span<const uint8_t> input, StreamFlushMode mode);
+    StreamResult resume();
 
 private:
     Generator<StreamResult> encode();
@@ -113,6 +118,6 @@ private:
     Generator<StreamResult> m_encoder;
     StreamFlushMode m_flush_mode { StreamFlushMode::NoFlush };
     ByteReader m_reader;
-    ByteWriter& m_writer;
+    ByteWriter m_writer;
 };
 }
