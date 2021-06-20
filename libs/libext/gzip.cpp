@@ -71,7 +71,7 @@ Generator<StreamResult> GZipDecoder::decode() {
         (void) header_crc16;
     }
 
-    uint32_t computed_crc32 = 0;
+    uint32_t computed_crc32 = CHECKSUM_CRC32_INIT;
     uint32_t computed_total_size = 0;
     for (;;) {
         bool resume = false;

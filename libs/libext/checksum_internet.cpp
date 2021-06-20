@@ -30,6 +30,6 @@ uint16_t compute_partial_internet_checksum(const void *packet, size_t num_bytes,
 }
 
 uint16_t compute_internet_checksum(const void *packet, size_t num_bytes) {
-    return compute_partial_internet_checksum(packet, num_bytes, ~0U & 0xFFFF);
+    return compute_partial_internet_checksum(packet, num_bytes, CHECKSUM_INTERNET_INIT);
 }
 }

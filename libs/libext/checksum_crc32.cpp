@@ -35,6 +35,6 @@ uint32_t compute_partial_crc32_checksum(const void* data, size_t num_bytes, uint
 }
 
 uint32_t compute_crc32_checksum(const void* data, size_t num_bytes) {
-    return compute_partial_crc32_checksum(data, num_bytes, 0);
+    return compute_partial_crc32_checksum(data, num_bytes, CHECKSUM_CRC32_INIT);
 }
 }
