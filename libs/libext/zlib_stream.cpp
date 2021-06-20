@@ -1,3 +1,5 @@
+#include <arpa/inet.h>
+#include <ext/checksum.h>
 #include <ext/zlib_stream.h>
 
 namespace Ext {
@@ -22,7 +24,10 @@ Generator<StreamResult> ZLibStreamDecoder::decode() {
     uint8_t flags;
     co_yield read_bytes(as_writable_bytes(flags));
 
-    // FIXME: Check the FCHECK field
+    if ((((compression_method * 256U) + flags) % 31) != 0) {
+        co_yield StreamResult::Error;
+        co_return;
+    }
 
     if (flags & 0x20U) {
         uint32_t dict;
@@ -30,6 +35,7 @@ Generator<StreamResult> ZLibStreamDecoder::decode() {
         (void) dict;
     }
 
+    uint32_t computed_adler32 = CHECKSUM_ADLER32_INIT;
     for (;;) {
         bool resume = false;
         for (;;) {
@@ -40,6 +46,9 @@ Generator<StreamResult> ZLibStreamDecoder::decode() {
                 co_yield result;
                 co_return;
             }
+
+            computed_adler32 = compute_partial_adler32_checksum(m_deflate_decoder.writer().data(),
+                                                                m_deflate_decoder.writer().bytes_written(), computed_adler32);
 
             reader().advance(m_deflate_decoder.reader().byte_offset());
 
@@ -59,9 +68,13 @@ Generator<StreamResult> ZLibStreamDecoder::decode() {
     }
 
 finished:
-    uint32_t adler32;
-    co_yield read_bytes(as_writable_bytes(adler32));
-    (void) adler32;
+    uint32_t expected_adler32;
+    co_yield read_bytes(as_writable_bytes(expected_adler32));
+    expected_adler32 = htonl(expected_adler32);
+    if (expected_adler32 != computed_adler32) {
+        co_yield StreamResult::Error;
+        co_return;
+    }
 
     co_yield StreamResult::Success;
 }
