@@ -34,6 +34,7 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
     int height = 0;
     int bit_depth = 0;
     int color_type = 0;
+    ByteBuffer image_data;
     Ext::ZLibStreamDecoder idat_decoder;
 
     auto get = [&](size_t bytes) -> Maybe<uint64_t> {
@@ -110,11 +111,20 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
             return false;
         }
 
-        auto result = idat_decoder.stream_data(&data[offset], chunk_length);
+        auto result = idat_decoder.stream_data({ &data[offset], chunk_length });
+        while (result == Ext::StreamResult::NeedsMoreOutputSpace) {
+            image_data.ensure_capacity(max(0x1000LU, image_data.capacity() * 2));
+            image_data.set_size(image_data.capacity());
+            idat_decoder.set_output(image_data.span());
+            result = idat_decoder.resume();
+        }
+
         if (result == Ext::StreamResult::Error) {
+            fprintf(stderr, "Failed to decode IDAT blocks\n");
             return false;
         } else if (result == Ext::StreamResult::Success) {
             successfully_decoded_idat = true;
+            image_data.set_size(idat_decoder.writer().bytes_written());
         }
 
         offset += chunk_length;
@@ -183,26 +193,24 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
         }
     }
 
-    auto& decompressed_data = idat_decoder.decompressed_data();
     auto channels = color_type == ColorType::RGBA ? 4 : 3;
     auto bpp = max(1, channels * bit_depth / CHAR_BIT);
     auto bytes_per_scanline = 1 + (width * bit_depth * channels / CHAR_BIT);
     auto expected_size = bytes_per_scanline * height;
 #ifdef PNG_DEBUG
-    fprintf(stderr, "bytes_per_scanline=%u expected_size=%u decompressed_size=%u\n", bytes_per_scanline, expected_size,
-            decompressed_data.size());
+    fprintf(stderr, "bytes_per_scanline=%u expected_size=%u decompressed_size=%lu\n", bytes_per_scanline, expected_size, image_data.size());
 #endif /* PNG_DEBUG */
-    if (decompressed_data.size() != expected_size) {
+    if (image_data.size() != static_cast<size_t>(expected_size)) {
         return nullptr;
     }
 
     for (auto scanline_index = 0; scanline_index < height; scanline_index++) {
-        auto filter_type = decompressed_data[scanline_index * bytes_per_scanline];
+        auto filter_type = image_data[scanline_index * bytes_per_scanline];
         switch (filter_type) {
             case FilterType::None:
                 break;
             case FilterType::Sub: {
-                auto* raw_scanline = &decompressed_data.vector()[scanline_index * bytes_per_scanline + 1];
+                auto* raw_scanline = &image_data[scanline_index * bytes_per_scanline + 1];
                 for (int i = bpp; i < bytes_per_scanline - 1; i++) {
                     raw_scanline[i] += raw_scanline[i - bpp];
                 }
@@ -213,16 +221,16 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
                     continue;
                 }
 
-                auto* prev_scanline = &decompressed_data.vector()[(scanline_index - 1) * bytes_per_scanline + 1];
-                auto* raw_scanline = &decompressed_data.vector()[scanline_index * bytes_per_scanline + 1];
+                auto* prev_scanline = &image_data[(scanline_index - 1) * bytes_per_scanline + 1];
+                auto* raw_scanline = &image_data[scanline_index * bytes_per_scanline + 1];
                 for (int i = 0; i < bytes_per_scanline - 1; i++) {
                     raw_scanline[i] += prev_scanline[i];
                 }
                 break;
             }
             case FilterType::Average: {
-                auto* prev_scanline = &decompressed_data.vector()[(scanline_index - 1) * bytes_per_scanline + 1];
-                auto* raw_scanline = &decompressed_data.vector()[scanline_index * bytes_per_scanline + 1];
+                auto* prev_scanline = &image_data[(scanline_index - 1) * bytes_per_scanline + 1];
+                auto* raw_scanline = &image_data[scanline_index * bytes_per_scanline + 1];
                 for (int i = 0; i < bytes_per_scanline - 1; i++) {
                     auto left = i >= bpp ? raw_scanline[i - bpp] : 0;
                     auto prev = scanline_index > 0 ? prev_scanline[i] : 0;
@@ -244,8 +252,8 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
                     }
                     return c;
                 };
-                auto* prev_scanline = &decompressed_data.vector()[(scanline_index - 1) * bytes_per_scanline + 1];
-                auto* raw_scanline = &decompressed_data.vector()[scanline_index * bytes_per_scanline + 1];
+                auto* prev_scanline = &image_data[(scanline_index - 1) * bytes_per_scanline + 1];
+                auto* raw_scanline = &image_data[scanline_index * bytes_per_scanline + 1];
                 for (int i = 0; i < bytes_per_scanline - 1; i++) {
                     auto left = i >= bpp ? raw_scanline[i - bpp] : 0;
                     auto above = scanline_index > 0 ? prev_scanline[i] : 0;
@@ -261,7 +269,7 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
 
     auto bitmap = make_shared<Bitmap>(width, height, color_type == ColorType::RGBA);
     for (int y = 0; y < height; y++) {
-        auto* raw_scanline = &decompressed_data[y * bytes_per_scanline + 1];
+        auto* raw_scanline = &image_data[y * bytes_per_scanline + 1];
         for (int x = 0; x < width; x++) {
             auto r = raw_scanline[channels * x];
             auto g = raw_scanline[channels * x + 1];

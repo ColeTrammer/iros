@@ -74,26 +74,38 @@ Generator<StreamResult> GZipDecoder::decode() {
     uint32_t computed_crc32 = 0;
     uint32_t computed_total_size = 0;
     for (;;) {
-        auto result = m_deflate_decoder.stream_data((uint8_t*) reader().data() + reader().byte_offset(), reader().bytes_remaining());
-        if (result == StreamResult::Error) {
-            co_yield result;
-            co_return;
-        }
+        bool resume = false;
+        for (;;) {
+            m_deflate_decoder.set_output(writer().span_available());
+            auto result = resume ? m_deflate_decoder.resume() : m_deflate_decoder.stream_data(reader().span_remaining());
+            writer().advance(m_deflate_decoder.writer().bytes_written());
+            if (result == StreamResult::Error) {
+                co_yield result;
+                co_return;
+            }
 
-        reader().advance(m_deflate_decoder.last_byte_offset());
-        if (result == StreamResult::NeedsMoreInput || result == StreamResult::NeedsMoreOutputSpace) {
-            co_yield result;
-            continue;
-        }
+            auto bytes_written = m_deflate_decoder.writer().bytes_written();
+            computed_total_size += bytes_written;
+            computed_crc32 = compute_partial_crc32_checksum(m_deflate_decoder.writer().data(), bytes_written, computed_crc32);
 
-        if (result == StreamResult::Success) {
-            computed_crc32 = compute_partial_crc32_checksum(m_deflate_decoder.decompressed_data().vector(),
-                                                            m_deflate_decoder.decompressed_data().size(), computed_crc32);
-            computed_total_size = m_deflate_decoder.decompressed_data().size();
-            break;
+            reader().advance(m_deflate_decoder.reader().byte_offset());
+
+            if (result == StreamResult::NeedsMoreInput) {
+                co_yield result;
+                break;
+            }
+
+            if (result == StreamResult::NeedsMoreOutputSpace) {
+                co_yield result;
+                resume = true;
+                m_deflate_decoder.reader().set_data(m_deflate_decoder.reader().span_remaining());
+                continue;
+            }
+            goto finished;
         }
     }
 
+finished:
     uint32_t expected_crc32;
     co_yield read_bytes(as_writable_bytes(expected_crc32));
 
@@ -105,7 +117,6 @@ Generator<StreamResult> GZipDecoder::decode() {
         co_return;
     }
 
-    co_yield write_bytes(m_deflate_decoder.decompressed_data().span());
     co_yield StreamResult::Success;
 }
 
@@ -142,9 +153,10 @@ Generator<StreamResult> GZipEncoder::encode() {
         total_size += reader().bytes_total();
         crc32 = compute_partial_crc32_checksum(reader().data(), reader().bytes_total(), crc32);
 
+        bool resume = false;
         for (;;) {
             m_deflate_encoder.set_output(writer().span_available());
-            auto result = m_deflate_encoder.stream_data(reader().span_remaining(), flush_mode());
+            auto result = resume ? m_deflate_encoder.resume() : m_deflate_encoder.stream_data(reader().span_remaining(), flush_mode());
             writer().advance(m_deflate_encoder.writer().bytes_written());
             switch (result) {
                 case StreamResult::Error:
@@ -152,6 +164,7 @@ Generator<StreamResult> GZipEncoder::encode() {
                     co_return;
                 case StreamResult::NeedsMoreOutputSpace:
                     co_yield result;
+                    resume = true;
                     continue;
                 case StreamResult::NeedsMoreInput:
                     co_yield result;

@@ -5,7 +5,6 @@
 // #define DEFLATE_DEBUG
 
 namespace Ext {
-
 enum CompressionType {
     None = 0,
     Fixed = 1,
@@ -19,16 +18,17 @@ struct CompressedOffset {
 
 static constexpr uint16_t block_end_marker = 256;
 
-static uint8_t code_length_alphabet_order_mapping[DeflateDecoder::hclen_max] = { 16, 17, 18, 0, 8,  7, 9,  6, 10, 5,
-                                                                                 11, 4,  12, 3, 13, 2, 14, 1, 15 };
+static constexpr uint8_t code_length_alphabet_order_mapping[DeflateDecoder::hclen_max] = {
+    16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15,
+};
 
-static CompressedOffset compressed_length_codes[DeflateDecoder::hlit_max - DeflateDecoder::hlit_offset] = {
+static constexpr CompressedOffset compressed_length_codes[DeflateDecoder::hlit_max - DeflateDecoder::hlit_offset] = {
     { 3, 0 },  { 4, 0 },  { 5, 0 },  { 6, 0 },   { 7, 0 },   { 8, 0 },   { 9, 0 },   { 10, 0 },  { 11, 1 }, { 13, 1 },
     { 15, 1 }, { 17, 1 }, { 19, 2 }, { 23, 2 },  { 27, 2 },  { 31, 2 },  { 35, 3 },  { 43, 3 },  { 51, 3 }, { 59, 3 },
     { 67, 4 }, { 83, 4 }, { 99, 4 }, { 115, 4 }, { 131, 5 }, { 163, 5 }, { 195, 5 }, { 227, 5 }, { 258, 0 }
 };
 
-static CompressedOffset compressed_distance_codes[DeflateDecoder::hdist_max] = {
+static constexpr CompressedOffset compressed_distance_codes[DeflateDecoder::hdist_max] = {
     { 1, 0 },     { 2, 0 },     { 3, 0 },     { 4, 0 },      { 5, 1 },      { 7, 1 },     { 9, 2 },     { 13, 2 },
     { 17, 3 },    { 25, 3 },    { 33, 4 },    { 49, 4 },     { 65, 5 },     { 97, 5 },    { 129, 6 },   { 193, 6 },
     { 257, 7 },   { 385, 7 },   { 513, 8 },   { 769, 8 },    { 1025, 9 },   { 1537, 9 },  { 2049, 10 }, { 3073, 10 },
@@ -129,424 +129,265 @@ static constexpr decltype(auto) build_static_huffman_distances() {
 constexpr auto static_literal_table = build_static_huffman_literals();
 constexpr auto static_distance_table = build_static_huffman_distances();
 
-StreamResult DeflateDecoder::stream_data(uint8_t* compressed_data, size_t compressed_data_length) {
-    auto get = [&](auto bits) -> Maybe<uint16_t> {
-        if (!m_in_get) {
-            m_in_get = true;
-            m_bits_to_get = bits;
-            m_get_buffer = 0;
+DeflateDecoder::DeflateDecoder() : StreamDecoder(decode()), m_previously_decoded_data(32LU * 1024LU) {}
+
+DeflateDecoder::~DeflateDecoder() {}
+
+Generator<StreamResult> DeflateDecoder::decode_symbol(const TreeNode* tree, uint16_t& value) {
+    int tree_index = 0;
+    for (;;) {
+        if (tree[tree_index].is_symbol()) {
+            value = tree[tree_index].symbol();
+            co_return;
         }
 
-        size_t byte_offset = m_bit_offset / CHAR_BIT;
-        for (; byte_offset < compressed_data_length && m_bits_to_get;) {
-            uint8_t byte = compressed_data[byte_offset];
-            byte &= (1U << (m_bit_offset % 8));
-            if (byte) {
-                m_get_buffer |= 1U << (bits - m_bits_to_get);
+        auto bit = reader().next_bit();
+        if (!bit) {
+            co_yield StreamResult::NeedsMoreInput;
+            continue;
+        }
+
+        tree_index = bit.value() ? tree[tree_index].left() : tree[tree_index].right();
+    }
+}
+
+Generator<StreamResult> DeflateDecoder::decode() {
+    for (;;) {
+        uint32_t block_header;
+        co_yield read_bits(block_header, 3);
+
+        bool is_last_block = !!(block_header & 1);
+        uint8_t compression_type = block_header >> 1;
+
+        m_literal_tree = nullptr;
+        m_distance_tree = nullptr;
+
+        switch (compression_type) {
+            case CompressionType::None: {
+                uint16_t length;
+                co_yield read_bytes(as_writable_bytes(length));
+
+                uint16_t length_complement;
+                co_yield read_bytes(as_writable_bytes(length_complement));
+
+                if ((length | length_complement) != static_cast<uint16_t>(-1)) {
+                    co_yield StreamResult::Error;
+                    co_return;
+                }
+
+                for (uint32_t i = 0; i < length; i++) {
+                    uint8_t byte;
+                    co_yield read_bytes(as_writable_bytes(byte));
+                    co_yield write_bytes(as_readonly_bytes(byte));
+                    m_previously_decoded_data.append(as_readonly_bytes(byte));
+                }
+                break;
             }
-
-            if (++m_bit_offset % 8 == 0) {
-                byte_offset++;
+            case CompressionType::Fixed: {
+                m_literal_tree = static_literal_table.array();
+                m_distance_tree = static_distance_table.array();
+                [[fallthrough]];
             }
-            m_bits_to_get--;
-        }
+            case CompressionType::Dynamic: {
+                if (!m_literal_tree && !m_distance_tree) {
+                    uint32_t hlit;
+                    co_yield read_bits(hlit, 5);
 
-        if (m_bits_to_get) {
-            return {};
-        }
+                    uint32_t hdist;
+                    co_yield read_bits(hdist, 5);
 
-        m_in_get = false;
-        return { m_get_buffer };
-    };
+                    uint32_t hclen;
+                    co_yield read_bits(hclen, 4);
+#ifdef DEFLATE_DEBUG
+                    fprintf(stderr, "hlit=%lu hdist=%lu hclen=%lu\n", hlit + hlit_offset, hdist + hdist_offset, hclen + hclen_offset);
+#endif /* DEFLATE_DEBUG */
 
-    auto decode = [&](const TreeNode* tree) -> Maybe<uint16_t> {
-        for (;;) {
-            if (tree[m_tree_index].is_symbol()) {
-                auto ret = tree[m_tree_index].symbol();
-                m_tree_index = 0;
-                return ret;
+                    for (size_t i = 0; i < m_code_length_symbols.size(); i++) {
+                        m_code_length_symbols[i].encoded_length = 0;
+                        m_code_length_symbols[i].code = 0;
+                        m_code_length_symbols[i].symbol = i;
+                    }
+
+                    for (size_t i = 0; i < hclen + hclen_offset; i++) {
+                        uint32_t len;
+                        co_yield read_bits(len, 3);
+
+                        auto index = code_length_alphabet_order_mapping[i];
+                        m_code_length_symbols[index].encoded_length = len;
+                    }
+
+#ifdef DEFLATE_DEBUG
+                    for (size_t i = 0; i < m_code_length_symbols.size(); i++) {
+                        fprintf(stderr, "CLA: %3u:%u\n", m_code_length_symbols[i].symbol, m_code_length_symbols[i].encoded_length);
+                    }
+#endif /* DEFLATE_DEBUG */
+
+                    for (size_t i = 0; i < m_length_codes_tree.size(); i++) {
+                        m_length_codes_tree[i].m_left = 0;
+                        m_length_codes_tree[i].m_right = 0;
+                    }
+                    build_huffman_tree(m_code_length_symbols.array(), m_code_length_symbols.size(), m_length_codes_tree.array(),
+                                       m_length_codes_tree.size());
+
+                    m_literal_and_distance_symbols.resize(hlit + hlit_offset + hdist + hdist_offset);
+                    for (size_t i = 0; i < hlit + hlit_offset; i++) {
+                        m_literal_and_distance_symbols[i].symbol = i;
+                    }
+                    for (size_t i = 0; i < hdist + hdist_offset; i++) {
+                        m_literal_and_distance_symbols[hlit + hlit_offset + i].symbol = i;
+                    }
+
+                    size_t i = 0;
+                    uint16_t prev_code_length = 0;
+                    while (i < m_literal_and_distance_symbols.size()) {
+                        uint16_t value;
+                        co_yield decode_symbol(m_length_codes_tree.array(), value);
+#ifdef DEFLATE_DEBUG
+                        fprintf(stderr, "DECODE: %3u (code length)\n", value);
+#endif /* DEFLATE_DEBUG */
+
+                        if (value > 18) {
+                            co_yield StreamResult::Error;
+                            co_return;
+                        }
+
+                        if (value == 16) {
+                            uint32_t repetitions;
+                            co_yield read_bits(repetitions, 2);
+
+                            for (size_t j = 0; j < repetitions + 3UL; j++) {
+                                m_literal_and_distance_symbols[i++].encoded_length = prev_code_length;
+                            }
+                            continue;
+                        }
+
+                        if (value == 17) {
+                            uint32_t repetitions;
+                            co_yield read_bits(repetitions, 3);
+
+                            for (size_t j = 0; j < repetitions + 3UL; j++) {
+                                m_literal_and_distance_symbols[i++].encoded_length = 0;
+                            }
+                            prev_code_length = 0;
+                            continue;
+                        }
+
+                        if (value == 18) {
+                            uint32_t repetitions;
+                            co_yield read_bits(repetitions, 7);
+
+                            for (size_t j = 0; j < repetitions + 11UL; j++) {
+                                m_literal_and_distance_symbols[i++].encoded_length = 0;
+                            }
+                            prev_code_length = 0;
+                            continue;
+                        }
+
+                        m_literal_and_distance_symbols[i++].encoded_length = value;
+                        prev_code_length = value;
+                    }
+
+                    if (i > m_literal_and_distance_symbols.size()) {
+                        co_yield StreamResult::Error;
+                        co_return;
+                    }
+
+#ifdef DEFLATE_DEBUG
+                    for (size_t i = 0; i < hlit + hlit_offset; i++) {
+                        fprintf(stderr, "LLA: %3u:%u\n", m_literal_and_distance_symbols[i].symbol,
+                                m_literal_and_distance_symbols[i].encoded_length);
+                    }
+                    for (size_t i = 0; i < hdist + hdist_offset; i++) {
+                        auto index = hlit + hlit_offset + i;
+                        fprintf(stderr, "DTA: %3u:%u\n", m_literal_and_distance_symbols[index].symbol,
+                                m_literal_and_distance_symbols[index].encoded_length);
+                    }
+#endif /* DEFLATE_DEBUG */
+
+                    for (size_t i = 0; i < hlit + hlit_offset; i++) {
+                        m_dynamic_literal_tree[i].m_left = 0;
+                        m_dynamic_literal_tree[i].m_right = 0;
+                    }
+                    build_huffman_tree(m_literal_and_distance_symbols.array(), hlit + hlit_offset, m_dynamic_literal_tree.array(),
+                                       m_dynamic_literal_tree.size());
+
+                    for (size_t i = 0; i < hdist + hdist_offset; i++) {
+                        m_dynamic_distance_tree[i].m_left = 0;
+                        m_dynamic_distance_tree[i].m_right = 0;
+                    }
+                    build_huffman_tree(m_literal_and_distance_symbols.array() + hlit + hlit_offset, hdist + hdist_offset,
+                                       m_dynamic_distance_tree.array(), m_dynamic_distance_tree.size());
+
+                    m_literal_tree = m_dynamic_literal_tree.array();
+                    m_distance_tree = m_dynamic_distance_tree.array();
+                }
+
+                for (;;) {
+                    uint16_t value;
+                    co_yield decode_symbol(m_literal_tree, value);
+#ifdef DEFLATE_DEBUG
+                    fprintf(stderr, "DECODE: %3u ('%c')\n", value, value);
+#endif /* DEFLATE_DEBUG */
+
+                    if (value == block_end_marker) {
+                        break;
+                    }
+
+                    if (value < block_end_marker) {
+                        uint8_t value_byte = static_cast<uint8_t>(value);
+                        co_yield write_bytes(as_readonly_bytes(value_byte));
+                        m_previously_decoded_data.append(as_readonly_bytes(value_byte));
+                        continue;
+                    }
+
+                    auto length_code = value - hlit_offset;
+                    auto descriptor = compressed_length_codes[length_code];
+
+                    uint32_t extra_data;
+                    co_yield read_bits(extra_data, descriptor.extra_bits);
+
+                    auto length = descriptor.offset + extra_data;
+
+                    uint16_t distance_code;
+                    co_yield decode_symbol(m_distance_tree, distance_code);
+#ifdef DEFLATE_DEBUG
+                    fprintf(stderr, "DECODE: %3u (distance)\n", distance_code);
+#endif /* DEFLATE_DEBUG */
+
+                    auto dst_descriptor = compressed_distance_codes[distance_code];
+
+                    uint32_t extra_distance;
+                    co_yield read_bits(extra_distance, dst_descriptor.extra_bits);
+
+                    auto distance = dst_descriptor.offset + extra_distance;
+#ifdef DEFLATE_DEBUG
+                    fprintf(stderr, "length=%u distance=%u sz=%lu\n", length, distance, m_previously_decoded_data.size());
+#endif /* DEFLATE_DEBUG */
+
+                    size_t current_index = m_previously_decoded_data.size();
+                    if (current_index < static_cast<size_t>(distance)) {
+                        co_yield StreamResult::Error;
+                        co_return;
+                    }
+
+                    for (size_t i = 0; i < length; i++) {
+                        auto byte = m_previously_decoded_data[current_index - distance + i];
+                        co_yield write_bytes(as_readonly_bytes(byte));
+                        m_previously_decoded_data.append(as_readonly_bytes(byte));
+                    }
+                }
+                break;
             }
-
-            auto bit = get(1);
-            if (!bit.has_value()) {
-                return {};
-            }
-
-            m_tree_index = bit.value() ? tree[m_tree_index].left() : tree[m_tree_index].right();
-        }
-    };
-
-    m_bit_offset = 0;
-    switch (m_state) {
-        case State::OnBlockIsLast:
-            goto GetBlockIsLast;
-        case State::OnBlockCompressionMethod:
-            goto GetBlockCompressionMethod;
-        case State::OnNoCompressionLen:
-            goto GetNoCompressionLen;
-        case State::OnNoCompressionNLen:
-            goto GetNoCompressionNLen;
-        case State::OnNoCompressionData:
-            goto GetNoCompressionData;
-        case State::OnLiteral:
-            goto GetLiteral;
-        case State::OnLengthExtraBits:
-            goto GetLengthExtraBits;
-        case State::OnDistanceCode:
-            goto GetDistanceCode;
-        case State::OnDistanceExtraBits:
-            goto GetDistanceExtraBits;
-        case State::OnHLit:
-            goto GetHLit;
-        case State::OnHDist:
-            goto GetHDist;
-        case State::OnHCLen:
-            goto GetHCLen;
-        case State::OnCodeLengthSymbol:
-            goto GetCodeLengthSymbol;
-        case State::OnLiteralAndDistanceSymbols:
-            goto GetLiteralAndDistanceSymbols;
-        case State::OnCodeLength16:
-            goto GetCodeLength16;
-        case State::OnCodeLength17:
-            goto GetCodeLength17;
-        case State::OnCodeLength18:
-            goto GetCodeLength18;
-    }
-
-GetBlockIsLast : {
-    if (m_is_last_block) {
-        return StreamResult::Success;
-    }
-
-    m_state = State::OnBlockIsLast;
-    auto is_last_block = get(1);
-    if (!is_last_block.has_value()) {
-        return StreamResult::NeedsMoreInput;
-    }
-    m_is_last_block = is_last_block.value();
-}
-
-GetBlockCompressionMethod : {
-    m_state = State::OnBlockCompressionMethod;
-    auto compression_type = get(2);
-    if (!compression_type.has_value()) {
-        return {};
-    }
-
-    switch (compression_type.value()) {
-        case CompressionType::None:
-#ifdef DEFLATE_DEBUG
-            fprintf(stderr, "No compression block\n");
-#endif /* DEFLATE_DEBUG */
-            goto GetNoCompressionLen;
-        case CompressionType::Fixed:
-            m_literal_tree = static_literal_table.array();
-            m_distance_tree = static_distance_table.array();
-#ifdef DEFLATE_DEBUG
-            fprintf(stderr, "Fixed compression block\n");
-#endif /* DEFLATE_DEBUG */
-            goto GetLiteral;
-        case CompressionType::Dynamic:
-#ifdef DEFLATE_DEBUG
-            fprintf(stderr, "Dynamic compression block\n");
-#endif /* DEFLATE_DEBUG */
-            goto GetHLit;
-        default:
-            return StreamResult::Error;
-    }
-}
-
-GetNoCompressionLen : {
-    m_state = State::OnNoCompressionLen;
-    if (m_bit_offset % 8) {
-        m_bit_offset += 8 - (m_bit_offset % 8);
-    }
-
-    auto len = get(16);
-    if (!len.has_value()) {
-        return StreamResult::NeedsMoreInput;
-    }
-    m_no_compression_len = len.value();
-}
-
-GetNoCompressionNLen : {
-    m_state = State::OnNoCompressionNLen;
-    auto nlen = get(16);
-    if (!nlen.has_value()) {
-        return StreamResult::NeedsMoreInput;
-    }
-}
-
-    m_i = 0;
-
-GetNoCompressionData : {
-    m_state = State::OnNoCompressionData;
-    for (; m_i < m_no_compression_len; m_i++) {
-        auto byte = get(8);
-        if (!byte.has_value()) {
-            return StreamResult::NeedsMoreInput;
-        }
-        m_decompressed_data.add(byte.value());
-    }
-    goto GetBlockIsLast;
-}
-
-GetLiteral : {
-    m_state = State::OnLiteral;
-    auto value = decode(m_literal_tree);
-    if (!value.has_value()) {
-        return StreamResult::NeedsMoreInput;
-    }
-
-#ifdef DEFLATE_DEBUG
-    fprintf(stderr, "DECODE: %3u ('%c')\n", value.value(), value.value());
-#endif /* DEFLATE_DEBUG */
-
-    if (value.value() == block_end_marker) {
-        goto GetBlockIsLast;
-    }
-
-    if (value.value() < block_end_marker) {
-        m_decompressed_data.add(value.value());
-        goto GetLiteral;
-    }
-
-    m_length_code = value.value() - hlit_offset;
-}
-
-GetLengthExtraBits : {
-    m_state = State::OnLengthExtraBits;
-    auto descriptor = compressed_length_codes[m_length_code];
-    auto extra_data = get(descriptor.extra_bits);
-    if (!extra_data.has_value()) {
-        return StreamResult::NeedsMoreInput;
-    }
-
-    m_length = descriptor.offset + extra_data.value();
-}
-
-GetDistanceCode : {
-    m_state = State::OnDistanceCode;
-    auto distance_code = decode(m_distance_tree);
-    if (!distance_code.has_value()) {
-        return StreamResult::NeedsMoreInput;
-    }
-
-#ifdef DEFLATE_DEBUG
-    fprintf(stderr, "DECODE: %3u (distance)\n", distance_code.value());
-#endif /* DEFLATE_DEBUG */
-
-    m_distance_code = distance_code.value();
-}
-
-GetDistanceExtraBits : {
-    m_state = State::OnDistanceExtraBits;
-    auto dst_descriptor = compressed_distance_codes[m_distance_code];
-    auto extra_distance = get(dst_descriptor.extra_bits);
-    if (!extra_distance.has_value()) {
-        return StreamResult::NeedsMoreInput;
-    }
-
-    auto distance = dst_descriptor.offset + extra_distance.value();
-#ifdef DEFLATE_DEBUG
-    fprintf(stderr, "length=%u distance=%u data_len=%u\n", m_length, distance, m_decompressed_data.size());
-#endif /* DEFLATE_DEBUG */
-
-    size_t current_index = m_decompressed_data.size();
-    if (current_index < static_cast<size_t>(distance)) {
-        return StreamResult::Error;
-    }
-    for (size_t i = 0; i < m_length; i++) {
-        auto byte = m_decompressed_data[current_index - distance + i];
-#ifdef DEFLATE_DEBUG
-        fprintf(stderr, "COPY:   %3u ('%c')\n", byte, byte);
-#endif /* DEFLATE_DEBUG */
-        m_decompressed_data.add(byte);
-    }
-    goto GetLiteral;
-}
-
-GetHLit : {
-    m_state = State::OnHLit;
-    auto hlit = get(5);
-    if (!hlit.has_value()) {
-        return StreamResult::NeedsMoreInput;
-    }
-    m_hlit = hlit.value();
-}
-
-GetHDist : {
-    m_state = State::OnHDist;
-    auto hdist = get(5);
-    if (!hdist.has_value()) {
-        return StreamResult::NeedsMoreInput;
-    }
-    m_hdist = hdist.value();
-}
-
-GetHCLen : {
-    m_state = State::OnHCLen;
-    auto hclen = get(4);
-    if (!hclen.has_value()) {
-        return StreamResult::NeedsMoreInput;
-    }
-    m_hclen = hclen.value();
-#ifdef DEFLATE_DEBUG
-    fprintf(stderr, "hlit=%lu hdist=%lu hclen=%lu\n", m_hlit + hlit_offset, m_hdist + hdist_offset, hclen.value() + hclen_offset);
-#endif /* DEFLATE_DEBUG */
-}
-
-    for (size_t i = 0; i < m_code_length_symbols.size(); i++) {
-        m_code_length_symbols[i].encoded_length = 0;
-        m_code_length_symbols[i].code = 0;
-        m_code_length_symbols[i].symbol = i;
-    }
-    m_i = 0;
-
-GetCodeLengthSymbol : {
-    m_state = State::OnCodeLengthSymbol;
-    for (; m_i < m_hclen + hclen_offset; m_i++) {
-        auto len = get(3);
-        if (!len.has_value()) {
-            return StreamResult::NeedsMoreInput;
+            default:
+                co_yield StreamResult::Error;
+                co_return;
         }
 
-        auto index = code_length_alphabet_order_mapping[m_i];
-        m_code_length_symbols[index].encoded_length = len.value();
-    }
-
-#ifdef DEFLATE_DEBUG
-    for (size_t i = 0; i < m_code_length_symbols.size(); i++) {
-        fprintf(stderr, "CLA: %3u:%u\n", m_code_length_symbols[i].symbol, m_code_length_symbols[i].encoded_length);
-    }
-#endif /* DEFLATE_DEBUG */
-
-    for (size_t i = 0; i < m_length_codes_tree.size(); i++) {
-        m_length_codes_tree[i].m_left = 0;
-        m_length_codes_tree[i].m_right = 0;
-    }
-    build_huffman_tree(m_code_length_symbols.array(), m_code_length_symbols.size(), m_length_codes_tree.array(),
-                       m_length_codes_tree.size());
-}
-
-    m_literal_and_distance_symbols.resize(m_hlit + hlit_offset + m_hdist + hdist_offset);
-    for (size_t i = 0; i < m_hlit + hlit_offset; i++) {
-        m_literal_and_distance_symbols[i].symbol = i;
-    }
-    for (size_t i = 0; i < m_hdist + hdist_offset; i++) {
-        m_literal_and_distance_symbols[m_hlit + hlit_offset + i].symbol = i;
-    }
-    m_i = 0;
-
-GetLiteralAndDistanceSymbols : {
-    m_state = State::OnLiteralAndDistanceSymbols;
-
-    if (m_i > m_literal_and_distance_symbols.size()) {
-        return StreamResult::Error;
-    }
-
-    if (m_i == m_literal_and_distance_symbols.size()) {
-#ifdef DEFLATE_DEBUG
-        for (size_t i = 0; i < m_hlit + hlit_offset; i++) {
-            fprintf(stderr, "LLA: %3u:%u\n", m_literal_and_distance_symbols[i].symbol, m_literal_and_distance_symbols[i].encoded_length);
+        if (is_last_block) {
+            co_yield StreamResult::Success;
+            co_return;
         }
-        for (size_t i = 0; i < m_hdist + hdist_offset; i++) {
-            auto index = m_hlit + hlit_offset + i;
-            fprintf(stderr, "DTA: %3u:%u\n", m_literal_and_distance_symbols[index].symbol,
-                    m_literal_and_distance_symbols[index].encoded_length);
-        }
-#endif /* DEFLATE_DEBUG */
-
-        for (size_t i = 0; i < m_hlit + hlit_offset; i++) {
-            m_dynamic_literal_tree[i].m_left = 0;
-            m_dynamic_literal_tree[i].m_right = 0;
-        }
-        build_huffman_tree(m_literal_and_distance_symbols.array(), m_hlit + hlit_offset, m_dynamic_literal_tree.array(),
-                           m_dynamic_literal_tree.size());
-
-        for (size_t i = 0; i < m_hdist + hdist_offset; i++) {
-            m_dynamic_distance_tree[i].m_left = 0;
-            m_dynamic_distance_tree[i].m_right = 0;
-        }
-        build_huffman_tree(m_literal_and_distance_symbols.array() + m_hlit + hlit_offset, m_hdist + hdist_offset,
-                           m_dynamic_distance_tree.array(), m_dynamic_distance_tree.size());
-
-        m_literal_tree = m_dynamic_literal_tree.array();
-        m_distance_tree = m_dynamic_distance_tree.array();
-        goto GetLiteral;
     }
-
-    auto value = decode(m_length_codes_tree.array());
-    if (!value.has_value()) {
-        return StreamResult::NeedsMoreInput;
-    }
-
-#ifdef DEFLATE_DEBUG
-    fprintf(stderr, "DECODE: %3u (code length)\n", value.value());
-#endif /* DEFLATE_DEBUG */
-
-    if (value.value() > 18) {
-        return StreamResult::Error;
-    }
-
-    if (value.value() == 16) {
-        goto GetCodeLength16;
-    }
-
-    if (value.value() == 17) {
-        goto GetCodeLength17;
-    }
-
-    if (value.value() == 18) {
-        goto GetCodeLength18;
-    }
-
-    m_literal_and_distance_symbols[m_i++].encoded_length = value.value();
-    m_prev_code_length = value.value();
-    goto GetLiteralAndDistanceSymbols;
-}
-
-GetCodeLength16 : {
-    m_state = State::OnCodeLength16;
-    auto repetitions = get(2);
-    if (!repetitions.has_value()) {
-        return StreamResult::NeedsMoreInput;
-    }
-
-    for (size_t j = 0; j < repetitions.value() + 3UL; j++) {
-        m_literal_and_distance_symbols[m_i++].encoded_length = m_prev_code_length;
-    }
-    goto GetLiteralAndDistanceSymbols;
-}
-
-GetCodeLength17 : {
-    m_state = State::OnCodeLength17;
-    auto repetitions = get(3);
-    if (!repetitions.has_value()) {
-        return StreamResult::NeedsMoreInput;
-    }
-
-    for (size_t j = 0; j < repetitions.value() + 3UL; j++) {
-        m_literal_and_distance_symbols[m_i++].encoded_length = 0;
-    }
-    m_prev_code_length = 0;
-    goto GetLiteralAndDistanceSymbols;
-}
-
-GetCodeLength18 : {
-    m_state = State::OnCodeLength18;
-    auto repetitions = get(7);
-    if (!repetitions.has_value()) {
-        return StreamResult::NeedsMoreInput;
-    }
-
-    for (size_t j = 0; j < repetitions.value() + 11UL; j++) {
-        m_literal_and_distance_symbols[m_i++].encoded_length = 0;
-    }
-    m_prev_code_length = 0;
-    goto GetLiteralAndDistanceSymbols;
-}
 }
 
 DeflateEncoder::DeflateEncoder() : StreamEncoder(encode()) {}

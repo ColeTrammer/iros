@@ -21,9 +21,12 @@ int main() {
     assert(result != Ext::StreamResult::NeedsMoreInput);
 
     Ext::DeflateDecoder decoder;
-    result = decoder.stream_data(output_buffer.data(), output_buffer.size());
+    ByteBuffer new_buffer(0x10000);
+    new_buffer.set_size(new_buffer.capacity());
+    decoder.set_output(new_buffer.span());
+    result = decoder.stream_data(output_buffer.span());
     assert(result == Ext::StreamResult::Success);
-    auto string = String((char*) decoder.decompressed_data().vector());
+    auto string = String((char*) new_buffer.data());
     printf("Decoded: '%s'\n", string.string());
 
     return 0;

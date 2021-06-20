@@ -14,7 +14,7 @@ Generator<StreamResult> Stream::read_bits(uint32_t& bits, uint8_t bit_count) {
             continue;
         }
 
-        if (bit) {
+        if (*bit) {
             bits |= (1U << i);
         }
         i++;
