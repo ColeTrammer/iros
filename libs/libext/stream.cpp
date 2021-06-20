@@ -5,6 +5,22 @@ Stream::Stream() {}
 
 Stream::~Stream() {}
 
+Generator<StreamResult> Stream::read_bits(uint32_t& bits, uint8_t bit_count) {
+    bits = 0;
+    for (uint8_t i = 0; i < bit_count;) {
+        auto bit = m_reader.next_bit();
+        if (!bit) {
+            co_yield StreamResult::NeedsMoreInput;
+            continue;
+        }
+
+        if (bit) {
+            bits |= (1U << i);
+        }
+        i++;
+    }
+}
+
 Generator<StreamResult> Stream::read_bytes(Span<uint8_t> bytes) {
     for (size_t i = 0; i < bytes.size();) {
         auto maybe_byte = m_reader.next_byte();

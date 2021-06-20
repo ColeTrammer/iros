@@ -37,6 +37,7 @@ protected:
     Generator<StreamResult> write_bytes(Span<const uint8_t> input);
     Generator<StreamResult> write_null_terminated_string(const String& string);
 
+    Generator<StreamResult> read_bits(uint32_t& bits, uint8_t bit_count);
     Generator<StreamResult> read_bytes(Span<uint8_t> bytes);
     Generator<StreamResult> read_null_terminated_string(String& string);
 
