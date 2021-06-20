@@ -9,7 +9,6 @@ class ByteReader {
 public:
     ByteReader() {}
     ByteReader(Span<const uint8_t> data) : m_data(data) {}
-    ByteReader(const ByteBuffer& buffer) : m_data({ buffer.data(), buffer.size() }) {}
 
     const uint8_t* data() const { return m_data.data(); }
 
@@ -27,31 +26,53 @@ public:
         assert(byte_offset() <= bytes_total());
     }
 
+    void set_byte_offset(size_t byte_offset) {
+        assert(byte_offset <= m_data.size());
+        m_byte_offset = byte_offset;
+    }
+
     void set_data(Span<const uint8_t> data) {
-        reset();
+        m_byte_offset = 0;
         m_data = move(data);
     }
 
-    void set_data(const ByteBuffer& buffer) {
-        reset();
-        m_data = { buffer.data(), buffer.size() };
+    Maybe<uint8_t> next_byte() {
+        if (m_bit_offset) {
+            m_bit_offset = 0;
+            m_bit_buffer = 0;
+        }
+
+        return next_byte_impl();
     }
 
-    Maybe<uint8_t> next_byte() {
+    Maybe<bool> next_bit() {
+        if (m_bit_offset == 0) {
+            auto byte = next_byte_impl();
+            if (!byte) {
+                return {};
+            }
+            m_bit_buffer = *byte;
+        }
+
+        auto bit = !!(m_bit_buffer & (1U << m_bit_offset));
+        if (++m_bit_offset == 8) {
+            m_bit_offset = 0;
+        }
+        return bit;
+    }
+
+private:
+    Maybe<uint8_t> next_byte_impl() {
         if (m_byte_offset >= m_data.size()) {
             return {};
         }
         return data()[m_byte_offset++];
     }
 
-    void set_byte_offset(size_t byte_offset) {
-        assert(byte_offset <= m_data.size());
-        m_byte_offset = byte_offset;
-    }
-
-private:
     Span<const uint8_t> m_data;
     size_t m_byte_offset { 0 };
+    size_t m_bit_offset { 0 };
+    uint8_t m_bit_buffer { 0 };
 };
 
 class ByteWriter {
