@@ -476,7 +476,7 @@ void swap(T& a, T& b) {
 
 template<typename T, typename U = T>
 constexpr T exchange(T& object, U&& new_value) {
-    auto temp = move(object);
+    auto temp = LIIM::move(object);
     object = forward<U>(new_value);
     return temp;
 }
