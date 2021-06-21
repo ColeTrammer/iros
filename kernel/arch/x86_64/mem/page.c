@@ -379,10 +379,10 @@ void mark_region_as_cow(struct vm_region *region) {
 }
 
 void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
-    // Disable preemption since we have to change the value of CR3. This could potentially be avoided by
+    // Disable interrupts since we have to change the value of CR3. This could potentially be avoided by
     // freeing the memory in old CR3 by traversing the physical addresses directly instead of using a
     // recursive page mapping.
-    disable_preemption();
+    uint64_t save = disable_interrupts_save();
 
     uint64_t old_cr3 = get_cr3();
     if (old_cr3 == phys_addr) {
@@ -396,7 +396,7 @@ void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
     load_cr3(old_cr3);
     free_phys_page(phys_addr, NULL);
 
-    enable_preemption();
+    interrupts_restore(save);
 }
 
 void map_vm_region_flags(struct vm_region *region, struct process *process) {
