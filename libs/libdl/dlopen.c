@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define DL_LOG
+// #define DL_LOG
 
 void *dlopen(const char *file, int flags) {
     if (!file) {
