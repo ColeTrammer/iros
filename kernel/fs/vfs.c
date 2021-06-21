@@ -2160,6 +2160,14 @@ static int fs_do_sys_poll(struct poll_entry *entries, int count, const struct ti
 
         wq_queue = false;
         if (timeout) {
+            // FIXME: For some mysterious reason, this call causes the command 'curl -kL google.com' to fail.
+            //        In particular, adding a call to io_wait_us(10000) prevents the error from occuring, although
+            //        alternative failure modes are also possible. This seems to be a race condition, but it occurs
+            //        even with irqs disabled and with only a single processor active. The error usually manifests
+            //        itself by time_fire_timer() being called with a corrupted timer object, whose mode of event
+            //        delivery is invalid. Removing the assertion only leads to a later crash. The underlying issue
+            //        is unfortunately completely unknown. In addition, the error is likely caused by some complex
+            //        interaction, as a simple test program which executes this code path works perfectly fine.
             ret = __time_wakeup_after(CLOCK_MONOTONIC, timeout);
             if (!ret && timeout->tv_sec == 0 && timeout->tv_nsec == 0) {
                 break;
