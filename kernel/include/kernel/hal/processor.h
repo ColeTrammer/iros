@@ -104,12 +104,13 @@ static inline void set_current_task(struct task *task) {
 
 static inline void disable_preemption(void) {
     struct processor *processor = get_current_processor();
+    assert(processor->preemption_disabled_count >= 0);
     processor->preemption_disabled_count++;
 }
 
 static inline void __enable_preemption(void) {
     struct processor *processor = get_current_processor();
-    assert(processor->preemption_disabled_count != 0);
+    assert(processor->preemption_disabled_count > 0);
     processor->preemption_disabled_count--;
 }
 

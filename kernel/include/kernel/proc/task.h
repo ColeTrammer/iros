@@ -201,7 +201,7 @@ static inline int __wait_do() {
 #define __wait_for(_task, cond, wq, begin_wait, end_wait, interruptible, lock_wq)                                   \
     ({                                                                                                              \
         struct wait_queue_entry __entry = { .task = (_task) };                                                      \
-        ___wait_for(_task, &__entry, cond, wq, begin_wait, end_wait, kernel_yield(), interruptible, lock_wq, true); \
+        ___wait_for(_task, &__entry, cond, wq, begin_wait, end_wait, wait_do(_task), interruptible, lock_wq, true); \
     })
 
 #define ___wait_for(_task, __entry, cond, wq, begin_wait, end_wait, do_block, interruptible, lock_wq, queue_task) \
@@ -229,7 +229,6 @@ static inline int __wait_do() {
                 spin_unlock_no_irq_restore(&(wq)->lock);                                                          \
             }                                                                                                     \
             __queue_task = false;                                                                                 \
-            __enable_preemption();                                                                                \
             __ret = do_block;                                                                                     \
             if (__ret) {                                                                                          \
                 break;                                                                                            \

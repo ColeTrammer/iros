@@ -2097,11 +2097,12 @@ int fs_poll_wait(struct file_state *state, mutex_t *lock, int mask, struct times
 
     if (!timeout) {
         return ___wait_for(entry.task, &entry, fs_do_poll(NULL, mask, state), &state->queue, mutex_unlock(lock), mutex_lock(lock),
-                           kernel_yield(), true, true, false);
+                           wait_do(entry.task), true, true, false);
     }
 
     return ___wait_for(entry.task, &entry, (timeout->tv_sec == 0 && timeout->tv_nsec == 0) || !!fs_do_poll(NULL, mask, state),
-                       &state->queue, mutex_unlock(lock), mutex_lock(lock), time_wakeup_after(CLOCK_MONOTONIC, timeout), true, true, false);
+                       &state->queue, mutex_unlock(lock), mutex_lock(lock), __time_wakeup_after(CLOCK_MONOTONIC, timeout), true, true,
+                       false);
 }
 
 struct poll_entry {
