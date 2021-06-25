@@ -433,6 +433,7 @@ void Document::move_cursor_to_line_end(MovementMode mode) {
         set_needs_display();
     }
 
+    m_col_offset = 0;
     m_panel.set_cursor_col(new_col_position);
 }
 
