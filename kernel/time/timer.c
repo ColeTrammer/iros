@@ -350,6 +350,11 @@ int __time_wakeup_after(int clockid, struct timespec *delta) {
         .task = get_current_task(),
     };
 
+    // If timer is set to 0, simply return without blocking.
+    if (!time_is_timer_armed(&timer)) {
+        return 0;
+    }
+
     uint64_t save = disable_interrupts_save();
     time_add_timer_to_clock(timer.clock, &timer);
 
@@ -370,6 +375,11 @@ int time_wakeup_after(int clockid, struct timespec *delta) {
         .spec = { .it_value = *delta },
         .task = get_current_task(),
     };
+
+    // If timer is set to 0, simply return without blocking.
+    if (!time_is_timer_armed(&timer)) {
+        return 0;
+    }
 
     uint64_t save = disable_interrupts_save();
     time_add_timer_to_clock(timer.clock, &timer);
