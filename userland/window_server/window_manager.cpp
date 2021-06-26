@@ -317,6 +317,9 @@ void WindowManager::notify_mouse_pressed(mouse_button_state left, mouse_button_s
     auto cursor_rect = Rect(m_mouse_x, m_mouse_y, cursor_width, cursor_height);
     auto window = find_window_intersecting_rect(cursor_rect);
     if (!window) {
+        if (left == MOUSE_DOWN || right == MOUSE_DOWN) {
+            set_active_window(nullptr);
+        }
         return;
     }
 
