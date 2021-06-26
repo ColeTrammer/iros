@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/param.h>
 
+#include <kernel/boot/multiboot2.h>
 #include <kernel/hal/block.h>
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
@@ -109,7 +110,7 @@ void free_phys_page(uintptr_t phys_addr, struct process *process) {
 uintptr_t initrd_phys_start;
 uintptr_t initrd_phys_end;
 
-void init_page_frame_allocator(uint32_t *multiboot_info) {
+void init_page_frame_allocator(struct multiboot2_info *multiboot_info) {
     // Everything starts off allocated (reserved). Only usable segments (according to the bootloader) are made available.
     memset(page_bitset_storage, 0xFF, sizeof(page_bitset_storage));
     init_bitset(&page_bitset, page_bitset_storage, sizeof(page_bitset_storage), sizeof(page_bitset_storage) * CHAR_BIT);
@@ -117,44 +118,44 @@ void init_page_frame_allocator(uint32_t *multiboot_info) {
     debug_log("multiboot_info: [ %p ]\n", multiboot_info);
     assert((uintptr_t) multiboot_info < 0x400000ULL);
 
-    uint32_t *data = multiboot_info + 2;
-    while (data < multiboot_info + multiboot_info[0] / sizeof(uint32_t)) {
-        if (data[0] == 1) {
-            char *cmd_line = (char *) &data[2];
+    multiboot2_for_each_tag(multiboot_info, tag) {
+        debug_log("TAG: [ %u, %u ]\n", tag->type, tag->size);
+
+        if (tag->type == MULTIBOOT2_TAG_BOOT_COMMAND_LINE) {
+            MULTIBOOT2_DECLARE_AND_CAST_TAG(command_line_tag, tag, boot_command_line);
+            char *cmd_line = command_line_tag->value;
             debug_log("kernel command line: [ %s ]\n", cmd_line);
             if (strcmp(cmd_line, "graphics=0") == 0) {
                 kernel_disable_graphics();
             }
         }
 
-        if (data[0] == 6) {
-            uintptr_t *mem = (uintptr_t *) (data + 4);
-            while ((uint32_t *) mem < data + data[1] / sizeof(uint32_t)) {
-                debug_log("Physical memory range: [ %#.16lX, %#.16lX, %u ]\n", mem[0] & ~0xFFF, mem[1], (uint32_t) mem[2]);
-                if ((uint32_t) mem[2] == 1) {
+        if (tag->type == MULTIBOOT2_TAG_MEMORY_MAP) {
+            MULTIBOOT2_DECLARE_AND_CAST_TAG(memory_map_tag, tag, memory_map);
+            multiboot2_for_each_memory_map_entry(memory_map_tag, entry) {
+                debug_log("Physical memory range: [ %#.16lX, %#.16lX, %u ]\n", entry->base_address & ~0xFFF, entry->length, entry->type);
+                if (entry->type == MULTIBOOT2_MEMORY_MAP_AVAILABLE) {
                     // Memory below 0x100000 is reserved, and accounted as allocated.
-                    if (mem[0] < 0x100000) {
+                    if (entry->base_address < 0x100000) {
                         g_phys_page_stats.phys_memory_allocated +=
-                            ALIGN_UP(MIN(ALIGN_UP((mem[0] & ~0xFFF) + mem[1], PAGE_SIZE), 0x100000) - (mem[0] & ~0xFFF), PAGE_SIZE);
+                            ALIGN_UP(MIN(ALIGN_UP((entry->base_address & ~0xFFF) + entry->length, PAGE_SIZE), 0x100000) -
+                                         (entry->base_address & ~0xFFF),
+                                     PAGE_SIZE);
                     }
 
-                    mark_available(mem[0] & ~0xFFF, mem[1]);
-                    g_phys_page_stats.phys_memory_total += mem[1] - (mem[0] & ~0xFFF);
+                    mark_available(entry->base_address & ~0xFFF, entry->length);
+                    g_phys_page_stats.phys_memory_total += entry->length - (entry->base_address & ~0xFFF);
                 }
-                g_phys_page_stats.phys_memory_max = MAX(ALIGN_UP((mem[0] & ~0xFFF) + mem[1], PAGE_SIZE), g_phys_page_stats.phys_memory_max);
-                mem += data[2] / sizeof(uintptr_t);
+                g_phys_page_stats.phys_memory_max =
+                    MAX(ALIGN_UP((entry->base_address & ~0xFFF) + entry->length, PAGE_SIZE), g_phys_page_stats.phys_memory_max);
             }
         }
 
-        if (data[0] == 3) {
-            initrd_phys_start = data[2];
-            initrd_phys_end = data[3];
-            debug_log("kernel module: [ %s ]\n", (char *) &data[4]);
-        }
-
-        data = (uint32_t *) ((uintptr_t) data + data[1]);
-        if ((uintptr_t) data % 8 != 0) {
-            data = (uint32_t *) (((uintptr_t) data & ~0x7) + 8);
+        if (tag->type == MULTIBOOT2_TAG_MODULE) {
+            MULTIBOOT2_DECLARE_AND_CAST_TAG(module_tag, tag, module);
+            initrd_phys_start = module_tag->module_start;
+            initrd_phys_end = module_tag->module_end;
+            debug_log("kernel module: [ %s ]\n", module_tag->name);
         }
     }
 

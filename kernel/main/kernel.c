@@ -22,7 +22,7 @@
 #include <kernel/util/init.h>
 #include <kernel/util/list.h>
 
-void kernel_main(uint32_t *multiboot_info) {
+void kernel_main(struct multiboot2_info *multiboot_info) {
     init_hal();
     init_irq_handlers();
     init_page_frame_allocator(multiboot_info);
