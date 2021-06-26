@@ -261,12 +261,11 @@ String TerminalWidget::selection_text() const {
 }
 
 void TerminalWidget::on_mouse_event(App::MouseEvent& event) {
-    int row_at_cursor = m_tty.scroll_relative_offset(event.y() / cell_height);
-    int col_at_cursor = event.x() / cell_width;
+    auto cell_x = event.x() / cell_width;
+    auto cell_y = event.y() / cell_height;
 
-    if (row_at_cursor < 0 || row_at_cursor >= m_tty.row_count() || col_at_cursor < 0 || col_at_cursor >= m_tty.col_count()) {
-        return;
-    }
+    int row_at_cursor = m_tty.scroll_relative_offset(cell_y);
+    int col_at_cursor = cell_x;
 
     if (m_pseudo_terminal.handle_mouse_event(event.left(), event.right(), row_at_cursor, col_at_cursor, event.scroll())) {
         return;
@@ -296,6 +295,11 @@ void TerminalWidget::on_mouse_event(App::MouseEvent& event) {
             case App::MouseEventType::Double: {
                 m_selection_start_row = m_selection_end_row = row_at_cursor;
                 m_selection_start_col = m_selection_end_col = col_at_cursor;
+
+                if (row_at_cursor < 0 || row_at_cursor >= m_tty.row_count()) {
+                    m_in_selection = false;
+                    return;
+                }
 
                 auto& row = m_tty.row_at_scroll_relative_offset(row_at_cursor);
                 bool connect_spaces = isspace(row[col_at_cursor].ch);
