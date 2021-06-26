@@ -48,15 +48,13 @@ bool File::read(ByteBuffer& buffer) {
 }
 
 bool File::write(ByteBuffer& buffer) {
-    auto current_size = buffer.size();
-    auto nwritten = fwrite(buffer.data(), 1, buffer.size(), m_file);
+    fwrite(buffer.data(), 1, buffer.size(), m_file);
     if (ferror(m_file)) {
         m_error = errno;
         clearerr(m_file);
         return false;
     }
 
-    buffer.set_size(current_size + nwritten);
     return true;
 }
 
