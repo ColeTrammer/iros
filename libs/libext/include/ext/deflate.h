@@ -7,6 +7,7 @@
 #include <liim/fixed_array.h>
 #include <liim/generator.h>
 #include <liim/maybe.h>
+#include <liim/ring_buffer.h>
 #include <liim/string.h>
 #include <liim/vector.h>
 #include <stdint.h>
@@ -52,11 +53,7 @@ private:
 
     Generator<StreamResult> decode_symbol(const TreeNode* tree, uint16_t& value);
 
-    // FIXME: This really should be a RingBuffer class, as only the last 32K bytes need to be stored.
-    //        For now, all decoded bytes are stored, because limiting the ByteBuffer to 32K would mean
-    //        every decoded byte may call memmove() on a 32K buffer.
-    ByteBuffer m_previously_decoded_data;
-
+    RingBuffer<uint8_t, 32768> m_previously_decoded_data;
     FixedArray<Symbol, hclen_max> m_code_length_symbols;
     FixedArray<TreeNode, 128> m_length_codes_tree;
     FixedArray<Symbol, hlit_max + hdist_max> m_literal_and_distance_symbols;

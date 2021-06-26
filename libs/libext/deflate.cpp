@@ -129,7 +129,7 @@ static constexpr decltype(auto) build_static_huffman_distances() {
 constexpr auto static_literal_table = build_static_huffman_literals();
 constexpr auto static_distance_table = build_static_huffman_distances();
 
-DeflateDecoder::DeflateDecoder() : StreamDecoder(decode()), m_previously_decoded_data(32LU * 1024LU) {}
+DeflateDecoder::DeflateDecoder() : StreamDecoder(decode()) {}
 
 DeflateDecoder::~DeflateDecoder() {}
 
@@ -179,7 +179,7 @@ Generator<StreamResult> DeflateDecoder::decode() {
                     uint8_t byte;
                     co_yield read_bytes(as_writable_bytes(byte));
                     co_yield write_bytes(as_readonly_bytes(byte));
-                    m_previously_decoded_data.append(as_readonly_bytes(byte));
+                    m_previously_decoded_data.force_add(byte);
                 }
                 break;
             }
@@ -336,7 +336,7 @@ Generator<StreamResult> DeflateDecoder::decode() {
                     if (value < block_end_marker) {
                         uint8_t value_byte = static_cast<uint8_t>(value);
                         co_yield write_bytes(as_readonly_bytes(value_byte));
-                        m_previously_decoded_data.append(as_readonly_bytes(value_byte));
+                        m_previously_decoded_data.force_add(value_byte);
                         continue;
                     }
 
@@ -361,7 +361,7 @@ Generator<StreamResult> DeflateDecoder::decode() {
 
                     auto distance = dst_descriptor.offset + extra_distance;
 #ifdef DEFLATE_DEBUG
-                    fprintf(stderr, "length=%u distance=%u sz=%lu\n", length, distance, m_previously_decoded_data.size());
+                    fprintf(stderr, "length=%u distance=%u\n", length, distance);
 #endif /* DEFLATE_DEBUG */
 
                     size_t current_index = m_previously_decoded_data.size();
@@ -371,9 +371,9 @@ Generator<StreamResult> DeflateDecoder::decode() {
                     }
 
                     for (size_t i = 0; i < length; i++) {
-                        auto byte = m_previously_decoded_data[current_index - distance + i];
+                        auto byte = m_previously_decoded_data.access_from_tail(distance);
                         co_yield write_bytes(as_readonly_bytes(byte));
-                        m_previously_decoded_data.append(as_readonly_bytes(byte));
+                        m_previously_decoded_data.force_add(byte);
                     }
                 }
                 break;
