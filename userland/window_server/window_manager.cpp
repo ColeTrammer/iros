@@ -91,6 +91,8 @@ void WindowManager::cleanup_active_window_state(SharedPtr<Window> window) {
         auto* parent = window->parent();
         if (parent && parent->visible()) {
             set_active_window(find_by_wid(parent->id()));
+        } else if (!m_window_stack.empty()) {
+            set_active_window(m_window_stack.last());
         } else {
             set_active_window(nullptr);
         }
