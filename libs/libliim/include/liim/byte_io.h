@@ -88,14 +88,13 @@ public:
     Span<uint8_t> span_available() const { return m_output.after(bytes_written()); }
 
     void set_output(Span<uint8_t> output) {
-        // If the data field is the same, we are simply extending the old output buffer.
-        if (output.data() == m_output.data()) {
-            m_output = output;
-            return;
-        }
-
         m_output = output;
         m_byte_offset = 0;
+    }
+
+    void extend_output(Span<uint8_t> output) {
+        assert(m_output.size() <= output.size());
+        m_output = output;
     }
 
     void advance(size_t count) { set_offset(m_byte_offset + count); }

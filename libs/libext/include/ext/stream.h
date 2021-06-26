@@ -30,6 +30,7 @@ public:
     const ByteReader& reader() const { return m_reader; }
 
     void set_output(Span<uint8_t> output) { m_writer.set_output(output); }
+    void extend_output(Span<uint8_t> output) { m_writer.extend_output(output); }
     void did_flush_output() { m_writer.set_offset(0); }
 
 protected:

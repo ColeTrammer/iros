@@ -115,7 +115,7 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
         while (result == Ext::StreamResult::NeedsMoreOutputSpace) {
             image_data.ensure_capacity(max(0x1000LU, image_data.capacity() * 2));
             image_data.set_size(image_data.capacity());
-            idat_decoder.set_output(image_data.span());
+            idat_decoder.extend_output(image_data.span());
             result = idat_decoder.resume();
         }
 
@@ -157,6 +157,11 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
         type.insert(static_cast<char>(chunk_type.value() >> 16), type.size());
         type.insert(static_cast<char>(chunk_type.value() >> 8), type.size());
         type.insert(static_cast<char>(chunk_type.value()), type.size());
+
+#ifdef PNG_DEBUG
+        fprintf(stderr, "PNG Chunk '%s'\n", type.string());
+#endif /* PNG_DEBUG */
+
         if (type == "IHDR") {
             if (!decode_ihdr(chunk_length.value())) {
                 return nullptr;
