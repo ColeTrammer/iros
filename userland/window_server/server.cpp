@@ -234,6 +234,8 @@ void ServerImpl::start() {
         close(fd);
     }
 
+    m_manager->invalidate_rect(m_manager->screen_rect());
+
     App::EventLoop loop;
     loop.enter();
 }

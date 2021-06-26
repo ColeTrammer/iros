@@ -45,6 +45,7 @@ Window::Window(const Rect& rect, String title, IPC::Endpoint& client, WindowServ
     update_rect_from_content();
     map_buffers();
     m_front_buffer->clear(WindowManager::the().palette()->color(Palette::Background));
+    m_back_buffer->clear(WindowManager::the().palette()->color(Palette::Background));
 }
 
 Window::~Window() {

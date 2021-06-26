@@ -36,10 +36,7 @@ int main() {
     }
 
     auto front_buffer = Bitmap::wrap(raw_pixels, sz.x, sz.y, false);
-    front_buffer->clear(ColorValue::DarkGray);
-
     auto back_buffer = Bitmap::wrap(raw_pixels + sz.x * sz.y, sz.x, sz.y, false);
-    back_buffer->clear(ColorValue::DarkGray);
 
     auto server = WindowServer::ServerImpl::create(nullptr, fb, front_buffer, back_buffer);
     server->start();

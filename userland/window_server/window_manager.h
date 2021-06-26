@@ -99,7 +99,6 @@ private:
     Point m_window_move_initial_location;
     Point m_window_move_origin;
 
-    Color m_desktop_color { ColorValue::DarkGray };
     SharedPtr<Bitmap> m_desktop_background;
 
     bool m_drawing { false };

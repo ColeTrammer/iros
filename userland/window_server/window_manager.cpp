@@ -150,13 +150,13 @@ void WindowManager::draw() {
 
         if (window->type() == WindowServer::WindowType::Application) {
             auto title_bar_rect = Rect { window->rect().x() + 1, window->rect().y() + 1, window->rect().width() - 1, 20 };
-            renderer.fill_rect(title_bar_rect, palette()->color(Palette::Background));
+            renderer.fill_rect(title_bar_rect, palette()->color(Palette::WindowTitlebarBackground));
             renderer.render_text(window->title(), title_bar_rect.adjusted(-4, 0), palette()->color(Palette::Text));
 
-            renderer.draw_rect(window->rect(), palette()->color(Palette::Outline));
+            renderer.draw_rect(window->rect(), palette()->color(Palette::WindowOutline));
             renderer.draw_line({ window->rect().x(), window->rect().y() + 21 },
                                { window->rect().x() + window->rect().width() - 1, window->rect().y() + 21 },
-                               palette()->color(Palette::Outline));
+                               palette()->color(Palette::WindowOutline));
             renderer.fill_circle(window->close_button_x(), window->close_button_y(), window->close_button_radius(),
                                  palette()->color(Palette::Text));
 
@@ -187,7 +187,7 @@ void WindowManager::draw() {
         if (m_desktop_background) {
             renderer.draw_bitmap(*m_desktop_background, rect, rect);
         } else {
-            renderer.fill_rect(rect, m_desktop_color);
+            renderer.fill_rect(rect, m_palette->color(Palette::DesktopBackground));
         }
     }
 

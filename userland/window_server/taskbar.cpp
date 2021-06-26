@@ -89,7 +89,7 @@ void Taskbar::render(Renderer& renderer) {
 
     int taskbar_top = renderer.pixels().height() - taskbar_height;
     auto taskbar_rect = Rect { 0, taskbar_top, renderer.pixels().width(), taskbar_height };
-    renderer.fill_rect(taskbar_rect, palette->color(Palette::Background));
+    renderer.fill_rect(taskbar_rect, palette->color(Palette::TaskbarBackground));
     renderer.draw_line({ 0, taskbar_top }, { renderer.pixels().width() - 1, taskbar_top }, palette->color(Palette::Outline));
 
     for (int i = 0; i < m_items.size(); i++) {
