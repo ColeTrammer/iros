@@ -16,7 +16,7 @@ __attribute__((__noreturn__)) void abort() {
 
     asm volatile("cli");
     while (1)
-        ;
+        asm volatile("hlt");
     __builtin_unreachable();
 #else
     // Unblock SIGABRT, and block everything else
