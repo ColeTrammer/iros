@@ -1,7 +1,7 @@
 set -e
 
 export ROOT="$PWD/../.."
-export HOST=`$ROOT/default-host.sh`
+export HOST=`$ROOT/scripts/default-host.sh`
 
 die() {
     echo "Error:" "$@" && exit 1

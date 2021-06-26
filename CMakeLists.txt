@@ -72,8 +72,8 @@ if (NOT ${NATIVE_BUILD})
     )
 
     add_custom_target(
-        os_2.iso
-        BYPRODUCTS ${ROOT}/os_2.iso
+        iso
+        BYPRODUCTS ${ROOT}/scripts/os_2.iso
         COMMAND /bin/mkdir -p ${ISODIR}/boot/grub
         COMMAND /bin/mkdir -p ${ISODIR}/modules
         COMMAND objcopy -S ${SYSROOT}/boot/kernel ${ISODIR}/boot/kernel
@@ -89,28 +89,28 @@ if (NOT ${NATIVE_BUILD})
         COMMAND /bin/echo "set timeout_style=menu" >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND /bin/echo "set timeout=0" >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND grub-file --is-x86-multiboot2 ${ISODIR}/boot/kernel
-        COMMAND grub-mkrescue -o ${ROOT}/os_2.iso ${ISODIR}
+        COMMAND grub-mkrescue -o ${ROOT}/scripts/os_2.iso ${ISODIR}
         DEPENDS generate-initrd kernel
     )
 
     add_custom_target(
-        os_2.img
+        image
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMAND sudo ./makeimg.sh
+        COMMAND sudo ./scripts/makeimg.sh
         USES_TERMINAL
     )
 
     add_custom_target(
         run
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMAND ./qemu.sh
+        COMMAND cd scripts && ./qemu.sh
         USES_TERMINAL
     )
 
     add_custom_target(
         brun
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMAND ./bochs.sh
+        COMMAND cd scripts && ./bochs.sh
         USES_TERMINAL
     )
 
@@ -119,9 +119,9 @@ if (NOT ${NATIVE_BUILD})
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR}
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target install
-        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target os_2.iso
-        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target os_2.img
-        COMMAND ./qemu.sh
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target iso
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target image
+        COMMAND cd scripts && ./qemu.sh
         USES_TERMINAL
     )
 
@@ -129,9 +129,9 @@ if (NOT ${NATIVE_BUILD})
         bfrun
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target install
-        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target os_2.iso
-        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target os_2.img
-        COMMAND ./bochs.sh
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target iso
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target image
+        COMMAND cd scripts && ./bochs.sh
         USES_TERMINAL
     )
 endif()

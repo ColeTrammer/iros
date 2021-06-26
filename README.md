@@ -25,13 +25,17 @@ My second attempt to create an OS
 
 -   You need to install various dependencies for gcc (look on osdev)
 -   Install qemu-system-x86_64 to run the os, also grub-mkrescue
--   Run `./setup.sh`, which will prompt you to build the toolchain and create two cmake build directories
+-   Run `./scripts/setup.sh`, which will prompt you to build the toolchain and create two cmake build directories.
+    Note that this must be run from the root directory, or the script will be confused.
     -   native - for tools that must be run on the host operating system
     -   build - for the os and other cross compiled components
--   Now, you can build the system by typing `cmake --build build`
--   Make the disk image with `sudo ./makeimg.sh`
--   Run the system inside qemu with `./qemu.sh`
--   Alternatively, you can cd into the build directory and type `make`, `make os_2.img`, and `make run`
+-   Now, cd into the build directory and type `make && make install && make iso && make image`.
+    This builds the system and installs it to the sysroot directory. Then, a bootable iso file is
+    made (containing the kernel as well as grub2), and finally, a ext2 disk image is created which
+    contains a union of both 'base' and 'sysroot'.
+-   To run with qemu, type `make run`, and to run with bochs, type `make brun`.
+-   In addition, the aliases `make frun` and `make bfrun` can be used to fully build the system (image and iso included),
+    and also start an emulator instance.
 
 # TODO
 

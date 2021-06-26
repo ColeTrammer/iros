@@ -41,10 +41,13 @@ cmake -S . -B "$OS_2_NATIVE_DIR" -G "$GENERATOR" || die "Failed to do create nat
 
 cmake --build "$OS_2_NATIVE_DIR" || die "Failed to do native build"
 
+export ARCH='x86_64'
+export TARGET_OS='os_2'
 export AS=${OS_AS:-"$ARCH-$TARGET_OS-as"}
 export CC=${OS_CC:-"$ARCH-$TARGET_OS-gcc"}
 export CXX=${OS_CXX:-"$ARCH-$TARGET_OS-g++"}
 
+echo "$(realpath .)"
 exists "$AS" || maybe_build_toolchain || die "$AS does not exist" 
 exists "$CC" || die "$CC does not exist" 
 exists "$CXX" || die "$CXX does not exist" 

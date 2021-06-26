@@ -8,12 +8,12 @@ then
     exit 1
 fi
 
-qemu-img create os_2.img 200m
-parted -s -- os_2.img \
+qemu-img create scripts/os_2.img 200m
+parted -s -- scripts/os_2.img \
     mklabel gpt \
     mkpart P1 ext2 1Mib -34s
 
-LOOP_DEV=$(losetup -o 1048576 --sizelimit=$((199 * 1048576 - 34 * 512)) -f os_2.img --show)
+LOOP_DEV=$(losetup -o 1048576 --sizelimit=$((199 * 1048576 - 34 * 512)) -f scripts/os_2.img --show)
 mke2fs "$LOOP_DEV"
 
 cleanup() {
@@ -63,4 +63,4 @@ ln -s /proc/self/fd/1 mnt/dev/stdout
 ln -s /proc/self/fd/2 mnt/dev/stderr
 ln -s urandom mnt/dev/random
 
-chmod 777 os_2.img
+chmod 777 scripts/os_2.img
