@@ -34,8 +34,8 @@ static void ata_clear_bus_master_status(struct ide_location location) {
     outb(location.ide_bus_master + ATA_BUS_MASTER_STATUS_OFFSET, status | ATA_BUS_MASTER_STATUS_DID_IRQ | ATA_BUS_MASTER_STATUS_ERROR);
 }
 
-void ata_setup_prdt(struct ata_drive *drive, bool write) {
-    outb(drive->channel->location.ide_bus_master + ATA_BUS_MASTER_COMMAND_OFFSET, write ? ATA_BUS_MASTER_COMMAND_WRITE : 0);
+void ata_setup_prdt(struct ata_drive *drive) {
+    outb(drive->channel->location.ide_bus_master + ATA_BUS_MASTER_COMMAND_OFFSET, 0);
     outl(drive->channel->location.ide_bus_master + ATA_BUS_MASTER_PRD_OFFSET, (uint32_t) get_phys_addr((uintptr_t) drive->prdt));
     ata_clear_bus_master_status(drive->channel->location);
 }
@@ -61,6 +61,8 @@ static bool ide_channel_irq(struct irq_context *context) {
     uint8_t ata_status = inb(channel->location.io_base + ATA_STATUS_OFFSET);
     if (!!(ata_status & ATA_STATUS_ERR) || !!(ata_status & ATA_STATUS_DF) || !!(status & ATA_BUS_MASTER_STATUS_ERROR)) {
         channel->error_from_irq = true;
+    } else {
+        channel->error_from_irq = false;
     }
     ata_clear_bus_master_status(channel->location);
     wake_up_all(&channel->wait_queue);
@@ -85,8 +87,6 @@ struct ide_channel *ide_create_channel(struct ide_controller *controller, uint16
         channel->irq_handler.flags = IRQ_HANDLER_EXTERNAL | IRQ_HANDLER_SHARED;
         channel->irq_handler.closure = channel;
         register_irq_handler(&channel->irq_handler, irq_line);
-    } else {
-        ata_write_device_control(channel->location, ATA_DEVICE_CONTROL_DISABLE_IRQS);
     }
 
     debug_log("Created IDE Channel: [ %#.4X, %#.4X, %#.4X ]\n", io_base, command_base, ide_bus_master);

@@ -22,8 +22,6 @@ static void ata_set_command_and_delay(struct ide_location location, uint8_t comm
 }
 
 static void ata_setup_registers(struct ata_drive *drive, uint32_t offset, uint8_t sectors) {
-    ata_select_drive_with_lba(drive->channel, drive->drive, offset);
-
     outb(drive->channel->location.io_base + ATA_FEATURES_OFFSET, 0);
     outb(drive->channel->location.io_base + ATA_SECTOR_COUNT_OFFSET, 0);
     outb(drive->channel->location.io_base + ATA_SECTOR_NUMBER_OFFSET, 0);
@@ -48,6 +46,8 @@ static ssize_t ata_write_sectors_pio(struct block_device *self, const void *buff
 
     ide_channel_lock(drive->channel);
 
+    ata_select_drive_with_lba(drive->channel, drive->drive, sector_offset);
+
     enum ata_wait_result wait_result = ata_wait_not_busy(drive->channel->location);
     if (wait_result != ATA_WAIT_RESULT_SUCCESS) {
         ide_channel_unlock(drive->channel);
@@ -57,7 +57,7 @@ static ssize_t ata_write_sectors_pio(struct block_device *self, const void *buff
     ata_setup_registers(drive, sector_offset, n);
 
     uint64_t save = disable_interrupts_save();
-    ata_set_command_and_delay(drive->channel->location, ATA_COMMAND_WRITE);
+    ata_set_command_and_delay(drive->channel->location, ATA_COMMAND_WRITE_PIO);
 
     const uint16_t *buf = (const uint16_t *) buffer;
     ssize_t ret = n;
@@ -107,6 +107,8 @@ static ssize_t ata_read_sectors_pio(struct block_device *self, void *buffer, blk
     assert(drive->channel);
     ide_channel_lock(drive->channel);
 
+    ata_select_drive_with_lba(drive->channel, drive->drive, sector_offset);
+
     enum ata_wait_result wait_result = ata_wait_not_busy(drive->channel->location);
     if (wait_result != ATA_WAIT_RESULT_SUCCESS) {
         ide_channel_unlock(drive->channel);
@@ -116,7 +118,7 @@ static ssize_t ata_read_sectors_pio(struct block_device *self, void *buffer, blk
     ata_setup_registers(drive, sector_offset, n);
 
     uint64_t save = disable_interrupts_save();
-    ata_set_command_and_delay(drive->channel->location, ATA_COMMAND_READ);
+    ata_set_command_and_delay(drive->channel->location, ATA_COMMAND_READ_PIO);
 
     uint16_t *buf = (uint16_t *) buffer;
     ssize_t ret = n;
@@ -152,7 +154,9 @@ static ssize_t ata_read_sectors_dma(struct block_device *self, void *buffer, blk
 
     drive->prdt[0].phys_addr = (uint32_t) get_phys_addr((uintptr_t) drive->dma_region->start);
     drive->prdt[0].size = (uint16_t)(self->block_size * sectors);
-    ata_setup_prdt(drive, false);
+    ata_setup_prdt(drive);
+
+    ata_select_drive_with_lba(drive->channel, drive->drive, sector_offset);
 
     enum ata_wait_result wait_result = ata_wait_not_busy(drive->channel->location);
     if (wait_result != ATA_WAIT_RESULT_SUCCESS) {
@@ -165,7 +169,7 @@ static ssize_t ata_read_sectors_dma(struct block_device *self, void *buffer, blk
 
     // Start bus master (Disable interrupts so that the irq doesn't come before we sleep)
     uint64_t save = disable_interrupts_save();
-    outb(drive->channel->location.ide_bus_master, ATA_BUS_MASTER_COMMAND_START);
+    outb(drive->channel->location.ide_bus_master, ATA_BUS_MASTER_COMMAND_START | ATA_BUS_MASTER_COMMAND_WRITE);
     int ret = ata_wait_irq(drive->channel);
     interrupts_restore(save);
 
@@ -195,7 +199,9 @@ static ssize_t ata_write_sectors_dma(struct block_device *self, const void *buff
 
     drive->prdt[0].phys_addr = (uint32_t) get_phys_addr(drive->dma_region->start);
     drive->prdt[0].size = (uint16_t)(self->block_size * sectors);
-    ata_setup_prdt(drive, true);
+    ata_setup_prdt(drive);
+
+    ata_select_drive_with_lba(drive->channel, drive->drive, sector_offset);
 
     enum ata_wait_result wait_result = ata_wait_not_busy(drive->channel->location);
     if (wait_result != ATA_WAIT_RESULT_SUCCESS) {
@@ -208,8 +214,7 @@ static ssize_t ata_write_sectors_dma(struct block_device *self, const void *buff
 
     // Start bus master (Disable interrupts so that the irq doesn't come before we sleep)
     uint64_t save = disable_interrupts_save();
-    outb(drive->channel->location.ide_bus_master + ATA_BUS_MASTER_COMMAND_OFFSET,
-         ATA_BUS_MASTER_COMMAND_START | ATA_BUS_MASTER_COMMAND_WRITE);
+    outb(drive->channel->location.ide_bus_master + ATA_BUS_MASTER_COMMAND_OFFSET, ATA_BUS_MASTER_COMMAND_START);
     int ret = ata_wait_irq(drive->channel);
     interrupts_restore(save);
 
@@ -231,7 +236,9 @@ static struct phys_page *ata_read_page_dma(struct block_device *self, off_t sect
     // Read directly into the phys_page
     drive->prdt[0].phys_addr = page->phys_addr;
     drive->prdt[0].size = PAGE_SIZE;
-    ata_setup_prdt(drive, false);
+    ata_setup_prdt(drive);
+
+    ata_select_drive_with_lba(drive->channel, drive->drive, sector_offset);
 
     enum ata_wait_result wait_result = ata_wait_not_busy(drive->channel->location);
     if (wait_result != ATA_WAIT_RESULT_SUCCESS) {
@@ -246,7 +253,7 @@ static struct phys_page *ata_read_page_dma(struct block_device *self, off_t sect
 
     // Start bus master (Disable interrupts so that the irq doesn't come before we sleep)
     uint64_t save = disable_interrupts_save();
-    outb(drive->channel->location.ide_bus_master, ATA_BUS_MASTER_COMMAND_START);
+    outb(drive->channel->location.ide_bus_master, ATA_BUS_MASTER_COMMAND_START | ATA_BUS_MASTER_COMMAND_WRITE);
     int ret = ata_wait_irq(drive->channel);
     interrupts_restore(save);
 
@@ -269,7 +276,9 @@ static int ata_sync_page_dma(struct block_device *self, struct phys_page *page) 
     // Write directly from the physical page.
     drive->prdt[0].phys_addr = page->phys_addr;
     drive->prdt[0].size = PAGE_SIZE;
-    ata_setup_prdt(drive, true);
+    ata_setup_prdt(drive);
+
+    ata_select_drive_with_lba(drive->channel, drive->drive, page->block_offset);
 
     enum ata_wait_result wait_result = ata_wait_not_busy(drive->channel->location);
     if (wait_result != ATA_WAIT_RESULT_SUCCESS) {
@@ -282,8 +291,7 @@ static int ata_sync_page_dma(struct block_device *self, struct phys_page *page) 
 
     // Start bus master (Disable interrupts so that the irq doesn't come before we sleep)
     uint64_t save = disable_interrupts_save();
-    outb(drive->channel->location.ide_bus_master + ATA_BUS_MASTER_COMMAND_OFFSET,
-         ATA_BUS_MASTER_COMMAND_START | ATA_BUS_MASTER_COMMAND_WRITE);
+    outb(drive->channel->location.ide_bus_master + ATA_BUS_MASTER_COMMAND_OFFSET, ATA_BUS_MASTER_COMMAND_START);
     int ret = ata_wait_irq(drive->channel);
     interrupts_restore(save);
 

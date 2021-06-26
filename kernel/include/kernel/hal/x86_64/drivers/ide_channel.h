@@ -37,7 +37,7 @@ enum ata_wait_result {
 
 enum ata_wait_result ata_wait_not_busy(struct ide_location location);
 void ata_select_drive_with_lba(struct ide_channel *channel, int drive, uint32_t lba);
-void ata_setup_prdt(struct ata_drive *drive, bool write);
+void ata_setup_prdt(struct ata_drive *drive);
 int ata_wait_irq(struct ide_channel *channel);
 
 struct ide_channel *ide_create_channel(struct ide_controller *controller, uint16_t io_base, uint16_t command_base, uint16_t ide_bus_master,
