@@ -153,7 +153,8 @@ void WindowManager::draw() {
         if (window->type() == WindowServer::WindowType::Application) {
             auto title_bar_rect = Rect { window->rect().x() + 1, window->rect().y() + 1, window->rect().width() - 1, 20 };
             renderer.fill_rect(title_bar_rect, palette()->color(Palette::WindowTitlebarBackground));
-            renderer.render_text(window->title(), title_bar_rect.adjusted(-4, 0), palette()->color(Palette::Text));
+            renderer.render_text(window->title(), title_bar_rect.adjusted(-4, 0), palette()->color(Palette::Text), TextAlign::CenterLeft,
+                                 m_active_window.get() == window.get() ? Font::bold_font() : Font::default_font());
 
             renderer.draw_rect(window->rect(), palette()->color(Palette::WindowOutline));
             renderer.draw_line({ window->rect().x(), window->rect().y() + 21 },
