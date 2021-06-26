@@ -8,6 +8,7 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 
+#include <kernel/boot/boot_info.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
@@ -35,9 +36,6 @@ static struct vm_region kernel_data;
 static struct vm_region kernel_heap;
 static struct vm_region initrd;
 static spinlock_t kernel_vm_lock = SPINLOCK_INITIALIZER;
-
-extern uintptr_t initrd_phys_start;
-extern uintptr_t initrd_phys_end;
 
 void init_vm_allocator(void) {
 #if ARCH == X86_64
@@ -67,8 +65,9 @@ void init_vm_allocator(void) {
     kernel_data.type = VM_KERNEL_DATA;
     kernel_vm_list = add_vm_region(kernel_vm_list, &kernel_data);
 
+    struct boot_info *boot_info = boot_get_boot_info();
     initrd.start = KERNEL_HEAP_START;
-    initrd.end = ((initrd.start + initrd_phys_end - initrd_phys_start) & ~0xFFF) + PAGE_SIZE;
+    initrd.end = ((initrd.start + boot_info->initrd_phys_end - boot_info->initrd_phys_start) & ~0xFFF) + PAGE_SIZE;
     initrd.flags = VM_GLOBAL | VM_NO_EXEC;
     initrd.type = VM_INITRD;
     kernel_vm_list = add_vm_region(kernel_vm_list, &initrd);
@@ -85,7 +84,7 @@ void init_vm_allocator(void) {
 
     clear_initial_page_mappings();
     for (int i = 0; initrd.start + i < initrd.end; i += PAGE_SIZE) {
-        map_phys_page(initrd_phys_start + i, initrd.start + i, initrd.flags, &idle_kernel_process);
+        map_phys_page(boot_info->initrd_phys_start + i, initrd.start + i, initrd.flags, &idle_kernel_process);
     }
 
     for (struct vm_region *region = kernel_vm_list; region; region = region->next) {

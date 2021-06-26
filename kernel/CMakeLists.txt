@@ -5,6 +5,7 @@ if (NOT ${NATIVE_BUILD})
 
     set(SOURCES
         ${KERNEL_ARCH_SOURCES}
+        boot/boot_info.c
         fs/cached_dirent.c
         fs/dev.c
         fs/disk_sync.c

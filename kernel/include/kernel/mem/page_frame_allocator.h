@@ -7,10 +7,9 @@
 
 #define PAGE_BITMAP_SIZE (PAGE_SIZE * 32)
 
-struct multiboot2_info;
 struct process;
 
-void init_page_frame_allocator(struct multiboot2_info *multiboot_info);
+void init_page_frame_allocator();
 void mark_used(uintptr_t phys_addr_start, uintptr_t length);
 uintptr_t get_next_phys_page(struct process *process);
 uintptr_t get_contiguous_pages(size_t pages);

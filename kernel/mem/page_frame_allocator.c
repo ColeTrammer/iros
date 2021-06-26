@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/param.h>
 
+#include <kernel/boot/boot_info.h>
 #include <kernel/boot/multiboot2.h>
 #include <kernel/hal/block.h>
 #include <kernel/hal/hal.h>
@@ -107,68 +108,40 @@ void free_phys_page(uintptr_t phys_addr, struct process *process) {
     spin_unlock(&bitmap_lock);
 }
 
-uintptr_t initrd_phys_start;
-uintptr_t initrd_phys_end;
-
-void init_page_frame_allocator(struct multiboot2_info *multiboot_info) {
+void init_page_frame_allocator() {
     // Everything starts off allocated (reserved). Only usable segments (according to the bootloader) are made available.
     memset(page_bitset_storage, 0xFF, sizeof(page_bitset_storage));
     init_bitset(&page_bitset, page_bitset_storage, sizeof(page_bitset_storage), sizeof(page_bitset_storage) * CHAR_BIT);
 
-    debug_log("multiboot_info: [ %p ]\n", multiboot_info);
-    assert((uintptr_t) multiboot_info < 0x400000ULL);
-
-    multiboot2_for_each_tag(multiboot_info, tag) {
-        debug_log("TAG: [ %u, %u ]\n", tag->type, tag->size);
-
-        if (tag->type == MULTIBOOT2_TAG_BOOT_COMMAND_LINE) {
-            MULTIBOOT2_DECLARE_AND_CAST_TAG(command_line_tag, tag, boot_command_line);
-            char *cmd_line = command_line_tag->value;
-            debug_log("kernel command line: [ %s ]\n", cmd_line);
-            if (strcmp(cmd_line, "graphics=0") == 0) {
-                kernel_disable_graphics();
+    struct boot_info *boot_info = boot_get_boot_info();
+    struct multiboot2_memory_map_tag *memory_map_tag = boot_info->memory_map;
+    multiboot2_for_each_memory_map_entry(memory_map_tag, entry) {
+        debug_log("Physical memory range: [ %#.16lX, %#.16lX, %u ]\n", entry->base_address & ~0xFFF, entry->length, entry->type);
+        if (entry->type == MULTIBOOT2_MEMORY_MAP_AVAILABLE) {
+            // Memory below 0x100000 is reserved, and accounted as allocated.
+            if (entry->base_address < 0x100000) {
+                g_phys_page_stats.phys_memory_allocated += ALIGN_UP(
+                    MIN(ALIGN_UP((entry->base_address & ~0xFFF) + entry->length, PAGE_SIZE), 0x100000) - (entry->base_address & ~0xFFF),
+                    PAGE_SIZE);
             }
-        }
 
-        if (tag->type == MULTIBOOT2_TAG_MEMORY_MAP) {
-            MULTIBOOT2_DECLARE_AND_CAST_TAG(memory_map_tag, tag, memory_map);
-            multiboot2_for_each_memory_map_entry(memory_map_tag, entry) {
-                debug_log("Physical memory range: [ %#.16lX, %#.16lX, %u ]\n", entry->base_address & ~0xFFF, entry->length, entry->type);
-                if (entry->type == MULTIBOOT2_MEMORY_MAP_AVAILABLE) {
-                    // Memory below 0x100000 is reserved, and accounted as allocated.
-                    if (entry->base_address < 0x100000) {
-                        g_phys_page_stats.phys_memory_allocated +=
-                            ALIGN_UP(MIN(ALIGN_UP((entry->base_address & ~0xFFF) + entry->length, PAGE_SIZE), 0x100000) -
-                                         (entry->base_address & ~0xFFF),
-                                     PAGE_SIZE);
-                    }
-
-                    mark_available(entry->base_address & ~0xFFF, entry->length);
-                    g_phys_page_stats.phys_memory_total += entry->length - (entry->base_address & ~0xFFF);
-                }
-                g_phys_page_stats.phys_memory_max =
-                    MAX(ALIGN_UP((entry->base_address & ~0xFFF) + entry->length, PAGE_SIZE), g_phys_page_stats.phys_memory_max);
-            }
+            mark_available(entry->base_address & ~0xFFF, entry->length);
+            g_phys_page_stats.phys_memory_total += entry->length - (entry->base_address & ~0xFFF);
         }
-
-        if (tag->type == MULTIBOOT2_TAG_MODULE) {
-            MULTIBOOT2_DECLARE_AND_CAST_TAG(module_tag, tag, module);
-            initrd_phys_start = module_tag->module_start;
-            initrd_phys_end = module_tag->module_end;
-            debug_log("kernel module: [ %s ]\n", module_tag->name);
-        }
+        g_phys_page_stats.phys_memory_max =
+            MAX(ALIGN_UP((entry->base_address & ~0xFFF) + entry->length, PAGE_SIZE), g_phys_page_stats.phys_memory_max);
     }
 
     mark_used(0, 0x100000); // assume none of this area is available for general purpose allocations, as device drivers might need it.
     g_phys_page_stats.phys_memory_allocated += ALIGN_UP(KERNEL_PHYS_END - KERNEL_PHYS_START, PAGE_SIZE);
     mark_used(KERNEL_PHYS_START, KERNEL_PHYS_END - KERNEL_PHYS_START);
-    g_phys_page_stats.phys_memory_allocated += ALIGN_UP(initrd_phys_end - initrd_phys_start, PAGE_SIZE);
-    mark_used(initrd_phys_start, initrd_phys_end - initrd_phys_start);
+    g_phys_page_stats.phys_memory_allocated += ALIGN_UP(boot_info->initrd_phys_end - boot_info->initrd_phys_start, PAGE_SIZE);
+    mark_used(boot_info->initrd_phys_start, boot_info->initrd_phys_end - boot_info->initrd_phys_start);
 
     debug_log("Max phys memory: [ %#lX ]\n", g_phys_page_stats.phys_memory_max);
     debug_log("Total available memory: [ %#lX ]\n", g_phys_page_stats.phys_memory_total);
     debug_log("Kernel physical memory: [ %#.16lX, %#.16lX, %#.16lX ]\n", KERNEL_PHYS_START, KERNEL_PHYS_END,
               KERNEL_PHYS_END - KERNEL_PHYS_START);
-    debug_log("Initrd physical memory: [ %#.16lX, %#.16lX, %#.16lX ]\n", initrd_phys_start, initrd_phys_end,
-              initrd_phys_end - initrd_phys_start);
+    debug_log("Initrd physical memory: [ %#.16lX, %#.16lX, %#.16lX ]\n", boot_info->initrd_phys_start, boot_info->initrd_phys_end,
+              boot_info->initrd_phys_end - boot_info->initrd_phys_start);
 }

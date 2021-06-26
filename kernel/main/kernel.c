@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <kernel/boot/boot_info.h>
 #include <kernel/fs/dev.h>
 #include <kernel/fs/disk_sync.h>
 #include <kernel/fs/vfs.h>
@@ -25,6 +26,7 @@
 void kernel_main(struct multiboot2_info *multiboot_info) {
     init_hal();
     init_irq_handlers();
+    init_boot_info_from_multiboot2(multiboot_info);
     init_page_frame_allocator(multiboot_info);
     init_kernel_process();
     init_vm_allocator();
