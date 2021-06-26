@@ -120,6 +120,9 @@ void Window::on_event(Event& event) {
                 }
 
                 do_resize(data.new_width, data.new_height);
+                if (auto* main_widget = m_main_widget.get()) {
+                    main_widget->set_rect({ 0, 0, data.new_width, data.new_height });
+                }
                 pixels()->clear(App::the().palette()->color(Palette::Background));
                 invalidate_rect(rect());
                 return;
