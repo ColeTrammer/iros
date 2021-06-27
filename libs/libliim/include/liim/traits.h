@@ -72,7 +72,7 @@ struct Traits<int64_t> {
 template<typename U>
 struct Traits<U*> {
     static constexpr bool is_simple() { return true; }
-    static unsigned int hash(const U*& obj) {
+    static unsigned int hash(const U* obj) {
         return static_cast<unsigned int>((uintptr_t) obj) + static_cast<unsigned int>((uintptr_t) obj >> 32);
     };
 };
