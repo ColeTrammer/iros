@@ -822,6 +822,7 @@ exit_search:
 }
 
 void TerminalPanel::notify_now_is_a_good_time_to_draw_cursor() {
+    draw_status_message();
     fflush(stdout);
 }
 
