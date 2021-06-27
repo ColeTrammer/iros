@@ -113,6 +113,10 @@ void WindowManager::remove_window(SharedPtr<Window> window) {
     m_window_stack.remove_element(window);
 
     m_taskbar.notify_window_removed(*window);
+    if (on_window_removed) {
+        on_window_removed(window->id());
+    }
+
     invalidate_rect(window->rect());
 
     cleanup_active_window_state(window);

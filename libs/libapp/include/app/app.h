@@ -29,6 +29,10 @@ private:
     virtual void handle(IPC::Endpoint&, const WindowServer::Server::WindowStateChangeMessage&) override;
     virtual void handle(IPC::Endpoint&, const WindowServer::Server::ChangeThemeResponse&) override {}
     virtual void handle(IPC::Endpoint&, const WindowServer::Server::ThemeChangeMessage&) override;
+    virtual void handle(IPC::Endpoint&, const WindowServer::Server::ServerDidCreatedWindow&) override {}
+    virtual void handle(IPC::Endpoint&, const WindowServer::Server::ServerDidChangeWindowTitle&) override {}
+    virtual void handle(IPC::Endpoint&, const WindowServer::Server::ServerDidCloseWindow&) override {}
+    virtual void handle(IPC::Endpoint&, const WindowServer::Server::ServerDidMakeWindowActive&) override {}
 
     SharedPtr<IPC::Endpoint> m_server;
 };

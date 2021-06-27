@@ -34,6 +34,13 @@ ServerImpl::ServerImpl(int fb, SharedPtr<Bitmap> front_buffer, SharedPtr<Bitmap>
 
     m_manager->on_window_state_change = [this](auto window, bool active) {
         send<Server::WindowStateChangeMessage>(window->client(), { .wid = window->id(), .active = active });
+        if (active) {
+            notify_listeners_did_make_window_active(*window);
+        }
+    };
+
+    m_manager->on_window_removed = [this](auto wid) {
+        notify_listeners_did_close_window(wid);
     };
 
     m_manager->on_rect_invaliadted = [this] {
@@ -100,6 +107,7 @@ void ServerImpl::update_draw_timer() {
 
 void ServerImpl::kill_client(IPC::Endpoint& client) {
     m_manager->remove_windows_of_client(client.shared_from_this());
+    m_window_server_listeners.remove(&client);
     m_server->kill_client(client);
 }
 
@@ -129,6 +137,8 @@ void ServerImpl::handle(IPC::Endpoint& client, const Client::CreateWindowRequest
                                                    .size = (size_t) window->buffer()->size_in_bytes(),
                                                    .path = window->shm_path(),
                                                });
+
+    notify_listeners_did_create_window(*window);
 
     m_manager->add_window(window);
 }
@@ -207,6 +217,7 @@ void ServerImpl::handle(IPC::Endpoint& client, const Client::WindowRenameRequest
         return;
     }
     window->set_title(String(data.name));
+    notify_listeners_did_change_window_title(*window);
 }
 
 void ServerImpl::handle(IPC::Endpoint& client, const Client::ChangeThemeRequest& data) {
@@ -223,6 +234,57 @@ void ServerImpl::handle(IPC::Endpoint& client, const Client::ChangeThemeRequest&
     broadcast<Server::ThemeChangeMessage>(*m_server, {});
 
     m_manager->invalidate_rect(m_manager->screen_rect());
+}
+
+void ServerImpl::handle(IPC::Endpoint& client, const Client::RegisterAsWindowServerListener&) {
+    m_window_server_listeners.put(&client);
+}
+
+void ServerImpl::handle(IPC::Endpoint& client, const Client::UnregisterAsWindowServerListener&) {
+    m_window_server_listeners.remove(&client);
+}
+
+void ServerImpl::notify_listeners_did_create_window(const Window& window) {
+    auto message = Server::ServerDidCreatedWindow {
+        .wid = window.id(),
+        .title = window.title(),
+        .type = window.type(),
+    };
+
+    m_window_server_listeners.for_each([&](IPC::Endpoint* client) {
+        client->send(message);
+    });
+}
+
+void ServerImpl::notify_listeners_did_change_window_title(const Window& window) {
+    auto message = Server::ServerDidChangeWindowTitle {
+        .wid = window.id(),
+        .new_title = window.title(),
+    };
+
+    m_window_server_listeners.for_each([&](IPC::Endpoint* client) {
+        client->send(message);
+    });
+}
+
+void ServerImpl::notify_listeners_did_close_window(wid_t wid) {
+    auto message = Server::ServerDidCloseWindow {
+        .wid = wid,
+    };
+
+    m_window_server_listeners.for_each([&](IPC::Endpoint* client) {
+        client->send(message);
+    });
+}
+
+void ServerImpl::notify_listeners_did_make_window_active(const Window& window) {
+    auto message = Server::ServerDidMakeWindowActive {
+        .wid = window.id(),
+    };
+
+    m_window_server_listeners.for_each([&](IPC::Endpoint* client) {
+        client->send(message);
+    });
 }
 
 void ServerImpl::start() {
