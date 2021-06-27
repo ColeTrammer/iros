@@ -32,6 +32,7 @@ private:
 
     Vector<TaskbarItem> m_items;
     SharedPtr<App::Timer> m_time_timer;
+    Rect m_button_rect;
     int m_display_width;
     int m_display_height;
 };

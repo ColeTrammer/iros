@@ -7,6 +7,9 @@ constexpr int taskbar_height = 32;
 constexpr int taskbar_item_x_spacing = 8;
 constexpr int taskbar_item_y_spacing = 4;
 constexpr int taskbar_item_width = 128;
+constexpr int taskbar_button_width = 16;
+constexpr int taskbar_button_x_margin = 12;
+constexpr int taskbar_button_y_margin = 8;
 
 Taskbar::Taskbar(int display_width, int display_height) : m_display_width(display_width), m_display_height(display_height) {
     m_time_timer = App::Timer::create_interval_timer(
@@ -16,6 +19,9 @@ Taskbar::Taskbar(int display_width, int display_height) : m_display_width(displa
             WindowManager::the().invalidate_rect({ 0, screen_rect.height() - taskbar_height, screen_rect.width(), taskbar_height });
         },
         1000);
+
+    m_button_rect = { taskbar_button_x_margin, display_height - taskbar_height + taskbar_button_y_margin, taskbar_button_width,
+                      taskbar_height - 2 * taskbar_button_y_margin };
 }
 
 void Taskbar::add_item(SharedPtr<Window> window) {
@@ -24,8 +30,8 @@ void Taskbar::add_item(SharedPtr<Window> window) {
     }
 
     if (m_items.empty()) {
-        m_items.add({ { taskbar_item_x_spacing, m_display_height - taskbar_height + taskbar_item_y_spacing, taskbar_item_width,
-                        taskbar_height - 2 * taskbar_item_y_spacing },
+        m_items.add({ { taskbar_button_x_margin * 2 + taskbar_button_width, m_display_height - taskbar_height + taskbar_item_y_spacing,
+                        taskbar_item_width, taskbar_height - 2 * taskbar_item_y_spacing },
                       window });
     } else {
         auto& last_rect = m_items.last().rect;
@@ -69,9 +75,21 @@ void Taskbar::notify_window_visibility_changed(SharedPtr<Window> window) {
     }
 }
 
-bool Taskbar::notify_mouse_pressed(int mouse_x, int mouse_y, mouse_button_state, mouse_button_state) {
+bool Taskbar::notify_mouse_pressed(int mouse_x, int mouse_y, mouse_button_state left, mouse_button_state) {
     if (mouse_y < m_display_height - taskbar_height) {
         return false;
+    }
+
+    if (m_button_rect.intersects({ mouse_x, mouse_y })) {
+        if (left == MOUSE_DOWN) {
+            if (fork() == 0) {
+                char* const args[] = { (char*) "terminal", nullptr };
+                execvp("terminal", args);
+                _exit(127);
+            }
+        }
+
+        return true;
     }
 
     for (auto& item : m_items) {
@@ -91,6 +109,8 @@ void Taskbar::render(Renderer& renderer) {
     auto taskbar_rect = Rect { 0, taskbar_top, renderer.pixels().width(), taskbar_height };
     renderer.fill_rect(taskbar_rect, palette->color(Palette::TaskbarBackground));
     renderer.draw_line({ 0, taskbar_top }, { renderer.pixels().width() - 1, taskbar_top }, palette->color(Palette::Outline));
+
+    renderer.fill_rect(m_button_rect, palette->color(Palette::Text));
 
     for (int i = 0; i < m_items.size(); i++) {
         auto& item = m_items[i];
