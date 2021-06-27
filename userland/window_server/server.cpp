@@ -127,6 +127,12 @@ void ServerImpl::handle(IPC::Endpoint& client, const Client::CreateWindowRequest
         rect.set_y(rect.y() + parent->content_rect().y());
     }
 
+    if (data.type == WindowServer::WindowType::Taskbar) {
+        rect.set_x(0);
+        rect.set_y(m_manager->screen_rect().height() - data.height);
+        rect.set_width(m_manager->screen_rect().width());
+    }
+
     auto window = make_shared<Window>(rect, String(data.name), client, data.type, data.has_alpha);
     if (parent) {
         Window::set_parent(window, parent);

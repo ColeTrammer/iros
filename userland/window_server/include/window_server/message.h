@@ -12,16 +12,14 @@
 typedef uint64_t wid_t;
 
 namespace WindowServer {
-
 enum WindowType {
     Application,
     Frameless,
+    Taskbar,
 };
-
 }
 
 namespace LIIM {
-
 template<>
 struct Traits<scroll_state> {
     static constexpr bool is_simple() { return true; }

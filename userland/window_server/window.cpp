@@ -64,6 +64,7 @@ void Window::update_rect_from_content() {
             m_rect.set_height(m_content_rect.height() + 23);
             break;
         case WindowServer::WindowType::Frameless:
+        case WindowServer::WindowType::Taskbar:
             m_rect = m_content_rect;
             break;
     }
@@ -78,6 +79,7 @@ void Window::update_content_from_rect() {
             m_content_rect.set_height(m_rect.height() - 23);
             break;
         case WindowServer::WindowType::Frameless:
+        case WindowServer::WindowType::Taskbar:
             m_content_rect = m_rect;
             break;
     }
