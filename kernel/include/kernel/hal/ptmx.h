@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <termios.h>
 
+#include <kernel/util/ring_buffer.h>
 #include <kernel/util/spinlock.h>
 
 // clang-format off
@@ -12,15 +13,7 @@
 #include HAL_ARCH_SPECIFIC(drivers/vga.h)
 // clang-format on
 
-#define TTY_BUF_MAX_START 256
-
-struct tty_buffer_message {
-    struct tty_buffer_message *next;
-    struct tty_buffer_message *prev;
-    size_t len;
-    size_t max;
-    char *buf;
-};
+#define PTMX_BUFFER_MAX 4096
 
 struct slave_data {
     int ref_count;
@@ -36,23 +29,16 @@ struct slave_data {
     pid_t pgid;
     pid_t sid;
 
-    char *input_buffer;
-    size_t input_buffer_index;
-    size_t input_buffer_length;
-    size_t input_buffer_max;
+    struct ring_buffer input_buffer;
 
     struct termios config;
     struct fs_device *device;
-    struct tty_buffer_message *messages;
 };
 
 struct master_data {
     int index;
 
-    char *output_buffer;
-    size_t output_buffer_index;
-    size_t output_buffer_length;
-    size_t output_buffer_max;
+    struct ring_buffer output_buffer;
 
     char *input_buffer;
     size_t input_buffer_length;

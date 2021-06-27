@@ -65,7 +65,7 @@ static void slave_on_open(struct fs_device *device) {
     mutex_unlock(&data->device->lock);
 }
 
-static ssize_t slave_read(struct fs_device *device, off_t offset, void *buf, size_t len, bool non_blocking) {
+static ssize_t slave_read(struct fs_device *device, off_t offset, void *buf, size_t _len, bool non_blocking) {
     assert(offset == 0);
 
     struct slave_data *data = device->private;
@@ -77,72 +77,44 @@ static ssize_t slave_read(struct fs_device *device, off_t offset, void *buf, siz
     }
 
     mutex_lock(&data->device->lock);
-    if (data->input_buffer == NULL) {
-        while (data->messages == NULL) {
-            if (non_blocking) {
-                mutex_unlock(&data->device->lock);
+again:;
+    size_t len = MIN(_len, ring_buffer_size(&data->input_buffer));
+    if (len == 0) {
+        mutex_unlock(&data->device->lock);
+        if (non_blocking) {
+            return 0;
+        }
+
+        if (!(data->config.c_lflag & ICANON) && data->config.c_cc[VTIME] != 0) {
+            time_t timeout_ms = data->config.c_cc[VTIME] * 100;
+            struct timespec timeout = { .tv_sec = timeout_ms / 1000, .tv_nsec = (timeout_ms % 1000) * 1000000 };
+            int ret = dev_poll_wait(data->device, POLLIN, &timeout);
+            if (ret) {
+                return ret;
+            }
+
+            if (timeout.tv_sec == 0 && timeout.tv_nsec == 0) {
                 return 0;
             }
-
-#ifdef PTMX_BLOCKING_DEBUG
-            debug_log("Blocking on slave read: [ %d ]\n", data->index);
-#endif /* PTMX_BLOCKING_DEBUG */
-
-            if (!(data->config.c_lflag & ICANON) && data->config.c_cc[VTIME] != 0) {
-                time_t timeout_ms = data->config.c_cc[VTIME] * 100;
-                struct timespec timeout = { .tv_sec = timeout_ms / 1000, .tv_nsec = (timeout_ms % 1000) * 1000000 };
-                int ret = dev_poll_wait(data->device, POLLIN, &timeout);
-                if (ret) {
-                    return ret;
-                }
-
-                if (timeout.tv_sec == 0 && timeout.tv_nsec == 0) {
-                    mutex_unlock(&data->device->lock);
-                    return 0;
-                }
-                break;
-            } else {
-                int ret = dev_poll_wait(data->device, POLLIN, NULL);
-                if (ret) {
-                    return ret;
-                }
+        } else {
+            int ret = dev_poll_wait(data->device, POLLIN, NULL);
+            if (ret) {
+                return ret;
             }
         }
-
-        struct tty_buffer_message *message = data->messages;
-        data->messages = message == message->next ? NULL : message->next;
-        remque(message);
-
-        data->input_buffer = malloc(message->len);
-        memcpy(data->input_buffer, message->buf, message->len);
-        data->input_buffer_length = data->input_buffer_max = message->len;
-
-        free(message->buf);
-        free(message);
+        mutex_lock(&data->device->lock);
+        goto again;
     }
 
-    size_t to_copy = MIN(len, data->input_buffer_length - data->input_buffer_index);
-    memcpy(buf, data->input_buffer + data->input_buffer_index, to_copy);
-    data->input_buffer_index += to_copy;
+    ring_buffer_user_read(&data->input_buffer, buf, len);
 
-    if (data->input_buffer_index >= data->input_buffer_length) {
-        free(data->input_buffer);
-        data->input_buffer = NULL;
-        data->input_buffer_index = data->input_buffer_length = data->input_buffer_max = 0;
-
-        // Clear the readable flag once we've consumed to input_buffer
-        // and there is no messages
-        if (data->messages == NULL) {
-#ifdef PTMX_BLOCKING_DEBUG
-            debug_log("Setting readable flag on slave to false: [ %d ]\n", data->index);
-#endif /* PTMX_BLOCKING_DEBUG */
-            fs_detrigger_state(&device->file_state, POLLIN);
-        }
-    }
+    struct master_data *mdata = masters[data->index]->private;
+    fs_trigger_state(&mdata->device->file_state, POLLOUT);
+    fs_set_state_bit(&data->device->file_state, POLLIN, !ring_buffer_empty(&data->input_buffer));
 
     mutex_unlock(&data->device->lock);
 
-    return (ssize_t) to_copy;
+    return (ssize_t) len;
 }
 
 static ssize_t slave_write(struct fs_device *device, off_t offset, const void *buf, size_t len, bool non_blocking) {
@@ -173,45 +145,51 @@ static ssize_t slave_write(struct fs_device *device, off_t offset, const void *b
     struct master_data *mdata = masters[data->index]->private;
     mutex_lock(&mdata->device->lock);
 
-    struct tty_buffer_message *message = mdata->messages;
-slave_write_again:
-    if (message == NULL) {
-        message = calloc(1, sizeof(struct tty_buffer_message));
-        message->max = MAX(TTY_BUF_MAX_START, len);
-        message->buf = malloc(message->max);
-        message->len = 0;
-        message->prev = message->next = message;
-        mdata->messages = message;
-    } else {
-        if (message->max < message->len + len) {
-            fs_detrigger_state(&mdata->device->file_state, POLLOUT);
-            while (mdata->messages != NULL) {
-                int ret = dev_poll_wait(mdata->device, POLLOUT, NULL);
-                if (ret) {
-                    return ret;
-                }
+    size_t raw_buffer_index = 0;
+    size_t bytes_written = 0;
+    while (raw_buffer_index < save_len) {
+        size_t space_available = ring_buffer_space(&mdata->output_buffer);
+        if (!space_available) {
+            mutex_unlock(&mdata->device->lock);
+
+            int ret = dev_poll_wait(data->device, POLLOUT, NULL);
+            if (ret) {
+                return ret;
             }
 
-            message = mdata->messages;
-            goto slave_write_again;
+            mutex_lock(&mdata->device->lock);
+            continue;
         }
-    }
 
-    size_t buf_index = 0;
-    for (size_t i = message->len; i < message->len + len; i++, buf_index++) {
-        if ((data->config.c_oflag & OPOST) && ((const char *) buf)[buf_index] == '\n') {
-            message->buf[i++] = '\r';
+        // NOTE: reserve a trailing byte so that OPOST can always add its '\r' character.
+        size_t amount_to_write = MIN(space_available - 1, len - bytes_written);
+        if (amount_to_write == 0) {
+            continue;
         }
-        message->buf[i] = ((const char *) buf)[buf_index];
+
+        if (data->config.c_oflag & OPOST) {
+            for (size_t i = 0; i < amount_to_write; i++) {
+                char character_to_write = ((char *) buf)[raw_buffer_index++];
+                if (character_to_write == '\n') {
+                    ring_buffer_write_byte(&mdata->output_buffer, '\r');
+                    ring_buffer_write_byte(&mdata->output_buffer, '\n');
+                    i++;
+                    bytes_written += 2;
+                    continue;
+                }
+
+                ring_buffer_write_byte(&mdata->output_buffer, character_to_write);
+                bytes_written++;
+            }
+        } else {
+            ring_buffer_user_write(&mdata->output_buffer, buf + raw_buffer_index, amount_to_write);
+            raw_buffer_index += amount_to_write;
+            bytes_written += amount_to_write;
+        }
+
+        fs_trigger_state(&mdata->device->file_state, POLLIN);
+        fs_set_state_bit(&data->device->file_state, POLLOUT, !ring_buffer_full(&mdata->output_buffer));
     }
-
-    message->len += len;
-
-    // This is now readable since we wrote to id
-#ifdef PTMX_BLOCKING_DEBUG
-    debug_log("Setting master to readable: [ %d ]\n", mdata->index);
-#endif /* PTMX_BLOCKING_DEBUG */
-    fs_trigger_state(&mdata->device->file_state, POLLIN);
 
     mutex_unlock(&mdata->device->lock);
     return (ssize_t) save_len;
@@ -252,6 +230,7 @@ static void slave_add(struct fs_device *device) {
     }
 
     init_file_state(&device->file_state, false, false);
+    init_ring_buffer(&data->input_buffer, PTMX_BUFFER_MAX);
 
     device->private = data;
     data->device = device;
@@ -265,17 +244,9 @@ static void slave_remove(struct fs_device *device) {
 
     slaves[data->index] = NULL;
 
-    free(data->input_buffer);
+    kill_ring_buffer(&data->input_buffer);
 
     debug_log("Removing slave tty: [ %d ]\n", data->index);
-
-    while (data->messages) {
-        struct tty_buffer_message *m = data->messages->next == data->messages ? NULL : data->messages->next;
-        remque(data->messages);
-        free(data->messages->buf);
-        free(data->messages);
-        data->messages = m;
-    }
 
     int index = data->index;
     free(data);
@@ -432,57 +403,29 @@ static void master_on_open(struct fs_device *device) {
     device->cannot_open = true;
 }
 
-static ssize_t master_read(struct fs_device *device, off_t offset, void *buf, size_t len, bool non_blocking) {
+static ssize_t master_read(struct fs_device *device, off_t offset, void *buf, size_t _len, bool non_blocking) {
     assert(offset == 0);
     (void) non_blocking;
 
     struct master_data *data = device->private;
+    struct slave_data *sdata = slaves[data->index]->private;
 
     mutex_lock(&data->device->lock);
-    if (data->output_buffer == NULL) {
-        if (data->messages == NULL) {
-            mutex_unlock(&data->device->lock);
-            return 0;
-        }
 
-        struct tty_buffer_message *message = data->messages;
-        assert(message);
-        assert(message->buf);
-
-        data->messages = message == message->next ? NULL : message->next;
-        remque(message);
-
-        data->output_buffer = malloc(message->len);
-        assert(data->output_buffer);
-        data->output_buffer_length = data->output_buffer_max = message->len;
-        memcpy(data->output_buffer, message->buf, data->output_buffer_length);
-
-        free(message->buf);
-        free(message);
+    size_t len = MIN(_len, ring_buffer_size(&data->output_buffer));
+    if (len == 0) {
+        mutex_unlock(&data->device->lock);
+        return 0;
     }
 
-    size_t to_read = MIN(len, data->output_buffer_length - data->output_buffer_index);
-    memcpy(buf, data->output_buffer + data->output_buffer_index, to_read);
-    data->output_buffer_index += to_read;
+    ring_buffer_user_read(&data->output_buffer, buf, len);
 
-    if (data->output_buffer_index >= data->output_buffer_length) {
-        free(data->output_buffer);
-        data->output_buffer = NULL;
-        data->output_buffer_index = data->output_buffer_length = data->output_buffer_max = 0;
-
-        // Reset readable/writable flags since we consumed to buffer
-        if (data->messages == NULL) {
-#ifdef PTMX_BLOCKING_DEBUG
-            debug_log("Resetting master flags: [ %d ]\n", data->index);
-#endif /* PTMX_BLOCKING_DEBUG */
-            fs_trigger_state(&device->file_state, POLLOUT);
-            fs_detrigger_state(&device->file_state, POLLIN);
-        }
-    }
+    fs_trigger_state(&sdata->device->file_state, POLLOUT);
+    fs_set_state_bit(&data->device->file_state, POLLIN, !ring_buffer_empty(&data->output_buffer));
 
     mutex_unlock(&data->device->lock);
 
-    return (ssize_t) to_read;
+    return (ssize_t) len;
 }
 
 static void tty_do_echo(struct master_data *data, struct slave_data *sdata, char c) {
@@ -526,7 +469,7 @@ static ssize_t master_write(struct fs_device *device, off_t offset, const void *
 
     for (size_t i = 0; i < len; i++) {
         if ((sdata->config.c_lflag & ICANON) && data->input_buffer_length >= data->input_buffer_max) {
-            data->input_buffer_max += TTY_BUF_MAX_START;
+            data->input_buffer_max += PTMX_BUFFER_MAX;
             data->input_buffer = realloc(data->input_buffer, data->input_buffer_max);
         }
 
@@ -554,16 +497,8 @@ static ssize_t master_write(struct fs_device *device, off_t offset, const void *
 
             mutex_lock(&sdata->device->lock);
 
-            struct tty_buffer_message *message = calloc(1, sizeof(struct tty_buffer_message));
-            message->len = message->max = data->input_buffer_length;
-            message->buf = malloc(message->len);
-            memcpy(message->buf, data->input_buffer, message->len);
-
-            if (sdata->messages == NULL) {
-                sdata->messages = message->next = message->prev = message;
-            } else {
-                insque(message, sdata->messages->prev);
-            }
+            size_t can_write = MIN(data->input_buffer_length, ring_buffer_space(&sdata->input_buffer));
+            ring_buffer_write(&sdata->input_buffer, data->input_buffer, can_write);
 
             free(data->input_buffer);
             data->input_buffer = NULL;
@@ -573,7 +508,6 @@ static ssize_t master_write(struct fs_device *device, off_t offset, const void *
             debug_log("Making slave readable: [ %d ]\n", sdata->index);
 #endif /* PTMX_BLOCKING_DEBUG */
 
-            // The slave is readable now that we wrote to it.
             fs_trigger_state(&sdata->device->file_state, POLLIN);
 
             mutex_unlock(&sdata->device->lock);
@@ -593,30 +527,10 @@ static ssize_t master_write(struct fs_device *device, off_t offset, const void *
         if (!(sdata->config.c_lflag & ICANON)) {
             mutex_lock(&sdata->device->lock);
 
-            if (sdata->messages == NULL) {
-                sdata->messages = calloc(1, sizeof(struct tty_buffer_message));
-                sdata->messages->buf = malloc(TTY_BUF_MAX_START);
-                sdata->messages->len = 1;
-                sdata->messages->max = TTY_BUF_MAX_START;
-                sdata->messages->buf[0] = c;
-                sdata->messages->prev = sdata->messages->next = sdata->messages;
-            } else {
-                struct tty_buffer_message *m = sdata->messages->prev;
-
-                if (m->len >= m->max) {
-                    m->max += TTY_BUF_MAX_START;
-                    m->buf = realloc(m->buf, m->max);
-                }
-
-                m->buf[m->len++] = c;
+            if (!ring_buffer_full(&sdata->input_buffer)) {
+                ring_buffer_write_byte(&sdata->input_buffer, c);
+                fs_trigger_state(&sdata->device->file_state, POLLIN);
             }
-
-#ifdef PTMX_BLOCKING_DEBUG
-            debug_log("Making slave readable: [ %d ]\n", sdata->index);
-#endif /* PTMX_BLOCKING_DEBUG */
-
-            // The slave is readable now that we wrote to it.
-            fs_trigger_state(&sdata->device->file_state, POLLIN);
 
             mutex_unlock(&sdata->device->lock);
             continue;
@@ -645,6 +559,8 @@ static void master_add(struct fs_device *device) {
 
     init_file_state(&device->file_state, false, false);
 
+    init_ring_buffer(&data->output_buffer, PTMX_BUFFER_MAX);
+
     device->private = data;
     data->device = device;
 }
@@ -660,15 +576,7 @@ static void master_remove(struct fs_device *device) {
     masters[data->index] = NULL;
 
     free(data->input_buffer);
-    free(data->output_buffer);
-
-    while (data->messages) {
-        struct tty_buffer_message *m = data->messages->next == data->messages ? NULL : data->messages->next;
-        remque(data->messages);
-        free(data->messages->buf);
-        free(data->messages);
-        data->messages = m;
-    }
+    kill_ring_buffer(&data->output_buffer);
 
     int index = data->index;
     free(data);
