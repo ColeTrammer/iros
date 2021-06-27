@@ -80,6 +80,9 @@ IPC_MESSAGES(Client,
     ),
     (RegisterAsWindowServerListener),
     (UnregisterAsWindowServerListener),
+    (SetActiveWindow,
+        (wid_t, wid),
+    ),
 )
 
 IPC_MESSAGES(Server,

@@ -46,6 +46,7 @@ private:
     virtual void handle(IPC::Endpoint& client, const Client::ChangeThemeRequest& data) override;
     virtual void handle(IPC::Endpoint& client, const Client::RegisterAsWindowServerListener& data) override;
     virtual void handle(IPC::Endpoint& client, const Client::UnregisterAsWindowServerListener& data) override;
+    virtual void handle(IPC::Endpoint& client, const Client::SetActiveWindow& data) override;
 
     UniquePtr<WindowManager> m_manager;
     SharedPtr<IPC::Server> m_server;

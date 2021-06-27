@@ -252,6 +252,20 @@ void ServerImpl::handle(IPC::Endpoint& client, const Client::UnregisterAsWindowS
     m_window_server_listeners.remove(&client);
 }
 
+void ServerImpl::handle(IPC::Endpoint& client, const Client::SetActiveWindow& data) {
+    if (!m_window_server_listeners.get(&client)) {
+        kill_client(client);
+        return;
+    }
+
+    auto window = m_manager->find_by_wid(data.wid);
+    if (!window) {
+        return;
+    }
+
+    m_manager->move_to_front_and_make_active(move(window));
+}
+
 void ServerImpl::notify_listeners_did_create_window(const Window& window) {
     auto message = Server::ServerDidCreatedWindow {
         .wid = window.id(),
