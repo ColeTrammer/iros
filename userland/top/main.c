@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <errno.h>
 #include <procinfo.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -93,6 +94,7 @@ struct proc_summary {
 };
 
 static struct winsize win_size;
+static struct winsize new_win_size;
 static struct termios tty_info;
 
 static struct proc_global_info *prev_global_data;
@@ -282,11 +284,24 @@ static void cleanup() {
     free(prev_global_data);
 }
 
+static void on_window_resize(int) {
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &new_win_size)) {
+        perror("ioctl(TIOCGWINSZ)");
+        exit(1);
+    }
+}
+
 int main() {
-    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win_size)) {
+    struct sigaction act;
+    act.sa_flags = 0;
+    act.sa_handler = on_window_resize;
+    sigaction(SIGWINCH, &act, NULL);
+
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &new_win_size)) {
         perror("ioctl(TIOCGWINSZ)");
         return 1;
     }
+    win_size = new_win_size;
 
     if (tcgetattr(STDOUT_FILENO, &tty_info)) {
         perror("tcgetattr");
@@ -313,11 +328,17 @@ int main() {
     FD_ZERO(&set);
     FD_SET(STDIN_FILENO, &set);
 
-    struct timeval timeout = { .tv_sec = 2, .tv_usec = 0 };
-
     char buf[BUFSIZ];
-    while (select(FD_SETSIZE, &set, NULL, NULL, &timeout) >= 0) {
-        if (FD_ISSET(STDIN_FILENO, &set)) {
+    for (;;) {
+        win_size = new_win_size;
+
+        struct timeval timeout = { .tv_sec = 2, .tv_usec = 0 };
+        int ret = select(FD_SETSIZE, &set, NULL, NULL, &timeout);
+        if (ret < 0 && errno != EINTR) {
+            break;
+        }
+
+        if (ret > 0 && FD_ISSET(STDIN_FILENO, &set)) {
             ssize_t ret = read(STDIN_FILENO, buf, sizeof(buf));
             if (ret < 0) {
                 perror("read");
