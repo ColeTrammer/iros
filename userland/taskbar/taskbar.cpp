@@ -114,6 +114,7 @@ void Taskbar::on_mouse_event(App::MouseEvent& event) {
 
     for (auto& item : m_items) {
         if (item.rect.intersects({ event.x(), event.y() })) {
+            App::App::the().ws().server().send<WindowServer::Client::SetActiveWindow>({ item.wid });
             return;
         }
     }
