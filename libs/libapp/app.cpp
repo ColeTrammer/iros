@@ -57,6 +57,30 @@ void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::Them
     });
 }
 
+void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::ServerDidCreatedWindow& data) {
+    if (m_window_server_listener) {
+        m_window_server_listener->server_did_create_window(data);
+    }
+}
+
+void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::ServerDidChangeWindowTitle& data) {
+    if (m_window_server_listener) {
+        m_window_server_listener->server_did_change_window_title(data);
+    }
+}
+
+void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::ServerDidCloseWindow& data) {
+    if (m_window_server_listener) {
+        m_window_server_listener->server_did_close_window(data);
+    }
+}
+
+void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::ServerDidMakeWindowActive& data) {
+    if (m_window_server_listener) {
+        m_window_server_listener->server_did_make_window_active(data);
+    }
+}
+
 App::App() {
     assert(!s_app);
     s_app = this;
@@ -68,5 +92,19 @@ App::~App() {}
 
 App& App::the() {
     return *s_app;
+}
+
+void App::set_window_server_listener(WindowServerListener& listener) {
+    if (!m_client->window_server_listener()) {
+        m_client->server().send<WindowServer::Client::RegisterAsWindowServerListener>({});
+    }
+    m_client->set_window_server_listener(&listener);
+}
+
+void App::remove_window_server_listener() {
+    if (m_client->window_server_listener()) {
+        m_client->server().send<WindowServer::Client::UnregisterAsWindowServerListener>({});
+        m_client->set_window_server_listener(nullptr);
+    }
 }
 }
