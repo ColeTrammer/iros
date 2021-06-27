@@ -7,6 +7,7 @@ if (NOT ${NATIVE_BUILD})
         psfedit
         stat
         system_monitor
+        taskbar
         terminal
         theme_editor
         top

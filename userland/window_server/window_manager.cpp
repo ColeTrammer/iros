@@ -32,7 +32,7 @@ WindowManager& WindowManager::the() {
 }
 
 WindowManager::WindowManager(int fb, SharedPtr<Bitmap> front_buffer, SharedPtr<Bitmap> back_buffer)
-    : m_fb(fb), m_front_buffer(front_buffer), m_back_buffer(back_buffer), m_taskbar(back_buffer->width(), back_buffer->height()) {
+    : m_fb(fb), m_front_buffer(front_buffer), m_back_buffer(back_buffer) {
     s_the = this;
 
     int shared_palette_fd = shm_open("/.shared_theme", O_RDWR | O_CREAT, 0644);
@@ -59,8 +59,6 @@ void WindowManager::add_window(SharedPtr<Window> window) {
         }
         invalidate_rect(window->rect());
     }
-
-    m_taskbar.notify_window_added(window);
 }
 
 void WindowManager::set_window_visibility(SharedPtr<Window> window, bool visible) {
@@ -83,7 +81,6 @@ void WindowManager::set_window_visibility(SharedPtr<Window> window, bool visible
         }
         cleanup_active_window_state(window);
     }
-    m_taskbar.notify_window_visibility_changed(move(window));
 }
 
 void WindowManager::cleanup_active_window_state(SharedPtr<Window> window) {
@@ -112,7 +109,6 @@ void WindowManager::remove_window(SharedPtr<Window> window) {
     m_window_map.remove(window->id());
     m_window_stack.remove_element(window);
 
-    m_taskbar.notify_window_removed(*window);
     if (on_window_removed) {
         on_window_removed(window->id());
     }
@@ -201,8 +197,6 @@ void WindowManager::draw() {
     for (auto& window : m_window_stack) {
         render_window(window);
     }
-
-    m_taskbar.render(renderer);
 
     for (int y = 0; y < cursor_height; y++) {
         for (int x = 0; x < cursor_width; x++) {
@@ -307,10 +301,6 @@ SharedPtr<Window> WindowManager::find_window_intersecting_rect(const Rect& r) {
 }
 
 void WindowManager::notify_mouse_pressed(mouse_button_state left, mouse_button_state right) {
-    if (m_taskbar.notify_mouse_pressed(m_mouse_x, m_mouse_y, left, right)) {
-        return;
-    }
-
     if (left == MOUSE_UP) {
         m_window_to_move = nullptr;
         m_window_to_resize = nullptr;

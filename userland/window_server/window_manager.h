@@ -9,7 +9,6 @@
 #include <liim/vector.h>
 #include <kernel/hal/input.h>
 
-#include "taskbar.h"
 #include "window.h"
 
 class Point;
@@ -90,7 +89,6 @@ private:
     SharedPtr<Palette> m_palette;
     Vector<SharedPtr<Window>> m_window_stack;
     HashMap<wid_t, SharedPtr<Window>> m_window_map;
-    Taskbar m_taskbar;
     SharedPtr<Window> m_active_window;
 
     SharedPtr<Window> m_window_to_resize;

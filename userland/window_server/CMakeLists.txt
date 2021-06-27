@@ -5,7 +5,6 @@ if (NOT ${NATIVE_BUILD})
     set(SOURCES
         main.cpp
         server.cpp
-        taskbar.cpp
         window_manager.cpp
         window.cpp
     )
