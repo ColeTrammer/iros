@@ -1165,9 +1165,14 @@ void Document::notify_key_pressed(KeyPress press) {
             case KeyPress::Key::UpArrow:
                 swap_lines_at_cursor(SwapDirection::Up);
                 break;
+            case 'D':
+                delete_word(DeleteCharMode::Delete);
+                break;
             default:
                 break;
         }
+
+        finish_key_press();
         return;
     }
 
