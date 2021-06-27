@@ -431,7 +431,7 @@ Vector<Variant<KeyPress, MouseEvent>> ReplPanel::read_input() {
     }
 
     if (ch == '\033') {
-        char escape_buffer[64];
+        char escape_buffer[64] = { 0 };
         ret = read(STDIN_FILENO, escape_buffer, 1);
         assert(ret >= 0);
 
