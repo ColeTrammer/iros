@@ -1,6 +1,8 @@
 #ifndef _KERNEL_UTIL_RING_BUFFER_H
 #define _KERNEL_UTIL_RING_BUFFER_H 1
 
+#include <stdint.h>
+
 #include <kernel/util/macros.h>
 
 struct ring_buffer {
@@ -20,6 +22,8 @@ void ring_buffer_read(struct ring_buffer *rb, void *data, size_t amount);
 void ring_buffer_user_read(struct ring_buffer *rb, void *data, size_t amount);
 void ring_buffer_write(struct ring_buffer *rb, const void *buffer, size_t amount);
 void ring_buffer_user_write(struct ring_buffer *rb, const void *data, size_t amount);
+
+void ring_buffer_write_byte(struct ring_buffer *rb, uint8_t byte);
 
 static inline size_t ring_buffer_size(struct ring_buffer *rb) {
     if (rb->full) {
@@ -49,6 +53,12 @@ static inline bool ring_buffer_full(struct ring_buffer *rb) {
 
 static inline bool ring_buffer_dead(struct ring_buffer *rb) {
     return !rb->buffer;
+}
+
+static inline void ring_buffer_clear(struct ring_buffer *rb) {
+    rb->head = 0;
+    rb->tail = 0;
+    rb->full = false;
 }
 
 #endif /* _KERNEL_UTIL_RING_BUFFER_H */
