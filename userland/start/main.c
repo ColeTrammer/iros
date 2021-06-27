@@ -126,7 +126,7 @@ int main(int argc, char **argv) {
         }
         mkdir(mntent->mnt_dir, 0777);
         if (mount(mntent->mnt_fsname, mntent->mnt_dir, mntent->mnt_type, 0, mntent->mnt_opts)) {
-            fprintf(stderr, "Failed to mount `%s' on `%s' :%s\n", mntent->mnt_fsname, mntent->mnt_dir, strerror(errno));
+            fprintf(stderr, "Failed to mount `%s' on `%s': %s\n", mntent->mnt_fsname, mntent->mnt_dir, strerror(errno));
         }
     }
 
@@ -155,6 +155,9 @@ int main(int argc, char **argv) {
     } else {
         char *window_server_args[] = { "/bin/window_server", NULL };
         spawn_process(window_server_args, 10, 10, false, true);
+
+        char *taskbar_args[] = { "/bin/taskbar", NULL };
+        spawn_process(taskbar_args, 100, 100, false, false);
 
         char *window_server_test_args[] = { "/bin/terminal", NULL };
         spawn_process(window_server_test_args, 100, 100, false, false);
