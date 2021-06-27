@@ -9,7 +9,7 @@
 
 class Bitmap;
 
-typedef uint64_t wid_t;
+typedef int wid_t;
 
 class Window {
 public:

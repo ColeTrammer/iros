@@ -9,7 +9,7 @@
 #include <string.h>
 #include <kernel/hal/input.h>
 
-typedef uint64_t wid_t;
+typedef int wid_t;
 
 namespace WindowServer {
 enum WindowType {

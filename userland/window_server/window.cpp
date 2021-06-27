@@ -41,7 +41,7 @@ void Window::set_parent(SharedPtr<Window> child, SharedPtr<Window> parent) {
 
 Window::Window(const Rect& rect, String title, IPC::Endpoint& client, WindowServer::WindowType type, bool has_alpha)
     : m_content_rect(rect), m_id(get_next_id()), m_title(title), m_client(client.shared_from_this()), m_type(type), m_has_alpha(has_alpha) {
-    m_shm_path = String::format("/window_server_%lu", m_id);
+    m_shm_path = String::format("/window_server_%d", m_id);
     update_rect_from_content();
     map_buffers();
     m_front_buffer->clear(WindowManager::the().palette()->color(Palette::Background));
