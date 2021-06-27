@@ -440,7 +440,7 @@ Vector<Variant<KeyPress, MouseEvent>> ReplPanel::read_input() {
         }
 
         if (escape_buffer[0] != '[' && escape_buffer[0] != 'O') {
-            return R::create_from_single_element(T { K { KeyPress::Modifier::Alt, escape_buffer[0] } });
+            return R::create_from_single_element(T { K { KeyPress::Modifier::Alt, toupper(escape_buffer[0]) } });
         } else {
             // Information from https://en.wikipedia.org/wiki/ANSI_escape_code#Terminal_input_sequences
             auto modifiers_from_digit = [](char digit) -> int {
@@ -950,5 +950,4 @@ String ReplPanel::clipboard_contents(bool& is_whole_line) const {
     }
     return move(ret);
 }
-
 }
