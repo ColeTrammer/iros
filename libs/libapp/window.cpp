@@ -60,7 +60,7 @@ Window::Window(int x, int y, int width, int height, String name, bool has_alpha,
     m_shm_path = response.value().path;
     m_wid = response.value().wid;
 
-    do_resize(width, height);
+    do_resize(response->width, response->height);
     register_window(*this);
 }
 

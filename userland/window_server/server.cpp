@@ -136,6 +136,8 @@ void ServerImpl::handle(IPC::Endpoint& client, const Client::CreateWindowRequest
                                                    .wid = window->id(),
                                                    .size = (size_t) window->buffer()->size_in_bytes(),
                                                    .path = window->shm_path(),
+                                                   .width = rect.width(),
+                                                   .height = rect.height(),
                                                });
 
     notify_listeners_did_create_window(*window);
