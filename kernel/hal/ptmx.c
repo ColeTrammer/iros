@@ -104,13 +104,33 @@ again:;
         goto again;
     }
 
-    ring_buffer_user_read(&data->input_buffer, buf, len);
+    if (data->config.c_lflag & ICANON) {
+        char c = ring_buffer_read_byte(&data->input_buffer);
+        if (c == data->config.c_cc[VEOF]) {
+            len = 0;
+        } else {
+            ((char *) buf)[0] = c;
+            for (size_t i = 1; i < len; i++) {
+                char c = ring_buffer_read_byte(&data->input_buffer);
+                if (c == data->config.c_cc[VEOF]) {
+                    len = i;
+                    break;
+                }
+                ((char *) buf)[i] = c;
+            }
+        }
+    } else {
+        ring_buffer_user_read(&data->input_buffer, buf, len);
+    }
 
     struct master_data *mdata = masters[data->index]->private;
-    fs_trigger_state(&mdata->device->file_state, POLLOUT);
     fs_set_state_bit(&data->device->file_state, POLLIN, !ring_buffer_empty(&data->input_buffer));
 
     mutex_unlock(&data->device->lock);
+
+    mutex_lock(&mdata->device->lock);
+    fs_trigger_state(&mdata->device->file_state, POLLOUT);
+    mutex_unlock(&mdata->device->lock);
 
     return (ssize_t) len;
 }
@@ -148,10 +168,14 @@ static ssize_t slave_write(struct fs_device *device, off_t offset, const void *b
     while (raw_buffer_index < save_len) {
         size_t space_available = ring_buffer_space(&mdata->output_buffer);
         if (!space_available) {
+            mutex_unlock(&mdata->device->lock);
+            mutex_lock(&data->device->lock);
             int ret = dev_poll_wait(data->device, POLLOUT, NULL);
             if (ret) {
                 return ret;
             }
+            mutex_unlock(&data->device->lock);
+            mutex_lock(&mdata->device->lock);
             continue;
         }
 
@@ -182,7 +206,12 @@ static ssize_t slave_write(struct fs_device *device, off_t offset, const void *b
         }
 
         fs_trigger_state(&mdata->device->file_state, POLLIN);
+
+        mutex_unlock(&mdata->device->lock);
+        mutex_lock(&data->device->lock);
         fs_set_state_bit(&data->device->file_state, POLLOUT, !ring_buffer_full(&mdata->output_buffer));
+        mutex_unlock(&data->device->lock);
+        mutex_lock(&mdata->device->lock);
     }
 
     mutex_unlock(&mdata->device->lock);
@@ -414,10 +443,12 @@ static ssize_t master_read(struct fs_device *device, off_t offset, void *buf, si
 
     ring_buffer_user_read(&data->output_buffer, buf, len);
 
-    fs_trigger_state(&sdata->device->file_state, POLLOUT);
     fs_set_state_bit(&data->device->file_state, POLLIN, !ring_buffer_empty(&data->output_buffer));
-
     mutex_unlock(&data->device->lock);
+
+    mutex_lock(&sdata->device->lock);
+    fs_trigger_state(&sdata->device->file_state, POLLOUT);
+    mutex_unlock(&sdata->device->lock);
 
     return (ssize_t) len;
 }
@@ -486,8 +517,8 @@ static ssize_t master_write(struct fs_device *device, off_t offset, const void *
         if ((c == sdata->config.c_cc[VEOL] || c == sdata->config.c_cc[VEOF]) && (sdata->config.c_lflag & ICANON)) {
             if (c == sdata->config.c_cc[VEOL]) {
                 tty_do_echo(data, sdata, c);
-                data->input_buffer[data->input_buffer_length++] = c;
             }
+            data->input_buffer[data->input_buffer_length++] = c;
 
             mutex_lock(&sdata->device->lock);
 
