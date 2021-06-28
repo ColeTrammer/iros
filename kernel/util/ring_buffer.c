@@ -59,6 +59,12 @@ void ring_buffer_user_write(struct ring_buffer *rb, const void *buffer, size_t a
     rb->full = rb->head == rb->tail;
 }
 
+uint8_t ring_buffer_read_byte(struct ring_buffer *rb) {
+    uint8_t ret;
+    ring_buffer_read(rb, &ret, 1);
+    return ret;
+}
+
 void ring_buffer_write_byte(struct ring_buffer *rb, uint8_t byte) {
     ring_buffer_write(rb, &byte, 1);
 }

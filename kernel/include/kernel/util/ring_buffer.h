@@ -23,6 +23,7 @@ void ring_buffer_user_read(struct ring_buffer *rb, void *data, size_t amount);
 void ring_buffer_write(struct ring_buffer *rb, const void *buffer, size_t amount);
 void ring_buffer_user_write(struct ring_buffer *rb, const void *data, size_t amount);
 
+uint8_t ring_buffer_read_byte(struct ring_buffer *rb);
 void ring_buffer_write_byte(struct ring_buffer *rb, uint8_t byte);
 
 static inline size_t ring_buffer_size(struct ring_buffer *rb) {
