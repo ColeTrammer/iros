@@ -44,7 +44,8 @@ function(add_os_executable name dest_dir)
     add_executable(${name} ${SOURCES})
     if (NOT ${NATIVE_BUILD})
         add_dependencies(${name} bootstrap-core-libs)
-        target_link_options(${name} PRIVATE "-Wl,-rpath-link" "${ROOT}/base/usr/lib") # Make the linker stop complaining about libgcc_s.so
+        target_compile_options(${name} PRIVATE "-rdynamic")
+        target_link_options(${name} PRIVATE "-rdynamic" "-Wl,-rpath-link" "${ROOT}/base/usr/lib") # Make the linker stop complaining about libgcc_s.so
     endif()
     install(TARGETS ${name} RUNTIME DESTINATION ${dest_dir})
 endfunction()
