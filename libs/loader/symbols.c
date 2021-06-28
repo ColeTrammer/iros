@@ -46,7 +46,8 @@ struct symbol_lookup_result do_addr_lookup(void *_addr) {
     struct dynamic_elf_object *obj = dynamic_object_head;
     uintptr_t addr = (uintptr_t) _addr;
     while (obj) {
-        if (addr >= obj->relocation_offset && addr < obj->relocation_offset + obj->raw_data_size) {
+        uintptr_t obj_vm_base = (uintptr_t) obj->raw_data;
+        if (addr >= obj_vm_base && addr < obj_vm_base + obj->raw_data_size) {
             struct symbol_lookup_result result = (struct symbol_lookup_result) { .symbol = NULL, .object = obj };
             result.symbol = lookup_addr(obj, addr);
             return result;
