@@ -146,7 +146,7 @@ void EventLoop::do_select() {
         break;
     }
 
-    for (auto* selectable : s_selectables) {
+    s_selectables.for_each_reverse([&](auto& selectable) {
         int fd = selectable->fd();
         if (FD_ISSET(fd, &rd_set)) {
             selectable->notify_readable();
@@ -157,7 +157,7 @@ void EventLoop::do_select() {
         if (FD_ISSET(fd, &ex_set)) {
             selectable->notify_exceptional();
         }
-    }
+    });
 }
 
 void EventLoop::do_event_dispatch() {
