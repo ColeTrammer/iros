@@ -5,6 +5,7 @@ set(SOURCES
     context_menu.cpp
     icon_view.cpp
     layout.cpp
+    menubar.cpp
     model.cpp
     mouse_press_tracker.cpp
     tab_widget.cpp
