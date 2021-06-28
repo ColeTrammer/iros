@@ -41,16 +41,6 @@ static ssize_t dev_ignore_write(struct fs_device *device, off_t offset, const vo
     return len;
 }
 
-static ssize_t full_read(struct fs_device *device, off_t offset, void *buf, size_t n, bool non_blocking) {
-    (void) device;
-    (void) offset;
-    (void) buf;
-    (void) n;
-    (void) non_blocking;
-
-    return -ENOSPC;
-}
-
 static ssize_t full_write(struct fs_device *device, off_t offset, const void *buf, size_t n, bool non_blocking) {
     (void) device;
     (void) offset;
@@ -111,7 +101,7 @@ static struct fs_device dev_zero = {
 };
 
 static struct fs_device_ops dev_full_ops = {
-    .read = &full_read,
+    .read = &dev_zero_read,
     .write = &full_write,
 };
 
