@@ -64,6 +64,7 @@ set(INITRD_PROGRAMS
     sigsuspend_test_a.cpp
     smart_pointer_test.cpp
     socket_pair_test.c
+    spawn_test.c
     stack_trace_test.c
     strcasecmp_test.c
     string_test.cpp
