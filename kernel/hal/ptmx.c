@@ -80,7 +80,6 @@ static ssize_t slave_read(struct fs_device *device, off_t offset, void *buf, siz
 again:;
     size_t len = MIN(_len, ring_buffer_size(&data->input_buffer));
     if (len == 0) {
-        mutex_unlock(&data->device->lock);
         if (non_blocking) {
             return 0;
         }
@@ -102,7 +101,6 @@ again:;
                 return ret;
             }
         }
-        mutex_lock(&data->device->lock);
         goto again;
     }
 
@@ -150,14 +148,10 @@ static ssize_t slave_write(struct fs_device *device, off_t offset, const void *b
     while (raw_buffer_index < save_len) {
         size_t space_available = ring_buffer_space(&mdata->output_buffer);
         if (!space_available) {
-            mutex_unlock(&mdata->device->lock);
-
             int ret = dev_poll_wait(data->device, POLLOUT, NULL);
             if (ret) {
                 return ret;
             }
-
-            mutex_lock(&mdata->device->lock);
             continue;
         }
 
