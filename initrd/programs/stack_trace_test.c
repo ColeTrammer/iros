@@ -1,16 +1,23 @@
-__attribute__((noinline)) void c() {
-    *((char*) (0)) = '\0';
+#include <assert.h>
+#include <stdint.h>
+
+#pragma GCC optimize "O0"
+
+void c() {
+    uint64_t reg = 1;
+    asm volatile("xor %%rdx, %%rdx" : "=d"(reg) : : "memory");
+    assert(reg == 1);
 }
 
-__attribute__((noinline)) void b() {
+void b() {
     c();
 }
 
-__attribute__((noinline)) void a() {
+void a() {
     b();
 }
 
-__attribute__((noinline)) int main() {
+int main() {
     a();
 
     return 0;
