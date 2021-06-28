@@ -133,6 +133,11 @@ void ServerImpl::handle(IPC::Endpoint& client, const Client::CreateWindowRequest
         rect.set_width(m_manager->screen_rect().width());
     }
 
+    while (m_manager->window_exactly_at(rect.top_left())) {
+        rect.set_x(rect.x() + 64);
+        rect.set_y(rect.y() + 64);
+    }
+
     auto window = make_shared<Window>(rect, String(data.name), client, data.type, data.has_alpha);
     if (parent) {
         Window::set_parent(window, parent);

@@ -123,6 +123,16 @@ Point WindowManager::mouse_position_relative_to_window(const Window& window) con
     return { m_mouse_x - window.content_rect().x(), m_mouse_y - window.content_rect().y() };
 }
 
+bool WindowManager::window_exactly_at(Point p) const {
+    bool found = false;
+    m_window_map.for_each([&](auto& window) {
+        if (window->rect().top_left() == p) {
+            found = true;
+        }
+    });
+    return found;
+}
+
 void WindowManager::remove_windows_of_client(SharedPtr<IPC::Endpoint> client) {
     Vector<SharedPtr<Window>> windows_to_remove;
     m_window_map.for_each([&](auto& window) {

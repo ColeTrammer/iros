@@ -64,6 +64,8 @@ public:
 
     bool drawing() const { return m_drawing; }
 
+    bool window_exactly_at(Point p) const;
+
     Rect screen_rect() const { return { 0, 0, m_front_buffer->width(), m_front_buffer->height() }; }
 
     SharedPtr<Palette> palette() const { return m_palette; }

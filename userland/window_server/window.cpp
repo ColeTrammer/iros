@@ -58,6 +58,8 @@ Window::~Window() {
 void Window::update_rect_from_content() {
     switch (m_type) {
         case WindowServer::WindowType::Application:
+            m_content_rect.set_x(m_content_rect.x() + 1);
+            m_content_rect.set_y(m_content_rect.y() + 22);
             m_rect.set_x(m_content_rect.x() - 1);
             m_rect.set_y(m_content_rect.y() - 22);
             m_rect.set_width(m_content_rect.width() + 2);
