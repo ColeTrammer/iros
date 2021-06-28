@@ -117,6 +117,7 @@ else()
         bits/__parse_fields.c
         dirent/dirent.c
         dirent/rewinddir.c
+        execinfo/dump_backtrace.c
         fcntl/creat.c
         fcntl/fcntl.c
         fcntl/open.c
