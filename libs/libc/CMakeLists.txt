@@ -207,6 +207,29 @@ else()
         signal/sigprocmask.c
         signal/sigqueue.c
         signal/sigsuspend.c
+        spawn/posix_spawnattr_destroy.c
+        spawn/posix_spawnattr_getflags.c
+        spawn/posix_spawnattr_getpgroup.c
+        spawn/posix_spawnattr_getschedparam.c
+        spawn/posix_spawnattr_getschedpolicy.c
+        spawn/posix_spawnattr_getsigdefault.c
+        spawn/posix_spawnattr_getsigmask.c
+        spawn/posix_spawnattr_init.c
+        spawn/posix_spawnattr_setflags.c
+        spawn/posix_spawnattr_setpgroup.c
+        spawn/posix_spawnattr_setschedparam.c
+        spawn/posix_spawnattr_setschedpolicy.c
+        spawn/posix_spawnattr_setsigdefault.c
+        spawn/posix_spawnattr_setsigmask.c
+        spawn/posix_spawn.c
+        spawn/posix_spawn_file_actions_addclose.c
+        spawn/posix_spawn_file_actions_adddup2.c
+        spawn/posix_spawn_file_actions_add_internal.c
+        spawn/posix_spawn_file_actions_addopen.c
+        spawn/posix_spawn_file_actions_destroy.c
+        spawn/posix_spawn_file_actions_init.c
+        spawn/posix_spawn_internal.c
+        spawn/posix_spawnp.c
         stdio/clearerr_unlocked.c
         stdio/clearerr.c
         stdio/fclose.c

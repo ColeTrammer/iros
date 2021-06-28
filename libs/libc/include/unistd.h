@@ -47,7 +47,7 @@ extern "C" {
 #define _POSIX_SEMAPHORES                 200809L
 #define _POSIX_SHARED_MEMORY_OBJECTS      200809L
 #define _POSIX_SHELL                      200809L
-#define _POSIX_SPAWN                      -1
+#define _POSIX_SPAWN                      200809L
 #define _POSIX_SPINLOCKS                  200809L
 #define _POSIX_SPORADIC_SERVER            -1
 #define _POSIX_SYNCHRONIZED_IO            -1
