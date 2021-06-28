@@ -2,6 +2,7 @@
 #include <app/window.h>
 #include <graphics/palette.h>
 #include <graphics/renderer.h>
+#include <spawn.h>
 
 #include "taskbar.h"
 
@@ -103,11 +104,8 @@ void Taskbar::server_did_make_window_active(const WindowServer::Server::ServerDi
 void Taskbar::on_mouse_event(App::MouseEvent& event) {
     if (m_button_rect.intersects({ event.x(), event.y() })) {
         if (event.left() == MOUSE_DOWN) {
-            if (fork() == 0) {
-                char* const args[] = { (char*) "terminal", nullptr };
-                execvp("terminal", args);
-                _exit(127);
-            }
+            char* const args[] = { (char*) "terminal", nullptr };
+            posix_spawnp(nullptr, args[0], nullptr, nullptr, args, environ);
         }
         return;
     }
