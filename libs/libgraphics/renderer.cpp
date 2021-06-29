@@ -56,11 +56,14 @@ void Renderer::fill_rect(int x, int y, int width, int height, Color color_object
 
     auto& buffer = m_pixels;
 
-    auto y_start = LIIM::max(0, y);
-    auto y_end = LIIM::min(y + height, buffer.height());
+    auto translated_x = translate_x(x);
+    auto translated_y = translate_y(y);
 
-    auto x_start = LIIM::max(0, x);
-    auto x_end = LIIM::min(x + width, buffer.width());
+    auto x_start = constrain_x(translated_x);
+    auto x_end = constrain_x(translated_x + width);
+
+    auto y_start = constrain_y(translated_y);
+    auto y_end = constrain_y(translated_y + height);
 
     if (y_end <= y_start || x_end <= x_start) {
         return;
@@ -76,25 +79,37 @@ void Renderer::fill_rect(int x, int y, int width, int height, Color color_object
 }
 
 void Renderer::draw_rect(int x, int y, int width, int height, Color color) {
-    for (int r = x; r < x + width; r++) {
-        m_pixels.put_pixel(r, y, color);
-        m_pixels.put_pixel(r, y + height - 1, color);
+    auto translated_x = translate_x(x);
+    auto translated_y = translate_y(y);
+
+    auto left = constrain_x(translated_x);
+    auto right = constrain_x(translated_x + width);
+
+    auto top = constrain_y(translated_y);
+    auto bottom = constrain_y(translated_y + height);
+
+    for (int r = left; r < right; r++) {
+        m_pixels.put_pixel(r, top, color);
+        m_pixels.put_pixel(r, bottom - 1, color);
     }
 
-    for (int c = y + 1; c < y + height - 1; c++) {
-        m_pixels.put_pixel(x, c, color);
-        m_pixels.put_pixel(x + width - 1, c, color);
+    for (int c = top + 1; c < bottom - 1; c++) {
+        m_pixels.put_pixel(left, c, color);
+        m_pixels.put_pixel(right - 1, c, color);
     }
 }
 
 void Renderer::clear_rect(int x, int y, int width, int height, Color color_object) {
     auto& buffer = m_pixels;
 
-    auto y_start = LIIM::max(0, y);
-    auto y_end = LIIM::min(y + height, buffer.height());
+    auto translated_x = translate_x(x);
+    auto translated_y = translate_y(y);
 
-    auto x_start = LIIM::max(0, x);
-    auto x_end = LIIM::min(x + width, buffer.width());
+    auto x_start = constrain_x(translated_x);
+    auto x_end = constrain_x(translated_x + width);
+
+    auto y_start = constrain_y(translated_y);
+    auto y_end = constrain_y(translated_y + height);
 
     if (y_end <= y_start || x_end <= x_start) {
         return;
@@ -110,11 +125,17 @@ void Renderer::clear_rect(int x, int y, int width, int height, Color color_objec
 }
 
 void Renderer::draw_line(Point start, Point end, Color color) {
-    auto x_start = clamp(start.x(), 0, m_pixels.width() - 1);
-    auto x_end = clamp(end.x(), 0, m_pixels.width() - 1);
+    auto translated_start = translate(start);
+    auto translated_end = translate(end);
 
-    auto y_start = clamp(start.y(), 0, m_pixels.height() - 1);
-    auto y_end = clamp(end.y(), 0, m_pixels.height() - 1);
+    auto constrained_start = constrain(translated_start);
+    auto constrained_end = constrain(translated_end);
+
+    auto x_start = constrained_start.x();
+    auto x_end = constrained_end.x();
+
+    auto y_start = constrained_start.y();
+    auto y_end = constrained_end.y();
 
     auto raw_color = color.color();
     if (x_start == x_end && y_start == y_end) {
@@ -177,10 +198,14 @@ void Renderer::draw_line(Point start, Point end, Color color) {
 
 void Renderer::fill_circle(int x, int y, int r, Color color) {
     int r2 = r * r;
-    for (int a = x - r; a < x + r; a++) {
-        for (int b = y - r; b <= y + r; b++) {
-            int da = a - x;
-            int db = b - y;
+
+    auto fixed_x = constrain_x(translate_x(x));
+    auto fixed_y = constrain_y(translate_y(y));
+
+    for (int a = fixed_x - r; a < fixed_x + r; a++) {
+        for (int b = fixed_y - r; b <= fixed_y + r; b++) {
+            int da = a - fixed_x;
+            int db = b - fixed_y;
             int dd = da * da + db * db;
             if (dd <= r2) {
                 m_pixels.put_pixel(a, b, color);
@@ -191,10 +216,14 @@ void Renderer::fill_circle(int x, int y, int r, Color color) {
 
 void Renderer::draw_circle(int x, int y, int r, Color color) {
     int r2 = r * r;
-    for (int a = x - r; a < x + r; a++) {
-        for (int b = y - r; b < y + r; b++) {
-            int da = a - x;
-            int db = b - y;
+
+    auto fixed_x = constrain_x(translate_x(x));
+    auto fixed_y = constrain_y(translate_y(y));
+
+    for (int a = fixed_x - r; a < fixed_x + r; a++) {
+        for (int b = fixed_y - r; b <= fixed_y + r; b++) {
+            int da = a - fixed_x;
+            int db = b - fixed_y;
             int dd = da * da + db * db;
             if (abs(dd - r2) <= r) {
                 m_pixels.put_pixel(a, b, color);
@@ -207,7 +236,7 @@ void Renderer::draw_bitmap(const Bitmap& src, const Rect& src_rect_in, const Rec
     assert(src_rect_in.width() == dest_rect_in.width());
     assert(src_rect_in.height() == dest_rect_in.height());
 
-    auto dest_rect = dest_rect_in.intersection_with({ 0, 0, m_pixels.width(), m_pixels.height() });
+    auto dest_rect = translate(dest_rect_in).intersection_with(m_bounding_rect);
     if (dest_rect == Rect()) {
         return;
     }
@@ -254,6 +283,9 @@ void Renderer::draw_bitmap(const Bitmap& src, const Rect& src_rect_in, const Rec
 }
 
 void Renderer::render_text(int x, int y, const String& text, Color color, const Font& font) {
+    auto translated_x = translate_x(x);
+    auto translated_y = translate_y(y);
+
     int x_offset = -8;
     int y_offset = 0;
     for (size_t k = 0; k < text.size(); k++) {
@@ -274,16 +306,18 @@ void Renderer::render_text(int x, int y, const String& text, Color color, const 
         for (int i = 0; i < 16; i++) {
             for (int j = 0; j < 8; j++) {
                 if (bitmap->get(i * 8 + j)) {
-                    m_pixels.put_pixel(x + x_offset - j + 7, y + y_offset + i, color.color());
+                    m_pixels.put_pixel(translated_x + x_offset - j + 7, translated_y + y_offset + i, color.color());
                 }
             }
         }
     }
 }
 
-void Renderer::render_text(const String& text, const Rect& rect, Color color, TextAlign align, const Font& font) {
+void Renderer::render_text(const String& text, const Rect& rect_in, Color color, TextAlign align, const Font& font) {
     auto lines = text.split_view('\n');
     int text_height = lines.size() * 16;
+
+    auto rect = translate(rect_in);
 
     int start_y = rect.y();
     if (text_height < rect.height()) {
@@ -354,4 +388,8 @@ void Renderer::render_text(const String& text, const Rect& rect, Color color, Te
 
         start_y += 16;
     }
+}
+
+void Renderer::set_bounding_rect(const Rect& rect) {
+    m_bounding_rect = rect.intersection_with(m_pixels.rect());
 }
