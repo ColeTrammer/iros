@@ -9,7 +9,7 @@ class TestWidget final : public App::Widget {
 
 public:
     virtual void render() override {
-        Renderer renderer(*window()->pixels());
+        auto renderer = get_renderer();
 
         RectSet s;
         s.add({ 50, 50, 300, 300 });

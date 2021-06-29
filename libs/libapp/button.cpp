@@ -4,13 +4,12 @@
 #include <graphics/renderer.h>
 
 namespace App {
-
 void Button::render() {
-    Renderer renderer(*window()->pixels());
+    auto renderer = get_renderer();
 
-    renderer.fill_rect(positioned_rect(), background_color());
-    renderer.draw_rect(positioned_rect(), outline_color());
-    renderer.render_text(label(), positioned_rect().adjusted(-2), text_color(), TextAlign::CenterLeft, font());
+    renderer.fill_rect(sized_rect(), background_color());
+    renderer.draw_rect(sized_rect(), outline_color());
+    renderer.render_text(label(), sized_rect().adjusted(-2), text_color(), TextAlign::CenterLeft, font());
 }
 
 void Button::on_mouse_event(MouseEvent& mouse_event) {
@@ -26,5 +25,4 @@ void Button::on_mouse_event(MouseEvent& mouse_event) {
         }
     }
 }
-
 }

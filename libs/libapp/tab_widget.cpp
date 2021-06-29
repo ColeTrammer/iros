@@ -46,11 +46,11 @@ void TabWidget::on_resize() {
 }
 
 void TabWidget::render() {
-    Renderer renderer(*window()->pixels());
-    renderer.clear_rect({ positioned_rect().x(), positioned_rect().y(), positioned_rect().width(), tab_bar_height }, background_color());
+    auto renderer = get_renderer();
+
+    renderer.clear_rect({ 0, 0, sized_rect().width(), tab_bar_height }, background_color());
     for (auto& tab : m_tabs) {
-        Rect absolute_rect = { positioned_rect().x() + tab.rect.x(), positioned_rect().y() + tab.rect.y(), tab.rect.width(),
-                               tab.rect.height() };
+        Rect absolute_rect = { tab.rect.x(), tab.rect.y(), tab.rect.width(), tab.rect.height() };
         renderer.draw_rect(absolute_rect, outline_color());
         renderer.render_text(tab.name, absolute_rect.adjusted(-tab_padding), text_color());
     }

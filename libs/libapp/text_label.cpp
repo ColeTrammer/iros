@@ -3,14 +3,12 @@
 #include <graphics/renderer.h>
 
 namespace App {
-
 void TextLabel::render() {
-    Renderer renderer(*window()->pixels());
+    auto renderer = get_renderer();
 
-    renderer.fill_rect(positioned_rect(), background_color());
-    renderer.render_text(text(), positioned_rect(), text_color(), text_align(), font());
+    renderer.fill_rect(sized_rect(), background_color());
+    renderer.render_text(text(), sized_rect(), text_color(), text_align(), font());
 
     Widget::render();
 }
-
 }

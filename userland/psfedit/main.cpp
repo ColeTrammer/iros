@@ -15,15 +15,15 @@ class GlyphEditorWidgetCell final : public App::Widget {
 
 public:
     virtual void render() {
-        Renderer renderer(*window()->pixels());
+        auto renderer = get_renderer();
         auto c = ColorValue::White;
         if (m_bitset && m_bitset->get(m_index)) {
             c = ColorValue::Black;
         }
 
-        renderer.fill_rect(positioned_rect(), c);
+        renderer.fill_rect(sized_rect(), c);
 
-        renderer.draw_rect(positioned_rect(), ColorValue::Black);
+        renderer.draw_rect(sized_rect(), ColorValue::Black);
     }
 
     virtual void on_mouse_event(App::MouseEvent& event) override {

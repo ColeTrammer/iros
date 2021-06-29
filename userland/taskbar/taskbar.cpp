@@ -123,7 +123,7 @@ void Taskbar::on_mouse_event(App::MouseEvent& event) {
 }
 
 void Taskbar::render() {
-    Renderer renderer(*window()->pixels());
+    auto renderer = get_renderer();
 
     auto& palette = *App::App::the().palette();
 

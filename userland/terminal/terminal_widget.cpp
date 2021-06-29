@@ -70,15 +70,14 @@ void TerminalWidget::render() {
     clock_gettime(CLOCK_MONOTONIC, &start);
 #endif /* TERMINAL_WIDGET_DEBUG */
 
-    Renderer renderer(*window()->pixels());
-    auto x_offset = positioned_rect().x() + 5;
-    auto y_offset = positioned_rect().y() + 5;
+    auto renderer = get_renderer();
+    auto x_offset = 5;
+    auto y_offset = 5;
 
-    Rect left_rect = { positioned_rect().x(), positioned_rect().y(), 5, positioned_rect().height() };
-    Rect right_rect = { positioned_rect().x() + 5 + cell_width * m_tty.col_count(), positioned_rect().y(), 5, positioned_rect().height() };
-    Rect top_rect = { positioned_rect().x() + 5, positioned_rect().y(), positioned_rect().width() - 10, 5 };
-    Rect bottom_rect = { positioned_rect().x() + 5, positioned_rect().y() + 5 + cell_height * m_tty.row_count(),
-                         positioned_rect().width() - 10, 5 };
+    Rect left_rect = { 0, 0, 5, sized_rect().height() };
+    Rect right_rect = { 5 + cell_width * m_tty.col_count(), 0, 5, sized_rect().height() };
+    Rect top_rect = { 5, 0, sized_rect().width() - 10, 5 };
+    Rect bottom_rect = { 5, 5 + cell_height * m_tty.row_count(), sized_rect().width() - 10, 5 };
 
     Color default_bg = ColorValue::Black;
     default_bg.set_alpha(m_background_alpha);

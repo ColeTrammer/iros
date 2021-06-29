@@ -9,7 +9,7 @@ class TestWidget final : public App::Widget {
 
 public:
     virtual void render() override {
-        Renderer renderer(*window()->pixels());
+        auto renderer = get_renderer();
         renderer.fill_rect(5, 5, 50, 50, ColorValue::White);
         renderer.render_text(60, 5, "Hello, World!", ColorValue::White);
 

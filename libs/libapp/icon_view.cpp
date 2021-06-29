@@ -5,21 +5,18 @@
 #include <graphics/renderer.h>
 
 namespace App {
-
 void IconView::render() {
-    Renderer renderer(*window()->pixels());
-    renderer.clear_rect(positioned_rect(), background_color());
+    auto renderer = get_renderer();
+    renderer.clear_rect(sized_rect(), background_color());
 
     for (int r = 0; r < m_items.size(); r++) {
         auto& item = m_items[r];
         if (auto bitmap = item.icon) {
-            Rect icon_rect = { positioned_rect().x() + item.rect.x() + m_icon_padding_x,
-                               positioned_rect().y() + item.rect.y() + m_icon_padding_y, m_icon_width, m_icon_height };
+            Rect icon_rect = { item.rect.x() + m_icon_padding_x, item.rect.y() + m_icon_padding_y, m_icon_width, m_icon_height };
             renderer.draw_bitmap(*bitmap, bitmap->rect(), icon_rect);
         }
         if (!item.name.is_empty()) {
-            Rect text_rect = { positioned_rect().x() + item.rect.x(),
-                               positioned_rect().y() + item.rect.y() + m_icon_height + 2 * m_icon_padding_y, item.rect.width(),
+            Rect text_rect = { item.rect.x(), item.rect.y() + m_icon_height + 2 * m_icon_padding_y, item.rect.width(),
                                item.rect.height() - m_icon_height - 2 * m_icon_padding_y };
             renderer.render_text(item.name, text_rect, text_color(), TextAlign::Center, font());
         }
@@ -33,8 +30,6 @@ void IconView::render() {
 
     if (m_in_selection) {
         Rect selection_rect = { m_selection_start, m_selection_end };
-        selection_rect.set_x(selection_rect.x() + positioned_rect().x());
-        selection_rect.set_y(selection_rect.y() + positioned_rect().y());
         renderer.fill_rect(selection_rect, Color(106, 126, 200, 200));
         renderer.draw_rect(selection_rect, Color(76, 96, 200, 255));
     }
@@ -117,5 +112,4 @@ ModelIndex IconView::index_at_position(int x, int y) {
     }
     return {};
 }
-
 }

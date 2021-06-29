@@ -6,7 +6,6 @@
 #include <liim/function.h>
 
 namespace App {
-
 class ContextMenuWindow final : public Window {
     APP_OBJECT(ContextMenuWindow)
 
@@ -67,5 +66,4 @@ void ContextMenu::hide() {
 bool ContextMenu::visible() const {
     return m_window && m_window->visible();
 }
-
 }

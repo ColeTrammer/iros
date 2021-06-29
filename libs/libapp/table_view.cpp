@@ -5,7 +5,6 @@
 #include <liim/utilities.h>
 
 namespace App {
-
 TableView::~TableView() {}
 
 int TableView::width_of(const ModelData& data) const {
@@ -21,8 +20,7 @@ int TableView::width_of(const ModelData& data) const {
 }
 
 void TableView::render_data(Renderer& renderer, int rx, int ry, int width, Function<ModelData(int)> getter) {
-    auto cell_rect = Rect { positioned_rect().x() + rx + cell_padding(), positioned_rect().y() + ry + cell_padding(),
-                            width - 2 * cell_padding(), 20 - 2 * cell_padding() };
+    auto cell_rect = Rect { rx + cell_padding(), ry + cell_padding(), width - 2 * cell_padding(), 20 - 2 * cell_padding() };
     auto data = getter(Model::Role::Display);
     if (data.is<Monostate>()) {
         return;
@@ -43,8 +41,8 @@ void TableView::render() {
         return;
     }
 
-    Renderer renderer(*window()->pixels());
-    renderer.fill_rect(positioned_rect(), background_color());
+    auto renderer = get_renderer();
+    renderer.fill_rect(sized_rect(), background_color());
 
     auto row_count = model()->row_count();
     auto col_count = model()->col_count();
@@ -74,13 +72,11 @@ void TableView::render() {
         ry += 21;
 
         if (hovered_index().row() == r) {
-            renderer.fill_rect({ positioned_rect().x(), positioned_rect().y() + ry, positioned_rect().width(), 21 },
-                               palette()->color(Palette::Hover));
+            renderer.fill_rect({ 0, ry, sized_rect().width(), 21 }, palette()->color(Palette::Hover));
         }
 
         if (is_selected({ r, 0 })) {
-            renderer.fill_rect({ positioned_rect().x(), positioned_rect().y() + ry, positioned_rect().width(), 21 },
-                               palette()->color(Palette::Selected));
+            renderer.fill_rect({ 0, ry, sized_rect().width(), 21 }, palette()->color(Palette::Selected));
         }
 
         for (auto c = 0; c < col_count; c++) {
@@ -94,8 +90,7 @@ void TableView::render() {
     ry = 0;
     for (int i = 0; i <= row_count; i++) {
         ry += 21;
-        renderer.draw_line({ positioned_rect().x(), positioned_rect().y() + ry },
-                           { positioned_rect().x() + positioned_rect().width() - 1, positioned_rect().y() + ry }, outline_color());
+        renderer.draw_line({ 0, ry }, { sized_rect().right() - 1, ry }, outline_color());
     }
     renderer.draw_rect(positioned_rect(), outline_color());
 }
@@ -134,5 +129,4 @@ ModelIndex TableView::index_at_position(int wx, int wy) {
 
     return { row, col };
 }
-
 }

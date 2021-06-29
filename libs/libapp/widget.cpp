@@ -9,15 +9,14 @@
 // #define WIDGET_DEBUG
 
 namespace App {
-
 Widget::Widget() : m_palette(App::the().palette()) {}
 
 Widget::~Widget() {}
 
 void Widget::render() {
 #ifdef WIDGET_DEBUG
-    Renderer renderer(*window()->pixels());
-    renderer.draw_rect(m_rect, outline_color());
+    auto renderer = get_renderer();
+    renderer.draw_rect(sized_rect(), outline_color());
 #endif /* WIDGET_DEBUG */
 
     for (auto& child : children()) {
@@ -107,4 +106,9 @@ void Widget::set_hidden(bool b) {
     invalidate(positioned_rect());
 }
 
+Renderer Widget::get_renderer() {
+    Renderer renderer(*window()->pixels());
+    renderer.set_bounding_rect(positioned_rect());
+    return renderer;
+}
 }

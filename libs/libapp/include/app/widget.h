@@ -6,6 +6,8 @@
 #include <graphics/palette.h>
 #include <graphics/rect.h>
 
+class Renderer;
+
 namespace App {
 
 class ContextMenu;
@@ -38,6 +40,8 @@ public:
 
     void set_positioned_rect(const Rect& rect);
     const Rect& positioned_rect() const { return m_positioned_rect; }
+
+    Rect sized_rect() const { return m_positioned_rect.positioned(0); }
 
     Window* window();
 
@@ -73,6 +77,8 @@ public:
 
 protected:
     Widget();
+
+    Renderer get_renderer();
 
 private:
     virtual bool is_widget() const final { return true; }

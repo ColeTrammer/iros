@@ -19,8 +19,8 @@ SearchWidget::~SearchWidget() {}
 void SearchWidget::render() {
     Widget::render();
 
-    Renderer renderer(*window()->pixels());
-    renderer.draw_rect(positioned_rect(), ColorValue::White);
+    auto renderer = get_renderer();
+    renderer.draw_rect(sized_rect(), ColorValue::White);
 }
 
 AppPanel& SearchWidget::panel() {
@@ -189,8 +189,8 @@ void AppPanel::render_cursor(Renderer& renderer) {
         return;
     }
 
-    int cursor_x = positioned_rect().x() + m_cursor_col * col_width();
-    int cursor_y = positioned_rect().y() + m_cursor_row * row_height();
+    int cursor_x = m_cursor_col * col_width();
+    int cursor_y = m_cursor_row * row_height();
     for (int y = cursor_y; y < cursor_y + row_height(); y++) {
         renderer.pixels().put_pixel(cursor_x, y, ColorValue::White);
     }
@@ -212,14 +212,12 @@ void AppPanel::render_cell(Renderer& renderer, int x, int y, CellData& cell) {
 }
 
 void AppPanel::render() {
-    Renderer renderer(*window()->pixels());
+    auto renderer = get_renderer();
 
     auto total_width = cols() * col_width();
     auto total_height = rows() * row_height();
-    Rect bottom_extra_rect = { positioned_rect().x(), positioned_rect().y() + total_height, total_width,
-                               positioned_rect().height() - total_height };
-    Rect right_extra_rect = { positioned_rect().x() + total_width, positioned_rect().y(), positioned_rect().width() - total_width,
-                              positioned_rect().height() };
+    Rect bottom_extra_rect = { 0, total_height, total_width, sized_rect().height() - total_height };
+    Rect right_extra_rect = { total_width, 0, sized_rect().width() - total_width, sized_rect().height() };
     renderer.fill_rect(bottom_extra_rect, ColorValue::Black);
     renderer.fill_rect(right_extra_rect, ColorValue::Black);
 
@@ -228,7 +226,7 @@ void AppPanel::render() {
             auto& cell = m_cells[index(r, c)];
             if (cell.dirty || (r == m_last_drawn_cursor_row && c == m_last_drawn_cursor_col)) {
                 cell.dirty = false;
-                render_cell(renderer, positioned_rect().x() + c * col_width(), positioned_rect().y() + r * row_height(), cell);
+                render_cell(renderer, c * col_width(), r * row_height(), cell);
             }
         }
     }
