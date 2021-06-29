@@ -8,7 +8,7 @@ SharedPtr<Widget> Layout::widget_pointer() {
 }
 
 const Rect& Layout::container_rect() const {
-    return widget().rect();
+    return widget().positioned_rect();
 }
 
 }

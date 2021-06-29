@@ -22,7 +22,7 @@ public:
             }
 
             if (!m_shown) {
-                m_menu->show({ rect().x(), rect().y() + rect().height() });
+                m_menu->show({ positioned_rect().x(), positioned_rect().y() + positioned_rect().height() });
                 m_shown = true;
             } else {
                 m_shown = false;
@@ -31,7 +31,7 @@ public:
     }
     virtual ~MenubarItem() override {}
 
-    virtual void on_resize() override { m_button->set_rect(rect()); }
+    virtual void on_resize() override { m_button->set_positioned_rect(positioned_rect()); }
 
     ContextMenu& menu() { return *m_menu; }
 

@@ -45,11 +45,11 @@ void Widget::on_theme_change_event(ThemeChangeEvent& event) {
     }
 }
 
-void Widget::set_rect(const Rect& rect) {
-    int old_width = m_rect.width();
-    int old_height = m_rect.height();
+void Widget::set_positioned_rect(const Rect& rect) {
+    int old_width = m_positioned_rect.width();
+    int old_height = m_positioned_rect.height();
 
-    m_rect = rect;
+    m_positioned_rect = rect;
 
     if (old_width != rect.width() || old_height != rect.height()) {
         on_resize();
@@ -92,8 +92,8 @@ void Widget::set_context_menu(SharedPtr<ContextMenu> menu) {
 
 void Widget::on_mouse_event(MouseEvent& event) {
     if (m_context_menu) {
-        if (event.right() == MOUSE_DOWN && !m_context_menu->visible() && rect().intersects({ event.x(), event.y() })) {
-            m_context_menu->show({ rect().x() + event.x(), rect().x() + event.y() });
+        if (event.right() == MOUSE_DOWN && !m_context_menu->visible() && positioned_rect().intersects({ event.x(), event.y() })) {
+            m_context_menu->show({ positioned_rect().x() + event.x(), positioned_rect().x() + event.y() });
         }
     }
 }
@@ -104,7 +104,7 @@ void Widget::set_hidden(bool b) {
     }
 
     m_hidden = b;
-    invalidate(rect());
+    invalidate(positioned_rect());
 }
 
 }

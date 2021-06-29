@@ -67,7 +67,7 @@ Window::Window(int x, int y, int width, int height, String name, bool has_alpha,
 void Window::set_rect(const Rect& rect) {
     m_rect = rect;
     if (m_main_widget) {
-        m_main_widget->set_rect(rect);
+        m_main_widget->set_positioned_rect(rect);
     }
 }
 
@@ -121,7 +121,7 @@ void Window::on_event(Event& event) {
 
                 do_resize(data.new_width, data.new_height);
                 if (auto* main_widget = m_main_widget.get()) {
-                    main_widget->set_rect({ 0, 0, data.new_width, data.new_height });
+                    main_widget->set_positioned_rect({ 0, 0, data.new_width, data.new_height });
                 }
                 pixels()->clear(App::the().palette()->color(Palette::Background));
                 invalidate_rect(rect());
@@ -173,8 +173,8 @@ void Window::on_event(Event& event) {
             }
 
             if (widget) {
-                mouse_event.set_x(mouse_event.x() - widget->rect().x());
-                mouse_event.set_y(mouse_event.y() - widget->rect().y());
+                mouse_event.set_x(mouse_event.x() - widget->positioned_rect().x());
+                mouse_event.set_y(mouse_event.y() - widget->positioned_rect().y());
                 widget->on_mouse_event(mouse_event);
             }
             return;
@@ -207,7 +207,7 @@ Widget* Window::find_widget_at_point(Point p) {
         for (auto& child : parent->children()) {
             if (child->is_widget()) {
                 auto& widget_child = const_cast<Widget&>(static_cast<const Widget&>(*child));
-                if (!widget_child.hidden() && widget_child.rect().intersects(p)) {
+                if (!widget_child.hidden() && widget_child.positioned_rect().intersects(p)) {
                     parent = &widget_child;
                     found = true;
                     break;

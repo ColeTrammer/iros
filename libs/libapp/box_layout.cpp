@@ -94,12 +94,12 @@ void BoxLayout::layout() {
         if (orientation() == Orientation::Horizontal) {
             auto used_width =
                 (size_in_layout_orientation == Size::Auto || !respect_preffered_sizes) ? computed_width : size_in_layout_orientation;
-            w->set_rect({ computed_x, computed_y, used_width, computed_height });
+            w->set_positioned_rect({ computed_x, computed_y, used_width, computed_height });
             computed_x += used_width + spacing();
         } else {
             auto used_height =
                 (size_in_layout_orientation == Size::Auto || !respect_preffered_sizes) ? computed_height : size_in_layout_orientation;
-            w->set_rect({ computed_x, computed_y, computed_width, used_height });
+            w->set_positioned_rect({ computed_x, computed_y, computed_width, used_height });
             computed_y += used_height + spacing();
         }
     }

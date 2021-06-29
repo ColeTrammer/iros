@@ -34,7 +34,7 @@ public:
     template<typename T, typename... Args>
     T& set_main_widget(Args... args) {
         auto ret = T::create(shared_from_this(), forward<Args>(args)...);
-        ret->set_rect(rect());
+        ret->set_positioned_rect(rect());
         set_focused_widget(ret.get());
         invalidate_rect(rect());
         m_main_widget = ret;

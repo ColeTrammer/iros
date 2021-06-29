@@ -71,13 +71,14 @@ void TerminalWidget::render() {
 #endif /* TERMINAL_WIDGET_DEBUG */
 
     Renderer renderer(*window()->pixels());
-    auto x_offset = rect().x() + 5;
-    auto y_offset = rect().y() + 5;
+    auto x_offset = positioned_rect().x() + 5;
+    auto y_offset = positioned_rect().y() + 5;
 
-    Rect left_rect = { rect().x(), rect().y(), 5, rect().height() };
-    Rect right_rect = { rect().x() + 5 + cell_width * m_tty.col_count(), rect().y(), 5, rect().height() };
-    Rect top_rect = { rect().x() + 5, rect().y(), rect().width() - 10, 5 };
-    Rect bottom_rect = { rect().x() + 5, rect().y() + 5 + cell_height * m_tty.row_count(), rect().width() - 10, 5 };
+    Rect left_rect = { positioned_rect().x(), positioned_rect().y(), 5, positioned_rect().height() };
+    Rect right_rect = { positioned_rect().x() + 5 + cell_width * m_tty.col_count(), positioned_rect().y(), 5, positioned_rect().height() };
+    Rect top_rect = { positioned_rect().x() + 5, positioned_rect().y(), positioned_rect().width() - 10, 5 };
+    Rect bottom_rect = { positioned_rect().x() + 5, positioned_rect().y() + 5 + cell_height * m_tty.row_count(),
+                         positioned_rect().width() - 10, 5 };
 
     Color default_bg = ColorValue::Black;
     default_bg.set_alpha(m_background_alpha);
@@ -139,8 +140,8 @@ void TerminalWidget::on_resize() {
     m_selection_start_row = m_selection_start_col = m_selection_end_row = m_selection_end_col = -1;
     m_in_selection = false;
 
-    int rows = (rect().height() - 10) / cell_height;
-    int cols = (rect().width() - 10) / cell_width;
+    int rows = (positioned_rect().height() - 10) / cell_height;
+    int cols = (positioned_rect().width() - 10) / cell_width;
     m_tty.resize(rows, cols);
     m_pseudo_terminal.set_size(rows, cols);
 }

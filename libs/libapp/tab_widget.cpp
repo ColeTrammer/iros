@@ -34,21 +34,23 @@ void TabWidget::on_focused() {
 }
 
 void TabWidget::on_resize() {
-    Rect tab_content_rect = { rect().x(), rect().y() + tab_bar_height, rect().width(), rect().height() - tab_bar_height };
+    Rect tab_content_rect = { positioned_rect().x(), positioned_rect().y() + tab_bar_height, positioned_rect().width(),
+                              positioned_rect().height() - tab_bar_height };
     if (tab_content_rect.height() < 0) {
         tab_content_rect = { 0, 0, 0, 0 };
     }
     for (auto& tab : m_tabs) {
-        tab.widget->set_rect(tab_content_rect);
+        tab.widget->set_positioned_rect(tab_content_rect);
     }
     m_tab_content_rect = tab_content_rect;
 }
 
 void TabWidget::render() {
     Renderer renderer(*window()->pixels());
-    renderer.clear_rect({ rect().x(), rect().y(), rect().width(), tab_bar_height }, background_color());
+    renderer.clear_rect({ positioned_rect().x(), positioned_rect().y(), positioned_rect().width(), tab_bar_height }, background_color());
     for (auto& tab : m_tabs) {
-        Rect absolute_rect = { rect().x() + tab.rect.x(), rect().y() + tab.rect.y(), tab.rect.width(), tab.rect.height() };
+        Rect absolute_rect = { positioned_rect().x() + tab.rect.x(), positioned_rect().y() + tab.rect.y(), tab.rect.width(),
+                               tab.rect.height() };
         renderer.draw_rect(absolute_rect, outline_color());
         renderer.render_text(tab.name, absolute_rect.adjusted(-tab_padding), text_color());
     }

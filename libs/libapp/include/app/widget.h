@@ -36,8 +36,8 @@ public:
     virtual void on_focused() {}
     virtual void on_leave() {}
 
-    void set_rect(const Rect& rect);
-    const Rect& rect() const { return m_rect; }
+    void set_positioned_rect(const Rect& rect);
+    const Rect& positioned_rect() const { return m_positioned_rect; }
 
     Window* window();
 
@@ -60,7 +60,7 @@ public:
     const Size& preferred_size() const { return m_preferred_size; }
     void set_preferred_size(const Size& size);
 
-    void invalidate() { invalidate(rect()); }
+    void invalidate() { invalidate(positioned_rect()); }
     void invalidate(const Rect& rect);
 
     void set_context_menu(SharedPtr<ContextMenu> menu);
@@ -77,7 +77,7 @@ protected:
 private:
     virtual bool is_widget() const final { return true; }
 
-    Rect m_rect;
+    Rect m_positioned_rect;
     Font m_font { Font::default_font() };
     SharedPtr<Palette> m_palette;
     Size m_preferred_size { Size::Auto, Size::Auto };

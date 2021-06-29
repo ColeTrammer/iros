@@ -21,9 +21,9 @@ public:
             c = ColorValue::Black;
         }
 
-        renderer.fill_rect(rect(), c);
+        renderer.fill_rect(positioned_rect(), c);
 
-        renderer.draw_rect(rect(), ColorValue::Black);
+        renderer.draw_rect(positioned_rect(), ColorValue::Black);
     }
 
     virtual void on_mouse_event(App::MouseEvent& event) override {

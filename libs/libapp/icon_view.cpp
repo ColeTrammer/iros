@@ -8,18 +8,19 @@ namespace App {
 
 void IconView::render() {
     Renderer renderer(*window()->pixels());
-    renderer.clear_rect(rect(), background_color());
+    renderer.clear_rect(positioned_rect(), background_color());
 
     for (int r = 0; r < m_items.size(); r++) {
         auto& item = m_items[r];
         if (auto bitmap = item.icon) {
-            Rect icon_rect = { rect().x() + item.rect.x() + m_icon_padding_x, rect().y() + item.rect.y() + m_icon_padding_y, m_icon_width,
-                               m_icon_height };
+            Rect icon_rect = { positioned_rect().x() + item.rect.x() + m_icon_padding_x,
+                               positioned_rect().y() + item.rect.y() + m_icon_padding_y, m_icon_width, m_icon_height };
             renderer.draw_bitmap(*bitmap, bitmap->rect(), icon_rect);
         }
         if (!item.name.is_empty()) {
-            Rect text_rect = { rect().x() + item.rect.x(), rect().y() + item.rect.y() + m_icon_height + 2 * m_icon_padding_y,
-                               item.rect.width(), item.rect.height() - m_icon_height - 2 * m_icon_padding_y };
+            Rect text_rect = { positioned_rect().x() + item.rect.x(),
+                               positioned_rect().y() + item.rect.y() + m_icon_height + 2 * m_icon_padding_y, item.rect.width(),
+                               item.rect.height() - m_icon_height - 2 * m_icon_padding_y };
             renderer.render_text(item.name, text_rect, text_color(), TextAlign::Center, font());
         }
         if (hovered_index() == ModelIndex { r, m_name_column }) {
@@ -32,8 +33,8 @@ void IconView::render() {
 
     if (m_in_selection) {
         Rect selection_rect = { m_selection_start, m_selection_end };
-        selection_rect.set_x(selection_rect.x() + rect().x());
-        selection_rect.set_y(selection_rect.y() + rect().y());
+        selection_rect.set_x(selection_rect.x() + positioned_rect().x());
+        selection_rect.set_y(selection_rect.y() + positioned_rect().y());
         renderer.fill_rect(selection_rect, Color(106, 126, 200, 200));
         renderer.draw_rect(selection_rect, Color(76, 96, 200, 255));
     }
@@ -101,7 +102,7 @@ void IconView::compute_layout() {
     for (auto& item : m_items) {
         item.rect = { x, y, w, h };
         x += w;
-        if (x + w >= rect().width()) {
+        if (x + w >= positioned_rect().width()) {
             x = 0;
             y += h;
         }

@@ -24,7 +24,7 @@ public:
             ret->set_hidden(false);
             m_active_tab = m_tabs.size();
         }
-        ret->set_rect(tab_content_rect());
+        ret->set_positioned_rect(tab_content_rect());
 
         auto rect = next_tab_rect(name);
         m_tabs.add({ move(name), rect, ret });

@@ -20,7 +20,7 @@ void SearchWidget::render() {
     Widget::render();
 
     Renderer renderer(*window()->pixels());
-    renderer.draw_rect(rect(), ColorValue::White);
+    renderer.draw_rect(positioned_rect(), ColorValue::White);
 }
 
 AppPanel& SearchWidget::panel() {
@@ -189,8 +189,8 @@ void AppPanel::render_cursor(Renderer& renderer) {
         return;
     }
 
-    int cursor_x = rect().x() + m_cursor_col * col_width();
-    int cursor_y = rect().y() + m_cursor_row * row_height();
+    int cursor_x = positioned_rect().x() + m_cursor_col * col_width();
+    int cursor_y = positioned_rect().y() + m_cursor_row * row_height();
     for (int y = cursor_y; y < cursor_y + row_height(); y++) {
         renderer.pixels().put_pixel(cursor_x, y, ColorValue::White);
     }
@@ -216,8 +216,10 @@ void AppPanel::render() {
 
     auto total_width = cols() * col_width();
     auto total_height = rows() * row_height();
-    Rect bottom_extra_rect = { rect().x(), rect().y() + total_height, total_width, rect().height() - total_height };
-    Rect right_extra_rect = { rect().x() + total_width, rect().y(), rect().width() - total_width, rect().height() };
+    Rect bottom_extra_rect = { positioned_rect().x(), positioned_rect().y() + total_height, total_width,
+                               positioned_rect().height() - total_height };
+    Rect right_extra_rect = { positioned_rect().x() + total_width, positioned_rect().y(), positioned_rect().width() - total_width,
+                              positioned_rect().height() };
     renderer.fill_rect(bottom_extra_rect, ColorValue::Black);
     renderer.fill_rect(right_extra_rect, ColorValue::Black);
 
@@ -226,7 +228,7 @@ void AppPanel::render() {
             auto& cell = m_cells[index(r, c)];
             if (cell.dirty || (r == m_last_drawn_cursor_row && c == m_last_drawn_cursor_col)) {
                 cell.dirty = false;
-                render_cell(renderer, rect().x() + c * col_width(), rect().y() + r * row_height(), cell);
+                render_cell(renderer, positioned_rect().x() + c * col_width(), positioned_rect().y() + r * row_height(), cell);
             }
         }
     }
@@ -381,7 +383,7 @@ void AppPanel::document_did_change() {
                             auto x = c * col_width();
                             auto y = r * row_height();
                             Rect cell_rect { x, y, col_width(), row_height() };
-                            if (m_search_widget->rect().intersects(cell_rect)) {
+                            if (m_search_widget->positioned_rect().intersects(cell_rect)) {
                                 cell.dirty = true;
                             }
                         }
@@ -394,8 +396,8 @@ void AppPanel::document_did_change() {
 }
 
 void AppPanel::on_resize() {
-    m_rows = rect().height() / row_height();
-    m_cols = rect().width() / col_width();
+    m_rows = positioned_rect().height() / row_height();
+    m_cols = positioned_rect().width() / col_width();
     clear();
     if (document()) {
         document()->notify_panel_size_changed();
@@ -404,7 +406,8 @@ void AppPanel::on_resize() {
     if (m_main_panel) {
         ensure_search_panel();
         constexpr int panel_height = 28;
-        m_search_widget->set_rect({ rect().x(), rect().y() + rect().height() - panel_height, rect().width(), panel_height });
+        m_search_widget->set_positioned_rect({ positioned_rect().x(), positioned_rect().y() + positioned_rect().height() - panel_height,
+                                               positioned_rect().width(), panel_height });
     }
 }
 
