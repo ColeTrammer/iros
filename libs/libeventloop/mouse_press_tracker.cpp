@@ -8,19 +8,21 @@ Vector<UniquePtr<MouseEvent>> MousePressTracker::notify_mouse_event(int buttons,
         events.add(make_unique<MouseEvent>(MouseEventType::Scroll, buttons, x, y, z, MouseButton::None));
     }
 
-    bool can_be_move = buttons == m_prev.buttons_down();
-    if (can_be_move && (m_prev.x() != x || m_prev.y() != y)) {
-        events.add(make_unique<MouseEvent>(MouseEventType::Move, buttons, x, y, 0, MouseButton::None));
+    if (m_prev.x() != x || m_prev.y() != y) {
+        events.add(make_unique<MouseEvent>(MouseEventType::Move, m_prev.buttons_down(), x, y, 0, MouseButton::None));
     }
 
+    auto buttons_to_pass = m_prev.buttons_down();
     auto handle_button = [&](int button) {
         if (!(buttons & button) && !!(m_prev.buttons_down() & button)) {
-            events.add(make_unique<MouseEvent>(MouseEventType::Up, buttons, x, y, 0, button));
+            buttons_to_pass &= ~button;
+            events.add(make_unique<MouseEvent>(MouseEventType::Up, buttons_to_pass, x, y, 0, button));
         }
 
         if (!!(buttons & button) && !(m_prev.buttons_down() & button)) {
             auto type = m_prev.set(x, y, button);
-            events.add(make_unique<MouseEvent>(type, buttons, x, y, 0, button));
+            buttons_to_pass |= button;
+            events.add(make_unique<MouseEvent>(type, buttons_to_pass, x, y, 0, button));
         }
     };
 
