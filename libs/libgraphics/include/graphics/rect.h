@@ -15,6 +15,11 @@ public:
     constexpr int width() const { return m_width; }
     constexpr int height() const { return m_height; }
 
+    constexpr int left() const { return m_x; }
+    constexpr int right() const { return m_x + m_width; }
+    constexpr int top() const { return m_y; }
+    constexpr int bottom() const { return m_y + m_height; }
+
     constexpr void set_x(int x) { m_x = x; }
     constexpr void set_y(int y) { m_y = y; }
     constexpr void set_width(int width) { m_width = width; }
@@ -51,6 +56,16 @@ public:
 
     constexpr Rect adjusted(int d) const { return adjusted(d, d); }
     constexpr Rect adjusted(int dx, int dy) const { return { x() - dx, y() - dy, width() + 2 * dx, height() + 2 * dy }; }
+
+    constexpr Rect translated(int d) const { return translated(d, d); }
+    constexpr Rect translated(int dx, int dy) const { return { x() + dx, y() + dy, width(), height() }; }
+    constexpr Rect translated(const Point& p) const { return translated(p.x(), p.y()); }
+
+    constexpr Rect positioned(int x) const { return positioned(x, x); }
+    constexpr Rect positioned(int x, int y) const { return { x, y, width(), height() }; }
+    constexpr Rect positioned(Point p) const { return positioned(p.x(), p.y()); }
+
+    constexpr Point constrained(const Point& p) const { return { clamp(p.x(), left(), right()), clamp(p.y(), top(), bottom()) }; }
 
     constexpr bool operator==(const Rect& other) const {
         return this->x() == other.x() && this->y() == other.y() && this->width() == other.width() && this->height() == other.height();

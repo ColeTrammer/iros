@@ -11,6 +11,10 @@ public:
     constexpr void set_x(int x) { m_x = x; }
     constexpr void set_y(int y) { m_y = y; }
 
+    constexpr Point translated(int d) const { return translated(d, d); }
+    constexpr Point translated(int dx, int dy) const { return { x() + dx, y() + dy }; }
+    constexpr Point translated(const Point& p) const { return translated(p.x(), p.y()); }
+
     constexpr bool operator==(const Point& other) const { return this->x() == other.x() && this->y() == other.y(); }
     constexpr bool operator!=(const Point& other) const { return !(*this == other); }
 
