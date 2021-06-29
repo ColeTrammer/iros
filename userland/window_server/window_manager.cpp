@@ -50,7 +50,7 @@ WindowManager::~WindowManager() {}
 void WindowManager::add_window(SharedPtr<Window> window) {
     m_window_map.put(window->id(), window);
 
-    if (window->visible()) {
+    if (window->visible() && window->type() != WindowServer::WindowType::Taskbar) {
         if (!window->parent()) {
             m_window_stack.add(window);
             set_active_window(window);
