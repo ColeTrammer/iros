@@ -33,14 +33,9 @@ void View::set_hovered_index(ModelIndex index) {
     invalidate();
 }
 
-void View::on_mouse_event(MouseEvent& event) {
+void View::on_mouse_down(const MouseEvent& event) {
     auto index = index_at_position(event.x(), event.y());
-    if (!event.button()) {
-        set_hovered_index(index);
-        return;
-    }
-
-    if (event.mouse_event_type() == MouseEventType::Down && event.button() == MouseButton::Left) {
+    if (event.left_button()) {
         clear_selection();
         if (index.valid()) {
             add_to_selection(index);
@@ -48,7 +43,12 @@ void View::on_mouse_event(MouseEvent& event) {
         invalidate();
     }
 
-    return Widget::on_mouse_event(event);
+    return Widget::on_mouse_down(event);
 }
 
+void View::on_mouse_move(const MouseEvent& event) {
+    auto index = index_at_position(event.x(), event.y());
+    set_hovered_index(index);
+    return;
+}
 }

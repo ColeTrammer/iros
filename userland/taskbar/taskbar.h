@@ -25,7 +25,7 @@ public:
     virtual void initialize() override;
     virtual ~Taskbar() override;
 
-    virtual void on_mouse_event(App::MouseEvent& event) override;
+    virtual void on_mouse_down(const App::MouseEvent& event) override;
 
     virtual void render() override;
 

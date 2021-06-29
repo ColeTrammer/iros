@@ -31,12 +31,19 @@ public:
     virtual ~Widget() override;
 
     virtual void render();
-    virtual void on_mouse_event(MouseEvent&);
-    virtual void on_key_event(KeyEvent&) {}
-    virtual void on_theme_change_event(ThemeChangeEvent&);
+    virtual void on_mouse_event(const MouseEvent&);
+    virtual void on_key_event(const KeyEvent&) {}
+    virtual void on_theme_change_event(const ThemeChangeEvent&);
     virtual void on_resize();
     virtual void on_focused() {}
     virtual void on_leave() {}
+
+    virtual void on_mouse_down(const MouseEvent&);
+    virtual void on_mouse_double(const MouseEvent&);
+    virtual void on_mouse_triple(const MouseEvent&);
+    virtual void on_mouse_up(const MouseEvent&);
+    virtual void on_mouse_move(const MouseEvent&);
+    virtual void on_mouse_scroll(const MouseEvent&);
 
     void set_positioned_rect(const Rect& rect);
     const Rect& positioned_rect() const { return m_positioned_rect; }

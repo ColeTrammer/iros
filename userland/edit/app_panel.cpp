@@ -250,7 +250,7 @@ int AppPanel::index_of_line_at_position(int, int wy) const {
     return clamp(index_of_line, 0, document()->num_lines() - 1);
 }
 
-void AppPanel::on_mouse_event(App::MouseEvent& event) {
+void AppPanel::on_mouse_event(const App::MouseEvent& event) {
     if (!document()) {
         return;
     }
@@ -266,7 +266,7 @@ void AppPanel::on_mouse_event(App::MouseEvent& event) {
     Widget::on_mouse_event(event);
 }
 
-void AppPanel::on_key_event(App::KeyEvent& event) {
+void AppPanel::on_key_event(const App::KeyEvent& event) {
     if (!document() || !event.key_down()) {
         return;
     }

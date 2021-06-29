@@ -47,7 +47,8 @@ public:
     const ModelIndex& hovered_index() const { return m_hovered_index; }
     void set_hovered_index(ModelIndex);
 
-    virtual void on_mouse_event(MouseEvent&) override;
+    virtual void on_mouse_down(const MouseEvent&) override;
+    virtual void on_mouse_move(const MouseEvent&) override;
     virtual void on_leave() override { set_hovered_index({}); }
 
     virtual void model_did_update() override { invalidate(); }

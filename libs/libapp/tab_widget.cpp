@@ -14,17 +14,18 @@ constexpr int tab_border = 1;
 constexpr int tab_bar_height = 2 * (tab_border + tab_padding) + character_height;
 constexpr int tab_bar_left_margin = 4;
 
-void TabWidget::on_mouse_event(MouseEvent& event) {
-    if (event.mouse_event_type() == App::MouseEventType::Down && event.button() == App::MouseButton::Left) {
+void TabWidget::on_mouse_down(const MouseEvent& event) {
+    if (event.left_button()) {
         for (int i = 0; i < m_tabs.size(); i++) {
             if (m_tabs[i].rect.intersects({ event.x(), event.y() })) {
                 set_active_tab(i);
                 return;
             }
         }
+        return;
     }
 
-    return Widget::on_mouse_event(event);
+    return Widget::on_mouse_down(event);
 }
 
 void TabWidget::on_focused() {

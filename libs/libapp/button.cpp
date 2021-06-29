@@ -12,13 +12,15 @@ void Button::render() {
     renderer.render_text(label(), sized_rect().adjusted(-2), text_color(), TextAlign::CenterLeft, font());
 }
 
-void Button::on_mouse_event(MouseEvent& mouse_event) {
-    if (mouse_event.mouse_event_type() == App::MouseEventType::Down && mouse_event.button() == App::MouseButton::Left) {
+void Button::on_mouse_down(const MouseEvent& mouse_event) {
+    if (mouse_event.left_button()) {
         m_did_mousedown = true;
         return;
     }
+}
 
-    if (m_did_mousedown && mouse_event.mouse_event_type() == App::MouseEventType::Up && mouse_event.button() == App::MouseButton::Left) {
+void Button::on_mouse_up(const MouseEvent& mouse_event) {
+    if (m_did_mousedown && mouse_event.left_button()) {
         m_did_mousedown = false;
         if (on_click) {
             on_click();

@@ -37,35 +37,44 @@ void IconView::render() {
     Widget::render();
 }
 
-void IconView::on_mouse_event(MouseEvent& event) {
-    if (event.mouse_event_type() == MouseEventType::Down) {
-        if (event.button() == MouseButton::Left) {
-            m_in_selection = true;
-            m_selection_start = m_selection_end = { event.x(), event.y() };
-        }
-    } else if (event.mouse_event_type() == MouseEventType::Move) {
-        if (m_in_selection) {
-            clear_selection();
-
-            m_selection_end = { event.x(), event.y() };
-            Rect selection_rect = { m_selection_start, m_selection_end };
-            for (auto r = 0; r < m_items.size(); r++) {
-                auto& item = m_items[r];
-                if (item.rect.intersects(selection_rect)) {
-                    add_to_selection({ r, m_name_column });
-                }
-            }
-
-            invalidate();
-        }
-    } else if (event.mouse_event_type() == MouseEventType::Up) {
-        if (m_in_selection) {
-            m_in_selection = false;
-            invalidate();
-        }
+void IconView::on_mouse_down(MouseEvent& event) {
+    if (event.left_button()) {
+        m_in_selection = true;
+        m_selection_start = m_selection_end = { event.x(), event.y() };
+        return;
     }
 
-    return View::on_mouse_event(event);
+    return View::on_mouse_down(event);
+}
+
+void IconView::on_mouse_move(MouseEvent& event) {
+    if (m_in_selection) {
+        clear_selection();
+
+        m_selection_end = { event.x(), event.y() };
+        Rect selection_rect = { m_selection_start, m_selection_end };
+        for (auto r = 0; r < m_items.size(); r++) {
+            auto& item = m_items[r];
+            if (item.rect.intersects(selection_rect)) {
+                add_to_selection({ r, m_name_column });
+            }
+        }
+
+        invalidate();
+        return;
+    }
+
+    return View::on_mouse_move(event);
+}
+
+void IconView::on_mouse_up(MouseEvent& event) {
+    if (m_in_selection) {
+        m_in_selection = false;
+        invalidate();
+        return;
+    }
+
+    return View::on_mouse_up(event);
 }
 
 void IconView::on_resize() {

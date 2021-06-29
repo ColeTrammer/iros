@@ -160,7 +160,7 @@ void TerminalWidget::paste_text() {
     m_pseudo_terminal.send_clipboard_contents(maybe_text.value());
 }
 
-void TerminalWidget::on_key_event(App::KeyEvent& event) {
+void TerminalWidget::on_key_event(const App::KeyEvent& event) {
     if (event.key_down() && event.control_down() && event.shift_down() && event.key() == KEY_C) {
         copy_selection();
         return;
@@ -260,16 +260,17 @@ String TerminalWidget::selection_text() const {
     return text;
 }
 
-void TerminalWidget::on_mouse_event(App::MouseEvent& event) {
+void TerminalWidget::on_mouse_event(const App::MouseEvent& event) {
     auto cell_x = event.x() / cell_width;
     auto cell_y = event.y() / cell_height;
 
     int row_at_cursor = m_tty.scroll_relative_offset(cell_y);
     int col_at_cursor = cell_x;
 
-    event.set_x(cell_x);
-    event.set_y(cell_y);
-    if (m_pseudo_terminal.handle_mouse_event(event)) {
+    auto event_copy = App::MouseEvent(event.mouse_event_type(), event.buttons_down(), event.x(), event.y(), event.z(), event.button());
+    event_copy.set_x(cell_x);
+    event_copy.set_y(cell_y);
+    if (m_pseudo_terminal.handle_mouse_event(event_copy)) {
         return;
     }
 
@@ -324,7 +325,7 @@ void TerminalWidget::on_mouse_event(App::MouseEvent& event) {
         }
     }
 
-    if (event.mouse_event_type() == App::MouseEventType::Up && event.button() == App::MouseButton::Left) {
+    if (event.mouse_up() && event.left_button()) {
         m_in_selection = false;
         return;
     }
@@ -336,5 +337,5 @@ void TerminalWidget::on_mouse_event(App::MouseEvent& event) {
         return;
     }
 
-    Widget::on_mouse_event(event);
+    return Widget::on_mouse_event(event);
 }

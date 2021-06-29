@@ -26,13 +26,14 @@ public:
         renderer.draw_rect(sized_rect(), ColorValue::Black);
     }
 
-    virtual void on_mouse_event(App::MouseEvent& event) override {
-        if (m_bitset && event.mouse_event_type() == App::MouseEventType::Down && event.button() == App::MouseButton::Left) {
+    virtual void on_mouse_down(const App::MouseEvent& event) override {
+        if (m_bitset && event.left_button()) {
             m_bitset->flip(m_index);
             invalidate();
+            return;
         }
 
-        App::Widget::on_mouse_event(event);
+        App::Widget::on_mouse_down(event);
     }
 
 private:

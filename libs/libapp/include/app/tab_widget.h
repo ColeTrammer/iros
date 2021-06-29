@@ -10,7 +10,7 @@ class TabWidget : public Widget {
     APP_OBJECT(TabWidget)
 
 public:
-    virtual void on_mouse_event(MouseEvent&) override;
+    virtual void on_mouse_down(const MouseEvent&) override;
     virtual void on_focused() override;
     virtual void on_resize() override;
     virtual void render() override;

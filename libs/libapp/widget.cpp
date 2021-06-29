@@ -35,7 +35,7 @@ void Widget::on_resize() {
     }
 }
 
-void Widget::on_theme_change_event(ThemeChangeEvent& event) {
+void Widget::on_theme_change_event(const ThemeChangeEvent& event) {
     for (auto& child : children()) {
         if (child->is_widget()) {
             auto& widget = const_cast<Widget&>(static_cast<const Widget&>(*child));
@@ -89,14 +89,46 @@ void Widget::set_context_menu(SharedPtr<ContextMenu> menu) {
     m_context_menu = move(menu);
 }
 
-void Widget::on_mouse_event(MouseEvent& event) {
-    if (m_context_menu) {
-        if (event.mouse_event_type() == MouseEventType::Down && event.button() == MouseButton::Right && !m_context_menu->visible() &&
-            positioned_rect().intersects({ event.x(), event.y() })) {
-            m_context_menu->show({ positioned_rect().x() + event.x(), positioned_rect().x() + event.y() });
-        }
+void Widget::on_mouse_event(const MouseEvent& event) {
+    switch (event.mouse_event_type()) {
+        case MouseEventType::Down:
+            return on_mouse_down(event);
+        case MouseEventType::Double:
+            return on_mouse_double(event);
+        case MouseEventType::Triple:
+            return on_mouse_triple(event);
+        case MouseEventType::Up:
+            return on_mouse_up(event);
+        case MouseEventType::Move:
+            return on_mouse_move(event);
+        case MouseEventType::Scroll:
+            return on_mouse_scroll(event);
     }
 }
+
+void Widget::on_mouse_down(const MouseEvent& event) {
+    if (!m_context_menu) {
+        return;
+    }
+
+    if (event.right_button() && !m_context_menu->visible() && sized_rect().intersects({ event.x(), event.y() })) {
+        m_context_menu->show(positioned_rect().top_left().translated(event.x(), event.y()));
+    }
+}
+
+void Widget::on_mouse_double(const MouseEvent& ev) {
+    return on_mouse_down(ev);
+}
+
+void Widget::on_mouse_triple(const MouseEvent& ev) {
+    return on_mouse_down(ev);
+}
+
+void Widget::on_mouse_up(const MouseEvent&) {}
+
+void Widget::on_mouse_move(const MouseEvent&) {}
+
+void Widget::on_mouse_scroll(const MouseEvent&) {}
 
 void Widget::set_hidden(bool b) {
     if (m_hidden == b) {

@@ -12,7 +12,9 @@ class IconView : public View {
 
 public:
     virtual void render() override;
-    virtual void on_mouse_event(MouseEvent& event);
+    virtual void on_mouse_down(MouseEvent& event);
+    virtual void on_mouse_move(MouseEvent& event);
+    virtual void on_mouse_up(MouseEvent& event);
     virtual void on_resize() override;
     virtual void model_did_update() override;
 

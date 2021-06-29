@@ -19,7 +19,8 @@ public:
 
 private:
     virtual void render() override;
-    virtual void on_mouse_event(MouseEvent& mouse_event) override;
+    virtual void on_mouse_down(const MouseEvent& mouse_event) override;
+    virtual void on_mouse_up(const MouseEvent& mouse_event) override;
 
     String m_label;
     bool m_did_mousedown { false };
