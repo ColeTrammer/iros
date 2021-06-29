@@ -145,19 +145,23 @@ struct key_event {
     unsigned int flags;
 };
 
-enum scroll_state { SCROLL_NONE, SCROLL_UP, SCROLL_DOWN };
+enum mouse_button {
+    MOUSE_BUTTON_LEFT = 1,
+    MOUSE_BUTTON_RIGHT = 2,
+    MOUSE_BUTTON_MIDDLE = 4,
+};
 
-enum mouse_button_state { MOUSE_NO_CHANGE, MOUSE_DOWN, MOUSE_UP };
-
-enum scale_mode { SCALE_NONE, SCALE_ABSOLUTE };
+enum scale_mode {
+    SCALE_DELTA,
+    SCALE_ABSOLUTE,
+};
 
 struct mouse_event {
-    enum scroll_state scroll_state;
-    enum mouse_button_state left;
-    enum mouse_button_state right;
     enum scale_mode scale_mode;
     int dx;
     int dy;
+    int dz;
+    int buttons;
 };
 
 #ifdef __cplusplus

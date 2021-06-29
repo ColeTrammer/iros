@@ -249,14 +249,25 @@ SharedPtr<Window> WindowManager::find_by_wid(wid_t id) {
     return ret ? *ret : nullptr;
 }
 
-void WindowManager::notify_mouse_moved(int dx, int dy, bool absolue) {
-    int computed_x = absolue ? (dx * m_front_buffer->width() / 0xFFFF) : (m_mouse_x + dx);
-    int computed_y = absolue ? (dy * m_front_buffer->height() / 0xFFFF) : (m_mouse_y - dy);
-
-    int new_mouse_x = LIIM::clamp(computed_x, 0, m_front_buffer->width() - cursor_width);
-    int new_mouse_y = LIIM::clamp(computed_y, 0, m_front_buffer->height() - cursor_height);
+void WindowManager::notify_mouse_moved(const App::MouseEvent& event) {
+    int new_mouse_x = LIIM::clamp(event.x(), 0, m_front_buffer->width() - cursor_width);
+    int new_mouse_y = LIIM::clamp(event.y(), 0, m_front_buffer->height() - cursor_height);
 
     set_mouse_coordinates(new_mouse_x, new_mouse_y);
+}
+
+void WindowManager::notify_mouse_input(int dx, int dy, int dz, int buttons, bool absolute) {
+    int computed_x = absolute ? (dx * m_front_buffer->width() / 0xFFFF) : (m_mouse_x + dx);
+    int computed_y = absolute ? (dy * m_front_buffer->height() / 0xFFFF) : (m_mouse_y - dy);
+
+    auto events = m_mouse_tracker.notify_mouse_event(buttons, computed_x, computed_y, dz);
+    for (auto& event : events) {
+        if (event->mouse_move()) {
+            notify_mouse_moved(*event);
+        } else if (event->mouse_down_any() || event->mouse_up()) {
+            notify_mouse_pressed(*event);
+        }
+    }
 }
 
 void WindowManager::set_active_window(SharedPtr<Window> window) {
@@ -312,8 +323,8 @@ SharedPtr<Window> WindowManager::find_window_intersecting_rect(const Rect& r) {
     return nullptr;
 }
 
-void WindowManager::notify_mouse_pressed(mouse_button_state left, mouse_button_state right) {
-    if (left == MOUSE_UP) {
+void WindowManager::notify_mouse_pressed(const App::MouseEvent& event) {
+    if (event.mouse_up() && event.button() == App::MouseButton::Left) {
         m_window_to_move = nullptr;
         m_window_to_resize = nullptr;
         m_window_resize_mode = ResizeMode::Invalid;
@@ -323,7 +334,7 @@ void WindowManager::notify_mouse_pressed(mouse_button_state left, mouse_button_s
     auto cursor_rect = Rect(m_mouse_x, m_mouse_y, cursor_width, cursor_height);
     auto window = find_window_intersecting_rect(cursor_rect);
     if (!window) {
-        if (left == MOUSE_DOWN || right == MOUSE_DOWN) {
+        if (event.mouse_down_any()) {
             set_active_window(nullptr);
         }
         return;
@@ -339,7 +350,7 @@ void WindowManager::notify_mouse_pressed(mouse_button_state left, mouse_button_s
         return;
     }
 
-    if (left == MOUSE_DOWN) {
+    if (event.mouse_down_any() && event.button() == App::MouseButton::Left) {
         if (window->resizable() && cursor_rect.intersects(window->rect().top_left())) {
             m_window_to_resize = window;
             m_window_resize_mode = ResizeMode::TopLeft;
@@ -372,7 +383,7 @@ void WindowManager::notify_mouse_pressed(mouse_button_state left, mouse_button_s
         }
     }
 
-    if (left == MOUSE_DOWN || right == MOUSE_DOWN) {
+    if (event.mouse_down_any()) {
         move_to_front_and_make_active(window);
     }
 }

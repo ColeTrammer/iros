@@ -35,12 +35,12 @@ void View::set_hovered_index(ModelIndex index) {
 
 void View::on_mouse_event(MouseEvent& event) {
     auto index = index_at_position(event.x(), event.y());
-    if (event.left() == MOUSE_NO_CHANGE && event.right() == MOUSE_NO_CHANGE) {
+    if (!event.button()) {
         set_hovered_index(index);
         return;
     }
 
-    if (event.left() == MOUSE_DOWN) {
+    if (event.mouse_event_type() == MouseEventType::Down && event.button() == MouseButton::Left) {
         clear_selection();
         if (index.valid()) {
             add_to_selection(index);

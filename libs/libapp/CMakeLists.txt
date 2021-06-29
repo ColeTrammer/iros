@@ -7,7 +7,6 @@ set(SOURCES
     layout.cpp
     menubar.cpp
     model.cpp
-    mouse_press_tracker.cpp
     tab_widget.cpp
     table_view.cpp
     text_label.cpp

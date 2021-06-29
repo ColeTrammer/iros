@@ -21,16 +21,6 @@ enum WindowType {
 
 namespace LIIM {
 template<>
-struct Traits<scroll_state> {
-    static constexpr bool is_simple() { return true; }
-};
-
-template<>
-struct Traits<mouse_button_state> {
-    static constexpr bool is_simple() { return true; }
-};
-
-template<>
 struct Traits<key_event> {
     static constexpr bool is_simple() { return true; }
 };
@@ -108,9 +98,8 @@ IPC_MESSAGES(Server,
         (wid_t, wid),
         (int, x),
         (int, y),
-        (scroll_state, scroll),
-        (mouse_button_state, left),
-        (mouse_button_state, right),
+        (int, z),
+        (int, buttons),
     ),
     (WindowDidResizeMessage,
         (wid_t, wid),

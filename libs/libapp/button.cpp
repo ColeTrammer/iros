@@ -13,12 +13,12 @@ void Button::render() {
 }
 
 void Button::on_mouse_event(MouseEvent& mouse_event) {
-    if (mouse_event.left() == MOUSE_DOWN) {
+    if (mouse_event.mouse_event_type() == App::MouseEventType::Down && mouse_event.button() == App::MouseButton::Left) {
         m_did_mousedown = true;
         return;
     }
 
-    if (m_did_mousedown && mouse_event.left() == MOUSE_UP) {
+    if (m_did_mousedown && mouse_event.mouse_event_type() == App::MouseEventType::Up && mouse_event.button() == App::MouseButton::Left) {
         m_did_mousedown = false;
         if (on_click) {
             on_click();

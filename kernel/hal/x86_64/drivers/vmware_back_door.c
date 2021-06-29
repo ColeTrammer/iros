@@ -25,8 +25,6 @@ static void disable_vmmouse(void) {
 }
 
 static struct mouse_event s_event;
-static bool left_is_down;
-static bool right_is_down;
 
 struct mouse_event *vmmouse_read(void) {
     uint32_t status = vmware_send(VMWARE_VMMOUSE_STATUS, 0);
@@ -47,40 +45,17 @@ struct mouse_event *vmmouse_read(void) {
     struct vmware_registers regs = vmware_send_full(VMWARE_VMMOUSE_DATA, 4);
     s_event.dx = regs.ebx;
     s_event.dy = regs.ecx;
+    s_event.buttons = 0;
 
     if (regs.eax & 0x20) {
-        if (left_is_down) {
-            s_event.left = MOUSE_NO_CHANGE;
-        } else {
-            s_event.left = MOUSE_DOWN;
-            left_is_down = true;
-        }
-    } else {
-        if (!left_is_down) {
-            s_event.left = MOUSE_NO_CHANGE;
-        } else {
-            s_event.left = MOUSE_UP;
-            left_is_down = false;
-        }
+        s_event.buttons |= MOUSE_BUTTON_LEFT;
     }
 
     if (regs.eax & 0x10) {
-        if (right_is_down) {
-            s_event.right = MOUSE_NO_CHANGE;
-        } else {
-            s_event.right = MOUSE_DOWN;
-            right_is_down = true;
-        }
-    } else {
-        if (!right_is_down) {
-            s_event.right = MOUSE_NO_CHANGE;
-        } else {
-            s_event.right = MOUSE_UP;
-            right_is_down = false;
-        }
+        s_event.buttons |= MOUSE_BUTTON_RIGHT;
     }
 
-    s_event.scroll_state = regs.edx == 0xFFFFFFFF ? SCROLL_UP : regs.edx == 0x01 ? SCROLL_DOWN : SCROLL_NONE;
+    s_event.dz = regs.edx == 0xFFFFFFFF ? -1 : regs.edx == 0x01 ? 1 : 0;
     s_event.scale_mode = SCALE_ABSOLUTE;
     return &s_event;
 }

@@ -65,13 +65,7 @@ void ServerImpl::initialize() {
                 }
             } else if (UMESSAGE_INPUT_MOUSE_EVENT_VALID((umessage*) buffer, (size_t) ret)) {
                 auto& event = ((umessage_input_mouse_event*) buffer)->event;
-                if (event.dx != 0 || event.dy != 0) {
-                    m_manager->notify_mouse_moved(event.dx, event.dy, event.scale_mode == SCALE_ABSOLUTE);
-                }
-
-                if (event.left != MOUSE_NO_CHANGE || event.right != MOUSE_NO_CHANGE) {
-                    m_manager->notify_mouse_pressed(event.left, event.right);
-                }
+                m_manager->notify_mouse_input(event.dx, event.dy, event.dz, event.buttons, event.scale_mode == SCALE_ABSOLUTE);
 
                 auto* active_window = m_manager->active_window();
                 if (active_window && m_manager->should_send_mouse_events(*active_window)) {
@@ -80,9 +74,8 @@ void ServerImpl::initialize() {
                                                                                  .wid = active_window->id(),
                                                                                  .x = relative_mouse.x(),
                                                                                  .y = relative_mouse.y(),
-                                                                                 .scroll = event.scroll_state,
-                                                                                 .left = event.left,
-                                                                                 .right = event.right,
+                                                                                 .z = event.dz,
+                                                                                 .buttons = event.buttons,
                                                                              });
                 }
             }

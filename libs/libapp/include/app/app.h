@@ -1,7 +1,7 @@
 #pragma once
 
-#include <app/mouse_press_tracker.h>
 #include <eventloop/event_loop.h>
+#include <eventloop/mouse_press_tracker.h>
 #include <graphics/palette.h>
 #include <window_server/message.h>
 

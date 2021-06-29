@@ -9,14 +9,14 @@ VgaTerminal::VgaTerminal(VgaBuffer& vga_buffer) : m_tty(m_pseudo_terminal), m_vg
     m_tty.resize(m_vga_buffer.height(), m_vga_buffer.width());
 }
 
-void VgaTerminal::on_mouse_event(mouse_event event) {
-    if (m_pseudo_terminal.handle_mouse_event(event.left, event.right, 1, 1, event.scroll_state)) {
+void VgaTerminal::on_mouse_event(const App::MouseEvent& event) {
+    if (m_pseudo_terminal.handle_mouse_event(event)) {
         return;
     }
 
-    if (event.scroll_state == SCROLL_DOWN) {
+    if (event.z() < 0) {
         m_tty.scroll_down();
-    } else if (event.scroll_state == SCROLL_UP) {
+    } else if (event.z() > 0) {
         m_tty.scroll_up();
     }
 }

@@ -91,7 +91,8 @@ void Widget::set_context_menu(SharedPtr<ContextMenu> menu) {
 
 void Widget::on_mouse_event(MouseEvent& event) {
     if (m_context_menu) {
-        if (event.right() == MOUSE_DOWN && !m_context_menu->visible() && positioned_rect().intersects({ event.x(), event.y() })) {
+        if (event.mouse_event_type() == MouseEventType::Down && event.button() == MouseButton::Right && !m_context_menu->visible() &&
+            positioned_rect().intersects({ event.x(), event.y() })) {
             m_context_menu->show({ positioned_rect().x() + event.x(), positioned_rect().x() + event.y() });
         }
     }

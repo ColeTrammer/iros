@@ -5,7 +5,6 @@
 #include <clipboard/connection.h>
 #include <edit/document.h>
 #include <edit/key_press.h>
-#include <edit/mouse_event.h>
 #include <eventloop/event.h>
 #include <graphics/bitmap.h>
 #include <graphics/renderer.h>
@@ -256,15 +255,11 @@ void AppPanel::on_mouse_event(App::MouseEvent& event) {
         return;
     }
 
-    MouseEvent ev;
-    ev.index_into_line = index_into_line_at_position(event.x(), event.y());
-    ev.index_of_line = index_of_line_at_position(event.x(), event.y());
-    ev.z = event.scroll() == SCROLL_UP ? -1 : event.scroll() == SCROLL_DOWN ? 1 : 0;
-    ev.left = event.left() != MOUSE_NO_CHANGE ? (MouseEvent::Press) event.mouse_event_type() : MouseEvent::Press::None;
-    ev.right = event.right() != MOUSE_NO_CHANGE ? (MouseEvent::Press) event.mouse_event_type() : MouseEvent::Press::None;
-    ev.down = event.buttons_down();
+    auto event_copy = App::MouseEvent(event.mouse_event_type(), event.buttons_down(), event.x(), event.y(), event.z(), event.button());
+    event_copy.set_x(index_into_line_at_position(event.x(), event.y()));
+    event_copy.set_y(index_of_line_at_position(event.x(), event.y()));
 
-    if (document()->notify_mouse_event(ev)) {
+    if (document()->notify_mouse_event(event_copy)) {
         return;
     }
 

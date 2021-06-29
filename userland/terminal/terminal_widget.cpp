@@ -267,23 +267,23 @@ void TerminalWidget::on_mouse_event(App::MouseEvent& event) {
     int row_at_cursor = m_tty.scroll_relative_offset(cell_y);
     int col_at_cursor = cell_x;
 
-    if (m_pseudo_terminal.handle_mouse_event(event.left(), event.right(), row_at_cursor, col_at_cursor, event.scroll())) {
+    event.set_x(cell_x);
+    event.set_y(cell_y);
+    if (m_pseudo_terminal.handle_mouse_event(event)) {
         return;
     }
 
-    if (event.scroll() == SCROLL_DOWN) {
-        m_tty.scroll_down();
+    if (event.mouse_scroll()) {
+        if (event.z() < 0) {
+            m_tty.scroll_up();
+        } else if (event.z() > 0) {
+            m_tty.scroll_down();
+        }
         invalidate();
         return;
     }
 
-    if (event.scroll() == SCROLL_UP) {
-        m_tty.scroll_up();
-        invalidate();
-        return;
-    }
-
-    if (event.left() == MOUSE_DOWN) {
+    if (event.mouse_down_any() && event.button() == App::MouseButton::Left) {
         clear_selection();
         m_in_selection = true;
         switch (event.mouse_event_type()) {
@@ -324,7 +324,7 @@ void TerminalWidget::on_mouse_event(App::MouseEvent& event) {
         }
     }
 
-    if (event.left() == MOUSE_UP) {
+    if (event.mouse_event_type() == App::MouseEventType::Up && event.button() == App::MouseButton::Left) {
         m_in_selection = false;
         return;
     }

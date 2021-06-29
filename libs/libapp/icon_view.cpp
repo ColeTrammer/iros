@@ -39,7 +39,7 @@ void IconView::render() {
 
 void IconView::on_mouse_event(MouseEvent& event) {
     if (event.mouse_event_type() == MouseEventType::Down) {
-        if (event.left() == MOUSE_DOWN) {
+        if (event.button() == MouseButton::Left) {
             m_in_selection = true;
             m_selection_start = m_selection_end = { event.x(), event.y() };
         }

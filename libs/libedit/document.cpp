@@ -1,9 +1,9 @@
 #include <edit/command.h>
 #include <edit/document.h>
 #include <edit/key_press.h>
-#include <edit/mouse_event.h>
 #include <edit/panel.h>
 #include <errno.h>
+#include <eventloop/event.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1115,24 +1115,24 @@ void Document::select_all() {
     scroll(save_row_offset - m_row_offset, save_col_offset - m_col_offset);
 }
 
-bool Document::notify_mouse_event(MouseEvent event) {
+bool Document::notify_mouse_event(const App::MouseEvent& event) {
     bool handled = false;
-    if (event.left == MouseEvent::Press::Down) {
-        move_cursor_to(event.index_of_line, event.index_into_line, MovementMode::Move);
+    if (event.mouse_down() && event.left_button()) {
+        move_cursor_to(event.y(), event.x(), MovementMode::Move);
         handled = true;
-    } else if (event.left == MouseEvent::Press::Double) {
-        move_cursor_to(event.index_of_line, event.index_into_line, MovementMode::Move);
+    } else if (event.mouse_double() && event.left_button()) {
+        move_cursor_to(event.y(), event.x(), MovementMode::Move);
         select_word_at_cursor();
         handled = true;
-    } else if (event.left == MouseEvent::Press::Triple) {
-        move_cursor_to(event.index_of_line, event.index_into_line, MovementMode::Move);
+    } else if (event.mouse_triple() && event.left_button()) {
+        move_cursor_to(event.y(), event.x(), MovementMode::Move);
         select_line_at_cursor();
         handled = true;
-    } else if (event.down & MouseEvent::Button::Left) {
-        move_cursor_to(event.index_of_line, event.index_into_line, MovementMode::Select);
+    } else if (event.buttons_down() & App::MouseButton::Left) {
+        move_cursor_to(event.y(), event.x(), MovementMode::Select);
         handled = true;
-    } else if (event.z != 0) {
-        scroll(2 * event.z, 0);
+    } else if (event.mouse_scroll()) {
+        scroll(2 * event.z(), 0);
         handled = true;
     }
 

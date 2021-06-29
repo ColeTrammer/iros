@@ -26,11 +26,12 @@ void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::Wind
 }
 
 void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::MouseEventMessage& message) {
-    auto mouse_event_type = s_app->m_mouse_tracker.notify_mouse_event(message.left, message.right, message.x, message.y, message.scroll);
+    auto events = s_app->m_mouse_tracker.notify_mouse_event(message.buttons, message.x, message.y, message.z);
     auto maybe_window = Window::find_by_wid(message.wid);
     assert(maybe_window.has_value());
-    EventLoop::queue_event(maybe_window.value(), make_unique<MouseEvent>(mouse_event_type, s_app->m_mouse_tracker.buttons_down(), message.x,
-                                                                         message.y, message.scroll, message.left, message.right));
+    for (auto& event : events) {
+        EventLoop::queue_event(maybe_window.value(), move(event));
+    }
 }
 
 void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::KeyEventMessage& message) {

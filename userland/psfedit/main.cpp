@@ -27,7 +27,7 @@ public:
     }
 
     virtual void on_mouse_event(App::MouseEvent& event) override {
-        if (m_bitset && event.left() == MOUSE_DOWN) {
+        if (m_bitset && event.mouse_event_type() == App::MouseEventType::Down && event.button() == App::MouseButton::Left) {
             m_bitset->flip(m_index);
             invalidate();
         }

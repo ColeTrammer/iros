@@ -1,5 +1,7 @@
 #pragma once
 
+#include <eventloop/event.h>
+#include <eventloop/mouse_press_tracker.h>
 #include <graphics/bitmap.h>
 #include <graphics/palette.h>
 #include <graphics/rect_set.h>
@@ -43,8 +45,9 @@ public:
     Window* active_window() { return m_active_window.get(); }
     const Window* active_window() const { return m_active_window.get(); };
 
-    void notify_mouse_moved(int dx, int dy, bool absolute);
-    void notify_mouse_pressed(mouse_button_state left, mouse_button_state right);
+    void notify_mouse_moved(const App::MouseEvent& event);
+    void notify_mouse_pressed(const App::MouseEvent& event);
+    void notify_mouse_input(int dx, int dy, int dz, int buttons, bool absolute);
 
     void set_active_window(SharedPtr<Window> window);
     void move_to_front_and_make_active(SharedPtr<Window> window);
@@ -92,6 +95,7 @@ private:
     Vector<SharedPtr<Window>> m_window_stack;
     HashMap<wid_t, SharedPtr<Window>> m_window_map;
     SharedPtr<Window> m_active_window;
+    App::MousePressTracker m_mouse_tracker;
 
     SharedPtr<Window> m_window_to_resize;
     ResizeMode m_window_resize_mode { ResizeMode::Invalid };

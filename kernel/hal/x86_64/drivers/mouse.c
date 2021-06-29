@@ -21,8 +21,6 @@ struct mouse_data {
     struct ps2_port *port;
     struct irq_handler irq_handler;
     struct mouse_event event;
-    bool left_is_down;
-    bool right_is_down;
     bool has_scroll_wheel;
     uint8_t index;
     uint8_t buffer[4];
@@ -77,43 +75,13 @@ bool on_interrupt(struct irq_context *context) {
 
     if (data->has_scroll_wheel) {
         if (data->buffer[3] == 0x1) {
-            data->event.scroll_state = SCROLL_DOWN;
+            data->event.dz = 1;
         } else if (data->buffer[3] == 0xFF) {
-            data->event.scroll_state = SCROLL_UP;
+            data->event.dz = -1;
         }
     }
 
-    if (data->buffer[0] & 0x1) {
-        if (data->left_is_down) {
-            data->event.left = MOUSE_NO_CHANGE;
-        } else {
-            data->event.left = MOUSE_DOWN;
-            data->left_is_down = true;
-        }
-    } else {
-        if (!data->left_is_down) {
-            data->event.left = MOUSE_NO_CHANGE;
-        } else {
-            data->event.left = MOUSE_UP;
-            data->left_is_down = false;
-        }
-    }
-
-    if (data->buffer[0] & 0x2) {
-        if (data->right_is_down) {
-            data->event.right = MOUSE_NO_CHANGE;
-        } else {
-            data->event.right = MOUSE_DOWN;
-            data->right_is_down = true;
-        }
-    } else {
-        if (!data->right_is_down) {
-            data->event.right = MOUSE_NO_CHANGE;
-        } else {
-            data->event.right = MOUSE_UP;
-            data->right_is_down = false;
-        }
-    }
+    data->event.buttons = data->buffer[0] & 0b11;
 
     if (data->buffer[0] & 0xC0) {
         data->event.dx = 0;
@@ -123,7 +91,7 @@ bool on_interrupt(struct irq_context *context) {
         data->event.dy = (int) data->buffer[2] - ((((int) data->buffer[0]) << 3) & 0x100);
     }
 
-    data->event.scale_mode = SCALE_NONE;
+    data->event.scale_mode = SCALE_DELTA;
     add_mouse_event(data, &data->event);
     data->index = 0;
     return true;

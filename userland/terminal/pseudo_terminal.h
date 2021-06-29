@@ -1,8 +1,8 @@
 #pragma once
 
+#include <eventloop/event.h>
 #include <liim/string.h>
 #include <sys/types.h>
-#include <kernel/hal/input.h>
 
 enum class MouseTrackingMode {
     None,
@@ -33,7 +33,7 @@ public:
 
     void send_clipboard_contents(const String& contents);
     void handle_key_event(key key, int flags, char ascii);
-    bool handle_mouse_event(mouse_button_state left, mouse_button_state right, int row, int col, scroll_state scroll_state);
+    bool handle_mouse_event(const App::MouseEvent& event);
     void set_size(int rows, int cols);
 
     void write(const String& message);
@@ -61,6 +61,4 @@ private:
     MouseReportingMode m_mouse_reporting_mode { MouseReportingMode::None };
     bool m_application_cursor_keys { false };
     bool m_bracketed_paste { false };
-    bool m_mouse_left_down { false };
-    bool m_mouse_right_down { false };
 };

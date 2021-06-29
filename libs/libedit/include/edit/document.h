@@ -11,8 +11,11 @@
 
 class Command;
 struct KeyPress;
-struct MouseEvent;
 class Panel;
+
+namespace App {
+struct MouseEvent;
+}
 
 enum class UpdateMaxCursorCol { No, Yes };
 
@@ -59,7 +62,7 @@ public:
     const Panel& panel() const { return m_panel; }
 
     void notify_key_pressed(KeyPress press);
-    bool notify_mouse_event(MouseEvent event);
+    bool notify_mouse_event(const App::MouseEvent& event);
     void notify_panel_size_changed();
 
     void save();

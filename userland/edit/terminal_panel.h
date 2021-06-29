@@ -1,8 +1,8 @@
 #pragma once
 
-#include <app/mouse_press_tracker.h>
-#include <edit/mouse_event.h>
 #include <edit/panel.h>
+#include <eventloop/event.h>
+#include <eventloop/mouse_press_tracker.h>
 #include <liim/hash_map.h>
 #include <liim/maybe.h>
 #include <liim/variant.h>
@@ -53,7 +53,7 @@ private:
 
     virtual void document_did_change() override;
 
-    Vector<Variant<KeyPress, MouseEvent>> read_input();
+    Vector<Variant<KeyPress, App::MouseEvent>> read_input();
 
     void draw_cursor();
     void draw_status_message();

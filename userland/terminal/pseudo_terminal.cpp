@@ -239,52 +239,27 @@ void PsuedoTerminal::handle_key_event(key key, int flags, char ascii) {
     this->write(String(ascii));
 }
 
-bool PsuedoTerminal::handle_mouse_event(mouse_button_state left, mouse_button_state right, int row, int col, scroll_state scroll_state) {
-    bool mouse_down = false;
-    bool mouse_up = false;
-    if (left == MOUSE_DOWN) {
-        mouse_down = true;
-        m_mouse_left_down = true;
-    } else if (left == MOUSE_UP) {
-        mouse_up = true;
-        m_mouse_left_down = false;
-    }
-
-    if (right == MOUSE_DOWN) {
-        mouse_down = true;
-        m_mouse_right_down = true;
-    } else if (right == MOUSE_UP) {
-        mouse_up = true;
-        m_mouse_right_down = false;
-    }
-
-    bool mouse_moved = !mouse_down && !mouse_up && (m_mouse_last_row == row || m_mouse_last_col == col);
-    m_mouse_last_row = row;
-    m_mouse_last_col = col;
-
+bool PsuedoTerminal::handle_mouse_event(const App::MouseEvent& event) {
     switch (m_mouse_tracking_mode) {
         case MouseTrackingMode::None:
         case MouseTrackingMode::Hilite:
             return false;
         case MouseTrackingMode::X10:
-            if (!mouse_down) {
+            if (!event.mouse_down_any()) {
                 return false;
             }
             break;
         case MouseTrackingMode::X11:
-            if (!mouse_down && !mouse_up && scroll_state == SCROLL_NONE) {
+            if (!event.mouse_down_any() && !event.mouse_up() && !event.mouse_scroll()) {
                 return false;
             }
             break;
         case MouseTrackingMode::Cell:
-            if (!m_mouse_left_down && !m_mouse_right_down && mouse_moved && scroll_state == SCROLL_NONE) {
+            if (event.mouse_move() && !event.buttons_down()) {
                 return false;
             }
-            // Fall through
+            break;
         case MouseTrackingMode::All:
-            if (!mouse_down && !mouse_up && !mouse_moved && scroll_state == SCROLL_NONE) {
-                return false;
-            }
             break;
     }
 
@@ -297,14 +272,14 @@ bool PsuedoTerminal::handle_mouse_event(mouse_button_state left, mouse_button_st
         case MouseReportingMode::URXVT:
             break;
         case MouseReportingMode::SGR: {
-            int cb = scroll_state == SCROLL_UP ? 64 : scroll_state == SCROLL_DOWN ? 65 : 0;
-            if (mouse_moved && !cb) {
-                cb = m_mouse_left_down ? 32 : 34;
+            int cb = event.z() < 0 ? 64 : event.z() > 0 ? 65 : 0;
+            if (event.mouse_move()) {
+                // FIXME: what to report if no button is held?
+                cb = event.buttons_down() & App::MouseButton::Left ? 32 : 34;
+            } else if (event.mouse_down_any() || event.mouse_up()) {
+                cb = event.button() == App::MouseButton::Left ? 0 : 2;
             }
-            if (mouse_down || mouse_up) {
-                cb = left != MOUSE_NO_CHANGE ? 0 : 2;
-            }
-            write(String::format("\033[<%d;%d;%d%c", cb, col + 1, row + 1, mouse_up ? 'm' : 'M'));
+            write(String::format("\033[<%d;%d;%d%c", cb, event.x() + 1, event.y() + 1, event.mouse_up() ? 'm' : 'M'));
             break;
         }
     }

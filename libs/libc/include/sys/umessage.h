@@ -16,6 +16,7 @@ extern "C" {
 enum umessage_category_number {
     UMESSAGE_INTERFACE,
     UMESSAGE_INPUT,
+    UMESSAGE_WATCH,
     UMESSAGE_NUM_CATEGORIES,
 };
 
@@ -112,6 +113,29 @@ struct umessage_input_mouse_event {
 };
 #define UMESSAGE_INPUT_MOUSE_EVENT_VALID(u, len) \
     (UMESSAGE_INPUT_MESSAGE_VALID(u, len) && (u)->type == UMESSAGE_INPUT_MOUSE_EVENT && (len) >= sizeof(struct umessage_input_mouse_event))
+
+enum umessage_watch_request_type {
+    UMESSAGE_WATCH_ADD_PATH_REQUEST,
+    UMESSAGE_WATCH_NUM_REQUESTS,
+};
+#define UMESSAGE_WATCH_REQUEST_VALID(u, len) \
+    (UMESSAGE_VALID(u, len) && (u)->category == UMESSAGE_WATCH && (u)->type < UMESSAGE_WATCH_NUM_REQUESTS)
+
+enum umessage_watch_message_type {
+    UMESSAGE_WATCH_INODE_MODIFIED,
+    UMESSAGE_WATCH_NUM_MESSAGES,
+};
+#define UMESSAGE_WATCH_MESSAGE_VALID(u, len) \
+    (UMESSAGE_VALID(u, len) && (u)->category == UMESSAGE_WATCH && (u)->type < UMESSAGE_WATCH_NUM_MESSAGES)
+
+struct umessage_watch_add_path_request {
+    struct umessage base;
+    uint16_t path_length;
+    char path[];
+};
+#define UMESSAGE_WATCH_ADD_PATH_REQUEST_VALID(u, len)                                        \
+    (UMESSAGE_WATCH_REQUEST_VALID(u, len) && (u)->type == UMESSAGE_WATCH_ADD_PATH_REQUEST && \
+     ((u)->path_len == len - sizeof(struct umessage_watch_add_path_request)) && (u)->path[(u)->path_length - 1] == '\0')
 
 #ifdef __cplusplus
 }

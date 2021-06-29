@@ -3,6 +3,8 @@
 #include <app/window.h>
 #include <clipboard/connection.h>
 #include <errno.h>
+#include <eventloop/event.h>
+#include <eventloop/mouse_press_tracker.h>
 #include <stdio.h>
 #include <sys/select.h>
 #include <sys/socket.h>
@@ -43,6 +45,8 @@ int main(int argc, char** argv) {
     signal(SIGWINCH, SIG_IGN);
 
     if (!graphics_mode) {
+        App::MousePressTracker mouse_press_tracker;
+
         VgaBuffer vga_buffer;
         VgaTerminal vga_terminal(vga_buffer);
 
@@ -97,7 +101,10 @@ int main(int argc, char** argv) {
                         vga_terminal.on_key_event(event);
                     } else if (UMESSAGE_INPUT_MOUSE_EVENT_VALID((umessage*) buffer, (size_t) ret)) {
                         auto& event = ((umessage_input_mouse_event*) buffer)->event;
-                        vga_terminal.on_mouse_event(event);
+                        auto events = mouse_press_tracker.notify_mouse_event(event.buttons, event.dx, event.dy, event.dz);
+                        for (auto& ev : events) {
+                            vga_terminal.on_mouse_event(*ev);
+                        }
                     }
                 }
             }

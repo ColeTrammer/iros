@@ -103,7 +103,7 @@ void Taskbar::server_did_make_window_active(const WindowServer::Server::ServerDi
 
 void Taskbar::on_mouse_event(App::MouseEvent& event) {
     if (m_button_rect.intersects({ event.x(), event.y() })) {
-        if (event.left() == MOUSE_DOWN) {
+        if (event.mouse_event_type() == App::MouseEventType::Down && event.button() == App::MouseButton::Left) {
             char* const args[] = { (char*) "terminal", nullptr };
             posix_spawnp(nullptr, args[0], nullptr, nullptr, args, environ);
         }
@@ -112,7 +112,7 @@ void Taskbar::on_mouse_event(App::MouseEvent& event) {
 
     for (auto& item : m_items) {
         if (item.rect.intersects({ event.x(), event.y() })) {
-            if (event.left() == MOUSE_DOWN) {
+            if (event.mouse_event_type() == App::MouseEventType::Down && event.button() == App::MouseButton::Left) {
                 App::App::the().ws().server().send<WindowServer::Client::SetActiveWindow>({ item.wid });
                 return;
             }

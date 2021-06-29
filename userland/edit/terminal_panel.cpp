@@ -1,6 +1,10 @@
 #include <assert.h>
 #include <clipboard/connection.h>
+#include <edit/document.h>
+#include <edit/document_type.h>
+#include <edit/key_press.h>
 #include <errno.h>
+#include <eventloop/event.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
@@ -8,10 +12,6 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include <edit/document.h>
-#include <edit/document_type.h>
-#include <edit/key_press.h>
-#include <edit/mouse_event.h>
 #include "terminal_panel.h"
 
 static termios s_original_termios;
@@ -388,9 +388,9 @@ void TerminalPanel::flush() {
     fflush(stdout);
 }
 
-Vector<Variant<KeyPress, MouseEvent>> TerminalPanel::read_input() {
+Vector<Variant<KeyPress, App::MouseEvent>> TerminalPanel::read_input() {
     using K = KeyPress;
-    using M = MouseEvent;
+    using M = App::MouseEvent;
     using T = Variant<K, M>;
     using R = Vector<T>;
 
@@ -540,18 +540,18 @@ Vector<Variant<KeyPress, MouseEvent>> TerminalPanel::read_input() {
                 if (sscanf(escape_buffer, "[<%d;%d;%d", &cb, &cx, &cy) != 3) {
                     return {};
                 }
-                bool mouse_down = escape_buffer[escape_buffer_length - 1] == 'M';
 
-                auto left = MOUSE_NO_CHANGE;
-                auto right = MOUSE_NO_CHANGE;
-                auto scroll_state = SCROLL_NONE;
+                bool mouse_down = escape_buffer[escape_buffer_length - 1] == 'M';
+                int z = 0;
+
+                int buttons_down = m_mouse_press_tracker.prev_buttons();
                 switch (cb & ~0b11100 /* ignore modifiers for now */) {
                     case 0:
                         // Left mouse button
                         if (mouse_down) {
-                            left = MOUSE_DOWN;
+                            buttons_down |= App::MouseButton::Left;
                         } else {
-                            left = MOUSE_UP;
+                            buttons_down &= ~App::MouseButton::Left;
                         }
                         break;
                     case 1:
@@ -560,9 +560,9 @@ Vector<Variant<KeyPress, MouseEvent>> TerminalPanel::read_input() {
                     case 2:
                         // Right mouse button
                         if (mouse_down) {
-                            right = MOUSE_DOWN;
+                            buttons_down |= App::MouseButton::Right;
                         } else {
-                            right = MOUSE_UP;
+                            buttons_down &= ~App::MouseButton::Right;
                         }
                         break;
                     case 32:
@@ -572,24 +572,23 @@ Vector<Variant<KeyPress, MouseEvent>> TerminalPanel::read_input() {
                         break;
                     case 64:
                         // Scroll up
-                        scroll_state = SCROLL_UP;
+                        z = -1;
                         break;
                     case 65:
                         // Scroll down
-                        scroll_state = SCROLL_DOWN;
+                        z = 1;
                         break;
                 }
 
-                auto type = m_mouse_press_tracker.notify_mouse_event(left, right, cx - 1, cy - 1, scroll_state);
+                auto events = m_mouse_press_tracker.notify_mouse_event(buttons_down, cx - 1, cy - 1, z);
 
-                MouseEvent ev;
-                ev.left = left != MOUSE_NO_CHANGE ? (MouseEvent::Press) type : MouseEvent::Press::None;
-                ev.right = right != MOUSE_NO_CHANGE ? (MouseEvent::Press) type : MouseEvent::Press::None;
-                ev.index_of_line = clamp(document()->index_of_line_at_position(cy - m_row_offset - 1), 0, document()->num_lines() - 1);
-                ev.index_into_line = document()->index_into_line(ev.index_of_line, cx - m_col_offset - m_cols_needed_for_line_numbers - 1);
-                ev.z = scroll_state == SCROLL_UP ? -1 : scroll_state == SCROLL_DOWN ? 1 : 0;
-                ev.down = m_mouse_press_tracker.buttons_down();
-                return R::create_from_single_element(T { ev });
+                R out_events;
+                for (auto& event : events) {
+                    event->set_y(clamp(document()->index_of_line_at_position(cy - m_row_offset - 1), 0, document()->num_lines() - 1));
+                    event->set_x(document()->index_into_line(event->y(), cx - m_col_offset - m_cols_needed_for_line_numbers - 1));
+                    out_events.add(*event);
+                }
+                return out_events;
             }
 
             if (isalpha(escape_buffer[1])) {
@@ -699,7 +698,7 @@ int TerminalPanel::enter() {
                 if (ev.is<KeyPress>()) {
                     document->notify_key_pressed(ev.as<KeyPress>());
                 } else {
-                    document->notify_mouse_event(ev.as<MouseEvent>());
+                    document->notify_mouse_event(ev.as<App::MouseEvent>());
                 }
             }
         }
@@ -800,7 +799,7 @@ void TerminalPanel::enter_search(String starting_text) {
 
                 text_panel.document()->notify_key_pressed(press);
             } else {
-                text_panel.document()->notify_mouse_event(ev.as<MouseEvent>());
+                text_panel.document()->notify_mouse_event(ev.as<App::MouseEvent>());
             }
         }
 
