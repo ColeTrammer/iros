@@ -55,6 +55,20 @@ public:
         return true;
     }
 
+    bool ends_with(const StringView& other) const {
+        if (this->size() < other.size()) {
+            return false;
+        }
+
+        for (size_t i = 0; i < other.size(); i++) {
+            if (this->start()[i + this->size() - other.size()] != other.start()[i]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     bool operator==(const StringView& other) const {
         if (other.size() != this->size()) {
             return false;
