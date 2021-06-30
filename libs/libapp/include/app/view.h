@@ -34,8 +34,6 @@ private:
 class View
     : public Widget
     , public ModelClient {
-    APP_OBJECT(View)
-
 public:
     virtual ~View() override;
 
@@ -48,6 +46,7 @@ public:
     void set_hovered_index(ModelIndex);
 
     virtual void on_mouse_down(const MouseEvent&) override;
+    virtual void on_mouse_double(const MouseEvent&) override;
     virtual void on_mouse_move(const MouseEvent&) override;
     virtual void on_leave() override { set_hovered_index({}); }
 
@@ -61,6 +60,8 @@ public:
     bool is_selected(const ModelIndex& index) const { return m_selection.present(index); }
     void clear_selection() { m_selection.clear(); }
     bool has_selection() const { return !m_selection.empty(); }
+
+    Function<void(const ModelIndex&)> on_item_activation;
 
 protected:
     virtual ModelIndex index_at_position(int wx, int wy) = 0;

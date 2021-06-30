@@ -46,6 +46,15 @@ void View::on_mouse_down(const MouseEvent& event) {
     return Widget::on_mouse_down(event);
 }
 
+void View::on_mouse_double(const MouseEvent& event) {
+    auto index = index_at_position(event.x(), event.y());
+    if (event.left_button() && index.valid()) {
+        on_item_activation.safe_call(index);
+    }
+
+    return Widget::on_mouse_double(event);
+}
+
 void View::on_mouse_move(const MouseEvent& event) {
     auto index = index_at_position(event.x(), event.y());
     set_hovered_index(index);
