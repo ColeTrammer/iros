@@ -16,7 +16,8 @@ class FileSystemModel final : public App::Model {
     APP_OBJECT(FileSystemModel)
 
 public:
-    FileSystemModel(String base_path);
+    FileSystemModel();
+    virtual ~FileSystemModel() override;
 
     enum Column {
         Icon,
@@ -33,6 +34,11 @@ public:
     virtual App::ModelData header_data(int col, int role) const override;
 
     const String& base_path() const { return m_base_path; }
+    void set_base_path(String path);
+
+    String full_path(const String& name);
+
+    const FileSystemObject& object_from_index(const App::ModelIndex& index);
 
 private:
     void load_data();

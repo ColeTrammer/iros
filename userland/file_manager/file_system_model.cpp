@@ -6,9 +6,31 @@
 
 #include "file_system_model.h"
 
-FileSystemModel::FileSystemModel(String base_path) : m_base_path(move(base_path)) {
+FileSystemModel::FileSystemModel() {
     m_text_file_icon = decode_png_file("/usr/share/text-file-32.png");
     assert(m_text_file_icon);
+}
+
+FileSystemModel::~FileSystemModel() {}
+
+const FileSystemObject& FileSystemModel::object_from_index(const App::ModelIndex& index) {
+    return m_objects[index.row()];
+}
+
+String FileSystemModel::full_path(const String& name) {
+    return String::format("%s%s", m_base_path.string(), name.string());
+}
+
+void FileSystemModel::set_base_path(String path) {
+    if (path == m_base_path) {
+        return;
+    }
+
+    if (!path.view().ends_with("/")) {
+        path += String('/');
+    }
+
+    m_base_path = move(path);
     load_data();
 }
 
@@ -103,4 +125,6 @@ void FileSystemModel::load_data() {
         free(dirent);
     }
     free(dirents);
+
+    did_update();
 }
