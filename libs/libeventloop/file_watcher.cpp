@@ -103,3 +103,76 @@ void FileWatcher::notify_readable() {
 }
 }
 #endif /* __os_2__ */
+
+#ifdef __linux__
+#include <sys/inotify.h>
+
+namespace App {
+FileWatcher::FileWatcher() {
+    int fd = inotify_init1(IN_CLOEXEC | IN_NONBLOCK);
+    if (fd < 0) {
+        return;
+    }
+
+    set_fd(fd);
+    set_selected_events(NotifyWhen::Readable);
+    enable_notifications();
+}
+
+FileWatcher::~FileWatcher() {
+    if (valid()) {
+        close(fd());
+    }
+}
+
+bool FileWatcher::watch(const String& path) {
+    int ret = inotify_add_watch(fd(), path.string(), IN_MODIFY);
+    if (ret < 0) {
+        return false;
+    }
+
+    m_identifier_to_path.put(ret, path);
+    m_path_to_indentifier.put(path, ret);
+    return true;
+}
+
+bool FileWatcher::unwatch(const String& path) {
+    auto* identifer = m_path_to_indentifier.get(path);
+    if (!identifer) {
+        return false;
+    }
+
+    m_identifier_to_path.remove(*identifer);
+    m_path_to_indentifier.remove(path);
+
+    int ret = inotify_rm_watch(fd(), *identifer);
+    if (ret < 0) {
+        return false;
+    }
+
+    return true;
+}
+
+void FileWatcher::notify_readable() {
+    char buffer[1024] __attribute__((aligned(__alignof__(inotify_event))));
+    ssize_t ret;
+    while ((ret = read(fd(), buffer, sizeof(buffer))) > 0) {
+        struct inotify_event* event;
+        for (char* ptr = buffer; ptr < buffer + ret; ptr += sizeof(inotify_event) + event->len) {
+            event = (struct inotify_event*) ptr;
+
+            auto* path = m_identifier_to_path.get(event->wd);
+            if (!path) {
+                continue;
+            }
+
+            if (event->mask & IN_MODIFY) {
+                if (on_change) {
+                    on_change(*path);
+                }
+            }
+        }
+    }
+}
+}
+#endif
