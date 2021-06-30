@@ -92,7 +92,7 @@ void TableView::render() {
         ry += 21;
         renderer.draw_line({ 0, ry }, { sized_rect().right() - 1, ry }, outline_color());
     }
-    renderer.draw_rect(positioned_rect(), outline_color());
+    renderer.draw_rect(sized_rect(), outline_color());
 }
 
 ModelIndex TableView::index_at_position(int wx, int wy) {
