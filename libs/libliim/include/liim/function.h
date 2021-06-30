@@ -48,6 +48,13 @@ public:
     bool operator!() const { return !m_closure; }
     R operator()(Args... args) const { return m_closure->call(forward<Args>(args)...); }
 
+    template<typename = typename LIIM::EnableIf<IsVoid<R>::value>>
+    void safe_call(Args... args) const {
+        if (!!m_closure) {
+            m_closure->call(forward<Args>(args)...);
+        }
+    }
+
     void swap(Function& other) { swap(this->m_closure, other.m_closure); }
 
 private:
@@ -75,7 +82,7 @@ private:
 };
 
 template<typename R, typename... Args>
-Function(R (*)(Args...))->Function<R(Args...)>;
+Function(R (*)(Args...)) -> Function<R(Args...)>;
 
 template<typename R, typename... Args>
 void swap(Function<R(Args...)>& a, Function<R(Args...)>& b) {
