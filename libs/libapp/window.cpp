@@ -146,20 +146,9 @@ void Window::on_event(const Event& event) {
         case Event::Type::Mouse: {
             auto& mouse_event = static_cast<const MouseEvent&>(event);
             Widget* widget = nullptr;
-            if (mouse_event.mouse_event_type() == MouseEventType::Down && mouse_event.button() == MouseButton::Left) {
-                m_left_down = true;
-            } else if (mouse_event.mouse_event_type() == MouseEventType::Up && mouse_event.button() == MouseButton::Left) {
-                m_left_down = false;
-            }
-
-            if (mouse_event.mouse_event_type() == MouseEventType::Down && mouse_event.button() == MouseButton::Right) {
-                m_right_down = true;
-            } else if (mouse_event.mouse_event_type() == MouseEventType::Up && mouse_event.button() == MouseButton::Right) {
-                m_right_down = false;
-            }
 
             hide_current_context_menu();
-            if (!mouse_event.button() && m_right_down && m_left_down) {
+            if (!mouse_event.button() && mouse_event.buttons_down()) {
                 if (!focused_widget()) {
                     return;
                 }

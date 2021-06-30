@@ -85,8 +85,6 @@ private:
     SharedPtr<Widget> m_main_widget;
     Rect m_rect;
     bool m_will_draw_soon { false };
-    bool m_left_down { false };
-    bool m_right_down { false };
     bool m_visible { true };
     bool m_active { false };
     bool m_has_alpha { false };
