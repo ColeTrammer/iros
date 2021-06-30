@@ -60,10 +60,6 @@ int main(int argc, char** argv) {
 
     HashMap<uint32_t, SharedPtr<Interface>> interfaces;
 
-    if (!UMESSAGE_INTERFACE_LIST_VALID((umessage*) buffer, (size_t) length)) {
-        syslog(LOG_ERR, "Interface list is invalid");
-        return 1;
-    }
     auto& list = *reinterpret_cast<umessage_interface_list*>(buffer);
     for (size_t i = 0; i < list.interface_count; i++) {
         auto& interface = list.interface_list[i];

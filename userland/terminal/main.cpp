@@ -96,14 +96,20 @@ int main(int argc, char** argv) {
                 char buffer[400];
                 ssize_t ret;
                 while ((ret = read(ifd, buffer, sizeof(buffer))) > 0) {
-                    if (UMESSAGE_INPUT_KEY_EVENT_VALID((umessage*) buffer, (size_t) ret)) {
-                        auto& event = ((umessage_input_key_event*) buffer)->event;
-                        vga_terminal.on_key_event(event);
-                    } else if (UMESSAGE_INPUT_MOUSE_EVENT_VALID((umessage*) buffer, (size_t) ret)) {
-                        auto& event = ((umessage_input_mouse_event*) buffer)->event;
-                        auto events = mouse_press_tracker.notify_mouse_event(event.buttons, event.dx, event.dy, event.dz);
-                        for (auto& ev : events) {
-                            vga_terminal.on_mouse_event(*ev);
+                    auto* message = (umessage*) buffer;
+                    switch (message->type) {
+                        case UMESSAGE_INPUT_KEY_EVENT: {
+                            auto& event = ((umessage_input_key_event*) message)->event;
+                            vga_terminal.on_key_event(event);
+                            break;
+                        }
+                        case UMESSAGE_INPUT_MOUSE_EVENT: {
+                            auto& event = ((umessage_input_mouse_event*) message)->event;
+                            auto events = mouse_press_tracker.notify_mouse_event(event.buttons, event.dx, event.dy, event.dz);
+                            for (auto& ev : events) {
+                                vga_terminal.on_mouse_event(*ev);
+                            }
+                            break;
                         }
                     }
                 }

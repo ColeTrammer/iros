@@ -44,9 +44,6 @@ struct if_nameindex *if_nameindex(void) {
         goto error;
     }
 
-    if (!UMESSAGE_INTERFACE_LIST_VALID((struct umessage *) buffer, (size_t) length)) {
-        goto error;
-    }
     struct umessage_interface_list *list = (void *) buffer;
     for (; i < list->interface_count; i++) {
         char *new_name = strdup(list->interface_list[i].name);

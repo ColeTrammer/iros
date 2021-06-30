@@ -78,16 +78,8 @@ void FileWatcher::notify_readable() {
     ssize_t ret;
     while ((ret = read(fd(), buffer, sizeof(buffer))) > 0) {
         auto* message = (umessage*) buffer;
-        auto size = (size_t) ret;
-        if (!UMESSAGE_WATCH_MESSAGE_VALID(message, size)) {
-            continue;
-        }
-
         switch (message->type) {
             case UMESSAGE_WATCH_INODE_MODIFIED: {
-                if (!UMESSAGE_WATCH_INODE_MODIFIED_VALID(message, size)) {
-                    continue;
-                }
                 auto& event = *(umessage_watch_inode_modified*) message;
                 auto path = m_identifier_to_path.get(event.identifier);
                 if (!path) {

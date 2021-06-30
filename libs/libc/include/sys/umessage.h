@@ -40,8 +40,6 @@ enum umessage_interface_message_type {
     UMESSAGE_INTERFACE_LIST,
     UMESSAGE_INTERFACE_NUM_MESSAGES,
 };
-#define UMESSAGE_INTERFACE_MESSAGE_VALID(u, len) \
-    (UMESSAGE_VALID(u, len) && (u)->category == UMESSAGE_INTERFACE && (u)->type < UMESSAGE_INTERFACE_NUM_MESSAGES)
 
 struct umessage_interface_list_request {
     struct umessage base;
@@ -83,10 +81,6 @@ struct umessage_interface_list {
     (((length) < sizeof(struct umessage_interface_list)) \
          ? 0                                             \
          : ((length) - sizeof(struct umessage_interface_list)) / sizeof(struct umessage_interface_desc))
-#define UMESSAGE_INTERFACE_LIST_VALID(u, len)                                                       \
-    (UMESSAGE_INTERFACE_MESSAGE_VALID(u, len) && (len) >= sizeof(struct umessage_interface_list) && \
-     (u)->type == UMESSAGE_INTERFACE_LIST &&                                                        \
-     ((struct umessage_interface_list*) (u))->interface_count == UMESSAGE_INTERFACE_LIST_COUNT(len))
 
 enum umessage_input_request_type {
     UMESSAGE_INPUT_NUM_REQUESTS,
@@ -97,22 +91,16 @@ enum umessage_input_message_type {
     UMESSAGE_INPUT_MOUSE_EVENT,
     UMESSAGE_INPUT_NUM_EVENTS,
 };
-#define UMESSAGE_INPUT_MESSAGE_VALID(u, len) \
-    (UMESSAGE_VALID(u, len) && (u)->category == UMESSAGE_INPUT && (u)->type < UMESSAGE_INPUT_NUM_EVENTS)
 
 struct umessage_input_key_event {
     struct umessage base;
     struct key_event event;
 };
-#define UMESSAGE_INPUT_KEY_EVENT_VALID(u, len) \
-    (UMESSAGE_INPUT_MESSAGE_VALID(u, len) && (u)->type == UMESSAGE_INPUT_KEY_EVENT && (len) >= sizeof(struct umessage_input_key_event))
 
 struct umessage_input_mouse_event {
     struct umessage base;
     struct mouse_event event;
 };
-#define UMESSAGE_INPUT_MOUSE_EVENT_VALID(u, len) \
-    (UMESSAGE_INPUT_MESSAGE_VALID(u, len) && (u)->type == UMESSAGE_INPUT_MOUSE_EVENT && (len) >= sizeof(struct umessage_input_mouse_event))
 
 enum umessage_watch_request_type {
     UMESSAGE_WATCH_ADD_PATH_REQUEST,
@@ -126,8 +114,6 @@ enum umessage_watch_message_type {
     UMESSAGE_WATCH_INODE_MODIFIED,
     UMESSAGE_WATCH_NUM_MESSAGES,
 };
-#define UMESSAGE_WATCH_MESSAGE_VALID(u, len) \
-    (UMESSAGE_VALID(u, len) && (u)->category == UMESSAGE_WATCH && (u)->type < UMESSAGE_WATCH_NUM_MESSAGES)
 
 struct umessage_watch_add_path_request {
     struct umessage base;
@@ -154,9 +140,6 @@ struct umessage_watch_inode_modified {
     int identifier;
     int content_modified;
 };
-#define UMESSAGE_WATCH_INODE_MODIFIED_VALID(u, len)                                        \
-    (UMESSAGE_WATCH_MESSAGE_VALID(u, len) && (u)->type == UMESSAGE_WATCH_INODE_MODIFIED && \
-     (u)->length == sizeof(struct umessage_watch_inode_modified))
 
 #ifdef __cplusplus
 }

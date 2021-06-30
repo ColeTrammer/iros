@@ -61,26 +61,32 @@ void ServerImpl::initialize() {
         char buffer[400];
         ssize_t ret;
         while ((ret = read(m_input_socket->fd(), buffer, sizeof(buffer))) > 0) {
-            if (UMESSAGE_INPUT_KEY_EVENT_VALID((umessage*) buffer, (size_t) ret)) {
-                auto& event = *(umessage_input_key_event*) buffer;
-                auto* active_window = m_manager->active_window();
-                if (active_window) {
-                    send<Server::KeyEventMessage>(active_window->client(), { .wid = active_window->id(), .event = event.event });
+            auto* message = (umessage*) buffer;
+            switch (message->type) {
+                case UMESSAGE_INPUT_KEY_EVENT: {
+                    auto& event = ((umessage_input_key_event*) message)->event;
+                    auto* active_window = m_manager->active_window();
+                    if (active_window) {
+                        send<Server::KeyEventMessage>(active_window->client(), { .wid = active_window->id(), .event = event });
+                    }
+                    break;
                 }
-            } else if (UMESSAGE_INPUT_MOUSE_EVENT_VALID((umessage*) buffer, (size_t) ret)) {
-                auto& event = ((umessage_input_mouse_event*) buffer)->event;
-                m_manager->notify_mouse_input(event.dx, event.dy, event.dz, event.buttons, event.scale_mode == SCALE_ABSOLUTE);
+                case UMESSAGE_INPUT_MOUSE_EVENT: {
+                    auto& event = ((umessage_input_mouse_event*) message)->event;
+                    m_manager->notify_mouse_input(event.dx, event.dy, event.dz, event.buttons, event.scale_mode == SCALE_ABSOLUTE);
 
-                auto* active_window = m_manager->active_window();
-                if (active_window && m_manager->should_send_mouse_events(*active_window)) {
-                    Point relative_mouse = m_manager->mouse_position_relative_to_window(*active_window);
-                    send<Server::MouseEventMessage>(active_window->client(), {
-                                                                                 .wid = active_window->id(),
-                                                                                 .x = relative_mouse.x(),
-                                                                                 .y = relative_mouse.y(),
-                                                                                 .z = event.dz,
-                                                                                 .buttons = event.buttons,
-                                                                             });
+                    auto* active_window = m_manager->active_window();
+                    if (active_window && m_manager->should_send_mouse_events(*active_window)) {
+                        Point relative_mouse = m_manager->mouse_position_relative_to_window(*active_window);
+                        send<Server::MouseEventMessage>(active_window->client(), {
+                                                                                     .wid = active_window->id(),
+                                                                                     .x = relative_mouse.x(),
+                                                                                     .y = relative_mouse.y(),
+                                                                                     .z = event.dz,
+                                                                                     .buttons = event.buttons,
+                                                                                 });
+                    }
+                    break;
                 }
             }
         }
