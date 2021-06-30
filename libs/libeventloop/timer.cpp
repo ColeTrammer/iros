@@ -79,14 +79,14 @@ void Timer::set_interval(time_t ms) {
     set_timeout(spec);
 }
 
-void Timer::on_event(Event& event) {
+void Timer::on_event(const Event& event) {
     switch (event.type()) {
         case Event::Type::Timer:
             if (m_single_shot) {
                 m_expired = true;
             }
             if (on_timeout) {
-                on_timeout(static_cast<TimerEvent&>(event).times_expired());
+                on_timeout(static_cast<const TimerEvent&>(event).times_expired());
             }
             break;
         default:

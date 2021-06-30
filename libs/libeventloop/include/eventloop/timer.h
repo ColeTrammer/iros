@@ -23,7 +23,7 @@ public:
     void set_timeout(time_t ms);
     void set_interval(time_t ms);
 
-    virtual void on_event(Event&);
+    virtual void on_event(const Event&) override;
 
     Function<void(int)> on_timeout;
 

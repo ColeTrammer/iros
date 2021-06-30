@@ -96,10 +96,10 @@ void Window::hide_current_context_menu() {
     }
 }
 
-void Window::on_event(Event& event) {
+void Window::on_event(const Event& event) {
     switch (event.type()) {
         case Event::Type::Window: {
-            auto& window_event = static_cast<WindowEvent&>(event);
+            auto& window_event = static_cast<const WindowEvent&>(event);
             if (window_event.window_event_type() == WindowEvent::Type::Close) {
                 m_removed = true;
                 App::the().main_event_loop().set_should_exit(true);
@@ -130,7 +130,7 @@ void Window::on_event(Event& event) {
             break;
         }
         case Event::Type::WindowState: {
-            auto& state_event = static_cast<WindowStateEvent&>(event);
+            auto& state_event = static_cast<const WindowStateEvent&>(event);
             if (state_event.active() == active()) {
                 return;
             }
@@ -144,7 +144,7 @@ void Window::on_event(Event& event) {
             return;
         }
         case Event::Type::Mouse: {
-            auto& mouse_event = static_cast<MouseEvent&>(event);
+            auto& mouse_event = static_cast<const MouseEvent&>(event);
             Widget* widget = nullptr;
             if (mouse_event.mouse_event_type() == MouseEventType::Down && mouse_event.button() == MouseButton::Left) {
                 m_left_down = true;
@@ -173,14 +173,15 @@ void Window::on_event(Event& event) {
             }
 
             if (widget) {
-                mouse_event.set_x(mouse_event.x() - widget->positioned_rect().x());
-                mouse_event.set_y(mouse_event.y() - widget->positioned_rect().y());
-                widget->on_mouse_event(mouse_event);
+                MouseEvent widget_relative_event(mouse_event.mouse_event_type(), mouse_event.buttons_down(),
+                                                 mouse_event.x() - widget->positioned_rect().x(),
+                                                 mouse_event.y() - widget->positioned_rect().y(), mouse_event.z(), mouse_event.button());
+                widget->on_mouse_event(widget_relative_event);
             }
             return;
         }
         case Event::Type::Key: {
-            auto& key_event = static_cast<KeyEvent&>(event);
+            auto& key_event = static_cast<const KeyEvent&>(event);
             auto widget = focused_widget();
             if (widget) {
                 widget->on_key_event(key_event);
@@ -191,7 +192,7 @@ void Window::on_event(Event& event) {
             m_back_buffer->clear(App::the().palette()->color(Palette::Background));
             invalidate_rect(rect());
 
-            m_main_widget->on_theme_change_event(static_cast<ThemeChangeEvent&>(event));
+            m_main_widget->on_theme_change_event(static_cast<const ThemeChangeEvent&>(event));
             return;
         default:
             break;

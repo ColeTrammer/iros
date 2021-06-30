@@ -42,7 +42,7 @@ public:
 
     void set_parent(Object* parent) { m_parent = parent; }
 
-    virtual void on_event(Event&) {}
+    virtual void on_event(const Event&) {}
 
     SharedPtr<Object> shared_from_this() { return m_weak_this.lock(); }
     SharedPtr<const Object> shared_from_this() const { return m_weak_this.lock(); }
