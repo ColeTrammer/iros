@@ -37,7 +37,7 @@ void IconView::render() {
     Widget::render();
 }
 
-void IconView::on_mouse_down(MouseEvent& event) {
+void IconView::on_mouse_down(const MouseEvent& event) {
     if (event.left_button()) {
         m_in_selection = true;
         m_selection_start = m_selection_end = { event.x(), event.y() };
@@ -47,7 +47,7 @@ void IconView::on_mouse_down(MouseEvent& event) {
     return View::on_mouse_down(event);
 }
 
-void IconView::on_mouse_move(MouseEvent& event) {
+void IconView::on_mouse_move(const MouseEvent& event) {
     if (m_in_selection) {
         clear_selection();
 
@@ -67,7 +67,7 @@ void IconView::on_mouse_move(MouseEvent& event) {
     return View::on_mouse_move(event);
 }
 
-void IconView::on_mouse_up(MouseEvent& event) {
+void IconView::on_mouse_up(const MouseEvent& event) {
     if (m_in_selection) {
         m_in_selection = false;
         invalidate();
