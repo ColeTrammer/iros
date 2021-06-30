@@ -32,7 +32,6 @@ struct multiboot2_tag {
 
 struct multiboot2_boot_command_line_tag {
     struct multiboot2_tag base;
-    uint32_t size;
     char value[0];
 } __attribute__((packed));
 
@@ -63,13 +62,13 @@ struct multiboot2_memory_map_tag {
     uint8_t entries[0];
 } __attribute__((packed));
 
-#define multiboot2_for_each_tag(info, iter)                                                                    \
-    for (struct multiboot2_tag *iter = (void *) (info)->tags;                                                  \
-         iter->type != MULTIBOOT2_TAG_SENTINEL && (uintptr_t) iter < ((uintptr_t)(info)) + (info)->total_size; \
+#define multiboot2_for_each_tag(info, iter)                                                                     \
+    for (struct multiboot2_tag *iter = (void *) (info)->tags;                                                   \
+         iter->type != MULTIBOOT2_TAG_SENTINEL && (uintptr_t) iter < ((uintptr_t) (info)) + (info)->total_size; \
          iter = (void *) ALIGN_UP(((uintptr_t) iter) + iter->size, 8))
 
-#define multiboot2_for_each_memory_map_entry(tag, iter)                                                                                \
-    for (struct multiboot2_memory_map_entry *iter = (void *) (tag)->entries; (uintptr_t) iter < ((uintptr_t)(tag)) + (tag)->base.size; \
+#define multiboot2_for_each_memory_map_entry(tag, iter)                                                                                 \
+    for (struct multiboot2_memory_map_entry *iter = (void *) (tag)->entries; (uintptr_t) iter < ((uintptr_t) (tag)) + (tag)->base.size; \
          iter = ((void *) (iter)) + (tag)->entry_size)
 
 #define MULTIBOOT2_DECLARE_AND_CAST_TAG(name, tag, type) struct multiboot2_##type##_tag *name = (void *) (tag)
