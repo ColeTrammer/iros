@@ -46,6 +46,10 @@ ServerImpl::ServerImpl(int fb, SharedPtr<Bitmap> front_buffer, SharedPtr<Bitmap>
     m_manager->on_rect_invaliadted = [this] {
         update_draw_timer();
     };
+
+    m_manager->on_palette_changed = [this] {
+        broadcast<Server::ThemeChangeMessage>(*m_server, {});
+    };
 }
 
 void ServerImpl::initialize() {
@@ -227,19 +231,8 @@ void ServerImpl::handle(IPC::Endpoint& client, const Client::WindowRenameRequest
 }
 
 void ServerImpl::handle(IPC::Endpoint& client, const Client::ChangeThemeRequest& data) {
-    auto theme = Palette::create_from_json(data.path);
-    if (!theme) {
-        send<Server::ChangeThemeResponse>(client, { .success = false });
-        return;
-    }
-
-    m_manager->palette()->copy_from(*theme);
-
-    send<Server::ChangeThemeResponse>(client, { .success = true });
-
-    broadcast<Server::ThemeChangeMessage>(*m_server, {});
-
-    m_manager->invalidate_rect(m_manager->screen_rect());
+    bool result = m_manager->load_palette(data.path);
+    send<Server::ChangeThemeResponse>(client, { .success = result });
 }
 
 void ServerImpl::handle(IPC::Endpoint& client, const Client::RegisterAsWindowServerListener&) {

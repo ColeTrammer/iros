@@ -1,6 +1,7 @@
 #pragma once
 
 #include <eventloop/event.h>
+#include <eventloop/file_watcher.h>
 #include <eventloop/mouse_press_tracker.h>
 #include <graphics/bitmap.h>
 #include <graphics/palette.h>
@@ -42,6 +43,8 @@ public:
 
     void draw();
 
+    bool load_palette(const String& path);
+
     Window* active_window() { return m_active_window.get(); }
     const Window* active_window() const { return m_active_window.get(); };
 
@@ -78,6 +81,7 @@ public:
     Function<void(SharedPtr<Window>, bool active)> on_window_state_change;
     Function<void(wid_t)> on_window_removed;
     Function<void()> on_rect_invaliadted;
+    Function<void()> on_palette_changed;
 
 private:
     void cleanup_active_window_state(SharedPtr<Window> window);
@@ -96,6 +100,8 @@ private:
     HashMap<wid_t, SharedPtr<Window>> m_window_map;
     SharedPtr<Window> m_active_window;
     App::MousePressTracker m_mouse_tracker;
+    App::FileWatcher m_watcher;
+    String m_palette_path;
 
     SharedPtr<Window> m_window_to_resize;
     ResizeMode m_window_resize_mode { ResizeMode::Invalid };
