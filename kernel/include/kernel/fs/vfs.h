@@ -15,8 +15,10 @@ struct file_descriptor;
 struct file_operations;
 struct inode_operations;
 struct iovec;
+struct queued_umessage;
 struct statvfs;
 struct super_block;
+struct watcher;
 
 #define PATH_MAX 4096
 #define NAME_MAX 255
@@ -51,6 +53,15 @@ int iname_with_base(struct tnode *base, const char *_path, int flags, struct tno
 int fs_read_all_inode_with_buffer(struct inode *inode, void *buffer);
 int fs_read_all_inode(struct inode *inode, void **buffer, size_t *buffer_len);
 int fs_read_all_path(const char *path, void **buffer, size_t *buffer_len, struct tnode **tnode);
+
+void __fs_register_watcher(struct inode *inode, struct watcher *watcher);
+void __fs_unregister_watcher(struct inode *inode, struct watcher *watcher);
+
+void fs_register_watcher(struct inode *inode, struct watcher *watcher);
+void fs_unregister_watcher(struct inode *inode, struct watcher *watcher);
+
+void fs_notify_watchers_inode_content_changed(struct inode *inode);
+void fs_notify_watcher(struct watcher *watcher, struct queued_umessage *umessage);
 
 struct file *fs_create_file(struct inode *inode, int type, int abilities, int flags, struct file_operations *operations, void *private);
 struct inode *fs_create_inode(struct super_block *sb, ino_t id, uid_t uid, gid_t gid, mode_t mode, size_t size,

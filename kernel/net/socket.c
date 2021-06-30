@@ -73,6 +73,14 @@ static void net_destroy_socket(struct socket *socket) {
     free(socket);
 }
 
+struct socket *net_try_bump_socket(struct socket *socket) {
+    int old_count = atomic_fetch_add(&socket->ref_count, 1);
+    if (old_count == 0) {
+        return NULL;
+    }
+    return socket;
+}
+
 struct socket *net_bump_socket(struct socket *socket) {
     atomic_fetch_add(&socket->ref_count, 1);
     return socket;

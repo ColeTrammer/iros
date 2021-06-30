@@ -43,8 +43,8 @@
 #define PROCFS_DIRECTORY_MODE (S_IFDIR | 0555)
 #define PROCFS_SYMLINK_MODE   (S_IFLNK | 0777)
 
-#define __PROCFS_IS(data, flag)   ((((uintptr_t)(data)->function)) & (flag))
-#define __PROCFS_MAKE(data, flag) ((data)->function = (void *) ((((uintptr_t)(data)->function)) | (flag)))
+#define __PROCFS_IS(data, flag)   ((((uintptr_t) (data)->function)) & (flag))
+#define __PROCFS_MAKE(data, flag) ((data)->function = (void *) ((((uintptr_t) (data)->function)) | (flag)))
 
 #define PROCFS_DYNAMIC_FLAG       (1UL)
 #define PROCFS_IS_DYNAMIC(data)   __PROCFS_IS(data, PROCFS_DYNAMIC_FLAG)
@@ -54,9 +54,9 @@
 #define PROCFS_IS_LOADED(data)   __PROCFS_IS(data, PROCFS_LOADED_FLAG)
 #define PROCFS_MAKE_LOADED(data) __PROCFS_MAKE(data, PROCFS_LOADED_FLAG)
 
-#define PROCFS_GET_FILE_FUNCTION(data) ((procfs_file_function_t)(((uintptr_t)((data)->function)) & ~(PROCFS_DYNAMIC_FLAG)))
+#define PROCFS_GET_FILE_FUNCTION(data) ((procfs_file_function_t) (((uintptr_t) ((data)->function)) & ~(PROCFS_DYNAMIC_FLAG)))
 #define PROCFS_GET_DIRECTORY_FUNCTION(data) \
-    ((procfs_directory_function_t)(((uintptr_t)((data)->function)) & ~(PROCFS_DYNAMIC_FLAG | PROCFS_LOADED_FLAG)))
+    ((procfs_directory_function_t) (((uintptr_t) ((data)->function)) & ~(PROCFS_DYNAMIC_FLAG | PROCFS_LOADED_FLAG)))
 
 static struct file_system fs;
 static struct super_block super_block;
@@ -106,6 +106,7 @@ static struct inode *procfs_create_inode(mode_t mode, uid_t uid, gid_t gid, stru
     inode->i_op = S_ISDIR(mode) ? &procfs_dir_i_op : &procfs_i_op;
     inode->ref_count = 1;
     init_mutex(&inode->lock);
+    init_list(&inode->watchers);
 
     spin_lock(&inode_counter_lock);
     inode->index = inode_counter++;

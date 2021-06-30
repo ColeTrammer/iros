@@ -14,6 +14,7 @@
 #include <sys/statvfs.h>
 #include <sys/types.h>
 #include <sys/uio.h>
+#include <sys/umessage.h>
 
 #include <kernel/fs/cached_dirent.h>
 #include <kernel/fs/dev.h>
@@ -21,12 +22,14 @@
 #include <kernel/fs/inode.h>
 #include <kernel/fs/pipe.h>
 #include <kernel/fs/vfs.h>
+#include <kernel/fs/watch.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
 #include <kernel/mem/inode_vm_object.h>
 #include <kernel/mem/vm_allocator.h>
 #include <kernel/net/socket.h>
 #include <kernel/net/socket_syscalls.h>
+#include <kernel/net/umessage.h>
 #include <kernel/proc/task.h>
 #include <kernel/time/clock.h>
 #include <kernel/util/init.h>
@@ -64,6 +67,10 @@ void drop_inode_reference(struct inode *inode) {
 #ifdef INODE_REF_COUNT_DEBUG
         debug_log("Destroying inode: [ %lu, %llu ]\n", inode->fsid, inode->index);
 #endif /* INODE_REF_COUNT_DEBUG */
+
+        // NOTE: all watchers should be removed when the event corresponding to the inode's destruction occurs.
+        assert(list_is_empty(&inode->watchers));
+
         if (inode->i_op->on_inode_destruction) {
             inode->i_op->on_inode_destruction(inode);
         }
@@ -188,6 +195,50 @@ struct file *fs_create_file(struct inode *inode, int type, int abilities, int fl
     return file;
 }
 
+void __fs_register_watcher(struct inode *inode, struct watcher *watcher) {
+    list_append(&inode->watchers, &watcher->list_for_inode);
+}
+
+void __fs_unregister_watcher(struct inode *, struct watcher *watcher) {
+    list_remove(&watcher->list_for_inode);
+}
+
+void fs_register_watcher(struct inode *inode, struct watcher *watcher) {
+    mutex_lock(&inode->lock);
+    __fs_register_watcher(inode, watcher);
+    mutex_unlock(&inode->lock);
+}
+
+void fs_unregister_watcher(struct inode *inode, struct watcher *watcher) {
+    mutex_lock(&inode->lock);
+    __fs_unregister_watcher(inode, watcher);
+    mutex_unlock(&inode->lock);
+}
+
+void fs_notify_watchers_inode_content_changed(struct inode *inode) {
+    list_for_each_entry(&inode->watchers, watcher, struct watcher, list_for_inode) {
+        struct queued_umessage *umessage =
+            net_create_umessage(UMESSAGE_WATCH, UMESSAGE_WATCH_INODE_MODIFIED, 0, sizeof(struct umessage_watch_inode_modified), NULL);
+
+        struct umessage_watch_inode_modified *event = (void *) &umessage->message;
+        event->content_modified = true;
+        event->identifier = watcher->identifier;
+
+        fs_notify_watcher(watcher, umessage);
+        net_drop_umessage(umessage);
+    }
+}
+
+void fs_notify_watcher(struct watcher *watcher, struct queued_umessage *umessage) {
+    struct umessage_queue *queue = net_try_bump_umessage_queue(watcher->queue);
+    if (!queue) {
+        return;
+    }
+
+    net_post_umessage_to(queue, umessage);
+    net_drop_umessage_queue(queue);
+}
+
 struct inode *fs_create_inode(struct super_block *sb, ino_t id, uid_t uid, gid_t gid, mode_t mode, size_t size,
                               struct inode_operations *ops, void *private) {
     struct inode *inode = fs_create_inode_without_sb(sb->fsid, id, uid, gid, mode, size, ops, private);
@@ -208,6 +259,7 @@ struct inode *fs_create_inode_without_sb(dev_t fsid, ino_t id, uid_t uid, gid_t 
     inode->i_op = ops;
     inode->index = id;
     init_mutex(&inode->lock);
+    init_list(&inode->watchers);
     inode->mode = mode;
     inode->private_data = private;
     inode->ref_count = 1;

@@ -107,6 +107,9 @@ struct inode {
     // Linked list for use by the super block.
     struct list_node sb_list;
 
+    // Linked list of watcher objects (for UMessage Watch)
+    struct list_node watchers;
+
     mutex_t lock;
 
     void *private_data;

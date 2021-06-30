@@ -59,6 +59,18 @@ static void unregister_umessage_queue(struct umessage_queue *queue) {
     spin_unlock(&category_queues[queue->category].lock);
 }
 
+struct umessage_queue *net_try_bump_umessage_queue(struct umessage_queue *queue) {
+    if (!net_try_bump_socket(queue->socket)) {
+        return NULL;
+    }
+
+    return queue;
+}
+
+void net_drop_umessage_queue(struct umessage_queue *queue) {
+    net_drop_socket(queue->socket);
+}
+
 struct queued_umessage *net_create_umessage(uint16_t category, uint16_t type, int flags, uint32_t length, const void *data) {
     struct queued_umessage *message = malloc(sizeof(struct queued_umessage) - sizeof(struct umessage) + length);
     message->ref_count = 1;

@@ -199,7 +199,7 @@ static int ext2_sync_block_group(struct super_block *sb, uint32_t blk_grp_index)
     size_t block_off = blk_grp_index * sizeof(struct raw_block_group_descriptor) / sb->block_size;
     size_t raw_off = block_off * sb->block_size;
 
-    ssize_t ret = ext2_write_blocks(sb, (void *) (((uintptr_t)(data->blk_desc_table)) + raw_off), 2 + block_off, 1);
+    ssize_t ret = ext2_write_blocks(sb, (void *) (((uintptr_t) (data->blk_desc_table)) + raw_off), 2 + block_off, 1);
 
     if (ret != 1) {
         return (int) ret;
@@ -785,6 +785,7 @@ static void ext2_update_tnode_list(struct inode *inode) {
             init_file_state(&inode_to_add->file_state, !!inode->size,
                             !!((inode->flags & FS_DIR) | (inode->flags & FS_FILE) | (inode->flags & FS_LINK)));
             init_mutex(&inode_to_add->lock);
+            init_list(&inode_to_add->watchers);
 
             fs_put_dirent_cache(inode->dirent_cache, inode_to_add, dirent->name, dirent->name_length);
 
@@ -952,6 +953,7 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
         inode->device_id = device;
         inode->index = index;
         init_mutex(&inode->lock);
+        init_list(&inode->watchers);
         inode->mode = mode;
         inode->uid = get_current_task()->process->euid;
         inode->gid = get_current_task()->process->egid;
@@ -1213,9 +1215,10 @@ finish_ext2_write:
     ext2_kill_block_iterator(&iter);
 
     if (ret > 0) {
-        inode->size = MAX(inode->size, (size_t)(offset));
+        inode->size = MAX(inode->size, (size_t) (offset));
         inode->modify_time = time_read_clock(CLOCK_REALTIME);
         fs_mark_inode_as_dirty(inode);
+        fs_notify_watchers_inode_content_changed(inode);
     }
     return ret;
 }

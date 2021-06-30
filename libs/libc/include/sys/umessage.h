@@ -116,6 +116,7 @@ struct umessage_input_mouse_event {
 
 enum umessage_watch_request_type {
     UMESSAGE_WATCH_ADD_PATH_REQUEST,
+    UMESSAGE_WATCH_REMOVE_WATCH_REQUEST,
     UMESSAGE_WATCH_NUM_REQUESTS,
 };
 #define UMESSAGE_WATCH_REQUEST_VALID(u, len) \
@@ -130,12 +131,32 @@ enum umessage_watch_message_type {
 
 struct umessage_watch_add_path_request {
     struct umessage base;
+    int identifier;
     uint16_t path_length;
     char path[];
 };
-#define UMESSAGE_WATCH_ADD_PATH_REQUEST_VALID(u, len)                                        \
-    (UMESSAGE_WATCH_REQUEST_VALID(u, len) && (u)->type == UMESSAGE_WATCH_ADD_PATH_REQUEST && \
-     ((u)->path_len == len - sizeof(struct umessage_watch_add_path_request)) && (u)->path[(u)->path_length - 1] == '\0')
+#define UMESSAGE_WATCH_ADD_PATH_REQUEST_LENGTH(path_length) (sizeof(struct umessage_watch_add_path_request) + path_length)
+#define UMESSAGE_WATCH_ADD_PATH_REQUEST_VALID(u, len)                                                                        \
+    (UMESSAGE_WATCH_REQUEST_VALID(u, len) && (u)->type == UMESSAGE_WATCH_ADD_PATH_REQUEST &&                                 \
+     ((struct umessage_watch_add_path_request*) (u))->path_length == len - sizeof(struct umessage_watch_add_path_request) && \
+     ((struct umessage_watch_add_path_request*) (u))->path[((struct umessage_watch_add_path_request*) (u))->path_length - 1] == '\0')
+
+struct umessage_watch_remove_watch_request {
+    struct umessage base;
+    int identifier;
+};
+#define UMESSAGE_WATCH_REMOVE_WATCH_REQUEST_VALID(u, len)                                        \
+    (UMESSAGE_WATCH_REQUEST_VALID(u, len) && (u)->type == UMESSAGE_WATCH_REMOVE_WATCH_REQUEST && \
+     (u)->length == sizeof(struct umessage_watch_remove_watch_request))
+
+struct umessage_watch_inode_modified {
+    struct umessage base;
+    int identifier;
+    int content_modified;
+};
+#define UMESSAGE_WATCH_INODE_MODIFIED_VALID(u, len)                                        \
+    (UMESSAGE_WATCH_MESSAGE_VALID(u, len) && (u)->type == UMESSAGE_WATCH_INODE_MODIFIED && \
+     (u)->length == sizeof(struct umessage_watch_inode_modified))
 
 #ifdef __cplusplus
 }

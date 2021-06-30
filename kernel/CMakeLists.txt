@@ -17,6 +17,7 @@ if (NOT ${NATIVE_BUILD})
         fs/tmp.c
         fs/tnode.c
         fs/vfs.c
+        fs/watch.c
         hal/block.c
         hal/devices.c
         hal/gpt.c

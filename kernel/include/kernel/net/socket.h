@@ -120,6 +120,7 @@ struct socket {
 
 struct list_node *net_get_socket_list(void);
 struct socket *net_create_socket(int domain, int type, int protocol, struct socket_ops *op, void *private_data);
+struct socket *net_try_bump_socket(struct socket *socket);
 struct socket *net_bump_socket(struct socket *socket);
 void net_drop_socket(struct socket *socket);
 struct socket *net_get_socket_by_id(unsigned long id);
