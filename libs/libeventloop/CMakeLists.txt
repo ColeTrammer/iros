@@ -1,5 +1,6 @@
 set(SOURCES
     event_loop.cpp
+    file_watcher.cpp
     mouse_press_tracker.cpp
     object.cpp
     selectable.cpp
