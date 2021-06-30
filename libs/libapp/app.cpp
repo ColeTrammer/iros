@@ -9,7 +9,7 @@
 
 namespace App {
 
-static App* s_app;
+static Application* s_app;
 
 void WindowServerClient::initialize() {
     m_server = IPC::Endpoint::create(shared_from_this());
@@ -82,27 +82,27 @@ void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::Serv
     }
 }
 
-App::App() {
+Application::Application() {
     assert(!s_app);
     s_app = this;
     m_palette = Palette::create_from_shared_memory("/.shared_theme", PROT_READ);
     m_client = WindowServerClient::create(nullptr);
 }
 
-App::~App() {}
+Application::~Application() {}
 
-App& App::the() {
+Application& Application::the() {
     return *s_app;
 }
 
-void App::set_window_server_listener(WindowServerListener& listener) {
+void Application::set_window_server_listener(WindowServerListener& listener) {
     if (!m_client->window_server_listener()) {
         m_client->server().send<WindowServer::Client::RegisterAsWindowServerListener>({});
     }
     m_client->set_window_server_listener(&listener);
 }
 
-void App::remove_window_server_listener() {
+void Application::remove_window_server_listener() {
     if (m_client->window_server_listener()) {
         m_client->server().send<WindowServer::Client::UnregisterAsWindowServerListener>({});
         m_client->set_window_server_listener(nullptr);

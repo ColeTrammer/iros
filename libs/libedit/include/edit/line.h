@@ -1,15 +1,12 @@
 #pragma once
 
+#include <edit/character_metadata.h>
+#include <edit/forward.h>
 #include <liim/string.h>
 #include <liim/vector.h>
 
-#include "character_metadata.h"
-
+namespace Edit {
 constexpr int tab_width = 4;
-
-class Document;
-struct LineSplitResult;
-class Panel;
 
 class Line {
 public:
@@ -58,3 +55,4 @@ struct LineSplitResult {
     Line first;
     Line second;
 };
+}

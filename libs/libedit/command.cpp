@@ -2,6 +2,7 @@
 #include <edit/document.h>
 #include <edit/panel.h>
 
+namespace Edit {
 Command::Command(Document& document) : m_document(document) {}
 
 Command::~Command() {}
@@ -360,4 +361,5 @@ void SwapLinesCommand::undo() {
     document().set_selection(m_end_selection);
     do_swap(m_direction == SwapDirection::Up ? SwapDirection::Down : SwapDirection::Up);
     document().restore_state(state_snapshot());
+}
 }

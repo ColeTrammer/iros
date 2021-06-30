@@ -4,7 +4,7 @@
 #include "taskbar.h"
 
 int main() {
-    App::App app;
+    App::Application app;
 
     auto window = App::Window::create(nullptr, 0, 0, 0, Taskbar::taskbar_height, "Taskbar", true, WindowServer::WindowType::Taskbar);
     auto& taskbar = window->set_main_widget<Taskbar::Taskbar>();

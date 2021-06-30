@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+namespace Edit {
 static inline int isword(int c) {
     return isalnum(c) || c == '_';
 }
@@ -1334,4 +1335,5 @@ void Document::notify_key_pressed(KeyPress press) {
     }
 
     finish_key_press();
+}
 }

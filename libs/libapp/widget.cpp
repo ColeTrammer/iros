@@ -9,7 +9,7 @@
 // #define WIDGET_DEBUG
 
 namespace App {
-Widget::Widget() : m_palette(App::the().palette()) {}
+Widget::Widget() : m_palette(Application::the().palette()) {}
 
 Widget::~Widget() {}
 

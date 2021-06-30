@@ -1,12 +1,9 @@
 #pragma once
 
-namespace LIIM {
-class StringView;
-class String;
-}
+#include <edit/forward.h>
+#include <liim/forward.h>
 
-class Document;
-
+namespace Edit {
 enum class DocumentType {
     Text,
     C,
@@ -17,6 +14,7 @@ enum class DocumentType {
 
 void update_document_type(Document& document);
 
-LIIM::String document_type_to_string(DocumentType type);
+String document_type_to_string(DocumentType type);
 
 void highlight_document(Document& document);
+}

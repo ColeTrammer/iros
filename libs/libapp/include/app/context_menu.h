@@ -1,16 +1,13 @@
 #pragma once
 
+#include <app/forward.h>
 #include <eventloop/object.h>
+#include <graphics/forward.h>
 #include <liim/function.h>
 #include <liim/string.h>
 #include <liim/vector.h>
 
-class Point;
-
 namespace App {
-
-class Window;
-
 class ContextMenu : public Object {
     APP_OBJECT(ContextMenu)
 

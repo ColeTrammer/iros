@@ -314,7 +314,7 @@ const Vector<ShRepl::Dirent> &ShRepl::ensure_directory_entries(const String &dir
     return *m_cached_directories.get(directory);
 }
 
-Suggestions ShRepl::suggest_executable(const String &prefix, const StringView &current, size_t suggestions_offset) const {
+Edit::Suggestions ShRepl::suggest_executable(const String &prefix, const StringView &current, size_t suggestions_offset) const {
     auto *path_env = getenv("PATH");
     if (!path_env) {
         return {};
@@ -354,11 +354,11 @@ Suggestions ShRepl::suggest_executable(const String &prefix, const StringView &c
         }
     }
 
-    return Suggestions(suggestions_offset, move(matches));
+    return Edit::Suggestions(suggestions_offset, move(matches));
 }
 
-Suggestions ShRepl::suggest_path_for(const String &input, const StringView &current_path, size_t suggestions_offset,
-                                     bool should_be_executable) const {
+Edit::Suggestions ShRepl::suggest_path_for(const String &input, const StringView &current_path, size_t suggestions_offset,
+                                           bool should_be_executable) const {
     String directory = "";
     String component = input;
 
@@ -387,10 +387,10 @@ Suggestions ShRepl::suggest_path_for(const String &input, const StringView &curr
         }
     }
 
-    return Suggestions(suggestions_offset - directory.size(), move(matches));
+    return Edit::Suggestions(suggestions_offset - directory.size(), move(matches));
 }
 
-Suggestions ShRepl::get_suggestions(const String &input, size_t position) const {
+Edit::Suggestions ShRepl::get_suggestions(const String &input, size_t position) const {
     ShLexer lexer(input.string(), input.size());
     lexer.lex(LexComments::Yes);
 

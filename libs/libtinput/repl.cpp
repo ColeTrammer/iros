@@ -3,7 +3,6 @@
 #include <tinput/repl.h>
 
 namespace TInput {
-
 Repl::Repl(UniquePtr<History> history) : m_history(move(history)) {}
 
 Repl::~Repl() {}
@@ -33,7 +32,7 @@ String Repl::get_secondary_prompt() const {
     return "> ";
 }
 
-Suggestions Repl::get_suggestions(const String&, size_t) const {
+Edit::Suggestions Repl::get_suggestions(const String&, size_t) const {
     return {};
 }
 }

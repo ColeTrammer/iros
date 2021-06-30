@@ -20,10 +20,10 @@ private:
     virtual bool force_stop_input() const override;
 
     virtual TInput::InputStatus get_input_status(const String& input) const override;
-    virtual DocumentType get_input_type() const override { return DocumentType::ShellScript; }
+    virtual Edit::DocumentType get_input_type() const override { return Edit::DocumentType::ShellScript; }
     virtual String get_main_prompt() const override;
     virtual String get_secondary_prompt() const override { return "> "; }
-    virtual Suggestions get_suggestions(const String& input, size_t position) const override;
+    virtual Edit::Suggestions get_suggestions(const String& input, size_t position) const override;
 
     struct Dirent {
         String name;
@@ -31,9 +31,9 @@ private:
     };
 
     const Vector<Dirent>& ensure_directory_entries(const String& directory) const;
-    Suggestions suggest_executable(const String& path, const StringView& current_path, size_t suggestions_offset) const;
-    Suggestions suggest_path_for(const String& path, const StringView& current_path, size_t suggestions_offset,
-                                 bool should_be_executable) const;
+    Edit::Suggestions suggest_executable(const String& path, const StringView& current_path, size_t suggestions_offset) const;
+    Edit::Suggestions suggest_path_for(const String& path, const StringView& current_path, size_t suggestions_offset,
+                                       bool should_be_executable) const;
 
     mutable HashMap<String, Vector<Dirent>> m_cached_directories;
 };

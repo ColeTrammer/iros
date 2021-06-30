@@ -1,5 +1,6 @@
 #pragma once
 
+#include <app/forward.h>
 #include <app/model_data.h>
 #include <app/model_index.h>
 #include <eventloop/object.h>
@@ -7,9 +8,6 @@
 #include <liim/variant.h>
 
 namespace App {
-
-class ModelClient;
-
 class Model : public Object {
     APP_OBJECT(Model)
 
@@ -34,5 +32,4 @@ protected:
 private:
     Vector<ModelClient*> m_clients;
 };
-
 }

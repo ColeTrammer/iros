@@ -11,7 +11,7 @@
 
 namespace TInput {
 
-class ReplPanel final : public Panel {
+class ReplPanel final : public Edit::Panel {
 public:
     ReplPanel(Repl& repl);
     virtual ~ReplPanel() override;
@@ -20,7 +20,7 @@ public:
     virtual int cols_at_row(int row) const override;
 
     virtual void clear() override;
-    virtual void set_text_at(int row, int col, char c, CharacterMetadata metadata) override;
+    virtual void set_text_at(int row, int col, char c, Edit::CharacterMetadata metadata) override;
     virtual void flush() override;
     virtual int enter() override;
     virtual void send_status_message(String message) override;
@@ -34,8 +34,8 @@ public:
 
     virtual void set_cursor(int row, int col) override;
 
-    virtual Suggestions get_suggestions() const override;
-    virtual void handle_suggestions(const Suggestions& suggestions) override;
+    virtual Edit::Suggestions get_suggestions() const override;
+    virtual void handle_suggestions(const Edit::Suggestions& suggestions) override;
 
     virtual int cursor_col() const { return m_cursor_col; }
     virtual int cursor_row() const { return m_cursor_row; }
@@ -50,18 +50,18 @@ public:
 private:
     struct Info {
         char ch;
-        CharacterMetadata metadata;
+        Edit::CharacterMetadata metadata;
     };
 
     virtual void document_did_change() override;
 
-    Vector<Variant<KeyPress, App::MouseEvent>> read_input();
+    Vector<Variant<Edit::KeyPress, App::MouseEvent>> read_input();
 
     void draw_cursor();
 
-    String string_for_metadata(CharacterMetadata metadata) const;
+    String string_for_metadata(Edit::CharacterMetadata metadata) const;
 
-    void print_char(char c, CharacterMetadata metadata);
+    void print_char(char c, Edit::CharacterMetadata metadata);
     void flush_row(int line);
 
     void set_quit_by_interrupt() { m_quit_by_interrupt = true; }
@@ -75,9 +75,9 @@ private:
     int prompt_cols_at_row(int row) const;
     const String& prompt_at_row(int row) const;
 
-    Vector<UniquePtr<Document>>& ensure_history_documents();
-    void put_history_document(UniquePtr<Document> document, int history_index);
-    UniquePtr<Document> take_history_document(int history_index);
+    Vector<UniquePtr<Edit::Document>>& ensure_history_documents();
+    void put_history_document(UniquePtr<Edit::Document> document, int history_index);
+    UniquePtr<Edit::Document> take_history_document(int history_index);
 
     void move_history_up();
     void move_history_down();
@@ -87,7 +87,7 @@ private:
     Repl& m_repl;
     String m_main_prompt;
     String m_secondary_prompt;
-    Vector<UniquePtr<Document>> m_history_documents;
+    Vector<UniquePtr<Edit::Document>> m_history_documents;
     int m_history_index { -1 };
 
     Vector<Info> m_screen_info;
@@ -95,7 +95,7 @@ private:
     mutable String m_prev_clipboard_contents;
     mutable bool m_prev_clipboard_contents_were_whole_line { false };
     App::MousePressTracker m_mouse_press_tracker;
-    CharacterMetadata m_last_metadata_rendered;
+    Edit::CharacterMetadata m_last_metadata_rendered;
     int m_rows { 0 };
     int m_max_rows { 0 };
     int m_max_cols { 0 };

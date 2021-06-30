@@ -26,7 +26,7 @@ public:
 
 int main() {
 #ifdef __os_2__
-    App::App app;
+    App::Application app;
 
     auto window = App::Window::create(nullptr, 50, 50, 400, 400, "Graphics Test", true);
     window->set_main_widget<TestWidget>();

@@ -28,10 +28,10 @@ public:
 
     virtual InputStatus get_input_status(const String& input) const = 0;
 
-    virtual DocumentType get_input_type() const { return DocumentType::Text; }
+    virtual Edit::DocumentType get_input_type() const { return Edit::DocumentType::Text; }
     virtual String get_main_prompt() const;
     virtual String get_secondary_prompt() const;
-    virtual Suggestions get_suggestions(const String& input, size_t cursor_index) const;
+    virtual Edit::Suggestions get_suggestions(const String& input, size_t cursor_index) const;
 
 protected:
     virtual void did_get_input(const String& input) = 0;

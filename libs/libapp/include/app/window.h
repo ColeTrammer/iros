@@ -1,5 +1,6 @@
 #pragma once
 
+#include <app/forward.h>
 #include <eventloop/object.h>
 #include <graphics/bitmap.h>
 #include <liim/hash_map.h>
@@ -9,10 +10,6 @@
 #include <window_server/message.h>
 
 namespace App {
-
-class ContextMenu;
-class Widget;
-
 class Window : public Object {
     APP_OBJECT(Window)
 

@@ -7,9 +7,9 @@
 #include "generator.h"
 #include "literal.h"
 
-Generator::Generator(const StateTable& table, const Vector<StringView>& identifiers, const Vector<StringView>& token_types,
-                     const LinkedList<String>& literals, const String& output_name, bool dont_overwite, bool has_value_header,
-                     const String& name_space)
+ParserGenerator::ParserGenerator(const StateTable& table, const Vector<StringView>& identifiers, const Vector<StringView>& token_types,
+                                 const LinkedList<String>& literals, const String& output_name, bool dont_overwite, bool has_value_header,
+                                 const String& name_space)
     : m_table(table)
     , m_identifiers(identifiers)
     , m_token_types(token_types)
@@ -19,9 +19,9 @@ Generator::Generator(const StateTable& table, const Vector<StringView>& identifi
     , m_dont_overwrite(dont_overwite)
     , m_has_value_header(has_value_header) {}
 
-Generator::~Generator() {}
+ParserGenerator::~ParserGenerator() {}
 
-void Generator::generate_token_type_header(const String& path) {
+void ParserGenerator::generate_token_type_header(const String& path) {
     fprintf(stderr, "Writing token types to %s.\n", path.string());
 
     int ofd = open(path.string(), O_CREAT | O_WRONLY | O_TRUNC | (m_dont_overwrite ? O_EXCL : 0), 0666);
@@ -48,7 +48,7 @@ void Generator::generate_token_type_header(const String& path) {
     }
 }
 
-void Generator::generate_generic_parser(String path) {
+void ParserGenerator::generate_generic_parser(String path) {
     struct ReductionInfo {
         String function_name;
         Vector<StringView> args;
@@ -385,7 +385,7 @@ void Generator::generate_generic_parser(String path) {
     }
 }
 
-void Generator::generate_value_header(const String& path, const String& value_types_header) {
+void ParserGenerator::generate_value_header(const String& path, const String& value_types_header) {
     fprintf(stderr, "Writing value header to %s.\n", path.string());
 
     int ofd = open(path.string(), O_CREAT | O_WRONLY | O_TRUNC | (m_dont_overwrite ? O_EXCL : 0), 0666);

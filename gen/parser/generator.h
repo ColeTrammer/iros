@@ -2,12 +2,12 @@
 
 #include "state_table.h"
 
-class Generator {
+class ParserGenerator {
 public:
-    Generator(const StateTable& table, const Vector<StringView>& identifiers, const Vector<StringView>& token_types,
-              const LinkedList<String>& literals, const String& output_name, bool dont_overwrite, bool has_value_header,
-              const String& name_space);
-    ~Generator();
+    ParserGenerator(const StateTable& table, const Vector<StringView>& identifiers, const Vector<StringView>& token_types,
+                    const LinkedList<String>& literals, const String& output_name, bool dont_overwrite, bool has_value_header,
+                    const String& name_space);
+    ~ParserGenerator();
 
     void generate_token_type_header(const String& path);
     void generate_generic_parser(String path);

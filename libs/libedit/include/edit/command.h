@@ -1,7 +1,8 @@
 #pragma once
 
-#include "document.h"
+#include <edit/document.h>
 
+namespace Edit {
 class Command {
 public:
     Command(Document& document);
@@ -120,3 +121,4 @@ private:
     int m_end_index { 0 };
     Selection m_end_selection;
 };
+}

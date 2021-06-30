@@ -180,7 +180,7 @@ static int vga_color_to_number(vga_color color, bool background) {
     return background ? ret + 10 : ret;
 }
 
-String TerminalPanel::string_for_metadata(CharacterMetadata metadata) const {
+String TerminalPanel::string_for_metadata(Edit::CharacterMetadata metadata) const {
     String ret = "\033[0";
 
     RenderingInfo info = rendering_info_for_metadata(metadata);
@@ -297,7 +297,7 @@ void TerminalPanel::send_status_message(String message) {
     draw_status_message();
 }
 
-void TerminalPanel::set_text_at(int row, int col, char c, CharacterMetadata metadata) {
+void TerminalPanel::set_text_at(int row, int col, char c, Edit::CharacterMetadata metadata) {
     auto& info = m_screen_info[index(row, col)];
     if (info.ch != c || info.metadata != metadata) {
         m_screen_info[index(row, col)] = { c, metadata };
@@ -315,7 +315,7 @@ void TerminalPanel::set_cursor(int row, int col) {
     draw_cursor();
 }
 
-void TerminalPanel::print_char(char c, CharacterMetadata metadata) {
+void TerminalPanel::print_char(char c, Edit::CharacterMetadata metadata) {
     if (c == '\0') {
         c = ' ';
     }
@@ -347,7 +347,7 @@ void TerminalPanel::do_open_prompt() {
         return;
     }
 
-    auto document = Document::create_from_file(result.value().string(), *this);
+    auto document = Edit::Document::create_from_file(result.value().string(), *this);
     if (!document) {
         send_status_message(String::format("Failed to open `%s'", result.value().string()));
         return;
@@ -369,7 +369,7 @@ void TerminalPanel::flush() {
 
         int line_number = document()->row_offset() + r + 1;
         if (document()->show_line_numbers() && line_number <= document()->num_lines()) {
-            m_last_metadata_rendered = CharacterMetadata();
+            m_last_metadata_rendered = Edit::CharacterMetadata();
             fputs(string_for_metadata(m_last_metadata_rendered).string(), stdout);
 
             char buf[48];
@@ -380,7 +380,7 @@ void TerminalPanel::flush() {
     }
 
     // Reset modifiers after every render, so that status bar, etc. are unaffected.
-    m_last_metadata_rendered = CharacterMetadata();
+    m_last_metadata_rendered = Edit::CharacterMetadata();
     fputs(string_for_metadata(m_last_metadata_rendered).string(), stdout);
 
     draw_status_message();
@@ -388,8 +388,8 @@ void TerminalPanel::flush() {
     fflush(stdout);
 }
 
-Vector<Variant<KeyPress, App::MouseEvent>> TerminalPanel::read_input() {
-    using K = KeyPress;
+Vector<Variant<Edit::KeyPress, App::MouseEvent>> TerminalPanel::read_input() {
+    using K = Edit::KeyPress;
     using M = App::MouseEvent;
     using T = Variant<K, M>;
     using R = Vector<T>;
@@ -407,11 +407,11 @@ Vector<Variant<KeyPress, App::MouseEvent>> TerminalPanel::read_input() {
         assert(ret >= 0);
 
         if (ret == 0) {
-            return R::create_from_single_element(T { K { 0, KeyPress::Key::Escape } });
+            return R::create_from_single_element(T { K { 0, Edit::KeyPress::Key::Escape } });
         }
 
         if (escape_buffer[0] != '[' && escape_buffer[0] != 'O') {
-            return R::create_from_single_element(T { K { KeyPress::Modifier::Alt, toupper(escape_buffer[0]) } });
+            return R::create_from_single_element(T { K { Edit::KeyPress::Modifier::Alt, toupper(escape_buffer[0]) } });
         } else {
             // Information from https://en.wikipedia.org/wiki/ANSI_escape_code#Terminal_input_sequences
             auto modifiers_from_digit = [](char digit) -> int {
@@ -424,25 +424,25 @@ Vector<Variant<KeyPress, App::MouseEvent>> TerminalPanel::read_input() {
             auto xterm_sequence_to_key = [](char ch, int modifiers) -> R {
                 switch (ch) {
                     case 'A':
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::UpArrow } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::UpArrow } });
                     case 'B':
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::DownArrow } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::DownArrow } });
                     case 'C':
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::RightArrow } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::RightArrow } });
                     case 'D':
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::LeftArrow } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::LeftArrow } });
                     case 'F':
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::End } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::End } });
                     case 'H':
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::Home } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::Home } });
                     case 'P':
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F1 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F1 } });
                     case 'Q':
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F2 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F2 } });
                     case 'R':
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F3 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F3 } });
                     case 'S':
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F4 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F4 } });
                     default:
                         return R::create_from_single_element(T { K { modifiers, ch } });
                 }
@@ -451,63 +451,63 @@ Vector<Variant<KeyPress, App::MouseEvent>> TerminalPanel::read_input() {
             auto vt_sequence_to_key = [](int num, int modifiers) -> R {
                 switch (num) {
                     case 1:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::Home } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::Home } });
                     case 2:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::Insert } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::Insert } });
                     case 3:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::Delete } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::Delete } });
                     case 4:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::End } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::End } });
                     case 5:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::PageUp } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::PageUp } });
                     case 6:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::PageDown } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::PageDown } });
                     case 7:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::Home } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::Home } });
                     case 8:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::End } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::End } });
                     case 10:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F0 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F0 } });
                     case 11:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F1 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F1 } });
                     case 12:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F2 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F2 } });
                     case 13:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F3 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F3 } });
                     case 14:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F4 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F4 } });
                     case 15:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F5 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F5 } });
                     case 17:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F6 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F6 } });
                     case 18:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F7 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F7 } });
                     case 19:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F8 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F8 } });
                     case 20:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F9 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F9 } });
                     case 21:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F10 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F10 } });
                     case 23:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F11 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F11 } });
                     case 24:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F12 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F12 } });
                     case 25:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F13 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F13 } });
                     case 26:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F14 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F14 } });
                     case 28:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F15 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F15 } });
                     case 29:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F16 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F16 } });
                     case 31:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F17 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F17 } });
                     case 32:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F18 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F18 } });
                     case 33:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F19 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F19 } });
                     case 34:
-                        return R::create_from_single_element(T { K { modifiers, KeyPress::Key::F20 } });
+                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F20 } });
                     default:
                         return {};
                 }
@@ -517,7 +517,7 @@ Vector<Variant<KeyPress, App::MouseEvent>> TerminalPanel::read_input() {
             assert(ret >= 0);
 
             if (ret == 0) {
-                return R::create_from_single_element(T { K { KeyPress::Modifier::Alt, KeyPress::Key::Escape } });
+                return R::create_from_single_element(T { K { Edit::KeyPress::Modifier::Alt, Edit::KeyPress::Key::Escape } });
             }
 
             if (escape_buffer[1] == '<') {
@@ -648,11 +648,11 @@ Vector<Variant<KeyPress, App::MouseEvent>> TerminalPanel::read_input() {
     }
 
     if (ch == s_original_termios.c_cc[VERASE]) {
-        return R::create_from_single_element(T { K { 0, KeyPress::Key::Backspace } });
+        return R::create_from_single_element(T { K { 0, Edit::KeyPress::Key::Backspace } });
     }
 
     if (ch == '\r') {
-        return R::create_from_single_element(T { K { 0, KeyPress::Key::Enter } });
+        return R::create_from_single_element(T { K { 0, Edit::KeyPress::Key::Enter } });
     }
 
     if (ch == '\t') {
@@ -663,11 +663,11 @@ Vector<Variant<KeyPress, App::MouseEvent>> TerminalPanel::read_input() {
     if (ch == ('w' & 0x1F)) {
         // control backspace unfortunately binds to control w, but control backspace
         // takes prcedence.
-        return R::create_from_single_element(T { K { KeyPress::Modifier::Control, KeyPress::Key::Backspace } });
+        return R::create_from_single_element(T { K { Edit::KeyPress::Modifier::Control, Edit::KeyPress::Key::Backspace } });
     }
 
     if (ch >= ('a' & 0x1F) && ch <= ('z' & 0x1F)) {
-        return R::create_from_single_element(T { K { KeyPress::Modifier::Control, ch | 0b1000000 } });
+        return R::create_from_single_element(T { K { Edit::KeyPress::Modifier::Control, ch | 0b1000000 } });
     }
 
     return R::create_from_single_element(T { K { 0, ch } });
@@ -695,8 +695,8 @@ int TerminalPanel::enter() {
 
         if (auto* document = Panel::document()) {
             for (auto& ev : input) {
-                if (ev.is<KeyPress>()) {
-                    document->notify_key_pressed(ev.as<KeyPress>());
+                if (ev.is<Edit::KeyPress>()) {
+                    document->notify_key_pressed(ev.as<Edit::KeyPress>());
                 } else {
                     document->notify_mouse_event(ev.as<App::MouseEvent>());
                 }
@@ -725,7 +725,7 @@ Maybe<String> TerminalPanel::enter_prompt(const String& message, String staring_
     s_prompt_panel = &text_panel;
     s_prompt_message = message;
 
-    auto document = Document::create_single_line(text_panel, move(staring_text));
+    auto document = Edit::Document::create_single_line(text_panel, move(staring_text));
     document->on_submit = [&] {
         text_panel.m_exit_code = 0;
         text_panel.m_should_exit = true;
@@ -762,7 +762,7 @@ void TerminalPanel::enter_search(String starting_text) {
     s_prompt_panel = &text_panel;
     s_prompt_message = message;
 
-    auto document = Document::create_single_line(text_panel, move(starting_text));
+    auto document = Edit::Document::create_single_line(text_panel, move(starting_text));
     text_panel.set_document(move(document));
 
     m_show_status_bar = false;
@@ -787,13 +787,14 @@ void TerminalPanel::enter_search(String starting_text) {
         }
 
         for (auto& ev : input) {
-            if (ev.is<KeyPress>()) {
-                auto& press = ev.as<KeyPress>();
-                if (press.key == KeyPress::Key::Enter) {
+            if (ev.is<Edit::KeyPress>()) {
+                auto& press = ev.as<Edit::KeyPress>();
+                if (press.key == Edit::KeyPress::Key::Enter) {
                     TerminalPanel::document()->move_cursor_to_next_search_match();
                 }
 
-                if (press.key == KeyPress::Key::Escape || ((press.modifiers & KeyPress::Modifier::Control) && press.key == 'Q')) {
+                if (press.key == Edit::KeyPress::Key::Escape ||
+                    ((press.modifiers & Edit::KeyPress::Modifier::Control) && press.key == 'Q')) {
                     goto exit_search;
                 }
 

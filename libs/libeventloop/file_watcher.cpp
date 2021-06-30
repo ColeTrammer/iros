@@ -90,6 +90,14 @@ void FileWatcher::notify_readable() {
                 }
                 break;
             }
+            case UMESSAGE_WATCH_INODE_REMOVED:
+                auto& event = *(umessage_watch_inode_removed*) message;
+                auto path = m_identifier_to_path.get(event.identifier);
+                if (!path) {
+                    continue;
+                }
+                unwatch(*path);
+                break;
         }
     }
 }

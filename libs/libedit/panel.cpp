@@ -3,6 +3,7 @@
 #include <liim/string.h>
 #include <liim/vector.h>
 
+namespace Edit {
 Panel::Panel() {}
 
 Panel::~Panel() {}
@@ -81,4 +82,5 @@ Panel::RenderingInfo Panel::rendering_info_for_metadata(const CharacterMetadata&
     }
 
     return info;
+}
 }

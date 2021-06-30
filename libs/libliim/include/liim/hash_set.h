@@ -1,18 +1,11 @@
 #pragma once
 
+#include <liim/forward.h>
 #include <liim/linked_list.h>
 #include <liim/traits.h>
 #include <liim/vector.h>
 
 namespace LIIM {
-
-template<typename T>
-concept Hashable = requires(T a, T b) {
-    Traits<T>::hash(a);
-    a == b;
-    a != b;
-};
-
 template<Hashable T>
 class HashSet {
 public:
@@ -180,7 +173,6 @@ template<Hashable T>
 void swap(HashSet<T>& a, HashSet<T>& b) {
     a.swap(b);
 }
-
 }
 
 using LIIM::HashSet;

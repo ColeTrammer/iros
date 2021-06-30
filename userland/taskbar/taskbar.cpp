@@ -113,7 +113,7 @@ void Taskbar::on_mouse_down(const App::MouseEvent& event) {
     for (auto& item : m_items) {
         if (item.rect.intersects({ event.x(), event.y() })) {
             if (event.left_button()) {
-                App::App::the().ws().server().send<WindowServer::Client::SetActiveWindow>({ item.wid });
+                App::Application::the().ws().server().send<WindowServer::Client::SetActiveWindow>({ item.wid });
                 return;
             }
         }
@@ -125,7 +125,7 @@ void Taskbar::on_mouse_down(const App::MouseEvent& event) {
 void Taskbar::render() {
     auto renderer = get_renderer();
 
-    auto& palette = *App::App::the().palette();
+    auto& palette = *App::Application::the().palette();
 
     auto taskbar_rect = Rect { 0, 0, renderer.pixels().width(), taskbar_height };
     renderer.fill_rect(taskbar_rect, palette.color(Palette::TaskbarBackground));

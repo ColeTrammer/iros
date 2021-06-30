@@ -1,10 +1,8 @@
 #pragma once
 
-#include <liim/string.h>
 #include <liim/utilities.h>
 
-class Document;
-
+namespace Edit {
 class Selection {
 public:
     Selection() {}
@@ -57,3 +55,4 @@ private:
     int m_end_line { 0 };
     int m_end_index { 0 };
 };
+}

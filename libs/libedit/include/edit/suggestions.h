@@ -3,6 +3,7 @@
 #include <liim/string.h>
 #include <liim/vector.h>
 
+namespace Edit {
 class Suggestions {
 public:
     Suggestions() {}
@@ -20,3 +21,4 @@ private:
     Vector<String> m_suggestion_list;
     size_t m_suggestion_offset { 0 };
 };
+}

@@ -3,6 +3,7 @@
 #include <edit/line.h>
 #include <edit/panel.h>
 
+namespace Edit {
 LineSplitResult Line::split_at(int position) {
     StringView first = StringView(contents().string(), contents().string() + position - 1);
     StringView second = StringView(contents().string() + position);
@@ -170,4 +171,5 @@ void Line::render(Document& document, Panel& panel, int col_offset, int row_in_p
     for (; col_position < panel.cols_at_row(row_in_panel); col_position++) {
         panel.set_text_at(row_in_panel, col_position, ' ', CharacterMetadata());
     }
+}
 }

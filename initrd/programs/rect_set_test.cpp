@@ -32,7 +32,7 @@ public:
 
 int main() {
 #ifdef __os_2__
-    App::App app;
+    App::Application app;
 
     auto window = App::Window::create(nullptr, 50, 50, 600, 600, "Rect Set Test");
     window->set_main_widget<TestWidget>();

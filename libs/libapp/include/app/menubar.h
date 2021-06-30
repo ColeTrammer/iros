@@ -1,11 +1,10 @@
 #pragma once
 
+#include <app/forward.h>
 #include <app/widget.h>
 #include <liim/string.h>
 
 namespace App {
-class ContextMenu;
-
 class Menubar : public Widget {
     APP_OBJECT(Menubar)
 

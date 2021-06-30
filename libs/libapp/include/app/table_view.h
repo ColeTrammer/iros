@@ -2,12 +2,10 @@
 
 #include <app/model_data.h>
 #include <app/view.h>
+#include <graphics/forward.h>
 #include <liim/function.h>
 
-class Renderer;
-
 namespace App {
-
 class TableView : public View {
     APP_OBJECT(TableView)
 
@@ -28,5 +26,4 @@ protected:
 private:
     int m_cell_padding { 2 };
 };
-
 }

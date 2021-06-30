@@ -7,7 +7,7 @@
 #include "theme_model.h"
 
 int main() {
-    App::App app;
+    App::Application app;
 
     auto model = ThemeModel::create(nullptr);
 

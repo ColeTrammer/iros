@@ -1,12 +1,10 @@
 #pragma once
 
+#include <app/forward.h>
 #include <graphics/rect.h>
 #include <liim/pointers.h>
 
 namespace App {
-
-class Widget;
-
 struct Margins {
     int top { 0 };
     int right { 0 };
@@ -46,5 +44,4 @@ private:
     Widget& m_widget;
     Margins m_margins { 5, 5, 5, 5 };
 };
-
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+namespace Edit {
 class CharacterMetadata {
 public:
     enum Flags {
@@ -53,3 +54,4 @@ public:
 private:
     int m_flags { 0 };
 };
+}

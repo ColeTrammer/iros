@@ -1,5 +1,6 @@
 #pragma once
 
+#include <eventloop/forward.h>
 #include <liim/function.h>
 #include <liim/pointers.h>
 #include <liim/vector.h>
@@ -20,9 +21,6 @@ public:                                                                       \
 private:
 
 namespace App {
-
-class Event;
-
 class Object {
 public:
     virtual ~Object();
@@ -68,5 +66,4 @@ private:
     Object* m_parent;
     mutable WeakPtr<Object> m_weak_this;
 };
-
 }

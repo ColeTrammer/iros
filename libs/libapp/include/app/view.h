@@ -1,14 +1,12 @@
 #pragma once
 
+#include <app/forward.h>
 #include <app/model_client.h>
 #include <app/model_index.h>
 #include <app/widget.h>
 #include <liim/hash_set.h>
 
 namespace App {
-
-class Model;
-
 class Selection {
 public:
     bool present(const ModelIndex& index) const { return !!m_indexes.get(index); }

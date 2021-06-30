@@ -1,22 +1,16 @@
 #pragma once
 
+#include <edit/document_type.h>
+#include <edit/forward.h>
+#include <edit/line.h>
+#include <edit/selection.h>
+#include <edit/suggestions.h>
+#include <eventloop/forward.h>
 #include <liim/function.h>
 #include <liim/pointers.h>
 #include <liim/vector.h>
 
-#include "document_type.h"
-#include "line.h"
-#include "selection.h"
-#include "suggestions.h"
-
-class Command;
-struct KeyPress;
-class Panel;
-
-namespace App {
-struct MouseEvent;
-}
-
+namespace Edit {
 enum class UpdateMaxCursorCol { No, Yes };
 
 enum class MovementMode { Move, Select };
@@ -277,3 +271,4 @@ private:
     mutable bool m_needs_display { false };
     DocumentType m_type { DocumentType::Text };
 };
+}

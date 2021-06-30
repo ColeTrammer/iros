@@ -1,5 +1,6 @@
 #pragma once
 
+namespace Edit {
 struct KeyPress {
     enum Modifier {
         Shift = 1,
@@ -50,3 +51,4 @@ struct KeyPress {
     int modifiers;
     int key;
 };
+}

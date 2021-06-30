@@ -37,24 +37,26 @@ Window::~Window() {
     }
 
     if (!m_removed) {
-        App::the().ws().server().send<WindowServer::Client::RemoveWindowRequest>({ .wid = m_wid });
+        Application::the().ws().server().send<WindowServer::Client::RemoveWindowRequest>({ .wid = m_wid });
         m_removed = true;
     }
 }
 
 Window::Window(int x, int y, int width, int height, String name, bool has_alpha, WindowServer::WindowType type, wid_t parent_id)
     : m_has_alpha(has_alpha) {
-    auto response =
-        App::the().ws().server().send_then_wait<WindowServer::Client::CreateWindowRequest, WindowServer::Server::CreateWindowResponse>({
-            .x = x,
-            .y = y,
-            .width = width,
-            .height = height,
-            .name = move(name),
-            .type = type,
-            .parent_id = parent_id,
-            .has_alpha = has_alpha,
-        });
+    auto response = Application::the()
+                        .ws()
+                        .server()
+                        .send_then_wait<WindowServer::Client::CreateWindowRequest, WindowServer::Server::CreateWindowResponse>({
+                            .x = x,
+                            .y = y,
+                            .width = width,
+                            .height = height,
+                            .name = move(name),
+                            .type = type,
+                            .parent_id = parent_id,
+                            .has_alpha = has_alpha,
+                        });
     assert(response.has_value());
 
     m_shm_path = response.value().path;
@@ -102,11 +104,11 @@ void Window::on_event(const Event& event) {
             auto& window_event = static_cast<const WindowEvent&>(event);
             if (window_event.window_event_type() == WindowEvent::Type::Close) {
                 m_removed = true;
-                App::the().main_event_loop().set_should_exit(true);
+                Application::the().main_event_loop().set_should_exit(true);
                 return;
             }
             if (window_event.window_event_type() == WindowEvent::Type::DidResize) {
-                auto response = App::the()
+                auto response = Application::the()
                                     .ws()
                                     .server()
                                     .send_then_wait<WindowServer::Client::WindowReadyToResizeMessage,
@@ -123,7 +125,7 @@ void Window::on_event(const Event& event) {
                 if (auto* main_widget = m_main_widget.get()) {
                     main_widget->set_positioned_rect({ 0, 0, data.new_width, data.new_height });
                 }
-                pixels()->clear(App::the().palette()->color(Palette::Background));
+                pixels()->clear(Application::the().palette()->color(Palette::Background));
                 invalidate_rect(rect());
                 return;
             }
@@ -178,7 +180,7 @@ void Window::on_event(const Event& event) {
             return;
         }
         case Event::Type::ThemeChange:
-            m_back_buffer->clear(App::the().palette()->color(Palette::Background));
+            m_back_buffer->clear(Application::the().palette()->color(Palette::Background));
             invalidate_rect(rect());
 
             m_main_widget->on_theme_change_event(static_cast<const ThemeChangeEvent&>(event));
@@ -239,7 +241,7 @@ void Window::set_current_context_menu(ContextMenu* menu) {
 }
 
 void Window::do_set_visibility(int x, int y, bool visible) {
-    App::the()
+    Application::the()
         .ws()
         .server()
         .send_then_wait<WindowServer::Client::ChangeWindowVisibilityRequest, WindowServer::Server::ChangeWindowVisibilityResponse>({
@@ -276,7 +278,7 @@ void Window::draw() {
     if (m_main_widget && !m_main_widget->hidden()) {
         m_main_widget->render();
 
-        App::the().ws().server().send<WindowServer::Client::SwapBufferRequest>({ .wid = m_wid });
+        Application::the().ws().server().send<WindowServer::Client::SwapBufferRequest>({ .wid = m_wid });
         LIIM::swap(m_front_buffer, m_back_buffer);
         memcpy(m_back_buffer->pixels(), m_front_buffer->pixels(), m_front_buffer->size_in_bytes());
     }

@@ -2,11 +2,10 @@
 
 #include <app/widget.h>
 #include <edit/panel.h>
+#include <graphics/forward.h>
 #include <liim/function.h>
 #include <liim/string.h>
 #include <liim/vector.h>
-
-class Renderer;
 
 class AppPanel;
 
@@ -26,7 +25,7 @@ private:
 };
 
 class AppPanel final
-    : public Panel
+    : public Edit::Panel
     , public App::Widget {
     APP_OBJECT(AppPanel)
 
@@ -41,7 +40,7 @@ public:
     constexpr int row_height() const { return 16; }
 
     virtual void clear() override;
-    virtual void set_text_at(int row, int col, char c, CharacterMetadata metadata) override;
+    virtual void set_text_at(int row, int col, char c, Edit::CharacterMetadata metadata) override;
     virtual void flush() override;
     virtual int enter() override;
     virtual void send_status_message(String message) override;
@@ -79,7 +78,7 @@ private:
     struct CellData {
         char c;
         bool dirty;
-        CharacterMetadata metadata;
+        Edit::CharacterMetadata metadata;
     };
 
     AppPanel(bool m_main_panel = true);

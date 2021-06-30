@@ -1,16 +1,12 @@
 #pragma once
 
+#include <eventloop/forward.h>
 #include <liim/function.h>
 #include <liim/pointers.h>
 #include <liim/vector.h>
 #include <time.h>
 
 namespace App {
-
-class Event;
-class Object;
-class Selectable;
-
 class EventLoop {
 public:
     EventLoop();
@@ -43,5 +39,4 @@ private:
     Vector<QueuedEvent> m_events;
     bool m_should_exit { false };
 };
-
 }

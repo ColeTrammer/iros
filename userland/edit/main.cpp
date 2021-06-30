@@ -42,14 +42,14 @@ int main(int argc, char** argv) {
         print_usage_and_exit(*argv);
     }
 
-    auto make_document = [&](Panel& panel) -> int {
-        UniquePtr<Document> document;
+    auto make_document = [&](Edit::Panel& panel) -> int {
+        UniquePtr<Edit::Document> document;
         if (read_from_stdin) {
-            document = Document::create_from_stdin(argv[optind] ? String(argv[optind]) : String(""), panel);
+            document = Edit::Document::create_from_stdin(argv[optind] ? String(argv[optind]) : String(""), panel);
         } else if (argc - optind == 1) {
-            document = Document::create_from_file(String(argv[optind]), panel);
+            document = Edit::Document::create_from_file(String(argv[optind]), panel);
         } else {
-            document = Document::create_empty(panel);
+            document = Edit::Document::create_empty(panel);
         }
 
         if (!document) {
@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
 
 #ifdef __os_2__
     if (use_graphics_mode) {
-        App::App app;
+        App::Application app;
 
         auto window = App::Window::create(nullptr, 250, 250, 400, 400, "Edit");
         auto& panel = window->set_main_widget<AppPanel>();

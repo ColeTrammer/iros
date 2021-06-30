@@ -72,11 +72,11 @@ void AppPanel::clear() {
     for (auto& cell : m_cells) {
         cell.c = ' ';
         cell.dirty = true;
-        cell.metadata = CharacterMetadata();
+        cell.metadata = Edit::CharacterMetadata();
     }
 }
 
-void AppPanel::set_text_at(int row, int col, char c, CharacterMetadata metadata) {
+void AppPanel::set_text_at(int row, int col, char c, Edit::CharacterMetadata metadata) {
     auto& cell = m_cells[index(row, col)];
     if (cell.c == c && cell.metadata == metadata) {
         return;
@@ -111,7 +111,7 @@ void AppPanel::enter_search(String starting_text) {
         return;
     }
 
-    ensure_search_panel().set_document(Document::create_single_line(ensure_search_panel(), move(starting_text)));
+    ensure_search_panel().set_document(Edit::Document::create_single_line(ensure_search_panel(), move(starting_text)));
     ensure_search_panel().document()->on_change = [this] {
         auto contents = ensure_search_panel().document()->content_string();
         document()->set_search_text(move(contents));
@@ -271,84 +271,84 @@ void AppPanel::on_key_event(const App::KeyEvent& event) {
         return;
     }
 
-    int modifiers = (event.shift_down() ? KeyPress::Modifier::Shift : 0) | (event.alt_down() ? KeyPress::Modifier::Alt : 0) |
-                    (event.control_down() ? KeyPress::Modifier::Control : 0);
+    int modifiers = (event.shift_down() ? Edit::KeyPress::Modifier::Shift : 0) | (event.alt_down() ? Edit::KeyPress::Modifier::Alt : 0) |
+                    (event.control_down() ? Edit::KeyPress::Modifier::Control : 0);
     int key = event.ascii();
     switch (event.key()) {
         case KEY_CURSOR_LEFT:
-            key = KeyPress::Key::LeftArrow;
+            key = Edit::KeyPress::Key::LeftArrow;
             break;
         case KEY_CURSOR_RIGHT:
-            key = KeyPress::Key::RightArrow;
+            key = Edit::KeyPress::Key::RightArrow;
             break;
         case KEY_CURSOR_UP:
-            key = KeyPress::Key::UpArrow;
+            key = Edit::KeyPress::Key::UpArrow;
             break;
         case KEY_CURSOR_DOWN:
-            key = KeyPress::Key::DownArrow;
+            key = Edit::KeyPress::Key::DownArrow;
             break;
         case KEY_HOME:
-            key = KeyPress::Key::Home;
+            key = Edit::KeyPress::Key::Home;
             break;
         case KEY_END:
-            key = KeyPress::Key::End;
+            key = Edit::KeyPress::Key::End;
             break;
         case KEY_BACKSPACE:
-            key = KeyPress::Key::Backspace;
+            key = Edit::KeyPress::Key::Backspace;
             break;
         case KEY_DELETE:
-            key = KeyPress::Key::Delete;
+            key = Edit::KeyPress::Key::Delete;
             break;
         case KEY_ENTER:
-            key = KeyPress::Key::Enter;
+            key = Edit::KeyPress::Key::Enter;
             break;
         case KEY_INSERT:
-            key = KeyPress::Key::Insert;
+            key = Edit::KeyPress::Key::Insert;
             break;
         case KEY_ESC:
-            key = KeyPress::Key::Escape;
+            key = Edit::KeyPress::Key::Escape;
             break;
         case KEY_PAGE_UP:
-            key = KeyPress::Key::PageUp;
+            key = Edit::KeyPress::Key::PageUp;
             break;
         case KEY_PAGE_DOWN:
-            key = KeyPress::Key::PageDown;
+            key = Edit::KeyPress::Key::PageDown;
             break;
         case KEY_F1:
-            key = KeyPress::Key::F1;
+            key = Edit::KeyPress::Key::F1;
             break;
         case KEY_F2:
-            key = KeyPress::Key::F2;
+            key = Edit::KeyPress::Key::F2;
             break;
         case KEY_F3:
-            key = KeyPress::Key::F3;
+            key = Edit::KeyPress::Key::F3;
             break;
         case KEY_F4:
-            key = KeyPress::Key::F4;
+            key = Edit::KeyPress::Key::F4;
             break;
         case KEY_F5:
-            key = KeyPress::Key::F5;
+            key = Edit::KeyPress::Key::F5;
             break;
         case KEY_F6:
-            key = KeyPress::Key::F6;
+            key = Edit::KeyPress::Key::F6;
             break;
         case KEY_F7:
-            key = KeyPress::Key::F7;
+            key = Edit::KeyPress::Key::F7;
             break;
         case KEY_F8:
-            key = KeyPress::Key::F8;
+            key = Edit::KeyPress::Key::F8;
             break;
         case KEY_F9:
-            key = KeyPress::Key::F9;
+            key = Edit::KeyPress::Key::F9;
             break;
         case KEY_F10:
-            key = KeyPress::Key::F10;
+            key = Edit::KeyPress::Key::F10;
             break;
         case KEY_F11:
-            key = KeyPress::Key::F11;
+            key = Edit::KeyPress::Key::F11;
             break;
         case KEY_F12:
-            key = KeyPress::Key::F12;
+            key = Edit::KeyPress::Key::F12;
             break;
         default:
             break;

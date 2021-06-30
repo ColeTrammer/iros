@@ -50,11 +50,11 @@ private:
     WindowServerListener* m_window_server_listener { nullptr };
 };
 
-class App {
+class Application {
 public:
-    static App& the();
-    App();
-    ~App();
+    static Application& the();
+    Application();
+    ~Application();
 
     void enter() { return m_loop.enter(); }
     EventLoop& main_event_loop() { return m_loop; }

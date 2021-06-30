@@ -1,22 +1,13 @@
 #pragma once
 
+#include <edit/character_metadata.h>
+#include <edit/forward.h>
 #include <graphics/color.h>
+#include <liim/forward.h>
 #include <liim/maybe.h>
 #include <liim/pointers.h>
 
-#include "character_metadata.h"
-
-class Document;
-
-namespace LIIM {
-
-class String;
-
-}
-
-class Suggestions;
-struct KeyPress;
-
+namespace Edit {
 class Panel {
 public:
     virtual ~Panel();
@@ -28,14 +19,14 @@ public:
     virtual void set_text_at(int row, int col, char c, CharacterMetadata metadata) = 0;
     virtual void flush() = 0;
     virtual int enter() = 0;
-    virtual void send_status_message(LIIM::String message) = 0;
-    virtual Maybe<LIIM::String> prompt(const LIIM::String& message) = 0;
-    virtual void enter_search(LIIM::String starting_text) = 0;
+    virtual void send_status_message(String message) = 0;
+    virtual Maybe<String> prompt(const String& message) = 0;
+    virtual void enter_search(String starting_text) = 0;
     virtual void do_open_prompt() = 0;
     virtual void quit() = 0;
 
     virtual void set_clipboard_contents(LIIM::String text, bool is_whole_line = false) = 0;
-    virtual LIIM::String clipboard_contents(bool& is_whole_line) const = 0;
+    virtual String clipboard_contents(bool& is_whole_line) const = 0;
 
     virtual void set_cursor(int row, int col) = 0;
     virtual int cursor_row() const = 0;
@@ -72,3 +63,4 @@ protected:
 private:
     UniquePtr<Document> m_document;
 };
+}

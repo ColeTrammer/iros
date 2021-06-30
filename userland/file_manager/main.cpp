@@ -5,7 +5,7 @@
 #include "file_system_model.h"
 
 int main() {
-    App::App app;
+    App::Application app;
 
     auto model = FileSystemModel::create(nullptr, "./");
 

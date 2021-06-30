@@ -125,7 +125,7 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    App::App app;
+    App::Application app;
     App::EventLoop::register_signal_handler(SIGCHLD, [] {
         for (;;) {
             int status;

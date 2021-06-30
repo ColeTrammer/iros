@@ -9,7 +9,7 @@
 #include <liim/vector.h>
 #include <time.h>
 
-class TerminalPanel final : public Panel {
+class TerminalPanel final : public Edit::Panel {
 public:
     TerminalPanel();
     virtual ~TerminalPanel() override;
@@ -18,7 +18,7 @@ public:
     virtual int cols_at_row(int) const override { return cols(); };
 
     virtual void clear() override;
-    virtual void set_text_at(int row, int col, char c, CharacterMetadata metadata) override;
+    virtual void set_text_at(int row, int col, char c, Edit::CharacterMetadata metadata) override;
     virtual void flush() override;
     virtual int enter() override;
     virtual void send_status_message(String message) override;
@@ -46,23 +46,23 @@ public:
 private:
     struct Info {
         char ch;
-        CharacterMetadata metadata;
+        Edit::CharacterMetadata metadata;
     };
 
     TerminalPanel(int rows, int cols, int row_off, int col_off);
 
     virtual void document_did_change() override;
 
-    Vector<Variant<KeyPress, App::MouseEvent>> read_input();
+    Vector<Variant<Edit::KeyPress, App::MouseEvent>> read_input();
 
     void draw_cursor();
     void draw_status_message();
 
     void compute_cols_needed_for_line_numbers();
 
-    String string_for_metadata(CharacterMetadata metadata) const;
+    String string_for_metadata(Edit::CharacterMetadata metadata) const;
 
-    void print_char(char c, CharacterMetadata metadata);
+    void print_char(char c, Edit::CharacterMetadata metadata);
     void flush_row(int line);
 
     Maybe<String> enter_prompt(const String& message, String starting_text = "");
@@ -78,7 +78,7 @@ private:
     mutable String m_prev_clipboard_contents;
     mutable bool m_prev_clipboard_contents_were_whole_line { false };
     App::MousePressTracker m_mouse_press_tracker;
-    CharacterMetadata m_last_metadata_rendered;
+    Edit::CharacterMetadata m_last_metadata_rendered;
     int m_rows { 0 };
     int m_cols { 0 };
     int m_cursor_row { 0 };

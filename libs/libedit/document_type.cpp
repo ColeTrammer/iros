@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+namespace Edit {
 void update_document_type(Document& document) {
     auto path = document.name();
 
@@ -372,4 +373,5 @@ void highlight_document(Document& document) {
         default:
             return;
     }
+}
 }

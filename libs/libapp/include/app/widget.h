@@ -1,22 +1,15 @@
 #pragma once
 
+#include <app/forward.h>
+#include <eventloop/forward.h>
 #include <eventloop/object.h>
 #include <graphics/color.h>
 #include <graphics/font.h>
+#include <graphics/forward.h>
 #include <graphics/palette.h>
 #include <graphics/rect.h>
 
-class Renderer;
-
 namespace App {
-
-class ContextMenu;
-class Layout;
-class KeyEvent;
-class MouseEvent;
-class ThemeChangeEvent;
-class Window;
-
 struct Size {
     enum { Auto = -1 };
 

@@ -7,7 +7,7 @@
 #include "resource_usage_tab.h"
 
 int main() {
-    App::App app;
+    App::Application app;
 
     auto window = App::Window::create(nullptr, 150, 150, 600, 400, "System Monitor");
     auto& tabs = window->set_main_widget<App::TabWidget>();
