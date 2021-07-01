@@ -1,4 +1,5 @@
 #include <ext/path.h>
+#include <limits.h>
 #include <unistd.h>
 
 namespace Ext {
