@@ -1146,6 +1146,8 @@ bool Document::notify_mouse_event(const App::MouseEvent& event) {
 }
 
 void Document::finish_key_press() {
+    scroll_cursor_into_view();
+
     if (preview_auto_complete()) {
         set_needs_display();
     }
@@ -1181,27 +1183,21 @@ void Document::notify_key_pressed(KeyPress press) {
         switch (toupper(press.key)) {
             case KeyPress::Key::LeftArrow:
                 move_cursor_left_by_word(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
-                scroll_cursor_into_view();
                 break;
             case KeyPress::Key::RightArrow:
                 move_cursor_right_by_word(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
-                scroll_cursor_into_view();
                 break;
             case KeyPress::Key::DownArrow:
                 move_cursor_down(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
-                scroll_cursor_into_view();
                 break;
             case KeyPress::Key::UpArrow:
                 move_cursor_up(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
-                scroll_cursor_into_view();
                 break;
             case KeyPress::Key::Home:
                 move_cursor_to_document_start(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
-                scroll_cursor_into_view();
                 break;
             case KeyPress::Key::End:
                 move_cursor_to_document_end(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
-                scroll_cursor_into_view();
                 break;
             case KeyPress::Key::Backspace:
                 delete_word(DeleteCharMode::Backspace);
@@ -1263,35 +1259,27 @@ void Document::notify_key_pressed(KeyPress press) {
     switch (press.key) {
         case KeyPress::Key::LeftArrow:
             move_cursor_left(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
-            scroll_cursor_into_view();
             break;
         case KeyPress::Key::RightArrow:
             move_cursor_right(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
-            scroll_cursor_into_view();
             break;
         case KeyPress::Key::DownArrow:
             move_cursor_down(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
-            scroll_cursor_into_view();
             break;
         case KeyPress::Key::UpArrow:
             move_cursor_up(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
-            scroll_cursor_into_view();
             break;
         case KeyPress::Key::Home:
             move_cursor_to_line_start(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
-            scroll_cursor_into_view();
             break;
         case KeyPress::Key::End:
             move_cursor_to_line_end(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
-            scroll_cursor_into_view();
             break;
         case KeyPress::Key::PageUp:
             move_cursor_page_up(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
-            scroll_cursor_into_view();
             break;
         case KeyPress::Key::PageDown:
             move_cursor_page_down(press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
-            scroll_cursor_into_view();
             break;
         case KeyPress::Key::Backspace:
             delete_char(DeleteCharMode::Backspace);
