@@ -20,17 +20,31 @@ Path::Path(const String& path) {
     m_components = path.split('/');
 }
 
-Path::Path() {
-    m_components = Vector<String>::create_from_single_element("");
-}
+Path::Path() {}
 
 Path::~Path() {}
 
+void Path::set_to_parent() {
+    if (!m_components.empty()) {
+        m_components.remove_last();
+    }
+}
+
+String Path::basename() const {
+    if (m_components.empty()) {
+        return "/";
+    }
+    return m_components.last();
+}
+
 String Path::to_string() const {
-    return String::join(m_components, '/');
+    return String::join(m_components, '/', JoinPrependDelimiter::Yes);
 }
 
 String Path::join_component(const String& name) const {
+    if (m_components.empty()) {
+        return String::format("/%s", name.string());
+    }
     return String::format("%s/%s", to_string().string(), name.string());
 }
 }

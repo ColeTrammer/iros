@@ -12,8 +12,10 @@ public:
     Path();
     ~Path();
 
-    const String& basename() const { return m_components.last(); };
+    String basename() const;
     String to_string() const;
+
+    void set_to_parent();
 
     String join_component(const String& name) const;
 
