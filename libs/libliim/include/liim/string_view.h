@@ -79,22 +79,20 @@ public:
 
     Vector<StringView> split(char c) const {
         Vector<StringView> ret;
-        if (empty()) {
-            return ret;
-        }
 
-        const char* word_start = m_start;
-        const char* word_end = m_start;
-        while (word_end < m_end) {
-            if (*word_end == c) {
-                ret.add({ word_start, word_end - 1 });
-                word_start = ++word_end;
+        const char* word_start = nullptr;
+        for (size_t i = 0; i < size(); i++) {
+            if (!word_start && start()[i] != c) {
+                word_start = start() + i;
             }
-            word_end++;
+            if (word_start && start()[i] == c) {
+                ret.add({ word_start, start() + i - 1 });
+                word_start = nullptr;
+            }
         }
 
-        if (word_start != word_end) {
-            ret.add({ word_start, word_end - 1 });
+        if (word_start) {
+            ret.add({ word_start, end() });
         }
         return ret;
     }
