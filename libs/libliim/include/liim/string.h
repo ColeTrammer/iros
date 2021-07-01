@@ -15,14 +15,21 @@ namespace LIIM {
 
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 
+enum class JoinPrependDelimiter { No, Yes };
+
 class String {
 public:
     static SharedPtr<String> wrap_malloced_chars(char* chars);
     static __attribute__((format(printf, 1, 2))) String format(const char* format, ...);
 
     template<typename StringType>
-    static String join(const Vector<StringType>& strings, char delimiter) {
+    static String join(const Vector<StringType>& strings, char delimiter,
+                       JoinPrependDelimiter prepend_delimiter = JoinPrependDelimiter::No) {
         String result;
+        if (prepend_delimiter == JoinPrependDelimiter::Yes) {
+            result += String(delimiter);
+        }
+
         for (int i = 0; i < strings.size(); i++) {
             if (i != 0) {
                 result += String(delimiter);
@@ -362,4 +369,5 @@ struct Traits<String> {
 };
 }
 
+using LIIM::JoinPrependDelimiter;
 using LIIM::String;
