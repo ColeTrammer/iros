@@ -35,6 +35,7 @@ public:
     virtual App::ModelData header_data(int col, int role) const override;
 
     void set_base_path(String path);
+    void go_to_parent();
 
     String full_path(const String& name);
 

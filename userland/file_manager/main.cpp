@@ -1,4 +1,6 @@
 #include <app/app.h>
+#include <app/box_layout.h>
+#include <app/button.h>
 #include <app/icon_view.h>
 #include <app/window.h>
 #include <getopt.h>
@@ -34,7 +36,16 @@ int main(int argc, char** argv) {
     model->set_base_path(starting_path);
 
     auto window = App::Window::create(nullptr, 350, 350, 400, 400, "File Manager");
-    auto& view = window->set_main_widget<App::IconView>();
+    auto& main_widget = window->set_main_widget<App::Widget>();
+    auto& layout = main_widget.set_layout<App::VerticalBoxLayout>();
+
+    auto& parent_button = layout.add<App::Button>("Go to parent");
+    parent_button.set_preferred_size({ 100, 24 });
+    parent_button.on_click = [&] {
+        model->go_to_parent();
+    };
+
+    auto& view = layout.add<App::IconView>();
     view.set_name_column(FileSystemModel::Column::Name);
     view.set_model(model);
 

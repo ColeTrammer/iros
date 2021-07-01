@@ -31,6 +31,11 @@ void FileSystemModel::set_base_path(String path_string) {
     load_data();
 }
 
+void FileSystemModel::go_to_parent() {
+    m_base_path.set_to_parent();
+    load_data();
+}
+
 App::ModelData FileSystemModel::data(const App::ModelIndex& index, int role) const {
     int row = index.row();
     if (row < 0 || row >= m_objects.size()) {
@@ -102,6 +107,8 @@ static int ignore_dots(const dirent* a) {
 }
 
 void FileSystemModel::load_data() {
+    fprintf(stderr, "Load data for: `%s'\n", m_base_path.to_string().string());
+
     m_objects.clear();
 
     dirent** dirents;
