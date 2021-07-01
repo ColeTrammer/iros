@@ -24,6 +24,7 @@ set(SOURCES
     gzip.cpp
     mapped_file.cpp
     parse_mode.cpp
+    path.cpp
     stream_decoder.cpp
     stream_encoder.cpp
     stream.cpp
