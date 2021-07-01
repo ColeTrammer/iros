@@ -167,6 +167,12 @@ static ssize_t slave_write(struct fs_device *device, off_t offset, const void *b
     size_t bytes_written = 0;
     while (raw_buffer_index < save_len) {
         size_t space_available = ring_buffer_space(&mdata->output_buffer);
+
+        // NOTE: reserve a trailing byte so that OPOST can always add its '\r' character.
+        if (space_available) {
+            space_available--;
+        }
+
         if (!space_available) {
             mutex_unlock(&mdata->device->lock);
             mutex_lock(&data->device->lock);
@@ -179,11 +185,8 @@ static ssize_t slave_write(struct fs_device *device, off_t offset, const void *b
             continue;
         }
 
-        // NOTE: reserve a trailing byte so that OPOST can always add its '\r' character.
-        size_t amount_to_write = MIN(space_available - 1, len - bytes_written);
-        if (amount_to_write == 0) {
-            continue;
-        }
+        size_t amount_to_write = MIN(space_available, len - bytes_written);
+        assert(amount_to_write != 0);
 
         if (data->config.c_oflag & OPOST) {
             for (size_t i = 0; i < amount_to_write; i++) {
@@ -447,7 +450,9 @@ static ssize_t master_read(struct fs_device *device, off_t offset, void *buf, si
     mutex_unlock(&data->device->lock);
 
     mutex_lock(&sdata->device->lock);
-    fs_trigger_state(&sdata->device->file_state, POLLOUT);
+    if (ring_buffer_space(&data->output_buffer) > 1) {
+        fs_trigger_state(&sdata->device->file_state, POLLOUT);
+    }
     mutex_unlock(&sdata->device->lock);
 
     return (ssize_t) len;
