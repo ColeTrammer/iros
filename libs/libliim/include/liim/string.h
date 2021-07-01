@@ -20,6 +20,18 @@ public:
     static SharedPtr<String> wrap_malloced_chars(char* chars);
     static __attribute__((format(printf, 1, 2))) String format(const char* format, ...);
 
+    template<typename StringType>
+    static String join(const Vector<StringType>& strings, char delimiter) {
+        String result;
+        for (int i = 0; i < strings.size(); i++) {
+            if (i != 0) {
+                result += String(delimiter);
+            }
+            result += String(strings[i]);
+        }
+        return result;
+    }
+
     explicit String(char c);
     explicit String(const StringView& view);
     String(const char* chars = "");
@@ -62,6 +74,16 @@ public:
 
     StringView view() const { return StringView(string(), string() + size() - 1); }
     Vector<StringView> split_view(char c) const { return view().split(c); }
+
+    Vector<String> split(char c) const {
+        auto views = view().split(c);
+
+        Vector<String> result;
+        for (auto& view : views) {
+            result.add(String(view));
+        }
+        return result;
+    }
 
     void insert(const StringView& view, size_t position);
     void insert(const String& string, size_t position) { insert(string.view(), position); }
