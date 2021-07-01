@@ -236,16 +236,17 @@ void Renderer::draw_bitmap(const Bitmap& src, const Rect& src_rect_in, const Rec
     assert(src_rect_in.width() == dest_rect_in.width());
     assert(src_rect_in.height() == dest_rect_in.height());
 
-    auto dest_rect = translate(dest_rect_in).intersection_with(m_bounding_rect);
+    auto translated_dest_rect = translate(dest_rect_in);
+    auto dest_rect = translated_dest_rect.intersection_with(m_bounding_rect);
     if (dest_rect == Rect()) {
         return;
     }
 
     auto src_rect = Rect {
-        src_rect_in.x() + dest_rect.x() - dest_rect_in.x(),
-        src_rect_in.y() + dest_rect.y() - dest_rect_in.y(),
-        src_rect_in.width() + dest_rect.width() - dest_rect_in.width(),
-        src_rect_in.height() + dest_rect.height() - dest_rect_in.height(),
+        src_rect_in.x() + dest_rect.x() - translated_dest_rect.x(),
+        src_rect_in.y() + dest_rect.y() - translated_dest_rect.y(),
+        src_rect_in.width() + dest_rect.width() - translated_dest_rect.width(),
+        src_rect_in.height() + dest_rect.height() - translated_dest_rect.height(),
     };
 
     auto x_offset = dest_rect.x() - src_rect.x();
