@@ -4,4 +4,4 @@ set(SOURCES
 )
 
 add_os_executable(file_manager bin)
-target_link_libraries(file_manager libapp)
+target_link_libraries(file_manager libapp libext)

@@ -18,19 +18,16 @@ const FileSystemObject& FileSystemModel::object_from_index(const App::ModelIndex
 }
 
 String FileSystemModel::full_path(const String& name) {
-    return String::format("%s%s", m_base_path.string(), name.string());
+    return m_base_path.join_component(name);
 }
 
-void FileSystemModel::set_base_path(String path) {
-    if (path == m_base_path) {
+void FileSystemModel::set_base_path(String path_string) {
+    auto new_path = Ext::Path::resolve(path_string);
+    if (!new_path) {
         return;
     }
 
-    if (!path.view().ends_with("/")) {
-        path += String('/');
-    }
-
-    m_base_path = move(path);
+    m_base_path = move(*new_path);
     load_data();
 }
 
@@ -109,13 +106,13 @@ void FileSystemModel::load_data() {
 
     dirent** dirents;
     int dirent_count;
-    if ((dirent_count = scandir(m_base_path.string(), &dirents, ignore_dots, nullptr)) == -1) {
+    if ((dirent_count = scandir(m_base_path.to_string().string(), &dirents, ignore_dots, nullptr)) == -1) {
         return;
     }
 
     for (int i = 0; i < dirent_count; i++) {
         auto* dirent = dirents[i];
-        auto path = String::format("%s%s", m_base_path.string(), dirent->d_name);
+        auto path = full_path(dirent->d_name);
         struct stat st;
         if (lstat(path.string(), &st) == 0) {
             passwd* pwd = getpwuid(st.st_uid);
