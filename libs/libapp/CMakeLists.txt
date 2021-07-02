@@ -19,4 +19,8 @@ set(SOURCES
 
 add_os_library(libapp app TRUE)
 
+if(${NATIVE_BUILD})
+    target_link_libraries(libapp PUBLIC SDL2)
+endif()
+
 target_link_libraries(libapp PUBLIC libeventloop libgraphics window_server_headers)
