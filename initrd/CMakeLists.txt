@@ -12,6 +12,7 @@ set(INITRD_PROGRAMS
     dl_iter_test.cpp
     dlopen_test.c
     event_loop_timer_test.cpp
+    event_loop_thread_test.cpp
     execve_waitpid_test.c
     fault_test.c
     fread_test.c
@@ -111,6 +112,7 @@ target_link_libraries(detached_thread_test ${PTHREAD_LIB})
 target_link_libraries(dlopen_test ${DL_LIB} ${PTHREAD_LIB})
 target_link_options(dlopen_test PRIVATE -rdynamic)
 target_link_libraries(event_loop_timer_test PRIVATE libapp)
+target_link_libraries(event_loop_thread_test PRIVATE libeventloop)
 target_link_libraries(getcpuclockid_test ${PTHREAD_LIB})
 target_link_libraries(graphics_test libapp)
 target_link_libraries(hash_map_test libliim)
