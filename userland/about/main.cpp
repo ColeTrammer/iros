@@ -23,7 +23,7 @@ private:
 };
 
 int main() {
-    App::Application app;
+    auto app = App::Application::create();
 
     auto window = App::Window::create(nullptr, 300, 300, 250, 250, "About");
     auto& main_widget = window->set_main_widget<App::Widget>();
@@ -66,6 +66,6 @@ int main() {
     });
     label.set_context_menu(context_menu);
 
-    app.enter();
+    app->enter();
     return 0;
 }

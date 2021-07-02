@@ -7,7 +7,7 @@
 #include "theme_model.h"
 
 int main() {
-    App::Application app;
+    auto app = App::Application::create();
 
     auto model = ThemeModel::create(nullptr);
 
@@ -26,10 +26,10 @@ int main() {
         }
 
         auto index = view.selection().first();
-        app.ws().server().send_then_wait<WindowServer::Client::ChangeThemeRequest, WindowServer::Server::ChangeThemeResponse>(
+        app->ws().server().send_then_wait<WindowServer::Client::ChangeThemeRequest, WindowServer::Server::ChangeThemeResponse>(
             { .path = model->themes()[index.row()].path });
     };
 
-    app.enter();
+    app->enter();
     return 0;
 }

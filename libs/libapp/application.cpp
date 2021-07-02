@@ -82,8 +82,11 @@ void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::Serv
     }
 }
 
+UniquePtr<Application> Application::create() {
+    return UniquePtr<Application>(new Application);
+}
+
 Application::Application() {
-    assert(!s_app);
     s_app = this;
     m_palette = Palette::create_from_shared_memory("/.shared_theme", PROT_READ);
     m_client = WindowServerClient::create(nullptr);

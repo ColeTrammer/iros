@@ -42,7 +42,7 @@ PsuedoTerminal::PsuedoTerminal() {
             _exit(1);
         }
 
-        if (ioctl(m_master_fd, TIOSCTTY)) {
+        if (ioctl(m_master_fd, TIOCSCTTY)) {
             perror("terminal (fork): ioctl(TIOSCTTY)");
             _exit(1);
         }
@@ -80,7 +80,7 @@ void PsuedoTerminal::send_clipboard_contents(const String& contents) {
 }
 
 void PsuedoTerminal::write(const String& contents) {
-    ::write(m_master_fd, contents.string(), contents.size());
+    assert(::write(m_master_fd, contents.string(), contents.size()) == static_cast<ssize_t>(contents.size()));
 }
 
 void PsuedoTerminal::handle_key_event(key key, int flags, char ascii) {

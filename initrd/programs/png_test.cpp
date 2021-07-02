@@ -40,11 +40,11 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    App::Application app;
+    auto app = App::Application::create();
 
     auto window = App::Window::create(nullptr, 50, 50, 400, 400, "Graphics Test");
     window->set_main_widget<TestWidget>();
-    app.enter();
+    app->enter();
     return 0;
 #endif /* __os_2__ */
 }

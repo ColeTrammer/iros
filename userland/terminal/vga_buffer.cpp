@@ -1,3 +1,4 @@
+#ifdef __os_2__
 #include <assert.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -47,3 +48,4 @@ void VgaBuffer::hide_cursor() {
     m_cursor_is_hidden = true;
     ioctl(m_fb, SDCURSOR);
 }
+#endif /* __os_2__ */

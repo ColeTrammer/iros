@@ -128,7 +128,7 @@ int main(int argc, char** argv) {
     }
     Font font = create_new_font ? Font::create_blank() : Font(argv[optind]);
 
-    App::Application app;
+    auto app = App::Application::create();
 
     auto window = App::Window::create(nullptr, 250, 150, 500, 600, "PSF Edit");
     auto& main_widget = window->set_main_widget<App::Widget>();
@@ -164,6 +164,6 @@ int main(int argc, char** argv) {
         }
     };
 
-    app.enter();
+    app->enter();
     return 0;
 }

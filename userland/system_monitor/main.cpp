@@ -7,7 +7,7 @@
 #include "resource_usage_tab.h"
 
 int main() {
-    App::Application app;
+    auto app = App::Application::create();
 
     auto window = App::Window::create(nullptr, 150, 150, 600, 400, "System Monitor");
     auto& tabs = window->set_main_widget<App::TabWidget>();
@@ -17,6 +17,6 @@ int main() {
     tabs.add_tab<ProcessTab>("Processes", model);
     tabs.add_tab<ResourceUsageTab>("Resources", model);
 
-    app.enter();
+    app->enter();
     return 0;
 }

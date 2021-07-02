@@ -26,11 +26,11 @@ public:
 
 int main() {
 #ifdef __os_2__
-    App::Application app;
+    auto app = App::Application::create();
 
     auto window = App::Window::create(nullptr, 50, 50, 400, 400, "Graphics Test", true);
     window->set_main_widget<TestWidget>();
-    app.enter();
+    app->enter();
     return 0;
 #endif /* __os_2__ */
 }

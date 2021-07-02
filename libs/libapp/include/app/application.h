@@ -3,6 +3,7 @@
 #include <eventloop/event_loop.h>
 #include <eventloop/mouse_press_tracker.h>
 #include <graphics/palette.h>
+#include <liim/pointers.h>
 #include <window_server/message.h>
 
 namespace App {
@@ -52,9 +53,10 @@ private:
 
 class Application {
 public:
+    static UniquePtr<Application> create();
     static Application& the();
-    Application();
-    ~Application();
+
+    virtual ~Application();
 
     void enter() { return m_loop.enter(); }
     EventLoop& main_event_loop() { return m_loop; }
@@ -65,6 +67,9 @@ public:
 
     void set_window_server_listener(WindowServerListener& listener);
     void remove_window_server_listener();
+
+protected:
+    Application();
 
 private:
     friend class WindowServerClient;

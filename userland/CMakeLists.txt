@@ -1,20 +1,16 @@
 if (NOT ${NATIVE_BUILD})
     set(OS_TARGETS
-        about
         dhcp_client
-        file_manager
         profile
-        psfedit
         stat
-        system_monitor
         taskbar
-        terminal
         theme_editor
         top
     )
 endif()
 
 set(TARGETS
+    about
     ${OS_TARGETS}
     basename
     cat
@@ -37,6 +33,7 @@ set(TARGETS
     env
     expand
     false
+    file_manager
     grep
     head
     id
@@ -51,8 +48,10 @@ set(TARGETS
     mv
     paste
     ping
+    psfedit
     ps
     pwd
+    system_monitor
     readlink
     realpath
     rm
@@ -64,6 +63,7 @@ set(TARGETS
     su
     tail
     tee
+    terminal
     touch
     true
     tty

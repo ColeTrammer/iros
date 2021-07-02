@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
         starting_path = argv[optind];
     }
 
-    App::Application app;
+    auto app = App::Application::create();
 
     auto model = FileSystemModel::create(nullptr);
     model->set_base_path(starting_path);
@@ -53,11 +53,11 @@ int main(int argc, char** argv) {
         auto& object = model->object_from_index(index);
 
         fprintf(stderr, "Activated: `%s'\n", object.name.string());
-        if (S_ISDIR(object.mode)) {
+        if (object.mode & S_IFDIR) {
             model->set_base_path(model->full_path(object.name));
         }
     };
 
-    app.enter();
+    app->enter();
     return 0;
 }

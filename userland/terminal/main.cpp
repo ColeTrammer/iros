@@ -5,11 +5,16 @@
 #include <errno.h>
 #include <eventloop/event.h>
 #include <eventloop/mouse_press_tracker.h>
+#include <signal.h>
 #include <stdio.h>
 #include <sys/select.h>
 #include <sys/socket.h>
-#include <sys/umessage.h>
+#include <sys/wait.h>
 #include <unistd.h>
+
+#ifdef __os_2__
+#include <sys/umessage.h>
+#endif /* __os_2__ */
 
 #include "terminal_widget.h"
 #include "vga_buffer.h"
@@ -21,7 +26,7 @@ void print_usage_and_exit(const char* s) {
 }
 
 int main(int argc, char** argv) {
-    bool graphics_mode = true;
+    [[maybe_unused]] bool graphics_mode = true;
 
     int opt;
     while ((opt = getopt(argc, argv, ":v")) != -1) {
@@ -44,6 +49,7 @@ int main(int argc, char** argv) {
     signal(SIGTTIN, SIG_IGN);
     signal(SIGWINCH, SIG_IGN);
 
+#ifdef __os_2__
     if (!graphics_mode) {
         App::MousePressTracker mouse_press_tracker;
 
@@ -124,8 +130,9 @@ int main(int argc, char** argv) {
 
         return 0;
     }
+#endif /* __os_2__ */
 
-    App::Application app;
+    auto app = App::Application::create();
     App::EventLoop::register_signal_handler(SIGCHLD, [] {
         for (;;) {
             int status;
@@ -142,6 +149,6 @@ int main(int argc, char** argv) {
     double opacity = 0.90;
     auto window = App::Window::create(nullptr, 200, 200, 80 * 8 + 10, 25 * 16 + 10, "Terminal", opacity != 1.0);
     window->set_main_widget<TerminalWidget>(opacity);
-    app.enter();
+    app->enter();
     return 0;
 }

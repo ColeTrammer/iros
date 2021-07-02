@@ -63,13 +63,13 @@ int main(int argc, char** argv) {
 
 #ifdef __os_2__
     if (use_graphics_mode) {
-        App::Application app;
+        auto app = App::Application::create();
 
         auto window = App::Window::create(nullptr, 250, 250, 400, 400, "Edit");
         auto& panel = window->set_main_widget<AppPanel>();
 
         panel.on_quit = [&] {
-            app.main_event_loop().set_should_exit(true);
+            app->main_event_loop().set_should_exit(true);
         };
 
         int ret = make_document(panel);
@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
             return ret;
         }
 
-        app.enter();
+        app->enter();
         return 0;
     }
 #endif /* __os_2__ */

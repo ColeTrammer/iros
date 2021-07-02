@@ -1,3 +1,4 @@
+#ifdef __os_2__
 #include <clipboard/connection.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -84,3 +85,4 @@ void VgaTerminal::drain_master_fd() {
         }
     }
 }
+#endif /* __os_2__ */
