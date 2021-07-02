@@ -1,4 +1,6 @@
 set(SOURCES
+    application_os_2.cpp
+    application_sdl.cpp
     application.cpp
     box_layout.cpp
     button.cpp

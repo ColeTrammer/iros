@@ -4,7 +4,6 @@ if (NOT ${NATIVE_BUILD})
         profile
         stat
         taskbar
-        theme_editor
         top
     )
 endif()
@@ -64,6 +63,7 @@ set(TARGETS
     tail
     tee
     terminal
+    theme_editor
     touch
     true
     tty

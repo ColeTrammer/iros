@@ -26,8 +26,7 @@ int main() {
         }
 
         auto index = view.selection().first();
-        app->ws().server().send_then_wait<WindowServer::Client::ChangeThemeRequest, WindowServer::Server::ChangeThemeResponse>(
-            { .path = model->themes()[index.row()].path });
+        app->set_global_palette(model->themes()[index.row()].path);
     };
 
     app->enter();

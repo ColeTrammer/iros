@@ -1,4 +1,5 @@
 #include <app/application.h>
+#include <app/application_os_2.h>
 #include <app/context_menu.h>
 #include <app/widget.h>
 #include <app/window.h>
@@ -37,14 +38,14 @@ Window::~Window() {
     }
 
     if (!m_removed) {
-        Application::the().ws().server().send<WindowServer::Client::RemoveWindowRequest>({ .wid = m_wid });
+        OSApplication::the().ws().server().send<WindowServer::Client::RemoveWindowRequest>({ .wid = m_wid });
         m_removed = true;
     }
 }
 
 Window::Window(int x, int y, int width, int height, String name, bool has_alpha, WindowServer::WindowType type, wid_t parent_id)
     : m_has_alpha(has_alpha) {
-    auto response = Application::the()
+    auto response = OSApplication::the()
                         .ws()
                         .server()
                         .send_then_wait<WindowServer::Client::CreateWindowRequest, WindowServer::Server::CreateWindowResponse>({
@@ -108,7 +109,7 @@ void Window::on_event(const Event& event) {
                 return;
             }
             if (window_event.window_event_type() == WindowEvent::Type::DidResize) {
-                auto response = Application::the()
+                auto response = OSApplication::the()
                                     .ws()
                                     .server()
                                     .send_then_wait<WindowServer::Client::WindowReadyToResizeMessage,
@@ -241,7 +242,7 @@ void Window::set_current_context_menu(ContextMenu* menu) {
 }
 
 void Window::do_set_visibility(int x, int y, bool visible) {
-    Application::the()
+    OSApplication::the()
         .ws()
         .server()
         .send_then_wait<WindowServer::Client::ChangeWindowVisibilityRequest, WindowServer::Server::ChangeWindowVisibilityResponse>({
@@ -278,7 +279,7 @@ void Window::draw() {
     if (m_main_widget && !m_main_widget->hidden()) {
         m_main_widget->render();
 
-        Application::the().ws().server().send<WindowServer::Client::SwapBufferRequest>({ .wid = m_wid });
+        OSApplication::the().ws().server().send<WindowServer::Client::SwapBufferRequest>({ .wid = m_wid });
         LIIM::swap(m_front_buffer, m_back_buffer);
         memcpy(m_back_buffer->pixels(), m_front_buffer->pixels(), m_front_buffer->size_in_bytes());
     }

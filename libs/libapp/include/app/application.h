@@ -1,5 +1,6 @@
 #pragma once
 
+#include <app/forward.h>
 #include <eventloop/event_loop.h>
 #include <eventloop/mouse_press_tracker.h>
 #include <graphics/palette.h>
@@ -17,40 +18,6 @@ public:
     virtual void server_did_make_window_active(const WindowServer::Server::ServerDidMakeWindowActive&) {}
 };
 
-class WindowServerClient final : public WindowServer::Server::MessageDispatcher {
-    APP_OBJECT(WindowServerClient)
-
-public:
-    virtual void initialize() override;
-
-    IPC::Endpoint& server() { return *m_server; }
-
-    WindowServerListener* window_server_listener() { return m_window_server_listener; }
-    void set_window_server_listener(WindowServerListener* listener) { m_window_server_listener = listener; }
-
-private:
-    virtual void handle_error(IPC::Endpoint&) override { assert(false); }
-
-    virtual void handle(IPC::Endpoint&, const WindowServer::Server::CreateWindowResponse&) override {}
-    virtual void handle(IPC::Endpoint&, const WindowServer::Server::RemoveWindowResponse&) override {}
-    virtual void handle(IPC::Endpoint&, const WindowServer::Server::ChangeWindowVisibilityResponse&) override {}
-    virtual void handle(IPC::Endpoint&, const WindowServer::Server::KeyEventMessage&) override;
-    virtual void handle(IPC::Endpoint&, const WindowServer::Server::MouseEventMessage&) override;
-    virtual void handle(IPC::Endpoint&, const WindowServer::Server::WindowDidResizeMessage&) override;
-    virtual void handle(IPC::Endpoint&, const WindowServer::Server::WindowReadyToResizeResponse&) override {}
-    virtual void handle(IPC::Endpoint&, const WindowServer::Server::WindowClosedEventMessage&) override;
-    virtual void handle(IPC::Endpoint&, const WindowServer::Server::WindowStateChangeMessage&) override;
-    virtual void handle(IPC::Endpoint&, const WindowServer::Server::ChangeThemeResponse&) override {}
-    virtual void handle(IPC::Endpoint&, const WindowServer::Server::ThemeChangeMessage&) override;
-    virtual void handle(IPC::Endpoint&, const WindowServer::Server::ServerDidCreatedWindow&) override;
-    virtual void handle(IPC::Endpoint&, const WindowServer::Server::ServerDidChangeWindowTitle&) override;
-    virtual void handle(IPC::Endpoint&, const WindowServer::Server::ServerDidCloseWindow&) override;
-    virtual void handle(IPC::Endpoint&, const WindowServer::Server::ServerDidMakeWindowActive&) override;
-
-    SharedPtr<IPC::Endpoint> m_server;
-    WindowServerListener* m_window_server_listener { nullptr };
-};
-
 class Application {
 public:
     static UniquePtr<Application> create();
@@ -61,15 +28,23 @@ public:
     void enter() { return m_loop.enter(); }
     EventLoop& main_event_loop() { return m_loop; }
 
+    MousePressTracker& mouse_tracker() { return m_mouse_tracker; }
+
     SharedPtr<Palette> palette() const { return m_palette; }
 
-    WindowServerClient& ws() { return *m_client; }
+    virtual void set_window_server_listener(WindowServerListener&) {}
+    virtual void remove_window_server_listener() {}
 
-    void set_window_server_listener(WindowServerListener& listener);
-    void remove_window_server_listener();
+    virtual void set_active_window(wid_t) {}
+    virtual void set_global_palette(const String& path);
+
+    virtual bool is_os_application() const { return false; }
+    virtual bool is_sdl_application() const { return false; }
 
 protected:
     Application();
+
+    void initialize_palette(SharedPtr<Palette> palette) { m_palette = move(palette); }
 
 private:
     friend class WindowServerClient;
@@ -77,6 +52,5 @@ private:
     EventLoop m_loop;
     MousePressTracker m_mouse_tracker;
     SharedPtr<Palette> m_palette;
-    SharedPtr<WindowServerClient> m_client;
 };
 }

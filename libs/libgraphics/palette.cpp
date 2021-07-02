@@ -1,6 +1,16 @@
 #include <ext/json.h>
 #include <graphics/palette.h>
 
+SharedPtr<Palette> Palette::create_default() {
+    Vector<uint32_t> colors(ColorType::Count);
+
+#define __ENUMERATE_COLOR_TYPE(t, l, d) colors.add(Color(d).color());
+    ENUMERATE_COLOR_TYPES
+#undef __ENUMERATE_COLOR_TYPE
+
+    return make_shared<Palette>(move(colors), "Default Palette");
+}
+
 SharedPtr<Palette> Palette::create_from_json(const String& path) {
     auto maybe_object = Ext::Json::parse_file(path);
     if (!maybe_object.has_value()) {

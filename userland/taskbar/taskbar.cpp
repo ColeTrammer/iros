@@ -113,7 +113,7 @@ void Taskbar::on_mouse_down(const App::MouseEvent& event) {
     for (auto& item : m_items) {
         if (item.rect.intersects({ event.x(), event.y() })) {
             if (event.left_button()) {
-                App::Application::the().ws().server().send<WindowServer::Client::SetActiveWindow>({ item.wid });
+                App::Application::the().set_active_window(item.wid);
                 return;
             }
         }

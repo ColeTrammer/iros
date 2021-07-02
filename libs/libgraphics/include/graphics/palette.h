@@ -23,6 +23,7 @@ public:
             Count,
     };
 
+    static SharedPtr<Palette> create_default();
     static SharedPtr<Palette> create_from_json(const String& path);
     static SharedPtr<Palette> create_from_shared_memory(const String& path, int prot);
 
