@@ -13,4 +13,4 @@ set(SOURCES
 
 add_os_library(libeventloop eventloop TRUE)
 
-target_link_libraries(libeventloop PUBLIC libliim ${REALTIME_LIB} kernel_headers)
+target_link_libraries(libeventloop PUBLIC libliim ${PTHREAD_LIB} ${REALTIME_LIB} kernel_headers)

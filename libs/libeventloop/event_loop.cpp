@@ -8,7 +8,8 @@
 #include <signal.h>
 #include <sys/select.h>
 
-#define TIMER_SIGNAL SIGRTMIN + 10
+#define TIMER_SIGNAL         SIGRTMIN + 10
+#define WAKEUP_THREAD_SIGNAL SIGRTMIN + 11
 
 #ifdef __linux__
 namespace LIIM {
@@ -41,6 +42,8 @@ static void timer_signal_handler(int, siginfo_t* info, void*) {
     s_timer_fired_id = (timer_t*) info->si_value.sival_ptr;
 }
 
+static void wakeup_thread_signal_handler(int, siginfo_t*, void*) {}
+
 void EventLoop::register_selectable(Selectable& selectable) {
     s_selectables.add(&selectable);
 }
@@ -70,18 +73,30 @@ void EventLoop::setup_timer_sigevent(sigevent& ev, timer_t* id) {
 }
 
 void EventLoop::queue_event(WeakPtr<Object> target, UniquePtr<Event> event) {
-    s_the->m_events.add({ move(target), move(event) });
+    s_the->do_queue_event(move(target), move(event));
+}
+
+void EventLoop::do_queue_event(WeakPtr<Object> target, UniquePtr<Event> event) {
+    pthread_mutex_lock(&m_lock);
+    m_events.add({ move(target), move(event) });
+    pthread_mutex_unlock(&m_lock);
+
+    if (pthread_self() != m_waiting_thread) {
+        pthread_kill(m_waiting_thread, WAKEUP_THREAD_SIGNAL);
+    }
 }
 
 EventLoop::EventLoop() {
     s_the = this;
+
+    pthread_mutex_init(&m_lock, nullptr);
 }
 
-EventLoop::~EventLoop() {}
+EventLoop::~EventLoop() {
+    pthread_mutex_destroy(&m_lock);
+}
 
 void EventLoop::do_select() {
-    assert(!s_selectables.empty() || !s_watched_signals.empty() || !s_timer_objects.empty());
-
     fd_set rd_set;
     fd_set wr_set;
     fd_set ex_set;
@@ -108,6 +123,7 @@ void EventLoop::do_select() {
     sigset_t sigset;
     sigprocmask(0, nullptr, &sigset);
     sigdelset(&sigset, TIMER_SIGNAL);
+    sigdelset(&sigset, WAKEUP_THREAD_SIGNAL);
     s_watched_signals.for_each_key([&](int signum) {
         sigdelset(&sigset, signum);
     });
@@ -123,7 +139,6 @@ void EventLoop::do_select() {
                     auto* handler = s_watched_signals.get(signo);
                     assert(handler);
                     (*handler)();
-                    return;
                 } else if (s_timer_fired_id) {
                     timer_t timer_id = *s_timer_fired_id;
                     s_timer_fired_id = nullptr;
@@ -133,9 +148,8 @@ void EventLoop::do_select() {
                     auto* target = s_timer_objects.get(timer_id);
                     assert(target);
                     EventLoop::queue_event(*target, make_unique<TimerEvent>(1 + extra_times_expired));
-                    return;
                 }
-                continue;
+                return;
             }
             assert(false);
         }
@@ -162,7 +176,10 @@ void EventLoop::do_select() {
 
 void EventLoop::do_event_dispatch() {
     for (;;) {
+        pthread_mutex_lock(&m_lock);
         auto events = move(m_events);
+        pthread_mutex_unlock(&m_lock);
+
         if (events.empty()) {
             return;
         }
@@ -188,12 +205,16 @@ void EventLoop::setup_signal_handlers() {
     act.sa_sigaction = &timer_signal_handler;
     sigaction(TIMER_SIGNAL, &act, nullptr);
 
+    act.sa_sigaction = &wakeup_thread_signal_handler;
+    sigaction(WAKEUP_THREAD_SIGNAL, &act, nullptr);
+
     act.sa_flags = 0;
     act.sa_handler = &private_signal_handler;
 
     sigset_t set;
     sigemptyset(&set);
     sigaddset(&set, TIMER_SIGNAL);
+    sigaddset(&set, WAKEUP_THREAD_SIGNAL);
     s_watched_signals.for_each_key([&](int signum) {
         sigaddset(&set, signum);
         sigaction(signum, &act, nullptr);
@@ -206,6 +227,7 @@ void EventLoop::enter() {
         return;
     }
 
+    m_waiting_thread = pthread_self();
     setup_signal_handlers();
 
     for (;;) {

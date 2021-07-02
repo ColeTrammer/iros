@@ -4,6 +4,7 @@
 #include <liim/function.h>
 #include <liim/pointers.h>
 #include <liim/vector.h>
+#include <pthread.h>
 #include <time.h>
 
 namespace App {
@@ -27,6 +28,8 @@ public:
     void set_should_exit(bool b) { m_should_exit = b; }
 
 private:
+    void do_queue_event(WeakPtr<Object> target, UniquePtr<Event> event);
+
     void do_select();
     void do_event_dispatch();
     void setup_signal_handlers();
@@ -37,6 +40,8 @@ private:
     };
 
     Vector<QueuedEvent> m_events;
+    pthread_mutex_t m_lock;
+    pthread_t m_waiting_thread;
     bool m_should_exit { false };
 };
 }
