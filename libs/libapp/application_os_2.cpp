@@ -1,5 +1,5 @@
 #include <app/application_os_2.h>
-#include <app/window.h>
+#include <app/window_os_2.h>
 
 namespace App {
 void WindowServerClient::initialize() {
@@ -44,8 +44,8 @@ void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::Wind
 }
 
 void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::ThemeChangeMessage&) {
-    Window::windows().for_each([&](auto& window) {
-        EventLoop::queue_event(window->weak_from_this(), make_unique<ThemeChangeEvent>());
+    Window::for_each_window([&](auto& window) {
+        EventLoop::queue_event(window.weak_from_this(), make_unique<ThemeChangeEvent>());
     });
 }
 
@@ -85,6 +85,11 @@ OSApplication::OSApplication() {
 }
 
 OSApplication::~OSApplication() {}
+
+UniquePtr<PlatformWindow> OSApplication::create_window(Window& window, int x, int y, int width, int height, String name, bool has_alpha,
+                                                       WindowServer::WindowType type, wid_t parent_id) {
+    return make_unique<OSWindow>(window, x, y, width, height, move(name), has_alpha, type, parent_id);
+}
 
 void OSApplication::set_active_window(wid_t id) {
     m_client->server().send<WindowServer::Client::SetActiveWindow>({ .wid = id });

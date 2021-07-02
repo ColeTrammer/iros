@@ -4,25 +4,38 @@
 #include <app/widget.h>
 #include <app/window.h>
 #include <eventloop/event.h>
+#include <pthread.h>
 
 namespace App {
 
 static HashMap<wid_t, Window*> s_windows;
+static pthread_mutex_t s_windows_lock = PTHREAD_MUTEX_INITIALIZER;
 
-const HashMap<wid_t, Window*>& Window::windows() {
-    return s_windows;
+void Window::for_each_window(Function<void(Window&)> callback) {
+    pthread_mutex_lock(&s_windows_lock);
+    s_windows.for_each([&](auto* window) {
+        callback(*window);
+    });
+    pthread_mutex_unlock(&s_windows_lock);
 }
 
 void Window::register_window(Window& window) {
+    pthread_mutex_lock(&s_windows_lock);
     s_windows.put(window.wid(), &window);
+    pthread_mutex_unlock(&s_windows_lock);
 }
 
 void Window::unregister_window(wid_t wid) {
+    pthread_mutex_lock(&s_windows_lock);
     s_windows.remove(wid);
+    pthread_mutex_unlock(&s_windows_lock);
 }
 
 Maybe<SharedPtr<Window>> Window::find_by_wid(wid_t wid) {
+    pthread_mutex_lock(&s_windows_lock);
     auto result = s_windows.get(wid);
+    pthread_mutex_unlock(&s_windows_lock);
+
     if (!result) {
         return {};
     }
@@ -31,39 +44,11 @@ Maybe<SharedPtr<Window>> Window::find_by_wid(wid_t wid) {
 
 Window::~Window() {
     unregister_window(wid());
-
-    if (m_raw_pixels != MAP_FAILED) {
-        munmap(m_raw_pixels, m_raw_pixels_size);
-        m_raw_pixels = MAP_FAILED;
-    }
-
-    if (!m_removed) {
-        OSApplication::the().ws().server().send<WindowServer::Client::RemoveWindowRequest>({ .wid = m_wid });
-        m_removed = true;
-    }
 }
 
 Window::Window(int x, int y, int width, int height, String name, bool has_alpha, WindowServer::WindowType type, wid_t parent_id)
     : m_has_alpha(has_alpha) {
-    auto response = OSApplication::the()
-                        .ws()
-                        .server()
-                        .send_then_wait<WindowServer::Client::CreateWindowRequest, WindowServer::Server::CreateWindowResponse>({
-                            .x = x,
-                            .y = y,
-                            .width = width,
-                            .height = height,
-                            .name = move(name),
-                            .type = type,
-                            .parent_id = parent_id,
-                            .has_alpha = has_alpha,
-                        });
-    assert(response.has_value());
-
-    m_shm_path = response.value().path;
-    m_wid = response.value().wid;
-
-    do_resize(response->width, response->height);
+    m_platform_window = Application::the().create_window(*this, x, y, width, height, move(name), has_alpha, type, parent_id);
     register_window(*this);
 }
 
@@ -80,7 +65,7 @@ void Window::hide() {
     }
 
     m_visible = false;
-    do_set_visibility(0, 0, false);
+    m_platform_window->do_set_visibility(0, 0, false);
 }
 
 void Window::show(int x, int y) {
@@ -89,7 +74,7 @@ void Window::show(int x, int y) {
     }
 
     m_visible = true;
-    do_set_visibility(x, y, true);
+    m_platform_window->do_set_visibility(x, y, true);
 }
 
 void Window::hide_current_context_menu() {
@@ -109,24 +94,15 @@ void Window::on_event(const Event& event) {
                 return;
             }
             if (window_event.window_event_type() == WindowEvent::Type::DidResize) {
-                auto response = OSApplication::the()
-                                    .ws()
-                                    .server()
-                                    .send_then_wait<WindowServer::Client::WindowReadyToResizeMessage,
-                                                    WindowServer::Server::WindowReadyToResizeResponse>({ .wid = m_wid });
-                assert(response.has_value());
-                auto& data = response.value();
-                assert(data.wid == wid());
-
-                if (data.new_width == rect().width() && data.new_height == rect().height()) {
-                    return;
-                }
-
-                do_resize(data.new_width, data.new_height);
+                m_platform_window->did_resize();
                 if (auto* main_widget = m_main_widget.get()) {
-                    main_widget->set_positioned_rect({ 0, 0, data.new_width, data.new_height });
+                    main_widget->set_positioned_rect(rect());
                 }
                 pixels()->clear(Application::the().palette()->color(Palette::Background));
+                invalidate_rect(rect());
+                return;
+            }
+            if (window_event.window_event_type() == WindowEvent::Type::ForceRedraw) {
                 invalidate_rect(rect());
                 return;
             }
@@ -181,7 +157,7 @@ void Window::on_event(const Event& event) {
             return;
         }
         case Event::Type::ThemeChange:
-            m_back_buffer->clear(Application::the().palette()->color(Palette::Background));
+            pixels()->clear(Application::the().palette()->color(Palette::Background));
             invalidate_rect(rect());
 
             m_main_widget->on_theme_change_event(static_cast<const ThemeChangeEvent&>(event));
@@ -241,47 +217,10 @@ void Window::set_current_context_menu(ContextMenu* menu) {
     m_current_context_menu = menu->weak_from_this();
 }
 
-void Window::do_set_visibility(int x, int y, bool visible) {
-    OSApplication::the()
-        .ws()
-        .server()
-        .send_then_wait<WindowServer::Client::ChangeWindowVisibilityRequest, WindowServer::Server::ChangeWindowVisibilityResponse>({
-            .wid = m_wid,
-            .x = x,
-            .y = y,
-            .visible = visible,
-        });
-}
-
-void Window::do_resize(int new_width, int new_height) {
-    if (m_raw_pixels != MAP_FAILED) {
-        munmap(m_raw_pixels, m_raw_pixels_size);
-        m_raw_pixels = MAP_FAILED;
-    }
-
-    int shm = shm_open(m_shm_path.string(), O_RDWR, 0);
-    assert(shm != -1);
-
-    m_raw_pixels_size = 2 * new_width * new_height * sizeof(uint32_t);
-    m_raw_pixels = mmap(nullptr, m_raw_pixels_size, PROT_WRITE | PROT_READ, MAP_SHARED, shm, 0);
-    assert(m_raw_pixels != MAP_FAILED);
-    close(shm);
-
-    m_front_buffer = Bitmap::wrap(reinterpret_cast<uint32_t*>(m_raw_pixels), new_width, new_height, has_alpha());
-    m_back_buffer = Bitmap::wrap(reinterpret_cast<uint32_t*>(m_raw_pixels) + m_raw_pixels_size / 2 / sizeof(uint32_t), new_width,
-                                 new_height, has_alpha());
-
-    m_rect.set_width(new_width);
-    m_rect.set_height(new_height);
-}
-
 void Window::draw() {
     if (m_main_widget && !m_main_widget->hidden()) {
         m_main_widget->render();
-
-        OSApplication::the().ws().server().send<WindowServer::Client::SwapBufferRequest>({ .wid = m_wid });
-        LIIM::swap(m_front_buffer, m_back_buffer);
-        memcpy(m_back_buffer->pixels(), m_front_buffer->pixels(), m_front_buffer->size_in_bytes());
+        m_platform_window->flush_pixels();
     }
 }
 

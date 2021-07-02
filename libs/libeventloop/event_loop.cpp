@@ -81,7 +81,7 @@ void EventLoop::do_queue_event(WeakPtr<Object> target, UniquePtr<Event> event) {
     m_events.add({ move(target), move(event) });
     pthread_mutex_unlock(&m_lock);
 
-    if (pthread_self() != m_waiting_thread) {
+    if (m_waiting_thread != 0 && pthread_self() != m_waiting_thread) {
         pthread_kill(m_waiting_thread, WAKEUP_THREAD_SIGNAL);
     }
 }

@@ -12,6 +12,7 @@ class Menubar;
 class ModelClient;
 class ModelIndex;
 class Model;
+class PlatformWindow;
 class TabWidget;
 class TableView;
 class TextLabel;

@@ -32,6 +32,7 @@ public:
     enum class Type {
         Invalid,
         Close,
+        ForceRedraw,
         DidResize,
     };
 

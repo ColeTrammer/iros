@@ -41,7 +41,7 @@ private:
 
     Vector<QueuedEvent> m_events;
     pthread_mutex_t m_lock;
-    pthread_t m_waiting_thread;
+    pthread_t m_waiting_thread { 0 };
     bool m_should_exit { false };
 };
 }

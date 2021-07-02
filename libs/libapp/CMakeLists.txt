@@ -14,6 +14,8 @@ set(SOURCES
     text_label.cpp
     view.cpp
     widget.cpp
+    window_os_2.cpp
+    window_sdl.cpp
     window.cpp
 )
 

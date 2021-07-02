@@ -35,6 +35,8 @@ public:
     virtual void set_window_server_listener(WindowServerListener&) {}
     virtual void remove_window_server_listener() {}
 
+    virtual UniquePtr<PlatformWindow> create_window(Window& window, int x, int y, int width, int height, String name, bool has_alpha,
+                                                    WindowServer::WindowType type, wid_t parent_id) = 0;
     virtual void set_active_window(wid_t) {}
     virtual void set_global_palette(const String& path);
 
