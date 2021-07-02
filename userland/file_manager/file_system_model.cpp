@@ -7,7 +7,7 @@
 #include "file_system_model.h"
 
 FileSystemModel::FileSystemModel() {
-    m_text_file_icon = decode_png_file("/usr/share/text-file-32.png");
+    m_text_file_icon = decode_png_file(RESOURCE_ROOT "/usr/share/text-file-32.png");
     assert(m_text_file_icon);
 }
 

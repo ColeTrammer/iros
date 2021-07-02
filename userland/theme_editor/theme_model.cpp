@@ -52,7 +52,7 @@ void ThemeModel::load_data() {
 
     dirent** dirents;
     int dirent_count;
-    if ((dirent_count = scandir("/usr/share/themes", &dirents, nullptr, nullptr)) == -1) {
+    if ((dirent_count = scandir(RESOURCE_ROOT "/usr/share/themes", &dirents, nullptr, nullptr)) == -1) {
         return;
     }
 
@@ -62,7 +62,7 @@ void ThemeModel::load_data() {
             continue;
         }
 
-        auto path = String::format("/usr/share/themes/%s", dirent->d_name);
+        auto path = String::format(RESOURCE_ROOT "/usr/share/themes/%s", dirent->d_name);
         auto theme = Palette::create_from_json(path);
         if (theme) {
             m_themes.add(Theme { move(path), move(theme) });

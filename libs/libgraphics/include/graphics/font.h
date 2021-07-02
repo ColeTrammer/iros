@@ -26,7 +26,7 @@ public:
     static const Font& default_font() {
         static Font* s_default;
         if (!s_default) {
-            s_default = new Font("/usr/share/font.psf");
+            s_default = new Font(RESOURCE_ROOT "/usr/share/font.psf");
         }
         return *s_default;
     }
@@ -34,7 +34,7 @@ public:
     static const Font& bold_font() {
         static Font* s_bold;
         if (!s_bold) {
-            s_bold = new Font("/usr/share/bold.psf");
+            s_bold = new Font(RESOURCE_ROOT "/usr/share/bold.psf");
         }
         return *s_bold;
     }

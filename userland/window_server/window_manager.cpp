@@ -41,10 +41,7 @@ WindowManager::WindowManager(int fb, SharedPtr<Bitmap> front_buffer, SharedPtr<B
     close(shared_palette_fd);
 
     m_palette = Palette::create_from_shared_memory("/.shared_theme", PROT_READ | PROT_WRITE);
-    load_palette("/usr/share/themes/default.json");
-
-    auto palette = Palette::create_from_json("/usr/share/themes/default.json");
-    m_palette->copy_from(*palette);
+    load_palette(RESOURCE_ROOT "/usr/share/themes/default.json");
 
     m_watcher.on_change = [this](auto& path) {
         load_palette(path);

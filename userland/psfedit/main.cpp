@@ -121,7 +121,7 @@ int main(int argc, char** argv) {
     }
 
     if (!argv[optind]) {
-        argv[optind] = (char*) "/usr/share/font.psf";
+        argv[optind] = (char*) RESOURCE_ROOT "/usr/share/font.psf";
     }
     if (!save_destination) {
         save_destination = argv[optind];

@@ -21,7 +21,7 @@ SDLApplication& SDLApplication::the() {
 }
 
 SDLApplication::SDLApplication() {
-    initialize_palette(Palette::create_default());
+    initialize_palette(Palette::create_from_json(RESOURCE_ROOT "/usr/share/themes/default.json"));
 
     pthread_barrier_init(&m_sdl_init_barrier, nullptr, 2);
     pthread_create(&m_sdl_thread, nullptr, thread_run_sdl, nullptr);
