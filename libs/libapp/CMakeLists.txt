@@ -1,5 +1,5 @@
 set(SOURCES
-    app.cpp
+    application.cpp
     box_layout.cpp
     button.cpp
     context_menu.cpp

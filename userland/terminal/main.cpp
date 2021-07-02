@@ -1,4 +1,4 @@
-#include <app/app.h>
+#include <app/application.h>
 #include <app/box_layout.h>
 #include <app/window.h>
 #include <clipboard/connection.h>

@@ -1,4 +1,4 @@
-#include <app/app.h>
+#include <app/application.h>
 #include <app/tab_widget.h>
 #include <app/window.h>
 

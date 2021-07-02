@@ -1,4 +1,4 @@
-#include <app/app.h>
+#include <app/application.h>
 #include <app/context_menu.h>
 #include <app/layout.h>
 #include <app/widget.h>

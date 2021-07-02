@@ -1,4 +1,4 @@
-#include <app/app.h>
+#include <app/application.h>
 #include <app/widget.h>
 #include <app/window.h>
 #include <graphics/rect_set.h>
