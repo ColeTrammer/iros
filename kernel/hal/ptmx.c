@@ -358,7 +358,7 @@ static int slave_ioctl(struct fs_device *device, unsigned long request, void *ar
             *i = data->index;
             return 0;
         }
-        case TIOSCTTY: {
+        case TIOCSCTTY: {
             int ret = 0;
             mutex_lock(&data->device->lock);
             struct process *current = get_current_task()->process;

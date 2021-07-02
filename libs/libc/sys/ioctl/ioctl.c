@@ -11,7 +11,7 @@ int ioctl(int fd, unsigned long request, ...) {
     switch (request) {
         case TISATTY:
         case TIOCNOTTY:
-        case TIOSCTTY:
+        case TIOCSCTTY:
         case TCIOFFI:
         case TCOOFFI:
         case TCIONI:

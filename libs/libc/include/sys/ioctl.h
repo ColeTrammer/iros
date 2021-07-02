@@ -12,7 +12,7 @@
 #define TIOCSWINSZ 9
 #define TGETNUM    10
 #define TIOCNOTTY  11
-#define TIOSCTTY   12
+#define TIOCSCTTY  12
 #define TCIOFFI    13
 #define TCOOFFI    14
 #define TCIONI     15
