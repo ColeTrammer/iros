@@ -11,6 +11,8 @@ public:
     Vector<UniquePtr<MouseEvent>> notify_mouse_event(int buttons, int x, int y, int z);
 
     int prev_buttons() const { return m_prev.buttons_down(); }
+    int prev_x() const { return m_prev.x(); }
+    int prev_y() const { return m_prev.y(); }
 
 private:
     class MousePress {

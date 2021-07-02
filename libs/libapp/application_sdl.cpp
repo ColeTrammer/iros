@@ -60,6 +60,19 @@ void SDLApplication::on_sdl_window_event(const SDL_Event& event) {
     }
 }
 
+static int translate_sdl_button(uint8_t button) {
+    switch (button) {
+        case SDL_BUTTON_LEFT:
+            return MouseButton::Left;
+        case SDL_BUTTON_MIDDLE:
+            return MouseButton::Middle;
+        case SDL_BUTTON_RIGHT:
+            return MouseButton::Right;
+        default:
+            return 0;
+    }
+}
+
 void SDLApplication::run_sdl() {
     SDL_SetMainReady();
     assert(SDL_Init(SDL_INIT_VIDEO) == 0);
@@ -74,6 +87,57 @@ void SDLApplication::run_sdl() {
             case SDL_WINDOWEVENT:
                 on_sdl_window_event(event);
                 break;
+            case SDL_MOUSEBUTTONDOWN:
+            case SDL_MOUSEBUTTONUP: {
+                auto button = translate_sdl_button(event.button.button);
+                if (!button) {
+                    return;
+                }
+
+                auto buttons_down = Application::the().mouse_tracker().prev_buttons();
+                if (event.button.state == SDL_PRESSED) {
+                    buttons_down |= button;
+                } else {
+                    buttons_down &= ~button;
+                }
+
+                auto events = Application::the().mouse_tracker().notify_mouse_event(buttons_down, event.button.x, event.button.y, 0);
+                auto maybe_target_window = Window::find_by_wid(event.button.windowID);
+                if (!maybe_target_window) {
+                    return;
+                }
+
+                for (auto& event : events) {
+                    EventLoop::queue_event(*maybe_target_window, move(event));
+                }
+                break;
+            }
+            case SDL_MOUSEWHEEL: {
+                auto& tracker = Application::the().mouse_tracker();
+                auto events = tracker.notify_mouse_event(tracker.prev_buttons(), tracker.prev_x(), tracker.prev_y(), -event.wheel.y);
+                auto maybe_target_window = Window::find_by_wid(event.button.windowID);
+                if (!maybe_target_window) {
+                    return;
+                }
+
+                for (auto& event : events) {
+                    EventLoop::queue_event(*maybe_target_window, move(event));
+                }
+                break;
+            }
+            case SDL_MOUSEMOTION: {
+                auto& tracker = Application::the().mouse_tracker();
+                auto events = tracker.notify_mouse_event(tracker.prev_buttons(), event.motion.x, event.motion.y, 0);
+                auto maybe_target_window = Window::find_by_wid(event.button.windowID);
+                if (!maybe_target_window) {
+                    return;
+                }
+
+                for (auto& event : events) {
+                    EventLoop::queue_event(*maybe_target_window, move(event));
+                }
+                break;
+            }
             default:
                 break;
         }
