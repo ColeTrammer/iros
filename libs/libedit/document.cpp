@@ -4,6 +4,7 @@
 #include <edit/panel.h>
 #include <errno.h>
 #include <eventloop/event.h>
+#include <ext/file.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,23 +17,20 @@ static inline int isword(int c) {
 }
 
 UniquePtr<Document> Document::create_from_stdin(const String& path, Panel& panel) {
-    Vector<Line> lines;
-    char* line = nullptr;
-    size_t line_max = 0;
-    ssize_t line_length;
-    while ((line_length = getline(&line, &line_max, stdin)) != -1) {
-        char* trailing_newline = strchr(line, '\n');
-        if (trailing_newline) {
-            *trailing_newline = '\0';
-        }
+    auto file = Ext::File(stdin);
 
-        lines.add(Line(String(line)));
-    }
+    Vector<Line> lines;
+    auto result = file.read_all_lines(
+        [&](auto line_string) -> bool {
+            lines.add(Line(move(line_string)));
+            return true;
+        },
+        Ext::StripTrailingNewlines::Yes);
 
     UniquePtr<Document> ret;
 
-    if (ferror(stdin)) {
-        panel.send_status_message(String::format("error reading stdin: `%s'", strerror(errno)));
+    if (!result) {
+        panel.send_status_message(String::format("error reading stdin: `%s'", strerror(file.error())));
         ret = Document::create_empty(panel);
         ret->set_name(path);
     } else {
@@ -44,7 +42,7 @@ UniquePtr<Document> Document::create_from_stdin(const String& path, Panel& panel
 }
 
 UniquePtr<Document> Document::create_from_file(const String& path, Panel& panel) {
-    FILE* file = fopen(path.string(), "r");
+    auto file = Ext::File::create(path, "r");
     if (!file) {
         if (errno == ENOENT) {
             panel.send_status_message(String::format("new file: `%s'", path.string()));
@@ -55,28 +53,23 @@ UniquePtr<Document> Document::create_from_file(const String& path, Panel& panel)
     }
 
     Vector<Line> lines;
-    char* line = nullptr;
-    size_t line_max = 0;
-    ssize_t line_length;
-    while ((line_length = getline(&line, &line_max, file)) != -1) {
-        char* trailing_newline = strchr(line, '\n');
-        if (trailing_newline) {
-            *trailing_newline = '\0';
-        }
-
-        lines.add(Line(String(line)));
-    }
+    auto result = file->read_all_lines(
+        [&](auto line_string) -> bool {
+            lines.add(move(line_string));
+            return true;
+        },
+        Ext::StripTrailingNewlines::Yes);
 
     UniquePtr<Document> ret;
 
-    if (ferror(file)) {
-        panel.send_status_message(String::format("error reading file: `%s'", path.string()));
+    if (!result) {
+        panel.send_status_message(String::format("error reading file: `%s': `%s'", path.string(), strerror(file->error())));
         ret = Document::create_empty(panel);
     } else {
         ret = make_unique<Document>(move(lines), path, panel, InputMode::Document);
     }
 
-    if (fclose(file)) {
+    if (!file->close()) {
         panel.send_status_message(String::format("error closing file: `%s'", path.string()));
     }
 
