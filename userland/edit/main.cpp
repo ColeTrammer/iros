@@ -7,9 +7,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#ifdef __os_2__
 #include "app_panel.h"
-#endif /* __os_2__ */
 #include "terminal_panel.h"
 
 void print_usage_and_exit(const char* s) {
@@ -61,7 +59,6 @@ int main(int argc, char** argv) {
         return 0;
     };
 
-#ifdef __os_2__
     if (use_graphics_mode) {
         auto app = App::Application::create();
 
@@ -80,7 +77,6 @@ int main(int argc, char** argv) {
         app->enter();
         return 0;
     }
-#endif /* __os_2__ */
 
     TerminalPanel panel;
     return make_document(panel);
