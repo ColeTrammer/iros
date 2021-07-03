@@ -47,8 +47,12 @@ public:
     void render(Document& document, Panel& panel, int col_offset, int row_in_panel) const;
 
 private:
+    void compute_rendered_contents(Document& document, Panel& panel) const;
+
     String m_contents;
+    mutable String m_rendered_contents;
     Vector<CharacterMetadata> m_metadata;
+    mutable Vector<CharacterMetadata> m_rendered_metadata;
 };
 
 struct LineSplitResult {

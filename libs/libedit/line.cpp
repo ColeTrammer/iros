@@ -133,39 +133,53 @@ void Line::clear_syntax_highlighting() {
     }
 }
 
-void Line::render(Document& document, Panel& panel, int col_offset, int row_in_panel) const {
+void Line::compute_rendered_contents(Document& document, Panel& panel) const {
+    m_rendered_contents.clear();
+    m_rendered_metadata.clear();
+
     int col_position = 0;
-    int line_index = index_of_col_position(col_offset);
-    while (line_index < length() && col_position < panel.cols_at_row(row_in_panel)) {
+    for (int line_index = 0; line_index < length(); line_index++) {
         char c = char_at(line_index);
         auto metadata = metadata_at(line_index);
         if (c == '\t') {
-            int num_spaces = tab_width - ((col_position + col_offset) % tab_width);
-            for (int i = 0; col_position < panel.cols_at_row(row_in_panel) && i < num_spaces; i++) {
-                panel.set_text_at(row_in_panel, col_position++, ' ', metadata);
+            int num_spaces = tab_width - (col_position % tab_width);
+            for (int i = 0; i < num_spaces; i++) {
+                m_rendered_contents += String(' ');
+                m_rendered_metadata.add(metadata);
             }
+            col_position += num_spaces;
         } else {
-            panel.set_text_at(row_in_panel, col_position++, c, metadata);
+            m_rendered_contents += String(c);
+            m_rendered_metadata.add(metadata);
+            col_position++;
         }
 
-        line_index++;
-
-        if (document.preview_auto_complete() && document.selection().empty() && row_in_panel == panel.cursor_row() &&
-            col_position == panel.cursor_col()) {
+        if (document.preview_auto_complete() && document.selection().empty() && this == &document.line_at_cursor() &&
+            document.cursor_col_position() == col_position) {
             auto suggestions = panel.get_suggestions();
             if (suggestions.suggestion_count() == 1) {
                 auto& text = suggestions.suggestion_list().first();
                 int length_to_write = text.size() - suggestions.suggestion_offset();
                 CharacterMetadata preview_metadata(CharacterMetadata::Flags::AutoCompletePreview);
-                for (int i = 0; col_position < panel.cols_at_row(row_in_panel) && i < length_to_write; i++) {
-                    panel.set_text_at(row_in_panel, col_position++, text[suggestions.suggestion_offset() + i], preview_metadata);
+                for (int i = 0; i < length_to_write; i++) {
+                    m_rendered_contents += String(text[suggestions.suggestion_offset() + i]);
+                    m_rendered_metadata.add(preview_metadata);
                 }
-
-                if (col_position >= panel.cols_at_row(row_in_panel)) {
-                    break;
-                }
+                col_position += length_to_write;
             }
         }
+    }
+}
+
+void Line::render(Document& document, Panel& panel, int col_offset, int row_in_panel) const {
+    compute_rendered_contents(document, panel);
+
+    int col_position;
+    for (col_position = 0;
+         static_cast<size_t>(col_offset + col_position) < m_rendered_contents.size() && col_position < panel.cols_at_row(row_in_panel);
+         col_position++) {
+        panel.set_text_at(row_in_panel, col_position, m_rendered_contents[col_offset + col_position],
+                          m_rendered_metadata[col_offset + col_position]);
     }
 
     for (; col_position < panel.cols_at_row(row_in_panel); col_position++) {
