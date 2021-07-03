@@ -155,7 +155,7 @@ void Line::compute_rendered_contents(Document& document, Panel& panel) const {
         }
 
         if (document.preview_auto_complete() && document.selection().empty() && this == &document.line_at_cursor() &&
-            document.cursor_col_position() == col_position) {
+            line_index + 1 == document.index_into_line_at_cursor()) {
             auto suggestions = panel.get_suggestions();
             if (suggestions.suggestion_count() == 1) {
                 auto& text = suggestions.suggestion_list().first();

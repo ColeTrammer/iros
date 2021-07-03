@@ -1,5 +1,6 @@
 #pragma once
 
+#include <edit/cursor.h>
 #include <edit/document_type.h>
 #include <edit/forward.h>
 #include <edit/line.h>
@@ -32,8 +33,7 @@ public:
     static UniquePtr<Document> create_single_line(Panel& panel, String text = "");
 
     struct StateSnapshot {
-        int absolute_cursor_row { 0 };
-        int absolute_cursor_col { 0 };
+        Cursor cursor;
         int max_cursor_col { 0 };
         bool document_was_modified { false };
         Selection selection;
@@ -81,9 +81,6 @@ public:
     bool needs_display() const { return m_needs_display; }
     void set_needs_display() { m_needs_display = true; }
 
-    int cursor_col_position() const;
-    int cursor_row_position() const;
-
     bool modified() const { return m_document_was_modified; }
 
     const String& name() const { return m_name; }
@@ -116,12 +113,15 @@ public:
 
     Line& line_at_cursor();
     const Line& line_at_cursor() const { return const_cast<Document&>(*this).line_at_cursor(); }
-    int line_index_at_cursor() const;
+    int index_into_line_at_cursor() const;
     int index_into_line(int index_of_line, int position) const;
     int index_of_line_at_cursor() const;
     int index_of_line_at_position(int position) const;
     char char_at_cursor() const;
     int num_lines() const { return m_lines.size(); }
+
+    int cursor_col_on_panel() const;
+    int cursor_row_on_panel() const;
 
     bool cursor_at_document_start() const;
     bool cursor_at_document_end() const;
@@ -264,6 +264,7 @@ private:
     int m_max_cursor_col { 0 };
     bool m_document_was_modified { false };
     Selection m_selection;
+    Cursor m_cursor;
 
     int m_max_undo_stack { 50 };
     bool m_show_line_numbers { false };

@@ -32,13 +32,8 @@ public:
     virtual void set_clipboard_contents(String text, bool is_whole_line) override;
     virtual String clipboard_contents(bool& is_whole_line) const override;
 
-    virtual void set_cursor(int row, int col) override;
-
     virtual Edit::Suggestions get_suggestions() const override;
     virtual void handle_suggestions(const Edit::Suggestions& suggestions) override;
-
-    virtual int cursor_col() const { return m_cursor_col; }
-    virtual int cursor_row() const { return m_cursor_row; }
 
     void set_coordinates(int rows, int max_rows, int max_cols);
     bool quit_by_interrupt() const { return m_quit_by_interrupt; }
@@ -100,8 +95,6 @@ private:
     int m_max_rows { 0 };
     int m_max_cols { 0 };
     int m_absolute_row_position { -1 };
-    int m_cursor_row { 0 };
-    int m_cursor_col { 0 };
     int m_visible_cursor_row { 0 };
     int m_visible_cursor_col { 0 };
     int m_exit_code { 0 };

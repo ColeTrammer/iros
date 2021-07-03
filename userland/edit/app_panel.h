@@ -54,11 +54,6 @@ public:
     virtual void set_clipboard_contents(String text, bool is_whole_line) override;
     virtual String clipboard_contents(bool& is_whole_line) const override;
 
-    virtual void set_cursor(int row, int col) override;
-
-    virtual int cursor_col() const { return m_cursor_col; }
-    virtual int cursor_row() const { return m_cursor_row; }
-
     virtual void do_open_prompt() override;
 
     virtual void render() override;
@@ -100,9 +95,6 @@ private:
     int m_cols { 0 };
     int m_last_drawn_cursor_col { -1 };
     int m_last_drawn_cursor_row { -1 };
-    int m_cursor_col { 0 };
-    int m_cursor_row { 0 };
-    bool m_cursor_dirty { true };
     bool m_main_panel { false };
     Vector<CellData> m_cells;
     SharedPtr<SearchWidget> m_search_widget;

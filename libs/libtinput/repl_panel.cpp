@@ -93,9 +93,6 @@ void ReplPanel::set_coordinates(int rows, int max_rows, int max_cols) {
         b = true;
     }
 
-    m_cursor_row = min(m_cursor_row, m_rows - 1);
-    m_cursor_col = min(m_cursor_col, cols_at_row(m_cursor_row));
-
     if (m_absolute_row_position != -1) {
         int old_row_position = m_absolute_row_position;
         if (old_row_position >= max_rows) {
@@ -228,12 +225,8 @@ void ReplPanel::document_did_change() {
             document()->display_if_needed();
         };
 
-        m_cursor_row = 0;
-        m_cursor_col = 0;
-
         clear();
         notify_line_count_changed();
-        document()->display();
     }
 }
 
@@ -296,12 +289,15 @@ const String& ReplPanel::prompt_at_row(int row) const {
 }
 
 void ReplPanel::draw_cursor() {
-    int desired_cursor_col = prompt_cols_at_row(m_cursor_row) + m_cursor_col;
-    if (m_cursor_row >= 0 && m_cursor_row < rows() && desired_cursor_col >= 0 && desired_cursor_col < max_cols()) {
-        if (m_cursor_row < m_visible_cursor_row) {
-            printf("\033[%dA", m_visible_cursor_row - m_cursor_row);
-        } else if (m_cursor_row > m_visible_cursor_row) {
-            printf("\033[%dB", m_cursor_row - m_visible_cursor_row);
+    int cursor_row = document()->cursor_row_on_panel();
+    int cursor_col = document()->cursor_col_on_panel();
+
+    int desired_cursor_col = prompt_cols_at_row(cursor_row) + cursor_col;
+    if (cursor_row >= 0 && cursor_row < rows() && desired_cursor_col >= 0 && desired_cursor_col < max_cols()) {
+        if (cursor_row < m_visible_cursor_row) {
+            printf("\033[%dA", m_visible_cursor_row - cursor_row);
+        } else if (cursor_row > m_visible_cursor_row) {
+            printf("\033[%dB", cursor_row - m_visible_cursor_row);
         }
 
         if (desired_cursor_col < m_visible_cursor_col) {
@@ -312,7 +308,7 @@ void ReplPanel::draw_cursor() {
 
         printf("\033[?25h");
 
-        m_visible_cursor_row = m_cursor_row;
+        m_visible_cursor_row = cursor_row;
         m_visible_cursor_col = desired_cursor_col;
     } else {
         printf("\033[?25l");
@@ -328,16 +324,6 @@ void ReplPanel::set_text_at(int row, int col, char c, Edit::CharacterMetadata me
         m_screen_info[index(row, col)] = { c, metadata };
         m_dirty_rows[row] = true;
     }
-}
-
-void ReplPanel::set_cursor(int row, int col) {
-    if (m_cursor_row == row && m_cursor_col == col) {
-        return;
-    }
-
-    m_cursor_row = row;
-    m_cursor_col = col;
-    draw_cursor();
 }
 
 void ReplPanel::print_char(char c, Edit::CharacterMetadata metadata) {
@@ -788,7 +774,7 @@ void ReplPanel::move_history_up() {
     set_document(move(new_document));
     document()->move_cursor_to_document_end();
     document()->scroll_cursor_into_view();
-    document()->display_if_needed();
+    document()->display();
 
     m_history_index--;
 }
@@ -806,7 +792,7 @@ void ReplPanel::move_history_down() {
     set_document(move(new_document));
     document()->move_cursor_to_document_end();
     document()->scroll_cursor_into_view();
-    document()->display_if_needed();
+    document()->display();
 
     m_history_index++;
 }
@@ -841,6 +827,7 @@ void ReplPanel::get_absolute_row_position() {
 
 int ReplPanel::enter() {
     get_absolute_row_position();
+    document()->display();
 
     fd_set set;
     for (;;) {
@@ -884,12 +871,12 @@ int ReplPanel::enter() {
                         continue;
                     }
 
-                    if (key_event.key == Edit::KeyPress::UpArrow && document->cursor_row_position() == 0) {
+                    if (key_event.key == Edit::KeyPress::UpArrow && document->index_of_line_at_cursor() == 0) {
                         move_history_up();
                         break;
                     }
 
-                    if (key_event.key == Edit::KeyPress::DownArrow && document->cursor_row_position() == document->num_lines() - 1) {
+                    if (key_event.key == Edit::KeyPress::DownArrow && document->index_of_line_at_cursor() == document->num_lines() - 1) {
                         move_history_down();
                         break;
                     }

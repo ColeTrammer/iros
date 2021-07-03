@@ -109,7 +109,7 @@ UniquePtr<Document> Document::create_single_line(Panel& panel, String text) {
 }
 
 Document::Document(Vector<Line> lines, String name, Panel& panel, InputMode mode)
-    : m_lines(move(lines)), m_name(move(name)), m_panel(panel), m_input_mode(mode) {
+    : m_lines(move(lines)), m_name(move(name)), m_panel(panel), m_input_mode(mode), m_cursor(*this, panel) {
     if (m_lines.empty()) {
         m_lines.add(Line(""));
     }
@@ -147,15 +147,15 @@ String Document::content_string() const {
 
 size_t Document::cursor_index_in_content_string() const {
     if (input_text_mode() && num_lines() == 1) {
-        return cursor_col_position();
+        return m_cursor.index_into_line();
     }
 
     size_t index = 0;
-    for (int i = 0; i < cursor_row_position(); i++) {
-        index += m_lines[i].length() + 1;
+    for (int i = 0; i < m_cursor.line_index(); i++) {
+        index += line_at_index(i).length() + 1;
     }
 
-    index += cursor_col_position();
+    index += m_cursor.index_into_line();
     return index;
 }
 
@@ -175,44 +175,43 @@ void Document::display() const {
 }
 
 Line& Document::line_at_cursor() {
-    return m_lines[m_panel.cursor_row() + m_row_offset];
+    return m_cursor.referenced_line();
 }
 
 char Document::char_at_cursor() const {
-    auto& line = line_at_cursor();
-    return line.char_at(line.index_of_col_position(cursor_col_position()));
+    return m_cursor.referenced_character();
 }
 
 int Document::index_of_line_at_cursor() const {
-    return cursor_row_position();
+    return m_cursor.line_index();
 }
 
 int Document::index_of_line_at_position(int position) const {
     return position + m_row_offset;
 }
 
-int Document::line_index_at_cursor() const {
-    return line_at_cursor().index_of_col_position(cursor_col_position());
+int Document::index_into_line_at_cursor() const {
+    return m_cursor.index_into_line();
 }
 
 int Document::index_into_line(int index_of_line, int position) const {
     return line_at_index(index_of_line).index_of_col_position(position + m_col_offset);
 }
 
-int Document::cursor_col_position() const {
-    return m_panel.cursor_col() + m_col_offset;
+int Document::cursor_col_on_panel() const {
+    return m_cursor.col_position() - m_col_offset;
 }
 
-int Document::cursor_row_position() const {
-    return m_panel.cursor_row() + m_row_offset;
+int Document::cursor_row_on_panel() const {
+    return m_cursor.row_position() - m_row_offset;
 }
 
 bool Document::cursor_at_document_start() const {
-    return cursor_row_position() == 0 && cursor_col_position() == 0;
+    return m_cursor.at_document_start();
 }
 
 bool Document::cursor_at_document_end() const {
-    return cursor_row_position() == num_lines() - 1 && cursor_col_position() == m_lines.last().length();
+    return m_cursor.at_document_end();
 }
 
 void Document::update_selection_state_for_mode(MovementMode mode) {
@@ -222,7 +221,7 @@ void Document::update_selection_state_for_mode(MovementMode mode) {
     }
 
     if (m_selection.empty()) {
-        m_selection.begin(cursor_row_position(), line_index_at_cursor());
+        m_selection.begin(index_of_line_at_cursor(), index_into_line_at_cursor());
     }
 }
 
@@ -230,11 +229,11 @@ void Document::move_cursor_right_by_word(MovementMode mode) {
     move_cursor_right(mode);
 
     auto& line = line_at_cursor();
-    while (line.index_of_col_position(cursor_col_position()) < line.length() && !isword(char_at_cursor())) {
+    while (index_into_line_at_cursor() < line.length() && !isword(char_at_cursor())) {
         move_cursor_right(mode);
     }
 
-    while (line.index_of_col_position(cursor_col_position()) < line.length() && isword(char_at_cursor())) {
+    while (index_into_line_at_cursor() < line.length() && isword(char_at_cursor())) {
         move_cursor_right(mode);
     }
 }
@@ -242,12 +241,12 @@ void Document::move_cursor_right_by_word(MovementMode mode) {
 void Document::move_cursor_left_by_word(MovementMode mode) {
     move_cursor_left(mode);
 
-    while (cursor_col_position() > 0 && !isword(char_at_cursor())) {
+    while (index_into_line_at_cursor() > 0 && !isword(char_at_cursor())) {
         move_cursor_left(mode);
     }
 
     bool found_word = false;
-    while (cursor_col_position() > 0 && isword(char_at_cursor())) {
+    while (index_into_line_at_cursor() > 0 && isword(char_at_cursor())) {
         move_cursor_left(mode);
         found_word = true;
     }
@@ -259,7 +258,7 @@ void Document::move_cursor_left_by_word(MovementMode mode) {
 
 void Document::move_cursor_right(MovementMode mode) {
     auto& line = line_at_cursor();
-    int index_into_line = line_index_at_cursor();
+    int index_into_line = index_into_line_at_cursor();
     if (index_into_line == line.length()) {
         if (&line == &m_lines.last()) {
             return;
@@ -270,9 +269,8 @@ void Document::move_cursor_right(MovementMode mode) {
         return;
     }
 
-    int new_col_position = line.col_position_of_index(index_into_line + 1);
-    int current_col_position = cursor_col_position();
-    int cols_to_advance = new_col_position - current_col_position;
+    int new_index_into_line = m_cursor.index_into_line() + 1;
+    int new_col_position = line.col_position_of_index(new_index_into_line);
 
     m_max_cursor_col = new_col_position;
 
@@ -286,19 +284,19 @@ void Document::move_cursor_right(MovementMode mode) {
 
     if (mode == MovementMode::Select) {
         if (m_selection.empty()) {
-            m_selection.begin(cursor_row_position(), line_index_at_cursor());
+            m_selection.begin(index_of_line_at_cursor(), index_into_line_at_cursor());
         }
-        m_selection.set_end_index(index_into_line + 1);
+        m_selection.set_end_index(new_index_into_line);
         line.metadata_at(index_into_line).invert_selected();
         set_needs_display();
     }
 
-    m_panel.set_cursor_col(m_panel.cursor_col() + cols_to_advance);
+    m_cursor.set_index_into_line(new_index_into_line);
 }
 
 void Document::move_cursor_left(MovementMode mode) {
     auto& line = line_at_cursor();
-    int index_into_line = line_index_at_cursor();
+    int index_into_line = index_into_line_at_cursor();
     if (index_into_line == 0) {
         if (&line == &m_lines.first()) {
             return;
@@ -309,9 +307,8 @@ void Document::move_cursor_left(MovementMode mode) {
         return;
     }
 
-    int new_col_position = line.col_position_of_index(index_into_line - 1);
-    int current_col_position = cursor_col_position();
-    int cols_to_recede = current_col_position - new_col_position;
+    int new_index_into_line = index_into_line - 1;
+    int new_col_position = line.col_position_of_index(new_index_into_line);
 
     m_max_cursor_col = new_col_position;
 
@@ -325,98 +322,105 @@ void Document::move_cursor_left(MovementMode mode) {
 
     if (mode == MovementMode::Select) {
         if (m_selection.empty()) {
-            m_selection.begin(cursor_row_position(), line_index_at_cursor());
+            m_selection.begin(index_of_line_at_cursor(), index_into_line_at_cursor());
         }
-        m_selection.set_end_index(index_into_line - 1);
-        line.metadata_at(index_into_line - 1).invert_selected();
+        m_selection.set_end_index(new_index_into_line);
+        line.metadata_at(new_index_into_line).invert_selected();
         set_needs_display();
     }
 
-    m_panel.set_cursor_col(m_panel.cursor_col() - cols_to_recede);
+    m_cursor.set_index_into_line(new_index_into_line);
 }
 
 void Document::move_cursor_down(MovementMode mode) {
-    int cursor_row = m_panel.cursor_row();
-    if (cursor_row + m_row_offset == m_lines.size() - 1) {
+    auto& prev_line = line_at_cursor();
+    if (&prev_line == &last_line()) {
         move_cursor_to_line_end(mode);
         return;
     }
 
-    auto& prev_line = line_at_cursor();
-    int prev_line_index = line_index_at_cursor();
+    auto prev_line_index = index_of_line_at_cursor();
+    auto prev_index_into_line = index_into_line_at_cursor();
+    auto prev_col_position = m_cursor.col_position();
     update_selection_state_for_mode(mode);
 
-    m_panel.set_cursor_row(cursor_row + 1);
+    auto new_line_index = prev_line_index + 1;
+    auto new_index_into_line = index_into_line(new_line_index, prev_col_position);
 
-    int new_line_index = clamp_cursor_to_line_end();
+    m_cursor.set(new_line_index, new_index_into_line);
+
+    new_index_into_line = clamp_cursor_to_line_end();
     if (mode == MovementMode::Select) {
-        prev_line.toggle_select_after(prev_line_index);
+        prev_line.toggle_select_after(prev_index_into_line);
         auto& new_line = line_at_cursor();
-        new_line.toggle_select_before(new_line_index);
-        m_selection.set_end_line(cursor_row_position());
-        m_selection.set_end_index(new_line_index);
+        new_line.toggle_select_before(new_index_into_line);
+        m_selection.set_end_line(new_line_index);
+        m_selection.set_end_index(new_index_into_line);
         set_needs_display();
     }
 }
 
 void Document::move_cursor_up(MovementMode mode) {
-    int cursor_row = m_panel.cursor_row();
-    if (cursor_row + m_row_offset == 0) {
+    auto& prev_line = line_at_cursor();
+    if (&prev_line == &first_line()) {
         move_cursor_to_line_start(mode);
         return;
     }
 
-    auto& prev_line = line_at_cursor();
-    int prev_line_index = line_index_at_cursor();
+    auto prev_line_index = index_of_line_at_cursor();
+    auto prev_index_into_line = index_into_line_at_cursor();
+    auto prev_col_position = m_cursor.col_position();
     update_selection_state_for_mode(mode);
 
-    m_panel.set_cursor_row(cursor_row - 1);
+    auto new_line_index = prev_line_index - 1;
+    auto new_index_into_line = index_into_line(new_line_index, prev_col_position);
 
-    int new_line_index = clamp_cursor_to_line_end();
+    m_cursor.set(new_line_index, new_index_into_line);
+
+    new_index_into_line = clamp_cursor_to_line_end();
     if (mode == MovementMode::Select) {
-        prev_line.toggle_select_before(prev_line_index);
+        prev_line.toggle_select_before(prev_index_into_line);
         auto& new_line = line_at_cursor();
-        new_line.toggle_select_after(new_line_index);
-        m_selection.set_end_line(cursor_row_position());
-        m_selection.set_end_index(new_line_index);
+        new_line.toggle_select_after(new_index_into_line);
+        m_selection.set_end_line(new_line_index);
+        m_selection.set_end_index(new_index_into_line);
         set_needs_display();
     }
 }
 
 int Document::clamp_cursor_to_line_end() {
     auto& line = line_at_cursor();
-    int current_col = cursor_col_position();
+    int current_col = m_cursor.col_position();
     int max_col = line.col_position_of_index(line.length());
     if (current_col == max_col) {
         return line.length();
     }
 
     if (current_col > max_col) {
-        m_panel.set_cursor_col(max_col - m_col_offset);
+        m_cursor.set_index_into_line(line.length());
         return line.length();
     }
 
     if (m_max_cursor_col > current_col) {
-        int new_line_index = line.index_of_col_position(m_max_cursor_col);
-        int new_cursor_col = line.col_position_of_index(new_line_index);
-        m_panel.set_cursor_col(new_cursor_col - m_col_offset);
-        return new_line_index;
+        int new_index_into_line = line.index_of_col_position(m_max_cursor_col);
+        m_cursor.set_index_into_line(new_index_into_line);
+        return new_index_into_line;
     }
 
-    return line_index_at_cursor();
+    return index_into_line_at_cursor();
 }
 
 void Document::move_cursor_to_line_start(MovementMode mode) {
     update_selection_state_for_mode(mode);
     if (mode == MovementMode::Select) {
         auto& line = line_at_cursor();
-        int line_index = line_index_at_cursor();
+        int line_index = index_into_line_at_cursor();
         line.toggle_select_before(line_index);
         m_selection.set_end_index(0);
         set_needs_display();
     }
 
-    m_panel.set_cursor_col(-m_col_offset);
+    m_cursor.set_index_into_line(0);
     m_max_cursor_col = 0;
 }
 
@@ -428,14 +432,14 @@ void Document::move_cursor_to_line_end(MovementMode mode) {
 
     update_selection_state_for_mode(mode);
     if (mode == MovementMode::Select) {
-        int line_index = line_index_at_cursor();
+        int line_index = index_into_line_at_cursor();
         line.toggle_select_after(line_index);
         m_selection.set_end_index(line.length());
         set_needs_display();
     }
 
     m_col_offset = 0;
-    m_panel.set_cursor_col(new_col_position);
+    m_cursor.set_index_into_line(line.length());
 }
 
 void Document::move_cursor_to_document_start(MovementMode mode) {
@@ -443,7 +447,7 @@ void Document::move_cursor_to_document_start(MovementMode mode) {
 }
 
 void Document::move_cursor_to_document_end(MovementMode mode) {
-    int last_line_index = m_lines.size() - 1;
+    auto last_line_index = m_lines.size() - 1;
     auto& last_line = m_lines.last();
     move_cursor_to(last_line_index, last_line.length(), mode);
 }
@@ -466,7 +470,6 @@ void Document::scroll_up(int times) {
     for (int i = 0; i < times; i++) {
         if (m_row_offset > 0) {
             m_row_offset--;
-            m_panel.set_cursor_row(m_panel.cursor_row() + 1);
             set_needs_display();
         }
     }
@@ -476,7 +479,6 @@ void Document::scroll_down(int times) {
     for (int i = 0; i < times; i++) {
         if (m_row_offset + m_panel.rows() < num_lines()) {
             m_row_offset++;
-            m_panel.set_cursor_row(m_panel.cursor_row() - 1);
             set_needs_display();
         }
     }
@@ -486,7 +488,6 @@ void Document::scroll_left(int times) {
     for (int i = 0; i < times; i++) {
         if (m_col_offset > 0) {
             m_col_offset--;
-            m_panel.set_cursor_col(m_panel.cursor_col() + 1);
             set_needs_display();
         }
     }
@@ -495,22 +496,21 @@ void Document::scroll_left(int times) {
 void Document::scroll_right(int times) {
     for (int i = 0; i < times; i++) {
         m_col_offset++;
-        m_panel.set_cursor_col(m_panel.cursor_col() - 1);
         set_needs_display();
     }
 }
 
 void Document::scroll_cursor_into_view() {
-    if (m_panel.cursor_row() < 0) {
-        scroll_up(-m_panel.cursor_row());
-    } else if (m_panel.cursor_row() >= m_panel.rows()) {
-        scroll_down(m_panel.cursor_row() - m_panel.rows() + 1);
+    if (cursor_row_on_panel() < 0) {
+        scroll_up(-cursor_row_on_panel());
+    } else if (cursor_row_on_panel() >= m_panel.rows()) {
+        scroll_down(cursor_row_on_panel() - m_panel.rows() + 1);
     }
 
-    if (m_panel.cursor_col() < 0) {
-        scroll_left(-m_panel.cursor_col());
-    } else if (m_panel.cursor_col() >= m_panel.cols_at_row(m_panel.cursor_row())) {
-        scroll_right(m_panel.cursor_col() - m_panel.cols_at_row(m_panel.cursor_row()) + 1);
+    if (cursor_col_on_panel() < 0) {
+        scroll_left(-cursor_col_on_panel());
+    } else if (cursor_col_on_panel() >= m_panel.cols_at_row(cursor_row_on_panel())) {
+        scroll_right(cursor_col_on_panel() - m_panel.cols_at_row(cursor_row_on_panel()) + 1);
     }
 }
 
@@ -553,9 +553,9 @@ void Document::delete_word(DeleteCharMode mode) {
         return;
     }
 
-    int line_index = line_index_at_cursor();
-    if ((mode == DeleteCharMode::Backspace && line_index == 0) ||
-        (mode == DeleteCharMode::Delete && line_index == line_at_cursor().length())) {
+    int index_into_line = index_into_line_at_cursor();
+    if ((mode == DeleteCharMode::Backspace && index_into_line == 0) ||
+        (mode == DeleteCharMode::Delete && index_into_line == line_at_cursor().length())) {
         delete_char(mode);
         return;
     }
@@ -622,7 +622,7 @@ void Document::undo() {
 }
 
 Document::StateSnapshot Document::snapshot_state() const {
-    return { cursor_row_position(), cursor_col_position(), m_max_cursor_col, m_document_was_modified, m_selection };
+    return { m_cursor, m_max_cursor_col, m_document_was_modified, m_selection };
 }
 
 Document::Snapshot Document::snapshot() const {
@@ -631,17 +631,18 @@ Document::Snapshot Document::snapshot() const {
 
 void Document::restore(Snapshot s) {
     m_lines = move(s.lines);
+    m_cursor = s.state.cursor;
     m_max_cursor_col = s.state.max_cursor_col;
     m_document_was_modified = s.state.document_was_modified;
     m_selection = s.state.selection;
 
     update_search_results();
-    m_panel.set_cursor(s.state.absolute_cursor_row - m_row_offset, s.state.absolute_cursor_col - m_col_offset);
     scroll_cursor_into_view();
     set_needs_display();
 }
 
 void Document::restore_state(const StateSnapshot& s) {
+    m_cursor = s.cursor;
     m_max_cursor_col = s.max_cursor_col;
     m_document_was_modified = s.document_was_modified;
 
@@ -649,7 +650,6 @@ void Document::restore_state(const StateSnapshot& s) {
     m_selection = s.selection;
     render_selection();
 
-    m_panel.set_cursor(s.absolute_cursor_row - m_row_offset, s.absolute_cursor_col - m_col_offset);
     scroll_cursor_into_view();
     set_needs_display();
 }
@@ -699,17 +699,17 @@ void Document::render_selection() {
 }
 
 void Document::move_cursor_to(int line_index, int index_into_line, MovementMode mode) {
-    while (cursor_row_position() < line_index) {
+    while (index_of_line_at_cursor() < line_index) {
         move_cursor_down(mode);
     }
-    while (cursor_row_position() > line_index) {
+    while (index_of_line_at_cursor() > line_index) {
         move_cursor_up(mode);
     }
 
-    while (line_index_at_cursor() < index_into_line) {
+    while (index_into_line_at_cursor() < index_into_line) {
         move_cursor_right(mode);
     }
-    while (line_index_at_cursor() > index_into_line) {
+    while (index_into_line_at_cursor() > index_into_line) {
         move_cursor_left(mode);
     }
 }
@@ -884,15 +884,6 @@ void Document::set_show_line_numbers(bool b) {
 }
 
 void Document::notify_panel_size_changed() {
-    while (m_panel.cursor_row() >= m_panel.rows()) {
-        move_cursor_up();
-    }
-
-    clamp_cursor_to_line_end();
-    while (m_panel.cursor_col() >= m_panel.cols_at_row(m_panel.cursor_row())) {
-        move_cursor_left();
-    }
-
     display();
 }
 
@@ -911,13 +902,12 @@ void Document::go_to_line() {
     }
 
     clear_selection();
+    m_cursor.set_line_index(line_number - 1);
 
     int screen_midpoint = m_panel.rows() / 2;
     if (line_number - 1 < screen_midpoint) {
-        m_panel.set_cursor_row(line_number - 1);
         m_row_offset = 0;
     } else {
-        m_panel.set_cursor_row(screen_midpoint);
         m_row_offset = line_number - 1 - screen_midpoint;
     }
 
@@ -1062,7 +1052,7 @@ void Document::move_cursor_to_next_search_match() {
         }
 
         auto& line = line_at_cursor();
-        int line_index = line_index_at_cursor();
+        int line_index = index_into_line_at_cursor();
         if (strstr(line.contents().string() + line_index, m_search_text.string()) == line.contents().string() + line_index) {
             for (size_t i = 0; i < m_search_text.size(); i++) {
                 move_cursor_right(MovementMode::Select);
@@ -1085,7 +1075,7 @@ void Document::swap_lines_at_cursor(SwapDirection direction) {
 void Document::select_word_at_cursor() {
     bool was_space = isspace(char_at_cursor());
     bool was_word = isword(char_at_cursor());
-    while (line_index_at_cursor() > 0) {
+    while (index_into_line_at_cursor() > 0) {
         move_cursor_left(MovementMode::Move);
         if (isspace(char_at_cursor()) != was_space || isword(char_at_cursor()) != was_word) {
             move_cursor_right(MovementMode::Move);
@@ -1093,7 +1083,7 @@ void Document::select_word_at_cursor() {
         }
     }
 
-    while (line_index_at_cursor() < line_at_cursor().length()) {
+    while (index_into_line_at_cursor() < line_at_cursor().length()) {
         move_cursor_right(MovementMode::Select);
         if (isspace(char_at_cursor()) != was_space || isword(char_at_cursor()) != was_word) {
             break;

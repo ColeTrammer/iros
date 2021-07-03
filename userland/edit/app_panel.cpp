@@ -141,7 +141,7 @@ void AppPanel::enter_search(String starting_text) {
 }
 
 void AppPanel::notify_now_is_a_good_time_to_draw_cursor() {
-    if (m_cursor_dirty) {
+    if (document()->cursor_col_on_panel() != m_last_drawn_cursor_col || document()->cursor_row_on_panel() != m_last_drawn_cursor_row) {
         flush();
     }
 }
@@ -171,16 +171,6 @@ String AppPanel::clipboard_contents(bool& is_whole_line) const {
     return move(ret);
 }
 
-void AppPanel::set_cursor(int row, int col) {
-    if (m_cursor_row == row && m_cursor_col == col) {
-        return;
-    }
-
-    m_cursor_row = row;
-    m_cursor_col = col;
-    m_cursor_dirty = true;
-}
-
 void AppPanel::do_open_prompt() {}
 
 void AppPanel::render_cursor(Renderer& renderer) {
@@ -188,15 +178,17 @@ void AppPanel::render_cursor(Renderer& renderer) {
         return;
     }
 
-    int cursor_x = m_cursor_col * col_width();
-    int cursor_y = m_cursor_row * row_height();
+    int cursor_col = document()->cursor_col_on_panel();
+    int cursor_row = document()->cursor_row_on_panel();
+
+    int cursor_x = cursor_col * col_width();
+    int cursor_y = cursor_row * row_height();
     for (int y = cursor_y; y < cursor_y + row_height(); y++) {
         renderer.pixels().put_pixel(cursor_x, y, ColorValue::White);
     }
 
-    m_last_drawn_cursor_col = m_cursor_col;
-    m_last_drawn_cursor_row = m_cursor_row;
-    m_cursor_dirty = false;
+    m_last_drawn_cursor_col = cursor_col;
+    m_last_drawn_cursor_row = cursor_row;
 }
 
 void AppPanel::render_cell(Renderer& renderer, int x, int y, CellData& cell) {

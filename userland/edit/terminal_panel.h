@@ -30,11 +30,6 @@ public:
     virtual void set_clipboard_contents(String text, bool is_whole_line) override;
     virtual String clipboard_contents(bool& is_whole_line) const override;
 
-    virtual void set_cursor(int row, int col) override;
-
-    virtual int cursor_col() const { return m_cursor_col; }
-    virtual int cursor_row() const { return m_cursor_row; }
-
     void set_coordinates(int row_offset, int col_offset, int rows, int cols);
 
     int col_offset() const { return m_col_offset; }
@@ -81,8 +76,6 @@ private:
     Edit::CharacterMetadata m_last_metadata_rendered;
     int m_rows { 0 };
     int m_cols { 0 };
-    int m_cursor_row { 0 };
-    int m_cursor_col { 0 };
     int m_row_offset { 0 };
     int m_col_offset { 0 };
     int m_cols_needed_for_line_numbers { 0 };

@@ -254,8 +254,10 @@ int TerminalPanel::cols() const {
 }
 
 void TerminalPanel::draw_cursor() {
-    if (m_cursor_row >= 0 && m_cursor_row < rows() && m_cursor_col >= 0 && m_cursor_col < cols()) {
-        printf("\033[%d;%dH\033[?25h", m_row_offset + m_cursor_row + 1, m_col_offset + m_cursor_col + m_cols_needed_for_line_numbers + 1);
+    auto cursor_row = document()->cursor_row_on_panel();
+    auto cursor_col = document()->cursor_col_on_panel();
+    if (cursor_row >= 0 && cursor_row < rows() && cursor_col >= 0 && cursor_col < cols()) {
+        printf("\033[%d;%dH\033[?25h", m_row_offset + cursor_row + 1, m_col_offset + cursor_col + m_cols_needed_for_line_numbers + 1);
     } else {
         printf("\033[?25l");
     }
@@ -276,7 +278,11 @@ void TerminalPanel::draw_status_message() {
     }
 
     auto& name = document()->name().is_empty() ? String("[Unamed File]") : document()->name();
-    auto position_string = String::format("%d,%d", document()->cursor_row_position() + 1, document()->cursor_col_position() + 1);
+
+    auto cursor_row_position = document()->cursor_row_on_panel() + document()->row_offset();
+    auto cursor_col_position = document()->cursor_col_on_panel() + document()->col_offset();
+
+    auto position_string = String::format("%d,%d", cursor_row_position + 1, cursor_col_position + 1);
     auto status_rhs = String::format("%s%s [%s] %9s", name.string(), document()->modified() ? "*" : " ",
                                      document_type_to_string(document()->type()).string(), position_string.string());
 
@@ -303,16 +309,6 @@ void TerminalPanel::set_text_at(int row, int col, char c, Edit::CharacterMetadat
         m_screen_info[index(row, col)] = { c, metadata };
         m_dirty_rows[row] = true;
     }
-}
-
-void TerminalPanel::set_cursor(int row, int col) {
-    if (m_cursor_row == row && m_cursor_col == col) {
-        return;
-    }
-
-    m_cursor_row = row;
-    m_cursor_col = col;
-    draw_cursor();
 }
 
 void TerminalPanel::print_char(char c, Edit::CharacterMetadata metadata) {
@@ -822,6 +818,7 @@ exit_search:
 }
 
 void TerminalPanel::notify_now_is_a_good_time_to_draw_cursor() {
+    draw_cursor();
     draw_status_message();
     fflush(stdout);
 }

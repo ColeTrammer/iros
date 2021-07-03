@@ -28,18 +28,11 @@ public:
     virtual void set_clipboard_contents(LIIM::String text, bool is_whole_line = false) = 0;
     virtual String clipboard_contents(bool& is_whole_line) const = 0;
 
-    virtual void set_cursor(int row, int col) = 0;
-    virtual int cursor_row() const = 0;
-    virtual int cursor_col() const = 0;
-
     virtual Suggestions get_suggestions() const;
     virtual void handle_suggestions(const Suggestions&) {}
 
     virtual void notify_line_count_changed() {}
     virtual void notify_now_is_a_good_time_to_draw_cursor() {}
-
-    void set_cursor_row(int row) { set_cursor(row, cursor_col()); }
-    void set_cursor_col(int col) { set_cursor(cursor_row(), col); }
 
     void set_document(UniquePtr<Document> document);
     UniquePtr<Document> take_document();
