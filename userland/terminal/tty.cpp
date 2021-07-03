@@ -201,6 +201,10 @@ void TTY::handle_escape_sequence() {
     bool starts_with_hashtag = m_escape_buffer[0] == '#';
     bool starts_with_lparen = m_escape_buffer[0] == '(';
 
+    if (m_escape_buffer[0] == ']') {
+        return;
+    }
+
 #ifdef TERMINAL_DEBUG
     fprintf(stderr, "^[%s\n", m_escape_buffer);
 #endif /* TERMINAL_DEBUG */
@@ -719,7 +723,7 @@ void TTY::on_next_escape_char(char c) {
         }
     }
 
-    if (m_escape_index == 0 && (c != '[' && c != '#' && c != '(')) {
+    if (m_escape_index == 0 && (c != '[' && c != '#' && c != '(' && c != ']')) {
         m_escape_index = 0;
         m_in_escape = false;
         return;
@@ -732,7 +736,8 @@ void TTY::on_next_escape_char(char c) {
     }
 
     m_escape_buffer[m_escape_index++] = c;
-    if (isalpha(c) || (m_escape_buffer[0] == '#' && isdigit(c))) {
+    if ((m_escape_buffer[0] != ']' && isalpha(c)) || (m_escape_buffer[0] == '#' && isdigit(c)) ||
+        (m_escape_buffer[0] == ']' && (c == '\a' || c == '\0'))) {
         m_escape_buffer[m_escape_index] = '\0';
         handle_escape_sequence();
         m_escape_index = 0;
