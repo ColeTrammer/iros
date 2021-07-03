@@ -2,6 +2,7 @@
 #include <app/window.h>
 #include <clipboard/connection.h>
 #include <ctype.h>
+#include <errno.h>
 #include <eventloop/event.h>
 #include <graphics/renderer.h>
 #include <unistd.h>
@@ -38,8 +39,11 @@ void TerminalWidget::initialize() {
         for (;;) {
             ssize_t ret = read(m_pseudo_terminal.master_fd(), buf, sizeof(buf));
             if (ret < 0) {
-                perror("terminal: read");
-                exit(1);
+                if (errno != EAGAIN) {
+                    perror("terminal: read");
+                    exit(1);
+                }
+                break;
             } else if (ret == 0) {
                 break;
             }

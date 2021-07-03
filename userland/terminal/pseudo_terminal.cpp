@@ -1,5 +1,6 @@
 #include <fcntl.h>
 #include <liim/string.h>
+#include <pwd.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
@@ -8,16 +9,33 @@
 #include "pseudo_terminal.h"
 
 PsuedoTerminal::PsuedoTerminal() {
-    m_master_fd = posix_openpt(O_RDWR);
+    passwd* pwd = getpwuid(getuid());
+    assert(pwd);
+
+    m_master_fd = posix_openpt(O_RDWR | O_NONBLOCK);
     if (m_master_fd == -1) {
         perror("terminal: posix_openpt");
         exit(1);
     }
 
+    if (grantpt(m_master_fd) < 0) {
+        perror("terminal: grantpt");
+        exit(1);
+    }
+
+    if (unlockpt(m_master_fd) < 0) {
+        perror("terminal: unlockpt");
+        exit(1);
+    }
+
     winsize ws;
+    memset(&ws, 0, sizeof(ws));
     ws.ws_row = m_rows;
     ws.ws_col = m_cols;
-    ioctl(m_master_fd, TIOCSWINSZ, &ws);
+    if (ioctl(m_master_fd, TIOCSWINSZ, &ws) < 0) {
+        perror("terminal: ioctl(TIOCSWINSZ)\n");
+        exit(1);
+    }
 
     m_child_pid = fork();
     if (m_child_pid < 0) {
@@ -26,7 +44,13 @@ PsuedoTerminal::PsuedoTerminal() {
     }
 
     if (m_child_pid == 0) {
-        int slave_fd = open(ptsname(m_master_fd), O_RDWR);
+        char* slave_path = ptsname(m_master_fd);
+        if (!slave_path) {
+            perror("terminal (fork): ptsname");
+            _exit(1);
+        }
+
+        int slave_fd = open(slave_path, O_RDWR);
         if (slave_fd == -1) {
             perror("terminal (fork): open");
             _exit(1);
@@ -34,11 +58,6 @@ PsuedoTerminal::PsuedoTerminal() {
 
         if (setsid() < 0) {
             perror("terminal (fork): setsid");
-            _exit(1);
-        }
-
-        if (tcsetpgrp(m_master_fd, getpid())) {
-            perror("terminal (fork): tcsetpgrp");
             _exit(1);
         }
 
@@ -58,12 +77,10 @@ PsuedoTerminal::PsuedoTerminal() {
         close(slave_fd);
         close(m_master_fd);
 
-        putenv((char*) "TERM=xterm");
-        execl("/bin/sh", "sh", NULL);
+        putenv((char*) "TERM=xterm-color");
+        execl(pwd->pw_shell, pwd->pw_shell, "-i", NULL);
         _exit(127);
     }
-
-    tcsetpgrp(m_master_fd, m_child_pid);
 }
 
 PsuedoTerminal::~PsuedoTerminal() {
@@ -222,6 +239,14 @@ void PsuedoTerminal::handle_key_event(key key, int flags, char ascii) {
             return;
         default:
             break;
+    }
+
+    if (key == KEY_ENTER) {
+        ascii = '\r';
+    } else if (key == KEY_TAB) {
+        ascii = '\t';
+    } else if (key == KEY_BACKSPACE) {
+        ascii = 127;
     }
 
     if (!ascii) {
