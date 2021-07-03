@@ -28,7 +28,7 @@ bool File::close() {
         }
         m_file = nullptr;
     }
-    return m_error;
+    return !m_error;
 }
 
 bool File::read(ByteBuffer& buffer) {
