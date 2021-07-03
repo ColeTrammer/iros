@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <ext/file.h>
+#include <liim/function.h>
 
 namespace Ext {
 UniquePtr<File> File::create(const String& path, const String& type) {

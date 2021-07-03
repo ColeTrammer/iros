@@ -2,6 +2,7 @@
 #include <ext/file.h>
 #include <ext/gzip.h>
 #include <ext/mapped_file.h>
+#include <liim/function.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

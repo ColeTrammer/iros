@@ -1,7 +1,7 @@
 #pragma once
 
 #include <liim/byte_buffer.h>
-#include <liim/function.h>
+#include <liim/forward.h>
 #include <liim/maybe.h>
 #include <liim/pointers.h>
 #include <liim/string.h>

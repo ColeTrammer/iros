@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <ext/file.h>
 #include <ext/gzip.h>
+#include <liim/function.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
