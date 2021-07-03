@@ -3,6 +3,7 @@
 namespace Edit {
 class CharacterMetadata;
 class Command;
+class Cursor;
 class Document;
 class KeyPress;
 class Line;

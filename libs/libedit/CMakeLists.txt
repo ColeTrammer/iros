@@ -1,5 +1,6 @@
 set(SOURCES
     command.cpp
+    cursor.cpp
     document_type.cpp
     document.cpp
     line.cpp
