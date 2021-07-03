@@ -5,6 +5,7 @@
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_events.h>
+#include <SDL2/SDL_hints.h>
 
 // #define SDL_DEBUG
 
@@ -43,6 +44,9 @@ void SDLApplication::on_sdl_window_event(const SDL_Event& event) {
 
     auto& window = **maybe_target_window;
     switch (event.window.event) {
+        case SDL_WINDOWEVENT_SHOWN:
+        case SDL_WINDOWEVENT_HIDDEN:
+            break;
         case SDL_WINDOWEVENT_CLOSE:
             EventLoop::queue_event(window.weak_from_this(), make_unique<WindowEvent>(WindowEvent::Type::Close));
             break;
@@ -51,6 +55,17 @@ void SDLApplication::on_sdl_window_event(const SDL_Event& event) {
             break;
         case SDL_WINDOWEVENT_SIZE_CHANGED:
             EventLoop::queue_event(window.weak_from_this(), make_unique<WindowEvent>(WindowEvent::Type::DidResize));
+            break;
+        case SDL_WINDOWEVENT_FOCUS_GAINED:
+            EventLoop::queue_event(window.weak_from_this(), make_unique<WindowStateEvent>(true));
+            break;
+        case SDL_WINDOWEVENT_FOCUS_LOST:
+            EventLoop::queue_event(window.weak_from_this(), make_unique<WindowStateEvent>(false));
+            break;
+        case SDL_WINDOWEVENT_MOVED:
+            break;
+        case SDL_WINDOWEVENT_TAKE_FOCUS:
+            SDL_SetWindowInputFocus(static_cast<SDLWindow&>(window.platform_window()).sdl_window());
             break;
         default:
 #ifdef SDL_DEBUG
@@ -344,6 +359,8 @@ static int translate_sdl_modifiers(uint16_t sdl_modifers) {
 
 void SDLApplication::run_sdl() {
     SDL_SetMainReady();
+    SDL_SetHint(SDL_HINT_FRAMEBUFFER_ACCELERATION, "0");
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software");
     assert(SDL_Init(SDL_INIT_VIDEO) == 0);
     SDL_StartTextInput();
 

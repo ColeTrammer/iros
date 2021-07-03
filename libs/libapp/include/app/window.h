@@ -62,6 +62,10 @@ public:
     bool has_alpha() const { return m_has_alpha; }
     bool removed() const { return m_removed; }
 
+    PlatformWindow& platform_window() { return *m_platform_window; }
+
+    wid_t parent_wid() const { return m_parent_wid; }
+
     void set_id(wid_t id) {
         assert(m_wid == 0);
         m_wid = id;
@@ -86,6 +90,7 @@ private:
     static void unregister_window(wid_t wid);
 
     wid_t m_wid { 0 };
+    wid_t m_parent_wid { 0 };
     WeakPtr<Widget> m_focused_widget;
     WeakPtr<ContextMenu> m_current_context_menu;
     SharedPtr<Widget> m_main_widget;

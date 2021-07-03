@@ -25,7 +25,7 @@ public:
 
     virtual ~Application();
 
-    void enter() { return m_loop.enter(); }
+    void enter();
     EventLoop& main_event_loop() { return m_loop; }
 
     MousePressTracker& mouse_tracker() { return m_mouse_tracker; }

@@ -47,7 +47,7 @@ Window::~Window() {
 }
 
 Window::Window(int x, int y, int width, int height, String name, bool has_alpha, WindowServer::WindowType type, wid_t parent_id)
-    : m_has_alpha(has_alpha) {
+    : m_parent_wid(parent_id), m_visible(type != WindowServer::WindowType::Frameless), m_has_alpha(has_alpha) {
     m_platform_window = Application::the().create_window(*this, x, y, width, height, move(name), has_alpha, type, parent_id);
     register_window(*this);
 }
@@ -126,7 +126,9 @@ void Window::on_event(const Event& event) {
             auto& mouse_event = static_cast<const MouseEvent&>(event);
             Widget* widget = nullptr;
 
-            hide_current_context_menu();
+            if (!mouse_event.mouse_move()) {
+                hide_current_context_menu();
+            }
             if (!mouse_event.button() && mouse_event.buttons_down()) {
                 if (!focused_widget()) {
                     return;
