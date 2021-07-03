@@ -17,8 +17,33 @@ File::~File() {
     close();
 }
 
-Maybe<ByteBuffer> read_all() {
+Maybe<ByteBuffer> File::read_all() {
     return {};
+}
+
+bool File::read_all_lines(Function<bool(String)> callback, StripTrailingNewlines strip_newlines) {
+    char* line = nullptr;
+    size_t line_max = 0;
+    ssize_t line_length;
+    while ((line_length = getline(&line, &line_max, m_file)) > 0) {
+        if (strip_newlines == StripTrailingNewlines::Yes && line[line_length - 1] == '\n') {
+            line[line_length--] = '\0';
+        }
+
+        auto line_string = String(line, static_cast<size_t>(line_length));
+        if (!callback(move(line_string))) {
+            break;
+        }
+    }
+    free(line);
+
+    if (ferror(m_file)) {
+        m_error = errno;
+        clearerr(m_file);
+        return false;
+    }
+
+    return true;
 }
 
 bool File::close() {
