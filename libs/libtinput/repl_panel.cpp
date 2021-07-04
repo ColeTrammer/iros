@@ -911,7 +911,7 @@ Maybe<String> ReplPanel::prompt(const String&) {
 void ReplPanel::enter_search(String) {}
 
 void ReplPanel::notify_now_is_a_good_time_to_draw_cursor() {
-    fflush(stdout);
+    draw_cursor();
 }
 
 void ReplPanel::set_clipboard_contents(String text, bool is_whole_line) {
