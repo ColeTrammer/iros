@@ -21,20 +21,25 @@ Line::~Line() {}
 int Line::col_position_of_index(const Document& document, const Panel& panel, int index) const {
     compute_rendered_contents(document, panel);
 
-    int position = 0;
-    for (int i = 0; i < index; i++) {
-        position += m_rendered_sizes[i];
+    if (index >= length()) {
+        if (m_rendered_spans.empty()) {
+            return 0;
+        }
+        return m_rendered_spans.last().rendered_end;
     }
-    return position;
+
+    if (index == 0) {
+        return 0;
+    }
+
+    return m_rendered_spans[index - 1].rendered_end;
 }
 
 int Line::index_of_col_position(const Document& document, const Panel& panel, int position) const {
     compute_rendered_contents(document, panel);
 
-    int current_position = 0;
     for (int index = 0; index < length(); index++) {
-        current_position += m_rendered_sizes[index];
-        if (position < current_position) {
+        if (position < m_rendered_spans[index].rendered_end) {
             return index;
         }
     }
@@ -71,26 +76,12 @@ int Line::search(const String& text) {
 
 void Line::compute_rendered_contents(const Document& document, const Panel& panel) const {
     m_rendered_contents.clear();
-    m_rendered_sizes.resize(length());
+    m_rendered_spans.resize(length());
 
     int col_position = 0;
-    for (int line_index = 0; line_index < length(); line_index++) {
-        char c = char_at(line_index);
-        if (c == '\t') {
-            int num_spaces = tab_width - (col_position % tab_width);
-            for (int i = 0; i < num_spaces; i++) {
-                m_rendered_contents += String(' ');
-            }
-            m_rendered_sizes[line_index] = num_spaces;
-            col_position += num_spaces;
-        } else {
-            m_rendered_contents += String(c);
-            m_rendered_sizes[line_index] = 1;
-            col_position++;
-        }
-
+    for (int line_index = 0; line_index <= length(); line_index++) {
         if (document.preview_auto_complete() && document.selection().empty() && this == &document.line_at_cursor() &&
-            line_index + 1 == document.index_into_line_at_cursor()) {
+            line_index == document.index_into_line_at_cursor()) {
             auto suggestions = panel.get_suggestions();
             if (suggestions.suggestion_count() == 1) {
                 auto& text = suggestions.suggestion_list().first();
@@ -98,9 +89,26 @@ void Line::compute_rendered_contents(const Document& document, const Panel& pane
                 for (int i = 0; i < length_to_write; i++) {
                     m_rendered_contents += String(text[suggestions.suggestion_offset() + i]);
                 }
-                m_rendered_sizes[line_index] += length_to_write;
                 col_position += length_to_write;
             }
+        }
+
+        if (line_index == length()) {
+            break;
+        }
+
+        char c = char_at(line_index);
+        if (c == '\t') {
+            int num_spaces = tab_width - (col_position % tab_width);
+            for (int i = 0; i < num_spaces; i++) {
+                m_rendered_contents += String(' ');
+            }
+            m_rendered_spans[line_index] = { col_position, col_position + num_spaces };
+            col_position += num_spaces;
+        } else {
+            m_rendered_contents += String(c);
+            m_rendered_spans[line_index] = { col_position, col_position + 1 };
+            col_position++;
         }
     }
 }
@@ -123,18 +131,20 @@ void Line::render(const Document& document, Panel& panel, DocumentTextRangeItera
         return;
     }
 
-    auto index_into_line_size_remaining =
-        m_rendered_sizes[index_into_line] - (col_offset - col_position_of_index(document, panel, index_into_line));
     metadata_iterator.advance_to_index_into_line(index_into_line);
 
-    while (col_position < panel.cols_at_row(row_in_panel) && index_into_line < length()) {
-        panel.set_text_at(row_in_panel, col_position, m_rendered_contents[col_offset + col_position], metadata_iterator.peek_metadata());
-
-        if (--index_into_line_size_remaining == 0) {
-            metadata_iterator.advance();
-            index_into_line_size_remaining = m_rendered_sizes.get_or(++index_into_line, 0);
+    while (col_position < panel.cols_at_row(row_in_panel) && static_cast<size_t>(col_offset + col_position) < m_rendered_contents.size()) {
+        CharacterMetadata metadata(CharacterMetadata::Flags::AutoCompletePreview);
+        if (index_into_line < length() && col_position + col_offset >= m_rendered_spans[index_into_line].rendered_start) {
+            metadata = metadata_iterator.peek_metadata();
         }
+        panel.set_text_at(row_in_panel, col_position, m_rendered_contents[col_offset + col_position], metadata);
+
         col_position++;
+        if (index_into_line < length() && col_position >= m_rendered_spans[index_into_line].rendered_end) {
+            index_into_line++;
+            metadata_iterator.advance();
+        }
     }
 
     blank_line_remaining();

@@ -38,9 +38,14 @@ public:
 private:
     void compute_rendered_contents(const Document& document, const Panel& panel) const;
 
+    struct IndexRenderedSpan {
+        int rendered_start { 0 };
+        int rendered_end { 0 };
+    };
+
     String m_contents;
     mutable String m_rendered_contents;
-    mutable Vector<int> m_rendered_sizes;
+    mutable Vector<IndexRenderedSpan> m_rendered_spans;
 };
 
 struct LineSplitResult {
