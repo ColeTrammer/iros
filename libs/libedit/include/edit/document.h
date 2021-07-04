@@ -144,6 +144,8 @@ public:
     StateSnapshot snapshot_state() const;
     void restore_state(const StateSnapshot& state_snapshot);
 
+    Cursor& cursor() { return m_cursor; }
+
     const Selection& selection() const { return m_selection; }
     void set_selection(Selection selection) { m_selection = move(selection); }
     void delete_selection();

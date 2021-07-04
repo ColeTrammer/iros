@@ -310,10 +310,10 @@ bool SwapLinesCommand::do_swap(SwapDirection direction) {
 
         if (direction == SwapDirection::Up) {
             document().rotate_lines_up(line_index - 1, line_index);
-            document().move_cursor_up();
+            document().cursor().set_line_index(line_index - 1);
         } else {
             document().rotate_lines_down(line_index, line_index + 1);
-            document().move_cursor_down();
+            document().cursor().set_line_index(line_index + 1);
         }
 
         document().set_needs_display();
@@ -333,7 +333,7 @@ bool SwapLinesCommand::do_swap(SwapDirection direction) {
         auto selection = document().selection();
         const_cast<Selection&>(document().selection()).clear();
 
-        document().move_cursor_up();
+        document().cursor().set_line_index(selection_start_line - 1);
         selection.set_start_line(selection_start_line - 1);
         selection.set_end_line(selection_end_line - 1);
 
@@ -343,7 +343,7 @@ bool SwapLinesCommand::do_swap(SwapDirection direction) {
         auto selection = document().selection();
         const_cast<Selection&>(document().selection()).clear();
 
-        document().move_cursor_down();
+        document().cursor().set_line_index(selection_start_line + 1);
         selection.set_start_line(selection_start_line + 1);
         selection.set_end_line(selection_end_line + 1);
 
