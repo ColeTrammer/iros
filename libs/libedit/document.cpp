@@ -18,6 +18,7 @@ static inline int isword(int c) {
 
 UniquePtr<Document> Document::create_from_stdin(const String& path, Panel& panel) {
     auto file = Ext::File(stdin);
+    file.set_should_close_file(false);
 
     Vector<Line> lines;
     auto result = file.read_all_lines(
