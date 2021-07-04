@@ -677,27 +677,21 @@ void Document::delete_selection() {
 
     move_cursor_to(line_start, index_start);
 
-    for (int li = line_end; li >= line_start; li--) {
-        auto& line = m_lines[li];
+    if (line_start == line_end) {
+        for (int i = index_end - 1; i >= index_start; i--) {
+            m_lines[line_start].remove_char_at(i);
+        }
+    } else {
+        auto split_end = m_lines[line_end].split_at(index_end);
+        remove_line(line_end);
 
-        int si = 0;
-        if (li == line_start) {
-            si = index_start;
+        for (int i = line_end - 1; i > line_start; i--) {
+            remove_line(i);
         }
 
-        int ei = line.length();
-        if (li == line_end) {
-            ei = index_end;
-        }
-
-        if (si == 0 && ei == line.length() && li != line_end) {
-            remove_line(li);
-            continue;
-        }
-
-        for (int i = ei - 1; i >= si; i--) {
-            line.remove_char_at(i);
-        }
+        auto split_start = m_lines[line_start].split_at(index_start);
+        m_lines[line_start] = split_start.first;
+        m_lines[line_start].combine_line(split_end.second);
     }
 
     set_needs_display();
