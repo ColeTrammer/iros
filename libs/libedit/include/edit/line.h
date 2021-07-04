@@ -10,14 +10,13 @@ constexpr int tab_width = 4;
 
 class Line {
 public:
-    Line(String contents);
+    explicit Line(String contents);
     ~Line();
 
     int length() const { return m_contents.size(); }
     bool empty() const { return m_contents.size() == 0; }
 
     const String& contents() const { return m_contents; }
-    const Vector<CharacterMetadata>& metadata() const { return m_metadata; }
 
     void insert_char_at(int position, char c);
     void remove_char_at(int position);
@@ -31,18 +30,7 @@ public:
 
     char char_at(int index) const { return contents()[index]; }
 
-    CharacterMetadata& metadata_at(int index) { return m_metadata[index]; }
-    const CharacterMetadata& metadata_at(int index) const { return m_metadata[index]; }
-
     int search(const String& text);
-    void clear_search();
-
-    void clear_selection();
-    void toggle_select_after(int index);
-    void toggle_select_before(int index);
-    void select_all();
-
-    void clear_syntax_highlighting();
 
     void render(Document& document, Panel& panel, int col_offset, int row_in_panel) const;
 
@@ -51,8 +39,6 @@ private:
 
     String m_contents;
     mutable String m_rendered_contents;
-    Vector<CharacterMetadata> m_metadata;
-    mutable Vector<CharacterMetadata> m_rendered_metadata;
 };
 
 struct LineSplitResult {

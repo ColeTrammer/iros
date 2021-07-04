@@ -6,6 +6,7 @@
 #include <edit/line.h>
 #include <edit/selection.h>
 #include <edit/suggestions.h>
+#include <edit/text_range_collection.h>
 #include <eventloop/forward.h>
 #include <liim/function.h>
 #include <liim/pointers.h>
@@ -187,6 +188,9 @@ public:
 
     bool execute_command(Command& command);
 
+    TextRangeCollection& syntax_highlighting_info() { return m_syntax_highlighting_info; }
+    const TextRangeCollection& syntax_highlighting_info() const { return m_syntax_highlighting_info; }
+
     Function<void()> on_change;
     Function<void()> on_submit;
     Function<void()> on_escape_press;
@@ -209,7 +213,6 @@ private:
 
     void go_to_line();
 
-    void render_selection();
     void swap_selection_start_and_cursor();
 
     void guess_type_from_name();
@@ -258,6 +261,8 @@ private:
 
     String m_search_text;
     int m_search_result_count { 0 };
+
+    TextRangeCollection m_syntax_highlighting_info;
 
     int m_row_offset { 0 };
     int m_col_offset { 0 };

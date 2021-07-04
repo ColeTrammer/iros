@@ -115,6 +115,9 @@ static int cpp_flags_for_token_type(CLanguage::CPPToken::Type type) {
 }
 
 static void highlight_cpp(Document& document) {
+    auto& range_collection = document.syntax_highlighting_info();
+    range_collection.clear();
+
     auto contents = document.content_string();
     CLanguage::CPPLexer lexer(contents.string(), contents.size());
     if (!lexer.lex(CLanguage::CPPLexMode::IncludeComments)) {
@@ -123,33 +126,7 @@ static void highlight_cpp(Document& document) {
 
     for (auto& token : lexer.tokens()) {
         int flags = cpp_flags_for_token_type(token.type);
-
-        int line_start = token.start_line;
-        int index_start = token.start_col;
-        int line_end = token.end_line;
-        int index_end = token.end_col;
-
-        for (int li = line_start; li <= line_end; li++) {
-            if (li == line_end && index_end == 0) {
-                break;
-            }
-
-            auto& line = document.line_at_index(li);
-
-            int si = 0;
-            if (li == line_start) {
-                si = index_start;
-            }
-
-            int ei = line.length();
-            if (li == line_end) {
-                ei = index_end;
-            }
-
-            for (int i = si; i < ei; i++) {
-                line.metadata_at(i).set_syntax_highlighting(flags);
-            }
-        }
+        range_collection.add({ token.start_line, token.start_col, token.end_line, token.end_col, { flags } });
     }
 }
 
@@ -197,41 +174,16 @@ static int c_flags_for_token_type(CLanguage::CToken::Type type) {
 }
 
 static void highlight_c(Document& document) {
+    auto& range_collection = document.syntax_highlighting_info();
+    range_collection.clear();
+
     auto contents = document.content_string();
     CLanguage::CLexer lexer(contents.string(), contents.size());
-    if (!lexer.lex(CLanguage::CLexMode::IncludeComments)) {
-        return;
-    }
+    lexer.lex(CLanguage::CLexMode::IncludeComments);
 
     for (auto& token : lexer.tokens()) {
         int flags = c_flags_for_token_type(token.type);
-
-        int line_start = token.start_line;
-        int index_start = token.start_col;
-        int line_end = token.end_line;
-        int index_end = token.end_col;
-
-        for (int li = line_start; li <= line_end; li++) {
-            if (li == line_end && index_end == 0) {
-                break;
-            }
-
-            auto& line = document.line_at_index(li);
-
-            int si = 0;
-            if (li == line_start) {
-                si = index_start;
-            }
-
-            int ei = line.length();
-            if (li == line_end) {
-                ei = index_end;
-            }
-
-            for (int i = si; i < ei; i++) {
-                line.metadata_at(i).set_syntax_highlighting(flags);
-            }
-        }
+        range_collection.add({ token.start_line, token.start_col, token.end_line, token.end_col, { flags } });
     }
 }
 
@@ -295,6 +247,9 @@ static int sh_flags_for_token_type(ShLexer& lexer, int index) {
 }
 
 static void highlight_sh(Document& document) {
+    auto& range_collection = document.syntax_highlighting_info();
+    range_collection.clear();
+
     auto contents = document.content_string();
     ShLexer lexer(contents.string(), contents.size());
     lexer.lex(LexComments::Yes);
@@ -336,22 +291,10 @@ static void highlight_sh(Document& document) {
             end_position = token.value().position();
         }
 
-        while ((line_index < document.num_lines()) &&
-               (line_index < end_line || (index_into_line < end_position && line_index == end_line))) {
-            auto& line = document.line_at_index(line_index);
-            if (line.empty()) {
-                line_index++;
-                continue;
-            }
+        range_collection.add({ line_index, index_into_line, end_line, end_position, { flags } });
 
-            line.metadata_at(index_into_line).set_syntax_highlighting(flags);
-            if (index_into_line == line.length() - 1) {
-                index_into_line = 0;
-                line_index++;
-            } else {
-                index_into_line++;
-            }
-        }
+        line_index = end_line;
+        index_into_line = end_position;
 
         if (i != lexer.tokens().size()) {
             flags = sh_flags_for_token_type(lexer, i);

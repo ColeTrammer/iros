@@ -34,6 +34,7 @@ UniquePtr<Document> Document::create_from_stdin(const String& path, Panel& panel
         ret = Document::create_empty(panel);
         ret->set_name(path);
     } else {
+        lines.add(Line(""));
         ret = make_unique<Document>(move(lines), path, panel, InputMode::Document);
     }
 
@@ -55,7 +56,7 @@ UniquePtr<Document> Document::create_from_file(const String& path, Panel& panel)
     Vector<Line> lines;
     auto result = file->read_all_lines(
         [&](auto line_string) -> bool {
-            lines.add(move(line_string));
+            lines.add(Line(move(line_string)));
             return true;
         },
         Ext::StripTrailingNewlines::Yes);
@@ -66,6 +67,7 @@ UniquePtr<Document> Document::create_from_file(const String& path, Panel& panel)
         panel.send_status_message(String::format("error reading file: `%s': `%s'", path.string(), strerror(file->error())));
         ret = Document::create_empty(panel);
     } else {
+        lines.add(Line(""));
         ret = make_unique<Document>(move(lines), path, panel, InputMode::Document);
     }
 
@@ -81,7 +83,7 @@ UniquePtr<Document> Document::create_from_text(Panel& panel, const String& text)
 
     Vector<Line> lines(lines_view.size());
     for (auto& line_view : lines_view) {
-        lines.add(String(line_view));
+        lines.add(Line(String(line_view)));
     }
 
     return make_unique<Document>(move(lines), "", panel, InputMode::InputText);
@@ -102,7 +104,12 @@ UniquePtr<Document> Document::create_single_line(Panel& panel, String text) {
 }
 
 Document::Document(Vector<Line> lines, String name, Panel& panel, InputMode mode)
-    : m_lines(move(lines)), m_name(move(name)), m_panel(panel), m_input_mode(mode), m_cursor(*this, panel) {
+    : m_lines(move(lines))
+    , m_name(move(name))
+    , m_panel(panel)
+    , m_input_mode(mode)
+    , m_syntax_highlighting_info(*this)
+    , m_cursor(*this, panel) {
     if (m_lines.empty()) {
         m_lines.add(Line(""));
     }
@@ -280,7 +287,6 @@ void Document::move_cursor_right(MovementMode mode) {
             m_selection.begin(index_of_line_at_cursor(), index_into_line_at_cursor());
         }
         m_selection.set_end_index(new_index_into_line);
-        line.metadata_at(index_into_line).invert_selected();
         set_needs_display();
     }
 
@@ -318,7 +324,6 @@ void Document::move_cursor_left(MovementMode mode) {
             m_selection.begin(index_of_line_at_cursor(), index_into_line_at_cursor());
         }
         m_selection.set_end_index(new_index_into_line);
-        line.metadata_at(new_index_into_line).invert_selected();
         set_needs_display();
     }
 
@@ -333,7 +338,6 @@ void Document::move_cursor_down(MovementMode mode) {
     }
 
     auto prev_line_index = index_of_line_at_cursor();
-    auto prev_index_into_line = index_into_line_at_cursor();
     auto prev_col_position = m_cursor.col_position();
     update_selection_state_for_mode(mode);
 
@@ -344,9 +348,6 @@ void Document::move_cursor_down(MovementMode mode) {
 
     new_index_into_line = clamp_cursor_to_line_end();
     if (mode == MovementMode::Select) {
-        prev_line.toggle_select_after(prev_index_into_line);
-        auto& new_line = line_at_cursor();
-        new_line.toggle_select_before(new_index_into_line);
         m_selection.set_end_line(new_line_index);
         m_selection.set_end_index(new_index_into_line);
         set_needs_display();
@@ -361,7 +362,6 @@ void Document::move_cursor_up(MovementMode mode) {
     }
 
     auto prev_line_index = index_of_line_at_cursor();
-    auto prev_index_into_line = index_into_line_at_cursor();
     auto prev_col_position = m_cursor.col_position();
     update_selection_state_for_mode(mode);
 
@@ -372,9 +372,6 @@ void Document::move_cursor_up(MovementMode mode) {
 
     new_index_into_line = clamp_cursor_to_line_end();
     if (mode == MovementMode::Select) {
-        prev_line.toggle_select_before(prev_index_into_line);
-        auto& new_line = line_at_cursor();
-        new_line.toggle_select_after(new_index_into_line);
         m_selection.set_end_line(new_line_index);
         m_selection.set_end_index(new_index_into_line);
         set_needs_display();
@@ -406,9 +403,6 @@ int Document::clamp_cursor_to_line_end() {
 void Document::move_cursor_to_line_start(MovementMode mode) {
     update_selection_state_for_mode(mode);
     if (mode == MovementMode::Select) {
-        auto& line = line_at_cursor();
-        int line_index = index_into_line_at_cursor();
-        line.toggle_select_before(line_index);
         m_selection.set_end_index(0);
         set_needs_display();
     }
@@ -425,8 +419,6 @@ void Document::move_cursor_to_line_end(MovementMode mode) {
 
     update_selection_state_for_mode(mode);
     if (mode == MovementMode::Select) {
-        int line_index = index_into_line_at_cursor();
-        line.toggle_select_after(line_index);
         m_selection.set_end_index(line.length());
         set_needs_display();
     }
@@ -641,7 +633,6 @@ void Document::restore_state(const StateSnapshot& s) {
 
     clear_selection();
     m_selection = s.selection;
-    render_selection();
 
     scroll_cursor_into_view();
     set_needs_display();
@@ -653,42 +644,6 @@ void Document::insert_text_at_cursor(const String& text) {
     }
 
     push_command<InsertCommand>(text);
-}
-
-void Document::render_selection() {
-    if (m_selection.empty()) {
-        return;
-    }
-
-    int line_start = m_selection.upper_line();
-    int index_start = m_selection.upper_index();
-    int line_end = m_selection.lower_line();
-    int index_end = m_selection.lower_index();
-
-    for (int li = line_start; li <= line_end; li++) {
-        auto& line = m_lines[li];
-
-        int si = 0;
-        if (li == line_start) {
-            si = index_start;
-        }
-
-        int ei = line.length();
-        if (li == line_end) {
-            ei = index_end;
-        }
-
-        if (si == 0 && ei == line.length()) {
-            line.select_all();
-            continue;
-        }
-
-        for (int i = si; i < ei; i++) {
-            line.metadata_at(i).set_selected(true);
-        }
-    }
-
-    set_needs_display();
 }
 
 void Document::move_cursor_to(int line_index, int index_into_line, MovementMode mode) {
@@ -787,9 +742,6 @@ String Document::selection_text() const {
 void Document::clear_selection() {
     if (!m_selection.empty()) {
         m_selection.clear();
-        for (auto& line : m_lines) {
-            line.clear_selection();
-        }
         set_needs_display();
     }
 }
@@ -985,9 +937,6 @@ void Document::quit() {
 }
 
 void Document::update_syntax_highlighting() {
-    for (auto& line : m_lines) {
-        line.clear_syntax_highlighting();
-    }
     highlight_document(*this);
 }
 
@@ -1018,9 +967,6 @@ void Document::clear_search_results() {
         return;
     }
 
-    for (auto& line : m_lines) {
-        line.clear_search();
-    }
     set_needs_display();
 }
 
