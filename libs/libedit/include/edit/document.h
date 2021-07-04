@@ -80,6 +80,12 @@ public:
     bool convert_tabs_to_spaces() const { return m_convert_tabs_to_spaces; }
     void set_convert_tabs_to_spaces(bool b) { m_convert_tabs_to_spaces = b; }
 
+    bool word_wrap_enabled() const { return m_word_wrap_enabled; }
+    void set_word_wrap_enabled(bool b) {
+        m_word_wrap_enabled = b;
+        set_needs_display();
+    }
+
     bool needs_display() const { return m_needs_display; }
     void set_needs_display() { m_needs_display = true; }
 
@@ -258,6 +264,8 @@ private:
 
     AutoCompleteMode m_auto_complete_mode { AutoCompleteMode::Never };
     bool m_preview_auto_complete { false };
+
+    bool m_word_wrap_enabled { true };
 
     Vector<UniquePtr<Command>> m_command_stack;
     int m_command_stack_index { 0 };
