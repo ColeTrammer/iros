@@ -20,6 +20,7 @@ public:
 
     ~File();
 
+    void set_should_close_file(bool b) { m_should_close_file = b; }
     int error() const {
         int error = m_error;
         const_cast<File&>(*this).m_error = 0;
@@ -38,5 +39,6 @@ public:
 private:
     FILE* m_file { nullptr };
     int m_error { 0 };
+    bool m_should_close_file { true };
 };
 }

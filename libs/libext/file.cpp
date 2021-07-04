@@ -14,7 +14,9 @@ UniquePtr<File> File::create(const String& path, const String& type) {
 File::File(FILE* file) : m_file(file) {}
 
 File::~File() {
-    close();
+    if (m_should_close_file) {
+        close();
+    }
 }
 
 Maybe<ByteBuffer> File::read_all() {
