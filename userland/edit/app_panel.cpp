@@ -226,30 +226,15 @@ void AppPanel::render() {
     Widget::render();
 }
 
-int AppPanel::index_into_line_at_position(int wx, int wy) const {
-    wx /= col_width();
-    wy /= row_height();
-
-    int index_of_line = clamp(document()->index_of_line_at_position(wy), 0, document()->num_lines() - 1);
-
-    return document()->index_into_line(index_of_line, wx);
-}
-
-int AppPanel::index_of_line_at_position(int, int wy) const {
-    wy /= row_height();
-
-    int index_of_line = document()->index_of_line_at_position(wy);
-    return clamp(index_of_line, 0, document()->num_lines() - 1);
-}
-
 void AppPanel::on_mouse_event(const App::MouseEvent& event) {
     if (!document()) {
         return;
     }
 
     auto event_copy = App::MouseEvent(event.mouse_event_type(), event.buttons_down(), event.x(), event.y(), event.z(), event.button());
-    event_copy.set_x(index_into_line_at_position(event.x(), event.y()));
-    event_copy.set_y(index_of_line_at_position(event.x(), event.y()));
+    auto text_index = document()->text_index_at_scrolled_position(event.y() / row_height(), event.x() / col_width());
+    event_copy.set_x(text_index.index_into_line());
+    event_copy.set_y(text_index.line_index());
 
     if (document()->notify_mouse_event(event_copy)) {
         return;

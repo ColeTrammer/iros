@@ -599,9 +599,10 @@ Vector<Variant<Edit::KeyPress, App::MouseEvent>> ReplPanel::read_input() {
 
                 R out_events;
                 for (auto& event : events) {
-                    event->set_y(
-                        clamp(document()->index_of_line_at_position(cy - m_absolute_row_position - 1), 0, document()->num_lines() - 1));
-                    event->set_x(document()->index_into_line(event->y(), cx - prompt_cols_at_row(event->y()) - 1));
+                    auto text_index = document()->text_index_at_scrolled_position(cy - m_absolute_row_position - 1,
+                                                                                  cx - prompt_cols_at_row(event->y()) - 1);
+                    event->set_y(text_index.line_index());
+                    event->set_x(text_index.index_into_line());
                     out_events.add(*event);
                 }
                 return out_events;

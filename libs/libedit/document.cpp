@@ -175,6 +175,16 @@ void Document::display() const {
     m_needs_display = false;
 }
 
+TextIndex Document::text_index_at_absolute_position(int row_position, int col_position) const {
+    auto line_index = clamp(row_position, 0, num_lines() - 1);
+    auto index_into_line = line_at_index(line_index).index_of_col_position(*this, m_panel, col_position);
+    return { line_index, index_into_line };
+}
+
+TextIndex Document::text_index_at_scrolled_position(int row_position, int col_position) const {
+    return text_index_at_absolute_position(row_position + m_row_offset, col_position + m_col_offset);
+}
+
 Line& Document::line_at_cursor() {
     return m_cursor.referenced_line();
 }
@@ -187,16 +197,8 @@ int Document::index_of_line_at_cursor() const {
     return m_cursor.line_index();
 }
 
-int Document::index_of_line_at_position(int position) const {
-    return position + m_row_offset;
-}
-
 int Document::index_into_line_at_cursor() const {
     return m_cursor.index_into_line();
-}
-
-int Document::index_into_line(int index_of_line, int position) const {
-    return line_at_index(index_of_line).index_of_col_position(*this, m_panel, position + m_col_offset);
 }
 
 int Document::cursor_col_on_panel() const {
@@ -338,19 +340,18 @@ void Document::move_cursor_down(MovementMode mode) {
         return;
     }
 
-    auto prev_line_index = index_of_line_at_cursor();
+    auto prev_row_position = m_cursor.row_position(m_panel);
     auto prev_col_position = m_cursor.col_position(m_panel);
     update_selection_state_for_mode(mode);
 
-    auto new_line_index = prev_line_index + 1;
-    auto new_index_into_line = index_into_line(new_line_index, prev_col_position);
+    auto new_index = text_index_at_absolute_position(prev_row_position + 1, prev_col_position);
 
-    m_cursor.set(new_line_index, new_index_into_line);
+    m_cursor.set(new_index.line_index(), new_index.index_into_line());
 
-    new_index_into_line = clamp_cursor_to_line_end();
+    clamp_cursor_to_line_end();
     if (mode == MovementMode::Select) {
-        m_selection.set_end_line(new_line_index);
-        m_selection.set_end_index(new_index_into_line);
+        m_selection.set_end_line(index_of_line_at_cursor());
+        m_selection.set_end_index(index_into_line_at_cursor());
         set_needs_display();
     }
 }
@@ -362,43 +363,40 @@ void Document::move_cursor_up(MovementMode mode) {
         return;
     }
 
-    auto prev_line_index = index_of_line_at_cursor();
+    auto prev_row_position = m_cursor.row_position(m_panel);
     auto prev_col_position = m_cursor.col_position(m_panel);
     update_selection_state_for_mode(mode);
 
-    auto new_line_index = prev_line_index - 1;
-    auto new_index_into_line = index_into_line(new_line_index, prev_col_position);
+    auto new_index = text_index_at_absolute_position(prev_row_position - 1, prev_col_position);
 
-    m_cursor.set(new_line_index, new_index_into_line);
+    m_cursor.set(new_index.line_index(), new_index.index_into_line());
 
-    new_index_into_line = clamp_cursor_to_line_end();
+    clamp_cursor_to_line_end();
     if (mode == MovementMode::Select) {
-        m_selection.set_end_line(new_line_index);
-        m_selection.set_end_index(new_index_into_line);
+        m_selection.set_end_line(index_of_line_at_cursor());
+        m_selection.set_end_index(index_into_line_at_cursor());
         set_needs_display();
     }
 }
 
-int Document::clamp_cursor_to_line_end() {
+void Document::clamp_cursor_to_line_end() {
     auto& line = line_at_cursor();
     int current_col = m_cursor.col_position(m_panel);
     int max_col = line.col_position_of_index(*this, m_panel, line.length());
     if (current_col == max_col) {
-        return line.length();
+        return;
     }
 
     if (current_col > max_col) {
         m_cursor.set_index_into_line(line.length());
-        return line.length();
+        return;
     }
 
     if (m_max_cursor_col > current_col) {
         int new_index_into_line = line.index_of_col_position(*this, m_panel, m_max_cursor_col);
         m_cursor.set_index_into_line(new_index_into_line);
-        return new_index_into_line;
+        return;
     }
-
-    return index_into_line_at_cursor();
 }
 
 void Document::move_cursor_to_line_start(MovementMode mode) {

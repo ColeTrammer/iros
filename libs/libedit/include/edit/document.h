@@ -6,6 +6,7 @@
 #include <edit/line.h>
 #include <edit/selection.h>
 #include <edit/suggestions.h>
+#include <edit/text_index.h>
 #include <edit/text_range_collection.h>
 #include <eventloop/forward.h>
 #include <liim/function.h>
@@ -115,10 +116,10 @@ public:
     Line& line_at_cursor();
     const Line& line_at_cursor() const { return const_cast<Document&>(*this).line_at_cursor(); }
     int index_into_line_at_cursor() const;
-    int index_into_line(int index_of_line, int position) const;
     int index_of_line_at_cursor() const;
-    int index_of_line_at_position(int position) const;
     char char_at_cursor() const;
+    TextIndex text_index_at_absolute_position(int row_position, int col_position) const;
+    TextIndex text_index_at_scrolled_position(int row_position, int col_position) const;
     int num_lines() const { return m_lines.size(); }
 
     int cursor_col_on_panel() const;
@@ -198,7 +199,7 @@ public:
     Function<void()> on_escape_press;
 
 private:
-    int clamp_cursor_to_line_end();
+    void clamp_cursor_to_line_end();
     void update_selection_state_for_mode(MovementMode mode);
 
     void update_search_results();

@@ -88,9 +88,6 @@ private:
     void render_cursor(Renderer& renderer);
     void render_cell(Renderer& renderer, int x, int y, CellData& cell);
 
-    int index_into_line_at_position(int wx, int wy) const;
-    int index_of_line_at_position(int wx, int wy) const;
-
     int m_rows { 0 };
     int m_cols { 0 };
     int m_last_drawn_cursor_col { -1 };

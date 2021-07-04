@@ -580,8 +580,10 @@ Vector<Variant<Edit::KeyPress, App::MouseEvent>> TerminalPanel::read_input() {
 
                 R out_events;
                 for (auto& event : events) {
-                    event->set_y(clamp(document()->index_of_line_at_position(cy - m_row_offset - 1), 0, document()->num_lines() - 1));
-                    event->set_x(document()->index_into_line(event->y(), cx - m_col_offset - m_cols_needed_for_line_numbers - 1));
+                    auto text_index = document()->text_index_at_scrolled_position(cy - m_row_offset - 1,
+                                                                                  cx - m_col_offset - m_cols_needed_for_line_numbers - 1);
+                    event->set_y(text_index.line_index());
+                    event->set_x(text_index.index_into_line());
                     out_events.add(*event);
                 }
                 return out_events;
