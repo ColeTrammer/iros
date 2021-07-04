@@ -27,6 +27,7 @@ public:
 
     int col_position_of_index(const Document& document, const Panel& panel, int index) const;
     int index_of_col_position(const Document& document, const Panel& panel, int position) const;
+    int rendered_line_count(const Document&, const Panel&) const { return 1; }
 
     char char_at(int index) const { return contents()[index]; }
 
