@@ -168,8 +168,9 @@ void Document::display_if_needed() const {
 
 void Document::display() const {
     auto& document = const_cast<Document&>(*this);
+    auto metadata_iterator = m_syntax_highlighting_info.iterator(m_row_offset, 0);
     for (int line_num = m_row_offset; line_num < m_lines.size() && line_num - m_row_offset < m_panel.rows(); line_num++) {
-        m_lines[line_num].render(document, document.panel(), m_col_offset, line_num - m_row_offset);
+        m_lines[line_num].render(document, document.panel(), metadata_iterator, m_col_offset, line_num - m_row_offset);
     }
     m_panel.flush();
     m_needs_display = false;

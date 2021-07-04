@@ -10,6 +10,7 @@ class Line;
 class Panel;
 class Selection;
 class Suggestions;
+class TextRangeCollectionIterator;
 class TextRangeCollection;
 class TextRange;
 enum class DocumentType;

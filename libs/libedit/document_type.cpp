@@ -120,13 +120,11 @@ static void highlight_cpp(Document& document) {
 
     auto contents = document.content_string();
     CLanguage::CPPLexer lexer(contents.string(), contents.size());
-    if (!lexer.lex(CLanguage::CPPLexMode::IncludeComments)) {
-        return;
-    }
+    lexer.lex(CLanguage::CPPLexMode::IncludeComments);
 
     for (auto& token : lexer.tokens()) {
         int flags = cpp_flags_for_token_type(token.type);
-        range_collection.add({ token.start_line, token.start_col, token.end_line, token.end_col, { flags } });
+        range_collection.add({ token.start_line, token.start_col, token.end_line, token.end_col - 1, { flags } });
     }
 }
 

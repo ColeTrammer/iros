@@ -32,7 +32,8 @@ public:
 
     int search(const String& text);
 
-    void render(const Document& document, Panel& panel, int col_offset, int row_in_panel) const;
+    void render(const Document& document, Panel& panel, TextRangeCollectionIterator& metadata_iterator, int col_offset,
+                int row_in_panel) const;
 
 private:
     void compute_rendered_contents(const Document& document, const Panel& panel) const;

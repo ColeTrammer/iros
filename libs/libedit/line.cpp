@@ -105,18 +105,38 @@ void Line::compute_rendered_contents(const Document& document, const Panel& pane
     }
 }
 
-void Line::render(const Document& document, Panel& panel, int col_offset, int row_in_panel) const {
+void Line::render(const Document& document, Panel& panel, TextRangeCollectionIterator& metadata_iterator, int col_offset,
+                  int row_in_panel) const {
     compute_rendered_contents(document, panel);
 
-    int col_position;
-    for (col_position = 0;
-         static_cast<size_t>(col_offset + col_position) < m_rendered_contents.size() && col_position < panel.cols_at_row(row_in_panel);
-         col_position++) {
-        panel.set_text_at(row_in_panel, col_position, m_rendered_contents[col_offset + col_position], {});
+    int col_position = 0;
+    auto blank_line_remaining = [&] {
+        for (; col_position < panel.cols_at_row(row_in_panel); col_position++) {
+            panel.set_text_at(row_in_panel, col_position, ' ', CharacterMetadata());
+        }
+        metadata_iterator.advance_line();
+    };
+
+    int index_into_line = index_of_col_position(document, panel, col_offset + col_position);
+    if (index_into_line == length()) {
+        blank_line_remaining();
+        return;
     }
 
-    for (; col_position < panel.cols_at_row(row_in_panel); col_position++) {
-        panel.set_text_at(row_in_panel, col_position, ' ', CharacterMetadata());
+    auto index_into_line_size_remaining =
+        m_rendered_sizes[index_into_line] - (col_offset - col_position_of_index(document, panel, index_into_line));
+    metadata_iterator.advance_to_index_into_line(index_into_line);
+
+    while (col_position < panel.cols_at_row(row_in_panel) && index_into_line < length()) {
+        panel.set_text_at(row_in_panel, col_position, m_rendered_contents[col_offset + col_position], metadata_iterator.peek_metadata());
+
+        if (--index_into_line_size_remaining == 0) {
+            metadata_iterator.advance();
+            index_into_line_size_remaining = m_rendered_sizes.get_or(++index_into_line, 0);
+        }
+        col_position++;
     }
+
+    blank_line_remaining();
 }
 }
