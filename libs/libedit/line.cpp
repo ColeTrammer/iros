@@ -117,22 +117,10 @@ void Line::render(const Document& document, Panel& panel, DocumentTextRangeItera
                   int row_in_panel) const {
     compute_rendered_contents(document, panel);
 
-    int col_position = 0;
-    auto blank_line_remaining = [&] {
-        for (; col_position < panel.cols_at_row(row_in_panel); col_position++) {
-            panel.set_text_at(row_in_panel, col_position, ' ', CharacterMetadata());
-        }
-        metadata_iterator.advance_line();
-    };
-
-    int index_into_line = index_of_col_position(document, panel, col_offset + col_position);
-    if (index_into_line == length()) {
-        blank_line_remaining();
-        return;
-    }
-
+    int index_into_line = index_of_col_position(document, panel, col_offset);
     metadata_iterator.advance_to_index_into_line(index_into_line);
 
+    int col_position = 0;
     while (col_position < panel.cols_at_row(row_in_panel) && static_cast<size_t>(col_offset + col_position) < m_rendered_contents.size()) {
         CharacterMetadata metadata(CharacterMetadata::Flags::AutoCompletePreview);
         if (index_into_line < length() && col_position + col_offset >= m_rendered_spans[index_into_line].rendered_start) {
@@ -141,12 +129,15 @@ void Line::render(const Document& document, Panel& panel, DocumentTextRangeItera
         panel.set_text_at(row_in_panel, col_position, m_rendered_contents[col_offset + col_position], metadata);
 
         col_position++;
-        if (index_into_line < length() && col_position >= m_rendered_spans[index_into_line].rendered_end) {
+        if (index_into_line < length() && col_position + col_offset >= m_rendered_spans[index_into_line].rendered_end) {
             index_into_line++;
             metadata_iterator.advance();
         }
     }
 
-    blank_line_remaining();
+    for (; col_position < panel.cols_at_row(row_in_panel); col_position++) {
+        panel.set_text_at(row_in_panel, col_position, ' ', CharacterMetadata());
+    }
+    metadata_iterator.advance_line();
 }
 }
