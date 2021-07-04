@@ -12,6 +12,7 @@ class Line;
 class Panel;
 class Selection;
 class Suggestions;
+class TextIndex;
 class TextRangeCollectionIterator;
 class TextRangeCollection;
 
