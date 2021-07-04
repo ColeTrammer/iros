@@ -11,8 +11,10 @@
 class ShValue {
 public:
     struct Token {
-        size_t line;
-        size_t position;
+        size_t start_line;
+        size_t start_col;
+        size_t end_line;
+        size_t end_col;
         StringView text;
     };
 
@@ -187,12 +189,15 @@ public:
     using Program = Vector<List>;
 
     ShValue() {}
-    ShValue(const StringView& text, size_t line, size_t position) : m_token({ line, position, text }) {}
+    ShValue(const StringView& text, size_t start_line, size_t start_col, size_t end_line, size_t end_col)
+        : m_token({ start_line, start_col, end_line, end_col, text }) {}
 
     ~ShValue() {}
 
-    size_t line() const { return m_token.value().line; }
-    size_t position() const { return m_token.value().position; }
+    size_t start_line() const { return m_token.value().start_line; }
+    size_t start_col() const { return m_token.value().start_col; }
+    size_t end_line() const { return m_token.value().end_line; }
+    size_t end_col() const { return m_token.value().end_col; }
 
     const StringView& text() const { return m_token.value().text; }
 
@@ -448,9 +453,9 @@ public:
                         }
                     });
                     fprintf(stderr, "%s\n",
-                            component.combinators[i] == ShValue::ListComponent::Combinator::And
-                                ? "   [ and ]"
-                                : component.combinators[i] == ShValue::ListComponent::Combinator::Or ? "   [ or ]" : "   [ end ]");
+                            component.combinators[i] == ShValue::ListComponent::Combinator::And  ? "   [ and ]"
+                            : component.combinators[i] == ShValue::ListComponent::Combinator::Or ? "   [ or ]"
+                                                                                                 : "   [ end ]");
                 }
 
                 fprintf(stderr, "%s\n",

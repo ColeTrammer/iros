@@ -250,7 +250,7 @@ private:
             }
         }
 
-        m_tokens.add({ type, { text, m_current_token_row, m_current_token_col } });
+        m_tokens.add({ type, { text, m_current_token_row, m_current_token_col, m_current_row, m_current_col } });
         m_current_token_start = nullptr;
         m_current_token_row = 0;
         m_current_token_col = 0;

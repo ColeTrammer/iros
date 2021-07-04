@@ -185,7 +185,7 @@ static void highlight_c(Document& document) {
     }
 }
 
-static int sh_flags_for_token_type(ShLexer& lexer, int index) {
+static int sh_flags_for_token_type(const ShLexer& lexer, int index) {
     auto type = lexer.tokens()[index].type();
     switch (type) {
         case ShTokenType::Ampersand:
@@ -263,12 +263,12 @@ static void highlight_sh(Document& document) {
         assert(t1->value().has_text());
         assert(t2->value().has_text());
 
-        if (t1->value().line() < t2->value().line()) {
+        if (t1->value().start_line() < t2->value().start_line()) {
             return -1;
-        } else if (t1->value().line() > t2->value().line()) {
+        } else if (t1->value().start_line() > t2->value().start_line()) {
             return 1;
         }
-        return t1->value().position() - t2->value().position();
+        return t1->value().start_col() - t2->value().start_col();
     };
 
     while (lexer.peek_next_token_type() != ShTokenType::End) {
@@ -277,26 +277,15 @@ static void highlight_sh(Document& document) {
 
     qsort(const_cast<ShLexer::Token*>(lexer.tokens().vector()), lexer.tokens().size(), sizeof(ShLexer::Token), do_sort);
 
-    int line_index = 0;
-    int index_into_line = 0;
-    int flags = sh_flags_for_token_type(lexer, 0);
-    for (int i = 1; i <= lexer.tokens().size(); i++) {
-        int end_line = document.num_lines() - 1;
-        int end_position = document.last_line().length();
-        if (i != lexer.tokens().size()) {
-            auto& token = lexer.tokens()[i];
-            end_line = token.value().line();
-            end_position = token.value().position();
-        }
+    for (int i = 0; i < lexer.tokens().size(); i++) {
+        int flags = sh_flags_for_token_type(lexer, i);
 
-        range_collection.add({ line_index, index_into_line, end_line, end_position, { flags } });
-
-        line_index = end_line;
-        index_into_line = end_position;
-
-        if (i != lexer.tokens().size()) {
-            flags = sh_flags_for_token_type(lexer, i);
-        }
+        auto& token_value = lexer.tokens()[i].value();
+        range_collection.add({ static_cast<int>(token_value.start_line()),
+                               static_cast<int>(token_value.start_col()),
+                               static_cast<int>(token_value.end_line()),
+                               static_cast<int>(token_value.end_col() - 1),
+                               { flags } });
     }
 }
 
