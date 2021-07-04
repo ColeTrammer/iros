@@ -7,12 +7,11 @@
 namespace Edit {
 class Cursor {
 public:
-    Cursor(Document& document, Panel& panel) : m_document(document), m_panel(panel) {}
+    Cursor(Document& document) : m_document(document) {}
     Cursor(const Cursor& other) = default;
 
     Cursor& operator=(const Cursor& other) {
         assert(&this->m_document == &other.m_document);
-        assert(&this->m_panel == &other.m_panel);
         set(other.line_index(), other.index_into_line());
         return *this;
     }
@@ -30,15 +29,14 @@ public:
         set_index_into_line(index_into_line);
     }
 
-    int row_position() const;
-    int col_position() const;
+    int row_position(const Panel& panel) const;
+    int col_position(const Panel& panel) const;
 
     bool at_document_start() const { return m_line_index == 0 && m_index_into_line == 0; }
     bool at_document_end() const;
 
 private:
     Document& m_document;
-    Panel& m_panel;
     int m_line_index { 0 };
     int m_index_into_line { 0 };
 };

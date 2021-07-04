@@ -105,12 +105,7 @@ UniquePtr<Document> Document::create_single_line(Panel& panel, String text) {
 }
 
 Document::Document(Vector<Line> lines, String name, Panel& panel, InputMode mode)
-    : m_lines(move(lines))
-    , m_name(move(name))
-    , m_panel(panel)
-    , m_input_mode(mode)
-    , m_syntax_highlighting_info(*this)
-    , m_cursor(*this, panel) {
+    : m_lines(move(lines)), m_name(move(name)), m_panel(panel), m_input_mode(mode), m_syntax_highlighting_info(*this), m_cursor(*this) {
     if (m_lines.empty()) {
         m_lines.add(Line(""));
     }
@@ -205,11 +200,11 @@ int Document::index_into_line(int index_of_line, int position) const {
 }
 
 int Document::cursor_col_on_panel() const {
-    return m_cursor.col_position() - m_col_offset;
+    return m_cursor.col_position(m_panel) - m_col_offset;
 }
 
 int Document::cursor_row_on_panel() const {
-    return m_cursor.row_position() - m_row_offset;
+    return m_cursor.row_position(m_panel) - m_row_offset;
 }
 
 bool Document::cursor_at_document_start() const {
@@ -344,7 +339,7 @@ void Document::move_cursor_down(MovementMode mode) {
     }
 
     auto prev_line_index = index_of_line_at_cursor();
-    auto prev_col_position = m_cursor.col_position();
+    auto prev_col_position = m_cursor.col_position(m_panel);
     update_selection_state_for_mode(mode);
 
     auto new_line_index = prev_line_index + 1;
@@ -368,7 +363,7 @@ void Document::move_cursor_up(MovementMode mode) {
     }
 
     auto prev_line_index = index_of_line_at_cursor();
-    auto prev_col_position = m_cursor.col_position();
+    auto prev_col_position = m_cursor.col_position(m_panel);
     update_selection_state_for_mode(mode);
 
     auto new_line_index = prev_line_index - 1;
@@ -386,7 +381,7 @@ void Document::move_cursor_up(MovementMode mode) {
 
 int Document::clamp_cursor_to_line_end() {
     auto& line = line_at_cursor();
-    int current_col = m_cursor.col_position();
+    int current_col = m_cursor.col_position(m_panel);
     int max_col = line.col_position_of_index(*this, m_panel, line.length());
     if (current_col == max_col) {
         return line.length();
