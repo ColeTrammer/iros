@@ -3,6 +3,7 @@
 #include <edit/document.h>
 #include <edit/document_type.h>
 #include <edit/key_press.h>
+#include <edit/position.h>
 #include <errno.h>
 #include <eventloop/event.h>
 #include <signal.h>
@@ -254,8 +255,9 @@ int TerminalPanel::cols() const {
 }
 
 void TerminalPanel::draw_cursor() {
-    auto cursor_row = document()->cursor_row_on_panel();
-    auto cursor_col = document()->cursor_col_on_panel();
+    auto cursor_pos = document()->cursor_position_on_panel();
+    auto cursor_row = cursor_pos.row;
+    auto cursor_col = cursor_pos.col;
     if (cursor_row >= 0 && cursor_row < rows() && cursor_col >= 0 && cursor_col < cols()) {
         printf("\033[%d;%dH\033[?25h", m_row_offset + cursor_row + 1, m_col_offset + cursor_col + m_cols_needed_for_line_numbers + 1);
     } else {
@@ -279,10 +281,8 @@ void TerminalPanel::draw_status_message() {
 
     auto& name = document()->name().is_empty() ? String("[Unamed File]") : document()->name();
 
-    auto cursor_row_position = document()->cursor_row_on_panel() + document()->row_offset();
-    auto cursor_col_position = document()->cursor_col_on_panel() + document()->col_offset();
-
-    auto position_string = String::format("%d,%d", cursor_row_position + 1, cursor_col_position + 1);
+    auto cursor_position = document()->cursor().position(*this);
+    auto position_string = String::format("%d,%d", cursor_position.row + 1, cursor_position.col + 1);
     auto status_rhs = String::format("%s%s [%s] %9s", name.string(), document()->modified() ? "*" : " ",
                                      document_type_to_string(document()->type()).string(), position_string.string());
 
@@ -580,8 +580,8 @@ Vector<Variant<Edit::KeyPress, App::MouseEvent>> TerminalPanel::read_input() {
 
                 R out_events;
                 for (auto& event : events) {
-                    auto text_index = document()->text_index_at_scrolled_position(cy - m_row_offset - 1,
-                                                                                  cx - m_col_offset - m_cols_needed_for_line_numbers - 1);
+                    auto text_index = document()->text_index_at_scrolled_position(
+                        { cy - m_row_offset - 1, cx - m_col_offset - m_cols_needed_for_line_numbers - 1 });
                     event->set_y(text_index.line_index());
                     event->set_x(text_index.index_into_line());
                     out_events.add(*event);

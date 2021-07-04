@@ -2,6 +2,7 @@
 #include <edit/document.h>
 #include <edit/key_press.h>
 #include <edit/panel.h>
+#include <edit/position.h>
 #include <errno.h>
 #include <eventloop/event.h>
 #include <ext/file.h>
@@ -175,14 +176,14 @@ void Document::display() const {
     m_needs_display = false;
 }
 
-TextIndex Document::text_index_at_absolute_position(int row_position, int col_position) const {
-    auto line_index = clamp(row_position, 0, num_lines() - 1);
-    auto index_into_line = line_at_index(line_index).index_of_col_position(*this, m_panel, col_position);
+TextIndex Document::text_index_at_absolute_position(const Position& position) const {
+    auto line_index = clamp(position.row, 0, num_lines() - 1);
+    auto index_into_line = line_at_index(line_index).index_of_position(*this, m_panel, position);
     return { line_index, index_into_line };
 }
 
-TextIndex Document::text_index_at_scrolled_position(int row_position, int col_position) const {
-    return text_index_at_absolute_position(row_position + m_row_offset, col_position + m_col_offset);
+TextIndex Document::text_index_at_scrolled_position(const Position& position) const {
+    return text_index_at_absolute_position({ position.row + m_row_offset, position.col + m_col_offset });
 }
 
 Line& Document::line_at_cursor() {
@@ -201,12 +202,9 @@ int Document::index_into_line_at_cursor() const {
     return m_cursor.index_into_line();
 }
 
-int Document::cursor_col_on_panel() const {
-    return m_cursor.col_position(m_panel) - m_col_offset;
-}
-
-int Document::cursor_row_on_panel() const {
-    return m_cursor.row_position(m_panel) - m_row_offset;
+Position Document::cursor_position_on_panel() const {
+    auto position = m_cursor.position(m_panel);
+    return { position.row - m_row_offset, position.col - m_col_offset };
 }
 
 bool Document::cursor_at_document_start() const {
@@ -215,6 +213,10 @@ bool Document::cursor_at_document_start() const {
 
 bool Document::cursor_at_document_end() const {
     return m_cursor.at_document_end();
+}
+
+int Document::index_of_line(const Line& line) const {
+    return &line - m_lines.vector();
 }
 
 void Document::update_selection_state_for_mode(MovementMode mode) {
@@ -273,7 +275,7 @@ void Document::move_cursor_right(MovementMode mode) {
     }
 
     int new_index_into_line = m_cursor.index_into_line() + 1;
-    int new_col_position = line.col_position_of_index(*this, m_panel, new_index_into_line);
+    int new_col_position = line.position_of_index(*this, m_panel, new_index_into_line).col;
 
     m_max_cursor_col = new_col_position;
 
@@ -310,7 +312,7 @@ void Document::move_cursor_left(MovementMode mode) {
     }
 
     int new_index_into_line = index_into_line - 1;
-    int new_col_position = line.col_position_of_index(*this, m_panel, new_index_into_line);
+    int new_col_position = line.position_of_index(*this, m_panel, new_index_into_line).col;
 
     m_max_cursor_col = new_col_position;
 
@@ -340,11 +342,10 @@ void Document::move_cursor_down(MovementMode mode) {
         return;
     }
 
-    auto prev_row_position = m_cursor.row_position(m_panel);
-    auto prev_col_position = m_cursor.col_position(m_panel);
+    auto prev_position = m_cursor.position(m_panel);
     update_selection_state_for_mode(mode);
 
-    auto new_index = text_index_at_absolute_position(prev_row_position + 1, prev_col_position);
+    auto new_index = text_index_at_absolute_position({ prev_position.row + 1, prev_position.col });
 
     m_cursor.set(new_index.line_index(), new_index.index_into_line());
 
@@ -363,11 +364,10 @@ void Document::move_cursor_up(MovementMode mode) {
         return;
     }
 
-    auto prev_row_position = m_cursor.row_position(m_panel);
-    auto prev_col_position = m_cursor.col_position(m_panel);
+    auto prev_position = m_cursor.position(m_panel);
     update_selection_state_for_mode(mode);
 
-    auto new_index = text_index_at_absolute_position(prev_row_position - 1, prev_col_position);
+    auto new_index = text_index_at_absolute_position({ prev_position.row - 1, prev_position.col });
 
     m_cursor.set(new_index.line_index(), new_index.index_into_line());
 
@@ -381,19 +381,19 @@ void Document::move_cursor_up(MovementMode mode) {
 
 void Document::clamp_cursor_to_line_end() {
     auto& line = line_at_cursor();
-    int current_col = m_cursor.col_position(m_panel);
-    int max_col = line.col_position_of_index(*this, m_panel, line.length());
-    if (current_col == max_col) {
+    int current_col = m_cursor.position(m_panel).col;
+    auto max_position = line.position_of_index(*this, m_panel, line.length());
+    if (current_col == max_position.col) {
         return;
     }
 
-    if (current_col > max_col) {
+    if (current_col > max_position.col) {
         m_cursor.set_index_into_line(line.length());
         return;
     }
 
     if (m_max_cursor_col > current_col) {
-        int new_index_into_line = line.index_of_col_position(*this, m_panel, m_max_cursor_col);
+        int new_index_into_line = line.index_of_position(*this, m_panel, { index_of_line_at_cursor(), m_max_cursor_col });
         m_cursor.set_index_into_line(new_index_into_line);
         return;
     }
@@ -412,9 +412,9 @@ void Document::move_cursor_to_line_start(MovementMode mode) {
 
 void Document::move_cursor_to_line_end(MovementMode mode) {
     auto& line = line_at_cursor();
-    int new_col_position = line.col_position_of_index(*this, m_panel, line.length());
+    auto new_position = line.position_of_index(*this, m_panel, line.length());
 
-    m_max_cursor_col = new_col_position;
+    m_max_cursor_col = new_position.col;
 
     update_selection_state_for_mode(mode);
     if (mode == MovementMode::Select) {
@@ -485,16 +485,16 @@ void Document::scroll_right(int times) {
 }
 
 void Document::scroll_cursor_into_view() {
-    if (cursor_row_on_panel() < 0) {
-        scroll_up(-cursor_row_on_panel());
-    } else if (cursor_row_on_panel() >= m_panel.rows()) {
-        scroll_down(cursor_row_on_panel() - m_panel.rows() + 1);
+    if (cursor_position_on_panel().row < 0) {
+        scroll_up(-cursor_position_on_panel().row);
+    } else if (cursor_position_on_panel().row >= m_panel.rows()) {
+        scroll_down(cursor_position_on_panel().row - m_panel.rows() + 1);
     }
 
-    if (cursor_col_on_panel() < 0) {
-        scroll_left(-cursor_col_on_panel());
-    } else if (cursor_col_on_panel() >= m_panel.cols_at_row(cursor_row_on_panel())) {
-        scroll_right(cursor_col_on_panel() - m_panel.cols_at_row(cursor_row_on_panel()) + 1);
+    if (cursor_position_on_panel().col < 0) {
+        scroll_left(-cursor_position_on_panel().col);
+    } else if (cursor_position_on_panel().col >= m_panel.cols_at_row(cursor_position_on_panel().row)) {
+        scroll_right(cursor_position_on_panel().col - m_panel.cols_at_row(cursor_position_on_panel().row) + 1);
     }
 }
 

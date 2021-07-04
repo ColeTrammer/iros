@@ -124,12 +124,12 @@ public:
     int index_into_line_at_cursor() const;
     int index_of_line_at_cursor() const;
     char char_at_cursor() const;
-    TextIndex text_index_at_absolute_position(int row_position, int col_position) const;
-    TextIndex text_index_at_scrolled_position(int row_position, int col_position) const;
+    TextIndex text_index_at_absolute_position(const Position& position) const;
+    TextIndex text_index_at_scrolled_position(const Position& position) const;
+    int index_of_line(const Line& line) const;
     int num_lines() const { return m_lines.size(); }
 
-    int cursor_col_on_panel() const;
-    int cursor_row_on_panel() const;
+    Position cursor_position_on_panel() const;
 
     bool cursor_at_document_start() const;
     bool cursor_at_document_end() const;

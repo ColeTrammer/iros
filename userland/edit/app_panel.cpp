@@ -5,6 +5,7 @@
 #include <clipboard/connection.h>
 #include <edit/document.h>
 #include <edit/key_press.h>
+#include <edit/position.h>
 #include <eventloop/event.h>
 #include <graphics/bitmap.h>
 #include <graphics/renderer.h>
@@ -141,7 +142,8 @@ void AppPanel::enter_search(String starting_text) {
 }
 
 void AppPanel::notify_now_is_a_good_time_to_draw_cursor() {
-    if (document()->cursor_col_on_panel() != m_last_drawn_cursor_col || document()->cursor_row_on_panel() != m_last_drawn_cursor_row) {
+    auto cursor_position = document()->cursor_position_on_panel();
+    if (cursor_position.col != m_last_drawn_cursor_col || cursor_position.row != m_last_drawn_cursor_row) {
         flush();
     }
 }
@@ -178,17 +180,16 @@ void AppPanel::render_cursor(Renderer& renderer) {
         return;
     }
 
-    int cursor_col = document()->cursor_col_on_panel();
-    int cursor_row = document()->cursor_row_on_panel();
+    auto cursor_pos = document()->cursor_position_on_panel();
 
-    int cursor_x = cursor_col * col_width();
-    int cursor_y = cursor_row * row_height();
+    int cursor_x = cursor_pos.col * col_width();
+    int cursor_y = cursor_pos.row * row_height();
     for (int y = cursor_y; y < cursor_y + row_height(); y++) {
         renderer.pixels().put_pixel(cursor_x, y, ColorValue::White);
     }
 
-    m_last_drawn_cursor_col = cursor_col;
-    m_last_drawn_cursor_row = cursor_row;
+    m_last_drawn_cursor_col = cursor_pos.col;
+    m_last_drawn_cursor_row = cursor_pos.row;
 }
 
 void AppPanel::render_cell(Renderer& renderer, int x, int y, CellData& cell) {
@@ -232,7 +233,7 @@ void AppPanel::on_mouse_event(const App::MouseEvent& event) {
     }
 
     auto event_copy = App::MouseEvent(event.mouse_event_type(), event.buttons_down(), event.x(), event.y(), event.z(), event.button());
-    auto text_index = document()->text_index_at_scrolled_position(event.y() / row_height(), event.x() / col_width());
+    auto text_index = document()->text_index_at_scrolled_position({ event.y() / row_height(), event.x() / col_width() });
     event_copy.set_x(text_index.index_into_line());
     event_copy.set_y(text_index.line_index());
 

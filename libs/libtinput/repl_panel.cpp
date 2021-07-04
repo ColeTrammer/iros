@@ -3,6 +3,7 @@
 #include <edit/document.h>
 #include <edit/document_type.h>
 #include <edit/key_press.h>
+#include <edit/position.h>
 #include <errno.h>
 #include <eventloop/event.h>
 #include <signal.h>
@@ -289,8 +290,9 @@ const String& ReplPanel::prompt_at_row(int row) const {
 }
 
 void ReplPanel::draw_cursor() {
-    int cursor_row = document()->cursor_row_on_panel();
-    int cursor_col = document()->cursor_col_on_panel();
+    auto cursor_pos = document()->cursor_position_on_panel();
+    auto cursor_row = cursor_pos.row;
+    auto cursor_col = cursor_pos.col;
 
     int desired_cursor_col = prompt_cols_at_row(cursor_row) + cursor_col;
     if (cursor_row >= 0 && cursor_row < rows() && desired_cursor_col >= 0 && desired_cursor_col < max_cols()) {
@@ -599,8 +601,8 @@ Vector<Variant<Edit::KeyPress, App::MouseEvent>> ReplPanel::read_input() {
 
                 R out_events;
                 for (auto& event : events) {
-                    auto text_index = document()->text_index_at_scrolled_position(cy - m_absolute_row_position - 1,
-                                                                                  cx - prompt_cols_at_row(event->y()) - 1);
+                    auto text_index = document()->text_index_at_scrolled_position(
+                        { cy - m_absolute_row_position - 1, cx - prompt_cols_at_row(event->y()) - 1 });
                     event->set_y(text_index.line_index());
                     event->set_x(text_index.index_into_line());
                     out_events.add(*event);

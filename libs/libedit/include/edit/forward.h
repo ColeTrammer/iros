@@ -22,6 +22,7 @@ class TextRangeCombinerIterator;
 class TextRange;
 enum class DocumentType;
 struct LineSplitResult;
+struct Position;
 
 using DocumentTextRangeIterator = TextRangeCombinerIterator<2>;
 }

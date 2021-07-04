@@ -1,6 +1,7 @@
 #include <edit/command.h>
 #include <edit/document.h>
 #include <edit/panel.h>
+#include <edit/position.h>
 
 namespace Edit {
 Command::Command(Document& document) : m_document(document) {}
@@ -75,7 +76,7 @@ void InsertCommand::do_insert(Document& document, char c) {
 
     int index_into_line = document.index_into_line_at_cursor();
     if (c == '\t' && document.convert_tabs_to_spaces()) {
-        int num_spaces = tab_width - (line.col_position_of_index(document, document.panel(), index_into_line) % tab_width);
+        int num_spaces = tab_width - (line.position_of_index(document, document.panel(), index_into_line).col % tab_width);
         for (int i = 0; i < num_spaces; i++) {
             line.insert_char_at(index_into_line, ' ');
             document.move_cursor_right();
@@ -111,7 +112,7 @@ void InsertCommand::undo() {
 
             // FIXME: what if convert_tabs_to_spaces() changes value
             if (c == '\t' && document().convert_tabs_to_spaces()) {
-                int num_spaces = tab_width - (line.col_position_of_index(document(), document().panel(), index_into_line) % tab_width);
+                int num_spaces = tab_width - (line.position_of_index(document(), document().panel(), index_into_line).col % tab_width);
                 for (int i = 0; i < num_spaces; i++) {
                     line.remove_char_at(index_into_line);
                 }

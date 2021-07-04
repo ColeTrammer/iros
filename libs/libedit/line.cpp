@@ -2,6 +2,7 @@
 #include <edit/document.h>
 #include <edit/line.h>
 #include <edit/panel.h>
+#include <edit/position.h>
 
 namespace Edit {
 LineSplitResult Line::split_at(int position) {
@@ -18,28 +19,29 @@ Line::Line(String contents) : m_contents(move(contents)) {}
 
 Line::~Line() {}
 
-int Line::col_position_of_index(const Document& document, const Panel& panel, int index) const {
+Position Line::position_of_index(const Document& document, const Panel& panel, int index) const {
     compute_rendered_contents(document, panel);
 
+    auto index_of_line = document.index_of_line(*this);
     if (index >= length()) {
         if (m_rendered_spans.empty()) {
-            return 0;
+            return { index_of_line, 0 };
         }
-        return m_rendered_spans.last().rendered_end;
+        return { index_of_line, m_rendered_spans.last().rendered_end };
     }
 
     if (index == 0) {
-        return 0;
+        return { index_of_line, 0 };
     }
 
-    return m_rendered_spans[index - 1].rendered_end;
+    return { index_of_line, m_rendered_spans[index - 1].rendered_end };
 }
 
-int Line::index_of_col_position(const Document& document, const Panel& panel, int position) const {
+int Line::index_of_position(const Document& document, const Panel& panel, const Position& position) const {
     compute_rendered_contents(document, panel);
 
     for (int index = 0; index < length(); index++) {
-        if (position < m_rendered_spans[index].rendered_end) {
+        if (position.col < m_rendered_spans[index].rendered_end) {
             return index;
         }
     }
@@ -117,7 +119,7 @@ void Line::render(const Document& document, Panel& panel, DocumentTextRangeItera
                   int row_in_panel) const {
     compute_rendered_contents(document, panel);
 
-    int index_into_line = index_of_col_position(document, panel, col_offset);
+    int index_into_line = index_of_position(document, panel, { document.index_of_line(*this), col_offset });
     metadata_iterator.advance_to_index_into_line(index_into_line);
 
     int col_position = 0;

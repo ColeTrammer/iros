@@ -1,5 +1,6 @@
 #include <edit/cursor.h>
 #include <edit/document.h>
+#include <edit/position.h>
 
 namespace Edit {
 Line& Cursor::referenced_line() const {
@@ -10,12 +11,8 @@ char Cursor::referenced_character() const {
     return referenced_line().char_at(index_into_line());
 }
 
-int Cursor::row_position(const Panel&) const {
-    return line_index();
-}
-
-int Cursor::col_position(const Panel& panel) const {
-    return referenced_line().col_position_of_index(m_document, panel, index_into_line());
+Position Cursor::position(const Panel& panel) const {
+    return referenced_line().position_of_index(m_document, panel, index_into_line());
 }
 
 bool Cursor::at_document_end() const {
