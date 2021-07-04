@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stddef.h>
+
 namespace Edit {
 class CharacterMetadata;
 class Command;
@@ -12,7 +14,13 @@ class Selection;
 class Suggestions;
 class TextRangeCollectionIterator;
 class TextRangeCollection;
+
+template<size_t N>
+class TextRangeCombinerIterator;
+
 class TextRange;
 enum class DocumentType;
 struct LineSplitResult;
+
+using DocumentTextRangeIterator = TextRangeCombinerIterator<2>;
 }

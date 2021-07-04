@@ -22,6 +22,8 @@ public:
     bool operator==(const CharacterMetadata& other) const { return this->m_flags == other.m_flags; }
     bool operator!=(const CharacterMetadata& other) const { return !(*this == other); }
 
+    CharacterMetadata combine(CharacterMetadata other) const { return { this->m_flags | other.m_flags }; }
+
     bool highlighted() const { return m_flags & Flags::Highlighted; }
     void set_highlighted(bool b) {
         if (b) {

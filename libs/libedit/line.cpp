@@ -105,7 +105,7 @@ void Line::compute_rendered_contents(const Document& document, const Panel& pane
     }
 }
 
-void Line::render(const Document& document, Panel& panel, TextRangeCollectionIterator& metadata_iterator, int col_offset,
+void Line::render(const Document& document, Panel& panel, DocumentTextRangeIterator& metadata_iterator, int col_offset,
                   int row_in_panel) const {
     compute_rendered_contents(document, panel);
 

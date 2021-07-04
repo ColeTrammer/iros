@@ -1,5 +1,6 @@
 #pragma once
 
+#include <edit/text_range.h>
 #include <liim/utilities.h>
 
 namespace Edit {
@@ -48,6 +49,10 @@ public:
 
     int end_line() const { return m_end_line; }
     int end_index() const { return m_end_index; }
+
+    TextRange text_range() const {
+        return { upper_line(), upper_index(), lower_line(), lower_index() - 1, { CharacterMetadata::Flags::Selected } };
+    }
 
 private:
     int m_start_line { 0 };

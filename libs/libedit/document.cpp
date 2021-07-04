@@ -168,7 +168,11 @@ void Document::display_if_needed() const {
 
 void Document::display() const {
     auto& document = const_cast<Document&>(*this);
-    auto metadata_iterator = m_syntax_highlighting_info.iterator(m_row_offset, 0);
+    TextRangeCollection selection_collection(*this);
+    if (!m_selection.empty()) {
+        selection_collection.add(m_selection.text_range());
+    }
+    DocumentTextRangeIterator metadata_iterator(m_row_offset, 0, m_syntax_highlighting_info, selection_collection);
     for (int line_num = m_row_offset; line_num < m_lines.size() && line_num - m_row_offset < m_panel.rows(); line_num++) {
         m_lines[line_num].render(document, document.panel(), metadata_iterator, m_col_offset, line_num - m_row_offset);
     }
