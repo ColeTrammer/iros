@@ -18,35 +18,27 @@ Line::Line(String contents) : m_contents(move(contents)) {}
 
 Line::~Line() {}
 
-int Line::col_position_of_index(int index) const {
-    int col = 0;
+int Line::col_position_of_index(const Document& document, const Panel& panel, int index) const {
+    compute_rendered_contents(document, panel);
+
+    int position = 0;
     for (int i = 0; i < index; i++) {
-        char c = contents()[i];
-        if (c == '\t') {
-            col += tab_width - (col % tab_width);
-        } else {
-            col++;
-        }
+        position += m_rendered_sizes[i];
     }
-    return col;
+    return position;
 }
 
-int Line::index_of_col_position(int position) const {
-    int col = 0;
-    int index;
-    for (index = 0; index < length(); index++) {
-        char c = contents()[index];
-        int col_width = 1;
-        if (c == '\t') {
-            col_width = tab_width - (col % tab_width);
-        }
+int Line::index_of_col_position(const Document& document, const Panel& panel, int position) const {
+    compute_rendered_contents(document, panel);
 
-        col += col_width;
-        if (col > position) {
-            break;
+    int current_position = 0;
+    for (int index = 0; index < length(); index++) {
+        current_position += m_rendered_sizes[index];
+        if (position < current_position) {
+            return index;
         }
     }
-    return index;
+    return length();
 }
 
 void Line::insert_char_at(int position, char c) {
@@ -77,8 +69,9 @@ int Line::search(const String& text) {
     return matches;
 }
 
-void Line::compute_rendered_contents(Document& document, Panel& panel) const {
+void Line::compute_rendered_contents(const Document& document, const Panel& panel) const {
     m_rendered_contents.clear();
+    m_rendered_sizes.resize(length());
 
     int col_position = 0;
     for (int line_index = 0; line_index < length(); line_index++) {
@@ -88,9 +81,11 @@ void Line::compute_rendered_contents(Document& document, Panel& panel) const {
             for (int i = 0; i < num_spaces; i++) {
                 m_rendered_contents += String(' ');
             }
+            m_rendered_sizes[line_index] = num_spaces;
             col_position += num_spaces;
         } else {
             m_rendered_contents += String(c);
+            m_rendered_sizes[line_index] = 1;
             col_position++;
         }
 
@@ -103,13 +98,14 @@ void Line::compute_rendered_contents(Document& document, Panel& panel) const {
                 for (int i = 0; i < length_to_write; i++) {
                     m_rendered_contents += String(text[suggestions.suggestion_offset() + i]);
                 }
+                m_rendered_sizes[line_index] += length_to_write;
                 col_position += length_to_write;
             }
         }
     }
 }
 
-void Line::render(Document& document, Panel& panel, int col_offset, int row_in_panel) const {
+void Line::render(const Document& document, Panel& panel, int col_offset, int row_in_panel) const {
     compute_rendered_contents(document, panel);
 
     int col_position;

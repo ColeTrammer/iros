@@ -25,20 +25,21 @@ public:
 
     LineSplitResult split_at(int position);
 
-    int col_position_of_index(int index) const;
-    int index_of_col_position(int position) const;
+    int col_position_of_index(const Document& document, const Panel& panel, int index) const;
+    int index_of_col_position(const Document& document, const Panel& panel, int position) const;
 
     char char_at(int index) const { return contents()[index]; }
 
     int search(const String& text);
 
-    void render(Document& document, Panel& panel, int col_offset, int row_in_panel) const;
+    void render(const Document& document, Panel& panel, int col_offset, int row_in_panel) const;
 
 private:
-    void compute_rendered_contents(Document& document, Panel& panel) const;
+    void compute_rendered_contents(const Document& document, const Panel& panel) const;
 
     String m_contents;
     mutable String m_rendered_contents;
+    mutable Vector<int> m_rendered_sizes;
 };
 
 struct LineSplitResult {

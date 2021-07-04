@@ -15,7 +15,7 @@ int Cursor::row_position() const {
 }
 
 int Cursor::col_position() const {
-    return referenced_line().col_position_of_index(index_into_line());
+    return referenced_line().col_position_of_index(m_document, m_panel, index_into_line());
 }
 
 bool Cursor::at_document_end() const {

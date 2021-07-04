@@ -196,7 +196,7 @@ int Document::index_into_line_at_cursor() const {
 }
 
 int Document::index_into_line(int index_of_line, int position) const {
-    return line_at_index(index_of_line).index_of_col_position(position + m_col_offset);
+    return line_at_index(index_of_line).index_of_col_position(*this, m_panel, position + m_col_offset);
 }
 
 int Document::cursor_col_on_panel() const {
@@ -271,7 +271,7 @@ void Document::move_cursor_right(MovementMode mode) {
     }
 
     int new_index_into_line = m_cursor.index_into_line() + 1;
-    int new_col_position = line.col_position_of_index(new_index_into_line);
+    int new_col_position = line.col_position_of_index(*this, m_panel, new_index_into_line);
 
     m_max_cursor_col = new_col_position;
 
@@ -308,7 +308,7 @@ void Document::move_cursor_left(MovementMode mode) {
     }
 
     int new_index_into_line = index_into_line - 1;
-    int new_col_position = line.col_position_of_index(new_index_into_line);
+    int new_col_position = line.col_position_of_index(*this, m_panel, new_index_into_line);
 
     m_max_cursor_col = new_col_position;
 
@@ -382,7 +382,7 @@ void Document::move_cursor_up(MovementMode mode) {
 int Document::clamp_cursor_to_line_end() {
     auto& line = line_at_cursor();
     int current_col = m_cursor.col_position();
-    int max_col = line.col_position_of_index(line.length());
+    int max_col = line.col_position_of_index(*this, m_panel, line.length());
     if (current_col == max_col) {
         return line.length();
     }
@@ -393,7 +393,7 @@ int Document::clamp_cursor_to_line_end() {
     }
 
     if (m_max_cursor_col > current_col) {
-        int new_index_into_line = line.index_of_col_position(m_max_cursor_col);
+        int new_index_into_line = line.index_of_col_position(*this, m_panel, m_max_cursor_col);
         m_cursor.set_index_into_line(new_index_into_line);
         return new_index_into_line;
     }
@@ -414,7 +414,7 @@ void Document::move_cursor_to_line_start(MovementMode mode) {
 
 void Document::move_cursor_to_line_end(MovementMode mode) {
     auto& line = line_at_cursor();
-    int new_col_position = line.col_position_of_index(line.length());
+    int new_col_position = line.col_position_of_index(*this, m_panel, line.length());
 
     m_max_cursor_col = new_col_position;
 
