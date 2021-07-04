@@ -5,6 +5,8 @@ set(SOURCES
     document.cpp
     line.cpp
     panel.cpp
+    text_range_collection.cpp
+    text_range.cpp
 )
 
 add_os_library(libedit edit TRUE)

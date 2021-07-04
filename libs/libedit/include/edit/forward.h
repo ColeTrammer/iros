@@ -10,6 +10,8 @@ class Line;
 class Panel;
 class Selection;
 class Suggestions;
+class TextRangeCollection;
+class TextRange;
 enum class DocumentType;
 struct LineSplitResult;
 }
