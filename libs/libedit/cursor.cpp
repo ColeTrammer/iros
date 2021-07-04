@@ -11,8 +11,13 @@ char Cursor::referenced_character() const {
     return referenced_line().char_at(index_into_line());
 }
 
-Position Cursor::position(const Panel& panel) const {
-    return referenced_line().position_of_index(m_document, panel, index_into_line());
+Position Cursor::relative_position(const Panel& panel) const {
+    return referenced_line().relative_position_of_index(m_document, panel, index_into_line());
+}
+
+Position Cursor::absolute_position(const Panel& panel) const {
+    auto relative_pos = relative_position(panel);
+    return { relative_pos.row + line_index(), relative_pos.col };
 }
 
 bool Cursor::at_document_end() const {

@@ -29,7 +29,8 @@ public:
         set_index_into_line(index_into_line);
     }
 
-    Position position(const Panel& panel) const;
+    Position relative_position(const Panel& panel) const;
+    Position absolute_position(const Panel& panel) const;
 
     bool at_document_start() const { return m_line_index == 0 && m_index_into_line == 0; }
     bool at_document_end() const;

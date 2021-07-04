@@ -178,7 +178,7 @@ void Document::display() const {
 
 TextIndex Document::text_index_at_absolute_position(const Position& position) const {
     auto line_index = clamp(position.row, 0, num_lines() - 1);
-    auto index_into_line = line_at_index(line_index).index_of_position(*this, m_panel, position);
+    auto index_into_line = line_at_index(line_index).index_of_relative_position(*this, m_panel, { 0, position.col });
     return { line_index, index_into_line };
 }
 
@@ -203,7 +203,7 @@ int Document::index_into_line_at_cursor() const {
 }
 
 Position Document::cursor_position_on_panel() const {
-    auto position = m_cursor.position(m_panel);
+    auto position = m_cursor.absolute_position(m_panel);
     return { position.row - m_row_offset, position.col - m_col_offset };
 }
 
@@ -275,7 +275,7 @@ void Document::move_cursor_right(MovementMode mode) {
     }
 
     int new_index_into_line = m_cursor.index_into_line() + 1;
-    int new_col_position = line.position_of_index(*this, m_panel, new_index_into_line).col;
+    int new_col_position = line.relative_position_of_index(*this, m_panel, new_index_into_line).col;
 
     m_max_cursor_col = new_col_position;
 
@@ -312,7 +312,7 @@ void Document::move_cursor_left(MovementMode mode) {
     }
 
     int new_index_into_line = index_into_line - 1;
-    int new_col_position = line.position_of_index(*this, m_panel, new_index_into_line).col;
+    int new_col_position = line.relative_position_of_index(*this, m_panel, new_index_into_line).col;
 
     m_max_cursor_col = new_col_position;
 
@@ -342,9 +342,9 @@ void Document::move_cursor_down(MovementMode mode) {
         return;
     }
 
-    auto prev_position = m_cursor.position(m_panel);
     update_selection_state_for_mode(mode);
 
+    auto prev_position = m_cursor.absolute_position(m_panel);
     auto new_index = text_index_at_absolute_position({ prev_position.row + 1, prev_position.col });
 
     m_cursor.set(new_index.line_index(), new_index.index_into_line());
@@ -364,9 +364,9 @@ void Document::move_cursor_up(MovementMode mode) {
         return;
     }
 
-    auto prev_position = m_cursor.position(m_panel);
     update_selection_state_for_mode(mode);
 
+    auto prev_position = m_cursor.absolute_position(m_panel);
     auto new_index = text_index_at_absolute_position({ prev_position.row - 1, prev_position.col });
 
     m_cursor.set(new_index.line_index(), new_index.index_into_line());
@@ -381,20 +381,19 @@ void Document::move_cursor_up(MovementMode mode) {
 
 void Document::clamp_cursor_to_line_end() {
     auto& line = line_at_cursor();
-    int current_col = m_cursor.position(m_panel).col;
-    auto max_position = line.position_of_index(*this, m_panel, line.length());
-    if (current_col == max_position.col) {
+    auto current_pos = m_cursor.relative_position(m_panel);
+    auto max_col = line.max_col_in_relative_row(*this, m_panel, current_pos.row);
+    if (current_pos.col == max_col) {
         return;
     }
 
-    if (current_col > max_position.col) {
-        m_cursor.set_index_into_line(line.length());
+    if (current_pos.col > max_col) {
+        m_cursor.set_index_into_line(line.index_of_relative_position(*this, m_panel, { current_pos.row, max_col }));
         return;
     }
 
-    if (m_max_cursor_col > current_col) {
-        int new_index_into_line = line.index_of_position(*this, m_panel, { index_of_line_at_cursor(), m_max_cursor_col });
-        m_cursor.set_index_into_line(new_index_into_line);
+    if (m_max_cursor_col > current_pos.col) {
+        m_cursor.set_index_into_line(line.index_of_relative_position(*this, m_panel, { current_pos.row, m_max_cursor_col }));
         return;
     }
 }
@@ -412,9 +411,9 @@ void Document::move_cursor_to_line_start(MovementMode mode) {
 
 void Document::move_cursor_to_line_end(MovementMode mode) {
     auto& line = line_at_cursor();
-    auto new_position = line.position_of_index(*this, m_panel, line.length());
+    auto new_col = line.relative_position_of_index(*this, m_panel, line.length()).col;
 
-    m_max_cursor_col = new_position.col;
+    m_max_cursor_col = new_col;
 
     update_selection_state_for_mode(mode);
     if (mode == MovementMode::Select) {

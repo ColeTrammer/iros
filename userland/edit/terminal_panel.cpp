@@ -281,7 +281,7 @@ void TerminalPanel::draw_status_message() {
 
     auto& name = document()->name().is_empty() ? String("[Unamed File]") : document()->name();
 
-    auto cursor_position = document()->cursor().position(*this);
+    auto cursor_position = document()->cursor().absolute_position(*this);
     auto position_string = String::format("%d,%d", cursor_position.row + 1, cursor_position.col + 1);
     auto status_rhs = String::format("%s%s [%s] %9s", name.string(), document()->modified() ? "*" : " ",
                                      document_type_to_string(document()->type()).string(), position_string.string());
