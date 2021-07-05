@@ -169,12 +169,13 @@ void Document::display() const {
     auto render_index = text_index_at_absolute_position({ m_row_offset, 0 });
     auto relative_start_position =
         line_at_index(render_index.line_index()).relative_position_of_index(*this, m_panel, render_index.index_into_line());
+    render_index.set_index_into_line(0);
 
     TextRangeCollection selection_collection(*this);
     if (!m_selection.empty()) {
         selection_collection.add(m_selection.text_range());
     }
-    DocumentTextRangeIterator metadata_iterator(render_index.line_index(), 0, m_syntax_highlighting_info, selection_collection);
+    DocumentTextRangeIterator metadata_iterator(render_index, m_syntax_highlighting_info, selection_collection);
 
     int row = m_row_offset;
     for (; render_index.line_index() < num_lines() && row < m_row_offset + m_panel.rows();) {
