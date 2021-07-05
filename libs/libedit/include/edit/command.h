@@ -1,6 +1,7 @@
 #pragma once
 
 #include <edit/document.h>
+#include <edit/text_index.h>
 
 namespace Edit {
 class Command {
@@ -76,8 +77,7 @@ private:
     DeleteCharMode m_mode { DeleteCharMode::Delete };
     bool m_should_clear_selection { false };
     char m_deleted_char { 0 };
-    int m_end_line { 0 };
-    int m_end_index { 0 };
+    TextIndex m_end;
 };
 
 class DeleteLineCommand final : public DeltaBackedCommand {
@@ -117,8 +117,7 @@ private:
     bool do_swap(SwapDirection direction);
 
     SwapDirection m_direction { SwapDirection::Down };
-    int m_end_line { 0 };
-    int m_end_index { 0 };
+    TextIndex m_end;
     Selection m_end_selection;
 };
 }

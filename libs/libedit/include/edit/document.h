@@ -124,6 +124,7 @@ public:
     const Line& line_at_cursor() const { return const_cast<Document&>(*this).line_at_cursor(); }
     int index_into_line_at_cursor() const;
     int index_of_line_at_cursor() const;
+    const TextIndex& index_at_cursor() const;
     char char_at_cursor() const;
     TextIndex text_index_at_absolute_position(const Position& position) const;
     TextIndex text_index_at_scrolled_position(const Position& position) const;
@@ -173,7 +174,7 @@ public:
     void paste();
     void cut();
 
-    void move_cursor_to(int line_index, int index_into_line, MovementMode mode = MovementMode::Move);
+    void move_cursor_to(const TextIndex& index, MovementMode mode = MovementMode::Move);
     void insert_text_at_cursor(const String& string);
 
     bool show_line_numbers() const { return m_show_line_numbers; }
