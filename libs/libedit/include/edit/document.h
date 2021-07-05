@@ -83,6 +83,7 @@ public:
     bool word_wrap_enabled() const { return m_word_wrap_enabled; }
     void set_word_wrap_enabled(bool b) {
         m_word_wrap_enabled = b;
+        m_col_offset = 0;
         set_needs_display();
     }
 

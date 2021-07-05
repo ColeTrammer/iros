@@ -165,16 +165,17 @@ void Document::display_if_needed() const {
 void Document::display() const {
     auto& document = const_cast<Document&>(*this);
 
+    auto render_index = text_index_at_absolute_position({ m_row_offset, 0 });
+    auto relative_start_position =
+        line_at_index(render_index.line_index()).relative_position_of_index(*this, m_panel, render_index.index_into_line());
+
     TextRangeCollection selection_collection(*this);
     if (!m_selection.empty()) {
         selection_collection.add(m_selection.text_range());
     }
-    DocumentTextRangeIterator metadata_iterator(m_row_offset, 0, m_syntax_highlighting_info, selection_collection);
+    DocumentTextRangeIterator metadata_iterator(render_index.line_index(), 0, m_syntax_highlighting_info, selection_collection);
 
-    auto render_index = text_index_at_absolute_position({ m_row_offset, 0 });
-    auto relative_start_position =
-        line_at_index(render_index.line_index()).relative_position_of_index(*this, m_panel, render_index.index_into_line());
-    for (int row = m_row_offset; row < m_row_offset + m_panel.rows();) {
+    for (int row = m_row_offset; render_index.line_index() < num_lines() && row < m_row_offset + m_panel.rows();) {
         auto& line = line_at_index(render_index.line_index());
         row += line.render(document, document.panel(), metadata_iterator, m_col_offset, relative_start_position.row, row - m_row_offset);
         render_index.set_line_index(render_index.line_index() + 1);
@@ -298,11 +299,6 @@ void Document::move_cursor_right(MovementMode mode) {
         return;
     }
 
-    int new_index_into_line = m_cursor.index_into_line() + 1;
-    int new_col_position = line.relative_position_of_index(*this, m_panel, new_index_into_line).col;
-
-    m_max_cursor_col = new_col_position;
-
     if (!m_selection.empty() && mode == MovementMode::Move) {
         int line_end = m_selection.lower_line();
         int index = m_selection.lower_index();
@@ -310,6 +306,11 @@ void Document::move_cursor_right(MovementMode mode) {
         move_cursor_to(line_end, index);
         return;
     }
+
+    int new_index_into_line = m_cursor.index_into_line() + 1;
+    int new_col_position = line.relative_position_of_index(*this, m_panel, new_index_into_line).col;
+
+    m_max_cursor_col = new_col_position;
 
     if (mode == MovementMode::Select) {
         if (m_selection.empty()) {
@@ -335,11 +336,6 @@ void Document::move_cursor_left(MovementMode mode) {
         return;
     }
 
-    int new_index_into_line = index_into_line - 1;
-    int new_col_position = line.relative_position_of_index(*this, m_panel, new_index_into_line).col;
-
-    m_max_cursor_col = new_col_position;
-
     if (!m_selection.empty() && mode == MovementMode::Move) {
         int line_start = m_selection.upper_line();
         int index = m_selection.upper_index();
@@ -347,6 +343,11 @@ void Document::move_cursor_left(MovementMode mode) {
         move_cursor_to(line_start, index);
         return;
     }
+
+    int new_index_into_line = index_into_line - 1;
+    int new_col_position = line.relative_position_of_index(*this, m_panel, new_index_into_line).col;
+
+    m_max_cursor_col = new_col_position;
 
     if (mode == MovementMode::Select) {
         if (m_selection.empty()) {
@@ -845,6 +846,11 @@ void Document::set_show_line_numbers(bool b) {
 }
 
 void Document::notify_panel_size_changed() {
+    if (word_wrap_enabled()) {
+        for (auto& line : m_lines) {
+            line.invalidate_rendered_contents();
+        }
+    }
     display();
 }
 
@@ -1094,6 +1100,7 @@ void Document::finish_key_press() {
     scroll_cursor_into_view();
 
     if (preview_auto_complete()) {
+        line_at_cursor().invalidate_rendered_contents();
         set_needs_display();
     }
 

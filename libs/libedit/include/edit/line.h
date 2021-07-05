@@ -30,7 +30,7 @@ public:
     int index_of_relative_position(const Document& document, const Panel& panel, const Position& position) const;
     int max_col_in_relative_row(const Document& document, const Panel& panel, int relative_row) const;
     int absolute_row_position(const Document& document, const Panel& panel) const;
-    int rendered_line_count(const Document&, const Panel&) const { return 1; }
+    int rendered_line_count(const Document&, const Panel&) const;
 
     char char_at(int index) const { return contents()[index]; }
 
@@ -38,6 +38,11 @@ public:
 
     int render(const Document& document, Panel& panel, DocumentTextRangeIterator& metadata_iterator, int col_offset, int relative_row_start,
                int row_in_panel) const;
+
+    void invalidate_rendered_contents() {
+        m_rendered_contents_valid = false;
+        m_rendered_line_count_valid = false;
+    }
 
 private:
     void compute_rendered_contents(const Document& document, const Panel& panel) const;
@@ -50,6 +55,9 @@ private:
     String m_contents;
     mutable String m_rendered_contents;
     mutable Vector<IndexRenderedSpan> m_rendered_spans;
+    mutable bool m_rendered_contents_valid { false };
+    mutable int m_rendered_line_count { 0 };
+    mutable bool m_rendered_line_count_valid { false };
 };
 
 struct LineSplitResult {

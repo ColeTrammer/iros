@@ -22,36 +22,76 @@ Line::~Line() {}
 Position Line::relative_position_of_index(const Document& document, const Panel& panel, int index) const {
     compute_rendered_contents(document, panel);
 
+    auto col_to_relative_position = [&](int col) -> Position {
+        if (!document.word_wrap_enabled() || col == 0) {
+            return { 0, col };
+        }
+
+        auto absolute_row = absolute_row_position(document, panel);
+        int relative_row = 0;
+        while (col >= panel.cols_at_row(absolute_row + relative_row)) {
+            col -= panel.cols_at_row(absolute_row + relative_row);
+            relative_row++;
+        }
+        return { relative_row, col };
+    };
+
     if (index >= length()) {
         if (m_rendered_spans.empty()) {
-            return { 0, 0 };
+            return col_to_relative_position(0);
         }
-        return { 0, m_rendered_spans.last().rendered_end };
+        return col_to_relative_position(m_rendered_spans.last().rendered_end);
     }
 
     if (index == 0) {
-        return { 0, 0 };
+        return col_to_relative_position(0);
     }
 
-    return { 0, m_rendered_spans[index - 1].rendered_end };
+    return col_to_relative_position(m_rendered_spans[index - 1].rendered_end);
 }
 
 int Line::rendered_string_offset_of_index(const Document& document, const Panel& panel, int index) const {
-    return relative_position_of_index(document, panel, index).col;
+    compute_rendered_contents(document, panel);
+
+    if (index >= length()) {
+        if (m_rendered_spans.empty()) {
+            return 0;
+        }
+        return m_rendered_spans.last().rendered_end;
+    }
+
+    if (index == 0) {
+        return 0;
+    }
+    return m_rendered_spans[index - 1].rendered_end;
 }
 
 int Line::index_of_relative_position(const Document& document, const Panel& panel, const Position& position) const {
     compute_rendered_contents(document, panel);
 
+    auto absolute_row = absolute_row_position(document, panel);
+    int relative_row = 0;
+    int accumulated_row_width = 0;
     for (int index = 0; index < length(); index++) {
-        if (position.col < m_rendered_spans[index].rendered_end) {
+        auto& span = m_rendered_spans[index];
+        auto rendered_line_col = span.rendered_end - accumulated_row_width;
+        if (relative_row == position.row && position.col < rendered_line_col) {
             return index;
+        }
+
+        if (document.word_wrap_enabled() && rendered_line_col >= panel.cols_at_row(absolute_row + relative_row)) {
+            accumulated_row_width += panel.cols_at_row(absolute_row + relative_row);
+            relative_row++;
         }
     }
     return length();
 }
 
 int Line::absolute_row_position(const Document& document, const Panel& panel) const {
+    if (!document.word_wrap_enabled()) {
+        return document.index_of_line(*this);
+    }
+
     int absolute_row = 0;
     for (int i = 0; i < document.num_lines(); i++) {
         if (this == &document.line_at_index(i)) {
@@ -62,20 +102,58 @@ int Line::absolute_row_position(const Document& document, const Panel& panel) co
     assert(false);
 }
 
-int Line::max_col_in_relative_row(const Document& document, const Panel& panel, int) const {
-    return relative_position_of_index(document, panel, length()).col;
+int Line::rendered_line_count(const Document& document, const Panel& panel) const {
+    if (!document.word_wrap_enabled()) {
+        return 1;
+    }
+
+    if (m_rendered_line_count_valid) {
+        return m_rendered_line_count;
+    }
+    m_rendered_line_count_valid = true;
+
+    compute_rendered_contents(document, panel);
+
+    auto absolute_row = absolute_row_position(document, panel);
+    int line_count = 0;
+    int line_width = m_rendered_contents.size();
+    while (line_width > 0) {
+        line_width -= panel.cols_at_row(absolute_row + line_count);
+        line_count++;
+    }
+
+    m_rendered_line_count = max(line_count, 1);
+    return m_rendered_line_count;
+}
+
+int Line::max_col_in_relative_row(const Document& document, const Panel& panel, int row) const {
+    compute_rendered_contents(document, panel);
+
+    auto absolute_row = absolute_row_position(document, panel);
+    if (row < rendered_line_count(document, panel) - 1) {
+        return panel.cols_at_row(absolute_row + row);
+    }
+
+    int accumulated_row_width = 0;
+    for (int i = 0; i < row; i++) {
+        accumulated_row_width += panel.cols_at_row(absolute_row + i);
+    }
+    return m_rendered_contents.size() - accumulated_row_width;
 }
 
 void Line::insert_char_at(int position, char c) {
     m_contents.insert(c, position);
+    invalidate_rendered_contents();
 }
 
 void Line::remove_char_at(int position) {
     m_contents.remove_index(position);
+    invalidate_rendered_contents();
 }
 
 void Line::combine_line(Line& line) {
     m_contents += line.contents();
+    invalidate_rendered_contents();
 }
 
 int Line::search(const String& text) {
@@ -95,6 +173,11 @@ int Line::search(const String& text) {
 }
 
 void Line::compute_rendered_contents(const Document& document, const Panel& panel) const {
+    if (m_rendered_contents_valid) {
+        return;
+    }
+
+    m_rendered_contents_valid = true;
     m_rendered_contents.clear();
     m_rendered_spans.resize(length());
 
@@ -134,31 +217,44 @@ void Line::compute_rendered_contents(const Document& document, const Panel& pane
 }
 
 int Line::render(const Document& document, Panel& panel, DocumentTextRangeIterator& metadata_iterator, int col_offset,
-                 [[maybe_unused]] int relative_row_start, int row_in_panel) const {
+                 int relative_row_start, int row_in_panel) const {
     compute_rendered_contents(document, panel);
 
-    int index_into_line = index_of_relative_position(document, panel, { 0, col_offset });
-    metadata_iterator.advance_to_index_into_line(index_into_line);
+    auto row_count = rendered_line_count(document, panel);
+    auto absolute_row = absolute_row_position(document, panel);
 
+    int row = 0;
     int col_position = 0;
-    while (col_position < panel.cols_at_row(row_in_panel) && static_cast<size_t>(col_offset + col_position) < m_rendered_contents.size()) {
-        CharacterMetadata metadata(CharacterMetadata::Flags::AutoCompletePreview);
-        if (index_into_line < length() && col_position + col_offset >= m_rendered_spans[index_into_line].rendered_start) {
-            metadata = metadata_iterator.peek_metadata();
-        }
-        panel.set_text_at(row_in_panel, col_position, m_rendered_contents[col_offset + col_position], metadata);
+    int render_index = 0;
+    for (; row + row_in_panel < panel.rows() && row < row_count; row++) {
+        int index_into_line = index_of_relative_position(document, panel, { row, col_offset });
+        metadata_iterator.advance_to_index_into_line(index_into_line);
+        render_index += col_offset;
 
-        col_position++;
-        if (index_into_line < length() && col_position + col_offset >= m_rendered_spans[index_into_line].rendered_end) {
-            index_into_line++;
-            metadata_iterator.advance();
+        col_position = 0;
+        while (col_position < panel.cols_at_row(absolute_row + row) && static_cast<size_t>(render_index) < m_rendered_contents.size()) {
+            CharacterMetadata metadata(CharacterMetadata::Flags::AutoCompletePreview);
+            if (index_into_line < length() && render_index >= m_rendered_spans[index_into_line].rendered_start) {
+                metadata = metadata_iterator.peek_metadata();
+            }
+
+            if (row >= relative_row_start) {
+                panel.set_text_at(row_in_panel + row - relative_row_start, col_position, m_rendered_contents[render_index], metadata);
+            }
+
+            col_position++;
+            render_index++;
+            if (index_into_line < length() && render_index >= m_rendered_spans[index_into_line].rendered_end) {
+                index_into_line++;
+                metadata_iterator.advance();
+            }
         }
     }
 
-    for (; col_position < panel.cols_at_row(row_in_panel); col_position++) {
-        panel.set_text_at(row_in_panel, col_position, ' ', CharacterMetadata());
+    for (; col_position < panel.cols_at_row(absolute_row + row - 1); col_position++) {
+        panel.set_text_at(row_in_panel + row - relative_row_start - 1, col_position, ' ', CharacterMetadata());
     }
     metadata_iterator.advance_line();
-    return 1;
+    return row_count - relative_row_start;
 }
 }
