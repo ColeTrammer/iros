@@ -392,7 +392,7 @@ void Document::move_cursor_down(MovementMode mode) {
     auto prev_position = m_cursor.absolute_position(m_panel);
     auto new_index = text_index_at_absolute_position({ prev_position.row + 1, prev_position.col });
 
-    m_cursor.set(new_index.line_index(), new_index.index_into_line());
+    m_cursor.set(new_index);
 
     clamp_cursor_to_line_end();
     if (mode == MovementMode::Select) {
@@ -414,7 +414,7 @@ void Document::move_cursor_up(MovementMode mode) {
     auto prev_position = m_cursor.absolute_position(m_panel);
     auto new_index = text_index_at_absolute_position({ prev_position.row - 1, prev_position.col });
 
-    m_cursor.set(new_index.line_index(), new_index.index_into_line());
+    m_cursor.set(new_index);
 
     clamp_cursor_to_line_end();
     if (mode == MovementMode::Select) {

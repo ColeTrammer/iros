@@ -3,6 +3,7 @@
 namespace Edit {
 class TextIndex {
 public:
+    TextIndex() {}
     TextIndex(int line_index, int index_into_line) : m_line_index(line_index), m_index_into_line(index_into_line) {}
 
     int line_index() const { return m_line_index; }
