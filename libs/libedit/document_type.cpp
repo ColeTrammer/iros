@@ -124,7 +124,7 @@ static void highlight_cpp(Document& document) {
 
     for (auto& token : lexer.tokens()) {
         int flags = cpp_flags_for_token_type(token.type);
-        range_collection.add({ { token.start_line, token.start_col }, { token.end_line, token.end_col - 1 }, { flags } });
+        range_collection.add({ { token.start_line, token.start_col }, { token.end_line, token.end_col }, { flags } });
     }
 }
 
@@ -283,7 +283,7 @@ static void highlight_sh(Document& document) {
         auto& token_value = lexer.tokens()[i].value();
         range_collection.add({
             { static_cast<int>(token_value.start_line()), static_cast<int>(token_value.start_col()) },
-            { static_cast<int>(token_value.end_line()), static_cast<int>(token_value.end_col() - 1) },
+            { static_cast<int>(token_value.end_line()), static_cast<int>(token_value.end_col()) },
             { flags },
         });
     }

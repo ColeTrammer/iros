@@ -16,10 +16,12 @@ public:
         m_index_into_line = index_into_line;
     }
 
-    bool operator==(const TextIndex& other) const {
-        return this->line_index() == other.line_index() && this->index_into_line() == other.index_into_line();
-    }
-    bool operator!=(const TextIndex& other) const { return !(*this == other); }
+    bool operator==(const TextIndex& other) const = default;
+    bool operator!=(const TextIndex& other) const = default;
+    bool operator<(const TextIndex& other) const { return this->is_before(other); }
+    bool operator<=(const TextIndex& other) const { return (*this == other) || this->is_before(other); }
+    bool operator>(const TextIndex& other) const { return this->is_after(other); }
+    bool operator>=(const TextIndex& other) const { return (*this == other) || this->is_after(other); }
 
     bool is_before(const TextIndex& other) const {
         if (this->line_index() < other.line_index()) {

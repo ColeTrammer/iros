@@ -51,7 +51,7 @@ public:
     int end_index() const { return m_end_index; }
 
     TextRange text_range() const {
-        return { { upper_line(), upper_index() }, { lower_line(), lower_index() - 1 }, { CharacterMetadata::Flags::Selected } };
+        return { { upper_line(), upper_index() }, { lower_line(), lower_index() }, { CharacterMetadata::Flags::Selected } };
     }
 
 private:
