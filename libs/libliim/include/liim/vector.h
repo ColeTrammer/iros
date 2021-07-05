@@ -320,6 +320,7 @@ public:
         for (int i = size() - 1; i >= 0; i--) {
             if (get(i) == val) {
                 remove(i);
+                break;
             }
         }
     }
