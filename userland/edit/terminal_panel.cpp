@@ -357,13 +357,7 @@ void TerminalPanel::flush() {
     fputs("\033[?25l", stdout);
 
     for (int r = 0; r < rows(); r++) {
-        if (!m_dirty_rows[r]) {
-            continue;
-        }
-        m_dirty_rows[r] = false;
-
-        printf("\033[%d;%dH\033[0K", m_row_offset + r + 1, m_col_offset + 1);
-
+        printf("\033[%d;%dH", m_row_offset + r + 1, m_col_offset + 1);
         if (document()->show_line_numbers()) {
             char buf[48];
             if (r + document()->row_offset() >= document()->num_rendered_lines()) {
@@ -381,6 +375,12 @@ void TerminalPanel::flush() {
             fputs(string_for_metadata(m_last_metadata_rendered).string(), stdout);
             fputs(buf, stdout);
         }
+
+        if (!m_dirty_rows[r]) {
+            continue;
+        }
+
+        m_dirty_rows[r] = false;
         flush_row(r);
     }
 
