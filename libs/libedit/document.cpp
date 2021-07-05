@@ -164,26 +164,50 @@ void Document::display_if_needed() const {
 
 void Document::display() const {
     auto& document = const_cast<Document&>(*this);
+
     TextRangeCollection selection_collection(*this);
     if (!m_selection.empty()) {
         selection_collection.add(m_selection.text_range());
     }
     DocumentTextRangeIterator metadata_iterator(m_row_offset, 0, m_syntax_highlighting_info, selection_collection);
-    for (int line_num = m_row_offset; line_num < m_lines.size() && line_num - m_row_offset < m_panel.rows(); line_num++) {
-        m_lines[line_num].render(document, document.panel(), metadata_iterator, m_col_offset, line_num - m_row_offset);
+
+    auto render_index = text_index_at_absolute_position({ m_row_offset, 0 });
+    auto relative_start_position =
+        line_at_index(render_index.line_index()).relative_position_of_index(*this, m_panel, render_index.index_into_line());
+    for (int row = m_row_offset; row < m_row_offset + m_panel.rows();) {
+        auto& line = line_at_index(render_index.line_index());
+        row += line.render(document, document.panel(), metadata_iterator, m_col_offset, relative_start_position.row, row - m_row_offset);
+        render_index.set_line_index(render_index.line_index() + 1);
+        relative_start_position = { 0, 0 };
     }
     m_panel.flush();
     m_needs_display = false;
 }
 
 TextIndex Document::text_index_at_absolute_position(const Position& position) const {
-    auto line_index = clamp(position.row, 0, num_lines() - 1);
-    auto index_into_line = line_at_index(line_index).index_of_relative_position(*this, m_panel, { 0, position.col });
-    return { line_index, index_into_line };
+    if (position.row < 0) {
+        return { 0, 0 };
+    }
+
+    int absolute_row = 0;
+    for (auto& line : m_lines) {
+        auto height_of_line = line.rendered_line_count(*this, m_panel);
+        if (position.row < absolute_row + height_of_line) {
+            return { index_of_line(line), line.index_of_relative_position(*this, m_panel, { position.row - absolute_row, position.col }) };
+        }
+        absolute_row += height_of_line;
+    }
+
+    return { num_lines() - 1, last_line().length() };
 }
 
 TextIndex Document::text_index_at_scrolled_position(const Position& position) const {
     return text_index_at_absolute_position({ position.row + m_row_offset, position.col + m_col_offset });
+}
+
+Position Document::relative_to_absolute_position(const Panel& panel, const Line& reference_line,
+                                                 const Position& line_relative_position) const {
+    return { reference_line.absolute_row_position(*this, panel) + line_relative_position.row, line_relative_position.col };
 }
 
 Line& Document::line_at_cursor() {

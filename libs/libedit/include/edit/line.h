@@ -29,14 +29,15 @@ public:
     int rendered_string_offset_of_index(const Document& document, const Panel& panel, int index) const;
     int index_of_relative_position(const Document& document, const Panel& panel, const Position& position) const;
     int max_col_in_relative_row(const Document& document, const Panel& panel, int relative_row) const;
+    int absolute_row_position(const Document& document, const Panel& panel) const;
     int rendered_line_count(const Document&, const Panel&) const { return 1; }
 
     char char_at(int index) const { return contents()[index]; }
 
     int search(const String& text);
 
-    void render(const Document& document, Panel& panel, DocumentTextRangeIterator& metadata_iterator, int col_offset,
-                int row_in_panel) const;
+    int render(const Document& document, Panel& panel, DocumentTextRangeIterator& metadata_iterator, int col_offset, int relative_row_start,
+               int row_in_panel) const;
 
 private:
     void compute_rendered_contents(const Document& document, const Panel& panel) const;

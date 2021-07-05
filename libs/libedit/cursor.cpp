@@ -17,7 +17,7 @@ Position Cursor::relative_position(const Panel& panel) const {
 
 Position Cursor::absolute_position(const Panel& panel) const {
     auto relative_pos = relative_position(panel);
-    return { relative_pos.row + line_index(), relative_pos.col };
+    return m_document.relative_to_absolute_position(panel, referenced_line(), relative_pos);
 }
 
 bool Cursor::at_document_end() const {

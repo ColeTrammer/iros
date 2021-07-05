@@ -51,6 +51,17 @@ int Line::index_of_relative_position(const Document& document, const Panel& pane
     return length();
 }
 
+int Line::absolute_row_position(const Document& document, const Panel& panel) const {
+    int absolute_row = 0;
+    for (int i = 0; i < document.num_lines(); i++) {
+        if (this == &document.line_at_index(i)) {
+            return absolute_row;
+        }
+        absolute_row += document.line_at_index(i).rendered_line_count(document, panel);
+    }
+    assert(false);
+}
+
 int Line::max_col_in_relative_row(const Document& document, const Panel& panel, int) const {
     return relative_position_of_index(document, panel, length()).col;
 }
@@ -122,8 +133,8 @@ void Line::compute_rendered_contents(const Document& document, const Panel& pane
     }
 }
 
-void Line::render(const Document& document, Panel& panel, DocumentTextRangeIterator& metadata_iterator, int col_offset,
-                  int row_in_panel) const {
+int Line::render(const Document& document, Panel& panel, DocumentTextRangeIterator& metadata_iterator, int col_offset,
+                 [[maybe_unused]] int relative_row_start, int row_in_panel) const {
     compute_rendered_contents(document, panel);
 
     int index_into_line = index_of_relative_position(document, panel, { 0, col_offset });
@@ -148,5 +159,6 @@ void Line::render(const Document& document, Panel& panel, DocumentTextRangeItera
         panel.set_text_at(row_in_panel, col_position, ' ', CharacterMetadata());
     }
     metadata_iterator.advance_line();
+    return 1;
 }
 }

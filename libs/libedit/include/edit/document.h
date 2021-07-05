@@ -126,6 +126,7 @@ public:
     char char_at_cursor() const;
     TextIndex text_index_at_absolute_position(const Position& position) const;
     TextIndex text_index_at_scrolled_position(const Position& position) const;
+    Position relative_to_absolute_position(const Panel& panel, const Line& line, const Position& line_relative_position) const;
     int index_of_line(const Line& line) const;
     int num_lines() const { return m_lines.size(); }
 
