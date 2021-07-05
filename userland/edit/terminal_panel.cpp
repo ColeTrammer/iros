@@ -281,8 +281,9 @@ void TerminalPanel::draw_status_message() {
 
     auto& name = document()->name().is_empty() ? String("[Unamed File]") : document()->name();
 
-    auto cursor_position = document()->cursor().absolute_position(*this);
-    auto position_string = String::format("%d,%d", cursor_position.row + 1, cursor_position.col + 1);
+    auto cursor_col =
+        document()->line_at_cursor().rendered_string_offset_of_index(*document(), *this, document()->index_into_line_at_cursor());
+    auto position_string = String::format("%d,%d", document()->index_of_line_at_cursor() + 1, cursor_col + 1);
     auto status_rhs = String::format("%s%s [%s] %9s", name.string(), document()->modified() ? "*" : " ",
                                      document_type_to_string(document()->type()).string(), position_string.string());
 
@@ -363,13 +364,21 @@ void TerminalPanel::flush() {
 
         printf("\033[%d;%dH\033[0K", m_row_offset + r + 1, m_col_offset + 1);
 
-        int line_number = document()->row_offset() + r + 1;
-        if (document()->show_line_numbers() && line_number <= document()->num_lines()) {
+        if (document()->show_line_numbers()) {
+            char buf[48];
+            if (r + document()->row_offset() >= document()->num_rendered_lines()) {
+                snprintf(buf, sizeof(buf) - 1, "%*s", m_cols_needed_for_line_numbers, "");
+            } else {
+                auto line_index = document()->text_index_at_scrolled_position({ r, 0 });
+                if (line_index.index_into_line() != 0) {
+                    snprintf(buf, sizeof(buf) - 1, "%*s", m_cols_needed_for_line_numbers, "");
+                } else {
+                    snprintf(buf, sizeof(buf) - 1, "%*d ", m_cols_needed_for_line_numbers - 1, line_index.line_index() + 1);
+                }
+            }
+
             m_last_metadata_rendered = Edit::CharacterMetadata();
             fputs(string_for_metadata(m_last_metadata_rendered).string(), stdout);
-
-            char buf[48];
-            snprintf(buf, sizeof(buf) - 1, "%*d ", m_cols_needed_for_line_numbers - 1, line_number);
             fputs(buf, stdout);
         }
         flush_row(r);
