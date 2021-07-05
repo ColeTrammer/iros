@@ -2118,7 +2118,6 @@ int we_glob(wordexp_t *we, size_t start) {
                         break;
                     }
 
-                    free(token);
                     if (!we_insert(gl.gl_pathv, gl.gl_pathc, i, we)) {
                         globfree(&gl);
                         return WRDE_NOSPACE;
