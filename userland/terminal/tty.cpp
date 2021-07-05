@@ -859,6 +859,9 @@ void TTY::on_char(char c) {
         case '\a':
             // Ignore alarm character for now
             break;
+        case 127:
+            // Ignore this for now (this should definitely not be printed)
+            break;
         default:
             put_char(c);
             break;

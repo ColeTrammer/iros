@@ -246,7 +246,7 @@ void PsuedoTerminal::handle_key_event(key key, int flags, char ascii) {
     } else if (key == KEY_TAB) {
         ascii = '\t';
     } else if (key == KEY_BACKSPACE) {
-        ascii = 127;
+        ascii = 8;
     }
 
     if (!ascii) {
