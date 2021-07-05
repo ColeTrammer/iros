@@ -130,6 +130,7 @@ public:
     Position relative_to_absolute_position(const Panel& panel, const Line& line, const Position& line_relative_position) const;
     int index_of_line(const Line& line) const;
     int num_lines() const { return m_lines.size(); }
+    int num_rendered_lines() const;
 
     Position cursor_position_on_panel() const;
 

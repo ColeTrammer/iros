@@ -123,6 +123,7 @@ void Document::copy_settings_from(const Document& other) {
     set_auto_complete_mode(other.m_auto_complete_mode);
     set_preview_auto_complete(other.m_preview_auto_complete);
     set_convert_tabs_to_spaces(other.m_convert_tabs_to_spaces);
+    set_word_wrap_enabled(other.m_word_wrap_enabled);
 
     set_show_line_numbers(other.show_line_numbers());
 }
@@ -175,12 +176,21 @@ void Document::display() const {
     }
     DocumentTextRangeIterator metadata_iterator(render_index.line_index(), 0, m_syntax_highlighting_info, selection_collection);
 
-    for (int row = m_row_offset; render_index.line_index() < num_lines() && row < m_row_offset + m_panel.rows();) {
+    int row = m_row_offset;
+    for (; render_index.line_index() < num_lines() && row < m_row_offset + m_panel.rows();) {
         auto& line = line_at_index(render_index.line_index());
         row += line.render(document, document.panel(), metadata_iterator, m_col_offset, relative_start_position.row, row - m_row_offset);
         render_index.set_line_index(render_index.line_index() + 1);
         relative_start_position = { 0, 0 };
     }
+
+    // Explicitly clear any visible line after the document ends
+    for (; row - m_row_offset < m_panel.rows(); row++) {
+        for (int col = 0; col < m_panel.cols_at_row(row); col++) {
+            m_panel.set_text_at(row - m_row_offset, col, ' ', {});
+        }
+    }
+
     m_panel.flush();
     m_needs_display = false;
 }
@@ -225,6 +235,14 @@ int Document::index_of_line_at_cursor() const {
 
 int Document::index_into_line_at_cursor() const {
     return m_cursor.index_into_line();
+}
+
+int Document::num_rendered_lines() const {
+    int total = 0;
+    for (auto& line : m_lines) {
+        total += line.rendered_line_count(*this, m_panel);
+    }
+    return total;
 }
 
 Position Document::cursor_position_on_panel() const {
@@ -362,7 +380,8 @@ void Document::move_cursor_left(MovementMode mode) {
 
 void Document::move_cursor_down(MovementMode mode) {
     auto& prev_line = line_at_cursor();
-    if (&prev_line == &last_line()) {
+    if (&prev_line == &last_line() && last_line().relative_position_of_index(*this, m_panel, index_into_line_at_cursor()).row ==
+                                          last_line().rendered_line_count(*this, m_panel) - 1) {
         move_cursor_to_line_end(mode);
         return;
     }
@@ -384,7 +403,7 @@ void Document::move_cursor_down(MovementMode mode) {
 
 void Document::move_cursor_up(MovementMode mode) {
     auto& prev_line = line_at_cursor();
-    if (&prev_line == &first_line()) {
+    if (&prev_line == &first_line() && first_line().relative_position_of_index(*this, m_panel, index_into_line_at_cursor()).row == 0) {
         move_cursor_to_line_start(mode);
         return;
     }
@@ -485,7 +504,7 @@ void Document::scroll_up(int times) {
 
 void Document::scroll_down(int times) {
     for (int i = 0; i < times; i++) {
-        if (m_row_offset + m_panel.rows() < num_lines()) {
+        if (m_row_offset + m_panel.rows() < num_rendered_lines()) {
             m_row_offset++;
             set_needs_display();
         }
