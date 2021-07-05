@@ -890,11 +890,13 @@ void Document::go_to_line() {
     clear_selection();
     m_cursor.set_line_index(line_number - 1);
 
+    auto cursor_row_position = line_at_cursor().absolute_row_position(*this, m_panel);
+
     int screen_midpoint = m_panel.rows() / 2;
-    if (line_number - 1 < screen_midpoint) {
+    if (cursor_row_position < screen_midpoint) {
         m_row_offset = 0;
     } else {
-        m_row_offset = line_number - 1 - screen_midpoint;
+        m_row_offset = cursor_row_position - screen_midpoint;
     }
 
     move_cursor_to_line_start();
