@@ -192,7 +192,7 @@ void Document::display() const {
 
     // Explicitly clear any visible line after the document ends
     for (; row - m_row_offset < m_panel.rows(); row++) {
-        for (int col = 0; col < m_panel.cols_at_row(row); col++) {
+        for (int col = 0; col < m_panel.cols(); col++) {
             m_panel.set_text_at(row - m_row_offset, col, ' ', {});
         }
     }
@@ -542,8 +542,8 @@ void Document::scroll_cursor_into_view() {
 
     if (cursor_position_on_panel().col < 0) {
         scroll_left(-cursor_position_on_panel().col);
-    } else if (cursor_position_on_panel().col >= m_panel.cols_at_row(cursor_position_on_panel().row)) {
-        scroll_right(cursor_position_on_panel().col - m_panel.cols_at_row(cursor_position_on_panel().row) + 1);
+    } else if (cursor_position_on_panel().col >= m_panel.cols()) {
+        scroll_right(cursor_position_on_panel().col - m_panel.cols() + 1);
     }
 }
 
@@ -787,14 +787,6 @@ void Document::clear_selection() {
 void Document::remove_line(int index) {
     m_lines.remove(index);
     m_panel.notify_line_count_changed();
-
-    int last_row_index = m_lines.size();
-    int row_in_panel = last_row_index - m_row_offset;
-    if (row_in_panel >= 0 && row_in_panel < m_panel.rows()) {
-        for (int c = 0; c < m_panel.cols_at_row(row_in_panel); c++) {
-            m_panel.set_text_at(row_in_panel, c, ' ', {});
-        }
-    }
 
     set_needs_display();
 }

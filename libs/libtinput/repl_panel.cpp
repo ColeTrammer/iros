@@ -40,8 +40,7 @@ static void update_panel_sizes() {
     winsize sz;
     assert(ioctl(STDOUT_FILENO, TIOCGWINSZ, &sz) == 0);
 
-    auto* document = s_main_panel->document();
-    s_main_panel->set_coordinates(document ? document->num_lines() : 1, sz.ws_row, sz.ws_col);
+    s_main_panel->set_coordinates(sz.ws_row, sz.ws_col);
 }
 
 static void enable_raw_mode() {
@@ -84,11 +83,10 @@ ReplPanel::ReplPanel(Repl& repl) : m_repl(repl) {
     update_panel_sizes();
 }
 
-void ReplPanel::set_coordinates(int rows, int max_rows, int max_cols) {
-    m_rows = min(max_rows, rows);
-    m_max_rows = max_rows;
-    m_max_cols = max_cols;
-    m_screen_info.resize(cols_at_row(0) + (m_rows - 1) * cols_at_row(1));
+void ReplPanel::set_coordinates(int rows, int cols) {
+    m_rows = rows;
+    m_cols = cols;
+    m_screen_info.resize(cols * rows);
     m_dirty_rows.resize(m_rows);
     for (auto& b : m_dirty_rows) {
         b = true;
@@ -96,7 +94,7 @@ void ReplPanel::set_coordinates(int rows, int max_rows, int max_cols) {
 
     if (m_absolute_row_position != -1) {
         int old_row_position = m_absolute_row_position;
-        if (old_row_position >= max_rows) {
+        if (old_row_position >= m_rows) {
             m_absolute_row_position = max(0, m_rows - document()->num_lines());
         }
 
@@ -116,7 +114,7 @@ ReplPanel::~ReplPanel() {
 
 void ReplPanel::clear() {
     m_screen_info.clear();
-    m_screen_info.resize(cols_at_row(0) + (m_rows - 1) * cols_at_row(1));
+    m_screen_info.resize(cols() * rows());
     for (auto& b : m_dirty_rows) {
         b = true;
     }
@@ -237,26 +235,12 @@ void ReplPanel::quit() {
 }
 
 int ReplPanel::index(int row, int col) const {
-    if (row == 0) {
-        return col;
-    }
-
-    return cols_at_row(0) + (row - 1) * cols_at_row(1) + col;
+    return row * cols() + col;
 }
 
-void ReplPanel::notify_line_count_changed() {
-    if (document()->num_lines() != m_rows) {
-        int new_rows = document()->num_lines();
-        if (m_absolute_row_position + new_rows > max_rows()) {
-            auto lines_to_scroll = (m_absolute_row_position + new_rows) - max_rows();
-            m_absolute_row_position -= lines_to_scroll;
-            printf("\033[%dS", lines_to_scroll);
-        }
-        set_coordinates(new_rows, max_rows(), max_cols());
-    }
-}
+void ReplPanel::notify_line_count_changed() {}
 
-static int string_print_width(const String& string) {
+[[maybe_unused]] static int string_print_width(const String& string) {
     // NOTE: naively handle TTY escape sequences as matching the regex \033(.*)[:alpha:]
     //       also UTF-8 characters are ignored.
 
@@ -277,14 +261,6 @@ static int string_print_width(const String& string) {
     return count;
 }
 
-int ReplPanel::cols_at_row(int row) const {
-    return max_cols() - prompt_cols_at_row(row);
-}
-
-int ReplPanel::prompt_cols_at_row(int row) const {
-    return string_print_width(prompt_at_row(row));
-}
-
 const String& ReplPanel::prompt_at_row(int row) const {
     return row == 0 ? m_main_prompt : m_secondary_prompt;
 }
@@ -294,24 +270,23 @@ void ReplPanel::draw_cursor() {
     auto cursor_row = cursor_pos.row;
     auto cursor_col = cursor_pos.col;
 
-    int desired_cursor_col = prompt_cols_at_row(cursor_row) + cursor_col;
-    if (cursor_row >= 0 && cursor_row < rows() && desired_cursor_col >= 0 && desired_cursor_col < max_cols()) {
+    if (cursor_row >= 0 && cursor_row < rows() && cursor_col >= 0 && cursor_col < cols()) {
         if (cursor_row < m_visible_cursor_row) {
             printf("\033[%dA", m_visible_cursor_row - cursor_row);
         } else if (cursor_row > m_visible_cursor_row) {
             printf("\033[%dB", cursor_row - m_visible_cursor_row);
         }
 
-        if (desired_cursor_col < m_visible_cursor_col) {
-            printf("\033[%dD", m_visible_cursor_col - desired_cursor_col);
-        } else if (desired_cursor_col > m_visible_cursor_col) {
-            printf("\033[%dC", desired_cursor_col - m_visible_cursor_col);
+        if (cursor_col < m_visible_cursor_col) {
+            printf("\033[%dD", m_visible_cursor_col - cursor_col);
+        } else if (cursor_col > m_visible_cursor_col) {
+            printf("\033[%dC", cursor_col - m_visible_cursor_col);
         }
 
         printf("\033[?25h");
 
         m_visible_cursor_row = cursor_row;
-        m_visible_cursor_col = desired_cursor_col;
+        m_visible_cursor_col = cursor_col;
     } else {
         printf("\033[?25l");
     }
@@ -339,20 +314,16 @@ void ReplPanel::print_char(char c, Edit::CharacterMetadata metadata) {
     }
 
     fputc(c, stdout);
-    m_visible_cursor_col = min(m_visible_cursor_col + 1, max_cols() - 1);
+    m_visible_cursor_col = min(m_visible_cursor_col + 1, cols() - 1);
 }
 
 void ReplPanel::flush_row(int row) {
-    printf("%s", prompt_at_row(row).string());
-    m_visible_cursor_col += prompt_cols_at_row(row);
-
-    int cols = cols_at_row(row);
-    for (int c = 0; c < cols; c++) {
+    for (int c = 0; c < m_cols; c++) {
         auto& info = m_screen_info[index(row, c)];
         print_char(info.ch, info.metadata);
     }
 
-    if (row < rows() - 1) {
+    if (row + document()->row_offset() < document()->num_rendered_lines() - 1 && row < rows() - 1) {
         fputc('\r', stdout);
         fputc('\n', stdout);
 
@@ -376,15 +347,16 @@ void ReplPanel::flush() {
         m_visible_cursor_row = 0;
     }
 
-    for (int r = 0; r < rows(); r++) {
+    auto rendered_line_count = document()->num_rendered_lines();
+    for (int r = 0; r < rows() && r + document()->row_offset() < rendered_line_count; r++) {
         if (!m_dirty_rows[r]) {
-            if (r != rows() - 1) {
+            if (r != rows() - 1 && r + document()->row_offset() != rendered_line_count - 1) {
                 printf("\r\n");
                 m_visible_cursor_col = 0;
                 m_visible_cursor_row++;
             } else {
-                printf("\033[%dC", max_cols() - 1);
-                m_visible_cursor_col = max_cols() - 1;
+                printf("\033[%dC", cols() - 1);
+                m_visible_cursor_col = cols() - 1;
             }
             continue;
         }
@@ -601,8 +573,7 @@ Vector<Variant<Edit::KeyPress, App::MouseEvent>> ReplPanel::read_input() {
 
                 R out_events;
                 for (auto& event : events) {
-                    auto text_index = document()->text_index_at_scrolled_position(
-                        { cy - m_absolute_row_position - 1, cx - prompt_cols_at_row(event->y()) - 1 });
+                    auto text_index = document()->text_index_at_scrolled_position({ cy - m_absolute_row_position - 1, cx - 1 });
                     event->set_y(text_index.line_index());
                     event->set_x(text_index.index_into_line());
                     out_events.add(*event);

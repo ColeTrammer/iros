@@ -34,7 +34,7 @@ public:
     virtual ~AppPanel() override;
 
     virtual int rows() const override { return m_rows; }
-    virtual int cols_at_row(int) const override { return cols(); };
+    virtual int cols() const override { return m_cols; }
 
     constexpr int col_width() const { return 8; }
     constexpr int row_height() const { return 16; }
@@ -83,7 +83,6 @@ private:
     AppPanel& ensure_search_panel();
 
     int index(int row, int col) const { return row * cols() + col; }
-    int cols() const { return m_cols; }
 
     void render_cursor(Renderer& renderer);
     void render_cell(Renderer& renderer, int x, int y, CellData& cell);

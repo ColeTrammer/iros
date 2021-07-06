@@ -13,7 +13,7 @@ public:
     virtual ~Panel();
 
     virtual int rows() const = 0;
-    virtual int cols_at_row(int row) const = 0;
+    virtual int cols() const = 0;
 
     virtual void clear() = 0;
     virtual void set_text_at(int row, int col, char c, CharacterMetadata metadata) = 0;

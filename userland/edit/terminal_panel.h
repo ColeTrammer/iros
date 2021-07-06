@@ -15,7 +15,7 @@ public:
     virtual ~TerminalPanel() override;
 
     virtual int rows() const override { return m_rows; }
-    virtual int cols_at_row(int) const override { return cols(); };
+    virtual int cols() const override;
 
     virtual void clear() override;
     virtual void set_text_at(int row, int col, char c, Edit::CharacterMetadata metadata) override;
@@ -63,7 +63,6 @@ private:
     Maybe<String> enter_prompt(const String& message, String starting_text = "");
 
     int index(int row, int col) const { return row * cols() + col; }
-    int cols() const;
 
     Vector<Info> m_screen_info;
     Vector<bool> m_dirty_rows;

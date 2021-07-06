@@ -17,7 +17,7 @@ public:
     virtual ~ReplPanel() override;
 
     virtual int rows() const override { return m_rows; }
-    virtual int cols_at_row(int row) const override;
+    virtual int cols() const override { return m_cols; };
 
     virtual void clear() override;
     virtual void set_text_at(int row, int col, char c, Edit::CharacterMetadata metadata) override;
@@ -35,7 +35,7 @@ public:
     virtual Edit::Suggestions get_suggestions() const override;
     virtual void handle_suggestions(const Edit::Suggestions& suggestions) override;
 
-    void set_coordinates(int rows, int max_rows, int max_cols);
+    void set_coordinates(int rows, int cols);
     bool quit_by_interrupt() const { return m_quit_by_interrupt; }
     bool quit_by_eof() const { return m_quit_by_eof; }
 
@@ -65,9 +65,6 @@ private:
     Maybe<String> enter_prompt(const String& message, String starting_text = "");
 
     int index(int row, int col) const;
-    int max_cols() const { return m_max_cols; }
-    int max_rows() const { return m_max_rows; }
-    int prompt_cols_at_row(int row) const;
     const String& prompt_at_row(int row) const;
 
     Vector<UniquePtr<Edit::Document>>& ensure_history_documents();
@@ -92,8 +89,8 @@ private:
     App::MousePressTracker m_mouse_press_tracker;
     Edit::CharacterMetadata m_last_metadata_rendered;
     int m_rows { 0 };
-    int m_max_rows { 0 };
-    int m_max_cols { 0 };
+    int m_cols { 0 };
+    int m_last_rendered_height { 1 };
     int m_absolute_row_position { -1 };
     int m_visible_cursor_row { 0 };
     int m_visible_cursor_col { 0 };

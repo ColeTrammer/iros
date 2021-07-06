@@ -40,8 +40,6 @@ Position Line::relative_position_of_index(const Document& document, const Panel&
 int Line::absoulte_col_offset_of_index(const Document& document, const Panel& panel, int index) const {
     compute_rendered_contents(document, panel);
 
-    auto absolute_row = absolute_row_position(document, panel);
-
     int col = 0;
     for (int i = 0; i < index; i++) {
         auto start = m_position_ranges[i].start;
@@ -49,7 +47,7 @@ int Line::absoulte_col_offset_of_index(const Document& document, const Panel& pa
         while (start != end) {
             col++;
             start.col++;
-            if (document.word_wrap_enabled() && start.col >= panel.cols_at_row(absolute_row + start.row)) {
+            if (document.word_wrap_enabled() && start.col >= panel.cols()) {
                 start.row++;
                 start.col = 0;
             }
@@ -133,8 +131,6 @@ void Line::compute_rendered_contents(const Document& document, const Panel& pane
         return;
     }
 
-    auto absolute_row = absolute_row_position(document, panel);
-
     PositionRange current_range;
     String current_segment;
     int current_row = 0;
@@ -149,7 +145,7 @@ void Line::compute_rendered_contents(const Document& document, const Panel& pane
         current_segment += String(c);
         current_col++;
         col_position++;
-        if (document.word_wrap_enabled() && current_col >= panel.cols_at_row(absolute_row + current_row)) {
+        if (document.word_wrap_enabled() && current_col >= panel.cols()) {
             current_row++;
             current_col = 0;
             m_rendered_lines.add(move(current_segment));
@@ -199,8 +195,6 @@ int Line::render(const Document& document, Panel& panel, DocumentTextRangeIterat
     compute_rendered_contents(document, panel);
 
     auto row_count = rendered_line_count(document, panel);
-    auto absolute_row = absolute_row_position(document, panel);
-
     for (int row = relative_row_start; row + row_in_panel - relative_row_start < panel.rows() && row < row_count; row++) {
         int index_into_line = index_of_relative_position(document, panel, { row, col_offset });
         metadata_iterator.advance_to_index_into_line(index_into_line);
@@ -208,7 +202,7 @@ int Line::render(const Document& document, Panel& panel, DocumentTextRangeIterat
         auto& rendered_line = m_rendered_lines[row];
         auto current_panel_position = Position { row, 0 };
         auto render_position = Position { row, col_offset };
-        while (index_into_line < length() && current_panel_position.col < panel.cols_at_row(absolute_row + row) &&
+        while (index_into_line < length() && current_panel_position.col < panel.cols() &&
                static_cast<size_t>(render_position.col) < rendered_line.size()) {
             auto& position_range = m_position_ranges[index_into_line];
 
@@ -228,7 +222,7 @@ int Line::render(const Document& document, Panel& panel, DocumentTextRangeIterat
             }
         }
 
-        for (; current_panel_position.col < panel.cols_at_row(absolute_row + row); current_panel_position.col++) {
+        for (; current_panel_position.col < panel.cols(); current_panel_position.col++) {
             panel.set_text_at(row_in_panel + row - relative_row_start, current_panel_position.col, ' ', CharacterMetadata());
         }
     }
