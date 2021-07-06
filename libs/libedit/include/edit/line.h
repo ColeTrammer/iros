@@ -46,12 +46,22 @@ public:
     }
 
 private:
-    void compute_rendered_contents(const Document& document, const Panel& panel) const;
+    enum class PositionRangeType {
+        Normal,
+        InlineBeforeCursor,
+        InlineAfterCursor,
+    };
 
     struct PositionRange {
         Position start;
         Position end;
+        int index_into_line { 0 };
+        int optional_metadata { 0 };
+        PositionRangeType type { PositionRangeType::Normal };
     };
+
+    void compute_rendered_contents(const Document& document, const Panel& panel) const;
+    int range_index_of_relative_position(const Document& document, const Panel& panel, const Position& position) const;
 
     String m_contents;
     mutable Vector<String> m_rendered_lines;
