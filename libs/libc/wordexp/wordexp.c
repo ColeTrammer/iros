@@ -115,8 +115,8 @@ size_t we_find_end_of_word_expansion(const char *input_stream, size_t start, siz
 int we_add(char *s, wordexp_t *we) {
     if (we->we_wordc == 0) {
         we->we_wordv = calloc(WE_BUF_DEFAULT, sizeof(char *));
-    } else if (we->we_wordc % 2 == 0) {
-        we->we_wordv = realloc(we->we_wordv, (we->we_wordc * 2) * sizeof(char *));
+    } else {
+        we->we_wordv = realloc(we->we_wordv, (we->we_wordc * 2 + 2) * sizeof(char *));
     }
 
     // Memory allocation error
@@ -2042,6 +2042,10 @@ int we_unescape(char **s) {
                 break;
             default:
                 break;
+        }
+
+        if ((*s)[j] == '\0') {
+            break;
         }
 
         if (k + 1 >= unescaped_string_max) {
