@@ -287,8 +287,10 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
         }
 
         if (!we_insert(exp.we_wordv, exp.we_wordc, 0, &we)) {
+            wordfree(&exp);
             return false;
         }
+        wordfree(&exp);
 
         gone_once = true;
         return expand_alias();
