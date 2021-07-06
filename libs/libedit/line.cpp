@@ -24,14 +24,14 @@ Position Line::relative_position_of_index(const Document& document, const Panel&
 
     if (index >= length()) {
         if (m_position_ranges.empty()) {
-            return { 0, 0 };
+            return { m_rendered_lines.size() - 1, static_cast<int>(m_rendered_lines.last().size()) };
         }
 
         return m_position_ranges.last().end;
     }
 
     if (index == 0) {
-        return { 0, 0 };
+        return m_position_ranges[0].start;
     }
 
     return m_position_ranges[index - 1].end;
@@ -54,7 +54,6 @@ int Line::absoulte_col_offset_of_index(const Document& document, const Panel& pa
         }
     }
     return col;
-    return 0;
 }
 
 int Line::index_of_relative_position(const Document& document, const Panel& panel, const Position& position) const {
@@ -157,6 +156,11 @@ void Line::compute_rendered_contents(const Document& document, const Panel& pane
         m_position_ranges.add(current_range);
     };
 
+    auto injected_text = panel.inject_inline_text_for_line_index(document.index_of_line(*this));
+    for (auto c : injected_text) {
+        put_char(c);
+    }
+
     for (int index_into_line = 0; index_into_line < length(); index_into_line++) {
         begin_range();
 
@@ -202,12 +206,13 @@ int Line::render(const Document& document, Panel& panel, DocumentTextRangeIterat
         auto& rendered_line = m_rendered_lines[row];
         auto current_panel_position = Position { row, 0 };
         auto render_position = Position { row, col_offset };
-        while (index_into_line < length() && current_panel_position.col < panel.cols() &&
-               static_cast<size_t>(render_position.col) < rendered_line.size()) {
-            auto& position_range = m_position_ranges[index_into_line];
-
+        while (current_panel_position.col < panel.cols() && static_cast<size_t>(render_position.col) < rendered_line.size()) {
             auto metadata = CharacterMetadata { CharacterMetadata::Flags::AutoCompletePreview };
-            if (index_into_line < length() && render_position >= position_range.start) {
+            if (index_into_line == 0) {
+                metadata = CharacterMetadata { 0 };
+            }
+
+            if (index_into_line < length() && render_position >= m_position_ranges[index_into_line].start) {
                 metadata = metadata_iterator.peek_metadata();
             }
 
@@ -216,7 +221,7 @@ int Line::render(const Document& document, Panel& panel, DocumentTextRangeIterat
 
             current_panel_position.col++;
             render_position.col++;
-            if (index_into_line < length() && render_position >= position_range.end) {
+            if (index_into_line < length() && render_position >= m_position_ranges[index_into_line].end) {
                 index_into_line++;
                 metadata_iterator.advance();
             }

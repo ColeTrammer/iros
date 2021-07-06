@@ -35,6 +35,8 @@ public:
     virtual Edit::Suggestions get_suggestions() const override;
     virtual void handle_suggestions(const Edit::Suggestions& suggestions) override;
 
+    virtual String inject_inline_text_for_line_index(int line_index) const override;
+
     void set_coordinates(int rows, int cols);
     bool quit_by_interrupt() const { return m_quit_by_interrupt; }
     bool quit_by_eof() const { return m_quit_by_eof; }
@@ -65,7 +67,6 @@ private:
     Maybe<String> enter_prompt(const String& message, String starting_text = "");
 
     int index(int row, int col) const;
-    const String& prompt_at_row(int row) const;
 
     Vector<UniquePtr<Edit::Document>>& ensure_history_documents();
     void put_history_document(UniquePtr<Edit::Document> document, int history_index);

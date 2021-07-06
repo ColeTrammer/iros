@@ -31,6 +31,8 @@ public:
     virtual Suggestions get_suggestions() const;
     virtual void handle_suggestions(const Suggestions&) {}
 
+    virtual String inject_inline_text_for_line_index(int line_index) const;
+
     virtual void notify_line_count_changed() {}
     virtual void notify_now_is_a_good_time_to_draw_cursor() {}
 

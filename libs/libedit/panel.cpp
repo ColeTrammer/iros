@@ -83,4 +83,8 @@ Panel::RenderingInfo Panel::rendering_info_for_metadata(const CharacterMetadata&
 
     return info;
 }
+
+String Panel::inject_inline_text_for_line_index(int) const {
+    return "";
+}
 }

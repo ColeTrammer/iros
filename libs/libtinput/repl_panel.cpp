@@ -261,8 +261,11 @@ void ReplPanel::notify_line_count_changed() {}
     return count;
 }
 
-const String& ReplPanel::prompt_at_row(int row) const {
-    return row == 0 ? m_main_prompt : m_secondary_prompt;
+String ReplPanel::inject_inline_text_for_line_index(int line_index) const {
+    if (line_index == 0) {
+        return m_main_prompt;
+    }
+    return m_secondary_prompt;
 }
 
 void ReplPanel::draw_cursor() {
