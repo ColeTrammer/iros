@@ -2,6 +2,7 @@
 
 #include <edit/character_metadata.h>
 #include <edit/forward.h>
+#include <edit/position.h>
 #include <liim/string.h>
 #include <liim/vector.h>
 
@@ -40,24 +41,21 @@ public:
                int row_in_panel) const;
 
     void invalidate_rendered_contents() {
-        m_rendered_contents_valid = false;
-        m_rendered_line_count_valid = false;
+        m_rendered_lines.clear();
+        m_position_ranges.clear();
     }
 
 private:
     void compute_rendered_contents(const Document& document, const Panel& panel) const;
 
-    struct IndexRenderedSpan {
-        int rendered_start { 0 };
-        int rendered_end { 0 };
+    struct PositionRange {
+        Position start;
+        Position end;
     };
 
     String m_contents;
-    mutable String m_rendered_contents;
-    mutable Vector<IndexRenderedSpan> m_rendered_spans;
-    mutable bool m_rendered_contents_valid { false };
-    mutable int m_rendered_line_count { 0 };
-    mutable bool m_rendered_line_count_valid { false };
+    mutable Vector<String> m_rendered_lines;
+    mutable Vector<PositionRange> m_position_ranges;
 };
 
 struct LineSplitResult {
