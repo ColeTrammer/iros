@@ -9,7 +9,7 @@ Command::Command(Document& document) : m_document(document) {}
 Command::~Command() {}
 
 DeltaBackedCommand::DeltaBackedCommand(Document& document) : Command(document), m_snapshot(document.snapshot_state()) {
-    m_selection_text = document.selection_text();
+    m_selection_text = document.selection_text(document.cursor());
 }
 
 DeltaBackedCommand::~DeltaBackedCommand() {}
@@ -37,8 +37,8 @@ InsertCommand::InsertCommand(Document& document, String text) : DeltaBackedComma
 InsertCommand::~InsertCommand() {}
 
 bool InsertCommand::execute() {
-    if (!document().selection().empty()) {
-        document().delete_selection();
+    if (!document().cursor().selection().empty()) {
+        document().delete_selection(document().cursor());
     }
 
     if (m_text.size() == 1 && m_text[0] == '\n') {
@@ -94,9 +94,9 @@ void InsertCommand::do_insert(Document& document, const String& text) {
 }
 
 void InsertCommand::undo() {
-    document().clear_selection();
-    if (!state_snapshot().selection.empty()) {
-        document().move_cursor_to(state_snapshot().selection.normalized_start());
+    document().clear_selection(document().cursor());
+    if (!state_snapshot().cursor.selection().empty()) {
+        document().move_cursor_to(state_snapshot().cursor.selection().normalized_start());
     } else {
         document().restore_state(state_snapshot());
     }
@@ -125,7 +125,7 @@ void InsertCommand::undo() {
         }
     }
 
-    if (!state_snapshot().selection.empty()) {
+    if (!state_snapshot().cursor.selection().empty()) {
         do_insert(document(), selection_text());
         document().restore_state(state_snapshot());
     }
@@ -137,8 +137,8 @@ DeleteCommand::DeleteCommand(Document& document, DeleteCharMode mode, bool shoul
 DeleteCommand::~DeleteCommand() {}
 
 bool DeleteCommand::execute() {
-    if (!document().selection().empty()) {
-        document().delete_selection();
+    if (!document().cursor().selection().empty()) {
+        document().delete_selection(document().cursor());
         return true;
     }
 
@@ -214,9 +214,9 @@ bool DeleteCommand::execute() {
 }
 
 void DeleteCommand::undo() {
-    document().clear_selection();
-    if (!state_snapshot().selection.empty()) {
-        document().move_cursor_to(state_snapshot().selection.normalized_start());
+    document().clear_selection(document().cursor());
+    if (!state_snapshot().cursor.selection().empty()) {
+        document().move_cursor_to(state_snapshot().cursor.selection().normalized_start());
         InsertCommand::do_insert(document(), selection_text());
     } else {
         assert(m_deleted_char != '\0');
@@ -226,7 +226,7 @@ void DeleteCommand::undo() {
 
     document().restore_state(state_snapshot());
     if (m_should_clear_selection) {
-        document().clear_selection();
+        document().clear_selection(document().cursor());
     }
 }
 
@@ -291,12 +291,12 @@ SwapLinesCommand::~SwapLinesCommand() {}
 bool SwapLinesCommand::execute() {
     bool ret = do_swap(m_direction);
     m_end = document().index_at_cursor();
-    m_end_selection = document().selection();
+    m_end_selection = document().cursor().selection();
     return ret;
 }
 
 bool SwapLinesCommand::do_swap(SwapDirection direction) {
-    if (document().selection().empty()) {
+    if (document().cursor().selection().empty()) {
         int line_index = document().index_of_line_at_cursor();
         if ((line_index == 0 && direction == SwapDirection::Up) ||
             (line_index == document().num_lines() - 1 && direction == SwapDirection::Down)) {
@@ -315,8 +315,8 @@ bool SwapLinesCommand::do_swap(SwapDirection direction) {
         return true;
     }
 
-    auto selection_start = document().selection().normalized_start();
-    auto selection_end = document().selection().normalized_end();
+    auto selection_start = document().cursor().selection().normalized_start();
+    auto selection_end = document().cursor().selection().normalized_end();
 
     if ((selection_start.line_index() == 0 && direction == SwapDirection::Up) ||
         (selection_end.line_index() == document().num_lines() - 1 && direction == SwapDirection::Down)) {
@@ -325,24 +325,24 @@ bool SwapLinesCommand::do_swap(SwapDirection direction) {
 
     if (direction == SwapDirection::Up) {
         document().rotate_lines_up(selection_start.line_index() - 1, selection_end.line_index());
-        auto selection = document().selection();
-        const_cast<Selection&>(document().selection()).clear();
+        auto selection = document().cursor().selection();
+        const_cast<Selection&>(document().cursor().selection()).clear();
 
         document().cursor().set_line_index(selection_start.line_index() - 1);
         selection.set_start_line_index(selection_start.line_index() - 1);
         selection.set_end_line_index(selection_end.line_index() - 1);
 
-        document().set_selection(move(selection));
+        document().cursor().selection() = move(selection);
     } else {
         document().rotate_lines_down(selection_start.line_index(), selection_end.line_index() + 1);
-        auto selection = document().selection();
-        const_cast<Selection&>(document().selection()).clear();
+        auto selection = document().cursor().selection();
+        const_cast<Selection&>(document().cursor().selection()).clear();
 
         document().cursor().set_line_index(selection_start.line_index() + 1);
         selection.set_start_line_index(selection_start.line_index() + 1);
         selection.set_end_line_index(selection_end.line_index() + 1);
 
-        document().set_selection(move(selection));
+        document().cursor().selection() = move(selection);
     }
 
     document().set_needs_display();
@@ -351,7 +351,7 @@ bool SwapLinesCommand::do_swap(SwapDirection direction) {
 
 void SwapLinesCommand::undo() {
     document().move_cursor_to(m_end);
-    document().set_selection(m_end_selection);
+    document().cursor().selection() = m_end_selection;
     do_swap(m_direction == SwapDirection::Up ? SwapDirection::Down : SwapDirection::Up);
     document().restore_state(state_snapshot());
 }

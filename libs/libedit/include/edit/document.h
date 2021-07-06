@@ -38,7 +38,6 @@ public:
         Cursor cursor;
         int max_cursor_col { 0 };
         bool document_was_modified { false };
-        Selection selection;
     };
 
     struct Snapshot {
@@ -156,12 +155,11 @@ public:
     void restore_state(const StateSnapshot& state_snapshot);
 
     Cursor& cursor() { return m_cursor; }
+    const Cursor& cursor() const { return m_cursor; }
 
-    const Selection& selection() const { return m_selection; }
-    void set_selection(Selection selection) { m_selection = move(selection); }
-    void delete_selection();
-    void clear_selection();
-    String selection_text() const;
+    void delete_selection(Cursor& cursor);
+    void clear_selection(Cursor& cursor);
+    String selection_text(Cursor& cursor) const;
 
     void select_line_at_cursor();
     void select_word_at_cursor();
@@ -284,7 +282,6 @@ private:
     int m_col_offset { 0 };
     int m_max_cursor_col { 0 };
     bool m_document_was_modified { false };
-    Selection m_selection;
     Cursor m_cursor;
 
     int m_max_undo_stack { 50 };

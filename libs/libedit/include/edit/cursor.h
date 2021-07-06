@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <edit/forward.h>
+#include <edit/selection.h>
 #include <edit/text_index.h>
 #include <stddef.h>
 
@@ -34,8 +35,12 @@ public:
     bool at_document_start() const { return m_index == TextIndex { 0, 0 }; }
     bool at_document_end() const;
 
+    Selection& selection() { return m_selection; }
+    const Selection& selection() const { return m_selection; }
+
 private:
     Document& m_document;
     TextIndex m_index;
+    Selection m_selection;
 };
 };
