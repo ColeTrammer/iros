@@ -26,7 +26,7 @@ public:
     LineSplitResult split_at(int position);
 
     Position relative_position_of_index(const Document& document, const Panel& panel, int index) const;
-    int rendered_string_offset_of_index(const Document& document, const Panel& panel, int index) const;
+    int absoulte_col_offset_of_index(const Document& document, const Panel& panel, int index) const;
     int index_of_relative_position(const Document& document, const Panel& panel, const Position& position) const;
     int max_col_in_relative_row(const Document& document, const Panel& panel, int relative_row) const;
     int absolute_row_position(const Document& document, const Panel& panel) const;

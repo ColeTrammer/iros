@@ -50,20 +50,14 @@ Position Line::relative_position_of_index(const Document& document, const Panel&
     return col_to_relative_position(m_rendered_spans[index - 1].rendered_end);
 }
 
-int Line::rendered_string_offset_of_index(const Document& document, const Panel& panel, int index) const {
+int Line::absoulte_col_offset_of_index(const Document& document, const Panel& panel, int index) const {
     compute_rendered_contents(document, panel);
 
-    if (index >= length()) {
-        if (m_rendered_spans.empty()) {
-            return 0;
-        }
-        return m_rendered_spans.last().rendered_end;
+    int col = 0;
+    for (int i = 0; i < index; i++) {
+        col += m_rendered_spans[i].rendered_end - m_rendered_spans[i].rendered_start;
     }
-
-    if (index == 0) {
-        return 0;
-    }
-    return m_rendered_spans[index - 1].rendered_end;
+    return col;
 }
 
 int Line::index_of_relative_position(const Document& document, const Panel& panel, const Position& position) const {
