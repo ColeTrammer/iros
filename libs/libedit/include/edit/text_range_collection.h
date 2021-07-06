@@ -14,6 +14,9 @@ public:
 
     void add(const TextRange& range) { m_ranges.add(range); }
     void clear() { m_ranges.clear(); }
+    int size() const { return m_ranges.size(); }
+    bool empty() const { return m_ranges.empty(); }
+    const TextRange& range(int index) const { return m_ranges[index]; }
 
     TextRangeCollectionIterator iterator(const TextIndex& start) const;
 

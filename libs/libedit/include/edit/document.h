@@ -97,7 +97,7 @@ public:
 
     const String& search_text() const { return m_search_text; }
     void set_search_text(String text);
-    int search_result_count() const { return m_search_result_count; }
+    int search_result_count() const { return m_search_results.size(); }
     void move_cursor_to_next_search_match();
 
     void move_cursor_left(MovementMode mode = MovementMode::Move);
@@ -275,7 +275,8 @@ private:
     int m_command_stack_index { 0 };
 
     String m_search_text;
-    int m_search_result_count { 0 };
+    TextRangeCollection m_search_results;
+    int m_search_result_index { 0 };
 
     TextRangeCollection m_syntax_highlighting_info;
 

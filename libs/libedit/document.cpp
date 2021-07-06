@@ -102,11 +102,18 @@ UniquePtr<Document> Document::create_single_line(Panel& panel, String text) {
     ret->set_submittable(true);
     ret->set_show_line_numbers(false);
     ret->move_cursor_to_line_end();
+    ret->select_all();
     return ret;
 }
 
 Document::Document(Vector<Line> lines, String name, Panel& panel, InputMode mode)
-    : m_lines(move(lines)), m_name(move(name)), m_panel(panel), m_input_mode(mode), m_syntax_highlighting_info(*this), m_cursor(*this) {
+    : m_lines(move(lines))
+    , m_name(move(name))
+    , m_panel(panel)
+    , m_input_mode(mode)
+    , m_search_results(*this)
+    , m_syntax_highlighting_info(*this)
+    , m_cursor(*this) {
     if (m_lines.empty()) {
         m_lines.add(Line(""));
     }
@@ -173,7 +180,7 @@ void Document::display() const {
 
     TextRangeCollection selection_collection(*this);
     selection_collection.add(m_selection.text_range());
-    DocumentTextRangeIterator metadata_iterator(render_index, m_syntax_highlighting_info, selection_collection);
+    DocumentTextRangeIterator metadata_iterator(render_index, m_syntax_highlighting_info, m_search_results, selection_collection);
 
     int row = m_row_offset;
     for (; render_index.line_index() < num_lines() && row < m_row_offset + m_panel.rows();) {
@@ -980,31 +987,31 @@ void Document::update_syntax_highlighting() {
 
 void Document::update_search_results() {
     clear_search_results();
-    m_search_result_count = 0;
     if (m_search_text.is_empty()) {
         return;
     }
 
     for (auto& line : m_lines) {
-        int num = line.search(m_search_text);
-        m_search_result_count += num;
-        if (num > 0) {
-            set_needs_display();
-        }
+        line.search(*this, m_search_text, m_search_results);
+    }
+
+    if (!m_search_results.empty()) {
+        set_needs_display();
     }
 }
 
 void Document::clear_search() {
     clear_search_results();
     m_search_text = "";
-    m_search_result_count = 0;
+    m_search_result_index = 0;
 }
 
 void Document::clear_search_results() {
-    if (m_search_result_count == 0) {
+    if (m_search_results.empty()) {
         return;
     }
 
+    m_search_results.clear();
     set_needs_display();
 }
 
@@ -1013,36 +1020,38 @@ void Document::set_search_text(String text) {
         return;
     }
 
+    clear_search();
     m_search_text = move(text);
     update_search_results();
 }
 
 void Document::move_cursor_to_next_search_match() {
-    if (m_search_result_count == 0) {
+    if (m_search_results.empty()) {
         return;
     }
 
-    for (;;) {
-        move_cursor_right();
-        if (cursor_at_document_end()) {
+    if (m_search_result_index >= m_search_results.size()) {
+        m_search_result_index = 0;
+        move_cursor_to_document_start();
+    }
+
+    while (m_search_results.range(m_search_result_index).ends_before(index_at_cursor())) {
+        m_search_result_index++;
+        if (m_search_result_index == m_search_results.size()) {
+            m_search_result_index = 0;
             move_cursor_to_document_start();
         }
-
-        auto& line = line_at_cursor();
-        int line_index = index_into_line_at_cursor();
-        if (strstr(line.contents().string() + line_index, m_search_text.string()) == line.contents().string() + line_index) {
-            for (size_t i = 0; i < m_search_text.size(); i++) {
-                move_cursor_right(MovementMode::Select);
-            }
-            break;
-        }
     }
+
+    move_cursor_to(m_search_results.range(m_search_result_index).start());
+    move_cursor_to(m_search_results.range(m_search_result_index).end(), MovementMode::Select);
     scroll_cursor_into_view();
+    m_search_result_index++;
 }
 
 void Document::enter_interactive_search() {
     m_panel.enter_search(m_search_text);
-    m_panel.send_status_message(String::format("Found %d result(s)", m_search_result_count));
+    m_panel.send_status_message(String::format("Found %d result(s)", search_result_count()));
 }
 
 void Document::swap_lines_at_cursor(SwapDirection direction) {

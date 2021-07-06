@@ -156,20 +156,21 @@ void Line::combine_line(Line& line) {
     invalidate_rendered_contents();
 }
 
-int Line::search(const String& text) {
-    char* s = m_contents.string();
-    int matches = 0;
+void Line::search(const Document& document, const String& text, TextRangeCollection& results) {
+    auto line_index = document.index_of_line(*this);
+    int index_into_line = 0;
     for (;;) {
-        char* match = strstr(s, text.string());
+        char* match = strstr(m_contents.string() + index_into_line, text.string());
         if (!match) {
             break;
         }
 
-        s = match + text.size();
-        matches++;
+        index_into_line = match - m_contents.string();
+        results.add({ { line_index, index_into_line },
+                      { line_index, index_into_line + static_cast<int>(text.size()) },
+                      { CharacterMetadata::Flags::Highlighted } });
+        index_into_line += text.size();
     }
-
-    return matches;
 }
 
 void Line::compute_rendered_contents(const Document& document, const Panel& panel) const {

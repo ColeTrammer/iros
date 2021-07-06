@@ -34,7 +34,7 @@ public:
 
     char char_at(int index) const { return contents()[index]; }
 
-    int search(const String& text);
+    void search(const Document& document, const String& text, TextRangeCollection& results);
 
     int render(const Document& document, Panel& panel, DocumentTextRangeIterator& metadata_iterator, int col_offset, int relative_row_start,
                int row_in_panel) const;

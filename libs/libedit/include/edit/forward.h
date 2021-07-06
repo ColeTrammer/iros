@@ -24,5 +24,5 @@ enum class DocumentType;
 struct LineSplitResult;
 struct Position;
 
-using DocumentTextRangeIterator = TextRangeCombinerIterator<2>;
+using DocumentTextRangeIterator = TextRangeCombinerIterator<3>;
 }
