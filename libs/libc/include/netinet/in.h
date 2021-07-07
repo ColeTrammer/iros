@@ -10,12 +10,14 @@
 #define IPPROTO_UDP  17
 #define IPPROTO_IPV6 41
 
-#define IP_ADD_MEMBERSHIP  1
-#define IP_DROP_MEMBERSHIP 2
-#define IP_TTL             3
-#define IP_MULTICAST_TTL   4
-#define IP_MULTICAST_LOOP  5
-#define IP_MULTICAST_IF    6
+#define IP_ADD_MEMBERSHIP         1
+#define IP_DROP_MEMBERSHIP        2
+#define IP_TTL                    3
+#define IP_MULTICAST_TTL          4
+#define IP_MULTICAST_LOOP         5
+#define IP_MULTICAST_IF           6
+#define IP_ADD_SOURCE_MEMBERSHIP  7
+#define IP_DROP_SOURCE_MEMBERSHIP 8
 
 #define IPV6_JOIN_GROUP     1
 #define IPV6_LEAVE_GROUP    2
@@ -63,6 +65,12 @@ struct ip_mreq {
     struct in_addr imr_interface;
 };
 
+struct ip_mreq_source {
+    struct in_addr imr_multiaddr;
+    struct in_addr imr_interface;
+    struct in_addr imr_sourceaddr;
+};
+
 struct ipv6_mreq {
     struct in6_addr ipv6mr_multiaddr;
     unsigned int ipv6mr_interface;
@@ -77,7 +85,7 @@ extern const struct in6_addr in6addr_loopback;
 
 #define INADDR_NONE     ((in_addr_t) -1)
 #define INADDR_ANY      ((in_addr_t) 0)
-#define INADDR_LOOPBACK ((in_addr_t)(1 | 0 | 0 | (127 << 24)))
+#define INADDR_LOOPBACK ((in_addr_t) (1 | 0 | 0 | (127 << 24)))
 
 #define IN6ADDR_ANY_INIT                                   \
     {                                                      \
