@@ -12,9 +12,9 @@ public:
     Document& document() { return m_document; }
     const Document& document() const { return m_document; }
 
-    virtual bool execute() = 0;
-    virtual void undo() = 0;
-    virtual void redo() = 0;
+    virtual bool execute(Cursor& cursor) = 0;
+    virtual void undo(Cursor& cursor) = 0;
+    virtual void redo(Cursor& cursor) = 0;
 
 private:
     Document& m_document;
@@ -25,7 +25,7 @@ public:
     DeltaBackedCommand(Document& document);
     virtual ~DeltaBackedCommand() override;
 
-    virtual void redo() override;
+    virtual void redo(Cursor& cursor) override;
 
     const Document::StateSnapshot& state_snapshot() const { return m_snapshot; }
 
@@ -41,8 +41,8 @@ public:
     SnapshotBackedCommand(Document& document);
     virtual ~SnapshotBackedCommand() override;
 
-    virtual void undo() override;
-    virtual void redo() override;
+    virtual void undo(Cursor& cursor) override;
+    virtual void redo(Cursor& cursor) override;
 
     const Document::Snapshot& snapshot() const { return m_snapshot; }
 
@@ -55,11 +55,11 @@ public:
     InsertCommand(Document& document, String string);
     virtual ~InsertCommand();
 
-    virtual bool execute() override;
-    virtual void undo() override;
+    virtual bool execute(Cursor& cursor) override;
+    virtual void undo(Cursor& cursor) override;
 
-    static void do_insert(Document& document, char c);
-    static void do_insert(Document& document, const String& string);
+    static void do_insert(Document& document, Cursor& cursor, char c);
+    static void do_insert(Document& document, Cursor& cursor, const String& string);
 
 private:
     String m_text;
@@ -70,8 +70,8 @@ public:
     DeleteCommand(Document& document, DeleteCharMode mode, bool should_clear_selection = false);
     virtual ~DeleteCommand();
 
-    virtual bool execute() override;
-    virtual void undo() override;
+    virtual bool execute(Cursor& cursor) override;
+    virtual void undo(Cursor& cursor) override;
 
 private:
     DeleteCharMode m_mode { DeleteCharMode::Delete };
@@ -85,8 +85,8 @@ public:
     DeleteLineCommand(Document& document);
     virtual ~DeleteLineCommand();
 
-    virtual bool execute() override;
-    virtual void undo() override;
+    virtual bool execute(Cursor& cursor) override;
+    virtual void undo(Cursor& cursor) override;
 
 private:
     Line m_saved_line;
@@ -98,8 +98,8 @@ public:
     InsertLineCommand(Document& document, String text);
     virtual ~InsertLineCommand() override;
 
-    virtual bool execute() override;
-    virtual void undo() override;
+    virtual bool execute(Cursor& cursor) override;
+    virtual void undo(Cursor& cursor) override;
 
 private:
     String m_text;
@@ -110,11 +110,11 @@ public:
     SwapLinesCommand(Document& document, SwapDirection direction);
     virtual ~SwapLinesCommand() override;
 
-    virtual bool execute() override;
-    virtual void undo() override;
+    virtual bool execute(Cursor& cursor) override;
+    virtual void undo(Cursor& cursor) override;
 
 private:
-    bool do_swap(SwapDirection direction);
+    bool do_swap(Cursor& cursor, SwapDirection direction);
 
     SwapDirection m_direction { SwapDirection::Down };
     TextIndex m_end;

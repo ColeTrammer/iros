@@ -1,6 +1,7 @@
 #pragma once
 
 #include <edit/character_metadata.h>
+#include <edit/cursor.h>
 #include <edit/forward.h>
 #include <graphics/color.h>
 #include <liim/forward.h>
@@ -42,6 +43,9 @@ public:
     Document* document() { return m_document.get(); }
     const Document* document() const { return m_document.get(); }
 
+    Cursor& cursor() { return m_cursor; }
+    const Cursor& cursor() const { return m_cursor; }
+
     struct RenderingInfo {
         Maybe<vga_color> fg;
         Maybe<vga_color> bg;
@@ -57,5 +61,6 @@ protected:
 
 private:
     UniquePtr<Document> m_document;
+    Cursor m_cursor;
 };
 }

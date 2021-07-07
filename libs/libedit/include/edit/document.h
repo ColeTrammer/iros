@@ -55,8 +55,8 @@ public:
     Panel& panel() { return m_panel; }
     const Panel& panel() const { return m_panel; }
 
-    void notify_key_pressed(KeyPress press);
-    bool notify_mouse_event(const App::MouseEvent& event);
+    void notify_key_pressed(Cursor& cursor, KeyPress press);
+    bool notify_mouse_event(Cursor& cursor, const App::MouseEvent& event);
     void notify_panel_size_changed();
 
     void save();
@@ -73,7 +73,7 @@ public:
     void set_preview_auto_complete(bool b) { m_preview_auto_complete = b; }
 
     String content_string() const;
-    size_t cursor_index_in_content_string() const;
+    size_t cursor_index_in_content_string(const Cursor& cursor) const;
 
     bool convert_tabs_to_spaces() const { return m_convert_tabs_to_spaces; }
     void set_convert_tabs_to_spaces(bool b) { m_convert_tabs_to_spaces = b; }
@@ -96,34 +96,28 @@ public:
     const String& search_text() const { return m_search_text; }
     void set_search_text(String text);
     int search_result_count() const { return m_search_results.size(); }
-    void move_cursor_to_next_search_match();
+    void move_cursor_to_next_search_match(Cursor& cursor);
 
-    void move_cursor_left(MovementMode mode = MovementMode::Move);
-    void move_cursor_right(MovementMode mode = MovementMode::Move);
-    void move_cursor_down(MovementMode mode = MovementMode::Move);
-    void move_cursor_up(MovementMode mode = MovementMode::Move);
-    void move_cursor_to_line_start(MovementMode mode = MovementMode::Move);
-    void move_cursor_to_line_end(MovementMode mode = MovementMode::Move);
-    void move_cursor_left_by_word(MovementMode mode = MovementMode::Move);
-    void move_cursor_right_by_word(MovementMode mode = MovementMode::Move);
-    void move_cursor_to_document_start(MovementMode mode = MovementMode::Move);
-    void move_cursor_to_document_end(MovementMode mode = MovementMode::Move);
-    void move_cursor_page_up(MovementMode mode = MovementMode::Move);
-    void move_cursor_page_down(MovementMode mode = MovementMode::Move);
+    void move_cursor_left(Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_right(Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_down(Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_up(Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_to_line_start(Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_to_line_end(Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_left_by_word(Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_right_by_word(Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_to_document_start(Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_to_document_end(Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_page_up(Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_page_down(Cursor& cursor, MovementMode mode = MovementMode::Move);
 
     void scroll(int vertical, int horizontal);
     void scroll_up(int times = 1);
     void scroll_down(int times = 1);
     void scroll_left(int times = 1);
     void scroll_right(int times = 1);
-    void scroll_cursor_into_view();
+    void scroll_cursor_into_view(Cursor& cursor);
 
-    Line& line_at_cursor();
-    const Line& line_at_cursor() const { return const_cast<Document&>(*this).line_at_cursor(); }
-    int index_into_line_at_cursor() const;
-    int index_of_line_at_cursor() const;
-    const TextIndex& index_at_cursor() const;
-    char char_at_cursor() const;
     TextIndex text_index_at_absolute_position(const Position& position) const;
     TextIndex text_index_at_scrolled_position(const Position& position) const;
     Position relative_to_absolute_position(const Panel& panel, const Line& line, const Position& line_relative_position) const;
@@ -131,10 +125,7 @@ public:
     int num_lines() const { return m_lines.size(); }
     int num_rendered_lines() const;
 
-    Position cursor_position_on_panel() const;
-
-    bool cursor_at_document_start() const;
-    bool cursor_at_document_end() const;
+    Position cursor_position_on_panel(Cursor& cursor) const;
 
     void remove_line(int index);
     void insert_line(Line&& line, int index);
@@ -145,34 +136,31 @@ public:
 
     void set_was_modified(bool b) { m_document_was_modified = b; }
 
-    void finish_key_press();
+    void finish_key_press(Cursor& cursor);
 
     Snapshot snapshot() const;
-    void restore(Snapshot snapshot);
+    void restore(Cursor& cursor, Snapshot snapshot);
 
     StateSnapshot snapshot_state() const;
-    void restore_state(const StateSnapshot& state_snapshot);
-
-    Cursor& cursor() { return m_cursor; }
-    const Cursor& cursor() const { return m_cursor; }
+    void restore_state(Cursor& cursor, const StateSnapshot& state_snapshot);
 
     void delete_selection(Cursor& cursor);
     void clear_selection(Cursor& cursor);
     String selection_text(Cursor& cursor) const;
 
-    void select_line_at_cursor();
-    void select_word_at_cursor();
-    void select_all();
+    void select_line_at_cursor(Cursor& cursor);
+    void select_word_at_cursor(Cursor& cursor);
+    void select_all(Cursor& cursor);
 
-    void redo();
-    void undo();
+    void redo(Cursor& cursor);
+    void undo(Cursor& cursor);
 
-    void copy();
-    void paste();
-    void cut();
+    void copy(Cursor& cursor);
+    void paste(Cursor& cursor);
+    void cut(Cursor& cursor);
 
-    void move_cursor_to(const TextIndex& index, MovementMode mode = MovementMode::Move);
-    void insert_text_at_cursor(const String& string);
+    void move_cursor_to(Cursor& cursor, const TextIndex& index, MovementMode mode = MovementMode::Move);
+    void insert_text_at_cursor(Cursor& cursor, const String& string);
 
     bool show_line_numbers() const { return m_show_line_numbers; }
     void set_show_line_numbers(bool b);
@@ -196,7 +184,7 @@ public:
     Line& last_line() { return m_lines.last(); }
     const Line& last_line() const { return m_lines.last(); }
 
-    bool execute_command(Command& command);
+    bool execute_command(Cursor& cursor, Command& command);
 
     TextRangeCollection& syntax_highlighting_info() { return m_syntax_highlighting_info; }
     const TextRangeCollection& syntax_highlighting_info() const { return m_syntax_highlighting_info; }
@@ -206,8 +194,8 @@ public:
     Function<void()> on_escape_press;
 
 private:
-    void clamp_cursor_to_line_end();
-    void update_selection_state_for_mode(MovementMode mode);
+    void clamp_cursor_to_line_end(Cursor& cursor);
+    void update_selection_state_for_mode(Cursor& cursor, MovementMode mode);
 
     void update_search_results();
     void clear_search_results();
@@ -215,20 +203,20 @@ private:
 
     void update_syntax_highlighting();
 
-    void swap_lines_at_cursor(SwapDirection direction);
-    void split_line_at_cursor();
-    void insert_char(char c);
-    void delete_char(DeleteCharMode mode);
-    void delete_word(DeleteCharMode mode);
+    void swap_lines_at_cursor(Cursor& cursor, SwapDirection direction);
+    void split_line_at_cursor(Cursor& cursor);
+    void insert_char(Cursor& cursor, char c);
+    void delete_char(Cursor& cursor, DeleteCharMode mode);
+    void delete_word(Cursor& cursor, DeleteCharMode mode);
 
-    void go_to_line();
+    void go_to_line(Panel& panel);
 
-    void swap_selection_start_and_cursor();
+    void swap_selection_start_and_cursor(Cursor& cursor);
 
     void guess_type_from_name();
 
     template<typename C, typename... Args>
-    void push_command(Args... args) {
+    void push_command(Cursor& cursor, Args... args) {
         // This means some undo's have taken place, and the user started typing
         // something else, so the redo stack will be discarded.
         if (m_command_stack_index != m_command_stack.size()) {
@@ -243,7 +231,7 @@ private:
         }
 
         auto command = make_unique<C>(*this, forward<Args>(args)...);
-        bool did_modify = execute_command(*command);
+        bool did_modify = execute_command(cursor, *command);
         if (did_modify) {
             m_command_stack.add(move(command));
             m_command_stack_index++;
@@ -266,8 +254,6 @@ private:
     AutoCompleteMode m_auto_complete_mode { AutoCompleteMode::Never };
     bool m_preview_auto_complete { false };
 
-    bool m_word_wrap_enabled { true };
-
     Vector<UniquePtr<Command>> m_command_stack;
     int m_command_stack_index { 0 };
     int m_max_undo_stack { 50 };
@@ -284,8 +270,7 @@ private:
     int m_col_offset { 0 };
     mutable bool m_needs_display { false };
 
-    Cursor m_cursor;
-
+    bool m_word_wrap_enabled { true };
     bool m_show_line_numbers { false };
     bool m_convert_tabs_to_spaces { true };
 };

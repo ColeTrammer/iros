@@ -205,8 +205,9 @@ void Line::compute_rendered_contents(const Document& document, const Panel& pane
 
         end_range();
 
-        if (document.preview_auto_complete() && document.cursor().selection().empty() && this == &document.line_at_cursor() &&
-            index_into_line == document.index_into_line_at_cursor() - 1) {
+        auto& cursor = panel.cursor();
+        if (document.preview_auto_complete() && cursor.selection().empty() && this == &cursor.referenced_line(document) &&
+            index_into_line == cursor.index_into_line() - 1) {
             auto suggestions = panel.get_suggestions();
             if (suggestions.suggestion_count() == 1) {
                 auto& text = suggestions.suggestion_list().first();
