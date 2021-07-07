@@ -18,6 +18,7 @@ public:
     bool empty() const { return m_ranges.empty(); }
     const TextRange& range(int index) const { return m_ranges[index]; }
 
+    void sort();
     TextRangeCollectionIterator iterator(const TextIndex& start) const;
 
 private:

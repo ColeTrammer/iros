@@ -41,17 +41,17 @@ void AppPanel::initialize() {
     auto context_menu = App::ContextMenu::create(w, w);
     context_menu->add_menu_item("Copy", [this] {
         if (auto* doc = document()) {
-            doc->copy();
+            doc->copy(cursors());
         }
     });
     context_menu->add_menu_item("Cut", [this] {
         if (auto* doc = document()) {
-            doc->cut();
+            doc->cut(cursors());
         }
     });
     context_menu->add_menu_item("Paste", [this] {
         if (auto* doc = document()) {
-            doc->paste();
+            doc->paste(cursors());
         }
     });
     set_context_menu(context_menu);
@@ -119,7 +119,8 @@ void AppPanel::enter_search(String starting_text) {
         document()->display_if_needed();
     };
     ensure_search_panel().document()->on_submit = [this] {
-        document()->move_cursor_to_next_search_match();
+        cursors().remove_secondary_cursors();
+        document()->move_cursor_to_next_search_match(cursors().main_cursor());
         document()->display_if_needed();
     };
     ensure_search_panel().document()->on_escape_press = [this] {
@@ -142,7 +143,7 @@ void AppPanel::enter_search(String starting_text) {
 }
 
 void AppPanel::notify_now_is_a_good_time_to_draw_cursor() {
-    auto cursor_position = document()->cursor_position_on_panel();
+    auto cursor_position = document()->cursor_position_on_panel(cursors().main_cursor());
     if (cursor_position.col != m_last_drawn_cursor_col || cursor_position.row != m_last_drawn_cursor_row) {
         flush();
     }
@@ -180,7 +181,7 @@ void AppPanel::render_cursor(Renderer& renderer) {
         return;
     }
 
-    auto cursor_pos = document()->cursor_position_on_panel();
+    auto cursor_pos = document()->cursor_position_on_panel(cursors().main_cursor());
 
     int cursor_x = cursor_pos.col * col_width();
     int cursor_y = cursor_pos.row * row_height();
@@ -237,7 +238,7 @@ void AppPanel::on_mouse_event(const App::MouseEvent& event) {
     event_copy.set_x(text_index.index_into_line());
     event_copy.set_y(text_index.line_index());
 
-    if (document()->notify_mouse_event(event_copy)) {
+    if (document()->notify_mouse_event(cursors(), event_copy)) {
         return;
     }
 
@@ -336,7 +337,7 @@ void AppPanel::on_key_event(const App::KeyEvent& event) {
         return;
     }
 
-    document()->notify_key_pressed({ modifiers, key });
+    document()->notify_key_pressed(cursors(), { modifiers, key });
 }
 
 void AppPanel::document_did_change() {

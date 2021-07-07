@@ -4,6 +4,7 @@ set(SOURCES
     document_type.cpp
     document.cpp
     line.cpp
+    multicursor.cpp
     panel.cpp
     text_range_collection.cpp
     text_range.cpp

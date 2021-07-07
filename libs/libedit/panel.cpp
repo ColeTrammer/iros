@@ -14,7 +14,8 @@ void Panel::set_document(UniquePtr<Document> document) {
     }
 
     m_document = move(document);
-    m_cursor.set({ 0, 0 });
+    m_cursors.remove_secondary_cursors();
+    m_cursors.main_cursor().set({ 0, 0 });
     document_did_change();
 }
 

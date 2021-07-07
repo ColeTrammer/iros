@@ -9,6 +9,7 @@ class Cursor;
 class Document;
 class KeyPress;
 class Line;
+class MultiCursor;
 class Panel;
 class Selection;
 class Suggestions;

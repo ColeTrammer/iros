@@ -1,8 +1,8 @@
 #pragma once
 
 #include <edit/character_metadata.h>
-#include <edit/cursor.h>
 #include <edit/forward.h>
+#include <edit/multicursor.h>
 #include <graphics/color.h>
 #include <liim/forward.h>
 #include <liim/maybe.h>
@@ -43,8 +43,8 @@ public:
     Document* document() { return m_document.get(); }
     const Document* document() const { return m_document.get(); }
 
-    Cursor& cursor() { return m_cursor; }
-    const Cursor& cursor() const { return m_cursor; }
+    MultiCursor& cursors() { return m_cursors; }
+    const MultiCursor& cursors() const { return m_cursors; }
 
     struct RenderingInfo {
         Maybe<vga_color> fg;
@@ -61,6 +61,6 @@ protected:
 
 private:
     UniquePtr<Document> m_document;
-    Cursor m_cursor;
+    MultiCursor m_cursors;
 };
 }

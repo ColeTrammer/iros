@@ -255,7 +255,25 @@ int TerminalPanel::cols() const {
 }
 
 void TerminalPanel::draw_cursor() {
-    auto cursor_pos = document()->cursor_position_on_panel();
+    for (auto& cursor : cursors()) {
+        if (&cursor == &cursors().main_cursor()) {
+            continue;
+        }
+
+        auto cursor_pos = document()->cursor_position_on_panel(cursor);
+        auto cursor_row = cursor_pos.row;
+        auto cursor_col = cursor_pos.col;
+
+        if (cursor_row >= 0 && cursor_row < rows() && cursor_col >= 0 && cursor_col < cols()) {
+            auto& entry = m_screen_info[index(cursor_row, cursor_col)];
+            printf("\033[%d;%dH%s\033[7m%c%s", m_row_offset + cursor_row + 1,
+                   m_col_offset + cursor_col + m_cols_needed_for_line_numbers + 1, string_for_metadata(entry.metadata).string(), entry.ch,
+                   string_for_metadata({}).string());
+            m_dirty_rows[cursor_row] = true;
+        }
+    }
+
+    auto cursor_pos = document()->cursor_position_on_panel(cursors().main_cursor());
     auto cursor_row = cursor_pos.row;
     auto cursor_col = cursor_pos.col;
     if (cursor_row >= 0 && cursor_row < rows() && cursor_col >= 0 && cursor_col < cols()) {
@@ -281,9 +299,11 @@ void TerminalPanel::draw_status_message() {
 
     auto& name = document()->name().is_empty() ? String("[Unamed File]") : document()->name();
 
-    auto cursor_col =
-        document()->line_at_cursor().absoulte_col_offset_of_index(*document(), *this, document()->index_into_line_at_cursor());
-    auto position_string = String::format("%d,%d", document()->index_of_line_at_cursor() + 1, cursor_col + 1);
+    auto cursor_col = cursors()
+                          .main_cursor()
+                          .referenced_line(*document())
+                          .absoulte_col_offset_of_index(*document(), *this, cursors().main_cursor().index_into_line());
+    auto position_string = String::format("%d,%d", cursors().main_cursor().line_index() + 1, cursor_col + 1);
     auto status_rhs = String::format("%s%s [%s] %9s", name.string(), document()->modified() ? "*" : " ",
                                      document_type_to_string(document()->type()).string(), position_string.string());
 
@@ -699,9 +719,9 @@ int TerminalPanel::enter() {
         if (auto* document = Panel::document()) {
             for (auto& ev : input) {
                 if (ev.is<Edit::KeyPress>()) {
-                    document->notify_key_pressed(ev.as<Edit::KeyPress>());
+                    document->notify_key_pressed(cursors(), ev.as<Edit::KeyPress>());
                 } else {
-                    document->notify_mouse_event(ev.as<App::MouseEvent>());
+                    document->notify_mouse_event(cursors(), ev.as<App::MouseEvent>());
                 }
             }
         }
@@ -793,7 +813,8 @@ void TerminalPanel::enter_search(String starting_text) {
             if (ev.is<Edit::KeyPress>()) {
                 auto& press = ev.as<Edit::KeyPress>();
                 if (press.key == Edit::KeyPress::Key::Enter) {
-                    TerminalPanel::document()->move_cursor_to_next_search_match();
+                    cursors().remove_secondary_cursors();
+                    TerminalPanel::document()->move_cursor_to_next_search_match(cursors().main_cursor());
                 }
 
                 if (press.key == Edit::KeyPress::Key::Escape ||
@@ -801,9 +822,9 @@ void TerminalPanel::enter_search(String starting_text) {
                     goto exit_search;
                 }
 
-                text_panel.document()->notify_key_pressed(press);
+                text_panel.document()->notify_key_pressed(cursors(), press);
             } else {
-                text_panel.document()->notify_mouse_event(ev.as<App::MouseEvent>());
+                text_panel.document()->notify_mouse_event(cursors(), ev.as<App::MouseEvent>());
             }
         }
 
@@ -825,9 +846,7 @@ exit_search:
 }
 
 void TerminalPanel::notify_now_is_a_good_time_to_draw_cursor() {
-    draw_cursor();
-    draw_status_message();
-    fflush(stdout);
+    flush();
 }
 
 void TerminalPanel::set_clipboard_contents(String text, bool is_whole_line) {

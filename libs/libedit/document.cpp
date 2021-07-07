@@ -101,8 +101,8 @@ UniquePtr<Document> Document::create_single_line(Panel& panel, String text) {
     auto ret = make_unique<Document>(move(lines), "", panel, InputMode::InputText);
     ret->set_submittable(true);
     ret->set_show_line_numbers(false);
-    ret->move_cursor_to_line_end(panel.cursor());
-    ret->select_all(panel.cursor());
+    ret->move_cursor_to_line_end(panel.cursors().main_cursor());
+    ret->select_all(panel.cursors().main_cursor());
     return ret;
 }
 
@@ -177,8 +177,7 @@ void Document::display() const {
         line_at_index(render_index.line_index()).relative_position_of_index(*this, m_panel, render_index.index_into_line());
     render_index.set_index_into_line(0);
 
-    TextRangeCollection selection_collection(*this);
-    selection_collection.add(m_panel.cursor().selection().text_range());
+    auto selection_collection = m_panel.cursors().selections(*this);
     DocumentTextRangeIterator metadata_iterator(render_index, m_syntax_highlighting_info, m_search_results, selection_collection);
 
     int row = m_row_offset;
@@ -545,35 +544,36 @@ void Document::merge_lines(int l1i, int l2i) {
     set_needs_display();
 }
 
-void Document::insert_char(Cursor& cursor, char c) {
-    push_command<InsertCommand>(cursor, String(c));
+void Document::insert_char(MultiCursor& cursors, char c) {
+    push_command<InsertCommand>(cursors, String(c));
 }
 
-void Document::delete_char(Cursor& cursor, DeleteCharMode mode) {
-    push_command<DeleteCommand>(cursor, mode);
+void Document::delete_char(MultiCursor& cursors, DeleteCharMode mode) {
+    push_command<DeleteCommand>(cursors, mode);
 }
 
-void Document::delete_word(Cursor& cursor, DeleteCharMode mode) {
-    if (!cursor.selection().empty()) {
-        delete_char(cursor, mode);
+void Document::delete_word(MultiCursor& cursors, DeleteCharMode mode) {
+    if (!cursors.main_cursor().selection().empty()) {
+        delete_char(cursors, mode);
         return;
     }
 
-    int index_into_line = cursor.index_into_line();
-    if ((mode == DeleteCharMode::Backspace && index_into_line == 0) ||
-        (mode == DeleteCharMode::Delete && index_into_line == cursor.referenced_line(*this).length())) {
-        delete_char(cursor, mode);
-        return;
-    }
+    for (auto& cursor : cursors) {
+        int index_into_line = cursor.index_into_line();
+        if ((mode == DeleteCharMode::Backspace && index_into_line == 0) ||
+            (mode == DeleteCharMode::Delete && index_into_line == cursor.referenced_line(*this).length())) {
+            continue;
+        }
 
-    if (mode == DeleteCharMode::Backspace) {
-        move_cursor_left_by_word(cursor, MovementMode::Select);
-    } else {
-        move_cursor_right_by_word(cursor, MovementMode::Select);
-    }
+        if (mode == DeleteCharMode::Backspace) {
+            move_cursor_left_by_word(cursor, MovementMode::Select);
+        } else {
+            move_cursor_right_by_word(cursor, MovementMode::Select);
+        }
 
-    swap_selection_start_and_cursor(cursor);
-    push_command<DeleteCommand>(cursor, mode, true);
+        swap_selection_start_and_cursor(cursor);
+    }
+    push_command<DeleteCommand>(cursors, mode, true);
 }
 
 void Document::swap_selection_start_and_cursor(Cursor& cursor) {
@@ -586,35 +586,35 @@ void Document::swap_selection_start_and_cursor(Cursor& cursor) {
     selection.set(start, end);
 }
 
-void Document::split_line_at_cursor(Cursor& cursor) {
-    push_command<InsertCommand>(cursor, "\n");
+void Document::split_line_at_cursor(MultiCursor& cursors) {
+    push_command<InsertCommand>(cursors, "\n");
 }
 
-bool Document::execute_command(Cursor& cursor, Command& command) {
-    scroll_cursor_into_view(cursor);
-    return command.execute(cursor);
+bool Document::execute_command(MultiCursor& cursors, Command& command) {
+    scroll_cursor_into_view(cursors.main_cursor());
+    return command.execute(cursors);
 }
 
-void Document::redo(Cursor& cursor) {
+void Document::redo(MultiCursor& cursors) {
     if (m_command_stack_index == m_command_stack.size()) {
         return;
     }
 
     auto& command = *m_command_stack[m_command_stack_index++];
-    command.redo(cursor);
+    command.redo(cursors);
 
     if (on_change) {
         on_change();
     }
 }
 
-void Document::undo(Cursor& cursor) {
+void Document::undo(MultiCursor& cursors) {
     if (m_command_stack_index == 0) {
         return;
     }
 
     auto& command = *m_command_stack[--m_command_stack_index];
-    command.undo(cursor);
+    command.undo(cursors);
     update_search_results();
     update_syntax_highlighting();
 
@@ -624,37 +624,37 @@ void Document::undo(Cursor& cursor) {
 }
 
 Document::StateSnapshot Document::snapshot_state() const {
-    return { m_panel.cursor(), m_document_was_modified };
+    return { m_panel.cursors(), m_document_was_modified };
 }
 
 Document::Snapshot Document::snapshot() const {
     return { Vector<Line>(m_lines), snapshot_state() };
 }
 
-void Document::restore(Cursor& cursor, Snapshot s) {
+void Document::restore(MultiCursor& cursors, Snapshot s) {
     m_lines = move(s.lines);
-    cursor = s.state.cursor;
+    cursors = s.state.cursors;
     m_document_was_modified = s.state.document_was_modified;
 
     update_search_results();
-    scroll_cursor_into_view(cursor);
+    scroll_cursor_into_view(cursors.main_cursor());
     set_needs_display();
 }
 
-void Document::restore_state(Cursor& cursor, const StateSnapshot& s) {
-    cursor = s.cursor;
+void Document::restore_state(MultiCursor& cursors, const StateSnapshot& s) {
+    cursors = s.cursors;
     m_document_was_modified = s.document_was_modified;
 
-    scroll_cursor_into_view(cursor);
+    scroll_cursor_into_view(cursors.main_cursor());
     set_needs_display();
 }
 
-void Document::insert_text_at_cursor(Cursor& cursor, const String& text) {
+void Document::insert_text_at_cursor(MultiCursor& cursors, const String& text) {
     if (text.is_empty()) {
         return;
     }
 
-    push_command<InsertCommand>(cursor, text);
+    push_command<InsertCommand>(cursors, text);
 }
 
 void Document::move_cursor_to(Cursor& cursor, const TextIndex& index, MovementMode mode) {
@@ -776,7 +776,8 @@ void Document::rotate_lines_down(int start, int end) {
     m_lines.rotate_right(start, end + 1);
 }
 
-void Document::copy(Cursor& cursor) {
+void Document::copy(MultiCursor& cursors) {
+    auto& cursor = cursors.main_cursor();
     if (cursor.selection().empty()) {
         String contents = cursor.referenced_line(*this).contents();
         if (!input_text_mode()) {
@@ -789,33 +790,35 @@ void Document::copy(Cursor& cursor) {
     m_panel.set_clipboard_contents(selection_text(cursor));
 }
 
-void Document::cut(Cursor& cursor) {
+void Document::cut(MultiCursor& cursors) {
+    auto& cursor = cursors.main_cursor();
     if (cursor.selection().empty()) {
         auto contents = cursor.referenced_line(*this).contents();
         if (!input_text_mode()) {
             contents += "\n";
         }
         m_panel.set_clipboard_contents(move(contents), true);
-        push_command<DeleteLineCommand>(cursor);
+        push_command<DeleteLineCommand>(cursors);
         return;
     }
 
     m_panel.set_clipboard_contents(selection_text(cursor));
-    push_command<DeleteCommand>(cursor, DeleteCharMode::Delete);
+    push_command<DeleteCommand>(cursors, DeleteCharMode::Delete);
 }
 
-void Document::paste(Cursor& cursor) {
+void Document::paste(MultiCursor& cursors) {
     bool is_whole_line;
     auto text_to_insert = m_panel.clipboard_contents(is_whole_line);
     if (text_to_insert.is_empty()) {
         return;
     }
 
+    auto& cursor = cursors.main_cursor();
     if (!input_text_mode() && cursor.selection().empty() && is_whole_line) {
         text_to_insert.remove_index(text_to_insert.size() - 1);
-        push_command<InsertLineCommand>(cursor, text_to_insert);
+        push_command<InsertLineCommand>(cursors, text_to_insert);
     } else {
-        insert_text_at_cursor(cursor, text_to_insert);
+        insert_text_at_cursor(cursors, text_to_insert);
     }
 
     set_needs_display();
@@ -851,10 +854,12 @@ void Document::go_to_line(Panel& panel) {
         return;
     }
 
-    clear_selection(panel.cursor());
-    panel.cursor().set_line_index(line_number - 1);
+    auto& cursor = panel.cursors().main_cursor();
 
-    auto cursor_row_position = panel.cursor().referenced_line(*this).absolute_row_position(*this, m_panel);
+    clear_selection(cursor);
+    cursor.set_line_index(line_number - 1);
+
+    auto cursor_row_position = cursor.referenced_line(*this).absolute_row_position(*this, m_panel);
 
     int screen_midpoint = m_panel.rows() / 2;
     if (cursor_row_position < screen_midpoint) {
@@ -863,7 +868,7 @@ void Document::go_to_line(Panel& panel) {
         m_row_offset = cursor_row_position - screen_midpoint;
     }
 
-    move_cursor_to_line_start(panel.cursor());
+    move_cursor_to_line_start(cursor);
     set_needs_display();
 }
 
@@ -1016,8 +1021,8 @@ void Document::enter_interactive_search() {
     m_panel.send_status_message(String::format("Found %d result(s)", search_result_count()));
 }
 
-void Document::swap_lines_at_cursor(Cursor& cursor, SwapDirection direction) {
-    push_command<SwapLinesCommand>(cursor, direction);
+void Document::swap_lines_at_cursor(MultiCursor& cursors, SwapDirection direction) {
+    push_command<SwapLinesCommand>(cursors, direction);
 }
 
 void Document::select_word_at_cursor(Cursor& cursor) {
@@ -1054,20 +1059,29 @@ void Document::select_all(Cursor& cursor) {
     scroll(save_row_offset - m_row_offset, save_col_offset - m_col_offset);
 }
 
-bool Document::notify_mouse_event(Cursor& cursor, const App::MouseEvent& event) {
+bool Document::notify_mouse_event(MultiCursor& cursors, const App::MouseEvent& event) {
+
     bool handled = false;
     if (event.mouse_down() && event.left_button()) {
+        cursors.remove_secondary_cursors();
+        auto& cursor = cursors.main_cursor();
         move_cursor_to(cursor, { event.y(), event.x() }, MovementMode::Move);
         handled = true;
     } else if (event.mouse_double() && event.left_button()) {
+        cursors.remove_secondary_cursors();
+        auto& cursor = cursors.main_cursor();
         move_cursor_to(cursor, { event.y(), event.x() }, MovementMode::Move);
         select_word_at_cursor(cursor);
         handled = true;
     } else if (event.mouse_triple() && event.left_button()) {
+        cursors.remove_secondary_cursors();
+        auto& cursor = cursors.main_cursor();
         move_cursor_to(cursor, { event.y(), event.x() }, MovementMode::Move);
         select_line_at_cursor(cursor);
         handled = true;
     } else if (event.buttons_down() & App::MouseButton::Left) {
+        cursors.remove_secondary_cursors();
+        auto& cursor = cursors.main_cursor();
         move_cursor_to(cursor, { event.y(), event.x() }, MovementMode::Select);
         handled = true;
     } else if (event.mouse_scroll()) {
@@ -1083,11 +1097,12 @@ bool Document::notify_mouse_event(Cursor& cursor, const App::MouseEvent& event) 
     return handled;
 }
 
-void Document::finish_key_press(Cursor& cursor) {
-    scroll_cursor_into_view(cursor);
+void Document::finish_key_press(MultiCursor& cursors) {
+    cursors.remove_duplicate_cursors();
+    scroll_cursor_into_view(cursors.main_cursor());
 
     if (preview_auto_complete()) {
-        cursor.referenced_line(*this).invalidate_rendered_contents();
+        cursors.main_cursor().referenced_line(*this).invalidate_rendered_contents();
         set_needs_display();
     }
 
@@ -1098,59 +1113,79 @@ void Document::finish_key_press(Cursor& cursor) {
     }
 }
 
-void Document::notify_key_pressed(Cursor& cursor, KeyPress press) {
+void Document::notify_key_pressed(MultiCursor& cursors, KeyPress press) {
     if (press.modifiers & KeyPress::Modifier::Alt) {
         switch (press.key) {
             case KeyPress::Key::DownArrow:
-                swap_lines_at_cursor(cursor, SwapDirection::Down);
+                swap_lines_at_cursor(cursors, SwapDirection::Down);
                 break;
             case KeyPress::Key::UpArrow:
-                swap_lines_at_cursor(cursor, SwapDirection::Up);
+                swap_lines_at_cursor(cursors, SwapDirection::Up);
                 break;
             case 'D':
-                delete_word(cursor, DeleteCharMode::Delete);
+                delete_word(cursors, DeleteCharMode::Delete);
                 break;
             default:
                 break;
         }
 
-        finish_key_press(cursor);
+        finish_key_press(cursors);
         return;
     }
 
     if (press.modifiers & KeyPress::Modifier::Control) {
         switch (toupper(press.key)) {
             case KeyPress::Key::LeftArrow:
-                move_cursor_left_by_word(cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                for (auto& cursor : cursors) {
+                    move_cursor_left_by_word(cursor,
+                                             press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                }
                 break;
             case KeyPress::Key::RightArrow:
-                move_cursor_right_by_word(cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                for (auto& cursor : cursors) {
+                    move_cursor_right_by_word(cursor,
+                                              press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                }
                 break;
             case KeyPress::Key::DownArrow:
-                move_cursor_down(cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                if (press.modifiers & KeyPress::Modifier::Shift) {
+                    auto& new_cursor = cursors.add_cursor();
+                    move_cursor_down(new_cursor);
+                } else {
+                    scroll_down();
+                }
                 break;
             case KeyPress::Key::UpArrow:
-                move_cursor_up(cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                if (press.modifiers & KeyPress::Modifier::Shift) {
+                    auto& new_cursor = cursors.add_cursor();
+                    move_cursor_up(new_cursor);
+                } else {
+                    scroll_up();
+                }
                 break;
             case KeyPress::Key::Home:
-                move_cursor_to_document_start(cursor,
-                                              press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                for (auto& cursor : cursors) {
+                    move_cursor_to_document_start(cursor,
+                                                  press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                }
                 break;
             case KeyPress::Key::End:
-                move_cursor_to_document_end(cursor,
-                                            press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                for (auto& cursor : cursors) {
+                    move_cursor_to_document_end(cursor,
+                                                press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                }
                 break;
             case KeyPress::Key::Backspace:
-                delete_word(cursor, DeleteCharMode::Backspace);
+                delete_word(cursors, DeleteCharMode::Backspace);
                 break;
             case KeyPress::Key::Delete:
-                delete_word(cursor, DeleteCharMode::Delete);
+                delete_word(cursors, DeleteCharMode::Delete);
                 break;
             case 'A':
-                select_all(cursor);
+                select_all(cursors.main_cursor());
                 break;
             case 'C':
-                copy(cursor);
+                copy(cursors);
                 break;
             case 'F':
                 enter_interactive_search();
@@ -1178,66 +1213,83 @@ void Document::notify_key_pressed(Cursor& cursor, KeyPress press) {
                 }
                 break;
             case 'V':
-                paste(cursor);
+                paste(cursors);
                 break;
             case 'X':
-                cut(cursor);
+                cut(cursors);
                 break;
             case 'Y':
-                redo(cursor);
+                redo(cursors);
                 break;
             case 'Z':
-                undo(cursor);
+                undo(cursors);
                 break;
             default:
                 break;
         }
 
-        finish_key_press(cursor);
+        finish_key_press(cursors);
         return;
     }
 
     switch (press.key) {
         case KeyPress::Key::LeftArrow:
-            move_cursor_left(cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            for (auto& cursor : cursors) {
+                move_cursor_left(cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            }
             break;
         case KeyPress::Key::RightArrow:
-            move_cursor_right(cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            for (auto& cursor : cursors) {
+                move_cursor_right(cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            }
             break;
         case KeyPress::Key::DownArrow:
-            move_cursor_down(cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            for (auto& cursor : cursors) {
+                move_cursor_down(cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            }
             break;
         case KeyPress::Key::UpArrow:
-            move_cursor_up(cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            for (auto& cursor : cursors) {
+                move_cursor_up(cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            }
             break;
         case KeyPress::Key::Home:
-            move_cursor_to_line_start(cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            for (auto& cursor : cursors) {
+                move_cursor_to_line_start(cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            }
             break;
         case KeyPress::Key::End:
-            move_cursor_to_line_end(cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            for (auto& cursor : cursors) {
+                move_cursor_to_line_end(cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            }
             break;
         case KeyPress::Key::PageUp:
-            move_cursor_page_up(cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            for (auto& cursor : cursors) {
+                move_cursor_page_up(cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            }
             break;
         case KeyPress::Key::PageDown:
-            move_cursor_page_down(cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            for (auto& cursor : cursors) {
+                move_cursor_page_down(cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+            }
             break;
         case KeyPress::Key::Backspace:
-            delete_char(cursor, DeleteCharMode::Backspace);
+            delete_char(cursors, DeleteCharMode::Backspace);
             break;
         case KeyPress::Key::Delete:
-            delete_char(cursor, DeleteCharMode::Delete);
+            delete_char(cursors, DeleteCharMode::Delete);
             break;
         case KeyPress::Key::Enter:
-            if (!submittable() || &cursor.referenced_line(*this) != &last_line()) {
-                split_line_at_cursor(cursor);
+            if (!submittable() || &cursors.main_cursor().referenced_line(*this) != &last_line()) {
+                split_line_at_cursor(cursors);
             } else if (submittable() && on_submit) {
                 on_submit();
             }
             break;
         case KeyPress::Key::Escape:
             clear_search();
-            clear_selection(cursor);
+            cursors.remove_secondary_cursors();
+            clear_selection(cursors.main_cursor());
             if (on_escape_press) {
                 on_escape_press();
             }
@@ -1247,22 +1299,22 @@ void Document::notify_key_pressed(Cursor& cursor, KeyPress press) {
                 auto suggestions = m_panel.get_suggestions();
                 if (suggestions.suggestion_count() == 1) {
                     auto suggestion = suggestions.suggestion_list()[0];
-                    insert_text_at_cursor(cursor, String(suggestion.string() + suggestions.suggestion_offset(),
-                                                         suggestion.size() - suggestions.suggestion_offset()));
+                    insert_text_at_cursor(cursors, String(suggestion.string() + suggestions.suggestion_offset(),
+                                                          suggestion.size() - suggestions.suggestion_offset()));
                 } else if (suggestions.suggestion_count() > 1) {
                     m_panel.handle_suggestions(suggestions);
                 }
                 break;
             }
-            insert_char(cursor, press.key);
+            insert_char(cursors, press.key);
             break;
         default:
             if (isascii(press.key)) {
-                insert_char(cursor, press.key);
+                insert_char(cursors, press.key);
             }
             break;
     }
 
-    finish_key_press(cursor);
+    finish_key_press(cursors);
 }
 }

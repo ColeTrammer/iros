@@ -3,6 +3,19 @@
 #include <edit/text_range_collection.h>
 
 namespace Edit {
+void TextRangeCollection::sort() {
+    qsort(m_ranges.vector(), m_ranges.size(), sizeof(TextRange), [](const void* k1, const void* k2) -> int {
+        auto& a = *reinterpret_cast<const TextRange*>(k1);
+        auto& b = *reinterpret_cast<const TextRange*>(k2);
+        if (a.start() < b.start()) {
+            return -1;
+        } else if (a.start() > b.start()) {
+            return 1;
+        }
+        return 0;
+    });
+}
+
 TextRangeCollectionIterator TextRangeCollection::iterator(const TextIndex& start) const {
     int range_index;
     for (range_index = 0; range_index < m_ranges.size(); range_index++) {

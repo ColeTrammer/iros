@@ -209,7 +209,8 @@ void ReplPanel::document_did_change() {
             auto input_status = m_repl.get_input_status(input_text);
 
             if (input_status == InputStatus::Finished) {
-                document()->move_cursor_to_document_end();
+                cursors().remove_secondary_cursors();
+                document()->move_cursor_to_document_end(cursors().main_cursor());
                 document()->set_preview_auto_complete(false);
                 document()->display();
                 printf("\r\n");
@@ -219,8 +220,9 @@ void ReplPanel::document_did_change() {
             }
 
             document()->insert_line(Edit::Line(""), document()->num_lines());
-            document()->move_cursor_to_document_end();
-            document()->scroll_cursor_into_view();
+            cursors().remove_secondary_cursors();
+            document()->move_cursor_to_document_end(cursors().main_cursor());
+            document()->scroll_cursor_into_view(cursors().main_cursor());
             document()->display_if_needed();
         };
 
@@ -269,7 +271,7 @@ String ReplPanel::inject_inline_text_for_line_index(int line_index) const {
 }
 
 void ReplPanel::draw_cursor() {
-    auto cursor_pos = document()->cursor_position_on_panel();
+    auto cursor_pos = document()->cursor_position_on_panel(cursors().main_cursor());
     auto cursor_row = cursor_pos.row;
     auto cursor_col = cursor_pos.col;
 
@@ -668,7 +670,7 @@ Vector<Variant<Edit::KeyPress, App::MouseEvent>> ReplPanel::read_input() {
 
 Edit::Suggestions ReplPanel::get_suggestions() const {
     auto content_string = document()->content_string();
-    auto cursor_index = document()->cursor_index_in_content_string();
+    auto cursor_index = document()->cursor_index_in_content_string(cursors().main_cursor());
     auto suggestions_object = m_repl.get_suggestions(content_string, cursor_index);
 
     auto& suggestions = suggestions_object.suggestion_list();
@@ -749,8 +751,8 @@ void ReplPanel::move_history_up() {
     put_history_document(move(current_document), m_history_index);
 
     set_document(move(new_document));
-    document()->move_cursor_to_document_end();
-    document()->scroll_cursor_into_view();
+    document()->move_cursor_to_document_end(cursors().main_cursor());
+    document()->scroll_cursor_into_view(cursors().main_cursor());
     document()->display();
 
     m_history_index--;
@@ -767,8 +769,8 @@ void ReplPanel::move_history_down() {
     put_history_document(move(current_document), m_history_index);
 
     set_document(move(new_document));
-    document()->move_cursor_to_document_end();
-    document()->scroll_cursor_into_view();
+    document()->move_cursor_to_document_end(cursors().main_cursor());
+    document()->scroll_cursor_into_view(cursors().main_cursor());
     document()->display();
 
     m_history_index++;
@@ -848,12 +850,12 @@ int ReplPanel::enter() {
                         continue;
                     }
 
-                    if (key_event.key == Edit::KeyPress::UpArrow && document->index_of_line_at_cursor() == 0) {
+                    if (key_event.key == Edit::KeyPress::UpArrow && cursors().main_cursor().line_index() == 0) {
                         move_history_up();
                         break;
                     }
 
-                    if (key_event.key == Edit::KeyPress::DownArrow && document->index_of_line_at_cursor() == document->num_lines() - 1) {
+                    if (key_event.key == Edit::KeyPress::DownArrow && cursors().main_cursor().line_index() == document->num_lines() - 1) {
                         move_history_down();
                         break;
                     }
@@ -862,9 +864,9 @@ int ReplPanel::enter() {
                         m_consecutive_tabs = 0;
                     }
 
-                    document->notify_key_pressed(ev.as<Edit::KeyPress>());
+                    document->notify_key_pressed(cursors(), ev.as<Edit::KeyPress>());
                 } else {
-                    document->notify_mouse_event(ev.as<App::MouseEvent>());
+                    document->notify_mouse_event(cursors(), ev.as<App::MouseEvent>());
                 }
             }
         }

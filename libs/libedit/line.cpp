@@ -205,7 +205,7 @@ void Line::compute_rendered_contents(const Document& document, const Panel& pane
 
         end_range();
 
-        auto& cursor = panel.cursor();
+        auto& cursor = panel.cursors().main_cursor();
         if (document.preview_auto_complete() && cursor.selection().empty() && this == &cursor.referenced_line(document) &&
             index_into_line == cursor.index_into_line() - 1) {
             auto suggestions = panel.get_suggestions();
