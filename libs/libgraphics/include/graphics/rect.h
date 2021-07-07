@@ -15,6 +15,8 @@ public:
     constexpr int width() const { return m_width; }
     constexpr int height() const { return m_height; }
 
+    constexpr bool empty() const { return m_width == 0 || m_height == 0; }
+
     constexpr int left() const { return m_x; }
     constexpr int right() const { return m_x + m_width; }
     constexpr int top() const { return m_y; }

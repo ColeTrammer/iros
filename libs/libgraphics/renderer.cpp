@@ -128,14 +128,11 @@ void Renderer::draw_line(Point start, Point end, Color color) {
     auto translated_start = translate(start);
     auto translated_end = translate(end);
 
-    auto constrained_start = constrain(translated_start);
-    auto constrained_end = constrain(translated_end);
+    auto x_start = translated_start.x();
+    auto x_end = translated_end.x();
 
-    auto x_start = constrained_start.x();
-    auto x_end = constrained_end.x();
-
-    auto y_start = constrained_start.y();
-    auto y_end = constrained_end.y();
+    auto y_start = translated_start.y();
+    auto y_end = translated_end.y();
 
     auto raw_color = color.color();
     if (x_start == x_end && y_start == y_end) {
@@ -143,28 +140,41 @@ void Renderer::draw_line(Point start, Point end, Color color) {
         return;
     }
 
+    // Horizontal line fast path
     if (y_start == y_end) {
         if (x_start > x_end) {
             swap(x_start, x_end);
         }
 
-        auto raw_pixels = m_pixels.pixels() + y_start * m_pixels.width();
+        auto rect = Rect { x_start, y_start, x_end - x_start + 1, 1 };
+        auto constrained_rect = constrain(rect);
+        if (constrained_rect.empty()) {
+            return;
+        }
 
-        for (auto x = x_start; x <= x_end; x++) {
+        auto raw_pixels = m_pixels.pixels() + y_start * m_pixels.width();
+        for (auto x = constrained_rect.left(); x < constrained_rect.right(); x++) {
             raw_pixels[x] = raw_color;
         }
         return;
     }
 
+    // Vertical line fast path
     if (x_start == x_end) {
         if (y_start > y_end) {
             swap(y_start, y_end);
         }
 
+        auto rect = Rect { x_start, y_start, 1, y_end - y_start + 1 };
+        auto constrained_rect = constrain(rect);
+        if (constrained_rect.empty()) {
+            return;
+        }
+
         auto raw_pixels = m_pixels.pixels() + x_start;
         auto raw_pixels_width = m_pixels.width();
-        auto adjusted_y_end = y_end * raw_pixels_width;
-        for (auto y = y_start * raw_pixels_width; y <= adjusted_y_end; y += raw_pixels_width) {
+        auto adjusted_y_end = constrained_rect.bottom() * raw_pixels_width;
+        for (auto y = constrained_rect.top() * raw_pixels_width; y < adjusted_y_end; y += raw_pixels_width) {
             raw_pixels[y] = raw_color;
         }
         return;
