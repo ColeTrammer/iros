@@ -112,8 +112,7 @@ Document::Document(Vector<Line> lines, String name, Panel& panel, InputMode mode
     , m_input_mode(mode)
     , m_search_results(*this)
     , m_syntax_highlighting_info(*this)
-    , m_panel(panel)
-    , m_cursor(*this) {
+    , m_panel(panel) {
     if (m_lines.empty()) {
         m_lines.add(Line(""));
     }
@@ -228,11 +227,11 @@ Position Document::relative_to_absolute_position(const Panel& panel, const Line&
 }
 
 Line& Document::line_at_cursor() {
-    return m_cursor.referenced_line();
+    return m_cursor.referenced_line(*this);
 }
 
 char Document::char_at_cursor() const {
-    return m_cursor.referenced_character();
+    return m_cursor.referenced_character(*this);
 }
 
 int Document::index_of_line_at_cursor() const {
@@ -256,16 +255,16 @@ int Document::num_rendered_lines() const {
 }
 
 Position Document::cursor_position_on_panel() const {
-    auto position = m_cursor.absolute_position(m_panel);
+    auto position = m_cursor.absolute_position(*this, m_panel);
     return { position.row - m_row_offset, position.col - m_col_offset };
 }
 
 bool Document::cursor_at_document_start() const {
-    return m_cursor.at_document_start();
+    return m_cursor.at_document_start(*this);
 }
 
 bool Document::cursor_at_document_end() const {
-    return m_cursor.at_document_end();
+    return m_cursor.at_document_end(*this);
 }
 
 int Document::index_of_line(const Line& line) const {
@@ -398,7 +397,7 @@ void Document::move_cursor_down(MovementMode mode) {
 
     update_selection_state_for_mode(mode);
 
-    auto prev_position = m_cursor.absolute_position(m_panel);
+    auto prev_position = m_cursor.absolute_position(*this, m_panel);
     auto new_index = text_index_at_absolute_position({ prev_position.row + 1, prev_position.col });
 
     m_cursor.set(new_index);
@@ -419,7 +418,7 @@ void Document::move_cursor_up(MovementMode mode) {
 
     update_selection_state_for_mode(mode);
 
-    auto prev_position = m_cursor.absolute_position(m_panel);
+    auto prev_position = m_cursor.absolute_position(*this, m_panel);
     auto new_index = text_index_at_absolute_position({ prev_position.row - 1, prev_position.col });
 
     m_cursor.set(new_index);
@@ -433,7 +432,7 @@ void Document::move_cursor_up(MovementMode mode) {
 
 void Document::clamp_cursor_to_line_end() {
     auto& line = line_at_cursor();
-    auto current_pos = m_cursor.relative_position(m_panel);
+    auto current_pos = m_cursor.relative_position(*this, m_panel);
     auto max_col = line.max_col_in_relative_row(*this, m_panel, current_pos.row);
     if (current_pos.col == max_col) {
         return;
