@@ -701,8 +701,9 @@ Edit::Suggestions ReplPanel::get_suggestions() const {
 
 void ReplPanel::handle_suggestions(const Edit::Suggestions& suggestions) {
     if (++m_consecutive_tabs >= 2) {
-        if (m_visible_cursor_row < rows() - 1) {
-            printf("\033[%dB", rows() - 1 - m_visible_cursor_row);
+        auto cursor_row_max = min(rows(), document()->num_rendered_lines()) - 1;
+        if (m_visible_cursor_row < cursor_row_max) {
+            printf("\033[%dB", cursor_row_max - m_visible_cursor_row);
         }
         printf("\r\n");
         for (auto& suggestion : suggestions.suggestion_list()) {
