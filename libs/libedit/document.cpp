@@ -109,10 +109,10 @@ UniquePtr<Document> Document::create_single_line(Panel& panel, String text) {
 Document::Document(Vector<Line> lines, String name, Panel& panel, InputMode mode)
     : m_lines(move(lines))
     , m_name(move(name))
-    , m_panel(panel)
     , m_input_mode(mode)
     , m_search_results(*this)
     , m_syntax_highlighting_info(*this)
+    , m_panel(panel)
     , m_cursor(*this) {
     if (m_lines.empty()) {
         m_lines.add(Line(""));
@@ -338,7 +338,7 @@ void Document::move_cursor_right(MovementMode mode) {
     int new_index_into_line = m_cursor.index_into_line() + 1;
     int new_col_position = line.relative_position_of_index(*this, m_panel, new_index_into_line).col;
 
-    m_max_cursor_col = new_col_position;
+    cursor().set_max_col(new_col_position);
 
     if (mode == MovementMode::Select) {
         if (selection.empty()) {
@@ -375,7 +375,7 @@ void Document::move_cursor_left(MovementMode mode) {
     int new_index_into_line = index_into_line - 1;
     int new_col_position = line.relative_position_of_index(*this, m_panel, new_index_into_line).col;
 
-    m_max_cursor_col = new_col_position;
+    cursor().set_max_col(new_col_position);
 
     if (mode == MovementMode::Select) {
         if (selection.empty()) {
@@ -444,8 +444,8 @@ void Document::clamp_cursor_to_line_end() {
         return;
     }
 
-    if (m_max_cursor_col > current_pos.col) {
-        m_cursor.set_index_into_line(line.index_of_relative_position(*this, m_panel, { current_pos.row, m_max_cursor_col }));
+    if (cursor().max_col() > current_pos.col) {
+        m_cursor.set_index_into_line(line.index_of_relative_position(*this, m_panel, { current_pos.row, cursor().max_col() }));
         return;
     }
 }
@@ -458,14 +458,14 @@ void Document::move_cursor_to_line_start(MovementMode mode) {
     }
 
     m_cursor.set_index_into_line(0);
-    m_max_cursor_col = 0;
+    m_cursor.set_max_col(0);
 }
 
 void Document::move_cursor_to_line_end(MovementMode mode) {
     auto& line = line_at_cursor();
     auto new_col = line.relative_position_of_index(*this, m_panel, line.length()).col;
 
-    m_max_cursor_col = new_col;
+    cursor().set_max_col(new_col);
 
     update_selection_state_for_mode(mode);
     if (mode == MovementMode::Select) {
@@ -653,7 +653,7 @@ void Document::undo() {
 }
 
 Document::StateSnapshot Document::snapshot_state() const {
-    return { m_cursor, m_max_cursor_col, m_document_was_modified };
+    return { m_cursor, m_document_was_modified };
 }
 
 Document::Snapshot Document::snapshot() const {
@@ -663,7 +663,6 @@ Document::Snapshot Document::snapshot() const {
 void Document::restore(Snapshot s) {
     m_lines = move(s.lines);
     m_cursor = s.state.cursor;
-    m_max_cursor_col = s.state.max_cursor_col;
     m_document_was_modified = s.state.document_was_modified;
 
     update_search_results();
@@ -673,7 +672,6 @@ void Document::restore(Snapshot s) {
 
 void Document::restore_state(const StateSnapshot& s) {
     m_cursor = s.cursor;
-    m_max_cursor_col = s.max_cursor_col;
     m_document_was_modified = s.document_was_modified;
 
     scroll_cursor_into_view();

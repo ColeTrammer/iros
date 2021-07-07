@@ -36,7 +36,6 @@ public:
 
     struct StateSnapshot {
         Cursor cursor;
-        int max_cursor_col { 0 };
         bool document_was_modified { false };
     };
 
@@ -260,7 +259,7 @@ private:
 
     Vector<Line> m_lines;
     String m_name;
-    Panel& m_panel;
+    DocumentType m_type { DocumentType::Text };
     InputMode m_input_mode { InputMode::Document };
     bool m_submittable { false };
 
@@ -271,6 +270,8 @@ private:
 
     Vector<UniquePtr<Command>> m_command_stack;
     int m_command_stack_index { 0 };
+    int m_max_undo_stack { 50 };
+    bool m_document_was_modified { false };
 
     String m_search_text;
     TextRangeCollection m_search_results;
@@ -278,16 +279,14 @@ private:
 
     TextRangeCollection m_syntax_highlighting_info;
 
+    Panel& m_panel;
     int m_row_offset { 0 };
     int m_col_offset { 0 };
-    int m_max_cursor_col { 0 };
-    bool m_document_was_modified { false };
+    mutable bool m_needs_display { false };
+
     Cursor m_cursor;
 
-    int m_max_undo_stack { 50 };
     bool m_show_line_numbers { false };
     bool m_convert_tabs_to_spaces { true };
-    mutable bool m_needs_display { false };
-    DocumentType m_type { DocumentType::Text };
 };
 }
