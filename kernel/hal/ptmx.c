@@ -106,6 +106,7 @@ again:;
     size_t len = MIN(_len, ring_buffer_size(&data->input_buffer));
     if (len == 0) {
         if (non_blocking) {
+            mutex_unlock(&data->device->lock);
             return 0;
         }
 
@@ -118,6 +119,7 @@ again:;
             }
 
             if (timeout.tv_sec == 0 && timeout.tv_nsec == 0) {
+                mutex_unlock(&data->device->lock);
                 return 0;
             }
         } else {
