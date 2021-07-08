@@ -53,6 +53,10 @@ private:
 
     Generator<StreamResult> decode_symbol(const TreeNode* tree, uint16_t& value);
 
+    Generator<StreamResult> decode_no_compression();
+    Generator<StreamResult> decode_with_compression();
+    Generator<StreamResult> decode_dynamic_symbols();
+
     RingBuffer<uint8_t, 32768> m_previously_decoded_data;
     FixedArray<Symbol, hclen_max> m_code_length_symbols;
     FixedArray<TreeNode, 128> m_length_codes_tree;
