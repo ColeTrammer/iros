@@ -24,6 +24,7 @@
 
 // #define PTMX_BLOCKING_DEBUG
 // #define PTMX_SIGNAL_DEBUG
+// #define PTMX_TERMIOS_DEBUG
 
 #define PTMX_MAX 16
 
@@ -55,6 +56,30 @@ static struct termios default_termios = {
 static struct fs_device *slaves[PTMX_MAX] = { 0 };
 static struct fs_device *masters[PTMX_MAX] = { 0 };
 static mutex_t lock = MUTEX_INITIALIZER(lock);
+
+static void ptmx_log_termios(struct termios *termios) {
+    (void) termios;
+
+#ifdef PTMX_TERMIOS_DEBUG
+    debug_log(
+        "c_iflag: [ ICRNL=%d ISTRIP=%d IXON=%d IXOFF=%d IXANY=%d BRKINT=%d PARMRK=%d IGNBRK=%d IGNCR=%d IGNPAR=%d INLCR=%d INPCK=%d ]\n",
+        !!(termios->c_iflag & ICRNL), !!(termios->c_iflag & ISTRIP), !!(termios->c_iflag & IXON), !!(termios->c_iflag & IXOFF),
+        !!(termios->c_iflag & IXANY), !!(termios->c_iflag & BRKINT), !!(termios->c_iflag & PARMRK), !!(termios->c_iflag & IGNBRK),
+        !!(termios->c_iflag & IGNCR), !!(termios->c_iflag & IGNPAR), !!(termios->c_iflag & INLCR), !!(termios->c_iflag & INPCK));
+    debug_log("c_oflag: [ OPOST=%d ONLCR=%d OCRNL=%d ONOCR=%d ONLRET=%d OFDEL=%d OFILL=%d ]\n", !!(termios->c_oflag & OPOST),
+              !!(termios->c_oflag & ONLCR), !!(termios->c_oflag & OCRNL), !!(termios->c_oflag & ONOCR), !!(termios->c_oflag & ONLRET),
+              !!(termios->c_oflag & OFDEL), !!(termios->c_oflag & OFILL));
+    debug_log("c_lflag: [ ECHO=%d ECHOE=%d ECHOK=%d ECHONL=%d ICANON=%d IEXTEN=%d ISIG=%d NOFLSH=%d TOSTOP=%d ]\n",
+              !!(termios->c_lflag & ECHO), !!(termios->c_lflag & ECHOE), !!(termios->c_lflag & ECHOK), !!(termios->c_lflag & ECHONL),
+              !!(termios->c_lflag & ICANON), !!(termios->c_lflag & IEXTEN), !!(termios->c_lflag & ISIG), !!(termios->c_lflag & NOFLSH),
+              !!(termios->c_lflag & TOSTOP));
+    debug_log("c_cc: [ VEOF=%d VEOL=%d VERASE=%d VINTR=%d VKILL=%d VMIN=%d VQUIT=%d VSTART=%d VSTOP=%d VSUSP=%d VITME=%d ]\n",
+              termios->c_cc[VEOF], termios->c_cc[VEOL], termios->c_cc[VERASE], termios->c_cc[VINTR], termios->c_cc[VKILL],
+              termios->c_cc[VMIN], termios->c_cc[VQUIT], termios->c_cc[VSTART], termios->c_cc[VSTOP], termios->c_cc[VSUSP],
+              termios->c_cc[VTIME]);
+
+#endif /* PTMX_TERMIOS_DEBUG */
+}
 
 static void slave_on_open(struct fs_device *device) {
     struct slave_data *data = device->private;
@@ -247,6 +272,7 @@ static void slave_add(struct fs_device *device) {
     data->input_enabled = data->output_enabled = true;
 
     memcpy(&data->config, &default_termios, sizeof(struct termios));
+    ptmx_log_termios(&data->config);
 
     for (int i = 0; i < PTMX_MAX; i++) {
         if (device == slaves[i]) {
@@ -350,6 +376,7 @@ static int slave_ioctl(struct fs_device *device, unsigned long request, void *ar
         case TCSETS: {
             mutex_lock(&data->device->lock);
             memcpy(&data->config, argp, sizeof(struct termios));
+            ptmx_log_termios(&data->config);
             mutex_unlock(&data->device->lock);
             return 0;
         }
