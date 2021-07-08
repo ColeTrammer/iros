@@ -81,9 +81,6 @@ public:
         };
 
         PureGeneratorAwaiter yield_value(Generator generator) {
-            // FIXME: support more than 1 layer of recursion
-            assert(!parent_handle);
-
             child_handle = generator.m_root_handle;
             return PureGeneratorAwaiter(generator.m_root_handle);
         }
@@ -110,15 +107,9 @@ public:
         void return_void() { returned = true; }
     };
 
-    Generator(Generator&& other)
-        : m_root_handle(exchange(other.m_root_handle, nullptr))
-        , m_child_handle(exchange(other.m_child_handle, nullptr))
-        , m_has_value(exchange(other.m_has_value, false)) {}
+    Generator(Generator&& other) : m_root_handle(exchange(other.m_root_handle, nullptr)), m_has_value(exchange(other.m_has_value, false)) {}
 
     ~Generator() {
-        if (m_child_handle && *m_child_handle) {
-            m_child_handle->destroy();
-        }
         if (m_root_handle) {
             m_root_handle.destroy();
         }
@@ -136,11 +127,12 @@ public:
     }
 
 private:
-    Generator(Promise& promise) : m_root_handle(Handle::from_promise(promise)), m_child_handle(&promise.child_handle) {}
+    Generator(Promise& promise) : m_root_handle(Handle::from_promise(promise)) {}
 
     T value() {
-        if (*m_child_handle) {
-            return m_child_handle->promise().value;
+        auto* child = current_child();
+        if (*child) {
+            return child->promise().value;
         }
         return m_root_handle.promise().value;
     }
@@ -150,16 +142,21 @@ private:
             return;
         }
 
-        if (*m_child_handle) {
-            (*m_child_handle)();
-        } else {
-            m_root_handle();
-        }
+        auto* child = current_child();
+        assert(*child);
+        (*child)();
         m_has_value = !m_root_handle.promise().returned;
     }
 
+    Handle* current_child() {
+        Handle* current = &m_root_handle;
+        while (current->promise().child_handle) {
+            current = &current->promise().child_handle;
+        }
+        return current;
+    }
+
     Handle m_root_handle;
-    Handle* m_child_handle;
     bool m_has_value { false };
 };
 }
