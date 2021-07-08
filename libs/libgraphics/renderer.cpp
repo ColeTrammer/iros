@@ -79,24 +79,10 @@ void Renderer::fill_rect(int x, int y, int width, int height, Color color_object
 }
 
 void Renderer::draw_rect(int x, int y, int width, int height, Color color) {
-    auto translated_x = translate_x(x);
-    auto translated_y = translate_y(y);
-
-    auto left = constrain_x(translated_x);
-    auto right = constrain_x(translated_x + width);
-
-    auto top = constrain_y(translated_y);
-    auto bottom = constrain_y(translated_y + height);
-
-    for (int r = left; r < right; r++) {
-        m_pixels.put_pixel(r, top, color);
-        m_pixels.put_pixel(r, bottom - 1, color);
-    }
-
-    for (int c = top + 1; c < bottom - 1; c++) {
-        m_pixels.put_pixel(left, c, color);
-        m_pixels.put_pixel(right - 1, c, color);
-    }
+    draw_line({ x, y }, { x + width - 1, y }, color);
+    draw_line({ x, y + height - 1 }, { x + width - 1, y + height - 1 }, color);
+    draw_line({ x, y + 1 }, { x, y + height - 2 }, color);
+    draw_line({ x + width - 1, y + 1 }, { x + width - 1, y + height - 2 }, color);
 }
 
 void Renderer::clear_rect(int x, int y, int width, int height, Color color_object) {
