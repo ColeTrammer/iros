@@ -126,6 +126,8 @@ private:
     void csi_ech(const Vector<int>& params);
     void csi_rep(const Vector<int>& params);
     void csi_da1(const Vector<int>& params);
+    void csi_da2(const Vector<int>& params);
+    void csi_da3(const Vector<int>& params);
     void csi_vpa(const Vector<int>& params);
     void csi_hvp(const Vector<int>& params);
     void csi_decset(const Vector<int>& params);

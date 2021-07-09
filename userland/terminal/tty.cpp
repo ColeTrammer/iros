@@ -30,6 +30,26 @@ void TTY::on_c0_character(uint8_t byte) {
 }
 
 void TTY::on_csi(const String& intermediate, const Vector<int>& params, uint8_t byte) {
+    if (intermediate == "=") {
+        switch (byte) {
+            case 'c':
+                return csi_da3(params);
+        }
+
+        fprintf(stderr, "Unknown escape: CSI %s %c\n", intermediate.string(), byte);
+        return;
+    }
+
+    if (intermediate == ">") {
+        switch (byte) {
+            case 'c':
+                return csi_da2(params);
+        }
+
+        fprintf(stderr, "Unknown escape: CSI %s %c\n", intermediate.string(), byte);
+        return;
+    }
+
     if (intermediate == "?") {
         switch (byte) {
             case 'h':
@@ -365,6 +385,22 @@ void TTY::csi_da1(const Vector<int>& params) {
         return;
     }
     m_psuedo_terminal.write("\033[?1;0c");
+}
+
+// Secondary Device Attributes - https://vt100.net/docs/vt510-rm/DA2.html
+void TTY::csi_da2(const Vector<int>& params) {
+    if (params.get_or(0, 0) != 0) {
+        return;
+    }
+    m_psuedo_terminal.write("\033[>010;0c");
+}
+
+// Tertiary Device Attributes - https://vt100.net/docs/vt510-rm/DA3.html
+void TTY::csi_da3(const Vector<int>& params) {
+    if (params.get_or(0, 0) != 0) {
+        return;
+    }
+    m_psuedo_terminal.write("\033P!|00000000\033\\");
 }
 
 // Vertical Line Position Absolute - https://vt100.net/docs/vt510-rm/VPA.html
