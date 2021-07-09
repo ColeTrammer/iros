@@ -7,7 +7,7 @@
 #include "vga_terminal.h"
 
 VgaTerminal::VgaTerminal(VgaBuffer& vga_buffer) : m_tty(m_pseudo_terminal), m_vga_buffer(vga_buffer) {
-    m_tty.resize(m_vga_buffer.height(), m_vga_buffer.width());
+    m_tty.set_visible_size(m_vga_buffer.height(), m_vga_buffer.width());
 }
 
 void VgaTerminal::on_mouse_event(const App::MouseEvent& event) {
@@ -40,11 +40,15 @@ void VgaTerminal::render() {
     bool cursor_is_visible = false;
     int cursor_row = -1;
     int cursor_col = -1;
-    for (auto r = 0; r < rows.size(); r++) {
-        auto& row = rows[r];
-        for (auto c = 0; c < row.size(); c++) {
-            auto& cell = row[c];
+    for (auto r = 0; r < m_vga_buffer.height(); r++) {
+        for (auto c = 0; c < m_vga_buffer.width(); c++) {
+            if (r >= m_tty.row_count() || c >= m_tty.col_count()) {
+                m_vga_buffer.draw(r, c, VGA_COLOR_BLACK, VGA_COLOR_LIGHT_GREY, ' ');
+                continue;
+            }
 
+            auto& row = rows[r];
+            auto& cell = row[c];
             if (m_tty.should_display_cursor_at_position(r, c)) {
                 cursor_is_visible = true;
                 cursor_row = r;

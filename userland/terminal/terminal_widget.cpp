@@ -89,12 +89,18 @@ void TerminalWidget::render() {
     renderer.clear_rect(bottom_rect, default_bg);
 
     auto& rows = m_tty.rows();
-    for (auto r = 0; r < rows.size(); r++) {
-        auto& row = rows[r];
+    for (auto r = 0; r < m_tty.available_rows_in_display(); r++) {
         auto y = y_offset + r * cell_height;
-        for (auto c = 0; c < row.size(); c++) {
-            auto& cell = row[c];
+        for (auto c = 0; c < m_tty.available_cols_in_display(); c++) {
             auto x = x_offset + c * cell_width;
+            auto cell_rect = Rect { x, y, cell_width, cell_height };
+            if (r >= m_tty.row_count() || c >= m_tty.col_count()) {
+                renderer.clear_rect(cell_rect, default_bg);
+                continue;
+            }
+
+            auto& row = rows[r];
+            auto& cell = row[c];
 
             bool at_cursor = m_tty.should_display_cursor_at_position(r, c);
             bool selected = in_selection(r, c);
@@ -119,7 +125,6 @@ void TerminalWidget::render() {
                 swap(fg, bg);
             }
 
-            auto cell_rect = Rect { x, y, cell_width, cell_height };
             bg.set_alpha(m_background_alpha);
             renderer.clear_rect(cell_rect, bg);
             renderer.render_text(String(cell.ch), cell_rect, fg, TextAlign::Center, cell.bold ? Font::bold_font() : Font::default_font());
@@ -143,7 +148,7 @@ void TerminalWidget::on_resize() {
 
     int rows = (positioned_rect().height() - 10) / cell_height;
     int cols = (positioned_rect().width() - 10) / cell_width;
-    m_tty.resize(rows, cols);
+    m_tty.set_visible_size(rows, cols);
     m_pseudo_terminal.set_size(rows, cols);
 }
 

@@ -46,8 +46,11 @@ public:
     int row_count() const { return m_row_count; }
     int col_count() const { return m_col_count; }
 
-    void resize(int rows, int cols);
+    void set_visible_size(int rows, int cols);
     void on_input(Span<const uint8_t> input);
+
+    int available_rows_in_display() const { return m_available_rows_in_display; }
+    int available_cols_in_display() const { return m_available_cols_in_display; }
 
     void scroll_down_if_needed();
     void scroll_up_if_needed();
@@ -58,6 +61,8 @@ public:
     void invalidate_all();
 
 private:
+    void resize(int rows, int cols);
+
     void put_char(int row, int col, char c);
     void put_char(char c);
 
@@ -138,27 +143,34 @@ private:
     void csi_scosc(const Vector<int>& params);
     void csi_scorc(const Vector<int>& params);
 
+    Vector<Row> m_rows;
     int m_row_count { 0 };
     int m_col_count { 0 };
+    int m_available_rows_in_display { 0 };
+    int m_available_cols_in_display { 0 };
+    bool m_80_col_mode { false };
+    bool m_132_col_mode { false };
+    bool m_allow_80_132_col_mode { false };
+
     int m_cursor_row { 0 };
     int m_cursor_col { 0 };
+    int m_saved_cursor_row { 0 };
+    int m_saved_cursor_col { 0 };
+    bool m_cursor_hidden { false };
+    bool m_x_overflow { false };
+
     bool m_inverted { false };
     bool m_bold { false };
     Color m_fg { ColorValue::LightGray };
     Color m_bg { ColorValue::Black };
-    Vector<Row> m_rows;
+
     Vector<Row> m_rows_below;
     Vector<Row> m_rows_above;
-    bool m_cursor_hidden { false };
-    bool m_in_escape { false };
-    bool m_x_overflow { false };
-    int m_saved_cursor_row { 0 };
-    int m_saved_cursor_col { 0 };
-    int m_escape_index { 0 };
     int m_scroll_start { 0 };
     int m_scroll_end { 0 };
-    char m_escape_buffer[50] { 0 };
-    PsuedoTerminal& m_psuedo_terminal;
+
     SharedPtr<TTY> m_save_state;
+
+    PsuedoTerminal& m_psuedo_terminal;
     SharedPtr<TTYParser> m_parser;
 };

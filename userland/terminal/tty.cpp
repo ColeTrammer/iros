@@ -421,6 +421,15 @@ void TTY::csi_decset(const Vector<int>& params) {
             // Cursor Keys Mode - https://vt100.net/docs/vt510-rm/DECCKM.html
             m_psuedo_terminal.set_application_cursor_keys(true);
             break;
+        case 3:
+            // Select 80 or 132 Columns per Page - https://vt100.net/docs/vt510-rm/DECCOLM.html
+            if (m_allow_80_132_col_mode) {
+                m_80_col_mode = false;
+                m_132_col_mode = true;
+                clear();
+                resize(m_row_count, 132);
+            }
+            break;
         case 9:
             m_psuedo_terminal.set_mouse_tracking_mode(MouseTrackingMode::X10);
             m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::X10);
@@ -428,6 +437,9 @@ void TTY::csi_decset(const Vector<int>& params) {
         case 25:
             // Text Cursor Enable Mode - https://vt100.net/docs/vt510-rm/DECTCEM.html
             m_cursor_hidden = false;
+            break;
+        case 40:
+            m_allow_80_132_col_mode = true;
             break;
         case 1000:
             m_psuedo_terminal.set_mouse_tracking_mode(MouseTrackingMode::X10);
@@ -485,12 +497,29 @@ void TTY::csi_decrst(const Vector<int>& params) {
             // Cursor Keys Mode - https://vt100.net/docs/vt510-rm/DECCKM.html
             m_psuedo_terminal.set_application_cursor_keys(false);
             break;
+        case 3:
+            // Select 80 or 132 Columns per Page - https://vt100.net/docs/vt510-rm/DECCOLM.html
+            if (m_allow_80_132_col_mode) {
+                m_80_col_mode = true;
+                m_132_col_mode = false;
+                clear();
+                resize(m_row_count, 80);
+            }
+            break;
         case 9:
             m_psuedo_terminal.reset_mouse_tracking_mode(MouseTrackingMode::X10);
             break;
         case 25:
             // Text Cursor Enable Mode - https://vt100.net/docs/vt510-rm/DECTCEM.html
             m_cursor_hidden = true;
+            break;
+        case 40:
+            m_allow_80_132_col_mode = false;
+            if (m_80_col_mode || m_132_col_mode) {
+                m_80_col_mode = false;
+                m_132_col_mode = false;
+                resize(m_available_rows_in_display, m_available_cols_in_display);
+            }
             break;
         case 1000:
             m_psuedo_terminal.reset_mouse_tracking_mode(MouseTrackingMode::X11);
@@ -699,6 +728,14 @@ void TTY::set_cursor(int row, int col) {
     m_x_overflow = false;
 }
 
+void TTY::set_visible_size(int rows, int cols) {
+    m_available_rows_in_display = rows;
+    m_available_cols_in_display = cols;
+    if (!m_80_col_mode && !m_132_col_mode) {
+        resize(rows, cols);
+    }
+}
+
 void TTY::resize(int rows, int cols) {
     m_row_count = rows;
     m_col_count = cols;
@@ -718,6 +755,8 @@ void TTY::resize(int rows, int cols) {
     for (auto& row : m_rows_below) {
         row.resize(cols);
     }
+
+    set_cursor(m_cursor_row, m_cursor_col);
 
     invalidate_all();
 }
