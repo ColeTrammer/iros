@@ -69,7 +69,7 @@ void VgaTerminal::render() {
 }
 
 void VgaTerminal::drain_master_fd() {
-    char buf[BUFSIZ];
+    uint8_t buf[BUFSIZ];
     for (;;) {
         ssize_t ret = read(m_pseudo_terminal.master_fd(), buf, sizeof(buf));
         if (ret < 0) {
@@ -80,9 +80,7 @@ void VgaTerminal::drain_master_fd() {
         }
 
         m_tty.scroll_to_bottom();
-        for (ssize_t i = 0; i < ret; i++) {
-            m_tty.on_char(buf[i]);
-        }
+        m_tty.on_input({ buf, static_cast<size_t>(ret) });
     }
 }
 #endif /* __os_2__ */

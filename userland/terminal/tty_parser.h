@@ -2,6 +2,8 @@
 
 #include <liim/function.h>
 #include <liim/span.h>
+#include <liim/string.h>
+#include <liim/vector.h>
 #include <stdint.h>
 
 class TTYParserDispatcher {
@@ -9,6 +11,9 @@ public:
     virtual ~TTYParserDispatcher() {}
 
     virtual void on_printable_character(uint8_t byte) = 0;
+    virtual void on_csi(const String& intermediate, const Vector<int>& params, uint8_t terminator) = 0;
+    virtual void on_escape(const String& intermediate, uint8_t terminator) = 0;
+    virtual void on_c0_character(uint8_t byte) = 0;
 };
 
 class TTYParser {
@@ -68,4 +73,8 @@ private:
     State m_last_state { State::Ground };
     State m_next_state { State::Ground };
     Function<void()> m_on_state_exit;
+
+    String m_intermediate;
+    String m_current_param;
+    Vector<int> m_params;
 };

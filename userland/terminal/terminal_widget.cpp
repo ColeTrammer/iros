@@ -35,7 +35,7 @@ void TerminalWidget::initialize() {
         clock_gettime(CLOCK_MONOTONIC, &start);
 #endif /* TERMINAL_WIDGET_DEBUG */
 
-        char buf[BUFSIZ];
+        uint8_t buf[BUFSIZ];
         for (;;) {
             ssize_t ret = read(m_pseudo_terminal.master_fd(), buf, sizeof(buf));
             if (ret < 0) {
@@ -49,9 +49,7 @@ void TerminalWidget::initialize() {
             }
 
             m_tty.scroll_to_bottom();
-            for (ssize_t i = 0; i < ret; i++) {
-                m_tty.on_char(buf[i]);
-            }
+            m_tty.on_input({ buf, static_cast<size_t>(ret) });
         }
 
 #ifdef TERMINAL_WIDGET_DEBUG

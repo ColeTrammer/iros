@@ -2,6 +2,7 @@ set(SOURCES
     main.cpp
     pseudo_terminal.cpp
     terminal_widget.cpp
+    tty_parser.cpp
     tty.cpp
     vga_buffer.cpp
     vga_terminal.cpp

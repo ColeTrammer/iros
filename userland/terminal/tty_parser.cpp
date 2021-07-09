@@ -1,5 +1,7 @@
 #include "tty_parser.h"
 
+// #define TTY_PARSER_DEBUG
+
 #define STATE(state) void TTYParser::state##_state([[maybe_unused]] uint8_t byte)
 
 #define ON_ENTRY_NOOP(state)         \
@@ -182,7 +184,13 @@ STATE(csi_intermediate) {
 }
 
 STATE(csi_param) {
-    ON_ENTRY_NOOP(CsiParam);
+    ON_ENTRY(CsiParam) {
+        m_on_state_exit = [this] {
+            if (!m_current_param.is_empty()) {
+                m_params.add(atoi(m_current_param.string()));
+            }
+        };
+    }
 
     if (is_executable(byte)) {
         return execute(byte);
@@ -194,8 +202,8 @@ STATE(csi_param) {
     }
 
     if (is_csi_terminator(byte)) {
-        csi_dispatch(byte);
-        return transition(State::Ground);
+        transition(State::Ground);
+        return csi_dispatch(byte);
     }
 
     if (is_param(byte)) {
@@ -263,7 +271,13 @@ STATE(dcs_entry) {
 }
 
 STATE(dcs_param) {
-    ON_ENTRY_NOOP(DcsParam);
+    ON_ENTRY(DcsParam) {
+        m_on_state_exit = [this] {
+            if (!m_current_param.is_empty()) {
+                m_params.add(atoi(m_current_param.string()));
+            }
+        };
+    }
 
     if (is_executable(byte)) {
         return ignore(byte);
@@ -371,17 +385,49 @@ void TTYParser::print(uint8_t byte) {
     m_dispatcher.on_printable_character(byte);
 }
 
-void TTYParser::execute(uint8_t) {}
+void TTYParser::execute(uint8_t byte) {
+    m_dispatcher.on_c0_character(byte);
+}
 
-void TTYParser::clear() {}
+void TTYParser::clear() {
+    m_current_param.clear();
+    m_params.clear();
+    m_intermediate.clear();
+}
 
-void TTYParser::collect(uint8_t) {}
+void TTYParser::collect(uint8_t byte) {
+    m_intermediate += String(byte);
+}
 
-void TTYParser::param(uint8_t) {}
+void TTYParser::param(uint8_t byte) {
+    if (byte != ';') {
+        m_current_param += String(byte);
+        return;
+    }
 
-void TTYParser::esc_dispatch(uint8_t) {}
+    if (m_current_param.is_empty()) {
+        m_params.add(0);
+        return;
+    }
 
-void TTYParser::csi_dispatch(uint8_t) {}
+    m_params.add(atoi(m_current_param.string()));
+    m_current_param.clear();
+}
+
+void TTYParser::esc_dispatch(uint8_t terminator) {
+    m_dispatcher.on_escape(m_intermediate, terminator);
+}
+
+void TTYParser::csi_dispatch(uint8_t terminator) {
+#ifdef TTY_PARSER_DEBUG
+    fprintf(stderr, "CSI %s ", m_intermediate.string());
+    for (auto param : m_params) {
+        fprintf(stderr, "%d ", param);
+    }
+    fprintf(stderr, "%c\n", terminator);
+#endif /* TTY_PARSER_DEBUG */
+    m_dispatcher.on_csi(m_intermediate, m_params, terminator);
+}
 
 void TTYParser::hook() {
     m_on_state_exit = [this] {

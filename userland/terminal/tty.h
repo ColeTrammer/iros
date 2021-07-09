@@ -6,9 +6,11 @@
 #include <liim/string.h>
 #include <liim/vector.h>
 
+#include "tty_parser.h"
+
 class PsuedoTerminal;
 
-class TTY {
+class TTY : public TTYParserDispatcher {
 public:
     struct Cell {
         Color fg { ColorValue::LightGray };
@@ -21,7 +23,13 @@ public:
 
     using Row = Vector<Cell>;
 
-    TTY(PsuedoTerminal& psuedo_terminal) : m_psuedo_terminal(psuedo_terminal) {}
+    TTY(PsuedoTerminal& psuedo_terminal) : m_psuedo_terminal(psuedo_terminal), m_parser(make_shared<TTYParser>(*this)) {}
+    virtual ~TTY() override {}
+
+    virtual void on_printable_character(uint8_t byte) override;
+    virtual void on_csi(const String& intermediate, const Vector<int>& params, uint8_t terminator) override;
+    virtual void on_escape(const String& intermediate, uint8_t terminator) override;
+    virtual void on_c0_character(uint8_t byte) override;
 
     int cursor_row() const { return m_cursor_row; }
     int cursor_col() const { return m_cursor_col; }
@@ -39,7 +47,7 @@ public:
     int col_count() const { return m_col_count; }
 
     void resize(int rows, int cols);
-    void on_char(char c);
+    void on_input(Span<const uint8_t> input);
 
     void scroll_down_if_needed();
     void scroll_up_if_needed();
@@ -50,6 +58,9 @@ public:
     void invalidate_all();
 
 private:
+    void put_char(int row, int col, char c);
+    void put_char(char c);
+
     void save_pos() {
         m_saved_cursor_row = m_cursor_row;
         m_saved_cursor_col = m_cursor_col;
@@ -58,6 +69,8 @@ private:
         m_cursor_row = m_saved_cursor_row;
         m_cursor_col = m_saved_cursor_col;
     }
+
+    void set_cursor(int row, int col);
 
     void clear_below_cursor(char ch = ' ');
     void clear_above_cursor(char ch = ' ');
@@ -83,13 +96,45 @@ private:
         set_bold(false);
     }
 
-    void put_char(int row, int col, char c);
-    void put_char(char c);
+    void esc_decaln();
+    void esc_decsc();
+    void esc_decrc();
 
-    void handle_escape_sequence();
-    void on_next_escape_char(char);
+    void c0_bs();
+    void c0_lf();
+    void c0_vt();
+    void c0_ff();
+    void c0_cr();
 
-    void clamp_cursor();
+    void c1_ind();
+    void c1_nel();
+    void c1_ri();
+
+    void csi_cuu(const Vector<int>& params);
+    void csi_cud(const Vector<int>& params);
+    void csi_cuf(const Vector<int>& params);
+    void csi_cub(const Vector<int>& params);
+    void csi_cup(const Vector<int>& params);
+    void csi_cha(const Vector<int>& params);
+    void csi_ed(const Vector<int>& params);
+    void csi_el(const Vector<int>& params);
+    void csi_il(const Vector<int>& params);
+    void csi_dl(const Vector<int>& params);
+    void csi_dch(const Vector<int>& params);
+    void csi_su(const Vector<int>& params);
+    void csi_sd(const Vector<int>& params);
+    void csi_ech(const Vector<int>& params);
+    void csi_rep(const Vector<int>& params);
+    void csi_da1(const Vector<int>& params);
+    void csi_vpa(const Vector<int>& params);
+    void csi_hvp(const Vector<int>& params);
+    void csi_decset(const Vector<int>& params);
+    void csi_decrst(const Vector<int>& params);
+    void csi_sgr(const Vector<int>& params);
+    void csi_dsr(const Vector<int>& params);
+    void csi_decstbm(const Vector<int>& params);
+    void csi_scosc(const Vector<int>& params);
+    void csi_scorc(const Vector<int>& params);
 
     int m_row_count { 0 };
     int m_col_count { 0 };
@@ -113,4 +158,5 @@ private:
     char m_escape_buffer[50] { 0 };
     PsuedoTerminal& m_psuedo_terminal;
     SharedPtr<TTY> m_save_state;
+    SharedPtr<TTYParser> m_parser;
 };
