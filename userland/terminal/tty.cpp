@@ -72,6 +72,8 @@ void TTY::on_csi(const String& intermediate, const Vector<int>& params, uint8_t 
     }
 
     switch (byte) {
+        case '@':
+            return csi_ich(params);
         case 'A':
             return csi_cuu(params);
         case 'B':
@@ -260,6 +262,20 @@ void TTY::esc_decrc() {
     restore_pos();
 }
 
+// Insert Character - https://vt100.net/docs/vt510-rm/ICH.html
+void TTY::csi_ich(const Vector<int>& params) {
+    auto chars = max(1, params.get_or(0, 1));
+
+    auto& row = m_rows[m_cursor_row];
+    for (int i = max_col_inclusive() - chars; i >= m_cursor_col; i--) {
+        row[i + chars] = row[i];
+    }
+
+    for (int i = m_cursor_col; i <= max_col_inclusive() && i < m_cursor_col + chars; i++) {
+        row[i] = {};
+    }
+}
+
 // Cursor Up - https://www.vt100.net/docs/vt100-ug/chapter3.html#CUU
 void TTY::csi_cuu(const Vector<int>& params) {
     auto delta_row = max(1, params.get_or(0, 1));
@@ -394,8 +410,8 @@ void TTY::csi_sd(const Vector<int>& params) {
 // Erase Character - https://vt100.net/docs/vt510-rm/ECH.html
 void TTY::csi_ech(const Vector<int>& params) {
     int chars_to_erase = max(1, params.get_or(0, 1));
-    for (int i = m_cursor_col; i < chars_to_erase && i < m_col_count; i++) {
-        m_rows[m_cursor_row][i] = Cell();
+    for (int i = m_cursor_col; i - m_cursor_col < chars_to_erase && i < m_col_count; i++) {
+        m_rows[m_cursor_row][i] = {};
     }
 }
 

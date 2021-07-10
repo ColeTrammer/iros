@@ -141,6 +141,7 @@ private:
     void c1_hts();
     void c1_ri();
 
+    void csi_ich(const Vector<int>& params);
     void csi_cuu(const Vector<int>& params);
     void csi_cud(const Vector<int>& params);
     void csi_cuf(const Vector<int>& params);
