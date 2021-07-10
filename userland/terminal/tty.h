@@ -185,6 +185,7 @@ private:
     int m_saved_cursor_row { 0 };
     int m_saved_cursor_col { 0 };
     bool m_cursor_hidden { false };
+    bool m_autowrap_mode { true };
     bool m_x_overflow { false };
     bool m_origin_mode { false };
 

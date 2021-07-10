@@ -484,6 +484,10 @@ void TTY::csi_decset(const Vector<int>& params) {
             m_origin_mode = true;
             set_cursor(m_cursor_row, m_cursor_col);
             break;
+        case 7:
+            // Autowrap mode - https://vt100.net/docs/vt510-rm/DECAWM.html
+            m_autowrap_mode = true;
+            break;
         case 9:
             m_psuedo_terminal.set_mouse_tracking_mode(MouseTrackingMode::X10);
             m_psuedo_terminal.set_mouse_reporting_mode(MouseReportingMode::X10);
@@ -564,6 +568,10 @@ void TTY::csi_decrst(const Vector<int>& params) {
         case 6:
             // Origin Mode - https://vt100.net/docs/vt510-rm/DECOM.html
             m_origin_mode = false;
+            break;
+        case 7:
+            // Autowrap mode - https://vt100.net/docs/vt510-rm/DECAWM.html
+            m_autowrap_mode = false;
             break;
         case 9:
             m_psuedo_terminal.reset_mouse_tracking_mode(MouseTrackingMode::X10);
@@ -915,7 +923,7 @@ void TTY::put_char(char c) {
 
     m_cursor_col++;
     if (m_cursor_col >= m_col_count) {
-        m_x_overflow = true;
+        m_x_overflow = m_autowrap_mode;
         m_cursor_col--;
     }
 }
