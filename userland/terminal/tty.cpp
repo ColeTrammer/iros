@@ -108,6 +108,8 @@ void TTY::on_csi(const String& intermediate, const Vector<int>& params, uint8_t 
             return csi_vpa(params);
         case 'f':
             return csi_hvp(params);
+        case 'g':
+            return csi_tbc(params);
         case 'm':
             return csi_sgr(params);
         case 'n':
@@ -152,6 +154,8 @@ void TTY::on_escape(const String& intermediate, uint8_t byte) {
             return c1_ind();
         case 'E':
             return c1_nel();
+        case 'H':
+            return c1_hts();
         case 'M':
             return c1_ri();
     }
@@ -169,9 +173,13 @@ void TTY::c0_bs() {
 
 // Horizontal Tab - https://vt100.net/docs/vt510-rm/chapter4.html#T4-1
 void TTY::c0_ht() {
-    // FIXME: support setting tab stops
-    m_cursor_col = max_col_inclusive();
-    m_x_overflow = false;
+    for (auto tab_stop : m_tab_stops) {
+        if (tab_stop > m_cursor_col) {
+            return set_cursor(m_cursor_row, tab_stop);
+        }
+    }
+
+    set_cursor(m_cursor_row, max_col_inclusive());
 }
 
 // Line Feed - https://vt100.net/docs/vt510-rm/chapter4.html#T4-1
@@ -210,6 +218,22 @@ void TTY::c1_nel() {
     m_cursor_col = 0;
     m_x_overflow = false;
     scroll_down_if_needed();
+}
+
+// Horizontal Tab Set - https://vt100.net/docs/vt510-rm/HTS.html
+void TTY::c1_hts() {
+    if (m_tab_stops.includes(m_cursor_col)) {
+        return;
+    }
+
+    int index = 0;
+    for (; index < m_tab_stops.size(); index++) {
+        if (m_cursor_col < m_tab_stops[index]) {
+            break;
+        }
+    }
+
+    m_tab_stops.insert(m_cursor_col, index);
 }
 
 // Reverse Index - https://www.vt100.net/docs/vt100-ug/chapter3.html#RI
@@ -422,6 +446,20 @@ void TTY::csi_vpa(const Vector<int>& params) {
 // Horizontal and Vertical Position - https://vt100.net/docs/vt510-rm/HVP.html
 void TTY::csi_hvp(const Vector<int>& params) {
     csi_cup(params);
+}
+
+// Tab Clear - https://vt100.net/docs/vt510-rm/TBC.html
+void TTY::csi_tbc(const Vector<int>& params) {
+    switch (params.get_or(0, 0)) {
+        case 0:
+            m_tab_stops.remove_if([this](auto x) {
+                return x == m_cursor_col;
+            });
+            return;
+        case 3:
+            m_tab_stops.clear();
+            return;
+    }
 }
 
 // DEC Private Mode Set - https://invisible-island.net/xterm/ctlseqs/ctlseqs.html

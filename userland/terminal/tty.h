@@ -138,6 +138,7 @@ private:
 
     void c1_ind();
     void c1_nel();
+    void c1_hts();
     void c1_ri();
 
     void csi_cuu(const Vector<int>& params);
@@ -160,6 +161,7 @@ private:
     void csi_da3(const Vector<int>& params);
     void csi_vpa(const Vector<int>& params);
     void csi_hvp(const Vector<int>& params);
+    void csi_tbc(const Vector<int>& params);
     void csi_decset(const Vector<int>& params);
     void csi_decrst(const Vector<int>& params);
     void csi_sgr(const Vector<int>& params);
@@ -177,6 +179,7 @@ private:
     bool m_132_col_mode { false };
     bool m_allow_80_132_col_mode { false };
 
+    Vector<int> m_tab_stops;
     int m_cursor_row { 0 };
     int m_cursor_col { 0 };
     int m_saved_cursor_row { 0 };
