@@ -6,6 +6,7 @@ set(SOURCES
     line.cpp
     multicursor.cpp
     panel.cpp
+    selection.cpp
     text_range_collection.cpp
     text_range.cpp
 )

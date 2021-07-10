@@ -1149,16 +1149,14 @@ void Document::notify_key_pressed(MultiCursor& cursors, KeyPress press) {
                 break;
             case KeyPress::Key::DownArrow:
                 if (press.modifiers & KeyPress::Modifier::Shift) {
-                    auto& new_cursor = cursors.add_cursor();
-                    move_cursor_down(new_cursor);
+                    cursors.add_cursor(*this, AddCursorMode::Down);
                 } else {
                     scroll_down();
                 }
                 break;
             case KeyPress::Key::UpArrow:
                 if (press.modifiers & KeyPress::Modifier::Shift) {
-                    auto& new_cursor = cursors.add_cursor();
-                    move_cursor_up(new_cursor);
+                    cursors.add_cursor(*this, AddCursorMode::Up);
                 } else {
                     scroll_up();
                 }

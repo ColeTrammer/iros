@@ -29,6 +29,9 @@ public:
 
     void begin(const TextIndex& start) { m_start = m_end = start; }
 
+    bool overlaps(const Selection& other) const;
+    void merge(const Selection& other);
+
     const TextIndex& normalized_start() const { return m_start <= m_end ? m_start : m_end; }
     const TextIndex& normalized_end() const { return m_start <= m_end ? m_end : m_start; }
 

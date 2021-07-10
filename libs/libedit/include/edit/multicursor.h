@@ -5,6 +5,11 @@
 #include <liim/vector.h>
 
 namespace Edit {
+enum class AddCursorMode {
+    Up,
+    Down,
+};
+
 class MultiCursor {
 public:
     MultiCursor();
@@ -14,7 +19,7 @@ public:
     Cursor& main_cursor();
     const Cursor& main_cursor() const { return const_cast<MultiCursor&>(*this).main_cursor(); }
 
-    Cursor& add_cursor();
+    void add_cursor(Document& document, AddCursorMode mode);
 
     TextRangeCollection selections(const Document& document) const;
 
@@ -31,5 +36,6 @@ public:
 
 private:
     Vector<Cursor> m_cursors;
+    int m_main_cursor_index { 0 };
 };
 }
