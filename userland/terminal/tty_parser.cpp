@@ -382,10 +382,16 @@ STATE(sos_pm_apc_string) {
 void TTYParser::ignore(uint8_t) {}
 
 void TTYParser::print(uint8_t byte) {
+#ifdef TTY_PARSER_DEBUG
+    fprintf(stderr, "PRINT '%c'\n", byte);
+#endif /* TTY_PARSER_DEBUG */
     m_dispatcher.on_printable_character(byte);
 }
 
 void TTYParser::execute(uint8_t byte) {
+#ifdef TTY_PARSER_DEBUG
+    fprintf(stderr, "C0 %#X %#o %d\n", byte, byte, byte);
+#endif /* TTY_PARSER_DEBUG */
     m_dispatcher.on_c0_character(byte);
 }
 
@@ -415,6 +421,9 @@ void TTYParser::param(uint8_t byte) {
 }
 
 void TTYParser::esc_dispatch(uint8_t terminator) {
+#ifdef TTY_PARSER_DEBUG
+    fprintf(stderr, "ESC %s %c\n", m_intermediate.string(), terminator);
+#endif /* TTY_PARSER_DEBUG */
     m_dispatcher.on_escape(m_intermediate, terminator);
 }
 
