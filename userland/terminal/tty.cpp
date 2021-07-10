@@ -618,6 +618,18 @@ void TTY::csi_sgr(const Vector<int>& params) {
             case 37:
                 set_fg(VGA_COLOR_LIGHT_GREY);
                 break;
+            case 38:
+                // Truecolor Foreground (xterm-256color)
+                if (params.get_or(i + 1, 0) != 2) {
+                    break;
+                }
+                if (params.size() - i < 5) {
+                    break;
+                }
+                set_fg({ (uint8_t) clamp(params[i + 2], 0, 255), (uint8_t) clamp(params[i + 3], 0, 255),
+                         (uint8_t) clamp(params[i + 4], 0, 255) });
+                i += 4;
+                break;
             case 39:
                 reset_fg();
                 break;
@@ -644,6 +656,18 @@ void TTY::csi_sgr(const Vector<int>& params) {
                 break;
             case 47:
                 set_bg(VGA_COLOR_LIGHT_GREY);
+                break;
+            case 48:
+                // Truecolor Foreground (xterm-256color)
+                if (params.get_or(i + 1, 0) != 2) {
+                    break;
+                }
+                if (params.size() - i < 5) {
+                    break;
+                }
+                set_bg({ (uint8_t) clamp(params[i + 2], 0, 255), (uint8_t) clamp(params[i + 3], 0, 255),
+                         (uint8_t) clamp(params[i + 4], 0, 255) });
+                i += 4;
                 break;
             case 49:
                 reset_bg();

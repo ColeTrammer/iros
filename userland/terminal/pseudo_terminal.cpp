@@ -77,7 +77,7 @@ PsuedoTerminal::PsuedoTerminal() {
         close(slave_fd);
         close(m_master_fd);
 
-        putenv((char*) "TERM=xterm-color");
+        putenv((char*) "TERM=xterm-256color");
         execl(pwd->pw_shell, pwd->pw_shell, "-i", NULL);
         _exit(127);
     }
