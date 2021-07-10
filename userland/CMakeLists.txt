@@ -55,6 +55,7 @@ set(TARGETS
     realpath
     rm
     rmdir
+    seq
     sh
     sleep
     sort
