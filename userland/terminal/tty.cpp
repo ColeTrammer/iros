@@ -18,6 +18,8 @@ void TTY::on_c0_character(uint8_t byte) {
     switch (byte) {
         case 8:
             return c0_bs();
+        case '\t':
+            return c0_ht();
         case '\n':
             return c0_lf();
         case '\v':
@@ -27,6 +29,8 @@ void TTY::on_c0_character(uint8_t byte) {
         case '\r':
             return c0_cr();
     }
+
+    fprintf(stderr, "Unknown C0: '%#X' '%#o' '%d'\n", byte, byte, byte);
 }
 
 void TTY::on_csi(const String& intermediate, const Vector<int>& params, uint8_t byte) {
@@ -163,6 +167,13 @@ void TTY::c0_bs() {
     m_x_overflow = false;
 }
 
+// Horizontal Tab - https://vt100.net/docs/vt510-rm/chapter4.html#T4-1
+void TTY::c0_ht() {
+    // FIXME: support setting tab stops
+    m_cursor_col = max_col_inclusive();
+    m_x_overflow = false;
+}
+
 // Line Feed - https://vt100.net/docs/vt510-rm/chapter4.html#T4-1
 void TTY::c0_lf() {
     m_cursor_row++;
@@ -211,8 +222,7 @@ void TTY::c1_ri() {
 // DEC Screen Alignment Pattern - https://vt100.net/docs/vt510-rm/DECALN.html
 void TTY::esc_decaln() {
     clear('E');
-    m_cursor_row = 0;
-    m_cursor_col = 0;
+    set_cursor(0, 0);
     m_x_overflow = false;
 }
 
@@ -252,13 +262,14 @@ void TTY::csi_cub(const Vector<int>& params) {
 
 // Cursor Position - https://www.vt100.net/docs/vt100-ug/chapter3.html#CUP
 void TTY::csi_cup(const Vector<int>& params) {
-    set_cursor(params.get_or(0, 1) - 1, params.get_or(1, 1) - 1);
+    auto row = translate_row(params.get_or(0, 1));
+    auto col = translate_col(params.get_or(1, 1));
+    set_cursor(row, col);
 }
 
 // Cursor Horizontal Absolute - https://vt100.net/docs/vt510-rm/CHA.html
 void TTY::csi_cha(const Vector<int>& params) {
-    m_cursor_col = params.get_or(0, 1) - 1;
-    m_x_overflow = false;
+    set_cursor(m_cursor_row, translate_col(params.get_or(0, 1)));
 }
 
 // Erase in Display - https://vt100.net/docs/vt510-rm/ED.html
@@ -405,8 +416,7 @@ void TTY::csi_da3(const Vector<int>& params) {
 
 // Vertical Line Position Absolute - https://vt100.net/docs/vt510-rm/VPA.html
 void TTY::csi_vpa(const Vector<int>& params) {
-    m_cursor_row = params.get_or(0, 1) - 1;
-    m_x_overflow = false;
+    set_cursor(translate_row(params.get_or(0, 1)), m_cursor_col);
 }
 
 // Horizontal and Vertical Position - https://vt100.net/docs/vt510-rm/HVP.html
@@ -426,9 +436,15 @@ void TTY::csi_decset(const Vector<int>& params) {
             if (m_allow_80_132_col_mode) {
                 m_80_col_mode = false;
                 m_132_col_mode = true;
-                clear();
                 resize(m_row_count, 132);
+                clear();
+                csi_decstbm({});
             }
+            break;
+        case 6:
+            // Origin Mode - https://vt100.net/docs/vt510-rm/DECOM.html
+            m_origin_mode = true;
+            set_cursor(m_cursor_row, m_cursor_col);
             break;
         case 9:
             m_psuedo_terminal.set_mouse_tracking_mode(MouseTrackingMode::X10);
@@ -502,9 +518,14 @@ void TTY::csi_decrst(const Vector<int>& params) {
             if (m_allow_80_132_col_mode) {
                 m_80_col_mode = true;
                 m_132_col_mode = false;
-                clear();
                 resize(m_row_count, 80);
+                clear();
+                csi_decstbm({});
             }
+            break;
+        case 6:
+            // Origin Mode - https://vt100.net/docs/vt510-rm/DECOM.html
+            m_origin_mode = false;
             break;
         case 9:
             m_psuedo_terminal.reset_mouse_tracking_mode(MouseTrackingMode::X10);
@@ -708,8 +729,7 @@ void TTY::csi_decstbm(const Vector<int>& params) {
     m_rows_below.clear();
     m_scroll_start = new_scroll_start;
     m_scroll_end = new_scroll_end;
-    m_cursor_row = 0;
-    m_cursor_col = 0;
+    set_cursor(0, 0);
 }
 
 // Save Current Cursor Position - https://vt100.net/docs/vt510-rm/SCOSC.html
@@ -723,8 +743,8 @@ void TTY::csi_scorc(const Vector<int>&) {
 }
 
 void TTY::set_cursor(int row, int col) {
-    m_cursor_row = clamp(row, 0, m_row_count - 1);
-    m_cursor_col = clamp(col, 0, m_col_count - 1);
+    m_cursor_row = clamp(row, min_row_inclusive(), max_row_inclusive());
+    m_cursor_col = clamp(col, min_col_inclusive(), max_col_inclusive());
     m_x_overflow = false;
 }
 
@@ -945,9 +965,8 @@ void TTY::scroll_down() {
 }
 
 void TTY::scroll_up_if_needed() {
-    if (m_cursor_row == m_scroll_start - 1 || m_cursor_row == m_scroll_end + 1) {
+    if (m_cursor_row == m_scroll_start - 1) {
         m_cursor_row = clamp(m_cursor_row, m_scroll_start, m_scroll_end);
-        m_x_overflow = false;
 
         if (!m_rows_above.empty()) {
             scroll_up();
@@ -967,9 +986,8 @@ void TTY::scroll_up_if_needed() {
 }
 
 void TTY::scroll_down_if_needed() {
-    if (m_cursor_row == m_scroll_start - 1 || m_cursor_row == m_scroll_end + 1) {
+    if (m_cursor_row == m_scroll_end + 1) {
         m_cursor_row = clamp(m_cursor_row, m_scroll_start, m_scroll_end);
-        m_x_overflow = false;
 
         if (!m_rows_below.empty()) {
             scroll_down();

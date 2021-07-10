@@ -77,6 +77,30 @@ private:
 
     void set_cursor(int row, int col);
 
+    int min_row_inclusive() const {
+        if (m_origin_mode) {
+            return m_scroll_start;
+        }
+        return 0;
+    }
+    int min_col_inclusive() const { return 0; }
+
+    int max_row_inclusive() const {
+        if (m_origin_mode) {
+            return m_scroll_end;
+        }
+        return m_row_count - 1;
+    }
+    int max_col_inclusive() const { return m_col_count - 1; }
+
+    int translate_row(int row) const {
+        if (m_origin_mode) {
+            return row + m_scroll_start - 1;
+        }
+        return row - 1;
+    }
+    int translate_col(int col) const { return col - 1; }
+
     void clear_below_cursor(char ch = ' ');
     void clear_above_cursor(char ch = ' ');
     void clear(char ch = ' ');
@@ -106,6 +130,7 @@ private:
     void esc_decrc();
 
     void c0_bs();
+    void c0_ht();
     void c0_lf();
     void c0_vt();
     void c0_ff();
@@ -158,6 +183,7 @@ private:
     int m_saved_cursor_col { 0 };
     bool m_cursor_hidden { false };
     bool m_x_overflow { false };
+    bool m_origin_mode { false };
 
     bool m_inverted { false };
     bool m_bold { false };
