@@ -348,7 +348,7 @@ void TTY::csi_il(const Vector<int>& params) {
     if (m_cursor_row < m_scroll_start || m_cursor_row > m_scroll_end) {
         return;
     }
-    int lines_to_insert = params.get_or(0, 1);
+    int lines_to_insert = max(1, params.get_or(0, 1));
     for (int i = 0; i < lines_to_insert; i++) {
         m_rows.rotate_right(m_cursor_row, m_scroll_end + 1);
         m_rows[m_cursor_row] = Row(m_col_count);
