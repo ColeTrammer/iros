@@ -19,6 +19,8 @@ enum class MovementMode { Move, Select };
 
 enum class DeleteCharMode { Backspace, Delete };
 
+enum class MergeLinesMode { AboveCursor, BelowCursor };
+
 enum class SwapDirection { Up, Down };
 
 enum class InputMode { Document, InputText };
@@ -131,7 +133,7 @@ public:
     void rotate_lines_up(int start, int end);
     void rotate_lines_down(int start, int end);
 
-    void merge_lines(int l1, int l2);
+    void merge_lines(MultiCursor& cursors, int cursor_index, MergeLinesMode mode);
 
     void set_was_modified(bool b) { m_document_was_modified = b; }
 
@@ -143,7 +145,7 @@ public:
     StateSnapshot snapshot_state() const;
     void restore_state(MultiCursor& cursors, const StateSnapshot& state_snapshot);
 
-    void delete_selection(Cursor& cursor);
+    void delete_selection(MultiCursor& cursors, int cursor_index);
     void clear_selection(Cursor& cursor);
     String selection_text(Cursor& cursor) const;
 

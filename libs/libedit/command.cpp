@@ -42,7 +42,7 @@ bool InsertCommand::execute(MultiCursor& cursors) {
     for (int i = 0; i < cursors.size(); i++) {
         auto& cursor = cursors[i];
         if (!cursor.selection().empty()) {
-            document().delete_selection(cursor);
+            document().delete_selection(cursors, i);
         }
 
         if (m_text.size() == 1 && m_text[0] == '\n') {
@@ -105,7 +105,7 @@ void InsertCommand::do_insert(Document& document, MultiCursor& cursors, int curs
 
 void InsertCommand::undo(MultiCursor& cursors) {
     cursors = state_snapshot().cursors;
-    for (int cursor_index = 0; cursor_index < cursors.size(); cursor_index++) {
+    for (int cursor_index = cursors.size() - 1; cursor_index >= 0; cursor_index--) {
         auto& cursor = cursors[cursor_index];
         document().clear_selection(cursor);
         if (!state_snapshot().cursors[cursor_index].selection().empty()) {
@@ -115,8 +115,7 @@ void InsertCommand::undo(MultiCursor& cursors) {
         for (size_t i = 0; i < m_text.size(); i++) {
             char c = m_text[i];
             if (c == '\n') {
-                int line_index = cursor.line_index();
-                document().merge_lines(line_index, line_index + 1);
+                document().merge_lines(cursors, cursor_index, MergeLinesMode::BelowCursor);
             } else {
                 auto& line = cursor.referenced_line(document());
                 int index_into_line = cursor.index_into_line();
@@ -157,7 +156,8 @@ bool DeleteCommand::execute(MultiCursor& cursors) {
 
         auto& cursor = cursors[i];
         if (!cursor.selection().empty()) {
-            document().delete_selection(cursor);
+            document().delete_selection(cursors, i);
+            m_end_indices[i] = cursor.index();
             modified = true;
             continue;
         }
@@ -175,7 +175,7 @@ bool DeleteCommand::execute(MultiCursor& cursors) {
                     document().move_cursor_left(cursor);
                     document().remove_line(index.line_index());
                     document().set_needs_display();
-                    m_end_indices[i] = { index.line_index() - 1, cursor.referenced_line(document()).length() };
+                    m_end_indices[i] = cursor.index();
                     m_deleted_chars[i] = '\n';
                     modified = true;
                     cursors.did_delete_lines(i, cursor.line_index(), 1);
@@ -189,16 +189,12 @@ bool DeleteCommand::execute(MultiCursor& cursors) {
 
                     document().move_cursor_up(cursor);
                     document().move_cursor_to_line_end(cursor);
-                    auto first_line_length = document().line_at_index(index.line_index() - 1).length();
-                    auto seconod_line_length = document().line_at_index(index.line_index()).length();
-                    document().merge_lines(index.line_index() - 1, index.line_index());
-                    cursors.did_delete_lines(i, index.line_index() - 1, 1);
-                    cursors.did_add_to_line(i, index.line_index() - 1, first_line_length, seconod_line_length);
-                    m_end_indices[i] = { index.line_index() - 1, cursor.referenced_line(document()).length() };
+                    document().merge_lines(cursors, i, MergeLinesMode::BelowCursor);
+                    m_end_indices[i] = cursor.index();
                     m_deleted_chars[i] = '\n';
                 } else {
                     document().move_cursor_left(cursor);
-                    m_end_indices[i] = { index.line_index(), index.index_into_line() - 1 };
+                    m_end_indices[i] = cursor.index();
                     m_deleted_chars[i] = line.char_at(index.index_into_line() - 1);
                     line.remove_char_at(index.index_into_line() - 1);
                     cursors.did_delete_from_line(i, index.line_index(), index.index_into_line() - 1, 1);
@@ -229,11 +225,7 @@ bool DeleteCommand::execute(MultiCursor& cursors) {
                         return false;
                     }
 
-                    auto first_line_length = document().line_at_index(index.line_index()).length();
-                    auto seconod_line_length = document().line_at_index(index.line_index() + 1).length();
-                    document().merge_lines(index.line_index(), index.line_index() + 1);
-                    cursors.did_delete_lines(i, index.line_index(), 1);
-                    cursors.did_add_to_line(i, index.line_index(), first_line_length, seconod_line_length);
+                    document().merge_lines(cursors, i, MergeLinesMode::BelowCursor);
                     m_deleted_chars[i] = '\n';
                 } else {
                     m_deleted_chars[i] = line.char_at(index.index_into_line());
@@ -254,12 +246,11 @@ void DeleteCommand::undo(MultiCursor& cursors) {
     cursors = state_snapshot().cursors;
     for (int i = cursors.size() - 1; i >= 0; i--) {
         auto& cursor = cursors[i];
+        document().move_cursor_to(cursor, m_end_indices[i]);
         if (!state_snapshot().cursors[i].selection().empty()) {
-            document().move_cursor_to(cursor, state_snapshot().cursors[i].selection().normalized_start());
             InsertCommand::do_insert(document(), cursors, i, selection_text(i));
         } else {
             assert(m_deleted_chars[i] != '\0');
-            document().move_cursor_to(cursor, m_end_indices[i]);
             InsertCommand::do_insert(document(), cursors, i, m_deleted_chars[i]);
         }
     }
