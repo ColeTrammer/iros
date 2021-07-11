@@ -24,6 +24,12 @@ Position Cursor::absolute_position(const Document& document, const Panel& panel)
     return document.relative_to_absolute_position(panel, referenced_line(document), relative_pos);
 }
 
+void Cursor::move_preserving_selection(int delta_line_index, int delta_index_into_line) {
+    set({ line_index() + delta_line_index, index_into_line() + delta_index_into_line });
+    m_selection.set({ m_selection.start().line_index() + delta_line_index, m_selection.start().index_into_line() + delta_index_into_line },
+                    { m_selection.end().line_index() + delta_line_index, m_selection.end().index_into_line() + delta_index_into_line });
+}
+
 bool Cursor::at_document_end(const Document& document) const {
     auto& last_line = document.last_line();
     return &referenced_line(document) == &last_line && index_into_line() == last_line.length();

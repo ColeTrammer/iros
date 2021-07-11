@@ -58,8 +58,8 @@ public:
     virtual bool execute(MultiCursor& cursor) override;
     virtual void undo(MultiCursor& cursor) override;
 
-    static void do_insert(Document& document, Cursor& cursor, char c);
-    static void do_insert(Document& document, Cursor& cursor, const String& string);
+    static void do_insert(Document& document, MultiCursor& cursors, int cursor_index, char c);
+    static void do_insert(Document& document, MultiCursor& cursors, int cursor_index, const String& string);
 
 private:
     String m_text;

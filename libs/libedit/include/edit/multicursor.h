@@ -21,6 +21,12 @@ public:
 
     void add_cursor(Document& document, AddCursorMode mode);
 
+    void did_delete_lines(int cursor_index, int line_index, int line_count);
+    void did_add_lines(int cursor_index, int line_index, int line_count);
+
+    void did_add_to_line(int cursor_index, int line_index, int index_into_line, int bytes_added);
+    void did_delete_from_line(int cursor_index, int line_index, int index_into_line, int bytes_deleted);
+
     TextRangeCollection selections(const Document& document) const;
 
     int size() const { return m_cursors.size(); }

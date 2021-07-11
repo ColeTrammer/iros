@@ -21,6 +21,14 @@ public:
     void set_index_into_line(int index_into_line) { set({ line_index(), index_into_line }); }
     void set(const TextIndex& index) { m_index = index; }
 
+    void move_up_preserving_selection(int count) { move_preserving_selection(-count, 0); }
+    void move_down_preserving_selection(int count) { move_preserving_selection(count, 0); }
+
+    void move_left_preserving_selection(int count) { move_preserving_selection(0, -count); }
+    void move_right_preserving_selection(int count) { move_preserving_selection(0, count); }
+
+    void move_preserving_selection(int delta_line_index, int delta_index_into_line);
+
     Position relative_position(const Document& document, const Panel& panel) const;
     Position absolute_position(const Document& document, const Panel& panel) const;
 

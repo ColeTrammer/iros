@@ -57,6 +57,42 @@ void MultiCursor::add_cursor(Document& document, AddCursorMode mode) {
     }
 }
 
+void MultiCursor::did_delete_lines(int cursor_index, [[maybe_unused]] int line_index, int line_count) {
+    for (int i = cursor_index + 1; i < m_cursors.size(); i++) {
+        auto& cursor = m_cursors[i];
+        cursor.move_up_preserving_selection(line_count);
+    }
+}
+
+void MultiCursor::did_add_lines(int cursor_index, [[maybe_unused]] int line_index, int line_count) {
+    for (int i = cursor_index + 1; i < m_cursors.size(); i++) {
+        auto& cursor = m_cursors[i];
+        cursor.move_down_preserving_selection(line_count);
+    }
+}
+
+void MultiCursor::did_add_to_line(int cursor_index, int line_index, [[maybe_unused]] int index_into_line, int bytes_added) {
+    for (int i = cursor_index + 1; i < m_cursors.size(); i++) {
+        auto& cursor = m_cursors[i];
+        if (cursor.line_index() > line_index) {
+            break;
+        }
+
+        cursor.move_right_preserving_selection(bytes_added);
+    }
+}
+
+void MultiCursor::did_delete_from_line(int cursor_index, int line_index, [[maybe_unused]] int index_into_line, int bytes_deleted) {
+    for (int i = cursor_index + 1; i < m_cursors.size(); i++) {
+        auto& cursor = m_cursors[i];
+        if (cursor.line_index() > line_index) {
+            break;
+        }
+
+        cursor.move_left_preserving_selection(bytes_deleted);
+    }
+}
+
 TextRangeCollection MultiCursor::selections(const Document& document) const {
     auto collection = TextRangeCollection { document };
     for (auto& cursor : m_cursors) {
