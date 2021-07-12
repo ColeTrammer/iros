@@ -25,14 +25,21 @@ public:
     DeltaBackedCommand(Document& document);
     virtual ~DeltaBackedCommand() override;
 
-    virtual void redo(MultiCursor& cursor) override;
+    virtual void redo(MultiCursor& cursors) final;
+    virtual bool execute(MultiCursor& cursors) final;
+    virtual void undo(MultiCursor& cursors) final;
 
-    const Document::StateSnapshot& state_snapshot() const { return m_snapshot; }
+    virtual bool do_execute(MultiCursor& cursors) = 0;
+    virtual void do_undo(MultiCursor& cursors) = 0;
+
+    const Document::StateSnapshot& start_snapshot() const { return m_start_snapshot; }
+    const Document::StateSnapshot& end_snapshot() const { return m_end_snapshot; }
 
     const String& selection_text(int index) const { return m_selection_texts[index]; }
 
 private:
-    Document::StateSnapshot m_snapshot;
+    Document::StateSnapshot m_start_snapshot;
+    Document::StateSnapshot m_end_snapshot;
     Vector<String> m_selection_texts;
 };
 
@@ -55,8 +62,8 @@ public:
     InsertCommand(Document& document, String string);
     virtual ~InsertCommand();
 
-    virtual bool execute(MultiCursor& cursor) override;
-    virtual void undo(MultiCursor& cursor) override;
+    virtual bool do_execute(MultiCursor& cursor) override;
+    virtual void do_undo(MultiCursor& cursor) override;
 
     static void do_insert(Document& document, MultiCursor& cursors, int cursor_index, char c);
     static void do_insert(Document& document, MultiCursor& cursors, int cursor_index, const String& string);
@@ -67,17 +74,15 @@ private:
 
 class DeleteCommand final : public DeltaBackedCommand {
 public:
-    DeleteCommand(Document& document, DeleteCharMode mode, bool should_clear_selection = false);
+    DeleteCommand(Document& document, DeleteCharMode mode);
     virtual ~DeleteCommand();
 
-    virtual bool execute(MultiCursor& cursor) override;
-    virtual void undo(MultiCursor& cursor) override;
+    virtual bool do_execute(MultiCursor& cursor) override;
+    virtual void do_undo(MultiCursor& cursor) override;
 
 private:
     DeleteCharMode m_mode { DeleteCharMode::Delete };
-    bool m_should_clear_selection { false };
     Vector<char> m_deleted_chars;
-    Vector<TextIndex> m_end_indices;
 };
 
 class DeleteLineCommand final : public DeltaBackedCommand {
@@ -85,8 +90,8 @@ public:
     DeleteLineCommand(Document& document);
     virtual ~DeleteLineCommand();
 
-    virtual bool execute(MultiCursor& cursor) override;
-    virtual void undo(MultiCursor& cursor) override;
+    virtual bool do_execute(MultiCursor& cursor) override;
+    virtual void do_undo(MultiCursor& cursor) override;
 
 private:
     Vector<Line> m_saved_lines;
@@ -98,8 +103,8 @@ public:
     InsertLineCommand(Document& document, String text);
     virtual ~InsertLineCommand() override;
 
-    virtual bool execute(MultiCursor& cursor) override;
-    virtual void undo(MultiCursor& cursor) override;
+    virtual bool do_execute(MultiCursor& cursor) override;
+    virtual void do_undo(MultiCursor& cursor) override;
 
 private:
     String m_text;
@@ -110,14 +115,12 @@ public:
     SwapLinesCommand(Document& document, SwapDirection direction);
     virtual ~SwapLinesCommand() override;
 
-    virtual bool execute(MultiCursor& cursor) override;
-    virtual void undo(MultiCursor& cursor) override;
+    virtual bool do_execute(MultiCursor& cursor) override;
+    virtual void do_undo(MultiCursor& cursor) override;
 
 private:
     bool do_swap(Cursor& cursor, SwapDirection direction);
 
     SwapDirection m_direction { SwapDirection::Down };
-    TextIndex m_end;
-    Selection m_end_selection;
 };
 }

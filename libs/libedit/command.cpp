@@ -9,16 +9,28 @@ Command::Command(Document& document) : m_document(document) {}
 
 Command::~Command() {}
 
-DeltaBackedCommand::DeltaBackedCommand(Document& document) : Command(document), m_snapshot(document.snapshot_state()) {
-    for (auto& cursor : m_snapshot.cursors) {
+DeltaBackedCommand::DeltaBackedCommand(Document& document) : Command(document), m_start_snapshot(document.snapshot_state()) {
+    for (auto& cursor : m_start_snapshot.cursors) {
         m_selection_texts.add(document.selection_text(cursor));
     }
 }
 
 DeltaBackedCommand::~DeltaBackedCommand() {}
 
+bool DeltaBackedCommand::execute(MultiCursor& cursors) {
+    bool was_modified = do_execute(cursors);
+    m_end_snapshot = document().snapshot_state();
+    return was_modified;
+}
+
+void DeltaBackedCommand::undo(MultiCursor& cursors) {
+    document().restore_state(cursors, m_end_snapshot);
+    do_undo(cursors);
+    document().restore_state(cursors, m_start_snapshot);
+}
+
 void DeltaBackedCommand::redo(MultiCursor& cursors) {
-    document().restore_state(cursors, state_snapshot());
+    document().restore_state(cursors, start_snapshot());
     document().execute_command(cursors, *this);
 }
 
@@ -39,7 +51,7 @@ InsertCommand::InsertCommand(Document& document, String text) : DeltaBackedComma
 
 InsertCommand::~InsertCommand() {}
 
-bool InsertCommand::execute(MultiCursor& cursors) {
+bool InsertCommand::do_execute(MultiCursor& cursors) {
     for (int i = 0; i < cursors.size(); i++) {
         auto& cursor = cursors[i];
         if (!cursor.selection().empty()) {
@@ -104,13 +116,14 @@ void InsertCommand::do_insert(Document& document, MultiCursor& cursors, int curs
     }
 }
 
-void InsertCommand::undo(MultiCursor& cursors) {
-    cursors = state_snapshot().cursors;
+void InsertCommand::do_undo(MultiCursor& cursors) {
     for (int cursor_index = 0; cursor_index < cursors.size(); cursor_index++) {
         auto& cursor = cursors[cursor_index];
         document().clear_selection(cursor);
-        if (!state_snapshot().cursors[cursor_index].selection().empty()) {
-            document().move_cursor_to(cursor, state_snapshot().cursors[cursor_index].selection().normalized_start());
+        if (!start_snapshot().cursors[cursor_index].selection().empty()) {
+            document().move_cursor_to(cursor, start_snapshot().cursors[cursor_index].selection().normalized_start());
+        } else {
+            document().move_cursor_to(cursor, start_snapshot().cursors[cursor_index].index());
         }
 
         for (size_t i = 0; i < m_text.size(); i++) {
@@ -136,29 +149,24 @@ void InsertCommand::undo(MultiCursor& cursors) {
             }
         }
 
-        if (!state_snapshot().cursors[cursor_index].selection().empty()) {
+        if (!start_snapshot().cursors[cursor_index].selection().empty()) {
             do_insert(document(), cursors, cursor_index, selection_text(cursor_index));
         }
     }
-
-    document().restore_state(cursors, state_snapshot());
 }
 
-DeleteCommand::DeleteCommand(Document& document, DeleteCharMode mode, bool should_clear_selection)
-    : DeltaBackedCommand(document), m_mode(mode), m_should_clear_selection(should_clear_selection) {}
+DeleteCommand::DeleteCommand(Document& document, DeleteCharMode mode) : DeltaBackedCommand(document), m_mode(mode) {}
 
 DeleteCommand::~DeleteCommand() {}
 
-bool DeleteCommand::execute(MultiCursor& cursors) {
+bool DeleteCommand::do_execute(MultiCursor& cursors) {
     bool modified = false;
     for (int i = 0; i < cursors.size(); i++) {
-        m_end_indices.add(TextIndex {});
         m_deleted_chars.add('\0');
 
         auto& cursor = cursors[i];
         if (!cursor.selection().empty()) {
             document().delete_selection(cursors, i);
-            m_end_indices[i] = cursor.index();
             modified = true;
             continue;
         }
@@ -176,7 +184,6 @@ bool DeleteCommand::execute(MultiCursor& cursors) {
                     document().move_cursor_left(cursor);
                     document().remove_line(index.line_index());
                     document().set_needs_display();
-                    m_end_indices[i] = cursor.index();
                     m_deleted_chars[i] = '\n';
                     modified = true;
                     cursors.did_delete_lines(i, cursor.line_index(), 1);
@@ -191,11 +198,9 @@ bool DeleteCommand::execute(MultiCursor& cursors) {
                     document().move_cursor_up(cursor);
                     document().move_cursor_to_line_end(cursor);
                     document().merge_lines(cursors, i, MergeLinesMode::BelowCursor);
-                    m_end_indices[i] = cursor.index();
                     m_deleted_chars[i] = '\n';
                 } else {
                     document().move_cursor_left(cursor);
-                    m_end_indices[i] = cursor.index();
                     m_deleted_chars[i] = line.char_at(index.index_into_line() - 1);
                     line.remove_char_at(index.index_into_line() - 1);
                     cursors.did_delete_from_line(i, index.line_index(), index.index_into_line() - 1, 1);
@@ -206,8 +211,6 @@ bool DeleteCommand::execute(MultiCursor& cursors) {
                 continue;
             }
             case DeleteCharMode::Delete:
-                m_end_indices[i] = index;
-
                 if (line.empty()) {
                     if (index.line_index() == document().num_lines() - 1) {
                         continue;
@@ -243,24 +246,15 @@ bool DeleteCommand::execute(MultiCursor& cursors) {
     return modified;
 }
 
-void DeleteCommand::undo(MultiCursor& cursors) {
-    cursors = state_snapshot().cursors;
+void DeleteCommand::do_undo(MultiCursor& cursors) {
     for (int i = cursors.size() - 1; i >= 0; i--) {
         auto& cursor = cursors[i];
-        document().move_cursor_to(cursor, m_end_indices[i]);
-        if (!state_snapshot().cursors[i].selection().empty()) {
+        if (!start_snapshot().cursors[i].selection().empty()) {
             cursor.selection().clear();
             InsertCommand::do_insert(document(), cursors, i, selection_text(i));
         } else {
             assert(m_deleted_chars[i] != '\0');
             InsertCommand::do_insert(document(), cursors, i, m_deleted_chars[i]);
-        }
-    }
-
-    document().restore_state(cursors, state_snapshot());
-    if (m_should_clear_selection) {
-        for (auto& cursor : cursors) {
-            document().clear_selection(cursor);
         }
     }
 }
@@ -269,7 +263,7 @@ DeleteLineCommand::DeleteLineCommand(Document& document) : DeltaBackedCommand(do
 
 DeleteLineCommand::~DeleteLineCommand() {}
 
-bool DeleteLineCommand::execute(MultiCursor& cursors) {
+bool DeleteLineCommand::do_execute(MultiCursor& cursors) {
     for (auto& cursor : cursors) {
         m_saved_lines.add(cursor.referenced_line(document()));
 
@@ -296,21 +290,20 @@ bool DeleteLineCommand::execute(MultiCursor& cursors) {
     return true;
 }
 
-void DeleteLineCommand::undo(MultiCursor& cursors) {
+void DeleteLineCommand::do_undo(MultiCursor& cursors) {
     for (int i = 0; i < cursors.size(); i++) {
         document().insert_line(Line(m_saved_lines[i]), cursors[i].line_index());
     }
     if (m_document_was_empty) {
         document().remove_line(1);
     }
-    document().restore_state(cursors, state_snapshot());
 }
 
 InsertLineCommand::InsertLineCommand(Document& document, String text) : DeltaBackedCommand(document), m_text(move(text)) {}
 
 InsertLineCommand::~InsertLineCommand() {}
 
-bool InsertLineCommand::execute(MultiCursor& cursors) {
+bool InsertLineCommand::do_execute(MultiCursor& cursors) {
     Line to_add(m_text);
     auto& cursor = cursors.main_cursor();
     document().insert_line(move(to_add), cursor.line_index());
@@ -319,8 +312,7 @@ bool InsertLineCommand::execute(MultiCursor& cursors) {
     return true;
 }
 
-void InsertLineCommand::undo(MultiCursor& cursors) {
-    document().restore_state(cursors, state_snapshot());
+void InsertLineCommand::do_undo(MultiCursor& cursors) {
     document().remove_line(cursors.main_cursor().line_index());
 }
 
@@ -328,12 +320,10 @@ SwapLinesCommand::SwapLinesCommand(Document& document, SwapDirection direction) 
 
 SwapLinesCommand::~SwapLinesCommand() {}
 
-bool SwapLinesCommand::execute(MultiCursor& cursors) {
+bool SwapLinesCommand::do_execute(MultiCursor& cursors) {
     cursors.remove_secondary_cursors();
     auto& cursor = cursors.main_cursor();
     bool ret = do_swap(cursor, m_direction);
-    m_end = cursor.index();
-    m_end_selection = cursor.selection();
     return ret;
 }
 
@@ -391,12 +381,8 @@ bool SwapLinesCommand::do_swap(Cursor& cursor, SwapDirection direction) {
     return true;
 }
 
-void SwapLinesCommand::undo(MultiCursor& cursors) {
-    cursors.remove_secondary_cursors();
+void SwapLinesCommand::do_undo(MultiCursor& cursors) {
     auto& cursor = cursors.main_cursor();
-    document().move_cursor_to(cursor, m_end);
-    cursor.selection() = m_end_selection;
     do_swap(cursor, m_direction == SwapDirection::Up ? SwapDirection::Down : SwapDirection::Up);
-    document().restore_state(cursors, state_snapshot());
 }
 }

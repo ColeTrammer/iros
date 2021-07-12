@@ -583,7 +583,7 @@ void Document::delete_word(MultiCursor& cursors, DeleteCharMode mode) {
 
         swap_selection_start_and_cursor(cursor);
     }
-    push_command<DeleteCommand>(cursors, mode, true);
+    push_command<DeleteCommand>(cursors, mode);
 }
 
 void Document::swap_selection_start_and_cursor(Cursor& cursor) {
