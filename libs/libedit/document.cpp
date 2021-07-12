@@ -1076,7 +1076,7 @@ void Document::select_all(Cursor& cursor) {
 }
 
 bool Document::notify_mouse_event(MultiCursor& cursors, const App::MouseEvent& event) {
-
+    bool should_scroll_cursor_into_view = false;
     bool handled = false;
     if (event.mouse_down() && event.left_button()) {
         cursors.remove_secondary_cursors();
@@ -1105,17 +1105,16 @@ bool Document::notify_mouse_event(MultiCursor& cursors, const App::MouseEvent& e
         handled = true;
     }
 
-    if (needs_display()) {
-        display();
-    } else {
-        m_panel.notify_now_is_a_good_time_to_draw_cursor();
-    }
+    finish_input(cursors, should_scroll_cursor_into_view);
     return handled;
 }
 
-void Document::finish_key_press(MultiCursor& cursors) {
+void Document::finish_input(MultiCursor& cursors, bool should_scroll_cursor_into_view) {
     cursors.remove_duplicate_cursors();
-    scroll_cursor_into_view(cursors.main_cursor());
+
+    if (should_scroll_cursor_into_view) {
+        scroll_cursor_into_view(cursors.main_cursor());
+    }
 
     if (preview_auto_complete()) {
         cursors.main_cursor().referenced_line(*this).invalidate_rendered_contents();
@@ -1130,6 +1129,7 @@ void Document::finish_key_press(MultiCursor& cursors) {
 }
 
 void Document::notify_key_pressed(MultiCursor& cursors, KeyPress press) {
+    bool should_scroll_cursor_into_view = true;
     if (press.modifiers & KeyPress::Modifier::Alt) {
         switch (press.key) {
             case KeyPress::Key::DownArrow:
@@ -1145,7 +1145,7 @@ void Document::notify_key_pressed(MultiCursor& cursors, KeyPress press) {
                 break;
         }
 
-        finish_key_press(cursors);
+        finish_input(cursors, should_scroll_cursor_into_view);
         return;
     }
 
@@ -1168,6 +1168,7 @@ void Document::notify_key_pressed(MultiCursor& cursors, KeyPress press) {
                     cursors.add_cursor(*this, AddCursorMode::Down);
                 } else {
                     scroll_down();
+                    should_scroll_cursor_into_view = false;
                 }
                 break;
             case KeyPress::Key::UpArrow:
@@ -1175,6 +1176,7 @@ void Document::notify_key_pressed(MultiCursor& cursors, KeyPress press) {
                     cursors.add_cursor(*this, AddCursorMode::Up);
                 } else {
                     scroll_up();
+                    should_scroll_cursor_into_view = false;
                 }
                 break;
             case KeyPress::Key::Home:
@@ -1197,6 +1199,7 @@ void Document::notify_key_pressed(MultiCursor& cursors, KeyPress press) {
                 break;
             case 'A':
                 select_all(cursors.main_cursor());
+                should_scroll_cursor_into_view = false;
                 break;
             case 'C':
                 copy(cursors);
@@ -1242,7 +1245,7 @@ void Document::notify_key_pressed(MultiCursor& cursors, KeyPress press) {
                 break;
         }
 
-        finish_key_press(cursors);
+        finish_input(cursors, should_scroll_cursor_into_view);
         return;
     }
 
@@ -1329,6 +1332,6 @@ void Document::notify_key_pressed(MultiCursor& cursors, KeyPress press) {
             break;
     }
 
-    finish_key_press(cursors);
+    finish_input(cursors, should_scroll_cursor_into_view);
 }
 }

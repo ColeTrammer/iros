@@ -137,7 +137,7 @@ public:
 
     void set_was_modified(bool b) { m_document_was_modified = b; }
 
-    void finish_key_press(MultiCursor& cursor);
+    void finish_input(MultiCursor& cursor, bool should_scroll_cursor_into_view);
 
     Snapshot snapshot() const;
     void restore(MultiCursor& cursors, Snapshot snapshot);
