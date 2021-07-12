@@ -2,6 +2,7 @@
 #include <edit/document.h>
 #include <edit/panel.h>
 #include <edit/position.h>
+#include <unistd.h>
 
 namespace Edit {
 Command::Command(Document& document) : m_document(document) {}
@@ -105,7 +106,7 @@ void InsertCommand::do_insert(Document& document, MultiCursor& cursors, int curs
 
 void InsertCommand::undo(MultiCursor& cursors) {
     cursors = state_snapshot().cursors;
-    for (int cursor_index = cursors.size() - 1; cursor_index >= 0; cursor_index--) {
+    for (int cursor_index = 0; cursor_index < cursors.size(); cursor_index++) {
         auto& cursor = cursors[cursor_index];
         document().clear_selection(cursor);
         if (!state_snapshot().cursors[cursor_index].selection().empty()) {
@@ -248,6 +249,7 @@ void DeleteCommand::undo(MultiCursor& cursors) {
         auto& cursor = cursors[i];
         document().move_cursor_to(cursor, m_end_indices[i]);
         if (!state_snapshot().cursors[i].selection().empty()) {
+            cursor.selection().clear();
             InsertCommand::do_insert(document(), cursors, i, selection_text(i));
         } else {
             assert(m_deleted_chars[i] != '\0');
