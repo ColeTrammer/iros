@@ -9,6 +9,25 @@
 namespace Edit {
 constexpr int tab_width = 4;
 
+enum class PositionRangeType {
+    Normal,
+    InlineBeforeCursor,
+    InlineAfterCursor,
+};
+
+struct PositionRange {
+    Position start;
+    Position end;
+    int index_into_line { 0 };
+    int optional_metadata { 0 };
+    PositionRangeType type { PositionRangeType::Normal };
+};
+
+struct RenderedLine {
+    Vector<String> rendered_lines;
+    Vector<PositionRange> position_ranges;
+};
+
 class Line {
 public:
     explicit Line(String contents);
@@ -46,20 +65,6 @@ public:
     }
 
 private:
-    enum class PositionRangeType {
-        Normal,
-        InlineBeforeCursor,
-        InlineAfterCursor,
-    };
-
-    struct PositionRange {
-        Position start;
-        Position end;
-        int index_into_line { 0 };
-        int optional_metadata { 0 };
-        PositionRangeType type { PositionRangeType::Normal };
-    };
-
     void compute_rendered_contents(const Document& document, const Panel& panel) const;
     int range_index_of_relative_position(const Document& document, const Panel& panel, const Position& position) const;
 

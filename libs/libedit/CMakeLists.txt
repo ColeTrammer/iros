@@ -3,6 +3,7 @@ set(SOURCES
     cursor.cpp
     document_type.cpp
     document.cpp
+    line_renderer.cpp
     line.cpp
     multicursor.cpp
     panel.cpp
