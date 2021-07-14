@@ -2,6 +2,7 @@
 
 #include <edit/cursor.h>
 #include <edit/forward.h>
+#include <liim/maybe.h>
 #include <liim/vector.h>
 
 namespace Edit {
@@ -26,6 +27,9 @@ public:
 
     void did_add_to_line(int cursor_index, int line_index, int index_into_line, int bytes_added);
     void did_delete_from_line(int cursor_index, int line_index, int index_into_line, int bytes_deleted);
+
+    bool should_show_auto_complete_text_at(const Document& document, const Line& line, int index_into_line) const;
+    Maybe<String> preview_auto_complete_text(const Panel& panel) const;
 
     TextRangeCollection selections(const Document& document) const;
 

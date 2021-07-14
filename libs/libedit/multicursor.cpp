@@ -1,5 +1,6 @@
 #include <edit/document.h>
 #include <edit/multicursor.h>
+#include <edit/panel.h>
 #include <edit/text_range_collection.h>
 
 namespace Edit {
@@ -91,6 +92,21 @@ void MultiCursor::did_delete_from_line(int cursor_index, int line_index, [[maybe
 
         cursor.move_left_preserving_selection(bytes_deleted);
     }
+}
+
+bool MultiCursor::should_show_auto_complete_text_at(const Document& document, const Line& line, int index_into_line) const {
+    return document.preview_auto_complete() && &main_cursor().referenced_line(document) == &line &&
+           main_cursor().index_into_line() == index_into_line;
+}
+
+Maybe<String> MultiCursor::preview_auto_complete_text(const Panel& panel) const {
+    auto suggestions = panel.get_suggestions();
+    if (suggestions.suggestion_count() != 1) {
+        return {};
+    }
+
+    auto& text = suggestions.suggestion_list().first();
+    return text.substring(suggestions.suggestion_offset());
 }
 
 TextRangeCollection MultiCursor::selections(const Document& document) const {

@@ -190,7 +190,22 @@ void Line::compute_rendered_contents(const Document& document, const Panel& pane
         end_range();
     }
 
-    for (int index_into_line = 0; index_into_line < length(); index_into_line++) {
+    for (int index_into_line = 0; index_into_line <= length(); index_into_line++) {
+        if (panel.cursors().should_show_auto_complete_text_at(document, *this, index_into_line)) {
+            auto maybe_suggestion_text = panel.cursors().preview_auto_complete_text(panel);
+            if (maybe_suggestion_text) {
+                begin_range(index_into_line, CharacterMetadata::Flags::AutoCompletePreview, PositionRangeType::InlineAfterCursor);
+                for (size_t i = 0; i < maybe_suggestion_text->size(); i++) {
+                    put_char(maybe_suggestion_text.value()[i]);
+                }
+                end_range();
+            }
+        }
+
+        if (index_into_line == length()) {
+            break;
+        }
+
         begin_range(index_into_line, 0, PositionRangeType::Normal);
 
         char c = char_at(index_into_line);
@@ -204,22 +219,6 @@ void Line::compute_rendered_contents(const Document& document, const Panel& pane
         }
 
         end_range();
-
-        auto& cursor = panel.cursors().main_cursor();
-        if (document.preview_auto_complete() && cursor.selection().empty() && this == &cursor.referenced_line(document) &&
-            index_into_line == cursor.index_into_line() - 1) {
-            auto suggestions = panel.get_suggestions();
-            if (suggestions.suggestion_count() == 1) {
-                auto& text = suggestions.suggestion_list().first();
-                int length_to_write = text.size() - suggestions.suggestion_offset();
-
-                begin_range(index_into_line + 1, CharacterMetadata::Flags::AutoCompletePreview, PositionRangeType::InlineAfterCursor);
-                for (int i = 0; i < length_to_write; i++) {
-                    put_char(text[suggestions.suggestion_offset() + i]);
-                }
-                end_range();
-            }
-        }
     }
 
     if (m_rendered_lines.empty() || !current_segment.is_empty()) {
