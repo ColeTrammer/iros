@@ -82,6 +82,9 @@ public:
     StringView view() const { return StringView(string(), string() + size() - 1); }
     Vector<StringView> split_view(char c) const { return view().split(c); }
 
+    String substring(size_t start) const { return substring(start, size() - start); }
+    String substring(size_t start, size_t length) const { return String(string() + start, length); }
+
     Vector<String> split(char c) const {
         auto views = view().split(c);
 
