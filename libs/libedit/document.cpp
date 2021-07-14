@@ -178,7 +178,9 @@ void Document::display() const {
     render_index.set_index_into_line(0);
 
     auto selection_collection = m_panel.cursors().selections(*this);
-    DocumentTextRangeIterator metadata_iterator(render_index, m_syntax_highlighting_info, m_search_results, selection_collection);
+    auto cursor_collection = m_panel.cursors().cursor_text_ranges(*this);
+    DocumentTextRangeIterator metadata_iterator(render_index, m_syntax_highlighting_info, m_search_results, selection_collection,
+                                                cursor_collection);
 
     int row = m_row_offset;
     for (; render_index.line_index() < num_lines() && row < m_row_offset + m_panel.rows();) {

@@ -14,6 +14,8 @@ public:
         SyntaxComment = 128,
         SyntaxImportant = 256,
         AutoCompletePreview = 512,
+        MainCursor = 1024,
+        SecondaryCursor = 2048,
     };
 
     CharacterMetadata() {}
@@ -52,6 +54,9 @@ public:
     int syntax_highlighting() const { return m_flags & (~(Flags::Highlighted | Flags::Selected | Flags::AutoCompletePreview)); }
 
     int auto_complete_preview() const { return m_flags & Flags::AutoCompletePreview; }
+
+    int main_cursor() const { return m_flags & Flags::MainCursor; }
+    int secondary_cursor() const { return m_flags & Flags::SecondaryCursor; }
 
 private:
     int m_flags { 0 };

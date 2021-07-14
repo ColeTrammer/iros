@@ -29,5 +29,5 @@ struct PositionRange;
 struct Position;
 struct RenderedLine;
 
-using DocumentTextRangeIterator = TextRangeCombinerIterator<3>;
+using DocumentTextRangeIterator = TextRangeCombinerIterator<4>;
 }

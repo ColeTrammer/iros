@@ -202,6 +202,10 @@ String TerminalPanel::string_for_metadata(Edit::CharacterMetadata metadata) cons
         ret += ";49";
     }
 
+    if (info.secondary_cursor) {
+        ret += ";7";
+    }
+
     ret += "m";
     return ret;
 }
@@ -256,24 +260,6 @@ int TerminalPanel::cols() const {
 }
 
 void TerminalPanel::draw_cursor() {
-    for (auto& cursor : cursors()) {
-        if (&cursor == &cursors().main_cursor()) {
-            continue;
-        }
-
-        auto cursor_pos = document()->cursor_position_on_panel(cursor);
-        auto cursor_row = cursor_pos.row;
-        auto cursor_col = cursor_pos.col;
-
-        if (cursor_row >= 0 && cursor_row < rows() && cursor_col >= 0 && cursor_col < cols()) {
-            auto& entry = m_screen_info[index(cursor_row, cursor_col)];
-            printf("\033[%d;%dH%s\033[7m%c%s", m_row_offset + cursor_row + 1,
-                   m_col_offset + cursor_col + m_cols_needed_for_line_numbers + 1, string_for_metadata(entry.metadata).string(), entry.ch,
-                   string_for_metadata({}).string());
-            m_dirty_rows[cursor_row] = true;
-        }
-    }
-
     auto cursor_pos = document()->cursor_position_on_panel(cursors().main_cursor());
     auto cursor_row = cursor_pos.row;
     auto cursor_col = cursor_pos.col;
@@ -282,7 +268,6 @@ void TerminalPanel::draw_cursor() {
     } else {
         printf("\033[?25l");
     }
-    fflush(stdout);
 }
 
 void TerminalPanel::draw_status_message() {
@@ -877,7 +862,7 @@ exit_search:
 }
 
 void TerminalPanel::notify_now_is_a_good_time_to_draw_cursor() {
-    flush();
+    document()->display();
 }
 
 void TerminalPanel::set_clipboard_contents(String text, bool is_whole_line) {

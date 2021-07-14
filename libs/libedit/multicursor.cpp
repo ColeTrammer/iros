@@ -109,12 +109,23 @@ Maybe<String> MultiCursor::preview_auto_complete_text(const Panel& panel) const 
     return text.substring(suggestions.suggestion_offset());
 }
 
+TextRangeCollection MultiCursor::cursor_text_ranges(const Document& document) const {
+    auto collection = TextRangeCollection { document };
+    for (auto& cursor : m_cursors) {
+        auto start = cursor.index();
+        auto end = TextIndex { cursor.line_index(), cursor.index_into_line() + 1 };
+        auto metadata = CharacterMetadata { &cursor == &main_cursor() ? CharacterMetadata::Flags::MainCursor
+                                                                      : CharacterMetadata::Flags::SecondaryCursor };
+        collection.add(TextRange { start, end, metadata });
+    }
+    return collection;
+}
+
 TextRangeCollection MultiCursor::selections(const Document& document) const {
     auto collection = TextRangeCollection { document };
     for (auto& cursor : m_cursors) {
         collection.add(cursor.selection().text_range());
     }
-    collection.sort();
     return collection;
 }
 }

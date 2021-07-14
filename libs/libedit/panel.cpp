@@ -83,6 +83,14 @@ Panel::RenderingInfo Panel::rendering_info_for_metadata(const CharacterMetadata&
         info.fg = VGA_COLOR_DARK_GREY;
     }
 
+    if (metadata.main_cursor()) {
+        info.main_cursor = true;
+    }
+
+    if (metadata.secondary_cursor()) {
+        info.secondary_cursor = true;
+    }
+
     return info;
 }
 }

@@ -2,7 +2,15 @@
 
 namespace Edit {
 RenderedLine LineRenderer::finish() {
-    if (m_rendered_line.rendered_lines.empty() || !m_current_rendered_line.is_empty()) {
+    auto last_index = 0;
+    if (!m_rendered_line.position_ranges.empty()) {
+        last_index = m_rendered_line.position_ranges.last().index_into_line + 1;
+    }
+    begin_segment(last_index, 0, PositionRangeType::Normal);
+    add_to_segment(" ", 1);
+    end_segment();
+
+    if (!m_current_rendered_line.is_empty()) {
         m_rendered_line.rendered_lines.add(move(m_current_rendered_line));
     }
     return move(m_rendered_line);

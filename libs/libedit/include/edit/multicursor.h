@@ -31,6 +31,7 @@ public:
     bool should_show_auto_complete_text_at(const Document& document, const Line& line, int index_into_line) const;
     Maybe<String> preview_auto_complete_text(const Panel& panel) const;
 
+    TextRangeCollection cursor_text_ranges(const Document& document) const;
     TextRangeCollection selections(const Document& document) const;
 
     int size() const { return m_cursors.size(); }

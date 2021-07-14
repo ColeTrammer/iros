@@ -49,6 +49,8 @@ public:
         Maybe<vga_color> fg;
         Maybe<vga_color> bg;
         bool bold { false };
+        bool main_cursor { false };
+        bool secondary_cursor { false };
     };
 
     RenderingInfo rendering_info_for_metadata(const CharacterMetadata& metadata) const;

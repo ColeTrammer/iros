@@ -49,7 +49,7 @@ CharacterMetadata TextRangeCollectionIterator::peek_metadata() const {
 
 void TextRangeCollectionIterator::advance() {
     auto& line = m_collection.m_document.line_at_index(m_index.line_index());
-    if (m_index.index_into_line() == line.length()) {
+    if (m_index.index_into_line() > line.length()) {
         m_index.set(m_index.line_index() + 1, 0);
     } else {
         m_index.set_index_into_line(m_index.index_into_line() + 1);
