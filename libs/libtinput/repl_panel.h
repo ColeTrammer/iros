@@ -36,8 +36,6 @@ public:
     virtual Edit::Suggestions get_suggestions() const override;
     virtual void handle_suggestions(const Edit::Suggestions& suggestions) override;
 
-    virtual String inject_inline_text_for_line_index(int line_index) const override;
-
     void set_coordinates(int rows, int cols);
     bool quit_by_interrupt() const { return m_quit_by_interrupt; }
     bool quit_by_eof() const { return m_quit_by_eof; }

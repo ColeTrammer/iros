@@ -243,7 +243,7 @@ int ReplPanel::index(int row, int col) const {
 
 void ReplPanel::notify_line_count_changed() {}
 
-[[maybe_unused]] static int string_print_width(const String& string) {
+static int string_print_width(const String& string) {
     // NOTE: naively handle TTY escape sequences as matching the regex \033(.*)[:alpha:]
     //       also UTF-8 characters are ignored.
 
@@ -265,7 +265,16 @@ void ReplPanel::notify_line_count_changed() {}
 }
 
 Edit::RenderedLine ReplPanel::compose_line(const Edit::Line& line) const {
+    if (!document()) {
+        return {};
+    }
+
     auto renderer = Edit::LineRenderer { cols(), document()->word_wrap_enabled() };
+    auto& prompt = &line == &document()->first_line() ? m_main_prompt : m_secondary_prompt;
+    renderer.begin_segment(0, 0, Edit::PositionRangeType::InlineBeforeCursor);
+    renderer.add_to_segment(prompt.view(), string_print_width(prompt));
+    renderer.end_segment();
+
     for (int index_into_line = 0; index_into_line <= line.length(); index_into_line++) {
         if (cursors().should_show_auto_complete_text_at(*document(), line, index_into_line)) {
             auto maybe_suggestion_text = cursors().preview_auto_complete_text(*this);
@@ -292,13 +301,6 @@ Edit::RenderedLine ReplPanel::compose_line(const Edit::Line& line) const {
         renderer.end_segment();
     }
     return renderer.finish();
-}
-
-String ReplPanel::inject_inline_text_for_line_index(int line_index) const {
-    if (line_index == 0) {
-        return m_main_prompt;
-    }
-    return m_secondary_prompt;
 }
 
 void ReplPanel::draw_cursor() {
