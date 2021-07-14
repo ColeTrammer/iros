@@ -147,83 +147,14 @@ void Line::search(const Document& document, const String& text, TextRangeCollect
     }
 }
 
-void Line::compute_rendered_contents(const Document& document, const Panel& panel) const {
+void Line::compute_rendered_contents(const Document&, const Panel& panel) const {
     if (!m_rendered_lines.empty()) {
         return;
     }
 
-    PositionRange current_range;
-    String current_segment;
-    int current_row = 0;
-    int current_col = 0;
-    int col_position = 0;
-
-    auto begin_range = [&](int index_into_line, int optional_metadata, PositionRangeType type) {
-        current_range.start = { current_row, current_col };
-        current_range.optional_metadata = optional_metadata;
-        current_range.index_into_line = index_into_line;
-        current_range.type = type;
-    };
-
-    auto put_char = [&](char c) {
-        current_segment += String(c);
-        current_col++;
-        col_position++;
-        if (document.word_wrap_enabled() && current_col >= panel.cols()) {
-            current_row++;
-            current_col = 0;
-            m_rendered_lines.add(move(current_segment));
-        }
-    };
-
-    auto end_range = [&] {
-        current_range.end = { current_row, current_col };
-        m_position_ranges.add(current_range);
-    };
-
-    auto injected_text = panel.inject_inline_text_for_line_index(document.index_of_line(*this));
-    if (!injected_text.is_empty()) {
-        begin_range(0, 0, PositionRangeType::InlineBeforeCursor);
-        for (auto c : injected_text) {
-            put_char(c);
-        }
-        end_range();
-    }
-
-    for (int index_into_line = 0; index_into_line <= length(); index_into_line++) {
-        if (panel.cursors().should_show_auto_complete_text_at(document, *this, index_into_line)) {
-            auto maybe_suggestion_text = panel.cursors().preview_auto_complete_text(panel);
-            if (maybe_suggestion_text) {
-                begin_range(index_into_line, CharacterMetadata::Flags::AutoCompletePreview, PositionRangeType::InlineAfterCursor);
-                for (size_t i = 0; i < maybe_suggestion_text->size(); i++) {
-                    put_char(maybe_suggestion_text.value()[i]);
-                }
-                end_range();
-            }
-        }
-
-        if (index_into_line == length()) {
-            break;
-        }
-
-        begin_range(index_into_line, 0, PositionRangeType::Normal);
-
-        char c = char_at(index_into_line);
-        if (c == '\t') {
-            int num_spaces = tab_width - (col_position % tab_width);
-            for (int i = 0; i < num_spaces; i++) {
-                put_char(' ');
-            }
-        } else {
-            put_char(c);
-        }
-
-        end_range();
-    }
-
-    if (m_rendered_lines.empty() || !current_segment.is_empty()) {
-        m_rendered_lines.add(move(current_segment));
-    }
+    auto rendered_line = panel.compose_line(*this);
+    m_rendered_lines = move(rendered_line.rendered_lines);
+    m_position_ranges = move(rendered_line.position_ranges);
 }
 
 int Line::render(const Document& document, Panel& panel, DocumentTextRangeIterator& metadata_iterator, int col_offset,

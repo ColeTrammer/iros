@@ -17,6 +17,7 @@ public:
     virtual int cols() const = 0;
 
     virtual void clear() = 0;
+    virtual RenderedLine compose_line(const Line& line) const = 0;
     virtual void set_text_at(int row, int col, char c, CharacterMetadata metadata) = 0;
     virtual void flush() = 0;
     virtual int enter() = 0;

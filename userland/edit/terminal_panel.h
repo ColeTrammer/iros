@@ -18,6 +18,7 @@ public:
     virtual int cols() const override;
 
     virtual void clear() override;
+    virtual Edit::RenderedLine compose_line(const Edit::Line& line) const override;
     virtual void set_text_at(int row, int col, char c, Edit::CharacterMetadata metadata) override;
     virtual void flush() override;
     virtual int enter() override;

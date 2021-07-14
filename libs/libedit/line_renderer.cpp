@@ -29,6 +29,12 @@ void LineRenderer::add_to_segment(const StringView& text, int display_width) {
     m_current_rendered_line += String(text);
     m_current_position.col += display_width;
     m_absolute_col_position += display_width;
+
+    if (m_word_wrap_enabled && current_position().col >= m_max_width) {
+        m_current_position.row++;
+        m_current_position.col = 0;
+        m_rendered_line.rendered_lines.add(move(m_current_rendered_line));
+    }
 }
 
 void LineRenderer::end_segment() {

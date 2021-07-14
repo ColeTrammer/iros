@@ -3,6 +3,7 @@
 #include <edit/document.h>
 #include <edit/document_type.h>
 #include <edit/key_press.h>
+#include <edit/line_renderer.h>
 #include <edit/position.h>
 #include <errno.h>
 #include <eventloop/event.h>
@@ -356,6 +357,36 @@ void TerminalPanel::flush_row(int row) {
         fputc('\r', stdout);
         fputc('\n', stdout);
     }
+}
+
+Edit::RenderedLine TerminalPanel::compose_line(const Edit::Line& line) const {
+    auto renderer = Edit::LineRenderer { cols(), document()->word_wrap_enabled() };
+    for (int index_into_line = 0; index_into_line <= line.length(); index_into_line++) {
+        if (cursors().should_show_auto_complete_text_at(*document(), line, index_into_line)) {
+            auto maybe_suggestion_text = cursors().preview_auto_complete_text(*this);
+            if (maybe_suggestion_text) {
+                renderer.begin_segment(index_into_line, Edit::CharacterMetadata::Flags::AutoCompletePreview,
+                                       Edit::PositionRangeType::InlineAfterCursor);
+                renderer.add_to_segment(maybe_suggestion_text->view(), maybe_suggestion_text->size());
+                renderer.end_segment();
+            }
+        }
+
+        if (index_into_line == line.length()) {
+            break;
+        }
+
+        renderer.begin_segment(index_into_line, 0, Edit::PositionRangeType::Normal);
+        char c = line.char_at(index_into_line);
+        if (c == '\t') {
+            auto spaces = String::repeat(' ', Edit::tab_width - (renderer.absolute_col_position() % Edit::tab_width));
+            renderer.add_to_segment(spaces.view(), spaces.size());
+        } else {
+            renderer.add_to_segment(StringView { &c, &c }, 1);
+        }
+        renderer.end_segment();
+    }
+    return renderer.finish();
 }
 
 void TerminalPanel::do_open_prompt() {
