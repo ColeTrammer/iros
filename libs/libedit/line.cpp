@@ -163,39 +163,31 @@ int Line::render(const Document& document, Panel& panel, DocumentTextRangeIterat
 
     auto row_count = rendered_line_count(document, panel);
     for (int row = relative_row_start; row + row_in_panel - relative_row_start < panel.rows() && row < row_count; row++) {
-        auto current_panel_position = Position { row, 0 };
-        auto render_position = Position { row, col_offset };
+        auto render_position = Position { row, 0 };
         auto range_index = range_index_of_relative_position(document, panel, render_position);
-        if (range_index != -1) {
-            int index_into_line = m_position_ranges[range_index].index_into_line;
-            metadata_iterator.advance_to_index_into_line(index_into_line);
+        if (range_index == -1) {
+            continue;
+        }
 
-            auto& rendered_line = m_rendered_lines[row];
-            while (current_panel_position.col < panel.cols() && static_cast<size_t>(render_position.col) < rendered_line.size()) {
-                auto& current_range = m_position_ranges[range_index];
-                auto metadata = CharacterMetadata { current_range.optional_metadata };
-                if (current_range.type == PositionRangeType::Normal) {
-                    metadata = metadata_iterator.peek_metadata();
-                }
+        int index_into_line = m_position_ranges[range_index].index_into_line;
+        metadata_iterator.advance_to_index_into_line(index_into_line);
 
-                panel.set_text_at(row_in_panel + row - relative_row_start, current_panel_position.col, rendered_line[render_position.col],
-                                  metadata);
+        auto& rendered_line = m_rendered_lines[row];
+        auto metadata_vector = Vector<CharacterMetadata>(rendered_line.size());
+        for (; range_index < m_position_ranges.size() && m_position_ranges[range_index].start.row == row; range_index++) {
+            auto& current_range = m_position_ranges[range_index];
+            auto metadata = CharacterMetadata { current_range.optional_metadata };
+            if (current_range.type == PositionRangeType::Normal) {
+                metadata = metadata_iterator.peek_metadata();
+                metadata_iterator.advance();
+            }
 
-                current_panel_position.col++;
-                render_position.col++;
-                if (render_position >= current_range.end) {
-                    if (current_range.type == PositionRangeType::Normal) {
-                        index_into_line++;
-                        metadata_iterator.advance();
-                    }
-                    range_index++;
-                }
+            for (int i = 0; i < current_range.byte_count_in_rendered_string; i++) {
+                metadata_vector.add(metadata);
             }
         }
 
-        for (; current_panel_position.col < panel.cols(); current_panel_position.col++) {
-            panel.set_text_at(row_in_panel + row - relative_row_start, current_panel_position.col, ' ', CharacterMetadata());
-        }
+        panel.output_line(row + row_in_panel - relative_row_start, col_offset, rendered_line.view(), metadata_vector);
     }
 
     metadata_iterator.advance_line();

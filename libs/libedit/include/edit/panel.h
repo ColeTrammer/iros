@@ -16,10 +16,9 @@ public:
     virtual int rows() const = 0;
     virtual int cols() const = 0;
 
-    virtual void clear() = 0;
     virtual RenderedLine compose_line(const Line& line) const = 0;
-    virtual void set_text_at(int row, int col, char c, CharacterMetadata metadata) = 0;
-    virtual void flush() = 0;
+    virtual void output_line(int row, int col_offset, const StringView& text, const Vector<CharacterMetadata>& metadata) = 0;
+    virtual void schedule_update() = 0;
     virtual int enter() = 0;
     virtual void send_status_message(String message) = 0;
     virtual Maybe<String> prompt(const String& message) = 0;
@@ -34,7 +33,6 @@ public:
     virtual void handle_suggestions(const Suggestions&) {}
 
     virtual void notify_line_count_changed() {}
-    virtual void notify_now_is_a_good_time_to_draw_cursor() {}
 
     void set_document(UniquePtr<Document> document);
     UniquePtr<Document> take_document();

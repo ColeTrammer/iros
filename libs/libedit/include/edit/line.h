@@ -20,6 +20,7 @@ struct PositionRange {
     Position end;
     int index_into_line { 0 };
     int optional_metadata { 0 };
+    int byte_count_in_rendered_string { 0 };
     PositionRangeType type { PositionRangeType::Normal };
 };
 

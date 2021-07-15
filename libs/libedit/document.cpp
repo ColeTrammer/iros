@@ -101,8 +101,6 @@ UniquePtr<Document> Document::create_single_line(Panel& panel, String text) {
     auto ret = make_unique<Document>(move(lines), "", panel, InputMode::InputText);
     ret->set_submittable(true);
     ret->set_show_line_numbers(false);
-    ret->move_cursor_to_line_end(panel.cursors().main_cursor());
-    ret->select_all(panel.cursors().main_cursor());
     return ret;
 }
 
@@ -163,42 +161,30 @@ size_t Document::cursor_index_in_content_string(const Cursor& cursor) const {
     return index;
 }
 
-void Document::display_if_needed() const {
-    if (needs_display()) {
-        display();
-    }
+void Document::set_needs_display() {
+    m_panel.schedule_update();
 }
 
-void Document::display() const {
+void Document::display(Panel& panel) const {
     auto& document = const_cast<Document&>(*this);
 
     auto render_index = text_index_at_absolute_position({ m_row_offset, 0 });
     auto relative_start_position =
-        line_at_index(render_index.line_index()).relative_position_of_index(*this, m_panel, render_index.index_into_line());
+        line_at_index(render_index.line_index()).relative_position_of_index(*this, panel, render_index.index_into_line());
     render_index.set_index_into_line(0);
 
-    auto selection_collection = m_panel.cursors().selections(*this);
-    auto cursor_collection = m_panel.cursors().cursor_text_ranges(*this);
+    auto selection_collection = panel.cursors().selections(*this);
+    auto cursor_collection = panel.cursors().cursor_text_ranges(*this);
     DocumentTextRangeIterator metadata_iterator(render_index, m_syntax_highlighting_info, m_search_results, selection_collection,
                                                 cursor_collection);
 
     int row = m_row_offset;
-    for (; render_index.line_index() < num_lines() && row < m_row_offset + m_panel.rows();) {
+    for (; render_index.line_index() < num_lines() && row < m_row_offset + panel.rows();) {
         auto& line = line_at_index(render_index.line_index());
         row += line.render(document, document.panel(), metadata_iterator, m_col_offset, relative_start_position.row, row - m_row_offset);
         render_index.set_line_index(render_index.line_index() + 1);
         relative_start_position = { 0, 0 };
     }
-
-    // Explicitly clear any visible line after the document ends
-    for (; row - m_row_offset < m_panel.rows(); row++) {
-        for (int col = 0; col < m_panel.cols(); col++) {
-            m_panel.set_text_at(row - m_row_offset, col, ' ', {});
-        }
-    }
-
-    m_panel.flush();
-    m_needs_display = false;
 }
 
 TextIndex Document::text_index_at_absolute_position(const Position& position) const {
@@ -855,7 +841,7 @@ void Document::notify_panel_size_changed() {
             line.invalidate_rendered_contents();
         }
     }
-    display();
+    set_needs_display();
 }
 
 void Document::go_to_line(Panel& panel) {
@@ -1123,11 +1109,7 @@ void Document::finish_input(MultiCursor& cursors, bool should_scroll_cursor_into
         set_needs_display();
     }
 
-    if (needs_display()) {
-        display();
-    } else {
-        m_panel.notify_now_is_a_good_time_to_draw_cursor();
-    }
+    set_needs_display();
 }
 
 void Document::notify_key_pressed(MultiCursor& cursors, KeyPress press) {

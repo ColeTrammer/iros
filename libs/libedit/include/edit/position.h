@@ -2,8 +2,8 @@
 
 namespace Edit {
 struct Position {
-    int row;
-    int col;
+    int row { 0 };
+    int col { 0 };
 
     bool operator==(const Position& other) const = default;
     bool operator!=(const Position& other) const = default;

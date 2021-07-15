@@ -105,11 +105,6 @@ void TerminalPanel::set_coordinates(int row_off, int col_off, int rows, int cols
     m_cols = cols;
     m_row_offset = row_off;
     m_col_offset = col_off;
-    m_screen_info.resize(m_rows * TerminalPanel::cols());
-    m_dirty_rows.resize(m_rows);
-    for (auto& b : m_dirty_rows) {
-        b = true;
-    }
 
     if (auto* doc = document()) {
         doc->notify_panel_size_changed();
@@ -117,13 +112,6 @@ void TerminalPanel::set_coordinates(int row_off, int col_off, int rows, int cols
 }
 
 TerminalPanel::~TerminalPanel() {}
-
-void TerminalPanel::clear() {
-    draw_cursor();
-    m_screen_info.clear();
-    m_screen_info.resize(m_rows * TerminalPanel::cols());
-    flush();
-}
 
 static int vga_color_to_number(vga_color color, bool background) {
     int ret = 0;
@@ -212,9 +200,8 @@ String TerminalPanel::string_for_metadata(Edit::CharacterMetadata metadata) cons
 
 void TerminalPanel::document_did_change() {
     if (document()) {
-        clear();
         notify_line_count_changed();
-        document()->display();
+        schedule_update();
     }
 }
 
@@ -310,14 +297,6 @@ void TerminalPanel::send_status_message(String message) {
     draw_status_message();
 }
 
-void TerminalPanel::set_text_at(int row, int col, char c, Edit::CharacterMetadata metadata) {
-    auto& info = m_screen_info[index(row, col)];
-    if (info.ch != c || info.metadata != metadata) {
-        m_screen_info[index(row, col)] = { c, metadata };
-        m_dirty_rows[row] = true;
-    }
-}
-
 void TerminalPanel::print_char(char c, Edit::CharacterMetadata metadata) {
     if (c == '\0') {
         c = ' ';
@@ -331,20 +310,19 @@ void TerminalPanel::print_char(char c, Edit::CharacterMetadata metadata) {
     fputc(c, stdout);
 }
 
-void TerminalPanel::flush_row(int row) {
-    int cols = TerminalPanel::cols();
-    for (int c = 0; c < cols; c++) {
-        auto& info = m_screen_info[index(row, c)];
-        print_char(info.ch, info.metadata);
+void TerminalPanel::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) {
+    printf("\033[%d;%dH", m_row_offset + row + 1, m_col_offset + 1);
+
+    auto cols = TerminalPanel::cols();
+    for (size_t c = col_offset; c < static_cast<size_t>(cols + col_offset) && c < text.size(); c++) {
+        print_char(text[c], metadata[c]);
     }
 
-    if (row < rows() - 1) {
-        fputc('\r', stdout);
-        fputc('\n', stdout);
-    }
+    printf("\033[K");
 }
 
 Edit::RenderedLine TerminalPanel::compose_line(const Edit::Line& line) const {
+    assert(document());
     auto renderer = Edit::LineRenderer { cols(), document()->word_wrap_enabled() };
     for (int index_into_line = 0; index_into_line <= line.length(); index_into_line++) {
         if (cursors().should_show_auto_complete_text_at(*document(), line, index_into_line)) {
@@ -390,39 +368,28 @@ void TerminalPanel::do_open_prompt() {
 }
 
 void TerminalPanel::flush() {
+    m_render_scheduled = false;
+
     fputs("\033[?25l", stdout);
 
-    for (int r = 0; r < rows(); r++) {
-        printf("\033[%d;%dH", m_row_offset + r + 1, m_col_offset + 1);
-        if (document()->show_line_numbers()) {
-            char buf[48];
-            if (r + document()->row_offset() >= document()->num_rendered_lines()) {
-                snprintf(buf, sizeof(buf) - 1, "%*s", m_cols_needed_for_line_numbers, "");
-            } else {
-                auto line_index = document()->text_index_at_scrolled_position({ r, 0 });
-                snprintf(buf, sizeof(buf) - 1, "%*d ", m_cols_needed_for_line_numbers - 1, line_index.line_index() + 1);
-            }
-
-            m_last_metadata_rendered = Edit::CharacterMetadata();
-            fputs(string_for_metadata(m_last_metadata_rendered).string(), stdout);
-            fputs(buf, stdout);
-        }
-
-        if (!m_dirty_rows[r]) {
-            continue;
-        }
-
-        m_dirty_rows[r] = false;
-        flush_row(r);
-    }
+    document()->display(*this);
 
     // Reset modifiers after every render, so that status bar, etc. are unaffected.
     m_last_metadata_rendered = Edit::CharacterMetadata();
     fputs(string_for_metadata(m_last_metadata_rendered).string(), stdout);
 
+    printf("\033[0J");
+
     draw_status_message();
     draw_cursor();
     fflush(stdout);
+}
+
+void TerminalPanel::flush_if_needed() {
+    if (!m_render_scheduled) {
+        return;
+    }
+    flush();
 }
 
 Vector<Variant<Edit::KeyPress, App::MouseEvent>> TerminalPanel::read_input() {
@@ -715,6 +682,8 @@ Vector<Variant<Edit::KeyPress, App::MouseEvent>> TerminalPanel::read_input() {
 int TerminalPanel::enter() {
     fd_set set;
     for (;;) {
+        flush_if_needed();
+
         FD_ZERO(&set);
         FD_SET(STDIN_FILENO, &set);
         int ret = select(STDIN_FILENO + 1, &set, nullptr, nullptr, nullptr);
@@ -741,8 +710,6 @@ int TerminalPanel::enter() {
                 }
             }
         }
-
-        draw_status_message();
 
         if (m_should_exit) {
             break;
@@ -846,7 +813,7 @@ void TerminalPanel::enter_search(String starting_text) {
 
         auto search_text = text_panel.document()->content_string();
         TerminalPanel::document()->set_search_text(search_text);
-        TerminalPanel::document()->display_if_needed();
+        flush_if_needed();
 
         text_panel.draw_cursor();
         fflush(stdout);
@@ -859,10 +826,6 @@ exit_search:
     fputs("\033[0K", stdout);
     draw_cursor();
     fflush(stdout);
-}
-
-void TerminalPanel::notify_now_is_a_good_time_to_draw_cursor() {
-    document()->display();
 }
 
 void TerminalPanel::set_clipboard_contents(String text, bool is_whole_line) {

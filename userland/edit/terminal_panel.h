@@ -17,10 +17,9 @@ public:
     virtual int rows() const override { return m_rows; }
     virtual int cols() const override;
 
-    virtual void clear() override;
     virtual Edit::RenderedLine compose_line(const Edit::Line& line) const override;
-    virtual void set_text_at(int row, int col, char c, Edit::CharacterMetadata metadata) override;
-    virtual void flush() override;
+    virtual void output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) override;
+    virtual void schedule_update() override { m_render_scheduled = true; }
     virtual int enter() override;
     virtual void send_status_message(String message) override;
     virtual Maybe<String> prompt(const String& message) override;
@@ -37,7 +36,6 @@ public:
     int row_offset() const { return m_row_offset; }
 
     virtual void do_open_prompt() override;
-    virtual void notify_now_is_a_good_time_to_draw_cursor() override;
 
 private:
     struct Info {
@@ -59,14 +57,13 @@ private:
     String string_for_metadata(Edit::CharacterMetadata metadata) const;
 
     void print_char(char c, Edit::CharacterMetadata metadata);
-    void flush_row(int line);
+    void flush();
+    void flush_if_needed();
 
     Maybe<String> enter_prompt(const String& message, String starting_text = "");
 
     int index(int row, int col) const { return row * cols() + col; }
 
-    Vector<Info> m_screen_info;
-    Vector<bool> m_dirty_rows;
     String m_status_message;
     time_t m_status_message_time { 0 };
     String m_prompt_buffer;
@@ -82,4 +79,5 @@ private:
     int m_exit_code { 0 };
     bool m_should_exit { false };
     bool m_show_status_bar { true };
+    bool m_render_scheduled { false };
 };

@@ -19,10 +19,9 @@ public:
     virtual int rows() const override { return m_rows; }
     virtual int cols() const override { return m_cols; };
 
-    virtual void clear() override;
     virtual Edit::RenderedLine compose_line(const Edit::Line& line) const override;
-    virtual void set_text_at(int row, int col, char c, Edit::CharacterMetadata metadata) override;
-    virtual void flush() override;
+    virtual void output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) override;
+    virtual void schedule_update() override { m_render_scheduled = true; }
     virtual int enter() override;
     virtual void send_status_message(String message) override;
     virtual Maybe<String> prompt(const String& message) override;
@@ -41,7 +40,6 @@ public:
     bool quit_by_eof() const { return m_quit_by_eof; }
 
     virtual void do_open_prompt() override;
-    virtual void notify_now_is_a_good_time_to_draw_cursor() override;
 
 private:
     struct Info {
@@ -59,6 +57,8 @@ private:
 
     void print_char(char c, Edit::CharacterMetadata metadata);
     void flush_row(int line);
+    void flush();
+    void flush_if_needed();
 
     void set_quit_by_interrupt() { m_quit_by_interrupt = true; }
     void set_quit_by_eof() { m_quit_by_eof = true; }
@@ -82,8 +82,6 @@ private:
     Vector<UniquePtr<Edit::Document>> m_history_documents;
     int m_history_index { -1 };
 
-    Vector<Info> m_screen_info;
-    Vector<bool> m_dirty_rows;
     mutable String m_prev_clipboard_contents;
     mutable bool m_prev_clipboard_contents_were_whole_line { false };
     App::MousePressTracker m_mouse_press_tracker;
@@ -99,6 +97,6 @@ private:
     bool m_should_exit { false };
     bool m_quit_by_interrupt { false };
     bool m_quit_by_eof { false };
+    bool m_render_scheduled { false };
 };
-
 }

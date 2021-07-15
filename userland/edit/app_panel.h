@@ -39,17 +39,15 @@ public:
     constexpr int col_width() const { return 8; }
     constexpr int row_height() const { return 16; }
 
-    virtual void clear() override;
     virtual Edit::RenderedLine compose_line(const Edit::Line& line) const override;
-    virtual void set_text_at(int row, int col, char c, Edit::CharacterMetadata metadata) override;
-    virtual void flush() override;
+    virtual void output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) override;
+    virtual void schedule_update() override;
     virtual int enter() override;
     virtual void send_status_message(String message) override;
     virtual Maybe<String> prompt(const String& message) override;
     virtual void enter_search(String starting_text) override;
     virtual void quit() override;
 
-    virtual void notify_now_is_a_good_time_to_draw_cursor() override;
     virtual void notify_line_count_changed() override;
 
     virtual void set_clipboard_contents(String text, bool is_whole_line) override;
@@ -62,11 +60,6 @@ public:
     virtual void on_mouse_event(const App::MouseEvent& event) override;
     virtual void on_resize() override;
     virtual void on_focused() override;
-    virtual void on_theme_change_event(const App::ThemeChangeEvent&) override {
-        for (auto& c : m_cells) {
-            c.dirty = true;
-        }
-    }
 
     Function<void()> on_quit;
 
@@ -86,14 +79,13 @@ private:
     int index(int row, int col) const { return row * cols() + col; }
 
     void render_cursor(Renderer& renderer);
-    void render_cell(Renderer& renderer, int x, int y, CellData& cell);
+    void render_cell(Renderer& renderer, int x, int y, char c, Edit::CharacterMetadata metadata);
 
     int m_rows { 0 };
     int m_cols { 0 };
     int m_last_drawn_cursor_col { -1 };
     int m_last_drawn_cursor_row { -1 };
     bool m_main_panel { false };
-    Vector<CellData> m_cells;
     SharedPtr<SearchWidget> m_search_widget;
 
     mutable String m_prev_clipboard_contents;

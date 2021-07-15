@@ -50,8 +50,8 @@ public:
 
     void copy_settings_from(const Document& other);
 
-    void display() const;
-    void display_if_needed() const;
+    void display(Panel& panel) const;
+    void set_needs_display();
 
     Panel& panel() { return m_panel; }
     const Panel& panel() const { return m_panel; }
@@ -85,9 +85,6 @@ public:
         m_col_offset = 0;
         set_needs_display();
     }
-
-    bool needs_display() const { return m_needs_display; }
-    void set_needs_display() { m_needs_display = true; }
 
     bool modified() const { return m_document_was_modified; }
 
@@ -269,7 +266,6 @@ private:
     Panel& m_panel;
     int m_row_offset { 0 };
     int m_col_offset { 0 };
-    mutable bool m_needs_display { false };
 
     bool m_word_wrap_enabled { true };
     bool m_show_line_numbers { false };

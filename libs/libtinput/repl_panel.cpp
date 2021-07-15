@@ -87,11 +87,6 @@ ReplPanel::ReplPanel(Repl& repl) : m_repl(repl) {
 void ReplPanel::set_coordinates(int rows, int cols) {
     m_rows = rows;
     m_cols = cols;
-    m_screen_info.resize(cols * rows);
-    m_dirty_rows.resize(m_rows);
-    for (auto& b : m_dirty_rows) {
-        b = true;
-    }
 
     if (m_absolute_row_position != -1) {
         int old_row_position = m_absolute_row_position;
@@ -111,15 +106,6 @@ void ReplPanel::set_coordinates(int rows, int cols) {
 
 ReplPanel::~ReplPanel() {
     restore_termios();
-}
-
-void ReplPanel::clear() {
-    m_screen_info.clear();
-    m_screen_info.resize(cols() * rows());
-    for (auto& b : m_dirty_rows) {
-        b = true;
-    }
-    flush();
 }
 
 static int vga_color_to_number(vga_color color, bool background) {
@@ -199,6 +185,10 @@ String ReplPanel::string_for_metadata(Edit::CharacterMetadata metadata) const {
         ret += ";49";
     }
 
+    if (info.secondary_cursor) {
+        ret += ";7";
+    }
+
     ret += "m";
     return ret;
 }
@@ -213,7 +203,7 @@ void ReplPanel::document_did_change() {
                 cursors().remove_secondary_cursors();
                 document()->move_cursor_to_document_end(cursors().main_cursor());
                 document()->set_preview_auto_complete(false);
-                document()->display();
+                flush();
                 printf("\r\n");
                 fflush(stdout);
                 quit();
@@ -224,11 +214,11 @@ void ReplPanel::document_did_change() {
             cursors().remove_secondary_cursors();
             document()->move_cursor_to_document_end(cursors().main_cursor());
             document()->scroll_cursor_into_view(cursors().main_cursor());
-            document()->display_if_needed();
+            flush_if_needed();
         };
 
-        clear();
         notify_line_count_changed();
+        schedule_update();
     }
 }
 
@@ -243,7 +233,7 @@ int ReplPanel::index(int row, int col) const {
 
 void ReplPanel::notify_line_count_changed() {}
 
-static int string_print_width(const String& string) {
+static int string_print_width(const StringView& string) {
     // NOTE: naively handle TTY escape sequences as matching the regex \033(.*)[:alpha:]
     //       also UTF-8 characters are ignored.
 
@@ -272,7 +262,7 @@ Edit::RenderedLine ReplPanel::compose_line(const Edit::Line& line) const {
     auto renderer = Edit::LineRenderer { cols(), document()->word_wrap_enabled() };
     auto& prompt = &line == &document()->first_line() ? m_main_prompt : m_secondary_prompt;
     renderer.begin_segment(0, 0, Edit::PositionRangeType::InlineBeforeCursor);
-    renderer.add_to_segment(prompt.view(), string_print_width(prompt));
+    renderer.add_to_segment(prompt.view(), string_print_width(prompt.view()));
     renderer.end_segment();
 
     for (int index_into_line = 0; index_into_line <= line.length(); index_into_line++) {
@@ -328,18 +318,9 @@ void ReplPanel::draw_cursor() {
     } else {
         printf("\033[?25l");
     }
-    fflush(stdout);
 }
 
 void ReplPanel::send_status_message(String) {}
-
-void ReplPanel::set_text_at(int row, int col, char c, Edit::CharacterMetadata metadata) {
-    auto& info = m_screen_info[index(row, col)];
-    if (info.ch != c || info.metadata != metadata) {
-        m_screen_info[index(row, col)] = { c, metadata };
-        m_dirty_rows[row] = true;
-    }
-}
 
 void ReplPanel::print_char(char c, Edit::CharacterMetadata metadata) {
     if (c == '\0') {
@@ -355,18 +336,27 @@ void ReplPanel::print_char(char c, Edit::CharacterMetadata metadata) {
     m_visible_cursor_col = min(m_visible_cursor_col + 1, cols() - 1);
 }
 
-void ReplPanel::flush_row(int row) {
-    for (int c = 0; c < m_cols; c++) {
-        auto& info = m_screen_info[index(row, c)];
-        print_char(info.ch, info.metadata);
+void ReplPanel::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata_vector) {
+    assert(col_offset == 0);
+
+    for (size_t i = 0; i < text.size(); i++) {
+        auto metadata = metadata_vector[i];
+        if (metadata != m_last_metadata_rendered) {
+            m_last_metadata_rendered = metadata;
+            fputs(string_for_metadata(metadata).string(), stdout);
+        }
+        fputc(text[i], stdout);
     }
 
-    if (row + document()->row_offset() < document()->num_rendered_lines() - 1 && row < rows() - 1) {
-        fputc('\r', stdout);
-        fputc('\n', stdout);
+    printf("\033[0K");
 
+    if (document()->row_offset() + row == document()->num_rendered_lines() - 1) {
+        m_visible_cursor_row = row;
+        m_visible_cursor_col = string_print_width(text);
+    } else {
+        printf("\r\n");
+        m_visible_cursor_row = row + 1;
         m_visible_cursor_col = 0;
-        m_visible_cursor_row++;
     }
 }
 
@@ -377,6 +367,8 @@ void ReplPanel::flush() {
         return;
     }
 
+    m_render_scheduled = false;
+
     fputs("\033[?25l\r", stdout);
     m_visible_cursor_col = 0;
 
@@ -385,34 +377,18 @@ void ReplPanel::flush() {
         m_visible_cursor_row = 0;
     }
 
-    auto rendered_line_count = document()->num_rendered_lines();
-    for (int r = 0; r < rows() && r + document()->row_offset() < rendered_line_count; r++) {
-        if (!m_dirty_rows[r]) {
-            if (r != rows() - 1 && r + document()->row_offset() != rendered_line_count - 1) {
-                printf("\r\n");
-                m_visible_cursor_col = 0;
-                m_visible_cursor_row++;
-            } else {
-                printf("\033[%dC", cols() - 1);
-                m_visible_cursor_col = cols() - 1;
-            }
-            continue;
-        }
-        m_dirty_rows[r] = false;
-
-        printf("\r\033[0K");
-        m_visible_cursor_col = 0;
-
-        flush_row(r);
-
-        // Reset modifiers so that line prompts are unaffected.
-        m_last_metadata_rendered = Edit::CharacterMetadata();
-        fputs(string_for_metadata(m_last_metadata_rendered).string(), stdout);
-    }
+    document()->display(*this);
 
     printf("\033[0J");
     draw_cursor();
     fflush(stdout);
+}
+
+void ReplPanel::flush_if_needed() {
+    if (!m_render_scheduled) {
+        return;
+    }
+    flush();
 }
 
 Vector<Variant<Edit::KeyPress, App::MouseEvent>> ReplPanel::read_input() {
@@ -748,8 +724,7 @@ void ReplPanel::handle_suggestions(const Edit::Suggestions& suggestions) {
         m_visible_cursor_row = 0;
         m_visible_cursor_col = 0;
 
-        clear();
-        document()->display();
+        flush();
     }
 }
 
@@ -787,7 +762,7 @@ void ReplPanel::move_history_up() {
     set_document(move(new_document));
     document()->move_cursor_to_document_end(cursors().main_cursor());
     document()->scroll_cursor_into_view(cursors().main_cursor());
-    document()->display();
+    flush();
 
     m_history_index--;
 }
@@ -805,7 +780,7 @@ void ReplPanel::move_history_down() {
     set_document(move(new_document));
     document()->move_cursor_to_document_end(cursors().main_cursor());
     document()->scroll_cursor_into_view(cursors().main_cursor());
-    document()->display();
+    flush();
 
     m_history_index++;
 }
@@ -840,10 +815,11 @@ void ReplPanel::get_absolute_row_position() {
 
 int ReplPanel::enter() {
     get_absolute_row_position();
-    document()->display();
 
     fd_set set;
     for (;;) {
+        flush_if_needed();
+
         FD_ZERO(&set);
         FD_SET(STDIN_FILENO, &set);
         int ret = select(STDIN_FILENO + 1, &set, nullptr, nullptr, nullptr);
@@ -867,7 +843,7 @@ int ReplPanel::enter() {
                     auto key_event = ev.as<Edit::KeyPress>();
                     if (key_event.key == 'C' && key_event.modifiers == Edit::KeyPress::Modifier::Control) {
                         document->set_preview_auto_complete(false);
-                        document->display();
+                        flush();
                         printf("^C\r\n");
                         fflush(stdout);
                         set_quit_by_interrupt();
@@ -922,10 +898,6 @@ Maybe<String> ReplPanel::prompt(const String&) {
 }
 
 void ReplPanel::enter_search(String) {}
-
-void ReplPanel::notify_now_is_a_good_time_to_draw_cursor() {
-    draw_cursor();
-}
 
 void ReplPanel::set_clipboard_contents(String text, bool is_whole_line) {
     m_prev_clipboard_contents = move(text);

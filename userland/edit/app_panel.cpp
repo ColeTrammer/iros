@@ -69,15 +69,6 @@ AppPanel& AppPanel::ensure_search_panel() {
     return m_search_widget->panel();
 }
 
-void AppPanel::clear() {
-    m_cells.resize(m_rows * m_cols);
-    for (auto& cell : m_cells) {
-        cell.c = ' ';
-        cell.dirty = true;
-        cell.metadata = Edit::CharacterMetadata();
-    }
-}
-
 Edit::RenderedLine AppPanel::compose_line(const Edit::Line& line) const {
     auto renderer = Edit::LineRenderer { cols(), document()->word_wrap_enabled() };
     for (int index_into_line = 0; index_into_line <= line.length(); index_into_line++) {
@@ -108,16 +99,15 @@ Edit::RenderedLine AppPanel::compose_line(const Edit::Line& line) const {
     return renderer.finish();
 }
 
-void AppPanel::set_text_at(int row, int col, char c, Edit::CharacterMetadata metadata) {
-    auto& cell = m_cells[index(row, col)];
-    if (cell.c == c && cell.metadata == metadata) {
-        return;
-    }
+void AppPanel::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) {
+    auto renderer = get_renderer();
 
-    m_cells[index(row, col)] = { c, true, metadata };
+    for (size_t i = col_offset; i < static_cast<size_t>(col_offset + cols()); i++) {
+        render_cell(renderer, (i - col_offset) * col_width(), row * row_height(), text[i], metadata[i]);
+    }
 }
 
-void AppPanel::flush() {
+void AppPanel::schedule_update() {
     invalidate();
 }
 
@@ -147,12 +137,10 @@ void AppPanel::enter_search(String starting_text) {
     ensure_search_panel().document()->on_change = [this] {
         auto contents = ensure_search_panel().document()->content_string();
         document()->set_search_text(move(contents));
-        document()->display_if_needed();
     };
     ensure_search_panel().document()->on_submit = [this] {
         cursors().remove_secondary_cursors();
         document()->move_cursor_to_next_search_match(cursors().main_cursor());
-        document()->display_if_needed();
     };
     ensure_search_panel().document()->on_escape_press = [this] {
         document()->set_search_text("");
@@ -171,13 +159,6 @@ void AppPanel::enter_search(String starting_text) {
 
     m_search_widget->set_hidden(false);
     window()->set_focused_widget(&ensure_search_panel());
-}
-
-void AppPanel::notify_now_is_a_good_time_to_draw_cursor() {
-    auto cursor_position = document()->cursor_position_on_panel(cursors().main_cursor());
-    if (cursor_position.col != m_last_drawn_cursor_col || cursor_position.row != m_last_drawn_cursor_row) {
-        flush();
-    }
 }
 
 void AppPanel::notify_line_count_changed() {}
@@ -224,15 +205,15 @@ void AppPanel::render_cursor(Renderer& renderer) {
     m_last_drawn_cursor_row = cursor_pos.row;
 }
 
-void AppPanel::render_cell(Renderer& renderer, int x, int y, CellData& cell) {
-    RenderingInfo info = rendering_info_for_metadata(cell.metadata);
+void AppPanel::render_cell(Renderer& renderer, int x, int y, char c, Edit::CharacterMetadata metadata) {
+    RenderingInfo info = rendering_info_for_metadata(metadata);
 
     Color fg = info.fg.has_value() ? Color(info.fg.value()) : Color(VGA_COLOR_LIGHT_GREY);
     Color bg = info.bg.has_value() ? Color(info.bg.value()) : ColorValue::Black;
 
     auto cell_rect = Rect { x, y, col_width(), row_height() };
     renderer.fill_rect(cell_rect, bg);
-    renderer.render_text(String(cell.c), cell_rect, fg, TextAlign::Center, info.bold ? Font::bold_font() : Font::default_font());
+    renderer.render_text(String(c), cell_rect, fg, TextAlign::Center, info.bold ? Font::bold_font() : Font::default_font());
 }
 
 void AppPanel::render() {
@@ -245,15 +226,7 @@ void AppPanel::render() {
     renderer.fill_rect(bottom_extra_rect, ColorValue::Black);
     renderer.fill_rect(right_extra_rect, ColorValue::Black);
 
-    for (int r = 0; r < rows(); r++) {
-        for (int c = 0; c < cols(); c++) {
-            auto& cell = m_cells[index(r, c)];
-            if (cell.dirty || (r == m_last_drawn_cursor_row && c == m_last_drawn_cursor_col)) {
-                cell.dirty = false;
-                render_cell(renderer, c * col_width(), r * row_height(), cell);
-            }
-        }
-    }
+    document()->display(*this);
 
     render_cursor(renderer);
     Widget::render();
@@ -373,35 +346,22 @@ void AppPanel::on_key_event(const App::KeyEvent& event) {
 
 void AppPanel::document_did_change() {
     if (document()) {
-        clear();
         notify_line_count_changed();
 
         if (m_main_panel) {
             document()->on_escape_press = [this] {
                 if (m_search_widget) {
                     m_search_widget->set_hidden(true);
-                    for (auto r = 0; r < rows(); r++) {
-                        for (auto c = 0; c < cols(); c++) {
-                            auto& cell = m_cells[r * cols() + c];
-                            auto x = c * col_width();
-                            auto y = r * row_height();
-                            Rect cell_rect { x, y, col_width(), row_height() };
-                            if (m_search_widget->positioned_rect().intersects(cell_rect)) {
-                                cell.dirty = true;
-                            }
-                        }
-                    }
                 }
             };
         }
-        document()->display();
+        schedule_update();
     }
 }
 
 void AppPanel::on_resize() {
     m_rows = positioned_rect().height() / row_height();
     m_cols = positioned_rect().width() / col_width();
-    clear();
     if (document()) {
         document()->notify_panel_size_changed();
     }

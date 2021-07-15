@@ -21,6 +21,7 @@ void LineRenderer::begin_segment(int index_into_line, int optional_metadata, Pos
     m_current_range.optional_metadata = optional_metadata;
     m_current_range.index_into_line = index_into_line;
     m_current_range.type = type;
+    m_current_range.byte_count_in_rendered_string = 0;
 }
 
 void LineRenderer::add_to_segment(const StringView& text, int display_width) {
@@ -34,6 +35,7 @@ void LineRenderer::add_to_segment(const StringView& text, int display_width) {
         m_rendered_line.rendered_lines.add(move(m_current_rendered_line));
     }
 
+    m_current_range.byte_count_in_rendered_string += text.size();
     m_current_rendered_line += String(text);
     m_current_position.col += display_width;
     m_absolute_col_position += display_width;
