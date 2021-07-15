@@ -33,6 +33,21 @@ Suggestions Panel::get_suggestions() const {
     return {};
 }
 
+void Panel::set_scroll_offsets(int row_offset, int col_offset) {
+    if (m_scroll_row_offset == row_offset && m_scroll_col_offset == col_offset) {
+        return;
+    }
+
+    m_scroll_row_offset = row_offset;
+    m_scroll_col_offset = col_offset;
+    schedule_update();
+}
+
+void Panel::scroll(int vertical, int horizontal) {
+    auto row_scroll_max = document()->num_rendered_lines() - rows();
+    set_scroll_offsets(clamp(m_scroll_row_offset + vertical, 0, row_scroll_max), max(m_scroll_col_offset + horizontal, 0));
+}
+
 Panel::RenderingInfo Panel::rendering_info_for_metadata(const CharacterMetadata& metadata) const {
     RenderingInfo info;
     if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxComment) {

@@ -53,6 +53,8 @@ public:
     void display(Panel& panel) const;
     void set_needs_display();
 
+    void invalidate_all_rendered_contents();
+
     Panel& panel() { return m_panel; }
     const Panel& panel() const { return m_panel; }
 
@@ -80,11 +82,7 @@ public:
     void set_convert_tabs_to_spaces(bool b) { m_convert_tabs_to_spaces = b; }
 
     bool word_wrap_enabled() const { return m_word_wrap_enabled; }
-    void set_word_wrap_enabled(bool b) {
-        m_word_wrap_enabled = b;
-        m_col_offset = 0;
-        set_needs_display();
-    }
+    void set_word_wrap_enabled(bool b);
 
     bool modified() const { return m_document_was_modified; }
 
@@ -109,11 +107,6 @@ public:
     void move_cursor_page_up(Cursor& cursor, MovementMode mode = MovementMode::Move);
     void move_cursor_page_down(Cursor& cursor, MovementMode mode = MovementMode::Move);
 
-    void scroll(int vertical, int horizontal);
-    void scroll_up(int times = 1);
-    void scroll_down(int times = 1);
-    void scroll_left(int times = 1);
-    void scroll_right(int times = 1);
     void scroll_cursor_into_view(Cursor& cursor);
 
     TextIndex text_index_at_absolute_position(const Position& position) const;
@@ -162,9 +155,6 @@ public:
 
     bool show_line_numbers() const { return m_show_line_numbers; }
     void set_show_line_numbers(bool b);
-
-    int row_offset() const { return m_row_offset; }
-    int col_offset() const { return m_col_offset; }
 
     void clear_search();
 
@@ -264,8 +254,6 @@ private:
     TextRangeCollection m_syntax_highlighting_info;
 
     Panel& m_panel;
-    int m_row_offset { 0 };
-    int m_col_offset { 0 };
 
     bool m_word_wrap_enabled { true };
     bool m_show_line_numbers { false };

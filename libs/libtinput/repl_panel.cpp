@@ -350,7 +350,7 @@ void ReplPanel::output_line(int row, int col_offset, const StringView& text, con
 
     printf("\033[0K");
 
-    if (document()->row_offset() + row == document()->num_rendered_lines() - 1) {
+    if (scroll_row_offset() + row == document()->num_rendered_lines() - 1) {
         m_visible_cursor_row = row;
         m_visible_cursor_col = string_print_width(text);
     } else {

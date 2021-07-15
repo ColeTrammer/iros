@@ -313,6 +313,15 @@ void TerminalPanel::print_char(char c, Edit::CharacterMetadata metadata) {
 void TerminalPanel::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) {
     printf("\033[%d;%dH", m_row_offset + row + 1, m_col_offset + 1);
 
+    if (document()->show_line_numbers()) {
+        auto line_number_text = String::repeat(' ', m_cols_needed_for_line_numbers);
+        auto line_start_index = document()->text_index_at_scrolled_position({ row, 0 });
+        if (line_start_index.index_into_line() == 0) {
+            line_number_text = String::format("%*d ", m_cols_needed_for_line_numbers - 1, line_start_index.line_index() + 1);
+        }
+        printf("%s", line_number_text.string());
+    }
+
     auto cols = TerminalPanel::cols();
     for (size_t c = col_offset; c < static_cast<size_t>(cols + col_offset) && c < text.size(); c++) {
         print_char(text[c], metadata[c]);

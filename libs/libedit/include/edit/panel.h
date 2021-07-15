@@ -16,6 +16,19 @@ public:
     virtual int rows() const = 0;
     virtual int cols() const = 0;
 
+    int scroll_row_offset() const { return m_scroll_row_offset; }
+    int scroll_col_offset() const { return m_scroll_col_offset; }
+
+    void set_scroll_row_offset(int row_offset) { set_scroll_offsets(row_offset, m_scroll_col_offset); }
+    void set_scroll_col_offset(int col_offset) { set_scroll_offsets(m_scroll_row_offset, col_offset); }
+    void set_scroll_offsets(int row_offset, int col_offset);
+
+    void scroll_up(int times) { scroll(-times, 0); }
+    void scroll_down(int times) { scroll(times, 0); }
+    void scroll_left(int times) { scroll(0, -times); }
+    void scroll_right(int times) { scroll(0, times); }
+    void scroll(int vertical, int horizontal);
+
     virtual RenderedLine compose_line(const Line& line) const = 0;
     virtual void output_line(int row, int col_offset, const StringView& text, const Vector<CharacterMetadata>& metadata) = 0;
     virtual void schedule_update() = 0;
@@ -61,5 +74,7 @@ protected:
 private:
     UniquePtr<Document> m_document;
     MultiCursor m_cursors;
+    int m_scroll_row_offset { 0 };
+    int m_scroll_col_offset { 0 };
 };
 }

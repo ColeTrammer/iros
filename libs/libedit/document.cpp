@@ -168,7 +168,10 @@ void Document::set_needs_display() {
 void Document::display(Panel& panel) const {
     auto& document = const_cast<Document&>(*this);
 
-    auto render_index = text_index_at_absolute_position({ m_row_offset, 0 });
+    int scroll_row_offset = panel.scroll_row_offset();
+    int scroll_col_offset = panel.scroll_col_offset();
+
+    auto render_index = text_index_at_absolute_position({ scroll_row_offset, 0 });
     auto relative_start_position =
         line_at_index(render_index.line_index()).relative_position_of_index(*this, panel, render_index.index_into_line());
     render_index.set_index_into_line(0);
@@ -178,10 +181,11 @@ void Document::display(Panel& panel) const {
     DocumentTextRangeIterator metadata_iterator(render_index, m_syntax_highlighting_info, m_search_results, selection_collection,
                                                 cursor_collection);
 
-    int row = m_row_offset;
-    for (; render_index.line_index() < num_lines() && row < m_row_offset + panel.rows();) {
+    int row = scroll_row_offset;
+    for (; render_index.line_index() < num_lines() && row < scroll_row_offset + panel.rows();) {
         auto& line = line_at_index(render_index.line_index());
-        row += line.render(document, document.panel(), metadata_iterator, m_col_offset, relative_start_position.row, row - m_row_offset);
+        row += line.render(document, document.panel(), metadata_iterator, scroll_col_offset, relative_start_position.row,
+                           row - scroll_row_offset);
         render_index.set_line_index(render_index.line_index() + 1);
         relative_start_position = { 0, 0 };
     }
@@ -205,7 +209,7 @@ TextIndex Document::text_index_at_absolute_position(const Position& position) co
 }
 
 TextIndex Document::text_index_at_scrolled_position(const Position& position) const {
-    return text_index_at_absolute_position({ position.row + m_row_offset, position.col + m_col_offset });
+    return text_index_at_absolute_position({ position.row + m_panel.scroll_row_offset(), position.col + m_panel.scroll_col_offset() });
 }
 
 Position Document::relative_to_absolute_position(const Panel& panel, const Line& reference_line,
@@ -223,7 +227,7 @@ int Document::num_rendered_lines() const {
 
 Position Document::cursor_position_on_panel(Cursor& cursor) const {
     auto position = cursor.absolute_position(*this, m_panel);
-    return { position.row - m_row_offset, position.col - m_col_offset };
+    return { position.row - m_panel.scroll_row_offset(), position.col - m_panel.scroll_col_offset() };
 }
 
 int Document::index_of_line(const Line& line) const {
@@ -431,7 +435,7 @@ void Document::move_cursor_to_line_end(Cursor& cursor, MovementMode mode) {
         set_needs_display();
     }
 
-    m_col_offset = 0;
+    m_panel.set_scroll_col_offset(0);
     cursor.set_index_into_line(line.length());
 }
 
@@ -445,65 +449,17 @@ void Document::move_cursor_to_document_end(Cursor& cursor, MovementMode mode) {
     move_cursor_to(cursor, { last_line_index, last_line.length() }, mode);
 }
 
-void Document::scroll(int vertical, int horizontal) {
-    if (vertical < 0) {
-        scroll_up(-vertical);
-    } else if (vertical > 0) {
-        scroll_down(vertical);
-    }
-
-    if (horizontal < 0) {
-        scroll_left(-horizontal);
-    } else if (horizontal > 0) {
-        scroll_right(horizontal);
-    }
-}
-
-void Document::scroll_up(int times) {
-    for (int i = 0; i < times; i++) {
-        if (m_row_offset > 0) {
-            m_row_offset--;
-            set_needs_display();
-        }
-    }
-}
-
-void Document::scroll_down(int times) {
-    for (int i = 0; i < times; i++) {
-        if (m_row_offset + m_panel.rows() < num_rendered_lines()) {
-            m_row_offset++;
-            set_needs_display();
-        }
-    }
-}
-
-void Document::scroll_left(int times) {
-    for (int i = 0; i < times; i++) {
-        if (m_col_offset > 0) {
-            m_col_offset--;
-            set_needs_display();
-        }
-    }
-}
-
-void Document::scroll_right(int times) {
-    for (int i = 0; i < times; i++) {
-        m_col_offset++;
-        set_needs_display();
-    }
-}
-
 void Document::scroll_cursor_into_view(Cursor& cursor) {
     if (cursor_position_on_panel(cursor).row < 0) {
-        scroll_up(-cursor_position_on_panel(cursor).row);
+        m_panel.scroll_up(-cursor_position_on_panel(cursor).row);
     } else if (cursor_position_on_panel(cursor).row >= m_panel.rows()) {
-        scroll_down(cursor_position_on_panel(cursor).row - m_panel.rows() + 1);
+        m_panel.scroll_down(cursor_position_on_panel(cursor).row - m_panel.rows() + 1);
     }
 
     if (cursor_position_on_panel(cursor).col < 0) {
-        scroll_left(-cursor_position_on_panel(cursor).col);
+        m_panel.scroll_left(-cursor_position_on_panel(cursor).col);
     } else if (cursor_position_on_panel(cursor).col >= m_panel.cols()) {
-        scroll_right(cursor_position_on_panel(cursor).col - m_panel.cols() + 1);
+        m_panel.scroll_right(cursor_position_on_panel(cursor).col - m_panel.cols() + 1);
     }
 }
 
@@ -835,6 +791,16 @@ void Document::set_show_line_numbers(bool b) {
     }
 }
 
+void Document::set_word_wrap_enabled(bool b) {
+    if (m_word_wrap_enabled == b) {
+        return;
+    }
+
+    m_word_wrap_enabled = b;
+    m_panel.set_scroll_col_offset(0);
+    invalidate_all_rendered_contents();
+}
+
 void Document::set_preview_auto_complete(bool b) {
     if (m_preview_auto_complete == b) {
         return;
@@ -844,11 +810,16 @@ void Document::set_preview_auto_complete(bool b) {
     m_panel.cursors().main_cursor().referenced_line(*this).invalidate_rendered_contents();
 }
 
+void Document::invalidate_all_rendered_contents() {
+    for (auto& line : m_lines) {
+        line.invalidate_rendered_contents();
+    }
+    set_needs_display();
+}
+
 void Document::notify_panel_size_changed() {
     if (word_wrap_enabled()) {
-        for (auto& line : m_lines) {
-            line.invalidate_rendered_contents();
-        }
+        invalidate_all_rendered_contents();
     }
     set_needs_display();
 }
@@ -876,9 +847,9 @@ void Document::go_to_line(Panel& panel) {
 
     int screen_midpoint = m_panel.rows() / 2;
     if (cursor_row_position < screen_midpoint) {
-        m_row_offset = 0;
+        m_panel.set_scroll_row_offset(0);
     } else {
-        m_row_offset = cursor_row_position - screen_midpoint;
+        m_panel.set_scroll_row_offset(cursor_row_position - screen_midpoint);
     }
 
     move_cursor_to_line_start(cursor);
@@ -1063,13 +1034,8 @@ void Document::select_line_at_cursor(Cursor& cursor) {
 }
 
 void Document::select_all(Cursor& cursor) {
-    int save_row_offset = m_row_offset;
-    int save_col_offset = m_col_offset;
-
     move_cursor_to_document_start(cursor, MovementMode::Move);
     move_cursor_to_document_end(cursor, MovementMode::Select);
-
-    scroll(save_row_offset - m_row_offset, save_col_offset - m_col_offset);
 }
 
 bool Document::notify_mouse_event(MultiCursor& cursors, const App::MouseEvent& event) {
@@ -1098,7 +1064,7 @@ bool Document::notify_mouse_event(MultiCursor& cursors, const App::MouseEvent& e
         move_cursor_to(cursor, { event.y(), event.x() }, MovementMode::Select);
         handled = true;
     } else if (event.mouse_scroll()) {
-        scroll(2 * event.z(), 0);
+        m_panel.scroll(2 * event.z(), 0);
         handled = true;
     }
 
@@ -1160,7 +1126,7 @@ void Document::notify_key_pressed(MultiCursor& cursors, KeyPress press) {
                 if (press.modifiers & KeyPress::Modifier::Shift) {
                     cursors.add_cursor(*this, AddCursorMode::Down);
                 } else {
-                    scroll_down();
+                    m_panel.scroll_down(1);
                     should_scroll_cursor_into_view = false;
                 }
                 break;
@@ -1168,7 +1134,7 @@ void Document::notify_key_pressed(MultiCursor& cursors, KeyPress press) {
                 if (press.modifiers & KeyPress::Modifier::Shift) {
                     cursors.add_cursor(*this, AddCursorMode::Up);
                 } else {
-                    scroll_up();
+                    m_panel.scroll_up(1);
                     should_scroll_cursor_into_view = false;
                 }
                 break;
