@@ -835,6 +835,15 @@ void Document::set_show_line_numbers(bool b) {
     }
 }
 
+void Document::set_preview_auto_complete(bool b) {
+    if (m_preview_auto_complete == b) {
+        return;
+    }
+
+    m_preview_auto_complete = b;
+    m_panel.cursors().main_cursor().referenced_line(*this).invalidate_rendered_contents();
+}
+
 void Document::notify_panel_size_changed() {
     if (word_wrap_enabled()) {
         for (auto& line : m_lines) {

@@ -71,7 +71,7 @@ public:
     void set_auto_complete_mode(AutoCompleteMode mode) { m_auto_complete_mode = mode; }
 
     bool preview_auto_complete() const { return m_preview_auto_complete; }
-    void set_preview_auto_complete(bool b) { m_preview_auto_complete = b; }
+    void set_preview_auto_complete(bool b);
 
     String content_string() const;
     size_t cursor_index_in_content_string(const Cursor& cursor) const;
