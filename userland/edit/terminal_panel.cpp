@@ -318,6 +318,10 @@ void TerminalPanel::output_line(int row, int col_offset, const StringView& text,
         print_char(text[c], metadata[c]);
     }
 
+    // Reset modifiers after every render, so that status bar, tty clear command, etc. are unaffected.
+    m_last_metadata_rendered = Edit::CharacterMetadata();
+    fputs(string_for_metadata(m_last_metadata_rendered).string(), stdout);
+
     printf("\033[K");
 }
 
@@ -373,10 +377,6 @@ void TerminalPanel::flush() {
     fputs("\033[?25l", stdout);
 
     document()->display(*this);
-
-    // Reset modifiers after every render, so that status bar, etc. are unaffected.
-    m_last_metadata_rendered = Edit::CharacterMetadata();
-    fputs(string_for_metadata(m_last_metadata_rendered).string(), stdout);
 
     printf("\033[0J");
 
