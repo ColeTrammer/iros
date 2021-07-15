@@ -96,7 +96,7 @@ Edit::RenderedLine AppPanel::compose_line(const Edit::Line& line) const {
         }
         renderer.end_segment();
     }
-    return renderer.finish();
+    return renderer.finish(line);
 }
 
 void AppPanel::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) {

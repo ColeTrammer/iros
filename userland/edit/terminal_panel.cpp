@@ -349,7 +349,7 @@ Edit::RenderedLine TerminalPanel::compose_line(const Edit::Line& line) const {
         }
         renderer.end_segment();
     }
-    return renderer.finish();
+    return renderer.finish(line);
 }
 
 void TerminalPanel::do_open_prompt() {

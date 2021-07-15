@@ -18,6 +18,7 @@ enum class PositionRangeType {
 struct PositionRange {
     Position start;
     Position end;
+    int start_absolute_col;
     int index_into_line { 0 };
     int optional_metadata { 0 };
     int byte_count_in_rendered_string { 0 };
@@ -26,7 +27,7 @@ struct PositionRange {
 
 struct RenderedLine {
     Vector<String> rendered_lines;
-    Vector<PositionRange> position_ranges;
+    Vector<Vector<PositionRange>> position_ranges;
 };
 
 class Line {
@@ -67,11 +68,18 @@ public:
 
 private:
     void compute_rendered_contents(const Document& document, const Panel& panel) const;
-    int range_index_of_relative_position(const Document& document, const Panel& panel, const Position& position) const;
+
+    enum class RangeFor {
+        Text,
+        Cursor,
+    };
+
+    const PositionRange* range_for_relative_position(const Document& document, const Panel& panel, const Position& position) const;
+    const PositionRange* range_for_index_into_line(const Document& documnet, const Panel& panel, int index_into_line, RangeFor mode) const;
 
     String m_contents;
     mutable Vector<String> m_rendered_lines;
-    mutable Vector<PositionRange> m_position_ranges;
+    mutable Vector<Vector<PositionRange>> m_position_ranges;
 };
 
 struct LineSplitResult {
