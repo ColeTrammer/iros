@@ -49,11 +49,12 @@ public:
     void notify_inserted_line(int index);
     void notify_removed_line(int index);
 
-    void set_document(UniquePtr<Document> document);
-    UniquePtr<Document> take_document();
+    void set_document(SharedPtr<Document> document);
 
     Document* document() { return m_document.get(); }
     const Document* document() const { return m_document.get(); }
+
+    SharedPtr<Document> document_as_shared() const { return m_document; }
 
     MultiCursor& cursors() { return m_cursors; }
     const MultiCursor& cursors() const { return m_cursors; }
@@ -77,7 +78,7 @@ protected:
     virtual void document_did_change() {}
 
 private:
-    UniquePtr<Document> m_document;
+    SharedPtr<Document> m_document;
     MultiCursor m_cursors;
     Vector<RenderedLine> m_rendered_lines;
     int m_scroll_row_offset { 0 };

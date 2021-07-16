@@ -15,11 +15,11 @@ InputResult TerminalInputSource::get_input() {
     for (;;) {
         ReplPanel panel(repl());
         auto document = Edit::Document::create_single_line(panel);
+        panel.set_document(document);
         document->set_type(repl().get_input_type());
         document->set_auto_complete_mode(Edit::AutoCompleteMode::Always);
         document->set_preview_auto_complete(true);
         document->set_word_wrap_enabled(true);
-        panel.set_document(move(document));
         panel.enter();
 
         if (panel.quit_by_eof()) {

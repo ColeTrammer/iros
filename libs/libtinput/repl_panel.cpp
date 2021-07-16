@@ -726,18 +726,18 @@ void ReplPanel::handle_suggestions(const Edit::Suggestions& suggestions) {
     }
 }
 
-Vector<UniquePtr<Edit::Document>>& ReplPanel::ensure_history_documents() {
+Vector<SharedPtr<Edit::Document>>& ReplPanel::ensure_history_documents() {
     if (m_history_documents.empty()) {
         m_history_documents.resize(m_repl.history().size() + 1);
     }
     return m_history_documents;
 }
 
-void ReplPanel::put_history_document(UniquePtr<Edit::Document> document, int index) {
+void ReplPanel::put_history_document(SharedPtr<Edit::Document> document, int index) {
     ensure_history_documents()[index] = move(document);
 }
 
-UniquePtr<Edit::Document> ReplPanel::take_history_document(int index) {
+SharedPtr<Edit::Document> ReplPanel::history_document(int index) {
     auto& documents = ensure_history_documents();
     if (documents[index]) {
         return move(documents[index]);
@@ -752,14 +752,14 @@ void ReplPanel::move_history_up() {
         return;
     }
 
-    auto current_document = take_document();
-    auto new_document = take_history_document(m_history_index - 1);
+    auto current_document = document_as_shared();
+    auto new_document = history_document(m_history_index - 1);
     new_document->copy_settings_from(*current_document);
     put_history_document(move(current_document), m_history_index);
 
-    set_document(move(new_document));
-    document()->move_cursor_to_document_end(cursors().main_cursor());
-    document()->scroll_cursor_into_view(cursors().main_cursor());
+    set_document(new_document);
+    new_document->move_cursor_to_document_end(cursors().main_cursor());
+    new_document->scroll_cursor_into_view(cursors().main_cursor());
     flush();
 
     m_history_index--;
@@ -770,14 +770,14 @@ void ReplPanel::move_history_down() {
         return;
     }
 
-    auto current_document = take_document();
-    auto new_document = take_history_document(m_history_index + 1);
+    auto current_document = document_as_shared();
+    auto new_document = history_document(m_history_index + 1);
     new_document->copy_settings_from(*current_document);
     put_history_document(move(current_document), m_history_index);
 
-    set_document(move(new_document));
-    document()->move_cursor_to_document_end(cursors().main_cursor());
-    document()->scroll_cursor_into_view(cursors().main_cursor());
+    set_document(new_document);
+    new_document->move_cursor_to_document_end(cursors().main_cursor());
+    new_document->scroll_cursor_into_view(cursors().main_cursor());
     flush();
 
     m_history_index++;

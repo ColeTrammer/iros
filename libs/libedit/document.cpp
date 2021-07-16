@@ -17,7 +17,7 @@ static inline int isword(int c) {
     return isalnum(c) || c == '_';
 }
 
-UniquePtr<Document> Document::create_from_stdin(const String& path, Panel& panel) {
+SharedPtr<Document> Document::create_from_stdin(const String& path, Panel& panel) {
     auto file = Ext::File(stdin);
     file.set_should_close_file(false);
 
@@ -29,7 +29,7 @@ UniquePtr<Document> Document::create_from_stdin(const String& path, Panel& panel
         },
         Ext::StripTrailingNewlines::Yes);
 
-    UniquePtr<Document> ret;
+    SharedPtr<Document> ret;
 
     if (!result) {
         panel.send_status_message(String::format("error reading stdin: `%s'", strerror(file.error())));
@@ -37,19 +37,19 @@ UniquePtr<Document> Document::create_from_stdin(const String& path, Panel& panel
         ret->set_name(path);
     } else {
         lines.add(Line(""));
-        ret = make_unique<Document>(move(lines), path, panel, InputMode::Document);
+        ret = make_shared<Document>(move(lines), path, panel, InputMode::Document);
     }
 
     assert(freopen("/dev/tty", "r+", stdin));
     return ret;
 }
 
-UniquePtr<Document> Document::create_from_file(const String& path, Panel& panel) {
+SharedPtr<Document> Document::create_from_file(const String& path, Panel& panel) {
     auto file = Ext::File::create(path, "r");
     if (!file) {
         if (errno == ENOENT) {
             panel.send_status_message(String::format("new file: `%s'", path.string()));
-            return make_unique<Document>(Vector<Line>(), path, panel, InputMode::Document);
+            return make_shared<Document>(Vector<Line>(), path, panel, InputMode::Document);
         }
         panel.send_status_message(String::format("error accessing file: `%s': `%s'", path.string(), strerror(errno)));
         return Document::create_empty(panel);
@@ -63,14 +63,14 @@ UniquePtr<Document> Document::create_from_file(const String& path, Panel& panel)
         },
         Ext::StripTrailingNewlines::Yes);
 
-    UniquePtr<Document> ret;
+    SharedPtr<Document> ret;
 
     if (!result) {
         panel.send_status_message(String::format("error reading file: `%s': `%s'", path.string(), strerror(file->error())));
         ret = Document::create_empty(panel);
     } else {
         lines.add(Line(""));
-        ret = make_unique<Document>(move(lines), path, panel, InputMode::Document);
+        ret = make_shared<Document>(move(lines), path, panel, InputMode::Document);
     }
 
     if (!file->close()) {
@@ -80,7 +80,7 @@ UniquePtr<Document> Document::create_from_file(const String& path, Panel& panel)
     return ret;
 }
 
-UniquePtr<Document> Document::create_from_text(Panel& panel, const String& text) {
+SharedPtr<Document> Document::create_from_text(Panel& panel, const String& text) {
     auto lines_view = text.split_view('\n');
 
     Vector<Line> lines(lines_view.size());
@@ -88,17 +88,17 @@ UniquePtr<Document> Document::create_from_text(Panel& panel, const String& text)
         lines.add(Line(String(line_view)));
     }
 
-    return make_unique<Document>(move(lines), "", panel, InputMode::InputText);
+    return make_shared<Document>(move(lines), "", panel, InputMode::InputText);
 }
 
-UniquePtr<Document> Document::create_empty(Panel& panel) {
-    return make_unique<Document>(Vector<Line>(), "", panel, InputMode::Document);
+SharedPtr<Document> Document::create_empty(Panel& panel) {
+    return make_shared<Document>(Vector<Line>(), "", panel, InputMode::Document);
 }
 
-UniquePtr<Document> Document::create_single_line(Panel& panel, String text) {
+SharedPtr<Document> Document::create_single_line(Panel& panel, String text) {
     Vector<Line> lines;
     lines.add(Line(move(text)));
-    auto ret = make_unique<Document>(move(lines), "", panel, InputMode::InputText);
+    auto ret = make_shared<Document>(move(lines), "", panel, InputMode::InputText);
     ret->set_submittable(true);
     ret->set_show_line_numbers(false);
     return ret;

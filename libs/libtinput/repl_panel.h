@@ -66,9 +66,9 @@ private:
 
     int index(int row, int col) const;
 
-    Vector<UniquePtr<Edit::Document>>& ensure_history_documents();
-    void put_history_document(UniquePtr<Edit::Document> document, int history_index);
-    UniquePtr<Edit::Document> take_history_document(int history_index);
+    Vector<SharedPtr<Edit::Document>>& ensure_history_documents();
+    void put_history_document(SharedPtr<Edit::Document> document, int history_index);
+    SharedPtr<Edit::Document> history_document(int history_index);
 
     void move_history_up();
     void move_history_down();
@@ -78,7 +78,7 @@ private:
     Repl& m_repl;
     String m_main_prompt;
     String m_secondary_prompt;
-    Vector<UniquePtr<Edit::Document>> m_history_documents;
+    Vector<SharedPtr<Edit::Document>> m_history_documents;
     int m_history_index { -1 };
 
     mutable String m_prev_clipboard_contents;

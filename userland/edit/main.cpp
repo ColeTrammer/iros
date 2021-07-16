@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     }
 
     auto make_document = [&](Edit::Panel& panel) -> int {
-        UniquePtr<Edit::Document> document;
+        SharedPtr<Edit::Document> document;
         if (read_from_stdin) {
             document = Edit::Document::create_from_stdin(argv[optind] ? String(argv[optind]) : String(""), panel);
         } else if (argc - optind == 1) {

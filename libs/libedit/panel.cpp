@@ -9,7 +9,7 @@ Panel::Panel() {}
 
 Panel::~Panel() {}
 
-void Panel::set_document(UniquePtr<Document> document) {
+void Panel::set_document(SharedPtr<Document> document) {
     if (m_document == document) {
         return;
     }
@@ -17,18 +17,9 @@ void Panel::set_document(UniquePtr<Document> document) {
     m_document = move(document);
     m_cursors.remove_secondary_cursors();
     m_cursors.main_cursor().set({ 0, 0 });
+    m_rendered_lines.clear();
     notify_line_count_changed();
     document_did_change();
-}
-
-UniquePtr<Document> Panel::take_document() {
-    if (!m_document) {
-        return nullptr;
-    }
-
-    auto document = move(m_document);
-    document_did_change();
-    return document;
 }
 
 Suggestions Panel::get_suggestions() const {
