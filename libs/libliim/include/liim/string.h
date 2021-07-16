@@ -21,6 +21,7 @@ class String {
 public:
     static SharedPtr<String> wrap_malloced_chars(char* chars);
     static __attribute__((format(printf, 1, 2))) String format(const char* format, ...);
+    static String repeat(char value, size_t count);
 
     template<typename StringType>
     static String join(const Vector<StringType>& strings, char delimiter,
@@ -148,6 +149,14 @@ inline String String::format(const char* format, ...) {
     int size = vsnprintf(buffer, 2047, format, args);
     va_end(args);
     return String(buffer, size);
+}
+
+inline String String::repeat(char value, size_t count) {
+    String ret;
+    for (size_t i = 0; i < count; i++) {
+        ret += String(value);
+    }
+    return ret;
 }
 
 inline String::String(char c) {
