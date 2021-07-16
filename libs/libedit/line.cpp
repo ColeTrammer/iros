@@ -22,7 +22,14 @@ Line::Line(String contents) : m_contents(move(contents)) {}
 Line::~Line() {}
 
 void Line::overwrite(Document& document, Line&& line) {
-    m_contents = move(line.contents());
+    auto old_length = this->length();
+    auto delta_length = line.length() - old_length;
+    this->m_contents = move(line.contents());
+    if (delta_length < 0) {
+        document.panel().cursors().did_delete_from_line(document, document.index_of_line(*this), old_length, -delta_length);
+    } else if (delta_length > 0) {
+        document.panel().cursors().did_add_to_line(document, document.index_of_line(*this), old_length, delta_length);
+    }
     invalidate_rendered_contents(document, document.panel());
 }
 
@@ -110,21 +117,25 @@ int Line::rendered_line_count(const Document& document, Panel& panel) const {
 
 int Line::max_col_in_relative_row(const Document& document, Panel& panel, int row) const {
     auto& info = compute_rendered_contents(document, panel);
-    return info.rendered_lines[row].size();
+    return info.position_ranges[row].last().end.col;
 }
 
 void Line::insert_char_at(Document& document, int position, char c) {
     m_contents.insert(c, position);
+    document.panel().cursors().did_add_to_line(document, document.index_of_line(*this), position, 1);
     invalidate_rendered_contents(document, document.panel());
 }
 
 void Line::remove_char_at(Document& document, int position) {
     m_contents.remove_index(position);
+    document.panel().cursors().did_delete_from_line(document, document.index_of_line(*this), position, 1);
     invalidate_rendered_contents(document, document.panel());
 }
 
 void Line::combine_line(Document& document, Line& line) {
+    auto old_length = length();
     m_contents += line.contents();
+    document.panel().cursors().did_add_to_line(document, document.index_of_line(*this), old_length, line.length());
     invalidate_rendered_contents(document, document.panel());
 }
 

@@ -71,7 +71,7 @@ void MultiCursor::did_delete_lines(Document& document, int line_index, int line_
                 continue;
             }
             document.clear_selection(cursor);
-            cursor.set(document.text_index_at_absolute_position(cursor.absolute_position(document, document.panel())));
+            document.move_cursor_to(cursor, document.text_index_at_absolute_position(cursor.absolute_position(document, document.panel())));
             continue;
         }
         cursor.move_up_preserving_selection(line_count);

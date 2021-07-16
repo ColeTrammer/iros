@@ -480,21 +480,14 @@ void Document::move_cursor_page_down(Cursor& cursor, MovementMode mode) {
 
 void Document::merge_lines(Cursor& cursor, MergeLinesMode mode) {
     auto index = cursor.index();
-    auto l1i = mode == MergeLinesMode::AboveCursor ? index.line_index() - 1 : index.line_index();
-    auto l2i = l1i + 1;
+    auto l1 = mode == MergeLinesMode::AboveCursor ? index.line_index() - 1 : index.line_index();
+    auto l2 = l1 + 1;
 
-    auto& l1 = m_lines[l1i];
-    auto& l2 = m_lines[l2i];
-
-    auto l1_length = l1.length();
-    auto l2_length = l2.length();
-
-    l1.combine_line(*this, l2);
-    remove_line(l2i);
+    m_lines[l1].combine_line(*this, m_lines[l2]);
+    remove_line(l2);
     set_needs_display();
 
-    m_panel.cursors().did_delete_lines(*this, l2i, 1);
-    m_panel.cursors().did_add_to_line(*this, l1i, l1_length, l2_length);
+    move_cursor_to(cursor, index);
 }
 
 void Document::insert_char(MultiCursor& cursors, char c) {
@@ -611,6 +604,7 @@ void Document::insert_text_at_cursor(MultiCursor& cursors, const String& text) {
 }
 
 void Document::move_cursor_to(Cursor& cursor, const TextIndex& index, MovementMode mode) {
+    update_selection_state_for_mode(cursor, mode);
     while (cursor.line_index() < index.line_index()) {
         move_cursor_down(cursor, mode);
     }
@@ -636,31 +630,25 @@ void Document::delete_selection(Cursor& cursor) {
     auto line_end = end.line_index();
     auto index_end = end.index_into_line();
 
-    clear_selection(cursor);
-    move_cursor_to(cursor, start);
-
     if (line_start == line_end) {
         for (int i = index_end - 1; i >= index_start; i--) {
             m_lines[line_start].remove_char_at(*this, i);
         }
-        m_panel.cursors().did_delete_from_line(*this, line_start, index_start, index_end - index_start);
     } else {
-        auto start_length = m_lines[line_start].length();
         auto split_start = m_lines[line_start].split_at(index_start);
         auto split_end = m_lines[line_end].split_at(index_end);
         for (int i = line_end - 1; i > line_start; i--) {
             remove_line(i);
         }
-        m_panel.cursors().did_delete_lines(*this, line_start + 1, line_end - line_start - 1);
 
         m_lines[line_start].overwrite(*this, move(split_start.first));
         m_lines[line_start + 1].overwrite(*this, move(split_end.second));
-        m_panel.cursors().did_delete_from_line(*this, line_start, index_start, start_length - index_start);
-        m_panel.cursors().did_delete_from_line(*this, line_end, 0, index_end);
 
+        cursor.set(start);
         merge_lines(cursor, MergeLinesMode::BelowCursor);
     }
 
+    move_cursor_to(cursor, start);
     set_needs_display();
     m_document_was_modified = true;
 }
@@ -715,13 +703,15 @@ void Document::clear_selection(Cursor& cursor) {
 void Document::remove_line(int index) {
     m_lines.remove(index);
     m_panel.notify_removed_line(index);
-
+    m_panel.cursors().did_delete_lines(*this, index, 1);
     set_needs_display();
 }
 
 void Document::insert_line(Line&& line, int index) {
     m_lines.insert(move(line), index);
     m_panel.notify_inserted_line(index);
+    m_panel.cursors().did_add_lines(*this, index, 1);
+    set_needs_display();
 }
 
 void Document::rotate_lines_up(int start, int end) {
