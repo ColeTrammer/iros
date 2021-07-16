@@ -21,16 +21,22 @@ Line::Line(String contents) : m_contents(move(contents)) {}
 
 Line::~Line() {}
 
-void Line::overwrite(Document& document, Line&& line) {
+void Line::overwrite(Document& document, Line&& line, OverwriteFrom mode) {
     auto old_length = this->length();
     auto delta_length = line.length() - old_length;
     this->m_contents = move(line.contents());
-    if (delta_length < 0) {
-        document.panel().cursors().did_delete_from_line(document, document.index_of_line(*this), old_length, -delta_length);
-    } else if (delta_length > 0) {
-        document.panel().cursors().did_add_to_line(document, document.index_of_line(*this), old_length, delta_length);
+    if (mode == OverwriteFrom::None) {
+        return;
     }
-    invalidate_rendered_contents(document, document.panel());
+
+    auto start_index = mode == OverwriteFrom::LineStart ? 0 : min(old_length, length());
+    if (delta_length < 0) {
+        document.did_delete_from_line(document.index_of_line(*this), start_index, -delta_length);
+    } else if (delta_length > 0) {
+        document.did_add_to_line(document.index_of_line(*this), start_index, delta_length);
+    } else {
+        invalidate_rendered_contents(document, document.panel());
+    }
 }
 
 Position Line::relative_position_of_index(const Document& document, Panel& panel, int index) const {
@@ -122,21 +128,16 @@ int Line::max_col_in_relative_row(const Document& document, Panel& panel, int ro
 
 void Line::insert_char_at(Document& document, int position, char c) {
     m_contents.insert(c, position);
-    document.panel().cursors().did_add_to_line(document, document.index_of_line(*this), position, 1);
-    invalidate_rendered_contents(document, document.panel());
+    document.did_add_to_line(document.index_of_line(*this), position, 1);
 }
 
 void Line::remove_char_at(Document& document, int position) {
     m_contents.remove_index(position);
-    document.panel().cursors().did_delete_from_line(document, document.index_of_line(*this), position, 1);
-    invalidate_rendered_contents(document, document.panel());
+    document.did_delete_from_line(document.index_of_line(*this), position, 1);
 }
 
-void Line::combine_line(Document& document, Line& line) {
-    auto old_length = length();
+void Line::combine_line(Document&, Line& line) {
     m_contents += line.contents();
-    document.panel().cursors().did_add_to_line(document, document.index_of_line(*this), old_length, line.length());
-    invalidate_rendered_contents(document, document.panel());
 }
 
 void Line::search(const Document& document, const String& text, TextRangeCollection& results) const {

@@ -60,8 +60,7 @@ void MultiCursor::add_cursor(Document& document, AddCursorMode mode) {
 }
 
 void MultiCursor::did_delete_lines(Document& document, int line_index, int line_count) {
-    for (int i = 0; i < m_cursors.size(); i++) {
-        auto& cursor = m_cursors[i];
+    for (auto& cursor : m_cursors) {
         if (cursor.line_index() < line_index) {
             continue;
         }
@@ -79,8 +78,7 @@ void MultiCursor::did_delete_lines(Document& document, int line_index, int line_
 }
 
 void MultiCursor::did_add_lines(Document&, int line_index, int line_count) {
-    for (int i = 0; i < m_cursors.size(); i++) {
-        auto& cursor = m_cursors[i];
+    for (auto& cursor : m_cursors) {
         if (cursor.line_index() < line_index) {
             continue;
         }
@@ -88,9 +86,26 @@ void MultiCursor::did_add_lines(Document&, int line_index, int line_count) {
     }
 }
 
+void MultiCursor::did_split_line(Document&, int line_index, int index_into_line) {
+    for (auto& cursor : m_cursors) {
+        if (cursor.line_index() != line_index || cursor.index_into_line() < index_into_line) {
+            continue;
+        }
+        cursor.set({ line_index + 1, cursor.index_into_line() - index_into_line });
+    }
+}
+
+void MultiCursor::did_merge_lines(Document&, int first_line_index, int first_line_length, int second_line_index) {
+    for (auto& cursor : m_cursors) {
+        if (cursor.line_index() != second_line_index) {
+            continue;
+        }
+        cursor.set({ first_line_index, first_line_length + cursor.index_into_line() });
+    }
+}
+
 void MultiCursor::did_add_to_line(Document&, int line_index, int index_into_line, int bytes_added) {
-    for (int i = 0; i < m_cursors.size(); i++) {
-        auto& cursor = m_cursors[i];
+    for (auto& cursor : m_cursors) {
         if (cursor.line_index() != line_index) {
             continue;
         }
@@ -102,8 +117,7 @@ void MultiCursor::did_add_to_line(Document&, int line_index, int index_into_line
 }
 
 void MultiCursor::did_delete_from_line(Document&, int line_index, int index_into_line, int bytes_deleted) {
-    for (int i = 0; i < m_cursors.size(); i++) {
-        auto& cursor = m_cursors[i];
+    for (auto& cursor : m_cursors) {
         if (cursor.line_index() != line_index) {
             continue;
         }

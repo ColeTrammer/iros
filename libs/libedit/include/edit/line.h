@@ -11,7 +11,8 @@ public:
     explicit Line(String contents);
     ~Line();
 
-    void overwrite(Document& document, Line&& line);
+    enum class OverwriteFrom { None, LineStart, LineEnd };
+    void overwrite(Document& document, Line&& line, OverwriteFrom mode);
 
     int length() const { return m_contents.size(); }
     bool empty() const { return m_contents.size() == 0; }

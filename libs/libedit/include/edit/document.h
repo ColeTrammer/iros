@@ -19,8 +19,6 @@ enum class MovementMode { Move, Select };
 
 enum class DeleteCharMode { Backspace, Delete };
 
-enum class MergeLinesMode { AboveCursor, BelowCursor };
-
 enum class SwapDirection { Up, Down };
 
 enum class InputMode { Document, InputText };
@@ -124,7 +122,8 @@ public:
     void rotate_lines_up(int start, int end);
     void rotate_lines_down(int start, int end);
 
-    void merge_lines(Cursor& cursor, MergeLinesMode mode);
+    void split_line_at(const TextIndex& index);
+    void merge_lines(int first_line_index, int second_line_index);
 
     void set_was_modified(bool b) { m_document_was_modified = b; }
 
@@ -172,6 +171,13 @@ public:
 
     Line& last_line() { return m_lines.last(); }
     const Line& last_line() const { return m_lines.last(); }
+
+    void did_delete_lines(int line_index, int line_count);
+    void did_add_lines(int line_index, int line_count);
+    void did_split_line(int line_index, int index_into_line);
+    void did_merge_lines(int first_line_index, int first_line_length, int second_line_index);
+    void did_add_to_line(int line_index, int index_into_line, int bytes_added);
+    void did_delete_from_line(int line_index, int index_into_line, int bytes_deleted);
 
     bool execute_command(MultiCursor& cursors, Command& command);
 
@@ -226,6 +232,7 @@ private:
             m_document_was_modified = true;
             update_search_results();
             update_syntax_highlighting();
+            set_needs_display();
 
             if (on_change) {
                 on_change();

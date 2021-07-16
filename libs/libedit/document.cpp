@@ -478,18 +478,6 @@ void Document::move_cursor_page_down(Cursor& cursor, MovementMode mode) {
     }
 }
 
-void Document::merge_lines(Cursor& cursor, MergeLinesMode mode) {
-    auto index = cursor.index();
-    auto l1 = mode == MergeLinesMode::AboveCursor ? index.line_index() - 1 : index.line_index();
-    auto l2 = l1 + 1;
-
-    m_lines[l1].combine_line(*this, m_lines[l2]);
-    remove_line(l2);
-    set_needs_display();
-
-    move_cursor_to(cursor, index);
-}
-
 void Document::insert_char(MultiCursor& cursors, char c) {
     push_command<InsertCommand>(cursors, String(c));
 }
@@ -630,6 +618,7 @@ void Document::delete_selection(Cursor& cursor) {
     auto line_end = end.line_index();
     auto index_end = end.index_into_line();
 
+    clear_selection(cursor);
     if (line_start == line_end) {
         for (int i = index_end - 1; i >= index_start; i--) {
             m_lines[line_start].remove_char_at(*this, i);
@@ -641,16 +630,11 @@ void Document::delete_selection(Cursor& cursor) {
             remove_line(i);
         }
 
-        m_lines[line_start].overwrite(*this, move(split_start.first));
-        m_lines[line_start + 1].overwrite(*this, move(split_end.second));
+        m_lines[line_start].overwrite(*this, move(split_start.first), Line::OverwriteFrom::LineEnd);
+        m_lines[line_start + 1].overwrite(*this, move(split_end.second), Line::OverwriteFrom::LineStart);
 
-        cursor.set(start);
-        merge_lines(cursor, MergeLinesMode::BelowCursor);
+        merge_lines(line_start, line_start + 1);
     }
-
-    move_cursor_to(cursor, start);
-    set_needs_display();
-    m_document_was_modified = true;
 }
 
 String Document::selection_text(Cursor& cursor) const {
@@ -702,16 +686,52 @@ void Document::clear_selection(Cursor& cursor) {
 
 void Document::remove_line(int index) {
     m_lines.remove(index);
-    m_panel.notify_removed_line(index);
-    m_panel.cursors().did_delete_lines(*this, index, 1);
-    set_needs_display();
+    did_delete_lines(index, 1);
 }
 
 void Document::insert_line(Line&& line, int index) {
     m_lines.insert(move(line), index);
-    m_panel.notify_inserted_line(index);
-    m_panel.cursors().did_add_lines(*this, index, 1);
-    set_needs_display();
+    did_add_lines(index, 1);
+}
+
+void Document::merge_lines(int l1, int l2) {
+    assert(l1 + 1 == l2);
+    auto old_l1_length = m_lines[l1].length();
+    m_lines[l1].combine_line(*this, m_lines[l2]);
+    m_lines.remove(l2);
+    did_merge_lines(l1, old_l1_length, l2);
+}
+
+void Document::split_line_at(const TextIndex& index) {
+    auto& line = line_at_index(index.line_index());
+    auto split_result = line.split_at(index.index_into_line());
+    line.overwrite(*this, move(split_result.first), Line::OverwriteFrom::None);
+    m_lines.insert(move(split_result.second), index.line_index() + 1);
+    did_split_line(index.line_index(), index.index_into_line());
+}
+
+void Document::did_delete_lines(int line_index, int line_count) {
+    m_panel.notify_did_delete_lines(line_index, line_count);
+}
+
+void Document::did_add_lines(int line_index, int line_count) {
+    m_panel.notify_did_add_lines(line_index, line_count);
+}
+
+void Document::did_split_line(int line_index, int index_into_line) {
+    m_panel.notify_did_split_line(line_index, index_into_line);
+}
+
+void Document::did_merge_lines(int first_line_index, int first_line_length, int second_line_index) {
+    m_panel.notify_did_merge_lines(first_line_index, first_line_length, second_line_index);
+}
+
+void Document::did_add_to_line(int line_index, int index_into_line, int bytes_added) {
+    m_panel.notify_did_add_to_line(line_index, index_into_line, bytes_added);
+}
+
+void Document::did_delete_from_line(int line_index, int index_into_line, int bytes_deleted) {
+    m_panel.notify_did_delete_from_line(line_index, index_into_line, bytes_deleted);
 }
 
 void Document::rotate_lines_up(int start, int end) {
@@ -768,8 +788,6 @@ void Document::paste(MultiCursor& cursors) {
     } else {
         insert_text_at_cursor(cursors, text_to_insert);
     }
-
-    set_needs_display();
 }
 
 void Document::set_show_line_numbers(bool b) {
@@ -1069,7 +1087,6 @@ void Document::finish_input(MultiCursor& cursors, bool should_scroll_cursor_into
 
     if (preview_auto_complete()) {
         cursors.main_cursor().referenced_line(*this).invalidate_rendered_contents(*this, m_panel);
-        set_needs_display();
     }
 
     set_needs_display();
