@@ -42,17 +42,17 @@ void AppPanel::initialize() {
     auto context_menu = App::ContextMenu::create(w, w);
     context_menu->add_menu_item("Copy", [this] {
         if (auto* doc = document()) {
-            doc->copy(cursors());
+            doc->copy(*this, cursors());
         }
     });
     context_menu->add_menu_item("Cut", [this] {
         if (auto* doc = document()) {
-            doc->cut(cursors());
+            doc->cut(*this, cursors());
         }
     });
     context_menu->add_menu_item("Paste", [this] {
         if (auto* doc = document()) {
-            doc->paste(cursors());
+            doc->paste(*this, cursors());
         }
     });
     set_context_menu(context_menu);
@@ -133,14 +133,14 @@ void AppPanel::enter_search(String starting_text) {
         return;
     }
 
-    ensure_search_panel().set_document(Edit::Document::create_single_line(ensure_search_panel(), move(starting_text)));
+    ensure_search_panel().set_document(Edit::Document::create_single_line(move(starting_text)));
     ensure_search_panel().document()->on_change = [this] {
         auto contents = ensure_search_panel().document()->content_string();
         document()->set_search_text(move(contents));
     };
     ensure_search_panel().document()->on_submit = [this] {
         cursors().remove_secondary_cursors();
-        document()->move_cursor_to_next_search_match(cursors().main_cursor());
+        document()->move_cursor_to_next_search_match(*this, cursors().main_cursor());
     };
     ensure_search_panel().document()->on_escape_press = [this] {
         document()->set_search_text("");
@@ -191,7 +191,7 @@ void AppPanel::render_cursor(Renderer& renderer) {
         return;
     }
 
-    auto cursor_pos = document()->cursor_position_on_panel(cursors().main_cursor());
+    auto cursor_pos = document()->cursor_position_on_panel(*this, cursors().main_cursor());
 
     int cursor_x = cursor_pos.col * col_width();
     int cursor_y = cursor_pos.row * row_height();
@@ -236,11 +236,11 @@ void AppPanel::on_mouse_event(const App::MouseEvent& event) {
     }
 
     auto event_copy = App::MouseEvent(event.mouse_event_type(), event.buttons_down(), event.x(), event.y(), event.z(), event.button());
-    auto text_index = document()->text_index_at_scrolled_position({ event.y() / row_height(), event.x() / col_width() });
+    auto text_index = document()->text_index_at_scrolled_position(*this, { event.y() / row_height(), event.x() / col_width() });
     event_copy.set_x(text_index.index_into_line());
     event_copy.set_y(text_index.line_index());
 
-    if (document()->notify_mouse_event(cursors(), event_copy)) {
+    if (document()->notify_mouse_event(*this, event_copy)) {
         return;
     }
 
@@ -339,7 +339,7 @@ void AppPanel::on_key_event(const App::KeyEvent& event) {
         return;
     }
 
-    document()->notify_key_pressed(cursors(), { modifiers, key });
+    document()->notify_key_pressed(*this, { modifiers, key });
 }
 
 void AppPanel::document_did_change() {

@@ -45,21 +45,21 @@ Cursor& MultiCursor::main_cursor() {
     return m_cursors[m_main_cursor_index];
 }
 
-void MultiCursor::add_cursor(Document& document, AddCursorMode mode) {
+void MultiCursor::add_cursor(Document& document, Panel& panel, AddCursorMode mode) {
     switch (mode) {
         case AddCursorMode::Up:
             m_cursors.insert(m_cursors.first(), 0);
-            document.move_cursor_up(m_cursors.first());
+            document.move_cursor_up(panel, m_cursors.first());
             m_main_cursor_index++;
             break;
         case AddCursorMode::Down:
             m_cursors.add(m_cursors.last());
-            document.move_cursor_down(m_cursors.last());
+            document.move_cursor_down(panel, m_cursors.last());
             break;
     }
 }
 
-void MultiCursor::did_delete_lines(Document& document, Panel&, int line_index, int line_count) {
+void MultiCursor::did_delete_lines(Document& document, Panel& panel, int line_index, int line_count) {
     for (auto& cursor : m_cursors) {
         if (cursor.line_index() < line_index) {
             continue;
@@ -70,7 +70,8 @@ void MultiCursor::did_delete_lines(Document& document, Panel&, int line_index, i
                 continue;
             }
             document.clear_selection(cursor);
-            document.move_cursor_to(cursor, document.text_index_at_absolute_position(cursor.absolute_position(document, document.panel())));
+            document.move_cursor_to(panel, cursor,
+                                    document.text_index_at_absolute_position(panel, cursor.absolute_position(document, panel)));
             continue;
         }
         cursor.move_up_preserving_selection(line_count);

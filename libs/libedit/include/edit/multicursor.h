@@ -20,7 +20,7 @@ public:
     Cursor& main_cursor();
     const Cursor& main_cursor() const { return const_cast<MultiCursor&>(*this).main_cursor(); }
 
-    void add_cursor(Document& document, AddCursorMode mode);
+    void add_cursor(Document& document, Panel& panel, AddCursorMode mode);
 
     void did_delete_lines(Document& document, Panel& panel, int line_index, int line_count);
     void did_add_lines(Document& document, Panel& panel, int line_index, int line_count);

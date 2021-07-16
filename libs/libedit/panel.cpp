@@ -7,14 +7,23 @@
 namespace Edit {
 Panel::Panel() {}
 
-Panel::~Panel() {}
+Panel::~Panel() {
+    set_document(nullptr);
+}
 
 void Panel::set_document(SharedPtr<Document> document) {
     if (m_document == document) {
         return;
     }
 
+    if (m_document) {
+        m_document->unregister_panel(*this);
+    }
     m_document = move(document);
+    if (m_document) {
+        m_document->register_panel(*this);
+    }
+
     m_cursors.remove_secondary_cursors();
     m_cursors.main_cursor().set({ 0, 0 });
     m_rendered_lines.clear();
@@ -37,7 +46,7 @@ void Panel::set_scroll_offsets(int row_offset, int col_offset) {
 }
 
 void Panel::scroll(int vertical, int horizontal) {
-    auto row_scroll_max = document()->num_rendered_lines() - rows();
+    auto row_scroll_max = document()->num_rendered_lines(*this) - rows();
     set_scroll_offsets(clamp(m_scroll_row_offset + vertical, 0, row_scroll_max), max(m_scroll_col_offset + horizontal, 0));
 }
 

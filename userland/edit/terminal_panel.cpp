@@ -249,7 +249,7 @@ int TerminalPanel::cols() const {
 }
 
 void TerminalPanel::draw_cursor() {
-    auto cursor_pos = document()->cursor_position_on_panel(cursors().main_cursor());
+    auto cursor_pos = document()->cursor_position_on_panel(*this, cursors().main_cursor());
     auto cursor_row = cursor_pos.row;
     auto cursor_col = cursor_pos.col;
     if (cursor_row >= 0 && cursor_row < rows() && cursor_col >= 0 && cursor_col < cols()) {
@@ -317,7 +317,7 @@ void TerminalPanel::output_line(int row, int col_offset, const StringView& text,
 
     if (document()->show_line_numbers()) {
         auto line_number_text = String::repeat(' ', m_cols_needed_for_line_numbers);
-        auto line_start_index = document()->text_index_at_scrolled_position({ row, 0 });
+        auto line_start_index = document()->text_index_at_scrolled_position(*this, { row, 0 });
         if (line_start_index.index_into_line() == 0) {
             line_number_text = String::format("%*d ", m_cols_needed_for_line_numbers - 1, line_start_index.line_index() + 1);
         }
@@ -600,7 +600,7 @@ Vector<Variant<Edit::KeyPress, App::MouseEvent>> TerminalPanel::read_input() {
                 R out_events;
                 for (auto& event : events) {
                     auto text_index = document()->text_index_at_scrolled_position(
-                        { cy - m_row_offset - 1, cx - m_col_offset - m_cols_needed_for_line_numbers - 1 });
+                        *this, { cy - m_row_offset - 1, cx - m_col_offset - m_cols_needed_for_line_numbers - 1 });
                     event->set_y(text_index.line_index());
                     event->set_x(text_index.index_into_line());
                     out_events.add(*event);
@@ -715,9 +715,9 @@ int TerminalPanel::enter() {
         if (auto* document = Panel::document()) {
             for (auto& ev : input) {
                 if (ev.is<Edit::KeyPress>()) {
-                    document->notify_key_pressed(cursors(), ev.as<Edit::KeyPress>());
+                    document->notify_key_pressed(*this, ev.as<Edit::KeyPress>());
                 } else {
-                    document->notify_mouse_event(cursors(), ev.as<App::MouseEvent>());
+                    document->notify_mouse_event(*this, ev.as<App::MouseEvent>());
                 }
             }
         }
@@ -742,7 +742,7 @@ Maybe<String> TerminalPanel::enter_prompt(const String& message, String staring_
     s_prompt_panel = &text_panel;
     s_prompt_message = message;
 
-    auto document = Edit::Document::create_single_line(text_panel, move(staring_text));
+    auto document = Edit::Document::create_single_line(move(staring_text));
     document->on_submit = [&] {
         text_panel.m_exit_code = 0;
         text_panel.m_should_exit = true;
@@ -779,7 +779,7 @@ void TerminalPanel::enter_search(String starting_text) {
     s_prompt_panel = &text_panel;
     s_prompt_message = message;
 
-    auto document = Edit::Document::create_single_line(text_panel, move(starting_text));
+    auto document = Edit::Document::create_single_line(move(starting_text));
     text_panel.set_document(move(document));
 
     m_show_status_bar = false;
@@ -808,7 +808,7 @@ void TerminalPanel::enter_search(String starting_text) {
                 auto& press = ev.as<Edit::KeyPress>();
                 if (press.key == Edit::KeyPress::Key::Enter) {
                     cursors().remove_secondary_cursors();
-                    TerminalPanel::document()->move_cursor_to_next_search_match(cursors().main_cursor());
+                    TerminalPanel::document()->move_cursor_to_next_search_match(*this, cursors().main_cursor());
                 }
 
                 if (press.key == Edit::KeyPress::Key::Escape ||
@@ -816,9 +816,9 @@ void TerminalPanel::enter_search(String starting_text) {
                     goto exit_search;
                 }
 
-                text_panel.document()->notify_key_pressed(cursors(), press);
+                text_panel.document()->notify_key_pressed(*this, press);
             } else {
-                text_panel.document()->notify_mouse_event(cursors(), ev.as<App::MouseEvent>());
+                text_panel.document()->notify_mouse_event(*this, ev.as<App::MouseEvent>());
             }
         }
 

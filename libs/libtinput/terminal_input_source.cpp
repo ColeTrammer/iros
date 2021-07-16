@@ -14,7 +14,7 @@ InputResult TerminalInputSource::get_input() {
 
     for (;;) {
         ReplPanel panel(repl());
-        auto document = Edit::Document::create_single_line(panel);
+        auto document = Edit::Document::create_single_line();
         panel.set_document(document);
         document->set_type(repl().get_input_type());
         document->set_auto_complete_mode(Edit::AutoCompleteMode::Always);

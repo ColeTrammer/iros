@@ -201,7 +201,7 @@ void ReplPanel::document_did_change() {
 
             if (input_status == InputStatus::Finished) {
                 cursors().remove_secondary_cursors();
-                document()->move_cursor_to_document_end(cursors().main_cursor());
+                document()->move_cursor_to_document_end(*this, cursors().main_cursor());
                 document()->set_preview_auto_complete(false);
                 flush();
                 printf("\r\n");
@@ -212,8 +212,8 @@ void ReplPanel::document_did_change() {
 
             document()->insert_line(Edit::Line(""), document()->num_lines());
             cursors().remove_secondary_cursors();
-            document()->move_cursor_to_document_end(cursors().main_cursor());
-            document()->scroll_cursor_into_view(cursors().main_cursor());
+            document()->move_cursor_to_document_end(*this, cursors().main_cursor());
+            document()->scroll_cursor_into_view(*this, cursors().main_cursor());
             flush_if_needed();
         };
 
@@ -292,7 +292,7 @@ Edit::RenderedLine ReplPanel::compose_line(const Edit::Line& line) const {
 }
 
 void ReplPanel::draw_cursor() {
-    auto cursor_pos = document()->cursor_position_on_panel(cursors().main_cursor());
+    auto cursor_pos = document()->cursor_position_on_panel(*this, cursors().main_cursor());
     auto cursor_row = cursor_pos.row;
     auto cursor_col = cursor_pos.col;
 
@@ -348,7 +348,7 @@ void ReplPanel::output_line(int row, int col_offset, const StringView& text, con
 
     printf("\033[0K");
 
-    if (scroll_row_offset() + row == document()->num_rendered_lines() - 1) {
+    if (scroll_row_offset() + row == document()->num_rendered_lines(*this) - 1) {
         m_visible_cursor_row = row;
         m_visible_cursor_col = string_print_width(text);
     } else {
@@ -585,7 +585,7 @@ Vector<Variant<Edit::KeyPress, App::MouseEvent>> ReplPanel::read_input() {
 
                 R out_events;
                 for (auto& event : events) {
-                    auto text_index = document()->text_index_at_scrolled_position({ cy - m_absolute_row_position - 1, cx - 1 });
+                    auto text_index = document()->text_index_at_scrolled_position(*this, { cy - m_absolute_row_position - 1, cx - 1 });
                     event->set_y(text_index.line_index());
                     event->set_x(text_index.index_into_line());
                     out_events.add(*event);
@@ -708,7 +708,7 @@ Edit::Suggestions ReplPanel::get_suggestions() const {
 
 void ReplPanel::handle_suggestions(const Edit::Suggestions& suggestions) {
     if (++m_consecutive_tabs >= 2) {
-        auto cursor_row_max = min(rows(), document()->num_rendered_lines()) - 1;
+        auto cursor_row_max = min(rows(), document()->num_rendered_lines(*this)) - 1;
         if (m_visible_cursor_row < cursor_row_max) {
             printf("\033[%dB", cursor_row_max - m_visible_cursor_row);
         }
@@ -744,7 +744,7 @@ SharedPtr<Edit::Document> ReplPanel::history_document(int index) {
     }
 
     auto& new_document_text = m_repl.history().item(index);
-    return Edit::Document::create_from_text(*this, new_document_text);
+    return Edit::Document::create_from_text(new_document_text);
 }
 
 void ReplPanel::move_history_up() {
@@ -758,8 +758,8 @@ void ReplPanel::move_history_up() {
     put_history_document(move(current_document), m_history_index);
 
     set_document(new_document);
-    new_document->move_cursor_to_document_end(cursors().main_cursor());
-    new_document->scroll_cursor_into_view(cursors().main_cursor());
+    new_document->move_cursor_to_document_end(*this, cursors().main_cursor());
+    new_document->scroll_cursor_into_view(*this, cursors().main_cursor());
     flush();
 
     m_history_index--;
@@ -776,8 +776,8 @@ void ReplPanel::move_history_down() {
     put_history_document(move(current_document), m_history_index);
 
     set_document(new_document);
-    new_document->move_cursor_to_document_end(cursors().main_cursor());
-    new_document->scroll_cursor_into_view(cursors().main_cursor());
+    new_document->move_cursor_to_document_end(*this, cursors().main_cursor());
+    new_document->scroll_cursor_into_view(*this, cursors().main_cursor());
     flush();
 
     m_history_index++;
@@ -872,9 +872,9 @@ int ReplPanel::enter() {
                         m_consecutive_tabs = 0;
                     }
 
-                    document->notify_key_pressed(cursors(), ev.as<Edit::KeyPress>());
+                    document->notify_key_pressed(*this, ev.as<Edit::KeyPress>());
                 } else {
-                    document->notify_mouse_event(cursors(), ev.as<App::MouseEvent>());
+                    document->notify_mouse_event(*this, ev.as<App::MouseEvent>());
                 }
             }
         }

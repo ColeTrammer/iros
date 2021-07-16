@@ -9,7 +9,8 @@ Command::Command(Document& document) : m_document(document) {}
 
 Command::~Command() {}
 
-DeltaBackedCommand::DeltaBackedCommand(Document& document) : Command(document), m_start_snapshot(document.snapshot_state()) {
+DeltaBackedCommand::DeltaBackedCommand(Document& document, Panel& panel)
+    : Command(document), m_start_snapshot(document.snapshot_state(panel)) {
     for (auto& cursor : m_start_snapshot.cursors) {
         m_selection_texts.add(document.selection_text(cursor));
     }
@@ -17,37 +18,37 @@ DeltaBackedCommand::DeltaBackedCommand(Document& document) : Command(document), 
 
 DeltaBackedCommand::~DeltaBackedCommand() {}
 
-bool DeltaBackedCommand::execute(MultiCursor& cursors) {
-    bool was_modified = do_execute(cursors);
-    m_end_snapshot = document().snapshot_state();
+bool DeltaBackedCommand::execute(Panel& panel) {
+    bool was_modified = do_execute(panel.cursors());
+    m_end_snapshot = document().snapshot_state(panel);
     return was_modified;
 }
 
-void DeltaBackedCommand::undo(MultiCursor& cursors) {
-    document().restore_state(cursors, m_end_snapshot);
-    do_undo(cursors);
-    document().restore_state(cursors, m_start_snapshot);
+void DeltaBackedCommand::undo(Panel& panel) {
+    document().restore_state(panel.cursors(), m_end_snapshot);
+    do_undo(panel.cursors());
+    document().restore_state(panel.cursors(), m_start_snapshot);
 }
 
-void DeltaBackedCommand::redo(MultiCursor& cursors) {
-    document().restore_state(cursors, start_snapshot());
-    document().execute_command(cursors, *this);
+void DeltaBackedCommand::redo(Panel& panel) {
+    document().restore_state(panel.cursors(), start_snapshot());
+    document().execute_command(panel, *this);
 }
 
-SnapshotBackedCommand::SnapshotBackedCommand(Document& document) : Command(document), m_snapshot(document.snapshot()) {}
+SnapshotBackedCommand::SnapshotBackedCommand(Document& document, Panel& panel) : Command(document), m_snapshot(document.snapshot(panel)) {}
 
 SnapshotBackedCommand::~SnapshotBackedCommand() {}
 
-void SnapshotBackedCommand::undo(MultiCursor& cursors) {
-    document().restore(cursors, snapshot());
+void SnapshotBackedCommand::undo(Panel& panel) {
+    document().restore(panel.cursors(), snapshot());
 }
 
-void SnapshotBackedCommand::redo(MultiCursor& cursors) {
-    document().restore_state(cursors, snapshot().state);
-    document().execute_command(cursors, *this);
+void SnapshotBackedCommand::redo(Panel& panel) {
+    document().restore_state(panel.cursors(), snapshot().state);
+    document().execute_command(panel, *this);
 }
 
-InsertCommand::InsertCommand(Document& document, String text) : DeltaBackedCommand(document), m_text(move(text)) {}
+InsertCommand::InsertCommand(Document& document, Panel& panel, String text) : DeltaBackedCommand(document, panel), m_text(move(text)) {}
 
 InsertCommand::~InsertCommand() {}
 
@@ -87,7 +88,8 @@ void InsertCommand::do_insert(Document& document, MultiCursor& cursors, int curs
 
     int index_into_line = cursor.index_into_line();
     if (c == '\t' && document.convert_tabs_to_spaces()) {
-        int num_spaces = tab_width - (line.absoulte_col_offset_of_index(document, document.panel(), index_into_line) % tab_width);
+        // FIXME: what about variable width encodings/characters
+        int num_spaces = tab_width - (index_into_line % tab_width);
         for (int i = 0; i < num_spaces; i++) {
             line.insert_char_at(document, index_into_line, ' ');
         }
@@ -122,8 +124,8 @@ void InsertCommand::do_undo(MultiCursor& cursors) {
 
                 // FIXME: what if convert_tabs_to_spaces() changes value
                 if (c == '\t' && document().convert_tabs_to_spaces()) {
-                    int num_spaces =
-                        tab_width - (line.absoulte_col_offset_of_index(document(), document().panel(), index_into_line) % tab_width);
+                    // FIXME: what about variable width encodings/characters
+                    int num_spaces = tab_width - (index_into_line % tab_width);
                     for (int i = 0; i < num_spaces; i++) {
                         line.remove_char_at(document(), index_into_line);
                     }
@@ -139,7 +141,7 @@ void InsertCommand::do_undo(MultiCursor& cursors) {
     }
 }
 
-DeleteCommand::DeleteCommand(Document& document, DeleteCharMode mode) : DeltaBackedCommand(document), m_mode(mode) {}
+DeleteCommand::DeleteCommand(Document& document, Panel& panel, DeleteCharMode mode) : DeltaBackedCommand(document, panel), m_mode(mode) {}
 
 DeleteCommand::~DeleteCommand() {}
 
@@ -209,7 +211,7 @@ void DeleteCommand::do_undo(MultiCursor& cursors) {
     }
 }
 
-DeleteLineCommand::DeleteLineCommand(Document& document) : DeltaBackedCommand(document) {}
+DeleteLineCommand::DeleteLineCommand(Document& document, Panel& panel) : DeltaBackedCommand(document, panel) {}
 
 DeleteLineCommand::~DeleteLineCommand() {}
 
@@ -238,7 +240,8 @@ void DeleteLineCommand::do_undo(MultiCursor& cursors) {
     }
 }
 
-InsertLineCommand::InsertLineCommand(Document& document, String text) : DeltaBackedCommand(document), m_text(move(text)) {}
+InsertLineCommand::InsertLineCommand(Document& document, Panel& panel, String text)
+    : DeltaBackedCommand(document, panel), m_text(move(text)) {}
 
 InsertLineCommand::~InsertLineCommand() {}
 
@@ -253,7 +256,8 @@ void InsertLineCommand::do_undo(MultiCursor& cursors) {
     document().remove_line(cursors.main_cursor().line_index());
 }
 
-SwapLinesCommand::SwapLinesCommand(Document& document, SwapDirection direction) : DeltaBackedCommand(document), m_direction(direction) {}
+SwapLinesCommand::SwapLinesCommand(Document& document, Panel& panel, SwapDirection direction)
+    : DeltaBackedCommand(document, panel), m_direction(direction) {}
 
 SwapLinesCommand::~SwapLinesCommand() {}
 

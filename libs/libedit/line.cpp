@@ -35,7 +35,7 @@ void Line::overwrite(Document& document, Line&& line, OverwriteFrom mode) {
     } else if (delta_length > 0) {
         document.did_add_to_line(document.index_of_line(*this), start_index, delta_length);
     } else {
-        invalidate_rendered_contents(document, document.panel());
+        document.invalidate_rendered_contents(*this);
     }
 }
 

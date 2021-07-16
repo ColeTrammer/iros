@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
         } else if (argc - optind == 1) {
             document = Edit::Document::create_from_file(String(argv[optind]), panel);
         } else {
-            document = Edit::Document::create_empty(panel);
+            document = Edit::Document::create_empty();
         }
 
         if (!document) {
