@@ -39,7 +39,7 @@ public:
     const Selection& selection() const { return m_selection; }
 
     int max_col() const { return m_max_col; }
-    void set_max_col(int col) { m_max_col = col; }
+    void compute_max_col(const Document& document, Panel& panel);
 
 private:
     TextIndex m_index;

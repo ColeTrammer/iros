@@ -58,7 +58,7 @@ void Panel::notify_did_delete_lines(int line_index, int line_count) {
     for (int i = 0; i < line_count; i++) {
         m_rendered_lines.remove(line_index);
     }
-    m_cursors.did_delete_lines(*document(), line_index, line_count);
+    m_cursors.did_delete_lines(*document(), *this, line_index, line_count);
     notify_line_count_changed();
     schedule_update();
 }
@@ -67,7 +67,7 @@ void Panel::notify_did_add_lines(int line_index, int line_count) {
     for (int i = 0; i < line_count; i++) {
         m_rendered_lines.insert({}, line_index);
     }
-    m_cursors.did_add_lines(*document(), line_index, line_count);
+    m_cursors.did_add_lines(*document(), *this, line_index, line_count);
     notify_line_count_changed();
     schedule_update();
 }
@@ -75,7 +75,7 @@ void Panel::notify_did_add_lines(int line_index, int line_count) {
 void Panel::notify_did_split_line(int line_index, int index_into_line) {
     m_rendered_lines.insert({}, line_index + 1);
     document()->line_at_index(line_index).invalidate_rendered_contents(*document(), *this);
-    m_cursors.did_split_line(*document(), line_index, index_into_line);
+    m_cursors.did_split_line(*document(), *this, line_index, index_into_line);
     notify_line_count_changed();
     schedule_update();
 }
@@ -83,20 +83,20 @@ void Panel::notify_did_split_line(int line_index, int index_into_line) {
 void Panel::notify_did_merge_lines(int first_line_index, int first_line_length, int second_line_index) {
     m_rendered_lines.remove(second_line_index);
     document()->line_at_index(first_line_index).invalidate_rendered_contents(*document(), *this);
-    m_cursors.did_merge_lines(*document(), first_line_index, first_line_length, second_line_index);
+    m_cursors.did_merge_lines(*document(), *this, first_line_index, first_line_length, second_line_index);
     notify_line_count_changed();
     schedule_update();
 }
 
 void Panel::notify_did_add_to_line(int line_index, int index_into_line, int bytes_added) {
     document()->line_at_index(line_index).invalidate_rendered_contents(*document(), *this);
-    m_cursors.did_add_to_line(*document(), line_index, index_into_line, bytes_added);
+    m_cursors.did_add_to_line(*document(), *this, line_index, index_into_line, bytes_added);
     schedule_update();
 }
 
 void Panel::notify_did_delete_from_line(int line_index, int index_into_line, int bytes_deleted) {
     document()->line_at_index(line_index).invalidate_rendered_contents(*document(), *this);
-    m_cursors.did_delete_from_line(*document(), line_index, index_into_line, bytes_deleted);
+    m_cursors.did_delete_from_line(*document(), *this, line_index, index_into_line, bytes_deleted);
     schedule_update();
 }
 

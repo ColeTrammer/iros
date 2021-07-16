@@ -297,10 +297,6 @@ void Document::move_cursor_right(Cursor& cursor, MovementMode mode) {
     }
 
     int new_index_into_line = cursor.index_into_line() + 1;
-    int new_col_position = line.relative_position_of_index(*this, m_panel, new_index_into_line).col;
-
-    cursor.set_max_col(new_col_position);
-
     if (mode == MovementMode::Select) {
         if (selection.empty()) {
             selection.begin(cursor.index());
@@ -310,6 +306,7 @@ void Document::move_cursor_right(Cursor& cursor, MovementMode mode) {
     }
 
     cursor.set_index_into_line(new_index_into_line);
+    cursor.compute_max_col(*this, m_panel);
 }
 
 void Document::move_cursor_left(Cursor& cursor, MovementMode mode) {
@@ -334,10 +331,6 @@ void Document::move_cursor_left(Cursor& cursor, MovementMode mode) {
     }
 
     int new_index_into_line = index_into_line - 1;
-    int new_col_position = line.relative_position_of_index(*this, m_panel, new_index_into_line).col;
-
-    cursor.set_max_col(new_col_position);
-
     if (mode == MovementMode::Select) {
         if (selection.empty()) {
             selection.begin(cursor.index());
@@ -347,6 +340,7 @@ void Document::move_cursor_left(Cursor& cursor, MovementMode mode) {
     }
 
     cursor.set_index_into_line(new_index_into_line);
+    cursor.compute_max_col(*this, m_panel);
 }
 
 void Document::move_cursor_down(Cursor& cursor, MovementMode mode) {
@@ -419,14 +413,11 @@ void Document::move_cursor_to_line_start(Cursor& cursor, MovementMode mode) {
     }
 
     cursor.set_index_into_line(0);
-    cursor.set_max_col(0);
+    cursor.compute_max_col(*this, m_panel);
 }
 
 void Document::move_cursor_to_line_end(Cursor& cursor, MovementMode mode) {
     auto& line = cursor.referenced_line(*this);
-    auto new_col = line.relative_position_of_index(*this, m_panel, line.length()).col;
-
-    cursor.set_max_col(new_col);
 
     update_selection_state_for_mode(cursor, mode);
     if (mode == MovementMode::Select) {
@@ -436,6 +427,7 @@ void Document::move_cursor_to_line_end(Cursor& cursor, MovementMode mode) {
 
     m_panel.set_scroll_col_offset(0);
     cursor.set_index_into_line(line.length());
+    cursor.compute_max_col(*this, m_panel);
 }
 
 void Document::move_cursor_to_document_start(Cursor& cursor, MovementMode mode) {

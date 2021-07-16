@@ -22,12 +22,12 @@ public:
 
     void add_cursor(Document& document, AddCursorMode mode);
 
-    void did_delete_lines(Document& document, int line_index, int line_count);
-    void did_add_lines(Document& document, int line_index, int line_count);
-    void did_split_line(Document& document, int line_index, int index_into_line);
-    void did_merge_lines(Document& document, int first_line_index, int first_line_length, int second_line_index);
-    void did_add_to_line(Document& document, int line_index, int index_into_line, int bytes_added);
-    void did_delete_from_line(Document& document, int line_index, int index_into_line, int bytes_deleted);
+    void did_delete_lines(Document& document, Panel& panel, int line_index, int line_count);
+    void did_add_lines(Document& document, Panel& panel, int line_index, int line_count);
+    void did_split_line(Document& document, Panel& panel, int line_index, int index_into_line);
+    void did_merge_lines(Document& document, Panel& panel, int first_line_index, int first_line_length, int second_line_index);
+    void did_add_to_line(Document& document, Panel& panel, int line_index, int index_into_line, int bytes_added);
+    void did_delete_from_line(Document& document, Panel& panel, int line_index, int index_into_line, int bytes_deleted);
 
     bool should_show_auto_complete_text_at(const Document& document, const Line& line, int index_into_line) const;
     Maybe<String> preview_auto_complete_text(const Panel& panel) const;

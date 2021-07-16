@@ -24,6 +24,10 @@ Position Cursor::absolute_position(const Document& document, Panel& panel) const
     return document.relative_to_absolute_position(panel, referenced_line(document), relative_pos);
 }
 
+void Cursor::compute_max_col(const Document& document, Panel& panel) {
+    m_max_col = referenced_line(document).relative_position_of_index(document, panel, index_into_line()).col;
+}
+
 void Cursor::move_preserving_selection(int delta_line_index, int delta_index_into_line) {
     set({ line_index() + delta_line_index, index_into_line() + delta_index_into_line });
     m_selection.set({ m_selection.start().line_index() + delta_line_index, m_selection.start().index_into_line() + delta_index_into_line },
