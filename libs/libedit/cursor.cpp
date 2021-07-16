@@ -15,11 +15,11 @@ char Cursor::referenced_character(const Document& document) const {
     return referenced_line(document).char_at(index_into_line());
 }
 
-Position Cursor::relative_position(const Document& document, const Panel& panel) const {
+Position Cursor::relative_position(const Document& document, Panel& panel) const {
     return referenced_line(document).relative_position_of_index(document, panel, index_into_line());
 }
 
-Position Cursor::absolute_position(const Document& document, const Panel& panel) const {
+Position Cursor::absolute_position(const Document& document, Panel& panel) const {
     auto relative_pos = relative_position(document, panel);
     return document.relative_to_absolute_position(panel, referenced_line(document), relative_pos);
 }

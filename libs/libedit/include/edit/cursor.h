@@ -29,8 +29,8 @@ public:
 
     void move_preserving_selection(int delta_line_index, int delta_index_into_line);
 
-    Position relative_position(const Document& document, const Panel& panel) const;
-    Position absolute_position(const Document& document, const Panel& panel) const;
+    Position relative_position(const Document& document, Panel& panel) const;
+    Position absolute_position(const Document& document, Panel& panel) const;
 
     bool at_document_start(const Document&) const { return m_index == TextIndex { 0, 0 }; }
     bool at_document_end(const Document& document) const;

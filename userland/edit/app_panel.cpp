@@ -161,8 +161,6 @@ void AppPanel::enter_search(String starting_text) {
     window()->set_focused_widget(&ensure_search_panel());
 }
 
-void AppPanel::notify_line_count_changed() {}
-
 void AppPanel::set_clipboard_contents(String text, bool is_whole_line) {
     m_prev_clipboard_contents = move(text);
     m_prev_clipboard_contents_were_whole_line = is_whole_line;

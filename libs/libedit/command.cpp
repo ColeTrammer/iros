@@ -85,7 +85,7 @@ void InsertCommand::do_insert(Document& document, MultiCursor& cursors, int curs
         int line_index = cursor.line_index();
         auto result = line.split_at(cursor.index_into_line());
 
-        line = move(result.first);
+        line.overwrite(document, move(result.first));
         document.insert_line(move(result.second), line_index + 1);
         document.move_cursor_down(cursor);
         document.move_cursor_to_line_start(cursor);
@@ -99,12 +99,12 @@ void InsertCommand::do_insert(Document& document, MultiCursor& cursors, int curs
     if (c == '\t' && document.convert_tabs_to_spaces()) {
         int num_spaces = tab_width - (line.absoulte_col_offset_of_index(document, document.panel(), index_into_line) % tab_width);
         for (int i = 0; i < num_spaces; i++) {
-            line.insert_char_at(index_into_line, ' ');
+            line.insert_char_at(document, index_into_line, ' ');
             document.move_cursor_right(cursor);
         }
         cursors.did_add_to_line(cursor_index, cursor.line_index(), index_into_line, num_spaces);
     } else {
-        line.insert_char_at(index_into_line, c);
+        line.insert_char_at(document, index_into_line, c);
         document.move_cursor_right(cursor);
         cursors.did_add_to_line(cursor_index, cursor.line_index(), index_into_line, 1);
     }
@@ -139,10 +139,10 @@ void InsertCommand::do_undo(MultiCursor& cursors) {
                     int num_spaces =
                         tab_width - (line.absoulte_col_offset_of_index(document(), document().panel(), index_into_line) % tab_width);
                     for (int i = 0; i < num_spaces; i++) {
-                        line.remove_char_at(index_into_line);
+                        line.remove_char_at(document(), index_into_line);
                     }
                 } else {
-                    line.remove_char_at(index_into_line);
+                    line.remove_char_at(document(), index_into_line);
                 }
 
                 document().set_needs_display();
@@ -202,7 +202,7 @@ bool DeleteCommand::do_execute(MultiCursor& cursors) {
                 } else {
                     document().move_cursor_left(cursor);
                     m_deleted_chars[i] = line.char_at(index.index_into_line() - 1);
-                    line.remove_char_at(index.index_into_line() - 1);
+                    line.remove_char_at(document(), index.index_into_line() - 1);
                     cursors.did_delete_from_line(i, index.line_index(), index.index_into_line() - 1, 1);
                 }
 
@@ -233,7 +233,7 @@ bool DeleteCommand::do_execute(MultiCursor& cursors) {
                     m_deleted_chars[i] = '\n';
                 } else {
                     m_deleted_chars[i] = line.char_at(index.index_into_line());
-                    line.remove_char_at(index.index_into_line());
+                    line.remove_char_at(document(), index.index_into_line());
                     cursors.did_delete_from_line(i, index.line_index(), index.index_into_line(), 1);
                 }
 

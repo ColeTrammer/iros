@@ -231,8 +231,6 @@ int ReplPanel::index(int row, int col) const {
     return row * cols() + col;
 }
 
-void ReplPanel::notify_line_count_changed() {}
-
 static int string_print_width(const StringView& string) {
     // NOTE: naively handle TTY escape sequences as matching the regex \033(.*)[:alpha:]
     //       also UTF-8 characters are ignored.

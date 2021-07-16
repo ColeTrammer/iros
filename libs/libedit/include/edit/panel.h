@@ -45,7 +45,9 @@ public:
     virtual Suggestions get_suggestions() const;
     virtual void handle_suggestions(const Suggestions&) {}
 
-    virtual void notify_line_count_changed() {}
+    virtual void notify_line_count_changed();
+    void notify_inserted_line(int index);
+    void notify_removed_line(int index);
 
     void set_document(UniquePtr<Document> document);
     UniquePtr<Document> take_document();
@@ -66,6 +68,9 @@ public:
 
     RenderingInfo rendering_info_for_metadata(const CharacterMetadata& metadata) const;
 
+    RenderedLine& rendered_line_at_index(int index);
+    const RenderedLine& rendered_line_at_index(int index) const { return const_cast<Panel&>(*this).rendered_line_at_index(index); }
+
 protected:
     Panel();
 
@@ -74,6 +79,7 @@ protected:
 private:
     UniquePtr<Document> m_document;
     MultiCursor m_cursors;
+    Vector<RenderedLine> m_rendered_lines;
     int m_scroll_row_offset { 0 };
     int m_scroll_col_offset { 0 };
 };

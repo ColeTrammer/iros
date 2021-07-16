@@ -1,6 +1,7 @@
 #pragma once
 
 #include <edit/line.h>
+#include <edit/rendered_line.h>
 #include <liim/forward.h>
 #include <liim/string.h>
 

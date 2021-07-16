@@ -211,6 +211,8 @@ void TerminalPanel::quit() {
 }
 
 void TerminalPanel::notify_line_count_changed() {
+    Panel::notify_line_count_changed();
+
     int old_cols_needed_for_line_numbers = m_cols_needed_for_line_numbers;
     compute_cols_needed_for_line_numbers();
 

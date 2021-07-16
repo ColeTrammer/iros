@@ -26,7 +26,6 @@ public:
     virtual void send_status_message(String message) override;
     virtual Maybe<String> prompt(const String& message) override;
     virtual void enter_search(String starting_text) override;
-    virtual void notify_line_count_changed() override;
     virtual void quit() override;
 
     virtual void set_clipboard_contents(String text, bool is_whole_line) override;

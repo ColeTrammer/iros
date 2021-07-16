@@ -48,8 +48,6 @@ public:
     virtual void enter_search(String starting_text) override;
     virtual void quit() override;
 
-    virtual void notify_line_count_changed() override;
-
     virtual void set_clipboard_contents(String text, bool is_whole_line) override;
     virtual String clipboard_contents(bool& is_whole_line) const override;
 

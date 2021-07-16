@@ -1,5 +1,6 @@
 #include <edit/document.h>
 #include <edit/panel.h>
+#include <edit/rendered_line.h>
 #include <liim/string.h>
 #include <liim/vector.h>
 
@@ -16,6 +17,7 @@ void Panel::set_document(UniquePtr<Document> document) {
     m_document = move(document);
     m_cursors.remove_secondary_cursors();
     m_cursors.main_cursor().set({ 0, 0 });
+    notify_line_count_changed();
     document_did_change();
 }
 
@@ -46,6 +48,29 @@ void Panel::set_scroll_offsets(int row_offset, int col_offset) {
 void Panel::scroll(int vertical, int horizontal) {
     auto row_scroll_max = document()->num_rendered_lines() - rows();
     set_scroll_offsets(clamp(m_scroll_row_offset + vertical, 0, row_scroll_max), max(m_scroll_col_offset + horizontal, 0));
+}
+
+RenderedLine& Panel::rendered_line_at_index(int index) {
+    assert(index < m_rendered_lines.size());
+    return m_rendered_lines[index];
+}
+
+void Panel::notify_line_count_changed() {
+    if (!document()) {
+        m_rendered_lines.clear();
+        return;
+    }
+    m_rendered_lines.resize(document()->num_lines());
+}
+
+void Panel::notify_inserted_line(int index) {
+    m_rendered_lines.insert({ {}, {} }, index);
+    notify_line_count_changed();
+}
+
+void Panel::notify_removed_line(int index) {
+    m_rendered_lines.remove(index);
+    notify_line_count_changed();
 }
 
 Panel::RenderingInfo Panel::rendering_info_for_metadata(const CharacterMetadata& metadata) const {

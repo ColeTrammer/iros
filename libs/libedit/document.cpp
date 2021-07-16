@@ -212,8 +212,7 @@ TextIndex Document::text_index_at_scrolled_position(const Position& position) co
     return text_index_at_absolute_position({ position.row + m_panel.scroll_row_offset(), position.col + m_panel.scroll_col_offset() });
 }
 
-Position Document::relative_to_absolute_position(const Panel& panel, const Line& reference_line,
-                                                 const Position& line_relative_position) const {
+Position Document::relative_to_absolute_position(Panel& panel, const Line& reference_line, const Position& line_relative_position) const {
     return { reference_line.absolute_row_position(*this, panel) + line_relative_position.row, line_relative_position.col };
 }
 
@@ -490,7 +489,7 @@ void Document::merge_lines(MultiCursor& cursors, int cursor_index, MergeLinesMod
     auto l1_length = l1.length();
     auto l2_length = l2.length();
 
-    l1.combine_line(l2);
+    l1.combine_line(*this, l2);
     remove_line(l2i);
     set_needs_display();
 
@@ -643,7 +642,7 @@ void Document::delete_selection(MultiCursor& cursors, int cursor_index) {
 
     if (line_start == line_end) {
         for (int i = index_end - 1; i >= index_start; i--) {
-            m_lines[line_start].remove_char_at(i);
+            m_lines[line_start].remove_char_at(*this, i);
         }
         cursors.did_delete_from_line(cursor_index, line_start, index_start, index_end - index_start);
     } else {
@@ -655,8 +654,8 @@ void Document::delete_selection(MultiCursor& cursors, int cursor_index) {
         }
         cursors.did_delete_lines(cursor_index, line_start + 1, line_end - line_start - 1);
 
-        m_lines[line_start] = move(split_start.first);
-        m_lines[line_start + 1] = move(split_end.second);
+        m_lines[line_start].overwrite(*this, move(split_start.first));
+        m_lines[line_start + 1].overwrite(*this, move(split_end.second));
         cursors.did_delete_from_line(cursor_index, line_start, index_start, start_length - index_start);
         cursors.did_delete_from_line(cursor_index + 1, line_end, 0, index_end);
 
@@ -716,14 +715,14 @@ void Document::clear_selection(Cursor& cursor) {
 
 void Document::remove_line(int index) {
     m_lines.remove(index);
-    m_panel.notify_line_count_changed();
+    m_panel.notify_removed_line(index);
 
     set_needs_display();
 }
 
 void Document::insert_line(Line&& line, int index) {
     m_lines.insert(move(line), index);
-    m_panel.notify_line_count_changed();
+    m_panel.notify_inserted_line(index);
 }
 
 void Document::rotate_lines_up(int start, int end) {
@@ -807,12 +806,12 @@ void Document::set_preview_auto_complete(bool b) {
     }
 
     m_preview_auto_complete = b;
-    m_panel.cursors().main_cursor().referenced_line(*this).invalidate_rendered_contents();
+    m_panel.cursors().main_cursor().referenced_line(*this).invalidate_rendered_contents(*this, m_panel);
 }
 
 void Document::invalidate_all_rendered_contents() {
     for (auto& line : m_lines) {
-        line.invalidate_rendered_contents();
+        line.invalidate_rendered_contents(*this, m_panel);
     }
     set_needs_display();
 }
@@ -1080,7 +1079,7 @@ void Document::finish_input(MultiCursor& cursors, bool should_scroll_cursor_into
     }
 
     if (preview_auto_complete()) {
-        cursors.main_cursor().referenced_line(*this).invalidate_rendered_contents();
+        cursors.main_cursor().referenced_line(*this).invalidate_rendered_contents(*this, m_panel);
         set_needs_display();
     }
 

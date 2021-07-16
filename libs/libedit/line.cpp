@@ -1,8 +1,10 @@
 #include <assert.h>
+#include <edit/character_metadata.h>
 #include <edit/document.h>
 #include <edit/line.h>
 #include <edit/panel.h>
 #include <edit/position.h>
+#include <edit/rendered_line.h>
 
 namespace Edit {
 LineSplitResult Line::split_at(int position) {
@@ -19,20 +21,23 @@ Line::Line(String contents) : m_contents(move(contents)) {}
 
 Line::~Line() {}
 
-Position Line::relative_position_of_index(const Document& document, const Panel& panel, int index) const {
-    compute_rendered_contents(document, panel);
+void Line::overwrite(Document& document, Line&& line) {
+    m_contents = move(line.contents());
+    invalidate_rendered_contents(document, document.panel());
+}
+
+Position Line::relative_position_of_index(const Document& document, Panel& panel, int index) const {
+    auto& info = compute_rendered_contents(document, panel);
 
     auto* range = range_for_index_into_line(document, panel, index, RangeFor::Cursor);
     if (!range) {
-        assert(!m_position_ranges.empty());
-        return m_position_ranges.last().last().end;
+        assert(!info.position_ranges.empty());
+        return info.position_ranges.last().last().end;
     }
     return range->start;
 }
 
-int Line::absoulte_col_offset_of_index(const Document& document, const Panel& panel, int index) const {
-    compute_rendered_contents(document, panel);
-
+int Line::absoulte_col_offset_of_index(const Document& document, Panel& panel, int index) const {
     auto* range = range_for_index_into_line(document, panel, index, RangeFor::Text);
     if (!range) {
         return 0;
@@ -41,11 +46,10 @@ int Line::absoulte_col_offset_of_index(const Document& document, const Panel& pa
     return range->start_absolute_col + (range->end.col - range->start.col);
 }
 
-const PositionRange* Line::range_for_index_into_line(const Document& document, const Panel& panel, int index_into_line,
-                                                     RangeFor mode) const {
-    compute_rendered_contents(document, panel);
+const PositionRange* Line::range_for_index_into_line(const Document& document, Panel& panel, int index_into_line, RangeFor mode) const {
+    auto& info = compute_rendered_contents(document, panel);
 
-    for (auto& position_ranges : m_position_ranges) {
+    for (auto& position_ranges : info.position_ranges) {
         for (auto& range : position_ranges) {
             if (range.index_into_line == index_into_line) {
                 if (mode == RangeFor::Text && range.type == PositionRangeType::Normal) {
@@ -61,14 +65,14 @@ const PositionRange* Line::range_for_index_into_line(const Document& document, c
     return nullptr;
 }
 
-const PositionRange* Line::range_for_relative_position(const Document& document, const Panel& panel, const Position& position) const {
-    compute_rendered_contents(document, panel);
+const PositionRange* Line::range_for_relative_position(const Document& document, Panel& panel, const Position& position) const {
+    auto& info = compute_rendered_contents(document, panel);
 
-    if (position.row < 0 || position.row >= m_position_ranges.size()) {
+    if (position.row < 0 || position.row >= info.position_ranges.size()) {
         return nullptr;
     }
 
-    for (auto& range : m_position_ranges[position.row]) {
+    for (auto& range : info.position_ranges[position.row]) {
         if (position >= range.start && position < range.end) {
             return &range;
         }
@@ -76,9 +80,7 @@ const PositionRange* Line::range_for_relative_position(const Document& document,
     return nullptr;
 }
 
-int Line::index_of_relative_position(const Document& document, const Panel& panel, const Position& position) const {
-    compute_rendered_contents(document, panel);
-
+int Line::index_of_relative_position(const Document& document, Panel& panel, const Position& position) const {
     auto* range = range_for_relative_position(document, panel, position);
     if (!range) {
         return length();
@@ -86,7 +88,7 @@ int Line::index_of_relative_position(const Document& document, const Panel& pane
     return range->index_into_line;
 }
 
-int Line::absolute_row_position(const Document& document, const Panel& panel) const {
+int Line::absolute_row_position(const Document& document, Panel& panel) const {
     if (!document.word_wrap_enabled()) {
         return document.index_of_line(*this);
     }
@@ -101,36 +103,36 @@ int Line::absolute_row_position(const Document& document, const Panel& panel) co
     assert(false);
 }
 
-int Line::rendered_line_count(const Document& document, const Panel& panel) const {
-    compute_rendered_contents(document, panel);
-    return m_rendered_lines.size();
+int Line::rendered_line_count(const Document& document, Panel& panel) const {
+    auto& info = compute_rendered_contents(document, panel);
+    return info.rendered_lines.size();
 }
 
-int Line::max_col_in_relative_row(const Document& document, const Panel& panel, int row) const {
-    compute_rendered_contents(document, panel);
-    return m_rendered_lines[row].size();
+int Line::max_col_in_relative_row(const Document& document, Panel& panel, int row) const {
+    auto& info = compute_rendered_contents(document, panel);
+    return info.rendered_lines[row].size();
 }
 
-void Line::insert_char_at(int position, char c) {
+void Line::insert_char_at(Document& document, int position, char c) {
     m_contents.insert(c, position);
-    invalidate_rendered_contents();
+    invalidate_rendered_contents(document, document.panel());
 }
 
-void Line::remove_char_at(int position) {
+void Line::remove_char_at(Document& document, int position) {
     m_contents.remove_index(position);
-    invalidate_rendered_contents();
+    invalidate_rendered_contents(document, document.panel());
 }
 
-void Line::combine_line(Line& line) {
+void Line::combine_line(Document& document, Line& line) {
     m_contents += line.contents();
-    invalidate_rendered_contents();
+    invalidate_rendered_contents(document, document.panel());
 }
 
-void Line::search(const Document& document, const String& text, TextRangeCollection& results) {
+void Line::search(const Document& document, const String& text, TextRangeCollection& results) const {
     auto line_index = document.index_of_line(*this);
     int index_into_line = 0;
     for (;;) {
-        char* match = strstr(m_contents.string() + index_into_line, text.string());
+        const char* match = strstr(m_contents.string() + index_into_line, text.string());
         if (!match) {
             break;
         }
@@ -143,28 +145,34 @@ void Line::search(const Document& document, const String& text, TextRangeCollect
     }
 }
 
-void Line::compute_rendered_contents(const Document&, const Panel& panel) const {
-    if (!m_rendered_lines.empty()) {
-        return;
+void Line::invalidate_rendered_contents(const Document& document, Panel& panel) const {
+    auto& info = panel.rendered_line_at_index(document.index_of_line(*this));
+    info.rendered_lines.clear();
+    info.position_ranges.clear();
+}
+
+const RenderedLine& Line::compute_rendered_contents(const Document& document, Panel& panel) const {
+    auto& rendered_line = panel.rendered_line_at_index(document.index_of_line(*this));
+    if (!rendered_line.rendered_lines.empty()) {
+        return rendered_line;
     }
 
-    auto rendered_line = panel.compose_line(*this);
-    m_rendered_lines = move(rendered_line.rendered_lines);
-    m_position_ranges = move(rendered_line.position_ranges);
+    rendered_line = panel.compose_line(*this);
+    return rendered_line;
 }
 
 int Line::render(const Document& document, Panel& panel, DocumentTextRangeIterator& metadata_iterator, int col_offset,
                  int relative_row_start, int row_in_panel) const {
-    compute_rendered_contents(document, panel);
+    auto& info = compute_rendered_contents(document, panel);
 
     auto row_count = rendered_line_count(document, panel);
     for (int row = relative_row_start; row + row_in_panel - relative_row_start < panel.rows() && row < row_count; row++) {
-        auto& position_ranges = m_position_ranges[row];
+        auto& position_ranges = info.position_ranges[row];
         int range_index = 0;
         int index_into_line = position_ranges[range_index].index_into_line;
         metadata_iterator.advance_to_index_into_line(index_into_line);
 
-        auto& rendered_line = m_rendered_lines[row];
+        auto& rendered_line = info.rendered_lines[row];
         auto metadata_vector = Vector<CharacterMetadata>(rendered_line.size());
         for (; range_index < position_ranges.size(); range_index++) {
             auto& current_range = position_ranges[range_index];
