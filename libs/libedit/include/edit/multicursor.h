@@ -22,11 +22,11 @@ public:
 
     void add_cursor(Document& document, AddCursorMode mode);
 
-    void did_delete_lines(int cursor_index, int line_index, int line_count);
-    void did_add_lines(int cursor_index, int line_index, int line_count);
+    void did_delete_lines(Document& document, int line_index, int line_count);
+    void did_add_lines(Document& document, int line_index, int line_count);
 
-    void did_add_to_line(int cursor_index, int line_index, int index_into_line, int bytes_added);
-    void did_delete_from_line(int cursor_index, int line_index, int index_into_line, int bytes_deleted);
+    void did_add_to_line(Document& document, int line_index, int index_into_line, int bytes_added);
+    void did_delete_from_line(Document& document, int line_index, int index_into_line, int bytes_deleted);
 
     bool should_show_auto_complete_text_at(const Document& document, const Line& line, int index_into_line) const;
     Maybe<String> preview_auto_complete_text(const Panel& panel) const;

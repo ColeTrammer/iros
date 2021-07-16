@@ -1,6 +1,7 @@
 #include <edit/document.h>
 #include <edit/multicursor.h>
 #include <edit/panel.h>
+#include <edit/position.h>
 #include <edit/text_range_collection.h>
 
 namespace Edit {
@@ -58,38 +59,57 @@ void MultiCursor::add_cursor(Document& document, AddCursorMode mode) {
     }
 }
 
-void MultiCursor::did_delete_lines(int cursor_index, [[maybe_unused]] int line_index, int line_count) {
-    for (int i = cursor_index + 1; i < m_cursors.size(); i++) {
+void MultiCursor::did_delete_lines(Document& document, int line_index, int line_count) {
+    for (int i = 0; i < m_cursors.size(); i++) {
         auto& cursor = m_cursors[i];
+        if (cursor.line_index() < line_index) {
+            continue;
+        }
+        if (cursor.line_index() == line_index) {
+            if (line_index == document.num_lines()) {
+                cursor.set({ document.num_lines() - 1, document.last_line().length() });
+                continue;
+            }
+            document.clear_selection(cursor);
+            cursor.set(document.text_index_at_absolute_position(cursor.absolute_position(document, document.panel())));
+            continue;
+        }
         cursor.move_up_preserving_selection(line_count);
     }
 }
 
-void MultiCursor::did_add_lines(int cursor_index, [[maybe_unused]] int line_index, int line_count) {
-    for (int i = cursor_index + 1; i < m_cursors.size(); i++) {
+void MultiCursor::did_add_lines(Document&, int line_index, int line_count) {
+    for (int i = 0; i < m_cursors.size(); i++) {
         auto& cursor = m_cursors[i];
+        if (cursor.line_index() < line_index) {
+            continue;
+        }
         cursor.move_down_preserving_selection(line_count);
     }
 }
 
-void MultiCursor::did_add_to_line(int cursor_index, int line_index, [[maybe_unused]] int index_into_line, int bytes_added) {
-    for (int i = cursor_index + 1; i < m_cursors.size(); i++) {
+void MultiCursor::did_add_to_line(Document&, int line_index, int index_into_line, int bytes_added) {
+    for (int i = 0; i < m_cursors.size(); i++) {
         auto& cursor = m_cursors[i];
-        if (cursor.line_index() > line_index) {
-            break;
+        if (cursor.line_index() != line_index) {
+            continue;
         }
-
+        if (cursor.index_into_line() < index_into_line) {
+            continue;
+        }
         cursor.move_right_preserving_selection(bytes_added);
     }
 }
 
-void MultiCursor::did_delete_from_line(int cursor_index, int line_index, [[maybe_unused]] int index_into_line, int bytes_deleted) {
-    for (int i = cursor_index + 1; i < m_cursors.size(); i++) {
+void MultiCursor::did_delete_from_line(Document&, int line_index, int index_into_line, int bytes_deleted) {
+    for (int i = 0; i < m_cursors.size(); i++) {
         auto& cursor = m_cursors[i];
-        if (cursor.line_index() > line_index) {
-            break;
+        if (cursor.line_index() != line_index) {
+            continue;
         }
-
+        if (cursor.index_into_line() <= index_into_line) {
+            continue;
+        }
         cursor.move_left_preserving_selection(bytes_deleted);
     }
 }

@@ -55,7 +55,7 @@ bool InsertCommand::do_execute(MultiCursor& cursors) {
     for (int i = 0; i < cursors.size(); i++) {
         auto& cursor = cursors[i];
         if (!cursor.selection().empty()) {
-            document().delete_selection(cursors, i);
+            document().delete_selection(cursor);
         }
 
         if (m_text.size() == 1 && m_text[0] == '\n') {
@@ -87,11 +87,9 @@ void InsertCommand::do_insert(Document& document, MultiCursor& cursors, int curs
 
         line.overwrite(document, move(result.first));
         document.insert_line(move(result.second), line_index + 1);
-        document.move_cursor_down(cursor);
-        document.move_cursor_to_line_start(cursor);
-        document.set_needs_display();
-        cursors.did_add_lines(cursor_index, line_index, 1);
-        cursors.did_delete_from_line(cursor_index, line_index + 1, 0, document.line_at_index(line_index).length());
+        cursors.did_add_lines(document, line_index + 1, 1);
+        cursors.did_delete_from_line(document, line_index, 0, document.line_at_index(line_index).length());
+        cursor.set({ cursor.line_index() + 1, 0 });
         return;
     }
 
@@ -100,13 +98,11 @@ void InsertCommand::do_insert(Document& document, MultiCursor& cursors, int curs
         int num_spaces = tab_width - (line.absoulte_col_offset_of_index(document, document.panel(), index_into_line) % tab_width);
         for (int i = 0; i < num_spaces; i++) {
             line.insert_char_at(document, index_into_line, ' ');
-            document.move_cursor_right(cursor);
         }
-        cursors.did_add_to_line(cursor_index, cursor.line_index(), index_into_line, num_spaces);
+        cursors.did_add_to_line(document, cursor.line_index(), index_into_line, num_spaces);
     } else {
         line.insert_char_at(document, index_into_line, c);
-        document.move_cursor_right(cursor);
-        cursors.did_add_to_line(cursor_index, cursor.line_index(), index_into_line, 1);
+        cursors.did_add_to_line(document, cursor.line_index(), index_into_line, 1);
     }
 }
 
@@ -129,7 +125,7 @@ void InsertCommand::do_undo(MultiCursor& cursors) {
         for (size_t i = 0; i < m_text.size(); i++) {
             char c = m_text[i];
             if (c == '\n') {
-                document().merge_lines(cursors, cursor_index, MergeLinesMode::BelowCursor);
+                document().merge_lines(cursor, MergeLinesMode::BelowCursor);
             } else {
                 auto& line = cursor.referenced_line(document());
                 int index_into_line = cursor.index_into_line();
@@ -166,7 +162,7 @@ bool DeleteCommand::do_execute(MultiCursor& cursors) {
 
         auto& cursor = cursors[i];
         if (!cursor.selection().empty()) {
-            document().delete_selection(cursors, i);
+            document().delete_selection(cursor);
             modified = true;
             continue;
         }
@@ -181,12 +177,11 @@ bool DeleteCommand::do_execute(MultiCursor& cursors) {
                         continue;
                     }
 
-                    document().move_cursor_left(cursor);
                     document().remove_line(index.line_index());
-                    document().set_needs_display();
+                    cursors.did_delete_lines(document(), cursor.line_index(), 1);
+                    cursor.set({ index.line_index() - 1, document().line_at_index(index.line_index() - 1).length() });
                     m_deleted_chars[i] = '\n';
                     modified = true;
-                    cursors.did_delete_lines(i, cursor.line_index(), 1);
                     continue;
                 }
 
@@ -195,15 +190,14 @@ bool DeleteCommand::do_execute(MultiCursor& cursors) {
                         continue;
                     }
 
-                    document().move_cursor_up(cursor);
-                    document().move_cursor_to_line_end(cursor);
-                    document().merge_lines(cursors, i, MergeLinesMode::BelowCursor);
+                    auto prev_line_length = document().line_at_index(index.line_index() - 1).length();
+                    document().merge_lines(cursor, MergeLinesMode::AboveCursor);
+                    cursor.set({ index.line_index() - 1, prev_line_length });
                     m_deleted_chars[i] = '\n';
                 } else {
-                    document().move_cursor_left(cursor);
                     m_deleted_chars[i] = line.char_at(index.index_into_line() - 1);
                     line.remove_char_at(document(), index.index_into_line() - 1);
-                    cursors.did_delete_from_line(i, index.line_index(), index.index_into_line() - 1, 1);
+                    cursors.did_delete_from_line(document(), index.line_index(), index.index_into_line() - 1, 1);
                 }
 
                 document().set_needs_display();
@@ -220,7 +214,7 @@ bool DeleteCommand::do_execute(MultiCursor& cursors) {
                     document().set_needs_display();
                     m_deleted_chars[i] = '\n';
                     modified = true;
-                    cursors.did_delete_lines(i, index.line_index(), 1);
+                    cursors.did_delete_lines(document(), index.line_index(), 1);
                     continue;
                 }
 
@@ -229,12 +223,12 @@ bool DeleteCommand::do_execute(MultiCursor& cursors) {
                         return false;
                     }
 
-                    document().merge_lines(cursors, i, MergeLinesMode::BelowCursor);
+                    document().merge_lines(cursor, MergeLinesMode::BelowCursor);
                     m_deleted_chars[i] = '\n';
                 } else {
                     m_deleted_chars[i] = line.char_at(index.index_into_line());
                     line.remove_char_at(document(), index.index_into_line());
-                    cursors.did_delete_from_line(i, index.line_index(), index.index_into_line(), 1);
+                    cursors.did_delete_from_line(document(), index.line_index(), index.index_into_line(), 1);
                 }
 
                 document().set_needs_display();
@@ -268,21 +262,11 @@ bool DeleteLineCommand::do_execute(MultiCursor& cursors) {
         m_saved_lines.add(cursor.referenced_line(document()));
 
         int line_number = cursor.line_index();
-        bool deleted_last_line = false;
-        if (line_number != 0 && line_number == document().num_lines() - 1) {
-            deleted_last_line = true;
-            document().move_cursor_up(cursor);
-            document().move_cursor_to_line_end(cursor);
-        }
-
         document().remove_line(line_number);
+        cursors.did_delete_lines(document(), line_number, 1);
         if (document().num_lines() == 0) {
             m_document_was_empty = true;
             document().insert_line(Line(""), 0);
-        }
-
-        if (!deleted_last_line) {
-            document().move_cursor_to_line_start(cursor);
         }
     }
 
@@ -292,7 +276,8 @@ bool DeleteLineCommand::do_execute(MultiCursor& cursors) {
 
 void DeleteLineCommand::do_undo(MultiCursor& cursors) {
     for (int i = 0; i < cursors.size(); i++) {
-        document().insert_line(Line(m_saved_lines[i]), cursors[i].line_index());
+        document().insert_line(Line(m_saved_lines[i]), start_snapshot().cursors[i].line_index());
+        cursors.did_add_lines(document(), start_snapshot().cursors[i].line_index(), 1);
     }
     if (m_document_was_empty) {
         document().remove_line(1);
@@ -307,7 +292,6 @@ bool InsertLineCommand::do_execute(MultiCursor& cursors) {
     Line to_add(m_text);
     auto& cursor = cursors.main_cursor();
     document().insert_line(move(to_add), cursor.line_index());
-    document().move_cursor_down(cursor);
     document().set_needs_display();
     return true;
 }

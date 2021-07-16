@@ -106,6 +106,7 @@ public:
     void move_cursor_to_document_end(Cursor& cursor, MovementMode mode = MovementMode::Move);
     void move_cursor_page_up(Cursor& cursor, MovementMode mode = MovementMode::Move);
     void move_cursor_page_down(Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void clamp_cursor_to_line_end(Cursor& cursor);
 
     void scroll_cursor_into_view(Cursor& cursor);
 
@@ -123,7 +124,7 @@ public:
     void rotate_lines_up(int start, int end);
     void rotate_lines_down(int start, int end);
 
-    void merge_lines(MultiCursor& cursors, int cursor_index, MergeLinesMode mode);
+    void merge_lines(Cursor& cursor, MergeLinesMode mode);
 
     void set_was_modified(bool b) { m_document_was_modified = b; }
 
@@ -135,7 +136,7 @@ public:
     StateSnapshot snapshot_state() const;
     void restore_state(MultiCursor& cursors, const StateSnapshot& state_snapshot);
 
-    void delete_selection(MultiCursor& cursors, int cursor_index);
+    void delete_selection(Cursor& cursor);
     void clear_selection(Cursor& cursor);
     String selection_text(Cursor& cursor) const;
 
@@ -182,7 +183,6 @@ public:
     Function<void()> on_escape_press;
 
 private:
-    void clamp_cursor_to_line_end(Cursor& cursor);
     void update_selection_state_for_mode(Cursor& cursor, MovementMode mode);
 
     void update_search_results();
