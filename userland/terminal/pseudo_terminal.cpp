@@ -100,19 +100,22 @@ void PsuedoTerminal::write(const String& contents) {
     assert(::write(m_master_fd, contents.string(), contents.size()) == static_cast<ssize_t>(contents.size()));
 }
 
-void PsuedoTerminal::handle_key_event(key key, int flags, char ascii) {
-    if (!(flags & KEY_DOWN)) {
+void PsuedoTerminal::handle_key_event(const App::KeyEvent& event) {
+    if (!event.key_down()) {
         return;
     }
 
     int modifiers = 1;
-    if (flags & KEY_CONTROL_ON) {
+    if (event.modifiers() & App::KeyModifier::Meta) {
+        modifiers += 8;
+    }
+    if (event.modifiers() & App::KeyModifier::Control) {
         modifiers += 4;
     }
-    if (flags & KEY_ALT_ON) {
+    if (event.modifiers() & App::KeyModifier::Alt) {
         modifiers += 2;
     }
-    if (flags & KEY_SHIFT_ON) {
+    if (event.modifiers() & App::KeyModifier::Shift) {
         modifiers += 1;
     }
 
@@ -146,106 +149,107 @@ void PsuedoTerminal::handle_key_event(key key, int flags, char ascii) {
         this->write(seq);
     };
 
-    switch (key) {
-        case KEY_CURSOR_UP:
+    switch (event.key()) {
+        case App::Key::UpArrow:
             if (m_application_cursor_keys) {
                 send_application_escape('A', modifiers);
             } else {
                 send_xterm_escape('A', modifiers);
             }
             return;
-        case KEY_CURSOR_DOWN:
+        case App::Key::DownArrow:
             if (m_application_cursor_keys) {
                 send_application_escape('B', modifiers);
             } else {
                 send_xterm_escape('B', modifiers);
             }
             return;
-        case KEY_CURSOR_RIGHT:
+        case App::Key::RightArrow:
             if (m_application_cursor_keys) {
                 send_application_escape('C', modifiers);
             } else {
                 send_xterm_escape('C', modifiers);
             }
             return;
-        case KEY_CURSOR_LEFT:
+        case App::Key::LeftArrow:
             if (m_application_cursor_keys) {
                 send_application_escape('D', modifiers);
             } else {
                 send_xterm_escape('D', modifiers);
             }
             return;
-        case KEY_END:
+        case App::Key::End:
             if (m_application_cursor_keys) {
                 send_application_escape('F', modifiers);
             } else {
                 send_xterm_escape('F', modifiers);
             }
             return;
-        case KEY_HOME:
+        case App::Key::Home:
             if (m_application_cursor_keys) {
                 send_application_escape('H', modifiers);
             } else {
                 send_xterm_escape('H', modifiers);
             }
             return;
-        case KEY_INSERT:
+        case App::Key::Insert:
             send_vt_escape(2, modifiers);
             return;
-        case KEY_DELETE:
+        case App::Key::Delete:
             send_vt_escape(3, modifiers);
             return;
-        case KEY_PAGE_UP:
+        case App::Key::PageUp:
             send_vt_escape(5, modifiers);
             return;
-        case KEY_PAGE_DOWN:
+        case App::Key::PageDown:
             send_vt_escape(6, modifiers);
             return;
-        case KEY_F1:
+        case App::Key::F1:
             send_vt_escape(11, modifiers);
             return;
-        case KEY_F2:
+        case App::Key::F2:
             send_vt_escape(12, modifiers);
             return;
-        case KEY_F3:
+        case App::Key::F3:
             send_vt_escape(13, modifiers);
             return;
-        case KEY_F4:
+        case App::Key::F4:
             send_vt_escape(14, modifiers);
             return;
-        case KEY_F5:
+        case App::Key::F5:
             send_vt_escape(15, modifiers);
             return;
-        case KEY_F6:
+        case App::Key::F6:
             send_vt_escape(17, modifiers);
             return;
-        case KEY_F7:
+        case App::Key::F7:
             send_vt_escape(18, modifiers);
             return;
-        case KEY_F8:
+        case App::Key::F8:
             send_vt_escape(19, modifiers);
             return;
-        case KEY_F9:
+        case App::Key::F9:
             send_vt_escape(20, modifiers);
             return;
-        case KEY_F10:
+        case App::Key::F10:
             send_vt_escape(21, modifiers);
             return;
-        case KEY_F11:
+        case App::Key::F11:
             send_vt_escape(23, modifiers);
             return;
-        case KEY_F12:
+        case App::Key::F12:
             send_vt_escape(24, modifiers);
             return;
         default:
             break;
     }
 
-    if (key == KEY_ENTER) {
+    char ascii = event.text()[0];
+    if (event.key() == App::Key::Enter) {
         ascii = '\r';
-    } else if (key == KEY_TAB) {
+    } else if (event.key() == App::Key::Tab) {
         ascii = '\t';
-    } else if (key == KEY_BACKSPACE) {
+    } else if (event.key() == App::Key::Backspace) {
         ascii = 8;
     }
 
@@ -253,8 +257,8 @@ void PsuedoTerminal::handle_key_event(key key, int flags, char ascii) {
         return;
     }
 
-    if (flags & KEY_CONTROL_ON) {
-        if (key == KEY_BACKSPACE) {
+    if (event.control_down()) {
+        if (event.key() == App::Key::Backspace) {
             ascii = 'W' & 0x1F;
         } else {
             ascii &= 0x1F;

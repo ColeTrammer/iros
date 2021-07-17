@@ -282,17 +282,11 @@ void WindowManager::notify_mouse_moved(const App::MouseEvent& event) {
     set_mouse_coordinates(new_mouse_x, new_mouse_y);
 }
 
-void WindowManager::notify_mouse_input(int dx, int dy, int dz, int buttons, bool absolute) {
-    int computed_x = absolute ? (dx * m_front_buffer->width() / 0xFFFF) : (m_mouse_x + dx);
-    int computed_y = absolute ? (dy * m_front_buffer->height() / 0xFFFF) : (m_mouse_y - dy);
-
-    auto events = m_mouse_tracker.notify_mouse_event(buttons, computed_x, computed_y, dz);
-    for (auto& event : events) {
-        if (event->mouse_move()) {
-            notify_mouse_moved(*event);
-        } else if (event->mouse_down_any() || event->mouse_up()) {
-            notify_mouse_pressed(*event);
-        }
+void WindowManager::notify_mouse_input(const App::MouseEvent& event) {
+    if (event.mouse_move()) {
+        notify_mouse_moved(event);
+    } else if (event.mouse_down_any() || event.mouse_up()) {
+        notify_mouse_pressed(event);
     }
 }
 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <eventloop/event.h>
-#include <kernel/hal/input.h>
 
 #include "pseudo_terminal.h"
 #include "tty.h"
@@ -12,7 +11,7 @@ public:
     VgaTerminal(VgaBuffer& vga_buffer);
 
     void render();
-    void on_key_event(key_event key_event);
+    void on_key_event(const App::KeyEvent& event);
     void on_mouse_event(const App::MouseEvent& event);
 
     int master_fd() const { return m_pseudo_terminal.master_fd(); }

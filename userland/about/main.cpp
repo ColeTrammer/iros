@@ -17,7 +17,7 @@ class TestWidget : public App::Widget {
 private:
     virtual void on_key_event(const App::KeyEvent& event) override {
         if (event.key_down()) {
-            printf("pressed: '%c'\n", event.ascii());
+            printf("pressed: '%s'\n", event.text().string());
         }
     }
 };

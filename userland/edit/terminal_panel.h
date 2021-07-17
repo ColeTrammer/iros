@@ -2,7 +2,7 @@
 
 #include <edit/panel.h>
 #include <eventloop/event.h>
-#include <eventloop/mouse_press_tracker.h>
+#include <eventloop/input_tracker.h>
 #include <liim/hash_map.h>
 #include <liim/maybe.h>
 #include <liim/variant.h>
@@ -47,7 +47,7 @@ private:
 
     virtual void document_did_change() override;
 
-    Vector<Variant<Edit::KeyPress, App::MouseEvent>> read_input();
+    Vector<Variant<App::KeyEvent, App::MouseEvent>> read_input();
 
     void draw_cursor();
     void draw_status_message();
@@ -69,7 +69,7 @@ private:
     String m_prompt_buffer;
     mutable String m_prev_clipboard_contents;
     mutable bool m_prev_clipboard_contents_were_whole_line { false };
-    App::MousePressTracker m_mouse_press_tracker;
+    App::InputTracker m_mouse_press_tracker;
     Edit::CharacterMetadata m_last_metadata_rendered;
     int m_rows { 0 };
     int m_cols { 0 };

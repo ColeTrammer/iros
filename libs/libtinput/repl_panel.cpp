@@ -2,7 +2,6 @@
 #include <clipboard/connection.h>
 #include <edit/document.h>
 #include <edit/document_type.h>
-#include <edit/key_press.h>
 #include <edit/line_renderer.h>
 #include <edit/position.h>
 #include <errno.h>
@@ -389,11 +388,18 @@ void ReplPanel::flush_if_needed() {
     flush();
 }
 
-Vector<Variant<Edit::KeyPress, App::MouseEvent>> ReplPanel::read_input() {
-    using K = Edit::KeyPress;
+Vector<Variant<App::KeyEvent, App::MouseEvent>> ReplPanel::read_input() {
+    using K = App::KeyEvent;
     using M = App::MouseEvent;
     using T = Variant<K, M>;
     using R = Vector<T>;
+
+    auto key_from_character = [&](char c) -> App::Key {
+        if (isascii(c)) {
+            return static_cast<App::Key>(c - 'A' + 1);
+        }
+        return App::Key::None;
+    };
 
     char ch;
     ssize_t ret = read(STDIN_FILENO, &ch, 1);
@@ -408,11 +414,12 @@ Vector<Variant<Edit::KeyPress, App::MouseEvent>> ReplPanel::read_input() {
         assert(ret >= 0);
 
         if (ret == 0) {
-            return R::create_from_single_element(T { K { 0, Edit::KeyPress::Key::Escape } });
+            return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::Escape, 0 } });
         }
 
         if (escape_buffer[0] != '[' && escape_buffer[0] != 'O') {
-            return R::create_from_single_element(T { K { Edit::KeyPress::Modifier::Alt, toupper(escape_buffer[0]) } });
+            return R::create_from_single_element(
+                T { K { App::KeyEventType::Down, "", key_from_character(toupper(escape_buffer[0])), App::KeyModifier::Alt } });
         } else {
             // Information from https://en.wikipedia.org/wiki/ANSI_escape_code#Terminal_input_sequences
             auto modifiers_from_digit = [](char digit) -> int {
@@ -425,90 +432,88 @@ Vector<Variant<Edit::KeyPress, App::MouseEvent>> ReplPanel::read_input() {
             auto xterm_sequence_to_key = [](char ch, int modifiers) -> R {
                 switch (ch) {
                     case 'A':
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::UpArrow } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::UpArrow, modifiers } });
                     case 'B':
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::DownArrow } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::DownArrow, modifiers } });
                     case 'C':
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::RightArrow } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::RightArrow, modifiers } });
                     case 'D':
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::LeftArrow } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::LeftArrow, modifiers } });
                     case 'F':
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::End } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::End, modifiers } });
                     case 'H':
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::Home } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::Home, modifiers } });
                     case 'P':
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F1 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F1, modifiers } });
                     case 'Q':
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F2 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F2, modifiers } });
                     case 'R':
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F3 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F3, modifiers } });
                     case 'S':
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F4 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F4, modifiers } });
                     default:
-                        return R::create_from_single_element(T { K { modifiers, ch } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::None, modifiers } });
                 }
             };
 
             auto vt_sequence_to_key = [](int num, int modifiers) -> R {
                 switch (num) {
                     case 1:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::Home } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::Home, modifiers } });
                     case 2:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::Insert } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::Insert, modifiers } });
                     case 3:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::Delete } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::Delete, modifiers } });
                     case 4:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::End } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::End, modifiers } });
                     case 5:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::PageUp } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::PageUp, modifiers } });
                     case 6:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::PageDown } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::PageDown, modifiers } });
                     case 7:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::Home } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::Home, modifiers } });
                     case 8:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::End } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::End, modifiers } });
                     case 10:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F0 } });
-                    case 11:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F1 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F1, modifiers } });
                     case 12:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F2 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F2, modifiers } });
                     case 13:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F3 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F3, modifiers } });
                     case 14:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F4 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F4, modifiers } });
                     case 15:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F5 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F5, modifiers } });
                     case 17:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F6 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F6, modifiers } });
                     case 18:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F7 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F7, modifiers } });
                     case 19:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F8 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F8, modifiers } });
                     case 20:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F9 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F9, modifiers } });
                     case 21:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F10 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F10, modifiers } });
                     case 23:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F11 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F11, modifiers } });
                     case 24:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F12 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F12, modifiers } });
                     case 25:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F13 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F13, modifiers } });
                     case 26:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F14 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F14, modifiers } });
                     case 28:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F15 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F15, modifiers } });
                     case 29:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F16 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F16, modifiers } });
                     case 31:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F17 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F17, modifiers } });
                     case 32:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F18 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F18, modifiers } });
                     case 33:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F19 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F19, modifiers } });
                     case 34:
-                        return R::create_from_single_element(T { K { modifiers, Edit::KeyPress::Key::F20 } });
+                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F20, modifiers } });
                     default:
                         return {};
                 }
@@ -518,7 +523,7 @@ Vector<Variant<Edit::KeyPress, App::MouseEvent>> ReplPanel::read_input() {
             assert(ret >= 0);
 
             if (ret == 0) {
-                return R::create_from_single_element(T { K { Edit::KeyPress::Modifier::Alt, Edit::KeyPress::Key::Escape } });
+                return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::Escape, App::KeyModifier::Alt } });
             }
 
             if (escape_buffer[1] == '<') {
@@ -541,8 +546,8 @@ Vector<Variant<Edit::KeyPress, App::MouseEvent>> ReplPanel::read_input() {
                 if (sscanf(escape_buffer, "[<%d;%d;%d", &cb, &cx, &cy) != 3) {
                     return {};
                 }
-                bool mouse_down = escape_buffer[escape_buffer_length - 1] == 'M';
 
+                bool mouse_down = escape_buffer[escape_buffer_length - 1] == 'M';
                 int z = 0;
 
                 int buttons_down = m_mouse_press_tracker.prev_buttons();
@@ -650,29 +655,29 @@ Vector<Variant<Edit::KeyPress, App::MouseEvent>> ReplPanel::read_input() {
     }
 
     if (ch == s_original_termios.c_cc[VERASE]) {
-        return R::create_from_single_element(T { K { 0, Edit::KeyPress::Key::Backspace } });
+        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::Backspace, 0 } });
     }
 
     if (ch == '\r') {
-        return R::create_from_single_element(T { K { 0, Edit::KeyPress::Key::Enter } });
+        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::Enter, 0 } });
     }
 
     if (ch == '\t') {
-        // \t is not a control key
-        return R::create_from_single_element(T { K { 0, '\t' } });
+        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::Tab, 0 } });
     }
 
     if (ch == ('w' & 0x1F)) {
         // control backspace unfortunately binds to control w, but control backspace
         // takes prcedence.
-        return R::create_from_single_element(T { K { Edit::KeyPress::Modifier::Control, Edit::KeyPress::Key::Backspace } });
+        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::Backspace, App::KeyModifier::Control } });
     }
 
     if (ch >= ('a' & 0x1F) && ch <= ('z' & 0x1F)) {
-        return R::create_from_single_element(T { K { Edit::KeyPress::Modifier::Control, ch | 0b1000000 } });
+        return R::create_from_single_element(
+            T { K { App::KeyEventType::Down, "", key_from_character(ch | 0b1000000), App::KeyModifier::Control } });
     }
 
-    return R::create_from_single_element(T { K { 0, ch } });
+    return R::create_from_single_element(T { K { App::KeyEventType::Down, String(ch), App::Key::None, 0 } });
 }
 
 Edit::Suggestions ReplPanel::get_suggestions() const {
@@ -837,9 +842,9 @@ int ReplPanel::enter() {
 
         if (auto* document = Panel::document()) {
             for (auto& ev : input) {
-                if (ev.is<Edit::KeyPress>()) {
-                    auto key_event = ev.as<Edit::KeyPress>();
-                    if (key_event.key == 'C' && key_event.modifiers == Edit::KeyPress::Modifier::Control) {
+                if (ev.is<App::KeyEvent>()) {
+                    auto key_event = ev.as<App::KeyEvent>();
+                    if (key_event.key() == App::Key::C && key_event.modifiers() == App::KeyModifier::Control) {
                         document->set_preview_auto_complete(false);
                         flush();
                         printf("^C\r\n");
@@ -849,7 +854,7 @@ int ReplPanel::enter() {
                         break;
                     }
 
-                    if (key_event.key == 'D' && key_event.modifiers == Edit::KeyPress::Modifier::Control) {
+                    if (key_event.key() == App::Key::D && key_event.modifiers() == App::KeyModifier::Control) {
                         if (document->num_lines() == 1 && document->content_string().is_empty()) {
                             set_quit_by_eof();
                             quit();
@@ -858,21 +863,21 @@ int ReplPanel::enter() {
                         continue;
                     }
 
-                    if (key_event.key == Edit::KeyPress::UpArrow && cursors().main_cursor().line_index() == 0) {
+                    if (key_event.key() == App::Key::UpArrow && cursors().main_cursor().line_index() == 0) {
                         move_history_up();
                         break;
                     }
 
-                    if (key_event.key == Edit::KeyPress::DownArrow && cursors().main_cursor().line_index() == document->num_lines() - 1) {
+                    if (key_event.key() == App::Key::DownArrow && cursors().main_cursor().line_index() == document->num_lines() - 1) {
                         move_history_down();
                         break;
                     }
 
-                    if (key_event.key != '\t') {
+                    if (key_event.key() != App::Key::Tab) {
                         m_consecutive_tabs = 0;
                     }
 
-                    document->notify_key_pressed(*this, ev.as<Edit::KeyPress>());
+                    document->notify_key_pressed(*this, ev.as<App::KeyEvent>());
                 } else {
                     document->notify_mouse_event(*this, ev.as<App::MouseEvent>());
                 }

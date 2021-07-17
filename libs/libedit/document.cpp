@@ -1,6 +1,5 @@
 #include <edit/command.h>
 #include <edit/document.h>
-#include <edit/key_press.h>
 #include <edit/panel.h>
 #include <edit/position.h>
 #include <errno.h>
@@ -1136,19 +1135,19 @@ void Document::finish_input(Panel& panel, bool should_scroll_cursor_into_view) {
     set_needs_display();
 }
 
-void Document::notify_key_pressed(Panel& panel, KeyPress press) {
+void Document::notify_key_pressed(Panel& panel, const App::KeyEvent& event) {
     auto& cursors = panel.cursors();
 
     bool should_scroll_cursor_into_view = true;
-    if (press.modifiers & KeyPress::Modifier::Alt) {
-        switch (press.key) {
-            case KeyPress::Key::DownArrow:
+    if (event.alt_down()) {
+        switch (event.key()) {
+            case App::Key::DownArrow:
                 swap_lines_at_cursor(panel, SwapDirection::Down);
                 break;
-            case KeyPress::Key::UpArrow:
+            case App::Key::UpArrow:
                 swap_lines_at_cursor(panel, SwapDirection::Up);
                 break;
-            case 'D':
+            case App::Key::D:
                 delete_word(panel, DeleteCharMode::Delete);
                 break;
             default:
@@ -1159,99 +1158,95 @@ void Document::notify_key_pressed(Panel& panel, KeyPress press) {
         return;
     }
 
-    if (press.modifiers & KeyPress::Modifier::Control) {
-        switch (toupper(press.key)) {
-            case KeyPress::Key::LeftArrow:
+    if (event.control_down()) {
+        switch (event.key()) {
+            case App::Key::LeftArrow:
                 for (auto& cursor : cursors) {
-                    move_cursor_left_by_word(panel, cursor,
-                                             press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                    move_cursor_left_by_word(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
                 }
                 break;
-            case KeyPress::Key::RightArrow:
+            case App::Key::RightArrow:
                 for (auto& cursor : cursors) {
-                    move_cursor_right_by_word(panel, cursor,
-                                              press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                    move_cursor_right_by_word(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
                 }
                 break;
-            case KeyPress::Key::DownArrow:
-                if (press.modifiers & KeyPress::Modifier::Shift) {
+            case App::Key::DownArrow:
+                if (event.shift_down()) {
                     cursors.add_cursor(*this, panel, AddCursorMode::Down);
                 } else {
                     panel.scroll_down(1);
                     should_scroll_cursor_into_view = false;
                 }
                 break;
-            case KeyPress::Key::UpArrow:
-                if (press.modifiers & KeyPress::Modifier::Shift) {
+            case App::Key::UpArrow:
+                if (event.shift_down()) {
                     cursors.add_cursor(*this, panel, AddCursorMode::Up);
                 } else {
                     panel.scroll_up(1);
                     should_scroll_cursor_into_view = false;
                 }
                 break;
-            case KeyPress::Key::Home:
+            case App::Key::Home:
                 for (auto& cursor : cursors) {
-                    move_cursor_to_document_start(panel, cursor,
-                                                  press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                    move_cursor_to_document_start(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
                 }
                 break;
-            case KeyPress::Key::End:
+            case App::Key::End:
                 for (auto& cursor : cursors) {
-                    move_cursor_to_document_end(panel, cursor,
-                                                press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                    move_cursor_to_document_end(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
                 }
                 break;
-            case KeyPress::Key::Backspace:
+            case App::Key::Backspace:
                 delete_word(panel, DeleteCharMode::Backspace);
                 break;
-            case KeyPress::Key::Delete:
+            case App::Key::Delete:
                 delete_word(panel, DeleteCharMode::Delete);
                 break;
-            case 'A':
+            case App::Key::A:
                 select_all(panel, cursors.main_cursor());
                 should_scroll_cursor_into_view = false;
                 break;
-            case 'C':
+            case App::Key::C:
                 copy(panel, cursors);
                 break;
-            case 'D':
+            case App::Key::D:
                 select_next_word_at_cursor(panel);
                 break;
-            case 'F':
+            case App::Key::F:
                 enter_interactive_search(panel);
                 break;
-            case 'G':
+            case App::Key::G:
                 go_to_line(panel);
                 break;
-            case 'L':
+            case App::Key::L:
                 if (!input_text_mode()) {
                     set_show_line_numbers(!m_show_line_numbers);
                 }
                 break;
-            case 'O':
+            case App::Key::O:
                 if (!input_text_mode()) {
                     panel.do_open_prompt();
                 }
                 break;
-            case 'Q':
-            case 'W':
+            case App::Key::Q:
+            case App::Key::W:
                 quit(panel);
                 break;
-            case 'S':
+            case App::Key::S:
                 if (!input_text_mode()) {
                     save(panel);
                 }
                 break;
-            case 'V':
+            case App::Key::V:
                 paste(panel, cursors);
                 break;
-            case 'X':
+            case App::Key::X:
                 cut(panel, cursors);
                 break;
-            case 'Y':
+            case App::Key::Y:
                 redo(panel);
                 break;
-            case 'Z':
+            case App::Key::Z:
                 undo(panel);
                 break;
             default:
@@ -1262,64 +1257,61 @@ void Document::notify_key_pressed(Panel& panel, KeyPress press) {
         return;
     }
 
-    switch (press.key) {
-        case KeyPress::Key::LeftArrow:
+    switch (event.key()) {
+        case App::Key::LeftArrow:
             for (auto& cursor : cursors) {
-                move_cursor_left(panel, cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                move_cursor_left(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
             }
             break;
-        case KeyPress::Key::RightArrow:
+        case App::Key::RightArrow:
             for (auto& cursor : cursors) {
-                move_cursor_right(panel, cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                move_cursor_right(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
             }
             break;
-        case KeyPress::Key::DownArrow:
+        case App::Key::DownArrow:
             for (auto& cursor : cursors) {
-                move_cursor_down(panel, cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                move_cursor_down(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
             }
             break;
-        case KeyPress::Key::UpArrow:
+        case App::Key::UpArrow:
             for (auto& cursor : cursors) {
-                move_cursor_up(panel, cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                move_cursor_up(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
             }
             break;
-        case KeyPress::Key::Home:
+        case App::Key::Home:
             for (auto& cursor : cursors) {
-                move_cursor_to_line_start(panel, cursor,
-                                          press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                move_cursor_to_line_start(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
             }
             break;
-        case KeyPress::Key::End:
+        case App::Key::End:
             for (auto& cursor : cursors) {
-                move_cursor_to_line_end(panel, cursor,
-                                        press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                move_cursor_to_line_end(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
             }
             break;
-        case KeyPress::Key::PageUp:
+        case App::Key::PageUp:
             for (auto& cursor : cursors) {
-                move_cursor_page_up(panel, cursor, press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                move_cursor_page_up(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
             }
             break;
-        case KeyPress::Key::PageDown:
+        case App::Key::PageDown:
             for (auto& cursor : cursors) {
-                move_cursor_page_down(panel, cursor,
-                                      press.modifiers & KeyPress::Modifier::Shift ? MovementMode::Select : MovementMode::Move);
+                move_cursor_page_down(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
             }
             break;
-        case KeyPress::Key::Backspace:
+        case App::Key::Backspace:
             delete_char(panel, DeleteCharMode::Backspace);
             break;
-        case KeyPress::Key::Delete:
+        case App::Key::Delete:
             delete_char(panel, DeleteCharMode::Delete);
             break;
-        case KeyPress::Key::Enter:
+        case App::Key::Enter:
             if (!submittable() || &cursors.main_cursor().referenced_line(*this) != &last_line()) {
                 split_line_at_cursor(panel);
             } else if (submittable() && on_submit) {
                 on_submit();
             }
             break;
-        case KeyPress::Key::Escape:
+        case App::Key::Escape:
             clear_search();
             cursors.remove_secondary_cursors();
             clear_selection(cursors.main_cursor());
@@ -1327,7 +1319,7 @@ void Document::notify_key_pressed(Panel& panel, KeyPress press) {
                 on_escape_press();
             }
             break;
-        case '\t':
+        case App::Key::Tab:
             if (m_auto_complete_mode == AutoCompleteMode::Always) {
                 auto suggestions = panel.get_suggestions();
                 if (suggestions.suggestion_count() == 1) {
@@ -1339,12 +1331,10 @@ void Document::notify_key_pressed(Panel& panel, KeyPress press) {
                 }
                 break;
             }
-            insert_char(panel, press.key);
+            insert_char(panel, '\t');
             break;
         default:
-            if (isascii(press.key)) {
-                insert_char(panel, press.key);
-            }
+            insert_text_at_cursor(panel, event.text());
             break;
     }
 

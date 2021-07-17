@@ -6,9 +6,13 @@
 #include <time.h>
 
 namespace App {
-class MousePressTracker {
+class InputTracker {
 public:
     Vector<UniquePtr<MouseEvent>> notify_mouse_event(int buttons, int x, int y, int z);
+
+    Vector<UniquePtr<MouseEvent>> notify_os_mouse_event(int scale_mode, int dx, int dy, int dz, int buttons, int screen_width,
+                                                        int screen_height);
+    UniquePtr<KeyEvent> notify_os_key_event(char ascii, int key, unsigned int flags);
 
     int prev_buttons() const { return m_prev.buttons_down(); }
     int prev_x() const { return m_prev.x(); }

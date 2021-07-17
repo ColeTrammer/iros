@@ -2,7 +2,6 @@
 
 #include <eventloop/event.h>
 #include <eventloop/file_watcher.h>
-#include <eventloop/mouse_press_tracker.h>
 #include <graphics/bitmap.h>
 #include <graphics/palette.h>
 #include <graphics/rect_set.h>
@@ -50,7 +49,7 @@ public:
 
     void notify_mouse_moved(const App::MouseEvent& event);
     void notify_mouse_pressed(const App::MouseEvent& event);
-    void notify_mouse_input(int dx, int dy, int dz, int buttons, bool absolute);
+    void notify_mouse_input(const App::MouseEvent& event);
 
     void set_active_window(SharedPtr<Window> window);
     void move_to_front_and_make_active(SharedPtr<Window> window);
@@ -99,7 +98,6 @@ private:
     Vector<SharedPtr<Window>> m_window_stack;
     HashMap<wid_t, SharedPtr<Window>> m_window_map;
     SharedPtr<Window> m_active_window;
-    App::MousePressTracker m_mouse_tracker;
     App::FileWatcher m_watcher;
     String m_palette_path;
 

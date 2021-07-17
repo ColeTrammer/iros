@@ -7,7 +7,6 @@ class CharacterMetadata;
 class Command;
 class Cursor;
 class Document;
-class KeyPress;
 class LineRenderer;
 class Line;
 class MultiCursor;

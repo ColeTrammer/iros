@@ -54,7 +54,7 @@ public:
     void invalidate_rendered_contents(const Line& line);
     void invalidate_all_rendered_contents();
 
-    void notify_key_pressed(Panel& panel, KeyPress press);
+    void notify_key_pressed(Panel& panel, const App::KeyEvent& event);
     bool notify_mouse_event(Panel& panel, const App::MouseEvent& event);
     void notify_panel_size_changed();
 

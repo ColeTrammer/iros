@@ -1,7 +1,7 @@
 #pragma once
 
 #include <liim/function.h>
-#include <kernel/hal/input.h>
+#include <liim/string.h>
 
 namespace App {
 class Event {
@@ -120,24 +120,166 @@ private:
     MouseEventType m_mouse_event_type { MouseEventType::Move };
 };
 
+enum class KeyEventType {
+    Down,
+    Up,
+};
+
+namespace KeyModifier {
+    enum {
+        Shift = 1,
+        Alt = 2,
+        Control = 4,
+        Meta = 8,
+    };
+}
+
+enum class Key {
+    None = 0,
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+    I,
+    J,
+    K,
+    L,
+    M,
+    N,
+    O,
+    P,
+    Q,
+    R,
+    S,
+    T,
+    U,
+    V,
+    W,
+    X,
+    Y,
+    Z,
+    _1,
+    _2,
+    _3,
+    _4,
+    _5,
+    _6,
+    _7,
+    _8,
+    _9,
+    _0,
+    Enter,
+    Escape,
+    Backspace,
+    Tab,
+    Space,
+    Minus,
+    Equals,
+    LeftBracket,
+    RightBracket,
+    Backslash,
+    NonUS_Pound,
+    SemiColon,
+    Quote,
+    Backtick,
+    Comma,
+    Period,
+    Slash,
+    CapsLock,
+    F1,
+    F2,
+    F3,
+    F4,
+    F5,
+    F6,
+    F7,
+    F8,
+    F9,
+    F10,
+    F11,
+    F12,
+    PrintScreen,
+    ScrollLock,
+    Pause,
+    Insert,
+    Home,
+    PageUp,
+    Delete,
+    End,
+    PageDown,
+    RightArrow,
+    LeftArrow,
+    DownArrow,
+    UpArrow,
+    NumLock,
+    Numpad_Slash,
+    Numpad_Star,
+    Numpad_Minus,
+    Numpad_Plus,
+    Numpad_Enter,
+    Numpad_1,
+    Numpad_2,
+    Numpad_3,
+    Numpad_4,
+    Numpad_5,
+    Numpad_6,
+    Numpad_7,
+    Numpad_8,
+    Numpad_9,
+    Numpad_0,
+    Numpad_Period,
+    NonUS_Backslash,
+    Application,
+    Power,
+    Numpad_Equals,
+    F13,
+    F14,
+    F15,
+    F16,
+    F17,
+    F18,
+    F19,
+    F20,
+    F21,
+    F22,
+    F23,
+    F24,
+    LeftControl,
+    LeftShift,
+    LeftAlt,
+    LeftMeta,
+    RightControl,
+    RightShift,
+    RightAlt,
+    RightMeta,
+};
+
 class KeyEvent final : public Event {
 public:
-    KeyEvent(char ascii, key k, int flags) : Event(Event::Type::Key), m_ascii(ascii), m_key(k), m_flags(flags) {}
+    KeyEvent(KeyEventType type, String text, Key key, int modifiers)
+        : Event(Event::Type::Key), m_type(type), m_text(move(text)), m_key(key), m_modifiers(modifiers) {}
 
-    char ascii() const { return m_ascii; }
-    enum key key() const { return m_key; }
-    int flags() const { return m_flags; }
+    const String& text() const { return m_text; }
+    Key key() const { return m_key; }
+    int modifiers() const { return m_modifiers; }
 
-    bool key_up() const { return !!(m_flags & KEY_UP); }
-    bool key_down() const { return !!(m_flags & KEY_DOWN); }
-    bool control_down() const { return !!(m_flags & KEY_CONTROL_ON); }
-    bool shift_down() const { return !!(m_flags & KEY_SHIFT_ON); }
-    bool alt_down() const { return !!(m_flags & KEY_ALT_ON); }
+    bool key_down() const { return m_type == KeyEventType::Down; }
+    bool key_up() const { return m_type == KeyEventType::Up; }
+
+    bool shift_down() const { return !!(m_modifiers & KeyModifier::Shift); }
+    bool alt_down() const { return !!(m_modifiers & KeyModifier::Alt); }
+    bool control_down() const { return !!(m_modifiers & KeyModifier::Control); }
+    bool meta_down() const { return !!(m_modifiers & KeyModifier::Meta); }
 
 private:
-    char m_ascii;
-    enum key m_key;
-    int m_flags;
+    KeyEventType m_type;
+    String m_text;
+    Key m_key;
+    int m_modifiers;
 };
 
 class CallbackEvent final : public Event {

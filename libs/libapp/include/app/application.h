@@ -2,7 +2,7 @@
 
 #include <app/forward.h>
 #include <eventloop/event_loop.h>
-#include <eventloop/mouse_press_tracker.h>
+#include <eventloop/input_tracker.h>
 #include <graphics/palette.h>
 #include <liim/pointers.h>
 #include <window_server/message.h>
@@ -28,7 +28,7 @@ public:
     void enter();
     EventLoop& main_event_loop() { return m_loop; }
 
-    MousePressTracker& mouse_tracker() { return m_mouse_tracker; }
+    InputTracker& input_tracker() { return m_mouse_tracker; }
 
     SharedPtr<Palette> palette() const { return m_palette; }
 
@@ -52,7 +52,7 @@ private:
     friend class WindowServerClient;
 
     EventLoop m_loop;
-    MousePressTracker m_mouse_tracker;
+    InputTracker m_mouse_tracker;
     SharedPtr<Palette> m_palette;
 };
 }

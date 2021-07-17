@@ -22,8 +22,8 @@ void VgaTerminal::on_mouse_event(const App::MouseEvent& event) {
     }
 }
 
-void VgaTerminal::on_key_event(key_event event) {
-    if ((event.flags & KEY_DOWN) && (event.flags & KEY_CONTROL_ON) && (event.flags & KEY_SHIFT_ON) && (event.key == KEY_V)) {
+void VgaTerminal::on_key_event(const App::KeyEvent& event) {
+    if (event.key_down() && event.control_down() && event.shift_down() && event.key() == App::Key::V) {
         auto maybe_text = Clipboard::Connection::the().get_clipboard_contents_as_text();
         if (!maybe_text.has_value()) {
             return;
@@ -32,7 +32,7 @@ void VgaTerminal::on_key_event(key_event event) {
         return;
     }
 
-    m_pseudo_terminal.handle_key_event(event.key, event.flags, event.ascii);
+    m_pseudo_terminal.handle_key_event(event);
 }
 
 void VgaTerminal::render() {

@@ -32,7 +32,7 @@ public:
     pid_t child_pid() const { return m_child_pid; }
 
     void send_clipboard_contents(const String& contents);
-    void handle_key_event(key key, int flags, char ascii);
+    void handle_key_event(const App::KeyEvent& event);
     bool handle_mouse_event(const App::MouseEvent& event);
     void set_size(int rows, int cols);
 

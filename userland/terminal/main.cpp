@@ -4,7 +4,7 @@
 #include <clipboard/connection.h>
 #include <errno.h>
 #include <eventloop/event.h>
-#include <eventloop/mouse_press_tracker.h>
+#include <eventloop/input_tracker.h>
 #include <signal.h>
 #include <stdio.h>
 #include <sys/select.h>
@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
 
 #ifdef __os_2__
     if (!graphics_mode) {
-        App::MousePressTracker mouse_press_tracker;
+        App::InputTracker input_tracker;
 
         VgaBuffer vga_buffer;
         VgaTerminal vga_terminal(vga_buffer);
@@ -106,12 +106,14 @@ int main(int argc, char** argv) {
                     switch (message->type) {
                         case UMESSAGE_INPUT_KEY_EVENT: {
                             auto& event = ((umessage_input_key_event*) message)->event;
-                            vga_terminal.on_key_event(event);
+                            auto key_event = input_tracker.notify_os_key_event(event.ascii, event.key, event.flags);
+                            vga_terminal.on_key_event(*key_event);
                             break;
                         }
                         case UMESSAGE_INPUT_MOUSE_EVENT: {
                             auto& event = ((umessage_input_mouse_event*) message)->event;
-                            auto events = mouse_press_tracker.notify_mouse_event(event.buttons, event.dx, event.dy, event.dz);
+                            auto events = input_tracker.notify_os_mouse_event(event.scale_mode, event.dx, event.dy, event.dz, event.buttons,
+                                                                              VGA_WIDTH, VGA_HEIGHT);
                             for (auto& ev : events) {
                                 vga_terminal.on_mouse_event(*ev);
                             }

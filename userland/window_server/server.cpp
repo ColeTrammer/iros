@@ -67,13 +67,26 @@ void ServerImpl::initialize() {
                     auto& event = ((umessage_input_key_event*) message)->event;
                     auto* active_window = m_manager->active_window();
                     if (active_window) {
-                        send<Server::KeyEventMessage>(active_window->client(), { .wid = active_window->id(), .event = event });
+                        auto key_event = m_input_tracker.notify_os_key_event(event.ascii, event.key, event.flags);
+                        if (key_event->key_down()) {
+                            send<Server::KeyEventMessage>(active_window->client(), {
+                                                                                       .wid = active_window->id(),
+                                                                                       .text = key_event->text(),
+                                                                                       .key = static_cast<int>(key_event->key()),
+                                                                                       .modifiers = key_event->modifiers(),
+                                                                                   });
+                        }
                     }
                     break;
                 }
                 case UMESSAGE_INPUT_MOUSE_EVENT: {
                     auto& event = ((umessage_input_mouse_event*) message)->event;
-                    m_manager->notify_mouse_input(event.dx, event.dy, event.dz, event.buttons, event.scale_mode == SCALE_ABSOLUTE);
+                    auto events =
+                        m_input_tracker.notify_os_mouse_event(event.scale_mode, event.dx, event.dy, event.dz, event.buttons,
+                                                              m_manager->screen_rect().width(), m_manager->screen_rect().height());
+                    for (auto& mouse_event : events) {
+                        m_manager->notify_mouse_input(*mouse_event);
+                    }
 
                     auto* active_window = m_manager->active_window();
                     if (active_window && m_manager->should_send_mouse_events(*active_window)) {

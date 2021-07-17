@@ -4,7 +4,6 @@
 #include <app/window.h>
 #include <clipboard/connection.h>
 #include <edit/document.h>
-#include <edit/key_press.h>
 #include <edit/line_renderer.h>
 #include <edit/position.h>
 #include <eventloop/event.h>
@@ -252,94 +251,7 @@ void AppPanel::on_key_event(const App::KeyEvent& event) {
         return;
     }
 
-    int modifiers = (event.shift_down() ? Edit::KeyPress::Modifier::Shift : 0) | (event.alt_down() ? Edit::KeyPress::Modifier::Alt : 0) |
-                    (event.control_down() ? Edit::KeyPress::Modifier::Control : 0);
-    int key = event.ascii();
-    switch (event.key()) {
-        case KEY_CURSOR_LEFT:
-            key = Edit::KeyPress::Key::LeftArrow;
-            break;
-        case KEY_CURSOR_RIGHT:
-            key = Edit::KeyPress::Key::RightArrow;
-            break;
-        case KEY_CURSOR_UP:
-            key = Edit::KeyPress::Key::UpArrow;
-            break;
-        case KEY_CURSOR_DOWN:
-            key = Edit::KeyPress::Key::DownArrow;
-            break;
-        case KEY_HOME:
-            key = Edit::KeyPress::Key::Home;
-            break;
-        case KEY_END:
-            key = Edit::KeyPress::Key::End;
-            break;
-        case KEY_BACKSPACE:
-            key = Edit::KeyPress::Key::Backspace;
-            break;
-        case KEY_DELETE:
-            key = Edit::KeyPress::Key::Delete;
-            break;
-        case KEY_ENTER:
-            key = Edit::KeyPress::Key::Enter;
-            break;
-        case KEY_INSERT:
-            key = Edit::KeyPress::Key::Insert;
-            break;
-        case KEY_ESC:
-            key = Edit::KeyPress::Key::Escape;
-            break;
-        case KEY_PAGE_UP:
-            key = Edit::KeyPress::Key::PageUp;
-            break;
-        case KEY_PAGE_DOWN:
-            key = Edit::KeyPress::Key::PageDown;
-            break;
-        case KEY_F1:
-            key = Edit::KeyPress::Key::F1;
-            break;
-        case KEY_F2:
-            key = Edit::KeyPress::Key::F2;
-            break;
-        case KEY_F3:
-            key = Edit::KeyPress::Key::F3;
-            break;
-        case KEY_F4:
-            key = Edit::KeyPress::Key::F4;
-            break;
-        case KEY_F5:
-            key = Edit::KeyPress::Key::F5;
-            break;
-        case KEY_F6:
-            key = Edit::KeyPress::Key::F6;
-            break;
-        case KEY_F7:
-            key = Edit::KeyPress::Key::F7;
-            break;
-        case KEY_F8:
-            key = Edit::KeyPress::Key::F8;
-            break;
-        case KEY_F9:
-            key = Edit::KeyPress::Key::F9;
-            break;
-        case KEY_F10:
-            key = Edit::KeyPress::Key::F10;
-            break;
-        case KEY_F11:
-            key = Edit::KeyPress::Key::F11;
-            break;
-        case KEY_F12:
-            key = Edit::KeyPress::Key::F12;
-            break;
-        default:
-            break;
-    }
-
-    if (!key) {
-        return;
-    }
-
-    document()->notify_key_pressed(*this, { modifiers, key });
+    document()->notify_key_pressed(*this, event);
 }
 
 void AppPanel::document_did_change() {

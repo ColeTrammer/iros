@@ -1,5 +1,6 @@
 #pragma once
 
+#include <eventloop/input_tracker.h>
 #include <eventloop/object.h>
 #include <eventloop/selectable_file.h>
 #include <eventloop/timer.h>
@@ -52,6 +53,7 @@ private:
     SharedPtr<IPC::Server> m_server;
     SharedPtr<App::FdWrapper> m_input_socket;
     SharedPtr<App::Timer> m_draw_timer;
+    App::InputTracker m_input_tracker;
     HashSet<IPC::Endpoint*> m_window_server_listeners;
 };
 }

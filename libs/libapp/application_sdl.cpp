@@ -88,271 +88,232 @@ static int translate_sdl_button(uint8_t button) {
     }
 }
 
-static key translate_sdl_keycode(SDL_Keycode keycode) {
+static Key translate_sdl_keycode(SDL_Keycode keycode) {
     switch (keycode) {
         case SDLK_RETURN:
-            return KEY_ENTER;
+            return Key::Enter;
         case SDLK_ESCAPE:
-            return KEY_ESC;
+            return Key::Escape;
         case SDLK_BACKSPACE:
-            return KEY_BACKSPACE;
+            return Key::Backspace;
         case SDLK_TAB:
-            return KEY_TAB;
+            return Key::Tab;
         case SDLK_SPACE:
-            return KEY_SPACE;
+            return Key::Space;
         case SDLK_QUOTE:
-            return KEY_SINGLE_QUOTE;
+            return Key::Quote;
         case SDLK_COMMA:
-            return KEY_COMMA;
+            return Key::Comma;
         case SDLK_MINUS:
-            return KEY_MINUS;
+            return Key::Minus;
         case SDLK_PERIOD:
-            return KEY_DOT;
+            return Key::Period;
         case SDLK_SLASH:
-            return KEY_FORWARD_SLASH;
+            return Key::Slash;
         case SDLK_0:
-            return KEY_0;
+            return Key::_0;
         case SDLK_1:
-            return KEY_1;
+            return Key::_1;
         case SDLK_2:
-            return KEY_2;
+            return Key::_2;
         case SDLK_3:
-            return KEY_3;
+            return Key::_3;
         case SDLK_4:
-            return KEY_4;
+            return Key::_4;
         case SDLK_5:
-            return KEY_5;
+            return Key::_5;
         case SDLK_6:
-            return KEY_6;
+            return Key::_6;
         case SDLK_7:
-            return KEY_7;
+            return Key::_7;
         case SDLK_8:
-            return KEY_8;
+            return Key::_8;
         case SDLK_9:
-            return KEY_9;
+            return Key::_9;
         case SDLK_SEMICOLON:
-            return KEY_SEMICOLON;
+            return Key::SemiColon;
         case SDLK_EQUALS:
-            return KEY_EQUALS;
+            return Key::Equals;
         case SDLK_LEFTBRACKET:
-            return KEY_LEFT_SQUARE_BRACKET;
+            return Key::LeftBracket;
         case SDLK_BACKSLASH:
-            return KEY_BACK_SLASH;
+            return Key::Backslash;
         case SDLK_RIGHTBRACKET:
-            return KEY_RIGHT_SQUARE_BRACKET;
+            return Key::RightBracket;
         case SDLK_BACKQUOTE:
-            return KEY_BACK_TICK;
+            return Key::Backtick;
         case SDLK_a:
-            return KEY_A;
+            return Key::A;
         case SDLK_b:
-            return KEY_B;
+            return Key::B;
         case SDLK_c:
-            return KEY_C;
+            return Key::C;
         case SDLK_d:
-            return KEY_D;
+            return Key::D;
         case SDLK_e:
-            return KEY_E;
+            return Key::E;
         case SDLK_f:
-            return KEY_F;
+            return Key::F;
         case SDLK_g:
-            return KEY_G;
+            return Key::G;
         case SDLK_h:
-            return KEY_H;
+            return Key::H;
         case SDLK_i:
-            return KEY_I;
+            return Key::I;
         case SDLK_j:
-            return KEY_J;
+            return Key::J;
         case SDLK_k:
-            return KEY_K;
+            return Key::K;
         case SDLK_l:
-            return KEY_L;
+            return Key::L;
         case SDLK_m:
-            return KEY_M;
+            return Key::M;
         case SDLK_n:
-            return KEY_N;
+            return Key::N;
         case SDLK_o:
-            return KEY_O;
+            return Key::O;
         case SDLK_p:
-            return KEY_P;
+            return Key::P;
         case SDLK_q:
-            return KEY_Q;
+            return Key::Q;
         case SDLK_r:
-            return KEY_R;
+            return Key::R;
         case SDLK_s:
-            return KEY_S;
+            return Key::S;
         case SDLK_t:
-            return KEY_T;
+            return Key::T;
         case SDLK_u:
-            return KEY_U;
+            return Key::U;
         case SDLK_v:
-            return KEY_V;
+            return Key::V;
         case SDLK_w:
-            return KEY_W;
+            return Key::W;
         case SDLK_x:
-            return KEY_X;
+            return Key::X;
         case SDLK_y:
-            return KEY_Y;
+            return Key::Y;
         case SDLK_z:
-            return KEY_Z;
+            return Key::Z;
         case SDLK_CAPSLOCK:
-            return KEY_CAPSLOCK;
+            return Key::CapsLock;
         case SDLK_F1:
-            return KEY_F1;
+            return Key::F1;
         case SDLK_F2:
-            return KEY_F2;
+            return Key::F2;
         case SDLK_F3:
-            return KEY_F3;
+            return Key::F3;
         case SDLK_F4:
-            return KEY_F4;
+            return Key::F4;
         case SDLK_F5:
-            return KEY_F5;
+            return Key::F5;
         case SDLK_F6:
-            return KEY_F6;
+            return Key::F6;
         case SDLK_F7:
-            return KEY_F7;
+            return Key::F7;
         case SDLK_F8:
-            return KEY_F8;
+            return Key::F8;
         case SDLK_F9:
-            return KEY_F9;
+            return Key::F9;
         case SDLK_F10:
-            return KEY_F10;
+            return Key::F10;
         case SDLK_F11:
-            return KEY_F11;
+            return Key::F11;
         case SDLK_F12:
-            return KEY_F12;
+            return Key::F12;
         case SDLK_SCROLLLOCK:
-            return KEY_SCROLL_LOCK;
+            return Key::ScrollLock;
         case SDLK_PAUSE:
-            return KEY_WWW_STOP;
+            return Key::Pause;
         case SDLK_INSERT:
-            return KEY_INSERT;
+            return Key::Insert;
         case SDLK_HOME:
-            return KEY_HOME;
+            return Key::Home;
         case SDLK_PAGEUP:
-            return KEY_PAGE_UP;
+            return Key::PageUp;
         case SDLK_DELETE:
-            return KEY_DELETE;
+            return Key::Delete;
         case SDLK_END:
-            return KEY_END;
+            return Key::End;
         case SDLK_PAGEDOWN:
-            return KEY_PAGE_DOWN;
+            return Key::PageDown;
         case SDLK_RIGHT:
-            return KEY_CURSOR_RIGHT;
+            return Key::RightArrow;
         case SDLK_LEFT:
-            return KEY_CURSOR_LEFT;
+            return Key::LeftArrow;
         case SDLK_DOWN:
-            return KEY_CURSOR_DOWN;
+            return Key::DownArrow;
         case SDLK_UP:
-            return KEY_CURSOR_UP;
+            return Key::UpArrow;
         case SDLK_KP_DIVIDE:
-            return KEY_NUMPAD_FORWARD_SLASH;
+            return Key::Numpad_Slash;
         case SDLK_KP_MULTIPLY:
-            return KEY_NUMPAD_STAR;
+            return Key::Numpad_Star;
         case SDLK_KP_MINUS:
-            return KEY_NUMPAD_MINUS;
+            return Key::Numpad_Minus;
         case SDLK_KP_PLUS:
-            return KEY_NUMPAD_PLUS;
+            return Key::Numpad_Plus;
         case SDLK_KP_ENTER:
-            return KEY_NUMPAD_ENTER;
+            return Key::Numpad_Enter;
         case SDLK_KP_1:
-            return KEY_NUMPAD_1;
+            return Key::Numpad_1;
         case SDLK_KP_2:
-            return KEY_NUMPAD_2;
+            return Key::Numpad_2;
         case SDLK_KP_3:
-            return KEY_NUMPAD_3;
+            return Key::Numpad_3;
         case SDLK_KP_4:
-            return KEY_NUMPAD_4;
+            return Key::Numpad_4;
         case SDLK_KP_5:
-            return KEY_NUMPAD_5;
+            return Key::Numpad_5;
         case SDLK_KP_6:
-            return KEY_NUMPAD_6;
+            return Key::Numpad_6;
         case SDLK_KP_7:
-            return KEY_NUMPAD_7;
+            return Key::Numpad_7;
         case SDLK_KP_8:
-            return KEY_NUMPAD_8;
+            return Key::Numpad_8;
         case SDLK_KP_9:
-            return KEY_NUMPAD_9;
+            return Key::Numpad_9;
         case SDLK_KP_0:
-            return KEY_NUMPAD_0;
+            return Key::Numpad_0;
         case SDLK_KP_PERIOD:
-            return KEY_NUMPAD_DOT;
+            return Key::Numpad_Period;
         case SDLK_APPLICATION:
-            return KEY_APPS;
+            return Key::Application;
         case SDLK_POWER:
-            return KEY_ACPI_POWER;
-        case SDLK_SELECT:
-            return KEY_MEDIA_SELECT;
-        case SDLK_STOP:
-            return KEY_WWW_STOP;
-        case SDLK_AGAIN:
-            return KEY_WWW_REFRESH;
-        case SDLK_MUTE:
-            return KEY_MUTE;
-        case SDLK_VOLUMEUP:
-            return KEY_VOLUME_UP;
-        case SDLK_VOLUMEDOWN:
-            return KEY_VOLUMNE_DOWN;
+            return Key::Power;
         case SDLK_LCTRL:
-            return KEY_LEFT_CONTROL;
+            return Key::LeftControl;
         case SDLK_LSHIFT:
-            return KEY_LEFT_SHIFT;
+            return Key::LeftShift;
         case SDLK_LALT:
-            return KEY_LEFT_ALT;
+            return Key::LeftAlt;
         case SDLK_LGUI:
-            return KEY_LEFT_GUI;
+            return Key::LeftMeta;
         case SDLK_RCTRL:
-            return KEY_RIGHT_CONTROL;
+            return Key::RightControl;
         case SDLK_RSHIFT:
-            return KEY_RIGHT_SHIFT;
+            return Key::RightShift;
         case SDLK_RALT:
-            return KEY_RIGHT_ALT;
+            return Key::RightAlt;
         case SDLK_RGUI:
-            return KEY_RIGHT_GUI;
-        case SDLK_AUDIONEXT:
-            return KEY_NEXT_TRACX;
-        case SDLK_AUDIOPREV:
-            return KEY_PREV_TRACK;
-        case SDLK_AUDIOSTOP:
-            return KEY_STOP;
-        case SDLK_AUDIOPLAY:
-            return KEY_PLAY;
-        case SDLK_AUDIOMUTE:
-            return KEY_MUTE;
-        case SDLK_MEDIASELECT:
-            return KEY_MEDIA_SELECT;
-        case SDLK_WWW:
-            return KEY_WWW;
-        case SDLK_MAIL:
-            return KEY_EMAIL;
-        case SDLK_CALCULATOR:
-            return KEY_CALC;
-        case SDLK_COMPUTER:
-            return KEY_MY_COMPUTER;
-        case SDLK_AC_SEARCH:
-            return KEY_WWW_SEARCH;
-        case SDLK_AC_BACK:
-            return KEY_WWW_BACK;
-        case SDLK_AC_FORWARD:
-            return KEY_WWW_FORWARD;
-        case SDLK_AC_STOP:
-            return KEY_WWW_STOP;
-        case SDLK_AC_REFRESH:
-            return KEY_WWW_REFRESH;
+            return Key::RightMeta;
         default:
-            return (key) 0;
+            return Key::None;
     }
 }
 
 static int translate_sdl_modifiers(uint16_t sdl_modifers) {
     int modifiers = 0;
     if (sdl_modifers & KMOD_SHIFT) {
-        modifiers |= KEY_SHIFT_ON;
+        modifiers |= KeyModifier::Shift;
     }
     if (sdl_modifers & KMOD_ALT) {
-        modifiers |= KEY_ALT_ON;
+        modifiers |= KeyModifier::Alt;
     }
     if (sdl_modifers & KMOD_CTRL) {
-        modifiers |= KEY_CONTROL_ON;
+        modifiers |= KeyModifier::Control;
+    }
+    if (sdl_modifers & KMOD_GUI) {
+        modifiers |= KeyModifier::Meta;
     }
     return modifiers;
 }
@@ -380,8 +341,9 @@ void SDLApplication::run_sdl() {
                     break;
                 }
 
-                auto modifiers = translate_sdl_modifiers(event.key.keysym.mod) | KEY_DOWN;
-                EventLoop::queue_event(*maybe_window, make_unique<KeyEvent>(0, translate_sdl_keycode(event.key.keysym.sym), modifiers));
+                auto modifiers = translate_sdl_modifiers(event.key.keysym.mod);
+                EventLoop::queue_event(
+                    *maybe_window, make_unique<KeyEvent>(KeyEventType::Down, "", translate_sdl_keycode(event.key.keysym.sym), modifiers));
                 break;
             }
             case SDL_TEXTINPUT: {
@@ -390,8 +352,8 @@ void SDLApplication::run_sdl() {
                     break;
                 }
 
-                auto modifiers = translate_sdl_modifiers(SDL_GetModState()) | KEY_DOWN;
-                EventLoop::queue_event(*maybe_window, make_unique<KeyEvent>(event.text.text[0], (key) 0, modifiers));
+                auto modifiers = translate_sdl_modifiers(SDL_GetModState());
+                EventLoop::queue_event(*maybe_window, make_unique<KeyEvent>(KeyEventType::Down, event.text.text, Key::None, modifiers));
                 break;
             }
             case SDL_MOUSEBUTTONDOWN:
@@ -401,14 +363,14 @@ void SDLApplication::run_sdl() {
                     break;
                 }
 
-                auto buttons_down = Application::the().mouse_tracker().prev_buttons();
+                auto buttons_down = Application::the().input_tracker().prev_buttons();
                 if (event.button.state == SDL_PRESSED) {
                     buttons_down |= button;
                 } else {
                     buttons_down &= ~button;
                 }
 
-                auto events = Application::the().mouse_tracker().notify_mouse_event(buttons_down, event.button.x, event.button.y, 0);
+                auto events = Application::the().input_tracker().notify_mouse_event(buttons_down, event.button.x, event.button.y, 0);
                 auto maybe_target_window = Window::find_by_wid(event.button.windowID);
                 if (!maybe_target_window) {
                     break;
@@ -420,7 +382,7 @@ void SDLApplication::run_sdl() {
                 break;
             }
             case SDL_MOUSEWHEEL: {
-                auto& tracker = Application::the().mouse_tracker();
+                auto& tracker = Application::the().input_tracker();
                 auto events = tracker.notify_mouse_event(tracker.prev_buttons(), tracker.prev_x(), tracker.prev_y(), -event.wheel.y);
                 auto maybe_target_window = Window::find_by_wid(event.button.windowID);
                 if (!maybe_target_window) {
@@ -433,7 +395,7 @@ void SDLApplication::run_sdl() {
                 break;
             }
             case SDL_MOUSEMOTION: {
-                auto& tracker = Application::the().mouse_tracker();
+                auto& tracker = Application::the().input_tracker();
                 auto events = tracker.notify_mouse_event(tracker.prev_buttons(), event.motion.x, event.motion.y, 0);
                 auto maybe_target_window = Window::find_by_wid(event.button.windowID);
                 if (!maybe_target_window) {

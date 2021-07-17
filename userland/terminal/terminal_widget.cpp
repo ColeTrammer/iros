@@ -168,21 +168,21 @@ void TerminalWidget::paste_text() {
 }
 
 void TerminalWidget::on_key_event(const App::KeyEvent& event) {
-    if (event.key_down() && event.control_down() && event.shift_down() && event.key() == KEY_C) {
+    if (event.key_down() && event.control_down() && event.shift_down() && event.key() == App::Key::C) {
         copy_selection();
         return;
     }
 
-    if (event.ascii()) {
+    if (!event.text().is_empty()) {
         clear_selection();
     }
 
-    if (event.key_down() && event.control_down() && event.shift_down() && event.key() == KEY_V) {
+    if (event.key_down() && event.control_down() && event.shift_down() && event.key() == App::Key::V) {
         paste_text();
         return;
     }
 
-    m_pseudo_terminal.handle_key_event(event.key(), event.flags(), event.ascii());
+    m_pseudo_terminal.handle_key_event(event);
 }
 
 void TerminalWidget::clear_selection() {
