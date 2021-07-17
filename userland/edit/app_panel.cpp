@@ -101,7 +101,7 @@ Edit::RenderedLine AppPanel::compose_line(const Edit::Line& line) const {
 void AppPanel::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) {
     auto renderer = get_renderer();
 
-    for (size_t i = col_offset; i < static_cast<size_t>(col_offset + cols()); i++) {
+    for (size_t i = col_offset; i < static_cast<size_t>(col_offset + cols()) && i < text.size(); i++) {
         render_cell(renderer, (i - col_offset) * col_width(), row * row_height(), text[i], metadata[i]);
     }
 }
@@ -223,6 +223,7 @@ void AppPanel::render() {
     renderer.fill_rect(bottom_extra_rect, ColorValue::Black);
     renderer.fill_rect(right_extra_rect, ColorValue::Black);
 
+    renderer.fill_rect(sized_rect(), ColorValue::Black);
     document()->display(*this);
 
     render_cursor(renderer);
