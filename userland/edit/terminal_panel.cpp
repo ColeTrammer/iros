@@ -772,20 +772,23 @@ void TerminalPanel::enter_search(String starting_text) {
 
     String message = "Find: ";
     int message_size = LIIM::min(message.size(), static_cast<size_t>(m_cols / 2));
-    printf("%.*s", m_cols / 2, message.string());
-    fflush(stdout);
 
     TerminalPanel text_panel(1, m_col_offset + m_cols - message_size, rows() + m_row_offset, message_size);
     s_prompt_panel = &text_panel;
     s_prompt_message = message;
 
     auto document = Edit::Document::create_single_line(move(starting_text));
-    text_panel.set_document(move(document));
+    text_panel.set_document(document);
+    document->select_all(text_panel, text_panel.cursors().main_cursor());
 
     m_show_status_bar = false;
 
     fd_set set;
     for (;;) {
+        printf("\033[%d;%dH", m_row_offset + m_rows + 1, m_col_offset + 1);
+        printf("%.*s", m_cols / 2, message.string());
+        text_panel.flush();
+
         FD_ZERO(&set);
         FD_SET(STDIN_FILENO, &set);
         int ret = select(STDIN_FILENO + 1, &set, nullptr, nullptr, nullptr);
@@ -816,18 +819,15 @@ void TerminalPanel::enter_search(String starting_text) {
                     goto exit_search;
                 }
 
-                text_panel.document()->notify_key_pressed(*this, press);
+                text_panel.document()->notify_key_pressed(text_panel, press);
             } else {
-                text_panel.document()->notify_mouse_event(*this, ev.as<App::MouseEvent>());
+                text_panel.document()->notify_mouse_event(text_panel, ev.as<App::MouseEvent>());
             }
         }
 
         auto search_text = text_panel.document()->content_string();
         TerminalPanel::document()->set_search_text(search_text);
         flush_if_needed();
-
-        text_panel.draw_cursor();
-        fflush(stdout);
     }
 
 exit_search:
