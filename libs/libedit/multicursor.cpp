@@ -59,6 +59,29 @@ void MultiCursor::add_cursor(Document& document, Panel& panel, AddCursorMode mod
     }
 }
 
+void MultiCursor::add_cursor_at(Document& document, Panel& panel, const TextIndex& index, const Selection& selection) {
+    int i = 0;
+    for (; i < m_cursors.size(); i++) {
+        // Duplicate cursors should not be created.
+        if (m_cursors[i].index() == index) {
+            return;
+        }
+
+        if (m_cursors[i].index() > index) {
+            break;
+        }
+    }
+
+    auto cursor = Cursor {};
+    cursor.set(index);
+    cursor.selection() = selection;
+    cursor.compute_max_col(document, panel);
+    m_cursors.insert(move(cursor), i);
+    if (i <= m_main_cursor_index) {
+        m_main_cursor_index++;
+    }
+}
+
 void MultiCursor::did_delete_lines(Document& document, Panel& panel, int line_index, int line_count) {
     for (auto& cursor : m_cursors) {
         if (cursor.line_index() < line_index) {

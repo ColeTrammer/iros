@@ -1033,6 +1033,29 @@ void Document::swap_lines_at_cursor(Panel& panel, SwapDirection direction) {
     push_command<SwapLinesCommand>(panel, direction);
 }
 
+void Document::select_next_word_at_cursor(Panel& panel) {
+    auto& main_cursor = panel.cursors().main_cursor();
+    if (main_cursor.selection().empty()) {
+        select_word_at_cursor(panel, main_cursor);
+        auto search_text = selection_text(main_cursor);
+        set_search_text(move(search_text));
+
+        // Set m_search_result_index to point just past the current cursor.
+        while (m_search_result_index < m_search_results.size() &&
+               m_search_results.range(m_search_result_index).ends_before(main_cursor.index())) {
+            m_search_result_index++;
+        }
+        m_search_result_index %= m_search_results.size();
+        return;
+    }
+
+    auto& result = m_search_results.range(m_search_result_index);
+    panel.cursors().add_cursor_at(*this, panel, result.end(), { result.start(), result.end() });
+
+    ++m_search_result_index;
+    m_search_result_index %= m_search_results.size();
+}
+
 void Document::select_word_at_cursor(Panel& panel, Cursor& cursor) {
     bool was_space = isspace(cursor.referenced_character(*this));
     bool was_word = isword(cursor.referenced_character(*this));
@@ -1190,6 +1213,9 @@ void Document::notify_key_pressed(Panel& panel, KeyPress press) {
                 break;
             case 'C':
                 copy(panel, cursors);
+                break;
+            case 'D':
+                select_next_word_at_cursor(panel);
                 break;
             case 'F':
                 enter_interactive_search(panel);

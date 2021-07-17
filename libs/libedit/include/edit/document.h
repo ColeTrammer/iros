@@ -138,6 +138,7 @@ public:
     void clear_selection(Cursor& cursor);
     String selection_text(Cursor& cursor) const;
 
+    void select_next_word_at_cursor(Panel& panel);
     void select_line_at_cursor(Panel& panel, Cursor& cursor);
     void select_word_at_cursor(Panel& panel, Cursor& cursor);
     void select_all(Panel& panel, Cursor& cursor);

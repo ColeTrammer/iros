@@ -7,6 +7,7 @@ namespace Edit {
 class Selection {
 public:
     Selection() {}
+    Selection(const TextIndex& start, const TextIndex& end) : m_start(start), m_end(end) {}
 
     void clear() { begin({ 0, 0 }); }
     bool empty() const { return start() == end(); }
