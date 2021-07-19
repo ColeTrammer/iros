@@ -3,7 +3,7 @@
 set -e
 
 ROOT="${ROOT:-$PWD/../..}"
-TARGET=`$ROOT/default-host.sh`
+TARGET=`$ROOT/scripts/default-host.sh`
 VERSION="2.36.1"
 DOWNLOAD_URL="https://ftp.gnu.org/gnu/binutils/binutils-$VERSION.tar.gz"
 DOWNLOAD_DEST=binutils.tar.gz

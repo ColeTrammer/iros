@@ -37,6 +37,9 @@ GENERATOR="${GENERATOR:-$DEFAULT_GENERATOR}"
 export OS_2_NATIVE_DIR="${OS_2_NATIVE_DIR:-native}"
 export OS_2_NATIVE_DIR="$(realpath $OS_2_NATIVE_DIR)"
 
+export OS_2_BUILD_DIR="${OS_2_BUILD_DIR:-build}"
+export OS_2_BUILD_DIR="$(realpath $OS_2_BUILD_DIR)"
+
 cmake -S . -B "$OS_2_NATIVE_DIR" -G "$GENERATOR" || die "Failed to do create native cmake project at" "$OS_2_NATIVE_DIR"
 
 cmake --build "$OS_2_NATIVE_DIR" || die "Failed to do native build"

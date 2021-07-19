@@ -23,7 +23,10 @@ My second attempt to create an OS
 
 # To build
 
--   You need to install various dependencies for gcc (look on osdev)
+-   You need to install various dependencies for the gcc (look cross compile on osdev)
+-   To build locally, gcc/g++ must have at least version 10 (for coroutine support).
+    -   Additionally, libX11 and libSDL2 are needed.
+    -   These correspond to the following apt packages: libsdl2-dev gcc-10 g++-10
 -   Install qemu-system-x86_64 to run the os, also grub-mkrescue
 -   Run `./scripts/setup.sh`, which will prompt you to build the toolchain and create two cmake build directories.
     Note that this must be run from the root directory, or the script will be confused.
