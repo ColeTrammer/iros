@@ -274,7 +274,8 @@ void TerminalWidget::on_mouse_event(const App::MouseEvent& event) {
     int row_at_cursor = m_tty.scroll_relative_offset(cell_y);
     int col_at_cursor = cell_x;
 
-    auto event_copy = App::MouseEvent(event.mouse_event_type(), event.buttons_down(), event.x(), event.y(), event.z(), event.button());
+    auto event_copy =
+        App::MouseEvent(event.mouse_event_type(), event.buttons_down(), event.x(), event.y(), event.z(), event.button(), event.modifiers());
     event_copy.set_x(cell_x);
     event_copy.set_y(cell_y);
     if (m_pseudo_terminal.handle_mouse_event(event_copy)) {

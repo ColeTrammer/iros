@@ -143,9 +143,9 @@ void Window::on_event(const Event& event) {
             }
 
             if (widget) {
-                MouseEvent widget_relative_event(mouse_event.mouse_event_type(), mouse_event.buttons_down(),
-                                                 mouse_event.x() - widget->positioned_rect().x(),
-                                                 mouse_event.y() - widget->positioned_rect().y(), mouse_event.z(), mouse_event.button());
+                MouseEvent widget_relative_event(
+                    mouse_event.mouse_event_type(), mouse_event.buttons_down(), mouse_event.x() - widget->positioned_rect().x(),
+                    mouse_event.y() - widget->positioned_rect().y(), mouse_event.z(), mouse_event.button(), mouse_event.modifiers());
                 widget->on_mouse_event(widget_relative_event);
             }
             return;

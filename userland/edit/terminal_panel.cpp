@@ -600,7 +600,7 @@ Vector<Variant<App::KeyEvent, App::MouseEvent>> TerminalPanel::read_input() {
                         break;
                 }
 
-                auto events = m_mouse_press_tracker.notify_mouse_event(buttons_down, cx - 1, cy - 1, z);
+                auto events = m_mouse_press_tracker.notify_mouse_event(buttons_down, cx - 1, cy - 1, z, 0);
 
                 R out_events;
                 for (auto& event : events) {

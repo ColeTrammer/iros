@@ -17,7 +17,8 @@ void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::Wind
 }
 
 void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::MouseEventMessage& message) {
-    auto events = Application::the().input_tracker().notify_mouse_event(message.buttons, message.x, message.y, message.z);
+    auto events =
+        Application::the().input_tracker().notify_mouse_event(message.buttons, message.x, message.y, message.z, message.modifiers);
     auto maybe_window = Window::find_by_wid(message.wid);
     assert(maybe_window.has_value());
     for (auto& event : events) {

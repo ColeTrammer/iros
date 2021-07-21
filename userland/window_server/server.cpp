@@ -97,6 +97,7 @@ void ServerImpl::initialize() {
                                                                                      .y = relative_mouse.y(),
                                                                                      .z = event.dz,
                                                                                      .buttons = event.buttons,
+                                                                                     .modifiers = 0,
                                                                                  });
                     }
                     break;

@@ -287,9 +287,7 @@ void TerminalInputParser::finish_sgr_mouse_event(const String& escape) {
             break;
     }
 
-    // FIXME: add key modifiers to mouse event
-    (void) modifiers;
-    auto events = m_tracker.notify_mouse_event(buttons_down, cx - 1, cy - 1, z);
+    auto events = m_tracker.notify_mouse_event(buttons_down, cx - 1, cy - 1, z, modifiers);
     for (auto& event : events) {
         enqueue_event(move(event));
     }

@@ -73,53 +73,6 @@ namespace MouseButton {
     };
 }
 
-class MouseEvent final : public Event {
-public:
-    MouseEvent(MouseEventType mouse_event_type, int buttons_down, int x, int y, int z, int button)
-        : Event(Event::Type::Mouse)
-        , m_x(x)
-        , m_y(y)
-        , m_z(z)
-        , m_buttons_down(buttons_down)
-        , m_button(button)
-        , m_mouse_event_type(mouse_event_type) {}
-
-    int x() const { return m_x; }
-    int y() const { return m_y; }
-    int z() const { return m_z; }
-    int button() const { return m_button; }
-
-    void set_x(int x) { m_x = x; }
-    void set_y(int y) { m_y = y; }
-
-    MouseEventType mouse_event_type() const { return m_mouse_event_type; }
-    int buttons_down() const { return m_buttons_down; };
-
-    bool left_button() const { return m_button == MouseButton::Left; }
-    bool right_button() const { return m_button == MouseButton::Right; }
-    bool middle_button() const { return m_button == MouseButton::Middle; }
-
-    bool mouse_down_any() const {
-        return m_mouse_event_type == MouseEventType::Down || m_mouse_event_type == MouseEventType::Double ||
-               m_mouse_event_type == MouseEventType::Triple;
-    }
-
-    bool mouse_down() const { return m_mouse_event_type == MouseEventType::Down; }
-    bool mouse_double() const { return m_mouse_event_type == MouseEventType::Double; }
-    bool mouse_triple() const { return m_mouse_event_type == MouseEventType::Triple; }
-    bool mouse_up() const { return m_mouse_event_type == MouseEventType::Up; }
-    bool mouse_move() const { return m_mouse_event_type == MouseEventType::Move; }
-    bool mouse_scroll() const { return m_mouse_event_type == MouseEventType::Scroll; }
-
-private:
-    int m_x { 0 };
-    int m_y { 0 };
-    int m_z { 0 };
-    int m_buttons_down { 0 };
-    int m_button { 0 };
-    MouseEventType m_mouse_event_type { MouseEventType::Move };
-};
-
 enum class KeyEventType {
     Down,
     Up,
@@ -280,6 +233,61 @@ private:
     String m_text;
     Key m_key;
     int m_modifiers;
+};
+
+class MouseEvent final : public Event {
+public:
+    MouseEvent(MouseEventType mouse_event_type, int buttons_down, int x, int y, int z, int button, int modifiers)
+        : Event(Event::Type::Mouse)
+        , m_x(x)
+        , m_y(y)
+        , m_z(z)
+        , m_buttons_down(buttons_down)
+        , m_button(button)
+        , m_modifiers(modifiers)
+        , m_mouse_event_type(mouse_event_type) {}
+
+    int x() const { return m_x; }
+    int y() const { return m_y; }
+    int z() const { return m_z; }
+    int button() const { return m_button; }
+
+    void set_x(int x) { m_x = x; }
+    void set_y(int y) { m_y = y; }
+
+    MouseEventType mouse_event_type() const { return m_mouse_event_type; }
+    int buttons_down() const { return m_buttons_down; };
+
+    bool left_button() const { return m_button == MouseButton::Left; }
+    bool right_button() const { return m_button == MouseButton::Right; }
+    bool middle_button() const { return m_button == MouseButton::Middle; }
+
+    bool mouse_down_any() const {
+        return m_mouse_event_type == MouseEventType::Down || m_mouse_event_type == MouseEventType::Double ||
+               m_mouse_event_type == MouseEventType::Triple;
+    }
+
+    bool mouse_down() const { return m_mouse_event_type == MouseEventType::Down; }
+    bool mouse_double() const { return m_mouse_event_type == MouseEventType::Double; }
+    bool mouse_triple() const { return m_mouse_event_type == MouseEventType::Triple; }
+    bool mouse_up() const { return m_mouse_event_type == MouseEventType::Up; }
+    bool mouse_move() const { return m_mouse_event_type == MouseEventType::Move; }
+    bool mouse_scroll() const { return m_mouse_event_type == MouseEventType::Scroll; }
+
+    int modifiers() const { return m_modifiers; }
+    int control_down() const { return m_modifiers & KeyModifier::Control; }
+    int shift_down() const { return m_modifiers & KeyModifier::Shift; }
+    int alt_down() const { return m_modifiers & KeyModifier::Alt; }
+    int meta_down() const { return m_modifiers & KeyModifier::Meta; }
+
+private:
+    int m_x { 0 };
+    int m_y { 0 };
+    int m_z { 0 };
+    int m_buttons_down { 0 };
+    int m_button { 0 };
+    int m_modifiers { 0 };
+    MouseEventType m_mouse_event_type { MouseEventType::Move };
 };
 
 class CallbackEvent final : public Event {

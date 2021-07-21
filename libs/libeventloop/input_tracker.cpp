@@ -263,30 +263,30 @@ Vector<UniquePtr<MouseEvent>> InputTracker::notify_os_mouse_event(int scale_mode
         out_buttons |= MouseButton::Right;
     }
 
-    return notify_mouse_event(out_buttons, out_x, out_y, dz);
+    return notify_mouse_event(out_buttons, out_x, out_y, dz, 0);
 }
 
-Vector<UniquePtr<MouseEvent>> InputTracker::notify_mouse_event(int buttons, int x, int y, int z) {
+Vector<UniquePtr<MouseEvent>> InputTracker::notify_mouse_event(int buttons, int x, int y, int z, int modifiers) {
     Vector<UniquePtr<MouseEvent>> events;
     if (z != 0) {
-        events.add(make_unique<MouseEvent>(MouseEventType::Scroll, buttons, x, y, z, MouseButton::None));
+        events.add(make_unique<MouseEvent>(MouseEventType::Scroll, buttons, x, y, z, MouseButton::None, modifiers));
     }
 
     if (m_prev.x() != x || m_prev.y() != y) {
-        events.add(make_unique<MouseEvent>(MouseEventType::Move, m_prev.buttons_down(), x, y, 0, MouseButton::None));
+        events.add(make_unique<MouseEvent>(MouseEventType::Move, m_prev.buttons_down(), x, y, 0, MouseButton::None, modifiers));
     }
 
     auto buttons_to_pass = m_prev.buttons_down();
     auto handle_button = [&](int button) {
         if (!(buttons & button) && !!(m_prev.buttons_down() & button)) {
             buttons_to_pass &= ~button;
-            events.add(make_unique<MouseEvent>(MouseEventType::Up, buttons_to_pass, x, y, 0, button));
+            events.add(make_unique<MouseEvent>(MouseEventType::Up, buttons_to_pass, x, y, 0, button, modifiers));
         }
 
         if (!!(buttons & button) && !(m_prev.buttons_down() & button)) {
             auto type = m_prev.set(x, y, button);
             buttons_to_pass |= button;
-            events.add(make_unique<MouseEvent>(type, buttons_to_pass, x, y, 0, button));
+            events.add(make_unique<MouseEvent>(type, buttons_to_pass, x, y, 0, button, modifiers));
         }
     };
 

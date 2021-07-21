@@ -370,7 +370,8 @@ void SDLApplication::run_sdl() {
                     buttons_down &= ~button;
                 }
 
-                auto events = Application::the().input_tracker().notify_mouse_event(buttons_down, event.button.x, event.button.y, 0);
+                auto events = Application::the().input_tracker().notify_mouse_event(buttons_down, event.button.x, event.button.y, 0,
+                                                                                    translate_sdl_modifiers(SDL_GetModState()));
                 auto maybe_target_window = Window::find_by_wid(event.button.windowID);
                 if (!maybe_target_window) {
                     break;
@@ -383,7 +384,8 @@ void SDLApplication::run_sdl() {
             }
             case SDL_MOUSEWHEEL: {
                 auto& tracker = Application::the().input_tracker();
-                auto events = tracker.notify_mouse_event(tracker.prev_buttons(), tracker.prev_x(), tracker.prev_y(), -event.wheel.y);
+                auto events = tracker.notify_mouse_event(tracker.prev_buttons(), tracker.prev_x(), tracker.prev_y(), -event.wheel.y,
+                                                         translate_sdl_modifiers(SDL_GetModState()));
                 auto maybe_target_window = Window::find_by_wid(event.button.windowID);
                 if (!maybe_target_window) {
                     return;
@@ -396,7 +398,8 @@ void SDLApplication::run_sdl() {
             }
             case SDL_MOUSEMOTION: {
                 auto& tracker = Application::the().input_tracker();
-                auto events = tracker.notify_mouse_event(tracker.prev_buttons(), event.motion.x, event.motion.y, 0);
+                auto events = tracker.notify_mouse_event(tracker.prev_buttons(), event.motion.x, event.motion.y, 0,
+                                                         translate_sdl_modifiers(SDL_GetModState()));
                 auto maybe_target_window = Window::find_by_wid(event.button.windowID);
                 if (!maybe_target_window) {
                     break;

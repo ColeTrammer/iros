@@ -235,7 +235,8 @@ void AppPanel::on_mouse_event(const App::MouseEvent& event) {
         return;
     }
 
-    auto event_copy = App::MouseEvent(event.mouse_event_type(), event.buttons_down(), event.x(), event.y(), event.z(), event.button());
+    auto event_copy =
+        App::MouseEvent(event.mouse_event_type(), event.buttons_down(), event.x(), event.y(), event.z(), event.button(), event.modifiers());
     auto text_index = document()->text_index_at_scrolled_position(*this, { event.y() / row_height(), event.x() / col_width() });
     event_copy.set_x(text_index.index_into_line());
     event_copy.set_y(text_index.line_index());
