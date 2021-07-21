@@ -21,6 +21,24 @@ static constexpr App::Key char_to_key(uint8_t c) {
     return App::Key::None;
 }
 
+static constexpr int convert_modifiers(int terminal_modifiers) {
+    auto terminal_flags = terminal_modifiers - 1;
+    int out_modifiers = 0;
+    if (terminal_flags & 1) {
+        out_modifiers |= App::KeyModifier::Shift;
+    }
+    if (terminal_flags & 2) {
+        out_modifiers |= App::KeyModifier::Alt;
+    }
+    if (terminal_flags & 4) {
+        out_modifiers |= App::KeyModifier::Control;
+    }
+    if (terminal_flags & 8) {
+        out_modifiers |= App::KeyModifier::Meta;
+    }
+    return out_modifiers;
+}
+
 TerminalInputParser::TerminalInputParser() : m_handler(handle()) {}
 
 TerminalInputParser::~TerminalInputParser() {}
@@ -50,12 +68,283 @@ Generator<Ext::StreamResult> TerminalInputParser::next_byte(uint8_t& byte) {
     }
 }
 
+void TerminalInputParser::finish_ss3(const String& escape) {
+    char c = '\0';
+    int modifiers = 1;
+    if (sscanf(escape.string(), "O%c", &c) != 1 && sscanf(escape.string(), "O%d%c", &modifiers, &c)) {
+        return;
+    }
+
+    auto key = [&] {
+        switch (c) {
+            case 'A':
+                return App::Key::UpArrow;
+            case 'B':
+                return App::Key::DownArrow;
+            case 'C':
+                return App::Key::RightArrow;
+            case 'D':
+                return App::Key::LeftArrow;
+            case 'F':
+                return App::Key::End;
+            case 'H':
+                return App::Key::Home;
+            case 'P':
+                return App::Key::F1;
+            case 'Q':
+                return App::Key::F2;
+            case 'R':
+                return App::Key::F3;
+            case 'S':
+                return App::Key::F4;
+            default:
+                return App::Key::None;
+        }
+    }();
+
+    enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", key, convert_modifiers(modifiers)));
+}
+
+void TerminalInputParser::finish_xterm_escape(const String& escape) {
+    char c = '\0';
+    int modifiers = 1;
+    if (sscanf(escape.string(), "[%c", &c) != 1 && sscanf(escape.string(), "[1;%d%c", &modifiers, &c)) {
+        return;
+    }
+
+    auto key = [&] {
+        switch (c) {
+            case 'A':
+                return App::Key::UpArrow;
+            case 'B':
+                return App::Key::DownArrow;
+            case 'C':
+                return App::Key::RightArrow;
+            case 'D':
+                return App::Key::LeftArrow;
+            case 'F':
+                return App::Key::End;
+            case 'H':
+                return App::Key::Home;
+            case 'P':
+                return App::Key::F1;
+            case 'Q':
+                return App::Key::F2;
+            case 'R':
+                return App::Key::F3;
+            case 'S':
+                return App::Key::F4;
+            default:
+                return App::Key::None;
+        }
+    }();
+
+    enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", key, convert_modifiers(modifiers)));
+}
+
+void TerminalInputParser::finish_vt_escape(const String& escape) {
+    int key_code;
+    int modifiers = 0;
+    if (sscanf(escape.string(), "[%d~", &key_code) != 1 && sscanf(escape.string(), "[%d;%d~", &key_code, &modifiers) != 2) {
+        return;
+    }
+
+    auto key = [&] {
+        switch (key_code) {
+            case 1:
+                return App::Key::Home;
+            case 2:
+                return App::Key::Insert;
+            case 3:
+                return App::Key::Delete;
+            case 4:
+                return App::Key::End;
+            case 5:
+                return App::Key::PageUp;
+            case 6:
+                return App::Key::PageDown;
+            case 7:
+                return App::Key::Home;
+            case 8:
+                return App::Key::End;
+            case 10:
+                return App::Key::F1;
+            case 12:
+                return App::Key::F2;
+            case 13:
+                return App::Key::F3;
+            case 14:
+                return App::Key::F4;
+            case 15:
+                return App::Key::F5;
+            case 17:
+                return App::Key::F6;
+            case 18:
+                return App::Key::F7;
+            case 19:
+                return App::Key::F8;
+            case 20:
+                return App::Key::F9;
+            case 21:
+                return App::Key::F10;
+            case 23:
+                return App::Key::F11;
+            case 24:
+                return App::Key::F12;
+            case 25:
+                return App::Key::F13;
+            case 26:
+                return App::Key::F14;
+            case 28:
+                return App::Key::F15;
+            case 29:
+                return App::Key::F16;
+            case 31:
+                return App::Key::F17;
+            case 32:
+                return App::Key::F18;
+            case 33:
+                return App::Key::F19;
+            case 34:
+                return App::Key::F20;
+            default:
+                return App::Key::None;
+        }
+    }();
+
+    enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", key, convert_modifiers(modifiers)));
+}
+
+void TerminalInputParser::finish_sgr_mouse_event(const String& escape) {
+    // SGR encoded mouse events (enabled with DECSET 1006)
+    // Information from https://github.com/chromium/hterm/blob/master/doc/ControlSequences.md#sgr
+    int cb;
+    int cx;
+    int cy;
+    char cm;
+    if (sscanf(escape.string(), "[<%d;%d;%d%c", &cb, &cx, &cy, &cm) != 4) {
+        return;
+    }
+
+    bool mouse_down = escape[escape.size() - 1] == 'M';
+    int z = 0;
+
+    auto button = cb & ~0b11100;
+    auto mouse_modifiers = (cb & 0b11100) >> 2;
+
+    // NOTE: SGR does not report the Alt modifier, because, X11 reserved it
+    //       for window control functionality. As such, xterm never bothered
+    //       to report its status...
+    auto modifiers = 0;
+    if (mouse_modifiers & 1) {
+        modifiers |= App::KeyModifier::Shift;
+    }
+    if (mouse_modifiers & 2) {
+        modifiers |= App::KeyModifier::Meta;
+    }
+    if (mouse_modifiers & 4) {
+        modifiers |= App::KeyModifier::Control;
+    }
+
+    int buttons_down = m_tracker.prev_buttons();
+    switch (button) {
+        case 0:
+            // Left mouse button
+            if (mouse_down) {
+                buttons_down |= App::MouseButton::Left;
+            } else {
+                buttons_down &= ~App::MouseButton::Left;
+            }
+            break;
+        case 1:
+            // Middle mouse button
+            if (mouse_down) {
+                buttons_down |= App::MouseButton::Middle;
+            } else {
+                buttons_down &= ~App::MouseButton::Middle;
+            }
+            break;
+        case 2:
+            // Right mouse button
+            if (mouse_down) {
+                buttons_down |= App::MouseButton::Right;
+            } else {
+                buttons_down &= ~App::MouseButton::Right;
+            }
+            break;
+        case 32:
+        case 33:
+        case 34:
+            // Mouse move.
+            break;
+        case 64:
+            // Scroll up
+            z = -1;
+            break;
+        case 65:
+            // Scroll down
+            z = 1;
+            break;
+    }
+
+    // FIXME: add key modifiers to mouse event
+    (void) modifiers;
+    auto events = m_tracker.notify_mouse_event(buttons_down, cx - 1, cy - 1, z);
+    for (auto& event : events) {
+        enqueue_event(move(event));
+    }
+}
+
+void TerminalInputParser::finish_csi(const String& csi) {
+    if (csi[csi.size() - 1] == '~') {
+        return finish_xterm_escape(csi);
+    }
+    if (csi[1] == '<') {
+        return finish_sgr_mouse_event(csi);
+    }
+    return finish_vt_escape(csi);
+}
+
 Generator<Ext::StreamResult> TerminalInputParser::handle_ss3() {
-    co_return;
+    auto maybe_byte = m_reader.next_byte();
+    if (!maybe_byte) {
+        enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", App::Key::RightBracket, App::KeyModifier::Alt));
+        co_return;
+    }
+
+    auto buffer = String { '[' };
+    for (;;) {
+        uint8_t byte;
+        co_yield next_byte(byte);
+
+        buffer += String(byte);
+        if (isdigit(byte)) {
+            continue;
+        }
+        finish_ss3(buffer);
+        co_return;
+    }
 }
 
 Generator<Ext::StreamResult> TerminalInputParser::handle_csi() {
-    co_return;
+    auto maybe_byte = m_reader.next_byte();
+    if (!maybe_byte) {
+        enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", App::Key::RightBracket, App::KeyModifier::Alt));
+        co_return;
+    }
+
+    auto buffer = String { '[' };
+    for (;;) {
+        uint8_t byte;
+        co_yield next_byte(byte);
+
+        buffer += String(byte);
+        if (isdigit(byte) || byte == ';' || byte == '>') {
+            continue;
+        }
+        finish_csi(buffer);
+        co_return;
+    }
 }
 
 Generator<Ext::StreamResult> TerminalInputParser::handle_escape() {

@@ -29,6 +29,12 @@ private:
     void handle_control_byte(uint8_t byte);
     void handle_regular_byte(uint8_t byte);
 
+    void finish_ss3(const String& escape);
+    void finish_xterm_escape(const String& escape);
+    void finish_vt_escape(const String& escape);
+    void finish_sgr_mouse_event(const String& escape);
+    void finish_csi(const String& csi);
+
     void enqueue_event(UniquePtr<App::Event> event);
 
     Generator<Ext::StreamResult> m_handler;
