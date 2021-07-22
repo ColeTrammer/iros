@@ -72,12 +72,6 @@ void TerminalInputParser::finish_ss3(const String& escape) {
     fprintf(stderr, "SS3 escape: '%s'\n", escape.string());
 #endif /* TERMINAL_INPUT_PARSER_DEBUG */
 
-    if (m_in_bracketed_paste) {
-        m_bracketed_paste_buffer += String('\033');
-        m_bracketed_paste_buffer += escape;
-        return;
-    }
-
     char c = '\0';
     int modifiers = 1;
     if (sscanf(escape.string(), "O%d%c", &modifiers, &c) != 2 && sscanf(escape.string(), "O%c", &c) != 1) {
@@ -121,12 +115,6 @@ void TerminalInputParser::finish_xterm_escape(const String& escape) {
 #ifdef TERMINAL_INPUT_PARSER_DEBUG
     fprintf(stderr, "XTerm escape: '%s'\n", escape.string());
 #endif /* TERMINAL_INPUT_PARSER_DEBUG */
-
-    if (m_in_bracketed_paste) {
-        m_bracketed_paste_buffer += String('\033');
-        m_bracketed_paste_buffer += escape;
-        return;
-    }
 
     char c = '\0';
     int modifiers = 1;
@@ -244,13 +232,6 @@ void TerminalInputParser::finish_vt_escape(const String& escape) {
             case 200:
                 m_in_bracketed_paste = true;
                 return App::Key::None;
-            case 201:
-                if (m_in_bracketed_paste) {
-                    m_in_bracketed_paste = false;
-                    enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, move(m_bracketed_paste_buffer), App::Key::None, 0));
-                    m_bracketed_paste_buffer.clear();
-                }
-                return App::Key::None;
             default:
                 return App::Key::None;
         }
@@ -265,12 +246,6 @@ void TerminalInputParser::finish_sgr_mouse_event(const String& escape) {
 #ifdef TERMINAL_INPUT_PARSER_DEBUG
     fprintf(stderr, "SGR mouse event: '%s'\n", escape.string());
 #endif /* TERMINAL_INPUT_PARSER_DEBUG */
-
-    if (m_in_bracketed_paste) {
-        m_bracketed_paste_buffer += String('\033');
-        m_bracketed_paste_buffer += escape;
-        return;
-    }
 
     // SGR encoded mouse events (enabled with DECSET 1006)
     // Information from https://github.com/chromium/hterm/blob/master/doc/ControlSequences.md#sgr
@@ -365,11 +340,6 @@ void TerminalInputParser::finish_csi(const String& csi) {
 Generator<Ext::StreamResult> TerminalInputParser::handle_ss3() {
     auto maybe_byte = m_reader.next_byte();
     if (!maybe_byte) {
-        if (m_in_bracketed_paste) {
-            m_bracketed_paste_buffer += "\033O";
-            co_return;
-        }
-
         enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", App::Key::O, App::KeyModifier::Alt));
         co_return;
     }
@@ -394,11 +364,6 @@ Generator<Ext::StreamResult> TerminalInputParser::handle_ss3() {
 Generator<Ext::StreamResult> TerminalInputParser::handle_csi() {
     auto maybe_byte = m_reader.next_byte();
     if (!maybe_byte) {
-        if (m_in_bracketed_paste) {
-            m_bracketed_paste_buffer += "\033[";
-            co_return;
-        }
-
         enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", App::Key::RightBracket, App::KeyModifier::Alt));
         co_return;
     }
@@ -423,11 +388,6 @@ Generator<Ext::StreamResult> TerminalInputParser::handle_csi() {
 Generator<Ext::StreamResult> TerminalInputParser::handle_escape() {
     auto maybe_byte = m_reader.next_byte();
     if (!maybe_byte) {
-        if (m_in_bracketed_paste) {
-            m_bracketed_paste_buffer += String('\033');
-            co_return;
-        }
-
         enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", App::Key::Escape, 0));
         co_return;
     }
@@ -440,12 +400,6 @@ Generator<Ext::StreamResult> TerminalInputParser::handle_escape() {
             co_yield handle_csi();
             co_return;
         default:
-            if (m_in_bracketed_paste) {
-                m_bracketed_paste_buffer += String('\033');
-                m_bracketed_paste_buffer += String(*maybe_byte);
-                co_return;
-            }
-
             enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", char_to_key(*maybe_byte), App::KeyModifier::Alt));
             co_return;
     }
@@ -469,11 +423,6 @@ void TerminalInputParser::handle_regular_byte(uint8_t byte) {
     fprintf(stderr, "Regular byte '%#.2X'\n", byte);
 #endif /* TERMINAL_INPUT_PARSER_DEBUG */
 
-    if (m_in_bracketed_paste) {
-        m_bracketed_paste_buffer += String(byte);
-        return;
-    }
-
     switch (byte) {
         case '\r':
             return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", App::Key::Enter, 0));
@@ -495,6 +444,19 @@ Generator<Ext::StreamResult> TerminalInputParser::handle() {
     for (;;) {
         uint8_t byte;
         co_yield next_byte(byte);
+
+        if (m_in_bracketed_paste) {
+            m_bracketed_paste_buffer += String(byte);
+
+            if (m_bracketed_paste_buffer.view().ends_with("\033[201~")) {
+                m_in_bracketed_paste = false;
+                enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down,
+                                                         m_bracketed_paste_buffer.substring(0, m_bracketed_paste_buffer.size() - 6),
+                                                         App::Key::None, 0));
+                m_bracketed_paste_buffer.clear();
+            }
+            continue;
+        }
 
         if (byte == '\033') {
             co_yield handle_escape();
