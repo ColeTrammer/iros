@@ -41,5 +41,7 @@ private:
     Vector<UniquePtr<App::Event>> m_event_buffer;
     ByteReader m_reader;
     App::InputTracker m_tracker;
+    String m_bracketed_paste_buffer;
+    bool m_in_bracketed_paste { false };
 };
 }
