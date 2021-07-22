@@ -388,298 +388,6 @@ void ReplPanel::flush_if_needed() {
     flush();
 }
 
-Vector<Variant<App::KeyEvent, App::MouseEvent>> ReplPanel::read_input() {
-    using K = App::KeyEvent;
-    using M = App::MouseEvent;
-    using T = Variant<K, M>;
-    using R = Vector<T>;
-
-    auto key_from_character = [&](char c) -> App::Key {
-        if (isascii(c)) {
-            return static_cast<App::Key>(c - 'A' + 1);
-        }
-        return App::Key::None;
-    };
-
-    char ch;
-    ssize_t ret = read(STDIN_FILENO, &ch, 1);
-    assert(ret >= 0);
-    if (ret == 0) {
-        return {};
-    }
-
-    if (ch == '\033') {
-        char escape_buffer[64] = { 0 };
-        ret = read(STDIN_FILENO, escape_buffer, 1);
-        assert(ret >= 0);
-
-        if (ret == 0) {
-            return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::Escape, 0 } });
-        }
-
-        if (escape_buffer[0] != '[' && escape_buffer[0] != 'O') {
-            return R::create_from_single_element(
-                T { K { App::KeyEventType::Down, "", key_from_character(toupper(escape_buffer[0])), App::KeyModifier::Alt } });
-        } else {
-            // Information from https://en.wikipedia.org/wiki/ANSI_escape_code#Terminal_input_sequences
-            auto modifiers_from_digit = [](char digit) -> int {
-                if (!isdigit(digit) || digit < '0' || digit > '8') {
-                    return 0;
-                }
-                return digit - 1;
-            };
-
-            auto xterm_sequence_to_key = [](char ch, int modifiers) -> R {
-                switch (ch) {
-                    case 'A':
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::UpArrow, modifiers } });
-                    case 'B':
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::DownArrow, modifiers } });
-                    case 'C':
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::RightArrow, modifiers } });
-                    case 'D':
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::LeftArrow, modifiers } });
-                    case 'F':
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::End, modifiers } });
-                    case 'H':
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::Home, modifiers } });
-                    case 'P':
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F1, modifiers } });
-                    case 'Q':
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F2, modifiers } });
-                    case 'R':
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F3, modifiers } });
-                    case 'S':
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F4, modifiers } });
-                    default:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::None, modifiers } });
-                }
-            };
-
-            auto vt_sequence_to_key = [](int num, int modifiers) -> R {
-                switch (num) {
-                    case 1:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::Home, modifiers } });
-                    case 2:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::Insert, modifiers } });
-                    case 3:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::Delete, modifiers } });
-                    case 4:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::End, modifiers } });
-                    case 5:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::PageUp, modifiers } });
-                    case 6:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::PageDown, modifiers } });
-                    case 7:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::Home, modifiers } });
-                    case 8:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::End, modifiers } });
-                    case 10:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F1, modifiers } });
-                    case 12:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F2, modifiers } });
-                    case 13:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F3, modifiers } });
-                    case 14:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F4, modifiers } });
-                    case 15:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F5, modifiers } });
-                    case 17:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F6, modifiers } });
-                    case 18:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F7, modifiers } });
-                    case 19:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F8, modifiers } });
-                    case 20:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F9, modifiers } });
-                    case 21:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F10, modifiers } });
-                    case 23:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F11, modifiers } });
-                    case 24:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F12, modifiers } });
-                    case 25:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F13, modifiers } });
-                    case 26:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F14, modifiers } });
-                    case 28:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F15, modifiers } });
-                    case 29:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F16, modifiers } });
-                    case 31:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F17, modifiers } });
-                    case 32:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F18, modifiers } });
-                    case 33:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F19, modifiers } });
-                    case 34:
-                        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::F20, modifiers } });
-                    default:
-                        return {};
-                }
-            };
-
-            ret = read(STDIN_FILENO, escape_buffer + 1, 1);
-            assert(ret >= 0);
-
-            if (ret == 0) {
-                return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::Escape, App::KeyModifier::Alt } });
-            }
-
-            if (escape_buffer[1] == '<') {
-                // SGR encoded mouse events (enabled with DECSET 1006)
-                // Information from https://github.com/chromium/hterm/blob/master/doc/ControlSequences.md#sgr
-                size_t escape_buffer_length = 2;
-                for (;;) {
-                    ret = read(STDIN_FILENO, &escape_buffer[escape_buffer_length++], 1);
-                    if (escape_buffer[escape_buffer_length - 1] == 'M' || escape_buffer[escape_buffer_length - 1] == 'm') {
-                        break;
-                    }
-                    if (ret <= 0) {
-                        return {};
-                    }
-                }
-
-                int cb;
-                int cx;
-                int cy;
-                if (sscanf(escape_buffer, "[<%d;%d;%d", &cb, &cx, &cy) != 3) {
-                    return {};
-                }
-
-                bool mouse_down = escape_buffer[escape_buffer_length - 1] == 'M';
-                int z = 0;
-
-                int buttons_down = m_mouse_press_tracker.prev_buttons();
-                switch (cb & ~0b11100 /* ignore modifiers for now */) {
-                    case 0:
-                        // Left mouse button
-                        if (mouse_down) {
-                            buttons_down |= App::MouseButton::Left;
-                        } else {
-                            buttons_down &= ~App::MouseButton::Left;
-                        }
-                        break;
-                    case 1:
-                        // Middle mouse button (ignored for now)
-                        break;
-                    case 2:
-                        // Right mouse button
-                        if (mouse_down) {
-                            buttons_down |= App::MouseButton::Right;
-                        } else {
-                            buttons_down &= ~App::MouseButton::Right;
-                        }
-                        break;
-                    case 32:
-                    case 33:
-                    case 34:
-                        // Mouse move.
-                        break;
-                    case 64:
-                        // Scroll up
-                        z = -1;
-                        break;
-                    case 65:
-                        // Scroll down
-                        z = 1;
-                        break;
-                }
-
-                auto events = m_mouse_press_tracker.notify_mouse_event(buttons_down, cx - 1, cy - 1, z, 0);
-
-                R out_events;
-                for (auto& event : events) {
-                    auto text_index = document()->text_index_at_scrolled_position(*this, { cy - m_absolute_row_position - 1, cx - 1 });
-                    event->set_y(text_index.line_index());
-                    event->set_x(text_index.index_into_line());
-                    out_events.add(*event);
-                }
-                return out_events;
-            }
-
-            if (isalpha(escape_buffer[1])) {
-                return xterm_sequence_to_key(escape_buffer[1], 0);
-            }
-
-            if (isdigit(escape_buffer[1])) {
-                ret = read(STDIN_FILENO, escape_buffer + 2, 1);
-                assert(ret >= 0);
-                if (ret == 0) {
-                    ch = escape_buffer[1];
-                } else {
-                    if (isalpha(escape_buffer[2])) {
-                        int modifiers = modifiers_from_digit(escape_buffer[1]);
-                        return xterm_sequence_to_key(escape_buffer[2], modifiers);
-                    }
-
-                    size_t i = 2;
-                    while (i < sizeof(escape_buffer) && (escape_buffer[i] != '~' && !isalpha(escape_buffer[i]))) {
-                        ret = read(STDIN_FILENO, escape_buffer + ++i, 1);
-                        assert(ret >= 0);
-                        if (ret == 0) {
-                            return {};
-                        }
-                    }
-
-                    if (escape_buffer[i] != '~' && !isalpha(escape_buffer[i])) {
-                        return {};
-                    }
-
-                    if (strchr(escape_buffer, ';')) {
-                        int num;
-                        char modifiers;
-                        if (sscanf(escape_buffer, "[%d;%c~", &num, &modifiers) != 2) {
-                            return {};
-                        }
-
-                        if (isalpha(escape_buffer[i]) && num == 1) {
-                            return xterm_sequence_to_key(escape_buffer[i], modifiers_from_digit(modifiers));
-                        } else if (escape_buffer[i] == '~') {
-                            return vt_sequence_to_key(num, modifiers_from_digit(modifiers));
-                        }
-                        return {};
-                    }
-
-                    int num;
-                    if (sscanf(escape_buffer, "[%d~", &num) != 1) {
-                        return {};
-                    }
-
-                    return vt_sequence_to_key(num, 0);
-                }
-            }
-
-            ch = escape_buffer[1];
-        }
-    }
-
-    if (ch == s_original_termios.c_cc[VERASE]) {
-        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::Backspace, 0 } });
-    }
-
-    if (ch == '\r') {
-        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::Enter, 0 } });
-    }
-
-    if (ch == '\t') {
-        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::Tab, 0 } });
-    }
-
-    if (ch == ('w' & 0x1F)) {
-        // control backspace unfortunately binds to control w, but control backspace
-        // takes prcedence.
-        return R::create_from_single_element(T { K { App::KeyEventType::Down, "", App::Key::Backspace, App::KeyModifier::Control } });
-    }
-
-    if (ch >= ('a' & 0x1F) && ch <= ('z' & 0x1F)) {
-        return R::create_from_single_element(
-            T { K { App::KeyEventType::Down, "", key_from_character(ch | 0b1000000), App::KeyModifier::Control } });
-    }
-
-    return R::create_from_single_element(T { K { App::KeyEventType::Down, String(ch), App::Key::None, 0 } });
-}
-
 Edit::Suggestions ReplPanel::get_suggestions() const {
     auto content_string = document()->content_string();
     auto cursor_index = document()->cursor_index_in_content_string(cursors().main_cursor());
@@ -825,7 +533,7 @@ int ReplPanel::enter() {
 
         FD_ZERO(&set);
         FD_SET(STDIN_FILENO, &set);
-        int ret = select(STDIN_FILENO + 1, &set, nullptr, nullptr, nullptr);
+        ssize_t ret = select(STDIN_FILENO + 1, &set, nullptr, nullptr, nullptr);
         if (ret == -1 && errno == EINTR) {
             continue;
         }
@@ -835,15 +543,21 @@ int ReplPanel::enter() {
             continue;
         }
 
-        auto input = read_input();
-        if (input.empty()) {
-            continue;
+        uint8_t buffer[4096];
+        ret = read(STDIN_FILENO, buffer, sizeof(buffer));
+        if (ret < 0) {
+            if (ret == EINTR) {
+                continue;
+            }
+            assert(false);
         }
 
+        m_input_parser.stream_data({ buffer, static_cast<size_t>(ret) });
+        auto input = m_input_parser.take_events();
         if (auto* document = Panel::document()) {
             for (auto& ev : input) {
-                if (ev.is<App::KeyEvent>()) {
-                    auto key_event = ev.as<App::KeyEvent>();
+                if (ev->type() == App::Event::Type::Key) {
+                    auto& key_event = static_cast<const App::KeyEvent&>(*ev);
                     if (key_event.key() == App::Key::C && key_event.modifiers() == App::KeyModifier::Control) {
                         document->set_preview_auto_complete(false);
                         flush();
@@ -877,9 +591,13 @@ int ReplPanel::enter() {
                         m_consecutive_tabs = 0;
                     }
 
-                    document->notify_key_pressed(*this, ev.as<App::KeyEvent>());
-                } else {
-                    document->notify_mouse_event(*this, ev.as<App::MouseEvent>());
+                    document->notify_key_pressed(*this, key_event);
+                } else if (ev->type() == App::Event::Type::Mouse) {
+                    auto event_copy = static_cast<const App::MouseEvent&>(*ev);
+                    auto text_index = document->text_index_at_scrolled_position(*this, { event_copy.y(), event_copy.x() });
+                    event_copy.set_y(text_index.line_index());
+                    event_copy.set_x(text_index.index_into_line());
+                    document->notify_mouse_event(*this, event_copy);
                 }
             }
         }

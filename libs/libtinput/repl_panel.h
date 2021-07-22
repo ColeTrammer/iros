@@ -2,12 +2,12 @@
 
 #include <edit/panel.h>
 #include <eventloop/event.h>
-#include <eventloop/input_tracker.h>
 #include <liim/hash_map.h>
 #include <liim/maybe.h>
 #include <liim/variant.h>
 #include <liim/vector.h>
 #include <time.h>
+#include <tinput/terminal_input_parser.h>
 
 namespace TInput {
 
@@ -41,14 +41,7 @@ public:
     virtual void do_open_prompt() override;
 
 private:
-    struct Info {
-        char ch;
-        Edit::CharacterMetadata metadata;
-    };
-
     virtual void document_did_change() override;
-
-    Vector<Variant<App::KeyEvent, App::MouseEvent>> read_input();
 
     void draw_cursor();
 
@@ -83,7 +76,7 @@ private:
 
     mutable String m_prev_clipboard_contents;
     mutable bool m_prev_clipboard_contents_were_whole_line { false };
-    App::InputTracker m_mouse_press_tracker;
+    TInput::TerminalInputParser m_input_parser;
     Edit::CharacterMetadata m_last_metadata_rendered;
     int m_rows { 0 };
     int m_cols { 0 };
