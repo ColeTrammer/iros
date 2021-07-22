@@ -2,7 +2,6 @@
 
 #include <edit/panel.h>
 #include <eventloop/event.h>
-#include <eventloop/input_tracker.h>
 #include <liim/hash_map.h>
 #include <liim/maybe.h>
 #include <liim/variant.h>
@@ -39,11 +38,6 @@ public:
     virtual void do_open_prompt() override;
 
 private:
-    struct Info {
-        char ch;
-        Edit::CharacterMetadata metadata;
-    };
-
     TerminalPanel(int rows, int cols, int row_off, int col_off);
 
     virtual void document_did_change() override;

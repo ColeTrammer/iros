@@ -26,7 +26,7 @@ static ReplPanel* s_main_panel;
 static void restore_termios() {
     tcsetattr(STDOUT_FILENO, TCSAFLUSH, &s_original_termios);
 
-    fputs("\033[?25h", stdout);
+    fputs("\033[?2004l\033[?25h", stdout);
     fflush(stdout);
 
     setvbuf(stdout, nullptr, _IOLBF, BUFSIZ);
@@ -65,6 +65,9 @@ static void enable_raw_mode() {
     atexit(restore_termios);
 
     setvbuf(stdout, nullptr, _IOFBF, BUFSIZ);
+
+    fputs("\033[?2004h", stdout);
+    fflush(stdout);
 }
 
 ReplPanel::ReplPanel(Repl& repl) : m_repl(repl) {
