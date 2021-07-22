@@ -8,6 +8,7 @@
 #include <liim/variant.h>
 #include <liim/vector.h>
 #include <time.h>
+#include <tinput/terminal_input_parser.h>
 
 class TerminalPanel final : public Edit::Panel {
 public:
@@ -47,8 +48,6 @@ private:
 
     virtual void document_did_change() override;
 
-    Vector<Variant<App::KeyEvent, App::MouseEvent>> read_input();
-
     void draw_cursor();
     void draw_status_message();
 
@@ -69,7 +68,7 @@ private:
     String m_prompt_buffer;
     mutable String m_prev_clipboard_contents;
     mutable bool m_prev_clipboard_contents_were_whole_line { false };
-    App::InputTracker m_mouse_press_tracker;
+    TInput::TerminalInputParser m_input_parser;
     Edit::CharacterMetadata m_last_metadata_rendered;
     int m_rows { 0 };
     int m_cols { 0 };
