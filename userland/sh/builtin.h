@@ -41,4 +41,9 @@ private:
         Sh::BuiltInManager::the().register_builtin("" #name, entry);             \
     }
 
+class FunctionBody;
+
+extern HashMap<String, String> g_aliases;
+extern HashMap<String, FunctionBody> g_functions;
+
 #endif /* _BUILTIN_H */
