@@ -122,6 +122,8 @@ void TerminalInputParser::finish_xterm_escape(const String& escape) {
                 return App::Key::RightArrow;
             case 'D':
                 return App::Key::LeftArrow;
+            case 'E':
+                return App::Key::Numpad_5;
             case 'F':
                 return App::Key::End;
             case 'H':
