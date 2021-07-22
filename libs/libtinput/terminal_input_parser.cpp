@@ -2,15 +2,14 @@
 #include <liim/vector.h>
 #include <tinput/terminal_input_parser.h>
 
+#define TERMINAL_INPUT_PARSER_DEBUG
+
 namespace TInput {
 static constexpr uint8_t char_to_control(uint8_t c) {
-    return c & 0x1F;
+    return c & 0x3F;
 }
 
 static constexpr uint8_t control_to_char(uint8_t c) {
-    if (c == char_to_control('?')) {
-        return '?';
-    }
     return c | 0x40;
 }
 
@@ -69,9 +68,16 @@ Generator<Ext::StreamResult> TerminalInputParser::next_byte(uint8_t& byte) {
 }
 
 void TerminalInputParser::finish_ss3(const String& escape) {
+#ifdef TERMINAL_INPUT_PARSER_DEBUG
+    fprintf(stderr, "SS3 escape: '%s'\n", escape.string());
+#endif /* TERMINAL_INPUT_PARSER_DEBUG */
+
     char c = '\0';
     int modifiers = 1;
-    if (sscanf(escape.string(), "O%c", &c) != 1 && sscanf(escape.string(), "O%d%c", &modifiers, &c)) {
+    if (sscanf(escape.string(), "O%d%c", &modifiers, &c) != 2 && sscanf(escape.string(), "O%c", &c) != 1) {
+#ifdef TERMINAL_INPUT_PARSER_DEBUG
+        fprintf(stderr, "Bad SS3 escape: '%s'\n", escape.string());
+#endif /* TERMINAL_INPUT_PARSER_DEBUG */
         return;
     }
 
@@ -106,9 +112,16 @@ void TerminalInputParser::finish_ss3(const String& escape) {
 }
 
 void TerminalInputParser::finish_xterm_escape(const String& escape) {
+#ifdef TERMINAL_INPUT_PARSER_DEBUG
+    fprintf(stderr, "XTerm escape: '%s'\n", escape.string());
+#endif /* TERMINAL_INPUT_PARSER_DEBUG */
+
     char c = '\0';
     int modifiers = 1;
-    if (sscanf(escape.string(), "[%c", &c) != 1 && sscanf(escape.string(), "[1;%d%c", &modifiers, &c)) {
+    if (sscanf(escape.string(), "[1;%d%c", &modifiers, &c) != 2 && sscanf(escape.string(), "[%c", &c) != 1) {
+#ifdef TERMINAL_INPUT_PARSER_DEBUG
+        fprintf(stderr, "Bad XTerm escape: '%s'\n", escape.string());
+#endif /* TERMINAL_INPUT_PARSER_DEBUG */
         return;
     }
 
@@ -145,9 +158,16 @@ void TerminalInputParser::finish_xterm_escape(const String& escape) {
 }
 
 void TerminalInputParser::finish_vt_escape(const String& escape) {
+#ifdef TERMINAL_INPUT_PARSER_DEBUG
+    fprintf(stderr, "VT escape: '%s'\n", escape.string());
+#endif /* TERMINAL_INPUT_PARSER_DEBUG */
+
     int key_code;
-    int modifiers = 0;
-    if (sscanf(escape.string(), "[%d~", &key_code) != 1 && sscanf(escape.string(), "[%d;%d~", &key_code, &modifiers) != 2) {
+    int modifiers = 1;
+    if (sscanf(escape.string(), "[%d;%d~", &key_code, &modifiers) != 2 && sscanf(escape.string(), "[%d~", &key_code) != 1) {
+#ifdef TERMINAL_INPUT_PARSER_DEBUG
+        fprintf(stderr, "Bad VT escape: '%s'\n", escape.string());
+#endif /* TERMINAL_INPUT_PARSER_DEBUG */
         return;
     }
 
@@ -218,6 +238,10 @@ void TerminalInputParser::finish_vt_escape(const String& escape) {
 }
 
 void TerminalInputParser::finish_sgr_mouse_event(const String& escape) {
+#ifdef TERMINAL_INPUT_PARSER_DEBUG
+    fprintf(stderr, "SGR mouse event: '%s'\n", escape.string());
+#endif /* TERMINAL_INPUT_PARSER_DEBUG */
+
     // SGR encoded mouse events (enabled with DECSET 1006)
     // Information from https://github.com/chromium/hterm/blob/master/doc/ControlSequences.md#sgr
     int cb;
@@ -225,6 +249,9 @@ void TerminalInputParser::finish_sgr_mouse_event(const String& escape) {
     int cy;
     char cm;
     if (sscanf(escape.string(), "[<%d;%d;%d%c", &cb, &cx, &cy, &cm) != 4) {
+#ifdef TERMINAL_INPUT_PARSER_DEBUG
+        fprintf(stderr, "Bad SGR mouse event: '%s'\n", escape.string());
+#endif /* TERMINAL_INPUT_PARSER_DEBUG */
         return;
     }
 
@@ -297,12 +324,12 @@ void TerminalInputParser::finish_sgr_mouse_event(const String& escape) {
 
 void TerminalInputParser::finish_csi(const String& csi) {
     if (csi[csi.size() - 1] == '~') {
-        return finish_xterm_escape(csi);
+        return finish_vt_escape(csi);
     }
     if (csi[1] == '<') {
         return finish_sgr_mouse_event(csi);
     }
-    return finish_vt_escape(csi);
+    return finish_xterm_escape(csi);
 }
 
 Generator<Ext::StreamResult> TerminalInputParser::handle_ss3() {
@@ -312,17 +339,20 @@ Generator<Ext::StreamResult> TerminalInputParser::handle_ss3() {
         co_return;
     }
 
-    auto buffer = String { '[' };
+    auto buffer = String { 'O' };
+    buffer += String(*maybe_byte);
+
     for (;;) {
+        auto last = buffer[buffer.size() - 1];
+        if (!isdigit(last)) {
+            finish_ss3(buffer);
+            co_return;
+        }
+
         uint8_t byte;
         co_yield next_byte(byte);
 
         buffer += String(byte);
-        if (isdigit(byte)) {
-            continue;
-        }
-        finish_ss3(buffer);
-        co_return;
     }
 }
 
@@ -334,16 +364,19 @@ Generator<Ext::StreamResult> TerminalInputParser::handle_csi() {
     }
 
     auto buffer = String { '[' };
+    buffer += String(*maybe_byte);
+
     for (;;) {
+        auto last = buffer[buffer.size() - 1];
+        if (!isdigit(last) && last != ';' && last != '<') {
+            finish_csi(buffer);
+            co_return;
+        }
+
         uint8_t byte;
         co_yield next_byte(byte);
 
         buffer += String(byte);
-        if (isdigit(byte) || byte == ';' || byte == '>') {
-            continue;
-        }
-        finish_csi(buffer);
-        co_return;
     }
 }
 
@@ -370,10 +403,10 @@ Generator<Ext::StreamResult> TerminalInputParser::handle_escape() {
 void TerminalInputParser::handle_control_byte(uint8_t byte) {
     auto character = control_to_char(byte);
     switch (character) {
-        case 'w':
+        case 'W':
             // NOTE: There is no way to distingish between ctrl+Backspace and ctrl+W
             return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", App::Key::Backspace, App::KeyModifier::Control));
-        case '?':
+        case '_':
             return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", App::Key::Backspace, 0));
     }
 
@@ -381,6 +414,10 @@ void TerminalInputParser::handle_control_byte(uint8_t byte) {
 }
 
 void TerminalInputParser::handle_regular_byte(uint8_t byte) {
+#ifdef TERMINAL_INPUT_PARSER_DEBUG
+    fprintf(stderr, "Regular byte '%#.2X'\n", byte);
+#endif /* TERMINAL_INPUT_PARSER_DEBUG */
+
     switch (byte) {
         case '\r':
             return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", App::Key::Enter, 0));
