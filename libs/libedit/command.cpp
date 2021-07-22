@@ -81,7 +81,7 @@ bool InsertCommand::do_execute(MultiCursor& cursors) {
 void InsertCommand::do_insert(Document& document, MultiCursor& cursors, int cursor_index, char c) {
     auto& cursor = cursors[cursor_index];
     auto& line = cursor.referenced_line(document);
-    if (c == '\n') {
+    if (c == '\n' || c == '\r') {
         document.split_line_at(cursor.index());
         return;
     }
@@ -116,7 +116,7 @@ void InsertCommand::do_undo(MultiCursor& cursors) {
 
         for (size_t i = 0; i < m_text.size(); i++) {
             char c = m_text[i];
-            if (c == '\n') {
+            if (c == '\n' || c == '\r') {
                 document().merge_lines(cursor.line_index(), cursor.line_index() + 1);
             } else {
                 auto& line = cursor.referenced_line(document());
