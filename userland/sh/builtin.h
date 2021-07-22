@@ -1,24 +1,44 @@
 #ifndef _BUILTIN_H
 #define _BUILTIN_H 1
 
-#include <stdbool.h>
+#include <liim/function.h>
+#include <liim/hash_map.h>
+#include <liim/string.h>
 
-#define NUM_BUILTINS 33
+namespace Sh {
+class BuiltInOperation {
+public:
+    BuiltInOperation(String name, Function<int(char**)> entry) : m_name(move(name)), m_entry(move(entry)) {}
 
-typedef int (*op_function_t)(char **args);
+    const String& name() const { return m_name; }
+    int execute(char** argv) { return m_entry(argv); }
 
-struct builtin_op {
-    char name[16];
-    op_function_t op;
-    bool run_immediately;
+private:
+    String m_name;
+    Function<int(char** argv)> m_entry;
 };
 
-struct builtin_op *builtin_find_op(char *name);
-bool builtin_should_run_immediately(struct builtin_op *op);
-int builtin_do_op(struct builtin_op *op, char **args);
+class BuiltInManager {
+public:
+    static BuiltInManager& the();
 
-int op_dot(char **argv);
+    void register_builtin(String name, Function<int(char**)> entry);
+    void unregister_builtin(const String& name);
 
-struct builtin_op *get_builtins();
+    BuiltInOperation* find(const String& name);
+    const HashMap<String, BuiltInOperation>& builtins() const { return m_builtins; }
+
+private:
+    HashMap<String, BuiltInOperation> m_builtins;
+};
+}
+
+#define __CAT_(x, y) x##y
+#define __CAT(x, y)  __CAT_(x, y)
+
+#define SH_REGISTER_BUILTIN(name, entry)                                         \
+    __attribute__((constructor)) void __CAT(__register_##entry, __COUNTER__)() { \
+        Sh::BuiltInManager::the().register_builtin("" #name, entry);             \
+    }
 
 #endif /* _BUILTIN_H */

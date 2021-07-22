@@ -31,6 +31,26 @@
 #include "job.h"
 #include "sh_state.h"
 
+namespace Sh {
+BuiltInManager &BuiltInManager::the() {
+    static BuiltInManager s_the;
+    return s_the;
+}
+
+void BuiltInManager::register_builtin(String name, Function<int(char **)> entry) {
+    auto builtin = BuiltInOperation { move(name), move(entry) };
+    m_builtins.put(builtin.name(), move(builtin));
+}
+
+void BuiltInManager::unregister_builtin(const String &name) {
+    m_builtins.remove(String(name));
+}
+
+BuiltInOperation *BuiltInManager::find(const String &name) {
+    return m_builtins.get(name);
+}
+}
+
 extern HashMap<String, String> g_aliases;
 extern HashMap<String, FunctionBody> g_functions;
 
@@ -46,6 +66,7 @@ static int op_exit(char **args) {
 
     exit(status);
 }
+SH_REGISTER_BUILTIN(exit, op_exit);
 
 static int op_cd(char **args) {
     if (args[2]) {
@@ -68,6 +89,7 @@ static int op_cd(char **args) {
     __refreshcwd();
     return 0;
 }
+SH_REGISTER_BUILTIN(cd, op_cd);
 
 static int op_echo(char **args) {
     if (!args[1]) {
@@ -102,18 +124,22 @@ static int op_echo(char **args) {
     }
     return 0;
 }
+SH_REGISTER_BUILTIN(echo, op_echo);
 
 static int op_colon(char **) {
     return 0;
 }
+SH_REGISTER_BUILTIN( :, op_colon);
 
 static int op_true(char **) {
     return 0;
 }
+SH_REGISTER_BUILTIN(true, op_true);
 
 static int op_false(char **) {
     return 1;
 }
+SH_REGISTER_BUILTIN(false, op_false);
 
 static int op_export(char **argv) {
     if (!argv[1]) {
@@ -137,6 +163,7 @@ static int op_export(char **argv) {
 
     return 0;
 }
+SH_REGISTER_BUILTIN(export, op_export);
 
 static int op_unset(char **argv) {
     if (!argv[1]) {
@@ -153,6 +180,7 @@ static int op_unset(char **argv) {
 
     return 0;
 }
+SH_REGISTER_BUILTIN(unset, op_unset);
 
 static int op_jobs(char **argv) {
     (void) argv;
@@ -161,6 +189,7 @@ static int op_jobs(char **argv) {
     job_print_all();
     return 0;
 }
+SH_REGISTER_BUILTIN(jobs, op_jobs);
 
 static int op_fg(char **argv) {
     if (!argv[1] || argv[2]) {
@@ -179,6 +208,7 @@ static int op_fg(char **argv) {
 
     return job_run(id);
 }
+SH_REGISTER_BUILTIN(fg, op_fg);
 
 static int op_bg(char **argv) {
     if (!argv[1] || argv[2]) {
@@ -197,6 +227,7 @@ static int op_bg(char **argv) {
 
     return job_run_background(id);
 }
+SH_REGISTER_BUILTIN(bg, op_bg);
 
 static int op_kill(char **argv) {
     if (!argv[1] || argv[2]) {
@@ -216,6 +247,7 @@ static int op_kill(char **argv) {
     job_check_updates(true);
     return ret;
 }
+SH_REGISTER_BUILTIN(kill, op_kill);
 
 static int op_history(char **argv) {
     if (argv[1]) {
@@ -226,6 +258,7 @@ static int op_history(char **argv) {
     ShRepl::the().history().print_history();
     return 0;
 }
+SH_REGISTER_BUILTIN(history, op_history);
 
 static int op_break(char **argv) {
     int break_count = 1;
@@ -246,6 +279,7 @@ static int op_break(char **argv) {
     set_break_count(break_count);
     return 0;
 }
+SH_REGISTER_BUILTIN(break, op_break);
 
 static int op_continue(char **argv) {
     int continue_count = 1;
@@ -266,6 +300,7 @@ static int op_continue(char **argv) {
     set_continue_count(continue_count);
     return 0;
 }
+SH_REGISTER_BUILTIN(continue, op_continue);
 
 int op_dot(char **argv) {
     if (argv[1] == NULL) {
@@ -291,6 +326,8 @@ int op_dot(char **argv) {
     dec_exec_depth_count();
     return get_last_exit_status();
 }
+SH_REGISTER_BUILTIN(source, op_dot);
+SH_REGISTER_BUILTIN(., op_dot);
 
 static String sh_escape(const String &string) {
     // FIXME: should escape the literal `'` with `'\''`
@@ -328,6 +365,7 @@ static int op_alias(char **argv) {
 
     return any_failed ? 1 : 0;
 }
+SH_REGISTER_BUILTIN(alias, op_alias);
 
 static int op_unalias(char **argv) {
     if (argv[1] == nullptr) {
@@ -353,6 +391,7 @@ static int op_unalias(char **argv) {
 
     return any_failed ? 1 : 0;
 }
+SH_REGISTER_BUILTIN(unalias, op_unalias);
 
 static int op_return(char **argv) {
     int status = 0;
@@ -373,6 +412,7 @@ static int op_return(char **argv) {
     set_should_return();
     return status;
 }
+SH_REGISTER_BUILTIN(return, op_return);
 
 static int op_shift(char **argv) {
     int amount = 1;
@@ -397,6 +437,7 @@ static int op_shift(char **argv) {
     command_shift_position_params_left(amount);
     return 0;
 }
+SH_REGISTER_BUILTIN(shift, op_shift);
 
 static int op_exec(char **argv) {
     if (argv[1] == NULL) {
@@ -409,6 +450,7 @@ static int op_exec(char **argv) {
     }
     return 126;
 }
+SH_REGISTER_BUILTIN(exec, op_exec);
 
 static int op_set(char **argv) {
     if (argv[1] == NULL) {
@@ -453,6 +495,7 @@ static int op_set(char **argv) {
 
     return 0;
 }
+SH_REGISTER_BUILTIN(set, op_set);
 
 static int op_test(char **argv) {
     if (!argv[1]) {
@@ -629,6 +672,8 @@ static int op_test(char **argv) {
 
     return !invert;
 }
+SH_REGISTER_BUILTIN([, op_test);
+SH_REGISTER_BUILTIN(test, op_test);
 
 static int op_eval(char **argv) {
     if (!argv[1]) {
@@ -658,6 +703,7 @@ static int op_eval(char **argv) {
     command_run(program.program());
     return get_last_exit_status();
 }
+SH_REGISTER_BUILTIN(eval, op_eval);
 
 static int op_time(char **argv) {
     struct timeval start;
@@ -706,6 +752,7 @@ static int op_time(char **argv) {
 
     return 0;
 }
+SH_REGISTER_BUILTIN(time, op_time);
 
 static Vector<String> s_dir_stack;
 
@@ -721,6 +768,7 @@ static int op_dirs(char **) {
     print_dirs();
     return 0;
 }
+SH_REGISTER_BUILTIN(dirs, op_dirs);
 
 static int op_pushd(char **argv) {
     if (!argv[1]) {
@@ -738,6 +786,7 @@ static int op_pushd(char **argv) {
     print_dirs();
     return 0;
 }
+SH_REGISTER_BUILTIN(pushd, op_pushd);
 
 static int op_popd(char **argv) {
     if (s_dir_stack.empty()) {
@@ -755,6 +804,7 @@ static int op_popd(char **argv) {
     print_dirs();
     return 0;
 }
+SH_REGISTER_BUILTIN(popd, op_popd);
 
 static int op_read(char **argv) {
     Vector<char> input;
@@ -816,6 +866,7 @@ static int op_read(char **argv) {
     wordfree(&exp);
     return 0;
 }
+SH_REGISTER_BUILTIN(read, op_read);
 
 static int op_umask(char **argv) {
     if (argv[2]) {
@@ -847,6 +898,7 @@ static int op_umask(char **argv) {
     umask(~mode);
     return 0;
 }
+SH_REGISTER_BUILTIN(umask, op_umask);
 
 static int op_type(char **argv) {
     while (*++argv) {
@@ -865,7 +917,7 @@ static int op_type(char **argv) {
             continue;
         }
 
-        auto *builtin = builtin_find_op(word.string());
+        auto *builtin = Sh::BuiltInManager::the().find(word);
         if (builtin) {
             printf("%s is a shell builtin\n", word.string());
             continue;
@@ -875,40 +927,4 @@ static int op_type(char **argv) {
     }
     return 0;
 }
-
-static struct builtin_op builtin_ops[NUM_BUILTINS] = {
-    { "exit", op_exit, true },       { "cd", op_cd, true },         { "echo", op_echo, false },
-    { "export", op_export, true },   { "unset", op_unset, true },   { "jobs", op_jobs, true },
-    { "fg", op_fg, true },           { "bg", op_bg, true },         { "kill", op_kill, true },
-    { "history", op_history, true }, { "true", op_true, true },     { "false", op_false, true },
-    { ":", op_colon, true },         { "break", op_break, true },   { "continue", op_continue, true },
-    { ".", op_dot, true },           { "source", op_dot, true },    { "alias", op_alias, true },
-    { "unalias", op_unalias, true }, { "return", op_return, true }, { "shift", op_shift, true },
-    { "exec", op_exec, true },       { "set", op_set, true },       { "[", op_test, true },
-    { "test", op_test, true },       { "eval", op_eval, true },     { "time", op_time, false },
-    { "pushd", op_pushd, true },     { "popd", op_popd, true },     { "dirs", op_dirs, true },
-    { "read", op_read, true },       { "umask", op_umask, true },   { "type", op_type, false },
-};
-
-struct builtin_op *get_builtins() {
-    return builtin_ops;
-}
-
-struct builtin_op *builtin_find_op(char *name) {
-    for (size_t i = 0; i < NUM_BUILTINS; i++) {
-        if (strcmp(builtin_ops[i].name, name) == 0) {
-            return &builtin_ops[i];
-        }
-    }
-
-    return NULL;
-}
-
-bool builtin_should_run_immediately(struct builtin_op *op) {
-    return op && op->run_immediately;
-}
-
-int builtin_do_op(struct builtin_op *op, char **args) {
-    assert(op);
-    return op->op(args);
-}
+SH_REGISTER_BUILTIN(type, op_type);

@@ -343,16 +343,16 @@ Edit::Suggestions ShRepl::suggest_executable(const String &prefix, const StringV
         }
     }
 
-    builtin_op *builtins = get_builtins();
-    for (size_t i = 0; i < NUM_BUILTINS; i++) {
-        auto builtin_name = String(builtins[i].name);
+    auto &builtins = Sh::BuiltInManager::the().builtins();
+    builtins.for_each([&](auto &builtin) {
+        auto builtin_name = builtin.name();
         if (builtin_name.view().starts_with(prefix.view())) {
             if (!current.starts_with(builtin_name.view())) {
                 builtin_name += String(' ');
                 matches.add(move(builtin_name));
             }
         }
-    }
+    });
 
     return Edit::Suggestions(suggestions_offset, move(matches));
 }

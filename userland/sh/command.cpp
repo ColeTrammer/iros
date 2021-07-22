@@ -326,10 +326,9 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
         return ret;
     }
 
-    bool do_builtin = false;
-    struct builtin_op* op = builtin_find_op(we.we_wordv[0]);
-    if (builtin_should_run_immediately(op)) {
-        if (strcmp(op->name, "exec") == 0) {
+    auto* op = Sh::BuiltInManager::the().find(we.we_wordv[0]);
+    if (op) {
+        if (op->name() == "exec") {
             if (we.we_wordc > 1) {
                 command.assignment_words.for_each(do_assignment_word);
             }
@@ -345,11 +344,9 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
         }
 
         *was_builtin = true;
-        int ret = builtin_do_op(op, we.we_wordv);
+        int ret = op->execute(we.we_wordv);
         wordfree(&we);
         return ret;
-    } else if (op) {
-        do_builtin = true;
     }
 
     pid_t pid = fork();
@@ -378,8 +375,8 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
 
         command.assignment_words.for_each(do_assignment_word);
 
-        if (do_builtin && op->op) {
-            _exit(builtin_do_op(op, we.we_wordv));
+        if (op) {
+            _exit(op->execute(we.we_wordv));
         }
 
         execvp(we.we_wordv[0], we.we_wordv);
