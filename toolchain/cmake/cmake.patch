@@ -12,3 +12,23 @@ index 1dc12c06..6cf50e3b 100644
  #elif defined(_SCO_SV) || defined(SCO_SV) || defined(sco_sv)
  # define PLATFORM_ID "SCO_SV"
  
+diff --git a/Modules/Platform/OS_2.cmake b/Modules/Platform/OS_2.cmake
+new file mode 100644
+index 00000000..635f3330
+--- /dev/null
++++ b/Modules/Platform/OS_2.cmake
+@@ -0,0 +1,14 @@
++set(CMAKE_DL_LIBS "dl")
++set(CMAKE_C_COMPILE_OPTIONS_PIC "-fPIC")
++set(CMAKE_C_COMPILE_OPTIONS_PIE "-fPIE")
++set(CMAKE_SHARED_LIBRARY_C_FLAGS "-fPIC")
++set(CMAKE_SHARED_LIBRARY_CREATE_C_FLAGS "-shared")
++set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
++set(CMAKE_SHARED_LIBRARY_RUNTIME_C_FLAG "-Wl,-rpath,")
++set(CMAKE_SHARED_LIBRARY_RUNTIME_C_FLAG_SEP ":")
++set(CMAKE_SHARED_LIBRARY_RPATH_ORIGIN_TOKEN "\$ORIGIN")
++set(CMAKE_SHARED_LIBRARY_RPATH_LINK_C_FLAG "-Wl,-rpath-link,")
++set(CMAKE_SHARED_LIBRARY_SONAME_C_FLAG "-Wl,-soname,")
++set(CMAKE_EXE_EXPORTS_C_FLAG "-Wl,--export-dynamic")
++
++include(Platform/UnixPaths)
