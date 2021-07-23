@@ -4,6 +4,7 @@
 #include <liim/pointers.h>
 #include <sh/sh_token.h>
 #include <stdio.h>
+#include <sys/types.h>
 #include <tinput/repl.h>
 
 class ShRepl final : public TInput::Repl {
