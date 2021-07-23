@@ -406,7 +406,7 @@ namespace Json {
             return {};
         }
 
-        auto view = StringView((char*) file->data(), (char*) file->data() + file->size() - 1);
+        auto view = StringView { (char*) file->data(), file->size() };
         return parse(view);
     }
 

@@ -11,7 +11,7 @@ void Lexer::consume() {
 }
 
 void Lexer::commit_token(TokenType type) {
-    m_vector.add({ type, { m_token_start, m_buffer + m_pos - 1 } });
+    m_vector.add({ type, { m_token_start, m_buffer + m_pos } });
     m_token_start = nullptr;
 }
 

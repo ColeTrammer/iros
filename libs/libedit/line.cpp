@@ -8,8 +8,8 @@
 
 namespace Edit {
 LineSplitResult Line::split_at(int position) {
-    StringView first = StringView(contents().string(), contents().string() + position - 1);
-    StringView second = StringView(contents().string() + position);
+    auto first = contents().view().first(position);
+    auto second = contents().view().after(position);
 
     auto l1 = Line(String(first));
     auto l2 = Line(String(second));

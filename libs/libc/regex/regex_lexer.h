@@ -52,7 +52,7 @@ public:
     const Vector<Token>& tokens() const { return m_tokens; }
 
 private:
-    StringView peek(int n) const { return { &m_input_stream[m_position], &m_input_stream[m_position + n - 1] }; }
+    StringView peek(int n) const { return { &m_input_stream[m_position], &m_input_stream[m_position + n] }; }
     char peek() const { return m_input_stream[m_position]; }
     char prev() const { return m_input_stream[m_position - 1]; }
     void consume() { m_position++; }
@@ -60,7 +60,7 @@ private:
         if (type == RegexTokenType::QuotedCharacter || type == RegexTokenType::BackReference) {
             m_token_start++;
         }
-        StringView text = { m_input_stream.string() + m_token_start, m_input_stream.string() + m_position - 1 };
+        auto text = StringView { m_input_stream.string() + m_token_start, m_input_stream.string() + m_position };
         m_tokens.add(Token { type, RegexValue { TokenInfo { text, m_token_start } } });
         m_token_start = m_position;
     }

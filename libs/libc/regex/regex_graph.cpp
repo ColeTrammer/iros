@@ -294,8 +294,8 @@ class BracketRangeMatcher final : public BracketItemMatcher {
 public:
     BracketRangeMatcher(StringView a, StringView b, int&) {
         // FIXME: consider multi character collating sequences
-        char c = a.start()[0];
-        char d = b.start()[0];
+        char c = a.first();
+        char d = b.first();
         min = LIIM::min(c, d);
         max = LIIM::max(c, d);
     }
@@ -319,7 +319,7 @@ private:
 
 class BracketSingleCollateMatcher final : public BracketItemMatcher {
 public:
-    BracketSingleCollateMatcher(StringView sv, int&) { to_match = sv.start()[0]; }
+    BracketSingleCollateMatcher(StringView sv, int&) { to_match = sv[0]; }
 
     virtual Maybe<size_t> matches(const char* s, size_t index, int flags) const override {
         if (flags & REG_ICASE) {
@@ -338,7 +338,7 @@ private:
 
 class BracketEquivalenceClassMatcher final : public BracketItemMatcher {
 public:
-    BracketEquivalenceClassMatcher(StringView sv, int&) { to_match = sv.start()[0]; }
+    BracketEquivalenceClassMatcher(StringView sv, int&) { to_match = sv.first(); }
 
     virtual Maybe<size_t> matches(const char* s, size_t index, int flags) const override {
         // FIXME: what even are equivalence classes anyway?

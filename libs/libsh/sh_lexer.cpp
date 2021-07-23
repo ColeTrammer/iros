@@ -202,7 +202,7 @@ bool ShLexer::lex(LexComments lex_comments) {
                         size_t cont_row_save = m_current_row;
                         size_t cont_col_save = m_current_col;
 
-                        StringView here_end(m_input_stream + word_start, m_input_stream + m_position - 1);
+                        auto here_end = StringView { m_input_stream + word_start, m_input_stream + m_position };
                         if (m_position == word_start) {
                             return false;
                         }
@@ -249,7 +249,7 @@ bool ShLexer::lex(LexComments lex_comments) {
                                 consume();
                             }
 
-                            StringView entire_line(m_input_stream + line_start, m_input_stream + m_position - 1);
+                            auto entire_line = StringView { m_input_stream + line_start, m_input_stream + m_position };
 
                             if (m_position - line_start == 0) {
                                 if (new_here_end.size() == 0) {
@@ -275,7 +275,7 @@ bool ShLexer::lex(LexComments lex_comments) {
                             consume();
                         }
 
-                        StringView here_document(m_input_stream + here_document_start, m_input_stream + line_start - 1);
+                        auto here_document = StringView { m_input_stream + here_document_start, m_input_stream + line_start };
                         m_tokens.add({ ShTokenType::HERE_END, { here_document, row_save, col_save, m_current_row, m_current_col } });
                         m_tokens.last().value().create_io_redirect(STDIN_FILENO, ShValue::IoRedirect::Type::HereDocument, here_document,
                                                                    here_document_quoted);

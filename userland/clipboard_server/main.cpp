@@ -37,7 +37,7 @@ public:
         m_data_type = message.type;
 
         syslog(LOG_INFO, "set clipboard content: type='%s' data='%s'", m_data_type.string(),
-               String(StringView(m_data.vector(), m_data.vector() + m_data.size() - 1)).string());
+               String(StringView(m_data.vector(), m_data.size())).string());
 
         send<Server::SetContentsResponse>(client, { .success = true });
     }

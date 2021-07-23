@@ -40,7 +40,7 @@ static StringView reduce_grouping(const Vector<Token<TokenType>>& tokens, Vector
             case TokenType::TokenLiteral: {
                 String real_name = literal_to_token(token.text());
                 literals.add(real_name);
-                StringView view = StringView(&literals.tail()[0], &literals.tail()[literals.tail().size() - 1]);
+                auto view = literals.tail().view();
                 if (!token_types.includes(view)) {
                     token_types.add(view);
                 }
@@ -89,7 +89,7 @@ static StringView reduce_grouping(const Vector<Token<TokenType>>& tokens, Vector
     }
 
     created_strings.add(prefix.to_lower_case());
-    StringView view = StringView(&created_strings.tail()[0], &created_strings.tail()[created_strings.tail().size() - 1]);
+    auto view = created_strings.tail().view();
     if (end_position < tokens.size()) {
         switch (tokens[end_position].type()) {
             case TokenType::TokenStar: {
@@ -222,7 +222,7 @@ int main(int argc, char** argv) {
             case TokenType::TokenLiteral: {
                 String real_name = literal_to_token(token.text());
                 literals.add(real_name);
-                StringView view = StringView(&literals.tail()[0], &literals.tail()[literals.tail().size() - 1]);
+                auto view = literals.tail().view();
                 if (!token_types.includes(view))
                     token_types.add(view);
                 break;
@@ -286,7 +286,7 @@ int main(int argc, char** argv) {
                         }
                     });
                     assert(lit);
-                    rule.components().add(StringView(&(*lit)[0], &(*lit)[lit->size() - 1]));
+                    rule.components().add(lit->view());
                     break;
                 }
                 case TokenType::TokenLeftParenthesis: {

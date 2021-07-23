@@ -68,7 +68,7 @@ void History::write_history() {
             if (!first) {
                 fputc(' ', file);
             }
-            fwrite(line.start(), 1, line.size(), file);
+            fwrite(line.data(), 1, line.size(), file);
             fputc('\n', file);
             first = false;
         }

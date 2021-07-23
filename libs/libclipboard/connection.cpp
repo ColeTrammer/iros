@@ -40,7 +40,7 @@ Maybe<String> Connection::get_clipboard_contents_as_text() {
         return {};
     }
 
-    return { String(StringView(response.value().data.vector(), response.value().data.vector() + response.value().data.size() - 1)) };
+    return { String(StringView(response.value().data.vector(), response.value().data.vector() + response.value().data.size())) };
 }
 }
 
@@ -102,7 +102,7 @@ static void* x11_background_thread_start(void*) {
 
         Atom da;
         XGetWindowProperty(s_display, s_target_window, s_target_property, 0, size, False, AnyPropertyType, &da, &di, &dul, &dul, &prop_ret);
-        auto data = String(StringView((char*) prop_ret, (char*) prop_ret + size - 1));
+        auto data = String(StringView((char*) prop_ret, size));
         XFree(prop_ret);
         XDeleteProperty(s_display, s_target_window, s_target_property);
         XFlush(s_display);

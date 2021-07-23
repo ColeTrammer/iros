@@ -95,9 +95,9 @@ int SH_BUILTIN_MAIN(op_kill)(int argc, char** argv) {
 
     auto first_arg = StringView { argv[1] };
     if (first_arg.starts_with("-") && first_arg != "--" && (isdigit(first_arg[1]) || isupper(first_arg[1]))) {
-        auto parsed_signal = signal_from_specifier(first_arg.start() + 1);
+        auto parsed_signal = signal_from_specifier(first_arg.data() + 1);
         if (!parsed_signal) {
-            fprintf(stderr, "kill: Cannot parse `%s' into a signal number\n", first_arg.start() + 1);
+            fprintf(stderr, "kill: Cannot parse `%s' into a signal number\n", first_arg.data() + 1);
             return 2;
         }
         signal = *parsed_signal;

@@ -164,7 +164,7 @@ private:
             return false;
         }
 
-        return memcmp(m_input + m_index, view.start(), view.size()) == 0;
+        return memcmp(m_input + m_index, view.data(), view.size()) == 0;
     }
 
     int peek(int n = 0) const {

@@ -80,7 +80,7 @@ public:
     char* string() { return is_small() ? m_string.small.data : m_string.large.data; }
     const char* string() const { return is_small() ? m_string.small.data : m_string.large.data; }
 
-    StringView view() const { return StringView(string(), string() + size() - 1); }
+    StringView view() const { return StringView(string(), size()); }
     Vector<StringView> split_view(char c) const { return view().split(c); }
 
     String substring(size_t start) const { return substring(start, size() - start); }
@@ -174,7 +174,7 @@ inline String::String(const StringView& view) {
         m_string.small.size_and_flag = 1;
     }
 
-    memcpy(string(), view.start(), view.size());
+    memcpy(string(), view.data(), view.size());
     string()[view.size()] = '\0';
 
     set_size(needed_capacity - 1);
@@ -182,7 +182,7 @@ inline String::String(const StringView& view) {
 
 inline String::String(const char* chars) : String(StringView(chars)) {}
 
-inline String::String(const char* chars, size_t size) : String(StringView(chars, chars + size - 1)) {}
+inline String::String(const char* chars, size_t size) : String(StringView(chars, size)) {}
 
 inline String::String(const String& other) : String(other.string()) {}
 
@@ -222,7 +222,7 @@ inline void String::insert(const StringView& to_insert, size_t position) {
         char* allocated_string = allocate_string(new_capacity);
 
         memcpy(allocated_string, string(), position);
-        memcpy(allocated_string + position, to_insert.start(), to_insert.size());
+        memcpy(allocated_string + position, to_insert.data(), to_insert.size());
         memcpy(allocated_string + position + to_insert.size(), string() + position, size() + 1 - position);
 
         set_capacity(new_capacity);
@@ -235,7 +235,7 @@ inline void String::insert(const StringView& to_insert, size_t position) {
     }
 
     memmove(string() + position + to_insert.size(), string() + position, size() + 1 - position);
-    memcpy(string() + position, to_insert.start(), to_insert.size());
+    memcpy(string() + position, to_insert.data(), to_insert.size());
     set_size(new_size);
 }
 

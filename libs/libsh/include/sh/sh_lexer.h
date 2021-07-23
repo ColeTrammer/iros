@@ -36,7 +36,7 @@ public:
             const StringView& text = m_tokens[m_current_pos].value().text();
 
             if (type == ShTokenType::WORD && would_be_first_word_of_command(m_current_pos) &&
-                !(m_current_pos == 0 && text.start()[0] == '=')) {
+                !(m_current_pos == 0 && text.first() == '=')) {
                 bool in_s_quotes = false;
                 bool in_d_quotes = false;
                 bool in_b_quotes = false;
@@ -45,7 +45,7 @@ public:
                 bool found_equal = false;
                 int param_expansion_count = 0;
                 for (size_t i = 0; !found_equal && i < text.size(); i++) {
-                    char current = text.start()[i];
+                    char current = text[i];
                     switch (current) {
                         case '\\':
                             if (!in_s_quotes) {
@@ -184,7 +184,7 @@ private:
             return;
         }
 
-        StringView text = { m_current_token_start, m_input_stream + m_position - 1 };
+        auto text = StringView { m_current_token_start, m_input_stream + m_position };
         if (m_expecting_name) {
             m_expecting_name = false;
 
@@ -194,8 +194,8 @@ private:
         }
 
         if (type == ShTokenType::IO_NUMBER) {
-            for (int i = 0; i < text.end() - text.start(); i++) {
-                if (!isdigit(text.start()[i])) {
+            for (size_t i = 0; i < text.size() - 1; i++) {
+                if (!isdigit(text[i])) {
                     type = ShTokenType::WORD;
                     break;
                 }

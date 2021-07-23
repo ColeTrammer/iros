@@ -149,12 +149,12 @@ static bool handle_redirection(ShValue::IoRedirect& desc) {
             if (desc.here_document_type == ShValue::IoRedirect::HereDocumentType::RemoveLeadingTabs) {
                 Vector<char> chars(desc.rhs.size() + 1);
                 for (size_t i = 0; i < desc.rhs.size(); i++) {
-                    while (i < desc.rhs.size() && desc.rhs.start()[i] == '\t') {
+                    while (i < desc.rhs.size() && desc.rhs[i] == '\t') {
                         i++;
                     }
 
-                    while (i < desc.rhs.size() && desc.rhs.start()[i] != '\n') {
-                        chars.add(desc.rhs.start()[i++]);
+                    while (i < desc.rhs.size() && desc.rhs[i] != '\n') {
+                        chars.add(desc.rhs[i++]);
                     }
 
                     if (i < desc.rhs.size()) {
@@ -221,22 +221,22 @@ static pid_t __do_compound_command(ShValue::CompoundCommand& command, ShValue::L
 // Does the command and returns the pid of the command for the caller to wait on, (returns -1 on error) (exit status if bulit in command)
 static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List::Combinator mode, bool* was_builtin, pid_t to_set_pgid) {
     auto do_assignment_word = [](const StringView& w) {
-        char* eq = strchr((char*) w.start(), '=');
+        char* eq = strchr((char*) w.data(), '=');
 
-        char* name_raw = (char*) malloc(eq - w.start() + 1);
-        memcpy(name_raw, w.start(), eq - w.start());
-        name_raw[eq - w.start()] = '\0';
+        char* name_raw = (char*) malloc(eq - w.data() + 1);
+        memcpy(name_raw, w.data(), eq - w.data());
+        name_raw[eq - w.data()] = '\0';
         auto name = String(name_raw);
         free(name_raw);
 
-        if (w.end() == eq) {
+        if (w.end() == eq + 1) {
             setenv(name.string(), "", 1);
             return;
         }
 
-        char* word_raw = (char*) malloc(w.end() - eq + 2);
-        memcpy(word_raw, eq + 1, w.end() - eq + 1);
-        word_raw[w.end() - eq + 1] = '\0';
+        char* word_raw = (char*) malloc(w.end() - eq + 1);
+        memcpy(word_raw, eq + 1, w.end() - eq);
+        word_raw[w.end() - eq] = '\0';
 
         char* expanded = nullptr;
         int ret = we_expand(word_raw, ShState::the().flags_for_wordexp(), &expanded, &special_vars);
@@ -749,6 +749,7 @@ static int do_pipeline(ShValue::Pipeline& pipeline, ShValue::List::Combinator mo
                 break;
             case ShValue::Command::Type::Simple:
                 pid = __do_simple_command(command.command.as<ShValue::SimpleCommand>(), mode, &is_builtin, pgid);
+                fprintf(stderr, "!!<<\n");
                 break;
             default:
                 assert(false);

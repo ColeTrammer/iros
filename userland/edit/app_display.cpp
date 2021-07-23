@@ -91,7 +91,7 @@ Edit::RenderedLine AppDisplay::compose_line(const Edit::Line& line) const {
             auto spaces = String::repeat(' ', Edit::tab_width - (renderer.absolute_col_position() % Edit::tab_width));
             renderer.add_to_segment(spaces.view(), spaces.size());
         } else {
-            renderer.add_to_segment(StringView { &c, &c }, 1);
+            renderer.add_to_segment(StringView { &c, 1 }, 1);
         }
         renderer.end_segment();
     }

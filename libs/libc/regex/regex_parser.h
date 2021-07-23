@@ -45,7 +45,7 @@ private:
         int min;
         // NOTE: sscanf is safe, it will stop reading once ints stop and this must be terminated
         //       eventually by either a '\0', ',', or '}' in all cases.
-        if (sscanf(c.as<TokenInfo>().text.start(), "%i", &min) != 1) {
+        if (sscanf(c.as<TokenInfo>().text.data(), "%i", &min) != 1) {
             this->set_error();
             m_error_code = REG_BADBR;
             return {};
@@ -59,7 +59,7 @@ private:
         int min;
         // NOTE: sscanf is safe, it will stop reading once ints stop and this must be terminated
         //       eventually by either a '\0', ',', or '}' in all cases.
-        if (sscanf(c.as<TokenInfo>().text.start(), "%i", &min) != 1) {
+        if (sscanf(c.as<TokenInfo>().text.data(), "%i", &min) != 1) {
             this->set_error();
             m_error_code = REG_BADBR;
             return {};
@@ -76,12 +76,12 @@ private:
         int max;
         // NOTE: sscanf is safe, it will stop reading once ints stop and this must be terminated
         //       eventually by either a '\0', ',', or '}' in all cases.
-        if (sscanf(c.as<TokenInfo>().text.start(), "%d", &min) != 1) {
+        if (sscanf(c.as<TokenInfo>().text.data(), "%d", &min) != 1) {
             this->set_error();
             m_error_code = REG_BADBR;
             return {};
         }
-        if (sscanf(d.as<TokenInfo>().text.start(), "%d", &max) != 1) {
+        if (sscanf(d.as<TokenInfo>().text.data(), "%d", &max) != 1) {
             this->set_error();
             m_error_code = REG_BADBR;
             return {};
@@ -97,13 +97,13 @@ private:
     virtual RegexValue reduce_regex_one_char$ordinarycharacter(RegexValue& ch) override {
         assert(ch.is<TokenInfo>());
         return { SharedPtr<RegexSingleExpression>(
-            new RegexSingleExpression { RegexSingleExpression::Type::OrdinaryCharacter, { *ch.as<TokenInfo>().text.start() }, {} }) };
+            new RegexSingleExpression { RegexSingleExpression::Type::OrdinaryCharacter, { *ch.as<TokenInfo>().text.data() }, {} }) };
     }
 
     virtual RegexValue reduce_regex_one_char$quotedcharacter(RegexValue& ch) override {
         assert(ch.is<TokenInfo>());
         return { SharedPtr<RegexSingleExpression>(
-            new RegexSingleExpression { RegexSingleExpression::Type::QuotedCharacter, { *ch.as<TokenInfo>().text.start() }, {} }) };
+            new RegexSingleExpression { RegexSingleExpression::Type::QuotedCharacter, { *ch.as<TokenInfo>().text.data() }, {} }) };
     }
 
     virtual RegexValue reduce_regex_one_char$period(RegexValue&) override {
@@ -123,7 +123,7 @@ private:
 
     virtual RegexValue reduce_expression$backreference(RegexValue& v) override {
         assert(v.is<TokenInfo>());
-        int group_index = static_cast<int>(*v.as<TokenInfo>().text.start() - '0');
+        int group_index = static_cast<int>(v.as<TokenInfo>().text.first() - '0');
         if (group_index > lexer().group_at_position(v.as<TokenInfo>().position)) {
             m_error_code = REG_ESUBREG;
             set_error();

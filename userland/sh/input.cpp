@@ -403,9 +403,9 @@ Edit::Suggestions ShRepl::get_suggestions(const String &input, size_t position) 
     int desired_token_index = lexer.tokens().size();
     for (auto &token : lexer.tokens()) {
         assert(token.value().has_text());
-        auto *start = token.value().text().start();
+        auto *start = token.value().text().data();
         auto *end = token.value().text().end();
-        if (desired_position >= start && desired_position <= end) {
+        if (desired_position >= start && desired_position < end) {
             desired_token_index = &token - lexer.tokens().vector();
             desired_token = &token;
         }
@@ -424,10 +424,10 @@ Edit::Suggestions ShRepl::get_suggestions(const String &input, size_t position) 
     StringView current_text("");
     size_t suggestions_offset = 0;
     if (desired_token) {
-        suggestions_offset = static_cast<size_t>(desired_position + 1 - desired_token->value().text().start());
+        suggestions_offset = static_cast<size_t>(desired_position + 1 - desired_token->value().text().data());
         current_text = desired_token->value().text();
-        current_text_before_cursor = { desired_token->value().text().start(),
-                                       static_cast<size_t>((input.string() + position) - desired_token->value().text().start()) };
+        current_text_before_cursor = { desired_token->value().text().data(),
+                                       static_cast<size_t>((input.string() + position) - desired_token->value().text().data()) };
     }
 
     bool should_be_executable = lexer.would_be_first_word_of_command(desired_token_index);

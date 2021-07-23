@@ -15,14 +15,14 @@ namespace Edit {
 void update_document_type(Document& document) {
     auto path = document.name();
 
-    auto filename = StringView(path.string(), path.string() + path.size() - 1);
+    auto filename = path.view();
     if (char* last_slash = strrchr(path.string(), '/')) {
-        filename = StringView(last_slash + 1, path.string() + path.size() - 1);
+        filename = { last_slash + 1, path.string() + path.size() };
     }
 
-    auto extension = StringView("");
-    if (const char* last_dot = strrchr(filename.start(), '.')) {
-        extension = StringView(last_dot + 1, filename.end());
+    auto extension = StringView { "" };
+    if (const char* last_dot = strrchr(filename.data(), '.')) {
+        extension = { last_dot + 1, filename.end() };
     }
 
     DocumentType type;
