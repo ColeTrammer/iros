@@ -1,6 +1,6 @@
 #pragma once
 
-#include <edit/panel.h>
+#include <edit/display.h>
 #include <eventloop/event.h>
 #include <liim/hash_map.h>
 #include <liim/maybe.h>
@@ -11,10 +11,10 @@
 
 namespace TInput {
 
-class ReplPanel final : public Edit::Panel {
+class ReplDisplay final : public Edit::Display {
 public:
-    ReplPanel(Repl& repl);
-    virtual ~ReplPanel() override;
+    ReplDisplay(Repl& repl);
+    virtual ~ReplDisplay() override;
 
     virtual int rows() const override { return m_rows; }
     virtual int cols() const override { return m_cols; };

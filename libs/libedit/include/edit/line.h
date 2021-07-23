@@ -26,32 +26,32 @@ public:
 
     LineSplitResult split_at(int position);
 
-    Position relative_position_of_index(const Document& document, Panel& panel, int index) const;
-    int absoulte_col_offset_of_index(const Document& document, Panel& panel, int index) const;
-    int index_of_relative_position(const Document& document, Panel& panel, const Position& position) const;
-    int max_col_in_relative_row(const Document& document, Panel& panel, int relative_row) const;
-    int absolute_row_position(const Document& document, Panel& panel) const;
-    int rendered_line_count(const Document&, Panel&) const;
+    Position relative_position_of_index(const Document& document, Display& display, int index) const;
+    int absoulte_col_offset_of_index(const Document& document, Display& display, int index) const;
+    int index_of_relative_position(const Document& document, Display& display, const Position& position) const;
+    int max_col_in_relative_row(const Document& document, Display& display, int relative_row) const;
+    int absolute_row_position(const Document& document, Display& display) const;
+    int rendered_line_count(const Document&, Display&) const;
 
     char char_at(int index) const { return contents()[index]; }
 
     void search(const Document& document, const String& text, TextRangeCollection& results) const;
 
-    int render(const Document& document, Panel& panel, DocumentTextRangeIterator& metadata_iterator, int col_offset, int relative_row_start,
-               int row_in_panel) const;
+    int render(const Document& document, Display& display, DocumentTextRangeIterator& metadata_iterator, int col_offset,
+               int relative_row_start, int row_in_display) const;
 
-    void invalidate_rendered_contents(const Document& document, Panel& panel) const;
+    void invalidate_rendered_contents(const Document& document, Display& display) const;
 
 private:
-    const RenderedLine& compute_rendered_contents(const Document& document, Panel& panel) const;
+    const RenderedLine& compute_rendered_contents(const Document& document, Display& display) const;
 
     enum class RangeFor {
         Text,
         Cursor,
     };
 
-    const PositionRange* range_for_relative_position(const Document& document, Panel& panel, const Position& position) const;
-    const PositionRange* range_for_index_into_line(const Document& documnet, Panel& panel, int index_into_line, RangeFor mode) const;
+    const PositionRange* range_for_relative_position(const Document& document, Display& display, const Position& position) const;
+    const PositionRange* range_for_index_into_line(const Document& documnet, Display& display, int index_into_line, RangeFor mode) const;
 
     String m_contents;
 };

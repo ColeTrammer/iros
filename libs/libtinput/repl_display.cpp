@@ -14,14 +14,14 @@
 #include <tinput/repl.h>
 #include <unistd.h>
 
-#include "repl_panel.h"
+#include "repl_display.h"
 
 namespace TInput {
 
 static termios s_original_termios;
 static bool s_raw_mode_enabled;
 
-static ReplPanel* s_main_panel;
+static ReplDisplay* s_main_display;
 
 static void restore_termios() {
     tcsetattr(STDOUT_FILENO, TCSAFLUSH, &s_original_termios);
@@ -34,13 +34,13 @@ static void restore_termios() {
     s_raw_mode_enabled = false;
 }
 
-static void update_panel_sizes() {
-    assert(s_main_panel);
+static void update_display_sizes() {
+    assert(s_main_display);
 
     winsize sz;
     assert(ioctl(STDOUT_FILENO, TIOCGWINSZ, &sz) == 0);
 
-    s_main_panel->set_coordinates(sz.ws_row, sz.ws_col);
+    s_main_display->set_coordinates(sz.ws_row, sz.ws_col);
 }
 
 static void enable_raw_mode() {
@@ -59,7 +59,7 @@ static void enable_raw_mode() {
     assert(tcsetattr(STDOUT_FILENO, TCSAFLUSH, &to_set) == 0);
 
     signal(SIGWINCH, [](int) {
-        update_panel_sizes();
+        update_display_sizes();
     });
 
     atexit(restore_termios);
@@ -70,7 +70,7 @@ static void enable_raw_mode() {
     fflush(stdout);
 }
 
-ReplPanel::ReplPanel(Repl& repl) : m_repl(repl) {
+ReplDisplay::ReplDisplay(Repl& repl) : m_repl(repl) {
     assert(isatty(STDOUT_FILENO));
 
     m_main_prompt = repl.get_main_prompt();
@@ -82,11 +82,11 @@ ReplPanel::ReplPanel(Repl& repl) : m_repl(repl) {
         enable_raw_mode();
     }
 
-    s_main_panel = this;
-    update_panel_sizes();
+    s_main_display = this;
+    update_display_sizes();
 }
 
-void ReplPanel::set_coordinates(int rows, int cols) {
+void ReplDisplay::set_coordinates(int rows, int cols) {
     m_rows = rows;
     m_cols = cols;
 
@@ -102,11 +102,11 @@ void ReplPanel::set_coordinates(int rows, int cols) {
     }
 
     if (auto* doc = document()) {
-        doc->notify_panel_size_changed();
+        doc->notify_display_size_changed();
     }
 }
 
-ReplPanel::~ReplPanel() {
+ReplDisplay::~ReplDisplay() {
     restore_termios();
 }
 
@@ -167,7 +167,7 @@ static int vga_color_to_number(vga_color color, bool background) {
     return background ? ret + 10 : ret;
 }
 
-String ReplPanel::string_for_metadata(Edit::CharacterMetadata metadata) const {
+String ReplDisplay::string_for_metadata(Edit::CharacterMetadata metadata) const {
     String ret = "\033[0";
 
     RenderingInfo info = rendering_info_for_metadata(metadata);
@@ -195,7 +195,7 @@ String ReplPanel::string_for_metadata(Edit::CharacterMetadata metadata) const {
     return ret;
 }
 
-void ReplPanel::document_did_change() {
+void ReplDisplay::document_did_change() {
     if (document()) {
         document()->on_submit = [this] {
             auto input_text = document()->content_string();
@@ -224,12 +224,12 @@ void ReplPanel::document_did_change() {
     }
 }
 
-void ReplPanel::quit() {
+void ReplDisplay::quit() {
     m_should_exit = true;
     m_exit_code = 1;
 }
 
-int ReplPanel::index(int row, int col) const {
+int ReplDisplay::index(int row, int col) const {
     return row * cols() + col;
 }
 
@@ -254,7 +254,7 @@ static int string_print_width(const StringView& string) {
     return count;
 }
 
-Edit::RenderedLine ReplPanel::compose_line(const Edit::Line& line) const {
+Edit::RenderedLine ReplDisplay::compose_line(const Edit::Line& line) const {
     if (!document()) {
         return {};
     }
@@ -293,8 +293,8 @@ Edit::RenderedLine ReplPanel::compose_line(const Edit::Line& line) const {
     return renderer.finish(line);
 }
 
-void ReplPanel::draw_cursor() {
-    auto cursor_pos = document()->cursor_position_on_panel(*this, cursors().main_cursor());
+void ReplDisplay::draw_cursor() {
+    auto cursor_pos = document()->cursor_position_on_display(*this, cursors().main_cursor());
     auto cursor_row = cursor_pos.row;
     auto cursor_col = cursor_pos.col;
 
@@ -320,9 +320,9 @@ void ReplPanel::draw_cursor() {
     }
 }
 
-void ReplPanel::send_status_message(String) {}
+void ReplDisplay::send_status_message(String) {}
 
-void ReplPanel::print_char(char c, Edit::CharacterMetadata metadata) {
+void ReplDisplay::print_char(char c, Edit::CharacterMetadata metadata) {
     if (c == '\0') {
         c = ' ';
     }
@@ -336,7 +336,7 @@ void ReplPanel::print_char(char c, Edit::CharacterMetadata metadata) {
     m_visible_cursor_col = min(m_visible_cursor_col + 1, cols() - 1);
 }
 
-void ReplPanel::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata_vector) {
+void ReplDisplay::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata_vector) {
     assert(col_offset == 0);
 
     for (size_t i = 0; i < text.size(); i++) {
@@ -360,9 +360,9 @@ void ReplPanel::output_line(int row, int col_offset, const StringView& text, con
     }
 }
 
-void ReplPanel::do_open_prompt() {}
+void ReplDisplay::do_open_prompt() {}
 
-void ReplPanel::flush() {
+void ReplDisplay::flush() {
     if (m_should_exit) {
         return;
     }
@@ -384,14 +384,14 @@ void ReplPanel::flush() {
     fflush(stdout);
 }
 
-void ReplPanel::flush_if_needed() {
+void ReplDisplay::flush_if_needed() {
     if (!m_render_scheduled) {
         return;
     }
     flush();
 }
 
-Edit::Suggestions ReplPanel::get_suggestions() const {
+Edit::Suggestions ReplDisplay::get_suggestions() const {
     auto content_string = document()->content_string();
     auto cursor_index = document()->cursor_index_in_content_string(cursors().main_cursor());
     auto suggestions_object = m_repl.get_suggestions(content_string, cursor_index);
@@ -422,7 +422,7 @@ Edit::Suggestions ReplPanel::get_suggestions() const {
     return Edit::Suggestions { suggestions_object.suggestion_offset(), move(new_suggestions) };
 }
 
-void ReplPanel::handle_suggestions(const Edit::Suggestions& suggestions) {
+void ReplDisplay::handle_suggestions(const Edit::Suggestions& suggestions) {
     if (++m_consecutive_tabs >= 2) {
         auto cursor_row_max = min(rows(), document()->num_rendered_lines(*this)) - 1;
         if (m_visible_cursor_row < cursor_row_max) {
@@ -442,18 +442,18 @@ void ReplPanel::handle_suggestions(const Edit::Suggestions& suggestions) {
     }
 }
 
-Vector<SharedPtr<Edit::Document>>& ReplPanel::ensure_history_documents() {
+Vector<SharedPtr<Edit::Document>>& ReplDisplay::ensure_history_documents() {
     if (m_history_documents.empty()) {
         m_history_documents.resize(m_repl.history().size() + 1);
     }
     return m_history_documents;
 }
 
-void ReplPanel::put_history_document(SharedPtr<Edit::Document> document, int index) {
+void ReplDisplay::put_history_document(SharedPtr<Edit::Document> document, int index) {
     ensure_history_documents()[index] = move(document);
 }
 
-SharedPtr<Edit::Document> ReplPanel::history_document(int index) {
+SharedPtr<Edit::Document> ReplDisplay::history_document(int index) {
     auto& documents = ensure_history_documents();
     if (documents[index]) {
         return move(documents[index]);
@@ -463,7 +463,7 @@ SharedPtr<Edit::Document> ReplPanel::history_document(int index) {
     return Edit::Document::create_from_text(new_document_text);
 }
 
-void ReplPanel::move_history_up() {
+void ReplDisplay::move_history_up() {
     if (m_history_index == 0) {
         return;
     }
@@ -482,7 +482,7 @@ void ReplPanel::move_history_up() {
     m_history_index--;
 }
 
-void ReplPanel::move_history_down() {
+void ReplDisplay::move_history_down() {
     if (m_history_index == m_repl.history().size()) {
         return;
     }
@@ -501,7 +501,7 @@ void ReplPanel::move_history_down() {
     m_history_index++;
 }
 
-void ReplPanel::get_absolute_row_position() {
+void ReplDisplay::get_absolute_row_position() {
     m_absolute_row_position = -1;
 
     printf("\033[6n");
@@ -529,7 +529,7 @@ void ReplPanel::get_absolute_row_position() {
     m_absolute_row_position = row - 1;
 }
 
-int ReplPanel::enter() {
+int ReplDisplay::enter() {
     get_absolute_row_position();
 
     fd_set set;
@@ -559,7 +559,7 @@ int ReplPanel::enter() {
 
         m_input_parser.stream_data({ buffer, static_cast<size_t>(ret) });
         auto input = m_input_parser.take_events();
-        if (auto* document = Panel::document()) {
+        if (auto* document = Display::document()) {
             for (auto& ev : input) {
                 if (ev->type() == App::Event::Type::Key) {
                     auto& key_event = static_cast<const App::KeyEvent&>(*ev);
@@ -615,23 +615,23 @@ int ReplPanel::enter() {
     return m_exit_code;
 }
 
-Maybe<String> ReplPanel::enter_prompt(const String&, String) {
+Maybe<String> ReplDisplay::enter_prompt(const String&, String) {
     return {};
 }
 
-Maybe<String> ReplPanel::prompt(const String&) {
+Maybe<String> ReplDisplay::prompt(const String&) {
     return {};
 }
 
-void ReplPanel::enter_search(String) {}
+void ReplDisplay::enter_search(String) {}
 
-void ReplPanel::set_clipboard_contents(String text, bool is_whole_line) {
+void ReplDisplay::set_clipboard_contents(String text, bool is_whole_line) {
     m_prev_clipboard_contents = move(text);
     m_prev_clipboard_contents_were_whole_line = is_whole_line;
     Clipboard::Connection::the().set_clipboard_contents_to_text(m_prev_clipboard_contents);
 }
 
-String ReplPanel::clipboard_contents(bool& is_whole_line) const {
+String ReplDisplay::clipboard_contents(bool& is_whole_line) const {
     auto contents = Clipboard::Connection::the().get_clipboard_contents_as_text();
     if (!contents.has_value()) {
         is_whole_line = m_prev_clipboard_contents_were_whole_line;

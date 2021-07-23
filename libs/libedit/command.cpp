@@ -1,6 +1,6 @@
 #include <edit/command.h>
+#include <edit/display.h>
 #include <edit/document.h>
-#include <edit/panel.h>
 #include <edit/position.h>
 #include <unistd.h>
 
@@ -9,8 +9,8 @@ Command::Command(Document& document) : m_document(document) {}
 
 Command::~Command() {}
 
-DeltaBackedCommand::DeltaBackedCommand(Document& document, Panel& panel)
-    : Command(document), m_start_snapshot(document.snapshot_state(panel)) {
+DeltaBackedCommand::DeltaBackedCommand(Document& document, Display& display)
+    : Command(document), m_start_snapshot(document.snapshot_state(display)) {
     for (auto& cursor : m_start_snapshot.cursors) {
         m_selection_texts.add(document.selection_text(cursor));
     }
@@ -18,37 +18,39 @@ DeltaBackedCommand::DeltaBackedCommand(Document& document, Panel& panel)
 
 DeltaBackedCommand::~DeltaBackedCommand() {}
 
-bool DeltaBackedCommand::execute(Panel& panel) {
-    bool was_modified = do_execute(panel.cursors());
-    m_end_snapshot = document().snapshot_state(panel);
+bool DeltaBackedCommand::execute(Display& display) {
+    bool was_modified = do_execute(display.cursors());
+    m_end_snapshot = document().snapshot_state(display);
     return was_modified;
 }
 
-void DeltaBackedCommand::undo(Panel& panel) {
-    document().restore_state(panel.cursors(), m_end_snapshot);
-    do_undo(panel.cursors());
-    document().restore_state(panel.cursors(), m_start_snapshot);
+void DeltaBackedCommand::undo(Display& display) {
+    document().restore_state(display.cursors(), m_end_snapshot);
+    do_undo(display.cursors());
+    document().restore_state(display.cursors(), m_start_snapshot);
 }
 
-void DeltaBackedCommand::redo(Panel& panel) {
-    document().restore_state(panel.cursors(), start_snapshot());
-    document().execute_command(panel, *this);
+void DeltaBackedCommand::redo(Display& display) {
+    document().restore_state(display.cursors(), start_snapshot());
+    document().execute_command(display, *this);
 }
 
-SnapshotBackedCommand::SnapshotBackedCommand(Document& document, Panel& panel) : Command(document), m_snapshot(document.snapshot(panel)) {}
+SnapshotBackedCommand::SnapshotBackedCommand(Document& document, Display& display)
+    : Command(document), m_snapshot(document.snapshot(display)) {}
 
 SnapshotBackedCommand::~SnapshotBackedCommand() {}
 
-void SnapshotBackedCommand::undo(Panel& panel) {
-    document().restore(panel.cursors(), snapshot());
+void SnapshotBackedCommand::undo(Display& display) {
+    document().restore(display.cursors(), snapshot());
 }
 
-void SnapshotBackedCommand::redo(Panel& panel) {
-    document().restore_state(panel.cursors(), snapshot().state);
-    document().execute_command(panel, *this);
+void SnapshotBackedCommand::redo(Display& display) {
+    document().restore_state(display.cursors(), snapshot().state);
+    document().execute_command(display, *this);
 }
 
-InsertCommand::InsertCommand(Document& document, Panel& panel, String text) : DeltaBackedCommand(document, panel), m_text(move(text)) {}
+InsertCommand::InsertCommand(Document& document, Display& display, String text)
+    : DeltaBackedCommand(document, display), m_text(move(text)) {}
 
 InsertCommand::~InsertCommand() {}
 
@@ -141,7 +143,8 @@ void InsertCommand::do_undo(MultiCursor& cursors) {
     }
 }
 
-DeleteCommand::DeleteCommand(Document& document, Panel& panel, DeleteCharMode mode) : DeltaBackedCommand(document, panel), m_mode(mode) {}
+DeleteCommand::DeleteCommand(Document& document, Display& display, DeleteCharMode mode)
+    : DeltaBackedCommand(document, display), m_mode(mode) {}
 
 DeleteCommand::~DeleteCommand() {}
 
@@ -211,7 +214,7 @@ void DeleteCommand::do_undo(MultiCursor& cursors) {
     }
 }
 
-DeleteLineCommand::DeleteLineCommand(Document& document, Panel& panel) : DeltaBackedCommand(document, panel) {}
+DeleteLineCommand::DeleteLineCommand(Document& document, Display& display) : DeltaBackedCommand(document, display) {}
 
 DeleteLineCommand::~DeleteLineCommand() {}
 
@@ -240,8 +243,8 @@ void DeleteLineCommand::do_undo(MultiCursor& cursors) {
     }
 }
 
-InsertLineCommand::InsertLineCommand(Document& document, Panel& panel, String text)
-    : DeltaBackedCommand(document, panel), m_text(move(text)) {}
+InsertLineCommand::InsertLineCommand(Document& document, Display& display, String text)
+    : DeltaBackedCommand(document, display), m_text(move(text)) {}
 
 InsertLineCommand::~InsertLineCommand() {}
 
@@ -256,8 +259,8 @@ void InsertLineCommand::do_undo(MultiCursor& cursors) {
     document().remove_line(cursors.main_cursor().line_index());
 }
 
-SwapLinesCommand::SwapLinesCommand(Document& document, Panel& panel, SwapDirection direction)
-    : DeltaBackedCommand(document, panel), m_direction(direction) {}
+SwapLinesCommand::SwapLinesCommand(Document& document, Display& display, SwapDirection direction)
+    : DeltaBackedCommand(document, display), m_direction(direction) {}
 
 SwapLinesCommand::~SwapLinesCommand() {}
 

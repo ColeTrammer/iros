@@ -6,11 +6,11 @@ namespace Edit {
 class CharacterMetadata;
 class Command;
 class Cursor;
+class Display;
 class Document;
 class LineRenderer;
 class Line;
 class MultiCursor;
-class Panel;
 class Selection;
 class Suggestions;
 class TextIndex;

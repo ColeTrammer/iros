@@ -1,6 +1,6 @@
 #include <edit/command.h>
+#include <edit/display.h>
 #include <edit/document.h>
-#include <edit/panel.h>
 #include <edit/position.h>
 #include <errno.h>
 #include <eventloop/event.h>
@@ -16,7 +16,7 @@ static inline int isword(int c) {
     return isalnum(c) || c == '_';
 }
 
-SharedPtr<Document> Document::create_from_stdin(const String& path, Panel& panel) {
+SharedPtr<Document> Document::create_from_stdin(const String& path, Display& display) {
     auto file = Ext::File(stdin);
     file.set_should_close_file(false);
 
@@ -31,7 +31,7 @@ SharedPtr<Document> Document::create_from_stdin(const String& path, Panel& panel
     SharedPtr<Document> ret;
 
     if (!result) {
-        panel.send_status_message(String::format("error reading stdin: `%s'", strerror(file.error())));
+        display.send_status_message(String::format("error reading stdin: `%s'", strerror(file.error())));
         ret = Document::create_empty();
         ret->set_name(path);
     } else {
@@ -43,14 +43,14 @@ SharedPtr<Document> Document::create_from_stdin(const String& path, Panel& panel
     return ret;
 }
 
-SharedPtr<Document> Document::create_from_file(const String& path, Panel& panel) {
+SharedPtr<Document> Document::create_from_file(const String& path, Display& display) {
     auto file = Ext::File::create(path, "r");
     if (!file) {
         if (errno == ENOENT) {
-            panel.send_status_message(String::format("new file: `%s'", path.string()));
+            display.send_status_message(String::format("new file: `%s'", path.string()));
             return make_shared<Document>(Vector<Line>(), path, InputMode::Document);
         }
-        panel.send_status_message(String::format("error accessing file: `%s': `%s'", path.string(), strerror(errno)));
+        display.send_status_message(String::format("error accessing file: `%s': `%s'", path.string(), strerror(errno)));
         return Document::create_empty();
     }
 
@@ -65,7 +65,7 @@ SharedPtr<Document> Document::create_from_file(const String& path, Panel& panel)
     SharedPtr<Document> ret;
 
     if (!result) {
-        panel.send_status_message(String::format("error reading file: `%s': `%s'", path.string(), strerror(file->error())));
+        display.send_status_message(String::format("error reading file: `%s': `%s'", path.string(), strerror(file->error())));
         ret = Document::create_empty();
     } else {
         lines.add(Line(""));
@@ -73,7 +73,7 @@ SharedPtr<Document> Document::create_from_file(const String& path, Panel& panel)
     }
 
     if (!file->close()) {
-        panel.send_status_message(String::format("error closing file: `%s'", path.string()));
+        display.send_status_message(String::format("error closing file: `%s'", path.string()));
     }
 
     return ret;
@@ -156,46 +156,46 @@ size_t Document::cursor_index_in_content_string(const Cursor& cursor) const {
 }
 
 void Document::set_needs_display() {
-    for (auto* panel : m_panels) {
-        panel->schedule_update();
+    for (auto* display : m_displays) {
+        display->schedule_update();
     }
 }
 
-void Document::display(Panel& panel) const {
+void Document::display(Display& display) const {
     auto& document = const_cast<Document&>(*this);
 
-    int scroll_row_offset = panel.scroll_row_offset();
-    int scroll_col_offset = panel.scroll_col_offset();
+    int scroll_row_offset = display.scroll_row_offset();
+    int scroll_col_offset = display.scroll_col_offset();
 
-    auto render_index = text_index_at_absolute_position(panel, { scroll_row_offset, 0 });
+    auto render_index = text_index_at_absolute_position(display, { scroll_row_offset, 0 });
     auto relative_start_position =
-        line_at_index(render_index.line_index()).relative_position_of_index(*this, panel, render_index.index_into_line());
+        line_at_index(render_index.line_index()).relative_position_of_index(*this, display, render_index.index_into_line());
     render_index.set_index_into_line(0);
 
-    auto selection_collection = panel.cursors().selections(*this);
-    auto cursor_collection = panel.cursors().cursor_text_ranges(*this);
+    auto selection_collection = display.cursors().selections(*this);
+    auto cursor_collection = display.cursors().cursor_text_ranges(*this);
     DocumentTextRangeIterator metadata_iterator(render_index, m_syntax_highlighting_info, m_search_results, selection_collection,
                                                 cursor_collection);
 
     int row = scroll_row_offset;
-    for (; render_index.line_index() < num_lines() && row < scroll_row_offset + panel.rows();) {
+    for (; render_index.line_index() < num_lines() && row < scroll_row_offset + display.rows();) {
         auto& line = line_at_index(render_index.line_index());
-        row += line.render(document, panel, metadata_iterator, scroll_col_offset, relative_start_position.row, row - scroll_row_offset);
+        row += line.render(document, display, metadata_iterator, scroll_col_offset, relative_start_position.row, row - scroll_row_offset);
         render_index.set_line_index(render_index.line_index() + 1);
         relative_start_position = { 0, 0 };
     }
 }
 
-TextIndex Document::text_index_at_absolute_position(Panel& panel, const Position& position) const {
+TextIndex Document::text_index_at_absolute_position(Display& display, const Position& position) const {
     if (position.row < 0) {
         return { 0, 0 };
     }
 
     int absolute_row = 0;
     for (auto& line : m_lines) {
-        auto height_of_line = line.rendered_line_count(*this, panel);
+        auto height_of_line = line.rendered_line_count(*this, display);
         if (position.row < absolute_row + height_of_line) {
-            return { index_of_line(line), line.index_of_relative_position(*this, panel, { position.row - absolute_row, position.col }) };
+            return { index_of_line(line), line.index_of_relative_position(*this, display, { position.row - absolute_row, position.col }) };
         }
         absolute_row += height_of_line;
     }
@@ -203,25 +203,27 @@ TextIndex Document::text_index_at_absolute_position(Panel& panel, const Position
     return { num_lines() - 1, last_line().length() };
 }
 
-TextIndex Document::text_index_at_scrolled_position(Panel& panel, const Position& position) const {
-    return text_index_at_absolute_position(panel, { position.row + panel.scroll_row_offset(), position.col + panel.scroll_col_offset() });
+TextIndex Document::text_index_at_scrolled_position(Display& display, const Position& position) const {
+    return text_index_at_absolute_position(display,
+                                           { position.row + display.scroll_row_offset(), position.col + display.scroll_col_offset() });
 }
 
-Position Document::relative_to_absolute_position(Panel& panel, const Line& reference_line, const Position& line_relative_position) const {
-    return { reference_line.absolute_row_position(*this, panel) + line_relative_position.row, line_relative_position.col };
+Position Document::relative_to_absolute_position(Display& display, const Line& reference_line,
+                                                 const Position& line_relative_position) const {
+    return { reference_line.absolute_row_position(*this, display) + line_relative_position.row, line_relative_position.col };
 }
 
-int Document::num_rendered_lines(Panel& panel) const {
+int Document::num_rendered_lines(Display& display) const {
     int total = 0;
     for (auto& line : m_lines) {
-        total += line.rendered_line_count(*this, panel);
+        total += line.rendered_line_count(*this, display);
     }
     return total;
 }
 
-Position Document::cursor_position_on_panel(Panel& panel, Cursor& cursor) const {
-    auto position = cursor.absolute_position(*this, panel);
-    return { position.row - panel.scroll_row_offset(), position.col - panel.scroll_col_offset() };
+Position Document::cursor_position_on_display(Display& display, Cursor& cursor) const {
+    auto position = cursor.absolute_position(*this, display);
+    return { position.row - display.scroll_row_offset(), position.col - display.scroll_col_offset() };
 }
 
 int Document::index_of_line(const Line& line) const {
@@ -239,38 +241,38 @@ void Document::update_selection_state_for_mode(Cursor& cursor, MovementMode mode
     }
 }
 
-void Document::move_cursor_right_by_word(Panel& panel, Cursor& cursor, MovementMode mode) {
-    move_cursor_right(panel, cursor, mode);
+void Document::move_cursor_right_by_word(Display& display, Cursor& cursor, MovementMode mode) {
+    move_cursor_right(display, cursor, mode);
 
     auto& line = cursor.referenced_line(*this);
     while (cursor.index_into_line() < line.length() && !isword(cursor.referenced_character(*this))) {
-        move_cursor_right(panel, cursor, mode);
+        move_cursor_right(display, cursor, mode);
     }
 
     while (cursor.index_into_line() < line.length() && isword(cursor.referenced_character(*this))) {
-        move_cursor_right(panel, cursor, mode);
+        move_cursor_right(display, cursor, mode);
     }
 }
 
-void Document::move_cursor_left_by_word(Panel& panel, Cursor& cursor, MovementMode mode) {
-    move_cursor_left(panel, cursor, mode);
+void Document::move_cursor_left_by_word(Display& display, Cursor& cursor, MovementMode mode) {
+    move_cursor_left(display, cursor, mode);
 
     while (cursor.index_into_line() > 0 && !isword(cursor.referenced_character(*this))) {
-        move_cursor_left(panel, cursor, mode);
+        move_cursor_left(display, cursor, mode);
     }
 
     bool found_word = false;
     while (cursor.index_into_line() > 0 && isword(cursor.referenced_character(*this))) {
-        move_cursor_left(panel, cursor, mode);
+        move_cursor_left(display, cursor, mode);
         found_word = true;
     }
 
     if (found_word && !isword(cursor.referenced_character(*this))) {
-        move_cursor_right(panel, cursor, mode);
+        move_cursor_right(display, cursor, mode);
     }
 }
 
-void Document::move_cursor_right(Panel& panel, Cursor& cursor, MovementMode mode) {
+void Document::move_cursor_right(Display& display, Cursor& cursor, MovementMode mode) {
     auto& line = cursor.referenced_line(*this);
     int index_into_line = cursor.index_into_line();
     if (index_into_line == line.length()) {
@@ -278,8 +280,8 @@ void Document::move_cursor_right(Panel& panel, Cursor& cursor, MovementMode mode
             return;
         }
 
-        move_cursor_down(panel, cursor, mode);
-        move_cursor_to_line_start(panel, cursor, mode);
+        move_cursor_down(display, cursor, mode);
+        move_cursor_to_line_start(display, cursor, mode);
         return;
     }
 
@@ -287,7 +289,7 @@ void Document::move_cursor_right(Panel& panel, Cursor& cursor, MovementMode mode
     if (!selection.empty() && mode == MovementMode::Move) {
         auto selection_end = selection.normalized_end();
         clear_selection(cursor);
-        move_cursor_to(panel, cursor, selection_end);
+        move_cursor_to(display, cursor, selection_end);
         return;
     }
 
@@ -301,10 +303,10 @@ void Document::move_cursor_right(Panel& panel, Cursor& cursor, MovementMode mode
     }
 
     cursor.set_index_into_line(new_index_into_line);
-    cursor.compute_max_col(*this, panel);
+    cursor.compute_max_col(*this, display);
 }
 
-void Document::move_cursor_left(Panel& panel, Cursor& cursor, MovementMode mode) {
+void Document::move_cursor_left(Display& display, Cursor& cursor, MovementMode mode) {
     auto& line = cursor.referenced_line(*this);
     int index_into_line = cursor.index_into_line();
     if (index_into_line == 0) {
@@ -312,8 +314,8 @@ void Document::move_cursor_left(Panel& panel, Cursor& cursor, MovementMode mode)
             return;
         }
 
-        move_cursor_up(panel, cursor, mode);
-        move_cursor_to_line_end(panel, cursor, mode);
+        move_cursor_up(display, cursor, mode);
+        move_cursor_to_line_end(display, cursor, mode);
         return;
     }
 
@@ -321,7 +323,7 @@ void Document::move_cursor_left(Panel& panel, Cursor& cursor, MovementMode mode)
     if (!selection.empty() && mode == MovementMode::Move) {
         auto selection_start = selection.normalized_start();
         clear_selection(cursor);
-        move_cursor_to(panel, cursor, selection_start);
+        move_cursor_to(display, cursor, selection_start);
         return;
     }
 
@@ -335,72 +337,72 @@ void Document::move_cursor_left(Panel& panel, Cursor& cursor, MovementMode mode)
     }
 
     cursor.set_index_into_line(new_index_into_line);
-    cursor.compute_max_col(*this, panel);
+    cursor.compute_max_col(*this, display);
 }
 
-void Document::move_cursor_down(Panel& panel, Cursor& cursor, MovementMode mode) {
+void Document::move_cursor_down(Display& display, Cursor& cursor, MovementMode mode) {
     auto& prev_line = cursor.referenced_line(*this);
-    if (&prev_line == &last_line() && last_line().relative_position_of_index(*this, panel, cursor.index_into_line()).row ==
-                                          last_line().rendered_line_count(*this, panel) - 1) {
-        move_cursor_to_line_end(panel, cursor, mode);
+    if (&prev_line == &last_line() && last_line().relative_position_of_index(*this, display, cursor.index_into_line()).row ==
+                                          last_line().rendered_line_count(*this, display) - 1) {
+        move_cursor_to_line_end(display, cursor, mode);
         return;
     }
 
     update_selection_state_for_mode(cursor, mode);
 
-    auto prev_position = cursor.absolute_position(*this, panel);
-    auto new_index = text_index_at_absolute_position(panel, { prev_position.row + 1, prev_position.col });
+    auto prev_position = cursor.absolute_position(*this, display);
+    auto new_index = text_index_at_absolute_position(display, { prev_position.row + 1, prev_position.col });
 
     cursor.set(new_index);
 
-    clamp_cursor_to_line_end(panel, cursor);
+    clamp_cursor_to_line_end(display, cursor);
     if (mode == MovementMode::Select) {
         cursor.selection().set_end(cursor.index());
         set_needs_display();
     }
 }
 
-void Document::move_cursor_up(Panel& panel, Cursor& cursor, MovementMode mode) {
+void Document::move_cursor_up(Display& display, Cursor& cursor, MovementMode mode) {
     auto& prev_line = cursor.referenced_line(*this);
-    if (&prev_line == &first_line() && first_line().relative_position_of_index(*this, panel, cursor.index_into_line()).row == 0) {
-        move_cursor_to_line_start(panel, cursor, mode);
+    if (&prev_line == &first_line() && first_line().relative_position_of_index(*this, display, cursor.index_into_line()).row == 0) {
+        move_cursor_to_line_start(display, cursor, mode);
         return;
     }
 
     update_selection_state_for_mode(cursor, mode);
 
-    auto prev_position = cursor.absolute_position(*this, panel);
-    auto new_index = text_index_at_absolute_position(panel, { prev_position.row - 1, prev_position.col });
+    auto prev_position = cursor.absolute_position(*this, display);
+    auto new_index = text_index_at_absolute_position(display, { prev_position.row - 1, prev_position.col });
 
     cursor.set(new_index);
 
-    clamp_cursor_to_line_end(panel, cursor);
+    clamp_cursor_to_line_end(display, cursor);
     if (mode == MovementMode::Select) {
         cursor.selection().set_end(cursor.index());
         set_needs_display();
     }
 }
 
-void Document::clamp_cursor_to_line_end(Panel& panel, Cursor& cursor) {
+void Document::clamp_cursor_to_line_end(Display& display, Cursor& cursor) {
     auto& line = cursor.referenced_line(*this);
-    auto current_pos = cursor.relative_position(*this, panel);
-    auto max_col = line.max_col_in_relative_row(*this, panel, current_pos.row);
+    auto current_pos = cursor.relative_position(*this, display);
+    auto max_col = line.max_col_in_relative_row(*this, display, current_pos.row);
     if (current_pos.col == max_col) {
         return;
     }
 
     if (current_pos.col > max_col) {
-        cursor.set_index_into_line(line.index_of_relative_position(*this, panel, { current_pos.row, max_col }));
+        cursor.set_index_into_line(line.index_of_relative_position(*this, display, { current_pos.row, max_col }));
         return;
     }
 
     if (cursor.max_col() > current_pos.col) {
-        cursor.set_index_into_line(line.index_of_relative_position(*this, panel, { current_pos.row, cursor.max_col() }));
+        cursor.set_index_into_line(line.index_of_relative_position(*this, display, { current_pos.row, cursor.max_col() }));
         return;
     }
 }
 
-void Document::move_cursor_to_line_start(Panel& panel, Cursor& cursor, MovementMode mode) {
+void Document::move_cursor_to_line_start(Display& display, Cursor& cursor, MovementMode mode) {
     update_selection_state_for_mode(cursor, mode);
     if (mode == MovementMode::Select) {
         cursor.selection().set_end_index_into_line(0);
@@ -408,10 +410,10 @@ void Document::move_cursor_to_line_start(Panel& panel, Cursor& cursor, MovementM
     }
 
     cursor.set_index_into_line(0);
-    cursor.compute_max_col(*this, panel);
+    cursor.compute_max_col(*this, display);
 }
 
-void Document::move_cursor_to_line_end(Panel& panel, Cursor& cursor, MovementMode mode) {
+void Document::move_cursor_to_line_end(Display& display, Cursor& cursor, MovementMode mode) {
     auto& line = cursor.referenced_line(*this);
 
     update_selection_state_for_mode(cursor, mode);
@@ -420,63 +422,63 @@ void Document::move_cursor_to_line_end(Panel& panel, Cursor& cursor, MovementMod
         set_needs_display();
     }
 
-    panel.set_scroll_col_offset(0);
+    display.set_scroll_col_offset(0);
     cursor.set_index_into_line(line.length());
-    cursor.compute_max_col(*this, panel);
+    cursor.compute_max_col(*this, display);
 }
 
-void Document::move_cursor_to_document_start(Panel& panel, Cursor& cursor, MovementMode mode) {
-    move_cursor_to(panel, cursor, { 0, 0 }, mode);
+void Document::move_cursor_to_document_start(Display& display, Cursor& cursor, MovementMode mode) {
+    move_cursor_to(display, cursor, { 0, 0 }, mode);
 }
 
-void Document::move_cursor_to_document_end(Panel& panel, Cursor& cursor, MovementMode mode) {
+void Document::move_cursor_to_document_end(Display& display, Cursor& cursor, MovementMode mode) {
     auto last_line_index = m_lines.size() - 1;
     auto& last_line = m_lines.last();
-    move_cursor_to(panel, cursor, { last_line_index, last_line.length() }, mode);
+    move_cursor_to(display, cursor, { last_line_index, last_line.length() }, mode);
 }
 
-void Document::scroll_cursor_into_view(Panel& panel, Cursor& cursor) {
-    if (cursor_position_on_panel(panel, cursor).row < 0) {
-        panel.scroll_up(-cursor_position_on_panel(panel, cursor).row);
-    } else if (cursor_position_on_panel(panel, cursor).row >= panel.rows()) {
-        panel.scroll_down(cursor_position_on_panel(panel, cursor).row - panel.rows() + 1);
+void Document::scroll_cursor_into_view(Display& display, Cursor& cursor) {
+    if (cursor_position_on_display(display, cursor).row < 0) {
+        display.scroll_up(-cursor_position_on_display(display, cursor).row);
+    } else if (cursor_position_on_display(display, cursor).row >= display.rows()) {
+        display.scroll_down(cursor_position_on_display(display, cursor).row - display.rows() + 1);
     }
 
-    if (cursor_position_on_panel(panel, cursor).col < 0) {
-        panel.scroll_left(-cursor_position_on_panel(panel, cursor).col);
-    } else if (cursor_position_on_panel(panel, cursor).col >= panel.cols()) {
-        panel.scroll_right(cursor_position_on_panel(panel, cursor).col - panel.cols() + 1);
+    if (cursor_position_on_display(display, cursor).col < 0) {
+        display.scroll_left(-cursor_position_on_display(display, cursor).col);
+    } else if (cursor_position_on_display(display, cursor).col >= display.cols()) {
+        display.scroll_right(cursor_position_on_display(display, cursor).col - display.cols() + 1);
     }
 }
 
-void Document::move_cursor_page_up(Panel& panel, Cursor& cursor, MovementMode mode) {
-    int rows_to_move = panel.rows() - 1;
+void Document::move_cursor_page_up(Display& display, Cursor& cursor, MovementMode mode) {
+    int rows_to_move = display.rows() - 1;
 
     for (int i = 0; !cursor.at_document_start(*this) && i < rows_to_move; i++) {
-        move_cursor_up(panel, cursor, mode);
+        move_cursor_up(display, cursor, mode);
     }
 }
 
-void Document::move_cursor_page_down(Panel& panel, Cursor& cursor, MovementMode mode) {
-    int rows_to_move = panel.rows() - 1;
+void Document::move_cursor_page_down(Display& display, Cursor& cursor, MovementMode mode) {
+    int rows_to_move = display.rows() - 1;
 
     for (int i = 0; !cursor.at_document_end(*this) <= num_lines() && i < rows_to_move; i++) {
-        move_cursor_down(panel, cursor, mode);
+        move_cursor_down(display, cursor, mode);
     }
 }
 
-void Document::insert_char(Panel& panel, char c) {
-    push_command<InsertCommand>(panel, String(c));
+void Document::insert_char(Display& display, char c) {
+    push_command<InsertCommand>(display, String(c));
 }
 
-void Document::delete_char(Panel& panel, DeleteCharMode mode) {
-    push_command<DeleteCommand>(panel, mode);
+void Document::delete_char(Display& display, DeleteCharMode mode) {
+    push_command<DeleteCommand>(display, mode);
 }
 
-void Document::delete_word(Panel& panel, DeleteCharMode mode) {
-    auto& cursors = panel.cursors();
+void Document::delete_word(Display& display, DeleteCharMode mode) {
+    auto& cursors = display.cursors();
     if (!cursors.main_cursor().selection().empty()) {
-        delete_char(panel, mode);
+        delete_char(display, mode);
         return;
     }
 
@@ -488,54 +490,54 @@ void Document::delete_word(Panel& panel, DeleteCharMode mode) {
         }
 
         if (mode == DeleteCharMode::Backspace) {
-            move_cursor_left_by_word(panel, cursor, MovementMode::Select);
+            move_cursor_left_by_word(display, cursor, MovementMode::Select);
         } else {
-            move_cursor_right_by_word(panel, cursor, MovementMode::Select);
+            move_cursor_right_by_word(display, cursor, MovementMode::Select);
         }
 
-        swap_selection_start_and_cursor(panel, cursor);
+        swap_selection_start_and_cursor(display, cursor);
     }
-    push_command<DeleteCommand>(panel, mode);
+    push_command<DeleteCommand>(display, mode);
 }
 
-void Document::swap_selection_start_and_cursor(Panel& panel, Cursor& cursor) {
+void Document::swap_selection_start_and_cursor(Display& display, Cursor& cursor) {
     auto& selection = cursor.selection();
     auto start = selection.start();
     auto end = selection.end();
 
-    move_cursor_to(panel, cursor, start);
+    move_cursor_to(display, cursor, start);
 
     selection.set(start, end);
 }
 
-void Document::split_line_at_cursor(Panel& panel) {
-    push_command<InsertCommand>(panel, "\n");
+void Document::split_line_at_cursor(Display& display) {
+    push_command<InsertCommand>(display, "\n");
 }
 
-bool Document::execute_command(Panel& panel, Command& command) {
-    return command.execute(panel);
+bool Document::execute_command(Display& display, Command& command) {
+    return command.execute(display);
 }
 
-void Document::redo(Panel& panel) {
+void Document::redo(Display& display) {
     if (m_command_stack_index == m_command_stack.size()) {
         return;
     }
 
     auto& command = *m_command_stack[m_command_stack_index++];
-    command.redo(panel);
+    command.redo(display);
 
     if (on_change) {
         on_change();
     }
 }
 
-void Document::undo(Panel& panel) {
+void Document::undo(Display& display) {
     if (m_command_stack_index == 0) {
         return;
     }
 
     auto& command = *m_command_stack[--m_command_stack_index];
-    command.undo(panel);
+    command.undo(display);
     update_search_results();
     update_syntax_highlighting();
 
@@ -544,12 +546,12 @@ void Document::undo(Panel& panel) {
     }
 }
 
-Document::StateSnapshot Document::snapshot_state(Panel& panel) const {
-    return { panel.cursors(), m_document_was_modified };
+Document::StateSnapshot Document::snapshot_state(Display& display) const {
+    return { display.cursors(), m_document_was_modified };
 }
 
-Document::Snapshot Document::snapshot(Panel& panel) const {
-    return { Vector<Line>(m_lines), snapshot_state(panel) };
+Document::Snapshot Document::snapshot(Display& display) const {
+    return { Vector<Line>(m_lines), snapshot_state(display) };
 }
 
 void Document::restore(MultiCursor& cursors, Snapshot s) {
@@ -568,28 +570,28 @@ void Document::restore_state(MultiCursor& cursors, const StateSnapshot& s) {
     set_needs_display();
 }
 
-void Document::insert_text_at_cursor(Panel& panel, const String& text) {
+void Document::insert_text_at_cursor(Display& display, const String& text) {
     if (text.is_empty()) {
         return;
     }
 
-    push_command<InsertCommand>(panel, text);
+    push_command<InsertCommand>(display, text);
 }
 
-void Document::move_cursor_to(Panel& panel, Cursor& cursor, const TextIndex& index, MovementMode mode) {
+void Document::move_cursor_to(Display& display, Cursor& cursor, const TextIndex& index, MovementMode mode) {
     update_selection_state_for_mode(cursor, mode);
     while (cursor.line_index() < index.line_index()) {
-        move_cursor_down(panel, cursor, mode);
+        move_cursor_down(display, cursor, mode);
     }
     while (cursor.line_index() > index.line_index()) {
-        move_cursor_up(panel, cursor, mode);
+        move_cursor_up(display, cursor, mode);
     }
 
     while (cursor.index_into_line() < index.index_into_line()) {
-        move_cursor_right(panel, cursor, mode);
+        move_cursor_right(display, cursor, mode);
     }
     while (cursor.index_into_line() > index.index_into_line()) {
-        move_cursor_left(panel, cursor, mode);
+        move_cursor_left(display, cursor, mode);
     }
 }
 
@@ -696,47 +698,47 @@ void Document::split_line_at(const TextIndex& index) {
 }
 
 void Document::did_delete_lines(int line_index, int line_count) {
-    for (auto* panel : m_panels) {
-        panel->notify_did_delete_lines(line_index, line_count);
+    for (auto* display : m_displays) {
+        display->notify_did_delete_lines(line_index, line_count);
     }
 }
 
 void Document::did_add_lines(int line_index, int line_count) {
-    for (auto* panel : m_panels) {
-        panel->notify_did_add_lines(line_index, line_count);
+    for (auto* display : m_displays) {
+        display->notify_did_add_lines(line_index, line_count);
     }
 }
 
 void Document::did_split_line(int line_index, int index_into_line) {
-    for (auto* panel : m_panels) {
-        panel->notify_did_split_line(line_index, index_into_line);
+    for (auto* display : m_displays) {
+        display->notify_did_split_line(line_index, index_into_line);
     }
 }
 
 void Document::did_merge_lines(int first_line_index, int first_line_length, int second_line_index) {
-    for (auto* panel : m_panels) {
-        panel->notify_did_merge_lines(first_line_index, first_line_length, second_line_index);
+    for (auto* display : m_displays) {
+        display->notify_did_merge_lines(first_line_index, first_line_length, second_line_index);
     }
 }
 
 void Document::did_add_to_line(int line_index, int index_into_line, int bytes_added) {
-    for (auto* panel : m_panels) {
-        panel->notify_did_add_to_line(line_index, index_into_line, bytes_added);
+    for (auto* display : m_displays) {
+        display->notify_did_add_to_line(line_index, index_into_line, bytes_added);
     }
 }
 
 void Document::did_delete_from_line(int line_index, int index_into_line, int bytes_deleted) {
-    for (auto* panel : m_panels) {
-        panel->notify_did_delete_from_line(line_index, index_into_line, bytes_deleted);
+    for (auto* display : m_displays) {
+        display->notify_did_delete_from_line(line_index, index_into_line, bytes_deleted);
     }
 }
 
-void Document::register_panel(Panel& panel) {
-    m_panels.add(&panel);
+void Document::register_display(Display& display) {
+    m_displays.add(&display);
 }
 
-void Document::unregister_panel(Panel& panel) {
-    m_panels.remove_element(&panel);
+void Document::unregister_display(Display& display) {
+    m_displays.remove_element(&display);
 }
 
 void Document::rotate_lines_up(int start, int end) {
@@ -749,39 +751,39 @@ void Document::rotate_lines_down(int start, int end) {
     m_lines.rotate_right(start, end + 1);
 }
 
-void Document::copy(Panel& panel, MultiCursor& cursors) {
+void Document::copy(Display& display, MultiCursor& cursors) {
     auto& cursor = cursors.main_cursor();
     if (cursor.selection().empty()) {
         String contents = cursor.referenced_line(*this).contents();
         if (!input_text_mode()) {
             contents += "\n";
         }
-        panel.set_clipboard_contents(move(contents), true);
+        display.set_clipboard_contents(move(contents), true);
         return;
     }
 
-    panel.set_clipboard_contents(selection_text(cursor));
+    display.set_clipboard_contents(selection_text(cursor));
 }
 
-void Document::cut(Panel& panel, MultiCursor& cursors) {
+void Document::cut(Display& display, MultiCursor& cursors) {
     auto& cursor = cursors.main_cursor();
     if (cursor.selection().empty()) {
         auto contents = cursor.referenced_line(*this).contents();
         if (!input_text_mode()) {
             contents += "\n";
         }
-        panel.set_clipboard_contents(move(contents), true);
-        push_command<DeleteLineCommand>(panel);
+        display.set_clipboard_contents(move(contents), true);
+        push_command<DeleteLineCommand>(display);
         return;
     }
 
-    panel.set_clipboard_contents(selection_text(cursor));
-    push_command<DeleteCommand>(panel, DeleteCharMode::Delete);
+    display.set_clipboard_contents(selection_text(cursor));
+    push_command<DeleteCommand>(display, DeleteCharMode::Delete);
 }
 
-void Document::paste(Panel& panel, MultiCursor& cursors) {
+void Document::paste(Display& display, MultiCursor& cursors) {
     bool is_whole_line;
-    auto text_to_insert = panel.clipboard_contents(is_whole_line);
+    auto text_to_insert = display.clipboard_contents(is_whole_line);
     if (text_to_insert.is_empty()) {
         return;
     }
@@ -789,17 +791,17 @@ void Document::paste(Panel& panel, MultiCursor& cursors) {
     auto& cursor = cursors.main_cursor();
     if (!input_text_mode() && cursor.selection().empty() && is_whole_line) {
         text_to_insert.remove_index(text_to_insert.size() - 1);
-        push_command<InsertLineCommand>(panel, text_to_insert);
+        push_command<InsertLineCommand>(display, text_to_insert);
     } else {
-        insert_text_at_cursor(panel, text_to_insert);
+        insert_text_at_cursor(display, text_to_insert);
     }
 }
 
 void Document::set_show_line_numbers(bool b) {
     if (m_show_line_numbers != b) {
         m_show_line_numbers = b;
-        for (auto* panel : m_panels) {
-            panel->notify_line_count_changed();
+        for (auto* display : m_displays) {
+            display->notify_line_count_changed();
         }
     }
 }
@@ -810,8 +812,8 @@ void Document::set_word_wrap_enabled(bool b) {
     }
 
     m_word_wrap_enabled = b;
-    for (auto* panel : m_panels) {
-        panel->set_scroll_col_offset(0);
+    for (auto* display : m_displays) {
+        display->set_scroll_col_offset(0);
     }
     invalidate_all_rendered_contents();
 }
@@ -822,14 +824,14 @@ void Document::set_preview_auto_complete(bool b) {
     }
 
     m_preview_auto_complete = b;
-    for (auto* panel : m_panels) {
-        panel->cursors().main_cursor().referenced_line(*this).invalidate_rendered_contents(*this, *panel);
+    for (auto* display : m_displays) {
+        display->cursors().main_cursor().referenced_line(*this).invalidate_rendered_contents(*this, *display);
     }
 }
 
 void Document::invalidate_rendered_contents(const Line& line) {
-    for (auto* panel : m_panels) {
-        line.invalidate_rendered_contents(*this, *panel);
+    for (auto* display : m_displays) {
+        line.invalidate_rendered_contents(*this, *display);
     }
 }
 
@@ -840,15 +842,15 @@ void Document::invalidate_all_rendered_contents() {
     set_needs_display();
 }
 
-void Document::notify_panel_size_changed() {
+void Document::notify_display_size_changed() {
     if (word_wrap_enabled()) {
         invalidate_all_rendered_contents();
     }
     set_needs_display();
 }
 
-void Document::go_to_line(Panel& panel) {
-    auto maybe_result = panel.prompt("Go to line: ");
+void Document::go_to_line(Display& display) {
+    auto maybe_result = display.prompt("Go to line: ");
     if (!maybe_result.has_value()) {
         return;
     }
@@ -857,25 +859,25 @@ void Document::go_to_line(Panel& panel) {
     char* end_ptr = result.string();
     long line_number = strtol(result.string(), &end_ptr, 10);
     if (errno == ERANGE || end_ptr != result.string() + result.size() || line_number < 1 || line_number > num_lines()) {
-        panel.send_status_message(String::format("Line `%s' is not between 1 and %d", result.string(), num_lines()));
+        display.send_status_message(String::format("Line `%s' is not between 1 and %d", result.string(), num_lines()));
         return;
     }
 
-    auto& cursor = panel.cursors().main_cursor();
+    auto& cursor = display.cursors().main_cursor();
 
     clear_selection(cursor);
     cursor.set_line_index(line_number - 1);
 
-    auto cursor_row_position = cursor.referenced_line(*this).absolute_row_position(*this, panel);
+    auto cursor_row_position = cursor.referenced_line(*this).absolute_row_position(*this, display);
 
-    int screen_midpoint = panel.rows() / 2;
+    int screen_midpoint = display.rows() / 2;
     if (cursor_row_position < screen_midpoint) {
-        panel.set_scroll_row_offset(0);
+        display.set_scroll_row_offset(0);
     } else {
-        panel.set_scroll_row_offset(cursor_row_position - screen_midpoint);
+        display.set_scroll_row_offset(cursor_row_position - screen_midpoint);
     }
 
-    move_cursor_to_line_start(panel, cursor);
+    move_cursor_to_line_start(display, cursor);
     set_needs_display();
 }
 
@@ -892,15 +894,15 @@ void Document::guess_type_from_name() {
     update_document_type(*this);
 }
 
-void Document::save(Panel& panel) {
+void Document::save(Display& display) {
     if (m_name.is_empty()) {
-        auto result = panel.prompt("Save as: ");
+        auto result = display.prompt("Save as: ");
         if (!result.has_value()) {
             return;
         }
 
         if (access(result.value().string(), F_OK) == 0) {
-            auto ok = panel.prompt(String::format("Are you sure you want to overwrite file `%s'? ", result.value().string()));
+            auto ok = display.prompt(String::format("Are you sure you want to overwrite file `%s'? ", result.value().string()));
             if (!ok.has_value() || (ok.value() != "y" && ok.value() != "yes")) {
                 return;
             }
@@ -912,14 +914,14 @@ void Document::save(Panel& panel) {
 
     if (access(m_name.string(), W_OK)) {
         if (errno != ENOENT) {
-            panel.send_status_message(String::format("Permission to write file `%s' denied", m_name.string()));
+            display.send_status_message(String::format("Permission to write file `%s' denied", m_name.string()));
             return;
         }
     }
 
     FILE* file = fopen(m_name.string(), "w");
     if (!file) {
-        panel.send_status_message(String::format("Failed to save - `%s'", strerror(errno)));
+        display.send_status_message(String::format("Failed to save - `%s'", strerror(errno)));
         return;
     }
 
@@ -930,29 +932,29 @@ void Document::save(Panel& panel) {
     }
 
     if (ferror(file)) {
-        panel.send_status_message(String::format("Failed to write to disk - `%s'", strerror(errno)));
+        display.send_status_message(String::format("Failed to write to disk - `%s'", strerror(errno)));
         fclose(file);
         return;
     }
 
     if (fclose(file)) {
-        panel.send_status_message(String::format("Failed to sync to disk - `%s'", strerror(errno)));
+        display.send_status_message(String::format("Failed to sync to disk - `%s'", strerror(errno)));
         return;
     }
 
-    panel.send_status_message(String::format("Successfully saved file: `%s'", m_name.string()));
+    display.send_status_message(String::format("Successfully saved file: `%s'", m_name.string()));
     m_document_was_modified = false;
 }
 
-void Document::quit(Panel& panel) {
+void Document::quit(Display& display) {
     if (m_document_was_modified && !input_text_mode()) {
-        auto result = panel.prompt("Quit without saving? ");
+        auto result = display.prompt("Quit without saving? ");
         if (!result.has_value() || (result.value() != "y" && result.value() != "yes")) {
             return;
         }
     }
 
-    panel.quit();
+    display.quit();
 }
 
 void Document::update_syntax_highlighting() {
@@ -999,43 +1001,43 @@ void Document::set_search_text(String text) {
     update_search_results();
 }
 
-void Document::move_cursor_to_next_search_match(Panel& panel, Cursor& cursor) {
+void Document::move_cursor_to_next_search_match(Display& display, Cursor& cursor) {
     if (m_search_results.empty()) {
         return;
     }
 
     if (m_search_result_index >= m_search_results.size()) {
         m_search_result_index = 0;
-        move_cursor_to_document_start(panel, cursor);
+        move_cursor_to_document_start(display, cursor);
     }
 
     while (m_search_results.range(m_search_result_index).ends_before(cursor.index())) {
         m_search_result_index++;
         if (m_search_result_index == m_search_results.size()) {
             m_search_result_index = 0;
-            move_cursor_to_document_start(panel, cursor);
+            move_cursor_to_document_start(display, cursor);
         }
     }
 
-    move_cursor_to(panel, cursor, m_search_results.range(m_search_result_index).start());
-    move_cursor_to(panel, cursor, m_search_results.range(m_search_result_index).end(), MovementMode::Select);
-    scroll_cursor_into_view(panel, cursor);
+    move_cursor_to(display, cursor, m_search_results.range(m_search_result_index).start());
+    move_cursor_to(display, cursor, m_search_results.range(m_search_result_index).end(), MovementMode::Select);
+    scroll_cursor_into_view(display, cursor);
     m_search_result_index++;
 }
 
-void Document::enter_interactive_search(Panel& panel) {
-    panel.enter_search(m_search_text);
-    panel.send_status_message(String::format("Found %d result(s)", search_result_count()));
+void Document::enter_interactive_search(Display& display) {
+    display.enter_search(m_search_text);
+    display.send_status_message(String::format("Found %d result(s)", search_result_count()));
 }
 
-void Document::swap_lines_at_cursor(Panel& panel, SwapDirection direction) {
-    push_command<SwapLinesCommand>(panel, direction);
+void Document::swap_lines_at_cursor(Display& display, SwapDirection direction) {
+    push_command<SwapLinesCommand>(display, direction);
 }
 
-void Document::select_next_word_at_cursor(Panel& panel) {
-    auto& main_cursor = panel.cursors().main_cursor();
+void Document::select_next_word_at_cursor(Display& display) {
+    auto& main_cursor = display.cursors().main_cursor();
     if (main_cursor.selection().empty()) {
-        select_word_at_cursor(panel, main_cursor);
+        select_word_at_cursor(display, main_cursor);
         auto search_text = selection_text(main_cursor);
         set_search_text(move(search_text));
 
@@ -1049,112 +1051,112 @@ void Document::select_next_word_at_cursor(Panel& panel) {
     }
 
     auto& result = m_search_results.range(m_search_result_index);
-    panel.cursors().add_cursor_at(*this, panel, result.end(), { result.start(), result.end() });
+    display.cursors().add_cursor_at(*this, display, result.end(), { result.start(), result.end() });
 
     ++m_search_result_index;
     m_search_result_index %= m_search_results.size();
 }
 
-void Document::select_word_at_cursor(Panel& panel, Cursor& cursor) {
+void Document::select_word_at_cursor(Display& display, Cursor& cursor) {
     bool was_space = isspace(cursor.referenced_character(*this));
     bool was_word = isword(cursor.referenced_character(*this));
     while (cursor.index_into_line() > 0) {
-        move_cursor_left(panel, cursor, MovementMode::Move);
+        move_cursor_left(display, cursor, MovementMode::Move);
         if (isspace(cursor.referenced_character(*this)) != was_space || isword(cursor.referenced_character(*this)) != was_word) {
-            move_cursor_right(panel, cursor, MovementMode::Move);
+            move_cursor_right(display, cursor, MovementMode::Move);
             break;
         }
     }
 
     while (cursor.index_into_line() < cursor.referenced_line(*this).length()) {
-        move_cursor_right(panel, cursor, MovementMode::Select);
+        move_cursor_right(display, cursor, MovementMode::Select);
         if (isspace(cursor.referenced_character(*this)) != was_space || isword(cursor.referenced_character(*this)) != was_word) {
             break;
         }
     }
 }
 
-void Document::select_line_at_cursor(Panel& panel, Cursor& cursor) {
-    move_cursor_to_line_start(panel, cursor, MovementMode::Move);
-    move_cursor_down(panel, cursor, MovementMode::Select);
+void Document::select_line_at_cursor(Display& display, Cursor& cursor) {
+    move_cursor_to_line_start(display, cursor, MovementMode::Move);
+    move_cursor_down(display, cursor, MovementMode::Select);
 }
 
-void Document::select_all(Panel& panel, Cursor& cursor) {
-    move_cursor_to_document_start(panel, cursor, MovementMode::Move);
-    move_cursor_to_document_end(panel, cursor, MovementMode::Select);
+void Document::select_all(Display& display, Cursor& cursor) {
+    move_cursor_to_document_start(display, cursor, MovementMode::Move);
+    move_cursor_to_document_end(display, cursor, MovementMode::Select);
 }
 
-bool Document::notify_mouse_event(Panel& panel, const App::MouseEvent& event) {
-    auto& cursors = panel.cursors();
+bool Document::notify_mouse_event(Display& display, const App::MouseEvent& event) {
+    auto& cursors = display.cursors();
 
     bool should_scroll_cursor_into_view = false;
     bool handled = false;
     if (event.mouse_down() && event.left_button()) {
         cursors.remove_secondary_cursors();
         auto& cursor = cursors.main_cursor();
-        move_cursor_to(panel, cursor, { event.y(), event.x() }, MovementMode::Move);
+        move_cursor_to(display, cursor, { event.y(), event.x() }, MovementMode::Move);
         handled = true;
     } else if (event.mouse_double() && event.left_button()) {
         cursors.remove_secondary_cursors();
         auto& cursor = cursors.main_cursor();
-        move_cursor_to(panel, cursor, { event.y(), event.x() }, MovementMode::Move);
-        select_word_at_cursor(panel, cursor);
+        move_cursor_to(display, cursor, { event.y(), event.x() }, MovementMode::Move);
+        select_word_at_cursor(display, cursor);
         handled = true;
     } else if (event.mouse_triple() && event.left_button()) {
         cursors.remove_secondary_cursors();
         auto& cursor = cursors.main_cursor();
-        move_cursor_to(panel, cursor, { event.y(), event.x() }, MovementMode::Move);
-        select_line_at_cursor(panel, cursor);
+        move_cursor_to(display, cursor, { event.y(), event.x() }, MovementMode::Move);
+        select_line_at_cursor(display, cursor);
         handled = true;
     } else if (event.buttons_down() & App::MouseButton::Left) {
         cursors.remove_secondary_cursors();
         auto& cursor = cursors.main_cursor();
-        move_cursor_to(panel, cursor, { event.y(), event.x() }, MovementMode::Select);
+        move_cursor_to(display, cursor, { event.y(), event.x() }, MovementMode::Select);
         handled = true;
     } else if (event.mouse_scroll()) {
-        panel.scroll(2 * event.z(), 0);
+        display.scroll(2 * event.z(), 0);
         handled = true;
     }
 
-    finish_input(panel, should_scroll_cursor_into_view);
+    finish_input(display, should_scroll_cursor_into_view);
     return handled;
 }
 
-void Document::finish_input(Panel& panel, bool should_scroll_cursor_into_view) {
-    auto& cursors = panel.cursors();
+void Document::finish_input(Display& display, bool should_scroll_cursor_into_view) {
+    auto& cursors = display.cursors();
     cursors.remove_duplicate_cursors();
 
     if (should_scroll_cursor_into_view) {
-        scroll_cursor_into_view(panel, cursors.main_cursor());
+        scroll_cursor_into_view(display, cursors.main_cursor());
     }
 
     if (preview_auto_complete()) {
-        cursors.main_cursor().referenced_line(*this).invalidate_rendered_contents(*this, panel);
+        cursors.main_cursor().referenced_line(*this).invalidate_rendered_contents(*this, display);
     }
 
     set_needs_display();
 }
 
-void Document::notify_key_pressed(Panel& panel, const App::KeyEvent& event) {
-    auto& cursors = panel.cursors();
+void Document::notify_key_pressed(Display& display, const App::KeyEvent& event) {
+    auto& cursors = display.cursors();
 
     bool should_scroll_cursor_into_view = true;
     if (event.alt_down()) {
         switch (event.key()) {
             case App::Key::DownArrow:
-                swap_lines_at_cursor(panel, SwapDirection::Down);
+                swap_lines_at_cursor(display, SwapDirection::Down);
                 break;
             case App::Key::UpArrow:
-                swap_lines_at_cursor(panel, SwapDirection::Up);
+                swap_lines_at_cursor(display, SwapDirection::Up);
                 break;
             case App::Key::D:
-                delete_word(panel, DeleteCharMode::Delete);
+                delete_word(display, DeleteCharMode::Delete);
                 break;
             default:
                 break;
         }
 
-        finish_input(panel, should_scroll_cursor_into_view);
+        finish_input(display, should_scroll_cursor_into_view);
         return;
     }
 
@@ -1162,61 +1164,61 @@ void Document::notify_key_pressed(Panel& panel, const App::KeyEvent& event) {
         switch (event.key()) {
             case App::Key::LeftArrow:
                 for (auto& cursor : cursors) {
-                    move_cursor_left_by_word(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                    move_cursor_left_by_word(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
                 }
                 break;
             case App::Key::RightArrow:
                 for (auto& cursor : cursors) {
-                    move_cursor_right_by_word(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                    move_cursor_right_by_word(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
                 }
                 break;
             case App::Key::DownArrow:
                 if (event.shift_down()) {
-                    cursors.add_cursor(*this, panel, AddCursorMode::Down);
+                    cursors.add_cursor(*this, display, AddCursorMode::Down);
                 } else {
-                    panel.scroll_down(1);
+                    display.scroll_down(1);
                     should_scroll_cursor_into_view = false;
                 }
                 break;
             case App::Key::UpArrow:
                 if (event.shift_down()) {
-                    cursors.add_cursor(*this, panel, AddCursorMode::Up);
+                    cursors.add_cursor(*this, display, AddCursorMode::Up);
                 } else {
-                    panel.scroll_up(1);
+                    display.scroll_up(1);
                     should_scroll_cursor_into_view = false;
                 }
                 break;
             case App::Key::Home:
                 for (auto& cursor : cursors) {
-                    move_cursor_to_document_start(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                    move_cursor_to_document_start(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
                 }
                 break;
             case App::Key::End:
                 for (auto& cursor : cursors) {
-                    move_cursor_to_document_end(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                    move_cursor_to_document_end(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
                 }
                 break;
             case App::Key::Backspace:
-                delete_word(panel, DeleteCharMode::Backspace);
+                delete_word(display, DeleteCharMode::Backspace);
                 break;
             case App::Key::Delete:
-                delete_word(panel, DeleteCharMode::Delete);
+                delete_word(display, DeleteCharMode::Delete);
                 break;
             case App::Key::A:
-                select_all(panel, cursors.main_cursor());
+                select_all(display, cursors.main_cursor());
                 should_scroll_cursor_into_view = false;
                 break;
             case App::Key::C:
-                copy(panel, cursors);
+                copy(display, cursors);
                 break;
             case App::Key::D:
-                select_next_word_at_cursor(panel);
+                select_next_word_at_cursor(display);
                 break;
             case App::Key::F:
-                enter_interactive_search(panel);
+                enter_interactive_search(display);
                 break;
             case App::Key::G:
-                go_to_line(panel);
+                go_to_line(display);
                 break;
             case App::Key::L:
                 if (!input_text_mode()) {
@@ -1225,88 +1227,88 @@ void Document::notify_key_pressed(Panel& panel, const App::KeyEvent& event) {
                 break;
             case App::Key::O:
                 if (!input_text_mode()) {
-                    panel.do_open_prompt();
+                    display.do_open_prompt();
                 }
                 break;
             case App::Key::Q:
             case App::Key::W:
-                quit(panel);
+                quit(display);
                 break;
             case App::Key::S:
                 if (!input_text_mode()) {
-                    save(panel);
+                    save(display);
                 }
                 break;
             case App::Key::V:
-                paste(panel, cursors);
+                paste(display, cursors);
                 break;
             case App::Key::X:
-                cut(panel, cursors);
+                cut(display, cursors);
                 break;
             case App::Key::Y:
-                redo(panel);
+                redo(display);
                 break;
             case App::Key::Z:
-                undo(panel);
+                undo(display);
                 break;
             default:
                 break;
         }
 
-        finish_input(panel, should_scroll_cursor_into_view);
+        finish_input(display, should_scroll_cursor_into_view);
         return;
     }
 
     switch (event.key()) {
         case App::Key::LeftArrow:
             for (auto& cursor : cursors) {
-                move_cursor_left(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                move_cursor_left(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
             }
             break;
         case App::Key::RightArrow:
             for (auto& cursor : cursors) {
-                move_cursor_right(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                move_cursor_right(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
             }
             break;
         case App::Key::DownArrow:
             for (auto& cursor : cursors) {
-                move_cursor_down(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                move_cursor_down(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
             }
             break;
         case App::Key::UpArrow:
             for (auto& cursor : cursors) {
-                move_cursor_up(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                move_cursor_up(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
             }
             break;
         case App::Key::Home:
             for (auto& cursor : cursors) {
-                move_cursor_to_line_start(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                move_cursor_to_line_start(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
             }
             break;
         case App::Key::End:
             for (auto& cursor : cursors) {
-                move_cursor_to_line_end(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                move_cursor_to_line_end(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
             }
             break;
         case App::Key::PageUp:
             for (auto& cursor : cursors) {
-                move_cursor_page_up(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                move_cursor_page_up(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
             }
             break;
         case App::Key::PageDown:
             for (auto& cursor : cursors) {
-                move_cursor_page_down(panel, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                move_cursor_page_down(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
             }
             break;
         case App::Key::Backspace:
-            delete_char(panel, DeleteCharMode::Backspace);
+            delete_char(display, DeleteCharMode::Backspace);
             break;
         case App::Key::Delete:
-            delete_char(panel, DeleteCharMode::Delete);
+            delete_char(display, DeleteCharMode::Delete);
             break;
         case App::Key::Enter:
             if (!submittable() || &cursors.main_cursor().referenced_line(*this) != &last_line()) {
-                split_line_at_cursor(panel);
+                split_line_at_cursor(display);
             } else if (submittable() && on_submit) {
                 on_submit();
             }
@@ -1321,23 +1323,23 @@ void Document::notify_key_pressed(Panel& panel, const App::KeyEvent& event) {
             break;
         case App::Key::Tab:
             if (m_auto_complete_mode == AutoCompleteMode::Always) {
-                auto suggestions = panel.get_suggestions();
+                auto suggestions = display.get_suggestions();
                 if (suggestions.suggestion_count() == 1) {
                     auto suggestion = suggestions.suggestion_list()[0];
-                    insert_text_at_cursor(panel, String(suggestion.string() + suggestions.suggestion_offset(),
-                                                        suggestion.size() - suggestions.suggestion_offset()));
+                    insert_text_at_cursor(display, String(suggestion.string() + suggestions.suggestion_offset(),
+                                                          suggestion.size() - suggestions.suggestion_offset()));
                 } else if (suggestions.suggestion_count() > 1) {
-                    panel.handle_suggestions(suggestions);
+                    display.handle_suggestions(suggestions);
                 }
                 break;
             }
-            insert_char(panel, '\t');
+            insert_char(display, '\t');
             break;
         default:
-            insert_text_at_cursor(panel, event.text());
+            insert_text_at_cursor(display, event.text());
             break;
     }
 
-    finish_input(panel, should_scroll_cursor_into_view);
+    finish_input(display, should_scroll_cursor_into_view);
 }
 }

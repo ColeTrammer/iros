@@ -27,8 +27,8 @@ enum class AutoCompleteMode { Never, Always };
 
 class Document {
 public:
-    static SharedPtr<Document> create_from_stdin(const String& path, Panel& panel);
-    static SharedPtr<Document> create_from_file(const String& path, Panel& panel);
+    static SharedPtr<Document> create_from_stdin(const String& path, Display& display);
+    static SharedPtr<Document> create_from_file(const String& path, Display& display);
     static SharedPtr<Document> create_from_text(const String& text);
     static SharedPtr<Document> create_empty();
     static SharedPtr<Document> create_single_line(String text = "");
@@ -48,18 +48,18 @@ public:
 
     void copy_settings_from(const Document& other);
 
-    void display(Panel& panel) const;
+    void display(Display& display) const;
     void set_needs_display();
 
     void invalidate_rendered_contents(const Line& line);
     void invalidate_all_rendered_contents();
 
-    void notify_key_pressed(Panel& panel, const App::KeyEvent& event);
-    bool notify_mouse_event(Panel& panel, const App::MouseEvent& event);
-    void notify_panel_size_changed();
+    void notify_key_pressed(Display& display, const App::KeyEvent& event);
+    bool notify_mouse_event(Display& display, const App::MouseEvent& event);
+    void notify_display_size_changed();
 
-    void save(Panel& panel);
-    void quit(Panel& panel);
+    void save(Display& display);
+    void quit(Display& display);
 
     bool input_text_mode() const { return m_input_mode == InputMode::InputText; }
     bool submittable() const { return m_submittable; }
@@ -88,33 +88,33 @@ public:
     const String& search_text() const { return m_search_text; }
     void set_search_text(String text);
     int search_result_count() const { return m_search_results.size(); }
-    void move_cursor_to_next_search_match(Panel& panel, Cursor& cursor);
+    void move_cursor_to_next_search_match(Display& display, Cursor& cursor);
 
-    void move_cursor_left(Panel& panel, Cursor& cursor, MovementMode mode = MovementMode::Move);
-    void move_cursor_right(Panel& panel, Cursor& cursor, MovementMode mode = MovementMode::Move);
-    void move_cursor_down(Panel& panel, Cursor& cursor, MovementMode mode = MovementMode::Move);
-    void move_cursor_up(Panel& panel, Cursor& cursor, MovementMode mode = MovementMode::Move);
-    void move_cursor_to_line_start(Panel& panel, Cursor& cursor, MovementMode mode = MovementMode::Move);
-    void move_cursor_to_line_end(Panel& panel, Cursor& cursor, MovementMode mode = MovementMode::Move);
-    void move_cursor_left_by_word(Panel& panel, Cursor& cursor, MovementMode mode = MovementMode::Move);
-    void move_cursor_right_by_word(Panel& panel, Cursor& cursor, MovementMode mode = MovementMode::Move);
-    void move_cursor_to_document_start(Panel& panel, Cursor& cursor, MovementMode mode = MovementMode::Move);
-    void move_cursor_to_document_end(Panel& panel, Cursor& cursor, MovementMode mode = MovementMode::Move);
-    void move_cursor_page_up(Panel& panel, Cursor& cursor, MovementMode mode = MovementMode::Move);
-    void move_cursor_page_down(Panel& panel, Cursor& cursor, MovementMode mode = MovementMode::Move);
-    void move_cursor_to(Panel& panel, Cursor& cursor, const TextIndex& index, MovementMode mode = MovementMode::Move);
-    void clamp_cursor_to_line_end(Panel& panel, Cursor& cursor);
+    void move_cursor_left(Display& display, Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_right(Display& display, Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_down(Display& display, Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_up(Display& display, Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_to_line_start(Display& display, Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_to_line_end(Display& display, Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_left_by_word(Display& display, Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_right_by_word(Display& display, Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_to_document_start(Display& display, Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_to_document_end(Display& display, Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_page_up(Display& display, Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_page_down(Display& display, Cursor& cursor, MovementMode mode = MovementMode::Move);
+    void move_cursor_to(Display& display, Cursor& cursor, const TextIndex& index, MovementMode mode = MovementMode::Move);
+    void clamp_cursor_to_line_end(Display& display, Cursor& cursor);
 
-    void scroll_cursor_into_view(Panel& panel, Cursor& cursor);
+    void scroll_cursor_into_view(Display& display, Cursor& cursor);
 
-    TextIndex text_index_at_absolute_position(Panel& panel, const Position& position) const;
-    TextIndex text_index_at_scrolled_position(Panel& panel, const Position& position) const;
-    Position relative_to_absolute_position(Panel& panel, const Line& line, const Position& line_relative_position) const;
+    TextIndex text_index_at_absolute_position(Display& display, const Position& position) const;
+    TextIndex text_index_at_scrolled_position(Display& display, const Position& position) const;
+    Position relative_to_absolute_position(Display& display, const Line& line, const Position& line_relative_position) const;
     int index_of_line(const Line& line) const;
     int num_lines() const { return m_lines.size(); }
-    int num_rendered_lines(Panel& panel) const;
+    int num_rendered_lines(Display& display) const;
 
-    Position cursor_position_on_panel(Panel& panel, Cursor& cursor) const;
+    Position cursor_position_on_display(Display& display, Cursor& cursor) const;
 
     void remove_line(int index);
     void insert_line(Line&& line, int index);
@@ -126,31 +126,31 @@ public:
 
     void set_was_modified(bool b) { m_document_was_modified = b; }
 
-    void finish_input(Panel& panel, bool should_scroll_cursor_into_view);
+    void finish_input(Display& display, bool should_scroll_cursor_into_view);
 
-    Snapshot snapshot(Panel& panel) const;
+    Snapshot snapshot(Display& display) const;
     void restore(MultiCursor& cursors, Snapshot snapshot);
 
-    StateSnapshot snapshot_state(Panel& panel) const;
+    StateSnapshot snapshot_state(Display& display) const;
     void restore_state(MultiCursor& cursors, const StateSnapshot& state_snapshot);
 
     void delete_selection(Cursor& cursor);
     void clear_selection(Cursor& cursor);
     String selection_text(Cursor& cursor) const;
 
-    void select_next_word_at_cursor(Panel& panel);
-    void select_line_at_cursor(Panel& panel, Cursor& cursor);
-    void select_word_at_cursor(Panel& panel, Cursor& cursor);
-    void select_all(Panel& panel, Cursor& cursor);
+    void select_next_word_at_cursor(Display& display);
+    void select_line_at_cursor(Display& display, Cursor& cursor);
+    void select_word_at_cursor(Display& display, Cursor& cursor);
+    void select_all(Display& display, Cursor& cursor);
 
-    void redo(Panel& panel);
-    void undo(Panel& panel);
+    void redo(Display& display);
+    void undo(Display& display);
 
-    void copy(Panel& panel, MultiCursor& cursor);
-    void paste(Panel& panel, MultiCursor& cursor);
-    void cut(Panel& panel, MultiCursor& cursor);
+    void copy(Display& display, MultiCursor& cursor);
+    void paste(Display& display, MultiCursor& cursor);
+    void cut(Display& display, MultiCursor& cursor);
 
-    void insert_text_at_cursor(Panel& panel, const String& string);
+    void insert_text_at_cursor(Display& display, const String& string);
 
     bool show_line_numbers() const { return m_show_line_numbers; }
     void set_show_line_numbers(bool b);
@@ -178,13 +178,13 @@ public:
     void did_add_to_line(int line_index, int index_into_line, int bytes_added);
     void did_delete_from_line(int line_index, int index_into_line, int bytes_deleted);
 
-    bool execute_command(Panel& panel, Command& command);
+    bool execute_command(Display& display, Command& command);
 
     TextRangeCollection& syntax_highlighting_info() { return m_syntax_highlighting_info; }
     const TextRangeCollection& syntax_highlighting_info() const { return m_syntax_highlighting_info; }
 
-    void register_panel(Panel& panel);
-    void unregister_panel(Panel& panel);
+    void register_display(Display& display);
+    void unregister_display(Display& display);
 
     Function<void()> on_change;
     Function<void()> on_submit;
@@ -195,24 +195,24 @@ private:
 
     void update_search_results();
     void clear_search_results();
-    void enter_interactive_search(Panel& panel);
+    void enter_interactive_search(Display& display);
 
     void update_syntax_highlighting();
 
-    void swap_lines_at_cursor(Panel& panel, SwapDirection direction);
-    void split_line_at_cursor(Panel& panel);
-    void insert_char(Panel& panel, char c);
-    void delete_char(Panel& panel, DeleteCharMode mode);
-    void delete_word(Panel& panel, DeleteCharMode mode);
+    void swap_lines_at_cursor(Display& display, SwapDirection direction);
+    void split_line_at_cursor(Display& display);
+    void insert_char(Display& display, char c);
+    void delete_char(Display& display, DeleteCharMode mode);
+    void delete_word(Display& display, DeleteCharMode mode);
 
-    void go_to_line(Panel& panel);
+    void go_to_line(Display& display);
 
-    void swap_selection_start_and_cursor(Panel& panel, Cursor& cursor);
+    void swap_selection_start_and_cursor(Display& display, Cursor& cursor);
 
     void guess_type_from_name();
 
     template<typename C, typename... Args>
-    void push_command(Panel& panel, Args... args) {
+    void push_command(Display& display, Args... args) {
         // This means some undo's have taken place, and the user started typing
         // something else, so the redo stack will be discarded.
         if (m_command_stack_index != m_command_stack.size()) {
@@ -226,8 +226,8 @@ private:
             m_command_stack_index--;
         }
 
-        auto command = make_unique<C>(*this, panel, forward<Args>(args)...);
-        bool did_modify = execute_command(panel, *command);
+        auto command = make_unique<C>(*this, display, forward<Args>(args)...);
+        bool did_modify = execute_command(display, *command);
         if (did_modify) {
             m_command_stack.add(move(command));
             m_command_stack_index++;
@@ -262,7 +262,7 @@ private:
 
     TextRangeCollection m_syntax_highlighting_info;
 
-    Vector<Panel*> m_panels;
+    Vector<Display*> m_displays;
 
     bool m_word_wrap_enabled { true };
     bool m_show_line_numbers { false };

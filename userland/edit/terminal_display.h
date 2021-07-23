@@ -1,6 +1,6 @@
 #pragma once
 
-#include <edit/panel.h>
+#include <edit/display.h>
 #include <eventloop/event.h>
 #include <liim/hash_map.h>
 #include <liim/maybe.h>
@@ -9,10 +9,10 @@
 #include <time.h>
 #include <tinput/terminal_input_parser.h>
 
-class TerminalPanel final : public Edit::Panel {
+class TerminalDisplay final : public Edit::Display {
 public:
-    TerminalPanel();
-    virtual ~TerminalPanel() override;
+    TerminalDisplay();
+    virtual ~TerminalDisplay() override;
 
     virtual int rows() const override { return m_rows; }
     virtual int cols() const override;
@@ -38,7 +38,7 @@ public:
     virtual void do_open_prompt() override;
 
 private:
-    TerminalPanel(int rows, int cols, int row_off, int col_off);
+    TerminalDisplay(int rows, int cols, int row_off, int col_off);
 
     virtual void document_did_change() override;
 

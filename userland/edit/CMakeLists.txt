@@ -1,7 +1,7 @@
 set(SOURCES
-    app_panel.cpp
+    app_display.cpp
     main.cpp
-    terminal_panel.cpp
+    terminal_display.cpp
 )
 
 add_os_executable(edit bin)

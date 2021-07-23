@@ -13,13 +13,13 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include "terminal_panel.h"
+#include "terminal_display.h"
 
 static termios s_original_termios;
 static bool s_raw_mode_enabled;
 
-static TerminalPanel* s_main_panel;
-static TerminalPanel* s_prompt_panel;
+static TerminalDisplay* s_main_display;
+static TerminalDisplay* s_prompt_display;
 static String s_prompt_message;
 
 static void restore_termios() {
@@ -29,16 +29,16 @@ static void restore_termios() {
     fflush(stdout);
 }
 
-static void update_panel_sizes() {
-    assert(s_main_panel);
+static void update_display_sizes() {
+    assert(s_main_display);
 
     fputs("\033[2J", stdout);
 
     winsize sz;
     assert(ioctl(STDOUT_FILENO, TIOCGWINSZ, &sz) == 0);
-    s_main_panel->set_coordinates(0, 0, sz.ws_row - 1, sz.ws_col);
+    s_main_display->set_coordinates(0, 0, sz.ws_row - 1, sz.ws_col);
 
-    if (s_prompt_panel) {
+    if (s_prompt_display) {
         printf("\033[%d;%dH", sz.ws_row + 1, 1);
         fputs("\033[0K", stdout);
 
@@ -46,7 +46,7 @@ static void update_panel_sizes() {
         printf("%.*s", sz.ws_col / 2, s_prompt_message.string());
         fflush(stdout);
 
-        s_prompt_panel->set_coordinates(sz.ws_row - 1, message_size, 1, sz.ws_col - message_size);
+        s_prompt_display->set_coordinates(sz.ws_row - 1, message_size, 1, sz.ws_col - message_size);
     }
 }
 
@@ -71,7 +71,7 @@ static void enable_raw_mode() {
     assert(tcsetattr(STDOUT_FILENO, TCSAFLUSH, &to_set) == 0);
 
     signal(SIGWINCH, [](int) {
-        update_panel_sizes();
+        update_display_sizes();
     });
 
     atexit(restore_termios);
@@ -84,33 +84,33 @@ static void enable_raw_mode() {
 constexpr int status_bar_height = 1;
 constexpr time_t status_message_timeout = 3;
 
-TerminalPanel::TerminalPanel() {
+TerminalDisplay::TerminalDisplay() {
     assert(isatty(STDOUT_FILENO));
 
     if (!s_raw_mode_enabled) {
         enable_raw_mode();
     }
 
-    s_main_panel = this;
-    update_panel_sizes();
+    s_main_display = this;
+    update_display_sizes();
 }
 
-TerminalPanel::TerminalPanel(int rows, int cols, int row_off, int col_off) {
+TerminalDisplay::TerminalDisplay(int rows, int cols, int row_off, int col_off) {
     set_coordinates(row_off, col_off, rows, cols);
 }
 
-void TerminalPanel::set_coordinates(int row_off, int col_off, int rows, int cols) {
+void TerminalDisplay::set_coordinates(int row_off, int col_off, int rows, int cols) {
     m_rows = rows;
     m_cols = cols;
     m_row_offset = row_off;
     m_col_offset = col_off;
 
     if (auto* doc = document()) {
-        doc->notify_panel_size_changed();
+        doc->notify_display_size_changed();
     }
 }
 
-TerminalPanel::~TerminalPanel() {}
+TerminalDisplay::~TerminalDisplay() {}
 
 static int vga_color_to_number(vga_color color, bool background) {
     int ret = 0;
@@ -169,7 +169,7 @@ static int vga_color_to_number(vga_color color, bool background) {
     return background ? ret + 10 : ret;
 }
 
-String TerminalPanel::string_for_metadata(Edit::CharacterMetadata metadata) const {
+String TerminalDisplay::string_for_metadata(Edit::CharacterMetadata metadata) const {
     String ret = "\033[0";
 
     RenderingInfo info = rendering_info_for_metadata(metadata);
@@ -197,20 +197,20 @@ String TerminalPanel::string_for_metadata(Edit::CharacterMetadata metadata) cons
     return ret;
 }
 
-void TerminalPanel::document_did_change() {
+void TerminalDisplay::document_did_change() {
     if (document()) {
         notify_line_count_changed();
         schedule_update();
     }
 }
 
-void TerminalPanel::quit() {
+void TerminalDisplay::quit() {
     m_should_exit = true;
     m_exit_code = 1;
 }
 
-void TerminalPanel::notify_line_count_changed() {
-    Panel::notify_line_count_changed();
+void TerminalDisplay::notify_line_count_changed() {
+    Display::notify_line_count_changed();
 
     int old_cols_needed_for_line_numbers = m_cols_needed_for_line_numbers;
     compute_cols_needed_for_line_numbers();
@@ -221,7 +221,7 @@ void TerminalPanel::notify_line_count_changed() {
     }
 }
 
-void TerminalPanel::compute_cols_needed_for_line_numbers() {
+void TerminalDisplay::compute_cols_needed_for_line_numbers() {
     if (auto* doc = document()) {
         if (doc->show_line_numbers()) {
             int num_lines = doc->num_lines();
@@ -243,12 +243,12 @@ void TerminalPanel::compute_cols_needed_for_line_numbers() {
     m_cols_needed_for_line_numbers = 0;
 }
 
-int TerminalPanel::cols() const {
+int TerminalDisplay::cols() const {
     return m_cols - m_cols_needed_for_line_numbers;
 }
 
-void TerminalPanel::draw_cursor() {
-    auto cursor_pos = document()->cursor_position_on_panel(*this, cursors().main_cursor());
+void TerminalDisplay::draw_cursor() {
+    auto cursor_pos = document()->cursor_position_on_display(*this, cursors().main_cursor());
     auto cursor_row = cursor_pos.row;
     auto cursor_col = cursor_pos.col;
     if (cursor_row >= 0 && cursor_row < rows() && cursor_col >= 0 && cursor_col < cols()) {
@@ -258,8 +258,8 @@ void TerminalPanel::draw_cursor() {
     }
 }
 
-void TerminalPanel::draw_status_message() {
-    if (this != s_main_panel || !document() || !m_show_status_bar) {
+void TerminalDisplay::draw_status_message() {
+    if (this != s_main_display || !document() || !m_show_status_bar) {
         return;
     }
 
@@ -292,13 +292,13 @@ void TerminalPanel::draw_status_message() {
     fputs("\033[u", stdout);
 }
 
-void TerminalPanel::send_status_message(String message) {
+void TerminalDisplay::send_status_message(String message) {
     m_status_message = move(message);
     m_status_message_time = time(nullptr);
     draw_status_message();
 }
 
-void TerminalPanel::print_char(char c, Edit::CharacterMetadata metadata) {
+void TerminalDisplay::print_char(char c, Edit::CharacterMetadata metadata) {
     if (c == '\0') {
         c = ' ';
     }
@@ -311,7 +311,7 @@ void TerminalPanel::print_char(char c, Edit::CharacterMetadata metadata) {
     fputc(c, stdout);
 }
 
-void TerminalPanel::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) {
+void TerminalDisplay::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) {
     printf("\033[%d;%dH", m_row_offset + row + 1, m_col_offset + 1);
 
     if (document()->show_line_numbers()) {
@@ -323,7 +323,7 @@ void TerminalPanel::output_line(int row, int col_offset, const StringView& text,
         printf("%s", line_number_text.string());
     }
 
-    auto cols = TerminalPanel::cols();
+    auto cols = TerminalDisplay::cols();
     for (size_t c = col_offset; c < static_cast<size_t>(cols + col_offset) && c < text.size(); c++) {
         print_char(text[c], metadata[c]);
     }
@@ -335,7 +335,7 @@ void TerminalPanel::output_line(int row, int col_offset, const StringView& text,
     printf("\033[K");
 }
 
-Edit::RenderedLine TerminalPanel::compose_line(const Edit::Line& line) const {
+Edit::RenderedLine TerminalDisplay::compose_line(const Edit::Line& line) const {
     assert(document());
     auto renderer = Edit::LineRenderer { cols(), document()->word_wrap_enabled() };
     for (int index_into_line = 0; index_into_line <= line.length(); index_into_line++) {
@@ -366,7 +366,7 @@ Edit::RenderedLine TerminalPanel::compose_line(const Edit::Line& line) const {
     return renderer.finish(line);
 }
 
-void TerminalPanel::do_open_prompt() {
+void TerminalDisplay::do_open_prompt() {
     auto result = prompt("Open: ");
     if (!result.has_value()) {
         return;
@@ -381,7 +381,7 @@ void TerminalPanel::do_open_prompt() {
     set_document(move(document));
 }
 
-void TerminalPanel::flush() {
+void TerminalDisplay::flush() {
     m_render_scheduled = false;
 
     fputs("\033[?25l", stdout);
@@ -395,14 +395,14 @@ void TerminalPanel::flush() {
     fflush(stdout);
 }
 
-void TerminalPanel::flush_if_needed() {
+void TerminalDisplay::flush_if_needed() {
     if (!m_render_scheduled) {
         return;
     }
     flush();
 }
 
-int TerminalPanel::enter() {
+int TerminalDisplay::enter() {
     fd_set set;
     for (;;) {
         flush_if_needed();
@@ -430,7 +430,7 @@ int TerminalPanel::enter() {
 
         m_input_parser.stream_data({ buffer, static_cast<size_t>(ret) });
         auto input = m_input_parser.take_events();
-        if (auto* document = Panel::document()) {
+        if (auto* document = Display::document()) {
             for (auto& ev : input) {
                 if (ev->type() == App::Event::Type::Key) {
                     document->notify_key_pressed(*this, static_cast<const App::KeyEvent&>(*ev));
@@ -453,7 +453,7 @@ int TerminalPanel::enter() {
     return m_exit_code;
 }
 
-Maybe<String> TerminalPanel::enter_prompt(const String& message, String staring_text) {
+Maybe<String> TerminalDisplay::enter_prompt(const String& message, String staring_text) {
     printf("\033[%d;%dH", m_row_offset + m_rows + 1, m_col_offset + 1);
     fputs("\033[0K", stdout);
 
@@ -461,25 +461,25 @@ Maybe<String> TerminalPanel::enter_prompt(const String& message, String staring_
     printf("%.*s", m_cols / 2, message.string());
     fflush(stdout);
 
-    TerminalPanel text_panel(1, m_col_offset + m_cols - message_size, rows() + m_row_offset, message_size);
-    s_prompt_panel = &text_panel;
+    TerminalDisplay text_display(1, m_col_offset + m_cols - message_size, rows() + m_row_offset, message_size);
+    s_prompt_display = &text_display;
     s_prompt_message = message;
 
     auto document = Edit::Document::create_single_line(move(staring_text));
     document->on_submit = [&] {
-        text_panel.m_exit_code = 0;
-        text_panel.m_should_exit = true;
+        text_display.m_exit_code = 0;
+        text_display.m_should_exit = true;
     };
-    text_panel.set_document(move(document));
+    text_display.set_document(move(document));
 
-    if (text_panel.enter() != 0) {
+    if (text_display.enter() != 0) {
         return {};
     }
 
-    return text_panel.document()->content_string();
+    return text_display.document()->content_string();
 }
 
-Maybe<String> TerminalPanel::prompt(const String& prompt) {
+Maybe<String> TerminalDisplay::prompt(const String& prompt) {
     Maybe<String> result = enter_prompt(prompt);
 
     printf("\033[%d;%dH", m_row_offset + m_rows + 1, m_col_offset + 1);
@@ -489,20 +489,20 @@ Maybe<String> TerminalPanel::prompt(const String& prompt) {
     return result;
 }
 
-void TerminalPanel::enter_search(String starting_text) {
+void TerminalDisplay::enter_search(String starting_text) {
     printf("\033[%d;%dH", m_row_offset + m_rows + 1, m_col_offset + 1);
     fputs("\033[0K", stdout);
 
     String message = "Find: ";
     int message_size = LIIM::min(message.size(), static_cast<size_t>(m_cols / 2));
 
-    TerminalPanel text_panel(1, m_col_offset + m_cols - message_size, rows() + m_row_offset, message_size);
-    s_prompt_panel = &text_panel;
+    TerminalDisplay text_display(1, m_col_offset + m_cols - message_size, rows() + m_row_offset, message_size);
+    s_prompt_display = &text_display;
     s_prompt_message = message;
 
     auto document = Edit::Document::create_single_line(move(starting_text));
-    text_panel.set_document(document);
-    document->select_all(text_panel, text_panel.cursors().main_cursor());
+    text_display.set_document(document);
+    document->select_all(text_display, text_display.cursors().main_cursor());
 
     m_show_status_bar = false;
 
@@ -510,7 +510,7 @@ void TerminalPanel::enter_search(String starting_text) {
     for (;;) {
         printf("\033[%d;%dH", m_row_offset + m_rows + 1, m_col_offset + 1);
         printf("%.*s", m_cols / 2, message.string());
-        text_panel.flush();
+        text_display.flush();
 
         FD_ZERO(&set);
         FD_SET(STDIN_FILENO, &set);
@@ -535,13 +535,13 @@ void TerminalPanel::enter_search(String starting_text) {
 
         m_input_parser.stream_data({ buffer, static_cast<size_t>(ret) });
         auto input = m_input_parser.take_events();
-        if (auto* document = Panel::document()) {
+        if (auto* document = Display::document()) {
             for (auto& ev : input) {
                 if (ev->type() == App::Event::Type::Key) {
                     auto& event = static_cast<const App::KeyEvent&>(*ev);
                     if (event.key() == App::Key::Enter) {
                         cursors().remove_secondary_cursors();
-                        TerminalPanel::document()->move_cursor_to_next_search_match(*this, cursors().main_cursor());
+                        TerminalDisplay::document()->move_cursor_to_next_search_match(*this, cursors().main_cursor());
                     }
 
                     if (event.key() == App::Key::Escape ||
@@ -561,8 +561,8 @@ void TerminalPanel::enter_search(String starting_text) {
             }
         }
 
-        auto search_text = text_panel.document()->content_string();
-        TerminalPanel::document()->set_search_text(search_text);
+        auto search_text = text_display.document()->content_string();
+        TerminalDisplay::document()->set_search_text(search_text);
         flush_if_needed();
     }
 
@@ -575,13 +575,13 @@ exit_search:
     fflush(stdout);
 }
 
-void TerminalPanel::set_clipboard_contents(String text, bool is_whole_line) {
+void TerminalDisplay::set_clipboard_contents(String text, bool is_whole_line) {
     m_prev_clipboard_contents = move(text);
     m_prev_clipboard_contents_were_whole_line = is_whole_line;
     Clipboard::Connection::the().set_clipboard_contents_to_text(m_prev_clipboard_contents);
 }
 
-String TerminalPanel::clipboard_contents(bool& is_whole_line) const {
+String TerminalDisplay::clipboard_contents(bool& is_whole_line) const {
     auto contents = Clipboard::Connection::the().get_clipboard_contents_as_text();
     if (!contents.has_value()) {
         is_whole_line = m_prev_clipboard_contents_were_whole_line;

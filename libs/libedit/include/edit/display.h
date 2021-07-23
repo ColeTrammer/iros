@@ -9,9 +9,9 @@
 #include <liim/pointers.h>
 
 namespace Edit {
-class Panel {
+class Display {
 public:
-    virtual ~Panel();
+    virtual ~Display();
 
     virtual int rows() const = 0;
     virtual int cols() const = 0;
@@ -74,10 +74,10 @@ public:
     RenderingInfo rendering_info_for_metadata(const CharacterMetadata& metadata) const;
 
     RenderedLine& rendered_line_at_index(int index);
-    const RenderedLine& rendered_line_at_index(int index) const { return const_cast<Panel&>(*this).rendered_line_at_index(index); }
+    const RenderedLine& rendered_line_at_index(int index) const { return const_cast<Display&>(*this).rendered_line_at_index(index); }
 
 protected:
-    Panel();
+    Display();
 
     virtual void document_did_change() {}
 

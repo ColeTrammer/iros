@@ -1,6 +1,6 @@
+#include <edit/display.h>
 #include <edit/document.h>
 #include <edit/multicursor.h>
-#include <edit/panel.h>
 #include <edit/position.h>
 #include <edit/text_range_collection.h>
 
@@ -45,21 +45,21 @@ Cursor& MultiCursor::main_cursor() {
     return m_cursors[m_main_cursor_index];
 }
 
-void MultiCursor::add_cursor(Document& document, Panel& panel, AddCursorMode mode) {
+void MultiCursor::add_cursor(Document& document, Display& display, AddCursorMode mode) {
     switch (mode) {
         case AddCursorMode::Up:
             m_cursors.insert(m_cursors.first(), 0);
-            document.move_cursor_up(panel, m_cursors.first());
+            document.move_cursor_up(display, m_cursors.first());
             m_main_cursor_index++;
             break;
         case AddCursorMode::Down:
             m_cursors.add(m_cursors.last());
-            document.move_cursor_down(panel, m_cursors.last());
+            document.move_cursor_down(display, m_cursors.last());
             break;
     }
 }
 
-void MultiCursor::add_cursor_at(Document& document, Panel& panel, const TextIndex& index, const Selection& selection) {
+void MultiCursor::add_cursor_at(Document& document, Display& display, const TextIndex& index, const Selection& selection) {
     int i = 0;
     for (; i < m_cursors.size(); i++) {
         // Duplicate cursors should not be created.
@@ -75,14 +75,14 @@ void MultiCursor::add_cursor_at(Document& document, Panel& panel, const TextInde
     auto cursor = Cursor {};
     cursor.set(index);
     cursor.selection() = selection;
-    cursor.compute_max_col(document, panel);
+    cursor.compute_max_col(document, display);
     m_cursors.insert(move(cursor), i);
     if (i <= m_main_cursor_index) {
         m_main_cursor_index++;
     }
 }
 
-void MultiCursor::did_delete_lines(Document& document, Panel& panel, int line_index, int line_count) {
+void MultiCursor::did_delete_lines(Document& document, Display& display, int line_index, int line_count) {
     for (auto& cursor : m_cursors) {
         if (cursor.line_index() < line_index) {
             continue;
@@ -93,15 +93,15 @@ void MultiCursor::did_delete_lines(Document& document, Panel& panel, int line_in
                 continue;
             }
             document.clear_selection(cursor);
-            document.move_cursor_to(panel, cursor,
-                                    document.text_index_at_absolute_position(panel, cursor.absolute_position(document, panel)));
+            document.move_cursor_to(display, cursor,
+                                    document.text_index_at_absolute_position(display, cursor.absolute_position(document, display)));
             continue;
         }
         cursor.move_up_preserving_selection(line_count);
     }
 }
 
-void MultiCursor::did_add_lines(Document&, Panel&, int line_index, int line_count) {
+void MultiCursor::did_add_lines(Document&, Display&, int line_index, int line_count) {
     for (auto& cursor : m_cursors) {
         if (cursor.line_index() < line_index) {
             continue;
@@ -110,27 +110,28 @@ void MultiCursor::did_add_lines(Document&, Panel&, int line_index, int line_coun
     }
 }
 
-void MultiCursor::did_split_line(Document& document, Panel& panel, int line_index, int index_into_line) {
+void MultiCursor::did_split_line(Document& document, Display& display, int line_index, int index_into_line) {
     for (auto& cursor : m_cursors) {
         if (cursor.line_index() != line_index || cursor.index_into_line() < index_into_line) {
             continue;
         }
         cursor.set({ line_index + 1, cursor.index_into_line() - index_into_line });
-        cursor.compute_max_col(document, panel);
+        cursor.compute_max_col(document, display);
     }
 }
 
-void MultiCursor::did_merge_lines(Document& document, Panel& panel, int first_line_index, int first_line_length, int second_line_index) {
+void MultiCursor::did_merge_lines(Document& document, Display& display, int first_line_index, int first_line_length,
+                                  int second_line_index) {
     for (auto& cursor : m_cursors) {
         if (cursor.line_index() != second_line_index) {
             continue;
         }
         cursor.set({ first_line_index, first_line_length + cursor.index_into_line() });
-        cursor.compute_max_col(document, panel);
+        cursor.compute_max_col(document, display);
     }
 }
 
-void MultiCursor::did_add_to_line(Document& document, Panel& panel, int line_index, int index_into_line, int bytes_added) {
+void MultiCursor::did_add_to_line(Document& document, Display& display, int line_index, int index_into_line, int bytes_added) {
     for (auto& cursor : m_cursors) {
         if (cursor.line_index() != line_index) {
             continue;
@@ -139,11 +140,11 @@ void MultiCursor::did_add_to_line(Document& document, Panel& panel, int line_ind
             continue;
         }
         cursor.move_right_preserving_selection(bytes_added);
-        cursor.compute_max_col(document, panel);
+        cursor.compute_max_col(document, display);
     }
 }
 
-void MultiCursor::did_delete_from_line(Document& document, Panel& panel, int line_index, int index_into_line, int bytes_deleted) {
+void MultiCursor::did_delete_from_line(Document& document, Display& display, int line_index, int index_into_line, int bytes_deleted) {
     for (auto& cursor : m_cursors) {
         if (cursor.line_index() != line_index) {
             continue;
@@ -152,7 +153,7 @@ void MultiCursor::did_delete_from_line(Document& document, Panel& panel, int lin
             continue;
         }
         cursor.move_left_preserving_selection(bytes_deleted);
-        cursor.compute_max_col(document, panel);
+        cursor.compute_max_col(document, display);
     }
 }
 
@@ -161,8 +162,8 @@ bool MultiCursor::should_show_auto_complete_text_at(const Document& document, co
            main_cursor().index_into_line() == index_into_line;
 }
 
-Maybe<String> MultiCursor::preview_auto_complete_text(const Panel& panel) const {
-    auto suggestions = panel.get_suggestions();
+Maybe<String> MultiCursor::preview_auto_complete_text(const Display& display) const {
+    auto suggestions = display.get_suggestions();
     if (suggestions.suggestion_count() != 1) {
         return {};
     }

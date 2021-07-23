@@ -10,7 +10,7 @@
 #include <graphics/bitmap.h>
 #include <graphics/renderer.h>
 
-#include "app_panel.h"
+#include "app_display.h"
 
 SearchWidget::SearchWidget() {}
 
@@ -23,20 +23,20 @@ void SearchWidget::render() {
     renderer.draw_rect(sized_rect(), ColorValue::White);
 }
 
-AppPanel& SearchWidget::panel() {
-    if (!m_panel) {
+AppDisplay& SearchWidget::display() {
+    if (!m_display) {
         auto& layout = set_layout<App::HorizontalBoxLayout>();
         auto& label = layout.add<App::TextLabel>("Find:");
         label.set_preferred_size({ 46, App::Size::Auto });
 
-        m_panel = layout.add<AppPanel>(false).shared_from_this();
+        m_display = layout.add<AppDisplay>(false).shared_from_this();
     }
-    return *m_panel;
+    return *m_display;
 }
 
-AppPanel::AppPanel(bool main_panel) : m_main_panel(main_panel) {}
+AppDisplay::AppDisplay(bool main_display) : m_main_display(main_display) {}
 
-void AppPanel::initialize() {
+void AppDisplay::initialize() {
     auto w = window()->shared_from_this();
     auto context_menu = App::ContextMenu::create(w, w);
     context_menu->add_menu_item("Copy", [this] {
@@ -57,18 +57,18 @@ void AppPanel::initialize() {
     set_context_menu(context_menu);
 }
 
-AppPanel::~AppPanel() {}
+AppDisplay::~AppDisplay() {}
 
-AppPanel& AppPanel::ensure_search_panel() {
-    assert(m_main_panel);
+AppDisplay& AppDisplay::ensure_search_display() {
+    assert(m_main_display);
     if (!m_search_widget) {
         m_search_widget = SearchWidget::create(shared_from_this());
         m_search_widget->set_hidden(true);
     }
-    return m_search_widget->panel();
+    return m_search_widget->display();
 }
 
-Edit::RenderedLine AppPanel::compose_line(const Edit::Line& line) const {
+Edit::RenderedLine AppDisplay::compose_line(const Edit::Line& line) const {
     auto renderer = Edit::LineRenderer { cols(), document()->word_wrap_enabled() };
     for (int index_into_line = 0; index_into_line <= line.length(); index_into_line++) {
         if (cursors().should_show_auto_complete_text_at(*document(), line, index_into_line)) {
@@ -98,7 +98,7 @@ Edit::RenderedLine AppPanel::compose_line(const Edit::Line& line) const {
     return renderer.finish(line);
 }
 
-void AppPanel::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) {
+void AppDisplay::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) {
     auto renderer = get_renderer();
 
     for (size_t i = col_offset; i < static_cast<size_t>(col_offset + cols()) && i < text.size(); i++) {
@@ -106,49 +106,49 @@ void AppPanel::output_line(int row, int col_offset, const StringView& text, cons
     }
 }
 
-void AppPanel::schedule_update() {
+void AppDisplay::schedule_update() {
     invalidate();
 }
 
-int AppPanel::enter() {
+int AppDisplay::enter() {
     window()->set_focused_widget(this);
     return 0;
 }
 
-void AppPanel::quit() {
+void AppDisplay::quit() {
     if (on_quit) {
         on_quit();
     }
 }
 
-void AppPanel::send_status_message(String) {}
+void AppDisplay::send_status_message(String) {}
 
-Maybe<String> AppPanel::prompt(const String&) {
+Maybe<String> AppDisplay::prompt(const String&) {
     return {};
 }
 
-void AppPanel::enter_search(String starting_text) {
-    if (!m_main_panel) {
+void AppDisplay::enter_search(String starting_text) {
+    if (!m_main_display) {
         return;
     }
 
-    ensure_search_panel().set_document(Edit::Document::create_single_line(move(starting_text)));
-    ensure_search_panel().document()->on_change = [this] {
-        auto contents = ensure_search_panel().document()->content_string();
+    ensure_search_display().set_document(Edit::Document::create_single_line(move(starting_text)));
+    ensure_search_display().document()->on_change = [this] {
+        auto contents = ensure_search_display().document()->content_string();
         document()->set_search_text(move(contents));
     };
-    ensure_search_panel().document()->on_submit = [this] {
+    ensure_search_display().document()->on_submit = [this] {
         cursors().remove_secondary_cursors();
         document()->move_cursor_to_next_search_match(*this, cursors().main_cursor());
     };
-    ensure_search_panel().document()->on_escape_press = [this] {
+    ensure_search_display().document()->on_escape_press = [this] {
         document()->set_search_text("");
         if (document()->on_escape_press) {
             document()->on_escape_press();
         }
         window()->set_focused_widget(this);
     };
-    ensure_search_panel().on_quit = [this] {
+    ensure_search_display().on_quit = [this] {
         document()->set_search_text("");
         if (document()->on_escape_press) {
             document()->on_escape_press();
@@ -157,16 +157,16 @@ void AppPanel::enter_search(String starting_text) {
     };
 
     m_search_widget->set_hidden(false);
-    window()->set_focused_widget(&ensure_search_panel());
+    window()->set_focused_widget(&ensure_search_display());
 }
 
-void AppPanel::set_clipboard_contents(String text, bool is_whole_line) {
+void AppDisplay::set_clipboard_contents(String text, bool is_whole_line) {
     m_prev_clipboard_contents = move(text);
     m_prev_clipboard_contents_were_whole_line = is_whole_line;
     Clipboard::Connection::the().set_clipboard_contents_to_text(m_prev_clipboard_contents);
 }
 
-String AppPanel::clipboard_contents(bool& is_whole_line) const {
+String AppDisplay::clipboard_contents(bool& is_whole_line) const {
     auto contents = Clipboard::Connection::the().get_clipboard_contents_as_text();
     if (!contents.has_value()) {
         is_whole_line = m_prev_clipboard_contents_were_whole_line;
@@ -183,14 +183,14 @@ String AppPanel::clipboard_contents(bool& is_whole_line) const {
     return move(ret);
 }
 
-void AppPanel::do_open_prompt() {}
+void AppDisplay::do_open_prompt() {}
 
-void AppPanel::render_cursor(Renderer& renderer) {
+void AppDisplay::render_cursor(Renderer& renderer) {
     if (this != window()->focused_widget().get()) {
         return;
     }
 
-    auto cursor_pos = document()->cursor_position_on_panel(*this, cursors().main_cursor());
+    auto cursor_pos = document()->cursor_position_on_display(*this, cursors().main_cursor());
 
     int cursor_x = cursor_pos.col * col_width();
     int cursor_y = cursor_pos.row * row_height();
@@ -202,7 +202,7 @@ void AppPanel::render_cursor(Renderer& renderer) {
     m_last_drawn_cursor_row = cursor_pos.row;
 }
 
-void AppPanel::render_cell(Renderer& renderer, int x, int y, char c, Edit::CharacterMetadata metadata) {
+void AppDisplay::render_cell(Renderer& renderer, int x, int y, char c, Edit::CharacterMetadata metadata) {
     RenderingInfo info = rendering_info_for_metadata(metadata);
 
     Color fg = info.fg.has_value() ? Color(info.fg.value()) : Color(VGA_COLOR_LIGHT_GREY);
@@ -213,7 +213,7 @@ void AppPanel::render_cell(Renderer& renderer, int x, int y, char c, Edit::Chara
     renderer.render_text(String(c), cell_rect, fg, TextAlign::Center, info.bold ? Font::bold_font() : Font::default_font());
 }
 
-void AppPanel::render() {
+void AppDisplay::render() {
     auto renderer = get_renderer();
 
     auto total_width = cols() * col_width();
@@ -230,7 +230,7 @@ void AppPanel::render() {
     Widget::render();
 }
 
-void AppPanel::on_mouse_event(const App::MouseEvent& event) {
+void AppDisplay::on_mouse_event(const App::MouseEvent& event) {
     if (!document()) {
         return;
     }
@@ -248,7 +248,7 @@ void AppPanel::on_mouse_event(const App::MouseEvent& event) {
     Widget::on_mouse_event(event);
 }
 
-void AppPanel::on_key_event(const App::KeyEvent& event) {
+void AppDisplay::on_key_event(const App::KeyEvent& event) {
     if (!document() || !event.key_down()) {
         return;
     }
@@ -256,11 +256,11 @@ void AppPanel::on_key_event(const App::KeyEvent& event) {
     document()->notify_key_pressed(*this, event);
 }
 
-void AppPanel::document_did_change() {
+void AppDisplay::document_did_change() {
     if (document()) {
         notify_line_count_changed();
 
-        if (m_main_panel) {
+        if (m_main_display) {
             document()->on_escape_press = [this] {
                 if (m_search_widget) {
                     m_search_widget->set_hidden(true);
@@ -271,21 +271,21 @@ void AppPanel::document_did_change() {
     }
 }
 
-void AppPanel::on_resize() {
+void AppDisplay::on_resize() {
     m_rows = positioned_rect().height() / row_height();
     m_cols = positioned_rect().width() / col_width();
     if (document()) {
-        document()->notify_panel_size_changed();
+        document()->notify_display_size_changed();
     }
 
-    if (m_main_panel) {
-        ensure_search_panel();
-        constexpr int panel_height = 28;
-        m_search_widget->set_positioned_rect({ positioned_rect().x(), positioned_rect().y() + positioned_rect().height() - panel_height,
-                                               positioned_rect().width(), panel_height });
+    if (m_main_display) {
+        ensure_search_display();
+        constexpr int display_height = 28;
+        m_search_widget->set_positioned_rect({ positioned_rect().x(), positioned_rect().y() + positioned_rect().height() - display_height,
+                                               positioned_rect().width(), display_height });
     }
 }
 
-void AppPanel::on_focused() {
+void AppDisplay::on_focused() {
     invalidate();
 }

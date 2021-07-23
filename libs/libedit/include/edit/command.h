@@ -12,9 +12,9 @@ public:
     Document& document() { return m_document; }
     const Document& document() const { return m_document; }
 
-    virtual bool execute(Panel& panel) = 0;
-    virtual void undo(Panel& panel) = 0;
-    virtual void redo(Panel& panel) = 0;
+    virtual bool execute(Display& display) = 0;
+    virtual void undo(Display& display) = 0;
+    virtual void redo(Display& display) = 0;
 
 private:
     Document& m_document;
@@ -22,12 +22,12 @@ private:
 
 class DeltaBackedCommand : public Command {
 public:
-    DeltaBackedCommand(Document& document, Panel& panel);
+    DeltaBackedCommand(Document& document, Display& display);
     virtual ~DeltaBackedCommand() override;
 
-    virtual void redo(Panel& panel) final;
-    virtual bool execute(Panel& panel) final;
-    virtual void undo(Panel& panel) final;
+    virtual void redo(Display& display) final;
+    virtual bool execute(Display& display) final;
+    virtual void undo(Display& display) final;
 
     virtual bool do_execute(MultiCursor& cursors) = 0;
     virtual void do_undo(MultiCursor& cursors) = 0;
@@ -45,11 +45,11 @@ private:
 
 class SnapshotBackedCommand : public Command {
 public:
-    SnapshotBackedCommand(Document& document, Panel& panel);
+    SnapshotBackedCommand(Document& document, Display& display);
     virtual ~SnapshotBackedCommand() override;
 
-    virtual void undo(Panel& panel) override;
-    virtual void redo(Panel& panel) override;
+    virtual void undo(Display& display) override;
+    virtual void redo(Display& display) override;
 
     const Document::Snapshot& snapshot() const { return m_snapshot; }
 
@@ -59,7 +59,7 @@ private:
 
 class InsertCommand final : public DeltaBackedCommand {
 public:
-    InsertCommand(Document& document, Panel& panel, String string);
+    InsertCommand(Document& document, Display& display, String string);
     virtual ~InsertCommand();
 
     virtual bool do_execute(MultiCursor& cursor) override;
@@ -74,7 +74,7 @@ private:
 
 class DeleteCommand final : public DeltaBackedCommand {
 public:
-    DeleteCommand(Document& document, Panel& panel, DeleteCharMode mode);
+    DeleteCommand(Document& document, Display& display, DeleteCharMode mode);
     virtual ~DeleteCommand();
 
     virtual bool do_execute(MultiCursor& cursor) override;
@@ -87,7 +87,7 @@ private:
 
 class DeleteLineCommand final : public DeltaBackedCommand {
 public:
-    DeleteLineCommand(Document& document, Panel& panel);
+    DeleteLineCommand(Document& document, Display& display);
     virtual ~DeleteLineCommand();
 
     virtual bool do_execute(MultiCursor& cursor) override;
@@ -100,7 +100,7 @@ private:
 
 class InsertLineCommand final : public DeltaBackedCommand {
 public:
-    InsertLineCommand(Document& document, Panel& panel, String text);
+    InsertLineCommand(Document& document, Display& display, String text);
     virtual ~InsertLineCommand() override;
 
     virtual bool do_execute(MultiCursor& cursor) override;
@@ -112,7 +112,7 @@ private:
 
 class SwapLinesCommand final : public DeltaBackedCommand {
 public:
-    SwapLinesCommand(Document& document, Panel& panel, SwapDirection direction);
+    SwapLinesCommand(Document& document, Display& display, SwapDirection direction);
     virtual ~SwapLinesCommand() override;
 
     virtual bool do_execute(MultiCursor& cursor) override;

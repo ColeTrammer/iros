@@ -2,6 +2,7 @@
 
 #include <edit/cursor.h>
 #include <edit/forward.h>
+#include <liim/forward.h>
 #include <liim/maybe.h>
 #include <liim/vector.h>
 
@@ -20,18 +21,18 @@ public:
     Cursor& main_cursor();
     const Cursor& main_cursor() const { return const_cast<MultiCursor&>(*this).main_cursor(); }
 
-    void add_cursor(Document& document, Panel& panel, AddCursorMode mode);
-    void add_cursor_at(Document& document, Panel& panel, const TextIndex& index, const Selection& selection = {});
+    void add_cursor(Document& document, Display& display, AddCursorMode mode);
+    void add_cursor_at(Document& document, Display& display, const TextIndex& index, const Selection& selection = {});
 
-    void did_delete_lines(Document& document, Panel& panel, int line_index, int line_count);
-    void did_add_lines(Document& document, Panel& panel, int line_index, int line_count);
-    void did_split_line(Document& document, Panel& panel, int line_index, int index_into_line);
-    void did_merge_lines(Document& document, Panel& panel, int first_line_index, int first_line_length, int second_line_index);
-    void did_add_to_line(Document& document, Panel& panel, int line_index, int index_into_line, int bytes_added);
-    void did_delete_from_line(Document& document, Panel& panel, int line_index, int index_into_line, int bytes_deleted);
+    void did_delete_lines(Document& document, Display& display, int line_index, int line_count);
+    void did_add_lines(Document& document, Display& display, int line_index, int line_count);
+    void did_split_line(Document& document, Display& display, int line_index, int index_into_line);
+    void did_merge_lines(Document& document, Display& display, int first_line_index, int first_line_length, int second_line_index);
+    void did_add_to_line(Document& document, Display& display, int line_index, int index_into_line, int bytes_added);
+    void did_delete_from_line(Document& document, Display& display, int line_index, int index_into_line, int bytes_deleted);
 
     bool should_show_auto_complete_text_at(const Document& document, const Line& line, int index_into_line) const;
-    Maybe<String> preview_auto_complete_text(const Panel& panel) const;
+    Maybe<String> preview_auto_complete_text(const Display& display) const;
 
     TextRangeCollection cursor_text_ranges(const Document& document) const;
     TextRangeCollection selections(const Document& document) const;

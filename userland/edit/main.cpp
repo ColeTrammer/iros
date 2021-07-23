@@ -7,8 +7,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "app_panel.h"
-#include "terminal_panel.h"
+#include "app_display.h"
+#include "terminal_display.h"
 
 void print_usage_and_exit(const char* s) {
     fprintf(stderr, "Usage: %s [-ig] <text-file>\n", s);
@@ -40,12 +40,12 @@ int main(int argc, char** argv) {
         print_usage_and_exit(*argv);
     }
 
-    auto make_document = [&](Edit::Panel& panel) -> int {
+    auto make_document = [&](Edit::Display& display) -> int {
         SharedPtr<Edit::Document> document;
         if (read_from_stdin) {
-            document = Edit::Document::create_from_stdin(argv[optind] ? String(argv[optind]) : String(""), panel);
+            document = Edit::Document::create_from_stdin(argv[optind] ? String(argv[optind]) : String(""), display);
         } else if (argc - optind == 1) {
-            document = Edit::Document::create_from_file(String(argv[optind]), panel);
+            document = Edit::Document::create_from_file(String(argv[optind]), display);
         } else {
             document = Edit::Document::create_empty();
         }
@@ -54,8 +54,8 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        panel.set_document(move(document));
-        panel.enter();
+        display.set_document(move(document));
+        display.enter();
         return 0;
     };
 
@@ -63,13 +63,13 @@ int main(int argc, char** argv) {
         auto app = App::Application::create();
 
         auto window = App::Window::create(nullptr, 250, 250, 400, 400, "Edit");
-        auto& panel = window->set_main_widget<AppPanel>();
+        auto& display = window->set_main_widget<AppDisplay>();
 
-        panel.on_quit = [&] {
+        display.on_quit = [&] {
             app->main_event_loop().set_should_exit(true);
         };
 
-        int ret = make_document(panel);
+        int ret = make_document(display);
         if (ret) {
             return ret;
         }
@@ -78,6 +78,6 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    TerminalPanel panel;
-    return make_document(panel);
+    TerminalDisplay display;
+    return make_document(display);
 }

@@ -1,13 +1,13 @@
 #pragma once
 
 #include <app/widget.h>
-#include <edit/panel.h>
+#include <edit/display.h>
 #include <graphics/forward.h>
 #include <liim/function.h>
 #include <liim/string.h>
 #include <liim/vector.h>
 
-class AppPanel;
+class AppDisplay;
 
 class SearchWidget final : public App::Widget {
     APP_OBJECT(SearchWidget)
@@ -18,20 +18,20 @@ public:
 
     virtual void render() override;
 
-    AppPanel& panel();
+    AppDisplay& display();
 
 private:
-    SharedPtr<AppPanel> m_panel;
+    SharedPtr<AppDisplay> m_display;
 };
 
-class AppPanel final
-    : public Edit::Panel
+class AppDisplay final
+    : public Edit::Display
     , public App::Widget {
-    APP_OBJECT(AppPanel)
+    APP_OBJECT(AppDisplay)
 
 public:
     virtual void initialize() override;
-    virtual ~AppPanel() override;
+    virtual ~AppDisplay() override;
 
     virtual int rows() const override { return m_rows; }
     virtual int cols() const override { return m_cols; }
@@ -68,11 +68,11 @@ private:
         Edit::CharacterMetadata metadata;
     };
 
-    AppPanel(bool m_main_panel = true);
+    AppDisplay(bool m_main_display = true);
 
     virtual void document_did_change() override;
 
-    AppPanel& ensure_search_panel();
+    AppDisplay& ensure_search_display();
 
     int index(int row, int col) const { return row * cols() + col; }
 
@@ -83,7 +83,7 @@ private:
     int m_cols { 0 };
     int m_last_drawn_cursor_col { -1 };
     int m_last_drawn_cursor_row { -1 };
-    bool m_main_panel { false };
+    bool m_main_display { false };
     SharedPtr<SearchWidget> m_search_widget;
 
     mutable String m_prev_clipboard_contents;
