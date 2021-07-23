@@ -3,7 +3,7 @@
 #include "../builtin.h"
 #include "../command.h"
 
-static int op_type(char **argv) {
+static int op_type(int, char **argv) {
     while (*++argv) {
         auto word = String(*argv);
 

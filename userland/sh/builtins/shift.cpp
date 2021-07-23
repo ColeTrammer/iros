@@ -3,14 +3,14 @@
 #include "../builtin.h"
 #include "../command.h"
 
-static int op_shift(char **argv) {
-    int amount = 1;
-    if (argv[1] != NULL) {
-        if (argv[2] != NULL) {
-            fprintf(stderr, "Usage %s [n]\n", argv[0]);
-            return 1;
-        }
+static int op_shift(int argc, char **argv) {
+    if (argc > 2) {
+        fprintf(stderr, "Usage: shift [n]\n");
+        return 2;
+    }
 
+    int amount = 1;
+    if (argc == 2) {
         amount = atoi(argv[1]);
     }
 

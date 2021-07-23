@@ -37,7 +37,7 @@ BuiltInManager &BuiltInManager::the() {
     return s_the;
 }
 
-void BuiltInManager::register_builtin(String name, Function<int(char **)> entry) {
+void BuiltInManager::register_builtin(String name, Function<int(int, char **)> entry) {
     auto builtin = BuiltInOperation { move(name), move(entry) };
     m_builtins.put(builtin.name(), move(builtin));
 }

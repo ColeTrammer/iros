@@ -5,13 +5,10 @@
 
 #include "../builtin.h"
 
-static int op_test(char **argv) {
-    if (!argv[1]) {
-        return 1;
+static int op_test(int argc, char **argv) {
+    if (argc == 1) {
+        return 2;
     }
-
-    int argc = 0;
-    while (argv[++argc]) {}
 
     if (strcmp(argv[0], "[") == 0) {
         if (strcmp(argv[argc - 1], "]") != 0) {

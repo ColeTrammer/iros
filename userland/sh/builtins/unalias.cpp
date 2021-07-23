@@ -3,8 +3,8 @@
 
 #include "../builtin.h"
 
-static int op_unalias(char **argv) {
-    if (argv[1] == nullptr) {
+static int op_unalias(int argc, char **argv) {
+    if (argc == 1) {
         fprintf(stderr, "Usage: %s [-a] name [...]\n", argv[0]);
         return 1;
     }
@@ -15,7 +15,7 @@ static int op_unalias(char **argv) {
     }
 
     bool any_failed = false;
-    for (int i = 1; argv[i] != nullptr; i++) {
+    for (int i = 1; i < argc; i++) {
         String s(argv[i]);
 
         if (!g_aliases.get(s)) {

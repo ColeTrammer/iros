@@ -3,8 +3,8 @@
 
 #include "../builtin.h"
 
-static int op_exec(char **argv) {
-    if (argv[1] == NULL) {
+static int op_exec(int argc, char **argv) {
+    if (argc == 1) {
         return 0;
     }
 

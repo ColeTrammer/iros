@@ -7,8 +7,8 @@ static String sh_escape(const String &string) {
     return String::format("'%s'", string.string());
 }
 
-static int op_alias(char **argv) {
-    if (argv[1] == nullptr) {
+static int op_alias(int argc, char **argv) {
+    if (argc == 1) {
         g_aliases.for_each_key([&](const String &name) {
             printf("alias %s=%s\n", name.string(), sh_escape(*g_aliases.get(name)).string());
         });
@@ -16,7 +16,7 @@ static int op_alias(char **argv) {
     }
 
     bool any_failed = false;
-    for (int i = 1; argv[i] != nullptr; i++) {
+    for (int i = 1; i < argc; i++) {
         String arg(argv[i]);
         auto equal_index = arg.index_of('=');
         if (!equal_index.has_value()) {

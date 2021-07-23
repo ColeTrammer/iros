@@ -148,7 +148,7 @@ int main(int argc, char** argv) {
                 char* args[3] = { const_cast<char*>("."), path.string(), nullptr };
                 auto* op_dot = Sh::BuiltInManager::the().find(".");
                 assert(op_dot);
-                op_dot->execute(args);
+                op_dot->execute(2, args);
             }
         }
     }

@@ -1,8 +1,8 @@
 #include "../builtin.h"
 #include "../job.h"
 
-static int op_fg(char **argv) {
-    if (!argv[1] || argv[2]) {
+static int op_fg(int argc, char **argv) {
+    if (argc != 2) {
         printf("Usage: %s <job>\n", argv[0]);
         return 0;
     }

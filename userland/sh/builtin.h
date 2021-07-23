@@ -8,21 +8,21 @@
 namespace Sh {
 class BuiltInOperation {
 public:
-    BuiltInOperation(String name, Function<int(char**)> entry) : m_name(move(name)), m_entry(move(entry)) {}
+    BuiltInOperation(String name, Function<int(int, char**)> entry) : m_name(move(name)), m_entry(move(entry)) {}
 
     const String& name() const { return m_name; }
-    int execute(char** argv) { return m_entry(argv); }
+    int execute(int argc, char** argv) { return m_entry(argc, argv); }
 
 private:
     String m_name;
-    Function<int(char** argv)> m_entry;
+    Function<int(int, char**)> m_entry;
 };
 
 class BuiltInManager {
 public:
     static BuiltInManager& the();
 
-    void register_builtin(String name, Function<int(char**)> entry);
+    void register_builtin(String name, Function<int(int, char**)> entry);
     void unregister_builtin(const String& name);
 
     BuiltInOperation* find(const String& name);

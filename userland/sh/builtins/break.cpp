@@ -4,15 +4,20 @@
 #include "../builtin.h"
 #include "../command.h"
 
-static int op_break(char **argv) {
-    int break_count = 1;
-    if (argv[1] != NULL) {
-        break_count = atoi(argv[1]);
-    }
-
+static int op_break(int argc, char **argv) {
     if (get_loop_depth_count() == 0) {
         fprintf(stderr, "Break is meaningless outside of for,while,until.\n");
         return 0;
+    }
+
+    if (argc > 2) {
+        fprintf(stderr, "Usage: break [n]\n");
+        return 2;
+    }
+
+    int break_count = 1;
+    if (argc == 2) {
+        break_count = atoi(argv[1]);
     }
 
     if (break_count == 0) {

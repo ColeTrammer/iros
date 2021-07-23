@@ -3,14 +3,14 @@
 #include "../builtin.h"
 #include "../command.h"
 
-static int op_return(char **argv) {
-    int status = 0;
-    if (argv[1] != NULL) {
-        if (argv[2] != NULL) {
-            fprintf(stderr, "Usage: %s [status]\n", argv[0]);
-            return 1;
-        }
+static int op_return(int argc, char **argv) {
+    if (argc > 2) {
+        fprintf(stderr, "Usage: return [n]\n");
+        return 2;
+    }
 
+    int status = 0;
+    if (argc == 2) {
         status = atoi(argv[1]);
     }
 

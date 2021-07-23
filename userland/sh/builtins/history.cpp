@@ -3,8 +3,8 @@
 #include "../builtin.h"
 #include "../input.h"
 
-static int op_history(char **argv) {
-    if (argv[1]) {
+static int op_history(int argc, char **argv) {
+    if (argc > 1) {
         printf("Usage: %s\n", argv[0]);
         return 0;
     }

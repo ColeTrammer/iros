@@ -5,8 +5,8 @@
 #include "../command.h"
 #include "../input.h"
 
-int op_source(char **argv) {
-    if (argv[1] == NULL) {
+int op_source(int argc, char **argv) {
+    if (argc == 1) {
         fprintf(stderr, "Usage: %s <filename> [args]\n", argv[0]);
         return 2;
     }
@@ -18,11 +18,7 @@ int op_source(char **argv) {
         return 1;
     }
 
-    int i;
-    for (i = 2; argv[i] != NULL; i++)
-        ;
-
-    command_push_position_params(PositionArgs(argv + 2, i - 2));
+    command_push_position_params(PositionArgs(argv + 2, argc - 2));
 
     inc_exec_depth_count();
     ShRepl::the().enter(*input_source);

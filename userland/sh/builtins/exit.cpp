@@ -3,13 +3,14 @@
 
 #include "../builtin.h"
 
-static int op_exit(char **args) {
+static int op_exit(int argc, char **args) {
+    if (argc > 2) {
+        fprintf(stderr, "Usage: exit [n]\n");
+        return 2;
+    }
+
     int status = 0;
-    if (args[1] != NULL) {
-        if (args[2] != NULL) {
-            printf("Usage: %s [n]\n", args[0]);
-            return 1;
-        }
+    if (argc == 2) {
         status = atoi(args[1]);
     }
 

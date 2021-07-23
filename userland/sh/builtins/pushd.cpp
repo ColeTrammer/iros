@@ -15,14 +15,14 @@ static void print_dirs() {
     printf("%c", '\n');
 }
 
-static int op_dirs(char **) {
+static int op_dirs(int, char **) {
     print_dirs();
     return 0;
 }
 SH_REGISTER_BUILTIN(dirs, op_dirs);
 
-static int op_pushd(char **argv) {
-    if (!argv[1]) {
+static int op_pushd(int argc, char **argv) {
+    if (argc != 2) {
         fprintf(stderr, "Usage: %s <dir>\n", argv[0]);
         return 2;
     }
@@ -39,7 +39,7 @@ static int op_pushd(char **argv) {
 }
 SH_REGISTER_BUILTIN(pushd, op_pushd);
 
-static int op_popd(char **argv) {
+static int op_popd(int, char **argv) {
     if (s_dir_stack.empty()) {
         fprintf(stderr, "%s: directory stack empty\n", argv[0]);
         return 1;

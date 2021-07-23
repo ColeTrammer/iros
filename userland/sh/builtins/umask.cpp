@@ -4,13 +4,13 @@
 
 #include "../builtin.h"
 
-static int op_umask(char **argv) {
-    if (argv[2]) {
+static int op_umask(int argc, char **argv) {
+    if (argc > 2) {
         fprintf(stderr, "Usage: %s <mode>\n", *argv);
         return 2;
     }
 
-    if (!argv[1]) {
+    if (argc == 1) {
         mode_t mask = umask(0);
         umask(mask);
 

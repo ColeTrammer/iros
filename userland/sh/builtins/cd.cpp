@@ -5,17 +5,17 @@
 #include "../builtin.h"
 #include "../input.h"
 
-static int op_cd(char **args) {
-    if (args[2]) {
-        printf("Usage: %s <dir>\n", args[0]);
-        return 0;
+static int op_cd(int argc, char **argv) {
+    if (argc > 2) {
+        printf("Usage: %s <dir>\n", argv[0]);
+        return 2;
     }
 
     char *dir = NULL;
-    if (!args[1]) {
+    if (!argv[1]) {
         dir = getenv("HOME");
     } else {
-        dir = args[1];
+        dir = argv[1];
     }
 
     int ret = chdir(dir);

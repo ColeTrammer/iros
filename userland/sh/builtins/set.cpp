@@ -2,14 +2,14 @@
 #include "../command.h"
 #include "../sh_state.h"
 
-static int op_set(char **argv) {
-    if (argv[1] == NULL) {
+static int op_set(int argc, char **argv) {
+    if (argc == 1) {
         // FIXME: should print out every shell variable.
         return 0;
     }
 
     int i = 1;
-    for (; argv[i]; i++) {
+    for (; i < argc; i++) {
         if (argv[i][0] == '-' || argv[i][0] == '+') {
             bool worked = false;
             if (argv[i][1] != 'o') {
@@ -39,7 +39,7 @@ static int op_set(char **argv) {
         break;
     }
 
-    for (; argv[i]; i++) {
+    for (; i < argc; i++) {
         command_add_position_param(argv[i]);
     }
 

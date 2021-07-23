@@ -10,7 +10,7 @@
 
 #include "../builtin.h"
 
-static int op_read(char **argv) {
+static int op_read(int argc, char **argv) {
     Vector<char> input;
 
     bool prev_was_backslash = false;
@@ -58,7 +58,7 @@ static int op_read(char **argv) {
         return 1;
     }
 
-    for (size_t i = 1; argv[i] != nullptr; i++) {
+    for (size_t i = 1; i < static_cast<size_t>(argc); i++) {
         if (exp.we_wordc <= i - 1) {
             break;
         }

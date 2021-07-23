@@ -5,13 +5,13 @@
 #include "../builtin.h"
 #include "../command.h"
 
-static int op_eval(char **argv) {
-    if (!argv[1]) {
+static int op_eval(int argc, char **argv) {
+    if (argc == 1) {
         return 0;
     }
 
     String string;
-    for (size_t i = 1; argv[i]; i++) {
+    for (int i = 1; i < argc; i++) {
         string += argv[i];
         if (argv[i + 1]) {
             string += " ";

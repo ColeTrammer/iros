@@ -1,9 +1,7 @@
 #include "../builtin.h"
 #include "../job.h"
 
-static int op_jobs(char **argv) {
-    (void) argv;
-
+static int op_jobs(int, char **) {
     job_check_updates(false);
     job_print_all();
     return 0;

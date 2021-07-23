@@ -8,7 +8,7 @@
 
 #include "../builtin.h"
 
-static int op_time(char **argv) {
+static int op_time(int, char **argv) {
     struct timeval start;
     gettimeofday(&start, nullptr);
     pid_t pid = fork();

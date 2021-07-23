@@ -344,7 +344,7 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
         }
 
         *was_builtin = true;
-        int ret = op->execute(we.we_wordv);
+        int ret = op->execute(we.we_wordc, we.we_wordv);
         wordfree(&we);
         return ret;
     }
@@ -376,7 +376,7 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
         command.assignment_words.for_each(do_assignment_word);
 
         if (op) {
-            _exit(op->execute(we.we_wordv));
+            _exit(op->execute(we.we_wordc, we.we_wordv));
         }
 
         execvp(we.we_wordv[0], we.we_wordv);
