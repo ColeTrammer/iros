@@ -1,3 +1,15 @@
+set(USERLAND_BUILTINS
+    kill
+)
+
+foreach(BUILTIN IN LISTS USERLAND_BUILTINS)
+    set(SOURCES builtins/${BUILTIN}.cpp)
+    add_os_executable(${BUILTIN} bin)
+    target_link_libraries(${BUILTIN} libliim)
+    target_compile_definitions(${BUILTIN} PUBLIC NO_SH)
+endforeach()
+
+
 set(SOURCES
     builtins/alias.cpp
     builtins/bg.cpp
@@ -14,7 +26,6 @@ set(SOURCES
     builtins/fg.cpp
     builtins/history.cpp
     builtins/jobs.cpp
-    builtins/kill.cpp
     builtins/pushd.cpp
     builtins/read.cpp
     builtins/return.cpp
@@ -35,6 +46,9 @@ set(SOURCES
     main.cpp
     sh_state.cpp
 )
+list(TRANSFORM USERLAND_BUILTINS PREPEND builtins/)
+list(TRANSFORM USERLAND_BUILTINS APPEND .cpp)
+list(PREPEND SOURCES ${USERLAND_BUILTINS})
 
 add_os_executable(sh bin)
 target_link_libraries(sh libsh libext libtinput)

@@ -36,10 +36,16 @@ private:
 #define __CAT_(x, y) x##y
 #define __CAT(x, y)  __CAT_(x, y)
 
+#ifdef NO_SH
+#define SH_BUILTIN_MAIN(name) main
+#define SH_REGISTER_BUILTIN(name, entry)
+#else
+#define SH_BUILTIN_MAIN(name) name
 #define SH_REGISTER_BUILTIN(name, entry)                                         \
     __attribute__((constructor)) void __CAT(__register_##entry, __COUNTER__)() { \
         Sh::BuiltInManager::the().register_builtin("" #name, entry);             \
     }
+#endif
 
 class FunctionBody;
 

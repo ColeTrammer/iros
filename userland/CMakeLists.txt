@@ -36,7 +36,6 @@ set(TARGETS
     grep
     head
     id
-    kill
     ln
     logname
     ls

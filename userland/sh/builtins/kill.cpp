@@ -83,7 +83,7 @@ static void print_usage(const char* name) {
     fprintf(stderr, "Usage: %s [-l|-s SIGNAL] <PID...>\n", name);
 }
 
-int op_kill(int argc, char** argv) {
+int SH_BUILTIN_MAIN(op_kill)(int argc, char** argv) {
     if (argc == 1) {
         print_usage(*argv);
         return 2;
@@ -157,12 +157,16 @@ int op_kill(int argc, char** argv) {
     bool any_failed = false;
     for (; optind < argc; optind++) {
         pid_t pid;
+#ifdef NO_SH
+        pid = atoi(argv[optind]);
+#else
         if (argv[optind][0] == '%') {
             auto id = job_id(JOB_ID, atoi(argv[optind] + 1));
             pid = -get_pgid_from_id(id);
         } else {
             pid = atoi(argv[optind]);
         }
+#endif
 
         if (kill(pid, signal)) {
             perror("kill: kill");
@@ -170,7 +174,9 @@ int op_kill(int argc, char** argv) {
         }
     }
 
+#ifndef NO_SH
     job_check_updates(true);
+#endif
     return any_failed ? 1 : 0;
 }
 SH_REGISTER_BUILTIN(kill, op_kill);
