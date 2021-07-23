@@ -903,8 +903,9 @@ static Stack<PositionArgs> args_stack;
 
 void command_push_position_params(const PositionArgs& args) {
     args_stack.push(args);
-    special_vars.position_args = args_stack.peek().argv.vector();
-    special_vars.position_args_size = (size_t) args_stack.peek().argc;
+    args_stack.peek().prepend(special_vars.vals[WRDE_SPECIAL_ZERO]);
+    special_vars.position_args = args_stack.peek().argv.vector() + 1;
+    special_vars.position_args_size = (size_t) args_stack.peek().argc - 1;
 }
 
 void command_pop_position_params() {
@@ -913,26 +914,30 @@ void command_pop_position_params() {
         return;
     }
 
-    special_vars.position_args = args_stack.peek().argv.vector();
-    special_vars.position_args_size = (size_t) args_stack.peek().argc;
+    special_vars.position_args = args_stack.peek().argv.vector() + 1;
+    special_vars.position_args_size = (size_t) args_stack.peek().argc - 1;
 }
 
 size_t command_position_params_size() {
-    return args_stack.peek().argc;
+    return args_stack.peek().argc - 1;
+}
+
+char** command_position_params() {
+    return args_stack.peek().argv.vector();
 }
 
 void command_shift_position_params_left(int amount) {
     args_stack.peek().shift(amount);
 
-    special_vars.position_args = args_stack.peek().argv.vector();
-    special_vars.position_args_size = (size_t) args_stack.peek().argc;
+    special_vars.position_args = args_stack.peek().argv.vector() + 1;
+    special_vars.position_args_size = (size_t) args_stack.peek().argc - 1;
 }
 
 void command_add_position_param(char* s) {
     args_stack.peek().add(s);
 
-    special_vars.position_args = args_stack.peek().argv.vector();
-    special_vars.position_args_size = (size_t) args_stack.peek().argc;
+    special_vars.position_args = args_stack.peek().argv.vector() + 1;
+    special_vars.position_args_size = (size_t) args_stack.peek().argc - 1;
 }
 
 void command_init_special_vars(char* arg_zero) {

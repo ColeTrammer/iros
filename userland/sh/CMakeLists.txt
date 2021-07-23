@@ -1,11 +1,12 @@
 set(USERLAND_BUILTINS
     kill
+    getopts
 )
 
 foreach(BUILTIN IN LISTS USERLAND_BUILTINS)
     set(SOURCES builtins/${BUILTIN}.cpp)
     add_os_executable(${BUILTIN} bin)
-    target_link_libraries(${BUILTIN} libliim)
+    target_link_libraries(${BUILTIN} libsh libliim)
     target_compile_definitions(${BUILTIN} PUBLIC NO_SH)
 endforeach()
 

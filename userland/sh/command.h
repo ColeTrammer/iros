@@ -35,10 +35,12 @@ public:
         argv.clear();
         argc -= amount;
 
-        for (int i = 0; i < amount; i++) {
+        auto first = strings.head();
+        for (int i = 0; i <= amount; i++) {
             strings.remove(strings.head());
         }
 
+        strings.prepend(first);
         sync_argv();
     }
 
@@ -48,10 +50,17 @@ public:
         sync_argv();
     }
 
+    void prepend(char* s) {
+        strings.prepend(String(s));
+        argc++;
+        sync_argv();
+    }
+
     PositionArgs(const PositionArgs& other) : argc(other.argc), strings(other.strings) { sync_argv(); }
 
 private:
     void sync_argv() {
+        argv.clear();
         strings.for_each([&](const auto& s) {
             argv.add((char*) s.string());
         });
@@ -75,6 +84,7 @@ int get_last_exit_status();
 void command_push_position_params(const PositionArgs& args);
 void command_pop_position_params();
 size_t command_position_params_size();
+char** command_position_params();
 void command_shift_position_params_left(int amount);
 void command_add_position_param(char* s);
 
