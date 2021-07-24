@@ -15,7 +15,7 @@ void IconView::render() {
             Rect icon_rect = { item.rect.x() + m_icon_padding_x, item.rect.y() + m_icon_padding_y, m_icon_width, m_icon_height };
             renderer.draw_bitmap(*bitmap, bitmap->rect(), icon_rect);
         }
-        if (!item.name.is_empty()) {
+        if (!item.name.empty()) {
             Rect text_rect = { item.rect.x(), item.rect.y() + m_icon_height + 2 * m_icon_padding_y, item.rect.width(),
                                item.rect.height() - m_icon_height - 2 * m_icon_padding_y };
             renderer.render_text(item.name, text_rect, text_color(), TextAlign::Center, font());

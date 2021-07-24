@@ -574,7 +574,7 @@ int ReplDisplay::enter() {
                     }
 
                     if (key_event.key() == App::Key::D && key_event.modifiers() == App::KeyModifier::Control) {
-                        if (document->num_lines() == 1 && document->content_string().is_empty()) {
+                        if (document->num_lines() == 1 && document->content_string().empty()) {
                             set_quit_by_eof();
                             quit();
                             break;

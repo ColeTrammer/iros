@@ -110,7 +110,7 @@ void ParserGenerator::generate_generic_parser(String path) {
         fprintf(file, "#include \"%s_value.h\"\n", m_output_name.string());
     }
 
-    if (!m_name_space.is_empty()) {
+    if (!m_name_space.empty()) {
         fprintf(file, "\nnamespace %s {\n", m_name_space.string());
     }
 
@@ -181,7 +181,7 @@ void ParserGenerator::generate_generic_parser(String path) {
         FILE* file = fdopen(ofd, "w");
         fprintf(file, "#include \"generic_%s_parser.h\"\n\n", String(m_output_name).to_lower_case().string());
 
-        if (!m_name_space.is_empty()) {
+        if (!m_name_space.empty()) {
             fprintf(file, "namespace %s {\n\n", m_name_space.string());
         }
 
@@ -336,7 +336,7 @@ void ParserGenerator::generate_generic_parser(String path) {
         fprintf(file, "    return false;\n");
         fprintf(file, "}\n");
 
-        if (!m_name_space.is_empty()) {
+        if (!m_name_space.empty()) {
             fprintf(file, "\n}\n");
         }
     }
@@ -375,7 +375,7 @@ void ParserGenerator::generate_generic_parser(String path) {
             m_output_name.string());
 
     fprintf(file, "};\n");
-    if (!m_name_space.is_empty()) {
+    if (!m_name_space.empty()) {
         fprintf(file, "\n}\n");
     }
 
@@ -403,7 +403,7 @@ void ParserGenerator::generate_value_header(const String& path, const String& va
     fprintf(file, "#include <liim/variant.h>\n");
     fprintf(file, "#include %s\n\n", value_types_header.string());
 
-    if (!m_name_space.is_empty()) {
+    if (!m_name_space.empty()) {
         fprintf(file, "namespace %s {\n\n", m_name_space.string());
     }
 
@@ -416,7 +416,7 @@ void ParserGenerator::generate_value_header(const String& path, const String& va
     }
     fprintf(file, "\n>;\n");
 
-    if (!m_name_space.is_empty()) {
+    if (!m_name_space.empty()) {
         fprintf(file, "\n}\n");
     }
 

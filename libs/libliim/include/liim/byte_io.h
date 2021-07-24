@@ -17,7 +17,7 @@ public:
     size_t bytes_remaining() const { return m_data.size() - byte_offset(); }
     bool finished() const { return bytes_remaining() == 0; }
 
-    Span<const uint8_t> span_remaining() const { return m_data.after(byte_offset()); }
+    Span<const uint8_t> span_remaining() const { return m_data.subspan(byte_offset()); }
 
     void reset() { m_byte_offset = 0; }
 
@@ -85,7 +85,7 @@ public:
     size_t space_available() const { return capacity() - bytes_written(); }
     uint8_t* data() const { return m_output.data(); }
 
-    Span<uint8_t> span_available() const { return m_output.after(bytes_written()); }
+    Span<uint8_t> span_available() const { return m_output.subspan(bytes_written()); }
 
     void set_output(Span<uint8_t> output) {
         m_output = output;

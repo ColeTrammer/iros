@@ -78,7 +78,7 @@ void History::write_history() {
 }
 
 void History::add(String text) {
-    if (text.is_empty() || isspace(text[0])) {
+    if (text.empty() || isspace(text[0])) {
         return;
     }
 

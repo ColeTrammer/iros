@@ -32,7 +32,7 @@ InputResult FileInputSource::get_input() {
         }
 
         auto input = input_text();
-        if (!input.is_empty()) {
+        if (!input.empty()) {
             input += String("\n");
         }
         input += String(line);
@@ -46,7 +46,7 @@ InputResult FileInputSource::get_input() {
     }
 
     free(line);
-    if (!input_text().is_empty()) {
+    if (!input_text().empty()) {
         return InputResult::Success;
     }
     return InputResult::Eof;

@@ -114,7 +114,7 @@ static inline String literal_to_token(const StringView& literal) {
 static inline String token_to_literal(const StringView& name) {
     String output = "";
     for (size_t i = 0; i < name.size();) {
-        auto next = name.after(i);
+        auto next = name.substring(i);
 #undef __ENUMERATE_LITERALS
 #define __ENUMERATE_LITERALS(c, n)          \
     if (next.starts_with(StringView(#n))) { \

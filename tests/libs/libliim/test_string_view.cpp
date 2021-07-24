@@ -20,8 +20,8 @@ TEST(string_view, substrings) {
     auto test = "test string literal"sv;
     EXPECT(test.first(4) == "test"sv);
     EXPECT(test.first(0) == ""sv);
-    EXPECT(test.after(5) == "string literal"sv);
-    EXPECT(test.after(test.size()) == ""sv);
+    EXPECT(test.substring(5) == "string literal"sv);
+    EXPECT(test.substring(test.size()) == ""sv);
     EXPECT(test.last(7) == "literal"sv);
     EXPECT(test.substring(5, 6) == "string"sv);
 }

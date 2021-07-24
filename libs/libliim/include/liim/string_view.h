@@ -56,7 +56,7 @@ public:
         assert(count <= size());
         return { data() + (size() - count), count };
     }
-    constexpr StringView after(size_t count) const {
+    constexpr StringView substring(size_t count) const {
         assert(count <= size());
         return { data() + count, size() - count };
     }

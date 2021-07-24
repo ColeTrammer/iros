@@ -168,7 +168,7 @@ public:
 };
 
 Maybe<Mode> parse_mode(const String& string) {
-    if (string.is_empty()) {
+    if (string.empty()) {
         return {};
     }
 

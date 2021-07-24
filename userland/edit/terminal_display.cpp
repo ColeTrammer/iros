@@ -271,7 +271,7 @@ void TerminalDisplay::draw_status_message() {
         m_status_message = "";
     }
 
-    auto& name = document()->name().is_empty() ? String("[Unamed File]") : document()->name();
+    auto& name = document()->name().empty() ? String("[Unamed File]") : document()->name();
 
     auto cursor_col = cursors()
                           .main_cursor()

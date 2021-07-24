@@ -186,7 +186,7 @@ STATE(csi_intermediate) {
 STATE(csi_param) {
     ON_ENTRY(CsiParam) {
         m_on_state_exit = [this] {
-            if (!m_current_param.is_empty()) {
+            if (!m_current_param.empty()) {
                 m_params.add(atoi(m_current_param.string()));
             }
         };
@@ -273,7 +273,7 @@ STATE(dcs_entry) {
 STATE(dcs_param) {
     ON_ENTRY(DcsParam) {
         m_on_state_exit = [this] {
-            if (!m_current_param.is_empty()) {
+            if (!m_current_param.empty()) {
                 m_params.add(atoi(m_current_param.string()));
             }
         };
@@ -411,7 +411,7 @@ void TTYParser::param(uint8_t byte) {
         return;
     }
 
-    if (m_current_param.is_empty()) {
+    if (m_current_param.empty()) {
         m_params.add(0);
         return;
     }

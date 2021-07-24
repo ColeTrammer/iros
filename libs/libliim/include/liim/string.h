@@ -64,7 +64,13 @@ public:
     const char& operator[](size_t index) const { return string()[index]; };
 
     size_t size() const { return is_small() ? (m_string.small.size_and_flag >> 1) : m_string.large.size; }
-    bool is_empty() const { return size() == 0; }
+    bool empty() const { return size() == 0; }
+
+    char& first() { return string()[0]; }
+    const char& first() const { return string()[0]; }
+
+    char& last() { return string()[size() - 1]; }
+    const char& last() const { return string()[size() - 1]; }
 
     size_t capacity() const { return is_small() ? sizeof(m_string.small.data) : (m_string.large.capacity & ~1); };
 
@@ -83,8 +89,16 @@ public:
     StringView view() const { return StringView(string(), size()); }
     Vector<StringView> split_view(char c) const { return view().split(c); }
 
+    String first(size_t count) const { return substring(0, count); }
+    String last(size_t count) const {
+        assert(count <= size());
+        return substring(size() - count, count);
+    }
     String substring(size_t start) const { return substring(start, size() - start); }
     String substring(size_t start, size_t length) const { return String(string() + start, length); }
+
+    bool starts_with(const StringView& needle) { return view().starts_with(needle); }
+    bool ends_with(const StringView& needle) { return view().ends_with(needle); }
 
     Vector<String> split(char c) const {
         auto views = view().split(c);
@@ -107,7 +121,8 @@ public:
     String& to_lower_case();
     String& to_title_case();
 
-    Maybe<size_t> index_of(char c) const;
+    Maybe<size_t> index_of(char c) const { return view().index_of(c); }
+    Maybe<size_t> last_index_of(char c) const { return view().last_index_of(c); }
 
     void swap(String& other);
 
@@ -293,15 +308,6 @@ inline String& String::to_title_case() {
     return *this;
 }
 
-inline Maybe<size_t> String::index_of(char c) const {
-    const char* s = strchr(string(), c);
-    if (s == NULL) {
-        return {};
-    }
-
-    return { static_cast<size_t>(s - string()) };
-}
-
 inline void String::swap(String& other) {
     if (this == &other) {
         return;
@@ -379,6 +385,10 @@ struct Traits<String> {
         return v;
     }
 };
+}
+
+inline LIIM::String operator""s(const char* string, size_t size) {
+    return { string, size };
 }
 
 using LIIM::JoinPrependDelimiter;

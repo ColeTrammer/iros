@@ -14,7 +14,7 @@ InputResult StringInputSource::get_input() {
 
     while (m_line_index < m_line_vector.size()) {
         auto input = input_text();
-        if (!input.is_empty()) {
+        if (!input.empty()) {
             input += String("\n");
         }
         input += String(m_line_vector[m_line_index++]);
@@ -26,7 +26,7 @@ InputResult StringInputSource::get_input() {
         }
     }
 
-    if (!input_text().is_empty()) {
+    if (!input_text().empty()) {
         return InputResult::Success;
     }
     return InputResult::Eof;

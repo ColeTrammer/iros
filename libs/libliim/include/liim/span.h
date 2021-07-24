@@ -32,7 +32,7 @@ public:
         assert(count <= m_size);
         return Span(m_data + (m_size - count), count);
     }
-    constexpr Span after(size_t count) const {
+    constexpr Span subspan(size_t count) const {
         assert(count <= m_size);
         return Span(m_data + count, m_size - count);
     }

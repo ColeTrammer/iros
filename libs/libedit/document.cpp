@@ -571,7 +571,7 @@ void Document::restore_state(MultiCursor& cursors, const StateSnapshot& s) {
 }
 
 void Document::insert_text_at_cursor(Display& display, const String& text) {
-    if (text.is_empty()) {
+    if (text.empty()) {
         return;
     }
 
@@ -784,7 +784,7 @@ void Document::cut(Display& display, MultiCursor& cursors) {
 void Document::paste(Display& display, MultiCursor& cursors) {
     bool is_whole_line;
     auto text_to_insert = display.clipboard_contents(is_whole_line);
-    if (text_to_insert.is_empty()) {
+    if (text_to_insert.empty()) {
         return;
     }
 
@@ -895,7 +895,7 @@ void Document::guess_type_from_name() {
 }
 
 void Document::save(Display& display) {
-    if (m_name.is_empty()) {
+    if (m_name.empty()) {
         auto result = display.prompt("Save as: ");
         if (!result.has_value()) {
             return;
@@ -963,7 +963,7 @@ void Document::update_syntax_highlighting() {
 
 void Document::update_search_results() {
     clear_search_results();
-    if (m_search_text.is_empty()) {
+    if (m_search_text.empty()) {
         return;
     }
 

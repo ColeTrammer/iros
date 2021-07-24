@@ -282,7 +282,7 @@ String ShRepl::get_main_prompt() const {
 
 const Vector<ShRepl::Dirent> &ShRepl::ensure_directory_entries(const String &directory_in) const {
     String directory = directory_in;
-    if (directory.is_empty()) {
+    if (directory.empty()) {
         directory = "./";
     }
 

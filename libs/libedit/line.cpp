@@ -9,7 +9,7 @@
 namespace Edit {
 LineSplitResult Line::split_at(int position) {
     auto first = contents().view().first(position);
-    auto second = contents().view().after(position);
+    auto second = contents().view().substring(position);
 
     auto l1 = Line(String(first));
     auto l2 = Line(String(second));

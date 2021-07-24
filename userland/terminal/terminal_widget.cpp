@@ -154,7 +154,7 @@ void TerminalWidget::on_resize() {
 
 void TerminalWidget::copy_selection() {
     auto text = selection_text();
-    if (!text.is_empty()) {
+    if (!text.empty()) {
         Clipboard::Connection::the().set_clipboard_contents_to_text(text);
     }
 }
@@ -173,7 +173,7 @@ void TerminalWidget::on_key_event(const App::KeyEvent& event) {
         return;
     }
 
-    if (!event.text().is_empty()) {
+    if (!event.text().empty()) {
         clear_selection();
     }
 
@@ -255,7 +255,7 @@ String TerminalWidget::selection_text() const {
             row_text += String(m_tty.row_at_scroll_relative_offset(r)[c].ch);
         }
 
-        while (!row_text.is_empty() && isspace(row_text[row_text.size() - 1])) {
+        while (!row_text.empty() && isspace(row_text[row_text.size() - 1])) {
             row_text.remove_index(row_text.size() - 1);
         }
 

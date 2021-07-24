@@ -6,7 +6,7 @@ RenderedLine LineRenderer::finish(const Line& line) {
     add_to_segment(" ", 1);
     end_segment();
 
-    if (!m_current_rendered_line.is_empty() || !m_current_position_ranges.empty()) {
+    if (!m_current_rendered_line.empty() || !m_current_position_ranges.empty()) {
         m_rendered_line.rendered_lines.add(move(m_current_rendered_line));
         m_rendered_line.position_ranges.add(move(m_current_position_ranges));
     }
