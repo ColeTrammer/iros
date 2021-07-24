@@ -30,8 +30,15 @@ function(add_os_static_library target_name short_name has_headers)
 endfunction()
 
 function(add_os_library_tests library)
-    add_executable("test_${library}" ${TEST_FILES} ${CMAKE_SOURCE_DIR}/libs/libtest/include/test/main.cpp)
-    target_link_libraries("test_${library}" libtest ${library})
+    foreach(TEST_FILE ${TEST_FILES})
+        get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
+        add_executable("${library}_${TEST_NAME}" ${TEST_FILE} ${CMAKE_SOURCE_DIR}/libs/libtest/include/test/main.cpp)
+        target_link_libraries("${library}_${TEST_NAME}" libtest ${library})
+        add_test(
+            NAME "${library}_${TEST_NAME}"
+            COMMAND "${library}_${TEST_NAME}"
+        )
+    endforeach()
 endfunction()
 
 

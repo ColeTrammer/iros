@@ -10,6 +10,8 @@ else()
     set(NATIVE_BUILD TRUE)
 endif()
 
+enable_testing()
+
 add_compile_definitions("ARCH=${ARCH}")
 add_compile_definitions("_OS_2_SOURCE")
 

@@ -75,7 +75,7 @@ set(INITRD_PROGRAMS
     tcp_server_test_a.c
     tcp_test_a.c
     tcp_test_b.c
-    test.c
+    test_argv.c
     test_cpp_a.cpp
     tgkill_test.cpp
     threaded_execve.c
