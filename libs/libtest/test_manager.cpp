@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <test/test_case.h>
 #include <test/test_manager.h>
+#include <unistd.h>
 
 namespace Test {
 TestManager& TestManager::the() {
@@ -21,7 +22,33 @@ void TestManager::test_did_fail(const char* file, int line, const char* cond) {
     m_fail_count++;
 }
 
-int TestManager::do_main(int, char**) {
+static void print_usage(const char* name) {
+    fprintf(stderr, "Usage: %s [-L]\n", name);
+}
+
+int TestManager::do_main(int argc, char** argv) {
+    bool list_simple = false;
+
+    int opt;
+    while ((opt = getopt(argc, argv, ":L")) != -1) {
+        switch (opt) {
+            case 'L':
+                list_simple = true;
+                break;
+            case ':':
+            case '?':
+                print_usage(*argv);
+                return 2;
+        }
+    }
+
+    if (list_simple) {
+        for (auto& test_case : m_test_cases) {
+            printf("%s:%s\n", test_case.suite_name().string(), test_case.case_name().string());
+        }
+        return 0;
+    }
+
     for (auto& test_case : m_test_cases) {
         auto start_fail_count = m_fail_count;
         m_current_test_case = &test_case;
