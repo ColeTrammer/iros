@@ -749,7 +749,6 @@ static int do_pipeline(ShValue::Pipeline& pipeline, ShValue::List::Combinator mo
                 break;
             case ShValue::Command::Type::Simple:
                 pid = __do_simple_command(command.command.as<ShValue::SimpleCommand>(), mode, &is_builtin, pgid);
-                fprintf(stderr, "!!<<\n");
                 break;
             default:
                 assert(false);
