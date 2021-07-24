@@ -103,6 +103,16 @@ public:
         return {};
     }
 
+    Maybe<size_t> last_index_of(char c) const {
+        for (size_t i = size(); i > 0; i--) {
+            if (char_at(i - 1) == c) {
+                return { i - 1 };
+            }
+        }
+
+        return {};
+    }
+
     Vector<StringView> split(char c) const {
         Vector<StringView> ret;
 

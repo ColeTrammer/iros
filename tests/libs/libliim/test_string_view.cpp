@@ -42,6 +42,11 @@ TEST(string_view, find) {
     EXPECT(!haystack.index_of('z'));
     EXPECT(haystack.index_of('i') == Maybe<size_t> { 0 });
     EXPECT(haystack.index_of('t') == Maybe<size_t> { 2 });
+
+    EXPECT(!haystack.last_index_of('z'));
+    EXPECT(haystack.last_index_of('t') == Maybe<size_t> { 7 });
+    EXPECT(haystack.last_index_of('g') == Maybe<size_t> { 10 });
+    EXPECT("abc"sv.last_index_of('a') == Maybe<size_t> { 0 });
 }
 
 TEST(string_view, split) {
