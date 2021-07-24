@@ -30,15 +30,21 @@ function(add_os_static_library target_name short_name has_headers)
 endfunction()
 
 function(add_os_library_tests library)
-    foreach(TEST_FILE ${TEST_FILES})
-        get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
-        add_executable("${library}_${TEST_NAME}" ${TEST_FILE} ${CMAKE_SOURCE_DIR}/libs/libtest/include/test/main.cpp)
-        target_link_libraries("${library}_${TEST_NAME}" libtest ${library})
-        add_test(
-            NAME "${library}_${TEST_NAME}"
-            COMMAND "${library}_${TEST_NAME}"
+    set(test_name "test_${library}")
+    set(test_executable "${CMAKE_CURRENT_BINARY_DIR}/${test_name}")
+    set(test_include_file "${CMAKE_CURRENT_BINARY_DIR}/${test_name}.cmake")
+
+    add_executable("${test_name}" ${TEST_FILES} ${CMAKE_SOURCE_DIR}/libs/libtest/include/test/main.cpp)
+    target_link_libraries("${test_name}" libtest ${library})
+
+    if (${NATIVE_BUILD})
+        add_custom_command(
+            TARGET "test_${library}"
+            POST_BUILD
+            COMMAND "${CMAKE_SOURCE_DIR}/scripts/generate-cmake-tests.sh" "${test_executable}" "${test_name}" "${test_include_file}"
         )
-    endforeach()
+        set_property(DIRECTORY APPEND PROPERTY TEST_INCLUDE_FILES "${test_include_file}")
+    endif()
 endfunction()
 
 
