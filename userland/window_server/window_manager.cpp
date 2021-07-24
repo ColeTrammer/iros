@@ -57,7 +57,7 @@ bool WindowManager::load_palette(const String& path) {
     }
 
     if (m_palette_path != path) {
-        if (!m_palette_path.is_empty()) {
+        if (!m_palette_path.empty()) {
             m_watcher.unwatch(m_palette_path);
         }
         m_watcher.watch(path);
