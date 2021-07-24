@@ -1,5 +1,4 @@
 set(INITRD_PROGRAMS
-    alarm_test.cpp
     aligned_alloc_test.c
     barrier_test.c
     broken.cpp
