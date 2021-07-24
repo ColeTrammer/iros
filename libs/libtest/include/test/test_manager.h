@@ -17,7 +17,7 @@ public:
     int do_main(int argc, char** argv);
 
 private:
-    Vector<TestCase> m_test_cases;
+    Vector<SharedPtr<TestCase>> m_test_cases;
     TestCase* m_current_test_case { nullptr };
     int m_fail_count { 0 };
 };
