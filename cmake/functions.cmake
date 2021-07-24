@@ -29,21 +29,27 @@ function(add_os_static_library target_name short_name has_headers)
     set_target_properties(${target_name} PROPERTIES OUTPUT_NAME ${short_name})
 endfunction()
 
-function(add_os_library_tests library)
-    set(test_name "test_${library}")
+function(add_os_tests name)
+    set(test_name "test_${name}")
     set(test_executable "${CMAKE_CURRENT_BINARY_DIR}/${test_name}")
     set(test_include_file "${CMAKE_CURRENT_BINARY_DIR}/${test_name}.cmake")
+    set(test_generate_script "${CMAKE_SOURCE_DIR}/scripts/generate-cmake-tests.sh")
 
-    add_executable("${test_name}" ${TEST_FILES} ${CMAKE_SOURCE_DIR}/libs/libtest/include/test/main.cpp)
-    target_link_libraries("${test_name}" libtest ${library})
+    set(SOURCES ${TEST_FILES} ${CMAKE_SOURCE_DIR}/libs/libtest/include/test/main.cpp)
+    add_os_executable("${test_name}" bin)
+    target_link_libraries("${test_name}" libtest)
 
     if (${NATIVE_BUILD})
+        target_compile_definitions("${test_name}" PRIVATE "BINARY_DIR=\"${CMAKE_CURRENT_BINARY_DIR}\"")
         add_custom_command(
-            TARGET "test_${library}"
+            TARGET "test_${name}"
             POST_BUILD
-            COMMAND "${CMAKE_SOURCE_DIR}/scripts/generate-cmake-tests.sh" "${test_executable}" "${test_name}" "${test_include_file}"
+            COMMAND "${test_generate_script}" "${test_executable}" "${test_name}" "${test_include_file}"
+            DEPENDS "${test_generate_script}"
         )
         set_property(DIRECTORY APPEND PROPERTY TEST_INCLUDE_FILES "${test_include_file}")
+    else()
+        target_compile_definitions("${test_name}" PRIVATE "BINARY_DIR=\"/bin\"")
     endif()
 endfunction()
 

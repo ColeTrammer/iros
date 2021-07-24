@@ -4,4 +4,5 @@ set(TEST_FILES
     test_string.cpp
 )
 
-add_os_library_tests(libliim ${TEST_FILES})
+add_os_tests(libliim ${TEST_FILES})
+target_link_libraries(test_libliim libliim)
