@@ -79,6 +79,8 @@ public:
     }
     const T& value() const { return const_cast<Maybe<T>&>(*this).value(); }
 
+    T value_or(T&& default_value) const { return has_value() ? value() : default_value; }
+
     void swap(Maybe& other) {
         if (this->has_value() && other.has_value()) {
             LIIM::swap(this->value(), other.value());
