@@ -14,7 +14,6 @@ initrd/files
 *.img
 *.pcap
 *.lock
-test
 
 # GDB
 .gdbinit
