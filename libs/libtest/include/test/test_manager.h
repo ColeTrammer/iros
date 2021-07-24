@@ -18,5 +18,7 @@ public:
 
 private:
     Vector<TestCase> m_test_cases;
+    TestCase* m_current_test_case { nullptr };
+    int m_fail_count { 0 };
 };
 }
