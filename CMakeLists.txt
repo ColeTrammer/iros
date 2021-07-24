@@ -57,6 +57,7 @@ add_subdirectory(gen)
 add_subdirectory(userland)
 add_subdirectory(initrd)
 add_subdirectory(kernel)
+add_subdirectory(tests)
 
 if (NOT ${NATIVE_BUILD})
     add_custom_target(
