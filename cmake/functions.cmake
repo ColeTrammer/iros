@@ -29,6 +29,12 @@ function(add_os_static_library target_name short_name has_headers)
     set_target_properties(${target_name} PROPERTIES OUTPUT_NAME ${short_name})
 endfunction()
 
+function(add_os_library_tests library)
+    add_executable("test_${library}" ${TEST_FILES} ${CMAKE_SOURCE_DIR}/libs/libtest/include/test/main.cpp)
+    target_link_libraries("test_${library}" libtest ${library})
+endfunction()
+
+
 function(add_os_library target_name short_name has_headers)
     add_library(${target_name} SHARED ${SOURCES})
     install(TARGETS ${target_name} LIBRARY DESTINATION usr/lib)
