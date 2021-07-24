@@ -14,6 +14,8 @@ public:
     void register_test_case(String suite_name, String case_name, Function<void()> tester);
     void test_did_fail(const char* file, int line, const char* cond);
 
+    int spawn(Function<void()> before_exec, String path);
+
     int do_main(int argc, char** argv);
 
 private:

@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <sys/wait.h>
+#include <test/test.h>
 #include <test/test_case.h>
 #include <test/test_manager.h>
 #include <unistd.h>
@@ -13,6 +15,26 @@ TestManager::~TestManager() {}
 
 void TestManager::register_test_case(String suite_name, String case_name, Function<void()> tester) {
     m_test_cases.add(make_shared<TestCase>(move(suite_name), move(case_name), move(tester)));
+}
+
+int TestManager::spawn(Function<void()> before_exec, String path) {
+    pid_t child = fork();
+    assert(child >= 0);
+
+    if (child == 0) {
+        before_exec();
+
+        char* args[] = { path.string(), nullptr };
+        assert(execvp(path.string(), args) == 0);
+    }
+
+    int status;
+    assert(waitpid(child, &status, 0) == child);
+
+    if (WIFSIGNALED(status)) {
+        return WTERMSIG(status);
+    }
+    return WEXITSTATUS(status);
 }
 
 void TestManager::test_did_fail(const char* file, int line, const char* cond) {
