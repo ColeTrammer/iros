@@ -141,7 +141,10 @@ struct Traits<StringView> {
         return v;
     }
 };
+}
 
+constexpr LIIM::StringView operator""sv(const char* data, size_t size) {
+    return { data, size };
 }
 
 using LIIM::StringView;
