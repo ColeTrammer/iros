@@ -20,6 +20,9 @@ public:
 
     ~File();
 
+    int fd() const { return m_file ? fileno(m_file) : -1; }
+    FILE* c_file() const { return m_file; }
+
     void set_should_close_file(bool b) { m_should_close_file = b; }
     int error() const {
         int error = m_error;
