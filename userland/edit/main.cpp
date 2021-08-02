@@ -40,24 +40,17 @@ int main(int argc, char** argv) {
         print_usage_and_exit(*argv);
     }
 
-    auto make_document = [&](Edit::Display& display) -> int {
-        SharedPtr<Edit::Document> document;
+    auto error_message = Maybe<String> {};
+    auto document = [&] {
         if (read_from_stdin) {
-            document = Edit::Document::create_from_stdin(argv[optind] ? String(argv[optind]) : String(""), display);
-        } else if (argc - optind == 1) {
-            document = Edit::Document::create_from_file(String(argv[optind]), display);
-        } else {
-            document = Edit::Document::create_empty();
+            return Edit::Document::create_from_stdin(argv[optind] ? String(argv[optind]) : String(""), error_message);
         }
-
-        if (!document) {
-            return 1;
+        if (argc - optind == 1) {
+            return Edit::Document::create_from_file(String(argv[optind]), error_message);
         }
-
-        display.set_document(move(document));
-        display.enter();
-        return 0;
-    };
+        return Edit::Document::create_empty();
+    }();
+    assert(document);
 
     if (use_graphics_mode) {
         auto app = App::Application::create();
@@ -69,15 +62,20 @@ int main(int argc, char** argv) {
             app->main_event_loop().set_should_exit(true);
         };
 
-        int ret = make_document(display);
-        if (ret) {
-            return ret;
+        display.set_document(move(document));
+        if (error_message) {
+            display.send_status_message(*error_message);
         }
-
+        display.enter();
         app->enter();
         return 0;
     }
 
     TerminalDisplay display;
-    return make_document(display);
+    display.set_document(move(document));
+    if (error_message) {
+        display.send_status_message(*error_message);
+    }
+    display.enter();
+    return 0;
 }

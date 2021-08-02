@@ -372,9 +372,10 @@ void TerminalDisplay::do_open_prompt() {
         return;
     }
 
-    auto document = Edit::Document::create_from_file(result.value().string(), *this);
-    if (!document) {
-        send_status_message(String::format("Failed to open `%s'", result.value().string()));
+    auto error_message = Maybe<String> {};
+    auto document = Edit::Document::create_from_file(result.value().string(), error_message);
+    if (error_message) {
+        send_status_message(*error_message);
         return;
     }
 

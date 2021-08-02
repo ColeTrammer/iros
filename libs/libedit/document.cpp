@@ -16,7 +16,7 @@ static inline int isword(int c) {
     return isalnum(c) || c == '_';
 }
 
-SharedPtr<Document> Document::create_from_stdin(const String& path, Display& display) {
+SharedPtr<Document> Document::create_from_stdin(const String& path, Maybe<String>& error_message) {
     auto file = Ext::File(stdin);
     file.set_should_close_file(false);
 
@@ -31,7 +31,7 @@ SharedPtr<Document> Document::create_from_stdin(const String& path, Display& dis
     SharedPtr<Document> ret;
 
     if (!result) {
-        display.send_status_message(String::format("error reading stdin: `%s'", strerror(file.error())));
+        error_message = String::format("error reading stdin: `%s'", strerror(file.error()));
         ret = Document::create_empty();
         ret->set_name(path);
     } else {
@@ -43,14 +43,14 @@ SharedPtr<Document> Document::create_from_stdin(const String& path, Display& dis
     return ret;
 }
 
-SharedPtr<Document> Document::create_from_file(const String& path, Display& display) {
+SharedPtr<Document> Document::create_from_file(const String& path, Maybe<String>& error_message) {
     auto file = Ext::File::create(path, "r");
     if (!file) {
         if (errno == ENOENT) {
-            display.send_status_message(String::format("new file: `%s'", path.string()));
+            error_message = String::format("new file: `%s'", path.string());
             return make_shared<Document>(Vector<Line>(), path, InputMode::Document);
         }
-        display.send_status_message(String::format("error accessing file: `%s': `%s'", path.string(), strerror(errno)));
+        error_message = String::format("error accessing file: `%s': `%s'", path.string(), strerror(errno));
         return Document::create_empty();
     }
 
@@ -65,7 +65,7 @@ SharedPtr<Document> Document::create_from_file(const String& path, Display& disp
     SharedPtr<Document> ret;
 
     if (!result) {
-        display.send_status_message(String::format("error reading file: `%s': `%s'", path.string(), strerror(file->error())));
+        error_message = String::format("error reading file: `%s': `%s'", path.string(), strerror(file->error()));
         ret = Document::create_empty();
     } else {
         lines.add(Line(""));
@@ -73,9 +73,8 @@ SharedPtr<Document> Document::create_from_file(const String& path, Display& disp
     }
 
     if (!file->close()) {
-        display.send_status_message(String::format("error closing file: `%s'", path.string()));
+        error_message = String::format("error closing file: `%s'", path.string());
     }
-
     return ret;
 }
 

@@ -27,8 +27,8 @@ enum class AutoCompleteMode { Never, Always };
 
 class Document {
 public:
-    static SharedPtr<Document> create_from_stdin(const String& path, Display& display);
-    static SharedPtr<Document> create_from_file(const String& path, Display& display);
+    static SharedPtr<Document> create_from_stdin(const String& path, Maybe<String>& error_message);
+    static SharedPtr<Document> create_from_file(const String& path, Maybe<String>& error_message);
     static SharedPtr<Document> create_from_text(const String& text);
     static SharedPtr<Document> create_empty();
     static SharedPtr<Document> create_single_line(String text = "");
