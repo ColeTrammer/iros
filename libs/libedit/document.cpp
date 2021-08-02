@@ -272,6 +272,14 @@ void Document::move_cursor_left_by_word(Display& display, Cursor& cursor, Moveme
 }
 
 void Document::move_cursor_right(Display& display, Cursor& cursor, MovementMode mode) {
+    auto& selection = cursor.selection();
+    if (!selection.empty() && mode == MovementMode::Move) {
+        auto selection_end = selection.normalized_end();
+        clear_selection(cursor);
+        move_cursor_to(display, cursor, selection_end);
+        return;
+    }
+
     auto& line = cursor.referenced_line(*this);
     int index_into_line = cursor.index_into_line();
     if (index_into_line == line.length()) {
@@ -281,14 +289,6 @@ void Document::move_cursor_right(Display& display, Cursor& cursor, MovementMode 
 
         move_cursor_down(display, cursor, mode);
         move_cursor_to_line_start(display, cursor, mode);
-        return;
-    }
-
-    auto& selection = cursor.selection();
-    if (!selection.empty() && mode == MovementMode::Move) {
-        auto selection_end = selection.normalized_end();
-        clear_selection(cursor);
-        move_cursor_to(display, cursor, selection_end);
         return;
     }
 
@@ -306,6 +306,14 @@ void Document::move_cursor_right(Display& display, Cursor& cursor, MovementMode 
 }
 
 void Document::move_cursor_left(Display& display, Cursor& cursor, MovementMode mode) {
+    auto& selection = cursor.selection();
+    if (!selection.empty() && mode == MovementMode::Move) {
+        auto selection_start = selection.normalized_start();
+        clear_selection(cursor);
+        move_cursor_to(display, cursor, selection_start);
+        return;
+    }
+
     auto& line = cursor.referenced_line(*this);
     int index_into_line = cursor.index_into_line();
     if (index_into_line == 0) {
@@ -315,14 +323,6 @@ void Document::move_cursor_left(Display& display, Cursor& cursor, MovementMode m
 
         move_cursor_up(display, cursor, mode);
         move_cursor_to_line_end(display, cursor, mode);
-        return;
-    }
-
-    auto& selection = cursor.selection();
-    if (!selection.empty() && mode == MovementMode::Move) {
-        auto selection_start = selection.normalized_start();
-        clear_selection(cursor);
-        move_cursor_to(display, cursor, selection_start);
         return;
     }
 
