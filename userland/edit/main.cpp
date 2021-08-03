@@ -5,6 +5,8 @@
 #include <liim/string_view.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <tui/application.h>
+#include <tui/flex_layout_engine.h>
 #include <unistd.h>
 
 #include "app_display.h"
@@ -71,11 +73,22 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    TerminalDisplay display;
+    auto app = TUI::Application::try_create();
+    if (!app) {
+        fprintf(stderr, "edit: standard input is not a terminal\n");
+        return 1;
+    }
+
+    auto& display_layout = app->set_layout_engine<TUI::FlexLayoutEngine>(TUI::FlexLayoutEngine::Direction::Horizontal);
+    auto& display = display_layout.add<TerminalDisplay>();
     display.set_document(move(document));
     if (error_message) {
         display.send_status_message(*error_message);
     }
     display.enter();
+
+    app->set_use_alternate_screen_buffer(true);
+    app->set_use_mouse(true);
+    app->enter();
     return 0;
 }
