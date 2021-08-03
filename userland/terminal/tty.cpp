@@ -720,7 +720,7 @@ void TTY::csi_sgr(const Vector<int>& params) {
                 set_bg(VGA_COLOR_LIGHT_GREY);
                 break;
             case 48:
-                // Truecolor Foreground (xterm-256color)
+                // Truecolor Background (xterm-256color)
                 if (params.get_or(i + 1, 0) != 2) {
                     break;
                 }
