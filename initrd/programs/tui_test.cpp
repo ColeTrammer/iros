@@ -9,6 +9,8 @@ class TestPanel final : public TUI::Panel {
 public:
     TestPanel(Color color) : m_color(color) {}
 
+    virtual Maybe<Point> cursor_position() override { return { { 0, 0 } }; }
+
     virtual void render() override {
         auto renderer = get_renderer();
         renderer.clear_rect(sized_rect(), m_color);

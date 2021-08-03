@@ -2,6 +2,7 @@
 
 #include <eventloop/object.h>
 #include <graphics/rect.h>
+#include <liim/forward.h>
 #include <tinput/forward.h>
 #include <tui/forward.h>
 
@@ -28,6 +29,7 @@ public:
     Panel();
     virtual ~Panel();
 
+    virtual Maybe<Point> cursor_position();
     virtual void render();
 
     virtual void on_resize();

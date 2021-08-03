@@ -1,4 +1,5 @@
 #include <eventloop/event.h>
+#include <liim/maybe.h>
 #include <tinput/terminal_renderer.h>
 #include <tui/application.h>
 #include <tui/layout_engine.h>
@@ -37,6 +38,10 @@ void Panel::on_resize() {
     if (m_layout_engine) {
         m_layout_engine->layout();
     }
+}
+
+Maybe<Point> Panel::cursor_position() {
+    return {};
 }
 
 TInput::TerminalRenderer Panel::get_renderer() {

@@ -34,6 +34,7 @@ public:
     App::EventLoop& event_loop() { return m_loop; }
 
     void set_active_panel(Panel* panel);
+    SharedPtr<Panel> active_panel() const { return m_active_panel.lock(); }
 
 private:
     Application(UniquePtr<TInput::IOTerminal> io_terminal);
@@ -48,6 +49,7 @@ private:
     TInput::TerminalInputParser m_parser;
     UniquePtr<TInput::IOTerminal> m_io_terminal;
     WeakPtr<Panel> m_active_panel;
+    Maybe<Point> m_cursor_position;
     bool m_use_alternate_screen_buffer { false };
     bool m_use_mouse { false };
     bool m_render_scheduled { false };
