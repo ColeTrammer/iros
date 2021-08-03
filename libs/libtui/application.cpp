@@ -54,7 +54,7 @@ void Application::render() {
     if (auto active_panel = m_active_panel.lock()) {
         if (auto cursor_position = active_panel->cursor_position()) {
             auto translated = cursor_position->translated(active_panel->positioned_rect().top_left());
-            if (m_io_terminal->terminal_rect().intersects(translated)) {
+            if (m_io_terminal->terminal_rect().intersects(translated) && active_panel->positioned_rect().intersects(translated)) {
                 m_io_terminal->move_cursor_to(translated);
                 m_io_terminal->set_show_cursor(true);
             }
