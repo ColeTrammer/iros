@@ -14,6 +14,18 @@ public:
         renderer.clear_rect(sized_rect(), m_color);
     }
 
+    virtual void on_mouse_down(const App::MouseEvent& event) override {
+        m_color = m_color.invert();
+        invalidate();
+        Panel::on_mouse_down(event);
+    }
+
+    virtual void on_key_event(const App::KeyEvent& event) override {
+        m_color = m_color.invert();
+        invalidate();
+        Panel::on_key_event(event);
+    }
+
 private:
     Color m_color;
 };

@@ -26,13 +26,20 @@ public:
     void invalidate(const Rect& rect);
 
     virtual void render() override;
+    virtual void on_key_event(const App::KeyEvent& event) override;
+    virtual void on_mouse_event(const App::MouseEvent& event) override;
 
     TInput::IOTerminal& io_terminal() { return *m_io_terminal; }
 
     App::EventLoop& event_loop() { return m_loop; }
 
+    void set_active_panel(Panel* panel);
+
 private:
     Application(UniquePtr<TInput::IOTerminal> io_terminal);
+
+    App::MouseEvent translate_mouse_event(const Panel& panel, const App::MouseEvent& event) const;
+    Panel* hit_test(const Panel& panel, const Point& point) const;
 
     void detect_cursor_position();
     void schedule_render();
@@ -40,6 +47,7 @@ private:
     App::EventLoop m_loop;
     TInput::TerminalInputParser m_parser;
     UniquePtr<TInput::IOTerminal> m_io_terminal;
+    WeakPtr<Panel> m_active_panel;
     bool m_use_alternate_screen_buffer { false };
     bool m_use_mouse { false };
     bool m_render_scheduled { false };

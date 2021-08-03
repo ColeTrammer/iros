@@ -63,6 +63,63 @@ void Application::schedule_render() {
     });
 }
 
+void Application::on_key_event(const App::KeyEvent& event) {
+    if (auto panel = m_active_panel.lock(); panel && panel.get() != this) {
+        return panel->on_key_event(event);
+    }
+    set_active_panel(this);
+    Panel::on_key_event(event);
+}
+
+void Application::on_mouse_event(const App::MouseEvent& event) {
+    if (!event.mouse_down_any()) {
+        if (auto panel = m_active_panel.lock(); panel && panel.get() != this) {
+            auto new_event = translate_mouse_event(*panel, event);
+            panel->on_mouse_event(new_event);
+        }
+        return;
+    }
+
+    auto* panel = hit_test(*this, { event.x(), event.y() });
+    set_active_panel(panel);
+    if (auto panel = m_active_panel.lock(); panel && panel.get() != this) {
+        auto new_event = translate_mouse_event(*panel, event);
+        return panel->on_mouse_event(new_event);
+    }
+    set_active_panel(this);
+    Panel::on_mouse_event(event);
+}
+
+App::MouseEvent Application::translate_mouse_event(const Panel& panel, const App::MouseEvent& event) const {
+    return App::MouseEvent(event.mouse_event_type(), event.buttons_down(), event.x() - panel.positioned_rect().x(),
+                           event.y() - panel.positioned_rect().y(), event.z(), event.button(), event.modifiers());
+}
+
+Panel* Application::hit_test(const Panel& root, const Point& point) const {
+    for (auto& child : root.children()) {
+        if (child->is_panel()) {
+            auto& panel = static_cast<const Panel&>(*child);
+            if (auto* result = hit_test(panel, point)) {
+                return result;
+            }
+        }
+    }
+
+    if (root.positioned_rect().intersects(point)) {
+        return const_cast<Panel*>(&root);
+    }
+    return nullptr;
+}
+
+void Application::set_active_panel(Panel* panel) {
+    if (!panel) {
+        m_active_panel.reset();
+        return;
+    }
+
+    m_active_panel = panel->weak_from_this();
+}
+
 void Application::enter() {
     if (!m_use_alternate_screen_buffer) {
         m_io_terminal->detect_cursor_position();
