@@ -62,9 +62,13 @@ void Panel::render() {
 
 void Panel::on_mouse_down(const App::MouseEvent&) {}
 
-void Panel::on_mouse_double(const App::MouseEvent&) {}
+void Panel::on_mouse_double(const App::MouseEvent& event) {
+    return on_mouse_down(event);
+}
 
-void Panel::on_mouse_triple(const App::MouseEvent&) {}
+void Panel::on_mouse_triple(const App::MouseEvent& event) {
+    return on_mouse_down(event);
+}
 
 void Panel::on_mouse_up(const App::MouseEvent&) {}
 
