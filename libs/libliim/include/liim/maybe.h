@@ -67,6 +67,14 @@ public:
     bool operator!() const { return !m_has_value; }
     operator bool() const { return m_has_value; }
 
+    bool operator==(const Maybe& other) const {
+        if (!this->has_value() && !other.has_value()) {
+            return true;
+        }
+        return this->has_value() && other.has_value() && this->value() == other.value();
+    }
+    bool operator!=(const Maybe& other) const { return !(*this == other); }
+
     T& operator*() { return value(); }
     const T& operator*() const { return value(); }
 

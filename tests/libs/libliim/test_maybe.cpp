@@ -25,3 +25,14 @@ TEST(maybe, basic_setters) {
     EXPECT(copy.value_or(0) == 5);
     EXPECT(moved.value_or(0) == 5);
 }
+
+TEST(maybe, equivalence) {
+    auto none = Maybe<int> {};
+    auto one = Maybe<int> { 1 };
+    auto two = Maybe<int> { 2 };
+    EXPECT(none == Maybe<int> {});
+    EXPECT(one == Maybe<int> { 1 });
+    EXPECT(two == Maybe<int> { 2 });
+    EXPECT(one != two);
+    EXPECT(one != none);
+}
