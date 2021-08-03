@@ -9,4 +9,6 @@ class Repl;
 class StringInputSource;
 class TerminalInputParser;
 class TerminalInputSource;
+class TerminalRenderer;
+struct TerminalTextStyle;
 }

@@ -2,11 +2,13 @@
 
 #include <eventloop/selectable.h>
 #include <ext/file.h>
+#include <graphics/point.h>
 #include <graphics/rect.h>
 #include <liim/forward.h>
 #include <liim/function.h>
 #include <liim/pointers.h>
 #include <termios.h>
+#include <tinput/terminal_text_style.h>
 
 namespace TInput {
 class IOTerminal {
@@ -22,19 +24,35 @@ public:
 
     void flush();
 
+    void detect_cursor_position();
+
+    void reset_cursor();
+    void move_cursor_to(const Point& position);
+    void put_style(const TerminalTextStyle& style);
+    void put_text(const Point& position, const StringView& text, const TerminalTextStyle& style = {});
+
     const Rect& terminal_rect() const { return m_terminal_rect; }
 
     Function<void(Span<const uint8_t>)> on_recieved_input;
     Function<void(const Rect&)> on_resize;
 
-    IOTerminal(termios& saved_termios, termios& current_termios, const Rect& m_terminal_rect, UniquePtr<Ext::File> file);
+    IOTerminal(const termios& saved_termios, const termios& current_termios, const Rect& m_terminal_rect, UniquePtr<Ext::File> file);
 
 private:
+    enum class ColorRole { Foreground, Background };
+    String color_string(Maybe<Color> color, ColorRole role) const;
+
     UniquePtr<Ext::File> m_file;
     SharedPtr<App::FdWrapper> m_selectable;
+    TerminalTextStyle m_current_text_style;
+    Point m_cursor_position;
     Rect m_terminal_rect;
     termios m_saved_termios;
     termios m_current_termios;
     bool m_did_set_termios { false };
+    bool m_show_cursor { true };
+    bool m_use_alternate_screen_buffer { false };
+    bool m_use_mouse { false };
+    bool m_bracketed_paste { false };
 };
 }

@@ -85,6 +85,7 @@ set(INITRD_PROGRAMS
     times_test.c
     tls_test.c
     tmpnam_test.c
+    tui_test.cpp
     udp_test.c
     vector_test.cpp
     vm_internet_test.c
@@ -140,4 +141,5 @@ target_link_libraries(test_cpp_a ${PTHREAD_LIB})
 target_link_libraries(tgkill_test ${PTHREAD_LIB})
 target_link_libraries(timer_overrun_test ${REALTIME_LIB})
 target_link_libraries(timer_test ${REALTIME_LIB})
+target_link_libraries(tui_test libtui)
 target_link_libraries(vector_test libliim)

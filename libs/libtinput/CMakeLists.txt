@@ -8,6 +8,7 @@ set(SOURCES
     string_input_source.cpp
     terminal_input_parser.cpp
     terminal_input_source.cpp
+    terminal_renderer.cpp
 )
 
 add_os_library(libtinput tinput TRUE)
