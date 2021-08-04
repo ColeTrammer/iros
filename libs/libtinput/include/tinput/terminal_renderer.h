@@ -20,6 +20,9 @@ public:
     void render_text(const Rect& rect, const StringView& text, const TerminalTextStyle& style = {},
                      TextAlign alignment = TextAlign::CenterLeft);
 
+    void render_complex_styled_text(const Rect& rect, const StringView& text, Function<TerminalTextStyle(size_t)>,
+                                    TextAlign alignment = TextAlign::CenterLeft);
+
 private:
     Rect translate(const Rect& rect) { return rect.translated(m_origin); }
     Rect constrained(const Rect& rect) { return rect.intersection_with(m_clip_rect); }

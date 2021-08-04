@@ -108,7 +108,7 @@ void TerminalDisplay::on_resize() {
     }
 }
 
-void TerminalDisplay::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>&) {
+void TerminalDisplay::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) {
     auto renderer = get_renderer();
     auto visible_line_rect = Rect { m_cols_needed_for_line_numbers, row, sized_rect().width() - m_cols_needed_for_line_numbers, 1 };
     renderer.set_clip_rect(visible_line_rect);
@@ -117,7 +117,19 @@ void TerminalDisplay::output_line(int row, int col_offset, const StringView& tex
     auto text_width = text.size();
 
     auto text_rect = visible_line_rect.translated({ -col_offset, 0 }).with_width(text_width);
-    renderer.render_text(text_rect, text);
+    renderer.render_complex_styled_text(text_rect, text, [&](size_t index) -> TInput::TerminalTextStyle {
+        auto rendering_info = rendering_info_for_metadata(metadata[index]);
+        return TInput::TerminalTextStyle {
+            .foreground = rendering_info.fg.map([](vga_color color) {
+                return Color { color };
+            }),
+            .background = rendering_info.bg.map([](vga_color color) {
+                return Color { color };
+            }),
+            .bold = rendering_info.bold,
+            .invert = rendering_info.secondary_cursor,
+        };
+    });
 
     auto clear_rect = Rect { text_rect.right(), row, max(visible_line_rect.right() - text_rect.right(), 0), 1 };
     renderer.clear_rect(clear_rect);
