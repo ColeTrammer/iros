@@ -33,6 +33,8 @@ public:
     virtual void render();
 
     virtual void on_resize();
+    virtual void on_made_active() {}
+    virtual void on_made_not_active() {}
 
     virtual void on_mouse_down(const App::MouseEvent&);
     virtual void on_mouse_double(const App::MouseEvent&);

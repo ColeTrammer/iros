@@ -124,12 +124,24 @@ Panel* Application::hit_test(const Panel& root, const Point& point) const {
 }
 
 void Application::set_active_panel(Panel* panel) {
+    auto old_panel = m_active_panel.lock();
+    if (old_panel.get() == panel) {
+        return;
+    }
+
+    if (old_panel) {
+        old_panel->on_made_not_active();
+    }
+
     if (!panel) {
         m_active_panel.reset();
         return;
     }
 
     m_active_panel = panel->weak_from_this();
+    if (panel) {
+        panel->on_made_active();
+    }
 }
 
 void Application::enter() {
