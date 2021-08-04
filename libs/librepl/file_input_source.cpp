@@ -1,9 +1,9 @@
+#include <repl/file_input_source.h>
+#include <repl/repl_base.h>
 #include <stdlib.h>
-#include <tinput/file_input_source.h>
-#include <tinput/repl.h>
 
-namespace TInput {
-UniquePtr<FileInputSource> FileInputSource::create_from_path(Repl& repl, const String& path) {
+namespace Repl {
+UniquePtr<FileInputSource> FileInputSource::create_from_path(ReplBase& repl, const String& path) {
     FILE* file = fopen(path.string(), "r");
     if (!file) {
         return nullptr;
@@ -12,7 +12,7 @@ UniquePtr<FileInputSource> FileInputSource::create_from_path(Repl& repl, const S
     return make_unique<FileInputSource>(repl, file);
 }
 
-FileInputSource::FileInputSource(Repl& repl, FILE* file) : InputSource(repl), m_file(file) {}
+FileInputSource::FileInputSource(ReplBase& repl, FILE* file) : InputSource(repl), m_file(file) {}
 
 FileInputSource::~FileInputSource() {
     fclose(m_file);

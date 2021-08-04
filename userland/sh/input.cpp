@@ -25,7 +25,7 @@
 
 enum class LineStatus { Done, Continue, EscapedNewline, Error };
 
-TInput::InputStatus ShRepl::get_input_status(const String &input) const {
+Repl::InputStatus ShRepl::get_input_status(const String &input) const {
     bool prev_was_backslash = false;
     bool in_s_quotes = false;
     bool in_d_quotes = false;
@@ -55,22 +55,22 @@ TInput::InputStatus ShRepl::get_input_status(const String &input) const {
     }
 
     if (prev_was_backslash) {
-        return TInput::InputStatus::Incomplete;
+        return Repl::InputStatus::Incomplete;
     }
 
     ShLexer lexer(input.string(), input.size());
     auto lex_result = lexer.lex();
     if (!lex_result) {
-        return TInput::InputStatus::Incomplete;
+        return Repl::InputStatus::Incomplete;
     }
 
     ShParser parser(lexer);
     auto parse_result = parser.parse();
     if (!parse_result) {
-        return parser.needs_more_tokens() ? TInput::InputStatus::Incomplete : TInput::InputStatus::Finished;
+        return parser.needs_more_tokens() ? Repl::InputStatus::Incomplete : Repl::InputStatus::Finished;
     }
 
-    return TInput::InputStatus::Finished;
+    return Repl::InputStatus::Finished;
 }
 
 struct suggestion {
@@ -492,7 +492,7 @@ ShRepl &ShRepl::the() {
     return *s_the;
 }
 
-ShRepl::ShRepl() : Repl(make_unique<TInput::History>(history_file(), history_size())) {
+ShRepl::ShRepl() : ReplBase(make_unique<Repl::History>(history_file(), history_size())) {
     s_the = this;
 }
 

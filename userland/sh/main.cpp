@@ -3,6 +3,9 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <pwd.h>
+#include <repl/file_input_source.h>
+#include <repl/string_input_source.h>
+#include <repl/terminal_input_source.h>
 #include <setjmp.h>
 #include <sh/sh_lexer.h>
 #include <sh/sh_parser.h>
@@ -17,9 +20,6 @@
 #include <sys/utsname.h>
 #include <sys/wait.h>
 #include <termios.h>
-#include <tinput/file_input_source.h>
-#include <tinput/string_input_source.h>
-#include <tinput/terminal_input_source.h>
 #include <unistd.h>
 
 #include "builtin.h"
@@ -58,13 +58,13 @@ int main(int argc, char** argv) {
 
     // Respect -c
     int arg_index = 1;
-    UniquePtr<TInput::InputSource> input_source;
+    UniquePtr<Repl::InputSource> input_source;
     bool string_input = false;
     if (argc > 1 && strcmp(argv[1], "-c") == 0) {
         string_input = true;
         arg_index++;
     } else if (argc > 1 && strcmp(argv[1], "-s") == 0) {
-        input_source = make_unique<TInput::FileInputSource>(repl, stdin);
+        input_source = make_unique<Repl::FileInputSource>(repl, stdin);
         arg_index++;
     }
 
@@ -101,10 +101,10 @@ int main(int argc, char** argv) {
             ShState::the().set_vi(true);
             command_init_special_vars(argv[0]);
 
-            input_source = make_unique<TInput::TerminalInputSource>(repl);
+            input_source = make_unique<Repl::TerminalInputSource>(repl);
         }
     } else if (string_input) {
-        input_source = make_unique<TInput::StringInputSource>(repl, argv[arg_index]);
+        input_source = make_unique<Repl::StringInputSource>(repl, argv[arg_index]);
 
         arg_index++;
         if (arg_index >= argc) {
@@ -113,7 +113,7 @@ int main(int argc, char** argv) {
             command_init_special_vars(argv[arg_index++]);
         }
     } else if (!input_source) {
-        input_source = TInput::FileInputSource::create_from_path(repl, argv[arg_index]);
+        input_source = Repl::FileInputSource::create_from_path(repl, argv[arg_index]);
         if (!input_source) {
             perror("sh");
             return 1;

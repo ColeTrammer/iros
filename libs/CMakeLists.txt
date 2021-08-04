@@ -21,6 +21,7 @@ set(TARGETS
     libipc
     libliim
     libprocinfo
+    librepl
     libsh
     libsharedtest
     libsharedtest2

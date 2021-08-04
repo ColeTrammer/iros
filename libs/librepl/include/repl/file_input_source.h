@@ -1,14 +1,14 @@
 #pragma once
 
+#include <repl/input_source.h>
 #include <stdio.h>
-#include <tinput/input_source.h>
 
-namespace TInput {
+namespace Repl {
 class FileInputSource final : public InputSource {
 public:
-    static UniquePtr<FileInputSource> create_from_path(Repl& repl, const String& path);
+    static UniquePtr<FileInputSource> create_from_path(ReplBase& repl, const String& path);
 
-    FileInputSource(Repl& repl, FILE* file);
+    FileInputSource(ReplBase& repl, FILE* file);
     virtual ~FileInputSource() override;
 
     virtual InputResult get_input() override;

@@ -1,11 +1,11 @@
 #include <edit/document.h>
-#include <tinput/repl.h>
-#include <tinput/terminal_input_source.h>
+#include <repl/repl_base.h>
+#include <repl/terminal_input_source.h>
 
 #include "repl_display.h"
 
-namespace TInput {
-TerminalInputSource::TerminalInputSource(Repl& repl) : InputSource(repl) {}
+namespace Repl {
+TerminalInputSource::TerminalInputSource(ReplBase& repl) : InputSource(repl) {}
 
 TerminalInputSource::~TerminalInputSource() {}
 

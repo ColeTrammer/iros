@@ -1,9 +1,9 @@
-#include <tinput/repl.h>
-#include <tinput/string_input_source.h>
+#include <repl/repl_base.h>
+#include <repl/string_input_source.h>
 
-namespace TInput {
+namespace Repl {
 
-StringInputSource::StringInputSource(Repl& repl, String string) : InputSource(repl), m_string(move(string)) {
+StringInputSource::StringInputSource(ReplBase& repl, String string) : InputSource(repl), m_string(move(string)) {
     m_line_vector = m_string.split_view('\n');
 }
 

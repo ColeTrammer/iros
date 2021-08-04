@@ -9,11 +9,11 @@
 #include <time.h>
 #include <tinput/terminal_input_parser.h>
 
-namespace TInput {
+namespace Repl {
 
 class ReplDisplay final : public Edit::Display {
 public:
-    ReplDisplay(Repl& repl);
+    ReplDisplay(ReplBase& repl);
     virtual ~ReplDisplay() override;
 
     virtual int rows() const override { return m_rows; }
@@ -69,7 +69,7 @@ private:
 
     void get_absolute_row_position();
 
-    Repl& m_repl;
+    ReplBase& m_repl;
     String m_main_prompt;
     String m_secondary_prompt;
     Vector<SharedPtr<Edit::Document>> m_history_documents;

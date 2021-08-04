@@ -1,10 +1,9 @@
 #pragma once
 
 #include <liim/string.h>
+#include <repl/forward.h>
 
-namespace TInput {
-class Repl;
-
+namespace Repl {
 enum class InputResult {
     Eof,
     Error,
@@ -13,14 +12,14 @@ enum class InputResult {
 
 class InputSource {
 public:
-    InputSource(Repl& repl);
+    InputSource(ReplBase& repl);
     virtual ~InputSource();
 
     virtual InputResult get_input() = 0;
 
     const String& input_text() const { return m_input; }
 
-    Repl& repl() { return m_repl; }
+    ReplBase& repl() { return m_repl; }
 
 protected:
     void set_input(String input) { m_input = move(input); }
@@ -28,6 +27,6 @@ protected:
 
 private:
     String m_input;
-    Repl& m_repl;
+    ReplBase& m_repl;
 };
 }

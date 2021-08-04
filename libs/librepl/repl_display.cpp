@@ -7,17 +7,17 @@
 #include <errno.h>
 #include <eventloop/event.h>
 #include <graphics/point.h>
+#include <repl/repl_base.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
 #include <termios.h>
-#include <tinput/repl.h>
 #include <unistd.h>
 
 #include "repl_display.h"
 
-namespace TInput {
+namespace Repl {
 
 static termios s_original_termios;
 static bool s_raw_mode_enabled;
@@ -71,7 +71,7 @@ static void enable_raw_mode() {
     fflush(stdout);
 }
 
-ReplDisplay::ReplDisplay(Repl& repl) : m_repl(repl) {
+ReplDisplay::ReplDisplay(ReplBase& repl) : m_repl(repl) {
     assert(isatty(STDOUT_FILENO));
 
     m_main_prompt = repl.get_main_prompt();
@@ -202,7 +202,7 @@ void ReplDisplay::document_did_change() {
             auto input_text = document()->content_string();
             auto input_status = m_repl.get_input_status(input_text);
 
-            if (input_status == InputStatus::Finished) {
+            if (input_status == Repl::InputStatus::Finished) {
                 cursors().remove_secondary_cursors();
                 document()->move_cursor_to_document_end(*this, cursors().main_cursor());
                 document()->set_preview_auto_complete(false);

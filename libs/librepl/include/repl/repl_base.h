@@ -2,24 +2,19 @@
 
 #include <edit/document_type.h>
 #include <liim/pointers.h>
-#include <tinput/history.h>
+#include <repl/forward.h>
+#include <repl/history.h>
 
-class Suggestions;
-
-namespace TInput {
-
-class InputSource;
-class History;
-
+namespace Repl {
 enum class InputStatus {
     Incomplete,
     Finished,
 };
 
-class Repl {
+class ReplBase {
 public:
-    explicit Repl(UniquePtr<History> history);
-    virtual ~Repl();
+    explicit ReplBase(UniquePtr<History> history);
+    virtual ~ReplBase();
 
     History& history() { return *m_history; }
     const History& history() const { return *m_history; }
@@ -44,5 +39,4 @@ protected:
 private:
     UniquePtr<History> m_history;
 };
-
 }

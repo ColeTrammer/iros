@@ -52,7 +52,7 @@ list(TRANSFORM USERLAND_BUILTINS APPEND .cpp)
 list(PREPEND SOURCES ${USERLAND_BUILTINS})
 
 add_os_executable(sh bin)
-target_link_libraries(sh libsh libext libtinput)
+target_link_libraries(sh libsh libext librepl)
 
 if (${NATIVE_BUILD})
     target_compile_definitions(sh PRIVATE USERLAND_NATIVE)

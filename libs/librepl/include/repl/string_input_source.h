@@ -1,11 +1,11 @@
 #pragma once
 
-#include <tinput/input_source.h>
+#include <repl/input_source.h>
 
-namespace TInput {
+namespace Repl {
 class StringInputSource final : public InputSource {
 public:
-    StringInputSource(Repl& repl, String string);
+    StringInputSource(ReplBase& repl, String string);
     virtual ~StringInputSource() override;
 
     virtual InputResult get_input() override;

@@ -5,6 +5,7 @@
 #include <liim/hash_map.h>
 #include <liim/string.h>
 #include <liim/vector.h>
+#include <repl/file_input_source.h>
 #include <sh/sh_lexer.h>
 #include <sh/sh_parser.h>
 #include <signal.h>
@@ -16,7 +17,6 @@
 #include <sys/times.h>
 #include <sys/wait.h>
 #include <time.h>
-#include <tinput/file_input_source.h>
 #include <unistd.h>
 
 #ifndef USERLAND_NATIVE

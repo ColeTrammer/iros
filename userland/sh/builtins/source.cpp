@@ -1,5 +1,5 @@
+#include <repl/file_input_source.h>
 #include <stdio.h>
-#include <tinput/file_input_source.h>
 
 #include "../builtin.h"
 #include "../command.h"
@@ -12,7 +12,7 @@ int op_source(int argc, char **argv) {
     }
 
     auto path = String(argv[1]);
-    auto input_source = TInput::FileInputSource::create_from_path(ShRepl::the(), path);
+    auto input_source = Repl ::FileInputSource::create_from_path(ShRepl::the(), path);
     if (!input_source) {
         fprintf(stderr, "%s: Failed to open file `%s'\n", argv[0], path.string());
         return 1;

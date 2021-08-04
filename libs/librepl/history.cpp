@@ -1,9 +1,9 @@
 #include <ctype.h>
+#include <repl/history.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <tinput/history.h>
 
-namespace TInput {
+namespace Repl {
 
 History::History(String path, int history_max) : m_history(history_max), m_history_max(history_max), m_path(move(path)) {
     read_history();

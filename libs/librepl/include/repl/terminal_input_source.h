@@ -1,11 +1,11 @@
 #pragma once
 
-#include <tinput/input_source.h>
+#include <repl/input_source.h>
 
-namespace TInput {
+namespace Repl {
 class TerminalInputSource final : public InputSource {
 public:
-    TerminalInputSource(Repl& repl);
+    TerminalInputSource(ReplBase& repl);
     virtual ~TerminalInputSource() override;
 
     virtual InputResult get_input() override;

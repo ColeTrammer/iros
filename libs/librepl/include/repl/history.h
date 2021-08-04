@@ -3,8 +3,7 @@
 #include <liim/string.h>
 #include <liim/vector.h>
 
-namespace TInput {
-
+namespace Repl {
 class History {
 public:
     History(String path, int history_max);

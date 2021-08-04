@@ -2,12 +2,12 @@
 
 #include <liim/hash_map.h>
 #include <liim/pointers.h>
+#include <repl/repl_base.h>
 #include <sh/sh_token.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include <tinput/repl.h>
 
-class ShRepl final : public TInput::Repl {
+class ShRepl final : public Repl::ReplBase {
 public:
     static ShRepl& the();
 
@@ -20,7 +20,7 @@ private:
     virtual void did_end_input() override;
     virtual bool force_stop_input() const override;
 
-    virtual TInput::InputStatus get_input_status(const String& input) const override;
+    virtual Repl::InputStatus get_input_status(const String& input) const override;
     virtual Edit::DocumentType get_input_type() const override { return Edit::DocumentType::ShellScript; }
     virtual String get_main_prompt() const override;
     virtual String get_secondary_prompt() const override { return "> "; }
