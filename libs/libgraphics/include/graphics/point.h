@@ -15,6 +15,9 @@ public:
     constexpr Point translated(int dx, int dy) const { return { x() + dx, y() + dy }; }
     constexpr Point translated(const Point& p) const { return translated(p.x(), p.y()); }
 
+    constexpr Point with_x(int x) const { return { x, y() }; }
+    constexpr Point with_y(int y) const { return { x(), y }; }
+
     constexpr bool operator==(const Point& other) const { return this->x() == other.x() && this->y() == other.y(); }
     constexpr bool operator!=(const Point& other) const { return !(*this == other); }
 

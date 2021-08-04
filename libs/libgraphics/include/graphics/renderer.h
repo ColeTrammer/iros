@@ -43,7 +43,6 @@ private:
     int translate_y(int y) const { return y + m_bounding_rect.top(); }
 
     Rect constrain(const Rect& r) const { return m_bounding_rect.intersection_with(r); }
-    Point constrain(const Point& p) const { return m_bounding_rect.constrained(p); }
     int constrain_x(int x) const { return clamp(x, m_bounding_rect.left(), m_bounding_rect.right()); }
     int constrain_y(int y) const { return clamp(y, m_bounding_rect.top(), m_bounding_rect.bottom()); }
 

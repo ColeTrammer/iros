@@ -27,10 +27,10 @@ public:
     constexpr void set_width(int width) { m_width = width; }
     constexpr void set_height(int height) { m_height = height; }
 
-    constexpr Point top_left() const { return { x(), y() }; }
-    constexpr Point top_right() const { return { x() + width(), y() }; }
-    constexpr Point bottom_left() const { return { x(), y() + height() }; }
-    constexpr Point bottom_right() const { return { x() + width(), y() + height() }; }
+    constexpr Point top_left() const { return { left(), top() }; }
+    constexpr Point top_right() const { return { right(), top() }; }
+    constexpr Point bottom_left() const { return { left(), bottom() }; }
+    constexpr Point bottom_right() const { return { right(), bottom() }; }
     constexpr Point center() const { return Point(x() + width() / 2, y() + height() / 2); }
 
     constexpr Rect top_edge() const { return { x(), y(), width(), 1 }; }
@@ -38,7 +38,7 @@ public:
     constexpr Rect bottom_edge() const { return { x(), y() + height() - 1, width(), 1 }; }
     constexpr Rect left_edge() const { return { x(), y(), 1, height() }; }
 
-    constexpr bool intersects(Point p) const { return p.x() >= m_x && p.x() <= m_x + m_width && p.y() >= m_y && p.y() <= m_y + m_height; }
+    constexpr bool intersects(Point p) const { return p.x() >= left() && p.x() < right() && p.y() >= top() && p.y() < bottom(); }
     constexpr bool intersects(const Rect& other) const {
         return !(this->x() >= other.x() + other.width() || this->x() + this->width() <= other.x() ||
                  this->y() >= other.y() + other.height() || this->y() + this->height() <= other.y());
@@ -67,7 +67,22 @@ public:
     constexpr Rect positioned(int x, int y) const { return { x, y, width(), height() }; }
     constexpr Rect positioned(Point p) const { return positioned(p.x(), p.y()); }
 
-    constexpr Point constrained(const Point& p) const { return { clamp(p.x(), left(), right()), clamp(p.y(), top(), bottom()) }; }
+    constexpr Rect expanded(int d) const { return expanded(d, d); }
+    constexpr Rect expanded(int dx, int dy) const { return { x(), y(), width() + dx, height() + dy }; }
+
+    constexpr Rect shrinked(int d) const { return shrinked(d, d); }
+    constexpr Rect shrinked(int dx, int dy) const {
+        auto rect = Rect { x(), y(), width() - dx, height() - dy };
+        if (rect.width() < 0 || rect.height() < 0) {
+            return {};
+        }
+        return rect;
+    }
+
+    constexpr Rect with_x(int x) const { return { x, y(), width(), height() }; }
+    constexpr Rect with_y(int y) const { return { x(), y, width(), height() }; }
+    constexpr Rect with_width(int width) const { return { x(), y(), width, height() }; }
+    constexpr Rect with_height(int height) const { return { x(), y(), width(), height }; }
 
     constexpr bool operator==(const Rect& other) const {
         return this->x() == other.x() && this->y() == other.y() && this->width() == other.width() && this->height() == other.height();
@@ -80,15 +95,3 @@ private:
     int m_width { 0 };
     int m_height { 0 };
 };
-
-static_assert(Rect(10, 10, 500, 500).intersects(Point(15, 15)));
-static_assert(!Rect(10, 10, 500, 500).intersects(Rect()));
-static_assert(!Rect(10, 10, 500, 500).intersects(Rect(550, 50, 5, 5)));
-static_assert(Rect(10, 10, 500, 500).intersects(Rect(50, 50, 50, 50)));
-
-static_assert(Rect(50, 50, 50, 50).intersection_with(Rect(60, 60, 10, 10)) == Rect(60, 60, 10, 10));
-static_assert(Rect(100, 25, 50, 50).intersection_with(Rect(50, 35, 100, 10)) == Rect(100, 35, 50, 10));
-static_assert(Rect(0, 0, 500, 500).intersection_with(Rect(50, 50, 500, 500)) == Rect(50, 50, 450, 450));
-static_assert(Rect(50, 50, 50, 50).intersection_with(Rect(10, 10, 10, 10)) == Rect());
-static_assert(Rect(25, 25, 450, 450).intersection_with(Rect(50, 50, 300, 300)) == Rect(50, 50, 300, 300));
-static_assert(Rect(40, 60, 10, 100).intersection_with(Rect(25, 25, 450, 450)) == Rect(40, 60, 10, 100));
