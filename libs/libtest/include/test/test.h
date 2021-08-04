@@ -10,10 +10,10 @@
     }                                                                                                         \
     static void suite_name##_##case_name()
 
-#define EXPECT(cond)                                                              \
-    do {                                                                          \
-        if (!(cond)) {                                                            \
-            Test::TestManager::the().test_did_fail(__FILE__, __LINE__, "" #cond); \
-            return;                                                               \
-        }                                                                         \
+#define EXPECT(...)                                                                      \
+    do {                                                                                 \
+        if (!(__VA_ARGS__)) {                                                            \
+            Test::TestManager::the().test_did_fail(__FILE__, __LINE__, "" #__VA_ARGS__); \
+            return;                                                                      \
+        }                                                                                \
     } while (0)
