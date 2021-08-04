@@ -14,7 +14,7 @@ public:
     TerminalRenderer(IOTerminal& io_terminal) : m_io_terminal(io_terminal) {}
 
     void set_origin(const Point& point) { m_origin = point; }
-    void set_clip_rect(const Rect& rect) { m_clip_rect = rect; }
+    void set_clip_rect(const Rect& rect) { m_clip_rect = translate(rect); }
 
     void clear_rect(const Rect& rect, Maybe<Color> color = {});
     void render_text(const Rect& rect, const StringView& text, const TerminalTextStyle& style = {},
