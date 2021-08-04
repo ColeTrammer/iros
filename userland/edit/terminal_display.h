@@ -46,9 +46,6 @@ public:
     virtual void set_clipboard_contents(String text, bool is_whole_line) override;
     virtual String clipboard_contents(bool& is_whole_line) const override;
 
-    int col_offset() const { return m_col_offset; }
-    int row_offset() const { return m_row_offset; }
-
 private:
     virtual void document_did_change() override;
 
@@ -56,7 +53,5 @@ private:
 
     mutable String m_prev_clipboard_contents;
     mutable bool m_prev_clipboard_contents_were_whole_line { false };
-    int m_row_offset { 0 };
-    int m_col_offset { 0 };
     int m_cols_needed_for_line_numbers { 0 };
 };

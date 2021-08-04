@@ -87,7 +87,7 @@ void TerminalDisplay::render() {
 
     document()->display(*this);
 
-    auto empty_rows = m_row_offset + rows() - document()->num_rendered_lines(*this);
+    auto empty_rows = scroll_row_offset() + rows() - document()->num_rendered_lines(*this);
     auto renderer = get_renderer();
     renderer.clear_rect({ 0, rows() - empty_rows, sized_rect().width(), empty_rows });
 }
@@ -114,6 +114,8 @@ void TerminalDisplay::on_resize() {
     if (document()) {
         document()->notify_display_size_changed();
     }
+
+    return Panel::on_resize();
 }
 
 void TerminalDisplay::on_made_active() {
