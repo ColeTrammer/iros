@@ -1,200 +1,26 @@
-#include <assert.h>
 #include <clipboard/connection.h>
 #include <edit/document.h>
 #include <edit/document_type.h>
 #include <edit/line_renderer.h>
 #include <edit/position.h>
-#include <errno.h>
 #include <eventloop/event.h>
 #include <graphics/point.h>
 #include <repl/repl_base.h>
-#include <signal.h>
 #include <stdlib.h>
-#include <sys/ioctl.h>
-#include <sys/select.h>
-#include <termios.h>
-#include <unistd.h>
+#include <tinput/terminal_renderer.h>
+#include <tui/application.h>
 
 #include "repl_display.h"
 
 namespace Repl {
-
-static termios s_original_termios;
-static bool s_raw_mode_enabled;
-
-static ReplDisplay* s_main_display;
-
-static void restore_termios() {
-    tcsetattr(STDOUT_FILENO, TCSAFLUSH, &s_original_termios);
-
-    fputs("\033[?2004l\033[?25h", stdout);
-    fflush(stdout);
-
-    setvbuf(stdout, nullptr, _IOLBF, BUFSIZ);
-
-    s_raw_mode_enabled = false;
-}
-
-static void update_display_sizes() {
-    assert(s_main_display);
-
-    winsize sz;
-    assert(ioctl(STDOUT_FILENO, TIOCGWINSZ, &sz) == 0);
-
-    s_main_display->set_coordinates(sz.ws_row, sz.ws_col);
-}
-
-static void enable_raw_mode() {
-    s_raw_mode_enabled = true;
-
-    assert(tcgetattr(STDOUT_FILENO, &s_original_termios) == 0);
-
-    termios to_set = s_original_termios;
-
-    cfmakeraw(&to_set);
-
-    // 100 ms timeout on reads
-    to_set.c_cc[VMIN] = 0;
-    to_set.c_cc[VTIME] = 1;
-
-    assert(tcsetattr(STDOUT_FILENO, TCSAFLUSH, &to_set) == 0);
-
-    signal(SIGWINCH, [](int) {
-        update_display_sizes();
-    });
-
-    atexit(restore_termios);
-
-    setvbuf(stdout, nullptr, _IOFBF, BUFSIZ);
-
-    fputs("\033[?2004h", stdout);
-    fflush(stdout);
-}
-
 ReplDisplay::ReplDisplay(ReplBase& repl) : m_repl(repl) {
-    assert(isatty(STDOUT_FILENO));
-
     m_main_prompt = repl.get_main_prompt();
     m_secondary_prompt = repl.get_secondary_prompt();
 
     m_history_index = m_repl.history().size();
-
-    if (!s_raw_mode_enabled) {
-        enable_raw_mode();
-    }
-
-    s_main_display = this;
-    update_display_sizes();
 }
 
-void ReplDisplay::set_coordinates(int rows, int cols) {
-    m_rows = rows;
-    m_cols = cols;
-
-    if (m_absolute_row_position != -1) {
-        int old_row_position = m_absolute_row_position;
-        if (old_row_position >= m_rows) {
-            m_absolute_row_position = max(0, m_rows - document()->num_lines());
-        }
-
-        printf("\033[%d;%dH", m_absolute_row_position + 1, 1);
-        m_visible_cursor_row = 0;
-        m_visible_cursor_col = 0;
-    }
-
-    if (auto* doc = document()) {
-        doc->notify_display_size_changed();
-    }
-}
-
-ReplDisplay::~ReplDisplay() {
-    restore_termios();
-}
-
-static int vga_color_to_number(vga_color color, bool background) {
-    int ret = 0;
-
-    switch (color) {
-        case VGA_COLOR_BLACK:
-            ret = 30;
-            break;
-        case VGA_COLOR_RED:
-            ret = 31;
-            break;
-        case VGA_COLOR_GREEN:
-            ret = 32;
-            break;
-        case VGA_COLOR_BROWN:
-            ret = 33;
-            break;
-        case VGA_COLOR_BLUE:
-            ret = 34;
-            break;
-        case VGA_COLOR_MAGENTA:
-            ret = 35;
-            break;
-        case VGA_COLOR_CYAN:
-            ret = 36;
-            break;
-        case VGA_COLOR_LIGHT_GREY:
-            ret = 37;
-            break;
-        case VGA_COLOR_DARK_GREY:
-            ret = 90;
-            break;
-        case VGA_COLOR_LIGHT_RED:
-            ret = 91;
-            break;
-        case VGA_COLOR_LIGHT_GREEN:
-            ret = 92;
-            break;
-        case VGA_COLOR_YELLOW:
-            ret = 93;
-            break;
-        case VGA_COLOR_LIGHT_BLUE:
-            ret = 94;
-            break;
-        case VGA_COLOR_LIGHT_MAGENTA:
-            ret = 95;
-            break;
-        case VGA_COLOR_LIGHT_CYAN:
-            ret = 96;
-            break;
-        case VGA_COLOR_WHITE:
-            ret = 97;
-            break;
-    }
-
-    return background ? ret + 10 : ret;
-}
-
-String ReplDisplay::string_for_metadata(Edit::CharacterMetadata metadata) const {
-    String ret = "\033[0";
-
-    RenderingInfo info = rendering_info_for_metadata(metadata);
-    if (info.bold) {
-        ret += ";1";
-    }
-
-    if (info.fg.has_value()) {
-        ret += String::format(";%d", vga_color_to_number(info.fg.value(), false));
-    } else {
-        ret += ";39";
-    }
-
-    if (info.bg.has_value()) {
-        ret += String::format(";%d", vga_color_to_number(info.bg.value(), true));
-    } else {
-        ret += ";49";
-    }
-
-    if (info.secondary_cursor) {
-        ret += ";7";
-    }
-
-    ret += "m";
-    return ret;
-}
+ReplDisplay::~ReplDisplay() {}
 
 void ReplDisplay::document_did_change() {
     if (document()) {
@@ -206,10 +32,11 @@ void ReplDisplay::document_did_change() {
                 cursors().remove_secondary_cursors();
                 document()->move_cursor_to_document_end(*this, cursors().main_cursor());
                 document()->set_preview_auto_complete(false);
-                flush();
-                printf("\r\n");
-                fflush(stdout);
+                invalidate();
                 quit();
+                deferred_invoke([] {
+                    printf("\r\n");
+                });
                 return;
             }
 
@@ -217,7 +44,6 @@ void ReplDisplay::document_did_change() {
             cursors().remove_secondary_cursors();
             document()->move_cursor_to_document_end(*this, cursors().main_cursor());
             document()->scroll_cursor_into_view(*this, cursors().main_cursor());
-            flush_if_needed();
         };
 
         notify_line_count_changed();
@@ -226,12 +52,92 @@ void ReplDisplay::document_did_change() {
 }
 
 void ReplDisplay::quit() {
-    m_should_exit = true;
-    m_exit_code = 1;
+    TUI::Application::the().event_loop().set_should_exit(true);
 }
 
-int ReplDisplay::index(int row, int col) const {
-    return row * cols() + col;
+int ReplDisplay::enter() {
+    TUI::Application::the().set_active_panel(this);
+    return 0;
+}
+
+Maybe<Point> ReplDisplay::cursor_position() {
+    if (!document()) {
+        return {};
+    }
+
+    auto position = document()->cursor_position_on_display(*this, cursors().main_cursor());
+    return Point { position.col, position.row };
+}
+
+void ReplDisplay::render() {
+    if (!document()) {
+        return;
+    }
+
+    document()->display(*this);
+
+    auto empty_rows = scroll_row_offset() + rows() - document()->num_rendered_lines(*this);
+    auto renderer = get_renderer();
+    renderer.clear_rect({ 0, rows() - empty_rows, sized_rect().width(), empty_rows });
+}
+
+void ReplDisplay::on_resize() {
+    if (document()) {
+        document()->notify_display_size_changed();
+    }
+
+    return Panel::on_resize();
+}
+
+void ReplDisplay::on_key_event(const App::KeyEvent& event) {
+    if (!document()) {
+        return;
+    }
+
+    if (event.key() == App::Key::C && event.control_down()) {
+        deferred_invoke([] {
+            printf("^C\r\n");
+        });
+        set_quit_by_interrupt();
+        quit();
+        return;
+    }
+
+    if (event.key() == App::Key::D && event.control_down()) {
+        if (document()->num_lines() == 1 && document()->content_string().empty()) {
+            set_quit_by_eof();
+            quit();
+        }
+        return;
+    }
+
+    if (event.key() == App::Key::UpArrow && cursors().main_cursor().line_index() == 0) {
+        move_history_up();
+        return;
+    }
+
+    if (event.key() == App::Key::DownArrow && cursors().main_cursor().line_index() == document()->num_lines() - 1) {
+        move_history_down();
+        return;
+    }
+
+    if (event.key() != App::Key::Tab) {
+        m_consecutive_tabs = 0;
+    }
+
+    document()->notify_key_pressed(*this, event);
+}
+
+void ReplDisplay::on_mouse_event(const App::MouseEvent& event) {
+    if (!document()) {
+        return;
+    }
+
+    if (document()->notify_mouse_event(*this, event)) {
+        return;
+    }
+
+    return Panel::on_mouse_event(event);
 }
 
 static int string_print_width(const StringView& string) {
@@ -294,103 +200,37 @@ Edit::RenderedLine ReplDisplay::compose_line(const Edit::Line& line) const {
     return renderer.finish(line);
 }
 
-void ReplDisplay::draw_cursor() {
-    auto cursor_pos = document()->cursor_position_on_display(*this, cursors().main_cursor());
-    auto cursor_row = cursor_pos.row;
-    auto cursor_col = cursor_pos.col;
-
-    if (cursor_row >= 0 && cursor_row < rows() && cursor_col >= 0 && cursor_col < cols()) {
-        if (cursor_row < m_visible_cursor_row) {
-            printf("\033[%dA", m_visible_cursor_row - cursor_row);
-        } else if (cursor_row > m_visible_cursor_row) {
-            printf("\033[%dB", cursor_row - m_visible_cursor_row);
-        }
-
-        if (cursor_col < m_visible_cursor_col) {
-            printf("\033[%dD", m_visible_cursor_col - cursor_col);
-        } else if (cursor_col > m_visible_cursor_col) {
-            printf("\033[%dC", cursor_col - m_visible_cursor_col);
-        }
-
-        printf("\033[?25h");
-
-        m_visible_cursor_row = cursor_row;
-        m_visible_cursor_col = cursor_col;
-    } else {
-        printf("\033[?25l");
-    }
-}
-
 void ReplDisplay::send_status_message(String) {}
 
-void ReplDisplay::print_char(char c, Edit::CharacterMetadata metadata) {
-    if (c == '\0') {
-        c = ' ';
-    }
+void ReplDisplay::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) {
+    auto renderer = get_renderer();
 
-    if (metadata != m_last_metadata_rendered) {
-        m_last_metadata_rendered = metadata;
-        fputs(string_for_metadata(metadata).string(), stdout);
-    }
+    auto visible_line_rect = Rect { 0, row, sized_rect().width(), 1 };
+    renderer.set_clip_rect(visible_line_rect);
 
-    fputc(c, stdout);
-    m_visible_cursor_col = min(m_visible_cursor_col + 1, cols() - 1);
-}
+    // FIXME: this computation is more complicated.
+    auto text_width = text.size();
 
-void ReplDisplay::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata_vector) {
-    assert(col_offset == 0);
+    auto text_rect = visible_line_rect.translated({ -col_offset, 0 }).with_width(text_width);
+    renderer.render_complex_styled_text(text_rect, text, [&](size_t index) -> TInput::TerminalTextStyle {
+        auto rendering_info = rendering_info_for_metadata(metadata[index]);
+        return TInput::TerminalTextStyle {
+            .foreground = rendering_info.fg.map([](vga_color color) {
+                return Color { color };
+            }),
+            .background = rendering_info.bg.map([](vga_color color) {
+                return Color { color };
+            }),
+            .bold = rendering_info.bold,
+            .invert = rendering_info.secondary_cursor,
+        };
+    });
 
-    for (size_t i = 0; i < text.size(); i++) {
-        auto metadata = metadata_vector[i];
-        if (metadata != m_last_metadata_rendered) {
-            m_last_metadata_rendered = metadata;
-            fputs(string_for_metadata(metadata).string(), stdout);
-        }
-        fputc(text[i], stdout);
-    }
-
-    printf("\033[0K");
-
-    if (scroll_row_offset() + row == document()->num_rendered_lines(*this) - 1) {
-        m_visible_cursor_row = row;
-        m_visible_cursor_col = string_print_width(text);
-    } else {
-        printf("\r\n");
-        m_visible_cursor_row = row + 1;
-        m_visible_cursor_col = 0;
-    }
+    auto clear_rect = Rect { text_rect.right(), row, max(visible_line_rect.right() - text_rect.right(), 0), 1 };
+    renderer.clear_rect(clear_rect);
 }
 
 void ReplDisplay::do_open_prompt() {}
-
-void ReplDisplay::flush() {
-    if (m_should_exit) {
-        return;
-    }
-
-    m_render_scheduled = false;
-
-    fputs("\033[?25l\r", stdout);
-    m_visible_cursor_col = 0;
-
-    if (m_visible_cursor_row > 0) {
-        printf("\033[%dA", m_visible_cursor_row);
-        m_visible_cursor_row = 0;
-    }
-
-    document()->display(*this);
-
-    printf("\033[0J");
-    draw_cursor();
-    fflush(stdout);
-}
-
-void ReplDisplay::flush_if_needed() {
-    if (!m_render_scheduled) {
-        return;
-    }
-    flush();
-}
 
 Edit::Suggestions ReplDisplay::get_suggestions() const {
     auto content_string = document()->content_string();
@@ -423,25 +263,7 @@ Edit::Suggestions ReplDisplay::get_suggestions() const {
     return Edit::Suggestions { suggestions_object.suggestion_offset(), move(new_suggestions) };
 }
 
-void ReplDisplay::handle_suggestions(const Edit::Suggestions& suggestions) {
-    if (++m_consecutive_tabs >= 2) {
-        auto cursor_row_max = min(rows(), document()->num_rendered_lines(*this)) - 1;
-        if (m_visible_cursor_row < cursor_row_max) {
-            printf("\033[%dB", cursor_row_max - m_visible_cursor_row);
-        }
-        printf("\r\n");
-        for (auto& suggestion : suggestions.suggestion_list()) {
-            printf("%s ", suggestion.string());
-        }
-        printf("\r\n");
-        fflush(stdout);
-
-        m_visible_cursor_row = 0;
-        m_visible_cursor_col = 0;
-
-        flush();
-    }
-}
+void ReplDisplay::handle_suggestions(const Edit::Suggestions&) {}
 
 Vector<SharedPtr<Edit::Document>>& ReplDisplay::ensure_history_documents() {
     if (m_history_documents.empty()) {
@@ -478,7 +300,7 @@ void ReplDisplay::move_history_up() {
     new_document->move_cursor_to_document_end(*this, cursors().main_cursor());
     new_document->scroll_cursor_into_view(*this, cursors().main_cursor());
     new_document->invalidate_rendered_contents(cursors().main_cursor().referenced_line(*new_document));
-    flush();
+    invalidate();
 
     m_history_index--;
 }
@@ -497,123 +319,13 @@ void ReplDisplay::move_history_down() {
     new_document->move_cursor_to_document_end(*this, cursors().main_cursor());
     new_document->scroll_cursor_into_view(*this, cursors().main_cursor());
     new_document->invalidate_rendered_contents(cursors().main_cursor().referenced_line(*new_document));
-    flush();
+    invalidate();
 
     m_history_index++;
 }
 
-void ReplDisplay::get_absolute_row_position() {
-    m_absolute_row_position = -1;
-
-    printf("\033[6n");
-    fflush(stdout);
-
-    char buffer[65];
-    fd_set set;
-    FD_ZERO(&set);
-    FD_SET(STDOUT_FILENO, &set);
-
-    if (select(2, &set, nullptr, nullptr, nullptr) < 0) {
-        return;
-    }
-
-    if (read(STDOUT_FILENO, buffer, sizeof(buffer) - 1) < 0) {
-        return;
-    }
-
-    int row;
-    int col;
-    if (sscanf(buffer, "\033[%d;%dR", &row, &col) < 2) {
-        return;
-    }
-
-    m_absolute_row_position = row - 1;
-}
-
 Edit::TextIndex ReplDisplay::text_index_at_mouse_position(const Point& point) {
     return document()->text_index_at_scrolled_position(*this, { point.y(), point.x() });
-}
-
-int ReplDisplay::enter() {
-    get_absolute_row_position();
-
-    fd_set set;
-    for (;;) {
-        flush_if_needed();
-
-        FD_ZERO(&set);
-        FD_SET(STDIN_FILENO, &set);
-        ssize_t ret = select(STDIN_FILENO + 1, &set, nullptr, nullptr, nullptr);
-        if (ret == -1 && errno == EINTR) {
-            continue;
-        }
-
-        assert(ret >= 0);
-        if (ret == 0) {
-            continue;
-        }
-
-        uint8_t buffer[4096];
-        ret = read(STDIN_FILENO, buffer, sizeof(buffer));
-        if (ret < 0) {
-            if (ret == EINTR) {
-                continue;
-            }
-            assert(false);
-        }
-
-        m_input_parser.stream_data({ buffer, static_cast<size_t>(ret) });
-        auto input = m_input_parser.take_events();
-        if (auto* document = Display::document()) {
-            for (auto& ev : input) {
-                if (ev->type() == App::Event::Type::Key) {
-                    auto& key_event = static_cast<const App::KeyEvent&>(*ev);
-                    if (key_event.key() == App::Key::C && key_event.modifiers() == App::KeyModifier::Control) {
-                        document->set_preview_auto_complete(false);
-                        flush();
-                        printf("^C\r\n");
-                        fflush(stdout);
-                        set_quit_by_interrupt();
-                        quit();
-                        break;
-                    }
-
-                    if (key_event.key() == App::Key::D && key_event.modifiers() == App::KeyModifier::Control) {
-                        if (document->num_lines() == 1 && document->content_string().empty()) {
-                            set_quit_by_eof();
-                            quit();
-                            break;
-                        }
-                        continue;
-                    }
-
-                    if (key_event.key() == App::Key::UpArrow && cursors().main_cursor().line_index() == 0) {
-                        move_history_up();
-                        break;
-                    }
-
-                    if (key_event.key() == App::Key::DownArrow && cursors().main_cursor().line_index() == document->num_lines() - 1) {
-                        move_history_down();
-                        break;
-                    }
-
-                    if (key_event.key() != App::Key::Tab) {
-                        m_consecutive_tabs = 0;
-                    }
-
-                    document->notify_key_pressed(*this, key_event);
-                } else if (ev->type() == App::Event::Type::Mouse) {
-                    document->notify_mouse_event(*this, static_cast<const App::MouseEvent&>(*ev));
-                }
-            }
-        }
-
-        if (m_should_exit) {
-            break;
-        }
-    }
-
-    return m_exit_code;
 }
 
 Maybe<String> ReplDisplay::enter_prompt(const String&, String) {

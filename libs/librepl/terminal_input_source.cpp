@@ -1,10 +1,38 @@
 #include <edit/document.h>
 #include <repl/repl_base.h>
 #include <repl/terminal_input_source.h>
+#include <tinput/io_terminal.h>
+#include <tui/application.h>
+#include <tui/flex_layout_engine.h>
 
 #include "repl_display.h"
 
 namespace Repl {
+class ReplLayoutEngine final : public TUI::LayoutEngine {
+public:
+    ReplLayoutEngine(TUI::Panel& parent) : TUI::LayoutEngine(parent) {}
+
+    virtual void do_add(TUI::Panel& panel) override {
+        assert(!m_panel);
+        m_panel = &panel;
+    }
+
+    virtual void layout() override {
+        if (!m_panel) {
+            return;
+        }
+
+        auto inital_cursor_position = TUI::Application::the().io_terminal().initial_cursor_position();
+        auto terminal_rect = TUI::Application::the().sized_rect();
+
+        m_panel->set_positioned_rect(
+            { 0, inital_cursor_position.y(), terminal_rect.width(), terminal_rect.height() - inital_cursor_position.y() });
+    }
+
+private:
+    TUI::Panel* m_panel { nullptr };
+};
+
 TerminalInputSource::TerminalInputSource(ReplBase& repl) : InputSource(repl) {}
 
 TerminalInputSource::~TerminalInputSource() {}
@@ -13,7 +41,14 @@ InputResult TerminalInputSource::get_input() {
     clear_input();
 
     for (;;) {
-        ReplDisplay display(repl());
+        auto app = TUI::Application::try_create();
+        if (!app) {
+            return InputResult::Error;
+        }
+
+        auto& layout = app->set_layout_engine<ReplLayoutEngine>();
+        auto& display = layout.add<ReplDisplay>(repl());
+
         auto document = Edit::Document::create_single_line();
         display.set_document(document);
         document->set_type(repl().get_input_type());
@@ -21,6 +56,7 @@ InputResult TerminalInputSource::get_input() {
         document->set_preview_auto_complete(true);
         document->set_word_wrap_enabled(true);
         display.enter();
+        app->enter();
 
         if (display.quit_by_eof()) {
             return InputResult::Eof;
@@ -34,9 +70,7 @@ InputResult TerminalInputSource::get_input() {
         repl().history().add(input_text);
 
         set_input(move(input_text));
-        break;
+        return InputResult::Success;
     }
-
-    return InputResult::Success;
 }
 }
