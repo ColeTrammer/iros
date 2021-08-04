@@ -30,10 +30,16 @@ public:
     void add_child(SharedPtr<Object> child);
     void remove_child(SharedPtr<Object> child);
 
-    const Vector<SharedPtr<Object>> children() const { return m_children; }
+    template<typename ObjectType, typename... Args>
+    ObjectType& add(Args&&... args) {
+        return *ObjectType::create(shared_from_this(), forward<Args>(args)...);
+    }
+
+    const Vector<SharedPtr<Object>>& children() const { return m_children; }
 
     virtual bool is_widget() const { return false; }
     virtual bool is_window() const { return false; }
+    virtual bool is_panel() const { return false; }
 
     Object* parent() { return m_parent; }
     const Object* parent() const { return m_parent; }
