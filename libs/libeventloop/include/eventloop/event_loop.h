@@ -18,6 +18,7 @@ public:
     static void register_selectable(Selectable& selectable);
     static void unregister_selectable(Selectable& selectable);
     static void register_signal_handler(int signum, Function<void()> callback);
+    static void unregister_signal_handler(int signum);
     static void register_timer_callback(timer_t id, WeakPtr<Object> target);
     static void unregister_timer_callback(timer_t id);
     static void queue_event(WeakPtr<Object> target, UniquePtr<Event> event);

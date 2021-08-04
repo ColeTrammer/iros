@@ -58,6 +58,10 @@ void EventLoop::register_signal_handler(int signum, Function<void()> callback) {
     s_watched_signals.put(signum, move(callback));
 }
 
+void EventLoop::unregister_signal_handler(int signum) {
+    s_watched_signals.remove(signum);
+}
+
 void EventLoop::register_timer_callback(timer_t id, WeakPtr<Object> target) {
     s_timer_objects.put(id, move(target));
 }
