@@ -26,6 +26,7 @@ set(TARGETS
     libsharedtest2
     libtest
     libtinput
+    libtui
 )
 
 add_all_targets()
