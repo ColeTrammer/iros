@@ -35,7 +35,6 @@ SharedPtr<Document> Document::create_from_stdin(const String& path, Maybe<String
         ret = Document::create_empty();
         ret->set_name(path);
     } else {
-        lines.add(Line(""));
         ret = make_shared<Document>(move(lines), path, InputMode::Document);
     }
 
@@ -68,7 +67,6 @@ SharedPtr<Document> Document::create_from_file(const String& path, Maybe<String>
         error_message = String::format("error reading file: `%s': `%s'", path.string(), strerror(file->error()));
         ret = Document::create_empty();
     } else {
-        lines.add(Line(""));
         ret = make_shared<Document>(move(lines), path, InputMode::Document);
     }
 
