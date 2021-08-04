@@ -14,7 +14,7 @@ void TerminalRenderer::clear_rect(const Rect& rect_in, Maybe<Color> color) {
     }
 }
 
-void TerminalRenderer::render_text(const Rect& rect_in, const String& text, const TerminalTextStyle& style, TextAlign alignment) {
+void TerminalRenderer::render_text(const Rect& rect_in, const StringView& text, const TerminalTextStyle& style, TextAlign alignment) {
     if (rect_in.height() == 0 || rect_in.width() == 0) {
         return;
     }
@@ -48,7 +48,7 @@ void TerminalRenderer::render_text(const Rect& rect_in, const String& text, cons
                 case TextAlign::TopLeft:
                 case TextAlign::CenterLeft:
                 case TextAlign::BottomLeft:
-                    return 0;
+                    return rect.left();
                 case TextAlign::TopCenter:
                 case TextAlign::Center:
                 case TextAlign::BottomCenter:
@@ -67,7 +67,7 @@ void TerminalRenderer::render_text(const Rect& rect_in, const String& text, cons
     for (size_t i = 0; i < text.size(); i++) {
         auto position = Point { start_position.x() + static_cast<int>(i), start_position.y() };
         if (in_bounds(position)) {
-            m_io_terminal.put_text(position, text.view().substring(i, 1), style);
+            m_io_terminal.put_text(position, text.substring(i, 1), style);
         }
     }
 }

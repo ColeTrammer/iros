@@ -17,7 +17,7 @@ public:
     void set_clip_rect(const Rect& rect) { m_clip_rect = rect; }
 
     void clear_rect(const Rect& rect, Maybe<Color> color = {});
-    void render_text(const Rect& rect, const String& text, const TerminalTextStyle& style = {},
+    void render_text(const Rect& rect, const StringView& text, const TerminalTextStyle& style = {},
                      TextAlign alignment = TextAlign::CenterLeft);
 
 private:
