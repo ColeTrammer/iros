@@ -19,6 +19,8 @@ TEST(point, basic) {
     EXPECT(p == p);
     EXPECT(p == Point { 0, 0 });
     EXPECT(q == Point { 2, 3 });
+
+    EXPECT(-q == Point { -2, -3 });
 }
 
 TEST(point, generators) {
