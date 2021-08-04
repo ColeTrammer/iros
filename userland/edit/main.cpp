@@ -11,6 +11,7 @@
 
 #include "app_display.h"
 #include "terminal_display.h"
+#include "terminal_status_bar.h"
 
 void print_usage_and_exit(const char* s) {
     fprintf(stderr, "Usage: %s [-ig] <text-file>\n", s);
@@ -79,8 +80,14 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    auto& display_layout = app->set_layout_engine<TUI::FlexLayoutEngine>(TUI::FlexLayoutEngine::Direction::Horizontal);
+    auto& main_layout = app->set_layout_engine<TUI::FlexLayoutEngine>(TUI::FlexLayoutEngine::Direction::Vertical);
+
+    auto& display_conainer = main_layout.add<TUI::Panel>();
+    auto& display_layout = display_conainer.set_layout_engine<TUI::FlexLayoutEngine>(TUI::FlexLayoutEngine::Direction::Horizontal);
     auto& display = display_layout.add<TerminalDisplay>();
+
+    main_layout.add<TerminalStatusBar>();
+
     display.set_document(move(document));
     if (error_message) {
         display.send_status_message(*error_message);

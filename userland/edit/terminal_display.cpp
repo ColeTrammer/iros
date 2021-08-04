@@ -8,9 +8,9 @@
 #include <stdlib.h>
 #include <tinput/terminal_renderer.h>
 #include <tui/application.h>
-#include <unistd.h>
 
 #include "terminal_display.h"
+#include "terminal_status_bar.h"
 
 TerminalDisplay::TerminalDisplay() {}
 
@@ -64,7 +64,9 @@ int TerminalDisplay::cols() const {
     return sized_rect().width() - m_cols_needed_for_line_numbers;
 }
 
-void TerminalDisplay::send_status_message(String) {}
+void TerminalDisplay::send_status_message(String message) {
+    TerminalStatusBar::the().set_status_message(move(message));
+}
 
 Maybe<Point> TerminalDisplay::cursor_position() {
     if (!document()) {
@@ -106,6 +108,10 @@ void TerminalDisplay::on_resize() {
     if (document()) {
         document()->notify_display_size_changed();
     }
+}
+
+void TerminalDisplay::on_made_active() {
+    TerminalStatusBar::the().set_active_display(this);
 }
 
 void TerminalDisplay::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) {
