@@ -36,3 +36,25 @@ TEST(maybe, equivalence) {
     EXPECT(one != two);
     EXPECT(one != none);
 }
+
+TEST(maybe, functional) {
+    auto none = Maybe<int> {};
+    auto one = Maybe<int> { 1 };
+
+    EXPECT(none.map([](auto) {
+        return 2;
+    }) == Maybe<int> {});
+    EXPECT(one.map([](auto) {
+        return 2;
+    }) == Maybe<int> { 2 });
+
+    EXPECT(none.and_then([](auto) -> Maybe<int> {
+        return { 3 };
+    }) == Maybe<int> {});
+    EXPECT(one.and_then([](auto) -> Maybe<int> {
+        return {};
+    }) == Maybe<int> {});
+    EXPECT(one.and_then([](auto) -> Maybe<int> {
+        return { 3 };
+    }) == Maybe<int> { 3 });
+}

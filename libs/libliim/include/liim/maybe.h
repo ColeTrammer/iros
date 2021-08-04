@@ -102,6 +102,22 @@ public:
         LIIM::swap(this->m_has_value, other.m_has_value);
     }
 
+    template<typename C, typename R = InvokeResult<C, T>::type>
+    Maybe<R> map(C mapper) const {
+        if (!has_value()) {
+            return {};
+        }
+        return Maybe<R> { mapper(value()) };
+    }
+
+    template<typename C, typename R = InvokeResult<C, T>::type>
+    R and_then(C mapper) const {
+        if (!has_value()) {
+            return {};
+        }
+        return mapper(value());
+    }
+
 private:
     char m_value[sizeof(T)];
     bool m_has_value { false };
