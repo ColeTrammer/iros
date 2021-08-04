@@ -98,6 +98,10 @@ Edit::RenderedLine AppDisplay::compose_line(const Edit::Line& line) const {
     return renderer.finish(line);
 }
 
+Edit::TextIndex AppDisplay::text_index_at_mouse_position(const Point& point) {
+    return document()->text_index_at_scrolled_position(*this, { point.y() / row_height(), point.x() / col_width() });
+}
+
 void AppDisplay::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) {
     auto renderer = get_renderer();
 
@@ -235,13 +239,7 @@ void AppDisplay::on_mouse_event(const App::MouseEvent& event) {
         return;
     }
 
-    auto event_copy =
-        App::MouseEvent(event.mouse_event_type(), event.buttons_down(), event.x(), event.y(), event.z(), event.button(), event.modifiers());
-    auto text_index = document()->text_index_at_scrolled_position(*this, { event.y() / row_height(), event.x() / col_width() });
-    event_copy.set_x(text_index.index_into_line());
-    event_copy.set_y(text_index.line_index());
-
-    if (document()->notify_mouse_event(*this, event_copy)) {
+    if (document()->notify_mouse_event(*this, event)) {
         return;
     }
 

@@ -4,6 +4,7 @@
 #include <edit/forward.h>
 #include <edit/multicursor.h>
 #include <graphics/color.h>
+#include <graphics/forward.h>
 #include <liim/forward.h>
 #include <liim/maybe.h>
 #include <liim/pointers.h>
@@ -29,6 +30,7 @@ public:
     void scroll_right(int times) { scroll(0, times); }
     void scroll(int vertical, int horizontal);
 
+    virtual TextIndex text_index_at_mouse_position(const Point& point) = 0;
     virtual RenderedLine compose_line(const Line& line) const = 0;
     virtual void output_line(int row, int col_offset, const StringView& text, const Vector<CharacterMetadata>& metadata) = 0;
     virtual void schedule_update() = 0;

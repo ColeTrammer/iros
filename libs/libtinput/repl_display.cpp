@@ -6,6 +6,7 @@
 #include <edit/position.h>
 #include <errno.h>
 #include <eventloop/event.h>
+#include <graphics/point.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
@@ -529,6 +530,10 @@ void ReplDisplay::get_absolute_row_position() {
     m_absolute_row_position = row - 1;
 }
 
+Edit::TextIndex ReplDisplay::text_index_at_mouse_position(const Point& point) {
+    return document()->text_index_at_scrolled_position(*this, { point.y(), point.x() });
+}
+
 int ReplDisplay::enter() {
     get_absolute_row_position();
 
@@ -598,11 +603,7 @@ int ReplDisplay::enter() {
 
                     document->notify_key_pressed(*this, key_event);
                 } else if (ev->type() == App::Event::Type::Mouse) {
-                    auto event_copy = static_cast<const App::MouseEvent&>(*ev);
-                    auto text_index = document->text_index_at_scrolled_position(*this, { event_copy.y(), event_copy.x() });
-                    event_copy.set_y(text_index.line_index());
-                    event_copy.set_x(text_index.index_into_line());
-                    document->notify_mouse_event(*this, event_copy);
+                    document->notify_mouse_event(*this, static_cast<const App::MouseEvent&>(*ev));
                 }
             }
         }

@@ -93,9 +93,15 @@ void TerminalDisplay::render() {
 }
 
 void TerminalDisplay::on_mouse_event(const App::MouseEvent& event) {
-    if (document()) {
-        document()->notify_mouse_event(*this, event);
+    if (!document()) {
+        return;
     }
+
+    if (document()->notify_mouse_event(*this, event)) {
+        return;
+    }
+
+    Panel::on_mouse_event(event);
 }
 
 void TerminalDisplay::on_key_event(const App::KeyEvent& event) {
@@ -114,8 +120,24 @@ void TerminalDisplay::on_made_active() {
     TerminalStatusBar::the().set_active_display(this);
 }
 
+Edit::TextIndex TerminalDisplay::text_index_at_mouse_position(const Point& point) {
+    return document()->text_index_at_scrolled_position(*this, { point.y(), point.x() - m_cols_needed_for_line_numbers });
+}
+
 void TerminalDisplay::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) {
     auto renderer = get_renderer();
+
+    if (document()->show_line_numbers()) {
+        auto line_number_rect = Rect { 0, row, m_cols_needed_for_line_numbers, 1 };
+        auto line_start_index = document()->text_index_at_scrolled_position(*this, { row, 0 });
+        if (line_start_index.index_into_line() == 0) {
+            auto line_number_text = String::format("%*d ", m_cols_needed_for_line_numbers - 1, line_start_index.line_index() + 1);
+            renderer.render_text(line_number_rect, line_number_text.view());
+        } else {
+            renderer.clear_rect(line_number_rect);
+        }
+    }
+
     auto visible_line_rect = Rect { m_cols_needed_for_line_numbers, row, sized_rect().width() - m_cols_needed_for_line_numbers, 1 };
     renderer.set_clip_rect(visible_line_rect);
 

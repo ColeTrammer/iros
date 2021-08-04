@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <eventloop/event.h>
 #include <ext/file.h>
+#include <graphics/point.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1086,29 +1087,31 @@ void Document::select_all(Display& display, Cursor& cursor) {
 bool Document::notify_mouse_event(Display& display, const App::MouseEvent& event) {
     auto& cursors = display.cursors();
 
+    auto index = display.text_index_at_mouse_position({ event.x(), event.y() });
+
     bool should_scroll_cursor_into_view = false;
     bool handled = false;
     if (event.mouse_down() && event.left_button()) {
         cursors.remove_secondary_cursors();
         auto& cursor = cursors.main_cursor();
-        move_cursor_to(display, cursor, { event.y(), event.x() }, MovementMode::Move);
+        move_cursor_to(display, cursor, index, MovementMode::Move);
         handled = true;
     } else if (event.mouse_double() && event.left_button()) {
         cursors.remove_secondary_cursors();
         auto& cursor = cursors.main_cursor();
-        move_cursor_to(display, cursor, { event.y(), event.x() }, MovementMode::Move);
+        move_cursor_to(display, cursor, index, MovementMode::Move);
         select_word_at_cursor(display, cursor);
         handled = true;
     } else if (event.mouse_triple() && event.left_button()) {
         cursors.remove_secondary_cursors();
         auto& cursor = cursors.main_cursor();
-        move_cursor_to(display, cursor, { event.y(), event.x() }, MovementMode::Move);
+        move_cursor_to(display, cursor, index, MovementMode::Move);
         select_line_at_cursor(display, cursor);
         handled = true;
     } else if (event.buttons_down() & App::MouseButton::Left) {
         cursors.remove_secondary_cursors();
         auto& cursor = cursors.main_cursor();
-        move_cursor_to(display, cursor, { event.y(), event.x() }, MovementMode::Select);
+        move_cursor_to(display, cursor, index, MovementMode::Select);
         handled = true;
     } else if (event.mouse_scroll()) {
         display.scroll(2 * event.z(), 0);
