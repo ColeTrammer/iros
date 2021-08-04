@@ -33,6 +33,8 @@ public:
 
     const Rect& terminal_rect() const { return m_terminal_rect; }
 
+    const Point& initial_cursor_position() const { return m_initial_cursor_position; }
+
     Function<void(Span<const uint8_t>)> on_recieved_input;
     Function<void(const Rect&)> on_resize;
 
@@ -46,6 +48,7 @@ private:
     SharedPtr<App::FdWrapper> m_selectable;
     TerminalTextStyle m_current_text_style;
     Point m_cursor_position;
+    Point m_initial_cursor_position;
     Rect m_terminal_rect;
     termios m_saved_termios;
     termios m_current_termios;

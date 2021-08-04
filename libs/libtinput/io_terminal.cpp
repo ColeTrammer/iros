@@ -1,5 +1,6 @@
 #include <eventloop/event_loop.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <tinput/io_terminal.h>
@@ -39,6 +40,7 @@ IOTerminal::IOTerminal(const termios& saved_termios, const termios& current_term
     , m_saved_termios(saved_termios)
     , m_current_termios(current_termios)
     , m_did_set_termios(true) {
+    m_file->set_should_close_file(false);
     m_selectable = App::FdWrapper::create(nullptr, m_file->fd());
     m_selectable->set_selected_events(App::NotifyWhen::Readable);
     m_selectable->enable_notifications();
@@ -64,6 +66,8 @@ IOTerminal::IOTerminal(const termios& saved_termios, const termios& current_term
 }
 
 IOTerminal::~IOTerminal() {
+    App::EventLoop::unregister_signal_handler(SIGWINCH);
+
     set_bracketed_paste(false);
     set_use_alternate_screen_buffer(false);
     set_use_mouse(false);
@@ -106,7 +110,55 @@ void IOTerminal::set_show_cursor(bool b) {
     fprintf(m_file->c_file(), "\033[?25%c", b ? 'h' : 'l');
 }
 
-void IOTerminal::detect_cursor_position() {}
+void IOTerminal::detect_cursor_position() {
+    fprintf(m_file->c_file(), "\033[6n");
+    flush();
+
+    auto start = time(nullptr);
+    auto end = start + 1;
+    for (;;) {
+        auto now = time(nullptr);
+        if (now > end) {
+            break;
+        }
+
+        pollfd fds[1] = { { .fd = m_file->fd(), .events = POLL_IN, .revents = 0 } };
+        auto ret = poll(fds, 1, now - end);
+        if (ret <= 0) {
+            break;
+        }
+
+        auto buffer = ByteBuffer {};
+        if (!m_file->read(buffer)) {
+            break;
+        }
+
+        auto string = String { (const char*) buffer.data(), buffer.size() };
+        for (size_t i = 0; i < string.size(); i++) {
+            int row;
+            int col;
+            auto ret = sscanf(string.string() + i, "\033[%d;%dR", &row, &col);
+            if (ret != 2) {
+                continue;
+            }
+
+            m_initial_cursor_position = { col - 1, row - 1 };
+            m_cursor_position = m_initial_cursor_position;
+
+            if (on_recieved_input) {
+                auto before_sequence = string.view().first(i);
+                auto after_sequence = string.view().substring(*string.view().substring(i).index_of('R') + 1);
+
+                on_recieved_input({ (const uint8_t*) before_sequence.data(), before_sequence.size() });
+                on_recieved_input({ (const uint8_t*) after_sequence.data(), after_sequence.size() });
+            }
+            return;
+        }
+    }
+
+    // Since the cursor's location wasn't found, force it the top left of the screen.
+    reset_cursor();
+}
 
 void IOTerminal::reset_cursor() {
     fprintf(m_file->c_file(), "\033[1;1H");
