@@ -79,12 +79,15 @@ Maybe<Point> TerminalDisplay::cursor_position() {
 }
 
 void TerminalDisplay::render() {
-    auto renderer = get_renderer();
-    renderer.clear_rect(sized_rect());
-
-    if (document()) {
-        document()->display(*this);
+    if (!document()) {
+        return;
     }
+
+    document()->display(*this);
+
+    auto empty_rows = m_row_offset + rows() - document()->num_rendered_lines(*this);
+    auto renderer = get_renderer();
+    renderer.clear_rect({ 0, rows() - empty_rows, sized_rect().width(), empty_rows });
 }
 
 void TerminalDisplay::on_mouse_event(const App::MouseEvent& event) {
@@ -110,7 +113,14 @@ void TerminalDisplay::output_line(int row, int col_offset, const StringView& tex
     auto visible_line_rect = Rect { m_cols_needed_for_line_numbers, row, sized_rect().width() - m_cols_needed_for_line_numbers, 1 };
     renderer.set_clip_rect(visible_line_rect);
 
-    renderer.render_text(visible_line_rect.translated({ -col_offset, 0 }), text);
+    // FIXME: this computation is more complicated.
+    auto text_width = text.size();
+
+    auto text_rect = visible_line_rect.translated({ -col_offset, 0 }).with_width(text_width);
+    renderer.render_text(text_rect, text);
+
+    auto clear_rect = Rect { text_rect.right(), row, max(visible_line_rect.right() - text_rect.right(), 0), 1 };
+    renderer.clear_rect(clear_rect);
 }
 
 Edit::RenderedLine TerminalDisplay::compose_line(const Edit::Line& line) const {
