@@ -64,11 +64,11 @@ public:
         return ret;
     }
 
-protected:
-    TInput::TerminalRenderer get_renderer();
-
     void invalidate();
     void invalidate(const Rect& rect);
+
+protected:
+    TInput::TerminalRenderer get_renderer();
 
 private:
     virtual bool is_panel() const final { return true; }
