@@ -110,6 +110,10 @@ void IOTerminal::set_show_cursor(bool b) {
     fprintf(m_file->c_file(), "\033[?25%c", b ? 'h' : 'l');
 }
 
+void IOTerminal::scroll_up(int times) {
+    fprintf(m_file->c_file(), "\033[%dS", times);
+}
+
 void IOTerminal::detect_cursor_position() {
     fprintf(m_file->c_file(), "\033[6n");
     flush();

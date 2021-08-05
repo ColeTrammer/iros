@@ -26,6 +26,7 @@ public:
 
     void detect_cursor_position();
 
+    void scroll_up(int times);
     void reset_cursor();
     void move_cursor_to(const Point& position);
     void put_style(const TerminalTextStyle& style);
