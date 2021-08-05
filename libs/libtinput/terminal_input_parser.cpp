@@ -149,6 +149,10 @@ void TerminalInputParser::finish_xterm_escape(const String& escape) {
                 return App::Key::F3;
             case 'S':
                 return App::Key::F4;
+            case 'Z':
+                // Special case - Shift Tab
+                modifiers += 1;
+                return App::Key::Tab;
             default:
                 return App::Key::None;
         }
