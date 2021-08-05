@@ -7,6 +7,7 @@
 #include <graphics/point.h>
 #include <repl/repl_base.h>
 #include <stdlib.h>
+#include <tinput/io_terminal.h>
 #include <tinput/terminal_renderer.h>
 #include <tui/application.h>
 
@@ -72,6 +73,17 @@ Maybe<Point> ReplDisplay::cursor_position() {
 void ReplDisplay::render() {
     if (!document()) {
         return;
+    }
+
+    if (positioned_rect().top() != 0 && document()->num_rendered_lines(*this) > sized_rect().height()) {
+        auto terminal_rect = TUI::Application::the().io_terminal().terminal_rect();
+        auto new_height = min(document()->num_rendered_lines(*this), terminal_rect.height());
+
+        auto delta_height = new_height - sized_rect().height();
+        set_positioned_rect({ 0, terminal_rect.height() - new_height, sized_rect().width(), new_height });
+
+        TUI::Application::the().io_terminal().scroll_up(delta_height);
+        scroll_up(delta_height);
     }
 
     document()->display(*this);

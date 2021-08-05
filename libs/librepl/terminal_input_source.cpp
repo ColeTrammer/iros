@@ -13,24 +13,31 @@ public:
     ReplLayoutEngine(TUI::Panel& parent) : TUI::LayoutEngine(parent) {}
 
     virtual void do_add(TUI::Panel& panel) override {
-        assert(!m_panel);
-        m_panel = &panel;
+        assert(!m_display);
+        m_display = static_cast<ReplDisplay*>(&panel);
     }
 
     virtual void layout() override {
-        if (!m_panel) {
+        if (!m_display) {
             return;
         }
 
         auto inital_cursor_position = TUI::Application::the().io_terminal().initial_cursor_position();
         auto terminal_rect = TUI::Application::the().sized_rect();
+        if (m_first_layout) {
+            m_first_layout = false;
+            m_display->set_positioned_rect(
+                { 0, inital_cursor_position.y(), terminal_rect.width(), terminal_rect.height() - inital_cursor_position.y() });
+            return;
+        }
 
-        m_panel->set_positioned_rect(
-            { 0, inital_cursor_position.y(), terminal_rect.width(), terminal_rect.height() - inital_cursor_position.y() });
+        // Invalidate the display, so that it will update itself based on the new terminal's dimensions.
+        m_display->invalidate();
     }
 
 private:
-    TUI::Panel* m_panel { nullptr };
+    ReplDisplay* m_display { nullptr };
+    bool m_first_layout { true };
 };
 
 TerminalInputSource::TerminalInputSource(ReplBase& repl) : InputSource(repl) {}
