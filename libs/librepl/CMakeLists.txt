@@ -5,6 +5,7 @@ set(SOURCES
     repl_base.cpp
     repl_display.cpp
     string_input_source.cpp
+    suggestions_panel.cpp
     terminal_input_source.cpp
 )
 

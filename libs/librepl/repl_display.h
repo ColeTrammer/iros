@@ -6,9 +6,12 @@
 #include <liim/maybe.h>
 #include <liim/variant.h>
 #include <liim/vector.h>
+#include <repl/repl_base.h>
 #include <time.h>
 #include <tinput/terminal_input_parser.h>
 #include <tui/panel.h>
+
+#include "suggestions_panel.h"
 
 namespace Repl {
 
@@ -53,8 +56,13 @@ public:
 
     virtual void do_open_prompt() override;
 
+    void exit_suggestion_panel();
+    void complete_suggestion(const Edit::Suggestions& suggestions, int suggestion_index);
+
 private:
     virtual void document_did_change() override;
+
+    void move_up_rows(int count);
 
     void set_quit_by_interrupt() { m_quit_by_interrupt = true; }
     void set_quit_by_eof() { m_quit_by_eof = true; }
@@ -73,6 +81,8 @@ private:
     String m_secondary_prompt;
     Vector<SharedPtr<Edit::Document>> m_history_documents;
     int m_history_index { -1 };
+
+    SharedPtr<SuggestionsPanel> m_suggestions_panel;
 
     mutable String m_prev_clipboard_contents;
     mutable bool m_prev_clipboard_contents_were_whole_line { false };

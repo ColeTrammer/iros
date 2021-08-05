@@ -12,6 +12,7 @@
 #include <tui/application.h>
 
 #include "repl_display.h"
+#include "suggestions_panel.h"
 
 namespace Repl {
 ReplDisplay::ReplDisplay(ReplBase& repl) : m_repl(repl) {
@@ -70,6 +71,14 @@ Maybe<Point> ReplDisplay::cursor_position() {
     return Point { position.col, position.row };
 }
 
+void ReplDisplay::move_up_rows(int count) {
+    auto terminal_rect = TUI::Application::the().io_terminal().terminal_rect();
+    auto new_height = sized_rect().height() + count;
+    set_positioned_rect({ 0, terminal_rect.height() - new_height, sized_rect().width(), new_height });
+
+    TUI::Application::the().io_terminal().scroll_up(count);
+}
+
 void ReplDisplay::render() {
     if (!document()) {
         return;
@@ -80,9 +89,7 @@ void ReplDisplay::render() {
         auto new_height = min(document()->num_rendered_lines(*this), terminal_rect.height());
 
         auto delta_height = new_height - sized_rect().height();
-        set_positioned_rect({ 0, terminal_rect.height() - new_height, sized_rect().width(), new_height });
-
-        TUI::Application::the().io_terminal().scroll_up(delta_height);
+        move_up_rows(delta_height);
         scroll_up(delta_height);
     }
 
@@ -91,6 +98,8 @@ void ReplDisplay::render() {
     auto empty_rows = scroll_row_offset() + rows() - document()->num_rendered_lines(*this);
     auto renderer = get_renderer();
     renderer.clear_rect({ 0, rows() - empty_rows, sized_rect().width(), empty_rows });
+
+    return Panel::render();
 }
 
 void ReplDisplay::on_resize() {
@@ -275,7 +284,39 @@ Edit::Suggestions ReplDisplay::get_suggestions() const {
     return Edit::Suggestions { suggestions_object.suggestion_offset(), move(new_suggestions) };
 }
 
-void ReplDisplay::handle_suggestions(const Edit::Suggestions&) {}
+void ReplDisplay::exit_suggestion_panel() {
+    TUI::Application::the().invalidate(m_suggestions_panel->positioned_rect());
+    remove_child(m_suggestions_panel);
+    m_suggestions_panel = nullptr;
+
+    TUI::Application::the().set_active_panel(this);
+}
+
+void ReplDisplay::complete_suggestion(const Edit::Suggestions& suggestions, int suggestions_index) {
+    document()->insert_suggestion(*this, suggestions, suggestions_index);
+    exit_suggestion_panel();
+}
+
+void ReplDisplay::handle_suggestions(const Edit::Suggestions& suggestions) {
+    auto cursor_position = document()->cursor_position_on_display(*this, cursors().main_cursor());
+
+    m_suggestions_panel = add<SuggestionsPanel>(*this, suggestions).shared_from_this();
+
+    auto suggestions_rect = Rect { positioned_rect().x(), positioned_rect().y() + cursor_position.row + 1, sized_rect().width(),
+                                   m_suggestions_panel->layout_constraint().height() };
+    if (suggestions_rect.bottom() > positioned_rect().bottom()) {
+        auto ideal_rows_to_move_up = suggestions_rect.bottom() - positioned_rect().bottom();
+        auto rows_to_move_up = min(positioned_rect().top(), ideal_rows_to_move_up);
+        if (rows_to_move_up != 0) {
+            move_up_rows(rows_to_move_up);
+            suggestions_rect.set_y(suggestions_rect.y() - rows_to_move_up);
+        }
+    }
+
+    m_suggestions_panel->set_positioned_rect(suggestions_rect);
+
+    TUI::Application::the().set_active_panel(m_suggestions_panel.get());
+}
 
 Vector<SharedPtr<Edit::Document>>& ReplDisplay::ensure_history_documents() {
     if (m_history_documents.empty()) {

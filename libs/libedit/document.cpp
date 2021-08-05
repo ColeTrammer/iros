@@ -1084,6 +1084,12 @@ void Document::select_all(Display& display, Cursor& cursor) {
     move_cursor_to_document_end(display, cursor, MovementMode::Select);
 }
 
+void Document::insert_suggestion(Display& display, const Suggestions& suggestions, int suggestion_index) {
+    auto suggestion = suggestions.suggestion_list()[suggestion_index];
+    insert_text_at_cursor(
+        display, String(suggestion.string() + suggestions.suggestion_offset(), suggestion.size() - suggestions.suggestion_offset()));
+}
+
 bool Document::notify_mouse_event(Display& display, const App::MouseEvent& event) {
     auto& cursors = display.cursors();
 
@@ -1325,9 +1331,7 @@ void Document::notify_key_pressed(Display& display, const App::KeyEvent& event) 
             if (m_auto_complete_mode == AutoCompleteMode::Always) {
                 auto suggestions = display.get_suggestions();
                 if (suggestions.suggestion_count() == 1) {
-                    auto suggestion = suggestions.suggestion_list()[0];
-                    insert_text_at_cursor(display, String(suggestion.string() + suggestions.suggestion_offset(),
-                                                          suggestion.size() - suggestions.suggestion_offset()));
+                    insert_suggestion(display, suggestions, 0);
                 } else if (suggestions.suggestion_count() > 1) {
                     display.handle_suggestions(suggestions);
                 }
