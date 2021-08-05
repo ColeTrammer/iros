@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <tinput/io_terminal.h>
+#include <tinput/terminal_glyph.h>
 #include <unistd.h>
 
 namespace TInput {
@@ -251,13 +252,17 @@ void IOTerminal::put_style(const TerminalTextStyle& style) {
     m_current_text_style = style;
 }
 
-void IOTerminal::put_text(const Point& position, const StringView& text, const TerminalTextStyle& style) {
-    move_cursor_to(position);
+void IOTerminal::put_glyph(const Point& position, const TerminalGlyph& glyph, const TerminalTextStyle& style) {
     put_style(style);
-    fwrite(text.data(), 1, text.size(), m_file->c_file());
 
-    // FIXME: this needs to take more things into account
-    m_cursor_position.set_x(m_cursor_position.x() + text.size());
+    move_cursor_to(position);
+    fwrite(glyph.text().string(), 1, glyph.text().size(), m_file->c_file());
+
+    m_cursor_position.set_x(m_cursor_position.x() + glyph.width());
+    if (m_cursor_position.x() > m_terminal_rect.width()) {
+        m_cursor_position.set_x(0);
+        m_cursor_position.set_y(min(m_cursor_position.y() + 1, m_terminal_rect.height() - 1));
+    }
 }
 
 void IOTerminal::flush() {

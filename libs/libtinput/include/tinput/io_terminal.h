@@ -8,6 +8,7 @@
 #include <liim/function.h>
 #include <liim/pointers.h>
 #include <termios.h>
+#include <tinput/forward.h>
 #include <tinput/terminal_text_style.h>
 
 namespace TInput {
@@ -30,7 +31,7 @@ public:
     void reset_cursor();
     void move_cursor_to(const Point& position);
     void put_style(const TerminalTextStyle& style);
-    void put_text(const Point& position, const StringView& text, const TerminalTextStyle& style = {});
+    void put_glyph(const Point& position, const TerminalGlyph& glyph, const TerminalTextStyle& style = {});
 
     const Rect& terminal_rect() const { return m_terminal_rect; }
 

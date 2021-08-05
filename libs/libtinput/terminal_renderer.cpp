@@ -1,5 +1,6 @@
 #include <liim/string_view.h>
 #include <tinput/io_terminal.h>
+#include <tinput/terminal_glyph.h>
 #include <tinput/terminal_renderer.h>
 
 namespace TInput {
@@ -9,7 +10,7 @@ void TerminalRenderer::clear_rect(const Rect& rect_in, Maybe<Color> color) {
     auto rect = constrained(translate(rect_in));
     for (auto x = rect.left(); x < rect.right(); x++) {
         for (auto y = rect.top(); y < rect.bottom(); y++) {
-            m_io_terminal.put_text({ x, y }, " "sv, style);
+            m_io_terminal.put_glyph({ x, y }, TerminalGlyph { " ", 1 }, style);
         }
     }
 }
@@ -29,8 +30,8 @@ void TerminalRenderer::render_complex_styled_text(const Rect& rect_in, const Str
         return;
     }
 
-    // FIXME: this requires a more sophisticated computation.
-    auto text_width = static_cast<int>(text.size());
+    auto glyphs = convert_to_glyphs(text);
+    auto text_width = glyphs.total_width();
 
     auto rect = translate(rect_in);
     auto start_position = [&] {
@@ -74,11 +75,15 @@ void TerminalRenderer::render_complex_styled_text(const Rect& rect_in, const Str
         return Point { x_position, y_position };
     }();
 
-    for (size_t i = 0; i < text.size(); i++) {
-        auto position = Point { start_position.x() + static_cast<int>(i), start_position.y() };
+    auto x = start_position.x();
+    auto text_index = 0;
+    for (int i = 0; i < glyphs.size(); i++) {
+        auto position = Point { x, start_position.y() };
         if (in_bounds(position)) {
-            m_io_terminal.put_text(position, text.substring(i, 1), style_generator(i));
+            m_io_terminal.put_glyph(position, glyphs[i], style_generator(text_index));
         }
+        x += glyphs[i].width();
+        text_index += glyphs[i].text().size();
     }
 }
 }

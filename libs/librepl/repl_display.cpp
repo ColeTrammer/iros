@@ -8,6 +8,7 @@
 #include <repl/repl_base.h>
 #include <stdlib.h>
 #include <tinput/io_terminal.h>
+#include <tinput/terminal_glyph.h>
 #include <tinput/terminal_renderer.h>
 #include <tui/application.h>
 
@@ -229,8 +230,7 @@ void ReplDisplay::output_line(int row, int col_offset, const StringView& text, c
     auto visible_line_rect = Rect { 0, row, sized_rect().width(), 1 };
     renderer.set_clip_rect(visible_line_rect);
 
-    // FIXME: this computation is more complicated.
-    auto text_width = text.size();
+    auto text_width = TInput::convert_to_glyphs(text).total_width();
 
     auto text_rect = visible_line_rect.translated({ -col_offset, 0 }).with_width(text_width);
     renderer.render_complex_styled_text(text_rect, text, [&](size_t index) -> TInput::TerminalTextStyle {
