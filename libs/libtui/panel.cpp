@@ -45,7 +45,7 @@ Maybe<Point> Panel::cursor_position() {
 }
 
 TInput::TerminalRenderer Panel::get_renderer() {
-    auto renderer = TInput::TerminalRenderer { Application::the().io_terminal() };
+    auto renderer = TInput::TerminalRenderer { Application::the().io_terminal(), Application::the().dirty_rects() };
     renderer.set_clip_rect(positioned_rect());
     renderer.set_origin(positioned_rect().top_left());
     return renderer;
@@ -55,7 +55,9 @@ void Panel::render() {
     for (auto& child : children()) {
         if (child->is_panel()) {
             auto& panel = const_cast<Panel&>(static_cast<const Panel&>(*child));
-            panel.render();
+            if (Application::the().dirty_rects().intersects(panel.positioned_rect())) {
+                panel.render();
+            }
         }
     }
 }

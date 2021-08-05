@@ -1,7 +1,7 @@
 #pragma once
 
 #include <eventloop/event_loop.h>
-#include <graphics/rect.h>
+#include <graphics/rect_set.h>
 #include <liim/pointers.h>
 #include <tinput/forward.h>
 #include <tinput/terminal_input_parser.h>
@@ -36,6 +36,8 @@ public:
     void set_active_panel(Panel* panel);
     SharedPtr<Panel> active_panel() const { return m_active_panel.lock(); }
 
+    const RectSet& dirty_rects() const { return m_dirty_rects; }
+
 private:
     Application(UniquePtr<TInput::IOTerminal> io_terminal);
 
@@ -50,6 +52,7 @@ private:
     UniquePtr<TInput::IOTerminal> m_io_terminal;
     WeakPtr<Panel> m_active_panel;
     Maybe<Point> m_cursor_position;
+    RectSet m_dirty_rects;
     bool m_use_alternate_screen_buffer { false };
     bool m_use_mouse { false };
     bool m_render_scheduled { false };

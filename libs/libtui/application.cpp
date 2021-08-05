@@ -42,7 +42,8 @@ void Application::invalidate() {
     invalidate(m_io_terminal->terminal_rect());
 }
 
-void Application::invalidate(const Rect&) {
+void Application::invalidate(const Rect& rect) {
+    m_dirty_rects.add(rect);
     schedule_render();
 }
 
@@ -61,6 +62,8 @@ void Application::render() {
         }
     }
     m_io_terminal->flush();
+
+    m_dirty_rects.clear();
 }
 
 void Application::schedule_render() {
@@ -70,8 +73,8 @@ void Application::schedule_render() {
 
     m_render_scheduled = true;
     deferred_invoke([this] {
-        m_render_scheduled = false;
         render();
+        m_render_scheduled = false;
     });
 }
 
