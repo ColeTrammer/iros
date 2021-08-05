@@ -27,7 +27,7 @@ void SuggestionsPanel::render() {
 
 void SuggestionsPanel::on_key_event(const App::KeyEvent& event) {
     auto next_suggestion = [this] {
-        if (m_suggestion_index < m_suggestions.suggestion_count()) {
+        if (m_suggestion_index < m_suggestions.suggestion_count() - 1) {
             m_suggestion_index++;
             if (m_suggestion_index >= m_suggestion_offset + max_visible_suggestions) {
                 m_suggestion_offset++;
