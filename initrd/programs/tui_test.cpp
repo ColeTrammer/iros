@@ -21,7 +21,7 @@ public:
             .bold = true,
             .invert = false,
         };
-        renderer.render_text(sized_rect(), m_text, style, m_alignment);
+        renderer.render_text(sized_rect(), m_text.view(), style, m_alignment);
     }
 
     virtual void on_mouse_down(const App::MouseEvent& event) override {

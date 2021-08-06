@@ -19,6 +19,8 @@ public:
         s.add({ 450, 450, 50, 125 });
         s.add({ 425, 425, 100, 100 });
         s.add({ 550, 550, 25, 25 });
+        s.subtract({ 50, 450, 480, 10 });
+        s.subtract({ 40, 40, 50, 50 });
 
         for (auto& r : s) {
             renderer.fill_rect(r, ColorValue::White);
@@ -31,12 +33,10 @@ public:
 };
 
 int main() {
-#ifdef __os_2__
     auto app = App::Application::create();
 
     auto window = App::Window::create(nullptr, 50, 50, 600, 600, "Rect Set Test");
     window->set_main_widget<TestWidget>();
     app->enter();
     return 0;
-#endif /* __os_2__ */
 }
