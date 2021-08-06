@@ -1,5 +1,6 @@
 #include <edit/document.h>
 #include <eventloop/event.h>
+#include <tinput/terminal_glyph.h>
 #include <tinput/terminal_renderer.h>
 
 #include "repl_display.h"
@@ -20,8 +21,10 @@ void SuggestionsPanel::render() {
     assert(m_suggestions.suggestion_count() > 0);
     for (int i = m_suggestion_offset; i < m_suggestion_offset + max_visible_suggestions && i < m_suggestions.suggestion_count(); i++) {
         auto& suggestion = m_suggestions.suggestion_list()[i];
+        auto text_width = TInput::convert_to_glyphs(suggestion.view()).total_width();
         renderer.render_text(sized_rect().with_y(i - m_suggestion_offset).with_height(1), suggestion.view(),
                              { .foreground = {}, .background = {}, .bold = i == m_suggestion_index, .invert = false });
+        renderer.clear_rect({ text_width, i - m_suggestion_offset, sized_rect().width() - text_width, 1 });
     }
 }
 
