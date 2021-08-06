@@ -199,6 +199,7 @@ private:
     void enter_interactive_search(Display& display);
 
     void update_syntax_highlighting();
+    void update_suggestions(Display& display);
 
     void swap_lines_at_cursor(Display& display, SwapDirection direction);
     void split_line_at_cursor(Display& display);
@@ -235,6 +236,7 @@ private:
             m_document_was_modified = true;
             update_search_results();
             update_syntax_highlighting();
+            update_suggestions(display);
             set_needs_display();
 
             if (on_change) {

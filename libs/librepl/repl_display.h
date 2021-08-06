@@ -49,14 +49,15 @@ public:
     virtual String clipboard_contents(bool& is_whole_line) const override;
 
     virtual Edit::Suggestions get_suggestions() const override;
-    virtual void handle_suggestions(const Edit::Suggestions& suggestions) override;
+    virtual void show_suggestions_panel() override;
+    virtual void update_suggestions_panel(const Edit::Suggestions& suggestions) override;
+    virtual void hide_suggestions_panel() override;
 
     bool quit_by_interrupt() const { return m_quit_by_interrupt; }
     bool quit_by_eof() const { return m_quit_by_eof; }
 
     virtual void do_open_prompt() override;
 
-    void exit_suggestion_panel();
     void complete_suggestion(const Edit::Suggestions& suggestions, int suggestion_index);
 
 private:

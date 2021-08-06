@@ -116,6 +116,19 @@ void ReplDisplay::on_key_event(const App::KeyEvent& event) {
         return;
     }
 
+    if (m_suggestions_panel) {
+        switch (event.key()) {
+            case App::Key::Enter:
+            case App::Key::Tab:
+            case App::Key::UpArrow:
+            case App::Key::DownArrow:
+            case App::Key::Escape:
+                return m_suggestions_panel->on_key_event(event);
+            default:
+                break;
+        }
+    }
+
     if (event.key() == App::Key::C && event.control_down()) {
         deferred_invoke([] {
             printf("^C\r\n");
@@ -264,9 +277,19 @@ Edit::Suggestions ReplDisplay::get_suggestions() const {
     }
 
     ::qsort(suggestions.vector(), suggestions.size(), sizeof(suggestions[0]), [](const void* p1, const void* p2) {
-        const auto* s1 = reinterpret_cast<const String*>(p1);
-        const auto* s2 = reinterpret_cast<const String*>(p2);
-        return strcmp(s1->string(), s2->string());
+        const auto& s1 = *reinterpret_cast<const String*>(p1);
+        const auto& s2 = *reinterpret_cast<const String*>(p2);
+
+        bool s1_special = strcmp(s1.string(), "../") == 0 || strcmp(s1.string(), "./") == 0;
+        bool s2_special = strcmp(s2.string(), "../") == 0 || strcmp(s2.string(), "./") == 0;
+
+        if (s1_special && !s2_special) {
+            return 1;
+        } else if (!s1_special && s2_special) {
+            return -1;
+        }
+
+        return strcmp(s1.string(), s2.string());
     });
 
     size_t i;
@@ -284,23 +307,10 @@ Edit::Suggestions ReplDisplay::get_suggestions() const {
     return Edit::Suggestions { suggestions_object.suggestion_offset(), move(new_suggestions) };
 }
 
-void ReplDisplay::exit_suggestion_panel() {
-    TUI::Application::the().invalidate(m_suggestions_panel->positioned_rect());
-    remove_child(m_suggestions_panel);
-    m_suggestions_panel = nullptr;
-
-    TUI::Application::the().set_active_panel(this);
-}
-
-void ReplDisplay::complete_suggestion(const Edit::Suggestions& suggestions, int suggestions_index) {
-    document()->insert_suggestion(*this, suggestions, suggestions_index);
-    exit_suggestion_panel();
-}
-
-void ReplDisplay::handle_suggestions(const Edit::Suggestions& suggestions) {
+void ReplDisplay::show_suggestions_panel() {
     auto cursor_position = document()->cursor_position_on_display(*this, cursors().main_cursor());
 
-    m_suggestions_panel = add<SuggestionsPanel>(*this, suggestions).shared_from_this();
+    m_suggestions_panel = add<SuggestionsPanel>(*this).shared_from_this();
 
     auto suggestions_rect = Rect { positioned_rect().x(), positioned_rect().y() + cursor_position.row + 1, sized_rect().width(),
                                    m_suggestions_panel->layout_constraint().height() };
@@ -314,8 +324,27 @@ void ReplDisplay::handle_suggestions(const Edit::Suggestions& suggestions) {
     }
 
     m_suggestions_panel->set_positioned_rect(suggestions_rect);
+}
 
-    TUI::Application::the().set_active_panel(m_suggestions_panel.get());
+void ReplDisplay::update_suggestions_panel(const Edit::Suggestions& suggestions) {
+    if (!m_suggestions_panel) {
+        return;
+    }
+
+    m_suggestions_panel->set_suggestions(suggestions);
+}
+
+void ReplDisplay::hide_suggestions_panel() {
+    TUI::Application::the().invalidate(m_suggestions_panel->positioned_rect());
+    remove_child(m_suggestions_panel);
+    m_suggestions_panel = nullptr;
+
+    TUI::Application::the().set_active_panel(this);
+}
+
+void ReplDisplay::complete_suggestion(const Edit::Suggestions& suggestions, int suggestions_index) {
+    document()->insert_suggestion(*this, suggestions, suggestions_index);
+    hide_suggestions_panel();
 }
 
 Vector<SharedPtr<Edit::Document>>& ReplDisplay::ensure_history_documents() {

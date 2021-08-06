@@ -41,11 +41,13 @@ public:
     virtual void do_open_prompt() = 0;
     virtual void quit() = 0;
 
+    virtual Suggestions get_suggestions() const;
+    virtual void show_suggestions_panel() {}
+    virtual void update_suggestions_panel(const Suggestions&) {}
+    virtual void hide_suggestions_panel() {}
+
     virtual void set_clipboard_contents(LIIM::String text, bool is_whole_line = false) = 0;
     virtual String clipboard_contents(bool& is_whole_line) const = 0;
-
-    virtual Suggestions get_suggestions() const;
-    virtual void handle_suggestions(const Suggestions&) {}
 
     virtual void notify_line_count_changed();
     void notify_did_delete_lines(int line_index, int line_count);

@@ -538,6 +538,7 @@ void Document::undo(Display& display) {
     command.undo(display);
     update_search_results();
     update_syntax_highlighting();
+    update_suggestions(display);
 
     if (on_change) {
         on_change();
@@ -892,6 +893,11 @@ void Document::guess_type_from_name() {
     update_document_type(*this);
 }
 
+void Document::update_suggestions(Display& display) {
+    auto suggestions = display.get_suggestions();
+    display.update_suggestions_panel(suggestions);
+}
+
 void Document::save(Display& display) {
     if (m_name.empty()) {
         auto result = display.prompt("Save as: ");
@@ -1136,6 +1142,7 @@ void Document::finish_input(Display& display, bool should_scroll_cursor_into_vie
         scroll_cursor_into_view(display, cursors.main_cursor());
     }
 
+    update_suggestions(display);
     if (preview_auto_complete()) {
         cursors.main_cursor().referenced_line(*this).invalidate_rendered_contents(*this, display);
     }
@@ -1333,7 +1340,8 @@ void Document::notify_key_pressed(Display& display, const App::KeyEvent& event) 
                 if (suggestions.suggestion_count() == 1) {
                     insert_suggestion(display, suggestions, 0);
                 } else if (suggestions.suggestion_count() > 1) {
-                    display.handle_suggestions(suggestions);
+                    display.show_suggestions_panel();
+                    display.update_suggestions_panel(suggestions);
                 }
                 break;
             }
