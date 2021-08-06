@@ -11,7 +11,7 @@
 namespace TInput {
 class TerminalRenderer {
 public:
-    TerminalRenderer(IOTerminal& io_terminal, const RectSet& dirty_rects) : m_io_terminal(io_terminal), m_dirty_rects(dirty_rects) {}
+    TerminalRenderer(IOTerminal& io_terminal, RectSet dirty_rects) : m_io_terminal(io_terminal), m_dirty_rects(move(dirty_rects)) {}
 
     void set_origin(const Point& point) { m_origin = point; }
     void set_clip_rect(const Rect& rect) { m_clip_rect = translate(rect); }
@@ -29,7 +29,7 @@ private:
     bool in_bounds(const Point& point) { return m_clip_rect.intersects(point) && m_dirty_rects.intersects(point); }
 
     IOTerminal& m_io_terminal;
-    const RectSet& m_dirty_rects;
+    RectSet m_dirty_rects;
     Rect m_clip_rect;
     Point m_origin;
 };
