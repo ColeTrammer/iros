@@ -32,7 +32,7 @@ String ReplBase::get_secondary_prompt() const {
     return "> ";
 }
 
-Edit::Suggestions ReplBase::get_suggestions(const String&, size_t) const {
+Vector<Edit::Suggestion> ReplBase::get_suggestions(const String&, size_t) const {
     return {};
 }
 }

@@ -196,7 +196,7 @@ static int string_print_width(const StringView& string) {
     return count;
 }
 
-Edit::RenderedLine ReplDisplay::compose_line(const Edit::Line& line) const {
+Edit::RenderedLine ReplDisplay::compose_line(const Edit::Line& line) {
     if (!document()) {
         return {};
     }
@@ -266,14 +266,19 @@ void ReplDisplay::output_line(int row, int col_offset, const StringView& text, c
 
 void ReplDisplay::do_open_prompt() {}
 
-Edit::Suggestions ReplDisplay::get_suggestions() const {
+void ReplDisplay::suggestions_did_change() {
+    if (m_suggestions_panel) {
+        m_suggestions_panel->set_suggestions(suggestions().suggestions());
+    }
+}
+
+void ReplDisplay::compute_suggestions() {
     auto content_string = document()->content_string();
     auto cursor_index = document()->cursor_index_in_content_string(cursors().main_cursor());
-    auto suggestions_object = m_repl.get_suggestions(content_string, cursor_index);
+    auto suggestions = m_repl.get_suggestions(content_string, cursor_index);
 
-    auto& suggestions = suggestions_object.suggestion_list();
-    if (suggestions_object.suggestion_count() <= 1) {
-        return suggestions_object;
+    if (suggestions.size() <= 1) {
+        return set_suggestions(move(suggestions));
     }
 
     ::qsort(suggestions.vector(), suggestions.size(), sizeof(suggestions[0]), [](const void* p1, const void* p2) {
@@ -283,18 +288,19 @@ Edit::Suggestions ReplDisplay::get_suggestions() const {
     });
 
     size_t i;
-    for (i = suggestions_object.suggestion_offset(); i < suggestions.first().size() && i < suggestions.last().size(); i++) {
-        if (suggestions.first()[i] != suggestions.last()[i]) {
+    for (i = suggestions.first().offset(); i < suggestions.first().content().size() && i < suggestions.last().content().size(); i++) {
+        if (suggestions.first().content()[i] != suggestions.last().content()[i]) {
             break;
         }
     }
 
-    if (i == suggestions_object.suggestion_offset()) {
-        return suggestions_object;
+    if (i == suggestions.first().offset()) {
+        return set_suggestions(move(suggestions));
     }
 
-    auto new_suggestions = Vector<String>::create_from_single_element({ suggestions.first().string(), i });
-    return Edit::Suggestions { suggestions_object.suggestion_offset(), move(new_suggestions) };
+    auto new_suggestions =
+        Vector<Edit::Suggestion>::create_from_single_element({ suggestions.first().content().first(i), suggestions.first().offset() });
+    return set_suggestions(move(new_suggestions));
 }
 
 void ReplDisplay::show_suggestions_panel() {
@@ -316,14 +322,6 @@ void ReplDisplay::show_suggestions_panel() {
     m_suggestions_panel->set_positioned_rect(suggestions_rect);
 }
 
-void ReplDisplay::update_suggestions_panel(const Edit::Suggestions& suggestions) {
-    if (!m_suggestions_panel) {
-        return;
-    }
-
-    m_suggestions_panel->set_suggestions(suggestions);
-}
-
 void ReplDisplay::hide_suggestions_panel() {
     TUI::Application::the().invalidate(m_suggestions_panel->positioned_rect());
     remove_child(m_suggestions_panel);
@@ -332,8 +330,8 @@ void ReplDisplay::hide_suggestions_panel() {
     TUI::Application::the().set_active_panel(this);
 }
 
-void ReplDisplay::complete_suggestion(const Edit::Suggestions& suggestions, int suggestions_index) {
-    document()->insert_suggestion(*this, suggestions, suggestions_index);
+void ReplDisplay::complete_suggestion(const Edit::Suggestion& suggestion) {
+    document()->insert_suggestion(*this, suggestion);
     hide_suggestions_panel();
 }
 

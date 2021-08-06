@@ -31,8 +31,9 @@ void Display::set_document(SharedPtr<Document> document) {
     document_did_change();
 }
 
-Suggestions Display::get_suggestions() const {
-    return {};
+void Display::set_suggestions(Vector<Suggestion> suggestions) {
+    m_suggestions.set_suggestions(move(suggestions));
+    suggestions_did_change();
 }
 
 void Display::set_scroll_offsets(int row_offset, int col_offset) {

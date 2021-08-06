@@ -4,21 +4,37 @@
 #include <liim/vector.h>
 
 namespace Edit {
-class Suggestions {
+class Suggestion {
 public:
-    Suggestions() {}
+    Suggestion(String content, size_t offset) : m_content(move(content)), m_offset(offset) {}
 
-    Suggestions(size_t suggestion_offset, Vector<String>&& suggestion_list)
-        : m_suggestion_list(suggestion_list), m_suggestion_offset(suggestion_offset) {}
-
-    Vector<String>& suggestion_list() { return m_suggestion_list; }
-    const Vector<String>& suggestion_list() const { return m_suggestion_list; }
-
-    int suggestion_count() const { return m_suggestion_list.size(); }
-    size_t suggestion_offset() const { return m_suggestion_offset; }
+    size_t offset() const { return m_offset; }
+    const String& content() const { return m_content; }
 
 private:
-    Vector<String> m_suggestion_list;
-    size_t m_suggestion_offset { 0 };
+    String m_content;
+    size_t m_offset;
+};
+
+class Suggestions {
+public:
+    auto begin() const { return m_suggestions.begin(); }
+    auto end() const { return m_suggestions.end(); }
+
+    int size() const { return m_suggestions.size(); }
+    bool empty() const { return m_suggestions.empty(); }
+
+    const Suggestion& first() const { return m_suggestions.first(); }
+    const Suggestion& last() const { return m_suggestions.last(); }
+
+    const Suggestion& operator[](int index) const { return m_suggestions[index]; }
+
+    void clear() { m_suggestions.clear(); }
+
+    const Vector<Suggestion> suggestions() const { return m_suggestions; }
+    void set_suggestions(Vector<Suggestion> suggestions) { m_suggestions = move(suggestions); }
+
+private:
+    Vector<Suggestion> m_suggestions;
 };
 }

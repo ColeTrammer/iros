@@ -13,6 +13,7 @@ class Line;
 class MultiCursor;
 class Selection;
 class Suggestions;
+class Suggestion;
 class TextIndex;
 class TextRangeCollectionIterator;
 class TextRangeCollection;

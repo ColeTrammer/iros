@@ -16,11 +16,11 @@ public:
     virtual void render() override;
     virtual void on_key_event(const App::KeyEvent& event) override;
 
-    void set_suggestions(const Edit::Suggestions& suggestions);
+    void set_suggestions(Vector<Edit::Suggestion> suggestions);
 
 private:
     ReplDisplay& m_display;
-    Edit::Suggestions m_suggestions;
+    Vector<Edit::Suggestion> m_suggestions;
     int m_suggestion_index { 0 };
     int m_suggestion_offset { 0 };
 };

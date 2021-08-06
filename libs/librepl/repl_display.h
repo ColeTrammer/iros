@@ -36,7 +36,7 @@ public:
     virtual int cols() const override { return sized_rect().width(); }
 
     virtual Edit::TextIndex text_index_at_mouse_position(const Point& point) override;
-    virtual Edit::RenderedLine compose_line(const Edit::Line& line) const override;
+    virtual Edit::RenderedLine compose_line(const Edit::Line& line) override;
     virtual void output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) override;
     virtual void schedule_update() override { invalidate(); }
     virtual int enter() override;
@@ -48,9 +48,8 @@ public:
     virtual void set_clipboard_contents(String text, bool is_whole_line) override;
     virtual String clipboard_contents(bool& is_whole_line) const override;
 
-    virtual Edit::Suggestions get_suggestions() const override;
+    virtual void compute_suggestions() override;
     virtual void show_suggestions_panel() override;
-    virtual void update_suggestions_panel(const Edit::Suggestions& suggestions) override;
     virtual void hide_suggestions_panel() override;
 
     bool quit_by_interrupt() const { return m_quit_by_interrupt; }
@@ -58,10 +57,11 @@ public:
 
     virtual void do_open_prompt() override;
 
-    void complete_suggestion(const Edit::Suggestions& suggestions, int suggestion_index);
+    void complete_suggestion(const Edit::Suggestion& suggestion);
 
 private:
     virtual void document_did_change() override;
+    virtual void suggestions_did_change() override;
 
     void move_up_rows(int count);
 

@@ -68,7 +68,7 @@ AppDisplay& AppDisplay::ensure_search_display() {
     return m_search_widget->display();
 }
 
-Edit::RenderedLine AppDisplay::compose_line(const Edit::Line& line) const {
+Edit::RenderedLine AppDisplay::compose_line(const Edit::Line& line) {
     auto renderer = Edit::LineRenderer { cols(), document()->word_wrap_enabled() };
     for (int index_into_line = 0; index_into_line <= line.length(); index_into_line++) {
         if (cursors().should_show_auto_complete_text_at(*document(), line, index_into_line)) {

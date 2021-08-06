@@ -3,6 +3,7 @@
 #include <edit/character_metadata.h>
 #include <edit/forward.h>
 #include <edit/multicursor.h>
+#include <edit/suggestions.h>
 #include <graphics/color.h>
 #include <graphics/forward.h>
 #include <liim/forward.h>
@@ -31,7 +32,7 @@ public:
     void scroll(int vertical, int horizontal);
 
     virtual TextIndex text_index_at_mouse_position(const Point& point) = 0;
-    virtual RenderedLine compose_line(const Line& line) const = 0;
+    virtual RenderedLine compose_line(const Line& line) = 0;
     virtual void output_line(int row, int col_offset, const StringView& text, const Vector<CharacterMetadata>& metadata) = 0;
     virtual void schedule_update() = 0;
     virtual int enter() = 0;
@@ -41,9 +42,8 @@ public:
     virtual void do_open_prompt() = 0;
     virtual void quit() = 0;
 
-    virtual Suggestions get_suggestions() const;
+    virtual void compute_suggestions() {}
     virtual void show_suggestions_panel() {}
-    virtual void update_suggestions_panel(const Suggestions&) {}
     virtual void hide_suggestions_panel() {}
 
     virtual void set_clipboard_contents(LIIM::String text, bool is_whole_line = false) = 0;
@@ -67,6 +67,11 @@ public:
     MultiCursor& cursors() { return m_cursors; }
     const MultiCursor& cursors() const { return m_cursors; }
 
+    Suggestions& suggestions() { return m_suggestions; }
+    const Suggestions& suggestions() const { return m_suggestions; }
+
+    void set_suggestions(Vector<Suggestion> suggestions);
+
     struct RenderingInfo {
         Maybe<vga_color> fg;
         Maybe<vga_color> bg;
@@ -84,11 +89,13 @@ protected:
     Display();
 
     virtual void document_did_change() {}
+    virtual void suggestions_did_change() {}
 
 private:
     SharedPtr<Document> m_document;
     MultiCursor m_cursors;
     Vector<RenderedLine> m_rendered_lines;
+    Suggestions m_suggestions;
     int m_scroll_row_offset { 0 };
     int m_scroll_col_offset { 0 };
 };

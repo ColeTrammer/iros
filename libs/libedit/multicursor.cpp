@@ -162,14 +162,15 @@ bool MultiCursor::should_show_auto_complete_text_at(const Document& document, co
            main_cursor().index_into_line() == index_into_line;
 }
 
-Maybe<String> MultiCursor::preview_auto_complete_text(const Display& display) const {
-    auto suggestions = display.get_suggestions();
-    if (suggestions.suggestion_count() != 1) {
+Maybe<String> MultiCursor::preview_auto_complete_text(Display& display) const {
+    display.compute_suggestions();
+    auto suggestions = display.suggestions();
+    if (suggestions.size() != 1) {
         return {};
     }
 
-    auto& text = suggestions.suggestion_list().first();
-    return text.substring(suggestions.suggestion_offset());
+    auto& suggestion = suggestions.first();
+    return suggestion.content().substring(suggestion.offset());
 }
 
 TextRangeCollection MultiCursor::cursor_text_ranges(const Document& document) const {

@@ -24,7 +24,7 @@ private:
     virtual Edit::DocumentType get_input_type() const override { return Edit::DocumentType::ShellScript; }
     virtual String get_main_prompt() const override;
     virtual String get_secondary_prompt() const override { return "> "; }
-    virtual Edit::Suggestions get_suggestions(const String& input, size_t position) const override;
+    virtual Vector<Edit::Suggestion> get_suggestions(const String& input, size_t position) const override;
 
     struct Dirent {
         String name;
@@ -32,9 +32,9 @@ private:
     };
 
     const Vector<Dirent>& ensure_directory_entries(const String& directory) const;
-    Edit::Suggestions suggest_executable(const String& path, const StringView& current_path, size_t suggestions_offset) const;
-    Edit::Suggestions suggest_path_for(const String& path, const StringView& current_path, size_t suggestions_offset,
-                                       bool should_be_executable) const;
+    Vector<Edit::Suggestion> suggest_executable(const String& path, const StringView& current_path, size_t suggestions_offset) const;
+    Vector<Edit::Suggestion> suggest_path_for(const String& path, const StringView& current_path, size_t suggestions_offset,
+                                              bool should_be_executable) const;
 
     mutable HashMap<String, Vector<Dirent>> m_cached_directories;
 };

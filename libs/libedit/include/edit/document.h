@@ -150,7 +150,7 @@ public:
     void paste(Display& display, MultiCursor& cursor);
     void cut(Display& display, MultiCursor& cursor);
 
-    void insert_suggestion(Display& display, const Suggestions& suggestions, int suggestion_index);
+    void insert_suggestion(Display& display, const Suggestion& suggestion);
     void insert_text_at_cursor(Display& display, const String& string);
 
     bool show_line_numbers() const { return m_show_line_numbers; }

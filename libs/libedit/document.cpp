@@ -894,8 +894,7 @@ void Document::guess_type_from_name() {
 }
 
 void Document::update_suggestions(Display& display) {
-    auto suggestions = display.get_suggestions();
-    display.update_suggestions_panel(suggestions);
+    display.compute_suggestions();
 }
 
 void Document::save(Display& display) {
@@ -1090,10 +1089,8 @@ void Document::select_all(Display& display, Cursor& cursor) {
     move_cursor_to_document_end(display, cursor, MovementMode::Select);
 }
 
-void Document::insert_suggestion(Display& display, const Suggestions& suggestions, int suggestion_index) {
-    auto suggestion = suggestions.suggestion_list()[suggestion_index];
-    insert_text_at_cursor(
-        display, String(suggestion.string() + suggestions.suggestion_offset(), suggestion.size() - suggestions.suggestion_offset()));
+void Document::insert_suggestion(Display& display, const Suggestion& suggestion) {
+    insert_text_at_cursor(display, suggestion.content().substring(suggestion.offset()));
 }
 
 bool Document::notify_mouse_event(Display& display, const App::MouseEvent& event) {
@@ -1336,12 +1333,12 @@ void Document::notify_key_pressed(Display& display, const App::KeyEvent& event) 
             break;
         case App::Key::Tab:
             if (m_auto_complete_mode == AutoCompleteMode::Always) {
-                auto suggestions = display.get_suggestions();
-                if (suggestions.suggestion_count() == 1) {
-                    insert_suggestion(display, suggestions, 0);
-                } else if (suggestions.suggestion_count() > 1) {
+                display.compute_suggestions();
+                auto suggestions = display.suggestions();
+                if (suggestions.size() == 1) {
+                    insert_suggestion(display, suggestions.first());
+                } else if (suggestions.size() > 1) {
                     display.show_suggestions_panel();
-                    display.update_suggestions_panel(suggestions);
                 }
                 break;
             }

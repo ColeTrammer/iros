@@ -32,7 +32,7 @@ public:
     void did_delete_from_line(Document& document, Display& display, int line_index, int index_into_line, int bytes_deleted);
 
     bool should_show_auto_complete_text_at(const Document& document, const Line& line, int index_into_line) const;
-    Maybe<String> preview_auto_complete_text(const Display& display) const;
+    Maybe<String> preview_auto_complete_text(Display& display) const;
 
     TextRangeCollection cursor_text_ranges(const Document& document) const;
     TextRangeCollection selections(const Document& document) const;

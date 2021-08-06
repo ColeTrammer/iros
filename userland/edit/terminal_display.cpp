@@ -165,7 +165,7 @@ void TerminalDisplay::output_line(int row, int col_offset, const StringView& tex
     renderer.clear_rect(clear_rect);
 }
 
-Edit::RenderedLine TerminalDisplay::compose_line(const Edit::Line& line) const {
+Edit::RenderedLine TerminalDisplay::compose_line(const Edit::Line& line) {
     assert(document());
     auto renderer = Edit::LineRenderer { cols(), document()->word_wrap_enabled() };
     for (int index_into_line = 0; index_into_line <= line.length(); index_into_line++) {
