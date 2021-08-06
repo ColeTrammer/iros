@@ -45,7 +45,19 @@ Maybe<Point> Panel::cursor_position() {
 }
 
 TInput::TerminalRenderer Panel::get_renderer() {
-    auto renderer = TInput::TerminalRenderer { Application::the().io_terminal(), Application::the().dirty_rects() };
+    auto dirty_rects = TUI::Application::the().dirty_rects();
+    Function<void(Panel&)> enumerate_children = [&](Panel& panel) {
+        for (auto& child : panel.children()) {
+            if (child->is_panel()) {
+                auto& panel = const_cast<Panel&>(static_cast<const Panel&>(*child));
+                dirty_rects.subtract(panel.positioned_rect());
+                enumerate_children(panel);
+            }
+        }
+    };
+    enumerate_children(*this);
+
+    auto renderer = TInput::TerminalRenderer { Application::the().io_terminal(), dirty_rects };
     renderer.set_clip_rect(positioned_rect());
     renderer.set_origin(positioned_rect().top_left());
     return renderer;
