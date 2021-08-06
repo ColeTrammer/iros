@@ -279,16 +279,6 @@ Edit::Suggestions ReplDisplay::get_suggestions() const {
     ::qsort(suggestions.vector(), suggestions.size(), sizeof(suggestions[0]), [](const void* p1, const void* p2) {
         const auto& s1 = *reinterpret_cast<const String*>(p1);
         const auto& s2 = *reinterpret_cast<const String*>(p2);
-
-        bool s1_special = strcmp(s1.string(), "../") == 0 || strcmp(s1.string(), "./") == 0;
-        bool s2_special = strcmp(s2.string(), "../") == 0 || strcmp(s2.string(), "./") == 0;
-
-        if (s1_special && !s2_special) {
-            return 1;
-        } else if (!s1_special && s2_special) {
-            return -1;
-        }
-
         return strcmp(s1.string(), s2.string());
     });
 
