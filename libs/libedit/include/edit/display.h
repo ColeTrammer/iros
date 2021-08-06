@@ -42,7 +42,7 @@ public:
     virtual void do_open_prompt() = 0;
     virtual void quit() = 0;
 
-    virtual void compute_suggestions() {}
+    virtual void do_compute_suggestions() {}
     virtual void show_suggestions_panel() {}
     virtual void hide_suggestions_panel() {}
 
@@ -70,6 +70,7 @@ public:
     Suggestions& suggestions() { return m_suggestions; }
     const Suggestions& suggestions() const { return m_suggestions; }
 
+    void compute_suggestions();
     void set_suggestions(Vector<Suggestion> suggestions);
 
     struct RenderingInfo {
@@ -89,7 +90,7 @@ protected:
     Display();
 
     virtual void document_did_change() {}
-    virtual void suggestions_did_change() {}
+    virtual void suggestions_did_change(const Maybe<TextRange>&) {}
 
 private:
     SharedPtr<Document> m_document;

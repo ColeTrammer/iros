@@ -184,6 +184,8 @@ public:
     TextRangeCollection& syntax_highlighting_info() { return m_syntax_highlighting_info; }
     const TextRangeCollection& syntax_highlighting_info() const { return m_syntax_highlighting_info; }
 
+    void update_syntax_highlighting();
+
     void register_display(Display& display);
     void unregister_display(Display& display);
 
@@ -198,7 +200,6 @@ private:
     void clear_search_results();
     void enter_interactive_search(Display& display);
 
-    void update_syntax_highlighting();
     void update_suggestions(Display& display);
 
     void swap_lines_at_cursor(Display& display, SwapDirection direction);

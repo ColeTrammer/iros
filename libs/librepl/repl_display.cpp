@@ -266,13 +266,27 @@ void ReplDisplay::output_line(int row, int col_offset, const StringView& text, c
 
 void ReplDisplay::do_open_prompt() {}
 
-void ReplDisplay::suggestions_did_change() {
+void ReplDisplay::suggestions_did_change(const Maybe<Edit::TextRange>& old_text_range) {
     if (m_suggestions_panel) {
+        auto& current_text_range = suggestions().current_text_range();
+        if ((current_text_range.has_value() && !old_text_range.has_value()) ||
+            (!current_text_range.has_value() && old_text_range.has_value())) {
+            hide_suggestions_panel();
+            return;
+        }
+        if (!current_text_range && !old_text_range) {
+            m_suggestions_panel->set_suggestions(suggestions().suggestions());
+            return;
+        }
+        if (current_text_range->start() != old_text_range->start()) {
+            hide_suggestions_panel();
+            return;
+        }
         m_suggestions_panel->set_suggestions(suggestions().suggestions());
     }
 }
 
-void ReplDisplay::compute_suggestions() {
+void ReplDisplay::do_compute_suggestions() {
     auto content_string = document()->content_string();
     auto cursor_index = document()->cursor_index_in_content_string(cursors().main_cursor());
     auto suggestions = m_repl.get_suggestions(content_string, cursor_index);
@@ -304,6 +318,10 @@ void ReplDisplay::compute_suggestions() {
 }
 
 void ReplDisplay::show_suggestions_panel() {
+    if (m_suggestions_panel) {
+        return;
+    }
+
     auto cursor_position = document()->cursor_position_on_display(*this, cursors().main_cursor());
 
     m_suggestions_panel = add<SuggestionsPanel>(*this).shared_from_this();
@@ -323,6 +341,10 @@ void ReplDisplay::show_suggestions_panel() {
 }
 
 void ReplDisplay::hide_suggestions_panel() {
+    if (!m_suggestions_panel) {
+        return;
+    }
+
     TUI::Application::the().invalidate(m_suggestions_panel->positioned_rect());
     remove_child(m_suggestions_panel);
     m_suggestions_panel = nullptr;
@@ -332,7 +354,6 @@ void ReplDisplay::hide_suggestions_panel() {
 
 void ReplDisplay::complete_suggestion(const Edit::Suggestion& suggestion) {
     document()->insert_suggestion(*this, suggestion);
-    hide_suggestions_panel();
 }
 
 Vector<SharedPtr<Edit::Document>>& ReplDisplay::ensure_history_documents() {

@@ -16,6 +16,15 @@ void TextRangeCollection::sort() {
     });
 }
 
+Maybe<TextRange> TextRangeCollection::range_at_text_index(const TextIndex& index) const {
+    for (auto& range : m_ranges) {
+        if (range.includes(index)) {
+            return range;
+        }
+    }
+    return {};
+}
+
 TextRangeCollectionIterator TextRangeCollection::iterator(const TextIndex& start) const {
     int range_index;
     for (range_index = 0; range_index < m_ranges.size(); range_index++) {

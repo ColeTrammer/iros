@@ -1,5 +1,7 @@
 #pragma once
 
+#include <edit/text_range.h>
+#include <liim/maybe.h>
 #include <liim/string.h>
 #include <liim/vector.h>
 
@@ -29,12 +31,19 @@ public:
 
     const Suggestion& operator[](int index) const { return m_suggestions[index]; }
 
-    void clear() { m_suggestions.clear(); }
+    void clear() {
+        m_suggestions.clear();
+        m_current_text_range = {};
+    }
 
     const Vector<Suggestion> suggestions() const { return m_suggestions; }
     void set_suggestions(Vector<Suggestion> suggestions) { m_suggestions = move(suggestions); }
 
+    const Maybe<TextRange>& current_text_range() const { return m_current_text_range; }
+    void set_current_text_range(Maybe<TextRange> text_range) { m_current_text_range = move(text_range); }
+
 private:
     Vector<Suggestion> m_suggestions;
+    Maybe<TextRange> m_current_text_range;
 };
 }

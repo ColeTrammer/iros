@@ -48,7 +48,7 @@ public:
     virtual void set_clipboard_contents(String text, bool is_whole_line) override;
     virtual String clipboard_contents(bool& is_whole_line) const override;
 
-    virtual void compute_suggestions() override;
+    virtual void do_compute_suggestions() override;
     virtual void show_suggestions_panel() override;
     virtual void hide_suggestions_panel() override;
 
@@ -61,7 +61,7 @@ public:
 
 private:
     virtual void document_did_change() override;
-    virtual void suggestions_did_change() override;
+    virtual void suggestions_did_change(const Maybe<Edit::TextRange>& old_text_range) override;
 
     void move_up_rows(int count);
 

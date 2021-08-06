@@ -27,13 +27,24 @@ void Display::set_document(SharedPtr<Document> document) {
     m_cursors.remove_secondary_cursors();
     m_cursors.main_cursor().set({ 0, 0 });
     m_rendered_lines.clear();
+    hide_suggestions_panel();
     notify_line_count_changed();
     document_did_change();
 }
 
 void Display::set_suggestions(Vector<Suggestion> suggestions) {
+    auto old_suggestion_range = m_suggestions.current_text_range();
     m_suggestions.set_suggestions(move(suggestions));
-    suggestions_did_change();
+
+    auto cursor_index = cursors().main_cursor().index();
+    auto index_for_suggestion = TextIndex { cursor_index.line_index(), max(cursor_index.index_into_line() - 1, 0) };
+    m_suggestions.set_current_text_range(document()->syntax_highlighting_info().range_at_text_index(index_for_suggestion));
+    suggestions_did_change(old_suggestion_range);
+}
+
+void Display::compute_suggestions() {
+    document()->update_syntax_highlighting();
+    do_compute_suggestions();
 }
 
 void Display::set_scroll_offsets(int row_offset, int col_offset) {

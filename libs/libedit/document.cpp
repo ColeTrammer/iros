@@ -1214,6 +1214,10 @@ void Document::notify_key_pressed(Display& display, const App::KeyEvent& event) 
             case App::Key::Delete:
                 delete_word(display, DeleteCharMode::Delete);
                 break;
+            case App::Key::Space:
+                display.compute_suggestions();
+                display.show_suggestions_panel();
+                break;
             case App::Key::A:
                 select_all(display, cursors.main_cursor());
                 should_scroll_cursor_into_view = false;
