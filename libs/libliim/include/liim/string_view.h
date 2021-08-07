@@ -10,6 +10,7 @@ namespace LIIM {
 
 class StringView {
 public:
+    constexpr StringView() : m_data(nullptr), m_size(0) {}
     constexpr StringView(const char* str) : m_data(str), m_size(0) {
         while (*str++) {
             m_size++;

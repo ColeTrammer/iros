@@ -8,15 +8,14 @@ class FormatArgs {
 public:
     explicit FormatArgs(Span<FormatArg> args) : m_args(args) {}
 
-    FormatArg* next_arg() {
-        if (m_next_index >= m_args.size()) {
-            return {};
+    FormatArg* arg_at_index(size_t index) {
+        if (index >= m_args.size()) {
+            return nullptr;
         }
-        return &m_args[m_next_index++];
+        return &m_args[index];
     }
 
 private:
     Span<FormatArg> m_args;
-    size_t m_next_index { 0 };
 };
 }
