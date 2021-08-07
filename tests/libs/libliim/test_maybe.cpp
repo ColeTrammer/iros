@@ -1,6 +1,12 @@
 #include <liim/maybe.h>
 #include <test/test.h>
 
+static_assert(Maybe<int> { 5 } == Maybe<int> { 5 });
+static_assert(Maybe<int> { 5 } != Maybe<int> { 6 });
+static_assert(Maybe<int> { 5 } != Maybe<int> {});
+static_assert(Maybe<int> { 5 }.value() == 5);
+static_assert(!Maybe<int> {}.has_value());
+
 TEST(maybe, basic_getters) {
     auto none = Maybe<int> {};
     auto some = Maybe<int> { 5 };

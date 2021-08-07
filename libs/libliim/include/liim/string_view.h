@@ -93,7 +93,7 @@ public:
         return true;
     }
 
-    Maybe<size_t> index_of(char c) const {
+    constexpr Maybe<size_t> index_of(char c) const {
         for (size_t i = 0; i < size(); i++) {
             if (char_at(i) == c) {
                 return { i };
@@ -103,7 +103,7 @@ public:
         return {};
     }
 
-    Maybe<size_t> last_index_of(char c) const {
+    constexpr Maybe<size_t> last_index_of(char c) const {
         for (size_t i = size(); i > 0; i--) {
             if (char_at(i - 1) == c) {
                 return { i - 1 };

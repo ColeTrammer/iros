@@ -257,7 +257,7 @@ inline constexpr T&& forward(typename TypeIdentity<T>::type& param) {
 }
 
 template<typename T>
-inline typename RemoveReference<T>::type&& move(T&& arg) {
+inline constexpr typename RemoveReference<T>::type&& move(T&& arg) {
     return static_cast<typename RemoveReference<T>::type&&>(arg);
 }
 
@@ -468,7 +468,7 @@ template<size_t I>
 inline constexpr in_place_index_t<I> in_place_index {};
 
 template<typename T>
-void swap(T& a, T& b) {
+constexpr void swap(T& a, T& b) {
     T temp(move(a));
     a = move(b);
     b = move(temp);

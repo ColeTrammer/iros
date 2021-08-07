@@ -8,102 +8,112 @@ namespace LIIM {
 template<typename T>
 class Maybe {
 public:
-    Maybe() {}
-    Maybe(const T& value) : m_has_value(true) { new (&m_value[0]) T(value); }
-    Maybe(T&& value) : m_has_value(true) { new (&m_value[0]) T(move(value)); }
-    Maybe(const Maybe& other) : m_has_value(other.has_value()) {
+    constexpr Maybe() {}
+    constexpr Maybe(const T& value) : m_value(value), m_has_value(true) {}
+    constexpr Maybe(T&& value) : m_value(move(value)), m_has_value(true) {}
+    constexpr Maybe(const Maybe& other) : m_has_value(other.has_value()) {
         if (other.has_value()) {
-            new (&m_value[0]) T(other.value());
+            new (&m_value) T { other.value() };
         }
     }
-    Maybe(Maybe&& other) : m_has_value(other.has_value()) {
+    constexpr Maybe(Maybe&& other) : m_has_value(other.has_value()) {
         if (m_has_value) {
-            new (&m_value[0]) T(LIIM::move(other.value()));
-            other.value().~T();
-            other.m_has_value = false;
+            new (&m_value) T { LIIM::move(other.value()) };
+            other.reset();
         }
     }
     template<typename U>
-    Maybe(const Maybe<U>& other) : m_has_value(other.has_value()) {
+    constexpr Maybe(const Maybe<U>& other) : m_has_value(other.has_value()) {
         if (other.has_value()) {
-            new (&m_value[0]) T(other.value());
+            new (&m_value) T { other.value() };
         }
     }
     template<typename U>
-    Maybe(Maybe<U>&& other) : m_has_value(other.has_value()) {
+    constexpr Maybe(Maybe<U>&& other) : m_has_value(other.has_value()) {
         if (m_has_value) {
-            new (&m_value[0]) T(LIIM::move(other.value()));
-            other.value().~U();
-            other.m_has_value = false;
+            new (&m_value) T { LIIM::move(other.value()) };
+            other.reset();
         }
     }
 
     template<typename U>
     friend class Maybe;
 
-    ~Maybe() {
+    constexpr ~Maybe() { reset(); }
+
+    constexpr void reset() {
         if (has_value()) {
             value().~T();
+            m_has_value = false;
         }
     }
 
-    Maybe<T>& operator=(const Maybe<T>& other) {
+    constexpr Maybe<T>& operator=(const Maybe<T>& other) {
         if (this != &other) {
-            Maybe<T> temp(other);
+            Maybe<T> temp { other };
             swap(temp);
         }
         return *this;
     }
 
-    Maybe<T>& operator=(Maybe<T>&& other) {
+    constexpr Maybe<T>& operator=(Maybe<T>&& other) {
         if (this != &other) {
-            Maybe<T> temp(LIIM::move(other));
+            Maybe<T> temp { LIIM::move(other) };
             swap(temp);
         }
         return *this;
     }
 
-    bool has_value() const { return m_has_value; }
-    bool operator!() const { return !m_has_value; }
-    operator bool() const { return m_has_value; }
+    constexpr bool has_value() const { return m_has_value; }
+    constexpr bool operator!() const { return !m_has_value; }
+    constexpr operator bool() const { return m_has_value; }
 
-    bool operator==(const Maybe& other) const {
+    constexpr bool operator==(const Maybe& other) const {
         if (!this->has_value() && !other.has_value()) {
             return true;
         }
         return this->has_value() && other.has_value() && this->value() == other.value();
     }
-    bool operator!=(const Maybe& other) const { return !(*this == other); }
+    constexpr bool operator!=(const Maybe& other) const { return !(*this == other); }
 
-    T& operator*() { return value(); }
-    const T& operator*() const { return value(); }
+    constexpr T& operator*() { return value(); }
+    constexpr const T& operator*() const { return value(); }
 
-    T* operator->() { return &value(); }
-    const T* operator->() const { return &value(); }
+    constexpr T* operator->() { return &value(); }
+    constexpr const T* operator->() const { return &value(); }
 
-    T& value() {
+    constexpr T& value() {
         assert(m_has_value);
-        return *reinterpret_cast<T*>(&m_value[0]);
+        return m_value;
     }
-    const T& value() const { return const_cast<Maybe<T>&>(*this).value(); }
+    constexpr const T& value() const { return const_cast<Maybe<T>&>(*this).value(); }
 
-    T value_or(T&& default_value) const { return has_value() ? value() : default_value; }
+    constexpr T value_or(T&& default_value) const { return has_value() ? value() : default_value; }
 
-    void swap(Maybe& other) {
+    template<typename... Args>
+    constexpr T& emplace(Args&&... args) {
+        if (has_value()) {
+            reset();
+        }
+        new (&m_value) T { forward<Args>(args)... };
+        m_has_value = true;
+        return value();
+    }
+
+    constexpr void swap(Maybe& other) {
         if (this->has_value() && other.has_value()) {
             LIIM::swap(this->value(), other.value());
         } else if (this->has_value()) {
-            new (&other.m_value[0]) T(LIIM::move(this->value()));
-            this->value().~T();
+            other.emplace(LIIM::move(this->value()));
+            this->reset();
         } else if (other.has_value()) {
-            new (&this->m_value[0]) T(LIIM::move(other.value()));
-            other.value().~T();
+            this->emplace(LIIM::move(other.value()));
+            other.reset();
         }
-        LIIM::swap(this->m_has_value, other.m_has_value);
     }
 
     template<typename C, typename R = InvokeResult<C, T>::type>
-    Maybe<R> map(C mapper) const {
+    constexpr Maybe<R> map(C mapper) const {
         if (!has_value()) {
             return {};
         }
@@ -111,7 +121,7 @@ public:
     }
 
     template<typename C, typename R = InvokeResult<C, T>::type>
-    R and_then(C mapper) const {
+    constexpr R and_then(C mapper) const {
         if (!has_value()) {
             return {};
         }
@@ -119,12 +129,15 @@ public:
     }
 
 private:
-    char m_value[sizeof(T)];
+    union {
+        char m_empty;
+        T m_value;
+    };
     bool m_has_value { false };
 };
 
 template<typename T>
-void swap(Maybe<T>& a, Maybe<T>& b) {
+constexpr void swap(Maybe<T>& a, Maybe<T>& b) {
     a.swap(b);
 }
 
