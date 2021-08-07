@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/format/forward.h>
 #include <liim/traits.h>
 
 namespace LIIM {
@@ -80,13 +81,13 @@ class Vector;
 
 template<typename T>
 class WeakPtr;
+
 }
 
 using LIIM::Bitset;
 using LIIM::ByteBuffer;
 using LIIM::ByteReader;
 using LIIM::ByteWriter;
-using LIIM::FixedArray;
 using LIIM::Function;
 using LIIM::Generator;
 using LIIM::HashMap;
