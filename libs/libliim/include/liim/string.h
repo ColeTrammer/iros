@@ -117,6 +117,8 @@ public:
     void clear();
     void remove_index(size_t index);
 
+    void reverse();
+
     String& to_upper_case();
     String& to_lower_case();
     String& to_title_case();
@@ -267,6 +269,12 @@ inline void String::remove_index(size_t index) {
     assert(index < size());
     memmove(string() + index, string() + index + 1, size() - index);
     set_size(size() - 1);
+}
+
+inline void String::reverse() {
+    for (size_t i = 0; i < size() / 2; i++) {
+        LIIM::swap(string()[i], string()[size() - i - 1]);
+    }
 }
 
 inline String& String::to_upper_case() {
