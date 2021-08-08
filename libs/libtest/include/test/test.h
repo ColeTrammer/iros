@@ -21,3 +21,29 @@
             return;                                                                                                                        \
         }                                                                                                                                  \
     } while (0)
+
+#define EXPECT_EQ(a, b)                                                                                                                    \
+    do {                                                                                                                                   \
+        auto a_result = (a);                                                                                                               \
+        auto b_result = (b);                                                                                                               \
+        if (a_result != b_result) {                                                                                                        \
+            error_log("\033[31;1mFAIL\033[0m: \033[1m{}\033[0m: {}: {}:{}: {} != {} => '{}' != '{}'",                                      \
+                      Test::TestManager::the().current_test_case().suite_name(), Test::TestManager::the().current_test_case().case_name(), \
+                      __FILE__, String::format("%d", __LINE__), "" #a, "" #b, a_result, b_result);                                         \
+            Test::TestManager::the().test_did_fail();                                                                                      \
+            return;                                                                                                                        \
+        }                                                                                                                                  \
+    } while (0)
+
+#define EXPECT_NOT_EQ(a, b)                                                                                                                \
+    do {                                                                                                                                   \
+        auto a_result = (a);                                                                                                               \
+        auto b_result = (b);                                                                                                               \
+        if (a_result == b_result) {                                                                                                        \
+            error_log("\033[31;1mFAIL\033[0m: \033[1m{}\033[0m: {}: {}:{}: {} != {} => '{}' == '{}'",                                      \
+                      Test::TestManager::the().current_test_case().suite_name(), Test::TestManager::the().current_test_case().case_name(), \
+                      __FILE__, String::format("%d", __LINE__), "" #a, "" #b, a_result, b_result);                                         \
+            Test::TestManager::the().test_did_fail();                                                                                      \
+            return;                                                                                                                        \
+        }                                                                                                                                  \
+    } while (0)
