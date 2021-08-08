@@ -21,7 +21,7 @@ TEST(alarm, basic) {
     EXPECT(!did_get_alarm);
     alarm(1);
     EXPECT(sigsuspend(&set) == -1);
-    EXPECT(errno == EINTR);
+    EXPECT_EQ(errno, EINTR);
     EXPECT(did_get_alarm);
 }
 
@@ -44,7 +44,7 @@ TEST(alarm, exec) {
             alarm(1);
         },
         BINARY_DIR "/test_alarm_exec_helper");
-    EXPECT(exit_status == 0);
+    EXPECT_EQ(exit_status, 0);
 }
 
 #ifdef ALARM_EXEC_HELPER

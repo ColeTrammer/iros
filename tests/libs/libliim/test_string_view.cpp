@@ -3,27 +3,27 @@
 
 TEST(string_view, basic_getters) {
     EXPECT(""sv.empty());
-    EXPECT("abc"sv.size() == 3);
-    EXPECT("liim"sv.char_at(3) == 'm');
-    EXPECT("liim"sv.first() == 'l');
-    EXPECT("liim"sv.last() == 'm');
+    EXPECT_EQ("abc"sv.size(), 3lu);
+    EXPECT_EQ("liim"sv.char_at(3), 'm');
+    EXPECT_EQ("liim"sv.first(), 'l');
+    EXPECT_EQ("liim"sv.last(), 'm');
 }
 
 TEST(string_view, comparisons) {
-    EXPECT(""sv == ""sv);
-    EXPECT("A"sv != ""sv);
-    EXPECT("string_view"sv == "string_view"sv);
-    EXPECT("string_view"sv != "string"sv);
+    EXPECT_EQ(""sv, ""sv);
+    EXPECT_NOT_EQ("A"sv, ""sv);
+    EXPECT_EQ("string_view"sv, "string_view"sv);
+    EXPECT_NOT_EQ("string_view"sv, "string"sv);
 }
 
 TEST(string_view, substrings) {
     auto test = "test string literal"sv;
-    EXPECT(test.first(4) == "test"sv);
-    EXPECT(test.first(0) == ""sv);
-    EXPECT(test.substring(5) == "string literal"sv);
-    EXPECT(test.substring(test.size()) == ""sv);
-    EXPECT(test.last(7) == "literal"sv);
-    EXPECT(test.substring(5, 6) == "string"sv);
+    EXPECT_EQ(test.first(4), "test"sv);
+    EXPECT_EQ(test.first(0), ""sv);
+    EXPECT_EQ(test.substring(5), "string literal"sv);
+    EXPECT_EQ(test.substring(test.size()), ""sv);
+    EXPECT_EQ(test.last(7), "literal"sv);
+    EXPECT_EQ(test.substring(5, 6), "string"sv);
 }
 
 TEST(string_view, contains) {
@@ -40,23 +40,23 @@ TEST(string_view, contains) {
 TEST(string_view, find) {
     auto haystack = "interesting"sv;
     EXPECT(!haystack.index_of('z'));
-    EXPECT(haystack.index_of('i') == Maybe<size_t> { 0 });
-    EXPECT(haystack.index_of('t') == Maybe<size_t> { 2 });
+    EXPECT_EQ(haystack.index_of('i'), Maybe<size_t> { 0 });
+    EXPECT_EQ(haystack.index_of('t'), Maybe<size_t> { 2 });
 
     EXPECT(!haystack.last_index_of('z'));
-    EXPECT(haystack.last_index_of('t') == Maybe<size_t> { 7 });
-    EXPECT(haystack.last_index_of('g') == Maybe<size_t> { 10 });
-    EXPECT("abc"sv.last_index_of('a') == Maybe<size_t> { 0 });
+    EXPECT_EQ(haystack.last_index_of('t'), Maybe<size_t> { 7 });
+    EXPECT_EQ(haystack.last_index_of('g'), Maybe<size_t> { 10 });
+    EXPECT_EQ("abc"sv.last_index_of('a'), Maybe<size_t> { 0 });
 }
 
 TEST(string_view, split) {
     auto view = "  a series  of   words "sv;
     auto parts = view.split(' ');
-    EXPECT(parts.size() == 4);
-    EXPECT(parts[0] == "a"sv);
-    EXPECT(parts[1] == "series"sv);
-    EXPECT(parts[2] == "of"sv);
-    EXPECT(parts[3] == "words"sv);
+    EXPECT_EQ(parts.size(), 4);
+    EXPECT_EQ(parts[0], "a"sv);
+    EXPECT_EQ(parts[1], "series"sv);
+    EXPECT_EQ(parts[2], "of"sv);
+    EXPECT_EQ(parts[3], "words"sv);
 
     EXPECT("   "sv.split(' ').empty());
     EXPECT(""sv.split(' ').empty());

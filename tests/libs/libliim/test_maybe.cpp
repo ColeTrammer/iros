@@ -15,9 +15,9 @@ TEST(maybe, basic_getters) {
     EXPECT(!none.has_value());
     EXPECT(some);
     EXPECT(some.has_value());
-    EXPECT(*some == 5);
-    EXPECT(some != none);
-    EXPECT(none.value_or(3) == 3);
+    EXPECT_EQ(*some, 5);
+    EXPECT_NOT_EQ(some, none);
+    EXPECT_EQ(none.value_or(3), 3);
 }
 
 TEST(maybe, basic_setters) {
@@ -28,39 +28,39 @@ TEST(maybe, basic_setters) {
 
     EXPECT(!none);
     EXPECT(!some);
-    EXPECT(copy.value_or(0) == 5);
-    EXPECT(moved.value_or(0) == 5);
+    EXPECT_EQ(copy.value_or(0), 5);
+    EXPECT_EQ(moved.value_or(0), 5);
 }
 
 TEST(maybe, equivalence) {
     auto none = Maybe<int> {};
     auto one = Maybe<int> { 1 };
     auto two = Maybe<int> { 2 };
-    EXPECT(none == Maybe<int> {});
-    EXPECT(one == Maybe<int> { 1 });
-    EXPECT(two == Maybe<int> { 2 });
-    EXPECT(one != two);
-    EXPECT(one != none);
+    EXPECT_EQ(none, Maybe<int> {});
+    EXPECT_EQ(one, Maybe<int> { 1 });
+    EXPECT_EQ(two, Maybe<int> { 2 });
+    EXPECT_NOT_EQ(one, two);
+    EXPECT_NOT_EQ(one, none);
 }
 
 TEST(maybe, functional) {
     auto none = Maybe<int> {};
     auto one = Maybe<int> { 1 };
 
-    EXPECT(none.map([](auto) {
+    EXPECT_EQ(Maybe<int> {}, none.map([](auto) {
         return 2;
-    }) == Maybe<int> {});
-    EXPECT(one.map([](auto) {
+    }));
+    EXPECT_EQ(Maybe<int> { 2 }, one.map([](auto) {
         return 2;
-    }) == Maybe<int> { 2 });
+    }));
 
-    EXPECT(none.and_then([](auto) -> Maybe<int> {
+    EXPECT_EQ(Maybe<int> {}, none.and_then([](auto) -> Maybe<int> {
         return { 3 };
-    }) == Maybe<int> {});
-    EXPECT(one.and_then([](auto) -> Maybe<int> {
+    }));
+    EXPECT_EQ(Maybe<int> {}, one.and_then([](auto) -> Maybe<int> {
         return {};
-    }) == Maybe<int> {});
-    EXPECT(one.and_then([](auto) -> Maybe<int> {
+    }));
+    EXPECT_EQ(Maybe<int> { 3 }, one.and_then([](auto) -> Maybe<int> {
         return { 3 };
-    }) == Maybe<int> { 3 });
+    }));
 }
