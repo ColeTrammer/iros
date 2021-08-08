@@ -6,8 +6,8 @@
 #include <liim/format/format_parse_context.h>
 
 namespace LIIM::Format {
-String vformat(StringView format_string, FormatArgs format_args) {
-    auto format_parse_context = FormatParseContext {};
+inline String vformat(StringView format_string, FormatArgs format_args) {
+    auto parse_context = FormatParseContext {};
     auto context = FormatContext {};
 
     for (;;) {
@@ -21,12 +21,13 @@ String vformat(StringView format_string, FormatArgs format_args) {
         assert(right_brace);
 
         auto format_specifier = format_string.substring(*left_brace + 1, *right_brace - 1);
-        auto arg_index = format_parse_context.parse_arg_index(format_specifier);
-
+        auto arg_index = parse_context.parse_arg_index(format_specifier);
         assert(arg_index);
         auto arg = format_args.arg_at_index(*arg_index);
         assert(arg);
-        arg->do_format(context);
+
+        assert(parse_context.parse_colon());
+        arg->do_format(context, parse_context);
 
         format_string = format_string.substring(*left_brace + *right_brace + 1);
     }

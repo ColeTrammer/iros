@@ -6,8 +6,9 @@
 namespace LIIM::Format {
 namespace Detail {
     template<typename T>
-    void do_format(const void* value, FormatContext& context) {
+    void do_format(const void* value, FormatContext& context, FormatParseContext& parse_context) {
         auto formatter = Formatter<T> {};
+        formatter.parse(parse_context);
         formatter.format(*static_cast<const T*>(value), context);
     }
 }

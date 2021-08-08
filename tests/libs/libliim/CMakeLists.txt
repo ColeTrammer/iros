@@ -1,4 +1,5 @@
 set(TEST_FILES
+    test_format.cpp
     test_maybe.cpp
     test_string_view.cpp
     test_string.cpp

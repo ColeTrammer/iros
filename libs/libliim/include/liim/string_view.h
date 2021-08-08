@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/character_type.h>
 #include <liim/maybe.h>
 #include <liim/traits.h>
 #include <liim/utilities.h>
@@ -37,7 +38,7 @@ public:
     constexpr bool empty() const { return size() == 0; }
     constexpr const char* data() const { return m_data; }
 
-    constexpr const char* start() const { return m_data; }
+    constexpr const char* begin() const { return m_data; }
     constexpr const char* end() const { return m_data + m_size; }
 
     constexpr const char& operator[](size_t index) const { return char_at(index); }
@@ -139,6 +140,23 @@ private:
     size_t m_size;
 };
 
+constexpr Maybe<size_t> parse_number(const StringView& view) {
+    if (view.empty()) {
+        return {};
+    }
+
+    // FIXME: handle overlow
+    size_t value = 0;
+    for (auto c : view) {
+        if (!is_digit(c)) {
+            return {};
+        }
+        value *= 10;
+        value += c - '0';
+    }
+    return value;
+}
+
 template<>
 struct Traits<StringView> {
     static constexpr bool is_simple() { return false; }
@@ -158,4 +176,5 @@ constexpr LIIM::StringView operator""sv(const char* data, size_t size) {
     return { data, size };
 }
 
+using LIIM::parse_number;
 using LIIM::StringView;
