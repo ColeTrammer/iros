@@ -88,7 +88,7 @@ public:
     }
     constexpr const T& value() const { return const_cast<Maybe<T>&>(*this).value(); }
 
-    constexpr T value_or(T&& default_value) const { return has_value() ? value() : default_value; }
+    constexpr T value_or(T default_value) const { return has_value() ? T { value() } : T { move(default_value) }; }
 
     template<typename... Args>
     constexpr T& emplace(Args&&... args) {

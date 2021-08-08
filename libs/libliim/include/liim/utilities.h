@@ -34,11 +34,11 @@ namespace LIIM {
 typedef __SIZE_TYPE__ size_t;
 
 struct TrueType {
-    enum { value = true };
+    static constexpr bool value = true;
 };
 
 struct FalseType {
-    enum { value = false };
+    static constexpr bool value = false;
 };
 
 template<typename T>
@@ -170,6 +170,73 @@ struct RemoveCVRef {
 
 template<typename T>
 struct IsVoid : IsSame<void, typename RemoveCV<T>::type> {};
+
+template<typename T, typename... Types>
+struct IsOneOf;
+
+template<typename T, typename First, typename... Rest>
+struct IsOneOf<T, First, Rest...> {
+    static constexpr bool value = IsSame<T, First>::value || IsOneOf<T, Rest...>::value;
+};
+
+template<typename T>
+struct IsOneOf<T> {
+    static constexpr bool value = false;
+};
+
+template<typename T>
+struct IsIntegral
+    : IsOneOf<typename RemoveCV<T>::type, bool, char, short, int long, long long, unsigned char, unsigned short, unsigned int,
+              unsigned long, unsigned long long> {};
+
+template<typename T>
+concept Integral = IsIntegral<T>::value;
+
+template<typename T>
+struct IsUnsigned
+    : IsOneOf<typename RemoveCV<T>::type, bool, unsigned char, unsigned short, unsigned int, unsigned long, unsigned long long> {};
+
+template<typename T>
+concept UnsignedIntegral = IsUnsigned<T>::value;
+
+template<typename T>
+struct IsSigned : IsOneOf<typename RemoveCV<T>::type, char, short, int, long, long long> {};
+
+template<typename T>
+concept SignedIntegral = IsSigned<T>::value;
+
+template<typename T>
+struct MakeUnsigned;
+
+template<UnsignedIntegral T>
+struct MakeUnsigned<T> {
+    using type = T;
+};
+
+template<>
+struct MakeUnsigned<char> {
+    using type = unsigned char;
+};
+
+template<>
+struct MakeUnsigned<short> {
+    using type = unsigned short;
+};
+
+template<>
+struct MakeUnsigned<int> {
+    using type = unsigned int;
+};
+
+template<>
+struct MakeUnsigned<long> {
+    using type = unsigned long;
+};
+
+template<>
+struct MakeUnsigned<long long> {
+    using type = unsigned long long;
+};
 
 namespace details {
     template<class T>
@@ -502,8 +569,21 @@ constexpr const T& min(const T& a, const T& b) {
     return a <= b ? a : b;
 }
 
+template<typename T>
+constexpr T abs(T x);
+
+template<UnsignedIntegral T>
+constexpr T abs(T x) {
+    return x;
 }
 
+template<SignedIntegral T>
+constexpr T abs(T x) {
+    return x < 0 ? -x : x;
+}
+}
+
+using LIIM::abs;
 using LIIM::clamp;
 using LIIM::exchange;
 using LIIM::forward;

@@ -16,57 +16,65 @@ struct Traits<bool> {
 };
 
 template<>
-struct Traits<uint8_t> {
+struct Traits<unsigned char> {
     static constexpr bool is_simple() { return true; }
-    static unsigned int hash(const uint8_t& obj) { return static_cast<unsigned int>(obj); };
+    static unsigned int hash(const unsigned char& obj) { return static_cast<unsigned int>(obj); };
 };
 
 template<>
-struct Traits<uint16_t> {
+struct Traits<unsigned short> {
     static constexpr bool is_simple() { return true; }
-    static unsigned int hash(const uint16_t& obj) { return static_cast<unsigned int>(obj); };
+    static unsigned int hash(const unsigned short& obj) { return static_cast<unsigned int>(obj); };
 };
 
 template<>
-struct Traits<uint32_t> {
+struct Traits<unsigned int> {
     static constexpr bool is_simple() { return true; }
-    static unsigned int hash(const uint32_t& obj) { return static_cast<unsigned int>(obj); };
+    static unsigned int hash(const unsigned int& obj) { return static_cast<unsigned int>(obj); };
 };
 
 template<>
-struct Traits<uint64_t> {
+struct Traits<unsigned long> {
     static constexpr bool is_simple() { return true; }
-    static unsigned int hash(const uint64_t& obj) { return static_cast<unsigned int>(obj) + static_cast<unsigned int>(obj >> 32); };
+    static unsigned int hash(const unsigned long& obj) { return static_cast<unsigned int>(obj) + static_cast<unsigned int>(obj >> 32); };
+};
+
+template<>
+struct Traits<unsigned long long> {
+    static constexpr bool is_simple() { return true; }
+    static unsigned int hash(const unsigned long long& obj) {
+        return static_cast<unsigned int>(obj) + static_cast<unsigned int>(obj >> 32);
+    };
 };
 
 template<>
 struct Traits<char> {
     static constexpr bool is_simple() { return true; }
-    static unsigned int hash(const int8_t& obj) { return static_cast<unsigned int>(obj); };
+    static unsigned int hash(const char& obj) { return static_cast<unsigned int>(obj); };
 };
 
 template<>
-struct Traits<int8_t> {
+struct Traits<short> {
     static constexpr bool is_simple() { return true; }
-    static unsigned int hash(const int8_t& obj) { return static_cast<unsigned int>(obj); };
+    static unsigned int hash(const short& obj) { return static_cast<unsigned int>(obj); };
 };
 
 template<>
-struct Traits<int16_t> {
+struct Traits<int> {
     static constexpr bool is_simple() { return true; }
-    static unsigned int hash(const int16_t& obj) { return static_cast<unsigned int>(obj); };
+    static unsigned int hash(const unsigned int& obj) { return static_cast<unsigned int>(obj); };
 };
 
 template<>
-struct Traits<int32_t> {
+struct Traits<long> {
     static constexpr bool is_simple() { return true; }
-    static unsigned int hash(const int32_t& obj) { return static_cast<unsigned int>(obj); };
+    static unsigned int hash(const long& obj) { return static_cast<unsigned int>(obj) + static_cast<unsigned int>(obj >> 32); };
 };
 
 template<>
-struct Traits<int64_t> {
+struct Traits<long long> {
     static constexpr bool is_simple() { return true; }
-    static unsigned int hash(const int64_t& obj) { return static_cast<unsigned int>(obj) + static_cast<unsigned int>(obj >> 32); };
+    static unsigned int hash(const long long& obj) { return static_cast<unsigned int>(obj) + static_cast<unsigned int>(obj >> 32); };
 };
 
 template<typename U>
