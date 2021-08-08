@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/format.h>
 #include <test/test_case.h>
 #include <test/test_manager.h>
 
@@ -10,10 +11,13 @@
     }                                                                                                         \
     static void suite_name##_##case_name()
 
-#define EXPECT(...)                                                                      \
-    do {                                                                                 \
-        if (!(__VA_ARGS__)) {                                                            \
-            Test::TestManager::the().test_did_fail(__FILE__, __LINE__, "" #__VA_ARGS__); \
-            return;                                                                      \
-        }                                                                                \
+#define EXPECT(...)                                                                                                                        \
+    do {                                                                                                                                   \
+        if (!(__VA_ARGS__)) {                                                                                                              \
+            error_log("\033[31;1mFAIL\033[0m: \033[1m{}\033[0m: {}: {}:{}: {}", Test::TestManager::the().current_test_case().suite_name(), \
+                      Test::TestManager::the().current_test_case().case_name(), __FILE__, String::format("%d", __LINE__),                  \
+                      "" #__VA_ARGS__);                                                                                                    \
+            Test::TestManager::the().test_did_fail();                                                                                      \
+            return;                                                                                                                        \
+        }                                                                                                                                  \
     } while (0)

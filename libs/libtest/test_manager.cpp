@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <liim/format.h>
 #include <sys/wait.h>
 #include <test/test.h>
 #include <test/test_case.h>
@@ -37,15 +37,12 @@ int TestManager::spawn(Function<void()> before_exec, String path) {
     return WEXITSTATUS(status);
 }
 
-void TestManager::test_did_fail(const char* file, int line, const char* cond) {
-    printf("\033[31;1mFAIL\033[0m: \033[1m%s\033[0m: %s: %s:%d: %s\n", m_current_test_case->suite_name().string(),
-           m_current_test_case->case_name().string(), file, line, cond);
-
+void TestManager::test_did_fail() {
     m_fail_count++;
 }
 
 static void print_usage(const char* name) {
-    fprintf(stderr, "Usage: %s [-L] [-s SUITE] [-t TESTCASE]\n", name);
+    error_log("Usage: {} [-L] [-s SUITE] [-t TESTCASE]", name);
 }
 
 int TestManager::do_main(int argc, char** argv) {
@@ -95,14 +92,13 @@ int TestManager::do_main(int argc, char** argv) {
     });
 
     if (test_cases.empty() && (suite_name || case_name)) {
-        fprintf(stderr, "%s: No test cases match filter: [suite=%s] [case=%s]\n", *argv, suite_name ? suite_name->string() : "",
-                case_name ? case_name->string() : "");
+        error_log("{}: No test cases match filter: [suite={}] [case={}]", *argv, suite_name, case_name);
         return 1;
     }
 
     if (list_simple) {
         for (auto& test_case : test_cases) {
-            printf("%s:%s\n", test_case->suite_name().string(), test_case->case_name().string());
+            out_log("{}:{}", test_case->suite_name(), test_case->case_name());
         }
         return 0;
     }
@@ -113,7 +109,7 @@ int TestManager::do_main(int argc, char** argv) {
         test_case->execute();
 
         if (m_fail_count == start_fail_count) {
-            printf("\033[1;32mPASS\033[0m: \033[1m%s\033[0m: %s\n", test_case->suite_name().string(), test_case->case_name().string());
+            error_log("\033[1;32mPASS\033[0m: \033[1m{}\033[0m: {}", test_case->suite_name(), test_case->case_name());
         }
     }
 
