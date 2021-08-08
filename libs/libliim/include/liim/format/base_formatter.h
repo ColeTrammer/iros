@@ -30,6 +30,7 @@ namespace Detail {
         BinaryUpper,
         Decimal,
         Octal,
+        OctalUpper,
         Hex,
         HexUpper,
         Pointer,
@@ -46,7 +47,7 @@ namespace Detail {
     class BaseOptions {
     public:
         constexpr Maybe<char> fill() const { return m_fill; }
-        constexpr Align align() const { return m_align; }
+        constexpr Maybe<Align> align() const { return m_align; }
         constexpr Sign sign() const { return m_sign; }
         constexpr bool alternate_form() const { return m_alternate_form; }
         constexpr bool zero_pad() const { return m_zero_pad; }
@@ -65,7 +66,7 @@ namespace Detail {
 
     private:
         Maybe<char> m_fill;
-        Align m_align { Align::Left };
+        Maybe<Align> m_align;
         Sign m_sign { Sign::OnlyMinus };
         bool m_alternate_form { false };
         bool m_zero_pad { false };
@@ -129,6 +130,7 @@ struct BaseFormatter {
 
         if (auto sign = context.peek().and_then(convert_char_to_sign)) {
             options.set_sign(*sign);
+            context.take();
         }
 
         if (context.peek() == Maybe<char> { '#' }) {
@@ -178,6 +180,8 @@ struct BaseFormatter {
                     return Detail::PresentationType::Decimal;
                 case 'o':
                     return Detail::PresentationType::Octal;
+                case 'O':
+                    return Detail::PresentationType::OctalUpper;
                 case 'x':
                     return Detail::PresentationType::Hex;
                 case 'X':
@@ -225,9 +229,9 @@ struct BaseFormatter {
         return width_to_use;
     }
 
-    void do_left_pad(FormatContext& context, size_t text_width, size_t width_to_use) {
+    void do_left_pad(FormatContext& context, size_t text_width, size_t width_to_use, Detail::Align align) {
         auto left_chars = [&] {
-            switch (options.align()) {
+            switch (align) {
                 case Detail::Align::Center:
                     return (width_to_use - text_width) / 2;
                 case Detail::Align::Right:
@@ -241,9 +245,9 @@ struct BaseFormatter {
         context.put(padding.view());
     }
 
-    void do_right_pad(FormatContext& context, size_t text_width, size_t width_to_use) {
+    void do_right_pad(FormatContext& context, size_t text_width, size_t width_to_use, Detail::Align align) {
         auto right_chars = [&] {
-            switch (options.align()) {
+            switch (align) {
                 case Detail::Align::Left:
                     return width_to_use - text_width;
                 case Detail::Align::Center:
@@ -257,7 +261,7 @@ struct BaseFormatter {
         context.put(padding.view());
     }
 
-    void format_string_view(StringView text, FormatContext& context) {
+    void format_string_view(StringView text, FormatContext& context, Detail::Align default_align = Detail::Align::Left) {
         auto text_width = text.size();
         if (options.precision()) {
             text_width = min(text_width, options.precision()->value);
@@ -265,9 +269,104 @@ struct BaseFormatter {
 
         auto width_to_use = compute_width_to_use(text_width);
 
-        do_left_pad(context, text_width, width_to_use);
+        auto align = options.align().value_or(default_align);
+        do_left_pad(context, text_width, width_to_use, align);
         context.put(text.first(text_width));
-        do_right_pad(context, text_width, width_to_use);
+        do_right_pad(context, text_width, width_to_use, align);
     }
+
+    constexpr char digit_to_char(int value, bool upper) {
+        auto lookup = upper ? "0123456789ABCDEF" : "0123456789abcdef";
+        return lookup[value];
+    }
+
+    constexpr int radix_for_presentation_type(Detail::PresentationType type) {
+        switch (type) {
+            case Detail::PresentationType::Binary:
+            case Detail::PresentationType::BinaryUpper:
+                return 2;
+            case Detail::PresentationType::Octal:
+            case Detail::PresentationType::OctalUpper:
+                return 8;
+            case Detail::PresentationType::Decimal:
+                return 10;
+            case Detail::PresentationType::Hex:
+            case Detail::PresentationType::HexUpper:
+                return 16;
+            default:
+                return 10;
+        }
+    }
+
+    constexpr bool is_presentation_type_upper(Detail::PresentationType type) {
+        switch (type) {
+            case Detail::PresentationType::BinaryUpper:
+            case Detail::PresentationType::OctalUpper:
+            case Detail::PresentationType::HexUpper:
+            case Detail::PresentationType::FloatExponentUpper:
+            case Detail::PresentationType::FloatFixedUpper:
+            case Detail::PresentationType::FloatGeneralUpper:
+            case Detail::PresentationType::FloatHexUpper:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    void format_unsigned_integer(uint64_t n, FormatContext& context, bool negative = false) {
+        auto number_string = String {};
+        if (negative) {
+            number_string += String { '-' };
+        } else if (options.sign() == Detail::Sign::MinusOrPlus) {
+            number_string += String { '+' };
+        } else if (options.sign() == Detail::Sign::MinusOrSpace) {
+            number_string += String { ' ' };
+        }
+
+        auto presentation_type = options.presentation_type().value_or(Detail::PresentationType::Decimal);
+        auto radix = radix_for_presentation_type(presentation_type);
+        auto is_upper = is_presentation_type_upper(presentation_type);
+
+        if (options.alternate_form()) {
+            switch (presentation_type) {
+                case Detail::PresentationType::Binary:
+                    number_string += "0b";
+                    break;
+                case Detail::PresentationType::BinaryUpper:
+                    number_string += "0B";
+                    break;
+                case Detail::PresentationType::Octal:
+                    number_string += "0o";
+                    break;
+                case Detail::PresentationType::OctalUpper:
+                    number_string += "0O";
+                    break;
+                case Detail::PresentationType::Hex:
+                    number_string += "0x";
+                    break;
+                case Detail::PresentationType::HexUpper:
+                    number_string += "0X";
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        auto digits = String {};
+        for (; n; n /= radix) {
+            digits += String { digit_to_char(n % radix, is_upper) };
+        }
+        digits.reverse();
+
+        if (options.zero_pad() && !options.align() && options.width() && digits.size() + number_string.size() < options.width()->value) {
+            number_string += String::repeat('0', options.width()->value - digits.size() - number_string.size());
+        }
+
+        number_string += digits;
+
+        return format_string_view(number_string.view(), context, Detail::Align::Right);
+    }
+
+    void format_signed_integer(int64_t n, FormatContext& context) { return format_unsigned_integer(abs(n), context, n < 0); }
 };
 }

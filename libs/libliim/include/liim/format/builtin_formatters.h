@@ -36,4 +36,14 @@ struct Formatter<Maybe<T>> : public BaseFormatter {
         return format_string_view(Format::format("{}", *value).view(), context);
     }
 };
+
+template<SignedIntegral T>
+struct Formatter<T> : public BaseFormatter {
+    void format(const T& value, FormatContext& context) { return format_signed_integer(value, context); }
+};
+
+template<UnsignedIntegral T>
+struct Formatter<T> : public BaseFormatter {
+    void format(const T& value, FormatContext& context) { return format_unsigned_integer(value, context); }
+};
 }
