@@ -21,15 +21,9 @@ enum WindowType {
 
 namespace LIIM {
 template<>
-struct Traits<key_event> {
-    static constexpr bool is_simple() { return true; }
-};
-
-template<>
 struct Traits<WindowServer::WindowType> {
     static constexpr bool is_simple() { return true; }
 };
-
 }
 
 namespace WindowServer {
