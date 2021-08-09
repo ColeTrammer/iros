@@ -23,9 +23,4 @@ struct key_code_entry {
     char ascii;
 };
 
-struct keyboard_event_queue {
-    struct key_event entry;
-    struct keyboard_event_queue *next;
-};
-
 #endif /* _KERNEL_HAL_X86_64_DRIVERS_KEYBOARD_H */
