@@ -18,7 +18,6 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <termios.h>
 #include <unistd.h>
 
 #ifndef USERLAND_NATIVE
@@ -836,11 +835,6 @@ static int do_pipeline(ShValue::Pipeline& pipeline, ShValue::List::Combinator mo
 }
 
 static int do_command_list(ShValue::List& list) {
-    struct termios save;
-    if (isatty(STDOUT_FILENO)) {
-        tcgetattr(STDOUT_FILENO, &save);
-    }
-
     for (int i = 0; i < list.components.size(); i++) {
         ShValue::ListComponent& component = list.components[i];
         for (int j = 0; j < component.pipelines.size(); j++) {
@@ -850,7 +844,7 @@ static int do_command_list(ShValue::List& list) {
             }
 
             if (break_count > 0 || continue_count > 0 || should_return) {
-                goto finish_command_list;
+                break;
             }
 
             int status = get_last_exit_status();
@@ -860,12 +854,6 @@ static int do_command_list(ShValue::List& list) {
             }
         }
     }
-
-finish_command_list:
-    if (isatty(STDOUT_FILENO)) {
-        tcsetattr(STDOUT_FILENO, TCSAFLUSH, &save);
-    }
-
     return 0;
 }
 

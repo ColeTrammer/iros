@@ -18,8 +18,6 @@
 #include <string.h>
 #include <sys/param.h>
 #include <sys/utsname.h>
-#include <sys/wait.h>
-#include <termios.h>
 #include <unistd.h>
 
 #include "builtin.h"
@@ -27,14 +25,6 @@
 #include "input.h"
 #include "job.h"
 #include "sh_state.h"
-
-static struct termios saved_termios;
-
-static void restore_termios() {
-    if (isatty(STDIN_FILENO)) {
-        tcsetattr(STDIN_FILENO, TCSAFLUSH, &saved_termios);
-    }
-}
 
 struct passwd* user_passwd;
 struct utsname system_name;
@@ -137,9 +127,6 @@ int main(int argc, char** argv) {
         sigemptyset(&sigset);
         sigaddset(&sigset, SIGTSTP);
         sigprocmask(SIG_SETMASK, &sigset, NULL);
-
-        tcgetattr(STDOUT_FILENO, &saved_termios);
-        atexit(restore_termios);
 
         if (ShState::the().option_interactive()) {
             String path = user_passwd->pw_dir;
