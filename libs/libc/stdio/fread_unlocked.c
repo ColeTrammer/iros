@@ -6,13 +6,13 @@
 size_t fread_unlocked(void *__restrict buf, size_t size, size_t nmemb, FILE *__restrict stream) {
     __stdio_log(stream, "fread_unlocked: %p %lu %lu %d", buf, size, nmemb, stream->__fd);
 
-    if ((stream->__flags & __STDIO_EOF) || (stream->__flags & __STDIO_ERROR)) {
-        return EOF;
+    if (stream->__flags & __STDIO_ERROR) {
+        return 0;
     }
 
     if (stream->__flags & __STDIO_LAST_OP_WRITE) {
         if (fflush_unlocked(stream)) {
-            return EOF;
+            return 0;
         }
 
         stream->__flags &= ~__STDIO_LAST_OP_WRITE;

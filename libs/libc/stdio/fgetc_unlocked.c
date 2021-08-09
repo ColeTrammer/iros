@@ -2,7 +2,7 @@
 #include <unistd.h>
 
 int fgetc_unlocked(FILE *stream) {
-    if ((stream->__flags & __STDIO_EOF) || (stream->__flags & __STDIO_ERROR)) {
+    if (stream->__flags & __STDIO_ERROR) {
         return EOF;
     }
 
