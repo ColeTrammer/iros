@@ -123,6 +123,12 @@ again:;
                 return 0;
             }
         } else {
+            if (data->config.c_cc[VMIN] == 0) {
+                mutex_unlock(&data->device->lock);
+                return 0;
+            }
+
+            // FIXME: handle values of VMIN > 1
             int ret = dev_poll_wait(data->device, POLLIN, NULL);
             if (ret) {
                 return ret;
