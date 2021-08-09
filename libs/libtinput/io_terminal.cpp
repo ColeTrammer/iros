@@ -150,15 +150,15 @@ void IOTerminal::detect_cursor_position() {
             m_initial_cursor_position = { col - 1, row - 1 };
             m_cursor_position = m_initial_cursor_position;
 
-            if (on_recieved_input) {
-                auto before_sequence = string.view().first(i);
-                auto after_sequence = string.view().substring(*string.view().substring(i).index_of('R') + 1);
+            auto before_sequence = string.view().first(i);
+            auto after_sequence = string.view().substring(*string.view().substring(i).index_of('R') + 1);
 
-                on_recieved_input({ (const uint8_t*) before_sequence.data(), before_sequence.size() });
-                on_recieved_input({ (const uint8_t*) after_sequence.data(), after_sequence.size() });
-            }
+            on_recieved_input.safe_call({ (const uint8_t*) before_sequence.data(), before_sequence.size() });
+            on_recieved_input.safe_call({ (const uint8_t*) after_sequence.data(), after_sequence.size() });
             return;
         }
+
+        on_recieved_input.safe_call({ buffer.span() });
     }
 
     // Since the cursor's location wasn't found, force it the top left of the screen.
