@@ -192,6 +192,12 @@ void PsuedoTerminal::handle_key_event(const App::KeyEvent& event) {
                 send_xterm_escape('H', modifiers);
             }
             return;
+        case App::Key::Tab:
+            if (event.shift_down()) {
+                send_xterm_escape('Z', 1);
+                return;
+            }
+            break;
         case App::Key::Insert:
             send_vt_escape(2, modifiers);
             return;
