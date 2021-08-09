@@ -1,10 +1,14 @@
 {
     "name": "Default",
     "palette": {
-        "background": "#000000",
+        "background": "#0C0C0C",
         "text": "#FFFFFF",
-        "outline": "#FFFFFF",
-        "hover": "#AAAAAA",
-        "selected": "#212121"
+        "outline": "#59606C",
+        "hover": "#737579",
+        "selected": "#182B4B",
+        "desktopBackground": "#666A72",
+        "taskbarBackground": "#122038",
+        "windowTitlebarBackground": "#122038",
+        "windowOutline": "#B0B0B0"
     }
 }
