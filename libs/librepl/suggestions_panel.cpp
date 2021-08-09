@@ -71,6 +71,9 @@ void SuggestionsPanel::on_key_event(const App::KeyEvent& event) {
             }
             return event.shift_down() ? prev_suggestion() : next_suggestion();
         case App::Key::Enter:
+            if (m_suggestions.empty()) {
+                return m_display.hide_suggestions_panel();
+            }
             return m_display.complete_suggestion(m_suggestions[m_suggestion_index]);
         default:
             break;
