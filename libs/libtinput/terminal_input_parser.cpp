@@ -428,6 +428,8 @@ void TerminalInputParser::handle_regular_byte(uint8_t byte) {
 #endif /* TERMINAL_INPUT_PARSER_DEBUG */
 
     switch (byte) {
+        case '\0':
+            return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", App::Key::Space, App::KeyModifier::Control));
         case '\r':
             return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", App::Key::Enter, 0));
         case '\b':
