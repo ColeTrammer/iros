@@ -66,7 +66,6 @@ bool File::read(ByteBuffer& buffer) {
     auto current_size = buffer.size();
     auto nread = fread(buffer.data() + current_size, 1, buffer.capacity() - current_size, m_file);
     if (ferror(m_file)) {
-        assert(false);
         m_error = errno;
         clearerr(m_file);
         return false;
