@@ -22,7 +22,12 @@ set(SOURCES
 add_os_library(libapp app TRUE)
 
 if(${NATIVE_BUILD})
-    target_link_libraries(libapp PUBLIC SDL2)
+    find_package(SDL2)
+    if (${SDL2_FOUND})
+        target_link_libraries(libapp PUBLIC ${SDL2_LIBRARIES})
+        target_include_directories(libapp PUBLIC ${SDL2_INCLUDE_DIRS})
+        target_compile_definitions(libapp PRIVATE "USE_SDL2=1")
+    endif()
 endif()
 
 target_link_libraries(libapp PUBLIC libeventloop libgraphics window_server_headers)

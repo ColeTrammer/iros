@@ -1,11 +1,12 @@
 #include <app/application.h>
 #include <app/application_os_2.h>
 #include <app/window.h>
+#include <liim/format.h>
 #include <signal.h>
 
-#ifdef __linux__
+#ifdef USE_SDL2
 #include <app/application_sdl.h>
-#endif /* __linux__ */
+#endif /* USE_SDL2 */
 
 namespace App {
 static Application* s_app;
@@ -13,10 +14,11 @@ static Application* s_app;
 UniquePtr<Application> Application::create() {
 #ifdef __os_2__
     return UniquePtr<Application>(new OSApplication);
-#elif __linux__
+#elif USE_SDL2
     return UniquePtr<Application>(new SDLApplication);
 #else
-#error "No platform specific application implementation"
+    error_log("No application backend could be found");
+    abort();
 #endif
 }
 

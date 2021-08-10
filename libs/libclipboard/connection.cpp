@@ -1,11 +1,10 @@
-#ifdef __os_2__
-
 #include <assert.h>
 #include <clipboard/connection.h>
+
+#ifdef __os_2__
 #include <clipboard_server/message.h>
 
 namespace Clipboard {
-
 static IPC::Endpoint& endpoint() {
     static SharedPtr<IPC::Endpoint> endpoint;
     if (!endpoint) {
@@ -43,19 +42,14 @@ Maybe<String> Connection::get_clipboard_contents_as_text() {
     return { String(StringView(response.value().data.vector(), response.value().data.vector() + response.value().data.size())) };
 }
 }
-
-#else
-
+#elif defined(USE_X11)
 #include <X11/Xlib.h>
-#include <assert.h>
-#include <clipboard/connection.h>
 #include <errno.h>
 #include <pthread.h>
 #include <signal.h>
 #include <sys/select.h>
 
 namespace Clipboard {
-
 static int s_x_fd;
 static Display* s_display;
 static int s_screen;
@@ -281,7 +275,23 @@ bool Connection::set_clipboard_contents_to_text(const String& text) {
     pthread_mutex_unlock(&s_clipboard_mutex);
     return true;
 }
+}
+#else
+namespace Clipboard {
+static String s_clipboard_text;
 
+Connection& Connection::the() {
+    static Connection s_connection;
+    return s_connection;
 }
 
+bool Connection::set_clipboard_contents_to_text(const String& text) {
+    s_clipboard_text = text;
+    return true;
+}
+
+Maybe<String> Connection::get_clipboard_contents_as_text() {
+    return s_clipboard_text;
+}
+}
 #endif /* __os_2__ */

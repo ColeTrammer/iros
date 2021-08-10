@@ -1,4 +1,4 @@
-#ifdef __linux__
+#ifdef USE_SDL2
 #include <app/application_sdl.h>
 #include <app/window_sdl.h>
 
@@ -420,4 +420,4 @@ void SDLApplication::wait_for_sdl_init() {
     pthread_barrier_wait(&m_sdl_init_barrier);
 }
 }
-#endif /* __linux__ */
+#endif /* USE_SDL2 */

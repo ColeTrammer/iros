@@ -1,4 +1,4 @@
-#ifdef __linux__
+#ifdef USE_SDL2
 #include <app/application_sdl.h>
 #include <app/window_sdl.h>
 
@@ -86,4 +86,4 @@ void SDLWindow::offset_position(int& x, int& y) {
     y += dy;
 }
 }
-#endif /* __linux__ */
+#endif /* USE_SDL2 */
