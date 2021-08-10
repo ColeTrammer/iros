@@ -23,32 +23,14 @@ My second attempt to create an OS
 
 # To build
 
--   You need to install various dependencies for the gcc (look cross compile on osdev)
--   To build locally, gcc/g++ must have at least version 10 (for coroutine support).
-    -   Additionally, libX11 and libSDL2 are needed.
-    -   These correspond to the following apt packages: libsdl2-dev gcc-10 g++-10
--   Install qemu-system-x86_64 to run the os, also grub-mkrescue
--   Run `./scripts/setup.sh`, which will prompt you to build the toolchain and create two cmake build directories.
-    Note that this must be run from the root directory, or the script will be confused.
-    -   native - for tools that must be run on the host operating system
-    -   build - for the os and other cross compiled components
--   Now, cd into the build directory and type `make && make install && make iso && make image`.
-    This builds the system and installs it to the sysroot directory. Then, a bootable iso file is
-    made (containing the kernel as well as grub2), and finally, a ext2 disk image is created which
-    contains a union of both 'base' and 'sysroot'.
--   To run with qemu, type `make run`, and to run with bochs, type `make brun`.
--   In addition, the aliases `make frun` and `make bfrun` can be used to fully build the system (image and iso included),
-    and also start an emulator instance.
+-   [See this document](docs/build.md)
 
 # TODO
 
 -   configuration/startup files
--   pthreads like library (conditions, barriers, cancellation, rdwrlock, scheduling)
 -   USB subsystem
 -   improved SMP handling
 -   more advanced scheduler
--   PATA channels
 -   AHCI SATA
--   Hardware agnostic timers
 -   Sound subsystem
 -   IP v6 networking support
