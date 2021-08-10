@@ -8,10 +8,6 @@ DOWNLOAD_URL="https://github.com/Kitware/CMake/releases/download/v$VERSION/cmake
 DOWNLOAD_DEST=cmake.tar.gz
 SRC="cmake-$VERSION"
 
-unset CC
-unset CXX
-unset AS
-
 if [ ! -e $DOWNLOAD_DEST ]; then
     curl -L "$DOWNLOAD_URL" -o "$DOWNLOAD_DEST"
 fi

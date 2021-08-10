@@ -10,10 +10,6 @@ DOWNLOAD_DEST=gcc.tar.gz
 SRC="gcc-$VERSION"
 BUILD_DIR="build-gcc"
 
-unset CC
-unset CXX
-unset AS
-
 if [ ! -e $DOWNLOAD_DEST ]; then
     curl -L "$DOWNLOAD_URL" -o "$DOWNLOAD_DEST"
 fi

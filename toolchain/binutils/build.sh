@@ -10,10 +10,6 @@ DOWNLOAD_DEST=binutils.tar.gz
 SRC="binutils-$VERSION"
 BUILD_DIR="build-binutils"
 
-unset CC
-unset CXX
-unset AS
-
 if [ ! -e $DOWNLOAD_DEST ]; then
     curl -L "$DOWNLOAD_URL" -o "$DOWNLOAD_DEST"
 fi

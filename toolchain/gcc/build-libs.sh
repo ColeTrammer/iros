@@ -6,27 +6,15 @@ ROOT="${ROOT:-$PWD/../..}"
 TARGET=`$ROOT/scripts/default-host.sh`
 BUILD_DIR="build-gcc"
 
-unset CC
-unset CXX
-unset AS
-
 die() {
     echo "$@" && exit 1
 }
 
-[ "$OS_2_BUILD_DIR" ] || die '$OS_2_BUILD_DIR must be set.' 
-
-
-cd "$BUILD_DIR"
-cmake --build "$OS_2_BUILD_DIR" --target libc
-mkdir -p "$ROOT/sysroot/lib" "$ROOT/base/usr/lib"
-cp "$OS_2_BUILD_DIR/libs/libc/libc.so" "$ROOT/sysroot/lib"
+cmake --build "$ROOT/build" --target bootstrap-core-libs
 
 make all-target-libgcc -j5
 make install-target-libgcc
 cp -p $ROOT/toolchain/cross/$TARGET/lib/libgcc_s.so* -t "$ROOT/base/usr/lib"
-
-cmake --build "$OS_2_BUILD_DIR" --target bootstrap-core-libs
 
 make all-target-libstdc++-v3 -j5
 make install-target-libstdc++-v3

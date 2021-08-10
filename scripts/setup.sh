@@ -25,6 +25,13 @@ maybe_build_toolchain() {
     export BUILD_TOOLCHAIN='1'
 }
 
+export OS_2_ARCH='x86_64'
+export OS_2_TARGET_OS='os_2'
+export OS_2_AS=${OS_AS:-"$OS_2_ARCH-$OS_2_TARGET_OS-as"}
+export OS_2_CC=${OS_CC:-"$OS_2_ARCH-$OS_2_TARGET_OS-gcc"}
+export OS_2_CXX=${OS_CXX:-"$OS_2_ARCH-$OS_2_TARGET_OS-g++"}
+exists "$OS_2_CC" || maybe_build_toolchain
+
 if exists 'ninja';
 then
     DEFAULT_GENERATOR='Ninja'
@@ -34,32 +41,7 @@ fi
 
 GENERATOR="${GENERATOR:-$DEFAULT_GENERATOR}"
 
-export OS_2_NATIVE_DIR="${OS_2_NATIVE_DIR:-native}"
-export OS_2_NATIVE_DIR="$(realpath $OS_2_NATIVE_DIR)"
-
-export OS_2_BUILD_DIR="${OS_2_BUILD_DIR:-build}"
-export OS_2_BUILD_DIR="$(realpath $OS_2_BUILD_DIR)"
-
-cmake -S . -B "$OS_2_NATIVE_DIR" -G "$GENERATOR" || die "Failed to do create native cmake project at" "$OS_2_NATIVE_DIR"
-
-cmake --build "$OS_2_NATIVE_DIR" || die "Failed to do native build"
-
-export ARCH='x86_64'
-export TARGET_OS='os_2'
-export AS=${OS_AS:-"$ARCH-$TARGET_OS-as"}
-export CC=${OS_CC:-"$ARCH-$TARGET_OS-gcc"}
-export CXX=${OS_CXX:-"$ARCH-$TARGET_OS-g++"}
-
-echo "$(realpath .)"
-exists "$AS" || maybe_build_toolchain || die "$AS does not exist" 
-exists "$CC" || die "$CC does not exist" 
-exists "$CXX" || die "$CXX does not exist" 
-
-cmake -S . -B "$OS_2_BUILD_DIR" -G "$GENERATOR" \
-    -DCMAKE_C_COMPILER_WORKS=TRUE \
-    -DCMAKE_CXX_COMPILER_WORKS=TRUE \
-    -DCMAKE_TOOLCHAIN_FILE=cmake/CMakeToolchain.txt \
-    || die "Failed to create os cmake project at" "$OS_2_BUILD_DIR"
+cmake -S cmake/super_build -B build -G "$GENERATOR" || die "Failed to do create cmake project at ./build"
 
 if [ "$BUILD_TOOLCHAIN" ];
 then
@@ -68,10 +50,9 @@ then
     cd ..
 fi
 
-echo "Successfully created cmake build directories:"
-echo "  'OS_2_NATIVE_DIR=$OS_2_NATIVE_DIR'"
-echo "  'OS_2_BUILD_DIR=$OS_2_BUILD_DIR'"
+echo "Finished the setup. Build files were created in ./build"
 if [ $BUILD_TOOLCHAIN ]; 
 then
-    echo "  'PATH=$PATH'"
+    echo "  To make sure the build tools are always available, please update your PATH as follows:"
+    echo "    'PATH=$PATH'"
 fi
