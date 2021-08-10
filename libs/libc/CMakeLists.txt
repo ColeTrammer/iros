@@ -117,6 +117,12 @@ else()
         bits/__parse_fields.c
         dirent/dirent.c
         dirent/rewinddir.c
+        dlfcn/dl_error_storage.c
+        dlfcn/dladdr.c
+        dlfcn/dlclose.c
+        dlfcn/dlerror.c
+        dlfcn/dlopen.c
+        dlfcn/dlsym.c
         execinfo/dump_backtrace.c
         fcntl/creat.c
         fcntl/fcntl.c
@@ -142,6 +148,7 @@ else()
         libgen/dirname.c
         link/dl_iterate_phdr.c
         locale/locale.c
+        math/math.c
         mntent/endmntent.c
         mntent/getmntent.c
         mntent/setmntent.c
@@ -178,6 +185,22 @@ else()
         netinet/in6_addr.c
         poll/poll.c
         poll/ppoll.c
+        pthread/atfork.c
+        pthread/attr.c
+        pthread/barrier.c
+        pthread/barrierattr.c
+        pthread/cancel.c
+        pthread/cond.c
+        pthread/condattr.c
+        pthread/getcpuclockid.c
+        pthread/key.c
+        pthread/mutex.c
+        pthread/mutexattr.c
+        pthread/once.c
+        pthread/pthread.c
+        pthread/rwlock.c
+        pthread/rwlockattr.c
+        pthread/spinlock.c
         pwd/endpwent.c
         pwd/getpwent.c
         pwd/getpwent_r.c
@@ -187,6 +210,17 @@ else()
         pwd/getpwuid_r.c
         pwd/setpwent.c
         sched/sched_yield.c
+        semaphore/__sem_wait.c
+        semaphore/sem_close.c
+        semaphore/sem_destroy.c
+        semaphore/sem_getvalue.c
+        semaphore/sem_init.c
+        semaphore/sem_open.c
+        semaphore/sem_post.c
+        semaphore/sem_timedwait.c
+        semaphore/sem_trywait.c
+        semaphore/sem_unlink.c
+        semaphore/sem_wait.c
         setjmp/__sigsetjmp.c
         setjmp/siglongjmp.c
         signal/kill.c
@@ -370,6 +404,11 @@ else()
         time/mktime.c
         time/nanosleep.c
         time/time.c
+        time/timer_create.c
+        time/timer_delete.c
+        time/timer_getoverrun.c
+        time/timer_gettime.c
+        time/timer_settime.c
         ulimit/ulimit.c
         unistd/_exit.c
         unistd/access.c
@@ -479,18 +518,32 @@ else()
     target_link_libraries(libk PRIVATE kernel_headers)
     target_include_directories(libk PUBLIC ../libext/include ../libliim/include)
 
+    set(SOURCES bits/empty_library_stub.c)
+    add_os_library(libdl dl FALSE)
+    add_os_static_library(libdl_static dl FALSE)
+    add_os_library(libm m FALSE)
+    add_os_static_library(libm_static m FALSE)
+    add_os_library(libpthread pthread FALSE)
+    add_os_static_library(libpthread_static pthread FALSE)
+    add_os_library(librt rt FALSE)
+    add_os_static_library(librt_static rt FALSE)
+    target_link_options(libdl PRIVATE -nostartfiles -nostdlib)
+    target_link_options(libdl_static PRIVATE -nostartfiles -nostdlib)
+    target_link_options(libm PRIVATE -nostartfiles -nostdlib)
+    target_link_options(libm_static PRIVATE -nostartfiles -nostdlib)
+    target_link_options(libpthread PRIVATE -nostartfiles -nostdlib)
+    target_link_options(libpthread_static PRIVATE -nostartfiles -nostdlib)
+    target_link_options(librt PRIVATE -nostartfiles -nostdlib)
+    target_link_options(librt_static PRIVATE -nostartfiles -nostdlib)
+
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffreestanding")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffreestanding -nostdinc++")
 
     add_custom_target(
         bootstrap-core-libs
         COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libc/cmake_install.cmake > /dev/null
-        COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libdl/cmake_install.cmake > /dev/null
-        COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libm/cmake_install.cmake > /dev/null
-        COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libpthread/cmake_install.cmake > /dev/null
-        COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/librt/cmake_install.cmake > /dev/null
         COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/loader/cmake_install.cmake > /dev/null
-        DEPENDS libc libc_static libdl libk libm libm_static libpthread libpthread_static librt librt_static loader
+        DEPENDS libc libc_static libdl libdl_static libk libm libm_static libpthread libpthread_static librt librt_static loader
     )
 
     install(FILES ${CRT0_PATH} DESTINATION usr/lib RENAME crt0.o)
