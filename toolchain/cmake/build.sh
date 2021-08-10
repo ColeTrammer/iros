@@ -23,7 +23,7 @@ fi
 
 if [ ! -e "$ROOT/toolchain/cross/bin/cmake" ]; then
     cd "$SRC"
-    ./bootstrap --prefix="$ROOT/toolchain/cross" --parallel=5 --system-curl
+    ./bootstrap --prefix="$ROOT/toolchain/cross" --parallel=5
     make -j5
     make install
     cd ..
