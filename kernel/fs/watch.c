@@ -1,10 +1,12 @@
 #include <errno.h>
+#include <stdatomic.h>
 #include <stdlib.h>
 #include <sys/umessage.h>
 
 #include <kernel/fs/inode.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/fs/watch.h>
+#include <kernel/net/socket.h>
 #include <kernel/net/umessage.h>
 #include <kernel/util/init.h>
 
@@ -14,9 +16,11 @@ static struct watcher *fs_create_watcher(int identifier, struct umessage_queue *
         return NULL;
     }
 
+    init_spinlock(&watcher->lock);
     watcher->queue = queue;
-    watcher->inode = inode;
+    watcher->inode = bump_inode_reference(inode);
     watcher->identifier = identifier;
+    watcher->removed_from_inode = false;
 
     return watcher;
 }
@@ -35,6 +39,7 @@ static int fs_create_and_register_watcher(int identifier, struct umessage_queue 
 }
 
 static void fs_free_watcher(struct watcher *watcher) {
+    drop_inode_reference(watcher->inode);
     free(watcher);
 }
 
@@ -86,10 +91,8 @@ static void watch_init(struct umessage_queue *queue) {
 
 static void watch_kill(struct umessage_queue *queue) {
     struct umessage_watch_queue_private *data = net_umessage_queue_private(queue);
-    list_for_each_entry(&data->watchers, watcher, struct watcher, list_for_queue) {
-        if (watcher->inode) {
-            fs_unregister_watcher(watcher->inode, watcher);
-        }
+    list_for_each_entry_safe(&data->watchers, watcher, struct watcher, list_for_queue) {
+        fs_unregister_watcher(watcher->inode, watcher);
         fs_free_watcher(watcher);
     }
 }

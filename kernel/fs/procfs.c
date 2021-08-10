@@ -107,6 +107,7 @@ static struct inode *procfs_create_inode(mode_t mode, uid_t uid, gid_t gid, stru
     inode->ref_count = 1;
     init_mutex(&inode->lock);
     init_list(&inode->watchers);
+    init_spinlock(&inode->watchers_lock);
 
     spin_lock(&inode_counter_lock);
     inode->index = inode_counter++;

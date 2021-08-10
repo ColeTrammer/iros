@@ -46,7 +46,7 @@ static inline void *net_umessage_queue_private(struct umessage_queue *queue) {
     return (void *) queue->private_data;
 }
 
-struct umessage_queue *net_try_bump_umessage_queue(struct umessage_queue *queue);
+struct umessage_queue *net_bump_umessage_queue(struct umessage_queue *queue);
 void net_drop_umessage_queue(struct umessage_queue *queue);
 
 struct queued_umessage *net_create_umessage(uint16_t category, uint16_t type, int flags, uint32_t length, const void *data);

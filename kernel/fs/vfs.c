@@ -200,43 +200,60 @@ void __fs_register_watcher(struct inode *inode, struct watcher *watcher) {
 }
 
 void __fs_unregister_watcher(struct inode *, struct watcher *watcher) {
-    list_remove(&watcher->list_for_inode);
+    fs_lock_watcher(watcher);
+    if (!watcher->removed_from_inode) {
+        list_remove(&watcher->list_for_inode);
+        watcher->removed_from_inode = true;
+    }
+    fs_unlock_watcher(watcher);
 }
 
 void fs_register_watcher(struct inode *inode, struct watcher *watcher) {
-    mutex_lock(&inode->lock);
+    spin_lock(&inode->watchers_lock);
     __fs_register_watcher(inode, watcher);
-    mutex_unlock(&inode->lock);
+    spin_unlock(&inode->watchers_lock);
 }
 
 void fs_unregister_watcher(struct inode *inode, struct watcher *watcher) {
-    mutex_lock(&inode->lock);
+    spin_lock(&inode->watchers_lock);
     __fs_unregister_watcher(inode, watcher);
-    mutex_unlock(&inode->lock);
+    spin_unlock(&inode->watchers_lock);
 }
 
-void fs_notify_watchers_inode_content_changed(struct inode *inode) {
+void fs_notify_watchers_inode_modified(struct inode *inode) {
+    spin_lock(&inode->watchers_lock);
     list_for_each_entry(&inode->watchers, watcher, struct watcher, list_for_inode) {
         struct queued_umessage *umessage =
             net_create_umessage(UMESSAGE_WATCH, UMESSAGE_WATCH_INODE_MODIFIED, 0, sizeof(struct umessage_watch_inode_modified), NULL);
 
         struct umessage_watch_inode_modified *event = (void *) &umessage->message;
-        event->content_modified = true;
         event->identifier = watcher->identifier;
 
         fs_notify_watcher(watcher, umessage);
         net_drop_umessage(umessage);
     }
+    spin_unlock(&inode->watchers_lock);
+}
+
+void fs_notify_watchers_inode_removed(struct inode *inode) {
+    spin_lock(&inode->watchers_lock);
+    list_for_each_entry_safe(&inode->watchers, watcher, struct watcher, list_for_inode) {
+        struct queued_umessage *umessage =
+            net_create_umessage(UMESSAGE_WATCH, UMESSAGE_WATCH_INODE_REMOVED, 0, sizeof(struct umessage_watch_inode_removed), NULL);
+
+        struct umessage_watch_inode_modified *event = (void *) &umessage->message;
+        event->identifier = watcher->identifier;
+
+        fs_notify_watcher(watcher, umessage);
+        net_drop_umessage(umessage);
+
+        __fs_unregister_watcher(inode, watcher);
+    }
+    spin_unlock(&inode->watchers_lock);
 }
 
 void fs_notify_watcher(struct watcher *watcher, struct queued_umessage *umessage) {
-    struct umessage_queue *queue = net_try_bump_umessage_queue(watcher->queue);
-    if (!queue) {
-        return;
-    }
-
-    net_post_umessage_to(queue, umessage);
-    net_drop_umessage_queue(queue);
+    net_post_umessage_to(watcher->queue, umessage);
 }
 
 struct inode *fs_create_inode(struct super_block *sb, ino_t id, uid_t uid, gid_t gid, mode_t mode, size_t size,
@@ -260,6 +277,7 @@ struct inode *fs_create_inode_without_sb(dev_t fsid, ino_t id, uid_t uid, gid_t 
     inode->index = id;
     init_mutex(&inode->lock);
     init_list(&inode->watchers);
+    init_spinlock(&inode->watchers_lock);
     inode->mode = mode;
     inode->private_data = private;
     inode->ref_count = 1;
@@ -834,6 +852,8 @@ ssize_t fs_write(struct file *file, const void *buffer, size_t len) {
 
         ssize_t ret = file->f_op->write(file, file->position, buffer, len);
         if (ret > 0) {
+            assert(file->inode);
+            fs_notify_watchers_inode_modified(file->inode);
             file->position += ret;
         }
 
@@ -1296,6 +1316,7 @@ int fs_unlink(const char *path, bool ignore_permission_checks) {
     mutex_unlock(&tnode->inode->lock);
 
     fs_del_dirent_cache(tnode->parent->inode->dirent_cache, tnode->name);
+    fs_notify_watchers_inode_removed(tnode->inode);
     drop_inode_reference(tnode->inode);
     drop_tnode(tnode);
     return 0;

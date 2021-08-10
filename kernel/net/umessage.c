@@ -59,11 +59,8 @@ static void unregister_umessage_queue(struct umessage_queue *queue) {
     spin_unlock(&category_queues[queue->category].lock);
 }
 
-struct umessage_queue *net_try_bump_umessage_queue(struct umessage_queue *queue) {
-    if (!net_try_bump_socket(queue->socket)) {
-        return NULL;
-    }
-
+struct umessage_queue *net_bump_umessage_queue(struct umessage_queue *queue) {
+    net_bump_socket(queue->socket);
     return queue;
 }
 

@@ -60,7 +60,8 @@ void __fs_unregister_watcher(struct inode *inode, struct watcher *watcher);
 void fs_register_watcher(struct inode *inode, struct watcher *watcher);
 void fs_unregister_watcher(struct inode *inode, struct watcher *watcher);
 
-void fs_notify_watchers_inode_content_changed(struct inode *inode);
+void fs_notify_watchers_inode_modified(struct inode *inode);
+void fs_notify_watchers_inode_removed(struct inode *inode);
 void fs_notify_watcher(struct watcher *watcher, struct queued_umessage *umessage);
 
 struct file *fs_create_file(struct inode *inode, int type, int abilities, int flags, struct file_operations *operations, void *private);

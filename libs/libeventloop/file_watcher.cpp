@@ -49,13 +49,14 @@ bool FileWatcher::watch(const String& path) {
 }
 
 bool FileWatcher::unwatch(const String& path) {
-    auto* identifier = m_path_to_indentifier.get(path);
-    if (!identifier) {
+    auto* identifier_p = m_path_to_indentifier.get(path);
+    if (!identifier_p) {
         return false;
     }
+    auto identifier = *identifier_p;
 
     m_path_to_indentifier.remove(path);
-    m_identifier_to_path.remove(*identifier);
+    m_identifier_to_path.remove(identifier);
 
     umessage_watch_remove_watch_request request;
 
@@ -63,7 +64,7 @@ bool FileWatcher::unwatch(const String& path) {
     request.base.category = UMESSAGE_WATCH;
     request.base.type = UMESSAGE_WATCH_REMOVE_WATCH_REQUEST;
 
-    request.identifier = m_identifier_index++;
+    request.identifier = identifier;
 
     if (write(fd(), &request, request.base.length) < 0) {
         return false;
@@ -85,19 +86,19 @@ void FileWatcher::notify_readable() {
                 if (!path) {
                     continue;
                 }
-                if (on_change) {
-                    on_change(*path);
-                }
+                on_change.safe_call(*path);
                 break;
             }
-                // case UMESSAGE_WATCH_INODE_REMOVED:
-                //     auto& event = *(umessage_watch_inode_removed*) message;
-                //     auto path = m_identifier_to_path.get(event.identifier);
-                //     if (!path) {
-                //         continue;
-                //     }
-                //     unwatch(*path);
-                //     break;
+            case UMESSAGE_WATCH_INODE_REMOVED:
+                auto& event = *(umessage_watch_inode_removed*) message;
+                auto path_p = m_identifier_to_path.get(event.identifier);
+                if (!path_p) {
+                    continue;
+                }
+                auto path = *path_p;
+                unwatch(path);
+                on_removed.safe_call(path);
+                break;
         }
     }
 }
@@ -126,7 +127,7 @@ FileWatcher::~FileWatcher() {
 }
 
 bool FileWatcher::watch(const String& path) {
-    int ret = inotify_add_watch(fd(), path.string(), IN_MODIFY);
+    int ret = inotify_add_watch(fd(), path.string(), IN_MODIFY | IN_DELETE_SELF);
     if (ret < 0) {
         return false;
     }
@@ -161,15 +162,19 @@ void FileWatcher::notify_readable() {
         for (char* ptr = buffer; ptr < buffer + ret; ptr += sizeof(inotify_event) + event->len) {
             event = (struct inotify_event*) ptr;
 
-            auto* path = m_identifier_to_path.get(event->wd);
-            if (!path) {
+            auto* path_p = m_identifier_to_path.get(event->wd);
+            if (!path_p) {
                 continue;
             }
+            auto path = *path_p;
 
             if (event->mask & IN_MODIFY) {
-                if (on_change) {
-                    on_change(*path);
-                }
+                on_change.safe_call(path);
+            }
+
+            if (event->mask & IN_DELETE_SELF) {
+                unwatch(path);
+                on_removed.safe_call(path);
             }
         }
     }

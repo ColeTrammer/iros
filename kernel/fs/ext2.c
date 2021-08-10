@@ -786,6 +786,7 @@ static void ext2_update_tnode_list(struct inode *inode) {
                             !!((inode->flags & FS_DIR) | (inode->flags & FS_FILE) | (inode->flags & FS_LINK)));
             init_mutex(&inode_to_add->lock);
             init_list(&inode_to_add->watchers);
+            init_spinlock(&inode_to_add->watchers_lock);
 
             fs_put_dirent_cache(inode->dirent_cache, inode_to_add, dirent->name, dirent->name_length);
 
@@ -954,6 +955,7 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
         inode->index = index;
         init_mutex(&inode->lock);
         init_list(&inode->watchers);
+        init_spinlock(&inode->watchers_lock);
         inode->mode = mode;
         inode->uid = get_current_task()->process->euid;
         inode->gid = get_current_task()->process->egid;
@@ -1218,7 +1220,6 @@ finish_ext2_write:
         inode->size = MAX(inode->size, (size_t) (offset));
         inode->modify_time = time_read_clock(CLOCK_REALTIME);
         fs_mark_inode_as_dirty(inode);
-        fs_notify_watchers_inode_content_changed(inode);
     }
     return ret;
 }

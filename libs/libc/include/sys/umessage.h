@@ -112,6 +112,7 @@ enum umessage_watch_request_type {
 
 enum umessage_watch_message_type {
     UMESSAGE_WATCH_INODE_MODIFIED,
+    UMESSAGE_WATCH_INODE_REMOVED,
     UMESSAGE_WATCH_NUM_MESSAGES,
 };
 
@@ -138,7 +139,11 @@ struct umessage_watch_remove_watch_request {
 struct umessage_watch_inode_modified {
     struct umessage base;
     int identifier;
-    int content_modified;
+};
+
+struct umessage_watch_inode_removed {
+    struct umessage base;
+    int identifier;
 };
 
 #ifdef __cplusplus

@@ -107,8 +107,9 @@ struct inode {
     // Linked list for use by the super block.
     struct list_node sb_list;
 
-    // Linked list of watcher objects (for UMessage Watch)
+    // Linked list of watcher objects (for UMessage Watch), synchronized by watchers_lock
     struct list_node watchers;
+    spinlock_t watchers_lock;
 
     mutex_t lock;
 

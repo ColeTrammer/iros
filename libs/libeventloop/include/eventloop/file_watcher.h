@@ -17,6 +17,7 @@ public:
     bool unwatch(const String& path);
 
     Function<void(const String&)> on_change;
+    Function<void(const String&)> on_removed;
 
 private:
     virtual void notify_readable();
