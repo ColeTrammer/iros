@@ -129,6 +129,12 @@ void ReplDisplay::on_key_event(const App::KeyEvent& event) {
         }
     }
 
+    if (event.key() == App::Key::R && event.control_down()) {
+        m_suggest_based_on_history = true;
+        document()->notify_key_pressed(*this, App::KeyEvent { App::KeyEventType::Down, "", App::Key::Space, App::KeyModifier::Control });
+        return;
+    }
+
     if (event.key() == App::Key::C && event.control_down()) {
         deferred_invoke([] {
             printf("^C\r\n");
@@ -268,6 +274,11 @@ void ReplDisplay::do_open_prompt() {}
 
 void ReplDisplay::suggestions_did_change(const Maybe<Edit::TextRange>& old_text_range) {
     if (m_suggestions_panel) {
+        if (m_suggest_based_on_history) {
+            m_suggestions_panel->set_suggestions(suggestions().suggestions());
+            return;
+        }
+
         auto& current_text_range = suggestions().current_text_range();
         if ((current_text_range.has_value() && !old_text_range.has_value()) ||
             (!current_text_range.has_value() && old_text_range.has_value())) {
@@ -287,6 +298,16 @@ void ReplDisplay::suggestions_did_change(const Maybe<Edit::TextRange>& old_text_
 }
 
 void ReplDisplay::do_compute_suggestions() {
+    if (m_suggest_based_on_history) {
+        auto& history = m_repl.history();
+        auto suggestions = Vector<Edit::Suggestion> {};
+        for (int i = history.size() - 1; i >= 0; i--) {
+            auto& item = m_repl.history().item(i);
+            suggestions.add({ item, document()->cursor_index_in_content_string(cursors().main_cursor()) });
+        }
+        return set_suggestions(move(suggestions));
+    }
+
     auto content_string = document()->content_string();
     auto cursor_index = document()->cursor_index_in_content_string(cursors().main_cursor());
     auto suggestions = m_repl.get_suggestions(content_string, cursor_index);
@@ -345,6 +366,8 @@ void ReplDisplay::hide_suggestions_panel() {
         return;
     }
 
+    m_suggest_based_on_history = false;
+
     TUI::Application::the().invalidate(m_suggestions_panel->positioned_rect());
     remove_child(m_suggestions_panel);
     m_suggestions_panel = nullptr;
@@ -354,6 +377,9 @@ void ReplDisplay::hide_suggestions_panel() {
 
 void ReplDisplay::complete_suggestion(const Edit::Suggestion& suggestion) {
     document()->insert_suggestion(*this, suggestion);
+    if (m_suggest_based_on_history) {
+        hide_suggestions_panel();
+    }
 }
 
 Vector<SharedPtr<Edit::Document>>& ReplDisplay::ensure_history_documents() {

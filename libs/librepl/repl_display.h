@@ -89,5 +89,6 @@ private:
     int m_consecutive_tabs { 0 };
     bool m_quit_by_interrupt { false };
     bool m_quit_by_eof { false };
+    bool m_suggest_based_on_history { false };
 };
 }
