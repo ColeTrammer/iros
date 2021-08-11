@@ -208,6 +208,7 @@ private:
     void delete_char(Display& display, DeleteCharMode mode);
     void delete_word(Display& display, DeleteCharMode mode);
 
+    void do_save(Display& display);
     void go_to_line(Display& display);
 
     void swap_selection_start_and_cursor(Display& display, Cursor& cursor);

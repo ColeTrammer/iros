@@ -423,10 +423,6 @@ Maybe<String> ReplDisplay::enter_prompt(const String&, String) {
     return {};
 }
 
-Maybe<String> ReplDisplay::prompt(const String&) {
-    return {};
-}
-
 void ReplDisplay::enter_search(String) {}
 
 void ReplDisplay::set_clipboard_contents(String text, bool is_whole_line) {

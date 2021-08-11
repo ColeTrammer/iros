@@ -41,7 +41,6 @@ public:
     virtual void schedule_update() override { invalidate(); }
     virtual int enter() override;
     virtual void send_status_message(String message) override;
-    virtual Maybe<String> prompt(const String& message) override;
     virtual void enter_search(String starting_text) override;
     virtual void quit() override;
 

@@ -2,6 +2,7 @@ set(SOURCES
     app_display.cpp
     main.cpp
     terminal_display.cpp
+    terminal_prompt.cpp
     terminal_status_bar.cpp
 )
 

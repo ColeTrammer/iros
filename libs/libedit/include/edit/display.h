@@ -7,6 +7,7 @@
 #include <graphics/color.h>
 #include <graphics/forward.h>
 #include <liim/forward.h>
+#include <liim/function.h>
 #include <liim/maybe.h>
 #include <liim/pointers.h>
 
@@ -37,7 +38,7 @@ public:
     virtual void schedule_update() = 0;
     virtual int enter() = 0;
     virtual void send_status_message(String message) = 0;
-    virtual Maybe<String> prompt(const String& message) = 0;
+    virtual void prompt(String, Function<void(Maybe<String>)> callback) { callback.safe_call({}); }
     virtual void enter_search(String starting_text) = 0;
     virtual void do_open_prompt() = 0;
     virtual void quit() = 0;

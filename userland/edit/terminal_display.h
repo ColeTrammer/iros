@@ -10,6 +10,8 @@
 #include <tinput/terminal_input_parser.h>
 #include <tui/panel.h>
 
+class TerminalPrompt;
+
 class TerminalDisplay final
     : public Edit::Display
     , public TUI::Panel {
@@ -20,6 +22,7 @@ public:
     virtual ~TerminalDisplay() override;
 
     // ^TUI::Panel
+    virtual bool steals_focus() override { return m_steals_focus; };
     virtual void render() override;
     virtual Maybe<Point> cursor_position() override;
     virtual void on_mouse_event(const App::MouseEvent& event) override;
@@ -37,7 +40,7 @@ public:
     virtual void schedule_update() override { invalidate(); }
     virtual int enter() override;
     virtual void send_status_message(String message) override;
-    virtual Maybe<String> prompt(const String& message) override;
+    virtual void prompt(String message, Function<void(Maybe<String>)> callback) override;
     virtual void enter_search(String starting_text) override;
     virtual void notify_line_count_changed() override;
     virtual void quit() override;
@@ -46,12 +49,17 @@ public:
     virtual void set_clipboard_contents(String text, bool is_whole_line) override;
     virtual String clipboard_contents(bool& is_whole_line) const override;
 
+    void set_steals_focus(bool b) { m_steals_focus = b; }
+
 private:
     virtual void document_did_change() override;
 
+    void hide_prompt_panel();
     void compute_cols_needed_for_line_numbers();
 
     mutable String m_prev_clipboard_contents;
     mutable bool m_prev_clipboard_contents_were_whole_line { false };
     int m_cols_needed_for_line_numbers { 0 };
+    SharedPtr<TerminalPrompt> m_prompt_panel;
+    bool m_steals_focus { false };
 };

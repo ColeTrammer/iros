@@ -127,10 +127,6 @@ void AppDisplay::quit() {
 
 void AppDisplay::send_status_message(String) {}
 
-Maybe<String> AppDisplay::prompt(const String&) {
-    return {};
-}
-
 void AppDisplay::enter_search(String starting_text) {
     if (!m_main_display) {
         return;

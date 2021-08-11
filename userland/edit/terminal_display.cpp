@@ -10,6 +10,7 @@
 #include <tui/application.h>
 
 #include "terminal_display.h"
+#include "terminal_prompt.h"
 #include "terminal_status_bar.h"
 
 TerminalDisplay::TerminalDisplay() {}
@@ -90,6 +91,8 @@ void TerminalDisplay::render() {
     auto empty_rows = scroll_row_offset() + rows() - document()->num_rendered_lines(*this);
     auto renderer = get_renderer();
     renderer.clear_rect({ 0, rows() - empty_rows, sized_rect().width(), empty_rows });
+
+    Panel::render();
 }
 
 void TerminalDisplay::on_mouse_event(const App::MouseEvent& event) {
@@ -113,6 +116,10 @@ void TerminalDisplay::on_key_event(const App::KeyEvent& event) {
 void TerminalDisplay::on_resize() {
     if (document()) {
         document()->notify_display_size_changed();
+    }
+
+    if (m_prompt_panel) {
+        m_prompt_panel->set_positioned_rect(positioned_rect().with_height(3));
     }
 
     return Panel::on_resize();
@@ -203,8 +210,29 @@ int TerminalDisplay::enter() {
     return 0;
 }
 
-Maybe<String> TerminalDisplay::prompt(const String&) {
-    return {};
+void TerminalDisplay::hide_prompt_panel() {
+    if (!m_prompt_panel) {
+        return;
+    }
+
+    TUI::Application::the().invalidate(m_prompt_panel->positioned_rect());
+    remove_child(m_prompt_panel);
+    m_prompt_panel = nullptr;
+}
+
+void TerminalDisplay::prompt(String message, Function<void(Maybe<String>)> callback) {
+    if (m_prompt_panel) {
+        hide_prompt_panel();
+        return;
+    }
+
+    m_prompt_panel = TerminalPrompt::create(shared_from_this(), move(message), "");
+    m_prompt_panel->on_submit = [this, callback = move(callback)](auto result) {
+        hide_prompt_panel();
+        TUI::Application::the().set_active_panel(this);
+        callback.safe_call(move(result));
+    };
+    m_prompt_panel->set_positioned_rect(positioned_rect().with_height(3));
 }
 
 void TerminalDisplay::enter_search(String) {}

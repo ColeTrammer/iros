@@ -849,35 +849,36 @@ void Document::notify_display_size_changed() {
 }
 
 void Document::go_to_line(Display& display) {
-    auto maybe_result = display.prompt("Go to line: ");
-    if (!maybe_result.has_value()) {
-        return;
-    }
+    display.prompt("Go to line: ", [this, &display](auto maybe_result) {
+        if (!maybe_result.has_value()) {
+            return;
+        }
 
-    auto& result = maybe_result.value();
-    char* end_ptr = result.string();
-    long line_number = strtol(result.string(), &end_ptr, 10);
-    if (errno == ERANGE || end_ptr != result.string() + result.size() || line_number < 1 || line_number > num_lines()) {
-        display.send_status_message(String::format("Line `%s' is not between 1 and %d", result.string(), num_lines()));
-        return;
-    }
+        auto& result = maybe_result.value();
+        char* end_ptr = result.string();
+        long line_number = strtol(result.string(), &end_ptr, 10);
+        if (errno == ERANGE || end_ptr != result.string() + result.size() || line_number < 1 || line_number > num_lines()) {
+            display.send_status_message(String::format("Line `%s' is not between 1 and %d", result.string(), num_lines()));
+            return;
+        }
 
-    auto& cursor = display.cursors().main_cursor();
+        auto& cursor = display.cursors().main_cursor();
 
-    clear_selection(cursor);
-    cursor.set_line_index(line_number - 1);
+        clear_selection(cursor);
+        cursor.set_line_index(line_number - 1);
 
-    auto cursor_row_position = cursor.referenced_line(*this).absolute_row_position(*this, display);
+        auto cursor_row_position = cursor.referenced_line(*this).absolute_row_position(*this, display);
 
-    int screen_midpoint = display.rows() / 2;
-    if (cursor_row_position < screen_midpoint) {
-        display.set_scroll_row_offset(0);
-    } else {
-        display.set_scroll_row_offset(cursor_row_position - screen_midpoint);
-    }
+        int screen_midpoint = display.rows() / 2;
+        if (cursor_row_position < screen_midpoint) {
+            display.set_scroll_row_offset(0);
+        } else {
+            display.set_scroll_row_offset(cursor_row_position - screen_midpoint);
+        }
 
-    move_cursor_to_line_start(display, cursor);
-    set_needs_display();
+        move_cursor_to_line_start(display, cursor);
+        set_needs_display();
+    });
 }
 
 void Document::set_type(DocumentType type) {
@@ -897,23 +898,8 @@ void Document::update_suggestions(Display& display) {
     display.compute_suggestions();
 }
 
-void Document::save(Display& display) {
-    if (m_name.empty()) {
-        auto result = display.prompt("Save as: ");
-        if (!result.has_value()) {
-            return;
-        }
-
-        if (access(result.value().string(), F_OK) == 0) {
-            auto ok = display.prompt(String::format("Are you sure you want to overwrite file `%s'? ", result.value().string()));
-            if (!ok.has_value() || (ok.value() != "y" && ok.value() != "yes")) {
-                return;
-            }
-        }
-
-        m_name = move(result.value());
-        guess_type_from_name();
-    }
+void Document::do_save(Display& display) {
+    assert(!m_name.empty());
 
     if (access(m_name.string(), W_OK)) {
         if (errno != ENOENT) {
@@ -949,12 +935,49 @@ void Document::save(Display& display) {
     m_document_was_modified = false;
 }
 
+void Document::save(Display& display) {
+    if (m_name.empty()) {
+        display.prompt("Save as: ", [this, &display](auto result) {
+            if (!result.has_value()) {
+                return;
+            }
+
+            if (access(result.value().string(), F_OK) == 0) {
+                display.prompt(String::format("Are you sure you want to overwrite file `%s'? ", result.value().string()),
+                               [this, &display, result](auto ok) {
+                                   if (!ok.has_value() || (ok.value() != "y" && ok.value() != "yes")) {
+                                       return;
+                                   }
+
+                                   m_name = move(result.value());
+                                   guess_type_from_name();
+
+                                   do_save(display);
+                               });
+                return;
+            }
+
+            m_name = move(result.value());
+            guess_type_from_name();
+
+            do_save(display);
+        });
+        return;
+    }
+
+    do_save(display);
+}
+
 void Document::quit(Display& display) {
     if (m_document_was_modified && !input_text_mode()) {
-        auto result = display.prompt("Quit without saving? ");
-        if (!result.has_value() || (result.value() != "y" && result.value() != "yes")) {
-            return;
-        }
+        display.prompt("Quit without saving? ", [&display, this](auto result) {
+            if (!result.has_value() || (result.value() != "y" && result.value() != "yes")) {
+                return;
+            }
+
+            display.quit();
+        });
+        return;
     }
 
     display.quit();
