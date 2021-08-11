@@ -1,9 +1,12 @@
 #pragma once
 
+#include <tinput/terminal_renderer.h>
 #include <tui/panel.h>
 
 namespace TUI {
 class Frame : public TUI::Panel {
+    APP_OBJECT(Frame)
+
 public:
     virtual void render() override;
 

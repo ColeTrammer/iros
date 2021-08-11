@@ -3,6 +3,8 @@
 
 namespace TUI {
 void Frame::render() {
+    Panel::render();
+
     auto renderer = get_renderer();
     renderer.draw_rect(sized_rect(), m_frame_color, m_box_style);
 }

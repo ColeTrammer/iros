@@ -2,6 +2,7 @@ set(SOURCES
     application.cpp
     flex_layout_engine.cpp
     frame.cpp
+    label.cpp
     panel.cpp
 )
 

@@ -13,6 +13,9 @@ public:
     virtual void layout() override;
     virtual void do_add(Panel& panel) override;
 
+    void set_padding(int padding) { m_padding = padding; }
+    Rect parent_rect() const;
+
 private:
     int auto_sized_item_count() const;
     int available_space() const;
@@ -20,5 +23,6 @@ private:
 
     Direction m_direction;
     Vector<SharedPtr<Panel>> m_items;
+    int m_padding { 0 };
 };
 }
