@@ -29,6 +29,8 @@ public:
     Panel();
     virtual ~Panel();
 
+    virtual bool steals_focus() { return false; }
+
     virtual Maybe<Point> cursor_position();
     virtual void render();
 

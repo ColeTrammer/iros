@@ -87,6 +87,11 @@ void Application::on_key_event(const App::KeyEvent& event) {
 }
 
 void Application::on_mouse_event(const App::MouseEvent& event) {
+    if (auto panel = m_active_panel.lock(); panel && panel.get() != this && panel->steals_focus()) {
+        auto new_event = translate_mouse_event(*panel, event);
+        return panel->on_mouse_event(new_event);
+    }
+
     if (!event.mouse_down_any()) {
         if (auto panel = m_active_panel.lock(); panel && panel.get() != this) {
             auto new_event = translate_mouse_event(*panel, event);
