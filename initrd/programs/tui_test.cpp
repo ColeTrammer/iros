@@ -2,18 +2,25 @@
 #include <tinput/terminal_renderer.h>
 #include <tui/application.h>
 #include <tui/flex_layout_engine.h>
+#include <tui/frame.h>
 
-class TestPanel final : public TUI::Panel {
+class TestPanel final : public TUI::Frame {
     APP_OBJECT(TestPanel)
 
 public:
-    TestPanel(Color color, TextAlign alignment, String text) : m_color(color), m_alignment(alignment), m_text(move(text)) {}
+    TestPanel(Color color, TextAlign alignment, TInput::TerminalRenderer::BoxStyle box_style, String text)
+        : m_color(color), m_alignment(alignment), m_text(move(text)) {
+        set_frame_color(m_color.invert());
+        set_box_style(box_style);
+    }
 
-    virtual Maybe<Point> cursor_position() override { return { { 0, 0 } }; }
+    virtual Maybe<Point> cursor_position() override { return { relative_inner_rect().top_left() }; }
 
     virtual void render() override {
-        auto renderer = get_renderer();
-        renderer.clear_rect(sized_rect(), m_color);
+        Frame::render();
+
+        auto renderer = get_renderer_inside_frame();
+        renderer.clear_rect(sized_inner_rect(), m_color);
 
         auto style = TInput::TerminalTextStyle {
             .foreground = {},
@@ -21,16 +28,18 @@ public:
             .bold = true,
             .invert = false,
         };
-        renderer.render_text(sized_rect(), m_text.view(), style, m_alignment);
+        renderer.render_text(sized_inner_rect(), m_text.view(), style, m_alignment);
     }
 
     virtual void on_mouse_down(const App::MouseEvent& event) override {
+        set_frame_color(m_color);
         m_color = m_color.invert();
         invalidate();
         Panel::on_mouse_down(event);
     }
 
     virtual void on_key_event(const App::KeyEvent& event) override {
+        set_frame_color(m_color);
         m_color = m_color.invert();
         invalidate();
         Panel::on_key_event(event);
@@ -57,6 +66,13 @@ int main() {
         TextAlign::TopLeft,     TextAlign::TopCenter,  TextAlign::TopRight,     TextAlign::CenterLeft,  TextAlign::Center,
         TextAlign::CenterRight, TextAlign::BottomLeft, TextAlign::BottomCenter, TextAlign::BottomRight,
     };
+    TInput::TerminalRenderer::BoxStyle box_styles[9] = {
+        TInput::TerminalRenderer::BoxStyle::Thick,  TInput::TerminalRenderer::BoxStyle::Thin,
+        TInput::TerminalRenderer::BoxStyle::Thick,  TInput::TerminalRenderer::BoxStyle::ThinDashed,
+        TInput::TerminalRenderer::BoxStyle::Double, TInput::TerminalRenderer::BoxStyle::ThinDashed,
+        TInput::TerminalRenderer::BoxStyle::Thick,  TInput::TerminalRenderer::BoxStyle::Ascii,
+        TInput::TerminalRenderer::BoxStyle::Thick,
+    };
 
     auto& layout = app->set_layout_engine<TUI::FlexLayoutEngine>(TUI::FlexLayoutEngine::Direction::Vertical);
     for (int i = 0; i < 3; i++) {
@@ -64,7 +80,7 @@ int main() {
         auto& horizontal_layout = horizontal_panel.set_layout_engine<TUI::FlexLayoutEngine>(TUI::FlexLayoutEngine::Direction::Horizontal);
         for (int j = 0; j < 3; j++) {
             auto index = i * 3 + j;
-            horizontal_layout.add<TestPanel>(colors[index], alignments[index], String::format("message %d", index + 1));
+            horizontal_layout.add<TestPanel>(colors[index], alignments[index], box_styles[index], String::format("message %d", index + 1));
         }
     }
 
