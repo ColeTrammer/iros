@@ -10,6 +10,10 @@ FlexLayoutEngine::FlexLayoutEngine(Panel& parent, Direction direction) : LayoutE
 
 FlexLayoutEngine::~FlexLayoutEngine() {}
 
+Rect FlexLayoutEngine::parent_rect() const {
+    return parent().positioned_rect().adjusted(-m_padding);
+}
+
 int FlexLayoutEngine::available_space() const {
     int fixed_space = 0;
     for (auto& item : m_items) {
@@ -17,7 +21,7 @@ int FlexLayoutEngine::available_space() const {
             fixed_space += size_in_layout_direction(m_direction, item->layout_constraint());
         }
     }
-    auto max_space = size_in_layout_direction(m_direction, parent().positioned_rect());
+    auto max_space = size_in_layout_direction(m_direction, parent_rect());
     return max(0, max_space - fixed_space);
 }
 
@@ -44,16 +48,16 @@ void FlexLayoutEngine::layout() {
     auto space = available_space();
     auto distributed_size = space / flex_count;
 
-    auto width = parent().positioned_rect().width();
-    auto height = parent().positioned_rect().height();
+    auto width = parent_rect().width();
+    auto height = parent_rect().height();
     if (m_direction == Direction::Horizontal) {
         width = distributed_size;
     } else {
         height = distributed_size;
     }
 
-    auto x = parent().positioned_rect().left();
-    auto y = parent().positioned_rect().top();
+    auto x = parent_rect().left();
+    auto y = parent_rect().top();
     for (auto& item : m_items) {
         auto width_to_use = width;
         auto height_to_use = height;
