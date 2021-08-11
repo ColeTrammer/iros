@@ -4,6 +4,137 @@
 #include <tinput/terminal_renderer.h>
 
 namespace TInput {
+static TerminalGlyph box_glyphs_array[6][8] = {
+    {
+        { "┏", 1 },
+        { "━", 1 },
+        { "┓", 1 },
+        { "┃", 1 },
+        { "┛", 1 },
+        { "━", 1 },
+        { "┗", 1 },
+        { "┃", 1 },
+    },
+    {
+        { "┌", 1 },
+        { "─", 1 },
+        { "┐", 1 },
+        { "│", 1 },
+        { "┘", 1 },
+        { "─", 1 },
+        { "└", 1 },
+        { "│", 1 },
+    },
+    {
+        { "╔", 1 },
+        { "═", 1 },
+        { "╗", 1 },
+        { "║", 1 },
+        { "╝", 1 },
+        { "═", 1 },
+        { "╚", 1 },
+        { "║", 1 },
+    },
+    {
+        { "┏", 1 },
+        { "┅", 1 },
+        { "┓", 1 },
+        { "┇", 1 },
+        { "┛", 1 },
+        { "┅", 1 },
+        { "┗", 1 },
+        { "┇", 1 },
+    },
+    {
+        { "┌", 1 },
+        { "╌", 1 },
+        { "┐", 1 },
+        { "╎", 1 },
+        { "┘", 1 },
+        { "╌", 1 },
+        { "└", 1 },
+        { "╎", 1 },
+    },
+    {
+        { "+", 1 },
+        { "-", 1 },
+        { "+", 1 },
+        { "|", 1 },
+        { "+", 1 },
+        { "-", 1 },
+        { "+", 1 },
+        { "|", 1 },
+    },
+};
+
+void TerminalRenderer::draw_rect(const Rect& rect_in, Maybe<Color> color, BoxStyle box_style) {
+    if (rect_in.width() < 1 || rect_in.height() < 1) {
+        return clear_rect(rect_in, color);
+    }
+
+#ifdef __os_2__
+    // FIXME: support unicode in the system terminal
+    box_style = BoxStyle::Ascii;
+#endif /* __os_2__ */
+
+    auto rect = translate(rect_in);
+    auto style = TerminalTextStyle { .foreground = color, .background = {}, .bold = false };
+
+    auto glyphs = box_glyphs_array[static_cast<uint8_t>(box_style)];
+
+    // Top Left
+    if (auto point = rect.top_left(); in_bounds(point)) {
+        m_io_terminal.put_glyph(point, glyphs[0], style);
+    }
+
+    // Top Edge
+    for (auto x = rect.left() + 1; x < rect.right() - 1; x++) {
+        auto point = Point { x, rect.top() };
+        if (in_bounds(point)) {
+            m_io_terminal.put_glyph(point, glyphs[1], style);
+        }
+    }
+
+    // Top Right
+    if (auto point = rect.top_right().translated({ -1, 0 }); in_bounds(point)) {
+        m_io_terminal.put_glyph(point, glyphs[2], style);
+    }
+
+    // Right Edge
+    for (auto y = rect.top() + 1; y < rect.bottom() - 1; y++) {
+        auto point = Point { rect.right() - 1, y };
+        if (in_bounds(point)) {
+            m_io_terminal.put_glyph(point, glyphs[3], style);
+        }
+    }
+
+    // Bottom Right
+    if (auto point = rect.bottom_right().translated({ -1, -1 }); in_bounds(point)) {
+        m_io_terminal.put_glyph(point, glyphs[4], style);
+    }
+
+    // Bottom Edge
+    for (auto x = rect.left() + 1; x < rect.right() - 1; x++) {
+        auto point = Point { x, rect.bottom() - 1 };
+        if (in_bounds(point)) {
+            m_io_terminal.put_glyph(point, glyphs[5], style);
+        }
+    }
+
+    // Bottom Left
+    if (auto point = rect.bottom_left().translated({ 0, -1 }); in_bounds(point)) {
+        m_io_terminal.put_glyph(point, glyphs[6], style);
+    }
+
+    // Right Edge
+    for (auto y = rect.top() + 1; y < rect.bottom() - 1; y++) {
+        auto point = Point { rect.left(), y };
+        if (in_bounds(point)) {
+            m_io_terminal.put_glyph(point, glyphs[7], style);
+        }
+    }
+}
+
 void TerminalRenderer::clear_rect(const Rect& rect_in, Maybe<Color> color) {
     auto style = TerminalTextStyle { .foreground = {}, .background = color, .bold = false };
 

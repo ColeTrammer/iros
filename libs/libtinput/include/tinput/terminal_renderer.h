@@ -16,6 +16,16 @@ public:
     void set_origin(const Point& point) { m_origin = point; }
     void set_clip_rect(const Rect& rect) { m_clip_rect = translate(rect); }
 
+    enum class BoxStyle {
+        Thick,
+        Thin,
+        Double,
+        ThickDash,
+        ThinDashed,
+        Ascii,
+    };
+    void draw_rect(const Rect& rect, Maybe<Color> color = {}, BoxStyle style = BoxStyle::Thick);
+
     void clear_rect(const Rect& rect, Maybe<Color> color = {});
     void render_text(const Rect& rect, const StringView& text, const TerminalTextStyle& style = {},
                      TextAlign alignment = TextAlign::CenterLeft);
