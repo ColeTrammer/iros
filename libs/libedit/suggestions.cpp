@@ -4,11 +4,23 @@
 
 namespace Edit {
 void Suggestions::do_match(const Suggestion& suggestion, StringView reference_text) {
-    if (!suggestion.content().view().starts_with(reference_text)) {
+    auto detailed_match = Vector<size_t> {};
+    auto& suggestion_text = suggestion.content();
+
+    size_t ri = 0;
+    for (size_t si = 0; si < suggestion_text.size() && ri < reference_text.size(); si++) {
+        if (reference_text[ri] == suggestion_text[si]) {
+            detailed_match.add(si);
+            ri++;
+        }
+    }
+
+    // Ensure the entire reference text appears in the suggestion.
+    if (ri != reference_text.size()) {
         return;
     }
 
-    m_matched_suggestions.add(MatchedSuggestion { suggestion });
+    m_matched_suggestions.add(MatchedSuggestion { suggestion, move(detailed_match) });
 }
 
 void Suggestions::compute_matches(const Document& document, const Cursor& cursor) {
