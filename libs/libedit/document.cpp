@@ -1112,8 +1112,8 @@ void Document::select_all(Display& display, Cursor& cursor) {
     move_cursor_to_document_end(display, cursor, MovementMode::Select);
 }
 
-void Document::insert_suggestion(Display& display, const Suggestion& suggestion) {
-    insert_text_at_cursor(display, suggestion.content().substring(suggestion.offset()));
+void Document::insert_suggestion(Display& display, const MatchedSuggestion& suggestion) {
+    insert_text_at_cursor(display, String { suggestion.content().substring(suggestion.offset()) });
 }
 
 bool Document::notify_mouse_event(Display& display, const App::MouseEvent& event) {

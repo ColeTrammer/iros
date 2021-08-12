@@ -314,7 +314,7 @@ const Vector<ShRepl::Dirent> &ShRepl::ensure_directory_entries(const String &dir
     return *m_cached_directories.get(directory);
 }
 
-Vector<Edit::Suggestion> ShRepl::suggest_executable(const String &prefix, const StringView &current, size_t suggestions_offset) const {
+Vector<Edit::Suggestion> ShRepl::suggest_executable(size_t suggestions_offset) const {
     auto *path_env = getenv("PATH");
     if (!path_env) {
         return {};
@@ -333,32 +333,23 @@ Vector<Edit::Suggestion> ShRepl::suggest_executable(const String &prefix, const 
                 continue;
             }
 
-            if (dirent.name.view().starts_with(prefix.view())) {
-                if (!current.starts_with(dirent.name.view())) {
-                    String name = dirent.name;
-                    name += String(' ');
-                    matches.add({ move(name), suggestions_offset });
-                }
-            }
+            String name = dirent.name;
+            name += String(' ');
+            matches.add({ move(name), suggestions_offset });
         }
     }
 
     auto &builtins = Sh::BuiltInManager::the().builtins();
     builtins.for_each([&](auto &builtin) {
         auto builtin_name = builtin.name();
-        if (builtin_name.view().starts_with(prefix.view())) {
-            if (!current.starts_with(builtin_name.view())) {
-                builtin_name += String(' ');
-                matches.add({ move(builtin_name), suggestions_offset });
-            }
-        }
+        builtin_name += String(' ');
+        matches.add({ move(builtin_name), suggestions_offset });
     });
 
     return matches;
 }
 
-Vector<Edit::Suggestion> ShRepl::suggest_path_for(const String &input, const StringView &current_path, size_t suggestions_offset,
-                                                  bool should_be_executable) const {
+Vector<Edit::Suggestion> ShRepl::suggest_path_for(const String &input, size_t suggestions_offset, bool should_be_executable) const {
     String directory = "";
     String component = input;
 
@@ -375,16 +366,12 @@ Vector<Edit::Suggestion> ShRepl::suggest_path_for(const String &input, const Str
             continue;
         }
 
-        if (dirent.name.view().starts_with(component.view())) {
-            auto full_path = String::format("%s%s", directory.string(), dirent.name.string());
-            if (!current_path.starts_with(full_path.view())) {
-                auto component = dirent.name;
-                if (!S_ISDIR(dirent.mode)) {
-                    component += String(' ');
-                }
-                matches.add({ move(component), suggestions_offset - directory.size() });
-            }
+        auto full_path = String::format("%s%s", directory.string(), dirent.name.string());
+        auto component = dirent.name;
+        if (!S_ISDIR(dirent.mode)) {
+            component += String(' ');
         }
+        matches.add({ move(component), suggestions_offset - directory.size() });
     }
 
     return matches;
@@ -432,9 +419,9 @@ Vector<Edit::Suggestion> ShRepl::get_suggestions(const String &input, size_t pos
 
     bool should_be_executable = lexer.would_be_first_word_of_command(desired_token_index);
     if (should_be_executable && !current_text.index_of('/').has_value()) {
-        return suggest_executable(current_text_before_cursor, current_text, suggestions_offset);
+        return suggest_executable(suggestions_offset);
     }
-    return suggest_path_for(current_text_before_cursor, current_text, suggestions_offset, should_be_executable);
+    return suggest_path_for(current_text_before_cursor, suggestions_offset, should_be_executable);
 }
 
 void ShRepl::did_get_input(const String &input) {

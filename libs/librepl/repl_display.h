@@ -56,7 +56,7 @@ public:
 
     virtual void do_open_prompt() override;
 
-    void complete_suggestion(const Edit::Suggestion& suggestion);
+    void complete_suggestion(const Edit::MatchedSuggestion& suggestion);
 
 private:
     virtual void document_did_change() override;

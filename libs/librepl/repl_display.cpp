@@ -275,7 +275,7 @@ void ReplDisplay::do_open_prompt() {}
 void ReplDisplay::suggestions_did_change(const Maybe<Edit::TextRange>& old_text_range) {
     if (m_suggestions_panel) {
         if (m_suggest_based_on_history) {
-            m_suggestions_panel->set_suggestions(suggestions().suggestions());
+            m_suggestions_panel->did_update_suggestions();
             return;
         }
 
@@ -286,14 +286,14 @@ void ReplDisplay::suggestions_did_change(const Maybe<Edit::TextRange>& old_text_
             return;
         }
         if (!current_text_range && !old_text_range) {
-            m_suggestions_panel->set_suggestions(suggestions().suggestions());
+            m_suggestions_panel->did_update_suggestions();
             return;
         }
         if (current_text_range->start() != old_text_range->start()) {
             hide_suggestions_panel();
             return;
         }
-        m_suggestions_panel->set_suggestions(suggestions().suggestions());
+        m_suggestions_panel->did_update_suggestions();
     }
 }
 
@@ -312,30 +312,7 @@ void ReplDisplay::do_compute_suggestions() {
     auto cursor_index = document()->cursor_index_in_content_string(cursors().main_cursor());
     auto suggestions = m_repl.get_suggestions(content_string, cursor_index);
 
-    if (suggestions.size() <= 1) {
-        return set_suggestions(move(suggestions));
-    }
-
-    ::qsort(suggestions.vector(), suggestions.size(), sizeof(suggestions[0]), [](const void* p1, const void* p2) {
-        const auto& s1 = *reinterpret_cast<const String*>(p1);
-        const auto& s2 = *reinterpret_cast<const String*>(p2);
-        return strcmp(s1.string(), s2.string());
-    });
-
-    size_t i;
-    for (i = suggestions.first().offset(); i < suggestions.first().content().size() && i < suggestions.last().content().size(); i++) {
-        if (suggestions.first().content()[i] != suggestions.last().content()[i]) {
-            break;
-        }
-    }
-
-    if (i == suggestions.first().offset()) {
-        return set_suggestions(move(suggestions));
-    }
-
-    auto new_suggestions =
-        Vector<Edit::Suggestion>::create_from_single_element({ suggestions.first().content().first(i), suggestions.first().offset() });
-    return set_suggestions(move(new_suggestions));
+    return set_suggestions(move(suggestions));
 }
 
 void ReplDisplay::show_suggestions_panel() {
@@ -375,7 +352,7 @@ void ReplDisplay::hide_suggestions_panel() {
     TUI::Application::the().set_active_panel(this);
 }
 
-void ReplDisplay::complete_suggestion(const Edit::Suggestion& suggestion) {
+void ReplDisplay::complete_suggestion(const Edit::MatchedSuggestion& suggestion) {
     document()->insert_suggestion(*this, suggestion);
     if (m_suggest_based_on_history) {
         hide_suggestions_panel();

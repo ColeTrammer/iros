@@ -32,9 +32,8 @@ private:
     };
 
     const Vector<Dirent>& ensure_directory_entries(const String& directory) const;
-    Vector<Edit::Suggestion> suggest_executable(const String& path, const StringView& current_path, size_t suggestions_offset) const;
-    Vector<Edit::Suggestion> suggest_path_for(const String& path, const StringView& current_path, size_t suggestions_offset,
-                                              bool should_be_executable) const;
+    Vector<Edit::Suggestion> suggest_executable(size_t suggestions_offset) const;
+    Vector<Edit::Suggestion> suggest_path_for(const String& path, size_t suggestions_offset, bool should_be_executable) const;
 
     mutable HashMap<String, Vector<Dirent>> m_cached_directories;
 };

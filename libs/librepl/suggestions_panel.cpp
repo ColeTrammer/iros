@@ -9,7 +9,7 @@
 namespace Repl {
 constexpr int max_visible_suggestions = 5;
 
-SuggestionsPanel::SuggestionsPanel(ReplDisplay& display) : m_display(display) {
+SuggestionsPanel::SuggestionsPanel(ReplDisplay& display) : m_display(display), m_suggestions(display.suggestions()) {
     set_layout_constraint({ TUI::LayoutConstraint::AutoSize, max_visible_suggestions });
 }
 
@@ -21,8 +21,8 @@ void SuggestionsPanel::render() {
     for (int i = m_suggestion_offset; i < m_suggestion_offset + max_visible_suggestions && i < m_suggestions.size();
          i++, suggestions_rendered++) {
         auto& suggestion = m_suggestions[i];
-        auto text_width = TInput::convert_to_glyphs(suggestion.content().view()).total_width();
-        renderer.render_text(sized_rect().with_y(i - m_suggestion_offset).with_height(1), suggestion.content().view(),
+        auto text_width = TInput::convert_to_glyphs(suggestion.content()).total_width();
+        renderer.render_text(sized_rect().with_y(i - m_suggestion_offset).with_height(1), suggestion.content(),
                              { .foreground = {}, .background = {}, .bold = i == m_suggestion_index, .invert = false });
         renderer.clear_rect({ text_width, i - m_suggestion_offset, sized_rect().width() - text_width, 1 });
     }
@@ -30,8 +30,7 @@ void SuggestionsPanel::render() {
     renderer.clear_rect(sized_rect().with_y(suggestions_rendered).with_height(sized_rect().height() - suggestions_rendered));
 }
 
-void SuggestionsPanel::set_suggestions(Vector<Edit::Suggestion> suggestions) {
-    m_suggestions = move(suggestions);
+void SuggestionsPanel::did_update_suggestions() {
     m_suggestion_index = 0;
     m_suggestion_offset = 0;
     invalidate();

@@ -39,6 +39,9 @@ void Display::set_suggestions(Vector<Suggestion> suggestions) {
     auto cursor_index = cursors().main_cursor().index();
     auto index_for_suggestion = TextIndex { cursor_index.line_index(), max(cursor_index.index_into_line() - 1, 0) };
     m_suggestions.set_current_text_range(document()->syntax_highlighting_info().range_at_text_index(index_for_suggestion));
+
+    m_suggestions.compute_matches(*document(), cursors().main_cursor());
+
     suggestions_did_change(old_suggestion_range);
 }
 

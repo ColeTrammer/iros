@@ -10,6 +10,7 @@ class Display;
 class Document;
 class LineRenderer;
 class Line;
+class MatchedSuggestion;
 class MultiCursor;
 class Selection;
 class Suggestions;
