@@ -21,17 +21,19 @@ private:
 
 class MatchedSuggestion {
 public:
-    explicit MatchedSuggestion(const Suggestion& suggestion, Vector<size_t> detailed_match)
-        : m_content(suggestion.content().view()), m_offset(suggestion.offset()), m_detailed_match(move(detailed_match)) {}
+    explicit MatchedSuggestion(const Suggestion& suggestion, Vector<size_t> detailed_match, int score)
+        : m_content(suggestion.content().view()), m_offset(suggestion.offset()), m_detailed_match(move(detailed_match)), m_score(score) {}
 
     size_t offset() const { return m_offset; }
     StringView content() const { return m_content; }
     const Vector<size_t> detailed_match() const { return m_detailed_match; }
+    int score() const { return m_score; }
 
 private:
     StringView m_content;
-    size_t m_offset;
+    size_t m_offset { 0 };
     Vector<size_t> m_detailed_match;
+    int m_score { 0 };
 };
 
 class Suggestions {
