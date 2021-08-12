@@ -1113,7 +1113,12 @@ void Document::select_all(Display& display, Cursor& cursor) {
 }
 
 void Document::insert_suggestion(Display& display, const MatchedSuggestion& suggestion) {
-    insert_text_at_cursor(display, String { suggestion.content().substring(suggestion.offset()) });
+    for (auto& cursor : display.cursors()) {
+        for (size_t i = 0; i < suggestion.offset(); i++) {
+            move_cursor_left(display, cursor, MovementMode::Select);
+        }
+    }
+    insert_text_at_cursor(display, String { suggestion.content() });
 }
 
 bool Document::notify_mouse_event(Display& display, const App::MouseEvent& event) {
