@@ -118,23 +118,24 @@ public:
 
     virtual void advance() override { m_current_pos++; }
 
-    bool would_be_first_word_of_command(int start_index = -1) const {
+    template<typename TypeGetter>
+    static bool static_would_be_first_word_of_command(int tokens_size, TypeGetter type_getter, int start_index = -1) {
         if (start_index == -1) {
-            start_index = m_tokens.size();
+            start_index = tokens_size;
         }
 
-        if (start_index > 0 && is_io_redirect(m_tokens[start_index - 1].type())) {
+        if (start_index > 0 && is_io_redirect(type_getter(start_index - 1))) {
             return false;
         }
 
         for (int i = start_index - 1; i >= 0; i--) {
-            if (m_tokens[i].type() == ShTokenType::In) {
+            if (type_getter(i) == ShTokenType::In) {
                 return false;
             }
 
-            if (m_tokens[i].type() != ShTokenType::WORD) {
+            if (type_getter(i) != ShTokenType::WORD) {
                 return true;
-            } else if (i > 0 && is_io_redirect(m_tokens[i - 1].type())) {
+            } else if (i > 0 && is_io_redirect(type_getter(i - 1))) {
                 i--;
                 continue;
             } else {
@@ -143,6 +144,15 @@ public:
         }
 
         return true;
+    }
+
+    bool would_be_first_word_of_command(int start_index = -1) const {
+        return static_would_be_first_word_of_command(
+            m_tokens.size(),
+            [&](int index) -> ShTokenType {
+                return m_tokens[index].type();
+            },
+            start_index);
     }
 
 private:

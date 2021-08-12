@@ -285,6 +285,7 @@ static void highlight_sh(Document& document) {
             { static_cast<int>(token_value.start_line()), static_cast<int>(token_value.start_col()) },
             { static_cast<int>(token_value.end_line()), static_cast<int>(token_value.end_col()) },
             { flags },
+            static_cast<int>(lexer.tokens()[i].type()),
         });
     }
 }

@@ -380,10 +380,17 @@ Vector<Edit::Suggestion> ShRepl::suggest_path_for(const String &input, const Edi
 }
 
 Vector<Edit::Suggestion> ShRepl::get_suggestions(const Edit::Document &document, const Edit::TextIndex &cursor) const {
-    auto input = document.content_string();
+    auto &syntax_info = document.syntax_highlighting_info();
 
     auto index_for_suggestion = Edit::TextIndex { cursor.line_index(), max(cursor.index_into_line() - 1, 0) };
-    auto desired_token = document.syntax_highlighting_info().range_at_text_index(index_for_suggestion);
+    auto desired_token_index = syntax_info.range_index_at_text_index(index_for_suggestion);
+    auto desired_token = desired_token_index.map([&](int index) {
+        return syntax_info.range(index);
+    });
+
+    if (desired_token && static_cast<ShTokenType>(desired_token->private_data()) != ShTokenType::WORD) {
+        return {};
+    }
 
     auto current_text_before_cursor = String {};
     auto start = cursor;
@@ -392,7 +399,12 @@ Vector<Edit::Suggestion> ShRepl::get_suggestions(const Edit::Document &document,
         current_text_before_cursor = document.text_in_range(start, cursor);
     }
 
-    auto should_be_executable = false;
+    auto should_be_executable = !desired_token || ShLexer::static_would_be_first_word_of_command(
+                                                      syntax_info.size(),
+                                                      [&](int index) -> ShTokenType {
+                                                          return static_cast<ShTokenType>(syntax_info.range(index).private_data());
+                                                      },
+                                                      *desired_token_index);
     if (should_be_executable && !current_text_before_cursor.index_of('/').has_value()) {
         return suggest_executable(start);
     }

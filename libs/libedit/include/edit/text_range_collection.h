@@ -21,6 +21,7 @@ public:
     void sort();
     TextRangeCollectionIterator iterator(const TextIndex& start) const;
     Maybe<TextRange> range_at_text_index(const TextIndex& index) const;
+    Maybe<int> range_index_at_text_index(const TextIndex& index) const;
 
 private:
     friend class TextRangeCollectionIterator;
