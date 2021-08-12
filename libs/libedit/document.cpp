@@ -623,16 +623,8 @@ void Document::delete_selection(Cursor& cursor) {
     }
 }
 
-String Document::selection_text(Cursor& cursor) const {
-    auto& selection = cursor.selection();
-    if (selection.empty()) {
-        return "";
-    }
-
-    auto start = selection.normalized_start();
-    auto end = selection.normalized_end();
-
-    String result;
+String Document::text_in_range(const TextIndex& start, const TextIndex& end) const {
+    auto result = String {};
     for (int li = start.line_index(); li <= end.line_index(); li++) {
         auto& line = m_lines[li];
 
@@ -659,8 +651,16 @@ String Document::selection_text(Cursor& cursor) const {
             result += String(line.char_at(i));
         }
     }
-
     return result;
+}
+
+String Document::selection_text(Cursor& cursor) const {
+    auto& selection = cursor.selection();
+    if (selection.empty()) {
+        return "";
+    }
+
+    return text_in_range(selection.normalized_start(), selection.normalized_end());
 }
 
 void Document::clear_selection(Cursor& cursor) {
@@ -1113,11 +1113,8 @@ void Document::select_all(Display& display, Cursor& cursor) {
 }
 
 void Document::insert_suggestion(Display& display, const MatchedSuggestion& suggestion) {
-    for (auto& cursor : display.cursors()) {
-        for (size_t i = 0; i < suggestion.offset(); i++) {
-            move_cursor_left(display, cursor, MovementMode::Select);
-        }
-    }
+    display.cursors().remove_secondary_cursors();
+    move_cursor_to(display, display.cursors().main_cursor(), suggestion.start(), MovementMode::Select);
     insert_text_at_cursor(display, String { suggestion.content() });
 }
 

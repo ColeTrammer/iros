@@ -138,6 +138,8 @@ public:
     void clear_selection(Cursor& cursor);
     String selection_text(Cursor& cursor) const;
 
+    String text_in_range(const TextIndex& start, const TextIndex& end) const;
+
     void select_next_word_at_cursor(Display& display);
     void select_line_at_cursor(Display& display, Cursor& cursor);
     void select_word_at_cursor(Display& display, Cursor& cursor);

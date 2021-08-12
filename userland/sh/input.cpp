@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <dirent.h>
+#include <edit/document.h>
 #include <edit/suggestions.h>
 #include <errno.h>
 #include <liim/pointers.h>
@@ -314,7 +315,7 @@ const Vector<ShRepl::Dirent> &ShRepl::ensure_directory_entries(const String &dir
     return *m_cached_directories.get(directory);
 }
 
-Vector<Edit::Suggestion> ShRepl::suggest_executable(size_t suggestions_offset) const {
+Vector<Edit::Suggestion> ShRepl::suggest_executable(const Edit::TextIndex &start) const {
     auto *path_env = getenv("PATH");
     if (!path_env) {
         return {};
@@ -335,7 +336,7 @@ Vector<Edit::Suggestion> ShRepl::suggest_executable(size_t suggestions_offset) c
 
             String name = dirent.name;
             name += String(' ');
-            matches.add({ move(name), suggestions_offset });
+            matches.add({ move(name), start });
         }
     }
 
@@ -343,13 +344,13 @@ Vector<Edit::Suggestion> ShRepl::suggest_executable(size_t suggestions_offset) c
     builtins.for_each([&](auto &builtin) {
         auto builtin_name = builtin.name();
         builtin_name += String(' ');
-        matches.add({ move(builtin_name), suggestions_offset });
+        matches.add({ move(builtin_name), start });
     });
 
     return matches;
 }
 
-Vector<Edit::Suggestion> ShRepl::suggest_path_for(const String &input, size_t suggestions_offset, bool should_be_executable) const {
+Vector<Edit::Suggestion> ShRepl::suggest_path_for(const String &input, const Edit::TextIndex &start, bool should_be_executable) const {
     String directory = "";
     String component = input;
 
@@ -371,57 +372,31 @@ Vector<Edit::Suggestion> ShRepl::suggest_path_for(const String &input, size_t su
         if (!S_ISDIR(dirent.mode)) {
             component += String(' ');
         }
-        matches.add({ move(component), suggestions_offset - directory.size() });
+        matches.add(
+            { move(component), Edit::TextIndex { start.line_index(), start.index_into_line() + static_cast<int>(directory.size()) } });
     }
 
     return matches;
 }
 
-Vector<Edit::Suggestion> ShRepl::get_suggestions(const String &input, size_t position) const {
-    ShLexer lexer(input.string(), input.size());
-    lexer.lex(LexComments::Yes);
+Vector<Edit::Suggestion> ShRepl::get_suggestions(const Edit::Document &document, const Edit::TextIndex &cursor) const {
+    auto input = document.content_string();
 
-    while (lexer.peek_next_token_type() != ShTokenType::End) {
-        lexer.advance();
-    }
+    auto index_for_suggestion = Edit::TextIndex { cursor.line_index(), max(cursor.index_into_line() - 1, 0) };
+    auto desired_token = document.syntax_highlighting_info().range_at_text_index(index_for_suggestion);
 
-    const ShLexer::Token *desired_token = nullptr;
-    auto *desired_position = input.string() + position - 1;
-    int desired_token_index = lexer.tokens().size();
-    for (auto &token : lexer.tokens()) {
-        assert(token.value().has_text());
-        auto *start = token.value().text().data();
-        auto *end = token.value().text().end();
-        if (desired_position >= start && desired_position < end) {
-            desired_token_index = &token - lexer.tokens().vector();
-            desired_token = &token;
-        }
-
-        if (desired_position < start) {
-            desired_token_index = &token - lexer.tokens().vector();
-            break;
-        }
-    }
-
-    if (desired_token && desired_token->type() != ShTokenType::WORD) {
-        return {};
-    }
-
-    String current_text_before_cursor;
-    StringView current_text("");
-    size_t suggestions_offset = 0;
+    auto current_text_before_cursor = String {};
+    auto start = cursor;
     if (desired_token) {
-        suggestions_offset = static_cast<size_t>(desired_position + 1 - desired_token->value().text().data());
-        current_text = desired_token->value().text();
-        current_text_before_cursor = { desired_token->value().text().data(),
-                                       static_cast<size_t>((input.string() + position) - desired_token->value().text().data()) };
+        start = desired_token->start();
+        current_text_before_cursor = document.text_in_range(start, cursor);
     }
 
-    bool should_be_executable = lexer.would_be_first_word_of_command(desired_token_index);
-    if (should_be_executable && !current_text.index_of('/').has_value()) {
-        return suggest_executable(suggestions_offset);
+    auto should_be_executable = false;
+    if (should_be_executable && !current_text_before_cursor.index_of('/').has_value()) {
+        return suggest_executable(start);
     }
-    return suggest_path_for(current_text_before_cursor, suggestions_offset, should_be_executable);
+    return suggest_path_for(current_text_before_cursor, start, should_be_executable);
 }
 
 void ShRepl::did_get_input(const String &input) {

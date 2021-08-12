@@ -26,7 +26,7 @@ public:
     virtual Edit::DocumentType get_input_type() const { return Edit::DocumentType::Text; }
     virtual String get_main_prompt() const;
     virtual String get_secondary_prompt() const;
-    virtual Vector<Edit::Suggestion> get_suggestions(const String& input, size_t cursor_index) const;
+    virtual Vector<Edit::Suggestion> get_suggestions(const Edit::Document& documnet, const Edit::TextIndex& cursor) const;
 
 protected:
     virtual void did_get_input(const String& input) = 0;

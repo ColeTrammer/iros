@@ -9,29 +9,29 @@
 namespace Edit {
 class Suggestion {
 public:
-    Suggestion(String content, size_t offset) : m_content(move(content)), m_offset(offset) {}
+    Suggestion(String content, const TextIndex& start) : m_content(move(content)), m_start(start) {}
 
-    size_t offset() const { return m_offset; }
+    const TextIndex& start() const { return m_start; }
     const String& content() const { return m_content; }
 
 private:
     String m_content;
-    size_t m_offset;
+    TextIndex m_start;
 };
 
 class MatchedSuggestion {
 public:
     explicit MatchedSuggestion(const Suggestion& suggestion, Vector<size_t> detailed_match, int score)
-        : m_content(suggestion.content().view()), m_offset(suggestion.offset()), m_detailed_match(move(detailed_match)), m_score(score) {}
+        : m_content(suggestion.content().view()), m_start(suggestion.start()), m_detailed_match(move(detailed_match)), m_score(score) {}
 
-    size_t offset() const { return m_offset; }
+    const TextIndex& start() const { return m_start; }
     StringView content() const { return m_content; }
     const Vector<size_t> detailed_match() const { return m_detailed_match; }
     int score() const { return m_score; }
 
 private:
     StringView m_content;
-    size_t m_offset { 0 };
+    TextIndex m_start;
     Vector<size_t> m_detailed_match;
     int m_score { 0 };
 };

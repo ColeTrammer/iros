@@ -28,12 +28,9 @@ void Suggestions::do_match(const Suggestion& suggestion, StringView reference_te
 }
 
 void Suggestions::compute_matches(const Document& document, const Cursor& cursor) {
-    auto content_string = document.content_string();
-    auto cursor_byte_index = document.cursor_index_in_content_string(cursor);
-
     for (auto& suggestion : m_suggestions) {
-        auto reference_text = content_string.view().substring(cursor_byte_index - suggestion.offset(), suggestion.offset());
-        do_match(suggestion, reference_text);
+        auto reference_text = document.text_in_range(suggestion.start(), cursor.index());
+        do_match(suggestion, reference_text.view());
     }
 
     ::qsort(m_matched_suggestions.vector(), m_matched_suggestions.size(), sizeof(m_matched_suggestions[0]),

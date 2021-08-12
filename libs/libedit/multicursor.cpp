@@ -170,7 +170,8 @@ Maybe<String> MultiCursor::preview_auto_complete_text(Display& display) const {
     }
 
     auto& suggestion = suggestions.first();
-    return String { suggestion.content().substring(suggestion.offset()) };
+    auto current_text = display.document()->text_in_range(suggestion.start(), display.cursors().main_cursor().index());
+    return String { suggestion.content().substring(current_text.size()) };
 }
 
 TextRangeCollection MultiCursor::cursor_text_ranges(const Document& document) const {

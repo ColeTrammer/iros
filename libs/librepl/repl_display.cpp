@@ -303,16 +303,12 @@ void ReplDisplay::do_compute_suggestions() {
         auto suggestions = Vector<Edit::Suggestion> {};
         for (int i = history.size() - 1; i >= 0; i--) {
             auto& item = m_repl.history().item(i);
-            suggestions.add({ item, document()->cursor_index_in_content_string(cursors().main_cursor()) });
+            suggestions.add({ item, {} });
         }
         return set_suggestions(move(suggestions));
     }
 
-    auto content_string = document()->content_string();
-    auto cursor_index = document()->cursor_index_in_content_string(cursors().main_cursor());
-    auto suggestions = m_repl.get_suggestions(content_string, cursor_index);
-
-    return set_suggestions(move(suggestions));
+    return set_suggestions(m_repl.get_suggestions(*document(), cursors().main_cursor().index()));
 }
 
 void ReplDisplay::show_suggestions_panel() {
