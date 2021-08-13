@@ -26,8 +26,8 @@ public:
         auto terminal_rect = TUI::Application::the().sized_rect();
         if (m_first_layout) {
             m_first_layout = false;
-            m_display->set_positioned_rect(
-                { 0, inital_cursor_position.y(), terminal_rect.width(), terminal_rect.height() - inital_cursor_position.y() });
+            auto y = inital_cursor_position.x() != 0 ? inital_cursor_position.y() + 1 : inital_cursor_position.y();
+            m_display->set_positioned_rect({ 0, y, terminal_rect.width(), terminal_rect.height() - y });
             return;
         }
 
