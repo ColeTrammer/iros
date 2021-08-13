@@ -696,7 +696,7 @@ static int do_pipeline(ShValue::Pipeline& pipeline, ShValue::List::Combinator mo
         if (i != 0) {
             String input = String::format("%d", fds[(i - 1) * 2]);
             created_strings.add(input);
-            StringView view = { &created_strings.tail()[0], &created_strings.tail()[created_strings.tail().size() - 1] };
+            auto view = created_strings.tail().view();
             switch (command.type) {
                 case ShValue::Command::Type::Compound:
                     command.command.as<ShValue::CompoundCommand>().redirect_list.add(
@@ -717,7 +717,7 @@ static int do_pipeline(ShValue::Pipeline& pipeline, ShValue::List::Combinator mo
         if (i != pipeline.commands.size() - 1) {
             String output = String::format("%d", fds[i * 2 + 1]);
             created_strings.add(output);
-            StringView view = { &created_strings.tail()[0], &created_strings.tail()[created_strings.tail().size() - 1] };
+            auto view = created_strings.tail().view();
             switch (command.type) {
                 case ShValue::Command::Type::Compound:
                     command.command.as<ShValue::CompoundCommand>().redirect_list.add(
