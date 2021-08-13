@@ -118,8 +118,7 @@ public:
 
     void remove_line(int index);
     void insert_line(Line&& line, int index);
-    void rotate_lines_up(int start, int end);
-    void rotate_lines_down(int start, int end);
+    void move_line_to(int line, int destination);
 
     void split_line_at(const TextIndex& index);
     void merge_lines(int first_line_index, int second_line_index);
@@ -180,6 +179,7 @@ public:
     void did_merge_lines(int first_line_index, int first_line_length, int second_line_index);
     void did_add_to_line(int line_index, int index_into_line, int bytes_added);
     void did_delete_from_line(int line_index, int index_into_line, int bytes_deleted);
+    void did_move_line_to(int line, int destination);
 
     bool execute_command(Display& display, Command& command);
 

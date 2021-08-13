@@ -157,6 +157,27 @@ void MultiCursor::did_delete_from_line(Document& document, Display& display, int
     }
 }
 
+void MultiCursor::did_move_line_to(Document&, Display&, int line, int destination) {
+    auto line_min = min(line, destination);
+    auto line_max = max(line, destination);
+    for (auto& cursor : m_cursors) {
+        if (cursor.line_index() < line_min || cursor.line_index() > line_max) {
+            continue;
+        }
+
+        if (cursor.line_index() == line) {
+            cursor.move_down_preserving_selection(line - destination);
+            continue;
+        }
+
+        if (line > destination) {
+            cursor.move_down_preserving_selection(1);
+        } else {
+            cursor.move_up_preserving_selection(1);
+        }
+    }
+}
+
 bool MultiCursor::should_show_auto_complete_text_at(const Document& document, const Line& line, int index_into_line) const {
     return document.preview_auto_complete() && &main_cursor().referenced_line(document) == &line &&
            main_cursor().index_into_line() == index_into_line;

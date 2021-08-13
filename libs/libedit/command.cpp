@@ -272,22 +272,10 @@ bool SwapLinesCommand::do_execute(MultiCursor& cursors) {
 }
 
 bool SwapLinesCommand::do_swap(Cursor& cursor, SwapDirection direction) {
+    // Adjust the selection to make sure its aligned with the cursor.
     if (cursor.selection().empty()) {
-        int line_index = cursor.line_index();
-        if ((line_index == 0 && direction == SwapDirection::Up) ||
-            (line_index == document().num_lines() - 1 && direction == SwapDirection::Down)) {
-            return false;
-        }
-
-        if (direction == SwapDirection::Up) {
-            document().rotate_lines_up(line_index - 1, line_index);
-            cursor.set_line_index(line_index - 1);
-        } else {
-            document().rotate_lines_down(line_index, line_index + 1);
-            cursor.set_line_index(line_index + 1);
-        }
-
-        return true;
+        cursor.selection().begin(cursor.index());
+        cursor.selection().set_end(cursor.index());
     }
 
     auto selection_start = cursor.selection().normalized_start();
@@ -299,25 +287,9 @@ bool SwapLinesCommand::do_swap(Cursor& cursor, SwapDirection direction) {
     }
 
     if (direction == SwapDirection::Up) {
-        document().rotate_lines_up(selection_start.line_index() - 1, selection_end.line_index());
-        auto selection = cursor.selection();
-        const_cast<Selection&>(cursor.selection()).clear();
-
-        cursor.set_line_index(selection_start.line_index() - 1);
-        selection.set_start_line_index(selection_start.line_index() - 1);
-        selection.set_end_line_index(selection_end.line_index() - 1);
-
-        cursor.selection() = move(selection);
+        document().move_line_to(selection_start.line_index() - 1, selection_end.line_index());
     } else {
-        document().rotate_lines_down(selection_start.line_index(), selection_end.line_index() + 1);
-        auto selection = cursor.selection();
-        const_cast<Selection&>(cursor.selection()).clear();
-
-        cursor.set_line_index(selection_start.line_index() + 1);
-        selection.set_start_line_index(selection_start.line_index() + 1);
-        selection.set_end_line_index(selection_end.line_index() + 1);
-
-        cursor.selection() = move(selection);
+        document().move_line_to(selection_end.line_index() + 1, selection_start.line_index());
     }
 
     return true;

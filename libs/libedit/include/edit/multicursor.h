@@ -30,6 +30,7 @@ public:
     void did_merge_lines(Document& document, Display& display, int first_line_index, int first_line_length, int second_line_index);
     void did_add_to_line(Document& document, Display& display, int line_index, int index_into_line, int bytes_added);
     void did_delete_from_line(Document& document, Display& display, int line_index, int index_into_line, int bytes_deleted);
+    void did_move_line_to(Document& document, Display& display, int line, int destination);
 
     bool should_show_auto_complete_text_at(const Document& document, const Line& line, int index_into_line) const;
     Maybe<String> preview_auto_complete_text(Display& display) const;

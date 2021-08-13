@@ -57,6 +57,7 @@ public:
     void notify_did_merge_lines(int first_line_index, int first_line_length, int second_line_index);
     void notify_did_add_to_line(int line_index, int index_into_line, int bytes_added);
     void notify_did_delete_from_line(int line_index, int index_into_line, int bytes_deleted);
+    void notify_did_move_line_to(int line, int destination);
 
     void set_document(SharedPtr<Document> document);
 

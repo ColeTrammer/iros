@@ -124,6 +124,34 @@ void Display::notify_did_delete_from_line(int line_index, int index_into_line, i
     schedule_update();
 }
 
+void Display::notify_did_move_line_to(int line, int destination) {
+    auto line_min = min(line, destination);
+    auto line_max = max(line, destination);
+    auto& start_line = document()->line_at_index(line_min);
+    auto& end_line = document()->line_at_index(line_max);
+
+    auto start_line_size = start_line.rendered_line_count(*document(), *this);
+    auto end_line_size = end_line.rendered_line_count(*document(), *this);
+
+    auto rendered_line_min = start_line.absolute_row_position(*document(), *this);
+    auto rendered_line_max = end_line.absolute_row_position(*document(), *this) + end_line_size;
+
+    // FIXME: add Vector<T>::rotate() to replace this computational inefficent and ugly approach.
+    if (line > destination) {
+        for (int i = 0; i < start_line_size; i++) {
+            m_rendered_lines.rotate_left(rendered_line_min, rendered_line_max);
+        }
+    } else {
+        for (int i = 0; i < end_line_size; i++) {
+            m_rendered_lines.rotate_right(rendered_line_min, rendered_line_max);
+        }
+    }
+
+    document()->invalidate_all_rendered_contents();
+    m_cursors.did_move_line_to(*document(), *this, line, destination);
+    schedule_update();
+}
+
 Display::RenderingInfo Display::rendering_info_for_metadata(const CharacterMetadata& metadata) const {
     RenderingInfo info;
     if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxComment) {

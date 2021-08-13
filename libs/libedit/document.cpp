@@ -732,6 +732,12 @@ void Document::did_delete_from_line(int line_index, int index_into_line, int byt
     }
 }
 
+void Document::did_move_line_to(int line, int destination) {
+    for (auto* display : m_displays) {
+        display->notify_did_move_line_to(line, destination);
+    }
+}
+
 void Document::register_display(Display& display) {
     m_displays.add(&display);
 }
@@ -740,14 +746,13 @@ void Document::unregister_display(Display& display) {
     m_displays.remove_element(&display);
 }
 
-void Document::rotate_lines_up(int start, int end) {
-    // Vector::rotate is exclusive, this is inclusive
-    m_lines.rotate_left(start, end + 1);
-}
-
-void Document::rotate_lines_down(int start, int end) {
-    // Vector::rotate is exclusive, this is inclusive
-    m_lines.rotate_right(start, end + 1);
+void Document::move_line_to(int line, int destination) {
+    if (line > destination) {
+        m_lines.rotate_right(destination, line + 1);
+    } else {
+        m_lines.rotate_left(line, destination + 1);
+    }
+    did_move_line_to(line, destination);
 }
 
 void Document::copy(Display& display, MultiCursor& cursors) {
