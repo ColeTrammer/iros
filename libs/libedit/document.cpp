@@ -495,7 +495,9 @@ void Document::delete_word(Display& display, DeleteCharMode mode) {
 
         swap_selection_start_and_cursor(display, cursor);
     }
-    push_command<DeleteCommand>(display, mode);
+    if (auto* command = push_command<DeleteCommand>(display, mode)) {
+        command->set_restore_selections(false);
+    }
 }
 
 void Document::swap_selection_start_and_cursor(Display& display, Cursor& cursor) {
@@ -553,27 +555,27 @@ Document::Snapshot Document::snapshot(Display& display) const {
     return { Vector<Line>(m_lines), snapshot_state(display) };
 }
 
-void Document::restore(MultiCursor& cursors, Snapshot s) {
+void Document::restore(MultiCursor& cursors, Snapshot s, bool restore_selections) {
     m_lines = move(s.lines);
-    cursors = s.state.cursors;
-    m_document_was_modified = s.state.document_was_modified;
+    restore_state(cursors, s.state, restore_selections);
 
     update_search_results();
     set_needs_display();
 }
 
-void Document::restore_state(MultiCursor& cursors, const StateSnapshot& s) {
+void Document::restore_state(MultiCursor& cursors, const StateSnapshot& s, bool restore_selections) {
     cursors = s.cursors;
+    if (!restore_selections) {
+        for (auto& cursor : cursors) {
+            cursor.selection().clear();
+        }
+    }
     m_document_was_modified = s.document_was_modified;
 
     set_needs_display();
 }
 
 void Document::insert_text_at_cursor(Display& display, const String& text) {
-    if (text.empty()) {
-        return;
-    }
-
     push_command<InsertCommand>(display, text);
 }
 

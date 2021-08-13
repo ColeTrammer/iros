@@ -128,10 +128,10 @@ public:
     void finish_input(Display& display, bool should_scroll_cursor_into_view);
 
     Snapshot snapshot(Display& display) const;
-    void restore(MultiCursor& cursors, Snapshot snapshot);
+    void restore(MultiCursor& cursors, Snapshot snapshot, bool restore_selections = true);
 
     StateSnapshot snapshot_state(Display& display) const;
-    void restore_state(MultiCursor& cursors, const StateSnapshot& state_snapshot);
+    void restore_state(MultiCursor& cursors, const StateSnapshot& state_snapshot, bool restore_selections = true);
 
     void delete_selection(Cursor& cursor);
     void clear_selection(Cursor& cursor);
@@ -218,7 +218,7 @@ private:
     void guess_type_from_name();
 
     template<typename C, typename... Args>
-    void push_command(Display& display, Args... args) {
+    C* push_command(Display& display, Args... args) {
         // This means some undo's have taken place, and the user started typing
         // something else, so the redo stack will be discarded.
         if (m_command_stack_index != m_command_stack.size()) {
@@ -234,19 +234,23 @@ private:
 
         auto command = make_unique<C>(*this, display, forward<Args>(args)...);
         bool did_modify = execute_command(display, *command);
-        if (did_modify) {
-            m_command_stack.add(move(command));
-            m_command_stack_index++;
-            m_document_was_modified = true;
-            update_search_results();
-            update_syntax_highlighting();
-            update_suggestions(display);
-            set_needs_display();
-
-            if (on_change) {
-                on_change();
-            }
+        if (!did_modify) {
+            return nullptr;
         }
+
+        auto ret = command.get();
+        m_command_stack.add(move(command));
+        m_command_stack_index++;
+        m_document_was_modified = true;
+        update_search_results();
+        update_syntax_highlighting();
+        update_suggestions(display);
+        set_needs_display();
+
+        if (on_change) {
+            on_change();
+        }
+        return ret;
     }
 
     Vector<Line> m_lines;

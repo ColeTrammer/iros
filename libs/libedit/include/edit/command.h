@@ -16,8 +16,12 @@ public:
     virtual void undo(Display& display) = 0;
     virtual void redo(Display& display) = 0;
 
+    void set_restore_selections(bool b) { m_restore_selections = b; }
+    bool restore_selections() const { return m_restore_selections; }
+
 private:
     Document& m_document;
+    bool m_restore_selections { false };
 };
 
 class DeltaBackedCommand : public Command {

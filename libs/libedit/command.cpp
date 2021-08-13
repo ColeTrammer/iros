@@ -27,7 +27,7 @@ bool DeltaBackedCommand::execute(Display& display) {
 void DeltaBackedCommand::undo(Display& display) {
     document().restore_state(display.cursors(), m_end_snapshot);
     do_undo(display.cursors());
-    document().restore_state(display.cursors(), m_start_snapshot);
+    document().restore_state(display.cursors(), m_start_snapshot, restore_selections());
 }
 
 void DeltaBackedCommand::redo(Display& display) {
@@ -41,7 +41,7 @@ SnapshotBackedCommand::SnapshotBackedCommand(Document& document, Display& displa
 SnapshotBackedCommand::~SnapshotBackedCommand() {}
 
 void SnapshotBackedCommand::undo(Display& display) {
-    document().restore(display.cursors(), snapshot());
+    document().restore(display.cursors(), snapshot(), restore_selections());
 }
 
 void SnapshotBackedCommand::redo(Display& display) {
@@ -55,6 +55,10 @@ InsertCommand::InsertCommand(Document& document, Display& display, String text)
 InsertCommand::~InsertCommand() {}
 
 bool InsertCommand::do_execute(MultiCursor& cursors) {
+    if (m_text.empty()) {
+        return false;
+    }
+
     for (int i = 0; i < cursors.size(); i++) {
         auto& cursor = cursors[i];
         if (!cursor.selection().empty()) {
