@@ -1,6 +1,7 @@
 #include <edit/document.h>
 #include <edit/suggestions.h>
 #include <edit/text_index.h>
+#include <strings.h>
 
 namespace Edit {
 void Suggestions::do_match(const Suggestion& suggestion, StringView reference_text) {
