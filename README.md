@@ -5,19 +5,24 @@ My second attempt to create an OS
 # Demos
 
 ## OS
-![OS Demo](https://user-images.githubusercontent.com/18405484/129427161-d5514538-4a11-4564-96a0-b515ab37c5d6.mp4)
+
+[OS Demo](https://user-images.githubusercontent.com/18405484/129427161-d5514538-4a11-4564-96a0-b515ab37c5d6.mp4)
 
 ## Shell
-![Shell Demo](https://user-images.githubusercontent.com/18405484/129427291-3422c899-cbf2-4e16-9e71-5dd8b72d24fb.mp4)
+
+[Shell Demo](https://user-images.githubusercontent.com/18405484/129427291-3422c899-cbf2-4e16-9e71-5dd8b72d24fb.mp4)
 
 ## Text Editor
-![Text Editor Demo](https://user-images.githubusercontent.com/18405484/129427374-c575427e-9653-4a40-90e0-656aae2ba64c.mp4)
+
+[Text Editor Demo](https://user-images.githubusercontent.com/18405484/129427374-c575427e-9653-4a40-90e0-656aae2ba64c.mp4)
 
 ## Networking
-![Networking Demo](https://user-images.githubusercontent.com/18405484/129427245-08812ca8-698b-4eda-9436-8149e88764e2.mp4)
+
+[Networking Demo](https://user-images.githubusercontent.com/18405484/129427245-08812ca8-698b-4eda-9436-8149e88764e2.mp4)
 
 ## GUI
-![GUI Demo](https://user-images.githubusercontent.com/18405484/129427196-777ef90a-c22a-4e2c-a5b9-eff8dfaf5365.mp4)
+
+[GUI Demo](https://user-images.githubusercontent.com/18405484/129427196-777ef90a-c22a-4e2c-a5b9-eff8dfaf5365.mp4)
 
 # Features
 
