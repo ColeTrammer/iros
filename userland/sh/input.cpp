@@ -347,6 +347,12 @@ Vector<Edit::Suggestion> ShRepl::suggest_executable(const Edit::TextIndex &start
         matches.add({ move(builtin_name), start });
     });
 
+    auto &functions = g_functions;
+    functions.for_each_key([&](auto function_name) {
+        function_name += String { ' ' };
+        matches.add({ move(function_name), start });
+    });
+
     return matches;
 }
 
