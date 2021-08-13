@@ -56,7 +56,7 @@ int Line::absoulte_col_offset_of_index(const Document& document, Display& displa
         return 0;
     }
 
-    return range->start_absolute_col + (range->end.col - range->start.col);
+    return range->start_absolute_col;
 }
 
 const PositionRange* Line::range_for_index_into_line(const Document& document, Display& display, int index_into_line, RangeFor mode) const {
