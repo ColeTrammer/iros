@@ -352,9 +352,7 @@ void ReplDisplay::hide_suggestions_panel() {
 
 void ReplDisplay::complete_suggestion(const Edit::MatchedSuggestion& suggestion) {
     document()->insert_suggestion(*this, suggestion);
-    if (m_suggest_based_on_history) {
-        hide_suggestions_panel();
-    }
+    hide_suggestions_panel();
 }
 
 Vector<SharedPtr<Edit::Document>>& ReplDisplay::ensure_history_documents() {
