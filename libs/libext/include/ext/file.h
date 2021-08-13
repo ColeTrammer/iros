@@ -1,6 +1,7 @@
 #pragma once
 
 #include <liim/byte_buffer.h>
+#include <liim/format.h>
 #include <liim/forward.h>
 #include <liim/maybe.h>
 #include <liim/pointers.h>
@@ -36,8 +37,15 @@ public:
 
     bool read(ByteBuffer& buffer);
     bool write(ByteBuffer& buffer);
+    bool write(StringView view);
 
     bool read_all_streamed(ByteBuffer& buffer, Function<bool(const ByteBuffer&)> callback);
+
+    template<typename... Args>
+    bool writef(StringView view, const Args&... args) {
+        auto string = vformat(view, make_format_args(args...));
+        return write(string.view());
+    }
 
 private:
     FILE* m_file { nullptr };

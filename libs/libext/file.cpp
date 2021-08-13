@@ -86,6 +86,16 @@ bool File::write(ByteBuffer& buffer) {
     return true;
 }
 
+bool File::write(StringView view) {
+    fwrite(view.data(), 1, view.size(), m_file);
+    if (ferror(m_file)) {
+        m_error = errno;
+        clearerr(m_file);
+        return false;
+    }
+    return true;
+}
+
 bool File::read_all_streamed(ByteBuffer& buffer, Function<bool(const ByteBuffer&)> callback) {
     for (;;) {
         bool read_result = read(buffer);
