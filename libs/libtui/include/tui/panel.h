@@ -50,6 +50,7 @@ public:
 
     virtual void on_event(const App::Event& event) override;
 
+    void remove();
     Panel* parent_panel();
 
     void make_focused();

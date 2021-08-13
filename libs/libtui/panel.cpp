@@ -40,6 +40,19 @@ void Panel::on_resize() {
     }
 }
 
+void Panel::remove() {
+    TUI::Application::the().invalidate(positioned_rect());
+    if (parent()) {
+        auto* panel_with_focus = focus_proxy() ? focus_proxy() : (accepts_focus() ? this : nullptr);
+        if (panel_with_focus && TUI::Application::the().focused_panel().get() == panel_with_focus) {
+            if (auto* parent = parent_panel()) {
+                parent->make_focused();
+            }
+        }
+        parent()->remove_child(shared_from_this());
+    }
+}
+
 Panel* Panel::parent_panel() {
     if (!parent()) {
         return nullptr;
