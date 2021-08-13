@@ -37,7 +37,7 @@ public:
     }
 
     Vector() : Vector(20) {}
-    explicit Vector(int capacity) : m_capacity(capacity) {}
+    explicit Vector(int capacity) : m_capacity(max(1, capacity)) {}
 
     Vector(const Vector& to_copy) : m_capacity(to_copy.capacity()), m_size(to_copy.size()) {
         allocate_vector();
