@@ -35,8 +35,8 @@ public:
     virtual void render();
 
     virtual void on_resize();
-    virtual void on_made_active() {}
-    virtual void on_made_not_active() {}
+    virtual void on_focused() {}
+    virtual void on_unfocused() {}
 
     virtual void on_mouse_down(const App::MouseEvent&);
     virtual void on_mouse_double(const App::MouseEvent&);
@@ -49,6 +49,15 @@ public:
     virtual void on_mouse_event(const App::MouseEvent& event);
 
     virtual void on_event(const App::Event& event) override;
+
+    Panel* parent_panel();
+
+    void make_focused();
+    bool accepts_focus() const { return m_accepts_focus; }
+    void set_accepts_focus(bool b) { m_accepts_focus = b; }
+
+    Panel* focus_proxy() const { return m_focus_proxy; }
+    void set_focus_proxy(Panel* panel) { m_focus_proxy = panel; }
 
     const Rect& positioned_rect() const { return m_positioned_rect; }
     Rect sized_rect() const { return { 0, 0, m_positioned_rect.width(), m_positioned_rect.height() }; }
@@ -80,5 +89,7 @@ private:
     Rect m_positioned_rect;
     LayoutConstraint m_layout_constraint;
     UniquePtr<LayoutEngine> m_layout_engine;
+    Panel* m_focus_proxy { nullptr };
+    bool m_accepts_focus { false };
 };
 }

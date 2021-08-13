@@ -52,10 +52,10 @@ void Application::render() {
 
     Panel::render();
 
-    if (auto active_panel = m_active_panel.lock()) {
-        if (auto cursor_position = active_panel->cursor_position()) {
-            auto translated = cursor_position->translated(active_panel->positioned_rect().top_left());
-            if (m_io_terminal->terminal_rect().intersects(translated) && active_panel->positioned_rect().intersects(translated)) {
+    if (auto panel = focused_panel()) {
+        if (auto cursor_position = panel->cursor_position()) {
+            auto translated = cursor_position->translated(panel->positioned_rect().top_left());
+            if (m_io_terminal->terminal_rect().intersects(translated) && panel->positioned_rect().intersects(translated)) {
                 m_io_terminal->move_cursor_to(translated);
                 m_io_terminal->set_show_cursor(true);
             }
@@ -79,21 +79,21 @@ void Application::schedule_render() {
 }
 
 void Application::on_key_event(const App::KeyEvent& event) {
-    if (auto panel = m_active_panel.lock(); panel && panel.get() != this) {
+    if (auto panel = focused_panel(); panel && panel.get() != this) {
         return panel->on_key_event(event);
     }
-    set_active_panel(this);
+    this->make_focused();
     Panel::on_key_event(event);
 }
 
 void Application::on_mouse_event(const App::MouseEvent& event) {
-    if (auto panel = m_active_panel.lock(); panel && panel.get() != this && panel->steals_focus()) {
+    if (auto panel = focused_panel(); panel && panel.get() != this && panel->steals_focus()) {
         auto new_event = translate_mouse_event(*panel, event);
         return panel->on_mouse_event(new_event);
     }
 
     if (!event.mouse_down_any()) {
-        if (auto panel = m_active_panel.lock(); panel && panel.get() != this) {
+        if (auto panel = focused_panel(); panel && panel.get() != this) {
             auto new_event = translate_mouse_event(*panel, event);
             panel->on_mouse_event(new_event);
         }
@@ -101,12 +101,12 @@ void Application::on_mouse_event(const App::MouseEvent& event) {
     }
 
     auto* panel = hit_test(*this, { event.x(), event.y() });
-    set_active_panel(panel);
-    if (auto panel = m_active_panel.lock(); panel && panel.get() != this) {
+    panel->make_focused();
+    if (auto panel = focused_panel(); panel && panel.get() != this) {
         auto new_event = translate_mouse_event(*panel, event);
         return panel->on_mouse_event(new_event);
     }
-    set_active_panel(this);
+    this->make_focused();
     Panel::on_mouse_event(event);
 }
 
@@ -131,24 +131,24 @@ Panel* Application::hit_test(const Panel& root, const Point& point) const {
     return nullptr;
 }
 
-void Application::set_active_panel(Panel* panel) {
-    auto old_panel = m_active_panel.lock();
+void Application::set_focused_panel(Panel* panel) {
+    auto old_panel = m_focused_panel.lock();
     if (old_panel.get() == panel) {
         return;
     }
 
     if (old_panel) {
-        old_panel->on_made_not_active();
+        old_panel->on_unfocused();
     }
 
     if (!panel) {
-        m_active_panel.reset();
+        m_focused_panel.reset();
         return;
     }
 
-    m_active_panel = panel->weak_from_this();
+    m_focused_panel = panel->weak_from_this();
     if (panel) {
-        panel->on_made_active();
+        panel->on_focused();
     }
 }
 

@@ -59,7 +59,7 @@ void ReplDisplay::quit() {
 }
 
 int ReplDisplay::enter() {
-    TUI::Application::the().set_active_panel(this);
+    make_focused();
     return 0;
 }
 
@@ -345,7 +345,7 @@ void ReplDisplay::hide_suggestions_panel() {
     remove_child(m_suggestions_panel);
     m_suggestions_panel = nullptr;
 
-    TUI::Application::the().set_active_panel(this);
+    make_focused();
 }
 
 void ReplDisplay::complete_suggestion(const Edit::MatchedSuggestion& suggestion) {

@@ -12,6 +12,7 @@ public:
         : m_color(color), m_alignment(alignment), m_text(move(text)) {
         set_frame_color(m_color.invert());
         set_box_style(box_style);
+        set_accepts_focus(true);
     }
 
     virtual Maybe<Point> cursor_position() override { return { relative_inner_rect().top_left() }; }

@@ -40,6 +40,27 @@ void Panel::on_resize() {
     }
 }
 
+Panel* Panel::parent_panel() {
+    if (!parent()) {
+        return nullptr;
+    }
+    if (!parent()->is_panel()) {
+        return nullptr;
+    }
+    return static_cast<Panel*>(parent());
+}
+
+void Panel::make_focused() {
+    auto& panel_to_check = focus_proxy() ? *focus_proxy() : *this;
+    if (!panel_to_check.accepts_focus()) {
+        if (auto* parent = parent_panel()) {
+            return parent->make_focused();
+        }
+        return;
+    }
+    TUI::Application::the().set_focused_panel(&panel_to_check);
+}
+
 Maybe<Point> Panel::cursor_position() {
     return {};
 }

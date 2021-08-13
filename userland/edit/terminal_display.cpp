@@ -13,7 +13,9 @@
 #include "terminal_prompt.h"
 #include "terminal_status_bar.h"
 
-TerminalDisplay::TerminalDisplay() {}
+TerminalDisplay::TerminalDisplay() {
+    set_accepts_focus(true);
+}
 
 TerminalDisplay::~TerminalDisplay() {}
 
@@ -122,10 +124,15 @@ void TerminalDisplay::on_resize() {
         m_prompt_panel->set_positioned_rect(positioned_rect().with_height(3));
     }
 
+    if (m_search_panel) {
+        auto width = min(sized_rect().width(), 20);
+        m_search_panel->set_positioned_rect({ positioned_rect().x() + (sized_rect().width() - width), positioned_rect().y(), width, 3 });
+    }
+
     return Panel::on_resize();
 }
 
-void TerminalDisplay::on_made_active() {
+void TerminalDisplay::on_focused() {
     TerminalStatusBar::the().set_active_display(this);
 }
 
@@ -206,7 +213,7 @@ Edit::RenderedLine TerminalDisplay::compose_line(const Edit::Line& line) {
 void TerminalDisplay::do_open_prompt() {}
 
 int TerminalDisplay::enter() {
-    TUI::Application::the().set_active_panel(this);
+    make_focused();
     return 0;
 }
 
@@ -229,7 +236,7 @@ void TerminalDisplay::prompt(String message, Function<void(Maybe<String>)> callb
     m_prompt_panel = TerminalPrompt::create(shared_from_this(), move(message), "");
     m_prompt_panel->on_submit = [this, callback = move(callback)](auto result) {
         hide_prompt_panel();
-        TUI::Application::the().set_active_panel(this);
+        make_focused();
         callback.safe_call(move(result));
     };
     m_prompt_panel->set_positioned_rect(positioned_rect().with_height(3));

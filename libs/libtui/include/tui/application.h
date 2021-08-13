@@ -33,8 +33,8 @@ public:
 
     App::EventLoop& event_loop() { return m_loop; }
 
-    void set_active_panel(Panel* panel);
-    SharedPtr<Panel> active_panel() const { return m_active_panel.lock(); }
+    void set_focused_panel(Panel* panel);
+    SharedPtr<Panel> focused_panel() const { return m_focused_panel.lock(); }
 
     const RectSet& dirty_rects() const { return m_dirty_rects; }
 
@@ -50,7 +50,7 @@ private:
     App::EventLoop m_loop;
     TInput::TerminalInputParser m_parser;
     UniquePtr<TInput::IOTerminal> m_io_terminal;
-    WeakPtr<Panel> m_active_panel;
+    WeakPtr<Panel> m_focused_panel;
     Maybe<Point> m_cursor_position;
     RectSet m_dirty_rects;
     bool m_use_alternate_screen_buffer { false };
