@@ -84,6 +84,9 @@ void MultiCursor::add_cursor_at(Document& document, Display& display, const Text
 
 void MultiCursor::did_delete_lines(Document& document, Display& display, int line_index, int line_count) {
     for (auto& cursor : m_cursors) {
+        if (cursor.selection().overlaps(Selection { { line_index, 0 }, { line_index + line_count, 0 } })) {
+            cursor.selection().clear();
+        }
         if (cursor.line_index() < line_index) {
             continue;
         }
@@ -103,6 +106,9 @@ void MultiCursor::did_delete_lines(Document& document, Display& display, int lin
 
 void MultiCursor::did_add_lines(Document&, Display&, int line_index, int line_count) {
     for (auto& cursor : m_cursors) {
+        if (cursor.selection().overlaps(Selection { { line_index, 0 }, { line_index + line_count, 0 } })) {
+            cursor.selection().clear();
+        }
         if (cursor.line_index() < line_index) {
             continue;
         }
@@ -112,6 +118,9 @@ void MultiCursor::did_add_lines(Document&, Display&, int line_index, int line_co
 
 void MultiCursor::did_split_line(Document& document, Display& display, int line_index, int index_into_line) {
     for (auto& cursor : m_cursors) {
+        if (cursor.selection().overlaps(Selection { { line_index, index_into_line }, { line_index + 1, 0 } })) {
+            cursor.selection().clear();
+        }
         if (cursor.line_index() != line_index || cursor.index_into_line() < index_into_line) {
             continue;
         }
@@ -123,6 +132,9 @@ void MultiCursor::did_split_line(Document& document, Display& display, int line_
 void MultiCursor::did_merge_lines(Document& document, Display& display, int first_line_index, int first_line_length,
                                   int second_line_index) {
     for (auto& cursor : m_cursors) {
+        if (cursor.selection().overlaps(Selection { { second_line_index, 0 }, { second_line_index + 1, 0 } })) {
+            cursor.selection().clear();
+        }
         if (cursor.line_index() != second_line_index) {
             continue;
         }
@@ -133,6 +145,9 @@ void MultiCursor::did_merge_lines(Document& document, Display& display, int firs
 
 void MultiCursor::did_add_to_line(Document& document, Display& display, int line_index, int index_into_line, int bytes_added) {
     for (auto& cursor : m_cursors) {
+        if (cursor.selection().overlaps(Selection { { line_index, index_into_line }, { line_index, index_into_line + bytes_added } })) {
+            cursor.selection().clear();
+        }
         if (cursor.line_index() != line_index) {
             continue;
         }
@@ -146,6 +161,9 @@ void MultiCursor::did_add_to_line(Document& document, Display& display, int line
 
 void MultiCursor::did_delete_from_line(Document& document, Display& display, int line_index, int index_into_line, int bytes_deleted) {
     for (auto& cursor : m_cursors) {
+        if (cursor.selection().overlaps(Selection { { line_index, index_into_line }, { line_index, index_into_line + bytes_deleted } })) {
+            cursor.selection().clear();
+        }
         if (cursor.line_index() != line_index) {
             continue;
         }
