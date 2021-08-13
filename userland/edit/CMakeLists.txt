@@ -3,6 +3,7 @@ set(SOURCES
     main.cpp
     terminal_display.cpp
     terminal_prompt.cpp
+    terminal_search.cpp
     terminal_status_bar.cpp
 )
 

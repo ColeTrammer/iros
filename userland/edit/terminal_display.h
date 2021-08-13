@@ -11,6 +11,7 @@
 #include <tui/panel.h>
 
 class TerminalPrompt;
+class TerminalSearch;
 
 class TerminalDisplay final
     : public Edit::Display
@@ -61,5 +62,6 @@ private:
     mutable bool m_prev_clipboard_contents_were_whole_line { false };
     int m_cols_needed_for_line_numbers { 0 };
     SharedPtr<TerminalPrompt> m_prompt_panel;
+    SharedPtr<TerminalSearch> m_search_panel;
     bool m_steals_focus { false };
 };

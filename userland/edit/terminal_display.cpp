@@ -11,6 +11,7 @@
 
 #include "terminal_display.h"
 #include "terminal_prompt.h"
+#include "terminal_search.h"
 #include "terminal_status_bar.h"
 
 TerminalDisplay::TerminalDisplay() {
@@ -230,7 +231,6 @@ void TerminalDisplay::hide_prompt_panel() {
 void TerminalDisplay::prompt(String message, Function<void(Maybe<String>)> callback) {
     if (m_prompt_panel) {
         hide_prompt_panel();
-        return;
     }
 
     m_prompt_panel = TerminalPrompt::create(shared_from_this(), move(message), "");
@@ -242,7 +242,16 @@ void TerminalDisplay::prompt(String message, Function<void(Maybe<String>)> callb
     m_prompt_panel->set_positioned_rect(positioned_rect().with_height(3));
 }
 
-void TerminalDisplay::enter_search(String) {}
+void TerminalDisplay::enter_search(String initial_text) {
+    if (m_search_panel) {
+        m_search_panel->make_focused();
+        return;
+    }
+
+    m_search_panel = TerminalSearch::create(shared_from_this(), *this, move(initial_text));
+    auto width = min(sized_rect().width(), 20);
+    m_search_panel->set_positioned_rect({ positioned_rect().x() + (sized_rect().width() - width), positioned_rect().y(), width, 3 });
+}
 
 void TerminalDisplay::set_clipboard_contents(String text, bool is_whole_line) {
     m_prev_clipboard_contents = move(text);

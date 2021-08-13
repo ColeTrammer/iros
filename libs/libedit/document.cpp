@@ -1053,7 +1053,6 @@ void Document::move_cursor_to_next_search_match(Display& display, Cursor& cursor
 
 void Document::enter_interactive_search(Display& display) {
     display.enter_search(m_search_text);
-    display.send_status_message(String::format("Found %d result(s)", search_result_count()));
 }
 
 void Document::swap_lines_at_cursor(Display& display, SwapDirection direction) {
