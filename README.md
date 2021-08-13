@@ -2,6 +2,18 @@
 
 My second attempt to create an OS
 
+# Demos
+
+## OS
+
+## Shell
+
+## Text Editor
+
+## Networking
+
+## GUI
+
 # Features
 
 -   Multiboot2 boot loader compliant
@@ -20,6 +32,7 @@ My second attempt to create an OS
 -   Shell that supports the POSIX grammar, job control, word expansion, etc.
 -   Some posix standard utilities
 -   Basic Desktop enviornment (with themes)
+-   Portable userland programs which build and run on linux.
 
 # To build
 
