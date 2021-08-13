@@ -20,6 +20,10 @@ TerminalStatusBar::TerminalStatusBar() {
 
 TerminalStatusBar::~TerminalStatusBar() {}
 
+void TerminalStatusBar::display_did_update(TerminalDisplay&) {
+    invalidate();
+}
+
 void TerminalStatusBar::set_active_display(TerminalDisplay* display) {
     if (!display) {
         m_active_display.reset();

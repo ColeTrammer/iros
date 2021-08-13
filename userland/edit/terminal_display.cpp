@@ -108,6 +108,7 @@ void TerminalDisplay::on_mouse_event(const App::MouseEvent& event) {
     }
 
     Panel::on_mouse_event(event);
+    TerminalStatusBar::the().display_did_update(*this);
 }
 
 void TerminalDisplay::on_key_event(const App::KeyEvent& event) {
@@ -118,6 +119,7 @@ void TerminalDisplay::on_key_event(const App::KeyEvent& event) {
 
     if (document()) {
         document()->notify_key_pressed(*this, event);
+        TerminalStatusBar::the().display_did_update(*this);
     }
 }
 
@@ -139,7 +141,9 @@ void TerminalDisplay::on_resize() {
 }
 
 void TerminalDisplay::on_focused() {
-    TerminalStatusBar::the().set_active_display(this);
+    if (document() && !document()->input_text_mode()) {
+        TerminalStatusBar::the().set_active_display(this);
+    }
 }
 
 Edit::TextIndex TerminalDisplay::text_index_at_mouse_position(const Point& point) {

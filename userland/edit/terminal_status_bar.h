@@ -16,6 +16,7 @@ public:
 
     void set_active_display(TerminalDisplay* display);
     void set_status_message(String message);
+    void display_did_update(TerminalDisplay& display);
 
     virtual void render() override;
 
