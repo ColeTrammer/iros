@@ -25,6 +25,9 @@ void TerminalSearch::initialize() {
         auto to_find = search_document->content_string();
         m_host_display.document()->set_search_text(move(to_find));
     };
+    search_document->on_escape_press = [this] {
+        m_host_display.hide_search_panel();
+    };
 
     auto& text_box = layout.add<TerminalDisplay>();
     text_box.set_document(search_document);

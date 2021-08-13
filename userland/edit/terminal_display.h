@@ -52,10 +52,12 @@ public:
 
     void set_steals_focus(bool b) { m_steals_focus = b; }
 
+    void hide_prompt_panel();
+    void hide_search_panel();
+
 private:
     virtual void document_did_change() override;
 
-    void hide_prompt_panel();
     void compute_cols_needed_for_line_numbers();
 
     mutable String m_prev_clipboard_contents;

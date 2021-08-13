@@ -5,7 +5,8 @@
 #include "terminal_display.h"
 #include "terminal_prompt.h"
 
-TerminalPrompt::TerminalPrompt(String prompt, String initial_value) : m_prompt(move(prompt)), m_initial_value(move(initial_value)) {}
+TerminalPrompt::TerminalPrompt(TerminalDisplay& host_display, String prompt, String initial_value)
+    : m_host_display(host_display), m_prompt(move(prompt)), m_initial_value(move(initial_value)) {}
 
 void TerminalPrompt::initialize() {
     auto& layout = set_layout_engine<TUI::FlexLayoutEngine>(TUI::FlexLayoutEngine::Direction::Horizontal);
@@ -23,6 +24,9 @@ void TerminalPrompt::initialize() {
         //       To prevent the callback from being destroyed while it is running, it is necessary to take a reference to ourselves.
         auto protector = shared_from_this();
         on_submit.safe_call(document->content_string());
+    };
+    document->on_escape_press = [this] {
+        m_host_display.hide_prompt_panel();
     };
 
     m_display = layout.add<TerminalDisplay>().shared_from_this();
