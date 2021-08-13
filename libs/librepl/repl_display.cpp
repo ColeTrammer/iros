@@ -17,6 +17,8 @@
 
 namespace Repl {
 ReplDisplay::ReplDisplay(ReplBase& repl) : m_repl(repl) {
+    set_accepts_focus(true);
+
     m_main_prompt = repl.get_main_prompt();
     m_secondary_prompt = repl.get_secondary_prompt();
 
