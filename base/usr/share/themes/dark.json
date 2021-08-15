@@ -1,0 +1,10 @@
+{
+    "name": "Dark",
+    "palette": {
+        "background": "#121212",
+        "text": "#FFFFFF",
+        "outline": "#FFFFFF",
+        "hover": "#AAAAAA",
+        "selected": "#212121"
+    }
+}
