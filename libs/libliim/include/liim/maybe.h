@@ -74,7 +74,9 @@ public:
         }
         return this->has_value() && other.has_value() && this->value() == other.value();
     }
+    constexpr bool operator==(const T& other) const { return this->has_value() && this->value() == other; }
     constexpr bool operator!=(const Maybe& other) const { return !(*this == other); }
+    constexpr bool operator!=(const T& other) const { return !(*this == other); }
 
     constexpr T& operator*() { return value(); }
     constexpr const T& operator*() const { return value(); }

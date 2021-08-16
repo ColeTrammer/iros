@@ -38,7 +38,7 @@ TEST(maybe, equivalence) {
     auto two = Maybe<int> { 2 };
     EXPECT_EQ(none, Maybe<int> {});
     EXPECT_EQ(one, Maybe<int> { 1 });
-    EXPECT_EQ(two, Maybe<int> { 2 });
+    EXPECT_EQ(two, 2);
     EXPECT_NOT_EQ(one, two);
     EXPECT_NOT_EQ(one, none);
 }
@@ -50,7 +50,7 @@ TEST(maybe, functional) {
     EXPECT_EQ(Maybe<int> {}, none.map([](auto) {
         return 2;
     }));
-    EXPECT_EQ(Maybe<int> { 2 }, one.map([](auto) {
+    EXPECT_EQ(2, one.map([](auto) {
         return 2;
     }));
 
@@ -60,7 +60,7 @@ TEST(maybe, functional) {
     EXPECT_EQ(Maybe<int> {}, one.and_then([](auto) -> Maybe<int> {
         return {};
     }));
-    EXPECT_EQ(Maybe<int> { 3 }, one.and_then([](auto) -> Maybe<int> {
+    EXPECT_EQ(3, one.and_then([](auto) -> Maybe<int> {
         return { 3 };
     }));
 }
