@@ -209,8 +209,28 @@ Maybe<String> MultiCursor::preview_auto_complete_text(Display& display) const {
     }
 
     auto& suggestion = suggestions.first();
-    auto current_text = display.document()->text_in_range(suggestion.start(), display.cursors().main_cursor().index());
-    return String { suggestion.content().substring(current_text.size()) };
+
+    // Don't show any preview if the suggestion's prefix is not aligned (because of fuzzy matching).
+    auto current_prefix = display.document()->text_in_range(suggestion.start(), display.cursors().main_cursor().index());
+    if (!suggestion.content().starts_with(current_prefix.view())) {
+        return {};
+    }
+
+    // Don't show any preview if the suggestion does not actually change the document.
+    auto end = suggestion.start();
+    for (size_t i = 0; i < suggestion.content().size(); i++) {
+        if (suggestion.content()[i] == '\n') {
+            end.set(end.line_index() + 1, 0);
+        } else {
+            end.set_index_into_line(end.index_into_line() + 1);
+        }
+    }
+    auto current_text = display.document()->text_in_range(suggestion.start(), end);
+    if (suggestion.content() == current_text.view()) {
+        return {};
+    }
+
+    return String { suggestion.content().substring(current_prefix.size()) };
 }
 
 TextRangeCollection MultiCursor::cursor_text_ranges(const Document& document) const {
