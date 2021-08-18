@@ -80,6 +80,9 @@ void Application::schedule_render() {
 
 void Application::on_key_event(const App::KeyEvent& event) {
     if (auto panel = focused_panel(); panel && panel.get() != this) {
+        if (panel->handle_as_key_shortcut(event)) {
+            return;
+        }
         return panel->on_key_event(event);
     }
     this->make_focused();

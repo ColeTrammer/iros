@@ -2,6 +2,7 @@ set(SOURCES
     event_loop.cpp
     file_watcher.cpp
     input_tracker.cpp
+    key_bindings.cpp
     object.cpp
     selectable.cpp
     selectable_file.cpp

@@ -1,4 +1,5 @@
 #include <eventloop/event.h>
+#include <eventloop/key_bindings.h>
 #include <liim/maybe.h>
 #include <tinput/terminal_renderer.h>
 #include <tui/application.h>
@@ -9,6 +10,17 @@ namespace TUI {
 Panel::Panel() {}
 
 Panel::~Panel() {}
+
+void Panel::set_key_bindings(UniquePtr<App::KeyBindings> bindings) {
+    m_key_bindings = move(bindings);
+}
+
+bool Panel::handle_as_key_shortcut(const App::KeyEvent& event) {
+    if (!m_key_bindings) {
+        return false;
+    }
+    return m_key_bindings->handle_key_event(event);
+}
 
 void Panel::do_set_layout_engine(UniquePtr<LayoutEngine> engine) {
     m_layout_engine = move(engine);

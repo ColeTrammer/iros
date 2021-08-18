@@ -153,6 +153,9 @@ void Window::on_event(const Event& event) {
         case Event::Type::Key: {
             auto& key_event = static_cast<const KeyEvent&>(event);
             if (auto widget = focused_widget()) {
+                if (widget->handle_as_key_shortcut(key_event)) {
+                    return;
+                }
                 widget->on_key_event(key_event);
             }
             return;

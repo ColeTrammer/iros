@@ -4,6 +4,7 @@
 #include <app/widget.h>
 #include <app/window.h>
 #include <eventloop/event.h>
+#include <eventloop/key_bindings.h>
 #include <graphics/renderer.h>
 
 // #define WIDGET_DEBUG
@@ -27,6 +28,17 @@ void Widget::render() {
             }
         }
     }
+}
+
+void Widget::set_key_bindings(UniquePtr<KeyBindings> bindings) {
+    m_key_bindings = move(bindings);
+}
+
+bool Widget::handle_as_key_shortcut(const KeyEvent& event) {
+    if (!m_key_bindings) {
+        return false;
+    }
+    return m_key_bindings->handle_key_event(event);
 }
 
 void Widget::on_resize() {

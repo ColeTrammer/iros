@@ -79,6 +79,9 @@ public:
 
     SharedPtr<Palette> palette() const { return m_palette; }
 
+    void set_key_bindings(UniquePtr<KeyBindings> bindings);
+    bool handle_as_key_shortcut(const KeyEvent& event);
+
 protected:
     Widget();
 
@@ -92,6 +95,7 @@ private:
     SharedPtr<Palette> m_palette;
     Size m_preferred_size { Size::Auto, Size::Auto };
     UniquePtr<Layout> m_layout;
+    UniquePtr<KeyBindings> m_key_bindings;
     SharedPtr<ContextMenu> m_context_menu;
     bool m_hidden { false };
 };

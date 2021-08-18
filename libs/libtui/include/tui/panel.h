@@ -83,6 +83,9 @@ public:
     void invalidate();
     void invalidate(const Rect& rect);
 
+    void set_key_bindings(UniquePtr<App::KeyBindings> bindings);
+    bool handle_as_key_shortcut(const App::KeyEvent& event);
+
 protected:
     TInput::TerminalRenderer get_renderer();
 
@@ -94,6 +97,7 @@ private:
     Rect m_positioned_rect;
     LayoutConstraint m_layout_constraint;
     UniquePtr<LayoutEngine> m_layout_engine;
+    UniquePtr<App::KeyBindings> m_key_bindings;
     Panel* m_focus_proxy { nullptr };
     bool m_accepts_focus { false };
 };
