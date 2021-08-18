@@ -55,6 +55,7 @@ public:
     void invalidate_all_rendered_contents();
 
     void notify_key_pressed(Display& display, const App::KeyEvent& event);
+    void notify_text_event(Display& display, const App::TextEvent& event);
     bool notify_mouse_event(Display& display, const App::MouseEvent& event);
     void notify_display_size_changed();
 

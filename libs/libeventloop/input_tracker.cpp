@@ -6,11 +6,6 @@ namespace App {
 UniquePtr<KeyEvent> InputTracker::notify_os_key_event(char ascii, int key, unsigned int flags) {
     auto out_type = (flags & KEY_DOWN) ? KeyEventType::Down : KeyEventType::Up;
 
-    String out_text;
-    if (ascii) {
-        out_text += String(ascii);
-    }
-
     int out_modifiers = 0;
     if (flags & KEY_CONTROL_ON) {
         out_modifiers |= KeyModifier::Control;
@@ -21,6 +16,16 @@ UniquePtr<KeyEvent> InputTracker::notify_os_key_event(char ascii, int key, unsig
     if (flags & KEY_ALT_ON) {
         out_modifiers |= KeyModifier::Alt;
     }
+
+    auto out_generates_text = [&] {
+        if (!ascii) {
+            return false;
+        }
+        if ((out_modifiers & KeyModifier::Control) || (out_modifiers & KeyModifier::Alt)) {
+            return false;
+        }
+        return true;
+    }();
 
     auto out_key = [&] {
         switch (key) {
@@ -234,7 +239,7 @@ UniquePtr<KeyEvent> InputTracker::notify_os_key_event(char ascii, int key, unsig
                 return Key::None;
         }
     }();
-    return make_unique<KeyEvent>(out_type, move(out_text), out_key, out_modifiers);
+    return make_unique<KeyEvent>(out_type, out_key, out_modifiers, out_generates_text);
 }
 
 Vector<UniquePtr<MouseEvent>> InputTracker::notify_os_mouse_event(int scale_mode, int dx, int dy, int dz, int buttons, int screen_width,

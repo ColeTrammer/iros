@@ -173,16 +173,16 @@ void TerminalWidget::on_key_event(const App::KeyEvent& event) {
         return;
     }
 
-    if (!event.text().empty()) {
-        clear_selection();
-    }
-
     if (event.key_down() && event.control_down() && event.shift_down() && event.key() == App::Key::V) {
         paste_text();
         return;
     }
 
-    m_pseudo_terminal.handle_key_event(event);
+    return m_pseudo_terminal.handle_key_event(event);
+}
+
+void TerminalWidget::on_text_event(const App::TextEvent& event) {
+    return m_pseudo_terminal.handle_text_event(event);
 }
 
 void TerminalWidget::clear_selection() {

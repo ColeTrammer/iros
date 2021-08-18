@@ -14,7 +14,7 @@ public:
     virtual ~SuggestionsPanel() override;
 
     virtual void render() override;
-    virtual void on_key_event(const App::KeyEvent& event) override;
+    virtual void on_key_down(const App::KeyEvent& event) override;
 
     void did_update_suggestions();
 

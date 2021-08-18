@@ -1178,6 +1178,11 @@ void Document::finish_input(Display& display, bool should_scroll_cursor_into_vie
     set_needs_display();
 }
 
+void Document::notify_text_event(Display& display, const App::TextEvent& event) {
+    insert_text_at_cursor(display, event.text());
+    finish_input(display, true);
+}
+
 void Document::notify_key_pressed(Display& display, const App::KeyEvent& event) {
     auto& cursors = display.cursors();
 
@@ -1380,7 +1385,6 @@ void Document::notify_key_pressed(Display& display, const App::KeyEvent& event) 
             insert_char(display, '\t');
             break;
         default:
-            insert_text_at_cursor(display, event.text());
             break;
     }
 

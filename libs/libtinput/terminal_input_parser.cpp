@@ -108,7 +108,7 @@ void TerminalInputParser::finish_ss3(const String& escape) {
         }
     }();
 
-    enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", key, convert_modifiers(modifiers)));
+    enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, key, convert_modifiers(modifiers), false));
 }
 
 void TerminalInputParser::finish_xterm_escape(const String& escape) {
@@ -158,7 +158,7 @@ void TerminalInputParser::finish_xterm_escape(const String& escape) {
         }
     }();
 
-    enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", key, convert_modifiers(modifiers)));
+    enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, key, convert_modifiers(modifiers), false));
 }
 
 void TerminalInputParser::finish_vt_escape(const String& escape) {
@@ -242,7 +242,7 @@ void TerminalInputParser::finish_vt_escape(const String& escape) {
     }();
 
     if (key != App::Key::None) {
-        enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", key, convert_modifiers(modifiers)));
+        enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, key, convert_modifiers(modifiers), false));
     }
 }
 
@@ -344,7 +344,7 @@ void TerminalInputParser::finish_csi(const String& csi) {
 Generator<Ext::StreamResult> TerminalInputParser::handle_ss3() {
     auto maybe_byte = m_reader.next_byte();
     if (!maybe_byte) {
-        enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", App::Key::O, App::KeyModifier::Alt));
+        enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, App::Key::O, App::KeyModifier::Alt, false));
         co_return;
     }
 
@@ -368,7 +368,7 @@ Generator<Ext::StreamResult> TerminalInputParser::handle_ss3() {
 Generator<Ext::StreamResult> TerminalInputParser::handle_csi() {
     auto maybe_byte = m_reader.next_byte();
     if (!maybe_byte) {
-        enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", App::Key::RightBracket, App::KeyModifier::Alt));
+        enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, App::Key::RightBracket, App::KeyModifier::Alt, false));
         co_return;
     }
 
@@ -392,7 +392,7 @@ Generator<Ext::StreamResult> TerminalInputParser::handle_csi() {
 Generator<Ext::StreamResult> TerminalInputParser::handle_escape() {
     auto maybe_byte = m_reader.next_byte();
     if (!maybe_byte) {
-        enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", App::Key::Escape, 0));
+        enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, App::Key::Escape, 0, false));
         co_return;
     }
 
@@ -404,7 +404,7 @@ Generator<Ext::StreamResult> TerminalInputParser::handle_escape() {
             co_yield handle_csi();
             co_return;
         default:
-            enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", char_to_key(*maybe_byte), App::KeyModifier::Alt));
+            enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, char_to_key(*maybe_byte), App::KeyModifier::Alt, false));
             co_return;
     }
 }
@@ -414,12 +414,13 @@ void TerminalInputParser::handle_control_byte(uint8_t byte) {
     switch (character) {
         case 'W':
             // NOTE: There is no way to distingish between ctrl+Backspace and ctrl+W
-            return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", App::Key::Backspace, App::KeyModifier::Control));
+            return enqueue_event(
+                make_unique<App::KeyEvent>(App::KeyEventType::Down, App::Key::Backspace, App::KeyModifier::Control, false));
         case '_':
-            return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", App::Key::Backspace, 0));
+            return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, App::Key::Backspace, 0, false));
     }
 
-    return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", char_to_key(character), App::KeyModifier::Control));
+    return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, char_to_key(character), App::KeyModifier::Control, false));
 }
 
 void TerminalInputParser::handle_regular_byte(uint8_t byte) {
@@ -429,21 +430,21 @@ void TerminalInputParser::handle_regular_byte(uint8_t byte) {
 
     switch (byte) {
         case '\0':
-            return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", App::Key::Space, App::KeyModifier::Control));
+            return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, App::Key::Space, App::KeyModifier::Control, false));
         case '\r':
-            return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", App::Key::Enter, 0));
+            return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, App::Key::Enter, 0, false));
         case '\b':
         case 127:
-            return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", App::Key::Backspace, 0));
+            return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, App::Key::Backspace, 0, false));
         case '\t':
-            return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, "", App::Key::Tab, 0));
+            return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, App::Key::Tab, 0, false));
     }
 
     if (iscntrl(byte)) {
         return handle_control_byte(byte);
     }
 
-    return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, String(byte), App::Key::None, 0));
+    return enqueue_event(make_unique<App::TextEvent>(String { static_cast<char>(byte) }));
 }
 
 Generator<Ext::StreamResult> TerminalInputParser::handle() {
@@ -456,9 +457,7 @@ Generator<Ext::StreamResult> TerminalInputParser::handle() {
 
             if (m_bracketed_paste_buffer.view().ends_with("\033[201~")) {
                 m_in_bracketed_paste = false;
-                enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down,
-                                                         m_bracketed_paste_buffer.substring(0, m_bracketed_paste_buffer.size() - 6),
-                                                         App::Key::None, 0));
+                enqueue_event(make_unique<App::TextEvent>(m_bracketed_paste_buffer.substring(0, m_bracketed_paste_buffer.size() - 6)));
                 m_bracketed_paste_buffer.clear();
             }
             continue;

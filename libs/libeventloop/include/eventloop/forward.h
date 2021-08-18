@@ -11,6 +11,7 @@ class MouseEvent;
 class Object;
 class Selectable;
 class SelectableFile;
+class TextEvent;
 class ThemeChangeEvent;
 class Timer;
 class TimerEvent;

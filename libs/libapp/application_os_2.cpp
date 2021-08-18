@@ -30,7 +30,14 @@ void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::KeyE
     auto maybe_window = Window::find_by_wid(message.wid);
     assert(maybe_window.has_value());
     EventLoop::queue_event(maybe_window.value(),
-                           make_unique<KeyEvent>(KeyEventType::Down, message.text, static_cast<Key>(message.key), message.modifiers));
+                           make_unique<KeyEvent>(message.key_down ? KeyEventType::Down : KeyEventType::Up, static_cast<Key>(message.key),
+                                                 message.modifiers, message.generates_text));
+}
+
+void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::TextEventMessage& message) {
+    auto maybe_window = Window::find_by_wid(message.wid);
+    assert(maybe_window);
+    EventLoop::queue_event(*maybe_window, make_unique<TextEvent>(message.text));
 }
 
 void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::WindowDidResizeMessage& message) {

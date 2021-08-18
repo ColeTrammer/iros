@@ -22,6 +22,10 @@ void VgaTerminal::on_mouse_event(const App::MouseEvent& event) {
     }
 }
 
+void VgaTerminal::on_text_event(const App::TextEvent& event) {
+    m_pseudo_terminal.handle_text_event(event);
+}
+
 void VgaTerminal::on_key_event(const App::KeyEvent& event) {
     if (event.key_down() && event.control_down() && event.shift_down() && event.key() == App::Key::V) {
         auto maybe_text = Clipboard::Connection::the().get_clipboard_contents_as_text();

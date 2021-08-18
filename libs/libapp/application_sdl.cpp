@@ -342,8 +342,8 @@ void SDLApplication::run_sdl() {
                 }
 
                 auto modifiers = translate_sdl_modifiers(event.key.keysym.mod);
-                EventLoop::queue_event(
-                    *maybe_window, make_unique<KeyEvent>(KeyEventType::Down, "", translate_sdl_keycode(event.key.keysym.sym), modifiers));
+                EventLoop::queue_event(*maybe_window, make_unique<KeyEvent>(KeyEventType::Down, translate_sdl_keycode(event.key.keysym.sym),
+                                                                            modifiers, false));
                 break;
             }
             case SDL_TEXTINPUT: {
@@ -352,8 +352,7 @@ void SDLApplication::run_sdl() {
                     break;
                 }
 
-                auto modifiers = translate_sdl_modifiers(SDL_GetModState());
-                EventLoop::queue_event(*maybe_window, make_unique<KeyEvent>(KeyEventType::Down, event.text.text, Key::None, modifiers));
+                EventLoop::queue_event(*maybe_window, make_unique<TextEvent>(event.text.text));
                 break;
             }
             case SDL_MOUSEBUTTONDOWN:

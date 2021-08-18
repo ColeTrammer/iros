@@ -54,7 +54,7 @@ void SuggestionsPanel::did_update_suggestions() {
     invalidate();
 }
 
-void SuggestionsPanel::on_key_event(const App::KeyEvent& event) {
+void SuggestionsPanel::on_key_down(const App::KeyEvent& event) {
     auto next_suggestion = [this] {
         if (m_suggestion_index < m_suggestions.size() - 1) {
             m_suggestion_index++;
@@ -95,6 +95,5 @@ void SuggestionsPanel::on_key_event(const App::KeyEvent& event) {
         default:
             break;
     }
-    return Panel::on_key_event(event);
 }
 }

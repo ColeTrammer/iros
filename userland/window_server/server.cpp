@@ -68,13 +68,19 @@ void ServerImpl::initialize() {
                     auto* active_window = m_manager->active_window();
                     if (active_window) {
                         auto key_event = m_input_tracker.notify_os_key_event(event.ascii, event.key, event.flags);
-                        if (key_event->key_down()) {
+                        if (!key_event->generates_text()) {
                             send<Server::KeyEventMessage>(active_window->client(), {
                                                                                        .wid = active_window->id(),
-                                                                                       .text = key_event->text(),
                                                                                        .key = static_cast<int>(key_event->key()),
                                                                                        .modifiers = key_event->modifiers(),
+                                                                                       .key_down = key_event->key_down(),
+                                                                                       .generates_text = key_event->generates_text(),
                                                                                    });
+                        } else if (event.ascii) {
+                            send<Server::TextEventMessage>(active_window->client(), {
+                                                                                        .wid = active_window->id(),
+                                                                                        .text = String { event.ascii },
+                                                                                    });
                         }
                     }
                     break;

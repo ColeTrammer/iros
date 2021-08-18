@@ -107,7 +107,12 @@ int main(int argc, char** argv) {
                         case UMESSAGE_INPUT_KEY_EVENT: {
                             auto& event = ((umessage_input_key_event*) message)->event;
                             auto key_event = input_tracker.notify_os_key_event(event.ascii, event.key, event.flags);
-                            vga_terminal.on_key_event(*key_event);
+                            if (!key_event->generates_text()) {
+                                vga_terminal.on_key_event(*key_event);
+                            } else if (event.ascii) {
+                                auto text_event = make_unique<App::TextEvent>(String { event.ascii });
+                                vga_terminal.on_text_event(*text_event);
+                            }
                             break;
                         }
                         case UMESSAGE_INPUT_MOUSE_EVENT: {

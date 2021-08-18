@@ -17,6 +17,7 @@ public:
     virtual void render() override;
     virtual void on_resize() override;
     virtual void on_key_event(const App::KeyEvent& event) override;
+    virtual void on_text_event(const App::TextEvent& event) override;
     virtual void on_mouse_event(const App::MouseEvent& event) override;
     virtual void on_theme_change_event(const App::ThemeChangeEvent&) override { m_tty.invalidate_all(); }
 

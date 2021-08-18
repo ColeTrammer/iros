@@ -83,7 +83,15 @@ void Application::on_key_event(const App::KeyEvent& event) {
         return panel->on_key_event(event);
     }
     this->make_focused();
-    Panel::on_key_event(event);
+    return Panel::on_key_event(event);
+}
+
+void Application::on_text_event(const App::TextEvent& event) {
+    if (auto panel = focused_panel(); panel && panel.get() != this) {
+        return panel->on_text_event(event);
+    }
+    this->make_focused();
+    return Panel::on_text_event(event);
 }
 
 void Application::on_mouse_event(const App::MouseEvent& event) {
@@ -107,7 +115,7 @@ void Application::on_mouse_event(const App::MouseEvent& event) {
         return panel->on_mouse_event(new_event);
     }
     this->make_focused();
-    Panel::on_mouse_event(event);
+    return Panel::on_mouse_event(event);
 }
 
 App::MouseEvent Application::translate_mouse_event(const Panel& panel, const App::MouseEvent& event) const {

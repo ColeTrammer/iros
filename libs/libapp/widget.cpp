@@ -106,6 +106,15 @@ void Widget::on_mouse_event(const MouseEvent& event) {
     }
 }
 
+void Widget::on_key_event(const KeyEvent& event) {
+    switch (event.key_event_type()) {
+        case KeyEventType::Down:
+            return on_key_down(event);
+        case KeyEventType::Up:
+            return on_key_up(event);
+    }
+}
+
 void Widget::on_mouse_down(const MouseEvent& event) {
     if (!m_context_menu) {
         return;

@@ -33,6 +33,7 @@ public:
 
     void send_clipboard_contents(const String& contents);
     void handle_key_event(const App::KeyEvent& event);
+    void handle_text_event(const App::TextEvent& event);
     bool handle_mouse_event(const App::MouseEvent& event);
     void set_size(int rows, int cols);
 

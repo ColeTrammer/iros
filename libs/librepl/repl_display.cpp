@@ -113,7 +113,7 @@ void ReplDisplay::on_resize() {
     return Panel::on_resize();
 }
 
-void ReplDisplay::on_key_event(const App::KeyEvent& event) {
+void ReplDisplay::on_key_down(const App::KeyEvent& event) {
     if (!document()) {
         return;
     }
@@ -125,7 +125,7 @@ void ReplDisplay::on_key_event(const App::KeyEvent& event) {
             case App::Key::UpArrow:
             case App::Key::DownArrow:
             case App::Key::Escape:
-                return m_suggestions_panel->on_key_event(event);
+                return m_suggestions_panel->on_key_down(event);
             default:
                 break;
         }
@@ -133,7 +133,7 @@ void ReplDisplay::on_key_event(const App::KeyEvent& event) {
 
     if (event.key() == App::Key::R && event.control_down()) {
         m_suggest_based_on_history = true;
-        document()->notify_key_pressed(*this, App::KeyEvent { App::KeyEventType::Down, "", App::Key::Space, App::KeyModifier::Control });
+        document()->notify_key_pressed(*this, App::KeyEvent { App::KeyEventType::Down, App::Key::Space, App::KeyModifier::Control, false });
         return;
     }
 
@@ -169,6 +169,12 @@ void ReplDisplay::on_key_event(const App::KeyEvent& event) {
     }
 
     document()->notify_key_pressed(*this, event);
+}
+
+void ReplDisplay::on_text_event(const App::TextEvent& event) {
+    if (document()) {
+        document()->notify_text_event(*this, event);
+    }
 }
 
 void ReplDisplay::on_mouse_event(const App::MouseEvent& event) {

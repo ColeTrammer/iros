@@ -8,6 +8,7 @@ class Event {
 public:
     enum class Type {
         Invalid,
+        Text,
         Key,
         Mouse,
         Resize,
@@ -213,26 +214,39 @@ enum class Key {
 
 class KeyEvent final : public Event {
 public:
-    KeyEvent(KeyEventType type, String text, Key key, int modifiers)
-        : Event(Event::Type::Key), m_type(type), m_text(move(text)), m_key(key), m_modifiers(modifiers) {}
+    KeyEvent(KeyEventType type, Key key, int modifiers, bool generates_text)
+        : Event(Event::Type::Key), m_key_event_type(type), m_key(key), m_modifiers(modifiers), m_generates_text(generates_text) {}
 
-    const String& text() const { return m_text; }
+    KeyEventType key_event_type() const { return m_key_event_type; }
     Key key() const { return m_key; }
     int modifiers() const { return m_modifiers; }
 
-    bool key_down() const { return m_type == KeyEventType::Down; }
-    bool key_up() const { return m_type == KeyEventType::Up; }
+    bool key_down() const { return m_key_event_type == KeyEventType::Down; }
+    bool key_up() const { return m_key_event_type == KeyEventType::Up; }
 
     bool shift_down() const { return !!(m_modifiers & KeyModifier::Shift); }
     bool alt_down() const { return !!(m_modifiers & KeyModifier::Alt); }
     bool control_down() const { return !!(m_modifiers & KeyModifier::Control); }
     bool meta_down() const { return !!(m_modifiers & KeyModifier::Meta); }
 
+    bool generates_text() const { return m_generates_text; }
+
 private:
-    KeyEventType m_type;
+    KeyEventType m_key_event_type { KeyEventType::Down };
+    Key m_key { Key::None };
+    int m_modifiers { 0 };
+    bool m_generates_text { false };
+};
+
+class TextEvent final : public Event {
+public:
+    explicit TextEvent(String text) : Event(Event::Type::Text), m_text(move(text)) {}
+
+    const String& text() const { return m_text; }
+    void set_text(String text) { m_text = move(text); }
+
+private:
     String m_text;
-    Key m_key;
-    int m_modifiers;
 };
 
 class MouseEvent final : public Event {

@@ -21,6 +21,7 @@ private:
     virtual void handle(IPC::Endpoint&, const WindowServer::Server::RemoveWindowResponse&) override {}
     virtual void handle(IPC::Endpoint&, const WindowServer::Server::ChangeWindowVisibilityResponse&) override {}
     virtual void handle(IPC::Endpoint&, const WindowServer::Server::KeyEventMessage&) override;
+    virtual void handle(IPC::Endpoint&, const WindowServer::Server::TextEventMessage&) override;
     virtual void handle(IPC::Endpoint&, const WindowServer::Server::MouseEventMessage&) override;
     virtual void handle(IPC::Endpoint&, const WindowServer::Server::WindowDidResizeMessage&) override;
     virtual void handle(IPC::Endpoint&, const WindowServer::Server::WindowReadyToResizeResponse&) override {}

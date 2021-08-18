@@ -111,7 +111,7 @@ void TerminalDisplay::on_mouse_event(const App::MouseEvent& event) {
     TerminalStatusBar::the().display_did_update(*this);
 }
 
-void TerminalDisplay::on_key_event(const App::KeyEvent& event) {
+void TerminalDisplay::on_key_down(const App::KeyEvent& event) {
     if (event.key() == App::Key::Escape) {
         hide_prompt_panel();
         hide_search_panel();
@@ -120,6 +120,12 @@ void TerminalDisplay::on_key_event(const App::KeyEvent& event) {
     if (document()) {
         document()->notify_key_pressed(*this, event);
         TerminalStatusBar::the().display_did_update(*this);
+    }
+}
+
+void TerminalDisplay::on_text_event(const App::TextEvent& event) {
+    if (document()) {
+        document()->notify_text_event(*this, event);
     }
 }
 

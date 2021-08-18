@@ -25,11 +25,15 @@ public:
 
     virtual void render();
     virtual void on_mouse_event(const MouseEvent&);
-    virtual void on_key_event(const KeyEvent&) {}
+    virtual void on_key_event(const KeyEvent&);
+    virtual void on_text_event(const TextEvent&) {}
     virtual void on_theme_change_event(const ThemeChangeEvent&);
     virtual void on_resize();
     virtual void on_focused() {}
     virtual void on_leave() {}
+
+    virtual void on_key_down(const KeyEvent&) {}
+    virtual void on_key_up(const KeyEvent&) {}
 
     virtual void on_mouse_down(const MouseEvent&);
     virtual void on_mouse_double(const MouseEvent&);

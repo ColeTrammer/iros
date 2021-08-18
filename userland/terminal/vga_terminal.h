@@ -12,6 +12,7 @@ public:
 
     void render();
     void on_key_event(const App::KeyEvent& event);
+    void on_text_event(const App::TextEvent& event);
     void on_mouse_event(const App::MouseEvent& event);
 
     int master_fd() const { return m_pseudo_terminal.master_fd(); }

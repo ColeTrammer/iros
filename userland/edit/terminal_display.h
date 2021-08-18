@@ -27,7 +27,8 @@ public:
     virtual void render() override;
     virtual Maybe<Point> cursor_position() override;
     virtual void on_mouse_event(const App::MouseEvent& event) override;
-    virtual void on_key_event(const App::KeyEvent& event) override;
+    virtual void on_key_down(const App::KeyEvent& event) override;
+    virtual void on_text_event(const App::TextEvent& event) override;
     virtual void on_resize() override;
     virtual void on_focused() override;
 

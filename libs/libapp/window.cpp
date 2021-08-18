@@ -152,9 +152,15 @@ void Window::on_event(const Event& event) {
         }
         case Event::Type::Key: {
             auto& key_event = static_cast<const KeyEvent&>(event);
-            auto widget = focused_widget();
-            if (widget) {
+            if (auto widget = focused_widget()) {
                 widget->on_key_event(key_event);
+            }
+            return;
+        }
+        case App::Event::Type::Text: {
+            auto& text_event = static_cast<const TextEvent&>(event);
+            if (auto widget = focused_widget()) {
+                widget->on_text_event(text_event);
             }
             return;
         }

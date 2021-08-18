@@ -101,7 +101,7 @@ void PsuedoTerminal::write(const String& contents) {
 }
 
 void PsuedoTerminal::handle_key_event(const App::KeyEvent& event) {
-    if (!event.key_down()) {
+    if (!event.key_down() || event.generates_text()) {
         return;
     }
 
@@ -250,28 +250,74 @@ void PsuedoTerminal::handle_key_event(const App::KeyEvent& event) {
             break;
     }
 
-    char ascii = event.text()[0];
-    if (event.key() == App::Key::Enter) {
-        ascii = '\r';
-    } else if (event.key() == App::Key::Tab) {
-        ascii = '\t';
-    } else if (event.key() == App::Key::Backspace) {
-        ascii = 8;
-    }
-
-    if (!ascii) {
-        return;
-    }
-
-    if (event.control_down()) {
-        if (event.key() == App::Key::Backspace) {
-            ascii = 'W' & 0x1F;
-        } else {
-            ascii &= 0x1F;
+    auto ascii = [&]() -> char {
+        if (event.key() == App::Key::Enter) {
+            return '\r';
         }
-    }
+        if (event.key() == App::Key::Tab) {
+            return '\t';
+        }
+        if (event.key() == App::Key::Backspace) {
+            return 8;
+        }
 
-    this->write(String(ascii));
+        if (event.control_down()) {
+            if (event.key() == App::Key::Backspace) {
+                return 'W' & 0x1F;
+            }
+
+            switch (event.key()) {
+                case App::Key::A:
+                case App::Key::B:
+                case App::Key::C:
+                case App::Key::D:
+                case App::Key::E:
+                case App::Key::F:
+                case App::Key::G:
+                case App::Key::H:
+                case App::Key::I:
+                case App::Key::J:
+                case App::Key::K:
+                case App::Key::L:
+                case App::Key::M:
+                case App::Key::N:
+                case App::Key::O:
+                case App::Key::P:
+                case App::Key::Q:
+                case App::Key::R:
+                case App::Key::S:
+                case App::Key::T:
+                case App::Key::U:
+                case App::Key::V:
+                case App::Key::W:
+                case App::Key::X:
+                case App::Key::Y:
+                case App::Key::Z:
+                    return (static_cast<int>(event.key()) - static_cast<int>(App::Key::A) + 'A') & 0x1F;
+                case App::Key::Slash:
+                    return '/' & 0x1F;
+                case App::Key::Backslash:
+                    return '\\' & 0x1F;
+                case App::Key::RightBracket:
+                    return '[' & 0x1F;
+                case App::Key::LeftBracket:
+                    return ']' & 0x1F;
+                default:
+                    return '\0';
+            }
+        }
+        return '\0';
+    }();
+
+    if (ascii) {
+        this->write(String { ascii });
+    }
+}
+
+void PsuedoTerminal::handle_text_event(const App::TextEvent& event) {
+    if (!event.text().empty()) {
+        this->write(event.text());
+    }
 }
 
 bool PsuedoTerminal::handle_mouse_event(const App::MouseEvent& event) {

@@ -124,9 +124,18 @@ void Panel::on_mouse_move(const App::MouseEvent&) {}
 
 void Panel::on_mouse_scroll(const App::MouseEvent&) {}
 
-void Panel::on_key_event(const App::KeyEvent& event) {
+void Panel::on_key_down(const App::KeyEvent& event) {
     if (event.control_down() && event.key() == App::Key::Q) {
         Application::the().event_loop().set_should_exit(true);
+    }
+}
+
+void Panel::on_key_event(const App::KeyEvent& event) {
+    switch (event.key_event_type()) {
+        case App::KeyEventType::Down:
+            return on_key_down(event);
+        case App::KeyEventType::Up:
+            return on_key_up(event);
     }
 }
 
@@ -151,6 +160,8 @@ void Panel::on_event(const App::Event& event) {
     switch (event.type()) {
         case App::Event::Type::Mouse:
             return on_mouse_event(static_cast<const App::MouseEvent&>(event));
+        case App::Event::Type::Text:
+            return on_text_event(static_cast<const App::TextEvent&>(event));
         case App::Event::Type::Key:
             return on_key_event(static_cast<const App::KeyEvent&>(event));
         default:

@@ -38,6 +38,9 @@ public:
     virtual void on_focused() {}
     virtual void on_unfocused() {}
 
+    virtual void on_key_down(const App::KeyEvent& event);
+    virtual void on_key_up(const App::KeyEvent&) {}
+
     virtual void on_mouse_down(const App::MouseEvent&);
     virtual void on_mouse_double(const App::MouseEvent&);
     virtual void on_mouse_triple(const App::MouseEvent&);
@@ -46,6 +49,7 @@ public:
     virtual void on_mouse_scroll(const App::MouseEvent&);
 
     virtual void on_key_event(const App::KeyEvent& event);
+    virtual void on_text_event(const App::TextEvent&) {}
     virtual void on_mouse_event(const App::MouseEvent& event);
 
     virtual void on_event(const App::Event& event) override;

@@ -242,8 +242,16 @@ void AppDisplay::on_mouse_event(const App::MouseEvent& event) {
     Widget::on_mouse_event(event);
 }
 
-void AppDisplay::on_key_event(const App::KeyEvent& event) {
-    if (!document() || !event.key_down()) {
+void AppDisplay::on_text_event(const App::TextEvent& event) {
+    if (!document()) {
+        return;
+    }
+
+    document()->notify_text_event(*this, event);
+}
+
+void AppDisplay::on_key_down(const App::KeyEvent& event) {
+    if (!document()) {
         return;
     }
 
