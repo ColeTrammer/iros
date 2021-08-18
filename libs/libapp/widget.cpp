@@ -4,7 +4,6 @@
 #include <app/widget.h>
 #include <app/window.h>
 #include <eventloop/event.h>
-#include <eventloop/key_bindings.h>
 #include <graphics/renderer.h>
 
 // #define WIDGET_DEBUG
@@ -28,17 +27,6 @@ void Widget::render() {
             }
         }
     }
-}
-
-void Widget::set_key_bindings(UniquePtr<KeyBindings> bindings) {
-    m_key_bindings = move(bindings);
-}
-
-bool Widget::handle_as_key_shortcut(const KeyEvent& event) {
-    if (!m_key_bindings) {
-        return false;
-    }
-    return m_key_bindings->handle_key_event(event);
 }
 
 void Widget::on_resize() {
@@ -101,32 +89,6 @@ void Widget::set_context_menu(SharedPtr<ContextMenu> menu) {
     m_context_menu = move(menu);
 }
 
-void Widget::on_mouse_event(const MouseEvent& event) {
-    switch (event.mouse_event_type()) {
-        case MouseEventType::Down:
-            return on_mouse_down(event);
-        case MouseEventType::Double:
-            return on_mouse_double(event);
-        case MouseEventType::Triple:
-            return on_mouse_triple(event);
-        case MouseEventType::Up:
-            return on_mouse_up(event);
-        case MouseEventType::Move:
-            return on_mouse_move(event);
-        case MouseEventType::Scroll:
-            return on_mouse_scroll(event);
-    }
-}
-
-void Widget::on_key_event(const KeyEvent& event) {
-    switch (event.key_event_type()) {
-        case KeyEventType::Down:
-            return on_key_down(event);
-        case KeyEventType::Up:
-            return on_key_up(event);
-    }
-}
-
 void Widget::on_mouse_down(const MouseEvent& event) {
     if (!m_context_menu) {
         return;
@@ -136,20 +98,6 @@ void Widget::on_mouse_down(const MouseEvent& event) {
         m_context_menu->show(positioned_rect().top_left().translated(event.x(), event.y()));
     }
 }
-
-void Widget::on_mouse_double(const MouseEvent& ev) {
-    return on_mouse_down(ev);
-}
-
-void Widget::on_mouse_triple(const MouseEvent& ev) {
-    return on_mouse_down(ev);
-}
-
-void Widget::on_mouse_up(const MouseEvent&) {}
-
-void Widget::on_mouse_move(const MouseEvent&) {}
-
-void Widget::on_mouse_scroll(const MouseEvent&) {}
 
 void Widget::set_hidden(bool b) {
     if (m_hidden == b) {

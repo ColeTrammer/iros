@@ -1,8 +1,8 @@
 #pragma once
 
 #include <app/forward.h>
+#include <eventloop/base_widget.h>
 #include <eventloop/forward.h>
-#include <eventloop/object.h>
 #include <graphics/color.h>
 #include <graphics/font.h>
 #include <graphics/forward.h>
@@ -17,30 +17,17 @@ struct Size {
     int height { 0 };
 };
 
-class Widget : public Object {
+class Widget : public BaseWidget {
     APP_OBJECT(Widget)
 
 public:
     virtual ~Widget() override;
 
     virtual void render();
-    virtual void on_mouse_event(const MouseEvent&);
-    virtual void on_key_event(const KeyEvent&);
-    virtual void on_text_event(const TextEvent&) {}
-    virtual void on_theme_change_event(const ThemeChangeEvent&);
-    virtual void on_resize();
-    virtual void on_focused() {}
-    virtual void on_leave() {}
+    virtual void on_resize() override;
+    virtual void on_theme_change_event(const ThemeChangeEvent&) override;
 
-    virtual void on_key_down(const KeyEvent&) {}
-    virtual void on_key_up(const KeyEvent&) {}
-
-    virtual void on_mouse_down(const MouseEvent&);
-    virtual void on_mouse_double(const MouseEvent&);
-    virtual void on_mouse_triple(const MouseEvent&);
-    virtual void on_mouse_up(const MouseEvent&);
-    virtual void on_mouse_move(const MouseEvent&);
-    virtual void on_mouse_scroll(const MouseEvent&);
+    virtual void on_mouse_down(const MouseEvent&) override;
 
     void set_positioned_rect(const Rect& rect);
     const Rect& positioned_rect() const { return m_positioned_rect; }
@@ -79,9 +66,6 @@ public:
 
     SharedPtr<Palette> palette() const { return m_palette; }
 
-    void set_key_bindings(UniquePtr<KeyBindings> bindings);
-    bool handle_as_key_shortcut(const KeyEvent& event);
-
 protected:
     Widget();
 
@@ -95,7 +79,6 @@ private:
     SharedPtr<Palette> m_palette;
     Size m_preferred_size { Size::Auto, Size::Auto };
     UniquePtr<Layout> m_layout;
-    UniquePtr<KeyBindings> m_key_bindings;
     SharedPtr<ContextMenu> m_context_menu;
     bool m_hidden { false };
 };

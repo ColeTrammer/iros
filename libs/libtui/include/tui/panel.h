@@ -1,6 +1,6 @@
 #pragma once
 
-#include <eventloop/object.h>
+#include <eventloop/base_widget.h>
 #include <graphics/rect.h>
 #include <liim/forward.h>
 #include <tinput/forward.h>
@@ -22,7 +22,7 @@ private:
     int m_height { AutoSize };
 };
 
-class Panel : public App::Object {
+class Panel : public App::BaseWidget {
     APP_OBJECT(Panel)
 
 public:
@@ -34,25 +34,9 @@ public:
     virtual Maybe<Point> cursor_position();
     virtual void render();
 
-    virtual void on_resize();
-    virtual void on_focused() {}
-    virtual void on_unfocused() {}
+    virtual void on_resize() override;
 
-    virtual void on_key_down(const App::KeyEvent& event);
-    virtual void on_key_up(const App::KeyEvent&) {}
-
-    virtual void on_mouse_down(const App::MouseEvent&);
-    virtual void on_mouse_double(const App::MouseEvent&);
-    virtual void on_mouse_triple(const App::MouseEvent&);
-    virtual void on_mouse_up(const App::MouseEvent&);
-    virtual void on_mouse_move(const App::MouseEvent&);
-    virtual void on_mouse_scroll(const App::MouseEvent&);
-
-    virtual void on_key_event(const App::KeyEvent& event);
-    virtual void on_text_event(const App::TextEvent&) {}
-    virtual void on_mouse_event(const App::MouseEvent& event);
-
-    virtual void on_event(const App::Event& event) override;
+    virtual void on_key_down(const App::KeyEvent& event) override;
 
     void remove();
     Panel* parent_panel();
@@ -83,9 +67,6 @@ public:
     void invalidate();
     void invalidate(const Rect& rect);
 
-    void set_key_bindings(UniquePtr<App::KeyBindings> bindings);
-    bool handle_as_key_shortcut(const App::KeyEvent& event);
-
 protected:
     TInput::TerminalRenderer get_renderer();
 
@@ -97,7 +78,6 @@ private:
     Rect m_positioned_rect;
     LayoutConstraint m_layout_constraint;
     UniquePtr<LayoutEngine> m_layout_engine;
-    UniquePtr<App::KeyBindings> m_key_bindings;
     Panel* m_focus_proxy { nullptr };
     bool m_accepts_focus { false };
 };

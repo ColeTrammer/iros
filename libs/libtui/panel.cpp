@@ -11,17 +11,6 @@ Panel::Panel() {}
 
 Panel::~Panel() {}
 
-void Panel::set_key_bindings(UniquePtr<App::KeyBindings> bindings) {
-    m_key_bindings = move(bindings);
-}
-
-bool Panel::handle_as_key_shortcut(const App::KeyEvent& event) {
-    if (!m_key_bindings) {
-        return false;
-    }
-    return m_key_bindings->handle_key_event(event);
-}
-
 void Panel::do_set_layout_engine(UniquePtr<LayoutEngine> engine) {
     m_layout_engine = move(engine);
 }
@@ -120,64 +109,9 @@ void Panel::render() {
     }
 }
 
-void Panel::on_mouse_down(const App::MouseEvent&) {}
-
-void Panel::on_mouse_double(const App::MouseEvent& event) {
-    return on_mouse_down(event);
-}
-
-void Panel::on_mouse_triple(const App::MouseEvent& event) {
-    return on_mouse_down(event);
-}
-
-void Panel::on_mouse_up(const App::MouseEvent&) {}
-
-void Panel::on_mouse_move(const App::MouseEvent&) {}
-
-void Panel::on_mouse_scroll(const App::MouseEvent&) {}
-
 void Panel::on_key_down(const App::KeyEvent& event) {
     if (event.control_down() && event.key() == App::Key::Q) {
         Application::the().event_loop().set_should_exit(true);
-    }
-}
-
-void Panel::on_key_event(const App::KeyEvent& event) {
-    switch (event.key_event_type()) {
-        case App::KeyEventType::Down:
-            return on_key_down(event);
-        case App::KeyEventType::Up:
-            return on_key_up(event);
-    }
-}
-
-void Panel::on_mouse_event(const App::MouseEvent& event) {
-    switch (event.mouse_event_type()) {
-        case App::MouseEventType::Down:
-            return on_mouse_down(event);
-        case App::MouseEventType::Double:
-            return on_mouse_double(event);
-        case App::MouseEventType::Triple:
-            return on_mouse_triple(event);
-        case App::MouseEventType::Up:
-            return on_mouse_up(event);
-        case App::MouseEventType::Move:
-            return on_mouse_move(event);
-        case App::MouseEventType::Scroll:
-            return on_mouse_scroll(event);
-    }
-}
-
-void Panel::on_event(const App::Event& event) {
-    switch (event.type()) {
-        case App::Event::Type::Mouse:
-            return on_mouse_event(static_cast<const App::MouseEvent&>(event));
-        case App::Event::Type::Text:
-            return on_text_event(static_cast<const App::TextEvent&>(event));
-        case App::Event::Type::Key:
-            return on_key_event(static_cast<const App::KeyEvent&>(event));
-        default:
-            return;
     }
 }
 }
