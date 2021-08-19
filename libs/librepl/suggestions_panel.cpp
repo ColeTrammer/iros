@@ -13,6 +13,61 @@ SuggestionsPanel::SuggestionsPanel(ReplDisplay& display) : m_display(display), m
     set_layout_constraint({ TUI::LayoutConstraint::AutoSize, max_visible_suggestions });
 }
 
+void SuggestionsPanel::initialize() {
+    on<App::KeyDownEvent>([this](const App::KeyDownEvent& event) {
+        auto next_suggestion = [this] {
+            if (m_suggestion_index < m_suggestions.size() - 1) {
+                m_suggestion_index++;
+                if (m_suggestion_index >= m_suggestion_offset + max_visible_suggestions) {
+                    m_suggestion_offset++;
+                }
+                invalidate();
+            }
+        };
+
+        auto prev_suggestion = [this] {
+            if (m_suggestion_index != 0) {
+                m_suggestion_index--;
+                if (m_suggestion_index < m_suggestion_offset) {
+                    m_suggestion_offset--;
+                }
+                invalidate();
+            }
+        };
+
+        switch (event.key()) {
+            case App::Key::Escape:
+                m_display.hide_suggestions_panel();
+                break;
+            case App::Key::UpArrow:
+                prev_suggestion();
+                break;
+            case App::Key::DownArrow:
+                next_suggestion();
+                break;
+            case App::Key::Tab:
+                if (m_suggestions.size() == 1) {
+                    m_display.complete_suggestion(m_suggestions.first());
+                    break;
+                }
+                event.shift_down() ? prev_suggestion() : next_suggestion();
+                break;
+            case App::Key::Enter:
+                if (m_suggestions.empty()) {
+                    m_display.hide_suggestions_panel();
+                    break;
+                }
+                m_display.complete_suggestion(m_suggestions[m_suggestion_index]);
+                break;
+            default:
+                return false;
+        }
+        return true;
+    });
+
+    Panel::initialize();
+}
+
 SuggestionsPanel::~SuggestionsPanel() {}
 
 void SuggestionsPanel::render() {
@@ -52,48 +107,5 @@ void SuggestionsPanel::did_update_suggestions() {
     m_suggestion_index = 0;
     m_suggestion_offset = 0;
     invalidate();
-}
-
-void SuggestionsPanel::on_key_down(const App::KeyEvent& event) {
-    auto next_suggestion = [this] {
-        if (m_suggestion_index < m_suggestions.size() - 1) {
-            m_suggestion_index++;
-            if (m_suggestion_index >= m_suggestion_offset + max_visible_suggestions) {
-                m_suggestion_offset++;
-            }
-            invalidate();
-        }
-    };
-
-    auto prev_suggestion = [this] {
-        if (m_suggestion_index != 0) {
-            m_suggestion_index--;
-            if (m_suggestion_index < m_suggestion_offset) {
-                m_suggestion_offset--;
-            }
-            invalidate();
-        }
-    };
-
-    switch (event.key()) {
-        case App::Key::Escape:
-            return m_display.hide_suggestions_panel();
-        case App::Key::UpArrow:
-            return prev_suggestion();
-        case App::Key::DownArrow:
-            return next_suggestion();
-        case App::Key::Tab:
-            if (m_suggestions.size() == 1) {
-                return m_display.complete_suggestion(m_suggestions.first());
-            }
-            return event.shift_down() ? prev_suggestion() : next_suggestion();
-        case App::Key::Enter:
-            if (m_suggestions.empty()) {
-                return m_display.hide_suggestions_panel();
-            }
-            return m_display.complete_suggestion(m_suggestions[m_suggestion_index]);
-        default:
-            break;
-    }
 }
 }

@@ -54,11 +54,6 @@ public:
     virtual void do_open_prompt() override;
 
     virtual void render() override;
-    virtual void on_key_down(const App::KeyEvent& event) override;
-    virtual void on_text_event(const App::TextEvent& event) override;
-    virtual void on_mouse_event(const App::MouseEvent& event) override;
-    virtual void on_resize() override;
-    virtual void on_focused() override;
 
     Function<void()> on_quit;
 
@@ -69,7 +64,7 @@ private:
         Edit::CharacterMetadata metadata;
     };
 
-    AppDisplay(bool m_main_display = true);
+    explicit AppDisplay(bool m_main_display = true);
 
     virtual void document_did_change() override;
 
@@ -77,6 +72,7 @@ private:
 
     int index(int row, int col) const { return row * cols() + col; }
 
+    bool handle_mouse_event(const App::MouseEvent& event);
     void render_cursor(Renderer& renderer);
     void render_cell(Renderer& renderer, int x, int y, char c, Edit::CharacterMetadata metadata);
 

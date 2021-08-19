@@ -15,16 +15,13 @@ public:
     virtual void initialize() override;
 
     virtual void render() override;
-    virtual void on_resize() override;
-    virtual void on_key_event(const App::KeyEvent& event) override;
-    virtual void on_text_event(const App::TextEvent& event) override;
-    virtual void on_mouse_event(const App::MouseEvent& event) override;
-    virtual void on_theme_change_event(const App::ThemeChangeEvent&) override { m_tty.invalidate_all(); }
 
 private:
     void clear_selection();
     bool in_selection(int row, int col) const;
     String selection_text() const;
+
+    bool handle_mouse_event(const App::MouseEvent& event);
 
     void copy_selection();
     void paste_text();

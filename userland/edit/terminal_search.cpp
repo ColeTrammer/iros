@@ -34,6 +34,8 @@ void TerminalSearch::initialize() {
     text_box.enter();
 
     set_focus_proxy(&text_box);
+
+    Panel::initialize();
 }
 
 TerminalSearch::~TerminalSearch() {}

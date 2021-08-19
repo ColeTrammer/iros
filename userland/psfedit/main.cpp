@@ -14,6 +14,19 @@ class GlyphEditorWidgetCell final : public App::Widget {
     APP_OBJECT(GlyphEditorWidgetCell)
 
 public:
+    virtual void initialize() override {
+        on<App::MouseDownEvent>([this](const App::MouseDownEvent& event) {
+            if (m_bitset && event.left_button()) {
+                m_bitset->flip(m_index);
+                invalidate();
+                return true;
+            }
+            return false;
+        });
+
+        App::Widget::initialize();
+    }
+
     virtual void render() {
         auto renderer = get_renderer();
         auto c = ColorValue::White;
@@ -24,16 +37,6 @@ public:
         renderer.fill_rect(sized_rect(), c);
 
         renderer.draw_rect(sized_rect(), ColorValue::Black);
-    }
-
-    virtual void on_mouse_down(const App::MouseEvent& event) override {
-        if (m_bitset && event.left_button()) {
-            m_bitset->flip(m_index);
-            invalidate();
-            return;
-        }
-
-        App::Widget::on_mouse_down(event);
     }
 
 private:
@@ -83,6 +86,8 @@ private:
                                                            "1234567890`~!@#$%^&*()-=_+\n"
                                                            "[]{}\\|;:'\",.<>/?");
         demo_label.set_font(font());
+
+        App::Widget::initialize();
     }
 
     Bitset<uint8_t>* m_bitset { nullptr };

@@ -11,11 +11,8 @@ class IconView : public View {
     APP_OBJECT(IconView)
 
 public:
+    virtual void initialize() override;
     virtual void render() override;
-    virtual void on_mouse_down(const MouseEvent& event) override;
-    virtual void on_mouse_move(const MouseEvent& event) override;
-    virtual void on_mouse_up(const MouseEvent& event) override;
-    virtual void on_resize() override;
     virtual void model_did_update() override;
 
     void set_name_column(int col) { m_name_column = col; }

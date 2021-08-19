@@ -25,6 +25,86 @@ ReplDisplay::ReplDisplay(ReplBase& repl) : m_repl(repl) {
     m_history_index = m_repl.history().size();
 }
 
+void ReplDisplay::initialize() {
+    on<App::ResizeEvent>([this](const App::ResizeEvent&) {
+        if (document()) {
+            document()->notify_display_size_changed();
+        }
+
+        return false;
+    });
+
+    on<App::KeyDownEvent>([this](const App::KeyEvent& event) {
+        if (!document()) {
+            return false;
+        }
+
+        if (m_suggestions_panel) {
+            switch (event.key()) {
+                case App::Key::Enter:
+                case App::Key::Tab:
+                case App::Key::UpArrow:
+                case App::Key::DownArrow:
+                case App::Key::Escape:
+                    return m_suggestions_panel->dispatch(event);
+                default:
+                    break;
+            }
+        }
+
+        if (event.key() == App::Key::R && event.control_down()) {
+            m_suggest_based_on_history = true;
+            document()->notify_key_pressed(*this, App::KeyDownEvent { App::Key::Space, App::KeyModifier::Control, false });
+            return true;
+        }
+
+        if (event.key() == App::Key::C && event.control_down()) {
+            deferred_invoke([] {
+                printf("^C\r\n");
+            });
+            set_quit_by_interrupt();
+            quit();
+            return true;
+        }
+
+        if (event.key() == App::Key::D && event.control_down()) {
+            if (document()->num_lines() == 1 && document()->content_string().empty()) {
+                set_quit_by_eof();
+                quit();
+            }
+            return true;
+        }
+
+        if (event.key() == App::Key::UpArrow && cursors().main_cursor().line_index() == 0) {
+            move_history_up();
+            return true;
+        }
+
+        if (event.key() == App::Key::DownArrow && cursors().main_cursor().line_index() == document()->num_lines() - 1) {
+            move_history_down();
+            return true;
+        }
+
+        if (event.key() != App::Key::Tab) {
+            m_consecutive_tabs = 0;
+        }
+
+        document()->notify_key_pressed(*this, event);
+        return true;
+    });
+
+    on<App::TextEvent>([this](const App::TextEvent& event) {
+        if (!document()) {
+            return false;
+        }
+
+        document()->notify_text_event(*this, event);
+        return true;
+    });
+
+    Panel::initialize();
+}
+
 ReplDisplay::~ReplDisplay() {}
 
 void ReplDisplay::document_did_change() {
@@ -105,88 +185,16 @@ void ReplDisplay::render() {
     return Panel::render();
 }
 
-void ReplDisplay::on_resize() {
-    if (document()) {
-        document()->notify_display_size_changed();
-    }
-
-    return Panel::on_resize();
-}
-
-void ReplDisplay::on_key_down(const App::KeyEvent& event) {
+bool ReplDisplay::handle_mouse_event(const App::MouseEvent& event) {
     if (!document()) {
-        return;
-    }
-
-    if (m_suggestions_panel) {
-        switch (event.key()) {
-            case App::Key::Enter:
-            case App::Key::Tab:
-            case App::Key::UpArrow:
-            case App::Key::DownArrow:
-            case App::Key::Escape:
-                return m_suggestions_panel->on_key_down(event);
-            default:
-                break;
-        }
-    }
-
-    if (event.key() == App::Key::R && event.control_down()) {
-        m_suggest_based_on_history = true;
-        document()->notify_key_pressed(*this, App::KeyEvent { App::KeyEventType::Down, App::Key::Space, App::KeyModifier::Control, false });
-        return;
-    }
-
-    if (event.key() == App::Key::C && event.control_down()) {
-        deferred_invoke([] {
-            printf("^C\r\n");
-        });
-        set_quit_by_interrupt();
-        quit();
-        return;
-    }
-
-    if (event.key() == App::Key::D && event.control_down()) {
-        if (document()->num_lines() == 1 && document()->content_string().empty()) {
-            set_quit_by_eof();
-            quit();
-        }
-        return;
-    }
-
-    if (event.key() == App::Key::UpArrow && cursors().main_cursor().line_index() == 0) {
-        move_history_up();
-        return;
-    }
-
-    if (event.key() == App::Key::DownArrow && cursors().main_cursor().line_index() == document()->num_lines() - 1) {
-        move_history_down();
-        return;
-    }
-
-    if (event.key() != App::Key::Tab) {
-        m_consecutive_tabs = 0;
-    }
-
-    document()->notify_key_pressed(*this, event);
-}
-
-void ReplDisplay::on_text_event(const App::TextEvent& event) {
-    if (document()) {
-        document()->notify_text_event(*this, event);
-    }
-}
-
-void ReplDisplay::on_mouse_event(const App::MouseEvent& event) {
-    if (!document()) {
-        return;
+        return false;
     }
 
     if (document()->notify_mouse_event(*this, event)) {
-        return;
+        return true;
     }
 
-    return Panel::on_mouse_event(event);
+    return false;
 }
 
 static int string_print_width(const StringView& string) {

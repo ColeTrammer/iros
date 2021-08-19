@@ -35,6 +35,8 @@ void TerminalPrompt::initialize() {
     m_display->enter();
 
     set_focus_proxy(m_display.get());
+
+    Panel::initialize();
 }
 
 TerminalPrompt::~TerminalPrompt() {}

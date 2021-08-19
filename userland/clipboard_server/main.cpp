@@ -20,6 +20,8 @@ class Dispatcher final : public Client::MessageDispatcher {
 public:
     virtual void initialize() override {
         m_server = IPC::Server::create(shared_from_this(), "/tmp/.clipboard_server.socket", shared_from_this());
+
+        Client::MessageDispatcher::initialize();
     }
 
     virtual void handle_error(IPC::Endpoint& client) override { m_server->kill_client(client); }

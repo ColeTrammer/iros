@@ -46,8 +46,6 @@ public:
 
     void set_parent(Object* parent) { m_parent = parent; }
 
-    virtual void on_event(const Event&) {}
-
     SharedPtr<Object> shared_from_this() { return m_weak_this.lock(); }
     SharedPtr<const Object> shared_from_this() const { return m_weak_this.lock(); }
 
@@ -61,6 +59,18 @@ public:
         m_weak_this = move(weak_this);
     }
 
+    bool dispatch(const Event& event) const;
+
+    template<typename Ev, typename HandlerCallback>
+    Object& on(HandlerCallback&& handler) {
+        static_assert(LIIM::IsSame<bool, typename LIIM::InvokeResult<HandlerCallback, Ev>::type>::value,
+                      "Callback handler function must return bool");
+        m_handlers.add(Handler { static_cast<int>(Ev::static_type()), [handler = move(handler)](const Event& event) -> bool {
+                                    return handler(static_cast<const Ev&>(event));
+                                } });
+        return *this;
+    }
+
 protected:
     Object();
 
@@ -68,7 +78,20 @@ protected:
     virtual void did_remove_child(SharedPtr<Object>) {}
 
 private:
+    class Handler {
+    public:
+        Handler(int event_type, Function<bool(const Event&)> handler) : m_event_type(event_type), m_handler(move(handler)) {}
+
+        bool can_handle(const App::Event& event) const;
+        bool handle(const App::Event& event);
+
+    private:
+        int m_event_type;
+        Function<bool(const Event&)> m_handler;
+    };
+
     Vector<SharedPtr<Object>> m_children;
+    Vector<Handler> m_handlers;
     Object* m_parent;
     mutable WeakPtr<Object> m_weak_this;
 };

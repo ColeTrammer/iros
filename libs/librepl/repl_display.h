@@ -22,15 +22,12 @@ class ReplDisplay final
 
 public:
     explicit ReplDisplay(ReplBase& repl);
+    virtual void initialize() override;
     virtual ~ReplDisplay() override;
 
     // ^TUI::Panel
     virtual Maybe<Point> cursor_position() override;
     virtual void render() override;
-    virtual void on_resize() override;
-    virtual void on_key_down(const App::KeyEvent& event) override;
-    virtual void on_text_event(const App::TextEvent& event) override;
-    virtual void on_mouse_event(const App::MouseEvent& event) override;
 
     // ^Edit::Display
     virtual int rows() const override { return sized_rect().height(); }
@@ -63,6 +60,7 @@ private:
     virtual void document_did_change() override;
     virtual void suggestions_did_change(const Maybe<Edit::TextRange>& old_text_range) override;
 
+    bool handle_mouse_event(const App::MouseEvent& event);
     void move_up_rows(int count);
 
     void set_quit_by_interrupt() { m_quit_by_interrupt = true; }

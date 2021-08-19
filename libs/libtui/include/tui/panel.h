@@ -1,6 +1,6 @@
 #pragma once
 
-#include <eventloop/base_widget.h>
+#include <eventloop/object.h>
 #include <graphics/rect.h>
 #include <liim/forward.h>
 #include <tinput/forward.h>
@@ -22,21 +22,18 @@ private:
     int m_height { AutoSize };
 };
 
-class Panel : public App::BaseWidget {
+class Panel : public App::Object {
     APP_OBJECT(Panel)
 
 public:
     Panel();
+    virtual void initialize() override;
     virtual ~Panel();
 
     virtual bool steals_focus() { return false; }
 
     virtual Maybe<Point> cursor_position();
     virtual void render();
-
-    virtual void on_resize() override;
-
-    virtual void on_key_down(const App::KeyEvent& event) override;
 
     void remove();
     Panel* parent_panel();

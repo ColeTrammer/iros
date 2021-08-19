@@ -108,7 +108,7 @@ void TerminalInputParser::finish_ss3(const String& escape) {
         }
     }();
 
-    enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, key, convert_modifiers(modifiers), false));
+    enqueue_event(make_unique<App::KeyDownEvent>(key, convert_modifiers(modifiers), false));
 }
 
 void TerminalInputParser::finish_xterm_escape(const String& escape) {
@@ -158,7 +158,7 @@ void TerminalInputParser::finish_xterm_escape(const String& escape) {
         }
     }();
 
-    enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, key, convert_modifiers(modifiers), false));
+    enqueue_event(make_unique<App::KeyDownEvent>(key, convert_modifiers(modifiers), false));
 }
 
 void TerminalInputParser::finish_vt_escape(const String& escape) {
@@ -242,7 +242,7 @@ void TerminalInputParser::finish_vt_escape(const String& escape) {
     }();
 
     if (key != App::Key::None) {
-        enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, key, convert_modifiers(modifiers), false));
+        enqueue_event(make_unique<App::KeyDownEvent>(key, convert_modifiers(modifiers), false));
     }
 }
 
@@ -344,7 +344,7 @@ void TerminalInputParser::finish_csi(const String& csi) {
 Generator<Ext::StreamResult> TerminalInputParser::handle_ss3() {
     auto maybe_byte = m_reader.next_byte();
     if (!maybe_byte) {
-        enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, App::Key::O, App::KeyModifier::Alt, false));
+        enqueue_event(make_unique<App::KeyDownEvent>(App::Key::O, App::KeyModifier::Alt, false));
         co_return;
     }
 
@@ -368,7 +368,7 @@ Generator<Ext::StreamResult> TerminalInputParser::handle_ss3() {
 Generator<Ext::StreamResult> TerminalInputParser::handle_csi() {
     auto maybe_byte = m_reader.next_byte();
     if (!maybe_byte) {
-        enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, App::Key::RightBracket, App::KeyModifier::Alt, false));
+        enqueue_event(make_unique<App::KeyDownEvent>(App::Key::RightBracket, App::KeyModifier::Alt, false));
         co_return;
     }
 
@@ -392,7 +392,7 @@ Generator<Ext::StreamResult> TerminalInputParser::handle_csi() {
 Generator<Ext::StreamResult> TerminalInputParser::handle_escape() {
     auto maybe_byte = m_reader.next_byte();
     if (!maybe_byte) {
-        enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, App::Key::Escape, 0, false));
+        enqueue_event(make_unique<App::KeyDownEvent>(App::Key::Escape, 0, false));
         co_return;
     }
 
@@ -404,7 +404,7 @@ Generator<Ext::StreamResult> TerminalInputParser::handle_escape() {
             co_yield handle_csi();
             co_return;
         default:
-            enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, char_to_key(*maybe_byte), App::KeyModifier::Alt, false));
+            enqueue_event(make_unique<App::KeyDownEvent>(char_to_key(*maybe_byte), App::KeyModifier::Alt, false));
             co_return;
     }
 }
@@ -414,13 +414,12 @@ void TerminalInputParser::handle_control_byte(uint8_t byte) {
     switch (character) {
         case 'W':
             // NOTE: There is no way to distingish between ctrl+Backspace and ctrl+W
-            return enqueue_event(
-                make_unique<App::KeyEvent>(App::KeyEventType::Down, App::Key::Backspace, App::KeyModifier::Control, false));
+            return enqueue_event(make_unique<App::KeyDownEvent>(App::Key::Backspace, App::KeyModifier::Control, false));
         case '_':
-            return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, App::Key::Backspace, 0, false));
+            return enqueue_event(make_unique<App::KeyDownEvent>(App::Key::Backspace, 0, false));
     }
 
-    return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, char_to_key(character), App::KeyModifier::Control, false));
+    return enqueue_event(make_unique<App::KeyDownEvent>(char_to_key(character), App::KeyModifier::Control, false));
 }
 
 void TerminalInputParser::handle_regular_byte(uint8_t byte) {
@@ -430,14 +429,14 @@ void TerminalInputParser::handle_regular_byte(uint8_t byte) {
 
     switch (byte) {
         case '\0':
-            return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, App::Key::Space, App::KeyModifier::Control, false));
+            return enqueue_event(make_unique<App::KeyDownEvent>(App::Key::Space, App::KeyModifier::Control, false));
         case '\r':
-            return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, App::Key::Enter, 0, false));
+            return enqueue_event(make_unique<App::KeyDownEvent>(App::Key::Enter, 0, false));
         case '\b':
         case 127:
-            return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, App::Key::Backspace, 0, false));
+            return enqueue_event(make_unique<App::KeyDownEvent>(App::Key::Backspace, 0, false));
         case '\t':
-            return enqueue_event(make_unique<App::KeyEvent>(App::KeyEventType::Down, App::Key::Tab, 0, false));
+            return enqueue_event(make_unique<App::KeyDownEvent>(App::Key::Tab, 0, false));
     }
 
     if (iscntrl(byte)) {

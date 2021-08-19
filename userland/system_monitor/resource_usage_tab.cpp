@@ -14,6 +14,8 @@ void ResourceUsageTab::initialize() {
     m_memory_label = layout.add<App::TextLabel>("Memory: 0 / 0 (0%)").shared_from_this();
 
     m_model->register_client(this);
+
+    Widget::initialize();
 }
 
 ResourceUsageTab::~ResourceUsageTab() {

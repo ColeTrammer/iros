@@ -3,7 +3,6 @@
 #include <eventloop/object.h>
 
 namespace App {
-
 void Object::add_child(SharedPtr<Object> child) {
     child->set_parent(this);
     m_children.add(move(child));
@@ -24,4 +23,24 @@ void Object::deferred_invoke(Function<void()> callback) {
     EventLoop::queue_event(weak_from_this(), make_unique<CallbackEvent>(move(callback)));
 }
 
+bool Object::Handler::can_handle(const Event& event) const {
+    return static_cast<int>(event.type()) == m_event_type;
+}
+
+bool Object::Handler::handle(const Event& event) {
+    return m_handler(event);
+}
+
+bool Object::dispatch(const Event& event) const {
+    for (auto& handler : m_handlers) {
+        if (!handler.can_handle(event)) {
+            continue;
+        }
+
+        if (const_cast<Handler&>(handler).handle(event)) {
+            return true;
+        }
+    }
+    return false;
+}
 }

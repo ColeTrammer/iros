@@ -15,6 +15,24 @@ public:
         set_accepts_focus(true);
     }
 
+    virtual void initialize() {
+        on<App::MouseDownEvent>([this](const App::MouseDownEvent&) {
+            set_frame_color(m_color);
+            m_color = m_color.invert();
+            invalidate();
+            return true;
+        });
+
+        on<App::KeyDownEvent>([this](const App::KeyDownEvent&) {
+            set_frame_color(m_color);
+            m_color = m_color.invert();
+            invalidate();
+            return true;
+        });
+
+        TUI::Frame::initialize();
+    }
+
     virtual Maybe<Point> cursor_position() override { return { relative_inner_rect().top_left() }; }
 
     virtual void render() override {
@@ -30,20 +48,6 @@ public:
             .invert = false,
         };
         renderer.render_text(sized_inner_rect(), m_text.view(), style, m_alignment);
-    }
-
-    virtual void on_mouse_down(const App::MouseEvent& event) override {
-        set_frame_color(m_color);
-        m_color = m_color.invert();
-        invalidate();
-        Panel::on_mouse_down(event);
-    }
-
-    virtual void on_key_event(const App::KeyEvent& event) override {
-        set_frame_color(m_color);
-        m_color = m_color.invert();
-        invalidate();
-        Panel::on_key_event(event);
     }
 
 private:

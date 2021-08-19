@@ -21,7 +21,7 @@ public:
 private:
     class MousePress {
     public:
-        MouseEventType set(int x, int y, int button);
+        EventType set(int x, int y, int button);
         void clear() {
             m_button = 0;
             m_double = false;

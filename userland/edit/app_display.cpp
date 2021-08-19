@@ -37,8 +37,8 @@ AppDisplay& SearchWidget::display() {
 AppDisplay::AppDisplay(bool main_display) : m_main_display(main_display) {}
 
 void AppDisplay::initialize() {
-    auto w = window()->shared_from_this();
-    auto context_menu = App::ContextMenu::create(w, w);
+    auto window = this->window()->shared_from_this();
+    auto context_menu = App::ContextMenu::create(window, window);
     context_menu->add_menu_item("Copy", [this] {
         if (auto* doc = document()) {
             doc->copy(*this, cursors());
@@ -55,6 +55,67 @@ void AppDisplay::initialize() {
         }
     });
     set_context_menu(context_menu);
+
+    on<App::MouseDownEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+    on<App::MouseDoubleEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+    on<App::MouseTripleEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+    on<App::MouseMoveEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+    on<App::MouseUpEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+    on<App::MouseScrollEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+
+    on<App::TextEvent>([this](const App::TextEvent& event) {
+        if (!document()) {
+            return false;
+        }
+
+        document()->notify_text_event(*this, event);
+        return true;
+    });
+
+    on<App::KeyDownEvent>([this](const App::KeyEvent& event) {
+        if (!document()) {
+            return false;
+        }
+
+        document()->notify_key_pressed(*this, event);
+        return true;
+    });
+
+    on<App::ResizeEvent>([this](const App::ResizeEvent&) {
+        m_rows = positioned_rect().height() / row_height();
+        m_cols = positioned_rect().width() / col_width();
+        if (document()) {
+            document()->notify_display_size_changed();
+        }
+
+        if (m_main_display) {
+            ensure_search_display();
+            constexpr int display_height = 28;
+            m_search_widget->set_positioned_rect({ positioned_rect().x(),
+                                                   positioned_rect().y() + positioned_rect().height() - display_height,
+                                                   positioned_rect().width(), display_height });
+        }
+        return false;
+    });
+
+    on<App::FocusedEvent>([this](const App::FocusedEvent&) {
+        invalidate();
+        return false;
+    });
+
+    Widget::initialize();
 }
 
 AppDisplay::~AppDisplay() {}
@@ -230,32 +291,16 @@ void AppDisplay::render() {
     Widget::render();
 }
 
-void AppDisplay::on_mouse_event(const App::MouseEvent& event) {
+bool AppDisplay::handle_mouse_event(const App::MouseEvent& event) {
     if (!document()) {
-        return;
+        return false;
     }
 
     if (document()->notify_mouse_event(*this, event)) {
-        return;
+        return true;
     }
 
-    Widget::on_mouse_event(event);
-}
-
-void AppDisplay::on_text_event(const App::TextEvent& event) {
-    if (!document()) {
-        return;
-    }
-
-    document()->notify_text_event(*this, event);
-}
-
-void AppDisplay::on_key_down(const App::KeyEvent& event) {
-    if (!document()) {
-        return;
-    }
-
-    document()->notify_key_pressed(*this, event);
+    return false;
 }
 
 void AppDisplay::document_did_change() {
@@ -271,23 +316,4 @@ void AppDisplay::document_did_change() {
         }
         schedule_update();
     }
-}
-
-void AppDisplay::on_resize() {
-    m_rows = positioned_rect().height() / row_height();
-    m_cols = positioned_rect().width() / col_width();
-    if (document()) {
-        document()->notify_display_size_changed();
-    }
-
-    if (m_main_display) {
-        ensure_search_display();
-        constexpr int display_height = 28;
-        m_search_widget->set_positioned_rect({ positioned_rect().x(), positioned_rect().y() + positioned_rect().height() - display_height,
-                                               positioned_rect().width(), display_height });
-    }
-}
-
-void AppDisplay::on_focused() {
-    invalidate();
 }

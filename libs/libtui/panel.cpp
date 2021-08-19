@@ -9,6 +9,25 @@
 namespace TUI {
 Panel::Panel() {}
 
+void Panel::initialize() {
+    on<App::KeyDownEvent>([this](const App::KeyDownEvent& event) {
+        if (event.control_down() && event.key() == App::Key::Q) {
+            Application::the().event_loop().set_should_exit(true);
+            return true;
+        }
+        return false;
+    });
+
+    on<App::ResizeEvent>([this](const App::ResizeEvent&) {
+        if (m_layout_engine) {
+            m_layout_engine->layout();
+        }
+        return false;
+    });
+
+    Object::initialize();
+}
+
 Panel::~Panel() {}
 
 void Panel::do_set_layout_engine(UniquePtr<LayoutEngine> engine) {
@@ -24,7 +43,7 @@ void Panel::set_positioned_rect(const Rect& rect) {
     m_positioned_rect = rect;
     invalidate();
 
-    on_resize();
+    dispatch(App::ResizeEvent {});
 }
 
 void Panel::invalidate() {
@@ -33,12 +52,6 @@ void Panel::invalidate() {
 
 void Panel::invalidate(const Rect& rect) {
     Application::the().invalidate(rect.translated(positioned_rect().top_left()));
-}
-
-void Panel::on_resize() {
-    if (m_layout_engine) {
-        m_layout_engine->layout();
-    }
 }
 
 void Panel::remove() {
@@ -106,12 +119,6 @@ void Panel::render() {
                 panel.render();
             }
         }
-    }
-}
-
-void Panel::on_key_down(const App::KeyEvent& event) {
-    if (event.control_down() && event.key() == App::Key::Q) {
-        Application::the().event_loop().set_should_exit(true);
     }
 }
 }

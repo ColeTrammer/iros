@@ -18,6 +18,77 @@ TerminalDisplay::TerminalDisplay() {
     set_accepts_focus(true);
 }
 
+void TerminalDisplay::initialize() {
+    on<App::MouseDownEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+    on<App::MouseDoubleEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+    on<App::MouseTripleEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+    on<App::MouseMoveEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+    on<App::MouseUpEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+    on<App::MouseScrollEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+
+    on<App::KeyDownEvent>([this](const App::KeyDownEvent& event) {
+        if (event.key() == App::Key::Escape) {
+            hide_prompt_panel();
+            hide_search_panel();
+        }
+
+        if (document()) {
+            document()->notify_key_pressed(*this, event);
+            TerminalStatusBar::the().display_did_update(*this);
+            return true;
+        }
+        return false;
+    });
+
+    on<App::TextEvent>([this](const App::TextEvent& event) {
+        if (document()) {
+            document()->notify_text_event(*this, event);
+            TerminalStatusBar::the().display_did_update(*this);
+            return true;
+        }
+        return false;
+    });
+
+    on<App::ResizeEvent>([this](const App::ResizeEvent&) {
+        if (document()) {
+            document()->notify_display_size_changed();
+        }
+
+        if (m_prompt_panel) {
+            m_prompt_panel->set_positioned_rect(positioned_rect().with_height(3));
+        }
+
+        if (m_search_panel) {
+            auto width = min(sized_rect().width(), 20);
+            m_search_panel->set_positioned_rect(
+                { positioned_rect().x() + (sized_rect().width() - width), positioned_rect().y(), width, 3 });
+        }
+
+        return false;
+    });
+
+    on<App::FocusedEvent>([this](const App::FocusedEvent&) {
+        if (document() && !document()->input_text_mode()) {
+            TerminalStatusBar::the().set_active_display(this);
+        }
+        return false;
+    });
+
+    Panel::initialize();
+}
+
 TerminalDisplay::~TerminalDisplay() {}
 
 void TerminalDisplay::document_did_change() {
@@ -98,58 +169,17 @@ void TerminalDisplay::render() {
     Panel::render();
 }
 
-void TerminalDisplay::on_mouse_event(const App::MouseEvent& event) {
+bool TerminalDisplay::handle_mouse_event(const App::MouseEvent& event) {
     if (!document()) {
-        return;
+        return false;
     }
 
     if (document()->notify_mouse_event(*this, event)) {
-        return;
-    }
-
-    Panel::on_mouse_event(event);
-    TerminalStatusBar::the().display_did_update(*this);
-}
-
-void TerminalDisplay::on_key_down(const App::KeyEvent& event) {
-    if (event.key() == App::Key::Escape) {
-        hide_prompt_panel();
-        hide_search_panel();
-    }
-
-    if (document()) {
-        document()->notify_key_pressed(*this, event);
         TerminalStatusBar::the().display_did_update(*this);
-    }
-}
-
-void TerminalDisplay::on_text_event(const App::TextEvent& event) {
-    if (document()) {
-        document()->notify_text_event(*this, event);
-    }
-}
-
-void TerminalDisplay::on_resize() {
-    if (document()) {
-        document()->notify_display_size_changed();
+        return true;
     }
 
-    if (m_prompt_panel) {
-        m_prompt_panel->set_positioned_rect(positioned_rect().with_height(3));
-    }
-
-    if (m_search_panel) {
-        auto width = min(sized_rect().width(), 20);
-        m_search_panel->set_positioned_rect({ positioned_rect().x() + (sized_rect().width() - width), positioned_rect().y(), width, 3 });
-    }
-
-    return Panel::on_resize();
-}
-
-void TerminalDisplay::on_focused() {
-    if (document() && !document()->input_text_mode()) {
-        TerminalStatusBar::the().set_active_display(this);
-    }
+    return false;
 }
 
 Edit::TextIndex TerminalDisplay::text_index_at_mouse_position(const Point& point) {

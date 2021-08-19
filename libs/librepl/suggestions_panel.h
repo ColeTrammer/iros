@@ -11,10 +11,10 @@ class SuggestionsPanel final : public TUI::Panel {
 
 public:
     explicit SuggestionsPanel(ReplDisplay& display);
+    virtual void initialize() override;
     virtual ~SuggestionsPanel() override;
 
     virtual void render() override;
-    virtual void on_key_down(const App::KeyEvent& event) override;
 
     void did_update_suggestions();
 

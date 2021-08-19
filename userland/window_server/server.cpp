@@ -120,6 +120,8 @@ void ServerImpl::initialize() {
             m_manager->draw();
         },
         draw_timer_rate);
+
+    Client::MessageDispatcher::initialize();
 }
 
 void ServerImpl::update_draw_timer() {

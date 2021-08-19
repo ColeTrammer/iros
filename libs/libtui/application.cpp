@@ -36,6 +36,39 @@ Application::Application(UniquePtr<TInput::IOTerminal> io_terminal) : m_io_termi
     };
 }
 
+void Application::initialize() {
+    on<App::MouseDownEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+    on<App::MouseDoubleEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+    on<App::MouseTripleEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+    on<App::MouseMoveEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+    on<App::MouseUpEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+    on<App::MouseScrollEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+
+    on<App::KeyDownEvent>([this](const auto& event) {
+        return handle_key_or_text_event(event);
+    });
+    on<App::KeyUpEvent>([this](const auto& event) {
+        return handle_key_or_text_event(event);
+    });
+    on<App::TextEvent>([this](const auto& event) {
+        return handle_key_or_text_event(event);
+    });
+
+    Panel::initialize();
+}
+
 Application::~Application() {}
 
 void Application::invalidate() {
@@ -78,51 +111,40 @@ void Application::schedule_render() {
     });
 }
 
-void Application::on_key_event(const App::KeyEvent& event) {
+bool Application::handle_key_or_text_event(const App::Event& event) {
     if (auto panel = focused_panel(); panel && panel.get() != this) {
-        if (panel->handle_as_key_shortcut(event)) {
-            return;
-        }
-        return panel->on_key_event(event);
+        return panel->dispatch(event);
     }
     this->make_focused();
-    return Panel::on_key_event(event);
+    return false;
 }
 
-void Application::on_text_event(const App::TextEvent& event) {
-    if (auto panel = focused_panel(); panel && panel.get() != this) {
-        return panel->on_text_event(event);
-    }
-    this->make_focused();
-    return Panel::on_text_event(event);
-}
-
-void Application::on_mouse_event(const App::MouseEvent& event) {
+bool Application::handle_mouse_event(const App::MouseEvent& event) {
     if (auto panel = focused_panel(); panel && panel.get() != this && panel->steals_focus()) {
         auto new_event = translate_mouse_event(*panel, event);
-        return panel->on_mouse_event(new_event);
+        return panel->dispatch(new_event);
     }
 
     if (!event.mouse_down_any()) {
         if (auto panel = focused_panel(); panel && panel.get() != this) {
             auto new_event = translate_mouse_event(*panel, event);
-            panel->on_mouse_event(new_event);
+            return panel->dispatch(new_event);
         }
-        return;
+        return false;
     }
 
     auto* panel = hit_test(*this, { event.x(), event.y() });
     panel->make_focused();
     if (auto panel = focused_panel(); panel && panel.get() != this) {
         auto new_event = translate_mouse_event(*panel, event);
-        return panel->on_mouse_event(new_event);
+        return panel->dispatch(new_event);
     }
     this->make_focused();
-    return Panel::on_mouse_event(event);
+    return false;
 }
 
 App::MouseEvent Application::translate_mouse_event(const Panel& panel, const App::MouseEvent& event) const {
-    return App::MouseEvent(event.mouse_event_type(), event.buttons_down(), event.x() - panel.positioned_rect().x(),
+    return App::MouseEvent(event.type(), event.buttons_down(), event.x() - panel.positioned_rect().x(),
                            event.y() - panel.positioned_rect().y(), event.z(), event.button(), event.modifiers());
 }
 
@@ -149,7 +171,7 @@ void Application::set_focused_panel(Panel* panel) {
     }
 
     if (old_panel) {
-        old_panel->on_unfocused();
+        old_panel->dispatch(App::UnfocusedEvent {});
     }
 
     if (!panel) {
@@ -159,7 +181,7 @@ void Application::set_focused_panel(Panel* panel) {
 
     m_focused_panel = panel->weak_from_this();
     if (panel) {
-        panel->on_focused();
+        panel->dispatch(App::FocusedEvent {});
     }
 }
 

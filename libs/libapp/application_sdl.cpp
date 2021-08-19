@@ -48,13 +48,13 @@ void SDLApplication::on_sdl_window_event(const SDL_Event& event) {
         case SDL_WINDOWEVENT_HIDDEN:
             break;
         case SDL_WINDOWEVENT_CLOSE:
-            EventLoop::queue_event(window.weak_from_this(), make_unique<WindowEvent>(WindowEvent::Type::Close));
+            EventLoop::queue_event(window.weak_from_this(), make_unique<WindowCloseEvent>());
             break;
         case SDL_WINDOWEVENT_EXPOSED:
-            EventLoop::queue_event(window.weak_from_this(), make_unique<WindowEvent>(WindowEvent::Type::ForceRedraw));
+            EventLoop::queue_event(window.weak_from_this(), make_unique<WindowForceRedrawEvent>());
             break;
         case SDL_WINDOWEVENT_SIZE_CHANGED:
-            EventLoop::queue_event(window.weak_from_this(), make_unique<WindowEvent>(WindowEvent::Type::DidResize));
+            EventLoop::queue_event(window.weak_from_this(), make_unique<WindowDidResizeEvent>());
             break;
         case SDL_WINDOWEVENT_FOCUS_GAINED:
             EventLoop::queue_event(window.weak_from_this(), make_unique<WindowStateEvent>(true));
@@ -342,8 +342,8 @@ void SDLApplication::run_sdl() {
                 }
 
                 auto modifiers = translate_sdl_modifiers(event.key.keysym.mod);
-                EventLoop::queue_event(*maybe_window, make_unique<KeyEvent>(KeyEventType::Down, translate_sdl_keycode(event.key.keysym.sym),
-                                                                            modifiers, false));
+                EventLoop::queue_event(*maybe_window,
+                                       make_unique<KeyDownEvent>(translate_sdl_keycode(event.key.keysym.sym), modifiers, false));
                 break;
             }
             case SDL_TEXTINPUT: {

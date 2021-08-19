@@ -15,7 +15,8 @@ public:
     static SharedPtr<Application> try_create();
     static Application& the();
 
-    ~Application();
+    virtual void initialize() override;
+    virtual ~Application() override;
 
     void set_use_alternate_screen_buffer(bool b) { m_use_alternate_screen_buffer = b; }
     void set_use_mouse(bool b) { m_use_mouse = b; }
@@ -26,9 +27,6 @@ public:
     void invalidate(const Rect& rect);
 
     virtual void render() override;
-    virtual void on_key_event(const App::KeyEvent& event) override;
-    virtual void on_text_event(const App::TextEvent& event) override;
-    virtual void on_mouse_event(const App::MouseEvent& event) override;
 
     TInput::IOTerminal& io_terminal() { return *m_io_terminal; }
 
@@ -40,7 +38,10 @@ public:
     const RectSet& dirty_rects() const { return m_dirty_rects; }
 
 private:
-    Application(UniquePtr<TInput::IOTerminal> io_terminal);
+    explicit Application(UniquePtr<TInput::IOTerminal> io_terminal);
+
+    bool handle_key_or_text_event(const App::Event& event);
+    bool handle_mouse_event(const App::MouseEvent& event);
 
     App::MouseEvent translate_mouse_event(const Panel& panel, const App::MouseEvent& event) const;
     Panel* hit_test(const Panel& panel, const Point& point) const;

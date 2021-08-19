@@ -23,6 +23,8 @@ void Server::initialize() {
             m_clients.add(move(client));
         }
     };
+
+    Object::initialize();
 }
 
 Server::~Server() {}

@@ -29,6 +29,18 @@ SharedPtr<Timer> Timer::create_single_shot_timer(SharedPtr<Object> parent, Funct
 
 Timer::Timer() {}
 
+void Timer::initialize() {
+    on<TimerEvent>([this](const TimerEvent& event) {
+        if (m_single_shot) {
+            m_expired = true;
+        }
+        on_timeout.safe_call(event.times_expired());
+        return false;
+    });
+
+    Object::initialize();
+}
+
 Timer::~Timer() {
     if (m_timer_id != (timer_t) -1) {
         EventLoop::unregister_timer_callback(m_timer_id);
@@ -78,20 +90,4 @@ void Timer::set_interval(time_t ms) {
     spec.it_interval.tv_nsec = spec.it_value.tv_nsec;
     set_timeout(spec);
 }
-
-void Timer::on_event(const Event& event) {
-    switch (event.type()) {
-        case Event::Type::Timer:
-            if (m_single_shot) {
-                m_expired = true;
-            }
-            if (on_timeout) {
-                on_timeout(static_cast<const TimerEvent&>(event).times_expired());
-            }
-            break;
-        default:
-            break;
-    }
-}
-
 }

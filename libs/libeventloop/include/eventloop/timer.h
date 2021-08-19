@@ -14,6 +14,7 @@ public:
     static SharedPtr<Timer> create_single_shot_timer(SharedPtr<Object> parent, Function<void(int)> callback, time_t ms);
 
     Timer();
+    virtual void initialize() override;
     virtual ~Timer() override;
 
     bool expired() const { return m_expired; }
@@ -22,8 +23,6 @@ public:
     void set_timeout(itimerspec timeout);
     void set_timeout(time_t ms);
     void set_interval(time_t ms);
-
-    virtual void on_event(const Event&) override;
 
     Function<void(int)> on_timeout;
 

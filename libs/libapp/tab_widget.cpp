@@ -14,36 +14,41 @@ constexpr int tab_border = 1;
 constexpr int tab_bar_height = 2 * (tab_border + tab_padding) + character_height;
 constexpr int tab_bar_left_margin = 4;
 
-void TabWidget::on_mouse_down(const MouseEvent& event) {
-    if (event.left_button()) {
-        for (int i = 0; i < m_tabs.size(); i++) {
-            if (m_tabs[i].rect.intersects({ event.x(), event.y() })) {
-                set_active_tab(i);
-                return;
+void TabWidget::initialize() {
+    on<MouseDownEvent>([this](const MouseDownEvent& event) {
+        if (event.left_button()) {
+            for (int i = 0; i < m_tabs.size(); i++) {
+                if (m_tabs[i].rect.intersects({ event.x(), event.y() })) {
+                    set_active_tab(i);
+                    return true;
+                }
             }
         }
-        return;
-    }
+        return false;
+    });
 
-    return Widget::on_mouse_down(event);
-}
+    // FIXME: use some sort of focus proxy mechanism instead.
+    on<FocusedEvent>([this](const FocusedEvent&) {
+        if (m_active_tab != -1) {
+            window()->set_focused_widget(m_tabs[m_active_tab].widget.get());
+        }
+        return false;
+    });
 
-void TabWidget::on_focused() {
-    if (m_active_tab != -1) {
-        window()->set_focused_widget(m_tabs[m_active_tab].widget.get());
-    }
-}
+    on<ResizeEvent>([this](const ResizeEvent&) {
+        Rect tab_content_rect = { positioned_rect().x(), positioned_rect().y() + tab_bar_height, positioned_rect().width(),
+                                  positioned_rect().height() - tab_bar_height };
+        if (tab_content_rect.height() < 0) {
+            tab_content_rect = { 0, 0, 0, 0 };
+        }
+        for (auto& tab : m_tabs) {
+            tab.widget->set_positioned_rect(tab_content_rect);
+        }
+        m_tab_content_rect = tab_content_rect;
+        return false;
+    });
 
-void TabWidget::on_resize() {
-    Rect tab_content_rect = { positioned_rect().x(), positioned_rect().y() + tab_bar_height, positioned_rect().width(),
-                              positioned_rect().height() - tab_bar_height };
-    if (tab_content_rect.height() < 0) {
-        tab_content_rect = { 0, 0, 0, 0 };
-    }
-    for (auto& tab : m_tabs) {
-        tab.widget->set_positioned_rect(tab_content_rect);
-    }
-    m_tab_content_rect = tab_content_rect;
+    Widget::initialize();
 }
 
 void TabWidget::render() {

@@ -5,6 +5,53 @@
 #include <graphics/renderer.h>
 
 namespace App {
+void IconView::initialize() {
+    on<MouseDownEvent>([this](const MouseDownEvent& event) {
+        if (event.left_button()) {
+            m_in_selection = true;
+            m_selection_start = m_selection_end = { event.x(), event.y() };
+            return true;
+        }
+        return false;
+    });
+
+    on<MouseMoveEvent>([this](const MouseMoveEvent& event) {
+        if (m_in_selection) {
+            clear_selection();
+
+            m_selection_end = { event.x(), event.y() };
+            Rect selection_rect = { m_selection_start, m_selection_end };
+            for (auto r = 0; r < m_items.size(); r++) {
+                auto& item = m_items[r];
+                if (item.rect.intersects(selection_rect)) {
+                    add_to_selection({ r, m_name_column });
+                }
+            }
+
+            invalidate();
+            return true;
+        }
+        return false;
+    });
+
+    on<MouseUpEvent>([this](const MouseUpEvent& event) {
+        if (event.left_button() && m_in_selection) {
+            m_in_selection = false;
+            invalidate();
+            return true;
+        }
+        return false;
+    });
+
+    on<ResizeEvent>([this](const ResizeEvent&) {
+        compute_layout();
+        invalidate();
+        return false;
+    });
+
+    View::initialize();
+}
+
 void IconView::render() {
     auto renderer = get_renderer();
     renderer.clear_rect(sized_rect(), background_color());
@@ -35,51 +82,6 @@ void IconView::render() {
     }
 
     Widget::render();
-}
-
-void IconView::on_mouse_down(const MouseEvent& event) {
-    if (event.left_button()) {
-        m_in_selection = true;
-        m_selection_start = m_selection_end = { event.x(), event.y() };
-        return;
-    }
-
-    return View::on_mouse_down(event);
-}
-
-void IconView::on_mouse_move(const MouseEvent& event) {
-    if (m_in_selection) {
-        clear_selection();
-
-        m_selection_end = { event.x(), event.y() };
-        Rect selection_rect = { m_selection_start, m_selection_end };
-        for (auto r = 0; r < m_items.size(); r++) {
-            auto& item = m_items[r];
-            if (item.rect.intersects(selection_rect)) {
-                add_to_selection({ r, m_name_column });
-            }
-        }
-
-        invalidate();
-        return;
-    }
-
-    return View::on_mouse_move(event);
-}
-
-void IconView::on_mouse_up(const MouseEvent& event) {
-    if (m_in_selection) {
-        m_in_selection = false;
-        invalidate();
-        return;
-    }
-
-    return View::on_mouse_up(event);
-}
-
-void IconView::on_resize() {
-    compute_layout();
-    invalidate();
 }
 
 void IconView::model_did_update() {
