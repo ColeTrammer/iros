@@ -73,7 +73,6 @@ void TerminalWidget::initialize() {
         int cols = (positioned_rect().width() - 10) / cell_width;
         m_tty.set_visible_size(rows, cols);
         m_pseudo_terminal.set_size(rows, cols);
-        return false;
     });
 
     on<App::KeyDownEvent>([this](const App::KeyDownEvent& event) {

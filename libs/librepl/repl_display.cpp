@@ -30,8 +30,6 @@ void ReplDisplay::initialize() {
         if (document()) {
             document()->notify_display_size_changed();
         }
-
-        return false;
     });
 
     on<App::KeyDownEvent>([this](const App::KeyEvent& event) {

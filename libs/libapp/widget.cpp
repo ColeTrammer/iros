@@ -28,14 +28,12 @@ void Widget::initialize() {
         if (layout()) {
             layout()->layout();
         }
-        return false;
     });
 
     on<ThemeChangeEvent>([this](const ThemeChangeEvent& event) {
         for (auto& child : children()) {
             child->dispatch(event);
         }
-        return false;
     });
 
     Object::initialize();

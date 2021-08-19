@@ -35,7 +35,6 @@ void Timer::initialize() {
             m_expired = true;
         }
         on_timeout.safe_call(event.times_expired());
-        return false;
     });
 
     Object::initialize();

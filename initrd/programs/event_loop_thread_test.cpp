@@ -15,7 +15,6 @@ public:
         on<App::ThemeChangeEvent>([](const App::ThemeChangeEvent&) {
             error_log("Got event!");
             exit(0);
-            return false;
         });
 
         Object::initialize();

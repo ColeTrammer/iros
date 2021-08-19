@@ -5,17 +5,22 @@
 #include <liim/string_view.h>
 
 namespace App {
-#define APP_EVENT(name)                                                  \
-public:                                                                  \
-    static constexpr StringView static_event_name() { return "" #name; } \
-                                                                         \
+#define APP_EVENT_REQUIRES_HANDLING(name) APP_EVENT_IMPL(name, true)
+
+#define APP_EVENT(name) APP_EVENT_IMPL(name, false)
+
+#define APP_EVENT_IMPL(name, requires_handling)                                          \
+public:                                                                                  \
+    static constexpr StringView static_event_name() { return "" #name; }                 \
+    static constexpr bool static_event_requires_handling() { return requires_handling; } \
+                                                                                         \
 private:
 
 class Event {
     APP_EVENT(Event)
 
 public:
-    explicit Event(StringView name) : m_name(name) {};
+    explicit Event(StringView name) : m_name(name) {}
     virtual ~Event() {}
 
     StringView name() const { return m_name; }
@@ -236,6 +241,8 @@ enum class Key {
 };
 
 class KeyEvent : public Event {
+    APP_EVENT_REQUIRES_HANDLING(KeyEvent)
+
 public:
     KeyEvent(StringView name, Key key, int modifiers, bool generates_text)
         : Event(name), m_key(key), m_modifiers(modifiers), m_generates_text(generates_text) {}
@@ -260,21 +267,21 @@ private:
 };
 
 class KeyDownEvent final : public KeyEvent {
-    APP_EVENT(KeyDownEvent)
+    APP_EVENT_REQUIRES_HANDLING(KeyDownEvent)
 
 public:
     KeyDownEvent(Key key, int modifiers, bool generates_text) : KeyEvent(static_event_name(), key, modifiers, generates_text) {}
 };
 
 class KeyUpEvent final : public KeyEvent {
-    APP_EVENT(KeyUpEvent)
+    APP_EVENT_REQUIRES_HANDLING(KeyUpEvent)
 
 public:
     KeyUpEvent(Key key, int modifiers, bool generates_text) : KeyEvent(static_event_name(), key, modifiers, generates_text) {}
 };
 
 class TextEvent final : public Event {
-    APP_EVENT(TextEvent)
+    APP_EVENT_REQUIRES_HANDLING(TextEvent)
 
 public:
     explicit TextEvent(String text) : Event(static_event_name()), m_text(move(text)) {}
@@ -287,6 +294,8 @@ private:
 };
 
 class MouseEvent : public Event {
+    APP_EVENT_REQUIRES_HANDLING(MouseEvent)
+
 public:
     MouseEvent(StringView name, int buttons_down, int x, int y, int z, int button, int modifiers)
         : Event(name), m_x(x), m_y(y), m_z(z), m_buttons_down(buttons_down), m_button(button), m_modifiers(modifiers) {}
@@ -330,7 +339,7 @@ private:
 };
 
 class MouseDownEvent final : public MouseEvent {
-    APP_EVENT(MouseDownEvent)
+    APP_EVENT_REQUIRES_HANDLING(MouseDownEvent)
 
 public:
     MouseDownEvent(int buttons_down, int x, int y, int z, int button, int modifiers)
@@ -338,7 +347,7 @@ public:
 };
 
 class MouseDoubleEvent final : public MouseEvent {
-    APP_EVENT(MouseDoubleEvent)
+    APP_EVENT_REQUIRES_HANDLING(MouseDoubleEvent)
 
 public:
     MouseDoubleEvent(int buttons_down, int x, int y, int z, int button, int modifiers)
@@ -346,7 +355,7 @@ public:
 };
 
 class MouseTripleEvent final : public MouseEvent {
-    APP_EVENT(MouseTripleEvent)
+    APP_EVENT_REQUIRES_HANDLING(MouseTripleEvent)
 
 public:
     MouseTripleEvent(int buttons_down, int x, int y, int z, int button, int modifiers)
@@ -354,7 +363,7 @@ public:
 };
 
 class MouseMoveEvent final : public MouseEvent {
-    APP_EVENT(MouseMoveEvent)
+    APP_EVENT_REQUIRES_HANDLING(MouseMoveEvent)
 
 public:
     MouseMoveEvent(int buttons_down, int x, int y, int z, int button, int modifiers)
@@ -362,7 +371,7 @@ public:
 };
 
 class MouseUpEvent final : public MouseEvent {
-    APP_EVENT(MouseUpEvent)
+    APP_EVENT_REQUIRES_HANDLING(MouseUpEvent)
 
 public:
     MouseUpEvent(int buttons_down, int x, int y, int z, int button, int modifiers)
@@ -370,7 +379,7 @@ public:
 };
 
 class MouseScrollEvent final : public MouseEvent {
-    APP_EVENT(MouseScrollEvent)
+    APP_EVENT_REQUIRES_HANDLING(MouseScrollEvent)
 
 public:
     MouseScrollEvent(int buttons_down, int x, int y, int z, int button, int modifiers)

@@ -32,7 +32,6 @@ void TabWidget::initialize() {
         if (m_active_tab != -1) {
             window()->set_focused_widget(m_tabs[m_active_tab].widget.get());
         }
-        return false;
     });
 
     on<ResizeEvent>([this](const ResizeEvent&) {
@@ -45,7 +44,6 @@ void TabWidget::initialize() {
             tab.widget->set_positioned_rect(tab_content_rect);
         }
         m_tab_content_rect = tab_content_rect;
-        return false;
     });
 
     Widget::initialize();

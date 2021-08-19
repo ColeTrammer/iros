@@ -28,7 +28,11 @@ bool Object::Handler::can_handle(const Event& event) const {
 }
 
 bool Object::Handler::handle(const Event& event) {
-    return m_handler(event);
+    if (m_bool_handler) {
+        return m_bool_handler(event);
+    }
+    m_void_handler(event);
+    return false;
 }
 
 bool Object::dispatch(const Event& event) const {

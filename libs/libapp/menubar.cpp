@@ -32,7 +32,6 @@ public:
 
         on<ResizeEvent>([this](const ResizeEvent&) {
             m_button->set_positioned_rect(positioned_rect());
-            return false;
         });
     }
     virtual ~MenubarItem() override {}
