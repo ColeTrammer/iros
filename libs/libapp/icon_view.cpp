@@ -46,7 +46,6 @@ void IconView::initialize() {
     on<ResizeEvent>([this](const ResizeEvent&) {
         compute_layout();
         invalidate();
-        return false;
     });
 
     View::initialize();

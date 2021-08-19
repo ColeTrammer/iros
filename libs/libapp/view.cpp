@@ -34,7 +34,6 @@ void View::initialize() {
 
     on<LeaveEvent>([this](const LeaveEvent&) {
         set_hovered_index({});
-        return false;
     });
 
     Widget::initialize();

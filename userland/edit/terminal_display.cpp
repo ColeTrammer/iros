@@ -75,15 +75,12 @@ void TerminalDisplay::initialize() {
             m_search_panel->set_positioned_rect(
                 { positioned_rect().x() + (sized_rect().width() - width), positioned_rect().y(), width, 3 });
         }
-
-        return false;
     });
 
     on<App::FocusedEvent>([this](const App::FocusedEvent&) {
         if (document() && !document()->input_text_mode()) {
             TerminalStatusBar::the().set_active_display(this);
         }
-        return false;
     });
 
     Panel::initialize();

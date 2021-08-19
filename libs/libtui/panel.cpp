@@ -22,7 +22,6 @@ void Panel::initialize() {
         if (m_layout_engine) {
             m_layout_engine->layout();
         }
-        return false;
     });
 
     Object::initialize();

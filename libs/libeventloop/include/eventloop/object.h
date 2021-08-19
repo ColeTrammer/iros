@@ -66,11 +66,19 @@ public:
 
     template<typename Ev, typename HandlerCallback>
     Object& on(HandlerCallback&& handler) {
-        static_assert(LIIM::IsSame<bool, typename LIIM::InvokeResult<HandlerCallback, Ev>::type>::value,
-                      "Callback handler function must return bool");
-        m_handlers.add(Handler { Ev::static_event_name(), [handler = move(handler)](const Event& event) -> bool {
-                                    return handler(static_cast<const Ev&>(event));
-                                } });
+        if constexpr (Ev::static_event_requires_handling()) {
+            static_assert(LIIM::IsSame<bool, typename LIIM::InvokeResult<HandlerCallback, const Ev&>::type>::value,
+                          "Callback handler function must return bool");
+            m_handlers.add(Handler { Ev::static_event_name(), Handler::Bool::Yes, [handler = move(handler)](const Event& event) -> bool {
+                                        return handler(static_cast<const Ev&>(event));
+                                    } });
+        } else {
+            static_assert(LIIM::IsSame<void, typename LIIM::InvokeResult<HandlerCallback, const Ev&>::type>::value,
+                          "Callback handler function must return void");
+            m_handlers.add(Handler { Ev::static_event_name(), Handler::Void::Yes, [handler = move(handler)](const Event& event) -> void {
+                                        handler(static_cast<const Ev&>(event));
+                                    } });
+        }
         return *this;
     }
 
@@ -83,14 +91,22 @@ protected:
 private:
     class Handler {
     public:
-        Handler(StringView event_name, Function<bool(const Event&)> handler) : m_event_name(event_name), m_handler(move(handler)) {}
+        enum class Bool { Yes };
+        enum class Void { Yes };
+
+        Handler(StringView event_name, Bool, Function<bool(const Event&)> handler)
+            : m_event_name(event_name), m_is_bool_handler(true), m_bool_handler(move(handler)) {}
+        Handler(StringView event_name, Void, Function<void(const Event&)> handler)
+            : m_event_name(event_name), m_is_bool_handler(false), m_void_handler(move(handler)) {}
 
         bool can_handle(const App::Event& event) const;
         bool handle(const App::Event& event);
 
     private:
         StringView m_event_name;
-        Function<bool(const Event&)> m_handler;
+        bool m_is_bool_handler { false };
+        Function<bool(const Event&)> m_bool_handler;
+        Function<void(const Event&)> m_void_handler;
     };
 
     Vector<SharedPtr<Object>> m_children;

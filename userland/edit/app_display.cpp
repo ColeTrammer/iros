@@ -107,12 +107,10 @@ void AppDisplay::initialize() {
                                                    positioned_rect().y() + positioned_rect().height() - display_height,
                                                    positioned_rect().width(), display_height });
         }
-        return false;
     });
 
     on<App::FocusedEvent>([this](const App::FocusedEvent&) {
         invalidate();
-        return false;
     });
 
     Widget::initialize();

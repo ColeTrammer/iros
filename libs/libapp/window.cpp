@@ -56,7 +56,6 @@ void Window::initialize() {
     on<WindowCloseEvent>([this](auto&) {
         m_removed = true;
         Application::the().main_event_loop().set_should_exit(true);
-        return true;
     });
 
     on<WindowDidResizeEvent>([this](auto&) {
@@ -66,18 +65,16 @@ void Window::initialize() {
         }
         pixels()->clear(Application::the().palette()->color(Palette::Background));
         invalidate_rect(rect());
-        return true;
     });
 
     on<WindowForceRedrawEvent>([this](auto&) {
         invalidate_rect(rect());
-        return true;
     });
 
     on<WindowStateEvent>([this](const WindowStateEvent& event) {
         auto& state_event = static_cast<const WindowStateEvent&>(event);
         if (state_event.active() == active()) {
-            return false;
+            return;
         }
 
         if (!state_event.active()) {
@@ -86,7 +83,6 @@ void Window::initialize() {
             did_become_active();
         }
         m_active = state_event.active();
-        return true;
     });
 
     on<MouseDownEvent>([this](const auto& event) {
@@ -122,7 +118,7 @@ void Window::initialize() {
         pixels()->clear(Application::the().palette()->color(Palette::Background));
         invalidate_rect(rect());
 
-        return m_main_widget->dispatch(event);
+        m_main_widget->dispatch(event);
     });
 
     Object::initialize();

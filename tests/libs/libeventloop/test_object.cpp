@@ -24,12 +24,11 @@ TEST(object, basic_events) {
     int count = 0;
     object->on<CustomEvent>([&](const auto&) {
         count++;
-        return true;
     });
 
-    EXPECT(object->dispatch(CustomEvent {}));
-    EXPECT(object->dispatch(CustomEvent {}));
-    EXPECT(object->dispatch(CustomEvent {}));
+    EXPECT(!object->dispatch(CustomEvent {}));
+    EXPECT(!object->dispatch(CustomEvent {}));
+    EXPECT(!object->dispatch(CustomEvent {}));
 
     EXPECT(!object->dispatch(CustomEvent2 {}));
 
