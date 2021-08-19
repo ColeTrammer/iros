@@ -190,7 +190,7 @@ void EventLoop::do_event_dispatch() {
 
         for (auto& event : events) {
             if (auto target = event.target.lock()) {
-                if (event.event->type() == EventType::Callback) {
+                if (event.event->name() == CallbackEvent::static_event_name()) {
                     static_cast<CallbackEvent&>(*event.event).invoke();
                     continue;
                 }
