@@ -1,8 +1,8 @@
 #pragma once
 
 #include <app/forward.h>
-#include <eventloop/base_widget.h>
 #include <eventloop/forward.h>
+#include <eventloop/object.h>
 #include <graphics/color.h>
 #include <graphics/font.h>
 #include <graphics/forward.h>
@@ -17,17 +17,14 @@ struct Size {
     int height { 0 };
 };
 
-class Widget : public BaseWidget {
+class Widget : public Object {
     APP_OBJECT(Widget)
 
 public:
+    virtual void initialize() override;
     virtual ~Widget() override;
 
     virtual void render();
-    virtual void on_resize() override;
-    virtual void on_theme_change_event(const ThemeChangeEvent&) override;
-
-    virtual void on_mouse_down(const MouseEvent&) override;
 
     void set_positioned_rect(const Rect& rect);
     const Rect& positioned_rect() const { return m_positioned_rect; }

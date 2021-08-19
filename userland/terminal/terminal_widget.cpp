@@ -64,6 +64,39 @@ void TerminalWidget::initialize() {
 
         invalidate();
     };
+
+    on<App::ResizeEvent>([this](const App::ResizeEvent&) {
+        m_selection_start_row = m_selection_start_col = m_selection_end_row = m_selection_end_col = -1;
+        m_in_selection = false;
+
+        int rows = (positioned_rect().height() - 10) / cell_height;
+        int cols = (positioned_rect().width() - 10) / cell_width;
+        m_tty.set_visible_size(rows, cols);
+        m_pseudo_terminal.set_size(rows, cols);
+        return false;
+    });
+
+    on<App::KeyDownEvent>([this](const App::KeyDownEvent& event) {
+        if (event.control_down() && event.shift_down() && event.key() == App::Key::C) {
+            copy_selection();
+            return true;
+        }
+
+        if (event.control_down() && event.shift_down() && event.key() == App::Key::V) {
+            paste_text();
+            return true;
+        }
+
+        m_pseudo_terminal.handle_key_event(event);
+        return true;
+    });
+
+    on<App::TextEvent>([this](const App::TextEvent& event) {
+        m_pseudo_terminal.handle_text_event(event);
+        return true;
+    });
+
+    Widget::initialize();
 }
 
 void TerminalWidget::render() {
@@ -142,16 +175,6 @@ void TerminalWidget::render() {
 #endif /* TERMINAL_WIDGET_DEBUG */
 }
 
-void TerminalWidget::on_resize() {
-    m_selection_start_row = m_selection_start_col = m_selection_end_row = m_selection_end_col = -1;
-    m_in_selection = false;
-
-    int rows = (positioned_rect().height() - 10) / cell_height;
-    int cols = (positioned_rect().width() - 10) / cell_width;
-    m_tty.set_visible_size(rows, cols);
-    m_pseudo_terminal.set_size(rows, cols);
-}
-
 void TerminalWidget::copy_selection() {
     auto text = selection_text();
     if (!text.empty()) {
@@ -165,24 +188,6 @@ void TerminalWidget::paste_text() {
         return;
     }
     m_pseudo_terminal.send_clipboard_contents(maybe_text.value());
-}
-
-void TerminalWidget::on_key_event(const App::KeyEvent& event) {
-    if (event.key_down() && event.control_down() && event.shift_down() && event.key() == App::Key::C) {
-        copy_selection();
-        return;
-    }
-
-    if (event.key_down() && event.control_down() && event.shift_down() && event.key() == App::Key::V) {
-        paste_text();
-        return;
-    }
-
-    return m_pseudo_terminal.handle_key_event(event);
-}
-
-void TerminalWidget::on_text_event(const App::TextEvent& event) {
-    return m_pseudo_terminal.handle_text_event(event);
 }
 
 void TerminalWidget::clear_selection() {
@@ -267,7 +272,7 @@ String TerminalWidget::selection_text() const {
     return text;
 }
 
-void TerminalWidget::on_mouse_event(const App::MouseEvent& event) {
+bool TerminalWidget::handle_mouse_event(const App::MouseEvent& event) {
     auto cell_x = event.x() / cell_width;
     auto cell_y = event.y() / cell_height;
 
@@ -275,11 +280,11 @@ void TerminalWidget::on_mouse_event(const App::MouseEvent& event) {
     int col_at_cursor = cell_x;
 
     auto event_copy =
-        App::MouseEvent(event.mouse_event_type(), event.buttons_down(), event.x(), event.y(), event.z(), event.button(), event.modifiers());
+        App::MouseEvent { event.type(), event.buttons_down(), event.x(), event.y(), event.z(), event.button(), event.modifiers() };
     event_copy.set_x(cell_x);
     event_copy.set_y(cell_y);
     if (m_pseudo_terminal.handle_mouse_event(event_copy)) {
-        return;
+        return true;
     }
 
     if (event.mouse_scroll()) {
@@ -289,25 +294,25 @@ void TerminalWidget::on_mouse_event(const App::MouseEvent& event) {
             m_tty.scroll_down();
         }
         invalidate();
-        return;
+        return true;
     }
 
     if (event.mouse_down_any() && event.button() == App::MouseButton::Left) {
         clear_selection();
         m_in_selection = true;
-        switch (event.mouse_event_type()) {
-            case App::MouseEventType::Down:
+        switch (event.type()) {
+            case App::EventType::MouseDown:
                 m_selection_start_row = m_selection_end_row = row_at_cursor;
                 m_selection_start_col = m_selection_end_col = col_at_cursor;
                 invalidate();
-                return;
-            case App::MouseEventType::Double: {
+                return true;
+            case App::EventType::MouseDouble: {
                 m_selection_start_row = m_selection_end_row = row_at_cursor;
                 m_selection_start_col = m_selection_end_col = col_at_cursor;
 
                 if (row_at_cursor < 0 || row_at_cursor >= m_tty.row_count()) {
                     m_in_selection = false;
-                    return;
+                    return true;
                 }
 
                 auto& row = m_tty.row_at_scroll_relative_offset(row_at_cursor);
@@ -320,14 +325,14 @@ void TerminalWidget::on_mouse_event(const App::MouseEvent& event) {
                 }
                 m_selection_end_col++;
                 invalidate();
-                return;
+                return true;
             }
-            case App::MouseEventType::Triple:
+            case App::EventType::MouseTriple:
                 m_selection_start_row = m_selection_end_row = row_at_cursor;
                 m_selection_start_col = 0;
                 m_selection_end_col = m_tty.col_count();
                 invalidate();
-                return;
+                return true;
             default:
                 break;
         }
@@ -335,15 +340,15 @@ void TerminalWidget::on_mouse_event(const App::MouseEvent& event) {
 
     if (event.mouse_up() && event.left_button()) {
         m_in_selection = false;
-        return;
+        return true;
     }
 
     if (m_in_selection && (m_selection_end_row != row_at_cursor || m_selection_end_col != col_at_cursor)) {
         m_selection_end_row = row_at_cursor;
         m_selection_end_col = col_at_cursor;
         invalidate();
-        return;
+        return true;
     }
 
-    return Widget::on_mouse_event(event);
+    return false;
 }

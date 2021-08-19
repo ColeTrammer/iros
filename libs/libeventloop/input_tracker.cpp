@@ -4,7 +4,7 @@
 
 namespace App {
 UniquePtr<KeyEvent> InputTracker::notify_os_key_event(char ascii, int key, unsigned int flags) {
-    auto out_type = (flags & KEY_DOWN) ? KeyEventType::Down : KeyEventType::Up;
+    auto out_type = (flags & KEY_DOWN) ? EventType::KeyDown : EventType::KeyUp;
 
     int out_modifiers = 0;
     if (flags & KEY_CONTROL_ON) {
@@ -274,18 +274,18 @@ Vector<UniquePtr<MouseEvent>> InputTracker::notify_os_mouse_event(int scale_mode
 Vector<UniquePtr<MouseEvent>> InputTracker::notify_mouse_event(int buttons, int x, int y, int z, int modifiers) {
     Vector<UniquePtr<MouseEvent>> events;
     if (z != 0) {
-        events.add(make_unique<MouseEvent>(MouseEventType::Scroll, buttons, x, y, z, MouseButton::None, modifiers));
+        events.add(make_unique<MouseEvent>(EventType::MouseScroll, buttons, x, y, z, MouseButton::None, modifiers));
     }
 
     if (m_prev.x() != x || m_prev.y() != y) {
-        events.add(make_unique<MouseEvent>(MouseEventType::Move, m_prev.buttons_down(), x, y, 0, MouseButton::None, modifiers));
+        events.add(make_unique<MouseEvent>(EventType::MouseMove, m_prev.buttons_down(), x, y, 0, MouseButton::None, modifiers));
     }
 
     auto buttons_to_pass = m_prev.buttons_down();
     auto handle_button = [&](int button) {
         if (!(buttons & button) && !!(m_prev.buttons_down() & button)) {
             buttons_to_pass &= ~button;
-            events.add(make_unique<MouseEvent>(MouseEventType::Up, buttons_to_pass, x, y, 0, button, modifiers));
+            events.add(make_unique<MouseEvent>(EventType::MouseUp, buttons_to_pass, x, y, 0, button, modifiers));
         }
 
         if (!!(buttons & button) && !(m_prev.buttons_down() & button)) {
@@ -306,7 +306,7 @@ Vector<UniquePtr<MouseEvent>> InputTracker::notify_mouse_event(int buttons, int 
     return events;
 }
 
-MouseEventType InputTracker::MousePress::set(int x, int y, int button) {
+EventType InputTracker::MousePress::set(int x, int y, int button) {
     timespec now;
     clock_gettime(CLOCK_REALTIME, &now);
 
@@ -319,12 +319,12 @@ MouseEventType InputTracker::MousePress::set(int x, int y, int button) {
     if (is_repetition) {
         if (m_double) {
             m_double = false;
-            return MouseEventType::Triple;
+            return EventType::MouseTriple;
         }
         m_double = true;
-        return MouseEventType::Double;
+        return EventType::MouseDouble;
     }
     m_double = false;
-    return MouseEventType::Down;
+    return EventType::MouseDown;
 }
 }

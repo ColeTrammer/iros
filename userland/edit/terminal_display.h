@@ -20,17 +20,13 @@ class TerminalDisplay final
 
 public:
     TerminalDisplay();
+    virtual void initialize() override;
     virtual ~TerminalDisplay() override;
 
     // ^TUI::Panel
     virtual bool steals_focus() override { return m_steals_focus; };
     virtual void render() override;
     virtual Maybe<Point> cursor_position() override;
-    virtual void on_mouse_event(const App::MouseEvent& event) override;
-    virtual void on_key_down(const App::KeyEvent& event) override;
-    virtual void on_text_event(const App::TextEvent& event) override;
-    virtual void on_resize() override;
-    virtual void on_focused() override;
 
     // ^Edit::Display
     virtual int rows() const override { return sized_rect().height(); }
@@ -59,6 +55,7 @@ public:
 private:
     virtual void document_did_change() override;
 
+    bool handle_mouse_event(const App::MouseEvent& event);
     void compute_cols_needed_for_line_numbers();
 
     mutable String m_prev_clipboard_contents;

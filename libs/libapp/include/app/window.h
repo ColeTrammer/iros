@@ -28,6 +28,7 @@ public:
     static Maybe<SharedPtr<Window>> find_by_wid(wid_t wid);
     static void for_each_window(Function<void(Window&)>);
 
+    virtual void initialize() override;
     virtual ~Window();
 
     SharedPtr<Bitmap> pixels() { return m_platform_window->pixels(); }
@@ -74,13 +75,15 @@ public:
 protected:
     Window(int x, int y, int width, int height, String name, bool has_alpha = false,
            WindowServer::WindowType window_type = WindowServer::WindowType::Application, wid_t parent_id = 0);
-    virtual void on_event(const Event& event) override;
 
     virtual void did_become_active() {}
     virtual void did_become_inactive() {}
 
 private:
     virtual bool is_window() const final { return true; }
+
+    bool handle_mouse_event(const MouseEvent& event);
+    bool handle_key_or_text_event(const Event& event);
 
     Widget* find_widget_at_point(Point p);
     void draw();

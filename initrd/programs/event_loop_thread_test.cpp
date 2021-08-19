@@ -1,6 +1,7 @@
 #include <eventloop/event.h>
 #include <eventloop/event_loop.h>
 #include <eventloop/object.h>
+#include <liim/format.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,9 +11,14 @@ class TestObject final : public App::Object {
     APP_OBJECT(TestObject)
 
 public:
-    virtual void on_event(const App::Event&) override {
-        fprintf(stderr, "Got event!\n");
-        exit(0);
+    virtual void initialize() {
+        on<App::ThemeChangeEvent>([](const App::ThemeChangeEvent&) {
+            error_log("Got event!");
+            exit(0);
+            return false;
+        });
+
+        Object::initialize();
     }
 
 private:

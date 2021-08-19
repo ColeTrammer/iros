@@ -3,6 +3,7 @@
 #include <app/context_menu.h>
 #include <app/menubar.h>
 #include <app/window.h>
+#include <eventloop/event.h>
 #include <graphics/renderer.h>
 
 constexpr int menubar_height = 20;
@@ -28,10 +29,13 @@ public:
                 m_shown = false;
             }
         };
+
+        on<ResizeEvent>([this](const ResizeEvent&) {
+            m_button->set_positioned_rect(positioned_rect());
+            return false;
+        });
     }
     virtual ~MenubarItem() override {}
-
-    virtual void on_resize() override { m_button->set_positioned_rect(positioned_rect()); }
 
     ContextMenu& menu() { return *m_menu; }
 

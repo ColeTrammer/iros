@@ -12,6 +12,8 @@ void ProcessTab::initialize() {
 
     auto& tabel = layout.add<App::TableView>();
     tabel.set_model(m_model);
+
+    Widget::initialize();
 }
 
 ProcessTab::~ProcessTab() {}

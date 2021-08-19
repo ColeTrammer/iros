@@ -11,6 +11,36 @@
 namespace App {
 Widget::Widget() : m_palette(Application::the().palette()) {}
 
+void Widget::initialize() {
+    on<MouseDownEvent>([this](const MouseDownEvent& event) {
+        if (!m_context_menu) {
+            return false;
+        }
+
+        if (event.right_button() && !m_context_menu->visible() && sized_rect().intersects({ event.x(), event.y() })) {
+            m_context_menu->show(positioned_rect().top_left().translated(event.x(), event.y()));
+            return true;
+        }
+        return false;
+    });
+
+    on<ResizeEvent>([this](const ResizeEvent&) {
+        if (layout()) {
+            layout()->layout();
+        }
+        return false;
+    });
+
+    on<ThemeChangeEvent>([this](const ThemeChangeEvent& event) {
+        for (auto& child : children()) {
+            child->dispatch(event);
+        }
+        return false;
+    });
+
+    Object::initialize();
+}
+
 Widget::~Widget() {}
 
 void Widget::render() {
@@ -29,21 +59,6 @@ void Widget::render() {
     }
 }
 
-void Widget::on_resize() {
-    if (layout()) {
-        layout()->layout();
-    }
-}
-
-void Widget::on_theme_change_event(const ThemeChangeEvent& event) {
-    for (auto& child : children()) {
-        if (child->is_widget()) {
-            auto& widget = const_cast<Widget&>(static_cast<const Widget&>(*child));
-            widget.on_theme_change_event(event);
-        }
-    }
-}
-
 void Widget::set_positioned_rect(const Rect& rect) {
     int old_width = m_positioned_rect.width();
     int old_height = m_positioned_rect.height();
@@ -51,7 +66,7 @@ void Widget::set_positioned_rect(const Rect& rect) {
     m_positioned_rect = rect;
 
     if (old_width != rect.width() || old_height != rect.height()) {
-        on_resize();
+        dispatch(ResizeEvent {});
     }
 }
 
@@ -87,16 +102,6 @@ void Widget::invalidate(const Rect& rect) {
 
 void Widget::set_context_menu(SharedPtr<ContextMenu> menu) {
     m_context_menu = move(menu);
-}
-
-void Widget::on_mouse_down(const MouseEvent& event) {
-    if (!m_context_menu) {
-        return;
-    }
-
-    if (event.right_button() && !m_context_menu->visible() && sized_rect().intersects({ event.x(), event.y() })) {
-        m_context_menu->show(positioned_rect().top_left().translated(event.x(), event.y()));
-    }
 }
 
 void Widget::set_hidden(bool b) {

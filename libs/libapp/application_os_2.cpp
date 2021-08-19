@@ -13,7 +13,7 @@ void WindowServerClient::initialize() {
 void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::WindowClosedEventMessage& message) {
     auto maybe_window = Window::find_by_wid(message.wid);
     assert(maybe_window.has_value());
-    EventLoop::queue_event(maybe_window.value(), make_unique<WindowEvent>(WindowEvent::Type::Close));
+    EventLoop::queue_event(maybe_window.value(), make_unique<WindowCloseEvent>());
 }
 
 void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::MouseEventMessage& message) {
@@ -30,7 +30,7 @@ void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::KeyE
     auto maybe_window = Window::find_by_wid(message.wid);
     assert(maybe_window.has_value());
     EventLoop::queue_event(maybe_window.value(),
-                           make_unique<KeyEvent>(message.key_down ? KeyEventType::Down : KeyEventType::Up, static_cast<Key>(message.key),
+                           make_unique<KeyEvent>(message.key_down ? EventType::KeyDown : EventType::KeyUp, static_cast<Key>(message.key),
                                                  message.modifiers, message.generates_text));
 }
 
@@ -43,7 +43,7 @@ void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::Text
 void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::WindowDidResizeMessage& message) {
     auto maybe_window = Window::find_by_wid(message.wid);
     assert(maybe_window.has_value());
-    EventLoop::queue_event(maybe_window.value(), make_unique<WindowEvent>(WindowEvent::Type::DidResize));
+    EventLoop::queue_event(maybe_window.value(), make_unique<WindowDidResizeEvent>());
 }
 
 void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::WindowStateChangeMessage& message) {

@@ -19,6 +19,28 @@ void Taskbar::initialize() {
 
     m_button_rect = { taskbar_button_x_margin, taskbar_button_y_margin, taskbar_button_width,
                       taskbar_height - 2 * taskbar_button_y_margin };
+
+    on<App::MouseDownEvent>([this](const App::MouseDownEvent& event) {
+        if (m_button_rect.intersects({ event.x(), event.y() })) {
+            if (event.left_button()) {
+                char* const args[] = { (char*) "terminal", nullptr };
+                posix_spawnp(nullptr, args[0], nullptr, nullptr, args, environ);
+            }
+            return true;
+        }
+
+        for (auto& item : m_items) {
+            if (item.rect.intersects({ event.x(), event.y() })) {
+                if (event.left_button()) {
+                    App::Application::the().set_active_window(item.wid);
+                    return true;
+                }
+            }
+        }
+        return false;
+    });
+
+    Widget::initialize();
 }
 
 Taskbar::~Taskbar() {}
@@ -99,27 +121,6 @@ void Taskbar::server_did_make_window_active(const WindowServer::Server::ServerDi
     }
 
     item->active = true;
-}
-
-void Taskbar::on_mouse_down(const App::MouseEvent& event) {
-    if (m_button_rect.intersects({ event.x(), event.y() })) {
-        if (event.left_button()) {
-            char* const args[] = { (char*) "terminal", nullptr };
-            posix_spawnp(nullptr, args[0], nullptr, nullptr, args, environ);
-        }
-        return;
-    }
-
-    for (auto& item : m_items) {
-        if (item.rect.intersects({ event.x(), event.y() })) {
-            if (event.left_button()) {
-                App::Application::the().set_active_window(item.wid);
-                return;
-            }
-        }
-    }
-
-    return App::Widget::on_mouse_down(event);
 }
 
 void Taskbar::render() {

@@ -9,13 +9,21 @@
 #include <assert.h>
 #include <eventloop/event.h>
 #include <eventloop/object.h>
+#include <liim/format.h>
 #include <unistd.h>
 
 class TestWidget : public App::Widget {
     APP_OBJECT(TestWidget)
 
 private:
-    virtual void on_text_event(const App::TextEvent& event) override { printf("typed: '%s'\n", event.text().string()); }
+    virtual void initialize() override {
+        on<App::TextEvent>([](const App::TextEvent& event) {
+            out_log("typed: '{}'", event.text());
+            return true;
+        });
+
+        Widget::initialize();
+    }
 };
 
 int main() {

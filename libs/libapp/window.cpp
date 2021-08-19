@@ -52,6 +52,123 @@ Window::Window(int x, int y, int width, int height, String name, bool has_alpha,
     register_window(*this);
 }
 
+void Window::initialize() {
+    on<WindowCloseEvent>([this](auto&) {
+        m_removed = true;
+        Application::the().main_event_loop().set_should_exit(true);
+        return true;
+    });
+
+    on<WindowDidResizeEvent>([this](auto&) {
+        m_platform_window->did_resize();
+        if (auto* main_widget = m_main_widget.get()) {
+            main_widget->set_positioned_rect(rect());
+        }
+        pixels()->clear(Application::the().palette()->color(Palette::Background));
+        invalidate_rect(rect());
+        return true;
+    });
+
+    on<WindowForceRedrawEvent>([this](auto&) {
+        invalidate_rect(rect());
+        return true;
+    });
+
+    on<WindowStateEvent>([this](const WindowStateEvent& event) {
+        auto& state_event = static_cast<const WindowStateEvent&>(event);
+        if (state_event.active() == active()) {
+            return false;
+        }
+
+        if (!state_event.active()) {
+            did_become_inactive();
+        } else {
+            did_become_active();
+        }
+        m_active = state_event.active();
+        return true;
+    });
+
+    on<MouseDownEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+    on<MouseDoubleEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+    on<MouseTripleEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+    on<MouseMoveEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+    on<MouseUpEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+    on<MouseScrollEvent>([this](const auto& event) {
+        return handle_mouse_event(event);
+    });
+
+    on<KeyDownEvent>([this](const auto& event) {
+        return handle_key_or_text_event(event);
+    });
+    on<KeyUpEvent>([this](const auto& event) {
+        return handle_key_or_text_event(event);
+    });
+    on<TextEvent>([this](const auto& event) {
+        return handle_key_or_text_event(event);
+    });
+
+    on<ThemeChangeEvent>([this](const ThemeChangeEvent& event) {
+        pixels()->clear(Application::the().palette()->color(Palette::Background));
+        invalidate_rect(rect());
+
+        return m_main_widget->dispatch(event);
+    });
+
+    Object::initialize();
+}
+
+bool Window::handle_mouse_event(const MouseEvent& event) {
+    auto& mouse_event = static_cast<const MouseEvent&>(event);
+    Widget* widget = nullptr;
+
+    if (!mouse_event.mouse_move()) {
+        hide_current_context_menu();
+    }
+    if (!mouse_event.button() && mouse_event.buttons_down()) {
+        if (!focused_widget()) {
+            return false;
+        }
+        widget = focused_widget().get();
+    } else {
+        widget = find_widget_at_point({ mouse_event.x(), mouse_event.y() });
+        if (focused_widget() && focused_widget().get() != widget) {
+            widget->dispatch(LeaveEvent {});
+        }
+        set_focused_widget(widget);
+    }
+
+    if (widget) {
+        // FIXME: this is very suspicous now that MouseEvent's have distinct types.
+        auto widget_relative_event = MouseEvent { mouse_event.type(),
+                                                  mouse_event.buttons_down(),
+                                                  mouse_event.x() - widget->positioned_rect().x(),
+                                                  mouse_event.y() - widget->positioned_rect().y(),
+                                                  mouse_event.z(),
+                                                  mouse_event.button(),
+                                                  mouse_event.modifiers() };
+        return widget->dispatch(widget_relative_event);
+    }
+    return false;
+}
+
+bool Window::handle_key_or_text_event(const Event& event) {
+    if (auto widget = focused_widget()) {
+        return widget->dispatch(event);
+    }
+    return false;
+}
+
 void Window::set_rect(const Rect& rect) {
     m_rect = rect;
     if (m_main_widget) {
@@ -84,102 +201,6 @@ void Window::hide_current_context_menu() {
     }
 }
 
-void Window::on_event(const Event& event) {
-    switch (event.type()) {
-        case Event::Type::Window: {
-            auto& window_event = static_cast<const WindowEvent&>(event);
-            if (window_event.window_event_type() == WindowEvent::Type::Close) {
-                m_removed = true;
-                Application::the().main_event_loop().set_should_exit(true);
-                return;
-            }
-            if (window_event.window_event_type() == WindowEvent::Type::DidResize) {
-                m_platform_window->did_resize();
-                if (auto* main_widget = m_main_widget.get()) {
-                    main_widget->set_positioned_rect(rect());
-                }
-                pixels()->clear(Application::the().palette()->color(Palette::Background));
-                invalidate_rect(rect());
-                return;
-            }
-            if (window_event.window_event_type() == WindowEvent::Type::ForceRedraw) {
-                invalidate_rect(rect());
-                return;
-            }
-            break;
-        }
-        case Event::Type::WindowState: {
-            auto& state_event = static_cast<const WindowStateEvent&>(event);
-            if (state_event.active() == active()) {
-                return;
-            }
-
-            if (!state_event.active()) {
-                did_become_inactive();
-            } else {
-                did_become_active();
-            }
-            m_active = state_event.active();
-            return;
-        }
-        case Event::Type::Mouse: {
-            auto& mouse_event = static_cast<const MouseEvent&>(event);
-            Widget* widget = nullptr;
-
-            if (!mouse_event.mouse_move()) {
-                hide_current_context_menu();
-            }
-            if (!mouse_event.button() && mouse_event.buttons_down()) {
-                if (!focused_widget()) {
-                    return;
-                }
-                widget = focused_widget().get();
-            } else {
-                widget = find_widget_at_point({ mouse_event.x(), mouse_event.y() });
-                if (focused_widget() && focused_widget().get() != widget) {
-                    focused_widget()->on_leave();
-                }
-                set_focused_widget(widget);
-            }
-
-            if (widget) {
-                MouseEvent widget_relative_event(
-                    mouse_event.mouse_event_type(), mouse_event.buttons_down(), mouse_event.x() - widget->positioned_rect().x(),
-                    mouse_event.y() - widget->positioned_rect().y(), mouse_event.z(), mouse_event.button(), mouse_event.modifiers());
-                widget->on_mouse_event(widget_relative_event);
-            }
-            return;
-        }
-        case Event::Type::Key: {
-            auto& key_event = static_cast<const KeyEvent&>(event);
-            if (auto widget = focused_widget()) {
-                if (widget->handle_as_key_shortcut(key_event)) {
-                    return;
-                }
-                widget->on_key_event(key_event);
-            }
-            return;
-        }
-        case App::Event::Type::Text: {
-            auto& text_event = static_cast<const TextEvent&>(event);
-            if (auto widget = focused_widget()) {
-                widget->on_text_event(text_event);
-            }
-            return;
-        }
-        case Event::Type::ThemeChange:
-            pixels()->clear(Application::the().palette()->color(Palette::Background));
-            invalidate_rect(rect());
-
-            m_main_widget->on_theme_change_event(static_cast<const ThemeChangeEvent&>(event));
-            return;
-        default:
-            break;
-    }
-
-    Object::on_event(event);
-}
-
 Widget* Window::find_widget_at_point(Point p) {
     Widget* parent = m_main_widget.get();
     while (parent && !parent->children().empty()) {
@@ -209,7 +230,8 @@ void Window::set_focused_widget(Widget* widget) {
     }
 
     m_focused_widget = widget->weak_from_this();
-    widget->on_focused();
+
+    EventLoop::queue_event(widget->weak_from_this(), make_unique<FocusedEvent>());
 }
 
 SharedPtr<Widget> Window::focused_widget() {
@@ -250,5 +272,4 @@ void Window::invalidate_rect(const Rect& rect) {
         m_will_draw_soon = false;
     });
 }
-
 }
