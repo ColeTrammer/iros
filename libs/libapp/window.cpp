@@ -150,7 +150,7 @@ bool Window::handle_mouse_event(const MouseEvent& event) {
 
     if (widget) {
         // FIXME: this is very suspicous now that MouseEvent's have distinct types.
-        auto widget_relative_event = MouseEvent { mouse_event.type(),
+        auto widget_relative_event = MouseEvent { mouse_event.name(),
                                                   mouse_event.buttons_down(),
                                                   mouse_event.x() - widget->positioned_rect().x(),
                                                   mouse_event.y() - widget->positioned_rect().y(),

@@ -144,7 +144,7 @@ bool Application::handle_mouse_event(const App::MouseEvent& event) {
 }
 
 App::MouseEvent Application::translate_mouse_event(const Panel& panel, const App::MouseEvent& event) const {
-    return App::MouseEvent(event.type(), event.buttons_down(), event.x() - panel.positioned_rect().x(),
+    return App::MouseEvent(event.name(), event.buttons_down(), event.x() - panel.positioned_rect().x(),
                            event.y() - panel.positioned_rect().y(), event.z(), event.button(), event.modifiers());
 }
 

@@ -280,7 +280,7 @@ bool TerminalWidget::handle_mouse_event(const App::MouseEvent& event) {
     int col_at_cursor = cell_x;
 
     auto event_copy =
-        App::MouseEvent { event.type(), event.buttons_down(), event.x(), event.y(), event.z(), event.button(), event.modifiers() };
+        App::MouseEvent { event.name(), event.buttons_down(), event.x(), event.y(), event.z(), event.button(), event.modifiers() };
     event_copy.set_x(cell_x);
     event_copy.set_y(cell_y);
     if (m_pseudo_terminal.handle_mouse_event(event_copy)) {
@@ -300,41 +300,41 @@ bool TerminalWidget::handle_mouse_event(const App::MouseEvent& event) {
     if (event.mouse_down_any() && event.button() == App::MouseButton::Left) {
         clear_selection();
         m_in_selection = true;
-        switch (event.type()) {
-            case App::EventType::MouseDown:
-                m_selection_start_row = m_selection_end_row = row_at_cursor;
-                m_selection_start_col = m_selection_end_col = col_at_cursor;
-                invalidate();
-                return true;
-            case App::EventType::MouseDouble: {
-                m_selection_start_row = m_selection_end_row = row_at_cursor;
-                m_selection_start_col = m_selection_end_col = col_at_cursor;
+        if (event.mouse_down()) {
+            m_selection_start_row = m_selection_end_row = row_at_cursor;
+            m_selection_start_col = m_selection_end_col = col_at_cursor;
+            invalidate();
+            return true;
+        }
 
-                if (row_at_cursor < 0 || row_at_cursor >= m_tty.row_count()) {
-                    m_in_selection = false;
-                    return true;
-                }
+        if (event.mouse_double()) {
+            m_selection_start_row = m_selection_end_row = row_at_cursor;
+            m_selection_start_col = m_selection_end_col = col_at_cursor;
 
-                auto& row = m_tty.row_at_scroll_relative_offset(row_at_cursor);
-                bool connect_spaces = isspace(row[col_at_cursor].ch);
-                while (m_selection_start_col > 0 && isspace(row[m_selection_start_col - 1].ch) == connect_spaces) {
-                    m_selection_start_col--;
-                }
-                while (m_selection_end_col < m_tty.col_count() - 1 && isspace(row[m_selection_end_col + 1].ch) == connect_spaces) {
-                    m_selection_end_col++;
-                }
-                m_selection_end_col++;
-                invalidate();
+            if (row_at_cursor < 0 || row_at_cursor >= m_tty.row_count()) {
+                m_in_selection = false;
                 return true;
             }
-            case App::EventType::MouseTriple:
-                m_selection_start_row = m_selection_end_row = row_at_cursor;
-                m_selection_start_col = 0;
-                m_selection_end_col = m_tty.col_count();
-                invalidate();
-                return true;
-            default:
-                break;
+
+            auto& row = m_tty.row_at_scroll_relative_offset(row_at_cursor);
+            bool connect_spaces = isspace(row[col_at_cursor].ch);
+            while (m_selection_start_col > 0 && isspace(row[m_selection_start_col - 1].ch) == connect_spaces) {
+                m_selection_start_col--;
+            }
+            while (m_selection_end_col < m_tty.col_count() - 1 && isspace(row[m_selection_end_col + 1].ch) == connect_spaces) {
+                m_selection_end_col++;
+            }
+            m_selection_end_col++;
+            invalidate();
+            return true;
+        }
+
+        if (event.mouse_triple()) {
+            m_selection_start_row = m_selection_end_row = row_at_cursor;
+            m_selection_start_col = 0;
+            m_selection_end_col = m_tty.col_count();
+            invalidate();
+            return true;
         }
     }
 

@@ -24,7 +24,7 @@ void Object::deferred_invoke(Function<void()> callback) {
 }
 
 bool Object::Handler::can_handle(const Event& event) const {
-    return static_cast<int>(event.type()) == m_event_type;
+    return event.name() == m_event_name;
 }
 
 bool Object::Handler::handle(const Event& event) {

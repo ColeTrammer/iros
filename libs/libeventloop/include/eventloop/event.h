@@ -2,77 +2,61 @@
 
 #include <liim/function.h>
 #include <liim/string.h>
+#include <liim/string_view.h>
 
 namespace App {
-enum class EventType {
-    Invalid = 0,
-    Text,
-    KeyDown,
-    KeyUp,
-    MouseDown,
-    MouseDouble,
-    MouseTriple,
-    MouseMove,
-    MouseUp,
-    MouseScroll,
-    WindowClose,
-    WindowForceRedraw,
-    WindowDidResize,
-    WindowState,
-    Resize,
-    Focused,
-    Unfocused,
-    Leave,
-    Callback,
-    Timer,
-    ThemeChange,
-};
+#define APP_EVENT(name)                                                  \
+public:                                                                  \
+    static constexpr StringView static_event_name() { return "" #name; } \
+                                                                         \
+private:
 
 class Event {
+    APP_EVENT(Event)
+
 public:
-    explicit Event(EventType type) : m_type(type) {};
+    explicit Event(StringView name) : m_name(name) {};
     virtual ~Event() {}
 
-    EventType type() const { return m_type; }
+    StringView name() const { return m_name; }
 
 private:
-    EventType m_type { EventType::Invalid };
+    StringView m_name;
 };
 
 class WindowEvent : public Event {
-public:
-    explicit WindowEvent(EventType type) : Event(type), m_type(type) {}
+    APP_EVENT(WindowEvent)
 
-private:
-    EventType m_type { EventType::Invalid };
+public:
+    explicit WindowEvent(StringView name) : Event(name) {}
 };
 
 class WindowCloseEvent : public WindowEvent {
-public:
-    static constexpr EventType static_type() { return EventType::WindowClose; }
+    APP_EVENT(WindowCloseEvent)
 
-    WindowCloseEvent() : WindowEvent(static_type()) {}
+public:
+    WindowCloseEvent() : WindowEvent(static_event_name()) {}
 };
 
 class WindowForceRedrawEvent : public WindowEvent {
-public:
-    static constexpr EventType static_type() { return EventType::WindowForceRedraw; }
+    APP_EVENT(WindowForceRedrawEvent)
 
-    WindowForceRedrawEvent() : WindowEvent(static_type()) {}
+public:
+    WindowForceRedrawEvent() : WindowEvent(static_event_name()) {}
 };
 
 class WindowDidResizeEvent : public WindowEvent {
-public:
-    static constexpr EventType static_type() { return EventType::WindowDidResize; }
+    APP_EVENT(WindowDidResizeEvent)
 
-    WindowDidResizeEvent() : WindowEvent(static_type()) {}
+public:
+    WindowDidResizeEvent() : WindowEvent(static_event_name()) {}
 };
 
 class WindowStateEvent final : public WindowEvent {
-public:
-    static constexpr EventType static_type() { return EventType::WindowState; }
+    APP_EVENT(WindowStateEvent)
 
-    explicit WindowStateEvent(bool active) : WindowEvent(static_type()), m_active(active) {}
+public:
+    explicit WindowStateEvent(bool active) : WindowEvent(static_event_name()), m_active(active) {}
 
     bool active() const { return m_active; }
     void set_active(bool b) { m_active = b; }
@@ -82,31 +66,31 @@ private:
 };
 
 class ResizeEvent final : public Event {
-public:
-    static constexpr EventType static_type() { return EventType::Resize; }
+    APP_EVENT(ResizeEvent)
 
-    ResizeEvent() : Event(static_type()) {}
+public:
+    ResizeEvent() : Event(static_event_name()) {}
 };
 
 class FocusedEvent final : public Event {
-public:
-    static constexpr EventType static_type() { return EventType::Focused; }
+    APP_EVENT(FocusedEvent)
 
-    FocusedEvent() : Event(static_type()) {}
+public:
+    FocusedEvent() : Event(static_event_name()) {}
 };
 
 class UnfocusedEvent final : public Event {
-public:
-    static constexpr EventType static_type() { return EventType::Unfocused; }
+    APP_EVENT(UnfocusedEvent)
 
-    UnfocusedEvent() : Event(static_type()) {}
+public:
+    UnfocusedEvent() : Event(static_event_name()) {}
 };
 
 class LeaveEvent final : public Event {
-public:
-    static constexpr EventType static_type() { return EventType::Leave; }
+    APP_EVENT(LeaveEvent)
 
-    LeaveEvent() : Event(static_type()) {}
+public:
+    LeaveEvent() : Event(static_event_name()) {}
 };
 
 namespace MouseButton {
@@ -253,14 +237,14 @@ enum class Key {
 
 class KeyEvent : public Event {
 public:
-    KeyEvent(EventType type, Key key, int modifiers, bool generates_text)
-        : Event(type), m_key(key), m_modifiers(modifiers), m_generates_text(generates_text) {}
+    KeyEvent(StringView name, Key key, int modifiers, bool generates_text)
+        : Event(name), m_key(key), m_modifiers(modifiers), m_generates_text(generates_text) {}
 
     Key key() const { return m_key; }
     int modifiers() const { return m_modifiers; }
 
-    bool key_down() const { return type() == EventType::KeyDown; }
-    bool key_up() const { return type() == EventType::KeyUp; }
+    bool key_down() const { return name() == "KeyDownEvent"; }
+    bool key_up() const { return name() == "KeyUpEvent"; }
 
     bool shift_down() const { return !!(m_modifiers & KeyModifier::Shift); }
     bool alt_down() const { return !!(m_modifiers & KeyModifier::Alt); }
@@ -276,24 +260,24 @@ private:
 };
 
 class KeyDownEvent final : public KeyEvent {
-public:
-    static constexpr EventType static_type() { return EventType::KeyDown; }
+    APP_EVENT(KeyDownEvent)
 
-    KeyDownEvent(Key key, int modifiers, bool generates_text) : KeyEvent(static_type(), key, modifiers, generates_text) {}
+public:
+    KeyDownEvent(Key key, int modifiers, bool generates_text) : KeyEvent(static_event_name(), key, modifiers, generates_text) {}
 };
 
 class KeyUpEvent final : public KeyEvent {
-public:
-    static constexpr EventType static_type() { return EventType::KeyUp; }
+    APP_EVENT(KeyUpEvent)
 
-    KeyUpEvent(Key key, int modifiers, bool generates_text) : KeyEvent(static_type(), key, modifiers, generates_text) {}
+public:
+    KeyUpEvent(Key key, int modifiers, bool generates_text) : KeyEvent(static_event_name(), key, modifiers, generates_text) {}
 };
 
 class TextEvent final : public Event {
-public:
-    static constexpr EventType static_type() { return EventType::Text; }
+    APP_EVENT(TextEvent)
 
-    explicit TextEvent(String text) : Event(static_type()), m_text(move(text)) {}
+public:
+    explicit TextEvent(String text) : Event(static_event_name()), m_text(move(text)) {}
 
     const String& text() const { return m_text; }
     void set_text(String text) { m_text = move(text); }
@@ -304,8 +288,8 @@ private:
 
 class MouseEvent : public Event {
 public:
-    MouseEvent(EventType type, int buttons_down, int x, int y, int z, int button, int modifiers)
-        : Event(type), m_x(x), m_y(y), m_z(z), m_buttons_down(buttons_down), m_button(button), m_modifiers(modifiers) {}
+    MouseEvent(StringView name, int buttons_down, int x, int y, int z, int button, int modifiers)
+        : Event(name), m_x(x), m_y(y), m_z(z), m_buttons_down(buttons_down), m_button(button), m_modifiers(modifiers) {}
 
     int x() const { return m_x; }
     int y() const { return m_y; }
@@ -321,16 +305,14 @@ public:
     bool right_button() const { return m_button == MouseButton::Right; }
     bool middle_button() const { return m_button == MouseButton::Middle; }
 
-    bool mouse_down_any() const {
-        return type() == EventType::MouseDown || type() == EventType::MouseDouble || type() == EventType::MouseTriple;
-    }
+    bool mouse_down_any() const { return name() == "MouseDownEvent" || name() == "MouseDoubleEvent" || name() == "MouseTripleEvent"; }
 
-    bool mouse_down() const { return type() == EventType::MouseDown; }
-    bool mouse_double() const { return type() == EventType::MouseDouble; }
-    bool mouse_triple() const { return type() == EventType::MouseTriple; }
-    bool mouse_up() const { return type() == EventType::MouseUp; }
-    bool mouse_move() const { return type() == EventType::MouseMove; }
-    bool mouse_scroll() const { return type() == EventType::MouseScroll; }
+    bool mouse_down() const { return name() == "MouseDownEvent"; }
+    bool mouse_double() const { return name() == "MouseDoubleEvent"; }
+    bool mouse_triple() const { return name() == "MouseTripleEvent"; }
+    bool mouse_up() const { return name() == "MouseUpEvent"; }
+    bool mouse_move() const { return name() == "MouseMoveEvent"; }
+    bool mouse_scroll() const { return name() == "MouseScrollEvent"; }
 
     int modifiers() const { return m_modifiers; }
     int control_down() const { return m_modifiers & KeyModifier::Control; }
@@ -348,58 +330,58 @@ private:
 };
 
 class MouseDownEvent final : public MouseEvent {
-public:
-    static constexpr EventType static_type() { return EventType::MouseDown; }
+    APP_EVENT(MouseDownEvent)
 
+public:
     MouseDownEvent(int buttons_down, int x, int y, int z, int button, int modifiers)
-        : MouseEvent(static_type(), buttons_down, x, y, z, button, modifiers) {}
+        : MouseEvent(static_event_name(), buttons_down, x, y, z, button, modifiers) {}
 };
 
 class MouseDoubleEvent final : public MouseEvent {
-public:
-    static constexpr EventType static_type() { return EventType::MouseDouble; }
+    APP_EVENT(MouseDoubleEvent)
 
+public:
     MouseDoubleEvent(int buttons_down, int x, int y, int z, int button, int modifiers)
-        : MouseEvent(static_type(), buttons_down, x, y, z, button, modifiers) {}
+        : MouseEvent(static_event_name(), buttons_down, x, y, z, button, modifiers) {}
 };
 
 class MouseTripleEvent final : public MouseEvent {
-public:
-    static constexpr EventType static_type() { return EventType::MouseTriple; }
+    APP_EVENT(MouseTripleEvent)
 
+public:
     MouseTripleEvent(int buttons_down, int x, int y, int z, int button, int modifiers)
-        : MouseEvent(static_type(), buttons_down, x, y, z, button, modifiers) {}
+        : MouseEvent(static_event_name(), buttons_down, x, y, z, button, modifiers) {}
 };
 
 class MouseMoveEvent final : public MouseEvent {
-public:
-    static constexpr EventType static_type() { return EventType::MouseMove; }
+    APP_EVENT(MouseMoveEvent)
 
+public:
     MouseMoveEvent(int buttons_down, int x, int y, int z, int button, int modifiers)
-        : MouseEvent(static_type(), buttons_down, x, y, z, button, modifiers) {}
+        : MouseEvent(static_event_name(), buttons_down, x, y, z, button, modifiers) {}
 };
 
 class MouseUpEvent final : public MouseEvent {
-public:
-    static constexpr EventType static_type() { return EventType::MouseUp; }
+    APP_EVENT(MouseUpEvent)
 
+public:
     MouseUpEvent(int buttons_down, int x, int y, int z, int button, int modifiers)
-        : MouseEvent(static_type(), buttons_down, x, y, z, button, modifiers) {}
+        : MouseEvent(static_event_name(), buttons_down, x, y, z, button, modifiers) {}
 };
 
 class MouseScrollEvent final : public MouseEvent {
-public:
-    static constexpr EventType static_type() { return EventType::MouseScroll; }
+    APP_EVENT(MouseScrollEvent)
 
+public:
     MouseScrollEvent(int buttons_down, int x, int y, int z, int button, int modifiers)
-        : MouseEvent(static_type(), buttons_down, x, y, z, button, modifiers) {}
+        : MouseEvent(static_event_name(), buttons_down, x, y, z, button, modifiers) {}
 };
 
 class CallbackEvent final : public Event {
-public:
-    static constexpr EventType static_type() { return EventType::Callback; }
+    APP_EVENT(CallbackEvent)
 
-    explicit CallbackEvent(Function<void()> callback) : Event(static_type()), m_callback(move(callback)) {}
+public:
+    explicit CallbackEvent(Function<void()> callback) : Event(static_event_name()), m_callback(move(callback)) {}
 
     void invoke() { m_callback(); }
 
@@ -408,10 +390,10 @@ private:
 };
 
 class TimerEvent final : public Event {
-public:
-    static constexpr EventType static_type() { return EventType::Timer; }
+    APP_EVENT(TimerEvent)
 
-    explicit TimerEvent(int times_expired) : Event(static_type()), m_times_expired(times_expired) {}
+public:
+    explicit TimerEvent(int times_expired) : Event(static_event_name()), m_times_expired(times_expired) {}
 
     int times_expired() const { return m_times_expired; }
 
@@ -420,9 +402,9 @@ private:
 };
 
 class ThemeChangeEvent final : public Event {
-public:
-    static constexpr EventType static_type() { return EventType::ThemeChange; }
+    APP_EVENT(ThemeChangeEvent)
 
-    ThemeChangeEvent() : Event(static_type()) {}
+public:
+    ThemeChangeEvent() : Event(static_event_name()) {}
 };
 }

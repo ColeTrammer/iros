@@ -3,6 +3,7 @@
 #include <eventloop/forward.h>
 #include <liim/function.h>
 #include <liim/pointers.h>
+#include <liim/string_view.h>
 #include <liim/vector.h>
 
 #define APP_OBJECT(name)                                                      \
@@ -22,6 +23,8 @@ private:
 
 namespace App {
 class Object {
+    APP_OBJECT(Object)
+
 public:
     virtual ~Object();
 
@@ -65,7 +68,7 @@ public:
     Object& on(HandlerCallback&& handler) {
         static_assert(LIIM::IsSame<bool, typename LIIM::InvokeResult<HandlerCallback, Ev>::type>::value,
                       "Callback handler function must return bool");
-        m_handlers.add(Handler { static_cast<int>(Ev::static_type()), [handler = move(handler)](const Event& event) -> bool {
+        m_handlers.add(Handler { Ev::static_event_name(), [handler = move(handler)](const Event& event) -> bool {
                                     return handler(static_cast<const Ev&>(event));
                                 } });
         return *this;
@@ -80,13 +83,13 @@ protected:
 private:
     class Handler {
     public:
-        Handler(int event_type, Function<bool(const Event&)> handler) : m_event_type(event_type), m_handler(move(handler)) {}
+        Handler(StringView event_name, Function<bool(const Event&)> handler) : m_event_name(event_name), m_handler(move(handler)) {}
 
         bool can_handle(const App::Event& event) const;
         bool handle(const App::Event& event);
 
     private:
-        int m_event_type;
+        StringView m_event_name;
         Function<bool(const Event&)> m_handler;
     };
 
