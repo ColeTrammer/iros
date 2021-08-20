@@ -85,32 +85,11 @@ void Window::initialize() {
         m_active = state_event.active();
     });
 
-    on<MouseDownEvent>([this](const auto& event) {
-        return handle_mouse_event(event);
-    });
-    on<MouseDoubleEvent>([this](const auto& event) {
-        return handle_mouse_event(event);
-    });
-    on<MouseTripleEvent>([this](const auto& event) {
-        return handle_mouse_event(event);
-    });
-    on<MouseMoveEvent>([this](const auto& event) {
-        return handle_mouse_event(event);
-    });
-    on<MouseUpEvent>([this](const auto& event) {
-        return handle_mouse_event(event);
-    });
-    on<MouseScrollEvent>([this](const auto& event) {
+    on<MouseDownEvent, MouseDoubleEvent, MouseTripleEvent, MouseMoveEvent, MouseUpEvent, MouseScrollEvent>([this](const MouseEvent& event) {
         return handle_mouse_event(event);
     });
 
-    on<KeyDownEvent>([this](const auto& event) {
-        return handle_key_or_text_event(event);
-    });
-    on<KeyUpEvent>([this](const auto& event) {
-        return handle_key_or_text_event(event);
-    });
-    on<TextEvent>([this](const auto& event) {
+    on<KeyDownEvent, KeyUpEvent, TextEvent>([this](const Event& event) {
         return handle_key_or_text_event(event);
     });
 
