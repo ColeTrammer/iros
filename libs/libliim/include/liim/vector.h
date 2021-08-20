@@ -378,12 +378,12 @@ public:
     template<typename C>
     bool remove_if(C callback) {
         bool removed = false;
-        for_each_reverse([&](auto& elem) {
-            if (callback(elem)) {
-                remove_element(elem);
+        for (int i = size() - 1; i >= 0; i--) {
+            if (callback(get(i))) {
+                remove(i);
                 removed = true;
             }
-        });
+        }
 
         return removed;
     }
