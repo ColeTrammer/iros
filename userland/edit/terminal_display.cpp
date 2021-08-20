@@ -19,24 +19,10 @@ TerminalDisplay::TerminalDisplay() {
 }
 
 void TerminalDisplay::initialize() {
-    on<App::MouseDownEvent>([this](const auto& event) {
-        return handle_mouse_event(event);
-    });
-    on<App::MouseDoubleEvent>([this](const auto& event) {
-        return handle_mouse_event(event);
-    });
-    on<App::MouseTripleEvent>([this](const auto& event) {
-        return handle_mouse_event(event);
-    });
-    on<App::MouseMoveEvent>([this](const auto& event) {
-        return handle_mouse_event(event);
-    });
-    on<App::MouseUpEvent>([this](const auto& event) {
-        return handle_mouse_event(event);
-    });
-    on<App::MouseScrollEvent>([this](const auto& event) {
-        return handle_mouse_event(event);
-    });
+    on<App::MouseDownEvent, App::MouseDoubleEvent, App::MouseTripleEvent, App::MouseMoveEvent, App::MouseUpEvent, App::MouseScrollEvent>(
+        [this](const App::MouseEvent& event) {
+            return handle_mouse_event(event);
+        });
 
     on<App::KeyDownEvent>([this](const App::KeyDownEvent& event) {
         if (event.key() == App::Key::Escape) {

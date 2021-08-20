@@ -37,32 +37,12 @@ Application::Application(UniquePtr<TInput::IOTerminal> io_terminal) : m_io_termi
 }
 
 void Application::initialize() {
-    on<App::MouseDownEvent>([this](const auto& event) {
-        return handle_mouse_event(event);
-    });
-    on<App::MouseDoubleEvent>([this](const auto& event) {
-        return handle_mouse_event(event);
-    });
-    on<App::MouseTripleEvent>([this](const auto& event) {
-        return handle_mouse_event(event);
-    });
-    on<App::MouseMoveEvent>([this](const auto& event) {
-        return handle_mouse_event(event);
-    });
-    on<App::MouseUpEvent>([this](const auto& event) {
-        return handle_mouse_event(event);
-    });
-    on<App::MouseScrollEvent>([this](const auto& event) {
-        return handle_mouse_event(event);
-    });
+    on<App::MouseDownEvent, App::MouseDoubleEvent, App::MouseTripleEvent, App::MouseMoveEvent, App::MouseUpEvent, App::MouseScrollEvent>(
+        [this](const App::MouseEvent& event) {
+            return handle_mouse_event(event);
+        });
 
-    on<App::KeyDownEvent>([this](const auto& event) {
-        return handle_key_or_text_event(event);
-    });
-    on<App::KeyUpEvent>([this](const auto& event) {
-        return handle_key_or_text_event(event);
-    });
-    on<App::TextEvent>([this](const auto& event) {
+    on<App::KeyDownEvent, App::KeyUpEvent, App::TextEvent>([this](const App::Event& event) {
         return handle_key_or_text_event(event);
     });
 
