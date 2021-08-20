@@ -25,6 +25,34 @@ namespace App {
 class Object {
     APP_OBJECT(Object)
 
+private:
+    class Handler {
+    public:
+        enum class Bool { Yes };
+        enum class Void { Yes };
+
+        Handler(StringView event_name, Bool, Function<bool(const Event&)> handler)
+            : m_event_name(event_name), m_is_bool_handler(true), m_bool_handler(move(handler)) {}
+        Handler(StringView event_name, Void, Function<void(const Event&)> handler)
+            : m_event_name(event_name), m_is_bool_handler(false), m_void_handler(move(handler)) {}
+
+        bool can_handle(const App::Event& event) const;
+        bool handle(const App::Event& event);
+
+        void set_listener(WeakPtr<Object> listener);
+        SharedPtr<Object> listener() const { return m_listener.lock(); }
+
+        bool global_listener() const { return m_global_listener; }
+
+    private:
+        StringView m_event_name;
+        bool m_global_listener { true };
+        bool m_is_bool_handler { false };
+        Function<bool(const Event&)> m_bool_handler;
+        Function<void(const Event&)> m_void_handler;
+        WeakPtr<Object> m_listener;
+    };
+
 public:
     virtual ~Object();
 
@@ -64,8 +92,29 @@ public:
 
     bool dispatch(const Event& event) const;
 
+    class GlobalListenerTag {};
+
     template<typename Ev, typename HandlerCallback>
-    Object& on(HandlerCallback&& handler) {
+    Object& on(GlobalListenerTag, HandlerCallback&& handler_callback) {
+        this->on<Ev>(move(handler_callback));
+        return *this;
+    }
+
+    template<typename Ev, typename HandlerCallback>
+    Object& on(Object& listener, HandlerCallback&& handler_callback) {
+        auto& handler = this->on<Ev>(move(handler_callback));
+        handler.set_listener(listener.weak_from_this());
+        return *this;
+    }
+
+protected:
+    Object();
+
+    virtual void did_add_child(SharedPtr<Object>) {}
+    virtual void did_remove_child(SharedPtr<Object>) {}
+
+    template<typename Ev, typename HandlerCallback>
+    Handler& on(HandlerCallback&& handler) {
         if constexpr (Ev::static_event_requires_handling()) {
             static_assert(LIIM::IsSame<bool, typename LIIM::InvokeResult<HandlerCallback, const Ev&>::type>::value,
                           "Callback handler function must return bool");
@@ -79,36 +128,10 @@ public:
                                         handler(static_cast<const Ev&>(event));
                                     } });
         }
-        return *this;
+        return m_handlers.last();
     }
 
-protected:
-    Object();
-
-    virtual void did_add_child(SharedPtr<Object>) {}
-    virtual void did_remove_child(SharedPtr<Object>) {}
-
 private:
-    class Handler {
-    public:
-        enum class Bool { Yes };
-        enum class Void { Yes };
-
-        Handler(StringView event_name, Bool, Function<bool(const Event&)> handler)
-            : m_event_name(event_name), m_is_bool_handler(true), m_bool_handler(move(handler)) {}
-        Handler(StringView event_name, Void, Function<void(const Event&)> handler)
-            : m_event_name(event_name), m_is_bool_handler(false), m_void_handler(move(handler)) {}
-
-        bool can_handle(const App::Event& event) const;
-        bool handle(const App::Event& event);
-
-    private:
-        StringView m_event_name;
-        bool m_is_bool_handler { false };
-        Function<bool(const Event&)> m_bool_handler;
-        Function<void(const Event&)> m_void_handler;
-    };
-
     Vector<SharedPtr<Object>> m_children;
     Vector<Handler> m_handlers;
     Object* m_parent;

@@ -35,16 +35,38 @@ bool Object::Handler::handle(const Event& event) {
     return false;
 }
 
+void Object::Handler::set_listener(WeakPtr<Object> listener) {
+    m_listener = listener;
+    m_global_listener = false;
+}
+
 bool Object::dispatch(const Event& event) const {
-    for (auto& handler : m_handlers) {
+    auto& handlers = const_cast<Vector<Handler>&>(m_handlers);
+    for (auto& handler : handlers) {
         if (!handler.can_handle(event)) {
             continue;
         }
 
-        if (const_cast<Handler&>(handler).handle(event)) {
-            return true;
+        if (handler.global_listener()) {
+            if (handler.handle(event)) {
+                return true;
+            }
+            continue;
+        }
+
+        if (auto listener = handler.listener()) {
+            if (handler.handle(event)) {
+                return true;
+            }
+            continue;
         }
     }
+
+    // FIXME: there's probably a better way to implement GC'ing stale listener callbacks.
+    handlers.remove_if([](const Handler& handler) {
+        return !handler.global_listener() && !handler.listener();
+    });
+
     return false;
 }
 }
