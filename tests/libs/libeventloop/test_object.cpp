@@ -94,3 +94,26 @@ TEST(object, event_consuming) {
     EXPECT(object->dispatch(ConsumableEvent {}));
     EXPECT_EQ(count, 5);
 }
+
+TEST(object, event_multiple) {
+    auto object = Object::create(nullptr);
+
+    int count = 0;
+
+    object->on<CustomEvent, CustomEvent2>({}, [&](auto&& event) {
+        using Type = LIIM::decay_t<decltype(event)>;
+
+        if constexpr (LIIM::IsSame<CustomEvent, Type>::value) {
+            EXPECT_EQ(event.name(), CustomEvent::static_event_name());
+            count++;
+        } else {
+            EXPECT_EQ(event.name(), CustomEvent2::static_event_name());
+            count += 2;
+        }
+    });
+
+    EXPECT(!object->dispatch(CustomEvent {}));
+    EXPECT(!object->dispatch(CustomEvent2 {}));
+
+    EXPECT_EQ(count, 3);
+}

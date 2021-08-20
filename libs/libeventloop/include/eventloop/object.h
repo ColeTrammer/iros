@@ -94,17 +94,14 @@ public:
 
     class GlobalListenerTag {};
 
-    template<typename Ev, typename HandlerCallback>
+    template<typename... Ev, typename HandlerCallback>
     Object& on(GlobalListenerTag, HandlerCallback&& handler_callback) {
-        this->on<Ev>(move(handler_callback));
-        return *this;
+        return this->on<Ev...>(move(handler_callback));
     }
 
-    template<typename Ev, typename HandlerCallback>
+    template<typename... Ev, typename HandlerCallback>
     Object& on(Object& listener, HandlerCallback&& handler_callback) {
-        auto& handler = this->on<Ev>(move(handler_callback));
-        handler.set_listener(listener.weak_from_this());
-        return *this;
+        return this->on<Ev...>(move(handler_callback), listener.weak_from_this());
     }
 
 protected:
@@ -113,22 +110,32 @@ protected:
     virtual void did_add_child(SharedPtr<Object>) {}
     virtual void did_remove_child(SharedPtr<Object>) {}
 
-    template<typename Ev, typename HandlerCallback>
-    Handler& on(HandlerCallback&& handler) {
-        if constexpr (Ev::static_event_requires_handling()) {
-            static_assert(LIIM::IsSame<bool, typename LIIM::InvokeResult<HandlerCallback, const Ev&>::type>::value,
-                          "Callback handler function must return bool");
-            m_handlers.add(Handler { Ev::static_event_name(), Handler::Bool::Yes, [handler = move(handler)](const Event& event) -> bool {
-                                        return handler(static_cast<const Ev&>(event));
-                                    } });
-        } else {
-            static_assert(LIIM::IsSame<void, typename LIIM::InvokeResult<HandlerCallback, const Ev&>::type>::value,
-                          "Callback handler function must return void");
-            m_handlers.add(Handler { Ev::static_event_name(), Handler::Void::Yes, [handler = move(handler)](const Event& event) -> void {
-                                        handler(static_cast<const Ev&>(event));
-                                    } });
-        }
-        return m_handlers.last();
+    template<typename... Ev, typename HandlerCallback>
+    Object& on(HandlerCallback&& handler, Maybe<WeakPtr<Object>> listener = {}) {
+        (
+            [&] {
+                if constexpr (Ev::static_event_requires_handling()) {
+                    static_assert(LIIM::IsSame<bool, typename LIIM::InvokeResult<HandlerCallback, const Ev&>::type>::value,
+                                  "Callback handler function must return bool");
+                    m_handlers.add(Handler { Ev::static_event_name(), Handler::Bool::Yes, [handler](const Event& event) -> bool {
+                                                return handler(static_cast<const Ev&>(event));
+                                            } });
+                    if (listener) {
+                        m_handlers.last().set_listener(*listener);
+                    }
+                } else {
+                    static_assert(LIIM::IsSame<void, typename LIIM::InvokeResult<HandlerCallback, const Ev&>::type>::value,
+                                  "Callback handler function must return void");
+                    m_handlers.add(Handler { Ev::static_event_name(), Handler::Void::Yes, [handler](const Event& event) -> void {
+                                                handler(static_cast<const Ev&>(event));
+                                            } });
+                    if (listener) {
+                        m_handlers.last().set_listener(*listener);
+                    }
+                }
+            }(),
+            ...);
+        return *this;
     }
 
 private:
