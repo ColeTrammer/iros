@@ -31,9 +31,7 @@ void Widget::initialize() {
     });
 
     on<ThemeChangeEvent>([this](const ThemeChangeEvent& event) {
-        for (auto& child : children()) {
-            child->dispatch(event);
-        }
+        forward_to_children(event);
     });
 
     Object::initialize();
@@ -64,7 +62,7 @@ void Widget::set_positioned_rect(const Rect& rect) {
     m_positioned_rect = rect;
 
     if (old_width != rect.width() || old_height != rect.height()) {
-        dispatch(ResizeEvent {});
+        emit<ResizeEvent>();
     }
 }
 

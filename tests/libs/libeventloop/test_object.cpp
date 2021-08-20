@@ -33,11 +33,11 @@ TEST(object, events_basic) {
         count++;
     });
 
-    EXPECT(!object->dispatch(CustomEvent {}));
-    EXPECT(!object->dispatch(CustomEvent {}));
-    EXPECT(!object->dispatch(CustomEvent {}));
+    EXPECT(!object->emit<CustomEvent>());
+    EXPECT(!object->emit<CustomEvent>());
+    EXPECT(!object->emit<CustomEvent>());
 
-    EXPECT(!object->dispatch(CustomEvent2 {}));
+    EXPECT(!object->emit<CustomEvent2>());
 
     EXPECT_EQ(count, 3);
 }
@@ -51,12 +51,12 @@ TEST(object, events_deregistration) {
         count++;
     });
 
-    EXPECT(!object->dispatch(CustomEvent {}));
-    EXPECT(!object->dispatch(CustomEvent {}));
+    EXPECT(!object->emit<CustomEvent>());
+    EXPECT(!object->emit<CustomEvent>());
 
     listener = nullptr;
 
-    EXPECT(!object->dispatch(CustomEvent {}));
+    EXPECT(!object->emit<CustomEvent>());
 
     EXPECT_EQ(count, 2);
 }
@@ -88,10 +88,10 @@ TEST(object, event_consuming) {
         return true;
     });
 
-    EXPECT(!object->dispatch(CustomEvent {}));
+    EXPECT(!object->emit<CustomEvent>());
     EXPECT_EQ(count, 3);
 
-    EXPECT(object->dispatch(ConsumableEvent {}));
+    EXPECT(object->emit<ConsumableEvent>());
     EXPECT_EQ(count, 5);
 }
 
@@ -112,8 +112,8 @@ TEST(object, event_multiple) {
         }
     });
 
-    EXPECT(!object->dispatch(CustomEvent {}));
-    EXPECT(!object->dispatch(CustomEvent2 {}));
+    EXPECT(!object->emit<CustomEvent>());
+    EXPECT(!object->emit<CustomEvent2>());
 
     EXPECT_EQ(count, 3);
 }

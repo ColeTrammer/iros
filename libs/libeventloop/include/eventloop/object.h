@@ -90,6 +90,22 @@ public:
         m_weak_this = move(weak_this);
     }
 
+    template<typename Ev, typename... Args>
+    bool emit(Args&&... args) const {
+        return dispatch(Ev { forward<Args>(args)... });
+    }
+
+    bool forward_to(const Object& to, const Event& event) const { return to.dispatch(event); }
+
+    bool forward_to_children(const Event& event) const {
+        for (auto& child : m_children) {
+            if (child->dispatch(event)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     bool dispatch(const Event& event) const;
 
     class GlobalListenerTag {};
@@ -114,24 +130,22 @@ protected:
     Object& on(HandlerCallback&& handler, Maybe<WeakPtr<Object>> listener = {}) {
         (
             [&] {
-                if constexpr (Ev::static_event_requires_handling()) {
+                auto callback = [handler](const Event& event) {
+                    return handler(static_cast<const Ev&>(event));
+                };
+
+                if constexpr (Ev::event_requires_handling()) {
                     static_assert(LIIM::IsSame<bool, typename LIIM::InvokeResult<HandlerCallback, const Ev&>::type>::value,
                                   "Callback handler function must return bool");
-                    m_handlers.add(Handler { Ev::static_event_name(), Handler::Bool::Yes, [handler](const Event& event) -> bool {
-                                                return handler(static_cast<const Ev&>(event));
-                                            } });
-                    if (listener) {
-                        m_handlers.last().set_listener(*listener);
-                    }
+                    m_handlers.add(Handler { Ev::static_event_name(), Handler::Bool::Yes, move(callback) });
                 } else {
                     static_assert(LIIM::IsSame<void, typename LIIM::InvokeResult<HandlerCallback, const Ev&>::type>::value,
                                   "Callback handler function must return void");
-                    m_handlers.add(Handler { Ev::static_event_name(), Handler::Void::Yes, [handler](const Event& event) -> void {
-                                                handler(static_cast<const Ev&>(event));
-                                            } });
-                    if (listener) {
-                        m_handlers.last().set_listener(*listener);
-                    }
+                    m_handlers.add(Handler { Ev::static_event_name(), Handler::Void::Yes, move(callback) });
+                }
+
+                if (listener) {
+                    m_handlers.last().set_listener(*listener);
                 }
             }(),
             ...);

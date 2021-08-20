@@ -9,11 +9,11 @@ namespace App {
 
 #define APP_EVENT(name) APP_EVENT_IMPL(name, false)
 
-#define APP_EVENT_IMPL(name, requires_handling)                                          \
-public:                                                                                  \
-    static constexpr StringView static_event_name() { return "" #name; }                 \
-    static constexpr bool static_event_requires_handling() { return requires_handling; } \
-                                                                                         \
+#define APP_EVENT_IMPL(name, requires_handling)                                   \
+public:                                                                           \
+    static constexpr StringView static_event_name() { return "" #name; }          \
+    static constexpr bool event_requires_handling() { return requires_handling; } \
+                                                                                  \
 private:
 
 class Event {

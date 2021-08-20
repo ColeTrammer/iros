@@ -93,7 +93,7 @@ void Application::schedule_render() {
 
 bool Application::handle_key_or_text_event(const App::Event& event) {
     if (auto panel = focused_panel(); panel && panel.get() != this) {
-        return panel->dispatch(event);
+        return forward_to(*panel, event);
     }
     this->make_focused();
     return false;
@@ -102,13 +102,13 @@ bool Application::handle_key_or_text_event(const App::Event& event) {
 bool Application::handle_mouse_event(const App::MouseEvent& event) {
     if (auto panel = focused_panel(); panel && panel.get() != this && panel->steals_focus()) {
         auto new_event = translate_mouse_event(*panel, event);
-        return panel->dispatch(new_event);
+        return forward_to(*panel, new_event);
     }
 
     if (!event.mouse_down_any()) {
         if (auto panel = focused_panel(); panel && panel.get() != this) {
             auto new_event = translate_mouse_event(*panel, event);
-            return panel->dispatch(new_event);
+            return forward_to(*panel, new_event);
         }
         return false;
     }
@@ -117,7 +117,7 @@ bool Application::handle_mouse_event(const App::MouseEvent& event) {
     panel->make_focused();
     if (auto panel = focused_panel(); panel && panel.get() != this) {
         auto new_event = translate_mouse_event(*panel, event);
-        return panel->dispatch(new_event);
+        return forward_to(*panel, new_event);
     }
     this->make_focused();
     return false;
@@ -151,7 +151,7 @@ void Application::set_focused_panel(Panel* panel) {
     }
 
     if (old_panel) {
-        old_panel->dispatch(App::UnfocusedEvent {});
+        old_panel->emit<App::UnfocusedEvent>();
     }
 
     if (!panel) {
@@ -161,7 +161,7 @@ void Application::set_focused_panel(Panel* panel) {
 
     m_focused_panel = panel->weak_from_this();
     if (panel) {
-        panel->dispatch(App::FocusedEvent {});
+        panel->emit<App::FocusedEvent>();
     }
 }
 
