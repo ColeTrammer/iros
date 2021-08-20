@@ -42,7 +42,7 @@ void Panel::set_positioned_rect(const Rect& rect) {
     m_positioned_rect = rect;
     invalidate();
 
-    dispatch(App::ResizeEvent {});
+    emit<App::ResizeEvent>();
 }
 
 void Panel::invalidate() {

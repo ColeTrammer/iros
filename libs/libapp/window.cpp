@@ -97,7 +97,7 @@ void Window::initialize() {
         pixels()->clear(Application::the().palette()->color(Palette::Background));
         invalidate_rect(rect());
 
-        m_main_widget->dispatch(event);
+        forward_to(*m_main_widget, event);
     });
 
     Object::initialize();
@@ -118,7 +118,7 @@ bool Window::handle_mouse_event(const MouseEvent& event) {
     } else {
         widget = find_widget_at_point({ mouse_event.x(), mouse_event.y() });
         if (focused_widget() && focused_widget().get() != widget) {
-            widget->dispatch(LeaveEvent {});
+            widget->emit<LeaveEvent>();
         }
         set_focused_widget(widget);
     }
@@ -132,14 +132,14 @@ bool Window::handle_mouse_event(const MouseEvent& event) {
                                                   mouse_event.z(),
                                                   mouse_event.button(),
                                                   mouse_event.modifiers() };
-        return widget->dispatch(widget_relative_event);
+        return forward_to(*widget, widget_relative_event);
     }
     return false;
 }
 
 bool Window::handle_key_or_text_event(const Event& event) {
     if (auto widget = focused_widget()) {
-        return widget->dispatch(event);
+        return forward_to(*widget, event);
     }
     return false;
 }

@@ -44,7 +44,7 @@ void ReplDisplay::initialize() {
                 case App::Key::UpArrow:
                 case App::Key::DownArrow:
                 case App::Key::Escape:
-                    return m_suggestions_panel->dispatch(event);
+                    return forward_to(*m_suggestions_panel, event);
                 default:
                     break;
             }
