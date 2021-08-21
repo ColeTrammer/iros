@@ -16,9 +16,7 @@ void Button::initialize() {
     on<MouseUpEvent>([this](const MouseUpEvent& event) {
         if (m_did_mousedown && event.left_button()) {
             m_did_mousedown = false;
-            if (on_click) {
-                on_click();
-            }
+            emit<App::ClickEvent>();
             return true;
         }
         return false;

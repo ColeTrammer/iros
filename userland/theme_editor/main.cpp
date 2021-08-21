@@ -20,14 +20,14 @@ int main() {
 
     auto& button = layout.add<App::Button>("Apply Theme");
     button.set_preferred_size({ App::Size::Auto, 24 });
-    button.on_click = [&] {
+    button.on<App::ClickEvent>({}, [&](auto&) {
         if (view.selection().empty()) {
             return;
         }
 
         auto index = view.selection().first();
         app->set_global_palette(model->themes()[index.row()].path);
-    };
+    });
 
     app->enter();
     return 0;

@@ -17,7 +17,7 @@ public:
     virtual void initialize() override {
         m_menu = ContextMenu::create(shared_from_this(), window()->shared_from_this());
         m_button = Button::create(shared_from_this(), m_name);
-        m_button->on_click = [this] {
+        m_button->on<App::ClickEvent>(*this, [this](auto&) {
             if (m_menu->menu_items().empty()) {
                 return;
             }
@@ -28,7 +28,7 @@ public:
             } else {
                 m_shown = false;
             }
-        };
+        });
 
         on<ResizeEvent>([this](const ResizeEvent&) {
             m_button->set_positioned_rect(positioned_rect());

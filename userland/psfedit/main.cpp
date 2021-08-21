@@ -155,19 +155,19 @@ int main(int argc, char** argv) {
             int code_point = i * 16 + j;
             auto& button = col_layout.add<App::Button>(String(static_cast<char>(code_point)));
             button.set_font(font);
-            button.on_click = [&, code_point]() {
+            button.on<App::ClickEvent>({}, [&, code_point](auto&) {
                 glyph_editor.set_bitset(const_cast<Bitset<uint8_t>*>(font.get_for_character(code_point)), code_point);
-            };
+            });
         }
     }
 
     auto& save_button = layout.add<App::Button>("Save");
     save_button.set_preferred_size({ App::Size::Auto, 24 });
-    save_button.on_click = [&] {
+    save_button.on<App::ClickEvent>({}, [&](auto&) {
         if (!font.save_to_file(save_destination)) {
             fprintf(stderr, "psfedit: Failed to save font to `%s'\n", save_destination);
         }
-    };
+    });
 
     app->enter();
     return 0;
