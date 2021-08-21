@@ -4,26 +4,11 @@
 
 using namespace App;
 
-class CustomEvent : public Event {
-    APP_EVENT(CustomEvent)
+APP_EVENT(App, CustomEvent, Event, (), (), ())
 
-public:
-    CustomEvent() : Event(static_event_name()) {}
-};
+APP_EVENT(App, CustomEvent2, Event, (), (), ())
 
-class CustomEvent2 : public Event {
-    APP_EVENT(CustomEvent2)
-
-public:
-    CustomEvent2() : Event(static_event_name()) {}
-};
-
-class ConsumableEvent : public Event {
-    APP_EVENT_REQUIRES_HANDLING(ConsumableEvent)
-
-public:
-    ConsumableEvent() : Event(static_event_name()) {}
-};
+APP_EVENT_REQUIRES_HANDLING(App, ConsumableEvent, Event, (), (), ())
 
 TEST(object, events_basic) {
     auto object = Object::create(nullptr);
