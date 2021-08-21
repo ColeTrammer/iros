@@ -18,6 +18,10 @@ void Panel::initialize() {
         return false;
     });
 
+    on<App::MouseDoubleEvent, App::MouseTripleEvent>([this](const App::MouseEvent& event) {
+        return emit<App::MouseDownEvent>(event.buttons_down(), event.x(), event.y(), event.z(), event.button(), event.modifiers());
+    });
+
     on<App::ResizeEvent>([this](const App::ResizeEvent&) {
         if (m_layout_engine) {
             m_layout_engine->layout();
