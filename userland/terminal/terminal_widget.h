@@ -4,35 +4,28 @@
 #include <eventloop/selectable.h>
 #include <liim/pointers.h>
 
+#include "base_terminal_widget.h"
 #include "pseudo_terminal.h"
 #include "tty.h"
 
-class TerminalWidget final : public App::Widget {
+class TerminalWidget final
+    : public App::Widget
+    , public BaseTerminalWidget {
     APP_OBJECT(TerminalWidget)
 
 public:
-    TerminalWidget(double opacity);
+    explicit TerminalWidget(double opacity);
     virtual void initialize() override;
 
+    // ^App::Widget
     virtual void render() override;
 
+    // ^BaseTerminalWidget
+    virtual App::Object& this_widget() override { return *this; }
+    virtual void invalidate_all_contents() override { invalidate(); }
+    virtual Point cell_position_of_mouse_coordinates(int mouse_x, int mouse_y) const override;
+    virtual Rect available_cells() const override;
+
 private:
-    void clear_selection();
-    bool in_selection(int row, int col) const;
-    String selection_text() const;
-
-    bool handle_mouse_event(const App::MouseEvent& event);
-
-    void copy_selection();
-    void paste_text();
-
-    PsuedoTerminal m_pseudo_terminal;
-    TTY m_tty;
-    SharedPtr<App::FdWrapper> m_pseudo_terminal_wrapper;
-    int m_selection_start_row { -1 };
-    int m_selection_start_col { -1 };
-    int m_selection_end_row { -1 };
-    int m_selection_end_col { -1 };
     uint8_t m_background_alpha { 255 };
-    bool m_in_selection { false };
 };

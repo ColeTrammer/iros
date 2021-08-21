@@ -1,4 +1,5 @@
 set(SOURCES
+    base_terminal_widget.cpp
     main.cpp
     pseudo_terminal.cpp
     terminal_widget.cpp
