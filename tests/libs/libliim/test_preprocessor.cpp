@@ -44,3 +44,16 @@ TEST(preprocessor, for_each) {
 
     EXPECT_EQ(LIIM_EVAL(LIIM_FOR_EACH(CONCAT3, (a, b, c), (d, e, f))), "|a|b|c|d|e|f"s);
 }
+
+TEST(preprocessor, list) {
+#define CAT(s, x)    "" #s #x
+#define JOIN(acc, x) acc CAT(|, x)
+#define TO_S(list)   LIIM_EVAL(LIIM_LIST_REDUCE(JOIN, "", list))
+
+    EXPECT_EQ(TO_S(LIIM_LIST_INIT()), ""s);
+    EXPECT_EQ(TO_S(LIIM_LIST_APPEND(LIIM_LIST_INIT(), x)), "|x"s);
+    EXPECT_EQ(TO_S(LIIM_LIST_APPEND((x, y), z)), "|x|y|z"s);
+    EXPECT_EQ(TO_S(LIIM_LIST_PREPEND(LIIM_LIST_INIT(), x)), "|x"s);
+    EXPECT_EQ(TO_S(LIIM_LIST_PREPEND((x, y), z)), "|z|x|y"s);
+    EXPECT_EQ(TO_S(LIIM_LIST_CONCAT((a, b), (c, d))), "|a|b|c|d"s);
+}
