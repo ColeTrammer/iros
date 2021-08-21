@@ -39,10 +39,10 @@ Window& ContextMenu::ensure_window(Point p) {
 
         for (auto& item : m_menu_items) {
             auto& button = layout.add<Button>(item.name);
-            button.on_click = [this, &item] {
+            button.on<App::ClickEvent>(*this, [this, &item](auto&) {
                 hide();
                 item.on_click();
-            };
+            });
         }
     }
     return *m_window;

@@ -54,9 +54,9 @@ int main() {
     root_layout.add<App::Widget>();
     root_layout.add<TestWidget>();
     auto& button = root_layout.add<App::Button>("Click Me!");
-    button.on_click = [] {
+    button.on<App::ClickEvent>({}, [](auto&) {
         printf("clicked!\n");
-    };
+    });
 
     auto context_menu = App::ContextMenu::create(window, window);
     context_menu->add_menu_item("A", [] {

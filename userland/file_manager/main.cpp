@@ -41,9 +41,9 @@ int main(int argc, char** argv) {
 
     auto& parent_button = layout.add<App::Button>("Go to parent");
     parent_button.set_preferred_size({ 100, 24 });
-    parent_button.on_click = [&] {
+    parent_button.on<App::ClickEvent>({}, [&](auto&) {
         model->go_to_parent();
-    };
+    });
 
     auto& view = layout.add<App::IconView>();
     view.set_name_column(FileSystemModel::Column::Name);
