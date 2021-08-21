@@ -237,14 +237,8 @@ void Window::invalidate_rect(const Rect& rect) {
         return;
     }
 
-    if (m_will_draw_soon) {
-        return;
-    }
-
-    m_will_draw_soon = true;
-    deferred_invoke([this] {
+    deferred_invoke_batched(m_will_draw_soon, [this] {
         draw();
-        m_will_draw_soon = false;
     });
 }
 }

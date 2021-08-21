@@ -84,6 +84,7 @@ public:
     WeakPtr<const Object> weak_from_this() const { return m_weak_this; }
 
     void deferred_invoke(Function<void()> callback);
+    void deferred_invoke_batched(bool& already_registered_flag, Function<void()> callback);
 
     void __set_weak_this(WeakPtr<Object> weak_this) {
         assert(m_weak_this.expired());

@@ -80,14 +80,8 @@ void Application::render() {
 }
 
 void Application::schedule_render() {
-    if (m_render_scheduled) {
-        return;
-    }
-
-    m_render_scheduled = true;
-    deferred_invoke([this] {
+    deferred_invoke_batched(m_render_scheduled, [this] {
         render();
-        m_render_scheduled = false;
     });
 }
 
