@@ -23,6 +23,17 @@ void Object::deferred_invoke(Function<void()> callback) {
     EventLoop::queue_event(weak_from_this(), make_unique<CallbackEvent>(move(callback)));
 }
 
+void Object::deferred_invoke_batched(bool& already_registered_flag, Function<void()> callback) {
+    if (already_registered_flag) {
+        return;
+    }
+
+    EventLoop::queue_event(weak_from_this(), make_unique<CallbackEvent>([&already_registered_flag, callback = move(callback)] {
+                               callback();
+                               already_registered_flag = false;
+                           }));
+}
+
 bool Object::Handler::can_handle(const Event& event) const {
     return event.name() == m_event_name;
 }
