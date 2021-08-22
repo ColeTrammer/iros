@@ -5,32 +5,40 @@
 #include <errno.h>
 #include <eventloop/event.h>
 #include <eventloop/input_tracker.h>
+#include <liim/format.h>
 #include <signal.h>
 #include <stdio.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
+#include <tui/application.h>
+#include <tui/flex_layout_engine.h>
 #include <unistd.h>
 
 #ifdef __os_2__
 #include <sys/umessage.h>
 #endif /* __os_2__ */
 
+#include "terminal_panel.h"
 #include "terminal_widget.h"
 #include "vga_buffer.h"
 #include "vga_terminal.h"
 
 void print_usage_and_exit(const char* s) {
-    fprintf(stderr, "Usage: %s [-v]\n", s);
+    fprintf(stderr, "Usage: %s [-tv]\n", s);
     exit(2);
 }
 
 int main(int argc, char** argv) {
     [[maybe_unused]] bool graphics_mode = true;
+    bool terminal_mode = false;
 
     int opt;
-    while ((opt = getopt(argc, argv, ":v")) != -1) {
+    while ((opt = getopt(argc, argv, ":tv")) != -1) {
         switch (opt) {
+            case 't':
+                terminal_mode = true;
+                break;
             case 'v':
                 graphics_mode = false;
                 break;
@@ -139,7 +147,6 @@ int main(int argc, char** argv) {
     }
 #endif /* __os_2__ */
 
-    auto app = App::Application::create();
     App::EventLoop::register_signal_handler(SIGCHLD, [] {
         for (;;) {
             int status;
@@ -152,6 +159,26 @@ int main(int argc, char** argv) {
             exit(0);
         }
     });
+
+    if (terminal_mode) {
+        auto app = TUI::Application::try_create();
+        if (!app) {
+            error_log("terminal: stdin is not a tty");
+            return 1;
+        }
+
+        auto& layout = app->set_layout_engine<TUI::FlexLayoutEngine>(TUI::FlexLayoutEngine::Direction::Horizontal);
+        auto& panel = layout.add<TerminalPanel>();
+
+        panel.make_focused();
+
+        app->set_use_alternate_screen_buffer(true);
+        app->set_use_mouse(true);
+        app->enter();
+        return 0;
+    }
+
+    auto app = App::Application::create();
 
     double opacity = 0.90;
     auto window = App::Window::create(nullptr, 200, 200, 80 * 8 + 10, 25 * 16 + 10, "Terminal", opacity != 1.0);
