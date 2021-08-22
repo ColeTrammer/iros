@@ -2,6 +2,7 @@
 
 #include <graphics/color.h>
 #include <liim/function.h>
+#include <liim/maybe.h>
 #include <liim/pointers.h>
 #include <liim/string.h>
 #include <liim/vector.h>
@@ -13,12 +14,12 @@ class PsuedoTerminal;
 class TTY : public TTYParserDispatcher {
 public:
     struct Cell {
-        Color fg { ColorValue::LightGray };
-        Color bg { ColorValue::Black };
+        Maybe<Color> fg;
+        Maybe<Color> bg;
         char ch { ' ' };
-        bool bold { false };
-        bool inverted { false };
-        mutable bool dirty { true };
+        bool bold : 1 { false };
+        bool inverted : 1 { false };
+        mutable bool dirty : 1 { true };
     };
 
     using Row = Vector<Cell>;
@@ -108,11 +109,11 @@ private:
     void clear_row_until(int row, int end_col, char ch = ' ');
     void clear_row_to_end(int row, int start_col, char ch = ' ');
 
-    void reset_bg() { m_bg = ColorValue::Black; }
-    void reset_fg() { m_fg = ColorValue::LightGray; }
+    void reset_bg() { m_bg.reset(); }
+    void reset_fg() { m_fg.reset(); }
 
-    void set_bg(Color c) { m_bg = c; }
-    void set_fg(Color c) { m_fg = c; }
+    void set_bg(Maybe<Color> c) { m_bg = c; }
+    void set_fg(Maybe<Color> c) { m_fg = c; }
 
     void set_inverted(bool b) { m_inverted = b; }
     void set_bold(bool b) { m_bold = b; }
@@ -192,8 +193,8 @@ private:
 
     bool m_inverted { false };
     bool m_bold { false };
-    Color m_fg { ColorValue::LightGray };
-    Color m_bg { ColorValue::Black };
+    Maybe<Color> m_fg;
+    Maybe<Color> m_bg;
 
     Vector<Row> m_rows_below;
     Vector<Row> m_rows_above;

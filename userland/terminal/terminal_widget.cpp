@@ -97,9 +97,11 @@ void TerminalWidget::render() {
                 swap(fg, bg);
             }
 
-            bg.set_alpha(m_background_alpha);
-            renderer.clear_rect(cell_rect, bg);
-            renderer.render_text(String(cell.ch), cell_rect, fg, TextAlign::Center, cell.bold ? Font::bold_font() : Font::default_font());
+            auto bg_to_use = bg.value_or(default_bg);
+            bg_to_use.set_alpha(m_background_alpha);
+            renderer.clear_rect(cell_rect, bg_to_use);
+            renderer.render_text(String(cell.ch), cell_rect, fg.value_or(ColorValue::White), TextAlign::Center,
+                                 cell.bold ? Font::bold_font() : Font::default_font());
         }
     }
 
