@@ -121,6 +121,8 @@ public:
         return this->on<Ev...>(move(handler_callback), listener.weak_from_this());
     }
 
+    void remove_listener(Object& listener);
+
 protected:
     Object();
 

@@ -44,6 +44,22 @@ TEST(object, events_deregistration) {
     EXPECT(!object->emit<CustomEvent>());
 
     EXPECT_EQ(count, 2);
+
+    listener = Object::create(nullptr);
+
+    count = 0;
+    object->on<CustomEvent>(*listener, [&](const auto&) {
+        count++;
+    });
+
+    EXPECT(!object->emit<CustomEvent>());
+    EXPECT(!object->emit<CustomEvent>());
+
+    object->remove_listener(*listener);
+
+    EXPECT(!object->emit<CustomEvent>());
+
+    EXPECT_EQ(count, 2);
 }
 
 TEST(object, event_consuming) {

@@ -51,6 +51,12 @@ void Object::Handler::set_listener(WeakPtr<Object> listener) {
     m_global_listener = false;
 }
 
+void Object::remove_listener(Object& listener) {
+    m_handlers.remove_if([&](auto& handler) {
+        return handler.listener().get() == &listener;
+    });
+}
+
 bool Object::dispatch(const Event& event) const {
     auto& handlers = const_cast<Vector<Handler>&>(m_handlers);
     for (auto& handler : handlers) {
