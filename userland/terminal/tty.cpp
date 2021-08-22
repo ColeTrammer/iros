@@ -657,28 +657,28 @@ void TTY::csi_sgr(const Vector<int>& params) {
                 set_inverted(true);
                 break;
             case 30:
-                set_fg(VGA_COLOR_BLACK);
+                set_fg({ VGA_COLOR_BLACK });
                 break;
             case 31:
-                set_fg(VGA_COLOR_RED);
+                set_fg({ VGA_COLOR_RED });
                 break;
             case 32:
-                set_fg(VGA_COLOR_GREEN);
+                set_fg({ VGA_COLOR_GREEN });
                 break;
             case 33:
-                set_fg(VGA_COLOR_BROWN);
+                set_fg({ VGA_COLOR_BROWN });
                 break;
             case 34:
-                set_fg(VGA_COLOR_BLUE);
+                set_fg({ VGA_COLOR_BLUE });
                 break;
             case 35:
-                set_fg(VGA_COLOR_MAGENTA);
+                set_fg({ VGA_COLOR_MAGENTA });
                 break;
             case 36:
-                set_fg(VGA_COLOR_CYAN);
+                set_fg({ VGA_COLOR_CYAN });
                 break;
             case 37:
-                set_fg(VGA_COLOR_LIGHT_GREY);
+                set_fg({ VGA_COLOR_LIGHT_GREY });
                 break;
             case 38:
                 // Truecolor Foreground (xterm-256color)
@@ -688,36 +688,36 @@ void TTY::csi_sgr(const Vector<int>& params) {
                 if (params.size() - i < 5) {
                     break;
                 }
-                set_fg({ (uint8_t) clamp(params[i + 2], 0, 255), (uint8_t) clamp(params[i + 3], 0, 255),
-                         (uint8_t) clamp(params[i + 4], 0, 255) });
+                set_fg(Color { (uint8_t) clamp(params[i + 2], 0, 255), (uint8_t) clamp(params[i + 3], 0, 255),
+                               (uint8_t) clamp(params[i + 4], 0, 255) });
                 i += 4;
                 break;
             case 39:
                 reset_fg();
                 break;
             case 40:
-                set_bg(VGA_COLOR_BLACK);
+                set_bg({ VGA_COLOR_BLACK });
                 break;
             case 41:
-                set_bg(VGA_COLOR_RED);
+                set_bg({ VGA_COLOR_RED });
                 break;
             case 42:
-                set_bg(VGA_COLOR_GREEN);
+                set_bg({ VGA_COLOR_GREEN });
                 break;
             case 43:
-                set_bg(VGA_COLOR_BROWN);
+                set_bg({ VGA_COLOR_BROWN });
                 break;
             case 44:
-                set_bg(VGA_COLOR_BLUE);
+                set_bg({ VGA_COLOR_BLUE });
                 break;
             case 45:
-                set_bg(VGA_COLOR_MAGENTA);
+                set_bg({ VGA_COLOR_MAGENTA });
                 break;
             case 46:
-                set_bg(VGA_COLOR_CYAN);
+                set_bg({ VGA_COLOR_CYAN });
                 break;
             case 47:
-                set_bg(VGA_COLOR_LIGHT_GREY);
+                set_bg({ VGA_COLOR_LIGHT_GREY });
                 break;
             case 48:
                 // Truecolor Background (xterm-256color)
@@ -727,60 +727,60 @@ void TTY::csi_sgr(const Vector<int>& params) {
                 if (params.size() - i < 5) {
                     break;
                 }
-                set_bg({ (uint8_t) clamp(params[i + 2], 0, 255), (uint8_t) clamp(params[i + 3], 0, 255),
-                         (uint8_t) clamp(params[i + 4], 0, 255) });
+                set_bg(Color { (uint8_t) clamp(params[i + 2], 0, 255), (uint8_t) clamp(params[i + 3], 0, 255),
+                               (uint8_t) clamp(params[i + 4], 0, 255) });
                 i += 4;
                 break;
             case 49:
                 reset_bg();
                 break;
             case 90:
-                set_fg(VGA_COLOR_DARK_GREY);
+                set_fg({ VGA_COLOR_DARK_GREY });
                 break;
             case 91:
-                set_fg(VGA_COLOR_LIGHT_RED);
+                set_fg({ VGA_COLOR_LIGHT_RED });
                 break;
             case 92:
-                set_fg(VGA_COLOR_LIGHT_GREEN);
+                set_fg({ VGA_COLOR_LIGHT_GREEN });
                 break;
             case 93:
-                set_fg(VGA_COLOR_YELLOW);
+                set_fg({ VGA_COLOR_YELLOW });
                 break;
             case 94:
-                set_fg(VGA_COLOR_LIGHT_BLUE);
+                set_fg({ VGA_COLOR_LIGHT_BLUE });
                 break;
             case 95:
-                set_fg(VGA_COLOR_LIGHT_MAGENTA);
+                set_fg({ VGA_COLOR_LIGHT_MAGENTA });
                 break;
             case 96:
-                set_fg(VGA_COLOR_LIGHT_CYAN);
+                set_fg({ VGA_COLOR_LIGHT_CYAN });
                 break;
             case 97:
-                set_fg(VGA_COLOR_WHITE);
+                set_fg({ VGA_COLOR_WHITE });
                 break;
             case 100:
-                set_bg(VGA_COLOR_DARK_GREY);
+                set_bg({ VGA_COLOR_DARK_GREY });
                 break;
             case 101:
-                set_bg(VGA_COLOR_LIGHT_RED);
+                set_bg({ VGA_COLOR_LIGHT_RED });
                 break;
             case 102:
-                set_bg(VGA_COLOR_LIGHT_GREEN);
+                set_bg({ VGA_COLOR_LIGHT_GREEN });
                 break;
             case 103:
-                set_bg(VGA_COLOR_YELLOW);
+                set_bg({ VGA_COLOR_YELLOW });
                 break;
             case 104:
-                set_bg(VGA_COLOR_LIGHT_BLUE);
+                set_bg({ VGA_COLOR_LIGHT_BLUE });
                 break;
             case 105:
-                set_bg(VGA_COLOR_LIGHT_MAGENTA);
+                set_bg({ VGA_COLOR_LIGHT_MAGENTA });
                 break;
             case 106:
-                set_bg(VGA_COLOR_LIGHT_CYAN);
+                set_bg({ VGA_COLOR_LIGHT_CYAN });
                 break;
             case 107:
-                set_bg(VGA_COLOR_WHITE);
+                set_bg({ VGA_COLOR_WHITE });
                 break;
             default:
                 break;

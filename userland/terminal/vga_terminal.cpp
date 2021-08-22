@@ -59,8 +59,8 @@ void VgaTerminal::render() {
                 cursor_col = c;
             }
 
-            auto bg = cell.bg.to_vga_color().value();
-            auto fg = cell.fg.to_vga_color().value();
+            auto bg = cell.bg.value_or({ VGA_COLOR_BLACK }).to_vga_color().value();
+            auto fg = cell.fg.value_or({ { VGA_COLOR_WHITE } }).to_vga_color().value();
             if (cell.inverted) {
                 swap(bg, fg);
             }
