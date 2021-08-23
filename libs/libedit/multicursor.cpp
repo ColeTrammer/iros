@@ -82,118 +82,121 @@ void MultiCursor::add_cursor_at(Document& document, Display& display, const Text
     }
 }
 
-void MultiCursor::did_delete_lines(Document& document, Display& display, int line_index, int line_count) {
-    for (auto& cursor : m_cursors) {
-        if (cursor.selection().overlaps(Selection { { line_index, 0 }, { line_index + line_count, 0 } })) {
-            cursor.selection().clear();
-        }
-        if (cursor.line_index() < line_index) {
-            continue;
-        }
-        if (cursor.line_index() == line_index) {
-            if (line_index == document.num_lines()) {
-                cursor.set({ document.num_lines() - 1, document.last_line().length() });
+void MultiCursor::install_document_listeners(Display& display, Document& document) {
+    document.on<DeleteLines>(display.this_widget(), [this, &display, &document](const DeleteLines& event) {
+        for (auto& cursor : m_cursors) {
+            if (cursor.selection().overlaps(Selection { { event.line_index(), 0 }, { event.line_index() + event.line_count(), 0 } })) {
+                cursor.selection().clear();
+            }
+            if (cursor.line_index() < event.line_index()) {
                 continue;
             }
-            document.clear_selection(cursor);
-            document.move_cursor_to(display, cursor,
-                                    document.text_index_at_absolute_position(display, cursor.absolute_position(document, display)));
-            continue;
+            if (cursor.line_index() == event.line_index()) {
+                if (event.line_index() == document.num_lines()) {
+                    cursor.set({ document.num_lines() - 1, document.last_line().length() });
+                    continue;
+                }
+                document.clear_selection(cursor);
+                document.move_cursor_to(display, cursor,
+                                        document.text_index_at_absolute_position(display, cursor.absolute_position(document, display)));
+                continue;
+            }
+            cursor.move_up_preserving_selection(event.line_count());
         }
-        cursor.move_up_preserving_selection(line_count);
-    }
-}
+    });
 
-void MultiCursor::did_add_lines(Document&, Display&, int line_index, int line_count) {
-    for (auto& cursor : m_cursors) {
-        if (cursor.selection().overlaps(Selection { { line_index, 0 }, { line_index + line_count, 0 } })) {
-            cursor.selection().clear();
+    document.on<AddLines>(display.this_widget(), [this, &display, &document](const AddLines& event) {
+        for (auto& cursor : m_cursors) {
+            if (cursor.selection().overlaps(Selection { { event.line_index(), 0 }, { event.line_index() + event.line_count(), 0 } })) {
+                cursor.selection().clear();
+            }
+            if (cursor.line_index() < event.line_index()) {
+                continue;
+            }
+            cursor.move_down_preserving_selection(event.line_count());
         }
-        if (cursor.line_index() < line_index) {
-            continue;
-        }
-        cursor.move_down_preserving_selection(line_count);
-    }
-}
+    });
 
-void MultiCursor::did_split_line(Document& document, Display& display, int line_index, int index_into_line) {
-    for (auto& cursor : m_cursors) {
-        if (cursor.selection().overlaps(Selection { { line_index, index_into_line }, { line_index + 1, 0 } })) {
-            cursor.selection().clear();
+    document.on<SplitLines>(display.this_widget(), [this, &display, &document](const SplitLines& event) {
+        for (auto& cursor : m_cursors) {
+            if (cursor.selection().overlaps(Selection { { event.line_index(), event.index_into_line() }, { event.line_index() + 1, 0 } })) {
+                cursor.selection().clear();
+            }
+            if (cursor.line_index() != event.line_index() || cursor.index_into_line() < event.index_into_line()) {
+                continue;
+            }
+            cursor.set({ event.line_index() + 1, cursor.index_into_line() - event.index_into_line() });
+            cursor.compute_max_col(document, display);
         }
-        if (cursor.line_index() != line_index || cursor.index_into_line() < index_into_line) {
-            continue;
-        }
-        cursor.set({ line_index + 1, cursor.index_into_line() - index_into_line });
-        cursor.compute_max_col(document, display);
-    }
-}
+    });
 
-void MultiCursor::did_merge_lines(Document& document, Display& display, int first_line_index, int first_line_length,
-                                  int second_line_index) {
-    for (auto& cursor : m_cursors) {
-        if (cursor.selection().overlaps(Selection { { second_line_index, 0 }, { second_line_index + 1, 0 } })) {
-            cursor.selection().clear();
+    document.on<MergeLines>(display.this_widget(), [this, &display, &document](const MergeLines& event) {
+        for (auto& cursor : m_cursors) {
+            if (cursor.selection().overlaps(Selection { { event.second_line_index(), 0 }, { event.second_line_index() + 1, 0 } })) {
+                cursor.selection().clear();
+            }
+            if (cursor.line_index() != event.second_line_index()) {
+                continue;
+            }
+            cursor.set({ event.first_line_index(), event.first_line_length() + cursor.index_into_line() });
+            cursor.compute_max_col(document, display);
         }
-        if (cursor.line_index() != second_line_index) {
-            continue;
-        }
-        cursor.set({ first_line_index, first_line_length + cursor.index_into_line() });
-        cursor.compute_max_col(document, display);
-    }
-}
+    });
 
-void MultiCursor::did_add_to_line(Document& document, Display& display, int line_index, int index_into_line, int bytes_added) {
-    for (auto& cursor : m_cursors) {
-        if (cursor.selection().overlaps(Selection { { line_index, index_into_line }, { line_index, index_into_line + bytes_added } })) {
-            cursor.selection().clear();
+    document.on<AddToLine>(display.this_widget(), [this, &display, &document](const AddToLine& event) {
+        for (auto& cursor : m_cursors) {
+            if (cursor.selection().overlaps(Selection { { event.line_index(), event.index_into_line() },
+                                                        { event.line_index(), event.index_into_line() + event.bytes_added() } })) {
+                cursor.selection().clear();
+            }
+            if (cursor.line_index() != event.line_index()) {
+                continue;
+            }
+            if (cursor.index_into_line() < event.index_into_line()) {
+                continue;
+            }
+            cursor.move_right_preserving_selection(event.bytes_added());
+            cursor.compute_max_col(document, display);
         }
-        if (cursor.line_index() != line_index) {
-            continue;
-        }
-        if (cursor.index_into_line() < index_into_line) {
-            continue;
-        }
-        cursor.move_right_preserving_selection(bytes_added);
-        cursor.compute_max_col(document, display);
-    }
-}
+    });
 
-void MultiCursor::did_delete_from_line(Document& document, Display& display, int line_index, int index_into_line, int bytes_deleted) {
-    for (auto& cursor : m_cursors) {
-        if (cursor.selection().overlaps(Selection { { line_index, index_into_line }, { line_index, index_into_line + bytes_deleted } })) {
-            cursor.selection().clear();
+    document.on<DeleteFromLine>(display.this_widget(), [this, &display, &document](const DeleteFromLine& event) {
+        for (auto& cursor : m_cursors) {
+            if (cursor.selection().overlaps(Selection { { event.line_index(), event.index_into_line() },
+                                                        { event.line_index(), event.index_into_line() + event.bytes_deleted() } })) {
+                cursor.selection().clear();
+            }
+            if (cursor.line_index() != event.line_index()) {
+                continue;
+            }
+            if (cursor.index_into_line() <= event.index_into_line()) {
+                continue;
+            }
+            cursor.move_left_preserving_selection(event.bytes_deleted());
+            cursor.compute_max_col(document, display);
         }
-        if (cursor.line_index() != line_index) {
-            continue;
-        }
-        if (cursor.index_into_line() <= index_into_line) {
-            continue;
-        }
-        cursor.move_left_preserving_selection(bytes_deleted);
-        cursor.compute_max_col(document, display);
-    }
-}
+    });
 
-void MultiCursor::did_move_line_to(Document&, Display&, int line, int destination) {
-    auto line_min = min(line, destination);
-    auto line_max = max(line, destination);
-    for (auto& cursor : m_cursors) {
-        if (cursor.line_index() < line_min || cursor.line_index() > line_max) {
-            continue;
-        }
+    document.on<MoveLineTo>(display.this_widget(), [this, &display, &document](const MoveLineTo& event) {
+        auto line_min = min(event.line(), event.destination());
+        auto line_max = max(event.line(), event.destination());
+        for (auto& cursor : m_cursors) {
+            if (cursor.line_index() < line_min || cursor.line_index() > line_max) {
+                continue;
+            }
 
-        if (cursor.line_index() == line) {
-            cursor.move_down_preserving_selection(line - destination);
-            continue;
-        }
+            if (cursor.line_index() == event.line()) {
+                cursor.move_down_preserving_selection(event.line() - event.destination());
+                continue;
+            }
 
-        if (line > destination) {
-            cursor.move_down_preserving_selection(1);
-        } else {
-            cursor.move_up_preserving_selection(1);
+            if (event.line() > event.destination()) {
+                cursor.move_down_preserving_selection(1);
+            } else {
+                cursor.move_up_preserving_selection(1);
+            }
         }
-    }
+    });
 }
 
 bool MultiCursor::should_show_auto_complete_text_at(const Document& document, const Line& line, int index_into_line) const {

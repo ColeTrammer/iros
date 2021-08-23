@@ -83,7 +83,6 @@ void Display::install_document_listeners(Document& new_document) {
         for (int i = 0; i < event.line_count(); i++) {
             m_rendered_lines.remove(event.line_index());
         }
-        m_cursors.did_delete_lines(*document(), *this, event.line_index(), event.line_count());
         notify_line_count_changed();
         schedule_update();
     });
@@ -92,7 +91,6 @@ void Display::install_document_listeners(Document& new_document) {
         for (int i = 0; i < event.line_count(); i++) {
             m_rendered_lines.insert({}, event.line_index());
         }
-        m_cursors.did_add_lines(*document(), *this, event.line_index(), event.line_count());
         notify_line_count_changed();
         schedule_update();
     });
@@ -100,7 +98,6 @@ void Display::install_document_listeners(Document& new_document) {
     new_document.on<SplitLines>(this_widget(), [this](const SplitLines& event) {
         m_rendered_lines.insert({}, event.line_index() + 1);
         document()->line_at_index(event.line_index()).invalidate_rendered_contents(*document(), *this);
-        m_cursors.did_split_line(*document(), *this, event.line_index(), event.index_into_line());
         notify_line_count_changed();
         schedule_update();
     });
@@ -108,20 +105,17 @@ void Display::install_document_listeners(Document& new_document) {
     new_document.on<MergeLines>(this_widget(), [this](const MergeLines& event) {
         m_rendered_lines.remove(event.second_line_index());
         document()->line_at_index(event.first_line_index()).invalidate_rendered_contents(*document(), *this);
-        m_cursors.did_merge_lines(*document(), *this, event.first_line_index(), event.first_line_length(), event.second_line_index());
         notify_line_count_changed();
         schedule_update();
     });
 
     new_document.on<AddToLine>(this_widget(), [this](const AddToLine& event) {
         document()->line_at_index(event.line_index()).invalidate_rendered_contents(*document(), *this);
-        m_cursors.did_add_to_line(*document(), *this, event.line_index(), event.index_into_line(), event.bytes_added());
         schedule_update();
     });
 
     new_document.on<DeleteFromLine>(this_widget(), [this](const DeleteFromLine& event) {
         document()->line_at_index(event.line_index()).invalidate_rendered_contents(*document(), *this);
-        m_cursors.did_delete_from_line(*document(), *this, event.line_index(), event.index_into_line(), event.bytes_deleted());
         schedule_update();
     });
 
@@ -149,9 +143,10 @@ void Display::install_document_listeners(Document& new_document) {
         }
 
         document()->invalidate_all_rendered_contents();
-        m_cursors.did_move_line_to(*document(), *this, event.line(), event.destination());
         schedule_update();
     });
+
+    cursors().install_document_listeners(*this, new_document);
 }
 
 void Display::uninstall_document_listeners(Document& document) {
