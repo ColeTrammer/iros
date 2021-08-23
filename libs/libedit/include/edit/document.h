@@ -45,7 +45,7 @@ public:
     static SharedPtr<Document> create_single_line(String text = "");
 
     struct StateSnapshot {
-        MultiCursor cursors;
+        MultiCursor::Snapshot cursors;
         bool document_was_modified { false };
     };
 

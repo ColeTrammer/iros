@@ -252,4 +252,12 @@ TextRangeCollection MultiCursor::selections(const Document& document) const {
     }
     return collection;
 }
+
+MultiCursor::Snapshot MultiCursor::snapshot() const {
+    return m_cursors;
+}
+
+void MultiCursor::restore(const Snapshot& snapshot) {
+    m_cursors = snapshot;
+}
 }

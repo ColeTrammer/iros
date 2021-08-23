@@ -548,7 +548,7 @@ void Document::undo(Display& display) {
 }
 
 Document::StateSnapshot Document::snapshot_state(Display& display) const {
-    return { display.cursors(), m_document_was_modified };
+    return { display.cursors().snapshot(), m_document_was_modified };
 }
 
 Document::Snapshot Document::snapshot(Display& display) const {
@@ -564,7 +564,7 @@ void Document::restore(MultiCursor& cursors, Snapshot s, bool restore_selections
 }
 
 void Document::restore_state(MultiCursor& cursors, const StateSnapshot& s, bool restore_selections) {
-    cursors = s.cursors;
+    cursors.restore(s.cursors);
     if (!restore_selections) {
         for (auto& cursor : cursors) {
             cursor.selection().clear();

@@ -14,6 +14,8 @@ enum class AddCursorMode {
 
 class MultiCursor {
 public:
+    using Snapshot = Vector<Cursor>;
+
     MultiCursor();
 
     void remove_duplicate_cursors();
@@ -48,6 +50,9 @@ public:
 
     auto begin() const { return m_cursors.begin(); }
     auto end() const { return m_cursors.end(); }
+
+    Snapshot snapshot() const;
+    void restore(const Snapshot& snapshot);
 
 private:
     Vector<Cursor> m_cursors;
