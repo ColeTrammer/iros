@@ -8,6 +8,7 @@
 #include <edit/text_index.h>
 #include <edit/text_range_collection.h>
 #include <eventloop/forward.h>
+#include <eventloop/object.h>
 #include <liim/function.h>
 #include <liim/pointers.h>
 #include <liim/vector.h>
@@ -25,7 +26,9 @@ enum class InputMode { Document, InputText };
 
 enum class AutoCompleteMode { Never, Always };
 
-class Document {
+class Document final : public App::Object {
+    APP_OBJECT(Document)
+
 public:
     static SharedPtr<Document> create_from_stdin(const String& path, Maybe<String>& error_message);
     static SharedPtr<Document> create_from_file(const String& path, Maybe<String>& error_message);
@@ -43,8 +46,7 @@ public:
         StateSnapshot state;
     };
 
-    Document(Vector<Line> lines, String name, InputMode mode);
-    ~Document();
+    virtual ~Document() override;
 
     void copy_settings_from(const Document& other);
 
@@ -53,11 +55,6 @@ public:
 
     void invalidate_rendered_contents(const Line& line);
     void invalidate_all_rendered_contents();
-
-    void notify_key_pressed(Display& display, const App::KeyEvent& event);
-    void notify_text_event(Display& display, const App::TextEvent& event);
-    bool notify_mouse_event(Display& display, const App::MouseEvent& event);
-    void notify_display_size_changed();
 
     void save(Display& display);
     void quit(Display& display);
@@ -197,6 +194,8 @@ public:
     Function<void()> on_escape_press;
 
 private:
+    Document(Vector<Line> lines, String name, InputMode mode);
+
     void update_selection_state_for_mode(Cursor& cursor, MovementMode mode);
 
     void update_search_results();

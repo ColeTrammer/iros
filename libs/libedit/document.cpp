@@ -36,7 +36,7 @@ SharedPtr<Document> Document::create_from_stdin(const String& path, Maybe<String
         ret = Document::create_empty();
         ret->set_name(path);
     } else {
-        ret = make_shared<Document>(move(lines), path, InputMode::Document);
+        ret = Document::create(nullptr, move(lines), path, InputMode::Document);
     }
 
     assert(freopen("/dev/tty", "r+", stdin));
@@ -48,7 +48,7 @@ SharedPtr<Document> Document::create_from_file(const String& path, Maybe<String>
     if (!file) {
         if (errno == ENOENT) {
             error_message = String::format("new file: `%s'", path.string());
-            return make_shared<Document>(Vector<Line>(), path, InputMode::Document);
+            return Document::create(nullptr, Vector<Line>(), path, InputMode::Document);
         }
         error_message = String::format("error accessing file: `%s': `%s'", path.string(), strerror(errno));
         return Document::create_empty();
@@ -68,7 +68,7 @@ SharedPtr<Document> Document::create_from_file(const String& path, Maybe<String>
         error_message = String::format("error reading file: `%s': `%s'", path.string(), strerror(file->error()));
         ret = Document::create_empty();
     } else {
-        ret = make_shared<Document>(move(lines), path, InputMode::Document);
+        ret = Document::create(nullptr, move(lines), path, InputMode::Document);
     }
 
     if (!file->close()) {
@@ -85,17 +85,17 @@ SharedPtr<Document> Document::create_from_text(const String& text) {
         lines.add(Line(String(line_view)));
     }
 
-    return make_shared<Document>(move(lines), "", InputMode::InputText);
+    return Document::create(nullptr, move(lines), "", InputMode::InputText);
 }
 
 SharedPtr<Document> Document::create_empty() {
-    return make_shared<Document>(Vector<Line>(), "", InputMode::Document);
+    return Document::create(nullptr, Vector<Line>(), "", InputMode::Document);
 }
 
 SharedPtr<Document> Document::create_single_line(String text) {
     Vector<Line> lines;
     lines.add(Line(move(text)));
-    auto ret = make_shared<Document>(move(lines), "", InputMode::InputText);
+    auto ret = Document::create(nullptr, move(lines), "", InputMode::InputText);
     ret->set_submittable(true);
     ret->set_show_line_numbers(false);
     return ret;
@@ -742,9 +742,292 @@ void Document::did_move_line_to(int line, int destination) {
 
 void Document::register_display(Display& display) {
     m_displays.add(&display);
+
+    display.this_widget().on<App::ResizeEvent>(*this, [this](auto&) {
+        if (word_wrap_enabled()) {
+            invalidate_all_rendered_contents();
+        }
+        set_needs_display();
+    });
+
+    display.this_widget().on<App::MouseDownEvent>(*this, [this, &display](const App::MouseDownEvent& event) {
+        auto& cursors = display.cursors();
+        auto index = display.text_index_at_mouse_position({ event.x(), event.y() });
+        if (event.left_button()) {
+            cursors.remove_secondary_cursors();
+            auto& cursor = cursors.main_cursor();
+            move_cursor_to(display, cursor, index, MovementMode::Move);
+            finish_input(display, true);
+            return true;
+        }
+        return false;
+    });
+
+    display.this_widget().on<App::MouseDoubleEvent>(*this, [this, &display](const App::MouseDoubleEvent& event) {
+        auto& cursors = display.cursors();
+        auto index = display.text_index_at_mouse_position({ event.x(), event.y() });
+        if (event.left_button()) {
+            cursors.remove_secondary_cursors();
+            auto& cursor = cursors.main_cursor();
+            move_cursor_to(display, cursor, index, MovementMode::Move);
+            select_word_at_cursor(display, cursor);
+            finish_input(display, true);
+            return true;
+        }
+        return false;
+    });
+
+    display.this_widget().on<App::MouseTripleEvent>(*this, [this, &display](const App::MouseTripleEvent& event) {
+        auto& cursors = display.cursors();
+        auto index = display.text_index_at_mouse_position({ event.x(), event.y() });
+        if (event.left_button()) {
+            cursors.remove_secondary_cursors();
+            auto& cursor = cursors.main_cursor();
+            move_cursor_to(display, cursor, index, MovementMode::Move);
+            select_line_at_cursor(display, cursor);
+            finish_input(display, true);
+            return true;
+        }
+        return false;
+    });
+
+    display.this_widget().on<App::MouseMoveEvent>(*this, [this, &display](const App::MouseMoveEvent& event) {
+        auto& cursors = display.cursors();
+        auto index = display.text_index_at_mouse_position({ event.x(), event.y() });
+        if (event.buttons_down() & App::MouseButton::Left) {
+            cursors.remove_secondary_cursors();
+            auto& cursor = cursors.main_cursor();
+            move_cursor_to(display, cursor, index, MovementMode::Select);
+            finish_input(display, true);
+            return true;
+        }
+        return false;
+    });
+
+    display.this_widget().on<App::MouseScrollEvent>(*this, [this, &display](const App::MouseScrollEvent& event) {
+        display.scroll(2 * event.z(), 0);
+        finish_input(display, false);
+        return true;
+    });
+
+    display.this_widget().on<App::TextEvent>(*this, [this, &display](const App::TextEvent& event) {
+        insert_text_at_cursor(display, event.text());
+        finish_input(display, true);
+        return true;
+    });
+
+    display.this_widget().on<App::KeyDownEvent>(*this, [this, &display](const App::KeyDownEvent& event) {
+        auto& cursors = display.cursors();
+
+        bool should_scroll_cursor_into_view = true;
+        if (event.alt_down()) {
+            switch (event.key()) {
+                case App::Key::DownArrow:
+                    swap_lines_at_cursor(display, SwapDirection::Down);
+                    break;
+                case App::Key::UpArrow:
+                    swap_lines_at_cursor(display, SwapDirection::Up);
+                    break;
+                case App::Key::D:
+                    delete_word(display, DeleteCharMode::Delete);
+                    break;
+                default:
+                    break;
+            }
+
+            finish_input(display, should_scroll_cursor_into_view);
+            return true;
+        }
+
+        if (event.control_down()) {
+            switch (event.key()) {
+                case App::Key::LeftArrow:
+                    for (auto& cursor : cursors) {
+                        move_cursor_left_by_word(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                    }
+                    break;
+                case App::Key::RightArrow:
+                    for (auto& cursor : cursors) {
+                        move_cursor_right_by_word(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                    }
+                    break;
+                case App::Key::DownArrow:
+                    if (event.shift_down()) {
+                        cursors.add_cursor(*this, display, AddCursorMode::Down);
+                    } else {
+                        display.scroll_down(1);
+                        should_scroll_cursor_into_view = false;
+                    }
+                    break;
+                case App::Key::UpArrow:
+                    if (event.shift_down()) {
+                        cursors.add_cursor(*this, display, AddCursorMode::Up);
+                    } else {
+                        display.scroll_up(1);
+                        should_scroll_cursor_into_view = false;
+                    }
+                    break;
+                case App::Key::Home:
+                    for (auto& cursor : cursors) {
+                        move_cursor_to_document_start(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                    }
+                    break;
+                case App::Key::End:
+                    for (auto& cursor : cursors) {
+                        move_cursor_to_document_end(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                    }
+                    break;
+                case App::Key::Backspace:
+                    delete_word(display, DeleteCharMode::Backspace);
+                    break;
+                case App::Key::Delete:
+                    delete_word(display, DeleteCharMode::Delete);
+                    break;
+                case App::Key::Space:
+                    display.compute_suggestions();
+                    display.show_suggestions_panel();
+                    break;
+                case App::Key::A:
+                    select_all(display, cursors.main_cursor());
+                    should_scroll_cursor_into_view = false;
+                    break;
+                case App::Key::C:
+                    copy(display, cursors);
+                    break;
+                case App::Key::D:
+                    select_next_word_at_cursor(display);
+                    break;
+                case App::Key::F:
+                    enter_interactive_search(display);
+                    break;
+                case App::Key::G:
+                    go_to_line(display);
+                    break;
+                case App::Key::L:
+                    if (!input_text_mode()) {
+                        set_show_line_numbers(!m_show_line_numbers);
+                    }
+                    break;
+                case App::Key::O:
+                    if (!input_text_mode()) {
+                        display.do_open_prompt();
+                    }
+                    break;
+                case App::Key::Q:
+                case App::Key::W:
+                    quit(display);
+                    break;
+                case App::Key::S:
+                    if (!input_text_mode()) {
+                        save(display);
+                    }
+                    break;
+                case App::Key::V:
+                    paste(display, cursors);
+                    break;
+                case App::Key::X:
+                    cut(display, cursors);
+                    break;
+                case App::Key::Y:
+                    redo(display);
+                    break;
+                case App::Key::Z:
+                    undo(display);
+                    break;
+                default:
+                    break;
+            }
+
+            finish_input(display, should_scroll_cursor_into_view);
+            return true;
+        }
+
+        switch (event.key()) {
+            case App::Key::LeftArrow:
+                for (auto& cursor : cursors) {
+                    move_cursor_left(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                }
+                break;
+            case App::Key::RightArrow:
+                for (auto& cursor : cursors) {
+                    move_cursor_right(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                }
+                break;
+            case App::Key::DownArrow:
+                for (auto& cursor : cursors) {
+                    move_cursor_down(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                }
+                break;
+            case App::Key::UpArrow:
+                for (auto& cursor : cursors) {
+                    move_cursor_up(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                }
+                break;
+            case App::Key::Home:
+                for (auto& cursor : cursors) {
+                    move_cursor_to_line_start(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                }
+                break;
+            case App::Key::End:
+                for (auto& cursor : cursors) {
+                    move_cursor_to_line_end(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                }
+                break;
+            case App::Key::PageUp:
+                for (auto& cursor : cursors) {
+                    move_cursor_page_up(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                }
+                break;
+            case App::Key::PageDown:
+                for (auto& cursor : cursors) {
+                    move_cursor_page_down(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
+                }
+                break;
+            case App::Key::Backspace:
+                delete_char(display, DeleteCharMode::Backspace);
+                break;
+            case App::Key::Delete:
+                delete_char(display, DeleteCharMode::Delete);
+                break;
+            case App::Key::Enter:
+                if (!submittable() || &cursors.main_cursor().referenced_line(*this) != &last_line()) {
+                    split_line_at_cursor(display);
+                } else if (submittable() && on_submit) {
+                    on_submit();
+                }
+                break;
+            case App::Key::Escape:
+                clear_search();
+                cursors.remove_secondary_cursors();
+                clear_selection(cursors.main_cursor());
+                if (on_escape_press) {
+                    on_escape_press();
+                }
+                break;
+            case App::Key::Tab:
+                if (m_auto_complete_mode == AutoCompleteMode::Always) {
+                    display.compute_suggestions();
+                    auto suggestions = display.suggestions();
+                    if (suggestions.size() == 1) {
+                        insert_suggestion(display, suggestions.first());
+                    } else if (suggestions.size() > 1) {
+                        display.show_suggestions_panel();
+                    }
+                    break;
+                }
+                insert_char(display, '\t');
+                break;
+            default:
+                break;
+        }
+
+        finish_input(display, should_scroll_cursor_into_view);
+        return true;
+    });
 }
 
 void Document::unregister_display(Display& display) {
+    display.this_widget().remove_listener(*this);
     m_displays.remove_element(&display);
 }
 
@@ -844,13 +1127,6 @@ void Document::invalidate_rendered_contents(const Line& line) {
 void Document::invalidate_all_rendered_contents() {
     for (auto& line : m_lines) {
         invalidate_rendered_contents(line);
-    }
-    set_needs_display();
-}
-
-void Document::notify_display_size_changed() {
-    if (word_wrap_enabled()) {
-        invalidate_all_rendered_contents();
     }
     set_needs_display();
 }
@@ -1124,44 +1400,6 @@ void Document::insert_suggestion(Display& display, const MatchedSuggestion& sugg
     insert_text_at_cursor(display, String { suggestion.content() });
 }
 
-bool Document::notify_mouse_event(Display& display, const App::MouseEvent& event) {
-    auto& cursors = display.cursors();
-
-    auto index = display.text_index_at_mouse_position({ event.x(), event.y() });
-
-    bool should_scroll_cursor_into_view = false;
-    bool handled = false;
-    if (event.mouse_down() && event.left_button()) {
-        cursors.remove_secondary_cursors();
-        auto& cursor = cursors.main_cursor();
-        move_cursor_to(display, cursor, index, MovementMode::Move);
-        handled = true;
-    } else if (event.mouse_double() && event.left_button()) {
-        cursors.remove_secondary_cursors();
-        auto& cursor = cursors.main_cursor();
-        move_cursor_to(display, cursor, index, MovementMode::Move);
-        select_word_at_cursor(display, cursor);
-        handled = true;
-    } else if (event.mouse_triple() && event.left_button()) {
-        cursors.remove_secondary_cursors();
-        auto& cursor = cursors.main_cursor();
-        move_cursor_to(display, cursor, index, MovementMode::Move);
-        select_line_at_cursor(display, cursor);
-        handled = true;
-    } else if (event.buttons_down() & App::MouseButton::Left) {
-        cursors.remove_secondary_cursors();
-        auto& cursor = cursors.main_cursor();
-        move_cursor_to(display, cursor, index, MovementMode::Select);
-        handled = true;
-    } else if (event.mouse_scroll()) {
-        display.scroll(2 * event.z(), 0);
-        handled = true;
-    }
-
-    finish_input(display, should_scroll_cursor_into_view);
-    return handled;
-}
-
 void Document::finish_input(Display& display, bool should_scroll_cursor_into_view) {
     auto& cursors = display.cursors();
     cursors.remove_duplicate_cursors();
@@ -1176,218 +1414,5 @@ void Document::finish_input(Display& display, bool should_scroll_cursor_into_vie
     }
 
     set_needs_display();
-}
-
-void Document::notify_text_event(Display& display, const App::TextEvent& event) {
-    insert_text_at_cursor(display, event.text());
-    finish_input(display, true);
-}
-
-void Document::notify_key_pressed(Display& display, const App::KeyEvent& event) {
-    auto& cursors = display.cursors();
-
-    bool should_scroll_cursor_into_view = true;
-    if (event.alt_down()) {
-        switch (event.key()) {
-            case App::Key::DownArrow:
-                swap_lines_at_cursor(display, SwapDirection::Down);
-                break;
-            case App::Key::UpArrow:
-                swap_lines_at_cursor(display, SwapDirection::Up);
-                break;
-            case App::Key::D:
-                delete_word(display, DeleteCharMode::Delete);
-                break;
-            default:
-                break;
-        }
-
-        finish_input(display, should_scroll_cursor_into_view);
-        return;
-    }
-
-    if (event.control_down()) {
-        switch (event.key()) {
-            case App::Key::LeftArrow:
-                for (auto& cursor : cursors) {
-                    move_cursor_left_by_word(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
-                }
-                break;
-            case App::Key::RightArrow:
-                for (auto& cursor : cursors) {
-                    move_cursor_right_by_word(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
-                }
-                break;
-            case App::Key::DownArrow:
-                if (event.shift_down()) {
-                    cursors.add_cursor(*this, display, AddCursorMode::Down);
-                } else {
-                    display.scroll_down(1);
-                    should_scroll_cursor_into_view = false;
-                }
-                break;
-            case App::Key::UpArrow:
-                if (event.shift_down()) {
-                    cursors.add_cursor(*this, display, AddCursorMode::Up);
-                } else {
-                    display.scroll_up(1);
-                    should_scroll_cursor_into_view = false;
-                }
-                break;
-            case App::Key::Home:
-                for (auto& cursor : cursors) {
-                    move_cursor_to_document_start(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
-                }
-                break;
-            case App::Key::End:
-                for (auto& cursor : cursors) {
-                    move_cursor_to_document_end(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
-                }
-                break;
-            case App::Key::Backspace:
-                delete_word(display, DeleteCharMode::Backspace);
-                break;
-            case App::Key::Delete:
-                delete_word(display, DeleteCharMode::Delete);
-                break;
-            case App::Key::Space:
-                display.compute_suggestions();
-                display.show_suggestions_panel();
-                break;
-            case App::Key::A:
-                select_all(display, cursors.main_cursor());
-                should_scroll_cursor_into_view = false;
-                break;
-            case App::Key::C:
-                copy(display, cursors);
-                break;
-            case App::Key::D:
-                select_next_word_at_cursor(display);
-                break;
-            case App::Key::F:
-                enter_interactive_search(display);
-                break;
-            case App::Key::G:
-                go_to_line(display);
-                break;
-            case App::Key::L:
-                if (!input_text_mode()) {
-                    set_show_line_numbers(!m_show_line_numbers);
-                }
-                break;
-            case App::Key::O:
-                if (!input_text_mode()) {
-                    display.do_open_prompt();
-                }
-                break;
-            case App::Key::Q:
-            case App::Key::W:
-                quit(display);
-                break;
-            case App::Key::S:
-                if (!input_text_mode()) {
-                    save(display);
-                }
-                break;
-            case App::Key::V:
-                paste(display, cursors);
-                break;
-            case App::Key::X:
-                cut(display, cursors);
-                break;
-            case App::Key::Y:
-                redo(display);
-                break;
-            case App::Key::Z:
-                undo(display);
-                break;
-            default:
-                break;
-        }
-
-        finish_input(display, should_scroll_cursor_into_view);
-        return;
-    }
-
-    switch (event.key()) {
-        case App::Key::LeftArrow:
-            for (auto& cursor : cursors) {
-                move_cursor_left(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
-            }
-            break;
-        case App::Key::RightArrow:
-            for (auto& cursor : cursors) {
-                move_cursor_right(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
-            }
-            break;
-        case App::Key::DownArrow:
-            for (auto& cursor : cursors) {
-                move_cursor_down(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
-            }
-            break;
-        case App::Key::UpArrow:
-            for (auto& cursor : cursors) {
-                move_cursor_up(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
-            }
-            break;
-        case App::Key::Home:
-            for (auto& cursor : cursors) {
-                move_cursor_to_line_start(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
-            }
-            break;
-        case App::Key::End:
-            for (auto& cursor : cursors) {
-                move_cursor_to_line_end(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
-            }
-            break;
-        case App::Key::PageUp:
-            for (auto& cursor : cursors) {
-                move_cursor_page_up(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
-            }
-            break;
-        case App::Key::PageDown:
-            for (auto& cursor : cursors) {
-                move_cursor_page_down(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
-            }
-            break;
-        case App::Key::Backspace:
-            delete_char(display, DeleteCharMode::Backspace);
-            break;
-        case App::Key::Delete:
-            delete_char(display, DeleteCharMode::Delete);
-            break;
-        case App::Key::Enter:
-            if (!submittable() || &cursors.main_cursor().referenced_line(*this) != &last_line()) {
-                split_line_at_cursor(display);
-            } else if (submittable() && on_submit) {
-                on_submit();
-            }
-            break;
-        case App::Key::Escape:
-            clear_search();
-            cursors.remove_secondary_cursors();
-            clear_selection(cursors.main_cursor());
-            if (on_escape_press) {
-                on_escape_press();
-            }
-            break;
-        case App::Key::Tab:
-            if (m_auto_complete_mode == AutoCompleteMode::Always) {
-                display.compute_suggestions();
-                auto suggestions = display.suggestions();
-                if (suggestions.size() == 1) {
-                    insert_suggestion(display, suggestions.first());
-                } else if (suggestions.size() > 1) {
-                    display.show_suggestions_panel();
-                }
-                break;
-            }
-            insert_char(display, '\t');
-            break;
-        default:
-            break;
-    }
-
-    finish_input(display, should_scroll_cursor_into_view);
 }
 }

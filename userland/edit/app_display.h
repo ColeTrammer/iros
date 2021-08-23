@@ -39,6 +39,7 @@ public:
     constexpr int col_width() const { return 8; }
     constexpr int row_height() const { return 16; }
 
+    virtual App::Object& this_widget() override { return *this; }
     virtual Edit::TextIndex text_index_at_mouse_position(const Point& point) override;
     virtual Edit::RenderedLine compose_line(const Edit::Line& line) override;
     virtual void output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) override;
@@ -72,7 +73,6 @@ private:
 
     int index(int row, int col) const { return row * cols() + col; }
 
-    bool handle_mouse_event(const App::MouseEvent& event);
     void render_cursor(Renderer& renderer);
     void render_cell(Renderer& renderer, int x, int y, char c, Edit::CharacterMetadata metadata);
 

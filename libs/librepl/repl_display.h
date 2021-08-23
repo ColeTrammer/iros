@@ -33,6 +33,7 @@ public:
     virtual int rows() const override { return sized_rect().height(); }
     virtual int cols() const override { return sized_rect().width(); }
 
+    virtual App::Object& this_widget() override { return *this; }
     virtual Edit::TextIndex text_index_at_mouse_position(const Point& point) override;
     virtual Edit::RenderedLine compose_line(const Edit::Line& line) override;
     virtual void output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) override;
@@ -60,7 +61,6 @@ private:
     virtual void document_did_change() override;
     virtual void suggestions_did_change(const Maybe<Edit::TextRange>& old_text_range) override;
 
-    bool handle_mouse_event(const App::MouseEvent& event);
     void move_up_rows(int count);
 
     void set_quit_by_interrupt() { m_quit_by_interrupt = true; }

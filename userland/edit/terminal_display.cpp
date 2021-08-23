@@ -19,39 +19,15 @@ TerminalDisplay::TerminalDisplay() {
 }
 
 void TerminalDisplay::initialize() {
-    on<App::MouseDownEvent, App::MouseDoubleEvent, App::MouseTripleEvent, App::MouseMoveEvent, App::MouseUpEvent, App::MouseScrollEvent>(
-        [this](const App::MouseEvent& event) {
-            return handle_mouse_event(event);
-        });
-
     on<App::KeyDownEvent>([this](const App::KeyDownEvent& event) {
         if (event.key() == App::Key::Escape) {
             hide_prompt_panel();
             hide_search_panel();
         }
-
-        if (document()) {
-            document()->notify_key_pressed(*this, event);
-            TerminalStatusBar::the().display_did_update(*this);
-            return true;
-        }
-        return false;
-    });
-
-    on<App::TextEvent>([this](const App::TextEvent& event) {
-        if (document()) {
-            document()->notify_text_event(*this, event);
-            TerminalStatusBar::the().display_did_update(*this);
-            return true;
-        }
         return false;
     });
 
     on<App::ResizeEvent>([this](const App::ResizeEvent&) {
-        if (document()) {
-            document()->notify_display_size_changed();
-        }
-
         if (m_prompt_panel) {
             m_prompt_panel->set_positioned_rect(positioned_rect().with_height(3));
         }
@@ -87,13 +63,7 @@ void TerminalDisplay::quit() {
 
 void TerminalDisplay::notify_line_count_changed() {
     Display::notify_line_count_changed();
-
-    int old_cols_needed_for_line_numbers = m_cols_needed_for_line_numbers;
     compute_cols_needed_for_line_numbers();
-
-    if (old_cols_needed_for_line_numbers != m_cols_needed_for_line_numbers) {
-        document()->notify_display_size_changed();
-    }
 }
 
 void TerminalDisplay::compute_cols_needed_for_line_numbers() {
@@ -150,19 +120,6 @@ void TerminalDisplay::render() {
     renderer.clear_rect({ 0, rows() - empty_rows, sized_rect().width(), empty_rows });
 
     Panel::render();
-}
-
-bool TerminalDisplay::handle_mouse_event(const App::MouseEvent& event) {
-    if (!document()) {
-        return false;
-    }
-
-    if (document()->notify_mouse_event(*this, event)) {
-        TerminalStatusBar::the().display_did_update(*this);
-        return true;
-    }
-
-    return false;
 }
 
 Edit::TextIndex TerminalDisplay::text_index_at_mouse_position(const Point& point) {

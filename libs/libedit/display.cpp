@@ -7,9 +7,7 @@
 namespace Edit {
 Display::Display() {}
 
-Display::~Display() {
-    set_document(nullptr);
-}
+Display::~Display() {}
 
 void Display::set_document(SharedPtr<Document> document) {
     if (m_document == document) {

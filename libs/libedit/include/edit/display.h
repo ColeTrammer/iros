@@ -4,6 +4,7 @@
 #include <edit/forward.h>
 #include <edit/multicursor.h>
 #include <edit/suggestions.h>
+#include <eventloop/forward.h>
 #include <graphics/color.h>
 #include <graphics/forward.h>
 #include <liim/forward.h>
@@ -32,6 +33,7 @@ public:
     void scroll_right(int times) { scroll(0, times); }
     void scroll(int vertical, int horizontal);
 
+    virtual App::Object& this_widget() = 0;
     virtual TextIndex text_index_at_mouse_position(const Point& point) = 0;
     virtual RenderedLine compose_line(const Line& line) = 0;
     virtual void output_line(int row, int col_offset, const StringView& text, const Vector<CharacterMetadata>& metadata) = 0;

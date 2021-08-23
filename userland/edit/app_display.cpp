@@ -56,35 +56,9 @@ void AppDisplay::initialize() {
     });
     set_context_menu(context_menu);
 
-    on<App::MouseDownEvent, App::MouseDoubleEvent, App::MouseTripleEvent, App::MouseMoveEvent, App::MouseUpEvent, App::MouseScrollEvent>(
-        [this](const App::MouseEvent& event) {
-            return handle_mouse_event(event);
-        });
-
-    on<App::TextEvent>([this](const App::TextEvent& event) {
-        if (!document()) {
-            return false;
-        }
-
-        document()->notify_text_event(*this, event);
-        return true;
-    });
-
-    on<App::KeyDownEvent>([this](const App::KeyEvent& event) {
-        if (!document()) {
-            return false;
-        }
-
-        document()->notify_key_pressed(*this, event);
-        return true;
-    });
-
     on<App::ResizeEvent>([this](const App::ResizeEvent&) {
         m_rows = positioned_rect().height() / row_height();
         m_cols = positioned_rect().width() / col_width();
-        if (document()) {
-            document()->notify_display_size_changed();
-        }
 
         if (m_main_display) {
             ensure_search_display();
@@ -273,18 +247,6 @@ void AppDisplay::render() {
 
     render_cursor(renderer);
     Widget::render();
-}
-
-bool AppDisplay::handle_mouse_event(const App::MouseEvent& event) {
-    if (!document()) {
-        return false;
-    }
-
-    if (document()->notify_mouse_event(*this, event)) {
-        return true;
-    }
-
-    return false;
 }
 
 void AppDisplay::document_did_change() {

@@ -1,3 +1,4 @@
+#include <liim/format.h>
 #include <signal.h>
 #include <tinput/io_terminal.h>
 #include <tui/application.h>

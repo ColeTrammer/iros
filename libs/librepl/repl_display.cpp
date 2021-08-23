@@ -26,12 +26,6 @@ ReplDisplay::ReplDisplay(ReplBase& repl) : m_repl(repl) {
 }
 
 void ReplDisplay::initialize() {
-    on<App::ResizeEvent>([this](const App::ResizeEvent&) {
-        if (document()) {
-            document()->notify_display_size_changed();
-        }
-    });
-
     on<App::KeyDownEvent>([this](const App::KeyEvent& event) {
         if (!document()) {
             return false;
@@ -52,7 +46,8 @@ void ReplDisplay::initialize() {
 
         if (event.key() == App::Key::R && event.control_down()) {
             m_suggest_based_on_history = true;
-            document()->notify_key_pressed(*this, App::KeyDownEvent { App::Key::Space, App::KeyModifier::Control, false });
+            compute_suggestions();
+            show_suggestions_panel();
             return true;
         }
 
@@ -87,17 +82,7 @@ void ReplDisplay::initialize() {
             m_consecutive_tabs = 0;
         }
 
-        document()->notify_key_pressed(*this, event);
-        return true;
-    });
-
-    on<App::TextEvent>([this](const App::TextEvent& event) {
-        if (!document()) {
-            return false;
-        }
-
-        document()->notify_text_event(*this, event);
-        return true;
+        return false;
     });
 
     Panel::initialize();
@@ -181,18 +166,6 @@ void ReplDisplay::render() {
     renderer.clear_rect({ 0, rows() - empty_rows, sized_rect().width(), empty_rows });
 
     return Panel::render();
-}
-
-bool ReplDisplay::handle_mouse_event(const App::MouseEvent& event) {
-    if (!document()) {
-        return false;
-    }
-
-    if (document()->notify_mouse_event(*this, event)) {
-        return true;
-    }
-
-    return false;
 }
 
 static int string_print_width(const StringView& string) {

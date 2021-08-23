@@ -28,7 +28,7 @@ class Panel : public App::Object {
 public:
     Panel();
     virtual void initialize() override;
-    virtual ~Panel();
+    virtual ~Panel() override;
 
     virtual bool steals_focus() { return false; }
 

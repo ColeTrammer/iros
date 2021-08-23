@@ -32,6 +32,7 @@ public:
     virtual int rows() const override { return sized_rect().height(); }
     virtual int cols() const override;
 
+    virtual App::Object& this_widget() override { return *this; }
     virtual Edit::TextIndex text_index_at_mouse_position(const Point& point) override;
     virtual Edit::RenderedLine compose_line(const Edit::Line& line) override;
     virtual void output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) override;
@@ -55,7 +56,6 @@ public:
 private:
     virtual void document_did_change() override;
 
-    bool handle_mouse_event(const App::MouseEvent& event);
     void compute_cols_needed_for_line_numbers();
 
     mutable String m_prev_clipboard_contents;
