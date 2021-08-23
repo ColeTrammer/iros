@@ -15,10 +15,12 @@ void Display::set_document(SharedPtr<Document> document) {
     }
 
     if (m_document) {
+        uninstall_document_listeners(*m_document);
         m_document->unregister_display(*this);
     }
     m_document = move(document);
     if (m_document) {
+        install_document_listeners(*m_document);
         m_document->register_display(*this);
     }
 
@@ -76,78 +78,84 @@ void Display::notify_line_count_changed() {
     m_rendered_lines.resize(document()->num_lines());
 }
 
-void Display::notify_did_delete_lines(int line_index, int line_count) {
-    for (int i = 0; i < line_count; i++) {
-        m_rendered_lines.remove(line_index);
-    }
-    m_cursors.did_delete_lines(*document(), *this, line_index, line_count);
-    notify_line_count_changed();
-    schedule_update();
-}
-
-void Display::notify_did_add_lines(int line_index, int line_count) {
-    for (int i = 0; i < line_count; i++) {
-        m_rendered_lines.insert({}, line_index);
-    }
-    m_cursors.did_add_lines(*document(), *this, line_index, line_count);
-    notify_line_count_changed();
-    schedule_update();
-}
-
-void Display::notify_did_split_line(int line_index, int index_into_line) {
-    m_rendered_lines.insert({}, line_index + 1);
-    document()->line_at_index(line_index).invalidate_rendered_contents(*document(), *this);
-    m_cursors.did_split_line(*document(), *this, line_index, index_into_line);
-    notify_line_count_changed();
-    schedule_update();
-}
-
-void Display::notify_did_merge_lines(int first_line_index, int first_line_length, int second_line_index) {
-    m_rendered_lines.remove(second_line_index);
-    document()->line_at_index(first_line_index).invalidate_rendered_contents(*document(), *this);
-    m_cursors.did_merge_lines(*document(), *this, first_line_index, first_line_length, second_line_index);
-    notify_line_count_changed();
-    schedule_update();
-}
-
-void Display::notify_did_add_to_line(int line_index, int index_into_line, int bytes_added) {
-    document()->line_at_index(line_index).invalidate_rendered_contents(*document(), *this);
-    m_cursors.did_add_to_line(*document(), *this, line_index, index_into_line, bytes_added);
-    schedule_update();
-}
-
-void Display::notify_did_delete_from_line(int line_index, int index_into_line, int bytes_deleted) {
-    document()->line_at_index(line_index).invalidate_rendered_contents(*document(), *this);
-    m_cursors.did_delete_from_line(*document(), *this, line_index, index_into_line, bytes_deleted);
-    schedule_update();
-}
-
-void Display::notify_did_move_line_to(int line, int destination) {
-    auto line_min = min(line, destination);
-    auto line_max = max(line, destination);
-    auto& start_line = document()->line_at_index(line_min);
-    auto& end_line = document()->line_at_index(line_max);
-
-    auto start_line_size = start_line.rendered_line_count(*document(), *this);
-    auto end_line_size = end_line.rendered_line_count(*document(), *this);
-
-    auto rendered_line_min = start_line.absolute_row_position(*document(), *this);
-    auto rendered_line_max = end_line.absolute_row_position(*document(), *this) + end_line_size;
-
-    // FIXME: add Vector<T>::rotate() to replace this computational inefficent and ugly approach.
-    if (line > destination) {
-        for (int i = 0; i < start_line_size; i++) {
-            m_rendered_lines.rotate_left(rendered_line_min, rendered_line_max);
+void Display::install_document_listeners(Document& new_document) {
+    new_document.on<DeleteLines>(this_widget(), [this](const DeleteLines& event) {
+        for (int i = 0; i < event.line_count(); i++) {
+            m_rendered_lines.remove(event.line_index());
         }
-    } else {
-        for (int i = 0; i < end_line_size; i++) {
-            m_rendered_lines.rotate_right(rendered_line_min, rendered_line_max);
-        }
-    }
+        m_cursors.did_delete_lines(*document(), *this, event.line_index(), event.line_count());
+        notify_line_count_changed();
+        schedule_update();
+    });
 
-    document()->invalidate_all_rendered_contents();
-    m_cursors.did_move_line_to(*document(), *this, line, destination);
-    schedule_update();
+    new_document.on<AddLines>(this_widget(), [this](const AddLines& event) {
+        for (int i = 0; i < event.line_count(); i++) {
+            m_rendered_lines.insert({}, event.line_index());
+        }
+        m_cursors.did_add_lines(*document(), *this, event.line_index(), event.line_count());
+        notify_line_count_changed();
+        schedule_update();
+    });
+
+    new_document.on<SplitLines>(this_widget(), [this](const SplitLines& event) {
+        m_rendered_lines.insert({}, event.line_index() + 1);
+        document()->line_at_index(event.line_index()).invalidate_rendered_contents(*document(), *this);
+        m_cursors.did_split_line(*document(), *this, event.line_index(), event.index_into_line());
+        notify_line_count_changed();
+        schedule_update();
+    });
+
+    new_document.on<MergeLines>(this_widget(), [this](const MergeLines& event) {
+        m_rendered_lines.remove(event.second_line_index());
+        document()->line_at_index(event.first_line_index()).invalidate_rendered_contents(*document(), *this);
+        m_cursors.did_merge_lines(*document(), *this, event.first_line_index(), event.first_line_length(), event.second_line_index());
+        notify_line_count_changed();
+        schedule_update();
+    });
+
+    new_document.on<AddToLine>(this_widget(), [this](const AddToLine& event) {
+        document()->line_at_index(event.line_index()).invalidate_rendered_contents(*document(), *this);
+        m_cursors.did_add_to_line(*document(), *this, event.line_index(), event.index_into_line(), event.bytes_added());
+        schedule_update();
+    });
+
+    new_document.on<DeleteFromLine>(this_widget(), [this](const DeleteFromLine& event) {
+        document()->line_at_index(event.line_index()).invalidate_rendered_contents(*document(), *this);
+        m_cursors.did_delete_from_line(*document(), *this, event.line_index(), event.index_into_line(), event.bytes_deleted());
+        schedule_update();
+    });
+
+    new_document.on<MoveLineTo>(this_widget(), [this](const MoveLineTo& event) {
+        auto line_min = min(event.line(), event.destination());
+        auto line_max = max(event.line(), event.destination());
+        auto& start_line = document()->line_at_index(line_min);
+        auto& end_line = document()->line_at_index(line_max);
+
+        auto start_line_size = start_line.rendered_line_count(*document(), *this);
+        auto end_line_size = end_line.rendered_line_count(*document(), *this);
+
+        auto rendered_line_min = start_line.absolute_row_position(*document(), *this);
+        auto rendered_line_max = end_line.absolute_row_position(*document(), *this) + end_line_size;
+
+        // FIXME: add Vector<T>::rotate() to replace this computational inefficent and ugly approach.
+        if (event.line() > event.destination()) {
+            for (int i = 0; i < start_line_size; i++) {
+                m_rendered_lines.rotate_left(rendered_line_min, rendered_line_max);
+            }
+        } else {
+            for (int i = 0; i < end_line_size; i++) {
+                m_rendered_lines.rotate_right(rendered_line_min, rendered_line_max);
+            }
+        }
+
+        document()->invalidate_all_rendered_contents();
+        m_cursors.did_move_line_to(*document(), *this, event.line(), event.destination());
+        schedule_update();
+    });
+}
+
+void Display::uninstall_document_listeners(Document& document) {
+    document.remove_listener(this_widget());
 }
 
 Display::RenderingInfo Display::rendering_info_for_metadata(const CharacterMetadata& metadata) const {

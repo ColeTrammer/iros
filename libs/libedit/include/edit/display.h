@@ -53,13 +53,6 @@ public:
     virtual String clipboard_contents(bool& is_whole_line) const = 0;
 
     virtual void notify_line_count_changed();
-    void notify_did_delete_lines(int line_index, int line_count);
-    void notify_did_add_lines(int line_index, int line_count);
-    void notify_did_split_line(int line_index, int index_into_line);
-    void notify_did_merge_lines(int first_line_index, int first_line_length, int second_line_index);
-    void notify_did_add_to_line(int line_index, int index_into_line, int bytes_added);
-    void notify_did_delete_from_line(int line_index, int index_into_line, int bytes_deleted);
-    void notify_did_move_line_to(int line, int destination);
 
     void set_document(SharedPtr<Document> document);
 
@@ -97,6 +90,9 @@ protected:
     virtual void suggestions_did_change(const Maybe<TextRange>&) {}
 
 private:
+    void install_document_listeners(Document& document);
+    void uninstall_document_listeners(Document& document);
+
     SharedPtr<Document> m_document;
     MultiCursor m_cursors;
     Vector<RenderedLine> m_rendered_lines;

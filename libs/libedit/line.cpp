@@ -31,9 +31,9 @@ void Line::overwrite(Document& document, Line&& line, OverwriteFrom mode) {
 
     auto start_index = mode == OverwriteFrom::LineStart ? 0 : min(old_length, length());
     if (delta_length < 0) {
-        document.did_delete_from_line(document.index_of_line(*this), start_index, -delta_length);
+        document.emit<DeleteFromLine>(document.index_of_line(*this), start_index, -delta_length);
     } else if (delta_length > 0) {
-        document.did_add_to_line(document.index_of_line(*this), start_index, delta_length);
+        document.emit<AddToLine>(document.index_of_line(*this), start_index, delta_length);
     } else {
         document.invalidate_rendered_contents(*this);
     }
@@ -128,12 +128,12 @@ int Line::max_col_in_relative_row(const Document& document, Display& display, in
 
 void Line::insert_char_at(Document& document, int position, char c) {
     m_contents.insert(c, position);
-    document.did_add_to_line(document.index_of_line(*this), position, 1);
+    document.emit<AddToLine>(document.index_of_line(*this), position, 1);
 }
 
 void Line::remove_char_at(Document& document, int position) {
     m_contents.remove_index(position);
-    document.did_delete_from_line(document.index_of_line(*this), position, 1);
+    document.emit<DeleteFromLine>(document.index_of_line(*this), position, 1);
 }
 
 void Line::combine_line(Document&, Line& line) {

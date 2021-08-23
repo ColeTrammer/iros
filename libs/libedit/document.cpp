@@ -674,12 +674,12 @@ void Document::clear_selection(Cursor& cursor) {
 
 void Document::remove_line(int index) {
     m_lines.remove(index);
-    did_delete_lines(index, 1);
+    emit<DeleteLines>(index, 1);
 }
 
 void Document::insert_line(Line&& line, int index) {
     m_lines.insert(move(line), index);
-    did_add_lines(index, 1);
+    emit<AddLines>(index, 1);
 }
 
 void Document::merge_lines(int l1, int l2) {
@@ -687,7 +687,7 @@ void Document::merge_lines(int l1, int l2) {
     auto old_l1_length = m_lines[l1].length();
     m_lines[l1].combine_line(*this, m_lines[l2]);
     m_lines.remove(l2);
-    did_merge_lines(l1, old_l1_length, l2);
+    emit<MergeLines>(l1, old_l1_length, l2);
 }
 
 void Document::split_line_at(const TextIndex& index) {
@@ -695,49 +695,7 @@ void Document::split_line_at(const TextIndex& index) {
     auto split_result = line.split_at(index.index_into_line());
     line.overwrite(*this, move(split_result.first), Line::OverwriteFrom::None);
     m_lines.insert(move(split_result.second), index.line_index() + 1);
-    did_split_line(index.line_index(), index.index_into_line());
-}
-
-void Document::did_delete_lines(int line_index, int line_count) {
-    for (auto* display : m_displays) {
-        display->notify_did_delete_lines(line_index, line_count);
-    }
-}
-
-void Document::did_add_lines(int line_index, int line_count) {
-    for (auto* display : m_displays) {
-        display->notify_did_add_lines(line_index, line_count);
-    }
-}
-
-void Document::did_split_line(int line_index, int index_into_line) {
-    for (auto* display : m_displays) {
-        display->notify_did_split_line(line_index, index_into_line);
-    }
-}
-
-void Document::did_merge_lines(int first_line_index, int first_line_length, int second_line_index) {
-    for (auto* display : m_displays) {
-        display->notify_did_merge_lines(first_line_index, first_line_length, second_line_index);
-    }
-}
-
-void Document::did_add_to_line(int line_index, int index_into_line, int bytes_added) {
-    for (auto* display : m_displays) {
-        display->notify_did_add_to_line(line_index, index_into_line, bytes_added);
-    }
-}
-
-void Document::did_delete_from_line(int line_index, int index_into_line, int bytes_deleted) {
-    for (auto* display : m_displays) {
-        display->notify_did_delete_from_line(line_index, index_into_line, bytes_deleted);
-    }
-}
-
-void Document::did_move_line_to(int line, int destination) {
-    for (auto* display : m_displays) {
-        display->notify_did_move_line_to(line, destination);
-    }
+    emit<SplitLines>(index.line_index(), index.index_into_line());
 }
 
 void Document::register_display(Display& display) {
@@ -1037,7 +995,7 @@ void Document::move_line_to(int line, int destination) {
     } else {
         m_lines.rotate_left(line, destination + 1);
     }
-    did_move_line_to(line, destination);
+    emit<MoveLineTo>(line, destination);
 }
 
 void Document::copy(Display& display, MultiCursor& cursors) {

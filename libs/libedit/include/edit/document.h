@@ -7,11 +7,19 @@
 #include <edit/suggestions.h>
 #include <edit/text_index.h>
 #include <edit/text_range_collection.h>
-#include <eventloop/forward.h>
+#include <eventloop/event.h>
 #include <eventloop/object.h>
 #include <liim/function.h>
 #include <liim/pointers.h>
 #include <liim/vector.h>
+
+APP_EVENT(Edit, DeleteLines, App::Event, (), ((int, line_index), (int, line_count)), ())
+APP_EVENT(Edit, AddLines, App::Event, (), ((int, line_index), (int, line_count)), ())
+APP_EVENT(Edit, SplitLines, App::Event, (), ((int, line_index), (int, index_into_line)), ())
+APP_EVENT(Edit, MergeLines, App::Event, (), ((int, first_line_index), (int, first_line_length), (int, second_line_index)), ())
+APP_EVENT(Edit, AddToLine, App::Event, (), ((int, line_index), (int, index_into_line), (int, bytes_added)), ())
+APP_EVENT(Edit, DeleteFromLine, App::Event, (), ((int, line_index), (int, index_into_line), (int, bytes_deleted)), ())
+APP_EVENT(Edit, MoveLineTo, App::Event, (), ((int, line), (int, destination)), ())
 
 namespace Edit {
 enum class UpdateMaxCursorCol { No, Yes };
@@ -170,14 +178,6 @@ public:
 
     Line& last_line() { return m_lines.last(); }
     const Line& last_line() const { return m_lines.last(); }
-
-    void did_delete_lines(int line_index, int line_count);
-    void did_add_lines(int line_index, int line_count);
-    void did_split_line(int line_index, int index_into_line);
-    void did_merge_lines(int first_line_index, int first_line_length, int second_line_index);
-    void did_add_to_line(int line_index, int index_into_line, int bytes_added);
-    void did_delete_from_line(int line_index, int index_into_line, int bytes_deleted);
-    void did_move_line_to(int line, int destination);
 
     bool execute_command(Display& display, Command& command);
 
