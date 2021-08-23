@@ -19,7 +19,11 @@ public:
         other.m_ptr = nullptr;
     }
 
-    ~UniquePtr() { delete m_ptr; }
+    ~UniquePtr() {
+        auto ptr = m_ptr;
+        m_ptr = nullptr;
+        delete ptr;
+    }
 
     UniquePtr& operator=(std::nullptr_t) {
         UniquePtr<T> temp;
@@ -135,15 +139,19 @@ public:
             return;
         }
 
-        m_control_block->deref();
-        if (m_control_block->ref_count() == 0) {
-            delete m_ptr;
-            if (m_control_block->weak_ref_count() == 0) {
-                delete m_control_block;
-            }
-        }
+        auto ptr = m_ptr;
+        auto control_block = m_control_block;
+
         m_control_block = nullptr;
         m_ptr = nullptr;
+
+        control_block->deref();
+        if (control_block->ref_count() == 0) {
+            if (control_block->weak_ref_count() == 0) {
+                delete control_block;
+            }
+            delete ptr;
+        }
     }
 
     SharedPtr(const SharedPtr& other) : m_ptr(other.m_ptr), m_control_block(other.m_control_block) {
@@ -342,14 +350,17 @@ public:
     }
 
     void reset() {
-        if (m_control_block) {
-            m_control_block->weak_deref();
-            if (m_control_block->ref_count() == 0 && m_control_block->weak_ref_count() == 0) {
-                delete m_control_block;
+        auto control_block = m_control_block;
+
+        m_ptr = nullptr;
+        m_control_block = nullptr;
+
+        if (control_block) {
+            control_block->weak_deref();
+            if (control_block->ref_count() == 0 && control_block->weak_ref_count() == 0) {
+                delete control_block;
             }
         }
-        m_control_block = nullptr;
-        m_ptr = nullptr;
     }
 
     void swap(WeakPtr& other) {
