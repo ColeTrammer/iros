@@ -199,8 +199,9 @@ void MultiCursor::install_document_listeners(Display& display, Document& documen
     });
 }
 
-bool MultiCursor::should_show_auto_complete_text_at(const Document& document, const Line& line, int index_into_line) const {
-    return document.preview_auto_complete() && &main_cursor().referenced_line(document) == &line &&
+bool MultiCursor::should_show_auto_complete_text_at(const Display& display, const Document& document, const Line& line,
+                                                    int index_into_line) const {
+    return display.preview_auto_complete() && &main_cursor().referenced_line(document) == &line &&
            main_cursor().index_into_line() == index_into_line;
 }
 
