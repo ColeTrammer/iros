@@ -1,5 +1,7 @@
 #pragma once
 
+#include <app/base/forward.h>
+
 namespace App {
 class Application;
 class BoxLayout;
@@ -7,6 +9,8 @@ class Button;
 class ContextMenu;
 class HorizontalBoxLayout;
 class IconView;
+class LayoutConstraint;
+class LayoutEngine;
 class Layout;
 class Menubar;
 class ModelClient;
