@@ -5,11 +5,11 @@ set(SOURCES
     application_os_2.cpp
     application_sdl.cpp
     application.cpp
-    box_layout.cpp
     button.cpp
     context_menu.cpp
+    flex_layout_engine.cpp
     icon_view.cpp
-    layout.cpp
+    layout_engine.cpp
     menubar.cpp
     model.cpp
     tab_widget.cpp

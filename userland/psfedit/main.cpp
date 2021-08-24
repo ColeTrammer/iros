@@ -1,6 +1,6 @@
 #include <app/application.h>
-#include <app/box_layout.h>
 #include <app/button.h>
+#include <app/flex_layout_engine.h>
 #include <app/text_label.h>
 #include <app/widget.h>
 #include <app/window.h>
@@ -59,14 +59,14 @@ public:
 private:
     GlyphEditorWidget(int width, int height, Font font) : m_width(width), m_height(height) { set_font(font); }
     virtual void initialize() override {
-        auto& layout = set_layout<App::HorizontalBoxLayout>();
+        auto& layout = set_layout_engine<App::HorizontalFlexLayoutEngine>();
         auto& left_container = layout.add<App::Widget>();
 
-        auto& row_layout = left_container.set_layout<App::VerticalBoxLayout>();
+        auto& row_layout = left_container.set_layout_engine<App::VerticalFlexLayoutEngine>();
         row_layout.set_spacing(0);
         for (int i = 0; i < m_height; i++) {
             auto& row_widget = row_layout.add<App::Widget>();
-            auto& col_layout = row_widget.set_layout<App::HorizontalBoxLayout>();
+            auto& col_layout = row_widget.set_layout_engine<App::HorizontalFlexLayoutEngine>();
             col_layout.set_margins({ 0, 0, 0, 0 });
             col_layout.set_spacing(0);
 
@@ -77,7 +77,7 @@ private:
         }
 
         auto& text_container = layout.add<App::Widget>();
-        auto& text_layout = text_container.set_layout<App::VerticalBoxLayout>();
+        auto& text_layout = text_container.set_layout_engine<App::VerticalFlexLayoutEngine>();
 
         m_info_label = text_layout.add<App::TextLabel>("").shared_from_this();
 
@@ -138,17 +138,17 @@ int main(int argc, char** argv) {
     auto window = App::Window::create(nullptr, 250, 150, 500, 600, "PSF Edit");
     auto& main_widget = window->set_main_widget<App::Widget>();
 
-    auto& layout = main_widget.set_layout<App::VerticalBoxLayout>();
+    auto& layout = main_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
     auto& glyph_editor = layout.add<GlyphEditorWidget>(8, 16, font);
     glyph_editor.set_bitset(const_cast<Bitset<uint8_t>*>(font.get_for_character(0)), 0);
 
     auto& glyph_widget = layout.add<App::Widget>();
-    auto& row_layout = glyph_widget.set_layout<App::VerticalBoxLayout>();
+    auto& row_layout = glyph_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
     row_layout.set_spacing(0);
 
     for (int i = 0; i < 16; i++) {
         auto& row_widget = row_layout.add<App::Widget>();
-        auto& col_layout = row_widget.set_layout<App::HorizontalBoxLayout>();
+        auto& col_layout = row_widget.set_layout_engine<App::HorizontalFlexLayoutEngine>();
         col_layout.set_margins({ 0, 0, 0, 0 });
         col_layout.set_spacing(0);
         for (int j = 0; j < 16; j++) {
@@ -162,7 +162,7 @@ int main(int argc, char** argv) {
     }
 
     auto& save_button = layout.add<App::Button>("Save");
-    save_button.set_preferred_size({ App::Size::Auto, 24 });
+    save_button.set_layout_constraint({ App::LayoutConstraint::AutoSize, 24 });
     save_button.on<App::ClickEvent>({}, [&](auto&) {
         if (!font.save_to_file(save_destination)) {
             fprintf(stderr, "psfedit: Failed to save font to `%s'\n", save_destination);

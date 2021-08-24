@@ -91,6 +91,7 @@ void EventLoop::do_queue_event(WeakPtr<Object> target, UniquePtr<Event> event) {
 }
 
 EventLoop::EventLoop() {
+    assert(!s_the);
     s_the = this;
 
     pthread_mutex_init(&m_lock, nullptr);

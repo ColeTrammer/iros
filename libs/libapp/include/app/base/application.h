@@ -16,6 +16,8 @@ public:
 protected:
     Application();
 
+    virtual void before_enter() {}
+
 private:
     EventLoop m_loop;
 };

@@ -60,7 +60,7 @@ void Window::initialize() {
 
     on<WindowDidResizeEvent>([this](auto&) {
         m_platform_window->did_resize();
-        if (auto* main_widget = m_main_widget.get()) {
+        if (auto* main_widget = &this->main_widget()) {
             main_widget->set_positioned_rect(rect());
         }
         pixels()->clear(Application::the().palette()->color(Palette::Background));
@@ -85,70 +85,12 @@ void Window::initialize() {
         m_active = state_event.active();
     });
 
-    on<MouseDownEvent, MouseDoubleEvent, MouseTripleEvent, MouseMoveEvent, MouseUpEvent, MouseScrollEvent>([this](const MouseEvent& event) {
-        return handle_mouse_event(event);
-    });
-
-    on<KeyDownEvent, KeyUpEvent, TextEvent>([this](const Event& event) {
-        return handle_key_or_text_event(event);
-    });
-
-    on<ThemeChangeEvent>([this](const ThemeChangeEvent& event) {
+    on<ThemeChangeEvent>([this](const ThemeChangeEvent&) {
         pixels()->clear(Application::the().palette()->color(Palette::Background));
         invalidate_rect(rect());
-
-        forward_to(*m_main_widget, event);
     });
 
-    Object::initialize();
-}
-
-bool Window::handle_mouse_event(const MouseEvent& event) {
-    auto& mouse_event = static_cast<const MouseEvent&>(event);
-    Widget* widget = nullptr;
-
-    if (!mouse_event.mouse_move()) {
-        hide_current_context_menu();
-    }
-    if (!mouse_event.button() && mouse_event.buttons_down()) {
-        if (!focused_widget()) {
-            return false;
-        }
-        widget = focused_widget().get();
-    } else {
-        widget = find_widget_at_point({ mouse_event.x(), mouse_event.y() });
-        if (focused_widget() && focused_widget().get() != widget) {
-            widget->emit<LeaveEvent>();
-        }
-        set_focused_widget(widget);
-    }
-
-    if (widget) {
-        // FIXME: this is very suspicous now that MouseEvent's have distinct types.
-        auto widget_relative_event = MouseEvent { mouse_event.name(),
-                                                  mouse_event.buttons_down(),
-                                                  mouse_event.x() - widget->positioned_rect().x(),
-                                                  mouse_event.y() - widget->positioned_rect().y(),
-                                                  mouse_event.z(),
-                                                  mouse_event.button(),
-                                                  mouse_event.modifiers() };
-        return forward_to(*widget, widget_relative_event);
-    }
-    return false;
-}
-
-bool Window::handle_key_or_text_event(const Event& event) {
-    if (auto widget = focused_widget()) {
-        return forward_to(*widget, event);
-    }
-    return false;
-}
-
-void Window::set_rect(const Rect& rect) {
-    m_rect = rect;
-    if (m_main_widget) {
-        m_main_widget->set_positioned_rect(rect);
-    }
+    Base::Window::initialize();
 }
 
 void Window::hide() {
@@ -176,47 +118,6 @@ void Window::hide_current_context_menu() {
     }
 }
 
-Widget* Window::find_widget_at_point(Point p) {
-    Widget* parent = m_main_widget.get();
-    while (parent && !parent->children().empty()) {
-        bool found = false;
-        for (auto& child : parent->children()) {
-            if (child->is_widget()) {
-                auto& widget_child = const_cast<Widget&>(static_cast<const Widget&>(*child));
-                if (!widget_child.hidden() && widget_child.positioned_rect().intersects(p)) {
-                    parent = &widget_child;
-                    found = true;
-                    break;
-                }
-            }
-        }
-
-        if (!found) {
-            break;
-        }
-    }
-    return parent;
-}
-
-void Window::set_focused_widget(Widget* widget) {
-    if (!widget) {
-        m_focused_widget.reset();
-        return;
-    }
-
-    m_focused_widget = widget->weak_from_this();
-
-    EventLoop::queue_event(widget->weak_from_this(), make_unique<FocusedEvent>());
-}
-
-SharedPtr<Widget> Window::focused_widget() {
-    auto ret = m_focused_widget.lock();
-    if (!ret) {
-        set_focused_widget(nullptr);
-    }
-    return ret;
-}
-
 void Window::clear_current_context_menu() {
     m_current_context_menu.reset();
 }
@@ -225,20 +126,10 @@ void Window::set_current_context_menu(ContextMenu* menu) {
     m_current_context_menu = menu->weak_from_this();
 }
 
-void Window::draw() {
-    if (m_main_widget && !m_main_widget->hidden()) {
-        m_main_widget->render();
+void Window::do_render() {
+    if (!main_widget().hidden()) {
+        main_widget().render();
         m_platform_window->flush_pixels();
     }
-}
-
-void Window::invalidate_rect(const Rect& rect) {
-    if (rect.width() == 0 || rect.height() == 0) {
-        return;
-    }
-
-    deferred_invoke_batched(m_will_draw_soon, [this] {
-        draw();
-    });
 }
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <app/base/application.h>
 #include <app/forward.h>
 #include <eventloop/event_loop.h>
 #include <eventloop/input_tracker.h>
@@ -18,15 +19,12 @@ public:
     virtual void server_did_make_window_active(const WindowServer::Server::ServerDidMakeWindowActive&) {}
 };
 
-class Application {
+class Application : public Base::Application {
 public:
-    static UniquePtr<Application> create();
+    static SharedPtr<Application> create();
     static Application& the();
 
     virtual ~Application();
-
-    void enter();
-    EventLoop& main_event_loop() { return m_loop; }
 
     InputTracker& input_tracker() { return m_mouse_tracker; }
 
@@ -48,10 +46,11 @@ protected:
 
     void initialize_palette(SharedPtr<Palette> palette) { m_palette = move(palette); }
 
+    virtual void before_enter() override;
+
 private:
     friend class WindowServerClient;
 
-    EventLoop m_loop;
     InputTracker m_mouse_tracker;
     SharedPtr<Palette> m_palette;
 };

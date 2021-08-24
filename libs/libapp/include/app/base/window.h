@@ -14,6 +14,7 @@ public:
     virtual ~Window() override;
 
     const Rect& rect() const { return m_rect; }
+    void set_rect(const Rect& rect);
 
     void invalidate_rect(const Rect& rect);
     const RectSet& dirty_rects() const { return m_dirty_rects; }

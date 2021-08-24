@@ -120,7 +120,9 @@ void Widget::set_positioned_rect(const Rect& rect) {
     int old_width = m_positioned_rect.width();
     int old_height = m_positioned_rect.height();
 
+    invalidate();
     m_positioned_rect = rect;
+    invalidate();
 
     if (old_width != rect.width() || old_height != rect.height()) {
         emit<ResizeEvent>();

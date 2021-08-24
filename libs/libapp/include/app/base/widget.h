@@ -54,7 +54,7 @@ public:
     const LayoutEngine* layout_engine() const { return m_layout_engine.get(); }
 
 private:
-    virtual bool is_base_widget() final { return true; }
+    virtual bool is_base_widget() const final override { return true; }
 
     void do_set_layout_engine(UniquePtr<LayoutEngine> engine);
     void relayout();
