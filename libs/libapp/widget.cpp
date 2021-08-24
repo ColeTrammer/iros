@@ -1,6 +1,6 @@
 #include <app/application.h>
 #include <app/context_menu.h>
-#include <app/layout.h>
+#include <app/layout_engine.h>
 #include <app/widget.h>
 #include <app/window.h>
 #include <eventloop/event.h>
@@ -24,97 +24,21 @@ void Widget::initialize() {
         return false;
     });
 
-    on<MouseDoubleEvent, MouseTripleEvent>([this](const MouseEvent& event) {
-        return emit<MouseDownEvent>(event.buttons_down(), event.x(), event.y(), event.z(), event.button(), event.modifiers());
-    });
-
-    on<ResizeEvent>([this](const ResizeEvent&) {
-        if (layout()) {
-            layout()->layout();
-        }
-    });
-
-    on<ThemeChangeEvent>([this](const ThemeChangeEvent& event) {
-        forward_to_children(event);
-    });
-
-    Object::initialize();
+    Base::Widget::initialize();
 }
 
 Widget::~Widget() {}
 
-void Widget::render() {
-#ifdef WIDGET_DEBUG
-    auto renderer = get_renderer();
-    renderer.draw_rect(sized_rect(), outline_color());
-#endif /* WIDGET_DEBUG */
-
-    for (auto& child : children()) {
-        if (child->is_widget()) {
-            auto& widget = const_cast<Widget&>(static_cast<const Widget&>(*child));
-            if (!widget.hidden()) {
-                widget.render();
-            }
-        }
-    }
-}
-
-void Widget::set_positioned_rect(const Rect& rect) {
-    int old_width = m_positioned_rect.width();
-    int old_height = m_positioned_rect.height();
-
-    m_positioned_rect = rect;
-
-    if (old_width != rect.width() || old_height != rect.height()) {
-        emit<ResizeEvent>();
-    }
-}
-
-void Widget::set_preferred_size(const Size& size) {
-    if (m_preferred_size.width == size.width && m_preferred_size.height == size.height) {
-        return;
-    }
-
-    m_preferred_size = size;
-    if (auto* parent = this->parent()) {
-        if (parent->is_widget()) {
-            if (auto* parent_layout = static_cast<Widget&>(*parent).layout()) {
-                parent_layout->layout();
-            }
-        }
-    }
-}
-
-Window* Widget::window() {
-    Object* object = parent();
-    while (object) {
-        if (object->is_window()) {
-            return static_cast<Window*>(object);
-        }
-        object = object->parent();
-    }
-    return nullptr;
-}
-
-void Widget::invalidate(const Rect& rect) {
-    window()->invalidate_rect(rect);
+Window* Widget::parent_window() {
+    return static_cast<Window*>(Base::Widget::parent_window());
 }
 
 void Widget::set_context_menu(SharedPtr<ContextMenu> menu) {
     m_context_menu = move(menu);
 }
 
-void Widget::set_hidden(bool b) {
-    if (m_hidden == b) {
-        return;
-    }
-
-    m_hidden = b;
-    invalidate(positioned_rect());
-}
-
 Renderer Widget::get_renderer() {
-    Renderer renderer(*window()->pixels());
+    Renderer renderer(*parent_window()->pixels());
     renderer.set_bounding_rect(positioned_rect());
     return renderer;
 }

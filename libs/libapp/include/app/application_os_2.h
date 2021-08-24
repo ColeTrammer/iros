@@ -39,6 +39,8 @@ private:
 };
 
 class OSApplication final : public Application {
+    APP_OBJECT(OSApplication)
+
 public:
     static OSApplication& the();
 

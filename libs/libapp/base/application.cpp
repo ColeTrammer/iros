@@ -14,6 +14,7 @@ Application::Application() {
 }
 
 void Application::enter() {
+    before_enter();
     m_loop.enter();
 }
 }

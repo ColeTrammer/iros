@@ -1,6 +1,6 @@
 #include <app/application.h>
-#include <app/box_layout.h>
 #include <app/button.h>
+#include <app/flex_layout_engine.h>
 #include <app/icon_view.h>
 #include <app/window.h>
 #include <getopt.h>
@@ -37,10 +37,10 @@ int main(int argc, char** argv) {
 
     auto window = App::Window::create(nullptr, 350, 350, 400, 400, "File Manager");
     auto& main_widget = window->set_main_widget<App::Widget>();
-    auto& layout = main_widget.set_layout<App::VerticalBoxLayout>();
+    auto& layout = main_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
 
     auto& parent_button = layout.add<App::Button>("Go to parent");
-    parent_button.set_preferred_size({ 100, 24 });
+    parent_button.set_layout_constraint({ 100, 24 });
     parent_button.on<App::ClickEvent>({}, [&](auto&) {
         model->go_to_parent();
     });

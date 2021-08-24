@@ -1,6 +1,6 @@
-#include <app/box_layout.h>
 #include <app/button.h>
 #include <app/context_menu.h>
+#include <app/flex_layout_engine.h>
 #include <app/window.h>
 #include <graphics/point.h>
 #include <liim/function.h>
@@ -33,7 +33,7 @@ Window& ContextMenu::ensure_window(Point p) {
     if (!m_window) {
         m_window = ContextMenuWindow::create(shared_from_this(), p, *this);
         auto& main_widget = m_window->set_main_widget<App::Widget>();
-        auto& layout = main_widget.set_layout<App::VerticalBoxLayout>();
+        auto& layout = main_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
         layout.set_margins({ 0, 0, 0, 0 });
         layout.set_spacing(0);
 

@@ -1,8 +1,8 @@
 #pragma once
 
+#include <app/base/widget.h>
 #include <app/forward.h>
 #include <eventloop/forward.h>
-#include <eventloop/object.h>
 #include <graphics/color.h>
 #include <graphics/font.h>
 #include <graphics/forward.h>
@@ -17,45 +17,20 @@ struct Size {
     int height { 0 };
 };
 
-class Widget : public Object {
+class Widget : public Base::Widget {
     APP_OBJECT(Widget)
 
 public:
     virtual void initialize() override;
     virtual ~Widget() override;
 
-    virtual void render();
-
-    void set_positioned_rect(const Rect& rect);
-    const Rect& positioned_rect() const { return m_positioned_rect; }
-
-    Rect sized_rect() const { return m_positioned_rect.positioned(0); }
-
-    Window* window();
-
-    Layout* layout() { return m_layout.get(); }
-    const Layout* layout() const { return m_layout.get(); }
-
-    template<typename LayoutClass, typename... Args>
-    LayoutClass& set_layout(Args&&... args) {
-        auto layout = make_unique<LayoutClass>(*this, forward<Args>(args)...);
-        m_layout = move(layout);
-        return static_cast<LayoutClass&>(*m_layout);
-    }
-
-    bool hidden() const { return m_hidden; }
-    void set_hidden(bool b);
-
     const Font& font() const { return m_font; }
     void set_font(Font font) { m_font = move(font); }
 
-    const Size& preferred_size() const { return m_preferred_size; }
-    void set_preferred_size(const Size& size);
-
-    void invalidate() { invalidate(positioned_rect()); }
-    void invalidate(const Rect& rect);
-
     void set_context_menu(SharedPtr<ContextMenu> menu);
+
+    Widget* parent_widget() { return static_cast<Widget*>(Base::Widget::parent_widget()); }
+    Window* parent_window();
 
     Color background_color() const { return m_palette->color(Palette::Background); }
     Color text_color() const { return m_palette->color(Palette::Text); }
@@ -71,13 +46,9 @@ protected:
 private:
     virtual bool is_widget() const final { return true; }
 
-    Rect m_positioned_rect;
     Font m_font { Font::default_font() };
     SharedPtr<Palette> m_palette;
-    Size m_preferred_size { Size::Auto, Size::Auto };
-    UniquePtr<Layout> m_layout;
     SharedPtr<ContextMenu> m_context_menu;
-    bool m_hidden { false };
 };
 
 }

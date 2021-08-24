@@ -1,6 +1,6 @@
 #include <app/application.h>
-#include <app/box_layout.h>
 #include <app/button.h>
+#include <app/flex_layout_engine.h>
 #include <app/table_view.h>
 #include <app/window.h>
 
@@ -13,13 +13,13 @@ int main() {
 
     auto window = App::Window::create(nullptr, 100, 250, 400, 400, "Theme Editor");
     auto& container = window->set_main_widget<App::Widget>();
-    auto& layout = container.set_layout<App::VerticalBoxLayout>();
+    auto& layout = container.set_layout_engine<App::VerticalFlexLayoutEngine>();
 
     auto& view = layout.add<App::TableView>();
     view.set_model(model);
 
     auto& button = layout.add<App::Button>("Apply Theme");
-    button.set_preferred_size({ App::Size::Auto, 24 });
+    button.set_layout_constraint({ App::LayoutConstraint::AutoSize, 24 });
     button.on<App::ClickEvent>({}, [&](auto&) {
         if (view.selection().empty()) {
             return;

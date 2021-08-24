@@ -11,11 +11,11 @@
 namespace App {
 static Application* s_app;
 
-UniquePtr<Application> Application::create() {
+SharedPtr<Application> Application::create() {
 #ifdef __os_2__
-    return UniquePtr<Application>(new OSApplication);
+    return OSApplication::create(nullptr);
 #elif USE_SDL2
-    return UniquePtr<Application>(new SDLApplication);
+    return SDLApplication::create(nullptr);
 #else
     error_log("No application backend could be found");
     abort();
@@ -45,10 +45,9 @@ void Application::set_global_palette(const String& path) {
     });
 }
 
-void Application::enter() {
+void Application::before_enter() {
     EventLoop::register_signal_handler(SIGINT, [] {
         Application::the().main_event_loop().set_should_exit(true);
     });
-    return m_loop.enter();
 }
 }

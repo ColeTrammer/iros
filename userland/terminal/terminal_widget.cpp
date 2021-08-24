@@ -17,7 +17,7 @@ constexpr int cell_height = 16;
 TerminalWidget::TerminalWidget(double opacity) : m_background_alpha(static_cast<uint8_t>(opacity * 255)) {}
 
 void TerminalWidget::initialize() {
-    auto context_menu = App::ContextMenu::create(window()->shared_from_this(), window()->shared_from_this());
+    auto context_menu = App::ContextMenu::create(parent_window()->shared_from_this(), parent_window()->shared_from_this());
     context_menu->add_menu_item("Copy", [this] {
         this->copy_selection();
     });

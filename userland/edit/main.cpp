@@ -1,5 +1,5 @@
 #include <app/application.h>
-#include <app/box_layout.h>
+#include <app/flex_layout_engine.h>
 #include <app/window.h>
 #include <edit/document.h>
 #include <liim/string_view.h>

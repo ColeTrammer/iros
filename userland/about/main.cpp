@@ -1,7 +1,7 @@
 #include <app/application.h>
-#include <app/box_layout.h>
 #include <app/button.h>
 #include <app/context_menu.h>
+#include <app/flex_layout_engine.h>
 #include <app/menubar.h>
 #include <app/text_label.h>
 #include <app/widget.h>
@@ -32,7 +32,7 @@ int main() {
     auto window = App::Window::create(nullptr, 300, 300, 250, 250, "About");
     auto& main_widget = window->set_main_widget<App::Widget>();
 
-    auto& root_layout = main_widget.set_layout<App::BoxLayout>(App::BoxLayout::Orientation::Vertical);
+    auto& root_layout = main_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
     root_layout.set_margins({ 0, 0, 0, 0 });
     root_layout.set_spacing(0);
 

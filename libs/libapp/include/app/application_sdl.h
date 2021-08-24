@@ -7,6 +7,8 @@
 
 namespace App {
 class SDLApplication final : public Application {
+    APP_OBJECT(SDLApplication)
+
 public:
     static SDLApplication& the();
     SDLApplication();

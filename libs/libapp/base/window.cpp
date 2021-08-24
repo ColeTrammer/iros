@@ -58,6 +58,17 @@ void Window::initialize() {
 
 Window::~Window() {}
 
+void Window::set_rect(const Rect& rect) {
+    if (m_rect == rect) {
+        return;
+    }
+
+    m_rect = rect;
+    if (m_main_widget) {
+        m_main_widget->set_positioned_rect(rect);
+    }
+}
+
 void Window::invalidate_rect(const Rect& rect) {
     m_dirty_rects.add(rect);
     schedule_render();

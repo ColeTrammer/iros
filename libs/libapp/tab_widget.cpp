@@ -30,7 +30,7 @@ void TabWidget::initialize() {
     // FIXME: use some sort of focus proxy mechanism instead.
     on<FocusedEvent>([this](const FocusedEvent&) {
         if (m_active_tab != -1) {
-            window()->set_focused_widget(m_tabs[m_active_tab].widget.get());
+            parent_window()->set_focused_widget(m_tabs[m_active_tab].widget.get());
         }
     });
 
@@ -73,7 +73,7 @@ void TabWidget::set_active_tab(int index) {
     m_active_tab = index;
     if (m_active_tab != -1) {
         m_tabs[m_active_tab].widget->set_hidden(false);
-        window()->set_focused_widget(m_tabs[m_active_tab].widget.get());
+        parent_window()->set_focused_widget(m_tabs[m_active_tab].widget.get());
     }
 }
 

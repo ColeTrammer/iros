@@ -1,5 +1,5 @@
-#include <app/box_layout.h>
 #include <app/context_menu.h>
+#include <app/flex_layout_engine.h>
 #include <app/text_label.h>
 #include <app/window.h>
 #include <clipboard/connection.h>
@@ -25,9 +25,9 @@ void SearchWidget::render() {
 
 AppDisplay& SearchWidget::display() {
     if (!m_display) {
-        auto& layout = set_layout<App::HorizontalBoxLayout>();
+        auto& layout = set_layout_engine<App::HorizontalFlexLayoutEngine>();
         auto& label = layout.add<App::TextLabel>("Find:");
-        label.set_preferred_size({ 46, App::Size::Auto });
+        label.set_layout_constraint({ 46, App::LayoutConstraint::AutoSize });
 
         m_display = layout.add<AppDisplay>(false).shared_from_this();
     }
@@ -37,7 +37,7 @@ AppDisplay& SearchWidget::display() {
 AppDisplay::AppDisplay(bool main_display) : m_main_display(main_display) {}
 
 void AppDisplay::initialize() {
-    auto window = this->window()->shared_from_this();
+    auto window = this->parent_window()->shared_from_this();
     auto context_menu = App::ContextMenu::create(window, window);
     context_menu->add_menu_item("Copy", [this] {
         if (auto* doc = document()) {
@@ -134,7 +134,7 @@ void AppDisplay::schedule_update() {
 }
 
 int AppDisplay::enter() {
-    window()->set_focused_widget(this);
+    parent_window()->set_focused_widget(this);
     return 0;
 }
 
@@ -165,18 +165,18 @@ void AppDisplay::enter_search(String starting_text) {
         if (document()->on_escape_press) {
             document()->on_escape_press();
         }
-        window()->set_focused_widget(this);
+        parent_window()->set_focused_widget(this);
     };
     ensure_search_display().on_quit = [this] {
         document()->set_search_text("");
         if (document()->on_escape_press) {
             document()->on_escape_press();
         }
-        window()->set_focused_widget(this);
+        parent_window()->set_focused_widget(this);
     };
 
     m_search_widget->set_hidden(false);
-    window()->set_focused_widget(&ensure_search_display());
+    parent_window()->set_focused_widget(&ensure_search_display());
 }
 
 void AppDisplay::set_clipboard_contents(String text, bool is_whole_line) {
@@ -205,7 +205,7 @@ String AppDisplay::clipboard_contents(bool& is_whole_line) const {
 void AppDisplay::do_open_prompt() {}
 
 void AppDisplay::render_cursor(Renderer& renderer) {
-    if (this != window()->focused_widget().get()) {
+    if (this != parent_window()->focused_widget().get()) {
         return;
     }
 
