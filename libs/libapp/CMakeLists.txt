@@ -1,4 +1,7 @@
 set(SOURCES
+    base/application.cpp
+    base/widget.cpp
+    base/window.cpp
     application_os_2.cpp
     application_sdl.cpp
     application.cpp

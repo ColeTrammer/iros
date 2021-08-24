@@ -173,6 +173,7 @@ APP_EVENT(App, ResizeEvent, Event, (), (), ())
 APP_EVENT(App, FocusedEvent, Event, (), (), ())
 APP_EVENT(App, UnfocusedEvent, Event, (), (), ())
 APP_EVENT(App, LeaveEvent, Event, (), (), ())
+APP_EVENT(App, EnterEvent, Event, (), (), ())
 
 #define __APP_KEY_EVENT_FIELDS ((Key, key), (int, modifiers), (bool, generates_text))
 

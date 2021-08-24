@@ -69,6 +69,7 @@ public:
     const Vector<SharedPtr<Object>>& children() const { return m_children; }
 
     virtual bool is_widget() const { return false; }
+    virtual bool is_base_widget() const { return false; }
     virtual bool is_window() const { return false; }
     virtual bool is_panel() const { return false; }
 
