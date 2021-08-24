@@ -99,7 +99,7 @@ void ReplDisplay::document_did_change() {
             if (input_status == Repl::InputStatus::Finished) {
                 cursors().remove_secondary_cursors();
                 document()->move_cursor_to_document_end(*this, cursors().main_cursor());
-                document()->set_preview_auto_complete(false);
+                set_preview_auto_complete(false);
                 invalidate();
                 quit();
                 deferred_invoke([] {
@@ -114,7 +114,6 @@ void ReplDisplay::document_did_change() {
             document()->scroll_cursor_into_view(*this, cursors().main_cursor());
         };
 
-        notify_line_count_changed();
         schedule_update();
     }
 }
@@ -194,14 +193,14 @@ Edit::RenderedLine ReplDisplay::compose_line(const Edit::Line& line) {
         return {};
     }
 
-    auto renderer = Edit::LineRenderer { cols(), document()->word_wrap_enabled() };
+    auto renderer = Edit::LineRenderer { cols(), word_wrap_enabled() };
     auto& prompt = &line == &document()->first_line() ? m_main_prompt : m_secondary_prompt;
     renderer.begin_segment(0, 0, Edit::PositionRangeType::InlineBeforeCursor);
     renderer.add_to_segment(prompt.view(), string_print_width(prompt.view()));
     renderer.end_segment();
 
     for (int index_into_line = 0; index_into_line <= line.length(); index_into_line++) {
-        if (cursors().should_show_auto_complete_text_at(*document(), line, index_into_line)) {
+        if (cursors().should_show_auto_complete_text_at(*this, *document(), line, index_into_line)) {
             auto maybe_suggestion_text = cursors().preview_auto_complete_text(*this);
             if (maybe_suggestion_text) {
                 renderer.begin_segment(index_into_line, Edit::CharacterMetadata::Flags::AutoCompletePreview,

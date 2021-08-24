@@ -26,7 +26,7 @@ public:
     void add_cursor(Document& document, Display& display, AddCursorMode mode);
     void add_cursor_at(Document& document, Display& display, const TextIndex& index, const Selection& selection = {});
 
-    bool should_show_auto_complete_text_at(const Document& document, const Line& line, int index_into_line) const;
+    bool should_show_auto_complete_text_at(const Display& display, const Document& document, const Line& line, int index_into_line) const;
     Maybe<String> preview_auto_complete_text(Display& display) const;
 
     TextRangeCollection cursor_text_ranges(const Document& document) const;

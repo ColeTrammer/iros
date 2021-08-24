@@ -102,7 +102,7 @@ int Line::index_of_relative_position(const Document& document, Display& display,
 }
 
 int Line::absolute_row_position(const Document& document, Display& display) const {
-    if (!document.word_wrap_enabled()) {
+    if (!display.word_wrap_enabled()) {
         return document.index_of_line(*this);
     }
 

@@ -95,10 +95,7 @@ SharedPtr<Document> Document::create_empty() {
 SharedPtr<Document> Document::create_single_line(String text) {
     Vector<Line> lines;
     lines.add(Line(move(text)));
-    auto ret = Document::create(nullptr, move(lines), "", InputMode::InputText);
-    ret->set_submittable(true);
-    ret->set_show_line_numbers(false);
-    return ret;
+    return Document::create(nullptr, move(lines), "", InputMode::InputText);
 }
 
 Document::Document(Vector<Line> lines, String name, InputMode mode)
@@ -116,12 +113,7 @@ void Document::copy_settings_from(const Document& other) {
     set_submittable(other.m_submittable);
     set_type(other.m_type);
 
-    set_auto_complete_mode(other.m_auto_complete_mode);
-    set_preview_auto_complete(other.m_preview_auto_complete);
     set_convert_tabs_to_spaces(other.m_convert_tabs_to_spaces);
-    set_word_wrap_enabled(other.m_word_wrap_enabled);
-
-    set_show_line_numbers(other.show_line_numbers());
 }
 
 String Document::content_string() const {
@@ -702,9 +694,6 @@ void Document::register_display(Display& display) {
     m_displays.add(&display);
 
     display.this_widget().on<App::ResizeEvent>(*this, [this](auto&) {
-        if (word_wrap_enabled()) {
-            invalidate_all_rendered_contents();
-        }
         set_needs_display();
     });
 
@@ -861,11 +850,6 @@ void Document::register_display(Display& display) {
                 case App::Key::G:
                     go_to_line(display);
                     break;
-                case App::Key::L:
-                    if (!input_text_mode()) {
-                        set_show_line_numbers(!m_show_line_numbers);
-                    }
-                    break;
                 case App::Key::O:
                     if (!input_text_mode()) {
                         display.do_open_prompt();
@@ -963,7 +947,7 @@ void Document::register_display(Display& display) {
                 }
                 break;
             case App::Key::Tab:
-                if (m_auto_complete_mode == AutoCompleteMode::Always) {
+                if (display.auto_complete_mode() == AutoCompleteMode::Always) {
                     display.compute_suggestions();
                     auto suggestions = display.suggestions();
                     if (suggestions.size() == 1) {
@@ -1041,38 +1025,6 @@ void Document::paste(Display& display, MultiCursor& cursors) {
         push_command<InsertLineCommand>(display, text_to_insert);
     } else {
         insert_text_at_cursor(display, text_to_insert);
-    }
-}
-
-void Document::set_show_line_numbers(bool b) {
-    if (m_show_line_numbers != b) {
-        m_show_line_numbers = b;
-        for (auto* display : m_displays) {
-            display->notify_line_count_changed();
-        }
-    }
-}
-
-void Document::set_word_wrap_enabled(bool b) {
-    if (m_word_wrap_enabled == b) {
-        return;
-    }
-
-    m_word_wrap_enabled = b;
-    for (auto* display : m_displays) {
-        display->set_scroll_col_offset(0);
-    }
-    invalidate_all_rendered_contents();
-}
-
-void Document::set_preview_auto_complete(bool b) {
-    if (m_preview_auto_complete == b) {
-        return;
-    }
-
-    m_preview_auto_complete = b;
-    for (auto* display : m_displays) {
-        display->cursors().main_cursor().referenced_line(*this).invalidate_rendered_contents(*this, *display);
     }
 }
 
@@ -1367,7 +1319,7 @@ void Document::finish_input(Display& display, bool should_scroll_cursor_into_vie
     }
 
     update_suggestions(display);
-    if (preview_auto_complete()) {
+    if (display.preview_auto_complete()) {
         cursors.main_cursor().referenced_line(*this).invalidate_rendered_contents(*this, display);
     }
 

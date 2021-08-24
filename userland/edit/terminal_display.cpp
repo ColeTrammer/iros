@@ -52,7 +52,7 @@ TerminalDisplay::~TerminalDisplay() {}
 
 void TerminalDisplay::document_did_change() {
     if (document()) {
-        notify_line_count_changed();
+        compute_cols_needed_for_line_numbers();
         schedule_update();
     }
 }
@@ -61,14 +61,9 @@ void TerminalDisplay::quit() {
     TUI::Application::the().event_loop().set_should_exit(true);
 }
 
-void TerminalDisplay::notify_line_count_changed() {
-    Display::notify_line_count_changed();
-    compute_cols_needed_for_line_numbers();
-}
-
 void TerminalDisplay::compute_cols_needed_for_line_numbers() {
     if (auto* doc = document()) {
-        if (doc->show_line_numbers()) {
+        if (show_line_numbers()) {
             int num_lines = doc->num_lines();
             if (num_lines == 0 || doc->input_text_mode()) {
                 m_cols_needed_for_line_numbers = 0;
@@ -129,7 +124,7 @@ Edit::TextIndex TerminalDisplay::text_index_at_mouse_position(const Point& point
 void TerminalDisplay::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) {
     auto renderer = get_renderer();
 
-    if (document()->show_line_numbers()) {
+    if (show_line_numbers()) {
         auto line_number_rect = Rect { 0, row, m_cols_needed_for_line_numbers, 1 };
         auto line_start_index = document()->text_index_at_scrolled_position(*this, { row, 0 });
         if (line_start_index.index_into_line() == 0) {
@@ -167,9 +162,9 @@ void TerminalDisplay::output_line(int row, int col_offset, const StringView& tex
 
 Edit::RenderedLine TerminalDisplay::compose_line(const Edit::Line& line) {
     assert(document());
-    auto renderer = Edit::LineRenderer { cols(), document()->word_wrap_enabled() };
+    auto renderer = Edit::LineRenderer { cols(), word_wrap_enabled() };
     for (int index_into_line = 0; index_into_line <= line.length(); index_into_line++) {
-        if (cursors().should_show_auto_complete_text_at(*document(), line, index_into_line)) {
+        if (cursors().should_show_auto_complete_text_at(*this, *document(), line, index_into_line)) {
             auto maybe_suggestion_text = cursors().preview_auto_complete_text(*this);
             if (maybe_suggestion_text) {
                 renderer.begin_segment(index_into_line, Edit::CharacterMetadata::Flags::AutoCompletePreview,

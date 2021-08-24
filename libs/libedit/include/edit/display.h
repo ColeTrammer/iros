@@ -13,6 +13,8 @@
 #include <liim/pointers.h>
 
 namespace Edit {
+enum class AutoCompleteMode { Never, Always };
+
 class Display {
 public:
     virtual ~Display();
@@ -64,6 +66,19 @@ public:
     MultiCursor& cursors() { return m_cursors; }
     const MultiCursor& cursors() const { return m_cursors; }
 
+    AutoCompleteMode auto_complete_mode() const { return m_auto_complete_mode; }
+    void set_auto_complete_mode(AutoCompleteMode mode) { m_auto_complete_mode = mode; }
+
+    bool preview_auto_complete() const { return m_preview_auto_complete; }
+    void set_preview_auto_complete(bool b);
+
+    bool show_line_numbers() const { return m_show_line_numbers; }
+    void toggle_show_line_numbers();
+    void set_show_line_numbers(bool b);
+
+    bool word_wrap_enabled() const { return m_word_wrap_enabled; }
+    void set_word_wrap_enabled(bool b);
+
     Suggestions& suggestions() { return m_suggestions; }
     const Suggestions& suggestions() const { return m_suggestions; }
 
@@ -97,6 +112,10 @@ private:
     MultiCursor m_cursors;
     Vector<RenderedLine> m_rendered_lines;
     Suggestions m_suggestions;
+    AutoCompleteMode m_auto_complete_mode { AutoCompleteMode::Never };
+    bool m_preview_auto_complete { false };
+    bool m_word_wrap_enabled { true };
+    bool m_show_line_numbers { false };
     int m_scroll_row_offset { 0 };
     int m_scroll_col_offset { 0 };
 };

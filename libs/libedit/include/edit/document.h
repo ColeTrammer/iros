@@ -32,8 +32,6 @@ enum class SwapDirection { Up, Down };
 
 enum class InputMode { Document, InputText };
 
-enum class AutoCompleteMode { Never, Always };
-
 class Document final : public App::Object {
     APP_OBJECT(Document)
 
@@ -72,19 +70,11 @@ public:
 
     void set_submittable(bool b) { m_submittable = b; }
 
-    void set_auto_complete_mode(AutoCompleteMode mode) { m_auto_complete_mode = mode; }
-
-    bool preview_auto_complete() const { return m_preview_auto_complete; }
-    void set_preview_auto_complete(bool b);
-
     String content_string() const;
     size_t cursor_index_in_content_string(const Cursor& cursor) const;
 
     bool convert_tabs_to_spaces() const { return m_convert_tabs_to_spaces; }
     void set_convert_tabs_to_spaces(bool b) { m_convert_tabs_to_spaces = b; }
-
-    bool word_wrap_enabled() const { return m_word_wrap_enabled; }
-    void set_word_wrap_enabled(bool b);
 
     bool modified() const { return m_document_was_modified; }
 
@@ -159,9 +149,6 @@ public:
 
     void insert_suggestion(Display& display, const MatchedSuggestion& suggestion);
     void insert_text_at_cursor(Display& display, const String& string);
-
-    bool show_line_numbers() const { return m_show_line_numbers; }
-    void set_show_line_numbers(bool b);
 
     void clear_search();
 
@@ -258,9 +245,7 @@ private:
     DocumentType m_type { DocumentType::Text };
     InputMode m_input_mode { InputMode::Document };
     bool m_submittable { false };
-
-    AutoCompleteMode m_auto_complete_mode { AutoCompleteMode::Never };
-    bool m_preview_auto_complete { false };
+    bool m_convert_tabs_to_spaces { true };
 
     Vector<UniquePtr<Command>> m_command_stack;
     int m_command_stack_index { 0 };
@@ -274,9 +259,5 @@ private:
     TextRangeCollection m_syntax_highlighting_info;
 
     Vector<Display*> m_displays;
-
-    bool m_word_wrap_enabled { true };
-    bool m_show_line_numbers { false };
-    bool m_convert_tabs_to_spaces { true };
 };
 }

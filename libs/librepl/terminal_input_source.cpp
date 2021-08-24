@@ -54,15 +54,16 @@ InputResult TerminalInputSource::get_input() {
         }
 
         auto& layout = app->set_layout_engine<ReplLayoutEngine>();
+
         auto& display = layout.add<ReplDisplay>(repl());
+        display.set_auto_complete_mode(Edit::AutoCompleteMode::Always);
+        display.set_preview_auto_complete(true);
+        display.set_word_wrap_enabled(true);
+        display.enter();
 
         auto document = Edit::Document::create_single_line();
-        display.set_document(document);
         document->set_type(repl().get_input_type());
-        document->set_auto_complete_mode(Edit::AutoCompleteMode::Always);
-        document->set_preview_auto_complete(true);
-        document->set_word_wrap_enabled(true);
-        display.enter();
+        display.set_document(document);
         app->enter();
 
         if (display.quit_by_eof()) {

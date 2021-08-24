@@ -78,6 +78,41 @@ void Display::notify_line_count_changed() {
     m_rendered_lines.resize(document()->num_lines());
 }
 
+void Display::toggle_show_line_numbers() {
+    set_show_line_numbers(!m_show_line_numbers);
+}
+
+void Display::set_preview_auto_complete(bool b) {
+    if (m_preview_auto_complete == b) {
+        return;
+    }
+
+    m_preview_auto_complete = b;
+    if (document()) {
+        document()->invalidate_rendered_contents(cursors().main_cursor().referenced_line(*document()));
+    }
+}
+
+void Display::set_show_line_numbers(bool b) {
+    if (m_show_line_numbers == b) {
+        return;
+    }
+
+    m_show_line_numbers = b;
+    notify_line_count_changed();
+}
+
+void Display::set_word_wrap_enabled(bool b) {
+    if (m_word_wrap_enabled == b) {
+        return;
+    }
+
+    m_word_wrap_enabled = b;
+    if (document()) {
+        document()->invalidate_all_rendered_contents();
+    }
+}
+
 void Display::install_document_listeners(Document& new_document) {
     new_document.on<DeleteLines>(this_widget(), [this](const DeleteLines& event) {
         for (int i = 0; i < event.line_count(); i++) {
