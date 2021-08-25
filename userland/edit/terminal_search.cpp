@@ -1,5 +1,5 @@
+#include <app/flex_layout_engine.h>
 #include <edit/document.h>
-#include <tui/flex_layout_engine.h>
 #include <tui/label.h>
 
 #include "terminal_display.h"
@@ -9,8 +9,8 @@ TerminalSearch::TerminalSearch(TerminalDisplay& host_display, String initial_tex
     : m_host_display(host_display), m_initial_text(move(initial_text)) {}
 
 void TerminalSearch::initialize() {
-    auto& layout = set_layout_engine<TUI::FlexLayoutEngine>(TUI::FlexLayoutEngine::Direction::Horizontal);
-    layout.set_padding(1);
+    auto& layout = set_layout_engine<App::HorizontalFlexLayoutEngine>();
+    layout.set_margins({ 1, 1, 1, 1 });
 
     auto& label = layout.add<TUI::Label>("Find: ");
     label.set_shrink_to_fit(true);

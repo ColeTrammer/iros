@@ -99,6 +99,7 @@ EventLoop::EventLoop() {
 
 EventLoop::~EventLoop() {
     pthread_mutex_destroy(&m_lock);
+    s_the = nullptr;
 }
 
 void EventLoop::do_select() {

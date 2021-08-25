@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <tui/application.h>
-#include <tui/flex_layout_engine.h>
 #include <unistd.h>
 
 #include "app_display.h"
@@ -80,10 +79,16 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    auto& main_layout = app->set_layout_engine<TUI::FlexLayoutEngine>(TUI::FlexLayoutEngine::Direction::Vertical);
+    auto& main_widget = app->root_window().set_main_widget<TUI::Panel>();
+    auto& main_layout = main_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
+    main_layout.set_margins({});
+    main_layout.set_spacing(0);
 
     auto& display_conainer = main_layout.add<TUI::Panel>();
-    auto& display_layout = display_conainer.set_layout_engine<TUI::FlexLayoutEngine>(TUI::FlexLayoutEngine::Direction::Horizontal);
+    auto& display_layout = display_conainer.set_layout_engine<App::HorizontalFlexLayoutEngine>();
+    display_layout.set_margins({});
+    display_layout.set_spacing(0);
+
     auto& display = display_layout.add<TerminalDisplay>();
 
     main_layout.add<TerminalStatusBar>();

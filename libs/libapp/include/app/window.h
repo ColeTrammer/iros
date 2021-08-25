@@ -63,8 +63,6 @@ protected:
     virtual void did_become_inactive() {}
 
 private:
-    virtual bool is_window() const final { return true; }
-
     virtual void do_render() override;
 
     void hide_current_context_menu();

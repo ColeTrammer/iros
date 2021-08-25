@@ -119,7 +119,7 @@ void ReplDisplay::document_did_change() {
 }
 
 void ReplDisplay::quit() {
-    TUI::Application::the().event_loop().set_should_exit(true);
+    TUI::Application::the().main_event_loop().set_should_exit(true);
 }
 
 int ReplDisplay::enter() {
@@ -327,8 +327,7 @@ void ReplDisplay::hide_suggestions_panel() {
 
     m_suggest_based_on_history = false;
 
-    TUI::Application::the().invalidate(m_suggestions_panel->positioned_rect());
-    remove_child(m_suggestions_panel);
+    m_suggestions_panel->remove();
     m_suggestions_panel = nullptr;
 
     make_focused();

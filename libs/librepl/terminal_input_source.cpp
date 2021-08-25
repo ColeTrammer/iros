@@ -1,20 +1,20 @@
+#include <app/flex_layout_engine.h>
 #include <edit/document.h>
 #include <repl/repl_base.h>
 #include <repl/terminal_input_source.h>
 #include <tinput/io_terminal.h>
 #include <tui/application.h>
-#include <tui/flex_layout_engine.h>
 
 #include "repl_display.h"
 
 namespace Repl {
-class ReplLayoutEngine final : public TUI::LayoutEngine {
+class ReplLayoutEngine final : public App::LayoutEngine {
 public:
-    ReplLayoutEngine(TUI::Panel& parent) : TUI::LayoutEngine(parent) {}
+    ReplLayoutEngine(App::Base::Widget& parent) : App::LayoutEngine(parent) {}
 
-    virtual void do_add(TUI::Panel& panel) override {
+    virtual void do_add(App::Base::Widget& widget) override {
         assert(!m_display);
-        m_display = static_cast<ReplDisplay*>(&panel);
+        m_display = static_cast<ReplDisplay*>(&widget);
     }
 
     virtual void layout() override {
@@ -23,7 +23,7 @@ public:
         }
 
         auto inital_cursor_position = TUI::Application::the().io_terminal().initial_cursor_position();
-        auto terminal_rect = TUI::Application::the().sized_rect();
+        auto terminal_rect = TUI::Application::the().root_window().rect();
         if (m_first_layout) {
             m_first_layout = false;
             auto y = inital_cursor_position.x() != 0 ? inital_cursor_position.y() + 1 : inital_cursor_position.y();
@@ -53,7 +53,8 @@ InputResult TerminalInputSource::get_input() {
             return InputResult::Error;
         }
 
-        auto& layout = app->set_layout_engine<ReplLayoutEngine>();
+        auto& main_widget = app->root_window().set_main_widget<TUI::Panel>();
+        auto& layout = main_widget.set_layout_engine<ReplLayoutEngine>();
 
         auto& display = layout.add<ReplDisplay>(repl());
         display.set_auto_complete_mode(Edit::AutoCompleteMode::Always);

@@ -130,6 +130,7 @@ void Window::do_render() {
     if (!main_widget().hidden()) {
         main_widget().render();
         m_platform_window->flush_pixels();
+        clear_dirty_rects();
     }
 }
 }
