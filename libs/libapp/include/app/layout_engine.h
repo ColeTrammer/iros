@@ -26,6 +26,7 @@ public:
     PanelType& add(Args&&... args) {
         auto panel = PanelType::create(parent().shared_from_this(), forward<Args>(args)...);
         do_add(*panel);
+        layout();
         return *panel;
     }
 

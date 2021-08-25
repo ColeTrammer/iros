@@ -10,7 +10,7 @@ namespace Repl {
 constexpr int max_visible_suggestions = 5;
 
 SuggestionsPanel::SuggestionsPanel(ReplDisplay& display) : m_display(display), m_suggestions(display.suggestions()) {
-    set_layout_constraint({ TUI::LayoutConstraint::AutoSize, max_visible_suggestions });
+    set_layout_constraint({ App::LayoutConstraint::AutoSize, max_visible_suggestions });
 }
 
 void SuggestionsPanel::initialize() {

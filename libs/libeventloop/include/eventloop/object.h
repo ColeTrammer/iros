@@ -159,7 +159,7 @@ protected:
 private:
     Vector<SharedPtr<Object>> m_children;
     Vector<Handler> m_handlers;
-    Object* m_parent;
+    Object* m_parent { nullptr };
     mutable WeakPtr<Object> m_weak_this;
 };
 }

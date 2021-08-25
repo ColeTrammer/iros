@@ -10,6 +10,11 @@ class Application : public App::Object {
 public:
     static Application& the();
 
+    virtual ~Application() override;
+
+    virtual Margins default_margins() const = 0;
+    virtual int default_spacing() const = 0;
+
     EventLoop& main_event_loop() { return m_loop; }
     void enter();
 

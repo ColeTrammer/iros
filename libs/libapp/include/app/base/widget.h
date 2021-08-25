@@ -62,7 +62,7 @@ private:
     Rect m_positioned_rect;
     LayoutConstraint m_layout_constraint;
     UniquePtr<LayoutEngine> m_layout_engine;
-    Widget* m_focus_proxy;
+    Widget* m_focus_proxy { nullptr };
     bool m_accepts_focus { false };
     bool m_hidden { false };
 };

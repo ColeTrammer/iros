@@ -58,7 +58,7 @@ void TerminalDisplay::document_did_change() {
 }
 
 void TerminalDisplay::quit() {
-    TUI::Application::the().event_loop().set_should_exit(true);
+    TUI::Application::the().main_event_loop().set_should_exit(true);
 }
 
 void TerminalDisplay::compute_cols_needed_for_line_numbers() {

@@ -35,9 +35,9 @@ void Label::set_shrink_to_fit(bool b) {
 
     m_shrink_to_fit = b;
     if (m_shrink_to_fit) {
-        set_layout_constraint({ TInput::convert_to_glyphs(m_text.view()).total_width(), LayoutConstraint::AutoSize });
+        set_layout_constraint({ TInput::convert_to_glyphs(m_text.view()).total_width(), App::LayoutConstraint::AutoSize });
     } else {
-        set_layout_constraint({ LayoutConstraint::AutoSize, LayoutConstraint::AutoSize });
+        set_layout_constraint({ App::LayoutConstraint::AutoSize, App::LayoutConstraint::AutoSize });
     }
 }
 }

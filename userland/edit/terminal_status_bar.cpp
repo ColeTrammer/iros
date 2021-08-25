@@ -15,7 +15,7 @@ TerminalStatusBar& TerminalStatusBar::the() {
 TerminalStatusBar::TerminalStatusBar() {
     s_the = this;
 
-    set_layout_constraint({ TUI::LayoutConstraint::AutoSize, 1 });
+    set_layout_constraint({ App::LayoutConstraint::AutoSize, 1 });
 }
 
 TerminalStatusBar::~TerminalStatusBar() {}

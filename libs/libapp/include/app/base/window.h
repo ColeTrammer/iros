@@ -18,6 +18,7 @@ public:
 
     void invalidate_rect(const Rect& rect);
     const RectSet& dirty_rects() const { return m_dirty_rects; }
+    void clear_dirty_rects() { m_dirty_rects.clear(); }
 
     void set_focused_widget(Widget* widget);
     SharedPtr<Widget> focused_widget();
@@ -40,6 +41,8 @@ protected:
     virtual void do_render() = 0;
 
 private:
+    virtual bool is_window() const final override { return true; }
+
     void schedule_render();
     void set_hovered_widget(Widget* widget);
 

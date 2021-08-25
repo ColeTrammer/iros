@@ -12,7 +12,6 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <tui/application.h>
-#include <tui/flex_layout_engine.h>
 #include <unistd.h>
 
 #ifdef __os_2__
@@ -167,7 +166,8 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        auto& layout = app->set_layout_engine<TUI::FlexLayoutEngine>(TUI::FlexLayoutEngine::Direction::Horizontal);
+        auto& main_panel = app->root_window().set_main_widget<TUI::Panel>();
+        auto& layout = main_panel.set_layout_engine<App::HorizontalFlexLayoutEngine>();
         auto& panel = layout.add<TerminalPanel>();
 
         panel.make_focused();

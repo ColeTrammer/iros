@@ -1,5 +1,5 @@
+#include <app/flex_layout_engine.h>
 #include <edit/document.h>
-#include <tui/flex_layout_engine.h>
 #include <tui/label.h>
 
 #include "terminal_display.h"
@@ -9,8 +9,8 @@ TerminalPrompt::TerminalPrompt(TerminalDisplay& host_display, String prompt, Str
     : m_host_display(host_display), m_prompt(move(prompt)), m_initial_value(move(initial_value)) {}
 
 void TerminalPrompt::initialize() {
-    auto& layout = set_layout_engine<TUI::FlexLayoutEngine>(TUI::FlexLayoutEngine::Direction::Horizontal);
-    layout.set_padding(1);
+    auto& layout = set_layout_engine<App::HorizontalFlexLayoutEngine>();
+    layout.set_margins({ 1, 1, 1, 1 });
 
     auto& label = layout.add<TUI::Label>(m_prompt);
     label.set_shrink_to_fit(true);

@@ -9,8 +9,6 @@
 #endif /* USE_SDL2 */
 
 namespace App {
-static Application* s_app;
-
 SharedPtr<Application> Application::create() {
 #ifdef __os_2__
     return OSApplication::create(nullptr);
@@ -22,15 +20,13 @@ SharedPtr<Application> Application::create() {
 #endif
 }
 
-Application::Application() {
-    s_app = this;
+Application& Application::the() {
+    return static_cast<Application&>(Base::Application::the());
 }
+
+Application::Application() {}
 
 Application::~Application() {}
-
-Application& Application::the() {
-    return *s_app;
-}
 
 void Application::set_global_palette(const String& path) {
     auto palette = Palette::create_from_json(path);
