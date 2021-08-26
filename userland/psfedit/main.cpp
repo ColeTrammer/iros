@@ -63,12 +63,9 @@ private:
         auto& left_container = layout.add<App::Widget>();
 
         auto& row_layout = left_container.set_layout_engine<App::VerticalFlexLayoutEngine>();
-        row_layout.set_spacing(0);
         for (int i = 0; i < m_height; i++) {
             auto& row_widget = row_layout.add<App::Widget>();
             auto& col_layout = row_widget.set_layout_engine<App::HorizontalFlexLayoutEngine>();
-            col_layout.set_margins({ 0, 0, 0, 0 });
-            col_layout.set_spacing(0);
 
             for (int j = 0; j < m_width; j++) {
                 int index = i * m_width + m_width - j - 1;
@@ -144,13 +141,9 @@ int main(int argc, char** argv) {
 
     auto& glyph_widget = layout.add<App::Widget>();
     auto& row_layout = glyph_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
-    row_layout.set_spacing(0);
-
     for (int i = 0; i < 16; i++) {
         auto& row_widget = row_layout.add<App::Widget>();
         auto& col_layout = row_widget.set_layout_engine<App::HorizontalFlexLayoutEngine>();
-        col_layout.set_margins({ 0, 0, 0, 0 });
-        col_layout.set_spacing(0);
         for (int j = 0; j < 16; j++) {
             int code_point = i * 16 + j;
             auto& button = col_layout.add<App::Button>(String(static_cast<char>(code_point)));

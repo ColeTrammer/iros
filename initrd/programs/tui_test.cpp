@@ -81,13 +81,9 @@ int main() {
 
     auto& main_widget = app->root_window().set_main_widget<TUI::Panel>();
     auto& layout = main_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
-    layout.set_spacing(0);
-    layout.set_margins({});
     for (int i = 0; i < 3; i++) {
         auto& horizontal_panel = layout.add<TUI::Panel>();
         auto& horizontal_layout = horizontal_panel.set_layout_engine<App::HorizontalFlexLayoutEngine>();
-        horizontal_layout.set_spacing(0);
-        horizontal_layout.set_margins({});
         for (int j = 0; j < 3; j++) {
             auto index = i * 3 + j;
             horizontal_layout.add<TestPanel>(colors[index], alignments[index], box_styles[index], String::format("message %d", index + 1));

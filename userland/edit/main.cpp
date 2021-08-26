@@ -81,13 +81,9 @@ int main(int argc, char** argv) {
 
     auto& main_widget = app->root_window().set_main_widget<TUI::Panel>();
     auto& main_layout = main_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
-    main_layout.set_margins({});
-    main_layout.set_spacing(0);
 
     auto& display_conainer = main_layout.add<TUI::Panel>();
     auto& display_layout = display_conainer.set_layout_engine<App::HorizontalFlexLayoutEngine>();
-    display_layout.set_margins({});
-    display_layout.set_spacing(0);
 
     auto& display = display_layout.add<TerminalDisplay>();
 

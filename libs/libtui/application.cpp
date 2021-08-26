@@ -1,3 +1,4 @@
+#include <app/layout_engine.h>
 #include <liim/format.h>
 #include <signal.h>
 #include <tinput/io_terminal.h>
@@ -42,6 +43,14 @@ void Application::initialize() {
 }
 
 Application::~Application() {}
+
+App::Margins Application::default_margins() const {
+    return {};
+}
+
+int Application::default_spacing() const {
+    return 0;
+}
 
 void Application::before_enter() {
     if (!m_use_alternate_screen_buffer) {

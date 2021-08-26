@@ -1,5 +1,6 @@
 #include <app/application.h>
 #include <app/application_os_2.h>
+#include <app/layout_engine.h>
 #include <app/window.h>
 #include <liim/format.h>
 #include <signal.h>
@@ -27,6 +28,14 @@ Application& Application::the() {
 Application::Application() {}
 
 Application::~Application() {}
+
+Margins Application::default_margins() const {
+    return { 5, 5, 5, 5 };
+}
+
+int Application::default_spacing() const {
+    return 2;
+}
 
 void Application::set_global_palette(const String& path) {
     auto palette = Palette::create_from_json(path);

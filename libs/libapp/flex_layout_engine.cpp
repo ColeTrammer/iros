@@ -1,3 +1,4 @@
+#include <app/base/application.h>
 #include <app/flex_layout_engine.h>
 
 namespace App {
@@ -6,7 +7,9 @@ static constexpr int size_in_layout_direction(FlexLayoutEngine::Direction direct
     return direction == FlexLayoutEngine::Direction::Horizontal ? size.width() : size.height();
 }
 
-FlexLayoutEngine::FlexLayoutEngine(Base::Widget& parent, Direction direction) : LayoutEngine(parent), m_direction(direction) {}
+FlexLayoutEngine::FlexLayoutEngine(Base::Widget& parent, Direction direction) : LayoutEngine(parent), m_direction(direction) {
+    set_spacing(App::Base::Application::the().default_spacing());
+}
 
 FlexLayoutEngine::~FlexLayoutEngine() {}
 

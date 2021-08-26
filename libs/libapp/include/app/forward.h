@@ -24,4 +24,6 @@ class VerticalBoxLayout;
 class View;
 class Widget;
 class Window;
+
+struct Margins;
 }
