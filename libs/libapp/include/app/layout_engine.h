@@ -19,6 +19,8 @@ public:
     virtual void layout() = 0;
     virtual void do_add(Base::Widget& child) = 0;
 
+    void schedule_layout();
+
     void set_margins(const Margins& m) { m_margins = m; }
     const Margins& margins() const { return m_margins; }
 
@@ -26,7 +28,7 @@ public:
     PanelType& add(Args&&... args) {
         auto panel = PanelType::create(parent().shared_from_this(), forward<Args>(args)...);
         do_add(*panel);
-        layout();
+        schedule_layout();
         return *panel;
     }
 
@@ -39,5 +41,6 @@ protected:
 private:
     Base::Widget& m_parent;
     Margins m_margins;
+    bool m_layout_scheduled { false };
 };
 }
