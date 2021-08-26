@@ -16,7 +16,6 @@ void TerminalSearch::initialize() {
     label.set_shrink_to_fit(true);
 
     auto search_document = Edit::Document::create_from_text(m_initial_text);
-    search_document->set_input_mode(Edit::InputMode::InputText);
     search_document->set_submittable(true);
     search_document->on_submit = [this] {
         m_host_display.document()->move_cursor_to_next_search_match(m_host_display, m_host_display.cursors().main_cursor());

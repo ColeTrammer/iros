@@ -16,7 +16,6 @@ void TerminalPrompt::initialize() {
     label.set_shrink_to_fit(true);
 
     auto document = Edit::Document::create_from_text(m_initial_value);
-    document->set_input_mode(Edit::InputMode::InputText);
     document->set_submittable(true);
     document->on_submit = [this, document] {
         // NOTE: We take reference to outselves since the on_submit hook will most probably remove the prompt from its tree.
