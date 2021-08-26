@@ -13,7 +13,7 @@ struct Margins {
 
 class LayoutEngine {
 public:
-    explicit LayoutEngine(Base::Widget& parent) : m_parent(parent) {}
+    explicit LayoutEngine(Base::Widget& parent);
     virtual ~LayoutEngine() {}
 
     virtual void layout() = 0;
@@ -38,6 +38,6 @@ protected:
 
 private:
     Base::Widget& m_parent;
-    Margins m_margins { 5, 5, 5, 5 };
+    Margins m_margins;
 };
 }

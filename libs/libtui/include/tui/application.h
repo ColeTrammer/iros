@@ -20,6 +20,9 @@ public:
     virtual void initialize() override;
     virtual ~Application() override;
 
+    virtual App::Margins default_margins() const override;
+    virtual int default_spacing() const override;
+
     void set_use_alternate_screen_buffer(bool b) { m_use_alternate_screen_buffer = b; }
     void set_use_mouse(bool b) { m_use_mouse = b; }
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <app/forward.h>
 #include <eventloop/event_loop.h>
 #include <eventloop/object.h>
 

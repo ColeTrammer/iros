@@ -26,7 +26,7 @@ private:
 
     Direction m_direction;
     Vector<SharedPtr<Base::Widget>> m_items;
-    int m_spacing { 2 };
+    int m_spacing { 0 };
 };
 
 class HorizontalFlexLayoutEngine final : public FlexLayoutEngine {

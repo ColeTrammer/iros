@@ -26,6 +26,9 @@ public:
 
     virtual ~Application();
 
+    virtual Margins default_margins() const override;
+    virtual int default_spacing() const override;
+
     InputTracker& input_tracker() { return m_mouse_tracker; }
 
     SharedPtr<Palette> palette() const { return m_palette; }
