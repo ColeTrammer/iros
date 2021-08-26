@@ -40,7 +40,6 @@ public:
     static SharedPtr<Document> create_from_file(const String& path, Maybe<String>& error_message);
     static SharedPtr<Document> create_from_text(const String& text);
     static SharedPtr<Document> create_empty();
-    static SharedPtr<Document> create_single_line(String text = "");
 
     struct StateSnapshot {
         MultiCursor::Snapshot cursors;

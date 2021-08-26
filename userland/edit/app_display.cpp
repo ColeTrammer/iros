@@ -151,7 +151,8 @@ void AppDisplay::enter_search(String starting_text) {
         return;
     }
 
-    ensure_search_display().set_document(Edit::Document::create_single_line(move(starting_text)));
+    ensure_search_display().set_document(Edit::Document::create_from_text(move(starting_text)));
+    ensure_search_display().document()->set_submittable(true);
     ensure_search_display().document()->on_change = [this] {
         auto contents = ensure_search_display().document()->content_string();
         document()->set_search_text(move(contents));

@@ -92,12 +92,6 @@ SharedPtr<Document> Document::create_empty() {
     return Document::create(nullptr, Vector<Line>(), "", InputMode::Document);
 }
 
-SharedPtr<Document> Document::create_single_line(String text) {
-    Vector<Line> lines;
-    lines.add(Line(move(text)));
-    return Document::create(nullptr, move(lines), "", InputMode::InputText);
-}
-
 Document::Document(Vector<Line> lines, String name, InputMode mode)
     : m_lines(move(lines)), m_name(move(name)), m_input_mode(mode), m_search_results(*this), m_syntax_highlighting_info(*this) {
     if (m_lines.empty()) {

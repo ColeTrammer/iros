@@ -20,7 +20,7 @@ void RootWindow::do_render() {
     io_terminal.set_show_cursor(false);
     main_widget().render();
 
-    if (auto panel = TUI::Application::the().root_window().focused_widget()) {
+    if (auto panel = focused_widget()) {
         if (auto cursor_position = panel->cursor_position()) {
             auto translated = cursor_position->translated(panel->positioned_rect().top_left());
             if (io_terminal.terminal_rect().intersects(translated) && panel->positioned_rect().intersects(translated)) {

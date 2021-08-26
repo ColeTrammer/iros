@@ -62,7 +62,8 @@ InputResult TerminalInputSource::get_input() {
         display.set_word_wrap_enabled(true);
         display.enter();
 
-        auto document = Edit::Document::create_single_line();
+        auto document = Edit::Document::create_from_text("");
+        document->set_submittable(true);
         document->set_type(repl().get_input_type());
         display.set_document(document);
         app->enter();
