@@ -7,6 +7,16 @@ LayoutEngine::LayoutEngine(Base::Widget& parent) : m_parent(parent) {
     set_margins(App::Base::Application::the().default_margins());
 }
 
+void LayoutEngine::schedule_layout() {
+    parent().deferred_invoke_batched(m_layout_scheduled, [this] {
+        // NOTE: instead of this check, it would perhaps be better for
+        //       LayoutEngine to be an App::Object.
+        if (parent().layout_engine() == this) {
+            layout();
+        }
+    });
+}
+
 Rect LayoutEngine::parent_rect() const {
     auto rect = parent().positioned_rect();
     if (margins().top + margins().bottom >= rect.height()) {

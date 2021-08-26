@@ -13,7 +13,7 @@ void Widget::initialize() {
 
     on<ResizeEvent>([this](const ResizeEvent&) {
         if (layout_engine()) {
-            layout_engine()->layout();
+            layout_engine()->schedule_layout();
         }
     });
 
@@ -145,7 +145,7 @@ void Widget::do_set_layout_engine(UniquePtr<LayoutEngine> engine) {
 void Widget::relayout() {
     if (auto* parent = parent_widget()) {
         if (auto* layout_engine = parent->layout_engine()) {
-            layout_engine->layout();
+            layout_engine->schedule_layout();
         }
     }
 }
