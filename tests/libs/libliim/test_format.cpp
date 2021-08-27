@@ -29,6 +29,7 @@ TEST(format, string_precision) {
 }
 
 TEST(format, integers) {
+    EXPECT_EQ(format("{}", 0), "0");
     EXPECT_EQ(format("{}", 5), "5");
     EXPECT_EQ(format("{}", -3), "-3");
     EXPECT_EQ(format("{:+}", 5), "+5");

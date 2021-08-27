@@ -352,7 +352,7 @@ struct BaseFormatter {
             }
         }
 
-        auto digits = String {};
+        auto digits = String { n == 0 ? "0" : "" };
         for (; n; n /= radix) {
             digits += String { digit_to_char(n % radix, is_upper) };
         }
