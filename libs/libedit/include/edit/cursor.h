@@ -47,3 +47,14 @@ private:
     int m_max_col { 0 };
 };
 };
+
+namespace LIIM::Format {
+template<>
+struct Formatter<Edit::Cursor> : public Formatter<String> {
+    void format(const Edit::Cursor& cursor, FormatContext& context) {
+        return Formatter<String>::format(::format("Cursor <line_index={} index_into_line={} max_col={} selection={}>", cursor.line_index(),
+                                                  cursor.index_into_line(), cursor.max_col(), cursor.selection()),
+                                         context);
+    }
+};
+}

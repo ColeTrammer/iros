@@ -1,5 +1,7 @@
 #pragma once
 
+#include <liim/format.h>
+
 namespace Edit {
 class TextIndex {
 public:
@@ -48,5 +50,15 @@ public:
 private:
     int m_line_index { 0 };
     int m_index_into_line { 0 };
+};
+}
+
+namespace LIIM::Format {
+template<>
+struct Formatter<Edit::TextIndex> : public Formatter<String> {
+    void format(const Edit::TextIndex& index, FormatContext& context) {
+        return Formatter<String>::format(
+            ::format("TextIndex <line_index={} index_into_line={}>", index.line_index(), index.index_into_line()), context);
+    }
 };
 }

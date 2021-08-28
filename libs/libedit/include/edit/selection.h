@@ -43,3 +43,12 @@ private:
     TextIndex m_end;
 };
 }
+
+namespace LIIM::Format {
+template<>
+struct Formatter<Edit::Selection> : public Formatter<String> {
+    void format(const Edit::Selection& selection, FormatContext& context) {
+        return Formatter<String>::format(::format("Selection <start={} end={}>", selection.start(), selection.end()), context);
+    }
+};
+}
