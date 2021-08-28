@@ -120,6 +120,7 @@ public:
 
     void set_was_modified(bool b) { m_document_was_modified = b; }
 
+    void start_input(Display& display, bool should_save_cursor_state);
     void finish_input(Display& display, bool should_scroll_cursor_into_view);
 
     Snapshot snapshot(Display& display) const;
