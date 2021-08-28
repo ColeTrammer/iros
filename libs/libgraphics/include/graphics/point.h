@@ -1,5 +1,7 @@
 #pragma once
 
+#include <liim/format.h>
+
 class Point {
 public:
     constexpr Point() {}
@@ -27,3 +29,12 @@ private:
     int m_x { 0 };
     int m_y { 0 };
 };
+
+namespace LIIM::Format {
+template<>
+struct Formatter<Point> : public Formatter<String> {
+    void format(const Point& p, FormatContext& context) {
+        return Formatter<String>::format(::format("Point <x={} y={}>", p.x(), p.y()), context);
+    }
+};
+}
