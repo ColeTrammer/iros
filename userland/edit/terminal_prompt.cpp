@@ -17,18 +17,18 @@ void TerminalPrompt::initialize() {
 
     auto document = Edit::Document::create_from_text(m_initial_value);
     document->set_submittable(true);
-    document->on_submit = [this, document] {
-        // NOTE: We take reference to outselves since the on_submit hook will most probably remove the prompt from its tree.
-        //       If a reference is not taken, then doing so will destruct ourselves, which also destroys this very callback.
-        //       To prevent the callback from being destroyed while it is running, it is necessary to take a reference to ourselves.
-        auto protector = shared_from_this();
+    document->on<Edit::Submit>(*this, [this, document](auto&) {
         on_submit.safe_call(document->content_string());
-    };
-    document->on_escape_press = [this] {
-        m_host_display.hide_prompt_panel();
-    };
+    });
 
     m_display = layout.add<TerminalDisplay>().shared_from_this();
+    m_display->on<App::KeyDownEvent>(*this, [this](const App::KeyEvent& event) {
+        if (event.key() == App::Key::Escape) {
+            m_host_display.hide_prompt_panel();
+            return true;
+        }
+        return false;
+    });
     m_display->set_steals_focus(true);
     m_display->set_document(move(document));
     m_display->enter();

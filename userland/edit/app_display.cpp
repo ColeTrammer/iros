@@ -153,26 +153,16 @@ void AppDisplay::enter_search(String starting_text) {
 
     ensure_search_display().set_document(Edit::Document::create_from_text(move(starting_text)));
     ensure_search_display().document()->set_submittable(true);
-    ensure_search_display().document()->on_change = [this] {
+    ensure_search_display().document()->on<Edit::Change>(*this, [this](auto&) {
         auto contents = ensure_search_display().document()->content_string();
         document()->set_search_text(move(contents));
-    };
-    ensure_search_display().document()->on_submit = [this] {
+    });
+    ensure_search_display().document()->on<Edit::Submit>(*this, [this](auto&) {
         cursors().remove_secondary_cursors();
         document()->move_cursor_to_next_search_match(*this, cursors().main_cursor());
-    };
-    ensure_search_display().document()->on_escape_press = [this] {
-        document()->set_search_text("");
-        if (document()->on_escape_press) {
-            document()->on_escape_press();
-        }
-        parent_window()->set_focused_widget(this);
-    };
+    });
     ensure_search_display().on_quit = [this] {
         document()->set_search_text("");
-        if (document()->on_escape_press) {
-            document()->on_escape_press();
-        }
         parent_window()->set_focused_widget(this);
     };
 
@@ -248,17 +238,4 @@ void AppDisplay::render() {
 
     render_cursor(renderer);
     Widget::render();
-}
-
-void AppDisplay::document_did_change() {
-    if (document()) {
-        if (m_main_display) {
-            document()->on_escape_press = [this] {
-                if (m_search_widget) {
-                    m_search_widget->set_hidden(true);
-                }
-            };
-        }
-        schedule_update();
-    }
 }
