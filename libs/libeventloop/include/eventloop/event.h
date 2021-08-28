@@ -225,7 +225,5 @@ APP_EVENT(App, CallbackEvent, Event, (), ((Function<void()>, callback)), (
     void invoke() { m_callback(); }
 ))
 
-APP_EVENT(App, TimerEvent, Event, (), ((int, times_expired)), ())
-
 APP_EVENT(App, ThemeChangeEvent, Event, (), (), ())
 // clang-format on

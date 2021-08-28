@@ -30,13 +30,13 @@ void GlobalProcessInfo::update(const proc_global_info& info) {
     m_kernel_ticks = info.kernel_ticks;
 }
 
-ProcessModel::ProcessModel() {
-    m_timer = App::Timer::create_interval_timer(
-        nullptr,
-        [this](int) {
-            load_data();
-        },
-        1000);
+ProcessModel::ProcessModel() {}
+
+void ProcessModel::initialize() {
+    m_timer = App::Timer::create_interval_timer(nullptr, 1000);
+    m_timer->on<App::TimerEvent>(*this, [this](auto&) {
+        load_data();
+    });
     load_data();
 }
 

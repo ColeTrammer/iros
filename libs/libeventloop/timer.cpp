@@ -7,22 +7,20 @@
 
 namespace App {
 
-SharedPtr<Timer> Timer::create_interval_timer(SharedPtr<Object> parent, Function<void(int)> callback, time_t ms) {
+SharedPtr<Timer> Timer::create_interval_timer(SharedPtr<Object> parent, time_t ms) {
     auto ret = Timer::create(move(parent));
     if (!ret) {
         return ret;
     }
-    ret->on_timeout = move(callback);
     ret->set_interval(ms);
     return ret;
 }
 
-SharedPtr<Timer> Timer::create_single_shot_timer(SharedPtr<Object> parent, Function<void(int)> callback, time_t ms) {
+SharedPtr<Timer> Timer::create_single_shot_timer(SharedPtr<Object> parent, time_t ms) {
     auto ret = Timer::create(move(parent));
     if (!ret) {
         return ret;
     }
-    ret->on_timeout = move(callback);
     ret->set_timeout(ms);
     return ret;
 }
@@ -30,11 +28,10 @@ SharedPtr<Timer> Timer::create_single_shot_timer(SharedPtr<Object> parent, Funct
 Timer::Timer() {}
 
 void Timer::initialize() {
-    on<TimerEvent>([this](const TimerEvent& event) {
+    on<TimerEvent>([this](auto&) {
         if (m_single_shot) {
             m_expired = true;
         }
-        on_timeout.safe_call(event.times_expired());
     });
 
     Object::initialize();

@@ -30,12 +30,10 @@ TEST(file_watcher, basic) {
         EXPECT_EQ(count, 3);
 
         EXPECT(file_watcher->unwatch("/tmp/test_file_watcher"));
-        auto timer = App::Timer::create_single_shot_timer(
-            nullptr,
-            [&](auto) {
-                loop.set_should_exit(true);
-            },
-            100);
+        auto timer = App::Timer::create_single_shot_timer(nullptr, 100);
+        timer->on<App::TimerEvent>({}, [&](auto&) {
+            loop.set_should_exit(true);
+        });
 
         fputc('a', file);
         loop.set_should_exit(false);

@@ -56,6 +56,7 @@ class ProcessModel final : public App::Model {
 
 public:
     ProcessModel();
+    virtual void initialize() override;
 
     enum Column {
         Pid,
