@@ -92,7 +92,7 @@ ReplDisplay::~ReplDisplay() {}
 
 void ReplDisplay::document_did_change() {
     if (document()) {
-        document()->on_submit = [this] {
+        document()->on<Edit::Submit>(*this, [this](auto&) {
             auto input_text = document()->content_string();
             auto input_status = m_repl.get_input_status(input_text);
 
@@ -112,7 +112,7 @@ void ReplDisplay::document_did_change() {
             cursors().remove_secondary_cursors();
             document()->move_cursor_to_document_end(*this, cursors().main_cursor());
             document()->scroll_cursor_into_view(*this, cursors().main_cursor());
-        };
+        });
 
         schedule_update();
     }

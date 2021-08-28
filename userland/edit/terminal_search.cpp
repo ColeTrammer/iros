@@ -17,18 +17,23 @@ void TerminalSearch::initialize() {
 
     auto search_document = Edit::Document::create_from_text(m_initial_text);
     search_document->set_submittable(true);
-    search_document->on_submit = [this] {
+    search_document->on<Edit::Submit>(*this, [this](auto&) {
         m_host_display.document()->move_cursor_to_next_search_match(m_host_display, m_host_display.cursors().main_cursor());
-    };
-    search_document->on_change = [this, search_document] {
+    });
+
+    search_document->on<Edit::Change>(*this, [this, search_document](auto&) {
         auto to_find = search_document->content_string();
         m_host_display.document()->set_search_text(move(to_find));
-    };
-    search_document->on_escape_press = [this] {
-        m_host_display.hide_search_panel();
-    };
+    });
 
     auto& text_box = layout.add<TerminalDisplay>();
+    text_box.on<App::KeyDownEvent>(*this, [this](const App::KeyDownEvent& event) {
+        if (event.key() == App::Key::Escape) {
+            m_host_display.hide_search_panel();
+            return true;
+        }
+        return false;
+    });
     text_box.set_document(search_document);
     text_box.enter();
 

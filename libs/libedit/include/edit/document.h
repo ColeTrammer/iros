@@ -21,6 +21,9 @@ APP_EVENT(Edit, AddToLine, App::Event, (), ((int, line_index), (int, index_into_
 APP_EVENT(Edit, DeleteFromLine, App::Event, (), ((int, line_index), (int, index_into_line), (int, bytes_deleted)), ())
 APP_EVENT(Edit, MoveLineTo, App::Event, (), ((int, line), (int, destination)), ())
 
+APP_EVENT(Edit, Submit, App::Event, (), (), ())
+APP_EVENT(Edit, Change, App::Event, (), (), ())
+
 namespace Edit {
 enum class UpdateMaxCursorCol { No, Yes };
 
@@ -176,10 +179,6 @@ public:
     void register_display(Display& display);
     void unregister_display(Display& display);
 
-    Function<void()> on_change;
-    Function<void()> on_submit;
-    Function<void()> on_escape_press;
-
 private:
     Document(Vector<Line> lines, String name, InputMode mode);
 
@@ -234,9 +233,7 @@ private:
         update_suggestions(display);
         set_needs_display();
 
-        if (on_change) {
-            on_change();
-        }
+        emit<Change>();
         return ret;
     }
 

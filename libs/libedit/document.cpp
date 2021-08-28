@@ -512,9 +512,7 @@ void Document::redo(Display& display) {
     auto& command = *m_command_stack[m_command_stack_index++];
     command.redo(display);
 
-    if (on_change) {
-        on_change();
-    }
+    emit<Change>();
 }
 
 void Document::undo(Display& display) {
@@ -528,9 +526,7 @@ void Document::undo(Display& display) {
     update_syntax_highlighting();
     update_suggestions(display);
 
-    if (on_change) {
-        on_change();
-    }
+    emit<Change>();
 }
 
 Document::StateSnapshot Document::snapshot_state(Display& display) const {
@@ -943,17 +939,14 @@ void Document::register_display(Display& display) {
             case App::Key::Enter:
                 if (!submittable() || &cursors.main_cursor().referenced_line(*this) != &last_line()) {
                     split_line_at_cursor(display);
-                } else if (submittable() && on_submit) {
-                    on_submit();
+                } else if (submittable()) {
+                    emit<Submit>();
                 }
                 break;
             case App::Key::Escape:
                 clear_search();
                 cursors.remove_secondary_cursors();
                 clear_selection(cursors.main_cursor());
-                if (on_escape_press) {
-                    on_escape_press();
-                }
                 break;
             case App::Key::Tab:
                 if (display.auto_complete_mode() == AutoCompleteMode::Always) {

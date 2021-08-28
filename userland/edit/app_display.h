@@ -67,8 +67,6 @@ private:
 
     explicit AppDisplay(bool m_main_display = true);
 
-    virtual void document_did_change() override;
-
     AppDisplay& ensure_search_display();
 
     int index(int row, int col) const { return row * cols() + col; }
