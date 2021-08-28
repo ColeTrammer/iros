@@ -62,6 +62,8 @@ void Object::remove_listener(Object& listener) {
 }
 
 bool Object::dispatch(const Event& event) const {
+    auto protector = shared_from_this();
+
     auto& handlers = const_cast<Vector<Handler>&>(m_handlers);
     for (auto& handler : handlers) {
         if (!handler.can_handle(event)) {
