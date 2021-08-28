@@ -1,5 +1,7 @@
 #pragma once
 
+#include <liim/format.h>
+
 namespace Edit {
 struct Position {
     int row { 0 };
@@ -30,6 +32,15 @@ struct Position {
             return this->col > other.col;
         }
         return false;
+    }
+};
+}
+
+namespace LIIM::Format {
+template<>
+struct Formatter<Edit::Position> : public Formatter<String> {
+    void format(const Edit::Position& p, FormatContext& context) {
+        return Formatter<String>::format(::format("Position <row={} col={}>", p.row, p.col), context);
     }
 };
 }
