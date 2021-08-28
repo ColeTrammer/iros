@@ -17,7 +17,11 @@ void Object::remove_child(SharedPtr<Object> child) {
 
 Object::Object() {}
 
-Object::~Object() {}
+Object::~Object() {
+    for (auto& child : m_children) {
+        child->set_parent(nullptr);
+    }
+}
 
 void Object::deferred_invoke(Function<void()> callback) {
     EventLoop::queue_event(weak_from_this(), make_unique<CallbackEvent>(move(callback)));
