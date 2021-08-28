@@ -698,6 +698,7 @@ void Document::register_display(Display& display) {
         auto& cursors = display.cursors();
         auto index = display.text_index_at_mouse_position({ event.x(), event.y() });
         if (event.left_button()) {
+            start_input(display, true);
             cursors.remove_secondary_cursors();
             auto& cursor = cursors.main_cursor();
             move_cursor_to(display, cursor, index, MovementMode::Move);
@@ -711,6 +712,7 @@ void Document::register_display(Display& display) {
         auto& cursors = display.cursors();
         auto index = display.text_index_at_mouse_position({ event.x(), event.y() });
         if (event.left_button()) {
+            start_input(display, true);
             cursors.remove_secondary_cursors();
             auto& cursor = cursors.main_cursor();
             move_cursor_to(display, cursor, index, MovementMode::Move);
@@ -725,6 +727,7 @@ void Document::register_display(Display& display) {
         auto& cursors = display.cursors();
         auto index = display.text_index_at_mouse_position({ event.x(), event.y() });
         if (event.left_button()) {
+            start_input(display, true);
             cursors.remove_secondary_cursors();
             auto& cursor = cursors.main_cursor();
             move_cursor_to(display, cursor, index, MovementMode::Move);
@@ -739,6 +742,7 @@ void Document::register_display(Display& display) {
         auto& cursors = display.cursors();
         auto index = display.text_index_at_mouse_position({ event.x(), event.y() });
         if (event.buttons_down() & App::MouseButton::Left) {
+            start_input(display, true);
             cursors.remove_secondary_cursors();
             auto& cursor = cursors.main_cursor();
             move_cursor_to(display, cursor, index, MovementMode::Select);
@@ -749,18 +753,23 @@ void Document::register_display(Display& display) {
     });
 
     display.this_widget().on<App::MouseScrollEvent>(*this, [this, &display](const App::MouseScrollEvent& event) {
+        start_input(display, true);
         display.scroll(2 * event.z(), 0);
         finish_input(display, false);
         return true;
     });
 
     display.this_widget().on<App::TextEvent>(*this, [this, &display](const App::TextEvent& event) {
+        start_input(display, true);
         insert_text_at_cursor(display, event.text());
         finish_input(display, true);
         return true;
     });
 
     display.this_widget().on<App::KeyDownEvent>(*this, [this, &display](const App::KeyDownEvent& event) {
+        bool should_save_cursor_state = !(!event.alt_down() && event.control_down() && event.key() == App::Key::U);
+        start_input(display, should_save_cursor_state);
+
         auto& cursors = display.cursors();
 
         bool should_scroll_cursor_into_view = true;
@@ -860,6 +869,9 @@ void Document::register_display(Display& display) {
                     if (!input_text_mode()) {
                         save(display);
                     }
+                    break;
+                case App::Key::U:
+                    cursors.cursor_undo();
                     break;
                 case App::Key::V:
                     paste(display, cursors);
@@ -1305,6 +1317,12 @@ void Document::insert_suggestion(Display& display, const MatchedSuggestion& sugg
     display.cursors().remove_secondary_cursors();
     move_cursor_to(display, display.cursors().main_cursor(), suggestion.start(), MovementMode::Select);
     insert_text_at_cursor(display, String { suggestion.content() });
+}
+
+void Document::start_input(Display& display, bool should_save_cursor_state) {
+    if (should_save_cursor_state) {
+        display.cursors().cursor_save();
+    }
 }
 
 void Document::finish_input(Display& display, bool should_scroll_cursor_into_view) {

@@ -84,6 +84,8 @@ void MultiCursor::add_cursor_at(Document& document, Display& display, const Text
 
 void MultiCursor::install_document_listeners(Display& display, Document& document) {
     document.on<DeleteLines>(display.this_widget(), [this, &display, &document](const DeleteLines& event) {
+        invalidate_cursor_history();
+
         for (auto& cursor : m_cursors) {
             if (cursor.selection().overlaps(Selection { { event.line_index(), 0 }, { event.line_index() + event.line_count(), 0 } })) {
                 cursor.selection().clear();
@@ -106,6 +108,8 @@ void MultiCursor::install_document_listeners(Display& display, Document& documen
     });
 
     document.on<AddLines>(display.this_widget(), [this, &display, &document](const AddLines& event) {
+        invalidate_cursor_history();
+
         for (auto& cursor : m_cursors) {
             if (cursor.selection().overlaps(Selection { { event.line_index(), 0 }, { event.line_index() + event.line_count(), 0 } })) {
                 cursor.selection().clear();
@@ -118,6 +122,8 @@ void MultiCursor::install_document_listeners(Display& display, Document& documen
     });
 
     document.on<SplitLines>(display.this_widget(), [this, &display, &document](const SplitLines& event) {
+        invalidate_cursor_history();
+
         for (auto& cursor : m_cursors) {
             if (cursor.selection().overlaps(Selection { { event.line_index(), event.index_into_line() }, { event.line_index() + 1, 0 } })) {
                 cursor.selection().clear();
@@ -131,6 +137,8 @@ void MultiCursor::install_document_listeners(Display& display, Document& documen
     });
 
     document.on<MergeLines>(display.this_widget(), [this, &display, &document](const MergeLines& event) {
+        invalidate_cursor_history();
+
         for (auto& cursor : m_cursors) {
             if (cursor.selection().overlaps(Selection { { event.second_line_index(), 0 }, { event.second_line_index() + 1, 0 } })) {
                 cursor.selection().clear();
@@ -144,6 +152,8 @@ void MultiCursor::install_document_listeners(Display& display, Document& documen
     });
 
     document.on<AddToLine>(display.this_widget(), [this, &display, &document](const AddToLine& event) {
+        invalidate_cursor_history();
+
         for (auto& cursor : m_cursors) {
             if (cursor.selection().overlaps(Selection { { event.line_index(), event.index_into_line() },
                                                         { event.line_index(), event.index_into_line() + event.bytes_added() } })) {
@@ -161,6 +171,8 @@ void MultiCursor::install_document_listeners(Display& display, Document& documen
     });
 
     document.on<DeleteFromLine>(display.this_widget(), [this, &display, &document](const DeleteFromLine& event) {
+        invalidate_cursor_history();
+
         for (auto& cursor : m_cursors) {
             if (cursor.selection().overlaps(Selection { { event.line_index(), event.index_into_line() },
                                                         { event.line_index(), event.index_into_line() + event.bytes_deleted() } })) {
@@ -178,6 +190,8 @@ void MultiCursor::install_document_listeners(Display& display, Document& documen
     });
 
     document.on<MoveLineTo>(display.this_widget(), [this, &display, &document](const MoveLineTo& event) {
+        invalidate_cursor_history();
+
         auto line_min = min(event.line(), event.destination());
         auto line_max = max(event.line(), event.destination());
         for (auto& cursor : m_cursors) {
@@ -263,5 +277,26 @@ MultiCursor::Snapshot MultiCursor::snapshot() const {
 
 void MultiCursor::restore(const Snapshot& snapshot) {
     m_cursors = snapshot;
+}
+
+void MultiCursor::invalidate_cursor_history() {
+    m_history.clear();
+}
+
+void MultiCursor::cursor_save() {
+    auto state = snapshot();
+    if (!m_history.empty() && m_history.last() == state) {
+        return;
+    }
+
+    m_history.add(move(state));
+}
+
+void MultiCursor::cursor_undo() {
+    if (m_history.empty()) {
+        return;
+    }
+    restore(m_history.last());
+    m_history.remove_last();
 }
 }

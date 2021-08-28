@@ -48,8 +48,13 @@ public:
     Snapshot snapshot() const;
     void restore(const Snapshot& snapshot);
 
+    void invalidate_cursor_history();
+    void cursor_save();
+    void cursor_undo();
+
 private:
     Vector<Cursor> m_cursors;
+    Vector<Snapshot> m_history;
     int m_main_cursor_index { 0 };
 };
 }

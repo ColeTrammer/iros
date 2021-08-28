@@ -41,6 +41,8 @@ public:
     int max_col() const { return m_max_col; }
     void compute_max_col(const Document& document, Display& display);
 
+    bool operator==(const Cursor& other) const { return this->index() == other.index() && this->selection() == other.selection(); }
+
 private:
     TextIndex m_index;
     Selection m_selection;

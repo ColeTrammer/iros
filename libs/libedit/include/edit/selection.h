@@ -38,6 +38,8 @@ public:
 
     TextRange text_range() const { return { normalized_start(), normalized_end(), { CharacterMetadata::Flags::Selected } }; }
 
+    bool operator==(const Selection& other) const { return this->start() == other.start() && this->end() == other.end(); }
+
 private:
     TextIndex m_start;
     TextIndex m_end;
