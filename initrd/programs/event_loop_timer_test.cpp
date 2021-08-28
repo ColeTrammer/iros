@@ -7,15 +7,13 @@ int main() {
     App::EventLoop loop;
 
     int count = 0;
-    auto timer = App::Timer::create_interval_timer(
-        nullptr,
-        [&](int) {
-            printf("Timer Fired\n");
-            if (++count == 10) {
-                exit(0);
-            }
-        },
-        1000);
+    auto timer = App::Timer::create_interval_timer(nullptr, 1000);
+    timer->on<App::TimerEvent>({}, [&](auto&) {
+        printf("Timer Fired\n");
+        if (++count == 10) {
+            exit(0);
+        }
+    });
 
     loop.enter();
     return 0;

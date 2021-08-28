@@ -37,13 +37,11 @@ void TerminalStatusBar::set_active_display(TerminalDisplay* display) {
 
 void TerminalStatusBar::set_status_message(String message) {
     m_status_message = move(message);
-    m_status_message_timer = App::Timer::create_single_shot_timer(
-        shared_from_this(),
-        [this](auto) {
-            m_status_message = {};
-            invalidate();
-        },
-        3000);
+    m_status_message_timer = App::Timer::create_single_shot_timer(shared_from_this(), 3000);
+    m_status_message_timer->on<App::TimerEvent>(*this, [this](auto&) {
+        m_status_message = {};
+        invalidate();
+    });
     invalidate();
 }
 

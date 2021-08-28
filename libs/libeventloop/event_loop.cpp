@@ -3,6 +3,7 @@
 #include <eventloop/event.h>
 #include <eventloop/event_loop.h>
 #include <eventloop/selectable.h>
+#include <eventloop/timer.h>
 #include <liim/hash_map.h>
 #include <liim/vector.h>
 #include <signal.h>

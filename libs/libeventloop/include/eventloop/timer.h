@@ -1,8 +1,11 @@
 #pragma once
 
+#include <eventloop/event.h>
 #include <eventloop/object.h>
 #include <liim/function.h>
 #include <time.h>
+
+APP_EVENT(App, TimerEvent, Event, (), ((int, times_expired)), ())
 
 namespace App {
 
@@ -10,8 +13,8 @@ class Timer : public Object {
     APP_OBJECT(Timer)
 
 public:
-    static SharedPtr<Timer> create_interval_timer(SharedPtr<Object> parent, Function<void(int)> callback, time_t ms);
-    static SharedPtr<Timer> create_single_shot_timer(SharedPtr<Object> parent, Function<void(int)> callback, time_t ms);
+    static SharedPtr<Timer> create_interval_timer(SharedPtr<Object> parent, time_t ms);
+    static SharedPtr<Timer> create_single_shot_timer(SharedPtr<Object> parent, time_t ms);
 
     Timer();
     virtual void initialize() override;
@@ -23,8 +26,6 @@ public:
     void set_timeout(itimerspec timeout);
     void set_timeout(time_t ms);
     void set_interval(time_t ms);
-
-    Function<void(int)> on_timeout;
 
 private:
     void maybe_setup();
