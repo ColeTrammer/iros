@@ -95,3 +95,12 @@ private:
     int m_width { 0 };
     int m_height { 0 };
 };
+
+namespace LIIM::Format {
+template<>
+struct Formatter<Rect> : public Formatter<String> {
+    void format(const Rect& r, FormatContext& context) {
+        return Formatter<String>::format(::format("Rect <x={} y={} width={} height={}>", r.x(), r.y(), r.width(), r.height()), context);
+    }
+};
+}
