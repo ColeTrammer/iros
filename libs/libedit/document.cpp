@@ -687,7 +687,10 @@ void Document::split_line_at(const TextIndex& index) {
 void Document::register_display(Display& display) {
     m_displays.add(&display);
 
-    display.this_widget().on<App::ResizeEvent>(*this, [this](auto&) {
+    display.this_widget().on<App::ResizeEvent>(*this, [this, &display](auto&) {
+        if (display.word_wrap_enabled()) {
+            invalidate_all_rendered_contents();
+        }
         set_needs_display();
     });
 
