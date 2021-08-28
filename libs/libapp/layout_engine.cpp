@@ -26,8 +26,8 @@ Rect LayoutEngine::parent_rect() const {
         return {};
     }
     return rect.with_x(rect.x() + margins().left)
-        .with_width(rect.width() - margins().right)
+        .with_width(rect.width() - margins().left - margins().right)
         .with_y(rect.y() + margins().top)
-        .with_height(rect.height() - margins().bottom);
+        .with_height(rect.height() - margins().top - margins().bottom);
 }
 }
