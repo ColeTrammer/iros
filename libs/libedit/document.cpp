@@ -4,6 +4,7 @@
 #include <edit/position.h>
 #include <errno.h>
 #include <eventloop/event.h>
+#include <eventloop/widget_events.h>
 #include <ext/file.h>
 #include <graphics/point.h>
 #include <stdio.h>

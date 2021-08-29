@@ -1,5 +1,6 @@
 #pragma once
 
+#include <eventloop/event.h>
 #include <eventloop/forward.h>
 #include <liim/function.h>
 #include <liim/pointers.h>
@@ -20,6 +21,8 @@ public:                                                                       \
     }                                                                         \
                                                                               \
 private:
+
+APP_EVENT(App, CallbackEvent, Event, (), ((Function<void()>, callback)), (void invoke() { m_callback(); }))
 
 namespace App {
 class Object {

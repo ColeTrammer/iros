@@ -1,6 +1,6 @@
 #pragma once
 
-#include <eventloop/event.h>
+#include <eventloop/widget_events.h>
 #include <liim/string.h>
 #include <sys/types.h>
 
