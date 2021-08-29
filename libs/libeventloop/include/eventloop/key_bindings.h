@@ -1,6 +1,7 @@
 #pragma once
 
 #include <eventloop/event.h>
+#include <eventloop/widget_events.h>
 #include <liim/function.h>
 #include <liim/vector.h>
 

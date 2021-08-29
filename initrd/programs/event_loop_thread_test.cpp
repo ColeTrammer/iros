@@ -1,6 +1,7 @@
 #include <eventloop/event.h>
 #include <eventloop/event_loop.h>
 #include <eventloop/object.h>
+#include <eventloop/widget_events.h>
 #include <liim/format.h>
 #include <pthread.h>
 #include <stdio.h>

@@ -3,6 +3,7 @@
 #include <app/forward.h>
 #include <app/layout_constraint.h>
 #include <eventloop/object.h>
+#include <eventloop/widget_events.h>
 #include <graphics/rect.h>
 
 namespace App::Base {

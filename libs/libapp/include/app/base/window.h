@@ -1,8 +1,15 @@
 #pragma once
 
 #include <app/base/widget.h>
+#include <eventloop/event.h>
 #include <eventloop/forward.h>
 #include <graphics/rect_set.h>
+
+APP_EVENT_PARENT(App, WindowEvent, Event, ((StringView, name)), (), ())
+APP_EVENT(App, WindowCloseEvent, WindowEvent, (), (), ())
+APP_EVENT(App, WindowForceRedrawEvent, WindowEvent, (), (), ())
+APP_EVENT(App, WindowDidResizeEvent, WindowEvent, (), (), ())
+APP_EVENT(App, WindowStateEvent, WindowEvent, (), ((bool, active)), ())
 
 namespace App::Base {
 class Window : public Object {
