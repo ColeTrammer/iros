@@ -25,8 +25,6 @@ APP_EVENT(Edit, Submit, App::Event, (), (), ())
 APP_EVENT(Edit, Change, App::Event, (), (), ())
 
 namespace Edit {
-enum class UpdateMaxCursorCol { No, Yes };
-
 enum class MovementMode { Move, Select };
 
 enum class DeleteCharMode { Backspace, Delete };
