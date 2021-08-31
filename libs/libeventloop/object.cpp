@@ -98,4 +98,15 @@ bool Object::dispatch(const Event& event) const {
 
     return false;
 }
+
+void Object::start_coroutine(Function<Task<>()> coroutine) {
+    m_owned_coroutines.add(coroutine());
+    schedule_coroutine(&m_owned_coroutines.last());
+}
+
+void Object::remove_coroutine(Task<>* task) {
+    m_owned_coroutines.remove_if([&](auto& coroutine) {
+        return &coroutine == task;
+    });
+}
 }

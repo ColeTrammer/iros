@@ -1,4 +1,5 @@
 #include <eventloop/event.h>
+#include <eventloop/event_loop.h>
 #include <eventloop/object.h>
 #include <test/test.h>
 
@@ -131,4 +132,25 @@ TEST(object, event_multiple) {
     EXPECT(!object->emit<CustomEvent2>());
 
     EXPECT_EQ(count, 3);
+}
+
+static Task<int> do_thing() {
+    co_return 1;
+}
+
+TEST(object, coroutine) {
+    static auto loop = App::EventLoop {};
+
+    auto object = Object::create(nullptr);
+
+    static int count = 0;
+    object->start_coroutine([]() -> Task<> {
+        count = co_await do_thing();
+        loop.set_should_exit(true);
+        co_return;
+    });
+
+    loop.enter();
+
+    EXPECT_EQ(count, 1);
 }

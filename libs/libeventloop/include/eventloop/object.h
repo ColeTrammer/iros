@@ -5,6 +5,7 @@
 #include <liim/function.h>
 #include <liim/pointers.h>
 #include <liim/string_view.h>
+#include <liim/task.h>
 #include <liim/vector.h>
 
 #define APP_OBJECT(name)                                                                \
@@ -165,6 +166,20 @@ public:
     void remove_listener(Object& listener);
     void remove_listener(int token);
 
+    void start_coroutine(Function<Task<>()> coroutine);
+
+    template<typename T = void>
+    void schedule_coroutine(Task<T>* task) {
+        deferred_invoke([this, task] {
+            (*task)();
+            if constexpr (LIIM::IsSame<T, void>::value) {
+                if (task->finished()) {
+                    remove_coroutine(task);
+                }
+            }
+        });
+    }
+
 protected:
     Object();
 
@@ -199,8 +214,11 @@ protected:
     }
 
 private:
+    void remove_coroutine(Task<>* task);
+
     Vector<SharedPtr<Object>> m_children;
     Vector<Handler> m_handlers;
+    Vector<Task<>> m_owned_coroutines;
     Object* m_parent { nullptr };
     mutable WeakPtr<Object> m_weak_this;
     int m_next_callback_token { 1 };
