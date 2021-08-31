@@ -38,6 +38,8 @@ enum class InputMode { Document, InputText };
 class Document final : public App::Object {
     APP_OBJECT(Document)
 
+    APP_EMITS(App::Object, DeleteLines, AddLines, SplitLines, MergeLines, AddToLine, DeleteFromLine, MoveLineTo, Submit, Change)
+
 public:
     static SharedPtr<Document> create_from_stdin(const String& path, Maybe<String>& error_message);
     static SharedPtr<Document> create_from_file(const String& path, Maybe<String>& error_message);

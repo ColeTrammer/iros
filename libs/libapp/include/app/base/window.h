@@ -15,6 +15,8 @@ namespace App::Base {
 class Window : public Object {
     APP_OBJECT(Window)
 
+    APP_EMITS(Object, WindowCloseEvent, WindowForceRedrawEvent, WindowDidResizeEvent, WindowStateEvent)
+
 public:
     Window();
     virtual void initialize() override;

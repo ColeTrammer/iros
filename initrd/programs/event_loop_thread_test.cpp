@@ -13,7 +13,7 @@ class TestObject final : public App::Object {
 
 public:
     virtual void initialize() {
-        on<App::ThemeChangeEvent>([](const App::ThemeChangeEvent&) {
+        on_unchecked<App::ThemeChangeEvent>([](const App::ThemeChangeEvent&) {
             error_log("Got event!");
             exit(0);
         });

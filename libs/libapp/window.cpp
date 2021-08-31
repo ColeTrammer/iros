@@ -85,7 +85,7 @@ void Window::initialize() {
         m_active = state_event.active();
     });
 
-    on<ThemeChangeEvent>([this](const ThemeChangeEvent&) {
+    on_unchecked<ThemeChangeEvent>([this](const ThemeChangeEvent&) {
         pixels()->clear(Application::the().palette()->color(Palette::Background));
         invalidate_rect(rect());
     });

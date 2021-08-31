@@ -14,7 +14,7 @@ TEST(object, events_basic) {
     auto object = Object::create(nullptr);
 
     int count = 0;
-    object->on<CustomEvent>({}, [&](const auto&) {
+    object->on_unchecked<CustomEvent>({}, [&](const auto&) {
         count++;
     });
 
@@ -32,7 +32,7 @@ TEST(object, events_deregistration) {
     auto listener = Object::create(nullptr);
 
     int count = 0;
-    object->on<CustomEvent>(*listener, [&](const auto&) {
+    object->on_unchecked<CustomEvent>(*listener, [&](const auto&) {
         count++;
     });
 
@@ -48,7 +48,7 @@ TEST(object, events_deregistration) {
     listener = Object::create(nullptr);
 
     count = 0;
-    object->on<CustomEvent>(*listener, [&](const auto&) {
+    object->on_unchecked<CustomEvent>(*listener, [&](const auto&) {
         count++;
     });
 
@@ -66,25 +66,25 @@ TEST(object, event_consuming) {
     auto object = Object::create(nullptr);
 
     int count = 0;
-    object->on<CustomEvent>({}, [&](const auto&) {
+    object->on_unchecked<CustomEvent>({}, [&](const auto&) {
         count++;
     });
-    object->on<CustomEvent>({}, [&](const auto&) {
+    object->on_unchecked<CustomEvent>({}, [&](const auto&) {
         count++;
     });
-    object->on<CustomEvent>({}, [&](const auto&) {
+    object->on_unchecked<CustomEvent>({}, [&](const auto&) {
         count++;
     });
 
-    object->on<ConsumableEvent>({}, [&](const auto&) {
+    object->on_unchecked<ConsumableEvent>({}, [&](const auto&) {
         count++;
         return false;
     });
-    object->on<ConsumableEvent>({}, [&](const auto&) {
+    object->on_unchecked<ConsumableEvent>({}, [&](const auto&) {
         count++;
         return true;
     });
-    object->on<ConsumableEvent>({}, [&](const auto&) {
+    object->on_unchecked<ConsumableEvent>({}, [&](const auto&) {
         count++;
         return true;
     });
@@ -101,7 +101,7 @@ TEST(object, event_multiple) {
 
     int count = 0;
 
-    object->on<CustomEvent, CustomEvent2>({}, [&](auto&& event) {
+    object->on_unchecked<CustomEvent, CustomEvent2>({}, [&](auto&& event) {
         using Type = LIIM::decay_t<decltype(event)>;
 
         if constexpr (LIIM::IsSame<CustomEvent, Type>::value) {

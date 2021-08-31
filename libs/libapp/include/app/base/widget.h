@@ -10,7 +10,19 @@ namespace App::Base {
 class Widget : public Object {
     APP_OBJECT(Widget)
 
+    // APP_EMITS(Object, ResizeEvent, FocusedEvent, UnfocusedEvent, LeaveEvent, EnterEvent, KeyDownEvent, KeyUpEvent, TextEvent,
+    //           MouseDownEvent, MouseDoubleEvent, MouseTripleEvent, MouseMoveEvent, MouseUpEvent, MouseScrollEvent, ThemeChangeEvent)
+
 public:
+    template<typename... Ev>
+    static constexpr bool does_emit() {
+        return (LIIM::IsOneOf<Ev, ResizeEvent, FocusedEvent, UnfocusedEvent, LeaveEvent, EnterEvent, KeyDownEvent, KeyUpEvent, TextEvent,
+                              MouseDownEvent, MouseDoubleEvent, MouseTripleEvent, MouseMoveEvent, MouseUpEvent, MouseScrollEvent,
+                              ThemeChangeEvent>::value &&
+                ...) ||
+               Object::does_emit<Ev...>();
+    }
+
     Widget();
     virtual void initialize() override;
     virtual ~Widget() override;

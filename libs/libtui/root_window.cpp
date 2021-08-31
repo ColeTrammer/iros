@@ -4,7 +4,7 @@
 
 namespace TUI {
 void RootWindow::initialize() {
-    on<App::KeyDownEvent>([this](const App::KeyDownEvent& event) {
+    on_unchecked<App::KeyDownEvent>([this](const App::KeyDownEvent& event) {
         if (event.control_down() && event.key() == App::Key::Q) {
             Application::the().main_event_loop().set_should_exit(true);
             return true;

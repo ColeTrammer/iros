@@ -7,25 +7,57 @@
 #include <liim/string_view.h>
 #include <liim/vector.h>
 
-#define APP_OBJECT(name)                                                      \
-public:                                                                       \
-    template<typename... Args>                                                \
-    static SharedPtr<name> create(SharedPtr<Object> parent, Args&&... args) { \
-        auto ret = SharedPtr<name>(new name(forward<Args>(args)...));         \
-        ret->__set_weak_this(WeakPtr<name>(ret));                             \
-        if (parent) {                                                         \
-            parent->add_child(ret);                                           \
-        }                                                                     \
-        ret->initialize();                                                    \
-        return ret;                                                           \
-    }                                                                         \
-                                                                              \
+#define APP_OBJECT(name)                                                                \
+public:                                                                                 \
+    template<typename... Args>                                                          \
+    static SharedPtr<name> create(SharedPtr<Object> parent, Args&&... args) {           \
+        auto ret = SharedPtr<name>(new name(forward<Args>(args)...));                   \
+        ret->__set_weak_this(WeakPtr<name>(ret));                                       \
+        if (parent) {                                                                   \
+            parent->add_child(ret);                                                     \
+        }                                                                               \
+        ret->initialize();                                                              \
+        return ret;                                                                     \
+    }                                                                                   \
+                                                                                        \
+    template<typename... Ev, typename HandlerCallback>                                  \
+    Object& on(GlobalListenerTag, HandlerCallback&& handler_callback) {                 \
+        static_assert(does_emit<Ev...>());                                              \
+        return this->on_unchecked<Ev...>(GlobalListenerTag {}, move(handler_callback)); \
+    }                                                                                   \
+                                                                                        \
+    template<typename... Ev, typename HandlerCallback>                                  \
+    Object& on(Object& listener, HandlerCallback&& handler_callback) {                  \
+        static_assert(does_emit<Ev...>());                                              \
+        return this->on_unchecked<Ev...>(listener, move(handler_callback));             \
+    }                                                                                   \
+                                                                                        \
+protected:                                                                              \
+    template<typename... Ev, typename HandlerCallback>                                  \
+    Object& on(HandlerCallback&& handler_callback) {                                    \
+        static_assert(does_emit<Ev...>());                                              \
+        return this->on_unchecked<Ev...>(move(handler_callback));                       \
+    }                                                                                   \
+                                                                                        \
+private:
+
+#define APP_EMITS(Parent, ...)                                                                 \
+public:                                                                                        \
+    template<typename... Ev>                                                                   \
+    static constexpr bool does_emit() {                                                        \
+        return (LIIM::IsOneOf<Ev, ##__VA_ARGS__>::value && ...) || Parent::does_emit<Ev...>(); \
+    }                                                                                          \
+                                                                                               \
 private:
 
 APP_EVENT(App, CallbackEvent, Event, (), ((Function<void()>, callback)), (void invoke() { m_callback(); }))
 
 namespace App {
 class Object {
+public:
+    class GlobalListenerTag {};
+
+private:
     APP_OBJECT(Object)
 
 private:
@@ -60,6 +92,11 @@ public:
     virtual ~Object();
 
     virtual void initialize() {}
+
+    template<typename... Ev>
+    static constexpr bool does_emit() {
+        return false;
+    }
 
     void add_child(SharedPtr<Object> child);
     void remove_child(SharedPtr<Object> child);
@@ -113,16 +150,14 @@ public:
 
     bool dispatch(const Event& event) const;
 
-    class GlobalListenerTag {};
-
     template<typename... Ev, typename HandlerCallback>
-    Object& on(GlobalListenerTag, HandlerCallback&& handler_callback) {
-        return this->on<Ev...>(move(handler_callback));
+    Object& on_unchecked(GlobalListenerTag, HandlerCallback&& handler_callback) {
+        return this->on_unchecked<Ev...>(move(handler_callback));
     }
 
     template<typename... Ev, typename HandlerCallback>
-    Object& on(Object& listener, HandlerCallback&& handler_callback) {
-        return this->on<Ev...>(move(handler_callback), listener.weak_from_this());
+    Object& on_unchecked(Object& listener, HandlerCallback&& handler_callback) {
+        return this->on_unchecked<Ev...>(move(handler_callback), listener.weak_from_this());
     }
 
     void remove_listener(Object& listener);
@@ -134,7 +169,7 @@ protected:
     virtual void did_remove_child(SharedPtr<Object>) {}
 
     template<typename... Ev, typename HandlerCallback>
-    Object& on(HandlerCallback&& handler, Maybe<WeakPtr<Object>> listener = {}) {
+    Object& on_unchecked(HandlerCallback&& handler, Maybe<WeakPtr<Object>> listener = {}) {
         (
             [&] {
                 auto callback = [handler](const Event& event) {

@@ -12,6 +12,8 @@ namespace App {
 class Timer : public Object {
     APP_OBJECT(Timer)
 
+    APP_EMITS(Object, TimerEvent)
+
 public:
     static SharedPtr<Timer> create_interval_timer(SharedPtr<Object> parent, time_t ms);
     static SharedPtr<Timer> create_single_shot_timer(SharedPtr<Object> parent, time_t ms);

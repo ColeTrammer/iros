@@ -56,7 +56,7 @@ void BaseTerminalWidget::initialize() {
         invalidate_all_contents();
     };
 
-    this_widget().on<App::ResizeEvent>({}, [this](auto&) {
+    this_widget().on_unchecked<App::ResizeEvent>({}, [this](auto&) {
         m_selection_start_row = m_selection_start_col = m_selection_end_row = m_selection_end_col = -1;
         m_in_selection = false;
 
@@ -67,7 +67,7 @@ void BaseTerminalWidget::initialize() {
         m_pseudo_terminal.set_size(rows, cols);
     });
 
-    this_widget().on<App::KeyDownEvent>({}, [this](const App::KeyDownEvent& event) {
+    this_widget().on_unchecked<App::KeyDownEvent>({}, [this](const App::KeyDownEvent& event) {
         if (event.control_down() && event.shift_down() && event.key() == App::Key::C) {
             copy_selection();
             return true;
@@ -82,14 +82,14 @@ void BaseTerminalWidget::initialize() {
         return true;
     });
 
-    this_widget().on<App::TextEvent>({}, [this](const App::TextEvent& event) {
+    this_widget().on_unchecked<App::TextEvent>({}, [this](const App::TextEvent& event) {
         m_pseudo_terminal.handle_text_event(event);
         return true;
     });
 
     this_widget()
-        .on<App::MouseDownEvent, App::MouseDoubleEvent, App::MouseTripleEvent, App::MouseMoveEvent, App::MouseUpEvent,
-            App::MouseScrollEvent>({}, [this](const auto& event) {
+        .on_unchecked<App::MouseDownEvent, App::MouseDoubleEvent, App::MouseTripleEvent, App::MouseMoveEvent, App::MouseUpEvent,
+                      App::MouseScrollEvent>({}, [this](const auto& event) {
             using SpecificMouseEvent = LIIM::decay_t<decltype(event)>;
 
             auto cell = cell_position_of_mouse_coordinates(event.x(), event.y());

@@ -11,6 +11,8 @@ namespace App {
 class Button : public Widget {
     APP_OBJECT(Button)
 
+    APP_EMITS(Widget, ClickEvent)
+
 public:
     explicit Button(String label) : m_label(move(label)) {}
     virtual void initialize() override;

@@ -684,14 +684,14 @@ void Document::split_line_at(const TextIndex& index) {
 void Document::register_display(Display& display) {
     m_displays.add(&display);
 
-    display.this_widget().on<App::ResizeEvent>(*this, [this, &display](auto&) {
+    display.this_widget().on_unchecked<App::ResizeEvent>(*this, [this, &display](auto&) {
         if (display.word_wrap_enabled()) {
             invalidate_all_rendered_contents();
         }
         set_needs_display();
     });
 
-    display.this_widget().on<App::MouseDownEvent>(*this, [this, &display](const App::MouseDownEvent& event) {
+    display.this_widget().on_unchecked<App::MouseDownEvent>(*this, [this, &display](const App::MouseDownEvent& event) {
         auto& cursors = display.cursors();
         auto index = display.text_index_at_mouse_position({ event.x(), event.y() });
         if (event.left_button()) {
@@ -705,7 +705,7 @@ void Document::register_display(Display& display) {
         return false;
     });
 
-    display.this_widget().on<App::MouseDoubleEvent>(*this, [this, &display](const App::MouseDoubleEvent& event) {
+    display.this_widget().on_unchecked<App::MouseDoubleEvent>(*this, [this, &display](const App::MouseDoubleEvent& event) {
         auto& cursors = display.cursors();
         auto index = display.text_index_at_mouse_position({ event.x(), event.y() });
         if (event.left_button()) {
@@ -720,7 +720,7 @@ void Document::register_display(Display& display) {
         return false;
     });
 
-    display.this_widget().on<App::MouseTripleEvent>(*this, [this, &display](const App::MouseTripleEvent& event) {
+    display.this_widget().on_unchecked<App::MouseTripleEvent>(*this, [this, &display](const App::MouseTripleEvent& event) {
         auto& cursors = display.cursors();
         auto index = display.text_index_at_mouse_position({ event.x(), event.y() });
         if (event.left_button()) {
@@ -735,7 +735,7 @@ void Document::register_display(Display& display) {
         return false;
     });
 
-    display.this_widget().on<App::MouseMoveEvent>(*this, [this, &display](const App::MouseMoveEvent& event) {
+    display.this_widget().on_unchecked<App::MouseMoveEvent>(*this, [this, &display](const App::MouseMoveEvent& event) {
         auto& cursors = display.cursors();
         auto index = display.text_index_at_mouse_position({ event.x(), event.y() });
         if (event.buttons_down() & App::MouseButton::Left) {
@@ -749,21 +749,21 @@ void Document::register_display(Display& display) {
         return false;
     });
 
-    display.this_widget().on<App::MouseScrollEvent>(*this, [this, &display](const App::MouseScrollEvent& event) {
+    display.this_widget().on_unchecked<App::MouseScrollEvent>(*this, [this, &display](const App::MouseScrollEvent& event) {
         start_input(display, true);
         display.scroll(2 * event.z(), 0);
         finish_input(display, false);
         return true;
     });
 
-    display.this_widget().on<App::TextEvent>(*this, [this, &display](const App::TextEvent& event) {
+    display.this_widget().on_unchecked<App::TextEvent>(*this, [this, &display](const App::TextEvent& event) {
         start_input(display, true);
         insert_text_at_cursor(display, event.text());
         finish_input(display, true);
         return true;
     });
 
-    display.this_widget().on<App::KeyDownEvent>(*this, [this, &display](const App::KeyDownEvent& event) {
+    display.this_widget().on_unchecked<App::KeyDownEvent>(*this, [this, &display](const App::KeyDownEvent& event) {
         bool should_save_cursor_state = !(!event.alt_down() && event.control_down() && event.key() == App::Key::U);
         start_input(display, should_save_cursor_state);
 
