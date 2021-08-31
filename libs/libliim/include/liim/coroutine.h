@@ -19,8 +19,13 @@ struct SuspendNever {
     void await_suspend(CoroutineHandle<>) {}
     void await_resume() {}
 };
+
+inline auto noop_coroutine() noexcept {
+    return std::noop_coroutine();
+}
 }
 
 using LIIM::CoroutineHandle;
+using LIIM::noop_coroutine;
 using LIIM::SuspendAlways;
 using LIIM::SuspendNever;

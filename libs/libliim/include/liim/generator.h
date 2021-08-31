@@ -91,7 +91,7 @@ public:
             bool await_ready() { return false; }
             CoroutineHandle<> await_suspend(CoroutineHandle<>) {
                 if (!handle) {
-                    return std::noop_coroutine();
+                    return noop_coroutine();
                 }
                 return handle;
             }
