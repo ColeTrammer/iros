@@ -47,7 +47,7 @@ class Generator {
 public:
     struct Promise;
 
-    using Handle = std::coroutine_handle<Promise>;
+    using Handle = CoroutineHandle<Promise>;
     using promise_type = Promise;
 
     struct Promise {
@@ -86,10 +86,10 @@ public:
         }
 
         struct RedirectAwaiter {
-            std::coroutine_handle<> handle;
+            CoroutineHandle<> handle;
 
             bool await_ready() { return false; }
-            std::coroutine_handle<> await_suspend(std::coroutine_handle<>) {
+            CoroutineHandle<> await_suspend(CoroutineHandle<>) {
                 if (!handle) {
                     return std::noop_coroutine();
                 }
