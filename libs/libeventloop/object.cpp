@@ -61,6 +61,12 @@ void Object::remove_listener(Object& listener) {
     });
 }
 
+void Object::remove_listener(int token) {
+    m_handlers.remove_if([&](auto& handler) {
+        return handler.token() == token;
+    });
+}
+
 bool Object::dispatch(const Event& event) const {
     auto protector = shared_from_this();
 

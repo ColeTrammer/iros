@@ -21,20 +21,20 @@ public:                                                                         
     }                                                                                   \
                                                                                         \
     template<typename... Ev, typename HandlerCallback>                                  \
-    Object& on(GlobalListenerTag, HandlerCallback&& handler_callback) {                 \
+    int on(GlobalListenerTag, HandlerCallback&& handler_callback) {                     \
         static_assert(does_emit<Ev...>());                                              \
         return this->on_unchecked<Ev...>(GlobalListenerTag {}, move(handler_callback)); \
     }                                                                                   \
                                                                                         \
     template<typename... Ev, typename HandlerCallback>                                  \
-    Object& on(Object& listener, HandlerCallback&& handler_callback) {                  \
+    int on(Object& listener, HandlerCallback&& handler_callback) {                      \
         static_assert(does_emit<Ev...>());                                              \
         return this->on_unchecked<Ev...>(listener, move(handler_callback));             \
     }                                                                                   \
                                                                                         \
 protected:                                                                              \
     template<typename... Ev, typename HandlerCallback>                                  \
-    Object& on(HandlerCallback&& handler_callback) {                                    \
+    int on(HandlerCallback&& handler_callback) {                                        \
         static_assert(does_emit<Ev...>());                                              \
         return this->on_unchecked<Ev...>(move(handler_callback));                       \
     }                                                                                   \
@@ -66,10 +66,10 @@ private:
         enum class Bool { Yes };
         enum class Void { Yes };
 
-        Handler(StringView event_name, Bool, Function<bool(const Event&)> handler)
-            : m_event_name(event_name), m_is_bool_handler(true), m_bool_handler(move(handler)) {}
-        Handler(StringView event_name, Void, Function<void(const Event&)> handler)
-            : m_event_name(event_name), m_is_bool_handler(false), m_void_handler(move(handler)) {}
+        Handler(int token, StringView event_name, Bool, Function<bool(const Event&)> handler)
+            : m_token(token), m_event_name(event_name), m_is_bool_handler(true), m_bool_handler(move(handler)) {}
+        Handler(int token, StringView event_name, Void, Function<void(const Event&)> handler)
+            : m_token(token), m_event_name(event_name), m_is_bool_handler(false), m_void_handler(move(handler)) {}
 
         bool can_handle(const App::Event& event) const;
         bool handle(const App::Event& event);
@@ -78,8 +78,10 @@ private:
         SharedPtr<Object> listener() const { return m_listener.lock(); }
 
         bool global_listener() const { return m_global_listener; }
+        int token() const { return m_token; }
 
     private:
+        int m_token { 0 };
         StringView m_event_name;
         bool m_global_listener { true };
         bool m_is_bool_handler { false };
@@ -151,16 +153,17 @@ public:
     bool dispatch(const Event& event) const;
 
     template<typename... Ev, typename HandlerCallback>
-    Object& on_unchecked(GlobalListenerTag, HandlerCallback&& handler_callback) {
+    int on_unchecked(GlobalListenerTag, HandlerCallback&& handler_callback) {
         return this->on_unchecked<Ev...>(move(handler_callback));
     }
 
     template<typename... Ev, typename HandlerCallback>
-    Object& on_unchecked(Object& listener, HandlerCallback&& handler_callback) {
+    int on_unchecked(Object& listener, HandlerCallback&& handler_callback) {
         return this->on_unchecked<Ev...>(move(handler_callback), listener.weak_from_this());
     }
 
     void remove_listener(Object& listener);
+    void remove_listener(int token);
 
 protected:
     Object();
@@ -169,7 +172,8 @@ protected:
     virtual void did_remove_child(SharedPtr<Object>) {}
 
     template<typename... Ev, typename HandlerCallback>
-    Object& on_unchecked(HandlerCallback&& handler, Maybe<WeakPtr<Object>> listener = {}) {
+    int on_unchecked(HandlerCallback&& handler, Maybe<WeakPtr<Object>> listener = {}) {
+        auto token = m_next_callback_token++;
         (
             [&] {
                 auto callback = [handler](const Event& event) {
@@ -179,11 +183,11 @@ protected:
                 if constexpr (Ev::event_requires_handling()) {
                     static_assert(LIIM::IsSame<bool, typename LIIM::InvokeResult<HandlerCallback, const Ev&>::type>::value,
                                   "Callback handler function must return bool");
-                    m_handlers.add(Handler { Ev::static_event_name(), Handler::Bool::Yes, move(callback) });
+                    m_handlers.add(Handler { token, Ev::static_event_name(), Handler::Bool::Yes, move(callback) });
                 } else {
                     static_assert(LIIM::IsSame<void, typename LIIM::InvokeResult<HandlerCallback, const Ev&>::type>::value,
                                   "Callback handler function must return void");
-                    m_handlers.add(Handler { Ev::static_event_name(), Handler::Void::Yes, move(callback) });
+                    m_handlers.add(Handler { token, Ev::static_event_name(), Handler::Void::Yes, move(callback) });
                 }
 
                 if (listener) {
@@ -191,7 +195,7 @@ protected:
                 }
             }(),
             ...);
-        return *this;
+        return token;
     }
 
 private:
@@ -199,5 +203,6 @@ private:
     Vector<Handler> m_handlers;
     Object* m_parent { nullptr };
     mutable WeakPtr<Object> m_weak_this;
+    int m_next_callback_token { 1 };
 };
 }
