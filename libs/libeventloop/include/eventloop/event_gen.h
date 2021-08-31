@@ -2,6 +2,19 @@
 
 #include <liim/preprocessor.h>
 
+namespace App::Detail {
+template<typename T>
+struct GetterType {
+    using type = const T&;
+};
+
+template<typename T>
+struct GetterType<T*> {
+    using type = T*;
+};
+
+}
+
 #define __APP_EVENT_PARAM(type, name)       type name
 #define __APP_EVENT_MOVE_NAME(type, name)   move(name)
 #define __APP_EVENT_MEMBER_INIT(type, name) m_##name(move(name))
@@ -34,8 +47,8 @@
                 LIIM_EVAL(LIIM_LIST_REDUCE(__APP_EVENT_MEMBER_INITIALIZER, LIIM_LIST_INIT(), fields))) {}
 // clang-format on
 
-#define __APP_EVENT_GETTER(type, name) \
-    const type& name() const { return m_##name; }
+#define __APP_EVENT_GETTER(Type, name) \
+    typename App::Detail::GetterType<Type>::type name() const { return m_##name; }
 #define __APP_EVENT_GETTERS(fields) LIIM_EVAL(LIIM_LIST_FOR_EACH(__APP_EVENT_GETTER, fields))
 
 #define __APP_EVENT_SETTER(type, name) \
@@ -48,18 +61,18 @@
 
 #define APP_EVENT_IMPL(Namespace, EventName, Base, base_fields, fields, methods, requires_handling, is_parent) \
     namespace Namespace {                                                                                      \
-    class EventName : public Base {                                                                            \
-        APP_EVENT_HEADER_IMPL(Namespace, EventName, requires_handling)                                         \
+        class EventName : public Base {                                                                        \
+            APP_EVENT_HEADER_IMPL(Namespace, EventName, requires_handling)                                     \
                                                                                                                \
-    public:                                                                                                    \
-        __APP_EVENT_CONSTRUCTOR(EventName, Base, base_fields, fields, is_parent)                               \
-        __APP_EVENT_GETTERS(fields)                                                                            \
-        __APP_EVENT_SETTERS(fields)                                                                            \
-        __APP_EVENT_METHODS(methods)                                                                           \
+        public:                                                                                                \
+            __APP_EVENT_CONSTRUCTOR(EventName, Base, base_fields, fields, is_parent)                           \
+            __APP_EVENT_GETTERS(fields)                                                                        \
+            __APP_EVENT_SETTERS(fields)                                                                        \
+            __APP_EVENT_METHODS(methods)                                                                       \
                                                                                                                \
-    private:                                                                                                   \
-        __APP_EVENT_MEMBERS(fields)                                                                            \
-    };                                                                                                         \
+        private:                                                                                               \
+            __APP_EVENT_MEMBERS(fields)                                                                        \
+        };                                                                                                     \
     }
 
 #define APP_EVENT_HEADER_IMPL(Namespace, EventName, requires_handling)                        \
