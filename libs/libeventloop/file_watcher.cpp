@@ -138,15 +138,16 @@ bool FileWatcher::watch(const String& path) {
 }
 
 bool FileWatcher::unwatch(const String& path) {
-    auto* identifer = m_path_to_indentifier.get(path);
-    if (!identifer) {
+    auto* identifer_p = m_path_to_indentifier.get(path);
+    if (!identifer_p) {
         return false;
     }
+    auto identifer = *identifer_p;
 
-    m_identifier_to_path.remove(*identifer);
+    m_identifier_to_path.remove(identifer);
     m_path_to_indentifier.remove(path);
 
-    int ret = inotify_rm_watch(fd(), *identifer);
+    int ret = inotify_rm_watch(fd(), identifer);
     if (ret < 0) {
         return false;
     }
