@@ -156,7 +156,7 @@ TEST(object, coroutine) {
     EXPECT_EQ(count, 1);
 }
 
-TEST(object, until_event) {
+TEST(object, block_until_event) {
     auto loop = App::EventLoop {};
 
     static auto object = Object::create(nullptr);
@@ -165,7 +165,7 @@ TEST(object, until_event) {
     static int count = 0;
 
     object->start_coroutine([]() -> App::ObjectBoundCoroutine {
-        auto event = co_await timer->until_event<App::TimerEvent>(*object);
+        auto event = co_await timer->block_until_event<App::TimerEvent>(*object);
         count = event.times_expired();
         EventLoop::the().set_should_exit(true);
         co_return;

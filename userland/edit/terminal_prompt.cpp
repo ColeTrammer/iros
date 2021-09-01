@@ -39,7 +39,7 @@ void TerminalPrompt::initialize() {
 }
 
 Task<Maybe<String>> TerminalPrompt::block_until_result() {
-    auto event = co_await until_event<Edit::PromptResult>(*this);
+    auto event = co_await block_until_event<Edit::PromptResult>(*this);
     co_return event.result();
 }
 

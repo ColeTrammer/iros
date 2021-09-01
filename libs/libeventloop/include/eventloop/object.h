@@ -23,9 +23,9 @@ public:                                                                         
     }                                                                                   \
                                                                                         \
     template<typename Ev>                                                               \
-    auto until_event(Object& coroutine_owner) {                                         \
+    auto block_until_event(Object& coroutine_owner) {                                   \
         static_assert(does_emit<Ev>());                                                 \
-        return this->until_event_unchecked<Ev>(coroutine_owner);                        \
+        return this->block_until_event_unchecked<Ev>(coroutine_owner);                  \
     }                                                                                   \
                                                                                         \
     template<typename... Ev, typename HandlerCallback>                                  \
@@ -178,7 +178,7 @@ public:
     void cleanup_coroutine(ObjectBoundCoroutine* coroutine);
 
     template<typename Ev>
-    auto until_event_unchecked(Object& coroutine_owner) {
+    auto block_until_event_unchecked(Object& coroutine_owner) {
         class EventWaiter {
         public:
             EventWaiter(Object& target_object, Object& coroutine_owner)
