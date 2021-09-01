@@ -10,12 +10,10 @@ namespace Taskbar {
 Taskbar::Taskbar() {}
 
 void Taskbar::initialize() {
-    m_time_timer = App::Timer::create_interval_timer(
-        shared_from_this(),
-        [this](int) {
-            invalidate();
-        },
-        1000);
+    m_time_timer = App::Timer::create_interval_timer(shared_from_this(), 1000);
+    m_time_timer->on<App::TimerEvent>(*this, [this](auto&) {
+        invalidate();
+    });
 
     m_button_rect = { taskbar_button_x_margin, taskbar_button_y_margin, taskbar_button_width,
                       taskbar_height - 2 * taskbar_button_y_margin };

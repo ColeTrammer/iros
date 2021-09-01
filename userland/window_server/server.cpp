@@ -114,12 +114,10 @@ void ServerImpl::initialize() {
 
     m_server = IPC::Server::create(shared_from_this(), "/tmp/.window_server.socket", shared_from_this());
 
-    m_draw_timer = App::Timer::create_single_shot_timer(
-        shared_from_this(),
-        [this](int) {
-            m_manager->draw();
-        },
-        draw_timer_rate);
+    m_draw_timer = App::Timer::create_single_shot_timer(shared_from_this(), draw_timer_rate);
+    m_draw_timer->on<App::TimerEvent>(*this, [this](auto&) {
+        m_manager->draw();
+    });
 
     Client::MessageDispatcher::initialize();
 }

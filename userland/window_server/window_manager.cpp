@@ -1,3 +1,4 @@
+#include <eventloop/widget_events.h>
 #include <graphics/bitmap.h>
 #include <graphics/renderer.h>
 #include <sys/ioctl.h>
