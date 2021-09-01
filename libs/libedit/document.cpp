@@ -851,7 +851,7 @@ void Document::register_display(Display& display) {
                     enter_interactive_search(display);
                     break;
                 case App::Key::G:
-                    go_to_line(display);
+                    display.this_widget().start_coroutine(go_to_line(display));
                     break;
                 case App::Key::O:
                     if (!input_text_mode()) {
@@ -860,11 +860,11 @@ void Document::register_display(Display& display) {
                     break;
                 case App::Key::Q:
                 case App::Key::W:
-                    quit(display);
+                    display.this_widget().start_coroutine(quit(display));
                     break;
                 case App::Key::S:
                     if (!input_text_mode()) {
-                        save(display);
+                        display.this_widget().start_coroutine(save(display));
                     }
                     break;
                 case App::Key::U:
@@ -1044,37 +1044,36 @@ void Document::invalidate_all_rendered_contents() {
     set_needs_display();
 }
 
-void Document::go_to_line(Display& display) {
-    display.prompt("Go to line: ", [this, &display](auto maybe_result) {
-        if (!maybe_result.has_value()) {
-            return;
-        }
+App::ObjectBoundCoroutine Document::go_to_line(Display& display) {
+    auto maybe_result = co_await display.prompt("Go to line: ");
+    if (!maybe_result.has_value()) {
+        co_return;
+    }
 
-        auto& result = maybe_result.value();
-        char* end_ptr = result.string();
-        long line_number = strtol(result.string(), &end_ptr, 10);
-        if (errno == ERANGE || end_ptr != result.string() + result.size() || line_number < 1 || line_number > num_lines()) {
-            display.send_status_message(String::format("Line `%s' is not between 1 and %d", result.string(), num_lines()));
-            return;
-        }
+    auto& result = maybe_result.value();
+    char* end_ptr = result.string();
+    long line_number = strtol(result.string(), &end_ptr, 10);
+    if (errno == ERANGE || end_ptr != result.string() + result.size() || line_number < 1 || line_number > num_lines()) {
+        display.send_status_message(format("Line `{}' is not between 1 and {}", result, num_lines()));
+        co_return;
+    }
 
-        auto& cursor = display.cursors().main_cursor();
+    auto& cursor = display.cursors().main_cursor();
 
-        clear_selection(cursor);
-        cursor.set_line_index(line_number - 1);
+    clear_selection(cursor);
+    cursor.set_line_index(line_number - 1);
 
-        auto cursor_row_position = cursor.referenced_line(*this).absolute_row_position(*this, display);
+    auto cursor_row_position = cursor.referenced_line(*this).absolute_row_position(*this, display);
 
-        int screen_midpoint = display.rows() / 2;
-        if (cursor_row_position < screen_midpoint) {
-            display.set_scroll_row_offset(0);
-        } else {
-            display.set_scroll_row_offset(cursor_row_position - screen_midpoint);
-        }
+    int screen_midpoint = display.rows() / 2;
+    if (cursor_row_position < screen_midpoint) {
+        display.set_scroll_row_offset(0);
+    } else {
+        display.set_scroll_row_offset(cursor_row_position - screen_midpoint);
+    }
 
-        move_cursor_to_line_start(display, cursor);
-        set_needs_display();
-    });
+    move_cursor_to_line_start(display, cursor);
+    set_needs_display();
 }
 
 void Document::set_type(DocumentType type) {
@@ -1094,20 +1093,37 @@ void Document::update_suggestions(Display& display) {
     display.compute_suggestions();
 }
 
-void Document::do_save(Display& display) {
+App::ObjectBoundCoroutine Document::save(Display& display) {
+    if (m_name.empty()) {
+        auto result = co_await display.prompt("Save as: ");
+        if (!result.has_value()) {
+            co_return;
+        }
+
+        if (access(result.value().string(), F_OK) == 0) {
+            auto ok = co_await display.prompt(format("Are you sure you want to overwrite file `{}'? ", *result));
+            if (!ok.has_value() || (ok.value() != "y" && ok.value() != "yes")) {
+                co_return;
+            }
+        }
+
+        m_name = move(result.value());
+        guess_type_from_name();
+    }
+
     assert(!m_name.empty());
 
     if (access(m_name.string(), W_OK)) {
         if (errno != ENOENT) {
-            display.send_status_message(String::format("Permission to write file `%s' denied", m_name.string()));
-            return;
+            display.send_status_message(format("Permission to write file `{}' denied", m_name));
+            co_return;
         }
     }
 
     FILE* file = fopen(m_name.string(), "w");
     if (!file) {
-        display.send_status_message(String::format("Failed to save - `%s'", strerror(errno)));
-        return;
+        display.send_status_message(format("Failed to save - `{}'", strerror(errno)));
+        co_return;
     }
 
     if (m_lines.size() != 1 || !m_lines.first().empty()) {
@@ -1117,65 +1133,27 @@ void Document::do_save(Display& display) {
     }
 
     if (ferror(file)) {
-        display.send_status_message(String::format("Failed to write to disk - `%s'", strerror(errno)));
+        display.send_status_message(format("Failed to write to disk - `{}'", strerror(errno)));
         fclose(file);
-        return;
+        co_return;
     }
 
     if (fclose(file)) {
-        display.send_status_message(String::format("Failed to sync to disk - `%s'", strerror(errno)));
-        return;
+        display.send_status_message(format("Failed to sync to disk - `{}'", strerror(errno)));
+        co_return;
     }
 
-    display.send_status_message(String::format("Successfully saved file: `%s'", m_name.string()));
+    display.send_status_message(format("Successfully saved file: `{}'", m_name.string()));
     m_document_was_modified = false;
 }
 
-void Document::save(Display& display) {
-    if (m_name.empty()) {
-        display.prompt("Save as: ", [this, &display](auto result) {
-            if (!result.has_value()) {
-                return;
-            }
-
-            if (access(result.value().string(), F_OK) == 0) {
-                display.prompt(String::format("Are you sure you want to overwrite file `%s'? ", result.value().string()),
-                               [this, &display, result](auto ok) {
-                                   if (!ok.has_value() || (ok.value() != "y" && ok.value() != "yes")) {
-                                       return;
-                                   }
-
-                                   m_name = move(result.value());
-                                   guess_type_from_name();
-
-                                   do_save(display);
-                               });
-                return;
-            }
-
-            m_name = move(result.value());
-            guess_type_from_name();
-
-            do_save(display);
-        });
-        return;
-    }
-
-    do_save(display);
-}
-
-void Document::quit(Display& display) {
+App::ObjectBoundCoroutine Document::quit(Display& display) {
     if (m_document_was_modified && !input_text_mode()) {
-        display.prompt("Quit without saving? ", [&display, this](auto result) {
-            if (!result.has_value() || (result.value() != "y" && result.value() != "yes")) {
-                return;
-            }
-
-            display.quit();
-        });
-        return;
+        auto result = co_await display.prompt("Quit without saving? ");
+        if (!result.has_value() || (result.value() != "y" && result.value() != "yes")) {
+            co_return;
+        }
     }
-
     display.quit();
 }
 

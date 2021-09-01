@@ -216,17 +216,17 @@ void TerminalDisplay::hide_search_panel() {
     m_search_panel = nullptr;
 }
 
-void TerminalDisplay::prompt(String message, Function<void(Maybe<String>)> callback) {
+Task<Maybe<String>> TerminalDisplay::prompt(String message) {
     if (m_prompt_panel) {
         hide_prompt_panel();
     }
 
     m_prompt_panel = TerminalPrompt::create(shared_from_this(), *this, move(message), "");
-    m_prompt_panel->on_submit = [this, callback = move(callback)](auto result) {
-        hide_prompt_panel();
-        callback.safe_call(move(result));
-    };
     m_prompt_panel->set_positioned_rect(positioned_rect().with_height(3));
+
+    auto result = co_await m_prompt_panel->block_until_result();
+    hide_prompt_panel();
+    co_return result;
 }
 
 void TerminalDisplay::enter_search(String initial_text) {

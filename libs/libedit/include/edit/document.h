@@ -64,8 +64,8 @@ public:
     void invalidate_rendered_contents(const Line& line);
     void invalidate_all_rendered_contents();
 
-    void save(Display& display);
-    void quit(Display& display);
+    App::ObjectBoundCoroutine save(Display& display);
+    App::ObjectBoundCoroutine quit(Display& display);
 
     bool input_text_mode() const { return m_input_mode == InputMode::InputText; }
     bool submittable() const { return m_submittable; }
@@ -196,8 +196,7 @@ private:
     void delete_char(Display& display, DeleteCharMode mode);
     void delete_word(Display& display, DeleteCharMode mode);
 
-    void do_save(Display& display);
-    void go_to_line(Display& display);
+    App::ObjectBoundCoroutine go_to_line(Display& display);
 
     void swap_selection_start_and_cursor(Display& display, Cursor& cursor);
 

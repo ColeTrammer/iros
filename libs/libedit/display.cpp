@@ -248,4 +248,8 @@ Display::RenderingInfo Display::rendering_info_for_metadata(const CharacterMetad
 
     return info;
 }
+
+Task<Maybe<String>> Display::prompt(String) {
+    co_return {};
+}
 }

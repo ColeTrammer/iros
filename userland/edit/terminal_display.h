@@ -39,7 +39,7 @@ public:
     virtual void schedule_update() override { invalidate(); }
     virtual int enter() override;
     virtual void send_status_message(String message) override;
-    virtual void prompt(String message, Function<void(Maybe<String>)> callback) override;
+    virtual Task<Maybe<String>> prompt(String message) override;
     virtual void enter_search(String starting_text) override;
     virtual void quit() override;
     virtual void do_open_prompt() override;

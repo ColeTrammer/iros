@@ -18,7 +18,7 @@ void TerminalPrompt::initialize() {
     auto document = Edit::Document::create_from_text(m_initial_value);
     document->set_submittable(true);
     document->on<Edit::Submit>(*this, [this, document](auto&) {
-        on_submit.safe_call(document->content_string());
+        emit<Edit::PromptResult>(document->content_string());
     });
 
     m_display = layout.add<TerminalDisplay>().shared_from_this();
@@ -36,6 +36,11 @@ void TerminalPrompt::initialize() {
     set_focus_proxy(m_display.get());
 
     Panel::initialize();
+}
+
+Task<Maybe<String>> TerminalPrompt::block_until_result() {
+    auto event = co_await until_event<Edit::PromptResult>(*this);
+    co_return event.result();
 }
 
 TerminalPrompt::~TerminalPrompt() {}
