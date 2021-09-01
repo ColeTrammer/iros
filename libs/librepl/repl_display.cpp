@@ -5,6 +5,7 @@
 #include <edit/position.h>
 #include <eventloop/event.h>
 #include <graphics/point.h>
+#include <liim/utf8_view.h>
 #include <repl/repl_base.h>
 #include <stdlib.h>
 #include <tinput/io_terminal.h>
@@ -192,12 +193,23 @@ Edit::RenderedLine ReplDisplay::compose_line(const Edit::Line& line) {
     }
 
     auto renderer = Edit::LineRenderer { cols(), word_wrap_enabled() };
+
     auto& prompt = &line == &document()->first_line() ? m_main_prompt : m_secondary_prompt;
     renderer.begin_segment(0, 0, Edit::PositionRangeType::InlineBeforeCursor);
     renderer.add_to_segment(prompt.view(), string_print_width(prompt.view()));
     renderer.end_segment();
 
-    for (int index_into_line = 0; index_into_line <= line.length(); index_into_line++) {
+    auto cursor_collection = cursors().cursor_text_ranges(*document());
+    auto selection_collection = cursors().selections(*document());
+    auto metadata_iterator = Edit::DocumentTextRangeIterator { { document()->index_of_line(line), 0 },
+                                                               document()->syntax_highlighting_info(),
+                                                               document()->search_results(),
+                                                               cursor_collection,
+                                                               selection_collection };
+
+    auto view = Utf8View { line.contents().view() };
+    for (auto iter = view.begin();; ++iter) {
+        auto index_into_line = iter.byte_offset();
         if (cursors().should_show_auto_complete_text_at(*document(), line, index_into_line)) {
             auto maybe_suggestion_text = cursors().preview_auto_complete_text();
             if (maybe_suggestion_text) {
@@ -208,19 +220,25 @@ Edit::RenderedLine ReplDisplay::compose_line(const Edit::Line& line) {
             }
         }
 
-        if (index_into_line == line.length()) {
+        if (iter == view.end()) {
             break;
         }
 
-        renderer.begin_segment(index_into_line, 0, Edit::PositionRangeType::Normal);
-        char c = line.char_at(index_into_line);
-        if (c == '\t') {
+        auto info = iter.current_code_point_info();
+
+        renderer.begin_segment(index_into_line, metadata_iterator.peek_metadata(), Edit::PositionRangeType::Normal);
+        if (info.codepoint == static_cast<uint32_t>('\t')) {
             auto spaces = String::repeat(' ', Edit::tab_width - (renderer.absolute_col_position() % Edit::tab_width));
             renderer.add_to_segment(spaces.view(), spaces.size());
+
         } else {
-            renderer.add_to_segment(StringView { &c, 1 }, 1);
+            renderer.add_to_segment(line.contents().view().substring(index_into_line, info.bytes_used), 1);
         }
         renderer.end_segment();
+
+        for (size_t i = 0; i < info.bytes_used; i++) {
+            metadata_iterator.advance();
+        }
     }
     return renderer.finish(line);
 }

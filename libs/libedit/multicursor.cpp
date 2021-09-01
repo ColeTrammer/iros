@@ -278,14 +278,31 @@ MultiCursor::Snapshot MultiCursor::snapshot() const {
     return m_cursors;
 }
 
-void MultiCursor::restore(const Snapshot& snapshot) {
+void MultiCursor::restore(Document& document, const Snapshot& snapshot) {
     cursor_save();
     m_cursors = snapshot;
-    invalidate_based_on_last_snapshot();
+    invalidate_based_on_last_snapshot(document);
 }
 
-void MultiCursor::invalidate_based_on_last_snapshot() {
-    m_display.document()->invalidate_all_rendered_contents();
+void MultiCursor::invalidate_based_on_last_snapshot(Document& document) {
+    if (m_history.empty()) {
+        document.invalidate_lines_in_range_collection(cursor_text_ranges(document));
+        document.invalidate_lines_in_range_collection(selections(document));
+        return;
+    }
+
+    auto current = snapshot();
+    if (!m_history.empty() && m_history.last() == current) {
+        return;
+    }
+
+    m_cursors = m_history.last();
+    document.invalidate_lines_in_range_collection(cursor_text_ranges(document));
+    document.invalidate_lines_in_range_collection(selections(document));
+
+    m_cursors = move(current);
+    document.invalidate_lines_in_range_collection(cursor_text_ranges(document));
+    document.invalidate_lines_in_range_collection(selections(document));
 }
 
 void MultiCursor::invalidate_cursor_history() {
@@ -301,11 +318,11 @@ void MultiCursor::cursor_save() {
     m_history.add(move(state));
 }
 
-void MultiCursor::cursor_undo() {
+void MultiCursor::cursor_undo(Document& document) {
     if (m_history.empty()) {
         return;
     }
-    restore(m_history.last());
+    restore(document, m_history.last());
     m_history.remove_last();
 }
 }

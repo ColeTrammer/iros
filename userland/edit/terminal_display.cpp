@@ -167,7 +167,10 @@ void TerminalDisplay::output_line(int row, int col_offset, const Edit::RenderedL
 }
 
 Edit::RenderedLine TerminalDisplay::compose_line(const Edit::Line& line) {
-    assert(document());
+    if (!document()) {
+        return {};
+    }
+
     auto renderer = Edit::LineRenderer { cols(), word_wrap_enabled() };
 
     auto cursor_collection = cursors().cursor_text_ranges(*document());

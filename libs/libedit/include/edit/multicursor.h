@@ -46,13 +46,13 @@ public:
     void install_document_listeners(Document& document);
 
     Snapshot snapshot() const;
-    void restore(const Snapshot& snapshot);
+    void restore(Document& document, const Snapshot& snapshot);
 
-    void invalidate_based_on_last_snapshot();
+    void invalidate_based_on_last_snapshot(Document& document);
 
     void invalidate_cursor_history();
     void cursor_save();
-    void cursor_undo();
+    void cursor_undo(Document& document);
 
 private:
     Display& m_display;

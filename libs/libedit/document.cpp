@@ -529,7 +529,7 @@ void Document::restore(MultiCursor& cursors, Snapshot s, bool restore_selections
 }
 
 void Document::restore_state(MultiCursor& cursors, const StateSnapshot& s, bool restore_selections) {
-    cursors.restore(s.cursors);
+    cursors.restore(*this, s.cursors);
     if (!restore_selections) {
         for (auto& cursor : cursors) {
             cursor.selection().clear();
@@ -849,7 +849,7 @@ void Document::register_display(Display& display) {
                     }
                     break;
                 case App::Key::U:
-                    cursors.cursor_undo();
+                    cursors.cursor_undo(*this);
                     break;
                 case App::Key::V:
                     paste(display, cursors);
@@ -1024,12 +1024,16 @@ void Document::invalidate_all_rendered_contents() {
     }
 }
 
-void Document::invalidate_lines_in_range(const TextRange&) {
-    invalidate_all_rendered_contents();
+void Document::invalidate_lines_in_range(const TextRange& range) {
+    for (int i = range.start().line_index(); i <= range.end().line_index(); i++) {
+        invalidate_rendered_contents(line_at_index(i));
+    }
 }
 
-void Document::invalidate_lines_in_range_collection(const TextRangeCollection&) {
-    invalidate_all_rendered_contents();
+void Document::invalidate_lines_in_range_collection(const TextRangeCollection& collection) {
+    for (int i = 0; i < collection.size(); i++) {
+        invalidate_lines_in_range(collection.range(i));
+    }
 }
 
 App::ObjectBoundCoroutine Document::go_to_line(Display& display) {
@@ -1297,6 +1301,6 @@ void Document::finish_input(Display& display, bool should_scroll_cursor_into_vie
         cursors.main_cursor().referenced_line(*this).invalidate_rendered_contents(*this, display);
     }
 
-    cursors.invalidate_based_on_last_snapshot();
+    cursors.invalidate_based_on_last_snapshot(*this);
 }
 }
