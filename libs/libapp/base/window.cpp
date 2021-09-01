@@ -23,7 +23,7 @@ void Window::initialize() {
             //    event and is focused (which generates Focus/Unfocused Events)
             // 4. Otherwise, the event is a MouseUp or MouseMove with buttons down. The currently
             //    focused widget gets the event, and the hit test result is ignored.
-            if (auto widget = focused_widget(); widget->steals_focus()) {
+            if (auto widget = focused_widget(); widget && widget->steals_focus()) {
                 return forward_to(*widget, translate_mouse_event(*widget, event));
             }
 
