@@ -243,6 +243,10 @@ Maybe<String> MultiCursor::preview_auto_complete_text(Display& display) const {
             end.set_index_into_line(end.index_into_line() + 1);
         }
     }
+    if (end.index_into_line() > display.document()->line_at_index(end.line_index()).length()) {
+        end.set_index_into_line(display.document()->line_at_index(end.line_index()).length());
+    }
+
     auto current_text = display.document()->text_in_range(suggestion.start(), end);
     if (suggestion.content() == current_text.view()) {
         return {};
