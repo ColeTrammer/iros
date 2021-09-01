@@ -5,6 +5,7 @@
 #include <edit/line_renderer.h>
 #include <edit/position.h>
 #include <eventloop/event.h>
+#include <liim/utf8_view.h>
 #include <stdlib.h>
 #include <tinput/terminal_renderer.h>
 #include <tui/application.h>
@@ -163,7 +164,9 @@ void TerminalDisplay::output_line(int row, int col_offset, const StringView& tex
 Edit::RenderedLine TerminalDisplay::compose_line(const Edit::Line& line) {
     assert(document());
     auto renderer = Edit::LineRenderer { cols(), word_wrap_enabled() };
-    for (int index_into_line = 0; index_into_line <= line.length(); index_into_line++) {
+    auto view = Utf8View { line.contents().view() };
+    for (auto iter = view.begin();; ++iter) {
+        auto index_into_line = iter.byte_offset();
         if (cursors().should_show_auto_complete_text_at(*this, *document(), line, index_into_line)) {
             auto maybe_suggestion_text = cursors().preview_auto_complete_text(*this);
             if (maybe_suggestion_text) {
@@ -174,17 +177,18 @@ Edit::RenderedLine TerminalDisplay::compose_line(const Edit::Line& line) {
             }
         }
 
-        if (index_into_line == line.length()) {
+        if (iter == view.end()) {
             break;
         }
 
+        auto info = iter.current_code_point_info();
+
         renderer.begin_segment(index_into_line, 0, Edit::PositionRangeType::Normal);
-        char c = line.char_at(index_into_line);
-        if (c == '\t') {
+        if (info.codepoint == static_cast<uint32_t>('\t')) {
             auto spaces = String::repeat(' ', Edit::tab_width - (renderer.absolute_col_position() % Edit::tab_width));
             renderer.add_to_segment(spaces.view(), spaces.size());
         } else {
-            renderer.add_to_segment(StringView { &c, 1 }, 1);
+            renderer.add_to_segment(line.contents().view().substring(index_into_line, info.bytes_used), 1);
         }
         renderer.end_segment();
     }
