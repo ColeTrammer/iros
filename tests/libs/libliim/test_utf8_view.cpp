@@ -35,7 +35,7 @@ auto to_vector = [](Utf8View view) -> Vector<uint32_t> {
 };
 
 TEST(utf8_view, iteration) {
-    auto vec = to_vector({ "$¢€𐍈" });
+    auto vec = to_vector(Utf8View { "$¢€𐍈" });
     EXPECT_EQ(vec.size(), 4);
     EXPECT_EQ(vec[0], 0x24U);
     EXPECT_EQ(vec[1], 0xA2U);
@@ -46,7 +46,7 @@ TEST(utf8_view, iteration) {
 // This tests that invalid UTF-8 sequences are replaced with
 // U+FFFD in a uniform manner, as specified in https://encoding.spec.whatwg.org/#utf-8-decoder
 TEST(utf8_view, replace_character_substitution_of_maximal_subparts) {
-    auto vec = to_vector({ "\xC0\xAF\xE0\x80\xBF\xF0\x81\x82\x41" });
+    auto vec = to_vector(Utf8View { "\xC0\xAF\xE0\x80\xBF\xF0\x81\x82\x41" });
     EXPECT_EQ(vec.size(), 9);
     EXPECT_EQ(vec[0], Utf8View::replacement_character);
     EXPECT_EQ(vec[1], Utf8View::replacement_character);
@@ -58,7 +58,7 @@ TEST(utf8_view, replace_character_substitution_of_maximal_subparts) {
     EXPECT_EQ(vec[7], Utf8View::replacement_character);
     EXPECT_EQ(vec[8], 0x41U);
 
-    vec = to_vector({ "\xED\xA0\x80\xED\xBF\xBF\xED\xAF\x41" });
+    vec = to_vector(Utf8View { "\xED\xA0\x80\xED\xBF\xBF\xED\xAF\x41" });
     EXPECT_EQ(vec.size(), 9);
     EXPECT_EQ(vec[0], Utf8View::replacement_character);
     EXPECT_EQ(vec[1], Utf8View::replacement_character);
@@ -70,7 +70,7 @@ TEST(utf8_view, replace_character_substitution_of_maximal_subparts) {
     EXPECT_EQ(vec[7], Utf8View::replacement_character);
     EXPECT_EQ(vec[8], 0x41U);
 
-    vec = to_vector({ "\xF4\x91\x92\x93\xFF\x41\x80\xBF\x42" });
+    vec = to_vector(Utf8View { "\xF4\x91\x92\x93\xFF\x41\x80\xBF\x42" });
     EXPECT_EQ(vec.size(), 9);
     EXPECT_EQ(vec[0], Utf8View::replacement_character);
     EXPECT_EQ(vec[1], Utf8View::replacement_character);
@@ -82,7 +82,7 @@ TEST(utf8_view, replace_character_substitution_of_maximal_subparts) {
     EXPECT_EQ(vec[7], Utf8View::replacement_character);
     EXPECT_EQ(vec[8], 0x42U);
 
-    vec = to_vector({ "\xE1\x80\xE2\xF0\x91\x92\xF1\xBF\x41" });
+    vec = to_vector(Utf8View { "\xE1\x80\xE2\xF0\x91\x92\xF1\xBF\x41" });
     EXPECT_EQ(vec.size(), 5);
     EXPECT_EQ(vec[0], Utf8View::replacement_character);
     EXPECT_EQ(vec[1], Utf8View::replacement_character);

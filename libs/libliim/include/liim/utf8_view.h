@@ -13,13 +13,13 @@ public:
     static constexpr uint32_t replacement_character = 0xFFFDU;
 
     constexpr Utf8View() = default;
-    constexpr Utf8View(const char* data) : m_data { data }, m_size_in_bytes { 0 } {
+    constexpr explicit Utf8View(const char* data) : m_data { data }, m_size_in_bytes { 0 } {
         while (*data++) {
             m_size_in_bytes++;
         }
     }
-    constexpr Utf8View(const char* data, size_t size_in_bytes) : m_data { data }, m_size_in_bytes { size_in_bytes } {}
-    constexpr Utf8View(StringView view) : m_data { view.data() }, m_size_in_bytes { view.size() } {}
+    constexpr explicit Utf8View(const char* data, size_t size_in_bytes) : m_data { data }, m_size_in_bytes { size_in_bytes } {}
+    constexpr explicit Utf8View(StringView view) : m_data { view.data() }, m_size_in_bytes { view.size() } {}
 
     constexpr const char* data() const { return m_data; }
     constexpr size_t size_in_bytes() const { return m_size_in_bytes; }
