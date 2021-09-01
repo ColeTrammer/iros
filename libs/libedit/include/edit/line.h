@@ -33,6 +33,9 @@ public:
     int absolute_row_position(const Document& document, Display& display) const;
     int rendered_line_count(const Document&, Display&) const;
 
+    int next_index_into_line(const Document& document, Display& display, int index) const;
+    int prev_index_into_line(const Document& document, Display& display, int index) const;
+
     char char_at(int index) const { return contents()[index]; }
 
     void search(const Document& document, const String& text, TextRangeCollection& results) const;

@@ -116,6 +116,29 @@ int Line::absolute_row_position(const Document& document, Display& display) cons
     assert(false);
 }
 
+int Line::next_index_into_line(const Document& document, Display& display, int index) const {
+    assert(index != length());
+
+    auto& info = compute_rendered_contents(document, display);
+    auto* range = range_for_index_into_line(document, display, index, RangeFor::Cursor);
+    bool last_in_row = &info.position_ranges[range->end.row].last() == range;
+
+    auto next_position = last_in_row ? Position { range->end.row + 1, 0 } : range->end;
+    return index_of_relative_position(document, display, next_position);
+}
+
+int Line::prev_index_into_line(const Document& document, Display& display, int index) const {
+    assert(index != 0);
+
+    auto& info = compute_rendered_contents(document, display);
+    auto* range = range_for_index_into_line(document, display, index, RangeFor::Cursor);
+    bool first_in_row = &info.position_ranges[range->start.row].first() == range;
+
+    auto prev_position = first_in_row ? Position { info.position_ranges[range->start.row - 1].last().start }
+                                      : Position { range->start.row, range->start.col - 1 };
+    return index_of_relative_position(document, display, prev_position);
+}
+
 int Line::rendered_line_count(const Document& document, Display& display) const {
     auto& info = compute_rendered_contents(document, display);
     return info.rendered_lines.size();

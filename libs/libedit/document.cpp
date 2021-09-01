@@ -278,7 +278,7 @@ void Document::move_cursor_right(Display& display, Cursor& cursor, MovementMode 
         return;
     }
 
-    int new_index_into_line = cursor.index_into_line() + 1;
+    int new_index_into_line = line.next_index_into_line(*this, display, cursor.index_into_line());
     if (mode == MovementMode::Select) {
         if (selection.empty()) {
             selection.begin(cursor.index());
@@ -312,7 +312,7 @@ void Document::move_cursor_left(Display& display, Cursor& cursor, MovementMode m
         return;
     }
 
-    int new_index_into_line = index_into_line - 1;
+    int new_index_into_line = line.prev_index_into_line(*this, display, index_into_line);
     if (mode == MovementMode::Select) {
         if (selection.empty()) {
             selection.begin(cursor.index());

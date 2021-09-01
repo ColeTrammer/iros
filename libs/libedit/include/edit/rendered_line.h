@@ -14,7 +14,7 @@ enum class PositionRangeType {
 struct PositionRange {
     Position start;
     Position end;
-    int start_absolute_col;
+    int start_absolute_col { 0 };
     int index_into_line { 0 };
     int optional_metadata { 0 };
     int byte_count_in_rendered_string { 0 };
