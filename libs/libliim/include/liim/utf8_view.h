@@ -61,7 +61,7 @@ public:
     constexpr size_t byte_offset() const { return m_byte_offset; }
 
     constexpr bool operator==(const Utf8ViewIterator& other) const {
-        return this->m_view.data() == other.m_view.data() && this->m_view.size_in_bytes() && other.m_view.size_in_bytes() &&
+        return this->m_view.data() == other.m_view.data() && this->m_view.size_in_bytes() == other.m_view.size_in_bytes() &&
                this->byte_offset() == other.byte_offset();
     }
 
@@ -184,7 +184,7 @@ constexpr Utf8ViewIterator::CodePointInfo Utf8ViewIterator::current_code_point_i
     for (bytes_used = 1; bytes_used < byte_count; bytes_used++) {
         auto byte = m_view.byte_at(m_byte_offset + bytes_used);
         if (!byte) {
-            return { {}, bytes_used };
+            return { {}, bytes_used - 1 };
         }
 
         if (!valid_byte(*byte, *first_byte, bytes_used, byte_count)) {
