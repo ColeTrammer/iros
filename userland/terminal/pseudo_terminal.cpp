@@ -195,9 +195,20 @@ void PsuedoTerminal::handle_key_event(const App::KeyEvent& event) {
         case App::Key::Tab:
             if (event.shift_down()) {
                 send_xterm_escape('Z', 1);
-                return;
+            } else {
+                this->write(String { '\t' });
             }
-            break;
+            return;
+        case App::Key::Enter:
+            this->write(String { '\r' });
+            return;
+        case App::Key::Backspace:
+            if (event.control_down()) {
+                this->write(String { 'W' & 0x1F });
+            } else {
+                this->write(String { '\x08' });
+            }
+            return;
         case App::Key::Insert:
             send_vt_escape(2, modifiers);
             return;
@@ -251,20 +262,7 @@ void PsuedoTerminal::handle_key_event(const App::KeyEvent& event) {
     }
 
     auto ascii = [&]() -> char {
-        if (event.key() == App::Key::Enter) {
-            return '\r';
-        }
-        if (event.key() == App::Key::Tab) {
-            return '\t';
-        }
-        if (event.key() == App::Key::Backspace) {
-            return 8;
-        }
-
         if (event.control_down()) {
-            if (event.key() == App::Key::Backspace) {
-                return 'W' & 0x1F;
-            }
 
             switch (event.key()) {
                 case App::Key::A:
