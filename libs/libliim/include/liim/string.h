@@ -60,8 +60,14 @@ public:
     bool operator==(const String& other) const { return strcmp(this->string(), other.string()) == 0; }
     bool operator!=(const String& other) const { return !(*this == other); }
 
-    char& operator[](size_t index) { return string()[index]; }
-    const char& operator[](size_t index) const { return string()[index]; };
+    char& operator[](size_t index) {
+        assert(index <= size());
+        return string()[index];
+    }
+    const char& operator[](size_t index) const {
+        assert(index <= size());
+        return string()[index];
+    };
 
     size_t size() const { return is_small() ? (m_string.small.size_and_flag >> 1) : m_string.large.size; }
     bool empty() const { return size() == 0; }
