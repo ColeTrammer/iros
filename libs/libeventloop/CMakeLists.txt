@@ -3,6 +3,7 @@ set(SOURCES
     file_watcher.cpp
     input_tracker.cpp
     key_bindings.cpp
+    object_bound_coroutine.cpp
     object.cpp
     selectable.cpp
     selectable_file.cpp

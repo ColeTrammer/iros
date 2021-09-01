@@ -1,6 +1,7 @@
 #include <eventloop/event.h>
 #include <eventloop/event_loop.h>
 #include <eventloop/object.h>
+#include <eventloop/timer.h>
 #include <test/test.h>
 
 using namespace App;
@@ -139,16 +140,36 @@ static Task<int> do_thing() {
 }
 
 TEST(object, coroutine) {
-    static auto loop = App::EventLoop {};
+    auto loop = App::EventLoop {};
 
     auto object = Object::create(nullptr);
 
     static int count = 0;
-    object->start_coroutine([]() -> Task<> {
+    object->start_coroutine([]() -> App::ObjectBoundCoroutine {
         count = co_await do_thing();
-        loop.set_should_exit(true);
+        EventLoop::the().set_should_exit(true);
         co_return;
-    });
+    }());
+
+    loop.enter();
+
+    EXPECT_EQ(count, 1);
+}
+
+TEST(object, until_event) {
+    auto loop = App::EventLoop {};
+
+    static auto object = Object::create(nullptr);
+    static auto timer = Timer::create_single_shot_timer(nullptr, 100);
+
+    static int count = 0;
+
+    object->start_coroutine([]() -> App::ObjectBoundCoroutine {
+        auto event = co_await timer->until_event<App::TimerEvent>(*object);
+        count = event.times_expired();
+        EventLoop::the().set_should_exit(true);
+        co_return;
+    }());
 
     loop.enter();
 

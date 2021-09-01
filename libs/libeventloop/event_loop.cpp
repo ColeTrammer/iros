@@ -45,6 +45,10 @@ static void timer_signal_handler(int, siginfo_t* info, void*) {
 
 static void wakeup_thread_signal_handler(int, siginfo_t*, void*) {}
 
+EventLoop& EventLoop::the() {
+    return *s_the;
+}
+
 void EventLoop::register_selectable(Selectable& selectable) {
     s_selectables.add(&selectable);
 }

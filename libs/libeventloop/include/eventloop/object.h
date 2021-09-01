@@ -2,6 +2,7 @@
 
 #include <eventloop/event.h>
 #include <eventloop/forward.h>
+#include <eventloop/object_bound_coroutine.h>
 #include <liim/function.h>
 #include <liim/pointers.h>
 #include <liim/string_view.h>
@@ -19,6 +20,12 @@ public:                                                                         
         }                                                                               \
         ret->initialize();                                                              \
         return ret;                                                                     \
+    }                                                                                   \
+                                                                                        \
+    template<typename Ev>                                                               \
+    auto until_event(Object& coroutine_owner) {                                         \
+        static_assert(does_emit<Ev>());                                                 \
+        return this->until_event_unchecked<Ev>(coroutine_owner);                        \
     }                                                                                   \
                                                                                         \
     template<typename... Ev, typename HandlerCallback>                                  \
@@ -166,18 +173,43 @@ public:
     void remove_listener(Object& listener);
     void remove_listener(int token);
 
-    void start_coroutine(Function<Task<>()> coroutine);
+    void start_coroutine(ObjectBoundCoroutine&& coroutine);
+    void schedule_coroutine(CoroutineHandle<> handle);
+    void cleanup_coroutine(ObjectBoundCoroutine* coroutine);
 
-    template<typename T = void>
-    void schedule_coroutine(Task<T>* task) {
-        deferred_invoke([this, task] {
-            (*task)();
-            if constexpr (LIIM::IsSame<T, void>::value) {
-                if (task->finished()) {
-                    remove_coroutine(task);
-                }
+    template<typename Ev>
+    auto until_event_unchecked(Object& coroutine_owner) {
+        class EventWaiter {
+        public:
+            EventWaiter(Object& target_object, Object& coroutine_owner)
+                : m_target_object(&target_object), m_coroutine_owner(&coroutine_owner) {}
+
+            bool await_ready() { return false; }
+            Ev await_resume() {
+                assert(m_event);
+                return *m_event;
             }
-        });
+            void await_suspend(CoroutineHandle<> handle) {
+                m_callback_token = m_target_object->on_unchecked<Ev>(*m_coroutine_owner, [this, handle](const Ev& event) {
+                    m_event = event;
+                    m_coroutine_owner->schedule_coroutine(handle);
+                    m_target_object->deferred_invoke([target = m_target_object, token = m_callback_token] {
+                        target->remove_listener(token);
+                    });
+
+                    if constexpr (Ev::event_requires_handling()) {
+                        return true;
+                    }
+                });
+            }
+
+        private:
+            Object* m_target_object { nullptr };
+            Object* m_coroutine_owner { nullptr };
+            Maybe<Ev> m_event;
+            int m_callback_token { 0 };
+        };
+        return EventWaiter { *this, coroutine_owner };
     }
 
 protected:
@@ -214,11 +246,9 @@ protected:
     }
 
 private:
-    void remove_coroutine(Task<>* task);
-
     Vector<SharedPtr<Object>> m_children;
     Vector<Handler> m_handlers;
-    Vector<Task<>> m_owned_coroutines;
+    Vector<ObjectBoundCoroutine> m_owned_coroutines;
     Object* m_parent { nullptr };
     mutable WeakPtr<Object> m_weak_this;
     int m_next_callback_token { 1 };

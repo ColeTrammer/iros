@@ -99,14 +99,22 @@ bool Object::dispatch(const Event& event) const {
     return false;
 }
 
-void Object::start_coroutine(Function<Task<>()> coroutine) {
-    m_owned_coroutines.add(coroutine());
-    schedule_coroutine(&m_owned_coroutines.last());
+void Object::start_coroutine(ObjectBoundCoroutine&& coroutine) {
+    m_owned_coroutines.add(move(coroutine));
+    schedule_coroutine(m_owned_coroutines.last().handle());
 }
 
-void Object::remove_coroutine(Task<>* task) {
-    m_owned_coroutines.remove_if([&](auto& coroutine) {
-        return &coroutine == task;
+void Object::schedule_coroutine(CoroutineHandle<> handle) {
+    deferred_invoke([this, handle] {
+        handle();
+    });
+}
+
+void Object::cleanup_coroutine(ObjectBoundCoroutine* coroutine) {
+    deferred_invoke([this, coroutine] {
+        m_owned_coroutines.remove_if([&](auto& element) {
+            return coroutine == &element;
+        });
     });
 }
 }

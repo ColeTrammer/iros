@@ -15,6 +15,7 @@ public:
 
     EventLoop(const EventLoop&) = delete;
 
+    static EventLoop& the();
     static void register_selectable(Selectable& selectable);
     static void unregister_selectable(Selectable& selectable);
     static void register_signal_handler(int signum, Function<void()> callback);
