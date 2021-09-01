@@ -148,6 +148,13 @@ void TerminalRenderer::clear_rect(const Rect& rect_in, Maybe<Color> color) {
     }
 }
 
+void TerminalRenderer::put_glyph(const Point& position_in, const TerminalGlyph& glyph, const TerminalTextStyle& style) {
+    auto position = translate(position_in);
+    if (in_bounds(position)) {
+        m_io_terminal.put_glyph(position, glyph, style);
+    }
+}
+
 void TerminalRenderer::render_text(const Rect& rect, const StringView& text, const TerminalTextStyle& style, TextAlign alignment) {
     return render_complex_styled_text(
         rect, text,

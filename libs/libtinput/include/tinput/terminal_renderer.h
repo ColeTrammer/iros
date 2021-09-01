@@ -27,14 +27,16 @@ public:
     void draw_rect(const Rect& rect, Maybe<Color> color = {}, BoxStyle style = BoxStyle::Thick);
 
     void clear_rect(const Rect& rect, Maybe<Color> color = {});
+
+    void put_glyph(const Point& point, const TerminalGlyph& glyph, const TerminalTextStyle& style = {});
     void render_text(const Rect& rect, const StringView& text, const TerminalTextStyle& style = {},
                      TextAlign alignment = TextAlign::CenterLeft);
-
     void render_complex_styled_text(const Rect& rect, const StringView& text, Function<TerminalTextStyle(size_t)>,
                                     TextAlign alignment = TextAlign::CenterLeft);
 
 private:
     Rect translate(const Rect& rect) { return rect.translated(m_origin); }
+    Point translate(const Point& point) { return point.translated(m_origin); }
 
     bool in_bounds(const Point& point) { return m_clip_rect.intersects(point) && m_dirty_rects.intersects(point); }
 

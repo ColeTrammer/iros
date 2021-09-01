@@ -36,7 +36,7 @@ public:
     virtual App::Object& this_widget() override { return *this; }
     virtual Edit::TextIndex text_index_at_mouse_position(const Point& point) override;
     virtual Edit::RenderedLine compose_line(const Edit::Line& line) override;
-    virtual void output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) override;
+    virtual void output_line(int row, int col_offset, const Edit::RenderedLine& line, int line_index) override;
     virtual void schedule_update() override { invalidate(); }
     virtual int enter() override;
     virtual void send_status_message(String message) override;

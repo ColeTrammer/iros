@@ -38,7 +38,7 @@ public:
     virtual App::Object& this_widget() = 0;
     virtual TextIndex text_index_at_mouse_position(const Point& point) = 0;
     virtual RenderedLine compose_line(const Line& line) = 0;
-    virtual void output_line(int row, int col_offset, const StringView& text, const Vector<CharacterMetadata>& metadata) = 0;
+    virtual void output_line(int row, int col_offset, const RenderedLine& line, int line_index) = 0;
     virtual void schedule_update() = 0;
     virtual int enter() = 0;
     virtual void send_status_message(String message) = 0;

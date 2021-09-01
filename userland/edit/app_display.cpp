@@ -121,13 +121,7 @@ Edit::TextIndex AppDisplay::text_index_at_mouse_position(const Point& point) {
     return document()->text_index_at_scrolled_position(*this, { point.y() / row_height(), point.x() / col_width() });
 }
 
-void AppDisplay::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) {
-    auto renderer = get_renderer();
-
-    for (size_t i = col_offset; i < static_cast<size_t>(col_offset + cols()) && i < text.size(); i++) {
-        render_cell(renderer, (i - col_offset) * col_width(), row * row_height(), text[i], metadata[i]);
-    }
-}
+void AppDisplay::output_line(int, int, const Edit::RenderedLine&, int) {}
 
 void AppDisplay::schedule_update() {
     invalidate();

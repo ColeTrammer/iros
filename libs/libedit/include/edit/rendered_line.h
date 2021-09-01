@@ -18,6 +18,7 @@ struct PositionRange {
     int start_absolute_col { 0 };
     int index_into_line { 0 };
     CharacterMetadata metadata { 0 };
+    int byte_offset_in_rendered_string { 0 };
     int byte_count_in_rendered_string { 0 };
     PositionRangeType type { PositionRangeType::Normal };
 };

@@ -25,6 +25,7 @@ private:
     Vector<PositionRange> m_current_position_ranges;
     PositionRange m_current_range;
     Position m_current_position;
+    int m_current_byte_offset { 0 };
     int m_absolute_col_position { 0 };
     int m_max_width { 0 };
     bool m_word_wrap_enabled { false };

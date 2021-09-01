@@ -20,6 +20,7 @@ void LineRenderer::begin_segment(int index_into_line, CharacterMetadata metadata
     m_current_range.type = type;
     m_current_range.byte_count_in_rendered_string = 0;
     m_current_range.start_absolute_col = m_absolute_col_position;
+    m_current_range.byte_offset_in_rendered_string = m_current_byte_offset;
 }
 
 void LineRenderer::add_to_segment(const StringView& text, int display_width) {
@@ -33,6 +34,9 @@ void LineRenderer::add_to_segment(const StringView& text, int display_width) {
         m_rendered_line.rendered_lines.add(move(m_current_rendered_line));
         m_rendered_line.position_ranges.add(move(m_current_position_ranges));
         m_current_range.start = current_position();
+        m_current_byte_offset = 0;
+    } else {
+        m_current_byte_offset += text.size();
     }
 
     m_current_range.byte_count_in_rendered_string += text.size();

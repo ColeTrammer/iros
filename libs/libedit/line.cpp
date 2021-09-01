@@ -199,20 +199,7 @@ int Line::render(const Document& document, Display& display, int col_offset, int
 
     auto row_count = rendered_line_count(document, display);
     for (int row = relative_row_start; row + row_in_display - relative_row_start < display.rows() && row < row_count; row++) {
-        auto& position_ranges = info.position_ranges[row];
-        int range_index = 0;
-
-        auto& rendered_line = info.rendered_lines[row];
-        auto metadata_vector = Vector<CharacterMetadata>(rendered_line.size());
-        for (; range_index < position_ranges.size(); range_index++) {
-            auto& current_range = position_ranges[range_index];
-            for (int i = 0; i < current_range.byte_count_in_rendered_string; i++) {
-                metadata_vector.add(current_range.metadata);
-            }
-        }
-
-        assert(rendered_line.size() == static_cast<size_t>(metadata_vector.size()));
-        display.output_line(row + row_in_display - relative_row_start, col_offset, rendered_line.view(), metadata_vector);
+        display.output_line(row + row_in_display - relative_row_start, col_offset, info, row);
     }
 
     return row_count - relative_row_start;

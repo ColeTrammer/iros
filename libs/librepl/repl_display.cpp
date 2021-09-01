@@ -227,18 +227,18 @@ Edit::RenderedLine ReplDisplay::compose_line(const Edit::Line& line) {
 
 void ReplDisplay::send_status_message(String) {}
 
-void ReplDisplay::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) {
+void ReplDisplay::output_line(int row, int col_offset, const Edit::RenderedLine& line, int line_index) {
     auto renderer = get_renderer();
 
     auto visible_line_rect = Rect { 0, row, sized_rect().width(), 1 };
     renderer.set_clip_rect(visible_line_rect);
 
-    auto text_width = TInput::convert_to_glyphs(text).total_width();
+    auto text_width = line.position_ranges[line_index].last().end.col;
 
     auto text_rect = visible_line_rect.translated({ -col_offset, 0 }).with_width(text_width);
-    renderer.render_complex_styled_text(text_rect, text, [&](size_t index) -> TInput::TerminalTextStyle {
-        auto rendering_info = rendering_info_for_metadata(metadata[index]);
-        return TInput::TerminalTextStyle {
+    for (auto& range : line.position_ranges[line_index]) {
+        auto rendering_info = rendering_info_for_metadata(range.metadata);
+        auto style = TInput::TerminalTextStyle {
             .foreground = rendering_info.fg.map([](vga_color color) {
                 return Color { color };
             }),
@@ -248,7 +248,12 @@ void ReplDisplay::output_line(int row, int col_offset, const StringView& text, c
             .bold = rendering_info.bold,
             .invert = rendering_info.secondary_cursor,
         };
-    });
+
+        auto glyph = TInput::TerminalGlyph { line.rendered_lines[line_index].substring(range.byte_offset_in_rendered_string,
+                                                                                       range.byte_count_in_rendered_string),
+                                             range.end.col - range.start.col };
+        renderer.put_glyph(text_rect.top_left().translated(range.start.col, 0), glyph, style);
+    }
 
     auto clear_rect = Rect { text_rect.right(), row, max(visible_line_rect.right() - text_rect.right(), 0), 1 };
     renderer.clear_rect(clear_rect);

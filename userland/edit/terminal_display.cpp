@@ -8,6 +8,7 @@
 #include <eventloop/event.h>
 #include <liim/utf8_view.h>
 #include <stdlib.h>
+#include <tinput/terminal_glyph.h>
 #include <tinput/terminal_renderer.h>
 #include <tui/application.h>
 
@@ -122,7 +123,7 @@ Edit::TextIndex TerminalDisplay::text_index_at_mouse_position(const Point& point
     return document()->text_index_at_scrolled_position(*this, { point.y(), point.x() - m_cols_needed_for_line_numbers });
 }
 
-void TerminalDisplay::output_line(int row, int col_offset, const StringView& text, const Vector<Edit::CharacterMetadata>& metadata) {
+void TerminalDisplay::output_line(int row, int col_offset, const Edit::RenderedLine& line, int line_index) {
     auto renderer = get_renderer();
 
     if (show_line_numbers()) {
@@ -139,13 +140,12 @@ void TerminalDisplay::output_line(int row, int col_offset, const StringView& tex
     auto visible_line_rect = Rect { m_cols_needed_for_line_numbers, row, sized_rect().width() - m_cols_needed_for_line_numbers, 1 };
     renderer.set_clip_rect(visible_line_rect);
 
-    // FIXME: this computation is more complicated.
-    auto text_width = text.size();
+    auto text_width = line.position_ranges[line_index].last().end.col;
 
     auto text_rect = visible_line_rect.translated({ -col_offset, 0 }).with_width(text_width);
-    renderer.render_complex_styled_text(text_rect, text, [&](size_t index) -> TInput::TerminalTextStyle {
-        auto rendering_info = rendering_info_for_metadata(metadata[index]);
-        return TInput::TerminalTextStyle {
+    for (auto& range : line.position_ranges[line_index]) {
+        auto rendering_info = rendering_info_for_metadata(range.metadata);
+        auto style = TInput::TerminalTextStyle {
             .foreground = rendering_info.fg.map([](vga_color color) {
                 return Color { color };
             }),
@@ -155,7 +155,12 @@ void TerminalDisplay::output_line(int row, int col_offset, const StringView& tex
             .bold = rendering_info.bold,
             .invert = rendering_info.secondary_cursor,
         };
-    });
+
+        auto glyph = TInput::TerminalGlyph { line.rendered_lines[line_index].substring(range.byte_offset_in_rendered_string,
+                                                                                       range.byte_count_in_rendered_string),
+                                             range.end.col - range.start.col };
+        renderer.put_glyph(text_rect.top_left().translated(range.start.col, 0), glyph, style);
+    }
 
     auto clear_rect = Rect { text_rect.right(), row, max(visible_line_rect.right() - text_rect.right(), 0), 1 };
     renderer.clear_rect(clear_rect);
