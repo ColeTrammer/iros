@@ -86,7 +86,10 @@ void Widget::invalidate() {
 
 void Widget::invalidate(const Rect& rect) {
     if (auto* window = parent_window()) {
-        window->invalidate_rect(rect.positioned(positioned_rect().top_left()));
+        auto absolute_rect = rect.intersection_with(sized_rect()).translated(positioned_rect().top_left());
+        if (!absolute_rect.empty()) {
+            window->invalidate_rect(absolute_rect);
+        }
     }
 }
 
