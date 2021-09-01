@@ -87,6 +87,7 @@ public:
             return FinalWaiter {};
         }
         void return_value(T&& object) { value = move(object); }
+        void return_value(const T& object) { value = object; }
     };
 
     struct Waiter {
