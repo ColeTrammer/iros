@@ -101,6 +101,7 @@ bool Object::dispatch(const Event& event) const {
 
 void Object::start_coroutine(ObjectBoundCoroutine&& coroutine) {
     m_owned_coroutines.add(move(coroutine));
+    m_owned_coroutines.last().set_owner(*this);
     schedule_coroutine(m_owned_coroutines.last().handle());
 }
 
@@ -110,10 +111,10 @@ void Object::schedule_coroutine(CoroutineHandle<> handle) {
     });
 }
 
-void Object::cleanup_coroutine(ObjectBoundCoroutine* coroutine) {
-    deferred_invoke([this, coroutine] {
+void Object::cleanup_coroutine(CoroutineHandle<> handle) {
+    deferred_invoke([this, handle] {
         m_owned_coroutines.remove_if([&](auto& element) {
-            return coroutine == &element;
+            return handle == element.handle();
         });
     });
 }

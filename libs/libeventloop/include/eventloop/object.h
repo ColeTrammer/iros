@@ -175,7 +175,7 @@ public:
 
     void start_coroutine(ObjectBoundCoroutine&& coroutine);
     void schedule_coroutine(CoroutineHandle<> handle);
-    void cleanup_coroutine(ObjectBoundCoroutine* coroutine);
+    void cleanup_coroutine(CoroutineHandle<> handle);
 
     template<typename Ev>
     auto block_until_event_unchecked(Object& coroutine_owner) {

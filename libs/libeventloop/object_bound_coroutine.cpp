@@ -3,13 +3,13 @@
 
 namespace App {
 SuspendAlways ObjectBoundCoroutine::Promise::final_suspend() {
-    if (auto object = coroutine->m_owner.lock()) {
-        object->cleanup_coroutine(coroutine);
+    if (auto object = owner.lock()) {
+        object->cleanup_coroutine(Handle::from_promise(*this));
     }
     return {};
 }
 
 void ObjectBoundCoroutine::set_owner(Object& owner) {
-    m_owner = owner.weak_from_this();
+    m_handle.promise().owner = owner.weak_from_this();
 }
 }

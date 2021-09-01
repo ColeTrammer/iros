@@ -139,37 +139,41 @@ static Task<int> do_thing() {
     co_return 1;
 }
 
+static App::ObjectBoundCoroutine coroutine_test(int& count) {
+    count = co_await do_thing();
+    EventLoop::the().set_should_exit(true);
+    co_return;
+}
+
 TEST(object, coroutine) {
     auto loop = App::EventLoop {};
 
     auto object = Object::create(nullptr);
 
-    static int count = 0;
-    object->start_coroutine([]() -> App::ObjectBoundCoroutine {
-        count = co_await do_thing();
-        EventLoop::the().set_should_exit(true);
-        co_return;
-    }());
+    int count = 0;
+    object->start_coroutine(coroutine_test(count));
 
     loop.enter();
 
     EXPECT_EQ(count, 1);
 }
 
+static App::ObjectBoundCoroutine block_until_event_test(App::Timer* timer, App::Object* object, int& count) {
+    auto event = co_await timer->block_until_event<App::TimerEvent>(*object);
+    count = event.times_expired();
+    EventLoop::the().set_should_exit(true);
+    co_return;
+}
+
 TEST(object, block_until_event) {
     auto loop = App::EventLoop {};
 
-    static auto object = Object::create(nullptr);
-    static auto timer = Timer::create_single_shot_timer(nullptr, 100);
+    auto object = Object::create(nullptr);
+    auto timer = Timer::create_single_shot_timer(nullptr, 100);
 
-    static int count = 0;
+    int count = 0;
 
-    object->start_coroutine([]() -> App::ObjectBoundCoroutine {
-        auto event = co_await timer->block_until_event<App::TimerEvent>(*object);
-        count = event.times_expired();
-        EventLoop::the().set_should_exit(true);
-        co_return;
-    }());
+    object->start_coroutine(block_until_event_test(timer.get(), object.get(), count));
 
     loop.enter();
 

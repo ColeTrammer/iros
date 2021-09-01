@@ -13,7 +13,7 @@ public:
     using promise_type = Promise;
 
     struct Promise {
-        ObjectBoundCoroutine* coroutine { nullptr };
+        WeakPtr<Object> owner;
 
         ObjectBoundCoroutine get_return_object() { return ObjectBoundCoroutine { Handle::from_promise(*this) }; }
         void unhandled_exception() {}
@@ -22,7 +22,7 @@ public:
         void return_void() {}
     };
 
-    ObjectBoundCoroutine(ObjectBoundCoroutine&& other) : m_handle(other.m_handle) { other.m_handle = nullptr; }
+    ObjectBoundCoroutine(ObjectBoundCoroutine&& other) : m_handle(exchange(other.m_handle, nullptr)) {}
 
     ~ObjectBoundCoroutine() {
         if (m_handle) {
@@ -35,9 +35,8 @@ public:
     void set_owner(Object&);
 
 private:
-    explicit ObjectBoundCoroutine(Handle handle) : m_handle(handle) { handle.promise().coroutine = this; }
+    explicit ObjectBoundCoroutine(Handle handle) : m_handle(handle) {}
 
     Handle m_handle;
-    WeakPtr<Object> m_owner;
 };
 }
