@@ -18,7 +18,7 @@ public:
     virtual void initialize() override;
     virtual ~TerminalPrompt() override;
 
-    Task<Maybe<String>> block_until_result();
+    Task<Maybe<String>> block_until_result(Object& coroutine_owner);
 
 private:
     TerminalDisplay& m_host_display;

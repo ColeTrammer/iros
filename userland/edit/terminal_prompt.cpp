@@ -17,7 +17,7 @@ void TerminalPrompt::initialize() {
 
     auto document = Edit::Document::create_from_text(m_initial_value);
     document->set_submittable(true);
-    document->on<Edit::Submit>(*this, [this, document](auto&) {
+    document->on<Edit::Submit>(*this, [this, document = document.get()](auto&) {
         emit<Edit::PromptResult>(document->content_string());
     });
 
@@ -38,8 +38,8 @@ void TerminalPrompt::initialize() {
     Panel::initialize();
 }
 
-Task<Maybe<String>> TerminalPrompt::block_until_result() {
-    auto event = co_await block_until_event<Edit::PromptResult>(*this);
+Task<Maybe<String>> TerminalPrompt::block_until_result(Object& coroutine_owner) {
+    auto event = co_await block_until_event<Edit::PromptResult>(coroutine_owner);
     co_return event.result();
 }
 

@@ -21,8 +21,8 @@ void TerminalSearch::initialize() {
         m_host_display.document()->move_cursor_to_next_search_match(m_host_display, m_host_display.cursors().main_cursor());
     });
 
-    search_document->on<Edit::Change>(*this, [this, search_document](auto&) {
-        auto to_find = search_document->content_string();
+    search_document->on<Edit::Change>(*this, [this, document = search_document.get()](auto&) {
+        auto to_find = document->content_string();
         m_host_display.document()->set_search_text(move(to_find));
     });
 

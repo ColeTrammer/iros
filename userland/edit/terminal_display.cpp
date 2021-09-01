@@ -224,7 +224,7 @@ Task<Maybe<String>> TerminalDisplay::prompt(String message) {
     m_prompt_panel = TerminalPrompt::create(shared_from_this(), *this, move(message), "");
     m_prompt_panel->set_positioned_rect(positioned_rect().with_height(3));
 
-    auto result = co_await m_prompt_panel->block_until_result();
+    auto result = co_await m_prompt_panel->block_until_result(*this);
     hide_prompt_panel();
     co_return result;
 }
