@@ -123,10 +123,6 @@ Edit::TextIndex AppDisplay::text_index_at_mouse_position(const Point& point) {
 
 void AppDisplay::output_line(int, int, const Edit::RenderedLine&, int) {}
 
-void AppDisplay::schedule_update() {
-    invalidate();
-}
-
 int AppDisplay::enter() {
     parent_window()->set_focused_widget(this);
     return 0;

@@ -58,7 +58,7 @@ void Display::set_scroll_offsets(int row_offset, int col_offset) {
 
     m_scroll_row_offset = row_offset;
     m_scroll_col_offset = col_offset;
-    schedule_update();
+    invalidate_all_line_rects();
 }
 
 void Display::scroll(int vertical, int horizontal) {
@@ -76,14 +76,19 @@ void Display::invalidate_all_lines() {
     if (auto doc = document()) {
         m_rendered_lines.resize(doc->num_lines());
     }
-    schedule_update();
+    invalidate_all_line_rects();
 }
 
 void Display::invalidate_line(int line_index) {
     auto& info = rendered_line_at_index(line_index);
+
+    auto absolute_row = document()->line_at_index(line_index).absolute_row_position(*document(), *this);
+    for (int i = 0; i < info.position_ranges.size(); i++) {
+        invalidate_line_rect(absolute_row + i - scroll_row_offset());
+    }
+
     info.rendered_lines.clear();
     info.position_ranges.clear();
-    schedule_update();
 }
 
 void Display::notify_line_count_changed() {}
