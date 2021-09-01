@@ -5,7 +5,7 @@
 #include <liim/vector.h>
 
 namespace Edit {
-Display::Display() {}
+Display::Display() : m_cursors { *this } {}
 
 Display::~Display() {}
 
@@ -26,7 +26,8 @@ void Display::set_document(SharedPtr<Document> document) {
 
     m_cursors.remove_secondary_cursors();
     m_cursors.main_cursor().set({ 0, 0 });
-    m_rendered_lines.clear();
+    m_rendered_lines.resize(m_document->num_lines());
+    invalidate_all_lines();
     hide_suggestions_panel();
     notify_line_count_changed();
     document_did_change();
@@ -70,13 +71,22 @@ RenderedLine& Display::rendered_line_at_index(int index) {
     return m_rendered_lines[index];
 }
 
-void Display::notify_line_count_changed() {
-    if (!document()) {
-        m_rendered_lines.clear();
-        return;
+void Display::invalidate_all_lines() {
+    m_rendered_lines.clear();
+    if (auto doc = document()) {
+        m_rendered_lines.resize(doc->num_lines());
     }
-    m_rendered_lines.resize(document()->num_lines());
+    schedule_update();
 }
+
+void Display::invalidate_line(int line_index) {
+    auto& info = rendered_line_at_index(line_index);
+    info.rendered_lines.clear();
+    info.position_ranges.clear();
+    schedule_update();
+}
+
+void Display::notify_line_count_changed() {}
 
 void Display::toggle_show_line_numbers() {
     set_show_line_numbers(!m_show_line_numbers);
@@ -119,7 +129,6 @@ void Display::install_document_listeners(Document& new_document) {
             m_rendered_lines.remove(event.line_index());
         }
         notify_line_count_changed();
-        schedule_update();
     });
 
     new_document.on<AddLines>(this_widget(), [this](const AddLines& event) {
@@ -127,31 +136,26 @@ void Display::install_document_listeners(Document& new_document) {
             m_rendered_lines.insert({}, event.line_index());
         }
         notify_line_count_changed();
-        schedule_update();
     });
 
     new_document.on<SplitLines>(this_widget(), [this](const SplitLines& event) {
         m_rendered_lines.insert({}, event.line_index() + 1);
         document()->line_at_index(event.line_index()).invalidate_rendered_contents(*document(), *this);
         notify_line_count_changed();
-        schedule_update();
     });
 
     new_document.on<MergeLines>(this_widget(), [this](const MergeLines& event) {
         m_rendered_lines.remove(event.second_line_index());
         document()->line_at_index(event.first_line_index()).invalidate_rendered_contents(*document(), *this);
         notify_line_count_changed();
-        schedule_update();
     });
 
     new_document.on<AddToLine>(this_widget(), [this](const AddToLine& event) {
         document()->line_at_index(event.line_index()).invalidate_rendered_contents(*document(), *this);
-        schedule_update();
     });
 
     new_document.on<DeleteFromLine>(this_widget(), [this](const DeleteFromLine& event) {
         document()->line_at_index(event.line_index()).invalidate_rendered_contents(*document(), *this);
-        schedule_update();
     });
 
     new_document.on<MoveLineTo>(this_widget(), [this](const MoveLineTo& event) {
@@ -178,10 +182,9 @@ void Display::install_document_listeners(Document& new_document) {
         }
 
         document()->invalidate_all_rendered_contents();
-        schedule_update();
     });
 
-    cursors().install_document_listeners(*this, new_document);
+    cursors().install_document_listeners(new_document);
 }
 
 void Display::uninstall_document_listeners(Document& document) {

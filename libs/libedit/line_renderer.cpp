@@ -13,9 +13,9 @@ RenderedLine LineRenderer::finish(const Line& line) {
     return move(m_rendered_line);
 }
 
-void LineRenderer::begin_segment(int index_into_line, int optional_metadata, PositionRangeType type) {
+void LineRenderer::begin_segment(int index_into_line, CharacterMetadata metadata, PositionRangeType type) {
     m_current_range.start = current_position();
-    m_current_range.optional_metadata = optional_metadata;
+    m_current_range.metadata = metadata;
     m_current_range.index_into_line = index_into_line;
     m_current_range.type = type;
     m_current_range.byte_count_in_rendered_string = 0;

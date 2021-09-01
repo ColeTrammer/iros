@@ -98,6 +98,9 @@ public:
     RenderedLine& rendered_line_at_index(int index);
     const RenderedLine& rendered_line_at_index(int index) const { return const_cast<Display&>(*this).rendered_line_at_index(index); }
 
+    void invalidate_all_lines();
+    void invalidate_line(int line_index);
+
 protected:
     Display();
 

@@ -12,7 +12,7 @@ public:
 
     RenderedLine finish(const Line& line);
 
-    void begin_segment(int index_into_line, int optional_metadata, PositionRangeType type);
+    void begin_segment(int index_into_line, CharacterMetadata metadata, PositionRangeType type);
     void add_to_segment(const StringView& text, int display_width);
     void end_segment();
 

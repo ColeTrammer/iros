@@ -181,9 +181,7 @@ void Line::search(const Document& document, const String& text, TextRangeCollect
 }
 
 void Line::invalidate_rendered_contents(const Document& document, Display& display) const {
-    auto& info = display.rendered_line_at_index(document.index_of_line(*this));
-    info.rendered_lines.clear();
-    info.position_ranges.clear();
+    display.invalidate_line(document.index_of_line(*this));
 }
 
 const RenderedLine& Line::compute_rendered_contents(const Document& document, Display& display) const {
@@ -196,29 +194,20 @@ const RenderedLine& Line::compute_rendered_contents(const Document& document, Di
     return rendered_line;
 }
 
-int Line::render(const Document& document, Display& display, DocumentTextRangeIterator& metadata_iterator, int col_offset,
-                 int relative_row_start, int row_in_display) const {
+int Line::render(const Document& document, Display& display, int col_offset, int relative_row_start, int row_in_display) const {
     auto& info = compute_rendered_contents(document, display);
 
     auto row_count = rendered_line_count(document, display);
     for (int row = relative_row_start; row + row_in_display - relative_row_start < display.rows() && row < row_count; row++) {
         auto& position_ranges = info.position_ranges[row];
         int range_index = 0;
-        int index_into_line = position_ranges[range_index].index_into_line;
-        metadata_iterator.advance_to_index_into_line(index_into_line);
 
         auto& rendered_line = info.rendered_lines[row];
         auto metadata_vector = Vector<CharacterMetadata>(rendered_line.size());
         for (; range_index < position_ranges.size(); range_index++) {
             auto& current_range = position_ranges[range_index];
-            auto metadata = CharacterMetadata { current_range.optional_metadata };
-            if (current_range.type == PositionRangeType::Normal) {
-                metadata = metadata_iterator.peek_metadata();
-                metadata_iterator.advance();
-            }
-
             for (int i = 0; i < current_range.byte_count_in_rendered_string; i++) {
-                metadata_vector.add(metadata);
+                metadata_vector.add(current_range.metadata);
             }
         }
 
@@ -226,7 +215,6 @@ int Line::render(const Document& document, Display& display, DocumentTextRangeIt
         display.output_line(row + row_in_display - relative_row_start, col_offset, rendered_line.view(), metadata_vector);
     }
 
-    metadata_iterator.advance_line();
     return row_count - relative_row_start;
 }
 }

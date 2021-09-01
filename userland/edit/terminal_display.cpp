@@ -4,6 +4,7 @@
 #include <edit/document_type.h>
 #include <edit/line_renderer.h>
 #include <edit/position.h>
+#include <edit/text_range_collection.h>
 #include <eventloop/event.h>
 #include <liim/utf8_view.h>
 #include <stdlib.h>
@@ -54,7 +55,6 @@ TerminalDisplay::~TerminalDisplay() {}
 void TerminalDisplay::document_did_change() {
     if (document()) {
         compute_cols_needed_for_line_numbers();
-        schedule_update();
     }
 }
 
@@ -164,11 +164,20 @@ void TerminalDisplay::output_line(int row, int col_offset, const StringView& tex
 Edit::RenderedLine TerminalDisplay::compose_line(const Edit::Line& line) {
     assert(document());
     auto renderer = Edit::LineRenderer { cols(), word_wrap_enabled() };
+
+    auto cursor_collection = cursors().cursor_text_ranges(*document());
+    auto selection_collection = cursors().selections(*document());
+    auto metadata_iterator = Edit::DocumentTextRangeIterator { { document()->index_of_line(line), 0 },
+                                                               document()->syntax_highlighting_info(),
+                                                               document()->search_results(),
+                                                               cursor_collection,
+                                                               selection_collection };
+
     auto view = Utf8View { line.contents().view() };
     for (auto iter = view.begin();; ++iter) {
         auto index_into_line = iter.byte_offset();
-        if (cursors().should_show_auto_complete_text_at(*this, *document(), line, index_into_line)) {
-            auto maybe_suggestion_text = cursors().preview_auto_complete_text(*this);
+        if (cursors().should_show_auto_complete_text_at(*document(), line, index_into_line)) {
+            auto maybe_suggestion_text = cursors().preview_auto_complete_text();
             if (maybe_suggestion_text) {
                 renderer.begin_segment(index_into_line, Edit::CharacterMetadata::Flags::AutoCompletePreview,
                                        Edit::PositionRangeType::InlineAfterCursor);
@@ -183,14 +192,19 @@ Edit::RenderedLine TerminalDisplay::compose_line(const Edit::Line& line) {
 
         auto info = iter.current_code_point_info();
 
-        renderer.begin_segment(index_into_line, 0, Edit::PositionRangeType::Normal);
+        renderer.begin_segment(index_into_line, metadata_iterator.peek_metadata(), Edit::PositionRangeType::Normal);
         if (info.codepoint == static_cast<uint32_t>('\t')) {
             auto spaces = String::repeat(' ', Edit::tab_width - (renderer.absolute_col_position() % Edit::tab_width));
             renderer.add_to_segment(spaces.view(), spaces.size());
+
         } else {
             renderer.add_to_segment(line.contents().view().substring(index_into_line, info.bytes_used), 1);
         }
         renderer.end_segment();
+
+        for (size_t i = 0; i < info.bytes_used; i++) {
+            metadata_iterator.advance();
+        }
     }
     return renderer.finish(line);
 }

@@ -113,8 +113,6 @@ void ReplDisplay::document_did_change() {
             document()->move_cursor_to_document_end(*this, cursors().main_cursor());
             document()->scroll_cursor_into_view(*this, cursors().main_cursor());
         });
-
-        schedule_update();
     }
 }
 
@@ -200,8 +198,8 @@ Edit::RenderedLine ReplDisplay::compose_line(const Edit::Line& line) {
     renderer.end_segment();
 
     for (int index_into_line = 0; index_into_line <= line.length(); index_into_line++) {
-        if (cursors().should_show_auto_complete_text_at(*this, *document(), line, index_into_line)) {
-            auto maybe_suggestion_text = cursors().preview_auto_complete_text(*this);
+        if (cursors().should_show_auto_complete_text_at(*document(), line, index_into_line)) {
+            auto maybe_suggestion_text = cursors().preview_auto_complete_text();
             if (maybe_suggestion_text) {
                 renderer.begin_segment(index_into_line, Edit::CharacterMetadata::Flags::AutoCompletePreview,
                                        Edit::PositionRangeType::InlineAfterCursor);

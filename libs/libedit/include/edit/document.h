@@ -59,8 +59,9 @@ public:
     void copy_settings_from(const Document& other);
 
     void display(Display& display) const;
-    void set_needs_display();
 
+    void invalidate_lines_in_range(const TextRange& range);
+    void invalidate_lines_in_range_collection(const TextRangeCollection& collection);
     void invalidate_rendered_contents(const Line& line);
     void invalidate_all_rendered_contents();
 
@@ -86,6 +87,7 @@ public:
     const String& search_text() const { return m_search_text; }
     void set_search_text(String text);
     int search_result_count() const { return m_search_results.size(); }
+    const TextRangeCollection& search_results() const { return m_search_results; }
     void move_cursor_to_next_search_match(Display& display, Cursor& cursor);
 
     void move_cursor_left(Display& display, Cursor& cursor, MovementMode mode = MovementMode::Move);
@@ -230,7 +232,6 @@ private:
         update_search_results();
         update_syntax_highlighting();
         update_suggestions(display);
-        set_needs_display();
 
         emit<Change>();
         return ret;

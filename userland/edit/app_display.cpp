@@ -90,8 +90,8 @@ AppDisplay& AppDisplay::ensure_search_display() {
 Edit::RenderedLine AppDisplay::compose_line(const Edit::Line& line) {
     auto renderer = Edit::LineRenderer { cols(), word_wrap_enabled() };
     for (int index_into_line = 0; index_into_line <= line.length(); index_into_line++) {
-        if (cursors().should_show_auto_complete_text_at(*this, *document(), line, index_into_line)) {
-            auto maybe_suggestion_text = cursors().preview_auto_complete_text(*this);
+        if (cursors().should_show_auto_complete_text_at(*document(), line, index_into_line)) {
+            auto maybe_suggestion_text = cursors().preview_auto_complete_text();
             if (maybe_suggestion_text) {
                 renderer.begin_segment(index_into_line, Edit::CharacterMetadata::Flags::AutoCompletePreview,
                                        Edit::PositionRangeType::InlineAfterCursor);

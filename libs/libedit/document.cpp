@@ -140,12 +140,6 @@ size_t Document::cursor_index_in_content_string(const Cursor& cursor) const {
     return index;
 }
 
-void Document::set_needs_display() {
-    for (auto* display : m_displays) {
-        display->schedule_update();
-    }
-}
-
 void Document::display(Display& display) const {
     auto& document = const_cast<Document&>(*this);
 
@@ -157,15 +151,10 @@ void Document::display(Display& display) const {
         line_at_index(render_index.line_index()).relative_position_of_index(*this, display, render_index.index_into_line());
     render_index.set_index_into_line(0);
 
-    auto selection_collection = display.cursors().selections(*this);
-    auto cursor_collection = display.cursors().cursor_text_ranges(*this);
-    DocumentTextRangeIterator metadata_iterator(render_index, m_syntax_highlighting_info, m_search_results, selection_collection,
-                                                cursor_collection);
-
     int row = scroll_row_offset;
     for (; render_index.line_index() < num_lines() && row < scroll_row_offset + display.rows();) {
         auto& line = line_at_index(render_index.line_index());
-        row += line.render(document, display, metadata_iterator, scroll_col_offset, relative_start_position.row, row - scroll_row_offset);
+        row += line.render(document, display, scroll_col_offset, relative_start_position.row, row - scroll_row_offset);
         render_index.set_line_index(render_index.line_index() + 1);
         relative_start_position = { 0, 0 };
     }
@@ -284,7 +273,6 @@ void Document::move_cursor_right(Display& display, Cursor& cursor, MovementMode 
             selection.begin(cursor.index());
         }
         selection.set_end_index_into_line(new_index_into_line);
-        set_needs_display();
     }
 
     cursor.set_index_into_line(new_index_into_line);
@@ -318,7 +306,6 @@ void Document::move_cursor_left(Display& display, Cursor& cursor, MovementMode m
             selection.begin(cursor.index());
         }
         selection.set_end_index_into_line(new_index_into_line);
-        set_needs_display();
     }
 
     cursor.set_index_into_line(new_index_into_line);
@@ -343,7 +330,6 @@ void Document::move_cursor_down(Display& display, Cursor& cursor, MovementMode m
     clamp_cursor_to_line_end(display, cursor);
     if (mode == MovementMode::Select) {
         cursor.selection().set_end(cursor.index());
-        set_needs_display();
     }
 }
 
@@ -364,7 +350,6 @@ void Document::move_cursor_up(Display& display, Cursor& cursor, MovementMode mod
     clamp_cursor_to_line_end(display, cursor);
     if (mode == MovementMode::Select) {
         cursor.selection().set_end(cursor.index());
-        set_needs_display();
     }
 }
 
@@ -391,7 +376,6 @@ void Document::move_cursor_to_line_start(Display& display, Cursor& cursor, Movem
     update_selection_state_for_mode(cursor, mode);
     if (mode == MovementMode::Select) {
         cursor.selection().set_end_index_into_line(0);
-        set_needs_display();
     }
 
     cursor.set_index_into_line(0);
@@ -404,7 +388,6 @@ void Document::move_cursor_to_line_end(Display& display, Cursor& cursor, Movemen
     update_selection_state_for_mode(cursor, mode);
     if (mode == MovementMode::Select) {
         cursor.selection().set_end_index_into_line(line.length());
-        set_needs_display();
     }
 
     display.set_scroll_col_offset(0);
@@ -543,7 +526,6 @@ void Document::restore(MultiCursor& cursors, Snapshot s, bool restore_selections
     restore_state(cursors, s.state, restore_selections);
 
     update_search_results();
-    set_needs_display();
 }
 
 void Document::restore_state(MultiCursor& cursors, const StateSnapshot& s, bool restore_selections) {
@@ -554,8 +536,6 @@ void Document::restore_state(MultiCursor& cursors, const StateSnapshot& s, bool 
         }
     }
     m_document_was_modified = s.document_was_modified;
-
-    set_needs_display();
 }
 
 void Document::insert_text_at_cursor(Display& display, const String& text) {
@@ -649,10 +629,12 @@ String Document::selection_text(Cursor& cursor) const {
 }
 
 void Document::clear_selection(Cursor& cursor) {
-    if (!cursor.selection().empty()) {
-        cursor.selection().clear();
-        set_needs_display();
+    if (cursor.selection().empty()) {
+        return;
     }
+
+    invalidate_lines_in_range(cursor.selection().text_range());
+    cursor.selection().clear();
 }
 
 void Document::remove_line(int index) {
@@ -688,7 +670,6 @@ void Document::register_display(Display& display) {
         if (display.word_wrap_enabled()) {
             invalidate_all_rendered_contents();
         }
-        set_needs_display();
     });
 
     display.this_widget().on_unchecked<App::MouseDownEvent>(*this, [this, &display](const App::MouseDownEvent& event) {
@@ -803,7 +784,7 @@ void Document::register_display(Display& display) {
                     break;
                 case App::Key::DownArrow:
                     if (event.shift_down()) {
-                        cursors.add_cursor(*this, display, AddCursorMode::Down);
+                        cursors.add_cursor(*this, AddCursorMode::Down);
                     } else {
                         display.scroll_down(1);
                         should_scroll_cursor_into_view = false;
@@ -811,7 +792,7 @@ void Document::register_display(Display& display) {
                     break;
                 case App::Key::UpArrow:
                     if (event.shift_down()) {
-                        cursors.add_cursor(*this, display, AddCursorMode::Up);
+                        cursors.add_cursor(*this, AddCursorMode::Up);
                     } else {
                         display.scroll_up(1);
                         should_scroll_cursor_into_view = false;
@@ -1041,7 +1022,14 @@ void Document::invalidate_all_rendered_contents() {
     for (auto& line : m_lines) {
         invalidate_rendered_contents(line);
     }
-    set_needs_display();
+}
+
+void Document::invalidate_lines_in_range(const TextRange&) {
+    invalidate_all_rendered_contents();
+}
+
+void Document::invalidate_lines_in_range_collection(const TextRangeCollection&) {
+    invalidate_all_rendered_contents();
 }
 
 App::ObjectBoundCoroutine Document::go_to_line(Display& display) {
@@ -1073,7 +1061,6 @@ App::ObjectBoundCoroutine Document::go_to_line(Display& display) {
     }
 
     move_cursor_to_line_start(display, cursor);
-    set_needs_display();
 }
 
 void Document::set_type(DocumentType type) {
@@ -1172,7 +1159,7 @@ void Document::update_search_results() {
     }
 
     if (!m_search_results.empty()) {
-        set_needs_display();
+        invalidate_lines_in_range_collection(m_search_results);
     }
 }
 
@@ -1187,8 +1174,8 @@ void Document::clear_search_results() {
         return;
     }
 
+    invalidate_lines_in_range_collection(m_search_results);
     m_search_results.clear();
-    set_needs_display();
 }
 
 void Document::set_search_text(String text) {
@@ -1250,7 +1237,7 @@ void Document::select_next_word_at_cursor(Display& display) {
     }
 
     auto& result = m_search_results.range(m_search_result_index);
-    display.cursors().add_cursor_at(*this, display, result.end(), { result.start(), result.end() });
+    display.cursors().add_cursor_at(*this, result.end(), { result.start(), result.end() });
 
     ++m_search_result_index;
     m_search_result_index %= m_search_results.size();
@@ -1310,6 +1297,6 @@ void Document::finish_input(Display& display, bool should_scroll_cursor_into_vie
         cursors.main_cursor().referenced_line(*this).invalidate_rendered_contents(*this, display);
     }
 
-    set_needs_display();
+    cursors.invalidate_based_on_last_snapshot();
 }
 }

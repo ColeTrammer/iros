@@ -40,8 +40,7 @@ public:
 
     void search(const Document& document, const String& text, TextRangeCollection& results) const;
 
-    int render(const Document& document, Display& display, DocumentTextRangeIterator& metadata_iterator, int col_offset,
-               int relative_row_start, int row_in_display) const;
+    int render(const Document& document, Display& display, int col_offset, int relative_row_start, int row_in_display) const;
 
     void invalidate_rendered_contents(const Document& document, Display& display) const;
 

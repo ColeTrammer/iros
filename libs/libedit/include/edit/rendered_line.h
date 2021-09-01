@@ -1,5 +1,6 @@
 #pragma once
 
+#include <edit/character_metadata.h>
 #include <edit/position.h>
 #include <liim/string.h>
 #include <liim/vector.h>
@@ -16,7 +17,7 @@ struct PositionRange {
     Position end;
     int start_absolute_col { 0 };
     int index_into_line { 0 };
-    int optional_metadata { 0 };
+    CharacterMetadata metadata { 0 };
     int byte_count_in_rendered_string { 0 };
     PositionRangeType type { PositionRangeType::Normal };
 };
