@@ -693,36 +693,16 @@ void Document::register_display(Display& display) {
             cursors.remove_secondary_cursors();
             auto& cursor = cursors.main_cursor();
             move_cursor_to(display, cursor, index, MovementMode::Move);
-            finish_input(display, true);
-            return true;
-        }
-        return false;
-    });
-
-    display.this_widget().on_unchecked<App::MouseDoubleEvent>(*this, [this, &display](const App::MouseDoubleEvent& event) {
-        auto& cursors = display.cursors();
-        auto index = display.text_index_at_mouse_position({ event.x(), event.y() });
-        if (event.left_button()) {
-            start_input(display, true);
-            cursors.remove_secondary_cursors();
-            auto& cursor = cursors.main_cursor();
-            move_cursor_to(display, cursor, index, MovementMode::Move);
-            select_word_at_cursor(display, cursor);
-            finish_input(display, true);
-            return true;
-        }
-        return false;
-    });
-
-    display.this_widget().on_unchecked<App::MouseTripleEvent>(*this, [this, &display](const App::MouseTripleEvent& event) {
-        auto& cursors = display.cursors();
-        auto index = display.text_index_at_mouse_position({ event.x(), event.y() });
-        if (event.left_button()) {
-            start_input(display, true);
-            cursors.remove_secondary_cursors();
-            auto& cursor = cursors.main_cursor();
-            move_cursor_to(display, cursor, index, MovementMode::Move);
-            select_line_at_cursor(display, cursor);
+            switch (event.cyclic_count(3)) {
+                case 2:
+                    select_word_at_cursor(display, cursor);
+                    break;
+                case 3:
+                    select_line_at_cursor(display, cursor);
+                    break;
+                default:
+                    break;
+            }
             finish_input(display, true);
             return true;
         }

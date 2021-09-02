@@ -7,10 +7,6 @@ namespace App::Base {
 Widget::Widget() {}
 
 void Widget::initialize() {
-    on<MouseDoubleEvent, MouseTripleEvent>([this](const MouseEvent& event) {
-        return emit<MouseDownEvent>(event.buttons_down(), event.x(), event.y(), event.z(), event.button(), event.modifiers());
-    });
-
     on<ResizeEvent>([this](const ResizeEvent&) {
         if (layout_engine()) {
             layout_engine()->schedule_layout();

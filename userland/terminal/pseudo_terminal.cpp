@@ -324,12 +324,12 @@ bool PsuedoTerminal::handle_mouse_event(const App::MouseEvent& event) {
         case MouseTrackingMode::Hilite:
             return false;
         case MouseTrackingMode::X10:
-            if (!event.mouse_down_any()) {
+            if (!event.mouse_down()) {
                 return false;
             }
             break;
         case MouseTrackingMode::X11:
-            if (!event.mouse_down_any() && !event.mouse_up() && !event.mouse_scroll()) {
+            if (!event.mouse_down() && !event.mouse_up() && !event.mouse_scroll()) {
                 return false;
             }
             break;
@@ -355,7 +355,7 @@ bool PsuedoTerminal::handle_mouse_event(const App::MouseEvent& event) {
             if (event.mouse_move()) {
                 // FIXME: what to report if no button is held?
                 cb = event.buttons_down() & App::MouseButton::Left ? 32 : 34;
-            } else if (event.mouse_down_any() || event.mouse_up()) {
+            } else if (event.mouse_down() || event.mouse_up()) {
                 cb = event.button() == App::MouseButton::Left ? 0 : 2;
             }
             write(String::format("\033[<%d;%d;%d%c", cb, event.x() + 1, event.y() + 1, event.mouse_up() ? 'm' : 'M'));

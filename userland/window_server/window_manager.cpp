@@ -286,7 +286,7 @@ void WindowManager::notify_mouse_moved(const App::MouseEvent& event) {
 void WindowManager::notify_mouse_input(const App::MouseEvent& event) {
     if (event.mouse_move()) {
         notify_mouse_moved(event);
-    } else if (event.mouse_down_any() || event.mouse_up()) {
+    } else if (event.mouse_down() || event.mouse_up()) {
         notify_mouse_pressed(event);
     }
 }
@@ -355,7 +355,7 @@ void WindowManager::notify_mouse_pressed(const App::MouseEvent& event) {
     auto cursor_rect = Rect(m_mouse_x, m_mouse_y, cursor_width, cursor_height);
     auto window = find_window_intersecting_rect(cursor_rect);
     if (!window) {
-        if (event.mouse_down_any()) {
+        if (event.mouse_down()) {
             set_active_window(nullptr);
         }
         return;
@@ -371,7 +371,7 @@ void WindowManager::notify_mouse_pressed(const App::MouseEvent& event) {
         return;
     }
 
-    if (event.mouse_down_any() && event.button() == App::MouseButton::Left) {
+    if (event.mouse_down() && event.button() == App::MouseButton::Left) {
         if (window->resizable() && cursor_rect.intersects(window->rect().top_left())) {
             m_window_to_resize = window;
             m_window_resize_mode = ResizeMode::TopLeft;
@@ -404,7 +404,7 @@ void WindowManager::notify_mouse_pressed(const App::MouseEvent& event) {
         }
     }
 
-    if (event.mouse_down_any()) {
+    if (event.mouse_down()) {
         move_to_front_and_make_active(window);
     }
 }

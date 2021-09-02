@@ -17,8 +17,7 @@ public:
     template<typename... Ev>
     static constexpr bool does_emit() {
         return (LIIM::IsOneOf<Ev, ResizeEvent, FocusedEvent, UnfocusedEvent, LeaveEvent, EnterEvent, KeyDownEvent, KeyUpEvent, TextEvent,
-                              MouseDownEvent, MouseDoubleEvent, MouseTripleEvent, MouseMoveEvent, MouseUpEvent, MouseScrollEvent,
-                              ThemeChangeEvent>::value &&
+                              MouseDownEvent, MouseMoveEvent, MouseUpEvent, MouseScrollEvent, ThemeChangeEvent>::value &&
                 ...) ||
                Object::does_emit<Ev...>();
     }

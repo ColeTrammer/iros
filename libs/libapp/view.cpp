@@ -7,20 +7,21 @@ void View::initialize() {
     on<MouseDownEvent>([this](const MouseDownEvent& event) {
         auto index = index_at_position(event.x(), event.y());
         if (event.left_button()) {
-            clear_selection();
-            if (index.valid()) {
-                add_to_selection(index);
+            switch (event.cyclic_count(2)) {
+                case 1:
+                    clear_selection();
+                    if (index.valid()) {
+                        add_to_selection(index);
+                    }
+                    invalidate();
+                    break;
+                case 2:
+                    if (index.valid()) {
+                        on_item_activation.safe_call(index);
+                    }
+                    break;
             }
-            invalidate();
-            return true;
-        }
-        return false;
-    });
 
-    on<MouseDoubleEvent>([this](const MouseDoubleEvent& event) {
-        auto index = index_at_position(event.x(), event.y());
-        if (event.left_button() && index.valid()) {
-            on_item_activation.safe_call(index);
             return true;
         }
         return false;

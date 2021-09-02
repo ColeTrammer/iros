@@ -87,9 +87,8 @@ void BaseTerminalWidget::initialize() {
         return true;
     });
 
-    this_widget()
-        .on_unchecked<App::MouseDownEvent, App::MouseDoubleEvent, App::MouseTripleEvent, App::MouseMoveEvent, App::MouseUpEvent,
-                      App::MouseScrollEvent>({}, [this](const auto& event) {
+    this_widget().on_unchecked<App::MouseDownEvent, App::MouseMoveEvent, App::MouseUpEvent, App::MouseScrollEvent>(
+        {}, [this](const auto& event) {
             using SpecificMouseEvent = LIIM::decay_t<decltype(event)>;
 
             auto cell = cell_position_of_mouse_coordinates(event.x(), event.y());
@@ -116,42 +115,46 @@ void BaseTerminalWidget::initialize() {
                 return true;
             }
 
-            if (event.mouse_down_any() && event.button() == App::MouseButton::Left) {
+            if (event.mouse_down() && event.left_button()) {
                 clear_selection();
                 m_in_selection = true;
-                if (event.mouse_down()) {
-                    m_selection_start_row = m_selection_end_row = row_at_cursor;
-                    m_selection_start_col = m_selection_end_col = col_at_cursor;
-                    invalidate_all_contents();
-                    return true;
-                }
 
-                if (event.mouse_double()) {
-                    m_selection_start_row = m_selection_end_row = row_at_cursor;
-                    m_selection_start_col = m_selection_end_col = col_at_cursor;
-
-                    if (row_at_cursor < 0 || row_at_cursor >= m_tty.row_count()) {
-                        m_in_selection = false;
-                        return true;
+                switch (event.cyclic_count(3)) {
+                    case 1: {
+                        m_selection_start_row = m_selection_end_row = row_at_cursor;
+                        m_selection_start_col = m_selection_end_col = col_at_cursor;
+                        invalidate_all_contents();
+                        break;
                     }
+                    case 2: {
+                        m_selection_start_row = m_selection_end_row = row_at_cursor;
+                        m_selection_start_col = m_selection_end_col = col_at_cursor;
 
-                    auto& row = m_tty.row_at_scroll_relative_offset(row_at_cursor);
-                    bool connect_spaces = isspace(row[col_at_cursor].ch);
-                    while (m_selection_start_col > 0 && isspace(row[m_selection_start_col - 1].ch) == connect_spaces) {
-                        m_selection_start_col--;
-                    }
-                    while (m_selection_end_col < m_tty.col_count() - 1 && isspace(row[m_selection_end_col + 1].ch) == connect_spaces) {
+                        if (row_at_cursor < 0 || row_at_cursor >= m_tty.row_count()) {
+                            m_in_selection = false;
+                            return true;
+                        }
+
+                        auto& row = m_tty.row_at_scroll_relative_offset(row_at_cursor);
+                        bool connect_spaces = isspace(row[col_at_cursor].ch);
+                        while (m_selection_start_col > 0 && isspace(row[m_selection_start_col - 1].ch) == connect_spaces) {
+                            m_selection_start_col--;
+                        }
+                        while (m_selection_end_col < m_tty.col_count() - 1 && isspace(row[m_selection_end_col + 1].ch) == connect_spaces) {
+                            m_selection_end_col++;
+                        }
                         m_selection_end_col++;
+                        invalidate_all_contents();
+                        break;
                     }
-                    m_selection_end_col++;
-                    invalidate_all_contents();
-                    return true;
+                    case 3: {
+                        m_selection_start_row = m_selection_end_row = row_at_cursor;
+                        m_selection_start_col = 0;
+                        m_selection_end_col = m_tty.col_count();
+                        invalidate_all_contents();
+                        break;
+                    }
                 }
-
-                m_selection_start_row = m_selection_end_row = row_at_cursor;
-                m_selection_start_col = 0;
-                m_selection_end_col = m_tty.col_count();
-                invalidate_all_contents();
                 return true;
             }
 

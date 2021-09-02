@@ -21,10 +21,10 @@ public:
 private:
     class MousePress {
     public:
-        StringView set(int x, int y, int button);
+        int set(int x, int y, int button);
         void clear() {
             m_button = 0;
-            m_double = false;
+            m_count = 0;
         }
 
         const timespec& timestamp() const { return m_timestamp; }
@@ -32,7 +32,6 @@ private:
         int y() const { return m_y; }
         int button() const { return m_button; }
         int buttons_down() const { return m_buttons_down; }
-        bool double_click() const { return m_double; }
 
         void set_x(int x) { m_x = x; }
         void set_y(int y) { m_y = y; }
@@ -44,7 +43,7 @@ private:
         int m_y { 0 };
         int m_button { 0 };
         int m_buttons_down { 0 };
-        bool m_double { false };
+        int m_count { 0 };
     };
 
     MousePress m_prev;

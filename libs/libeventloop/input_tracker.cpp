@@ -274,24 +274,24 @@ Vector<UniquePtr<MouseEvent>> InputTracker::notify_os_mouse_event(int scale_mode
 Vector<UniquePtr<MouseEvent>> InputTracker::notify_mouse_event(int buttons, int x, int y, int z, int modifiers) {
     Vector<UniquePtr<MouseEvent>> events;
     if (z != 0) {
-        events.add(make_unique<MouseScrollEvent>(buttons, x, y, z, MouseButton::None, modifiers));
+        events.add(make_unique<MouseScrollEvent>(buttons, x, y, z, MouseButton::None, 0, modifiers));
     }
 
     if (m_prev.x() != x || m_prev.y() != y) {
-        events.add(make_unique<MouseMoveEvent>(m_prev.buttons_down(), x, y, 0, MouseButton::None, modifiers));
+        events.add(make_unique<MouseMoveEvent>(m_prev.buttons_down(), x, y, 0, MouseButton::None, 0, modifiers));
     }
 
     auto buttons_to_pass = m_prev.buttons_down();
     auto handle_button = [&](int button) {
         if (!(buttons & button) && !!(m_prev.buttons_down() & button)) {
             buttons_to_pass &= ~button;
-            events.add(make_unique<MouseUpEvent>(buttons_to_pass, x, y, 0, button, modifiers));
+            events.add(make_unique<MouseUpEvent>(buttons_to_pass, x, y, 0, button, 0, modifiers));
         }
 
         if (!!(buttons & button) && !(m_prev.buttons_down() & button)) {
-            auto name = m_prev.set(x, y, button);
+            auto count = m_prev.set(x, y, button);
             buttons_to_pass |= button;
-            events.add(make_unique<MouseEvent>(name, buttons_to_pass, x, y, 0, button, modifiers));
+            events.add(make_unique<MouseDownEvent>(buttons_to_pass, x, y, 0, button, count, modifiers));
         }
     };
 
@@ -306,7 +306,7 @@ Vector<UniquePtr<MouseEvent>> InputTracker::notify_mouse_event(int buttons, int 
     return events;
 }
 
-StringView InputTracker::MousePress::set(int x, int y, int button) {
+int InputTracker::MousePress::set(int x, int y, int button) {
     timespec now;
     clock_gettime(CLOCK_REALTIME, &now);
 
@@ -316,15 +316,9 @@ StringView InputTracker::MousePress::set(int x, int y, int button) {
     m_button = button;
     m_timestamp = now;
 
-    if (is_repetition) {
-        if (m_double) {
-            m_double = false;
-            return MouseTripleEvent::static_event_name();
-        }
-        m_double = true;
-        return MouseDoubleEvent::static_event_name();
+    if (!is_repetition) {
+        m_count = 0;
     }
-    m_double = false;
-    return MouseDownEvent::static_event_name();
+    return ++m_count;
 }
 }
