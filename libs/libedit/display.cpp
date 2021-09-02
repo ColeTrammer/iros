@@ -156,27 +156,14 @@ void Display::install_document_listeners(Document& new_document) {
     new_document.on<MoveLineTo>(this_widget(), [this](const MoveLineTo& event) {
         auto line_min = min(event.line(), event.destination());
         auto line_max = max(event.line(), event.destination());
-        auto& start_line = document()->line_at_index(line_min);
-        auto& end_line = document()->line_at_index(line_max);
 
-        auto start_line_size = start_line.rendered_line_count(*document(), *this);
-        auto end_line_size = end_line.rendered_line_count(*document(), *this);
-
-        auto rendered_line_min = start_line.absolute_row_position(*document(), *this);
-        auto rendered_line_max = end_line.absolute_row_position(*document(), *this) + end_line_size;
-
-        // FIXME: add Vector<T>::rotate() to replace this computational inefficent and ugly approach.
         if (event.line() > event.destination()) {
-            for (int i = 0; i < start_line_size; i++) {
-                m_rendered_lines.rotate_left(rendered_line_min, rendered_line_max);
-            }
+            m_rendered_lines.rotate_right(line_min, line_max + 1);
         } else {
-            for (int i = 0; i < end_line_size; i++) {
-                m_rendered_lines.rotate_right(rendered_line_min, rendered_line_max);
-            }
+            m_rendered_lines.rotate_left(line_min, line_max + 1);
         }
 
-        document()->invalidate_all_rendered_contents();
+        invalidate_all_line_rects();
     });
 
     cursors().install_document_listeners(new_document);
