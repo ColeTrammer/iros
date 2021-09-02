@@ -215,8 +215,8 @@ bool InsertLineCommand::do_execute(MultiCursor& cursors) {
     return true;
 }
 
-void InsertLineCommand::do_undo(MultiCursor& cursors) {
-    document().remove_line(cursors.main_cursor().line_index());
+void InsertLineCommand::do_undo(MultiCursor&) {
+    document().remove_line(start_snapshot().cursors.cursors[start_snapshot().cursors.main_cursor_index].line_index());
 }
 
 SwapLinesCommand::SwapLinesCommand(Document& document, Display& display, SwapDirection direction)
