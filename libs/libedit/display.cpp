@@ -82,10 +82,7 @@ void Display::invalidate_all_lines() {
 void Display::invalidate_line(int line_index) {
     auto& info = rendered_line_at_index(line_index);
 
-    auto absolute_row = document()->line_at_index(line_index).absolute_row_position(*document(), *this);
-    for (int i = 0; i < info.position_ranges.size(); i++) {
-        invalidate_line_rect(absolute_row + i - scroll_row_offset());
-    }
+    invalidate_all_line_rects();
 
     info.rendered_lines.clear();
     info.position_ranges.clear();
