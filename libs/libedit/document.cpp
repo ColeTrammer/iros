@@ -439,8 +439,26 @@ void Document::insert_char(Display& display, char c) {
     push_command<InsertCommand>(display, String(c));
 }
 
-void Document::delete_char(Display& display, DeleteCharMode mode) {
-    push_command<DeleteCommand>(display, mode);
+DeleteCommand* Document::delete_char(Display& display, DeleteCharMode mode) {
+    for (auto& cursor : display.cursors()) {
+        if (cursor.selection().empty()) {
+            if (mode == DeleteCharMode::Backspace) {
+                move_cursor_left(display, cursor, MovementMode::Select);
+            } else {
+                move_cursor_right(display, cursor, MovementMode::Select);
+            }
+            swap_selection_start_and_cursor(display, cursor);
+        }
+    }
+
+    bool has_selection = !display.cursors().main_cursor().selection().empty();
+    if (auto* command = push_command<DeleteCommand>(display)) {
+        if (!has_selection) {
+            command->set_restore_selections(false);
+        }
+        return command;
+    }
+    return nullptr;
 }
 
 void Document::delete_word(Display& display, DeleteCharMode mode) {
@@ -465,7 +483,7 @@ void Document::delete_word(Display& display, DeleteCharMode mode) {
 
         swap_selection_start_and_cursor(display, cursor);
     }
-    if (auto* command = push_command<DeleteCommand>(display, mode)) {
+    if (auto* command = delete_char(display, mode)) {
         command->set_restore_selections(false);
     }
 }
@@ -993,7 +1011,7 @@ void Document::cut(Display& display, MultiCursor& cursors) {
     }
 
     display.set_clipboard_contents(selection_text(cursor));
-    push_command<DeleteCommand>(display, DeleteCharMode::Delete);
+    push_command<DeleteCommand>(display);
 }
 
 void Document::paste(Display& display, MultiCursor& cursors) {

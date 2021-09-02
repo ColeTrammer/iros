@@ -25,6 +25,8 @@ APP_EVENT(Edit, Submit, App::Event, (), (), ())
 APP_EVENT(Edit, Change, App::Event, (), (), ())
 
 namespace Edit {
+class DeleteCommand;
+
 enum class MovementMode { Move, Select };
 
 enum class DeleteCharMode { Backspace, Delete };
@@ -195,7 +197,7 @@ private:
     void swap_lines_at_cursor(Display& display, SwapDirection direction);
     void split_line_at_cursor(Display& display);
     void insert_char(Display& display, char c);
-    void delete_char(Display& display, DeleteCharMode mode);
+    DeleteCommand* delete_char(Display& display, DeleteCharMode mode);
     void delete_word(Display& display, DeleteCharMode mode);
 
     App::ObjectBoundCoroutine go_to_line(Display& display);

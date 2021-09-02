@@ -147,58 +147,17 @@ void InsertCommand::do_undo(MultiCursor& cursors) {
     }
 }
 
-DeleteCommand::DeleteCommand(Document& document, Display& display, DeleteCharMode mode)
-    : DeltaBackedCommand(document, display), m_mode(mode) {}
+DeleteCommand::DeleteCommand(Document& document, Display& display) : DeltaBackedCommand(document, display) {}
 
 DeleteCommand::~DeleteCommand() {}
 
 bool DeleteCommand::do_execute(MultiCursor& cursors) {
     bool modified = false;
     for (int i = 0; i < cursors.size(); i++) {
-        m_deleted_chars.add('\0');
-
         auto& cursor = cursors[i];
         if (!cursor.selection().empty()) {
             document().delete_selection(cursor);
             modified = true;
-            continue;
-        }
-
-        auto& line = cursor.referenced_line(document());
-        auto index = cursor.index();
-
-        switch (m_mode) {
-            case DeleteCharMode::Backspace: {
-                if (index.index_into_line() == 0) {
-                    if (index.line_index() == 0) {
-                        continue;
-                    }
-
-                    document().merge_lines(index.line_index() - 1, index.line_index());
-                    m_deleted_chars[i] = '\n';
-                } else {
-                    m_deleted_chars[i] = line.char_at(index.index_into_line() - 1);
-                    line.remove_char_at(document(), index.index_into_line() - 1);
-                }
-
-                modified = true;
-                continue;
-            }
-            case DeleteCharMode::Delete:
-                if (index.index_into_line() == line.length()) {
-                    if (index.line_index() == document().num_lines() - 1) {
-                        continue;
-                    }
-
-                    document().merge_lines(index.line_index(), index.line_index() + 1);
-                    m_deleted_chars[i] = '\n';
-                } else {
-                    m_deleted_chars[i] = line.char_at(index.index_into_line());
-                    line.remove_char_at(document(), index.index_into_line());
-                }
-
-                modified = true;
-                continue;
         }
     }
 
@@ -211,9 +170,6 @@ void DeleteCommand::do_undo(MultiCursor& cursors) {
         if (!start_snapshot().cursors[i].selection().empty()) {
             cursor.selection().clear();
             InsertCommand::do_insert(document(), cursors, i, selection_text(i));
-        } else {
-            assert(m_deleted_chars[i] != '\0');
-            InsertCommand::do_insert(document(), cursors, i, m_deleted_chars[i]);
         }
     }
 }

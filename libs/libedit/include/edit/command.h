@@ -78,15 +78,11 @@ private:
 
 class DeleteCommand final : public DeltaBackedCommand {
 public:
-    DeleteCommand(Document& document, Display& display, DeleteCharMode mode);
+    DeleteCommand(Document& document, Display& display);
     virtual ~DeleteCommand();
 
     virtual bool do_execute(MultiCursor& cursor) override;
     virtual void do_undo(MultiCursor& cursor) override;
-
-private:
-    DeleteCharMode m_mode { DeleteCharMode::Delete };
-    Vector<char> m_deleted_chars;
 };
 
 class DeleteLineCommand final : public DeltaBackedCommand {
