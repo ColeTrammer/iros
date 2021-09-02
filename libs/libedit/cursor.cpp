@@ -30,8 +30,13 @@ void Cursor::compute_max_col(const Document& document, Display& display) {
 
 void Cursor::move_preserving_selection(int delta_line_index, int delta_index_into_line) {
     set({ line_index() + delta_line_index, index_into_line() + delta_index_into_line });
-    m_selection.set({ m_selection.start().line_index() + delta_line_index, m_selection.start().index_into_line() + delta_index_into_line },
-                    { m_selection.end().line_index() + delta_line_index, m_selection.end().index_into_line() + delta_index_into_line });
+    if (!m_selection.empty()) {
+        m_selection.set(
+            { m_selection.start().line_index() + delta_line_index, m_selection.start().index_into_line() + delta_index_into_line },
+            { m_selection.end().line_index() + delta_line_index, m_selection.end().index_into_line() + delta_index_into_line });
+    } else {
+        m_selection.set(index(), index());
+    }
 }
 
 bool Cursor::at_document_end(const Document& document) const {
