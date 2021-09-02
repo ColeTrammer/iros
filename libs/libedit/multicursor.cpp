@@ -292,7 +292,7 @@ void MultiCursor::invalidate_based_on_last_snapshot(Document& document) {
     }
 
     auto current = snapshot();
-    if (!m_history.empty() && m_history.last() == current) {
+    if (m_history.last() == current) {
         return;
     }
 

@@ -1,8 +1,8 @@
 #include <edit/line_renderer.h>
 
 namespace Edit {
-RenderedLine LineRenderer::finish(const Line& line) {
-    begin_segment(line.length(), 0, PositionRangeType::Normal);
+RenderedLine LineRenderer::finish(const Line& line, CharacterMetadata end_metadata) {
+    begin_segment(line.length(), end_metadata, PositionRangeType::Normal);
     add_to_segment(" ", 1);
     end_segment();
 

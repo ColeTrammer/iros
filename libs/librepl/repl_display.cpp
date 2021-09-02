@@ -240,7 +240,7 @@ Edit::RenderedLine ReplDisplay::compose_line(const Edit::Line& line) {
             metadata_iterator.advance();
         }
     }
-    return renderer.finish(line);
+    return renderer.finish(line, metadata_iterator.peek_metadata());
 }
 
 void ReplDisplay::send_status_message(String) {}

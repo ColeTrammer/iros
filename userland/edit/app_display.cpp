@@ -114,7 +114,7 @@ Edit::RenderedLine AppDisplay::compose_line(const Edit::Line& line) {
         }
         renderer.end_segment();
     }
-    return renderer.finish(line);
+    return renderer.finish(line, {});
 }
 
 Edit::TextIndex AppDisplay::text_index_at_mouse_position(const Point& point) {

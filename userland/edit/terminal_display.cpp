@@ -214,7 +214,7 @@ Edit::RenderedLine TerminalDisplay::compose_line(const Edit::Line& line) {
             metadata_iterator.advance();
         }
     }
-    return renderer.finish(line);
+    return renderer.finish(line, metadata_iterator.peek_metadata());
 }
 
 void TerminalDisplay::do_open_prompt() {}
