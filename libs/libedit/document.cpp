@@ -1046,6 +1046,10 @@ void Document::invalidate_all_rendered_contents() {
 }
 
 void Document::invalidate_lines_in_range(const TextRange& range) {
+    if (range.start() == range.end()) {
+        return;
+    }
+
     for (int i = range.start().line_index(); i <= range.end().line_index(); i++) {
         invalidate_rendered_contents(line_at_index(i));
     }
