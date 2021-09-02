@@ -44,6 +44,7 @@ public:
     virtual void enter_search(String starting_text) override;
     virtual void quit() override;
     virtual void do_open_prompt() override;
+    virtual void install_document_listeners(Edit::Document& document) override;
 
     virtual void set_clipboard_contents(String text, bool is_whole_line) override;
     virtual String clipboard_contents(bool& is_whole_line) const override;
@@ -55,7 +56,9 @@ public:
 
 private:
     virtual void document_did_change() override;
+    virtual void did_set_show_line_numbers() override;
 
+    void set_cols_needed_for_line_numbers(int value);
     void compute_cols_needed_for_line_numbers();
 
     mutable String m_prev_clipboard_contents;

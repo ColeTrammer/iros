@@ -852,6 +852,9 @@ void Document::register_display(Display& display) {
                 case App::Key::G:
                     display.this_widget().start_coroutine(go_to_line(display));
                     break;
+                case App::Key::L:
+                    display.toggle_show_line_numbers();
+                    break;
                 case App::Key::O:
                     if (!input_text_mode()) {
                         display.do_open_prompt();

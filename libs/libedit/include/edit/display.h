@@ -55,8 +55,6 @@ public:
     virtual void set_clipboard_contents(LIIM::String text, bool is_whole_line = false) = 0;
     virtual String clipboard_contents(bool& is_whole_line) const = 0;
 
-    virtual void notify_line_count_changed();
-
     void set_document(SharedPtr<Document> document);
 
     Document* document() { return m_document.get(); }
@@ -107,9 +105,10 @@ protected:
 
     virtual void document_did_change() {}
     virtual void suggestions_did_change(const Maybe<TextRange>&) {}
+    virtual void install_document_listeners(Document& document);
+    virtual void did_set_show_line_numbers() {}
 
 private:
-    void install_document_listeners(Document& document);
     void uninstall_document_listeners(Document& document);
 
     SharedPtr<Document> m_document;

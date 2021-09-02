@@ -63,12 +63,33 @@ void TerminalDisplay::quit() {
     TUI::Application::the().main_event_loop().set_should_exit(true);
 }
 
+void TerminalDisplay::install_document_listeners(Edit::Document& document) {
+    Display::install_document_listeners(document);
+
+    document.on<Edit::AddLines, Edit::DeleteLines, Edit::MergeLines, Edit::SplitLines>(*this, [this](auto&) {
+        compute_cols_needed_for_line_numbers();
+    });
+}
+
+void TerminalDisplay::did_set_show_line_numbers() {
+    compute_cols_needed_for_line_numbers();
+}
+
+void TerminalDisplay::set_cols_needed_for_line_numbers(int value) {
+    if (m_cols_needed_for_line_numbers == value) {
+        return;
+    }
+
+    m_cols_needed_for_line_numbers = value;
+    invalidate_all_lines();
+}
+
 void TerminalDisplay::compute_cols_needed_for_line_numbers() {
     if (auto* doc = document()) {
         if (show_line_numbers()) {
             int num_lines = doc->num_lines();
             if (num_lines == 0 || doc->input_text_mode()) {
-                m_cols_needed_for_line_numbers = 0;
+                set_cols_needed_for_line_numbers(0);
                 return;
             }
 
@@ -78,11 +99,11 @@ void TerminalDisplay::compute_cols_needed_for_line_numbers() {
                 digits++;
             }
 
-            m_cols_needed_for_line_numbers = digits + 1;
+            set_cols_needed_for_line_numbers(digits + 1);
             return;
         }
     }
-    m_cols_needed_for_line_numbers = 0;
+    set_cols_needed_for_line_numbers(0);
 }
 
 int TerminalDisplay::cols() const {
