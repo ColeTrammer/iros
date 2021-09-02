@@ -127,22 +127,26 @@ void Display::install_document_listeners(Document& new_document) {
         for (int i = 0; i < event.line_count(); i++) {
             m_rendered_lines.remove(event.line_index());
         }
+        invalidate_all_line_rects();
     });
 
     new_document.on<AddLines>(this_widget(), [this](const AddLines& event) {
         for (int i = 0; i < event.line_count(); i++) {
             m_rendered_lines.insert({}, event.line_index());
         }
+        invalidate_all_line_rects();
     });
 
     new_document.on<SplitLines>(this_widget(), [this](const SplitLines& event) {
         m_rendered_lines.insert({}, event.line_index() + 1);
         document()->line_at_index(event.line_index()).invalidate_rendered_contents(*document(), *this);
+        invalidate_all_line_rects();
     });
 
     new_document.on<MergeLines>(this_widget(), [this](const MergeLines& event) {
         m_rendered_lines.remove(event.second_line_index());
         document()->line_at_index(event.first_line_index()).invalidate_rendered_contents(*document(), *this);
+        invalidate_all_line_rects();
     });
 
     new_document.on<AddToLine>(this_widget(), [this](const AddToLine& event) {
