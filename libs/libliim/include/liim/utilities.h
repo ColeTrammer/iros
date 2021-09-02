@@ -301,7 +301,8 @@ namespace details {
 
 template<typename From, typename To>
 struct IsConvertible {
-    enum { value = (decltype(details::test_returnable<To>(0))::value&& decltype(details::test_nonvoid_convertible<From, To>(0))::value) };
+    static constexpr bool value =
+        (decltype(details::test_returnable<To>(0))::value&& decltype(details::test_nonvoid_convertible<From, To>(0))::value);
 };
 
 template<typename T>
@@ -405,7 +406,8 @@ namespace details {
 
 template<typename Base, typename Derived>
 struct IsBaseOf {
-    enum { value = IsClass<Base>::value && IsClass<Derived>::value && decltype(details::test_is_pre_base_of<Base, Derived>(0))::value };
+    static constexpr bool value =
+        IsClass<Base>::value && IsClass<Derived>::value && decltype(details::test_is_pre_base_of<Base, Derived>(0))::value;
 };
 
 namespace details {
@@ -519,6 +521,9 @@ private:
 
 template<typename T>
 ReferenceWrapper(T&) -> ReferenceWrapper<T>;
+
+template<typename Derived, typename Base>
+concept DerivedFrom = IsBaseOf<Base, Derived>::value && IsConvertible<const volatile Derived*, const volatile Base*>::value;
 
 template<class T>
 struct in_place_type_t {

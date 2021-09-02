@@ -58,7 +58,37 @@ public:                                                                         
                                                                                                \
 private:
 
-APP_EVENT(App, CallbackEvent, Event, (), ((Function<void()>, callback)), (void invoke() { m_callback(); }))
+// FIXME: replace with macro when GCC fixes very strange if constexpr bug.
+// APP_EVENT(App, CallbackEvent, Event, (), ((Function<void()>, callback)), (void invoke() { m_callback(); }))
+namespace App {
+class CallbackEvent : public Event {
+public:
+    static constexpr StringView static_event_name() {
+        return ""
+               "App"
+               "::"
+               "CallbackEvent";
+    }
+    static constexpr bool event_requires_handling() { return 0; }
+
+private:
+public:
+    explicit CallbackEvent(Function<void()> callback) : Event(static_event_name()), m_callback(move(callback)) {}
+    typename App::Detail::GetterType<Function<void()>>::type callback() const { return m_callback; }
+    void set_callback(Function<void()> callback) { m_callback = move(callback); }
+    void invoke() { m_callback(); }
+    virtual Vector<FieldString> field_strings() const override {
+        auto vector = Event::field_strings();
+        vector.add(FieldString { ""
+                                 "callback",
+                                 "<>" });
+        return vector;
+    }
+
+private:
+    Function<void()> m_callback;
+};
+}
 
 namespace App {
 class Object {

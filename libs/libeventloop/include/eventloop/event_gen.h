@@ -1,6 +1,10 @@
 #pragma once
 
+#include <liim/format.h>
 #include <liim/preprocessor.h>
+#include <liim/string.h>
+#include <liim/string_view.h>
+#include <liim/vector.h>
 
 namespace App::Detail {
 template<typename T>
@@ -13,6 +17,10 @@ struct GetterType<T*> {
     using type = T*;
 };
 
+template<typename Type>
+concept Formattable = requires(Type value, LIIM::Format::FormatContext context, LIIM::Format::Formatter<Type> formatter) {
+    formatter.format(value, context);
+};
 }
 
 #define __APP_EVENT_PARAM(type, name)       type name
@@ -57,6 +65,19 @@ struct GetterType<T*> {
 
 #define __APP_EVENT_METHODS(methods) LIIM_EVAL(LIIM_LIST_FOR_EACH(LIIM_ID, methods))
 
+#define __APP_EVENT_FIELD_STRING(Type, name)                                        \
+    if constexpr (App::Detail::Formattable<Type>) {                                 \
+        vector.add(FieldString { "" #name, LIIM::Format::format("{}", m_##name) }); \
+    } else {                                                                        \
+        vector.add(FieldString { "" #name, "<>" });                                 \
+    }
+
+#define __APP_EVENT_FIELD_STRINGS(Base, fields)                                        \
+    virtual Vector<FieldString> field_strings() const override {                       \
+        auto vector = Base::field_strings();                                           \
+        LIIM_EVAL(LIIM_LIST_FOR_EACH(__APP_EVENT_FIELD_STRING, fields)) return vector; \
+    }
+
 #define __APP_EVENT_MEMBERS(fields) LIIM_EVAL(LIIM_LIST_FOR_EACH(__APP_EVENT_MEMBER, fields))
 
 #define APP_EVENT_IMPL(Namespace, EventName, Base, base_fields, fields, methods, requires_handling, is_parent) \
@@ -69,6 +90,7 @@ struct GetterType<T*> {
             __APP_EVENT_GETTERS(fields)                                                                        \
             __APP_EVENT_SETTERS(fields)                                                                        \
             __APP_EVENT_METHODS(methods)                                                                       \
+            __APP_EVENT_FIELD_STRINGS(Base, fields)                                                            \
                                                                                                                \
         private:                                                                                               \
             __APP_EVENT_MEMBERS(fields)                                                                        \
