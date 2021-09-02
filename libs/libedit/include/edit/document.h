@@ -138,7 +138,7 @@ public:
 
     void delete_selection(Cursor& cursor);
     void clear_selection(Cursor& cursor);
-    String selection_text(Cursor& cursor) const;
+    String selection_text(const Cursor& cursor) const;
 
     String text_in_range(const TextIndex& start, const TextIndex& end) const;
 

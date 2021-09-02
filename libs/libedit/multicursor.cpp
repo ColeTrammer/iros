@@ -275,12 +275,13 @@ TextRangeCollection MultiCursor::selections(const Document& document) const {
 }
 
 MultiCursor::Snapshot MultiCursor::snapshot() const {
-    return m_cursors;
+    return { m_cursors, m_main_cursor_index };
 }
 
 void MultiCursor::restore(Document& document, const Snapshot& snapshot) {
     cursor_save();
-    m_cursors = snapshot;
+    m_cursors = snapshot.cursors;
+    m_main_cursor_index = snapshot.main_cursor_index;
     invalidate_based_on_last_snapshot(document);
 }
 
@@ -296,11 +297,13 @@ void MultiCursor::invalidate_based_on_last_snapshot(Document& document) {
         return;
     }
 
-    m_cursors = m_history.last();
+    m_cursors = m_history.last().cursors;
+    m_main_cursor_index = m_history.last().main_cursor_index;
     document.invalidate_lines_in_range_collection(cursor_text_ranges(document));
     document.invalidate_lines_in_range_collection(selections(document));
 
-    m_cursors = move(current);
+    m_cursors = move(current.cursors);
+    m_main_cursor_index = current.main_cursor_index;
     document.invalidate_lines_in_range_collection(cursor_text_ranges(document));
     document.invalidate_lines_in_range_collection(selections(document));
 }

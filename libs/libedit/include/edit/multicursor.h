@@ -14,7 +14,18 @@ enum class AddCursorMode {
 
 class MultiCursor {
 public:
-    using Snapshot = Vector<Cursor>;
+    struct Snapshot {
+        Vector<Cursor> cursors;
+        int main_cursor_index { 0 };
+
+        const Cursor& operator[](int index) const { return cursors[index]; }
+        auto begin() const { return cursors.begin(); }
+        auto end() const { return cursors.end(); }
+
+        bool operator==(const Snapshot& other) const {
+            return this->main_cursor_index == other.main_cursor_index && this->cursors == other.cursors;
+        }
+    };
 
     explicit MultiCursor(Display& display);
 

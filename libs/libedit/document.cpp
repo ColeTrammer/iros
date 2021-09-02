@@ -637,7 +637,7 @@ String Document::text_in_range(const TextIndex& start, const TextIndex& end) con
     return result;
 }
 
-String Document::selection_text(Cursor& cursor) const {
+String Document::selection_text(const Cursor& cursor) const {
     auto& selection = cursor.selection();
     if (selection.empty()) {
         return "";
