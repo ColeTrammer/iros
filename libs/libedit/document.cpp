@@ -1217,6 +1217,7 @@ void Document::move_cursor_to_next_search_match(Display& display, Cursor& cursor
         return;
     }
 
+    start_input(display, true);
     if (m_search_result_index >= m_search_results.size()) {
         m_search_result_index = 0;
         move_cursor_to_document_start(display, cursor);
@@ -1232,8 +1233,8 @@ void Document::move_cursor_to_next_search_match(Display& display, Cursor& cursor
 
     move_cursor_to(display, cursor, m_search_results.range(m_search_result_index).start());
     move_cursor_to(display, cursor, m_search_results.range(m_search_result_index).end(), MovementMode::Select);
-    scroll_cursor_into_view(display, cursor);
     m_search_result_index++;
+    finish_input(display, true);
 }
 
 void Document::enter_interactive_search(Display& display) {

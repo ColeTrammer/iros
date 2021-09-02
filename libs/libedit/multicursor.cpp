@@ -283,6 +283,7 @@ void MultiCursor::restore(Document& document, const Snapshot& snapshot) {
     m_cursors = snapshot.cursors;
     m_main_cursor_index = snapshot.main_cursor_index;
     invalidate_based_on_last_snapshot(document);
+    m_history.remove_last();
 }
 
 void MultiCursor::invalidate_based_on_last_snapshot(Document& document) {
