@@ -562,19 +562,14 @@ void Document::insert_text_at_cursor(Display& display, const String& text) {
 
 void Document::move_cursor_to(Display& display, Cursor& cursor, const TextIndex& index, MovementMode mode) {
     update_selection_state_for_mode(cursor, mode);
-    while (cursor.line_index() < index.line_index()) {
-        move_cursor_down(display, cursor, mode);
+    if (mode == MovementMode::Select) {
+        if (cursor.selection().empty()) {
+            cursor.selection().begin(cursor.index());
+        }
+        cursor.selection().set_end(index);
     }
-    while (cursor.line_index() > index.line_index()) {
-        move_cursor_up(display, cursor, mode);
-    }
-
-    while (cursor.index_into_line() < index.index_into_line()) {
-        move_cursor_right(display, cursor, mode);
-    }
-    while (cursor.index_into_line() > index.index_into_line()) {
-        move_cursor_left(display, cursor, mode);
-    }
+    cursor.set(index);
+    cursor.compute_max_col(*this, display);
 }
 
 void Document::delete_selection(Cursor& cursor) {
