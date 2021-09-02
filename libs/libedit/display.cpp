@@ -61,7 +61,7 @@ void Display::set_scroll_offsets(int row_offset, int col_offset) {
 }
 
 void Display::scroll(int vertical, int horizontal) {
-    auto row_scroll_max = document()->num_rendered_lines(*this) - rows();
+    auto row_scroll_max = max(0, document()->num_rendered_lines(*this) - rows());
     set_scroll_offsets(clamp(m_scroll_row_offset + vertical, 0, row_scroll_max), max(m_scroll_col_offset + horizontal, 0));
 }
 
