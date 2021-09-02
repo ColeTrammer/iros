@@ -36,6 +36,7 @@ void Object::deferred_invoke_batched(bool& already_registered_flag, Function<voi
                                callback();
                                already_registered_flag = false;
                            }));
+    already_registered_flag = true;
 }
 
 bool Object::Handler::can_handle(const Event& event) const {
