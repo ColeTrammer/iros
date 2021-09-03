@@ -13,6 +13,7 @@ void LayoutEngine::schedule_layout() {
         //       LayoutEngine to be an App::Object.
         if (parent().layout_engine() == this) {
             layout();
+            parent().invalidate();
         }
     });
 }
