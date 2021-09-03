@@ -13,6 +13,10 @@ public:
     ~Path();
 
     String basename() const;
+
+    enum class SlashTerminated { No, Yes };
+    String dirname(SlashTerminated slash_terminated = SlashTerminated::No) const;
+
     String to_string() const;
 
     void set_to_parent();

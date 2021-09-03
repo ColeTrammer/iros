@@ -37,6 +37,22 @@ String Path::basename() const {
     return m_components.last();
 }
 
+String Path::dirname(SlashTerminated slash_terminated) const {
+    if (m_components.size() <= 1) {
+        return "/";
+    }
+
+    auto string = String {};
+    for (int i = 0; i < m_components.size() - 1; i++) {
+        string += "/";
+        string += m_components[i];
+    }
+    if (slash_terminated == SlashTerminated::Yes) {
+        string += "/";
+    }
+    return string;
+}
+
 String Path::to_string() const {
     return String::join(m_components, '/', JoinPrependDelimiter::Yes);
 }
