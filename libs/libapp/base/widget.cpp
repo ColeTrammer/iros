@@ -27,6 +27,10 @@ Maybe<Point> Widget::cursor_position() {
 }
 
 void Widget::render() {
+    if (auto* engine = layout_engine()) {
+        engine->maybe_force_layout();
+    }
+
     for (auto& child : children()) {
         if (child->is_base_widget()) {
             auto& widget = const_cast<Widget&>(static_cast<const Widget&>(*child));

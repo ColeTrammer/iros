@@ -20,6 +20,12 @@ public:
     virtual void do_add(Base::Widget& child) = 0;
     virtual void do_remove(Base::Widget& child) = 0;
 
+    void maybe_force_layout() {
+        // FIXME: also cancel/ignore the scheduled layout as well.
+        if (m_layout_scheduled) {
+            layout();
+        }
+    }
     void schedule_layout();
 
     void set_margins(const Margins& m) { m_margins = m; }
