@@ -13,6 +13,12 @@ FlexLayoutEngine::FlexLayoutEngine(Base::Widget& parent, Direction direction) : 
 
 FlexLayoutEngine::~FlexLayoutEngine() {}
 
+void FlexLayoutEngine::do_remove(Base::Widget& child) {
+    m_items.remove_if([&](auto& widget) {
+        return widget.get() == &child;
+    });
+}
+
 void FlexLayoutEngine::layout() {
     if (m_items.empty() || parent_rect().empty()) {
         return;

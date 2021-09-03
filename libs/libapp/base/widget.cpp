@@ -50,6 +50,12 @@ void Widget::remove() {
         }
     }
 
+    if (auto* parent = parent_widget()) {
+        if (auto* engine = parent->layout_engine()) {
+            engine->remove(*this);
+        }
+    }
+
     if (parent()) {
         parent()->remove_child(shared_from_this());
     }

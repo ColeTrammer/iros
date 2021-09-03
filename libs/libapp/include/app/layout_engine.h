@@ -18,6 +18,7 @@ public:
 
     virtual void layout() = 0;
     virtual void do_add(Base::Widget& child) = 0;
+    virtual void do_remove(Base::Widget& child) = 0;
 
     void schedule_layout();
 
@@ -30,6 +31,13 @@ public:
         do_add(*panel);
         schedule_layout();
         return *panel;
+    }
+
+    void remove(Base::Widget& child) {
+        do_remove(child);
+        if (!child.hidden()) {
+            schedule_layout();
+        }
     }
 
 protected:

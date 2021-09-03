@@ -14,6 +14,7 @@ public:
 
     virtual void layout() override;
     virtual void do_add(Base::Widget& widget) override;
+    virtual void do_remove(Base::Widget& widget) override;
 
     void set_spacing(int spacing) { m_spacing = spacing; }
     int spacing() const { return m_spacing; }

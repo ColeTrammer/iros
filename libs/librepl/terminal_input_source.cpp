@@ -17,6 +17,8 @@ public:
         m_display = static_cast<ReplDisplay*>(&widget);
     }
 
+    virtual void do_remove(App::Base::Widget&) override {}
+
     virtual void layout() override {
         if (!m_display) {
             return;
