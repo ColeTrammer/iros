@@ -239,6 +239,15 @@ Edit::RenderedLine TerminalDisplay::compose_line(const Edit::Line& line) {
     return renderer.finish(line, metadata_iterator.peek_metadata());
 }
 
+void TerminalDisplay::invalidate_all_line_rects() {
+    invalidate();
+    TerminalStatusBar::the().invalidate();
+}
+void TerminalDisplay::invalidate_line_rect(int row_in_display) {
+    invalidate(sized_rect().with_y(row_in_display).with_height(1));
+    TerminalStatusBar::the().invalidate();
+}
+
 App::ObjectBoundCoroutine TerminalDisplay::do_open_prompt() {
     if (document() && document()->input_text_mode()) {
         co_return;

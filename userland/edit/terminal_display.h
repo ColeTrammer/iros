@@ -36,8 +36,8 @@ public:
     virtual Edit::TextIndex text_index_at_mouse_position(const Point& point) override;
     virtual Edit::RenderedLine compose_line(const Edit::Line& line) override;
     virtual void output_line(int row, int col_offset, const Edit::RenderedLine& line, int line_index) override;
-    virtual void invalidate_all_line_rects() override { invalidate(); }
-    virtual void invalidate_line_rect(int row_in_display) override { invalidate(sized_rect().with_y(row_in_display).with_height(1)); }
+    virtual void invalidate_all_line_rects() override;
+    virtual void invalidate_line_rect(int row_in_display) override;
     virtual int enter() override;
     virtual void send_status_message(String message) override;
     virtual Task<Maybe<String>> prompt(String message, String initial_value = "") override;
