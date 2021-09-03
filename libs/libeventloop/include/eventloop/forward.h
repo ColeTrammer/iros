@@ -10,6 +10,7 @@ class KeyEvent;
 class KeyShortcut;
 class InputTracker;
 class MouseEvent;
+class ObjectBoundCoroutine;
 class Object;
 class Selectable;
 class SelectableFile;

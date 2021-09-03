@@ -55,8 +55,6 @@ public:
     virtual void set_clipboard_contents(String text, bool is_whole_line) override;
     virtual String clipboard_contents(bool& is_whole_line) const override;
 
-    virtual void do_open_prompt() override;
-
     virtual void render() override;
 
     Function<void()> on_quit;

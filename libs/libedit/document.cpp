@@ -832,7 +832,7 @@ void Document::register_display(Display& display) {
                     break;
                 case App::Key::O:
                     if (!input_text_mode()) {
-                        display.do_open_prompt();
+                        display.this_widget().start_coroutine(display.do_open_prompt());
                     }
                     break;
                 case App::Key::Q:

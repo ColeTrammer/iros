@@ -30,10 +30,12 @@ void TerminalPrompt::initialize() {
         return false;
     });
     m_display->set_steals_focus(true);
-    m_display->set_document(move(document));
+    m_display->set_document(document);
     m_display->enter();
 
     set_focus_proxy(m_display.get());
+
+    document->move_cursor_to_document_end(*m_display, m_display->cursors().main_cursor());
 
     Panel::initialize();
 }

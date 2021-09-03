@@ -40,10 +40,10 @@ public:
     virtual void invalidate_line_rect(int row_in_display) override { invalidate(sized_rect().with_y(row_in_display).with_height(1)); }
     virtual int enter() override;
     virtual void send_status_message(String message) override;
-    virtual Task<Maybe<String>> prompt(String message) override;
+    virtual Task<Maybe<String>> prompt(String message, String initial_value = "") override;
     virtual void enter_search(String starting_text) override;
     virtual void quit() override;
-    virtual void do_open_prompt() override;
+    virtual App::ObjectBoundCoroutine do_open_prompt() override;
     virtual void install_document_listeners(Edit::Document& document) override;
 
     virtual void set_clipboard_contents(String text, bool is_whole_line) override;

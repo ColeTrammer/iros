@@ -6,6 +6,7 @@
 #include <edit/position.h>
 #include <edit/text_range_collection.h>
 #include <eventloop/event.h>
+#include <ext/path.h>
 #include <liim/utf8_view.h>
 #include <stdlib.h>
 #include <tinput/terminal_glyph.h>
@@ -238,7 +239,38 @@ Edit::RenderedLine TerminalDisplay::compose_line(const Edit::Line& line) {
     return renderer.finish(line, metadata_iterator.peek_metadata());
 }
 
-void TerminalDisplay::do_open_prompt() {}
+App::ObjectBoundCoroutine TerminalDisplay::do_open_prompt() {
+    if (document() && document()->input_text_mode()) {
+        co_return;
+    }
+
+    auto initial_value = [&]() -> String {
+        if (!document()) {
+            return "";
+        }
+
+        auto path = Ext::Path::resolve(document()->name());
+        if (!path) {
+            return document()->name();
+        }
+        return path->dirname(Ext::Path::SlashTerminated::Yes);
+    }();
+
+    auto result = co_await prompt("Open: ", move(initial_value));
+    if (!result) {
+        co_return;
+    }
+
+    auto error = Maybe<String> {};
+    auto document = Edit::Document::create_from_file(*result, error);
+    if (error) {
+        send_status_message(move(*error));
+        co_return;
+    }
+
+    assert(document);
+    set_document(document);
+}
 
 int TerminalDisplay::enter() {
     make_focused();
@@ -263,12 +295,12 @@ void TerminalDisplay::hide_search_panel() {
     m_search_panel = nullptr;
 }
 
-Task<Maybe<String>> TerminalDisplay::prompt(String message) {
+Task<Maybe<String>> TerminalDisplay::prompt(String message, String initial_value) {
     if (m_prompt_panel) {
         hide_prompt_panel();
     }
 
-    m_prompt_panel = TerminalPrompt::create(shared_from_this(), *this, move(message), "");
+    m_prompt_panel = TerminalPrompt::create(shared_from_this(), *this, move(message), move(initial_value));
     m_prompt_panel->set_positioned_rect(positioned_rect().with_height(3));
 
     auto result = co_await m_prompt_panel->block_until_result(*this);

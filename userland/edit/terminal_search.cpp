@@ -39,6 +39,8 @@ void TerminalSearch::initialize() {
 
     set_focus_proxy(&text_box);
 
+    search_document->select_all(text_box, text_box.cursors().main_cursor());
+
     Panel::initialize();
 }
 

@@ -54,8 +54,6 @@ public:
     bool quit_by_interrupt() const { return m_quit_by_interrupt; }
     bool quit_by_eof() const { return m_quit_by_eof; }
 
-    virtual void do_open_prompt() override;
-
     void complete_suggestion(const Edit::MatchedSuggestion& suggestion);
 
 private:
@@ -66,8 +64,6 @@ private:
 
     void set_quit_by_interrupt() { m_quit_by_interrupt = true; }
     void set_quit_by_eof() { m_quit_by_eof = true; }
-
-    Maybe<String> enter_prompt(const String& message, String starting_text = "");
 
     Vector<SharedPtr<Edit::Document>>& ensure_history_documents();
     void put_history_document(SharedPtr<Edit::Document> document, int history_index);

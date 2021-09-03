@@ -183,8 +183,6 @@ String AppDisplay::clipboard_contents(bool& is_whole_line) const {
     return move(ret);
 }
 
-void AppDisplay::do_open_prompt() {}
-
 void AppDisplay::render_cursor(Renderer& renderer) {
     if (this != parent_window()->focused_widget().get()) {
         return;

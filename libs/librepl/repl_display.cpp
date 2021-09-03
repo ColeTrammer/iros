@@ -277,8 +277,6 @@ void ReplDisplay::output_line(int row, int col_offset, const Edit::RenderedLine&
     renderer.clear_rect(clear_rect);
 }
 
-void ReplDisplay::do_open_prompt() {}
-
 void ReplDisplay::suggestions_did_change(const Maybe<Edit::TextRange>& old_text_range) {
     if (m_suggestions_panel) {
         if (m_suggest_based_on_history) {
@@ -420,10 +418,6 @@ void ReplDisplay::move_history_down() {
 
 Edit::TextIndex ReplDisplay::text_index_at_mouse_position(const Point& point) {
     return document()->text_index_at_scrolled_position(*this, { point.y(), point.x() });
-}
-
-Maybe<String> ReplDisplay::enter_prompt(const String&, String) {
-    return {};
 }
 
 void ReplDisplay::enter_search(String) {}
