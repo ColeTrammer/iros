@@ -181,7 +181,7 @@ public:
     void update_syntax_highlighting();
 
     void register_display(Display& display);
-    void unregister_display(Display& display);
+    void unregister_display(Display& display, bool remove_listener);
 
 private:
     Document(Vector<Line> lines, String name, InputMode mode);

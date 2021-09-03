@@ -48,6 +48,8 @@ public:
     virtual App::ObjectBoundCoroutine do_open_prompt();
     virtual void quit() = 0;
 
+    virtual void split_display() {}
+
     virtual void do_compute_suggestions() {}
     virtual void show_suggestions_panel() {}
     virtual void hide_suggestions_panel() {}

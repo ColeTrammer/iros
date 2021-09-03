@@ -804,6 +804,9 @@ void Document::register_display(Display& display) {
                         move_cursor_to_document_end(display, cursor, event.shift_down() ? MovementMode::Select : MovementMode::Move);
                     }
                     break;
+                case App::Key::Backslash:
+                    display.split_display();
+                    break;
                 case App::Key::Backspace:
                     delete_word(display, DeleteCharMode::Backspace);
                     break;
@@ -951,9 +954,11 @@ void Document::register_display(Display& display) {
     });
 }
 
-void Document::unregister_display(Display& display) {
-    display.this_widget().remove_listener(*this);
+void Document::unregister_display(Display& display, bool remove_listener) {
     m_displays.remove_element(&display);
+    if (remove_listener) {
+        display.this_widget().remove_listener(*this);
+    }
 }
 
 void Document::move_line_to(int line, int destination) {

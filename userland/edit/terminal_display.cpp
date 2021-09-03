@@ -1,3 +1,4 @@
+#include <app/layout_engine.h>
 #include <assert.h>
 #include <clipboard/connection.h>
 #include <edit/document.h>
@@ -18,7 +19,11 @@
 #include "terminal_search.h"
 #include "terminal_status_bar.h"
 
+static int s_display_count = 0;
+
 TerminalDisplay::TerminalDisplay() {
+    s_display_count++;
+
     set_accepts_focus(true);
 }
 
@@ -52,7 +57,11 @@ void TerminalDisplay::initialize() {
     Panel::initialize();
 }
 
-TerminalDisplay::~TerminalDisplay() {}
+TerminalDisplay::~TerminalDisplay() {
+    if (--s_display_count == 0) {
+        TUI::Application::the().main_event_loop().set_should_exit(true);
+    }
+}
 
 void TerminalDisplay::document_did_change() {
     if (document()) {
@@ -61,7 +70,15 @@ void TerminalDisplay::document_did_change() {
 }
 
 void TerminalDisplay::quit() {
-    TUI::Application::the().main_event_loop().set_should_exit(true);
+    auto* parent = parent_panel();
+    remove();
+
+    // Give focus to another display, namely, the first one we can find.
+    if (parent) {
+        if (auto first_child = parent->children().get_or(0, nullptr); first_child && first_child->is_base_widget()) {
+            static_cast<App::Base::Widget&>(*first_child).make_focused();
+        }
+    }
 }
 
 void TerminalDisplay::install_document_listeners(Edit::Document& document) {
@@ -315,6 +332,21 @@ Task<Maybe<String>> TerminalDisplay::prompt(String message, String initial_value
     auto result = co_await m_prompt_panel->block_until_result(*this);
     hide_prompt_panel();
     co_return result;
+}
+
+void TerminalDisplay::split_display() {
+    auto* parent = parent_panel();
+    assert(parent);
+
+    auto& layout = *parent->layout_engine();
+    auto& display = layout.add<TerminalDisplay>();
+
+    display.set_document(document()->shared_from_this());
+    display.set_preview_auto_complete(preview_auto_complete());
+    display.set_word_wrap_enabled(word_wrap_enabled());
+    display.set_show_line_numbers(show_line_numbers());
+    display.cursors().restore(*document(), cursors().snapshot());
+    display.enter();
 }
 
 void TerminalDisplay::enter_search(String initial_text) {

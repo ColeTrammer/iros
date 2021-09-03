@@ -7,7 +7,11 @@
 namespace Edit {
 Display::Display() : m_cursors { *this } {}
 
-Display::~Display() {}
+Display::~Display() {
+    if (auto* doc = document()) {
+        doc->unregister_display(*this, false);
+    }
+}
 
 void Display::set_document(SharedPtr<Document> document) {
     if (m_document == document) {
@@ -16,7 +20,7 @@ void Display::set_document(SharedPtr<Document> document) {
 
     if (m_document) {
         uninstall_document_listeners(*m_document);
-        m_document->unregister_display(*this);
+        m_document->unregister_display(*this, true);
     }
     m_document = move(document);
     if (m_document) {

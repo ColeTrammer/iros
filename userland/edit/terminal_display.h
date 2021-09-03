@@ -46,6 +46,8 @@ public:
     virtual App::ObjectBoundCoroutine do_open_prompt() override;
     virtual void install_document_listeners(Edit::Document& document) override;
 
+    virtual void split_display() override;
+
     virtual void set_clipboard_contents(String text, bool is_whole_line) override;
     virtual String clipboard_contents(bool& is_whole_line) const override;
 
