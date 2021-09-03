@@ -5,12 +5,33 @@
 #include <liim/string_view.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <tinput/terminal_renderer.h>
 #include <tui/application.h>
 #include <unistd.h>
 
 #include "app_display.h"
 #include "terminal_display.h"
 #include "terminal_status_bar.h"
+
+class BackgroundPanel : public TUI::Panel {
+    APP_OBJECT(BackgroundPanel)
+
+public:
+    virtual void render() override {
+        auto renderer = get_renderer();
+
+        renderer.set_origin({ 0, 0 });
+
+        for (auto& child : children()) {
+            if (child->is_base_widget()) {
+                auto& widget = static_cast<const App::Base::Widget&>(*child);
+                renderer.draw_rect(widget.positioned_rect().adjusted(1), { ColorValue::White });
+            }
+        }
+
+        TUI::Panel::render();
+    }
+};
 
 void print_usage_and_exit(const char* s) {
     fprintf(stderr, "Usage: %s [-ig] <text-file>\n", s);
@@ -79,11 +100,13 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    auto& main_widget = app->root_window().set_main_widget<TUI::Panel>();
+    auto& main_widget = app->root_window().set_main_widget<BackgroundPanel>();
     auto& main_layout = main_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
+    main_layout.set_spacing(1);
 
-    auto& display_conainer = main_layout.add<TUI::Panel>();
+    auto& display_conainer = main_layout.add<BackgroundPanel>();
     auto& display_layout = display_conainer.set_layout_engine<App::HorizontalFlexLayoutEngine>();
+    display_layout.set_spacing(1);
 
     auto& display = display_layout.add<TerminalDisplay>();
 
