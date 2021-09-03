@@ -35,6 +35,7 @@ void FlexLayoutEngine::layout() {
     }
 
     auto distributed_size = flex_count != 0 ? space / flex_count : 0;
+    auto leftover_size = flex_count != 0 ? space % flex_count : 0;
 
     auto width = parent_rect().width();
     auto height = parent_rect().height();
@@ -59,6 +60,13 @@ void FlexLayoutEngine::layout() {
                 width_to_use = constraint.width();
             } else {
                 height_to_use = constraint.height();
+            }
+        } else if (leftover_size > 0) {
+            leftover_size--;
+            if (m_direction == Direction::Horizontal) {
+                width_to_use++;
+            } else {
+                height_to_use++;
             }
         }
 
