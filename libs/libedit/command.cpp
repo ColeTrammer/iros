@@ -153,7 +153,7 @@ DeleteCommand::~DeleteCommand() {}
 
 bool DeleteCommand::do_execute(MultiCursor& cursors) {
     bool modified = false;
-    for (int i = 0; i < cursors.size(); i++) {
+    for (int i = cursors.size() - 1; i >= 0; i--) {
         auto& cursor = cursors[i];
         if (!cursor.selection().empty()) {
             document().delete_selection(cursor);
