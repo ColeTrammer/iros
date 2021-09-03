@@ -150,7 +150,7 @@ void TerminalDisplay::output_line(int row, int col_offset, const Edit::RenderedL
 
     if (show_line_numbers()) {
         auto line_number_rect = Rect { 0, row, m_cols_needed_for_line_numbers, 1 };
-        auto line_start_index = document()->text_index_at_scrolled_position(*this, { row, 0 });
+        auto line_start_index = document()->text_index_at_scrolled_position(*this, { row, -col_offset });
         if (line_start_index.index_into_line() == 0) {
             auto line_number_text = String::format("%*d ", m_cols_needed_for_line_numbers - 1, line_start_index.line_index() + 1);
             renderer.render_text(line_number_rect, line_number_text.view());
