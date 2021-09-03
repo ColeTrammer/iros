@@ -755,6 +755,9 @@ void Document::register_display(Display& display) {
                 case App::Key::D:
                     delete_word(display, DeleteCharMode::Delete);
                     break;
+                case App::Key::Z:
+                    display.toggle_word_wrap_enabled();
+                    break;
                 default:
                     break;
             }

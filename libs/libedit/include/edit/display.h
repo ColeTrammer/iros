@@ -76,6 +76,7 @@ public:
     void set_show_line_numbers(bool b);
 
     bool word_wrap_enabled() const { return m_word_wrap_enabled; }
+    void toggle_word_wrap_enabled();
     void set_word_wrap_enabled(bool b);
 
     Suggestions& suggestions() { return m_suggestions; }

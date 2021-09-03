@@ -122,6 +122,10 @@ void Display::set_word_wrap_enabled(bool b) {
     }
 }
 
+void Display::toggle_word_wrap_enabled() {
+    set_word_wrap_enabled(!m_word_wrap_enabled);
+}
+
 void Display::install_document_listeners(Document& new_document) {
     new_document.on<DeleteLines>(this_widget(), [this](const DeleteLines& event) {
         for (int i = 0; i < event.line_count(); i++) {
