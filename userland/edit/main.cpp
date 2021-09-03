@@ -97,6 +97,7 @@ int main(int argc, char** argv) {
 
     app->set_use_alternate_screen_buffer(true);
     app->set_use_mouse(true);
+    app->set_quit_on_control_q(false);
     app->enter();
     return 0;
 }

@@ -25,6 +25,8 @@ public:
 
     void set_use_alternate_screen_buffer(bool b) { m_use_alternate_screen_buffer = b; }
     void set_use_mouse(bool b) { m_use_mouse = b; }
+    void set_quit_on_control_q(bool b) { m_quit_on_control_q = b; }
+    bool quit_on_control_q() const { return m_quit_on_control_q; }
 
     TInput::IOTerminal& io_terminal() { return *m_io_terminal; }
 
@@ -44,5 +46,6 @@ private:
     bool m_use_alternate_screen_buffer { false };
     bool m_use_mouse { false };
     bool m_render_scheduled { false };
+    bool m_quit_on_control_q { true };
 };
 }

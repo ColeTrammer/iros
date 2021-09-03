@@ -66,6 +66,8 @@ InputResult TerminalInputSource::get_input() {
         document->set_submittable(true);
         document->set_type(repl().get_input_type());
         display.set_document(document);
+
+        app->set_quit_on_control_q(false);
         app->enter();
 
         if (display.quit_by_eof()) {

@@ -9,14 +9,6 @@ namespace TUI {
 Panel::Panel() {}
 
 void Panel::initialize() {
-    on<App::KeyDownEvent>([this](const App::KeyDownEvent& event) {
-        if (event.control_down() && event.key() == App::Key::Q) {
-            Application::the().main_event_loop().set_should_exit(true);
-            return true;
-        }
-        return false;
-    });
-
     App::Base::Widget::initialize();
 }
 
