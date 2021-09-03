@@ -15,6 +15,9 @@ static constexpr uint8_t control_to_char(uint8_t c) {
 }
 
 static constexpr App::Key char_to_key(uint8_t c) {
+    if (c == '\\') {
+        return App::Key::Backslash;
+    }
     if (isalpha(c)) {
         return static_cast<App::Key>(toupper(c) + 1 - 'A');
     }
