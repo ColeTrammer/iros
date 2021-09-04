@@ -170,7 +170,7 @@ void init_actions() {
                                           auto& document = *display.document();
                                           display.cursors().add_cursor(document, AddCursorMode::Down);
                                       });
-    register_document_keyboard_action("Add Cursor Up", { App::Key::DownArrow, App::KeyModifier::Control | App::KeyModifier::Shift },
+    register_document_keyboard_action("Add Cursor Up", { App::Key::UpArrow, App::KeyModifier::Control | App::KeyModifier::Shift },
                                       [](Display& display) {
                                           auto& document = *display.document();
                                           display.cursors().add_cursor(document, AddCursorMode::Up);
@@ -207,7 +207,7 @@ void init_actions() {
         }
     });
 
-    register_document_keyboard_action("Reset Cursors", { App::Key::D, 0 }, [](Display& display) {
+    register_document_keyboard_action("Reset Cursors", { App::Key::Escape, 0 }, [](Display& display) {
         auto& document = *display.document();
         document.clear_search();
         display.cursors().remove_secondary_cursors();
