@@ -2,6 +2,7 @@
 
 #include <app/forward.h>
 #include <app/layout_constraint.h>
+#include <eventloop/key_bindings.h>
 #include <eventloop/object.h>
 #include <eventloop/widget_events.h>
 #include <graphics/rect.h>
@@ -10,18 +11,10 @@ namespace App::Base {
 class Widget : public Object {
     APP_OBJECT(Widget)
 
-    // APP_EMITS(Object, ResizeEvent, FocusedEvent, UnfocusedEvent, LeaveEvent, EnterEvent, KeyDownEvent, KeyUpEvent, TextEvent,
-    //           MouseDownEvent, MouseDoubleEvent, MouseTripleEvent, MouseMoveEvent, MouseUpEvent, MouseScrollEvent, ThemeChangeEvent)
+    APP_EMITS(Object, ResizeEvent, FocusedEvent, UnfocusedEvent, LeaveEvent, EnterEvent, KeyDownEvent, KeyUpEvent, TextEvent,
+              MouseDownEvent, MouseMoveEvent, MouseUpEvent, MouseScrollEvent, ThemeChangeEvent)
 
 public:
-    template<typename... Ev>
-    static constexpr bool does_emit() {
-        return (LIIM::IsOneOf<Ev, ResizeEvent, FocusedEvent, UnfocusedEvent, LeaveEvent, EnterEvent, KeyDownEvent, KeyUpEvent, TextEvent,
-                              MouseDownEvent, MouseMoveEvent, MouseUpEvent, MouseScrollEvent, ThemeChangeEvent>::value &&
-                ...) ||
-               Object::does_emit<Ev...>();
-    }
-
     Widget();
     virtual void initialize() override;
     virtual ~Widget() override;
@@ -41,6 +34,9 @@ public:
     void make_focused();
     bool accepts_focus() const { return m_accepts_focus; }
     void set_accepts_focus(bool b) { m_accepts_focus = b; }
+
+    const App::KeyBindings& key_bindings() { return m_key_bindings; }
+    void set_key_bindings(App::KeyBindings key_bindings) { m_key_bindings = move(key_bindings); }
 
     bool hidden() const { return m_hidden; }
     void set_hidden(bool b);
@@ -74,6 +70,7 @@ private:
     Rect m_positioned_rect;
     LayoutConstraint m_layout_constraint;
     UniquePtr<LayoutEngine> m_layout_engine;
+    App::KeyBindings m_key_bindings;
     Widget* m_focus_proxy { nullptr };
     bool m_accepts_focus { false };
     bool m_hidden { false };

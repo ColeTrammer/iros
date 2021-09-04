@@ -4,7 +4,11 @@
 #include <eventloop/event.h>
 
 namespace App::Base {
-Widget::Widget() {}
+Widget::Widget() {
+    on<KeyDownEvent>([this](const KeyDownEvent& event) {
+        return m_key_bindings.handle_key_event(event);
+    });
+}
 
 void Widget::initialize() {
     on<ResizeEvent>([this](const ResizeEvent&) {
