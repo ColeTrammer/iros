@@ -183,17 +183,6 @@ public:
     void register_display(Display& display);
     void unregister_display(Display& display, bool remove_listener);
 
-private:
-    Document(Vector<Line> lines, String name, InputMode mode);
-
-    void update_selection_state_for_mode(Cursor& cursor, MovementMode mode);
-
-    void update_search_results();
-    void clear_search_results();
-    void enter_interactive_search(Display& display);
-
-    void update_suggestions(Display& display);
-
     void swap_lines_at_cursor(Display& display, SwapDirection direction);
     void split_line_at_cursor(Display& display);
     void insert_char(Display& display, char c);
@@ -201,6 +190,16 @@ private:
     void delete_word(Display& display, DeleteCharMode mode);
 
     App::ObjectBoundCoroutine go_to_line(Display& display);
+
+private:
+    Document(Vector<Line> lines, String name, InputMode mode);
+
+    void update_selection_state_for_mode(Cursor& cursor, MovementMode mode);
+
+    void update_search_results();
+    void clear_search_results();
+
+    void update_suggestions(Display& display);
 
     void swap_selection_start_and_cursor(Display& display, Cursor& cursor);
 

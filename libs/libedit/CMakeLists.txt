@@ -1,8 +1,10 @@
 set(SOURCES
+    actions.cpp
     command.cpp
     cursor.cpp
     document_type.cpp
     document.cpp
+    keyboard_action.cpp
     line_renderer.cpp
     line.cpp
     multicursor.cpp

@@ -3,6 +3,7 @@
 #include <clipboard/connection.h>
 #include <edit/document.h>
 #include <edit/document_type.h>
+#include <edit/keyboard_action.h>
 #include <edit/line_renderer.h>
 #include <edit/position.h>
 #include <edit/text_range_collection.h>
@@ -28,6 +29,8 @@ TerminalDisplay::TerminalDisplay() {
 }
 
 void TerminalDisplay::initialize() {
+    set_key_bindings(Edit::get_key_bindings(*this));
+
     on<App::KeyDownEvent>([this](const App::KeyDownEvent& event) {
         if (event.key() == App::Key::Escape) {
             hide_prompt_panel();

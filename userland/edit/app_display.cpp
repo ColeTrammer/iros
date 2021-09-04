@@ -4,6 +4,7 @@
 #include <app/window.h>
 #include <clipboard/connection.h>
 #include <edit/document.h>
+#include <edit/keyboard_action.h>
 #include <edit/line_renderer.h>
 #include <edit/position.h>
 #include <eventloop/event.h>
@@ -37,6 +38,8 @@ AppDisplay& SearchWidget::display() {
 AppDisplay::AppDisplay(bool main_display) : m_main_display(main_display) {}
 
 void AppDisplay::initialize() {
+    set_key_bindings(Edit::get_key_bindings(*this));
+
     auto window = this->parent_window()->shared_from_this();
     auto context_menu = App::ContextMenu::create(window, window);
     context_menu->add_menu_item("Copy", [this] {

@@ -1,6 +1,7 @@
 #include <clipboard/connection.h>
 #include <edit/document.h>
 #include <edit/document_type.h>
+#include <edit/keyboard_action.h>
 #include <edit/line_renderer.h>
 #include <edit/position.h>
 #include <eventloop/event.h>
@@ -27,6 +28,8 @@ ReplDisplay::ReplDisplay(ReplBase& repl) : m_repl(repl) {
 }
 
 void ReplDisplay::initialize() {
+    set_key_bindings(Edit::get_key_bindings(*this));
+
     on<App::KeyDownEvent>([this](const App::KeyEvent& event) {
         if (!document()) {
             return false;
