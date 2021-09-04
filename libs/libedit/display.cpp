@@ -102,7 +102,7 @@ void Display::set_preview_auto_complete(bool b) {
 
     m_preview_auto_complete = b;
     if (document()) {
-        document()->invalidate_rendered_contents(cursors().main_cursor().referenced_line(*document()));
+        invalidate_line(cursors().main_cursor().line_index());
     }
 }
 
@@ -122,7 +122,7 @@ void Display::set_word_wrap_enabled(bool b) {
 
     m_word_wrap_enabled = b;
     if (document()) {
-        document()->invalidate_all_rendered_contents();
+        invalidate_all_lines();
     }
 }
 
@@ -147,22 +147,22 @@ void Display::install_document_listeners(Document& new_document) {
 
     new_document.on<SplitLines>(this_widget(), [this](const SplitLines& event) {
         m_rendered_lines.insert({}, event.line_index() + 1);
-        document()->line_at_index(event.line_index()).invalidate_rendered_contents(*document(), *this);
+        invalidate_line(event.line_index());
         invalidate_all_line_rects();
     });
 
     new_document.on<MergeLines>(this_widget(), [this](const MergeLines& event) {
         m_rendered_lines.remove(event.second_line_index());
-        document()->line_at_index(event.first_line_index()).invalidate_rendered_contents(*document(), *this);
+        invalidate_line(event.first_line_index());
         invalidate_all_line_rects();
     });
 
     new_document.on<AddToLine>(this_widget(), [this](const AddToLine& event) {
-        document()->line_at_index(event.line_index()).invalidate_rendered_contents(*document(), *this);
+        invalidate_line(event.line_index());
     });
 
     new_document.on<DeleteFromLine>(this_widget(), [this](const DeleteFromLine& event) {
-        document()->line_at_index(event.line_index()).invalidate_rendered_contents(*document(), *this);
+        invalidate_line(event.line_index());
     });
 
     new_document.on<MoveLineTo>(this_widget(), [this](const MoveLineTo& event) {
@@ -176,6 +176,11 @@ void Display::install_document_listeners(Document& new_document) {
         }
 
         invalidate_all_line_rects();
+    });
+
+    new_document.on<SyntaxHighlightingChanged, SearchResultsChanged>(this_widget(), [this](auto&) {
+        // FIXME: only the metadata needs to be invalidated, not the line's contents.
+        invalidate_all_lines();
     });
 
     cursors().install_document_listeners(new_document);

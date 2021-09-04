@@ -288,8 +288,8 @@ void MultiCursor::restore(Document& document, const Snapshot& snapshot) {
 
 void MultiCursor::invalidate_based_on_last_snapshot(Document& document) {
     if (m_history.empty()) {
-        document.invalidate_lines_in_range_collection(cursor_text_ranges(document));
-        document.invalidate_lines_in_range_collection(selections(document));
+        document.invalidate_lines_in_range_collection(m_display, cursor_text_ranges(document));
+        document.invalidate_lines_in_range_collection(m_display, selections(document));
         return;
     }
 
@@ -300,13 +300,13 @@ void MultiCursor::invalidate_based_on_last_snapshot(Document& document) {
 
     m_cursors = m_history.last().cursors;
     m_main_cursor_index = m_history.last().main_cursor_index;
-    document.invalidate_lines_in_range_collection(cursor_text_ranges(document));
-    document.invalidate_lines_in_range_collection(selections(document));
+    document.invalidate_lines_in_range_collection(m_display, cursor_text_ranges(document));
+    document.invalidate_lines_in_range_collection(m_display, selections(document));
 
     m_cursors = move(current.cursors);
     m_main_cursor_index = current.main_cursor_index;
-    document.invalidate_lines_in_range_collection(cursor_text_ranges(document));
-    document.invalidate_lines_in_range_collection(selections(document));
+    document.invalidate_lines_in_range_collection(m_display, cursor_text_ranges(document));
+    document.invalidate_lines_in_range_collection(m_display, selections(document));
 }
 
 void MultiCursor::invalidate_cursor_history() {

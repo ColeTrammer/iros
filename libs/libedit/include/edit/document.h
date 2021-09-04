@@ -21,6 +21,9 @@ APP_EVENT(Edit, AddToLine, App::Event, (), ((int, line_index), (int, index_into_
 APP_EVENT(Edit, DeleteFromLine, App::Event, (), ((int, line_index), (int, index_into_line), (int, bytes_deleted)), ())
 APP_EVENT(Edit, MoveLineTo, App::Event, (), ((int, line), (int, destination)), ())
 
+APP_EVENT(Edit, SyntaxHighlightingChanged, App::Event, (), (), ())
+APP_EVENT(Edit, SearchResultsChanged, App::Event, (), (), ())
+
 APP_EVENT(Edit, Submit, App::Event, (), (), ())
 APP_EVENT(Edit, Change, App::Event, (), (), ())
 
@@ -38,7 +41,8 @@ enum class InputMode { Document, InputText };
 class Document final : public App::Object {
     APP_OBJECT(Document)
 
-    APP_EMITS(App::Object, DeleteLines, AddLines, SplitLines, MergeLines, AddToLine, DeleteFromLine, MoveLineTo, Submit, Change)
+    APP_EMITS(App::Object, DeleteLines, AddLines, SplitLines, MergeLines, AddToLine, DeleteFromLine, SyntaxHighlightingChanged,
+              SearchResultsChanged, MoveLineTo, Submit, Change)
 
 public:
     static SharedPtr<Document> create_from_stdin(const String& path, Maybe<String>& error_message);
@@ -62,10 +66,8 @@ public:
 
     void display(Display& display) const;
 
-    void invalidate_lines_in_range(const TextRange& range);
-    void invalidate_lines_in_range_collection(const TextRangeCollection& collection);
-    void invalidate_rendered_contents(const Line& line);
-    void invalidate_all_rendered_contents();
+    void invalidate_lines_in_range(Display& display, const TextRange& range);
+    void invalidate_lines_in_range_collection(Display& display, const TextRangeCollection& collection);
 
     App::ObjectBoundCoroutine save(Display& display);
     App::ObjectBoundCoroutine quit(Display& display);

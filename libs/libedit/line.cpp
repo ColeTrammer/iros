@@ -30,12 +30,12 @@ void Line::overwrite(Document& document, Line&& line, OverwriteFrom mode) {
     }
 
     auto start_index = mode == OverwriteFrom::LineStart ? 0 : min(old_length, length());
+
+    // Maybe a separate overwrite event is better since these events don't tell the whole picture.
     if (delta_length < 0) {
         document.emit<DeleteFromLine>(document.index_of_line(*this), start_index, -delta_length);
-    } else if (delta_length > 0) {
+    } else if (delta_length >= 0) {
         document.emit<AddToLine>(document.index_of_line(*this), start_index, delta_length);
-    } else {
-        document.invalidate_rendered_contents(*this);
     }
 }
 
@@ -178,10 +178,6 @@ void Line::search(const Document& document, const String& text, TextRangeCollect
                       { CharacterMetadata::Flags::Highlighted } });
         index_into_line += text.size();
     }
-}
-
-void Line::invalidate_rendered_contents(const Document& document, Display& display) const {
-    display.invalidate_line(document.index_of_line(*this));
 }
 
 const RenderedLine& Line::compute_rendered_contents(const Document& document, Display& display) const {

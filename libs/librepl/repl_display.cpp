@@ -394,7 +394,7 @@ void ReplDisplay::move_history_up() {
     set_document(new_document);
     new_document->move_cursor_to_document_end(*this, cursors().main_cursor());
     new_document->scroll_cursor_into_view(*this, cursors().main_cursor());
-    new_document->invalidate_rendered_contents(cursors().main_cursor().referenced_line(*new_document));
+    invalidate_line(cursors().main_cursor().line_index());
     invalidate();
 
     m_history_index--;
@@ -413,7 +413,7 @@ void ReplDisplay::move_history_down() {
     set_document(new_document);
     new_document->move_cursor_to_document_end(*this, cursors().main_cursor());
     new_document->scroll_cursor_into_view(*this, cursors().main_cursor());
-    new_document->invalidate_rendered_contents(cursors().main_cursor().referenced_line(*new_document));
+    invalidate_line(cursors().main_cursor().line_index());
     invalidate();
 
     m_history_index++;

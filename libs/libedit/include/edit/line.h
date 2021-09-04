@@ -42,8 +42,6 @@ public:
 
     int render(const Document& document, Display& display, int col_offset, int relative_row_start, int row_in_display) const;
 
-    void invalidate_rendered_contents(const Document& document, Display& display) const;
-
 private:
     const RenderedLine& compute_rendered_contents(const Document& document, Display& display) const;
 

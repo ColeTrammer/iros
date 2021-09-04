@@ -646,7 +646,6 @@ void Document::clear_selection(Cursor& cursor) {
         return;
     }
 
-    invalidate_lines_in_range(cursor.selection().text_range());
     cursor.selection().clear();
 }
 
@@ -681,7 +680,7 @@ void Document::register_display(Display& display) {
 
     display.this_widget().on_unchecked<App::ResizeEvent>(*this, [this, &display](auto&) {
         if (display.word_wrap_enabled()) {
-            invalidate_all_rendered_contents();
+            display.invalidate_all_lines();
         }
     });
 
@@ -800,31 +799,20 @@ void Document::paste(Display& display, MultiCursor& cursors) {
     }
 }
 
-void Document::invalidate_rendered_contents(const Line& line) {
-    for (auto* display : m_displays) {
-        line.invalidate_rendered_contents(*this, *display);
-    }
-}
-
-void Document::invalidate_all_rendered_contents() {
-    for (auto& line : m_lines) {
-        invalidate_rendered_contents(line);
-    }
-}
-
-void Document::invalidate_lines_in_range(const TextRange& range) {
+void Document::invalidate_lines_in_range(Display& display, const TextRange& range) {
     if (range.start() == range.end()) {
         return;
     }
 
-    for (int i = range.start().line_index(); i <= range.end().line_index(); i++) {
-        invalidate_rendered_contents(line_at_index(i));
+    bool exclusive = range.end().index_into_line() == 0;
+    for (int i = range.start().line_index(); exclusive ? i < range.end().line_index() : i <= range.end().line_index(); i++) {
+        display.invalidate_line(i);
     }
 }
 
-void Document::invalidate_lines_in_range_collection(const TextRangeCollection& collection) {
+void Document::invalidate_lines_in_range_collection(Display& display, const TextRangeCollection& collection) {
     for (int i = 0; i < collection.size(); i++) {
-        invalidate_lines_in_range(collection.range(i));
+        invalidate_lines_in_range(display, collection.range(i));
     }
 }
 
@@ -942,21 +930,19 @@ App::ObjectBoundCoroutine Document::quit(Display& display) {
 
 void Document::update_syntax_highlighting() {
     highlight_document(*this);
+    emit<SyntaxHighlightingChanged>();
 }
 
 void Document::update_search_results() {
-    clear_search_results();
     if (m_search_text.empty()) {
         return;
     }
 
+    m_search_results.clear();
     for (auto& line : m_lines) {
         line.search(*this, m_search_text, m_search_results);
     }
-
-    if (!m_search_results.empty()) {
-        invalidate_lines_in_range_collection(m_search_results);
-    }
+    emit<SearchResultsChanged>();
 }
 
 void Document::clear_search() {
@@ -970,8 +956,8 @@ void Document::clear_search_results() {
         return;
     }
 
-    invalidate_lines_in_range_collection(m_search_results);
     m_search_results.clear();
+    emit<SearchResultsChanged>();
 }
 
 void Document::set_search_text(String text) {
@@ -1087,7 +1073,7 @@ void Document::finish_input(Display& display, bool should_scroll_cursor_into_vie
 
     update_suggestions(display);
     if (display.preview_auto_complete()) {
-        cursors.main_cursor().referenced_line(*this).invalidate_rendered_contents(*this, display);
+        display.invalidate_line(cursors.main_cursor().line_index());
     }
 
     cursors.invalidate_based_on_last_snapshot(*this);
