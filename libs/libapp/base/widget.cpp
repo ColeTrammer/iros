@@ -130,6 +130,10 @@ void Widget::set_hidden(bool b) {
 }
 
 void Widget::set_positioned_rect(const Rect& rect) {
+    if (m_positioned_rect == rect) {
+        return;
+    }
+
     int old_width = m_positioned_rect.width();
     int old_height = m_positioned_rect.height();
 
