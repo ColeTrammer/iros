@@ -24,6 +24,7 @@ public:
         // FIXME: also cancel/ignore the scheduled layout as well.
         if (m_layout_scheduled) {
             layout();
+            m_layout_scheduled = false;
         }
     }
     void schedule_layout();

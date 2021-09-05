@@ -12,8 +12,11 @@ void LayoutEngine::schedule_layout() {
         // NOTE: instead of this check, it would perhaps be better for
         //       LayoutEngine to be an App::Object.
         if (parent().layout_engine() == this) {
-            layout();
-            parent().invalidate();
+            // FIXME: this is a hack to ensure pointless relayouts don't occur.
+            if (m_layout_scheduled) {
+                layout();
+                parent().invalidate();
+            }
         }
     });
 }
