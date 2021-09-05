@@ -40,7 +40,8 @@ public:
 
     constexpr bool intersects(Point p) const { return p.x() >= left() && p.x() < right() && p.y() >= top() && p.y() < bottom(); }
     constexpr bool intersects(const Rect& other) const {
-        return !(this->x() >= other.x() + other.width() || this->x() + this->width() <= other.x() ||
+        return !this->empty() && !other.empty() &&
+               !(this->x() >= other.x() + other.width() || this->x() + this->width() <= other.x() ||
                  this->y() >= other.y() + other.height() || this->y() + this->height() <= other.y());
     }
 
