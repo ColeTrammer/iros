@@ -140,6 +140,10 @@ void TerminalRenderer::clear_rect(const Rect& rect_in, Maybe<Color> color) {
 
     for (auto& dirty_rect : m_dirty_rects) {
         auto rect = m_clip_rect.intersection_with(translate(rect_in)).intersection_with(dirty_rect);
+        if (rect.empty()) {
+            continue;
+        }
+
         for (auto x = rect.left(); x < rect.right(); x++) {
             for (auto y = rect.top(); y < rect.bottom(); y++) {
                 m_io_terminal.put_glyph({ x, y }, TerminalGlyph { " ", 1 }, style);
