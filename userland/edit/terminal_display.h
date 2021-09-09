@@ -65,6 +65,7 @@ private:
 
     mutable String m_prev_clipboard_contents;
     mutable bool m_prev_clipboard_contents_were_whole_line { false };
+    int m_last_rendered_row { 0 };
     int m_cols_needed_for_line_numbers { 0 };
     SharedPtr<TerminalPrompt> m_prompt_panel;
     SharedPtr<TerminalSearch> m_search_panel;

@@ -152,9 +152,10 @@ void TerminalDisplay::render() {
         return;
     }
 
+    m_last_rendered_row = 0;
     document()->display(*this);
 
-    auto empty_rows = max(0, scroll_row_offset() + rows() - document()->num_rendered_lines(*this));
+    auto empty_rows = rows() - m_last_rendered_row;
     auto renderer = get_renderer();
     renderer.clear_rect({ 0, rows() - empty_rows, sized_rect().width(), empty_rows });
 
@@ -166,6 +167,8 @@ Edit::TextIndex TerminalDisplay::text_index_at_mouse_position(const Point& point
 }
 
 void TerminalDisplay::output_line(int row, int col_offset, const Edit::RenderedLine& line, int line_index) {
+    m_last_rendered_row = row;
+
     auto renderer = get_renderer();
 
     if (show_line_numbers()) {
