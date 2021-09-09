@@ -154,7 +154,7 @@ void TerminalDisplay::render() {
 
     document()->display(*this);
 
-    auto empty_rows = max(scroll_row_offset() + rows() - document()->num_rendered_lines(*this));
+    auto empty_rows = max(0, scroll_row_offset() + rows() - document()->num_rendered_lines(*this));
     auto renderer = get_renderer();
     renderer.clear_rect({ 0, rows() - empty_rows, sized_rect().width(), empty_rows });
 
