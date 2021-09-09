@@ -53,6 +53,7 @@ private:
     virtual bool is_window() const final override { return true; }
 
     void schedule_render();
+    void flush_layout();
     void set_hovered_widget(Widget* widget);
 
     WeakPtr<Widget> m_focused_widget;

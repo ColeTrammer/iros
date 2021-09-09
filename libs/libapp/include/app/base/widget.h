@@ -48,6 +48,8 @@ public:
     const Rect& positioned_rect() const { return m_positioned_rect; }
     void set_positioned_rect(const Rect& rect);
 
+    void flush_layout();
+
     const LayoutConstraint& layout_constraint() const { return m_layout_constraint; }
     void set_layout_constraint(const LayoutConstraint& constraint);
 

@@ -119,8 +119,13 @@ Widget* Window::hit_test(const Widget& root, const Point& point) const {
     return nullptr;
 }
 
+void Window::flush_layout() {
+    main_widget().flush_layout();
+}
+
 void Window::schedule_render() {
     deferred_invoke_batched(m_render_scheduled, [this] {
+        flush_layout();
         do_render();
     });
 }
