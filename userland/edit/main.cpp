@@ -116,6 +116,7 @@ int main(int argc, char** argv) {
     terminal_container.set_hidden(true);
 
     auto terminal = SharedPtr<TUI::TerminalPanel> {};
+    auto& terminal_container_layout = terminal_container.set_layout_engine<App::HorizontalFlexLayoutEngine>();
 
     main_layout.add<TerminalStatusBar>();
 
@@ -133,9 +134,18 @@ int main(int argc, char** argv) {
         }
 
         terminal_container.set_hidden(false);
-        auto& terminal_container_layout = terminal_container.set_layout_engine<App::HorizontalFlexLayoutEngine>();
-
         terminal = terminal_container_layout.add<TUI::TerminalPanel>().shared_from_this();
+        terminal->on<App::TerminalHangupEvent>({}, [&terminal, &terminal_container, &display_conainer](auto&) {
+            terminal_container.set_hidden(true);
+            terminal->remove();
+            terminal = nullptr;
+
+            // FIXME: handle widget removal focus changing using a stack of previously focused widgets.
+            auto& first_display = display_conainer.children().first();
+            if (first_display->is_base_widget()) {
+                static_cast<App::Base::Widget&>(const_cast<App::Object&>(*first_display)).make_focused();
+            }
+        });
         terminal->make_focused();
     });
     root_window.set_key_bindings(move(global_key_bindings));
