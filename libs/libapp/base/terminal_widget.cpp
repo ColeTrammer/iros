@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <eventloop/event.h>
+#include <eventloop/event_loop.h>
 #include <eventloop/object.h>
 #include <graphics/renderer.h>
 #include <unistd.h>
@@ -31,8 +32,8 @@ void TerminalWidget::initialize() {
             ssize_t ret = read(m_pseudo_terminal.master_fd(), buf, sizeof(buf));
             if (ret < 0) {
                 if (errno != EAGAIN) {
-                    perror("terminal: read");
-                    exit(1);
+                    EventLoop::queue_event(this_widget().weak_from_this(), make_unique<App::TerminalHangupEvent>());
+                    return;
                 }
                 break;
             } else if (ret == 0) {

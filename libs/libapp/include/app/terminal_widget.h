@@ -7,9 +7,11 @@
 
 namespace App {
 class TerminalWidget final
-    : public App::Widget
+    : public Widget
     , public Base::TerminalWidget {
     APP_OBJECT(TerminalWidget)
+
+    APP_EMITS(Widget, TerminalHangupEvent)
 
 public:
     explicit TerminalWidget(double opacity);

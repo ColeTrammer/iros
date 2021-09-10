@@ -9,6 +9,8 @@ class TerminalPanel
     , public App::Base::TerminalWidget {
     APP_OBJECT(TerminalPanel)
 
+    APP_EMITS(TUI::Panel, App::TerminalHangupEvent)
+
 public:
     TerminalPanel();
     virtual void initialize() override;

@@ -8,6 +8,8 @@
 #include <terminal/pseudo_terminal.h>
 #include <terminal/tty.h>
 
+APP_EVENT(App, TerminalHangupEvent, Event, (), (), ())
+
 namespace App::Base {
 class TerminalWidget {
 public:
