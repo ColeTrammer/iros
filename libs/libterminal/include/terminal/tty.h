@@ -6,11 +6,10 @@
 #include <liim/pointers.h>
 #include <liim/string.h>
 #include <liim/vector.h>
+#include <terminal/forward.h>
+#include <terminal/tty_parser.h>
 
-#include "tty_parser.h"
-
-class PsuedoTerminal;
-
+namespace Terminal {
 class TTY : public TTYParserDispatcher {
 public:
     struct Cell {
@@ -206,3 +205,4 @@ private:
     PsuedoTerminal& m_psuedo_terminal;
     SharedPtr<TTYParser> m_parser;
 };
+}

@@ -6,6 +6,7 @@
 #include <liim/vector.h>
 #include <stdint.h>
 
+namespace Terminal {
 class TTYParserDispatcher {
 public:
     virtual ~TTYParserDispatcher() {}
@@ -78,3 +79,4 @@ private:
     String m_current_param;
     Vector<int> m_params;
 };
+}

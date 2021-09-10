@@ -24,14 +24,14 @@ public:
     void paste_text();
 
 protected:
-    const TTY& tty() const { return m_tty; }
+    const Terminal::TTY& tty() const { return m_tty; }
     bool in_selection(int row, int col) const;
 
 private:
     String selection_text() const;
 
-    PsuedoTerminal m_pseudo_terminal;
-    TTY m_tty;
+    Terminal::PsuedoTerminal m_pseudo_terminal;
+    Terminal::TTY m_tty;
     SharedPtr<App::FdWrapper> m_pseudo_terminal_wrapper;
     int m_selection_start_row { -1 };
     int m_selection_start_col { -1 };

@@ -4,6 +4,7 @@
 #include <liim/string.h>
 #include <sys/types.h>
 
+namespace Terminal {
 enum class MouseTrackingMode {
     None,
     X10,
@@ -63,3 +64,4 @@ private:
     bool m_application_cursor_keys { false };
     bool m_bracketed_paste { false };
 };
+}

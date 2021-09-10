@@ -14,6 +14,7 @@
     m_last_state = State::state;                          \
     if (__did_transition)
 
+namespace Terminal {
 static inline bool is_printable(uint8_t byte) {
     return (byte >= 0x20 && byte <= 0x7F) || (byte >= 0xA0);
 }
@@ -487,4 +488,5 @@ void TTYParser::parse(Span<const uint8_t> data) {
     for (auto byte : data) {
         on_input(byte);
     }
+}
 }

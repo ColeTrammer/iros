@@ -7,6 +7,7 @@
 #include <terminal/pseudo_terminal.h>
 #include <unistd.h>
 
+namespace Terminal {
 PsuedoTerminal::PsuedoTerminal() {
     passwd* pwd = getpwuid(getuid());
     assert(pwd);
@@ -401,4 +402,5 @@ void PsuedoTerminal::set_size(int rows, int cols) {
     ws.ws_col = cols;
     ioctl(m_master_fd, TIOCSWINSZ, &ws);
     kill(tcgetpgrp(m_master_fd), SIGWINCH);
+}
 }

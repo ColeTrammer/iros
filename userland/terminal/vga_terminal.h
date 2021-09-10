@@ -19,7 +19,7 @@ public:
     void drain_master_fd();
 
 private:
-    PsuedoTerminal m_pseudo_terminal;
-    TTY m_tty;
+    Terminal::PsuedoTerminal m_pseudo_terminal;
+    Terminal::TTY m_tty;
     VgaBuffer& m_vga_buffer;
 };

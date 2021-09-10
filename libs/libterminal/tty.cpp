@@ -7,6 +7,7 @@
 
 // #define TERMINAL_DEBUG
 
+namespace Terminal {
 void TTY::on_printable_character(uint8_t byte) {
     if (byte < 0x7F) {
         put_char(byte);
@@ -1099,4 +1100,5 @@ void TTY::scroll_to_bottom() {
 
 void TTY::on_input(Span<const uint8_t> input) {
     m_parser->parse(input);
+}
 }
