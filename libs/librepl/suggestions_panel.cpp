@@ -75,7 +75,7 @@ void SuggestionsPanel::render() {
         // Render the suggestion such that the characters actually matched are highlighted with a different color.
         // Other characters are rendered with the default color.
         auto match_index_start = 0;
-        renderer.render_complex_styled_text(suggestion_rect, suggestion.content(), [&](size_t index) {
+        renderer.render_complex_styled_text(suggestion_rect, suggestion.content().view(), [&](size_t index) {
             auto bold = i == m_suggestion_index;
             auto part_of_match =
                 match_index_start < suggestion.detailed_match().size() && suggestion.detailed_match()[match_index_start] == index;
@@ -90,7 +90,7 @@ void SuggestionsPanel::render() {
             };
         });
 
-        auto text_width = TInput::convert_to_glyphs(suggestion.content()).total_width();
+        auto text_width = TInput::convert_to_glyphs(suggestion.content().view()).total_width();
         renderer.clear_rect({ text_width, i - m_suggestion_offset, sized_rect().width() - text_width, 1 });
     }
 

@@ -25,12 +25,12 @@ public:
         : m_content(suggestion.content().view()), m_start(suggestion.start()), m_detailed_match(move(detailed_match)), m_score(score) {}
 
     const TextIndex& start() const { return m_start; }
-    StringView content() const { return m_content; }
+    String content() const { return m_content; }
     const Vector<size_t> detailed_match() const { return m_detailed_match; }
     int score() const { return m_score; }
 
 private:
-    StringView m_content;
+    String m_content;
     TextIndex m_start;
     Vector<size_t> m_detailed_match;
     int m_score { 0 };

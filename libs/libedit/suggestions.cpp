@@ -50,7 +50,7 @@ void Suggestions::compute_matches(const Document& document, const Cursor& cursor
                 } else if (a.content().size() > b.content().size()) {
                     return 1;
                 }
-                return strcasecmp(a.content().data(), b.content().data());
+                return strcasecmp(a.content().string(), b.content().string());
             });
 }
 }

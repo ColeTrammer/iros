@@ -247,7 +247,7 @@ Maybe<String> MultiCursor::preview_auto_complete_text() const {
     }
 
     auto current_text = m_display.document()->text_in_range(suggestion.start(), end);
-    if (suggestion.content() == current_text.view()) {
+    if (suggestion.content().view() == current_text.view()) {
         return {};
     }
 
