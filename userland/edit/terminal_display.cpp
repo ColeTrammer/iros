@@ -155,7 +155,7 @@ void TerminalDisplay::render() {
     m_last_rendered_row = 0;
     document()->display(*this);
 
-    auto empty_rows = rows() - m_last_rendered_row;
+    auto empty_rows = rows() - m_last_rendered_row - 1;
     auto renderer = get_renderer();
     renderer.clear_rect({ 0, rows() - empty_rows, sized_rect().width(), empty_rows });
 
