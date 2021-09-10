@@ -170,10 +170,14 @@ int main(int argc, char** argv) {
         auto& layout = main_panel.set_layout_engine<App::HorizontalFlexLayoutEngine>();
         auto& panel = layout.add<TUI::TerminalPanel>();
 
+        panel.on<App::TerminalHangupEvent>({}, [&](auto&) {
+            app->main_event_loop().set_should_exit(true);
+        });
         panel.make_focused();
 
         app->set_use_alternate_screen_buffer(true);
         app->set_use_mouse(true);
+        app->set_quit_on_control_q(false);
         app->enter();
         return 0;
     }
@@ -182,7 +186,10 @@ int main(int argc, char** argv) {
 
     double opacity = 0.90;
     auto window = App::Window::create(nullptr, 200, 200, 80 * 8 + 10, 25 * 16 + 10, "Terminal", opacity != 1.0);
-    window->set_main_widget<App::TerminalWidget>(opacity);
+    auto& terminal_widget = window->set_main_widget<App::TerminalWidget>(opacity);
+    terminal_widget.on<App::TerminalHangupEvent>({}, [&](auto&) {
+        app->main_event_loop().set_should_exit(true);
+    });
     app->enter();
     return 0;
 }
