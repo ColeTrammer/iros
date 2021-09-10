@@ -3,6 +3,7 @@
 #include <app/base/widget.h>
 #include <eventloop/event.h>
 #include <eventloop/forward.h>
+#include <eventloop/key_bindings.h>
 #include <graphics/rect_set.h>
 
 APP_EVENT_PARENT(App, WindowEvent, Event, ((StringView, name)), (), ())
@@ -28,6 +29,8 @@ public:
     void invalidate_rect(const Rect& rect);
     const RectSet& dirty_rects() const { return m_dirty_rects; }
     void clear_dirty_rects() { m_dirty_rects.clear(); }
+
+    void set_key_bindings(KeyBindings key_bindings) { m_key_bindings = move(key_bindings); }
 
     void set_focused_widget(Widget* widget);
     SharedPtr<Widget> focused_widget();
@@ -56,6 +59,7 @@ private:
     void flush_layout();
     void set_hovered_widget(Widget* widget);
 
+    KeyBindings m_key_bindings;
     WeakPtr<Widget> m_focused_widget;
     WeakPtr<Widget> m_hovered_widget;
     SharedPtr<Widget> m_main_widget;

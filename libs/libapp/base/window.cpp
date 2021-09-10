@@ -49,7 +49,19 @@ void Window::initialize() {
         return false;
     });
 
-    on_unchecked<KeyDownEvent, KeyUpEvent, TextEvent>([this](const Event& event) {
+    on_unchecked<KeyDownEvent>([this](const KeyDownEvent& event) {
+        if (auto widget = focused_widget()) {
+            if (forward_to(*widget, event)) {
+                return true;
+            }
+        }
+        if (m_key_bindings.handle_key_event(event)) {
+            return true;
+        }
+        return false;
+    });
+
+    on_unchecked<KeyUpEvent, TextEvent>([this](const Event& event) {
         if (auto widget = focused_widget()) {
             return forward_to(*widget, event);
         }
