@@ -87,7 +87,7 @@ void FlexLayoutEngine::do_add(Base::Widget& widget) {
 int FlexLayoutEngine::available_space() const {
     int fixed_space = max(0, (visible_item_count() - 1) * spacing());
     for (auto& item : m_items) {
-        if (!auto_sized(*item)) {
+        if (!item->hidden() && !auto_sized(*item)) {
             fixed_space += size_in_layout_direction(m_direction, item->layout_constraint());
         }
     }
