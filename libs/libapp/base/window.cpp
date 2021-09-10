@@ -39,7 +39,7 @@ void Window::initialize() {
         }
 
         if (event.mouse_down()) {
-            set_focused_widget(widget);
+            widget->make_focused();
         } else {
             widget = focused_widget().get();
         }
@@ -143,7 +143,7 @@ void Window::schedule_render() {
 }
 
 void Window::set_hovered_widget(Widget* widget) {
-    auto old_widget = m_focused_widget.lock();
+    auto old_widget = m_hovered_widget.lock();
     if (old_widget.get() == widget) {
         return;
     }
@@ -153,11 +153,11 @@ void Window::set_hovered_widget(Widget* widget) {
     }
 
     if (!widget) {
-        m_focused_widget.reset();
+        m_hovered_widget.reset();
         return;
     }
 
-    m_focused_widget = widget->weak_from_this();
+    m_hovered_widget = widget->weak_from_this();
     widget->emit<App::EnterEvent>();
 }
 }
