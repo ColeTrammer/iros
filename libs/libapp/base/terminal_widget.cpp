@@ -1,3 +1,4 @@
+#include <app/base/terminal_widget.h>
 #include <app/context_menu.h>
 #include <app/window.h>
 #include <clipboard/connection.h>
@@ -8,15 +9,14 @@
 #include <graphics/renderer.h>
 #include <unistd.h>
 
-#include "base_terminal_widget.h"
-
 // #define TERMINAL_WIDGET_DEBUG
 
-BaseTerminalWidget::BaseTerminalWidget() : m_tty(m_pseudo_terminal) {}
+namespace App::Base {
+TerminalWidget::TerminalWidget() : m_tty(m_pseudo_terminal) {}
 
-BaseTerminalWidget::~BaseTerminalWidget() {}
+TerminalWidget::~TerminalWidget() {}
 
-void BaseTerminalWidget::initialize() {
+void TerminalWidget::initialize() {
     m_pseudo_terminal_wrapper = App::FdWrapper::create(this_widget().shared_from_this(), m_pseudo_terminal.master_fd());
     m_pseudo_terminal_wrapper->set_selected_events(App::NotifyWhen::Readable);
     m_pseudo_terminal_wrapper->enable_notifications();
@@ -174,14 +174,14 @@ void BaseTerminalWidget::initialize() {
         });
 }
 
-void BaseTerminalWidget::copy_selection() {
+void TerminalWidget::copy_selection() {
     auto text = selection_text();
     if (!text.empty()) {
         Clipboard::Connection::the().set_clipboard_contents_to_text(text);
     }
 }
 
-void BaseTerminalWidget::paste_text() {
+void TerminalWidget::paste_text() {
     auto maybe_text = Clipboard::Connection::the().get_clipboard_contents_as_text();
     if (!maybe_text.has_value()) {
         return;
@@ -189,7 +189,7 @@ void BaseTerminalWidget::paste_text() {
     m_pseudo_terminal.send_clipboard_contents(maybe_text.value());
 }
 
-void BaseTerminalWidget::clear_selection() {
+void TerminalWidget::clear_selection() {
     m_in_selection = false;
     if (m_selection_start_row == -1 || m_selection_start_col == -1 || m_selection_end_row == -1 || m_selection_end_col == -1) {
         return;
@@ -199,7 +199,7 @@ void BaseTerminalWidget::clear_selection() {
     invalidate_all_contents();
 }
 
-bool BaseTerminalWidget::in_selection(int relative_row, int col) const {
+bool TerminalWidget::in_selection(int relative_row, int col) const {
     int start_row = m_selection_start_row;
     int start_col = m_selection_start_col;
     int end_row = m_selection_end_row;
@@ -230,7 +230,7 @@ bool BaseTerminalWidget::in_selection(int relative_row, int col) const {
     return row == end_row && col < end_col;
 }
 
-String BaseTerminalWidget::selection_text() const {
+String TerminalWidget::selection_text() const {
     int start_row = m_selection_start_row;
     int start_col = m_selection_start_col;
     int end_row = m_selection_end_row;
@@ -269,4 +269,5 @@ String BaseTerminalWidget::selection_text() const {
         }
     }
     return text;
+}
 }

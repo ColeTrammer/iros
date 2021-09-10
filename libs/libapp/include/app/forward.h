@@ -19,6 +19,7 @@ class Model;
 class PlatformWindow;
 class TabWidget;
 class TableView;
+class TerminalWidget;
 class TextLabel;
 class VerticalBoxLayout;
 class View;

@@ -1,5 +1,6 @@
 set(SOURCES
     base/application.cpp
+    base/terminal_widget.cpp
     base/widget.cpp
     base/window.cpp
     application_os_2.cpp
@@ -14,6 +15,7 @@ set(SOURCES
     model.cpp
     tab_widget.cpp
     table_view.cpp
+    terminal_widget.cpp
     text_label.cpp
     view.cpp
     widget.cpp
@@ -33,4 +35,4 @@ if(${NATIVE_BUILD})
     endif()
 endif()
 
-target_link_libraries(libapp PUBLIC libeventloop libgraphics window_server_headers)
+target_link_libraries(libapp PUBLIC libeventloop libgraphics libterminal libclipboard window_server_headers)

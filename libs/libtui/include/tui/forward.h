@@ -8,4 +8,5 @@ class Label;
 class LayoutConstraint;
 class LayoutEngine;
 class Panel;
+class TerminalPanel;
 }

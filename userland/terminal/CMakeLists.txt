@@ -1,8 +1,5 @@
 set(SOURCES
-    base_terminal_widget.cpp
     main.cpp
-    terminal_panel.cpp
-    terminal_widget.cpp
     vga_buffer.cpp
     vga_terminal.cpp
 )

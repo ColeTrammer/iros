@@ -1,14 +1,14 @@
 #include <terminal/tty.h>
 #include <tinput/terminal_renderer.h>
+#include <tui/terminal_panel.h>
 
-#include "terminal_panel.h"
-
+namespace TUI {
 TerminalPanel::TerminalPanel() {
     set_accepts_focus(true);
 }
 
 void TerminalPanel::initialize() {
-    BaseTerminalWidget::initialize();
+    TerminalWidget::initialize();
     Panel::initialize();
 }
 
@@ -52,4 +52,5 @@ void TerminalPanel::render() {
                                  { .foreground = fg, .background = bg, .bold = cell.bold, .invert = cell.inverted });
         }
     }
+}
 }

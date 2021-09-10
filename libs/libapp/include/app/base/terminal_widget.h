@@ -2,16 +2,18 @@
 
 #include <eventloop/forward.h>
 #include <eventloop/selectable.h>
+#include <graphics/rect.h>
 #include <liim/pointers.h>
 #include <liim/string.h>
 #include <terminal/pseudo_terminal.h>
 #include <terminal/tty.h>
 
-class BaseTerminalWidget {
+namespace App::Base {
+class TerminalWidget {
 public:
-    BaseTerminalWidget();
+    TerminalWidget();
     void initialize();
-    virtual ~BaseTerminalWidget();
+    virtual ~TerminalWidget();
 
     virtual App::Object& this_widget() = 0;
     virtual void invalidate_all_contents() = 0;
@@ -32,10 +34,11 @@ private:
 
     Terminal::PsuedoTerminal m_pseudo_terminal;
     Terminal::TTY m_tty;
-    SharedPtr<App::FdWrapper> m_pseudo_terminal_wrapper;
+    SharedPtr<FdWrapper> m_pseudo_terminal_wrapper;
     int m_selection_start_row { -1 };
     int m_selection_start_col { -1 };
     int m_selection_end_row { -1 };
     int m_selection_end_col { -1 };
     bool m_in_selection { false };
 };
+}

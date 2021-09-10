@@ -1,4 +1,5 @@
 #include <app/context_menu.h>
+#include <app/terminal_widget.h>
 #include <app/window.h>
 #include <clipboard/connection.h>
 #include <ctype.h>
@@ -7,10 +8,9 @@
 #include <graphics/renderer.h>
 #include <unistd.h>
 
-#include "terminal_widget.h"
-
 // #define TERMINAL_WIDGET_DEBUG
 
+namespace App {
 constexpr int cell_width = 8;
 constexpr int cell_height = 16;
 
@@ -26,7 +26,7 @@ void TerminalWidget::initialize() {
     });
     set_context_menu(move(context_menu));
 
-    BaseTerminalWidget::initialize();
+    Base::TerminalWidget::initialize();
     Widget::initialize();
 }
 
@@ -112,4 +112,5 @@ void TerminalWidget::render() {
     time_t delta_milli_seconds = delta_seconds * 1000 + delta_nano_seconds / 1000000;
     fprintf(stderr, "TerminalWidget::render() took %lu ms\n", delta_milli_seconds);
 #endif /* TERMINAL_WIDGET_DEBUG */
+}
 }

@@ -1,5 +1,6 @@
 #include <app/application.h>
 #include <app/flex_layout_engine.h>
+#include <app/terminal_widget.h>
 #include <app/window.h>
 #include <clipboard/connection.h>
 #include <errno.h>
@@ -12,14 +13,13 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <tui/application.h>
+#include <tui/terminal_panel.h>
 #include <unistd.h>
 
 #ifdef __os_2__
 #include <sys/umessage.h>
 #endif /* __os_2__ */
 
-#include "terminal_panel.h"
-#include "terminal_widget.h"
 #include "vga_buffer.h"
 #include "vga_terminal.h"
 
@@ -168,7 +168,7 @@ int main(int argc, char** argv) {
 
         auto& main_panel = app->root_window().set_main_widget<TUI::Panel>();
         auto& layout = main_panel.set_layout_engine<App::HorizontalFlexLayoutEngine>();
-        auto& panel = layout.add<TerminalPanel>();
+        auto& panel = layout.add<TUI::TerminalPanel>();
 
         panel.make_focused();
 
@@ -182,7 +182,7 @@ int main(int argc, char** argv) {
 
     double opacity = 0.90;
     auto window = App::Window::create(nullptr, 200, 200, 80 * 8 + 10, 25 * 16 + 10, "Terminal", opacity != 1.0);
-    window->set_main_widget<TerminalWidget>(opacity);
+    window->set_main_widget<App::TerminalWidget>(opacity);
     app->enter();
     return 0;
 }
