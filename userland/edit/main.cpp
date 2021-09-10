@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <tinput/terminal_renderer.h>
 #include <tui/application.h>
+#include <tui/terminal_panel.h>
 #include <unistd.h>
 
 #include "app_display.h"
@@ -100,7 +101,8 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    auto& main_widget = app->root_window().set_main_widget<BackgroundPanel>();
+    auto& root_window = app->root_window();
+    auto& main_widget = root_window.set_main_widget<BackgroundPanel>();
     auto& main_layout = main_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
     main_layout.set_spacing(1);
 
@@ -110,6 +112,11 @@ int main(int argc, char** argv) {
 
     auto& display = display_layout.add<TerminalDisplay>();
 
+    auto& terminal_container = main_layout.add<TUI::Panel>();
+    terminal_container.set_hidden(true);
+
+    auto terminal = SharedPtr<TUI::TerminalPanel> {};
+
     main_layout.add<TerminalStatusBar>();
 
     display.set_document(move(document));
@@ -117,6 +124,21 @@ int main(int argc, char** argv) {
         display.send_status_message(*error_message);
     }
     display.enter();
+
+    auto global_key_bindings = App::KeyBindings {};
+    global_key_bindings.add({ App::Key::T, App::KeyModifier::Control }, [&] {
+        if (terminal) {
+            terminal->make_focused();
+            return;
+        }
+
+        terminal_container.set_hidden(false);
+        auto& terminal_container_layout = terminal_container.set_layout_engine<App::HorizontalFlexLayoutEngine>();
+
+        terminal = terminal_container_layout.add<TUI::TerminalPanel>().shared_from_this();
+        terminal->make_focused();
+    });
+    root_window.set_key_bindings(move(global_key_bindings));
 
     app->set_use_alternate_screen_buffer(true);
     app->set_use_mouse(true);
