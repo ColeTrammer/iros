@@ -46,12 +46,6 @@ void SuggestionsPanel::initialize() {
                 next_suggestion();
                 break;
             case App::Key::Tab:
-                if (m_suggestions.size() == 1) {
-                    m_display.complete_suggestion(m_suggestions.first());
-                    break;
-                }
-                event.shift_down() ? prev_suggestion() : next_suggestion();
-                break;
             case App::Key::Enter:
                 if (m_suggestions.empty()) {
                     m_display.hide_suggestions_panel();
