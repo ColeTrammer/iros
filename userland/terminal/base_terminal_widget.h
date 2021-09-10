@@ -4,9 +4,8 @@
 #include <eventloop/selectable.h>
 #include <liim/pointers.h>
 #include <liim/string.h>
-
-#include "pseudo_terminal.h"
-#include "tty.h"
+#include <terminal/pseudo_terminal.h>
+#include <terminal/tty.h>
 
 class BaseTerminalWidget {
 public:

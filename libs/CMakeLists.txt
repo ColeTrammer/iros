@@ -22,6 +22,7 @@ set(TARGETS
     libsharedtest
     libsharedtest2
     libtest
+    libterminal
     libtinput
     libtui
 )

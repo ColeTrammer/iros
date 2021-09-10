@@ -2,9 +2,8 @@
 #include <errno.h>
 #include <liim/byte_io.h>
 #include <stdlib.h>
-
-#include "pseudo_terminal.h"
-#include "tty.h"
+#include <terminal/pseudo_terminal.h>
+#include <terminal/tty.h>
 
 // #define TERMINAL_DEBUG
 

@@ -1,9 +1,9 @@
 #pragma once
 
 #include <eventloop/event.h>
+#include <terminal/pseudo_terminal.h>
+#include <terminal/tty.h>
 
-#include "pseudo_terminal.h"
-#include "tty.h"
 #include "vga_buffer.h"
 
 class VgaTerminal {

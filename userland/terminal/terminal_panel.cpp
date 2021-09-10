@@ -1,7 +1,7 @@
+#include <terminal/tty.h>
 #include <tinput/terminal_renderer.h>
 
 #include "terminal_panel.h"
-#include "tty.h"
 
 TerminalPanel::TerminalPanel() {
     set_accepts_focus(true);

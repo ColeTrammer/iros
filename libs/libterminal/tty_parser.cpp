@@ -1,4 +1,4 @@
-#include "tty_parser.h"
+#include <terminal/tty_parser.h>
 
 // #define TTY_PARSER_DEBUG
 

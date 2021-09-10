@@ -4,9 +4,8 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
+#include <terminal/pseudo_terminal.h>
 #include <unistd.h>
-
-#include "pseudo_terminal.h"
 
 PsuedoTerminal::PsuedoTerminal() {
     passwd* pwd = getpwuid(getuid());

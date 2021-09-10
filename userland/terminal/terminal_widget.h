@@ -5,8 +5,6 @@
 #include <liim/pointers.h>
 
 #include "base_terminal_widget.h"
-#include "pseudo_terminal.h"
-#include "tty.h"
 
 class TerminalWidget final
     : public App::Widget
