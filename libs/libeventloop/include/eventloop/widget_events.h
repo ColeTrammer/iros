@@ -11,7 +11,7 @@ APP_EVENT(App, UnfocusedEvent, Event, (), (), ())
 APP_EVENT(App, LeaveEvent, Event, (), (), ())
 APP_EVENT(App, EnterEvent, Event, (), (), ())
 
-#define __APP_KEY_EVENT_FIELDS ((Key, key), (int, modifiers), (bool, generates_text))
+#define __APP_KEY_EVENT_FIELDS ((Key, key), (int, modifiers), (bool, generates_text), (bool, is_multi))
 
 // clang-format off
 APP_EVENT_PARENT_REQUIRES_HANDLING(App, KeyEvent, Event, ((StringView, name)), __APP_KEY_EVENT_FIELDS, (

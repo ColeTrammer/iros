@@ -90,6 +90,12 @@ int main() {
         }
     }
 
+    auto key_bindings = App::KeyBindings {};
+    key_bindings.add({ App::Key::Y, App::KeyModifier::Control, App::KeyShortcut::IsMulti::Yes }, [] {
+        TUI::Application::the().main_event_loop().set_should_exit(true);
+    });
+    app->root_window().set_key_bindings(move(key_bindings));
+
     app->set_use_mouse(true);
     app->set_use_alternate_screen_buffer(true);
     app->enter();

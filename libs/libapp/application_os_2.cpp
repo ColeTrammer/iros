@@ -30,8 +30,8 @@ void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::KeyE
     auto maybe_window = Window::find_by_wid(message.wid);
     assert(maybe_window.has_value());
     EventLoop::queue_event(maybe_window.value(),
-                           make_unique<KeyEvent>(message.key_down ? KeyDownEvent::static_event_name() : KeyUpEvent::static_event_name(),
-                                                 static_cast<Key>(message.key), message.modifiers, message.generates_text));
+                           Application::the().input_tracker().notify_key_event(static_cast<Key>(message.key), message.modifiers,
+                                                                               message.generates_text, message.key_down));
 }
 
 void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::TextEventMessage& message) {

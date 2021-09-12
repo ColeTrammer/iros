@@ -342,8 +342,8 @@ void SDLApplication::run_sdl() {
                 }
 
                 auto modifiers = translate_sdl_modifiers(event.key.keysym.mod);
-                EventLoop::queue_event(*maybe_window,
-                                       make_unique<KeyDownEvent>(translate_sdl_keycode(event.key.keysym.sym), modifiers, false));
+                EventLoop::queue_event(
+                    *maybe_window, input_tracker().notify_key_event(translate_sdl_keycode(event.key.keysym.sym), modifiers, false, true));
                 break;
             }
             case SDL_TEXTINPUT: {

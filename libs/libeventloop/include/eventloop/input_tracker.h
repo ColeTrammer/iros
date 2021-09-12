@@ -14,6 +14,8 @@ public:
                                                         int screen_height);
     UniquePtr<KeyEvent> notify_os_key_event(char ascii, int key, unsigned int flags);
 
+    UniquePtr<KeyEvent> notify_key_event(App::Key key, int modifiers, bool generates_text, bool key_down);
+
     int prev_buttons() const { return m_prev.buttons_down(); }
     int prev_x() const { return m_prev.x(); }
     int prev_y() const { return m_prev.y(); }
@@ -47,5 +49,7 @@ private:
     };
 
     MousePress m_prev;
+    bool m_last_was_multi_keypress_signal { false };
+    timespec m_multi_keypress_signal_timestamp;
 };
 }

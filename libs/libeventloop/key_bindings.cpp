@@ -11,7 +11,8 @@ bool KeyBindings::handle_key_event(const KeyEvent& event) {
     }
 
     for (auto& binding : m_key_bindings) {
-        if (event.key() != binding.shortcut.key() || event.modifiers() != binding.shortcut.modifiers()) {
+        if (event.key() != binding.shortcut.key() || event.modifiers() != binding.shortcut.modifiers() ||
+            event.is_multi() != binding.shortcut.is_multi()) {
             continue;
         }
 

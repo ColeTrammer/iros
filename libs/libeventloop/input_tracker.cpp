@@ -4,7 +4,7 @@
 
 namespace App {
 UniquePtr<KeyEvent> InputTracker::notify_os_key_event(char ascii, int key, unsigned int flags) {
-    auto out_type = (flags & KEY_DOWN) ? KeyDownEvent::static_event_name() : KeyUpEvent::static_event_name();
+    bool out_is_down = !!(flags & KEY_DOWN);
 
     int out_modifiers = 0;
     if (flags & KEY_CONTROL_ON) {
@@ -239,7 +239,32 @@ UniquePtr<KeyEvent> InputTracker::notify_os_key_event(char ascii, int key, unsig
                 return Key::None;
         }
     }();
-    return make_unique<KeyEvent>(out_type, out_key, out_modifiers, out_generates_text);
+    return notify_key_event(out_key, out_modifiers, out_generates_text, out_is_down);
+}
+
+UniquePtr<KeyEvent> InputTracker::notify_key_event(App::Key key, int modifiers, bool generates_text, bool is_down) {
+    if (!is_down) {
+        return make_unique<App::KeyUpEvent>(key, modifiers, generates_text, false);
+    }
+
+    bool is_multi = false;
+    if (m_last_was_multi_keypress_signal) {
+        m_last_was_multi_keypress_signal = false;
+
+        timespec now;
+        clock_gettime(CLOCK_REALTIME, &now);
+
+        auto time_delta_ms = (now.tv_sec - m_multi_keypress_signal_timestamp.tv_sec) * 1000 +
+                             (now.tv_nsec - m_multi_keypress_signal_timestamp.tv_nsec) / 1000000;
+
+        is_multi = time_delta_ms <= 2000;
+    } else {
+        m_last_was_multi_keypress_signal = key == App::Key::K && modifiers == App::KeyModifier::Control;
+        if (m_last_was_multi_keypress_signal) {
+            clock_gettime(CLOCK_REALTIME, &m_multi_keypress_signal_timestamp);
+        }
+    }
+    return make_unique<App::KeyDownEvent>(key, modifiers, generates_text, is_multi);
 }
 
 Vector<UniquePtr<MouseEvent>> InputTracker::notify_os_mouse_event(int scale_mode, int dx, int dy, int dz, int buttons, int screen_width,

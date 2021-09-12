@@ -35,6 +35,7 @@ private:
     void finish_sgr_mouse_event(const String& escape);
     void finish_csi(const String& csi);
 
+    void enqueue_key_down_event(App::Key key, int modifiers);
     void enqueue_event(UniquePtr<App::Event> event);
 
     Generator<Ext::StreamResult> m_handler;

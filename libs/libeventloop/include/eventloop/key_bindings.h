@@ -8,14 +8,19 @@
 namespace App {
 class KeyShortcut {
 public:
-    KeyShortcut(Key key, int modifiers) : m_key(key), m_modifiers(modifiers) {}
+    enum class IsMulti { Yes, No };
+
+    KeyShortcut(Key key, int modifiers, IsMulti is_multi = IsMulti::No)
+        : m_key(key), m_modifiers(modifiers), m_is_multi(is_multi == IsMulti::Yes) {}
 
     Key key() const { return m_key; }
     int modifiers() const { return m_modifiers; }
+    bool is_multi() const { return m_is_multi; }
 
 private:
     Key m_key { Key::None };
     int m_modifiers { 0 };
+    bool m_is_multi { false };
 };
 
 class KeyBindings {
