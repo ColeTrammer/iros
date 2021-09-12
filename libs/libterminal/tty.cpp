@@ -18,6 +18,8 @@ void TTY::on_c0_character(uint8_t byte) {
     switch (byte) {
         case 8:
             return c0_bs();
+        case '\a':
+            return;
         case '\t':
             return c0_ht();
         case '\n':
