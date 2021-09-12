@@ -35,7 +35,8 @@ public:
     bool accepts_focus() const { return m_accepts_focus; }
     void set_accepts_focus(bool b) { m_accepts_focus = b; }
 
-    const App::KeyBindings& key_bindings() { return m_key_bindings; }
+    App::KeyBindings& key_bindings() { return m_key_bindings; }
+    const App::KeyBindings& key_bindings() const { return m_key_bindings; }
     void set_key_bindings(App::KeyBindings key_bindings) { m_key_bindings = move(key_bindings); }
 
     bool hidden() const { return m_hidden; }
