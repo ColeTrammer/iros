@@ -9,6 +9,14 @@ namespace TUI {
 Panel::Panel() {}
 
 void Panel::initialize() {
+    on<App::FocusedEvent>([this](auto&) {
+        if (cursor_position().has_value()) {
+            if (auto* window = parent_window()) {
+                window->schedule_render();
+            }
+        }
+    });
+
     App::Base::Widget::initialize();
 }
 

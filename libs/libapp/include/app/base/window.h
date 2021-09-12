@@ -48,6 +48,7 @@ public:
     const Widget& main_widget() const { return *m_main_widget; }
 
     Widget* hit_test(const Widget& root, const Point& point) const;
+    void schedule_render();
 
 protected:
     virtual void do_render() = 0;
@@ -55,7 +56,6 @@ protected:
 private:
     virtual bool is_window() const final override { return true; }
 
-    void schedule_render();
     void flush_layout();
     void set_hovered_widget(Widget* widget);
 
