@@ -18,7 +18,7 @@ class TerminalDisplay final
     , public TUI::Panel {
     APP_OBJECT(TerminalDisplay)
 
-    APP_EMITS(TUI::Panel, Edit::SplitDisplayEvent)
+    APP_EMITS(TUI::Panel, Edit::SplitDisplayEvent, Edit::NewDisplayEvent)
 
 public:
     TerminalDisplay();

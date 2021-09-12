@@ -14,6 +14,7 @@
 #include <liim/pointers.h>
 
 APP_EVENT(Edit, SplitDisplayEvent, App::Event, (), (), ())
+APP_EVENT(Edit, NewDisplayEvent, App::Event, (), (), ())
 
 namespace Edit {
 enum class AutoCompleteMode { Never, Always };

@@ -120,7 +120,10 @@ int main(int argc, char** argv) {
 
     main_layout.add<TerminalStatusBar>();
 
-    auto install_navigation_handlers = [&](TerminalDisplay& display) {
+    Function<void(TerminalDisplay&)> split_display;
+    Function<void(TerminalDisplay&)> make_new_display;
+
+    auto setup_display_handlers = [&](TerminalDisplay& display) {
         auto& key_bindings = display.key_bindings();
         key_bindings.add({ App::Key::DownArrow, App::KeyModifier::Control, App::KeyShortcut::IsMulti::Yes },
                          [&terminal_container, &terminal, &display] {
@@ -156,9 +159,16 @@ int main(int argc, char** argv) {
                                  static_cast<App::Base::Widget&>(const_cast<App::Object&>(*prev_child)).make_focused();
                              }
                          });
+
+        display.on<Edit::SplitDisplayEvent>({}, [&display, &split_display](auto&) {
+            split_display(display);
+        });
+        display.on<Edit::NewDisplayEvent>({}, [&display, &make_new_display](auto&) {
+            make_new_display(display);
+        });
     };
 
-    Function<void(TerminalDisplay&)> split_display = [&](TerminalDisplay& display) {
+    split_display = [&](TerminalDisplay& display) {
         auto& new_display = display_layout.add<TerminalDisplay>();
         new_display.set_document(display.document()->shared_from_this());
         new_display.set_preview_auto_complete(display.preview_auto_complete());
@@ -167,16 +177,24 @@ int main(int argc, char** argv) {
         new_display.cursors().restore(*display.document(), display.cursors().snapshot());
         new_display.enter();
 
+        setup_display_handlers(new_display);
+    };
+
+    make_new_display = [&](TerminalDisplay& display) {
+        auto& new_display = display_layout.add<TerminalDisplay>();
+        new_display.set_document(Edit::Document::create_empty());
+        new_display.set_preview_auto_complete(display.preview_auto_complete());
+        new_display.set_word_wrap_enabled(display.word_wrap_enabled());
+        new_display.set_show_line_numbers(display.show_line_numbers());
+        new_display.enter();
+
         new_display.on<Edit::SplitDisplayEvent>({}, [&](auto&) {
             split_display(display);
         });
-        install_navigation_handlers(new_display);
+        setup_display_handlers(new_display);
     };
 
-    display.on<Edit::SplitDisplayEvent>({}, [&](auto&) {
-        split_display(display);
-    });
-    install_navigation_handlers(display);
+    setup_display_handlers(display);
 
     display.set_document(move(document));
     if (error_message) {

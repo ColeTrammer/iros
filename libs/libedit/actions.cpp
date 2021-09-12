@@ -277,6 +277,9 @@ void init_actions() {
         display.scroll_up(1);
     });
 
+    register_display_keyboard_action("New Display", { App::Key::N, App::KeyModifier::Control }, [](Display& display) {
+        display.this_widget().emit<Edit::NewDisplayEvent>();
+    });
     register_display_keyboard_action("Split Display", { App::Key::Backslash, App::KeyModifier::Control }, [](Display& display) {
         display.this_widget().emit<Edit::SplitDisplayEvent>();
     });
