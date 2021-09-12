@@ -18,6 +18,15 @@ TerminalWidget::TerminalWidget() : m_tty(m_pseudo_terminal) {}
 TerminalWidget::~TerminalWidget() {}
 
 void TerminalWidget::initialize() {
+    auto key_bindings = App::KeyBindings {};
+    key_bindings.add({ App::Key::C, App::KeyModifier::Control | App::KeyModifier::Shift }, [this] {
+        copy_selection();
+    });
+    key_bindings.add({ App::Key::V, App::KeyModifier::Control | App::KeyModifier::Shift }, [this] {
+        paste_text();
+    });
+    this_widget().set_key_bindings(move(key_bindings));
+
     m_pseudo_terminal_wrapper = App::FdWrapper::create(this_widget().shared_from_this(), m_pseudo_terminal.master_fd());
     m_pseudo_terminal_wrapper->set_selected_events(App::NotifyWhen::Readable);
     m_pseudo_terminal_wrapper->enable_notifications();
@@ -75,16 +84,6 @@ void TerminalWidget::initialize() {
 
     this_widget().on<App::KeyDownEvent>({}, [this](const App::KeyDownEvent& event) {
         if (this_widget().key_bindings().handle_key_event(event)) {
-            return true;
-        }
-
-        if (event.control_down() && event.shift_down() && event.key() == App::Key::C) {
-            copy_selection();
-            return true;
-        }
-
-        if (event.control_down() && event.shift_down() && event.key() == App::Key::V) {
-            paste_text();
             return true;
         }
 
