@@ -128,6 +128,34 @@ int main(int argc, char** argv) {
                                  terminal->make_focused();
                              }
                          });
+        key_bindings.add({ App::Key::LeftArrow, App::KeyModifier::Control, App::KeyShortcut::IsMulti::Yes }, [&display_conainer, &display] {
+            auto prev_child = static_cast<const App::Object*>(nullptr);
+            for (auto& child : display_conainer.children()) {
+                if (child.get() == &display) {
+                    break;
+                }
+                prev_child = child.get();
+            }
+
+            if (prev_child && prev_child->is_base_widget()) {
+                static_cast<App::Base::Widget&>(const_cast<App::Object&>(*prev_child)).make_focused();
+            }
+        });
+        key_bindings.add({ App::Key::RightArrow, App::KeyModifier::Control, App::KeyShortcut::IsMulti::Yes },
+                         [&display_conainer, &display] {
+                             auto prev_child = static_cast<const App::Object*>(nullptr);
+                             for (int i = display_conainer.children().size() - 1; i >= 0; i--) {
+                                 auto& child = display_conainer.children()[i];
+                                 if (child.get() == &display) {
+                                     break;
+                                 }
+                                 prev_child = child.get();
+                             }
+
+                             if (prev_child && prev_child->is_base_widget()) {
+                                 static_cast<App::Base::Widget&>(const_cast<App::Object&>(*prev_child)).make_focused();
+                             }
+                         });
     };
 
     Function<void(TerminalDisplay&)> split_display = [&](TerminalDisplay& display) {
