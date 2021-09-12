@@ -1,5 +1,6 @@
 #pragma once
 
+#include <app/forward.h>
 #include <eventloop/forward.h>
 #include <eventloop/selectable.h>
 #include <graphics/rect.h>
@@ -17,7 +18,7 @@ public:
     void initialize();
     virtual ~TerminalWidget();
 
-    virtual App::Object& this_widget() = 0;
+    virtual Widget& this_widget() = 0;
     virtual void invalidate_all_contents() = 0;
 
     virtual Point cell_position_of_mouse_coordinates(int mouse_x, int mouse_y) const = 0;

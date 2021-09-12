@@ -21,7 +21,7 @@ public:
     virtual void render() override;
 
     // ^Base::TerminalWidget
-    virtual App::Object& this_widget() override { return *this; }
+    virtual TerminalWidget& this_widget() override { return *this; }
     virtual void invalidate_all_contents() override { invalidate(); }
     virtual Point cell_position_of_mouse_coordinates(int mouse_x, int mouse_y) const override;
     virtual Rect available_cells() const override;

@@ -57,7 +57,7 @@ void TerminalWidget::initialize() {
         invalidate_all_contents();
     };
 
-    this_widget().on_unchecked<App::ResizeEvent>({}, [this](auto&) {
+    this_widget().on<App::ResizeEvent>({}, [this](auto&) {
         m_selection_start_row = m_selection_start_col = m_selection_end_row = m_selection_end_col = -1;
         m_in_selection = false;
 
@@ -68,7 +68,16 @@ void TerminalWidget::initialize() {
         m_pseudo_terminal.set_size(rows, cols);
     });
 
-    this_widget().on_unchecked<App::KeyDownEvent>({}, [this](const App::KeyDownEvent& event) {
+    this_widget().on<App::ShowEvent>({}, [this](auto&) {
+        m_tty.invalidate_all();
+        invalidate_all_contents();
+    });
+
+    this_widget().on<App::KeyDownEvent>({}, [this](const App::KeyDownEvent& event) {
+        if (this_widget().key_bindings().handle_key_event(event)) {
+            return true;
+        }
+
         if (event.control_down() && event.shift_down() && event.key() == App::Key::C) {
             copy_selection();
             return true;
@@ -83,96 +92,95 @@ void TerminalWidget::initialize() {
         return true;
     });
 
-    this_widget().on_unchecked<App::TextEvent>({}, [this](const App::TextEvent& event) {
+    this_widget().on<App::TextEvent>({}, [this](const App::TextEvent& event) {
         m_pseudo_terminal.handle_text_event(event);
         return true;
     });
 
-    this_widget().on_unchecked<App::MouseDownEvent, App::MouseMoveEvent, App::MouseUpEvent, App::MouseScrollEvent>(
-        {}, [this](const auto& event) {
-            using SpecificMouseEvent = LIIM::decay_t<decltype(event)>;
+    this_widget().on<App::MouseDownEvent, App::MouseMoveEvent, App::MouseUpEvent, App::MouseScrollEvent>({}, [this](const auto& event) {
+        using SpecificMouseEvent = LIIM::decay_t<decltype(event)>;
 
-            auto cell = cell_position_of_mouse_coordinates(event.x(), event.y());
-            auto cell_x = cell.x();
-            auto cell_y = cell.y();
+        auto cell = cell_position_of_mouse_coordinates(event.x(), event.y());
+        auto cell_x = cell.x();
+        auto cell_y = cell.y();
 
-            int row_at_cursor = m_tty.scroll_relative_offset(cell_y);
-            int col_at_cursor = cell_x;
+        int row_at_cursor = m_tty.scroll_relative_offset(cell_y);
+        int col_at_cursor = cell_x;
 
-            auto event_copy = SpecificMouseEvent { event };
-            event_copy.set_x(cell_x);
-            event_copy.set_y(cell_y);
-            if (m_pseudo_terminal.handle_mouse_event(event_copy)) {
-                return true;
+        auto event_copy = SpecificMouseEvent { event };
+        event_copy.set_x(cell_x);
+        event_copy.set_y(cell_y);
+        if (m_pseudo_terminal.handle_mouse_event(event_copy)) {
+            return true;
+        }
+
+        if (event.mouse_scroll()) {
+            if (event.z() < 0) {
+                m_tty.scroll_up();
+            } else if (event.z() > 0) {
+                m_tty.scroll_down();
             }
+            invalidate_all_contents();
+            return true;
+        }
 
-            if (event.mouse_scroll()) {
-                if (event.z() < 0) {
-                    m_tty.scroll_up();
-                } else if (event.z() > 0) {
-                    m_tty.scroll_down();
+        if (event.mouse_down() && event.left_button()) {
+            clear_selection();
+            m_in_selection = true;
+
+            switch (event.cyclic_count(3)) {
+                case 1: {
+                    m_selection_start_row = m_selection_end_row = row_at_cursor;
+                    m_selection_start_col = m_selection_end_col = col_at_cursor;
+                    invalidate_all_contents();
+                    break;
                 }
-                invalidate_all_contents();
-                return true;
-            }
+                case 2: {
+                    m_selection_start_row = m_selection_end_row = row_at_cursor;
+                    m_selection_start_col = m_selection_end_col = col_at_cursor;
 
-            if (event.mouse_down() && event.left_button()) {
-                clear_selection();
-                m_in_selection = true;
-
-                switch (event.cyclic_count(3)) {
-                    case 1: {
-                        m_selection_start_row = m_selection_end_row = row_at_cursor;
-                        m_selection_start_col = m_selection_end_col = col_at_cursor;
-                        invalidate_all_contents();
-                        break;
+                    if (row_at_cursor < 0 || row_at_cursor >= m_tty.row_count()) {
+                        m_in_selection = false;
+                        return true;
                     }
-                    case 2: {
-                        m_selection_start_row = m_selection_end_row = row_at_cursor;
-                        m_selection_start_col = m_selection_end_col = col_at_cursor;
 
-                        if (row_at_cursor < 0 || row_at_cursor >= m_tty.row_count()) {
-                            m_in_selection = false;
-                            return true;
-                        }
-
-                        auto& row = m_tty.row_at_scroll_relative_offset(row_at_cursor);
-                        bool connect_spaces = isspace(row[col_at_cursor].ch);
-                        while (m_selection_start_col > 0 && isspace(row[m_selection_start_col - 1].ch) == connect_spaces) {
-                            m_selection_start_col--;
-                        }
-                        while (m_selection_end_col < m_tty.col_count() - 1 && isspace(row[m_selection_end_col + 1].ch) == connect_spaces) {
-                            m_selection_end_col++;
-                        }
+                    auto& row = m_tty.row_at_scroll_relative_offset(row_at_cursor);
+                    bool connect_spaces = isspace(row[col_at_cursor].ch);
+                    while (m_selection_start_col > 0 && isspace(row[m_selection_start_col - 1].ch) == connect_spaces) {
+                        m_selection_start_col--;
+                    }
+                    while (m_selection_end_col < m_tty.col_count() - 1 && isspace(row[m_selection_end_col + 1].ch) == connect_spaces) {
                         m_selection_end_col++;
-                        invalidate_all_contents();
-                        break;
                     }
-                    case 3: {
-                        m_selection_start_row = m_selection_end_row = row_at_cursor;
-                        m_selection_start_col = 0;
-                        m_selection_end_col = m_tty.col_count();
-                        invalidate_all_contents();
-                        break;
-                    }
+                    m_selection_end_col++;
+                    invalidate_all_contents();
+                    break;
                 }
-                return true;
+                case 3: {
+                    m_selection_start_row = m_selection_end_row = row_at_cursor;
+                    m_selection_start_col = 0;
+                    m_selection_end_col = m_tty.col_count();
+                    invalidate_all_contents();
+                    break;
+                }
             }
+            return true;
+        }
 
-            if (event.mouse_up() && event.left_button()) {
-                m_in_selection = false;
-                return true;
-            }
+        if (event.mouse_up() && event.left_button()) {
+            m_in_selection = false;
+            return true;
+        }
 
-            if (m_in_selection && (m_selection_end_row != row_at_cursor || m_selection_end_col != col_at_cursor)) {
-                m_selection_end_row = row_at_cursor;
-                m_selection_end_col = col_at_cursor;
-                invalidate_all_contents();
-                return true;
-            }
+        if (m_in_selection && (m_selection_end_row != row_at_cursor || m_selection_end_col != col_at_cursor)) {
+            m_selection_end_row = row_at_cursor;
+            m_selection_end_col = col_at_cursor;
+            invalidate_all_contents();
+            return true;
+        }
 
-            return false;
-        });
+        return false;
+    });
 }
 
 void TerminalWidget::copy_selection() {
