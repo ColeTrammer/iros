@@ -11,13 +11,13 @@ void Widget::initialize() {
         return m_key_bindings.handle_key_event(event);
     });
 
-    on<ResizeEvent>([this](const ResizeEvent&) {
+    on<ResizeEvent>([this](auto&) {
         if (layout_engine()) {
             layout_engine()->schedule_layout();
         }
     });
 
-    on<ThemeChangeEvent>([this](const ThemeChangeEvent& event) {
+    on<ShowEvent, HideEvent, ThemeChangeEvent>([this](const auto& event) {
         forward_to_children(event);
     });
 
@@ -132,10 +132,14 @@ void Widget::set_hidden(bool b) {
     }
 
     m_hidden = b;
-    if (!b) {
-        invalidate(positioned_rect());
-    }
+    invalidate(positioned_rect());
     relayout();
+
+    if (m_hidden) {
+        emit<HideEvent>();
+    } else {
+        emit<ShowEvent>();
+    }
 }
 
 void Widget::set_positioned_rect(const Rect& rect) {

@@ -10,6 +10,8 @@ APP_EVENT(App, FocusedEvent, Event, (), (), ())
 APP_EVENT(App, UnfocusedEvent, Event, (), (), ())
 APP_EVENT(App, LeaveEvent, Event, (), (), ())
 APP_EVENT(App, EnterEvent, Event, (), (), ())
+APP_EVENT(App, ShowEvent, Event, (), (), ())
+APP_EVENT(App, HideEvent, Event, (), (), ())
 
 #define __APP_KEY_EVENT_FIELDS ((Key, key), (int, modifiers), (bool, generates_text), (bool, is_multi))
 

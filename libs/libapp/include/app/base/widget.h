@@ -11,8 +11,8 @@ namespace App::Base {
 class Widget : public Object {
     APP_OBJECT(Widget)
 
-    APP_EMITS(Object, ResizeEvent, FocusedEvent, UnfocusedEvent, LeaveEvent, EnterEvent, KeyDownEvent, KeyUpEvent, TextEvent,
-              MouseDownEvent, MouseMoveEvent, MouseUpEvent, MouseScrollEvent, ThemeChangeEvent)
+    APP_EMITS(Object, ResizeEvent, FocusedEvent, UnfocusedEvent, LeaveEvent, EnterEvent, ShowEvent, HideEvent, KeyDownEvent, KeyUpEvent,
+              TextEvent, MouseDownEvent, MouseMoveEvent, MouseUpEvent, MouseScrollEvent, ThemeChangeEvent)
 
 public:
     Widget();
