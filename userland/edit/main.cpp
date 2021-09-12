@@ -120,6 +120,36 @@ int main(int argc, char** argv) {
 
     main_layout.add<TerminalStatusBar>();
 
+    auto install_navigation_handlers = [&](TerminalDisplay& display) {
+        auto& key_bindings = display.key_bindings();
+        key_bindings.add({ App::Key::DownArrow, App::KeyModifier::Control, App::KeyShortcut::IsMulti::Yes },
+                         [&terminal_container, &terminal, &display] {
+                             if (!terminal_container.hidden() && terminal) {
+                                 terminal->make_focused();
+                             }
+                         });
+    };
+
+    Function<void(TerminalDisplay&)> split_display = [&](TerminalDisplay& display) {
+        auto& new_display = display_layout.add<TerminalDisplay>();
+        new_display.set_document(display.document()->shared_from_this());
+        new_display.set_preview_auto_complete(display.preview_auto_complete());
+        new_display.set_word_wrap_enabled(display.word_wrap_enabled());
+        new_display.set_show_line_numbers(display.show_line_numbers());
+        new_display.cursors().restore(*display.document(), display.cursors().snapshot());
+        new_display.enter();
+
+        new_display.on<Edit::SplitDisplayEvent>({}, [&](auto&) {
+            split_display(display);
+        });
+        install_navigation_handlers(new_display);
+    };
+
+    display.on<Edit::SplitDisplayEvent>({}, [&](auto&) {
+        split_display(display);
+    });
+    install_navigation_handlers(display);
+
     display.set_document(move(document));
     if (error_message) {
         display.send_status_message(*error_message);

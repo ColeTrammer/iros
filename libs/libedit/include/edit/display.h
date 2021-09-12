@@ -4,6 +4,7 @@
 #include <edit/forward.h>
 #include <edit/multicursor.h>
 #include <edit/suggestions.h>
+#include <eventloop/event.h>
 #include <eventloop/forward.h>
 #include <graphics/color.h>
 #include <graphics/forward.h>
@@ -11,6 +12,8 @@
 #include <liim/function.h>
 #include <liim/maybe.h>
 #include <liim/pointers.h>
+
+APP_EVENT(Edit, SplitDisplayEvent, App::Event, (), (), ())
 
 namespace Edit {
 enum class AutoCompleteMode { Never, Always };
@@ -47,8 +50,6 @@ public:
     virtual void enter_search(String starting_text) = 0;
     virtual App::ObjectBoundCoroutine do_open_prompt();
     virtual void quit() = 0;
-
-    virtual void split_display() {}
 
     virtual void do_compute_suggestions() {}
     virtual void show_suggestions_panel() {}

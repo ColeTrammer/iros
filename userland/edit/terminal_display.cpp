@@ -340,21 +340,6 @@ Task<Maybe<String>> TerminalDisplay::prompt(String message, String initial_value
     co_return result;
 }
 
-void TerminalDisplay::split_display() {
-    auto* parent = parent_panel();
-    assert(parent);
-
-    auto& layout = *parent->layout_engine();
-    auto& display = layout.add<TerminalDisplay>();
-
-    display.set_document(document()->shared_from_this());
-    display.set_preview_auto_complete(preview_auto_complete());
-    display.set_word_wrap_enabled(word_wrap_enabled());
-    display.set_show_line_numbers(show_line_numbers());
-    display.cursors().restore(*document(), cursors().snapshot());
-    display.enter();
-}
-
 void TerminalDisplay::enter_search(String initial_text) {
     if (m_search_panel) {
         m_search_panel->make_focused();

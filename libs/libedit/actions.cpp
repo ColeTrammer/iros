@@ -278,7 +278,7 @@ void init_actions() {
     });
 
     register_display_keyboard_action("Split Display", { App::Key::Backslash, App::KeyModifier::Control }, [](Display& display) {
-        display.split_display();
+        display.this_widget().emit<Edit::SplitDisplayEvent>();
     });
 
     register_display_keyboard_action("Search", { App::Key::F, App::KeyModifier::Control }, [](Display& display) {
