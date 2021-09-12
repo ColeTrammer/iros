@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #include <terminal/pseudo_terminal.h>
+#include <termios.h>
 #include <unistd.h>
 
 namespace Terminal {
@@ -63,6 +64,18 @@ PsuedoTerminal::PsuedoTerminal() {
 
         if (ioctl(m_master_fd, TIOCSCTTY)) {
             perror("terminal (fork): ioctl(TIOSCTTY)");
+            _exit(1);
+        }
+
+        struct termios old_termios;
+        if (tcgetattr(slave_fd, &old_termios)) {
+            perror("terminal (fork): tcgetattr");
+            _exit(1);
+        }
+
+        old_termios.c_cc[VERASE] = '\b';
+        if (tcsetattr(slave_fd, 0, &old_termios)) {
+            perror("terminal (fork): tcsetattr");
             _exit(1);
         }
 
