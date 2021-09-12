@@ -67,6 +67,7 @@ PsuedoTerminal::PsuedoTerminal() {
             _exit(1);
         }
 
+#ifdef __linux__
         struct termios old_termios;
         if (tcgetattr(slave_fd, &old_termios)) {
             perror("terminal (fork): tcgetattr");
@@ -78,6 +79,7 @@ PsuedoTerminal::PsuedoTerminal() {
             perror("terminal (fork): tcsetattr");
             _exit(1);
         }
+#endif
 
         signal(SIGTTOU, SIG_DFL);
         signal(SIGTTIN, SIG_DFL);
