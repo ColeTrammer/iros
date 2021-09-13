@@ -287,7 +287,7 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
 }
 
 SharedPtr<Bitmap> decode_png_file(const String& path) {
-    auto mapped_file = Ext::MappedFile::create(path, PROT_READ, MAP_SHARED);
+    auto mapped_file = Ext::MappedFile::try_create(path, PROT_READ, MAP_SHARED);
     if (!mapped_file) {
         return nullptr;
     }

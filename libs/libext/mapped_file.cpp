@@ -1,12 +1,13 @@
 #include <ext/mapped_file.h>
 #include <fcntl.h>
+#include <liim/pointers.h>
+#include <liim/string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 namespace Ext {
-
-UniquePtr<MappedFile> MappedFile::create(const String& path, int prot, int type) {
+UniquePtr<MappedFile> MappedFile::try_create(const String& path, int prot, int type) {
     int fd = open(path.string(), O_RDONLY);
     if (fd == -1) {
         return nullptr;
@@ -29,10 +30,10 @@ UniquePtr<MappedFile> MappedFile::create(const String& path, int prot, int type)
         return nullptr;
     }
 
-    return make_unique<MappedFile>(raw_data, st.st_size);
+    return make_unique<MappedFile>(ByteBuffer::create_from_memory_mapping(raw_data, st.st_size));
 }
 
-UniquePtr<MappedFile> MappedFile::create_with_shared_memory(const String& path, int prot) {
+UniquePtr<MappedFile> MappedFile::try_create_with_shared_memory(const String& path, int prot) {
     int fd = shm_open(path.string(), O_RDONLY, 0);
     if (fd == -1) {
         return nullptr;
@@ -55,11 +56,10 @@ UniquePtr<MappedFile> MappedFile::create_with_shared_memory(const String& path, 
         return nullptr;
     }
 
-    return make_unique<MappedFile>(raw_data, st.st_size);
+    return make_unique<MappedFile>(ByteBuffer::create_from_memory_mapping(raw_data, st.st_size));
 }
 
-MappedFile::~MappedFile() {
-    munmap(m_data, m_size);
-}
+MappedFile::MappedFile(ByteBuffer&& buffer) : m_buffer(move(buffer)) {}
 
+MappedFile::~MappedFile() {}
 }

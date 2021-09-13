@@ -4,16 +4,27 @@
 #include <liim/span.h>
 #include <liim/utilities.h>
 #include <stdint.h>
+#include <sys/mman.h>
 
 namespace LIIM {
 class ByteBuffer {
 public:
+    static ByteBuffer create_from_memory_mapping(uint8_t* data, size_t size) {
+        auto byte_buffer = ByteBuffer {};
+        byte_buffer.m_data = data;
+        byte_buffer.m_data_capacity = size;
+        byte_buffer.m_data_size = size;
+        byte_buffer.m_mmaped = true;
+        return byte_buffer;
+    }
+
     explicit ByteBuffer(size_t capacity = 0) : m_data(nullptr) { ensure_capacity(capacity); }
     ByteBuffer(const ByteBuffer& other) = delete;
     ByteBuffer(ByteBuffer&& other)
         : m_data(exchange(other.m_data, nullptr))
         , m_data_size(exchange(other.m_data_size, 0))
-        , m_data_capacity(exchange(other.m_data_capacity, 0)) {}
+        , m_data_capacity(exchange(other.m_data_capacity, 0))
+        , m_mmaped(exchange(other.m_mmaped, false)) {}
 
     ~ByteBuffer() { clear(); }
 
@@ -59,7 +70,11 @@ public:
 
     void clear() {
         if (m_data) {
-            free(m_data);
+            if (m_mmaped) {
+                munmap(m_data, m_data_capacity);
+            } else {
+                free(m_data);
+            }
             m_data = nullptr;
         }
         m_data_size = 0;
@@ -99,6 +114,7 @@ private:
     uint8_t* m_data { nullptr };
     size_t m_data_size { 0 };
     size_t m_data_capacity { 0 };
+    bool m_mmaped { false };
 };
 
 inline void swap(ByteBuffer& a, ByteBuffer& b) {

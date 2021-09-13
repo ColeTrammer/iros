@@ -1,7 +1,7 @@
 #pragma once
 
-#include <liim/pointers.h>
-#include <liim/string.h>
+#include <liim/byte_buffer.h>
+#include <liim/forward.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -9,20 +9,21 @@ namespace Ext {
 
 class MappedFile {
 public:
-    static UniquePtr<MappedFile> create(const String& path, int prot, int type);
-    static UniquePtr<MappedFile> create_with_shared_memory(const String& path, int prot);
+    static UniquePtr<MappedFile> try_create(const String& path, int prot, int type);
+    static UniquePtr<MappedFile> try_create_with_shared_memory(const String& path, int prot);
 
-    MappedFile(uint8_t* data, size_t size) : m_data(data), m_size(size) {}
     MappedFile(const MappedFile& other) = delete;
     ~MappedFile();
 
-    uint8_t* data() { return m_data; }
-    const uint8_t* data() const { return m_data; }
+    uint8_t* data() { return m_buffer.data(); }
+    const uint8_t* data() const { return m_buffer.data(); }
 
-    size_t size() const { return m_size; }
+    bool empty() const { return m_buffer.empty(); }
+    size_t size() const { return m_buffer.size(); }
+
+    explicit MappedFile(ByteBuffer&& buffer);
 
 private:
-    uint8_t* m_data { nullptr };
-    size_t m_size { 0 };
+    ByteBuffer m_buffer;
 };
 }
