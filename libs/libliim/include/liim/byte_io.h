@@ -61,6 +61,23 @@ public:
         return bit;
     }
 
+    template<typename T>
+    const T* pointer_at_offset(size_t offset) const {
+        if (offset + sizeof(T) > m_data.size()) {
+            return nullptr;
+        }
+        return reinterpret_cast<const T*>(&data()[offset]);
+    }
+
+    template<typename T>
+    const T* sized_pointer_at_offset(size_t offset, size_t explicit_size) const {
+        static_assert(explicit_size >= sizeof(T), "The explicit size must be at least greater than sizeof(T).");
+        if (offset + explicit_size > m_data.size()) {
+            return nullptr;
+        }
+        return reinterpret_cast<const T*>(&data()[offset]);
+    }
+
 private:
     Maybe<uint8_t> next_byte_impl() {
         if (m_byte_offset >= m_data.size()) {
