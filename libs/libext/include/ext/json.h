@@ -401,7 +401,7 @@ namespace Json {
     }
 
     static inline Maybe<Object> parse_file(const String& path) {
-        auto file = MappedFile::try_create(path, PROT_READ, MAP_SHARED);
+        auto file = try_map_file(path, PROT_READ, MAP_SHARED);
         if (!file) {
             return {};
         }

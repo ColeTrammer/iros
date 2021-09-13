@@ -36,11 +36,11 @@ public:
     void copy_from(const Palette& other);
 
     Palette(Vector<uint32_t> data, String name) : m_colors(data.vector()), m_color_data(move(data)), m_name(name) {}
-    Palette(UniquePtr<Ext::MappedFile> file) : m_colors((uint32_t*) file->data()), m_raw_file(move(file)) {}
+    Palette(UniquePtr<ByteBuffer> byte_buffer) : m_colors((uint32_t*) byte_buffer->data()), m_raw_data(move(byte_buffer)) {}
 
 private:
     uint32_t* m_colors { nullptr };
     Vector<uint32_t> m_color_data;
-    UniquePtr<Ext::MappedFile> m_raw_file;
+    UniquePtr<ByteBuffer> m_raw_data;
     String m_name;
 };

@@ -46,11 +46,11 @@ SharedPtr<Palette> Palette::create_from_json(const String& path) {
 }
 
 SharedPtr<Palette> Palette::create_from_shared_memory(const String& path, int prot) {
-    auto file = Ext::MappedFile::try_create_with_shared_memory(path, prot);
-    if (!file || file->size() != byte_size()) {
+    auto buffer = Ext::try_map_shared_memory(path, prot);
+    if (!buffer || buffer->size() != byte_size()) {
         return nullptr;
     }
-    return make_shared<Palette>(move(file));
+    return make_shared<Palette>(move(buffer));
 }
 
 void Palette::copy_from(const Palette& other) {
