@@ -51,6 +51,7 @@ set(TARGETS
     pwd
     system_monitor
     readlink
+    readttf
     realpath
     rm
     rmdir
