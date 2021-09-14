@@ -42,7 +42,7 @@ private:
 };
 
 UniquePtr<Profile> Profile::create(const String& path, bool invert_profile) {
-    auto file = Ext::MappedFile::create(path, PROT_READ, MAP_SHARED);
+    auto file = Ext::try_map_file(path, PROT_READ, MAP_SHARED);
     if (!file) {
         return nullptr;
     }

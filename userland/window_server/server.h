@@ -7,6 +7,7 @@
 #include <eventloop/unix_socket.h>
 #include <eventloop/unix_socket_server.h>
 #include <ipc/server.h>
+#include <liim/hash_set.h>
 #include <liim/pointers.h>
 #include <liim/vector.h>
 #include <window_server/message.h>

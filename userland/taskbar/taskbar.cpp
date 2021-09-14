@@ -3,6 +3,7 @@
 #include <graphics/palette.h>
 #include <graphics/renderer.h>
 #include <spawn.h>
+#include <unistd.h>
 
 #include "taskbar.h"
 
@@ -137,7 +138,7 @@ void Taskbar::render() {
         auto& rect = item.rect;
         renderer.draw_rect(rect, palette.color(Palette::Outline));
         renderer.render_text(item.title, rect.adjusted(-4), palette.color(Palette::Text), TextAlign::CenterLeft,
-                             item.active ? Font::bold_font() : Font::default_font());
+                             item.active ? *Font::bold_font() : *Font::default_font());
     }
 
     time_t now = time(nullptr);

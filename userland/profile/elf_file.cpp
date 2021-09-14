@@ -43,7 +43,7 @@ SharedPtr<ElfFile> ElfFile::find_or_create(FileId id) {
     return nullptr;
 }
 
-static bool validate_elf(const Ext::MappedFile& file) {
+static bool validate_elf(const ByteBuffer& file) {
     if (file.size() < sizeof(Elf64_Ehdr)) {
         return false;
     }
@@ -74,7 +74,7 @@ static bool validate_elf(const Ext::MappedFile& file) {
 }
 
 SharedPtr<ElfFile> ElfFile::create(FileId file_id, const String& path) {
-    auto mapped_file = Ext::MappedFile::create(path, PROT_READ, MAP_SHARED);
+    auto mapped_file = Ext::try_map_file(path, PROT_READ, MAP_SHARED);
     if (!mapped_file) {
         return nullptr;
     }
@@ -97,8 +97,7 @@ SharedPtr<ElfFile> ElfFile::create(const String& path) {
     return ElfFile::create({ st.st_ino, st.st_dev }, path);
 }
 
-ElfFile::ElfFile(FileId file_id, UniquePtr<Ext::MappedFile> file, String path)
-    : m_file_id(file_id), m_file(move(file)), m_path(move(path)) {
+ElfFile::ElfFile(FileId file_id, UniquePtr<ByteBuffer> file, String path) : m_file_id(file_id), m_file(move(file)), m_path(move(path)) {
     for (size_t i = 0; i < shdr_count(); i++) {
         auto& shdr = *shdr_at(i);
         if (shdr.sh_type == SHT_STRTAB && i != elf_header()->e_shstrndx) {

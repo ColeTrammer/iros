@@ -3,6 +3,7 @@
 #include <app/flex_layout_engine.h>
 #include <app/icon_view.h>
 #include <app/window.h>
+#include <fcntl.h>
 #include <getopt.h>
 #include <stdlib.h>
 

@@ -1,7 +1,12 @@
-#include <graphics/psf/font.h>
-
+#include <assert.h>
+#include <fcntl.h>
+#include <graphics/bitmap.h>
+#include <graphics/color.h>
 #include <graphics/font.h>
+#include <graphics/psf/font.h>
+#include <liim/string.h>
 #include <stdio.h>
+#include <unistd.h>
 
 namespace PSF {
 SharedPtr<Font> Font::create_blank() {
@@ -45,11 +50,38 @@ Font::Font(int num_chars) {
 
 Font::~Font() {}
 
-const Bitset<uint8_t>* Font::get_for_character(int c) const {
-    return m_font_map.get(c);
+Maybe<uint32_t> Font::fallback_glyph_id() {
+    return glyph_id_for_code_point('?');
 }
 
-bool Font::save_to_file(const String& path) const {
+Maybe<uint32_t> Font::glyph_id_for_code_point(uint32_t code_point) {
+    if (code_point < 256) {
+        return code_point;
+    }
+    return {};
+}
+
+int Font::width_of_glyph(uint32_t) {
+    return 8;
+}
+
+SharedPtr<Bitmap> Font::rasterize_glyph(uint32_t glyph_id, Color color) {
+    auto bitmap = make_shared<Bitmap>(8, 16, true);
+    auto& bitset = bitset_for_glyph_id(glyph_id);
+    for (int y = 0; y < 16; y++) {
+        for (int x = 0; x < 8; x++) {
+            auto bit = bitset.get(y * 8 + (7 - x));
+            bitmap->put_pixel(x, y, bit ? color : ColorValue::Clear);
+        }
+    }
+    return move(bitmap);
+}
+
+Bitset<uint8_t>& Font::bitset_for_glyph_id(uint32_t glyph_id) {
+    return *m_font_map.get(glyph_id);
+}
+
+bool Font::save_to_file(const String& path) {
     FILE* file = fopen(path.string(), "w");
     if (!file) {
         return false;
@@ -61,13 +93,8 @@ bool Font::save_to_file(const String& path) const {
     fputc(0, file);
     fputc(16, file);
 
-    for (int i = 0; i < 256; i++) {
-        auto* bitset = get_for_character(i);
-        if (!bitset) {
-            break;
-        }
-
-        bitset->for_each_storage_part([&](uint8_t byte) {
+    for (uint32_t i = 0; i < 256; i++) {
+        bitset_for_glyph_id(i).for_each_storage_part([&](uint8_t byte) {
             fputc(byte, file);
         });
     }

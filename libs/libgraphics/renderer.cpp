@@ -279,42 +279,9 @@ void Renderer::draw_bitmap(const Bitmap& src, const Rect& src_rect_in, const Rec
     }
 }
 
-void Renderer::render_text(int x, int y, const String& text, Color color, const Font& font) {
-    auto translated_x = translate_x(x);
-    auto translated_y = translate_y(y);
-
-    int x_offset = -8;
-    int y_offset = 0;
-    for (size_t k = 0; k < text.size(); k++) {
-        char c = text[k];
-        if (c == '\n') {
-            y_offset += 16;
-            x_offset = -8;
-            continue;
-        } else {
-            x_offset += 8;
-        }
-
-        auto* bitmap = font.get_for_character(c);
-        if (!bitmap) {
-            bitmap = font.get_for_character('?');
-            assert(bitmap);
-        }
-        for (int i = 0; i < 16; i++) {
-            for (int j = 0; j < 8; j++) {
-                if (bitmap->get(i * 8 + j)) {
-                    m_pixels.put_pixel(translated_x + x_offset - j + 7, translated_y + y_offset + i, color.color());
-                }
-            }
-        }
-    }
-}
-
-void Renderer::render_text(const String& text, const Rect& rect_in, Color color, TextAlign align, const Font& font) {
+void Renderer::render_text(const String& text, const Rect& rect, Color color, TextAlign align, Font& font) {
     auto lines = text.split_view('\n');
     int text_height = lines.size() * 16;
-
-    auto rect = translate(rect_in);
 
     int start_y = rect.y();
     if (text_height < rect.height()) {
@@ -337,7 +304,6 @@ void Renderer::render_text(const String& text, const Rect& rect_in, Color color,
         }
     }
 
-    auto color_value = color.color();
     int lines_to_render = min(lines.size(), rect.height() / 16);
     for (int l = 0; l < lines_to_render; l++) {
         auto& line_text = lines[l];
@@ -367,18 +333,18 @@ void Renderer::render_text(const String& text, const Rect& rect_in, Color color,
         auto chars_to_render = min(line_text.size(), static_cast<size_t>(rect.width() / 8));
         for (size_t k = 0; k < chars_to_render; k++) {
             char c = line_text[k];
-            auto* bitmap = font.get_for_character(c);
-            if (!bitmap) {
-                bitmap = font.get_for_character('?');
-                assert(bitmap);
+
+            auto glyph_id = font.glyph_id_for_code_point(c);
+            if (!glyph_id) {
+                glyph_id = font.fallback_glyph_id();
             }
-            for (int i = 0; i < 16; i++) {
-                for (int j = 0; j < 8; j++) {
-                    if (bitmap->get(i * 8 + j)) {
-                        m_pixels.put_pixel(start_x - j + 7, start_y + i, color_value);
-                    }
-                }
-            }
+            // We really should have a fallback glyph id in some font.
+            assert(glyph_id);
+
+            // FIXME: use a glyph atlas
+            auto bitmap = font.rasterize_glyph(c, color);
+
+            draw_bitmap(*bitmap, bitmap->rect(), { start_x, start_y, 8, 16 });
 
             start_x += 8;
         }

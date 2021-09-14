@@ -24,7 +24,7 @@ public:
     virtual void initialize() override;
     virtual ~Widget() override;
 
-    const SharedPtr<Font> font() const { return m_font; }
+    SharedPtr<Font> font() const { return m_font; }
     void set_font(SharedPtr<Font> font) { m_font = move(font); }
 
     void set_context_menu(SharedPtr<ContextMenu> menu);

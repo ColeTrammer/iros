@@ -1,5 +1,7 @@
+#include <assert.h>
 #include <graphics/font.h>
 #include <graphics/psf/font.h>
+#include <liim/string.h>
 
 SharedPtr<Font> Font::default_font() {
     SharedPtr<Font> s_default;

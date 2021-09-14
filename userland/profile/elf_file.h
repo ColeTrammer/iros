@@ -28,7 +28,7 @@ public:
     static SharedPtr<ElfFile> create(FileId id, const String& path);
     static SharedPtr<ElfFile> create(const String& path);
 
-    ElfFile(FileId file_id, UniquePtr<Ext::MappedFile> file, String path);
+    ElfFile(FileId file_id, UniquePtr<ByteBuffer> file, String path);
     ~ElfFile();
 
     SharedPtr<ElfFile> shared_from_this() { return m_weak_this.lock(); }
@@ -74,7 +74,7 @@ public:
 
 private:
     FileId m_file_id { 0, 0 };
-    UniquePtr<Ext::MappedFile> m_file;
+    UniquePtr<ByteBuffer> m_file;
     String m_path;
     const Elf64_Shdr* m_string_table { nullptr };
     const Elf64_Shdr* m_symbol_table { nullptr };

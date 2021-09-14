@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
 
     auto& layout = main_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
     auto& glyph_editor = layout.add<GlyphEditorWidget>(8, 16, font);
-    glyph_editor.set_bitset(const_cast<Bitset<uint8_t>*>(font->get_for_character(0)), 0);
+    glyph_editor.set_bitset(&font->bitset_for_glyph_id(0), 0);
 
     auto& glyph_widget = layout.add<App::Widget>();
     auto& row_layout = glyph_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
@@ -154,7 +154,7 @@ int main(int argc, char** argv) {
             auto& button = col_layout.add<App::Button>(String(static_cast<char>(code_point)));
             button.set_font(font);
             button.on<App::ClickEvent>({}, [&, code_point](auto&) {
-                glyph_editor.set_bitset(const_cast<Bitset<uint8_t>*>(font->get_for_character(code_point)), code_point);
+                glyph_editor.set_bitset(&font->bitset_for_glyph_id(code_point), code_point);
             });
         }
     }

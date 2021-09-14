@@ -11,7 +11,7 @@ public:
     virtual void render() override {
         auto renderer = get_renderer();
         renderer.fill_rect(5, 5, 50, 50, ColorValue::White);
-        renderer.render_text(60, 5, "Hello, World!", ColorValue::White);
+        renderer.render_text("Hello, World!", { 60, 5, sized_rect().width(), 50 }, ColorValue::White, TextAlign::TopLeft);
 
         renderer.draw_line({ 5, 75 }, { 75, 75 }, ColorValue::White);
         renderer.draw_line({ 35, 80 }, { 35, 200 }, ColorValue::White);
