@@ -1,4 +1,5 @@
 set(SOURCES
+    ttf/font.cpp
     bitmap.cpp
     color.cpp
     font.cpp
