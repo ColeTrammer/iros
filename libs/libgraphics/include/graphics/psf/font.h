@@ -16,9 +16,10 @@ public:
     explicit Font(int num_chars);
     virtual ~Font() override;
 
+    virtual FontMetrics font_metrics() override;
     virtual Maybe<uint32_t> fallback_glyph_id() override;
     virtual Maybe<uint32_t> glyph_id_for_code_point(uint32_t code_point) override;
-    virtual int width_of_glyph(uint32_t glyph_id) override;
+    virtual GlyphMetrics glyph_metrics(uint32_t glyph_id) override;
     virtual SharedPtr<Bitmap> rasterize_glyph(uint32_t glyph_id, Color color) override;
 
     bool save_to_file(const String& path);

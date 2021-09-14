@@ -50,6 +50,16 @@ Font::Font(int num_chars) {
 
 Font::~Font() {}
 
+FontMetrics Font::font_metrics() {
+    // NOTE: since we only have bitmaps, we must report inaccurate metrics.
+    auto font_metrics = FontMetrics {};
+    font_metrics.set_ascender(16);
+    font_metrics.set_descender(0);
+    font_metrics.set_line_gap(0);
+    font_metrics.set_base_line(0);
+    return font_metrics;
+}
+
 Maybe<uint32_t> Font::fallback_glyph_id() {
     return glyph_id_for_code_point('?');
 }
@@ -61,8 +71,12 @@ Maybe<uint32_t> Font::glyph_id_for_code_point(uint32_t code_point) {
     return {};
 }
 
-int Font::width_of_glyph(uint32_t) {
-    return 8;
+GlyphMetrics Font::glyph_metrics(uint32_t) {
+    auto glyph_metrics = GlyphMetrics {};
+    glyph_metrics.set_advance_width(8);
+    glyph_metrics.set_left_side_bearing(0);
+    glyph_metrics.set_height(16);
+    return glyph_metrics;
 }
 
 SharedPtr<Bitmap> Font::rasterize_glyph(uint32_t glyph_id, Color color) {
