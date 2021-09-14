@@ -1,4 +1,5 @@
 set(SOURCES
+    psf/font.cpp
     ttf/font.cpp
     bitmap.cpp
     color.cpp

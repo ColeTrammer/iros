@@ -24,8 +24,8 @@ public:
     virtual void initialize() override;
     virtual ~Widget() override;
 
-    const Font& font() const { return m_font; }
-    void set_font(Font font) { m_font = move(font); }
+    const SharedPtr<Font> font() const { return m_font; }
+    void set_font(SharedPtr<Font> font) { m_font = move(font); }
 
     void set_context_menu(SharedPtr<ContextMenu> menu);
 
@@ -46,7 +46,7 @@ protected:
 private:
     virtual bool is_widget() const final { return true; }
 
-    Font m_font { Font::default_font() };
+    SharedPtr<Font> m_font { Font::default_font() };
     SharedPtr<Palette> m_palette;
     SharedPtr<ContextMenu> m_context_menu;
 };

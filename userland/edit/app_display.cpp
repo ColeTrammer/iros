@@ -211,7 +211,7 @@ void AppDisplay::render_cell(Renderer& renderer, int x, int y, char c, Edit::Cha
 
     auto cell_rect = Rect { x, y, col_width(), row_height() };
     renderer.fill_rect(cell_rect, bg);
-    renderer.render_text(String(c), cell_rect, fg, TextAlign::Center, info.bold ? Font::bold_font() : Font::default_font());
+    renderer.render_text(String(c), cell_rect, fg, TextAlign::Center, info.bold ? *Font::bold_font() : *Font::default_font());
 }
 
 void AppDisplay::render() {

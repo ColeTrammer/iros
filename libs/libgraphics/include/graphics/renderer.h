@@ -25,9 +25,9 @@ public:
     void fill_circle(int x, int y, int r, Color color);
     void draw_circle(int x, int y, int r, Color color);
 
-    void render_text(int x, int y, const String& text, Color color, const Font& font = Font::default_font());
+    void render_text(int x, int y, const String& text, Color color, const Font& font = *Font::default_font());
     void render_text(const String& text, const Rect& rect, Color color, TextAlign text_align = TextAlign::CenterLeft,
-                     const Font& font = Font::default_font());
+                     const Font& font = *Font::default_font());
 
     void draw_bitmap(const Bitmap& src, const Rect& src_rect, const Rect& dest_rect);
 

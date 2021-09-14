@@ -6,6 +6,7 @@
 #include <app/window.h>
 #include <eventloop/event.h>
 #include <graphics/font.h>
+#include <graphics/psf/font.h>
 #include <graphics/renderer.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -57,7 +58,7 @@ public:
     }
 
 private:
-    GlyphEditorWidget(int width, int height, Font font) : m_width(width), m_height(height) { set_font(font); }
+    GlyphEditorWidget(int width, int height, SharedPtr<Font> font) : m_width(width), m_height(height) { set_font(font); }
     virtual void initialize() override {
         auto& layout = set_layout_engine<App::HorizontalFlexLayoutEngine>();
         auto& left_container = layout.add<App::Widget>();
@@ -128,7 +129,11 @@ int main(int argc, char** argv) {
     if (!save_destination) {
         save_destination = argv[optind];
     }
-    Font font = create_new_font ? Font::create_blank() : Font(argv[optind]);
+    auto font = create_new_font ? PSF::Font::create_blank() : PSF::Font::try_create_from_path(argv[optind]);
+    if (!font) {
+        error_log("psfedit: `{}' is not a valid psf font file", argv[optind]);
+        return 1;
+    }
 
     auto app = App::Application::create();
 
@@ -137,7 +142,7 @@ int main(int argc, char** argv) {
 
     auto& layout = main_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
     auto& glyph_editor = layout.add<GlyphEditorWidget>(8, 16, font);
-    glyph_editor.set_bitset(const_cast<Bitset<uint8_t>*>(font.get_for_character(0)), 0);
+    glyph_editor.set_bitset(const_cast<Bitset<uint8_t>*>(font->get_for_character(0)), 0);
 
     auto& glyph_widget = layout.add<App::Widget>();
     auto& row_layout = glyph_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
@@ -149,7 +154,7 @@ int main(int argc, char** argv) {
             auto& button = col_layout.add<App::Button>(String(static_cast<char>(code_point)));
             button.set_font(font);
             button.on<App::ClickEvent>({}, [&, code_point](auto&) {
-                glyph_editor.set_bitset(const_cast<Bitset<uint8_t>*>(font.get_for_character(code_point)), code_point);
+                glyph_editor.set_bitset(const_cast<Bitset<uint8_t>*>(font->get_for_character(code_point)), code_point);
             });
         }
     }
@@ -157,7 +162,7 @@ int main(int argc, char** argv) {
     auto& save_button = layout.add<App::Button>("Save");
     save_button.set_layout_constraint({ App::LayoutConstraint::AutoSize, 24 });
     save_button.on<App::ClickEvent>({}, [&](auto&) {
-        if (!font.save_to_file(save_destination)) {
+        if (!font->save_to_file(save_destination)) {
             fprintf(stderr, "psfedit: Failed to save font to `%s'\n", save_destination);
         }
     });

@@ -64,7 +64,7 @@ void IconView::render() {
         if (!item.name.empty()) {
             Rect text_rect = { item.rect.x(), item.rect.y() + m_icon_height + 2 * m_icon_padding_y, item.rect.width(),
                                item.rect.height() - m_icon_height - 2 * m_icon_padding_y };
-            renderer.render_text(item.name, text_rect, text_color(), TextAlign::Center, font());
+            renderer.render_text(item.name, text_rect, text_color(), TextAlign::Center, *font());
         }
         if (hovered_index() == ModelIndex { r, m_name_column }) {
             renderer.draw_rect(item.rect, palette()->color(Palette::Hover));

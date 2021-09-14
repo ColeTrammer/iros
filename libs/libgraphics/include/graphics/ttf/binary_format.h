@@ -69,6 +69,18 @@ struct [[gnu::packed]] MaxpTable {
     BigEndian<uint16_t> max_component_depth;
 };
 
+struct [[gnu::packed]] GlyphHeader {
+    BigEndian<int16_t> number_of_contours;
+    BigEndian<int16_t> x_min;
+    BigEndian<int16_t> y_min;
+    BigEndian<int16_t> x_max;
+    BigEndian<int16_t> y_max;
+};
+
+struct [[gnu::packed]] GlyfTable {
+    uint8_t glyph_data[0];
+};
+
 struct [[gnu::packed]] HeadTable {
     BigEndian<uint16_t> major_version;
     BigEndian<uint16_t> minor_version;

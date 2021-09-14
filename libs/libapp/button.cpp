@@ -30,6 +30,6 @@ void Button::render() {
 
     renderer.fill_rect(sized_rect(), background_color());
     renderer.draw_rect(sized_rect(), outline_color());
-    renderer.render_text(label(), sized_rect().adjusted(-2), text_color(), TextAlign::CenterLeft, font());
+    renderer.render_text(label(), sized_rect().adjusted(-2), text_color(), TextAlign::CenterLeft, *font());
 }
 }
