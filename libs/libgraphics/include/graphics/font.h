@@ -2,6 +2,7 @@
 
 #include <graphics/forward.h>
 #include <liim/forward.h>
+#include <liim/utilities.h>
 #include <stdint.h>
 
 class FontMetrics {
@@ -43,6 +44,18 @@ private:
     int m_left_side_bearing { 0 };
     int m_advance_width { 0 };
     int m_height { 0 };
+};
+
+class Glyph {
+public:
+    Glyph(uint32_t glyph_id, GlyphMetrics metrics) : m_id { glyph_id }, m_metrics { move(metrics) } {}
+
+    uint32_t id() const { return m_id; }
+    const GlyphMetrics& metrics() const { return m_metrics; }
+
+private:
+    uint32_t m_id { 0 };
+    GlyphMetrics m_metrics;
 };
 
 class Font {

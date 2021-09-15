@@ -2,6 +2,7 @@
 #include <graphics/font.h>
 #include <graphics/renderer.h>
 #include <liim/scope_guard.h>
+#include <liim/utf8_view.h>
 #include <math.h>
 #include <stdlib.h>
 
@@ -314,8 +315,22 @@ void Renderer::render_text(const String& text, const Rect& rect, Color color, Te
     }
 
     for (auto& line_text : lines) {
-        // FIXME: this is completely wrong.
-        int text_width = line_text.size() * 8;
+        int text_width = 0;
+
+        auto utf8_view = Utf8View { line_text };
+        auto glyphs = Vector<Glyph> {};
+        for (auto code_point : utf8_view) {
+            auto glyph_id = font.glyph_id_for_code_point(code_point);
+            if (!glyph_id) {
+                glyph_id = font.fallback_glyph_id();
+            }
+            // We really should have a fallback glyph id in some font.
+            assert(glyph_id);
+
+            auto glyph_metrics = font.glyph_metrics(*glyph_id);
+            text_width += glyph_metrics.advance_width();
+            glyphs.add(Glyph { *glyph_id, move(glyph_metrics) });
+        }
 
         int start_x = 0;
         if (text_width < rect.width()) {
@@ -338,23 +353,14 @@ void Renderer::render_text(const String& text, const Rect& rect, Color color, Te
             }
         }
 
-        for (auto& c : line_text) {
-            auto glyph_id = font.glyph_id_for_code_point(c);
-            if (!glyph_id) {
-                glyph_id = font.fallback_glyph_id();
-            }
-            // We really should have a fallback glyph id in some font.
-            assert(glyph_id);
-
-            auto glyph_metrics = font.glyph_metrics(glyph_id);
-
+        for (auto& glyph : glyphs) {
             // FIXME: use a glyph atlas
-            auto bitmap = font.rasterize_glyph(c, color);
+            auto bitmap = font.rasterize_glyph(glyph.id(), color);
 
             // FIXME: start_x and start_y should be adjusted by the glyph metrics somehow.
             draw_bitmap(*bitmap, bitmap->rect(), { start_x, start_y, bitmap->width(), bitmap->height() });
 
-            start_x += glyph_metrics.advance_width();
+            start_x += glyph.metrics().advance_width();
         }
 
         start_y += font_metrics.line_height();
