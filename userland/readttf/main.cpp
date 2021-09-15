@@ -124,20 +124,20 @@ int main() {
     assert(hhea_table);
 
     debug_log("hhea table:\n"
-              "major_version: {}\n"
-              "minor version: {}\n"
-              "ascender: {}\n"
-              "descender: {}\n"
-              "line gap: {}\n"
-              "advance_width_max: {}\n"
-              "min left side bearing: {}\n"
-              "min right side bearing: {}\n"
-              "x max extent: {}\n"
-              "caret slope rise: {}\n"
-              "caret slope run: {}\n"
-              "caret offset: {}\n"
-              "metric data format: {}\n"
-              "number of h metrics: {}",
+              "  major_version:          {}\n"
+              "  minor version:          {}\n"
+              "  ascender:               {}\n"
+              "  descender:              {}\n"
+              "  line gap:               {}\n"
+              "  advance_width_max:      {}\n"
+              "  min left side bearing:  {}\n"
+              "  min right side bearing: {}\n"
+              "  x max extent:           {}\n"
+              "  caret slope rise:       {}\n"
+              "  caret slope run:        {}\n"
+              "  caret offset:           {}\n"
+              "  metric data format:     {}\n"
+              "  number of h metrics:    {}",
               hhea_table->major_version, hhea_table->minor_version, hhea_table->ascender, hhea_table->descender, hhea_table->line_gap,
               hhea_table->advance_width_max, hhea_table->min_left_side_bearing, hhea_table->min_right_side_bearing,
               hhea_table->x_max_extent, hhea_table->caret_slope_rise, hhea_table->caret_slope_run, hhea_table->caret_offset,

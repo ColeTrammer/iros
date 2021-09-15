@@ -1,5 +1,7 @@
 #pragma once
 
+#include <graphics/ttf/forward.h>
+
 class Bitmap;
 class Color;
 class Font;

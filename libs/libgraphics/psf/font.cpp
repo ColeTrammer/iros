@@ -56,7 +56,6 @@ FontMetrics Font::font_metrics() {
     font_metrics.set_ascender(16);
     font_metrics.set_descender(0);
     font_metrics.set_line_gap(0);
-    font_metrics.set_base_line(0);
     return font_metrics;
 }
 
@@ -75,7 +74,6 @@ GlyphMetrics Font::glyph_metrics(uint32_t) {
     auto glyph_metrics = GlyphMetrics {};
     glyph_metrics.set_advance_width(8);
     glyph_metrics.set_left_side_bearing(0);
-    glyph_metrics.set_height(16);
     return glyph_metrics;
 }
 

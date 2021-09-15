@@ -42,8 +42,10 @@ struct [[gnu::packed]] LongHorizontalMetric {
 };
 
 struct [[gnu::packed]] HmtxTable {
-    LongHorizontalMetric h_metrics[0];
-    BigEndian<int16_t> left_side_bearings[0];
+    uint8_t metric_data[0];
+
+    const LongHorizontalMetric* as_long_metrics() const { return reinterpret_cast<const LongHorizontalMetric*>(metric_data); }
+    const BigEndian<int16_t>* as_short_metrics() const { return reinterpret_cast<const BigEndian<int16_t>*>(metric_data); }
 };
 
 struct [[gnu::packed]] CmapTable {
