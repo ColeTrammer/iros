@@ -22,7 +22,65 @@ struct [[gnu::packed]] Version16Dot16 {
     BigEndian<uint16_t> minor;
 };
 
+struct [[gnu::packed]] CmapSubtable4 {
+    BigEndian<uint16_t> format;
+    BigEndian<uint16_t> length;
+    BigEndian<uint16_t> language;
+    BigEndian<uint16_t> seg_count_x2;
+    BigEndian<uint16_t> search_range;
+    BigEndian<uint16_t> entry_selector;
+    BigEndian<uint16_t> range_shift;
+    uint8_t segment_data[];
+
+    uint16_t segment_count() const { return seg_count_x2 / 2; }
+
+    const BigEndian<uint16_t>& end_character_code(uint16_t segment_index) const {
+        assert(segment_index < segment_count());
+        return reinterpret_cast<const BigEndian<uint16_t>*>(segment_data)[segment_index];
+    }
+
+    const BigEndian<uint16_t>& start_character_code(uint16_t segment_index) const {
+        assert(segment_index < segment_count());
+        return reinterpret_cast<const BigEndian<uint16_t>*>(segment_data)[1 + segment_count() + segment_index];
+    }
+
+    const BigEndian<int16_t>& segment_delta(uint16_t segment_index) const {
+        assert(segment_index < segment_count());
+        return reinterpret_cast<const BigEndian<int16_t>*>(segment_data)[1 + 2 * segment_count() + segment_index];
+    }
+
+    const BigEndian<uint16_t>& segment_range_offset(uint16_t segment_index) const {
+        assert(segment_index < segment_count());
+        return reinterpret_cast<const BigEndian<uint16_t>*>(segment_data)[1 + 3 * segment_count() + segment_index];
+    }
+
+    Span<const BigEndian<uint16_t>> glyph_index_array() const {
+        return { &reinterpret_cast<const BigEndian<uint16_t>*>(segment_data)[1 + 4 * segment_count()],
+                 (length - minimum_length()) / sizeof(uint16_t) };
+    }
+
+    size_t minimum_length() const { return sizeof(CmapSubtable4) + sizeof(uint16_t) + 4 * segment_count() * sizeof(uint16_t); }
+};
+
 struct [[gnu::packed]] EncodingRecord {
+    enum PlatformId {
+        Unicocde = 0,
+        Macintosh = 1,
+        ISO = 2,
+        Windows = 3,
+        Custom = 4,
+    };
+
+    enum UnicodeEncodingID {
+        Unicode1_0 = 0,
+        Unicode1_1 = 1,
+        ISO10646 = 2,
+        Unicode2_0BMP = 3,
+        Unicode2_0FullRepertoire = 4,
+        UnicodeVariationSequences = 5,
+        UnicodeFullRepertoire = 6,
+    };
+
     BigEndian<uint16_t> platform_id;
     BigEndian<uint16_t> platform_specific_id;
     BigEndian<uint32_t> offset;
@@ -52,6 +110,8 @@ struct [[gnu::packed]] CmapTable {
     BigEndian<uint16_t> version;
     BigEndian<uint16_t> num_tables;
     EncodingRecord encoding_records[];
+
+    size_t minimum_size() const { return sizeof(CmapTable) + sizeof(EncodingRecord) * num_tables; }
 };
 
 struct [[gnu::packed]] MaxpTable {

@@ -1,6 +1,7 @@
 set(SOURCES
     psf/font.cpp
     ttf/font.cpp
+    ttf/glyph_mapping.cpp
     bitmap.cpp
     color.cpp
     font.cpp

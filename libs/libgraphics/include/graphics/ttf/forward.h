@@ -2,7 +2,10 @@
 
 namespace TTF {
 class Font;
+class GlyphMappingFormat4;
+class GlyphMapping;
 
+struct CmapSubtable4;
 struct CmapTable;
 struct EncodingRecord;
 struct Fixed;

@@ -1,6 +1,7 @@
 #include <graphics/color.h>
 #include <graphics/ttf/binary_format.h>
 #include <graphics/ttf/font.h>
+#include <graphics/ttf/glyph_mapping.h>
 #include <liim/byte_io.h>
 
 namespace TTF {
@@ -15,13 +16,15 @@ static const TableRecord* find_table_impl(const TableDirectory& directory, Strin
 }
 
 Font::Font(ByteBuffer&& buffer, const TableDirectory& table_directory, const HeadTable& font_header_table,
-           const HheaTable& horizontal_header_table, const MaxpTable& maximum_profile_table, const HmtxTable& horizontal_metrics_table)
+           const HheaTable& horizontal_header_table, const MaxpTable& maximum_profile_table, const HmtxTable& horizontal_metrics_table,
+           UniquePtr<GlyphMapping> glyph_mapping)
     : m_buffer(move(buffer))
     , m_table_directory(table_directory)
     , m_font_header_table(font_header_table)
     , m_horizontal_header_table(horizontal_header_table)
     , m_maximum_profile_table(maximum_profile_table)
-    , m_horizontal_metrics_table(horizontal_metrics_table) {}
+    , m_horizontal_metrics_table(horizontal_metrics_table)
+    , m_glyph_mapping(move(glyph_mapping)) {}
 
 Font::~Font() {}
 
@@ -82,8 +85,18 @@ SharedPtr<Font> Font::try_create_from_buffer(ByteBuffer buffer) {
         return nullptr;
     }
 
+    auto* cmap_record = find_table_impl(*table_directory, "cmap");
+    if (!cmap_record) {
+        return nullptr;
+    }
+
+    auto glyph_mapping = GlyphMapping::try_create(buffer, *cmap_record);
+    if (!glyph_mapping) {
+        return nullptr;
+    }
+
     return make_shared<Font>(move(buffer), *table_directory, *font_header_table, *horizontal_header_table, *maximum_profile_table,
-                             *horizontal_metrics_table);
+                             *horizontal_metrics_table, move(glyph_mapping));
 }
 
 FontMetrics Font::font_metrics() {
@@ -98,8 +111,8 @@ Maybe<uint32_t> Font::fallback_glyph_id() {
     return 0;
 }
 
-Maybe<uint32_t> Font::glyph_id_for_code_point(uint32_t) {
-    assert(false);
+Maybe<uint32_t> Font::glyph_id_for_code_point(uint32_t code_point) {
+    return m_glyph_mapping->lookup_code_point(code_point);
 }
 
 GlyphMetrics Font::glyph_metrics(uint32_t glyph_id) {
