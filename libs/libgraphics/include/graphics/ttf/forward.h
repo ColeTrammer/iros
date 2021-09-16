@@ -11,7 +11,7 @@ struct EncodingRecord;
 struct Fixed;
 struct HeadTable;
 struct HheaTable;
-struct HtmxTable;
+struct HmtxTable;
 struct Loca16Table;
 struct Loca32Table;
 struct LongHorizontalMetric;
