@@ -14,12 +14,11 @@ Endpoint::~Endpoint() {}
 void Endpoint::set_socket(SharedPtr<App::UnixSocket> socket) {
     m_socket = move(socket);
     if (m_socket) {
-        m_socket->on_ready_to_read = [this](auto&) {
-            auto protector = shared_from_this();
+        m_socket->on<App::ReadableEvent>(*this, [this](auto&) {
             if (read_from_socket()) {
                 handle_messages();
             }
-        };
+        });
     }
 }
 

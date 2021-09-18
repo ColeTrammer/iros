@@ -25,7 +25,7 @@ SharedPtr<Interface> Interface::create(const umessage_interface_desc& desc, uint
 
     socket->set_selected_events(App::NotifyWhen::Readable);
     socket->enable_notifications();
-    socket->on_ready_to_recieve = [socket, interface] {
+    socket->on<App::ReadableEvent>({}, [socket, interface](auto&) {
         dhcp_packet packet;
         while (const_cast<App::UdpSocket&>(*socket).recvfrom((uint8_t*) &packet, sizeof(packet)) > 0) {
             if (packet.op != DHCP_OP_REPLY) {
@@ -41,7 +41,7 @@ SharedPtr<Interface> Interface::create(const umessage_interface_desc& desc, uint
 
             const_cast<Interface&>(*interface).handle_dhcp_response(packet);
         }
-    };
+    });
 
     return interface;
 }

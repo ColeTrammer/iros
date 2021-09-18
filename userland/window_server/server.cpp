@@ -57,7 +57,7 @@ void ServerImpl::initialize() {
     assert(m_input_socket->valid());
     m_input_socket->set_selected_events(App::NotifyWhen::Readable);
     m_input_socket->enable_notifications();
-    m_input_socket->on_readable = [this] {
+    m_input_socket->on<App::ReadableEvent>(*this, [this](auto&) {
         char buffer[400];
         ssize_t ret;
         while ((ret = read(m_input_socket->fd(), buffer, sizeof(buffer))) > 0) {
@@ -110,7 +110,7 @@ void ServerImpl::initialize() {
                 }
             }
         }
-    };
+    });
 
     m_server = IPC::Server::create(shared_from_this(), "/tmp/.window_server.socket", shared_from_this());
 

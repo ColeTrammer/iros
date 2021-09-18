@@ -1,12 +1,16 @@
 #pragma once
 
+#include <eventloop/event.h>
 #include <eventloop/selectable.h>
 #include <liim/string.h>
 
-namespace App {
+APP_EVENT(App, DisconnectEvent, Event, (), (), ())
 
+namespace App {
 class UnixSocket final : public Selectable {
     APP_OBJECT(UnixSocket)
+
+    APP_EMITS(Selectable, DisconnectEvent)
 
 public:
     static SharedPtr<UnixSocket> create_from_fd(SharedPtr<Object> parent, int accepted_fd, bool nonblocking);
@@ -19,13 +23,8 @@ public:
     bool nonblocking() const { return m_nonblocking; }
     void set_nonblocking(bool b);
 
-    Function<void(UnixSocket& self)> on_ready_to_read;
-    Function<void(UnixSocket& self)> on_disconnect;
-
 private:
     UnixSocket(int fd, bool nonblocking);
-
-    virtual void notify_readable() override;
 
     bool m_nonblocking { true };
 };

@@ -15,14 +15,14 @@ TEST(file_watcher, basic) {
         EXPECT(file_watcher->watch("/tmp/test_file_watcher"));
 
         int count = 0;
-        file_watcher->on_change = [&](const auto& path) {
-            EXPECT_EQ(path, "/tmp/test_file_watcher");
+        file_watcher->on<App::PathChangeEvent>({}, [&](auto& event) {
+            EXPECT_EQ(event.path(), "/tmp/test_file_watcher");
             if (++count >= 3) {
                 loop.set_should_exit(true);
                 return;
             }
             fputc('a', file);
-        };
+        });
 
         fputc('a', file);
         loop.enter();
@@ -56,11 +56,11 @@ TEST(file_watcher, remove) {
         EXPECT(file_watcher->watch("/tmp/test_file_watcher"));
 
         bool did_remove = false;
-        file_watcher->on_removed = [&](const auto& path) {
-            EXPECT_EQ(path, "/tmp/test_file_watcher");
+        file_watcher->on<App::PathRemovedEvent>({}, [&](auto& event) {
+            EXPECT_EQ(event.path(), "/tmp/test_file_watcher");
             did_remove = true;
             loop.set_should_exit(true);
-        };
+        });
 
         unlink("/tmp/test_file_watcher");
         fclose(file);

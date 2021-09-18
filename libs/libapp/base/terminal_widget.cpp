@@ -30,7 +30,7 @@ void TerminalWidget::initialize() {
     m_pseudo_terminal_wrapper = App::FdWrapper::create(this_widget().shared_from_this(), m_pseudo_terminal.master_fd());
     m_pseudo_terminal_wrapper->set_selected_events(App::NotifyWhen::Readable);
     m_pseudo_terminal_wrapper->enable_notifications();
-    m_pseudo_terminal_wrapper->on_readable = [this] {
+    m_pseudo_terminal_wrapper->on<App::ReadableEvent>(this_widget(), [this](auto&) {
 #ifdef TERMINAL_WIDGET_DEBUG
         timespec start;
         clock_gettime(CLOCK_MONOTONIC, &start);
@@ -64,7 +64,7 @@ void TerminalWidget::initialize() {
 #endif /* TERMINAL_WIDGET_DEBUG */
 
         invalidate_all_contents();
-    };
+    });
 
     this_widget().on<App::ResizeEvent>({}, [this](auto&) {
         m_selection_start_row = m_selection_start_col = m_selection_end_row = m_selection_end_col = -1;

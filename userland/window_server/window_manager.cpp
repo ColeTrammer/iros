@@ -43,12 +43,13 @@ WindowManager::WindowManager(int fb, SharedPtr<Bitmap> front_buffer, SharedPtr<B
     assert(ftruncate(shared_palette_fd, Palette::byte_size()) == 0);
     close(shared_palette_fd);
 
+    m_watcher = App::FileWatcher::create(nullptr);
+    m_watcher->on<App::PathChangeEvent>({}, [this](auto& event) {
+        load_palette(event.path());
+    });
+
     m_palette = Palette::create_from_shared_memory("/.shared_theme", PROT_READ | PROT_WRITE);
     load_palette(RESOURCE_ROOT "/usr/share/themes/default.json");
-
-    m_watcher.on_change = [this](auto& path) {
-        load_palette(path);
-    };
 }
 
 WindowManager::~WindowManager() {}
@@ -61,9 +62,9 @@ bool WindowManager::load_palette(const String& path) {
 
     if (m_palette_path != path) {
         if (!m_palette_path.empty()) {
-            m_watcher.unwatch(m_palette_path);
+            m_watcher->unwatch(m_palette_path);
         }
-        m_watcher.watch(path);
+        m_watcher->watch(path);
         m_palette_path = path;
     }
 

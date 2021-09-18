@@ -5,7 +5,6 @@
 #include <unistd.h>
 
 namespace App {
-
 UnixSocketServer::UnixSocketServer(const String& bind_path) {
     set_fd(socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0));
     if (fd() < 0) {
@@ -36,11 +35,4 @@ UnixSocketServer::~UnixSocketServer() {
         close(fd());
     }
 }
-
-void UnixSocketServer::notify_readable() {
-    if (on_ready_to_accept) {
-        on_ready_to_accept();
-    }
-}
-
 }

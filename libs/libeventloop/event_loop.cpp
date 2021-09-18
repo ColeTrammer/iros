@@ -174,13 +174,13 @@ void EventLoop::do_select() {
     s_selectables.for_each_reverse([&](auto& selectable) {
         int fd = selectable->fd();
         if (FD_ISSET(fd, &rd_set)) {
-            selectable->notify_readable();
+            EventLoop::queue_event(selectable->weak_from_this(), make_unique<ReadableEvent>());
         }
         if (FD_ISSET(fd, &wr_set)) {
-            selectable->notify_writeable();
+            EventLoop::queue_event(selectable->weak_from_this(), make_unique<WritableEvent>());
         }
         if (FD_ISSET(fd, &ex_set)) {
-            selectable->notify_exceptional();
+            EventLoop::queue_event(selectable->weak_from_this(), make_unique<ExceptionalEvent>());
         }
     });
 }

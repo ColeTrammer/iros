@@ -45,7 +45,7 @@ IOTerminal::IOTerminal(const termios& saved_termios, const termios& current_term
     m_selectable = App::FdWrapper::create(nullptr, m_file->fd());
     m_selectable->set_selected_events(App::NotifyWhen::Readable);
     m_selectable->enable_notifications();
-    m_selectable->on_readable = [this] {
+    m_selectable->on<App::ReadableEvent>({}, [this](auto&) {
         auto buffer = ByteBuffer {};
         while (m_file->read(buffer)) {
             if (on_recieved_input) {
@@ -53,7 +53,7 @@ IOTerminal::IOTerminal(const termios& saved_termios, const termios& current_term
             }
             buffer.set_size(0);
         }
-    };
+    });
 
     App::EventLoop::register_signal_handler(SIGWINCH, [this] {
         winsize size;

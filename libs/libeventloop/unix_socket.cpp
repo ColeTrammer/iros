@@ -6,7 +6,6 @@
 #include <unistd.h>
 
 namespace App {
-
 SharedPtr<UnixSocket> UnixSocket::create_from_fd(SharedPtr<Object> parent, int fd, bool nonblocking) {
     return UnixSocket::create(move(parent), fd, nonblocking);
 }
@@ -57,15 +56,6 @@ void UnixSocket::set_nonblocking(bool b) {
 }
 
 void UnixSocket::disconnect() {
-    if (on_disconnect) {
-        on_disconnect(*this);
-    }
+    emit<DisconnectEvent>();
 }
-
-void UnixSocket::notify_readable() {
-    if (on_ready_to_read) {
-        on_ready_to_read(*this);
-    }
-}
-
 }

@@ -15,6 +15,37 @@ FileWatcher::FileWatcher() {
     enable_notifications();
 }
 
+void FileWatcher::initialize() {
+    char buffer[1024];
+
+    ssize_t ret;
+    while ((ret = read(fd(), buffer, sizeof(buffer))) > 0) {
+        auto* message = (umessage*) buffer;
+        switch (message->type) {
+            case UMESSAGE_WATCH_INODE_MODIFIED: {
+                auto& event = *(umessage_watch_inode_modified*) message;
+                auto path = m_identifier_to_path.get(event.identifier);
+                if (!path) {
+                    continue;
+                }
+
+                emit<PathChangeEvent>(*path);
+                break;
+            }
+            case UMESSAGE_WATCH_INODE_REMOVED:
+                auto& event = *(umessage_watch_inode_removed*) message;
+                auto path_p = m_identifier_to_path.get(event.identifier);
+                if (!path_p) {
+                    continue;
+                }
+                auto path = *path_p;
+                unwatch(path);
+                emit<PathRemovedEvent>(path);
+                break;
+        }
+    }
+}
+
 FileWatcher::~FileWatcher() {
     if (valid()) {
         close(fd());
@@ -72,36 +103,6 @@ bool FileWatcher::unwatch(const String& path) {
 
     return true;
 }
-
-void FileWatcher::notify_readable() {
-    char buffer[1024];
-
-    ssize_t ret;
-    while ((ret = read(fd(), buffer, sizeof(buffer))) > 0) {
-        auto* message = (umessage*) buffer;
-        switch (message->type) {
-            case UMESSAGE_WATCH_INODE_MODIFIED: {
-                auto& event = *(umessage_watch_inode_modified*) message;
-                auto path = m_identifier_to_path.get(event.identifier);
-                if (!path) {
-                    continue;
-                }
-                on_change.safe_call(*path);
-                break;
-            }
-            case UMESSAGE_WATCH_INODE_REMOVED:
-                auto& event = *(umessage_watch_inode_removed*) message;
-                auto path_p = m_identifier_to_path.get(event.identifier);
-                if (!path_p) {
-                    continue;
-                }
-                auto path = *path_p;
-                unwatch(path);
-                on_removed.safe_call(path);
-                break;
-        }
-    }
-}
 }
 #endif /* __os_2__ */
 
@@ -118,6 +119,34 @@ FileWatcher::FileWatcher() {
     set_fd(fd);
     set_selected_events(NotifyWhen::Readable);
     enable_notifications();
+}
+
+void FileWatcher::initialize() {
+    on<ReadableEvent>([this](auto&) {
+        char buffer[1024] __attribute__((aligned(__alignof__(inotify_event))));
+        ssize_t ret;
+        while ((ret = read(fd(), buffer, sizeof(buffer))) > 0) {
+            struct inotify_event* event;
+            for (char* ptr = buffer; ptr < buffer + ret; ptr += sizeof(inotify_event) + event->len) {
+                event = (struct inotify_event*) ptr;
+
+                auto* path_p = m_identifier_to_path.get(event->wd);
+                if (!path_p) {
+                    continue;
+                }
+                auto path = *path_p;
+
+                if (event->mask & IN_MODIFY) {
+                    emit<PathChangeEvent>(path);
+                }
+
+                if (event->mask & IN_DELETE_SELF) {
+                    unwatch(path);
+                    emit<PathRemovedEvent>(path);
+                }
+            }
+        }
+    });
 }
 
 FileWatcher::~FileWatcher() {
@@ -153,32 +182,6 @@ bool FileWatcher::unwatch(const String& path) {
     }
 
     return true;
-}
-
-void FileWatcher::notify_readable() {
-    char buffer[1024] __attribute__((aligned(__alignof__(inotify_event))));
-    ssize_t ret;
-    while ((ret = read(fd(), buffer, sizeof(buffer))) > 0) {
-        struct inotify_event* event;
-        for (char* ptr = buffer; ptr < buffer + ret; ptr += sizeof(inotify_event) + event->len) {
-            event = (struct inotify_event*) ptr;
-
-            auto* path_p = m_identifier_to_path.get(event->wd);
-            if (!path_p) {
-                continue;
-            }
-            auto path = *path_p;
-
-            if (event->mask & IN_MODIFY) {
-                on_change.safe_call(path);
-            }
-
-            if (event->mask & IN_DELETE_SELF) {
-                unwatch(path);
-                on_removed.safe_call(path);
-            }
-        }
-    }
 }
 }
 #endif

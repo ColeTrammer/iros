@@ -20,15 +20,5 @@ public:
 
     ssize_t sendto(const uint8_t* buffer, size_t length, const sockaddr_in& dest);
     ssize_t recvfrom(uint8_t* buffer, size_t length, sockaddr_in* addr_out = nullptr);
-
-    Function<void()> on_ready_to_recieve;
-
-private:
-    virtual void notify_readable() override {
-        if (on_ready_to_recieve) {
-            on_ready_to_recieve();
-        }
-    }
 };
-
 }

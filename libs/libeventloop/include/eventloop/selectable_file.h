@@ -13,15 +13,6 @@ class SelectableFile : public Selectable {
 public:
     SelectableFile(const String& path, int oflags, mode_t mode = 0);
     virtual ~SelectableFile() override;
-
-    Function<void()> on_readable;
-
-private:
-    virtual void notify_readable() override {
-        if (on_readable) {
-            on_readable();
-        }
-    }
 };
 
 }

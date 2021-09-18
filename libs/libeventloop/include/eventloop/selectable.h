@@ -1,10 +1,14 @@
 #pragma once
 
+#include <eventloop/event.h>
 #include <eventloop/object.h>
 #include <liim/function.h>
 
-namespace App {
+APP_EVENT(App, ReadableEvent, Event, (), (), ())
+APP_EVENT(App, WritableEvent, Event, (), (), ())
+APP_EVENT(App, ExceptionalEvent, Event, (), (), ())
 
+namespace App {
 enum NotifyWhen {
     Readable = 1,
     Writeable = 2,
@@ -12,6 +16,10 @@ enum NotifyWhen {
 };
 
 class Selectable : public Object {
+    APP_OBJECT(Selectable)
+
+    APP_EMITS(Object, ReadableEvent, WritableEvent, ExceptionalEvent)
+
 public:
     virtual ~Selectable();
 
@@ -23,10 +31,6 @@ public:
 
     int fd() const { return m_fd; }
     bool valid() const { return m_fd != -1; }
-
-    virtual void notify_readable() {}
-    virtual void notify_writeable() {}
-    virtual void notify_exceptional() {}
 
 protected:
     void set_fd(int fd) { m_fd = fd; }
@@ -41,15 +45,6 @@ class FdWrapper final : public Selectable {
     APP_OBJECT(FdWrapper)
 
 public:
-    FdWrapper(int fd) { set_fd(fd); }
-
-    Function<void()> on_readable;
-
-    virtual void notify_readable() override {
-        if (on_readable) {
-            on_readable();
-        }
-    }
+    explicit FdWrapper(int fd) { set_fd(fd); }
 };
-
 }

@@ -98,7 +98,7 @@ private:
     Vector<SharedPtr<Window>> m_window_stack;
     HashMap<wid_t, SharedPtr<Window>> m_window_map;
     SharedPtr<Window> m_active_window;
-    App::FileWatcher m_watcher;
+    SharedPtr<App::FileWatcher> m_watcher;
     String m_palette_path;
 
     SharedPtr<Window> m_window_to_resize;
