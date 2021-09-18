@@ -439,7 +439,9 @@ void Document::insert_char(Display& display, char c) {
     push_command<InsertCommand>(display, String(c));
 }
 
-DeleteCommand* Document::delete_char(Display& display, DeleteCharMode mode) {
+void Document::delete_char(Display& display, DeleteCharMode mode) {
+    auto group = make_unique<CommandGroup>(*this, display);
+
     for (auto& cursor : display.cursors()) {
         if (cursor.selection().empty()) {
             if (mode == DeleteCharMode::Backspace) {
@@ -451,14 +453,8 @@ DeleteCommand* Document::delete_char(Display& display, DeleteCharMode mode) {
         }
     }
 
-    bool has_selection = !display.cursors().main_cursor().selection().empty();
-    if (auto* command = push_command<DeleteCommand>(display)) {
-        if (!has_selection) {
-            command->set_restore_selections(false);
-        }
-        return command;
-    }
-    return nullptr;
+    group->add<DeleteCommand>(*this, display);
+    push_command(display, move(group));
 }
 
 void Document::delete_word(Display& display, DeleteCharMode mode) {
@@ -468,6 +464,7 @@ void Document::delete_word(Display& display, DeleteCharMode mode) {
         return;
     }
 
+    auto group = make_unique<CommandGroup>(*this, display);
     for (auto& cursor : cursors) {
         int index_into_line = cursor.index_into_line();
         if ((mode == DeleteCharMode::Backspace && index_into_line == 0) ||
@@ -483,9 +480,9 @@ void Document::delete_word(Display& display, DeleteCharMode mode) {
 
         swap_selection_start_and_cursor(display, cursor);
     }
-    if (auto* command = delete_char(display, mode)) {
-        command->set_restore_selections(false);
-    }
+
+    group->add<DeleteCommand>(*this, display);
+    push_command(display, move(group));
 }
 
 void Document::swap_selection_start_and_cursor(Display& display, Cursor& cursor) {
@@ -539,19 +536,17 @@ Document::Snapshot Document::snapshot(Display& display) const {
     return { Vector<Line>(m_lines), snapshot_state(display) };
 }
 
-void Document::restore(MultiCursor& cursors, Snapshot s, bool restore_selections) {
+void Document::restore(MultiCursor& cursors, Snapshot s) {
     m_lines = move(s.lines);
-    restore_state(cursors, s.state, restore_selections);
+    restore_state(cursors, s.state);
 
     update_search_results();
 }
 
-void Document::restore_state(MultiCursor& cursors, const StateSnapshot& s, bool restore_selections) {
+void Document::restore_state(MultiCursor& cursors, const StateSnapshot& s) {
     cursors.restore(*this, s.cursors);
-    if (!restore_selections) {
-        for (auto& cursor : cursors) {
-            cursor.selection().clear();
-        }
+    for (auto& cursor : cursors) {
+        cursor.selection().clear();
     }
     m_document_was_modified = s.document_was_modified;
 }
@@ -1049,6 +1044,35 @@ void Document::select_line_at_cursor(Display& display, Cursor& cursor) {
 void Document::select_all(Display& display, Cursor& cursor) {
     move_cursor_to_document_start(display, cursor, MovementMode::Move);
     move_cursor_to_document_end(display, cursor, MovementMode::Select);
+}
+
+void Document::push_command(Display& display, UniquePtr<Command> command) {
+    // This means some undo's have taken place, and the user started typing
+    // something else, so the redo stack will be discarded.
+    if (m_command_stack_index != m_command_stack.size()) {
+        m_command_stack.resize(m_command_stack_index);
+    }
+
+    if (m_command_stack.size() >= m_max_undo_stack) {
+        // FIXME: this makes the Vector data structure very inefficent
+        //        a doubly-linked list would be much nicer.
+        m_command_stack.remove(0);
+        m_command_stack_index--;
+    }
+
+    bool did_modify = execute_command(display, *command);
+    if (!did_modify) {
+        return;
+    }
+
+    m_command_stack.add(move(command));
+    m_command_stack_index++;
+    m_document_was_modified = true;
+    update_search_results();
+    update_syntax_highlighting();
+    update_suggestions(display);
+
+    emit<Change>();
 }
 
 void Document::insert_suggestion(Display& display, const MatchedSuggestion& suggestion) {

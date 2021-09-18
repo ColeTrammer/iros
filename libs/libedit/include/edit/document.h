@@ -133,10 +133,10 @@ public:
     void finish_input(Display& display, bool should_scroll_cursor_into_view);
 
     Snapshot snapshot(Display& display) const;
-    void restore(MultiCursor& cursors, Snapshot snapshot, bool restore_selections = true);
+    void restore(MultiCursor& cursors, Snapshot snapshot);
 
     StateSnapshot snapshot_state(Display& display) const;
-    void restore_state(MultiCursor& cursors, const StateSnapshot& state_snapshot, bool restore_selections = true);
+    void restore_state(MultiCursor& cursors, const StateSnapshot& state_snapshot);
 
     void delete_selection(Cursor& cursor);
     void clear_selection(Cursor& cursor);
@@ -188,7 +188,7 @@ public:
     void swap_lines_at_cursor(Display& display, SwapDirection direction);
     void split_line_at_cursor(Display& display);
     void insert_char(Display& display, char c);
-    DeleteCommand* delete_char(Display& display, DeleteCharMode mode);
+    void delete_char(Display& display, DeleteCharMode mode);
     void delete_word(Display& display, DeleteCharMode mode);
 
     App::ObjectBoundCoroutine go_to_line(Display& display);
@@ -208,37 +208,12 @@ private:
     void guess_type_from_name();
 
     template<typename C, typename... Args>
-    C* push_command(Display& display, Args... args) {
-        // This means some undo's have taken place, and the user started typing
-        // something else, so the redo stack will be discarded.
-        if (m_command_stack_index != m_command_stack.size()) {
-            m_command_stack.resize(m_command_stack_index);
-        }
-
-        if (m_command_stack.size() >= m_max_undo_stack) {
-            // FIXME: this makes the Vector data structure very inefficent
-            //        a doubly-linked list would be much nicer.
-            m_command_stack.remove(0);
-            m_command_stack_index--;
-        }
-
+    void push_command(Display& display, Args... args) {
         auto command = make_unique<C>(*this, display, forward<Args>(args)...);
-        bool did_modify = execute_command(display, *command);
-        if (!did_modify) {
-            return nullptr;
-        }
-
-        auto ret = command.get();
-        m_command_stack.add(move(command));
-        m_command_stack_index++;
-        m_document_was_modified = true;
-        update_search_results();
-        update_syntax_highlighting();
-        update_suggestions(display);
-
-        emit<Change>();
-        return ret;
+        push_command(display, move(command));
     }
+
+    void push_command(Display& display, UniquePtr<Command> command);
 
     Vector<Line> m_lines;
     String m_name;

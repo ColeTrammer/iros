@@ -9,6 +9,29 @@ Command::Command(Document& document) : m_document(document) {}
 
 Command::~Command() {}
 
+bool CommandGroup::execute(Display& display) {
+    bool modified = false;
+    for (auto& command : m_commands) {
+        if (command->execute(display)) {
+            modified = true;
+        }
+    }
+    return modified;
+}
+
+void CommandGroup::undo(Display& display) {
+    m_commands.for_each_reverse([&](auto& command) {
+        const_cast<Command&>(*command).undo(display);
+    });
+    document().restore_state(display.cursors(), m_snapshot);
+}
+
+void CommandGroup::redo(Display& display) {
+    for (auto& command : m_commands) {
+        command->redo(display);
+    }
+}
+
 DeltaBackedCommand::DeltaBackedCommand(Document& document, Display& display)
     : Command(document), m_start_snapshot(document.snapshot_state(display)) {
     for (auto& cursor : m_start_snapshot.cursors) {
@@ -27,7 +50,7 @@ bool DeltaBackedCommand::execute(Display& display) {
 void DeltaBackedCommand::undo(Display& display) {
     document().restore_state(display.cursors(), m_end_snapshot);
     do_undo(display.cursors());
-    document().restore_state(display.cursors(), m_start_snapshot, restore_selections());
+    document().restore_state(display.cursors(), m_start_snapshot);
 }
 
 void DeltaBackedCommand::redo(Display& display) {
@@ -41,7 +64,7 @@ SnapshotBackedCommand::SnapshotBackedCommand(Document& document, Display& displa
 SnapshotBackedCommand::~SnapshotBackedCommand() {}
 
 void SnapshotBackedCommand::undo(Display& display) {
-    document().restore(display.cursors(), snapshot(), restore_selections());
+    document().restore(display.cursors(), snapshot());
 }
 
 void SnapshotBackedCommand::redo(Display& display) {

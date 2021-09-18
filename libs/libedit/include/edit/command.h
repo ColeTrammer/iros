@@ -16,12 +16,26 @@ public:
     virtual void undo(Display& display) = 0;
     virtual void redo(Display& display) = 0;
 
-    void set_restore_selections(bool b) { m_restore_selections = b; }
-    bool restore_selections() const { return m_restore_selections; }
-
 private:
     Document& m_document;
-    bool m_restore_selections { false };
+};
+
+class CommandGroup : public Command {
+public:
+    explicit CommandGroup(Document& document, Display& display) : Command(document), m_snapshot(document.snapshot_state(display)) {}
+
+    template<typename C, typename... Args>
+    void add(Args&&... args) {
+        m_commands.add(make_unique<C>(forward<Args>(args)...));
+    }
+
+    virtual bool execute(Display& display) override;
+    virtual void undo(Display& display) override;
+    virtual void redo(Display& display) override;
+
+private:
+    Vector<UniquePtr<Command>> m_commands;
+    Document::StateSnapshot m_snapshot;
 };
 
 class DeltaBackedCommand : public Command {
