@@ -187,6 +187,10 @@ Position Document::relative_to_absolute_position(Display& display, const Line& r
 }
 
 int Document::num_rendered_lines(Display& display) const {
+    if (!display.word_wrap_enabled()) {
+        return num_lines();
+    }
+
     int total = 0;
     for (auto& line : m_lines) {
         total += line.rendered_line_count(*this, display);
