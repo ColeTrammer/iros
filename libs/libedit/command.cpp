@@ -9,7 +9,32 @@ Command::Command(Document& document) : m_document(document) {}
 
 Command::~Command() {}
 
-bool CommandGroup::execute(Display& display) {
+DeltaBackedCommand::DeltaBackedCommand(Document& document) : Command(document) {}
+
+DeltaBackedCommand::~DeltaBackedCommand() {}
+
+bool DeltaBackedCommand::execute(Display& display) {
+    m_start_snapshot = document().snapshot_state(display);
+    for (auto& cursor : m_start_snapshot.cursors) {
+        m_selection_texts.add(document().selection_text(cursor));
+    }
+    bool was_modified = do_execute(display, display.cursors());
+    m_end_snapshot = document().snapshot_state(display);
+    return was_modified;
+}
+
+void DeltaBackedCommand::undo(Display& display) {
+    document().restore_state(display.cursors(), m_end_snapshot);
+    do_undo(display, display.cursors());
+    document().restore_state(display.cursors(), m_start_snapshot);
+}
+
+void DeltaBackedCommand::redo(Display& display) {
+    document().restore_state(display.cursors(), start_snapshot());
+    do_execute(display, display.cursors());
+}
+
+bool CommandGroup::do_execute(Display& display, MultiCursor&) {
     bool modified = false;
     for (auto& command : m_commands) {
         if (command->execute(display)) {
@@ -19,65 +44,17 @@ bool CommandGroup::execute(Display& display) {
     return modified;
 }
 
-void CommandGroup::undo(Display& display) {
+void CommandGroup::do_undo(Display& display, MultiCursor&) {
     m_commands.for_each_reverse([&](auto& command) {
         const_cast<Command&>(*command).undo(display);
     });
-    document().restore_state(display.cursors(), m_snapshot);
 }
 
-void CommandGroup::redo(Display& display) {
-    for (auto& command : m_commands) {
-        command->redo(display);
-    }
-}
-
-DeltaBackedCommand::DeltaBackedCommand(Document& document, Display& display)
-    : Command(document), m_start_snapshot(document.snapshot_state(display)) {
-    for (auto& cursor : m_start_snapshot.cursors) {
-        m_selection_texts.add(document.selection_text(cursor));
-    }
-}
-
-DeltaBackedCommand::~DeltaBackedCommand() {}
-
-bool DeltaBackedCommand::execute(Display& display) {
-    bool was_modified = do_execute(display.cursors());
-    m_end_snapshot = document().snapshot_state(display);
-    return was_modified;
-}
-
-void DeltaBackedCommand::undo(Display& display) {
-    document().restore_state(display.cursors(), m_end_snapshot);
-    do_undo(display.cursors());
-    document().restore_state(display.cursors(), m_start_snapshot);
-}
-
-void DeltaBackedCommand::redo(Display& display) {
-    document().restore_state(display.cursors(), start_snapshot());
-    document().execute_command(display, *this);
-}
-
-SnapshotBackedCommand::SnapshotBackedCommand(Document& document, Display& display)
-    : Command(document), m_snapshot(document.snapshot(display)) {}
-
-SnapshotBackedCommand::~SnapshotBackedCommand() {}
-
-void SnapshotBackedCommand::undo(Display& display) {
-    document().restore(display.cursors(), snapshot());
-}
-
-void SnapshotBackedCommand::redo(Display& display) {
-    document().restore_state(display.cursors(), snapshot().state);
-    document().execute_command(display, *this);
-}
-
-InsertCommand::InsertCommand(Document& document, Display& display, String text)
-    : DeltaBackedCommand(document, display), m_text(move(text)) {}
+InsertCommand::InsertCommand(Document& document, String text) : DeltaBackedCommand(document), m_text(move(text)) {}
 
 InsertCommand::~InsertCommand() {}
 
-bool InsertCommand::do_execute(MultiCursor& cursors) {
+bool InsertCommand::do_execute(Display&, MultiCursor& cursors) {
     if (m_text.empty()) {
         return false;
     }
@@ -133,7 +110,7 @@ void InsertCommand::do_insert(Document& document, MultiCursor& cursors, int curs
     }
 }
 
-void InsertCommand::do_undo(MultiCursor& cursors) {
+void InsertCommand::do_undo(Display&, MultiCursor& cursors) {
     for (int cursor_index = 0; cursor_index < cursors.size(); cursor_index++) {
         auto& cursor = cursors[cursor_index];
         document().clear_selection(cursor);
@@ -170,11 +147,11 @@ void InsertCommand::do_undo(MultiCursor& cursors) {
     }
 }
 
-DeleteCommand::DeleteCommand(Document& document, Display& display) : DeltaBackedCommand(document, display) {}
+DeleteCommand::DeleteCommand(Document& document) : DeltaBackedCommand(document) {}
 
 DeleteCommand::~DeleteCommand() {}
 
-bool DeleteCommand::do_execute(MultiCursor& cursors) {
+bool DeleteCommand::do_execute(Display&, MultiCursor& cursors) {
     bool modified = false;
     for (int i = cursors.size() - 1; i >= 0; i--) {
         auto& cursor = cursors[i];
@@ -187,7 +164,7 @@ bool DeleteCommand::do_execute(MultiCursor& cursors) {
     return modified;
 }
 
-void DeleteCommand::do_undo(MultiCursor& cursors) {
+void DeleteCommand::do_undo(Display&, MultiCursor& cursors) {
     for (int i = cursors.size() - 1; i >= 0; i--) {
         auto& cursor = cursors[i];
         if (!start_snapshot().cursors[i].selection().empty()) {
@@ -197,11 +174,11 @@ void DeleteCommand::do_undo(MultiCursor& cursors) {
     }
 }
 
-DeleteLineCommand::DeleteLineCommand(Document& document, Display& display) : DeltaBackedCommand(document, display) {}
+DeleteLineCommand::DeleteLineCommand(Document& document) : DeltaBackedCommand(document) {}
 
 DeleteLineCommand::~DeleteLineCommand() {}
 
-bool DeleteLineCommand::do_execute(MultiCursor& cursors) {
+bool DeleteLineCommand::do_execute(Display&, MultiCursor& cursors) {
     for (auto& cursor : cursors) {
         m_saved_lines.add(cursor.referenced_line(document()));
 
@@ -217,7 +194,7 @@ bool DeleteLineCommand::do_execute(MultiCursor& cursors) {
     return true;
 }
 
-void DeleteLineCommand::do_undo(MultiCursor& cursors) {
+void DeleteLineCommand::do_undo(Display&, MultiCursor& cursors) {
     for (int i = 0; i < cursors.size(); i++) {
         document().insert_line(Line(m_saved_lines[i]), start_snapshot().cursors[i].line_index());
     }
@@ -226,28 +203,26 @@ void DeleteLineCommand::do_undo(MultiCursor& cursors) {
     }
 }
 
-InsertLineCommand::InsertLineCommand(Document& document, Display& display, String text)
-    : DeltaBackedCommand(document, display), m_text(move(text)) {}
+InsertLineCommand::InsertLineCommand(Document& document, String text) : DeltaBackedCommand(document), m_text(move(text)) {}
 
 InsertLineCommand::~InsertLineCommand() {}
 
-bool InsertLineCommand::do_execute(MultiCursor& cursors) {
+bool InsertLineCommand::do_execute(Display&, MultiCursor& cursors) {
     Line to_add(m_text);
     auto& cursor = cursors.main_cursor();
     document().insert_line(move(to_add), cursor.line_index());
     return true;
 }
 
-void InsertLineCommand::do_undo(MultiCursor&) {
+void InsertLineCommand::do_undo(Display&, MultiCursor&) {
     document().remove_line(start_snapshot().cursors.cursors[start_snapshot().cursors.main_cursor_index].line_index());
 }
 
-SwapLinesCommand::SwapLinesCommand(Document& document, Display& display, SwapDirection direction)
-    : DeltaBackedCommand(document, display), m_direction(direction) {}
+SwapLinesCommand::SwapLinesCommand(Document& document, SwapDirection direction) : DeltaBackedCommand(document), m_direction(direction) {}
 
 SwapLinesCommand::~SwapLinesCommand() {}
 
-bool SwapLinesCommand::do_execute(MultiCursor& cursors) {
+bool SwapLinesCommand::do_execute(Display&, MultiCursor& cursors) {
     cursors.remove_secondary_cursors();
     auto& cursor = cursors.main_cursor();
     bool ret = do_swap(cursor, m_direction);
@@ -278,7 +253,7 @@ bool SwapLinesCommand::do_swap(Cursor& cursor, SwapDirection direction) {
     return true;
 }
 
-void SwapLinesCommand::do_undo(MultiCursor& cursors) {
+void SwapLinesCommand::do_undo(Display&, MultiCursor& cursors) {
     auto& cursor = cursors.main_cursor();
     do_swap(cursor, m_direction == SwapDirection::Up ? SwapDirection::Down : SwapDirection::Up);
 }

@@ -209,7 +209,7 @@ private:
 
     template<typename C, typename... Args>
     void push_command(Display& display, Args... args) {
-        auto command = make_unique<C>(*this, display, forward<Args>(args)...);
+        auto command = make_unique<C>(*this, forward<Args>(args)...);
         push_command(display, move(command));
     }
 

@@ -440,20 +440,21 @@ void Document::insert_char(Display& display, char c) {
 }
 
 void Document::delete_char(Display& display, DeleteCharMode mode) {
-    auto group = make_unique<CommandGroup>(*this, display);
-
-    for (auto& cursor : display.cursors()) {
-        if (cursor.selection().empty()) {
-            if (mode == DeleteCharMode::Backspace) {
-                move_cursor_left(display, cursor, MovementMode::Select);
-            } else {
-                move_cursor_right(display, cursor, MovementMode::Select);
+    auto group = make_unique<CommandGroup>(*this);
+    group->add<MovementCommand>(*this, [this, mode](Display& display, MultiCursor& cursors) {
+        for (auto& cursor : cursors) {
+            if (cursor.selection().empty()) {
+                if (mode == DeleteCharMode::Backspace) {
+                    move_cursor_left(display, cursor, MovementMode::Select);
+                } else {
+                    move_cursor_right(display, cursor, MovementMode::Select);
+                }
+                swap_selection_start_and_cursor(display, cursor);
             }
-            swap_selection_start_and_cursor(display, cursor);
         }
-    }
+    });
+    group->add<DeleteCommand>(*this);
 
-    group->add<DeleteCommand>(*this, display);
     push_command(display, move(group));
 }
 
@@ -464,24 +465,26 @@ void Document::delete_word(Display& display, DeleteCharMode mode) {
         return;
     }
 
-    auto group = make_unique<CommandGroup>(*this, display);
-    for (auto& cursor : cursors) {
-        int index_into_line = cursor.index_into_line();
-        if ((mode == DeleteCharMode::Backspace && index_into_line == 0) ||
-            (mode == DeleteCharMode::Delete && index_into_line == cursor.referenced_line(*this).length())) {
-            continue;
+    auto group = make_unique<CommandGroup>(*this);
+    group->add<MovementCommand>(*this, [this, mode](Display& display, MultiCursor& cursors) {
+        for (auto& cursor : cursors) {
+            int index_into_line = cursor.index_into_line();
+            if ((mode == DeleteCharMode::Backspace && index_into_line == 0) ||
+                (mode == DeleteCharMode::Delete && index_into_line == cursor.referenced_line(*this).length())) {
+                continue;
+            }
+
+            if (mode == DeleteCharMode::Backspace) {
+                move_cursor_left_by_word(display, cursor, MovementMode::Select);
+            } else {
+                move_cursor_right_by_word(display, cursor, MovementMode::Select);
+            }
+
+            swap_selection_start_and_cursor(display, cursor);
         }
+    });
+    group->add<DeleteCommand>(*this);
 
-        if (mode == DeleteCharMode::Backspace) {
-            move_cursor_left_by_word(display, cursor, MovementMode::Select);
-        } else {
-            move_cursor_right_by_word(display, cursor, MovementMode::Select);
-        }
-
-        swap_selection_start_and_cursor(display, cursor);
-    }
-
-    group->add<DeleteCommand>(*this, display);
     push_command(display, move(group));
 }
 
@@ -545,13 +548,78 @@ void Document::restore(MultiCursor& cursors, Snapshot s) {
 
 void Document::restore_state(MultiCursor& cursors, const StateSnapshot& s) {
     cursors.restore(*this, s.cursors);
-    for (auto& cursor : cursors) {
-        cursor.selection().clear();
-    }
     m_document_was_modified = s.document_was_modified;
 }
 
 void Document::insert_text_at_cursor(Display& display, const String& text) {
+    auto all_cursors_have_selection = [&] {
+        for (auto& cursor : display.cursors()) {
+            if (cursor.selection().empty()) {
+                return false;
+            }
+        }
+        return true;
+    }();
+
+    if (all_cursors_have_selection) {
+        struct InsertAround {
+            String left;
+            String right;
+        };
+        auto insert_around_result = [&]() -> Maybe<InsertAround> {
+            if (text.view() == "<") {
+                return InsertAround { "<", ">" };
+            }
+            if (text.view() == "'") {
+                return InsertAround { "'", "'" };
+            }
+            if (text.view() == "\"") {
+                return InsertAround { "\"", "\"" };
+            }
+            if (text.view() == "(") {
+                return InsertAround { "(", ")" };
+            }
+            if (text.view() == "[") {
+                return InsertAround { "[", "]" };
+            }
+            if (text.view() == "{") {
+                return InsertAround { "{", "}" };
+            }
+            return {};
+        }();
+
+        if (insert_around_result) {
+            auto selections = Vector<Selection> {};
+            for (auto& cursor : display.cursors()) {
+                selections.add(cursor.selection());
+            }
+
+            auto group = make_unique<CommandGroup>(*this);
+            group->add<MovementCommand>(*this, [this, selections](Display& display, MultiCursor& cursors) {
+                for (int i = 0; i < cursors.size(); i++) {
+                    auto& cursor = cursors[i];
+                    move_cursor_to(display, cursor, selections[i].normalized_start());
+                }
+            });
+            group->add<InsertCommand>(*this, insert_around_result->left);
+            group->add<MovementCommand>(*this, [this, selections](Display& display, MultiCursor& cursors) {
+                for (int i = 0; i < cursors.size(); i++) {
+                    auto& cursor = cursors[i];
+                    move_cursor_to(display, cursor, selections[i].normalized_end().offset({ 0, 1 }));
+                }
+            });
+            group->add<InsertCommand>(*this, insert_around_result->right);
+            group->add<MovementCommand>(*this, [this, selections](Display& display, MultiCursor& cursors) {
+                for (int i = 0; i < cursors.size(); i++) {
+                    auto& cursor = cursors[i];
+                    move_cursor_to(display, cursor, selections[i].normalized_start().offset({ 0, 1 }));
+                    move_cursor_to(display, cursor, selections[i].normalized_end().offset({ 0, 1 }), MovementMode::Select);
+                }
+            });
+            return push_command(display, move(group));
+        }
+    }
+
     push_command<InsertCommand>(display, text);
 }
 
