@@ -22,7 +22,7 @@ void TerminalPrompt::initialize() {
     });
 
     m_display = layout.add<TerminalDisplay>().shared_from_this();
-    m_display->on<App::KeyDownEvent>(*this, [this](const App::KeyEvent& event) {
+    m_display->intercept<App::KeyDownEvent>(*this, [this](const App::KeyEvent& event) {
         if (event.key() == App::Key::Escape) {
             m_host_display.hide_prompt_panel();
             return true;

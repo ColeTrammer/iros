@@ -27,7 +27,7 @@ void TerminalSearch::initialize() {
     });
 
     auto& text_box = layout.add<TerminalDisplay>();
-    text_box.on<App::KeyDownEvent>(*this, [this](const App::KeyDownEvent& event) {
+    text_box.intercept<App::KeyDownEvent>(*this, [this](const App::KeyDownEvent& event) {
         if (event.key() == App::Key::Escape) {
             m_host_display.hide_search_panel();
             return true;
