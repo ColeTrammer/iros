@@ -202,11 +202,11 @@ Edit::RenderedLine ReplDisplay::compose_line(const Edit::Line& line) {
     renderer.add_to_segment(prompt.view(), string_print_width(prompt.view()));
     renderer.end_segment();
 
-    auto cursor_collection = cursors().cursor_text_ranges(*document());
-    auto selection_collection = cursors().selections(*document());
+    auto cursor_collection = cursors().cursor_text_ranges();
+    auto selection_collection = cursors().selections();
     auto metadata_iterator = Edit::DocumentTextRangeIterator { { document()->index_of_line(line), 0 },
                                                                document()->syntax_highlighting_info(),
-                                                               *search_results(),
+                                                               search_results(),
                                                                cursor_collection,
                                                                selection_collection };
 
@@ -240,7 +240,7 @@ Edit::RenderedLine ReplDisplay::compose_line(const Edit::Line& line) {
         renderer.end_segment();
 
         for (size_t i = 0; i < info.bytes_used; i++) {
-            metadata_iterator.advance();
+            metadata_iterator.advance(*document());
         }
     }
     return renderer.finish(line, metadata_iterator.peek_metadata());

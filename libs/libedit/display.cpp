@@ -21,13 +21,12 @@ void Display::set_document(SharedPtr<Document> document) {
     if (m_document) {
         uninstall_document_listeners(*m_document);
         m_document->unregister_display(*this, true);
-        m_search_results = nullptr;
+        m_search_results.clear();
     }
     m_document = move(document);
     if (m_document) {
         install_document_listeners(*m_document);
         m_document->register_display(*this);
-        m_search_results = make_unique<TextRangeCollection>(*m_document);
         clear_search();
     }
 
@@ -134,11 +133,7 @@ void Display::toggle_word_wrap_enabled() {
 }
 
 void Display::move_cursor_to_next_search_match() {
-    if (!document()) {
-        return;
-    }
-    auto& search_results = *this->search_results();
-    if (search_results.empty()) {
+    if (!document() || m_search_results.empty()) {
         return;
     }
 
@@ -147,30 +142,29 @@ void Display::move_cursor_to_next_search_match() {
     cursors().remove_secondary_cursors();
     auto& cursor = cursors().main_cursor();
 
-    if (m_search_result_index >= search_results.size()) {
+    if (m_search_result_index >= m_search_results.size()) {
         m_search_result_index = 0;
         document()->move_cursor_to_document_start(*this, cursor);
     }
 
-    while (search_results.range(m_search_result_index).ends_before(cursor.index())) {
+    while (m_search_results.range(m_search_result_index).ends_before(cursor.index())) {
         m_search_result_index++;
-        if (m_search_result_index == search_results.size()) {
+        if (m_search_result_index == m_search_results.size()) {
             m_search_result_index = 0;
             document()->move_cursor_to_document_start(*this, cursor);
         }
     }
 
-    document()->move_cursor_to(*this, cursor, search_results.range(m_search_result_index).start());
-    document()->move_cursor_to(*this, cursor, search_results.range(m_search_result_index).end(), MovementMode::Select);
+    document()->move_cursor_to(*this, cursor, m_search_results.range(m_search_result_index).start());
+    document()->move_cursor_to(*this, cursor, m_search_results.range(m_search_result_index).end(), MovementMode::Select);
     m_search_result_index++;
     document()->finish_input(*this, true);
 }
 
 void Display::select_next_word_at_cursor() {
-    if (!document()) {
+    if (!document() || m_search_results.empty()) {
         return;
     }
-    auto& search_results = *this->search_results();
 
     auto& main_cursor = cursors().main_cursor();
     if (main_cursor.selection().empty()) {
@@ -179,19 +173,19 @@ void Display::select_next_word_at_cursor() {
         set_search_text(move(search_text));
 
         // Set m_search_result_index to point just past the current cursor.
-        while (m_search_result_index < search_results.size() &&
-               search_results.range(m_search_result_index).ends_before(main_cursor.index())) {
+        while (m_search_result_index < m_search_results.size() &&
+               m_search_results.range(m_search_result_index).ends_before(main_cursor.index())) {
             m_search_result_index++;
         }
-        m_search_result_index %= search_results.size();
+        m_search_result_index %= m_search_results.size();
         return;
     }
 
-    auto& result = search_results.range(m_search_result_index);
+    auto& result = m_search_results.range(m_search_result_index);
     cursors().add_cursor_at(*document(), result.end(), { result.start(), result.end() });
 
     ++m_search_result_index;
-    m_search_result_index %= search_results.size();
+    m_search_result_index %= m_search_results.size();
 }
 
 void Display::update_search_results() {
@@ -199,17 +193,17 @@ void Display::update_search_results() {
         return;
     }
 
-    document()->invalidate_lines_in_range_collection(*this, *m_search_results);
+    document()->invalidate_lines_in_range_collection(*this, m_search_results);
 
-    m_search_results->clear();
+    m_search_results.clear();
     if (m_search_text.empty()) {
         return;
     }
 
     for (int i = 0; i < document()->num_lines(); i++) {
-        document()->line_at_index(i).search(*document(), m_search_text, *m_search_results);
+        document()->line_at_index(i).search(*document(), m_search_text, m_search_results);
     }
-    document()->invalidate_lines_in_range_collection(*this, *m_search_results);
+    document()->invalidate_lines_in_range_collection(*this, m_search_results);
 }
 
 void Display::clear_search() {
@@ -217,9 +211,9 @@ void Display::clear_search() {
         return;
     }
 
-    document()->invalidate_lines_in_range_collection(*this, *m_search_results);
+    document()->invalidate_lines_in_range_collection(*this, m_search_results);
     m_search_result_index = 0;
-    m_search_results->clear();
+    m_search_results.clear();
 }
 
 void Display::set_search_text(String text) {

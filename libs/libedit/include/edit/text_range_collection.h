@@ -10,7 +10,7 @@ class TextRangeCollectionIterator;
 
 class TextRangeCollection {
 public:
-    TextRangeCollection(const Document& document) : m_document(document) {}
+    TextRangeCollection() = default;
 
     void add(const TextRange& range) { m_ranges.add(range); }
     void clear() { m_ranges.clear(); }
@@ -27,7 +27,6 @@ private:
     friend class TextRangeCollectionIterator;
 
     Vector<TextRange> m_ranges;
-    const Document& m_document;
 };
 
 class TextRangeCollectionIterator {
@@ -36,9 +35,9 @@ public:
         : m_collection(collection), m_index(start), m_range_index(start_range_index) {}
 
     CharacterMetadata peek_metadata() const;
-    void advance();
-    void advance_line();
-    void advance_to_index_into_line(int index_into_line);
+    void advance(const Document& document);
+    void advance_line(const Document& document);
+    void advance_to_index_into_line(const Document& document, int index_into_line);
 
 private:
     const TextRange* current_range() const;
@@ -63,21 +62,21 @@ public:
         return metadata;
     }
 
-    void advance() {
+    void advance(const Document& document) {
         for (auto& iter : m_iterators) {
-            iter.advance();
+            iter.advance(document);
         }
     }
 
-    void advance_line() {
+    void advance_line(const Document& document) {
         for (auto& iter : m_iterators) {
-            iter.advance_line();
+            iter.advance_line(document);
         }
     }
 
-    void advance_to_index_into_line(int index_into_line) {
+    void advance_to_index_into_line(const Document& document, int index_into_line) {
         for (auto& iter : m_iterators) {
-            iter.advance_to_index_into_line(index_into_line);
+            iter.advance_to_index_into_line(document, index_into_line);
         }
     }
 

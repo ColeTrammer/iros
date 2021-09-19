@@ -65,8 +65,8 @@ CharacterMetadata TextRangeCollectionIterator::peek_metadata() const {
     return range->metadata();
 }
 
-void TextRangeCollectionIterator::advance() {
-    auto& line = m_collection.m_document.line_at_index(m_index.line_index());
+void TextRangeCollectionIterator::advance(const Document& document) {
+    auto& line = document.line_at_index(m_index.line_index());
     if (m_index.index_into_line() > line.length()) {
         m_index.set(m_index.line_index() + 1, 0);
     } else {
@@ -79,21 +79,21 @@ void TextRangeCollectionIterator::advance() {
     }
 }
 
-void TextRangeCollectionIterator::advance_line() {
-    if (m_index.line_index() == m_collection.m_document.num_lines() - 1) {
+void TextRangeCollectionIterator::advance_line(const Document& document) {
+    if (m_index.line_index() == document.num_lines() - 1) {
         return;
     }
 
     int starting_line_index = m_index.line_index();
     while (m_index.line_index() == starting_line_index) {
-        advance();
+        advance(document);
     }
 }
 
-void TextRangeCollectionIterator::advance_to_index_into_line(int index_into_line) {
+void TextRangeCollectionIterator::advance_to_index_into_line(const Document& document, int index_into_line) {
     assert(m_index.index_into_line() <= index_into_line);
     while (m_index.index_into_line() < index_into_line) {
-        advance();
+        advance(document);
     }
 }
 }

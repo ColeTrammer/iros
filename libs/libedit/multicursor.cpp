@@ -254,8 +254,8 @@ Maybe<String> MultiCursor::preview_auto_complete_text() const {
     return String { suggestion.content().substring(current_prefix.size()) };
 }
 
-TextRangeCollection MultiCursor::cursor_text_ranges(const Document& document) const {
-    auto collection = TextRangeCollection { document };
+TextRangeCollection MultiCursor::cursor_text_ranges() const {
+    auto collection = TextRangeCollection {};
     for (auto& cursor : m_cursors) {
         auto start = cursor.index();
         auto end = TextIndex { cursor.line_index(), cursor.index_into_line() + 1 };
@@ -266,8 +266,8 @@ TextRangeCollection MultiCursor::cursor_text_ranges(const Document& document) co
     return collection;
 }
 
-TextRangeCollection MultiCursor::selections(const Document& document) const {
-    auto collection = TextRangeCollection { document };
+TextRangeCollection MultiCursor::selections() const {
+    auto collection = TextRangeCollection {};
     for (auto& cursor : m_cursors) {
         collection.add(cursor.selection().text_range());
     }
@@ -288,8 +288,8 @@ void MultiCursor::restore(Document& document, const Snapshot& snapshot) {
 
 void MultiCursor::invalidate_based_on_last_snapshot(Document& document) {
     if (m_history.empty()) {
-        document.invalidate_lines_in_range_collection(m_display, cursor_text_ranges(document));
-        document.invalidate_lines_in_range_collection(m_display, selections(document));
+        document.invalidate_lines_in_range_collection(m_display, cursor_text_ranges());
+        document.invalidate_lines_in_range_collection(m_display, selections());
         return;
     }
 
@@ -300,13 +300,13 @@ void MultiCursor::invalidate_based_on_last_snapshot(Document& document) {
 
     m_cursors = m_history.last().cursors;
     m_main_cursor_index = m_history.last().main_cursor_index;
-    document.invalidate_lines_in_range_collection(m_display, cursor_text_ranges(document));
-    document.invalidate_lines_in_range_collection(m_display, selections(document));
+    document.invalidate_lines_in_range_collection(m_display, cursor_text_ranges());
+    document.invalidate_lines_in_range_collection(m_display, selections());
 
     m_cursors = move(current.cursors);
     m_main_cursor_index = current.main_cursor_index;
-    document.invalidate_lines_in_range_collection(m_display, cursor_text_ranges(document));
-    document.invalidate_lines_in_range_collection(m_display, selections(document));
+    document.invalidate_lines_in_range_collection(m_display, cursor_text_ranges());
+    document.invalidate_lines_in_range_collection(m_display, selections());
 }
 
 void MultiCursor::invalidate_cursor_history() {

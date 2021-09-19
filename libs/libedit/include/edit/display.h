@@ -4,6 +4,7 @@
 #include <edit/forward.h>
 #include <edit/multicursor.h>
 #include <edit/suggestions.h>
+#include <edit/text_range_collection.h>
 #include <eventloop/event.h>
 #include <eventloop/forward.h>
 #include <graphics/color.h>
@@ -111,7 +112,7 @@ public:
     void select_next_word_at_cursor();
 
     void set_search_text(String text);
-    const TextRangeCollection* search_results() const { return m_search_results.get(); }
+    const TextRangeCollection& search_results() const { return m_search_results; }
     const String& search_text() const { return m_search_text; }
 
 protected:
@@ -135,7 +136,7 @@ private:
     bool m_preview_auto_complete { false };
 
     String m_search_text;
-    UniquePtr<TextRangeCollection> m_search_results;
+    TextRangeCollection m_search_results;
     int m_search_result_index { 0 };
 
     bool m_word_wrap_enabled { true };
