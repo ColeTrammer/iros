@@ -11,12 +11,6 @@ void Widget::initialize() {
         return m_key_bindings.handle_key_event(event);
     });
 
-    on<ResizeEvent>([this](auto&) {
-        if (layout_engine()) {
-            layout_engine()->schedule_layout();
-        }
-    });
-
     on<ShowEvent, HideEvent, ThemeChangeEvent>([this](const auto& event) {
         forward_to_children(event);
     });
@@ -153,6 +147,10 @@ void Widget::set_positioned_rect(const Rect& rect) {
     invalidate();
     m_positioned_rect = rect;
     invalidate();
+
+    if (layout_engine()) {
+        layout_engine()->schedule_layout();
+    }
 
     if (old_width != rect.width() || old_height != rect.height()) {
         emit<ResizeEvent>();
