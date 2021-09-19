@@ -468,12 +468,6 @@ void Document::delete_word(Display& display, DeleteCharMode mode) {
     auto group = make_unique<CommandGroup>(*this);
     group->add<MovementCommand>(*this, [this, mode](Display& display, MultiCursor& cursors) {
         for (auto& cursor : cursors) {
-            int index_into_line = cursor.index_into_line();
-            if ((mode == DeleteCharMode::Backspace && index_into_line == 0) ||
-                (mode == DeleteCharMode::Delete && index_into_line == cursor.referenced_line(*this).length())) {
-                continue;
-            }
-
             if (mode == DeleteCharMode::Backspace) {
                 move_cursor_left_by_word(display, cursor, MovementMode::Select);
             } else {
