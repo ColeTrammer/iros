@@ -206,7 +206,7 @@ Edit::RenderedLine ReplDisplay::compose_line(const Edit::Line& line) {
     auto selection_collection = cursors().selections(*document());
     auto metadata_iterator = Edit::DocumentTextRangeIterator { { document()->index_of_line(line), 0 },
                                                                document()->syntax_highlighting_info(),
-                                                               document()->search_results(),
+                                                               *search_results(),
                                                                cursor_collection,
                                                                selection_collection };
 

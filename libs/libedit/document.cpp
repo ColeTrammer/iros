@@ -94,7 +94,7 @@ SharedPtr<Document> Document::create_empty() {
 }
 
 Document::Document(Vector<Line> lines, String name, InputMode mode)
-    : m_lines(move(lines)), m_name(move(name)), m_input_mode(mode), m_search_results(*this), m_syntax_highlighting_info(*this) {
+    : m_lines(move(lines)), m_name(move(name)), m_input_mode(mode), m_syntax_highlighting_info(*this) {
     if (m_lines.empty()) {
         m_lines.add(Line(""));
     }
@@ -524,7 +524,6 @@ void Document::undo(Display& display) {
 
     auto& command = *m_command_stack[--m_command_stack_index];
     command.undo(display);
-    update_search_results();
     update_syntax_highlighting();
     update_suggestions(display);
 
@@ -542,8 +541,6 @@ Document::Snapshot Document::snapshot(Display& display) const {
 void Document::restore(MultiCursor& cursors, Snapshot s) {
     m_lines = move(s.lines);
     restore_state(cursors, s.state);
-
-    update_search_results();
 }
 
 void Document::restore_state(MultiCursor& cursors, const StateSnapshot& s) {
@@ -996,93 +993,8 @@ void Document::update_syntax_highlighting() {
     emit<SyntaxHighlightingChanged>();
 }
 
-void Document::update_search_results() {
-    if (m_search_text.empty()) {
-        return;
-    }
-
-    m_search_results.clear();
-    for (auto& line : m_lines) {
-        line.search(*this, m_search_text, m_search_results);
-    }
-    emit<SearchResultsChanged>();
-}
-
-void Document::clear_search() {
-    clear_search_results();
-    m_search_text = "";
-    m_search_result_index = 0;
-}
-
-void Document::clear_search_results() {
-    if (m_search_results.empty()) {
-        return;
-    }
-
-    m_search_results.clear();
-    emit<SearchResultsChanged>();
-}
-
-void Document::set_search_text(String text) {
-    if (m_search_text == text) {
-        return;
-    }
-
-    clear_search();
-    m_search_text = move(text);
-    update_search_results();
-}
-
-void Document::move_cursor_to_next_search_match(Display& display, Cursor& cursor) {
-    if (m_search_results.empty()) {
-        return;
-    }
-
-    start_input(display, true);
-    if (m_search_result_index >= m_search_results.size()) {
-        m_search_result_index = 0;
-        move_cursor_to_document_start(display, cursor);
-    }
-
-    while (m_search_results.range(m_search_result_index).ends_before(cursor.index())) {
-        m_search_result_index++;
-        if (m_search_result_index == m_search_results.size()) {
-            m_search_result_index = 0;
-            move_cursor_to_document_start(display, cursor);
-        }
-    }
-
-    move_cursor_to(display, cursor, m_search_results.range(m_search_result_index).start());
-    move_cursor_to(display, cursor, m_search_results.range(m_search_result_index).end(), MovementMode::Select);
-    m_search_result_index++;
-    finish_input(display, true);
-}
-
 void Document::swap_lines_at_cursor(Display& display, SwapDirection direction) {
     push_command<SwapLinesCommand>(display, direction);
-}
-
-void Document::select_next_word_at_cursor(Display& display) {
-    auto& main_cursor = display.cursors().main_cursor();
-    if (main_cursor.selection().empty()) {
-        select_word_at_cursor(display, main_cursor);
-        auto search_text = selection_text(main_cursor);
-        set_search_text(move(search_text));
-
-        // Set m_search_result_index to point just past the current cursor.
-        while (m_search_result_index < m_search_results.size() &&
-               m_search_results.range(m_search_result_index).ends_before(main_cursor.index())) {
-            m_search_result_index++;
-        }
-        m_search_result_index %= m_search_results.size();
-        return;
-    }
-
-    auto& result = m_search_results.range(m_search_result_index);
-    display.cursors().add_cursor_at(*this, result.end(), { result.start(), result.end() });
-
-    ++m_search_result_index;
-    m_search_result_index %= m_search_results.size();
 }
 
 void Document::select_word_at_cursor(Display& display, Cursor& cursor) {
@@ -1136,7 +1048,6 @@ void Document::push_command(Display& display, UniquePtr<Command> command) {
     m_command_stack.add(move(command));
     m_command_stack_index++;
     m_document_was_modified = true;
-    update_search_results();
     update_syntax_highlighting();
     update_suggestions(display);
 

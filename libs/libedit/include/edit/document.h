@@ -22,7 +22,6 @@ APP_EVENT(Edit, DeleteFromLine, App::Event, (), ((int, line_index), (int, index_
 APP_EVENT(Edit, MoveLineTo, App::Event, (), ((int, line), (int, destination)), ())
 
 APP_EVENT(Edit, SyntaxHighlightingChanged, App::Event, (), (), ())
-APP_EVENT(Edit, SearchResultsChanged, App::Event, (), (), ())
 
 APP_EVENT(Edit, Submit, App::Event, (), (), ())
 APP_EVENT(Edit, Change, App::Event, (), (), ())
@@ -41,8 +40,8 @@ enum class InputMode { Document, InputText };
 class Document final : public App::Object {
     APP_OBJECT(Document)
 
-    APP_EMITS(App::Object, DeleteLines, AddLines, SplitLines, MergeLines, AddToLine, DeleteFromLine, SyntaxHighlightingChanged,
-              SearchResultsChanged, MoveLineTo, Submit, Change)
+    APP_EMITS(App::Object, DeleteLines, AddLines, SplitLines, MergeLines, AddToLine, DeleteFromLine, SyntaxHighlightingChanged, MoveLineTo,
+              Submit, Change)
 
 public:
     static SharedPtr<Document> create_from_stdin(const String& path, Maybe<String>& error_message);
@@ -87,12 +86,6 @@ public:
 
     const String& name() const { return m_name; }
     void set_name(String name) { m_name = move(name); }
-
-    const String& search_text() const { return m_search_text; }
-    void set_search_text(String text);
-    int search_result_count() const { return m_search_results.size(); }
-    const TextRangeCollection& search_results() const { return m_search_results; }
-    void move_cursor_to_next_search_match(Display& display, Cursor& cursor);
 
     void move_cursor_left(Display& display, Cursor& cursor, MovementMode mode = MovementMode::Move);
     void move_cursor_right(Display& display, Cursor& cursor, MovementMode mode = MovementMode::Move);
@@ -144,7 +137,6 @@ public:
 
     String text_in_range(const TextIndex& start, const TextIndex& end) const;
 
-    void select_next_word_at_cursor(Display& display);
     void select_line_at_cursor(Display& display, Cursor& cursor);
     void select_word_at_cursor(Display& display, Cursor& cursor);
     void select_all(Display& display, Cursor& cursor);
@@ -158,8 +150,6 @@ public:
 
     void insert_suggestion(Display& display, const MatchedSuggestion& suggestion);
     void insert_text_at_cursor(Display& display, const String& string);
-
-    void clear_search();
 
     void set_input_mode(InputMode mode) { m_input_mode = mode; }
 
@@ -198,9 +188,6 @@ private:
 
     void update_selection_state_for_mode(Cursor& cursor, MovementMode mode);
 
-    void update_search_results();
-    void clear_search_results();
-
     void update_suggestions(Display& display);
 
     void swap_selection_start_and_cursor(Display& display, Cursor& cursor);
@@ -226,10 +213,6 @@ private:
     int m_command_stack_index { 0 };
     int m_max_undo_stack { 50 };
     bool m_document_was_modified { false };
-
-    String m_search_text;
-    TextRangeCollection m_search_results;
-    int m_search_result_index { 0 };
 
     TextRangeCollection m_syntax_highlighting_info;
 

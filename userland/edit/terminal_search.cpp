@@ -18,12 +18,12 @@ void TerminalSearch::initialize() {
     auto search_document = Edit::Document::create_from_text(m_initial_text);
     search_document->set_submittable(true);
     search_document->on<Edit::Submit>(*this, [this](auto&) {
-        m_host_display.document()->move_cursor_to_next_search_match(m_host_display, m_host_display.cursors().main_cursor());
+        m_host_display.move_cursor_to_next_search_match();
     });
 
     search_document->on<Edit::Change>(*this, [this, document = search_document.get()](auto&) {
         auto to_find = document->content_string();
-        m_host_display.document()->set_search_text(move(to_find));
+        m_host_display.set_search_text(move(to_find));
     });
 
     auto& text_box = layout.add<TerminalDisplay>();

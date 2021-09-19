@@ -105,6 +105,15 @@ public:
     void invalidate_all_lines();
     void invalidate_line(int line_index);
 
+    void clear_search();
+    void update_search_results();
+    void move_cursor_to_next_search_match();
+    void select_next_word_at_cursor();
+
+    void set_search_text(String text);
+    const TextRangeCollection* search_results() const { return m_search_results.get(); }
+    const String& search_text() const { return m_search_text; }
+
 protected:
     Display();
 
@@ -117,13 +126,21 @@ private:
     void uninstall_document_listeners(Document& document);
 
     SharedPtr<Document> m_document;
-    MultiCursor m_cursors;
     Vector<RenderedLine> m_rendered_lines;
+
+    MultiCursor m_cursors;
+
     Suggestions m_suggestions;
     AutoCompleteMode m_auto_complete_mode { AutoCompleteMode::Never };
     bool m_preview_auto_complete { false };
+
+    String m_search_text;
+    UniquePtr<TextRangeCollection> m_search_results;
+    int m_search_result_index { 0 };
+
     bool m_word_wrap_enabled { true };
     bool m_show_line_numbers { false };
+
     int m_scroll_row_offset { 0 };
     int m_scroll_col_offset { 0 };
 };

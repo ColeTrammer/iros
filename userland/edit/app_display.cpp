@@ -148,14 +148,14 @@ void AppDisplay::enter_search(String starting_text) {
     ensure_search_display().document()->set_submittable(true);
     ensure_search_display().document()->on<Edit::Change>(*this, [this](auto&) {
         auto contents = ensure_search_display().document()->content_string();
-        document()->set_search_text(move(contents));
+        set_search_text(move(contents));
     });
     ensure_search_display().document()->on<Edit::Submit>(*this, [this](auto&) {
         cursors().remove_secondary_cursors();
-        document()->move_cursor_to_next_search_match(*this, cursors().main_cursor());
+        move_cursor_to_next_search_match();
     });
     ensure_search_display().on_quit = [this] {
-        document()->set_search_text("");
+        set_search_text("");
         parent_window()->set_focused_widget(this);
     };
 

@@ -209,7 +209,7 @@ void init_actions() {
 
     register_document_keyboard_action("Reset Cursors", { App::Key::Escape, 0 }, [](Display& display) {
         auto& document = *display.document();
-        document.clear_search();
+        display.clear_search();
         display.cursors().remove_secondary_cursors();
         document.clear_selection(display.cursors().main_cursor());
     });
@@ -239,8 +239,7 @@ void init_actions() {
     });
 
     register_document_keyboard_action("Select Next Word at Cursor", { App::Key::D, App::KeyModifier::Control }, [](Display& display) {
-        auto& document = *display.document();
-        document.select_next_word_at_cursor(display);
+        display.select_next_word_at_cursor();
     });
 
     register_document_keyboard_action("Cursor Undo", { App::Key::U, App::KeyModifier::Control }, [](Display& display) {
@@ -285,8 +284,7 @@ void init_actions() {
     });
 
     register_display_keyboard_action("Search", { App::Key::F, App::KeyModifier::Control }, [](Display& display) {
-        auto& document = *display.document();
-        display.enter_search(document.search_text());
+        display.enter_search(display.search_text());
     });
 
     register_display_keyboard_action("Go To Line", { App::Key::G, App::KeyModifier::Control }, [](Display& display) {
