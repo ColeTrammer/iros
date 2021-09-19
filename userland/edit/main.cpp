@@ -217,28 +217,17 @@ int main(int argc, char** argv) {
             terminal->remove();
             terminal = nullptr;
 
-            // FIXME: handle widget removal focus changing using a stack of previously focused widgets.
-            auto& first_display = display_conainer.children().first();
-            if (first_display->is_base_widget()) {
-                static_cast<App::Base::Widget&>(const_cast<App::Object&>(*first_display)).make_focused();
-            }
+            TerminalStatusBar::the().active_display().make_focused();
         });
 
         auto& terminal_key_bindings = terminal->key_bindings();
         terminal_key_bindings.add({ App::Key::UpArrow, App::KeyModifier::Control, App::KeyShortcut::IsMulti::Yes }, [&display_conainer] {
-            auto& first_display = display_conainer.children().first();
-            if (first_display->is_base_widget()) {
-                static_cast<App::Base::Widget&>(const_cast<App::Object&>(*first_display)).make_focused();
-            }
+            TerminalStatusBar::the().active_display().make_focused();
         });
         terminal_key_bindings.add({ App::Key::T, App::KeyModifier::Control }, [&terminal, &terminal_container, &display_conainer] {
             terminal_container.set_hidden(true);
 
-            // FIXME: handle widget removal focus changing using a stack of previously focused widgets.
-            auto& first_display = display_conainer.children().first();
-            if (first_display->is_base_widget()) {
-                static_cast<App::Base::Widget&>(const_cast<App::Object&>(*first_display)).make_focused();
-            }
+            TerminalStatusBar::the().active_display().make_focused();
         });
 
         terminal->make_focused();

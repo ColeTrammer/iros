@@ -25,6 +25,7 @@ void TerminalPrompt::initialize() {
     m_display->intercept<App::KeyDownEvent>(*this, [this](const App::KeyEvent& event) {
         if (event.key() == App::Key::Escape) {
             m_host_display.hide_prompt_panel();
+            m_host_display.make_focused();
             return true;
         }
         return false;

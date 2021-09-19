@@ -323,7 +323,6 @@ void TerminalDisplay::hide_search_panel() {
         return;
     }
 
-    m_search_panel->set_focus_proxy(nullptr);
     m_search_panel->remove();
     m_search_panel = nullptr;
 }
@@ -338,6 +337,7 @@ Task<Maybe<String>> TerminalDisplay::prompt(String message, String initial_value
 
     auto result = co_await m_prompt_panel->block_until_result(*this);
     hide_prompt_panel();
+    make_focused();
     co_return result;
 }
 

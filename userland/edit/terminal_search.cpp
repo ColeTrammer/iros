@@ -40,6 +40,7 @@ void TerminalSearch::initialize() {
             }
             if (event.key() == App::Key::Escape) {
                 m_host_display.hide_search_panel();
+                m_host_display.make_focused();
                 return true;
             }
             return false;
@@ -73,6 +74,7 @@ void TerminalSearch::initialize() {
             }
             if (event.key() == App::Key::Escape) {
                 m_host_display.hide_search_panel();
+                m_host_display.make_focused();
                 return true;
             }
             return false;

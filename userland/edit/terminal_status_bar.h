@@ -20,6 +20,8 @@ public:
 
     virtual void render() override;
 
+    TerminalDisplay& active_display() { return *m_active_display.lock(); }
+
 private:
     WeakPtr<TerminalDisplay> m_active_display;
     Maybe<String> m_status_message;

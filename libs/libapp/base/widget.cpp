@@ -51,16 +51,6 @@ void Widget::render() {
 void Widget::remove() {
     invalidate();
 
-    // If this Widget is focused, then give its parent Widget focus before removing itself.
-    if (auto* window = parent_window()) {
-        auto* widget_to_check = focus_proxy() ? focus_proxy() : (accepts_focus() ? this : nullptr);
-        if (widget_to_check && window->focused_widget().get() == widget_to_check) {
-            if (auto* parent = parent_widget()) {
-                parent->make_focused();
-            }
-        }
-    }
-
     if (auto* parent = parent_widget()) {
         if (auto* engine = parent->layout_engine()) {
             engine->remove(*this);
