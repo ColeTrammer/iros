@@ -286,27 +286,9 @@ void MultiCursor::restore(Document& document, const Snapshot& snapshot) {
     m_history.remove_last();
 }
 
-void MultiCursor::invalidate_based_on_last_snapshot(Document& document) {
-    if (m_history.empty()) {
-        document.invalidate_lines_in_range_collection(m_display, cursor_text_ranges());
-        document.invalidate_lines_in_range_collection(m_display, selections());
-        return;
-    }
-
-    auto current = snapshot();
-    if (m_history.last() == current) {
-        return;
-    }
-
-    m_cursors = m_history.last().cursors;
-    m_main_cursor_index = m_history.last().main_cursor_index;
-    document.invalidate_lines_in_range_collection(m_display, cursor_text_ranges());
-    document.invalidate_lines_in_range_collection(m_display, selections());
-
-    m_cursors = move(current.cursors);
-    m_main_cursor_index = current.main_cursor_index;
-    document.invalidate_lines_in_range_collection(m_display, cursor_text_ranges());
-    document.invalidate_lines_in_range_collection(m_display, selections());
+void MultiCursor::invalidate_based_on_last_snapshot(Document&) {
+    // FIXME: this could be made a lot more precise than invalidating the entire document's metadata.
+    m_display.invalidate_metadata();
 }
 
 void MultiCursor::invalidate_cursor_history() {

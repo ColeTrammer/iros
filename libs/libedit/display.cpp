@@ -199,7 +199,7 @@ void Display::update_search_results() {
         return;
     }
 
-    document()->invalidate_lines_in_range_collection(*this, m_search_results);
+    invalidate_metadata();
 
     m_search_results.clear();
     if (m_search_text.empty()) {
@@ -209,7 +209,6 @@ void Display::update_search_results() {
     for (int i = 0; i < document()->num_lines(); i++) {
         document()->line_at_index(i).search(*document(), m_search_text, m_search_results);
     }
-    document()->invalidate_lines_in_range_collection(*this, m_search_results);
 
     m_search_result_index = 0;
     while (m_search_result_index < m_search_results.size() &&
@@ -223,7 +222,7 @@ void Display::clear_search() {
         return;
     }
 
-    document()->invalidate_lines_in_range_collection(*this, m_search_results);
+    invalidate_metadata();
     m_search_result_index = 0;
     m_search_results.clear();
 }
@@ -235,6 +234,25 @@ void Display::set_search_text(String text) {
 
     m_search_text = move(text);
     update_search_results();
+}
+
+void Display::update_metadata(int line_index) {
+    auto& rendered_contents = m_rendered_lines[line_index];
+
+    auto cursor_collection = cursors().cursor_text_ranges();
+    auto selection_collection = cursors().selections();
+    auto metadata_iterator = Edit::DocumentTextRangeIterator {
+        { line_index, 0 }, document()->syntax_highlighting_info(), search_results(), cursor_collection, selection_collection
+    };
+
+    for (int row = 0; row < rendered_contents.position_ranges.size(); row++) {
+        for (auto& range : rendered_contents.position_ranges[row]) {
+            if (range.type == PositionRangeType::Normal) {
+                metadata_iterator.advance_to_index_into_line(*document(), range.index_into_line);
+                range.metadata = metadata_iterator.peek_metadata();
+            }
+        }
+    }
 }
 
 void Display::install_document_listeners(Document& new_document) {
@@ -286,8 +304,7 @@ void Display::install_document_listeners(Document& new_document) {
     });
 
     new_document.on<SyntaxHighlightingChanged>(this_widget(), [this](auto&) {
-        // FIXME: only the metadata needs to be invalidated, not the line's contents.
-        invalidate_all_lines();
+        invalidate_metadata();
     });
 
     new_document.on<Change>(this_widget(), [this](auto&) {

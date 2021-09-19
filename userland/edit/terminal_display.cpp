@@ -218,14 +218,6 @@ Edit::RenderedLine TerminalDisplay::compose_line(const Edit::Line& line) {
 
     auto renderer = Edit::LineRenderer { cols(), word_wrap_enabled() };
 
-    auto cursor_collection = cursors().cursor_text_ranges();
-    auto selection_collection = cursors().selections();
-    auto metadata_iterator = Edit::DocumentTextRangeIterator { { document()->index_of_line(line), 0 },
-                                                               document()->syntax_highlighting_info(),
-                                                               search_results(),
-                                                               cursor_collection,
-                                                               selection_collection };
-
     auto view = Utf8View { line.contents().view() };
     for (auto iter = view.begin();; ++iter) {
         auto index_into_line = iter.byte_offset();
@@ -245,7 +237,7 @@ Edit::RenderedLine TerminalDisplay::compose_line(const Edit::Line& line) {
 
         auto info = iter.current_code_point_info();
 
-        renderer.begin_segment(index_into_line, metadata_iterator.peek_metadata(), Edit::PositionRangeType::Normal);
+        renderer.begin_segment(index_into_line, 0, Edit::PositionRangeType::Normal);
         if (info.codepoint == static_cast<uint32_t>('\t')) {
             auto spaces = String::repeat(' ', Edit::tab_width - (renderer.absolute_col_position() % Edit::tab_width));
             renderer.add_to_segment(spaces.view(), spaces.size());
@@ -254,12 +246,8 @@ Edit::RenderedLine TerminalDisplay::compose_line(const Edit::Line& line) {
             renderer.add_to_segment(line.contents().view().substring(index_into_line, info.bytes_used), 1);
         }
         renderer.end_segment();
-
-        for (size_t i = 0; i < info.bytes_used; i++) {
-            metadata_iterator.advance(*document());
-        }
     }
-    return renderer.finish(line, metadata_iterator.peek_metadata());
+    return renderer.finish(line, 0);
 }
 
 void TerminalDisplay::invalidate_all_line_rects() {

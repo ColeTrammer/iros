@@ -60,6 +60,9 @@ public:
     virtual void set_clipboard_contents(LIIM::String text, bool is_whole_line = false) = 0;
     virtual String clipboard_contents(bool& is_whole_line) const = 0;
 
+    void update_metadata(int line_index);
+    void invalidate_metadata() { invalidate_all_line_rects(); }
+
     void set_document(SharedPtr<Document> document);
 
     Document* document() { return m_document.get(); }

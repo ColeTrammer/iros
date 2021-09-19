@@ -184,6 +184,9 @@ const RenderedLine& Line::compute_rendered_contents(const Document& document, Di
 int Line::render(const Document& document, Display& display, int col_offset, int relative_row_start, int row_in_display) const {
     auto& info = compute_rendered_contents(document, display);
 
+    // FIXME: this could be done only when the metadata is considered to be invalidated.
+    display.update_metadata(document.index_of_line(*this));
+
     auto row_count = rendered_line_count(document, display);
     for (int row = relative_row_start; row + row_in_display - relative_row_start < display.rows() && row < row_count; row++) {
         display.output_line(row + row_in_display - relative_row_start, col_offset, info, row);
