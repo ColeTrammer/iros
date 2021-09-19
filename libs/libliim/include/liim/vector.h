@@ -353,7 +353,7 @@ public:
     void insert(T&& val, int position) {
         assert(position >= 0 && position <= size());
         if (position == size()) {
-            add(val);
+            add(LIIM::move(val));
             return;
         }
 
