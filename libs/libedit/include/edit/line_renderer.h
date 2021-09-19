@@ -17,14 +17,14 @@ public:
     void end_segment();
 
     int absolute_col_position() const { return m_absolute_col_position; }
-    const Position& current_position() const { return m_current_position; }
+    const RelativePosition& current_position() const { return m_current_position; }
 
 private:
     RenderedLine m_rendered_line;
     String m_current_rendered_line;
     Vector<PositionRange> m_current_position_ranges;
     PositionRange m_current_range;
-    Position m_current_position;
+    RelativePosition m_current_position;
     int m_current_byte_offset { 0 };
     int m_absolute_col_position { 0 };
     int m_max_width { 0 };

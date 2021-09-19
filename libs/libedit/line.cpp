@@ -3,7 +3,6 @@
 #include <edit/display.h>
 #include <edit/document.h>
 #include <edit/line.h>
-#include <edit/position.h>
 #include <edit/rendered_line.h>
 
 namespace Edit {
@@ -39,7 +38,7 @@ void Line::overwrite(Document& document, Line&& line, OverwriteFrom mode) {
     }
 }
 
-Position Line::relative_position_of_index(const Document& document, Display& display, int index) const {
+RelativePosition Line::relative_position_of_index(const Document& document, Display& display, int index) const {
     auto& info = compute_rendered_contents(document, display);
 
     auto* range = range_for_index_into_line(document, display, index, RangeFor::Cursor);
@@ -78,14 +77,14 @@ const PositionRange* Line::range_for_index_into_line(const Document& document, D
     return nullptr;
 }
 
-const PositionRange* Line::range_for_relative_position(const Document& document, Display& display, const Position& position) const {
+const PositionRange* Line::range_for_relative_position(const Document& document, Display& display, const RelativePosition& position) const {
     auto& info = compute_rendered_contents(document, display);
 
-    if (position.row < 0 || position.row >= info.position_ranges.size()) {
+    if (position.row() < 0 || position.row() >= info.position_ranges.size()) {
         return nullptr;
     }
 
-    for (auto& range : info.position_ranges[position.row]) {
+    for (auto& range : info.position_ranges[position.row()]) {
         if (position >= range.start && position < range.end) {
             return &range;
         }
@@ -93,7 +92,7 @@ const PositionRange* Line::range_for_relative_position(const Document& document,
     return nullptr;
 }
 
-int Line::index_of_relative_position(const Document& document, Display& display, const Position& position) const {
+int Line::index_of_relative_position(const Document& document, Display& display, const RelativePosition& position) const {
     auto* range = range_for_relative_position(document, display, position);
     if (!range) {
         return length();
@@ -137,7 +136,7 @@ int Line::rendered_line_count(const Document& document, Display& display) const 
 
 int Line::max_col_in_relative_row(const Document& document, Display& display, int row) const {
     auto& info = compute_rendered_contents(document, display);
-    return info.position_ranges[row].last().end.col;
+    return info.position_ranges[row].last().end.col();
 }
 
 void Line::insert_char_at(Document& document, int position, char c) {

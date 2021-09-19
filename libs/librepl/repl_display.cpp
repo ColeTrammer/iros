@@ -3,7 +3,6 @@
 #include <edit/document_type.h>
 #include <edit/keyboard_action.h>
 #include <edit/line_renderer.h>
-#include <edit/position.h>
 #include <eventloop/event.h>
 #include <graphics/point.h>
 #include <liim/utf8_view.h>
@@ -135,7 +134,7 @@ Maybe<Point> ReplDisplay::cursor_position() {
     }
 
     auto position = document()->cursor_position_on_display(*this, cursors().main_cursor());
-    return Point { position.col, position.row };
+    return Point { position.col(), position.row() };
 }
 
 void ReplDisplay::move_up_rows(int count) {
@@ -242,7 +241,7 @@ void ReplDisplay::output_line(int row, int col_offset, const Edit::RenderedLine&
     auto visible_line_rect = Rect { 0, row, sized_rect().width(), 1 };
     renderer.set_clip_rect(visible_line_rect);
 
-    auto text_width = line.position_ranges[line_index].last().end.col;
+    auto text_width = line.position_ranges[line_index].last().end.col();
 
     auto text_rect = visible_line_rect.translated({ -col_offset, 0 }).with_width(text_width);
     for (auto& range : line.position_ranges[line_index]) {
@@ -260,8 +259,8 @@ void ReplDisplay::output_line(int row, int col_offset, const Edit::RenderedLine&
 
         auto glyph = TInput::TerminalGlyph { line.rendered_lines[line_index].substring(range.byte_offset_in_rendered_string,
                                                                                        range.byte_count_in_rendered_string),
-                                             range.end.col - range.start.col };
-        renderer.put_glyph(text_rect.top_left().translated(range.start.col, 0), glyph, style);
+                                             range.end.col() - range.start.col() };
+        renderer.put_glyph(text_rect.top_left().translated(range.start.col(), 0), glyph, style);
     }
 
     auto clear_rect = Rect { text_rect.right(), row, max(visible_line_rect.right() - text_rect.right(), 0), 1 };
@@ -316,7 +315,7 @@ void ReplDisplay::show_suggestions_panel() {
 
     m_suggestions_panel = add<SuggestionsPanel>(*this).shared_from_this();
 
-    auto suggestions_rect = Rect { positioned_rect().x(), positioned_rect().y() + cursor_position.row + 1, sized_rect().width(),
+    auto suggestions_rect = Rect { positioned_rect().x(), positioned_rect().y() + cursor_position.row() + 1, sized_rect().width(),
                                    m_suggestions_panel->layout_constraint().height() };
     if (suggestions_rect.bottom() > positioned_rect().bottom()) {
         auto ideal_rows_to_move_up = suggestions_rect.bottom() - positioned_rect().bottom();
@@ -408,7 +407,7 @@ void ReplDisplay::move_history_down() {
 }
 
 Edit::TextIndex ReplDisplay::text_index_at_mouse_position(const Point& point) {
-    return document()->text_index_at_scrolled_position(*this, { point.y(), point.x() });
+    return document()->text_index_at_display_position(*this, { point.y(), point.x() });
 }
 
 void ReplDisplay::enter_search(String) {}

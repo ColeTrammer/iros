@@ -28,9 +28,8 @@ void LineRenderer::add_to_segment(const StringView& text, int display_width) {
         display_width = m_max_width;
     }
 
-    if (m_word_wrap_enabled && current_position().col + display_width > m_max_width) {
-        m_current_position.row++;
-        m_current_position.col = 0;
+    if (m_word_wrap_enabled && current_position().col() + display_width > m_max_width) {
+        m_current_position.set(m_current_position.row() + 1, 0);
         m_current_byte_offset = 0;
         m_rendered_line.rendered_lines.add(move(m_current_rendered_line));
         m_rendered_line.position_ranges.add(move(m_current_position_ranges));
@@ -42,7 +41,7 @@ void LineRenderer::add_to_segment(const StringView& text, int display_width) {
 
     m_current_range.byte_count_in_rendered_string += text.size();
     m_current_rendered_line += String(text);
-    m_current_position.col += display_width;
+    m_current_position.set_col(m_current_position.col() + display_width);
     m_absolute_col_position += display_width;
 }
 

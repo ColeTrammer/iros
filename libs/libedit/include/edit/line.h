@@ -26,9 +26,9 @@ public:
 
     LineSplitResult split_at(int position);
 
-    Position relative_position_of_index(const Document& document, Display& display, int index) const;
+    RelativePosition relative_position_of_index(const Document& document, Display& display, int index) const;
     int absoulte_col_offset_of_index(const Document& document, Display& display, int index) const;
-    int index_of_relative_position(const Document& document, Display& display, const Position& position) const;
+    int index_of_relative_position(const Document& document, Display& display, const RelativePosition& position) const;
     int max_col_in_relative_row(const Document& document, Display& display, int relative_row) const;
     int absolute_row_position(const Document& document, Display& display) const;
     int rendered_line_count(const Document&, Display&) const;
@@ -50,7 +50,7 @@ private:
         Cursor,
     };
 
-    const PositionRange* range_for_relative_position(const Document& document, Display& display, const Position& position) const;
+    const PositionRange* range_for_relative_position(const Document& document, Display& display, const RelativePosition& position) const;
     const PositionRange* range_for_index_into_line(const Document& documnet, Display& display, int index_into_line, RangeFor mode) const;
 
     String m_contents;

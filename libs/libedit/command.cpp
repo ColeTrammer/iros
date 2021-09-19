@@ -1,7 +1,6 @@
 #include <edit/command.h>
 #include <edit/display.h>
 #include <edit/document.h>
-#include <edit/position.h>
 #include <unistd.h>
 
 namespace Edit {

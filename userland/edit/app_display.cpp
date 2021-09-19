@@ -6,7 +6,6 @@
 #include <edit/document.h>
 #include <edit/keyboard_action.h>
 #include <edit/line_renderer.h>
-#include <edit/position.h>
 #include <eventloop/event.h>
 #include <graphics/bitmap.h>
 #include <graphics/renderer.h>
@@ -121,7 +120,7 @@ Edit::RenderedLine AppDisplay::compose_line(const Edit::Line& line) {
 }
 
 Edit::TextIndex AppDisplay::text_index_at_mouse_position(const Point& point) {
-    return document()->text_index_at_scrolled_position(*this, { point.y() / row_height(), point.x() / col_width() });
+    return document()->text_index_at_display_position(*this, { point.y() / row_height(), point.x() / col_width() });
 }
 
 void AppDisplay::output_line(int, int, const Edit::RenderedLine&, int) {}
@@ -193,14 +192,14 @@ void AppDisplay::render_cursor(Renderer& renderer) {
 
     auto cursor_pos = document()->cursor_position_on_display(*this, cursors().main_cursor());
 
-    int cursor_x = cursor_pos.col * col_width();
-    int cursor_y = cursor_pos.row * row_height();
+    int cursor_x = cursor_pos.col() * col_width();
+    int cursor_y = cursor_pos.row() * row_height();
     for (int y = cursor_y; y < cursor_y + row_height(); y++) {
         renderer.pixels().put_pixel(cursor_x, y, ColorValue::White);
     }
 
-    m_last_drawn_cursor_col = cursor_pos.col;
-    m_last_drawn_cursor_row = cursor_pos.row;
+    m_last_drawn_cursor_col = cursor_pos.col();
+    m_last_drawn_cursor_row = cursor_pos.row();
 }
 
 void AppDisplay::render_cell(Renderer& renderer, int x, int y, char c, Edit::CharacterMetadata metadata) {

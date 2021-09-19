@@ -3,9 +3,11 @@
 #include <stddef.h>
 
 namespace Edit {
+class AbsolutePosition;
 class CharacterMetadata;
 class Command;
 class Cursor;
+class DisplayPosition;
 class Display;
 class Document;
 class LineRenderer;
@@ -27,7 +29,7 @@ enum class DocumentType;
 struct LineSplitResult;
 enum class PositionRangeType;
 struct PositionRange;
-struct Position;
+class RelativePosition;
 struct RenderedLine;
 
 using DocumentTextRangeIterator = TextRangeCombinerIterator<4>;

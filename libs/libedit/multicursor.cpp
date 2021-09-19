@@ -1,7 +1,8 @@
+#include <edit/absolute_position.h>
 #include <edit/display.h>
 #include <edit/document.h>
 #include <edit/multicursor.h>
-#include <edit/position.h>
+#include <edit/relative_position.h>
 #include <edit/text_range_collection.h>
 
 namespace Edit {

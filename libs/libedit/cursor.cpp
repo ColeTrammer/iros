@@ -1,6 +1,5 @@
 #include <edit/cursor.h>
 #include <edit/document.h>
-#include <edit/position.h>
 
 namespace Edit {
 Line& Cursor::referenced_line(Document& document) const {
@@ -15,17 +14,17 @@ char Cursor::referenced_character(const Document& document) const {
     return referenced_line(document).char_at(index_into_line());
 }
 
-Position Cursor::relative_position(const Document& document, Display& display) const {
+RelativePosition Cursor::relative_position(const Document& document, Display& display) const {
     return referenced_line(document).relative_position_of_index(document, display, index_into_line());
 }
 
-Position Cursor::absolute_position(const Document& document, Display& display) const {
+AbsolutePosition Cursor::absolute_position(const Document& document, Display& display) const {
     auto relative_pos = relative_position(document, display);
     return document.relative_to_absolute_position(display, referenced_line(document), relative_pos);
 }
 
 void Cursor::compute_max_col(const Document& document, Display& display) {
-    m_max_col = referenced_line(document).relative_position_of_index(document, display, index_into_line()).col;
+    m_max_col = referenced_line(document).relative_position_of_index(document, display, index_into_line()).col();
 }
 
 void Cursor::move_preserving_selection(int delta_line_index, int delta_index_into_line) {

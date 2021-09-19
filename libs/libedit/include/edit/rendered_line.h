@@ -1,7 +1,7 @@
 #pragma once
 
 #include <edit/character_metadata.h>
-#include <edit/position.h>
+#include <edit/relative_position.h>
 #include <liim/string.h>
 #include <liim/vector.h>
 
@@ -13,8 +13,8 @@ enum class PositionRangeType {
 };
 
 struct PositionRange {
-    Position start;
-    Position end;
+    RelativePosition start;
+    RelativePosition end;
     int start_absolute_col { 0 };
     int index_into_line { 0 };
     CharacterMetadata metadata { 0 };

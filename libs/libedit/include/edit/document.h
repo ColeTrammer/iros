@@ -1,9 +1,12 @@
 #pragma once
 
+#include <edit/absolute_position.h>
+#include <edit/display_position.h>
 #include <edit/document_type.h>
 #include <edit/forward.h>
 #include <edit/line.h>
 #include <edit/multicursor.h>
+#include <edit/relative_position.h>
 #include <edit/suggestions.h>
 #include <edit/text_index.h>
 #include <edit/text_range_collection.h>
@@ -104,14 +107,15 @@ public:
 
     void scroll_cursor_into_view(Display& display, Cursor& cursor);
 
-    TextIndex text_index_at_absolute_position(Display& display, const Position& position) const;
-    TextIndex text_index_at_scrolled_position(Display& display, const Position& position) const;
-    Position relative_to_absolute_position(Display& display, const Line& line, const Position& line_relative_position) const;
+    TextIndex text_index_at_absolute_position(Display& display, const AbsolutePosition& position) const;
+    TextIndex text_index_at_display_position(Display& display, const DisplayPosition& position) const;
+    AbsolutePosition relative_to_absolute_position(Display& display, const Line& line,
+                                                   const RelativePosition& line_relative_position) const;
     int index_of_line(const Line& line) const;
     int num_lines() const { return m_lines.size(); }
     int num_rendered_lines(Display& display) const;
 
-    Position cursor_position_on_display(Display& display, Cursor& cursor) const;
+    DisplayPosition cursor_position_on_display(Display& display, Cursor& cursor) const;
 
     void remove_line(int index);
     void insert_line(Line&& line, int index);
