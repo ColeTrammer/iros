@@ -9,44 +9,62 @@
 #include <liim/task.h>
 #include <liim/vector.h>
 
-#define APP_OBJECT(name)                                                                \
-public:                                                                                 \
-    template<typename... Args>                                                          \
-    static SharedPtr<name> create(SharedPtr<Object> parent, Args&&... args) {           \
-        auto ret = SharedPtr<name>(new name(forward<Args>(args)...));                   \
-        ret->__set_weak_this(WeakPtr<name>(ret));                                       \
-        if (parent) {                                                                   \
-            parent->add_child(ret);                                                     \
-        }                                                                               \
-        ret->initialize();                                                              \
-        return ret;                                                                     \
-    }                                                                                   \
-                                                                                        \
-    template<typename Ev>                                                               \
-    auto block_until_event(Object& coroutine_owner) {                                   \
-        static_assert(does_emit<Ev>());                                                 \
-        return this->block_until_event_unchecked<Ev>(coroutine_owner);                  \
-    }                                                                                   \
-                                                                                        \
-    template<typename... Ev, typename HandlerCallback>                                  \
-    int on(GlobalListenerTag, HandlerCallback&& handler_callback) {                     \
-        static_assert(does_emit<Ev...>());                                              \
-        return this->on_unchecked<Ev...>(GlobalListenerTag {}, move(handler_callback)); \
-    }                                                                                   \
-                                                                                        \
-    template<typename... Ev, typename HandlerCallback>                                  \
-    int on(Object& listener, HandlerCallback&& handler_callback) {                      \
-        static_assert(does_emit<Ev...>());                                              \
-        return this->on_unchecked<Ev...>(listener, move(handler_callback));             \
-    }                                                                                   \
-                                                                                        \
-protected:                                                                              \
-    template<typename... Ev, typename HandlerCallback>                                  \
-    int on(HandlerCallback&& handler_callback) {                                        \
-        static_assert(does_emit<Ev...>());                                              \
-        return this->on_unchecked<Ev...>(move(handler_callback));                       \
-    }                                                                                   \
-                                                                                        \
+#define APP_OBJECT(name)                                                                       \
+public:                                                                                        \
+    template<typename... Args>                                                                 \
+    static SharedPtr<name> create(SharedPtr<Object> parent, Args&&... args) {                  \
+        auto ret = SharedPtr<name>(new name(forward<Args>(args)...));                          \
+        ret->__set_weak_this(WeakPtr<name>(ret));                                              \
+        if (parent) {                                                                          \
+            parent->add_child(ret);                                                            \
+        }                                                                                      \
+        ret->initialize();                                                                     \
+        return ret;                                                                            \
+    }                                                                                          \
+                                                                                               \
+    template<typename Ev>                                                                      \
+    auto block_until_event(Object& coroutine_owner) {                                          \
+        static_assert(does_emit<Ev>());                                                        \
+        return this->block_until_event_unchecked<Ev>(coroutine_owner);                         \
+    }                                                                                          \
+                                                                                               \
+    template<typename... Ev, typename HandlerCallback>                                         \
+    int intercept(GlobalListenerTag, HandlerCallback&& handler_callback) {                     \
+        static_assert(does_emit<Ev...>());                                                     \
+        return this->intercept_unchecked<Ev...>(GlobalListenerTag {}, move(handler_callback)); \
+    }                                                                                          \
+                                                                                               \
+    template<typename... Ev, typename HandlerCallback>                                         \
+    int intercept(Object& listener, HandlerCallback&& handler_callback) {                      \
+        static_assert(does_emit<Ev...>());                                                     \
+        return this->intercept_unchecked<Ev...>(listener, move(handler_callback));             \
+    }                                                                                          \
+                                                                                               \
+    template<typename... Ev, typename HandlerCallback>                                         \
+    int on(GlobalListenerTag, HandlerCallback&& handler_callback) {                            \
+        static_assert(does_emit<Ev...>());                                                     \
+        return this->on_unchecked<Ev...>(GlobalListenerTag {}, move(handler_callback));        \
+    }                                                                                          \
+                                                                                               \
+    template<typename... Ev, typename HandlerCallback>                                         \
+    int on(Object& listener, HandlerCallback&& handler_callback) {                             \
+        static_assert(does_emit<Ev...>());                                                     \
+        return this->on_unchecked<Ev...>(listener, move(handler_callback));                    \
+    }                                                                                          \
+                                                                                               \
+protected:                                                                                     \
+    template<typename... Ev, typename HandlerCallback>                                         \
+    int intercept(HandlerCallback&& handler_callback) {                                        \
+        static_assert(does_emit<Ev...>());                                                     \
+        return this->intercept_unchecked<Ev...>(move(handler_callback));                       \
+    }                                                                                          \
+                                                                                               \
+    template<typename... Ev, typename HandlerCallback>                                         \
+    int on(HandlerCallback&& handler_callback) {                                               \
+        static_assert(does_emit<Ev...>());                                                     \
+        return this->on_unchecked<Ev...>(move(handler_callback));                              \
+    }                                                                                          \
+                                                                                               \
 private:
 
 #define APP_EMITS(Parent, ...)                                                                 \
@@ -96,6 +114,11 @@ public:
     class GlobalListenerTag {};
 
 private:
+    enum class ListenerOrdering {
+        BeforeOthers,
+        AfterOthers,
+    };
+
     APP_OBJECT(Object)
 
 private:
@@ -191,13 +214,23 @@ public:
     bool dispatch(const Event& event) const;
 
     template<typename... Ev, typename HandlerCallback>
+    int intercept_unchecked(GlobalListenerTag, HandlerCallback&& handler_callback) {
+        return this->intercept_unchecked<Ev...>(move(handler_callback));
+    }
+
+    template<typename... Ev, typename HandlerCallback>
+    int intercept_unchecked(Object& listener, HandlerCallback&& handler_callback) {
+        return this->on_unchecked_impl<Ev...>(move(handler_callback), ListenerOrdering::BeforeOthers, listener.weak_from_this());
+    }
+
+    template<typename... Ev, typename HandlerCallback>
     int on_unchecked(GlobalListenerTag, HandlerCallback&& handler_callback) {
         return this->on_unchecked<Ev...>(move(handler_callback));
     }
 
     template<typename... Ev, typename HandlerCallback>
     int on_unchecked(Object& listener, HandlerCallback&& handler_callback) {
-        return this->on_unchecked<Ev...>(move(handler_callback), listener.weak_from_this());
+        return this->on_unchecked_impl<Ev...>(move(handler_callback), ListenerOrdering::AfterOthers, listener.weak_from_this());
     }
 
     void remove_listener(Object& listener);
@@ -220,7 +253,7 @@ public:
                 return *m_event;
             }
             void await_suspend(CoroutineHandle<> handle) {
-                m_callback_token = m_target_object->on_unchecked<Ev>(*m_coroutine_owner, [this, handle](const Ev& event) {
+                m_callback_token = m_target_object->intercept_unchecked<Ev>(*m_coroutine_owner, [this, handle](const Ev& event) {
                     m_event = event;
                     m_coroutine_owner->schedule_coroutine(handle);
                     m_target_object->deferred_invoke([target = m_target_object, token = m_callback_token] {
@@ -249,7 +282,17 @@ protected:
     virtual void did_remove_child(SharedPtr<Object>) {}
 
     template<typename... Ev, typename HandlerCallback>
-    int on_unchecked(HandlerCallback&& handler, Maybe<WeakPtr<Object>> listener = {}) {
+    int intercept_unchecked(HandlerCallback&& handler) {
+        return on_unchecked_impl<Ev...>(handler, ListenerOrdering::BeforeOthers);
+    }
+
+    template<typename... Ev, typename HandlerCallback>
+    int on_unchecked(HandlerCallback&& handler) {
+        return on_unchecked_impl<Ev...>(handler, ListenerOrdering::AfterOthers);
+    }
+
+    template<typename... Ev, typename HandlerCallback>
+    int on_unchecked_impl(HandlerCallback&& handler, ListenerOrdering ordering, Maybe<WeakPtr<Object>> listener = {}) {
         auto token = m_next_callback_token++;
         (
             [&] {
@@ -257,14 +300,15 @@ protected:
                     return handler(static_cast<const Ev&>(event));
                 };
 
+                auto position = ordering == ListenerOrdering::AfterOthers ? m_handlers.size() : 0;
                 if constexpr (Ev::event_requires_handling()) {
                     static_assert(LIIM::IsSame<bool, typename LIIM::InvokeResult<HandlerCallback, const Ev&>::type>::value,
                                   "Callback handler function must return bool");
-                    m_handlers.add(Handler { token, Ev::static_event_name(), Handler::Bool::Yes, move(callback) });
+                    m_handlers.insert(Handler { token, Ev::static_event_name(), Handler::Bool::Yes, move(callback) }, position);
                 } else {
                     static_assert(LIIM::IsSame<void, typename LIIM::InvokeResult<HandlerCallback, const Ev&>::type>::value,
                                   "Callback handler function must return void");
-                    m_handlers.add(Handler { token, Ev::static_event_name(), Handler::Void::Yes, move(callback) });
+                    m_handlers.insert(Handler { token, Ev::static_event_name(), Handler::Void::Yes, move(callback) }, position);
                 }
 
                 if (listener) {

@@ -179,3 +179,23 @@ TEST(object, block_until_event) {
 
     EXPECT_EQ(count, 1);
 }
+
+TEST(object, intercept) {
+    auto loop = App::EventLoop {};
+
+    int value = 0;
+
+    auto object = Object::create(nullptr);
+    object->intercept_unchecked<CustomEvent>({}, [&](auto&) {
+        value = 1;
+    });
+    object->intercept_unchecked<CustomEvent>({}, [&](auto&) {
+        value = 2;
+    });
+    object->intercept_unchecked<CustomEvent>({}, [&](auto&) {
+        value = 3;
+    });
+
+    EXPECT(!object->emit<CustomEvent>());
+    EXPECT_EQ(value, 1);
+}
