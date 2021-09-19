@@ -12,9 +12,10 @@ void TerminalSearch::initialize() {
     auto& layout = set_layout_engine<App::VerticalFlexLayoutEngine>();
     layout.set_margins({ 1, 1, 1, 1 });
 
-    {
-        auto& search_container = layout.add<TUI::Panel>();
+    auto& search_container = layout.add<TUI::Panel>();
+    auto& replace_container = layout.add<TUI::Panel>();
 
+    {
         auto& search_layout = search_container.set_layout_engine<App::HorizontalFlexLayoutEngine>();
 
         auto& search_label = search_layout.add<TUI::Label>("Find: ");
@@ -32,7 +33,11 @@ void TerminalSearch::initialize() {
         });
 
         auto& search_text_box = search_layout.add<TerminalDisplay>();
-        search_text_box.intercept<App::KeyDownEvent>(*this, [this](const App::KeyDownEvent& event) {
+        search_text_box.intercept<App::KeyDownEvent>(*this, [this, &replace_container](const App::KeyDownEvent& event) {
+            if (event.key() == App::Key::Tab && event.modifiers() == 0) {
+                replace_container.make_focused();
+                return true;
+            }
             if (event.key() == App::Key::Escape) {
                 m_host_display.hide_search_panel();
                 return true;
@@ -44,12 +49,11 @@ void TerminalSearch::initialize() {
 
         search_document->select_all(search_text_box, search_text_box.cursors().main_cursor());
 
+        search_container.set_focus_proxy(&search_text_box);
         set_focus_proxy(&search_text_box);
     }
 
     {
-        auto& replace_container = layout.add<TUI::Panel>();
-
         auto& replace_layout = replace_container.set_layout_engine<App::HorizontalFlexLayoutEngine>();
 
         auto& replace_label = replace_layout.add<TUI::Label>("Replace: ");
@@ -62,7 +66,11 @@ void TerminalSearch::initialize() {
         });
 
         auto& replace_text_box = replace_layout.add<TerminalDisplay>();
-        replace_text_box.intercept<App::KeyDownEvent>(*this, [this](const App::KeyDownEvent& event) {
+        replace_text_box.intercept<App::KeyDownEvent>(*this, [this, &search_container](const App::KeyDownEvent& event) {
+            if (event.key() == App::Key::Tab && event.modifiers() == App::KeyModifier::Shift) {
+                search_container.make_focused();
+                return true;
+            }
             if (event.key() == App::Key::Escape) {
                 m_host_display.hide_search_panel();
                 return true;
@@ -70,6 +78,8 @@ void TerminalSearch::initialize() {
             return false;
         });
         replace_text_box.set_document(replace_document);
+
+        replace_container.set_focus_proxy(&replace_text_box);
     }
 
     Panel::initialize();
