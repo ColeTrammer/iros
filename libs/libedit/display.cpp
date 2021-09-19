@@ -132,6 +132,12 @@ void Display::toggle_word_wrap_enabled() {
     set_word_wrap_enabled(!m_word_wrap_enabled);
 }
 
+void Display::replace_next_search_match(const String& replacement) {
+    document()->start_input(*this, true);
+    document()->replace_next_search_match(*this, replacement);
+    document()->finish_input(*this, true);
+}
+
 void Display::move_cursor_to_next_search_match() {
     if (!document() || m_search_results.empty()) {
         return;
@@ -204,6 +210,12 @@ void Display::update_search_results() {
         document()->line_at_index(i).search(*document(), m_search_text, m_search_results);
     }
     document()->invalidate_lines_in_range_collection(*this, m_search_results);
+
+    m_search_result_index = 0;
+    while (m_search_result_index < m_search_results.size() &&
+           cursors().main_cursor().index() < m_search_results.range(m_search_result_index).start()) {
+        m_search_result_index++;
+    }
 }
 
 void Display::clear_search() {

@@ -45,9 +45,9 @@ void TerminalDisplay::initialize() {
         }
 
         if (m_search_panel) {
-            auto width = min(sized_rect().width(), 20);
+            auto width = min(sized_rect().width(), 30);
             m_search_panel->set_positioned_rect(
-                { positioned_rect().x() + (sized_rect().width() - width), positioned_rect().y(), width, 3 });
+                { positioned_rect().x() + (sized_rect().width() - width), positioned_rect().y(), width, 4 });
         }
     });
 
@@ -323,6 +323,7 @@ void TerminalDisplay::hide_search_panel() {
         return;
     }
 
+    m_search_panel->set_focus_proxy(nullptr);
     m_search_panel->remove();
     m_search_panel = nullptr;
 }
@@ -347,8 +348,8 @@ void TerminalDisplay::enter_search(String initial_text) {
     }
 
     m_search_panel = TerminalSearch::create(shared_from_this(), *this, move(initial_text));
-    auto width = min(sized_rect().width(), 20);
-    m_search_panel->set_positioned_rect({ positioned_rect().x() + (sized_rect().width() - width), positioned_rect().y(), width, 3 });
+    auto width = min(sized_rect().width(), 30);
+    m_search_panel->set_positioned_rect({ positioned_rect().x() + (sized_rect().width() - width), positioned_rect().y(), width, 4 });
 }
 
 void TerminalDisplay::set_clipboard_contents(String text, bool is_whole_line) {

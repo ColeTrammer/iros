@@ -137,6 +137,7 @@ public:
 
     String text_in_range(const TextIndex& start, const TextIndex& end) const;
 
+    void select_all_matches(Display& display, const TextRangeCollection& collection);
     void select_line_at_cursor(Display& display, Cursor& cursor);
     void select_word_at_cursor(Display& display, Cursor& cursor);
     void select_all(Display& display, Cursor& cursor);
@@ -150,6 +151,8 @@ public:
 
     void insert_suggestion(Display& display, const MatchedSuggestion& suggestion);
     void insert_text_at_cursor(Display& display, const String& string);
+    void replace_next_search_match(Display& display, const String& replacement);
+    void replace_all_search_matches(Display& display, const String& replacement);
 
     void set_input_mode(InputMode mode) { m_input_mode = mode; }
 

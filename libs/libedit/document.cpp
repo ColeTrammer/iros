@@ -585,21 +585,21 @@ void Document::insert_text_at_cursor(Display& display, const String& text) {
             }
 
             auto group = make_unique<CommandGroup>(*this);
-            group->add<MovementCommand>(*this, [this, selections](Display& display, MultiCursor& cursors) {
+            group->add<MovementCommand>(*this, [this, &selections](Display& display, MultiCursor& cursors) {
                 for (int i = 0; i < cursors.size(); i++) {
                     auto& cursor = cursors[i];
                     move_cursor_to(display, cursor, selections[i].normalized_start());
                 }
             });
             group->add<InsertCommand>(*this, insert_around_result->left);
-            group->add<MovementCommand>(*this, [this, selections](Display& display, MultiCursor& cursors) {
+            group->add<MovementCommand>(*this, [this, &selections](Display& display, MultiCursor& cursors) {
                 for (int i = 0; i < cursors.size(); i++) {
                     auto& cursor = cursors[i];
                     move_cursor_to(display, cursor, selections[i].normalized_end().offset({ 0, 1 }));
                 }
             });
             group->add<InsertCommand>(*this, insert_around_result->right);
-            group->add<MovementCommand>(*this, [this, selections](Display& display, MultiCursor& cursors) {
+            group->add<MovementCommand>(*this, [this, &selections](Display& display, MultiCursor& cursors) {
                 for (int i = 0; i < cursors.size(); i++) {
                     auto& cursor = cursors[i];
                     move_cursor_to(display, cursor, selections[i].normalized_start().offset({ 0, 1 }));
@@ -611,6 +611,42 @@ void Document::insert_text_at_cursor(Display& display, const String& text) {
     }
 
     push_command<InsertCommand>(display, text);
+}
+
+void Document::replace_next_search_match(Display& display, const String& replacement) {
+    if (display.search_results().empty()) {
+        return;
+    }
+
+    auto group = make_unique<CommandGroup>(*this);
+    if (display.search_text() != selection_text(display.cursors().main_cursor())) {
+        group->add<MovementCommand>(*this, [this](Display& display, MultiCursor&) {
+            display.move_cursor_to_next_search_match();
+        });
+    }
+    group->add<InsertCommand>(*this, replacement);
+    if (display.search_results().size() > 1) {
+        group->add<MovementCommand>(*this, [this](Display& display, MultiCursor&) {
+            display.update_search_results();
+            display.move_cursor_to_next_search_match();
+        });
+    }
+
+    push_command(display, move(group));
+}
+
+void Document::replace_all_search_matches(Display& display, const String& replacement) {
+    if (display.search_results().empty()) {
+        return;
+    }
+
+    auto group = make_unique<CommandGroup>(*this);
+    group->add<MovementCommand>(*this, [this](Display& display, MultiCursor&) {
+        select_all_matches(display, display.search_results());
+    });
+    group->add<InsertCommand>(*this, replacement);
+
+    push_command(display, move(group));
 }
 
 void Document::move_cursor_to(Display& display, Cursor& cursor, const TextIndex& index, MovementMode mode) {
@@ -988,6 +1024,23 @@ void Document::update_syntax_highlighting() {
 
 void Document::swap_lines_at_cursor(Display& display, SwapDirection direction) {
     push_command<SwapLinesCommand>(display, direction);
+}
+
+void Document::select_all_matches(Display& display, const TextRangeCollection& collection) {
+    if (collection.empty()) {
+        return;
+    }
+
+    display.cursors().remove_secondary_cursors();
+
+    auto& main_cursor = display.cursors().main_cursor();
+    main_cursor.set(collection.range(0).end());
+    main_cursor.selection().set(collection.range(0).start(), collection.range(0).end());
+
+    for (int i = 1; i < collection.size(); i++) {
+        auto& range = collection.range(i);
+        display.cursors().add_cursor_at(*this, range.end(), { range.start(), range.end() });
+    }
 }
 
 void Document::select_word_at_cursor(Display& display, Cursor& cursor) {

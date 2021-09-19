@@ -110,6 +110,7 @@ public:
     void update_search_results();
     void move_cursor_to_next_search_match();
     void select_next_word_at_cursor();
+    void replace_next_search_match(const String& replacement);
 
     void set_search_text(String text);
     const TextRangeCollection& search_results() const { return m_search_results; }

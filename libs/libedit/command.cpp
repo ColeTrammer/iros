@@ -50,6 +50,10 @@ void CommandGroup::do_undo(Display& display, MultiCursor&) {
     });
 }
 
+void MovementCommand::redo(Display& display) {
+    document().restore_state(display.cursors(), end_snapshot());
+}
+
 InsertCommand::InsertCommand(Document& document, String text) : DeltaBackedCommand(document), m_text(move(text)) {}
 
 InsertCommand::~InsertCommand() {}

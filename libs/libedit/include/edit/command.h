@@ -25,7 +25,7 @@ public:
     DeltaBackedCommand(Document& document);
     virtual ~DeltaBackedCommand() override;
 
-    virtual void redo(Display& display) final;
+    virtual void redo(Display& display) override;
     virtual bool execute(Display& display) final;
     virtual void undo(Display& display) final;
 
@@ -70,6 +70,8 @@ public:
     }
 
     virtual void do_undo(Display&, MultiCursor&) override {}
+
+    virtual void redo(Display& display) override;
 
 private:
     Function<void(Display&, MultiCursor&)> m_do_movement;
