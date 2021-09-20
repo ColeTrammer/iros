@@ -386,6 +386,7 @@ Vector<Edit::Suggestion> ShRepl::suggest_path_for(const String &input, const Edi
 }
 
 Vector<Edit::Suggestion> ShRepl::get_suggestions(const Edit::Document &document, const Edit::TextIndex &cursor) const {
+    const_cast<Edit::Document &>(document).update_syntax_highlighting();
     auto &syntax_info = document.syntax_highlighting_info();
 
     auto index_for_suggestion = Edit::TextIndex { cursor.line_index(), max(cursor.index_into_line() - 1, 0) };

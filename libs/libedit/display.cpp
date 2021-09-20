@@ -53,7 +53,6 @@ void Display::set_suggestions(Vector<Suggestion> suggestions) {
 }
 
 void Display::compute_suggestions() {
-    document()->update_syntax_highlighting();
     do_compute_suggestions();
 }
 
