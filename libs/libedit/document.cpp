@@ -362,7 +362,7 @@ void Document::move_cursor_down(Display& display, Cursor& cursor, MovementMode m
 
     cursor.set(new_index);
 
-    clamp_cursor_to_line_end(display, cursor);
+    move_cursor_to_max_col_position(display, cursor);
 }
 
 void Document::move_cursor_up(Display& display, Cursor& cursor, MovementMode mode) {
@@ -386,26 +386,13 @@ void Document::move_cursor_up(Display& display, Cursor& cursor, MovementMode mod
 
     cursor.set(new_index);
 
-    clamp_cursor_to_line_end(display, cursor);
+    move_cursor_to_max_col_position(display, cursor);
 }
 
-void Document::clamp_cursor_to_line_end(Display& display, Cursor& cursor) {
-    auto& line = cursor.referenced_line(*this);
+void Document::move_cursor_to_max_col_position(Display& display, Cursor& cursor) {
     auto current_pos = cursor.relative_position(*this, display);
-    auto max_col = line.max_col_in_relative_row(*this, display, current_pos.row());
-    if (current_pos.col() == max_col) {
-        return;
-    }
-
-    if (current_pos.col() > max_col) {
-        cursor.set_index_into_line(line.index_of_relative_position(*this, display, { current_pos.row(), max_col }).index_into_line());
-        return;
-    }
-
     if (cursor.max_col() > current_pos.col()) {
-        cursor.set_index_into_line(
-            line.index_of_relative_position(*this, display, { current_pos.row(), cursor.max_col() }).index_into_line());
-        return;
+        cursor.set(cursor.referenced_line(*this).index_of_relative_position(*this, display, { current_pos.row(), cursor.max_col() }));
     }
 }
 

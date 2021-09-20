@@ -103,7 +103,6 @@ public:
     void move_cursor_page_up(Display& display, Cursor& cursor, MovementMode mode = MovementMode::Move);
     void move_cursor_page_down(Display& display, Cursor& cursor, MovementMode mode = MovementMode::Move);
     void move_cursor_to(Display& display, Cursor& cursor, const TextIndex& index, MovementMode mode = MovementMode::Move);
-    void clamp_cursor_to_line_end(Display& display, Cursor& cursor);
 
     void scroll_cursor_into_view(Display& display, Cursor& cursor);
     void center_display_on_cursor(Display& display, Cursor& cursor);
@@ -198,6 +197,7 @@ public:
 private:
     Document(Vector<Line> lines, String name, InputMode mode);
 
+    void move_cursor_to_max_col_position(Display& display, Cursor& cursor);
     void update_selection_state_for_mode(Cursor& cursor, MovementMode mode);
 
     void update_suggestions(Display& display);
