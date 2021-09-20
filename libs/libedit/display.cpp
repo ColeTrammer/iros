@@ -56,6 +56,13 @@ void Display::compute_suggestions() {
     do_compute_suggestions();
 }
 
+void Display::clamp_scroll_offset() {
+    if (scroll_offset().line_index() >= document()->num_lines()) {
+        set_scroll_offset({ document()->num_lines() - 1, document()->last_line().rendered_line_count(*document(), *this) - 1,
+                            scroll_offset().relative_col() });
+    }
+}
+
 void Display::set_scroll_offset(const AbsolutePosition& offset) {
     if (m_scroll_offset == offset) {
         return;
@@ -259,6 +266,7 @@ void Display::install_document_listeners(Document& new_document) {
             m_rendered_lines.remove(event.line_index());
         }
         invalidate_all_line_rects();
+        clamp_scroll_offset();
     });
 
     new_document.on<AddLines>(this_widget(), [this](const AddLines& event) {
@@ -278,6 +286,7 @@ void Display::install_document_listeners(Document& new_document) {
         m_rendered_lines.remove(event.second_line_index());
         invalidate_line(event.first_line_index());
         invalidate_all_line_rects();
+        clamp_scroll_offset();
     });
 
     new_document.on<AddToLine>(this_widget(), [this](const AddToLine& event) {

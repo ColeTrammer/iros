@@ -126,6 +126,7 @@ protected:
 
 private:
     void uninstall_document_listeners(Document& document);
+    void clamp_scroll_offset();
 
     SharedPtr<Document> m_document;
     Vector<RenderedLine> m_rendered_lines;
