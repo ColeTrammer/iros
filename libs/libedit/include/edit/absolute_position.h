@@ -6,16 +6,20 @@ namespace Edit {
 class AbsolutePosition {
 public:
     AbsolutePosition() = default;
-    AbsolutePosition(int row, int col) : m_row(row), m_col(col) {}
+    AbsolutePosition(int line_index, int relative_row, int relative_col)
+        : m_line_index(line_index), m_relative_row(relative_row), m_relative_col(relative_col) {}
 
-    int row() const { return m_row; }
-    int col() const { return m_col; }
+    int line_index() const { return m_line_index; }
+    int relative_row() const { return m_relative_row; }
+    int relative_col() const { return m_relative_col; }
 
-    void set_row(int r) { set(r, m_col); }
-    void set_col(int c) { set(m_row, c); }
-    void set(int r, int c) {
-        m_row = r;
-        m_col = c;
+    void set_line_index(int l) { set(l, m_relative_row, m_relative_col); }
+    void set_relative_row(int r) { set(m_line_index, r, m_relative_col); }
+    void set_relative_col(int c) { set(m_line_index, m_relative_row, c); }
+    void set(int l, int r, int c) {
+        m_line_index = l;
+        m_relative_row = r;
+        m_relative_col = c;
     }
 
     bool operator==(const AbsolutePosition& other) const = default;
@@ -24,30 +28,41 @@ public:
     bool operator>=(const AbsolutePosition& other) const { return *this == other || *this > other; }
 
     bool operator<(const AbsolutePosition& other) const {
-        if (this->row() < other.row()) {
+        if (this->line_index() < other.line_index()) {
             return true;
         }
-
-        if (this->row() == other.row()) {
-            return this->col() < other.col();
+        if (this->line_index() > other.line_index()) {
+            return false;
         }
-        return false;
+        if (this->relative_row() < other.relative_row()) {
+            return true;
+        }
+        if (this->relative_row() > other.relative_row()) {
+            return false;
+        }
+        return this->relative_col() < other.relative_col();
     }
 
     bool operator>(const AbsolutePosition& other) const {
-        if (this->row() > other.row()) {
+        if (this->line_index() < other.line_index()) {
+            return false;
+        }
+        if (this->line_index() > other.line_index()) {
             return true;
         }
-
-        if (this->row() == other.row()) {
-            return this->col() > other.col();
+        if (this->relative_row() < other.relative_row()) {
+            return false;
         }
-        return false;
+        if (this->relative_row() > other.relative_row()) {
+            return true;
+        }
+        return this->relative_col() > other.relative_col();
     }
 
 private:
-    int m_row { 0 };
-    int m_col { 0 };
+    int m_line_index { 0 };
+    int m_relative_row { 0 };
+    int m_relative_col { 0 };
 };
 }
 
@@ -55,7 +70,8 @@ namespace LIIM::Format {
 template<>
 struct Formatter<Edit::AbsolutePosition> : public Formatter<String> {
     void format(const Edit::AbsolutePosition& p, FormatContext& context) {
-        return Formatter<String>::format(::format("AbsolutePosition <row={} col={}>", p.row(), p.col()), context);
+        return Formatter<String>::format(
+            ::format("AbsolutePosition <line_index={} row={} col={}>", p.line_index(), p.relative_row(), p.relative_col()), context);
     }
 };
 }

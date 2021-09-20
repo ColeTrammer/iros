@@ -190,7 +190,7 @@ void AppDisplay::render_cursor(Renderer& renderer) {
         return;
     }
 
-    auto cursor_pos = document()->cursor_position_on_display(*this, cursors().main_cursor());
+    auto cursor_pos = document()->display_position_of_index(*this, cursors().main_cursor().index());
 
     int cursor_x = cursor_pos.col() * col_width();
     int cursor_y = cursor_pos.row() * row_height();

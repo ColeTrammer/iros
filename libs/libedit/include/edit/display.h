@@ -1,5 +1,6 @@
 #pragma once
 
+#include <edit/absolute_position.h>
 #include <edit/character_metadata.h>
 #include <edit/forward.h>
 #include <edit/multicursor.h>
@@ -27,12 +28,8 @@ public:
     virtual int rows() const = 0;
     virtual int cols() const = 0;
 
-    int scroll_row_offset() const { return m_scroll_row_offset; }
-    int scroll_col_offset() const { return m_scroll_col_offset; }
-
-    void set_scroll_row_offset(int row_offset) { set_scroll_offsets(row_offset, m_scroll_col_offset); }
-    void set_scroll_col_offset(int col_offset) { set_scroll_offsets(m_scroll_row_offset, col_offset); }
-    void set_scroll_offsets(int row_offset, int col_offset);
+    AbsolutePosition scroll_offset() const { return m_scroll_offset; }
+    void set_scroll_offset(const AbsolutePosition& offset);
 
     void scroll_up(int times) { scroll(-times, 0); }
     void scroll_down(int times) { scroll(times, 0); }
@@ -146,7 +143,6 @@ private:
     bool m_word_wrap_enabled { true };
     bool m_show_line_numbers { false };
 
-    int m_scroll_row_offset { 0 };
-    int m_scroll_col_offset { 0 };
+    AbsolutePosition m_scroll_offset;
 };
 }

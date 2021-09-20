@@ -31,9 +31,10 @@ void Display::set_document(SharedPtr<Document> document) {
     }
 
     m_cursors.remove_secondary_cursors();
-    m_cursors.main_cursor().set({ 0, 0 });
+    m_cursors.main_cursor().set({});
     m_rendered_lines.resize(m_document->num_lines());
     invalidate_all_lines();
+    set_scroll_offset({});
     hide_suggestions_panel();
     document_did_change();
 }
@@ -56,19 +57,17 @@ void Display::compute_suggestions() {
     do_compute_suggestions();
 }
 
-void Display::set_scroll_offsets(int row_offset, int col_offset) {
-    if (m_scroll_row_offset == row_offset && m_scroll_col_offset == col_offset) {
+void Display::set_scroll_offset(const AbsolutePosition& offset) {
+    if (m_scroll_offset == offset) {
         return;
     }
 
-    m_scroll_row_offset = row_offset;
-    m_scroll_col_offset = col_offset;
+    m_scroll_offset = offset;
     invalidate_all_line_rects();
 }
 
 void Display::scroll(int vertical, int horizontal) {
-    auto row_scroll_max = max(0, document()->num_rendered_lines(*this) - rows());
-    set_scroll_offsets(clamp(m_scroll_row_offset + vertical, 0, row_scroll_max), max(m_scroll_col_offset + horizontal, 0));
+    set_scroll_offset(document()->display_to_absolute_position(*this, { vertical, horizontal }));
 }
 
 RenderedLine& Display::rendered_line_at_index(int index) {

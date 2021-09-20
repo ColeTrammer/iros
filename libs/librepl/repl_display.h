@@ -82,6 +82,7 @@ private:
 
     mutable String m_prev_clipboard_contents;
     mutable bool m_prev_clipboard_contents_were_whole_line { false };
+    int m_last_rendered_row { 0 };
     int m_consecutive_tabs { 0 };
     bool m_quit_by_interrupt { false };
     bool m_quit_by_eof { false };

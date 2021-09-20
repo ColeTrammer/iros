@@ -139,7 +139,7 @@ Maybe<Point> TerminalDisplay::cursor_position() {
         return {};
     }
 
-    auto position = document()->cursor_position_on_display(*this, cursors().main_cursor());
+    auto position = document()->display_position_of_index(*this, cursors().main_cursor().index());
     if (position.row() < 0 || position.row() >= rows() || position.col() < 0 || position.col() >= cols()) {
         return {};
     }

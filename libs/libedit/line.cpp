@@ -100,21 +100,6 @@ int Line::index_of_relative_position(const Document& document, Display& display,
     return range->index_into_line;
 }
 
-int Line::absolute_row_position(const Document& document, Display& display) const {
-    if (!display.word_wrap_enabled()) {
-        return document.index_of_line(*this);
-    }
-
-    int absolute_row = 0;
-    for (int i = 0; i < document.num_lines(); i++) {
-        if (this == &document.line_at_index(i)) {
-            return absolute_row;
-        }
-        absolute_row += document.line_at_index(i).rendered_line_count(document, display);
-    }
-    assert(false);
-}
-
 int Line::next_index_into_line(const Document& document, Display& display, int index) const {
     assert(index != length());
 

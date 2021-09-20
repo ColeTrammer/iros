@@ -133,7 +133,7 @@ Maybe<Point> ReplDisplay::cursor_position() {
         return {};
     }
 
-    auto position = document()->cursor_position_on_display(*this, cursors().main_cursor());
+    auto position = document()->display_position_of_index(*this, cursors().main_cursor().index());
     return Point { position.col(), position.row() };
 }
 
@@ -150,9 +150,10 @@ void ReplDisplay::render() {
         return;
     }
 
-    if (positioned_rect().top() != 0 && document()->num_rendered_lines(*this) > sized_rect().height()) {
+    auto rendered_line_count = document()->num_rendered_lines(*this);
+    if (positioned_rect().top() != 0 && rendered_line_count > sized_rect().height()) {
         auto terminal_rect = TUI::Application::the().io_terminal().terminal_rect();
-        auto new_height = min(document()->num_rendered_lines(*this), terminal_rect.height());
+        auto new_height = min(rendered_line_count, terminal_rect.height());
 
         auto delta_height = new_height - sized_rect().height();
         move_up_rows(delta_height);
@@ -161,7 +162,7 @@ void ReplDisplay::render() {
 
     document()->display(*this);
 
-    auto empty_rows = scroll_row_offset() + rows() - document()->num_rendered_lines(*this);
+    auto empty_rows = rows() - m_last_rendered_row - 1;
     auto renderer = get_renderer();
     renderer.clear_rect({ 0, rows() - empty_rows, sized_rect().width(), empty_rows });
 
@@ -236,6 +237,8 @@ Edit::RenderedLine ReplDisplay::compose_line(const Edit::Line& line) {
 void ReplDisplay::send_status_message(String) {}
 
 void ReplDisplay::output_line(int row, int col_offset, const Edit::RenderedLine& line, int line_index) {
+    m_last_rendered_row = row;
+
     auto renderer = get_renderer();
 
     auto visible_line_rect = Rect { 0, row, sized_rect().width(), 1 };
@@ -311,7 +314,7 @@ void ReplDisplay::show_suggestions_panel() {
         return;
     }
 
-    auto cursor_position = document()->cursor_position_on_display(*this, cursors().main_cursor());
+    auto cursor_position = document()->display_position_of_index(*this, cursors().main_cursor().index());
 
     m_suggestions_panel = add<SuggestionsPanel>(*this).shared_from_this();
 
