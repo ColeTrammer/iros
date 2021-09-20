@@ -106,6 +106,7 @@ public:
     void clamp_cursor_to_line_end(Display& display, Cursor& cursor);
 
     void scroll_cursor_into_view(Display& display, Cursor& cursor);
+    void center_display_on_cursor(Display& display, Cursor& cursor);
 
     TextIndex text_index_at_absolute_position(Display& display, const AbsolutePosition& position) const;
     TextIndex text_index_at_display_position(Display& display, const DisplayPosition& position) const;

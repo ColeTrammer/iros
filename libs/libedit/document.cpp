@@ -458,6 +458,11 @@ void Document::move_cursor_to_document_end(Display& display, Cursor& cursor, Mov
     move_cursor_to(display, cursor, { last_line_index, last_line.length() }, mode);
 }
 
+void Document::center_display_on_cursor(Display& display, Cursor& cursor) {
+    display.set_scroll_offset(cursor.absolute_position(*this, display));
+    display.scroll_up(display.rows() / 2);
+}
+
 void Document::scroll_cursor_into_view(Display& display, Cursor& cursor) {
     auto cursor_position = display_position_of_index(display, cursor.index());
     if (cursor_position.row() < 0) {
@@ -979,7 +984,7 @@ App::ObjectBoundCoroutine Document::go_to_line(Display& display) {
     clear_selection(cursor);
     cursor.set_line_index(line_number - 1);
 
-    scroll_cursor_into_view(display, cursor);
+    center_display_on_cursor(display, cursor);
 
     move_cursor_to_line_start(display, cursor);
 }
