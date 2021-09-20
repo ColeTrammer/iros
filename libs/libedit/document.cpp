@@ -144,8 +144,7 @@ void Document::display(Display& display) const {
     auto render_position = display.scroll_offset();
     for (int row_in_display = 0; row_in_display < display.rows() && render_position.line_index() < num_lines();) {
         auto& line = line_at_index(render_position.line_index());
-        row_in_display += line.render(document, display, render_position.relative_col(), render_position.relative_row(),
-                                      row_in_display - render_position.relative_row());
+        row_in_display += line.render(document, display, render_position.relative_col(), render_position.relative_row(), row_in_display);
         render_position.set_line_index(render_position.line_index() + 1);
         render_position.set_relative_row(0);
     }
@@ -232,7 +231,8 @@ DisplayPosition Document::absolute_to_display_position(Display& display, const A
             row_offset += line_at_index(line_index).rendered_line_count(*this, display);
         }
     }
-    return { row_offset + position.relative_row(), position.relative_col() - display.scroll_offset().relative_col() };
+    return { row_offset + position.relative_row() - display.scroll_offset().relative_row(),
+             position.relative_col() - display.scroll_offset().relative_col() };
 }
 
 DisplayPosition Document::display_position_of_index(Display& display, const TextIndex& index) const {
