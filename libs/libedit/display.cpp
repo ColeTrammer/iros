@@ -130,6 +130,11 @@ void Display::set_word_wrap_enabled(bool b) {
     m_word_wrap_enabled = b;
     if (document()) {
         invalidate_all_lines();
+        for (auto& cursor : cursors()) {
+            cursor.compute_max_col(*document(), *this);
+        }
+        set_scroll_offset({ scroll_offset().line_index(), 0, 0 });
+        document()->scroll_cursor_into_view(*this, cursors().main_cursor());
     }
 }
 
