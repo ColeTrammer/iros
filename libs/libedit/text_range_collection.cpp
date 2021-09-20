@@ -35,15 +35,24 @@ Maybe<TextRange> TextRangeCollection::range_at_text_index(const TextIndex& index
 }
 
 TextRangeCollectionIterator TextRangeCollection::iterator(const TextIndex& start) const {
-    int range_index;
-    for (range_index = 0; range_index < m_ranges.size(); range_index++) {
-        auto& range = m_ranges[range_index];
-        if (range.includes(start) || range.starts_after(start)) {
+    // Perform binary search to find the first range that starts_after(start) or includes(start).
+    int left = 0;
+    int right = m_ranges.size();
+    while (left < right) {
+        auto mid = (left + right) / 2;
+        auto& range = m_ranges[mid];
+        if (range.includes(start)) {
+            left = mid;
             break;
         }
+        if (range.starts_after(start)) {
+            right = mid;
+            continue;
+        }
+        left = mid + 1;
     }
 
-    return TextRangeCollectionIterator(*this, start, range_index);
+    return TextRangeCollectionIterator(*this, start, left);
 }
 
 const TextRange* TextRangeCollectionIterator::current_range() const {
