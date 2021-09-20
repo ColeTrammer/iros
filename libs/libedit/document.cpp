@@ -245,12 +245,12 @@ int Document::index_of_line(const Line& line) const {
 
 void Document::update_selection_state_for_mode(Cursor& cursor, MovementMode mode) {
     if (mode == MovementMode::Move) {
-        clear_selection(cursor);
+        cursor.clear_selection();
         return;
     }
 
     if (cursor.selection().empty()) {
-        cursor.selection().begin(cursor.index());
+        cursor.set_selection_anchor(cursor.index());
     }
 }
 
@@ -286,10 +286,10 @@ void Document::move_cursor_left_by_word(Display& display, Cursor& cursor, Moveme
 }
 
 void Document::move_cursor_right(Display& display, Cursor& cursor, MovementMode mode) {
-    auto& selection = cursor.selection();
+    auto selection = cursor.selection();
     if (!selection.empty() && mode == MovementMode::Move) {
-        auto selection_end = selection.normalized_end();
-        clear_selection(cursor);
+        auto selection_end = selection.end();
+        cursor.clear_selection();
         move_cursor_to(display, cursor, selection_end);
         return;
     }
@@ -306,23 +306,18 @@ void Document::move_cursor_right(Display& display, Cursor& cursor, MovementMode 
         return;
     }
 
-    int new_index_into_line = line.next_index_into_line(*this, display, cursor.index_into_line());
-    if (mode == MovementMode::Select) {
-        if (selection.empty()) {
-            selection.begin(cursor.index());
-        }
-        selection.set_end_index_into_line(new_index_into_line);
-    }
+    update_selection_state_for_mode(cursor, mode);
 
+    int new_index_into_line = line.next_index_into_line(*this, display, cursor.index_into_line());
     cursor.set_index_into_line(new_index_into_line);
     cursor.compute_max_col(*this, display);
 }
 
 void Document::move_cursor_left(Display& display, Cursor& cursor, MovementMode mode) {
-    auto& selection = cursor.selection();
+    auto selection = cursor.selection();
     if (!selection.empty() && mode == MovementMode::Move) {
-        auto selection_start = selection.normalized_start();
-        clear_selection(cursor);
+        auto selection_start = selection.start();
+        cursor.clear_selection();
         move_cursor_to(display, cursor, selection_start);
         return;
     }
@@ -339,14 +334,9 @@ void Document::move_cursor_left(Display& display, Cursor& cursor, MovementMode m
         return;
     }
 
-    int new_index_into_line = line.prev_index_into_line(*this, display, index_into_line);
-    if (mode == MovementMode::Select) {
-        if (selection.empty()) {
-            selection.begin(cursor.index());
-        }
-        selection.set_end_index_into_line(new_index_into_line);
-    }
+    update_selection_state_for_mode(cursor, mode);
 
+    int new_index_into_line = line.prev_index_into_line(*this, display, index_into_line);
     cursor.set_index_into_line(new_index_into_line);
     cursor.compute_max_col(*this, display);
 }
@@ -373,9 +363,6 @@ void Document::move_cursor_down(Display& display, Cursor& cursor, MovementMode m
     cursor.set(new_index);
 
     clamp_cursor_to_line_end(display, cursor);
-    if (mode == MovementMode::Select) {
-        cursor.selection().set_end(cursor.index());
-    }
 }
 
 void Document::move_cursor_up(Display& display, Cursor& cursor, MovementMode mode) {
@@ -400,9 +387,6 @@ void Document::move_cursor_up(Display& display, Cursor& cursor, MovementMode mod
     cursor.set(new_index);
 
     clamp_cursor_to_line_end(display, cursor);
-    if (mode == MovementMode::Select) {
-        cursor.selection().set_end(cursor.index());
-    }
 }
 
 void Document::clamp_cursor_to_line_end(Display& display, Cursor& cursor) {
@@ -427,23 +411,17 @@ void Document::clamp_cursor_to_line_end(Display& display, Cursor& cursor) {
 
 void Document::move_cursor_to_line_start(Display& display, Cursor& cursor, MovementMode mode) {
     update_selection_state_for_mode(cursor, mode);
-    if (mode == MovementMode::Select) {
-        cursor.selection().set_end_index_into_line(0);
-    }
 
     cursor.set_index_into_line(0);
     cursor.compute_max_col(*this, display);
 }
 
 void Document::move_cursor_to_line_end(Display& display, Cursor& cursor, MovementMode mode) {
-    auto& line = cursor.referenced_line(*this);
-
     update_selection_state_for_mode(cursor, mode);
-    if (mode == MovementMode::Select) {
-        cursor.selection().set_end_index_into_line(line.length());
-    }
 
     display.set_scroll_offset({ display.scroll_offset().line_index(), display.scroll_offset().relative_row(), 0 });
+
+    auto& line = cursor.referenced_line(*this);
     cursor.set_index_into_line(line.length());
     cursor.compute_max_col(*this, display);
 }
@@ -542,13 +520,11 @@ void Document::delete_word(Display& display, DeleteCharMode mode) {
 }
 
 void Document::swap_selection_start_and_cursor(Display& display, Cursor& cursor) {
-    auto& selection = cursor.selection();
-    auto start = selection.start();
-    auto end = selection.end();
+    auto index = cursor.index();
+    auto selection_start = cursor.selection_anchor();
 
-    move_cursor_to(display, cursor, start);
-
-    selection.set(start, end);
+    move_cursor_to(display, cursor, selection_start);
+    cursor.set_selection_anchor(index);
 }
 
 void Document::split_line_at_cursor(Display& display) {
@@ -639,7 +615,7 @@ void Document::insert_text_at_cursor(Display& display, const String& text) {
         }();
 
         if (insert_around_result) {
-            auto selections = Vector<Selection> {};
+            auto selections = Vector<TextRange> {};
             for (auto& cursor : display.cursors()) {
                 selections.add(cursor.selection());
             }
@@ -648,22 +624,22 @@ void Document::insert_text_at_cursor(Display& display, const String& text) {
             group->add<MovementCommand>(*this, [this, &selections](Display& display, MultiCursor& cursors) {
                 for (int i = 0; i < cursors.size(); i++) {
                     auto& cursor = cursors[i];
-                    move_cursor_to(display, cursor, selections[i].normalized_start());
+                    move_cursor_to(display, cursor, selections[i].start());
                 }
             });
             group->add<InsertCommand>(*this, insert_around_result->left);
             group->add<MovementCommand>(*this, [this, &selections](Display& display, MultiCursor& cursors) {
                 for (int i = 0; i < cursors.size(); i++) {
                     auto& cursor = cursors[i];
-                    move_cursor_to(display, cursor, selections[i].normalized_end().offset({ 0, 1 }));
+                    move_cursor_to(display, cursor, selections[i].end().offset({ 0, 1 }));
                 }
             });
             group->add<InsertCommand>(*this, insert_around_result->right);
             group->add<MovementCommand>(*this, [this, &selections](Display& display, MultiCursor& cursors) {
                 for (int i = 0; i < cursors.size(); i++) {
                     auto& cursor = cursors[i];
-                    move_cursor_to(display, cursor, selections[i].normalized_start().offset({ 0, 1 }));
-                    move_cursor_to(display, cursor, selections[i].normalized_end().offset({ 0, 1 }), MovementMode::Select);
+                    move_cursor_to(display, cursor, selections[i].start().offset({ 0, 1 }));
+                    move_cursor_to(display, cursor, selections[i].end().offset({ 0, 1 }), MovementMode::Select);
                 }
             });
             return push_command(display, move(group));
@@ -713,25 +689,24 @@ void Document::move_cursor_to(Display& display, Cursor& cursor, const TextIndex&
     update_selection_state_for_mode(cursor, mode);
     if (mode == MovementMode::Select) {
         if (cursor.selection().empty()) {
-            cursor.selection().begin(cursor.index());
+            cursor.set_selection_anchor(cursor.index());
         }
-        cursor.selection().set_end(index);
     }
     cursor.set(index);
     cursor.compute_max_col(*this, display);
 }
 
 void Document::delete_selection(Cursor& cursor) {
-    auto& selection = cursor.selection();
-    auto start = selection.normalized_start();
-    auto end = selection.normalized_end();
+    auto selection = cursor.selection();
+    auto start = selection.start();
+    auto end = selection.end();
 
     auto line_start = start.line_index();
     auto index_start = start.index_into_line();
     auto line_end = end.line_index();
     auto index_end = end.index_into_line();
 
-    clear_selection(cursor);
+    cursor.clear_selection();
     if (line_start == line_end) {
         for (int i = index_end - 1; i >= index_start; i--) {
             m_lines[line_start].remove_char_at(*this, i);
@@ -782,20 +757,12 @@ String Document::text_in_range(const TextIndex& start, const TextIndex& end) con
 }
 
 String Document::selection_text(const Cursor& cursor) const {
-    auto& selection = cursor.selection();
+    auto selection = cursor.selection();
     if (selection.empty()) {
         return "";
     }
 
-    return text_in_range(selection.normalized_start(), selection.normalized_end());
-}
-
-void Document::clear_selection(Cursor& cursor) {
-    if (cursor.selection().empty()) {
-        return;
-    }
-
-    cursor.selection().clear();
+    return text_in_range(selection.start(), selection.end());
 }
 
 void Document::remove_line(int index) {
@@ -981,7 +948,7 @@ App::ObjectBoundCoroutine Document::go_to_line(Display& display) {
 
     auto& cursor = display.cursors().main_cursor();
 
-    clear_selection(cursor);
+    cursor.clear_selection();
     cursor.set_line_index(line_number - 1);
 
     center_display_on_cursor(display, cursor);
@@ -1087,12 +1054,12 @@ void Document::select_all_matches(Display& display, const TextRangeCollection& c
     display.cursors().remove_secondary_cursors();
 
     auto& main_cursor = display.cursors().main_cursor();
+    main_cursor.set_selection_anchor(collection.range(0).start());
     main_cursor.set(collection.range(0).end());
-    main_cursor.selection().set(collection.range(0).start(), collection.range(0).end());
 
     for (int i = 1; i < collection.size(); i++) {
         auto& range = collection.range(i);
-        display.cursors().add_cursor_at(*this, range.end(), { range.start(), range.end() });
+        display.cursors().add_cursor_at(*this, range.end(), range.start());
     }
 }
 

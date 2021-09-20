@@ -29,12 +29,37 @@ void Cursor::compute_max_col(const Document& document, Display& display) {
 
 void Cursor::move_preserving_selection(int delta_line_index, int delta_index_into_line) {
     set({ line_index() + delta_line_index, index_into_line() + delta_index_into_line });
-    if (!m_selection.empty()) {
-        m_selection.set(
-            { m_selection.start().line_index() + delta_line_index, m_selection.start().index_into_line() + delta_index_into_line },
-            { m_selection.end().line_index() + delta_line_index, m_selection.end().index_into_line() + delta_index_into_line });
+    if (m_selection_anchor) {
+        set_selection_anchor(
+            { selection_anchor().line_index() + delta_line_index, selection_anchor().index_into_line() + delta_index_into_line });
+    }
+}
+
+TextIndex Cursor::normalized_selection_start() const {
+    if (index() <= selection_anchor()) {
+        return index();
+    }
+    return selection_anchor();
+}
+
+TextIndex Cursor::normalized_selection_end() const {
+    if (index() >= selection_anchor()) {
+        return index();
+    }
+    return selection_anchor();
+}
+
+TextRange Cursor::selection() const {
+    return { normalized_selection_start(), normalized_selection_end(), CharacterMetadata::Flags::Selected };
+}
+
+void Cursor::merge_selections(const Cursor& other) {
+    if (this->index() == normalized_selection_start()) {
+        set(min(this->normalized_selection_start(), other.normalized_selection_start()));
+        set_selection_anchor(max(this->normalized_selection_end(), other.normalized_selection_end()));
     } else {
-        m_selection.set(index(), index());
+        set_selection_anchor(min(this->normalized_selection_start(), other.normalized_selection_start()));
+        set(max(this->normalized_selection_end(), other.normalized_selection_end()));
     }
 }
 

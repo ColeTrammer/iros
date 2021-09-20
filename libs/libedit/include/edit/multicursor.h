@@ -35,7 +35,7 @@ public:
     const Cursor& main_cursor() const { return const_cast<MultiCursor&>(*this).main_cursor(); }
 
     void add_cursor(Document& document, AddCursorMode mode);
-    void add_cursor_at(Document& document, const TextIndex& index, const Selection& selection = {});
+    void add_cursor_at(Document& document, const TextIndex& index, const TextIndex& selection_start);
 
     bool should_show_auto_complete_text_at(const Document& document, const Line& line, int index_into_line) const;
     Maybe<String> preview_auto_complete_text() const;

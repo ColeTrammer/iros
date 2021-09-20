@@ -116,9 +116,9 @@ void InsertCommand::do_insert(Document& document, MultiCursor& cursors, int curs
 void InsertCommand::do_undo(Display&, MultiCursor& cursors) {
     for (int cursor_index = 0; cursor_index < cursors.size(); cursor_index++) {
         auto& cursor = cursors[cursor_index];
-        document().clear_selection(cursor);
+        cursor.clear_selection();
         if (!start_snapshot().cursors[cursor_index].selection().empty()) {
-            cursor.set(start_snapshot().cursors[cursor_index].selection().normalized_start());
+            cursor.set(start_snapshot().cursors[cursor_index].selection().start());
         } else {
             cursor.set(start_snapshot().cursors[cursor_index].index());
         }
@@ -171,7 +171,7 @@ void DeleteCommand::do_undo(Display&, MultiCursor& cursors) {
     for (int i = cursors.size() - 1; i >= 0; i--) {
         auto& cursor = cursors[i];
         if (!start_snapshot().cursors[i].selection().empty()) {
-            cursor.selection().clear();
+            cursor.clear_selection();
             InsertCommand::do_insert(document(), cursors, i, selection_text(i));
         }
     }
@@ -233,14 +233,8 @@ bool SwapLinesCommand::do_execute(Display&, MultiCursor& cursors) {
 }
 
 bool SwapLinesCommand::do_swap(Cursor& cursor, SwapDirection direction) {
-    // Adjust the selection to make sure its aligned with the cursor.
-    if (cursor.selection().empty()) {
-        cursor.selection().begin(cursor.index());
-        cursor.selection().set_end(cursor.index());
-    }
-
-    auto selection_start = cursor.selection().normalized_start();
-    auto selection_end = cursor.selection().normalized_end();
+    auto selection_start = cursor.selection().start();
+    auto selection_end = cursor.selection().end();
 
     if ((selection_start.line_index() == 0 && direction == SwapDirection::Up) ||
         (selection_end.line_index() == document().num_lines() - 1 && direction == SwapDirection::Down)) {

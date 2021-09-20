@@ -11,19 +11,10 @@ MultiCursor::MultiCursor(Display& display) : m_display { display }, m_cursors { 
 void MultiCursor::remove_duplicate_cursors() {
     for (int i = 0; i < m_cursors.size(); i++) {
         auto& current = m_cursors[i];
-
-        // NOTE: for Selection::overlaps() to behave correctly, empty selections must be "positioned" at the cursor.
-        if (current.selection().empty()) {
-            current.selection().begin(current.index());
-        }
         while (i + 1 < m_cursors.size()) {
             auto& next_cursor = m_cursors[i + 1];
-            if (next_cursor.selection().empty()) {
-                next_cursor.selection().begin(next_cursor.index());
-            }
-
             if (current.selection().overlaps(next_cursor.selection())) {
-                current.selection().merge(m_cursors[i + 1].selection());
+                current.merge_selections(m_cursors[i + 1]);
                 m_cursors.remove(i + 1);
                 if (m_main_cursor_index >= i + 1) {
                     m_main_cursor_index--;
@@ -60,7 +51,7 @@ void MultiCursor::add_cursor(Document& document, AddCursorMode mode) {
     }
 }
 
-void MultiCursor::add_cursor_at(Document& document, const TextIndex& index, const Selection& selection) {
+void MultiCursor::add_cursor_at(Document& document, const TextIndex& index, const TextIndex& selection_start) {
     int i = 0;
     for (; i < m_cursors.size(); i++) {
         // Duplicate cursors should not be created.
@@ -74,8 +65,8 @@ void MultiCursor::add_cursor_at(Document& document, const TextIndex& index, cons
     }
 
     auto cursor = Cursor {};
+    cursor.set_selection_anchor(selection_start);
     cursor.set(index);
-    cursor.selection() = selection;
     cursor.compute_max_col(document, m_display);
     m_cursors.insert(move(cursor), i);
     if (i <= m_main_cursor_index) {
@@ -88,8 +79,8 @@ void MultiCursor::install_document_listeners(Document& document) {
         invalidate_cursor_history();
 
         for (auto& cursor : m_cursors) {
-            if (cursor.selection().overlaps(Selection { { event.line_index(), 0 }, { event.line_index() + event.line_count(), 0 } })) {
-                cursor.selection().clear();
+            if (cursor.selection().overlaps({ { event.line_index(), 0 }, { event.line_index() + event.line_count(), 0 } })) {
+                cursor.clear_selection();
             }
             if (cursor.line_index() < event.line_index()) {
                 continue;
@@ -99,7 +90,7 @@ void MultiCursor::install_document_listeners(Document& document) {
                     cursor.set({ document.num_lines() - 1, document.last_line().length() });
                     continue;
                 }
-                document.clear_selection(cursor);
+                cursor.clear_selection();
                 document.move_cursor_to(m_display, cursor,
                                         document.text_index_at_absolute_position(m_display, cursor.absolute_position(document, m_display)));
                 continue;
@@ -112,8 +103,8 @@ void MultiCursor::install_document_listeners(Document& document) {
         invalidate_cursor_history();
 
         for (auto& cursor : m_cursors) {
-            if (cursor.selection().overlaps(Selection { { event.line_index(), 0 }, { event.line_index() + event.line_count(), 0 } })) {
-                cursor.selection().clear();
+            if (cursor.selection().overlaps({ { event.line_index(), 0 }, { event.line_index() + event.line_count(), 0 } })) {
+                cursor.clear_selection();
             }
             if (cursor.line_index() < event.line_index()) {
                 continue;
@@ -126,8 +117,8 @@ void MultiCursor::install_document_listeners(Document& document) {
         invalidate_cursor_history();
 
         for (auto& cursor : m_cursors) {
-            if (cursor.selection().overlaps(Selection { { event.line_index(), event.index_into_line() }, { event.line_index() + 1, 0 } })) {
-                cursor.selection().clear();
+            if (cursor.selection().overlaps({ { event.line_index(), event.index_into_line() }, { event.line_index() + 1, 0 } })) {
+                cursor.clear_selection();
             }
             if (cursor.line_index() != event.line_index() || cursor.index_into_line() < event.index_into_line()) {
                 continue;
@@ -141,8 +132,8 @@ void MultiCursor::install_document_listeners(Document& document) {
         invalidate_cursor_history();
 
         for (auto& cursor : m_cursors) {
-            if (cursor.selection().overlaps(Selection { { event.second_line_index(), 0 }, { event.second_line_index() + 1, 0 } })) {
-                cursor.selection().clear();
+            if (cursor.selection().overlaps({ { event.second_line_index(), 0 }, { event.second_line_index() + 1, 0 } })) {
+                cursor.clear_selection();
             }
             if (cursor.line_index() != event.second_line_index()) {
                 continue;
@@ -156,9 +147,9 @@ void MultiCursor::install_document_listeners(Document& document) {
         invalidate_cursor_history();
 
         for (auto& cursor : m_cursors) {
-            if (cursor.selection().overlaps(Selection { { event.line_index(), event.index_into_line() },
-                                                        { event.line_index(), event.index_into_line() + event.bytes_added() } })) {
-                cursor.selection().clear();
+            if (cursor.selection().overlaps({ { event.line_index(), event.index_into_line() },
+                                              { event.line_index(), event.index_into_line() + event.bytes_added() } })) {
+                cursor.clear_selection();
             }
             if (cursor.line_index() != event.line_index()) {
                 continue;
@@ -175,9 +166,9 @@ void MultiCursor::install_document_listeners(Document& document) {
         invalidate_cursor_history();
 
         for (auto& cursor : m_cursors) {
-            if (cursor.selection().overlaps(Selection { { event.line_index(), event.index_into_line() },
-                                                        { event.line_index(), event.index_into_line() + event.bytes_deleted() } })) {
-                cursor.selection().clear();
+            if (cursor.selection().overlaps({ { event.line_index(), event.index_into_line() },
+                                              { event.line_index(), event.index_into_line() + event.bytes_deleted() } })) {
+                cursor.clear_selection();
             }
             if (cursor.line_index() != event.line_index()) {
                 continue;
@@ -270,7 +261,7 @@ TextRangeCollection MultiCursor::cursor_text_ranges() const {
 TextRangeCollection MultiCursor::selections() const {
     auto collection = TextRangeCollection {};
     for (auto& cursor : m_cursors) {
-        collection.add(cursor.selection().text_range());
+        collection.add(cursor.selection());
     }
     return collection;
 }

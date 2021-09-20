@@ -9,7 +9,6 @@ set(SOURCES
     line.cpp
     multicursor.cpp
     display.cpp
-    selection.cpp
     suggestions.cpp
     text_range_collection.cpp
     text_range.cpp

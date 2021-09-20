@@ -208,10 +208,9 @@ void init_actions() {
     });
 
     register_document_keyboard_action("Reset Cursors", { App::Key::Escape, 0 }, [](Display& display) {
-        auto& document = *display.document();
         display.clear_search();
         display.cursors().remove_secondary_cursors();
-        document.clear_selection(display.cursors().main_cursor());
+        display.cursors().main_cursor().clear_selection();
     });
 
     register_document_keyboard_action("Show Suggestions", { App::Key::Space, App::KeyModifier::Control }, [](Display& display) {

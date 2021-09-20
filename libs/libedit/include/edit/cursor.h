@@ -2,7 +2,6 @@
 
 #include <assert.h>
 #include <edit/forward.h>
-#include <edit/selection.h>
 #include <edit/text_index.h>
 #include <stddef.h>
 
@@ -35,17 +34,31 @@ public:
     bool at_document_start(const Document&) const { return m_index == TextIndex { 0, 0 }; }
     bool at_document_end(const Document& document) const;
 
-    Selection& selection() { return m_selection; }
-    const Selection& selection() const { return m_selection; }
+    void reset() {
+        set({});
+        clear_selection();
+    }
+
+    TextIndex selection_anchor() const { return m_selection_anchor.value_or(m_index); }
+    void set_selection_anchor(const TextIndex& index) { m_selection_anchor = index; }
+    void clear_selection() { m_selection_anchor = {}; }
+
+    TextIndex normalized_selection_start() const;
+    TextIndex normalized_selection_end() const;
+
+    void merge_selections(const Cursor& other);
+    TextRange selection() const;
 
     int max_col() const { return m_max_col; }
     void compute_max_col(const Document& document, Display& display);
 
-    bool operator==(const Cursor& other) const { return this->index() == other.index() && this->selection() == other.selection(); }
+    bool operator==(const Cursor& other) const {
+        return this->index() == other.index() && this->selection_anchor() == other.selection_anchor();
+    }
 
 private:
     TextIndex m_index;
-    Selection m_selection;
+    Maybe<TextIndex> m_selection_anchor;
     int m_max_col { 0 };
 };
 };
@@ -54,9 +67,9 @@ namespace LIIM::Format {
 template<>
 struct Formatter<Edit::Cursor> : public Formatter<String> {
     void format(const Edit::Cursor& cursor, FormatContext& context) {
-        return Formatter<String>::format(::format("Cursor <line_index={} index_into_line={} max_col={} selection={}>", cursor.line_index(),
-                                                  cursor.index_into_line(), cursor.max_col(), cursor.selection()),
-                                         context);
+        return Formatter<String>::format(
+            ::format("Cursor <index={} selection_start={} max_col={}>", cursor.index(), cursor.selection_anchor(), cursor.max_col()),
+            context);
     }
 };
 }

@@ -31,7 +31,7 @@ void Display::set_document(SharedPtr<Document> document) {
     }
 
     m_cursors.remove_secondary_cursors();
-    m_cursors.main_cursor().set({});
+    m_cursors.main_cursor().reset();
     m_rendered_lines.resize(m_document->num_lines());
     invalidate_all_lines();
     set_scroll_offset({});
@@ -193,7 +193,7 @@ void Display::select_next_word_at_cursor() {
     }
 
     auto& result = m_search_results.range(m_search_result_index);
-    cursors().add_cursor_at(*document(), result.end(), { result.start(), result.end() });
+    cursors().add_cursor_at(*document(), result.end(), result.start());
 
     ++m_search_result_index;
     m_search_result_index %= m_search_results.size();
