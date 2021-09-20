@@ -152,9 +152,8 @@ void Document::display(Display& display) const {
 }
 
 TextIndex Document::text_index_at_absolute_position(Display& display, const AbsolutePosition& position) const {
-    auto index_into_line = line_at_index(position.line_index())
-                               .index_of_relative_position(*this, display, { position.relative_row(), position.relative_col() });
-    return { position.line_index(), index_into_line };
+    return line_at_index(position.line_index())
+        .index_of_relative_position(*this, display, { position.relative_row(), position.relative_col() });
 }
 
 TextIndex Document::text_index_at_display_position(Display& display, const DisplayPosition& position) const {
@@ -366,10 +365,9 @@ void Document::move_cursor_down(Display& display, Cursor& cursor, MovementMode m
     auto new_index = [&] {
         if (prev_position.row() == prev_line.rendered_line_count(*this, display) - 1) {
             auto& line_above = line_at_index(cursor.line_index() + 1);
-            return TextIndex { cursor.line_index() + 1, line_above.index_of_relative_position(*this, display, { 0, prev_position.col() }) };
+            return line_above.index_of_relative_position(*this, display, { 0, prev_position.col() });
         }
-        return TextIndex { cursor.line_index(),
-                           prev_line.index_of_relative_position(*this, display, { prev_position.row() + 1, prev_position.col() }) };
+        return prev_line.index_of_relative_position(*this, display, { prev_position.row() + 1, prev_position.col() });
     }();
 
     cursor.set(new_index);
@@ -393,12 +391,10 @@ void Document::move_cursor_up(Display& display, Cursor& cursor, MovementMode mod
     auto new_index = [&] {
         if (prev_position.row() == 0) {
             auto& line_above = line_at_index(cursor.line_index() - 1);
-            return TextIndex { cursor.line_index() - 1,
-                               line_above.index_of_relative_position(
-                                   *this, display, { line_above.rendered_line_count(*this, display) - 1, prev_position.col() }) };
+            return line_above.index_of_relative_position(*this, display,
+                                                         { line_above.rendered_line_count(*this, display) - 1, prev_position.col() });
         }
-        return TextIndex { cursor.line_index(),
-                           prev_line.index_of_relative_position(*this, display, { prev_position.row() - 1, prev_position.col() }) };
+        return prev_line.index_of_relative_position(*this, display, { prev_position.row() - 1, prev_position.col() });
     }();
 
     cursor.set(new_index);
@@ -418,12 +414,13 @@ void Document::clamp_cursor_to_line_end(Display& display, Cursor& cursor) {
     }
 
     if (current_pos.col() > max_col) {
-        cursor.set_index_into_line(line.index_of_relative_position(*this, display, { current_pos.row(), max_col }));
+        cursor.set_index_into_line(line.index_of_relative_position(*this, display, { current_pos.row(), max_col }).index_into_line());
         return;
     }
 
     if (cursor.max_col() > current_pos.col()) {
-        cursor.set_index_into_line(line.index_of_relative_position(*this, display, { current_pos.row(), cursor.max_col() }));
+        cursor.set_index_into_line(
+            line.index_of_relative_position(*this, display, { current_pos.row(), cursor.max_col() }).index_into_line());
         return;
     }
 }

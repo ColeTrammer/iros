@@ -92,12 +92,14 @@ const PositionRange* Line::range_for_relative_position(const Document& document,
     return nullptr;
 }
 
-int Line::index_of_relative_position(const Document& document, Display& display, const RelativePosition& position) const {
+TextIndex Line::index_of_relative_position(const Document& document, Display& display, const RelativePosition& position) const {
+    auto line_index = document.index_of_line(*this);
+
     auto* range = range_for_relative_position(document, display, position);
     if (!range) {
-        return length();
+        return { line_index, length() };
     }
-    return range->index_into_line;
+    return { line_index, range->index_into_line };
 }
 
 int Line::next_index_into_line(const Document& document, Display& display, int index) const {
