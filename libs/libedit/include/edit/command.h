@@ -43,17 +43,18 @@ private:
     Vector<String> m_selection_texts;
 };
 
-class CommandGroup : public DeltaBackedCommand {
+class CommandGroup : public Command {
 public:
-    explicit CommandGroup(Document& document) : DeltaBackedCommand(document) {}
+    explicit CommandGroup(Document& document) : Command(document) {}
 
     template<typename C, typename... Args>
     void add(Args&&... args) {
         m_commands.add(make_unique<C>(forward<Args>(args)...));
     }
 
-    virtual bool do_execute(Display& display, MultiCursor&) override;
-    virtual void do_undo(Display& display, MultiCursor&) override;
+    virtual bool execute(Display& display) override;
+    virtual void undo(Display& display) override;
+    virtual void redo(Display& display) override;
 
 private:
     Vector<UniquePtr<Command>> m_commands;

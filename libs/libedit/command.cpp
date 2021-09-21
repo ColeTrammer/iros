@@ -33,7 +33,7 @@ void DeltaBackedCommand::redo(Display& display) {
     do_execute(display, display.cursors());
 }
 
-bool CommandGroup::do_execute(Display& display, MultiCursor&) {
+bool CommandGroup::execute(Display& display) {
     bool modified = false;
     for (auto& command : m_commands) {
         if (command->execute(display)) {
@@ -43,10 +43,16 @@ bool CommandGroup::do_execute(Display& display, MultiCursor&) {
     return modified;
 }
 
-void CommandGroup::do_undo(Display& display, MultiCursor&) {
+void CommandGroup::undo(Display& display) {
     m_commands.for_each_reverse([&](auto& command) {
         const_cast<Command&>(*command).undo(display);
     });
+}
+
+void CommandGroup::redo(Display& display) {
+    for (auto& command : m_commands) {
+        command->redo(display);
+    }
 }
 
 void MovementCommand::redo(Display& display) {
