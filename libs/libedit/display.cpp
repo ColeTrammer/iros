@@ -178,13 +178,17 @@ void Display::move_cursor_to_next_search_match() {
 }
 
 void Display::select_next_word_at_cursor() {
-    if (!document() || m_search_results.empty()) {
+    if (!document()) {
         return;
     }
 
     auto& main_cursor = cursors().main_cursor();
     if (main_cursor.selection().empty()) {
         document()->select_word_at_cursor(*this, main_cursor);
+        if (main_cursor.selection().empty()) {
+            return;
+        }
+
         auto search_text = document()->selection_text(main_cursor);
         set_search_text(move(search_text));
 
@@ -195,6 +199,8 @@ void Display::select_next_word_at_cursor() {
         }
         m_search_result_index %= m_search_results.size();
         return;
+    } else {
+        set_search_text(document()->selection_text(main_cursor));
     }
 
     auto& result = m_search_results.range(m_search_result_index);
