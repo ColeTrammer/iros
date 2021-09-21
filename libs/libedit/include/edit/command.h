@@ -101,19 +101,6 @@ public:
     virtual void do_undo(Display& display, MultiCursor& cursor) override;
 };
 
-class DeleteLineCommand final : public DeltaBackedCommand {
-public:
-    explicit DeleteLineCommand(Document& document);
-    virtual ~DeleteLineCommand();
-
-    virtual bool do_execute(Display& display, MultiCursor& cursor) override;
-    virtual void do_undo(Display& display, MultiCursor& cursor) override;
-
-private:
-    Vector<Line> m_saved_lines;
-    bool m_document_was_empty { false };
-};
-
 class SwapLinesCommand final : public DeltaBackedCommand {
 public:
     SwapLinesCommand(Document& document, SwapDirection direction);

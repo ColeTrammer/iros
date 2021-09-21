@@ -463,6 +463,37 @@ void Document::insert_char(Display& display, char c) {
     push_command<InsertCommand>(display, String(c));
 }
 
+void Document::delete_line(Display& display) {
+    auto saved_max_col = Vector<int> {};
+
+    // NOTE: subsequent cursors on the same line will be removed, so their max col can't be saved.
+    auto last_line_index_seen = -1;
+    for (auto& cursor : display.cursors()) {
+        if (cursor.line_index() != last_line_index_seen) {
+            saved_max_col.add(cursor.max_col());
+        }
+        last_line_index_seen = cursor.line_index();
+    }
+
+    auto group = make_unique<CommandGroup>(*this);
+    group->add<MovementCommand>(*this, [&](Display& display, MultiCursor& cursors) {
+        for (auto& cursor : cursors) {
+            select_line_at_cursor(display, cursor);
+        }
+        cursors.remove_duplicate_cursors();
+    });
+    group->add<DeleteCommand>(*this);
+    group->add<MovementCommand>(*this, [&](Display& display, MultiCursor& cursors) {
+        for (int i = 0; i < cursors.size(); i++) {
+            auto& cursor = cursors[i];
+            cursor.set_max_col(saved_max_col[i]);
+            move_cursor_to_max_col_position(display, cursor);
+        }
+    });
+
+    push_command(display, move(group));
+}
+
 void Document::delete_char(Display& display, DeleteCharMode mode) {
     auto group = make_unique<CommandGroup>(*this);
     group->add<MovementCommand>(*this, [this, mode](Display& display, MultiCursor& cursors) {
@@ -894,7 +925,7 @@ void Document::cut(Display& display, MultiCursor& cursors) {
             contents += "\n";
         }
         display.set_clipboard_contents(move(contents), true);
-        push_command<DeleteLineCommand>(display);
+        delete_line(display);
         return;
     }
 

@@ -192,6 +192,7 @@ public:
     void insert_char(Display& display, char c);
     void delete_char(Display& display, DeleteCharMode mode);
     void delete_word(Display& display, DeleteCharMode mode);
+    void delete_line(Display& display);
 
     App::ObjectBoundCoroutine go_to_line(Display& display);
 

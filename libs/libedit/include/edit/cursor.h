@@ -50,6 +50,7 @@ public:
     TextRange selection() const;
 
     int max_col() const { return m_max_col; }
+    void set_max_col(int max_col) { m_max_col = max_col; }
     void compute_max_col(const Document& document, Display& display);
 
     bool operator==(const Cursor& other) const {

@@ -177,35 +177,6 @@ void DeleteCommand::do_undo(Display&, MultiCursor& cursors) {
     }
 }
 
-DeleteLineCommand::DeleteLineCommand(Document& document) : DeltaBackedCommand(document) {}
-
-DeleteLineCommand::~DeleteLineCommand() {}
-
-bool DeleteLineCommand::do_execute(Display&, MultiCursor& cursors) {
-    for (auto& cursor : cursors) {
-        m_saved_lines.add(cursor.referenced_line(document()));
-
-        int line_number = cursor.line_index();
-        if (document().num_lines() == 1) {
-            cursor.referenced_line(document()).overwrite(document(), Line(""), Line::OverwriteFrom::LineStart);
-            m_document_was_empty = true;
-        } else {
-            document().remove_line(line_number);
-        }
-    }
-
-    return true;
-}
-
-void DeleteLineCommand::do_undo(Display&, MultiCursor& cursors) {
-    for (int i = 0; i < cursors.size(); i++) {
-        document().insert_line(Line(m_saved_lines[i]), start_snapshot().cursors[i].line_index());
-    }
-    if (m_document_was_empty) {
-        document().remove_line(1);
-    }
-}
-
 SwapLinesCommand::SwapLinesCommand(Document& document, SwapDirection direction) : DeltaBackedCommand(document), m_direction(direction) {}
 
 SwapLinesCommand::~SwapLinesCommand() {}
