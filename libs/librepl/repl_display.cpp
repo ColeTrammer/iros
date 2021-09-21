@@ -88,6 +88,7 @@ void ReplDisplay::initialize() {
         return false;
     });
 
+    Display::initialize();
     Panel::initialize();
 }
 

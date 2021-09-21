@@ -832,12 +832,6 @@ void Document::split_line_at(const TextIndex& index) {
 void Document::register_display(Display& display) {
     m_displays.add(&display);
 
-    display.this_widget().on_unchecked<App::ResizeEvent>(*this, [this, &display](auto&) {
-        if (display.word_wrap_enabled()) {
-            display.invalidate_all_lines();
-        }
-    });
-
     display.this_widget().on_unchecked<App::MouseDownEvent>(*this, [this, &display](const App::MouseDownEvent& event) {
         auto& cursors = display.cursors();
         auto index = display.text_index_at_mouse_position({ event.x(), event.y() });

@@ -1,11 +1,21 @@
 #include <edit/display.h>
 #include <edit/document.h>
 #include <edit/rendered_line.h>
+#include <eventloop/widget_events.h>
 #include <liim/string.h>
 #include <liim/vector.h>
 
 namespace Edit {
 Display::Display() : m_cursors { *this } {}
+
+void Display::initialize() {
+    this_widget().on_unchecked<App::ResizeEvent>({}, [this](auto&) {
+        if (word_wrap_enabled()) {
+            invalidate_all_lines();
+            set_scroll_offset({ scroll_offset().line_index(), 0, 0 });
+        }
+    });
+}
 
 Display::~Display() {
     if (auto* doc = document()) {

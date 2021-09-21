@@ -56,6 +56,7 @@ void TerminalDisplay::initialize() {
         }
     });
 
+    Display::initialize();
     Panel::initialize();
 }
 

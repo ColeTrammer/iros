@@ -23,6 +23,7 @@ enum class AutoCompleteMode { Never, Always };
 
 class Display {
 public:
+    void initialize();
     virtual ~Display();
 
     virtual int rows() const = 0;

@@ -75,6 +75,7 @@ void AppDisplay::initialize() {
         invalidate();
     });
 
+    Display::initialize();
     Widget::initialize();
 }
 
