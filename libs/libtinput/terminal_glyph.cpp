@@ -8,7 +8,7 @@ Glyphs convert_to_glyphs(const StringView& view) {
     auto utf8 = Utf8View { view };
     for (auto it = utf8.begin(); it != utf8.end(); ++it) {
         auto info = it.current_code_point_info();
-        if (info.codepoint == 0x1FU) {
+        if (info.codepoint == 0x1BU) {
             auto start = it.byte_offset();
             while (it != utf8.end() && !isalpha(*it)) {
                 ++it;
