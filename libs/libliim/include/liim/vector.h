@@ -180,7 +180,7 @@ public:
         for (auto& v : other) {
             add(move(v));
         }
-        other.resize(0);
+        other.clear();
     }
 
     void remove_last() {
