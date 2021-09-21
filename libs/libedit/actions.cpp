@@ -240,6 +240,12 @@ void init_actions() {
     register_document_keyboard_action("Select Next Word at Cursor", { App::Key::D, App::KeyModifier::Control }, [](Display& display) {
         display.select_next_word_at_cursor();
     });
+    register_document_keyboard_action("Select Line", { App::Key::L, App::KeyModifier::Control }, [](Display& display) {
+        auto& document = *display.document();
+        for (auto& cursor : display.cursors()) {
+            document.select_line_at_cursor(display, cursor);
+        }
+    });
 
     register_document_keyboard_action("Cursor Undo", { App::Key::U, App::KeyModifier::Control }, [](Display& display) {
         auto& document = *display.document();

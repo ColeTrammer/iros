@@ -1120,7 +1120,9 @@ void Document::select_word_at_cursor(Display& display, Cursor& cursor) {
 }
 
 void Document::select_line_at_cursor(Display& display, Cursor& cursor) {
-    move_cursor_to_line_start(display, cursor, MovementMode::Move);
+    if (cursor.selection().empty()) {
+        move_cursor_to_line_start(display, cursor, MovementMode::Move);
+    }
     move_cursor_to_line_end(display, cursor, MovementMode::Select);
     move_cursor_right(display, cursor, MovementMode::Select);
 }
