@@ -206,21 +206,6 @@ void DeleteLineCommand::do_undo(Display&, MultiCursor& cursors) {
     }
 }
 
-InsertLineCommand::InsertLineCommand(Document& document, String text) : DeltaBackedCommand(document), m_text(move(text)) {}
-
-InsertLineCommand::~InsertLineCommand() {}
-
-bool InsertLineCommand::do_execute(Display&, MultiCursor& cursors) {
-    Line to_add(m_text);
-    auto& cursor = cursors.main_cursor();
-    document().insert_line(move(to_add), cursor.line_index());
-    return true;
-}
-
-void InsertLineCommand::do_undo(Display&, MultiCursor&) {
-    document().remove_line(start_snapshot().cursors.cursors[start_snapshot().cursors.main_cursor_index].line_index());
-}
-
 SwapLinesCommand::SwapLinesCommand(Document& document, SwapDirection direction) : DeltaBackedCommand(document), m_direction(direction) {}
 
 SwapLinesCommand::~SwapLinesCommand() {}

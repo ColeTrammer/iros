@@ -562,6 +562,29 @@ void Document::restore_state(MultiCursor& cursors, const StateSnapshot& s) {
     m_document_was_modified = s.document_was_modified;
 }
 
+void Document::insert_line_at_cursor(Display& display, const String& line_text) {
+    auto saved_indices_into_line = Vector<int> {};
+    for (auto& cursor : display.cursors()) {
+        saved_indices_into_line.add(cursor.index_into_line());
+    }
+
+    auto group = make_unique<CommandGroup>(*this);
+    group->add<MovementCommand>(*this, [&](Display& display, MultiCursor& cursors) {
+        for (auto& cursor : cursors) {
+            move_cursor_to_line_start(display, cursor);
+        }
+    });
+    group->add<InsertCommand>(*this, line_text);
+    group->add<MovementCommand>(*this, [&](Display&, MultiCursor& cursors) {
+        for (int i = 0; i < cursors.size(); i++) {
+            auto& cursor = cursors[i];
+            cursor.set_index_into_line(saved_indices_into_line[i]);
+        }
+    });
+
+    push_command(display, move(group));
+}
+
 void Document::insert_text_at_cursor(Display& display, const String& text) {
     auto all_cursors_have_selection = [&] {
         for (auto& cursor : display.cursors()) {
@@ -888,8 +911,7 @@ void Document::paste(Display& display, MultiCursor& cursors) {
 
     auto& cursor = cursors.main_cursor();
     if (!input_text_mode() && cursor.selection().empty() && is_whole_line) {
-        text_to_insert.remove_index(text_to_insert.size() - 1);
-        push_command<InsertLineCommand>(display, text_to_insert);
+        insert_line_at_cursor(display, text_to_insert);
     } else {
         insert_text_at_cursor(display, text_to_insert);
     }

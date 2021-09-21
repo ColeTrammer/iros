@@ -159,6 +159,7 @@ public:
 
     void insert_suggestion(Display& display, const MatchedSuggestion& suggestion);
     void insert_text_at_cursor(Display& display, const String& string);
+    void insert_line_at_cursor(Display& display, const String& line);
     void replace_next_search_match(Display& display, const String& replacement);
     void replace_all_search_matches(Display& display, const String& replacement);
 

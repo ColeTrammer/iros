@@ -114,18 +114,6 @@ private:
     bool m_document_was_empty { false };
 };
 
-class InsertLineCommand final : public DeltaBackedCommand {
-public:
-    InsertLineCommand(Document& document, String text);
-    virtual ~InsertLineCommand() override;
-
-    virtual bool do_execute(Display& display, MultiCursor& cursor) override;
-    virtual void do_undo(Display& display, MultiCursor& cursor) override;
-
-private:
-    String m_text;
-};
-
 class SwapLinesCommand final : public DeltaBackedCommand {
 public:
     SwapLinesCommand(Document& document, SwapDirection direction);
