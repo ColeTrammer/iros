@@ -69,7 +69,7 @@ template<>
 struct Formatter<Edit::Cursor> : public Formatter<String> {
     void format(const Edit::Cursor& cursor, FormatContext& context) {
         return Formatter<String>::format(
-            ::format("Cursor <index={} selection_start={} max_col={}>", cursor.index(), cursor.selection_anchor(), cursor.max_col()),
+            ::format("Cursor <index={} selection_anchor={} max_col={}>", cursor.index(), cursor.selection_anchor(), cursor.max_col()),
             context);
     }
 };
