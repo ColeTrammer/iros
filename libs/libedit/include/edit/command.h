@@ -16,6 +16,8 @@ public:
     virtual void undo(Display& display) = 0;
     virtual void redo(Display& display) = 0;
 
+    virtual StringView name() const = 0;
+
 private:
     Document& m_document;
 };
@@ -57,6 +59,8 @@ public:
     virtual void redo(Display& display) override;
 
 private:
+    virtual StringView name() const override { return "CommandGroup"; };
+
     Vector<UniquePtr<Command>> m_commands;
 };
 
@@ -75,6 +79,8 @@ public:
     virtual void redo(Display& display) override;
 
 private:
+    virtual StringView name() const override { return "MovementCommand"; }
+
     Function<void(Display&, MultiCursor&)> m_do_movement;
 };
 
@@ -90,6 +96,8 @@ public:
     static void do_insert(Document& document, MultiCursor& cursors, int cursor_index, const String& string);
 
 private:
+    virtual StringView name() const override { return "InsertCommand"; }
+
     String m_text;
 };
 
@@ -100,6 +108,9 @@ public:
 
     virtual bool do_execute(Display& display, MultiCursor& cursor) override;
     virtual void do_undo(Display& display, MultiCursor& cursor) override;
+
+private:
+    virtual StringView name() const override { return "DeleteCommand"; }
 };
 
 class SwapLinesCommand final : public DeltaBackedCommand {
@@ -111,6 +122,8 @@ public:
     virtual void do_undo(Display& display, MultiCursor& cursor) override;
 
 private:
+    virtual StringView name() const override { return "SwapLinesCommand"; }
+
     bool do_swap(Cursor& cursor, SwapDirection direction);
 
     SwapDirection m_direction { SwapDirection::Down };
