@@ -110,10 +110,22 @@ int Line::next_index_into_line(const Document& document, Display& display, int i
     return index + range->byte_count_in_rendered_string;
 }
 
-int Line::prev_index_into_line(const Document& document, Display& display, int index) const {
-    assert(index != 0);
+int Line::prev_index_into_line(const Document& document, Display& display, int index_into_line) const {
+    assert(index_into_line != 0);
 
-    return range_for_index_into_line(document, display, index - 1, RangeFor::Text)->index_into_line;
+    auto& info = compute_rendered_contents(document, display);
+
+    auto* last_range = static_cast<const PositionRange*>(nullptr);
+    for (auto& position_ranges : info.position_ranges) {
+        for (auto& range : position_ranges) {
+            if (range.index_into_line < index_into_line && range.type == PositionRangeType::Normal) {
+                last_range = &range;
+                continue;
+            }
+            break;
+        }
+    }
+    return last_range ? last_range->index_into_line : 0;
 }
 
 int Line::rendered_line_count(const Document& document, Display& display) const {
