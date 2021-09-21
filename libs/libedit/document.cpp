@@ -829,69 +829,6 @@ void Document::split_line_at(const TextIndex& index) {
     emit<SplitLines>(index.line_index(), index.index_into_line());
 }
 
-void Document::register_display(Display& display) {
-    m_displays.add(&display);
-
-    display.this_widget().on_unchecked<App::MouseDownEvent>(*this, [this, &display](const App::MouseDownEvent& event) {
-        auto& cursors = display.cursors();
-        auto index = display.text_index_at_mouse_position({ event.x(), event.y() });
-        if (event.left_button()) {
-            start_input(display, true);
-            cursors.remove_secondary_cursors();
-            auto& cursor = cursors.main_cursor();
-            move_cursor_to(display, cursor, index, MovementMode::Move);
-            switch (event.cyclic_count(3)) {
-                case 2:
-                    select_word_at_cursor(display, cursor);
-                    break;
-                case 3:
-                    select_line_at_cursor(display, cursor);
-                    break;
-                default:
-                    break;
-            }
-            finish_input(display, true);
-            return true;
-        }
-        return false;
-    });
-
-    display.this_widget().on_unchecked<App::MouseMoveEvent>(*this, [this, &display](const App::MouseMoveEvent& event) {
-        auto& cursors = display.cursors();
-        auto index = display.text_index_at_mouse_position({ event.x(), event.y() });
-        if (event.buttons_down() & App::MouseButton::Left) {
-            start_input(display, true);
-            cursors.remove_secondary_cursors();
-            auto& cursor = cursors.main_cursor();
-            move_cursor_to(display, cursor, index, MovementMode::Select);
-            finish_input(display, true);
-            return true;
-        }
-        return false;
-    });
-
-    display.this_widget().on_unchecked<App::MouseScrollEvent>(*this, [this, &display](const App::MouseScrollEvent& event) {
-        start_input(display, true);
-        display.scroll(2 * event.z(), 0);
-        finish_input(display, false);
-        return true;
-    });
-
-    display.this_widget().on_unchecked<App::TextEvent>(*this, [this, &display](const App::TextEvent& event) {
-        start_input(display, true);
-        insert_text_at_cursor(display, event.text());
-        finish_input(display, true);
-        return true;
-    });
-}
-
-void Document::unregister_display(Display& display, bool remove_listener) {
-    m_displays.remove_element(&display);
-    if (remove_listener) {
-        display.this_widget().remove_listener(*this);
-    }
-}
-
 void Document::move_line_to(int line, int destination) {
     if (line > destination) {
         m_lines.rotate_right(destination, line + 1);

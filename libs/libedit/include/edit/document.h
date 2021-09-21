@@ -184,9 +184,6 @@ public:
 
     void update_syntax_highlighting();
 
-    void register_display(Display& display);
-    void unregister_display(Display& display, bool remove_listener);
-
     void swap_lines_at_cursor(Display& display, SwapDirection direction);
     void split_line_at_cursor(Display& display);
     void insert_char(Display& display, char c);
@@ -229,7 +226,5 @@ private:
     bool m_document_was_modified { false };
 
     TextRangeCollection m_syntax_highlighting_info;
-
-    Vector<Display*> m_displays;
 };
 }

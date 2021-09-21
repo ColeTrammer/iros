@@ -2,6 +2,7 @@
 #include <edit/document.h>
 #include <edit/rendered_line.h>
 #include <eventloop/widget_events.h>
+#include <graphics/point.h>
 #include <liim/string.h>
 #include <liim/vector.h>
 
@@ -15,13 +16,79 @@ void Display::initialize() {
             set_scroll_offset({ scroll_offset().line_index(), 0, 0 });
         }
     });
+
+    this_widget().on_unchecked<App::MouseDownEvent>({}, [this](const App::MouseDownEvent& event) {
+        if (!document()) {
+            return false;
+        }
+        auto& document = *this->document();
+
+        auto index = text_index_at_mouse_position({ event.x(), event.y() });
+        if (event.left_button()) {
+            document.start_input(*this, true);
+            cursors().remove_secondary_cursors();
+            auto& cursor = cursors().main_cursor();
+            document.move_cursor_to(*this, cursor, index, MovementMode::Move);
+            switch (event.cyclic_count(3)) {
+                case 2:
+                    document.select_word_at_cursor(*this, cursor);
+                    break;
+                case 3:
+                    document.select_line_at_cursor(*this, cursor);
+                    break;
+                default:
+                    break;
+            }
+            document.finish_input(*this, true);
+            return true;
+        }
+        return false;
+    });
+
+    this_widget().on_unchecked<App::MouseMoveEvent>({}, [this](const App::MouseMoveEvent& event) {
+        if (!document()) {
+            return false;
+        }
+        auto& document = *this->document();
+
+        auto index = text_index_at_mouse_position({ event.x(), event.y() });
+        if (event.buttons_down() & App::MouseButton::Left) {
+            document.start_input(*this, true);
+            cursors().remove_secondary_cursors();
+            auto& cursor = cursors().main_cursor();
+            document.move_cursor_to(*this, cursor, index, MovementMode::Select);
+            document.finish_input(*this, true);
+            return true;
+        }
+        return false;
+    });
+
+    this_widget().on_unchecked<App::MouseScrollEvent>({}, [this](const App::MouseScrollEvent& event) {
+        if (!document()) {
+            return false;
+        }
+        auto& document = *this->document();
+
+        document.start_input(*this, true);
+        scroll(2 * event.z(), 0);
+        document.finish_input(*this, false);
+        return true;
+    });
+
+    this_widget().on_unchecked<App::TextEvent>({}, [this](const App::TextEvent& event) {
+        if (!document()) {
+            return false;
+        }
+        auto& document = *this->document();
+
+        document.start_input(*this, true);
+        document.insert_text_at_cursor(*this, event.text());
+        document.finish_input(*this, true);
+        return true;
+    });
 }
 
-Display::~Display() {
-    if (auto* doc = document()) {
-        doc->unregister_display(*this, false);
-    }
-}
+Display::~Display() {}
 
 void Display::set_document(SharedPtr<Document> document) {
     if (m_document == document) {
@@ -30,13 +97,11 @@ void Display::set_document(SharedPtr<Document> document) {
 
     if (m_document) {
         uninstall_document_listeners(*m_document);
-        m_document->unregister_display(*this, true);
         m_search_results.clear();
     }
     m_document = move(document);
     if (m_document) {
         install_document_listeners(*m_document);
-        m_document->register_display(*this);
         clear_search();
     }
 
