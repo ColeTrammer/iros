@@ -170,27 +170,6 @@ void ReplDisplay::render() {
     return Panel::render();
 }
 
-static int string_print_width(const StringView& string) {
-    // NOTE: naively handle TTY escape sequences as matching the regex \033(.*)[:alpha:]
-    //       also UTF-8 characters are ignored.
-
-    int count = 0;
-    for (size_t i = 0; i < string.size(); i++) {
-        if (string[i] != '\033') {
-            count++;
-            continue;
-        }
-
-        for (i = i + 1; i < string.size(); i++) {
-            if (isalpha(string[i])) {
-                break;
-            }
-        }
-    }
-
-    return count;
-}
-
 Edit::RenderedLine ReplDisplay::compose_line(const Edit::Line& line) {
     if (!document()) {
         return {};
@@ -200,12 +179,13 @@ Edit::RenderedLine ReplDisplay::compose_line(const Edit::Line& line) {
 
     auto& prompt = &line == &document()->first_line() ? m_main_prompt : m_secondary_prompt;
     renderer.begin_segment(0, 0, Edit::PositionRangeType::InlineBeforeCursor);
-    renderer.add_to_segment(prompt.view(), string_print_width(prompt.view()));
+    renderer.add_to_segment(prompt.view(), TInput::convert_to_glyphs(prompt.view()).total_width());
     renderer.end_segment();
 
-    auto view = Utf8View { line.contents().view() };
-    for (auto iter = view.begin();; ++iter) {
-        auto index_into_line = iter.byte_offset();
+    auto glyphs = TInput::convert_to_glyphs(line.contents().view());
+    auto index_into_line = 0;
+
+    auto maybe_insert_auto_complete_text = [&] {
         if (cursors().should_show_auto_complete_text_at(*document(), line, index_into_line)) {
             auto maybe_suggestion_text = cursors().preview_auto_complete_text();
             if (maybe_suggestion_text) {
@@ -215,23 +195,24 @@ Edit::RenderedLine ReplDisplay::compose_line(const Edit::Line& line) {
                 renderer.end_segment();
             }
         }
+    };
 
-        if (iter == view.end()) {
-            break;
-        }
-
-        auto info = iter.current_code_point_info();
+    for (auto& glyph : glyphs) {
+        maybe_insert_auto_complete_text();
 
         renderer.begin_segment(index_into_line, 0, Edit::PositionRangeType::Normal);
-        if (info.codepoint == static_cast<uint32_t>('\t')) {
+        if (glyph.text() == "\t") {
             auto spaces = String::repeat(' ', Edit::tab_width - (renderer.absolute_col_position() % Edit::tab_width));
             renderer.add_to_segment(spaces.view(), spaces.size());
-
         } else {
-            renderer.add_to_segment(line.contents().view().substring(index_into_line, info.bytes_used), 1);
+            renderer.add_to_segment(line.contents().view().substring(index_into_line, glyph.text().size()), glyph.width());
         }
         renderer.end_segment();
+
+        index_into_line += glyph.text().size();
     }
+    maybe_insert_auto_complete_text();
+
     return renderer.finish(line, 0);
 }
 

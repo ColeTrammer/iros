@@ -23,6 +23,9 @@ public:
         m_total_width += glyph.width();
     }
 
+    auto begin() const { return m_glyphs.begin(); }
+    auto end() const { return m_glyphs.end(); }
+
     int total_width() const { return m_total_width; }
     int size() const { return m_glyphs.size(); }
 
