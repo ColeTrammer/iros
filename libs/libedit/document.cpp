@@ -483,15 +483,13 @@ void Document::delete_char(Display& display, DeleteCharMode mode) {
 }
 
 void Document::delete_word(Display& display, DeleteCharMode mode) {
-    auto& cursors = display.cursors();
-    if (!cursors.main_cursor().selection().empty()) {
-        delete_char(display, mode);
-        return;
-    }
-
     auto group = make_unique<CommandGroup>(*this);
     group->add<MovementCommand>(*this, [this, mode](Display& display, MultiCursor& cursors) {
         for (auto& cursor : cursors) {
+            if (!cursor.selection().empty()) {
+                continue;
+            }
+
             if (mode == DeleteCharMode::Backspace) {
                 move_cursor_left_by_word(display, cursor, MovementMode::Select);
             } else {
