@@ -115,6 +115,7 @@ public:
     void set_search_text(String text);
     const TextRangeCollection& search_results() const { return m_search_results; }
     const String& search_text() const { return m_search_text; }
+    const String& previous_search_text() const { return m_previous_search_text; }
 
 protected:
     Display();
@@ -137,6 +138,7 @@ private:
     AutoCompleteMode m_auto_complete_mode { AutoCompleteMode::Never };
     bool m_preview_auto_complete { false };
 
+    String m_previous_search_text;
     String m_search_text;
     TextRangeCollection m_search_results;
     int m_search_result_index { 0 };

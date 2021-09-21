@@ -301,7 +301,8 @@ void init_actions() {
     });
 
     register_display_keyboard_action("Search", { App::Key::F, App::KeyModifier::Control }, [](Display& display) {
-        display.enter_search(display.search_text());
+        display.enter_search(display.previous_search_text());
+        display.set_search_text(display.previous_search_text());
     });
 
     register_display_keyboard_action("Go To Line", { App::Key::G, App::KeyModifier::Control }, [](Display& display) {

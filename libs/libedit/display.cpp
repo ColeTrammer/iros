@@ -244,6 +244,8 @@ void Display::clear_search() {
     invalidate_metadata();
     m_search_result_index = 0;
     m_search_results.clear();
+
+    m_previous_search_text = move(m_search_text);
 }
 
 void Display::set_search_text(String text) {
