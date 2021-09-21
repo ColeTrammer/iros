@@ -16,6 +16,8 @@ public:
     virtual void undo(Display& display) = 0;
     virtual void redo(Display& display) = 0;
 
+    virtual bool merge(Command&) { return false; }
+
     virtual StringView name() const = 0;
 
 private:
@@ -38,6 +40,10 @@ public:
     const Document::StateSnapshot& end_snapshot() const { return m_end_snapshot; }
 
     const String& selection_text(int index) const { return m_selection_texts[index]; }
+
+protected:
+    void set_start_snapshot(Document::StateSnapshot snapshot) { m_start_snapshot = move(snapshot); }
+    void set_end_snapshot(Document::StateSnapshot snapshot) { m_end_snapshot = move(snapshot); }
 
 private:
     Document::StateSnapshot m_start_snapshot;
@@ -94,6 +100,8 @@ public:
 
     static void do_insert(Document& document, MultiCursor& cursors, int cursor_index, char c);
     static void do_insert(Document& document, MultiCursor& cursors, int cursor_index, const String& string);
+
+    virtual bool merge(Command& other) override;
 
 private:
     virtual StringView name() const override { return "InsertCommand"; }

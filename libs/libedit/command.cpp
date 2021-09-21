@@ -63,6 +63,21 @@ InsertCommand::InsertCommand(Document& document, String text) : DeltaBackedComma
 
 InsertCommand::~InsertCommand() {}
 
+bool InsertCommand::merge(Command& other_command) {
+    if (other_command.name() != name()) {
+        return false;
+    }
+
+    auto& other = static_cast<InsertCommand&>(other_command);
+    if (other.start_snapshot().cursors != end_snapshot().cursors) {
+        return false;
+    }
+
+    m_text += other.m_text;
+    set_end_snapshot(other.end_snapshot());
+    return true;
+}
+
 bool InsertCommand::do_execute(Display&, MultiCursor& cursors) {
     if (m_text.empty()) {
         return false;

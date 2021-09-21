@@ -1130,26 +1130,29 @@ void Document::select_all(Display& display, Cursor& cursor) {
 }
 
 void Document::push_command(Display& display, UniquePtr<Command> command) {
+    bool did_modify = execute_command(display, *command);
+    if (!did_modify) {
+        return;
+    }
+
     // This means some undo's have taken place, and the user started typing
     // something else, so the redo stack will be discarded.
     if (m_command_stack_index != m_command_stack.size()) {
         m_command_stack.resize(m_command_stack_index);
     }
 
-    if (m_command_stack.size() >= m_max_undo_stack) {
-        // FIXME: this makes the Vector data structure very inefficent
-        //        a doubly-linked list would be much nicer.
-        m_command_stack.remove(0);
-        m_command_stack_index--;
+    if (m_command_stack.empty() || !m_command_stack.last()->merge(*command)) {
+        if (m_command_stack.size() >= m_max_undo_stack) {
+            // FIXME: this makes the Vector data structure very inefficent
+            //        a doubly-linked list would be much nicer.
+            m_command_stack.remove(0);
+            m_command_stack_index--;
+        }
+
+        m_command_stack.add(move(command));
+        m_command_stack_index++;
     }
 
-    bool did_modify = execute_command(display, *command);
-    if (!did_modify) {
-        return;
-    }
-
-    m_command_stack.add(move(command));
-    m_command_stack_index++;
     m_document_was_modified = true;
     update_syntax_highlighting();
     update_suggestions(display);
