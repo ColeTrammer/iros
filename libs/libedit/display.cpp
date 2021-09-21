@@ -13,7 +13,7 @@ void Display::initialize() {
     this_widget().on_unchecked<App::ResizeEvent>({}, [this](auto&) {
         if (word_wrap_enabled()) {
             invalidate_all_lines();
-            set_scroll_offset({ scroll_offset().line_index(), 0, 0 });
+            clamp_scroll_offset();
         }
     });
 
@@ -132,9 +132,20 @@ void Display::compute_suggestions() {
 }
 
 void Display::clamp_scroll_offset() {
+    if (!document()) {
+        set_scroll_offset({});
+        return;
+    }
+
     if (scroll_offset().line_index() >= document()->num_lines()) {
         set_scroll_offset({ document()->num_lines() - 1, document()->last_line().rendered_line_count(*document(), *this) - 1,
                             scroll_offset().relative_col() });
+        return;
+    }
+
+    auto rendered_line_count = document()->line_at_index(scroll_offset().line_index()).rendered_line_count(*document(), *this);
+    if (scroll_offset().relative_row() >= rendered_line_count) {
+        set_scroll_offset({ scroll_offset().line_index(), rendered_line_count - 1, 0 });
     }
 }
 
@@ -386,6 +397,7 @@ void Display::install_document_listeners(Document& new_document) {
 
     new_document.on<DeleteFromLine>(this_widget(), [this](const DeleteFromLine& event) {
         invalidate_line(event.line_index());
+        clamp_scroll_offset();
     });
 
     new_document.on<MoveLineTo>(this_widget(), [this](const MoveLineTo& event) {
@@ -399,6 +411,7 @@ void Display::install_document_listeners(Document& new_document) {
         }
 
         invalidate_all_line_rects();
+        clamp_scroll_offset();
     });
 
     new_document.on<SyntaxHighlightingChanged>(this_widget(), [this](auto&) {
