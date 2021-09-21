@@ -672,11 +672,6 @@ void Document::replace_all_search_matches(Display& display, const String& replac
 
 void Document::move_cursor_to(Display& display, Cursor& cursor, const TextIndex& index, MovementMode mode) {
     update_selection_state_for_mode(cursor, mode);
-    if (mode == MovementMode::Select) {
-        if (cursor.selection().empty()) {
-            cursor.set_selection_anchor(cursor.index());
-        }
-    }
     cursor.set(index);
     cursor.compute_max_col(*this, display);
 }
