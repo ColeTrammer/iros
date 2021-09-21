@@ -111,6 +111,7 @@ int main(int argc, char** argv) {
     display_layout.set_spacing(1);
 
     auto& display = display_layout.add<TerminalDisplay>();
+    display.set_show_line_numbers(true);
 
     auto& terminal_container = main_layout.add<TUI::Panel>();
     terminal_container.set_hidden(true);

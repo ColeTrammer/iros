@@ -291,7 +291,7 @@ void init_actions() {
         display.this_widget().start_coroutine(document.go_to_line(display));
     });
 
-    register_display_keyboard_action("Toogle Show Line Numbers", { App::Key::L, App::KeyModifier::Control }, [](Display& display) {
+    register_display_keyboard_action("Toogle Show Line Numbers", { App::Key::L, App::KeyModifier::Alt }, [](Display& display) {
         display.toggle_show_line_numbers();
     });
 
