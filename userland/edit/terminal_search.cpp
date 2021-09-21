@@ -84,6 +84,8 @@ void TerminalSearch::initialize() {
         replace_container.set_focus_proxy(&replace_text_box);
     }
 
+    m_host_display.update_search_results();
+
     Panel::initialize();
 }
 
