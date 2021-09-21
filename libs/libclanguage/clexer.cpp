@@ -155,7 +155,7 @@ bool CLexer::lex(CLexMode mode) {
 #undef __ENUMERATE_C_PREPROCESSOR_KEYWORD
 #define __ENUMERATE_C_PREPROCESSOR_KEYWORD(n, s)                                            \
     constexpr auto view_##n = StringView { s };                                             \
-    if (input_starts_with(view_##n) && isspace(peek(view_##n.size()))) {                    \
+    if (isspace(peek(view_##n.size())) && input_starts_with(view_##n)) {                    \
         begin_token();                                                                      \
         consume(view_##n.size());                                                           \
         commit_token(CToken::Type::Preprocessor##n);                                        \
@@ -168,7 +168,7 @@ bool CLexer::lex(CLexMode mode) {
             __ENUMERATE_C_PREPROCESSOR_KEYWORDS
         }
 
-        if (m_in_preprocessor && input_starts_with("defined") && !isalnum(peek(7)) && peek(7) != '_' && peek(7) != '$' && peek(7) != EOF) {
+        if (m_in_preprocessor && !isalnum(peek(7)) && peek(7) != '_' && peek(7) != '$' && peek(7) != EOF && input_starts_with("defined")) {
             begin_token();
             consume(7);
             commit_token(CToken::Type::PreprocessorDefined);
@@ -176,14 +176,14 @@ bool CLexer::lex(CLexMode mode) {
         }
 
 #undef __ENUMERATE_C_KEYWORD
-#define __ENUMERATE_C_KEYWORD(n, s)                                                                                                       \
-    constexpr auto view_##n = StringView { s };                                                                                           \
-    if (input_starts_with(view_##n) && !isalnum(peek(view_##n.size())) && peek(view_##n.size()) != '_' && peek(view_##n.size()) != '$' && \
-        peek(view_##n.size()) != EOF) {                                                                                                   \
-        begin_token();                                                                                                                    \
-        consume(view_##n.size());                                                                                                         \
-        commit_token(CToken::Type::Keyword##n);                                                                                           \
-        continue;                                                                                                                         \
+#define __ENUMERATE_C_KEYWORD(n, s)                                                                                                        \
+    constexpr auto view_##n = StringView { s };                                                                                            \
+    if (!isalnum(peek(view_##n.size())) && peek(view_##n.size()) != '_' && peek(view_##n.size()) != '$' && peek(view_##n.size()) != EOF && \
+        input_starts_with(view_##n)) {                                                                                                     \
+        begin_token();                                                                                                                     \
+        consume(view_##n.size());                                                                                                          \
+        commit_token(CToken::Type::Keyword##n);                                                                                            \
+        continue;                                                                                                                          \
     }
         __ENUMERATE_C_KEYWORDS
 

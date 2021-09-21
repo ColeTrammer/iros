@@ -155,7 +155,7 @@ bool CPPLexer::lex(CPPLexMode mode) {
 #undef __ENUMERATE_CPP_PREPROCESSOR_KEYWORD
 #define __ENUMERATE_CPP_PREPROCESSOR_KEYWORD(n, s)                                              \
     constexpr auto view_##n = StringView { s };                                                 \
-    if (input_starts_with(view_##n) && isspace(peek(view_##n.size()))) {                        \
+    if (isspace(peek(view_##n.size())) && input_starts_with(view_##n)) {                        \
         begin_token();                                                                          \
         consume(view_##n.size());                                                               \
         commit_token(CPPToken::Type::Preprocessor##n);                                          \
@@ -168,7 +168,7 @@ bool CPPLexer::lex(CPPLexMode mode) {
             __ENUMERATE_CPP_PREPROCESSOR_KEYWORDS
         }
 
-        if (m_in_preprocessor && input_starts_with("defined") && !isalnum(peek(7)) && peek(7) != '_' && peek(7) != '$' && peek(7) != EOF) {
+        if (m_in_preprocessor && !isalnum(peek(7)) && peek(7) != '_' && peek(7) != '$' && peek(7) != EOF && input_starts_with("defined")) {
             begin_token();
             consume(7);
             commit_token(CPPToken::Type::PreprocessorDefined);
@@ -176,38 +176,38 @@ bool CPPLexer::lex(CPPLexMode mode) {
         }
 
 #undef __ENUMERATE_CPP_KEYWORD
-#define __ENUMERATE_CPP_KEYWORD(n, s)                                                                                                     \
-    constexpr auto view_##n = StringView { s };                                                                                           \
-    if (input_starts_with(view_##n) && !isalnum(peek(view_##n.size())) && peek(view_##n.size()) != '_' && peek(view_##n.size()) != '$' && \
-        peek(view_##n.size()) != EOF) {                                                                                                   \
-        begin_token();                                                                                                                    \
-        consume(view_##n.size());                                                                                                         \
-        commit_token(CPPToken::Type::Keyword##n);                                                                                         \
-        continue;                                                                                                                         \
+#define __ENUMERATE_CPP_KEYWORD(n, s)                                                                                                      \
+    constexpr auto view_##n = StringView { s };                                                                                            \
+    if (!isalnum(peek(view_##n.size())) && peek(view_##n.size()) != '_' && peek(view_##n.size()) != '$' && peek(view_##n.size()) != EOF && \
+        input_starts_with(view_##n)) {                                                                                                     \
+        begin_token();                                                                                                                     \
+        consume(view_##n.size());                                                                                                          \
+        commit_token(CPPToken::Type::Keyword##n);                                                                                          \
+        continue;                                                                                                                          \
     }
         __ENUMERATE_CPP_KEYWORDS
 
 #undef __ENUMERATE_CPP_TYPE_TOKEN
-#define __ENUMERATE_CPP_TYPE_TOKEN(n, s)                                                                                                  \
-    constexpr auto view_##n = StringView { s };                                                                                           \
-    if (input_starts_with(view_##n) && !isalnum(peek(view_##n.size())) && peek(view_##n.size()) != '_' && peek(view_##n.size()) != '$' && \
-        peek(view_##n.size()) != EOF) {                                                                                                   \
-        begin_token();                                                                                                                    \
-        consume(view_##n.size());                                                                                                         \
-        commit_token(CPPToken::Type::Type##n);                                                                                            \
-        continue;                                                                                                                         \
+#define __ENUMERATE_CPP_TYPE_TOKEN(n, s)                                                                                                   \
+    constexpr auto view_##n = StringView { s };                                                                                            \
+    if (!isalnum(peek(view_##n.size())) && peek(view_##n.size()) != '_' && peek(view_##n.size()) != '$' && peek(view_##n.size()) != EOF && \
+        input_starts_with(view_##n)) {                                                                                                     \
+        begin_token();                                                                                                                     \
+        consume(view_##n.size());                                                                                                          \
+        commit_token(CPPToken::Type::Type##n);                                                                                             \
+        continue;                                                                                                                          \
     }
         __ENUMERATE_CPP_TYPE_TOKENS
 
 #undef __ENUMERATE_CPP_LITERAL
-#define __ENUMERATE_CPP_LITERAL(n, s)                                                                                                     \
-    constexpr auto view_##n = StringView { s };                                                                                           \
-    if (input_starts_with(view_##n) && !isalnum(peek(view_##n.size())) && peek(view_##n.size()) != '_' && peek(view_##n.size()) != '$' && \
-        peek(view_##n.size()) != EOF) {                                                                                                   \
-        begin_token();                                                                                                                    \
-        consume(view_##n.size());                                                                                                         \
-        commit_token(CPPToken::Type::Literal##n);                                                                                         \
-        continue;                                                                                                                         \
+#define __ENUMERATE_CPP_LITERAL(n, s)                                                                                                      \
+    constexpr auto view_##n = StringView { s };                                                                                            \
+    if (!isalnum(peek(view_##n.size())) && peek(view_##n.size()) != '_' && peek(view_##n.size()) != '$' && peek(view_##n.size()) != EOF && \
+        input_starts_with(view_##n)) {                                                                                                     \
+        begin_token();                                                                                                                     \
+        consume(view_##n.size());                                                                                                          \
+        commit_token(CPPToken::Type::Literal##n);                                                                                          \
+        continue;                                                                                                                          \
     }
         __ENUMERATE_CPP_LITERALS
 
