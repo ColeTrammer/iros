@@ -24,10 +24,6 @@ void LineRenderer::begin_segment(int index_into_line, CharacterMetadata metadata
 }
 
 void LineRenderer::add_to_segment(const StringView& text, int display_width) {
-    if (display_width > m_max_width) {
-        display_width = m_max_width;
-    }
-
     if (m_word_wrap_enabled && current_position().col() + display_width > m_max_width) {
         m_current_position.set(m_current_position.row() + 1, 0);
         m_current_byte_offset = 0;
