@@ -558,6 +558,8 @@ void Document::redo(Display& display) {
 
     auto& command = *m_command_stack[m_command_stack_index++];
     command.redo(display);
+    update_syntax_highlighting();
+    update_suggestions(display);
 
     emit<Change>();
 }
