@@ -18,9 +18,13 @@ public:
         Vector<Cursor> cursors;
         int main_cursor_index { 0 };
 
+        Cursor& operator[](int index) { return cursors[index]; }
         const Cursor& operator[](int index) const { return cursors[index]; }
         auto begin() const { return cursors.begin(); }
         auto end() const { return cursors.end(); }
+
+        auto empty() const { return cursors.empty(); }
+        auto size() const { return cursors.size(); }
 
         bool operator==(const Snapshot& other) const {
             return this->main_cursor_index == other.main_cursor_index && this->cursors == other.cursors;

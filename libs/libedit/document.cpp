@@ -475,7 +475,7 @@ void Document::delete_line(Display& display) {
         last_line_index_seen = cursor.line_index();
     }
 
-    auto group = make_unique<CommandGroup>(*this);
+    auto group = make_unique<CommandGroup>(*this, "DeleteLine"sv);
     group->add<MovementCommand>(*this, [&](Display& display, MultiCursor& cursors) {
         for (auto& cursor : cursors) {
             select_line_at_cursor(display, cursor);
@@ -495,7 +495,8 @@ void Document::delete_line(Display& display) {
 }
 
 void Document::delete_char(Display& display, DeleteCharMode mode) {
-    auto group = make_unique<CommandGroup>(*this);
+    auto group = make_unique<CommandGroup>(*this, mode == DeleteCharMode::Backspace ? "DeleteCharLeft" : "DeleteCharRight",
+                                           CommandGroup::ShouldMerge::Yes);
     group->add<MovementCommand>(*this, [this, mode](Display& display, MultiCursor& cursors) {
         for (auto& cursor : cursors) {
             if (cursor.selection().empty()) {
@@ -514,7 +515,7 @@ void Document::delete_char(Display& display, DeleteCharMode mode) {
 }
 
 void Document::delete_word(Display& display, DeleteCharMode mode) {
-    auto group = make_unique<CommandGroup>(*this);
+    auto group = make_unique<CommandGroup>(*this, "DeleteWord");
     group->add<MovementCommand>(*this, [this, mode](Display& display, MultiCursor& cursors) {
         for (auto& cursor : cursors) {
             if (!cursor.selection().empty()) {
@@ -602,7 +603,7 @@ void Document::insert_line_at_cursor(Display& display, const String& line_text) 
         saved_indices_into_line.add(cursor.index_into_line());
     }
 
-    auto group = make_unique<CommandGroup>(*this);
+    auto group = make_unique<CommandGroup>(*this, "InsertLine");
     group->add<MovementCommand>(*this, [&](Display& display, MultiCursor& cursors) {
         for (auto& cursor : cursors) {
             move_cursor_to_line_start(display, cursor);
@@ -662,7 +663,7 @@ void Document::insert_text_at_cursor(Display& display, const String& text) {
                 selections.add(cursor.selection());
             }
 
-            auto group = make_unique<CommandGroup>(*this);
+            auto group = make_unique<CommandGroup>(*this, "InsertAround");
             group->add<MovementCommand>(*this, [this, &selections](Display& display, MultiCursor& cursors) {
                 for (int i = 0; i < cursors.size(); i++) {
                     auto& cursor = cursors[i];
@@ -696,7 +697,7 @@ void Document::replace_next_search_match(Display& display, const String& replace
         return;
     }
 
-    auto group = make_unique<CommandGroup>(*this);
+    auto group = make_unique<CommandGroup>(*this, "ReplaceSearchMatch");
     if (display.search_text() != selection_text(display.cursors().main_cursor())) {
         group->add<MovementCommand>(*this, [this](Display& display, MultiCursor&) {
             display.move_cursor_to_next_search_match();
@@ -718,7 +719,7 @@ void Document::replace_all_search_matches(Display& display, const String& replac
         return;
     }
 
-    auto group = make_unique<CommandGroup>(*this);
+    auto group = make_unique<CommandGroup>(*this, "ReplaceAll");
     group->add<MovementCommand>(*this, [this](Display& display, MultiCursor&) {
         select_all_matches(display, display.search_results());
     });

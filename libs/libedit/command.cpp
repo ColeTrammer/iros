@@ -33,7 +33,26 @@ void DeltaBackedCommand::redo(Display& display) {
     do_execute(display, display.cursors());
 }
 
-bool CommandGroup::execute(Display& display) {
+bool CommandGroup::merge(Command& other_command) {
+    if (m_should_merge == ShouldMerge::No) {
+        return false;
+    }
+
+    if (other_command.name() != name()) {
+        return false;
+    }
+
+    auto& other = static_cast<CommandGroup&>(other_command);
+    if (other.start_snapshot().cursors != this->end_snapshot().cursors) {
+        return false;
+    }
+
+    m_commands.add(move(other.m_commands));
+    set_end_snapshot(other.end_snapshot());
+    return true;
+}
+
+bool CommandGroup::do_execute(Display& display, MultiCursor&) {
     bool modified = false;
     for (auto& command : m_commands) {
         if (command->execute(display)) {
@@ -43,7 +62,7 @@ bool CommandGroup::execute(Display& display) {
     return modified;
 }
 
-void CommandGroup::undo(Display& display) {
+void CommandGroup::do_undo(Display& display, MultiCursor&) {
     m_commands.for_each_reverse([&](auto& command) {
         const_cast<Command&>(*command).undo(display);
     });

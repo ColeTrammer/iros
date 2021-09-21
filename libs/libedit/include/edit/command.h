@@ -51,23 +51,30 @@ private:
     Vector<String> m_selection_texts;
 };
 
-class CommandGroup : public Command {
+class CommandGroup : public DeltaBackedCommand {
 public:
-    explicit CommandGroup(Document& document) : Command(document) {}
+    enum class ShouldMerge { Yes, No };
+
+    explicit CommandGroup(Document& document, StringView name, ShouldMerge should_merge = ShouldMerge::No)
+        : DeltaBackedCommand(document), m_name(name), m_should_merge(should_merge) {}
 
     template<typename C, typename... Args>
     void add(Args&&... args) {
         m_commands.add(make_unique<C>(forward<Args>(args)...));
     }
 
-    virtual bool execute(Display& display) override;
-    virtual void undo(Display& display) override;
+    virtual bool do_execute(Display& display, MultiCursor& cursors) override;
+    virtual void do_undo(Display& display, MultiCursor& cursors) override;
     virtual void redo(Display& display) override;
 
+    virtual bool merge(Command& other) override;
+
 private:
-    virtual StringView name() const override { return "CommandGroup"; };
+    virtual StringView name() const override { return m_name; };
 
     Vector<UniquePtr<Command>> m_commands;
+    StringView m_name;
+    ShouldMerge m_should_merge { ShouldMerge::No };
 };
 
 class MovementCommand : public DeltaBackedCommand {
