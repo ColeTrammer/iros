@@ -165,16 +165,20 @@ void init_actions() {
                                           }
                                       });
 
-    register_document_keyboard_action("Add Cursor Down", { App::Key::DownArrow, App::KeyModifier::Control | App::KeyModifier::Shift },
-                                      [](Display& display) {
-                                          auto& document = *display.document();
-                                          display.cursors().add_cursor(document, AddCursorMode::Down);
-                                      });
-    register_document_keyboard_action("Add Cursor Up", { App::Key::UpArrow, App::KeyModifier::Control | App::KeyModifier::Shift },
-                                      [](Display& display) {
-                                          auto& document = *display.document();
-                                          display.cursors().add_cursor(document, AddCursorMode::Up);
-                                      });
+    register_display_keyboard_action("Add Cursor Down", { App::Key::DownArrow, App::KeyModifier::Control | App::KeyModifier::Shift },
+                                     [](Display& display) {
+                                         auto& document = *display.document();
+                                         if (auto* cursor = display.cursors().add_cursor(document, AddCursorMode::Down)) {
+                                             document.scroll_cursor_into_view(display, *cursor);
+                                         }
+                                     });
+    register_display_keyboard_action("Add Cursor Up", { App::Key::UpArrow, App::KeyModifier::Control | App::KeyModifier::Shift },
+                                     [](Display& display) {
+                                         auto& document = *display.document();
+                                         if (auto* cursor = display.cursors().add_cursor(document, AddCursorMode::Up)) {
+                                             document.scroll_cursor_into_view(display, *cursor);
+                                         }
+                                     });
 
     register_document_keyboard_action("Delete Left", { App::Key::Backspace, 0 }, [](Display& display) {
         auto& document = *display.document();
@@ -237,7 +241,7 @@ void init_actions() {
         document.select_all(display, display.cursors().main_cursor());
     });
 
-    register_document_keyboard_action("Select Next Word at Cursor", { App::Key::D, App::KeyModifier::Control }, [](Display& display) {
+    register_display_keyboard_action("Select Next Word at Cursor", { App::Key::D, App::KeyModifier::Control }, [](Display& display) {
         display.select_next_word_at_cursor();
     });
     register_document_keyboard_action("Select Line", { App::Key::L, App::KeyModifier::Control }, [](Display& display) {

@@ -37,26 +37,27 @@ Cursor& MultiCursor::main_cursor() {
     return m_cursors[m_main_cursor_index];
 }
 
-void MultiCursor::add_cursor(Document& document, AddCursorMode mode) {
+Cursor* MultiCursor::add_cursor(Document& document, AddCursorMode mode) {
     switch (mode) {
         case AddCursorMode::Up:
             m_cursors.insert(m_cursors.first(), 0);
             document.move_cursor_up(m_display, m_cursors.first());
             m_main_cursor_index++;
-            break;
+            return &m_cursors.first();
         case AddCursorMode::Down:
             m_cursors.add(m_cursors.last());
             document.move_cursor_down(m_display, m_cursors.last());
-            break;
+            return &m_cursors.last();
     }
+    return nullptr;
 }
 
-void MultiCursor::add_cursor_at(Document& document, const TextIndex& index, const TextIndex& selection_start) {
+Cursor* MultiCursor::add_cursor_at(Document& document, const TextIndex& index, const TextIndex& selection_start) {
     int i = 0;
     for (; i < m_cursors.size(); i++) {
         // Duplicate cursors should not be created.
         if (m_cursors[i].index() == index) {
-            return;
+            return nullptr;
         }
 
         if (m_cursors[i].index() > index) {
@@ -72,6 +73,7 @@ void MultiCursor::add_cursor_at(Document& document, const TextIndex& index, cons
     if (i <= m_main_cursor_index) {
         m_main_cursor_index++;
     }
+    return &m_cursors[i];
 }
 
 void MultiCursor::install_document_listeners(Document& document) {

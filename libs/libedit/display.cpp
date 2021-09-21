@@ -204,7 +204,10 @@ void Display::select_next_word_at_cursor() {
     }
 
     auto& result = m_search_results.range(m_search_result_index);
-    cursors().add_cursor_at(*document(), result.end(), result.start());
+    auto* added_cursor = cursors().add_cursor_at(*document(), result.end(), result.start());
+    if (added_cursor) {
+        document()->scroll_cursor_into_view(*this, *added_cursor);
+    }
 
     ++m_search_result_index;
     m_search_result_index %= m_search_results.size();
