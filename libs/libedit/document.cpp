@@ -473,7 +473,7 @@ void Document::delete_char(Display& display, DeleteCharMode mode) {
                 } else {
                     move_cursor_right(display, cursor, MovementMode::Select);
                 }
-                swap_selection_start_and_cursor(display, cursor);
+                swap_selection_anchor_and_cursor(display, cursor);
             }
         }
     });
@@ -498,7 +498,7 @@ void Document::delete_word(Display& display, DeleteCharMode mode) {
                 move_cursor_right_by_word(display, cursor, MovementMode::Select);
             }
 
-            swap_selection_start_and_cursor(display, cursor);
+            swap_selection_anchor_and_cursor(display, cursor);
         }
     });
     group->add<DeleteCommand>(*this);
@@ -506,7 +506,7 @@ void Document::delete_word(Display& display, DeleteCharMode mode) {
     push_command(display, move(group));
 }
 
-void Document::swap_selection_start_and_cursor(Display& display, Cursor& cursor) {
+void Document::swap_selection_anchor_and_cursor(Display& display, Cursor& cursor) {
     auto index = cursor.index();
     auto selection_start = cursor.selection_anchor();
 

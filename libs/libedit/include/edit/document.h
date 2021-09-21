@@ -202,7 +202,7 @@ private:
 
     void update_suggestions(Display& display);
 
-    void swap_selection_start_and_cursor(Display& display, Cursor& cursor);
+    void swap_selection_anchor_and_cursor(Display& display, Cursor& cursor);
 
     void guess_type_from_name();
 
