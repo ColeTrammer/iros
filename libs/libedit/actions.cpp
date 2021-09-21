@@ -241,6 +241,14 @@ void init_actions() {
         document.select_all(display, display.cursors().main_cursor());
     });
 
+    register_display_keyboard_action("Select All Words at Cursor",
+                                     { App::Key::D, App::KeyModifier::Control, App::KeyShortcut::IsMulti::Yes }, [](Display& display) {
+                                         auto& document = *display.document();
+                                         display.select_next_word_at_cursor();
+                                         if (!display.search_text().empty()) {
+                                             document.select_all_matches(display, display.search_results());
+                                         }
+                                     });
     register_display_keyboard_action("Select Next Word at Cursor", { App::Key::D, App::KeyModifier::Control }, [](Display& display) {
         display.select_next_word_at_cursor();
     });
