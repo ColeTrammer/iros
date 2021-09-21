@@ -141,7 +141,7 @@ private:
     TextRangeCollection m_search_results;
     int m_search_result_index { 0 };
 
-    bool m_word_wrap_enabled { true };
+    bool m_word_wrap_enabled { false };
     bool m_show_line_numbers { false };
 
     AbsolutePosition m_scroll_offset;
