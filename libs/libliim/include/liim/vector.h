@@ -302,18 +302,35 @@ public:
 
     void remove(int index) {
         get(index).~T();
-        if (index != size() - 1) {
-            if constexpr (Traits<T>::is_simple()) {
-                memcpy(m_vector + index, m_vector + index + 1, sizeof(T) * (size() - index - 1));
-            } else {
-                for (int j = index; j < size() - 1; j++) {
-                    new (m_vector + j) T(LIIM::move(get(j + 1)));
-                    get(j + 1).~T();
-                }
+        if constexpr (Traits<T>::is_simple()) {
+            memmove(m_vector + index, m_vector + index + 1, sizeof(T) * (size() - index - 1));
+        } else {
+            for (int j = index; j < size() - 1; j++) {
+                new (m_vector + j) T(LIIM::move(get(j + 1)));
+                get(j + 1).~T();
             }
         }
 
         m_size--;
+    }
+
+    void remove_count(int start, int count) {
+        assert(count > 0);
+        assert(start + count <= size());
+
+        for (int i = 0; i < count; i++) {
+            get(start + i).~T();
+        }
+
+        if constexpr (Traits<T>::is_simple()) {
+            memmove(m_vector + start, m_vector + start + count, sizeof(T) * (size() - index - count));
+        } else {
+            for (int j = start; j < size() - count; j++) {
+                new (m_vector + j) T(LIIM::move(get(j + count)));
+                get(j + count).~T();
+            }
+        }
+        m_size -= count;
     }
 
     void remove_element(const T& val) {
@@ -373,6 +390,33 @@ public:
         }
 
         new (m_vector + position) T(LIIM::move(val));
+    }
+
+    void insert(Vector<T>&& values, int position) {
+        assert(position >= 0 && position <= size());
+        if (position == size()) {
+            add(LIIM::move(values));
+            return;
+        }
+
+        while (!m_vector || m_size + values.size() > m_capacity) {
+            increase_capacity();
+            allocate_vector();
+        }
+        m_size += values.size();
+
+        if constexpr (Traits<T>::is_simple()) {
+            memmove(m_vector + position + values.size(), m_vector + position, sizeof(T) * (size() - position - values.size()));
+        } else {
+            for (int j = size() - 1; j >= position + values.size(); j--) {
+                new (m_vector + j) T(LIIM::move(get(j - values.size())));
+                get(j - values.size()).~T();
+            }
+        }
+
+        for (int i = 0; i < values.size(); i++) {
+            new (m_vector + position + i) T(LIIM::move(values[i]));
+        }
     }
 
     template<typename C>
