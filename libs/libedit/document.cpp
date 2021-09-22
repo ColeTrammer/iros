@@ -424,7 +424,10 @@ void Document::move_cursor_to_document_end(Display& display, Cursor& cursor, Mov
 }
 
 void Document::center_display_on_cursor(Display& display, Cursor& cursor) {
-    display.set_scroll_offset(cursor.absolute_position(*this, display));
+    auto position = cursor.absolute_position(*this, display);
+    position.set_relative_col(0);
+
+    display.set_scroll_offset(position);
     display.scroll_up(display.rows() / 2);
 }
 
