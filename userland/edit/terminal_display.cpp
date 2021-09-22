@@ -241,7 +241,7 @@ Edit::RenderedLine TerminalDisplay::compose_line(const Edit::Line& line) {
             auto spaces = String::repeat(' ', Edit::tab_width - (renderer.absolute_col_position() % Edit::tab_width));
             renderer.add_to_segment(spaces.view(), spaces.size());
         } else {
-            renderer.add_to_segment(line.contents().view().substring(index_into_line, glyph.text().size()), glyph.width());
+            renderer.add_to_segment(glyph.text().view(), glyph.width());
         }
         renderer.end_segment();
 
