@@ -432,38 +432,38 @@ void Display::uninstall_document_listeners(Document& document) {
 Display::RenderingInfo Display::rendering_info_for_metadata(const CharacterMetadata& metadata) const {
     RenderingInfo info;
     if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxComment) {
-        info.fg = VGA_COLOR_DARK_GREY;
+        info.fg = { VGA_COLOR_DARK_GREY };
     }
 
     if (metadata.highlighted()) {
-        info.fg = VGA_COLOR_BLACK;
-        info.bg = VGA_COLOR_YELLOW;
+        info.fg = { VGA_COLOR_BLACK };
+        info.bg = { VGA_COLOR_YELLOW };
     }
 
     if (metadata.selected()) {
         info.fg = {};
-        info.bg = VGA_COLOR_DARK_GREY;
+        info.bg = { VGA_COLOR_DARK_GREY };
     }
 
     if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxOperator) {
-        info.fg = VGA_COLOR_CYAN;
+        info.fg = { VGA_COLOR_CYAN };
     }
 
     if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxKeyword) {
-        info.fg = VGA_COLOR_MAGENTA;
+        info.fg = { VGA_COLOR_MAGENTA };
     }
 
     if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxNumber) {
-        info.fg = VGA_COLOR_RED;
+        info.fg = { VGA_COLOR_RED };
     }
 
     if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxIdentifier) {
-        info.fg = VGA_COLOR_YELLOW;
+        info.fg = { VGA_COLOR_YELLOW };
         info.bold = true;
     }
 
     if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxString) {
-        info.fg = VGA_COLOR_GREEN;
+        info.fg = { VGA_COLOR_GREEN };
     }
 
     if (metadata.syntax_highlighting() & CharacterMetadata::Flags::SyntaxImportant) {
@@ -471,12 +471,12 @@ Display::RenderingInfo Display::rendering_info_for_metadata(const CharacterMetad
     }
 
     if (metadata.highlighted() && metadata.selected()) {
-        info.fg = VGA_COLOR_YELLOW;
-        info.bg = VGA_COLOR_DARK_GREY;
+        info.fg = { VGA_COLOR_YELLOW };
+        info.bg = { VGA_COLOR_DARK_GREY };
     }
 
     if (metadata.auto_complete_preview()) {
-        info.fg = VGA_COLOR_DARK_GREY;
+        info.fg = { VGA_COLOR_DARK_GREY };
     }
 
     if (metadata.main_cursor()) {

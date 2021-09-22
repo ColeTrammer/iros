@@ -206,8 +206,8 @@ void AppDisplay::render_cursor(Renderer& renderer) {
 void AppDisplay::render_cell(Renderer& renderer, int x, int y, char c, Edit::CharacterMetadata metadata) {
     RenderingInfo info = rendering_info_for_metadata(metadata);
 
-    Color fg = info.fg.has_value() ? Color(info.fg.value()) : Color(VGA_COLOR_LIGHT_GREY);
-    Color bg = info.bg.has_value() ? Color(info.bg.value()) : ColorValue::Black;
+    Color fg = info.fg.has_value() ? info.fg.value() : Color(VGA_COLOR_LIGHT_GREY);
+    Color bg = info.bg.has_value() ? info.bg.value() : ColorValue::Black;
 
     auto cell_rect = Rect { x, y, col_width(), row_height() };
     renderer.fill_rect(cell_rect, bg);

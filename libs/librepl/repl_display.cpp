@@ -232,12 +232,8 @@ void ReplDisplay::output_line(int row, int col_offset, const Edit::RenderedLine&
     for (auto& range : line.position_ranges[line_index]) {
         auto rendering_info = rendering_info_for_metadata(range.metadata);
         auto style = TInput::TerminalTextStyle {
-            .foreground = rendering_info.fg.map([](vga_color color) {
-                return Color { color };
-            }),
-            .background = rendering_info.bg.map([](vga_color color) {
-                return Color { color };
-            }),
+            .foreground = rendering_info.fg,
+            .background = rendering_info.bg,
             .bold = rendering_info.bold,
             .invert = rendering_info.secondary_cursor,
         };

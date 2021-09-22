@@ -92,8 +92,8 @@ public:
     void set_suggestions(Vector<Suggestion> suggestions);
 
     struct RenderingInfo {
-        Maybe<vga_color> fg;
-        Maybe<vga_color> bg;
+        Maybe<Color> fg;
+        Maybe<Color> bg;
         bool bold { false };
         bool main_cursor { false };
         bool secondary_cursor { false };
