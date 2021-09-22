@@ -156,33 +156,9 @@ void InsertCommand::do_insert(Document& document, MultiCursor& cursors, int curs
 void InsertCommand::do_undo(Display&, MultiCursor& cursors) {
     for (int cursor_index = 0; cursor_index < cursors.size(); cursor_index++) {
         auto& cursor = cursors[cursor_index];
-        cursor.clear_selection();
-        if (!start_snapshot().cursors[cursor_index].selection().empty()) {
-            cursor.set(start_snapshot().cursors[cursor_index].selection().start());
-        } else {
-            cursor.set(start_snapshot().cursors[cursor_index].index());
-        }
 
-        for (size_t i = 0; i < m_text.size(); i++) {
-            char c = m_text[i];
-            if (c == '\n' || c == '\r') {
-                document().merge_lines(cursor.line_index(), cursor.line_index() + 1);
-            } else {
-                auto& line = cursor.referenced_line(document());
-                int index_into_line = cursor.index_into_line();
-
-                // FIXME: what if convert_tabs_to_spaces() changes value
-                if (c == '\t' && document().convert_tabs_to_spaces()) {
-                    // FIXME: what about variable width encodings/characters
-                    int num_spaces = tab_width - (index_into_line % tab_width);
-                    for (int i = 0; i < num_spaces; i++) {
-                        line.remove_char_at(document(), index_into_line);
-                    }
-                } else {
-                    line.remove_char_at(document(), index_into_line);
-                }
-            }
-        }
+        cursor.set_selection_anchor(start_snapshot().cursors[cursor_index].index());
+        document().delete_selection(cursor);
 
         if (!start_snapshot().cursors[cursor_index].selection().empty()) {
             do_insert(document(), cursors, cursor_index, selection_text(cursor_index));
