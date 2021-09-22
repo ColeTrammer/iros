@@ -148,8 +148,32 @@ void InsertCommand::do_insert(Document& document, MultiCursor& cursors, int curs
 }
 
 void InsertCommand::do_insert(Document& document, MultiCursor& cursors, int cursor_index, const String& text) {
-    for (size_t i = 0; i < text.size(); i++) {
-        do_insert(document, cursors, cursor_index, text[i]);
+    if (text.size() == 1) {
+        return do_insert(document, cursors, cursor_index, text.first());
+    }
+
+    auto& cursor = cursors[cursor_index];
+
+    auto lines = text.split_view("\r\n", SplitMethod::KeepEmpty);
+    assert(!lines.empty());
+
+    auto& first_line = cursor.referenced_line(document);
+    for (auto& c : lines.first()) {
+        first_line.insert_char_at(document, cursor.index_into_line(), c);
+    }
+    if (lines.size() > 1) {
+        document.split_line_at(cursor.index());
+    }
+
+    if (lines.size() > 2) {
+        document.insert_lines(cursor.line_index(), lines.span().subspan(1, lines.size() - 2));
+    }
+
+    if (lines.size() > 1) {
+        auto& last_line = cursor.referenced_line(document);
+        for (auto& c : lines.last()) {
+            last_line.insert_char_at(document, cursor.index_into_line(), c);
+        }
     }
 }
 
