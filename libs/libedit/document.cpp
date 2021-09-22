@@ -432,6 +432,18 @@ void Document::center_display_on_cursor(Display& display, Cursor& cursor) {
 }
 
 void Document::scroll_cursor_into_view(Display& display, Cursor& cursor) {
+    // NOTE: this is a fast path to prevent calling display_position_of_index() when the position is very far
+    //       from the display's scroll offset. If we know for sure the cursor is not on the display, we can
+    //       first move the cursor to the display and then adjust if needed.
+    if (cursor.index().line_index() < display.scroll_offset().line_index()) {
+        auto relative_row = cursor.relative_position(*this, display).row();
+        display.set_scroll_offset({ cursor.line_index(), relative_row, display.scroll_offset().relative_col() });
+    } else if (cursor.index().line_index() > display.scroll_offset().line_index() + display.rows()) {
+        auto relative_row = cursor.relative_position(*this, display).row();
+        display.set_scroll_offset({ cursor.line_index(), relative_row, display.scroll_offset().relative_col() });
+        display.scroll_up(display.rows() - 1);
+    }
+
     auto cursor_position = display_position_of_index(display, cursor.index());
     if (cursor_position.row() < 0) {
         display.scroll_up(-cursor_position.row());
