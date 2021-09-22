@@ -110,15 +110,13 @@ public:
     TextIndex text_index_at_absolute_position(Display& display, const AbsolutePosition& position) const;
     TextIndex text_index_at_display_position(Display& display, const DisplayPosition& position) const;
 
-    AbsolutePosition relative_to_absolute_position(Display& display, const Line& line,
-                                                   const RelativePosition& line_relative_position) const;
+    AbsolutePosition relative_to_absolute_position(Display& display, int line_index, const RelativePosition& line_relative_position) const;
     AbsolutePosition display_to_absolute_position(Display& display, const DisplayPosition& display_position) const;
     AbsolutePosition absolute_position_of_index(Display& display, const TextIndex& index) const;
 
     DisplayPosition absolute_to_display_position(Display& display, const AbsolutePosition& absolute_position) const;
     DisplayPosition display_position_of_index(Display& display, const TextIndex& index) const;
 
-    int index_of_line(const Line& line) const;
     int num_lines() const { return m_lines.size(); }
     int num_rendered_lines(Display& display) const;
 

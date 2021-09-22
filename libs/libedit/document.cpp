@@ -144,7 +144,8 @@ void Document::display(Display& display) const {
     auto render_position = display.scroll_offset();
     for (int row_in_display = 0; row_in_display < display.rows() && render_position.line_index() < num_lines();) {
         auto& line = line_at_index(render_position.line_index());
-        row_in_display += line.render(document, display, render_position.relative_col(), render_position.relative_row(), row_in_display);
+        row_in_display += line.render(document, display, render_position.line_index(), render_position.relative_col(),
+                                      render_position.relative_row(), row_in_display);
         render_position.set_line_index(render_position.line_index() + 1);
         render_position.set_relative_row(0);
     }
@@ -152,16 +153,15 @@ void Document::display(Display& display) const {
 
 TextIndex Document::text_index_at_absolute_position(Display& display, const AbsolutePosition& position) const {
     return line_at_index(position.line_index())
-        .index_of_relative_position(*this, display, { position.relative_row(), position.relative_col() });
+        .index_of_relative_position(*this, display, position.line_index(), { position.relative_row(), position.relative_col() });
 }
 
 TextIndex Document::text_index_at_display_position(Display& display, const DisplayPosition& position) const {
     return text_index_at_absolute_position(display, display_to_absolute_position(display, position));
 }
 
-AbsolutePosition Document::relative_to_absolute_position(Display&, const Line& reference_line,
-                                                         const RelativePosition& line_relative_position) const {
-    return { index_of_line(reference_line), line_relative_position.row(), line_relative_position.col() };
+AbsolutePosition Document::relative_to_absolute_position(Display&, int line_index, const RelativePosition& line_relative_position) const {
+    return { line_index, line_relative_position.row(), line_relative_position.col() };
 }
 
 AbsolutePosition Document::display_to_absolute_position(Display& display, const DisplayPosition& position_in) const {
@@ -174,7 +174,8 @@ AbsolutePosition Document::display_to_absolute_position(Display& display, const 
         }
         if (absolute_position.relative_row() == 0) {
             absolute_position.set_line_index(absolute_position.line_index() - 1);
-            absolute_position.set_relative_row(line_at_index(absolute_position.line_index()).rendered_line_count(*this, display) - 1);
+            absolute_position.set_relative_row(
+                line_at_index(absolute_position.line_index()).rendered_line_count(*this, display, absolute_position.line_index()) - 1);
         } else {
             absolute_position.set_relative_row(absolute_position.relative_row() - 1);
         }
@@ -182,10 +183,11 @@ AbsolutePosition Document::display_to_absolute_position(Display& display, const 
     }
     while (position.row() > 0) {
         if (absolute_position.line_index() == num_lines() - 1 &&
-            absolute_position.relative_row() == last_line().rendered_line_count(*this, display) - 1) {
+            absolute_position.relative_row() == last_line().rendered_line_count(*this, display, num_lines() - 1) - 1) {
             break;
         }
-        if (absolute_position.relative_row() == line_at_index(absolute_position.line_index()).rendered_line_count(*this, display) - 1) {
+        if (absolute_position.relative_row() ==
+            line_at_index(absolute_position.line_index()).rendered_line_count(*this, display, absolute_position.line_index()) - 1) {
             absolute_position.set_line_index(absolute_position.line_index() + 1);
             absolute_position.set_relative_row(0);
         } else {
@@ -200,7 +202,7 @@ AbsolutePosition Document::display_to_absolute_position(Display& display, const 
 
 AbsolutePosition Document::absolute_position_of_index(Display& display, const TextIndex& index) const {
     auto& line = line_at_index(index.line_index());
-    return relative_to_absolute_position(display, line, line.relative_position_of_index(*this, display, index.index_into_line()));
+    return relative_to_absolute_position(display, index.line_index(), line.relative_position_of_index(*this, display, index));
 }
 
 int Document::num_rendered_lines(Display& display) const {
@@ -209,8 +211,8 @@ int Document::num_rendered_lines(Display& display) const {
     }
 
     int total = 0;
-    for (auto& line : m_lines) {
-        total += line.rendered_line_count(*this, display);
+    for (int i = 0; i < num_lines(); i++) {
+        total += line_at_index(i).rendered_line_count(*this, display, i);
     }
     return total;
 }
@@ -224,11 +226,11 @@ DisplayPosition Document::absolute_to_display_position(Display& display, const A
     int row_offset = 0;
     if (position.line_index() <= display.scroll_offset().line_index()) {
         for (int line_index = display.scroll_offset().line_index() - 1; line_index >= position.line_index(); line_index--) {
-            row_offset -= line_at_index(line_index).rendered_line_count(*this, display);
+            row_offset -= line_at_index(line_index).rendered_line_count(*this, display, line_index);
         }
     } else {
         for (int line_index = display.scroll_offset().line_index(); line_index < position.line_index(); line_index++) {
-            row_offset += line_at_index(line_index).rendered_line_count(*this, display);
+            row_offset += line_at_index(line_index).rendered_line_count(*this, display, line_index);
         }
     }
     return { row_offset + position.relative_row() - display.scroll_offset().relative_row(),
@@ -237,10 +239,6 @@ DisplayPosition Document::absolute_to_display_position(Display& display, const A
 
 DisplayPosition Document::display_position_of_index(Display& display, const TextIndex& index) const {
     return absolute_to_display_position(display, absolute_position_of_index(display, index));
-}
-
-int Document::index_of_line(const Line& line) const {
-    return &line - m_lines.vector();
 }
 
 void Document::update_selection_state_for_mode(Cursor& cursor, MovementMode mode) {
@@ -295,8 +293,7 @@ void Document::move_cursor_right(Display& display, Cursor& cursor, MovementMode 
     }
 
     auto& line = cursor.referenced_line(*this);
-    int index_into_line = cursor.index_into_line();
-    if (index_into_line == line.length()) {
+    if (cursor.index_into_line() == line.length()) {
         if (&line == &m_lines.last()) {
             return;
         }
@@ -308,7 +305,7 @@ void Document::move_cursor_right(Display& display, Cursor& cursor, MovementMode 
 
     update_selection_state_for_mode(cursor, mode);
 
-    int new_index_into_line = line.next_index_into_line(*this, display, cursor.index_into_line());
+    int new_index_into_line = line.next_index_into_line(*this, display, cursor.index());
     cursor.set_index_into_line(new_index_into_line);
     cursor.compute_max_col(*this, display);
 }
@@ -323,8 +320,7 @@ void Document::move_cursor_left(Display& display, Cursor& cursor, MovementMode m
     }
 
     auto& line = cursor.referenced_line(*this);
-    int index_into_line = cursor.index_into_line();
-    if (index_into_line == 0) {
+    if (cursor.index_into_line() == 0) {
         if (&line == &m_lines.first()) {
             return;
         }
@@ -336,15 +332,15 @@ void Document::move_cursor_left(Display& display, Cursor& cursor, MovementMode m
 
     update_selection_state_for_mode(cursor, mode);
 
-    int new_index_into_line = line.prev_index_into_line(*this, display, index_into_line);
+    int new_index_into_line = line.prev_index_into_line(*this, display, cursor.index());
     cursor.set_index_into_line(new_index_into_line);
     cursor.compute_max_col(*this, display);
 }
 
 void Document::move_cursor_down(Display& display, Cursor& cursor, MovementMode mode) {
     auto& prev_line = cursor.referenced_line(*this);
-    if (&prev_line == &last_line() && last_line().relative_position_of_index(*this, display, cursor.index_into_line()).row() ==
-                                          last_line().rendered_line_count(*this, display) - 1) {
+    if (&prev_line == &last_line() && last_line().relative_position_of_index(*this, display, cursor.index()).row() ==
+                                          last_line().rendered_line_count(*this, display, num_lines() - 1) - 1) {
         move_cursor_to_line_end(display, cursor, mode);
         return;
     }
@@ -353,11 +349,11 @@ void Document::move_cursor_down(Display& display, Cursor& cursor, MovementMode m
 
     auto prev_position = cursor.relative_position(*this, display);
     auto new_index = [&] {
-        if (prev_position.row() == prev_line.rendered_line_count(*this, display) - 1) {
+        if (prev_position.row() == prev_line.rendered_line_count(*this, display, cursor.line_index()) - 1) {
             auto& line_above = line_at_index(cursor.line_index() + 1);
-            return line_above.index_of_relative_position(*this, display, { 0, prev_position.col() });
+            return line_above.index_of_relative_position(*this, display, cursor.line_index() + 1, { 0, prev_position.col() });
         }
-        return prev_line.index_of_relative_position(*this, display, { prev_position.row() + 1, prev_position.col() });
+        return prev_line.index_of_relative_position(*this, display, cursor.line_index(), { prev_position.row() + 1, prev_position.col() });
     }();
 
     cursor.set(new_index);
@@ -367,7 +363,7 @@ void Document::move_cursor_down(Display& display, Cursor& cursor, MovementMode m
 
 void Document::move_cursor_up(Display& display, Cursor& cursor, MovementMode mode) {
     auto& prev_line = cursor.referenced_line(*this);
-    if (&prev_line == &first_line() && first_line().relative_position_of_index(*this, display, cursor.index_into_line()).row() == 0) {
+    if (&prev_line == &first_line() && first_line().relative_position_of_index(*this, display, cursor.index()).row() == 0) {
         move_cursor_to_line_start(display, cursor, mode);
         return;
     }
@@ -378,10 +374,11 @@ void Document::move_cursor_up(Display& display, Cursor& cursor, MovementMode mod
     auto new_index = [&] {
         if (prev_position.row() == 0) {
             auto& line_above = line_at_index(cursor.line_index() - 1);
-            return line_above.index_of_relative_position(*this, display,
-                                                         { line_above.rendered_line_count(*this, display) - 1, prev_position.col() });
+            return line_above.index_of_relative_position(
+                *this, display, cursor.line_index() - 1,
+                { line_above.rendered_line_count(*this, display, cursor.line_index() - 1) - 1, prev_position.col() });
         }
-        return prev_line.index_of_relative_position(*this, display, { prev_position.row() - 1, prev_position.col() });
+        return prev_line.index_of_relative_position(*this, display, cursor.line_index(), { prev_position.row() - 1, prev_position.col() });
     }();
 
     cursor.set(new_index);
@@ -392,7 +389,8 @@ void Document::move_cursor_up(Display& display, Cursor& cursor, MovementMode mod
 void Document::move_cursor_to_max_col_position(Display& display, Cursor& cursor) {
     auto current_pos = cursor.relative_position(*this, display);
     if (cursor.max_col() > current_pos.col()) {
-        cursor.set(cursor.referenced_line(*this).index_of_relative_position(*this, display, { current_pos.row(), cursor.max_col() }));
+        cursor.set(cursor.referenced_line(*this).index_of_relative_position(*this, display, cursor.line_index(),
+                                                                            { current_pos.row(), cursor.max_col() }));
     }
 }
 
@@ -762,7 +760,7 @@ void Document::delete_selection(Cursor& cursor) {
     cursor.clear_selection();
     if (line_start == line_end) {
         for (int i = index_end - 1; i >= index_start; i--) {
-            m_lines[line_start].remove_char_at(*this, i);
+            m_lines[line_start].remove_char_at(*this, { line_start, i });
         }
     } else {
         auto split_start = m_lines[line_start].split_at(index_start);
@@ -773,8 +771,8 @@ void Document::delete_selection(Cursor& cursor) {
             remove_lines(line_start + 1, line_count_to_remove);
         }
 
-        m_lines[line_start].overwrite(*this, move(split_start.first), Line::OverwriteFrom::LineEnd);
-        m_lines[line_start + 1].overwrite(*this, move(split_end.second), Line::OverwriteFrom::LineStart);
+        m_lines[line_start].overwrite(*this, move(split_start.first), line_start, Line::OverwriteFrom::LineEnd);
+        m_lines[line_start + 1].overwrite(*this, move(split_end.second), line_start + 1, Line::OverwriteFrom::LineStart);
 
         merge_lines(line_start, line_start + 1);
     }
@@ -856,7 +854,7 @@ void Document::merge_lines(int l1, int l2) {
 void Document::split_line_at(const TextIndex& index) {
     auto& line = line_at_index(index.line_index());
     auto split_result = line.split_at(index.index_into_line());
-    line.overwrite(*this, move(split_result.first), Line::OverwriteFrom::None);
+    line.overwrite(*this, move(split_result.first), index.line_index(), Line::OverwriteFrom::None);
     m_lines.insert(move(split_result.second), index.line_index() + 1);
     emit<SplitLines>(index.line_index(), index.index_into_line());
 }

@@ -135,15 +135,14 @@ void InsertCommand::do_insert(Document& document, MultiCursor& cursors, int curs
         return;
     }
 
-    int index_into_line = cursor.index_into_line();
     if (c == '\t' && document.convert_tabs_to_spaces()) {
         // FIXME: what about variable width encodings/characters
-        int num_spaces = tab_width - (index_into_line % tab_width);
+        int num_spaces = tab_width - (cursor.index_into_line() % tab_width);
         for (int i = 0; i < num_spaces; i++) {
-            line.insert_char_at(document, index_into_line, ' ');
+            line.insert_char_at(document, cursor.index(), ' ');
         }
     } else {
-        line.insert_char_at(document, index_into_line, c);
+        line.insert_char_at(document, cursor.index(), c);
     }
 }
 
@@ -159,7 +158,7 @@ void InsertCommand::do_insert(Document& document, MultiCursor& cursors, int curs
 
     auto& first_line = cursor.referenced_line(document);
     for (auto& c : lines.first()) {
-        first_line.insert_char_at(document, cursor.index_into_line(), c);
+        first_line.insert_char_at(document, cursor.index(), c);
     }
     if (lines.size() > 1) {
         document.split_line_at(cursor.index());
@@ -172,7 +171,7 @@ void InsertCommand::do_insert(Document& document, MultiCursor& cursors, int curs
     if (lines.size() > 1) {
         auto& last_line = cursor.referenced_line(document);
         for (auto& c : lines.last()) {
-            last_line.insert_char_at(document, cursor.index_into_line(), c);
+            last_line.insert_char_at(document, cursor.index(), c);
         }
     }
 }

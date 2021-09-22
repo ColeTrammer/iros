@@ -138,12 +138,14 @@ void Display::clamp_scroll_offset() {
     }
 
     if (scroll_offset().line_index() >= document()->num_lines()) {
-        set_scroll_offset({ document()->num_lines() - 1, document()->last_line().rendered_line_count(*document(), *this) - 1,
+        set_scroll_offset({ document()->num_lines() - 1,
+                            document()->last_line().rendered_line_count(*document(), *this, document()->num_lines() - 1) - 1,
                             scroll_offset().relative_col() });
         return;
     }
 
-    auto rendered_line_count = document()->line_at_index(scroll_offset().line_index()).rendered_line_count(*document(), *this);
+    auto rendered_line_count =
+        document()->line_at_index(scroll_offset().line_index()).rendered_line_count(*document(), *this, scroll_offset().line_index());
     if (scroll_offset().relative_row() >= rendered_line_count) {
         set_scroll_offset({ scroll_offset().line_index(), rendered_line_count - 1, 0 });
     }
@@ -312,7 +314,7 @@ void Display::update_search_results() {
     }
 
     for (int i = 0; i < document()->num_lines(); i++) {
-        document()->line_at_index(i).search(*document(), m_search_text, m_search_results);
+        document()->line_at_index(i).search(*document(), i, m_search_text, m_search_results);
     }
 
     m_search_result_index = 0;
