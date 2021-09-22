@@ -120,9 +120,7 @@ int Line::prev_index_into_line(const Document& document, Display& display, int i
         for (auto& range : position_ranges) {
             if (range.index_into_line < index_into_line && range.type == PositionRangeType::Normal) {
                 last_range = &range;
-                continue;
             }
-            break;
         }
     }
     return last_range ? last_range->index_into_line : 0;
