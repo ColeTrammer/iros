@@ -364,22 +364,21 @@ void Display::update_metadata(int line_index) {
 
 void Display::install_document_listeners(Document& new_document) {
     new_document.on<DeleteLines>(this_widget(), [this](const DeleteLines& event) {
-        for (int i = 0; i < event.line_count(); i++) {
-            m_rendered_lines.remove(event.line_index());
-        }
+        m_rendered_lines.remove_count(event.line_index(), event.line_count());
         invalidate_all_line_rects();
         clamp_scroll_offset();
     });
 
     new_document.on<AddLines>(this_widget(), [this](const AddLines& event) {
-        for (int i = 0; i < event.line_count(); i++) {
-            m_rendered_lines.insert({}, event.line_index());
-        }
+        auto new_rendered_lines = Vector<RenderedLine> {};
+        new_rendered_lines.resize(event.line_count());
+
+        m_rendered_lines.insert(move(new_rendered_lines), event.line_index());
         invalidate_all_line_rects();
     });
 
     new_document.on<SplitLines>(this_widget(), [this](const SplitLines& event) {
-        m_rendered_lines.insert({}, event.line_index() + 1);
+        m_rendered_lines.insert(RenderedLine {}, event.line_index() + 1);
         invalidate_line(event.line_index());
         invalidate_all_line_rects();
     });

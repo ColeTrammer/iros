@@ -123,7 +123,9 @@ public:
     int num_rendered_lines(Display& display) const;
 
     void remove_line(int index);
+    void remove_lines(int index, int count);
     void insert_line(Line&& line, int index);
+    void insert_lines(int line_index, Span<StringView> lines);
     void move_line_to(int line, int destination);
 
     void split_line_at(const TextIndex& index);

@@ -767,8 +767,10 @@ void Document::delete_selection(Cursor& cursor) {
     } else {
         auto split_start = m_lines[line_start].split_at(index_start);
         auto split_end = m_lines[line_end].split_at(index_end);
-        for (int i = line_end - 1; i > line_start; i--) {
-            remove_line(i);
+
+        auto line_count_to_remove = line_end - line_start - 1;
+        if (line_count_to_remove > 0) {
+            remove_lines(line_start + 1, line_count_to_remove);
         }
 
         m_lines[line_start].overwrite(*this, move(split_start.first), Line::OverwriteFrom::LineEnd);
@@ -818,9 +820,24 @@ String Document::selection_text(const Cursor& cursor) const {
     return text_in_range(selection.start(), selection.end());
 }
 
+void Document::remove_lines(int line_index, int count) {
+    m_lines.remove_count(line_index, count);
+    emit<DeleteLines>(line_index, count);
+}
+
 void Document::remove_line(int index) {
     m_lines.remove(index);
     emit<DeleteLines>(index, 1);
+}
+
+void Document::insert_lines(int line_index, Span<StringView> lines) {
+    auto lines_to_add = Vector<Line> {};
+    for (auto& line : lines) {
+        lines_to_add.add(Line { String { line } });
+    }
+
+    m_lines.insert(move(lines_to_add), line_index);
+    emit<AddLines>(line_index, static_cast<int>(lines.size()));
 }
 
 void Document::insert_line(Line&& line, int index) {
