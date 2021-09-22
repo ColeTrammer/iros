@@ -184,7 +184,7 @@ constexpr Utf8ViewIterator::CodePointInfo Utf8ViewIterator::current_code_point_i
     for (bytes_used = 1; bytes_used < byte_count; bytes_used++) {
         auto byte = m_view.byte_at(m_byte_offset + bytes_used);
         if (!byte) {
-            return { {}, bytes_used - 1 };
+            return { {}, bytes_used };
         }
 
         if (!valid_byte(*byte, *first_byte, bytes_used, byte_count)) {
