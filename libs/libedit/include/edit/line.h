@@ -26,35 +26,11 @@ public:
 
     LineSplitResult split_at(int position);
 
-    RelativePosition relative_position_of_index(const Document& document, Display& display, const TextIndex& index) const;
-    int absoulte_col_offset_of_index(const Document& document, Display& display, const TextIndex& index) const;
-    TextIndex index_of_relative_position(const Document& document, Display& display, int this_line_index,
-                                         const RelativePosition& position) const;
-    int max_col_in_relative_row(const Document& document, Display& display, int this_line_index, int relative_row) const;
-    int rendered_line_count(const Document& document, Display& display, int this_line_index) const;
-
-    int next_index_into_line(const Document& document, Display& display, const TextIndex& index) const;
-    int prev_index_into_line(const Document& document, Display& display, const TextIndex& index) const;
-
     char char_at(int index) const { return contents()[index]; }
 
     void search(const Document& document, int this_line_index, const String& text, TextRangeCollection& results) const;
 
-    int render(const Document& document, Display& display, int this_line_index, int col_offset, int relative_row_start,
-               int row_in_display) const;
-
 private:
-    const RenderedLine& compute_rendered_contents(const Document& document, Display& display, int this_line_index) const;
-
-    enum class RangeFor {
-        Text,
-        Cursor,
-    };
-
-    const PositionRange* range_for_relative_position(const Document& document, Display& display, int this_line_index,
-                                                     const RelativePosition& position) const;
-    const PositionRange* range_for_index(const Document& documnet, Display& display, const TextIndex& index, RangeFor mode) const;
-
     String m_contents;
 };
 

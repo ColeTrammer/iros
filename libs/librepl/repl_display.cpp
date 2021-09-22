@@ -134,7 +134,7 @@ Maybe<Point> ReplDisplay::cursor_position() {
         return {};
     }
 
-    auto position = document()->display_position_of_index(*this, cursors().main_cursor().index());
+    auto position = display_position_of_index(cursors().main_cursor().index());
     return Point { position.col(), position.row() };
 }
 
@@ -161,7 +161,8 @@ void ReplDisplay::render() {
         scroll_up(delta_height);
     }
 
-    document()->display(*this);
+    m_last_rendered_row = 0;
+    render_lines();
 
     auto empty_rows = rows() - m_last_rendered_row - 1;
     auto renderer = get_renderer();
@@ -226,10 +227,10 @@ void ReplDisplay::output_line(int row, int col_offset, const Edit::RenderedLine&
     auto visible_line_rect = Rect { 0, row, sized_rect().width(), 1 };
     renderer.set_clip_rect(visible_line_rect);
 
-    auto text_width = line.position_ranges[line_index].last().end.col();
+    auto text_width = line.position_ranges()[line_index].last().end.col();
 
     auto text_rect = visible_line_rect.translated({ -col_offset, 0 }).with_width(text_width);
-    for (auto& range : line.position_ranges[line_index]) {
+    for (auto& range : line.position_ranges()[line_index]) {
         auto rendering_info = rendering_info_for_metadata(range.metadata);
         auto style = TInput::TerminalTextStyle {
             .foreground = rendering_info.fg,
@@ -238,8 +239,8 @@ void ReplDisplay::output_line(int row, int col_offset, const Edit::RenderedLine&
             .invert = rendering_info.secondary_cursor,
         };
 
-        auto glyph = TInput::TerminalGlyph { line.rendered_lines[line_index].substring(range.byte_offset_in_rendered_string,
-                                                                                       range.byte_count_in_rendered_string),
+        auto glyph = TInput::TerminalGlyph { line.rendered_lines()[line_index].substring(range.byte_offset_in_rendered_string,
+                                                                                         range.byte_count_in_rendered_string),
                                              range.end.col() - range.start.col() };
         renderer.put_glyph(text_rect.top_left().translated(range.start.col(), 0), glyph, style);
     }
@@ -292,7 +293,7 @@ void ReplDisplay::show_suggestions_panel() {
         return;
     }
 
-    auto cursor_position = document()->display_position_of_index(*this, cursors().main_cursor().index());
+    auto cursor_position = display_position_of_index(cursors().main_cursor().index());
 
     m_suggestions_panel = add<SuggestionsPanel>(*this).shared_from_this();
 
@@ -388,7 +389,7 @@ void ReplDisplay::move_history_down() {
 }
 
 Edit::TextIndex ReplDisplay::text_index_at_mouse_position(const Point& point) {
-    return document()->text_index_at_display_position(*this, { point.y(), point.x() });
+    return text_index_at_display_position({ point.y(), point.x() });
 }
 
 void ReplDisplay::enter_search(String) {}

@@ -7,8 +7,7 @@ RenderedLine LineRenderer::finish(const Line& line, CharacterMetadata end_metada
     end_segment();
 
     if (!m_current_rendered_line.empty() || !m_current_position_ranges.empty()) {
-        m_rendered_line.rendered_lines.add(move(m_current_rendered_line));
-        m_rendered_line.position_ranges.add(move(m_current_position_ranges));
+        m_rendered_line.append_line(move(m_current_rendered_line), move(m_current_position_ranges));
     }
     return move(m_rendered_line);
 }
@@ -27,8 +26,7 @@ void LineRenderer::add_to_segment(const StringView& text, int display_width) {
     if (m_word_wrap_enabled && current_position().col() + display_width > m_max_width) {
         m_current_position.set(m_current_position.row() + 1, 0);
         m_current_byte_offset = 0;
-        m_rendered_line.rendered_lines.add(move(m_current_rendered_line));
-        m_rendered_line.position_ranges.add(move(m_current_position_ranges));
+        m_rendered_line.append_line(move(m_current_rendered_line), move(m_current_position_ranges));
         m_current_range.start = current_position();
         m_current_range.byte_offset_in_rendered_string = m_current_byte_offset;
     }

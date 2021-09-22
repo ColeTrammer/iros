@@ -140,7 +140,7 @@ Maybe<Point> TerminalDisplay::cursor_position() {
         return {};
     }
 
-    auto position = document()->display_position_of_index(*this, cursors().main_cursor().index());
+    auto position = display_position_of_index(cursors().main_cursor().index());
     if (position.row() < 0 || position.row() >= rows() || position.col() < 0 || position.col() >= cols()) {
         return {};
     }
@@ -153,7 +153,7 @@ void TerminalDisplay::render() {
     }
 
     m_last_rendered_row = 0;
-    document()->display(*this);
+    render_lines();
 
     auto empty_rows = rows() - m_last_rendered_row - 1;
     auto renderer = get_renderer();
@@ -163,7 +163,7 @@ void TerminalDisplay::render() {
 }
 
 Edit::TextIndex TerminalDisplay::text_index_at_mouse_position(const Point& point) {
-    return document()->text_index_at_display_position(*this, { point.y(), point.x() - m_cols_needed_for_line_numbers });
+    return text_index_at_display_position({ point.y(), point.x() - m_cols_needed_for_line_numbers });
 }
 
 void TerminalDisplay::output_line(int row, int col_offset, const Edit::RenderedLine& line, int line_index) {
@@ -173,7 +173,7 @@ void TerminalDisplay::output_line(int row, int col_offset, const Edit::RenderedL
 
     if (show_line_numbers()) {
         auto line_number_rect = Rect { 0, row, m_cols_needed_for_line_numbers, 1 };
-        auto line_start_index = document()->text_index_at_display_position(*this, { row, -col_offset });
+        auto line_start_index = text_index_at_display_position({ row, -col_offset });
         if (line_start_index.index_into_line() == 0) {
             auto line_number_text = String::format("%*d ", m_cols_needed_for_line_numbers - 1, line_start_index.line_index() + 1);
             renderer.render_text(line_number_rect, line_number_text.view());
@@ -185,10 +185,10 @@ void TerminalDisplay::output_line(int row, int col_offset, const Edit::RenderedL
     auto visible_line_rect = Rect { m_cols_needed_for_line_numbers, row, sized_rect().width() - m_cols_needed_for_line_numbers, 1 };
     renderer.set_clip_rect(visible_line_rect);
 
-    auto text_width = line.position_ranges[line_index].last().end.col();
+    auto text_width = line.position_ranges()[line_index].last().end.col();
 
     auto text_rect = visible_line_rect.translated({ -col_offset, 0 }).with_width(text_width);
-    for (auto& range : line.position_ranges[line_index]) {
+    for (auto& range : line.position_ranges()[line_index]) {
         auto rendering_info = rendering_info_for_metadata(range.metadata);
         auto style = TInput::TerminalTextStyle {
             .foreground = rendering_info.fg,
@@ -197,8 +197,8 @@ void TerminalDisplay::output_line(int row, int col_offset, const Edit::RenderedL
             .invert = rendering_info.secondary_cursor,
         };
 
-        auto glyph = TInput::TerminalGlyph { line.rendered_lines[line_index].substring(range.byte_offset_in_rendered_string,
-                                                                                       range.byte_count_in_rendered_string),
+        auto glyph = TInput::TerminalGlyph { line.rendered_lines()[line_index].substring(range.byte_offset_in_rendered_string,
+                                                                                         range.byte_count_in_rendered_string),
                                              range.end.col() - range.start.col() };
         renderer.put_glyph(text_rect.top_left().translated(range.start.col(), 0), glyph, style);
     }

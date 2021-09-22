@@ -2,13 +2,14 @@ set(SOURCES
     actions.cpp
     command.cpp
     cursor.cpp
+    display.cpp
     document_type.cpp
     document.cpp
     keyboard_action.cpp
     line_renderer.cpp
     line.cpp
     multicursor.cpp
-    display.cpp
+    rendered_line.cpp
     suggestions.cpp
     text_range_collection.cpp
     text_range.cpp

@@ -1,4 +1,5 @@
 #include <edit/cursor.h>
+#include <edit/display.h>
 #include <edit/document.h>
 
 namespace Edit {
@@ -14,17 +15,17 @@ char Cursor::referenced_character(const Document& document) const {
     return referenced_line(document).char_at(index_into_line());
 }
 
-RelativePosition Cursor::relative_position(const Document& document, Display& display) const {
-    return referenced_line(document).relative_position_of_index(document, display, index());
+RelativePosition Cursor::relative_position(Display& display) const {
+    auto absolute_position = this->absolute_position(display);
+    return { absolute_position.relative_row(), absolute_position.relative_col() };
 }
 
-AbsolutePosition Cursor::absolute_position(const Document& document, Display& display) const {
-    auto relative_pos = relative_position(document, display);
-    return document.relative_to_absolute_position(display, line_index(), relative_pos);
+AbsolutePosition Cursor::absolute_position(Display& display) const {
+    return display.absolute_position_of_index(index());
 }
 
-void Cursor::compute_max_col(const Document& document, Display& display) {
-    m_max_col = referenced_line(document).relative_position_of_index(document, display, index()).col();
+void Cursor::compute_max_col(Display& display) {
+    m_max_col = absolute_position(display).relative_col();
 }
 
 void Cursor::move_preserving_selection(int delta_line_index, int delta_index_into_line) {
@@ -66,5 +67,13 @@ void Cursor::merge_selections(const Cursor& other) {
 bool Cursor::at_document_end(const Document& document) const {
     auto& last_line = document.last_line();
     return &referenced_line(document) == &last_line && index_into_line() == last_line.length();
+}
+
+bool Cursor::at_line_end(const Document& document) const {
+    return index_into_line() == referenced_line(document).length();
+}
+
+bool Cursor::at_last_line(const Document& document) const {
+    return line_index() == document.last_line_index();
 }
 }

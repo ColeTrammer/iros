@@ -52,7 +52,7 @@ Cursor* MultiCursor::add_cursor(Document& document, AddCursorMode mode) {
     return nullptr;
 }
 
-Cursor* MultiCursor::add_cursor_at(Document& document, const TextIndex& index, const TextIndex& selection_start) {
+Cursor* MultiCursor::add_cursor_at(Document&, const TextIndex& index, const TextIndex& selection_start) {
     int i = 0;
     for (; i < m_cursors.size(); i++) {
         // Duplicate cursors should not be created.
@@ -68,7 +68,7 @@ Cursor* MultiCursor::add_cursor_at(Document& document, const TextIndex& index, c
     auto cursor = Cursor {};
     cursor.set_selection_anchor(selection_start);
     cursor.set(index);
-    cursor.compute_max_col(document, m_display);
+    cursor.compute_max_col(m_display);
     m_cursors.insert(move(cursor), i);
     if (i <= m_main_cursor_index) {
         m_main_cursor_index++;
@@ -89,19 +89,18 @@ void MultiCursor::install_document_listeners(Document& document) {
             }
             if (cursor.line_index() == event.line_index()) {
                 if (event.line_index() == document.num_lines()) {
-                    cursor.set({ document.num_lines() - 1, document.last_line().length() });
+                    cursor.set({ document.last_line_index(), document.last_line().length() });
                     continue;
                 }
                 cursor.clear_selection();
-                document.move_cursor_to(m_display, cursor,
-                                        document.text_index_at_absolute_position(m_display, cursor.absolute_position(document, m_display)));
+                document.move_cursor_to(m_display, cursor, m_display.text_index_at_absolute_position(cursor.absolute_position(m_display)));
                 continue;
             }
             cursor.move_up_preserving_selection(event.line_count());
         }
     });
 
-    document.on<AddLines>(m_display.this_widget(), [this, &document](const AddLines& event) {
+    document.on<AddLines>(m_display.this_widget(), [this](const AddLines& event) {
         invalidate_cursor_history();
 
         for (auto& cursor : m_cursors) {
@@ -115,7 +114,7 @@ void MultiCursor::install_document_listeners(Document& document) {
         }
     });
 
-    document.on<SplitLines>(m_display.this_widget(), [this, &document](const SplitLines& event) {
+    document.on<SplitLines>(m_display.this_widget(), [this](const SplitLines& event) {
         invalidate_cursor_history();
 
         for (auto& cursor : m_cursors) {
@@ -126,11 +125,11 @@ void MultiCursor::install_document_listeners(Document& document) {
                 continue;
             }
             cursor.set({ event.line_index() + 1, cursor.index_into_line() - event.index_into_line() });
-            cursor.compute_max_col(document, m_display);
+            cursor.compute_max_col(m_display);
         }
     });
 
-    document.on<MergeLines>(m_display.this_widget(), [this, &document](const MergeLines& event) {
+    document.on<MergeLines>(m_display.this_widget(), [this](const MergeLines& event) {
         invalidate_cursor_history();
 
         for (auto& cursor : m_cursors) {
@@ -141,11 +140,11 @@ void MultiCursor::install_document_listeners(Document& document) {
                 continue;
             }
             cursor.set({ event.first_line_index(), event.first_line_length() + cursor.index_into_line() });
-            cursor.compute_max_col(document, m_display);
+            cursor.compute_max_col(m_display);
         }
     });
 
-    document.on<AddToLine>(m_display.this_widget(), [this, &document](const AddToLine& event) {
+    document.on<AddToLine>(m_display.this_widget(), [this](const AddToLine& event) {
         invalidate_cursor_history();
 
         for (auto& cursor : m_cursors) {
@@ -160,11 +159,11 @@ void MultiCursor::install_document_listeners(Document& document) {
                 continue;
             }
             cursor.move_right_preserving_selection(event.bytes_added());
-            cursor.compute_max_col(document, m_display);
+            cursor.compute_max_col(m_display);
         }
     });
 
-    document.on<DeleteFromLine>(m_display.this_widget(), [this, &document](const DeleteFromLine& event) {
+    document.on<DeleteFromLine>(m_display.this_widget(), [this](const DeleteFromLine& event) {
         invalidate_cursor_history();
 
         for (auto& cursor : m_cursors) {
@@ -179,11 +178,11 @@ void MultiCursor::install_document_listeners(Document& document) {
                 continue;
             }
             cursor.move_left_preserving_selection(event.bytes_deleted());
-            cursor.compute_max_col(document, m_display);
+            cursor.compute_max_col(m_display);
         }
     });
 
-    document.on<MoveLineTo>(m_display.this_widget(), [this, &document](const MoveLineTo& event) {
+    document.on<MoveLineTo>(m_display.this_widget(), [this](const MoveLineTo& event) {
         invalidate_cursor_history();
 
         auto line_min = min(event.line(), event.destination());

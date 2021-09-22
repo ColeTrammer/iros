@@ -138,14 +138,12 @@ void Display::clamp_scroll_offset() {
     }
 
     if (scroll_offset().line_index() >= document()->num_lines()) {
-        set_scroll_offset({ document()->num_lines() - 1,
-                            document()->last_line().rendered_line_count(*document(), *this, document()->num_lines() - 1) - 1,
-                            scroll_offset().relative_col() });
+        set_scroll_offset(
+            { document()->last_line_index(), rendered_line_count(document()->last_line_index()) - 1, scroll_offset().relative_col() });
         return;
     }
 
-    auto rendered_line_count =
-        document()->line_at_index(scroll_offset().line_index()).rendered_line_count(*document(), *this, scroll_offset().line_index());
+    auto rendered_line_count = this->rendered_line_count(scroll_offset().line_index());
     if (scroll_offset().relative_row() >= rendered_line_count) {
         set_scroll_offset({ scroll_offset().line_index(), rendered_line_count - 1, 0 });
     }
@@ -161,12 +159,17 @@ void Display::set_scroll_offset(const AbsolutePosition& offset) {
 }
 
 void Display::scroll(int vertical, int horizontal) {
-    set_scroll_offset(document()->display_to_absolute_position(*this, { vertical, horizontal }));
+    set_scroll_offset(display_to_absolute_position({ vertical, horizontal }));
 }
 
 RenderedLine& Display::rendered_line_at_index(int index) {
     assert(index < m_rendered_lines.size());
-    return m_rendered_lines[index];
+
+    auto& line = m_rendered_lines[index];
+    if (!line.is_up_to_date()) {
+        m_rendered_lines[index] = compose_line(document()->line_at_index(index));
+    }
+    return line;
 }
 
 void Display::invalidate_all_lines() {
@@ -178,12 +181,8 @@ void Display::invalidate_all_lines() {
 }
 
 void Display::invalidate_line(int line_index) {
-    auto& info = rendered_line_at_index(line_index);
-
+    m_rendered_lines[line_index].invalidate();
     invalidate_all_line_rects();
-
-    info.rendered_lines.clear();
-    info.position_ranges.clear();
 }
 
 void Display::toggle_show_line_numbers() {
@@ -219,7 +218,7 @@ void Display::set_word_wrap_enabled(bool b) {
     if (document()) {
         invalidate_all_lines();
         for (auto& cursor : cursors()) {
-            cursor.compute_max_col(*document(), *this);
+            cursor.compute_max_col(*this);
         }
         set_scroll_offset({ scroll_offset().line_index(), 0, 0 });
         document()->scroll_cursor_into_view(*this, cursors().main_cursor());
@@ -345,25 +344,6 @@ void Display::set_search_text(String text) {
     update_search_results();
 }
 
-void Display::update_metadata(int line_index) {
-    auto& rendered_contents = m_rendered_lines[line_index];
-
-    auto cursor_collection = cursors().cursor_text_ranges();
-    auto selection_collection = cursors().selections();
-    auto metadata_iterator = Edit::DocumentTextRangeIterator {
-        { line_index, 0 }, document()->syntax_highlighting_info(), search_results(), cursor_collection, selection_collection
-    };
-
-    for (int row = 0; row < rendered_contents.position_ranges.size(); row++) {
-        for (auto& range : rendered_contents.position_ranges[row]) {
-            if (range.type == PositionRangeType::Normal) {
-                metadata_iterator.advance_to_index_into_line(*document(), range.index_into_line);
-                range.metadata = metadata_iterator.peek_metadata();
-            }
-        }
-    }
-}
-
 void Display::install_document_listeners(Document& new_document) {
     new_document.on<DeleteLines>(this_widget(), [this](const DeleteLines& event) {
         m_rendered_lines.remove_count(event.line_index(), event.line_count());
@@ -428,6 +408,107 @@ void Display::install_document_listeners(Document& new_document) {
 
 void Display::uninstall_document_listeners(Document& document) {
     document.remove_listener(this_widget());
+}
+
+void Display::render_lines() {
+    if (!document()) {
+        return;
+    }
+
+    auto render_position = scroll_offset();
+    for (int row_in_display = 0; row_in_display < rows() && render_position.line_index() < document()->num_lines();) {
+        auto& line = rendered_line_at_index(render_position.line_index());
+        row_in_display += line.render(*this, { render_position.line_index(), 0 }, render_position.relative_col(),
+                                      render_position.relative_row(), row_in_display);
+        render_position.set_line_index(render_position.line_index() + 1);
+        render_position.set_relative_row(0);
+    }
+}
+
+int Display::absolute_col_offset_of_index(const TextIndex& index) const {
+    return rendered_line_at_index(index.line_index()).absolute_col_offset_of_index(index);
+}
+
+int Display::rendered_line_count(int line_index) const {
+    return rendered_line_at_index(line_index).rendered_line_count();
+}
+
+TextIndex Display::prev_index_into_line(const TextIndex& index) const {
+    return rendered_line_at_index(index.line_index()).prev_index_into_line(index);
+}
+
+TextIndex Display::next_index_into_line(const TextIndex& index) const {
+    return rendered_line_at_index(index.line_index()).next_index_into_line(index);
+}
+
+TextIndex Display::text_index_at_absolute_position(const AbsolutePosition& position) const {
+    return rendered_line_at_index(position.line_index()).index_of_absolute_position(position);
+}
+
+TextIndex Display::text_index_at_display_position(const DisplayPosition& position) const {
+    return text_index_at_absolute_position(display_to_absolute_position(position));
+}
+
+AbsolutePosition Display::display_to_absolute_position(const DisplayPosition& display_position) const {
+    auto absolute_position = scroll_offset();
+
+    auto position = display_position;
+    while (position.row() < 0) {
+        if (absolute_position.line_index() == 0 && absolute_position.relative_row() == 0) {
+            break;
+        }
+        if (absolute_position.relative_row() == 0) {
+            absolute_position.set_line_index(absolute_position.line_index() - 1);
+            absolute_position.set_relative_row(rendered_line_count(absolute_position.line_index()) - 1);
+        } else {
+            absolute_position.set_relative_row(absolute_position.relative_row() - 1);
+        }
+        position.set_row(position.row() + 1);
+    }
+    while (position.row() > 0) {
+        if (absolute_position.line_index() == document()->last_line_index() &&
+            absolute_position.relative_row() == rendered_line_count(document()->last_line_index()) - 1) {
+            break;
+        }
+        if (absolute_position.relative_row() == rendered_line_count(absolute_position.line_index()) - 1) {
+            absolute_position.set_line_index(absolute_position.line_index() + 1);
+            absolute_position.set_relative_row(0);
+        } else {
+            absolute_position.set_relative_row(absolute_position.relative_row() + 1);
+        }
+        position.set_row(position.row() - 1);
+    }
+
+    absolute_position.set_relative_col(absolute_position.relative_col() + position.col());
+    return absolute_position;
+}
+
+AbsolutePosition Display::absolute_position_of_index(const TextIndex& index) const {
+    auto position = rendered_line_at_index(index.line_index()).relative_position_of_index(index);
+    return { index.line_index(), position.row(), position.col() };
+}
+
+DisplayPosition Display::absolute_to_display_position(const AbsolutePosition& position) const {
+    if (!word_wrap_enabled()) {
+        return { position.line_index() - scroll_offset().line_index(), position.relative_col() - scroll_offset().relative_col() };
+    }
+
+    int row_offset = 0;
+    if (position.line_index() <= scroll_offset().line_index()) {
+        for (int line_index = scroll_offset().line_index() - 1; line_index >= position.line_index(); line_index--) {
+            row_offset -= rendered_line_count(line_index);
+        }
+    } else {
+        for (int line_index = scroll_offset().line_index(); line_index < position.line_index(); line_index++) {
+            row_offset += rendered_line_count(line_index);
+        }
+    }
+    return { row_offset + position.relative_row() - scroll_offset().relative_row(),
+             position.relative_col() - scroll_offset().relative_col() };
+}
+
+DisplayPosition Display::display_position_of_index(const TextIndex& index) const {
+    return absolute_to_display_position(absolute_position_of_index(index));
 }
 
 Display::RenderingInfo Display::rendering_info_for_metadata(const CharacterMetadata& metadata) const {

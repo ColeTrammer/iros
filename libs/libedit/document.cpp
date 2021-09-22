@@ -138,73 +138,6 @@ size_t Document::cursor_index_in_content_string(const Cursor& cursor) const {
     return index;
 }
 
-void Document::display(Display& display) const {
-    auto& document = const_cast<Document&>(*this);
-
-    auto render_position = display.scroll_offset();
-    for (int row_in_display = 0; row_in_display < display.rows() && render_position.line_index() < num_lines();) {
-        auto& line = line_at_index(render_position.line_index());
-        row_in_display += line.render(document, display, render_position.line_index(), render_position.relative_col(),
-                                      render_position.relative_row(), row_in_display);
-        render_position.set_line_index(render_position.line_index() + 1);
-        render_position.set_relative_row(0);
-    }
-}
-
-TextIndex Document::text_index_at_absolute_position(Display& display, const AbsolutePosition& position) const {
-    return line_at_index(position.line_index())
-        .index_of_relative_position(*this, display, position.line_index(), { position.relative_row(), position.relative_col() });
-}
-
-TextIndex Document::text_index_at_display_position(Display& display, const DisplayPosition& position) const {
-    return text_index_at_absolute_position(display, display_to_absolute_position(display, position));
-}
-
-AbsolutePosition Document::relative_to_absolute_position(Display&, int line_index, const RelativePosition& line_relative_position) const {
-    return { line_index, line_relative_position.row(), line_relative_position.col() };
-}
-
-AbsolutePosition Document::display_to_absolute_position(Display& display, const DisplayPosition& position_in) const {
-    auto absolute_position = display.scroll_offset();
-
-    auto position = position_in;
-    while (position.row() < 0) {
-        if (absolute_position.line_index() == 0 && absolute_position.relative_row() == 0) {
-            break;
-        }
-        if (absolute_position.relative_row() == 0) {
-            absolute_position.set_line_index(absolute_position.line_index() - 1);
-            absolute_position.set_relative_row(
-                line_at_index(absolute_position.line_index()).rendered_line_count(*this, display, absolute_position.line_index()) - 1);
-        } else {
-            absolute_position.set_relative_row(absolute_position.relative_row() - 1);
-        }
-        position.set_row(position.row() + 1);
-    }
-    while (position.row() > 0) {
-        if (absolute_position.line_index() == num_lines() - 1 &&
-            absolute_position.relative_row() == last_line().rendered_line_count(*this, display, num_lines() - 1) - 1) {
-            break;
-        }
-        if (absolute_position.relative_row() ==
-            line_at_index(absolute_position.line_index()).rendered_line_count(*this, display, absolute_position.line_index()) - 1) {
-            absolute_position.set_line_index(absolute_position.line_index() + 1);
-            absolute_position.set_relative_row(0);
-        } else {
-            absolute_position.set_relative_row(absolute_position.relative_row() + 1);
-        }
-        position.set_row(position.row() - 1);
-    }
-
-    absolute_position.set_relative_col(absolute_position.relative_col() + position.col());
-    return absolute_position;
-}
-
-AbsolutePosition Document::absolute_position_of_index(Display& display, const TextIndex& index) const {
-    auto& line = line_at_index(index.line_index());
-    return relative_to_absolute_position(display, index.line_index(), line.relative_position_of_index(*this, display, index));
-}
-
 int Document::num_rendered_lines(Display& display) const {
     if (!display.word_wrap_enabled()) {
         return num_lines();
@@ -212,33 +145,9 @@ int Document::num_rendered_lines(Display& display) const {
 
     int total = 0;
     for (int i = 0; i < num_lines(); i++) {
-        total += line_at_index(i).rendered_line_count(*this, display, i);
+        total += display.rendered_line_count(i);
     }
     return total;
-}
-
-DisplayPosition Document::absolute_to_display_position(Display& display, const AbsolutePosition& position) const {
-    if (!display.word_wrap_enabled()) {
-        return { position.line_index() - display.scroll_offset().line_index(),
-                 position.relative_col() - display.scroll_offset().relative_col() };
-    }
-
-    int row_offset = 0;
-    if (position.line_index() <= display.scroll_offset().line_index()) {
-        for (int line_index = display.scroll_offset().line_index() - 1; line_index >= position.line_index(); line_index--) {
-            row_offset -= line_at_index(line_index).rendered_line_count(*this, display, line_index);
-        }
-    } else {
-        for (int line_index = display.scroll_offset().line_index(); line_index < position.line_index(); line_index++) {
-            row_offset += line_at_index(line_index).rendered_line_count(*this, display, line_index);
-        }
-    }
-    return { row_offset + position.relative_row() - display.scroll_offset().relative_row(),
-             position.relative_col() - display.scroll_offset().relative_col() };
-}
-
-DisplayPosition Document::display_position_of_index(Display& display, const TextIndex& index) const {
-    return absolute_to_display_position(display, absolute_position_of_index(display, index));
 }
 
 void Document::update_selection_state_for_mode(Cursor& cursor, MovementMode mode) {
@@ -292,9 +201,8 @@ void Document::move_cursor_right(Display& display, Cursor& cursor, MovementMode 
         return;
     }
 
-    auto& line = cursor.referenced_line(*this);
-    if (cursor.index_into_line() == line.length()) {
-        if (&line == &m_lines.last()) {
+    if (cursor.at_line_end(*this)) {
+        if (cursor.at_last_line(*this)) {
             return;
         }
 
@@ -305,9 +213,8 @@ void Document::move_cursor_right(Display& display, Cursor& cursor, MovementMode 
 
     update_selection_state_for_mode(cursor, mode);
 
-    int new_index_into_line = line.next_index_into_line(*this, display, cursor.index());
-    cursor.set_index_into_line(new_index_into_line);
-    cursor.compute_max_col(*this, display);
+    cursor.set(display.next_index_into_line(cursor.index()));
+    cursor.compute_max_col(display);
 }
 
 void Document::move_cursor_left(Display& display, Cursor& cursor, MovementMode mode) {
@@ -319,9 +226,8 @@ void Document::move_cursor_left(Display& display, Cursor& cursor, MovementMode m
         return;
     }
 
-    auto& line = cursor.referenced_line(*this);
-    if (cursor.index_into_line() == 0) {
-        if (&line == &m_lines.first()) {
+    if (cursor.at_line_start(*this)) {
+        if (cursor.at_first_line(*this)) {
             return;
         }
 
@@ -332,28 +238,24 @@ void Document::move_cursor_left(Display& display, Cursor& cursor, MovementMode m
 
     update_selection_state_for_mode(cursor, mode);
 
-    int new_index_into_line = line.prev_index_into_line(*this, display, cursor.index());
-    cursor.set_index_into_line(new_index_into_line);
-    cursor.compute_max_col(*this, display);
+    cursor.set(display.prev_index_into_line(cursor.index()));
+    cursor.compute_max_col(display);
 }
 
 void Document::move_cursor_down(Display& display, Cursor& cursor, MovementMode mode) {
-    auto& prev_line = cursor.referenced_line(*this);
-    if (&prev_line == &last_line() && last_line().relative_position_of_index(*this, display, cursor.index()).row() ==
-                                          last_line().rendered_line_count(*this, display, num_lines() - 1) - 1) {
+    auto prev_position = cursor.relative_position(display);
+    if (cursor.at_last_line(*this) && prev_position.row() == display.rendered_line_count(last_line_index()) - 1) {
         move_cursor_to_line_end(display, cursor, mode);
         return;
     }
 
     update_selection_state_for_mode(cursor, mode);
 
-    auto prev_position = cursor.relative_position(*this, display);
     auto new_index = [&] {
-        if (prev_position.row() == prev_line.rendered_line_count(*this, display, cursor.line_index()) - 1) {
-            auto& line_above = line_at_index(cursor.line_index() + 1);
-            return line_above.index_of_relative_position(*this, display, cursor.line_index() + 1, { 0, prev_position.col() });
+        if (prev_position.row() == display.rendered_line_count(cursor.line_index()) - 1) {
+            return display.text_index_at_absolute_position({ cursor.line_index() + 1, 0, prev_position.col() });
         }
-        return prev_line.index_of_relative_position(*this, display, cursor.line_index(), { prev_position.row() + 1, prev_position.col() });
+        return display.text_index_at_absolute_position({ cursor.line_index(), prev_position.row() + 1, prev_position.col() });
     }();
 
     cursor.set(new_index);
@@ -362,23 +264,20 @@ void Document::move_cursor_down(Display& display, Cursor& cursor, MovementMode m
 }
 
 void Document::move_cursor_up(Display& display, Cursor& cursor, MovementMode mode) {
-    auto& prev_line = cursor.referenced_line(*this);
-    if (&prev_line == &first_line() && first_line().relative_position_of_index(*this, display, cursor.index()).row() == 0) {
+    auto prev_position = cursor.relative_position(display);
+    if (cursor.at_first_line(*this) && prev_position.row() == 0) {
         move_cursor_to_line_start(display, cursor, mode);
         return;
     }
 
     update_selection_state_for_mode(cursor, mode);
 
-    auto prev_position = cursor.relative_position(*this, display);
     auto new_index = [&] {
         if (prev_position.row() == 0) {
-            auto& line_above = line_at_index(cursor.line_index() - 1);
-            return line_above.index_of_relative_position(
-                *this, display, cursor.line_index() - 1,
-                { line_above.rendered_line_count(*this, display, cursor.line_index() - 1) - 1, prev_position.col() });
+            return display.text_index_at_absolute_position(
+                { cursor.line_index() - 1, display.rendered_line_count(cursor.line_index() - 1) - 1, prev_position.col() });
         }
-        return prev_line.index_of_relative_position(*this, display, cursor.line_index(), { prev_position.row() - 1, prev_position.col() });
+        return display.text_index_at_absolute_position({ cursor.line_index(), prev_position.row() - 1, prev_position.col() });
     }();
 
     cursor.set(new_index);
@@ -387,10 +286,9 @@ void Document::move_cursor_up(Display& display, Cursor& cursor, MovementMode mod
 }
 
 void Document::move_cursor_to_max_col_position(Display& display, Cursor& cursor) {
-    auto current_pos = cursor.relative_position(*this, display);
+    auto current_pos = cursor.relative_position(display);
     if (cursor.max_col() > current_pos.col()) {
-        cursor.set(cursor.referenced_line(*this).index_of_relative_position(*this, display, cursor.line_index(),
-                                                                            { current_pos.row(), cursor.max_col() }));
+        cursor.set(display.text_index_at_absolute_position({ cursor.line_index(), current_pos.row(), cursor.max_col() }));
     }
 }
 
@@ -398,7 +296,7 @@ void Document::move_cursor_to_line_start(Display& display, Cursor& cursor, Movem
     update_selection_state_for_mode(cursor, mode);
 
     cursor.set_index_into_line(0);
-    cursor.compute_max_col(*this, display);
+    cursor.compute_max_col(display);
 }
 
 void Document::move_cursor_to_line_end(Display& display, Cursor& cursor, MovementMode mode) {
@@ -408,7 +306,7 @@ void Document::move_cursor_to_line_end(Display& display, Cursor& cursor, Movemen
 
     auto& line = cursor.referenced_line(*this);
     cursor.set_index_into_line(line.length());
-    cursor.compute_max_col(*this, display);
+    cursor.compute_max_col(display);
 }
 
 void Document::move_cursor_to_document_start(Display& display, Cursor& cursor, MovementMode mode) {
@@ -422,7 +320,7 @@ void Document::move_cursor_to_document_end(Display& display, Cursor& cursor, Mov
 }
 
 void Document::center_display_on_cursor(Display& display, Cursor& cursor) {
-    auto position = cursor.absolute_position(*this, display);
+    auto position = cursor.absolute_position(display);
     position.set_relative_col(0);
 
     display.set_scroll_offset(position);
@@ -434,15 +332,15 @@ void Document::scroll_cursor_into_view(Display& display, Cursor& cursor) {
     //       from the display's scroll offset. If we know for sure the cursor is not on the display, we can
     //       first move the cursor to the display and then adjust if needed.
     if (cursor.index().line_index() < display.scroll_offset().line_index()) {
-        auto relative_row = cursor.relative_position(*this, display).row();
+        auto relative_row = cursor.relative_position(display).row();
         display.set_scroll_offset({ cursor.line_index(), relative_row, display.scroll_offset().relative_col() });
     } else if (cursor.index().line_index() > display.scroll_offset().line_index() + display.rows()) {
-        auto relative_row = cursor.relative_position(*this, display).row();
+        auto relative_row = cursor.relative_position(display).row();
         display.set_scroll_offset({ cursor.line_index(), relative_row, display.scroll_offset().relative_col() });
         display.scroll_up(display.rows() - 1);
     }
 
-    auto cursor_position = display_position_of_index(display, cursor.index());
+    auto cursor_position = display.display_position_of_index(cursor.index());
     if (cursor_position.row() < 0) {
         display.scroll_up(-cursor_position.row());
     } else if (cursor_position.row() >= display.rows()) {
@@ -744,7 +642,7 @@ void Document::replace_all_search_matches(Display& display, const String& replac
 void Document::move_cursor_to(Display& display, Cursor& cursor, const TextIndex& index, MovementMode mode) {
     update_selection_state_for_mode(cursor, mode);
     cursor.set(index);
-    cursor.compute_max_col(*this, display);
+    cursor.compute_max_col(display);
 }
 
 void Document::delete_selection(Cursor& cursor) {

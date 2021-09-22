@@ -58,8 +58,7 @@ void TerminalStatusBar::render() {
 
     auto& name = document->name().empty() ? "[Unamed File]"s : document->name();
 
-    auto cursor_col = display->cursors().main_cursor().referenced_line(*document).absoulte_col_offset_of_index(
-        *document, *display, display->cursors().main_cursor().index());
+    auto cursor_col = display->absolute_col_offset_of_index(display->cursors().main_cursor().index());
     auto position_string = String::format("%d,%d", display->cursors().main_cursor().line_index() + 1, cursor_col + 1);
     auto status_rhs = String::format("%s%s [%s] %9s", name.string(), document->modified() ? "*" : "",
                                      Edit::document_type_to_string(document->type()).string(), position_string.string());

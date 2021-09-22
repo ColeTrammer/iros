@@ -58,7 +58,6 @@ public:
     virtual void set_clipboard_contents(LIIM::String text, bool is_whole_line = false) = 0;
     virtual String clipboard_contents(bool& is_whole_line) const = 0;
 
-    void update_metadata(int line_index);
     void invalidate_metadata() { invalidate_all_line_rects(); }
 
     void set_document(SharedPtr<Document> document);
@@ -101,8 +100,25 @@ public:
 
     RenderingInfo rendering_info_for_metadata(const CharacterMetadata& metadata) const;
 
+    void render_lines();
+
     RenderedLine& rendered_line_at_index(int index);
     const RenderedLine& rendered_line_at_index(int index) const { return const_cast<Display&>(*this).rendered_line_at_index(index); }
+
+    int absolute_col_offset_of_index(const TextIndex& index) const;
+    int rendered_line_count(int line_index) const;
+
+    TextIndex prev_index_into_line(const TextIndex& index) const;
+    TextIndex next_index_into_line(const TextIndex& index) const;
+
+    TextIndex text_index_at_absolute_position(const AbsolutePosition& position) const;
+    TextIndex text_index_at_display_position(const DisplayPosition& position) const;
+
+    AbsolutePosition display_to_absolute_position(const DisplayPosition& display_position) const;
+    AbsolutePosition absolute_position_of_index(const TextIndex& index) const;
+
+    DisplayPosition absolute_to_display_position(const AbsolutePosition& absolute_position) const;
+    DisplayPosition display_position_of_index(const TextIndex& index) const;
 
     void invalidate_all_lines();
     void invalidate_line(int line_index);

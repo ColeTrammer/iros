@@ -66,8 +66,6 @@ public:
 
     void copy_settings_from(const Document& other);
 
-    void display(Display& display) const;
-
     void invalidate_lines_in_range(Display& display, const TextRange& range);
     void invalidate_lines_in_range_collection(Display& display, const TextRangeCollection& collection);
 
@@ -106,16 +104,6 @@ public:
 
     void scroll_cursor_into_view(Display& display, Cursor& cursor);
     void center_display_on_cursor(Display& display, Cursor& cursor);
-
-    TextIndex text_index_at_absolute_position(Display& display, const AbsolutePosition& position) const;
-    TextIndex text_index_at_display_position(Display& display, const DisplayPosition& position) const;
-
-    AbsolutePosition relative_to_absolute_position(Display& display, int line_index, const RelativePosition& line_relative_position) const;
-    AbsolutePosition display_to_absolute_position(Display& display, const DisplayPosition& display_position) const;
-    AbsolutePosition absolute_position_of_index(Display& display, const TextIndex& index) const;
-
-    DisplayPosition absolute_to_display_position(Display& display, const AbsolutePosition& absolute_position) const;
-    DisplayPosition display_position_of_index(Display& display, const TextIndex& index) const;
 
     int num_lines() const { return m_lines.size(); }
     int num_rendered_lines(Display& display) const;
@@ -176,6 +164,9 @@ public:
 
     Line& last_line() { return m_lines.last(); }
     const Line& last_line() const { return m_lines.last(); }
+
+    int first_line_index() const { return 0; }
+    int last_line_index() const { return num_lines() - 1; }
 
     bool execute_command(Display& display, Command& command);
 

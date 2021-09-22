@@ -121,7 +121,7 @@ Edit::RenderedLine AppDisplay::compose_line(const Edit::Line& line) {
 }
 
 Edit::TextIndex AppDisplay::text_index_at_mouse_position(const Point& point) {
-    return document()->text_index_at_display_position(*this, { point.y() / row_height(), point.x() / col_width() });
+    return text_index_at_display_position({ point.y() / row_height(), point.x() / col_width() });
 }
 
 void AppDisplay::output_line(int, int, const Edit::RenderedLine&, int) {}
@@ -191,7 +191,7 @@ void AppDisplay::render_cursor(Renderer& renderer) {
         return;
     }
 
-    auto cursor_pos = document()->display_position_of_index(*this, cursors().main_cursor().index());
+    auto cursor_pos = display_position_of_index(cursors().main_cursor().index());
 
     int cursor_x = cursor_pos.col() * col_width();
     int cursor_y = cursor_pos.row() * row_height();
@@ -225,7 +225,8 @@ void AppDisplay::render() {
     renderer.fill_rect(right_extra_rect, ColorValue::Black);
 
     renderer.fill_rect(sized_rect(), ColorValue::Black);
-    document()->display(*this);
+
+    render_lines();
 
     render_cursor(renderer);
     Widget::render();

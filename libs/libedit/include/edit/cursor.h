@@ -28,11 +28,17 @@ public:
 
     void move_preserving_selection(int delta_line_index, int delta_index_into_line);
 
-    RelativePosition relative_position(const Document& document, Display& display) const;
-    AbsolutePosition absolute_position(const Document& document, Display& display) const;
+    RelativePosition relative_position(Display& display) const;
+    AbsolutePosition absolute_position(Display& display) const;
 
     bool at_document_start(const Document&) const { return m_index == TextIndex { 0, 0 }; }
     bool at_document_end(const Document& document) const;
+
+    bool at_line_start(const Document&) const { return index_into_line() == 0; }
+    bool at_line_end(const Document& document) const;
+
+    bool at_first_line(const Document&) const { return line_index() == 0; }
+    bool at_last_line(const Document& document) const;
 
     void reset() {
         set({});
@@ -51,7 +57,7 @@ public:
 
     int max_col() const { return m_max_col; }
     void set_max_col(int max_col) { m_max_col = max_col; }
-    void compute_max_col(const Document& document, Display& display);
+    void compute_max_col(Display& display);
 
     bool operator==(const Cursor& other) const {
         return this->index() == other.index() && this->selection_anchor() == other.selection_anchor();
