@@ -61,3 +61,17 @@ TEST(string_view, split) {
     EXPECT("   "sv.split(' ').empty());
     EXPECT(""sv.split(' ').empty());
 }
+
+TEST(string_view, split_include_empty) {
+    auto view = "\nvery\r\rmany\nlines\n"sv;
+    auto parts = view.split("\n\r", SplitMethod::KeepEmpty);
+    EXPECT_EQ(parts.size(), 6);
+    EXPECT_EQ(parts[0], ""sv);
+    EXPECT_EQ(parts[1], "very"sv);
+    EXPECT_EQ(parts[2], ""sv);
+    EXPECT_EQ(parts[3], "many"sv);
+    EXPECT_EQ(parts[4], "lines"sv);
+    EXPECT_EQ(parts[5], ""sv);
+
+    EXPECT(""sv.split(' ', SplitMethod::KeepEmpty).empty());
+}

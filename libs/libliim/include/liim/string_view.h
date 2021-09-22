@@ -8,6 +8,7 @@
 #include <string.h>
 
 namespace LIIM {
+enum SplitMethod { KeepEmpty, RemoveEmpty };
 
 class StringView {
 public:
@@ -115,25 +116,32 @@ public:
         return {};
     }
 
-    Vector<StringView> split(char c) const { return split({ &c, 1 }); }
+    Vector<StringView> split(char c, SplitMethod split_method = SplitMethod::RemoveEmpty) const { return split({ &c, 1 }, split_method); }
 
-    Vector<StringView> split(StringView characters) const {
-        Vector<StringView> ret;
+    Vector<StringView> split(StringView characters, SplitMethod split_method = SplitMethod::RemoveEmpty) const {
+        if (empty()) {
+            return {};
+        }
 
-        const char* word_start = nullptr;
-        for (size_t i = 0; i < size(); i++) {
-            if (!word_start && !characters.index_of(char_at(i))) {
-                word_start = m_data + i;
+        auto ret = Vector<StringView> {};
+        size_t word_start = 0;
+        size_t index = 0;
+
+        auto maybe_add_substring = [&] {
+            auto substring_length = index - word_start;
+            if (substring_length > 0 || split_method == SplitMethod::KeepEmpty) {
+                ret.add(substring(word_start, substring_length));
             }
-            if (word_start && characters.index_of(char_at(i))) {
-                ret.add({ word_start, data() + i });
-                word_start = nullptr;
+        };
+
+        for (; index < size(); index++) {
+            if (characters.index_of(char_at(index))) {
+                maybe_add_substring();
+                word_start = index + 1;
             }
         }
 
-        if (word_start) {
-            ret.add({ word_start, data() + size() });
-        }
+        maybe_add_substring();
         return ret;
     }
 
@@ -179,4 +187,5 @@ constexpr LIIM::StringView operator""sv(const char* data, size_t size) {
 }
 
 using LIIM::parse_number;
+using LIIM::SplitMethod;
 using LIIM::StringView;

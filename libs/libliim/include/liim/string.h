@@ -93,8 +93,12 @@ public:
     const char* string() const { return is_small() ? m_string.small.data : m_string.large.data; }
 
     StringView view() const { return StringView(string(), size()); }
-    Vector<StringView> split_view(char c) const { return view().split(c); }
-    Vector<StringView> split_view(StringView characters) const { return view().split(characters); }
+    Vector<StringView> split_view(char c, SplitMethod split_method = SplitMethod::RemoveEmpty) const {
+        return view().split(c, split_method);
+    }
+    Vector<StringView> split_view(StringView characters, SplitMethod split_method = SplitMethod::RemoveEmpty) const {
+        return view().split(characters, split_method);
+    }
 
     String first(size_t count) const { return substring(0, count); }
     String last(size_t count) const {
@@ -107,9 +111,9 @@ public:
     bool starts_with(const StringView& needle) const { return view().starts_with(needle); }
     bool ends_with(const StringView& needle) const { return view().ends_with(needle); }
 
-    Vector<String> split(char c) const { return split({ &c, 1 }); }
-    Vector<String> split(StringView characters) const {
-        auto views = view().split(characters);
+    Vector<String> split(char c, SplitMethod split_method = SplitMethod::RemoveEmpty) const { return split({ &c, 1 }, split_method); }
+    Vector<String> split(StringView characters, SplitMethod split_method = SplitMethod::RemoveEmpty) const {
+        auto views = view().split(characters, split_method);
 
         Vector<String> result;
         for (auto& view : views) {
