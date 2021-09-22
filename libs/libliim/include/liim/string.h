@@ -94,6 +94,7 @@ public:
 
     StringView view() const { return StringView(string(), size()); }
     Vector<StringView> split_view(char c) const { return view().split(c); }
+    Vector<StringView> split_view(StringView characters) const { return view().split(characters); }
 
     String first(size_t count) const { return substring(0, count); }
     String last(size_t count) const {
@@ -103,11 +104,12 @@ public:
     String substring(size_t start) const { return substring(start, size() - start); }
     String substring(size_t start, size_t length) const { return String(string() + start, length); }
 
-    bool starts_with(const StringView& needle) { return view().starts_with(needle); }
-    bool ends_with(const StringView& needle) { return view().ends_with(needle); }
+    bool starts_with(const StringView& needle) const { return view().starts_with(needle); }
+    bool ends_with(const StringView& needle) const { return view().ends_with(needle); }
 
-    Vector<String> split(char c) const {
-        auto views = view().split(c);
+    Vector<String> split(char c) const { return split({ &c, 1 }); }
+    Vector<String> split(StringView characters) const {
+        auto views = view().split(characters);
 
         Vector<String> result;
         for (auto& view : views) {

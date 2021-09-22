@@ -115,15 +115,17 @@ public:
         return {};
     }
 
-    Vector<StringView> split(char c) const {
+    Vector<StringView> split(char c) const { return split({ &c, 1 }); }
+
+    Vector<StringView> split(StringView characters) const {
         Vector<StringView> ret;
 
         const char* word_start = nullptr;
         for (size_t i = 0; i < size(); i++) {
-            if (!word_start && char_at(i) != c) {
+            if (!word_start && !characters.index_of(char_at(i))) {
                 word_start = m_data + i;
             }
-            if (word_start && char_at(i) == c) {
+            if (word_start && characters.index_of(char_at(i))) {
                 ret.add({ word_start, data() + i });
                 word_start = nullptr;
             }
