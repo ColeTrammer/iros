@@ -111,7 +111,7 @@ bool InsertCommand::do_execute(Display&, MultiCursor& cursors) {
         if (m_text.size() == 1 && m_text[0] == '\n') {
             String leading_whitespace = "";
             auto& line = cursor.referenced_line(document());
-            for (int i = 0; i < line.length(); i++) {
+            for (int i = 0; i < cursor.index_into_line(); i++) {
                 if (!isspace(line.char_at(i))) {
                     break;
                 }
