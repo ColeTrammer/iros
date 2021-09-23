@@ -232,7 +232,7 @@ bool SwapLinesCommand::do_swap(Cursor& cursor, SwapDirection direction) {
     auto selection_end = cursor.selection().end();
 
     if ((selection_start.line_index() == 0 && direction == SwapDirection::Up) ||
-        (selection_end.line_index() == document().num_lines() - 1 && direction == SwapDirection::Down)) {
+        (selection_end.line_index() == document().last_line_index() && direction == SwapDirection::Down)) {
         return false;
     }
 

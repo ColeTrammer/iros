@@ -89,7 +89,7 @@ void TextRangeCollectionIterator::advance(const Document& document) {
 }
 
 void TextRangeCollectionIterator::advance_line(const Document& document) {
-    if (m_index.line_index() == document.num_lines() - 1) {
+    if (m_index.line_index() == document.last_line_index()) {
         return;
     }
 

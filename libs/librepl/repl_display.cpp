@@ -71,12 +71,12 @@ void ReplDisplay::initialize() {
             return true;
         }
 
-        if (event.key() == App::Key::UpArrow && main_cursor().line_index() == 0) {
+        if (event.key() == App::Key::UpArrow && main_cursor().at_first_line(*document())) {
             move_history_up();
             return true;
         }
 
-        if (event.key() == App::Key::DownArrow && main_cursor().line_index() == document()->num_lines() - 1) {
+        if (event.key() == App::Key::DownArrow && main_cursor().at_last_line(*document())) {
             move_history_down();
             return true;
         }
