@@ -114,17 +114,13 @@ static int cpp_flags_for_token_type(CLanguage::CPPToken::Type type) {
     }
 }
 
-static void highlight_cpp(Document& document) {
-    auto& range_collection = document.syntax_highlighting_info();
-    range_collection.clear();
-
-    auto contents = document.content_string();
-    CLanguage::CPPLexer lexer(contents.string(), contents.size());
+static void highlight_cpp(StringView contents, TextRangeCollection& syntax_ranges) {
+    auto lexer = CLanguage::CPPLexer { contents.data(), contents.size() };
     lexer.lex(CLanguage::CPPLexMode::IncludeComments);
 
     for (auto& token : lexer.tokens()) {
         int flags = cpp_flags_for_token_type(token.type);
-        range_collection.add({ { token.start_line, token.start_col }, { token.end_line, token.end_col }, { flags } });
+        syntax_ranges.add({ { token.start_line, token.start_col }, { token.end_line, token.end_col }, { flags } });
     }
 }
 
@@ -171,17 +167,13 @@ static int c_flags_for_token_type(CLanguage::CToken::Type type) {
     }
 }
 
-static void highlight_c(Document& document) {
-    auto& range_collection = document.syntax_highlighting_info();
-    range_collection.clear();
-
-    auto contents = document.content_string();
-    CLanguage::CLexer lexer(contents.string(), contents.size());
+static void highlight_c(StringView contents, TextRangeCollection& syntax_ranges) {
+    CLanguage::CLexer lexer(contents.data(), contents.size());
     lexer.lex(CLanguage::CLexMode::IncludeComments);
 
     for (auto& token : lexer.tokens()) {
         int flags = c_flags_for_token_type(token.type);
-        range_collection.add({ { token.start_line, token.start_col }, { token.end_line, token.end_col }, { flags } });
+        syntax_ranges.add({ { token.start_line, token.start_col }, { token.end_line, token.end_col }, { flags } });
     }
 }
 
@@ -244,12 +236,8 @@ static int sh_flags_for_token_type(const ShLexer& lexer, int index) {
     }
 }
 
-static void highlight_sh(Document& document) {
-    auto& range_collection = document.syntax_highlighting_info();
-    range_collection.clear();
-
-    auto contents = document.content_string();
-    ShLexer lexer(contents.string(), contents.size());
+static void highlight_sh(StringView contents, TextRangeCollection& syntax_ranges) {
+    ShLexer lexer(contents.data(), contents.size());
     lexer.lex(LexComments::Yes);
 
     if (lexer.tokens().empty()) {
@@ -281,7 +269,7 @@ static void highlight_sh(Document& document) {
         int flags = sh_flags_for_token_type(lexer, i);
 
         auto& token_value = lexer.tokens()[i].value();
-        range_collection.add({
+        syntax_ranges.add({
             { static_cast<int>(token_value.start_line()), static_cast<int>(token_value.start_col()) },
             { static_cast<int>(token_value.end_line()), static_cast<int>(token_value.end_col()) },
             { flags },
@@ -291,18 +279,23 @@ static void highlight_sh(Document& document) {
 }
 
 void highlight_document(Document& document) {
+    auto syntax_ranges = TextRangeCollection {};
+    auto document_contents = document.content_string();
+
     switch (document.type()) {
         case DocumentType::CPP:
-            highlight_cpp(document);
-            return;
+            highlight_cpp(document_contents.view(), syntax_ranges);
+            break;
         case DocumentType::C:
-            highlight_c(document);
-            return;
+            highlight_c(document_contents.view(), syntax_ranges);
+            break;
         case DocumentType::ShellScript:
-            highlight_sh(document);
-            return;
+            highlight_sh(document_contents.view(), syntax_ranges);
+            break;
         default:
             return;
     }
+
+    document.syntax_highlighting_info() = move(syntax_ranges);
 }
 }
