@@ -96,7 +96,20 @@ Document::Document(Vector<Line> lines, String name, InputMode mode) : m_lines(mo
     if (m_lines.empty()) {
         m_lines.add(Line(""));
     }
+}
+
+void Document::initialize() {
+    on<DocumentTypeChanged>([this](auto&) {
+        highlight_document(*this);
+    });
+
+    on<Change>([this](auto&) {
+        highlight_document(*this);
+    });
+
     guess_type_from_name();
+
+    Object::initialize();
 }
 
 Document::~Document() {}
@@ -436,7 +449,6 @@ void Document::redo(Display& display) {
     auto& command = *m_command_stack[m_command_stack_index++];
     command.redo(display);
     m_document_was_modified = true;
-    update_syntax_highlighting();
     update_suggestions(display);
 
     emit<Change>();
@@ -449,7 +461,6 @@ void Document::undo(Display& display) {
 
     auto& command = *m_command_stack[--m_command_stack_index];
     command.undo(display);
-    update_syntax_highlighting();
     update_suggestions(display);
 
     emit<Change>();
@@ -823,7 +834,7 @@ void Document::set_type(DocumentType type) {
     }
 
     m_type = type;
-    update_syntax_highlighting();
+    emit<DocumentTypeChanged>();
 }
 
 void Document::guess_type_from_name() {
@@ -896,11 +907,6 @@ App::ObjectBoundCoroutine Document::quit(Display& display) {
         }
     }
     display.quit();
-}
-
-void Document::update_syntax_highlighting() {
-    highlight_document(*this);
-    emit<SyntaxHighlightingChanged>();
 }
 
 void Document::swap_lines_at_cursor(Display& display, SwapDirection direction) {
@@ -981,7 +987,6 @@ void Document::push_command(Display& display, UniquePtr<Command> command) {
     }
 
     m_document_was_modified = true;
-    update_syntax_highlighting();
     update_suggestions(display);
 
     emit<Change>();

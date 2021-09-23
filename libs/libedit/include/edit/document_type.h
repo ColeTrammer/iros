@@ -16,5 +16,7 @@ void update_document_type(Document& document);
 
 String document_type_to_string(DocumentType type);
 
+void highlight_sh(StringView content, TextRangeCollection& syntax_ranges);
+
 void highlight_document(Document& document);
 }

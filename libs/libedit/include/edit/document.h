@@ -25,6 +25,7 @@ APP_EVENT(Edit, DeleteFromLine, App::Event, (), ((int, line_index), (int, index_
 APP_EVENT(Edit, MoveLineTo, App::Event, (), ((int, line), (int, destination)), ())
 
 APP_EVENT(Edit, SyntaxHighlightingChanged, App::Event, (), (), ())
+APP_EVENT(Edit, DocumentTypeChanged, App::Event, (), (), ())
 
 APP_EVENT(Edit, Submit, App::Event, (), (), ())
 APP_EVENT(Edit, Change, App::Event, (), (), ())
@@ -44,7 +45,7 @@ class Document final : public App::Object {
     APP_OBJECT(Document)
 
     APP_EMITS(App::Object, DeleteLines, AddLines, SplitLines, MergeLines, AddToLine, DeleteFromLine, SyntaxHighlightingChanged, MoveLineTo,
-              Submit, Change)
+              DocumentTypeChanged, Submit, Change)
 
 public:
     static SharedPtr<Document> create_from_stdin(const String& path, Maybe<String>& error_message);
@@ -62,6 +63,7 @@ public:
         StateSnapshot state;
     };
 
+    virtual void initialize() override;
     virtual ~Document() override;
 
     void copy_settings_from(const Document& other);
@@ -169,8 +171,6 @@ public:
 
     TextRangeCollection& syntax_highlighting_info() { return m_syntax_highlighting_info; }
     const TextRangeCollection& syntax_highlighting_info() const { return m_syntax_highlighting_info; }
-
-    void update_syntax_highlighting();
 
     void swap_lines_at_cursor(Display& display, SwapDirection direction);
     void split_line_at_cursor(Display& display);

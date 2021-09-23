@@ -1,5 +1,6 @@
 #include <edit/display.h>
 #include <edit/document.h>
+#include <edit/document_type.h>
 #include <edit/rendered_line.h>
 #include <eventloop/widget_events.h>
 #include <graphics/point.h>

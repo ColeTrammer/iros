@@ -236,7 +236,7 @@ static int sh_flags_for_token_type(const ShLexer& lexer, int index) {
     }
 }
 
-static void highlight_sh(StringView contents, TextRangeCollection& syntax_ranges) {
+void highlight_sh(StringView contents, TextRangeCollection& syntax_ranges) {
     ShLexer lexer(contents.data(), contents.size());
     lexer.lex(LexComments::Yes);
 
@@ -279,23 +279,29 @@ static void highlight_sh(StringView contents, TextRangeCollection& syntax_ranges
 }
 
 void highlight_document(Document& document) {
-    auto syntax_ranges = TextRangeCollection {};
     auto document_contents = document.content_string();
 
-    switch (document.type()) {
-        case DocumentType::CPP:
-            highlight_cpp(document_contents.view(), syntax_ranges);
-            break;
-        case DocumentType::C:
-            highlight_c(document_contents.view(), syntax_ranges);
-            break;
-        case DocumentType::ShellScript:
-            highlight_sh(document_contents.view(), syntax_ranges);
-            break;
-        default:
-            return;
-    }
+    // FIXME: run this in a background thread instead of on the main thread.
+    // FIXME: don't try to highlight the document multiple times at once.
+    // FIXME: do this immediately if the document is sufficently small.
+    document.deferred_invoke([&document, document_contents = move(document_contents)] {
+        auto syntax_ranges = TextRangeCollection {};
+        switch (document.type()) {
+            case DocumentType::CPP:
+                highlight_cpp(document_contents.view(), syntax_ranges);
+                break;
+            case DocumentType::C:
+                highlight_c(document_contents.view(), syntax_ranges);
+                break;
+            case DocumentType::ShellScript:
+                highlight_sh(document_contents.view(), syntax_ranges);
+                break;
+            default:
+                return;
+        }
 
-    document.syntax_highlighting_info() = move(syntax_ranges);
+        document.syntax_highlighting_info() = move(syntax_ranges);
+        document.emit<SyntaxHighlightingChanged>();
+    });
 }
 }

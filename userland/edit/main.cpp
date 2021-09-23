@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
     }
 
     auto error_message = Maybe<String> {};
-    auto document = [&] {
+    auto make_document = [&] {
         if (read_from_stdin) {
             return Edit::Document::create_from_stdin(argv[optind] ? String(argv[optind]) : String(""), error_message);
         }
@@ -73,8 +73,7 @@ int main(int argc, char** argv) {
             return Edit::Document::create_from_file(String(argv[optind]), error_message);
         }
         return Edit::Document::create_empty();
-    }();
-    assert(document);
+    };
 
     if (use_graphics_mode) {
         auto app = App::Application::create();
@@ -86,7 +85,7 @@ int main(int argc, char** argv) {
             app->main_event_loop().set_should_exit(true);
         };
 
-        display.set_document(move(document));
+        display.set_document(make_document());
         if (error_message) {
             display.send_status_message(*error_message);
         }
@@ -198,7 +197,7 @@ int main(int argc, char** argv) {
 
     setup_display_handlers(display);
 
-    display.set_document(move(document));
+    display.set_document(make_document());
     if (error_message) {
         display.send_status_message(*error_message);
     }
