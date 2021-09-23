@@ -108,7 +108,7 @@ void TerminalDisplay::set_cols_needed_for_line_numbers(int value) {
 void TerminalDisplay::compute_cols_needed_for_line_numbers() {
     if (auto* doc = document()) {
         if (show_line_numbers()) {
-            int num_lines = doc->num_lines();
+            int num_lines = doc->line_count();
             if (num_lines == 0 || doc->input_text_mode()) {
                 set_cols_needed_for_line_numbers(0);
                 return;

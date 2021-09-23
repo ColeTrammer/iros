@@ -64,7 +64,7 @@ void ReplDisplay::initialize() {
         }
 
         if (event.key() == App::Key::D && event.control_down()) {
-            if (document()->num_lines() == 1 && document()->content_string().empty()) {
+            if (document()->line_count() == 1 && document()->content_string().empty()) {
                 set_quit_by_eof();
                 quit();
             }
@@ -112,7 +112,7 @@ void ReplDisplay::document_did_change() {
                 return;
             }
 
-            document()->insert_line(Edit::Line(""), document()->num_lines());
+            document()->insert_line(Edit::Line(""), document()->line_count());
             cursors().remove_secondary_cursors();
             document()->move_cursor_to_document_end(*this, main_cursor());
             document()->scroll_cursor_into_view(*this, main_cursor());

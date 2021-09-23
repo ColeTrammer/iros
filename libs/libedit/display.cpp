@@ -107,7 +107,7 @@ void Display::set_document(SharedPtr<Document> document) {
 
     m_cursors.remove_secondary_cursors();
     m_cursors.main_cursor().reset();
-    m_rendered_lines.resize(m_document->num_lines());
+    m_rendered_lines.resize(m_document->line_count());
     invalidate_all_lines();
     set_scroll_offset({});
     hide_suggestions_panel();
@@ -137,7 +137,7 @@ void Display::clamp_scroll_offset() {
         return;
     }
 
-    if (scroll_offset().line_index() >= document()->num_lines()) {
+    if (scroll_offset().line_index() >= document()->line_count()) {
         set_scroll_offset(
             { document()->last_line_index(), rendered_line_count(document()->last_line_index()) - 1, scroll_offset().relative_col() });
         return;
@@ -175,7 +175,7 @@ RenderedLine& Display::rendered_line_at_index(int index) {
 void Display::invalidate_all_lines() {
     m_rendered_lines.clear();
     if (auto doc = document()) {
-        m_rendered_lines.resize(doc->num_lines());
+        m_rendered_lines.resize(doc->line_count());
     }
     invalidate_all_line_rects();
 }
@@ -312,7 +312,7 @@ void Display::update_search_results() {
         return;
     }
 
-    for (int i = 0; i < document()->num_lines(); i++) {
+    for (int i = 0; i < document()->line_count(); i++) {
         document()->line_at_index(i).search(*document(), i, m_search_text, m_search_results);
     }
 
@@ -416,7 +416,7 @@ void Display::render_lines() {
     }
 
     auto render_position = scroll_offset();
-    for (int row_in_display = 0; row_in_display < rows() && render_position.line_index() < document()->num_lines();) {
+    for (int row_in_display = 0; row_in_display < rows() && render_position.line_index() < document()->line_count();) {
         auto& line = rendered_line_at_index(render_position.line_index());
         row_in_display += line.render(*this, { render_position.line_index(), 0 }, render_position.relative_col(),
                                       render_position.relative_row(), row_in_display);

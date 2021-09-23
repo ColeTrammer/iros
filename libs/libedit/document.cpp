@@ -110,7 +110,7 @@ void Document::copy_settings_from(const Document& other) {
 }
 
 String Document::content_string() const {
-    if (input_text_mode() && num_lines() == 1) {
+    if (input_text_mode() && line_count() == 1) {
         return m_lines.first().contents();
     }
 
@@ -125,7 +125,7 @@ String Document::content_string() const {
 }
 
 size_t Document::cursor_index_in_content_string(const Cursor& cursor) const {
-    if (input_text_mode() && num_lines() == 1) {
+    if (input_text_mode() && line_count() == 1) {
         return cursor.index_into_line();
     }
 
@@ -140,11 +140,11 @@ size_t Document::cursor_index_in_content_string(const Cursor& cursor) const {
 
 int Document::num_rendered_lines(Display& display) const {
     if (!display.word_wrap_enabled()) {
-        return num_lines();
+        return line_count();
     }
 
     int total = 0;
-    for (int i = 0; i < num_lines(); i++) {
+    for (int i = 0; i < line_count(); i++) {
         total += display.rendered_line_count(i);
     }
     return total;
@@ -365,7 +365,7 @@ void Document::move_cursor_page_up(Display& display, Cursor& cursor, MovementMod
 void Document::move_cursor_page_down(Display& display, Cursor& cursor, MovementMode mode) {
     int rows_to_move = display.rows() - 1;
 
-    for (int i = 0; !cursor.at_document_end(*this) <= num_lines() && i < rows_to_move; i++) {
+    for (int i = 0; !cursor.at_document_end(*this) <= line_count() && i < rows_to_move; i++) {
         move_cursor_down(display, cursor, mode);
     }
 }
@@ -837,8 +837,8 @@ App::ObjectBoundCoroutine Document::go_to_line(Display& display) {
     auto& result = maybe_result.value();
     char* end_ptr = result.string();
     long line_number = strtol(result.string(), &end_ptr, 10);
-    if (errno == ERANGE || end_ptr != result.string() + result.size() || line_number < 1 || line_number > num_lines()) {
-        display.send_status_message(format("Line `{}' is not between 1 and {}", result, num_lines()));
+    if (errno == ERANGE || end_ptr != result.string() + result.size() || line_number < 1 || line_number > line_count()) {
+        display.send_status_message(format("Line `{}' is not between 1 and {}", result, line_count()));
         co_return;
     }
 

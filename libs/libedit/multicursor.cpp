@@ -88,7 +88,7 @@ void MultiCursor::install_document_listeners(Document& document) {
                 continue;
             }
             if (cursor.line_index() == event.line_index()) {
-                if (event.line_index() == document.num_lines()) {
+                if (event.line_index() == document.line_count()) {
                     cursor.set({ document.last_line_index(), document.last_line().length() });
                     continue;
                 }

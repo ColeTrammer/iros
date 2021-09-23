@@ -105,7 +105,7 @@ public:
     void scroll_cursor_into_view(Display& display, Cursor& cursor);
     void center_display_on_cursor(Display& display, Cursor& cursor);
 
-    int num_lines() const { return m_lines.size(); }
+    int line_count() const { return m_lines.size(); }
     int num_rendered_lines(Display& display) const;
 
     void remove_line(int index);
@@ -166,7 +166,7 @@ public:
     const Line& last_line() const { return m_lines.last(); }
 
     int first_line_index() const { return 0; }
-    int last_line_index() const { return num_lines() - 1; }
+    int last_line_index() const { return line_count() - 1; }
 
     bool execute_command(Display& display, Command& command);
 
