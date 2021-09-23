@@ -71,12 +71,12 @@ void ReplDisplay::initialize() {
             return true;
         }
 
-        if (event.key() == App::Key::UpArrow && cursors().main_cursor().line_index() == 0) {
+        if (event.key() == App::Key::UpArrow && main_cursor().line_index() == 0) {
             move_history_up();
             return true;
         }
 
-        if (event.key() == App::Key::DownArrow && cursors().main_cursor().line_index() == document()->num_lines() - 1) {
+        if (event.key() == App::Key::DownArrow && main_cursor().line_index() == document()->num_lines() - 1) {
             move_history_down();
             return true;
         }
@@ -102,7 +102,7 @@ void ReplDisplay::document_did_change() {
 
             if (input_status == Repl::InputStatus::Finished) {
                 cursors().remove_secondary_cursors();
-                document()->move_cursor_to_document_end(*this, cursors().main_cursor());
+                document()->move_cursor_to_document_end(*this, main_cursor());
                 set_preview_auto_complete(false);
                 invalidate();
                 quit();
@@ -114,8 +114,8 @@ void ReplDisplay::document_did_change() {
 
             document()->insert_line(Edit::Line(""), document()->num_lines());
             cursors().remove_secondary_cursors();
-            document()->move_cursor_to_document_end(*this, cursors().main_cursor());
-            document()->scroll_cursor_into_view(*this, cursors().main_cursor());
+            document()->move_cursor_to_document_end(*this, main_cursor());
+            document()->scroll_cursor_into_view(*this, main_cursor());
         });
     }
 }
@@ -134,7 +134,7 @@ Maybe<Point> ReplDisplay::cursor_position() {
         return {};
     }
 
-    auto position = display_position_of_index(cursors().main_cursor().index());
+    auto position = display_position_of_index(main_cursor().index());
     return Point { position.col(), position.row() };
 }
 
@@ -285,7 +285,7 @@ void ReplDisplay::do_compute_suggestions() {
         return set_suggestions(move(suggestions));
     }
 
-    return set_suggestions(m_repl.get_suggestions(*document(), cursors().main_cursor().index()));
+    return set_suggestions(m_repl.get_suggestions(*document(), main_cursor().index()));
 }
 
 void ReplDisplay::show_suggestions_panel() {
@@ -293,7 +293,7 @@ void ReplDisplay::show_suggestions_panel() {
         return;
     }
 
-    auto cursor_position = display_position_of_index(cursors().main_cursor().index());
+    auto cursor_position = display_position_of_index(main_cursor().index());
 
     m_suggestions_panel = add<SuggestionsPanel>(*this).shared_from_this();
 
@@ -361,9 +361,9 @@ void ReplDisplay::move_history_up() {
     put_history_document(move(current_document), m_history_index);
 
     set_document(new_document);
-    new_document->move_cursor_to_document_end(*this, cursors().main_cursor());
-    new_document->scroll_cursor_into_view(*this, cursors().main_cursor());
-    invalidate_line(cursors().main_cursor().line_index());
+    new_document->move_cursor_to_document_end(*this, main_cursor());
+    new_document->scroll_cursor_into_view(*this, main_cursor());
+    invalidate_line(main_cursor().line_index());
     invalidate();
 
     m_history_index--;
@@ -380,9 +380,9 @@ void ReplDisplay::move_history_down() {
     put_history_document(move(current_document), m_history_index);
 
     set_document(new_document);
-    new_document->move_cursor_to_document_end(*this, cursors().main_cursor());
-    new_document->scroll_cursor_into_view(*this, cursors().main_cursor());
-    invalidate_line(cursors().main_cursor().line_index());
+    new_document->move_cursor_to_document_end(*this, main_cursor());
+    new_document->scroll_cursor_into_view(*this, main_cursor());
+    invalidate_line(main_cursor().line_index());
     invalidate();
 
     m_history_index++;

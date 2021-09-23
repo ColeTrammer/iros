@@ -36,7 +36,7 @@ void TerminalPrompt::initialize() {
 
     set_focus_proxy(m_display.get());
 
-    document->move_cursor_to_document_end(*m_display, m_display->cursors().main_cursor());
+    document->move_cursor_to_document_end(*m_display, m_display->main_cursor());
 
     Panel::initialize();
 }

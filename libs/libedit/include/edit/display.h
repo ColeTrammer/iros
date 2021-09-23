@@ -67,6 +67,9 @@ public:
 
     SharedPtr<Document> document_as_shared() const { return m_document; }
 
+    Cursor& main_cursor() { return m_cursors.main_cursor(); }
+    const Cursor& main_cursor() const { return m_cursors.main_cursor(); }
+
     MultiCursor& cursors() { return m_cursors; }
     const MultiCursor& cursors() const { return m_cursors; }
 

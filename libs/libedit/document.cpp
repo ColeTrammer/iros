@@ -609,7 +609,7 @@ void Document::replace_next_search_match(Display& display, const String& replace
     }
 
     auto group = make_unique<CommandGroup>(*this, "ReplaceSearchMatch");
-    if (display.search_text() != selection_text(display.cursors().main_cursor())) {
+    if (display.search_text() != selection_text(display.main_cursor())) {
         group->add<MovementCommand>(*this, [this](Display& display, MultiCursor&) {
             display.move_cursor_to_next_search_match();
         });
@@ -842,7 +842,7 @@ App::ObjectBoundCoroutine Document::go_to_line(Display& display) {
         co_return;
     }
 
-    auto& cursor = display.cursors().main_cursor();
+    auto& cursor = display.main_cursor();
 
     cursor.clear_selection();
     cursor.set_line_index(line_number - 1);
@@ -949,7 +949,7 @@ void Document::select_all_matches(Display& display, const TextRangeCollection& c
 
     display.cursors().remove_secondary_cursors();
 
-    auto& main_cursor = display.cursors().main_cursor();
+    auto& main_cursor = display.main_cursor();
     main_cursor.set_selection_anchor(collection.range(0).start());
     main_cursor.set(collection.range(0).end());
 
@@ -1024,7 +1024,7 @@ void Document::push_command(Display& display, UniquePtr<Command> command) {
 
 void Document::insert_suggestion(Display& display, const MatchedSuggestion& suggestion) {
     display.cursors().remove_secondary_cursors();
-    move_cursor_to(display, display.cursors().main_cursor(), suggestion.start(), MovementMode::Select);
+    move_cursor_to(display, display.main_cursor(), suggestion.start(), MovementMode::Select);
     insert_text_at_cursor(display, String { suggestion.content() });
 }
 

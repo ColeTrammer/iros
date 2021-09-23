@@ -48,7 +48,7 @@ void TerminalSearch::initialize() {
         search_text_box.set_document(search_document);
         search_text_box.enter();
 
-        search_document->select_all(search_text_box, search_text_box.cursors().main_cursor());
+        search_document->select_all(search_text_box, search_text_box.main_cursor());
 
         search_container.set_focus_proxy(&search_text_box);
         set_focus_proxy(&search_text_box);

@@ -140,7 +140,7 @@ Maybe<Point> TerminalDisplay::cursor_position() {
         return {};
     }
 
-    auto position = display_position_of_index(cursors().main_cursor().index());
+    auto position = display_position_of_index(main_cursor().index());
     if (position.row() < 0 || position.row() >= rows() || position.col() < 0 || position.col() >= cols()) {
         return {};
     }

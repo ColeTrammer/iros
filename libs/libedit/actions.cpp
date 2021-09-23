@@ -204,7 +204,7 @@ void init_actions() {
 
     register_document_keyboard_action("Split Line", { App::Key::Enter, 0 }, [](Display& display) {
         auto& document = *display.document();
-        if (!document.submittable() || &display.cursors().main_cursor().referenced_line(document) != &document.last_line()) {
+        if (!document.submittable() || &display.main_cursor().referenced_line(document) != &document.last_line()) {
             document.split_line_at_cursor(display);
         } else if (document.submittable()) {
             document.emit<Submit>();
@@ -214,7 +214,7 @@ void init_actions() {
     register_document_keyboard_action("Reset Cursors", { App::Key::Escape, 0 }, [](Display& display) {
         display.clear_search();
         display.cursors().remove_secondary_cursors();
-        display.cursors().main_cursor().clear_selection();
+        display.main_cursor().clear_selection();
     });
 
     register_document_keyboard_action("Show Suggestions", { App::Key::Space, App::KeyModifier::Control }, [](Display& display) {
@@ -238,7 +238,7 @@ void init_actions() {
 
     register_display_keyboard_action("Select All", { App::Key::A, App::KeyModifier::Control }, [](Display& display) {
         auto& document = *display.document();
-        document.select_all(display, display.cursors().main_cursor());
+        document.select_all(display, display.main_cursor());
     });
 
     register_display_keyboard_action("Select All Words at Cursor",

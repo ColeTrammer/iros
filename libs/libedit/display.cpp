@@ -27,7 +27,7 @@ void Display::initialize() {
         if (event.left_button()) {
             document.start_input(*this, true);
             cursors().remove_secondary_cursors();
-            auto& cursor = cursors().main_cursor();
+            auto& cursor = main_cursor();
             document.move_cursor_to(*this, cursor, index, MovementMode::Move);
             switch (event.cyclic_count(3)) {
                 case 2:
@@ -55,7 +55,7 @@ void Display::initialize() {
         if (event.buttons_down() & App::MouseButton::Left) {
             document.start_input(*this, true);
             cursors().remove_secondary_cursors();
-            auto& cursor = cursors().main_cursor();
+            auto& cursor = main_cursor();
             document.move_cursor_to(*this, cursor, index, MovementMode::Select);
             document.finish_input(*this, true);
             return true;
@@ -118,11 +118,11 @@ void Display::set_suggestions(Vector<Suggestion> suggestions) {
     auto old_suggestion_range = m_suggestions.current_text_range();
     m_suggestions.set_suggestions(move(suggestions));
 
-    auto cursor_index = cursors().main_cursor().index();
+    auto cursor_index = main_cursor().index();
     auto index_for_suggestion = TextIndex { cursor_index.line_index(), max(cursor_index.index_into_line() - 1, 0) };
     m_suggestions.set_current_text_range(document()->syntax_highlighting_info().range_at_text_index(index_for_suggestion));
 
-    m_suggestions.compute_matches(*document(), cursors().main_cursor());
+    m_suggestions.compute_matches(*document(), main_cursor());
 
     suggestions_did_change(old_suggestion_range);
 }
@@ -196,7 +196,7 @@ void Display::set_preview_auto_complete(bool b) {
 
     m_preview_auto_complete = b;
     if (document()) {
-        invalidate_line(cursors().main_cursor().line_index());
+        invalidate_line(main_cursor().line_index());
     }
 }
 
@@ -221,7 +221,7 @@ void Display::set_word_wrap_enabled(bool b) {
             cursor.compute_max_col(*this);
         }
         set_scroll_offset({ scroll_offset().line_index(), 0, 0 });
-        document()->scroll_cursor_into_view(*this, cursors().main_cursor());
+        document()->scroll_cursor_into_view(*this, main_cursor());
     }
 }
 
@@ -243,7 +243,7 @@ void Display::move_cursor_to_next_search_match() {
     document()->start_input(*this, true);
 
     cursors().remove_secondary_cursors();
-    auto& cursor = cursors().main_cursor();
+    auto& cursor = main_cursor();
 
     if (m_search_result_index >= m_search_results.size()) {
         m_search_result_index = 0;
@@ -269,7 +269,7 @@ void Display::select_next_word_at_cursor() {
         return;
     }
 
-    auto& main_cursor = cursors().main_cursor();
+    auto& main_cursor = this->main_cursor();
     if (main_cursor.selection().empty()) {
         document()->select_word_at_cursor(*this, main_cursor);
         if (main_cursor.selection().empty()) {
@@ -318,7 +318,7 @@ void Display::update_search_results() {
 
     m_search_result_index = 0;
     while (m_search_result_index < m_search_results.size() &&
-           cursors().main_cursor().index() < m_search_results.range(m_search_result_index).start()) {
+           main_cursor().index() < m_search_results.range(m_search_result_index).start()) {
         m_search_result_index++;
     }
 }
