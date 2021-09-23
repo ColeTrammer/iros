@@ -319,41 +319,6 @@ void Document::move_cursor_to_document_end(Display& display, Cursor& cursor, Mov
     move_cursor_to(display, cursor, { last_line_index, last_line.length() }, mode);
 }
 
-void Document::center_display_on_cursor(Display& display, Cursor& cursor) {
-    auto position = cursor.absolute_position(display);
-    position.set_relative_col(0);
-
-    display.set_scroll_offset(position);
-    display.scroll_up(display.rows() / 2);
-}
-
-void Document::scroll_cursor_into_view(Display& display, Cursor& cursor) {
-    // NOTE: this is a fast path to prevent calling display_position_of_index() when the position is very far
-    //       from the display's scroll offset. If we know for sure the cursor is not on the display, we can
-    //       first move the cursor to the display and then adjust if needed.
-    if (cursor.index().line_index() < display.scroll_offset().line_index()) {
-        auto relative_row = cursor.relative_position(display).row();
-        display.set_scroll_offset({ cursor.line_index(), relative_row, display.scroll_offset().relative_col() });
-    } else if (cursor.index().line_index() > display.scroll_offset().line_index() + display.rows()) {
-        auto relative_row = cursor.relative_position(display).row();
-        display.set_scroll_offset({ cursor.line_index(), relative_row, display.scroll_offset().relative_col() });
-        display.scroll_up(display.rows() - 1);
-    }
-
-    auto cursor_position = display.display_position_of_index(cursor.index());
-    if (cursor_position.row() < 0) {
-        display.scroll_up(-cursor_position.row());
-    } else if (cursor_position.row() >= display.rows()) {
-        display.scroll_down(cursor_position.row() - display.rows() + 1);
-    }
-
-    if (cursor_position.col() < 0) {
-        display.scroll_left(-cursor_position.col());
-    } else if (cursor_position.col() >= display.cols()) {
-        display.scroll_right(cursor_position.col() - display.cols() + 1);
-    }
-}
-
 void Document::move_cursor_page_up(Display& display, Cursor& cursor, MovementMode mode) {
     int rows_to_move = display.rows() - 1;
 
@@ -847,7 +812,7 @@ App::ObjectBoundCoroutine Document::go_to_line(Display& display) {
     cursor.clear_selection();
     cursor.set_line_index(line_number - 1);
 
-    center_display_on_cursor(display, cursor);
+    display.center_on_cursor(cursor);
 
     move_cursor_to_line_start(display, cursor);
 }
@@ -1039,7 +1004,7 @@ void Document::finish_input(Display& display, bool should_scroll_cursor_into_vie
     cursors.remove_duplicate_cursors();
 
     if (should_scroll_cursor_into_view) {
-        scroll_cursor_into_view(display, cursors.main_cursor());
+        display.scroll_cursor_into_view(cursors.main_cursor());
     }
 
     update_suggestions(display);

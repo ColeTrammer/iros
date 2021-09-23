@@ -162,6 +162,41 @@ void Display::scroll(int vertical, int horizontal) {
     set_scroll_offset(display_to_absolute_position({ vertical, horizontal }));
 }
 
+void Display::center_on_cursor(Cursor& cursor) {
+    auto position = cursor.absolute_position(*this);
+    position.set_relative_col(0);
+
+    set_scroll_offset(position);
+    scroll_up(rows() / 2);
+}
+
+void Display::scroll_cursor_into_view(Cursor& cursor) {
+    // NOTE: this is a fast path to prevent calling display_position_of_index() when the position is very far
+    //       from the display's scroll offset. If we know for sure the cursor is not on the display, we can
+    //       first move the cursor to the display and then adjust if needed.
+    if (cursor.index().line_index() < scroll_offset().line_index()) {
+        auto relative_row = cursor.relative_position(*this).row();
+        set_scroll_offset({ cursor.line_index(), relative_row, scroll_offset().relative_col() });
+    } else if (cursor.index().line_index() > scroll_offset().line_index() + rows()) {
+        auto relative_row = cursor.relative_position(*this).row();
+        set_scroll_offset({ cursor.line_index(), relative_row, scroll_offset().relative_col() });
+        scroll_up(rows() - 1);
+    }
+
+    auto cursor_position = display_position_of_index(cursor.index());
+    if (cursor_position.row() < 0) {
+        scroll_up(-cursor_position.row());
+    } else if (cursor_position.row() >= rows()) {
+        scroll_down(cursor_position.row() - rows() + 1);
+    }
+
+    if (cursor_position.col() < 0) {
+        scroll_left(-cursor_position.col());
+    } else if (cursor_position.col() >= cols()) {
+        scroll_right(cursor_position.col() - cols() + 1);
+    }
+}
+
 RenderedLine& Display::rendered_line_at_index(int index) {
     assert(index < m_rendered_lines.size());
 
@@ -221,7 +256,7 @@ void Display::set_word_wrap_enabled(bool b) {
             cursor.compute_max_col(*this);
         }
         set_scroll_offset({ scroll_offset().line_index(), 0, 0 });
-        document()->scroll_cursor_into_view(*this, main_cursor());
+        scroll_cursor_into_view(main_cursor());
     }
 }
 
@@ -293,7 +328,7 @@ void Display::select_next_word_at_cursor() {
     auto& result = m_search_results.range(m_search_result_index);
     auto* added_cursor = cursors().add_cursor_at(*document(), result.end(), result.start());
     if (added_cursor) {
-        document()->scroll_cursor_into_view(*this, *added_cursor);
+        scroll_cursor_into_view(*added_cursor);
     }
 
     ++m_search_result_index;

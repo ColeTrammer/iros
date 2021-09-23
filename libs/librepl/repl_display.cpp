@@ -115,7 +115,7 @@ void ReplDisplay::document_did_change() {
             document()->insert_line(Edit::Line(""), document()->line_count());
             cursors().remove_secondary_cursors();
             document()->move_cursor_to_document_end(*this, main_cursor());
-            document()->scroll_cursor_into_view(*this, main_cursor());
+            scroll_cursor_into_view(main_cursor());
         });
     }
 }
@@ -362,7 +362,7 @@ void ReplDisplay::move_history_up() {
 
     set_document(new_document);
     new_document->move_cursor_to_document_end(*this, main_cursor());
-    new_document->scroll_cursor_into_view(*this, main_cursor());
+    scroll_cursor_into_view(main_cursor());
     invalidate_line(main_cursor().line_index());
     invalidate();
 
@@ -381,7 +381,7 @@ void ReplDisplay::move_history_down() {
 
     set_document(new_document);
     new_document->move_cursor_to_document_end(*this, main_cursor());
-    new_document->scroll_cursor_into_view(*this, main_cursor());
+    scroll_cursor_into_view(main_cursor());
     invalidate_line(main_cursor().line_index());
     invalidate();
 

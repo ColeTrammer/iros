@@ -102,9 +102,6 @@ public:
     void move_cursor_page_down(Display& display, Cursor& cursor, MovementMode mode = MovementMode::Move);
     void move_cursor_to(Display& display, Cursor& cursor, const TextIndex& index, MovementMode mode = MovementMode::Move);
 
-    void scroll_cursor_into_view(Display& display, Cursor& cursor);
-    void center_display_on_cursor(Display& display, Cursor& cursor);
-
     int line_count() const { return m_lines.size(); }
     int num_rendered_lines(Display& display) const;
 

@@ -169,14 +169,14 @@ void init_actions() {
                                      [](Display& display) {
                                          auto& document = *display.document();
                                          if (auto* cursor = display.cursors().add_cursor(document, AddCursorMode::Down)) {
-                                             document.scroll_cursor_into_view(display, *cursor);
+                                             display.scroll_cursor_into_view(*cursor);
                                          }
                                      });
     register_display_keyboard_action("Add Cursor Up", { App::Key::UpArrow, App::KeyModifier::Control | App::KeyModifier::Shift },
                                      [](Display& display) {
                                          auto& document = *display.document();
                                          if (auto* cursor = display.cursors().add_cursor(document, AddCursorMode::Up)) {
-                                             document.scroll_cursor_into_view(display, *cursor);
+                                             display.scroll_cursor_into_view(*cursor);
                                          }
                                      });
 
