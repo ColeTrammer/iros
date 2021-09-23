@@ -17,4 +17,4 @@ set(SOURCES
 
 add_os_library(libedit edit TRUE)
 
-target_link_libraries(libedit PUBLIC libliim libext libgraphics libeventloop libclanguage libsh)
+target_link_libraries(libedit PUBLIC libliim libext libgraphics libeventloop libthread libclanguage libsh)

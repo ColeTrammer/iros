@@ -10,6 +10,7 @@
 #include <sh/sh_lexer.h>
 #include <stdlib.h>
 #include <string.h>
+#include <thread/background_job.h>
 
 namespace Edit {
 void update_document_type(Document& document) {
@@ -278,30 +279,38 @@ void highlight_sh(StringView contents, TextRangeCollection& syntax_ranges) {
     }
 }
 
+static void do_highlight_document(DocumentType type, StringView contents, TextRangeCollection& syntax_ranges) {
+    switch (type) {
+        case DocumentType::CPP:
+            highlight_cpp(contents, syntax_ranges);
+            return;
+        case DocumentType::C:
+            highlight_c(contents, syntax_ranges);
+            return;
+        case DocumentType::ShellScript:
+            highlight_sh(contents, syntax_ranges);
+            return;
+        default:
+            return;
+    }
+}
+
 void highlight_document(Document& document) {
     auto document_contents = document.content_string();
 
-    // FIXME: run this in a background thread instead of on the main thread.
     // FIXME: don't try to highlight the document multiple times at once.
     // FIXME: do this immediately if the document is sufficently small.
-    document.deferred_invoke([&document, document_contents = move(document_contents)] {
-        auto syntax_ranges = TextRangeCollection {};
-        switch (document.type()) {
-            case DocumentType::CPP:
-                highlight_cpp(document_contents.view(), syntax_ranges);
-                break;
-            case DocumentType::C:
-                highlight_c(document_contents.view(), syntax_ranges);
-                break;
-            case DocumentType::ShellScript:
-                highlight_sh(document_contents.view(), syntax_ranges);
-                break;
-            default:
-                return;
-        }
+    Thread::BackgroundJob::start(
+        [weak_document = document.weak_from_this(), document_contents = move(document_contents), type = document.type()] {
+            auto syntax_ranges = TextRangeCollection {};
+            do_highlight_document(type, document_contents.view(), syntax_ranges);
 
-        document.syntax_highlighting_info() = move(syntax_ranges);
-        document.emit<SyntaxHighlightingChanged>();
-    });
+            if (auto document = weak_document.lock()) {
+                document->deferred_invoke([&document = static_cast<Document&>(*document), syntax_ranges = move(syntax_ranges)] {
+                    document.syntax_highlighting_info() = move(syntax_ranges);
+                    document.emit<SyntaxHighlightingChanged>();
+                });
+            }
+        });
 }
 }
