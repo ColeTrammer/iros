@@ -102,45 +102,21 @@ bool InsertCommand::do_execute(Display&, MultiCursor& cursors) {
         return false;
     }
 
-    for (int i = 0; i < cursors.size(); i++) {
-        auto& cursor = cursors[i];
+    for (auto& cursor : cursors) {
         if (!cursor.selection().empty()) {
             document().delete_text_in_range(cursor.selection());
         }
-
-        if (m_text.size() == 1 && m_text[0] == '\n') {
-            String leading_whitespace = "";
-            auto& line = cursor.referenced_line(document());
-            for (int i = 0; i < cursor.index_into_line(); i++) {
-                if (!isspace(line.char_at(i))) {
-                    break;
-                }
-
-                leading_whitespace += String(line.char_at(i));
-            }
-            m_text += move(leading_whitespace);
-        }
-
-        do_insert(document(), cursors, i, m_text);
+        document().insert_text_at_index(cursor.index(), m_text.view());
     }
-
     return true;
-}
-
-void InsertCommand::do_insert(Document& document, MultiCursor& cursors, int cursor_index, const String& text) {
-    auto& cursor = cursors[cursor_index];
-    document.insert_text_at_index(cursor.index(), text.view());
 }
 
 void InsertCommand::do_undo(Display&, MultiCursor& cursors) {
     for (int cursor_index = 0; cursor_index < cursors.size(); cursor_index++) {
-        auto& cursor = cursors[cursor_index];
-
-        cursor.set_selection_anchor(start_snapshot().cursors[cursor_index].index());
-        document().delete_text_in_range(cursor.selection());
-
-        if (!start_snapshot().cursors[cursor_index].selection().empty()) {
-            do_insert(document(), cursors, cursor_index, selection_text(cursor_index));
+        auto start_selection = start_snapshot().cursors[cursor_index].selection();
+        document().delete_text_in_range({ start_selection.start(), end_snapshot().cursors[cursor_index].index() });
+        if (!start_selection.empty()) {
+            document().insert_text_at_index(start_selection.start(), selection_text(cursor_index).view());
         }
     }
 }
@@ -164,10 +140,9 @@ bool DeleteCommand::do_execute(Display&, MultiCursor& cursors) {
 
 void DeleteCommand::do_undo(Display&, MultiCursor& cursors) {
     for (int i = cursors.size() - 1; i >= 0; i--) {
-        auto& cursor = cursors[i];
-        if (!start_snapshot().cursors[i].selection().empty()) {
-            cursor.clear_selection();
-            InsertCommand::do_insert(document(), cursors, i, selection_text(i));
+        auto start_selection = start_snapshot().cursors[i].selection();
+        if (!start_selection.empty()) {
+            document().insert_text_at_index(start_selection.start(), selection_text(i).view());
         }
     }
 }

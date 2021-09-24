@@ -627,14 +627,13 @@ void Document::insert_text_at_index(const TextIndex& index_in, StringView text) 
         return;
     }
 
-    auto first_line_index = index.line_index();
-    auto& first_line = line_at_index(first_line_index);
+    auto& first_line = line_at_index(index.line_index());
     first_line.insert_text(*this, index, lines.first());
 
     if (lines.size() == 1) {
         return;
     }
-    split_line_at({ first_line_index, first_line.length() });
+    split_line_at({ index.line_index(), index.index_into_line() + static_cast<int>(lines.first().size()) });
 
     auto line_count_to_insert = lines.size() - 2;
     if (line_count_to_insert > 0) {

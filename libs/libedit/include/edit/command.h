@@ -105,8 +105,6 @@ public:
     virtual bool do_execute(Display& display, MultiCursor& cursor) override;
     virtual void do_undo(Display& display, MultiCursor& cursor) override;
 
-    static void do_insert(Document& document, MultiCursor& cursors, int cursor_index, const String& string);
-
     virtual bool merge(Command& other) override;
 
 private:
