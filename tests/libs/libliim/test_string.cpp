@@ -124,4 +124,7 @@ TEST(string, mutators) {
 
     str.remove_index(4);
     EXPECT_EQ(str, "hArri"s);
+
+    str.remove_count(2, 2);
+    EXPECT_EQ(str, "hAi"s);
 }

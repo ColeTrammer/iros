@@ -57,7 +57,9 @@ public:
         return *this;
     }
 
-    bool operator==(const String& other) const { return strcmp(this->string(), other.string()) == 0; }
+    bool operator==(const String& other) const {
+        return this->size() == other.size() && memcmp(this->string(), other.string(), this->size()) == 0;
+    }
     bool operator!=(const String& other) const { return !(*this == other); }
 
     char& operator[](size_t index) {
@@ -128,6 +130,7 @@ public:
 
     void clear();
     void remove_index(size_t index);
+    void remove_count(size_t index, size_t count);
 
     void reverse();
 
@@ -281,6 +284,12 @@ inline void String::remove_index(size_t index) {
     assert(index < size());
     memmove(string() + index, string() + index + 1, size() - index);
     set_size(size() - 1);
+}
+
+inline void String::remove_count(size_t index, size_t count) {
+    assert(index + count <= size());
+    memmove(string() + index, string() + index + count, size() - index - count + 1);
+    set_size(size() - count);
 }
 
 inline void String::reverse() {
