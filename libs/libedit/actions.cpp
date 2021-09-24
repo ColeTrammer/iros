@@ -233,7 +233,18 @@ void init_actions() {
             }
             return;
         }
-        document.insert_char(display, '\t');
+
+        if (!document.convert_tabs_to_spaces()) {
+            document.insert_char(display, '\t');
+            return;
+        }
+
+        auto spaces = Vector<String> {};
+        for (auto& cursor : display.cursors()) {
+            auto col_position = display.absolute_col_offset_of_index(cursor.index());
+            spaces.add(String::repeat(' ', tab_width - (col_position % tab_width)));
+        }
+        document.insert_text_per_cursor(display, move(spaces));
     });
 
     register_display_keyboard_action("Select All", { App::Key::A, App::KeyModifier::Control }, [](Display& display) {

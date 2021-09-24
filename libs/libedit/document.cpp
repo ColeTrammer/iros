@@ -505,6 +505,10 @@ void Document::insert_line_at_cursor(Display& display, const String& line_text) 
     push_command(display, move(group));
 }
 
+void Document::insert_text_per_cursor(Display& display, Vector<String> strings) {
+    push_command<InsertCommand>(display, move(strings));
+}
+
 void Document::insert_text_at_cursor(Display& display, const String& text) {
     auto all_cursors_have_selection = [&] {
         for (auto& cursor : display.cursors()) {

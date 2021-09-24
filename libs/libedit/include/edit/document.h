@@ -138,6 +138,7 @@ public:
     void cut(Display& display, MultiCursor& cursor);
 
     void insert_suggestion(Display& display, const MatchedSuggestion& suggestion);
+    void insert_text_per_cursor(Display& display, Vector<String> strings);
     void insert_text_at_cursor(Display& display, const String& string);
     void insert_line_at_cursor(Display& display, const String& line);
     void replace_next_search_match(Display& display, const String& replacement);
