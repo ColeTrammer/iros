@@ -50,7 +50,8 @@ public:
     virtual int enter() override;
     virtual void send_status_message(String message) override;
     virtual void enter_search(String starting_text) override;
-    virtual void quit() override;
+
+    virtual App::ObjectBoundCoroutine quit() override;
 
     virtual void set_clipboard_contents(String text, bool is_whole_line) override;
     virtual String clipboard_contents(bool& is_whole_line) const override;

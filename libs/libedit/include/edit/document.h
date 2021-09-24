@@ -71,9 +71,6 @@ public:
     void invalidate_lines_in_range(Display& display, const TextRange& range);
     void invalidate_lines_in_range_collection(Display& display, const TextRangeCollection& collection);
 
-    App::ObjectBoundCoroutine save(Display& display);
-    App::ObjectBoundCoroutine quit(Display& display);
-
     bool input_text_mode() const { return m_input_mode == InputMode::InputText; }
     bool submittable() const { return m_submittable; }
 
@@ -175,8 +172,6 @@ public:
     void delete_char(Display& display, DeleteCharMode mode);
     void delete_word(Display& display, DeleteCharMode mode);
     void delete_line(Display& display);
-
-    App::ObjectBoundCoroutine go_to_line(Display& display);
 
 private:
     Document(Vector<Line> lines, String name, InputMode mode);

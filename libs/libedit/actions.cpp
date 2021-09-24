@@ -306,8 +306,7 @@ void init_actions() {
     });
 
     register_display_keyboard_action("Go To Line", { App::Key::G, App::KeyModifier::Control }, [](Display& display) {
-        auto& document = *display.document();
-        display.this_widget().start_coroutine(document.go_to_line(display));
+        display.this_widget().start_coroutine(display.go_to_line());
     });
 
     register_display_keyboard_action("Toogle Show Line Numbers", { App::Key::L, App::KeyModifier::Alt }, [](Display& display) {
@@ -322,13 +321,11 @@ void init_actions() {
         display.this_widget().start_coroutine(display.do_open_prompt());
     });
     register_display_keyboard_action("Close Display", { App::Key::Q, App::KeyModifier::Control }, [](Display& display) {
-        auto& document = *display.document();
-        display.this_widget().start_coroutine(document.quit(display));
+        display.this_widget().start_coroutine(display.quit());
     });
 
     register_display_keyboard_action("Save", { App::Key::S, App::KeyModifier::Control }, [](Display& display) {
-        auto& document = *display.document();
-        display.this_widget().start_coroutine(document.save(display));
+        display.this_widget().start_coroutine(display.save());
     });
 }
 }

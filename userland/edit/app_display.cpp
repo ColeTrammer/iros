@@ -131,10 +131,11 @@ int AppDisplay::enter() {
     return 0;
 }
 
-void AppDisplay::quit() {
+App::ObjectBoundCoroutine AppDisplay::quit() {
     if (on_quit) {
         on_quit();
     }
+    co_return;
 }
 
 void AppDisplay::send_status_message(String) {}

@@ -51,8 +51,11 @@ public:
     virtual void send_status_message(String message) = 0;
     virtual Task<Maybe<String>> prompt(String message, String initial_value = "");
     virtual void enter_search(String starting_text) = 0;
+
     virtual App::ObjectBoundCoroutine do_open_prompt();
-    virtual void quit() = 0;
+    virtual App::ObjectBoundCoroutine save();
+    virtual App::ObjectBoundCoroutine quit() = 0;
+    virtual App::ObjectBoundCoroutine go_to_line();
 
     virtual void do_compute_suggestions() {}
     virtual void show_suggestions_panel() {}

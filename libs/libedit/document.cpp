@@ -802,30 +802,6 @@ void Document::invalidate_lines_in_range_collection(Display& display, const Text
     }
 }
 
-App::ObjectBoundCoroutine Document::go_to_line(Display& display) {
-    auto maybe_result = co_await display.prompt("Go to line: ");
-    if (!maybe_result.has_value()) {
-        co_return;
-    }
-
-    auto& result = maybe_result.value();
-    char* end_ptr = result.string();
-    long line_number = strtol(result.string(), &end_ptr, 10);
-    if (errno == ERANGE || end_ptr != result.string() + result.size() || line_number < 1 || line_number > line_count()) {
-        display.send_status_message(format("Line `{}' is not between 1 and {}", result, line_count()));
-        co_return;
-    }
-
-    auto& cursor = display.main_cursor();
-
-    cursor.clear_selection();
-    cursor.set_line_index(line_number - 1);
-
-    display.center_on_cursor(cursor);
-
-    move_cursor_to_line_start(display, cursor);
-}
-
 void Document::set_type(DocumentType type) {
     if (type == m_type) {
         return;
@@ -837,70 +813,6 @@ void Document::set_type(DocumentType type) {
 
 void Document::guess_type_from_name() {
     update_document_type(*this);
-}
-
-App::ObjectBoundCoroutine Document::save(Display& display) {
-    if (m_name.empty()) {
-        auto result = co_await display.prompt("Save as: ");
-        if (!result.has_value()) {
-            co_return;
-        }
-
-        if (access(result.value().string(), F_OK) == 0) {
-            auto ok = co_await display.prompt(format("Are you sure you want to overwrite file `{}'? ", *result));
-            if (!ok.has_value() || (ok.value() != "y" && ok.value() != "yes")) {
-                co_return;
-            }
-        }
-
-        m_name = move(result.value());
-        guess_type_from_name();
-    }
-
-    assert(!m_name.empty());
-
-    if (access(m_name.string(), W_OK)) {
-        if (errno != ENOENT) {
-            display.send_status_message(format("Permission to write file `{}' denied", m_name));
-            co_return;
-        }
-    }
-
-    FILE* file = fopen(m_name.string(), "w");
-    if (!file) {
-        display.send_status_message(format("Failed to save - `{}'", strerror(errno)));
-        co_return;
-    }
-
-    if (m_lines.size() != 1 || !m_lines.first().empty()) {
-        for (auto& line : m_lines) {
-            fprintf(file, "%s\n", line.contents().string());
-        }
-    }
-
-    if (ferror(file)) {
-        display.send_status_message(format("Failed to write to disk - `{}'", strerror(errno)));
-        fclose(file);
-        co_return;
-    }
-
-    if (fclose(file)) {
-        display.send_status_message(format("Failed to sync to disk - `{}'", strerror(errno)));
-        co_return;
-    }
-
-    display.send_status_message(format("Successfully saved file: `{}'", m_name.string()));
-    m_document_was_modified = false;
-}
-
-App::ObjectBoundCoroutine Document::quit(Display& display) {
-    if (m_document_was_modified && !input_text_mode()) {
-        auto result = co_await display.prompt("Quit without saving? ");
-        if (!result.has_value() || (result.value() != "y" && result.value() != "yes")) {
-            co_return;
-        }
-    }
-    display.quit();
 }
 
 void Document::swap_lines_at_cursor(Display& display, SwapDirection direction) {

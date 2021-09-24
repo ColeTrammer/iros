@@ -2,10 +2,12 @@
 #include <edit/document.h>
 #include <edit/document_type.h>
 #include <edit/rendered_line.h>
+#include <errno.h>
 #include <eventloop/widget_events.h>
 #include <graphics/point.h>
 #include <liim/string.h>
 #include <liim/vector.h>
+#include <unistd.h>
 
 namespace Edit {
 Display::Display() : m_cursors { *this } {}
@@ -625,6 +627,82 @@ Display::RenderingInfo Display::rendering_info_for_metadata(const CharacterMetad
     }
 
     return info;
+}
+
+App::ObjectBoundCoroutine Display::go_to_line() {
+    auto maybe_result = co_await prompt("Go to line: ");
+    if (!maybe_result.has_value()) {
+        co_return;
+    }
+
+    auto& result = maybe_result.value();
+    char* end_ptr = result.string();
+    long line_number = strtol(result.string(), &end_ptr, 10);
+    if (errno == ERANGE || end_ptr != result.string() + result.size() || line_number < 1 || line_number > document()->line_count()) {
+        send_status_message(format("Line `{}' is not between 1 and {}", result, document()->line_count()));
+        co_return;
+    }
+
+    auto& cursor = main_cursor();
+    cursor.clear_selection();
+    cursor.set_line_index(line_number - 1);
+
+    center_on_cursor(cursor);
+
+    document()->move_cursor_to_line_start(*this, cursor);
+}
+
+App::ObjectBoundCoroutine Display::save() {
+    if (document()->name().empty()) {
+        auto result = co_await prompt("Save as: ");
+        if (!result.has_value()) {
+            co_return;
+        }
+
+        if (access(result.value().string(), F_OK) == 0) {
+            auto ok = co_await prompt(format("Are you sure you want to overwrite file `{}'? ", *result));
+            if (!ok.has_value() || (ok.value() != "y" && ok.value() != "yes")) {
+                co_return;
+            }
+        }
+
+        document()->set_name(move(result.value()));
+    }
+
+    assert(!document()->name().empty());
+
+    if (access(document()->name().string(), W_OK)) {
+        if (errno != ENOENT) {
+            send_status_message(format("Permission to write file `{}' denied", document()->name()));
+            co_return;
+        }
+    }
+
+    FILE* file = fopen(document()->name().string(), "w");
+    if (!file) {
+        send_status_message(format("Failed to save - `{}'", strerror(errno)));
+        co_return;
+    }
+
+    if (document()->line_count() != 1 || !document()->first_line().empty()) {
+        for (int i = 0; i < document()->line_count(); i++) {
+            fprintf(file, "%s\n", document()->line_at_index(i).contents().string());
+        }
+    }
+
+    if (ferror(file)) {
+        send_status_message(format("Failed to write to disk - `{}'", strerror(errno)));
+        fclose(file);
+        co_return;
+    }
+
+    if (fclose(file)) {
+        send_status_message(format("Failed to sync to disk - `{}'", strerror(errno)));
+        co_return;
+    }
+
+    send_status_message(format("Successfully saved file: `{}'", document()->name()));
+    document()->set_was_modified(false);
 }
 
 Task<Maybe<String>> Display::prompt(String, String) {

@@ -120,8 +120,9 @@ void ReplDisplay::document_did_change() {
     }
 }
 
-void ReplDisplay::quit() {
+App::ObjectBoundCoroutine ReplDisplay::quit() {
     TUI::Application::the().main_event_loop().set_should_exit(true);
+    co_return;
 }
 
 int ReplDisplay::enter() {

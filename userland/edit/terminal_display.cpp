@@ -72,7 +72,14 @@ void TerminalDisplay::document_did_change() {
     }
 }
 
-void TerminalDisplay::quit() {
+App::ObjectBoundCoroutine TerminalDisplay::quit() {
+    if (document() && document()->modified() && !document()->input_text_mode()) {
+        auto result = co_await prompt("Quit without saving? ");
+        if (!result.has_value() || (result.value() != "y" && result.value() != "yes")) {
+            co_return;
+        }
+    }
+
     auto* parent = parent_panel();
     remove();
 
