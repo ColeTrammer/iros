@@ -48,9 +48,17 @@ int RenderedLine::rendered_line_count() const {
 }
 
 TextIndex RenderedLine::next_index_into_line(const TextIndex& index) const {
-    auto* range = range_for_index(index, RangeFor::Text);
-    assert(range->type == PositionRangeType::Normal);
-    return { index.line_index(), index.index_into_line() + range->byte_count_in_rendered_string };
+    auto* last_range = static_cast<const PositionRange*>(nullptr);
+    for (int row = m_position_ranges.size() - 1; row >= 0; row--) {
+        auto& position_ranges = m_position_ranges[row];
+        for (int i = position_ranges.size() - 1; i >= 0; i--) {
+            auto& range = position_ranges[i];
+            if (range.index_into_line > index.index_into_line() && range.type == PositionRangeType::Normal) {
+                last_range = &range;
+            }
+        }
+    }
+    return { index.line_index(), last_range ? last_range->index_into_line : m_position_ranges.last().last().index_into_line };
 }
 
 TextIndex RenderedLine::prev_index_into_line(const TextIndex& index) const {
