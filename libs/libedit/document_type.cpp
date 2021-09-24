@@ -298,19 +298,42 @@ static void do_highlight_document(DocumentType type, StringView contents, TextRa
 void highlight_document(Document& document) {
     auto document_contents = document.content_string();
 
-    // FIXME: don't try to highlight the document multiple times at once.
-    // FIXME: do this immediately if the document is sufficently small.
-    Thread::BackgroundJob::start(
-        [weak_document = document.weak_from_this(), document_contents = move(document_contents), type = document.type()] {
+    if (document.line_count() < 5000) {
+        auto syntax_ranges = TextRangeCollection {};
+        do_highlight_document(document.type(), document_contents.view(), syntax_ranges);
+
+        document.syntax_highlighting_info() = move(syntax_ranges);
+        document.emit<SyntaxHighlightingChanged>();
+        return;
+    }
+
+    // FIXME: it would be nice to cancel running jobs if it document changes.
+    static bool s_highlight_running = false;
+    static int s_highlight_request_counter = 0;
+
+    if (!s_highlight_running) {
+        s_highlight_running = true;
+
+        Thread::BackgroundJob::start([weak_document = document.weak_from_this(), document_contents = move(document_contents),
+                                      type = document.type(), request_id = s_highlight_request_counter] {
             auto syntax_ranges = TextRangeCollection {};
             do_highlight_document(type, document_contents.view(), syntax_ranges);
 
             if (auto document = weak_document.lock()) {
-                document->deferred_invoke([&document = static_cast<Document&>(*document), syntax_ranges = move(syntax_ranges)] {
+                document->deferred_invoke([&document = static_cast<Document&>(*document), syntax_ranges = move(syntax_ranges), request_id] {
                     document.syntax_highlighting_info() = move(syntax_ranges);
                     document.emit<SyntaxHighlightingChanged>();
+
+                    s_highlight_running = false;
+                    if (s_highlight_request_counter > request_id) {
+                        highlight_document(document);
+                    }
                 });
             }
         });
+        return;
+    }
+
+    s_highlight_request_counter++;
 }
 }
