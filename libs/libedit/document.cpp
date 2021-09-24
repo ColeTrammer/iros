@@ -449,7 +449,6 @@ void Document::redo(Display& display) {
     auto& command = *m_command_stack[m_command_stack_index++];
     command.redo(display);
     m_document_was_modified = true;
-    update_suggestions(display);
 
     emit<Change>();
 }
@@ -461,7 +460,6 @@ void Document::undo(Display& display) {
 
     auto& command = *m_command_stack[--m_command_stack_index];
     command.undo(display);
-    update_suggestions(display);
 
     emit<Change>();
 }
@@ -841,10 +839,6 @@ void Document::guess_type_from_name() {
     update_document_type(*this);
 }
 
-void Document::update_suggestions(Display& display) {
-    display.compute_suggestions();
-}
-
 App::ObjectBoundCoroutine Document::save(Display& display) {
     if (m_name.empty()) {
         auto result = co_await display.prompt("Save as: ");
@@ -987,7 +981,6 @@ void Document::push_command(Display& display, UniquePtr<Command> command) {
     }
 
     m_document_was_modified = true;
-    update_suggestions(display);
 
     emit<Change>();
 }
@@ -1012,7 +1005,7 @@ void Document::finish_input(Display& display, bool should_scroll_cursor_into_vie
         display.scroll_cursor_into_view(cursors.main_cursor());
     }
 
-    update_suggestions(display);
+    display.compute_suggestions();
     if (display.preview_auto_complete()) {
         display.invalidate_line(cursors.main_cursor().line_index());
     }

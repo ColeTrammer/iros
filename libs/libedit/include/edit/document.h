@@ -187,8 +187,6 @@ private:
     void move_cursor_to_max_col_position(Display& display, Cursor& cursor);
     void update_selection_state_for_mode(Cursor& cursor, MovementMode mode);
 
-    void update_suggestions(Display& display);
-
     void swap_selection_anchor_and_cursor(Display& display, Cursor& cursor);
 
     void guess_type_from_name();
