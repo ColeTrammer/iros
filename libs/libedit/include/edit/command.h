@@ -2,6 +2,7 @@
 
 #include <edit/document.h>
 #include <edit/text_index.h>
+#include <liim/variant.h>
 
 namespace Edit {
 class Command {
@@ -100,6 +101,7 @@ private:
 class InsertCommand final : public DeltaBackedCommand {
 public:
     InsertCommand(Document& document, String string);
+    InsertCommand(Document& document, Vector<String> text_per_cursor);
     virtual ~InsertCommand();
 
     virtual bool do_execute(Display& display, MultiCursor& cursor) override;
@@ -110,7 +112,7 @@ public:
 private:
     virtual StringView name() const override { return "InsertCommand"; }
 
-    String m_text;
+    Variant<String, Vector<String>> m_text_to_insert;
 };
 
 class DeleteCommand final : public DeltaBackedCommand {

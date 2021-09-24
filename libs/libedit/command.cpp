@@ -78,7 +78,10 @@ void MovementCommand::redo(Display& display) {
     document().restore_state(display.cursors(), end_snapshot());
 }
 
-InsertCommand::InsertCommand(Document& document, String text) : DeltaBackedCommand(document), m_text(move(text)) {}
+InsertCommand::InsertCommand(Document& document, String text) : DeltaBackedCommand(document), m_text_to_insert(move(text)) {}
+
+InsertCommand::InsertCommand(Document& document, Vector<String> text_per_cursor)
+    : DeltaBackedCommand(document), m_text_to_insert(move(text_per_cursor)) {}
 
 InsertCommand::~InsertCommand() {}
 
@@ -92,23 +95,30 @@ bool InsertCommand::merge(Command& other_command) {
         return false;
     }
 
-    m_text += other.m_text;
+    if (!this->m_text_to_insert.is<String>() || !other.m_text_to_insert.is<String>()) {
+        return false;
+    }
+
+    m_text_to_insert.as<String>() += other.m_text_to_insert.as<String>();
     set_end_snapshot(other.end_snapshot());
     return true;
 }
 
 bool InsertCommand::do_execute(Display&, MultiCursor& cursors) {
-    if (m_text.empty()) {
-        return false;
-    }
-
-    for (auto& cursor : cursors) {
+    bool modified = false;
+    for (int i = 0; i < cursors.size(); i++) {
+        auto& cursor = cursors[i];
         if (!cursor.selection().empty()) {
             document().delete_text_in_range(cursor.selection());
         }
-        document().insert_text_at_index(cursor.index(), m_text.view());
+
+        auto text = m_text_to_insert.is<String>() ? m_text_to_insert.as<String>().view() : m_text_to_insert.as<Vector<String>>()[i].view();
+        if (!text.empty()) {
+            document().insert_text_at_index(cursor.index(), text);
+            modified = true;
+        }
     }
-    return true;
+    return modified;
 }
 
 void InsertCommand::do_undo(Display&, MultiCursor& cursors) {
