@@ -5,7 +5,7 @@
 #include <liim/pointers.h>
 
 namespace App {
-class ObjectBoundCoroutine {
+class [[nodiscard]] ObjectBoundCoroutine {
 public:
     struct Promise;
 

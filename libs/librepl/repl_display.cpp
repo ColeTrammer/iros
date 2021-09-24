@@ -59,14 +59,14 @@ void ReplDisplay::initialize() {
                 printf("^C\r\n");
             });
             set_quit_by_interrupt();
-            quit();
+            start_coroutine(quit());
             return true;
         }
 
         if (event.key() == App::Key::D && event.control_down()) {
             if (document()->line_count() == 1 && document()->content_string().empty()) {
                 set_quit_by_eof();
-                quit();
+                start_coroutine(quit());
             }
             return true;
         }
@@ -105,7 +105,7 @@ void ReplDisplay::document_did_change() {
                 document()->move_cursor_to_document_end(*this, main_cursor());
                 set_preview_auto_complete(false);
                 invalidate();
-                quit();
+                start_coroutine(quit());
                 deferred_invoke([] {
                     printf("\r\n");
                 });
