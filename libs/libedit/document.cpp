@@ -990,26 +990,4 @@ void Document::insert_suggestion(Display& display, const MatchedSuggestion& sugg
     move_cursor_to(display, display.main_cursor(), suggestion.start(), MovementMode::Select);
     insert_text_at_cursor(display, String { suggestion.content() });
 }
-
-void Document::start_input(Display& display, bool should_save_cursor_state) {
-    if (should_save_cursor_state) {
-        display.cursors().cursor_save();
-    }
-}
-
-void Document::finish_input(Display& display, bool should_scroll_cursor_into_view) {
-    auto& cursors = display.cursors();
-    cursors.remove_duplicate_cursors();
-
-    if (should_scroll_cursor_into_view) {
-        display.scroll_cursor_into_view(cursors.main_cursor());
-    }
-
-    display.compute_suggestions();
-    if (display.preview_auto_complete()) {
-        display.invalidate_line(cursors.main_cursor().line_index());
-    }
-
-    cursors.invalidate_based_on_last_snapshot(*this);
-}
 }

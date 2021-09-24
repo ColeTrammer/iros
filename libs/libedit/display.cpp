@@ -26,7 +26,7 @@ void Display::initialize() {
 
         auto index = text_index_at_mouse_position({ event.x(), event.y() });
         if (event.left_button()) {
-            document.start_input(*this, true);
+            start_input(true);
             cursors().remove_secondary_cursors();
             auto& cursor = main_cursor();
             document.move_cursor_to(*this, cursor, index, MovementMode::Move);
@@ -40,7 +40,7 @@ void Display::initialize() {
                 default:
                     break;
             }
-            document.finish_input(*this, true);
+            finish_input(true);
             return true;
         }
         return false;
@@ -54,11 +54,11 @@ void Display::initialize() {
 
         auto index = text_index_at_mouse_position({ event.x(), event.y() });
         if (event.buttons_down() & App::MouseButton::Left) {
-            document.start_input(*this, true);
+            start_input(true);
             cursors().remove_secondary_cursors();
             auto& cursor = main_cursor();
             document.move_cursor_to(*this, cursor, index, MovementMode::Select);
-            document.finish_input(*this, true);
+            finish_input(true);
             return true;
         }
         return false;
@@ -68,11 +68,9 @@ void Display::initialize() {
         if (!document()) {
             return false;
         }
-        auto& document = *this->document();
-
-        document.start_input(*this, true);
+        start_input(true);
         scroll(2 * event.z(), 0);
-        document.finish_input(*this, false);
+        finish_input(false);
         return true;
     });
 
@@ -82,9 +80,9 @@ void Display::initialize() {
         }
         auto& document = *this->document();
 
-        document.start_input(*this, true);
+        start_input(true);
         document.insert_text_at_cursor(*this, event.text());
-        document.finish_input(*this, true);
+        finish_input(true);
         return true;
     });
 }
@@ -266,9 +264,9 @@ void Display::toggle_word_wrap_enabled() {
 }
 
 void Display::replace_next_search_match(const String& replacement) {
-    document()->start_input(*this, true);
+    start_input(true);
     document()->replace_next_search_match(*this, replacement);
-    document()->finish_input(*this, true);
+    finish_input(true);
 }
 
 void Display::move_cursor_to_next_search_match() {
@@ -276,7 +274,7 @@ void Display::move_cursor_to_next_search_match() {
         return;
     }
 
-    document()->start_input(*this, true);
+    start_input(true);
 
     cursors().remove_secondary_cursors();
     auto& cursor = main_cursor();
@@ -297,7 +295,7 @@ void Display::move_cursor_to_next_search_match() {
     document()->move_cursor_to(*this, cursor, m_search_results.range(m_search_result_index).start());
     document()->move_cursor_to(*this, cursor, m_search_results.range(m_search_result_index).end(), MovementMode::Select);
     m_search_result_index++;
-    document()->finish_input(*this, true);
+    finish_input(true);
 }
 
 void Display::select_next_word_at_cursor() {
@@ -545,6 +543,27 @@ DisplayPosition Display::absolute_to_display_position(const AbsolutePosition& po
 
 DisplayPosition Display::display_position_of_index(const TextIndex& index) const {
     return absolute_to_display_position(absolute_position_of_index(index));
+}
+
+void Display::start_input(bool should_save_cursor_state) {
+    if (should_save_cursor_state) {
+        cursors().cursor_save();
+    }
+}
+
+void Display::finish_input(bool should_scroll_cursor_into_view) {
+    cursors().remove_duplicate_cursors();
+
+    if (should_scroll_cursor_into_view) {
+        scroll_cursor_into_view(main_cursor());
+    }
+
+    compute_suggestions();
+    if (preview_auto_complete()) {
+        invalidate_line(main_cursor().line_index());
+    }
+
+    cursors().invalidate_based_on_last_snapshot(*document());
 }
 
 Display::RenderingInfo Display::rendering_info_for_metadata(const CharacterMetadata& metadata) const {

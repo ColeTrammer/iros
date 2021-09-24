@@ -129,6 +129,9 @@ public:
     void invalidate_all_lines();
     void invalidate_line(int line_index);
 
+    void start_input(bool should_save_cursor_state);
+    void finish_input(bool should_scroll_cursor_into_view);
+
     void clear_search();
     void update_search_results();
     void move_cursor_to_next_search_match();

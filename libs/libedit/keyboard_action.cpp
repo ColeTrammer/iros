@@ -29,10 +29,9 @@ App::KeyBindings get_key_bindings(Display& display) {
         key_bindings.add(
             action.shortcut(),
             [&action, &display] {
-                auto& document = *display.document();
-                document.start_input(display, action.name() != "Cursor Undo");
+                display.start_input(action.name() != "Cursor Undo");
                 action.do_action(display);
-                document.finish_input(display, action.type() == KeyboardAction::Type::Document);
+                display.finish_input(action.type() == KeyboardAction::Type::Document);
             },
             [&action, &display] {
                 auto* document = display.document();
