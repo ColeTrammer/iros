@@ -323,7 +323,7 @@ public:
         }
 
         if constexpr (Traits<T>::is_simple()) {
-            memmove(m_vector + start, m_vector + start + count, sizeof(T) * (size() - index - count));
+            memmove(m_vector + start, m_vector + start + count, sizeof(T) * (size() - start - count));
         } else {
             for (int j = start; j < size() - count; j++) {
                 new (m_vector + j) T(LIIM::move(get(j + count)));
