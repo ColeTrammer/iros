@@ -121,6 +121,7 @@ public:
     StateSnapshot snapshot_state(Display& display) const;
     void restore_state(MultiCursor& cursors, const StateSnapshot& state_snapshot);
 
+    void insert_text_at_index(const TextIndex& index, StringView text);
     void delete_text_in_range(const TextRange& range);
     String text_in_range(const TextRange& range) const;
 

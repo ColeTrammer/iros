@@ -38,14 +38,14 @@ void Line::overwrite(Document& document, Line&& line, int this_line_index, Overw
     }
 }
 
-void Line::insert_char_at(Document& document, const TextIndex& index, char c) {
-    m_contents.insert(c, index.index_into_line());
-    document.emit<AddToLine>(index.line_index(), index.index_into_line(), 1);
+void Line::insert_text(Document& document, const TextIndex& index, StringView text) {
+    m_contents.insert(text, index.index_into_line());
+    document.emit<AddToLine>(index.line_index(), index.index_into_line(), static_cast<int>(text.size()));
 }
 
-void Line::remove_char_at(Document& document, const TextIndex& index) {
-    m_contents.remove_index(index.index_into_line());
-    document.emit<DeleteFromLine>(index.line_index(), index.index_into_line(), 1);
+void Line::remove_count(Document& document, const TextIndex& index, int count) {
+    m_contents.remove_count(index.index_into_line(), count);
+    document.emit<DeleteFromLine>(index.line_index(), index.index_into_line(), count);
 }
 
 void Line::combine_line(Document&, Line& line) {

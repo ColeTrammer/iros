@@ -19,8 +19,8 @@ public:
 
     const String& contents() const { return m_contents; }
 
-    void insert_char_at(Document& document, const TextIndex& index, char c);
-    void remove_char_at(Document& document, const TextIndex& index);
+    void insert_text(Document& document, const TextIndex& index, StringView text);
+    void remove_count(Document& document, const TextIndex& index, int count);
 
     void combine_line(Document& document, Line& line);
 

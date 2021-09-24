@@ -619,7 +619,37 @@ void Document::move_cursor_to(Display& display, Cursor& cursor, const TextIndex&
     cursor.compute_max_col(display);
 }
 
+void Document::insert_text_at_index(const TextIndex& index_in, StringView text) {
+    auto index = index_in;
+
+    auto lines = text.split("\r\n", SplitMethod::KeepEmpty);
+    if (lines.empty()) {
+        return;
+    }
+
+    auto first_line_index = index.line_index();
+    auto& first_line = line_at_index(first_line_index);
+    first_line.insert_text(*this, index, lines.first());
+
+    if (lines.size() == 1) {
+        return;
+    }
+    split_line_at({ first_line_index, first_line.length() });
+
+    auto line_count_to_insert = lines.size() - 2;
+    if (line_count_to_insert > 0) {
+        insert_lines(index.line_index() + 1, lines.span().subspan(1, line_count_to_insert));
+    }
+
+    auto last_line_index = TextIndex { index.line_index() + lines.size() - 1, 0 };
+    line_at_index(last_line_index.line_index()).insert_text(*this, last_line_index, lines.last());
+}
+
 void Document::delete_text_in_range(const TextRange& range) {
+    if (range.empty()) {
+        return;
+    }
+
     auto start = range.start();
     auto end = range.end();
 
@@ -629,23 +659,22 @@ void Document::delete_text_in_range(const TextRange& range) {
     auto index_end = end.index_into_line();
 
     if (line_start == line_end) {
-        for (int i = index_end - 1; i >= index_start; i--) {
-            m_lines[line_start].remove_char_at(*this, { line_start, i });
-        }
-    } else {
-        auto split_start = m_lines[line_start].split_at(index_start);
-        auto split_end = m_lines[line_end].split_at(index_end);
-
-        auto line_count_to_remove = line_end - line_start - 1;
-        if (line_count_to_remove > 0) {
-            remove_lines(line_start + 1, line_count_to_remove);
-        }
-
-        m_lines[line_start].overwrite(*this, move(split_start.first), line_start, Line::OverwriteFrom::LineEnd);
-        m_lines[line_start + 1].overwrite(*this, move(split_end.second), line_start + 1, Line::OverwriteFrom::LineStart);
-
-        merge_lines(line_start, line_start + 1);
+        line_at_index(line_start).remove_count(*this, start, index_end - index_start);
+        return;
     }
+
+    auto split_start = m_lines[line_start].split_at(index_start);
+    auto split_end = m_lines[line_end].split_at(index_end);
+
+    auto line_count_to_remove = line_end - line_start - 1;
+    if (line_count_to_remove > 0) {
+        remove_lines(line_start + 1, line_count_to_remove);
+    }
+
+    m_lines[line_start].overwrite(*this, move(split_start.first), line_start, Line::OverwriteFrom::LineEnd);
+    m_lines[line_start + 1].overwrite(*this, move(split_end.second), line_start + 1, Line::OverwriteFrom::LineStart);
+
+    merge_lines(line_start, line_start + 1);
 }
 
 String Document::text_in_range(const TextRange& range) const {

@@ -127,53 +127,9 @@ bool InsertCommand::do_execute(Display&, MultiCursor& cursors) {
     return true;
 }
 
-void InsertCommand::do_insert(Document& document, MultiCursor& cursors, int cursor_index, char c) {
-    auto& cursor = cursors[cursor_index];
-    auto& line = cursor.referenced_line(document);
-    if (c == '\n' || c == '\r') {
-        document.split_line_at(cursor.index());
-        return;
-    }
-
-    if (c == '\t' && document.convert_tabs_to_spaces()) {
-        // FIXME: what about variable width encodings/characters
-        int num_spaces = tab_width - (cursor.index_into_line() % tab_width);
-        for (int i = 0; i < num_spaces; i++) {
-            line.insert_char_at(document, cursor.index(), ' ');
-        }
-    } else {
-        line.insert_char_at(document, cursor.index(), c);
-    }
-}
-
 void InsertCommand::do_insert(Document& document, MultiCursor& cursors, int cursor_index, const String& text) {
-    if (text.size() == 1) {
-        return do_insert(document, cursors, cursor_index, text.first());
-    }
-
     auto& cursor = cursors[cursor_index];
-
-    auto lines = text.split_view("\r\n", SplitMethod::KeepEmpty);
-    assert(!lines.empty());
-
-    auto& first_line = cursor.referenced_line(document);
-    for (auto& c : lines.first()) {
-        first_line.insert_char_at(document, cursor.index(), c);
-    }
-    if (lines.size() > 1) {
-        document.split_line_at(cursor.index());
-    }
-
-    if (lines.size() > 2) {
-        document.insert_lines(cursor.line_index(), lines.span().subspan(1, lines.size() - 2));
-    }
-
-    if (lines.size() > 1) {
-        auto& last_line = cursor.referenced_line(document);
-        for (auto& c : lines.last()) {
-            last_line.insert_char_at(document, cursor.index(), c);
-        }
-    }
+    document.insert_text_at_index(cursor.index(), text.view());
 }
 
 void InsertCommand::do_undo(Display&, MultiCursor& cursors) {
