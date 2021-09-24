@@ -54,6 +54,10 @@ TextRange Cursor::selection() const {
     return { normalized_selection_start(), normalized_selection_end(), CharacterMetadata::Flags::Selected };
 }
 
+String Cursor::selection_text(const Document& document) const {
+    return document.text_in_range(selection());
+}
+
 void Cursor::merge_selections(const Cursor& other) {
     if (this->index() == normalized_selection_start()) {
         set(min(this->normalized_selection_start(), other.normalized_selection_start()));

@@ -312,7 +312,7 @@ void Display::select_next_word_at_cursor() {
             return;
         }
 
-        auto search_text = document()->selection_text(main_cursor);
+        auto search_text = main_cursor.selection_text(*document());
         set_search_text(move(search_text));
 
         // Set m_search_result_index to point just past the current cursor.
@@ -323,7 +323,7 @@ void Display::select_next_word_at_cursor() {
         m_search_result_index %= m_search_results.size();
         return;
     } else {
-        set_search_text(document()->selection_text(main_cursor));
+        set_search_text(main_cursor.selection_text(*document()));
     }
 
     auto& result = m_search_results.range(m_search_result_index);

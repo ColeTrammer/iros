@@ -404,7 +404,7 @@ Vector<Edit::Suggestion> ShRepl::get_suggestions(const Edit::Document &document,
     auto start = cursor;
     if (desired_token) {
         start = desired_token->start();
-        current_text_before_cursor = document.text_in_range(start, cursor);
+        current_text_before_cursor = document.text_in_range({ start, cursor });
     }
 
     auto should_be_executable = !desired_token || ShLexer::static_would_be_first_word_of_command(

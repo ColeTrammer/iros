@@ -30,7 +30,7 @@ void Suggestions::do_match(const Suggestion& suggestion, StringView reference_te
 
 void Suggestions::compute_matches(const Document& document, const Cursor& cursor) {
     for (auto& suggestion : m_suggestions) {
-        auto reference_text = document.text_in_range(suggestion.start(), cursor.index());
+        auto reference_text = document.text_in_range({ suggestion.start(), cursor.index() });
         do_match(suggestion, reference_text.view());
     }
 

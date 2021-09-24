@@ -121,10 +121,8 @@ public:
     StateSnapshot snapshot_state(Display& display) const;
     void restore_state(MultiCursor& cursors, const StateSnapshot& state_snapshot);
 
-    void delete_selection(Cursor& cursor);
-    String selection_text(const Cursor& cursor) const;
-
-    String text_in_range(const TextIndex& start, const TextIndex& end) const;
+    void delete_text_in_range(const TextRange& range);
+    String text_in_range(const TextRange& range) const;
 
     void select_all_matches(Display& display, const TextRangeCollection& collection);
     void select_line_at_cursor(Display& display, Cursor& cursor);

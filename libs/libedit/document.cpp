@@ -583,7 +583,7 @@ void Document::replace_next_search_match(Display& display, const String& replace
     }
 
     auto group = make_unique<CommandGroup>(*this, "ReplaceSearchMatch");
-    if (display.search_text() != selection_text(display.main_cursor())) {
+    if (display.search_text() != display.main_cursor().selection_text(*this)) {
         group->add<MovementCommand>(*this, [this](Display& display, MultiCursor&) {
             display.move_cursor_to_next_search_match();
         });
@@ -619,17 +619,15 @@ void Document::move_cursor_to(Display& display, Cursor& cursor, const TextIndex&
     cursor.compute_max_col(display);
 }
 
-void Document::delete_selection(Cursor& cursor) {
-    auto selection = cursor.selection();
-    auto start = selection.start();
-    auto end = selection.end();
+void Document::delete_text_in_range(const TextRange& range) {
+    auto start = range.start();
+    auto end = range.end();
 
     auto line_start = start.line_index();
     auto index_start = start.index_into_line();
     auto line_end = end.line_index();
     auto index_end = end.index_into_line();
 
-    cursor.clear_selection();
     if (line_start == line_end) {
         for (int i = index_end - 1; i >= index_start; i--) {
             m_lines[line_start].remove_char_at(*this, { line_start, i });
@@ -650,7 +648,10 @@ void Document::delete_selection(Cursor& cursor) {
     }
 }
 
-String Document::text_in_range(const TextIndex& start, const TextIndex& end) const {
+String Document::text_in_range(const TextRange& range) const {
+    auto start = range.start();
+    auto end = range.end();
+
     auto result = String {};
     for (int li = start.line_index(); li <= end.line_index(); li++) {
         auto& line = m_lines[li];
@@ -679,15 +680,6 @@ String Document::text_in_range(const TextIndex& start, const TextIndex& end) con
         }
     }
     return result;
-}
-
-String Document::selection_text(const Cursor& cursor) const {
-    auto selection = cursor.selection();
-    if (selection.empty()) {
-        return "";
-    }
-
-    return text_in_range(selection.start(), selection.end());
 }
 
 void Document::remove_lines(int line_index, int count) {
@@ -751,7 +743,7 @@ void Document::copy(Display& display, MultiCursor& cursors) {
         return;
     }
 
-    display.set_clipboard_contents(selection_text(cursor));
+    display.set_clipboard_contents(cursor.selection_text(*this));
 }
 
 void Document::cut(Display& display, MultiCursor& cursors) {
@@ -766,7 +758,7 @@ void Document::cut(Display& display, MultiCursor& cursors) {
         return;
     }
 
-    display.set_clipboard_contents(selection_text(cursor));
+    display.set_clipboard_contents(cursor.selection_text(*this));
     push_command<DeleteCommand>(display);
 }
 

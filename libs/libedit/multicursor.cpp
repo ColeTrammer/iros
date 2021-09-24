@@ -221,7 +221,7 @@ Maybe<String> MultiCursor::preview_auto_complete_text() const {
     auto& suggestion = suggestions.first();
 
     // Don't show any preview if the suggestion's prefix is not aligned (because of fuzzy matching).
-    auto current_prefix = m_display.document()->text_in_range(suggestion.start(), m_display.main_cursor().index());
+    auto current_prefix = m_display.document()->text_in_range({ suggestion.start(), m_display.main_cursor().index() });
     if (!suggestion.content().starts_with(current_prefix.view())) {
         return {};
     }
@@ -239,7 +239,7 @@ Maybe<String> MultiCursor::preview_auto_complete_text() const {
         end.set_index_into_line(m_display.document()->line_at_index(end.line_index()).length());
     }
 
-    auto current_text = m_display.document()->text_in_range(suggestion.start(), end);
+    auto current_text = m_display.document()->text_in_range({ suggestion.start(), end });
     if (suggestion.content().view() == current_text.view()) {
         return {};
     }

@@ -54,6 +54,7 @@ public:
 
     void merge_selections(const Cursor& other);
     TextRange selection() const;
+    String selection_text(const Document& document) const;
 
     int max_col() const { return m_max_col; }
     void set_max_col(int max_col) { m_max_col = max_col; }

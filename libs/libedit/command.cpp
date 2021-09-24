@@ -15,7 +15,7 @@ DeltaBackedCommand::~DeltaBackedCommand() {}
 bool DeltaBackedCommand::execute(Display& display) {
     m_start_snapshot = document().snapshot_state(display);
     for (auto& cursor : m_start_snapshot.cursors) {
-        m_selection_texts.add(document().selection_text(cursor));
+        m_selection_texts.add(cursor.selection_text(document()));
     }
     bool was_modified = do_execute(display, display.cursors());
     m_end_snapshot = document().snapshot_state(display);
@@ -105,7 +105,7 @@ bool InsertCommand::do_execute(Display&, MultiCursor& cursors) {
     for (int i = 0; i < cursors.size(); i++) {
         auto& cursor = cursors[i];
         if (!cursor.selection().empty()) {
-            document().delete_selection(cursor);
+            document().delete_text_in_range(cursor.selection());
         }
 
         if (m_text.size() == 1 && m_text[0] == '\n') {
@@ -181,7 +181,7 @@ void InsertCommand::do_undo(Display&, MultiCursor& cursors) {
         auto& cursor = cursors[cursor_index];
 
         cursor.set_selection_anchor(start_snapshot().cursors[cursor_index].index());
-        document().delete_selection(cursor);
+        document().delete_text_in_range(cursor.selection());
 
         if (!start_snapshot().cursors[cursor_index].selection().empty()) {
             do_insert(document(), cursors, cursor_index, selection_text(cursor_index));
@@ -198,7 +198,7 @@ bool DeleteCommand::do_execute(Display&, MultiCursor& cursors) {
     for (int i = cursors.size() - 1; i >= 0; i--) {
         auto& cursor = cursors[i];
         if (!cursor.selection().empty()) {
-            document().delete_selection(cursor);
+            document().delete_text_in_range(cursor.selection());
             modified = true;
         }
     }
