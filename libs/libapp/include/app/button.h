@@ -14,7 +14,7 @@ class Button : public Widget {
     APP_EMITS(Widget, ClickEvent)
 
 public:
-    explicit Button(String label) : m_label(move(label)) {}
+    explicit Button(String label) : m_label(move(label)) { set_accepts_focus(true); }
     virtual void initialize() override;
 
     void set_label(String label) { m_label = move(label); }

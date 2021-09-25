@@ -58,6 +58,8 @@ public:
     Function<void(const ModelIndex&)> on_item_activation;
 
 protected:
+    View() { set_accepts_focus(true); }
+
     virtual ModelIndex index_at_position(int wx, int wy) = 0;
 
 private:
