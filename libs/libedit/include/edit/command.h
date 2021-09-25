@@ -107,12 +107,11 @@ public:
     virtual bool do_execute(Display& display, MultiCursor& cursor) override;
     virtual void do_undo(Display& display, MultiCursor& cursor) override;
 
-    virtual bool merge(Command& other) override;
-
 private:
     virtual StringView name() const override { return "InsertCommand"; }
 
     Variant<String, Vector<String>> m_text_to_insert;
+    Vector<TextIndex> m_insertion_start_indices;
 };
 
 class DeleteCommand final : public DeltaBackedCommand {

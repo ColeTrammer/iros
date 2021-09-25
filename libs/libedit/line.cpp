@@ -39,11 +39,19 @@ void Line::overwrite(Document& document, Line&& line, int this_line_index, Overw
 }
 
 void Line::insert_text(Document& document, const TextIndex& index, StringView text) {
+    if (text.empty()) {
+        return;
+    }
+
     m_contents.insert(text, index.index_into_line());
     document.emit<AddToLine>(index.line_index(), index.index_into_line(), static_cast<int>(text.size()));
 }
 
 void Line::remove_count(Document& document, const TextIndex& index, int count) {
+    if (count == 0) {
+        return;
+    }
+
     m_contents.remove_count(index.index_into_line(), count);
     document.emit<DeleteFromLine>(index.line_index(), index.index_into_line(), count);
 }

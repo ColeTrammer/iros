@@ -13,7 +13,7 @@ void MultiCursor::remove_duplicate_cursors() {
         auto& current = m_cursors[i];
         while (i + 1 < m_cursors.size()) {
             auto& next_cursor = m_cursors[i + 1];
-            if (current.selection().overlaps(next_cursor.selection())) {
+            if (current.index() == next_cursor.index() || current.selection().overlaps(next_cursor.selection())) {
                 current.merge_selections(m_cursors[i + 1]);
                 m_cursors.remove(i + 1);
                 if (m_main_cursor_index >= i + 1) {
@@ -121,11 +121,16 @@ void MultiCursor::install_document_listeners(Document& document) {
             if (cursor.selection().overlaps({ { event.line_index(), event.index_into_line() }, { event.line_index() + 1, 0 } })) {
                 cursor.clear_selection();
             }
-            if (cursor.line_index() != event.line_index() || cursor.index_into_line() < event.index_into_line()) {
+            if (cursor.line_index() < event.line_index() ||
+                (cursor.line_index() == event.line_index() && cursor.index_into_line() < event.index_into_line())) {
                 continue;
             }
-            cursor.set({ event.line_index() + 1, cursor.index_into_line() - event.index_into_line() });
-            cursor.compute_max_col(m_display);
+            if (cursor.line_index() == event.line_index()) {
+                cursor.set({ event.line_index() + 1, cursor.index_into_line() - event.index_into_line() });
+                cursor.compute_max_col(m_display);
+                continue;
+            }
+            cursor.move_down_preserving_selection(1);
         }
     });
 
@@ -136,11 +141,15 @@ void MultiCursor::install_document_listeners(Document& document) {
             if (cursor.selection().overlaps({ { event.second_line_index(), 0 }, { event.second_line_index() + 1, 0 } })) {
                 cursor.clear_selection();
             }
-            if (cursor.line_index() != event.second_line_index()) {
+            if (cursor.line_index() < event.second_line_index()) {
                 continue;
             }
-            cursor.set({ event.first_line_index(), event.first_line_length() + cursor.index_into_line() });
-            cursor.compute_max_col(m_display);
+            if (cursor.line_index() == event.second_line_index()) {
+                cursor.set({ event.first_line_index(), event.first_line_length() + cursor.index_into_line() });
+                cursor.compute_max_col(m_display);
+                continue;
+            }
+            cursor.move_up_preserving_selection(1);
         }
     });
 
