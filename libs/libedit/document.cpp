@@ -349,10 +349,6 @@ void Document::move_cursor_page_down(Display& display, Cursor& cursor, MovementM
     }
 }
 
-void Document::insert_char(Display& display, char c) {
-    push_command<InsertCommand>(display, String(c));
-}
-
 void Document::delete_line(Display& display) {
     auto saved_max_col = Vector<int> {};
 
@@ -453,7 +449,7 @@ void Document::split_line_at_cursor(Display& display) {
         strings_to_insert.add(move(text_to_insert));
     }
 
-    insert_text_per_cursor(display, move(strings_to_insert));
+    insert_text_per_cursor(display, move(strings_to_insert), "SplitLine");
 }
 
 bool Document::execute_command(Display& display, Command& command) {
@@ -524,8 +520,12 @@ void Document::insert_line_at_cursor(Display& display, const String& line_text) 
     push_command(display, move(group));
 }
 
-void Document::insert_text_per_cursor(Display& display, Vector<String> strings) {
-    push_command<InsertCommand>(display, move(strings));
+void Document::insert_text_per_cursor(Display& display, Vector<String> strings, StringView command_name) {
+    auto group = make_unique<CommandGroup>(*this, command_name);
+    group->add<DeleteCommand>(*this);
+    group->add<InsertCommand>(*this, move(strings));
+
+    push_command(display, move(group));
 }
 
 void Document::insert_text_at_cursor(Display& display, const String& text) {
@@ -597,7 +597,11 @@ void Document::insert_text_at_cursor(Display& display, const String& text) {
         }
     }
 
-    push_command<InsertCommand>(display, text);
+    auto group = make_unique<CommandGroup>(*this, "InsertText", CommandGroup::ShouldMerge::Yes);
+    group->add<DeleteCommand>(*this);
+    group->add<InsertCommand>(*this, move(text));
+
+    push_command(display, move(group));
 }
 
 void Document::replace_next_search_match(Display& display, const String& replacement) {
@@ -611,6 +615,7 @@ void Document::replace_next_search_match(Display& display, const String& replace
             display.move_cursor_to_next_search_match();
         });
     }
+    group->add<DeleteCommand>(*this);
     group->add<InsertCommand>(*this, replacement);
     if (display.search_results().size() > 1) {
         group->add<MovementCommand>(*this, [this](Display& display, MultiCursor&) {
@@ -631,6 +636,7 @@ void Document::replace_all_search_matches(Display& display, const String& replac
     group->add<MovementCommand>(*this, [this](Display& display, MultiCursor&) {
         select_all_matches(display, display.search_results());
     });
+    group->add<DeleteCommand>(*this);
     group->add<InsertCommand>(*this, replacement);
 
     push_command(display, move(group));
@@ -824,7 +830,11 @@ void Document::paste(Display& display, MultiCursor& cursors) {
     if (!input_text_mode() && cursor.selection().empty() && is_whole_line) {
         insert_line_at_cursor(display, text_to_insert);
     } else {
-        insert_text_at_cursor(display, text_to_insert);
+        auto group = make_unique<CommandGroup>(*this, "Paste");
+        group->add<DeleteCommand>(*this);
+        group->add<InsertCommand>(*this, move(text_to_insert));
+
+        push_command(display, move(group));
     }
 }
 
@@ -943,6 +953,11 @@ void Document::push_command(Display& display, UniquePtr<Command> command) {
 void Document::insert_suggestion(Display& display, const MatchedSuggestion& suggestion) {
     display.cursors().remove_secondary_cursors();
     move_cursor_to(display, display.main_cursor(), suggestion.start(), MovementMode::Select);
-    insert_text_at_cursor(display, String { suggestion.content() });
+
+    auto group = make_unique<CommandGroup>(*this, "InsertSuggestion");
+    group->add<DeleteCommand>(*this);
+    group->add<InsertCommand>(*this, suggestion.content());
+
+    push_command(display, move(group));
 }
 }

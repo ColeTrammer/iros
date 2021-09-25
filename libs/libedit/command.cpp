@@ -93,11 +93,6 @@ bool InsertCommand::do_execute(Display&, MultiCursor& cursors) {
         auto& cursor = cursors[i];
         m_insertion_start_indices.add(cursor.index());
 
-        if (!cursor.selection().empty()) {
-            document().delete_text_in_range(cursor.selection());
-            modified = true;
-        }
-
         auto text = m_text_to_insert.is<String>() ? m_text_to_insert.as<String>().view() : m_text_to_insert.as<Vector<String>>()[i].view();
         if (!text.empty()) {
             document().insert_text_at_index(cursor.index(), text);
@@ -109,11 +104,7 @@ bool InsertCommand::do_execute(Display&, MultiCursor& cursors) {
 
 void InsertCommand::do_undo(Display&, MultiCursor& cursors) {
     for (int cursor_index = cursors.size() - 1; cursor_index >= 0; cursor_index--) {
-        auto start_selection = start_snapshot().cursors[cursor_index].selection();
         document().delete_text_in_range({ m_insertion_start_indices[cursor_index], end_snapshot().cursors[cursor_index].index() });
-        if (!start_selection.empty()) {
-            document().insert_text_at_index(m_insertion_start_indices[cursor_index], selection_text(cursor_index).view());
-        }
     }
 }
 

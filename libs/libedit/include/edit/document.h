@@ -138,7 +138,7 @@ public:
     void cut(Display& display, MultiCursor& cursor);
 
     void insert_suggestion(Display& display, const MatchedSuggestion& suggestion);
-    void insert_text_per_cursor(Display& display, Vector<String> strings);
+    void insert_text_per_cursor(Display& display, Vector<String> strings, StringView command_name);
     void insert_text_at_cursor(Display& display, const String& string);
     void insert_line_at_cursor(Display& display, const String& line);
     void replace_next_search_match(Display& display, const String& replacement);
@@ -168,7 +168,6 @@ public:
 
     void swap_lines_at_cursor(Display& display, SwapDirection direction);
     void split_line_at_cursor(Display& display);
-    void insert_char(Display& display, char c);
     void delete_char(Display& display, DeleteCharMode mode);
     void delete_word(Display& display, DeleteCharMode mode);
     void delete_line(Display& display);

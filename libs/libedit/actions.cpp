@@ -235,7 +235,7 @@ void init_actions() {
         }
 
         if (!document.convert_tabs_to_spaces()) {
-            document.insert_char(display, '\t');
+            document.insert_text_at_cursor(display, "\t");
             return;
         }
 
@@ -244,7 +244,7 @@ void init_actions() {
             auto col_position = display.absolute_col_offset_of_index(cursor.index());
             spaces.add(String::repeat(' ', tab_width - (col_position % tab_width)));
         }
-        document.insert_text_per_cursor(display, move(spaces));
+        document.insert_text_per_cursor(display, move(spaces), "IncreaseIndent");
     });
 
     register_display_keyboard_action("Select All", { App::Key::A, App::KeyModifier::Control }, [](Display& display) {
