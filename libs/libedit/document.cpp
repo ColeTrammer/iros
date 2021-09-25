@@ -6,6 +6,7 @@
 #include <eventloop/widget_events.h>
 #include <ext/file.h>
 #include <graphics/point.h>
+#include <liim/utf8_view.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -434,7 +435,25 @@ void Document::swap_selection_anchor_and_cursor(Display& display, Cursor& cursor
 }
 
 void Document::split_line_at_cursor(Display& display) {
-    push_command<InsertCommand>(display, "\n");
+    auto strings_to_insert = Vector<String> {};
+    for (auto& cursor : display.cursors()) {
+        auto whitespace_to_insert = ""s;
+        auto utf8_view = Utf8View { line_at_index(cursor.line_index()).contents().view() };
+        for (auto it = utf8_view.begin(); it != utf8_view.end(); ++it) {
+            auto info = it.current_code_point_info();
+            if (!isspace(info.codepoint.value_or(Utf8View::replacement_character)) ||
+                it.byte_offset() + info.bytes_used > static_cast<size_t>(cursor.index_into_line())) {
+                break;
+            }
+            whitespace_to_insert += String { utf8_view.data() + it.byte_offset(), info.bytes_used };
+        }
+
+        auto text_to_insert = "\n"s;
+        text_to_insert += whitespace_to_insert;
+        strings_to_insert.add(move(text_to_insert));
+    }
+
+    insert_text_per_cursor(display, move(strings_to_insert));
 }
 
 bool Document::execute_command(Display& display, Command& command) {
