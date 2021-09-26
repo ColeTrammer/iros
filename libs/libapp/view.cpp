@@ -48,12 +48,12 @@ void View::set_model(SharedPtr<Model> model) {
     }
 
     if (m_model) {
-        m_model->unregister_client(this);
+        uninstall_model_listeners(*m_model);
     }
 
     m_model = model;
     if (m_model) {
-        m_model->register_client(this);
+        install_model_listeners(*m_model);
     }
 
     m_hovered_index.clear();
@@ -67,5 +67,15 @@ void View::set_hovered_index(ModelIndex index) {
 
     m_hovered_index = move(index);
     invalidate();
+}
+
+void View::install_model_listeners(Model& model) {
+    model.on<ModelUpdateEvent>(*this, [this](auto&) {
+        invalidate();
+    });
+}
+
+void View::uninstall_model_listeners(Model& model) {
+    model.remove_listener(*this);
 }
 }

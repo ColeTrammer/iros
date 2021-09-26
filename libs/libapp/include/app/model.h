@@ -3,13 +3,16 @@
 #include <app/forward.h>
 #include <app/model_data.h>
 #include <app/model_index.h>
+#include <eventloop/event.h>
 #include <eventloop/object.h>
-#include <liim/string.h>
-#include <liim/variant.h>
+
+APP_EVENT(App, ModelUpdateEvent, Event, (), (), ())
 
 namespace App {
 class Model : public Object {
     APP_OBJECT(Model)
+
+    APP_EMITS(Object, ModelUpdateEvent)
 
 public:
     enum Role {
@@ -23,13 +26,7 @@ public:
     virtual ModelData data(const ModelIndex& index, int role) const = 0;
     virtual ModelData header_data(int col, int role) const = 0;
 
-    void register_client(ModelClient* view);
-    void unregister_client(ModelClient* view);
-
 protected:
     void did_update();
-
-private:
-    Vector<ModelClient*> m_clients;
 };
 }

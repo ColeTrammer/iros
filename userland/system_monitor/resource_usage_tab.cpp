@@ -13,14 +13,15 @@ void ResourceUsageTab::initialize() {
     m_cpu_label = layout.add<App::TextLabel>("CPU: 0%").shared_from_this();
     m_memory_label = layout.add<App::TextLabel>("Memory: 0 / 0 (0%)").shared_from_this();
 
-    m_model->register_client(this);
+    m_model->on<App::ModelUpdateEvent>(*this, [this](auto&) {
+        update_display();
+    });
+    update_display();
 
     Widget::initialize();
 }
 
-ResourceUsageTab::~ResourceUsageTab() {
-    m_model->unregister_client(this);
-}
+ResourceUsageTab::~ResourceUsageTab() {}
 
 void ResourceUsageTab::update_display() {
     auto& info = m_model->global_process_info();

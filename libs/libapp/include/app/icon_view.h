@@ -13,13 +13,15 @@ class IconView : public View {
 public:
     virtual void initialize() override;
     virtual void render() override;
-    virtual void model_did_update() override;
 
     void set_name_column(int col) { m_name_column = col; }
 
 private:
     virtual ModelIndex index_at_position(int, int) override;
+    virtual void install_model_listeners(Model& model) override;
+    virtual void uninstall_model_listeners(Model& model) override;
 
+    void rebuild_layout();
     void compute_layout();
 
     struct Item {

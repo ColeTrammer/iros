@@ -83,7 +83,7 @@ void IconView::render() {
     Widget::render();
 }
 
-void IconView::model_did_update() {
+void IconView::rebuild_layout() {
     m_items.clear();
 
     for (int r = 0; r < model()->row_count(); r++) {
@@ -96,7 +96,21 @@ void IconView::model_did_update() {
     }
 
     compute_layout();
-    View::model_did_update();
+}
+
+void IconView::install_model_listeners(Model& model) {
+    model.on<ModelUpdateEvent>(*this, [this, &model](auto&) {
+        rebuild_layout();
+    });
+
+    View::install_model_listeners(model);
+
+    rebuild_layout();
+}
+
+void IconView::uninstall_model_listeners(Model& model) {
+    m_items.clear();
+    View::uninstall_model_listeners(model);
 }
 
 void IconView::compute_layout() {

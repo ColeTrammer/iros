@@ -1,7 +1,6 @@
 #pragma once
 
 #include <app/forward.h>
-#include <app/model_client.h>
 #include <app/model_index.h>
 #include <app/widget.h>
 #include <liim/hash_set.h>
@@ -29,9 +28,7 @@ private:
     HashSet<ModelIndex> m_indexes;
 };
 
-class View
-    : public Widget
-    , public ModelClient {
+class View : public Widget {
 public:
     virtual void initialize() override;
     virtual ~View() override;
@@ -43,8 +40,6 @@ public:
 
     const ModelIndex& hovered_index() const { return m_hovered_index; }
     void set_hovered_index(ModelIndex);
-
-    virtual void model_did_update() override { invalidate(); }
 
     const Selection& selection() const { return m_selection; }
 
@@ -61,6 +56,9 @@ protected:
     View() { set_accepts_focus(true); }
 
     virtual ModelIndex index_at_position(int wx, int wy) = 0;
+
+    virtual void install_model_listeners(Model& model);
+    virtual void uninstall_model_listeners(Model& model);
 
 private:
     SharedPtr<Model> m_model;

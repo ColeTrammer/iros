@@ -1,25 +1,16 @@
 #pragma once
 
-#include <app/model_client.h>
 #include <app/widget.h>
 
 class ProcessModel;
 
-namespace App {
-class TextLabel;
-}
-
-class ResourceUsageTab final
-    : public App::Widget
-    , public App::ModelClient {
+class ResourceUsageTab final : public App::Widget {
     APP_OBJECT(ResourceUsageTab)
 
 public:
-    ResourceUsageTab(SharedPtr<ProcessModel> model);
+    explicit ResourceUsageTab(SharedPtr<ProcessModel> model);
     virtual void initialize() override;
     virtual ~ResourceUsageTab() override;
-
-    virtual void model_did_update() override { update_display(); }
 
     void update_display();
 
