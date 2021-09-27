@@ -1,8 +1,8 @@
 #pragma once
 
 #include <app/forward.h>
-#include <app/model_data.h>
 #include <app/model_index.h>
+#include <app/model_item_info.h>
 #include <eventloop/event.h>
 #include <eventloop/object.h>
 
@@ -15,16 +15,14 @@ class Model : public Object {
     APP_EMITS(Object, ModelUpdateEvent)
 
 public:
-    enum Role {
-        Display,
-        TextAlignment,
-        Icon,
+    struct ModelDimensions {
+        int item_count { 0 };
+        int field_count { 1 };
     };
 
-    virtual int row_count() const = 0;
-    virtual int col_count() const = 0;
-    virtual ModelData data(const ModelIndex& index, int role) const = 0;
-    virtual ModelData header_data(int col, int role) const = 0;
+    virtual ModelDimensions dimensions() const = 0;
+    virtual ModelItemInfo item_info(const ModelIndex& index, int request) const = 0;
+    virtual ModelItemInfo header_info(int field, int request) const = 0;
 
 protected:
     void did_update();

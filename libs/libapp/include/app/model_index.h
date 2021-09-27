@@ -7,30 +7,27 @@ namespace App {
 class ModelIndex {
 public:
     ModelIndex() {}
-    ModelIndex(int r, int c) : m_row(r), m_col(c) {}
+    ModelIndex(int item, int field) : m_item(item), m_field(field) {}
 
-    int row() const { return m_row; }
-    int col() const { return m_col; }
+    int item() const { return m_item; }
+    int field() const { return m_field; }
 
-    void clear() { m_row = m_col = -1; }
-    bool valid() const { return m_row != -1 && m_col != -1; }
+    void clear() { m_item = m_field = -1; }
+    bool valid() const { return m_item != -1 && m_field != -1; }
 
-    bool operator==(const ModelIndex& other) const { return this->row() == other.row() && this->col() == other.col(); }
-    bool operator!=(const ModelIndex& other) const { return !(*this == other); }
+    bool operator==(const ModelIndex& other) const = default;
 
 private:
-    int m_row { -1 };
-    int m_col { -1 };
+    int m_item { -1 };
+    int m_field { -1 };
 };
 
 }
 
 namespace LIIM {
-
 template<>
 struct Traits<App::ModelIndex> {
     static constexpr bool is_simple() { return true; }
-    static unsigned int hash(const App::ModelIndex& obj) { return Traits<int>::hash(obj.row()) + Traits<int>::hash(obj.col()); };
+    static unsigned int hash(const App::ModelIndex& obj) { return Traits<int>::hash(obj.item()) + Traits<int>::hash(obj.field()); };
 };
-
 }

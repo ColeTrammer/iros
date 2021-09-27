@@ -14,7 +14,7 @@ FileSystemModel::FileSystemModel() {
 FileSystemModel::~FileSystemModel() {}
 
 const FileSystemObject& FileSystemModel::object_from_index(const App::ModelIndex& index) {
-    return m_objects[index.row()];
+    return m_objects[index.item()];
 }
 
 String FileSystemModel::full_path(const String& name) {
@@ -36,70 +36,60 @@ void FileSystemModel::go_to_parent() {
     load_data();
 }
 
-App::ModelData FileSystemModel::data(const App::ModelIndex& index, int role) const {
-    int row = index.row();
+App::ModelItemInfo FileSystemModel::item_info(const App::ModelIndex& index, int request) const {
+    int row = index.item();
     if (row < 0 || row >= m_objects.size()) {
         return {};
     }
 
+    auto info = App::ModelItemInfo {};
     auto& object = m_objects[row];
-    if (role == Role::Display) {
-        switch (index.col()) {
-            case Column::Icon:
-                return m_text_file_icon;
-            case Column::Name:
-                return object.name;
-            case Column::Owner:
-                return object.owner;
-            case Column::Group:
-                return object.group;
-            case Column::Size:
-                return String::format("%lu", object.size);
-            default:
-                return {};
-        }
+    switch (index.field()) {
+        case Column::Name:
+            if (request & App::ModelItemInfo::Request::Text)
+                info.set_text(object.name);
+            if (request & App::ModelItemInfo::Request::Bitmap)
+                info.set_bitmap(m_text_file_icon);
+            break;
+        case Column::Owner:
+            if (request & App::ModelItemInfo::Request::Text)
+                info.set_text(object.owner);
+            break;
+        case Column::Group:
+            if (request & App::ModelItemInfo::Request::Text)
+                info.set_text(object.group);
+            break;
+        case Column::Size:
+            if (request & App::ModelItemInfo::Request::Text)
+                info.set_text(format("{}", object.size));
+            break;
+        default:
+            break;
     }
-
-    if (role == Role::Icon) {
-        return m_text_file_icon;
-    }
-
-    if (role == Role::TextAlignment) {
-        switch (index.col()) {
-            case Column::Icon:
-                return {};
-            case Column::Name:
-            case Column::Owner:
-            case Column::Group:
-                return TextAlign::CenterLeft;
-            case Column::Size:
-                return TextAlign::CenterRight;
-            default:
-                return {};
-        }
-    }
-
-    return {};
+    return info;
 }
 
-App::ModelData FileSystemModel::header_data(int col, int role) const {
-    if (role == Role::Display) {
-        switch (col) {
-            case Column::Icon:
-                return {};
-            case Column::Name:
-                return "Name";
-            case Column::Owner:
-                return "Owner";
-            case Column::Group:
-                return "Group";
-            case Column::Size:
-                return "Size";
-            default:
-                return {};
-        }
+App::ModelItemInfo FileSystemModel::header_info(int field, int request) const {
+    auto info = App::ModelItemInfo {};
+    switch (field) {
+        case Column::Name:
+            if (request & App::ModelItemInfo::Request::Text)
+                info.set_text("Name");
+            break;
+        case Column::Owner:
+            if (request & App::ModelItemInfo::Request::Text)
+                info.set_text("Owner");
+            break;
+        case Column::Group:
+            if (request & App::ModelItemInfo::Request::Text)
+                info.set_text("Group");
+            break;
+        case Column::Size:
+            if (request & App::ModelItemInfo::Request::Text)
+                info.set_text("Size");
+            break;
     }
-    return {};
+    return info;
 }
 
 static int ignore_dots(const dirent* a) {

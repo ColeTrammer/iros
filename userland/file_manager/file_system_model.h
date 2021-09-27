@@ -21,7 +21,6 @@ public:
     virtual ~FileSystemModel() override;
 
     enum Column {
-        Icon,
         Name,
         Owner,
         Group,
@@ -29,10 +28,9 @@ public:
         __Count,
     };
 
-    virtual int row_count() const override { return m_objects.size(); }
-    virtual int col_count() const override { return Column::__Count; }
-    virtual App::ModelData data(const App::ModelIndex& index, int role) const override;
-    virtual App::ModelData header_data(int col, int role) const override;
+    virtual ModelDimensions dimensions() const override { return { .item_count = m_objects.size(), .field_count = Column::__Count }; }
+    virtual App::ModelItemInfo item_info(const App::ModelIndex& index, int request) const override;
+    virtual App::ModelItemInfo header_info(int field, int request) const override;
 
     void set_base_path(String path);
     void go_to_parent();

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <app/model_data.h>
 #include <app/view.h>
 #include <graphics/forward.h>
 #include <liim/function.h>
@@ -18,8 +17,8 @@ public:
     void set_cell_padding(int p) { m_cell_padding = p; }
 
 protected:
-    int width_of(const ModelData& data) const;
-    void render_data(Renderer& renderer, int rx, int ry, int width, Function<ModelData(int)> getter);
+    int width_of(const ModelItemInfo& data) const;
+    void render_data(Renderer& renderer, int rx, int ry, int width, Function<ModelItemInfo()> getter);
 
     virtual ModelIndex index_at_position(int, int) override;
 

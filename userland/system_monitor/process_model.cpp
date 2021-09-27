@@ -93,24 +93,38 @@ void ProcessModel::load_data() {
     did_update();
 }
 
-App::ModelData ProcessModel::data(const App::ModelIndex& index, int role) const {
-    int row = index.row();
+App::ModelItemInfo ProcessModel::item_info(const App::ModelIndex& index, int request) const {
+    int row = index.item();
     if (row < 0 || row >= m_processes.size()) {
         return {};
     }
 
+    auto info = App::ModelItemInfo {};
     auto& process = m_processes[row];
-    if (role == Role::Display) {
-        switch (index.col()) {
-            case Column::Pid:
-                return String::format("%d", process.pid());
-            case Column::Name:
-                return process.name();
-            case Column::Memory:
-                return String::format("%lu", process.resident_memory());
-            case Column::Priority:
-                return String::format("%d", process.priority());
-            case Column::RunningTime: {
+    switch (index.field()) {
+        case Column::Pid:
+            if (request & App::ModelItemInfo::Request::Text) {
+                info.set_text(format("{}", process.pid()));
+            }
+            break;
+        case Column::Name:
+            if (request & App::ModelItemInfo::Request::Text)
+                info.set_text(process.name());
+            break;
+        case Column::Memory:
+            if (request & App::ModelItemInfo::Request::Text)
+                info.set_text(format("{}", process.resident_memory()));
+            if (request & App::ModelItemInfo::Request::TextAlign)
+                info.set_text_align(TextAlign::CenterRight);
+            break;
+        case Column::Priority:
+            if (request & App::ModelItemInfo::Request::Text)
+                info.set_text(format("{}", process.priority()));
+            if (request & App::ModelItemInfo::Request::TextAlign)
+                info.set_text_align(TextAlign::CenterRight);
+            break;
+        case Column::RunningTime: {
+            if (request & App::ModelItemInfo::Request::Text) {
                 double seconds = process.running_time().tv_sec + process.running_time().tv_nsec / 1000000000.0;
                 long int_seconds = (int) seconds;
                 seconds -= int_seconds;
@@ -119,48 +133,43 @@ App::ModelData ProcessModel::data(const App::ModelIndex& index, int role) const 
                 long minutes = int_seconds / 60;
                 int_seconds %= 60;
 
-                return String::format("%ld:%02ld.%02d", minutes, int_seconds, (int) seconds);
+                info.set_text(format("{}:{:02}.{:02}", minutes, int_seconds, static_cast<int>(seconds)));
             }
-            default:
-                return {};
-        }
-    }
 
-    if (role == Role::TextAlignment) {
-        switch (index.col()) {
-            case Column::Pid:
-            case Column::Name:
-                return TextAlign::CenterLeft;
-            case Column::Memory:
-            case Column::Priority:
-            case Column::RunningTime: {
-                return TextAlign::CenterRight;
-            }
-            default:
-                return {};
+            if (request & App::ModelItemInfo::Request::TextAlign)
+                info.set_text_align(TextAlign::CenterRight);
+            break;
         }
+        default:
+            break;
     }
-
-    return {};
+    return info;
 }
 
-App::ModelData ProcessModel::header_data(int col, int role) const {
-    if (role == Role::Display) {
-        switch (col) {
-            case Column::Pid:
-                return "PID";
-            case Column::Name:
-                return "Name";
-            case Column::Memory:
-                return "Memory";
-            case Column::Priority:
-                return "Priority";
-            case Column::RunningTime:
-                return "Running Time";
-            default:
-                return {};
-        }
+App::ModelItemInfo ProcessModel::header_info(int field, int request) const {
+    auto info = App::ModelItemInfo {};
+    switch (field) {
+        case Column::Pid:
+            info.set_text("PID");
+            break;
+        case Column::Name:
+            if (request & App::ModelItemInfo::Request::Text)
+                info.set_text("Name");
+            break;
+        case Column::Memory:
+            if (request & App::ModelItemInfo::Request::Text)
+                info.set_text("Memory");
+            break;
+        case Column::Priority:
+            if (request & App::ModelItemInfo::Request::Text)
+                info.set_text("Priority");
+            break;
+        case Column::RunningTime:
+            if (request & App::ModelItemInfo::Request::Text)
+                info.set_text("Running Time");
+            break;
+        default:
+            break;
     }
-
-    return {};
+    return info;
 }

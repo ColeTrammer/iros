@@ -86,10 +86,12 @@ void IconView::render() {
 void IconView::rebuild_layout() {
     m_items.clear();
 
-    for (int r = 0; r < model()->row_count(); r++) {
+    auto dimensions = model()->dimensions();
+    for (int r = 0; r < dimensions.item_count; r++) {
+        auto info = model()->item_info({ r, m_name_column }, ModelItemInfo::Request::Text | ModelItemInfo::Request::Bitmap);
         m_items.add({
-            model()->data({ r, m_name_column }, Model::Role::Icon).get_or<SharedPtr<Bitmap>>(nullptr),
-            model()->data({ r, m_name_column }, Model::Role::Display).get_or<String>(""),
+            info.bitmap(),
+            info.text().value_or(""),
             {},
             { r, m_name_column },
         });

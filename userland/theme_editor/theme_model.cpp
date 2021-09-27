@@ -7,44 +7,36 @@ ThemeModel::ThemeModel() {
     load_data();
 }
 
-App::ModelData ThemeModel::data(const App::ModelIndex& index, int role) const {
-    int row = index.row();
-    if (row < 0 || row >= m_themes.size()) {
+App::ModelItemInfo ThemeModel::item_info(const App::ModelIndex& index, int request) const {
+    int item = index.item();
+    if (item < 0 || item >= m_themes.size()) {
         return {};
     }
 
-    auto& theme = m_themes[row];
-    if (role == Role::Display) {
-        switch (index.col()) {
-            case Column::Name:
-                return theme.palette->name();
-            default:
-                return {};
-        }
+    auto info = App::ModelItemInfo {};
+    auto& theme = m_themes[item];
+    switch (index.field()) {
+        case Column::Name:
+            if (request & App::ModelItemInfo::Request::Text)
+                info.set_text(theme.palette->name());
+            break;
+        default:
+            break;
     }
-
-    if (role == Role::TextAlignment) {
-        switch (index.col()) {
-            case Column::Name:
-                return TextAlign::CenterLeft;
-            default:
-                return {};
-        }
-    }
-
-    return {};
+    return info;
 }
 
-App::ModelData ThemeModel::header_data(int col, int role) const {
-    if (role == Role::Display) {
-        switch (col) {
-            case Column::Name:
-                return "Name";
-            default:
-                return {};
-        }
+App::ModelItemInfo ThemeModel::header_info(int field, int request) const {
+    auto info = App::ModelItemInfo {};
+    switch (field) {
+        case Column::Name:
+            if (request & App::ModelItemInfo::Request::Text)
+                info.set_text("Name");
+            break;
+        default:
+            break;
     }
-    return {};
+    return info;
 }
 
 void ThemeModel::load_data() {
