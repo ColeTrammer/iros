@@ -73,7 +73,7 @@ void TableView::render() {
             renderer.fill_rect({ 0, ry, sized_rect().width(), 21 }, palette()->color(Palette::Hover));
         }
 
-        if (is_selected({ r, 0 })) {
+        if (selection().present({ r, 0 })) {
             renderer.fill_rect({ 0, ry, sized_rect().width(), 21 }, palette()->color(Palette::Selected));
         }
 

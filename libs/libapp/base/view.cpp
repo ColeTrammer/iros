@@ -1,19 +1,23 @@
+#include <app/base/view.h>
+#include <app/base/widget.h>
 #include <app/model.h>
-#include <app/view.h>
-#include <eventloop/event.h>
 
-namespace App {
+namespace App::Base {
+View::View() {}
+
 void View::initialize() {
-    on<MouseDownEvent>([this](const MouseDownEvent& event) {
+    this_widget().set_accepts_focus(true);
+
+    this_widget().on<MouseDownEvent>({}, [this](const MouseDownEvent& event) {
         auto index = index_at_position(event.x(), event.y());
         if (event.left_button()) {
             switch (event.cyclic_count(2)) {
                 case 1:
-                    clear_selection();
+                    selection().clear();
                     if (index.valid()) {
-                        add_to_selection(index);
+                        selection().add(index);
                     }
-                    invalidate();
+                    invalidate_all();
                     break;
                 case 2:
                     if (index.valid()) {
@@ -27,17 +31,15 @@ void View::initialize() {
         return false;
     });
 
-    on<MouseMoveEvent>([this](const MouseMoveEvent& event) {
+    this_widget().on<MouseMoveEvent>({}, [this](const MouseMoveEvent& event) {
         auto index = index_at_position(event.x(), event.y());
         set_hovered_index(index);
         return false;
     });
 
-    on<LeaveEvent>([this](const LeaveEvent&) {
+    this_widget().on<LeaveEvent>({}, [this](const LeaveEvent&) {
         set_hovered_index({});
     });
-
-    Widget::initialize();
 }
 
 View::~View() {}
@@ -57,7 +59,7 @@ void View::set_model(SharedPtr<Model> model) {
     }
 
     m_hovered_index.clear();
-    invalidate();
+    invalidate_all();
 }
 
 void View::set_hovered_index(ModelIndex index) {
@@ -66,16 +68,16 @@ void View::set_hovered_index(ModelIndex index) {
     }
 
     m_hovered_index = move(index);
-    invalidate();
+    invalidate_all();
 }
 
 void View::install_model_listeners(Model& model) {
-    model.on<ModelUpdateEvent>(*this, [this](auto&) {
-        invalidate();
+    model.on<ModelUpdateEvent>(this_widget(), [this](auto&) {
+        invalidate_all();
     });
 }
 
 void View::uninstall_model_listeners(Model& model) {
-    model.remove_listener(*this);
+    model.remove_listener(this_widget());
 }
 }

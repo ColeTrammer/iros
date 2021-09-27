@@ -17,14 +17,14 @@ void IconView::initialize() {
 
     on<MouseMoveEvent>([this](const MouseMoveEvent& event) {
         if (m_in_selection) {
-            clear_selection();
+            selection().clear();
 
             m_selection_end = { event.x(), event.y() };
             Rect selection_rect = { m_selection_start, m_selection_end };
             for (auto r = 0; r < m_items.size(); r++) {
                 auto& item = m_items[r];
                 if (item.rect.intersects(selection_rect)) {
-                    add_to_selection({ r, m_name_column });
+                    selection().add({ r, m_name_column });
                 }
             }
 
@@ -69,7 +69,7 @@ void IconView::render() {
         if (hovered_index() == ModelIndex { r, m_name_column }) {
             renderer.draw_rect(item.rect, palette()->color(Palette::Hover));
         }
-        if (is_selected(ModelIndex { r, m_name_column })) {
+        if (selection().present(ModelIndex { r, m_name_column })) {
             renderer.draw_rect(item.rect, palette()->color(Palette::Selected));
         }
     }

@@ -1,6 +1,7 @@
 set(SOURCES
     base/application.cpp
     base/terminal_widget.cpp
+    base/view.cpp
     base/widget.cpp
     base/window.cpp
     application_os_2.cpp
@@ -17,7 +18,6 @@ set(SOURCES
     table_view.cpp
     terminal_widget.cpp
     text_label.cpp
-    view.cpp
     widget.cpp
     window_os_2.cpp
     window_sdl.cpp

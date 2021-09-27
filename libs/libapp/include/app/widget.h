@@ -10,13 +10,6 @@
 #include <graphics/rect.h>
 
 namespace App {
-struct Size {
-    enum { Auto = -1 };
-
-    int width { 0 };
-    int height { 0 };
-};
-
 class Widget : public Base::Widget {
     APP_OBJECT(Widget)
 
