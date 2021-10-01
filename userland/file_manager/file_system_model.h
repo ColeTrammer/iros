@@ -5,12 +5,27 @@
 #include <liim/vector.h>
 #include <sys/types.h>
 
-struct FileSystemObject {
-    String name;
-    String owner;
-    String group;
-    mode_t mode;
-    off_t size;
+class FileSystemObject : public App::ModelItem {
+public:
+    FileSystemObject(SharedPtr<Bitmap> icon, String name, String owner, String group, mode_t mode, off_t size)
+        : m_icon(move(icon)), m_name(move(name)), m_owner(move(owner)), m_group(move(group)), m_mode(mode), m_size(size) {}
+
+    virtual App::ModelItemInfo info(int field, int request) const override;
+
+    SharedPtr<Bitmap> icon() const { return m_icon; }
+    const String& name() const { return m_name; }
+    const String& owner() const { return m_owner; }
+    const String& group() const { return m_group; }
+    mode_t mode() const { return m_mode; }
+    off_t size() const { return m_size; }
+
+private:
+    SharedPtr<Bitmap> m_icon;
+    String m_name;
+    String m_owner;
+    String m_group;
+    mode_t m_mode;
+    off_t m_size;
 };
 
 class FileSystemModel final : public App::Model {
@@ -28,8 +43,7 @@ public:
         __Count,
     };
 
-    virtual ModelDimensions dimensions() const override { return { .item_count = m_objects.size(), .field_count = Column::__Count }; }
-    virtual App::ModelItemInfo item_info(const App::ModelIndex& index, int request) const override;
+    virtual int field_count() const override { return Column::__Count; }
     virtual App::ModelItemInfo header_info(int field, int request) const override;
 
     void set_base_path(String path);
@@ -37,12 +51,9 @@ public:
 
     String full_path(const String& name);
 
-    const FileSystemObject& object_from_index(const App::ModelIndex& index);
-
 private:
     void load_data();
 
     Ext::Path m_base_path;
-    Vector<FileSystemObject> m_objects;
     SharedPtr<Bitmap> m_text_file_icon;
 };

@@ -7,18 +7,12 @@ ThemeModel::ThemeModel() {
     load_data();
 }
 
-App::ModelItemInfo ThemeModel::item_info(const App::ModelIndex& index, int request) const {
-    int item = index.item();
-    if (item < 0 || item >= m_themes.size()) {
-        return {};
-    }
-
+App::ModelItemInfo Theme::info(int field, int request) const {
     auto info = App::ModelItemInfo {};
-    auto& theme = m_themes[item];
-    switch (index.field()) {
-        case Column::Name:
+    switch (field) {
+        case ThemeModel::Column::Name:
             if (request & App::ModelItemInfo::Request::Text)
-                info.set_text(theme.palette->name());
+                info.set_text(palette()->name());
             break;
         default:
             break;
@@ -40,7 +34,8 @@ App::ModelItemInfo ThemeModel::header_info(int field, int request) const {
 }
 
 void ThemeModel::load_data() {
-    m_themes.clear();
+    auto* root_item = model_item_root();
+    root_item->clear_children();
 
     dirent** dirents;
     int dirent_count;
@@ -57,7 +52,7 @@ void ThemeModel::load_data() {
         auto path = String::format(RESOURCE_ROOT "/usr/share/themes/%s", dirent->d_name);
         auto theme = Palette::create_from_json(path);
         if (theme) {
-            m_themes.add(Theme { move(path), move(theme) });
+            root_item->add_child(make_unique<Theme>(move(path), move(theme)));
         }
 
         free(dirent);

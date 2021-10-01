@@ -51,11 +51,11 @@ int main(int argc, char** argv) {
     view.set_model(model);
 
     view.on_item_activation = [&](const App::ModelIndex& index) {
-        auto& object = model->object_from_index(index);
+        auto& object = model->model_item_root()->typed_item<FileSystemObject>(index.item());
 
-        fprintf(stderr, "Activated: `%s'\n", object.name.string());
-        if (object.mode & S_IFDIR) {
-            model->set_base_path(model->full_path(object.name));
+        fprintf(stderr, "Activated: `%s'\n", object.name().string());
+        if (object.mode() & S_IFDIR) {
+            model->set_base_path(model->full_path(object.name()));
         }
     };
 

@@ -7,9 +7,13 @@
 struct proc_info;
 struct proc_global_info;
 
-class ProcessInfo {
+class ProcessInfo : public App::ModelItem {
 public:
-    ProcessInfo(const proc_info& info);
+    explicit ProcessInfo(const proc_info& info);
+    virtual ~ProcessInfo() override = default;
+
+    virtual App::ModelItemInfo info(int field, int request) const override;
+
     void update(const proc_info& info);
 
     const String& name() const { return m_name; }
@@ -67,8 +71,7 @@ public:
         __Count,
     };
 
-    virtual ModelDimensions dimensions() const override { return { .item_count = m_processes.size(), .field_count = Column::__Count }; }
-    virtual App::ModelItemInfo item_info(const App::ModelIndex& index, int request) const override;
+    virtual int field_count() const override { return Column::__Count; }
     virtual App::ModelItemInfo header_info(int field, int request) const override;
 
     void load_data();
@@ -76,7 +79,6 @@ public:
     const GlobalProcessInfo& global_process_info() const { return m_global_process_info; }
 
 private:
-    Vector<ProcessInfo> m_processes;
     GlobalProcessInfo m_global_process_info;
     SharedPtr<App::Timer> m_timer;
 };

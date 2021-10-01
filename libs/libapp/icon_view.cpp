@@ -86,9 +86,10 @@ void IconView::render() {
 void IconView::rebuild_layout() {
     m_items.clear();
 
-    auto dimensions = model()->dimensions();
-    for (int r = 0; r < dimensions.item_count; r++) {
-        auto info = model()->item_info({ r, m_name_column }, ModelItemInfo::Request::Text | ModelItemInfo::Request::Bitmap);
+    auto* root_item = model()->model_item_root();
+    auto item_count = root_item->item_count();
+    for (int r = 0; r < item_count; r++) {
+        auto info = root_item->model_item_at(r)->info(m_name_column, ModelItemInfo::Request::Text | ModelItemInfo::Request::Bitmap);
         m_items.add({
             info.bitmap(),
             info.text().value_or(""),

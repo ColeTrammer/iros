@@ -58,11 +58,12 @@ void ProcessModel::load_data() {
     // read_procfs_info() returns the process information sorted by pid. In order to sample things like the process CPU usage,
     // it is necessary to match up the new process information with the old. To accomplish this, the new information must be
     // merged with the new.
+    auto* root_item = model_item_root();
     size_t new_info_index = 0;
     size_t old_info_index = 0;
-    while (new_info_index < num_processes && old_info_index < static_cast<size_t>(m_processes.size())) {
+    while (new_info_index < num_processes && old_info_index < static_cast<size_t>(root_item->item_count())) {
         auto& new_info = info[new_info_index];
-        auto& old_info = m_processes[old_info_index];
+        auto& old_info = root_item->typed_item<ProcessInfo>(old_info_index);
         if (new_info.pid == old_info.pid()) {
             old_info.update(new_info);
             new_info_index++;
@@ -71,21 +72,21 @@ void ProcessModel::load_data() {
         }
 
         if (new_info.pid < old_info.pid()) {
-            m_processes.insert(new_info, old_info_index);
+            root_item->insert_child(make_unique<ProcessInfo>(new_info), old_info_index);
             new_info_index++;
             old_info_index++;
             continue;
         }
 
-        m_processes.remove(old_info_index);
+        root_item->remove_child(old_info_index);
     }
 
-    while (old_info_index < static_cast<size_t>(m_processes.size())) {
-        m_processes.remove(old_info_index);
+    while (old_info_index < static_cast<size_t>(root_item->item_count())) {
+        root_item->remove_child(old_info_index);
     }
 
     while (new_info_index < num_processes) {
-        m_processes.add(info[new_info_index++]);
+        root_item->add_child(make_unique<ProcessInfo>(info[new_info_index++]));
     }
 
     free_procfs_info(info);
@@ -93,39 +94,33 @@ void ProcessModel::load_data() {
     did_update();
 }
 
-App::ModelItemInfo ProcessModel::item_info(const App::ModelIndex& index, int request) const {
-    int row = index.item();
-    if (row < 0 || row >= m_processes.size()) {
-        return {};
-    }
-
+App::ModelItemInfo ProcessInfo::info(int field, int request) const {
     auto info = App::ModelItemInfo {};
-    auto& process = m_processes[row];
-    switch (index.field()) {
-        case Column::Pid:
+    switch (field) {
+        case ProcessModel::Column::Pid:
             if (request & App::ModelItemInfo::Request::Text) {
-                info.set_text(format("{}", process.pid()));
+                info.set_text(format("{}", pid()));
             }
             break;
-        case Column::Name:
+        case ProcessModel::Column::Name:
             if (request & App::ModelItemInfo::Request::Text)
-                info.set_text(process.name());
+                info.set_text(name());
             break;
-        case Column::Memory:
+        case ProcessModel::Column::Memory:
             if (request & App::ModelItemInfo::Request::Text)
-                info.set_text(format("{}", process.resident_memory()));
+                info.set_text(format("{}", resident_memory()));
             if (request & App::ModelItemInfo::Request::TextAlign)
                 info.set_text_align(TextAlign::CenterRight);
             break;
-        case Column::Priority:
+        case ProcessModel::Column::Priority:
             if (request & App::ModelItemInfo::Request::Text)
-                info.set_text(format("{}", process.priority()));
+                info.set_text(format("{}", priority()));
             if (request & App::ModelItemInfo::Request::TextAlign)
                 info.set_text_align(TextAlign::CenterRight);
             break;
-        case Column::RunningTime: {
+        case ProcessModel::Column::RunningTime: {
             if (request & App::ModelItemInfo::Request::Text) {
-                double seconds = process.running_time().tv_sec + process.running_time().tv_nsec / 1000000000.0;
+                double seconds = running_time().tv_sec + running_time().tv_nsec / 1000000000.0;
                 long int_seconds = (int) seconds;
                 seconds -= int_seconds;
                 seconds *= 100;

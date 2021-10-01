@@ -2,6 +2,7 @@
 
 #include <app/forward.h>
 #include <app/model_index.h>
+#include <app/model_item.h>
 #include <app/model_item_info.h>
 #include <eventloop/event.h>
 #include <eventloop/object.h>
@@ -15,16 +16,19 @@ class Model : public Object {
     APP_EMITS(Object, ModelUpdateEvent)
 
 public:
-    struct ModelDimensions {
-        int item_count { 0 };
-        int field_count { 1 };
-    };
-
-    virtual ModelDimensions dimensions() const = 0;
-    virtual ModelItemInfo item_info(const ModelIndex& index, int request) const = 0;
+    virtual int field_count() const = 0;
     virtual ModelItemInfo header_info(int field, int request) const = 0;
 
+    ModelItem* model_item_root() { return m_root.get(); }
+
 protected:
+    Model();
+
     void did_update();
+
+    void set_root(UniquePtr<ModelItem> root);
+
+private:
+    UniquePtr<ModelItem> m_root;
 };
 }

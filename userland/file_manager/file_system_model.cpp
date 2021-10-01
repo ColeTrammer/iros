@@ -13,10 +13,6 @@ FileSystemModel::FileSystemModel() {
 
 FileSystemModel::~FileSystemModel() {}
 
-const FileSystemObject& FileSystemModel::object_from_index(const App::ModelIndex& index) {
-    return m_objects[index.item()];
-}
-
 String FileSystemModel::full_path(const String& name) {
     return m_base_path.join_component(name);
 }
@@ -36,32 +32,26 @@ void FileSystemModel::go_to_parent() {
     load_data();
 }
 
-App::ModelItemInfo FileSystemModel::item_info(const App::ModelIndex& index, int request) const {
-    int row = index.item();
-    if (row < 0 || row >= m_objects.size()) {
-        return {};
-    }
-
+App::ModelItemInfo FileSystemObject::info(int field, int request) const {
     auto info = App::ModelItemInfo {};
-    auto& object = m_objects[row];
-    switch (index.field()) {
-        case Column::Name:
+    switch (field) {
+        case FileSystemModel::Column::Name:
             if (request & App::ModelItemInfo::Request::Text)
-                info.set_text(object.name);
+                info.set_text(name());
             if (request & App::ModelItemInfo::Request::Bitmap)
-                info.set_bitmap(m_text_file_icon);
+                info.set_bitmap(icon());
             break;
-        case Column::Owner:
+        case FileSystemModel::Column::Owner:
             if (request & App::ModelItemInfo::Request::Text)
-                info.set_text(object.owner);
+                info.set_text(owner());
             break;
-        case Column::Group:
+        case FileSystemModel::Column::Group:
             if (request & App::ModelItemInfo::Request::Text)
-                info.set_text(object.group);
+                info.set_text(group());
             break;
-        case Column::Size:
+        case FileSystemModel::Column::Size:
             if (request & App::ModelItemInfo::Request::Text)
-                info.set_text(format("{}", object.size));
+                info.set_text(format("{}", size()));
             break;
         default:
             break;
@@ -99,7 +89,8 @@ static int ignore_dots(const dirent* a) {
 void FileSystemModel::load_data() {
     fprintf(stderr, "Load data for: `%s'\n", m_base_path.to_string().string());
 
-    m_objects.clear();
+    auto* root_item = model_item_root();
+    root_item->clear_children();
 
     dirent** dirents;
     int dirent_count;
@@ -114,7 +105,8 @@ void FileSystemModel::load_data() {
         if (lstat(path.string(), &st) == 0) {
             passwd* pwd = getpwuid(st.st_uid);
             group* grp = getgrgid(st.st_gid);
-            m_objects.add({ dirent->d_name, pwd ? pwd->pw_name : "Unknown", grp ? grp->gr_name : "Unknown", st.st_mode, st.st_size });
+            root_item->add_child(make_unique<FileSystemObject>(m_text_file_icon, dirent->d_name, pwd ? pwd->pw_name : "Unknown",
+                                                               grp ? grp->gr_name : "Unknown", st.st_mode, st.st_size));
         }
         free(dirent);
     }

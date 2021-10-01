@@ -16,6 +16,7 @@ class Menubar;
 class ModelClient;
 class ModelIndex;
 class ModelItemInfo;
+class ModelItem;
 class Model;
 class PlatformWindow;
 class TabWidget;
