@@ -15,6 +15,7 @@ public:
 
     int item_count() const { return m_children.size(); }
 
+    ModelItem* parent() { return m_parent; }
     ModelItem* model_item_at(int index) { return m_children[index].get(); }
 
     template<typename T>
@@ -22,12 +23,36 @@ public:
         return static_cast<T&>(*m_children[index].get());
     }
 
-    void add_child(UniquePtr<ModelItem> item) { m_children.add(move(item)); }
-    void insert_child(UniquePtr<ModelItem> item, int index) { m_children.insert(move(item), index); }
+    template<typename T>
+    T* typed_parent() {
+        return static_cast<T*>(m_parent);
+    }
+
+    template<typename T, typename... Args>
+    T& add_child(Args&&... args) {
+        auto child = make_unique<T>(forward<Args>(args)...);
+        auto& ret = *child;
+        child->set_parent(this);
+        m_children.add(move(child));
+        return ret;
+    }
+
+    template<typename T, typename... Args>
+    T& insert_child(int index, Args&&... args) {
+        auto child = make_unique<T>(forward<Args>(args)...);
+        auto& ret = *child;
+        child->set_parent(this);
+        m_children.insert(move(child), index);
+        return ret;
+    }
+
     void remove_child(int index) { m_children.remove(index); }
     void clear_children() { m_children.clear(); }
 
 private:
+    void set_parent(ModelItem* parent) { m_parent = parent; }
+
     Vector<UniquePtr<ModelItem>> m_children;
+    ModelItem* m_parent { nullptr };
 };
 }

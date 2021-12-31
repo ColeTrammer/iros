@@ -72,7 +72,7 @@ void ProcessModel::load_data() {
         }
 
         if (new_info.pid < old_info.pid()) {
-            root_item->insert_child(make_unique<ProcessInfo>(new_info), old_info_index);
+            root_item->insert_child<ProcessInfo>(old_info_index, new_info);
             new_info_index++;
             old_info_index++;
             continue;
@@ -86,7 +86,7 @@ void ProcessModel::load_data() {
     }
 
     while (new_info_index < num_processes) {
-        root_item->add_child(make_unique<ProcessInfo>(info[new_info_index++]));
+        root_item->add_child<ProcessInfo>(info[new_info_index++]);
     }
 
     free_procfs_info(info);

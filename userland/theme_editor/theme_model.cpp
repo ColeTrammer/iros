@@ -52,7 +52,7 @@ void ThemeModel::load_data() {
         auto path = String::format(RESOURCE_ROOT "/usr/share/themes/%s", dirent->d_name);
         auto theme = Palette::create_from_json(path);
         if (theme) {
-            root_item->add_child(make_unique<Theme>(move(path), move(theme)));
+            root_item->add_child<Theme>(move(path), move(theme));
         }
 
         free(dirent);

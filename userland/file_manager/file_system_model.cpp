@@ -105,8 +105,8 @@ void FileSystemModel::load_data() {
         if (lstat(path.string(), &st) == 0) {
             passwd* pwd = getpwuid(st.st_uid);
             group* grp = getgrgid(st.st_gid);
-            root_item->add_child(make_unique<FileSystemObject>(m_text_file_icon, dirent->d_name, pwd ? pwd->pw_name : "Unknown",
-                                                               grp ? grp->gr_name : "Unknown", st.st_mode, st.st_size));
+            root_item->add_child<FileSystemObject>(m_text_file_icon, dirent->d_name, pwd ? pwd->pw_name : "Unknown",
+                                                   grp ? grp->gr_name : "Unknown", st.st_mode, st.st_size);
         }
         free(dirent);
     }
