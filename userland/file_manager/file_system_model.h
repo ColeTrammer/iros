@@ -49,7 +49,7 @@ public:
     void set_base_path(String path);
     void go_to_parent();
 
-    String full_path(const String& name);
+    Ext::Path full_path(const FileSystemObject& object);
 
 private:
     void load_data();

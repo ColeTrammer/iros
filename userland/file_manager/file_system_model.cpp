@@ -13,8 +13,8 @@ FileSystemModel::FileSystemModel() {
 
 FileSystemModel::~FileSystemModel() {}
 
-String FileSystemModel::full_path(const String& name) {
-    return m_base_path.join_component(name);
+Ext::Path FileSystemModel::full_path(const FileSystemObject& object) {
+    return m_base_path.join_component(object.name());
 }
 
 void FileSystemModel::set_base_path(String path_string) {
@@ -100,9 +100,9 @@ void FileSystemModel::load_data() {
 
     for (int i = 0; i < dirent_count; i++) {
         auto* dirent = dirents[i];
-        auto path = full_path(dirent->d_name);
+        auto path = m_base_path.join_component(dirent->d_name);
         struct stat st;
-        if (lstat(path.string(), &st) == 0) {
+        if (lstat(path.to_string().string(), &st) == 0) {
             passwd* pwd = getpwuid(st.st_uid);
             group* grp = getgrgid(st.st_gid);
             root_item->add_child<FileSystemObject>(m_text_file_icon, dirent->d_name, pwd ? pwd->pw_name : "Unknown",

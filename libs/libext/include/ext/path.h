@@ -21,7 +21,7 @@ public:
 
     void set_to_parent();
 
-    String join_component(const String& name) const;
+    Path join_component(const String& name) const;
 
 private:
     Path(const String& path);

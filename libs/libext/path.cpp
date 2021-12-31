@@ -57,10 +57,10 @@ String Path::to_string() const {
     return String::join(m_components, '/', JoinPrependDelimiter::Yes);
 }
 
-String Path::join_component(const String& name) const {
+Path Path::join_component(const String& name) const {
     if (m_components.empty()) {
-        return String::format("/%s", name.string());
+        return Path { String::format("/%s", name.string()) };
     }
-    return String::format("%s/%s", to_string().string(), name.string());
+    return Path { String::format("%s/%s", to_string().string(), name.string()) };
 }
 }

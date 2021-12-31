@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
 
         fprintf(stderr, "Activated: `%s'\n", object.name().string());
         if (object.mode() & S_IFDIR) {
-            model->set_base_path(model->full_path(object.name()));
+            model->set_base_path(model->full_path(object).to_string());
         }
     };
 
