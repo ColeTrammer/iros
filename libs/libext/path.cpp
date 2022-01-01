@@ -16,6 +16,10 @@ Maybe<Path> Path::resolve(const String& path) {
     return { Path(buffer) };
 }
 
+Path Path::root() {
+    return Path { "/" };
+}
+
 Path::Path(const String& path) {
     m_components = path.split('/');
 }
