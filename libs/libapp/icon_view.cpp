@@ -48,6 +48,10 @@ void IconView::initialize() {
         invalidate();
     });
 
+    on<ViewRootChanged>([this](auto&) {
+        rebuild_layout();
+    });
+
     View::initialize();
 }
 
@@ -86,7 +90,12 @@ void IconView::render() {
 void IconView::rebuild_layout() {
     m_items.clear();
 
-    auto* root_item = model()->model_item_root();
+    auto* root_item = this->root_item();
+    if (!root_item) {
+        error_log("No root");
+        return;
+    }
+
     auto item_count = root_item->item_count();
     for (int r = 0; r < item_count; r++) {
         auto info = root_item->model_item_at(r)->info(m_name_column, ModelItemInfo::Request::Text | ModelItemInfo::Request::Bitmap);

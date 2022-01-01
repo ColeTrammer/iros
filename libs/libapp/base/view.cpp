@@ -51,11 +51,13 @@ void View::set_model(SharedPtr<Model> model) {
 
     if (m_model) {
         uninstall_model_listeners(*m_model);
+        set_root_item(nullptr);
     }
 
     m_model = model;
     if (m_model) {
         install_model_listeners(*m_model);
+        set_root_item(m_model->model_item_root());
     }
 
     m_hovered_index.clear();
@@ -73,11 +75,23 @@ void View::set_hovered_index(ModelIndex index) {
 
 void View::install_model_listeners(Model& model) {
     model.on<ModelUpdateEvent>(this_widget(), [this](auto&) {
+        if (!root_item()) {
+            set_root_item(this->model()->model_item_root());
+        }
         invalidate_all();
     });
 }
 
 void View::uninstall_model_listeners(Model& model) {
     model.remove_listener(this_widget());
+}
+
+void View::set_root_item(ModelItem* item) {
+    if (m_root_item == item) {
+        return;
+    }
+
+    m_root_item = item;
+    this_widget().emit<ViewRootChanged>();
 }
 }

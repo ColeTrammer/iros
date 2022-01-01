@@ -39,11 +39,15 @@ void TableView::render() {
         return;
     }
 
+    auto root_item = this->root_item();
+    if (!root_item) {
+        return;
+    }
+
     auto renderer = get_renderer();
     renderer.fill_rect(sized_rect(), background_color());
 
     auto field_count = model()->field_count();
-    auto root_item = model()->model_item_root();
     auto item_count = root_item->item_count();
 
     auto col_widths = Vector<int> { field_count };

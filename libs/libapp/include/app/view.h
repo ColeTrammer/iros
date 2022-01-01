@@ -10,6 +10,8 @@ class View
     , public Base::View {
     APP_OBJECT(View)
 
+    APP_EMITS(Widget, ViewRootChanged)
+
 public:
     virtual void initialize() override {
         Base::View::initialize();

@@ -2,7 +2,10 @@
 
 #include <app/forward.h>
 #include <app/selection.h>
+#include <eventloop/event.h>
 #include <liim/function.h>
+
+APP_EVENT(App, ViewRootChanged, Event, (), (), ());
 
 namespace App::Base {
 class View {
@@ -21,6 +24,11 @@ public:
     Selection& selection() { return m_selection; }
     const Selection& selection() const { return m_selection; }
 
+    ModelItem* root_item() { return m_root_item; }
+    const ModelItem* root_item() const { return m_root_item; }
+
+    void set_root_item(ModelItem* item);
+
     Function<void(const ModelIndex&)> on_item_activation;
 
 protected:
@@ -37,5 +45,6 @@ private:
     SharedPtr<Model> m_model;
     ModelIndex m_hovered_index;
     Selection m_selection;
+    ModelItem* m_root_item { nullptr };
 };
 }
