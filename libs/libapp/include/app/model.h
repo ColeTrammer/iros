@@ -20,6 +20,45 @@ public:
     virtual ModelItemInfo header_info(int field, int request) const = 0;
 
     ModelItem* model_item_root() { return m_root.get(); }
+    const ModelItem* model_item_root() const { return m_root.get(); }
+
+    template<typename T>
+    T* typed_root() {
+        return static_cast<T*>(m_root.get());
+    }
+
+    template<typename T>
+    const T* typed_root() const {
+        return static_cast<const T*>(m_root.get());
+    }
+
+    template<typename T, typename... Args>
+    T& add_child(ModelItem& parent, Args&&... args) {
+        auto child = make_unique<T>(forward<Args>(args)...);
+        auto& ret = *child;
+        parent.add_child(move(child));
+        did_update();
+        return ret;
+    }
+
+    template<typename T, typename... Args>
+    T& insert_child(ModelItem& parent, int index, Args&&... args) {
+        auto child = make_unique<T>(forward<Args>(args)...);
+        auto& ret = *child;
+        parent.insert_child(index, move(child));
+        did_update();
+        return ret;
+    }
+
+    void remove_child(ModelItem& parent, int index) {
+        parent.remove_child(index);
+        did_update();
+    }
+
+    void clear_children(ModelItem& parent) {
+        parent.clear_children();
+        did_update();
+    }
 
 protected:
     Model();

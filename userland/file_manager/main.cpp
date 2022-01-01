@@ -34,7 +34,11 @@ int main(int argc, char** argv) {
     auto app = App::Application::create();
 
     auto model = FileSystemModel::create(nullptr);
-    model->set_base_path(starting_path);
+    auto root = model->load_initial_data(starting_path);
+    if (!root) {
+        error_log("Failed to load path: `{}'", starting_path);
+        return 1;
+    }
 
     auto window = App::Window::create(nullptr, 350, 350, 400, 400, "File Manager");
     auto& main_widget = window->set_main_widget<App::Widget>();
@@ -42,21 +46,18 @@ int main(int argc, char** argv) {
 
     auto& parent_button = layout.add<App::Button>("Go to parent");
     parent_button.set_layout_constraint({ 100, 24 });
-    parent_button.on<App::ClickEvent>({}, [&](auto&) {
-        model->go_to_parent();
-    });
+    parent_button.on<App::ClickEvent>({}, [&](auto&) {});
 
     auto& view = layout.add<App::IconView>();
     view.set_name_column(FileSystemModel::Column::Name);
     view.set_model(model);
+    view.set_root_item(root);
 
     view.on_item_activation = [&](const App::ModelIndex& index) {
         auto& object = model->model_item_root()->typed_item<FileSystemObject>(index.item());
 
         fprintf(stderr, "Activated: `%s'\n", object.name().string());
-        if (object.mode() & S_IFDIR) {
-            model->set_base_path(model->full_path(object).to_string());
-        }
+        if (object.mode() & S_IFDIR) {}
     };
 
     app->enter();

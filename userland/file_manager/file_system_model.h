@@ -18,6 +18,9 @@ public:
     const String& group() const { return m_group; }
     mode_t mode() const { return m_mode; }
     off_t size() const { return m_size; }
+    bool loaded() const { return m_loaded; }
+
+    void set_loaded(bool b) { m_loaded = b; }
 
 private:
     SharedPtr<Bitmap> m_icon;
@@ -26,6 +29,7 @@ private:
     String m_group;
     mode_t m_mode;
     off_t m_size;
+    bool m_loaded { false };
 };
 
 class FileSystemModel final : public App::Model {
@@ -46,14 +50,11 @@ public:
     virtual int field_count() const override { return Column::__Count; }
     virtual App::ModelItemInfo header_info(int field, int request) const override;
 
-    void set_base_path(String path);
-    void go_to_parent();
-
     Ext::Path full_path(const FileSystemObject& object);
 
-private:
-    void load_data();
+    FileSystemObject* load_initial_data(const String& path);
+    void load_data(FileSystemObject& object);
 
-    Ext::Path m_base_path;
+private:
     SharedPtr<Bitmap> m_text_file_icon;
 };

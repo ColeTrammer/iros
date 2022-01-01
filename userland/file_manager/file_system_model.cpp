@@ -14,22 +14,12 @@ FileSystemModel::FileSystemModel() {
 FileSystemModel::~FileSystemModel() {}
 
 Ext::Path FileSystemModel::full_path(const FileSystemObject& object) {
-    return m_base_path.join_component(object.name());
-}
-
-void FileSystemModel::set_base_path(String path_string) {
-    auto new_path = Ext::Path::resolve(path_string);
-    if (!new_path) {
-        return;
+    if (!object.parent()) {
+        return Ext::Path::root();
     }
 
-    m_base_path = move(*new_path);
-    load_data();
-}
-
-void FileSystemModel::go_to_parent() {
-    m_base_path.set_to_parent();
-    load_data();
+    auto base = full_path(*object.typed_parent<FileSystemObject>());
+    return base.join_component(object.name());
 }
 
 App::ModelItemInfo FileSystemObject::info(int field, int request) const {
@@ -86,31 +76,48 @@ static int ignore_dots(const dirent* a) {
     return a->d_name[0] != '.';
 }
 
-void FileSystemModel::load_data() {
-    fprintf(stderr, "Load data for: `%s'\n", m_base_path.to_string().string());
+FileSystemObject* FileSystemModel::load_initial_data(const String& string_path) {
+    auto maybe_path = Ext::Path::resolve(string_path);
+    if (!maybe_path) {
+        return nullptr;
+    }
 
-    auto* root_item = model_item_root();
-    root_item->clear_children();
+    auto& path = *maybe_path;
+    auto* object = typed_root<FileSystemObject>();
+    for (auto part : path.components()) {
+        object = &add_child<FileSystemObject>(*object, nullptr, part, "", "", 0, 0);
+    }
+    load_data(*object);
+    return object;
+}
+
+void FileSystemModel::load_data(FileSystemObject& object) {
+    if (object.loaded()) {
+        return;
+    }
+    clear_children(object);
+    object.set_loaded(true);
+
+    auto base_path = full_path(object);
+    error_log("Loading data for: `{}'", base_path);
 
     dirent** dirents;
     int dirent_count;
-    if ((dirent_count = scandir(m_base_path.to_string().string(), &dirents, ignore_dots, nullptr)) == -1) {
+    if ((dirent_count = scandir(base_path.to_string().string(), &dirents, ignore_dots, nullptr)) == -1) {
         return;
     }
 
     for (int i = 0; i < dirent_count; i++) {
         auto* dirent = dirents[i];
-        auto path = m_base_path.join_component(dirent->d_name);
+        auto path = base_path.join_component(dirent->d_name);
         struct stat st;
         if (lstat(path.to_string().string(), &st) == 0) {
             passwd* pwd = getpwuid(st.st_uid);
             group* grp = getgrgid(st.st_gid);
-            root_item->add_child<FileSystemObject>(m_text_file_icon, dirent->d_name, pwd ? pwd->pw_name : "Unknown",
-                                                   grp ? grp->gr_name : "Unknown", st.st_mode, st.st_size);
+            add_child<FileSystemObject>(object, m_text_file_icon, dirent->d_name, pwd ? pwd->pw_name : "Unknown",
+                                        grp ? grp->gr_name : "Unknown", st.st_mode, st.st_size);
         }
         free(dirent);
     }
     free(dirents);
-
-    did_update();
 }

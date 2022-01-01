@@ -72,26 +72,24 @@ void ProcessModel::load_data() {
         }
 
         if (new_info.pid < old_info.pid()) {
-            root_item->insert_child<ProcessInfo>(old_info_index, new_info);
+            insert_child<ProcessInfo>(*root_item, old_info_index, new_info);
             new_info_index++;
             old_info_index++;
             continue;
         }
 
-        root_item->remove_child(old_info_index);
+        remove_child(*root_item, old_info_index);
     }
 
     while (old_info_index < static_cast<size_t>(root_item->item_count())) {
-        root_item->remove_child(old_info_index);
+        remove_child(*root_item, old_info_index);
     }
 
     while (new_info_index < num_processes) {
-        root_item->add_child<ProcessInfo>(info[new_info_index++]);
+        add_child<ProcessInfo>(*root_item, info[new_info_index++]);
     }
 
     free_procfs_info(info);
-
-    did_update();
 }
 
 App::ModelItemInfo ProcessInfo::info(int field, int request) const {

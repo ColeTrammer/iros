@@ -16,7 +16,9 @@ public:
     int item_count() const { return m_children.size(); }
 
     ModelItem* parent() { return m_parent; }
+    const ModelItem* parent() const { return m_parent; }
     ModelItem* model_item_at(int index) { return m_children[index].get(); }
+    const ModelItem* model_item_at(int index) const { return m_children[index].get(); }
 
     template<typename T>
     T& typed_item(int index) {
@@ -24,26 +26,28 @@ public:
     }
 
     template<typename T>
+    const T& typed_item(int index) const {
+        return static_cast<const T&>(*m_children[index].get());
+    }
+
+    template<typename T>
     T* typed_parent() {
         return static_cast<T*>(m_parent);
     }
 
-    template<typename T, typename... Args>
-    T& add_child(Args&&... args) {
-        auto child = make_unique<T>(forward<Args>(args)...);
-        auto& ret = *child;
-        child->set_parent(this);
-        m_children.add(move(child));
-        return ret;
+    template<typename T>
+    const T* typed_parent() const {
+        return static_cast<const T*>(m_parent);
     }
 
-    template<typename T, typename... Args>
-    T& insert_child(int index, Args&&... args) {
-        auto child = make_unique<T>(forward<Args>(args)...);
-        auto& ret = *child;
+    void add_child(UniquePtr<ModelItem> child) {
+        child->set_parent(this);
+        m_children.add(move(child));
+    }
+
+    void insert_child(int index, UniquePtr<ModelItem> child) {
         child->set_parent(this);
         m_children.insert(move(child), index);
-        return ret;
     }
 
     void remove_child(int index) { m_children.remove(index); }
