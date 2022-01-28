@@ -1,28 +1,28 @@
 #pragma once
 
-#include <app/model_index.h>
+#include <app/model_item.h>
 #include <liim/hash_set.h>
 
 namespace App {
 class Selection {
 public:
-    bool present(const ModelIndex& index) const { return !!m_indexes.get(index); }
-    void toggle(const ModelIndex& index) { m_indexes.toggle(index); }
-    void add(ModelIndex index) { m_indexes.put(move(index)); }
-    void remove(const ModelIndex& index) { m_indexes.remove(index); }
+    bool present(ModelItem& item) const { return !!m_items.get(&item); }
+    void toggle(ModelItem& item) { m_items.toggle(&item); }
+    void add(ModelItem& item) { m_items.put(&item); }
+    void remove(ModelItem& item) { m_items.remove(&item); }
 
-    void clear() { m_indexes.clear(); }
-    bool empty() const { return m_indexes.size() == 0; }
+    void clear() { m_items.clear(); }
+    bool empty() const { return m_items.size() == 0; }
 
-    const ModelIndex& first() const {
-        ModelIndex* ret = nullptr;
-        m_indexes.for_each([&](auto& i) {
-            ret = &i;
+    ModelItem& first() const {
+        ModelItem* ret = nullptr;
+        m_items.for_each([&](auto& i) {
+            ret = i;
         });
         return *ret;
     }
 
 private:
-    HashSet<ModelIndex> m_indexes;
+    HashSet<ModelItem*> m_items;
 };
 }

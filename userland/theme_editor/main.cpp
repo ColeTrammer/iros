@@ -25,8 +25,8 @@ int main() {
             return;
         }
 
-        auto index = view.selection().first();
-        app->set_global_palette(model->model_item_root()->typed_item<Theme>(index.item()).path());
+        auto& item = view.selection().first();
+        app->set_global_palette(static_cast<Theme&>(item).path());
     });
 
     app->enter();

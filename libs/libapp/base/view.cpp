@@ -9,19 +9,19 @@ void View::initialize() {
     this_widget().set_accepts_focus(true);
 
     this_widget().on<MouseDownEvent>({}, [this](const MouseDownEvent& event) {
-        auto index = index_at_position(event.x(), event.y());
+        auto item = item_at_position(event.x(), event.y());
         if (event.left_button()) {
             switch (event.cyclic_count(2)) {
                 case 1:
                     selection().clear();
-                    if (index.valid()) {
-                        selection().add(index);
+                    if (item) {
+                        // selection().add(item);
                     }
                     invalidate_all();
                     break;
                 case 2:
-                    if (index.valid()) {
-                        on_item_activation.safe_call(index);
+                    if (item) {
+                        this_widget().emit<ViewItemActivated>(item);
                     }
                     break;
             }
@@ -32,13 +32,13 @@ void View::initialize() {
     });
 
     this_widget().on<MouseMoveEvent>({}, [this](const MouseMoveEvent& event) {
-        auto index = index_at_position(event.x(), event.y());
-        set_hovered_index(index);
+        auto item = item_at_position(event.x(), event.y());
+        set_hovered_item(item);
         return false;
     });
 
     this_widget().on<LeaveEvent>({}, [this](const LeaveEvent&) {
-        set_hovered_index({});
+        set_hovered_item(nullptr);
     });
 }
 
@@ -60,16 +60,16 @@ void View::set_model(SharedPtr<Model> model) {
         set_root_item(m_model->model_item_root());
     }
 
-    m_hovered_index.clear();
+    m_hovered_item = nullptr;
     invalidate_all();
 }
 
-void View::set_hovered_index(ModelIndex index) {
-    if (index == m_hovered_index) {
+void View::set_hovered_item(ModelItem* item) {
+    if (item == m_hovered_item) {
         return;
     }
 
-    m_hovered_index = move(index);
+    m_hovered_item = item;
     invalidate_all();
 }
 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <app/forward.h>
-#include <app/model_index.h>
 #include <app/model_item.h>
 #include <app/model_item_info.h>
 #include <eventloop/event.h>

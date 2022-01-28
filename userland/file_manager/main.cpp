@@ -53,12 +53,12 @@ int main(int argc, char** argv) {
     view.set_model(model);
     view.set_root_item(root);
 
-    view.on_item_activation = [&](const App::ModelIndex& index) {
-        auto& object = model->model_item_root()->typed_item<FileSystemObject>(index.item());
+    view.on<App::ViewItemActivated>({}, [&](auto& event) {
+        auto& object = static_cast<FileSystemObject&>(*event.item());
 
         fprintf(stderr, "Activated: `%s'\n", object.name().string());
         if (object.mode() & S_IFDIR) {}
-    };
+    });
 
     app->enter();
     return 0;

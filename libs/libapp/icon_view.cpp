@@ -24,7 +24,7 @@ void IconView::initialize() {
             for (auto r = 0; r < m_items.size(); r++) {
                 auto& item = m_items[r];
                 if (item.rect.intersects(selection_rect)) {
-                    selection().add({ r, m_name_column });
+                    selection().add(*item.item);
                 }
             }
 
@@ -70,10 +70,10 @@ void IconView::render() {
                                item.rect.height() - m_icon_height - 2 * m_icon_padding_y };
             renderer.render_text(item.name, text_rect, text_color(), TextAlign::Center, *font());
         }
-        if (hovered_index() == ModelIndex { r, m_name_column }) {
+        if (hovered_item() == item.item) {
             renderer.draw_rect(item.rect, palette()->color(Palette::Hover));
         }
-        if (selection().present(ModelIndex { r, m_name_column })) {
+        if (selection().present(*item.item)) {
             renderer.draw_rect(item.rect, palette()->color(Palette::Selected));
         }
     }
@@ -98,12 +98,13 @@ void IconView::rebuild_layout() {
 
     auto item_count = root_item->item_count();
     for (int r = 0; r < item_count; r++) {
-        auto info = root_item->model_item_at(r)->info(m_name_column, ModelItemInfo::Request::Text | ModelItemInfo::Request::Bitmap);
+        auto* item = root_item->model_item_at(r);
+        auto info = item->info(m_name_column, ModelItemInfo::Request::Text | ModelItemInfo::Request::Bitmap);
         m_items.add({
             info.bitmap(),
             info.text().value_or(""),
             {},
-            { r, m_name_column },
+            item,
         });
     }
 
@@ -140,12 +141,12 @@ void IconView::compute_layout() {
     }
 }
 
-ModelIndex IconView::index_at_position(int x, int y) {
+ModelItem* IconView::item_at_position(int x, int y) {
     for (auto& item : m_items) {
         if (item.rect.intersects({ x, y })) {
-            return item.index;
+            return item.item;
         }
     }
-    return {};
+    return nullptr;
 }
 }

@@ -75,18 +75,18 @@ void TableView::render() {
         rx = 1;
         ry += 21;
 
-        if (hovered_index().item() == r) {
+        auto* item = root_item->model_item_at(r);
+        if (hovered_item() == item) {
             renderer.fill_rect({ 0, ry, sized_rect().width(), 21 }, palette()->color(Palette::Hover));
         }
 
-        if (selection().present({ r, 0 })) {
+        if (selection().present(*item)) {
             renderer.fill_rect({ 0, ry, sized_rect().width(), 21 }, palette()->color(Palette::Selected));
         }
 
         for (auto c = 0; c < field_count; c++) {
             render_data(renderer, rx, ry, col_widths[c], [&]() {
-                return root_item->model_item_at(r)->info(c, ModelItemInfo::Request::Text | ModelItemInfo::Request::Bitmap |
-                                                                ModelItemInfo::Request::TextAlign);
+                return item->info(c, ModelItemInfo::Request::Text | ModelItemInfo::Request::Bitmap | ModelItemInfo::Request::TextAlign);
             });
             rx += col_widths[c] + 1;
         }
@@ -100,7 +100,7 @@ void TableView::render() {
     renderer.draw_rect(sized_rect(), outline_color());
 }
 
-ModelIndex TableView::index_at_position(int, int) {
-    return {};
+ModelItem* TableView::item_at_position(int, int) {
+    return nullptr;
 }
 }

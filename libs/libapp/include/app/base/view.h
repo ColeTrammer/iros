@@ -6,6 +6,7 @@
 #include <liim/function.h>
 
 APP_EVENT(App, ViewRootChanged, Event, (), (), ());
+APP_EVENT(App, ViewItemActivated, Event, (), ((ModelItem*, item)), ())
 
 namespace App::Base {
 class View {
@@ -18,8 +19,8 @@ public:
 
     void set_model(SharedPtr<Model> model);
 
-    const ModelIndex& hovered_index() const { return m_hovered_index; }
-    void set_hovered_index(ModelIndex);
+    ModelItem* hovered_item() const { return m_hovered_item; }
+    void set_hovered_item(ModelItem*);
 
     Selection& selection() { return m_selection; }
     const Selection& selection() const { return m_selection; }
@@ -29,21 +30,19 @@ public:
 
     void set_root_item(ModelItem* item);
 
-    Function<void(const ModelIndex&)> on_item_activation;
-
 protected:
     View();
 
     virtual Base::Widget& this_widget() = 0;
     virtual void invalidate_all() = 0;
-    virtual ModelIndex index_at_position(int wx, int wy) = 0;
+    virtual ModelItem* item_at_position(int wx, int wy) = 0;
 
     virtual void install_model_listeners(Model& model);
     virtual void uninstall_model_listeners(Model& model);
 
 private:
     SharedPtr<Model> m_model;
-    ModelIndex m_hovered_index;
+    ModelItem* m_hovered_item;
     Selection m_selection;
     ModelItem* m_root_item { nullptr };
 };
