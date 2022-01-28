@@ -50,6 +50,7 @@ void IconView::initialize() {
 
     on<ViewRootChanged>([this](auto&) {
         rebuild_layout();
+        invalidate();
     });
 
     View::initialize();

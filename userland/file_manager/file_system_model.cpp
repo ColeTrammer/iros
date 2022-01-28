@@ -83,9 +83,19 @@ FileSystemObject* FileSystemModel::load_initial_data(const String& string_path) 
     }
 
     auto& path = *maybe_path;
+
+    set_root(make_unique<FileSystemObject>(m_text_file_icon, "/", "root", "root", 0666, 4096));
     auto* object = typed_root<FileSystemObject>();
     for (auto part : path.components()) {
-        object = &add_child<FileSystemObject>(*object, nullptr, part, "", "", 0, 0);
+        load_data(*object);
+
+        for (int i = 0; i < object->item_count(); i++) {
+            auto& child = object->typed_item<FileSystemObject>(i);
+            if (child.name() == part) {
+                object = &child;
+                break;
+            }
+        }
     }
     load_data(*object);
     return object;
