@@ -10,7 +10,7 @@ void IconView::initialize() {
         if (event.left_button()) {
             m_in_selection = true;
             m_selection_start = m_selection_end = { event.x(), event.y() };
-            return true;
+            return false;
         }
         return false;
     });
@@ -38,7 +38,7 @@ void IconView::initialize() {
         if (event.left_button() && m_in_selection) {
             m_in_selection = false;
             invalidate();
-            return true;
+            return false;
         }
         return false;
     });

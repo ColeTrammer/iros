@@ -15,7 +15,7 @@ void View::initialize() {
                 case 1:
                     selection().clear();
                     if (item) {
-                        // selection().add(item);
+                        selection().add(*item);
                     }
                     invalidate_all();
                     break;
