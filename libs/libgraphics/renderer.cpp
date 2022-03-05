@@ -283,10 +283,13 @@ void Renderer::draw_bitmap(const Bitmap& src, const Rect& src_rect_in, const Rec
 
 void Renderer::render_text(const String& text, const Rect& rect, Color color, TextAlign align, Font& font) {
     auto old_clip_rect = m_bounding_rect;
+    auto old_translation = m_translation;
     auto restorer = ScopeGuard { [&] {
         m_bounding_rect = old_clip_rect;
+        m_translation = old_translation;
     } };
     m_bounding_rect = old_clip_rect.intersection_with(translate(rect));
+    m_translation = m_bounding_rect.top_left();
 
     auto font_metrics = font.font_metrics();
 
@@ -369,4 +372,9 @@ void Renderer::render_text(const String& text, const Rect& rect, Color color, Te
 
 void Renderer::set_bounding_rect(const Rect& rect) {
     m_bounding_rect = rect.intersection_with(m_pixels.rect());
+    m_translation = m_bounding_rect.top_left();
+}
+
+void Renderer::set_translation(const Point& translation) {
+    m_translation = m_translation.translated(translation);
 }

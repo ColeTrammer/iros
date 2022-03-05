@@ -34,12 +34,13 @@ public:
     const Bitmap& pixels() const { return m_pixels; }
 
     void set_bounding_rect(const Rect& rect);
+    void set_translation(const Point& point);
 
 private:
-    Rect translate(const Rect& r) const { return r.translated(m_bounding_rect.top_left()); }
-    Point translate(const Point& p) const { return p.translated(m_bounding_rect.top_left()); }
-    int translate_x(int x) const { return x + m_bounding_rect.left(); }
-    int translate_y(int y) const { return y + m_bounding_rect.top(); }
+    Rect translate(const Rect& r) const { return r.translated(m_translation); }
+    Point translate(const Point& p) const { return p.translated(m_translation); }
+    int translate_x(int x) const { return x + m_translation.x(); }
+    int translate_y(int y) const { return y + m_translation.y(); }
 
     Rect constrain(const Rect& r) const { return m_bounding_rect.intersection_with(r); }
     int constrain_x(int x) const { return clamp(x, m_bounding_rect.left(), m_bounding_rect.right()); }
@@ -47,4 +48,5 @@ private:
 
     Bitmap& m_pixels;
     Rect m_bounding_rect;
+    Point m_translation;
 };
