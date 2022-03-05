@@ -13,17 +13,19 @@ enum Scrollability {
 
 class ScrollComponent : public Component {
 public:
+    static constexpr int scrollbar_width = 16;
+
     explicit ScrollComponent(Object& object) : Component(object) {}
     virtual ~ScrollComponent() override {}
 
     Renderer get_renderer();
-    void draw_scrollbars(Renderer&);
+    void draw_scrollbars();
 
     Rect available_rect();
     Point scroll_offset() { return m_scroll_offset; }
 
-    bool vertically_scrollable() const { return m_scrollability & Scrollability::Vertiacal; }
-    bool horizontally_scrollable() const { return m_scrollability & Scrollability::Horizontal; }
+    bool vertically_scrollable();
+    bool horizontally_scrollable();
 
     void set_scrollability(int flags) {
         m_scrollability = flags;

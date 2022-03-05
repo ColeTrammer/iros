@@ -10,10 +10,51 @@ Renderer ScrollComponent::get_renderer() {
     return renderer;
 }
 
-void ScrollComponent::draw_scrollbars(Renderer&) {}
+void ScrollComponent::draw_scrollbars() {
+    auto renderer = widget().get_renderer();
+
+    if (horizontally_scrollable()) {
+        renderer.fill_rect({ 0, widget().sized_rect().height() - scrollbar_width, widget().sized_rect().width(), scrollbar_width },
+                           widget().background_color());
+
+        double percent_scrolled_x = m_scroll_offset.x() / static_cast<double>(total_rect().width() - available_rect().width());
+
+        int fixed_width = 30;
+        int bar_offset = ceil(widget().sized_rect().width() - fixed_width) * percent_scrolled_x;
+        renderer.fill_rect(
+            {
+                bar_offset,
+                widget().sized_rect().height() - scrollbar_width,
+                fixed_width,
+                scrollbar_width,
+            },
+            ColorValue::White);
+    }
+
+    if (vertically_scrollable()) {
+        renderer.fill_rect({ widget().sized_rect().width() - scrollbar_width, 0, scrollbar_width, widget().sized_rect().height() },
+                           widget().background_color());
+
+        double percent_scrolled_y = m_scroll_offset.y() / static_cast<double>(total_rect().height() - available_rect().height());
+
+        int fixed_height = 30;
+        int bar_offset = ceil(widget().sized_rect().height() - fixed_height) * percent_scrolled_y;
+        renderer.fill_rect(
+            {
+                widget().sized_rect().width() - scrollbar_width,
+                bar_offset,
+                scrollbar_width,
+                fixed_height,
+            },
+            ColorValue::White);
+    }
+}
 
 Rect ScrollComponent::available_rect() {
-    return widget().sized_rect().translated(m_scroll_offset);
+    return widget()
+        .sized_rect()
+        .translated(m_scroll_offset)
+        .shrinked(vertically_scrollable() ? scrollbar_width : 0, horizontally_scrollable() ? scrollbar_width : 0);
 }
 
 Rect ScrollComponent::total_rect() {
@@ -24,6 +65,14 @@ Rect ScrollComponent::total_rect() {
         hints.width() == LayoutConstraint::AutoSize ? widget().sized_rect().width() : hints.width(),
         hints.height() == LayoutConstraint::AutoSize ? widget().sized_rect().height() : hints.height(),
     };
+}
+
+bool ScrollComponent::vertically_scrollable() {
+    return !!(m_scrollability & Scrollability::Vertiacal) && total_rect().height() > widget().sized_rect().height();
+}
+
+bool ScrollComponent::horizontally_scrollable() {
+    return !!(m_scrollability & Scrollability::Horizontal) && total_rect().width() > widget().sized_rect().width();
 }
 
 void ScrollComponent::did_attach() {

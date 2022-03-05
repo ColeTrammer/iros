@@ -19,7 +19,7 @@ void TreeView::initialize() {
 
 void TreeView::render() {
     auto renderer = ScrollComponent::get_renderer();
-    draw_scrollbars(renderer);
+    draw_scrollbars();
 
     renderer.clear_rect(available_rect(), background_color());
 
