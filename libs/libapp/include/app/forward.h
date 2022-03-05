@@ -19,6 +19,7 @@ class ModelItemInfo;
 class ModelItem;
 class Model;
 class PlatformWindow;
+class ScrollComponent;
 class TabWidget;
 class TableView;
 class TerminalWidget;

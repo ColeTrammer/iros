@@ -22,10 +22,6 @@ Object::~Object() {
     for (auto& child : m_children) {
         child->set_parent(nullptr);
     }
-
-    for (auto* component : m_components) {
-        component->detach();
-    }
 }
 
 void Object::initialize() {

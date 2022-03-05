@@ -13,13 +13,11 @@ public:
     }
 
     void attach() { did_attach(); }
-    void detach() { did_detach(); }
 
 protected:
     explicit Component(Object&);
 
     virtual void did_attach() {}
-    virtual void did_detach() {}
 
 private:
     Object& m_object;

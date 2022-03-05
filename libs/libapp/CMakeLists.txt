@@ -14,6 +14,7 @@ set(SOURCES
     layout_engine.cpp
     menubar.cpp
     model.cpp
+    scroll_component.cpp
     tab_widget.cpp
     table_view.cpp
     terminal_widget.cpp
