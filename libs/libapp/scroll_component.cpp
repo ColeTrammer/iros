@@ -82,10 +82,23 @@ void ScrollComponent::did_attach() {
         widget().invalidate();
         return true;
     });
+
+    widget().intercept<ResizeEvent>({}, [this](auto&) {
+        clamp_scroll_offset();
+    });
 }
 
 void ScrollComponent::clamp_scroll_offset() {
-    m_scroll_offset.set_x(clamp(m_scroll_offset.x(), 0, max(0, total_rect().width() - available_rect().width())));
-    m_scroll_offset.set_y(clamp(m_scroll_offset.y(), 0, max(0, total_rect().height() - available_rect().height())));
+    if (!horizontally_scrollable()) {
+        m_scroll_offset.set_x(0);
+    } else {
+        m_scroll_offset.set_x(clamp(m_scroll_offset.x(), 0, max(0, total_rect().width() - available_rect().width())));
+    }
+
+    if (!vertically_scrollable()) {
+        m_scroll_offset.set_y(0);
+    } else {
+        m_scroll_offset.set_y(clamp(m_scroll_offset.y(), 0, max(0, total_rect().height() - available_rect().height())));
+    }
 }
 }

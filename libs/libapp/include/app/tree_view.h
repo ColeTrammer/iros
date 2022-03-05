@@ -17,21 +17,24 @@ public:
     void set_name_column(int col) { m_name_column = col; }
 
 private:
-    virtual ModelItem* item_at_position(const Point& point) override;
-    virtual void install_model_listeners(Model& model) override;
-    virtual void uninstall_model_listeners(Model& model) override;
-
-    void rebuild_layout();
-
     struct Item {
         String name;
         Rect item_rect;
         Rect container_rect;
-        ModelItem* item;
+        ModelItem* item { nullptr };
         int level { 0 };
-        bool open { true };
+        bool open { false };
         Vector<Item> children;
     };
+
+    virtual ModelItem* item_at_position(const Point& point) override;
+    virtual void install_model_listeners(Model& model) override;
+    virtual void uninstall_model_listeners(Model& model) override;
+
+    Item* internal_item_at_position(const Point& point);
+
+    void rebuild_items();
+    void rebuild_layout();
 
     Vector<Item> m_items;
     int m_padding { 2 };
