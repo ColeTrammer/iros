@@ -18,8 +18,10 @@ void TreeView::initialize() {
 }
 
 void TreeView::render() {
-    auto renderer = get_renderer();
-    renderer.clear_rect(sized_rect(), background_color());
+    auto renderer = ScrollComponent::get_renderer();
+    draw_scrollbars(renderer);
+
+    renderer.clear_rect(available_rect(), background_color());
 
     auto render_item = [&](auto& item) {
         renderer.draw_rect(item.item_rect, outline_color());
@@ -76,8 +78,8 @@ void TreeView::rebuild_layout() {
         }
 
         return Item { info.text().value_or(""),
-                      Rect { 0, initial_y, sized_rect().width(), m_row_height },
-                      Rect { 0, initial_y, sized_rect().width(), y - initial_y },
+                      Rect { 0, initial_y, available_rect().width(), m_row_height },
+                      Rect { 0, initial_y, available_rect().width(), y - initial_y },
                       item,
                       level,
                       true,
@@ -94,5 +96,7 @@ void TreeView::rebuild_layout() {
         auto* item = root_item->model_item_at(r);
         m_items.add(process_item(item, 0));
     }
+
+    set_layout_constraint({ LayoutConstraint::AutoSize, m_items.size() * m_row_height });
 }
 }

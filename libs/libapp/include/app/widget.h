@@ -31,10 +31,10 @@ public:
 
     SharedPtr<Palette> palette() const { return m_palette; }
 
+    Renderer get_renderer();
+
 protected:
     Widget();
-
-    Renderer get_renderer();
 
 private:
     virtual bool is_widget() const final { return true; }

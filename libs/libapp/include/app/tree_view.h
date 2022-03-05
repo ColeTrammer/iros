@@ -1,12 +1,16 @@
 #pragma once
 
+#include <app/scroll_component.h>
 #include <app/view.h>
 
 namespace App {
-class TreeView : public View {
+class TreeView
+    : public View
+    , public ScrollComponent {
     APP_OBJECT(TreeView)
 
 public:
+    TreeView() : ScrollComponent(static_cast<Object&>(*this)) {}
     virtual void initialize() override;
     virtual void render() override;
 
