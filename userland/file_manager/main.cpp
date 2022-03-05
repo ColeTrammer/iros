@@ -2,6 +2,7 @@
 #include <app/button.h>
 #include <app/flex_layout_engine.h>
 #include <app/icon_view.h>
+#include <app/tree_view.h>
 #include <app/window.h>
 #include <fcntl.h>
 #include <getopt.h>
@@ -61,7 +62,14 @@ int main(int argc, char** argv) {
 
     auto window = App::Window::create(nullptr, 350, 350, 400, 400, "File Manager");
     auto& main_widget = window->set_main_widget<App::Widget>();
-    auto& layout = main_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
+    auto& main_layout = main_widget.set_layout_engine<App::HorizontalFlexLayoutEngine>();
+
+    auto& tree_view = main_layout.add<App::TreeView>();
+    tree_view.set_name_column(FileSystemModel::Column::Name);
+    tree_view.set_model(model);
+
+    auto& right_widget = main_layout.add<App::Widget>();
+    auto& layout = right_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
 
     auto& parent_button = layout.add<App::Button>("Go to parent");
     parent_button.set_layout_constraint({ 100, 24 });
