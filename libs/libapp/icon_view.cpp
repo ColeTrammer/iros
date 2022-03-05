@@ -142,9 +142,9 @@ void IconView::compute_layout() {
     }
 }
 
-ModelItem* IconView::item_at_position(int x, int y) {
+ModelItem* IconView::item_at_position(const Point& point) {
     for (auto& item : m_items) {
-        if (item.rect.intersects({ x, y })) {
+        if (item.rect.intersects(point)) {
             return item.item;
         }
     }

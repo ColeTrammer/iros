@@ -35,7 +35,7 @@ protected:
 
     virtual Base::Widget& this_widget() = 0;
     virtual void invalidate_all() = 0;
-    virtual ModelItem* item_at_position(int wx, int wy) = 0;
+    virtual ModelItem* item_at_position(const Point& point) = 0;
 
     virtual void install_model_listeners(Model& model);
     virtual void uninstall_model_listeners(Model& model);

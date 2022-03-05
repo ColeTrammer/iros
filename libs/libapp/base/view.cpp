@@ -9,7 +9,7 @@ void View::initialize() {
     this_widget().set_accepts_focus(true);
 
     this_widget().on<MouseDownEvent>({}, [this](const MouseDownEvent& event) {
-        auto item = item_at_position(event.x(), event.y());
+        auto item = item_at_position({ event.x(), event.y() });
         if (event.left_button()) {
             switch (event.cyclic_count(2)) {
                 case 1:
@@ -32,7 +32,7 @@ void View::initialize() {
     });
 
     this_widget().on<MouseMoveEvent>({}, [this](const MouseMoveEvent& event) {
-        auto item = item_at_position(event.x(), event.y());
+        auto item = item_at_position({ event.x(), event.y() });
         set_hovered_item(item);
         return false;
     });

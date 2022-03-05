@@ -41,7 +41,7 @@ void TreeView::render() {
     render_level(m_items);
 }
 
-ModelItem* TreeView::item_at_position(int, int) {
+ModelItem* TreeView::item_at_position(const Point&) {
     return nullptr;
 }
 

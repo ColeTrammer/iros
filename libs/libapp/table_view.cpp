@@ -100,7 +100,7 @@ void TableView::render() {
     renderer.draw_rect(sized_rect(), outline_color());
 }
 
-ModelItem* TableView::item_at_position(int, int) {
+ModelItem* TableView::item_at_position(const Point&) {
     return nullptr;
 }
 }

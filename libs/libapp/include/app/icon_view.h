@@ -17,7 +17,7 @@ public:
     void set_name_column(int col) { m_name_column = col; }
 
 private:
-    virtual ModelItem* item_at_position(int, int) override;
+    virtual ModelItem* item_at_position(const Point& point) override;
     virtual void install_model_listeners(Model& model) override;
     virtual void uninstall_model_listeners(Model& model) override;
 

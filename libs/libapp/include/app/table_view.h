@@ -20,7 +20,7 @@ protected:
     int width_of(const ModelItemInfo& data) const;
     void render_data(Renderer& renderer, int rx, int ry, int width, Function<ModelItemInfo()> getter);
 
-    virtual ModelItem* item_at_position(int, int) override;
+    virtual ModelItem* item_at_position(const Point& point) override;
 
 private:
     int m_cell_padding { 2 };
