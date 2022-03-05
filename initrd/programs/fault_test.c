@@ -30,7 +30,10 @@ int main() {
         perror("kill");
     }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overread"
     if (write(STDOUT_FILENO, (char*) 0x12345678, 0x1000)) {
+#pragma GCC diagnostic pop
         perror("write");
     }
 
