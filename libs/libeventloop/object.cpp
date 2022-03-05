@@ -1,3 +1,4 @@
+#include <eventloop/component.h>
 #include <eventloop/event.h>
 #include <eventloop/event_loop.h>
 #include <eventloop/object.h>
@@ -21,6 +22,20 @@ Object::~Object() {
     for (auto& child : m_children) {
         child->set_parent(nullptr);
     }
+
+    for (auto* component : m_components) {
+        component->detach();
+    }
+}
+
+void Object::initialize() {
+    m_components.for_each_reverse([&](auto* component) {
+        component->attach();
+    });
+}
+
+void Object::register_component(Component& component) {
+    m_components.add(&component);
 }
 
 void Object::deferred_invoke(Function<void()> callback) {

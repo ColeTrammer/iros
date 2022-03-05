@@ -2,6 +2,7 @@
 
 namespace App {
 class CallbackEvent;
+class Component;
 class Event;
 class EventLoop;
 class FileWatcher;

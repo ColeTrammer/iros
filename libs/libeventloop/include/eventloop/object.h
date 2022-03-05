@@ -154,7 +154,7 @@ private:
 public:
     virtual ~Object();
 
-    virtual void initialize() {}
+    virtual void initialize();
 
     template<typename... Ev>
     static constexpr bool does_emit() {
@@ -175,6 +175,8 @@ public:
     virtual bool is_base_widget() const { return false; }
     virtual bool is_window() const { return false; }
     virtual bool is_panel() const { return false; }
+
+    void register_component(Component& component);
 
     Object* parent() { return m_parent; }
     const Object* parent() const { return m_parent; }
@@ -323,6 +325,7 @@ private:
     Vector<SharedPtr<Object>> m_children;
     Vector<Handler> m_handlers;
     Vector<ObjectBoundCoroutine> m_owned_coroutines;
+    Vector<Component*> m_components;
     Object* m_parent { nullptr };
     mutable WeakPtr<Object> m_weak_this;
     int m_next_callback_token { 1 };
