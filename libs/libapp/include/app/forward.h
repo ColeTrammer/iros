@@ -23,6 +23,7 @@ class TabWidget;
 class TableView;
 class TerminalWidget;
 class TextLabel;
+class TreeView;
 class VerticalBoxLayout;
 class View;
 class Widget;

@@ -18,6 +18,7 @@ set(SOURCES
     table_view.cpp
     terminal_widget.cpp
     text_label.cpp
+    tree_view.cpp
     widget.cpp
     window_os_2.cpp
     window_sdl.cpp
