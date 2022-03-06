@@ -21,6 +21,7 @@
 #define PCI_CONFIG_HEADER_TYPE           0x0E
 #define PCI_CONFIG_BAR(x)                (0x10 + 4 * (x))
 #define PCI_CONFIG_SECONDARY_BUS_NUMBER  0x19
+#define PCI_CONFIG_CAPABILITIES_POINTER  0x38
 #define PCI_CONFIG_INTERRUPT_LINE        0x3C
 
 #define PCI_HEADER_TYPE_REGULAR    0x00
@@ -29,7 +30,26 @@
 #define PCI_COMMAND_REGISTER_BUS_MASTER (1 << 2)
 #define PCI_COMMAND_REGISTER_IO_SPACE   (1 << 0)
 
+#define PCI_STATUS_REGISTER_INTERRUPT_STATUS  (1 << 2)
+#define PCI_STATUS_REGISTER_CAPABILITIES_LIST (1 << 4)
+
 #define PCI_VENDOR_ID_INVALID 0xFFFF
+
+struct pci_capability {
+    uint8_t capability_id;
+    uint8_t next_pointer;
+} __attribute__((__packed__));
+
+struct pci_capability_msi {
+    struct pci_capability base;
+    uint16_t message_control;
+    uint32_t message_address_low;
+    uint32_t message_address_high;
+    uint16_t message_data;
+    uint16_t resserved;
+    uint32_t mask;
+    uint32_t pending;
+};
 
 struct pci_device_location {
     uint8_t bus;
