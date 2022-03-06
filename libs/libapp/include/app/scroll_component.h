@@ -6,7 +6,7 @@
 #include <graphics/point.h>
 
 namespace App {
-enum Scrollability {
+enum ScrollDirection {
     Horizontal = 1 << 0,
     Vertiacal = 1 << 1,
 };
@@ -27,8 +27,16 @@ public:
     bool vertically_scrollable();
     bool horizontally_scrollable();
 
+    bool draw_vertical_scrollbar() { return vertically_scrollable() && !!(m_scrollbar_visibility & ScrollDirection::Vertiacal); }
+    bool draw_horizontal_scrollbar() { return horizontally_scrollable() && !!(m_scrollbar_visibility & ScrollDirection::Vertiacal); }
+
     void set_scrollability(int flags) {
         m_scrollability = flags;
+        clamp_scroll_offset();
+    }
+
+    void set_scrollbar_visibility(int flags) {
+        m_scrollbar_visibility = flags;
         clamp_scroll_offset();
     }
 
@@ -42,6 +50,7 @@ private:
     void clamp_scroll_offset();
 
     Point m_scroll_offset;
-    int m_scrollability { Scrollability::Vertiacal };
+    int m_scrollability { ScrollDirection::Vertiacal };
+    int m_scrollbar_visibility { ScrollDirection::Horizontal | ScrollDirection::Vertiacal };
 };
 }

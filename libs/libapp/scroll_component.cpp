@@ -14,7 +14,7 @@ Renderer ScrollComponent::get_renderer() {
 void ScrollComponent::draw_scrollbars() {
     auto renderer = widget().get_renderer();
 
-    if (horizontally_scrollable()) {
+    if (draw_horizontal_scrollbar()) {
         renderer.fill_rect({ 0, widget().sized_rect().height() - scrollbar_width, widget().sized_rect().width(), scrollbar_width },
                            widget().background_color());
 
@@ -32,7 +32,7 @@ void ScrollComponent::draw_scrollbars() {
             ColorValue::White);
     }
 
-    if (vertically_scrollable()) {
+    if (draw_vertical_scrollbar()) {
         renderer.fill_rect({ widget().sized_rect().width() - scrollbar_width, 0, scrollbar_width, widget().sized_rect().height() },
                            widget().background_color());
 
@@ -55,7 +55,7 @@ Rect ScrollComponent::available_rect() {
     return widget()
         .sized_rect()
         .translated(m_scroll_offset)
-        .shrinked(vertically_scrollable() ? scrollbar_width : 0, horizontally_scrollable() ? scrollbar_width : 0);
+        .shrinked(draw_vertical_scrollbar() ? scrollbar_width : 0, draw_horizontal_scrollbar() ? scrollbar_width : 0);
 }
 
 Rect ScrollComponent::total_rect() {
@@ -69,11 +69,11 @@ Rect ScrollComponent::total_rect() {
 }
 
 bool ScrollComponent::vertically_scrollable() {
-    return !!(m_scrollability & Scrollability::Vertiacal) && total_rect().height() > widget().sized_rect().height();
+    return !!(m_scrollability & ScrollDirection::Vertiacal) && total_rect().height() > widget().sized_rect().height();
 }
 
 bool ScrollComponent::horizontally_scrollable() {
-    return !!(m_scrollability & Scrollability::Horizontal) && total_rect().width() > widget().sized_rect().width();
+    return !!(m_scrollability & ScrollDirection::Horizontal) && total_rect().width() > widget().sized_rect().width();
 }
 
 void ScrollComponent::did_attach() {
