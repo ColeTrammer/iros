@@ -4,6 +4,7 @@ set(SOURCES
     label.cpp
     panel.cpp
     root_window.cpp
+    table_view.cpp
     terminal_panel.cpp
 )
 

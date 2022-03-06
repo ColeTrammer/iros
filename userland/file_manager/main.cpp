@@ -7,18 +7,25 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <stdlib.h>
+#include <tui/application.h>
+#include <tui/table_view.h>
 
 #include "file_system_model.h"
 
 static void print_usage_and_exit(const char* s) {
-    fprintf(stderr, "Usage: %s [path]\n", s);
+    fprintf(stderr, "Usage: %s [-t] [path]\n", s);
     exit(2);
 }
 
 int main(int argc, char** argv) {
+    bool use_terminal = false;
+
     int opt;
-    while ((opt = getopt(argc, argv, ":")) != -1) {
+    while ((opt = getopt(argc, argv, ":t")) != -1) {
         switch (opt) {
+            case 't':
+                use_terminal = true;
+                break;
             case ':':
             case '?':
                 print_usage_and_exit(*argv);
@@ -31,8 +38,6 @@ int main(int argc, char** argv) {
     } else if (argc - optind == 1) {
         starting_path = argv[optind];
     }
-
-    auto app = App::Application::create();
 
     auto model = FileSystemModel::create(nullptr);
     auto root = model->load_initial_data(starting_path);
