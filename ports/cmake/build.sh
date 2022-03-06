@@ -2,30 +2,14 @@
 
 PORT_NAME=cmake
 SRC_DIR='cmake'
-BUILD_DIR='cmake/build-cmake'
+BUILD_DIR='build-cmake'
+VERSION='3.20.3'
 
 download() {
-    git clone https://gitlab.kitware.com/cmake/cmake --depth=1
-}
-
-patch() {
-    git apply ../cmake.patch
+    :
 }
 
 configure() {
-    # Bootstrap CMake so that it thinks the Os_2 system name actually exists.
-    mkdir -p ../build-temp
-    cd ../build-temp
-    export CC=gcc
-    export CXX=g++
-    unset CFLAGS
-    unset CXXFLAGS
-    ../bootstrap && make -j5
-    cd "../../$BUILD_DIR"
-
-    # Export the path with the bootstapped cmake
-    export PATH="$ROOT/ports/cmake/$SRC_DIR/build-temp/bin:$PATH"
-    
     # Export necessary build flags/info
     export CC='x86_64-os_2-gcc'
     export CXX='x86_64-os_2-g++'
@@ -38,8 +22,9 @@ configure() {
     fi
 
     # Run twice because of TryRunResults.cmake
-    cmake -DCMAKE_SYSTEM_NAME=Os_2 -DCMAKE_SYSROOT="$ROOT/sysroot" -S ..
-    cmake -DCMAKE_SYSTEM_NAME=Os_2 -DCMAKE_SYSROOT="$ROOT/sysroot" -S ..
+    cmake -DCMAKE_SYSTEM_NAME=OS_2 -DCMAKE_SYSROOT="$ROOT/sysroot" -DCMAKE_USE_SYSTEM_CURL=ON -S "$ROOT/toolchain/cmake/cmake-$VERSION"
+    cmake -DCMAKE_SYSTEM_NAME=OS_2 -DCMAKE_SYSROOT="$ROOT/sysroot" -DCMAKE_USE_SYSTEM_CURL=ON -S "$ROOT/toolchain/cmake/cmake-$VERSION"
+
     if [ -e "_make" ]; then
         mv _make "$ROOT/sysroot/usr/bin/make"
     fi
