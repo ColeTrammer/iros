@@ -71,7 +71,6 @@ public:
 
     template<typename T>
     const T* sized_pointer_at_offset(size_t offset, size_t explicit_size) const {
-        static_assert(explicit_size >= sizeof(T), "The explicit size must be at least greater than sizeof(T).");
         if (offset + explicit_size > m_data.size()) {
             return nullptr;
         }
