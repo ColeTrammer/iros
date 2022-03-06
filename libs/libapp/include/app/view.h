@@ -12,15 +12,11 @@ class View
 
     APP_EMITS(Widget, ViewRootChanged, ViewItemActivated)
 
-public:
-    virtual void initialize() override {
-        Base::View::initialize();
-        Widget::initialize();
-    }
+protected:
+    View() : Base::View(static_cast<Object&>(*this)) {}
 
 private:
     // ^Base::View
-    virtual View& this_widget() override { return *this; }
     virtual void invalidate_all() override { invalidate(); }
 };
 }

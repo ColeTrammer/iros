@@ -1,6 +1,7 @@
 #include <app/scroll_component.h>
 #include <app/widget.h>
 #include <graphics/renderer.h>
+#include <math.h>
 
 namespace App {
 Renderer ScrollComponent::get_renderer() {

@@ -2,6 +2,7 @@
 
 #include <app/forward.h>
 #include <app/selection.h>
+#include <eventloop/component.h>
 #include <eventloop/event.h>
 #include <liim/function.h>
 
@@ -9,9 +10,8 @@ APP_EVENT(App, ViewRootChanged, Event, (), (), ());
 APP_EVENT(App, ViewItemActivated, Event, (), ((ModelItem*, item)), ())
 
 namespace App::Base {
-class View {
+class View : public Component {
 public:
-    void initialize();
     ~View();
 
     Model* model() { return m_model.get(); }
@@ -31,14 +31,16 @@ public:
     void set_root_item(ModelItem* item);
 
 protected:
-    View();
+    explicit View(Object& object);
 
-    virtual Base::Widget& this_widget() = 0;
+    virtual void did_attach() override;
     virtual void invalidate_all() = 0;
     virtual ModelItem* item_at_position(const Point& point) = 0;
 
     virtual void install_model_listeners(Model& model);
     virtual void uninstall_model_listeners(Model& model);
+
+    Widget& this_widget() { return typed_object<Widget>(); }
 
 private:
     SharedPtr<Model> m_model;

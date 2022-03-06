@@ -11,15 +11,11 @@ class View
 
     APP_EMITS(Panel, App::ViewRootChanged, App::ViewItemActivated)
 
-public:
-    virtual void initialize() override {
-        App::Base::View::initialize();
-        Panel::initialize();
-    }
+protected:
+    View() : App::Base::View(static_cast<Object&>(*this)) {}
 
 private:
     // ^Base::View
-    virtual View& this_widget() override { return *this; }
     virtual void invalidate_all() override { invalidate(); }
 };
 }

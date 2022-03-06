@@ -3,9 +3,9 @@
 #include <app/model.h>
 
 namespace App::Base {
-View::View() {}
+View::View(Object& object) : Component(object) {}
 
-void View::initialize() {
+void View::did_attach() {
     this_widget().set_accepts_focus(true);
 
     this_widget().on<MouseDownEvent>({}, [this](const MouseDownEvent& event) {

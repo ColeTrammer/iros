@@ -1,3 +1,5 @@
+#pragma once
+
 #include <eventloop/forward.h>
 
 namespace App {
