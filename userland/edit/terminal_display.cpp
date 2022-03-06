@@ -21,7 +21,7 @@
 
 static int s_display_count = 0;
 
-TerminalDisplay::TerminalDisplay() {
+TerminalDisplay::TerminalDisplay() : Display(static_cast<Object&>(*this)) {
     s_display_count++;
 
     set_accepts_focus(true);
@@ -56,7 +56,6 @@ void TerminalDisplay::initialize() {
         }
     });
 
-    Display::initialize();
     Panel::initialize();
 }
 

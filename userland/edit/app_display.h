@@ -25,8 +25,8 @@ private:
 };
 
 class AppDisplay final
-    : public Edit::Display
-    , public App::Widget {
+    : public App::Widget
+    , public Edit::Display {
     APP_OBJECT(AppDisplay)
 
 public:
@@ -39,7 +39,6 @@ public:
     constexpr int col_width() const { return 8; }
     constexpr int row_height() const { return 16; }
 
-    virtual App::Object& this_widget() override { return *this; }
     virtual Edit::TextIndex text_index_at_mouse_position(const Point& point) override;
     virtual Edit::RenderedLine compose_line(const Edit::Line& line) override;
     virtual void output_line(int row, int col_offset, const Edit::RenderedLine& line, int line_index) override;

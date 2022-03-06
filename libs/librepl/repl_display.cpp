@@ -17,7 +17,7 @@
 #include "suggestions_panel.h"
 
 namespace Repl {
-ReplDisplay::ReplDisplay(ReplBase& repl) : m_repl(repl) {
+ReplDisplay::ReplDisplay(ReplBase& repl) : Display(static_cast<Object&>(*this)), m_repl(repl) {
     set_accepts_focus(true);
 
     m_main_prompt = repl.get_main_prompt();
@@ -88,7 +88,6 @@ void ReplDisplay::initialize() {
         return false;
     });
 
-    Display::initialize();
     Panel::initialize();
 }
 

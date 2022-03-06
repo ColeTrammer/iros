@@ -34,7 +34,7 @@ AppDisplay& SearchWidget::display() {
     return *m_display;
 }
 
-AppDisplay::AppDisplay(bool main_display) : m_main_display(main_display) {}
+AppDisplay::AppDisplay(bool main_display) : Display(static_cast<Object&>(*this)), m_main_display(main_display) {}
 
 void AppDisplay::initialize() {
     set_key_bindings(Edit::get_key_bindings(*this));
@@ -75,7 +75,6 @@ void AppDisplay::initialize() {
         invalidate();
     });
 
-    Display::initialize();
     Widget::initialize();
 }
 

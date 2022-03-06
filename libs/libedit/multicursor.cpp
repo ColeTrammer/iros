@@ -77,7 +77,7 @@ Cursor* MultiCursor::add_cursor_at(Document&, const TextIndex& index, const Text
 }
 
 void MultiCursor::install_document_listeners(Document& document) {
-    document.on<DeleteLines>(m_display.this_widget(), [this, &document](const DeleteLines& event) {
+    document.on<DeleteLines>(m_display.object(), [this, &document](const DeleteLines& event) {
         invalidate_cursor_history();
 
         for (auto& cursor : m_cursors) {
@@ -100,7 +100,7 @@ void MultiCursor::install_document_listeners(Document& document) {
         }
     });
 
-    document.on<AddLines>(m_display.this_widget(), [this](const AddLines& event) {
+    document.on<AddLines>(m_display.object(), [this](const AddLines& event) {
         invalidate_cursor_history();
 
         for (auto& cursor : m_cursors) {
@@ -114,7 +114,7 @@ void MultiCursor::install_document_listeners(Document& document) {
         }
     });
 
-    document.on<SplitLines>(m_display.this_widget(), [this](const SplitLines& event) {
+    document.on<SplitLines>(m_display.object(), [this](const SplitLines& event) {
         invalidate_cursor_history();
 
         for (auto& cursor : m_cursors) {
@@ -134,7 +134,7 @@ void MultiCursor::install_document_listeners(Document& document) {
         }
     });
 
-    document.on<MergeLines>(m_display.this_widget(), [this](const MergeLines& event) {
+    document.on<MergeLines>(m_display.object(), [this](const MergeLines& event) {
         invalidate_cursor_history();
 
         for (auto& cursor : m_cursors) {
@@ -153,7 +153,7 @@ void MultiCursor::install_document_listeners(Document& document) {
         }
     });
 
-    document.on<AddToLine>(m_display.this_widget(), [this](const AddToLine& event) {
+    document.on<AddToLine>(m_display.object(), [this](const AddToLine& event) {
         invalidate_cursor_history();
 
         for (auto& cursor : m_cursors) {
@@ -172,7 +172,7 @@ void MultiCursor::install_document_listeners(Document& document) {
         }
     });
 
-    document.on<DeleteFromLine>(m_display.this_widget(), [this](const DeleteFromLine& event) {
+    document.on<DeleteFromLine>(m_display.object(), [this](const DeleteFromLine& event) {
         invalidate_cursor_history();
 
         for (auto& cursor : m_cursors) {
@@ -191,7 +191,7 @@ void MultiCursor::install_document_listeners(Document& document) {
         }
     });
 
-    document.on<MoveLineTo>(m_display.this_widget(), [this](const MoveLineTo& event) {
+    document.on<MoveLineTo>(m_display.object(), [this](const MoveLineTo& event) {
         invalidate_cursor_history();
 
         auto line_min = min(event.line(), event.destination());

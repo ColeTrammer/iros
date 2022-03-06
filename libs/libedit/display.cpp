@@ -10,17 +10,17 @@
 #include <unistd.h>
 
 namespace Edit {
-Display::Display() : m_cursors { *this } {}
+Display::Display(App::Object& object) : App::Component(object), m_cursors { *this } {}
 
-void Display::initialize() {
-    this_widget().on_unchecked<App::ResizeEvent>({}, [this](auto&) {
+void Display::did_attach() {
+    object().on_unchecked<App::ResizeEvent>({}, [this](auto&) {
         if (word_wrap_enabled()) {
             invalidate_all_lines();
             clamp_scroll_offset();
         }
     });
 
-    this_widget().on_unchecked<App::MouseDownEvent>({}, [this](const App::MouseDownEvent& event) {
+    object().on_unchecked<App::MouseDownEvent>({}, [this](const App::MouseDownEvent& event) {
         if (!document()) {
             return false;
         }
@@ -48,7 +48,7 @@ void Display::initialize() {
         return false;
     });
 
-    this_widget().on_unchecked<App::MouseMoveEvent>({}, [this](const App::MouseMoveEvent& event) {
+    object().on_unchecked<App::MouseMoveEvent>({}, [this](const App::MouseMoveEvent& event) {
         if (!document()) {
             return false;
         }
@@ -66,7 +66,7 @@ void Display::initialize() {
         return false;
     });
 
-    this_widget().on_unchecked<App::MouseScrollEvent>({}, [this](const App::MouseScrollEvent& event) {
+    object().on_unchecked<App::MouseScrollEvent>({}, [this](const App::MouseScrollEvent& event) {
         if (!document()) {
             return false;
         }
@@ -76,7 +76,7 @@ void Display::initialize() {
         return true;
     });
 
-    this_widget().on_unchecked<App::TextEvent>({}, [this](const App::TextEvent& event) {
+    object().on_unchecked<App::TextEvent>({}, [this](const App::TextEvent& event) {
         if (!document()) {
             return false;
         }
@@ -381,13 +381,13 @@ void Display::set_search_text(String text) {
 }
 
 void Display::install_document_listeners(Document& new_document) {
-    new_document.on<DeleteLines>(this_widget(), [this](const DeleteLines& event) {
+    new_document.on<DeleteLines>(object(), [this](const DeleteLines& event) {
         m_rendered_lines.remove_count(event.line_index(), event.line_count());
         invalidate_all_line_rects();
         clamp_scroll_offset();
     });
 
-    new_document.on<AddLines>(this_widget(), [this](const AddLines& event) {
+    new_document.on<AddLines>(object(), [this](const AddLines& event) {
         auto new_rendered_lines = Vector<RenderedLine> {};
         new_rendered_lines.resize(event.line_count());
 
@@ -395,29 +395,29 @@ void Display::install_document_listeners(Document& new_document) {
         invalidate_all_line_rects();
     });
 
-    new_document.on<SplitLines>(this_widget(), [this](const SplitLines& event) {
+    new_document.on<SplitLines>(object(), [this](const SplitLines& event) {
         m_rendered_lines.insert(RenderedLine {}, event.line_index() + 1);
         invalidate_line(event.line_index());
         invalidate_all_line_rects();
     });
 
-    new_document.on<MergeLines>(this_widget(), [this](const MergeLines& event) {
+    new_document.on<MergeLines>(object(), [this](const MergeLines& event) {
         m_rendered_lines.remove(event.second_line_index());
         invalidate_line(event.first_line_index());
         invalidate_all_line_rects();
         clamp_scroll_offset();
     });
 
-    new_document.on<AddToLine>(this_widget(), [this](const AddToLine& event) {
+    new_document.on<AddToLine>(object(), [this](const AddToLine& event) {
         invalidate_line(event.line_index());
     });
 
-    new_document.on<DeleteFromLine>(this_widget(), [this](const DeleteFromLine& event) {
+    new_document.on<DeleteFromLine>(object(), [this](const DeleteFromLine& event) {
         invalidate_line(event.line_index());
         clamp_scroll_offset();
     });
 
-    new_document.on<MoveLineTo>(this_widget(), [this](const MoveLineTo& event) {
+    new_document.on<MoveLineTo>(object(), [this](const MoveLineTo& event) {
         auto line_min = min(event.line(), event.destination());
         auto line_max = max(event.line(), event.destination());
 
@@ -431,11 +431,11 @@ void Display::install_document_listeners(Document& new_document) {
         clamp_scroll_offset();
     });
 
-    new_document.on<SyntaxHighlightingChanged>(this_widget(), [this](auto&) {
+    new_document.on<SyntaxHighlightingChanged>(object(), [this](auto&) {
         invalidate_metadata();
     });
 
-    new_document.on<Change>(this_widget(), [this](auto&) {
+    new_document.on<Change>(object(), [this](auto&) {
         update_search_results();
     });
 
@@ -443,7 +443,7 @@ void Display::install_document_listeners(Document& new_document) {
 }
 
 void Display::uninstall_document_listeners(Document& document) {
-    document.remove_listener(this_widget());
+    document.remove_listener(object());
 }
 
 void Display::render_lines() {

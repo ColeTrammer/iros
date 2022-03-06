@@ -305,10 +305,10 @@ void init_actions() {
     });
 
     register_display_keyboard_action("New Display", { App::Key::N, App::KeyModifier::Control }, [](Display& display) {
-        display.this_widget().emit<Edit::NewDisplayEvent>();
+        display.object().emit<Edit::NewDisplayEvent>();
     });
     register_display_keyboard_action("Split Display", { App::Key::Backslash, App::KeyModifier::Control }, [](Display& display) {
-        display.this_widget().emit<Edit::SplitDisplayEvent>();
+        display.object().emit<Edit::SplitDisplayEvent>();
     });
 
     register_display_keyboard_action("Search", { App::Key::F, App::KeyModifier::Control }, [](Display& display) {
@@ -317,7 +317,7 @@ void init_actions() {
     });
 
     register_display_keyboard_action("Go To Line", { App::Key::G, App::KeyModifier::Control }, [](Display& display) {
-        display.this_widget().start_coroutine(display.go_to_line());
+        display.object().start_coroutine(display.go_to_line());
     });
 
     register_display_keyboard_action("Toogle Show Line Numbers", { App::Key::L, App::KeyModifier::Alt }, [](Display& display) {
@@ -329,14 +329,14 @@ void init_actions() {
     });
 
     register_display_keyboard_action("Open File", { App::Key::O, App::KeyModifier::Control }, [](Display& display) {
-        display.this_widget().start_coroutine(display.do_open_prompt());
+        display.object().start_coroutine(display.do_open_prompt());
     });
     register_display_keyboard_action("Close Display", { App::Key::Q, App::KeyModifier::Control }, [](Display& display) {
-        display.this_widget().start_coroutine(display.quit());
+        display.object().start_coroutine(display.quit());
     });
 
     register_display_keyboard_action("Save", { App::Key::S, App::KeyModifier::Control }, [](Display& display) {
-        display.this_widget().start_coroutine(display.save());
+        display.object().start_coroutine(display.save());
     });
 }
 }

@@ -14,8 +14,8 @@ class TerminalPrompt;
 class TerminalSearch;
 
 class TerminalDisplay final
-    : public Edit::Display
-    , public TUI::Panel {
+    : public TUI::Panel
+    , public Edit::Display {
     APP_OBJECT(TerminalDisplay)
 
     APP_EMITS(TUI::Panel, Edit::SplitDisplayEvent, Edit::NewDisplayEvent)
@@ -34,7 +34,6 @@ public:
     virtual int rows() const override { return sized_rect().height(); }
     virtual int cols() const override;
 
-    virtual App::Object& this_widget() override { return *this; }
     virtual Edit::TextIndex text_index_at_mouse_position(const Point& point) override;
     virtual Edit::RenderedLine compose_line(const Edit::Line& line) override;
     virtual void output_line(int row, int col_offset, const Edit::RenderedLine& line, int line_index) override;

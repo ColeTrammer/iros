@@ -1,11 +1,12 @@
-#pragma once
 
+#pragma once
 #include <edit/absolute_position.h>
 #include <edit/character_metadata.h>
 #include <edit/forward.h>
 #include <edit/multicursor.h>
 #include <edit/suggestions.h>
 #include <edit/text_range_collection.h>
+#include <eventloop/component.h>
 #include <eventloop/event.h>
 #include <eventloop/forward.h>
 #include <graphics/color.h>
@@ -21,9 +22,9 @@ APP_EVENT(Edit, NewDisplayEvent, App::Event, (), (), ())
 namespace Edit {
 enum class AutoCompleteMode { Never, Always };
 
-class Display {
+class Display : public App::Component {
 public:
-    void initialize();
+    virtual void did_attach() override;
     virtual ~Display();
 
     virtual int rows() const = 0;
@@ -41,7 +42,6 @@ public:
     void scroll_cursor_into_view(Cursor& cursor);
     void center_on_cursor(Cursor& cursor);
 
-    virtual App::Object& this_widget() = 0;
     virtual TextIndex text_index_at_mouse_position(const Point& point) = 0;
     virtual RenderedLine compose_line(const Line& line) = 0;
     virtual void output_line(int row, int col_offset, const RenderedLine& line, int line_index) = 0;
@@ -147,7 +147,7 @@ public:
     const String& previous_search_text() const { return m_previous_search_text; }
 
 protected:
-    Display();
+    explicit Display(App::Object& object);
 
     virtual void document_did_change() {}
     virtual void suggestions_did_change(const Maybe<TextRange>&) {}
