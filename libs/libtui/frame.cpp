@@ -1,7 +1,12 @@
+#include <app/base/widget.h>
 #include <tinput/terminal_renderer.h>
 #include <tui/frame.h>
 
 namespace TUI {
+Frame::Frame() {}
+
+Frame::~Frame() {}
+
 void Frame::render() {
     Panel::render();
 
@@ -19,6 +24,16 @@ Rect Frame::relative_inner_rect() const {
 
 Rect Frame::positioned_inner_rect() const {
     return positioned_rect().adjusted(-1);
+}
+
+void Frame::set_frame_color(Maybe<Color> c) {
+    m_frame_color = c;
+    invalidate();
+}
+
+void Frame::set_box_style(TInput::TerminalRenderer::BoxStyle box_style) {
+    m_box_style = box_style;
+    invalidate();
 }
 
 TInput::TerminalRenderer Frame::get_renderer_inside_frame() {

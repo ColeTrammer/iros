@@ -13,6 +13,7 @@ class Endpoint : public App::Object {
     APP_OBJECT(Endpoint)
 
 public:
+    Endpoint();
     virtual ~Endpoint() override;
 
     void set_dispatcher(SharedPtr<MessageDispatcher> dispatcher) { m_dispatcher = move(dispatcher); }

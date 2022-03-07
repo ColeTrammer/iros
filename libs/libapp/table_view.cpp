@@ -44,7 +44,7 @@ void TableView::render() {
         return;
     }
 
-    auto renderer = get_renderer();
+    auto renderer = ScrollComponent::get_renderer();
     renderer.fill_rect(sized_rect(), background_color());
 
     auto field_count = model()->field_count();

@@ -1,5 +1,4 @@
 set(SOURCES
-    component.cpp
     event_loop.cpp
     file_watcher.cpp
     input_tracker.cpp

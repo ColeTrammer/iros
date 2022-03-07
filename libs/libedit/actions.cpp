@@ -2,6 +2,7 @@
 #include <edit/display.h>
 #include <edit/document.h>
 #include <edit/keyboard_action.h>
+#include <edit/rendered_line.h>
 
 namespace Edit {
 void init_actions() {
@@ -305,10 +306,10 @@ void init_actions() {
     });
 
     register_display_keyboard_action("New Display", { App::Key::N, App::KeyModifier::Control }, [](Display& display) {
-        display.object().emit<Edit::NewDisplayEvent>();
+        display.emit<Edit::NewDisplayEvent>();
     });
     register_display_keyboard_action("Split Display", { App::Key::Backslash, App::KeyModifier::Control }, [](Display& display) {
-        display.object().emit<Edit::SplitDisplayEvent>();
+        display.emit<Edit::SplitDisplayEvent>();
     });
 
     register_display_keyboard_action("Search", { App::Key::F, App::KeyModifier::Control }, [](Display& display) {
@@ -317,7 +318,7 @@ void init_actions() {
     });
 
     register_display_keyboard_action("Go To Line", { App::Key::G, App::KeyModifier::Control }, [](Display& display) {
-        display.object().start_coroutine(display.go_to_line());
+        display.start_coroutine(display.go_to_line());
     });
 
     register_display_keyboard_action("Toogle Show Line Numbers", { App::Key::L, App::KeyModifier::Alt }, [](Display& display) {
@@ -329,14 +330,14 @@ void init_actions() {
     });
 
     register_display_keyboard_action("Open File", { App::Key::O, App::KeyModifier::Control }, [](Display& display) {
-        display.object().start_coroutine(display.do_open_prompt());
+        display.start_coroutine(display.do_open_prompt());
     });
     register_display_keyboard_action("Close Display", { App::Key::Q, App::KeyModifier::Control }, [](Display& display) {
-        display.object().start_coroutine(display.quit());
+        display.start_coroutine(display.quit());
     });
 
     register_display_keyboard_action("Save", { App::Key::S, App::KeyModifier::Control }, [](Display& display) {
-        display.object().start_coroutine(display.save());
+        display.start_coroutine(display.save());
     });
 }
 }

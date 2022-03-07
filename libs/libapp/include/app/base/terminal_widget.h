@@ -1,9 +1,10 @@
 #pragma once
 
+#include <app/base/terminal_widget_bridge.h>
+#include <app/base/terminal_widget_interface.h>
+#include <app/base/widget.h>
 #include <app/forward.h>
-#include <eventloop/component.h>
 #include <eventloop/forward.h>
-#include <eventloop/selectable.h>
 #include <graphics/rect.h>
 #include <liim/pointers.h>
 #include <liim/string.h>
@@ -13,32 +14,38 @@
 APP_EVENT(App, TerminalHangupEvent, Event, (), (), ())
 
 namespace App::Base {
-class TerminalWidget : public Component {
+class TerminalWidget : public Widget {
+    APP_OBJECT(TerminalWidget)
+
+    APP_EMITS(Widget, TerminalHangupEvent)
+
+    APP_BASE_TERMINAL_WIDGET_BRIDGE_INTERFACE_FORWARD(bridge())
+
 public:
-    virtual void did_attach() override;
-    virtual ~TerminalWidget();
+    virtual void initialize() override;
+    virtual ~TerminalWidget() override;
 
-    virtual void invalidate_all_contents() = 0;
-
-    virtual Point cell_position_of_mouse_coordinates(int mouse_x, int mouse_y) const = 0;
-    virtual Rect available_cells() const = 0;
-
+    // os_2 reflect begin
     void clear_selection();
     void copy_selection();
     void paste_text();
 
-protected:
-    explicit TerminalWidget(Object& object);
-
     const Terminal::TTY& tty() const { return m_tty; }
     bool in_selection(int row, int col) const;
+    // os_2 reflect end
+
+    const TerminalWidgetBridge& bridge() const { return *m_bridge; }
+    TerminalWidgetBridge& bridge() { return *m_bridge; }
+
+protected:
+    TerminalWidget(SharedPtr<WidgetBridge> widget_bridge, SharedPtr<TerminalWidgetBridge> terminal_bridge);
 
 private:
-    App::Base::Widget& this_widget() { return typed_object<App::Base::Widget>(); }
     String selection_text() const;
 
     Terminal::PsuedoTerminal m_pseudo_terminal;
     Terminal::TTY m_tty;
+    SharedPtr<TerminalWidgetBridge> m_bridge;
     SharedPtr<FdWrapper> m_pseudo_terminal_wrapper;
     int m_selection_start_row { -1 };
     int m_selection_start_col { -1 };

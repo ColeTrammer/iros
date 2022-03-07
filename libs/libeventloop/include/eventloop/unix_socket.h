@@ -13,8 +13,8 @@ class UnixSocket final : public Selectable {
     APP_EMITS(Selectable, DisconnectEvent)
 
 public:
-    static SharedPtr<UnixSocket> create_from_fd(SharedPtr<Object> parent, int accepted_fd, bool nonblocking);
-    static SharedPtr<UnixSocket> create_connection(SharedPtr<Object> parent, const String& path);
+    static SharedPtr<UnixSocket> create_from_fd(Object* parent, int accepted_fd, bool nonblocking);
+    static SharedPtr<UnixSocket> create_connection(Object* parent, const String& path);
 
     ~UnixSocket();
 

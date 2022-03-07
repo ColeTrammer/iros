@@ -14,7 +14,7 @@ public:
 
     virtual void do_add(App::Base::Widget& widget) override {
         assert(!m_display);
-        m_display = static_cast<ReplDisplay*>(&widget);
+        m_display = &widget;
     }
 
     virtual void do_remove(App::Base::Widget&) override {}
@@ -38,7 +38,7 @@ public:
     }
 
 private:
-    ReplDisplay* m_display { nullptr };
+    App::Base::Widget* m_display { nullptr };
     bool m_first_layout { true };
 };
 

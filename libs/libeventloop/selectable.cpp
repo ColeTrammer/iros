@@ -3,6 +3,7 @@
 #include <eventloop/selectable.h>
 
 namespace App {
+Selectable::Selectable() {}
 
 Selectable::~Selectable() {
     disable_notifications();
@@ -26,5 +27,4 @@ void Selectable::disable_notifications() {
     EventLoop::unregister_selectable(*this);
     m_notifications_enabled = false;
 }
-
 }

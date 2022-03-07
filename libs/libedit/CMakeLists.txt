@@ -17,4 +17,7 @@ set(SOURCES
 
 add_os_library(libedit edit TRUE)
 
-target_link_libraries(libedit PUBLIC libliim libext libgraphics libeventloop libthread libclanguage libsh)
+generate_interface(libedit libedit_display_interface ${CMAKE_CURRENT_SOURCE_DIR}/include/edit/display.h edit/display_interface.h)
+generate_interface(libedit libedit_display_bridge_interface ${CMAKE_CURRENT_SOURCE_DIR}/include/edit/display_bridge.h edit/display_bridge_interface.h)
+
+target_link_libraries(libedit PUBLIC libapp libliim libext libgraphics libeventloop libthread libclanguage libsh)

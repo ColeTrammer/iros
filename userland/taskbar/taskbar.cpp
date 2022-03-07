@@ -10,9 +10,9 @@
 namespace Taskbar {
 Taskbar::Taskbar() {}
 
-void Taskbar::initialize() {
-    m_time_timer = App::Timer::create_interval_timer(shared_from_this(), 1000);
-    m_time_timer->on<App::TimerEvent>(*this, [this](auto&) {
+void Taskbar::did_attach() {
+    m_time_timer = App::Timer::create_interval_timer(&base(), 1000);
+    listen<App::TimerEvent>(*m_time_timer, [this](auto&) {
         invalidate();
     });
 
@@ -39,7 +39,7 @@ void Taskbar::initialize() {
         return false;
     });
 
-    Widget::initialize();
+    Widget::did_attach();
 }
 
 Taskbar::~Taskbar() {}

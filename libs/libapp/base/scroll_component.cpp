@@ -5,15 +5,16 @@
 #include <math.h>
 
 namespace App::Base {
-ScrollComponent::ScrollComponent(Object& object, int scrollbar_width) : Component(object), m_scrollbar_width(scrollbar_width) {}
+ScrollComponent::ScrollComponent(Widget& widget, SharedPtr<ScrollComponentBridge> bridge) : m_widget(widget), m_bridge(move(bridge)) {}
 
 ScrollComponent::~ScrollComponent() {}
 
 Rect ScrollComponent::available_rect() {
+    auto scrollbar_width = this->scrollbar_width();
     return widget()
         .sized_rect()
         .translated(m_scroll_offset)
-        .shrinked(draw_vertical_scrollbar() ? m_scrollbar_width : 0, draw_horizontal_scrollbar() ? m_scrollbar_width : 0);
+        .shrinked(draw_vertical_scrollbar() ? scrollbar_width : 0, draw_horizontal_scrollbar() ? scrollbar_width : 0);
 }
 
 Rect ScrollComponent::total_rect() {
@@ -34,7 +35,7 @@ bool ScrollComponent::horizontally_scrollable() {
     return !!(m_scrollability & ScrollDirection::Horizontal) && total_rect().width() > widget().sized_rect().width();
 }
 
-void ScrollComponent::did_attach() {
+void ScrollComponent::initialize() {
     widget().intercept<MouseScrollEvent>({}, [this](const MouseScrollEvent& event) {
         m_scroll_offset.set_y(m_scroll_offset.y() + event.z() * 6);
         clamp_scroll_offset();

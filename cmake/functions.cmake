@@ -29,6 +29,19 @@ function(add_os_static_library target_name short_name has_headers)
     set_target_properties(${target_name} PROPERTIES OUTPUT_NAME ${short_name})
 endfunction()
 
+function(generate_interface target id input output)
+    add_custom_command(
+        OUTPUT ${output}
+        COMMAND node ${ROOT}/gen/reflect/index.js -i ${input} -o ${output}
+        DEPENDS ${ROOT}/gen/reflect/index.js
+        MAIN_DEPENDENCY ${input}
+        VERBATIM
+    )
+    add_custom_target(generate_interface_${id} DEPENDS ${output})
+    add_dependencies(${target} generate_interface_${id})
+    target_include_directories(${target} PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
+endfunction()
+
 function(add_os_tests name)
     set(test_name "test_${name}")
     set(test_executable "${CMAKE_CURRENT_BINARY_DIR}/${test_name}")

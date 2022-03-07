@@ -15,8 +15,8 @@ class Timer : public Object {
     APP_EMITS(Object, TimerEvent)
 
 public:
-    static SharedPtr<Timer> create_interval_timer(SharedPtr<Object> parent, time_t ms);
-    static SharedPtr<Timer> create_single_shot_timer(SharedPtr<Object> parent, time_t ms);
+    static SharedPtr<Timer> create_interval_timer(Object* parent, time_t ms);
+    static SharedPtr<Timer> create_single_shot_timer(Object* parent, time_t ms);
 
     Timer();
     virtual void initialize() override;

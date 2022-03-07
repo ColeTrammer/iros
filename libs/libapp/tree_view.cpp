@@ -3,7 +3,7 @@
 #include <graphics/renderer.h>
 
 namespace App {
-void TreeView::initialize() {
+void TreeView::did_attach() {
     on<ResizeEvent>([this](auto&) {
         rebuild_layout();
     });
@@ -26,7 +26,7 @@ void TreeView::initialize() {
         return false;
     });
 
-    View::initialize();
+    View::did_attach();
 }
 
 void TreeView::render() {
@@ -78,7 +78,7 @@ TreeView::Item* TreeView::internal_item_at_position(const Point& point) {
 }
 
 void TreeView::install_model_listeners(Model& model) {
-    model.on<ModelUpdateEvent>(*this, [this, &model](auto&) {
+    listen<ModelUpdateEvent>(model, [this, &model](auto&) {
         rebuild_items();
     });
 

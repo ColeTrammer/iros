@@ -4,7 +4,9 @@
 #include <graphics/renderer.h>
 
 namespace App {
-void Button::initialize() {
+Button::Button(String label) : m_label(move(label)) {}
+
+void Button::did_attach() {
     on<MouseDownEvent>([this](const MouseDownEvent& event) {
         if (event.left_button()) {
             m_did_mousedown = true;
@@ -22,7 +24,7 @@ void Button::initialize() {
         return false;
     });
 
-    return Widget::initialize();
+    return Widget::did_attach();
 }
 
 void Button::render() {

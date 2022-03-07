@@ -1,49 +1,60 @@
 #pragma once
 
+#include <app/base/scroll_component.h>
+#include <app/base/view_bridge.h>
+#include <app/base/view_interface.h>
+#include <app/base/widget.h>
 #include <app/forward.h>
 #include <app/selection.h>
-#include <eventloop/component.h>
-#include <eventloop/event.h>
-#include <liim/function.h>
 
 APP_EVENT(App, ViewRootChanged, Event, (), (), ());
 APP_EVENT(App, ViewItemActivated, Event, (), ((ModelItem*, item)), ())
 
 namespace App::Base {
-class View : public Component {
+class View
+    : public Widget
+    , public ScrollComponent {
+    APP_OBJECT(View)
+
+    APP_EMITS(Widget, ViewRootChanged, ViewItemActivated)
+
+    APP_BASE_VIEW_BRIDGE_INTERFACE_FORWARD(bridge())
+
 public:
-    ~View();
+    virtual void initialize() override;
+    virtual ~View() override;
 
-    Model* model() { return m_model.get(); }
-    const Model* model() const { return m_model.get(); }
+    // os_2 reflect begin
+    App::Model* model() { return m_model.get(); }
+    const App::Model* model() const { return m_model.get(); }
 
-    void set_model(SharedPtr<Model> model);
+    void set_model(SharedPtr<App::Model> model);
 
-    ModelItem* hovered_item() const { return m_hovered_item; }
-    void set_hovered_item(ModelItem*);
+    App::ModelItem* hovered_item() const { return m_hovered_item; }
+    void set_hovered_item(App::ModelItem* item);
 
-    Selection& selection() { return m_selection; }
-    const Selection& selection() const { return m_selection; }
+    App::Selection& selection() { return m_selection; }
+    const App::Selection& selection() const { return m_selection; }
 
-    ModelItem* root_item() { return m_root_item; }
-    const ModelItem* root_item() const { return m_root_item; }
+    App::ModelItem* root_item() { return m_root_item; }
+    const App::ModelItem* root_item() const { return m_root_item; }
 
-    void set_root_item(ModelItem* item);
+    void set_root_item(App::ModelItem* item);
+    // os_2 reflect end
+
+    const ViewBridge& bridge() const { return *m_bridge; }
+    ViewBridge& bridge() { return *m_bridge; }
 
 protected:
-    explicit View(Object& object);
-
-    virtual void did_attach() override;
-    virtual void invalidate_all() = 0;
-    virtual ModelItem* item_at_position(const Point& point) = 0;
-
-    virtual void install_model_listeners(Model& model);
-    virtual void uninstall_model_listeners(Model& model);
-
-    Widget& this_widget() { return typed_object<Widget>(); }
+    explicit View(SharedPtr<WidgetBridge> widget_bridge, SharedPtr<ViewBridge> view_bridge,
+                  SharedPtr<ScrollComponentBridge> scroll_component_bridge);
 
 private:
+    void install_model_listeners(Model& model);
+    void uninstall_model_listeners(Model& model);
+
     SharedPtr<Model> m_model;
+    SharedPtr<ViewBridge> m_bridge;
     ModelItem* m_hovered_item;
     Selection m_selection;
     ModelItem* m_root_item { nullptr };

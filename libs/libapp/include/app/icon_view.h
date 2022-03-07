@@ -8,10 +8,13 @@
 namespace App {
 
 class IconView : public View {
-    APP_OBJECT(IconView)
+    APP_WIDGET(View, IconView)
 
 public:
-    virtual void initialize() override;
+    IconView();
+    virtual void did_attach() override;
+    virtual ~IconView() override;
+
     virtual void render() override;
 
     void set_name_column(int col) { m_name_column = col; }

@@ -14,17 +14,19 @@ TerminalStatusBar& TerminalStatusBar::the() {
 
 TerminalStatusBar::TerminalStatusBar() {
     s_the = this;
+}
 
+void TerminalStatusBar::did_attach() {
     set_layout_constraint({ App::LayoutConstraint::AutoSize, 1 });
 }
 
 TerminalStatusBar::~TerminalStatusBar() {}
 
-void TerminalStatusBar::display_did_update(TerminalDisplay&) {
+void TerminalStatusBar::display_did_update(Edit::Display&) {
     invalidate();
 }
 
-void TerminalStatusBar::set_active_display(TerminalDisplay* display) {
+void TerminalStatusBar::set_active_display(Edit::Display* display) {
     if (!display) {
         m_active_display.reset();
         invalidate();
@@ -37,8 +39,8 @@ void TerminalStatusBar::set_active_display(TerminalDisplay* display) {
 
 void TerminalStatusBar::set_status_message(String message) {
     m_status_message = move(message);
-    m_status_message_timer = App::Timer::create_single_shot_timer(shared_from_this(), 3000);
-    m_status_message_timer->on<App::TimerEvent>(*this, [this](auto&) {
+    m_status_message_timer = App::Timer::create_single_shot_timer(&base(), 3000);
+    listen<App::TimerEvent>(*m_status_message_timer, [this](auto&) {
         m_status_message = {};
         invalidate();
     });

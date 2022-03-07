@@ -7,6 +7,7 @@ class WindowServerClient final : public WindowServer::Server::MessageDispatcher 
     APP_OBJECT(WindowServerClient)
 
 public:
+    WindowServerClient() {}
     virtual void initialize() override;
 
     IPC::Endpoint& server() { return *m_server; }

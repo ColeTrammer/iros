@@ -2,9 +2,14 @@
 
 namespace App::Base {
 class Application;
+class ScrollComponent;
+class ScrollComponentBridge;
 class TableView;
 class TerminalWidget;
-class Widget;
-class Window;
+class TerminalWidgetBridge;
 class View;
+class ViewBridge;
+class Widget;
+class WidgetBridge;
+class Window;
 }

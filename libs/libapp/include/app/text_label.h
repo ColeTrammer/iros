@@ -7,7 +7,7 @@
 namespace App {
 
 class TextLabel : public Widget {
-    APP_OBJECT(TextLabel)
+    APP_WIDGET(Widget, TextLabel)
 
 public:
     TextLabel(String text) : m_text(move(text)) {}

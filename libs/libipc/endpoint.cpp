@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 namespace IPC {
+Endpoint::Endpoint() {}
 
 Endpoint::~Endpoint() {}
 
@@ -81,5 +82,4 @@ void Endpoint::handle_messages() {
     }
     m_messages.clear();
 }
-
 }

@@ -6,14 +6,14 @@
 
 ProcessTab::ProcessTab(SharedPtr<ProcessModel> model) : m_model(move(model)) {}
 
-void ProcessTab::initialize() {
+void ProcessTab::did_attach() {
     auto& layout = set_layout_engine<App::VerticalFlexLayoutEngine>();
     layout.set_margins({ 0, 0, 0, 0 });
 
     auto& tabel = layout.add<App::TableView>();
     tabel.set_model(m_model);
 
-    Widget::initialize();
+    Widget::did_attach();
 }
 
 ProcessTab::~ProcessTab() {}

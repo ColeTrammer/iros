@@ -6,9 +6,10 @@
 
 namespace App {
 class TableView : public View {
-    APP_OBJECT(TableView)
+    APP_WIDGET(View, TableView)
 
 public:
+    TableView() {}
     virtual ~TableView() override;
 
     virtual void render() override;

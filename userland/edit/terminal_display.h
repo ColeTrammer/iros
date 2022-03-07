@@ -1,6 +1,7 @@
 #pragma once
 
 #include <edit/display.h>
+#include <edit/display_bridge.h>
 #include <eventloop/event.h>
 #include <liim/hash_map.h>
 #include <liim/maybe.h>
@@ -15,14 +16,14 @@ class TerminalSearch;
 
 class TerminalDisplay final
     : public TUI::Panel
-    , public Edit::Display {
-    APP_OBJECT(TerminalDisplay)
+    , public Edit::DisplayBridge {
+    APP_WIDGET_BASE(Edit::Display, TUI::Panel, TerminalDisplay, self, self)
 
-    APP_EMITS(TUI::Panel, Edit::SplitDisplayEvent, Edit::NewDisplayEvent)
+    EDIT_DISPLAY_INTERFACE_FORWARD(base())
 
 public:
     TerminalDisplay();
-    virtual void initialize() override;
+    virtual void did_attach() override;
     virtual ~TerminalDisplay() override;
 
     // ^TUI::Panel
@@ -30,7 +31,7 @@ public:
     virtual void render() override;
     virtual Maybe<Point> cursor_position() override;
 
-    // ^Edit::Display
+    // ^Edit::DisplayBridge
     virtual int rows() const override { return sized_rect().height(); }
     virtual int cols() const override;
 

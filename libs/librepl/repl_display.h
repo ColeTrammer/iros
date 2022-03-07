@@ -1,6 +1,7 @@
 #pragma once
 
 #include <edit/display.h>
+#include <edit/display_bridge.h>
 #include <eventloop/event.h>
 #include <liim/hash_map.h>
 #include <liim/maybe.h>
@@ -17,12 +18,14 @@ namespace Repl {
 
 class ReplDisplay final
     : public TUI::Panel
-    , public Edit::Display {
-    APP_OBJECT(ReplDisplay)
+    , public Edit::DisplayBridge {
+    APP_WIDGET_BASE(Edit::Display, TUI::Panel, ReplDisplay, self, self)
+
+    EDIT_DISPLAY_INTERFACE_FORWARD(base())
 
 public:
     explicit ReplDisplay(ReplBase& repl);
-    virtual void initialize() override;
+    virtual void did_attach() override;
     virtual ~ReplDisplay() override;
 
     // ^TUI::Panel
@@ -42,6 +45,8 @@ public:
     virtual void send_status_message(String message) override;
     virtual void enter_search(String starting_text) override;
 
+    virtual Task<Maybe<String>> prompt(String message, String initial_value) override;
+    virtual App::ObjectBoundCoroutine do_open_prompt() override;
     virtual App::ObjectBoundCoroutine quit() override;
 
     virtual void set_clipboard_contents(String text, bool is_whole_line) override;

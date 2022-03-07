@@ -5,7 +5,6 @@
 #include <graphics/renderer.h>
 
 namespace App {
-
 constexpr int character_height = 16;
 constexpr int character_width = 8;
 
@@ -14,7 +13,7 @@ constexpr int tab_border = 1;
 constexpr int tab_bar_height = 2 * (tab_border + tab_padding) + character_height;
 constexpr int tab_bar_left_margin = 4;
 
-void TabWidget::initialize() {
+void TabWidget::did_attach() {
     on<MouseDownEvent>([this](const MouseDownEvent& event) {
         if (event.left_button()) {
             for (int i = 0; i < m_tabs.size(); i++) {
@@ -30,7 +29,7 @@ void TabWidget::initialize() {
     // FIXME: use some sort of focus proxy mechanism instead.
     on<FocusedEvent>([this](const FocusedEvent&) {
         if (m_active_tab != -1) {
-            parent_window()->set_focused_widget(m_tabs[m_active_tab].widget.get());
+            m_tabs[m_active_tab].widget->make_focused();
         }
     });
 
@@ -46,7 +45,7 @@ void TabWidget::initialize() {
         m_tab_content_rect = tab_content_rect;
     });
 
-    Widget::initialize();
+    Widget::did_attach();
 }
 
 void TabWidget::render() {
@@ -73,7 +72,7 @@ void TabWidget::set_active_tab(int index) {
     m_active_tab = index;
     if (m_active_tab != -1) {
         m_tabs[m_active_tab].widget->set_hidden(false);
-        parent_window()->set_focused_widget(m_tabs[m_active_tab].widget.get());
+        m_tabs[m_active_tab].widget->make_focused();
     }
 }
 
@@ -94,16 +93,18 @@ void TabWidget::remove_tab(int index) {
     }
 }
 
+/*
 void TabWidget::did_remove_child(SharedPtr<Object> child) {
     int i = 0;
     for (auto& tab : m_tabs) {
-        if (tab.widget.get() == child.get()) {
+        if (&tab.widget->base() == child.get()) {
             remove_tab(i);
             break;
         }
         i++;
     }
 }
+*/
 
 Rect TabWidget::next_tab_rect(const String& name) const {
     auto text_width = static_cast<int>(name.size()) * character_width;
@@ -116,5 +117,4 @@ Rect TabWidget::next_tab_rect(const String& name) const {
     auto& reference_rect = m_tabs.last().rect;
     return { reference_rect.x() + reference_rect.width(), 0, width, tab_bar_height };
 }
-
 }

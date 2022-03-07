@@ -800,7 +800,7 @@ void Document::copy(Display& display, MultiCursor& cursors) {
         return;
     }
 
-    display.set_clipboard_contents(cursor.selection_text(*this));
+    display.set_clipboard_contents(cursor.selection_text(*this), false);
 }
 
 void Document::cut(Display& display, MultiCursor& cursors) {
@@ -815,7 +815,7 @@ void Document::cut(Display& display, MultiCursor& cursors) {
         return;
     }
 
-    display.set_clipboard_contents(cursor.selection_text(*this));
+    display.set_clipboard_contents(cursor.selection_text(*this), false);
     push_command<DeleteCommand>(display);
 }
 

@@ -1,3 +1,4 @@
+#include <app/base/view.h>
 #include <app/model.h>
 #include <app/model_item_info.h>
 #include <tinput/terminal_renderer.h>
@@ -11,7 +12,7 @@ void TableView::render() {
         return;
     }
 
-    auto* root_item = model()->model_item_root();
+    auto* root_item = this->root_item();
     auto item_count = root_item->item_count();
     for (int i = 0; i < item_count; i++) {
         auto info = root_item->model_item_at(i)->info(0, App::ModelItemInfo::Request::Text);

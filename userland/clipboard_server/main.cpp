@@ -18,8 +18,10 @@ class Dispatcher final : public Client::MessageDispatcher {
     APP_OBJECT(Dispatcher)
 
 public:
+    Dispatcher() {}
+
     virtual void initialize() override {
-        m_server = IPC::Server::create(shared_from_this(), "/tmp/.clipboard_server.socket", shared_from_this());
+        m_server = IPC::Server::create(this, "/tmp/.clipboard_server.socket", shared_from_this());
 
         Client::MessageDispatcher::initialize();
     }

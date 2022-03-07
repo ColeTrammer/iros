@@ -8,9 +8,11 @@
 static SharedPtr<Bitmap> s_bitmap;
 
 class TestWidget final : public App::Widget {
-    APP_OBJECT(TestWidget)
+    APP_WIDGET(App::Widget, TestWidget)
 
 public:
+    TestWidget() {}
+
     virtual void render() override {
         auto renderer = get_renderer();
         renderer.fill_rect(sized_rect(), ColorValue::Black);

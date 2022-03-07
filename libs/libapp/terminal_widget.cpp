@@ -14,11 +14,10 @@ namespace App {
 constexpr int cell_width = 8;
 constexpr int cell_height = 16;
 
-TerminalWidget::TerminalWidget(double opacity)
-    : Base::TerminalWidget(static_cast<Object&>(*this)), m_background_alpha(static_cast<uint8_t>(opacity * 255)) {}
+TerminalWidget::TerminalWidget(double opacity) : m_background_alpha(static_cast<uint8_t>(opacity * 255)) {}
 
-void TerminalWidget::initialize() {
-    auto context_menu = App::ContextMenu::create(parent_window()->shared_from_this(), parent_window()->shared_from_this());
+void TerminalWidget::did_attach() {
+    auto context_menu = App::ContextMenu::create(parent_window(), parent_window()->shared_from_this());
     context_menu->add_menu_item("Copy", [this] {
         this->copy_selection();
     });
@@ -27,7 +26,7 @@ void TerminalWidget::initialize() {
     });
     set_context_menu(move(context_menu));
 
-    Widget::initialize();
+    Widget::did_attach();
 }
 
 Point TerminalWidget::cell_position_of_mouse_coordinates(int mouse_x, int mouse_y) const {

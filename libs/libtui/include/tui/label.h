@@ -7,7 +7,7 @@
 
 namespace TUI {
 class Label : public Panel {
-    APP_OBJECT(Label)
+    APP_WIDGET(Panel, Label)
 
 public:
     explicit Label(String text) : m_text(move(text)) {}

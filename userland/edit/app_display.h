@@ -2,6 +2,7 @@
 
 #include <app/widget.h>
 #include <edit/display.h>
+#include <edit/display_bridge.h>
 #include <graphics/forward.h>
 #include <liim/function.h>
 #include <liim/string.h>
@@ -10,7 +11,7 @@
 class AppDisplay;
 
 class SearchWidget final : public App::Widget {
-    APP_OBJECT(SearchWidget)
+    APP_WIDGET(App::Widget, SearchWidget)
 
 public:
     SearchWidget();
@@ -26,11 +27,14 @@ private:
 
 class AppDisplay final
     : public App::Widget
-    , public Edit::Display {
-    APP_OBJECT(AppDisplay)
+    , public Edit::DisplayBridge {
+    APP_WIDGET_BASE(Edit::Display, App::Widget, AppDisplay, self, self)
+
+    EDIT_DISPLAY_INTERFACE_FORWARD(base())
 
 public:
-    virtual void initialize() override;
+    explicit AppDisplay(bool m_main_display = true);
+    virtual void did_attach() override;
     virtual ~AppDisplay() override;
 
     virtual int rows() const override { return m_rows; }
@@ -48,9 +52,11 @@ public:
     }
     virtual int enter() override;
     virtual void send_status_message(String message) override;
+    virtual Task<Maybe<String>> prompt(String message, String initial_value) override;
     virtual void enter_search(String starting_text) override;
 
     virtual App::ObjectBoundCoroutine quit() override;
+    virtual App::ObjectBoundCoroutine do_open_prompt() override;
 
     virtual void set_clipboard_contents(String text, bool is_whole_line) override;
     virtual String clipboard_contents(bool& is_whole_line) const override;
@@ -65,8 +71,6 @@ private:
         bool dirty;
         Edit::CharacterMetadata metadata;
     };
-
-    explicit AppDisplay(bool m_main_display = true);
 
     AppDisplay& ensure_search_display();
 

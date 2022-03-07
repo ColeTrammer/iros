@@ -7,8 +7,8 @@
 
 namespace App {
 
-SharedPtr<Timer> Timer::create_interval_timer(SharedPtr<Object> parent, time_t ms) {
-    auto ret = Timer::create(move(parent));
+SharedPtr<Timer> Timer::create_interval_timer(Object* parent, time_t ms) {
+    auto ret = Timer::create(parent);
     if (!ret) {
         return ret;
     }
@@ -16,8 +16,8 @@ SharedPtr<Timer> Timer::create_interval_timer(SharedPtr<Object> parent, time_t m
     return ret;
 }
 
-SharedPtr<Timer> Timer::create_single_shot_timer(SharedPtr<Object> parent, time_t ms) {
-    auto ret = Timer::create(move(parent));
+SharedPtr<Timer> Timer::create_single_shot_timer(Object* parent, time_t ms) {
+    auto ret = Timer::create(parent);
     if (!ret) {
         return ret;
     }

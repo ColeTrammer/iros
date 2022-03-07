@@ -13,16 +13,18 @@
 #include <unistd.h>
 
 class TestWidget : public App::Widget {
-    APP_OBJECT(TestWidget)
+    APP_WIDGET(App::Widget, TestWidget)
 
-private:
-    virtual void initialize() override {
+public:
+    TestWidget() {}
+
+    virtual void did_attach() override {
         on<App::TextEvent>([](const App::TextEvent& event) {
             out_log("typed: '{}'", event.text());
             return true;
         });
 
-        Widget::initialize();
+        Widget::did_attach();
     }
 };
 
@@ -58,7 +60,7 @@ int main() {
         printf("clicked!\n");
     });
 
-    auto context_menu = App::ContextMenu::create(window, window);
+    auto context_menu = App::ContextMenu::create(window.get(), window);
     context_menu->add_menu_item("A", [] {
         printf("A Pressed\n");
     });

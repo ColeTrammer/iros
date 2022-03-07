@@ -6,11 +6,11 @@
 #include <unistd.h>
 
 namespace App {
-SharedPtr<UnixSocket> UnixSocket::create_from_fd(SharedPtr<Object> parent, int fd, bool nonblocking) {
+SharedPtr<UnixSocket> UnixSocket::create_from_fd(Object* parent, int fd, bool nonblocking) {
     return UnixSocket::create(move(parent), fd, nonblocking);
 }
 
-SharedPtr<UnixSocket> UnixSocket::create_connection(SharedPtr<Object> parent, const String& path) {
+SharedPtr<UnixSocket> UnixSocket::create_connection(Object* parent, const String& path) {
     int fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
     if (fd < 0) {
         return nullptr;

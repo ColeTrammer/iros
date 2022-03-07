@@ -4,3 +4,5 @@ set(TARGETS
 )
 
 add_all_targets()
+
+add_subdirectory(reflect)

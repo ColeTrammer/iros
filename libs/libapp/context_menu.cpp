@@ -31,7 +31,7 @@ void ContextMenu::add_menu_item(String name, Function<void()> hook) {
 
 Window& ContextMenu::ensure_window(Point p) {
     if (!m_window) {
-        m_window = ContextMenuWindow::create(shared_from_this(), p, *this);
+        m_window = ContextMenuWindow::create(this, p, *this);
         auto& main_widget = m_window->set_main_widget<App::Widget>();
         auto& layout = main_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
         layout.set_margins({ 0, 0, 0, 0 });

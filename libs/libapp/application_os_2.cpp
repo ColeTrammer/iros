@@ -3,10 +3,10 @@
 
 namespace App {
 void WindowServerClient::initialize() {
-    m_server = IPC::Endpoint::create(shared_from_this());
+    m_server = add<IPC::Endpoint>();
     m_server->set_dispatcher(shared_from_this());
 
-    auto socket = UnixSocket::create_connection(shared_from_this(), "/tmp/.window_server.socket");
+    auto socket = UnixSocket::create_connection(this, "/tmp/.window_server.socket");
     m_server->set_socket(move(socket));
 }
 

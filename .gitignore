@@ -15,6 +15,9 @@ initrd/files
 *.pcap
 *.lock
 
+# Javascript
+**/node_modules/**
+
 # GDB
 .gdbinit
 

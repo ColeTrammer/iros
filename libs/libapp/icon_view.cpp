@@ -5,7 +5,9 @@
 #include <graphics/renderer.h>
 
 namespace App {
-void IconView::initialize() {
+IconView::IconView() {}
+
+void IconView::did_attach() {
     on<MouseDownEvent>([this](const MouseDownEvent& event) {
         if (event.left_button()) {
             m_in_selection = true;
@@ -53,11 +55,13 @@ void IconView::initialize() {
         invalidate();
     });
 
-    View::initialize();
+    View::did_attach();
 }
 
+IconView::~IconView() {}
+
 void IconView::render() {
-    auto renderer = get_renderer();
+    auto renderer = ScrollComponent::get_renderer();
     renderer.clear_rect(sized_rect(), background_color());
 
     for (int r = 0; r < m_items.size(); r++) {
@@ -113,7 +117,7 @@ void IconView::rebuild_layout() {
 }
 
 void IconView::install_model_listeners(Model& model) {
-    model.on<ModelUpdateEvent>(*this, [this, &model](auto&) {
+    listen<ModelUpdateEvent>(model, [this, &model](auto&) {
         rebuild_layout();
     });
 

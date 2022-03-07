@@ -32,12 +32,20 @@ public:
     void set_margins(const Margins& m) { m_margins = m; }
     const Margins& margins() const { return m_margins; }
 
-    template<typename PanelType, typename... Args>
-    PanelType& add(Args&&... args) {
-        auto panel = PanelType::create(parent().shared_from_this(), forward<Args>(args)...);
-        do_add(*panel);
+    template<typename WidgetType, typename... Args>
+    WidgetType& add(Args&&... args) {
+        auto& result = WidgetType::create(&parent(), forward<Args>(args)...);
+        do_add(result.base());
         schedule_layout();
-        return *panel;
+        return result;
+    }
+
+    template<typename WidgetType, typename... Args>
+    SharedPtr<WidgetType> add_owned(Args&&... args) {
+        auto result = WidgetType::create_owned(&parent(), forward<Args>(args)...);
+        do_add(result->base());
+        schedule_layout();
+        return result;
     }
 
     void remove(Base::Widget& child) {

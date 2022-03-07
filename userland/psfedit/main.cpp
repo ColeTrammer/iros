@@ -12,10 +12,12 @@
 #include <unistd.h>
 
 class GlyphEditorWidgetCell final : public App::Widget {
-    APP_OBJECT(GlyphEditorWidgetCell)
+    APP_WIDGET(App::Widget, GlyphEditorWidgetCell)
 
 public:
-    virtual void initialize() override {
+    GlyphEditorWidgetCell(Bitset<uint8_t>*& bitset, int index) : m_bitset(bitset), m_index(index) {}
+
+    virtual void did_attach() override {
         on<App::MouseDownEvent>([this](const App::MouseDownEvent& event) {
             if (m_bitset && event.left_button()) {
                 m_bitset->flip(m_index);
@@ -25,7 +27,7 @@ public:
             return false;
         });
 
-        App::Widget::initialize();
+        App::Widget::did_attach();
     }
 
     virtual void render() {
@@ -40,26 +42,23 @@ public:
         renderer.draw_rect(sized_rect(), ColorValue::Black);
     }
 
-private:
-    GlyphEditorWidgetCell(Bitset<uint8_t>*& bitset, int index) : m_bitset(bitset), m_index(index) {}
-
     Bitset<uint8_t>*& m_bitset;
     int m_index { 0 };
 };
 
 class GlyphEditorWidget final : public App::Widget {
-    APP_OBJECT(GlyphEditorWidget)
+    APP_WIDGET(App::Widget, GlyphEditorWidget)
 
 public:
+    GlyphEditorWidget(int width, int height, SharedPtr<Font> font) : m_width(width), m_height(height) { set_font(font); }
+
     void set_bitset(Bitset<uint8_t>* bitset, char c) {
         m_bitset = bitset;
         m_info_label->set_text(String::format("Editing glyph %d (%c)", c, c));
         invalidate();
     }
 
-private:
-    GlyphEditorWidget(int width, int height, SharedPtr<Font> font) : m_width(width), m_height(height) { set_font(font); }
-    virtual void initialize() override {
+    virtual void did_attach() override {
         auto& layout = set_layout_engine<App::HorizontalFlexLayoutEngine>();
         auto& left_container = layout.add<App::Widget>();
 
@@ -77,7 +76,7 @@ private:
         auto& text_container = layout.add<App::Widget>();
         auto& text_layout = text_container.set_layout_engine<App::VerticalFlexLayoutEngine>();
 
-        m_info_label = text_layout.add<App::TextLabel>("").shared_from_this();
+        m_info_label = text_layout.add_owned<App::TextLabel>("");
 
         auto& demo_label = text_layout.add<App::TextLabel>("abcdefghijklmnopqrstuvwxyz\n"
                                                            "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n"
@@ -85,7 +84,7 @@ private:
                                                            "[]{}\\|;:'\",.<>/?");
         demo_label.set_font(font());
 
-        App::Widget::initialize();
+        App::Widget::did_attach();
     }
 
     Bitset<uint8_t>* m_bitset { nullptr };

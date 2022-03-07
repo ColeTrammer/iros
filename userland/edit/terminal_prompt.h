@@ -9,16 +9,14 @@ class TerminalDisplay;
 APP_EVENT(Edit, PromptResult, App::Event, (), ((Maybe<String>, result)), ())
 
 class TerminalPrompt final : public TUI::Frame {
-    APP_OBJECT(TerminalPrompt)
-
-    APP_EMITS(TUI::Frame, Edit::PromptResult)
+    APP_WIDGET_EMITS(TUI::Frame, TerminalPrompt, (Edit::PromptResult))
 
 public:
     TerminalPrompt(TerminalDisplay& host_display, String prompt, String initial_value);
-    virtual void initialize() override;
+    virtual void did_attach() override;
     virtual ~TerminalPrompt() override;
 
-    Task<Maybe<String>> block_until_result(Object& coroutine_owner);
+    Task<Maybe<String>> block_until_result(App::Object& coroutine_owner);
 
 private:
     TerminalDisplay& m_host_display;

@@ -8,7 +8,7 @@
 TerminalSearch::TerminalSearch(TerminalDisplay& host_display, String initial_text)
     : m_host_display(host_display), m_initial_text(move(initial_text)) {}
 
-void TerminalSearch::initialize() {
+void TerminalSearch::did_attach() {
     auto& layout = set_layout_engine<App::VerticalFlexLayoutEngine>();
     layout.set_margins({ 1, 1, 1, 1 });
 
@@ -23,17 +23,17 @@ void TerminalSearch::initialize() {
 
         auto search_document = Edit::Document::create_from_text(m_initial_text);
         search_document->set_submittable(true);
-        search_document->on<Edit::Submit>(*this, [this](auto&) {
+        listen<Edit::Submit>(*search_document, [this](auto&) {
             m_host_display.move_cursor_to_next_search_match();
         });
 
-        search_document->on<Edit::Change>(*this, [this, document = search_document.get()](auto&) {
+        listen<Edit::Change>(*search_document, [this, document = search_document.get()](auto&) {
             auto to_find = document->content_string();
             m_host_display.set_search_text(move(to_find));
         });
 
         auto& search_text_box = search_layout.add<TerminalDisplay>();
-        search_text_box.intercept<App::KeyDownEvent>(*this, [this, &replace_container](const App::KeyDownEvent& event) {
+        listen_intercept<App::KeyDownEvent>(search_text_box, [this, &replace_container](const App::KeyDownEvent& event) {
             if (event.key() == App::Key::Tab && event.modifiers() == 0) {
                 replace_container.make_focused();
                 return true;
@@ -48,10 +48,10 @@ void TerminalSearch::initialize() {
         search_text_box.set_document(search_document);
         search_text_box.enter();
 
-        search_document->select_all(search_text_box, search_text_box.main_cursor());
+        search_document->select_all(search_text_box.base(), search_text_box.main_cursor());
 
-        search_container.set_focus_proxy(&search_text_box);
-        set_focus_proxy(&search_text_box);
+        search_container.set_focus_proxy(&search_text_box.base());
+        set_focus_proxy(&search_text_box.base());
     }
 
     {
@@ -62,12 +62,12 @@ void TerminalSearch::initialize() {
 
         auto replace_document = Edit::Document::create_from_text("");
         replace_document->set_submittable(true);
-        replace_document->on<Edit::Submit>(*this, [this, document = replace_document.get()](auto&) {
+        listen<Edit::Submit>(*replace_document, [this, document = replace_document.get()](auto&) {
             m_host_display.replace_next_search_match(document->content_string());
         });
 
         auto& replace_text_box = replace_layout.add<TerminalDisplay>();
-        replace_text_box.intercept<App::KeyDownEvent>(*this, [this, &search_container](const App::KeyDownEvent& event) {
+        listen_intercept<App::KeyDownEvent>(replace_text_box, [this, &search_container](const App::KeyDownEvent& event) {
             if (event.key() == App::Key::Tab && event.modifiers() == App::KeyModifier::Shift) {
                 search_container.make_focused();
                 return true;
@@ -81,10 +81,10 @@ void TerminalSearch::initialize() {
         });
         replace_text_box.set_document(replace_document);
 
-        replace_container.set_focus_proxy(&replace_text_box);
+        replace_container.set_focus_proxy(&replace_text_box.base());
     }
 
-    Panel::initialize();
+    Panel::did_attach();
 }
 
 TerminalSearch::~TerminalSearch() {}

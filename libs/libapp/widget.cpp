@@ -1,4 +1,5 @@
 #include <app/application.h>
+#include <app/base/widget.h>
 #include <app/context_menu.h>
 #include <app/layout_engine.h>
 #include <app/widget.h>
@@ -11,7 +12,7 @@
 namespace App {
 Widget::Widget() : m_palette(Application::the().palette()) {}
 
-void Widget::initialize() {
+void Widget::did_attach() {
     on<MouseDownEvent>([this](const MouseDownEvent& event) {
         if (!m_context_menu) {
             return false;
@@ -23,14 +24,12 @@ void Widget::initialize() {
         }
         return false;
     });
-
-    Base::Widget::initialize();
 }
 
 Widget::~Widget() {}
 
-Window* Widget::parent_window() {
-    return static_cast<Window*>(Base::Widget::parent_window());
+Window* Widget::typed_parent_window() {
+    return static_cast<Window*>(parent_window());
 }
 
 void Widget::set_context_menu(SharedPtr<ContextMenu> menu) {
@@ -38,7 +37,7 @@ void Widget::set_context_menu(SharedPtr<ContextMenu> menu) {
 }
 
 Renderer Widget::get_renderer() {
-    Renderer renderer(*parent_window()->pixels());
+    Renderer renderer(*typed_parent_window()->pixels());
     renderer.set_bounding_rect(positioned_rect());
     return renderer;
 }
