@@ -14,7 +14,8 @@ namespace App {
 constexpr int cell_width = 8;
 constexpr int cell_height = 16;
 
-TerminalWidget::TerminalWidget(double opacity) : m_background_alpha(static_cast<uint8_t>(opacity * 255)) {}
+TerminalWidget::TerminalWidget(double opacity)
+    : Base::TerminalWidget(static_cast<Object&>(*this)), m_background_alpha(static_cast<uint8_t>(opacity * 255)) {}
 
 void TerminalWidget::initialize() {
     auto context_menu = App::ContextMenu::create(parent_window()->shared_from_this(), parent_window()->shared_from_this());
@@ -26,7 +27,6 @@ void TerminalWidget::initialize() {
     });
     set_context_menu(move(context_menu));
 
-    Base::TerminalWidget::initialize();
     Widget::initialize();
 }
 

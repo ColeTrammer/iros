@@ -3,13 +3,8 @@
 #include <tui/terminal_panel.h>
 
 namespace TUI {
-TerminalPanel::TerminalPanel() {
+TerminalPanel::TerminalPanel() : TerminalWidget(static_cast<Object&>(*this)) {
     set_accepts_focus(true);
-}
-
-void TerminalPanel::initialize() {
-    TerminalWidget::initialize();
-    Panel::initialize();
 }
 
 Maybe<Point> TerminalPanel::cursor_position() {

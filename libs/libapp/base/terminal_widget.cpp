@@ -13,11 +13,11 @@
 // #define TERMINAL_WIDGET_DEBUG
 
 namespace App::Base {
-TerminalWidget::TerminalWidget() : m_tty(m_pseudo_terminal) {}
+TerminalWidget::TerminalWidget(Object& object) : Component(object), m_tty(m_pseudo_terminal) {}
 
 TerminalWidget::~TerminalWidget() {}
 
-void TerminalWidget::initialize() {
+void TerminalWidget::did_attach() {
     auto key_bindings = App::KeyBindings {};
     key_bindings.add({ App::Key::C, App::KeyModifier::Control | App::KeyModifier::Shift }, [this] {
         copy_selection();
