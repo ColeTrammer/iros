@@ -15,9 +15,11 @@
 #include "terminal_status_bar.h"
 
 class BackgroundPanel : public TUI::Panel {
-    APP_OBJECT(BackgroundPanel)
+    APP_WIDGET(TUI::Panel, BackgroundPanel)
 
 public:
+    BackgroundPanel() {}
+
     virtual void render() override {
         auto renderer = get_renderer();
 
@@ -135,7 +137,7 @@ int main(int argc, char** argv) {
         key_bindings.add({ App::Key::LeftArrow, App::KeyModifier::Control, App::KeyShortcut::IsMulti::Yes }, [&display_conainer, &display] {
             auto prev_child = static_cast<const App::Object*>(nullptr);
             for (auto& child : display_conainer.children()) {
-                if (child.get() == &display) {
+                if (child.get() == &display.base()) {
                     break;
                 }
                 prev_child = child.get();
@@ -150,7 +152,7 @@ int main(int argc, char** argv) {
                              auto prev_child = static_cast<const App::Object*>(nullptr);
                              for (int i = display_conainer.children().size() - 1; i >= 0; i--) {
                                  auto& child = display_conainer.children()[i];
-                                 if (child.get() == &display) {
+                                 if (child.get() == &display.base()) {
                                      break;
                                  }
                                  prev_child = child.get();
@@ -212,7 +214,7 @@ int main(int argc, char** argv) {
         }
 
         terminal_container.set_hidden(false);
-        terminal = terminal_container_layout.add<TUI::TerminalPanel>().shared_from_this();
+        terminal = terminal_container_layout.add_owned<TUI::TerminalPanel>();
         terminal->on<App::TerminalHangupEvent>({}, [&terminal, &terminal_container, &display_conainer](auto&) {
             terminal_container.set_hidden(true);
             terminal->remove();

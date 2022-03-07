@@ -24,15 +24,7 @@ Object::~Object() {
     }
 }
 
-void Object::initialize() {
-    m_components.for_each_reverse([&](auto* component) {
-        component->attach();
-    });
-}
-
-void Object::register_component(Component& component) {
-    m_components.add(&component);
-}
+void Object::initialize() {}
 
 void Object::deferred_invoke(Function<void()> callback) {
     EventLoop::queue_event(weak_from_this(), make_unique<CallbackEvent>(move(callback)));

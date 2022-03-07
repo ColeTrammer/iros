@@ -8,7 +8,7 @@
 TerminalPrompt::TerminalPrompt(TerminalDisplay& host_display, String prompt, String initial_value)
     : m_host_display(host_display), m_prompt(move(prompt)), m_initial_value(move(initial_value)) {}
 
-void TerminalPrompt::initialize() {
+void TerminalPrompt::did_attach() {
     auto& layout = set_layout_engine<App::HorizontalFlexLayoutEngine>();
     layout.set_margins({ 1, 1, 1, 1 });
 
@@ -17,12 +17,12 @@ void TerminalPrompt::initialize() {
 
     auto document = Edit::Document::create_from_text(m_initial_value);
     document->set_submittable(true);
-    document->on<Edit::Submit>(*this, [this, document = document.get()](auto&) {
+    listen<Edit::Submit>(*document, [this, document = document.get()](auto&) {
         emit<Edit::PromptResult>(document->content_string());
     });
 
-    m_display = layout.add<TerminalDisplay>().shared_from_this();
-    m_display->intercept<App::KeyDownEvent>(*this, [this](const App::KeyEvent& event) {
+    m_display = layout.add_owned<TerminalDisplay>();
+    listen_intercept<App::KeyDownEvent>(*m_display, [this](const App::KeyEvent& event) {
         if (event.key() == App::Key::Escape) {
             m_host_display.hide_prompt_panel();
             m_host_display.make_focused();
@@ -34,14 +34,14 @@ void TerminalPrompt::initialize() {
     m_display->set_document(document);
     m_display->enter();
 
-    set_focus_proxy(m_display.get());
+    set_focus_proxy(&m_display->base());
 
-    document->move_cursor_to_document_end(*m_display, m_display->main_cursor());
+    document->move_cursor_to_document_end(m_display->base(), m_display->main_cursor());
 
-    Panel::initialize();
+    Panel::did_attach();
 }
 
-Task<Maybe<String>> TerminalPrompt::block_until_result(Object& coroutine_owner) {
+Task<Maybe<String>> TerminalPrompt::block_until_result(App::Object& coroutine_owner) {
     auto event = co_await block_until_event<Edit::PromptResult>(coroutine_owner);
     co_return event.result();
 }

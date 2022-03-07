@@ -29,31 +29,31 @@ AppDisplay& SearchWidget::display() {
         auto& label = layout.add<App::TextLabel>("Find:");
         label.set_layout_constraint({ 46, App::LayoutConstraint::AutoSize });
 
-        m_display = layout.add<AppDisplay>(false).shared_from_this();
+        m_display = layout.add_owned<AppDisplay>(false);
     }
     return *m_display;
 }
 
-AppDisplay::AppDisplay(bool main_display) : Display(static_cast<Object&>(*this)), m_main_display(main_display) {}
+AppDisplay::AppDisplay(bool main_display) : m_main_display(main_display) {}
 
-void AppDisplay::initialize() {
-    set_key_bindings(Edit::get_key_bindings(*this));
+void AppDisplay::did_attach() {
+    set_key_bindings(Edit::get_key_bindings(base()));
 
     auto window = this->parent_window()->shared_from_this();
-    auto context_menu = App::ContextMenu::create(window, window);
+    auto context_menu = App::ContextMenu::create(window.get(), window);
     context_menu->add_menu_item("Copy", [this] {
         if (auto* doc = document()) {
-            doc->copy(*this, cursors());
+            doc->copy(base(), cursors());
         }
     });
     context_menu->add_menu_item("Cut", [this] {
         if (auto* doc = document()) {
-            doc->cut(*this, cursors());
+            doc->cut(base(), cursors());
         }
     });
     context_menu->add_menu_item("Paste", [this] {
         if (auto* doc = document()) {
-            doc->paste(*this, cursors());
+            doc->paste(base(), cursors());
         }
     });
     set_context_menu(context_menu);
@@ -75,7 +75,7 @@ void AppDisplay::initialize() {
         invalidate();
     });
 
-    Widget::initialize();
+    Widget::did_attach();
 }
 
 AppDisplay::~AppDisplay() {}
@@ -83,7 +83,7 @@ AppDisplay::~AppDisplay() {}
 AppDisplay& AppDisplay::ensure_search_display() {
     assert(m_main_display);
     if (!m_search_widget) {
-        m_search_widget = SearchWidget::create(shared_from_this());
+        m_search_widget = create_widget_owned<SearchWidget>();
         m_search_widget->set_hidden(true);
     }
     return m_search_widget->display();
@@ -126,7 +126,7 @@ Edit::TextIndex AppDisplay::text_index_at_mouse_position(const Point& point) {
 void AppDisplay::output_line(int, int, const Edit::RenderedLine&, int) {}
 
 int AppDisplay::enter() {
-    parent_window()->set_focused_widget(this);
+    this->make_focused();
     return 0;
 }
 
@@ -137,7 +137,15 @@ App::ObjectBoundCoroutine AppDisplay::quit() {
     co_return;
 }
 
+App::ObjectBoundCoroutine AppDisplay::do_open_prompt() {
+    co_return;
+}
+
 void AppDisplay::send_status_message(String) {}
+
+Task<Maybe<String>> AppDisplay::prompt(String, String) {
+    co_return {};
+}
 
 void AppDisplay::enter_search(String starting_text) {
     if (!m_main_display) {
@@ -145,22 +153,24 @@ void AppDisplay::enter_search(String starting_text) {
     }
 
     ensure_search_display().set_document(Edit::Document::create_from_text(move(starting_text)));
-    ensure_search_display().document()->set_submittable(true);
-    ensure_search_display().document()->on<Edit::Change>(*this, [this](auto&) {
+
+    auto& search_document = *ensure_search_display().document();
+    search_document.set_submittable(true);
+    listen<Edit::Change>(search_document, [this](auto&) {
         auto contents = ensure_search_display().document()->content_string();
         set_search_text(move(contents));
     });
-    ensure_search_display().document()->on<Edit::Submit>(*this, [this](auto&) {
+    listen<Edit::Submit>(search_document, [this](auto&) {
         cursors().remove_secondary_cursors();
         move_cursor_to_next_search_match();
     });
     ensure_search_display().on_quit = [this] {
         set_search_text("");
-        parent_window()->set_focused_widget(this);
+        this->make_focused();
     };
 
     m_search_widget->set_hidden(false);
-    parent_window()->set_focused_widget(&ensure_search_display());
+    ensure_search_display().make_focused();
 }
 
 void AppDisplay::set_clipboard_contents(String text, bool is_whole_line) {
@@ -187,7 +197,7 @@ String AppDisplay::clipboard_contents(bool& is_whole_line) const {
 }
 
 void AppDisplay::render_cursor(Renderer& renderer) {
-    if (this != parent_window()->focused_widget().get()) {
+    if (focused()) {
         return;
     }
 
@@ -204,7 +214,7 @@ void AppDisplay::render_cursor(Renderer& renderer) {
 }
 
 void AppDisplay::render_cell(Renderer& renderer, int x, int y, char c, Edit::CharacterMetadata metadata) {
-    RenderingInfo info = rendering_info_for_metadata(metadata);
+    auto info = rendering_info_for_metadata(metadata);
 
     Color fg = info.fg.has_value() ? info.fg.value() : Color(VGA_COLOR_LIGHT_GREY);
     Color bg = info.bg.has_value() ? info.bg.value() : ColorValue::Black;
@@ -229,5 +239,5 @@ void AppDisplay::render() {
     render_lines();
 
     render_cursor(renderer);
-    Widget::render();
+    App::Widget::render();
 }

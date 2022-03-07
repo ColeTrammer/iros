@@ -5,9 +5,11 @@
 #include <graphics/renderer.h>
 
 class TestWidget final : public App::Widget {
-    APP_OBJECT(TestWidget)
+    APP_WIDGET(App::Widget, TestWidget)
 
 public:
+    TestWidget() {}
+
     virtual void render() override {
         auto renderer = get_renderer();
 

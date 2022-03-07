@@ -21,6 +21,7 @@ class Selectable : public Object {
     APP_EMITS(Object, ReadableEvent, WritableEvent, ExceptionalEvent)
 
 public:
+    Selectable();
     virtual ~Selectable();
 
     void set_selected_events(int events) { m_selected_events = events; }

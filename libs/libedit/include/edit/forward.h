@@ -7,19 +7,20 @@ class AbsolutePosition;
 class CharacterMetadata;
 class Command;
 class Cursor;
-class DisplayPosition;
 class Display;
+class DisplayBridge;
+class DisplayPosition;
 class Document;
-class LineRenderer;
 class Line;
+class LineRenderer;
 class MatchedSuggestion;
 class MultiCursor;
 class Selection;
-class Suggestions;
 class Suggestion;
+class Suggestions;
 class TextIndex;
-class TextRangeCollectionIterator;
 class TextRangeCollection;
+class TextRangeCollectionIterator;
 
 template<size_t N>
 class TextRangeCombinerIterator;

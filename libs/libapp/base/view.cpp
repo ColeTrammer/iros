@@ -1,14 +1,18 @@
 #include <app/base/view.h>
+#include <app/base/view_bridge.h>
 #include <app/base/widget.h>
+#include <app/base/widget_bridge.h>
 #include <app/model.h>
 
 namespace App::Base {
-View::View(Object& object) : Component(object) {}
+View::View(SharedPtr<WidgetBridge> widget_bridge, SharedPtr<ViewBridge> view_bridge,
+           SharedPtr<ScrollComponentBridge> scroll_component_bridge)
+    : Widget(move(widget_bridge)), ScrollComponent(*this, move(scroll_component_bridge)), m_bridge(move(view_bridge)) {}
 
-void View::did_attach() {
-    this_widget().set_accepts_focus(true);
+void View::initialize() {
+    set_accepts_focus(true);
 
-    this_widget().on<MouseDownEvent>({}, [this](const MouseDownEvent& event) {
+    on<MouseDownEvent>([this](const MouseDownEvent& event) {
         auto item = item_at_position({ event.x(), event.y() });
         if (event.left_button()) {
             switch (event.cyclic_count(2)) {
@@ -17,11 +21,11 @@ void View::did_attach() {
                     if (item) {
                         selection().add(*item);
                     }
-                    invalidate_all();
+                    bridge().invalidate_all();
                     break;
                 case 2:
                     if (item) {
-                        this_widget().emit<ViewItemActivated>(item);
+                        emit<ViewItemActivated>(item);
                     }
                     break;
             }
@@ -31,15 +35,18 @@ void View::did_attach() {
         return false;
     });
 
-    this_widget().on<MouseMoveEvent>({}, [this](const MouseMoveEvent& event) {
+    on<MouseMoveEvent>({}, [this](const MouseMoveEvent& event) {
         auto item = item_at_position({ event.x(), event.y() });
         set_hovered_item(item);
         return false;
     });
 
-    this_widget().on<LeaveEvent>({}, [this](const LeaveEvent&) {
+    on<LeaveEvent>({}, [this](const LeaveEvent&) {
         set_hovered_item(nullptr);
     });
+
+    Base::ScrollComponent::initialize();
+    Widget::initialize();
 }
 
 View::~View() {}
@@ -61,7 +68,7 @@ void View::set_model(SharedPtr<Model> model) {
     }
 
     m_hovered_item = nullptr;
-    invalidate_all();
+    bridge().invalidate_all();
 }
 
 void View::set_hovered_item(ModelItem* item) {
@@ -70,20 +77,20 @@ void View::set_hovered_item(ModelItem* item) {
     }
 
     m_hovered_item = item;
-    invalidate_all();
+    bridge().invalidate_all();
 }
 
 void View::install_model_listeners(Model& model) {
-    model.on<ModelUpdateEvent>(this_widget(), [this](auto&) {
+    listen<ModelUpdateEvent>(model, [this](auto&) {
         if (!root_item()) {
             set_root_item(this->model()->model_item_root());
         }
-        invalidate_all();
+        bridge().invalidate_all();
     });
 }
 
 void View::uninstall_model_listeners(Model& model) {
-    model.remove_listener(this_widget());
+    model.remove_listener(*this);
 }
 
 void View::set_root_item(ModelItem* item) {
@@ -92,6 +99,6 @@ void View::set_root_item(ModelItem* item) {
     }
 
     m_root_item = item;
-    this_widget().emit<ViewRootChanged>();
+    emit<ViewRootChanged>();
 }
 }

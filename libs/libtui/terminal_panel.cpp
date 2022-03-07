@@ -3,9 +3,7 @@
 #include <tui/terminal_panel.h>
 
 namespace TUI {
-TerminalPanel::TerminalPanel() : TerminalWidget(static_cast<Object&>(*this)) {
-    set_accepts_focus(true);
-}
+TerminalPanel::TerminalPanel() {}
 
 Maybe<Point> TerminalPanel::cursor_position() {
     if (tty().cursor_hidden()) {
@@ -47,5 +45,17 @@ void TerminalPanel::render() {
                                  { .foreground = fg, .background = bg, .bold = cell.bold, .invert = cell.inverted });
         }
     }
+}
+
+void TerminalPanel::invalidate_all_contents() {
+    invalidate();
+}
+
+Rect TerminalPanel::available_cells() const {
+    return sized_rect();
+}
+
+Point TerminalPanel::cell_position_of_mouse_coordinates(int mouse_x, int mouse_y) const {
+    return { mouse_x, mouse_y };
 }
 }

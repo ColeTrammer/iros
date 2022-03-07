@@ -1,10 +1,13 @@
+#include <app/base/widget.h>
 #include <app/scroll_component.h>
 #include <app/widget.h>
 #include <graphics/renderer.h>
 #include <math.h>
 
 namespace App {
-ScrollComponent::ScrollComponent(Object& object) : Base::ScrollComponent(object, scrollbar_width) {}
+ScrollComponent::ScrollComponent(Widget& widget) : m_widget(widget) {}
+
+void ScrollComponent::did_attach() {}
 
 ScrollComponent::~ScrollComponent() {}
 
@@ -17,6 +20,7 @@ Renderer ScrollComponent::get_renderer() {
 
 void ScrollComponent::draw_scrollbars() {
     auto renderer = widget().get_renderer();
+    auto scrollbar_width = this->scrollbar_width();
 
     if (draw_horizontal_scrollbar()) {
         renderer.fill_rect({ 0, widget().sized_rect().height() - scrollbar_width, widget().sized_rect().width(), scrollbar_width },
@@ -53,5 +57,10 @@ void ScrollComponent::draw_scrollbars() {
             },
             ColorValue::White);
     }
+}
+
+void ScrollComponent::attach_to_base(Base::ScrollComponent& base) {
+    m_base = &base;
+    did_attach();
 }
 }

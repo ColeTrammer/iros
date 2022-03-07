@@ -18,7 +18,7 @@ void RootWindow::initialize() {
 void RootWindow::do_render() {
     auto& io_terminal = TUI::Application::the().io_terminal();
     io_terminal.set_show_cursor(false);
-    main_widget().render();
+    main_widget().render_including_children();
 
     if (auto panel = focused_widget()) {
         if (auto cursor_position = panel->cursor_position()) {

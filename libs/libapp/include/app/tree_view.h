@@ -4,14 +4,12 @@
 #include <app/view.h>
 
 namespace App {
-class TreeView
-    : public View
-    , public ScrollComponent {
-    APP_OBJECT(TreeView)
+class TreeView : public View {
+    APP_WIDGET(View, TreeView)
 
 public:
-    TreeView() : ScrollComponent(static_cast<Object&>(*this)) {}
-    virtual void initialize() override;
+    TreeView() {}
+    virtual void did_attach() override;
     virtual void render() override;
 
     void set_name_column(int col) { m_name_column = col; }

@@ -9,12 +9,12 @@ Server::Server(String path, SharedPtr<MessageDispatcher> dispatcher) : m_path(mo
 
 void Server::initialize() {
     mode_t mode = umask(0002);
-    m_socket = App::UnixSocketServer::create(shared_from_this(), m_path);
+    m_socket = App::UnixSocketServer::create(this, m_path);
     umask(mode);
     m_socket->on<App::ReadableEvent>(*this, [this](auto&) {
         SharedPtr<App::UnixSocket> client_socket;
         while (client_socket = m_socket->accept()) {
-            auto client = Endpoint::create(shared_from_this());
+            auto client = Endpoint::create(this);
             client->set_socket(move(client_socket));
             client->set_dispatcher(m_dispatcher);
             client->on_disconnect = [this](auto& client) {

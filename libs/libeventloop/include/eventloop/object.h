@@ -12,15 +12,24 @@
 #define APP_OBJECT(name)                                                                       \
 public:                                                                                        \
     template<typename... Args>                                                                 \
-    static SharedPtr<name> create(SharedPtr<Object> parent, Args&&... args) {                  \
+    static SharedPtr<name> create_without_initializing(Object* parent, Args&&... args) {       \
         auto ret = SharedPtr<name>(new name(forward<Args>(args)...));                          \
         ret->__set_weak_this(WeakPtr<name>(ret));                                              \
         if (parent) {                                                                          \
             parent->add_child(ret);                                                            \
         }                                                                                      \
+        return ret;                                                                            \
+    }                                                                                          \
+                                                                                               \
+    template<typename... Args>                                                                 \
+    static SharedPtr<name> create(Object* parent, Args&&... args) {                            \
+        auto ret = create_without_initializing(parent, forward<Args>(args)...);                \
         ret->initialize();                                                                     \
         return ret;                                                                            \
     }                                                                                          \
+                                                                                               \
+    name(const name& other) = delete;                                                          \
+    name(name&& other) = delete;                                                               \
                                                                                                \
     template<typename Ev>                                                                      \
     auto block_until_event(Object& coroutine_owner) {                                          \
@@ -74,6 +83,142 @@ public:                                                                         
         return (LIIM::IsOneOf<Ev, ##__VA_ARGS__>::value && ...) || Parent::does_emit<Ev...>(); \
     }                                                                                          \
                                                                                                \
+private:
+
+#define APP_OBJECT_FORWARD_EVENT_API(o)                                                                 \
+public:                                                                                                 \
+    template<typename Ev>                                                                               \
+    auto block_until_event(App::Object& coroutine_owner) {                                              \
+        static_assert(does_emit<Ev>());                                                                 \
+        return o.block_until_event_unchecked<Ev>(coroutine_owner);                                      \
+    }                                                                                                   \
+                                                                                                        \
+    template<typename... Ev, typename HandlerCallback>                                                  \
+    int intercept(App::Object::GlobalListenerTag, HandlerCallback&& handler_callback) {                 \
+        static_assert(does_emit<Ev...>());                                                              \
+        return o.intercept_unchecked<Ev...>(App::Object::GlobalListenerTag {}, move(handler_callback)); \
+    }                                                                                                   \
+                                                                                                        \
+    template<typename... Ev, typename HandlerCallback>                                                  \
+    int intercept(App::Object& listener, HandlerCallback&& handler_callback) {                          \
+        static_assert(does_emit<Ev...>());                                                              \
+        return o.intercept_unchecked<Ev...>(listener, move(handler_callback));                          \
+    }                                                                                                   \
+                                                                                                        \
+    template<typename... Ev, typename HandlerCallback>                                                  \
+    int on(App::Object::GlobalListenerTag, HandlerCallback&& handler_callback) {                        \
+        static_assert(does_emit<Ev...>());                                                              \
+        return o.on_unchecked<Ev...>(App::Object::GlobalListenerTag {}, move(handler_callback));        \
+    }                                                                                                   \
+                                                                                                        \
+    template<typename... Ev, typename HandlerCallback>                                                  \
+    int on(App::Object& listener, HandlerCallback&& handler_callback) {                                 \
+        static_assert(does_emit<Ev...>());                                                              \
+        return o.on_unchecked<Ev...>(listener, move(handler_callback));                                 \
+    }                                                                                                   \
+                                                                                                        \
+protected:                                                                                              \
+    template<typename... Ev, typename HandlerCallback>                                                  \
+    int intercept(HandlerCallback&& handler_callback) {                                                 \
+        static_assert(does_emit<Ev...>());                                                              \
+        return o.intercept_unchecked<Ev...>(App::Object::GlobalListenerTag {}, move(handler_callback)); \
+    }                                                                                                   \
+                                                                                                        \
+    template<typename... Ev, typename HandlerCallback>                                                  \
+    int on(HandlerCallback&& handler_callback) {                                                        \
+        static_assert(does_emit<Ev...>());                                                              \
+        return o.on<Ev...>(App::Object::GlobalListenerTag {}, move(handler_callback));                  \
+    }                                                                                                   \
+                                                                                                        \
+private:
+
+#define APP_OBJECT_FORWARD_API(o)                                                                             \
+public:                                                                                                       \
+    template<typename ObjectType, typename... Args>                                                           \
+    SharedPtr<ObjectType> add(Args&&... args) {                                                               \
+        return o.add<ObjectType, Args...>(forward<Args>(args)...);                                            \
+    }                                                                                                         \
+                                                                                                              \
+    const Vector<SharedPtr<App::Object>>& children() const { return o.children(); }                           \
+                                                                                                              \
+    App::Object* parent() { return o.parent(); }                                                              \
+    const App::Object* parent() const { return o.parent(); }                                                  \
+                                                                                                              \
+    void deferred_invoke(Function<void()> callback) { o.deferred_invoke(move(callback)); }                    \
+    void deferred_invoke_batched(bool& already_registered_flag, Function<void()> callback) {                  \
+        o.deferred_invoke_batched(already_registered_flag, move(callback));                                   \
+    }                                                                                                         \
+                                                                                                              \
+    template<typename Ev, typename... Args>                                                                   \
+    bool emit(Args&&... args) const {                                                                         \
+        return o.emit<Ev, Args...>(forward<Args>(args)...);                                                   \
+    }                                                                                                         \
+                                                                                                              \
+    bool forward_to(const App::Object& to, const App::Event& event) const { return o.forward_to(to, event); } \
+    bool forward_to_children(const App::Event& event) const { return o.forward_to_children(event); }          \
+                                                                                                              \
+    template<typename... Ev, typename HandlerCallback>                                                        \
+    int intercept_unchecked(App::Object::GlobalListenerTag, HandlerCallback&& handler_callback) {             \
+        return o.intercept_unchecked<Ev...>(App::Object::GlobalListenerTag {}, move(handler_callback));       \
+    }                                                                                                         \
+                                                                                                              \
+    template<typename... Ev, typename HandlerCallback>                                                        \
+    int intercept_unchecked(App::Object& listener, HandlerCallback&& handler_callback) {                      \
+        return o.intercept_unchecked<Ev...>(listener, move(handler_callback));                                \
+    }                                                                                                         \
+                                                                                                              \
+    template<typename... Ev, typename HandlerCallback>                                                        \
+    int on_unchecked(App::Object::GlobalListenerTag, HandlerCallback&& handler_callback) {                    \
+        return o.on_unchecked<Ev...>(App::Object::GlobalListenerTag {}, move(handler_callback));              \
+    }                                                                                                         \
+                                                                                                              \
+    template<typename... Ev, typename HandlerCallback>                                                        \
+    int on_unchecked(App::Object& listener, HandlerCallback&& handler_callback) {                             \
+        return o.on_unchecked<Ev...>(listener, move(handler_callback));                                       \
+    }                                                                                                         \
+                                                                                                              \
+protected:                                                                                                    \
+    template<typename... Ev, typename HandlerCallback>                                                        \
+    int intercept_unchecked(HandlerCallback&& handler_callback) {                                             \
+        return o.intercept_unchecked<Ev...>(App::Object::GlobalListenerTag {}, move(handler_callback));       \
+    }                                                                                                         \
+                                                                                                              \
+    template<typename... Ev, typename HandlerCallback>                                                        \
+    int on_unchecked(HandlerCallback&& handler_callback) {                                                    \
+        return o.on_unchecked<Ev...>(App::Object::GlobalListenerTag {}, move(handler_callback));              \
+    }                                                                                                         \
+                                                                                                              \
+public:                                                                                                       \
+    void remove_listener(App::Object& listener) { o.remove_listener(listener); }                              \
+    void remove_listener(int token) { o.remove_listener(token); }                                             \
+                                                                                                              \
+    void start_coroutine(App::ObjectBoundCoroutine&& coroutine) { o.start_coroutine(move(coroutine)); }       \
+                                                                                                              \
+    template<typename... Ev, typename ObjectType, typename Callback>                                          \
+    int listen(ObjectType& obj, Callback&& cb) {                                                              \
+        return obj.template on<Ev...>(o, move(cb));                                                           \
+    }                                                                                                         \
+                                                                                                              \
+    template<typename... Ev, typename ObjectType, typename Callback>                                          \
+    int listen_unchecked(ObjectType& obj, Callback&& cb) {                                                    \
+        return obj.template on_unchecked<Ev...>(o, move(cb));                                                 \
+    }                                                                                                         \
+                                                                                                              \
+    template<typename... Ev, typename ObjectType, typename Callback>                                          \
+    int listen_intercept(ObjectType& obj, Callback&& cb) {                                                    \
+        return obj.template intercept<Ev...>(o, move(cb));                                                    \
+    }                                                                                                         \
+                                                                                                              \
+    template<typename... Ev, typename ObjectType, typename Callback>                                          \
+    int listen_intercept_unchecked(ObjectType& obj, Callback&& cb) {                                          \
+        return obj.template intercept_unchecked<Ev...>(o, move(cb));                                          \
+    }                                                                                                         \
+                                                                                                              \
+    template<typename Ev>                                                                                     \
+    auto block_until_event_unchecked(App::Object& coroutine_owner) {                                          \
+        return o.block_until_event_unchecked<Ev>(coroutine_owner);                                            \
+    }                                                                                                         \
+                                                                                                              \
 private:
 
 // FIXME: replace with macro when GCC fixes very strange if constexpr bug.
@@ -165,18 +310,14 @@ public:
     void remove_child(SharedPtr<Object> child);
 
     template<typename ObjectType, typename... Args>
-    ObjectType& add(Args&&... args) {
-        return *ObjectType::create(shared_from_this(), forward<Args>(args)...);
+    SharedPtr<ObjectType> add(Args&&... args) {
+        return ObjectType::create(this, forward<Args>(args)...);
     }
 
     const Vector<SharedPtr<Object>>& children() const { return m_children; }
 
-    virtual bool is_widget() const { return false; }
     virtual bool is_base_widget() const { return false; }
     virtual bool is_window() const { return false; }
-    virtual bool is_panel() const { return false; }
-
-    void register_component(Component& component);
 
     Object* parent() { return m_parent; }
     const Object* parent() const { return m_parent; }
@@ -293,6 +434,26 @@ protected:
         return on_unchecked_impl<Ev...>(handler, ListenerOrdering::AfterOthers);
     }
 
+    template<typename... Ev, typename ObjectType, typename Callback>
+    int listen(ObjectType& obj, Callback&& cb) {
+        return obj.template on<Ev...>(*this, move(cb));
+    }
+
+    template<typename... Ev, typename ObjectType, typename Callback>
+    int listen_unchecked(ObjectType& obj, Callback&& cb) {
+        return obj.template on_unchecked<Ev...>(*this, move(cb));
+    }
+
+    template<typename... Ev, typename ObjectType, typename Callback>
+    int listen_intercept(ObjectType& obj, Callback&& cb) {
+        return obj.template intercept<Ev...>(*this, move(cb));
+    }
+
+    template<typename... Ev, typename ObjectType, typename Callback>
+    int listen_intercept_unchecked(ObjectType& obj, Callback&& cb) {
+        return obj.template intercept_unchecked<Ev...>(*this, move(cb));
+    }
+
     template<typename... Ev, typename HandlerCallback>
     int on_unchecked_impl(HandlerCallback&& handler, ListenerOrdering ordering, Maybe<WeakPtr<Object>> listener = {}) {
         auto token = m_next_callback_token++;
@@ -325,7 +486,6 @@ private:
     Vector<SharedPtr<Object>> m_children;
     Vector<Handler> m_handlers;
     Vector<ObjectBoundCoroutine> m_owned_coroutines;
-    Vector<Component*> m_components;
     Object* m_parent { nullptr };
     mutable WeakPtr<Object> m_weak_this;
     int m_next_callback_token { 1 };

@@ -1,10 +1,11 @@
 #include <app/base/widget.h>
+#include <app/base/widget_bridge.h>
 #include <app/base/window.h>
 #include <app/layout_engine.h>
 #include <eventloop/event.h>
 
 namespace App::Base {
-Widget::Widget() {}
+Widget::Widget(SharedPtr<WidgetBridge> bridge) : m_bridge(move(bridge)) {}
 
 void Widget::initialize() {
     on<KeyDownEvent>([this](const KeyDownEvent& event) {
@@ -20,10 +21,6 @@ void Widget::initialize() {
 
 Widget::~Widget() {}
 
-Maybe<Point> Widget::cursor_position() {
-    return {};
-}
-
 void Widget::flush_layout() {
     for (auto& child : children()) {
         if (child->is_base_widget()) {
@@ -37,12 +34,14 @@ void Widget::flush_layout() {
     }
 }
 
-void Widget::render() {
+void Widget::render_including_children() {
+    bridge().render();
+
     for (auto& child : children()) {
         if (child->is_base_widget()) {
             auto& widget = const_cast<Widget&>(static_cast<const Widget&>(*child));
             if (!widget.hidden()) {
-                widget.render();
+                widget.render_including_children();
             }
         }
     }
@@ -94,6 +93,14 @@ void Widget::invalidate(const Rect& rect) {
             window->invalidate_rect(absolute_rect);
         }
     }
+}
+
+bool Widget::focused() {
+    if (auto* window = parent_window()) {
+        // FIXME: ensure this window is focused/active.
+        return window->focused_widget().get() == this;
+    }
+    return false;
 }
 
 void Widget::make_focused() {

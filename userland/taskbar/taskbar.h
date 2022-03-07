@@ -18,11 +18,11 @@ constexpr int taskbar_button_y_margin = 8;
 class Taskbar final
     : public App::Widget
     , public App::WindowServerListener {
-    APP_OBJECT(Taskbar)
+    APP_WIDGET(App::Widget, Taskbar)
 
 public:
     Taskbar();
-    virtual void initialize() override;
+    virtual void did_attach() override;
     virtual ~Taskbar() override;
 
     virtual void render() override;

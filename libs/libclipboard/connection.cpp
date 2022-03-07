@@ -9,7 +9,7 @@ static IPC::Endpoint& endpoint() {
     static SharedPtr<IPC::Endpoint> endpoint;
     if (!endpoint) {
         endpoint = IPC::Endpoint::create(nullptr);
-        endpoint->set_socket(App::UnixSocket::create_connection(endpoint, "/tmp/.clipboard_server.socket"));
+        endpoint->set_socket(App::UnixSocket::create_connection(endpoint.get(), "/tmp/.clipboard_server.socket"));
     }
     return *endpoint;
 }

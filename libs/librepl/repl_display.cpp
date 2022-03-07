@@ -17,8 +17,7 @@
 #include "suggestions_panel.h"
 
 namespace Repl {
-ReplDisplay::ReplDisplay(ReplBase& repl) : Display(static_cast<Object&>(*this)), m_repl(repl) {
-    set_accepts_focus(true);
+ReplDisplay::ReplDisplay(ReplBase& repl) : m_repl(repl) {
 
     m_main_prompt = repl.get_main_prompt();
     m_secondary_prompt = repl.get_secondary_prompt();
@@ -26,8 +25,10 @@ ReplDisplay::ReplDisplay(ReplBase& repl) : Display(static_cast<Object&>(*this)),
     m_history_index = m_repl.history().size();
 }
 
-void ReplDisplay::initialize() {
-    set_key_bindings(Edit::get_key_bindings(*this));
+void ReplDisplay::did_attach() {
+    set_accepts_focus(true);
+
+    set_key_bindings(Edit::get_key_bindings(base()));
 
     on<App::KeyDownEvent>([this](const App::KeyEvent& event) {
         if (!document()) {
@@ -41,7 +42,7 @@ void ReplDisplay::initialize() {
                 case App::Key::UpArrow:
                 case App::Key::DownArrow:
                 case App::Key::Escape:
-                    return forward_to(*m_suggestions_panel, event);
+                    return forward_to(m_suggestions_panel->base(), event);
                 default:
                     break;
             }
@@ -88,20 +89,20 @@ void ReplDisplay::initialize() {
         return false;
     });
 
-    Panel::initialize();
+    Panel::did_attach();
 }
 
 ReplDisplay::~ReplDisplay() {}
 
 void ReplDisplay::document_did_change() {
     if (document()) {
-        document()->on<Edit::Submit>(*this, [this](auto&) {
+        listen<Edit::Submit>(*document(), [this](auto&) {
             auto input_text = document()->content_string();
             auto input_status = m_repl.get_input_status(input_text);
 
             if (input_status == Repl::InputStatus::Finished) {
                 cursors().remove_secondary_cursors();
-                document()->move_cursor_to_document_end(*this, main_cursor());
+                document()->move_cursor_to_document_end(base(), main_cursor());
                 set_preview_auto_complete(false);
                 invalidate();
                 start_coroutine(quit());
@@ -113,7 +114,7 @@ void ReplDisplay::document_did_change() {
 
             document()->insert_line(Edit::Line(""), document()->line_count());
             cursors().remove_secondary_cursors();
-            document()->move_cursor_to_document_end(*this, main_cursor());
+            document()->move_cursor_to_document_end(base(), main_cursor());
             scroll_cursor_into_view(main_cursor());
         });
     }
@@ -122,6 +123,14 @@ void ReplDisplay::document_did_change() {
 App::ObjectBoundCoroutine ReplDisplay::quit() {
     TUI::Application::the().main_event_loop().set_should_exit(true);
     co_return;
+}
+
+App::ObjectBoundCoroutine ReplDisplay::do_open_prompt() {
+    co_return;
+}
+
+Task<Maybe<String>> ReplDisplay::prompt(String, String) {
+    co_return {};
 }
 
 int ReplDisplay::enter() {
@@ -151,7 +160,7 @@ void ReplDisplay::render() {
         return;
     }
 
-    auto rendered_line_count = document()->num_rendered_lines(*this);
+    auto rendered_line_count = document()->num_rendered_lines(base());
     if (positioned_rect().top() != 0 && rendered_line_count > sized_rect().height()) {
         auto terminal_rect = TUI::Application::the().io_terminal().terminal_rect();
         auto new_height = min(rendered_line_count, terminal_rect.height());
@@ -295,7 +304,7 @@ void ReplDisplay::show_suggestions_panel() {
 
     auto cursor_position = display_position_of_index(main_cursor().index());
 
-    m_suggestions_panel = add<SuggestionsPanel>(*this).shared_from_this();
+    m_suggestions_panel = create_widget_owned<SuggestionsPanel>(*this);
 
     auto suggestions_rect = Rect { positioned_rect().x(), positioned_rect().y() + cursor_position.row() + 1, sized_rect().width(),
                                    m_suggestions_panel->layout_constraint().height() };
@@ -325,7 +334,7 @@ void ReplDisplay::hide_suggestions_panel() {
 }
 
 void ReplDisplay::complete_suggestion(const Edit::MatchedSuggestion& suggestion) {
-    document()->insert_suggestion(*this, suggestion);
+    document()->insert_suggestion(base(), suggestion);
     hide_suggestions_panel();
 }
 
@@ -361,7 +370,7 @@ void ReplDisplay::move_history_up() {
     put_history_document(move(current_document), m_history_index);
 
     set_document(new_document);
-    new_document->move_cursor_to_document_end(*this, main_cursor());
+    new_document->move_cursor_to_document_end(base(), main_cursor());
     scroll_cursor_into_view(main_cursor());
     invalidate_line(main_cursor().line_index());
     invalidate();
@@ -380,7 +389,7 @@ void ReplDisplay::move_history_down() {
     put_history_document(move(current_document), m_history_index);
 
     set_document(new_document);
-    new_document->move_cursor_to_document_end(*this, main_cursor());
+    new_document->move_cursor_to_document_end(base(), main_cursor());
     scroll_cursor_into_view(main_cursor());
     invalidate_line(main_cursor().line_index());
     invalidate();

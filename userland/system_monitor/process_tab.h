@@ -5,11 +5,11 @@
 class ProcessModel;
 
 class ProcessTab final : public App::Widget {
-    APP_OBJECT(ProcessTab)
+    APP_WIDGET(App::Widget, ProcessTab)
 
 public:
     ProcessTab(SharedPtr<ProcessModel> model);
-    virtual void initialize() override;
+    virtual void did_attach() override;
     virtual ~ProcessTab() override;
 
 private:

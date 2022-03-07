@@ -1,13 +1,16 @@
 
 #pragma once
+
+#include <app/base/widget.h>
 #include <edit/absolute_position.h>
 #include <edit/character_metadata.h>
+#include <edit/display_bridge.h>
+#include <edit/display_interface.h>
 #include <edit/forward.h>
 #include <edit/multicursor.h>
+#include <edit/rendered_line.h>
 #include <edit/suggestions.h>
 #include <edit/text_range_collection.h>
-#include <eventloop/component.h>
-#include <eventloop/event.h>
 #include <eventloop/forward.h>
 #include <graphics/color.h>
 #include <graphics/forward.h>
@@ -22,16 +25,28 @@ APP_EVENT(Edit, NewDisplayEvent, App::Event, (), (), ())
 namespace Edit {
 enum class AutoCompleteMode { Never, Always };
 
-class Display : public App::Component {
+class Display : public App::Base::Widget {
+    APP_OBJECT(Display)
+
+    APP_EMITS(App::Base::Widget, SplitDisplayEvent, NewDisplayEvent)
+
+    EDIT_DISPLAY_BRIDGE_INTERFACE_FORWARD(bridge())
+
 public:
-    virtual void did_attach() override;
+    virtual void initialize() override;
     virtual ~Display();
 
-    virtual int rows() const = 0;
-    virtual int cols() const = 0;
+    struct RenderingInfo {
+        Maybe<Color> fg;
+        Maybe<Color> bg;
+        bool bold { false };
+        bool main_cursor { false };
+        bool secondary_cursor { false };
+    };
 
-    AbsolutePosition scroll_offset() const { return m_scroll_offset; }
-    void set_scroll_offset(const AbsolutePosition& offset);
+    // os_2 reflect begin
+    Edit::AbsolutePosition scroll_offset() const { return m_scroll_offset; }
+    void set_scroll_offset(const Edit::AbsolutePosition& offset);
 
     void scroll_up(int times) { scroll(-times, 0); }
     void scroll_down(int times) { scroll(times, 0); }
@@ -39,48 +54,29 @@ public:
     void scroll_right(int times) { scroll(0, times); }
     void scroll(int vertical, int horizontal);
 
-    void scroll_cursor_into_view(Cursor& cursor);
-    void center_on_cursor(Cursor& cursor);
+    void scroll_cursor_into_view(Edit::Cursor& cursor);
+    void center_on_cursor(Edit::Cursor& cursor);
 
-    virtual TextIndex text_index_at_mouse_position(const Point& point) = 0;
-    virtual RenderedLine compose_line(const Line& line) = 0;
-    virtual void output_line(int row, int col_offset, const RenderedLine& line, int line_index) = 0;
-    virtual void invalidate_all_line_rects() = 0;
-    virtual void invalidate_line_rect(int row_in_display) = 0;
-    virtual int enter() = 0;
-    virtual void send_status_message(String message) = 0;
-    virtual Task<Maybe<String>> prompt(String message, String initial_value = "");
-    virtual void enter_search(String starting_text) = 0;
-
-    virtual App::ObjectBoundCoroutine do_open_prompt();
-    virtual App::ObjectBoundCoroutine save();
-    virtual App::ObjectBoundCoroutine quit() = 0;
-    virtual App::ObjectBoundCoroutine go_to_line();
-
-    virtual void do_compute_suggestions() {}
-    virtual void show_suggestions_panel() {}
-    virtual void hide_suggestions_panel() {}
-
-    virtual void set_clipboard_contents(LIIM::String text, bool is_whole_line = false) = 0;
-    virtual String clipboard_contents(bool& is_whole_line) const = 0;
+    App::ObjectBoundCoroutine save();
+    App::ObjectBoundCoroutine go_to_line();
 
     void invalidate_metadata() { invalidate_all_line_rects(); }
 
-    void set_document(SharedPtr<Document> document);
+    void set_document(SharedPtr<Edit::Document> document);
 
-    Document* document() { return m_document.get(); }
-    const Document* document() const { return m_document.get(); }
+    Edit::Document* document() { return m_document.get(); }
+    const Edit::Document* document() const { return m_document.get(); }
 
-    SharedPtr<Document> document_as_shared() const { return m_document; }
+    SharedPtr<Edit::Document> document_as_shared() const { return m_document; }
 
-    Cursor& main_cursor() { return m_cursors.main_cursor(); }
-    const Cursor& main_cursor() const { return m_cursors.main_cursor(); }
+    Edit::Cursor& main_cursor() { return m_cursors.main_cursor(); }
+    const Edit::Cursor& main_cursor() const { return m_cursors.main_cursor(); }
 
-    MultiCursor& cursors() { return m_cursors; }
-    const MultiCursor& cursors() const { return m_cursors; }
+    Edit::MultiCursor& cursors() { return m_cursors; }
+    const Edit::MultiCursor& cursors() const { return m_cursors; }
 
-    AutoCompleteMode auto_complete_mode() const { return m_auto_complete_mode; }
-    void set_auto_complete_mode(AutoCompleteMode mode) { m_auto_complete_mode = mode; }
+    Edit::AutoCompleteMode auto_complete_mode() const { return m_auto_complete_mode; }
+    void set_auto_complete_mode(Edit::AutoCompleteMode mode) { m_auto_complete_mode = mode; }
 
     bool preview_auto_complete() const { return m_preview_auto_complete; }
     void set_preview_auto_complete(bool b);
@@ -93,41 +89,33 @@ public:
     void toggle_word_wrap_enabled();
     void set_word_wrap_enabled(bool b);
 
-    Suggestions& suggestions() { return m_suggestions; }
-    const Suggestions& suggestions() const { return m_suggestions; }
+    Edit::Suggestions& suggestions() { return m_suggestions; }
+    const Edit::Suggestions& suggestions() const { return m_suggestions; }
 
     void compute_suggestions();
-    void set_suggestions(Vector<Suggestion> suggestions);
+    void set_suggestions(Vector<Edit::Suggestion> suggestions);
 
-    struct RenderingInfo {
-        Maybe<Color> fg;
-        Maybe<Color> bg;
-        bool bold { false };
-        bool main_cursor { false };
-        bool secondary_cursor { false };
-    };
-
-    RenderingInfo rendering_info_for_metadata(const CharacterMetadata& metadata) const;
+    Edit::Display::RenderingInfo rendering_info_for_metadata(const Edit::CharacterMetadata& metadata) const;
 
     void render_lines();
 
-    RenderedLine& rendered_line_at_index(int index);
-    const RenderedLine& rendered_line_at_index(int index) const { return const_cast<Display&>(*this).rendered_line_at_index(index); }
+    Edit::RenderedLine& rendered_line_at_index(int index);
+    const Edit::RenderedLine& rendered_line_at_index(int index) const { return const_cast<Display&>(*this).rendered_line_at_index(index); }
 
-    int absolute_col_offset_of_index(const TextIndex& index) const;
+    int absolute_col_offset_of_index(const Edit::TextIndex& index) const;
     int rendered_line_count(int line_index) const;
 
-    TextIndex prev_index_into_line(const TextIndex& index) const;
-    TextIndex next_index_into_line(const TextIndex& index) const;
+    Edit::TextIndex prev_index_into_line(const Edit::TextIndex& index) const;
+    Edit::TextIndex next_index_into_line(const Edit::TextIndex& index) const;
 
-    TextIndex text_index_at_absolute_position(const AbsolutePosition& position) const;
-    TextIndex text_index_at_display_position(const DisplayPosition& position) const;
+    Edit::TextIndex text_index_at_absolute_position(const Edit::AbsolutePosition& position) const;
+    Edit::TextIndex text_index_at_display_position(const Edit::DisplayPosition& position) const;
 
-    AbsolutePosition display_to_absolute_position(const DisplayPosition& display_position) const;
-    AbsolutePosition absolute_position_of_index(const TextIndex& index) const;
+    Edit::AbsolutePosition display_to_absolute_position(const Edit::DisplayPosition& display_position) const;
+    Edit::AbsolutePosition absolute_position_of_index(const Edit::TextIndex& index) const;
 
-    DisplayPosition absolute_to_display_position(const AbsolutePosition& absolute_position) const;
-    DisplayPosition display_position_of_index(const TextIndex& index) const;
+    Edit::DisplayPosition absolute_to_display_position(const Edit::AbsolutePosition& absolute_position) const;
+    Edit::DisplayPosition display_position_of_index(const Edit::TextIndex& index) const;
 
     void invalidate_all_lines();
     void invalidate_line(int line_index);
@@ -142,24 +130,27 @@ public:
     void replace_next_search_match(const String& replacement);
 
     void set_search_text(String text);
-    const TextRangeCollection& search_results() const { return m_search_results; }
+    const Edit::TextRangeCollection& search_results() const { return m_search_results; }
     const String& search_text() const { return m_search_text; }
     const String& previous_search_text() const { return m_previous_search_text; }
+    // os_2 reflect end
+
+    DisplayBridge& bridge() { return *m_bridge; }
+    const DisplayBridge& bridge() const { return *m_bridge; }
 
 protected:
-    explicit Display(App::Object& object);
+    Display(SharedPtr<App::Base::WidgetBridge> widget_bridge, SharedPtr<DisplayBridge> display_bridge);
 
-    virtual void document_did_change() {}
-    virtual void suggestions_did_change(const Maybe<TextRange>&) {}
-    virtual void install_document_listeners(Document& document);
-    virtual void did_set_show_line_numbers() {}
+    void install_document_listeners(Document& document);
+    void uninstall_document_listeners(Document& document);
 
 private:
-    void uninstall_document_listeners(Document& document);
     void clamp_scroll_offset();
 
     SharedPtr<Document> m_document;
     Vector<RenderedLine> m_rendered_lines;
+
+    SharedPtr<DisplayBridge> m_bridge;
 
     MultiCursor m_cursors;
 

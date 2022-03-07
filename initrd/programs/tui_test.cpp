@@ -5,17 +5,17 @@
 #include <tui/frame.h>
 
 class TestPanel final : public TUI::Frame {
-    APP_OBJECT(TestPanel)
+    APP_WIDGET(TUI::Frame, TestPanel)
 
 public:
     TestPanel(Color color, TextAlign alignment, TInput::TerminalRenderer::BoxStyle box_style, String text)
-        : m_color(color), m_alignment(alignment), m_text(move(text)) {
-        set_frame_color(m_color.invert());
-        set_box_style(box_style);
-        set_accepts_focus(true);
-    }
+        : m_color(color), m_alignment(alignment), m_box_style(box_style), m_text(move(text)) {}
 
-    virtual void initialize() {
+    virtual void did_attach() {
+        set_frame_color(m_color.invert());
+        set_box_style(m_box_style);
+        set_accepts_focus(true);
+
         on<App::MouseDownEvent>([this](const App::MouseDownEvent&) {
             set_frame_color(m_color);
             m_color = m_color.invert();
@@ -30,7 +30,7 @@ public:
             return true;
         });
 
-        TUI::Frame::initialize();
+        TUI::Frame::did_attach();
     }
 
     virtual Maybe<Point> cursor_position() override { return { relative_inner_rect().top_left() }; }
@@ -53,6 +53,7 @@ public:
 private:
     Color m_color;
     TextAlign m_alignment;
+    TInput::TerminalRenderer::BoxStyle m_box_style;
     String m_text;
 };
 

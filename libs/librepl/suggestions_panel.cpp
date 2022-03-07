@@ -1,3 +1,4 @@
+#include <app/base/widget.h>
 #include <edit/document.h>
 #include <eventloop/event.h>
 #include <tinput/terminal_glyph.h>
@@ -9,11 +10,11 @@
 namespace Repl {
 constexpr int max_visible_suggestions = 5;
 
-SuggestionsPanel::SuggestionsPanel(ReplDisplay& display) : m_display(display), m_suggestions(display.suggestions()) {
-    set_layout_constraint({ App::LayoutConstraint::AutoSize, max_visible_suggestions });
-}
+SuggestionsPanel::SuggestionsPanel(ReplDisplay& display) : m_display(display), m_suggestions(display.suggestions()) {}
 
-void SuggestionsPanel::initialize() {
+void SuggestionsPanel::did_attach() {
+    set_layout_constraint({ App::LayoutConstraint::AutoSize, max_visible_suggestions });
+
     on<App::KeyDownEvent>([this](const App::KeyDownEvent& event) {
         auto next_suggestion = [this] {
             if (m_suggestion_index < m_suggestions.size() - 1) {
@@ -59,7 +60,7 @@ void SuggestionsPanel::initialize() {
         return true;
     });
 
-    Panel::initialize();
+    Panel::did_attach();
 }
 
 SuggestionsPanel::~SuggestionsPanel() {}

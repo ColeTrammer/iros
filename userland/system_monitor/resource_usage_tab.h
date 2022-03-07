@@ -5,11 +5,11 @@
 class ProcessModel;
 
 class ResourceUsageTab final : public App::Widget {
-    APP_OBJECT(ResourceUsageTab)
+    APP_WIDGET(App::Widget, ResourceUsageTab)
 
 public:
     explicit ResourceUsageTab(SharedPtr<ProcessModel> model);
-    virtual void initialize() override;
+    virtual void did_attach() override;
     virtual ~ResourceUsageTab() override;
 
     void update_display();

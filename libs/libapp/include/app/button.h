@@ -9,18 +9,15 @@ APP_EVENT(App, ClickEvent, Event, (), (), ())
 
 namespace App {
 class Button : public Widget {
-    APP_OBJECT(Button)
-
-    APP_EMITS(Widget, ClickEvent)
+    APP_WIDGET_EMITS(Widget, Button, (ClickEvent))
 
 public:
-    explicit Button(String label) : m_label(move(label)) { set_accepts_focus(true); }
-    virtual void initialize() override;
+    explicit Button(String label);
+    virtual void did_attach() override;
 
     void set_label(String label) { m_label = move(label); }
     const String& label() const { return m_label; }
 
-private:
     virtual void render() override;
 
     String m_label;

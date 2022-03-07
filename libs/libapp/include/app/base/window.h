@@ -37,13 +37,14 @@ public:
 
     template<typename T, typename... Args>
     T& set_main_widget(Args... args) {
-        auto ret = T::create(shared_from_this(), forward<Args>(args)...);
-        ret->set_positioned_rect(rect());
-        set_focused_widget(ret.get());
+        auto [result_base, result] = T::create_both_owned(this, forward<Args>(args)...);
+        result_base->set_positioned_rect(rect());
+        set_focused_widget(result_base.get());
         invalidate_rect(rect());
-        m_main_widget = ret;
-        return *ret;
+        m_main_widget = move(result_base);
+        return *result;
     }
+
     Widget& main_widget() { return *m_main_widget; }
     const Widget& main_widget() const { return *m_main_widget; }
 

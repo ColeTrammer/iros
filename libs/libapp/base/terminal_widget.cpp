@@ -1,4 +1,6 @@
 #include <app/base/terminal_widget.h>
+#include <app/base/terminal_widget_bridge.h>
+#include <app/base/widget_bridge.h>
 #include <app/context_menu.h>
 #include <app/window.h>
 #include <clipboard/connection.h>
@@ -7,17 +9,19 @@
 #include <eventloop/event.h>
 #include <eventloop/event_loop.h>
 #include <eventloop/object.h>
+#include <eventloop/selectable.h>
 #include <graphics/renderer.h>
 #include <unistd.h>
 
 // #define TERMINAL_WIDGET_DEBUG
 
 namespace App::Base {
-TerminalWidget::TerminalWidget(Object& object) : Component(object), m_tty(m_pseudo_terminal) {}
+TerminalWidget::TerminalWidget(SharedPtr<WidgetBridge> widget_bridge, SharedPtr<TerminalWidgetBridge> terminal_bridge)
+    : Widget(move(widget_bridge)), m_tty(m_pseudo_terminal), m_bridge(move(terminal_bridge)) {}
 
 TerminalWidget::~TerminalWidget() {}
 
-void TerminalWidget::did_attach() {
+void TerminalWidget::initialize() {
     auto key_bindings = App::KeyBindings {};
     key_bindings.add({ App::Key::C, App::KeyModifier::Control | App::KeyModifier::Shift }, [this] {
         copy_selection();
@@ -25,12 +29,14 @@ void TerminalWidget::did_attach() {
     key_bindings.add({ App::Key::V, App::KeyModifier::Control | App::KeyModifier::Shift }, [this] {
         paste_text();
     });
-    this_widget().set_key_bindings(move(key_bindings));
+    set_key_bindings(move(key_bindings));
 
-    m_pseudo_terminal_wrapper = App::FdWrapper::create(this_widget().shared_from_this(), m_pseudo_terminal.master_fd());
+    set_accepts_focus(true);
+
+    m_pseudo_terminal_wrapper = add<App::FdWrapper>(m_pseudo_terminal.master_fd());
     m_pseudo_terminal_wrapper->set_selected_events(App::NotifyWhen::Readable);
     m_pseudo_terminal_wrapper->enable_notifications();
-    m_pseudo_terminal_wrapper->on<App::ReadableEvent>(this_widget(), [this](auto&) {
+    listen<App::ReadableEvent>(*m_pseudo_terminal_wrapper, [this](auto&) {
 #ifdef TERMINAL_WIDGET_DEBUG
         timespec start;
         clock_gettime(CLOCK_MONOTONIC, &start);
@@ -41,7 +47,7 @@ void TerminalWidget::did_attach() {
             ssize_t ret = read(m_pseudo_terminal.master_fd(), buf, sizeof(buf));
             if (ret < 0) {
                 if (errno != EAGAIN) {
-                    EventLoop::queue_event(this_widget().weak_from_this(), make_unique<App::TerminalHangupEvent>());
+                    EventLoop::queue_event(weak_from_this(), make_unique<App::TerminalHangupEvent>());
                     return;
                 }
                 break;
@@ -63,10 +69,10 @@ void TerminalWidget::did_attach() {
         fprintf(stderr, "TerminalWidget: draining master fd took %lu ms\n", delta_milli_seconds);
 #endif /* TERMINAL_WIDGET_DEBUG */
 
-        invalidate_all_contents();
+        bridge().invalidate_all_contents();
     });
 
-    this_widget().on<App::ResizeEvent>({}, [this](auto&) {
+    on<App::ResizeEvent>([this](auto&) {
         m_selection_start_row = m_selection_start_col = m_selection_end_row = m_selection_end_col = -1;
         m_in_selection = false;
 
@@ -77,13 +83,13 @@ void TerminalWidget::did_attach() {
         m_pseudo_terminal.set_size(rows, cols);
     });
 
-    this_widget().on<App::ShowEvent>({}, [this](auto&) {
+    on<App::ShowEvent>([this](auto&) {
         m_tty.invalidate_all();
-        invalidate_all_contents();
+        bridge().invalidate_all_contents();
     });
 
-    this_widget().on<App::KeyDownEvent>({}, [this](const App::KeyDownEvent& event) {
-        if (this_widget().key_bindings().handle_key_event(event)) {
+    on<App::KeyDownEvent>([this](const App::KeyDownEvent& event) {
+        if (Widget::key_bindings().handle_key_event(event)) {
             return true;
         }
 
@@ -91,12 +97,12 @@ void TerminalWidget::did_attach() {
         return true;
     });
 
-    this_widget().on<App::TextEvent>({}, [this](const App::TextEvent& event) {
+    on<App::TextEvent>([this](const App::TextEvent& event) {
         m_pseudo_terminal.handle_text_event(event);
         return true;
     });
 
-    this_widget().on<App::MouseDownEvent, App::MouseMoveEvent, App::MouseUpEvent, App::MouseScrollEvent>({}, [this](const auto& event) {
+    on<App::MouseDownEvent, App::MouseMoveEvent, App::MouseUpEvent, App::MouseScrollEvent>([this](const auto& event) {
         using SpecificMouseEvent = LIIM::decay_t<decltype(event)>;
 
         auto cell = cell_position_of_mouse_coordinates(event.x(), event.y());
@@ -119,7 +125,7 @@ void TerminalWidget::did_attach() {
             } else if (event.z() > 0) {
                 m_tty.scroll_down();
             }
-            invalidate_all_contents();
+            bridge().invalidate_all_contents();
             return true;
         }
 
@@ -131,7 +137,7 @@ void TerminalWidget::did_attach() {
                 case 1: {
                     m_selection_start_row = m_selection_end_row = row_at_cursor;
                     m_selection_start_col = m_selection_end_col = col_at_cursor;
-                    invalidate_all_contents();
+                    bridge().invalidate_all_contents();
                     break;
                 }
                 case 2: {
@@ -152,14 +158,14 @@ void TerminalWidget::did_attach() {
                         m_selection_end_col++;
                     }
                     m_selection_end_col++;
-                    invalidate_all_contents();
+                    bridge().invalidate_all_contents();
                     break;
                 }
                 case 3: {
                     m_selection_start_row = m_selection_end_row = row_at_cursor;
                     m_selection_start_col = 0;
                     m_selection_end_col = m_tty.col_count();
-                    invalidate_all_contents();
+                    bridge().invalidate_all_contents();
                     break;
                 }
             }
@@ -174,12 +180,14 @@ void TerminalWidget::did_attach() {
         if (m_in_selection && (m_selection_end_row != row_at_cursor || m_selection_end_col != col_at_cursor)) {
             m_selection_end_row = row_at_cursor;
             m_selection_end_col = col_at_cursor;
-            invalidate_all_contents();
+            bridge().invalidate_all_contents();
             return true;
         }
 
         return false;
     });
+
+    Widget::initialize();
 }
 
 void TerminalWidget::copy_selection() {
@@ -204,7 +212,7 @@ void TerminalWidget::clear_selection() {
     }
 
     m_selection_start_row = m_selection_start_col = m_selection_end_row = m_selection_end_col = -1;
-    invalidate_all_contents();
+    bridge().invalidate_all_contents();
 }
 
 bool TerminalWidget::in_selection(int relative_row, int col) const {

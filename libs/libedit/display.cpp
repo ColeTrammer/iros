@@ -1,4 +1,6 @@
+#include <app/base/widget_bridge.h>
 #include <edit/display.h>
+#include <edit/display_bridge.h>
 #include <edit/document.h>
 #include <edit/document_type.h>
 #include <edit/rendered_line.h>
@@ -10,17 +12,18 @@
 #include <unistd.h>
 
 namespace Edit {
-Display::Display(App::Object& object) : App::Component(object), m_cursors { *this } {}
+Display::Display(SharedPtr<App::Base::WidgetBridge> widget_bridge, SharedPtr<DisplayBridge> display_bridge)
+    : App::Base::Widget(move(widget_bridge)), m_bridge(move(display_bridge)), m_cursors { *this } {}
 
-void Display::did_attach() {
-    object().on_unchecked<App::ResizeEvent>({}, [this](auto&) {
+void Display::initialize() {
+    on<App::ResizeEvent>([this](auto&) {
         if (word_wrap_enabled()) {
             invalidate_all_lines();
             clamp_scroll_offset();
         }
     });
 
-    object().on_unchecked<App::MouseDownEvent>({}, [this](const App::MouseDownEvent& event) {
+    on<App::MouseDownEvent>([this](const App::MouseDownEvent& event) {
         if (!document()) {
             return false;
         }
@@ -48,7 +51,7 @@ void Display::did_attach() {
         return false;
     });
 
-    object().on_unchecked<App::MouseMoveEvent>({}, [this](const App::MouseMoveEvent& event) {
+    on<App::MouseMoveEvent>([this](const App::MouseMoveEvent& event) {
         if (!document()) {
             return false;
         }
@@ -66,7 +69,7 @@ void Display::did_attach() {
         return false;
     });
 
-    object().on_unchecked<App::MouseScrollEvent>({}, [this](const App::MouseScrollEvent& event) {
+    on<App::MouseScrollEvent>([this](const App::MouseScrollEvent& event) {
         if (!document()) {
             return false;
         }
@@ -76,7 +79,7 @@ void Display::did_attach() {
         return true;
     });
 
-    object().on_unchecked<App::TextEvent>({}, [this](const App::TextEvent& event) {
+    on<App::TextEvent>([this](const App::TextEvent& event) {
         if (!document()) {
             return false;
         }
@@ -87,6 +90,8 @@ void Display::did_attach() {
         finish_input(true);
         return true;
     });
+
+    App::Base::Widget::initialize();
 }
 
 Display::~Display() {}
@@ -112,7 +117,7 @@ void Display::set_document(SharedPtr<Document> document) {
     invalidate_all_lines();
     set_scroll_offset({});
     hide_suggestions_panel();
-    document_did_change();
+    bridge().document_did_change();
 }
 
 void Display::set_suggestions(Vector<Suggestion> suggestions) {
@@ -125,11 +130,11 @@ void Display::set_suggestions(Vector<Suggestion> suggestions) {
 
     m_suggestions.compute_matches(*document(), main_cursor());
 
-    suggestions_did_change(old_suggestion_range);
+    bridge().suggestions_did_change(old_suggestion_range);
 }
 
 void Display::compute_suggestions() {
-    do_compute_suggestions();
+    bridge().do_compute_suggestions();
 }
 
 void Display::clamp_scroll_offset() {
@@ -242,7 +247,7 @@ void Display::set_show_line_numbers(bool b) {
     }
 
     m_show_line_numbers = b;
-    did_set_show_line_numbers();
+    bridge().did_set_show_line_numbers();
 }
 
 void Display::set_word_wrap_enabled(bool b) {
@@ -381,13 +386,15 @@ void Display::set_search_text(String text) {
 }
 
 void Display::install_document_listeners(Document& new_document) {
-    new_document.on<DeleteLines>(object(), [this](const DeleteLines& event) {
+    bridge().install_document_listeners(new_document);
+
+    listen<DeleteLines>(new_document, [this](const DeleteLines& event) {
         m_rendered_lines.remove_count(event.line_index(), event.line_count());
         invalidate_all_line_rects();
         clamp_scroll_offset();
     });
 
-    new_document.on<AddLines>(object(), [this](const AddLines& event) {
+    listen<AddLines>(new_document, [this](const AddLines& event) {
         auto new_rendered_lines = Vector<RenderedLine> {};
         new_rendered_lines.resize(event.line_count());
 
@@ -395,29 +402,29 @@ void Display::install_document_listeners(Document& new_document) {
         invalidate_all_line_rects();
     });
 
-    new_document.on<SplitLines>(object(), [this](const SplitLines& event) {
+    listen<SplitLines>(new_document, [this](const SplitLines& event) {
         m_rendered_lines.insert(RenderedLine {}, event.line_index() + 1);
         invalidate_line(event.line_index());
         invalidate_all_line_rects();
     });
 
-    new_document.on<MergeLines>(object(), [this](const MergeLines& event) {
+    listen<MergeLines>(new_document, [this](const MergeLines& event) {
         m_rendered_lines.remove(event.second_line_index());
         invalidate_line(event.first_line_index());
         invalidate_all_line_rects();
         clamp_scroll_offset();
     });
 
-    new_document.on<AddToLine>(object(), [this](const AddToLine& event) {
+    listen<AddToLine>(new_document, [this](const AddToLine& event) {
         invalidate_line(event.line_index());
     });
 
-    new_document.on<DeleteFromLine>(object(), [this](const DeleteFromLine& event) {
+    listen<DeleteFromLine>(new_document, [this](const DeleteFromLine& event) {
         invalidate_line(event.line_index());
         clamp_scroll_offset();
     });
 
-    new_document.on<MoveLineTo>(object(), [this](const MoveLineTo& event) {
+    listen<MoveLineTo>(new_document, [this](const MoveLineTo& event) {
         auto line_min = min(event.line(), event.destination());
         auto line_max = max(event.line(), event.destination());
 
@@ -431,11 +438,11 @@ void Display::install_document_listeners(Document& new_document) {
         clamp_scroll_offset();
     });
 
-    new_document.on<SyntaxHighlightingChanged>(object(), [this](auto&) {
+    listen<SyntaxHighlightingChanged>(new_document, [this](auto&) {
         invalidate_metadata();
     });
 
-    new_document.on<Change>(object(), [this](auto&) {
+    listen<Change>(new_document, [this](auto&) {
         update_search_results();
     });
 
@@ -443,7 +450,8 @@ void Display::install_document_listeners(Document& new_document) {
 }
 
 void Display::uninstall_document_listeners(Document& document) {
-    document.remove_listener(object());
+    bridge().uninstall_document_listeners(document);
+    document.remove_listener(*this);
 }
 
 void Display::render_lines() {
@@ -630,7 +638,7 @@ Display::RenderingInfo Display::rendering_info_for_metadata(const CharacterMetad
 }
 
 App::ObjectBoundCoroutine Display::go_to_line() {
-    auto maybe_result = co_await prompt("Go to line: ");
+    auto maybe_result = co_await bridge().prompt("Go to line: ", "");
     if (!maybe_result.has_value()) {
         co_return;
     }
@@ -639,7 +647,7 @@ App::ObjectBoundCoroutine Display::go_to_line() {
     char* end_ptr = result.string();
     long line_number = strtol(result.string(), &end_ptr, 10);
     if (errno == ERANGE || end_ptr != result.string() + result.size() || line_number < 1 || line_number > document()->line_count()) {
-        send_status_message(format("Line `{}' is not between 1 and {}", result, document()->line_count()));
+        bridge().send_status_message(format("Line `{}' is not between 1 and {}", result, document()->line_count()));
         co_return;
     }
 
@@ -654,13 +662,13 @@ App::ObjectBoundCoroutine Display::go_to_line() {
 
 App::ObjectBoundCoroutine Display::save() {
     if (document()->name().empty()) {
-        auto result = co_await prompt("Save as: ");
+        auto result = co_await prompt("Save as: ", "");
         if (!result.has_value()) {
             co_return;
         }
 
         if (access(result.value().string(), F_OK) == 0) {
-            auto ok = co_await prompt(format("Are you sure you want to overwrite file `{}'? ", *result));
+            auto ok = co_await prompt(format("Are you sure you want to overwrite file `{}'? ", *result), "");
             if (!ok.has_value() || (ok.value() != "y" && ok.value() != "yes")) {
                 co_return;
             }
@@ -703,13 +711,5 @@ App::ObjectBoundCoroutine Display::save() {
 
     send_status_message(format("Successfully saved file: `{}'", document()->name()));
     document()->set_was_modified(false);
-}
-
-Task<Maybe<String>> Display::prompt(String, String) {
-    co_return {};
-}
-
-App::ObjectBoundCoroutine Display::do_open_prompt() {
-    co_return;
 }
 }

@@ -53,7 +53,7 @@ ServerImpl::ServerImpl(int fb, SharedPtr<Bitmap> front_buffer, SharedPtr<Bitmap>
 }
 
 void ServerImpl::initialize() {
-    m_input_socket = App::FdWrapper::create(shared_from_this(), socket(AF_UMESSAGE, SOCK_DGRAM | SOCK_NONBLOCK, UMESSAGE_INPUT));
+    m_input_socket = App::FdWrapper::create(this, socket(AF_UMESSAGE, SOCK_DGRAM | SOCK_NONBLOCK, UMESSAGE_INPUT));
     assert(m_input_socket->valid());
     m_input_socket->set_selected_events(App::NotifyWhen::Readable);
     m_input_socket->enable_notifications();
@@ -112,9 +112,9 @@ void ServerImpl::initialize() {
         }
     });
 
-    m_server = IPC::Server::create(shared_from_this(), "/tmp/.window_server.socket", shared_from_this());
+    m_server = IPC::Server::create(this, "/tmp/.window_server.socket", shared_from_this());
 
-    m_draw_timer = App::Timer::create_single_shot_timer(shared_from_this(), draw_timer_rate);
+    m_draw_timer = App::Timer::create_single_shot_timer(this, draw_timer_rate);
     m_draw_timer->on<App::TimerEvent>(*this, [this](auto&) {
         m_manager->draw();
     });

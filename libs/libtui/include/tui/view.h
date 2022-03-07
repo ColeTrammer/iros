@@ -1,21 +1,22 @@
 #pragma once
 
 #include <app/base/view.h>
+#include <app/base/view_bridge.h>
 #include <tui/panel.h>
 
 namespace TUI {
 class View
     : public Panel
-    , public App::Base::View {
-    APP_OBJECT(View)
+    , public App::Base::ViewBridge {
+    APP_WIDGET_BASE(App::Base::View, Panel, View, self, self, nullptr)
 
-    APP_EMITS(Panel, App::ViewRootChanged, App::ViewItemActivated)
+    APP_BASE_VIEW_INTERFACE_FORWARD(base())
 
 protected:
-    View() : App::Base::View(static_cast<Object&>(*this)) {}
+    View() {}
 
 private:
     // ^Base::View
-    virtual void invalidate_all() override { invalidate(); }
+    virtual void invalidate_all() override;
 };
 }

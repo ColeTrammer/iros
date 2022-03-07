@@ -12,6 +12,8 @@ class TestObject final : public App::Object {
     APP_OBJECT(TestObject)
 
 public:
+    TestObject() {}
+
     virtual void initialize() {
         on_unchecked<App::ThemeChangeEvent>([](const App::ThemeChangeEvent&) {
             error_log("Got event!");

@@ -1,3 +1,4 @@
+#include <app/base/widget.h>
 #include <eventloop/event.h>
 #include <eventloop/key_bindings.h>
 #include <liim/maybe.h>
@@ -8,7 +9,7 @@
 namespace TUI {
 Panel::Panel() {}
 
-void Panel::initialize() {
+void Panel::did_attach() {
     on<App::FocusedEvent>([this](auto&) {
         if (cursor_position().has_value()) {
             if (auto* window = parent_window()) {
@@ -16,15 +17,9 @@ void Panel::initialize() {
             }
         }
     });
-
-    App::Base::Widget::initialize();
 }
 
 Panel::~Panel() {}
-
-Panel* Panel::parent_panel() {
-    return static_cast<Panel*>(parent_widget());
-}
 
 TInput::TerminalRenderer Panel::get_renderer() {
     auto dirty_rects = TUI::Application::the().root_window().dirty_rects();
@@ -37,7 +32,7 @@ TInput::TerminalRenderer Panel::get_renderer() {
             }
         }
     };
-    enumerate_children(*this);
+    enumerate_children(base());
 
     auto renderer = TInput::TerminalRenderer { Application::the().io_terminal(), dirty_rects };
     renderer.set_clip_rect(positioned_rect());

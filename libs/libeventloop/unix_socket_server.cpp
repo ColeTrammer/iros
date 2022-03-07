@@ -16,7 +16,7 @@ UnixSocketServer::UnixSocketServer(const String& bind_path) {
     assert(bind_path.size() + 1 < sizeof(addr.sun_path));
     strcpy(addr.sun_path, bind_path.string());
     assert(bind(fd(), (const sockaddr*) &addr, sizeof(addr)) == 0);
-    assert(listen(fd(), 5) == 0);
+    assert(::listen(fd(), 5) == 0);
 
     set_selected_events(NotifyWhen::Readable);
     enable_notifications();
@@ -27,7 +27,7 @@ SharedPtr<UnixSocket> UnixSocketServer::accept() {
     if (fd < 0) {
         return nullptr;
     }
-    return UnixSocket::create_from_fd(shared_from_this(), fd, true);
+    return UnixSocket::create_from_fd(this, fd, true);
 }
 
 UnixSocketServer::~UnixSocketServer() {

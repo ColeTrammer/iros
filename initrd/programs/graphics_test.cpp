@@ -6,15 +6,19 @@
 #include <liim/string.h>
 
 class TestWidget final : public App::Widget {
-    APP_OBJECT(TestWidget)
+    APP_WIDGET(App::Widget, TestWidget)
 
 public:
-    virtual void initialize() override {
+    TestWidget() {}
+
+    virtual void did_attach() override {
         auto font_file = Ext::try_map_file(RESOURCE_ROOT "/usr/share/font.ttf", PROT_READ, MAP_SHARED);
         assert(font_file);
 
         set_font(TTF::Font::try_create_from_buffer(move(*font_file)));
         assert(font());
+
+        App::Widget::did_attach();
     }
 
     virtual void render() override {

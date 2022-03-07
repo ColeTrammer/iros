@@ -7,26 +7,27 @@
 namespace App {
 
 class TabWidget : public Widget {
-    APP_OBJECT(TabWidget)
+    APP_WIDGET(Widget, TabWidget)
 
 public:
-    virtual void initialize() override;
+    TabWidget() {}
+    virtual void did_attach() override;
     virtual void render() override;
 
     template<typename T, typename... Args>
     T& add_tab(String name, Args... args) {
-        auto ret = T::create(shared_from_this(), forward<Args>(args)...);
+        auto& widget = create_widget<T>(forward<Args>(args)...);
         if (active_tab() != -1 && m_tabs.size() != active_tab()) {
-            ret->set_hidden(true);
+            widget.set_hidden(true);
         } else if (active_tab() == -1) {
-            ret->set_hidden(false);
+            widget.set_hidden(false);
             m_active_tab = m_tabs.size();
         }
-        ret->set_positioned_rect(tab_content_rect());
+        widget.set_positioned_rect(tab_content_rect());
 
         auto rect = next_tab_rect(name);
-        m_tabs.add({ move(name), rect, ret });
-        return *ret;
+        m_tabs.add({ move(name), rect, widget.base().shared_from_this() });
+        return widget;
     }
 
     void remove_tab(int index);
@@ -37,7 +38,7 @@ public:
     const Rect& tab_content_rect() const { return m_tab_content_rect; }
 
 protected:
-    virtual void did_remove_child(SharedPtr<Object>) override;
+    // virtual void did_remove_child(SharedPtr<Object>) override;
 
     Rect next_tab_rect(const String& name) const;
 
@@ -45,7 +46,7 @@ private:
     struct Tab {
         String name;
         Rect rect;
-        SharedPtr<Widget> widget;
+        SharedPtr<Base::Widget> widget;
     };
 
     Vector<Tab> m_tabs;

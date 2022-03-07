@@ -6,11 +6,11 @@
 
 namespace App {
 class Menubar : public Widget {
-    APP_OBJECT(Menubar)
+    APP_WIDGET(Widget, Menubar)
 
 public:
     Menubar();
-    virtual void initialize() override;
+    virtual void did_attach() override;
     virtual ~Menubar() override;
 
     ContextMenu& create_menu(String name);

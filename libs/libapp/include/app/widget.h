@@ -1,7 +1,9 @@
 #pragma once
 
 #include <app/base/widget.h>
+#include <app/base/widget_bridge.h>
 #include <app/forward.h>
+#include <eventloop/component.h>
 #include <eventloop/forward.h>
 #include <graphics/color.h>
 #include <graphics/font.h>
@@ -10,11 +12,18 @@
 #include <graphics/rect.h>
 
 namespace App {
-class Widget : public Base::Widget {
-    APP_OBJECT(Widget)
+class Widget
+    : public Component
+    , public Base::WidgetBridge {
+    APP_WIDGET_BASE(Base::Widget, Base::WidgetBridge, Widget, self)
+
+    APP_OBJECT_FORWARD_API(base())
+
+    APP_BASE_WIDGET_INTERFACE_FORWARD(base())
 
 public:
-    virtual void initialize() override;
+    Widget();
+    virtual void did_attach() override;
     virtual ~Widget() override;
 
     SharedPtr<Font> font() const { return m_font; }
@@ -22,8 +31,7 @@ public:
 
     void set_context_menu(SharedPtr<ContextMenu> menu);
 
-    Widget* parent_widget() { return static_cast<Widget*>(Base::Widget::parent_widget()); }
-    Window* parent_window();
+    Window* typed_parent_window();
 
     Color background_color() const { return m_palette->color(Palette::Background); }
     Color text_color() const { return m_palette->color(Palette::Text); }
@@ -33,9 +41,6 @@ public:
 
     Renderer get_renderer();
 
-protected:
-    Widget();
-
 private:
     virtual bool is_widget() const final { return true; }
 
@@ -43,5 +48,4 @@ private:
     SharedPtr<Palette> m_palette;
     SharedPtr<ContextMenu> m_context_menu;
 };
-
 }

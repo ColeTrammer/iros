@@ -6,11 +6,11 @@
 class TerminalDisplay;
 
 class TerminalSearch final : public TUI::Frame {
-    APP_OBJECT(TerminalSearch)
+    APP_WIDGET(TUI::Frame, TerminalSearch)
 
 public:
-    TerminalSearch(TerminalDisplay& hots_display, String initial_text);
-    virtual void initialize() override;
+    TerminalSearch(TerminalDisplay& host_display, String initial_text);
+    virtual void did_attach() override;
     virtual ~TerminalSearch() override;
 
 private:

@@ -21,14 +21,14 @@
 
 static int s_display_count = 0;
 
-TerminalDisplay::TerminalDisplay() : Display(static_cast<Object&>(*this)) {
+TerminalDisplay::TerminalDisplay() {
     s_display_count++;
-
-    set_accepts_focus(true);
 }
 
-void TerminalDisplay::initialize() {
-    set_key_bindings(Edit::get_key_bindings(*this));
+void TerminalDisplay::did_attach() {
+    set_accepts_focus(true);
+
+    set_key_bindings(Edit::get_key_bindings(base()));
 
     on<App::KeyDownEvent>([this](const App::KeyDownEvent& event) {
         if (event.key() == App::Key::Escape) {
@@ -52,11 +52,11 @@ void TerminalDisplay::initialize() {
 
     on<App::FocusedEvent>([this](const App::FocusedEvent&) {
         if (document() && !document()->input_text_mode()) {
-            TerminalStatusBar::the().set_active_display(this);
+            TerminalStatusBar::the().set_active_display(&base());
         }
     });
 
-    Panel::initialize();
+    Panel::did_attach();
 }
 
 TerminalDisplay::~TerminalDisplay() {
@@ -79,7 +79,7 @@ App::ObjectBoundCoroutine TerminalDisplay::quit() {
         }
     }
 
-    auto* parent = parent_panel();
+    auto* parent = this->parent();
     remove();
 
     // Give focus to another display, namely, the first one we can find.
@@ -91,9 +91,7 @@ App::ObjectBoundCoroutine TerminalDisplay::quit() {
 }
 
 void TerminalDisplay::install_document_listeners(Edit::Document& document) {
-    Display::install_document_listeners(document);
-
-    document.on<Edit::AddLines, Edit::DeleteLines, Edit::MergeLines, Edit::SplitLines>(*this, [this](auto&) {
+    listen<Edit::AddLines, Edit::DeleteLines, Edit::MergeLines, Edit::SplitLines>(document, [this](auto&) {
         compute_cols_needed_for_line_numbers();
     });
 }
@@ -324,10 +322,10 @@ Task<Maybe<String>> TerminalDisplay::prompt(String message, String initial_value
         hide_prompt_panel();
     }
 
-    m_prompt_panel = TerminalPrompt::create(shared_from_this(), *this, move(message), move(initial_value));
+    m_prompt_panel = create_widget_owned<TerminalPrompt>(*this, move(message), move(initial_value));
     m_prompt_panel->set_positioned_rect(positioned_rect().with_height(3));
 
-    auto result = co_await m_prompt_panel->block_until_result(*this);
+    auto result = co_await m_prompt_panel->block_until_result(base());
     hide_prompt_panel();
     make_focused();
     co_return result;
@@ -339,7 +337,7 @@ void TerminalDisplay::enter_search(String initial_text) {
         return;
     }
 
-    m_search_panel = TerminalSearch::create(shared_from_this(), *this, move(initial_text));
+    m_search_panel = create_widget_owned<TerminalSearch>(*this, move(initial_text));
     auto width = min(sized_rect().width(), 30);
     m_search_panel->set_positioned_rect({ positioned_rect().x() + (sized_rect().width() - width), positioned_rect().y(), width, 4 });
 }

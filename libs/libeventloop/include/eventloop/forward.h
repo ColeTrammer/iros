@@ -2,9 +2,9 @@
 
 namespace App {
 class CallbackEvent;
-class Component;
 class Event;
 class EventLoop;
+class FdWrapper;
 class FileWatcher;
 class KeyBindings;
 class KeyEvent;

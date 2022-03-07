@@ -7,11 +7,11 @@ namespace Repl {
 class ReplDisplay;
 
 class SuggestionsPanel final : public TUI::Panel {
-    APP_OBJECT(SuggestionsPanel)
+    APP_WIDGET(TUI::Panel, SuggestionsPanel)
 
 public:
     explicit SuggestionsPanel(ReplDisplay& display);
-    virtual void initialize() override;
+    virtual void did_attach() override;
     virtual ~SuggestionsPanel() override;
 
     virtual void render() override;

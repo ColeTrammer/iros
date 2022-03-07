@@ -6,6 +6,7 @@ set(SOURCES
     root_window.cpp
     table_view.cpp
     terminal_panel.cpp
+    view.cpp
 )
 
 add_os_library(libtui tui true)

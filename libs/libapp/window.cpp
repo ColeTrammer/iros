@@ -128,7 +128,7 @@ void Window::set_current_context_menu(ContextMenu* menu) {
 
 void Window::do_render() {
     if (!main_widget().hidden()) {
-        main_widget().render();
+        main_widget().render_including_children();
         m_platform_window->flush_pixels();
         clear_dirty_rects();
     }
