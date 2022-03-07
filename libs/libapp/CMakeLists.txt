@@ -1,5 +1,6 @@
 set(SOURCES
     base/application.cpp
+    base/scroll_component.cpp
     base/terminal_widget.cpp
     base/view.cpp
     base/widget.cpp
