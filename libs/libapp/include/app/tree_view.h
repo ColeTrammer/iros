@@ -1,42 +1,28 @@
 #pragma once
 
-#include <app/scroll_component.h>
+#include <app/base/tree_view.h>
 #include <app/view.h>
 
 namespace App {
-class TreeView : public View {
-    APP_WIDGET(View, TreeView)
+class TreeView
+    : public View
+    , public Base::TreeViewBridge {
+    APP_WIDGET_BASE(Base::TreeView, View, TreeView, self, self, self, self)
+
+    APP_BASE_TREE_VIEW_INTERFACE_FORWARD(base())
 
 public:
-    TreeView() {}
+    TreeView();
     virtual void did_attach() override;
+    virtual ~TreeView() override;
+
+    // ^Widget
     virtual void render() override;
 
-    void set_name_column(int col) { m_name_column = col; }
+    // ^TreeViewBridge
+    virtual void render_item(const Base::TreeViewItem& item) override;
 
-private:
-    struct Item {
-        String name;
-        Rect item_rect;
-        Rect container_rect;
-        ModelItem* item { nullptr };
-        int level { 0 };
-        bool open { false };
-        Vector<Item> children;
-    };
-
+    // ^ViewBridge
     virtual ModelItem* item_at_position(const Point& point) override;
-    virtual void install_model_listeners(Model& model) override;
-    virtual void uninstall_model_listeners(Model& model) override;
-
-    Item* internal_item_at_position(const Point& point);
-
-    void rebuild_items();
-    void rebuild_layout();
-
-    Vector<Item> m_items;
-    int m_padding { 2 };
-    int m_row_height { 32 };
-    int m_name_column { 0 };
 };
 }

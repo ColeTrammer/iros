@@ -49,10 +49,10 @@ protected:
     explicit View(SharedPtr<WidgetBridge> widget_bridge, SharedPtr<ViewBridge> view_bridge,
                   SharedPtr<ScrollComponentBridge> scroll_component_bridge);
 
-private:
-    void install_model_listeners(Model& model);
-    void uninstall_model_listeners(Model& model);
+    virtual void install_model_listeners(Model& model);
+    virtual void uninstall_model_listeners(Model& model);
 
+private:
     SharedPtr<Model> m_model;
     SharedPtr<ViewBridge> m_bridge;
     ModelItem* m_hovered_item;
