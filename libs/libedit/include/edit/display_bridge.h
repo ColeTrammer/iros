@@ -21,7 +21,7 @@ public:
     virtual void invalidate_line_rect(int row_in_display) = 0;
     virtual int enter() = 0;
     virtual void send_status_message(String message) = 0;
-    virtual Task<Maybe<String>> prompt(String message, String initial_value);
+    virtual Task<Maybe<String>> prompt(String message, String initial_value) = 0;
     virtual void enter_search(String starting_text) = 0;
 
     virtual void do_compute_suggestions() {}
