@@ -7,6 +7,7 @@ set(SOURCES
     scroll_component.cpp
     table_view.cpp
     terminal_panel.cpp
+    tree_view.cpp
     view.cpp
 )
 
