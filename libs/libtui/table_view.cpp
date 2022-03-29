@@ -6,7 +6,7 @@
 
 namespace TUI {
 void TableView::render() {
-    auto renderer = get_renderer();
+    auto renderer = ScrollComponent::get_renderer();
     if (!model()) {
         renderer.clear_rect(sized_rect());
         return;

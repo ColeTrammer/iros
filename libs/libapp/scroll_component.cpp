@@ -1,4 +1,3 @@
-#include <app/base/widget.h>
 #include <app/scroll_component.h>
 #include <app/widget.h>
 #include <graphics/renderer.h>

@@ -25,7 +25,6 @@ public:
     virtual void did_attach() override;
     virtual ~Panel() override;
 
-protected:
     TInput::TerminalRenderer get_renderer();
 };
 }

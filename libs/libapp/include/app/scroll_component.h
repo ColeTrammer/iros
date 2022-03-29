@@ -5,6 +5,7 @@
 #include <eventloop/component.h>
 #include <graphics/forward.h>
 #include <graphics/point.h>
+#include <graphics/rect.h>
 
 namespace App {
 class ScrollComponent : public Base::ScrollComponentBridge {
