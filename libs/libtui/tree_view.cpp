@@ -26,7 +26,9 @@ void TreeView::render() {
 void TreeView::render_item(const App::Base::TreeViewItem& item) {
     auto renderer = ScrollComponent::get_renderer();
 
-    renderer.render_text(item.item_rect, item.name.view());
+    auto text_rect = item.item_rect.adjusted(-padding());
+    text_rect.set_x(text_rect.x() + item.level);
+    renderer.render_text(text_rect, item.name.view());
 }
 
 App::ModelItem* TreeView::item_at_position(const Point& point) {
