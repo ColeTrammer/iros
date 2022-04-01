@@ -5,4 +5,4 @@ set(SOURCES
 )
 
 add_os_executable(terminal bin)
-target_link_libraries(terminal libapp libclipboard libtui libterminal)
+target_link_libraries(terminal libgui libclipboard libtui libterminal)

@@ -1,19 +1,19 @@
-#include <app/application.h>
-#include <app/button.h>
-#include <app/context_menu.h>
 #include <app/flex_layout_engine.h>
-#include <app/menubar.h>
-#include <app/text_label.h>
-#include <app/widget.h>
-#include <app/window.h>
 #include <assert.h>
 #include <eventloop/event.h>
 #include <eventloop/object.h>
+#include <gui/application.h>
+#include <gui/button.h>
+#include <gui/context_menu.h>
+#include <gui/menubar.h>
+#include <gui/text_label.h>
+#include <gui/widget.h>
+#include <gui/window.h>
 #include <liim/format.h>
 #include <unistd.h>
 
-class TestWidget : public App::Widget {
-    APP_WIDGET(App::Widget, TestWidget)
+class TestWidget : public GUI::Widget {
+    APP_WIDGET(GUI::Widget, TestWidget)
 
 public:
     TestWidget() {}
@@ -29,16 +29,16 @@ public:
 };
 
 int main() {
-    auto app = App::Application::create();
+    auto app = GUI::Application::create();
 
-    auto window = App::Window::create(nullptr, 300, 300, 250, 250, "About");
-    auto& main_widget = window->set_main_widget<App::Widget>();
+    auto window = GUI::Window::create(nullptr, 300, 300, 250, 250, "About");
+    auto& main_widget = window->set_main_widget<GUI::Widget>();
 
     auto& root_layout = main_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
     root_layout.set_margins({ 0, 0, 0, 0 });
     root_layout.set_spacing(0);
 
-    auto& menubar = root_layout.add<App::Menubar>();
+    auto& menubar = root_layout.add<GUI::Menubar>();
 
     menubar.create_menu("File");
 
@@ -52,15 +52,15 @@ int main() {
         printf("Helping\n");
     });
 
-    auto& label = root_layout.add<App::TextLabel>("Hello World!");
-    root_layout.add<App::Widget>();
+    auto& label = root_layout.add<GUI::TextLabel>("Hello World!");
+    root_layout.add<GUI::Widget>();
     root_layout.add<TestWidget>();
-    auto& button = root_layout.add<App::Button>("Click Me!");
-    button.on<App::ClickEvent>({}, [](auto&) {
+    auto& button = root_layout.add<GUI::Button>("Click Me!");
+    button.on<GUI::ClickEvent>({}, [](auto&) {
         printf("clicked!\n");
     });
 
-    auto context_menu = App::ContextMenu::create(window.get(), window);
+    auto context_menu = GUI::ContextMenu::create(window.get(), window);
     context_menu->add_menu_item("A", [] {
         printf("A Pressed\n");
     });

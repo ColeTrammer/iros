@@ -1,17 +1,17 @@
 #pragma once
 
-#include <app/widget.h>
 #include <edit/display.h>
 #include <edit/display_bridge.h>
 #include <graphics/forward.h>
+#include <gui/widget.h>
 #include <liim/function.h>
 #include <liim/string.h>
 #include <liim/vector.h>
 
 class AppDisplay;
 
-class SearchWidget final : public App::Widget {
-    APP_WIDGET(App::Widget, SearchWidget)
+class SearchWidget final : public GUI::Widget {
+    APP_WIDGET(GUI::Widget, SearchWidget)
 
 public:
     SearchWidget();
@@ -26,9 +26,9 @@ private:
 };
 
 class AppDisplay final
-    : public App::Widget
+    : public GUI::Widget
     , public Edit::DisplayBridge {
-    APP_WIDGET_BASE(Edit::Display, App::Widget, AppDisplay, self, self)
+    APP_WIDGET_BASE(Edit::Display, GUI::Widget, AppDisplay, self, self)
 
     EDIT_DISPLAY_INTERFACE_FORWARD(base())
 

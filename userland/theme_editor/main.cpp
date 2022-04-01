@@ -1,26 +1,26 @@
-#include <app/application.h>
-#include <app/button.h>
 #include <app/flex_layout_engine.h>
-#include <app/table_view.h>
-#include <app/window.h>
+#include <gui/application.h>
+#include <gui/button.h>
+#include <gui/table_view.h>
+#include <gui/window.h>
 
 #include "theme_model.h"
 
 int main() {
-    auto app = App::Application::create();
+    auto app = GUI::Application::create();
 
     auto model = ThemeModel::create(nullptr);
 
-    auto window = App::Window::create(nullptr, 100, 250, 400, 400, "Theme Editor");
-    auto& container = window->set_main_widget<App::Widget>();
+    auto window = GUI::Window::create(nullptr, 100, 250, 400, 400, "Theme Editor");
+    auto& container = window->set_main_widget<GUI::Widget>();
     auto& layout = container.set_layout_engine<App::VerticalFlexLayoutEngine>();
 
-    auto& view = layout.add<App::TableView>();
+    auto& view = layout.add<GUI::TableView>();
     view.set_model(model);
 
-    auto& button = layout.add<App::Button>("Apply Theme");
+    auto& button = layout.add<GUI::Button>("Apply Theme");
     button.set_layout_constraint({ App::LayoutConstraint::AutoSize, 24 });
-    button.on<App::ClickEvent>({}, [&](auto&) {
+    button.on<GUI::ClickEvent>({}, [&](auto&) {
         if (view.selection().empty()) {
             return;
         }

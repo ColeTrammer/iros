@@ -1,9 +1,9 @@
 #pragma once
 
-#include <app/base/window.h>
+#include <app/window.h>
 
 namespace TUI {
-class RootWindow final : public App::Base::Window {
+class RootWindow final : public App::Window {
     APP_OBJECT(RootWindow)
 
 public:

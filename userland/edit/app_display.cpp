@@ -1,7 +1,4 @@
-#include <app/context_menu.h>
 #include <app/flex_layout_engine.h>
-#include <app/text_label.h>
-#include <app/window.h>
 #include <clipboard/connection.h>
 #include <edit/document.h>
 #include <edit/keyboard_action.h>
@@ -9,6 +6,9 @@
 #include <eventloop/event.h>
 #include <graphics/bitmap.h>
 #include <graphics/renderer.h>
+#include <gui/context_menu.h>
+#include <gui/text_label.h>
+#include <gui/window.h>
 
 #include "app_display.h"
 
@@ -26,7 +26,7 @@ void SearchWidget::render() {
 AppDisplay& SearchWidget::display() {
     if (!m_display) {
         auto& layout = set_layout_engine<App::HorizontalFlexLayoutEngine>();
-        auto& label = layout.add<App::TextLabel>("Find:");
+        auto& label = layout.add<GUI::TextLabel>("Find:");
         label.set_layout_constraint({ 46, App::LayoutConstraint::AutoSize });
 
         m_display = layout.add_owned<AppDisplay>(false);
@@ -40,7 +40,7 @@ void AppDisplay::did_attach() {
     set_key_bindings(Edit::get_key_bindings(base()));
 
     auto window = this->parent_window()->shared_from_this();
-    auto context_menu = App::ContextMenu::create(window.get(), window);
+    auto context_menu = GUI::ContextMenu::create(window.get(), window);
     context_menu->add_menu_item("Copy", [this] {
         if (auto* doc = document()) {
             doc->copy(base(), cursors());
@@ -239,5 +239,5 @@ void AppDisplay::render() {
     render_lines();
 
     render_cursor(renderer);
-    App::Widget::render();
+    GUI::Widget::render();
 }

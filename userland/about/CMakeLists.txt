@@ -4,4 +4,4 @@ set(SOURCES
 
 add_os_executable(about bin)
 
-target_link_libraries(about libapp)
+target_link_libraries(about libgui)

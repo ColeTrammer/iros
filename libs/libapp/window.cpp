@@ -1,136 +1,163 @@
-#include <app/application.h>
-#include <app/application_os_2.h>
-#include <app/context_menu.h>
-#include <app/widget.h>
 #include <app/window.h>
 #include <eventloop/event.h>
-#include <pthread.h>
 
 namespace App {
-
-static HashMap<wid_t, Window*> s_windows;
-static pthread_mutex_t s_windows_lock = PTHREAD_MUTEX_INITIALIZER;
-
-void Window::for_each_window(Function<void(Window&)> callback) {
-    pthread_mutex_lock(&s_windows_lock);
-    s_windows.for_each([&](auto* window) {
-        callback(*window);
-    });
-    pthread_mutex_unlock(&s_windows_lock);
+template<typename MouseEventType>
+static MouseEventType translate_mouse_event(const Widget& widget, const MouseEventType& event) {
+    return MouseEventType { event.buttons_down(),
+                            event.x() - widget.positioned_rect().x(),
+                            event.y() - widget.positioned_rect().y(),
+                            event.z(),
+                            event.button(),
+                            event.count(),
+                            event.modifiers() };
 }
 
-void Window::register_window(Window& window) {
-    pthread_mutex_lock(&s_windows_lock);
-    s_windows.put(window.wid(), &window);
-    pthread_mutex_unlock(&s_windows_lock);
-}
-
-void Window::unregister_window(wid_t wid) {
-    pthread_mutex_lock(&s_windows_lock);
-    s_windows.remove(wid);
-    pthread_mutex_unlock(&s_windows_lock);
-}
-
-Maybe<SharedPtr<Window>> Window::find_by_wid(wid_t wid) {
-    pthread_mutex_lock(&s_windows_lock);
-    auto result = s_windows.get(wid);
-    pthread_mutex_unlock(&s_windows_lock);
-
-    if (!result) {
-        return {};
-    }
-    return { (*result)->shared_from_this() };
-}
-
-Window::~Window() {
-    unregister_window(wid());
-}
-
-Window::Window(int x, int y, int width, int height, String name, bool has_alpha, WindowServer::WindowType type, wid_t parent_id)
-    : m_parent_wid(parent_id), m_visible(type != WindowServer::WindowType::Frameless), m_has_alpha(has_alpha) {
-    m_platform_window = Application::the().create_window(*this, x, y, width, height, move(name), has_alpha, type, parent_id);
-    register_window(*this);
-}
+Window::Window() {}
 
 void Window::initialize() {
-    on<WindowCloseEvent>([this](auto&) {
-        m_removed = true;
-        Application::the().main_event_loop().set_should_exit(true);
-    });
-
-    on<WindowDidResizeEvent>([this](auto&) {
-        m_platform_window->did_resize();
-        if (auto* main_widget = &this->main_widget()) {
-            main_widget->set_positioned_rect(rect());
-        }
-        pixels()->clear(Application::the().palette()->color(Palette::Background));
-        invalidate_rect(rect());
-    });
-
-    on<WindowForceRedrawEvent>([this](auto&) {
-        invalidate_rect(rect());
-    });
-
-    on<WindowStateEvent>([this](const WindowStateEvent& event) {
-        auto& state_event = static_cast<const WindowStateEvent&>(event);
-        if (state_event.active() == active()) {
-            return;
+    on_unchecked<MouseDownEvent, MouseMoveEvent, MouseUpEvent, MouseScrollEvent>([this](const auto& event) {
+        // Rules for MouseEvents forwarding:
+        // 1. If the currently focused widget steals focus, it gets the event no matter what.
+        // 2. If the event is a MouseMove/MouseScroll events and no buttons are down, then the hovered
+        //    widget gets updated (which generates Leave/Enter Events).
+        // 3. If the event is a MouseDown event, then the Widget being clicked on gets the
+        //    event and is focused (which generates Focus/Unfocused Events)
+        // 4. Otherwise, the event is a MouseUp or MouseMove with buttons down. The currently
+        //    focused widget gets the event, and the hit test result is ignored.
+        if (auto widget = focused_widget(); widget && widget->steals_focus()) {
+            return forward_to(*widget, translate_mouse_event(*widget, event));
         }
 
-        if (!state_event.active()) {
-            did_become_inactive();
+        auto* widget = hit_test(main_widget(), { event.x(), event.y() });
+        if (!event.mouse_down() && !event.mouse_up() && !event.buttons_down()) {
+            set_hovered_widget(widget);
+            if (widget) {
+                return forward_to(*widget, translate_mouse_event(*widget, event));
+            }
+            return false;
+        }
+
+        if (event.mouse_down()) {
+            widget->make_focused();
         } else {
-            did_become_active();
+            widget = focused_widget().get();
         }
-        m_active = state_event.active();
+        if (widget) {
+            return forward_to(*widget, translate_mouse_event(*widget, event));
+        }
+        return false;
     });
 
-    on_unchecked<ThemeChangeEvent>([this](const ThemeChangeEvent&) {
-        pixels()->clear(Application::the().palette()->color(Palette::Background));
-        invalidate_rect(rect());
+    on_unchecked<KeyDownEvent>([this](const KeyDownEvent& event) {
+        if (auto widget = focused_widget()) {
+            if (forward_to(*widget, event)) {
+                return true;
+            }
+        }
+        if (m_key_bindings.handle_key_event(event)) {
+            return true;
+        }
+        return false;
     });
 
-    Base::Window::initialize();
+    on_unchecked<KeyUpEvent, TextEvent>([this](const Event& event) {
+        if (auto widget = focused_widget()) {
+            return forward_to(*widget, event);
+        }
+        return false;
+    });
+
+    Object::initialize();
 }
 
-void Window::hide() {
-    if (!m_visible) {
+Window::~Window() {}
+
+void Window::set_rect(const Rect& rect) {
+    if (m_rect == rect) {
         return;
     }
 
-    m_visible = false;
-    m_platform_window->do_set_visibility(0, 0, false);
+    m_rect = rect;
+    if (m_main_widget) {
+        m_main_widget->set_positioned_rect(rect);
+    }
 }
 
-void Window::show(int x, int y) {
-    if (m_visible) {
+void Window::invalidate_rect(const Rect& rect) {
+    m_dirty_rects.add(rect);
+    schedule_render();
+}
+
+void Window::set_focused_widget(Widget* widget) {
+    auto old_widget = m_focused_widget.lock();
+    if (old_widget.get() == widget) {
         return;
     }
 
-    m_visible = true;
-    m_platform_window->do_set_visibility(x, y, true);
-}
-
-void Window::hide_current_context_menu() {
-    auto maybe_context_menu = m_current_context_menu.lock();
-    if (maybe_context_menu) {
-        maybe_context_menu->hide();
+    if (old_widget) {
+        old_widget->emit<App::UnfocusedEvent>();
     }
-}
 
-void Window::clear_current_context_menu() {
-    m_current_context_menu.reset();
-}
-
-void Window::set_current_context_menu(ContextMenu* menu) {
-    m_current_context_menu = menu->weak_from_this();
-}
-
-void Window::do_render() {
-    if (!main_widget().hidden()) {
-        main_widget().render_including_children();
-        m_platform_window->flush_pixels();
-        clear_dirty_rects();
+    if (!widget) {
+        m_focused_widget.reset();
+        return;
     }
+
+    m_focused_widget = widget->weak_from_this();
+    widget->emit<App::FocusedEvent>();
+}
+
+SharedPtr<Widget> Window::focused_widget() {
+    auto widget = m_focused_widget.lock();
+    if (!widget) {
+        m_focused_widget.reset();
+    }
+    return widget;
+}
+
+Widget* Window::hit_test(const Widget& root, const Point& point) const {
+    for (auto& child : root.children()) {
+        if (child->is_base_widget()) {
+            auto& widget_child = const_cast<Widget&>(static_cast<const Widget&>(*child));
+            if (auto* result = hit_test(widget_child, point)) {
+                return result;
+            }
+        }
+    }
+    if (!root.hidden() && root.positioned_rect().intersects(point)) {
+        return const_cast<Widget*>(&root);
+    }
+    return nullptr;
+}
+
+void Window::flush_layout() {
+    main_widget().flush_layout();
+}
+
+void Window::schedule_render() {
+    deferred_invoke_batched(m_render_scheduled, [this] {
+        flush_layout();
+        do_render();
+    });
+}
+
+void Window::set_hovered_widget(Widget* widget) {
+    auto old_widget = m_hovered_widget.lock();
+    if (old_widget.get() == widget) {
+        return;
+    }
+
+    if (old_widget) {
+        old_widget->emit<App::LeaveEvent>();
+    }
+
+    if (!widget) {
+        m_hovered_widget.reset();
+        return;
+    }
+
+    m_hovered_widget = widget->weak_from_this();
+    widget->emit<App::EnterEvent>();
 }
 }

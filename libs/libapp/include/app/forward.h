@@ -1,35 +1,31 @@
 #pragma once
 
-#include <app/base/forward.h>
-
 namespace App {
 class Application;
 class BoxLayout;
-class Button;
-class ContextMenu;
 class FileSystemModel;
 class FileSystemObject;
 class HorizontalBoxLayout;
-class IconView;
 class Layout;
 class LayoutConstraint;
 class LayoutEngine;
-class Menubar;
 class Model;
-class ModelClient;
 class ModelIndex;
 class ModelItem;
 class ModelItemInfo;
-class PlatformWindow;
 class ScrollComponent;
-class TabWidget;
+class ScrollComponentBridge;
 class TableView;
 class TerminalWidget;
-class TextLabel;
+class TerminalWidgetBridge;
 class TreeView;
+class TreeViewBridge;
+class TreeViewItem;
 class VerticalBoxLayout;
 class View;
+class ViewBridge;
 class Widget;
+class WidgetBridge;
 class Window;
 
 struct Margins;

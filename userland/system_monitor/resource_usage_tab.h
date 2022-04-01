@@ -1,11 +1,11 @@
 #pragma once
 
-#include <app/widget.h>
+#include <gui/widget.h>
 
 class ProcessModel;
 
-class ResourceUsageTab final : public App::Widget {
-    APP_WIDGET(App::Widget, ResourceUsageTab)
+class ResourceUsageTab final : public GUI::Widget {
+    APP_WIDGET(GUI::Widget, ResourceUsageTab)
 
 public:
     explicit ResourceUsageTab(SharedPtr<ProcessModel> model);
@@ -16,6 +16,6 @@ public:
 
 private:
     SharedPtr<ProcessModel> m_model;
-    SharedPtr<App::TextLabel> m_cpu_label;
-    SharedPtr<App::TextLabel> m_memory_label;
+    SharedPtr<GUI::TextLabel> m_cpu_label;
+    SharedPtr<GUI::TextLabel> m_memory_label;
 };

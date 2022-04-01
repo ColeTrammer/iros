@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <app/base/widget.h>
+#include <app/widget.h>
 #include <edit/absolute_position.h>
 #include <edit/character_metadata.h>
 #include <edit/display_bridge.h>
@@ -25,10 +25,10 @@ APP_EVENT(Edit, NewDisplayEvent, App::Event, (), (), ())
 namespace Edit {
 enum class AutoCompleteMode { Never, Always };
 
-class Display : public App::Base::Widget {
+class Display : public App::Widget {
     APP_OBJECT(Display)
 
-    APP_EMITS(App::Base::Widget, SplitDisplayEvent, NewDisplayEvent)
+    APP_EMITS(App::Widget, SplitDisplayEvent, NewDisplayEvent)
 
     EDIT_DISPLAY_BRIDGE_INTERFACE_FORWARD(bridge())
 
@@ -139,7 +139,7 @@ public:
     const DisplayBridge& bridge() const { return *m_bridge; }
 
 protected:
-    Display(SharedPtr<App::Base::WidgetBridge> widget_bridge, SharedPtr<DisplayBridge> display_bridge);
+    Display(SharedPtr<App::WidgetBridge> widget_bridge, SharedPtr<DisplayBridge> display_bridge);
 
     void install_document_listeners(Document& document);
     void uninstall_document_listeners(Document& document);

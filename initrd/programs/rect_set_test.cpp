@@ -1,11 +1,11 @@
-#include <app/application.h>
-#include <app/widget.h>
-#include <app/window.h>
 #include <graphics/rect_set.h>
 #include <graphics/renderer.h>
+#include <gui/application.h>
+#include <gui/widget.h>
+#include <gui/window.h>
 
-class TestWidget final : public App::Widget {
-    APP_WIDGET(App::Widget, TestWidget)
+class TestWidget final : public GUI::Widget {
+    APP_WIDGET(GUI::Widget, TestWidget)
 
 public:
     TestWidget() {}
@@ -30,14 +30,14 @@ public:
             fprintf(stderr, "x=%d y=%d w=%d h=%d\n", r.x(), r.y(), r.width(), r.height());
         }
 
-        App::Widget::render();
+        GUI::Widget::render();
     }
 };
 
 int main() {
-    auto app = App::Application::create();
+    auto app = GUI::Application::create();
 
-    auto window = App::Window::create(nullptr, 50, 50, 600, 600, "Rect Set Test");
+    auto window = GUI::Window::create(nullptr, 50, 50, 600, 600, "Rect Set Test");
     window->set_main_widget<TestWidget>();
     app->enter();
     return 0;

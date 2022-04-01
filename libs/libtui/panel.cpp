@@ -1,4 +1,3 @@
-#include <app/base/widget.h>
 #include <eventloop/event.h>
 #include <eventloop/key_bindings.h>
 #include <liim/maybe.h>
@@ -23,10 +22,10 @@ Panel::~Panel() {}
 
 TInput::TerminalRenderer Panel::get_renderer() {
     auto dirty_rects = TUI::Application::the().root_window().dirty_rects();
-    Function<void(App::Base::Widget&)> enumerate_children = [&](App::Base::Widget& widget) {
+    Function<void(App::Widget&)> enumerate_children = [&](App::Widget& widget) {
         for (auto& child : widget.children()) {
             if (child->is_base_widget()) {
-                auto& widget = const_cast<App::Base::Widget&>(static_cast<const App::Base::Widget&>(*child));
+                auto& widget = const_cast<App::Widget&>(static_cast<const App::Widget&>(*child));
                 dirty_rects.subtract(widget.positioned_rect());
                 enumerate_children(widget);
             }

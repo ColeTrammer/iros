@@ -1,7 +1,7 @@
 #pragma once
 
-#include <app/base/widget.h>
 #include <app/forward.h>
+#include <app/widget.h>
 
 namespace App {
 struct Margins {
@@ -13,12 +13,12 @@ struct Margins {
 
 class LayoutEngine {
 public:
-    explicit LayoutEngine(Base::Widget& parent);
+    explicit LayoutEngine(Widget& parent);
     virtual ~LayoutEngine() {}
 
     virtual void layout() = 0;
-    virtual void do_add(Base::Widget& child) = 0;
-    virtual void do_remove(Base::Widget& child) = 0;
+    virtual void do_add(Widget& child) = 0;
+    virtual void do_remove(Widget& child) = 0;
 
     void maybe_force_layout() {
         // FIXME: also cancel/ignore the scheduled layout as well.
@@ -48,7 +48,7 @@ public:
         return result;
     }
 
-    void remove(Base::Widget& child) {
+    void remove(Widget& child) {
         do_remove(child);
         if (!child.hidden()) {
             schedule_layout();
@@ -58,11 +58,11 @@ public:
 protected:
     Rect parent_rect() const;
 
-    Base::Widget& parent() { return m_parent; }
-    const Base::Widget& parent() const { return m_parent; }
+    Widget& parent() { return m_parent; }
+    const Widget& parent() const { return m_parent; }
 
 private:
-    Base::Widget& m_parent;
+    Widget& m_parent;
     Margins m_margins;
     bool m_layout_scheduled { false };
 };

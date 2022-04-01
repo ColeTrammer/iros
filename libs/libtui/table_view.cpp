@@ -1,4 +1,3 @@
-#include <app/base/view.h>
 #include <app/model.h>
 #include <app/model_item_info.h>
 #include <tinput/terminal_renderer.h>

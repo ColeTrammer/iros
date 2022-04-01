@@ -1,32 +1,56 @@
 #pragma once
 
-#include <app/base/terminal_widget.h>
-#include <app/base/terminal_widget_bridge.h>
+#include <app/forward.h>
+#include <app/terminal_widget_bridge.h>
+#include <app/terminal_widget_interface.h>
 #include <app/widget.h>
-#include <eventloop/selectable.h>
+#include <eventloop/forward.h>
+#include <graphics/rect.h>
 #include <liim/pointers.h>
+#include <liim/string.h>
+#include <terminal/pseudo_terminal.h>
+#include <terminal/tty.h>
+
+APP_EVENT(App, TerminalHangupEvent, Event, (), (), ())
 
 namespace App {
-class TerminalWidget final
-    : public Widget
-    , public Base::TerminalWidgetBridge {
-    APP_WIDGET_BASE(Base::TerminalWidget, Widget, TerminalWidget, self, self)
+class TerminalWidget : public Widget {
+    APP_OBJECT(TerminalWidget)
 
-    APP_BASE_TERMINAL_WIDGET_INTERFACE_FORWARD(base())
+    APP_EMITS(Widget, TerminalHangupEvent)
+
+    APP_TERMINAL_WIDGET_BRIDGE_INTERFACE_FORWARD(bridge())
 
 public:
-    explicit TerminalWidget(double opacity);
-    virtual void did_attach() override;
+    virtual void initialize() override;
+    virtual ~TerminalWidget() override;
 
-    // ^App::Widget
-    virtual void render() override;
+    // os_2 reflect begin
+    void clear_selection();
+    void copy_selection();
+    void paste_text();
 
-    // ^Base::TerminalWidgetBridge
-    virtual void invalidate_all_contents() override { invalidate(); }
-    virtual Point cell_position_of_mouse_coordinates(int mouse_x, int mouse_y) const override;
-    virtual Rect available_cells() const override;
+    const Terminal::TTY& tty() const { return m_tty; }
+    bool in_selection(int row, int col) const;
+    // os_2 reflect end
+
+    const TerminalWidgetBridge& bridge() const { return *m_bridge; }
+    TerminalWidgetBridge& bridge() { return *m_bridge; }
+
+protected:
+    TerminalWidget(SharedPtr<WidgetBridge> widget_bridge, SharedPtr<TerminalWidgetBridge> terminal_bridge);
 
 private:
-    uint8_t m_background_alpha { 255 };
+    String selection_text() const;
+
+    Terminal::PsuedoTerminal m_pseudo_terminal;
+    Terminal::TTY m_tty;
+    SharedPtr<TerminalWidgetBridge> m_bridge;
+    SharedPtr<FdWrapper> m_pseudo_terminal_wrapper;
+    int m_selection_start_row { -1 };
+    int m_selection_start_col { -1 };
+    int m_selection_end_row { -1 };
+    int m_selection_end_col { -1 };
+    bool m_in_selection { false };
 };
 }

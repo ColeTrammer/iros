@@ -20,7 +20,7 @@ SharedPtr<Application> Application::try_create() {
 }
 
 Application& Application::the() {
-    return static_cast<Application&>(App::Base::Application::the());
+    return static_cast<Application&>(App::Application::the());
 }
 
 Application::Application(UniquePtr<TInput::IOTerminal> io_terminal) : m_io_terminal(move(io_terminal)) {

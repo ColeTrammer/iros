@@ -1,11 +1,11 @@
-#include <app/application.h>
 #include <app/flex_layout_engine.h>
-#include <app/terminal_widget.h>
-#include <app/window.h>
 #include <clipboard/connection.h>
 #include <errno.h>
 #include <eventloop/event.h>
 #include <eventloop/input_tracker.h>
+#include <gui/application.h>
+#include <gui/terminal_widget.h>
+#include <gui/window.h>
 #include <liim/format.h>
 #include <signal.h>
 #include <stdio.h>
@@ -182,11 +182,11 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    auto app = App::Application::create();
+    auto app = GUI::Application::create();
 
     double opacity = 0.90;
-    auto window = App::Window::create(nullptr, 200, 200, 80 * 8 + 10, 25 * 16 + 10, "Terminal", opacity != 1.0);
-    auto& terminal_widget = window->set_main_widget<App::TerminalWidget>(opacity);
+    auto window = GUI::Window::create(nullptr, 200, 200, 80 * 8 + 10, 25 * 16 + 10, "Terminal", opacity != 1.0);
+    auto& terminal_widget = window->set_main_widget<GUI::TerminalWidget>(opacity);
     terminal_widget.on<App::TerminalHangupEvent>({}, [&](auto&) {
         app->main_event_loop().set_should_exit(true);
     });

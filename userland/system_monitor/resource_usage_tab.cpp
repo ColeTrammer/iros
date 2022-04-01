@@ -1,5 +1,5 @@
 #include <app/flex_layout_engine.h>
-#include <app/text_label.h>
+#include <gui/text_label.h>
 
 #include "process_model.h"
 #include "resource_usage_tab.h"
@@ -10,8 +10,8 @@ void ResourceUsageTab::did_attach() {
     auto& layout = set_layout_engine<App::VerticalFlexLayoutEngine>();
     layout.set_margins({ 0, 0, 0, 0 });
     layout.set_spacing(0);
-    m_cpu_label = layout.add_owned<App::TextLabel>("CPU: 0%");
-    m_memory_label = layout.add_owned<App::TextLabel>("Memory: 0 / 0 (0%)");
+    m_cpu_label = layout.add_owned<GUI::TextLabel>("CPU: 0%");
+    m_memory_label = layout.add_owned<GUI::TextLabel>("Memory: 0 / 0 (0%)");
 
     listen<App::ModelUpdateEvent>(*m_model, [this](auto&) {
         update_display();

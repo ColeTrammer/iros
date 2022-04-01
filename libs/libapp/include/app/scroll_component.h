@@ -1,39 +1,60 @@
 #pragma once
 
-#include <app/base/scroll_component.h>
 #include <app/forward.h>
+#include <app/scroll_component_bridge.h>
+#include <app/scroll_component_interface.h>
 #include <eventloop/component.h>
 #include <graphics/forward.h>
 #include <graphics/point.h>
-#include <graphics/rect.h>
 
 namespace App {
-class ScrollComponent : public Base::ScrollComponentBridge {
-    APP_BASE_SCROLL_COMPONENT_INTERFACE_FORWARD(base())
+enum ScrollDirection {
+    Horizontal = 1 << 0,
+    Vertiacal = 1 << 1,
+};
+
+class ScrollComponent {
+    APP_SCROLL_COMPONENT_BRIDGE_INTERFACE_FORWARD(bridge())
 
 public:
-    static constexpr int s_scrollbar_width = 16;
+    explicit ScrollComponent(Widget& widget, SharedPtr<ScrollComponentBridge> bridge);
+    void initialize();
+    virtual ~ScrollComponent();
 
-    explicit ScrollComponent(Widget& widget);
-    virtual ~ScrollComponent() override;
+    // os_2 reflect begin
+    Rect available_rect();
+    Point scroll_offset() { return m_scroll_offset; }
 
-    void attach_to_base(Base::ScrollComponent& base);
+    bool vertically_scrollable();
+    bool horizontally_scrollable();
 
-    virtual int scrollbar_width() const override { return s_scrollbar_width; }
+    bool draw_vertical_scrollbar() { return vertically_scrollable() && !!(m_scrollbar_visibility & ScrollDirection::Vertiacal); }
+    bool draw_horizontal_scrollbar() { return horizontally_scrollable() && !!(m_scrollbar_visibility & ScrollDirection::Horizontal); }
 
-    Renderer get_renderer();
-    void draw_scrollbars();
+    void set_scrollability(int flags) {
+        m_scrollability = flags;
+        clamp_scroll_offset();
+    }
+
+    void set_scrollbar_visibility(int flags) {
+        m_scrollbar_visibility = flags;
+        clamp_scroll_offset();
+    }
+
+    Rect total_rect();
+    // os_2 reflect end
 
 private:
-    void did_attach();
-
-    Base::ScrollComponent& base() { return *m_base; }
-    const Base::ScrollComponent& base() const { return *m_base; }
+    ScrollComponentBridge& bridge() { return *m_bridge; }
+    const ScrollComponentBridge& bridge() const { return *m_bridge; }
 
     Widget& widget() { return m_widget; }
-    const Widget& widget() const { return m_widget; }
+    void clamp_scroll_offset();
 
+    Point m_scroll_offset;
     Widget& m_widget;
-    Base::ScrollComponent* m_base { nullptr };
+    SharedPtr<ScrollComponentBridge> m_bridge;
+    int m_scrollability { ScrollDirection::Vertiacal };
+    int m_scrollbar_visibility { ScrollDirection::Horizontal | ScrollDirection::Vertiacal };
 };
 }

@@ -1,4 +1,3 @@
-#include <app/base/view.h>
 #include <tui/view.h>
 
 namespace TUI {

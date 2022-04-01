@@ -1,7 +1,7 @@
-#include <app/application.h>
-#include <app/window.h>
 #include <graphics/palette.h>
 #include <graphics/renderer.h>
+#include <gui/application.h>
+#include <gui/window.h>
 #include <spawn.h>
 #include <unistd.h>
 
@@ -31,7 +31,7 @@ void Taskbar::did_attach() {
         for (auto& item : m_items) {
             if (item.rect.intersects({ event.x(), event.y() })) {
                 if (event.left_button()) {
-                    App::Application::the().set_active_window(item.wid);
+                    GUI::Application::the().set_active_window(item.wid);
                     return true;
                 }
             }
@@ -125,7 +125,7 @@ void Taskbar::server_did_make_window_active(const WindowServer::Server::ServerDi
 void Taskbar::render() {
     auto renderer = get_renderer();
 
-    auto& palette = *App::Application::the().palette();
+    auto& palette = *GUI::Application::the().palette();
 
     auto taskbar_rect = Rect { 0, 0, renderer.pixels().width(), taskbar_height };
     renderer.fill_rect(taskbar_rect, palette.color(Palette::TaskbarBackground));

@@ -85,7 +85,7 @@ App::ObjectBoundCoroutine TerminalDisplay::quit() {
     // Give focus to another display, namely, the first one we can find.
     if (parent) {
         if (auto first_child = parent->children().get_or(0, nullptr); first_child && first_child->is_base_widget()) {
-            static_cast<App::Base::Widget&>(*first_child).make_focused();
+            static_cast<App::Widget&>(*first_child).make_focused();
         }
     }
 }

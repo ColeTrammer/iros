@@ -2,6 +2,7 @@
 
 #include <ext/mapped_file.h>
 #include <graphics/color.h>
+#include <liim/string.h>
 
 #define ENUMERATE_COLOR_TYPES                                                                     \
     __ENUMERATE_COLOR_TYPE(Background, background, ColorValue::Black)                             \

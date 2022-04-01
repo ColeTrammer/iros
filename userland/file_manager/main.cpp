@@ -1,12 +1,12 @@
-#include <app/application.h>
-#include <app/button.h>
 #include <app/file_system_model.h>
 #include <app/flex_layout_engine.h>
-#include <app/icon_view.h>
-#include <app/tree_view.h>
-#include <app/window.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <gui/application.h>
+#include <gui/button.h>
+#include <gui/icon_view.h>
+#include <gui/tree_view.h>
+#include <gui/window.h>
 #include <stdlib.h>
 #include <tui/application.h>
 #include <tui/table_view.h>
@@ -62,28 +62,28 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    auto app = App::Application::create();
+    auto app = GUI::Application::create();
 
-    auto window = App::Window::create(nullptr, 350, 350, 400, 400, "File Manager");
-    auto& main_widget = window->set_main_widget<App::Widget>();
+    auto window = GUI::Window::create(nullptr, 350, 350, 400, 400, "File Manager");
+    auto& main_widget = window->set_main_widget<GUI::Widget>();
     auto& main_layout = main_widget.set_layout_engine<App::HorizontalFlexLayoutEngine>();
 
-    auto& tree_view = main_layout.add<App::TreeView>();
+    auto& tree_view = main_layout.add<GUI::TreeView>();
     tree_view.set_name_column(App::FileSystemModel::Column::Name);
     tree_view.set_model(model);
 
-    auto& right_widget = main_layout.add<App::Widget>();
+    auto& right_widget = main_layout.add<GUI::Widget>();
     auto& layout = right_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
 
-    auto& parent_button = layout.add<App::Button>("Go to parent");
+    auto& parent_button = layout.add<GUI::Button>("Go to parent");
     parent_button.set_layout_constraint({ 100, 24 });
 
-    auto& view = layout.add<App::IconView>();
+    auto& view = layout.add<GUI::IconView>();
     view.set_name_column(App::FileSystemModel::Column::Name);
     view.set_model(model);
     view.set_root_item(root);
 
-    parent_button.on<App::ClickEvent>({}, [&](auto&) {
+    parent_button.on<GUI::ClickEvent>({}, [&](auto&) {
         auto* root = view.root_item();
         if (root->parent()) {
             model->load_data(static_cast<App::FileSystemObject&>(*root->parent()));

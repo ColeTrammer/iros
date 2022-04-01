@@ -18,7 +18,7 @@ TInput::TerminalRenderer ScrollComponent::get_renderer() {
 
 void ScrollComponent::draw_scrollbars() {}
 
-void ScrollComponent::attach_to_base(App::Base::ScrollComponent& base) {
+void ScrollComponent::attach_to_base(App::ScrollComponent& base) {
     m_base = &base;
     did_attach();
 }

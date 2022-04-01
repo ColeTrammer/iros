@@ -1,8 +1,8 @@
-#include <app/application.h>
 #include <app/file_system_model.h>
 #include <app/flex_layout_engine.h>
-#include <app/window.h>
 #include <edit/document.h>
+#include <gui/application.h>
+#include <gui/window.h>
 #include <liim/string_view.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,7 +29,7 @@ public:
 
         for (auto& child : children()) {
             if (child->is_base_widget()) {
-                auto& widget = static_cast<const App::Base::Widget&>(*child);
+                auto& widget = static_cast<const App::Widget&>(*child);
                 renderer.draw_rect(widget.positioned_rect().adjusted(1), { ColorValue::White });
             }
         }
@@ -92,9 +92,9 @@ int main(int argc, char** argv) {
     }();
 
     if (use_graphics_mode) {
-        auto app = App::Application::create();
+        auto app = GUI::Application::create();
 
-        auto window = App::Window::create(nullptr, 250, 250, 400, 400, "Edit");
+        auto window = GUI::Window::create(nullptr, 250, 250, 400, 400, "Edit");
         auto& display = window->set_main_widget<AppDisplay>();
 
         display.on_quit = [&] {
@@ -177,7 +177,7 @@ int main(int argc, char** argv) {
             }
 
             if (prev_child && prev_child->is_base_widget()) {
-                static_cast<App::Base::Widget&>(const_cast<App::Object&>(*prev_child)).make_focused();
+                static_cast<App::Widget&>(const_cast<App::Object&>(*prev_child)).make_focused();
             }
         });
         key_bindings.add({ App::Key::RightArrow, App::KeyModifier::Control, App::KeyShortcut::IsMulti::Yes },
@@ -192,7 +192,7 @@ int main(int argc, char** argv) {
                              }
 
                              if (prev_child && prev_child->is_base_widget()) {
-                                 static_cast<App::Base::Widget&>(const_cast<App::Object&>(*prev_child)).make_focused();
+                                 static_cast<App::Widget&>(const_cast<App::Object&>(*prev_child)).make_focused();
                              }
                          });
         key_bindings.add({ App::Key::B, App::KeyModifier::Control }, [&sidebar] {

@@ -1,18 +1,18 @@
-#include <app/application.h>
-#include <app/button.h>
 #include <app/flex_layout_engine.h>
-#include <app/text_label.h>
-#include <app/widget.h>
-#include <app/window.h>
 #include <eventloop/event.h>
 #include <graphics/font.h>
 #include <graphics/psf/font.h>
 #include <graphics/renderer.h>
+#include <gui/application.h>
+#include <gui/button.h>
+#include <gui/text_label.h>
+#include <gui/widget.h>
+#include <gui/window.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-class GlyphEditorWidgetCell final : public App::Widget {
-    APP_WIDGET(App::Widget, GlyphEditorWidgetCell)
+class GlyphEditorWidgetCell final : public GUI::Widget {
+    APP_WIDGET(GUI::Widget, GlyphEditorWidgetCell)
 
 public:
     GlyphEditorWidgetCell(Bitset<uint8_t>*& bitset, int index) : m_bitset(bitset), m_index(index) {}
@@ -27,7 +27,7 @@ public:
             return false;
         });
 
-        App::Widget::did_attach();
+        GUI::Widget::did_attach();
     }
 
     virtual void render() {
@@ -46,8 +46,8 @@ public:
     int m_index { 0 };
 };
 
-class GlyphEditorWidget final : public App::Widget {
-    APP_WIDGET(App::Widget, GlyphEditorWidget)
+class GlyphEditorWidget final : public GUI::Widget {
+    APP_WIDGET(GUI::Widget, GlyphEditorWidget)
 
 public:
     GlyphEditorWidget(int width, int height, SharedPtr<Font> font) : m_width(width), m_height(height) { set_font(font); }
@@ -60,11 +60,11 @@ public:
 
     virtual void did_attach() override {
         auto& layout = set_layout_engine<App::HorizontalFlexLayoutEngine>();
-        auto& left_container = layout.add<App::Widget>();
+        auto& left_container = layout.add<GUI::Widget>();
 
         auto& row_layout = left_container.set_layout_engine<App::VerticalFlexLayoutEngine>();
         for (int i = 0; i < m_height; i++) {
-            auto& row_widget = row_layout.add<App::Widget>();
+            auto& row_widget = row_layout.add<GUI::Widget>();
             auto& col_layout = row_widget.set_layout_engine<App::HorizontalFlexLayoutEngine>();
 
             for (int j = 0; j < m_width; j++) {
@@ -73,24 +73,24 @@ public:
             }
         }
 
-        auto& text_container = layout.add<App::Widget>();
+        auto& text_container = layout.add<GUI::Widget>();
         auto& text_layout = text_container.set_layout_engine<App::VerticalFlexLayoutEngine>();
 
-        m_info_label = text_layout.add_owned<App::TextLabel>("");
+        m_info_label = text_layout.add_owned<GUI::TextLabel>("");
 
-        auto& demo_label = text_layout.add<App::TextLabel>("abcdefghijklmnopqrstuvwxyz\n"
+        auto& demo_label = text_layout.add<GUI::TextLabel>("abcdefghijklmnopqrstuvwxyz\n"
                                                            "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n"
                                                            "1234567890`~!@#$%^&*()-=_+\n"
                                                            "[]{}\\|;:'\",.<>/?");
         demo_label.set_font(font());
 
-        App::Widget::did_attach();
+        GUI::Widget::did_attach();
     }
 
     Bitset<uint8_t>* m_bitset { nullptr };
     int m_width { 0 };
     int m_height { 0 };
-    SharedPtr<App::TextLabel> m_info_label;
+    SharedPtr<GUI::TextLabel> m_info_label;
 };
 
 static void print_usage_and_exit(const char* s) {
@@ -134,33 +134,33 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    auto app = App::Application::create();
+    auto app = GUI::Application::create();
 
-    auto window = App::Window::create(nullptr, 250, 150, 500, 600, "PSF Edit");
-    auto& main_widget = window->set_main_widget<App::Widget>();
+    auto window = GUI::Window::create(nullptr, 250, 150, 500, 600, "PSF Edit");
+    auto& main_widget = window->set_main_widget<GUI::Widget>();
 
     auto& layout = main_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
     auto& glyph_editor = layout.add<GlyphEditorWidget>(8, 16, font);
     glyph_editor.set_bitset(&font->bitset_for_glyph_id(0), 0);
 
-    auto& glyph_widget = layout.add<App::Widget>();
+    auto& glyph_widget = layout.add<GUI::Widget>();
     auto& row_layout = glyph_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
     for (int i = 0; i < 16; i++) {
-        auto& row_widget = row_layout.add<App::Widget>();
+        auto& row_widget = row_layout.add<GUI::Widget>();
         auto& col_layout = row_widget.set_layout_engine<App::HorizontalFlexLayoutEngine>();
         for (int j = 0; j < 16; j++) {
             int code_point = i * 16 + j;
-            auto& button = col_layout.add<App::Button>(String(static_cast<char>(code_point)));
+            auto& button = col_layout.add<GUI::Button>(String(static_cast<char>(code_point)));
             button.set_font(font);
-            button.on<App::ClickEvent>({}, [&, code_point](auto&) {
+            button.on<GUI::ClickEvent>({}, [&, code_point](auto&) {
                 glyph_editor.set_bitset(&font->bitset_for_glyph_id(code_point), code_point);
             });
         }
     }
 
-    auto& save_button = layout.add<App::Button>("Save");
+    auto& save_button = layout.add<GUI::Button>("Save");
     save_button.set_layout_constraint({ App::LayoutConstraint::AutoSize, 24 });
-    save_button.on<App::ClickEvent>({}, [&](auto&) {
+    save_button.on<GUI::ClickEvent>({}, [&](auto&) {
         if (!font->save_to_file(save_destination)) {
             fprintf(stderr, "psfedit: Failed to save font to `%s'\n", save_destination);
         }

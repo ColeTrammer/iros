@@ -1,10 +1,10 @@
-#include <app/base/application.h>
+#include <app/application.h>
 #include <app/layout_engine.h>
 #include <graphics/rect.h>
 
 namespace App {
-LayoutEngine::LayoutEngine(Base::Widget& parent) : m_parent(parent) {
-    set_margins(App::Base::Application::the().default_margins());
+LayoutEngine::LayoutEngine(Widget& parent) : m_parent(parent) {
+    set_margins(App::Application::the().default_margins());
 }
 
 void LayoutEngine::schedule_layout() {

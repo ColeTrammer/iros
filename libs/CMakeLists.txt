@@ -14,6 +14,7 @@ set(TARGETS
     libeventloop
     libext
     libgraphics
+    libgui
     libipc
     libliim
     libprocinfo
@@ -21,9 +22,9 @@ set(TARGETS
     libsh
     libsharedtest
     libsharedtest2
+    libterminal
     libtest
     libthread
-    libterminal
     libtinput
     libtui
 )

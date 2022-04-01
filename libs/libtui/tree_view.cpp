@@ -23,7 +23,7 @@ void TreeView::render() {
     render_items();
 }
 
-void TreeView::render_item(const App::Base::TreeViewItem& item) {
+void TreeView::render_item(const App::TreeViewItem& item) {
     auto renderer = ScrollComponent::get_renderer();
 
     auto text_rect = item.item_rect.adjusted(-padding());

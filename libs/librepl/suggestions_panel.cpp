@@ -1,4 +1,3 @@
-#include <app/base/widget.h>
 #include <edit/document.h>
 #include <eventloop/event.h>
 #include <tinput/terminal_glyph.h>

@@ -1,82 +1,71 @@
 #pragma once
 
-#include <app/base/window.h>
-#include <app/forward.h>
-#include <eventloop/object.h>
-#include <graphics/bitmap.h>
-#include <liim/hash_map.h>
-#include <liim/maybe.h>
-#include <liim/string.h>
-#include <sys/mman.h>
-#include <window_server/message.h>
+#include <app/widget.h>
+#include <eventloop/event.h>
+#include <eventloop/forward.h>
+#include <eventloop/key_bindings.h>
+#include <graphics/rect_set.h>
+
+APP_EVENT_PARENT(App, WindowEvent, Event, ((StringView, name)), (), ())
+APP_EVENT(App, WindowCloseEvent, WindowEvent, (), (), ())
+APP_EVENT(App, WindowForceRedrawEvent, WindowEvent, (), (), ())
+APP_EVENT(App, WindowDidResizeEvent, WindowEvent, (), (), ())
+APP_EVENT(App, WindowStateEvent, WindowEvent, (), ((bool, active)), ())
 
 namespace App {
-class PlatformWindow {
-public:
-    PlatformWindow() {}
-    virtual ~PlatformWindow() {}
+class Window : public Object {
+    APP_OBJECT(Window)
 
-    virtual SharedPtr<Bitmap> pixels() = 0;
-    virtual void flush_pixels() = 0;
-    virtual void did_resize() = 0;
-    virtual void do_set_visibility(int x, int y, bool visible) = 0;
-};
-
-class Window : public Base::Window {
-    APP_OBJECT(Window);
+    APP_EMITS(Object, WindowCloseEvent, WindowForceRedrawEvent, WindowDidResizeEvent, WindowStateEvent)
 
 public:
-    static Maybe<SharedPtr<Window>> find_by_wid(wid_t wid);
-    static void for_each_window(Function<void(Window&)>);
-
+    Window();
     virtual void initialize() override;
-    virtual ~Window();
+    virtual ~Window() override;
 
-    SharedPtr<Bitmap> pixels() { return m_platform_window->pixels(); }
+    const Rect& rect() const { return m_rect; }
+    void set_rect(const Rect& rect);
 
-    wid_t wid() const { return m_wid; }
+    void invalidate_rect(const Rect& rect);
+    const RectSet& dirty_rects() const { return m_dirty_rects; }
+    void clear_dirty_rects() { m_dirty_rects.clear(); }
 
-    void set_current_context_menu(ContextMenu* menu);
-    void clear_current_context_menu();
+    void set_key_bindings(KeyBindings key_bindings) { m_key_bindings = move(key_bindings); }
 
-    void hide();
-    void show(int x, int y);
-    bool visible() const { return m_visible; }
-    bool active() const { return m_active; }
-    bool has_alpha() const { return m_has_alpha; }
-    bool removed() const { return m_removed; }
+    void set_focused_widget(Widget* widget);
+    SharedPtr<Widget> focused_widget();
 
-    PlatformWindow& platform_window() { return *m_platform_window; }
-
-    wid_t parent_wid() const { return m_parent_wid; }
-
-    void set_id(wid_t id) {
-        assert(m_wid == 0);
-        m_wid = id;
+    template<typename T, typename... Args>
+    T& set_main_widget(Args... args) {
+        auto [result_base, result] = T::create_both_owned(this, forward<Args>(args)...);
+        result_base->set_positioned_rect(rect());
+        set_focused_widget(result_base.get());
+        invalidate_rect(rect());
+        m_main_widget = move(result_base);
+        return *result;
     }
 
-protected:
-    Window(int x, int y, int width, int height, String name, bool has_alpha = false,
-           WindowServer::WindowType window_type = WindowServer::WindowType::Application, wid_t parent_id = 0);
+    Widget& main_widget() { return *m_main_widget; }
+    const Widget& main_widget() const { return *m_main_widget; }
 
-    virtual void did_become_active() {}
-    virtual void did_become_inactive() {}
+    Widget* hit_test(const Widget& root, const Point& point) const;
+    void schedule_render();
+
+protected:
+    virtual void do_render() = 0;
 
 private:
-    virtual void do_render() override;
+    virtual bool is_window() const final override { return true; }
 
-    void hide_current_context_menu();
+    void flush_layout();
+    void set_hovered_widget(Widget* widget);
 
-    static void register_window(Window& window);
-    static void unregister_window(wid_t wid);
-
-    wid_t m_wid { 0 };
-    wid_t m_parent_wid { 0 };
-    WeakPtr<ContextMenu> m_current_context_menu;
-    UniquePtr<PlatformWindow> m_platform_window;
-    bool m_visible { true };
-    bool m_active { false };
-    bool m_has_alpha { false };
-    bool m_removed { false };
+    KeyBindings m_key_bindings;
+    WeakPtr<Widget> m_focused_widget;
+    WeakPtr<Widget> m_hovered_widget;
+    SharedPtr<Widget> m_main_widget;
+    RectSet m_dirty_rects;
+    Rect m_rect;
+    bool m_render_scheduled { false };
 };
 }

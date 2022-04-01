@@ -1,6 +1,6 @@
 #pragma once
 
-#include <app/base/application.h>
+#include <app/application.h>
 #include <eventloop/event_loop.h>
 #include <graphics/rect_set.h>
 #include <liim/pointers.h>
@@ -10,7 +10,7 @@
 #include <tui/root_window.h>
 
 namespace TUI {
-class Application : public App::Base::Application {
+class Application : public App::Application {
     APP_OBJECT(Application)
 
 public:

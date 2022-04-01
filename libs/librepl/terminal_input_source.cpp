@@ -10,14 +10,14 @@
 namespace Repl {
 class ReplLayoutEngine final : public App::LayoutEngine {
 public:
-    ReplLayoutEngine(App::Base::Widget& parent) : App::LayoutEngine(parent) {}
+    ReplLayoutEngine(App::Widget& parent) : App::LayoutEngine(parent) {}
 
-    virtual void do_add(App::Base::Widget& widget) override {
+    virtual void do_add(App::Widget& widget) override {
         assert(!m_display);
         m_display = &widget;
     }
 
-    virtual void do_remove(App::Base::Widget&) override {}
+    virtual void do_remove(App::Widget&) override {}
 
     virtual void layout() override {
         if (!m_display) {
@@ -38,7 +38,7 @@ public:
     }
 
 private:
-    App::Base::Widget* m_display { nullptr };
+    App::Widget* m_display { nullptr };
     bool m_first_layout { true };
 };
 

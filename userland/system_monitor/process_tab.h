@@ -1,11 +1,11 @@
 #pragma once
 
-#include <app/widget.h>
+#include <gui/widget.h>
 
 class ProcessModel;
 
-class ProcessTab final : public App::Widget {
-    APP_WIDGET(App::Widget, ProcessTab)
+class ProcessTab final : public GUI::Widget {
+    APP_WIDGET(GUI::Widget, ProcessTab)
 
 public:
     ProcessTab(SharedPtr<ProcessModel> model);

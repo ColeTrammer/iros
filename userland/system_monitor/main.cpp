@@ -1,16 +1,16 @@
-#include <app/application.h>
-#include <app/tab_widget.h>
-#include <app/window.h>
+#include <gui/application.h>
+#include <gui/tab_widget.h>
+#include <gui/window.h>
 
 #include "process_model.h"
 #include "process_tab.h"
 #include "resource_usage_tab.h"
 
 int main() {
-    auto app = App::Application::create();
+    auto app = GUI::Application::create();
 
-    auto window = App::Window::create(nullptr, 150, 150, 600, 400, "System Monitor");
-    auto& tabs = window->set_main_widget<App::TabWidget>();
+    auto window = GUI::Window::create(nullptr, 150, 150, 600, 400, "System Monitor");
+    auto& tabs = window->set_main_widget<GUI::TabWidget>();
 
     auto model = ProcessModel::create(nullptr);
 

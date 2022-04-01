@@ -1,4 +1,3 @@
-#include <app/base/widget.h>
 #include <tinput/terminal_glyph.h>
 #include <tinput/terminal_renderer.h>
 #include <tui/label.h>

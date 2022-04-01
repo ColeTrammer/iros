@@ -5,4 +5,4 @@ set(SOURCES
 
 add_os_executable(taskbar bin)
 
-target_link_libraries(taskbar libapp)
+target_link_libraries(taskbar libgui)

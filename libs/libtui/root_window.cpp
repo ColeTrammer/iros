@@ -12,7 +12,7 @@ void RootWindow::initialize() {
         return false;
     });
 
-    App::Base::Window::initialize();
+    App::Window::initialize();
 }
 
 void RootWindow::do_render() {

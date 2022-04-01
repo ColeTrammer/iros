@@ -1,4 +1,4 @@
-#include <app/base/widget_bridge.h>
+#include <app/widget_bridge.h>
 #include <edit/display.h>
 #include <edit/display_bridge.h>
 #include <edit/document.h>
@@ -12,8 +12,8 @@
 #include <unistd.h>
 
 namespace Edit {
-Display::Display(SharedPtr<App::Base::WidgetBridge> widget_bridge, SharedPtr<DisplayBridge> display_bridge)
-    : App::Base::Widget(move(widget_bridge)), m_bridge(move(display_bridge)), m_cursors { *this } {}
+Display::Display(SharedPtr<App::WidgetBridge> widget_bridge, SharedPtr<DisplayBridge> display_bridge)
+    : App::Widget(move(widget_bridge)), m_bridge(move(display_bridge)), m_cursors { *this } {}
 
 void Display::initialize() {
     on<App::ResizeEvent>([this](auto&) {
@@ -91,7 +91,7 @@ void Display::initialize() {
         return true;
     });
 
-    App::Base::Widget::initialize();
+    App::Widget::initialize();
 }
 
 Display::~Display() {}

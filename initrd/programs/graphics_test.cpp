@@ -1,12 +1,12 @@
-#include <app/application.h>
-#include <app/widget.h>
-#include <app/window.h>
 #include <graphics/renderer.h>
 #include <graphics/ttf/font.h>
+#include <gui/application.h>
+#include <gui/widget.h>
+#include <gui/window.h>
 #include <liim/string.h>
 
-class TestWidget final : public App::Widget {
-    APP_WIDGET(App::Widget, TestWidget)
+class TestWidget final : public GUI::Widget {
+    APP_WIDGET(GUI::Widget, TestWidget)
 
 public:
     TestWidget() {}
@@ -18,7 +18,7 @@ public:
         set_font(TTF::Font::try_create_from_buffer(move(*font_file)));
         assert(font());
 
-        App::Widget::did_attach();
+        GUI::Widget::did_attach();
     }
 
     virtual void render() override {
@@ -33,14 +33,14 @@ public:
         renderer.draw_line({ 300, 50 }, { 350, 350 }, ColorValue::White);
 
         renderer.clear_rect({ 100, 100, 200, 200 }, Color(255, 255, 255, 123));
-        App::Widget::render();
+        GUI::Widget::render();
     }
 };
 
 int main() {
-    auto app = App::Application::create();
+    auto app = GUI::Application::create();
 
-    auto window = App::Window::create(nullptr, 50, 50, 400, 400, "Graphics Test", true);
+    auto window = GUI::Window::create(nullptr, 50, 50, 400, 400, "Graphics Test", true);
     window->set_main_widget<TestWidget>();
     app->enter();
     return 0;

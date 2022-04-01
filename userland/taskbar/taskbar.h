@@ -1,8 +1,8 @@
 #pragma once
 
-#include <app/widget.h>
 #include <eventloop/timer.h>
 #include <graphics/rect.h>
+#include <gui/widget.h>
 #include <liim/pointers.h>
 #include <liim/vector.h>
 
@@ -16,9 +16,9 @@ constexpr int taskbar_button_x_margin = 12;
 constexpr int taskbar_button_y_margin = 8;
 
 class Taskbar final
-    : public App::Widget
-    , public App::WindowServerListener {
-    APP_WIDGET(App::Widget, Taskbar)
+    : public GUI::Widget
+    , public GUI::WindowServerListener {
+    APP_WIDGET(GUI::Widget, Taskbar)
 
 public:
     Taskbar();

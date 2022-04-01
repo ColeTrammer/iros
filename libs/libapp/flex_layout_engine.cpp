@@ -1,4 +1,4 @@
-#include <app/base/application.h>
+#include <app/application.h>
 #include <app/flex_layout_engine.h>
 
 namespace App {
@@ -7,13 +7,13 @@ static constexpr int size_in_layout_direction(FlexLayoutEngine::Direction direct
     return direction == FlexLayoutEngine::Direction::Horizontal ? size.width() : size.height();
 }
 
-FlexLayoutEngine::FlexLayoutEngine(Base::Widget& parent, Direction direction) : LayoutEngine(parent), m_direction(direction) {
-    set_spacing(App::Base::Application::the().default_spacing());
+FlexLayoutEngine::FlexLayoutEngine(Widget& parent, Direction direction) : LayoutEngine(parent), m_direction(direction) {
+    set_spacing(App::Application::the().default_spacing());
 }
 
 FlexLayoutEngine::~FlexLayoutEngine() {}
 
-void FlexLayoutEngine::do_remove(Base::Widget& child) {
+void FlexLayoutEngine::do_remove(Widget& child) {
     m_items.remove_if([&](auto& widget) {
         return widget.get() == &child;
     });
@@ -80,7 +80,7 @@ void FlexLayoutEngine::layout() {
     }
 }
 
-void FlexLayoutEngine::do_add(Base::Widget& widget) {
+void FlexLayoutEngine::do_add(Widget& widget) {
     m_items.add(widget.shared_from_this());
 }
 
@@ -115,7 +115,7 @@ int FlexLayoutEngine::auto_sized_item_count() const {
     return count;
 }
 
-bool FlexLayoutEngine::auto_sized(const Base::Widget& item) const {
+bool FlexLayoutEngine::auto_sized(const Widget& item) const {
     return !item.hidden() && size_in_layout_direction(m_direction, item.layout_constraint()) == LayoutConstraint::AutoSize;
 }
 }
