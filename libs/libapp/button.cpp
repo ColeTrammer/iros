@@ -7,6 +7,8 @@ namespace App {
 Button::Button(String label) : m_label(move(label)) {}
 
 void Button::did_attach() {
+    set_accepts_focus(true);
+
     on<MouseDownEvent>([this](const MouseDownEvent& event) {
         if (event.left_button()) {
             m_did_mousedown = true;
