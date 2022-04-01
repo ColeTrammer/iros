@@ -127,7 +127,7 @@ void TreeView::rebuild_layout() {
         process_item(item);
     }
 
-    set_layout_constraint({ LayoutConstraint::AutoSize, y });
+    set_layout_constraint({ layout_constraint().width(), y });
     invalidate();
 }
 }
