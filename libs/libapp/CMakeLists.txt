@@ -11,6 +11,7 @@ set(SOURCES
     application.cpp
     button.cpp
     context_menu.cpp
+    file_system_model.cpp
     flex_layout_engine.cpp
     icon_view.cpp
     layout_engine.cpp

@@ -1,5 +1,4 @@
 set(SOURCES
-    file_system_model.cpp
     main.cpp
 )
 

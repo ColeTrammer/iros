@@ -1,5 +1,6 @@
 #include <app/application.h>
 #include <app/button.h>
+#include <app/file_system_model.h>
 #include <app/flex_layout_engine.h>
 #include <app/icon_view.h>
 #include <app/tree_view.h>
@@ -9,8 +10,6 @@
 #include <stdlib.h>
 #include <tui/application.h>
 #include <tui/table_view.h>
-
-#include "file_system_model.h"
 
 static void print_usage_and_exit(const char* s) {
     fprintf(stderr, "Usage: %s [-t] [path]\n", s);
@@ -39,7 +38,7 @@ int main(int argc, char** argv) {
         starting_path = argv[optind];
     }
 
-    auto model = FileSystemModel::create(nullptr);
+    auto model = App::FileSystemModel::create(nullptr);
     auto root = model->load_initial_data(starting_path);
     if (!root) {
         error_log("Failed to load path: `{}'", starting_path);
@@ -70,7 +69,7 @@ int main(int argc, char** argv) {
     auto& main_layout = main_widget.set_layout_engine<App::HorizontalFlexLayoutEngine>();
 
     auto& tree_view = main_layout.add<App::TreeView>();
-    tree_view.set_name_column(FileSystemModel::Column::Name);
+    tree_view.set_name_column(App::FileSystemModel::Column::Name);
     tree_view.set_model(model);
 
     auto& right_widget = main_layout.add<App::Widget>();
@@ -80,20 +79,20 @@ int main(int argc, char** argv) {
     parent_button.set_layout_constraint({ 100, 24 });
 
     auto& view = layout.add<App::IconView>();
-    view.set_name_column(FileSystemModel::Column::Name);
+    view.set_name_column(App::FileSystemModel::Column::Name);
     view.set_model(model);
     view.set_root_item(root);
 
     parent_button.on<App::ClickEvent>({}, [&](auto&) {
         auto* root = view.root_item();
         if (root->parent()) {
-            model->load_data(static_cast<FileSystemObject&>(*root->parent()));
+            model->load_data(static_cast<App::FileSystemObject&>(*root->parent()));
             view.set_root_item(root->parent());
         }
     });
 
     view.on<App::ViewItemActivated>({}, [&](auto& event) {
-        auto& object = static_cast<FileSystemObject&>(*event.item());
+        auto& object = static_cast<App::FileSystemObject&>(*event.item());
 
         fprintf(stderr, "Activated: `%s'\n", object.name().string());
         if (object.mode() & S_IFDIR) {

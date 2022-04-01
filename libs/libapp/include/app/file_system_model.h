@@ -5,7 +5,8 @@
 #include <liim/vector.h>
 #include <sys/types.h>
 
-class FileSystemObject : public App::ModelItem {
+namespace App {
+class FileSystemObject : public ModelItem {
 public:
     FileSystemObject(SharedPtr<Bitmap> icon, String name, String owner, String group, mode_t mode, off_t size)
         : m_icon(move(icon)), m_name(move(name)), m_owner(move(owner)), m_group(move(group)), m_mode(mode), m_size(size) {}
@@ -32,7 +33,7 @@ private:
     bool m_loaded { false };
 };
 
-class FileSystemModel final : public App::Model {
+class FileSystemModel final : public Model {
     APP_OBJECT(FileSystemModel)
 
 public:
@@ -48,7 +49,7 @@ public:
     };
 
     virtual int field_count() const override { return Column::__Count; }
-    virtual App::ModelItemInfo header_info(int field, int request) const override;
+    virtual ModelItemInfo header_info(int field, int request) const override;
 
     Ext::Path full_path(const FileSystemObject& object);
 
@@ -58,3 +59,4 @@ public:
 private:
     SharedPtr<Bitmap> m_text_file_icon;
 };
+}

@@ -1,11 +1,13 @@
+#include <app/file_system_model.h>
 #include <dirent.h>
 #include <graphics/png.h>
 #include <grp.h>
 #include <pwd.h>
 #include <sys/stat.h>
 
-#include "file_system_model.h"
+// #define FILE_SYSTEM_MODEL_DEBUG
 
+namespace App {
 FileSystemModel::FileSystemModel() {
     m_text_file_icon = decode_png_file(RESOURCE_ROOT "/usr/share/text-file-32.png");
     assert(m_text_file_icon);
@@ -22,25 +24,25 @@ Ext::Path FileSystemModel::full_path(const FileSystemObject& object) {
     return base.join_component(object.name());
 }
 
-App::ModelItemInfo FileSystemObject::info(int field, int request) const {
-    auto info = App::ModelItemInfo {};
+ModelItemInfo FileSystemObject::info(int field, int request) const {
+    auto info = ModelItemInfo {};
     switch (field) {
         case FileSystemModel::Column::Name:
-            if (request & App::ModelItemInfo::Request::Text)
+            if (request & ModelItemInfo::Request::Text)
                 info.set_text(name());
-            if (request & App::ModelItemInfo::Request::Bitmap)
+            if (request & ModelItemInfo::Request::Bitmap)
                 info.set_bitmap(icon());
             break;
         case FileSystemModel::Column::Owner:
-            if (request & App::ModelItemInfo::Request::Text)
+            if (request & ModelItemInfo::Request::Text)
                 info.set_text(owner());
             break;
         case FileSystemModel::Column::Group:
-            if (request & App::ModelItemInfo::Request::Text)
+            if (request & ModelItemInfo::Request::Text)
                 info.set_text(group());
             break;
         case FileSystemModel::Column::Size:
-            if (request & App::ModelItemInfo::Request::Text)
+            if (request & ModelItemInfo::Request::Text)
                 info.set_text(format("{}", size()));
             break;
         default:
@@ -49,23 +51,23 @@ App::ModelItemInfo FileSystemObject::info(int field, int request) const {
     return info;
 }
 
-App::ModelItemInfo FileSystemModel::header_info(int field, int request) const {
-    auto info = App::ModelItemInfo {};
+ModelItemInfo FileSystemModel::header_info(int field, int request) const {
+    auto info = ModelItemInfo {};
     switch (field) {
         case Column::Name:
-            if (request & App::ModelItemInfo::Request::Text)
+            if (request & ModelItemInfo::Request::Text)
                 info.set_text("Name");
             break;
         case Column::Owner:
-            if (request & App::ModelItemInfo::Request::Text)
+            if (request & ModelItemInfo::Request::Text)
                 info.set_text("Owner");
             break;
         case Column::Group:
-            if (request & App::ModelItemInfo::Request::Text)
+            if (request & ModelItemInfo::Request::Text)
                 info.set_text("Group");
             break;
         case Column::Size:
-            if (request & App::ModelItemInfo::Request::Text)
+            if (request & ModelItemInfo::Request::Text)
                 info.set_text("Size");
             break;
     }
@@ -109,7 +111,10 @@ void FileSystemModel::load_data(FileSystemObject& object) {
     object.set_loaded(true);
 
     auto base_path = full_path(object);
+
+#ifdef FILE_SYSTEM_MODEL_DEBUG
     error_log("Loading data for: `{}'", base_path);
+#endif /* FILE_SYSTEM_MODEL_DEBUG */
 
     dirent** dirents;
     int dirent_count;
@@ -130,4 +135,5 @@ void FileSystemModel::load_data(FileSystemObject& object) {
         free(dirent);
     }
     free(dirents);
+}
 }
