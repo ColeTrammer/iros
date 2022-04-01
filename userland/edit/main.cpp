@@ -1,4 +1,5 @@
 #include <app/application.h>
+#include <app/file_system_model.h>
 #include <app/flex_layout_engine.h>
 #include <app/window.h>
 #include <edit/document.h>
@@ -8,6 +9,7 @@
 #include <tinput/terminal_renderer.h>
 #include <tui/application.h>
 #include <tui/terminal_panel.h>
+#include <tui/tree_view.h>
 #include <unistd.h>
 
 #include "app_display.h"
@@ -77,6 +79,18 @@ int main(int argc, char** argv) {
         return Edit::Document::create_empty();
     };
 
+    auto base_file_path = [&]() -> String {
+        if (read_from_stdin) {
+            return "./";
+        }
+        if (argc - optind == 1) {
+            if (auto maybe_path = Ext::Path::resolve(argv[optind])) {
+                return maybe_path.value().dirname();
+            }
+        }
+        return "./";
+    }();
+
     if (use_graphics_mode) {
         auto app = App::Application::create();
 
@@ -104,7 +118,28 @@ int main(int argc, char** argv) {
 
     auto& root_window = app->root_window();
     auto& main_widget = root_window.set_main_widget<BackgroundPanel>();
-    auto& main_layout = main_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
+
+    auto& statusbar_layout = main_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
+    statusbar_layout.set_spacing(1);
+
+    auto& main_content_container = statusbar_layout.add<BackgroundPanel>();
+    statusbar_layout.add<TerminalStatusBar>();
+
+    auto& sidebar_layout = main_content_container.set_layout_engine<App::HorizontalFlexLayoutEngine>();
+    sidebar_layout.set_spacing(1);
+
+    auto file_system_model = App::FileSystemModel::create(nullptr);
+    auto file_system_root = file_system_model->load_initial_data(base_file_path);
+
+    auto& sidebar = sidebar_layout.add<TUI::TreeView>();
+    sidebar.set_name_column(App::FileSystemModel::Column::Name);
+    sidebar.set_model(file_system_model);
+    sidebar.set_root_item(file_system_root);
+    sidebar.set_layout_constraint({ 25, App::LayoutConstraint::AutoSize });
+    sidebar.set_hidden(true);
+
+    auto& content_container = sidebar_layout.add<BackgroundPanel>();
+    auto& main_layout = content_container.set_layout_engine<App::VerticalFlexLayoutEngine>();
     main_layout.set_spacing(1);
 
     auto& display_conainer = main_layout.add<BackgroundPanel>();
@@ -120,8 +155,6 @@ int main(int argc, char** argv) {
 
     auto terminal = SharedPtr<TUI::TerminalPanel> {};
     auto& terminal_container_layout = terminal_container.set_layout_engine<App::HorizontalFlexLayoutEngine>();
-
-    main_layout.add<TerminalStatusBar>();
 
     Function<void(TerminalDisplay&)> split_display;
     Function<void(TerminalDisplay&)> make_new_display;
@@ -162,6 +195,9 @@ int main(int argc, char** argv) {
                                  static_cast<App::Base::Widget&>(const_cast<App::Object&>(*prev_child)).make_focused();
                              }
                          });
+        key_bindings.add({ App::Key::B, App::KeyModifier::Control }, [&sidebar] {
+            sidebar.set_hidden(!sidebar.hidden());
+        });
 
         display.on<Edit::SplitDisplayEvent>({}, [&display, &split_display](auto&) {
             split_display(display);
@@ -231,6 +267,9 @@ int main(int argc, char** argv) {
             terminal_container.set_hidden(true);
 
             TerminalStatusBar::the().active_display().make_focused();
+        });
+        terminal_key_bindings.add({ App::Key::B, App::KeyModifier::Control }, [&sidebar] {
+            sidebar.set_hidden(!sidebar.hidden());
         });
 
         terminal->make_focused();
