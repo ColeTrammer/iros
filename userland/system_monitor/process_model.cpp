@@ -90,6 +90,8 @@ void ProcessModel::load_data() {
     }
 
     free_procfs_info(info);
+
+    emit<SystemMonitor::ProcessModelDidUpdate>();
 }
 
 App::ModelItemInfo ProcessInfo::info(int field, int request) const {

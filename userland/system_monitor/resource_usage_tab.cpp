@@ -13,7 +13,7 @@ void ResourceUsageTab::did_attach() {
     m_cpu_label = layout.add_owned<GUI::TextLabel>("CPU: 0%");
     m_memory_label = layout.add_owned<GUI::TextLabel>("Memory: 0 / 0 (0%)");
 
-    listen<App::ModelUpdateEvent>(*m_model, [this](auto&) {
+    listen<SystemMonitor::ProcessModelDidUpdate>(*m_model, [this](auto&) {
         update_display();
     });
     update_display();

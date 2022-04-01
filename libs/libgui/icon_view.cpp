@@ -117,7 +117,7 @@ void IconView::rebuild_layout() {
 }
 
 void IconView::install_model_listeners(App::Model& model) {
-    listen<App::ModelUpdateEvent>(model, [this, &model](auto&) {
+    listen<App::ModelDidInsertItem, App::ModelDidRemoveItem, App::ModelDidSetRoot>(model, [this, &model](auto&) {
         rebuild_layout();
     });
 

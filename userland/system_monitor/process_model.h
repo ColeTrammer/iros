@@ -1,6 +1,7 @@
 #pragma once
 
 #include <app/model.h>
+#include <eventloop/event.h>
 #include <eventloop/timer.h>
 #include <liim/vector.h>
 
@@ -55,8 +56,12 @@ private:
     uint64_t m_kernel_ticks { 0 };
 };
 
+APP_EVENT(SystemMonitor, ProcessModelDidUpdate, App::Event, (), (), ())
+
 class ProcessModel final : public App::Model {
     APP_OBJECT(ProcessModel)
+
+    APP_EMITS(App::Model, SystemMonitor::ProcessModelDidUpdate);
 
 public:
     ProcessModel();

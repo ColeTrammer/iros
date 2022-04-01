@@ -81,7 +81,7 @@ void View::set_hovered_item(ModelItem* item) {
 }
 
 void View::install_model_listeners(Model& model) {
-    listen<ModelUpdateEvent>(model, [this](auto&) {
+    listen<App::ModelDidInsertItem, App::ModelDidRemoveItem, App::ModelDidSetRoot>(model, [this](auto&) {
         if (!root_item()) {
             set_root_item(this->model()->model_item_root());
         }
