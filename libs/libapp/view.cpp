@@ -13,7 +13,8 @@ void View::initialize() {
     set_accepts_focus(true);
 
     on<MouseDownEvent>([this](const MouseDownEvent& event) {
-        auto item = item_at_position({ event.x(), event.y() });
+        auto mouse_position = Point { event.x(), event.y() }.translated(scroll_offset());
+        auto item = item_at_position(mouse_position);
         if (event.left_button()) {
             switch (event.cyclic_count(2)) {
                 case 1:

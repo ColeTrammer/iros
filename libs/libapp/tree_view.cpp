@@ -16,7 +16,8 @@ void TreeView::initialize() {
     });
 
     on<MouseDownEvent>([this](const MouseDownEvent& event) {
-        auto* item = internal_item_at_position({ event.x(), event.y() });
+        auto mouse_position = Point { event.x(), event.y() }.translated(scroll_offset());
+        auto* item = internal_item_at_position(mouse_position);
         if (!item) {
             return false;
         }
