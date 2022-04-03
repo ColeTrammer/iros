@@ -138,6 +138,8 @@ int main(int argc, char** argv) {
     sidebar.set_layout_constraint({ 25, App::LayoutConstraint::AutoSize });
     sidebar.set_hidden(true);
 
+    file_system_model->install_on_tree_view(sidebar.base());
+
     auto& content_container = sidebar_layout.add<BackgroundPanel>();
     auto& main_layout = content_container.set_layout_engine<App::VerticalFlexLayoutEngine>();
     main_layout.set_spacing(1);

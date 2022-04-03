@@ -1,4 +1,5 @@
 #include <app/file_system_model.h>
+#include <app/tree_view.h>
 #include <dirent.h>
 #include <graphics/png.h>
 #include <grp.h>
@@ -135,5 +136,13 @@ void FileSystemModel::load_data(FileSystemObject& object) {
         free(dirent);
     }
     free(dirents);
+}
+
+void FileSystemModel::install_on_tree_view(TreeView& view) {
+    listen<TreeViewItemExpanded>(view, [this, &view](const TreeViewItemExpanded& event) {
+        if (view.model() == this) {
+            load_data(static_cast<FileSystemObject&>(*event.item()));
+        }
+    });
 }
 }

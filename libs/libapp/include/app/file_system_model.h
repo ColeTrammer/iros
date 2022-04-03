@@ -56,6 +56,8 @@ public:
     FileSystemObject* load_initial_data(const String& path);
     void load_data(FileSystemObject& object);
 
+    void install_on_tree_view(TreeView& view);
+
 private:
     SharedPtr<Bitmap> m_text_file_icon;
 };
