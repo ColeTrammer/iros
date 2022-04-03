@@ -4,6 +4,9 @@
 #include <app/tree_view_interface.h>
 #include <app/view.h>
 
+APP_EVENT(App, TreeViewItemExpanded, Event, (), ((ModelItem*, item)), ())
+APP_EVENT(App, TreeViewItemClosed, Event, (), ((ModelItem*, item)), ())
+
 namespace App {
 struct TreeViewItem {
     String name;
@@ -17,6 +20,8 @@ struct TreeViewItem {
 
 class TreeView : public View {
     APP_OBJECT(TreeView)
+
+    APP_EMITS(View, TreeViewItemExpanded, TreeViewItemClosed)
 
     APP_TREE_VIEW_BRIDGE_INTERFACE_FORWARD(bridge())
 

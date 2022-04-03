@@ -25,6 +25,12 @@ void TreeView::initialize() {
         if (event.left_button()) {
             item->open = !item->open;
             rebuild_layout();
+
+            if (item->open) {
+                emit<TreeViewItemExpanded>(item->item);
+            } else {
+                emit<TreeViewItemClosed>(item->item);
+            }
             return true;
         }
         return false;
