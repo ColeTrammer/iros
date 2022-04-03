@@ -62,8 +62,38 @@ TreeViewItem* TreeView::internal_item_at_position(const Point& point) {
     return find(m_items);
 }
 
+TreeViewItem* TreeView::internal_item_for_model_item(const ModelItem* target) {
+    Function<TreeViewItem*(Vector<TreeViewItem>&)> find = [&](Vector<TreeViewItem>& items) -> TreeViewItem* {
+        for (auto& item : items) {
+            if (item.item == target) {
+                return &item;
+            }
+            if (auto* result = find(item.children)) {
+                return result;
+            }
+        }
+        return nullptr;
+    };
+
+    return find(m_items);
+}
+
 void TreeView::install_model_listeners(Model& model) {
-    listen<ModelUpdateEvent>(model, [this, &model](auto&) {
+    listen<ModelDidInsertItem>(model, [this](const ModelDidInsertItem& event) {
+        if (auto* parent = internal_item_for_model_item(event.parent())) {
+            parent->children.insert(create_tree_view_item(event.child(), parent->level + 1), event.index_into_parent());
+            rebuild_layout();
+        }
+    });
+
+    listen<ModelDidRemoveItem>(model, [this](const ModelDidRemoveItem& event) {
+        if (auto* parent = internal_item_for_model_item(event.parent())) {
+            parent->children.remove(event.index_into_parent());
+            rebuild_layout();
+        }
+    });
+
+    listen<ModelDidSetRoot>(model, [this](auto&) {
         rebuild_items();
     });
 
@@ -77,20 +107,20 @@ void TreeView::uninstall_model_listeners(Model& model) {
     View::uninstall_model_listeners(model);
 }
 
+TreeViewItem TreeView::create_tree_view_item(ModelItem* item, int level) {
+    auto info = item->info(name_column(), ModelItemInfo::Request::Text);
+
+    Vector<TreeViewItem> children;
+    auto item_count = item->item_count();
+    for (int r = 0; r < item_count; r++) {
+        children.add(create_tree_view_item(item->model_item_at(r), level + 1));
+    }
+
+    return TreeViewItem { info.text().value_or(""), {}, {}, item, level, false, move(children) };
+}
+
 void TreeView::rebuild_items() {
     m_items.clear();
-
-    Function<TreeViewItem(ModelItem*, int)> process_item = [&](ModelItem* item, int level) {
-        auto info = item->info(name_column(), ModelItemInfo::Request::Text);
-
-        Vector<TreeViewItem> children;
-        auto item_count = item->item_count();
-        for (int r = 0; r < item_count; r++) {
-            children.add(process_item(item->model_item_at(r), level + 1));
-        }
-
-        return TreeViewItem { info.text().value_or(""), {}, {}, item, level, false, move(children) };
-    };
 
     auto* root_item = this->root_item();
     if (!root_item) {
@@ -100,7 +130,7 @@ void TreeView::rebuild_items() {
     auto item_count = root_item->item_count();
     for (int r = 0; r < item_count; r++) {
         auto* item = root_item->model_item_at(r);
-        m_items.add(process_item(item, 0));
+        m_items.add(create_tree_view_item(item, 0));
     }
 
     rebuild_layout();

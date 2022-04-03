@@ -43,10 +43,13 @@ public:
     const TreeViewBridge& bridge() const { return *m_bridge; }
 
     TreeViewItem* internal_item_at_position(const Point& point);
+    TreeViewItem* internal_item_for_model_item(const ModelItem* item);
 
 private:
     virtual void install_model_listeners(Model& model) override;
     virtual void uninstall_model_listeners(Model& model) override;
+
+    TreeViewItem create_tree_view_item(ModelItem* item, int level);
 
     void rebuild_items();
     void rebuild_layout();

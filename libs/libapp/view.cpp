@@ -81,10 +81,18 @@ void View::set_hovered_item(ModelItem* item) {
 }
 
 void View::install_model_listeners(Model& model) {
-    listen<App::ModelDidInsertItem, App::ModelDidRemoveItem, App::ModelDidSetRoot>(model, [this](auto&) {
-        if (!root_item()) {
-            set_root_item(this->model()->model_item_root());
+    listen<ModelDidRemoveItem>(model, [this](const App::ModelDidRemoveItem& event) {
+        selection().remove(*event.child_warning_stale());
+        if (hovered_item() == event.child_warning_stale()) {
+            set_hovered_item(nullptr);
         }
+        bridge().invalidate_all();
+    });
+
+    listen<ModelDidSetRoot>(model, [this](auto&) {
+        set_root_item(this->model()->model_item_root());
+        selection().clear();
+        set_hovered_item(nullptr);
         bridge().invalidate_all();
     });
 }

@@ -52,6 +52,8 @@ public:
     }
 
     void remove_child(ModelItem& parent, int index) {
+        // FIXME: if the child has its own children, they need to be explicitly removed
+        //        to prevent stale pointers from lying around.
         auto* child = parent.model_item_at(index);
         parent.remove_child(index);
         did_remove_child(&parent, child, index);
