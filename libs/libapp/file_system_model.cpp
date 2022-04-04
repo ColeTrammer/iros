@@ -119,7 +119,7 @@ void FileSystemModel::load_data(FileSystemObject& object) {
 
     dirent** dirents;
     int dirent_count;
-    if ((dirent_count = scandir(base_path.to_string().string(), &dirents, ignore_dots, nullptr)) == -1) {
+    if ((dirent_count = scandir(base_path.to_string().string(), &dirents, ignore_dots, &alphasort)) == -1) {
         return;
     }
 
