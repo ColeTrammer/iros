@@ -138,6 +138,20 @@ int main(int argc, char** argv) {
     sidebar.set_layout_constraint({ 25, App::LayoutConstraint::AutoSize });
     sidebar.set_hidden(true);
 
+    sidebar.on<App::ViewItemActivated>({}, [&](const App::ViewItemActivated& event) {
+        auto& item = static_cast<App::FileSystemObject&>(*event.item());
+        auto path = file_system_model->full_path(item);
+
+        auto error = Maybe<String> {};
+        auto new_document = Edit::Document::create_from_file(path.to_string(), error);
+        auto& active_display = TerminalStatusBar::the().active_display();
+        if (!error) {
+            active_display.set_document(move(new_document));
+        } else {
+            active_display.send_status_message(*error);
+        }
+    });
+
     file_system_model->install_on_tree_view(sidebar.base());
 
     auto& content_container = sidebar_layout.add<BackgroundPanel>();
