@@ -283,15 +283,13 @@ App::ObjectBoundCoroutine TerminalDisplay::do_open_prompt() {
         co_return;
     }
 
-    auto error = Maybe<String> {};
-    auto document = Edit::Document::create_from_file(*result, error);
-    if (error) {
-        send_status_message(move(*error));
+    auto document_or_error = Edit::Document::create_from_file(*result);
+    if (document_or_error.is_error()) {
+        send_status_message(move(document_or_error.error()));
         co_return;
     }
 
-    assert(document);
-    set_document(document);
+    set_document(move(document_or_error.value()));
 }
 
 int TerminalDisplay::enter() {

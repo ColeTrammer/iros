@@ -14,6 +14,7 @@
 #include <eventloop/object.h>
 #include <liim/function.h>
 #include <liim/pointers.h>
+#include <liim/result.h>
 #include <liim/vector.h>
 
 APP_EVENT(Edit, DeleteLines, App::Event, (), ((int, line_index), (int, line_count)), ())
@@ -48,9 +49,10 @@ class Document final : public App::Object {
               DocumentTypeChanged, Submit, Change)
 
 public:
-    static SharedPtr<Document> create_from_stdin(const String& path, Maybe<String>& error_message);
-    static SharedPtr<Document> create_from_file(const String& path, Maybe<String>& error_message);
+    static Result<SharedPtr<Document>, String> create_from_stdin(const String& path);
+    static Result<SharedPtr<Document>, String> create_from_file(const String& path);
     static SharedPtr<Document> create_from_text(const String& text);
+    static SharedPtr<Document> create_default(const String& path);
     static SharedPtr<Document> create_empty();
 
     struct StateSnapshot {

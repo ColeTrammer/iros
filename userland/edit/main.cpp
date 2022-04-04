@@ -69,13 +69,22 @@ int main(int argc, char** argv) {
         print_usage_and_exit(*argv);
     }
 
-    auto error_message = Maybe<String> {};
-    auto make_document = [&] {
+    auto path = [&] {
         if (read_from_stdin) {
-            return Edit::Document::create_from_stdin(argv[optind] ? String(argv[optind]) : String(""), error_message);
+            return argv[optind] ? String(argv[optind]) : String("");
         }
         if (argc - optind == 1) {
-            return Edit::Document::create_from_file(String(argv[optind]), error_message);
+            return String(argv[optind]);
+        }
+        return String("");
+    }();
+
+    auto make_document = [&]() -> Result<SharedPtr<Edit::Document>, String> {
+        if (read_from_stdin) {
+            return Edit::Document::create_from_stdin(path);
+        }
+        if (argc - optind == 1) {
+            return Edit::Document::create_from_file(path);
         }
         return Edit::Document::create_empty();
     };
@@ -111,9 +120,12 @@ int main(int argc, char** argv) {
             app->main_event_loop().set_should_exit(true);
         };
 
-        display.set_document(make_document());
-        if (error_message) {
-            display.send_status_message(*error_message);
+        auto document_or_error = make_document();
+        if (document_or_error.is_error()) {
+            display.send_status_message(document_or_error.error());
+            display.set_document(Edit::Document::create_default(path));
+        } else {
+            display.set_document(move(document_or_error.value()));
         }
         display.enter();
         app->enter();
@@ -152,15 +164,14 @@ int main(int argc, char** argv) {
         auto& item = static_cast<App::FileSystemObject&>(*event.item());
         auto path = file_system_model->full_path(item);
 
-        auto error = Maybe<String> {};
-        auto new_document = Edit::Document::create_from_file(path.to_string(), error);
+        auto document_or_error = Edit::Document::create_from_file(path.to_string());
         auto& active_display = TerminalStatusBar::the().active_display();
-        if (error) {
-            active_display.send_status_message(*error);
+        if (document_or_error.is_error()) {
+            active_display.send_status_message(document_or_error.error());
             return;
         }
 
-        active_display.set_document(move(new_document));
+        active_display.set_document(move(document_or_error.value()));
     });
 
     file_system_model->install_on_tree_view(sidebar.base());
@@ -262,9 +273,12 @@ int main(int argc, char** argv) {
 
     setup_display_handlers(display);
 
-    display.set_document(make_document());
-    if (error_message) {
-        display.send_status_message(*error_message);
+    auto document_or_error = make_document();
+    if (document_or_error.is_error()) {
+        display.send_status_message(document_or_error.error());
+        display.set_document(Edit::Document::create_default(path));
+    } else {
+        display.set_document(move(document_or_error.value()));
     }
     display.enter();
 

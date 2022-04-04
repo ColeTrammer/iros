@@ -6,6 +6,7 @@
 #include <eventloop/widget_events.h>
 #include <ext/file.h>
 #include <graphics/point.h>
+#include <liim/scope_guard.h>
 #include <liim/utf8_view.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,9 +19,13 @@ static inline int isword(int c) {
     return isalnum(c) || c == '_';
 }
 
-SharedPtr<Document> Document::create_from_stdin(const String& path, Maybe<String>& error_message) {
+Result<SharedPtr<Document>, String> Document::create_from_stdin(const String& path) {
     auto file = Ext::File(stdin);
     file.set_should_close_file(false);
+
+    auto guard = ScopeGuard([&] {
+        assert(freopen("/dev/tty", "r+", stdin));
+    });
 
     Vector<Line> lines;
     auto result = file.read_all_lines(
@@ -30,29 +35,19 @@ SharedPtr<Document> Document::create_from_stdin(const String& path, Maybe<String
         },
         Ext::StripTrailingNewlines::Yes);
 
-    SharedPtr<Document> ret;
-
     if (!result) {
-        error_message = String::format("error reading stdin: `%s'", strerror(file.error()));
-        ret = Document::create_empty();
-        ret->set_name(path);
-    } else {
-        ret = Document::create(nullptr, move(lines), path, InputMode::Document);
+        return String::format("error reading stdin: `%s'", strerror(file.error()));
     }
-
-    assert(freopen("/dev/tty", "r+", stdin));
-    return ret;
+    return Document::create(nullptr, move(lines), path, InputMode::Document);
 }
 
-SharedPtr<Document> Document::create_from_file(const String& path, Maybe<String>& error_message) {
+Result<SharedPtr<Document>, String> Document::create_from_file(const String& path) {
     auto file = Ext::File::create(path, "r");
     if (!file) {
         if (errno == ENOENT) {
-            error_message = String::format("new file: `%s'", path.string());
-            return Document::create(nullptr, Vector<Line>(), path, InputMode::Document);
+            return String::format("new file: `%s'", path.string());
         }
-        error_message = String::format("error accessing file: `%s': `%s'", path.string(), strerror(errno));
-        return Document::create_empty();
+        return String::format("error accessing file: `%s': `%s'", path.string(), strerror(errno));
     }
 
     Vector<Line> lines;
@@ -63,19 +58,13 @@ SharedPtr<Document> Document::create_from_file(const String& path, Maybe<String>
         },
         Ext::StripTrailingNewlines::Yes);
 
-    SharedPtr<Document> ret;
-
     if (!result) {
-        error_message = String::format("error reading file: `%s': `%s'", path.string(), strerror(file->error()));
-        ret = Document::create_empty();
-    } else {
-        ret = Document::create(nullptr, move(lines), path, InputMode::Document);
+        return String::format("error reading file: `%s': `%s'", path.string(), strerror(file->error()));
     }
-
     if (!file->close()) {
-        error_message = String::format("error closing file: `%s'", path.string());
+        return String::format("error closing file: `%s'", path.string());
     }
-    return ret;
+    return Document::create(nullptr, move(lines), path, InputMode::Document);
 }
 
 SharedPtr<Document> Document::create_from_text(const String& text) {
@@ -87,6 +76,10 @@ SharedPtr<Document> Document::create_from_text(const String& text) {
     }
 
     return Document::create(nullptr, move(lines), "", InputMode::InputText);
+}
+
+SharedPtr<Document> Document::create_default(const String& path) {
+    return Document::create(nullptr, Vector<Line>(), path, InputMode::Document);
 }
 
 SharedPtr<Document> Document::create_empty() {
