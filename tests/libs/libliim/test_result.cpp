@@ -27,4 +27,12 @@ TEST(result, functional) {
     EXPECT_EQ((Result<int, String> { "error"s }), err.map([](auto x) {
         return x * 2;
     }));
+
+    EXPECT_EQ((Result<int, String> { 5 }), ok.map_error([](auto x) {
+        return format("{} plus", x);
+    }));
+
+    EXPECT_EQ((Result<int, String> { "error plus"s }), err.map_error([](auto x) {
+        return format("{} plus", x);
+    }));
 }

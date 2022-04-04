@@ -33,6 +33,14 @@ public:
         return Result<R, E>(mapper(T(value())));
     }
 
+    template<typename C, typename R = InvokeResult<C, E>::type>
+    constexpr Result<T, R> map_error(C mapper) const {
+        if (!is_error()) {
+            return Result<T, R>(T(value()));
+        }
+        return Result<T, R>(mapper(E(error())));
+    }
+
     constexpr operator bool() const { return is_ok(); }
     constexpr bool operator!() const { return !is_ok(); }
 
