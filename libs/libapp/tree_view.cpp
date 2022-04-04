@@ -22,7 +22,7 @@ void TreeView::initialize() {
             return false;
         }
 
-        if (event.left_button()) {
+        if (event.left_button() && item->item->openable()) {
             item->open = !item->open;
             rebuild_layout();
 

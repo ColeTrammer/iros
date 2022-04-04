@@ -12,6 +12,7 @@ public:
     virtual ~ModelItem() = default;
 
     virtual ModelItemInfo info(int, int) const { return {}; }
+    virtual bool openable() const { return item_count() > 0; }
 
     int item_count() const { return m_children.size(); }
 

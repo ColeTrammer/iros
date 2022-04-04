@@ -52,6 +52,10 @@ ModelItemInfo FileSystemObject::info(int field, int request) const {
     return info;
 }
 
+bool FileSystemObject::openable() const {
+    return S_ISDIR(m_mode);
+}
+
 ModelItemInfo FileSystemModel::header_info(int field, int request) const {
     auto info = ModelItemInfo {};
     switch (field) {

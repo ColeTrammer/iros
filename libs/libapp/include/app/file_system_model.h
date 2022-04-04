@@ -12,6 +12,7 @@ public:
         : m_icon(move(icon)), m_name(move(name)), m_owner(move(owner)), m_group(move(group)), m_mode(mode), m_size(size) {}
 
     virtual App::ModelItemInfo info(int field, int request) const override;
+    virtual bool openable() const override;
 
     SharedPtr<Bitmap> icon() const { return m_icon; }
     const String& name() const { return m_name; }
