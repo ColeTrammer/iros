@@ -41,7 +41,7 @@ public:
 };
 
 void print_usage_and_exit(const char* s) {
-    fprintf(stderr, "Usage: %s [-ig] <text-file>\n", s);
+    error_log("Usage: {} [-ig] [text-file]", s);
     exit(2);
 }
 
