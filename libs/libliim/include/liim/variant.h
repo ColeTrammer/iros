@@ -289,19 +289,19 @@ public:
 
     static constexpr size_t num_variants() { return TypeList::Count<Types...>::value; }
 
-    bool operator!=(const Variant& other) const {
-        return LIIM::visit(
-            [&](auto&& a, auto&& b) -> bool {
-                return a != b;
-            },
-            forward<const Variant>(*this), forward<const Variant>(other));
-    }
+    bool operator!=(const Variant& other) const { return !(*this == other); }
     bool operator==(const Variant& other) const {
-        return LIIM::visit(
-            [&](auto&& a, auto&& b) -> bool {
-                return a == b;
-            },
-            forward<const Variant>(*this), forward<const Variant>(other));
+        return this->m_value_index == other.m_value_index && LIIM::visit(
+                                                                 [&](auto&& a, auto&& b) -> bool {
+                                                                     using A = LIIM::decay_t<decltype(a)>;
+                                                                     using B = LIIM::decay_t<decltype(b)>;
+                                                                     if constexpr (!IsSame<A, B>::value) {
+                                                                         return false;
+                                                                     } else {
+                                                                         return a == b;
+                                                                     }
+                                                                 },
+                                                                 forward<const Variant>(*this), forward<const Variant>(other));
     }
     bool operator<=(const Variant& other) const {
         return LIIM::visit(

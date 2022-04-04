@@ -1,5 +1,7 @@
 #pragma once
 
+#include <liim/utilities.h>
+
 namespace LIIM::TypeList {
 template<typename ToFind, size_t index, typename... Types>
 struct IndexImpl;
