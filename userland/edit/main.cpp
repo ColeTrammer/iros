@@ -6,6 +6,7 @@
 #include <liim/string_view.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <tinput/terminal_renderer.h>
 #include <tui/application.h>
 #include <tui/terminal_panel.h>
@@ -79,12 +80,21 @@ int main(int argc, char** argv) {
         return Edit::Document::create_empty();
     };
 
+    bool is_directory = false;
     auto base_file_path = [&]() -> String {
         if (read_from_stdin) {
             return "./";
         }
         if (argc - optind == 1) {
             if (auto maybe_path = Ext::Path::resolve(argv[optind])) {
+                auto full_path = maybe_path.value().to_string();
+
+                struct stat st;
+                ::stat(full_path.string(), &st);
+                if (S_ISDIR(st.st_mode)) {
+                    is_directory = true;
+                    return move(full_path);
+                }
                 return maybe_path.value().dirname();
             }
         }
@@ -136,7 +146,7 @@ int main(int argc, char** argv) {
     sidebar.set_model(file_system_model);
     sidebar.set_root_item(file_system_root);
     sidebar.set_layout_constraint({ 25, App::LayoutConstraint::AutoSize });
-    sidebar.set_hidden(true);
+    sidebar.set_hidden(!is_directory);
 
     sidebar.on<App::ViewItemActivated>({}, [&](const App::ViewItemActivated& event) {
         auto& item = static_cast<App::FileSystemObject&>(*event.item());
@@ -145,11 +155,12 @@ int main(int argc, char** argv) {
         auto error = Maybe<String> {};
         auto new_document = Edit::Document::create_from_file(path.to_string(), error);
         auto& active_display = TerminalStatusBar::the().active_display();
-        if (!error) {
-            active_display.set_document(move(new_document));
-        } else {
+        if (error) {
             active_display.send_status_message(*error);
+            return;
         }
+
+        active_display.set_document(move(new_document));
     });
 
     file_system_model->install_on_tree_view(sidebar.base());
