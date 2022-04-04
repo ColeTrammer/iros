@@ -49,8 +49,8 @@ class Document final : public App::Object {
               DocumentTypeChanged, Submit, Change)
 
 public:
-    static Result<SharedPtr<Document>, String> create_from_stdin(const String& path);
-    static Result<SharedPtr<Document>, String> create_from_file(const String& path);
+    static Result<SharedPtr<Document>, int> create_from_stdin(const String& path);
+    static Result<SharedPtr<Document>, int> create_from_file(const String& path);
     static SharedPtr<Document> create_from_text(const String& text);
     static SharedPtr<Document> create_default(const String& path);
     static SharedPtr<Document> create_empty();

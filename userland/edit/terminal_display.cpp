@@ -285,7 +285,7 @@ App::ObjectBoundCoroutine TerminalDisplay::do_open_prompt() {
 
     auto document_or_error = Edit::Document::create_from_file(*result);
     if (document_or_error.is_error()) {
-        send_status_message(move(document_or_error.error()));
+        send_status_message(format("Failed to open file `{}': {}", *result, strerror(document_or_error.error())));
         co_return;
     }
 

@@ -19,7 +19,7 @@ static inline int isword(int c) {
     return isalnum(c) || c == '_';
 }
 
-Result<SharedPtr<Document>, String> Document::create_from_stdin(const String& path) {
+Result<SharedPtr<Document>, int> Document::create_from_stdin(const String& path) {
     auto file = Ext::File(stdin);
     file.set_should_close_file(false);
 
@@ -36,18 +36,15 @@ Result<SharedPtr<Document>, String> Document::create_from_stdin(const String& pa
         Ext::StripTrailingNewlines::Yes);
 
     if (!result) {
-        return String::format("error reading stdin: `%s'", strerror(file.error()));
+        return int { errno };
     }
     return Document::create(nullptr, move(lines), path, InputMode::Document);
 }
 
-Result<SharedPtr<Document>, String> Document::create_from_file(const String& path) {
+Result<SharedPtr<Document>, int> Document::create_from_file(const String& path) {
     auto file = Ext::File::create(path, "r");
     if (!file) {
-        if (errno == ENOENT) {
-            return String::format("new file: `%s'", path.string());
-        }
-        return String::format("error accessing file: `%s': `%s'", path.string(), strerror(errno));
+        return int { errno };
     }
 
     Vector<Line> lines;
@@ -59,10 +56,10 @@ Result<SharedPtr<Document>, String> Document::create_from_file(const String& pat
         Ext::StripTrailingNewlines::Yes);
 
     if (!result) {
-        return String::format("error reading file: `%s': `%s'", path.string(), strerror(file->error()));
+        return int { errno };
     }
     if (!file->close()) {
-        return String::format("error closing file: `%s'", path.string());
+        return int { errno };
     }
     return Document::create(nullptr, move(lines), path, InputMode::Document);
 }

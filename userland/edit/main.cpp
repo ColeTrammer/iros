@@ -1,6 +1,7 @@
 #include <app/file_system_model.h>
 #include <app/flex_layout_engine.h>
 #include <edit/document.h>
+#include <errno.h>
 #include <gui/application.h>
 #include <gui/window.h>
 #include <liim/string_view.h>
@@ -79,30 +80,41 @@ int main(int argc, char** argv) {
         return String("");
     }();
 
-    auto make_document = [&]() -> Result<SharedPtr<Edit::Document>, String> {
+    bool is_directory = false;
+    auto document_or_error = [&]() -> Result<SharedPtr<Edit::Document>, String> {
         if (read_from_stdin) {
-            return Edit::Document::create_from_stdin(path);
+            return Edit::Document::create_from_stdin(path).map_error([&](int error_code) {
+                return format("Failed to open `{}': {}", path, strerror(error_code));
+            });
         }
         if (argc - optind == 1) {
-            return Edit::Document::create_from_file(path);
+            auto result = Edit::Document::create_from_file(path);
+            if (result.is_error()) {
+                if (result.error() == EISDIR) {
+                    is_directory = true;
+                    return format("Opened directory: `{}'", path);
+                }
+                if (result.error() == ENOENT) {
+                    return format("Create new file: `{}'", path);
+                }
+                path = "";
+                return move(result).map_error([&](int error_code) {
+                    return format("Failed to open `{}': {}", path, strerror(error_code));
+                });
+            }
+            return move(result.value());
         }
         return Edit::Document::create_empty();
-    };
+    }();
 
-    bool is_directory = false;
     auto base_file_path = [&]() -> String {
         if (read_from_stdin) {
             return "./";
         }
         if (argc - optind == 1) {
             if (auto maybe_path = Ext::Path::resolve(argv[optind])) {
-                auto full_path = maybe_path.value().to_string();
-
-                struct stat st;
-                ::stat(full_path.string(), &st);
-                if (S_ISDIR(st.st_mode)) {
-                    is_directory = true;
-                    return move(full_path);
+                if (is_directory) {
+                    return maybe_path.value().to_string();
                 }
                 return maybe_path.value().dirname();
             }
@@ -120,7 +132,6 @@ int main(int argc, char** argv) {
             app->main_event_loop().set_should_exit(true);
         };
 
-        auto document_or_error = make_document();
         if (document_or_error.is_error()) {
             display.send_status_message(document_or_error.error());
             display.set_document(Edit::Document::create_default(path));
@@ -167,7 +178,7 @@ int main(int argc, char** argv) {
         auto document_or_error = Edit::Document::create_from_file(path.to_string());
         auto& active_display = TerminalStatusBar::the().active_display();
         if (document_or_error.is_error()) {
-            active_display.send_status_message(document_or_error.error());
+            active_display.send_status_message(format("Failed to open `{}': {}", path, strerror(document_or_error.error())));
             return;
         }
 
@@ -273,7 +284,6 @@ int main(int argc, char** argv) {
 
     setup_display_handlers(display);
 
-    auto document_or_error = make_document();
     if (document_or_error.is_error()) {
         display.send_status_message(document_or_error.error());
         display.set_document(Edit::Document::create_default(path));
