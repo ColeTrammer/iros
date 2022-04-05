@@ -3,8 +3,8 @@
 
 namespace App {
 template<typename T>
-static constexpr int size_in_layout_direction(FlexLayoutEngine::Direction direction, const T& size) {
-    return direction == FlexLayoutEngine::Direction::Horizontal ? size.width() : size.height();
+static constexpr int size_in_layout_direction(Direction direction, const T& size) {
+    return direction == Direction::Horizontal ? size.width() : size.height();
 }
 
 FlexLayoutEngine::FlexLayoutEngine(Widget& parent, Direction direction) : LayoutEngine(parent), m_direction(direction) {

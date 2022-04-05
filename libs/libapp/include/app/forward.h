@@ -15,6 +15,9 @@ class ModelItem;
 class ModelItemInfo;
 class ScrollComponent;
 class ScrollComponentBridge;
+class Selection;
+class Splitter;
+class SplitterBridge;
 class TableView;
 class TerminalWidget;
 class TerminalWidgetBridge;
@@ -27,6 +30,8 @@ class ViewBridge;
 class Widget;
 class WidgetBridge;
 class Window;
+
+enum class Direction;
 
 struct Margins;
 }

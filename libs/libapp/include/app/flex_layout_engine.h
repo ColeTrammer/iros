@@ -1,5 +1,6 @@
 #pragma once
 
+#include <app/direction.h>
 #include <app/forward.h>
 #include <app/layout_engine.h>
 #include <graphics/forward.h>
@@ -7,8 +8,6 @@
 namespace App {
 class FlexLayoutEngine : public LayoutEngine {
 public:
-    enum class Direction { Horizontal, Vertical };
-
     FlexLayoutEngine(Widget& parent, Direction direction);
     virtual ~FlexLayoutEngine() override;
 
@@ -18,6 +17,9 @@ public:
 
     void set_spacing(int spacing) { m_spacing = spacing; }
     int spacing() const { return m_spacing; }
+
+    Direction direction() const { return m_direction; }
+    void set_direction(Direction direction) { m_direction = direction; }
 
 private:
     int available_space() const;
@@ -32,11 +34,11 @@ private:
 
 class HorizontalFlexLayoutEngine final : public FlexLayoutEngine {
 public:
-    HorizontalFlexLayoutEngine(Widget& widget) : FlexLayoutEngine(widget, FlexLayoutEngine::Direction::Horizontal) {}
+    HorizontalFlexLayoutEngine(Widget& widget) : FlexLayoutEngine(widget, Direction::Horizontal) {}
 };
 
 class VerticalFlexLayoutEngine final : public FlexLayoutEngine {
 public:
-    VerticalFlexLayoutEngine(Widget& widget) : FlexLayoutEngine(widget, FlexLayoutEngine::Direction::Vertical) {}
+    VerticalFlexLayoutEngine(Widget& widget) : FlexLayoutEngine(widget, Direction::Vertical) {}
 };
 }

@@ -5,6 +5,7 @@ set(SOURCES
     layout_engine.cpp
     model.cpp
     scroll_component.cpp
+    splitter.cpp
     terminal_widget.cpp
     tree_view.cpp
     view.cpp
@@ -28,5 +29,8 @@ generate_interface(libapp libapp_terminal_widget_bridge_interface ${CMAKE_CURREN
 
 generate_interface(libapp libapp_scroll_component_interface ${CMAKE_CURRENT_SOURCE_DIR}/include/app/scroll_component.h app/scroll_component_interface.h)
 generate_interface(libapp libapp_scroll_component_bridge_interface ${CMAKE_CURRENT_SOURCE_DIR}/include/app/scroll_component_bridge.h app/scroll_component_bridge_interface.h)
+
+generate_interface(libapp libapp_splitter_interface ${CMAKE_CURRENT_SOURCE_DIR}/include/app/splitter.h app/splitter_interface.h)
+generate_interface(libapp libapp_splitter_bridge_interface ${CMAKE_CURRENT_SOURCE_DIR}/include/app/splitter_bridge.h app/splitter_bridge_interface.h)
 
 target_link_libraries(libapp PUBLIC libeventloop libterminal libclipboard libgraphics window_server_headers)
