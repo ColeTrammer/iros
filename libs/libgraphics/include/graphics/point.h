@@ -22,6 +22,8 @@ public:
 
     constexpr Point operator-() const { return { -x(), -y() }; }
 
+    constexpr Point operator-(const Point& other) const { return { this->x() - other.x(), this->y() - other.y() }; }
+
     constexpr bool operator==(const Point& other) const { return this->x() == other.x() && this->y() == other.y(); }
     constexpr bool operator!=(const Point& other) const { return !(*this == other); }
 
