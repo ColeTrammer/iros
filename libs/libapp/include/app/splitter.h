@@ -21,8 +21,8 @@ public:
     virtual ~SplitterLayoutEngine() override;
 
     virtual void layout() override;
-    virtual void do_add(Widget&) override;
-    virtual void do_remove(Widget&) override;
+    virtual void do_add(Widget& widget) override;
+    virtual void do_remove(Widget& widget) override;
 
     int gutter_width() const { return m_gutter_width; }
     void set_gutter_width(int gutter_width) { m_gutter_width = gutter_width; }
@@ -34,13 +34,16 @@ public:
     void adjust_size_and_position(const HoldStart& start, const Point& drag_point);
 
 private:
+    void insert_widget(Widget& widget, int index);
+    void remove_widget_at_index(int index);
     Maybe<int> find_index_of_item(Widget& widget) const;
 
-    int item_count() const;
+    int item_count() const { return m_items.size(); }
     int rect_size_in_layout_direction(const Rect& rect) const;
     int rect_size_against_layout_direction(const Rect& rect) const;
     int available_space_in_layout_direction() const;
     int available_space_against_layout_direction() const;
+    int flexible_space() const;
     void compute_layout();
 
     struct Item {

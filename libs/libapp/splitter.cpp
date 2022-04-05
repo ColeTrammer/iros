@@ -10,73 +10,124 @@ void SplitterLayoutEngine::layout() {
     compute_layout();
 
     for (auto& item : m_items) {
-        if (!item.widget->hidden()) {
-            item.widget->set_positioned_rect(item.relative_rect.translated(parent().positioned_rect().top_left()));
-        }
+        item.widget->set_positioned_rect(item.relative_rect.translated(parent().positioned_rect().top_left()));
     }
 }
 
 void SplitterLayoutEngine::do_add(Widget& widget) {
-    if (!widget.hidden()) {
-        for (auto& item : m_items) {
-            item.expected_fraction *= static_cast<double>(item_count()) / static_cast<double>(item_count() + 1);
-        }
-
-        double expected_fraction = 1.0 / (item_count() + 1);
-        m_items.add({ expected_fraction, {}, widget.shared_from_this() });
-    } else {
-        m_items.add({ 0.0, {}, widget.shared_from_this() });
-    }
+    insert_widget(widget, item_count());
 
     widget.on<HideEvent>(parent(), [this, &widget](auto&) {
         if (auto index = find_index_of_item(widget)) {
-            for (auto& item : m_items) {
-                item.expected_fraction *= static_cast<double>(item_count() + 1) / static_cast<double>(item_count());
-            }
-
-            m_items[*index].expected_fraction = 0.0;
+            remove_widget_at_index(*index);
         }
     });
 
     widget.on<ShowEvent>(parent(), [this, &widget](auto&) {
         if (auto index = find_index_of_item(widget)) {
-            for (auto& item : m_items) {
-                item.expected_fraction *= static_cast<double>(item_count() - 1) / static_cast<double>(item_count());
-            }
-
-            // FIXME: remember potentially old state.
-            m_items[*index].expected_fraction = 1.0 / item_count();
+            insert_widget(widget, *index);
         }
     });
 }
 
 void SplitterLayoutEngine::do_remove(Widget& widget) {
-    if (m_items.size() == 1) {
-        m_items.clear();
+    if (widget.hidden()) {
+        widget.remove_listener(parent());
         return;
     }
 
     auto found_index = find_index_of_item(widget);
     assert(found_index);
-    m_items.remove(*found_index);
 
+    remove_widget_at_index(*found_index);
+}
+
+Maybe<HoldStart> SplitterLayoutEngine::compute_hold_start(const Point& origin) const {
+    for (int i = 0; i < item_count() - 1; i++) {
+        auto first_item = m_items[i];
+        auto second_item = m_items[i + 1];
+
+        auto rect_between = [&]() -> Rect {
+            if (direction() == Direction::Horizontal) {
+                return { first_item.relative_rect.right(), 0, gutter_width(), parent().sized_rect().height() };
+            }
+            return { 0, first_item.relative_rect.bottom(), parent().sized_rect().width(), gutter_width() };
+        }();
+
+        if (rect_between.intersects(origin)) {
+            return HoldStart { origin, i };
+        }
+    }
+    return {};
+}
+
+void SplitterLayoutEngine::adjust_size_and_position(const HoldStart& start, const Point& drag_point) {
+    Point delta = drag_point - start.origin;
+    auto delta_in_layout_direction = rect_size_in_layout_direction({ 0, 0, delta.x(), delta.y() });
+    if (delta_in_layout_direction == 0) {
+        return;
+    }
+
+    // FIXME: this should be communicated by the underlying the widgets.
+    auto min_pixel_size = 30;
+
+    auto available_space = flexible_space();
+    auto as_fraction = static_cast<double>(delta_in_layout_direction) / static_cast<double>(available_space);
+    double minimum_fraction = static_cast<double>(min_pixel_size) / static_cast<double>(available_space);
+    if (as_fraction < 0.0) {
+        as_fraction = -(m_items[start.item_index].expected_fraction -
+                        max(minimum_fraction, m_items[start.item_index].expected_fraction + as_fraction));
+    } else {
+        as_fraction = m_items[start.item_index + 1].expected_fraction -
+                      max(minimum_fraction, m_items[start.item_index + 1].expected_fraction - as_fraction);
+    }
+
+    m_items[start.item_index].expected_fraction += as_fraction;
+    m_items[start.item_index + 1].expected_fraction -= as_fraction;
+
+    parent().invalidate();
+    schedule_layout();
+}
+
+void SplitterLayoutEngine::insert_widget(Widget& widget, int index) {
+    if (widget.hidden()) {
+        return;
+    }
+
+    for (auto& item : m_items) {
+        item.expected_fraction *= static_cast<double>(item_count()) / static_cast<double>(item_count() + 1);
+    }
+
+    double expected_fraction = 1.0 / (item_count() + 1);
+    m_items.insert({ expected_fraction, {}, widget.shared_from_this() }, index);
+}
+
+void SplitterLayoutEngine::remove_widget_at_index(int index) {
+    m_items.remove(index);
     for (auto& item : m_items) {
         item.expected_fraction *= static_cast<double>(item_count() + 1) / static_cast<double>(item_count());
     }
 }
 
-Maybe<HoldStart> SplitterLayoutEngine::compute_hold_start(const Point&) const {
-    return {};
-}
-
-void SplitterLayoutEngine::adjust_size_and_position(const HoldStart&, const Point&) {}
-
 Maybe<int> SplitterLayoutEngine::find_index_of_item(Widget& widget) const {
-    Maybe<int> found_index;
-    for (int i = 0; i < m_items.size(); i++) {
-        if (m_items[i].widget.get() == &widget) {
+    int i = 0;
+    int j = 0;
+    while (i < item_count() && j < parent().children().size()) {
+        if (m_items[i].widget.get() == &widget || parent().children()[j].get() == &widget) {
             return i;
         }
+
+        if (m_items[i].widget.get() == parent().children()[j].get()) {
+            i++;
+            j++;
+            continue;
+        }
+
+        j++;
+    }
+
+    if (i < item_count() || j < parent().children().size()) {
+        return item_count();
     }
     return {};
 }
@@ -103,14 +154,9 @@ int SplitterLayoutEngine::available_space_against_layout_direction() const {
     return rect_size_against_layout_direction(parent().sized_rect());
 }
 
-int SplitterLayoutEngine::item_count() const {
-    int count = 0;
-    for (auto& item : m_items) {
-        if (!item.widget->hidden()) {
-            count++;
-        }
-    }
-    return count;
+int SplitterLayoutEngine::flexible_space() const {
+    auto gutters = item_count() - 1;
+    return max(0, available_space_in_layout_direction() - gutters * gutter_width());
 }
 
 void SplitterLayoutEngine::compute_layout() {
@@ -118,16 +164,11 @@ void SplitterLayoutEngine::compute_layout() {
         return;
     }
 
-    auto gutters = item_count() - 1;
-    auto space_available = max(0, available_space_in_layout_direction() - gutters * gutter_width());
+    auto space_available = flexible_space();
 
     int space_leftover = space_available;
     Point offset;
     for (auto& item : m_items) {
-        if (item.widget->hidden()) {
-            continue;
-        }
-
         auto length = static_cast<int>(space_available * item.expected_fraction);
         auto width = direction() == Direction::Horizontal ? length : available_space_against_layout_direction();
         auto height = direction() == Direction::Vertical ? length : available_space_against_layout_direction();
@@ -177,6 +218,7 @@ void Splitter::initialize() {
         auto mouse_position = Point { event.x(), event.y() };
         if (m_hold_start && (event.buttons_down() & MouseButton::Left)) {
             layout.adjust_size_and_position(*m_hold_start, mouse_position);
+            m_hold_start->origin = mouse_position;
             return true;
         }
         return false;
