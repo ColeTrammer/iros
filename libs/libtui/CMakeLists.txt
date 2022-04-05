@@ -5,6 +5,7 @@ set(SOURCES
     panel.cpp
     root_window.cpp
     scroll_component.cpp
+    splitter.cpp
     table_view.cpp
     terminal_panel.cpp
     tree_view.cpp

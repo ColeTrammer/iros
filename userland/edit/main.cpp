@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <tinput/terminal_renderer.h>
 #include <tui/application.h>
+#include <tui/splitter.h>
 #include <tui/terminal_panel.h>
 #include <tui/tree_view.h>
 #include <unistd.h>
@@ -36,7 +37,7 @@ public:
             }
         }
 
-        TUI::Panel::render();
+        ParentWidget::render();
     }
 };
 
@@ -155,16 +156,15 @@ int main(int argc, char** argv) {
     auto& statusbar_layout = main_widget.set_layout_engine<App::VerticalFlexLayoutEngine>();
     statusbar_layout.set_spacing(1);
 
-    auto& main_content_container = statusbar_layout.add<BackgroundPanel>();
-    statusbar_layout.add<TerminalStatusBar>();
+    auto& main_content_container = statusbar_layout.add<TUI::Splitter>();
+    main_content_container.set_direction(App::Direction::Horizontal);
 
-    auto& sidebar_layout = main_content_container.set_layout_engine<App::HorizontalFlexLayoutEngine>();
-    sidebar_layout.set_spacing(1);
+    statusbar_layout.add<TerminalStatusBar>();
 
     auto file_system_model = App::FileSystemModel::create(nullptr);
     auto file_system_root = file_system_model->load_initial_data(base_file_path);
 
-    auto& sidebar = sidebar_layout.add<TUI::TreeView>();
+    auto& sidebar = main_content_container.add_widget<TUI::TreeView>();
     sidebar.set_name_column(App::FileSystemModel::Column::Name);
     sidebar.set_model(file_system_model);
     sidebar.set_root_item(file_system_root);
@@ -187,19 +187,17 @@ int main(int argc, char** argv) {
 
     file_system_model->install_on_tree_view(sidebar.base());
 
-    auto& content_container = sidebar_layout.add<BackgroundPanel>();
-    auto& main_layout = content_container.set_layout_engine<App::VerticalFlexLayoutEngine>();
-    main_layout.set_spacing(1);
+    auto& content_container = main_content_container.add_widget<TUI::Splitter>();
+    content_container.set_direction(App::Direction::Vertical);
 
-    auto& display_conainer = main_layout.add<BackgroundPanel>();
-    auto& display_layout = display_conainer.set_layout_engine<App::HorizontalFlexLayoutEngine>();
-    display_layout.set_spacing(1);
+    auto& display_container = content_container.add_widget<TUI::Splitter>();
+    display_container.set_direction(App::Direction::Horizontal);
 
-    auto& display = display_layout.add<TerminalDisplay>();
+    auto& display = display_container.add_widget<TerminalDisplay>();
     display.set_show_line_numbers(true);
     display.set_word_wrap_enabled(true);
 
-    auto& terminal_container = main_layout.add<TUI::Panel>();
+    auto& terminal_container = content_container.add_widget<TUI::Panel>();
     terminal_container.set_hidden(true);
 
     auto terminal = SharedPtr<TUI::TerminalPanel> {};
@@ -216,24 +214,25 @@ int main(int argc, char** argv) {
                                  terminal->make_focused();
                              }
                          });
-        key_bindings.add({ App::Key::LeftArrow, App::KeyModifier::Control, App::KeyShortcut::IsMulti::Yes }, [&display_conainer, &display] {
-            auto prev_child = static_cast<const App::Object*>(nullptr);
-            for (auto& child : display_conainer.children()) {
-                if (child.get() == &display.base()) {
-                    break;
-                }
-                prev_child = child.get();
-            }
-
-            if (prev_child && prev_child->is_base_widget()) {
-                static_cast<App::Widget&>(const_cast<App::Object&>(*prev_child)).make_focused();
-            }
-        });
-        key_bindings.add({ App::Key::RightArrow, App::KeyModifier::Control, App::KeyShortcut::IsMulti::Yes },
-                         [&display_conainer, &display] {
+        key_bindings.add({ App::Key::LeftArrow, App::KeyModifier::Control, App::KeyShortcut::IsMulti::Yes },
+                         [&display_container, &display] {
                              auto prev_child = static_cast<const App::Object*>(nullptr);
-                             for (int i = display_conainer.children().size() - 1; i >= 0; i--) {
-                                 auto& child = display_conainer.children()[i];
+                             for (auto& child : display_container.children()) {
+                                 if (child.get() == &display.base()) {
+                                     break;
+                                 }
+                                 prev_child = child.get();
+                             }
+
+                             if (prev_child && prev_child->is_base_widget()) {
+                                 static_cast<App::Widget&>(const_cast<App::Object&>(*prev_child)).make_focused();
+                             }
+                         });
+        key_bindings.add({ App::Key::RightArrow, App::KeyModifier::Control, App::KeyShortcut::IsMulti::Yes },
+                         [&display_container, &display] {
+                             auto prev_child = static_cast<const App::Object*>(nullptr);
+                             for (int i = display_container.children().size() - 1; i >= 0; i--) {
+                                 auto& child = display_container.children()[i];
                                  if (child.get() == &display.base()) {
                                      break;
                                  }
@@ -257,7 +256,7 @@ int main(int argc, char** argv) {
     };
 
     split_display = [&](TerminalDisplay& display) {
-        auto& new_display = display_layout.add<TerminalDisplay>();
+        auto& new_display = display_container.add_widget<TerminalDisplay>();
         new_display.set_document(display.document()->shared_from_this());
         new_display.set_preview_auto_complete(display.preview_auto_complete());
         new_display.set_word_wrap_enabled(display.word_wrap_enabled());
@@ -269,7 +268,7 @@ int main(int argc, char** argv) {
     };
 
     make_new_display = [&](TerminalDisplay& display) {
-        auto& new_display = display_layout.add<TerminalDisplay>();
+        auto& new_display = display_container.add_widget<TerminalDisplay>();
         new_display.set_document(Edit::Document::create_empty());
         new_display.set_preview_auto_complete(display.preview_auto_complete());
         new_display.set_word_wrap_enabled(display.word_wrap_enabled());
@@ -302,7 +301,7 @@ int main(int argc, char** argv) {
 
         terminal_container.set_hidden(false);
         terminal = terminal_container_layout.add_owned<TUI::TerminalPanel>();
-        terminal->on<App::TerminalHangupEvent>({}, [&terminal, &terminal_container, &display_conainer](auto&) {
+        terminal->on<App::TerminalHangupEvent>({}, [&terminal, &terminal_container, &display_container](auto&) {
             terminal_container.set_hidden(true);
             terminal->remove();
             terminal = nullptr;
@@ -311,10 +310,10 @@ int main(int argc, char** argv) {
         });
 
         auto& terminal_key_bindings = terminal->key_bindings();
-        terminal_key_bindings.add({ App::Key::UpArrow, App::KeyModifier::Control, App::KeyShortcut::IsMulti::Yes }, [&display_conainer] {
+        terminal_key_bindings.add({ App::Key::UpArrow, App::KeyModifier::Control, App::KeyShortcut::IsMulti::Yes }, [&display_container] {
             TerminalStatusBar::the().active_display().make_focused();
         });
-        terminal_key_bindings.add({ App::Key::T, App::KeyModifier::Control }, [&terminal, &terminal_container, &display_conainer] {
+        terminal_key_bindings.add({ App::Key::T, App::KeyModifier::Control }, [&terminal, &terminal_container, &display_container] {
             terminal_container.set_hidden(true);
 
             TerminalStatusBar::the().active_display().make_focused();
