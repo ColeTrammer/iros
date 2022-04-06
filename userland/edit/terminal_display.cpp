@@ -272,11 +272,11 @@ App::ObjectBoundCoroutine TerminalDisplay::do_open_prompt() {
             return "";
         }
 
-        auto path = Ext::Path::resolve(document()->name());
-        if (!path) {
-            return document()->name();
-        }
-        return path->dirname(Ext::Path::SlashTerminated::Yes);
+        return format("{}/", Ext::Path::resolve(".")
+                                 .map([](auto p) {
+                                     return p.to_string();
+                                 })
+                                 .value_or("."));
     }();
 
     auto result = co_await prompt("Open: ", move(initial_value));
