@@ -54,6 +54,9 @@ public:
     const App::LayoutConstraint& layout_constraint() const { return m_layout_constraint; }
     void set_layout_constraint(const App::LayoutConstraint& constraint);
 
+    const App::LayoutConstraint& min_layout_constraint() const { return m_min_layout_constraint; }
+    void set_min_layout_constraint(const App::LayoutConstraint& constraint);
+
     template<typename WidgetType, typename... Args>
     SharedPtr<WidgetType> create_widget_owned(Args&&... args) {
         return WidgetType::create_owned(this, forward<Args>(args)...);
@@ -91,6 +94,7 @@ private:
 
     Rect m_positioned_rect;
     LayoutConstraint m_layout_constraint;
+    LayoutConstraint m_min_layout_constraint;
     UniquePtr<LayoutEngine> m_layout_engine;
     SharedPtr<WidgetBridge> m_bridge;
     App::KeyBindings m_key_bindings;

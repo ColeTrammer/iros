@@ -163,6 +163,15 @@ void Widget::set_layout_constraint(const LayoutConstraint& constraint) {
     relayout();
 }
 
+void Widget::set_min_layout_constraint(const LayoutConstraint& constraint) {
+    if (m_min_layout_constraint.width() == constraint.width() && m_min_layout_constraint.height() == constraint.height()) {
+        return;
+    }
+
+    m_min_layout_constraint = constraint;
+    relayout();
+}
+
 void Widget::do_set_layout_engine(UniquePtr<LayoutEngine> engine) {
     m_layout_engine = move(engine);
 }

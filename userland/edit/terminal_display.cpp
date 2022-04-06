@@ -27,6 +27,7 @@ TerminalDisplay::TerminalDisplay() {
 
 void TerminalDisplay::did_attach() {
     set_accepts_focus(true);
+    set_min_layout_constraint({ 20, 10 });
 
     set_key_bindings(Edit::get_key_bindings(base()));
 

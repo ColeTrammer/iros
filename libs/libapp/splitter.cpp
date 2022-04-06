@@ -68,18 +68,26 @@ void SplitterLayoutEngine::adjust_size_and_position(const HoldStart& start, cons
         return;
     }
 
-    // FIXME: this should be communicated by the underlying the widgets.
-    auto min_pixel_size = 30;
+    auto min_pixel_width = [&](Widget& widget) {
+        auto constraint =
+            direction() == Direction::Horizontal ? widget.min_layout_constraint().width() : widget.min_layout_constraint().height();
+        if (constraint == LayoutConstraint::AutoSize) {
+            // FIXME: this value should depend on whether we are in libtui or libapp.
+            return 8;
+        }
+        return constraint;
+    };
 
     auto available_space = flexible_space();
     auto as_fraction = static_cast<double>(delta_in_layout_direction) / static_cast<double>(available_space);
-    double minimum_fraction = static_cast<double>(min_pixel_size) / static_cast<double>(available_space);
     if (as_fraction < 0.0) {
-        as_fraction = -(m_items[start.item_index].expected_fraction -
-                        max(minimum_fraction, m_items[start.item_index].expected_fraction + as_fraction));
+        auto min_pixel_size = static_cast<double>(min_pixel_width(*m_items[start.item_index].widget));
+        as_fraction = -(m_items[start.item_index].expected_fraction - max(min_pixel_size / static_cast<double>(available_space),
+                                                                          m_items[start.item_index].expected_fraction + as_fraction));
     } else {
-        as_fraction = m_items[start.item_index + 1].expected_fraction -
-                      max(minimum_fraction, m_items[start.item_index + 1].expected_fraction - as_fraction);
+        auto min_pixel_size = static_cast<double>(min_pixel_width(*m_items[start.item_index + 1].widget));
+        as_fraction = m_items[start.item_index + 1].expected_fraction - max(min_pixel_size / static_cast<double>(available_space),
+                                                                            m_items[start.item_index + 1].expected_fraction - as_fraction);
     }
 
     m_items[start.item_index].expected_fraction += as_fraction;
