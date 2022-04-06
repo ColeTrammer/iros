@@ -164,11 +164,10 @@ int main(int argc, char** argv) {
     auto file_system_model = App::FileSystemModel::create(nullptr);
     auto file_system_root = file_system_model->load_initial_data(base_file_path);
 
-    auto& sidebar = main_content_container.add_widget<TUI::TreeView>();
+    auto& sidebar = main_content_container.add_widget_fixed<TUI::TreeView>(25);
     sidebar.set_name_column(App::FileSystemModel::Column::Name);
     sidebar.set_model(file_system_model);
     sidebar.set_root_item(file_system_root);
-    sidebar.set_layout_constraint({ 25, App::LayoutConstraint::AutoSize });
     sidebar.set_hidden(!is_directory);
 
     sidebar.on<App::ViewItemActivated>({}, [&](const App::ViewItemActivated& event) {
@@ -197,7 +196,7 @@ int main(int argc, char** argv) {
     display.set_show_line_numbers(true);
     display.set_word_wrap_enabled(true);
 
-    auto& terminal_container = content_container.add_widget<TUI::Panel>();
+    auto& terminal_container = content_container.add_widget_fixed<TUI::Panel>(25);
     terminal_container.set_hidden(true);
 
     auto terminal = SharedPtr<TUI::TerminalPanel> {};

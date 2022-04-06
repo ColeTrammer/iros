@@ -21,7 +21,7 @@ public:
     virtual ~SplitterLayoutEngine() override;
 
     virtual void layout() override;
-    virtual void do_add(Widget& widget) override;
+    virtual void do_add(Widget&) override { assert(false); }
     virtual void do_remove(Widget& widget) override;
 
     int gutter_width() const { return m_gutter_width; }
@@ -33,24 +33,36 @@ public:
     Maybe<HoldStart> compute_hold_start(const Point& origin) const;
     void adjust_size_and_position(const HoldStart& start, const Point& drag_point);
 
+    template<typename WidgetType, typename... Args>
+    SharedPtr<WidgetType> add(Maybe<int> fixed_width, Args&&... args) {
+        auto result = WidgetType::create_owned(&parent(), forward<Args>(args)...);
+        add_impl(fixed_width, result->base());
+        schedule_layout();
+        return result;
+    }
+
 private:
+    struct Item {
+        double expected_fraction;
+        Rect relative_rect;
+        SharedPtr<Widget> widget;
+    };
+
+    void add_impl(Maybe<int> fixed_width, Widget& widget);
+
     void insert_widget(Widget& widget, int index);
     void remove_widget_at_index(int index);
     Maybe<int> find_index_of_item(Widget& widget) const;
 
     int item_count() const { return m_items.size(); }
+    int flexible_item_count() const;
+    bool is_flexible_item(const Item& item) const;
     int rect_size_in_layout_direction(const Rect& rect) const;
     int rect_size_against_layout_direction(const Rect& rect) const;
     int available_space_in_layout_direction() const;
     int available_space_against_layout_direction() const;
     int flexible_space() const;
     void compute_layout();
-
-    struct Item {
-        double expected_fraction;
-        Rect relative_rect;
-        SharedPtr<Widget> widget;
-    };
 
     Direction m_direction { Direction::Horizontal };
     Vector<Item> m_items;
@@ -80,7 +92,17 @@ public:
 
     template<typename T, typename... Args>
     SharedPtr<T> add_widget_owned(Args&&... args) {
-        return layout_engine()->add_owned<T>(forward<Args>(args)...);
+        return layout().add<T>({}, forward<Args>(args)...);
+    }
+
+    template<typename T, typename... Args>
+    T& add_widget_fixed(int fixed_width, Args&&... args) {
+        return *add_widget_fixed_owned<T>(fixed_width, forward<Args>(args)...);
+    }
+
+    template<typename T, typename... Args>
+    SharedPtr<T> add_widget_fixed_owned(int fixed_width, Args&&... args) {
+        return layout().add<T>({ fixed_width }, forward<Args>(args)...);
     }
     // os_2 reflect end
 

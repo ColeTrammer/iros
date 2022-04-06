@@ -14,7 +14,15 @@ void SplitterLayoutEngine::layout() {
     }
 }
 
-void SplitterLayoutEngine::do_add(Widget& widget) {
+void SplitterLayoutEngine::add_impl(Maybe<int> fixed_width, Widget& widget) {
+    if (fixed_width) {
+        if (direction() == Direction::Horizontal) {
+            widget.set_layout_constraint({ *fixed_width, LayoutConstraint::AutoSize });
+        } else {
+            widget.set_layout_constraint({ LayoutConstraint::AutoSize, *fixed_width });
+        }
+    }
+
     insert_widget(widget, item_count());
 
     widget.on<HideEvent>(parent(), [this, &widget](auto&) {
@@ -62,6 +70,8 @@ Maybe<HoldStart> SplitterLayoutEngine::compute_hold_start(const Point& origin) c
 }
 
 void SplitterLayoutEngine::adjust_size_and_position(const HoldStart& start, const Point& drag_point) {
+    compute_layout();
+
     Point delta = drag_point - start.origin;
     auto delta_in_layout_direction = rect_size_in_layout_direction({ 0, 0, delta.x(), delta.y() });
     if (delta_in_layout_direction == 0) {
@@ -79,19 +89,51 @@ void SplitterLayoutEngine::adjust_size_and_position(const HoldStart& start, cons
     };
 
     auto available_space = flexible_space();
-    auto as_fraction = static_cast<double>(delta_in_layout_direction) / static_cast<double>(available_space);
-    if (as_fraction < 0.0) {
-        auto min_pixel_size = static_cast<double>(min_pixel_width(*m_items[start.item_index].widget));
-        as_fraction = -(m_items[start.item_index].expected_fraction - max(min_pixel_size / static_cast<double>(available_space),
-                                                                          m_items[start.item_index].expected_fraction + as_fraction));
-    } else {
-        auto min_pixel_size = static_cast<double>(min_pixel_width(*m_items[start.item_index + 1].widget));
-        as_fraction = m_items[start.item_index + 1].expected_fraction - max(min_pixel_size / static_cast<double>(available_space),
-                                                                            m_items[start.item_index + 1].expected_fraction - as_fraction);
-    }
 
-    m_items[start.item_index].expected_fraction += as_fraction;
-    m_items[start.item_index + 1].expected_fraction -= as_fraction;
+    auto& first_item = m_items[start.item_index];
+    auto& latter_item = m_items[start.item_index + 1];
+
+    auto shrink_item = [&](Item& item, int& pixels) {
+        auto min_pixel_size = min_pixel_width(*item.widget);
+        pixels = min(pixels, rect_size_in_layout_direction(item.relative_rect) - min_pixel_size);
+
+        if (is_flexible_item(item)) {
+            auto as_fraction = static_cast<double>(pixels) / available_space;
+            item.expected_fraction -= as_fraction;
+        } else {
+            if (direction() == Direction::Horizontal) {
+                item.widget->set_layout_constraint(
+                    { item.widget->layout_constraint().width() - pixels, item.widget->layout_constraint().height() });
+            } else {
+                item.widget->set_layout_constraint(
+                    { item.widget->layout_constraint().width(), item.widget->layout_constraint().height() - pixels });
+            }
+        }
+    };
+
+    auto expand_item = [&](Item& item, int pixels) {
+        if (is_flexible_item(item)) {
+            auto as_fraction = static_cast<double>(pixels) / available_space;
+            item.expected_fraction += as_fraction;
+        } else {
+            if (direction() == Direction::Horizontal) {
+                item.widget->set_layout_constraint(
+                    { item.widget->layout_constraint().width() + pixels, item.widget->layout_constraint().height() });
+            } else {
+                item.widget->set_layout_constraint(
+                    { item.widget->layout_constraint().width(), item.widget->layout_constraint().height() + pixels });
+            }
+        }
+    };
+
+    if (delta_in_layout_direction < 0) {
+        auto to_shrink = -delta_in_layout_direction;
+        shrink_item(first_item, to_shrink);
+        expand_item(latter_item, to_shrink);
+    } else {
+        shrink_item(latter_item, delta_in_layout_direction);
+        expand_item(first_item, delta_in_layout_direction);
+    }
 
     parent().invalidate();
     schedule_layout();
@@ -102,18 +144,33 @@ void SplitterLayoutEngine::insert_widget(Widget& widget, int index) {
         return;
     }
 
-    for (auto& item : m_items) {
-        item.expected_fraction *= static_cast<double>(item_count()) / static_cast<double>(item_count() + 1);
+    auto flex_item_count = flexible_item_count();
+
+    double expected_fraction = 1.0 / (flex_item_count + 1);
+    auto new_item = Item { expected_fraction, {}, widget.shared_from_this() };
+
+    if (is_flexible_item(new_item)) {
+        for (auto& item : m_items) {
+            if (is_flexible_item(item)) {
+                item.expected_fraction -= expected_fraction * item.expected_fraction;
+            }
+        }
     }
 
-    double expected_fraction = 1.0 / (item_count() + 1);
-    m_items.insert({ expected_fraction, {}, widget.shared_from_this() }, index);
+    m_items.insert(move(new_item), index);
 }
 
 void SplitterLayoutEngine::remove_widget_at_index(int index) {
+    bool was_flexible_item = is_flexible_item(m_items[index]);
+    double old_expected_fraction = m_items[index].expected_fraction;
     m_items.remove(index);
-    for (auto& item : m_items) {
-        item.expected_fraction *= static_cast<double>(item_count() + 1) / static_cast<double>(item_count());
+
+    if (was_flexible_item) {
+        for (auto& item : m_items) {
+            if (is_flexible_item(item)) {
+                item.expected_fraction += old_expected_fraction / (1.0 - old_expected_fraction) * item.expected_fraction;
+            }
+        }
     }
 }
 
@@ -140,6 +197,21 @@ Maybe<int> SplitterLayoutEngine::find_index_of_item(Widget& widget) const {
     return {};
 }
 
+int SplitterLayoutEngine::flexible_item_count() const {
+    int count = 0;
+    for (auto& item : m_items) {
+        if (is_flexible_item(item)) {
+            count++;
+        }
+    }
+    return count;
+}
+
+bool SplitterLayoutEngine::is_flexible_item(const Item& item) const {
+    return rect_size_in_layout_direction({ 0, 0, item.widget->layout_constraint().width(), item.widget->layout_constraint().height() }) ==
+           LayoutConstraint::AutoSize;
+}
+
 int SplitterLayoutEngine::rect_size_in_layout_direction(const Rect& rect) const {
     if (direction() == Direction::Horizontal) {
         return rect.width();
@@ -164,7 +236,14 @@ int SplitterLayoutEngine::available_space_against_layout_direction() const {
 
 int SplitterLayoutEngine::flexible_space() const {
     auto gutters = item_count() - 1;
-    return max(0, available_space_in_layout_direction() - gutters * gutter_width());
+    auto base_flexible_space = available_space_in_layout_direction() - gutters * gutter_width();
+    for (auto& item : m_items) {
+        if (!is_flexible_item(item)) {
+            base_flexible_space -= rect_size_in_layout_direction(
+                { 0, 0, item.widget->layout_constraint().width(), item.widget->layout_constraint().height() });
+        }
+    }
+    return max(0, base_flexible_space);
 }
 
 void SplitterLayoutEngine::compute_layout() {
@@ -173,31 +252,33 @@ void SplitterLayoutEngine::compute_layout() {
     }
 
     auto space_available = flexible_space();
+    auto flex_item_count = flexible_item_count();
+
+    // FIXME: potenially consider this layout's margins.
+    Point offset;
 
     int space_leftover = space_available;
-    Point offset;
     for (auto& item : m_items) {
-        auto length = static_cast<int>(space_available * item.expected_fraction);
-        auto width = direction() == Direction::Horizontal ? length : available_space_against_layout_direction();
-        auto height = direction() == Direction::Vertical ? length : available_space_against_layout_direction();
+        if (is_flexible_item(item)) {
+            auto length = flex_item_count > 1 ? static_cast<int>(space_available * item.expected_fraction) : space_leftover;
+            auto width = direction() == Direction::Horizontal ? length : available_space_against_layout_direction();
+            auto height = direction() == Direction::Vertical ? length : available_space_against_layout_direction();
 
-        // FIXME: potenially consider this layout's margins.
-        // FIXME: allow "fixed" sized items.
-        item.relative_rect = { offset.x(), offset.y(), width, height };
+            item.relative_rect = { offset.x(), offset.y(), width, height };
+            space_leftover -= length;
+            flex_item_count--;
+        } else {
+            auto constraint = item.widget->layout_constraint();
+            auto width = direction() == Direction::Horizontal ? constraint.width() : parent().sized_rect().width();
+            auto height = direction() == Direction::Vertical ? constraint.height() : parent().sized_rect().height();
+            item.relative_rect = { offset.x(), offset.y(), width, height };
+        }
 
         if (direction() == Direction::Horizontal) {
-            offset.set_x(offset.x() + length + gutter_width());
+            offset.set_x(offset.x() + item.relative_rect.width() + gutter_width());
         } else {
-            offset.set_y(offset.y() + length + gutter_width());
+            offset.set_y(offset.y() + item.relative_rect.height() + gutter_width());
         }
-        space_leftover -= length;
-    }
-
-    // FIXME: maybe not all left over space should go to the last item
-    if (direction() == Direction::Horizontal) {
-        m_items.last().relative_rect = m_items.last().relative_rect.expanded(space_leftover, 0);
-    } else {
-        m_items.last().relative_rect = m_items.last().relative_rect.expanded(0, space_leftover);
     }
 }
 }
