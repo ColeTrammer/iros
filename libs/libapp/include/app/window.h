@@ -49,16 +49,19 @@ public:
     const Widget& main_widget() const { return *m_main_widget; }
 
     Widget* hit_test(const Widget& root, const Point& point) const;
-    void schedule_render();
+
+    Window* parent_window();
+
+    virtual void schedule_render() = 0;
 
 protected:
     virtual void do_render() = 0;
 
-private:
-    virtual bool is_window() const final override { return true; }
-
     void flush_layout();
     void set_hovered_widget(Widget* widget);
+
+private:
+    virtual bool is_window() const final override { return true; }
 
     KeyBindings m_key_bindings;
     WeakPtr<Widget> m_focused_widget;
@@ -66,6 +69,5 @@ private:
     SharedPtr<Widget> m_main_widget;
     RectSet m_dirty_rects;
     Rect m_rect;
-    bool m_render_scheduled { false };
 };
 }

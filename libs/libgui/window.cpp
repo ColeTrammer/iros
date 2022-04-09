@@ -125,6 +125,13 @@ void Window::set_current_context_menu(ContextMenu* menu) {
     m_current_context_menu = menu->weak_from_this();
 }
 
+void Window::schedule_render() {
+    deferred_invoke_batched(m_render_scheduled, [this] {
+        flush_layout();
+        do_render();
+    });
+}
+
 void Window::do_render() {
     if (!main_widget().hidden()) {
         main_widget().render_including_children();

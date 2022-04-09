@@ -135,13 +135,6 @@ void Window::flush_layout() {
     main_widget().flush_layout();
 }
 
-void Window::schedule_render() {
-    deferred_invoke_batched(m_render_scheduled, [this] {
-        flush_layout();
-        do_render();
-    });
-}
-
 void Window::set_hovered_widget(Widget* widget) {
     auto old_widget = m_hovered_widget.lock();
     if (old_widget.get() == widget) {
@@ -159,5 +152,14 @@ void Window::set_hovered_widget(Widget* widget) {
 
     m_hovered_widget = widget->weak_from_this();
     widget->emit<App::EnterEvent>();
+}
+
+Window* Window::parent_window() {
+    for (auto* parent = this->parent(); parent; parent = parent->parent()) {
+        if (parent->is_window()) {
+            return static_cast<Window*>(parent);
+        }
+    }
+    return nullptr;
 }
 }

@@ -15,23 +15,29 @@ void Window::initialize() {
     App::Window::initialize();
 }
 
-void Window::do_render() {
-    auto& io_terminal = TUI::Application::the().io_terminal();
-    io_terminal.set_show_cursor(false);
-    main_widget().render_including_children();
+Window* Window::parent_window() {
+    return static_cast<Window*>(App::Window::parent_window());
+}
 
-    if (auto panel = focused_widget()) {
-        if (auto cursor_position = panel->cursor_position()) {
-            auto translated = cursor_position->translated(panel->positioned_rect().top_left());
-            if (io_terminal.terminal_rect().intersects(translated) && panel->positioned_rect().intersects(translated)) {
-                io_terminal.move_cursor_to(translated);
-                io_terminal.set_show_cursor(true);
-            }
+void Window::schedule_render() {
+    TUI::Application::the().schedule_render();
+}
+
+void Window::render_subwindows() {
+    for (auto& child : children()) {
+        if (child->is_window()) {
+            static_cast<Window&>(const_cast<Object&>(*child)).do_render();
         }
     }
+}
 
-    io_terminal.flush();
+void Window::do_render() {
+    flush_layout();
+
+    main_widget().render_including_children();
 
     clear_dirty_rects();
+
+    render_subwindows();
 }
 }

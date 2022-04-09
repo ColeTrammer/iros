@@ -65,6 +65,7 @@ protected:
 
 private:
     virtual void do_render() override;
+    virtual void schedule_render() override;
 
     void hide_current_context_menu();
 
@@ -79,5 +80,6 @@ private:
     bool m_active { false };
     bool m_has_alpha { false };
     bool m_removed { false };
+    bool m_render_scheduled { false };
 };
 }

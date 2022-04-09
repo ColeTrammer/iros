@@ -10,7 +10,16 @@ public:
     Window() {}
     virtual void initialize() override;
 
-protected:
+    Window* parent_window();
+
+    const Point& position() const { return m_position; }
+
+    virtual void schedule_render() override;
     virtual void do_render() override;
+
+private:
+    void render_subwindows();
+
+    Point m_position;
 };
 }

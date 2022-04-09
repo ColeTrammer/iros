@@ -32,17 +32,23 @@ public:
 
     Window& root_window() { return *m_root_window; }
 
+    void schedule_render();
+
 private:
     explicit Application(UniquePtr<TInput::IOTerminal> io_terminal);
 
     virtual void before_enter() override;
 
+    Window* hit_test(const Point& point);
+    void render();
     void detect_cursor_position();
-    void schedule_render();
+
+    void set_active_window(Window* window);
 
     TInput::TerminalInputParser m_parser;
     UniquePtr<TInput::IOTerminal> m_io_terminal;
     SharedPtr<Window> m_root_window;
+    WeakPtr<Window> m_active_window;
     bool m_use_alternate_screen_buffer { false };
     bool m_use_mouse { false };
     bool m_render_scheduled { false };

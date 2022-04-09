@@ -48,7 +48,9 @@ APP_EVENT_PARENT_REQUIRES_HANDLING(App, MouseEvent, Event, ((StringView, name)),
     (int control_down() const { return m_modifiers & KeyModifier::Control; }),
     (int shift_down() const { return m_modifiers & KeyModifier::Shift; }),
     (int alt_down() const { return m_modifiers & KeyModifier::Alt; }),
-    (int meta_down() const { return m_modifiers & KeyModifier::Meta; })
+    (int meta_down() const { return m_modifiers & KeyModifier::Meta; }),
+
+    (static bool is_mouse_event(const Event& event) { return event.name() == "App::MouseDownEvent" || event.name() == "App::MouseUpEvent" || event.name() == "App::MouseMoveEvent" || event.name() == "App::MouseScrollEvent"; })
 ))
 // clang-format on
 
