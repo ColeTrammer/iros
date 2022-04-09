@@ -1,9 +1,9 @@
 #include <tinput/io_terminal.h>
 #include <tui/application.h>
-#include <tui/root_window.h>
+#include <tui/window.h>
 
 namespace TUI {
-void RootWindow::initialize() {
+void Window::initialize() {
     on_unchecked<App::KeyDownEvent>([this](const App::KeyDownEvent& event) {
         if (Application::the().quit_on_control_q() && event.control_down() && event.key() == App::Key::Q) {
             Application::the().main_event_loop().set_should_exit(true);
@@ -15,7 +15,7 @@ void RootWindow::initialize() {
     App::Window::initialize();
 }
 
-void RootWindow::do_render() {
+void Window::do_render() {
     auto& io_terminal = TUI::Application::the().io_terminal();
     io_terminal.set_show_cursor(false);
     main_widget().render_including_children();

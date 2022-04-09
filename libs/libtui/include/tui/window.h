@@ -3,11 +3,11 @@
 #include <app/window.h>
 
 namespace TUI {
-class RootWindow final : public App::Window {
-    APP_OBJECT(RootWindow)
+class Window final : public App::Window {
+    APP_OBJECT(Window)
 
 public:
-    RootWindow() {}
+    Window() {}
     virtual void initialize() override;
 
 protected:

@@ -7,7 +7,7 @@
 #include <tinput/forward.h>
 #include <tinput/terminal_input_parser.h>
 #include <tui/panel.h>
-#include <tui/root_window.h>
+#include <tui/window.h>
 
 namespace TUI {
 class Application : public App::Application {
@@ -30,7 +30,7 @@ public:
 
     TInput::IOTerminal& io_terminal() { return *m_io_terminal; }
 
-    RootWindow& root_window() { return *m_root_window; }
+    Window& root_window() { return *m_root_window; }
 
 private:
     explicit Application(UniquePtr<TInput::IOTerminal> io_terminal);
@@ -42,7 +42,7 @@ private:
 
     TInput::TerminalInputParser m_parser;
     UniquePtr<TInput::IOTerminal> m_io_terminal;
-    SharedPtr<RootWindow> m_root_window;
+    SharedPtr<Window> m_root_window;
     bool m_use_alternate_screen_buffer { false };
     bool m_use_mouse { false };
     bool m_render_scheduled { false };

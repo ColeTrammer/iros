@@ -3,13 +3,13 @@ set(SOURCES
     frame.cpp
     label.cpp
     panel.cpp
-    root_window.cpp
     scroll_component.cpp
     splitter.cpp
     table_view.cpp
     terminal_panel.cpp
     tree_view.cpp
     view.cpp
+    window.cpp
 )
 
 add_os_library(libtui tui true)

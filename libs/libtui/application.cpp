@@ -38,7 +38,7 @@ Application::Application(UniquePtr<TInput::IOTerminal> io_terminal) : m_io_termi
 }
 
 void Application::initialize() {
-    m_root_window = RootWindow::create(this);
+    m_root_window = Window::create(this);
     m_root_window->set_rect(m_io_terminal->terminal_rect());
 }
 
