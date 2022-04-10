@@ -8,7 +8,7 @@ int main() {
 
     if (fork() == 0) {
         for (int i = 0; i < 10000000; i++) {
-            asm volatile(" mov %rax, %rax ");
+            asm volatile(" mov %eax, %eax ");
         }
 
         for (int i = 0; i < 1000000; i++) {

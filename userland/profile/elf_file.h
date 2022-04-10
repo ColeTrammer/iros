@@ -43,9 +43,9 @@ public:
     }
 
     const uint8_t* offset_in_memory(size_t offset) const { return m_file->data() + offset; }
-    const uint8_t* section_in_memory(const Elf64_Shdr* section) const { return offset_in_memory(section->sh_offset); }
+    const uint8_t* section_in_memory(const ElfW(Shdr) * section) const { return offset_in_memory(section->sh_offset); }
 
-    const char* string_at(const Elf64_Shdr* str_section, size_t i) const {
+    const char* string_at(const ElfW(Shdr) * str_section, size_t i) const {
         if (!m_string_table) {
             return nullptr;
         }
@@ -53,14 +53,14 @@ public:
     }
     const char* string_at(size_t i) const { return string_at(m_string_table, i); }
 
-    const Elf64_Ehdr* elf_header() const { return (const Elf64_Ehdr*) m_file->data(); }
+    const ElfW(Ehdr) * elf_header() const { return (const ElfW(Ehdr)*) m_file->data(); }
     size_t phdr_size() const { return elf_header()->e_phentsize; }
     size_t phdr_count() const { return elf_header()->e_phnum; }
-    const Elf64_Phdr* phdr_at(size_t i) { return (const Elf64_Phdr*) offset_in_memory(elf_header()->e_phoff + shdr_size() * i); }
+    const ElfW(Phdr) * phdr_at(size_t i) { return (const ElfW(Phdr)*) offset_in_memory(elf_header()->e_phoff + shdr_size() * i); }
 
     size_t shdr_size() const { return elf_header()->e_shentsize; }
     size_t shdr_count() const { return elf_header()->e_shnum; }
-    const Elf64_Shdr* shdr_at(size_t i) { return (const Elf64_Shdr*) offset_in_memory(elf_header()->e_shoff + shdr_size() * i); }
+    const ElfW(Shdr) * shdr_at(size_t i) { return (const ElfW(Shdr)*) offset_in_memory(elf_header()->e_shoff + shdr_size() * i); }
 
     struct LookupResult {
         String name;
@@ -76,7 +76,7 @@ private:
     FileId m_file_id { 0, 0 };
     UniquePtr<ByteBuffer> m_file;
     String m_path;
-    const Elf64_Shdr* m_string_table { nullptr };
-    const Elf64_Shdr* m_symbol_table { nullptr };
+    const ElfW(Shdr) * m_string_table { nullptr };
+    const ElfW(Shdr) * m_symbol_table { nullptr };
     mutable WeakPtr<ElfFile> m_weak_this;
 };

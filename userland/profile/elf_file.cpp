@@ -44,11 +44,11 @@ SharedPtr<ElfFile> ElfFile::find_or_create(FileId id) {
 }
 
 static bool validate_elf(const ByteBuffer& file) {
-    if (file.size() < sizeof(Elf64_Ehdr)) {
+    if (file.size() < sizeof(ElfW(Ehdr))) {
         return false;
     }
 
-    const Elf64_Ehdr* header = (const Elf64_Ehdr*) file.data();
+    const ElfW(Ehdr)* header = (const ElfW(Ehdr)*) file.data();
     if (header->e_ident[EI_MAG0] != 0x7F || header->e_ident[EI_MAG1] != 'E' || header->e_ident[EI_MAG2] != 'L' ||
         header->e_ident[EI_MAG3] != 'F') {
         return false;
@@ -117,8 +117,8 @@ Maybe<ElfFile::LookupResult> ElfFile::lookup_symbol(uintptr_t addr) const {
         return {};
     }
 
-    size_t symbol_count = m_symbol_table->sh_size / sizeof(Elf64_Sym);
-    auto* symbols = (const Elf64_Sym*) offset_in_memory(m_symbol_table->sh_offset);
+    size_t symbol_count = m_symbol_table->sh_size / sizeof(ElfW(Sym));
+    auto* symbols = (const ElfW(Sym)*) offset_in_memory(m_symbol_table->sh_offset);
     for (size_t i = 0; i < symbol_count; i++) {
         auto& sym = symbols[i];
         if (sym.st_size && sym.st_value <= addr && addr <= sym.st_value + sym.st_size) {

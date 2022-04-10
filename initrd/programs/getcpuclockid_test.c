@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <inttypes.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,7 +33,7 @@ static void pclock(char *msg, clockid_t cid) {
     printf("%s", msg);
     if (clock_gettime(cid, &ts) == -1)
         handle_error("clock_gettime");
-    printf("%4ld.%03ld\n", ts.tv_sec, ts.tv_nsec / 1000000);
+    printf("%4" PRIi64 ".%03ld\n", ts.tv_sec, ts.tv_nsec / 1000000);
 }
 
 int main(int argc __attribute__((unused)), char *argv[] __attribute__((unused))) {

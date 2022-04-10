@@ -9,11 +9,11 @@
 #include "tls_record.h"
 
 static int validate_elf_shared_library(void *base, size_t size) {
-    if (size < sizeof(Elf64_Ehdr)) {
+    if (size < sizeof(ElfW(Ehdr))) {
         return -1;
     }
 
-    const Elf64_Ehdr *header = (const Elf64_Ehdr *) base;
+    const ElfW(Ehdr) *header = (const ElfW(Ehdr) *) base;
     if (header->e_ident[EI_MAG0] != 0x7F || header->e_ident[EI_MAG1] != 'E' || header->e_ident[EI_MAG2] != 'L' ||
         header->e_ident[EI_MAG3] != 'F') {
         return -1;
@@ -95,16 +95,16 @@ void destroy_mapped_elf_file(struct mapped_elf_file *self) {
 }
 LOADER_HIDDEN_EXPORT(destroy_mapped_elf_file, __loader_destroy_mapped_elf_file);
 
-const Elf64_Ehdr *elf_header(const struct mapped_elf_file *self) {
+const ElfW(Ehdr) * elf_header(const struct mapped_elf_file *self) {
     return self->base;
 }
 
-const Elf64_Shdr *section_table(const struct mapped_elf_file *self) {
-    const Elf64_Ehdr *header = elf_header(self);
+const ElfW(Shdr) * section_table(const struct mapped_elf_file *self) {
+    const ElfW(Ehdr) *header = elf_header(self);
     return self->base + header->e_shoff;
 }
 
-const Elf64_Shdr *section_at(const struct mapped_elf_file *self, size_t index) {
+const ElfW(Shdr) * section_at(const struct mapped_elf_file *self, size_t index) {
     return &section_table(self)[index];
 }
 
@@ -112,12 +112,12 @@ size_t section_count(const struct mapped_elf_file *self) {
     return elf_header(self)->e_shnum;
 }
 
-const Elf64_Phdr *program_header_table(const struct mapped_elf_file *self) {
-    const Elf64_Ehdr *header = elf_header(self);
+const ElfW(Phdr) * program_header_table(const struct mapped_elf_file *self) {
+    const ElfW(Ehdr) *header = elf_header(self);
     return self->base + header->e_phoff;
 }
 
-const Elf64_Phdr *program_header_at(const struct mapped_elf_file *self, size_t index) {
+const ElfW(Phdr) * program_header_at(const struct mapped_elf_file *self, size_t index) {
     return &program_header_table(self)[index];
 }
 
@@ -126,11 +126,11 @@ size_t program_header_count(const struct mapped_elf_file *self) {
 }
 
 const char *section_strings(const struct mapped_elf_file *self) {
-    const Elf64_Ehdr *header = elf_header(self);
+    const ElfW(Ehdr) *header = elf_header(self);
     if (header->e_shstrndx == 0) {
         return NULL;
     }
-    const Elf64_Shdr *string_table = section_at(self, header->e_shstrndx);
+    const ElfW(Shdr) *string_table = section_at(self, header->e_shstrndx);
     return self->base + string_table->sh_offset;
 }
 
@@ -145,7 +145,7 @@ const char *section_string(const struct mapped_elf_file *self, size_t index) {
 const char *strings(const struct mapped_elf_file *self) {
     size_t count = section_count(self);
     for (size_t i = 0; i < count; i++) {
-        const Elf64_Shdr *section = section_at(self, i);
+        const ElfW(Shdr) *section = section_at(self, i);
         if (section->sh_type == SHT_STRTAB && strcmp(section_string(self, section->sh_name), ".strtab") == 0) {
             return self->base + section->sh_offset;
         }
@@ -161,10 +161,10 @@ __attribute__((unused)) const char *string(const struct mapped_elf_file *self, s
     return &strs[index];
 }
 
-const Elf64_Phdr *dynamic_program_header(const struct mapped_elf_file *self) {
+const ElfW(Phdr) * dynamic_program_header(const struct mapped_elf_file *self) {
     size_t count = program_header_count(self);
     for (size_t i = 0; i < count; i++) {
-        const Elf64_Phdr *phdr = program_header_at(self, i);
+        const ElfW(Phdr) *phdr = program_header_at(self, i);
         if (phdr->p_type == PT_DYNAMIC) {
             return phdr;
         }
@@ -173,7 +173,7 @@ const Elf64_Phdr *dynamic_program_header(const struct mapped_elf_file *self) {
 }
 
 uintptr_t dynamic_table_offset(const struct mapped_elf_file *self) {
-    const Elf64_Phdr *phdr = dynamic_program_header(self);
+    const ElfW(Phdr) *phdr = dynamic_program_header(self);
     if (!phdr) {
         return -1;
     }
@@ -181,11 +181,11 @@ uintptr_t dynamic_table_offset(const struct mapped_elf_file *self) {
 }
 
 size_t dynamic_count(const struct mapped_elf_file *self) {
-    const Elf64_Phdr *phdr = dynamic_program_header(self);
+    const ElfW(Phdr) *phdr = dynamic_program_header(self);
     if (!phdr) {
         return 0;
     }
-    return phdr->p_filesz / sizeof(Elf64_Dyn);
+    return phdr->p_filesz / sizeof(ElfW(Dyn));
 }
 
 struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file, const char *full_path, bool global, bool use_initial_tls) {
@@ -195,12 +195,12 @@ struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file, co
         return NULL;
     }
 
-    const Elf64_Phdr *first = program_header_at(file, 0);
-    const Elf64_Phdr *last = program_header_at(file, 0);
+    const ElfW(Phdr) *first = program_header_at(file, 0);
+    const ElfW(Phdr) *last = program_header_at(file, 0);
     size_t tls_size = 0;
     size_t tls_align = 0;
     for (size_t i = 1; i < count; i++) {
-        const Elf64_Phdr *phdr = program_header_at(file, i);
+        const ElfW(Phdr) *phdr = program_header_at(file, i);
         if (phdr->p_type == PT_TLS) {
             tls_size = phdr->p_memsz;
             tls_align = phdr->p_align;
@@ -233,7 +233,7 @@ struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file, co
 
     void *tls_image = NULL;
     for (size_t i = 0; i < count; i++) {
-        const Elf64_Phdr *phdr = program_header_at(file, i);
+        const ElfW(Phdr) *phdr = program_header_at(file, i);
         if (phdr->p_type == PT_TLS && tls_size) {
             tls_image = base + tls_start;
             mprotect(tls_image, ALIGN_UP(tls_size, PAGE_SIZE), PROT_WRITE);
@@ -271,8 +271,8 @@ struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file, co
     }
 
     struct dynamic_elf_object *obj = loader_malloc(sizeof(struct dynamic_elf_object));
-    void *phdr_start = loader_malloc(count * sizeof(Elf64_Phdr));
-    memcpy(phdr_start, program_header_table(file), count * sizeof(Elf64_Phdr));
+    void *phdr_start = loader_malloc(count * sizeof(ElfW(Phdr)));
+    memcpy(phdr_start, program_header_table(file), count * sizeof(ElfW(Phdr)));
     *obj = build_dynamic_elf_object(base + dyn_table_offset, dyn_count, base, total_size, (uintptr_t) base, phdr_start, count,
                                     tls_module_id, full_path, global);
 

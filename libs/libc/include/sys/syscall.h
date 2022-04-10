@@ -133,8 +133,7 @@ enum sc_number {
     ENUMERATE_SYSCALLS __SYS_NUM
 };
 
-#ifdef __is_libc
-#if ARCH == X86_64
+#if defined(__is_libc) && __x86_64__
 #define __SC_TYPE(name)   __typeof__((name) - (name))
 #define __SC_CAST(name)   ((__SC_TYPE(name))(name))
 #define __SC_CLOBBER_LIST "cc", "cx", "r11"
@@ -235,9 +234,6 @@ enum sc_number {
                      : "memory", __SC_CLOBBER_LIST);                                             \
         ret;                                                                                     \
     })
-#else
-#erro "Unsupported architecture"
-#endif /* ARCH */
 #else
 long __do_syscall(int sc, unsigned long a1, unsigned long a2, unsigned long a3, unsigned long a4, unsigned long a5, unsigned long a6);
 

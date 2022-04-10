@@ -20,13 +20,21 @@ int main() {
     act.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
     sigemptyset(&act.sa_mask);
     act.sa_sigaction = [](int, siginfo_t*, void* _context [[maybe_unused]]) {
-        uint64_t rsp;
-        asm("mov %%rsp, %0" : "=r"(rsp) : :);
-        fprintf(stderr, "\n%%rsp=%#.16lX\n", rsp);
+        unsigned long sp;
+#ifdef __x86_64__
+        asm("mov %%rsp, %0" : "=r"(sp) : :);
+#elif defined(__i386__)
+        asm("mov %%esp, %0" : "=r"(sp) : :);
+#endif
+        fprintf(stderr, "\n%%sp=%#.16lX\n", sp);
 #ifdef __os_2__
         ucontext_t* context = reinterpret_cast<ucontext_t*>(_context);
-        fprintf(stderr, "rsp on now: [ %p ]\n", context->uc_stack.ss_sp);
-        fprintf(stderr, "rsp return: [ %#.16lX ]\n", context->uc_mcontext.__stack_state.rsp);
+        fprintf(stderr, "sp on now: [ %p ]\n", context->uc_stack.ss_sp);
+#ifdef __x86_64__
+        fprintf(stderr, "sp return: [ %#.16lX ]\n", context->uc_mcontext.__stack_state.rsp);
+#elif defined(__i386__)
+        fprintf(stderr, "sp return: [ %#.8lX ]\n", context->uc_mcontext.__stack_state.esp);
+#endif
 #endif /* __os_2__ */
     };
 

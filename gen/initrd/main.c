@@ -1,4 +1,5 @@
 #include <dirent.h>
+#include <inttypes.h>
 #include <regex.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -73,7 +74,7 @@ int main(int argc, char **argv) {
         printf("No Files in Dir: %s\n", dir);
         return 1;
     }
-    printf("Process %ld file(s)...\n", files);
+    printf("Process %" PRIi64 " file(s)...\n", files);
 
     size_t dir_name_length = strlen(dir) + 1;
     char *file_name = calloc(dir_name_length + MAX_FILE_NAME_LENGTH, 1);

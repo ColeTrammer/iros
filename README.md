@@ -24,6 +24,10 @@ My second attempt to create an OS
 
 [GUI Demo](https://user-images.githubusercontent.com/18405484/129427196-777ef90a-c22a-4e2c-a5b9-eff8dfaf5365.mp4)
 
+# Supported Architectures
+
+-   x86 (32 and 64 bit)
+
 # Features
 
 -   Multiboot2 boot loader compliant

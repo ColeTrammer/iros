@@ -71,7 +71,7 @@ UniquePtr<Message> Endpoint::wait_for_response_impl(uint32_t type) {
 
 bool Endpoint::send_impl(const Message& message) {
     int fd = m_socket ? m_socket->fd() : -1;
-    return write(fd, &message, message.size) == message.size;
+    return write(fd, &message, message.size) == static_cast<ssize_t>(message.size);
 }
 
 void Endpoint::handle_messages() {

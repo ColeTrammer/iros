@@ -28,7 +28,7 @@ struct symbol_lookup_result do_symbol_lookup(const char *s, const struct dynamic
 #endif /* LOADER_SYMBOL_DEBUG */
     while (obj) {
         if ((!(flags & SYMBOL_LOOKUP_NOT_CURRENT) || (obj != current_object)) && (obj->global || is_dependency(obj, current_object))) {
-            const Elf64_Sym *sym = lookup_symbol(obj, s);
+            const ElfW(Sym) *sym = lookup_symbol(obj, s);
             if (sym && sym->st_shndx != STN_UNDEF) {
                 uint8_t visibility = sym->st_info >> 4;
                 if (visibility == STB_GLOBAL || visibility == STB_WEAK) {

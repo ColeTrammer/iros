@@ -14,7 +14,7 @@ get_filename_component(
 )
 
 get_filename_component(
-    OS_2_TOOLCHAIN "${OS_2_PROJECT_ROOT}/cmake/CMakeToolchain.txt"
+    OS_2_TOOLCHAIN "${OS_2_PROJECT_ROOT}/cmake/CMakeToolchain_$ENV{OS_2_ARCH}.txt"
     ABSOLUTE CACHE
 )
 
@@ -35,7 +35,7 @@ ExternalProject_Add(
     os_2
     SOURCE_DIR "${OS_2_PROJECT_ROOT}"
     BINARY_DIR "${PROJECT_BINARY_DIR}/os_2"
-    INSTALL_DIR "${OS_2_PROJECT_ROOT}/sysroot"
+    INSTALL_DIR "${CMAKE_CURRENT_BINARY_DIR}/os_2/sysroot"
     CMAKE_CACHE_DEFAULT_ARGS
         "-DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>"
         "-DCMAKE_TOOLCHAIN_FILE:PATH=${OS_2_TOOLCHAIN}"

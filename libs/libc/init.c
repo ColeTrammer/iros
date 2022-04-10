@@ -106,3 +106,16 @@ void initialize_standard_library(struct initial_process_info *initial_process_in
     }
 #endif /* __is_static */
 }
+
+#include <assert.h>
+void __udivdi3() {
+    assert(false);
+}
+
+void __divmoddi4() {
+    assert(false);
+}
+
+void __divdi3() {
+    assert(false);
+}

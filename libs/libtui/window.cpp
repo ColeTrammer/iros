@@ -26,7 +26,10 @@ void Window::schedule_render() {
 void Window::render_subwindows() {
     for (auto& child : children()) {
         if (child->is_window()) {
-            static_cast<Window&>(const_cast<Object&>(*child)).do_render();
+            auto& subwindow = static_cast<Window&>(const_cast<Object&>(*child));
+            if (!subwindow.hidden()) {
+                subwindow.do_render();
+            }
         }
     }
 }

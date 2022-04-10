@@ -77,9 +77,10 @@ int main(int argc, char **argv) {
 
     fprintf(stderr, "PING: %s\n", inet_ntoa(addr.sin_addr));
 
-    char *message = "Ping message";
+    const char *message = "Ping message";
 
-    struct ping_message ping_message = { 0 };
+    struct ping_message ping_message;
+    memset(&ping_message, 0, sizeof(ping_message));
     ping_message.header.type = ICMP_ECHO;
     ping_message.header.code = 0;
     ping_message.header.un.echo.id = htons(getpid() & 0xFFFF);
@@ -98,7 +99,7 @@ int main(int argc, char **argv) {
         }
 
         socklen_t addr_size = sizeof(struct sockaddr_in);
-        struct ping_message recieved_message = { 0 };
+        struct ping_message recieved_message;
         ssize_t ret = recvfrom(fd, &recieved_message, sizeof(struct ping_message), 0, (struct sockaddr *) &addr, &addr_size);
         if (ret < 0) {
             if (errno == EINTR) {

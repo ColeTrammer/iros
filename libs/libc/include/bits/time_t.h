@@ -5,7 +5,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-typedef long time_t;
+typedef __INT64_TYPE__ time_t;
 
 #ifdef __cplusplus
 }

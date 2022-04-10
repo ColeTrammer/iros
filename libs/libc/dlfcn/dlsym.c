@@ -23,7 +23,7 @@ void *dlsym(void *__restrict _handle, const char *__restrict symbol) {
         queue_head = queue_head->bfs_queue_next;
         obj->bfs_queue_next = NULL;
 
-        const Elf64_Sym *sym = __loader_lookup_symbol(obj, symbol);
+        const ElfW(Sym) *sym = __loader_lookup_symbol(obj, symbol);
         if (sym && sym->st_shndx != SHN_UNDEF && (sym->st_info >> 4 == STB_GLOBAL || sym->st_info >> 4 == STB_WEAK)) {
             return (void *) (sym->st_value + obj->relocation_offset);
         }

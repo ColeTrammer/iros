@@ -6,7 +6,7 @@ die() {
     echo $1 && exit 1
 }
 
-ARCH=${ARCH:-x86_64}
+ARCH=${OS_2_ARCH:-x86_64}
 
 [ -e os_2.img ] || die 'os_2.img not found - try running `sudo ./makeimg.sh'"'"
 [ -e os_2.iso ] || die 'os_2.iso not found - try making target `os_2.iso'"'"

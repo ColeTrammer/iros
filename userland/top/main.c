@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <procinfo.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -119,7 +120,7 @@ static size_t display_header(struct proc_summary *summary) {
            summary->tasks_running, summary->tasks_sleeping);
     printf("\033[0K\n");
 
-    printf("Mem: \033[1;97m%lu\033[0m bytes total, \033[1;97m%lu\033[0m bytes allocated, \033[1;97m%.1f\033[0m%% used",
+    printf("Mem: \033[1;97m%" PRIuPTR "\033[0m bytes total, \033[1;97m%" PRIuPTR "\033[0m bytes allocated, \033[1;97m%.1f\033[0m%% used",
            current_global_info.total_memory, current_global_info.allocated_memory,
            (double) current_global_info.allocated_memory / (double) current_global_info.total_memory * 100.0);
     printf("\033[0K\n");
