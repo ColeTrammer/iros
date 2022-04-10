@@ -9,7 +9,7 @@
 #define VGA_HEIGHT           25
 #define VGA_PHYS_ADDR        0xB8000
 #define VGA_INDEX(row, col)  ((row) *VGA_WIDTH + (col))
-#define VGA_ENTRY(c, fg, bg) ((uint16_t)(((uint16_t)(c) &0x00FF) | ((uint16_t)(fg) << 8 & 0x0F00) | ((uint16_t)(bg) << 12 & 0xF000)))
+#define VGA_ENTRY(c, fg, bg) ((uint16_t) (((uint16_t) (c) &0x00FF) | ((uint16_t) (fg) << 8 & 0x0F00) | ((uint16_t) (bg) << 12 & 0xF000)))
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,7 +40,8 @@ enum vga_color {
 
 #ifdef __is_kernel
 
-#include <kernel/arch/x86_64/asm_utils.h>
+#include <kernel/arch/arch.h>
+#include ARCH_SPECIFIC(asm_utils.h)
 
 #define VGA_CURSOR_Y_START 14
 #define VGA_CURSOR_Y_END   15

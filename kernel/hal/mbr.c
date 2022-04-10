@@ -36,7 +36,7 @@ void mbr_partition_device(struct block_device *block_device) {
             continue;
         }
 
-        blkcnt_t lba_end = partition->lba_start + partition->sector_count;
+        uint64_t lba_end = partition->lba_start + partition->sector_count;
         if (lba_end > block_device->block_count) {
             debug_log("Partition goes past the end of the device: [ %d ]\n", i);
             goto done;

@@ -22,7 +22,7 @@
     ((((pml4_offset) &0x100UL) ? 0xFFFFUL << 48 : 0UL) | (((pml4_offset) &0x1FFUL) << 39) | (((pdp_offset) &0x1FFUL) << 30) | \
      (((pd_offset) &0x1FFUL) << 21) | (((pt_offset) &0x1FFUL) << 12))
 
-#define PHYS_ID_START VIRT_ADDR(MAX_PML4_ENTRIES - 2, 0, 0, 0)
+#define PHYS_ID_START     VIRT_ADDR(MAX_PML4_ENTRIES - 2, 0, 0, 0)
 #define KERNEL_HEAP_START VIRT_ADDR(MAX_PML4_ENTRIES - 1, 0, 0, 0)
 
 #ifndef __ASSEMBLER__

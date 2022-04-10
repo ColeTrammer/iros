@@ -256,7 +256,7 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_status(struct procfs_
                  "NICE: %d\n"
                  "VIRTUAL_MEMORY: %lu\n"
                  "RESIDENT_MEMORY: %lu\n"
-                 "START_TIME.tv_sec: %lu\n"
+                 "START_TIME.tv_sec: %" PRIi64 "\n"
                  "START_TIME.tv_nsec: %lu\n",
                  process->name, process->pid, main_task ? task_state_to_string(main_task->sched_state) : "? (unknown)", process->uid,
                  process->gid, proc_getppid(process), process->umask, process->euid, process->egid, process->pgid, process->sid, tty_string,
@@ -306,7 +306,7 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_signal(struct procfs_
                      "SIGNAL: %d (%s)\n"
                      "STATE: %s\n"
                      "FLAGS: %c%c%c%c%c%c%c\n"
-                     "MASK: %#.16lX\n",
+                     "MASK: %#.16" PRIX64 "\n",
                      i, strsignal(i),
                      process->sig_state[i].sa_handler == SIG_IGN   ? "ignored"
                      : process->sig_state[i].sa_handler == SIG_DFL ? "default"
@@ -355,8 +355,8 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_pid_sched(struct proc
                                                                      struct process *process, bool need_buffer) {
     char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
     size_t length = snprintf(buffer, need_buffer ? PAGE_SIZE : 0,
-                             "USER_TICKS: %lu\n"
-                             "KERNEL_TICKS: %lu\n",
+                             "USER_TICKS: %" PRIi64 "\n"
+                             "KERNEL_TICKS: %" PRIi64 "\n",
                              process->rusage_self.ru_utime.tv_sec * 1000 + process->rusage_self.ru_utime.tv_usec / 1000,
                              process->rusage_self.ru_stime.tv_sec * 1000 + process->rusage_self.ru_stime.tv_usec / 1000);
     return (struct procfs_buffer) { buffer, length };
@@ -560,9 +560,9 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_sched(struct procfs_d
                                                                  struct process *process __attribute__((unused)), bool need_buffer) {
     char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
     size_t length = snprintf(buffer, need_buffer ? PAGE_SIZE : 0,
-                             "IDLE_TICKS: %lu\n"
-                             "USER_TICKS: %lu\n"
-                             "KERNEL_TICKS: %lu\n",
+                             "IDLE_TICKS: %" PRIu64 "\n"
+                             "USER_TICKS: %" PRIu64 "\n"
+                             "KERNEL_TICKS: %" PRIu64 "\n",
                              sched_idle_ticks(), sched_user_ticks(), sched_kernel_ticks());
     return (struct procfs_buffer) { buffer, length };
 }
@@ -572,9 +572,9 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_meminfo(struct procfs
     char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
     size_t length =
         snprintf(buffer, need_buffer ? PAGE_SIZE : 0,
-                 "ALLOCATED_MEMORY: %lu\n"
-                 "TOTAL_MEMORY: %lu\n"
-                 "MAX_MEMORY: %lu\n",
+                 "ALLOCATED_MEMORY: %" PRIu64 "\n"
+                 "TOTAL_MEMORY: %" PRIu64 "\n"
+                 "MAX_MEMORY: %" PRIu64 "\n",
                  g_phys_page_stats.phys_memory_allocated, g_phys_page_stats.phys_memory_total, g_phys_page_stats.phys_memory_max);
     return (struct procfs_buffer) { buffer, length };
 }
@@ -621,9 +621,9 @@ PROCFS_ENSURE_ALIGNMENT static struct procfs_buffer procfs_kheap(struct procfs_d
     char *buffer = need_buffer ? malloc(PAGE_SIZE) : NULL;
     size_t length =
         snprintf(buffer, need_buffer ? PAGE_SIZE : 0,
-                 "ALLOC: %lu\n"
-                 "FREE: %lu\n"
-                 "DELTA: %lu\n",
+                 "ALLOC: %" PRIu64 "\n"
+                 "FREE: %" PRIu64 "\n"
+                 "DELTA: %" PRIu64 "\n",
                  g_kmalloc_stats.alloc_count, g_kmalloc_stats.free_count, g_kmalloc_stats.alloc_count - g_kmalloc_stats.free_count);
     return (struct procfs_buffer) { buffer, length };
 }

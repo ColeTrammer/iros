@@ -41,7 +41,7 @@ void mark_available(uintptr_t phys_addr_start, uintptr_t length) {
 static uintptr_t try_get_next_phys_page(struct process *process) {
     spin_lock(&bitmap_lock);
 
-    uintptr_t page_index;
+    size_t page_index;
     if (bitset_find_first_free_bit(&page_bitset, &page_index) == 0) {
         bitset_set_bit(&page_bitset, page_index);
         g_phys_page_stats.phys_memory_allocated += PAGE_SIZE;
@@ -116,7 +116,8 @@ void init_page_frame_allocator() {
     struct boot_info *boot_info = boot_get_boot_info();
     struct multiboot2_memory_map_tag *memory_map_tag = boot_info->memory_map;
     multiboot2_for_each_memory_map_entry(memory_map_tag, entry) {
-        debug_log("Physical memory range: [ %#.16lX, %#.16lX, %u ]\n", entry->base_address & ~0xFFF, entry->length, entry->type);
+        debug_log("Physical memory range: [ %#.16" PRIX64 ", %#.16" PRIX64 ", %u ]\n", entry->base_address & ~0xFFF, entry->length,
+                  entry->type);
         if (entry->type == MULTIBOOT2_MEMORY_MAP_AVAILABLE) {
             // Memory below 0x100000 is reserved, and accounted as allocated.
             if (entry->base_address < 0x100000) {
@@ -138,10 +139,10 @@ void init_page_frame_allocator() {
     g_phys_page_stats.phys_memory_allocated += ALIGN_UP(boot_info->initrd_phys_end - boot_info->initrd_phys_start, PAGE_SIZE);
     mark_used(boot_info->initrd_phys_start, boot_info->initrd_phys_end - boot_info->initrd_phys_start);
 
-    debug_log("Max phys memory: [ %#lX ]\n", g_phys_page_stats.phys_memory_max);
-    debug_log("Total available memory: [ %#lX ]\n", g_phys_page_stats.phys_memory_total);
-    debug_log("Kernel physical memory: [ %#.16lX, %#.16lX, %#.16lX ]\n", KERNEL_PHYS_START, KERNEL_PHYS_END,
-              KERNEL_PHYS_END - KERNEL_PHYS_START);
-    debug_log("Initrd physical memory: [ %#.16lX, %#.16lX, %#.16lX ]\n", boot_info->initrd_phys_start, boot_info->initrd_phys_end,
-              boot_info->initrd_phys_end - boot_info->initrd_phys_start);
+    debug_log("Max phys memory: [ %#" PRIX64 " ]\n", g_phys_page_stats.phys_memory_max);
+    debug_log("Total available memory: [ %#" PRIX64 " ]\n", g_phys_page_stats.phys_memory_total);
+    debug_log("Kernel physical memory: [ %p], %p, %lu ]\n", (void *) KERNEL_PHYS_START, (void *) KERNEL_PHYS_END,
+              (size_t) (KERNEL_PHYS_END - KERNEL_PHYS_START));
+    debug_log("Initrd physical memory: [ %p, %p, %lu ]\n", (void *) boot_info->initrd_phys_start, (void *) boot_info->initrd_phys_end,
+              (size_t) (boot_info->initrd_phys_end - boot_info->initrd_phys_start));
 }

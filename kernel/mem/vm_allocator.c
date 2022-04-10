@@ -27,7 +27,7 @@
 // #define MMAP_DEBUG
 
 static struct vm_region *kernel_vm_list = NULL;
-#if ARCH == X86_64
+#ifdef __x86_64__
 static struct vm_region kernel_phys_id;
 #endif /* ARCH==X86_64 */
 static struct vm_region kernel_text;
@@ -38,7 +38,7 @@ static struct vm_region initrd;
 static spinlock_t kernel_vm_lock = SPINLOCK_INITIALIZER;
 
 void init_vm_allocator(void) {
-#if ARCH == X86_64
+#ifdef __x86_64__
     kernel_phys_id.start = PHYS_ID_START;
     kernel_phys_id.end = kernel_phys_id.start + g_phys_page_stats.phys_memory_max;
     kernel_phys_id.flags = VM_NO_EXEC | VM_GLOBAL | VM_WRITE;
@@ -99,10 +99,10 @@ void init_vm_allocator(void) {
 void dump_kernel_regions(uintptr_t addr) {
     struct vm_region *region = kernel_vm_list;
     while (region) {
-        debug_log(" region: [ %p, %#.16lX, %#.16lX, %#.16lX, %s ]\n", region, region->start, region->end, region->flags,
+        debug_log(" region: [ %p, %p, %p, %#.16" PRIX64 ", %s ]\n", region, (void *) region->start, (void *) region->end, region->flags,
                   vm_type_to_string(region->type));
         if (addr >= region->start && addr <= region->end) {
-            debug_log("Addr found in above: [ %#.16lX ]\n", addr);
+            debug_log("Addr found in above: [ %p ]\n", (void *) addr);
         }
         region = region->next;
     }
@@ -654,7 +654,7 @@ struct vm_region *clone_process_vm() {
 void dump_process_regions(struct process *process) {
     struct vm_region *region = process->process_memory;
     while (region) {
-        debug_log("region: [ %p, %#.16lX, %#.16lX, %#.16lX, %s ]\n", region, region->start, region->end, region->flags,
+        debug_log("region: [ %p, %p, %p, %#.16" PRIX64 ", %s ]\n", region, (void *) region->start, (void *) region->end, region->flags,
                   vm_type_to_string(region->type));
         region = region->next;
     }

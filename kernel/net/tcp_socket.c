@@ -219,10 +219,10 @@ int tcp_send_segments(struct socket *socket) {
         uint32_t data_queued = data_available - (tcb->send_next - tcb->send_unacknowledged);
 
         uint32_t data_to_send = 0;
-        if ((MIN(usable_window, data_queued) >= (ssize_t) segment_size) ||
-            ((socket->tcp_nodelay || tcb->send_next == tcb->send_unacknowledged) && push_data && data_queued <= usable_window) ||
+        if ((MIN((uint32_t) usable_window, data_queued) >= segment_size) ||
+            ((socket->tcp_nodelay || tcb->send_next == tcb->send_unacknowledged) && push_data && data_queued <= (uint32_t) usable_window) ||
             ((socket->tcp_nodelay || tcb->send_next == tcb->send_unacknowledged) &&
-             MIN(usable_window, data_queued) >= tcb->send_window_max / 2)) {
+             MIN((uint32_t) usable_window, data_queued) >= tcb->send_window_max / 2)) {
             data_to_send = MIN(MIN(data_queued, segment_size), (size_t) usable_window);
         } else if (push_data && data_queued != 0) {
             // FIXME: Set up a timer to send the data in ~0.5s

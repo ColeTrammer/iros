@@ -274,8 +274,8 @@ static void slave_add(struct fs_device *device) {
     struct slave_data *data = calloc(1, sizeof(struct slave_data));
     data->ref_count = 1; // For the master
 
-    data->cols = VGA_WIDTH;
-    data->rows = VGA_HEIGHT;
+    data->cols = 80;
+    data->rows = 25;
     data->pgid = get_current_task()->process->pgid;
     data->input_enabled = data->output_enabled = true;
 

@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -92,12 +93,12 @@ static ssize_t block_read(struct fs_device *device, off_t offset, void *buf, siz
     }
 
     struct block_device *block_device = device->private;
-    blksize_t block_size = block_device->block_size;
+    uint32_t block_size = block_device->block_size;
     if (size % block_size != 0 || offset % block_size != 0) {
         return -ENXIO;
     }
 
-    blkcnt_t block_count = size / block_size;
+    uint64_t block_count = size / block_size;
     off_t block_offset = offset / block_size;
     if (block_count + block_offset > block_device->block_count) {
         return -ENXIO;
@@ -140,12 +141,12 @@ static ssize_t block_write(struct fs_device *device, off_t offset, const void *b
     }
 
     struct block_device *block_device = device->private;
-    blksize_t block_size = block_device->block_size;
+    uint32_t block_size = block_device->block_size;
     if (size % block_size != 0 || offset % block_size != 0) {
         return -ENXIO;
     }
 
-    blkcnt_t block_count = size / block_size;
+    uint64_t block_count = size / block_size;
     off_t block_offset = offset / block_size;
     if (block_count + block_offset > block_device->block_count) {
         return -ENXIO;
@@ -309,8 +310,8 @@ struct list_node *block_device_list(void) {
 int block_show_device(struct block_device *block_device, char *buffer, size_t _buffer_length) {
     int position = 0;
     int buffer_length = _buffer_length;
-    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "BLOCK_SIZE: %lu\n", block_device->block_size);
-    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "BLOCK_COUNT: %lu\n", block_device->block_count);
+    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "BLOCK_SIZE: %" PRIu32 "\n", block_device->block_size);
+    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "BLOCK_COUNT: %" PRIu64 "\n", block_device->block_count);
     position +=
         snprintf(buffer + position, MAX(buffer_length - position, 0), "TYPE: %s\n", block_device_type_to_string(block_device->info.type));
 

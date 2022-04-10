@@ -15,13 +15,15 @@
 -   Before compiling the system, you need to build the os specific toolchain. This includes binutils, gcc, and cmake.
 -   The dependencies for GCC are listed on the [OSDev Wiki](https://wiki.osdev.org/GCC_Cross-Compiler#Preparing_for_the_build), and must be installed.
 -   CMake tries to build its dependencies automatically, but its build of libcurl may fail. In that happens, try to install libcurl manually.
+-   To properly bootstrap the system, the `patchelf` binary is used. This must be installed for the toolchain to fully build. On Ubuntu, this can
+    be installed using `sudo apt install patchelf`.
 -   The default architecture is x86_64, but this can be overriden by setting `OS_2_ARCH=i686`.
 -   Run `./scripts/setup.sh`, which will prompt you to build the toolchain and bootstrap the system.
     Note that this must be run from the root directory, or the script will be confused.
 
 ## Building the OS
 
--   The setup script creates one build directory: build*$OS_2_ARCH/, which contains 2 other build directories. The native tools are handled by build*$OS_2_ARCH/native/, while the cross compiled os kernel and userland are built in build_$OS_2_ARCH/os_2/.
+-   The setup script creates one build directory: build/$OS_2_ARCH/, which contains 2 other build directories. The native tools are handled by build/$OS_2_ARCH/native/, while the cross compiled os kernel and userland are built in build/$OS_2_ARCH/os_2/.
 -   The system can be fully built by running `make` in the build directory, but this is often uneeded.
 -   Most of the time, you should run commands directly in the build\_$OS_2_ARCH/os_2/ directory. A full build is only required when specific tools are modified (namely anything in the gen/ directory).
 

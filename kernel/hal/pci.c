@@ -1,4 +1,6 @@
+#include <assert.h>
 #include <stdlib.h>
+
 #include <kernel/hal/output.h>
 #include <kernel/hal/pci.h>
 #include <kernel/hal/pci_driver.h>

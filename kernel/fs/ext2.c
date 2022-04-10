@@ -756,7 +756,7 @@ static void ext2_update_tnode_list(struct inode *inode) {
             goto finish_update_tnode_list;
         }
 
-        uint32_t byte_offset = 0;
+        int byte_offset = 0;
         for (struct raw_dirent *dirent = raw_dirent_table; byte_offset < inode->super_block->block_size;
              dirent = raw_dirent_table + byte_offset) {
             if (dirent->ino == 0 || dirent->type == EXT2_DIRENT_TYPE_UNKNOWN) {
@@ -1016,7 +1016,7 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
             goto finish_write_dirent;
         }
 
-        uint32_t byte_offset = 0;
+        int byte_offset = 0;
         for (struct raw_dirent *dirent = raw_dirent_table; byte_offset < inode->super_block->block_size;
              dirent = raw_dirent_table + byte_offset) {
             uint16_t actual_dirent_size = sizeof(struct raw_dirent) + ALIGN_UP(dirent->name_length, 4);
@@ -1569,7 +1569,7 @@ int __ext2_unlink(struct tnode *tnode, bool drop_reference) {
             goto did_remove_inode;
         }
 
-        uint32_t byte_offset = 0;
+        int byte_offset = 0;
         for (struct raw_dirent *dirent = raw_dirent_table; byte_offset < inode->super_block->block_size;
              dirent = raw_dirent_table + byte_offset) {
 
