@@ -65,6 +65,7 @@ else()
         stdio/scanf.c
         stdlib/abort.c
         stdlib/conversions.c
+        stdlib/exit.c
         stdlib/malloc.c
         stdlib/mbstowcs.c
         stdlib/mbtowc.c

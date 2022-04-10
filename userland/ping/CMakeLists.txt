@@ -1,5 +1,5 @@
 set(SOURCES
-    main.c
+    main.cpp
 )
 
 add_os_executable(ping bin)

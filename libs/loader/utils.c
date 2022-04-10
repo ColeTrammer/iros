@@ -48,7 +48,7 @@ int close(int fd) {
     return (int) syscall(SYS_close, fd);
 }
 
-void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t offset) {
+__attribute__((noinline)) void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t offset) {
     return (void *) syscall(SYS_mmap, addr, size, prot, flags, fd, offset);
 }
 

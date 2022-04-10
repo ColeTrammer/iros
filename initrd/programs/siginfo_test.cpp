@@ -8,8 +8,13 @@ int main() {
         assert(sig == SIGINT);
 
 #ifdef __os_2__
+#ifdef __x86_64__
         ucontext_t* context = reinterpret_cast<ucontext_t*>(_context);
         fprintf(stderr, "rax: %#.16lX\n", context->uc_mcontext.__cpu_state.rax);
+#elif defined(__i386__)
+        ucontext_t* context = reinterpret_cast<ucontext_t*>(_context);
+        fprintf(stderr, "eax: %#.8lX\n", context->uc_mcontext.__cpu_state.eax);
+#endif
 #endif /* __os_2__ */
 
         fprintf(stderr, "val: %d\n", info->si_value.sival_int);

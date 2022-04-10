@@ -1,4 +1,5 @@
 #include <elf.h>
+#include <inttypes.h>
 #include <link.h>
 #include <stdatomic.h>
 #include <sys/param.h>
@@ -9,7 +10,7 @@
 
 static void do_call_fini_functions(struct dynamic_elf_object *obj);
 
-struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynamic_table, size_t dynamic_count, uint8_t *base, size_t size,
+struct dynamic_elf_object build_dynamic_elf_object(const ElfW(Dyn) * dynamic_table, size_t dynamic_count, uint8_t *base, size_t size,
                                                    size_t relocation_offset, void *phdr_start, size_t phdr_count, size_t tls_module_id,
                                                    const char *full_path, bool global) {
     struct dynamic_elf_object self = { 0 };
@@ -24,7 +25,7 @@ struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynamic_tabl
     self.global = global;
     self.ref_count = 1;
     for (size_t i = 0; i < dynamic_count; i++) {
-        const Elf64_Dyn *entry = &dynamic_table[i];
+        const ElfW(Dyn) *entry = &dynamic_table[i];
         switch (entry->d_tag) {
             case DT_NULL:
                 return self;
@@ -127,7 +128,11 @@ struct dynamic_elf_object build_dynamic_elf_object(const Elf64_Dyn *dynamic_tabl
             case DT_VERNEEDNUM:
                 break;
             default:
+#ifdef __x86_64__
                 loader_log("Unkown DT_* value %ld", entry->d_tag);
+#else
+                loader_log("Unkown DT_* value %d", entry->d_tag);
+#endif
                 break;
         }
     }
@@ -184,16 +189,16 @@ size_t rela_count(const struct dynamic_elf_object *self) {
     return self->rela_size / self->rela_entry_size;
 }
 
-const Elf64_Rela *rela_table(const struct dynamic_elf_object *self) {
-    return (const Elf64_Rela *) (self->rela_addr + self->relocation_offset);
+const ElfW(Rela) * rela_table(const struct dynamic_elf_object *self) {
+    return (const ElfW(Rela) *) (self->rela_addr + self->relocation_offset);
 }
 
-const Elf64_Rela *rela_at(const struct dynamic_elf_object *self, size_t i) {
+const ElfW(Rela) * rela_at(const struct dynamic_elf_object *self, size_t i) {
     return &rela_table(self)[i];
 }
 
 size_t plt_relocation_count(const struct dynamic_elf_object *self) {
-    size_t ent_size = self->plt_type == DT_RELA ? sizeof(Elf64_Rela) : sizeof(Elf64_Rel);
+    size_t ent_size = self->plt_type == DT_RELA ? sizeof(ElfW(Rela)) : sizeof(ElfW(Rel));
 
     if (!self->plt_size) {
         return 0;
@@ -207,18 +212,18 @@ const void *plt_relocation_table(const struct dynamic_elf_object *self) {
 
 const void *plt_relocation_at(const struct dynamic_elf_object *self, size_t i) {
     if (self->plt_type == DT_RELA) {
-        const Elf64_Rela *tbl = plt_relocation_table(self);
+        const ElfW(Rela) *tbl = plt_relocation_table(self);
         return &tbl[i];
     }
-    const Elf64_Rel *tbl = plt_relocation_table(self);
+    const ElfW(Rel) *tbl = plt_relocation_table(self);
     return &tbl[i];
 }
 
-const Elf64_Sym *symbol_table(const struct dynamic_elf_object *self) {
-    return (const Elf64_Sym *) (self->symbol_table + self->relocation_offset);
+const ElfW(Sym) * symbol_table(const struct dynamic_elf_object *self) {
+    return (const ElfW(Sym) *) (self->symbol_table + self->relocation_offset);
 }
 
-const Elf64_Sym *symbol_at(const struct dynamic_elf_object *self, size_t i) {
+const ElfW(Sym) * symbol_at(const struct dynamic_elf_object *self, size_t i) {
     return &symbol_table(self)[i];
 }
 
@@ -226,17 +231,17 @@ const char *symbol_name(const struct dynamic_elf_object *self, size_t i) {
     return dynamic_string(self, symbol_at(self, i)->st_name);
 }
 
-const Elf64_Word *hash_table(const struct dynamic_elf_object *self) {
-    return (const Elf64_Word *) (self->hash_table + self->relocation_offset);
+const ElfW(Word) * hash_table(const struct dynamic_elf_object *self) {
+    return (const ElfW(Word) *) (self->hash_table + self->relocation_offset);
 }
 
-const Elf64_Sym *lookup_symbol(const struct dynamic_elf_object *self, const char *s) {
-    const Elf64_Word *ht = hash_table(self);
-    Elf64_Word nbucket = ht[0];
-    Elf64_Word nchain = ht[1];
+const ElfW(Sym) * lookup_symbol(const struct dynamic_elf_object *self, const char *s) {
+    const ElfW(Word) *ht = hash_table(self);
+    ElfW(Word) nbucket = ht[0];
+    ElfW(Word) nchain = ht[1];
     unsigned long hashed_value = elf64_hash(s);
     unsigned long bucket_index = hashed_value % nbucket;
-    Elf64_Word symbol_index = ht[2 + bucket_index];
+    ElfW(Word) symbol_index = ht[2 + bucket_index];
     while (symbol_index != STN_UNDEF) {
         if (strcmp(symbol_name(self, symbol_index), s) == 0) {
             return symbol_at(self, symbol_index);
@@ -252,15 +257,15 @@ const Elf64_Sym *lookup_symbol(const struct dynamic_elf_object *self, const char
 }
 LOADER_HIDDEN_EXPORT(lookup_symbol, __loader_lookup_symbol);
 
-const Elf64_Sym *lookup_addr(const struct dynamic_elf_object *self, uintptr_t addr) {
+const ElfW(Sym) * lookup_addr(const struct dynamic_elf_object *self, uintptr_t addr) {
     addr -= self->relocation_offset;
 
-    const Elf64_Word *ht = hash_table(self);
-    Elf64_Word nbucket = ht[0];
-    Elf64_Word nchain = ht[1];
+    const ElfW(Word) *ht = hash_table(self);
+    ElfW(Word) nbucket = ht[0];
+    ElfW(Word) nchain = ht[1];
     size_t num_symbols = nbucket + nchain;
     for (size_t i = 0; i < num_symbols; i++) {
-        const Elf64_Sym *sym = symbol_at(self, i);
+        const ElfW(Sym) *sym = symbol_at(self, i);
         if (addr >= sym->st_value && addr < sym->st_value + MAX(1, sym->st_size)) {
             return sym;
         }
@@ -306,7 +311,7 @@ static void do_call_init_functions(struct dynamic_elf_object *obj, int argc, cha
     }
 
     if (obj->init_addr) {
-        init_function_t init = (init_function_t)(obj->init_addr + obj->relocation_offset);
+        init_function_t init = (init_function_t) (obj->init_addr + obj->relocation_offset);
         init(argc, argv, envp);
     }
 
@@ -403,7 +408,7 @@ static void do_call_fini_functions(struct dynamic_elf_object *obj) {
     }
 
     if (obj->fini_addr) {
-        fini_function_t fini = (fini_function_t)(obj->fini_addr + obj->relocation_offset);
+        fini_function_t fini = (fini_function_t) (obj->fini_addr + obj->relocation_offset);
         fini();
     }
 }

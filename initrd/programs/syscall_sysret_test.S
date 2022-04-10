@@ -10,6 +10,7 @@
 .type main, @function
 .section .text
 main:
+#ifdef __x86_64__
     mov $8, %rdi
     call strerror
     push $0
@@ -30,5 +31,8 @@ main:
 l:
     ud2
     jmp l
+#else
+    ud2
+#endif
 
 .size main, . - main

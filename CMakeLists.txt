@@ -16,8 +16,8 @@ endif()
 add_compile_definitions("ARCH=${ARCH}")
 add_compile_definitions("_OS_2_SOURCE")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -Wall -Wextra -Werror -ftrack-macro-expansion=1 -fdiagnostics-color=always -fno-omit-frame-pointer -std=gnu2x")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -Wall -Wextra -Werror -ftrack-macro-expansion=1 -fconcepts -fcoroutines -fno-exceptions -fno-rtti -fdiagnostics-color=always -fno-omit-frame-pointer -Wno-literal-suffix")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -Wall -Wextra -Werror -ftrack-macro-expansion=1 -fdiagnostics-color=always -fno-omit-frame-pointer -std=gnu2x -U${ARCH}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -Wall -Wextra -Werror -ftrack-macro-expansion=1 -fconcepts -fcoroutines -fno-exceptions -fno-rtti -fdiagnostics-color=always -fno-omit-frame-pointer -Wno-literal-suffix -U${ARCH}")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_INSTALL_MESSAGE NEVER)
@@ -29,8 +29,8 @@ if(CCACHE_PROGRAM)
 endif()
 
 set(ROOT ${CMAKE_CURRENT_SOURCE_DIR})
-set(ISODIR ${ROOT}/isodir)
-set(SYSROOT ${ROOT}/sysroot)
+set(ISODIR ${CMAKE_CURRENT_BINARY_DIR}/isodir)
+set(SYSROOT ${CMAKE_CURRENT_BINARY_DIR}/sysroot)
 
 if (${NATIVE_BUILD})
     add_compile_definitions("_GNU_SOURCE")
@@ -78,7 +78,7 @@ if (NOT ${NATIVE_BUILD})
 
     add_custom_target(
         iso
-        BYPRODUCTS ${ROOT}/scripts/os_2.iso
+        BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/os_2.iso
         COMMAND /bin/mkdir -p ${ISODIR}/boot/grub
         COMMAND /bin/mkdir -p ${ISODIR}/modules
         COMMAND objcopy -S ${SYSROOT}/boot/kernel ${ISODIR}/boot/kernel
@@ -94,50 +94,55 @@ if (NOT ${NATIVE_BUILD})
         COMMAND /bin/echo "set timeout_style=menu" >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND /bin/echo "set timeout=0" >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND grub-file --is-x86-multiboot2 ${ISODIR}/boot/kernel
-        COMMAND grub-mkrescue -o ${ROOT}/scripts/os_2.iso ${ISODIR}
-        DEPENDS generate-initrd kernel
+        COMMAND grub-mkrescue -o ${CMAKE_CURRENT_BINARY_DIR}/os_2.iso ${ISODIR}
+        DEPENDS generate-initrd kernel install-all
     )
 
     add_custom_target(
         image
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMAND sudo ./scripts/makeimg.sh
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMAND sudo ROOT="${ROOT}"
+                OUTPUT_DIR="${CMAKE_CURRENT_BINARY_DIR}"
+                SYSROOT="${SYSROOT}"
+                "${ROOT}/scripts/makeimg.sh"
+        DEPENDS install-all
         USES_TERMINAL
     )
 
     add_custom_target(
         run
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMAND cd scripts && ./qemu.sh
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMAND "OS_2_ARCH=${ARCH} ${ROOT}/scripts/qemu.sh"
         USES_TERMINAL
     )
 
     add_custom_target(
         brun
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMAND cd scripts && ./bochs.sh
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMAND [ -e bochsrc.txt ] || cp "${ROOT}/scripts/bochsrc.txt" .
+        COMMAND "${ROOT}/scripts/bochs.sh"
         USES_TERMINAL
     )
 
     add_custom_target(
         frun
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR}
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target install
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target iso
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target image
-        COMMAND cd scripts && ./qemu.sh
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target run
         USES_TERMINAL
     )
 
     add_custom_target(
         bfrun
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR}
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target install
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target iso
         COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target image
-        COMMAND cd scripts && ./bochs.sh
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --target brun
         USES_TERMINAL
     )
 endif()

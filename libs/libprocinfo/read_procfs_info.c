@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <procinfo.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -69,11 +70,12 @@ int read_procfs_info(struct proc_info **info, size_t *length, int flags) {
                 goto read_procfs_info_fail;
             }
 
-#define _(x) "" #x
+#define _(x)  "" #x
+#define __(x) x
 #define READ_PROCFS_STRING_FIELD(name, convert_spec)                                                                 \
     do {                                                                                                             \
         char field_name[64];                                                                                         \
-        if (fscanf(file, "%64[^:]: " convert_spec, field_name, (*info)[i].name) != 2) {                              \
+        if (fscanf(file, "%64[^:]: %" convert_spec, field_name, (*info)[i].name) != 2) {                             \
             fprintf(stderr, "fscanf: failed to read field `%s`\n", _(name));                                         \
             goto read_procfs_info_fail;                                                                              \
         }                                                                                                            \
@@ -85,7 +87,7 @@ int read_procfs_info(struct proc_info **info, size_t *length, int flags) {
 #define READ_PROCFS_FIELD(name, convert_spec)                                                                        \
     do {                                                                                                             \
         char field_name[64];                                                                                         \
-        if (fscanf(file, "%64[^:]: " convert_spec, field_name, &(*info)[i].name) != 2) {                             \
+        if (fscanf(file, "%64[^:]: %" convert_spec, field_name, &(*info)[i].name) != 2) {                            \
             fprintf(stderr, "fscanf: failed to read field `%s`\n", _(name));                                         \
             goto read_procfs_info_fail;                                                                              \
         }                                                                                                            \
@@ -95,24 +97,24 @@ int read_procfs_info(struct proc_info **info, size_t *length, int flags) {
         }                                                                                                            \
     } while (0)
 
-            READ_PROCFS_STRING_FIELD(name, "%64s");
-            READ_PROCFS_FIELD(pid, "%d");
-            READ_PROCFS_STRING_FIELD(state, "%64[^\n]");
-            READ_PROCFS_FIELD(uid, "%hu");
-            READ_PROCFS_FIELD(gid, "%hu");
-            READ_PROCFS_FIELD(ppid, "%d");
-            READ_PROCFS_FIELD(umask, "%o");
-            READ_PROCFS_FIELD(euid, "%hu");
-            READ_PROCFS_FIELD(egid, "%hu");
-            READ_PROCFS_FIELD(pgid, "%d");
-            READ_PROCFS_FIELD(sid, "%d");
-            READ_PROCFS_STRING_FIELD(tty, "%64s");
-            READ_PROCFS_FIELD(priority, "%d");
-            READ_PROCFS_FIELD(nice, "%d");
-            READ_PROCFS_FIELD(virtual_memory, "%lu");
-            READ_PROCFS_FIELD(resident_memory, "%lu");
-            READ_PROCFS_FIELD(start_time.tv_sec, "%lu");
-            READ_PROCFS_FIELD(start_time.tv_nsec, "%lu");
+            READ_PROCFS_STRING_FIELD(name, "64s");
+            READ_PROCFS_FIELD(pid, "d");
+            READ_PROCFS_STRING_FIELD(state, "64[^\n]");
+            READ_PROCFS_FIELD(uid, "hu");
+            READ_PROCFS_FIELD(gid, "hu");
+            READ_PROCFS_FIELD(ppid, "d");
+            READ_PROCFS_FIELD(umask, "o");
+            READ_PROCFS_FIELD(euid, "hu");
+            READ_PROCFS_FIELD(egid, "hu");
+            READ_PROCFS_FIELD(pgid, "d");
+            READ_PROCFS_FIELD(sid, "d");
+            READ_PROCFS_STRING_FIELD(tty, "64s");
+            READ_PROCFS_FIELD(priority, "d");
+            READ_PROCFS_FIELD(nice, "d");
+            READ_PROCFS_FIELD(virtual_memory, "lu");
+            READ_PROCFS_FIELD(resident_memory, "lu");
+            READ_PROCFS_FIELD(start_time.tv_sec, SCNi64);
+            READ_PROCFS_FIELD(start_time.tv_nsec, "ld");
 
             if (fclose(file)) {
                 goto read_procfs_info_fail;
@@ -127,8 +129,8 @@ int read_procfs_info(struct proc_info **info, size_t *length, int flags) {
                 goto read_procfs_info_fail;
             }
 
-            READ_PROCFS_FIELD(user_ticks, "%lu");
-            READ_PROCFS_FIELD(kernel_ticks, "%lu");
+            READ_PROCFS_FIELD(user_ticks, SCNu64);
+            READ_PROCFS_FIELD(kernel_ticks, SCNu64);
 
             if (fclose(file)) {
                 goto read_procfs_info_fail;

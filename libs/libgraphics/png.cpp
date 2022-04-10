@@ -3,6 +3,7 @@
 #include <ext/mapped_file.h>
 #include <ext/zlib_stream.h>
 #include <graphics/png.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <sys/mman.h>
@@ -192,8 +193,8 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
 
         auto check = compute_crc32_checksum(&data[checksum_offset], 4 + chunk_length.value());
         if (check != static_cast<uint32_t>(crc.value())) {
-            fprintf(stderr, "PNG checksum failed for `%s' (%lu) failed: %#.8X != %#.8X\n", type.string(), chunk_length.value(), check,
-                    static_cast<uint32_t>(crc.value()));
+            fprintf(stderr, "PNG checksum failed for `%s' (%" PRIu64 ") failed: %#.8X != %#.8X\n", type.string(), chunk_length.value(),
+                    check, static_cast<uint32_t>(crc.value()));
             return nullptr;
         }
     }

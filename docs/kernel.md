@@ -7,10 +7,6 @@ Currently, this includes parsing sys call input, handling
 irqs, save context state, using virtual memory, and the
 establishment of a valid C enviornment on boot.
 
-ALso, only x86_64 is supported, but i386 should be able
-to be added very easily. Other achitectures would be much
-more difficult.
-
 # fs
 
 This directory contains all code related to the file

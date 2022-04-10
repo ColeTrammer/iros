@@ -4,15 +4,31 @@
 #include <bits/wchar_t.h>
 #include <stdint.h>
 
-#define __PRI8  ""
-#define __PRI16 ""
-#define __PRI32 ""
-#define __PRI64 "l"
+#ifdef __x86_64__
+#define __PRI8   ""
+#define __PRI16  ""
+#define __PRI32  ""
+#define __PRI64  "l"
+#define __PRIPTR __PRI64
 
-#define __SCN8  "hh"
-#define __SCN16 "h"
-#define __SCN32 ""
-#define __SCN64 "l"
+#define __SCN8   "hh"
+#define __SCN16  "h"
+#define __SCN32  ""
+#define __SCN64  "l"
+#define __SCNPTR __SCN64
+#elif defined(__i386__)
+#define __PRI8   ""
+#define __PRI16  ""
+#define __PRI32  ""
+#define __PRI64  "ll"
+#define __PRIPTR __PRI32
+
+#define __SCN8   "hh"
+#define __SCN16  "h"
+#define __SCN32  ""
+#define __SCN64  "ll"
+#define __SCNPTR __SCN32
+#endif
 
 #define PRId8 __PRI8 "d"
 #define PRIi8 __PRI8 "i"
@@ -105,12 +121,12 @@
 #define PRIxMAX __PRI64 "x"
 #define PRIXMAX __PRI64 "X"
 
-#define PRIdPTR __PRI64 "d"
-#define PRIiPTR __PRI64 "i"
-#define PRIoPTR __PRI64 "o"
-#define PRIuPTR __PRI64 "u"
-#define PRIxPTR __PRI64 "x"
-#define PRIXPTR __PRI64 "X"
+#define PRIdPTR __PRIPTR "d"
+#define PRIiPTR __PRIPTR "i"
+#define PRIoPTR __PRIPTR "o"
+#define PRIuPTR __PRIPTR "u"
+#define PRIxPTR __PRIPTR "x"
+#define PRIXPTR __PRIPTR "X"
 
 #define SCNd8 __SCN8 "d"
 #define SCNi8 __SCN8 "i"
@@ -190,11 +206,11 @@
 #define SCNuMAX __SCN64 "u"
 #define SCNxMAX __SCN64 "x"
 
-#define SCNdPTR __SCN64 "d"
-#define SCNiPTR __SCN64 "i"
-#define SCNoPTR __SCN64 "o"
-#define SCNuPTR __SCN64 "u"
-#define SCNxPTR __SCN64 "x"
+#define SCNdPTR __SCNPTR "d"
+#define SCNiPTR __SCNPTR "i"
+#define SCNoPTR __SCNPTR "o"
+#define SCNuPTR __SCNPTR "u"
+#define SCNxPTR __SCNPTR "x"
 
 intmax_t strtoimax(const char *__restrict str, char **__restrict endptr, int base);
 uintmax_t strtoumax(const char *__restrict str, char **__restrict endptr, int base);

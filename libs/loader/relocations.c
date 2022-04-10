@@ -5,8 +5,16 @@
 #include "symbols.h"
 
 uintptr_t do_got_resolve(const struct dynamic_elf_object *obj, size_t plt_offset) {
-    const Elf64_Rela *relocation = plt_relocation_at(obj, plt_offset);
+    const ElfW(Rela) *relocation = plt_relocation_at(obj, plt_offset);
+
+#ifdef __x86_64__
     const char *to_lookup = symbol_name(obj, ELF64_R_SYM(relocation->r_info));
+#elif __i386__
+    const char *to_lookup = symbol_name(obj, ELF32_R_SYM(relocation->r_info));
+#else
+#error "Unsupported architecture"
+#endif
+
     struct symbol_lookup_result result = do_symbol_lookup(to_lookup, obj, 0);
     if (!result.symbol) {
         loader_log("Cannot resolve `%s' for `%s'", to_lookup, object_name(obj));

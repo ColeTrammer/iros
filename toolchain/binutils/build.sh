@@ -3,12 +3,12 @@
 set -e
 
 ROOT="${ROOT:-$PWD/../..}"
-TARGET=`$ROOT/scripts/default-host.sh`
+TARGET="${OS_2_TARGET:-`$ROOT/scripts/default-host.sh`}"
 VERSION="2.36.1"
 DOWNLOAD_URL="https://ftp.gnu.org/gnu/binutils/binutils-$VERSION.tar.gz"
 DOWNLOAD_DEST=binutils.tar.gz
 SRC="binutils-$VERSION"
-BUILD_DIR="build-binutils"
+BUILD_DIR="build-binutils-$TARGET"
 
 if [ ! -e $DOWNLOAD_DEST ]; then
     curl -L "$DOWNLOAD_URL" -o "$DOWNLOAD_DEST"
@@ -31,7 +31,7 @@ if [ ! -d "$BUILD_DIR" ]; then
         --target="$TARGET" \
         --prefix="$ROOT/toolchain/cross" \
         --disable-nls \
-        --with-sysroot="$ROOT/sysroot" \
+        --with-sysroot="$SYSROOT" \
         --disable-werror \
         --enable-shared
     cd ..

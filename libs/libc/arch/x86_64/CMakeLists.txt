@@ -14,7 +14,6 @@ set(ARCH_HOSTED_SOURCES
     ${ARCHDIR}/setjmp/setjmp.S
     ${ARCHDIR}/setjmp/sigsetjmp.S
     ${ARCHDIR}/crt0.S
-    ${ARCHDIR}/exit.c
     ${ARCHDIR}/sigreturn.S
     ${ARCHDIR}/syscall.S
     PARENT_SCOPE

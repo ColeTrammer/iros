@@ -1,11 +1,12 @@
+#include <inttypes.h>
 #include <stdio.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
 static void print_rusage(struct rusage *rusage) {
-    printf("  user time:            %lds %ldus\n"
-           "  kernel time:          %lds %ldus\n"
+    printf("  user time:            %" PRIi64 "s %ldus\n"
+           "  kernel time:          %" PRIi64 "s %ldus\n"
            "  max resident memory:  %ld KB\n"
            "  page faults:          %ld\n"
            "  io faults:            %ld\n"
