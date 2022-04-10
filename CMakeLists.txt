@@ -112,7 +112,7 @@ if (NOT ${NATIVE_BUILD})
     add_custom_target(
         run
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        COMMAND "OS_2_ARCH=${ARCH} ${ROOT}/scripts/qemu.sh"
+        COMMAND OS_2_ARCH=${ARCH} "${ROOT}/scripts/qemu.sh"
         USES_TERMINAL
     )
 

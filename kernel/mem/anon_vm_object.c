@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <inttypes.h>
 #include <stdatomic.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,7 +57,7 @@ static uintptr_t anon_handle_fault(struct vm_object *self, uintptr_t offset_into
 
     size_t page_index = offset_into_self / PAGE_SIZE;
     if (page_index >= data->pages) {
-        debug_log("fault in address outside anon object: [ %#.16lX, %lu, %lu ]\n", offset_into_self, page_index, data->pages);
+        debug_log("fault in address outside anon object: [ %#.16" PRIXPTR ", %lu, %lu ]\n", offset_into_self, page_index, data->pages);
         assert(page_index < data->pages);
     }
 

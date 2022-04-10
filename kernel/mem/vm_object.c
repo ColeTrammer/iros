@@ -50,7 +50,7 @@ int vm_handle_cow_fault_in_region(struct vm_region *region, uintptr_t address) {
     uintptr_t offset_in_object = region->vm_object_offset + address - region->start;
 
     if (!object->ops->handle_cow_fault) {
-        debug_log("unrecoverable vm_object cow fault: [ %#.16lX ]\n", address);
+        debug_log("unrecoverable vm_object cow fault: [ %p ]\n", (void *) address);
         return 1;
     }
 
@@ -73,7 +73,7 @@ int vm_handle_fault_in_region(struct vm_region *region, uintptr_t address) {
     uintptr_t offset_in_object = region->vm_object_offset + address - region->start;
 
     if (!object->ops->handle_fault) {
-        debug_log("unrecoverable vm_object fault: [ %#.16lX ]\n", address);
+        debug_log("unrecoverable vm_object fault: [ %p ]\n", (void *) address);
         return 1;
     }
 

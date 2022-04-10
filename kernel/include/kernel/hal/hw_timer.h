@@ -1,6 +1,7 @@
 #ifndef _KERNEL_HAL_HW_TIMER_H
 #define _KERNEL_HAL_HW_TIMER_H 1
 
+#include <assert.h>
 #include <sys/time.h>
 
 #include <kernel/hal/hw_device.h>

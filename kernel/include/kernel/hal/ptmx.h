@@ -8,11 +8,6 @@
 #include <kernel/util/ring_buffer.h>
 #include <kernel/util/spinlock.h>
 
-// clang-format off
-#include <kernel/hal/arch.h>
-#include HAL_ARCH_SPECIFIC(drivers/vga.h)
-// clang-format on
-
 #define PTMX_BUFFER_MAX 4096
 
 struct slave_data {

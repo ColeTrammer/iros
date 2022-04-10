@@ -20,19 +20,19 @@
 
 // #define ELF64_DEBUG
 
-static Elf64_Sym *kernel_symbols;
+static ElfW(Sym) * kernel_symbols;
 static char *kernel_string_table;
 static size_t kernel_symbols_size;
 static void *kernel_buffer;
 
-static void try_load_symbols(void *buffer, Elf64_Sym **symbols, size_t *symbols_size, char **string_table) {
-    Elf64_Ehdr *elf_header = (Elf64_Ehdr *) buffer;
-    Elf64_Shdr *section_headers = (Elf64_Shdr *) (((uintptr_t) buffer) + elf_header->e_shoff);
+static void try_load_symbols(void *buffer, ElfW(Sym) * *symbols, size_t *symbols_size, char **string_table) {
+    ElfW(Ehdr) *elf_header = (ElfW(Ehdr) *) buffer;
+    ElfW(Shdr) *section_headers = (ElfW(Shdr) *) (((uintptr_t) buffer) + elf_header->e_shoff);
 
     char *section_string_table = (char *) (((uintptr_t) buffer) + section_headers[elf_header->e_shstrndx].sh_offset);
     for (int i = 0; i < elf_header->e_shnum; i++) {
         if (section_headers[i].sh_type == SHT_SYMTAB) {
-            *symbols = (Elf64_Sym *) (((uintptr_t) buffer) + section_headers[i].sh_offset);
+            *symbols = (ElfW(Sym) *) (((uintptr_t) buffer) + section_headers[i].sh_offset);
             *symbols_size = section_headers[i].sh_size;
         } else if (section_headers[i].sh_type == SHT_STRTAB && strcmp(".strtab", section_string_table + section_headers[i].sh_name) == 0) {
             *string_table = (char *) (((uintptr_t) buffer) + section_headers[i].sh_offset);
@@ -65,7 +65,7 @@ void init_kernel_symbols(void) {
 bool elf64_is_valid(void *buffer) {
     /* Should Probably Also Check Sections And Architecture */
 
-    Elf64_Ehdr *elf_header = buffer;
+    ElfW(Ehdr) *elf_header = buffer;
     if (elf_header->e_ident[EI_MAG0] != 0x7F || elf_header->e_ident[EI_MAG1] != 'E' || elf_header->e_ident[EI_MAG2] != 'L' ||
         elf_header->e_ident[EI_MAG3] != 'F') {
         return false;
@@ -81,8 +81,8 @@ bool elf64_is_valid(void *buffer) {
 }
 
 uintptr_t elf64_get_start(void *buffer) {
-    Elf64_Ehdr *elf_header = buffer;
-    Elf64_Phdr *program_header = (Elf64_Phdr *) ((uintptr_t) buffer + elf_header->e_phoff);
+    ElfW(Ehdr) *elf_header = buffer;
+    ElfW(Phdr) *program_header = (ElfW(Phdr) *) ((uintptr_t) buffer + elf_header->e_phoff);
     for (int i = 0; i < elf_header->e_phnum; i++) {
         if (program_header[i].p_type == PT_LOAD) {
             return program_header[i].p_vaddr;
@@ -94,8 +94,8 @@ uintptr_t elf64_get_start(void *buffer) {
 uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatable, struct initial_process_info *info) {
     (void) length;
 
-    Elf64_Ehdr *elf_header = buffer;
-    Elf64_Phdr *program_headers = (Elf64_Phdr *) (((uintptr_t) buffer) + elf_header->e_phoff);
+    ElfW(Ehdr) *elf_header = buffer;
+    ElfW(Phdr) *program_headers = (ElfW(Phdr) *) (((uintptr_t) buffer) + elf_header->e_phoff);
 
     uintptr_t offset = 0;
     const char *interpreter = NULL;
@@ -281,10 +281,10 @@ struct stack_frame {
     uintptr_t rip;
 };
 
-static size_t print_symbol_at(uintptr_t rip, Elf64_Sym *symbols, uintptr_t symbols_size, const char *string_table,
+static size_t print_symbol_at(uintptr_t rip, ElfW(Sym) * symbols, uintptr_t symbols_size, const char *string_table,
                               size_t (*output)(void *closure, const char *string, ...), void *closure1, bool kernel) {
     if (kernel) {
-        for (int i = 0; symbols && string_table && (uintptr_t)(symbols + i) < ((uintptr_t) symbols) + symbols_size; i++) {
+        for (int i = 0; symbols && string_table && (uintptr_t) (symbols + i) < ((uintptr_t) symbols) + symbols_size; i++) {
             if (symbols[i].st_name != 0 && symbols[i].st_size != 0) {
                 if (rip >= symbols[i].st_value && rip <= symbols[i].st_value + symbols[i].st_size) {
                     return output(closure1, "<%s> [ %#.16lX, %#.16lX, %s ]\n", kernel ? "K" : "U", rip, symbols[i].st_value,
@@ -313,7 +313,7 @@ static size_t print_symbol_at(uintptr_t rip, Elf64_Sym *symbols, uintptr_t symbo
     return output(closure1, "<%s> [ %#.16lX, %#.16lX, %s, %ld, %ld ]\n", "U", rip, 0UL, "??", dev, id);
 }
 
-static size_t do_stack_trace(uintptr_t rip, uintptr_t rbp, Elf64_Sym *symbols, size_t symbols_size, char *string_table,
+static size_t do_stack_trace(uintptr_t rip, uintptr_t rbp, ElfW(Sym) * symbols, size_t symbols_size, char *string_table,
                              size_t (*output)(void *closure, const char *string, ...), void *closure1, bool kernel) {
     size_t ret = print_symbol_at(rip, symbols, symbols_size, string_table, output, closure1, kernel);
 
@@ -342,7 +342,7 @@ size_t do_elf64_stack_trace(struct task *task, bool extra_info, size_t (*output)
     }
 
     if (extra_info) {
-        debug_log("Dumping core: [ %#.16lX, %#.16lX ]\n", rip, rsp);
+        debug_log("Dumping core: [ %p, %p ]\n", (void *) rip, (void *) rsp);
     }
 
     size_t ret = do_stack_trace(rip, rbp, NULL, 0, NULL, output, closure, false);
@@ -403,10 +403,14 @@ size_t kernel_stack_trace_for_procfs(struct task *main_task, void *buffer, size_
         struct task *current = get_current_task();
 
         uintptr_t rip =
-            current == main_task ? (uintptr_t)(&kernel_stack_trace_for_procfs) : main_task->arch_task.task_state.stack_state.rip;
+            current == main_task ? (uintptr_t) (&kernel_stack_trace_for_procfs) : main_task->arch_task.task_state.stack_state.rip;
 
         uintptr_t current_rbp;
+#ifdef __x86_64__
         asm("mov %%rbp, %0" : "=r"(current_rbp) : :);
+#elif defined(__i386__)
+        asm("mov %%ebp, %0" : "=r"(current_rbp) : :);
+#endif
         uintptr_t rbp = current == main_task ? current_rbp : main_task->arch_task.task_state.cpu_state.rbp;
         return do_stack_trace(rip, rbp, kernel_symbols, kernel_symbols_size, kernel_string_table, snprintf_wrapper, &obj, true);
     }

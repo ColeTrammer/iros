@@ -22,7 +22,7 @@ static struct hash_map *neighbor_cache;
 static unsigned int neighbor_cache_entry_hash(void *_key, int num_buckets) {
     struct neighbor_cache_key *key = _key;
     return (key->ip_v4_address.addr[0] + key->ip_v4_address.addr[1] + key->ip_v4_address.addr[2] + key->ip_v4_address.addr[3] +
-            ((uintptr_t) key->interface >> 32) + ((uintptr_t) key->interface & 0xFFFFFFFF)) %
+            (uintptr_t) key->interface) %
            num_buckets;
 }
 

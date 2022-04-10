@@ -1,15 +1,15 @@
 #ifndef _KERNEL_MEM_VM_REGION_H
 #define _KERNEL_MEM_VM_REGION_H
 
-#define VM_WRITE     (1UL << 1)
-#define VM_USER      (1UL << 2)
-#define VM_HUGE      (1UL << 7)
-#define VM_GLOBAL    (1UL << 8)
-#define VM_COW       (1UL << 9)
-#define VM_PROT_NONE (1UL << 10)
-#define VM_SHARED    (1UL << 11)
-#define VM_STACK     (1UL << 62)
-#define VM_NO_EXEC   (1UL << 63)
+#define VM_WRITE     (1ULL << 1)
+#define VM_USER      (1ULL << 2)
+#define VM_HUGE      (1ULL << 7)
+#define VM_GLOBAL    (1ULL << 8)
+#define VM_COW       (1ULL << 9)
+#define VM_PROT_NONE (1ULL << 10)
+#define VM_SHARED    (1ULL << 11)
+#define VM_STACK     (1ULL << 62)
+#define VM_NO_EXEC   (1ULL << 63)
 
 #ifndef __ASSEMBLER__
 #include <stddef.h>

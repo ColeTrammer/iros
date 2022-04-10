@@ -7,7 +7,7 @@
 #define TSS_OFFSET 16
 #else
 
-#include <kernel/arch/x86_64/asm_utils.h>
+#include <kernel/arch/i686/asm_utils.h>
 
 struct processor;
 

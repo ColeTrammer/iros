@@ -67,8 +67,8 @@ struct block_device_ops {
 
 struct block_device {
     struct fs_device *device;
-    blkcnt_t block_count;
-    blksize_t block_size;
+    uint64_t block_count;
+    uint32_t block_size;
     off_t partition_offset;
     int partition_number;
     struct hash_map *block_hash_map;

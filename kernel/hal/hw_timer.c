@@ -1,3 +1,4 @@
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -32,7 +33,7 @@ int show_hw_timer_channel(struct hw_timer_channel *channel, char *buffer, size_t
     position += snprintf(buffer + position, MAX(buffer_length - position, 0), "    TYPE: %s\n",
                          channel->type == HW_TIMER_INTERVAL ? "interval" : "single_shot");
     position += snprintf(buffer + position, MAX(buffer_length - position, 0), "    FREQUENCY: %ld\n", channel->frequency);
-    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "    INTERVAL_S: %ld\n", channel->interval.tv_sec);
+    position += snprintf(buffer + position, MAX(buffer_length - position, 0), "    INTERVAL_S: %" PRId64 "\n", channel->interval.tv_sec);
     position += snprintf(buffer + position, MAX(buffer_length - position, 0), "    INTERVAL_NS: %ld\n", channel->interval.tv_nsec);
 
     return position;
