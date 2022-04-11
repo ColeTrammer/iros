@@ -4,7 +4,7 @@
 #include <liim/string_view.h>
 #include <stdint.h>
 
-#include <kernel/hal/x86_64/drivers/vga.h>
+#include <kernel/hal/x86/drivers/vga.h>
 
 enum class ColorValue {
     White,

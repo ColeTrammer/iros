@@ -20,7 +20,7 @@ struct super_block {
     dev_t fsid;
     struct inode *root;
     struct super_block_operations *op;
-    blksize_t block_size;
+    uint32_t block_size;
 
     fsblkcnt_t num_blocks;
     fsblkcnt_t free_blocks;
