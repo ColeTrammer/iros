@@ -14,8 +14,8 @@
 
 static ssize_t block_read(struct fs_device *device, off_t offset, void *buf, size_t size, bool non_block);
 static ssize_t block_write(struct fs_device *device, off_t offset, const void *buf, size_t size, bool non_block);
-static blkcnt_t block_block_count(struct fs_device *device);
-static blksize_t block_block_size(struct fs_device *device);
+static uint64_t block_block_count(struct fs_device *device);
+static uint32_t block_block_size(struct fs_device *device);
 
 static struct fs_device_ops block_device_ops = {
     .read = block_read,
@@ -104,15 +104,15 @@ static ssize_t block_read(struct fs_device *device, off_t offset, void *buf, siz
         return -ENXIO;
     }
 
-    blkcnt_t block_step = PAGE_SIZE / block_size;
+    uint64_t block_step = PAGE_SIZE / block_size;
     off_t block_end = block_offset + block_count;
     off_t block;
 
     mutex_lock(&device->lock);
     for (block = block_offset; block < block_end;) {
         // This could only be non-zero on the first read, subsequent reads will be page aligned.
-        blkcnt_t page_block_offset = block % block_step;
-        blkcnt_t blocks_to_read = MIN(block - page_block_offset + block_step, block_end) - block;
+        uint64_t page_block_offset = block % block_step;
+        uint64_t blocks_to_read = MIN(block - page_block_offset + block_step, (uint64_t) block_end) - block;
 
         struct phys_page *page = block_find_or_read_page(block_device, block - page_block_offset);
         if (!page) {
@@ -153,15 +153,15 @@ static ssize_t block_write(struct fs_device *device, off_t offset, const void *b
     }
 
     // Write out blocks in page size multiples. This could be improved, but at least allows for efficent DMA use.
-    blkcnt_t block_step = PAGE_SIZE / block_size;
+    uint64_t block_step = PAGE_SIZE / block_size;
     off_t block_end = block_offset + block_count;
     off_t block;
 
     mutex_lock(&device->lock);
     for (block = block_offset; block < block_end;) {
         // This could only be non-zero on the first write, subsequent writes will be page aligned.
-        blkcnt_t page_block_offset = block % block_step;
-        blkcnt_t blocks_to_write = MIN(block - page_block_offset + block_step, block_end) - block;
+        uint64_t page_block_offset = block % block_step;
+        uint64_t blocks_to_write = MIN(block - page_block_offset + block_step, (uint64_t) block_end) - block;
 
         struct phys_page *page;
         if (page_block_offset == 0 && blocks_to_write == block_step) {
@@ -196,12 +196,12 @@ static ssize_t block_write(struct fs_device *device, off_t offset, const void *b
     return ret;
 }
 
-static blkcnt_t block_block_count(struct fs_device *device) {
+static uint64_t block_block_count(struct fs_device *device) {
     struct block_device *block_device = device->private;
     return block_device->block_count;
 }
 
-static blksize_t block_block_size(struct fs_device *device) {
+static uint32_t block_block_size(struct fs_device *device) {
     struct block_device *block_device = device->private;
     return block_device->block_size;
 }
@@ -214,8 +214,8 @@ struct phys_page *block_generic_read_page(struct block_device *self, off_t block
     page->block_offset = block_offset;
 
     void *buffer = create_phys_addr_mapping(page->phys_addr);
-    blkcnt_t blocks_to_read = PAGE_SIZE / self->block_size;
-    if (self->op->read(self, buffer, blocks_to_read, block_offset) != blocks_to_read) {
+    uint64_t blocks_to_read = PAGE_SIZE / self->block_size;
+    if (self->op->read(self, buffer, blocks_to_read, block_offset) != (int64_t) blocks_to_read) {
         drop_phys_page(page);
         return NULL;
     }
@@ -225,15 +225,15 @@ struct phys_page *block_generic_read_page(struct block_device *self, off_t block
 
 int block_generic_sync_page(struct block_device *self, struct phys_page *page) {
     void *buffer = create_phys_addr_mapping(page->phys_addr);
-    blkcnt_t blocks_to_write = PAGE_SIZE / self->block_size;
-    if (self->op->write(self, buffer, blocks_to_write, page->block_offset) != blocks_to_write) {
+    uint64_t blocks_to_write = PAGE_SIZE / self->block_size;
+    if (self->op->write(self, buffer, blocks_to_write, page->block_offset) != (int64_t) blocks_to_write) {
         return -EIO;
     }
 
     return 0;
 }
 
-struct block_device *create_block_device(blkcnt_t block_count, blksize_t block_size, struct block_device_info info,
+struct block_device *create_block_device(uint64_t block_count, uint32_t block_size, struct block_device_info info,
                                          struct block_device_ops *op, void *private_data) {
     struct block_device *block_device = malloc(sizeof(struct block_device));
     block_device->block_count = block_count;

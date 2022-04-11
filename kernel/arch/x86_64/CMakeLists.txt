@@ -7,6 +7,7 @@ set(KERNEL_ARCHDIR arch/x86_64)
 set(KERNEL_HALDIR hal/x86_64)
 
 set(KERNEL_ARCH_SOURCES
+    arch/x86/sched/arch_task_sched.c
     ${KERNEL_ARCHDIR}/ap_boot.S
     ${KERNEL_ARCHDIR}/boot.S
     ${KERNEL_ARCHDIR}/irqs/asm_handlers.S
@@ -20,25 +21,24 @@ set(KERNEL_ARCH_SOURCES
     ${KERNEL_ARCHDIR}/proc/arch_process.c
     ${KERNEL_ARCHDIR}/proc/arch_profile.c
     ${KERNEL_ARCHDIR}/sched/__kernel_yield.S
-    ${KERNEL_ARCHDIR}/sched/arch_task_sched.c
-    ${KERNEL_HALDIR}/drivers/local_apic.c
-    ${KERNEL_HALDIR}/drivers/ata_drive.c
-    ${KERNEL_HALDIR}/drivers/bga.c
-    ${KERNEL_HALDIR}/drivers/e1000.c
-    ${KERNEL_HALDIR}/drivers/ide_channel.c
-    ${KERNEL_HALDIR}/drivers/ide_controller.c
-    ${KERNEL_HALDIR}/drivers/io_apic.c
-    ${KERNEL_HALDIR}/drivers/keyboard.c
-    ${KERNEL_HALDIR}/drivers/mouse.c
-    ${KERNEL_HALDIR}/drivers/pic.c
-    ${KERNEL_HALDIR}/drivers/pit.c
-    ${KERNEL_HALDIR}/drivers/ps2.c
-    ${KERNEL_HALDIR}/drivers/rtc.c
-    ${KERNEL_HALDIR}/drivers/serial.c
-    ${KERNEL_HALDIR}/drivers/vga.c
-    ${KERNEL_HALDIR}/drivers/vmware_back_door.c
-    ${KERNEL_HALDIR}/acpi.c
-    ${KERNEL_HALDIR}/arch_pci.c
+    hal/x86/drivers/ata_drive.c
+    hal/x86/drivers/bga.c
+    hal/x86/drivers/ide_channel.c
+    hal/x86/drivers/ide_controller.c
+    hal/x86/drivers/io_apic.c
+    hal/x86/drivers/keyboard.c
+    hal/x86/drivers/local_apic.c
+    hal/x86/drivers/mouse.c
+    hal/x86/drivers/pic.c
+    hal/x86/drivers/pit.c
+    hal/x86/drivers/ps2.c
+    hal/x86/drivers/rtc.c
+    hal/x86/drivers/serial.c
+    hal/x86/drivers/vga.c
+    hal/x86/drivers/vmware_back_door.c
+    hal/x86/acpi.c
+    hal/x86/arch_pci.c
+    hal/x86/processor.c
     ${KERNEL_HALDIR}/gdt.c
     ${KERNEL_HALDIR}/hal.c
     ${KERNEL_HALDIR}/idt.c

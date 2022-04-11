@@ -31,6 +31,12 @@ static inline uint32_t get_cr3() {
     return cr3;
 }
 
+static inline uint64_t get_base_pointer() {
+    uint32_t ebp;
+    asm volatile("mov %%ebp, %0" : "=a"(ebp) : :);
+    return ebp;
+}
+
 static inline uint32_t get_rflags() {
     uint32_t rflags;
     asm volatile("pushf\n"
@@ -66,6 +72,16 @@ static inline void interrupts_restore(unsigned long flags) {
                  :
                  : "rm"(flags)
                  : "memory", "cc");
+}
+
+static inline void fxsave(uint8_t* state) {
+    assert((uintptr_t) state % 16 == 0);
+    asm volatile("fxsave %0" : : "m"(*state) : "memory");
+}
+
+static inline void fxrstor(uint8_t* state) {
+    assert((uintptr_t) state % 16 == 0);
+    asm volatile("fxrstor %0" : : "m"(*state) : "memory");
 }
 
 #endif /* _KERNEL_ARCH_I386_ASM_UTILS_H */

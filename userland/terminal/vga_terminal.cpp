@@ -2,7 +2,7 @@
 #include <clipboard/connection.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <kernel/hal/x86_64/drivers/vga.h>
+#include <kernel/hal/x86/drivers/vga.h>
 
 #include "vga_terminal.h"
 

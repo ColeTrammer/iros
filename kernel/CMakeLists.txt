@@ -18,6 +18,7 @@ if (NOT ${NATIVE_BUILD})
         fs/tnode.c
         fs/vfs.c
         fs/watch.c
+        hal/drivers/e1000.c
         hal/block.c
         hal/devices.c
         hal/gpt.c
@@ -26,6 +27,7 @@ if (NOT ${NATIVE_BUILD})
         hal/input.c
         hal/isa_driver.c
         hal/mbr.c
+        hal/output.c
         hal/partition.c
         hal/pci_driver.c
         hal/pci.c

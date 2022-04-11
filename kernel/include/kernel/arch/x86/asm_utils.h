@@ -66,16 +66,6 @@ static inline void enable_interrupts() {
     asm volatile("sti" : : : "memory");
 }
 
-static inline void fxsave(uint8_t *state) {
-    assert((uintptr_t) state % 16 == 0);
-    asm volatile("fxsave64 %0" : : "m"(*state) : "memory");
-}
-
-static inline void fxrstor(uint8_t *state) {
-    assert((uintptr_t) state % 16 == 0);
-    asm volatile("fxrstor64 %0" : : "m"(*state) : "memory");
-}
-
 static inline void fninit(void) {
     asm volatile("fninit" : : : "memory");
 }

@@ -5,18 +5,18 @@
 #include <kernel/hal/partition.h>
 #include <kernel/mem/phys_page.h>
 
-static blkcnt_t partition_read(struct block_device *self, void *buf, blkcnt_t block_count, off_t block_offset) {
+static int64_t partition_read(struct block_device *self, void *buf, uint64_t block_count, off_t block_offset) {
     struct block_device *root = self->private_data;
     mutex_lock(&root->device->lock);
-    blkcnt_t ret = root->op->read(root, buf, block_count, self->partition_offset + block_offset);
+    int64_t ret = root->op->read(root, buf, block_count, self->partition_offset + block_offset);
     mutex_unlock(&root->device->lock);
     return ret;
 }
 
-static blkcnt_t partition_write(struct block_device *self, const void *buf, blkcnt_t block_count, off_t block_offset) {
+static int64_t partition_write(struct block_device *self, const void *buf, uint64_t block_count, off_t block_offset) {
     struct block_device *root = self->private_data;
     mutex_lock(&root->device->lock);
-    blkcnt_t ret = root->op->write(root, buf, block_count, self->partition_offset + block_offset);
+    int64_t ret = root->op->write(root, buf, block_count, self->partition_offset + block_offset);
     mutex_unlock(&root->device->lock);
     return ret;
 }
@@ -44,7 +44,7 @@ static struct block_device_ops partition_ops = {
     .sync_page = partition_sync_page,
 };
 
-struct block_device *create_and_register_partition_device(struct block_device *root_device, blkcnt_t block_count, off_t partition_offset,
+struct block_device *create_and_register_partition_device(struct block_device *root_device, uint64_t block_count, off_t partition_offset,
                                                           int partition_number, struct block_device_info info) {
     struct block_device *block_device = create_block_device(block_count, root_device->block_size, info, &partition_ops, root_device);
     block_device->partition_offset = partition_offset;

@@ -4,6 +4,7 @@
 
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
+#include <kernel/mem/vm_allocator.h>
 #include <kernel/proc/task.h>
 #include <kernel/sched/task_sched.h>
 
@@ -13,6 +14,7 @@ static struct processor *processor_list;
 static struct processor *bsp;
 static int num_processors;
 static bool s_smp_enabled;
+static bool s_bsp_enabled;
 
 void set_smp_enabled() {
     s_smp_enabled = true;
@@ -24,6 +26,23 @@ bool smp_enabled(void) {
 
 struct processor *get_bsp(void) {
     return bsp;
+}
+
+bool bsp_enabled(void) {
+    return s_bsp_enabled;
+}
+
+void init_bsp(struct processor *processor) {
+    processor->kernel_stack = vm_allocate_kernel_region(PAGE_SIZE);
+    arch_init_processor(processor);
+
+    processor->current_task = &initial_kernel_task;
+    local_sched_add_task(processor, &initial_kernel_task);
+    initial_kernel_task.active_processor = processor;
+    initial_kernel_task.kernel_stack = vm_allocate_kernel_region(KERNEL_STACK_SIZE);
+
+    processor->enabled = true;
+    s_bsp_enabled = true;
 }
 
 struct processor *create_processor() {

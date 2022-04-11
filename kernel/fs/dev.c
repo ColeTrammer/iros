@@ -195,13 +195,13 @@ intptr_t dev_mmap(void *addr, size_t len, int prot, int flags, struct file *file
     return -ENODEV;
 }
 
-blksize_t dev_block_size(struct fs_device *device) {
+uint32_t dev_block_size(struct fs_device *device) {
     assert(device->mode & S_IFBLK);
     assert(device->ops->block_size);
     return device->ops->block_size(device);
 }
 
-blkcnt_t dev_block_count(struct fs_device *device) {
+uint64_t dev_block_count(struct fs_device *device) {
     assert(device->mode & S_IFBLK);
     assert(device->ops->block_count);
     return device->ops->block_count(device);

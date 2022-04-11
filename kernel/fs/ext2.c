@@ -102,30 +102,30 @@ static struct file_operations ext2_dir_f_op = {
 };
 
 /* Allocate space to read blocks (eventually should probably not use malloc and instead another mechanism) */
-static void *ext2_allocate_blocks(struct super_block *sb, blkcnt_t num_blocks) {
+static void *ext2_allocate_blocks(struct super_block *sb, uint64_t num_blocks) {
     void *ret = malloc(num_blocks * sb->block_size);
     assert(ret);
     return ret;
 }
 
 /* Reads blocks at a given offset into the buffer */
-static ssize_t __ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t block_offset, blkcnt_t num_blocks) {
+static ssize_t __ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t block_offset, uint64_t num_blocks) {
     if (sb->device->ops->read(sb->device, sb->block_size * block_offset, buffer, num_blocks * sb->block_size, false) !=
-        num_blocks * sb->block_size) {
+        (ssize_t) (num_blocks * sb->block_size)) {
         return -EIO;
     }
 
     return num_blocks;
 }
 
-static ssize_t ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t block_offset, blkcnt_t num_blocks) {
+static ssize_t ext2_read_blocks(struct super_block *sb, void *buffer, uint32_t block_offset, uint64_t num_blocks) {
     return __ext2_read_blocks(sb, buffer, block_offset, num_blocks);
 }
 
 /* Writes to blocks at a given offset from buffer */
-static ssize_t ext2_write_blocks(struct super_block *sb, const void *buffer, uint32_t block_offset, blkcnt_t num_blocks) {
+static ssize_t ext2_write_blocks(struct super_block *sb, const void *buffer, uint32_t block_offset, uint64_t num_blocks) {
     if (sb->device->ops->write(sb->device, sb->block_size * block_offset, buffer, num_blocks * sb->block_size, false) !=
-        num_blocks * sb->block_size) {
+        (ssize_t) (num_blocks * sb->block_size)) {
         return -EIO;
     }
 
@@ -756,7 +756,7 @@ static void ext2_update_tnode_list(struct inode *inode) {
             goto finish_update_tnode_list;
         }
 
-        int byte_offset = 0;
+        uint32_t byte_offset = 0;
         for (struct raw_dirent *dirent = raw_dirent_table; byte_offset < inode->super_block->block_size;
              dirent = raw_dirent_table + byte_offset) {
             if (dirent->ino == 0 || dirent->type == EXT2_DIRENT_TYPE_UNKNOWN) {
@@ -859,7 +859,7 @@ int ext2_sync_inode(struct inode *inode) {
     raw_inode->mtime = inode->modify_time.tv_sec;
     raw_inode->ctime = inode->change_time.tv_sec;
     /* Sector size should be retrieved from block device */
-    blksize_t blk_size = dev_block_size(inode->super_block->device);
+    uint32_t blk_size = dev_block_size(inode->super_block->device);
     raw_inode->sectors = (inode->size + blk_size - 1) / blk_size;
 
     memcpy(block + (inode_table_index * sb_data->sb->inode_size) % inode->super_block->block_size, raw_inode, sb_data->sb->inode_size);
@@ -1016,7 +1016,7 @@ struct inode *__ext2_create(struct tnode *tparent, const char *name, mode_t mode
             goto finish_write_dirent;
         }
 
-        int byte_offset = 0;
+        uint32_t byte_offset = 0;
         for (struct raw_dirent *dirent = raw_dirent_table; byte_offset < inode->super_block->block_size;
              dirent = raw_dirent_table + byte_offset) {
             uint16_t actual_dirent_size = sizeof(struct raw_dirent) + ALIGN_UP(dirent->name_length, 4);
@@ -1569,7 +1569,7 @@ int __ext2_unlink(struct tnode *tnode, bool drop_reference) {
             goto did_remove_inode;
         }
 
-        int byte_offset = 0;
+        uint32_t byte_offset = 0;
         for (struct raw_dirent *dirent = raw_dirent_table; byte_offset < inode->super_block->block_size;
              dirent = raw_dirent_table + byte_offset) {
 
@@ -1840,15 +1840,16 @@ int ext2_mount(struct block_device *device, unsigned long, const void *, struct 
     debug_log("Ext2 Num Inodes: [ %u ]\n", raw_super_block->num_inodes);
     debug_log("Ext2 Num Inodes in Group: [ %u ]\n", raw_super_block->num_inodes_in_block_group);
     debug_log("Ext2 Num Blocks in Group: [ %u ]\n", raw_super_block->num_blocks_in_block_group);
-    debug_log("Ext2 Block Size: [ %lu ]\n", super_block->block_size);
+    debug_log("Ext2 Block Size: [ %u ]\n", super_block->block_size);
     debug_log("Ext2 Num Block Groups: [ %lu ]\n", data->num_block_groups);
     debug_log("Ext2 Inode Size: [ %u ]\n", raw_super_block->inode_size);
 
-    blkcnt_t num_blocks =
+    uint64_t num_blocks =
         (data->num_block_groups * sizeof(struct raw_block_group_descriptor) + super_block->block_size - 1) / super_block->block_size;
     struct raw_block_group_descriptor *raw_block_group_descriptor_table = ext2_allocate_blocks(super_block, num_blocks);
     uint32_t block_group_descriptor_offset = super_block->block_size == 1024 ? 2 : 1;
-    if (__ext2_read_blocks(super_block, raw_block_group_descriptor_table, block_group_descriptor_offset, num_blocks) != num_blocks) {
+    if (__ext2_read_blocks(super_block, raw_block_group_descriptor_table, block_group_descriptor_offset, num_blocks) !=
+        (ssize_t) num_blocks) {
         debug_log("Ext2 Read Error: [ Block Group Descriptor Table ]\n");
         ext2_free_blocks(raw_super_block);
         ext2_free_blocks(raw_block_group_descriptor_table);

@@ -28,8 +28,8 @@ struct fs_device_ops {
     void (*on_open)(struct fs_device *device);
     intptr_t (*mmap)(struct fs_device *device, void *addr, size_t len, int prot, int flags, off_t offset);
     int (*read_all)(struct fs_device *device, void *buf);
-    blksize_t (*block_size)(struct fs_device *device);
-    blkcnt_t (*block_count)(struct fs_device *device);
+    uint32_t (*block_size)(struct fs_device *device);
+    uint64_t (*block_count)(struct fs_device *device);
 };
 
 struct fs_device {
@@ -60,8 +60,8 @@ ssize_t dev_read(struct file *file, off_t offset, void *buffer, size_t len);
 ssize_t dev_write(struct file *file, off_t offset, const void *buffer, size_t len);
 int dev_ioctl(struct file *file, unsigned long request, void *argp);
 intptr_t dev_mmap(void *addr, size_t len, int prot, int flags, struct file *file, off_t offset);
-blksize_t dev_block_size(struct fs_device *device);
-blkcnt_t dev_block_count(struct fs_device *device);
+uint32_t dev_block_size(struct fs_device *device);
+uint64_t dev_block_count(struct fs_device *device);
 int dev_mount(struct block_device *device, unsigned long flags, const void *data, struct super_block **super_block);
 int dev_umount(struct super_block *super_block);
 
