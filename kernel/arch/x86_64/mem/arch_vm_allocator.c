@@ -1,14 +1,24 @@
+#include <kernel/hal/processor.h>
 #include <kernel/mem/page.h>
 
 // Physical addresses are already mapped in at VIRT_ADDR(MAX_PML4_ENTRIES - 3)
-void *create_phys_addr_mapping(uintptr_t phys_addr) {
+void *get_identity_phys_addr_mapping(uintptr_t phys_addr) {
     return (void *) (phys_addr + PHYS_ID_START);
 }
 
-void *create_phys_addr_mapping_from_virt_addr(void *virt_addr) {
-    if (virt_addr == NULL) {
-        return NULL;
+void *create_phys_addr_mapping(uintptr_t phys_addr) {
+#ifdef CREATE_PHYS_ADDR_MAPPING_CHECK
+    if (bsp_enabled()) {
+        assert(++get_current_processor()->arch_processor.phys_addr_mapping_count <= 2);
     }
+#endif /* CREATE_PHYS_ADDR_MAPPING_CHECK */
+    return get_identity_phys_addr_mapping(phys_addr);
+}
 
-    return create_phys_addr_mapping(get_phys_addr((uintptr_t) virt_addr));
+void free_phys_addr_mapping(void *) {
+#ifdef CREATE_PHYS_ADDR_MAPPING_CHECK
+    if (bsp_enabled()) {
+        get_current_processor()->arch_processor.phys_addr_mapping_count--;
+    }
+#endif /* CREATE_PHYS_ADDR_MAPPING_CHECK */
 }
