@@ -35,22 +35,22 @@ uintptr_t get_phys_addr(uintptr_t virt_addr) {
     uint64_t pd_offset = (virt_addr >> 21) & 0x1FF;
     uint64_t pt_offset = (virt_addr >> 12) & 0x1FF;
 
-    uint64_t *pml4 = create_phys_addr_mapping(get_cr3() & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pml4 = get_identity_phys_addr_mapping(get_cr3() & 0x0000FFFFFFFFF000ULL);
     assert(pml4[pml4_offset] & 1);
 
-    uint64_t *pdp = create_phys_addr_mapping(pml4[pml4_offset] & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pdp = get_identity_phys_addr_mapping(pml4[pml4_offset] & 0x0000FFFFFFFFF000ULL);
     assert(pdp[pdp_offset] & 1);
     if (cpu_supports_1gb_pages() && (pdp[pdp_offset] & VM_HUGE)) {
         return (pdp[pdp_offset] & 0x0000FFFFFFE00000ULL) + (virt_addr & 0x1FFFFF);
     }
 
-    uint64_t *pd = create_phys_addr_mapping(pdp[pdp_offset] & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pd = get_identity_phys_addr_mapping(pdp[pdp_offset] & 0x0000FFFFFFFFF000ULL);
     assert(pd[pd_offset] & 1);
     if (pd[pd_offset] & VM_HUGE) {
         return (pd[pd_offset] & 0x000FFFFC0000000ULL) + (virt_addr & 0x3FFFFFFF);
     }
 
-    uint64_t *pt = create_phys_addr_mapping(pd[pd_offset] & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pt = get_identity_phys_addr_mapping(pd[pd_offset] & 0x0000FFFFFFFFF000ULL);
     assert(pt[pt_offset] & 1);
 
     uint64_t *pt_entry = pt + pt_offset;
@@ -74,25 +74,25 @@ void do_unmap_page(uintptr_t virt_addr, bool free_phys, bool free_phys_structure
     uint64_t pd_offset = (virt_addr >> 21) & 0x1FF;
     uint64_t pt_offset = (virt_addr >> 12) & 0x1FF;
 
-    uint64_t *pml4 = create_phys_addr_mapping(get_cr3() & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pml4 = get_identity_phys_addr_mapping(get_cr3() & 0x0000FFFFFFFFF000ULL);
     uint64_t *pml4_entry = &pml4[pml4_offset];
     if (!(*pml4_entry & 1)) {
         return; // Page is already unmapped
     }
 
-    uint64_t *pdp = create_phys_addr_mapping(*pml4_entry & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pdp = get_identity_phys_addr_mapping(*pml4_entry & 0x0000FFFFFFFFF000ULL);
     uint64_t *pdp_entry = &pdp[pdp_offset];
     if (!(*pdp_entry & 1)) {
         return;
     }
 
-    uint64_t *pd = create_phys_addr_mapping(pdp[pdp_offset] & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pd = get_identity_phys_addr_mapping(pdp[pdp_offset] & 0x0000FFFFFFFFF000ULL);
     uint64_t *pd_entry = &pd[pd_offset];
     if (!(*pd_entry & 1)) {
         return;
     }
 
-    uint64_t *pt = create_phys_addr_mapping(pd[pd_offset] & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pt = get_identity_phys_addr_mapping(pd[pd_offset] & 0x0000FFFFFFFFF000ULL);
     uint64_t *pt_entry = &pt[pt_offset];
     if (!(*pt_entry & 1)) {
         return;
@@ -137,29 +137,29 @@ void do_map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags, 
     uint64_t pd_offset = (virt_addr >> 21) & 0x1FF;
     uint64_t pt_offset = (virt_addr >> 12) & 0x1FF;
 
-    uint64_t *pml4 = create_phys_addr_mapping(get_cr3() & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pml4 = get_identity_phys_addr_mapping(get_cr3() & 0x0000FFFFFFFFF000ULL);
     uint64_t *pml4_entry = &pml4[pml4_offset];
 
-    uint64_t *pdp = create_phys_addr_mapping(pml4[pml4_offset] & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pdp = get_identity_phys_addr_mapping(pml4[pml4_offset] & 0x0000FFFFFFFFF000ULL);
     if (!(*pml4_entry & 1)) {
         *pml4_entry = get_next_phys_page(process) | VM_WRITE | (VM_USER & flags) | 0x01;
-        pdp = create_phys_addr_mapping(*pml4_entry & 0x0000FFFFFFFFF000ULL);
+        pdp = get_identity_phys_addr_mapping(*pml4_entry & 0x0000FFFFFFFFF000ULL);
         memset(pdp, 0, PAGE_SIZE);
     }
     uint64_t *pdp_entry = &pdp[pdp_offset];
 
-    uint64_t *pd = create_phys_addr_mapping(pdp[pdp_offset] & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pd = get_identity_phys_addr_mapping(pdp[pdp_offset] & 0x0000FFFFFFFFF000ULL);
     if (!(*pdp_entry & 1)) {
         *pdp_entry = get_next_phys_page(process) | VM_WRITE | (VM_USER & flags) | 0x01;
-        pd = create_phys_addr_mapping(pdp[pdp_offset] & 0x0000FFFFFFFFF000ULL);
+        pd = get_identity_phys_addr_mapping(pdp[pdp_offset] & 0x0000FFFFFFFFF000ULL);
         memset(pd, 0, PAGE_SIZE);
     }
     uint64_t *pd_entry = &pd[pd_offset];
 
-    uint64_t *pt = create_phys_addr_mapping(pd[pd_offset] & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pt = get_identity_phys_addr_mapping(pd[pd_offset] & 0x0000FFFFFFFFF000ULL);
     if (!(*pd_entry & 1)) {
         *pd_entry = get_next_phys_page(process) | VM_WRITE | (VM_USER & flags) | 0x01;
-        pt = create_phys_addr_mapping(pd[pd_offset] & 0x0000FFFFFFFFF000ULL);
+        pt = get_identity_phys_addr_mapping(pd[pd_offset] & 0x0000FFFFFFFFF000ULL);
         memset(pt, 0, PAGE_SIZE);
     }
     uint64_t *pt_entry = &pt[pt_offset];
@@ -174,25 +174,25 @@ void map_page_flags(uintptr_t virt_addr, uint64_t flags) {
     uint64_t pd_offset = (virt_addr >> 21) & 0x1FF;
     uint64_t pt_offset = (virt_addr >> 12) & 0x1FF;
 
-    uint64_t *pml4 = create_phys_addr_mapping(get_cr3() & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pml4 = get_identity_phys_addr_mapping(get_cr3() & 0x0000FFFFFFFFF000ULL);
     uint64_t *pml4_entry = &pml4[pml4_offset];
     if (!(*pml4_entry & 1)) {
         return; // Page is isn't mapped, so will be mapped later on page fault and we can ignore it for now
     }
 
-    uint64_t *pdp = create_phys_addr_mapping(*pml4_entry & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pdp = get_identity_phys_addr_mapping(*pml4_entry & 0x0000FFFFFFFFF000ULL);
     uint64_t *pdp_entry = &pdp[pdp_offset];
     if (!(*pdp_entry & 1)) {
         return;
     }
 
-    uint64_t *pd = create_phys_addr_mapping(pdp[pdp_offset] & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pd = get_identity_phys_addr_mapping(pdp[pdp_offset] & 0x0000FFFFFFFFF000ULL);
     uint64_t *pd_entry = &pd[pd_offset];
     if (!(*pd_entry & 1)) {
         return;
     }
 
-    uint64_t *pt = create_phys_addr_mapping(pd[pd_offset] & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pt = get_identity_phys_addr_mapping(pd[pd_offset] & 0x0000FFFFFFFFF000ULL);
     uint64_t *pt_entry = &pt[pt_offset];
     if (!(*pt_entry & 1)) {
         return;
@@ -213,25 +213,25 @@ uint64_t *get_page_table_entry(uintptr_t virt_addr) {
     uint64_t pd_offset = (virt_addr >> 21) & 0x1FF;
     uint64_t pt_offset = (virt_addr >> 12) & 0x1FF;
 
-    uint64_t *pml4 = create_phys_addr_mapping(get_cr3() & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pml4 = get_identity_phys_addr_mapping(get_cr3() & 0x0000FFFFFFFFF000ULL);
     uint64_t *pml4_entry = &pml4[pml4_offset];
     if (!(*pml4_entry & 1)) {
         return NULL;
     }
 
-    uint64_t *pdp = create_phys_addr_mapping(*pml4_entry & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pdp = get_identity_phys_addr_mapping(*pml4_entry & 0x0000FFFFFFFFF000ULL);
     uint64_t *pdp_entry = &pdp[pdp_offset];
     if (!(*pdp_entry & 1)) {
         return NULL;
     }
 
-    uint64_t *pd = create_phys_addr_mapping(pdp[pdp_offset] & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pd = get_identity_phys_addr_mapping(pdp[pdp_offset] & 0x0000FFFFFFFFF000ULL);
     uint64_t *pd_entry = &pd[pd_offset];
     if (!(*pd_entry & 1)) {
         return NULL;
     }
 
-    uint64_t *pt = create_phys_addr_mapping(pd[pd_offset] & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pt = get_identity_phys_addr_mapping(pd[pd_offset] & 0x0000FFFFFFFFF000ULL);
     return &pt[pt_offset];
 }
 
@@ -247,7 +247,7 @@ void clear_initial_page_mappings() {
     initial_kernel_process.arch_process.cr3 = cr3;
     idle_kernel_process.arch_process.cr3 = cr3;
 
-    uint64_t *pml4 = create_phys_addr_mapping(cr3 & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pml4 = get_identity_phys_addr_mapping(cr3 & 0x0000FFFFFFFFF000ULL);
     pml4[0] = 0;
     pml4[PML4_RECURSIVE_INDEX] = 0;
 
@@ -277,8 +277,8 @@ uintptr_t get_current_paging_structure() {
 
 uintptr_t create_clone_process_paging_structure(struct process *process) {
     uint64_t pml4_addr = get_next_phys_page(process);
-    uint64_t *pml4 = create_phys_addr_mapping(pml4_addr);
-    uint64_t *old_pml4 = create_phys_addr_mapping(get_cr3() & 0x0000FFFFFFFFF000ULL);
+    uint64_t *pml4 = get_identity_phys_addr_mapping(pml4_addr);
+    uint64_t *old_pml4 = get_identity_phys_addr_mapping(get_cr3() & 0x0000FFFFFFFFF000ULL);
 
     // Only clone the kernel entries in this table.
     memset(pml4, 0, (MAX_PML4_ENTRIES - 2) * sizeof(uint64_t));

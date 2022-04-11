@@ -6,8 +6,13 @@
 #include <stdint.h>
 #include <sys/types.h>
 
+#include <kernel/arch/arch.h>
 #include <kernel/fs/file.h>
 #include <kernel/mem/vm_region.h>
+
+// clang-format off
+#include ARCH_SPECIFIC(mem/arch_vm_allocator.h)
+// clang-format on
 
 struct process;
 
@@ -29,7 +34,7 @@ struct vm_region *find_user_vm_region_in_range(uintptr_t start, uintptr_t end);
 struct vm_region *clone_process_vm();
 
 void *create_phys_addr_mapping(uintptr_t phys_addr);
-void *create_phys_addr_mapping_from_virt_addr(void *virt_addr);
+void free_phys_addr_mapping(void *virt_addr);
 
 size_t vm_compute_total_virtual_memory(struct process *process);
 

@@ -9,6 +9,8 @@
 
 #include <kernel/arch/x86_64/asm_utils.h>
 
+// #define CREATE_PHYS_ADDR_MAPPING_CHECK
+
 struct processor;
 
 struct arch_processor {
@@ -16,6 +18,10 @@ struct arch_processor {
 
     uint8_t acpi_id;
     uint8_t local_apic_id;
+
+#ifdef CREATE_PHYS_ADDR_MAPPING_CHECK
+    int phys_addr_mapping_count;
+#endif /* CREATE_PHYS_ADDR_MAPPING_CHECK */
 
     struct gdt_entry gdt[GDT_ENTRIES];
     struct gdt_descriptor gdt_descriptor;
