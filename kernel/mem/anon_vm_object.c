@@ -72,8 +72,9 @@ static uintptr_t anon_handle_fault(struct vm_object *self, uintptr_t offset_into
     data->phys_pages[page_index] = allocate_phys_page();
     uintptr_t phys_addr = data->phys_pages[page_index]->phys_addr;
 
-    void *phys_addr_mapping = create_phys_addr_mapping(phys_addr);
+    void *phys_addr_mapping = create_temp_phys_addr_mapping(phys_addr);
     memset(phys_addr_mapping, 0, PAGE_SIZE);
+    free_temp_phys_addr_mapping(phys_addr_mapping);
 
     mutex_unlock(&self->lock);
     *is_cow = false;
@@ -102,11 +103,14 @@ static uintptr_t anon_handle_cow_fault(struct vm_object *self, uintptr_t offset_
     struct phys_page *new_page = allocate_phys_page();
     uintptr_t new_phys_addr = new_page->phys_addr;
 
-    void *old_addr_mapping = create_phys_addr_mapping(old_phys_addr);
-    void *new_addr_mapping = create_phys_addr_mapping(new_phys_addr);
+    void *old_addr_mapping = create_temp_phys_addr_mapping(old_phys_addr);
+    void *new_addr_mapping = create_temp_phys_addr_mapping(new_phys_addr);
 
     memcpy(new_addr_mapping, old_addr_mapping, PAGE_SIZE);
     data->phys_pages[page_index] = new_page;
+
+    free_temp_phys_addr_mapping(new_addr_mapping);
+    free_temp_phys_addr_mapping(old_addr_mapping);
 
     drop_phys_page(old_page);
     mutex_unlock(&self->lock);

@@ -88,6 +88,7 @@ struct acpi_madt {
 
 struct acpi_info {
     uintptr_t local_apic_address;
+    struct vm_region *local_apic_vm_region;
     struct acpi_interrupt_source_override interrupt_source_override[16];
     size_t interrupt_source_overrides_length;
 };

@@ -18,6 +18,7 @@
 #include <kernel/proc/task.h>
 #include <kernel/util/init.h>
 
+static struct vm_region *vga_buffer_vm_region;
 static uint16_t *vga_buffer = (uint16_t *) VGA_PHYS_ADDR;
 static enum vga_color fg = VGA_COLOR_LIGHT_GREY;
 static enum vga_color bg = VGA_COLOR_BLACK;
@@ -98,7 +99,8 @@ void vga_disable_cursor() {
 }
 
 void update_vga_buffer() {
-    vga_buffer = create_phys_addr_mapping(VGA_PHYS_ADDR);
+    vga_buffer_vm_region = vm_allocate_physically_mapped_kernel_region(VGA_PHYS_ADDR, PAGE_SIZE);
+    vga_buffer = (void *) vga_buffer_vm_region->start;
     vga_enable_cursor();
 }
 

@@ -46,20 +46,12 @@ void init_bsp(struct processor *processor) {
 }
 
 struct processor *create_processor() {
-    struct processor *processor = malloc(sizeof(struct processor));
+    struct processor *processor = calloc(1, sizeof(struct processor));
     processor->self = processor;
-    processor->next = NULL;
-    processor->ipi_messages_head = processor->ipi_messages_tail = NULL;
     init_spinlock(&processor->ipi_messages_lock);
-    processor->current_task = NULL;
     init_list(&processor->sched_list);
     init_spinlock(&processor->sched_lock);
-    processor->sched_idle = false;
-    processor->idle_task = NULL;
-    processor->kernel_stack = NULL;
     processor->id = num_processors++;
-    processor->enabled = false;
-    processor->preemption_disabled_count = 0;
     return processor;
 }
 
