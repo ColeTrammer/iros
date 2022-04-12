@@ -702,7 +702,7 @@ struct vm_region *vm_reallocate_kernel_region(struct vm_region *kernel_region, s
     return kernel_region;
 }
 
-void vm_free_kernel_region(struct vm_region *region) {
+static void do_vm_free_kernel_region(struct vm_region *region, bool free_phys) {
     spin_lock(&kernel_vm_lock);
 
     struct vm_region *vm = kernel_vm_list;
@@ -713,12 +713,41 @@ void vm_free_kernel_region(struct vm_region *region) {
     }
     vm->next = region->next;
 
-    for (uintptr_t s = region->start; s < region->end; s += PAGE_SIZE) {
-        unmap_page(s, &idle_kernel_process);
+    if (free_phys) {
+        for (uintptr_t s = region->start; s < region->end; s += PAGE_SIZE) {
+            unmap_page(s, &idle_kernel_process);
+        }
     }
     free(region);
 
     spin_unlock(&kernel_vm_lock);
+}
+
+void vm_free_kernel_region(struct vm_region *region) {
+    assert(region->type == VM_KERNEL_ANON_MAPPING);
+    do_vm_free_kernel_region(region, true);
+}
+
+struct vm_region *vm_allocate_physically_mapped_kernel_region(uintptr_t phys_addr, size_t size) {
+    assert(phys_addr % PAGE_SIZE == 0);
+
+    size = ALIGN_UP(size, PAGE_SIZE);
+
+    struct vm_region *region = make_kernel_region(size, VM_KERNEL_PHYS_MAPPING);
+    if (!region) {
+        return NULL;
+    }
+
+    for (uintptr_t addr = region->start; addr < region->end; addr += PAGE_SIZE, phys_addr += PAGE_SIZE) {
+        map_phys_page(phys_addr, addr, region->flags, &initial_kernel_process);
+    }
+
+    return region;
+}
+
+void vm_free_physically_mapped_kernel_region(struct vm_region *region) {
+    assert(region->type == VM_KERNEL_PHYS_MAPPING);
+    do_vm_free_kernel_region(region, false);
 }
 
 struct vm_region *vm_allocate_low_identity_map(uintptr_t start, uintptr_t size) {
@@ -756,5 +785,6 @@ struct vm_region *vm_allocate_dma_region(size_t size) {
 }
 
 void vm_free_dma_region(struct vm_region *region) {
-    vm_free_kernel_region(region);
+    assert(region->type == VM_KERNEL_DMA_MAPPING);
+    do_vm_free_kernel_region(region, true);
 }

@@ -109,7 +109,7 @@ struct e1000_transmit_desc {
 struct e1000_data {
     struct pci_device pci_device;
 
-    uintptr_t mem_io_phys_base;
+    struct vm_region *mem_io_vm_region;
     uint16_t io_port_base;
 
     struct vm_region *descs_region;

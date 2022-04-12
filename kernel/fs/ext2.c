@@ -1795,8 +1795,13 @@ int ext2_determine_fsid(struct block_device *block_device, struct block_device_i
         return -EIO;
     }
 
-    struct ext2_raw_super_block *raw_sb = create_phys_addr_mapping(page->phys_addr) + EXT2_SUPER_BLOCK_OFFSET;
-    *result = block_device_id_uuid(raw_sb->fs_uuid);
+    void *raw_page = create_phys_addr_mapping(page->phys_addr);
+    {
+        struct ext2_raw_super_block *raw_sb = raw_page + EXT2_SUPER_BLOCK_OFFSET;
+        *result = block_device_id_uuid(raw_sb->fs_uuid);
+    }
+    free_phys_addr_mapping(raw_page);
+
     drop_phys_page(page);
     return 0;
 }

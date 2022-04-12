@@ -121,6 +121,7 @@ static ssize_t block_read(struct fs_device *device, off_t offset, void *buf, siz
 
         void *mapped_page = create_phys_addr_mapping(page->phys_addr);
         memcpy(buf + (block - block_offset) * block_size, mapped_page + (page_block_offset * block_size), blocks_to_read * block_size);
+        free_phys_addr_mapping(mapped_page);
         drop_phys_page(page);
 
         block += blocks_to_read;
@@ -177,6 +178,7 @@ static ssize_t block_write(struct fs_device *device, off_t offset, const void *b
 
         void *mapped_page = create_phys_addr_mapping(page->phys_addr);
         memcpy(mapped_page + (page_block_offset * block_size), buf + (block - block_offset) * block_size, blocks_to_write * block_size);
+        free_phys_addr_mapping(mapped_page);
 
         // This should eventually be made asynchronous.
         int ret = block_device->op->sync_page(block_device, page);
@@ -213,22 +215,30 @@ struct phys_page *block_generic_read_page(struct block_device *self, off_t block
     }
     page->block_offset = block_offset;
 
-    void *buffer = create_phys_addr_mapping(page->phys_addr);
     uint64_t blocks_to_read = PAGE_SIZE / self->block_size;
+
+    // NOTE: if this operation is ever blocking, we would need to allocate a permenant buffer.
+    void *buffer = create_phys_addr_mapping(page->phys_addr);
     if (self->op->read(self, buffer, blocks_to_read, block_offset) != (int64_t) blocks_to_read) {
+        free_phys_addr_mapping(buffer);
         drop_phys_page(page);
         return NULL;
     }
+    free_phys_addr_mapping(buffer);
 
     return page;
 }
 
 int block_generic_sync_page(struct block_device *self, struct phys_page *page) {
-    void *buffer = create_phys_addr_mapping(page->phys_addr);
     uint64_t blocks_to_write = PAGE_SIZE / self->block_size;
+
+    // NOTE: if this operation is ever blocking, we would need to allocate a permenant buffer.
+    void *buffer = create_phys_addr_mapping(page->phys_addr);
     if (self->op->write(self, buffer, blocks_to_write, page->block_offset) != (int64_t) blocks_to_write) {
+        free_phys_addr_mapping(buffer);
         return -EIO;
     }
+    free_phys_addr_mapping(buffer);
 
     return 0;
 }

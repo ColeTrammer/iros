@@ -26,6 +26,8 @@ void mbr_partition_device(struct block_device *block_device) {
     for (i = 0; i < MBR_MAX_PARTITIONS; i++) {
         struct mbr_partition *partition = &mbr->partitions[i];
         if (i == 0 && partition->partition_type == GPT_MBR_TYPE) {
+            free_phys_addr_mapping(mbr);
+            mbr = NULL;
             mutex_unlock(&block_device->device->lock);
             gpt_partition_device(block_device);
             mutex_lock(&block_device->device->lock);
@@ -70,6 +72,8 @@ void mbr_partition_device(struct block_device *block_device) {
         size_t ebr_lba = extended_lba_start;
         for (;;) {
             drop_phys_page(page);
+            free_phys_addr_mapping(mbr);
+
             page = block_device->op->read_page(block_device, ALIGN_DOWN(ebr_lba, (PAGE_SIZE / block_device->block_size)));
 
             mbr = create_phys_addr_mapping(page->phys_addr) + (ebr_lba % (PAGE_SIZE / block_device->block_size) * block_device->block_size);
@@ -116,6 +120,9 @@ void mbr_partition_device(struct block_device *block_device) {
     }
 
 done:
+    if (mbr) {
+        free_phys_addr_mapping((void *) ALIGN_DOWN((uintptr_t) mbr, PAGE_SIZE));
+    }
     mutex_unlock(&block_device->device->lock);
     if (page) {
         drop_phys_page(page);

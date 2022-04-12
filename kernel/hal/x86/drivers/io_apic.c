@@ -4,6 +4,7 @@
 #include <kernel/hal/x86/drivers/io_apic.h>
 #include <kernel/hal/x86/drivers/local_apic.h>
 #include <kernel/irqs/handlers.h>
+#include <kernel/mem/page.h>
 #include <kernel/mem/vm_allocator.h>
 
 static struct io_apic *io_apics;
@@ -104,7 +105,8 @@ static struct irq_controller_ops io_apic_ops = { .is_valid_irq = &io_apic_is_val
 
 void create_io_apic(uint8_t acpi_id, uintptr_t base_phys_addr, uint32_t irq_base) {
     struct io_apic *io_apic = malloc(sizeof(struct io_apic));
-    io_apic->memory = create_phys_addr_mapping(base_phys_addr);
+    io_apic->memory_mapped_region = vm_allocate_physically_mapped_kernel_region(base_phys_addr, sizeof(struct io_apic));
+    io_apic->memory = (void *) io_apic->memory_mapped_region->start;
     io_apic->id = acpi_id;
 
     uint32_t id_register = read_io_apic_register(io_apic, IO_APIC_REGISTER_ID);
