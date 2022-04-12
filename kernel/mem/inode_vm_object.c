@@ -46,6 +46,8 @@ static uintptr_t inode_handle_fault(struct vm_object *self, uintptr_t offset_int
     size_t page_index = offset_into_self / PAGE_SIZE;
     assert(page_index < data->pages);
 
+    // FIXME: this is called from an exception handler, should we really be allowed
+    //        to take a mutex here.
     mutex_lock(&self->lock);
     if (!data->owned) {
         return (uintptr_t) data->phys_pages[page_index];
@@ -61,7 +63,14 @@ static uintptr_t inode_handle_fault(struct vm_object *self, uintptr_t offset_int
     data->phys_pages[page_index] = page;
 
     uintptr_t phys_addr = page->phys_addr;
-    char *phys_page_mapping = create_phys_addr_mapping(phys_addr);
+
+    // FIXME: either directly map the page into the current process's address space or
+    //        add an API to read physical pages directly, without having to create a temporary
+    //        mapping.
+    // NOTE:  a temporary physical address mapping cannot be used here, since reading from an inode
+    //        takes a mutex.
+    struct vm_region *region = vm_allocate_physically_mapped_kernel_region(phys_addr, PAGE_SIZE);
+    char *phys_page_mapping = (void *) region->start;
 
     struct inode *inode = data->inode;
     ssize_t read = inode->i_op->read(inode, phys_page_mapping, PAGE_SIZE, page_index * PAGE_SIZE);
@@ -71,6 +80,7 @@ static uintptr_t inode_handle_fault(struct vm_object *self, uintptr_t offset_int
     }
 
     memset(phys_page_mapping + read, 0, PAGE_SIZE - read);
+    vm_free_physically_mapped_kernel_region(region);
     mutex_unlock(&self->lock);
 
     *is_cow = false;
@@ -137,7 +147,7 @@ struct vm_object *vm_create_direct_inode_object(struct inode *inode, struct vm_r
 
     char *buffer = (char *) kernel_region->start;
     for (size_t i = 0; i < num_pages; i++) {
-        data->phys_pages[i] = (void *) get_phys_addr((uintptr_t)(buffer + (i * PAGE_SIZE)));
+        data->phys_pages[i] = (void *) get_phys_addr((uintptr_t) (buffer + (i * PAGE_SIZE)));
     }
 
     // Make sure to zero excess bytes before allowing the pages to be mapped in

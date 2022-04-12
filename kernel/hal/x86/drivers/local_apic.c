@@ -20,7 +20,7 @@
 
 void local_apic_send_eoi(void) {
     struct acpi_info *info = acpi_get_info();
-    volatile struct local_apic *local_apic = create_phys_addr_mapping(info->local_apic_address);
+    volatile struct local_apic *local_apic = (void *) info->local_apic_vm_region->start;
 
     local_apic->eoi_register = 0;
 }
@@ -37,7 +37,7 @@ static void write_icr(volatile struct local_apic *local_apic, union local_apic_i
 
 void local_apic_broadcast_ipi(int vector) {
     struct acpi_info *info = acpi_get_info();
-    volatile struct local_apic *local_apic = create_phys_addr_mapping(info->local_apic_address);
+    volatile struct local_apic *local_apic = (void *) info->local_apic_vm_region->start;
 
     union local_apic_icr command = { .raw_value = 0 };
     command.vector = vector;
@@ -52,7 +52,7 @@ void local_apic_broadcast_ipi(int vector) {
 
 void local_apic_send_ipi(uint8_t apic_id, int vector) {
     struct acpi_info *info = acpi_get_info();
-    volatile struct local_apic *local_apic = create_phys_addr_mapping(info->local_apic_address);
+    volatile struct local_apic *local_apic = (void *) info->local_apic_vm_region->start;
 
     union local_apic_icr command = { .raw_value = 0 };
     command.vector = vector;
@@ -136,7 +136,7 @@ static void start_ap(volatile struct local_apic *local_apic, struct processor *p
 
 void local_apic_start_aps(void) {
     struct acpi_info *info = acpi_get_info();
-    volatile struct local_apic *local_apic = create_phys_addr_mapping(info->local_apic_address);
+    volatile struct local_apic *local_apic = (void *) info->local_apic_vm_region->start;
 
     struct processor *processor = get_processor_list();
     while (processor) {
@@ -186,7 +186,7 @@ static void lapic_timer_setup_interval_timer(struct hw_timer *self, int channel_
     register_irq_handler(&channel->irq_handler, LOCAL_APIC_TIMER_IRQ);
 
     struct acpi_info *info = acpi_get_info();
-    volatile struct local_apic *local_apic = create_phys_addr_mapping(info->local_apic_address);
+    volatile struct local_apic *local_apic = (void *) info->local_apic_vm_region->start;
 
     local_apic->lvt_timer_register.raw_value =
         (struct local_apic_timer_lvt) {
@@ -211,7 +211,7 @@ static void lapic_timer_setup_one_shot_timer(struct hw_timer *self, int channel_
     register_irq_handler(&channel->irq_handler, LOCAL_APIC_TIMER_IRQ);
 
     struct acpi_info *info = acpi_get_info();
-    volatile struct local_apic *local_apic = create_phys_addr_mapping(info->local_apic_address);
+    volatile struct local_apic *local_apic = (void *) info->local_apic_vm_region->start;
 
     local_apic->lvt_timer_register.raw_value =
         (struct local_apic_timer_lvt) {
@@ -227,7 +227,7 @@ static void lapic_timer_disable_channel(struct hw_timer *self, int channel_index
     struct hw_timer_channel *channel = &self->channels[channel_index];
 
     struct acpi_info *info = acpi_get_info();
-    volatile struct local_apic *local_apic = create_phys_addr_mapping(info->local_apic_address);
+    volatile struct local_apic *local_apic = (void *) info->local_apic_vm_region->start;
 
     uint64_t save = disable_interrupts_save();
     unregister_irq_handler(&channel->irq_handler, LOCAL_APIC_TIMER_IRQ);
@@ -240,7 +240,7 @@ static void lapic_timer_disable_channel(struct hw_timer *self, int channel_index
 
 static void lapic_timer_calibrate(struct hw_timer *self, struct hw_timer *reference) {
     struct acpi_info *info = acpi_get_info();
-    volatile struct local_apic *local_apic = create_phys_addr_mapping(info->local_apic_address);
+    volatile struct local_apic *local_apic = (void *) info->local_apic_vm_region->start;
 
     local_apic->divide_configuration_register = 0b0011;
 
@@ -272,7 +272,7 @@ void init_local_apic(void) {
     struct acpi_info *info = acpi_get_info();
     set_msr(MSR_LOCAL_APIC_BASE, info->local_apic_address | APIC_MSR_ENABLE_LOCAL);
 
-    volatile struct local_apic *local_apic = create_phys_addr_mapping(info->local_apic_address);
+    volatile struct local_apic *local_apic = (void *) info->local_apic_vm_region->start;
     local_apic->spurious_interrupt_vector_register = 0x1FF;
 
     if (!lapic_timer) {

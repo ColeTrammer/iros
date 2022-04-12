@@ -141,7 +141,7 @@ void init_page_frame_allocator() {
 
     debug_log("Max phys memory: [ %#" PRIX64 " ]\n", g_phys_page_stats.phys_memory_max);
     debug_log("Total available memory: [ %#" PRIX64 " ]\n", g_phys_page_stats.phys_memory_total);
-    debug_log("Kernel physical memory: [ %p], %p, %lu ]\n", (void *) KERNEL_PHYS_START, (void *) KERNEL_PHYS_END,
+    debug_log("Kernel physical memory: [ %p, %p, %lu ]\n", (void *) KERNEL_PHYS_START, (void *) KERNEL_PHYS_END,
               (size_t) (KERNEL_PHYS_END - KERNEL_PHYS_START));
     debug_log("Initrd physical memory: [ %p, %p, %lu ]\n", (void *) boot_info->initrd_phys_start, (void *) boot_info->initrd_phys_end,
               (size_t) (boot_info->initrd_phys_end - boot_info->initrd_phys_start));
