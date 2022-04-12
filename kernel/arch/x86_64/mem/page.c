@@ -22,8 +22,6 @@
 
 // #define MAP_VM_REGION_DEBUG
 
-spinlock_t temp_page_lock = SPINLOCK_INITIALIZER;
-
 void flush_tlb(uintptr_t addr) {
     invlpg(addr);
     broadcast_flush_tlb(addr, 1);
@@ -240,6 +238,19 @@ bool is_virt_addr_cow(uintptr_t virt_addr) {
     return pt_entry && (*pt_entry & VM_COW);
 }
 
+void mark_region_as_cow(struct vm_region *region) {
+    for (uintptr_t addr = region->start; addr < region->end; addr += PAGE_SIZE) {
+        uint64_t *pt_entry = get_page_table_entry(addr);
+        if (!pt_entry || !(*pt_entry & 1)) {
+            continue;
+        }
+
+        *pt_entry |= VM_COW;
+        *pt_entry &= ~VM_WRITE;
+        flush_tlb(addr);
+    }
+}
+
 void clear_initial_page_mappings() {
     update_vga_buffer();
 
@@ -257,22 +268,6 @@ void clear_initial_page_mappings() {
         do_unmap_page(i, false, true, false, &idle_kernel_process);
     }
     load_cr3(cr3);
-}
-
-void map_page(uintptr_t virt_addr, uint64_t flags, struct process *process) {
-    do_map_phys_page(get_next_phys_page(process), virt_addr, flags, true, process);
-}
-
-void map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags, struct process *process) {
-    do_map_phys_page(phys_addr, virt_addr, flags, true, process);
-}
-
-void unmap_page(uintptr_t virt_addr, struct process *process) {
-    do_unmap_page(virt_addr, true, true, true, process);
-}
-
-uintptr_t get_current_paging_structure() {
-    return get_current_task()->process->arch_process.cr3;
 }
 
 uintptr_t create_clone_process_paging_structure(struct process *process) {
@@ -347,37 +342,6 @@ void create_phys_id_map() {
     load_cr3(get_cr3());
 }
 
-void load_paging_structure(uintptr_t phys_addr, struct process *process) {
-    process->arch_process.cr3 = phys_addr;
-    load_cr3(phys_addr);
-}
-
-void soft_remove_paging_structure(struct vm_region *list) {
-    struct vm_region *region = list;
-    while (region != NULL) {
-        if (!(region->flags & VM_GLOBAL)) {
-            for (uintptr_t page = region->start; page < region->end; page += PAGE_SIZE) {
-                // NOTE: The vm object is responsible for unmapping the physical pages
-                do_unmap_page(page, false, true, false, NULL);
-            }
-        }
-        region = region->next;
-    }
-}
-
-void mark_region_as_cow(struct vm_region *region) {
-    for (uintptr_t addr = region->start; addr < region->end; addr += PAGE_SIZE) {
-        uint64_t *pt_entry = get_page_table_entry(addr);
-        if (!pt_entry || !(*pt_entry & 1)) {
-            continue;
-        }
-
-        *pt_entry |= VM_COW;
-        *pt_entry &= ~VM_WRITE;
-        flush_tlb(addr);
-    }
-}
-
 void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
     // Disable interrupts since we have to change the value of CR3. This could potentially be avoided by
     // freeing the memory in old CR3 by traversing the physical addresses directly instead of using a
@@ -397,20 +361,4 @@ void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
     free_phys_page(phys_addr, NULL);
 
     interrupts_restore(save);
-}
-
-void map_vm_region_flags(struct vm_region *region, struct process *process) {
-    for (uintptr_t addr = region->start; addr < region->end; addr += PAGE_SIZE) {
-        map_phys_page(get_phys_addr(addr), addr, region->flags, process);
-    }
-}
-
-void map_vm_region(struct vm_region *region, struct process *process) {
-#ifdef MAP_VM_REGION_DEBUG
-    debug_log("Mapped VM Region: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", get_cr3(), region->type, region->flags, region->start,
-              region->end);
-#endif /* MAP_VM_REGION_DEBUG */
-    for (uintptr_t addr = region->start; addr < region->end; addr += PAGE_SIZE) {
-        map_page(addr, region->flags, process);
-    }
 }

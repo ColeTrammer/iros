@@ -7,7 +7,10 @@
 
 #define PAGE_SIZE 4096
 
-#define KERNEL_HEAP_START 0
+#define MAX_PD_ENTRIES 1024
+#define MAX_PT_ENTRIES 1024
+
+#define KERNEL_HEAP_START 0xD0000000UL
 
 struct process;
 

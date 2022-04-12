@@ -51,7 +51,11 @@ static void on_hw_profile_tick(struct hw_timer_channel *channel, struct irq_cont
         if (spin_trylock(&current->process->profile_buffer_lock)) {
             // Make sure not to write into a stale buffer.
             if (current->process->profile_buffer) {
+#ifdef __x86_64__
                 proc_record_profile_stack(context->task_state);
+#else
+                (void) context;
+#endif
             }
             spin_unlock(&current->process->profile_buffer_lock);
         }

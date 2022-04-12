@@ -7,19 +7,19 @@ set(KERNEL_ARCHDIR arch/x86_64)
 set(KERNEL_HALDIR hal/x86_64)
 
 set(KERNEL_ARCH_SOURCES
-    arch/x86/sched/arch_task_sched.c
+    arch/x86/irqs/handlers.c
+    arch/x86/proc/arch_process.c
     arch/x86/proc/fpu.c
+    arch/x86/sched/arch_task_sched.c
     ${KERNEL_ARCHDIR}/ap_boot.S
     ${KERNEL_ARCHDIR}/boot.S
     ${KERNEL_ARCHDIR}/irqs/asm_handlers.S
-    ${KERNEL_ARCHDIR}/irqs/handlers.c
     ${KERNEL_ARCHDIR}/irqs/sys_calls.c
     ${KERNEL_ARCHDIR}/irqs/syscall_sysret_entry.S
     ${KERNEL_ARCHDIR}/mem/page.c
     ${KERNEL_ARCHDIR}/mem/arch_vm_allocator.c
     ${KERNEL_ARCHDIR}/proc/run_task.S
     ${KERNEL_ARCHDIR}/proc/arch_task.c
-    ${KERNEL_ARCHDIR}/proc/arch_process.c
     ${KERNEL_ARCHDIR}/proc/arch_profile.c
     ${KERNEL_ARCHDIR}/sched/__kernel_yield.S
     hal/x86/drivers/ata_drive.c
@@ -40,10 +40,10 @@ set(KERNEL_ARCH_SOURCES
     hal/x86/acpi.c
     hal/x86/arch_pci.c
     hal/x86/hal.c
+    hal/x86/irqs.c
     hal/x86/processor.c
     ${KERNEL_HALDIR}/gdt.c
     ${KERNEL_HALDIR}/idt.c
-    ${KERNEL_HALDIR}/irqs.c
     ${KERNEL_HALDIR}/output.c
     ${KERNEL_HALDIR}/processor.c
     PARENT_SCOPE

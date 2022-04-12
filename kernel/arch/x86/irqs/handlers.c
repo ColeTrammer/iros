@@ -29,7 +29,7 @@ static bool handle_divide_by_zero(struct irq_context *context) {
     struct task_state *task_state = context->task_state;
 
     struct task *current = get_current_task();
-    debug_log("#DE: [ %#.16lX ]\n", task_state->stack_state.rip);
+    debug_log("#DE: [ %p ]\n", (void *) task_get_instruction_pointer(task_state));
 
     if (!current->in_kernel) {
         memcpy(&current->arch_task.task_state, task_state, sizeof(struct task_state));
@@ -43,7 +43,7 @@ static bool handle_divide_by_zero(struct irq_context *context) {
 
     dump_registers_to_screen();
     debug_log("\n\033[31m%s\033[0m\n", "Divide by Zero Error");
-    kernel_stack_trace(task_state->stack_state.rip, task_state->cpu_state.rbp);
+    kernel_stack_trace(task_get_instruction_pointer(task_state), task_get_base_pointer(task_state));
     abort();
     return true;
 }
@@ -53,7 +53,7 @@ static bool handle_stack_fault(struct irq_context *context) {
     uint32_t error_code = context->error_code;
 
     struct task *current = get_current_task();
-    debug_log("%d #SF: [ %#.16lX, %u ]\n", current->process->pid, task_state->stack_state.rip, error_code);
+    debug_log("%d #SF: [ %p, %u ]\n", current->process->pid, (void *) task_get_instruction_pointer(task_state), error_code);
 
     if (!current->in_kernel) {
         memcpy(&current->arch_task.task_state, task_state, sizeof(struct task_state));
@@ -77,11 +77,12 @@ static bool handle_general_protection_fault(struct irq_context *context) {
     uint32_t error_code = context->error_code;
 
     struct task *current = get_current_task();
-    debug_log("%d #GP: [ %#.16lX, %u ]\n", current->process->pid, task_state->stack_state.rip, error_code);
+    debug_log("%d #GP: [ %p, %u ]\n", current->process->pid, (void *) task_get_instruction_pointer(task_state), error_code);
 
-    debug_log("\n\033[32mProcess \033[37m(\033[34m %d:%d \033[37m): \033[1;31mCRASH (general protection fault)\033[0;37m: [ %#.16lX, "
-              "%#.16lX ]\n",
-              current->process->pid, current->tid, task_state->stack_state.rip, task_state->stack_state.rsp);
+    debug_log("\n\033[32mProcess \033[37m(\033[34m %d:%d \033[37m): \033[1;31mCRASH (general protection fault)\033[0;37m: [ %p, "
+              "%p ]\n",
+              current->process->pid, current->tid, (void *) task_get_instruction_pointer(task_state),
+              (void *) task_get_stack_pointer(task_state));
     if (!current->in_kernel) {
         memcpy(&current->arch_task.task_state, task_state, sizeof(struct task_state));
         spin_lock(&current->sig_lock);
@@ -96,7 +97,7 @@ static bool handle_general_protection_fault(struct irq_context *context) {
     dump_process_regions(current->process);
     dump_kernel_regions(0);
 
-    kernel_stack_trace(task_state->stack_state.rip, task_state->cpu_state.rbp);
+    kernel_stack_trace(task_get_instruction_pointer(task_state), task_get_base_pointer(task_state));
     abort();
     return true;
 }
@@ -146,9 +147,9 @@ static bool handle_page_fault(struct irq_context *context) {
         }
     }
 
-    debug_log(
-        "\n\033[32mProcess \033[37m(\033[34m %d:%d \033[37m): \033[1;31mCRASH (page fault)\033[0;37m: [ %#.16lX, %#.16lX, %#.16lX, %u ]\n",
-        current->process->pid, current->tid, address, task_state->stack_state.rip, task_state->stack_state.rsp, error_code);
+    debug_log("\n\033[32mProcess \033[37m(\033[34m %d:%d \033[37m): \033[1;31mCRASH (page fault)\033[0;37m: [ %p, %p, %p, %u ]\n",
+              current->process->pid, current->tid, (void *) address, (void *) task_get_instruction_pointer(task_state),
+              (void *) task_get_stack_pointer(task_state), error_code);
     if (!is_kernel) {
         if (!is_kernel) {
             current->in_kernel = false;
@@ -167,7 +168,7 @@ static bool handle_page_fault(struct irq_context *context) {
     dump_process_regions(current->process);
     dump_kernel_regions(address);
 
-    kernel_stack_trace(task_state->stack_state.rip, task_state->cpu_state.rbp);
+    kernel_stack_trace(task_get_instruction_pointer(task_state), task_get_base_pointer(task_state));
     abort();
     return true;
 }
@@ -260,7 +261,7 @@ static bool handle_simd_exception(struct irq_context *context __attribute__((unu
     struct task_state *task_state = context->task_state;
 
     struct task *current = get_current_task();
-    debug_log("#XF: [ %#.16lX, %#.8X ]\n", task_state->stack_state.rip, get_mxcsr());
+    debug_log("#XF: [ %p, %#.8X ]\n", (void *) task_get_instruction_pointer(task_state), get_mxcsr());
 
     if (!current->in_kernel) {
         memcpy(&current->arch_task.task_state, task_state, sizeof(struct task_state));
@@ -312,7 +313,9 @@ static struct irq_handler handle_machine_check_irq = { .handler = &handle_machin
 static struct irq_handler handle_simd_exception_irq = { .handler = &handle_simd_exception };
 static struct irq_handler handle_virtualization_exception_irq = { .handler = &handle_virtualization_exception };
 static struct irq_handler handle_security_exception_irq = { .handler = &handle_security_exception };
+#ifdef __x86_64__
 static struct irq_handler sys_call_irq = { .handler = &arch_system_call_entry };
+#endif
 
 extern struct list_node irq_handlers[256];
 
@@ -345,5 +348,7 @@ void init_irq_handlers() {
 
     register_irq_handler(&handle_security_exception_irq, 30);
 
+#ifdef __x86_64__
     register_irq_handler(&sys_call_irq, 128);
+#endif
 }

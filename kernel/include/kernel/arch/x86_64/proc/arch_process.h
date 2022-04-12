@@ -1,14 +1,6 @@
 #ifndef _KERNEL_ARCH_X86_64_PROC_ARCH_PROCESS_H
 #define _KERNEL_ARCH_X86_64_PROC_ARCH_PROCESS_H 1
 
-#include <stdint.h>
-
-struct arch_process {
-    uint64_t cr3;
-};
-
-struct process;
-
-void proc_kill_arch_process(struct process *process, bool free_paging_structure);
+#include <kernel/arch/x86/proc/arch_process.h>
 
 #endif /* _KERNEL_ARCH_X86_64_PROC_ARCH_PROCESS_H */

@@ -1,13 +1,12 @@
 #ifndef _KERNEL_HAL_I386_PROCESSOR_H
 #define _KERNEL_HAL_I386_PROCESSOR_H 1
 
-#include <kernel/hal/x86_64/gdt.h>
-
 #ifdef __ASSEMBLER__
 #define TSS_OFFSET 16
 #else
 
 #include <kernel/arch/i686/asm_utils.h>
+#include <kernel/hal/i686/gdt.h>
 
 struct processor;
 
