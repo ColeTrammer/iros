@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <kernel/arch/x86/proc/fpu.h>
 #include <kernel/mem/page.h>
 
 #define KERNEL_STACK_SIZE PAGE_SIZE
@@ -41,27 +42,11 @@ struct task_state {
 
 struct arch_task {
     struct task_state task_state;
-    struct task_state *user_task_state;
     void *user_thread_pointer;
-};
-
-#define FPU_IMAGE_SIZE 512
-
-// Can be longer if more extensions are enabled,
-// so this basically needs to be variable length
-struct raw_fpu_state {
-    uint8_t padding[16];
-    uint8_t image[FPU_IMAGE_SIZE];
-} __attribute__((packed));
-
-struct arch_fpu_state {
-    struct raw_fpu_state raw_fpu_state;
-    uint8_t *aligned_state;
 };
 
 struct task;
 
-void task_align_fpu(struct task *task);
 void task_setup_user_state(struct task_state *task_state);
 
 extern void __run_task(struct arch_task *state);
@@ -72,6 +57,18 @@ static inline void task_set_ip(struct task_state *task_state, uintptr_t ip) {
 
 static inline void task_set_sp(struct task_state *task_state, uintptr_t sp) {
     task_state->stack_state.rsp = sp;
+}
+
+static inline uint64_t task_get_instruction_pointer(struct task_state *task_state) {
+    return task_state->stack_state.rip;
+}
+
+static inline uint64_t task_get_stack_pointer(struct task_state *task_state) {
+    return task_state->stack_state.rsp;
+}
+
+static inline uint64_t task_get_base_pointer(struct task_state *task_state) {
+    return task_state->cpu_state.rbp;
 }
 
 #endif /* _KERNEL_ARCH_X86_64_ARCH_PROC_TASK_H */

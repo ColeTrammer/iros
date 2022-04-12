@@ -80,7 +80,7 @@ pid_t proc_fork(void) {
     debug_log("Forking Task: [ %d ]\n", parent->process->pid);
 #endif /* FORK_DEBUG */
 
-    memcpy(&child->arch_task.task_state, parent->arch_task.user_task_state, sizeof(struct task_state));
+    memcpy(&child->arch_task.task_state, parent->user_task_state, sizeof(struct task_state));
     child->arch_task.task_state.cpu_state.rax = 0;
     child_process->arch_process.cr3 = create_clone_process_paging_structure(child_process);
     child->kernel_stack = vm_allocate_kernel_region(KERNEL_STACK_SIZE);
@@ -148,14 +148,6 @@ void task_setup_user_state(struct task_state *task_state) {
     task_state->stack_state.ss = USER_DATA_SELECTOR;
 }
 
-void task_align_fpu(struct task *task) {
-    uintptr_t unaligned_fpu = (uintptr_t) &task->fpu.raw_fpu_state;
-    task->fpu.aligned_state = (uint8_t *) ((unaligned_fpu & ~0xFULL) + 16ULL);
-    assert(((uintptr_t) task->fpu.aligned_state) % 16 == 0);
-    assert((uintptr_t) task->fpu.aligned_state >= unaligned_fpu &&
-           (uintptr_t) task->fpu.aligned_state <= (uintptr_t) task->fpu.raw_fpu_state.image);
-}
-
 void arch_init_idle_task(struct task *idle_task, struct processor *processor) {
     idle_task->arch_task.task_state.stack_state.rip = (uint64_t) &kernel_idle;
     idle_task->arch_task.task_state.stack_state.cs = CS_SELECTOR;
@@ -180,10 +172,10 @@ void arch_load_kernel_task(struct task *task, uintptr_t entry) {
 }
 
 void arch_setup_program_args(struct task *task, struct initial_process_info *info, size_t argc, char **argv, char **envp) {
-    task->arch_task.user_task_state->cpu_state.rdi = (uint64_t) info;
-    task->arch_task.user_task_state->cpu_state.rsi = (uint64_t) argc;
-    task->arch_task.user_task_state->cpu_state.rdx = (uint64_t) argv;
-    task->arch_task.user_task_state->cpu_state.rcx = (uint64_t) envp;
+    task->user_task_state->cpu_state.rdi = (uint64_t) info;
+    task->user_task_state->cpu_state.rsi = (uint64_t) argc;
+    task->user_task_state->cpu_state.rdx = (uint64_t) argv;
+    task->user_task_state->cpu_state.rcx = (uint64_t) envp;
 }
 
 /* Must be called from unpremptable context */
@@ -211,8 +203,8 @@ void task_yield_if_state_changed(struct task *task) {
 
     if (task->should_stop) {
         // Restart the system call so that when the task is resumed, it will begin gracefully.
-        task->arch_task.user_task_state->stack_state.rip -= SIZEOF_IRETQ_INSTRUCTION;
-        task->arch_task.user_task_state->cpu_state.rax = task->last_system_call;
+        task->user_task_state->stack_state.rip -= SIZEOF_IRETQ_INSTRUCTION;
+        task->user_task_state->cpu_state.rax = task->last_system_call;
         task_stop(task);
         kernel_yield();
     }
@@ -237,8 +229,7 @@ void task_do_sig_handler(struct task *task, int signum) {
 
     load_task_into_memory(task);
 
-    uint64_t save_rsp =
-        proc_in_kernel(task) ? task->arch_task.user_task_state->stack_state.rsp : task->arch_task.task_state.stack_state.rsp;
+    uint64_t save_rsp = proc_in_kernel(task) ? task->user_task_state->stack_state.rsp : task->arch_task.task_state.stack_state.rsp;
     if ((act->sa_flags & SA_ONSTACK) && (task->process->alt_stack.ss_flags & __SS_ENABLED)) {
         if (!(save_rsp >= (uintptr_t) task->process->alt_stack.ss_sp &&
               save_rsp <= (uintptr_t) task->process->alt_stack.ss_sp + task->process->alt_stack.ss_size)) {
@@ -271,14 +262,14 @@ void task_do_sig_handler(struct task *task, int signum) {
         task_unset_sig_pending(task, signum);
     }
 
-    struct task_state *to_copy = proc_in_kernel(task) ? task->arch_task.user_task_state : &task->arch_task.task_state;
+    struct task_state *to_copy = proc_in_kernel(task) ? task->user_task_state : &task->arch_task.task_state;
 
     uint64_t *stack_frame = ((uint64_t *) info) - 2;
     *stack_frame = (uintptr_t) act->sa_restorer;
     assert((uintptr_t) stack_frame % 16 == 0);
 
     save_state->uc_link = save_state;
-    save_state->uc_sigmask = (uint64_t)(task->in_sigsuspend ? task->saved_sig_mask : task->sig_mask);
+    save_state->uc_sigmask = (uint64_t) (task->in_sigsuspend ? task->saved_sig_mask : task->sig_mask);
 
     if ((act->sa_flags & SA_ONSTACK) && (task->process->alt_stack.ss_flags & __SS_ENABLED)) {
         save_state->uc_stack.ss_flags = SS_ONSTACK;
@@ -296,7 +287,7 @@ void task_do_sig_handler(struct task *task, int signum) {
         if (task->in_sigsuspend) {
             task->in_sigsuspend = false;
             task->in_kernel = false;
-        } else if ((act->sa_flags & SA_RESTART) && (task->arch_task.user_task_state->cpu_state.rax == (uint64_t) -EINTR)) {
+        } else if ((act->sa_flags & SA_RESTART) && (task->user_task_state->cpu_state.rax == (uint64_t) -EINTR)) {
             // Decrement %rip by the sizeof of the iretq instruction so that
             // the program will automatically execute syscall or int $0x80, restarting
             // the sys call in the easist way possible.

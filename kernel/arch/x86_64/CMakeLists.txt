@@ -8,6 +8,7 @@ set(KERNEL_HALDIR hal/x86_64)
 
 set(KERNEL_ARCH_SOURCES
     arch/x86/sched/arch_task_sched.c
+    arch/x86/proc/fpu.c
     ${KERNEL_ARCHDIR}/ap_boot.S
     ${KERNEL_ARCHDIR}/boot.S
     ${KERNEL_ARCHDIR}/irqs/asm_handlers.S
@@ -38,9 +39,9 @@ set(KERNEL_ARCH_SOURCES
     hal/x86/drivers/vmware_back_door.c
     hal/x86/acpi.c
     hal/x86/arch_pci.c
+    hal/x86/hal.c
     hal/x86/processor.c
     ${KERNEL_HALDIR}/gdt.c
-    ${KERNEL_HALDIR}/hal.c
     ${KERNEL_HALDIR}/idt.c
     ${KERNEL_HALDIR}/irqs.c
     ${KERNEL_HALDIR}/output.c

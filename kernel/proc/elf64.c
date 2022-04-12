@@ -333,9 +333,10 @@ static size_t do_stack_trace(uintptr_t rip, uintptr_t rbp, ElfW(Sym) * symbols, 
 
 // NOTE: this must be called from within a task's address space
 size_t do_elf64_stack_trace(struct task *task, bool extra_info, size_t (*output)(void *closure, const char *string, ...), void *closure) {
-    uintptr_t rsp = task->in_kernel ? task->arch_task.user_task_state->stack_state.rsp : task->arch_task.task_state.stack_state.rsp;
-    uintptr_t rbp = task->in_kernel ? task->arch_task.user_task_state->cpu_state.rbp : task->arch_task.task_state.cpu_state.rbp;
-    uintptr_t rip = task->in_kernel ? task->arch_task.user_task_state->stack_state.rip : task->arch_task.task_state.stack_state.rip;
+    uintptr_t rsp = task->in_kernel ? task_get_stack_pointer(task->user_task_state) : task_get_stack_pointer(&task->arch_task.task_state);
+    uintptr_t rbp = task->in_kernel ? task_get_base_pointer(task->user_task_state) : task_get_base_pointer(&task->arch_task.task_state);
+    uintptr_t rip =
+        task->in_kernel ? task_get_instruction_pointer(task->user_task_state) : task_get_instruction_pointer(&task->arch_task.task_state);
 
     if (extra_info) {
         dump_process_regions(task->process);
@@ -403,15 +404,10 @@ size_t kernel_stack_trace_for_procfs(struct task *main_task, void *buffer, size_
         struct task *current = get_current_task();
 
         uintptr_t rip =
-            current == main_task ? (uintptr_t) (&kernel_stack_trace_for_procfs) : main_task->arch_task.task_state.stack_state.rip;
+            current == main_task ? (uintptr_t) (&kernel_stack_trace_for_procfs) : task_get_instruction_pointer(main_task->user_task_state);
 
-        uintptr_t current_rbp;
-#ifdef __x86_64__
-        asm("mov %%rbp, %0" : "=r"(current_rbp) : :);
-#elif defined(__i386__)
-        asm("mov %%ebp, %0" : "=r"(current_rbp) : :);
-#endif
-        uintptr_t rbp = current == main_task ? current_rbp : main_task->arch_task.task_state.cpu_state.rbp;
+        uintptr_t current_bp = get_base_pointer();
+        uintptr_t rbp = current == main_task ? current_bp : task_get_base_pointer(main_task->user_task_state);
         return do_stack_trace(rip, rbp, kernel_symbols, kernel_symbols_size, kernel_string_table, snprintf_wrapper, &obj, true);
     }
 

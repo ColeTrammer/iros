@@ -8,6 +8,9 @@ set(KERNEL_HALDIR hal/i686)
 
 set(KERNEL_ARCH_SOURCES
     arch/x86/sched/arch_task_sched.c
+    arch/x86/proc/fpu.c
+    ${KERNEL_ARCHDIR}/sched/__kernel_yield.S
+    ${KERNEL_ARCHDIR}/boot.S
     hal/x86/drivers/ata_drive.c
     hal/x86/drivers/bga.c
     hal/x86/drivers/ide_channel.c
@@ -25,6 +28,8 @@ set(KERNEL_ARCH_SOURCES
     hal/x86/drivers/vmware_back_door.c
     hal/x86/acpi.c
     hal/x86/arch_pci.c
+    hal/x86/hal.c
     hal/x86/processor.c
+    ${KERNEL_HALDIR}/output.c
     PARENT_SCOPE
 )
