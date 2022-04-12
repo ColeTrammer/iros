@@ -1,9 +1,13 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include <kernel/hal/arch.h>
 #include <kernel/hal/output.h>
-#include <kernel/hal/x86_64/idt.h>
 #include <kernel/irqs/handlers.h>
+
+// clang-format off
+#include HAL_ARCH_SPECIFIC(idt.h)
+// clang-format off
 
 static struct idt_entry idt[NUM_IRQS];
 static struct idt_descriptor idt_descriptor;

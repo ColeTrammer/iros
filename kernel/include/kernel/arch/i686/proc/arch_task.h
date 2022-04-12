@@ -10,6 +10,11 @@
 #define KERNEL_STACK_SIZE PAGE_SIZE
 
 struct cpu_state {
+    uint16_t ds;
+    uint16_t es;
+    uint16_t fs;
+    uint16_t gs;
+
     uint32_t ebp;
     uint32_t edi;
     uint32_t esi;
@@ -17,11 +22,6 @@ struct cpu_state {
     uint32_t ecx;
     uint32_t ebx;
     uint32_t eax;
-
-    uint16_t ds;
-    uint16_t es;
-    uint16_t fs;
-    uint16_t gs;
 } __attribute__((packed));
 
 struct stack_state {

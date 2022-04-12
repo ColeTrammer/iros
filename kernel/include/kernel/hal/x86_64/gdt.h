@@ -26,34 +26,9 @@
 
 #ifndef __ASSEMBLER__
 
+#include <kernel/hal/x86/gdt.h>
+
 struct processor;
-
-struct gdt_entry {
-    uint16_t limit_low;
-    uint16_t base_low;
-    uint8_t base_mid;
-    uint8_t type;
-    uint8_t limit_high : 4;
-    uint8_t flags : 4;
-    uint8_t base_high;
-} __attribute__((packed));
-
-struct gdt_descriptor {
-    uint16_t limit;
-    struct gdt_entry *gdt;
-} __attribute__((packed));
-
-struct gdt_tss_entry {
-    uint16_t limit_low;
-    uint16_t base_low;
-    uint8_t base_low_mid;
-    uint8_t type;
-    uint8_t limit_high : 4;
-    uint8_t flags : 4;
-    uint8_t base_high_mid;
-    uint32_t base_high;
-    uint16_t zero;
-} __attribute__((packed));
 
 struct tss {
     uint32_t reserved1;
@@ -66,14 +41,6 @@ struct tss {
     uint16_t reserved4;
     uint16_t io_map_base;
 } __attribute__((packed));
-
-static inline void load_gdt(struct gdt_descriptor descriptor) {
-    asm("lgdt %0" : : "m"(descriptor));
-}
-
-static inline void load_tr(uint16_t selector) {
-    asm("ltr %0" : : "m"(selector));
-}
 
 void init_gdt(struct processor *processor);
 void set_tss_stack_pointer(uintptr_t rsp);

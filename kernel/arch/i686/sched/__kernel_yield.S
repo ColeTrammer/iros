@@ -17,11 +17,6 @@ __kernel_yield:
     push $0x08
     push %eax
 
-    pushw %gs
-    pushw %fs
-    pushw %es
-    pushw %ds
-
     push %eax
     push %ebx
     push %ecx
@@ -29,6 +24,11 @@ __kernel_yield:
     push %esi
     push %edi
     push %ebp
+
+    pushw %gs
+    pushw %fs
+    pushw %es
+    pushw %ds
 
     # Set up argument to scheduler
     push %esp

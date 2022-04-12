@@ -7,8 +7,13 @@ set(KERNEL_ARCHDIR arch/i686)
 set(KERNEL_HALDIR hal/i686)
 
 set(KERNEL_ARCH_SOURCES
-    arch/x86/sched/arch_task_sched.c
+    arch/x86/irqs/handlers.c
+    arch/x86/proc/arch_process.c
     arch/x86/proc/fpu.c
+    arch/x86/sched/arch_task_sched.c
+    ${KERNEL_ARCHDIR}/irqs/asm_handlers.S
+    ${KERNEL_ARCHDIR}/mem/arch_page.c
+    ${KERNEL_ARCHDIR}/mem/arch_vm_allocator.c
     ${KERNEL_ARCHDIR}/sched/__kernel_yield.S
     ${KERNEL_ARCHDIR}/boot.S
     hal/x86/drivers/ata_drive.c
@@ -29,7 +34,11 @@ set(KERNEL_ARCH_SOURCES
     hal/x86/acpi.c
     hal/x86/arch_pci.c
     hal/x86/hal.c
+    hal/x86/irqs.c
     hal/x86/processor.c
+    ${KERNEL_HALDIR}/idt.c
+    ${KERNEL_HALDIR}/gdt.c
     ${KERNEL_HALDIR}/output.c
+    ${KERNEL_HALDIR}/processor.c
     PARENT_SCOPE
 )
