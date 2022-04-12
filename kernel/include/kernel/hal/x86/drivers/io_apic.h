@@ -41,6 +41,7 @@ struct io_apic_registers {
 
 struct io_apic {
     struct io_apic *next;
+    struct vm_region *memory_mapped_region;
     volatile struct io_apic_registers *memory;
     uint8_t id;
 };

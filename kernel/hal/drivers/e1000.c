@@ -21,11 +21,13 @@
 static struct network_interface *interface = NULL;
 
 static uint32_t read_command(struct e1000_data *data, uint16_t offset) {
-    return *((volatile uint32_t *) (data->mem_io_phys_base + offset));
+    assert(offset < data->mem_io_vm_region->end - data->mem_io_vm_region->start);
+    return *((volatile uint32_t *) (data->mem_io_vm_region->start + offset));
 }
 
 static void write_command(struct e1000_data *data, uint16_t offset, uint32_t value) {
-    *((volatile uint32_t *) (data->mem_io_phys_base + offset)) = value;
+    assert(offset < data->mem_io_vm_region->end - data->mem_io_vm_region->start);
+    *((volatile uint32_t *) (data->mem_io_vm_region->start + offset)) = value;
 }
 
 static bool has_eeprom(struct e1000_data *data) {
@@ -201,7 +203,10 @@ static struct pci_device *e1000_create(struct hw_device *parent, struct pci_devi
     init_pci_device(&data->pci_device, location, info);
     init_hw_device(&data->pci_device.hw_device, "E1000 Network Card", parent, hw_device_id_pci(id), NULL, NULL);
     data->pci_device.hw_device.status = HW_STATUS_ACTIVE;
-    data->mem_io_phys_base = (uintptr_t) create_phys_addr_mapping(bar0);
+
+    // FIXME: how big does this allocation really need to be?
+    data->mem_io_vm_region = vm_allocate_physically_mapped_kernel_region(bar0, 4 * PAGE_SIZE);
+
     data->io_port_base = bar1 & ~1;
 
     debug_log("IO Bases: [ %#X, %#X ]\n", bar0, data->io_port_base);

@@ -22,7 +22,7 @@ struct gpt_header {
     uint64_t last_usable_block;
     struct uuid disk_uuid;
     uint64_t partition_entry_start;
-    uint32_t parittion_entry_count;
+    uint32_t partition_entry_count;
     uint32_t partition_entry_size;
     uint32_t partition_entry_crc32;
 } __attribute__((packed));
