@@ -84,9 +84,9 @@ void proc_record_profile_stack(struct task_state *task_state) {
 
         // Switch over to the user stack.
         in_kernel = false;
-        rip = current->arch_task.user_task_state->stack_state.rip;
-        rbp = current->arch_task.user_task_state->cpu_state.rbp;
-        rsp = current->arch_task.user_task_state->stack_state.rsp;
+        rip = current->user_task_state->stack_state.rip;
+        rbp = current->user_task_state->cpu_state.rbp;
+        rsp = current->user_task_state->stack_state.rsp;
     }
 
     proc_write_profile_buffer(process, raw_buffer, PEV_STACK_TRACE_SIZE(ev));

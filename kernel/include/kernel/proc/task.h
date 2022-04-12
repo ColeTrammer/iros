@@ -73,6 +73,10 @@ struct task {
     // throughout the task's lifetime.
     struct processor *active_processor;
 
+    // Pointer to the saved user task state if this task task is a user task and is
+    // currently in the kernel (syscall or page fault handler).
+    struct task_state *user_task_state;
+
     struct vm_region *kernel_stack;
 
     enum sched_state sched_state;

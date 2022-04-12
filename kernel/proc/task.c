@@ -338,7 +338,7 @@ void start_userland(void) {
     task_setup_user_state(&task_state_save);
 
     struct task *current = get_current_task();
-    current->arch_task.user_task_state = &task_state_save;
+    current->user_task_state = &task_state_save;
 
     task_switch_from_kernel_to_user_mode(current);
 

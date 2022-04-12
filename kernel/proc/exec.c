@@ -226,14 +226,14 @@ int proc_execve(char *path, char **argv, char **envp) {
     }
 
     assert(elf64_is_valid(buffer));
-    task_set_ip(current->arch_task.user_task_state, elf64_load_program(buffer, length, file, &info));
+    task_set_ip(current->user_task_state, elf64_load_program(buffer, length, file, &info));
     elf64_map_heap(current, &info);
 
     fs_close(file);
     unmap_range((uintptr_t) buffer, length);
 
     uintptr_t stack_end = proc_allocate_user_stack(process, &info);
-    task_set_sp(current->arch_task.user_task_state, map_program_args(stack_end, process->args_context, &info, current));
+    task_set_sp(current->user_task_state, map_program_args(stack_end, process->args_context, &info, current));
 
     for (size_t i = 0; prepend_argv && i < prepend_argv_length; i++) {
         free(prepend_argv[i]);
