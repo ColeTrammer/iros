@@ -3,7 +3,7 @@
 #include <bits/lock.h>
 #include <pthread.h>
 #include <stdatomic.h>
-#include <sys/os_2.h>
+#include <sys/iros.h>
 
 void __unlock_recursive(struct __recursive_lock *lock) {
     if (!--lock->__count) {

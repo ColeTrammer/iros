@@ -7,7 +7,7 @@ index 63c1f1c8b..addb76470 100755
  	gnu* | android* | bsd* | mach* | minix* | genix* | ultrix* | irix* \
  	     | *vms* | esix* | aix* | cnk* | sunos | sunos[34]* \
 -	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* \
-+	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* | os_2* \
++	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* | iros* \
  	     | sym* |  plan9* | psp* | sim* | xray* | os68k* | v88r* \
  	     | hiux* | abug | nacl* | netware* | windows* \
  	     | os9* | macos* | osx* | ios* \
@@ -19,7 +19,7 @@ index df90720b7..8716fa247 100755
      i?86-*-cygwin* | \
      i?86-*-mingw32* | \
      x86_64-*-mingw32* | \
-+    *-os_2-* | \
++    *-iros-* | \
      powerpc-*-eabisim* | \
      powerpc-*-eabi*    | \
      powerpc-*-rtems*   | \
@@ -31,7 +31,7 @@ index 357b0bed0..fa69545ec 100644
    esac
    target_has_targetdm=yes
    ;;
-+*-*-os_2*)
++*-*-iros*)
 +  gas=yes
 +  gnu_ld=yes
 +  default_use_cxa_atexit=yes
@@ -45,27 +45,27 @@ index 357b0bed0..fa69545ec 100644
  		esac
  	fi
  	;;
-+i[34567]86-*-os_2*)
-+    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h os_2.h"
++i[34567]86-*-iros*)
++    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h iros.h"
 +	tmake_file="${tmake_file} t-slibgcc"
 +	extra_options="${extra_options} gnu-user.opt"
 +    ;;
-+x86_64-*-os_2*)
-+    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h i386/x86-64.h os_2.h"
++x86_64-*-iros*)
++    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h i386/x86-64.h iros.h"
 +	tmake_file="${tmake_file} t-slibgcc"
 +	extra_options="${extra_options} gnu-user.opt"
 +    ;;
  i[4567]86-wrs-vxworks*|x86_64-wrs-vxworks7*)
  	tm_file="${tm_file} i386/unix.h i386/att.h elfos.h"
  	case ${target} in
-diff --git a/gcc/config/os_2.h b/gcc/config/os_2.h
+diff --git a/gcc/config/iros.h b/gcc/config/iros.h
 new file mode 100644
 index 000000000..f3f1b6133
 --- /dev/null
-+++ b/gcc/config/os_2.h
++++ b/gcc/config/iros.h
 @@ -0,0 +1,28 @@
-+#undef TARGET_OS_2
-+#define TARGET_OS_2 1
++#undef TARGET_IROS
++#define TARGET_IROS 1
 +
 +#undef LIB_SPEC
 +#define LIB_SPEC "%{pthread:-lpthread} %{!shared:-lc}"
@@ -86,9 +86,9 @@ index 000000000..f3f1b6133
 +#undef TARGET_OS_CPP_BUILTINS
 +#define TARGET_OS_CPP_BUILTINS()        \
 +    do {                                \
-+        builtin_define("__os_2__");     \
++        builtin_define("__iros__");     \
 +        builtin_define("__unix__");     \
-+        builtin_assert("system=os_2");  \
++        builtin_assert("system=iros");  \
 +        builtin_assert("system=unix");  \
 +        builtin_assert("system=posix"); \
 +    } while (0);
@@ -101,7 +101,7 @@ index 96a6f62b0..72e5cb1b5 100644
      fi
      ;;
 -  *-linux-musl*)
-+  *-linux-musl* | *-*-os_2*)
++  *-linux-musl* | *-*-iros*)
      gcc_cv_target_dl_iterate_phdr=yes
      ;;
  esac
@@ -113,12 +113,12 @@ index f808b61be..80602fe8f 100644
  	tm_file="${tm_file} i386/elf-lib.h"
  	md_unwind_header=i386/sol2-unwind.h
  	;;
-+i[34567]86-*-os_2*)
++i[34567]86-*-iros*)
 +	extra_parts="$extra_parts crti.o crtbegin.o crtbeginS.o crtend.o crtendS.o crtn.o"
 +	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic t-slibgcc t-slibgcc-gld-nover t-eh-dw2-dip"
 +	tm_file="${tm_file} i386/elf-lib.h"
 +	;;
-+x86_64-*-os_2*)
++x86_64-*-iros*)
 +	extra_parts="$extra_parts crti.o crtbegin.o crtbeginS.o crtend.o crtendS.o crtn.o"
 +	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic t-slibgcc t-slibgcc-gld-nover t-eh-dw2-dip"
 +	tm_file="${tm_file} i386/elf-lib.h"
@@ -136,7 +136,7 @@ index 5095b6830..3fd3bfbb5 100644
  
 +#if !defined(inihibit_libc) && defined(HAVE_LD_EH_FRAME_HDR) \
 +    && defined(TARGET_DL_ITERATE_PHDR) \
-+    && defined(__os_2__)
++    && defined(__iros__)
 +# define USE_PT_GNU_EH_FRAME
 +#endif
 +
@@ -152,7 +152,7 @@ index a3d84896c..79a7e4889 100644
    | *-*-netbsd* | *-*-freebsd* | *-*-openbsd* \
    | *-*-solaris2* | *-*-sysv4* | *-*-hpux11* \
 -  | *-*-aix* | *-*-dragonfly*)
-+  | *-*-aix* | *-*-dragonfly* | *-*-os_2*)
++  | *-*-aix* | *-*-dragonfly* | *-*-iros*)
  	# POSIX system.  The OS is supported.
  	;;
  
@@ -165,7 +165,7 @@ index 1c0a4c130..1885a7bec 100644
          ac_has_sched_yield=yes
          ;;
 -      freebsd*|netbsd*|dragonfly*|rtems*)
-+      freebsd*|netbsd*|dragonfly*|rtems*|os_2*)
++      freebsd*|netbsd*|dragonfly*|rtems*|iros*)
          ac_has_clock_monotonic=yes
          ac_has_clock_realtime=yes
          ac_has_nanosleep=yes
@@ -174,15 +174,15 @@ index 1c0a4c130..1885a7bec 100644
          enable_libstdcxx_filesystem_ts=yes
          ;;
 -      solaris*)
-+      solaris*|os_2*)
++      solaris*|iros*)
          enable_libstdcxx_filesystem_ts=yes
          ;;
        mingw*)
-diff --git a/libstdc++-v3/config/os/os_2/ctype_base.h b/libstdc++-v3/config/os/os_2/ctype_base.h
+diff --git a/libstdc++-v3/config/os/iros/ctype_base.h b/libstdc++-v3/config/os/iros/ctype_base.h
 new file mode 100644
 index 000000000..62fce6080
 --- /dev/null
-+++ b/libstdc++-v3/config/os/os_2/ctype_base.h
++++ b/libstdc++-v3/config/os/iros/ctype_base.h
 @@ -0,0 +1,59 @@
 +// Locale support -*- C++ -*-
 +
@@ -243,11 +243,11 @@ index 000000000..62fce6080
 +
 +_GLIBCXX_END_NAMESPACE_VERSION
 +} // namespace
-diff --git a/libstdc++-v3/config/os/os_2/ctype_configure_char.cc b/libstdc++-v3/config/os/os_2/ctype_configure_char.cc
+diff --git a/libstdc++-v3/config/os/iros/ctype_configure_char.cc b/libstdc++-v3/config/os/iros/ctype_configure_char.cc
 new file mode 100644
 index 000000000..b12c0bd43
 --- /dev/null
-+++ b/libstdc++-v3/config/os/os_2/ctype_configure_char.cc
++++ b/libstdc++-v3/config/os/iros/ctype_configure_char.cc
 @@ -0,0 +1,99 @@
 +// Locale support -*- C++ -*-
 +
@@ -348,11 +348,11 @@ index 000000000..b12c0bd43
 +
 +_GLIBCXX_END_NAMESPACE_VERSION
 +} // namespace
-diff --git a/libstdc++-v3/config/os/os_2/ctype_inline.h b/libstdc++-v3/config/os/os_2/ctype_inline.h
+diff --git a/libstdc++-v3/config/os/iros/ctype_inline.h b/libstdc++-v3/config/os/iros/ctype_inline.h
 new file mode 100644
 index 000000000..b6ad988d8
 --- /dev/null
-+++ b/libstdc++-v3/config/os/os_2/ctype_inline.h
++++ b/libstdc++-v3/config/os/iros/ctype_inline.h
 @@ -0,0 +1,173 @@
 +// Locale support -*- C++ -*-
 +
@@ -527,11 +527,11 @@ index 000000000..b6ad988d8
 +
 +_GLIBCXX_END_NAMESPACE_VERSION
 +} // namespace
-diff --git a/libstdc++-v3/config/os/os_2/error_constants.h b/libstdc++-v3/config/os/os_2/error_constants.h
+diff --git a/libstdc++-v3/config/os/iros/error_constants.h b/libstdc++-v3/config/os/iros/error_constants.h
 new file mode 100644
 index 000000000..9d01c16ee
 --- /dev/null
-+++ b/libstdc++-v3/config/os/os_2/error_constants.h
++++ b/libstdc++-v3/config/os/iros/error_constants.h
 @@ -0,0 +1,178 @@
 +// Specific definitions for generic platforms  -*- C++ -*-
 +
@@ -711,11 +711,11 @@ index 000000000..9d01c16ee
 +} // namespace
 +
 +#endif
-diff --git a/libstdc++-v3/config/os/os_2/os_defines.h b/libstdc++-v3/config/os/os_2/os_defines.h
+diff --git a/libstdc++-v3/config/os/iros/os_defines.h b/libstdc++-v3/config/os/iros/os_defines.h
 new file mode 100644
 index 000000000..508526305
 --- /dev/null
-+++ b/libstdc++-v3/config/os/os_2/os_defines.h
++++ b/libstdc++-v3/config/os/iros/os_defines.h
 @@ -0,0 +1,38 @@
 +// Specific definitions for generic platforms  -*- C++ -*-
 +
@@ -763,8 +763,8 @@ index ec32980aa..562d9cf74 100644
    solaris2*)
      os_include_dir="os/solaris"
      ;;
-+  os_2*)
-+    os_include_dir="os/os_2"
++  iros*)
++    os_include_dir="os/iros"
 +    ;;
    tpf)
      os_include_dir="os/tpf"
@@ -777,7 +777,7 @@ index ff44d5ae0..7c0a1ac08 100644
      AC_CHECK_FUNCS(uselocale)
      AM_ICONV
      ;;
-+  *-os_2*)
++  *-iros*)
 +    GLIBCXX_CHECK_COMPILER_FEATURES
 +    GLIBCXX_CHECK_LINKER_FEATURES
 +    GLIBCXX_CHECK_MATH_SUPPORT
@@ -799,7 +799,7 @@ index 17f8e5f30..8ec1e197a 100644
    dynamic_linker=no
    ;;
  
-+os_2*)
++iros*)
 +  version_type=linux
 +  need_lib_prefix=no
 +  need_version=no
@@ -817,7 +817,7 @@ index 17f8e5f30..8ec1e197a 100644
    lt_cv_deplibs_check_method=pass_all
    ;;
  
-+os_2*)
++iros*)
 +  lt_cv_deplibs_check_method=pass_all
 +  ;;
 +

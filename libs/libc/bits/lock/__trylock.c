@@ -1,6 +1,6 @@
 #include <bits/lock.h>
 #include <stdatomic.h>
-#include <sys/os_2.h>
+#include <sys/iros.h>
 
 int __trylock(struct __lock *lock) {
     int expected = 0;

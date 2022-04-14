@@ -2,7 +2,7 @@
 #define _KERNEL_PROC_PROFILE_H 1
 
 #include <stdint.h>
-#include <sys/os_2.h>
+#include <sys/iros.h>
 #include <sys/types.h>
 
 struct process;

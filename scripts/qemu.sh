@@ -6,10 +6,10 @@ die() {
     echo $1 && exit 1
 }
 
-ARCH=${OS_2_ARCH:-x86_64}
+ARCH=${IROS_ARCH:-x86_64}
 
-[ -e os_2.img ] || die 'os_2.img not found - try running `sudo ./makeimg.sh'"'"
-[ -e os_2.iso ] || die 'os_2.iso not found - try making target `os_2.iso'"'"
+[ -e iros.img ] || die 'iros.img not found - try running `sudo ./makeimg.sh'"'"
+[ -e iros.iso ] || die 'iros.iso not found - try making target `iros.iso'"'"
 
 ENABLE_KVM=""
 if [ -e /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
@@ -17,12 +17,12 @@ if [ -e /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
 fi
 
 qemu-system-$ARCH \
-    -cdrom os_2.iso \
+    -cdrom iros.iso \
     -d guest_errors \
     -serial stdio \
     ${ENABLE_KVM} \
     -device VGA,vgamem_mb=64 \
-    -drive file=os_2.img,format=raw,index=0,media=disk \
+    -drive file=iros.img,format=raw,index=0,media=disk \
     -boot d \
     -no-reboot \
     -no-shutdown \

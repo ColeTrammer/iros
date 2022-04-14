@@ -21,7 +21,7 @@ public:
     void initialize();
     virtual ~ScrollComponent();
 
-    // os_2 reflect begin
+    // iros reflect begin
     Rect available_rect();
     Point scroll_offset() { return m_scroll_offset; }
 
@@ -42,7 +42,7 @@ public:
     }
 
     Rect total_rect();
-    // os_2 reflect end
+    // iros reflect end
 
 private:
     ScrollComponentBridge& bridge() { return *m_bridge; }

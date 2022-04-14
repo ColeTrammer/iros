@@ -1,8 +1,8 @@
 root:x:0:
-ws:x:10:eloc
-clip:x:11:eloc
-dns:x:12:eloc
-input:x:13:eloc,ws
-video:x:14:eloc,ws
-eloc:x:100:
-test:x:200:eloc
+ws:x:10:iris
+clip:x:11:iris
+dns:x:12:iris
+input:x:13:iris,ws
+video:x:14:iris,ws
+iris:x:100:
+test:x:200:iris

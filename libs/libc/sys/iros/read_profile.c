@@ -1,5 +1,5 @@
 #include <errno.h>
-#include <sys/os_2.h>
+#include <sys/iros.h>
 #include <sys/syscall.h>
 
 ssize_t read_profile(pid_t pid, void *buffer, size_t size) {

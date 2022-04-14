@@ -3,11 +3,11 @@
 #include <gui/window.h>
 
 namespace GUI {
-class OSWindow final : public PlatformWindow {
+class IrosWindow final : public PlatformWindow {
 public:
-    OSWindow(Window& window, int x, int y, int width, int height, String name, bool has_alpha, WindowServer::WindowType window_type,
-             wid_t parent_id);
-    virtual ~OSWindow() override;
+    IrosWindow(Window& window, int x, int y, int width, int height, String name, bool has_alpha, WindowServer::WindowType window_type,
+               wid_t parent_id);
+    virtual ~IrosWindow() override;
 
     virtual SharedPtr<Bitmap> pixels() override { return m_back_buffer; }
     virtual void flush_pixels() override;

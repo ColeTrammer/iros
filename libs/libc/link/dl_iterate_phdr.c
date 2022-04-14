@@ -3,7 +3,7 @@
 #include <bits/dynamic_elf_object.h>
 #include <link.h>
 #include <pthread.h>
-#include <sys/os_2.h>
+#include <sys/iros.h>
 
 int dl_iterate_phdr(int (*iter)(struct dl_phdr_info *info, size_t size, void *closure), void *closure) {
 #ifdef __is_static

@@ -4,7 +4,7 @@
 #include <pthread.h>
 #include <stdatomic.h>
 #include <stddef.h>
-#include <sys/os_2.h>
+#include <sys/iros.h>
 
 static void reset_once(pthread_once_t *once_control) {
     atomic_store(once_control, 0);

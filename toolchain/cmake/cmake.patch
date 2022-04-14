@@ -6,17 +6,17 @@ index 1dc12c06..6cf50e3b 100644
  #elif defined(__osf) || defined(__osf__)
  # define PLATFORM_ID "OSF1"
  
-+#elif defined(__os_2__)
-+# define PLATFORM_ID "OS_2"
++#elif defined(__iros__)
++# define PLATFORM_ID "Iros"
 +
  #elif defined(_SCO_SV) || defined(SCO_SV) || defined(sco_sv)
  # define PLATFORM_ID "SCO_SV"
  
-diff --git a/Modules/Platform/OS_2.cmake b/Modules/Platform/OS_2.cmake
+diff --git a/Modules/Platform/Iros.cmake b/Modules/Platform/Iros.cmake
 new file mode 100644
 index 00000000..635f3330
 --- /dev/null
-+++ b/Modules/Platform/OS_2.cmake
++++ b/Modules/Platform/Iros.cmake
 @@ -0,0 +1,14 @@
 +set(CMAKE_DL_LIBS "dl")
 +set(CMAKE_C_COMPILE_OPTIONS_PIC "-fPIC")

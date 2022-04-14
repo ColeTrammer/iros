@@ -25,14 +25,14 @@ public:
     virtual void initialize() override;
     virtual ~TerminalWidget() override;
 
-    // os_2 reflect begin
+    // iros reflect begin
     void clear_selection();
     void copy_selection();
     void paste_text();
 
     const Terminal::TTY& tty() const { return m_tty; }
     bool in_selection(int row, int col) const;
-    // os_2 reflect end
+    // iros reflect end
 
     const TerminalWidgetBridge& bridge() const { return *m_bridge; }
     TerminalWidgetBridge& bridge() { return *m_bridge; }

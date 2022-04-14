@@ -5,7 +5,7 @@
 #include <strings.h>
 
 int read_procfs_global_info(struct proc_global_info *info, int flags) {
-#ifndef __os_2__
+#ifndef __iros__
     (void) info;
     (void) flags;
     errno = ENOTSUP;
@@ -60,5 +60,5 @@ int read_procfs_global_info(struct proc_global_info *info, int flags) {
 fail:
     fclose(file);
     return 1;
-#endif /* __os_2__ */
+#endif /* __iros__ */
 }

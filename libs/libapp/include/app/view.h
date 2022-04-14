@@ -24,7 +24,7 @@ public:
     virtual void initialize() override;
     virtual ~View() override;
 
-    // os_2 reflect begin
+    // iros reflect begin
     App::Model* model() { return m_model.get(); }
     const App::Model* model() const { return m_model.get(); }
 
@@ -40,7 +40,7 @@ public:
     const App::ModelItem* root_item() const { return m_root_item; }
 
     void set_root_item(App::ModelItem* item);
-    // os_2 reflect end
+    // iros reflect end
 
     const ViewBridge& bridge() const { return *m_bridge; }
     ViewBridge& bridge() { return *m_bridge; }

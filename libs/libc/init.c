@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/os_2.h>
+#include <sys/iros.h>
 #include <sys/param.h>
 #include <sys/syscall.h>
 #include <unistd.h>

@@ -8,10 +8,10 @@ class TerminalWidgetBridge {
 public:
     virtual ~TerminalWidgetBridge() {}
 
-    // os_2 reflect begin
+    // iros reflect begin
     virtual Point cell_position_of_mouse_coordinates(int mouse_x, int mouse_y) const = 0;
     virtual Rect available_cells() const = 0;
-    // os_2 reflect end
+    // iros reflect end
 
     virtual void invalidate_all_contents() = 0;
 };

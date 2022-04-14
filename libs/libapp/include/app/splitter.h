@@ -81,7 +81,7 @@ public:
     virtual void initialize() override;
     virtual ~Splitter() override;
 
-    // os_2 reflect begin
+    // iros reflect begin
     App::Direction direction() const { return m_direction; }
     void set_direction(App::Direction direction);
 
@@ -104,7 +104,7 @@ public:
     SharedPtr<T> add_widget_fixed_owned(int fixed_width, Args&&... args) {
         return layout().add<T>({ fixed_width }, forward<Args>(args)...);
     }
-    // os_2 reflect end
+    // iros reflect end
 
     SplitterBridge& bridge() { return *m_bridge; }
     const SplitterBridge& bridge() const { return *m_bridge; }

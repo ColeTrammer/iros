@@ -10,7 +10,7 @@ class DisplayBridge {
 public:
     virtual ~DisplayBridge() {}
 
-    // os_2 reflect begin
+    // iros reflect begin
     virtual int rows() const = 0;
     virtual int cols() const = 0;
 
@@ -33,7 +33,7 @@ public:
 
     virtual void set_clipboard_contents(LIIM::String text, bool is_whole_line) = 0;
     virtual String clipboard_contents(bool& is_whole_line) const = 0;
-    // os_2 reflect end
+    // iros reflect end
 
     // FIXME: these should be proper events
     virtual void document_did_change() {}

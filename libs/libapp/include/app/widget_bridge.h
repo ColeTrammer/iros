@@ -127,11 +127,11 @@ public:
 
     virtual ~WidgetBridge() {}
 
-    // os_2 reflect begin
+    // iros reflect begin
     virtual bool steals_focus() { return false; }
 
     virtual Maybe<Point> cursor_position() { return {}; }
-    // os_2 reflect end
+    // iros reflect end
 
     virtual void render() {}
 

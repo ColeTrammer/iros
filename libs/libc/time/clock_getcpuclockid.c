@@ -1,5 +1,5 @@
 #include <errno.h>
-#include <sys/os_2.h>
+#include <sys/iros.h>
 #include <time.h>
 
 int clock_getcpuclockid(pid_t pid, clockid_t *id) {

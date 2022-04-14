@@ -7,8 +7,8 @@ class ScrollComponentBridge {
 public:
     virtual ~ScrollComponentBridge() {}
 
-    // os_2 reflect begin
+    // iros reflect begin
     virtual int scrollbar_width() const = 0;
-    // os_2 reflect end
+    // iros reflect end
 };
 }

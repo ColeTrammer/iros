@@ -1,4 +1,4 @@
-#include <sys/os_2.h>
+#include <sys/iros.h>
 #include <sys/syscall.h>
 
 __attribute__((__noreturn__)) void exit_task(void) {

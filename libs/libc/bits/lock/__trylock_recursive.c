@@ -3,7 +3,7 @@
 #include <bits/lock.h>
 #include <pthread.h>
 #include <stdatomic.h>
-#include <sys/os_2.h>
+#include <sys/iros.h>
 
 int __trylock_recursive(struct __recursive_lock *lock) {
     unsigned int tid = __get_self()->id;

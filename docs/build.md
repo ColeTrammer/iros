@@ -17,20 +17,20 @@
 -   CMake tries to build its dependencies automatically, but its build of libcurl may fail. In that happens, try to install libcurl manually.
 -   To properly bootstrap the system, the `patchelf` binary is used. This must be installed for the toolchain to fully build. On Ubuntu, this can
     be installed using `sudo apt install patchelf`.
--   The default architecture is x86_64, but this can be overriden by setting `OS_2_ARCH=i686`.
+-   The default architecture is x86_64, but this can be overriden by setting `IROS_ARCH=i686`.
 -   Run `./scripts/setup.sh`, which will prompt you to build the toolchain and bootstrap the system.
     Note that this must be run from the root directory, or the script will be confused.
 
 ## Building the OS
 
--   The setup script creates one build directory: build/$OS_2_ARCH/, which contains 2 other build directories. The native tools are handled by build/$OS_2_ARCH/native/, while the cross compiled os kernel and userland are built in build/$OS_2_ARCH/os_2/.
+-   The setup script creates one build directory: build/$IROS_ARCH/, which contains 2 other build directories. The native tools are handled by build/$IROS_ARCH/native/, while the cross compiled os kernel and userland are built in build/$IROS_ARCH/iros/.
 -   The system can be fully built by running `make` in the build directory, but this is often uneeded.
--   Most of the time, you should run commands directly in the build\_$OS_2_ARCH/os_2/ directory. A full build is only required when specific tools are modified (namely anything in the gen/ directory).
+-   Most of the time, you should run commands directly in the build\_$IROS_ARCH/iros/ directory. A full build is only required when specific tools are modified (namely anything in the gen/ directory).
 
 ## Running the OS
 
--   The OS can be run with either qemu-system-$OS_2_ARCH or bochs. Creating a bootable image requires the grub tools (grub-file and grub-mkrescue). Creating an ext2fs requires parted, mke2fs, losetup, and being able to mount an ext2fs.
--   The OS is booted from an ISO (cdrom) file, which can be created with `make iso`. This contains grub2 as well as the kernel object file, and is output to os_2.iso in the os_2 build directory.
--   The OS additionally must mount a root file system. A suitable hard disk image can be created using `make image`. This command requires sudo becuase it mounts os_2.img directly, and writes to its using regular file system APIs.
+-   The OS can be run with either qemu-system-$IROS_ARCH or bochs. Creating a bootable image requires the grub tools (grub-file and grub-mkrescue). Creating an ext2fs requires parted, mke2fs, losetup, and being able to mount an ext2fs.
+-   The OS is booted from an ISO (cdrom) file, which can be created with `make iso`. This contains grub2 as well as the kernel object file, and is output to iros.iso in the iros build directory.
+-   The OS additionally must mount a root file system. A suitable hard disk image can be created using `make image`. This command requires sudo becuase it mounts iros.img directly, and writes to its using regular file system APIs.
 -   With both an iso and disk image, the OS can be run using `make run` (for qemu) or `make brun` (for bochs).
 -   In addition, the aliases `make frun` and `make bfrun` can be used to fully build the system (image and iso included), and also start an emulator instance.

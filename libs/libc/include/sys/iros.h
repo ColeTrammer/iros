@@ -1,5 +1,5 @@
-#ifndef _SYS_OS_2_H
-#define _SYS_OS_2_H 1
+#ifndef _SYS_IROS_H
+#define _SYS_IROS_H 1
 
 #include <bits/__locked_robust_mutex_node.h>
 #include <bits/clockid_t.h>
@@ -89,7 +89,7 @@ struct profile_event {
 
 #define PEV_MEMORY_MAP_SIZE(pev) (sizeof(struct profile_event_memory_map) + ((pev)->count) * sizeof(pev->mem[0]))
 
-#ifndef SYS_OS_2_NO_FUNCTIONS
+#ifndef SYS_IROS_NO_FUNCTIONS
 int create_task(struct create_task_args *create_task_args);
 void exit_task(void) __attribute__((__noreturn__));
 int os_mutex(unsigned int *__protected, int op, int expected, int to_place, int to_wake, unsigned int *to_wait);
@@ -99,10 +99,10 @@ int getcpuclockid(int tgid, int tid, clockid_t *clock_id);
 int enable_profiling(pid_t pid);
 ssize_t read_profile(pid_t pid, void *buffer, size_t size);
 int disable_profiling(pid_t pid);
-#endif /* SYS_OS_2_NO_FUNCTIONS */
+#endif /* SYS_IROS_NO_FUNCTIONS */
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* _SYS_OS_2_H */
+#endif /* _SYS_IROS_H */

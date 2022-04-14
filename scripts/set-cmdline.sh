@@ -19,5 +19,5 @@ do
 done
 
 unset OPTIND
-export OS_2_CMDLINE="$enable_graphics"
-echo "OS_2_CMDLINE=\"$OS_2_CMDLINE\""
+export IROS_CMDLINE="$enable_graphics"
+echo "IROS_CMDLINE=\"$IROS_CMDLINE\""

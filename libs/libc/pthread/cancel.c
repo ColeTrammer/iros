@@ -6,7 +6,7 @@
 #include <signal.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <sys/os_2.h>
+#include <sys/iros.h>
 
 static void on_cancelation_request(int signum) {
     assert(signum == __PTHREAD_CANCEL_SIGNAL);

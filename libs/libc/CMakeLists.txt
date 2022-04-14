@@ -345,15 +345,15 @@ else()
         sys/mman/mman.c
         sys/mount/mount.c
         sys/mount/umount.c
-        sys/os_2/create_task.c
-        sys/os_2/disable_profiling.c
-        sys/os_2/enable_profiling.c
-        sys/os_2/exit_task.c
-        sys/os_2/getcpuclockid.c
-        sys/os_2/os_mutex.c
-        sys/os_2/read_profile.c
-        sys/os_2/set_thread_self_pointer.c
-        sys/os_2/tgkill.c
+        sys/iros/create_task.c
+        sys/iros/disable_profiling.c
+        sys/iros/enable_profiling.c
+        sys/iros/exit_task.c
+        sys/iros/getcpuclockid.c
+        sys/iros/os_mutex.c
+        sys/iros/read_profile.c
+        sys/iros/set_thread_self_pointer.c
+        sys/iros/tgkill.c
         sys/resource/getpriority.c
         sys/resource/getrlimit.c
         sys/resource/getrusage.c

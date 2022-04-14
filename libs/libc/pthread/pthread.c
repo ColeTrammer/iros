@@ -6,8 +6,8 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/iros.h>
 #include <sys/mman.h>
-#include <sys/os_2.h>
 #include <sys/syscall.h>
 #include <unistd.h>
 
