@@ -66,6 +66,7 @@ else()
         stdlib/abort.c
         stdlib/conversions.c
         stdlib/exit.c
+        stdlib/libgcc_polyfill.c
         stdlib/malloc.c
         stdlib/mbstowcs.c
         stdlib/mbtowc.c
