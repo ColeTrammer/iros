@@ -1,7 +1,7 @@
 #include <bits/lock.h>
 #include <stdatomic.h>
 #include <stddef.h>
-#include <sys/os_2.h>
+#include <sys/iros.h>
 
 void __unlock(struct __lock *lock) {
     int expected = 1;

@@ -11,13 +11,13 @@ exists() {
 }
 
 maybe_build_toolchain() {
-    echo -n "Unable to find os_2 toolchain. Do you want to build it? (y/n) "
+    echo -n "Unable to find $IROS_ARCH-$IROS_TARGET_OS toolchain. Do you want to build it? (y/n) "
     read RESPONSE
     [ "$RESPONSE" = 'y' ] || return 1
     [ -d ./toolchain ] || die "Cannot find toolchain directory"
     
     export ROOT="$(realpath .)"
-    export SYSROOT="$ROOT/$OS_2_BUILD/os_2/sysroot"
+    export SYSROOT="$ROOT/$IROS_BUILD/iros/sysroot"
     cd toolchain
     ./build.sh
     cd ..
@@ -26,14 +26,14 @@ maybe_build_toolchain() {
     export BUILD_TOOLCHAIN='1'
 }
 
-export OS_2_ARCH=${OS_2_ARCH:-'x86_64'}
-export OS_2_BUILD="build_$OS_2_ARCH"
-export OS_2_TARGET_OS='os_2'
-export OS_2_TARGET="$OS_2_ARCH-$OS_2_TARGET_OS"
-export OS_2_AS=${OS_AS:-"$OS_2_ARCH-$OS_2_TARGET_OS-as"}
-export OS_2_CC=${OS_CC:-"$OS_2_ARCH-$OS_2_TARGET_OS-gcc"}
-export OS_2_CXX=${OS_CXX:-"$OS_2_ARCH-$OS_2_TARGET_OS-g++"}
-exists "$OS_2_CC" || maybe_build_toolchain
+export IROS_ARCH=${IROS_ARCH:-'x86_64'}
+export IROS_BUILD="build_$IROS_ARCH"
+export IROS_TARGET_OS='iros'
+export IROS_TARGET="$IROS_ARCH-$IROS_TARGET_OS"
+export IROS_AS=${OS_AS:-"$IROS_ARCH-$IROS_TARGET_OS-as"}
+export IROS_CC=${OS_CC:-"$IROS_ARCH-$IROS_TARGET_OS-gcc"}
+export IROS_CXX=${OS_CXX:-"$IROS_ARCH-$IROS_TARGET_OS-g++"}
+exists "$IROS_CC" || maybe_build_toolchain
 
 if exists 'ninja';
 then
@@ -44,7 +44,7 @@ fi
 
 GENERATOR="${GENERATOR:-$DEFAULT_GENERATOR}"
 
-cmake -S cmake/super_build -B "$OS_2_BUILD" -G "$GENERATOR" || die "Failed to do create cmake project at ./build"
+cmake -S cmake/super_build -B "$IROS_BUILD" -G "$GENERATOR" || die "Failed to do create cmake project at ./build"
 
 if [ "$BUILD_TOOLCHAIN" ];
 then
@@ -53,7 +53,7 @@ then
     cd ..
 fi
 
-echo "Finished the setup. Build files were created in ./$OS_2_BUILD"
+echo "Finished the setup. Build files were created in ./$IROS_BUILD"
 if [ $BUILD_TOOLCHAIN ]; 
 then
     echo "  To make sure the build tools are always available, please update your PATH as follows:"

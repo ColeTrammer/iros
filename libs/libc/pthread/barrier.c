@@ -2,7 +2,7 @@
 #include <limits.h>
 #include <pthread.h>
 #include <stdatomic.h>
-#include <sys/os_2.h>
+#include <sys/iros.h>
 
 int pthread_barrier_destroy(pthread_barrier_t *barrier) {
     if (barrier == NULL || barrier->__count_gap == 0) {

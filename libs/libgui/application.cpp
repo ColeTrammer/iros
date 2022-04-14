@@ -1,6 +1,6 @@
 #include <app/layout_engine.h>
 #include <gui/application.h>
-#include <gui/application_os_2.h>
+#include <gui/application_iros.h>
 #include <gui/window.h>
 #include <liim/format.h>
 #include <signal.h>
@@ -11,8 +11,8 @@
 
 namespace GUI {
 SharedPtr<Application> Application::create() {
-#ifdef __os_2__
-    return OSApplication::create(nullptr);
+#ifdef __iros__
+    return IrosApplication::create(nullptr);
 #elif USE_SDL2
     return SDLApplication::create(nullptr);
 #else

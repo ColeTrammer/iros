@@ -7,13 +7,13 @@ index e7b55b0d..50af21cd 100644
      want64=true
      ;;
 +#endif
-+  i[3-7]86-*-os_2*)
++  i[3-7]86-*-iros*)
 +    targ_defvec=i386_elf32_vec
 +    targ_selvecs=
 +    targ64_selvecs=x86_64_elf64_vec
 +    ;;
 +#ifdef BFD64
-+  x86_64-*-os_2*)
++  x86_64-*-iros*)
 +    targ_defvec=x86_64_elf64_vec
 +    targ_selvecs=i386_elf32_vec
 +    want64=true
@@ -30,7 +30,7 @@ index b0f84923..4868ed5f 100755
  	gnu* | android* | bsd* | mach* | minix* | genix* | ultrix* | irix* \
  	     | *vms* | esix* | aix* | cnk* | sunos | sunos[34]* \
 -	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* \
-+	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* | os_2* \
++	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* | iros* \
  	     | sym* |  plan9* | psp* | sim* | xray* | os68k* | v88r* \
  	     | hiux* | abug | nacl* | netware* | windows* \
  	     | os9* | macos* | osx* | ios* \
@@ -42,7 +42,7 @@ index 6f46e0a6..b8c03747 100644
    i386-*-lynxos*)			fmt=elf em=lynx ;;
    i386-*-redox*)			fmt=elf ;;
    i386-*-solaris*)			fmt=elf em=solaris ;;
-+  i386-*-os_2*)			fmt=elf em=gnu ;;
++  i386-*-iros*)			fmt=elf em=gnu ;;
    i386-*-freebsd* \
    | i386-*-kfreebsd*-gnu)		fmt=elf em=freebsd ;;
    i386-*-msdosdjgpp* \
@@ -54,7 +54,7 @@ index 2c9a4873..d806ec37 100644
  	eelf_i386_fbsd.c \
  	eelf_i386_ldso.c \
  	eelf_i386_sol2.c \
-+	eelf_i386_os_2.c \
++	eelf_i386_iros.c \
  	eelf_i386_vxworks.c \
  	eelf_iamcu.c \
  	eelf_s390.c \
@@ -62,7 +62,7 @@ index 2c9a4873..d806ec37 100644
  	eelf_x86_64_cloudabi.c \
  	eelf_x86_64_fbsd.c \
  	eelf_x86_64_sol2.c \
-+	eelf_x86_64_os_2.c \
++	eelf_x86_64_iros.c \
  	ehppa64linux.c \
  	ei386pep.c \
  	emmo.c
@@ -74,32 +74,32 @@ index 0c780b24..886186ac 100644
  			targ_extra_emuls="elf_i386_ldso elf_i386 elf_iamcu elf_x86_64_sol2 elf_x86_64 elf_l1om elf_k1om"
  			targ_extra_libpath=$targ_extra_emuls
  			;;
-+i[3-7]86-*-os_2*)
-+			targ_emul=elf_i386_os_2
++i[3-7]86-*-iros*)
++			targ_emul=elf_i386_iros
 +			targ_extra_emuls=elf_i386
-+			targ64_extra_emuls="elf_x86_64_os_2 elf_x86_64"
++			targ64_extra_emuls="elf_x86_64_iros elf_x86_64"
 +			;;
-+x86_64-*-os_2*)
-+			targ_emul=elf_x86_64_os_2
-+			targ_extra_emuls="elf_i386_os_2 elf_x86_64 elf_i386"
++x86_64-*-iros*)
++			targ_emul=elf_x86_64_iros
++			targ_extra_emuls="elf_i386_iros elf_x86_64 elf_i386"
 +			;;
  i[3-7]86-*-unixware)	targ_emul=elf_i386
  			targ_extra_emuls=elf_iamcu
  			;;
-diff --git a/ld/emulparams/elf_i386_os_2.sh b/ld/emulparams/elf_i386_os_2.sh
+diff --git a/ld/emulparams/elf_i386_iros.sh b/ld/emulparams/elf_i386_iros.sh
 new file mode 100644
 index 00000000..342d5298
 --- /dev/null
-+++ b/ld/emulparams/elf_i386_os_2.sh
++++ b/ld/emulparams/elf_i386_iros.sh
 @@ -0,0 +1,3 @@
 +. ${srcdir}/emulparams/elf_i386.sh
 +GENERATE_SHLIB_SCRIPT=yes
 +GENERATE_PIE_SCRIPT=yes
-diff --git a/ld/emulparams/elf_x86_64_os_2.sh b/ld/emulparams/elf_x86_64_os_2.sh
+diff --git a/ld/emulparams/elf_x86_64_iros.sh b/ld/emulparams/elf_x86_64_iros.sh
 new file mode 100644
 index 00000000..a2af90a6
 --- /dev/null
-+++ b/ld/emulparams/elf_x86_64_os_2.sh
++++ b/ld/emulparams/elf_x86_64_iros.sh
 @@ -0,0 +1 @@
 +. ${srcdir}/emulparams/elf_x86_64.sh
 diff --git a/libtool.m4 b/libtool.m4
@@ -110,7 +110,7 @@ index e993b621..e7414e51 100644
    dynamic_linker=no
    ;;
  
-+os_2*)
++iros*)
 +  version_type=linux
 +  need_lib_prefix=no
 +  need_version=no
@@ -128,7 +128,7 @@ index e993b621..e7414e51 100644
    lt_cv_deplibs_check_method=pass_all
    ;;
  
-+os_2*)
++iros*)
 +  lt_cv_deplibs_check_method=pass_all
 +  ;;
 +

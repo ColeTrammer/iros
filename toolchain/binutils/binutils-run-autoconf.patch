@@ -55,7 +55,7 @@ index 1e3ff336..0f4b7ac8 100755
    lt_cv_deplibs_check_method=pass_all
    ;;
  
-+os_2*)
++iros*)
 +  lt_cv_deplibs_check_method=pass_all
 +  ;;
 +
@@ -66,7 +66,7 @@ index 1e3ff336..0f4b7ac8 100755
    dynamic_linker=no
    ;;
  
-+os_2*)
++iros*)
 +  version_type=linux
 +  need_lib_prefix=no
 +  need_version=no
@@ -271,7 +271,7 @@ index b3c38077..390b1126 100755
    lt_cv_deplibs_check_method=pass_all
    ;;
  
-+os_2*)
++iros*)
 +  lt_cv_deplibs_check_method=pass_all
 +  ;;
 +
@@ -282,7 +282,7 @@ index b3c38077..390b1126 100755
    dynamic_linker=no
    ;;
  
-+os_2*)
++iros*)
 +  version_type=linux
 +  need_lib_prefix=no
 +  need_version=no
@@ -375,7 +375,7 @@ index b41941c8..14d6ab85 100644
  	eelf_i386_fbsd.c \
  	eelf_i386_ldso.c \
  	eelf_i386_sol2.c \
-+	eelf_i386_os_2.c \
++	eelf_i386_iros.c \
  	eelf_i386_vxworks.c \
  	eelf_iamcu.c \
  	eelf_s390.c \
@@ -383,7 +383,7 @@ index b41941c8..14d6ab85 100644
  	eelf_x86_64_cloudabi.c \
  	eelf_x86_64_fbsd.c \
  	eelf_x86_64_sol2.c \
-+	eelf_x86_64_os_2.c \
++	eelf_x86_64_iros.c \
  	ehppa64linux.c \
  	ei386pep.c \
  	emmo.c
@@ -391,7 +391,7 @@ index b41941c8..14d6ab85 100644
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_be.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_fbsd.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_ldso.Po@am__quote@
-+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_os_2.Po@am__quote@
++@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_iros.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_sol2.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_i386_vxworks.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_iamcu.Po@am__quote@
@@ -399,7 +399,7 @@ index b41941c8..14d6ab85 100644
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_cloudabi.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_fbsd.Po@am__quote@
-+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_os_2.Po@am__quote@
++@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_iros.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eelf_x86_64_sol2.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eh8300elf.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/eh8300elf_linux.Po@am__quote@
@@ -460,7 +460,7 @@ index b0969791..c1a3933f 100755
    lt_cv_deplibs_check_method=pass_all
    ;;
  
-+os_2*)
++iros*)
 +  lt_cv_deplibs_check_method=pass_all
 +  ;;
 +
@@ -471,7 +471,7 @@ index b0969791..c1a3933f 100755
    dynamic_linker=no
    ;;
  
-+os_2*)
++iros*)
 +  version_type=linux
 +  need_lib_prefix=no
 +  need_version=no
@@ -507,7 +507,7 @@ index b0969791..c1a3933f 100755
    dynamic_linker=no
    ;;
  
-+os_2*)
++iros*)
 +  version_type=linux
 +  need_lib_prefix=no
 +  need_version=no
@@ -632,7 +632,7 @@ index 6b294bfe..f9ad2011 100755
    lt_cv_deplibs_check_method=pass_all
    ;;
  
-+os_2*)
++iros*)
 +  lt_cv_deplibs_check_method=pass_all
 +  ;;
 +
@@ -643,7 +643,7 @@ index 6b294bfe..f9ad2011 100755
    dynamic_linker=no
    ;;
  
-+os_2*)
++iros*)
 +  version_type=linux
 +  need_lib_prefix=no
 +  need_version=no

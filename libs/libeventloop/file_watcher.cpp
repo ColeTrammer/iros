@@ -3,7 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef __os_2__
+#ifdef __iros__
 #include <sys/socket.h>
 #include <sys/umessage.h>
 
@@ -104,7 +104,7 @@ bool FileWatcher::unwatch(const String& path) {
     return true;
 }
 }
-#endif /* __os_2__ */
+#endif /* __iros__ */
 
 #ifdef __linux__
 #include <sys/inotify.h>

@@ -4,7 +4,7 @@
 #include <limits.h>
 #include <semaphore.h>
 #include <stdatomic.h>
-#include <sys/os_2.h>
+#include <sys/iros.h>
 
 int sem_post(sem_t *s) {
     int expected = 0;

@@ -33,7 +33,7 @@ __attribute__((unused)) static int sort_by_pid(const struct dirent **a, const st
 }
 
 int read_procfs_info(struct proc_info **info, size_t *length, int flags) {
-#ifndef __os_2__
+#ifndef __iros__
     (void) info;
     (void) length;
     (void) flags;
@@ -148,5 +148,5 @@ int read_procfs_info(struct proc_info **info, size_t *length, int flags) {
 
     free(pids);
     return success ? 0 : 1;
-#endif /* __os_2__ */
+#endif /* __iros__ */
 }

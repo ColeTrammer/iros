@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <clipboard/connection.h>
 
-#ifdef __os_2__
+#ifdef __iros__
 #include <clipboard_server/message.h>
 
 namespace Clipboard {
@@ -294,4 +294,4 @@ Maybe<String> Connection::get_clipboard_contents_as_text() {
     return s_clipboard_text;
 }
 }
-#endif /* __os_2__ */
+#endif /* __iros__ */

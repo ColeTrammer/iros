@@ -1,4 +1,4 @@
-# os_2
+# Iros
 
 My second attempt to create an OS
 

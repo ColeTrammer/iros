@@ -72,10 +72,10 @@ void TerminalRenderer::draw_rect(const Rect& rect_in, Maybe<Color> color, BoxSty
         return clear_rect(rect_in, color);
     }
 
-#ifdef __os_2__
+#ifdef __iros__
     // FIXME: support unicode in the system terminal
     box_style = BoxStyle::Ascii;
-#endif /* __os_2__ */
+#endif /* __iros__ */
 
     auto rect = translate(rect_in);
     auto style = TerminalTextStyle { .foreground = color, .background = {}, .bold = false };

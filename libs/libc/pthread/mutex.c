@@ -7,7 +7,7 @@
 #include <stdatomic.h>
 #include <stddef.h>
 #include <string.h>
-#include <sys/os_2.h>
+#include <sys/iros.h>
 
 int pthread_mutex_consistent(pthread_mutex_t *mutex) {
     if (!mutex || !(mutex->__attr.__flags & PTHREAD_MUTEX_ROBUST) || !(mutex->__attr.__flags & __PTHREAD_MUTEX_INCONSISTENT)) {

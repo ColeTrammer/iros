@@ -1,14 +1,14 @@
 #include <fcntl.h>
-#include <gui/application_os_2.h>
-#include <gui/window_os_2.h>
+#include <gui/application_iros.h>
+#include <gui/window_iros.h>
 #include <sys/mman.h>
 #include <unistd.h>
 
 namespace GUI {
-OSWindow::OSWindow(Window& window, int x, int y, int width, int height, String name, bool has_alpha, WindowServer::WindowType type,
-                   wid_t parent_id)
+IrosWindow::IrosWindow(Window& window, int x, int y, int width, int height, String name, bool has_alpha, WindowServer::WindowType type,
+                       wid_t parent_id)
     : m_window(window) {
-    auto response = OSApplication::the()
+    auto response = IrosApplication::the()
                         .ws()
                         .server()
                         .send_then_wait<WindowServer::Client::CreateWindowRequest, WindowServer::Server::CreateWindowResponse>({
@@ -29,19 +29,19 @@ OSWindow::OSWindow(Window& window, int x, int y, int width, int height, String n
     do_resize(response->width, response->height);
 }
 
-OSWindow::~OSWindow() {
+IrosWindow::~IrosWindow() {
     if (m_raw_pixels != MAP_FAILED) {
         munmap(m_raw_pixels, m_raw_pixels_size);
         m_raw_pixels = MAP_FAILED;
     }
 
     if (!m_window.removed()) {
-        OSApplication::the().ws().server().send<WindowServer::Client::RemoveWindowRequest>({ .wid = m_window.wid() });
+        IrosApplication::the().ws().server().send<WindowServer::Client::RemoveWindowRequest>({ .wid = m_window.wid() });
     }
 }
 
-void OSWindow::do_set_visibility(int x, int y, bool visible) {
-    OSApplication::the()
+void IrosWindow::do_set_visibility(int x, int y, bool visible) {
+    IrosApplication::the()
         .ws()
         .server()
         .send_then_wait<WindowServer::Client::ChangeWindowVisibilityRequest, WindowServer::Server::ChangeWindowVisibilityResponse>({
@@ -52,15 +52,15 @@ void OSWindow::do_set_visibility(int x, int y, bool visible) {
         });
 }
 
-void OSWindow::flush_pixels() {
-    OSApplication::the().ws().server().send<WindowServer::Client::SwapBufferRequest>({ .wid = m_window.wid() });
+void IrosWindow::flush_pixels() {
+    IrosApplication::the().ws().server().send<WindowServer::Client::SwapBufferRequest>({ .wid = m_window.wid() });
     LIIM::swap(m_front_buffer, m_back_buffer);
     memcpy(m_back_buffer->pixels(), m_front_buffer->pixels(), m_front_buffer->size_in_bytes());
 }
 
-void OSWindow::did_resize() {
+void IrosWindow::did_resize() {
     auto response =
-        OSApplication::the()
+        IrosApplication::the()
             .ws()
             .server()
             .send_then_wait<WindowServer::Client::WindowReadyToResizeMessage, WindowServer::Server::WindowReadyToResizeResponse>(
@@ -76,7 +76,7 @@ void OSWindow::did_resize() {
     do_resize(data.new_width, data.new_height);
 }
 
-void OSWindow::do_resize(int new_width, int new_height) {
+void IrosWindow::do_resize(int new_width, int new_height) {
     if (m_raw_pixels != MAP_FAILED) {
         munmap(m_raw_pixels, m_raw_pixels_size);
         m_raw_pixels = MAP_FAILED;

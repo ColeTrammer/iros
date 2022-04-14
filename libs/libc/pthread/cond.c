@@ -3,7 +3,7 @@
 #include <pthread.h>
 #include <stddef.h>
 #include <string.h>
-#include <sys/os_2.h>
+#include <sys/iros.h>
 
 int pthread_cond_broadcast(pthread_cond_t *cond) {
     return os_mutex(&cond->__lock, MUTEX_WAKE_AND_SET, 0, 0, INT_MAX, NULL);

@@ -22,7 +22,7 @@ public:
     virtual void initialize() override;
     virtual ~Widget() override;
 
-    // os_2 reflect begin
+    // iros reflect begin
     void remove();
     App::Widget* parent_widget();
     App::Window* parent_window();
@@ -77,7 +77,7 @@ public:
 
     App::LayoutEngine* layout_engine() { return m_layout_engine.get(); }
     const App::LayoutEngine* layout_engine() const { return m_layout_engine.get(); }
-    // os_2 reflect end
+    // iros reflect end
 
     WidgetBridge& bridge() { return *m_bridge; }
 

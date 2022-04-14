@@ -9,9 +9,9 @@ class ViewBridge {
 public:
     virtual ~ViewBridge() {}
 
-    // os_2 reflect begin
+    // iros reflect begin
     virtual ModelItem* item_at_position(const Point& point) = 0;
-    // os_2 reflect end
+    // iros reflect end
 
     virtual void invalidate_all() = 0;
 

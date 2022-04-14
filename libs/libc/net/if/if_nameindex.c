@@ -6,18 +6,18 @@
 #include <sys/param.h>
 #include <unistd.h>
 
-#ifdef __os_2__
+#ifdef __iros__
 #include <sys/umessage.h>
 #else
 #include <sys/ioctl.h>
-#endif /* __os_2__ */
+#endif /* __iros__ */
 
 struct if_nameindex *if_nameindex(void) {
-#ifdef __os_2__
+#ifdef __iros__
     int fd = socket(AF_UMESSAGE, SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC, UMESSAGE_INTERFACE);
 #else
     int fd = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0);
-#endif /* __os_2__ */
+#endif /* __iros__ */
     if (fd < 0) {
         return NULL;
     }
@@ -27,7 +27,7 @@ struct if_nameindex *if_nameindex(void) {
     size_t max = 10;
     struct if_nameindex *nameindex = malloc(max * sizeof(struct if_nameindex));
 
-#ifdef __os_2__
+#ifdef __iros__
     struct umessage_interface_list_request req = {
         .base = { .category = UMESSAGE_INTERFACE,
                   .type = UMESSAGE_INTERFACE_LIST_REQUEST,
@@ -61,7 +61,7 @@ struct if_nameindex *if_nameindex(void) {
 
         char *new_name = strdup(req.ifr_name);
         int new_index = i + 1;
-#endif /* __os_2__ */
+#endif /* __iros__ */
 
         if (!new_name) {
             goto error;

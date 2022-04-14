@@ -5,7 +5,7 @@
 #include <stdalign.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <sys/os_2.h>
+#include <sys/iros.h>
 #include <sys/param.h>
 
 void __free_thread_control_block(struct thread_control_block *block) {

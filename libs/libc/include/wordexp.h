@@ -24,7 +24,7 @@ typedef unsigned long size_t;
 extern "C" {
 #endif /* __cplusplus */
 
-#ifdef _OS_2_SOURCE
+#ifdef _IROS_SOURCE
 
 #define WRDE_SPECIAL 64
 #define WRDE_NOFS    128
@@ -44,21 +44,21 @@ typedef struct {
     int (*do_command_subst)(char *str);
 } word_special_t;
 
-#endif /* _OS_2_SOURCE */
+#endif /* _IROS_SOURCE */
 
 typedef struct {
     size_t we_wordc;
     char **we_wordv;
     size_t we_offs;
-#ifdef _OS_2_SOURCE
+#ifdef _IROS_SOURCE
     word_special_t *we_special_vars;
-#endif /* _OS_2_SOURCE */
+#endif /* _IROS_SOURCE */
 } wordexp_t;
 
 int wordexp(const char *s, wordexp_t *p, int flags);
 void wordfree(wordexp_t *p);
 
-#ifdef _OS_2_SOURCE
+#ifdef _IROS_SOURCE
 size_t we_find_end_of_word_expansion(const char *input_stream, size_t start, size_t input_length);
 int we_add(char *s, wordexp_t *we);
 int we_insert(char **arr, size_t arr_size, size_t pos, wordexp_t *we);
@@ -66,7 +66,7 @@ int we_expand(const char *s, int flags, char **result, word_special_t *special);
 int we_split(char *s, const char *split_on, wordexp_t *we, int flags);
 int we_glob(wordexp_t *we, size_t start);
 int we_unescape(char **s);
-#endif /* _OS_2_SOURCE */
+#endif /* _IROS_SOURCE */
 
 #ifdef __cplusplus
 }

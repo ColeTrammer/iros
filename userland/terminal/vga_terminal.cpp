@@ -1,4 +1,4 @@
-#ifdef __os_2__
+#ifdef __iros__
 #include <clipboard/connection.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -91,4 +91,4 @@ void VgaTerminal::drain_master_fd() {
         m_tty.on_input({ buf, static_cast<size_t>(ret) });
     }
 }
-#endif /* __os_2__ */
+#endif /* __iros__ */

@@ -5,7 +5,7 @@
 #include <string.h>
 
 int main() {
-#ifdef __os_2__
+#ifdef __iros__
     sigset_t set;
     sigemptyset(&set);
     printf("Empty set: %#.16" PRIX64 "\n", set);
@@ -31,6 +31,6 @@ int main() {
     sigfillset(&set);
     printf("Full set: %#.16" PRIX64 "\n", set);
 
-#endif /* __os_2__ */
+#endif /* __iros__ */
     return 0;
 }

@@ -10,8 +10,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <sys/iros.h>
 #include <sys/mman.h>
-#include <sys/os_2.h>
 #include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/statvfs.h>
@@ -1478,10 +1478,10 @@ SYS_CALL(uname) {
     SYS_PARAM1_VALIDATE(struct utsname *, buf, validate_write, sizeof(struct utsname));
 
     strcpy(buf->machine, "x86_64");
-    strcpy(buf->sysname, "os_2");
+    strcpy(buf->sysname, "Iros");
     strcpy(buf->release, "0.0.1");
     strcpy(buf->version, "0");
-    strcpy(buf->nodename, "os_2-dev");
+    strcpy(buf->nodename, "iros-dev");
 
     SYS_RETURN(0);
 }

@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.16.3)
-project(os_2 C CXX ASM)
+project(iros C CXX ASM)
 
 set(ARCH ${CMAKE_SYSTEM_PROCESSOR} CACHE STRING "architecture for the os")
 set(ROOT ${CMAKE_CURRENT_SOURCE_DIR})
-if (${CMAKE_SYSTEM_NAME} STREQUAL OS_2)
+if (${CMAKE_SYSTEM_NAME} STREQUAL Iros)
     set(NATIVE_BUILD FALSE)
 else()
     set(NATIVE_BUILD TRUE)
@@ -14,7 +14,7 @@ if (${NATIVE_BUILD})
 endif()
 
 add_compile_definitions("ARCH=${ARCH}")
-add_compile_definitions("_OS_2_SOURCE")
+add_compile_definitions("_IROS_SOURCE")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -Wall -Wextra -Werror -ftrack-macro-expansion=1 -fdiagnostics-color=always -fno-omit-frame-pointer -std=gnu2x -U${ARCH}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -Wall -Wextra -Werror -ftrack-macro-expansion=1 -fconcepts -fcoroutines -fno-exceptions -fno-rtti -fdiagnostics-color=always -fno-omit-frame-pointer -Wno-literal-suffix -U${ARCH}")
@@ -78,7 +78,7 @@ if (NOT ${NATIVE_BUILD})
 
     add_custom_target(
         iso
-        BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/os_2.iso
+        BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/iros.iso
         COMMAND /bin/mkdir -p ${ISODIR}/boot/grub
         COMMAND /bin/mkdir -p ${ISODIR}/modules
         COMMAND objcopy -S ${SYSROOT}/boot/kernel ${ISODIR}/boot/kernel
@@ -86,15 +86,15 @@ if (NOT ${NATIVE_BUILD})
         COMMAND /bin/echo "set menu_color_normal=white/black" >| ${ISODIR}/boot/grub/grub.cfg
         COMMAND /bin/echo "set menu_color_highlight=black/light-gray" >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND /bin/echo >> ${ISODIR}/boot/grub/grub.cfg
-        COMMAND /bin/echo "menuentry \"os_2\" {" >> ${ISODIR}/boot/grub/grub.cfg
-        COMMAND /bin/echo "    multiboot2 /boot/kernel $$OS_2_CMDLINE" >> ${ISODIR}/boot/grub/grub.cfg
+        COMMAND /bin/echo "menuentry \"Iros\" {" >> ${ISODIR}/boot/grub/grub.cfg
+        COMMAND /bin/echo "    multiboot2 /boot/kernel $$IROS_CMDLINE" >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND /bin/echo "    module2 /modules/initrd.bin initrd" >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND /bin/echo "}" >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND /bin/echo >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND /bin/echo "set timeout_style=menu" >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND /bin/echo "set timeout=0" >> ${ISODIR}/boot/grub/grub.cfg
         COMMAND grub-file --is-x86-multiboot2 ${ISODIR}/boot/kernel
-        COMMAND grub-mkrescue -o ${CMAKE_CURRENT_BINARY_DIR}/os_2.iso ${ISODIR}
+        COMMAND grub-mkrescue -o ${CMAKE_CURRENT_BINARY_DIR}/iros.iso ${ISODIR}
         DEPENDS generate-initrd kernel install-all
     )
 
@@ -112,7 +112,7 @@ if (NOT ${NATIVE_BUILD})
     add_custom_target(
         run
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        COMMAND OS_2_ARCH=${ARCH} "${ROOT}/scripts/qemu.sh"
+        COMMAND IROS_ARCH=${ARCH} "${ROOT}/scripts/qemu.sh"
         USES_TERMINAL
     )
 

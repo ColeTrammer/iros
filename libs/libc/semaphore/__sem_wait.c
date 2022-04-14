@@ -3,7 +3,7 @@
 #include <errno.h>
 #include <semaphore.h>
 #include <stdatomic.h>
-#include <sys/os_2.h>
+#include <sys/iros.h>
 
 int __sem_wait(struct __sem *__restrict s, const struct timespec *__restrict timeout, int try_only) {
     (void) timeout;

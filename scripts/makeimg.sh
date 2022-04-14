@@ -14,12 +14,12 @@ then
     exit 1
 fi
 
-qemu-img create "$OUTPUT_DIR/os_2.img" 30m
-parted -s -- "$OUTPUT_DIR/os_2.img" \
+qemu-img create "$OUTPUT_DIR/iros.img" 30m
+parted -s -- "$OUTPUT_DIR/iros.img" \
     mklabel gpt \
     mkpart P1 ext2 1Mib -34s
 
-LOOP_DEV=$(losetup -o 1048576 --sizelimit=$((199 * 1048576 - 34 * 512)) -f "$OUTPUT_DIR/os_2.img" --show)
+LOOP_DEV=$(losetup -o 1048576 --sizelimit=$((199 * 1048576 - 34 * 512)) -f "$OUTPUT_DIR/iros.img" --show)
 mke2fs "$LOOP_DEV"
 
 cleanup() {
@@ -34,7 +34,7 @@ mount -text2 "$LOOP_DEV" "$OUTPUT_DIR/mnt"
 cp -r --preserve=mode,links $ROOT/base/* "$OUTPUT_DIR/mnt"
 cp -r --preserve=mode,links $SYSROOT/* "$OUTPUT_DIR/mnt"
 chown -R 50:50 "$OUTPUT_DIR/mnt/home/test"
-chown -R 100:100 "$OUTPUT_DIR/mnt/home/eloc"
+chown -R 100:100 "$OUTPUT_DIR/mnt/home/iris"
 
 chmod u+s "$OUTPUT_DIR/mnt/bin/ping"
 chmod u+s "$OUTPUT_DIR/mnt/bin/su"
@@ -69,4 +69,4 @@ ln -s /proc/self/fd/1 "$OUTPUT_DIR/mnt/dev/stdout"
 ln -s /proc/self/fd/2 "$OUTPUT_DIR/mnt/dev/stderr"
 ln -s urandom "$OUTPUT_DIR/mnt/dev/random"
 
-chmod 777 "$OUTPUT_DIR/os_2.img"
+chmod 777 "$OUTPUT_DIR/iros.img"

@@ -44,7 +44,7 @@ public:
         bool secondary_cursor { false };
     };
 
-    // os_2 reflect begin
+    // iros reflect begin
     Edit::AbsolutePosition scroll_offset() const { return m_scroll_offset; }
     void set_scroll_offset(const Edit::AbsolutePosition& offset);
 
@@ -133,7 +133,7 @@ public:
     const Edit::TextRangeCollection& search_results() const { return m_search_results; }
     const String& search_text() const { return m_search_text; }
     const String& previous_search_text() const { return m_previous_search_text; }
-    // os_2 reflect end
+    // iros reflect end
 
     DisplayBridge& bridge() { return *m_bridge; }
     const DisplayBridge& bridge() const { return *m_bridge; }

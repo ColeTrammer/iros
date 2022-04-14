@@ -50,7 +50,7 @@ void kernel_main(struct multiboot2_info *multiboot_info) {
     };
     assert(!fs_mount_root(root_desc));
 
-    // NOTE: if we put these symbols on the initrd instead of in /boot/os_2.o, thse symbols
+    // NOTE: if we put these symbols on the initrd instead of in /boot/iros.o, thse symbols
     //       could be loaded sooner
     init_kernel_symbols();
     init_smp();

@@ -16,9 +16,9 @@
 #include <tui/terminal_panel.h>
 #include <unistd.h>
 
-#ifdef __os_2__
+#ifdef __iros__
 #include <sys/umessage.h>
-#endif /* __os_2__ */
+#endif /* __iros__ */
 
 #include "vga_buffer.h"
 #include "vga_terminal.h"
@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
     signal(SIGTTIN, SIG_IGN);
     signal(SIGWINCH, SIG_IGN);
 
-#ifdef __os_2__
+#ifdef __iros__
     if (!graphics_mode) {
         App::InputTracker input_tracker;
 
@@ -144,7 +144,7 @@ int main(int argc, char** argv) {
 
         return 0;
     }
-#endif /* __os_2__ */
+#endif /* __iros__ */
 
     App::EventLoop::register_signal_handler(SIGCHLD, [] {
         for (;;) {

@@ -20,7 +20,7 @@ const result = yargs
     .help().argv;
 
 const contents = fs.readFileSync(result["input"], "utf8");
-const relevant = contents.replace(/[\s\S]*\/\/ os_2 reflect begin([\s\S]*)\/\/ os_2 reflect end[\s\S]*/gm, "$1");
+const relevant = contents.replace(/[\s\S]*\/\/ iros reflect begin([\s\S]*)\/\/ iros reflect end[\s\S]*/gm, "$1");
 
 const removeMultilineImplementation = (s) => {
     let fixed = "";

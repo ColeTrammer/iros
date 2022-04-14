@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
     (void) argc;
     (void) argv;
 
-#ifdef __os_2__
+#ifdef __iros__
     if (argc != 2) {
         fprintf(stderr, "Usage: %s <png>\n", *argv);
         return 1;
@@ -48,5 +48,5 @@ int main(int argc, char **argv) {
     window->set_main_widget<TestWidget>();
     app->enter();
     return 0;
-#endif /* __os_2__ */
+#endif /* __iros__ */
 }

@@ -3,7 +3,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <pthread.h>
-#include <sys/os_2.h>
+#include <sys/iros.h>
 #include <unistd.h>
 
 int sysconf(int name) {

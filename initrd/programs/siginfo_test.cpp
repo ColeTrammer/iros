@@ -7,7 +7,7 @@ int main() {
     auto on_int = [](int sig, siginfo_t* info, void* _context [[maybe_unused]]) {
         assert(sig == SIGINT);
 
-#ifdef __os_2__
+#ifdef __iros__
 #ifdef __x86_64__
         ucontext_t* context = reinterpret_cast<ucontext_t*>(_context);
         fprintf(stderr, "rax: %#.16lX\n", context->uc_mcontext.__cpu_state.rax);
@@ -15,7 +15,7 @@ int main() {
         ucontext_t* context = reinterpret_cast<ucontext_t*>(_context);
         fprintf(stderr, "eax: %#.8lX\n", context->uc_mcontext.__cpu_state.eax);
 #endif
-#endif /* __os_2__ */
+#endif /* __iros__ */
 
         fprintf(stderr, "val: %d\n", info->si_value.sival_int);
     };

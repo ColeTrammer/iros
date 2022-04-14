@@ -27,7 +27,7 @@ int main() {
         asm("mov %%esp, %0" : "=r"(sp) : :);
 #endif
         fprintf(stderr, "\n%%sp=%#.16lX\n", sp);
-#ifdef __os_2__
+#ifdef __iros__
         ucontext_t* context = reinterpret_cast<ucontext_t*>(_context);
         fprintf(stderr, "sp on now: [ %p ]\n", context->uc_stack.ss_sp);
 #ifdef __x86_64__
@@ -35,7 +35,7 @@ int main() {
 #elif defined(__i386__)
         fprintf(stderr, "sp return: [ %#.8lX ]\n", context->uc_mcontext.__stack_state.esp);
 #endif
-#endif /* __os_2__ */
+#endif /* __iros__ */
     };
 
     sigaction(SIGINT, &act, nullptr);

@@ -8,8 +8,8 @@ class TreeViewBridge {
 public:
     virtual ~TreeViewBridge() {}
 
-    // os_2 reflect begin
+    // iros reflect begin
     virtual void render_item(const App::TreeViewItem& item) = 0;
-    // os_2 reflect end
+    // iros reflect end
 };
 }

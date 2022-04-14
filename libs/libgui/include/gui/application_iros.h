@@ -39,14 +39,14 @@ private:
     WindowServerListener* m_window_server_listener { nullptr };
 };
 
-class OSApplication final : public Application {
-    APP_OBJECT(OSApplication)
+class IrosApplication final : public Application {
+    APP_OBJECT(IrosApplication)
 
 public:
-    static OSApplication& the();
+    static IrosApplication& the();
 
-    OSApplication();
-    virtual ~OSApplication() override;
+    IrosApplication();
+    virtual ~IrosApplication() override;
 
     WindowServerClient& ws() { return *m_client; }
 

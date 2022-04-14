@@ -1,5 +1,5 @@
-#include <gui/application_os_2.h>
-#include <gui/window_os_2.h>
+#include <gui/application_iros.h>
+#include <gui/window_iros.h>
 
 namespace GUI {
 void WindowServerClient::initialize() {
@@ -82,41 +82,41 @@ void WindowServerClient::handle(IPC::Endpoint&, const WindowServer::Server::Serv
     }
 }
 
-OSApplication& OSApplication::the() {
+IrosApplication& IrosApplication::the() {
     auto& app = Application::the();
     assert(app.is_os_application());
-    return static_cast<OSApplication&>(app);
+    return static_cast<IrosApplication&>(app);
 }
 
-OSApplication::OSApplication() {
+IrosApplication::IrosApplication() {
     initialize_palette(Palette::create_from_shared_memory("/.shared_theme", PROT_READ));
     m_client = WindowServerClient::create(nullptr);
 }
 
-OSApplication::~OSApplication() {}
+IrosApplication::~IrosApplication() {}
 
-UniquePtr<PlatformWindow> OSApplication::create_window(Window& window, int x, int y, int width, int height, String name, bool has_alpha,
-                                                       WindowServer::WindowType type, wid_t parent_id) {
-    return make_unique<OSWindow>(window, x, y, width, height, move(name), has_alpha, type, parent_id);
+UniquePtr<PlatformWindow> IrosApplication::create_window(Window& window, int x, int y, int width, int height, String name, bool has_alpha,
+                                                         WindowServer::WindowType type, wid_t parent_id) {
+    return make_unique<IrosWindow>(window, x, y, width, height, move(name), has_alpha, type, parent_id);
 }
 
-void OSApplication::set_active_window(wid_t id) {
+void IrosApplication::set_active_window(wid_t id) {
     m_client->server().send<WindowServer::Client::SetActiveWindow>({ .wid = id });
 }
 
-void OSApplication::set_global_palette(const String& path) {
+void IrosApplication::set_global_palette(const String& path) {
     m_client->server().send_then_wait<WindowServer::Client::ChangeThemeRequest, WindowServer::Server::ChangeThemeResponse>(
         { .path = path });
 }
 
-void OSApplication::set_window_server_listener(WindowServerListener& listener) {
+void IrosApplication::set_window_server_listener(WindowServerListener& listener) {
     if (!m_client->window_server_listener()) {
         m_client->server().send<WindowServer::Client::RegisterAsWindowServerListener>({});
     }
     m_client->set_window_server_listener(&listener);
 }
 
-void OSApplication::remove_window_server_listener() {
+void IrosApplication::remove_window_server_listener() {
     if (m_client->window_server_listener()) {
         m_client->server().send<WindowServer::Client::UnregisterAsWindowServerListener>({});
         m_client->set_window_server_listener(nullptr);

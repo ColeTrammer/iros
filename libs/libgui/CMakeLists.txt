@@ -1,6 +1,6 @@
 set(SOURCES
     application.cpp
-    application_os_2.cpp
+    application_iros.cpp
     application_sdl.cpp
     button.cpp
     context_menu.cpp
@@ -15,7 +15,7 @@ set(SOURCES
     view.cpp
     widget.cpp
     window.cpp
-    window_os_2.cpp
+    window_iros.cpp
     window_sdl.cpp
 )
 

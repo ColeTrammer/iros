@@ -31,7 +31,7 @@ public:
     virtual void initialize() override;
     virtual ~TreeView() override;
 
-    // os_2 reflect begin
+    // iros reflect begin
     void render_items();
 
     void set_name_column(int col) { m_name_column = col; }
@@ -42,7 +42,7 @@ public:
 
     void set_row_height(int row_height) { m_row_height = row_height; }
     int row_height() const { return m_row_height; }
-    // os_2 reflect end
+    // iros reflect end
 
     TreeViewBridge& bridge() { return *m_bridge; }
     const TreeViewBridge& bridge() const { return *m_bridge; }

@@ -5,7 +5,7 @@
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <sys/os_2.h>
+#include <sys/iros.h>
 #include <sys/times.h>
 #include <sys/types.h>
 
