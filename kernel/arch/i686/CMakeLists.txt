@@ -14,6 +14,7 @@ set(KERNEL_ARCH_SOURCES
     ${KERNEL_ARCHDIR}/irqs/asm_handlers.S
     ${KERNEL_ARCHDIR}/mem/arch_page.c
     ${KERNEL_ARCHDIR}/mem/arch_vm_allocator.c
+    ${KERNEL_ARCHDIR}/proc/arch_task.c
     ${KERNEL_ARCHDIR}/sched/__kernel_yield.S
     ${KERNEL_ARCHDIR}/boot.S
     hal/x86/drivers/ata_drive.c

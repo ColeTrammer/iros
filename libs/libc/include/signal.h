@@ -177,6 +177,11 @@ typedef struct {
 #elif defined(__i386__)
 
 typedef struct {
+    unsigned short ds;
+    unsigned short es;
+    unsigned short fs;
+    unsigned short gs;
+
     unsigned long ebp;
     unsigned long edi;
     unsigned long esi;
@@ -184,17 +189,12 @@ typedef struct {
     unsigned long ecx;
     unsigned long ebx;
     unsigned long eax;
-
-    unsigned short ds;
-    unsigned short es;
-    unsigned short fs;
-    unsigned short gs;
 } __attribute__((packed)) __cpu_state_t;
 
 typedef struct {
     unsigned long eip;
     unsigned long cs;
-    unsigned long rflags;
+    unsigned long eflags;
     unsigned long esp;
     unsigned long ss;
 } __attribute__((packed)) __stack_state_t;
