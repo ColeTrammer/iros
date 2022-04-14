@@ -17,6 +17,8 @@
 #define USER_DATA_SELECTOR ((USER_DATA_OFFSET * 8UL) | 0b11)
 #define TSS_SELECTOR       (GDT_TSS_OFFSET * 8UL)
 
+#define TSS_TYPE 0b10001001
+
 #ifndef __ASSEMBLER__
 
 #include <kernel/hal/x86/gdt.h>

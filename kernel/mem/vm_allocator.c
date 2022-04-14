@@ -670,7 +670,7 @@ static struct vm_region *make_kernel_region(size_t size, uint64_t type) {
     }
 
     // FIXME: use a better allocation strategy then sequential assignments
-    uintptr_t start = vm->type == VM_KERNEL_HEAP ? vm->end + 1073741824ULL / 2ULL : vm->end;
+    uintptr_t start = vm->type == VM_KERNEL_HEAP ? vm->end + 1073741824ULL / 8ULL : vm->end;
 
     region->flags = VM_WRITE | VM_NO_EXEC;
     region->start = start;

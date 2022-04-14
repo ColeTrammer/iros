@@ -1,8 +1,10 @@
 #include <string.h>
+#include <sys/param.h>
 
 #include <kernel/arch/i686/asm_utils.h>
 #include <kernel/hal/processor.h>
 #include <kernel/hal/x86/drivers/vga.h>
+#include <kernel/mem/kernel_vm.h>
 #include <kernel/mem/page.h>
 #include <kernel/mem/page_frame_allocator.h>
 #include <kernel/mem/vm_allocator.h>
@@ -198,11 +200,19 @@ void clear_initial_page_mappings() {
     initial_kernel_process.arch_process.cr3 = cr3;
     idle_kernel_process.arch_process.cr3 = cr3;
 
-    uint32_t *pd = create_temp_phys_addr_mapping(cr3 & ~0xFFF);
-    pd[0] = 0;
+    {
+        // NOTE: cr3 must be identity mapped because we haven't cleared the mapping
+        //       yet, so its safe to cast the physical address directly to a virtual
+        //       address.
+        uint32_t *pd = (void *) (cr3 & ~0xFFF);
+        pd[0] = 0;
+    }
 
-    // FIXME: actually clear the initial higher-half page mappings, or ensure the kernel
-    //        does not overwrite the page tables setup by the boot loader.
+    uintptr_t kernel_vm_end = ALIGN_UP(KERNEL_VM_END, PAGE_SIZE);
+    uintptr_t kernel_vm_mapping_end = ALIGN_UP(kernel_vm_end, 2 * 1024 * 1024);
+    for (uintptr_t i = kernel_vm_end; i < kernel_vm_mapping_end; i += PAGE_SIZE) {
+        do_unmap_page(i, false, true, false, &idle_kernel_process);
+    }
 
     load_cr3(cr3);
 }
