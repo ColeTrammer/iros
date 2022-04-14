@@ -740,11 +740,13 @@ void task_do_sig(struct task *task, int signum) {
     switch (behavior) {
         case TERMINATE_AND_DUMP:
             elf64_stack_trace(task, false);
+#ifdef __x86_64__
             if (task == get_current_task() && atomic_load(&task->process->should_profile)) {
                 spin_lock(&task->process->profile_buffer_lock);
                 proc_record_profile_stack(NULL);
                 spin_unlock(&task->process->profile_buffer_lock);
             }
+#endif
             // Fall through
         case TERMINATE:
             if (task->sched_state == EXITING) {

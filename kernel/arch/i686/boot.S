@@ -87,11 +87,51 @@ _start32:
     jmp _l
 
 _valid_bootloader:
-    # Restore the multiboot2 info into edi
-    pop %edi
+    # Setup up the kernel page tables, so we can jump to
+    # the higher-half kernel address.
 
-    # The bootloader should have set things up properly, so
-    # we can let the kernel handle everything in C.
+    # Write PT_LOW to the PD
+    mov $(_PT_LOW - _start32 + _kernel_entry32), %eax
+    or $0x03, %eax
+    mov %eax, (_PD - _start32 + _kernel_entry32)
+
+    # Write PT_HIGH to the PD
+    mov $(_PT_HIGH - _start32 + _kernel_entry32), %eax
+    or $0x03, %eax
+    mov %eax, (_PD - _start32 + _kernel_entry32 + 4 * 768)
+
+    # Write an identity map from 0x000000 to 0x400000
+    mov $(_PT_LOW - _start32 + _kernel_entry32), %eax
+    mov $3, %edx
+    mov $1024, %ecx
+
+_add_page_table_low:
+    mov %edx, (%eax)
+    add $0x1000, %edx
+    add $0x04, %eax
+    loop _add_page_table_low
+
+    # Write an identity map from 0x000000 to 0x400000
+    mov $(_PT_HIGH - _start32 + _kernel_entry32), %eax
+    mov $0x200003, %edx
+    mov $1024, %ecx
+
+_add_page_table_high:
+    mov %edx, (%eax)
+    add $0x1000, %edx
+    add $0x04, %eax
+    loop _add_page_table_high
+
+    # Set cr3
+    mov $(_PD - _start32 + _kernel_entry32), %eax
+    mov %eax, %cr3
+
+    # Enable Paging
+    mov %cr0, %eax
+    or $0x80000001, %eax
+    mov %eax, %cr0
+
+    # Now at last tranfer control to the kernel
     call kernel_main
 
 _l:
@@ -125,6 +165,16 @@ _invalid_boot_loader_str:
 early_stack_bottom:
 .skip 0x100
 early_stack_top:
+
+.align 0x1000
+_KERNEL_PAGE_TABLE_START:
+_PD:
+    .skip 0x1000
+_PT_LOW:
+    .skip 0x1000
+_PT_HIGH:
+    .skip 0x1000
+_KERNEL_PAGE_TABLE_END:
 
 .section .bss.kernel_stack
 .skip 0x1000
