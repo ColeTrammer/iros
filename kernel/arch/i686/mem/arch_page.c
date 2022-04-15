@@ -92,7 +92,7 @@ void do_map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags, 
 
     uint32_t *pd = create_temp_phys_addr_mapping(get_cr3() & ~0xFFF);
     uint32_t *pd_entry = &pd[pd_offset];
-    if (!(pd[pd_offset] & 1)) {
+    if (!(*pd_entry & 1)) {
         *pd_entry = get_next_phys_page(process) | VM_WRITE | (VM_USER & flags) | 0x01;
         zero_pt = true;
     }
@@ -105,10 +105,11 @@ void do_map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags, 
     }
 
     uint32_t *pt_entry = &pt[pt_offset];
-    assert(!(*pt_entry & 1));
 
     *pt_entry = phys_addr | flags;
     do_tlb_flush(virt_addr);
+
+    free_temp_phys_addr_mapping(pt);
 }
 
 void map_page_flags(uintptr_t virt_addr, uint64_t flags64) {

@@ -25,6 +25,7 @@ bool smp_enabled(void) {
 }
 
 struct processor *get_bsp(void) {
+    assert(bsp);
     return bsp;
 }
 

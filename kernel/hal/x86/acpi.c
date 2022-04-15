@@ -113,8 +113,6 @@ void init_acpi(void) {
     free_temp_phys_addr_mapping(rsdt);
     rsdt = NULL;
 
-    debug_log("Xxx\n");
-
     madt = create_temp_phys_addr_mapping(madt_addr);
     if (!validate_table(madt, madt->header.length)) {
         debug_log("MADT is invalid");
