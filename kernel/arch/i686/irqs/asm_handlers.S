@@ -18,15 +18,15 @@ interrupt_handler_\n:
     # Save pointer to task state
     mov %esp, %edx
 
-    push $\n  # Arg 1: IRQ number
-    push %edx # Arg 2: Task state
     xor %edx, %edx # Arg 3: Error code
     push %edx
+    push %edx # Arg 2: Task state
+    push $\n  # Arg 1: IRQ number
 
     call generic_irq_handler
 
     # Remove arguments
-    add $16, %esp
+    add $12, %esp
 
     popw %dx
     movw %dx, %ds
@@ -72,14 +72,14 @@ interrupt_handler_\n:
     # Save pointer to task state
     mov %esp, %edx
 
-    push $\n  # Arg 1: IRQ number
-    push %edx # Arg 2: Task state
     push %eax # Arg 3: Error code
+    push %edx # Arg 2: Task state
+    push $\n  # Arg 1: IRQ number
 
     call generic_irq_handler
 
     # Remove arguments
-    add $16, %esp
+    add $12, %esp
 
     popw %dx
     movw %dx, %ds

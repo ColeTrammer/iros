@@ -78,9 +78,7 @@ void init_vm_allocator(void) {
     kernel_heap.type = VM_KERNEL_HEAP;
     kernel_vm_list = add_vm_region(kernel_vm_list, &kernel_heap);
 
-#if __x86_64__
-    create_phys_id_map();
-#endif
+    vm_bootstrap_temp_page_mapping();
 
     clear_initial_page_mappings();
     for (int i = 0; initrd.start + i < initrd.end; i += PAGE_SIZE) {

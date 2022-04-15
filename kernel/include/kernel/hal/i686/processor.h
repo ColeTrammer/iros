@@ -16,6 +16,12 @@ struct arch_processor {
     uint8_t acpi_id;
     uint8_t local_apic_id;
 
+    // Temp page related data
+    uint32_t temp_page_irq_save;
+    uint32_t temp_page_alloc_count;
+    // NOTE: NULL for bsp, which uses static memory
+    struct vm_region *temp_page_vm;
+
     struct gdt_entry gdt[GDT_ENTRIES];
     struct gdt_descriptor gdt_descriptor;
 };

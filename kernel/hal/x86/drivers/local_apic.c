@@ -249,6 +249,7 @@ static void lapic_timer_calibrate(struct hw_timer *self, struct hw_timer *refere
     reference->ops->setup_one_shot_timer(reference, 0, interval, lapic_do_wakeup);
 
     local_apic->initial_count_register = 0xFFFFFFFFU;
+    debug_log("current: [ %d ]\n", get_current_task()->tid);
     wait_simple(get_current_task(), &lapic_timer_wq);
 
     local_apic->lvt_timer_register.raw_value = (struct local_apic_timer_lvt) { .mask = 1 }.raw_value;

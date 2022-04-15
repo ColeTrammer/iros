@@ -9,6 +9,7 @@ void init_bitset(struct bitset *bitset, void *data, size_t data_bytes, size_t bi
     bitset->data = data;
     bitset->data_bytes = data_bytes;
     bitset->bit_count = bit_count;
+    bitset->owned = false;
 
     assert(bit_count <= data_bytes * CHAR_BIT);
 }

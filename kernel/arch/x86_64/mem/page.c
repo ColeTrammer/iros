@@ -298,7 +298,7 @@ uintptr_t create_clone_process_paging_structure(struct process *process) {
     return pml4_addr;
 }
 
-void create_phys_id_map() {
+void vm_bootstrap_temp_page_mapping() {
     uintptr_t stride = 2 * 1024 * 1024;
     if (cpu_supports_1gb_pages()) {
         stride *= 512;

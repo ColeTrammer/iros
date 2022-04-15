@@ -33,6 +33,8 @@ struct vm_region *find_user_vm_region_by_addr(uintptr_t addr);
 struct vm_region *find_user_vm_region_in_range(uintptr_t start, uintptr_t end);
 struct vm_region *clone_process_vm();
 
+void vm_bootstrap_temp_page_mapping();
+
 void *create_temp_phys_addr_mapping(uintptr_t phys_addr);
 void free_temp_phys_addr_mapping(void *virt_addr);
 

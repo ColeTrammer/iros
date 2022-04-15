@@ -93,7 +93,7 @@ struct acpi_info {
     size_t interrupt_source_overrides_length;
 };
 
-void init_acpi(void);
-struct acpi_info *acpi_get_info(void);
+void init_acpi();
+struct acpi_info *acpi_get_info();
 
 #endif /* _KERNEL_HAL_X86_ACPI_H */

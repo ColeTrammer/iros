@@ -71,7 +71,12 @@ void debug_log_assertion(const char *msg, const char *file, int line, const char
     printf("\n\033[31m");
 #endif /* KERNEL_NO_DEBUG_COLORS */
 
-    printf("( %d ): Assertion failed: %s in %s at %s, line %d\n", get_current_task()->process->pid, msg, func, file, line);
+    if (!bsp_enabled() || get_current_task() == NULL || get_current_task()->process->pid == 1) {
+        printf("Kernel  ( %d:%d ): ", 1, 1);
+    } else {
+        printf("%s ( %d:%d ): ", "Process", get_current_task()->process->pid, get_current_task()->tid);
+    }
+    printf("Assertion failed: %s in %s at %s, line %d\n", msg, func, file, line);
 
 #ifndef KERNEL_NO_DEBUG_COLORS
     printf("\033[0m");

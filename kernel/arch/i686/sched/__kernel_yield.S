@@ -8,14 +8,13 @@ __kernel_yield:
     # Switches stack and then builds task_state struct on that stack
 
     # Save old rsp and provide rip for reentry
-    mov $continue, %eax
-    mov %esp, %edx
+    mov %esp, %eax
 
     push $0x10
-    push %edx
+    push %eax
     pushf
     push $0x08
-    push %eax
+    push $continue
 
     push %eax
     push %ebx

@@ -32,8 +32,7 @@ static void load_task_into_memory(struct task *task) {
 void arch_run_task(struct task *task) {
     load_task_into_memory(task);
     set_current_task(task);
-    assert(false);
-    // __run_task(&task->arch_task);
+    __run_task(&task->arch_task);
 }
 
 void task_setup_user_state(struct task_state *task_state) {
@@ -59,6 +58,8 @@ void arch_init_idle_task(struct task *idle_task, struct processor *processor) {
     idle_task->arch_task.task_state.stack_state.eflags = get_rflags() & ~INTERRUPTS_ENABLED_FLAG;
     idle_task->arch_task.task_state.stack_state.ss = DATA_SELECTOR;
     idle_task->arch_task.task_state.stack_state.esp = processor->kernel_stack->end;
+
+    debug_log("idle task: [ %d ]\n", idle_task->tid);
 
     task_align_fpu(idle_task);
     fninit();

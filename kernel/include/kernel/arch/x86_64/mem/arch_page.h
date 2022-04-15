@@ -36,8 +36,6 @@ struct process;
 void do_map_phys_page(uintptr_t phys_addr, uintptr_t virt_addr, uint64_t flags, bool broadcast_flush_tlb, struct process *process);
 void do_unmap_page(uintptr_t virt_addr, bool free_phys, bool free_phys_structure, bool broadcast_tlb_flush, struct process *process);
 
-void create_phys_id_map();
-
 #endif /* __ASSEMBLER__ */
 
 #endif /* _KERNEL_ARCH_X86_64_MEM_ARCH_PAGE_H */
