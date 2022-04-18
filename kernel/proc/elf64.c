@@ -71,7 +71,12 @@ bool elf64_is_valid(void *buffer) {
         return false;
     }
 
-    if (elf_header->e_ident[EI_CLASS] != ELFCLASS64 || elf_header->e_ident[EI_DATA] != ELFDATA2LSB ||
+#ifdef __x86_64__
+    uint8_t expected_class = ELFCLASS64;
+#else
+    uint8_t expected_class = ELFCLASS32;
+#endif
+    if (elf_header->e_ident[EI_CLASS] != expected_class || elf_header->e_ident[EI_DATA] != ELFDATA2LSB ||
         elf_header->e_ident[EI_VERSION] != EV_CURRENT || elf_header->e_ident[EI_OSABI] != ELFOSABI_SYSV ||
         elf_header->e_ident[EI_ABIVERSION] != 0) {
         return false;
@@ -154,7 +159,7 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
 
     if (data_end >= data_start) {
 #ifdef ELF64_DEBUG
-        debug_log("Creating data region: [ %#.16lX, %lu ]\n", data_start + offset, data_end - data_start);
+        debug_log("Creating data region: [ %p, %" PRIuPTR " ]\n", (void *) data_start + offset, data_end - data_start);
 #endif /* ELF64_DEBUG */
         struct vm_region *data_region = map_region((void *) (data_start + offset), data_end - data_start, PROT_READ | PROT_WRITE,
                                                    MAP_ANON | MAP_PRIVATE, VM_PROCESS_DATA);
@@ -166,7 +171,7 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
 
     if (tls_size != 0) {
 #ifdef ELF64_DEBUG
-        debug_log("Creating tls region: [ %#.16lX, %lu ]\n", data_end + offset, tls_size);
+        debug_log("Creating tls region: [ %p, %lu ]\n", (void *) data_end + offset, tls_size);
 #endif /* ELF64_DEBUG */
         struct vm_region *tls_region =
             map_region((void *) (data_end + offset), tls_size, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, VM_PROCESS_TLS_MASTER_COPY);
@@ -224,7 +229,7 @@ uintptr_t elf64_load_program(void *buffer, size_t length, struct file *execuatab
             case PT_LOAD:
                 if (program_headers[i].p_flags & PF_X) {
 #ifdef ELF64_DEBUG
-                    debug_log("Creating text region: [ %#.16lX, %lu ]\n", program_headers[i].p_vaddr + offset,
+                    debug_log("Creating text region: [ %p, %" PRIuPTR " ]\n", (void *) (program_headers[i].p_vaddr + offset),
                               ((program_headers[i].p_filesz + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE);
 #endif /* ELF64_DEBUG */
                     assert(fs_mmap((void *) (program_headers[i].p_vaddr + offset), program_headers[i].p_filesz, PROT_READ | PROT_EXEC,
@@ -268,7 +273,7 @@ void elf64_map_heap(struct task *task, struct initial_process_info *info) {
     task_heap->type = VM_PROCESS_HEAP;
     task_heap->start = ((info->program_offset + info->program_size) & ~0xFFF) + 100 * PAGE_SIZE;
 #ifdef ELF64_DEBUG
-    debug_log("Heap start: [ %#.16lX ]\n", task_heap->start);
+    debug_log("Heap start: [ %p ]\n", (void *) task_heap->start);
 #endif /* ELF64_DEBUG */
     task_heap->end = task_heap->start;
     task_heap->vm_object = vm_create_anon_object(0);

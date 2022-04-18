@@ -429,129 +429,22 @@ static int printf_internal(bool (*print)(void *obj, const char *s, size_t len), 
             }
             written += width;
         } else if (*format == 'x' || *format == 'X' || *format == 'p') {
+#ifdef __x86_64__
             if (length_modifier == 0 && *format != 'p') {
+#else
+            if (length_modifier == 0 || *format == 'p' || length_modifier == 3 || length_modifier == 5) {
+#endif
                 unsigned int num = va_arg(parameters, unsigned int);
-                size_t len = 1;
-                size_t len_prec;
-                size_t len_width;
-                unsigned int div = 1;
-                while (num / div > 15) {
-                    div *= 16;
-                    len++;
-                }
-                if (precision == 0 && num == 0) {
-                    len = 0;
-                }
-                len_prec = len;
-                len_width = len_prec;
-                if (precision >= 0 && (unsigned int) precision > len) {
-                    len_prec = precision;
-                    len_width = precision;
-                }
-                if ((flags & 0b00001000) | (flags & 0b00000100))
-                    len_width++;
-                if (flags & 0b00000010)
-                    len_width += 2;
-                if ((unsigned int) width < len_width)
-                    width = len_width;
-                if (maxrem < (unsigned int) width) {
-                    // TODO: Set errno to EOVERFLOW.
-                    return -1;
-                }
-                char filler = ' ';
-                if (!((flags & 0b00010000) | (flags & 0b00000001))) {
-                    for (unsigned int i = 0; i < (unsigned int) width - len_width; i++) {
-                        if (!print(obj, &filler, 1))
-                            return -1;
-                    }
-                }
-                if (flags & 0b00001000) {
-                    char plus = '+';
-                    if (!print(obj, &plus, 1))
-                        return -1;
-                } else if (flags & 0b00000100) {
-                    char space = ' ';
-                    if (!print(obj, &space, 1))
-                        return -1;
-                }
-                if (flags & 0b00000010) {
-                    char zero = '0';
-                    if (!print(obj, &zero, 1))
-                        return -1;
-                    if (!print(obj, format, 1))
-                        return -1;
-                }
-                if (!(flags & 0b00010000) && (flags & 0b00000001)) {
-                    filler = '0';
-                    for (unsigned int i = 0; i < (unsigned int) width - len_width; i++) {
-                        if (!print(obj, &filler, 1))
-                            return -1;
-                    }
-                }
-                while (len < len_prec) {
-                    char zero = '0';
-                    if (!print(obj, &zero, 1))
-                        return -1;
-                    len++;
-                }
-                if (num == 0) {
-                    if (precision != 0) {
-                        char zero = '0';
-                        if (!print(obj, &zero, 1))
-                            return -1;
-                    }
-                } else {
-                    char digit;
-                    while (div > 15) {
-                        unsigned int n = num / div;
-                        div /= 16;
-                        digit = n % 16;
-                        if (digit < 10) {
-                            digit += '0';
-                        } else {
-                            digit += *format - ('x' - 'a') - 10;
-                        }
-                        if (!print(obj, &digit, 1))
-                            return -1;
-                    }
-                    digit = num % 16;
-                    if (digit < 10) {
-                        digit += '0';
-                    } else {
-                        digit += *format - ('x' - 'a') - 10;
-                    }
-                    if (!print(obj, &digit, 1))
-                        return -1;
-                }
-                if (flags & 0b00010000) {
-                    for (unsigned int i = 0; i < (unsigned int) width - len_width; i++) {
-                        if (!print(obj, &filler, 1))
-                            return -1;
-                    }
-                }
-                written += width;
-                format++;
-            } else if (length_modifier == 3 || length_modifier == 6 || length_modifier == 5 || *format == 'p') {
-                unsigned long num = va_arg(parameters, unsigned long);
-                if (num == 0 && *format == 'p') {
-                    if (!print(obj, "(null)", 6)) {
-                        return -1;
-                    }
-
-                    written += 6;
-                    format++;
-                    continue;
-                }
-
                 size_t len = 1;
                 size_t len_prec;
                 size_t len_width;
                 char base_char = *format == 'p' ? 'X' : *format;
                 if (*format == 'p') {
-                    precision = 16;
+                    precision = 8;
                     flags |= 0b10;
                 }
-                unsigned long div = 1;
+
+                unsigned int div = 1;
                 while (num / div > 15) {
                     div *= 16;
                     len++;
@@ -620,7 +513,128 @@ static int printf_internal(bool (*print)(void *obj, const char *s, size_t len), 
                 } else {
                     char digit;
                     while (div > 15) {
-                        unsigned long n = num / div;
+                        unsigned int n = num / div;
+                        div /= 16;
+                        digit = n % 16;
+                        if (digit < 10) {
+                            digit += '0';
+                        } else {
+                            digit += base_char - ('x' - 'a') - 10;
+                        }
+                        if (!print(obj, &digit, 1))
+                            return -1;
+                    }
+                    digit = num % 16;
+                    if (digit < 10) {
+                        digit += '0';
+                    } else {
+                        digit += base_char - ('x' - 'a') - 10;
+                    }
+                    if (!print(obj, &digit, 1))
+                        return -1;
+                }
+                if (flags & 0b00010000) {
+                    for (unsigned int i = 0; i < (unsigned int) width - len_width; i++) {
+                        if (!print(obj, &filler, 1))
+                            return -1;
+                    }
+                }
+                written += width;
+                format++;
+#ifdef __x86_64__
+            } else if (length_modifier == 3 || length_modifier == 6 || length_modifier == 5 || *format == 'p') {
+#else
+            } else if (length_modifier == 6) {
+#endif
+                uint64_t num = va_arg(parameters, uint64_t);
+                if (num == 0 && *format == 'p') {
+                    if (!print(obj, "(null)", 6)) {
+                        return -1;
+                    }
+
+                    written += 6;
+                    format++;
+                    continue;
+                }
+
+                size_t len = 1;
+                size_t len_prec;
+                size_t len_width;
+                char base_char = *format == 'p' ? 'X' : *format;
+                if (*format == 'p') {
+                    precision = 16;
+                    flags |= 0b10;
+                }
+                uint64_t div = 1;
+                while (num / div > 15) {
+                    div *= 16;
+                    len++;
+                }
+                if (precision == 0 && num == 0) {
+                    len = 0;
+                }
+                len_prec = len;
+                len_width = len_prec;
+                if (precision >= 0 && (unsigned int) precision > len) {
+                    len_prec = precision;
+                    len_width = precision;
+                }
+                if ((flags & 0b00001000) | (flags & 0b00000100))
+                    len_width++;
+                if (flags & 0b00000010)
+                    len_width += 2;
+                if ((unsigned int) width < len_width)
+                    width = len_width;
+                if (maxrem < (unsigned int) width) {
+                    // TODO: Set errno to EOVERFLOW.
+                    return -1;
+                }
+                char filler = ' ';
+                if (!((flags & 0b00010000) | (flags & 0b00000001))) {
+                    for (unsigned int i = 0; i < (unsigned int) width - len_width; i++) {
+                        if (!print(obj, &filler, 1))
+                            return -1;
+                    }
+                }
+                if (flags & 0b00001000) {
+                    char plus = '+';
+                    if (!print(obj, &plus, 1))
+                        return -1;
+                } else if (flags & 0b00000100) {
+                    char space = ' ';
+                    if (!print(obj, &space, 1))
+                        return -1;
+                }
+                if (flags & 0b00000010) {
+                    char zero = '0';
+                    if (!print(obj, &zero, 1))
+                        return -1;
+                    if (!print(obj, &base_char, 1))
+                        return -1;
+                }
+                if (!(flags & 0b00010000) && (flags & 0b00000001)) {
+                    filler = '0';
+                    for (unsigned int i = 0; i < (unsigned int) width - len_width; i++) {
+                        if (!print(obj, &filler, 1))
+                            return -1;
+                    }
+                }
+                while (len < len_prec) {
+                    char zero = '0';
+                    if (!print(obj, &zero, 1))
+                        return -1;
+                    len++;
+                }
+                if (num == 0) {
+                    if (precision != 0) {
+                        char zero = '0';
+                        if (!print(obj, &zero, 1))
+                            return -1;
+                    }
+                } else {
+                    char digit;
+                    while (div > 15) {
+                        uint64_t n = num / div;
                         div /= 16;
                         digit = n % 16;
                         if (digit < 10) {

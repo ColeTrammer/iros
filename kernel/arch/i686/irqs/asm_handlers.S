@@ -15,7 +15,7 @@ interrupt_handler_\n:
 .global interrupt_handler_\n
 interrupt_handler_\n:
     # Error code is already pushed, so just push IRQ number
-    push \n
+    push $\n
     jmp _irq_entry_common
 .size interrupt_handler_\n, . - interrupt_handler_\n
 .endm
@@ -37,7 +37,7 @@ _irq_entry_common:
     # Check if the irq was from kernel or userspace
     # Load the old %cs value into %eax
     mov 16(%esp), %ecx
-    and $3, %eax
+    and $3, %ecx
     jz _irq_entry_from_kernelspace
     jmp _irq_entry_from_userspace
 
