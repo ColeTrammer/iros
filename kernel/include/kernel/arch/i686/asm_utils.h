@@ -31,10 +31,16 @@ static inline uint32_t get_cr3() {
     return cr3;
 }
 
-static inline uint64_t get_base_pointer() {
+static inline uint32_t get_base_pointer() {
     uint32_t ebp;
     asm volatile("mov %%ebp, %0" : "=a"(ebp) : :);
     return ebp;
+}
+
+static inline uint32_t get_stack_pointer() {
+    uint32_t esp;
+    asm volatile("mov %%ebp, %0" : "=a"(esp) : :);
+    return esp;
 }
 
 static inline uint32_t get_rflags() {

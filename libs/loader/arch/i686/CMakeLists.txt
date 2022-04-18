@@ -1,4 +1,4 @@
-set(ARCH_CFLAGS -mno-mmx -mno-sse -mno-sse2 PARENT_SCOPE)
+set(ARCH_CFLAGS -mno-mmx -mno-sse -mno-sse2 -mno-red-zone PARENT_SCOPE)
 set(ARCHDIR arch/i686)
 
 set(ARCH_SOURCES
