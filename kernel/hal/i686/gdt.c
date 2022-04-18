@@ -69,5 +69,6 @@ void init_gdt(struct processor *processor) {
 
 /* Must be called from unpremptable context */
 void set_tss_stack_pointer(uintptr_t rsp) {
+    get_current_processor()->arch_processor.tss.ss0 = DATA_SELECTOR;
     get_current_processor()->arch_processor.tss.esp0 = rsp;
 }

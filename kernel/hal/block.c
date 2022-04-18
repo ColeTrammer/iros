@@ -217,14 +217,18 @@ struct phys_page *block_generic_read_page(struct block_device *self, off_t block
 
     uint64_t blocks_to_read = PAGE_SIZE / self->block_size;
 
-    // NOTE: if this operation is ever blocking, we would need to allocate a permenant buffer.
-    void *buffer = create_temp_phys_addr_mapping(page->phys_addr);
+    // FIXME: we can do better by pre-resesrving vm space per block device.
+    void *buffer = malloc(PAGE_SIZE);
     if (self->op->read(self, buffer, blocks_to_read, block_offset) != (int64_t) blocks_to_read) {
-        free_temp_phys_addr_mapping(buffer);
+        free(buffer);
         drop_phys_page(page);
         return NULL;
     }
-    free_temp_phys_addr_mapping(buffer);
+
+    void *vm_page = create_temp_phys_addr_mapping(page->phys_addr);
+    memcpy(vm_page, buffer, PAGE_SIZE);
+    free_temp_phys_addr_mapping(vm_page);
+    free(buffer);
 
     return page;
 }
@@ -232,13 +236,17 @@ struct phys_page *block_generic_read_page(struct block_device *self, off_t block
 int block_generic_sync_page(struct block_device *self, struct phys_page *page) {
     uint64_t blocks_to_write = PAGE_SIZE / self->block_size;
 
-    // NOTE: if this operation is ever blocking, we would need to allocate a permenant buffer.
-    void *buffer = create_temp_phys_addr_mapping(page->phys_addr);
+    // FIXME: we can do better by pre-resesrving vm space per block device.
+    void *buffer = malloc(PAGE_SIZE);
+    void *vm_page = create_temp_phys_addr_mapping(page->phys_addr);
+    memcpy(buffer, vm_page, PAGE_SIZE);
+    free_temp_phys_addr_mapping(vm_page);
+
     if (self->op->write(self, buffer, blocks_to_write, page->block_offset) != (int64_t) blocks_to_write) {
-        free_temp_phys_addr_mapping(buffer);
+        free(buffer);
         return -EIO;
     }
-    free_temp_phys_addr_mapping(buffer);
+    free(buffer);
 
     return 0;
 }

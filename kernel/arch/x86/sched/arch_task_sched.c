@@ -9,6 +9,7 @@
 void sched_tick(struct task_state *task_state) {
     struct task *current_task = get_current_task();
     memcpy(&current_task->arch_task.task_state, task_state, sizeof(struct task_state));
+    // debug_log("~tick eip: [ %p ]\n", (void *) task_state->stack_state.esp);
     if (!current_task->kernel_task) {
         fxsave(current_task->fpu.aligned_state);
     }

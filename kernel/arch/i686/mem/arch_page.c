@@ -29,7 +29,7 @@ uintptr_t get_phys_addr(uintptr_t virt_addr) {
     free_temp_phys_addr_mapping(pt);
 
     assert(pt_entry & 1);
-    return pt_entry & ~0x3FF;
+    return (pt_entry & ~0x3FF) + (virt_addr & 0xFFF);
 }
 
 static bool all_empty(uint32_t *page) {

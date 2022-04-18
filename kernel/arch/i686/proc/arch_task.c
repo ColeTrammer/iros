@@ -29,10 +29,16 @@ static void load_task_into_memory(struct task *task) {
 }
 
 /* Must be called from unpremptable context */
+void __arch_run_task(struct arch_task *task) {
+    // debug_log("eip: [ %p ]\n", (void *) task_get_stack_pointer(&task->task_state));
+    __run_task(task);
+}
+
+/* Must be called from unpremptable context */
 void arch_run_task(struct task *task) {
     load_task_into_memory(task);
     set_current_task(task);
-    __run_task(&task->arch_task);
+    __arch_run_task(&task->arch_task);
 }
 
 void task_setup_user_state(struct task_state *task_state) {
@@ -44,6 +50,12 @@ void task_setup_user_state(struct task_state *task_state) {
 void arch_load_kernel_task(struct task *task, uintptr_t entry) {
     task->process->arch_process.cr3 = idle_kernel_process.arch_process.cr3;
     task->arch_task.task_state.cpu_state.ebp = task->kernel_stack->end;
+
+    task->arch_task.task_state.cpu_state.ds = DATA_SELECTOR;
+    task->arch_task.task_state.cpu_state.es = DATA_SELECTOR;
+    task->arch_task.task_state.cpu_state.fs = DATA_SELECTOR;
+    task->arch_task.task_state.cpu_state.gs = GS_PROCESSOR_SELECTOR;
+
     task->arch_task.task_state.stack_state.eip = entry;
     task->arch_task.task_state.stack_state.cs = CS_SELECTOR;
     task->arch_task.task_state.stack_state.eflags = get_rflags() | INTERRUPTS_ENABLED_FLAG;
@@ -53,13 +65,16 @@ void arch_load_kernel_task(struct task *task, uintptr_t entry) {
 }
 
 void arch_init_idle_task(struct task *idle_task, struct processor *processor) {
+    idle_task->arch_task.task_state.cpu_state.ds = DATA_SELECTOR;
+    idle_task->arch_task.task_state.cpu_state.es = DATA_SELECTOR;
+    idle_task->arch_task.task_state.cpu_state.fs = DATA_SELECTOR;
+    idle_task->arch_task.task_state.cpu_state.gs = GS_PROCESSOR_SELECTOR;
+
     idle_task->arch_task.task_state.stack_state.eip = (uintptr_t) &kernel_idle;
     idle_task->arch_task.task_state.stack_state.cs = CS_SELECTOR;
     idle_task->arch_task.task_state.stack_state.eflags = get_rflags() & ~INTERRUPTS_ENABLED_FLAG;
     idle_task->arch_task.task_state.stack_state.ss = DATA_SELECTOR;
     idle_task->arch_task.task_state.stack_state.esp = processor->kernel_stack->end;
-
-    debug_log("idle task: [ %d ]\n", idle_task->tid);
 
     task_align_fpu(idle_task);
     fninit();

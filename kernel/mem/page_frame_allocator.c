@@ -49,7 +49,7 @@ static uintptr_t try_get_next_phys_page(struct process *process) {
 
         process->resident_memory += PAGE_SIZE;
 #ifdef PAGE_FRAME_ALLOCATOR_DEBUG
-        debug_log("allocated: [ %#.16lX ]\n", bit_index * PAGE_SIZE);
+        debug_log("allocated: [ %#.16" PRIXPTR " ]\n", (uintptr_t) (page_index * PAGE_SIZE));
 #endif /* PAGE_FRAME_ALLOCATOR_DEBUG */
         return page_index * PAGE_SIZE;
     }
@@ -94,7 +94,7 @@ uintptr_t get_contiguous_pages(size_t pages) {
 
 void free_phys_page(uintptr_t phys_addr, struct process *process) {
 #ifdef PAGE_FRAME_ALLOCATOR_DEBUG
-    debug_log("freed: [ %#.16lX ]\n", phys_addr);
+    debug_log("freed: [ %#.16" PRIXPTR " ]\n", phys_addr);
 #endif /* PAGE_FRAME_ALLOCATOR_DEBUG */
 
     spin_lock(&bitmap_lock);
