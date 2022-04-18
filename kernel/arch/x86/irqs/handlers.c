@@ -117,9 +117,9 @@ static bool handle_page_fault(struct irq_context *context) {
     // In this case we just need to map in a region that's allocation was put off by the kernel
     struct vm_region *vm_region = find_user_vm_region_by_addr(address);
 
-#ifdef PAGE_FAULT_DEBUG
-    debug_log("%d page faulted: [ %#.16lX, %#.16lX, %#.16lX, %u, %p ]\n", current->process->pid, task_state->stack_state.rsp,
-              task_state->stack_state.rip, address, error_code, vm_region);
+#ifndef PAGE_FAULT_DEBUG
+    debug_log("%d page faulted: [ %p, %p, %p, %u, %p ]\n", current->process->pid, (void *) task_get_stack_pointer(task_state),
+              (void *) task_get_instruction_pointer(task_state), (void *) address, error_code, vm_region);
 #endif /* PAGE_FAULT_DEBUG */
 
     if (vm_region && !(error_code & 1) && address != vm_region->end && !(vm_region->flags & VM_PROT_NONE) && !(vm_region->flags & VM_COW)) {

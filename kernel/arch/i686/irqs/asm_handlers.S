@@ -1,64 +1,74 @@
+#include <kernel/hal/i686/gdt.h>
+
 .section .text
 .macro no_error_code_interrupt_handler n
 .global interrupt_handler_\n
-interrupt_handler_\n:   
-    push %eax
-    push %ebx
-    push %ecx
-    push %edx
-    push %esi
-    push %edi
-    push %ebp
-
-    pushw %gs
-    pushw %fs
-    pushw %es
-    pushw %ds
-
-    # Save pointer to task state
-    mov %esp, %edx
-
-    xor %edx, %edx # Arg 3: Error code
-    push %edx
-    push %edx # Arg 2: Task state
-    push $\n  # Arg 1: IRQ number
-
-    call generic_irq_handler
-
-    # Remove arguments
-    add $12, %esp
-
-    popw %dx
-    movw %dx, %ds
-    popw %dx
-    movw %dx, %es
-    popw %dx
-    movw %dx, %fs
-    popw %dx
-    movw %dx, %gs
-
-    pop %ebp
-    pop %edi
-    pop %esi
-    pop %edx
-    pop %ecx
-    pop %ebx
-    pop %eax
-
-    iret
+interrupt_handler_\n:
+    # Push 0 error code and IRQ number
+    push $0
+    push $\n
+    jmp _irq_entry_common
 .size interrupt_handler_\n, . - interrupt_handler_\n
 .endm
 
 .macro interrupt_handler n
 .global interrupt_handler_\n
 interrupt_handler_\n:
-    # Swap error code with %eax
-    xor (%esp), %eax
-    xor %eax, (%esp)
-    xor (%esp), %eax
+    # Error code is already pushed, so just push IRQ number
+    push \n
+    jmp _irq_entry_common
+.size interrupt_handler_\n, . - interrupt_handler_\n
+.endm
 
-    push %ebx
+_irq_entry_common:
+    # Swap error code with %eax
+    xor 4(%esp), %eax
+    xor %eax, 4(%esp)
+    xor 4(%esp), %eax
+
+    # Swap irq number with %ebx
+    xor 0(%esp), %ebx
+    xor %ebx, 0(%esp)
+    xor 0(%esp), %ebx
+
+    # Save %ecx on stack
     push %ecx
+
+    # Check if the irq was from kernel or userspace
+    # Load the old %cs value into %eax
+    mov 16(%esp), %ecx
+    and $3, %eax
+    jz _irq_entry_from_kernelspace
+    jmp _irq_entry_from_userspace
+
+_irq_entry_from_kernelspace:
+    # FIXME: this could also switch the current stack out
+
+    # Reserve stack space for saved %ss and %esp
+    sub $8, %esp
+
+    # Move 6 words currently on the stack over
+    mov 8(%esp), %ecx
+    mov %ecx, 0(%esp)
+    mov 12(%esp), %ecx
+    mov %ecx, 4(%esp)
+    mov 16(%esp), %ecx
+    mov %ecx, 8(%esp)
+    mov 20(%esp), %ecx
+    mov %ecx, 12(%esp)
+    mov 24(%esp), %ecx
+    mov %ecx, 16(%esp)
+    mov 28(%esp), %ecx
+    mov %ecx, 20(%esp)
+
+    # Put %ss and %esp onto stack
+    movl $DATA_SELECTOR, 28(%esp)
+    lea 32(%esp), %ecx
+    mov %ecx, 24(%esp)
+
+    # Fall through to save the rest of the registers, and handle IRQ
+
+_irq_entry_from_userspace:
     push %edx
     push %esi
     push %edi
@@ -70,37 +80,25 @@ interrupt_handler_\n:
     pushw %ds
 
     # Save pointer to task state
-    mov %esp, %edx
+    mov %esp, %edi
 
-    push %eax # Arg 3: Error code
-    push %edx # Arg 2: Task state
-    push $\n  # Arg 1: IRQ number
+    # Ensure stack is 16 byte aligned
+    sub $12, %esp
+    and $0xFFFFFFF0, %esp
+
+    mov %eax, 8(%esp) # Arg 3: Errpr Code
+    mov %edi, 4(%esp) # Arg 2: Task state
+    mov %ebx, 0(%esp) # Arg 1: IRQ number
 
     call generic_irq_handler
 
-    # Remove arguments
-    add $12, %esp
+    # Resume the task properly
+    mov %edi, 0(%esp)
+    call __run_task
 
-    popw %dx
-    movw %dx, %ds
-    popw %dx
-    movw %dx, %es
-    popw %dx
-    movw %dx, %fs
-    popw %dx
-    movw %dx, %gs
-
-    pop %ebp
-    pop %edi
-    pop %esi
-    pop %edx
-    pop %ecx
-    pop %ebx
-    pop %eax
-
-    iret
-.size interrupt_handler_\n, . - interrupt_handler_\n
-.endm
+__ll:
+    jmp __ll
+.size _irq_entry_common, . - _irq_entry_common
 
 no_error_code_interrupt_handler 0
 no_error_code_interrupt_handler 1

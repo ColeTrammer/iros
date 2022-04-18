@@ -132,7 +132,7 @@ _add_page_table_high:
     mov %eax, %cr0
 
     # Restore multiboot info into %edx
-    pop %edx
+    pop %ebx
 
     # Set eip to the new higher half address space
     lea higher_half, %ecx
@@ -141,9 +141,11 @@ _add_page_table_high:
 higher_half:
     # Load higher half stack
     mov $BOOT_KERNEL_VM_STACK_START, %esp
-    
+
     # Now at last tranfer control to the kernel
-    push %edx
+    sub $16, %esp
+
+    mov %ebx, 0(%esp)
     call kernel_main
 
 _l:

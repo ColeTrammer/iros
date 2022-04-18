@@ -204,7 +204,7 @@ void free_program_args(struct args_context *context) {
 }
 
 static spinlock_t tid_lock;
-static int tid_counter = 1;
+static int tid_counter = 2;
 
 int get_next_tid() {
     spin_lock(&tid_lock);

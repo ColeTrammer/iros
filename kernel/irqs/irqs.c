@@ -1,5 +1,6 @@
 #include <stdlib.h>
 
+#include <kernel/hal/hal.h>
 #include <kernel/hal/processor.h>
 #include <kernel/irqs/handlers.h>
 #include <kernel/proc/task.h>
@@ -108,7 +109,7 @@ void generic_irq_handler(int irq_number, struct task_state *task_state, uint32_t
     (void) error_code;
 
 #ifdef GENERIC_IRQ_DEBUG
-    debug_log("Got IRQ: [ %u, %d ]\n", get_current_processor()->id, irq_number);
+    debug_log("~Got IRQ: [ %u, %d, %p ]\n", get_current_processor()->id, irq_number, (void *) task_get_stack_pointer(task_state));
 #endif /* GENERIC_IRQ_DEBUG */
 
     struct irq_controller *controller = find_irq_controller(irq_number);

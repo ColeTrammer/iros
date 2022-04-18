@@ -30,7 +30,10 @@ __kernel_yield:
     pushw %ds
 
     # Set up argument to scheduler
-    push %esp
+    mov %esp, %eax
+    sub $0x4, %esp
+    and $0xFFFFFFF0, %esp
+    mov %eax, 0(%esp)
 
     cli
     call arch_sched_run_next
