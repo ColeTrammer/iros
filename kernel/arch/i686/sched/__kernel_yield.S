@@ -1,3 +1,5 @@
+#include <kernel/hal/i686/gdt.h>
+
 .section .text
 .global __kernel_yield
 .type __kernel_yield, @function
@@ -7,13 +9,13 @@ __kernel_yield:
 
     # Switches stack and then builds task_state struct on that stack
 
-    # Save old rsp and provide rip for reentry
+    # Save old rsp
     mov %esp, %eax
 
-    push $0x10
+    push $DATA_SELECTOR
     push %eax
     pushf
-    push $0x08
+    push $CS_SELECTOR
     push $continue
 
     push %eax
