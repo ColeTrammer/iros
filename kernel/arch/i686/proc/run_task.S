@@ -5,7 +5,7 @@ __run_task:
     mov 4(%esp), %edi
 
     # Loads stored cs register
-    mov 40(%esp), %eax
+    mov 40(%edi), %eax
     and $3, %eax
     jz __run_task_kernelspace
     jmp __run_task_userspace
