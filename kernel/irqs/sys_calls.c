@@ -27,7 +27,6 @@
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
-#include <kernel/hal/x86_64/gdt.h>
 #include <kernel/irqs/handlers.h>
 #include <kernel/mem/anon_vm_object.h>
 #include <kernel/mem/vm_allocator.h>
@@ -52,93 +51,93 @@
 // #define USER_MUTEX_DEBUG
 // #define WAIT_PID_DEBUG
 
-#define SYS_CALL(n) void arch_sys_##n(struct task_state *task_state)
+#define SYS_CALL(n) void sys_##n##_entry(struct task_state *task_state)
 
 #define SYS_VALIDATE(n, a, f)               \
     do {                                    \
         __DO_VALIDATE(n, a, f, SYS_RETURN); \
     } while (0)
 
-#define SYS_PARAM(t, n, r) t n = (t) task_state->cpu_state.r
+#define SYS_PARAM(t, n, r) t n = (t) task_get_sys_call_arg##r(task_state)
 #define SYS_PARAM_VALIDATE(t, n, r, f, a) \
     SYS_PARAM(t, n, r);                   \
     do {                                  \
         SYS_VALIDATE(n, a, f);            \
     } while (0)
-#define SYS_PARAM_TRANSFORM(t, n, ot, r, f)            \
-    t n;                                               \
-    do {                                               \
-        int ret = f((ot) task_state->cpu_state.r, &n); \
-        if (ret < 0) {                                 \
-            SYS_RETURN(ret);                           \
-        }                                              \
+#define SYS_PARAM_TRANSFORM(t, n, ot, r, f)                         \
+    t n;                                                            \
+    do {                                                            \
+        int ret = f((ot) task_get_sys_call_arg##r(task_state), &n); \
+        if (ret < 0) {                                              \
+            SYS_RETURN(ret);                                        \
+        }                                                           \
     } while (0)
 
-#define SYS_PARAM1(t, n) SYS_PARAM(t, n, rdi)
-#define SYS_PARAM2(t, n) SYS_PARAM(t, n, rsi)
-#define SYS_PARAM3(t, n) SYS_PARAM(t, n, rdx)
-#define SYS_PARAM4(t, n) SYS_PARAM(t, n, r8)
-#define SYS_PARAM5(t, n) SYS_PARAM(t, n, r9)
-#define SYS_PARAM6(t, n) SYS_PARAM(t, n, r10)
+#define SYS_PARAM1(t, n) SYS_PARAM(t, n, 1)
+#define SYS_PARAM2(t, n) SYS_PARAM(t, n, 2)
+#define SYS_PARAM3(t, n) SYS_PARAM(t, n, 3)
+#define SYS_PARAM4(t, n) SYS_PARAM(t, n, 4)
+#define SYS_PARAM5(t, n) SYS_PARAM(t, n, 5)
+#define SYS_PARAM6(t, n) SYS_PARAM(t, n, 6)
 
-#define SYS_PARAM1_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, rdi, f, a)
-#define SYS_PARAM2_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, rsi, f, a)
-#define SYS_PARAM3_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, rdx, f, a)
-#define SYS_PARAM4_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, r8, f, a)
-#define SYS_PARAM5_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, r9, f, a)
-#define SYS_PARAM6_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, r10, f, a)
+#define SYS_PARAM1_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, 1, f, a)
+#define SYS_PARAM2_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, 2, f, a)
+#define SYS_PARAM3_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, 3, f, a)
+#define SYS_PARAM4_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, 4, f, a)
+#define SYS_PARAM5_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, 5, f, a)
+#define SYS_PARAM6_VALIDATE(t, n, f, a) SYS_PARAM_VALIDATE(t, n, 6, f, a)
 
-#define SYS_PARAM1_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, rdi, f)
-#define SYS_PARAM2_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, rsi, f)
-#define SYS_PARAM3_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, rdx, f)
-#define SYS_PARAM4_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, r8, f)
-#define SYS_PARAM5_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, r9, f)
-#define SYS_PARAM6_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, r10, f)
+#define SYS_PARAM1_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, 1, f)
+#define SYS_PARAM2_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, 2, f)
+#define SYS_PARAM3_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, 3, f)
+#define SYS_PARAM4_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, 4, f)
+#define SYS_PARAM5_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, 5, f)
+#define SYS_PARAM6_TRANSFORM(t, n, ot, f) SYS_PARAM_TRANSFORM(t, n, ot, 6, f)
 
-#define SYS_BEGIN()                                                                                \
-    do {                                                                                           \
-        get_current_task()->user_task_state = (task_state);                                        \
-        get_current_task()->last_system_call = get_current_task()->user_task_state->cpu_state.rax; \
-        get_current_task()->user_task_state->cpu_state.rax = -EINTR;                               \
-        get_current_task()->in_kernel = true;                                                      \
-        get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;                                 \
-        enable_interrupts();                                                                       \
+#define SYS_BEGIN()                                                                                           \
+    do {                                                                                                      \
+        get_current_task()->user_task_state = (task_state);                                                   \
+        get_current_task()->last_system_call = task_get_sys_call_number(get_current_task()->user_task_state); \
+        task_set_sys_call_return_value(get_current_task()->user_task_state, -EINTR);                          \
+        get_current_task()->in_kernel = true;                                                                 \
+        get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;                                            \
+        enable_interrupts();                                                                                  \
     } while (0)
 
-#define SYS_BEGIN_CAN_SEND_SELF_SIGNALS()                                                          \
-    do {                                                                                           \
-        get_current_task()->user_task_state = (task_state);                                        \
-        get_current_task()->last_system_call = get_current_task()->user_task_state->cpu_state.rax; \
-        get_current_task()->in_kernel = true;                                                      \
-        get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;                                 \
-        get_current_task()->user_task_state->cpu_state.rax = 0;                                    \
-        enable_interrupts();                                                                       \
+#define SYS_BEGIN_CAN_SEND_SELF_SIGNALS()                                                                     \
+    do {                                                                                                      \
+        get_current_task()->user_task_state = (task_state);                                                   \
+        get_current_task()->last_system_call = task_get_sys_call_number(get_current_task()->user_task_state); \
+        get_current_task()->in_kernel = true;                                                                 \
+        get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;                                            \
+        task_set_sys_call_return_value(get_current_task()->user_task_state, 0);                               \
+        enable_interrupts();                                                                                  \
     } while (0)
 
-#define SYS_BEGIN_SIGSUSPEND()                                                                     \
-    do {                                                                                           \
-        get_current_task()->user_task_state = (task_state);                                        \
-        get_current_task()->last_system_call = get_current_task()->user_task_state->cpu_state.rax; \
-        get_current_task()->user_task_state->cpu_state.rax = -EINTR;                               \
-        get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;                                 \
-        get_current_task()->in_kernel = true;                                                      \
-        get_current_task()->in_sigsuspend = true;                                                  \
+#define SYS_BEGIN_SIGSUSPEND()                                                                                \
+    do {                                                                                                      \
+        get_current_task()->user_task_state = (task_state);                                                   \
+        get_current_task()->last_system_call = task_get_sys_call_number(get_current_task()->user_task_state); \
+        task_set_sys_call_return_value(get_current_task()->user_task_state, -EINTR);                          \
+        get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;                                            \
+        get_current_task()->in_kernel = true;                                                                 \
+        get_current_task()->in_sigsuspend = true;                                                             \
     } while (0)
 
-#define SYS_BEGIN_PSELECT()                                                                        \
-    do {                                                                                           \
-        get_current_task()->user_task_state = (task_state);                                        \
-        get_current_task()->last_system_call = get_current_task()->user_task_state->cpu_state.rax; \
-        get_current_task()->user_task_state->cpu_state.rax = -EINTR;                               \
-        get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;                                 \
-        get_current_task()->in_kernel = true;                                                      \
+#define SYS_BEGIN_PSELECT()                                                                                   \
+    do {                                                                                                      \
+        get_current_task()->user_task_state = (task_state);                                                   \
+        get_current_task()->last_system_call = task_get_sys_call_number(get_current_task()->user_task_state); \
+        task_set_sys_call_return_value(get_current_task()->user_task_state, -EINTR);                          \
+        get_current_task()->sched_state = RUNNING_UNINTERRUPTIBLE;                                            \
+        get_current_task()->in_kernel = true;                                                                 \
     } while (0)
 
 #define SYS_RETURN(val)                                          \
     do {                                                         \
-        uint64_t _val = (uint64_t) (val);                        \
+        uintptr_t _val = (uintptr_t) (val);                      \
         disable_interrupts();                                    \
-        task_state->cpu_state.rax = (_val);                      \
+        task_set_sys_call_return_value(task_state, _val);        \
         task_do_sigs_if_needed(get_current_task());              \
         task_yield_if_state_changed(get_current_task());         \
         get_current_task()->in_kernel = false;                   \
@@ -149,9 +148,9 @@
 
 #define SYS_RETURN_DONT_CHECK_SIGNALS(val)                       \
     do {                                                         \
-        uint64_t _val = (uint64_t) (val);                        \
+        uintptr_t _val = (uintptr_t) (val);                      \
         disable_interrupts();                                    \
-        task_state->cpu_state.rax = (_val);                      \
+        task_set_sys_call_return_value(task_state, _val);        \
         task_yield_if_state_changed(get_current_task());         \
         get_current_task()->in_kernel = false;                   \
         get_current_task()->user_task_state = NULL;              \
@@ -163,7 +162,7 @@
     do {                                                                        \
         uint64_t _val = (uint64_t) (val);                                       \
         disable_interrupts();                                                   \
-        task_state->cpu_state.rax = (_val);                                     \
+        task_set_sys_call_return_value(task_state, _val);                       \
         if (_val == (uint64_t) -EINTR) {                                        \
             task_do_sigs_if_needed(get_current_task());                         \
             task_yield_if_state_changed(get_current_task());                    \
@@ -316,11 +315,13 @@ SYS_CALL(exit) {
         SYS_RETURN_NORETURN();
     }
 
+#ifdef __x86_64__
     if (process->should_profile) {
         spin_lock(&process->profile_buffer_lock);
         proc_record_profile_stack(NULL);
         spin_unlock(&process->profile_buffer_lock);
     }
+#endif
 
     exit_process(process, NULL);
     proc_set_process_state(process, PS_TERMINATED, exit_code, false);
@@ -735,7 +736,7 @@ SYS_CALL(sigaction) {
 
 SYS_CALL(sigreturn) {
     struct task *task = get_current_task();
-    siginfo_t *info = (siginfo_t *) (((uint64_t *) task_state->stack_state.rsp) + 1);
+    siginfo_t *info = (siginfo_t *) (((uint64_t *) task_get_stack_pointer(task_state)) + 1);
     ucontext_t *context = (ucontext_t *) (info + 1);
     uint8_t *saved_fpu_state = (uint8_t *) (context + 1);
 #ifdef SIGRETURN_DEBUG
@@ -1100,8 +1101,7 @@ SYS_CALL(create_task) {
     uintptr_t new_rsp = (args->stack_start - sizeof(uintptr_t)) & ~0xF;
     SYS_VALIDATE((uintptr_t *) new_rsp, sizeof(uintptr_t), validate_write);
 
-    debug_log("Creating task: [ %#.16lX, %#.16lX, %#.16lX, %#.16lX ]\n", args->entry, args->stack_start, (uintptr_t) args->tid_ptr,
-              (uintptr_t) args->thread_self_pointer);
+    debug_log("Creating task: [ %#.16lX, %#.16lX, %p, %p ]\n", args->entry, args->stack_start, args->tid_ptr, args->thread_self_pointer);
 
     struct task *current = get_current_task();
     proc_bump_process(current->process);
@@ -1124,14 +1124,7 @@ SYS_CALL(create_task) {
     task->kernel_stack = vm_allocate_kernel_region(KERNEL_STACK_SIZE);
     task->arch_task.user_thread_pointer = args->thread_self_pointer;
 
-    task->arch_task.task_state.stack_state.cs = current->user_task_state->stack_state.cs;
-    task->arch_task.task_state.stack_state.rip = args->entry;
-    task->arch_task.task_state.stack_state.rflags = current->user_task_state->stack_state.rflags;
-    task->arch_task.task_state.stack_state.rsp = new_rsp;
-    assert(new_rsp % 16 == 0);
-    *((uintptr_t *) new_rsp) = args->push_onto_stack;
-    task->arch_task.task_state.stack_state.ss = current->user_task_state->stack_state.ss;
-    task->arch_task.task_state.cpu_state.rdi = (uint64_t) args->arg;
+    arch_sys_create_task(task, args->entry, new_rsp, args->push_onto_stack, args->arg);
 
     *args->tid_ptr = task->tid;
 
@@ -1260,10 +1253,13 @@ SYS_CALL(set_thread_self_pointer) {
     SYS_PARAM2(struct __locked_robust_mutex_node **, locked_robust_mutex_list_head);
 
     struct task *current = get_current_task();
-    current->arch_task.user_thread_pointer = thread_self_pointer;
     current->locked_robust_mutex_list_head = locked_robust_mutex_list_head;
 
-    set_msr(MSR_FS_BASE, (uint64_t) thread_self_pointer);
+    // Ensure interrupts are disabled since this following code can may change
+    // the processor state.
+    disable_interrupts();
+
+    arch_task_set_thread_self_pointer(current, thread_self_pointer);
 
     SYS_RETURN(0);
 }
@@ -2063,25 +2059,25 @@ void do_syscall(struct task_state *task_state) {
         debug_log("syscall: %s\n", #x); \
         break;
     if (get_current_task()->process->should_trace) {
-        switch ((enum sc_number) task_state->cpu_state.rax) {
+        switch (task_get_sys_call_number(task_state)) {
             ENUMERATE_SYSCALLS
             default:
-                debug_log("unknown syscall: [ %d ]\n", (enum sc_number) task_state->cpu_state.rax);
+                debug_log("unknown syscall: [ %#.8X ]\n", task_get_sys_call_number(task_state));
                 break;
         }
     }
 #endif /* SYSCALL_DEBUG */
 
 #undef __ENUMERATE_SYSCALL
-#define __ENUMERATE_SYSCALL(x, a) \
-    case SYS_##x:                 \
-        arch_sys_##x(task_state); \
+#define __ENUMERATE_SYSCALL(x, a)    \
+    case SYS_##x:                    \
+        sys_##x##_entry(task_state); \
         break;
 
-    switch ((enum sc_number) task_state->cpu_state.rax) {
+    switch (task_get_sys_call_number(task_state)) {
         ENUMERATE_SYSCALLS
         default:
-            arch_sys_invalid_system_call(task_state);
+            sys_invalid_system_call_entry(task_state);
             break;
     }
 

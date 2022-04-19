@@ -15,7 +15,6 @@
 #include "../libc/string/strlen.c"
 
 #define ONLY_DPRINTF
-#define __is_loader
 #include "../libc/stdio/printf.c"
 
 void _exit(int status) {

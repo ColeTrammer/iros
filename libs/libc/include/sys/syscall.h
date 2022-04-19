@@ -235,7 +235,13 @@ enum sc_number {
         ret;                                                                                     \
     })
 #else
-long __do_syscall(int sc, unsigned long a1, unsigned long a2, unsigned long a3, unsigned long a4, unsigned long a5, unsigned long a6);
+#ifdef __is_loader
+#define __loader_private __attribute__((visibility("internal")))
+#else
+#define __loader_private
+#endif
+long __loader_private __do_syscall(int sc, unsigned long a1, unsigned long a2, unsigned long a3, unsigned long a4, unsigned long a5,
+                                   unsigned long a6);
 
 #define __syscall0(n)          __do_syscall(n, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL)
 #define __syscall1(n, a)       __do_syscall(n, (unsigned long) (a), 0UL, 0UL, 0UL, 0UL, 0UL)

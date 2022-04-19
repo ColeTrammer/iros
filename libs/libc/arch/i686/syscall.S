@@ -11,13 +11,13 @@ __do_syscall:
     push %ebp
 
     // Load the arguments
-    mov 24(%esp), %eax
-    mov 28(%esp), %ebx
-    mov 32(%esp), %ecx
-    mov 46(%esp), %edx
-    mov 40(%esp), %esi
-    mov 44(%esp), %edi
-    mov 48(%esp), %ebp
+    mov 28(%esp), %eax
+    mov 32(%esp), %ebx
+    mov 36(%esp), %ecx
+    mov 40(%esp), %edx
+    mov 44(%esp), %esi
+    mov 48(%esp), %edi
+    mov 52(%esp), %ebp
     
     // Do system call
     int $0x80

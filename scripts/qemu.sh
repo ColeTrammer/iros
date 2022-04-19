@@ -7,6 +7,9 @@ die() {
 }
 
 ARCH=${IROS_ARCH:-x86_64}
+if [ "$ARCH" = "i686" ]; then
+    ARCH="i386"
+fi
 
 [ -e iros.img ] || die 'iros.img not found - try running `sudo ./makeimg.sh'"'"
 [ -e iros.iso ] || die 'iros.iso not found - try making target `iros.iso'"'"

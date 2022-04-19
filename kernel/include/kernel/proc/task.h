@@ -136,7 +136,8 @@ void start_userland(void);
 
 void proc_clone_program_args(struct process *process, char **prepend_argv, char **argv, char **envp);
 uintptr_t map_program_args(uintptr_t start, struct args_context *context, struct initial_process_info *info, struct task *task);
-void arch_setup_program_args(struct task *task, struct initial_process_info *info, size_t argc, char **argv, char **envp);
+char *arch_setup_program_args(struct task *task, char *args_start, struct initial_process_info *info, size_t argc, char **argv,
+                              char **envp);
 void free_program_args(struct args_context *context);
 
 int get_next_tid();
@@ -154,6 +155,11 @@ void task_enqueue_signal_object(struct task *task, struct queued_signal *sig);
 void task_dequeue_signal(struct task *task, struct queued_signal *signal);
 void task_free_queued_signal(struct queued_signal *queued_signal);
 struct queued_signal *task_first_queued_signal(struct task *task);
+
+void arch_task_switch_from_kernel_to_user_mode(struct task *task);
+void arch_task_set_thread_self_pointer(struct task *task, void *thread_self_pointer);
+void arch_sys_create_task(struct task *task, uintptr_t entry, uintptr_t new_sp, uintptr_t return_address, void *arg);
+void arch_task_prepare_to_restart_sys_call(struct task *task);
 
 void task_yield_if_state_changed(struct task *task);
 void task_do_sigs_if_needed(struct task *task);

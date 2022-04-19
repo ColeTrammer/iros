@@ -218,6 +218,37 @@ void clear_initial_page_mappings() {
     load_cr3(cr3);
 }
 
+uintptr_t create_clone_process_paging_structure(struct process *process) {
+    (void) process;
+    assert(false);
+
+    // uint64_t pml4_addr = get_next_phys_page(process);
+    // uint64_t *pml4 = get_identity_phys_addr_mapping(pml4_addr);
+    // uint64_t *old_pml4 = get_identity_phys_addr_mapping(get_cr3() & 0x0000FFFFFFFFF000ULL);
+
+    // // Only clone the kernel entries in this table.
+    // memset(pml4, 0, (MAX_PML4_ENTRIES - 2) * sizeof(uint64_t));
+    // pml4[MAX_PML4_ENTRIES - 2] = old_pml4[MAX_PML4_ENTRIES - 2];
+    // pml4[MAX_PML4_ENTRIES - 1] = old_pml4[MAX_PML4_ENTRIES - 1];
+
+    // uint64_t old_cr3 = get_cr3();
+    // uint64_t irq_save = disable_interrupts_save();
+
+    // load_cr3(pml4_addr);
+
+    // struct vm_region *region = process->process_memory;
+    // while (region) {
+    //     if (region->vm_object) {
+    //         vm_map_region_with_object(region);
+    //     }
+    //     region = region->next;
+    // }
+
+    // load_cr3(old_cr3);
+    // interrupts_restore(irq_save);
+    // return pml4_addr;
+}
+
 void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {
     // Disable interrupts since we have to change the value of CR3. This could potentially be avoided by
     // freeing the memory in old CR3 by traversing the physical addresses directly.

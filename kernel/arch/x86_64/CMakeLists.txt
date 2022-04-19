@@ -14,7 +14,6 @@ set(KERNEL_ARCH_SOURCES
     ${KERNEL_ARCHDIR}/ap_boot.S
     ${KERNEL_ARCHDIR}/boot.S
     ${KERNEL_ARCHDIR}/irqs/asm_handlers.S
-    ${KERNEL_ARCHDIR}/irqs/sys_calls.c
     ${KERNEL_ARCHDIR}/irqs/syscall_sysret_entry.S
     ${KERNEL_ARCHDIR}/mem/page.c
     ${KERNEL_ARCHDIR}/mem/arch_vm_allocator.c

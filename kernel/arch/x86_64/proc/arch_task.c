@@ -47,86 +47,6 @@ static void kernel_idle() {
     }
 }
 
-pid_t proc_fork(void) {
-    struct task *parent = get_current_task();
-    struct task *child = calloc(1, sizeof(struct task));
-    struct process *child_process = calloc(1, sizeof(struct process));
-    child->process = child_process;
-
-    mutex_lock(&parent->process->lock);
-
-    child->tid = get_next_tid();
-    child_process->pid = get_next_pid();
-    child_process->main_tid = child->tid;
-    init_mutex(&child_process->lock);
-    init_spinlock(&child_process->user_mutex_lock);
-    init_spinlock(&child_process->children_lock);
-    init_spinlock(&child_process->parent_lock);
-    init_list(&child_process->task_list);
-    init_list(&child_process->timer_list);
-    init_spinlock(&child->sig_lock);
-    init_spinlock(&child->unblock_lock);
-    init_list(&child->queued_signals);
-    init_wait_queue(&child_process->one_task_left_queue);
-    init_wait_queue(&child_process->child_wait_queue);
-    proc_add_process(child_process);
-    child->sched_state = RUNNING_INTERRUPTIBLE;
-    child->kernel_task = false;
-    child_process->process_memory = clone_process_vm();
-    child_process->tty = parent->process->tty;
-    list_append(&child_process->task_list, &child->process_list);
-
-#ifdef FORK_DEBUG
-    debug_log("Forking Task: [ %d ]\n", parent->process->pid);
-#endif /* FORK_DEBUG */
-
-    memcpy(&child->arch_task.task_state, parent->user_task_state, sizeof(struct task_state));
-    child->arch_task.task_state.cpu_state.rax = 0;
-    child_process->arch_process.cr3 = create_clone_process_paging_structure(child_process);
-    child->kernel_stack = vm_allocate_kernel_region(KERNEL_STACK_SIZE);
-    child->arch_task.user_thread_pointer = parent->arch_task.user_thread_pointer;
-    child_process->cwd = bump_tnode(parent->process->cwd);
-    child_process->pgid = parent->process->pgid;
-    child->process->uid = parent->process->uid;
-    child->process->euid = parent->process->euid;
-    child->process->gid = parent->process->gid;
-    child->process->egid = parent->process->egid;
-    child->process->sid = parent->process->sid;
-    child->process->umask = parent->process->umask;
-    child_process->priority = parent->process->priority;
-    child->process->parent = parent->process;
-    proc_add_child(parent->process, child->process);
-    proc_bump_process(child_process);
-    child->process->start_time = time_read_clock(CLOCK_REALTIME);
-    child->sig_pending = 0;
-    child->sig_mask = parent->sig_mask;
-    child_process->exe = bump_tnode(parent->process->exe);
-    child_process->name = strdup(parent->process->name);
-    memcpy(child_process->limits, parent->process->limits, sizeof(child_process->limits));
-    memcpy(child_process->sig_state, parent->process->sig_state, sizeof(child_process->sig_state));
-    child_process->process_clock = time_create_clock(CLOCK_PROCESS_CPUTIME_ID);
-    child->task_clock = time_create_clock(CLOCK_THREAD_CPUTIME_ID);
-
-    child_process->supplemental_gids_size = parent->process->supplemental_gids_size;
-    child_process->supplemental_gids = malloc(parent->process->supplemental_gids_size * sizeof(gid_t));
-    memcpy(child_process->supplemental_gids, parent->process->supplemental_gids, parent->process->supplemental_gids_size * sizeof(gid_t));
-
-    task_align_fpu(child);
-    memcpy(child->fpu.aligned_state, parent->fpu.aligned_state, FPU_IMAGE_SIZE);
-
-    for (size_t i = 0; i < FOPEN_MAX; i++) {
-        if (parent->process->files[i].file) {
-            child_process->files[i] = fs_dup_accross_fork(parent->process->files[i]);
-        }
-    }
-
-    mutex_unlock(&parent->process->lock);
-
-    disable_interrupts();
-    sched_add_task(child);
-    return child_process->pid;
-}
-
 static void load_task_into_memory(struct task *task) {
     if (task->kernel_stack) {
         set_tss_stack_pointer(task->kernel_stack->end);
@@ -138,13 +58,13 @@ static void load_task_into_memory(struct task *task) {
 
     if (!task->kernel_task) {
         fxrstor(task->fpu.aligned_state);
-        set_msr(MSR_FS_BASE, (uint64_t) task->arch_task.user_thread_pointer);
+        arch_task_load_thread_self_pointer(task->arch_task.user_thread_pointer);
     }
 }
 
 void task_setup_user_state(struct task_state *task_state) {
     task_state->stack_state.cs = USER_CODE_SELECTOR;
-    task_state->stack_state.rflags = get_rflags() | INTERRUPTS_ENABLED_FLAG;
+    task_state->stack_state.rflags = INTERRUPTS_ENABLED_FLAG;
     task_state->stack_state.ss = USER_DATA_SELECTOR;
 }
 
@@ -171,11 +91,41 @@ void arch_load_kernel_task(struct task *task, uintptr_t entry) {
     task->in_kernel = true;
 }
 
-void arch_setup_program_args(struct task *task, struct initial_process_info *info, size_t argc, char **argv, char **envp) {
+char *arch_setup_program_args(struct task *task, char *args_start, struct initial_process_info *info, size_t argc, char **argv,
+                              char **envp) {
     task->user_task_state->cpu_state.rdi = (uint64_t) info;
     task->user_task_state->cpu_state.rsi = (uint64_t) argc;
     task->user_task_state->cpu_state.rdx = (uint64_t) argv;
     task->user_task_state->cpu_state.rcx = (uint64_t) envp;
+
+    // Align the stack to be 16 byte aligned, offset by 8 bytes (as required by the SYS-V ABI).
+    return (char *) ((((uintptr_t) args_start) & ~0xF) - 8);
+}
+
+void arch_task_switch_from_kernel_to_user_mode(struct task *task) {
+    task_align_fpu(task);
+}
+
+void arch_task_set_thread_self_pointer(struct task *task, void *thread_self_pointer) {
+    task->arch_task.user_thread_pointer = thread_self_pointer;
+    arch_task_load_thread_self_pointer(thread_self_pointer);
+}
+
+void arch_sys_create_task(struct task *task, uintptr_t entry, uintptr_t new_sp, uintptr_t return_address, void *arg) {
+    task_setup_user_state(&task->arch_task.task_state);
+    task->arch_task.task_state.stack_state.rip = entry;
+
+    // Stack must be 16 byte aligned as per the SYS-V ABI
+    new_sp &= ~0xF;
+    assert(new_sp % 16 == 0);
+
+    new_sp -= 8;
+    *((uintptr_t *) new_sp) = return_address;
+
+    task->arch_task.task_state.stack_state.rsp = new_sp;
+
+    // Pass argument in rdi
+    task->arch_task.task_state.cpu_state.rdi = (uintptr_t) arg;
 }
 
 /* Must be called from unpremptable context */
@@ -191,23 +141,13 @@ void arch_free_task(struct task *task, bool free_paging_structure) {
     (void) free_paging_structure;
 }
 
-void task_yield_if_state_changed(struct task *task) {
-    if (task->should_exit) {
-#ifdef TASK_SCHED_STATE_DEBUG
-        debug_log("setting sched state to EXITING: [ %d:%d ]\n", task->process->pid, task->tid);
-#endif /* TASK_SCHED_STATE_DEBUG */
-        task_exit(task);
-        disable_interrupts();
-        sched_run_next();
-    }
-
-    if (task->should_stop) {
-        // Restart the system call so that when the task is resumed, it will begin gracefully.
-        task->user_task_state->stack_state.rip -= SIZEOF_IRETQ_INSTRUCTION;
-        task->user_task_state->cpu_state.rax = task->last_system_call;
-        task_stop(task);
-        kernel_yield();
-    }
+void arch_task_prepare_to_restart_sys_call(struct task *task) {
+    // The resume point of the task will be its rip minus the size of the system call
+    // entry instruction (2 bytes for both int and syscall instructions). The rax register
+    // is also reset to the system call number, so that system call will be properly
+    // resumed.
+    task->user_task_state->stack_state.rip -= SIZEOF_IRETQ_INSTRUCTION;
+    task->user_task_state->cpu_state.rax = task->last_system_call;
 }
 
 bool proc_in_kernel(struct task *task) {

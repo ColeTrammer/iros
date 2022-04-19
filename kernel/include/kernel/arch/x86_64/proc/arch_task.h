@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <sys/syscall.h>
 
 #include <kernel/arch/x86/proc/fpu.h>
 #include <kernel/mem/page.h>
@@ -69,6 +70,38 @@ static inline uint64_t task_get_stack_pointer(struct task_state *task_state) {
 
 static inline uint64_t task_get_base_pointer(struct task_state *task_state) {
     return task_state->cpu_state.rbp;
+}
+
+static inline enum sc_number task_get_sys_call_number(struct task_state *task_state) {
+    return (enum sc_number) task_state->cpu_state.rax;
+}
+
+static inline uint64_t task_get_sys_call_arg1(struct task_state *task_state) {
+    return task_state->cpu_state.rdi;
+}
+
+static inline uint64_t task_get_sys_call_arg2(struct task_state *task_state) {
+    return task_state->cpu_state.rsi;
+}
+
+static inline uint64_t task_get_sys_call_arg3(struct task_state *task_state) {
+    return task_state->cpu_state.rdx;
+}
+
+static inline uint64_t task_get_sys_call_arg4(struct task_state *task_state) {
+    return task_state->cpu_state.r8;
+}
+
+static inline uint64_t task_get_sys_call_arg5(struct task_state *task_state) {
+    return task_state->cpu_state.r9;
+}
+
+static inline uint64_t task_get_sys_call_arg6(struct task_state *task_state) {
+    return task_state->cpu_state.r10;
+}
+
+static inline void task_set_sys_call_return_value(struct task_state *task_state, uint64_t value) {
+    task_state->cpu_state.rax = value;
 }
 
 #endif /* _KERNEL_ARCH_X86_64_ARCH_PROC_TASK_H */
