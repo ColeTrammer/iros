@@ -34,6 +34,7 @@ if (NOT ${NATIVE_BUILD})
         hal/processor.c
         hal/ptmx.c
         irqs/irqs.c
+        irqs/sys_calls.c
         main/kernel.c
         mem/anon_vm_object.c
         mem/inode_vm_object.c
@@ -67,6 +68,7 @@ if (NOT ${NATIVE_BUILD})
         net/unix_socket.c
         proc/elf64.c
         proc/exec.c
+        proc/fork.c
         proc/pid.c
         proc/process.c
         proc/profile.c

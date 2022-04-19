@@ -38,6 +38,11 @@ void init_gdt(struct processor *processor) {
     processor->arch_processor.gdt[USER_DATA_OFFSET].type = 0b11110010;
     processor->arch_processor.gdt[USER_DATA_OFFSET].flags = 0b1100;
 
+    processor->arch_processor.gdt[GS_USER_THREAD_OFFSET].limit_low = 4;
+    processor->arch_processor.gdt[GS_USER_THREAD_OFFSET].limit_high = 0xF;
+    processor->arch_processor.gdt[GS_USER_THREAD_OFFSET].type = 0b11110010;
+    processor->arch_processor.gdt[GS_USER_THREAD_OFFSET].flags = 0b0100;
+
     struct gdt_tss_entry *tss_entry = (struct gdt_tss_entry *) (processor->arch_processor.gdt + GDT_TSS_OFFSET);
     tss_entry->type = TSS_TYPE;
     tss_entry->limit_low = sizeof(struct tss);
@@ -71,4 +76,14 @@ void init_gdt(struct processor *processor) {
 void set_tss_stack_pointer(uintptr_t rsp) {
     get_current_processor()->arch_processor.tss.ss0 = DATA_SELECTOR;
     get_current_processor()->arch_processor.tss.esp0 = rsp;
+}
+
+/* Must be called from unpremptable context */
+void arch_task_load_thread_self_pointer(void *thread_self_pointer) {
+    struct processor *processor = get_current_processor();
+    uintptr_t vm_addr = (uintptr_t) thread_self_pointer;
+
+    processor->arch_processor.gdt[GS_USER_THREAD_OFFSET].base_low = vm_addr & 0xFFFF;
+    processor->arch_processor.gdt[GS_USER_THREAD_OFFSET].base_mid = (vm_addr >> 16) & 0xFF;
+    processor->arch_processor.gdt[GS_USER_THREAD_OFFSET].base_high = (vm_addr >> 24) & 0xFF;
 }

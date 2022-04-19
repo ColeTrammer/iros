@@ -185,12 +185,8 @@ uintptr_t map_program_args(uintptr_t start, struct args_context *context, struct
 
     argv_start[-(context->prepend_argc + context->argc + 1)] = NULL;
 
-    args_start = (char *) ((((uintptr_t) args_start) & ~0xF) - 8);
-
-    arch_setup_program_args(task, info_location, context->prepend_argc + context->argc - 1,
-                            argv_start - context->prepend_argc - context->argc, argv_start - count);
-
-    assert((uintptr_t) args_start % 16 == 8);
+    args_start = arch_setup_program_args(task, args_start, info_location, context->prepend_argc + context->argc - 1,
+                                         argv_start - context->prepend_argc - context->argc, argv_start - count);
     return (uintptr_t) args_start;
 }
 
@@ -316,7 +312,9 @@ static void task_switch_from_kernel_to_user_mode(struct task *current) {
     }
     current->in_kernel = true;
     current->kernel_task = false;
-    task_align_fpu(current);
+
+    arch_task_switch_from_kernel_to_user_mode(current);
+
     current->task_clock = time_create_clock(CLOCK_THREAD_CPUTIME_ID);
     current->process->process_clock = time_create_clock(CLOCK_PROCESS_CPUTIME_ID);
     current->process->umask = 0022;
@@ -364,6 +362,25 @@ void start_userland(void) {
 void init_userland(void) {
     struct task *init = load_kernel_task((uintptr_t) start_userland, "init");
     sched_add_task(init);
+}
+
+void task_yield_if_state_changed(struct task *task) {
+    if (task->should_exit) {
+#ifdef TASK_SCHED_STATE_DEBUG
+        debug_log("setting sched state to EXITING: [ %d:%d ]\n", task->process->pid, task->tid);
+#endif /* TASK_SCHED_STATE_DEBUG */
+        task_exit(task);
+        disable_interrupts();
+        sched_run_next();
+    }
+
+    if (task->should_stop) {
+        // Restart the system call so that when the task is resumed, it will begin gracefully.
+        arch_task_prepare_to_restart_sys_call(task);
+
+        task_stop(task);
+        kernel_yield();
+    }
 }
 
 int proc_waitpid(pid_t waitspec, int *status, int flags) {

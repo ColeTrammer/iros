@@ -26,6 +26,7 @@
 
 #ifndef __ASSEMBLER__
 
+#include <kernel/arch/x86_64/asm_utils.h>
 #include <kernel/hal/x86/gdt.h>
 
 struct processor;
@@ -44,6 +45,10 @@ struct tss {
 
 void init_gdt(struct processor *processor);
 void set_tss_stack_pointer(uintptr_t rsp);
+
+static inline void arch_task_load_thread_self_pointer(void *thread_self_pointer) {
+    set_msr(MSR_FS_BASE, (uint64_t) thread_self_pointer);
+}
 
 #endif /* __ASSEMBLER__ */
 

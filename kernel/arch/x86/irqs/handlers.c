@@ -314,9 +314,7 @@ static struct irq_handler handle_machine_check_irq = { .handler = &handle_machin
 static struct irq_handler handle_simd_exception_irq = { .handler = &handle_simd_exception };
 static struct irq_handler handle_virtualization_exception_irq = { .handler = &handle_virtualization_exception };
 static struct irq_handler handle_security_exception_irq = { .handler = &handle_security_exception };
-#ifdef __x86_64__
 static struct irq_handler sys_call_irq = { .handler = &arch_system_call_entry };
-#endif
 
 extern struct list_node irq_handlers[256];
 
@@ -349,7 +347,5 @@ void init_irq_handlers() {
 
     register_irq_handler(&handle_security_exception_irq, 30);
 
-#ifdef __x86_64__
     register_irq_handler(&sys_call_irq, 128);
-#endif
 }

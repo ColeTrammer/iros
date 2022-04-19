@@ -39,6 +39,11 @@ _irq_entry_common:
     mov 16(%esp), %ecx
     and $3, %ecx
     jz _irq_entry_from_kernelspace
+
+    # Set %gs to the current processor, not the userspace thread
+    mov $GS_PROCESSOR_SELECTOR, %cx
+    mov %cx, %gs
+
     jmp _irq_entry_from_userspace
 
 _irq_entry_from_kernelspace:

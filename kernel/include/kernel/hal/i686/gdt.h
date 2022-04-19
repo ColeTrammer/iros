@@ -73,6 +73,7 @@ struct tss {
 
 void init_gdt(struct processor *processor);
 void set_tss_stack_pointer(uintptr_t rsp);
+void arch_task_load_thread_self_pointer(void *thread_self_pointer);
 
 #endif /* __ASSEMBLER__ */
 
