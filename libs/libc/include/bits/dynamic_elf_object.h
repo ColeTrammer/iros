@@ -35,11 +35,14 @@ struct dynamic_elf_object {
     uintptr_t fini_array;
     uintptr_t fini_array_size;
     uintptr_t fini_addr;
+    uintptr_t rel_addr;
     uintptr_t rela_addr;
     uintptr_t plt_addr;
     size_t plt_size;
     size_t plt_type;
     uintptr_t got_addr;
+    size_t rel_size;
+    size_t rel_entry_size;
     size_t rela_size;
     size_t rela_entry_size;
     size_t dt_flags;

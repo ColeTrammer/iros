@@ -8,6 +8,7 @@
 static int do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rela) {
     size_t type = ELF64_R_TYPE(rela->r_info);
     size_t symbol_index = ELF64_R_SYM(rela->r_info);
+    uint64_t *addr = (uint64_t *) (rela->r_offset + self->relocation_offset);
     switch (type) {
             // A               - The addend used to compute the value of the relocatable field.
             // B               - The base address at which a shared object is loaded into memory during execution. Generally, a shared
@@ -48,7 +49,6 @@ static int do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rela
                 return -1;
             }
 
-            uint64_t *addr = (uint64_t *) (rela->r_offset + self->relocation_offset);
             *addr = symbol_value + rela->r_addend;
             break;
         }
@@ -59,9 +59,8 @@ static int do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rela
                 loader_err("Cannot resolve `%s' for `%s'", to_lookup, object_name(self));
                 return -1;
             }
-            void *dest = (void *) (self->relocation_offset + rela->r_offset);
             const void *src = (const void *) (result.symbol->st_value + result.object->relocation_offset);
-            memcpy(dest, src, result.symbol->st_size);
+            memcpy(addr, src, result.symbol->st_size);
             break;
         }
         case R_X86_64_GLOB_DAT:
@@ -78,7 +77,6 @@ static int do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rela
                 return -1;
             }
 
-            uint64_t *addr = (uint64_t *) (rela->r_offset + self->relocation_offset);
             *addr = symbol_value;
             break;
         }
@@ -86,13 +84,12 @@ static int do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rela
             // B + A
             uintptr_t B = (uintptr_t) self->relocation_offset;
             uintptr_t A = rela->r_addend;
-            uint64_t *addr = (uint64_t *) (self->relocation_offset + rela->r_offset);
             *addr = B + A;
             break;
         }
         case R_X86_64_DPTMOD64: {
             // @dtpmod(s)
-            uint64_t *addr = (uint64_t *) (self->relocation_offset + rela->r_offset);
+
             // Static tls variables don't need a symbol index for relocation, they only need their own tls module id.
             if (symbol_index) {
                 const char *to_lookup = symbol_name(self, symbol_index);
@@ -122,7 +119,6 @@ static int do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rela
                 loader_err("Found `%s' in `%s', but the symbol is not thread local", to_lookup, object_name(result.object));
                 return -1;
             }
-            uint64_t *addr = (uint64_t *) (self->relocation_offset + rela->r_offset);
             *addr = result.symbol->st_value;
             break;
         }
@@ -138,14 +134,13 @@ static int do_rela(const struct dynamic_elf_object *self, const Elf64_Rela *rela
                 return -1;
             }
 
-#ifdef LOADER_TLS_DEBUG
-            loader_log("Resolved @tpoff(`%s') to %#.16lX", to_lookup, result.object->tls_record->tls_offset - result.symbol->st_value);
-#endif /* LOADER_TLS_DEBUG */
-
             // NOTE: for this to work, the symbol must be located in the initial thread local storage area.
             struct tls_record *record = &tls_records[result.object->tls_module_id - 1];
-            uint64_t *addr = (uint64_t *) (self->relocation_offset + rela->r_offset);
             *addr = -(record->tls_offset - result.symbol->st_value);
+
+#ifdef LOADER_TLS_DEBUG
+            loader_log("Resolved @tpoff(`%s') to %#.16lX", to_lookup, record->tls_offset - result.symbol->st_value);
+#endif /* LOADER_TLS_DEBUG */
             break;
         }
         default:

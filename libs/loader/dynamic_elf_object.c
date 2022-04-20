@@ -82,6 +82,15 @@ struct dynamic_elf_object build_dynamic_elf_object(const ElfW(Dyn) * dynamic_tab
             case DT_SYMBOLIC:
                 // meaningless during dynamic linking
                 break;
+            case DT_REL:
+                self.rel_addr = entry->d_un.d_ptr;
+                break;
+            case DT_RELSZ:
+                self.rel_size = entry->d_un.d_val;
+                break;
+            case DT_RELENT:
+                self.rel_entry_size = entry->d_un.d_val;
+                break;
             case DT_PLTREL:
                 self.plt_type = entry->d_un.d_val;
                 break;
@@ -129,9 +138,9 @@ struct dynamic_elf_object build_dynamic_elf_object(const ElfW(Dyn) * dynamic_tab
                 break;
             default:
 #ifdef __x86_64__
-                loader_log("Unkown DT_* value %ld", entry->d_tag);
+                loader_log("Unkown DT_* value %#.16lX", entry->d_tag);
 #else
-                loader_log("Unkown DT_* value %d", entry->d_tag);
+                loader_log("Unkown DT_* value %#.8X", entry->d_tag);
 #endif
                 break;
         }
@@ -197,6 +206,21 @@ const ElfW(Rela) * rela_at(const struct dynamic_elf_object *self, size_t i) {
     return &rela_table(self)[i];
 }
 
+size_t rel_count(const struct dynamic_elf_object *self) {
+    if (!self->rel_size || !self->rel_entry_size) {
+        return 0;
+    }
+    return self->rel_size / self->rel_entry_size;
+}
+
+const ElfW(Rel) * rel_table(const struct dynamic_elf_object *self) {
+    return (const ElfW(Rel) *) (self->rel_addr + self->relocation_offset);
+}
+
+const ElfW(Rel) * rel_at(const struct dynamic_elf_object *self, size_t i) {
+    return &rel_table(self)[i];
+}
+
 size_t plt_relocation_count(const struct dynamic_elf_object *self) {
     size_t ent_size = self->plt_type == DT_RELA ? sizeof(ElfW(Rela)) : sizeof(ElfW(Rel));
 
@@ -239,7 +263,7 @@ const ElfW(Sym) * lookup_symbol(const struct dynamic_elf_object *self, const cha
     const ElfW(Word) *ht = hash_table(self);
     ElfW(Word) nbucket = ht[0];
     ElfW(Word) nchain = ht[1];
-    unsigned long hashed_value = elf64_hash(s);
+    unsigned long hashed_value = elf_hash(s);
     unsigned long bucket_index = hashed_value % nbucket;
     ElfW(Word) symbol_index = ht[2 + bucket_index];
     while (symbol_index != STN_UNDEF) {

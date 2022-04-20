@@ -216,6 +216,30 @@ typedef struct {
 #define ELF64_R_TYPE(i)    ((i) & (0xFFFFFFFFL))
 #define ELF64_R_INFO(s, t) (((s) << 32) + ((t) & (0xFFFFFFFFL)))
 
+#define R_386_NONE         0
+#define R_386_32           1
+#define R_386_PC32         2
+#define R_386_GOT32        3
+#define R_386_PLT32        4
+#define R_386_COPY         5
+#define R_386_GLOB_DAT     6
+#define R_386_JMP_SLOT     7
+#define R_386_RELATIVE     8
+#define R_386_GOTOFF       9
+#define R_386_GOTPC        10
+#define R_386_32PLT        11
+#define R_386_TLS_GD_PLT   12
+#define R_386_TLS_LDM_PLT  13
+#define R_386_TLS_TPOFF    14
+#define R_386_TLS_IE       15
+#define R_386_TLS_GOTIE    16
+#define R_386_TLS_LE       17
+#define R_386_TLS_GD       18
+#define R_386_TLS_LDM      19
+#define R_386_TLS_LDO_32   32
+#define R_386_TLS_DTPMOD32 35
+#define R_386_TLS_DTPOFF32 36
+
 #define R_X86_64_NONE      0
 #define R_X86_64_64        1
 #define R_X86_64_PC32      2
@@ -359,7 +383,7 @@ typedef struct {
 
 #define STN_UNDEF 0
 
-static inline unsigned long elf64_hash(const char *_name) {
+static inline uint32_t elf_hash(const char *_name) {
     const unsigned char *name = (const unsigned char *) _name;
     unsigned long h = 0, g;
     while (*name) {

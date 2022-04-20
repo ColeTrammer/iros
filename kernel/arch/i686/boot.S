@@ -142,6 +142,17 @@ higher_half:
     # Load higher half stack
     mov $BOOT_KERNEL_VM_STACK_START, %esp
 
+    # Enable cr4.PGE and cr4.OSFXSR and cr4.OSXMMEEXCPT
+    mov %cr4, %eax
+    or $(1 << 7 | 1 << 9 | 1 << 10), %eax
+    mov %eax, %cr4
+
+    # Set cr0.PE and cr0.WP and cr0.MP and cr0.NE; Clear cr0.EM
+    mov %cr0, %eax
+    or $(1 << 31 | 1 << 16 | 1 << 5 | 1 << 1), %eax
+    and $(~(1 << 2)), %eax
+    mov %eax, %cr0
+
     # Now at last tranfer control to the kernel
     sub $16, %esp
 

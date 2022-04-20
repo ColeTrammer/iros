@@ -2,25 +2,43 @@
 .global _start
 .type _start, @function
 _start:
+    # Load arguments into registers
+    mov 4(%esp), %eax
+    mov 8(%esp), %ebx
+    mov 12(%esp), %esi
+    mov 16(%esp), %edi
+
 	# Set up end of the stack frame linked list.
 	xor %ebp, %ebp
 	push %ebp
 	push %ebp
 	mov %esp, %ebp
 
-    push %ecx    # ENVP
-    push %ebx    # ARGV
-    push %esi    # ARGC
+    # Align stack
+    sub $16, %esp
+    and $0xFFFFFFF0, %esp
 
-    # Note: does initialize_standard_library clobber its arguments? It probably does
+    # Put initialize_standard_library() arguments onto stack
+    mov %eax, 0(%esp)
+    mov %ebx, 4(%esp)
+    mov %esi, 8(%esp)
+    mov %edi, 12(%esp)
+
+    # Init libc
     call initialize_standard_library
 
-    xor %eax, %eax # Zero EAX
+    # Put main() arguments onto stack
+    mov %ebx, 0(%esp)
+    mov %esi, 4(%esp)
+    mov %edi, 8(%esp)
+
+    # Zero eax (main return value defaults to 0)
+    xor %eax, %eax
 
     # FIXME: ensure the stack is aligned
     call main
 
-    push %eax
+    mov %eax, 0(%esp)
     call exit
 
 .global __halt
