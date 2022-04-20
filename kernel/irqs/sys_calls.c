@@ -44,6 +44,7 @@
 // #define DUP_DEBUG
 // #define EXIT_DEBUG
 // #define SET_PGID_DEBUG
+// #define SETUID_HACK
 // #define SIGACTION_DEBUG
 // #define SIGPROCMASK_DEBUG
 // #define SIGRETURN_DEBUG
@@ -1379,6 +1380,10 @@ SYS_CALL(setuid) {
     SYS_BEGIN();
 
     SYS_PARAM1(uid_t, uid);
+
+#ifdef SETUID_HACK
+    debug_log("uid hack: [ %p ]\n", (void *) task_get_sys_call_arg1(task_state));
+#endif
 
     struct process *current = get_current_task()->process;
     if (current->euid == 0) {
