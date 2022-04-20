@@ -87,7 +87,7 @@ static int do_rel(struct dynamic_elf_object *self, const Elf32_Rel *rel) {
             break;
         }
         case R_386_GLOB_DAT:
-        case R_386_JMP_SLOT: {
+        case R_386_JUMP_SLOT: {
             // S
             const Elf32_Sym *symbol_to_lookup = symbol_at(self, symbol_index);
             const char *to_lookup = symbol_name(self, symbol_index);
@@ -164,11 +164,10 @@ static int do_rel(struct dynamic_elf_object *self, const Elf32_Rel *rel) {
                 return -1;
             }
 
-            struct tls_record *record = &tls_records[result.object->tls_module_id - 1];
-            *addr = record->tls_offset;
+            *addr = result.symbol->st_value;
 
 #ifdef LOADER_TLS_DEBUG
-            loader_log("Resolved @dtpoff(`%s') to %#.8zX", to_lookup, record->tls_offset);
+            loader_log("Resolved @dtpoff(`%s') to %#.8X", to_lookup, result.symbol->st_value);
 #endif /* LOADER_TLS_DEBUG */
             break;
         }
