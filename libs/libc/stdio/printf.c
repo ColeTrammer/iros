@@ -541,6 +541,7 @@ static int printf_internal(bool (*print)(void *obj, const char *s, size_t len), 
                 }
                 written += width;
                 format++;
+#if !defined(__is_loader) || !defined(__i386__)
 #ifdef __x86_64__
             } else if (length_modifier == 3 || length_modifier == 6 || length_modifier == 5 || *format == 'p') {
 #else
@@ -663,6 +664,9 @@ static int printf_internal(bool (*print)(void *obj, const char *s, size_t len), 
                 written += width;
                 format++;
             }
+#else
+            }
+#endif
         } else if (*format == 'u') {
             format++;
             unsigned int num = va_arg(parameters, unsigned int);

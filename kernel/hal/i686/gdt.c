@@ -39,7 +39,6 @@ void init_gdt(struct processor *processor) {
     processor->arch_processor.gdt[USER_DATA_OFFSET].flags = 0b1100;
 
     processor->arch_processor.gdt[GS_USER_THREAD_OFFSET].limit_low = 4;
-    processor->arch_processor.gdt[GS_USER_THREAD_OFFSET].limit_high = 0xF;
     processor->arch_processor.gdt[GS_USER_THREAD_OFFSET].type = 0b11110010;
     processor->arch_processor.gdt[GS_USER_THREAD_OFFSET].flags = 0b0100;
 

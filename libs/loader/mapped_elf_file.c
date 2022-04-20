@@ -19,7 +19,12 @@ static int validate_elf_shared_library(void *base, size_t size) {
         return -1;
     }
 
-    if (header->e_ident[EI_CLASS] != ELFCLASS64) {
+#ifdef __x86_64__
+    uint8_t expected_class = ELFCLASS64;
+#else
+    uint8_t expected_class = ELFCLASS32;
+#endif
+    if (header->e_ident[EI_CLASS] != expected_class) {
         return -1;
     }
 
@@ -254,7 +259,7 @@ struct dynamic_elf_object *load_mapped_elf_file(struct mapped_elf_file *file, co
         void *phdr_page_start = (void *) (((uintptr_t) phdr_start) & ~(PAGE_SIZE - 1));
 
         if ((phdr->p_filesz == phdr->p_memsz) && !(prot & PROT_WRITE) && (phdr->p_align % PAGE_SIZE == 0)) {
-            mmap(phdr_start, phdr_end - phdr_start, prot, MAP_SHARED | MAP_FIXED, file->fd, phdr->p_offset);
+            mmap(phdr_start, phdr_end - phdr_start, prot | PROT_WRITE, MAP_SHARED | MAP_FIXED, file->fd, phdr->p_offset);
         } else {
             mprotect(phdr_page_start, phdr_end - phdr_start, PROT_WRITE);
             memcpy(phdr_start, file->base + phdr->p_offset, phdr->p_filesz);

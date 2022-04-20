@@ -40,11 +40,23 @@ _irq_entry_common:
     and $3, %ecx
     jz _irq_entry_from_kernelspace
 
+_irq_entry_from_userspace:
+    # Save registers
+    push %edx
+    push %esi
+    push %edi
+    push %ebp
+
+    pushw %gs
+    pushw %fs
+    pushw %es
+    pushw %ds
+
     # Set %gs to the current processor, not the userspace thread
     mov $GS_PROCESSOR_SELECTOR, %cx
     mov %cx, %gs
 
-    jmp _irq_entry_from_userspace
+    jmp _irq_entry_impl
 
 _irq_entry_from_kernelspace:
     # FIXME: this could also switch the current stack out
@@ -71,9 +83,7 @@ _irq_entry_from_kernelspace:
     lea 32(%esp), %ecx
     mov %ecx, 24(%esp)
 
-    # Fall through to save the rest of the registers, and handle IRQ
-
-_irq_entry_from_userspace:
+    # Save registers
     push %edx
     push %esi
     push %edi
@@ -84,6 +94,9 @@ _irq_entry_from_userspace:
     pushw %es
     pushw %ds
 
+    # Fall through to handle IRQ
+
+_irq_entry_impl:
     # Save pointer to task state
     mov %esp, %edi
 

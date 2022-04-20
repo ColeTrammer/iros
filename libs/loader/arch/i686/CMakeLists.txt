@@ -5,5 +5,6 @@ set(ARCH_SOURCES
     ../libc/arch/i686/syscall.S
     ${ARCHDIR}/i686_loader.c
     ${ARCHDIR}/i686_relocations.c
+    ${ARCHDIR}/plt.S
     PARENT_SCOPE
 )

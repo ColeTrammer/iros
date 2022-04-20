@@ -5,7 +5,7 @@ __attribute__((noreturn)) void loader_exec(struct initial_process_info *info, in
     loader_log("starting program");
 #endif /* LOADER_DEBUG */
     ran_program = 1;
-    asm volatile("and $(~16), %%rsp\n"
+    asm volatile("and $(~15), %%rsp\n"
                  "sub $8, %%rsp\n"
                  "mov %0, %%rdi\n"
                  "mov %1, %%esi\n"

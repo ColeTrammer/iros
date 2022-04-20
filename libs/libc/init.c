@@ -68,7 +68,7 @@ static __attribute__((constructor)) void early_init(int argc, char **argv, char 
 
     environ = envp;
 
-    // It would be best to try and call this function event earlier (although it would be difficult to get
+    // It would be best to try and call this function even earlier (although it would be difficult to get
     // other constructor functions to be called before this once (since libc is linked in last by default)).
     init_threads();
 
