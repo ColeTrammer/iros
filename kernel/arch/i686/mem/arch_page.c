@@ -201,14 +201,13 @@ void clear_initial_page_mappings() {
     initial_kernel_process.arch_process.cr3 = cr3;
     idle_kernel_process.arch_process.cr3 = cr3;
 
-    {
-        // NOTE: cr3 must be identity mapped because we haven't cleared the mapping
-        //       yet, so its safe to cast the physical address directly to a virtual
-        //       address.
-        uint32_t *pd = (void *) (cr3 & ~0xFFF);
-        pd[0] = 0;
-    }
+    // Delete the kernel page mappings below the kernel vm start.
+    uint32_t *pd = create_temp_phys_addr_mapping(cr3 & ~0xFFF);
+    memset(pd, 0, 768 * sizeof(uint32_t));
+    free_temp_phys_addr_mapping(pd);
 
+    // boot.S maps in exactly 2 MiB of memory regardless of the kernel size. This
+    // function clears those entries, since they are not needed.
     uintptr_t kernel_vm_end = ALIGN_UP(KERNEL_VM_END, PAGE_SIZE);
     uintptr_t kernel_vm_mapping_end = ALIGN_UP(kernel_vm_end, 2 * 1024 * 1024);
     for (uintptr_t i = kernel_vm_end; i < kernel_vm_mapping_end; i += PAGE_SIZE) {
@@ -219,34 +218,36 @@ void clear_initial_page_mappings() {
 }
 
 uintptr_t create_clone_process_paging_structure(struct process *process) {
-    (void) process;
-    assert(false);
+    uint32_t new_cr3 = get_next_phys_page(process);
 
-    // uint64_t pml4_addr = get_next_phys_page(process);
-    // uint64_t *pml4 = get_identity_phys_addr_mapping(pml4_addr);
-    // uint64_t *old_pml4 = get_identity_phys_addr_mapping(get_cr3() & 0x0000FFFFFFFFF000ULL);
+    // Copy the kernel page table into the new address space
+    uint32_t *pd = create_temp_phys_addr_mapping(initial_kernel_process.arch_process.cr3 & ~0xFFF);
+    uint32_t *new_pd = create_temp_phys_addr_mapping(new_cr3);
+    memcpy(new_pd, pd, PAGE_SIZE);
 
-    // // Only clone the kernel entries in this table.
-    // memset(pml4, 0, (MAX_PML4_ENTRIES - 2) * sizeof(uint64_t));
-    // pml4[MAX_PML4_ENTRIES - 2] = old_pml4[MAX_PML4_ENTRIES - 2];
-    // pml4[MAX_PML4_ENTRIES - 1] = old_pml4[MAX_PML4_ENTRIES - 1];
+    // FIXME: copying the kernel's page tables should be enough, why
+    //        are there still mappings with addresses less than the
+    //        kernel vm start?
+    memset(new_pd, 0, 768 * sizeof(uint32_t));
 
-    // uint64_t old_cr3 = get_cr3();
-    // uint64_t irq_save = disable_interrupts_save();
+    free_temp_phys_addr_mapping(new_pd);
+    free_temp_phys_addr_mapping(pd);
 
-    // load_cr3(pml4_addr);
+    unsigned long irq_save = disable_interrupts_save();
+    uint32_t old_cr3 = get_cr3();
+    load_cr3(new_cr3);
 
-    // struct vm_region *region = process->process_memory;
-    // while (region) {
-    //     if (region->vm_object) {
-    //         vm_map_region_with_object(region);
-    //     }
-    //     region = region->next;
-    // }
+    struct vm_region *region = process->process_memory;
+    while (region) {
+        if (region->vm_object) {
+            vm_map_region_with_object(region);
+        }
+        region = region->next;
+    }
 
-    // load_cr3(old_cr3);
-    // interrupts_restore(irq_save);
-    // return pml4_addr;
+    load_cr3(old_cr3);
+    interrupts_restore(irq_save);
+    return new_cr3;
 }
 
 void remove_paging_structure(uintptr_t phys_addr, struct vm_region *list) {

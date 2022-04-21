@@ -21,5 +21,5 @@ cp -pd $ROOT/toolchain/cross/$TARGET/lib/libgcc_s.so* -t "$SYSROOT/usr/lib"
 
 make all-target-libstdc++-v3 -j5
 make install-target-libstdc++-v3
-cp -pd $ROOT/toolchain/cross/x86_64-iros/lib/libstdc++.so* -t "$SYSROOT/usr/lib"
+cp -pd $ROOT/toolchain/cross/$TARGET/lib/libstdc++.so* -t "$SYSROOT/usr/lib"
 cd ..

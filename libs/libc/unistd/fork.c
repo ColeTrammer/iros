@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <sys/syscall.h>
 #include <unistd.h>
 
@@ -36,7 +37,8 @@ pid_t fork() {
 
     pid_t ret = (pid_t) syscall(SYS_fork);
     if (ret < 0) {
-        return ret;
+        errno = -ret;
+        return -1;
     }
 
     if (ret == 0) {

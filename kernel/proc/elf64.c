@@ -18,7 +18,7 @@
 #include <kernel/proc/task.h>
 #include <kernel/util/validators.h>
 
-#define ELF64_DEBUG
+// #define ELF64_DEBUG
 
 static ElfW(Sym) * kernel_symbols;
 static char *kernel_string_table;

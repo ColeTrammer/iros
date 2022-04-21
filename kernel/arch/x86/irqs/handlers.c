@@ -137,7 +137,7 @@ static bool handle_page_fault(struct irq_context *context) {
     if (vm_region && ((error_code & 3) == 3) && address != vm_region->end && is_virt_addr_cow(address) &&
         !(vm_region->flags & VM_PROT_NONE) && (vm_region->flags & VM_WRITE)) {
 #ifdef PAGE_FAULT_DEBUG
-        debug_log("handling cow fault: [ %#.16lX ]\n", address);
+        debug_log("handling cow fault: [ %p ]\n", (void *) address);
 #endif /* PAGE_FAULT_DEBUG */
         if (!vm_handle_cow_fault_in_region(vm_region, address)) {
             if (!is_kernel) {
