@@ -31,9 +31,9 @@ static void *create_temp_phys_addr_mapping_bsp(uintptr_t phys_addr, uint32_t *co
     bsp_temp_page_mapping_pt[pt_offset] = phys_addr | 0x03;
     invlpg(virt_addr);
 
-    void *result = __temp_page_mappings + *count * PAGE_SIZE;
     *count += 1;
-    return result;
+
+    return (void *) virt_addr;
 }
 
 static void free_temp_phys_addr_mapping_bsp(void *addr, uint32_t *count) {

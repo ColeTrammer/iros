@@ -29,7 +29,7 @@ int vdebug_log_internal(const char *func, const char *format, va_list parameters
 
 #ifndef KERNEL_NO_DEBUG_COLORS
     int written = 0;
-    if (!bsp_enabled() || get_current_task() == NULL || get_current_task()->process->pid == 1) {
+    if (!bsp_enabled() || get_current_task() == NULL || (get_current_task()->process->pid == 1 && get_current_task()->kernel_task)) {
         written += printf("\033[35mKernel  \033[37m(\033[34m %d:%d \033[37m): ", 1, 1);
     } else {
         printf("\033[32m%s \033[37m(\033[34m %d:%d \033[37m): ", "Process", get_current_task()->process->pid, get_current_task()->tid);

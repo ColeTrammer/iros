@@ -82,7 +82,7 @@ struct sockaddr_storage {
     sa_family_t ss_family;
     char __ss_pad1[sizeof(long long) - sizeof(sa_family_t)];
     long long __ss_align;
-    char __ss_pad2[108 - 2 * sizeof(long long)]; /* UNIX_PATH_MAX == 108 */
+    char __ss_pad2[108 + sizeof(sa_family_t) - 2 * sizeof(long long)]; /* UNIX_PATH_MAX == 108 */
 };
 
 struct msghdr {
@@ -106,7 +106,7 @@ struct cmsghdr {
     (((unsigned char *) (cmsg) - (unsigned char *) ((mhdr)->msg_control) + (cmsg)->cmsg_len) > (mhdr)->msg_controllen \
          ? NULL                                                                                                       \
          : ((struct cmsghdr *) (unsigned char *) (cmsg) + ((cmsg)->cmsg_len)))
-#define CMSG_FIRSTHDR(mhdr) ((size_t)(mhdr)->msg_controllen < sizeof(struct cmsghdr) ? NULL : (struct cmsghdr *) ((mhdr)->msg_control))
+#define CMSG_FIRSTHDR(mhdr) ((size_t) (mhdr)->msg_controllen < sizeof(struct cmsghdr) ? NULL : (struct cmsghdr *) ((mhdr)->msg_control))
 #define CMSG_ALIGN(len)     ((((len) + sizeof(size_t) - 1) / sizeof(size_t)) * sizeof(size_t))
 #define CMSG_SPACE(len)     (CMSG_ALIGN(len) + CMSG_ALIGN(sizeof(struct cmsghdr)))
 #define CMSG_LEN(len)       (CMSG_ALIGN(sizeof(struct cmsghdr)) + (len))

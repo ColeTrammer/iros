@@ -543,7 +543,7 @@ else()
 
     add_custom_target(
         bootstrap-core-libs
-        COMMAND readelf -d "${CMAKE_CURRENT_BINARY_DIR}/libc.so" | grep "libgcc_s.so" >/dev/null || patchelf --add-needed libgcc_s.so "${CMAKE_CURRENT_BINARY_DIR}/libc.so"
+        COMMAND readelf -d "${CMAKE_CURRENT_BINARY_DIR}/libc.so" | grep "libgcc_s.so.1" >/dev/null || patchelf --add-needed libgcc_s.so.1 "${CMAKE_CURRENT_BINARY_DIR}/libc.so"
         COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/libc/cmake_install.cmake > /dev/null
         COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE=${CMAKE_BUILD_TYPE} -P ${CMAKE_BINARY_DIR}/libs/loader/cmake_install.cmake > /dev/null
         DEPENDS libc libc_static libdl libdl_static libk libm libm_static libpthread libpthread_static librt librt_static loader

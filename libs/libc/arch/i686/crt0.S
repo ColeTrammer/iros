@@ -19,23 +19,22 @@ _start:
     and $0xFFFFFFF0, %esp
 
     # Put initialize_standard_library() arguments onto stack
-    mov %eax, 0(%esp)
-    mov %ebx, 4(%esp)
-    mov %esi, 8(%esp)
     mov %edi, 12(%esp)
+    mov %esi, 8(%esp)
+    mov %ebx, 4(%esp)
+    mov %eax, 0(%esp)
 
     # Init libc
     call initialize_standard_library
 
     # Put main() arguments onto stack
-    mov %ebx, 0(%esp)
-    mov %esi, 4(%esp)
     mov %edi, 8(%esp)
+    mov %esi, 4(%esp)
+    mov %ebx, 0(%esp)
 
     # Zero eax (main return value defaults to 0)
     xor %eax, %eax
 
-    # FIXME: ensure the stack is aligned
     call main
 
     mov %eax, 0(%esp)
