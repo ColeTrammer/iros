@@ -66,7 +66,8 @@ struct acpi_info *acpi_get_info(void) {
     return &s_acpi_info;
 }
 
-void init_acpi(void) {
+bool init_acpi(void) {
+    bool found_acpi_tables = false;
     struct acpi_rsdp *rsdp = NULL;
     struct acpi_rsdt *rsdt = NULL;
     struct acpi_madt *madt = NULL;
@@ -166,6 +167,8 @@ void init_acpi(void) {
         }
     }
 
+    found_acpi_tables = true;
+
 cleanup:
     if (id_region) {
         vm_free_low_identity_map(id_region);
@@ -179,4 +182,5 @@ cleanup:
     if (madt) {
         free_temp_phys_addr_mapping(madt);
     }
+    return found_acpi_tables;
 }

@@ -5,11 +5,11 @@
 
 #define APIC_MSR_ENABLE_LOCAL 0x800
 
-#define LOCAL_APIC_IRQ_OFFSET 48
-#define LOCAL_APIC_IPI_IRQ    48
-#define LOCAL_APIC_PANIC_IRQ  49
-#define LOCAL_APIC_TIMER_IRQ  50
-#define LOCAL_APIC_IRQ_END    63
+#define LOCAL_APIC_IRQ_OFFSET 240
+#define LOCAL_APIC_IPI_IRQ    240
+#define LOCAL_APIC_PANIC_IRQ  241
+#define LOCAL_APIC_TIMER_IRQ  242
+#define LOCAL_APIC_IRQ_END    255
 
 union local_apic_icr {
     struct {

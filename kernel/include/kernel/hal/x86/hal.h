@@ -5,5 +5,6 @@
 
 bool cpu_supports_1gb_pages(void);
 bool cpu_supports_rdrand(void);
+bool found_acpi_tables(void);
 
 #endif /* _KERNEL_HAL_X86_HAL_H */

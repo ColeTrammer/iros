@@ -167,7 +167,7 @@ void *realloc(void *p, size_t sz) {
 #include <kernel/hal/output.h>
 #undef free
 void free(void *p, int line, const char *func) {
-    debug_log("~Free: [ %s, %d, %#.16lX, %p ]\n", func, line, (uintptr_t) p, GET_BLOCK(p));
+    debug_log("~Free: [ %s, %d, %p, %p ]\n", func, line, p, GET_BLOCK(p));
 
     __lock(&__malloc_lock);
     struct metadata *_block = start;
@@ -210,7 +210,7 @@ void free(void *p) {
 #endif /* MALLOC_SCRUB_FREE */
 
 #if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
-    debug_log("~Malloc block freed: [ %#.16lX ]\n", (uintptr_t) block);
+    debug_log("~Malloc block freed: [ %p ]\n", block);
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
 
     __unlock(&__malloc_lock);
@@ -299,7 +299,7 @@ __attribute__((weak)) void *aligned_alloc(size_t alignment, size_t n) {
                     __unlock(&__malloc_lock);
 
 #if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
-                    debug_log("~Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t) (block + 1), __LINE__);
+                    debug_log("~Malloc block allocated: [ %p, %d ]\n", (block + 1), __LINE__);
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
 
 #ifdef MALLOC_SCRUB_ALLOC
@@ -350,7 +350,7 @@ __attribute__((weak)) void *aligned_alloc(size_t alignment, size_t n) {
     tail->magic = __MALLOC_MAGIG_CHECK;
 
 #if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
-    debug_log("~Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t) (new_block + 1), __LINE__);
+    debug_log("~Malloc block allocated: [ %p, %d ]\n", (new_block + 1), __LINE__);
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
 
 #ifdef __is_libk
@@ -418,7 +418,7 @@ void *malloc(size_t n) {
         __unlock(&__malloc_lock);
 
 #if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
-        debug_log("~Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t) start, __LINE__);
+        debug_log("~Malloc block allocated: [ %p, %d ]\n", start, __LINE__);
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
 
 #ifdef MALLOC_SCRUB_ALLOC
@@ -444,7 +444,7 @@ void *malloc(size_t n) {
             __unlock(&__malloc_lock);
 
 #if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
-            debug_log("~Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t) (block + 1), __LINE__);
+            debug_log("~Malloc block allocated: [ %p, %d ]\n", (block + 1), __LINE__);
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
 
 #ifdef MALLOC_SCRUB_ALLOC
@@ -471,7 +471,7 @@ void *malloc(size_t n) {
     struct metadata *ret = PREV_BLOCK(block) + 1;
 
 #if defined(KERNEL_MALLOC_DEBUG) && defined(__is_libk)
-    debug_log("~Malloc block allocated: [ %#.16lX, %d ]\n", (uintptr_t) (block + 1), __LINE__);
+    debug_log("~Malloc block allocated: [ %p, %d ]\n", (block + 1), __LINE__);
 #endif /* KERNEL_MALLOC_DEBUG && __is_libk */
 
 #ifdef __is_libk

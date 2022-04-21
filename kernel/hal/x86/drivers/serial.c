@@ -24,6 +24,10 @@ static bool handle_serial_interrupt(struct irq_context *context __attribute__((u
 }
 
 static void serial_write_character(char c) {
+    if (c == '\n') {
+        serial_write_character('\r');
+    }
+
     while ((inb(SERIAL_PORT(SERIAL_COM1_PORT, SERIAL_STATUS_OFFSET)) & SERIAL_TRANSMITTER_EMPTY_BUFFER) == 0)
         ;
 

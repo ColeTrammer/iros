@@ -1,6 +1,7 @@
 #ifndef _KERNEL_HAL_X86_ACPI_H
 #define _KERNEL_HAL_X86_ACPI_H 1
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -93,7 +94,7 @@ struct acpi_info {
     size_t interrupt_source_overrides_length;
 };
 
-void init_acpi();
+bool init_acpi();
 struct acpi_info *acpi_get_info();
 
 #endif /* _KERNEL_HAL_X86_ACPI_H */
