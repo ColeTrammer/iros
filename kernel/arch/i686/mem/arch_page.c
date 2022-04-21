@@ -68,7 +68,10 @@ void do_unmap_page(uintptr_t virt_addr, bool free_phys, bool free_phys_structure
     *pt_entry = 0;
     do_tlb_flush(virt_addr);
 
-    if (all_empty(pt)) {
+    // Don't free kernel page tables at all cost, since this would
+    // cause massive problems later (each page table is shared across
+    // all address spaces).
+    if (all_empty(pt) && virt_addr < KERNEL_VM_START) {
         if (free_phys_structure) {
             free_phys_page(*pd_entry & ~0xFFF, process);
         }
@@ -204,6 +207,23 @@ void clear_initial_page_mappings() {
     // Delete the kernel page mappings below the kernel vm start.
     uint32_t *pd = create_temp_phys_addr_mapping(cr3 & ~0xFFF);
     memset(pd, 0, 768 * sizeof(uint32_t));
+
+    // Preallocate all kernel page tables, so that they won't need to
+    // be synchronized across processes.
+    for (size_t i = 768; i < MAX_PD_ENTRIES; i++) {
+        if (pd[i] & 1) {
+            continue;
+        }
+
+        uintptr_t pt_addr = get_next_phys_page(&idle_kernel_process);
+
+        uint32_t *pt = create_temp_phys_addr_mapping(pt_addr);
+        memset(pt, 0, PAGE_SIZE);
+        free_temp_phys_addr_mapping(pt);
+
+        pd[i] = pt_addr | VM_WRITE | 1;
+    }
+
     free_temp_phys_addr_mapping(pd);
 
     // boot.S maps in exactly 2 MiB of memory regardless of the kernel size. This
