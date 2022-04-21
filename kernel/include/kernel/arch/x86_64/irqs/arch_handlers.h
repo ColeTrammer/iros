@@ -3,11 +3,7 @@
 
 #include <stdbool.h>
 
-#ifdef KERNEL_USE_PIC
 #define EXTERNAL_IRQ_OFFSET 32
-#else
-#define EXTERNAL_IRQ_OFFSET 64
-#endif /* KERNEL_USE_PIC */
 
 #define NMI_IRQ 2
 

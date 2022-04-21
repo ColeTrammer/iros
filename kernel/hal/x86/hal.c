@@ -45,21 +45,48 @@ void init_hal(void) {
     init_serial_ports();
 }
 
+static bool s_found_acpi_tables;
+
 void init_cpus(void) {
+#ifndef KERNEL_DISABLE_ACPI
+    // Parse the acpi tables now that dynamic memory allocation is available.
+    s_found_acpi_tables = init_acpi();
+#else
+    s_found_acpi_tables = false;
+#endif
+
+    if (s_found_acpi_tables) {
+        init_local_apic_irq_handlers();
+    }
+
 #ifdef KERNEL_USE_PIC
     init_pic();
 #else
-    disable_pic();
-    init_local_apic_irq_handlers();
-#endif /* KERNEL_USE_PIC */
+    if (s_found_acpi_tables) {
+        disable_pic();
+    } else {
+        init_pic();
+    }
+#endif
 
-    // Parse the acpi tables now that dynamic memory allocation is available.
-    init_acpi();
+    if (!s_found_acpi_tables) {
+        // Without acpi, just create the bsp and just assume only 1 core.
+        struct processor *bsp = create_processor(0);
+        add_processor(bsp);
+    }
 
     init_bsp(get_bsp());
 }
 
+bool found_acpi_tables() {
+    return s_found_acpi_tables;
+}
+
 void init_smp(void) {
+    if (!found_acpi_tables()) {
+        return;
+    }
+
     init_processor_ipi_messages();
     set_smp_enabled();
     local_apic_start_aps();
