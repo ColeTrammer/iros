@@ -92,7 +92,7 @@ struct ide_channel *ide_create_channel(struct ide_controller *controller, uint16
     debug_log("Created IDE Channel: [ %#.4X, %#.4X, %#.4X ]\n", io_base, command_base, ide_bus_master);
 
     // Ensure drive 0 will be selected
-    channel->current_drive = 1;
+    channel->current_drive = -1;
 
     for (int drive = 0; drive < 2; drive++) {
         channel->drives[drive] = ata_detect_drive(channel, drive);
