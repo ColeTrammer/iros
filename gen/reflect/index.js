@@ -1,5 +1,6 @@
 const yargs = require("yargs");
 const fs = require("fs");
+const path = require("path");
 
 const result = yargs
     .option("output", {
@@ -128,4 +129,7 @@ private:
 `;
 };
 
+try {
+    fs.mkdirSync(path.dirname(result["output"], { recursive: true }));
+} catch {}
 fs.writeFileSync(result["output"], forward(methods));
