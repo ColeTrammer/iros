@@ -10,12 +10,7 @@ exists() {
     $1 --version >/dev/null 2>&1
 }
 
-maybe_build_toolchain() {
-    echo -n "Unable to find $IROS_ARCH-$IROS_TARGET_OS toolchain. Do you want to build it? (y/n) "
-    read RESPONSE
-    [ "$RESPONSE" = 'y' ] || return 1
-    [ -d ./toolchain ] || die "Cannot find toolchain directory"
-    
+build_toolchain() {
     export ROOT="$(realpath .)"
     export SYSROOT="$ROOT/$IROS_BUILD/iros/sysroot"
     cd toolchain
@@ -26,6 +21,15 @@ maybe_build_toolchain() {
     export BUILD_TOOLCHAIN='1'
 }
 
+maybe_build_toolchain() {
+    echo -n "Unable to find $IROS_ARCH-$IROS_TARGET_OS toolchain. Do you want to build it? (y/n) "
+    read RESPONSE
+    [ "$RESPONSE" = 'y' ] || return 1
+    [ -d ./toolchain ] || die "Cannot find toolchain directory"
+
+    build_toolchain
+}
+
 export IROS_ARCH=${IROS_ARCH:-'x86_64'}
 export IROS_BUILD="build_$IROS_ARCH"
 export IROS_TARGET_OS='iros'
@@ -33,7 +37,12 @@ export IROS_TARGET="$IROS_ARCH-$IROS_TARGET_OS"
 export IROS_AS=${OS_AS:-"$IROS_ARCH-$IROS_TARGET_OS-as"}
 export IROS_CC=${OS_CC:-"$IROS_ARCH-$IROS_TARGET_OS-gcc"}
 export IROS_CXX=${OS_CXX:-"$IROS_ARCH-$IROS_TARGET_OS-g++"}
-exists "$IROS_CC" || maybe_build_toolchain
+
+if [ "$FORCE_BUILD_TOOLCHAIN" ]; then
+    build_toolchain
+else
+    exists "$IROS_CC" || maybe_build_toolchain
+fi
 
 if exists 'ninja';
 then
