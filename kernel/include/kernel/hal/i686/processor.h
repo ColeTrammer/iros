@@ -21,6 +21,7 @@ struct arch_processor {
     uint32_t temp_page_alloc_count;
     // NOTE: NULL for bsp, which uses static memory
     struct vm_region *temp_page_vm;
+    struct vm_region *temp_page_page_table_vm;
 
     struct gdt_entry gdt[GDT_ENTRIES];
     struct gdt_descriptor gdt_descriptor;

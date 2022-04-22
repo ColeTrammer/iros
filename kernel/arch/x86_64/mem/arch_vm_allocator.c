@@ -1,6 +1,8 @@
 #include <kernel/hal/processor.h>
 #include <kernel/mem/page.h>
 
+void vm_bootstrap_temp_page_mapping_processor(struct processor *) {}
+
 // Physical addresses are already mapped in at VIRT_ADDR(MAX_PML4_ENTRIES - 3)
 void *get_identity_phys_addr_mapping(uintptr_t phys_addr) {
     return (void *) (phys_addr + PHYS_ID_START);

@@ -37,10 +37,11 @@ struct vm_region {
 #define VM_KERNEL_ANON_MAPPING (6)
 #define VM_KERNEL_ID_MAPPING   (7)
 #define VM_KERNEL_PHYS_MAPPING (8)
-#define VM_KERNEL_DMA_MAPPING  (9)
+#define VM_KERNEL_VM_MAPPING   (9)
+#define VM_KERNEL_DMA_MAPPING  (10)
 
 /* Defines per process vm_regions */
-#define VM_KERNEL_STACK            (10)
+#define VM_KERNEL_STACK            (11)
 #define VM_PROCESS_TEXT            (16)
 #define VM_PROCESS_ROD             (17)
 #define VM_PROCESS_DATA            (18)

@@ -81,6 +81,8 @@ struct ap_trampoline {
 } __attribute__((packed));
 
 static void start_ap(volatile struct local_apic *local_apic, struct processor *processor) {
+    vm_bootstrap_temp_page_mapping_processor(processor);
+
     struct vm_region *code_trampoline = vm_allocate_low_identity_map(0x8000, KERNEL_AP_TRAMPOLINE_END - KERNEL_AP_TRAMPOLINE_START);
     assert(get_phys_addr(0x8000) == 0x8000);
     assert(code_trampoline->end > 0x8000 + KERNEL_AP_TRAMPOLINE_END - KERNEL_AP_TRAMPOLINE_START);

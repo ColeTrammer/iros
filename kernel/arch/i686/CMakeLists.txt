@@ -18,6 +18,7 @@ set(KERNEL_ARCH_SOURCES
     ${KERNEL_ARCHDIR}/proc/arch_task.c
     ${KERNEL_ARCHDIR}/proc/run_task.S
     ${KERNEL_ARCHDIR}/sched/__kernel_yield.S
+    ${KERNEL_ARCHDIR}/ap_boot.S
     ${KERNEL_ARCHDIR}/boot.S
     hal/x86/drivers/ata_drive.c
     hal/x86/drivers/bga.c

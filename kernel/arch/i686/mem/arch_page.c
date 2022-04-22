@@ -57,8 +57,8 @@ void do_unmap_page(uintptr_t virt_addr, bool free_phys, bool free_phys_structure
     uint32_t *pt = create_temp_phys_addr_mapping(*pd_entry & ~0xFFF);
     uint32_t *pt_entry = &pt[pt_offset];
     if (!(*pt_entry & 1)) {
-        free_temp_phys_addr_mapping(pd);
         free_temp_phys_addr_mapping(pt);
+        free_temp_phys_addr_mapping(pd);
         return;
     }
 

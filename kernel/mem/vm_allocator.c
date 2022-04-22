@@ -748,6 +748,15 @@ void vm_free_physically_mapped_kernel_region(struct vm_region *region) {
     do_vm_free_kernel_region(region, false);
 }
 
+struct vm_region *vm_allocate_kernel_vm(size_t size) {
+    return make_kernel_region(size, VM_KERNEL_VM_MAPPING);
+}
+
+void vm_free_kernel_vm(struct vm_region *region) {
+    assert(region->type == VM_KERNEL_VM_MAPPING);
+    do_vm_free_kernel_region(region, false);
+}
+
 struct vm_region *vm_allocate_low_identity_map(uintptr_t start, uintptr_t size) {
     assert(start + size <= 0x100000);
 

@@ -166,6 +166,8 @@ const char *vm_type_to_string(uint64_t type) {
             return "kernel=>anonymous mapping";
         case VM_KERNEL_PHYS_MAPPING:
             return "kernel=>physical mapping";
+        case VM_KERNEL_VM_MAPPING:
+            return "kernel=>vm mapping";
         case VM_KERNEL_DMA_MAPPING:
             return "kernel=>dma mapping";
         case VM_KERNEL_STACK:

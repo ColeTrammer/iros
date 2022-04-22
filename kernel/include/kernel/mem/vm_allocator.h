@@ -14,6 +14,7 @@
 #include ARCH_SPECIFIC(mem/arch_vm_allocator.h)
 // clang-format on
 
+struct processor;
 struct process;
 
 void init_vm_allocator(void);
@@ -34,6 +35,7 @@ struct vm_region *find_user_vm_region_in_range(uintptr_t start, uintptr_t end);
 struct vm_region *clone_process_vm();
 
 void vm_bootstrap_temp_page_mapping();
+void vm_bootstrap_temp_page_mapping_processor(struct processor *processor);
 
 void *create_temp_phys_addr_mapping(uintptr_t phys_addr);
 void free_temp_phys_addr_mapping(void *virt_addr);
@@ -49,6 +51,9 @@ bool vm_is_kernel_address(uintptr_t addr);
 struct vm_region *vm_allocate_kernel_region(size_t size);
 struct vm_region *vm_reallocate_kernel_region(struct vm_region *kernel_region, size_t new_size);
 void vm_free_kernel_region(struct vm_region *region);
+
+struct vm_region *vm_allocate_kernel_vm(size_t size);
+void vm_free_kernel_vm(struct vm_region *region);
 
 struct vm_region *vm_allocate_physically_mapped_kernel_region(uintptr_t phys_base, size_t size);
 void vm_free_physically_mapped_kernel_region(struct vm_region *region);
