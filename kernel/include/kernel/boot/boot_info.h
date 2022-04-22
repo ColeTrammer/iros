@@ -1,6 +1,7 @@
 #ifndef _KERNEL_BOOT_BOOT_INFO_H
 #define _KERNEL_BOOT_BOOT_INFO_H 1
 
+#include <stdbool.h>
 #include <stdint.h>
 
 struct multiboot2_info;
@@ -10,6 +11,7 @@ struct boot_info {
     uintptr_t initrd_phys_start;
     uintptr_t initrd_phys_end;
     const char *command_line;
+    bool ide_use_default_ports;
     struct multiboot2_memory_map_tag *memory_map;
 };
 

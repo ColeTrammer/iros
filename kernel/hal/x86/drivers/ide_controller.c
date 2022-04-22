@@ -1,12 +1,17 @@
 #include <stdlib.h>
 
 #include <kernel/arch/x86/asm_utils.h>
+#include <kernel/boot/boot_info.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/pci_driver.h>
 #include <kernel/hal/x86/drivers/ata.h>
 #include <kernel/hal/x86/drivers/ide_controller.h>
 
-static uint16_t ide_get_io_base(struct pci_device_location location, uint8_t bar, uint16_t default_value) {
+static uint16_t ide_get_io_base(struct pci_device_location location, uint8_t bar, uint16_t default_value, bool force_defaults) {
+    if (force_defaults) {
+        return default_value;
+    }
+
     uint32_t value = pci_config_read32(location, PCI_CONFIG_BAR(bar)) & ~1;
     if (!value) {
         return default_value;
@@ -21,11 +26,12 @@ static struct pci_device *ide_create(struct hw_device *parent, struct pci_device
     init_hw_device(&controller->pci_device.hw_device, "IDE Controller", parent, hw_device_id_pci(id), NULL, NULL);
     controller->pci_device.hw_device.status = HW_STATUS_ACTIVE;
 
-    uint32_t channel0_io_base = ide_get_io_base(location, 0, IDE_CONTROLLER_CHANNEL0_DEFAULT_IO_BASE);
-    uint32_t channel0_command_base = ide_get_io_base(location, 1, IDE_CONTROLLER_CHANNEL0_DEFAULT_COMMAND_BASE);
-    uint32_t channel1_io_base = ide_get_io_base(location, 2, IDE_CONTROLLER_CHANNEL1_DEFAULT_IO_BASE);
-    uint32_t channel1_command_base = ide_get_io_base(location, 3, IDE_CONTROLLER_CHANNEL1_DEFAULT_COMMAND_BASE);
-    uint32_t ide_bus_master_base = ide_get_io_base(location, 4, 0);
+    bool use_default_io_ports = boot_get_boot_info()->ide_use_default_ports;
+    uint32_t channel0_io_base = ide_get_io_base(location, 0, IDE_CONTROLLER_CHANNEL0_DEFAULT_IO_BASE, use_default_io_ports);
+    uint32_t channel0_command_base = ide_get_io_base(location, 1, IDE_CONTROLLER_CHANNEL0_DEFAULT_COMMAND_BASE, use_default_io_ports);
+    uint32_t channel1_io_base = ide_get_io_base(location, 2, IDE_CONTROLLER_CHANNEL1_DEFAULT_IO_BASE, use_default_io_ports);
+    uint32_t channel1_command_base = ide_get_io_base(location, 3, IDE_CONTROLLER_CHANNEL1_DEFAULT_COMMAND_BASE, use_default_io_ports);
+    uint32_t ide_bus_master_base = ide_get_io_base(location, 4, 0, false);
 
     debug_log("Detected IDE Controller: [ %#.2X, %#.4X, %#.4X, %#.4X, %#.4X, %#.4X ]\n", info.programming_interface, channel0_io_base,
               channel0_command_base, channel1_io_base, channel1_command_base, ide_bus_master_base);

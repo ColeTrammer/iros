@@ -422,6 +422,9 @@ struct ata_drive *ata_detect_drive(struct ide_channel *channel, int drive) {
             debug_log("SATA drive detected, but is unsupported: [ %d ]\n", drive);
             return NULL;
         }
+
+        debug_log("Unknown ATA drive type: [ %2X, %2X, %d ]\n", cl, ch, drive);
+        return NULL;
     }
 
     status = ata_read_alt_status(channel->location);

@@ -104,6 +104,7 @@ if (NOT ${NATIVE_BUILD})
         COMMAND sudo ROOT="${ROOT}"
                 OUTPUT_DIR="${CMAKE_CURRENT_BINARY_DIR}"
                 SYSROOT="${SYSROOT}"
+                IROS_GRUB_IMAGE="$$IROS_GRUB_IMAGE"
                 "${ROOT}/scripts/makeimg.sh"
         DEPENDS install-all
         USES_TERMINAL

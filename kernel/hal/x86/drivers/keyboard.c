@@ -526,6 +526,7 @@ static void kbd_create(struct ps2_controller *controller, struct ps2_port *port)
 static struct ps2_device_id kbd_ids[] = {
     { 0xAB, 0x41 },
     { 0xAB, 0xC1 },
+    { 0xAB, 83 },
     { 0xAB, 0x83 },
 };
 

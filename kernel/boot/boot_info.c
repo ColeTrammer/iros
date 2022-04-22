@@ -22,8 +22,11 @@ void init_boot_info_from_multiboot2(const struct multiboot2_info *info) {
             MULTIBOOT2_DECLARE_AND_CAST_TAG(command_line_tag, tag, boot_command_line);
             s_boot_info.command_line = command_line_tag->value;
             debug_log("kernel command line: [ %s ]\n", s_boot_info.command_line);
-            if (strcmp(s_boot_info.command_line, "graphics=0") == 0) {
+            if (strstr(s_boot_info.command_line, "graphics=0") != 0) {
                 kernel_disable_graphics();
+            }
+            if (strstr(s_boot_info.command_line, "ide_use_default_ports=1") != 0) {
+                s_boot_info.ide_use_default_ports = true;
             }
         }
 
