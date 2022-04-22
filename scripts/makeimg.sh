@@ -14,22 +14,39 @@ then
     exit 1
 fi
 
-qemu-img create "$OUTPUT_DIR/iros.img" 30m
-parted -s -- "$OUTPUT_DIR/iros.img" \
-    mklabel gpt \
-    mkpart P1 ext2 1Mib -34s
+DEFAULT_DISK_SIZE=30m
+if [ -e "$IROS_GRUB_IMAGE" ]; then
+    DEFAULT_DISK_SIZE=50m;
+fi
 
-LOOP_DEV=$(losetup -o 1048576 --sizelimit=$((199 * 1048576 - 34 * 512)) -f "$OUTPUT_DIR/iros.img" --show)
-mke2fs "$LOOP_DEV"
+DISK_SIZE="${IROS_DISK_SIZE:-$DEFAULT_DISK_SIZE}"
+
+qemu-img create "$OUTPUT_DIR/iros.img" "$DISK_SIZE"
+if [ -e "$IROS_GRUB_IMAGE" ]; then
+    parted -s -- "$OUTPUT_DIR/iros.img" \
+        mklabel gpt \
+        mkpart BIOSBOOT ext3 1Mib 8Mib \
+        mkpart IROS ext2 8Mib -34s \
+        set 1 bios_grub
+    ROOT_PARTITION=p2
+else
+    parted -s -- "$OUTPUT_DIR/iros.img" \
+        mklabel gpt \
+        mkpart IROS ext2 1Mib -34s
+    ROOT_PARTITION=p1
+fi
+
+LOOP_DEV=$(losetup --partscan -f "$OUTPUT_DIR/iros.img" --show)
+mke2fs "$LOOP_DEV$ROOT_PARTITION"
 
 cleanup() {
-    umount "$LOOP_DEV"
+    umount "$OUTPUT_DIR/mnt"
     losetup -d "$LOOP_DEV"
 }
 trap cleanup EXIT
 
 mkdir -p "$OUTPUT_DIR/mnt"
-mount -text2 "$LOOP_DEV" "$OUTPUT_DIR/mnt"
+mount -text2 "$LOOP_DEV$ROOT_PARTITION" "$OUTPUT_DIR/mnt"
 
 cp -r --preserve=mode,links $ROOT/base/* "$OUTPUT_DIR/mnt"
 cp -r --preserve=mode,links $SYSROOT/* "$OUTPUT_DIR/mnt"
@@ -70,3 +87,12 @@ ln -s /proc/self/fd/2 "$OUTPUT_DIR/mnt/dev/stderr"
 ln -s urandom "$OUTPUT_DIR/mnt/dev/random"
 
 chmod 777 "$OUTPUT_DIR/iros.img"
+
+if [ -e "$IROS_GRUB_IMAGE" ]; then
+    grub-install --boot-directory="$OUTPUT_DIR/mnt/boot" --target=i386-pc --modules="ext2 part_msdos" "$LOOP_DEV"
+
+    cp "$IROS_GRUB_IMAGE" "$OUTPUT_DIR/mnt/boot/grub/grub.cfg"
+
+    mkdir -p "$OUTPUT_DIR/mnt/modules"
+    cp "$SYSROOT/boot/initrd.bin" "$OUTPUT_DIR/mnt/modules/"
+fi
