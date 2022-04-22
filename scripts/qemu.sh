@@ -19,10 +19,16 @@ if [ -e /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
     ENABLE_KVM="-enable-kvm"
 fi
 
+RUN_SMP=""
+if [ "$IROS_RUN_SMP" ]; then
+    RUN_SMP="-smp $IROS_RUN_SMP"
+fi
+
 qemu-system-$ARCH \
     -cdrom iros.iso \
     -d guest_errors \
     -serial stdio \
+    ${RUN_SMP} \
     ${ENABLE_KVM} \
     -device VGA,vgamem_mb=64 \
     -drive file=iros.img,format=raw,index=0,media=disk \
