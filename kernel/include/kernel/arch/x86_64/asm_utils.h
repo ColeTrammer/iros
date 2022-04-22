@@ -37,6 +37,12 @@ static inline uint64_t get_base_pointer() {
     return rbp;
 }
 
+static inline uint64_t get_stack_pointer() {
+    uint64_t rsp;
+    asm volatile("mov %%rsp, %0" : "=a"(rsp) : :);
+    return rsp;
+}
+
 static inline uint64_t get_rflags() {
     uint64_t rflags;
     asm volatile("pushfq\n"

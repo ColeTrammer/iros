@@ -56,7 +56,7 @@ public:
     const ElfW(Ehdr) * elf_header() const { return (const ElfW(Ehdr)*) m_file->data(); }
     size_t phdr_size() const { return elf_header()->e_phentsize; }
     size_t phdr_count() const { return elf_header()->e_phnum; }
-    const ElfW(Phdr) * phdr_at(size_t i) { return (const ElfW(Phdr)*) offset_in_memory(elf_header()->e_phoff + shdr_size() * i); }
+    const ElfW(Phdr) * phdr_at(size_t i) { return (const ElfW(Phdr)*) offset_in_memory(elf_header()->e_phoff + phdr_size() * i); }
 
     size_t shdr_size() const { return elf_header()->e_shentsize; }
     size_t shdr_count() const { return elf_header()->e_shnum; }

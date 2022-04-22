@@ -316,13 +316,11 @@ SYS_CALL(exit) {
         SYS_RETURN_NORETURN();
     }
 
-#ifdef __x86_64__
     if (process->should_profile) {
         spin_lock(&process->profile_buffer_lock);
         proc_record_profile_stack(NULL);
         spin_unlock(&process->profile_buffer_lock);
     }
-#endif
 
     exit_process(process, NULL);
     proc_set_process_state(process, PS_TERMINATED, exit_code, false);

@@ -54,7 +54,12 @@ static bool validate_elf(const ByteBuffer& file) {
         return false;
     }
 
-    if (header->e_ident[EI_CLASS] != ELFCLASS64) {
+#ifdef __x86_64__
+    uint8_t expected_class = ELFCLASS64;
+#else
+    uint8_t expected_class = ELFCLASS32;
+#endif
+    if (header->e_ident[EI_CLASS] != expected_class) {
         return false;
     }
 
