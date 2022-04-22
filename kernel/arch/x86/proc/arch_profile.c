@@ -8,7 +8,7 @@
 
 struct stack_frame {
     struct stack_frame *next;
-    uintptr_t rip;
+    uintptr_t ip;
 };
 
 static int do_validate_read(void *addr, size_t size, bool kernel) {
@@ -28,24 +28,24 @@ void proc_record_profile_stack(struct task_state *task_state) {
 
     bool in_kernel = current->in_kernel;
 
-    uintptr_t rip;
-    uintptr_t rbp;
-    uintptr_t rsp;
+    uintptr_t ip;
+    uintptr_t bp;
+    uintptr_t sp;
     if (task_state) {
         // Called from IRQ context (preemption)
-        rip = task_state->stack_state.rip;
-        rbp = task_state->cpu_state.rbp;
-        rsp = task_state->stack_state.rsp;
+        ip = task_get_instruction_pointer(task_state);
+        bp = task_get_base_pointer(task_state);
+        sp = task_get_stack_pointer(task_state);
     } else if (!in_kernel) {
         // Called from CPU fault context (#GP or #PF)
-        rip = current->arch_task.task_state.stack_state.rip;
-        rbp = current->arch_task.task_state.cpu_state.rbp;
-        rsp = current->arch_task.task_state.stack_state.rsp;
+        ip = task_get_instruction_pointer(&current->arch_task.task_state);
+        bp = task_get_base_pointer(&current->arch_task.task_state);
+        sp = task_get_stack_pointer(&current->arch_task.task_state);
     } else {
         // Called at program exit time
-        rip = (uintptr_t) proc_record_profile_stack;
-        asm volatile("mov %%rbp, %0" : "=r"(rbp) : : "memory");
-        asm volatile("mov %%rsp, %0" : "=r"(rsp) : : "memory");
+        ip = (uintptr_t) proc_record_profile_stack;
+        bp = get_base_pointer();
+        sp = get_stack_pointer();
     }
 
     char raw_buffer[sizeof(struct profile_event_stack_trace) + PROFILE_MAX_STACK_FRAMES * sizeof(uintptr_t)];
@@ -55,15 +55,15 @@ void proc_record_profile_stack(struct task_state *task_state) {
 
     for (;;) {
         if (ev->count < PROFILE_MAX_STACK_FRAMES) {
-            ev->frames[ev->count++] = rip;
+            ev->frames[ev->count++] = ip;
         }
 
         if (ev->count < PROFILE_MAX_STACK_FRAMES) {
-            // Some leaf functions don't create a stack frame. If so, rsp will point to the return address.
+            // Some leaf functions don't create a stack frame. If so, sp will point to the return address.
             // Unfortunately, this can produce false positives, so this might not be the best method of
             // stack unwinding.
-            if (!do_validate_read((uintptr_t *) rsp, sizeof(uintptr_t), in_kernel)) {
-                uintptr_t possible_return_address = *(uintptr_t *) rsp;
+            if (!do_validate_read((uintptr_t *) sp, sizeof(uintptr_t), in_kernel)) {
+                uintptr_t possible_return_address = *(uintptr_t *) sp;
                 struct vm_region *region = in_kernel ? find_kernel_vm_region_by_addr(possible_return_address)
                                                      : find_user_vm_region_by_addr(possible_return_address);
                 if (region && !(region->flags & VM_NO_EXEC)) {
@@ -72,9 +72,9 @@ void proc_record_profile_stack(struct task_state *task_state) {
             }
         }
 
-        struct stack_frame *frame = (struct stack_frame *) rbp;
-        while (!stack_frame_validate(frame, in_kernel) && frame && frame->rip && ev->count < PROFILE_MAX_STACK_FRAMES) {
-            ev->frames[ev->count++] = frame->rip;
+        struct stack_frame *frame = (struct stack_frame *) bp;
+        while (!stack_frame_validate(frame, in_kernel) && frame && frame->ip && ev->count < PROFILE_MAX_STACK_FRAMES) {
+            ev->frames[ev->count++] = frame->ip;
             frame = frame->next;
         }
 
@@ -84,9 +84,9 @@ void proc_record_profile_stack(struct task_state *task_state) {
 
         // Switch over to the user stack.
         in_kernel = false;
-        rip = current->user_task_state->stack_state.rip;
-        rbp = current->user_task_state->cpu_state.rbp;
-        rsp = current->user_task_state->stack_state.rsp;
+        ip = task_get_instruction_pointer(current->user_task_state);
+        bp = task_get_base_pointer(current->user_task_state);
+        sp = task_get_stack_pointer(current->user_task_state);
     }
 
     proc_write_profile_buffer(process, raw_buffer, PEV_STACK_TRACE_SIZE(ev));

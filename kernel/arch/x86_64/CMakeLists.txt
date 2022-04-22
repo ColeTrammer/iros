@@ -9,6 +9,7 @@ set(KERNEL_HALDIR hal/x86_64)
 set(KERNEL_ARCH_SOURCES
     arch/x86/irqs/handlers.c
     arch/x86/proc/arch_process.c
+    arch/x86/proc/arch_profile.c
     arch/x86/proc/fpu.c
     arch/x86/sched/arch_task_sched.c
     ${KERNEL_ARCHDIR}/ap_boot.S
@@ -19,7 +20,6 @@ set(KERNEL_ARCH_SOURCES
     ${KERNEL_ARCHDIR}/mem/arch_vm_allocator.c
     ${KERNEL_ARCHDIR}/proc/run_task.S
     ${KERNEL_ARCHDIR}/proc/arch_task.c
-    ${KERNEL_ARCHDIR}/proc/arch_profile.c
     ${KERNEL_ARCHDIR}/sched/__kernel_yield.S
     hal/x86/drivers/ata_drive.c
     hal/x86/drivers/bga.c

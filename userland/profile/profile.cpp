@@ -57,6 +57,8 @@ UniquePtr<Profile> Profile::create(const String& path, bool invert_profile) {
     auto add_kernel_object = [&] {
 #ifdef __x86_64__
         current_memory_map.add({ 0xFFFFFF0000000000, 0xFFFFFFFFFFFFFFFF, kernel_object });
+#else
+        current_memory_map.add({ 0xC0000000, 0xFFFFFFFF, kernel_object });
 #endif
     };
     add_kernel_object();

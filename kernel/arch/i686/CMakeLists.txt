@@ -9,6 +9,7 @@ set(KERNEL_HALDIR hal/i686)
 set(KERNEL_ARCH_SOURCES
     arch/x86/irqs/handlers.c
     arch/x86/proc/arch_process.c
+    arch/x86/proc/arch_profile.c
     arch/x86/proc/fpu.c
     arch/x86/sched/arch_task_sched.c
     ${KERNEL_ARCHDIR}/irqs/asm_handlers.S
