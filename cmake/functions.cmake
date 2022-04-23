@@ -32,7 +32,7 @@ endfunction()
 function(generate_interface target id input output)
     add_custom_command(
         OUTPUT ${output}
-        COMMAND node ${ROOT}/gen/reflect/index.js -i ${input} -o ${output}
+        COMMAND node ${ROOT}/gen/reflect/index.js ${input} ${output}
         DEPENDS ${ROOT}/gen/reflect/index.js
         MAIN_DEPENDENCY ${input}
         VERBATIM

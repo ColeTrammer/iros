@@ -1,24 +1,7 @@
-const yargs = require("yargs");
 const fs = require("fs");
 const path = require("path");
 
-const result = yargs
-    .option("output", {
-        alias: "o",
-        description: "Output file path",
-        type: "string",
-    })
-    .option("input", {
-        alias: "i",
-        description: "Input file path",
-        type: "string",
-    })
-    .option("namespace", {
-        alias: "n",
-        description: "Target namespace",
-        type: "string",
-    })
-    .help().argv;
+const result = { input: process.argv[2], output: process.argv[3] };
 
 const contents = fs.readFileSync(result["input"], "utf8");
 const relevant = contents.replace(/[\s\S]*\/\/ iros reflect begin([\s\S]*)\/\/ iros reflect end[\s\S]*/gm, "$1");
