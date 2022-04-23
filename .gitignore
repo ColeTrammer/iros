@@ -4,12 +4,12 @@ mnt/
 native/
 ports/*/*/**
 ports/**/*.gz
-!ports/**/*.sh
-!ports/**/*.patch
+!ports/*/*.sh
+!ports/*/*.patch
 toolchain/*/*/**
 toolchain/**/*.gz
-!toolchain/**/*.sh
-!toolchain/**/*.patch
+!toolchain/*/*.sh
+!toolchain/*/*.patch
 initrd/files
 *.bin
 *.iso
