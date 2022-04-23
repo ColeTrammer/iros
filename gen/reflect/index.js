@@ -32,7 +32,7 @@ const removeMultilineImplementation = (s) => {
 };
 
 const fixTemplates = (s) => {
-    return s.replaceAll(/template(.*)\n(.*)/gm, "template$1$2");
+    return s.replace(/template(.*)\n(.*)/gm, "template$1$2");
 };
 
 const lines = fixTemplates(removeMultilineImplementation(relevant))
@@ -55,7 +55,7 @@ const processParams = (p) => {
 
 const methods = lines
     .map((line) => {
-        return line.replaceAll("virtual", "").replaceAll(" = 0;", "").replaceAll(/{.*}/g, "").replaceAll(";", "").trim();
+        return line.replace("virtual", "").replace(" = 0;", "").replace(/{.*}/g, "").replace(";", "").trim();
     })
     .map((line) => {
         return line.split(" ");
@@ -80,7 +80,7 @@ const methods = lines
 const forwardMethod = (method) => {
     const processArg = ({ type, name }) => {
         if (type.includes("...")) {
-            return `forward<${type.replaceAll("&&", "").replaceAll("...", "")}>(${name})...`;
+            return `forward<${type.replace("&&", "").replace("...", "")}>(${name})...`;
         }
         return `forward<${type}>(${name})`;
     };
@@ -89,7 +89,7 @@ const forwardMethod = (method) => {
         if (!s.includes("template")) {
             return "";
         }
-        const args = processParams(s.replaceAll(/.*template(<.*>  ).*/g, "$1").trim());
+        const args = processParams(s.replace(/.*template(<.*>  ).*/g, "$1").trim());
         return `<${args.map(({ type, name }) => (type.includes("...") ? `${name}...` : name)).join(", ")}>`;
     };
 
@@ -104,7 +104,7 @@ const forwardMethod = (method) => {
 const forward = (methods) => {
     return `#pragma once
 
-#define ${result["output"].replaceAll("/", "_").replaceAll(".h", "").toUpperCase()}_FORWARD(__o_) \\
+#define ${result["output"].replace("/", "_").replace(".h", "").toUpperCase()}_FORWARD(__o_) \\
 public: \\
 ${methods.map(forwardMethod).join(" \\\n")} \\
 \\
