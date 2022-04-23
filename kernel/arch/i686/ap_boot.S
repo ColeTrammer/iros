@@ -46,7 +46,7 @@ _entry32:
 
     # Jump to the kernel
     mov $init_ap, %eax
-    call %eax
+    call *%eax
 
 _GDT:
 _GDT_NULL:
