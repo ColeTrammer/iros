@@ -1,11 +1,15 @@
 # Project Specific
-sysroot/
-isodir/
 build*/
-ports/
 mnt/
 native/
-toolchain/
+ports/*/*/**
+ports/**/*.gz
+!ports/**/*.sh
+!ports/**/*.patch
+toolchain/*/*/**
+toolchain/**/*.gz
+!toolchain/**/*.sh
+!toolchain/**/*.patch
 initrd/files
 *.bin
 *.iso
