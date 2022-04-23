@@ -7,13 +7,14 @@ VERSION="3.20.3"
 DOWNLOAD_URL="https://github.com/Kitware/CMake/releases/download/v$VERSION/cmake-$VERSION.tar.gz"
 DOWNLOAD_DEST=cmake.tar.gz
 SRC="cmake-$VERSION"
+INSTALL_PREFIX="${INSTALL_PREFIX:-$ROOT/toolchain/cross}"
 
 exists() {
     $1 --version >/dev/null 2>&1
 }
 
 if [ ! -e $DOWNLOAD_DEST ]; then
-    curl -L "$DOWNLOAD_URL" -o "$DOWNLOAD_DEST"
+    curl -L "$DOWNLOAD_URL" -o "$DOWNLOAD_DEST" -4 --retry 5
 fi
 
 if [ ! -d "$SRC" ]; then
@@ -28,11 +29,11 @@ fi
 if [ ! -e "$ROOT/toolchain/cross/bin/cmake" ]; then
     cd "$SRC"
     if exists cmake; then
-        cmake -S .
+        cmake -S . -DCMAKE_INSTALL_PREFIX="$INSTALL_PREFIX"
         make -j5
         make install
     else
-        ./bootstrap --prefix="$ROOT/toolchain/cross" --parallel=5
+        ./bootstrap --prefix="$INSTALL_PREFIX" --parallel=5
         make -j5
         make install
     fi

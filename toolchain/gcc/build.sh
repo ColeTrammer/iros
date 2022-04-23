@@ -9,9 +9,10 @@ DOWNLOAD_URL="http://ftp.gnu.org/gnu/gcc/gcc-$VERSION/gcc-$VERSION.tar.gz"
 DOWNLOAD_DEST=gcc.tar.gz
 SRC="gcc-$VERSION"
 BUILD_DIR="build-gcc-$TARGET"
+INSTALL_PREFIX="${INSTALL_PREFIX:-$ROOT/toolchain/cross}"
 
 if [ ! -e $DOWNLOAD_DEST ]; then
-    curl -L "$DOWNLOAD_URL" -o "$DOWNLOAD_DEST"
+    curl -L "$DOWNLOAD_URL" -o "$DOWNLOAD_DEST" -4 --retry 5
 fi
 
 if [ ! -d "$SRC" ]; then
@@ -37,13 +38,13 @@ if [ ! -d "$BUILD_DIR" ]; then
     cd "$BUILD_DIR"
     "../$SRC/configure" \
         --target="$TARGET" \
-        --prefix="$ROOT/toolchain/cross" \
+        --prefix="$INSTALL_PREFIX" \
         --disable-nls \
         --enable-shared \
         --with-sysroot="$SYSROOT" \
         --enable-languages=c,c++ \
         --enable-threads=posix \
-        --with-build-time-tools=$ROOT/toolchain/cross/bin
+        --with-build-time-tools=$INSTALL_PREFIX/bin
     cd ..
 fi
 

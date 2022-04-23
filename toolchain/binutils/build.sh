@@ -5,13 +5,14 @@ set -e
 ROOT="${ROOT:-$PWD/../..}"
 TARGET="${IROS_TARGET:-`$ROOT/scripts/default-host.sh`}"
 VERSION="2.36.1"
-DOWNLOAD_URL="https://ftp.gnu.org/gnu/binutils/binutils-$VERSION.tar.gz"
+DOWNLOAD_URL="http://ftp.gnu.org/gnu/binutils/binutils-$VERSION.tar.gz"
 DOWNLOAD_DEST=binutils.tar.gz
 SRC="binutils-$VERSION"
 BUILD_DIR="build-binutils-$TARGET"
+INSTALL_PREFIX="${INSTALL_PREFIX:-$ROOT/toolchain/cross}"
 
 if [ ! -e $DOWNLOAD_DEST ]; then
-    curl -L "$DOWNLOAD_URL" -o "$DOWNLOAD_DEST"
+    curl -L "$DOWNLOAD_URL" -o "$DOWNLOAD_DEST" -4 --retry 5
 fi
 
 if [ ! -d "$SRC" ]; then
@@ -29,7 +30,7 @@ if [ ! -d "$BUILD_DIR" ]; then
     cd "$BUILD_DIR"
     "../$SRC/configure" \
         --target="$TARGET" \
-        --prefix="$ROOT/toolchain/cross" \
+        --prefix="$INSTALL_PREFIX" \
         --disable-nls \
         --with-sysroot="$SYSROOT" \
         --disable-werror \
