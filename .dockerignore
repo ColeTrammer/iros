@@ -1,0 +1,13 @@
+# Git
+.git/
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Project Specific
+build*/
+ports/**
+!ports/*/*.sh
+!ports/*.sh
+!ports/*/*.patch
