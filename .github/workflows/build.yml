@@ -1,4 +1,4 @@
-name: Build and Test Iros
+name: Build Toolchain
 
 on:
     push:
