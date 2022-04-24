@@ -3,13 +3,14 @@ project(iros C CXX ASM)
 
 set(ARCH ${CMAKE_SYSTEM_PROCESSOR} CACHE STRING "architecture for the os")
 set(ROOT ${CMAKE_CURRENT_SOURCE_DIR})
+set(MINIMAL_BUILD FALSE CACHE STRING "")
 if (${CMAKE_SYSTEM_NAME} STREQUAL Iros)
     set(NATIVE_BUILD FALSE)
 else()
     set(NATIVE_BUILD TRUE)
 endif()
 
-if (${NATIVE_BUILD})
+if (${NATIVE_BUILD} AND NOT ${MINIMAL_BUILD})
     enable_testing()
 endif()
 
@@ -49,6 +50,10 @@ else()
     set(DL_LIB libdl)
     set(PTHREAD_LIB libpthread)
     set(REALTIME_LIB librt)
+
+    set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} --sysroot=${SYSROOT}")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --sysroot=${SYSROOT}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --sysroot=${SYSROOT}")
     include_directories(libs/libc/include)
 endif()
 
@@ -56,12 +61,20 @@ include(cmake/functions.cmake)
 
 add_subdirectory(libs)
 add_subdirectory(gen)
-add_subdirectory(userland)
-add_subdirectory(initrd)
-add_subdirectory(kernel)
-add_subdirectory(tests)
+if (NOT ${MINIMAL_BUILD})
+    add_subdirectory(userland)
+    add_subdirectory(initrd)
+    add_subdirectory(kernel)
+    add_subdirectory(tests)
+endif()
 
 if (NOT ${NATIVE_BUILD})
+    add_custom_target(
+        add-gcc-libs-to-sysroot
+        COMMAND "ARCH=${ARCH}" "SYSROOT=${SYSROOT}" "${ROOT}/scripts/add-gcc-libs-to-sysroot.sh"
+        DEPENDS bootstrap-core-libs
+    )
+
     add_custom_target(
         generate-initrd
         BYPRODUCTS ${SYSROOT}/boot/initrd.bin
@@ -113,7 +126,7 @@ if (NOT ${NATIVE_BUILD})
     add_custom_target(
         run
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-        COMMAND IROS_ARCH=${ARCH} "${ROOT}/scripts/qemu.sh"
+        COMMAND "IROS_ARCH=${ARCH}" "IROS_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}/.." "${ROOT}/scripts/qemu.sh"
         USES_TERMINAL
     )
 

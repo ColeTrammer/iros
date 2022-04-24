@@ -8,6 +8,7 @@ DOWNLOAD_URL="https://github.com/Kitware/CMake/releases/download/v$VERSION/cmake
 DOWNLOAD_DEST=cmake.tar.gz
 SRC="cmake-$VERSION"
 INSTALL_PREFIX="${INSTALL_PREFIX:-$ROOT/toolchain/cross}"
+NPROC="${NPROC:-`nproc`}"
 
 exists() {
     $1 --version >/dev/null 2>&1
@@ -33,8 +34,8 @@ if [ ! -e "$ROOT/toolchain/cross/bin/cmake" ]; then
         make -j5
         make install
     else
-        ./bootstrap --prefix="$INSTALL_PREFIX" --parallel=5
-        make -j5
+        ./bootstrap --prefix="$INSTALL_PREFIX" "--parallel=$NPROC"
+        make "-j$NPROC"
         make install
     fi
     cd ..

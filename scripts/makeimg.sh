@@ -14,7 +14,7 @@ then
     exit 1
 fi
 
-DEFAULT_DISK_SIZE=30m
+DEFAULT_DISK_SIZE=100m
 if [ -e "$IROS_GRUB_IMAGE" ]; then
     DEFAULT_DISK_SIZE=50m;
 fi
@@ -36,14 +36,27 @@ else
     ROOT_PARTITION=p1
 fi
 
-LOOP_DEV=$(losetup --partscan -f "$OUTPUT_DIR/iros.img" --show)
-mke2fs "$LOOP_DEV$ROOT_PARTITION"
-
 cleanup() {
     umount "$OUTPUT_DIR/mnt"
     losetup -d "$LOOP_DEV"
 }
 trap cleanup EXIT
+
+LOOP_DEV=$(losetup --partscan -f "$OUTPUT_DIR/iros.img" --show)
+
+# HACK to make partitions show up in a docker container
+# https://github.com/moby/moby/issues/27886#issuecomment-417074845
+# drop the first line, as this is our LOOP_DEV itself, but we only want the child partitions
+PARTITIONS=$(lsblk --raw --output "MAJ:MIN" --noheadings ${LOOP_DEV} | tail -n +2)
+COUNTER=1
+for i in $PARTITIONS; do
+    MAJ=$(echo $i | cut -d: -f1)
+    MIN=$(echo $i | cut -d: -f2)
+    if [ ! -e "${LOOP_DEV}p${COUNTER}" ]; then mknod ${LOOP_DEV}p${COUNTER} b $MAJ $MIN; fi
+    COUNTER=$((COUNTER + 1))
+done
+
+mke2fs "$LOOP_DEV$ROOT_PARTITION"
 
 mkdir -p "$OUTPUT_DIR/mnt"
 mount -text2 "$LOOP_DEV$ROOT_PARTITION" "$OUTPUT_DIR/mnt"

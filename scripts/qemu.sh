@@ -7,12 +7,12 @@ die() {
 }
 
 ARCH=${IROS_ARCH:-x86_64}
-if [ "$ARCH" = "i686" ]; then
-    ARCH="i386"
-fi
 
-[ -e iros.img ] || die 'iros.img not found - try running `sudo ./makeimg.sh'"'"
-[ -e iros.iso ] || die 'iros.iso not found - try making target `iros.iso'"'"
+ROOT=${ROOT:-`realpath ..`}
+BUILD_DIR=${IROS_BUILD_DIR:-$ROOT/build_$ARCH}
+
+[ -e "$BUILD_DIR/iros/iros.img" ] || die 'iros.img not found - try running `sudo ./makeimg.sh'"'"
+[ -e "$BUILD_DIR/iros/iros.iso" ] || [ "$IROS_RUN_HARDDRIVE" ] || die 'iros.iso not found - try making target `iros.iso'"'"
 
 ENABLE_KVM=""
 if [ -e /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
@@ -26,9 +26,13 @@ fi
 
 CDROM=""
 BOOT=""
-if [ -e iros.iso ] && [ ! "$IROS_RUN_HARDDRIVE" ]; then
-    CDROM="-cdrom iros.iso"
+if [ -e "$BUILD_DIR/iros/iros.iso" ] && [ ! "$IROS_RUN_HARDDRIVE" ]; then
+    CDROM="-cdrom $BUILD_DIR/iros/iros.iso"
     BOOT="-boot d"
+fi
+
+if [ "$ARCH" = "i686" ]; then
+    ARCH="i386"
 fi
 
 qemu-system-$ARCH \
@@ -38,7 +42,7 @@ qemu-system-$ARCH \
     ${RUN_SMP} \
     ${ENABLE_KVM} \
     -device VGA,vgamem_mb=64 \
-    -drive file=iros.img,format=raw,index=0,media=disk \
+    -drive file="$BUILD_DIR/iros/iros.img",format=raw,index=0,media=disk \
     $BOOT \
     -no-reboot \
     -no-shutdown \

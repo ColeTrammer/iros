@@ -10,6 +10,7 @@ DOWNLOAD_DEST=binutils.tar.gz
 SRC="binutils-$VERSION"
 BUILD_DIR="build-binutils-$TARGET"
 INSTALL_PREFIX="${INSTALL_PREFIX:-$ROOT/toolchain/cross}"
+NPROC="${NPROC:-`nproc`}"
 
 if [ ! -e $DOWNLOAD_DEST ]; then
     curl -L "$DOWNLOAD_URL" -o "$DOWNLOAD_DEST" -4 --retry 5
@@ -39,6 +40,6 @@ if [ ! -d "$BUILD_DIR" ]; then
 fi
 
 cd "$BUILD_DIR"
-make -j5
+make "-j$NPROC"
 make install
 cd ..

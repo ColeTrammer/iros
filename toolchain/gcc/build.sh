@@ -10,6 +10,7 @@ DOWNLOAD_DEST=gcc.tar.gz
 SRC="gcc-$VERSION"
 BUILD_DIR="build-gcc-$TARGET"
 INSTALL_PREFIX="${INSTALL_PREFIX:-$ROOT/toolchain/cross}"
+NPROC="${NPROC:-`nproc`}"
 
 if [ ! -e $DOWNLOAD_DEST ]; then
     curl -L "$DOWNLOAD_URL" -o "$DOWNLOAD_DEST" -4 --retry 5
@@ -49,6 +50,6 @@ if [ ! -d "$BUILD_DIR" ]; then
 fi
 
 cd "$BUILD_DIR"
-make all-gcc -j5
+make all-gcc "-j$NPROC"
 make install-gcc
 cd ..

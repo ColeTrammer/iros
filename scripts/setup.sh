@@ -13,7 +13,7 @@ exists() {
 build_toolchain() {
     export ROOT="$(realpath .)"
     export SYSROOT="$ROOT/$IROS_BUILD/iros/sysroot"
-    export INSTALL_PREFIX="${IROS_TOOCHAIN_PREFIX:-ROOT/toolchain/cross}"
+    export INSTALL_PREFIX="${IROS_TOOLCHAIN_PREFIX:-$ROOT/toolchain/cross}"
     cd toolchain
     ./build.sh
     cd ..

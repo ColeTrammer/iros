@@ -4,29 +4,37 @@ if (NOT ${NATIVE_BUILD})
     )
 endif()
 
-set(TARGETS
+set(OS_LIBS
     ${OS_LIBS}
-    libapp
-    libc
-    libclanguage
-    libclipboard
-    libedit
-    libeventloop
-    libext
-    libgraphics
-    libgui
-    libipc
     libliim
-    libprocinfo
-    librepl
-    libsh
-    libsharedtest
-    libsharedtest2
-    libterminal
-    libtest
-    libthread
-    libtinput
-    libtui
 )
+
+if (NOT ${MINIMAL_BUILD})
+    set(OS_LIBS
+        ${OS_LIBS}
+        libapp
+        libc
+        libclanguage
+        libclipboard
+        libedit
+        libeventloop
+        libext
+        libgraphics
+        libgui
+        libipc
+        libprocinfo
+        librepl
+        libsh
+        libsharedtest
+        libsharedtest2
+        libterminal
+        libtest
+        libthread
+        libtinput
+        libtui
+    )
+endif()
+
+set(TARGETS ${OS_LIBS})
 
 add_all_targets()
