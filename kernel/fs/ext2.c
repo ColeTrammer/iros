@@ -713,7 +713,7 @@ static struct raw_inode *ext2_get_raw_inode(struct super_block *sb, uint32_t ind
     }
 
     struct raw_inode *raw_inode = (struct raw_inode *) (block + (inode_table_index * sb_data->sb->inode_size) % sb->block_size);
-    struct raw_inode *raw_inode_copy = malloc(sizeof(struct raw_inode));
+    struct raw_inode *raw_inode_copy = malloc(sb_data->sb->inode_size);
     memcpy(raw_inode_copy, raw_inode, sb_data->sb->inode_size);
 
     ext2_free_blocks(block);
