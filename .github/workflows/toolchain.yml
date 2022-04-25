@@ -4,12 +4,25 @@ on:
     push:
         branches:
             - "master"
-        paths:
-            - 'Dockerfile'
-            - 'toolchain/**'
 
 jobs:
-    docker:
+    check_should_build_toolchain:
+        runs-on: ubuntu-latest
+        outputs:
+            changed: ${{ steps.file_changes.any_changed }}
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v2
+            - name: Determine Changed Files
+              uses: tj-actions/changed-files@v18.7
+              id: file_changes
+              with:
+                  files: |
+                      Dockerfile
+                      toolchain/**
+    build_toolchain:
+        needs: check_should_build_toolchain
+        if: needs.check_should_build_toolchain.changed
         runs-on: ubuntu-latest
         steps:
             - name: Set up Docker Buildx
