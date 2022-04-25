@@ -1,3 +1,5 @@
+[![GitHub Actions Status](https://github.com/ColeTrammer/iros/workflows/Toolchain/badge.svg)](https://github.com/ColeTrammer/iros/actions?query=workflow%3A"Toolchain")
+
 # Iros
 
 My second attempt to create an OS
