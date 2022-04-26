@@ -1,0 +1,33 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.231.6/containers/docker-existing-docker-compose
+// If you want to run as a non-root user in the container, see .devcontainer/docker-compose.yml.
+{
+	"name": "Iros",
+	"dockerComposeFile": [
+		"docker-compose.yml"
+	],
+	"service": "iros",
+	"workspaceFolder": "/build/iros",
+	"settings": {
+		"search.exclude": {
+			"**/.git": true,
+			"build*/**": true,
+			"toolchain/cross/**": true,
+			"ports/**": true,
+			"/usr/include/**": true,
+		},
+		"files.exclude": {
+			"**/.git": true,
+			"build*/**": true,
+			"ports/build/**": true,
+			"/usr/include/**": true,
+		},
+	},
+	"extensions": [
+		"jeff-hykin.better-cpp-syntax",
+		"ms-vscode.cpptools",
+		"eamodio.gitlens",
+		"xaver.clang-format",
+	],
+	"remoteUser": "iris",
+}
