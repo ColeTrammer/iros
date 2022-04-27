@@ -10,7 +10,6 @@ RUN apt-get update -y && apt-get install -y \
     libmpc-dev \
     libmpfr-dev \
     libssl-dev \
-    patchelf \
     tar \
     && rm -rf /var/lib/apt/lists/* \
     && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 900 --slave /usr/bin/g++ g++ /usr/bin/g++-11
@@ -32,7 +31,6 @@ RUN apt-get update -y && apt-get install -y \
     ninja-build \
     nodejs \
     parted \
-    patchelf \
     qemu-system-i386 \
     qemu-system-x86 \
     qemu-utils \

@@ -1,4 +1,4 @@
-#ifdef __is_libk
+#if defined(__is_libk) || (defined(__is_shared) && defined(__i686__))
 // GCC 32/64-bit integer arithmetic support for 32-bit systems that can't link
 // to libgcc.
 

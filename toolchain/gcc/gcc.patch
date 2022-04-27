@@ -1,5 +1,5 @@
 diff --git a/config.sub b/config.sub
-index 63c1f1c8b..addb76470 100755
+index 63c1f1c8b..dc467bbe2 100755
 --- a/config.sub
 +++ b/config.sub
 @@ -1697,7 +1697,7 @@ case $os in
@@ -12,7 +12,7 @@ index 63c1f1c8b..addb76470 100755
  	     | hiux* | abug | nacl* | netware* | windows* \
  	     | os9* | macos* | osx* | ios* \
 diff --git a/fixincludes/mkfixinc.sh b/fixincludes/mkfixinc.sh
-index df90720b7..8716fa247 100755
+index df90720b7..1a58946cd 100755
 --- a/fixincludes/mkfixinc.sh
 +++ b/fixincludes/mkfixinc.sh
 @@ -14,6 +14,7 @@ case $machine in
@@ -24,7 +24,7 @@ index df90720b7..8716fa247 100755
      powerpc-*-eabi*    | \
      powerpc-*-rtems*   | \
 diff --git a/gcc/config.gcc b/gcc/config.gcc
-index 357b0bed0..fa69545ec 100644
+index 357b0bed0..4295fa3d0 100644
 --- a/gcc/config.gcc
 +++ b/gcc/config.gcc
 @@ -984,6 +984,13 @@ case ${target} in
@@ -60,15 +60,15 @@ index 357b0bed0..fa69545ec 100644
  	case ${target} in
 diff --git a/gcc/config/iros.h b/gcc/config/iros.h
 new file mode 100644
-index 000000000..f3f1b6133
+index 000000000..5ffbbd363
 --- /dev/null
 +++ b/gcc/config/iros.h
-@@ -0,0 +1,28 @@
+@@ -0,0 +1,31 @@
 +#undef TARGET_IROS
 +#define TARGET_IROS 1
 +
 +#undef LIB_SPEC
-+#define LIB_SPEC "%{pthread:-lpthread} %{!shared:-lc}"
++#define LIB_SPEC "%{pthread:-lpthread} -lc"
 +
 +#undef STARTFILE_SPEC
 +#define STARTFILE_SPEC "%{!shared:crt0.o%s} crti.o%s %{!shared:crtbegin.o%s} %{shared:crtbeginS.o%s}"
@@ -83,6 +83,9 @@ index 000000000..f3f1b6133
 +    "%{shared:-shared} %{static:-static} -z max-page-size=4096 %{!shared:%{!static:-dynamic-linker " DYNAMIC_LINKER "}} " \
 +    "%{!shared: %{!static: %{rdynamic:-export-dynamic}}}"
 +
++/* Use --as-needed -lgcc_s for eh support. */
++#define USE_LD_AS_NEEDED 1
++
 +#undef TARGET_OS_CPP_BUILTINS
 +#define TARGET_OS_CPP_BUILTINS()        \
 +    do {                                \
@@ -93,7 +96,7 @@ index 000000000..f3f1b6133
 +        builtin_assert("system=posix"); \
 +    } while (0);
 diff --git a/gcc/configure.ac b/gcc/configure.ac
-index 96a6f62b0..72e5cb1b5 100644
+index 96a6f62b0..898d77936 100644
 --- a/gcc/configure.ac
 +++ b/gcc/configure.ac
 @@ -6807,7 +6807,7 @@ case "$target" in
@@ -106,7 +109,7 @@ index 96a6f62b0..72e5cb1b5 100644
      ;;
  esac
 diff --git a/libgcc/config.host b/libgcc/config.host
-index f808b61be..80602fe8f 100644
+index f808b61be..0d2989a0e 100644
 --- a/libgcc/config.host
 +++ b/libgcc/config.host
 @@ -775,6 +775,16 @@ i[34567]86-*-solaris2* | x86_64-*-solaris2*)
@@ -127,7 +130,7 @@ index f808b61be..80602fe8f 100644
  	;;
  i[34567]86-*-cygwin*)
 diff --git a/libgcc/unwind-dw2-fde-dip.c b/libgcc/unwind-dw2-fde-dip.c
-index 5095b6830..3fd3bfbb5 100644
+index 5095b6830..d41e53f28 100644
 --- a/libgcc/unwind-dw2-fde-dip.c
 +++ b/libgcc/unwind-dw2-fde-dip.c
 @@ -83,6 +83,12 @@
@@ -144,7 +147,7 @@ index 5095b6830..3fd3bfbb5 100644
  
  #include <link.h>
 diff --git a/libitm/configure.tgt b/libitm/configure.tgt
-index a3d84896c..79a7e4889 100644
+index a3d84896c..419788748 100644
 --- a/libitm/configure.tgt
 +++ b/libitm/configure.tgt
 @@ -142,7 +142,7 @@ case "${target}" in
@@ -157,7 +160,7 @@ index a3d84896c..79a7e4889 100644
  	;;
  
 diff --git a/libstdc++-v3/acinclude.m4 b/libstdc++-v3/acinclude.m4
-index 1c0a4c130..1885a7bec 100644
+index 1c0a4c130..0053e3b25 100644
 --- a/libstdc++-v3/acinclude.m4
 +++ b/libstdc++-v3/acinclude.m4
 @@ -1442,7 +1442,7 @@ AC_DEFUN([GLIBCXX_ENABLE_LIBSTDCXX_TIME], [
@@ -756,7 +759,7 @@ index 000000000..508526305
 +
 +#endif
 diff --git a/libstdc++-v3/configure.host b/libstdc++-v3/configure.host
-index ec32980aa..562d9cf74 100644
+index ec32980aa..4fd922a4f 100644
 --- a/libstdc++-v3/configure.host
 +++ b/libstdc++-v3/configure.host
 @@ -300,6 +300,9 @@ case "${host_os}" in
@@ -770,7 +773,7 @@ index ec32980aa..562d9cf74 100644
      os_include_dir="os/tpf"
      ;;
 diff --git a/libstdc++-v3/crossconfig.m4 b/libstdc++-v3/crossconfig.m4
-index ff44d5ae0..7c0a1ac08 100644
+index ff44d5ae0..3f341e50b 100644
 --- a/libstdc++-v3/crossconfig.m4
 +++ b/libstdc++-v3/crossconfig.m4
 @@ -198,6 +198,17 @@ case "${host}" in
@@ -792,7 +795,7 @@ index ff44d5ae0..7c0a1ac08 100644
      GLIBCXX_CHECK_LINKER_FEATURES
      GLIBCXX_CHECK_MATH_SUPPORT
 diff --git a/libtool.m4 b/libtool.m4
-index 17f8e5f30..8ec1e197a 100644
+index 17f8e5f30..35fc2d3aa 100644
 --- a/libtool.m4
 +++ b/libtool.m4
 @@ -2578,6 +2578,17 @@ rdos*)

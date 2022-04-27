@@ -9,7 +9,7 @@ jobs:
     check_should_build_toolchain:
         runs-on: ubuntu-latest
         outputs:
-            changed: ${{ steps.file_changes.any_changed }}
+            changed: ${{ steps.file_changes.outputs.any_changed }}
         steps:
             - name: Checkout Code
               uses: actions/checkout@v2
@@ -22,7 +22,7 @@ jobs:
                       toolchain/**
     build_toolchain:
         needs: check_should_build_toolchain
-        if: needs.check_should_build_toolchain.changed
+        if: needs.check_should_build_toolchain.outputs.changed
         runs-on: ubuntu-latest
         steps:
             - name: Set up Docker Buildx
