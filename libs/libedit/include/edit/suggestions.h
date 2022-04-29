@@ -25,8 +25,8 @@ public:
         : m_content(suggestion.content().view()), m_start(suggestion.start()), m_detailed_match(move(detailed_match)), m_score(score) {}
 
     const TextIndex& start() const { return m_start; }
-    String content() const { return m_content; }
-    const Vector<size_t> detailed_match() const { return m_detailed_match; }
+    const String& content() const { return m_content; }
+    const Vector<size_t>& detailed_match() const { return m_detailed_match; }
     int score() const { return m_score; }
 
 private:
