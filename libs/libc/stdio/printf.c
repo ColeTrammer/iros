@@ -763,25 +763,38 @@ static int printf_internal(bool (*print)(void *obj, const char *s, size_t len), 
             format++;
             int num = va_arg(parameters, int);
             size_t len = 1;
+            size_t len_prec;
+            size_t len_width;
             unsigned int div = 1;
             int abs_num = num < 0 ? -num : num;
             while (abs_num / div > 9) {
                 div *= 10;
                 len++;
             }
-            if (((flags & 0b00001000) | (flags & 0b00000100)) && num >= 0)
-                len++;
+            if (precision == 0 && num == 0) {
+                len = 0;
+            }
+            len_prec = len;
+            len_width = len_prec;
+            if (precision >= 0 && (unsigned int) precision > len) {
+                len_prec = precision;
+                len_width = precision;
+            }
+            if ((flags & 0b00001000) | (flags & 0b00000100))
+                len_width++;
+            if (flags & 0b00000010)
+                len_width += 2;
             if (num < 0)
-                len++;
-            if ((unsigned int) width < len)
-                width = len;
+                len_width++;
+            if ((unsigned int) width < len_width)
+                width = len_width;
             if (maxrem < (unsigned int) width) {
                 // TODO: Set errno to EOVERFLOW.
                 return -1;
             }
             char filler = ' ';
             if (!((flags & 0b00010000) | (flags & 0b00000001))) {
-                for (unsigned int i = 0; i < (unsigned int) width - len; i++) {
+                for (unsigned int i = 0; i < (unsigned int) width - len_width; i++) {
                     if (!print(obj, &filler, 1))
                         return -1;
                 }
@@ -802,33 +815,47 @@ static int printf_internal(bool (*print)(void *obj, const char *s, size_t len), 
                     return -1;
                 num = -num;
             }
-            unsigned int to_write_buffer = (unsigned int) num;
+            if (flags & 0b00000010) {
+                char zero = '0';
+                if (!print(obj, &zero, 1))
+                    return -1;
+                if (!print(obj, format, 1))
+                    return -1;
+            }
             if (!(flags & 0b00010000) && (flags & 0b00000001)) {
                 filler = '0';
-                for (unsigned int i = 0; i < (unsigned int) width - len; i++) {
+                for (unsigned int i = 0; i < (unsigned int) width - len_width; i++) {
                     if (!print(obj, &filler, 1))
                         return -1;
                 }
             }
-            if (to_write_buffer == 0) {
+            while (len < len_prec) {
                 char zero = '0';
                 if (!print(obj, &zero, 1))
                     return -1;
+                len++;
+            }
+            if (num == 0) {
+                if (precision != 0) {
+                    char zero = '0';
+                    if (!print(obj, &zero, 1))
+                        return -1;
+                }
             } else {
                 char digit;
                 while (div > 9) {
-                    int n = to_write_buffer / div;
+                    unsigned int n = abs_num / div;
                     div /= 10;
                     digit = n % 10 + '0';
                     if (!print(obj, &digit, 1))
                         return -1;
                 }
-                digit = to_write_buffer % 10 + '0';
+                digit = num % 10 + '0';
                 if (!print(obj, &digit, 1))
                     return -1;
             }
             if (flags & 0b00010000) {
-                for (unsigned int i = 0; i < (unsigned int) width - len; i++) {
+                for (unsigned int i = 0; i < (unsigned int) width - len_width; i++) {
                     if (!print(obj, &filler, 1))
                         return -1;
                 }
