@@ -107,7 +107,7 @@ EventLoop::~EventLoop() {
     s_the = nullptr;
 }
 
-void EventLoop::do_select() {
+void EventLoop::do_select(bool block) {
     fd_set rd_set;
     fd_set wr_set;
     fd_set ex_set;
@@ -140,7 +140,8 @@ void EventLoop::do_select() {
     });
 
     for (;;) {
-        int ret = pselect(FD_SETSIZE, &rd_set, &wr_set, &ex_set, nullptr, &sigset);
+        timespec no_timeout { .tv_sec = 0, .tv_nsec = 0 };
+        int ret = pselect(FD_SETSIZE, &rd_set, &wr_set, &ex_set, block ? nullptr : &no_timeout, &sigset);
         if (ret == -1) {
             if (errno == EINTR) {
                 if (s_signal_number) {
@@ -246,7 +247,13 @@ void EventLoop::enter() {
         if (m_should_exit) {
             return;
         }
-        do_select();
+        do_select(true);
     }
+}
+
+void EventLoop::pump() {
+    setup_signal_handlers();
+    do_select(false);
+    do_event_dispatch();
 }
 }

@@ -29,10 +29,12 @@ public:
     void enter();
     void set_should_exit(bool b) { m_should_exit = b; }
 
+    void pump();
+
 private:
     void do_queue_event(WeakPtr<Object> target, UniquePtr<Event> event);
 
-    void do_select();
+    void do_select(bool block);
     void do_event_dispatch();
     void setup_signal_handlers();
 
