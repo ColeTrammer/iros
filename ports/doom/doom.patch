@@ -1,0 +1,209 @@
+diff --git a/doomgeneric/Makefile.iros b/doomgeneric/Makefile.iros
+new file mode 100644
+index 0000000..5a4c24d
+--- /dev/null
++++ b/doomgeneric/Makefile.iros
+@@ -0,0 +1,48 @@
++CC=x86_64-iros-gcc
++CXX=x86_64-iros-g++ -fcoroutines -fno-rtti -std=gnu++20
++CFLAGS+=-Os
++LDFLAGS+=-Wl,--gc-sections
++CFLAGS+=-Wall -DNORMALUNIX -DSNDSERV -D_DEFAULT_SOURCE # -DUSEASM
++LIBS+=-lgraphics -leventloop -lapp -lgui -lm -lc
++
++# subdirectory for objects
++OBJDIR=build
++OUTPUT=doomgeneric
++
++SRC_DOOM = i_main.o dummy.o am_map.o doomdef.o doomstat.o dstrings.o d_event.o d_items.o d_iwad.o d_loop.o d_main.o d_mode.o d_net.o f_finale.o f_wipe.o g_game.o hu_lib.o hu_stuff.o info.o i_cdmus.o i_endoom.o i_joystick.o i_scale.o i_sound.o i_system.o i_timer.o memio.o m_argv.o m_bbox.o m_cheat.o m_config.o m_controls.o m_fixed.o m_menu.o m_misc.o m_random.o p_ceilng.o p_doors.o p_enemy.o p_floor.o p_inter.o p_lights.o p_map.o p_maputl.o p_mobj.o p_plats.o p_pspr.o p_saveg.o p_setup.o p_sight.o p_spec.o p_switch.o p_telept.o p_tick.o p_user.o r_bsp.o r_data.o r_draw.o r_main.o r_plane.o r_segs.o r_sky.o r_things.o sha1.o sounds.o statdump.o st_lib.o st_stuff.o s_sound.o tables.o v_video.o wi_stuff.o w_checksum.o w_file.o w_main.o w_wad.o z_zone.o w_file_stdc.o i_input.o i_video.o doomgeneric.o doomgeneric_iros.o
++OBJS += $(addprefix $(OBJDIR)/, $(SRC_DOOM))
++
++all:	 $(OUTPUT)
++
++clean:
++	rm -rf $(OBJDIR)
++	rm -f $(OUTPUT)
++	rm -f $(OUTPUT).gdb
++	rm -f $(OUTPUT).map
++
++$(OUTPUT):	$(OBJS)
++	@echo [Linking $@]
++	$(CXX) $(CFLAGS) $(LDFLAGS) $(OBJS) \
++	-o $(OUTPUT) $(LIBS) -Wl,-Map,$(OUTPUT).map
++	@echo [Size]
++	-$(CROSS_COMPILE)size $(OUTPUT)
++
++$(OBJS): | $(OBJDIR)
++
++$(OBJDIR):
++	mkdir -p $(OBJDIR)
++
++$(OBJDIR)/%.o:	%.c
++	@echo [Compiling $<]
++	$(CC) $(CFLAGS) -c $< -o $@
++
++$(OBJDIR)/%.o:	%.cpp
++	@echo [Compiling $<]
++	$(CXX) $(CFLAGS) -c $< -o $@
++
++print:
++	@echo OBJS: $(OBJS)
++
++install:
++	@echo INSTALL
++	cp $(OUTPUT) $(DESTDIR)/bin/doom
+diff --git a/doomgeneric/doomgeneric_iros.cpp b/doomgeneric/doomgeneric_iros.cpp
+new file mode 100644
+index 0000000..553402c
+--- /dev/null
++++ b/doomgeneric/doomgeneric_iros.cpp
+@@ -0,0 +1,149 @@
++#include <app/widget.h>
++#include <app/widget_bridge.h>
++#include <graphics/renderer.h>
++#include <gui/application.h>
++#include <gui/widget.h>
++#include <gui/window.h>
++#include <liim/format.h>
++#include <time.h>
++#include <unistd.h>
++
++extern "C" {
++#include "doomkeys.h"
++
++#include "doomgeneric.h"
++}
++
++class DoomWidget;
++
++static SharedPtr<GUI::Window> s_main_window;
++static DoomWidget* s_doom_widget;
++
++class DoomWidget final : public GUI::Widget {
++    APP_WIDGET_EMITS(GUI::Widget, DoomWidget, (App::KeyDownEvent, App::KeyUpEvent))
++
++public:
++    DoomWidget() {}
++
++    virtual void did_attach() override {
++        set_accepts_focus(true);
++
++        on<App::KeyDownEvent, App::KeyUpEvent>([this](auto& event) {
++            m_key_events.add(event);
++            return true;
++        });
++    }
++
++    virtual void render() override {
++        auto renderer = get_renderer();
++
++        auto bitmap = Bitmap::wrap(DG_ScreenBuffer, DOOMGENERIC_RESX, DOOMGENERIC_RESY, false);
++        renderer.draw_bitmap(*bitmap, { 0, 0, DOOMGENERIC_RESX, DOOMGENERIC_RESY }, sized_rect());
++    }
++
++    Maybe<App::KeyEvent> next_key_event() {
++        if (m_key_events.empty()) {
++            return {};
++        }
++        auto event = m_key_events[0];
++        m_key_events.remove(0);
++        return event;
++    }
++
++private:
++    Vector<App::KeyEvent> m_key_events;
++};
++
++extern "C" void DG_Init() {
++    static auto app = GUI::Application::create();
++
++    s_main_window = GUI::Window::create(nullptr, 50, 50, DOOMGENERIC_RESX, DOOMGENERIC_RESY, "Doom", false);
++    s_doom_widget = &s_main_window->set_main_widget<DoomWidget>();
++}
++
++extern "C" void DG_DrawFrame() {
++    s_main_window->invalidate_rect({});
++    GUI::Application::the().main_event_loop().pump();
++}
++
++extern "C" void DG_SleepMs(uint32_t ms) {
++    usleep(ms * 1000);
++}
++
++extern "C" uint32_t DG_GetTicksMs() {
++    timespec spec;
++    clock_gettime(CLOCK_REALTIME, &spec);
++
++    return spec.tv_sec * 1000 + spec.tv_nsec / 1000000;
++}
++
++extern "C" int DG_GetKey(int* pressed, unsigned char* doomKey) {
++    if (auto maybe_event = s_doom_widget->next_key_event()) {
++        auto event = *maybe_event;
++
++        unsigned char code = [&](App::Key key) {
++            switch (key) {
++                case App::Key::Enter:
++                    return KEY_ENTER;
++                case App::Key::Escape:
++                    return KEY_ESCAPE;
++                case App::Key::LeftArrow:
++                    return KEY_LEFTARROW;
++                case App::Key::RightArrow:
++                    return KEY_RIGHTARROW;
++                case App::Key::UpArrow:
++                    return KEY_UPARROW;
++                case App::Key::DownArrow:
++                    return KEY_DOWNARROW;
++                case App::Key::LeftControl:
++                case App::Key::RightControl:
++                    return KEY_FIRE;
++                case App::Key::Space:
++                    return KEY_USE;
++                case App::Key::LeftShift:
++                case App::Key::RightShift:
++                    return KEY_RSHIFT;
++                case App::Key::A:
++                case App::Key::B:
++                case App::Key::C:
++                case App::Key::D:
++                case App::Key::E:
++                case App::Key::F:
++                case App::Key::G:
++                case App::Key::H:
++                case App::Key::I:
++                case App::Key::J:
++                case App::Key::K:
++                case App::Key::L:
++                case App::Key::M:
++                case App::Key::N:
++                case App::Key::O:
++                case App::Key::P:
++                case App::Key::Q:
++                case App::Key::R:
++                case App::Key::S:
++                case App::Key::T:
++                case App::Key::U:
++                case App::Key::V:
++                case App::Key::W:
++                case App::Key::X:
++                case App::Key::Y:
++                case App::Key::Z:
++                    return (static_cast<int>(event.key()) - static_cast<int>(App::Key::A) + 'A') & 0x1F;
++                default:
++                    return 254;
++            }
++
++            return 0;
++        }(event.key());
++
++        *doomKey = code;
++        *pressed = event.key_down();
++        return 1;
++    }
++    return 0;
++}
++
++extern "C" void DG_SetWindowTitle(const char* title) {
++    (void) title;
++}

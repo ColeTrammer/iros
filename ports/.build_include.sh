@@ -2,6 +2,7 @@ set -e
 
 export ROOT="$PWD/../.."
 export HOST=`$ROOT/scripts/default-host.sh`
+export SYSROOT="$ROOT/build_x86_64/iros/sysroot"
 
 die() {
     echo "Error:" "$@" && exit 1
@@ -71,7 +72,7 @@ function_exists patch || patch() {
 }
 
 function_exists install || install() {
-    make ${INSTALL_COMMAND:-install} DESTDIR="$ROOT/sysroot" $MAKE_ARGS
+    make ${INSTALL_COMMAND:-install} DESTDIR="$SYSROOT" $MAKE_ARGS
 }
 
 run() {

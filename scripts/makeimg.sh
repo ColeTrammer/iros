@@ -14,7 +14,7 @@ then
     exit 1
 fi
 
-DEFAULT_DISK_SIZE=100m
+DEFAULT_DISK_SIZE=40m
 if [ -e "$IROS_GRUB_IMAGE" ]; then
     DEFAULT_DISK_SIZE=50m;
 fi
