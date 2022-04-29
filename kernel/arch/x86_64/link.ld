@@ -7,6 +7,14 @@ PROVIDE(KERNEL_PHYS_START = 0x200000);
 /* Sets first thing to be executed to be start */
 ENTRY(_start32)
 
+PHDRS
+{
+    text PT_LOAD ;
+    rodata PT_LOAD ;
+    data PT_LOAD ;
+    note PT_NOTE ;
+}
+
 SECTIONS
 {
     PROVIDE (__executable_start = SEGMENT_START("text-segment", KERNEL_VMA)); 
@@ -36,7 +44,7 @@ SECTIONS
         PROVIDE(__init_level_net_start = .);
         KEEP(*(SORT_NONE(.init.level.net)))
         PROVIDE(__init_level_net_end = .);
-    }
+    } :text
 
     .text : AT(ADDR(.text) - KERNEL_VMA + KERNEL_PHYS_START)
     {
@@ -46,35 +54,35 @@ SECTIONS
         *(.text.ap_boot)
         PROVIDE(_kernel_ap_trampoline_end = .);
         *(.text .text.*)
-    }
+    } :text
 
     .fini : AT(ADDR(.fini) - KERNEL_VMA + KERNEL_PHYS_START)
     {
         KEEP(*(SORT_NONE(.fini)))
         PROVIDE(_text_end = .);
-    }
+    } :text
 
     .rodata ALIGN(0x1000) : AT(ADDR(.rodata) - KERNEL_VMA + KERNEL_PHYS_START)
     {
         PROVIDE(_rod_start = .);
         *(.rodata .rodata.*)
-    }
+    } :rodata
 
     .ctors : AT(ADDR(.ctors) - KERNEL_VMA + KERNEL_PHYS_START)
     {
         *(.ctors)
-    }
+    } :rodata
 
     .dtors : AT(ADDR(.dtors) - KERNEL_VMA + KERNEL_PHYS_START)
     {
         *(.dtors)
-    }
+    } :rodata
 
     .eh_frame : AT(ADDR(.eh_frame) - KERNEL_VMA + KERNEL_PHYS_START)
     {
         *(.eh_frame)
         PROVIDE(_rod_end = .);
-    }
+    } :rodata
 
     /* Put data */
     .data ALIGN(0x1000) : AT(ADDR(.data) - KERNEL_VMA + KERNEL_PHYS_START)
@@ -83,7 +91,7 @@ SECTIONS
         *(.data)
         PROVIDE(_data_end_boot = . - KERNEL_VMA + KERNEL_PHYS_START);
         PROVIDE(_data_end = .);
-    }
+    } :data
 
     /* Put uninitialized data */
     .bss ALIGN(0x1000) : AT(ADDR(.bss) - KERNEL_VMA + KERNEL_PHYS_START)
@@ -96,7 +104,12 @@ SECTIONS
         PROVIDE(_bss_end_boot = . - KERNEL_VMA + KERNEL_PHYS_START);
         PROVIDE(_bss_end = .);
         PROVIDE(_kernel_phys_end = . - KERNEL_VMA + KERNEL_PHYS_START);
-    }
+    } :data
 
-    /DISCARD/ : { *(.comment) }
+    .note : AT(ADDR(.note) - KERNEL_VMA + KERNEL_PHYS_START)
+    {
+        *(.note)
+    } :note
+
+    /DISCARD/ : { *(.comment) *(.note.gnu*) }
 }

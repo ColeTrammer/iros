@@ -1,3 +1,6 @@
+#include <kernel/boot/xen.h>
+#include <kernel/boot/boot_info.h>
+
 # Multiboot Header information
 .set MAGIC, 0xE85250D6
 .set ARCHITECTURE, 0
@@ -38,7 +41,7 @@ ENTRY_TAG_START:
 .word 3
 .word 1
 .long ENTRY_TAG_END - ENTRY_TAG_START
-.long _kernel_entry32
+.long _kernel_entry32 + (_start_multiboot2 - _start32)
 ENTRY_TAG_END:
 .align 8
 MODULE_ALIGNMENT_TAG_START:
@@ -56,6 +59,17 @@ MULTIBOOT_HEADER_END:
 
 .set MULTIBOOT2_MAGIC_CHECK, 0x36D76289
 
+.section .note
+.align 4
+.long 4
+.long XEN_ELFNOTE_PHYS32_ENTRY_DATA_END - XEN_ELFNOTE_PHYS32_ENTRY_DATA_START
+.long XEN_ELFNOTE_PHYS32_ENTRY
+.asciz "Xen"
+XEN_ELFNOTE_PHYS32_ENTRY_DATA_START:
+.long _kernel_entry32 + (_start_xen - _start32)
+.align 4
+XEN_ELFNOTE_PHYS32_ENTRY_DATA_END:
+
 .set VGA_BASE, 0xB8000
 .set VGA_WIDTH, 80
 .set VGA_HEIGHT, 25
@@ -66,27 +80,10 @@ _start32:
     # Load early stack
     mov $(early_stack_top - _start32 + _kernel_entry32), %esp
 
-    # Save eax (should be equal to MULTIBOOT2_MAGIC_CHECK)
-    mov %eax, %ebp
-    
-    # Save ebx (points to the multiboot2 info)
+    # Save boot info type and pointer
+    push %eax
     push %ebx
 
-    # Clear screen
-    mov $VGA_BASE, %edi
-    mov $(VGA_WIDTH * VGA_HEIGHT), %ecx
-    mov $0x0720, %ax
-    rep stosw
-
-    # Check bootloader validity
-    cmp $MULTIBOOT2_MAGIC_CHECK, %ebp
-    je _valid_bootloader
-
-    mov $(_invalid_boot_loader_str - _start32 + _kernel_entry32), %edi
-    call _kprint32
-    jmp _l
-
-_valid_bootloader:
     # Setup up the kernel page tables, so we can jump to
     # the higher-half kernel address.
 
@@ -131,8 +128,9 @@ _add_page_table_high:
     or $0x80000001, %eax
     mov %eax, %cr0
 
-    # Restore multiboot info into %edx
+    # Restore boot info into %ebx
     pop %ebx
+    pop %ecx
 
     # Set eip to the new higher half address space
     lea higher_half, %ecx
@@ -156,6 +154,7 @@ higher_half:
     # Now at last tranfer control to the kernel
     sub $16, %esp
 
+    mov %ecx, 4(%esp)
     mov %ebx, 0(%esp)
     call kernel_main
 
@@ -182,6 +181,50 @@ __halt:
     cli
     hlt
     jmp __halt
+
+.global _start_multiboot2
+_start_multiboot2:
+    # Save eax (should be equal to MULTIBOOT2_MAGIC_CHECK)
+    mov %eax, %ebp
+
+    # Save multiboot2 structure
+    mov %ebx, %esi
+
+    # Clear screen
+    mov $VGA_BASE, %edi
+    mov $(VGA_WIDTH * VGA_HEIGHT), %ecx
+    mov $0x0720, %ax
+    rep stosw
+
+    # Check bootloader validity
+    cmp $MULTIBOOT2_MAGIC_CHECK, %ebp
+    je _valid_bootloader
+
+    mov $(_invalid_boot_loader_str - _start32 + _kernel_entry32), %edi
+    call _kprint32
+    jmp _l
+
+_valid_bootloader:
+    # Restore boot info structure
+    mov %esi, %ebx
+    mov $BOOT_INFO_MULTIBOOT2, %eax
+    jmp _start32
+
+.global _start_xen
+_start_xen:
+    # Save xen info structure
+    mov %ebx, %esi
+
+    # Clear screen
+    mov $VGA_BASE, %edi
+    mov $(VGA_WIDTH * VGA_HEIGHT), %ecx
+    mov $0x0720, %ax
+    rep stosw
+
+    # Restore boot info structure
+    mov %esi, %ebx
+    mov $BOOT_INFO_XEN, %eax
+    jmp _start32
 
 # The data fields must be in the same section to allow relative offsets to be used.
 _invalid_boot_loader_str:

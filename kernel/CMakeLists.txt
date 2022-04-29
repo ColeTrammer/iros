@@ -97,6 +97,7 @@ if (NOT ${NATIVE_BUILD})
     target_compile_definitions(kernel PRIVATE __is_kernel)
 
     target_link_libraries(kernel libk kernel_headers)
+    set_target_properties(kernel PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/arch/${ARCH}/link.ld)
 
     install(TARGETS kernel RUNTIME DESTINATION boot)
 endif()
