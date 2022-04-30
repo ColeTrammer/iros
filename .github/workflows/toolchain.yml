@@ -22,7 +22,7 @@ jobs:
                       toolchain/**
     build_toolchain:
         needs: check_should_build_toolchain
-        if: needs.check_should_build_toolchain.outputs.changed
+        if: needs.check_should_build_toolchain.outputs.changed == 'true'
         runs-on: ubuntu-latest
         steps:
             - name: Set up Docker Buildx
