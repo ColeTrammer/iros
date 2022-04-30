@@ -9,13 +9,20 @@ die() {
 ARCH=${IROS_ARCH:-x86_64}
 
 ROOT=${ROOT:-`realpath ..`}
-BUILD_DIR=${IROS_BUILD_DIR:-$ROOT/build_$ARCH}
+BUILD_DIR="${IROS_BUILD_DIR:-$ROOT/build_$ARCH}"
+IMAGE="${IROS_IMAGE:-$BUILD_DIR/iros/iros.img}"
+KERNEL="${IROS_KERNEL:-$BUILD_DIR/iros/kernel/kernel}"
+INITRD="${IROS_INITRD:-$BUILD_DIR/iros/sysroot/boot/initrd.bin}"
+ISO="${IROS_ISO:-$BUILD_DIR/iros/iros.iso}"
+RUN="${IROS_RUN:-kernel}"
 
-[ -e "$BUILD_DIR/iros/iros.img" ] || die 'iros.img not found - try running `sudo ./makeimg.sh'"'"
-[ -e "$BUILD_DIR/iros/iros.iso" ] || [ "$IROS_RUN_HARDDRIVE" ] || die 'iros.iso not found - try making target `iros.iso'"'"
+[ -e "$IMAGE" ] || die 'iros.img not found - try running `ninja image'"'"
+[ "$RUN" != iso ] || [ -e "$ISO" ] || die 'iros.iso not found - try running `ninja iso'"'"
+[ "$RUN" != kernel ] || [ -e "$KERNEL" ] || die 'kernel not found - try running `ninja'"'"
+[ "$RUN" != kernel ] || [ -e "$INITRD" ] || die 'initrd not found - try running `ninja install'"'"
 
 ENABLE_KVM=""
-if [ -e /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
+if ! [ "$IROS_DISABLE_KVM" ] && [ -e /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
     ENABLE_KVM="-enable-kvm"
 fi
 
@@ -26,9 +33,19 @@ fi
 
 CDROM=""
 BOOT=""
-if [ -e "$BUILD_DIR/iros/iros.iso" ] && [ ! "$IROS_RUN_HARDDRIVE" ]; then
-    CDROM="-cdrom $BUILD_DIR/iros/iros.iso"
+KERNEL_ARG=""
+if [ "$RUN" = iso ]; then
+    CDROM="-cdrom $ISO"
     BOOT="-boot d"
+elif [ "$RUN" = kernel ]; then
+    KERNEL_ARG="-kernel $KERNEL -initrd $INITRD"
+    if [ "$IROS_CMDLINE" ]; then
+        KERNEL_ARG="$KERNEL_ARG -append $IROS_CMDLINE"
+    fi
+elif [ "$RUN" = harddrive ]; then
+    :;
+else
+    die 'Unkown value of IROS_RUN: `'"$RUN'"
 fi
 
 if [ "$ARCH" = "i686" ]; then
@@ -36,13 +53,14 @@ if [ "$ARCH" = "i686" ]; then
 fi
 
 qemu-system-$ARCH \
+    $KERNEL_ARG \
     $CDROM \
     -d guest_errors \
     -serial stdio \
     ${RUN_SMP} \
     ${ENABLE_KVM} \
     -device VGA,vgamem_mb=64 \
-    -drive file="$BUILD_DIR/iros/iros.img",format=raw,index=0,media=disk \
+    -drive file="$IMAGE",format=raw,index=0,media=disk \
     $BOOT \
     -no-reboot \
     -no-shutdown \
