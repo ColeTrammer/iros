@@ -117,7 +117,7 @@ if (NOT ${NATIVE_BUILD})
                 SYSROOT="${SYSROOT}"
                 IROS_GRUB_IMAGE="$$IROS_GRUB_IMAGE"
                 "${ROOT}/scripts/makeimg.sh"
-        DEPENDS install-all
+        DEPENDS generate-initrd install-all
         USES_TERMINAL
     )
 
