@@ -1,14 +1,17 @@
 #include <stdint.h>
 
+#include <kernel/boot/boot_info.h>
 #include <kernel/hal/output.h>
-#include <kernel/util/spinlock.h>
-
 #include <kernel/hal/x86/drivers/serial.h>
+#include <kernel/util/spinlock.h>
 
 extern spinlock_t debug_lock;
 
 bool kprint(const char *str, size_t len) {
-    return serial_write_message(str, len);
+    if (boot_get_boot_info()->serial_debug) {
+        return serial_write_message(str, len);
+    }
+    return true;
 }
 
 void dump_registers_to_screen() {

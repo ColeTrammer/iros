@@ -11,6 +11,8 @@
 #include <kernel/hal/output.h>
 #include <kernel/mem/page.h>
 
+// #define BOOT_INFO_DEBUG
+
 static struct boot_info s_boot_info;
 
 struct boot_info *boot_get_boot_info() {
@@ -19,12 +21,18 @@ struct boot_info *boot_get_boot_info() {
 
 static void init_command_line(const char *command_line) {
     s_boot_info.command_line = command_line;
+#ifdef BOOT_INFO_DEBUG
     debug_log("kernel command line: [ %s ]\n", s_boot_info.command_line);
+#endif /* BOOT_INFO_DEBUG */
     if (strstr(s_boot_info.command_line, "graphics=0") != 0) {
         kernel_disable_graphics();
     }
     if (strstr(s_boot_info.command_line, "ide_use_default_ports=1") != 0) {
         s_boot_info.ide_use_default_ports = true;
+    }
+    s_boot_info.serial_debug = true;
+    if (strstr(s_boot_info.command_line, "disable_serial_debug=1")) {
+        s_boot_info.serial_debug = false;
     }
 }
 
@@ -46,7 +54,9 @@ void init_boot_info_from_multiboot2(const struct multiboot2_info *info) {
             MULTIBOOT2_DECLARE_AND_CAST_TAG(module_tag, tag, module);
             s_boot_info.initrd_phys_start = ALIGN_DOWN(module_tag->module_start, PAGE_SIZE);
             s_boot_info.initrd_phys_end = ALIGN_UP(module_tag->module_end, PAGE_SIZE);
+#ifdef BOOT_INFO_DEBUG
             debug_log("kernel module: [ %s, %#.8X, %#.8X ]\n", module_tag->name, module_tag->module_start, module_tag->module_end);
+#endif /* BOOT_INFO_DEBUG */
         }
     }
 }
@@ -57,7 +67,9 @@ void init_boot_info_from_xen(const struct xen_boot_info *info) {
         abort();
     }
 
+#ifdef BOOT_INFO_DEBUG
     debug_log("Found Xen boot info: [ %p ]\n", info);
+#endif /* BOOT_INFO_DEBUG */
 
     bool found_initrd = false;
 
@@ -65,7 +77,9 @@ void init_boot_info_from_xen(const struct xen_boot_info *info) {
     const struct xen_module_entry *modules = (void *) (uintptr_t) info->modules;
     for (uint32_t i = 0; i < module_count; i++) {
         const struct xen_module_entry *module = &modules[i];
+#ifdef BOOT_INFO_DEBUG
         debug_log("Xen Module: [ %.16" PRIX64 ", %" PRIu64 " ]\n", module->addr, module->size);
+#endif /* BOOT_INFO_DEBUG */
 
         found_initrd = true;
         s_boot_info.initrd_phys_start = ALIGN_DOWN(module->addr, PAGE_SIZE);

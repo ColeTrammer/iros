@@ -5,6 +5,7 @@
 #define BOOT_INFO_XEN        2
 #ifndef __ASSEMBLER__
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 struct multiboot2_info;
@@ -16,6 +17,7 @@ struct boot_info {
     uintptr_t initrd_phys_end;
     const char *command_line;
     bool ide_use_default_ports;
+    bool serial_debug;
     void *memory_map;
     size_t memory_map_count;
 };

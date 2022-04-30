@@ -24,9 +24,9 @@
 #include <kernel/util/list.h>
 
 void kernel_main(int boot_type, void *boot_info) {
+    init_boot_info(boot_type, boot_info);
     init_hal();
     init_irq_handlers();
-    init_boot_info(boot_type, boot_info);
     init_page_frame_allocator();
     init_kernel_process();
     init_vm_allocator();
