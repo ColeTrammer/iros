@@ -99,6 +99,7 @@ int getcpuclockid(int tgid, int tid, clockid_t *clock_id);
 int enable_profiling(pid_t pid);
 ssize_t read_profile(pid_t pid, void *buffer, size_t size);
 int disable_profiling(pid_t pid);
+int poweroff(void);
 #endif /* SYS_IROS_NO_FUNCTIONS */
 
 #ifdef __cplusplus

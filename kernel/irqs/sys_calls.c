@@ -2049,6 +2049,19 @@ SYS_CALL(umount) {
     SYS_RETURN(fs_umount(target));
 }
 
+SYS_CALL(poweroff) {
+    SYS_BEGIN();
+
+    struct task *task = get_current_task();
+    if (task->process->euid != 0) {
+        SYS_RETURN(-EPERM);
+    }
+
+    hal_poweroff();
+
+    abort();
+}
+
 SYS_CALL(invalid_system_call) {
     SYS_BEGIN();
     SYS_RETURN(-ENOSYS);

@@ -17,4 +17,6 @@ void enumerate_devices(void);
 void kernel_disable_graphics(void);
 bool kernel_use_graphics(void);
 
+void hal_poweroff(void);
+
 #endif /* _KERNEL_HAL_HAL_H */

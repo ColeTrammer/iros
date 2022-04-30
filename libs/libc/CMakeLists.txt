@@ -351,6 +351,7 @@ else()
         sys/iros/exit_task.c
         sys/iros/getcpuclockid.c
         sys/iros/os_mutex.c
+        sys/iros/poweroff.c
         sys/iros/read_profile.c
         sys/iros/set_thread_self_pointer.c
         sys/iros/tgkill.c

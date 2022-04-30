@@ -109,6 +109,11 @@ void enumerate_devices(void) {
     init_virtual_devices();
 }
 
+void hal_poweroff(void) {
+    // FIXME: this hack only works in Qemu
+    outw(0x604, 0x2000);
+}
+
 static struct hw_device s_root_device = {
     .name = "x86 Motherboard",
     .children = INIT_LIST(s_root_device.children),
