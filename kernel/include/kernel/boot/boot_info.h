@@ -8,19 +8,21 @@
 #include <stdint.h>
 
 struct multiboot2_info;
-struct multiboot2_memory_map_tag;
-struct xen_info;
+struct xen_boot_info;
 
 struct boot_info {
+    int boot_info_type;
     uintptr_t initrd_phys_start;
     uintptr_t initrd_phys_end;
     const char *command_line;
     bool ide_use_default_ports;
-    struct multiboot2_memory_map_tag *memory_map;
+    void *memory_map;
+    size_t memory_map_count;
 };
 
 void init_boot_info_from_multiboot2(const struct multiboot2_info *info);
-void init_boot_info_from_xen(const struct xen_info *info);
+void init_boot_info_from_xen(const struct xen_boot_info *info);
+void init_boot_info(int boot_info_type, const void *info);
 
 struct boot_info *boot_get_boot_info();
 #endif

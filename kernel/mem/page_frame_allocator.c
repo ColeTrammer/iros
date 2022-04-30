@@ -7,6 +7,7 @@
 
 #include <kernel/boot/boot_info.h>
 #include <kernel/boot/multiboot2.h>
+#include <kernel/boot/xen.h>
 #include <kernel/hal/block.h>
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
@@ -108,29 +109,57 @@ void free_phys_page(uintptr_t phys_addr, struct process *process) {
     spin_unlock(&bitmap_lock);
 }
 
+static void process_memory_map_region(uint64_t start, uint64_t length, uint32_t type) {
+    debug_log("Physical memory range: [ %#.16" PRIX64 ", %#.16" PRIX64 ", %u ]\n", start, length, type);
+
+    // NOTE: the kernel will need to define its own memory map types and
+    //       convert between them if different boot loaders use different
+    //       types. At the moment, both multiboot2 and xen use use
+    //       1 to denote free. However, this is not the case for all
+    //       boot protocols.
+    if (type == MULTIBOOT2_MEMORY_MAP_AVAILABLE) {
+        // Memory below 0x100000 is reserved, and accounted as allocated.
+        if (start < 0x100000) {
+            g_phys_page_stats.phys_memory_allocated +=
+                ALIGN_UP(MIN(ALIGN_UP((start & ~0xFFF) + length, PAGE_SIZE), 0x100000) - (start & ~0xFFF), PAGE_SIZE);
+        }
+
+        mark_available(start & ~0xFFF, length);
+        g_phys_page_stats.phys_memory_total += length - (start & ~0xFFF);
+    }
+    g_phys_page_stats.phys_memory_max = MAX(ALIGN_UP((start & ~0xFFF) + length, PAGE_SIZE), g_phys_page_stats.phys_memory_max);
+}
+
+static void init_from_multiboot2_map(struct boot_info *boot_info) {
+    struct multiboot2_memory_map_tag *memory_map_tag = boot_info->memory_map;
+    multiboot2_for_each_memory_map_entry(memory_map_tag, entry) {
+        process_memory_map_region(entry->base_address, entry->length, entry->type);
+    }
+}
+
+static void init_from_xen_map(struct boot_info *boot_info) {
+    const struct xen_memory_map_entry *memory_map = boot_info->memory_map;
+    for (uint32_t i = 0; i < boot_info->memory_map_count; i++) {
+        const struct xen_memory_map_entry *entry = &memory_map[i];
+        process_memory_map_region(entry->base_address, entry->length, entry->type);
+    }
+}
+
 void init_page_frame_allocator() {
     // Everything starts off allocated (reserved). Only usable segments (according to the bootloader) are made available.
     memset(page_bitset_storage, 0xFF, sizeof(page_bitset_storage));
     init_bitset(&page_bitset, page_bitset_storage, sizeof(page_bitset_storage), sizeof(page_bitset_storage) * CHAR_BIT);
 
     struct boot_info *boot_info = boot_get_boot_info();
-    struct multiboot2_memory_map_tag *memory_map_tag = boot_info->memory_map;
-    multiboot2_for_each_memory_map_entry(memory_map_tag, entry) {
-        debug_log("Physical memory range: [ %#.16" PRIX64 ", %#.16" PRIX64 ", %u ]\n", entry->base_address & ~0xFFF, entry->length,
-                  entry->type);
-        if (entry->type == MULTIBOOT2_MEMORY_MAP_AVAILABLE) {
-            // Memory below 0x100000 is reserved, and accounted as allocated.
-            if (entry->base_address < 0x100000) {
-                g_phys_page_stats.phys_memory_allocated += ALIGN_UP(
-                    MIN(ALIGN_UP((entry->base_address & ~0xFFF) + entry->length, PAGE_SIZE), 0x100000) - (entry->base_address & ~0xFFF),
-                    PAGE_SIZE);
-            }
-
-            mark_available(entry->base_address & ~0xFFF, entry->length);
-            g_phys_page_stats.phys_memory_total += entry->length - (entry->base_address & ~0xFFF);
-        }
-        g_phys_page_stats.phys_memory_max =
-            MAX(ALIGN_UP((entry->base_address & ~0xFFF) + entry->length, PAGE_SIZE), g_phys_page_stats.phys_memory_max);
+    switch (boot_info->boot_info_type) {
+        case BOOT_INFO_MULTIBOOT2:
+            init_from_multiboot2_map(boot_info);
+            break;
+        case BOOT_INFO_XEN:
+            init_from_xen_map(boot_info);
+            break;
+        default:
+            abort();
     }
 
     mark_used(0, 0x100000); // assume none of this area is available for general purpose allocations, as device drivers might need it.

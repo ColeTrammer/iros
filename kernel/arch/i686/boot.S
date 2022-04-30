@@ -130,7 +130,7 @@ _add_page_table_high:
 
     # Restore boot info into %ebx
     pop %ebx
-    pop %ecx
+    pop %edx
 
     # Set eip to the new higher half address space
     lea higher_half, %ecx
@@ -154,8 +154,8 @@ higher_half:
     # Now at last tranfer control to the kernel
     sub $16, %esp
 
-    mov %ecx, 4(%esp)
-    mov %ebx, 0(%esp)
+    mov %ebx, 4(%esp)
+    mov %edx, 0(%esp)
     call kernel_main
 
 _l:

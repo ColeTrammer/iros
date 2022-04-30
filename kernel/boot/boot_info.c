@@ -1,9 +1,12 @@
 #include <assert.h>
+#include <inttypes.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/param.h>
 
 #include <kernel/boot/boot_info.h>
 #include <kernel/boot/multiboot2.h>
+#include <kernel/boot/xen.h>
 #include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
 #include <kernel/mem/page.h>
@@ -14,20 +17,24 @@ struct boot_info *boot_get_boot_info() {
     return &s_boot_info;
 }
 
+static void init_command_line(const char *command_line) {
+    s_boot_info.command_line = command_line;
+    debug_log("kernel command line: [ %s ]\n", s_boot_info.command_line);
+    if (strstr(s_boot_info.command_line, "graphics=0") != 0) {
+        kernel_disable_graphics();
+    }
+    if (strstr(s_boot_info.command_line, "ide_use_default_ports=1") != 0) {
+        s_boot_info.ide_use_default_ports = true;
+    }
+}
+
 void init_boot_info_from_multiboot2(const struct multiboot2_info *info) {
     assert((uintptr_t) info < 0x400000ULL);
 
     multiboot2_for_each_tag(info, tag) {
         if (tag->type == MULTIBOOT2_TAG_BOOT_COMMAND_LINE) {
             MULTIBOOT2_DECLARE_AND_CAST_TAG(command_line_tag, tag, boot_command_line);
-            s_boot_info.command_line = command_line_tag->value;
-            debug_log("kernel command line: [ %s ]\n", s_boot_info.command_line);
-            if (strstr(s_boot_info.command_line, "graphics=0") != 0) {
-                kernel_disable_graphics();
-            }
-            if (strstr(s_boot_info.command_line, "ide_use_default_ports=1") != 0) {
-                s_boot_info.ide_use_default_ports = true;
-            }
+            init_command_line(command_line_tag->value);
         }
 
         if (tag->type == MULTIBOOT2_TAG_MEMORY_MAP) {
@@ -41,5 +48,53 @@ void init_boot_info_from_multiboot2(const struct multiboot2_info *info) {
             s_boot_info.initrd_phys_end = ALIGN_UP(module_tag->module_end, PAGE_SIZE);
             debug_log("kernel module: [ %s, %#.8X, %#.8X ]\n", module_tag->name, module_tag->module_start, module_tag->module_end);
         }
+    }
+}
+
+void init_boot_info_from_xen(const struct xen_boot_info *info) {
+    if (info->magic != XEN_BOOT_MAGIC) {
+        debug_log("Incorrect Xen boot magic: [ %8.X ]\n", info->magic);
+        abort();
+    }
+
+    debug_log("Found Xen boot info: [ %p ]\n", info);
+
+    bool found_initrd = false;
+
+    uint32_t module_count = info->module_count;
+    const struct xen_module_entry *modules = (void *) (uintptr_t) info->modules;
+    for (uint32_t i = 0; i < module_count; i++) {
+        const struct xen_module_entry *module = &modules[i];
+        debug_log("Xen Module: [ %.16" PRIX64 ", %" PRIu64 " ]\n", module->addr, module->size);
+
+        found_initrd = true;
+        s_boot_info.initrd_phys_start = ALIGN_DOWN(module->addr, PAGE_SIZE);
+        s_boot_info.initrd_phys_end = ALIGN_UP(module->addr + module->size, PAGE_SIZE);
+        break;
+    }
+
+    if (!found_initrd) {
+        debug_log("Failed to locate initrd\n");
+        abort();
+    }
+
+    init_command_line((void *) (uintptr_t) info->command_line);
+
+    s_boot_info.memory_map = (void *) (uintptr_t) info->memory_map;
+    s_boot_info.memory_map_count = info->memory_map_entry_count;
+}
+
+void init_boot_info(int boot_info_type, const void *info) {
+    s_boot_info.boot_info_type = boot_info_type;
+    switch (boot_info_type) {
+        case BOOT_INFO_MULTIBOOT2:
+            init_boot_info_from_multiboot2(info);
+            break;
+        case BOOT_INFO_XEN:
+            init_boot_info_from_xen(info);
+            break;
+        default:
+            debug_log("Failed to read boot info: unknown type: [ %d ]\n", boot_info_type);
+            abort();
     }
 }

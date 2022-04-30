@@ -24,11 +24,10 @@
 #include <kernel/util/list.h>
 
 void kernel_main(int boot_type, void *boot_info) {
-    assert(boot_type == BOOT_INFO_MULTIBOOT2);
     init_hal();
     init_irq_handlers();
-    init_boot_info_from_multiboot2(boot_info);
-    init_page_frame_allocator(boot_info);
+    init_boot_info(boot_type, boot_info);
+    init_page_frame_allocator();
     init_kernel_process();
     init_vm_allocator();
     init_cpus();
