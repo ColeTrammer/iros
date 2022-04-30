@@ -1,4 +1,6 @@
-[![GitHub Actions Status](https://github.com/ColeTrammer/iros/workflows/Toolchain/badge.svg)](https://github.com/ColeTrammer/iros/actions?query=workflow%3A"Toolchain")
+[![Toolchain](https://github.com/ColeTrammer/iros/actions/workflows/toolchain.yml/badge.svg)](https://github.com/ColeTrammer/iros/actions/workflows/toolchain.yml)
+[![Iros Disk Images](https://github.com/ColeTrammer/iros/actions/workflows/image.yml/badge.svg)](https://github.com/ColeTrammer/iros/actions/workflows/image.yml)
+[![Native Tests](https://github.com/ColeTrammer/iros/actions/workflows/native.yml/badge.svg)](https://github.com/ColeTrammer/iros/actions/workflows/native.yml)
 
 # Iros
 
