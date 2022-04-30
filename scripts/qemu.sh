@@ -16,7 +16,7 @@ INITRD="${IROS_INITRD:-$BUILD_DIR/iros/sysroot/boot/initrd.bin}"
 ISO="${IROS_ISO:-$BUILD_DIR/iros/iros.iso}"
 RUN="${IROS_RUN:-kernel}"
 
-[ -e "$IMAGE" ] || die 'iros.img not found - try running `ninja image'"'"
+[ "$IROS_DISABLE_HARDDRIVE" ] || [ -e "$IMAGE" ] || die 'iros.img not found - try running `ninja image'"'"
 [ "$RUN" != iso ] || [ -e "$ISO" ] || die 'iros.iso not found - try running `ninja iso'"'"
 [ "$RUN" != kernel ] || [ -e "$KERNEL" ] || die 'kernel not found - try running `ninja'"'"
 [ "$RUN" != kernel ] || [ -e "$INITRD" ] || die 'initrd not found - try running `ninja install'"'"
@@ -29,6 +29,19 @@ fi
 RUN_SMP=""
 if [ "$IROS_RUN_SMP" ]; then
     RUN_SMP="-smp $IROS_RUN_SMP"
+fi
+
+SERIAL="-serial stdio"
+if [ "$IROS_DISABLE_GRAPHICS" ]; then
+    GRAPHICS="-device VGA,vgamem_mb=64 -nographic"
+    SERIAL=""
+else
+    GRAPHICS="-device VGA,vgamem_mb=64"
+fi
+
+HARDDRIVE=""
+if [ ! "$IROS_DISABLE_HARDDRIVE" ]; then
+    HARDDRIVE="-drive file="$IMAGE",format=raw,index=0,media=disk"
 fi
 
 CDROM=""
@@ -56,14 +69,13 @@ qemu-system-$ARCH \
     $KERNEL_ARG \
     $CDROM \
     -d guest_errors \
-    -serial stdio \
-    ${RUN_SMP} \
-    ${ENABLE_KVM} \
-    -device VGA,vgamem_mb=64 \
-    -drive file="$IMAGE",format=raw,index=0,media=disk \
+    $RUN_SMP \
+    $ENABLE_KVM \
+    $GRAPHICS \
+    $SERIAL \
+    $HARDDRIVE \
     $BOOT \
     -no-reboot \
-    -no-shutdown \
     -netdev user,id=breh,hostfwd=udp:127.0.0.1:8888-10.0.2.15:8888,hostfwd=tcp:127.0.0.1:8823-10.0.2.15:8823 \
     -object filter-dump,id=f1,netdev=breh,file=e1000.pcap \
     -device e1000,netdev=breh

@@ -54,18 +54,20 @@ function(add_os_tests name)
 
     set(SOURCES ${TEST_FILES} ${CMAKE_SOURCE_DIR}/libs/libtest/include/test/main.cpp)
     add_os_executable("${test_name}" bin)
-    target_link_libraries("${test_name}" libtest)
+    target_link_libraries("${test_name}" PRIVATE libtest)
 
     if (${NATIVE_BUILD})
-        target_compile_definitions("${test_name}" PRIVATE "BINARY_DIR=\"${CMAKE_CURRENT_BINARY_DIR}\"")
         add_custom_command(
             TARGET "test_${name}"
             POST_BUILD
-            COMMAND "${test_generate_script}" "${test_executable}" "${test_name}" "${test_include_file}"
+            COMMAND "IROS_ROOT=${ROOT}" "NATIVE=${NATIVE_BUILD}" "NATIVE_INITRD=${NATIVE_INITRD}" "${test_generate_script}" "${test_executable}" "${test_name}" "${test_include_file}"
             DEPENDS "${test_generate_script}"
         )
         set_property(DIRECTORY APPEND PROPERTY TEST_INCLUDE_FILES "${test_include_file}")
+        target_compile_definitions("${test_name}" PRIVATE "BINARY_DIR=\"${CMAKE_CURRENT_BINARY_DIR}\"")
     else()
+        add_test(NAME ${test_name} COMMAND /bin/sh -c "IROS_ROOT=${CMAKE_SOURCE_DIR} IROS_ARCH=${ARCH} IROS_QUIET_KERNEL=1 IROS_REPORT_STATUS=1 ${CMAKE_SOURCE_DIR}/scripts/run-test.sh ${test_executable}")
+        set_tests_properties(${test_name} PROPERTIES TIMEOUT 30)
         target_compile_definitions("${test_name}" PRIVATE "BINARY_DIR=\"/bin\"")
     endif()
 endfunction()

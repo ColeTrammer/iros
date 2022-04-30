@@ -13,6 +13,7 @@
 
 // #define BOOT_INFO_DEBUG
 
+static char s_command_line_buffer[2048];
 static struct boot_info s_boot_info;
 
 struct boot_info *boot_get_boot_info() {
@@ -20,7 +21,8 @@ struct boot_info *boot_get_boot_info() {
 }
 
 static void init_command_line(const char *command_line) {
-    s_boot_info.command_line = command_line;
+    strncpy(s_command_line_buffer, command_line, sizeof(s_command_line_buffer) - 1);
+    s_boot_info.command_line = s_command_line_buffer;
 #ifdef BOOT_INFO_DEBUG
     debug_log("kernel command line: [ %s ]\n", s_boot_info.command_line);
 #endif /* BOOT_INFO_DEBUG */
@@ -33,6 +35,9 @@ static void init_command_line(const char *command_line) {
     s_boot_info.serial_debug = true;
     if (strstr(s_boot_info.command_line, "disable_serial_debug=1")) {
         s_boot_info.serial_debug = false;
+    }
+    if (strstr(s_boot_info.command_line, "redirect_start_stdio_to_serial=1")) {
+        s_boot_info.redirect_start_stdio_to_serial = true;
     }
 }
 

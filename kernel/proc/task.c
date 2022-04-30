@@ -10,6 +10,7 @@
 #include <sys/mman.h>
 #include <sys/syscall.h>
 
+#include <kernel/boot/boot_info.h>
 #include <kernel/fs/procfs.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/hal/hal.h>
@@ -28,7 +29,6 @@
 #include <kernel/sched/task_sched.h>
 #include <kernel/time/clock.h>
 
-#define START_DEBUG
 // #define TASK_DEBUG
 // #define TASK_SCHED_STATE_DEBUG
 // #define TASK_SIGNAL_DEBUG
@@ -329,9 +329,6 @@ static void task_switch_from_kernel_to_user_mode(struct task *current) {
 }
 
 void start_userland(void) {
-    char *argv[3] = { argv[0] = "/bin/start", kernel_use_graphics() ? "-g" : "-v", NULL };
-    char *envp[1] = { NULL };
-
     struct task_state task_state_save = { 0 };
     task_setup_user_state(&task_state_save);
 
@@ -340,17 +337,50 @@ void start_userland(void) {
 
     task_switch_from_kernel_to_user_mode(current);
 
-#ifdef START_DEBUG
-    int error = 0;
-    current->process->files[0] =
-        (struct file_descriptor) { .file = fs_openat(fs_root(), "/dev/serial0", O_RDWR, 0, &error), .fd_flags = 0 };
-    current->process->files[1] = fs_dup(current->process->files[0]);
-    current->process->files[2] = fs_dup(current->process->files[0]);
-#endif /* START_DEBUG */
+    struct boot_info *info = boot_get_boot_info();
+    if (info->redirect_start_stdio_to_serial) {
+        int error = 0;
+        current->process->files[0] =
+            (struct file_descriptor) { .file = fs_openat(fs_root(), "/dev/serial0", O_RDWR, 0, &error), .fd_flags = 0 };
+        current->process->files[1] = fs_dup(current->process->files[0]);
+        current->process->files[2] = fs_dup(current->process->files[0]);
+    }
 
-    int ret = proc_execve("/bin/start", argv, envp);
+    char *test_program = strstr(info->command_line, "test=");
+    char *start_program = "/bin/start";
+
+    char *envp[1] = { NULL };
+    int ret;
+    if (test_program) {
+        debug_log("command line: [ %s ]\n", info->command_line);
+
+        char *test_end = strstr(test_program, ";");
+        if (test_end) {
+            *test_end = '\0';
+        }
+
+        char *test_args = strstr(info->command_line, "test_args=");
+        char *test_args_end = NULL;
+        if (test_args) {
+            test_args_end = strstr(test_args, ";");
+        }
+        if (test_args_end) {
+            *test_args_end = '\0';
+        }
+
+        char *start_buffer = calloc(256, 1);
+        snprintf(start_buffer, 255, "/bin/%s", test_program + 5);
+        start_program = start_buffer;
+
+        char *argv[10] = { start_program, NULL };
+        ret = proc_execve(argv[0], argv, envp);
+    } else {
+        char *argv[3] = { "/bin/start", kernel_use_graphics() ? "-g" : "-v", NULL };
+        ret = proc_execve(argv[0], argv, envp);
+    }
+
     if (ret) {
-        debug_log("Failed to exec /bin/start: [ %s ]\n", strerror(-ret));
+        debug_log("Failed to exec `%s': [ %s ]\n", start_program, strerror(-ret));
         abort();
     }
 

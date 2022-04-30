@@ -10,4 +10,4 @@ set(TEST_FILES
 )
 
 add_os_tests(libliim ${TEST_FILES})
-target_link_libraries(test_libliim libliim)
+target_link_libraries(test_libliim PRIVATE libliim)

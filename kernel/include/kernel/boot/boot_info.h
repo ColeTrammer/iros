@@ -18,6 +18,7 @@ struct boot_info {
     const char *command_line;
     bool ide_use_default_ports;
     bool serial_debug;
+    bool redirect_start_stdio_to_serial;
     void *memory_map;
     size_t memory_map_count;
 };

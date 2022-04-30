@@ -4,4 +4,4 @@ set(TEST_FILES
 )
 
 add_os_tests(libeventloop ${TEST_FILES})
-target_link_libraries(test_libeventloop libeventloop)
+target_link_libraries(test_libeventloop PRIVATE libeventloop)

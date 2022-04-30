@@ -10,9 +10,7 @@ else()
     set(NATIVE_BUILD TRUE)
 endif()
 
-if (${NATIVE_BUILD} AND NOT ${MINIMAL_BUILD})
-    enable_testing()
-endif()
+enable_testing()
 
 add_compile_definitions("ARCH=${ARCH}")
 add_compile_definitions("_IROS_SOURCE")

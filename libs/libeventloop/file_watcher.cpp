@@ -16,34 +16,36 @@ FileWatcher::FileWatcher() {
 }
 
 void FileWatcher::initialize() {
-    char buffer[1024];
+    on<ReadableEvent>([this](auto&) {
+        char buffer[1024];
 
-    ssize_t ret;
-    while ((ret = read(fd(), buffer, sizeof(buffer))) > 0) {
-        auto* message = (umessage*) buffer;
-        switch (message->type) {
-            case UMESSAGE_WATCH_INODE_MODIFIED: {
-                auto& event = *(umessage_watch_inode_modified*) message;
-                auto path = m_identifier_to_path.get(event.identifier);
-                if (!path) {
-                    continue;
+        ssize_t ret;
+        while ((ret = read(fd(), buffer, sizeof(buffer))) > 0) {
+            auto* message = (umessage*) buffer;
+            switch (message->type) {
+                case UMESSAGE_WATCH_INODE_MODIFIED: {
+                    auto& event = *(umessage_watch_inode_modified*) message;
+                    auto path = m_identifier_to_path.get(event.identifier);
+                    if (!path) {
+                        continue;
+                    }
+
+                    emit<PathChangeEvent>(*path);
+                    break;
                 }
-
-                emit<PathChangeEvent>(*path);
-                break;
+                case UMESSAGE_WATCH_INODE_REMOVED:
+                    auto& event = *(umessage_watch_inode_removed*) message;
+                    auto path_p = m_identifier_to_path.get(event.identifier);
+                    if (!path_p) {
+                        continue;
+                    }
+                    auto path = *path_p;
+                    unwatch(path);
+                    emit<PathRemovedEvent>(path);
+                    break;
             }
-            case UMESSAGE_WATCH_INODE_REMOVED:
-                auto& event = *(umessage_watch_inode_removed*) message;
-                auto path_p = m_identifier_to_path.get(event.identifier);
-                if (!path_p) {
-                    continue;
-                }
-                auto path = *path_p;
-                unwatch(path);
-                emit<PathRemovedEvent>(path);
-                break;
         }
-    }
+    });
 }
 
 FileWatcher::~FileWatcher() {
