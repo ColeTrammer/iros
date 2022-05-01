@@ -59,6 +59,23 @@ void* TestManager::spawn_thread_and_block(Function<void(pthread_t)> after_spawn_
     return result;
 }
 
+void TestManager::spawn_threads_and_block(int thread_count, Function<void()> thread_body) {
+    Vector<pthread_t> threads;
+    threads.resize(thread_count);
+    for (int i = 0; i < thread_count; i++) {
+        assert(pthread_create(
+                   &threads[i], nullptr,
+                   [](void* arg) -> void* {
+                       (*(Function<void()>*) arg)();
+                       return nullptr;
+                   },
+                   &thread_body) == 0);
+    }
+    for (int i = 0; i < thread_count; i++) {
+        assert(pthread_join(threads[i], nullptr) == 0);
+    }
+}
+
 void TestManager::test_did_fail() {
     m_fail_count++;
 }

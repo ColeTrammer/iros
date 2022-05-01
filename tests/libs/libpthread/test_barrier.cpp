@@ -10,26 +10,13 @@ TEST(barrier, basic) {
 
     EXPECT_EQ(pthread_barrier_init(&barrier, NULL, thread_count), 0);
 
-    pthread_t threads[thread_count];
-    for (size_t i = 0; i < thread_count; i++) {
-        EXPECT_EQ(pthread_create(
-                      &threads[i], nullptr,
-                      [](void*) -> void* {
-                          for (size_t i = 0; i < 5; i++) {
-                              if (pthread_barrier_wait(&barrier) == PTHREAD_BARRIER_SERIAL_THREAD) {
-                                  count++;
-                              }
-                          }
-
-                          return nullptr;
-                      },
-                      nullptr),
-                  0);
-    }
-
-    for (size_t i = 0; i < thread_count; i++) {
-        EXPECT_EQ(pthread_join(threads[i], nullptr), 0);
-    }
+    Test::TestManager::the().spawn_threads_and_block(thread_count, [] {
+        for (size_t i = 0; i < rounds; i++) {
+            if (pthread_barrier_wait(&barrier) == PTHREAD_BARRIER_SERIAL_THREAD) {
+                count++;
+            }
+        }
+    });
 
     EXPECT_EQ(count, rounds);
 

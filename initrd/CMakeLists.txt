@@ -1,10 +1,8 @@
 set(INITRD_PROGRAMS
     aligned_alloc_test.c
     broken.cpp
-    cond_test.c
     coroutine_test.cpp
     deflate_test.cpp
-    detached_thread_test.cpp
     dl_iter_test.cpp
     dlopen_test.c
     event_loop_timer_test.cpp
@@ -99,10 +97,8 @@ endforeach()
 
 set(INITRD_TARGETS ${PRIVATE_INITRD_TARGETS} PARENT_SCOPE)
 
-target_link_libraries(cond_test ${PTHREAD_LIB})
 target_link_libraries(coroutine_test libliim)
 target_link_libraries(deflate_test libext)
-target_link_libraries(detached_thread_test ${PTHREAD_LIB})
 target_link_libraries(dlopen_test ${DL_LIB} ${PTHREAD_LIB})
 target_link_options(dlopen_test PRIVATE -rdynamic)
 target_link_libraries(event_loop_timer_test PRIVATE libapp)

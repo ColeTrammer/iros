@@ -17,6 +17,7 @@ public:
 
     int spawn_process_and_block(Function<void()> before_exec, String path);
     void* spawn_thread_and_block(Function<void(pthread_t)> after_spawn_before_join, Function<void()> thread_body);
+    void spawn_threads_and_block(int thread_count, Function<void()>);
 
     int do_main(int argc, char** argv);
 
