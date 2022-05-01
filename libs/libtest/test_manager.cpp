@@ -109,7 +109,11 @@ int TestManager::do_main(int argc, char** argv) {
         test_case->execute();
 
         if (m_fail_count == start_fail_count) {
-            error_log("\033[1;32mPASS\033[0m: \033[1m{}\033[0m: {}", test_case->suite_name(), test_case->case_name());
+            if (test_case->skipped()) {
+                error_log("\033[1;33mSKIP\033[0m: \033[1m{}\033[0m: {}", test_case->suite_name(), test_case->case_name());
+            } else {
+                error_log("\033[1;32mPASS\033[0m: \033[1m{}\033[0m: {}", test_case->suite_name(), test_case->case_name());
+            }
         }
     }
 

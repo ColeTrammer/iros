@@ -11,6 +11,13 @@
     }                                                                                                         \
     static void suite_name##_##case_name()
 
+#define TEST_SKIP(suite_name, case_name)                                                                              \
+    static void suite_name##_##case_name();                                                                           \
+    static __attribute__((constructor)) void __register_##suite_name##_##case_name() {                                \
+        Test::TestManager::the().register_skipped_test_case("" #suite_name, "" #case_name, suite_name##_##case_name); \
+    }                                                                                                                 \
+    static void suite_name##_##case_name()
+
 #define EXPECT(...)                                                                                                                        \
     do {                                                                                                                                   \
         if (!(__VA_ARGS__)) {                                                                                                              \
