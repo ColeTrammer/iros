@@ -62,6 +62,10 @@ void init_serial_ports() {
     outb(SERIAL_PORT(SERIAL_COM1_PORT, SERIAL_CONTROL_OFFSET), SERIAL_STOP_1_BIT | SERIAL_PARITY_NONE | SERIAL_8_BITS);
     outb(SERIAL_PORT(SERIAL_COM1_PORT, SERIAL_FIFO_OFFSET), 0xC7);
     outb(SERIAL_PORT(SERIAL_COM1_PORT, SERIAL_INTERRUPT_OFFSET), SERIAL_INTERRUPT_DATA | SERIAL_INTERRUPT_ERROR | SERIAL_INTERRUPT_STATUS);
+
+    serial_write_character('\r');
+    serial_write_character('\n');
+
     debug_log("Serial Port Initialized: [ %#.3X ]\n", SERIAL_COM1_PORT);
 }
 
