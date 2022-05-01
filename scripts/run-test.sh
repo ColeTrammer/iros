@@ -17,7 +17,7 @@ if [ "$TEST_ARGS" ]; then
     TEST_ARGS="start_args=$TEST_ARGS"
 fi
 
-CMDLINE="redirect_start_stdio_to_serial=1;start=/bin/$TEST_NAME;$TEST_ARGS"
+CMDLINE="poweroff_on_panic=1;redirect_start_stdio_to_serial=1;start=/bin/$TEST_NAME;$TEST_ARGS"
 if [ $IROS_QUIET_KERNEL ]; then
     CMDLINE="disable_serial_debug=1;$CMDLINE"
 fi

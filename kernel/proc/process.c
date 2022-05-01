@@ -288,6 +288,11 @@ static void proc_update_rusage(struct process *parent, struct process *child) {
 void proc_consume_wait_info(struct process *parent, struct process *child, enum process_state state) {
     switch (state) {
         case PS_TERMINATED: {
+            if (child->pid == 1) {
+                debug_log("Init process exited, time to panic\n");
+                assert(false);
+            }
+
             if (parent->children == child) {
                 parent->children = child->sibling_next;
             }

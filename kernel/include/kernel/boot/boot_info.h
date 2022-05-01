@@ -19,6 +19,7 @@ struct boot_info {
     bool ide_use_default_ports;
     bool serial_debug;
     bool redirect_start_stdio_to_serial;
+    bool poweroff_on_panic;
     void *memory_map;
     size_t memory_map_count;
 };

@@ -39,6 +39,9 @@ static void init_command_line(const char *command_line) {
     if (strstr(s_boot_info.command_line, "redirect_start_stdio_to_serial=1")) {
         s_boot_info.redirect_start_stdio_to_serial = true;
     }
+    if (strstr(s_boot_info.command_line, "poweroff_on_panic=1")) {
+        s_boot_info.poweroff_on_panic = true;
+    }
 }
 
 void init_boot_info_from_multiboot2(const struct multiboot2_info *info) {

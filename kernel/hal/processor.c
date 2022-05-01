@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <kernel/boot/boot_info.h>
+#include <kernel/hal/hal.h>
 #include <kernel/hal/output.h>
 #include <kernel/hal/processor.h>
 #include <kernel/mem/vm_allocator.h>
@@ -77,6 +79,10 @@ int processor_count(void) {
 }
 
 void broadcast_panic(void) {
+    if (boot_get_boot_info()->poweroff_on_panic) {
+        hal_poweroff();
+    }
+
     if (processor_count() <= 1) {
         return;
     }
