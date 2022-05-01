@@ -30,10 +30,8 @@ set(INITRD_PROGRAMS
     mmap_file_test.c
     mmap_test.cpp
     mprotect_test.c
-    mutex_test.c
     netdb_test.c
     nftw_test.c
-    once_test.c
     orphan_test.c
     pipe_test.c
     png_test.cpp
@@ -71,14 +69,10 @@ set(INITRD_PROGRAMS
     tcp_test_b.c
     test_argv.c
     test_cpp_a.cpp
-    tgkill_test.cpp
     threaded_execve.c
-    thread_specific_data_test.cpp
-    thread_test.c
     timer_overrun_test.c
     timer_test.cpp
     times_test.c
-    tls_test.c
     tmpnam_test.c
     tui_test.cpp
     udp_test.c
@@ -110,9 +104,7 @@ target_link_libraries(ipc_test libipc)
 target_link_libraries(itimer_test libapp)
 target_link_libraries(json_test libext)
 target_link_libraries(linked_list_test_a libliim)
-target_link_libraries(once_test ${PTHREAD_LIB})
 target_link_libraries(map_shared_test ${PTHREAD_LIB})
-target_link_libraries(mutex_test ${PTHREAD_LIB})
 target_link_libraries(png_test libgui)
 target_link_libraries(pthread_atfork_test ${PTHREAD_LIB})
 target_link_libraries(pthread_attr_test ${PTHREAD_LIB})
@@ -123,12 +115,8 @@ target_link_libraries(sem_test ${PTHREAD_LIB})
 target_link_libraries(shared_memory_test ${REALTIME_LIB})
 target_link_libraries(smart_pointer_test libliim)
 target_link_libraries(string_test libliim)
-target_link_libraries(thread_specific_data_test ${PTHREAD_LIB})
-target_link_libraries(thread_test ${PTHREAD_LIB})
 target_link_libraries(threaded_execve ${PTHREAD_LIB})
-target_link_libraries(tls_test ${PTHREAD_LIB})
 target_link_libraries(test_cpp_a ${PTHREAD_LIB})
-target_link_libraries(tgkill_test ${PTHREAD_LIB})
 target_link_libraries(timer_overrun_test ${REALTIME_LIB})
 target_link_libraries(timer_test ${REALTIME_LIB})
 target_link_libraries(tui_test libtui)
