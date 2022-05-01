@@ -199,9 +199,9 @@ int pthread_mutex_unlock(pthread_mutex_t *mutex) {
         if (mutex->__attr.__flags & __PTHREAD_MUTEX_INCONSISTENT) {
             mutex->__attr.__flags |= __PTHREAD_MUTEX_UNRECOVERABLE;
 
-            // Wake all threads waiting so they'll return ENOTRECOVERABLE (store 1 so nobody can ever)
-            // lock it again, since tid 1 is reserved for the kernel
-            return os_mutex(&mutex->__lock, MUTEX_WAKE_AND_SET, tid, 1, INT_MAX, NULL);
+            // Wake all threads waiting so they'll return ENOTRECOVERABLE (store -1 so nobody can ever)
+            // lock it again, since tid -1 is clearly invalid.
+            return os_mutex(&mutex->__lock, MUTEX_WAKE_AND_SET, tid, -1, INT_MAX, NULL);
         }
     }
 
