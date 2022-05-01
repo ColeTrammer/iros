@@ -1,9 +1,6 @@
 set(INITRD_PROGRAMS
     aligned_alloc_test.c
-    barrier_test.c
     broken.cpp
-    cancel_test.cpp
-    cleanup_handler_test.c
     cond_test.c
     coroutine_test.cpp
     deflate_test.cpp
@@ -102,9 +99,6 @@ endforeach()
 
 set(INITRD_TARGETS ${PRIVATE_INITRD_TARGETS} PARENT_SCOPE)
 
-target_link_libraries(barrier_test ${PTHREAD_LIB})
-target_link_libraries(cancel_test ${PTHREAD_LIB})
-target_link_libraries(cleanup_handler_test ${PTHREAD_LIB})
 target_link_libraries(cond_test ${PTHREAD_LIB})
 target_link_libraries(coroutine_test libliim)
 target_link_libraries(deflate_test libext)
