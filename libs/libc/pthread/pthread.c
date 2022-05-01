@@ -302,6 +302,8 @@ __attribute__((__noreturn__)) static void pthread_exit_after_cleanup(void *value
 
         __free_thread_control_block(thread);
         // NOTE: if this isn't properly inlined by the compiler, it could use the stack that was just unmapped.
+        // FIXME: we also need to make sure signals are disabled, because if someone tries to signal us at this,
+        //        point, since the stack is invalid, SIGSEGV would generated.
         syscall(SYS_munmap, stack_start, stack_len + guard_len);
         syscall(SYS_exit_task);
         __builtin_unreachable();
