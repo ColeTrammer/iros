@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
     dup2(serial_debug, STDOUT_FILENO);
     dup2(serial_debug, STDERR_FILENO);
 
-    bool use_graphics = false;
+    bool use_graphics = true;
     int opt;
     while ((opt = getopt(argc, argv, ":gv")) != -1) {
         switch (opt) {

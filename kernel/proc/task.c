@@ -338,6 +338,9 @@ void start_userland(void) {
     task_switch_from_kernel_to_user_mode(current);
 
     struct boot_info *info = boot_get_boot_info();
+
+    debug_log("Starting userland: kernel command line: [ %s ]\n", info->command_line);
+
     if (info->redirect_start_stdio_to_serial) {
         int error = 0;
         current->process->files[0] =
@@ -346,39 +349,41 @@ void start_userland(void) {
         current->process->files[2] = fs_dup(current->process->files[0]);
     }
 
-    char *test_program = strstr(info->command_line, "test=");
-    char *start_program = "/bin/start";
+    char *start_program = strstr(info->command_line, "start=");
+    char *start_args = strstr(info->command_line, "start_args=");
 
-    char *envp[1] = { NULL };
-    int ret;
-    if (test_program) {
-        debug_log("command line: [ %s ]\n", info->command_line);
-
-        char *test_end = strstr(test_program, ";");
-        if (test_end) {
-            *test_end = '\0';
-        }
-
-        char *test_args = strstr(info->command_line, "test_args=");
-        char *test_args_end = NULL;
-        if (test_args) {
-            test_args_end = strstr(test_args, ";");
-        }
-        if (test_args_end) {
-            *test_args_end = '\0';
-        }
-
-        char *start_buffer = calloc(256, 1);
-        snprintf(start_buffer, 255, "/bin/%s", test_program + 5);
-        start_program = start_buffer;
-
-        char *argv[10] = { start_program, NULL };
-        ret = proc_execve(argv[0], argv, envp);
+    if (!start_program) {
+        start_program = "/bin/start";
     } else {
-        char *argv[3] = { "/bin/start", kernel_use_graphics() ? "-g" : "-v", NULL };
-        ret = proc_execve(argv[0], argv, envp);
+        start_program = start_program + 6;
     }
 
+    char *envp[1] = { NULL };
+    char *start_end = strstr(start_program, ";");
+    if (start_end) {
+        *start_end = '\0';
+    }
+
+    char *start_args_end = NULL;
+    if (start_args) {
+        start_args_end = strstr(start_args, ";");
+    }
+    if (start_args_end) {
+        *start_args_end = '\0';
+    }
+
+    char *argv[10] = { start_program, NULL };
+    if (start_args) {
+        size_t i = 1;
+        char *save = start_args + 11;
+        char *arg = NULL;
+        while ((arg = strtok_r(NULL, "|", &save)) && i < 9) {
+            argv[i++] = arg;
+        }
+        argv[i] = NULL;
+    }
+
+    int ret = proc_execve(argv[0], argv, envp);
     if (ret) {
         debug_log("Failed to exec `%s': [ %s ]\n", start_program, strerror(-ret));
         abort();

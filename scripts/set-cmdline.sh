@@ -10,8 +10,8 @@ enable_graphics=
 while getopts :gv opt
 do
     case $opt in
-        g)   enable_graphics='graphics=1';;
-        v)   enable_graphics='graphics=0';;
+        g)   enable_graphics='graphics=1;start_args=-g';;
+        v)   enable_graphics='graphics=0;start_args=-v';;
         ?)   print_usage_and_exit
              return $?
              ;;
