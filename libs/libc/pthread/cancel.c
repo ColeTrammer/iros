@@ -61,6 +61,10 @@ int pthread_setcancelstate(int state, int *oldstate) {
         } else {
             sigprocmask(SIG_UNBLOCK, &set, NULL);
         }
+    } else {
+        // NOTE: explicitly test any pending cancellations which were
+        //       previously blocked.
+        pthread_testcancel();
     }
 
     return 0;
@@ -82,7 +86,7 @@ int pthread_setcanceltype(int type, int *oldtype) {
 
     block->attributes.__flags |= type;
 
-    if (block->attributes.__flags & PTHREAD_CANCEL_ENABLE) {
+    if (!(block->attributes.__flags & PTHREAD_CANCEL_DISABLE)) {
         sigset_t set;
         sigemptyset(&set);
         sigaddset(&set, __PTHREAD_CANCEL_SIGNAL);
