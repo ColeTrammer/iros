@@ -4,4 +4,4 @@ set(SOURCES
 
 add_os_library(libtest test TRUE)
 
-target_link_libraries(libtest PUBLIC libliim)
+target_link_libraries(libtest PUBLIC libliim ${PTHREAD_LIB})

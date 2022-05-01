@@ -39,7 +39,7 @@ TEST(alarm, cancel) {
 }
 
 TEST(alarm, exec) {
-    auto exit_status = Test::TestManager::the().spawn(
+    auto exit_status = Test::TestManager::the().spawn_process_and_block(
         [] {
             alarm(1);
         },

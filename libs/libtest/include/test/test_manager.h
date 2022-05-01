@@ -11,10 +11,12 @@ public:
 
     ~TestManager();
 
+    void register_skipped_test_case(String suite_name, String case_name, Function<void()> tester);
     void register_test_case(String suite_name, String case_name, Function<void()> tester);
     void test_did_fail();
 
-    int spawn(Function<void()> before_exec, String path);
+    int spawn_process_and_block(Function<void()> before_exec, String path);
+    void* spawn_thread_and_block(Function<void(pthread_t)> after_spawn_before_join, Function<void()> thread_body);
 
     int do_main(int argc, char** argv);
 

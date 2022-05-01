@@ -1,4 +1,5 @@
 #include <liim/format.h>
+#include <pthread.h>
 #include <sys/wait.h>
 #include <test/test.h>
 #include <test/test_case.h>
@@ -14,10 +15,14 @@ TestManager& TestManager::the() {
 TestManager::~TestManager() {}
 
 void TestManager::register_test_case(String suite_name, String case_name, Function<void()> tester) {
-    m_test_cases.add(make_shared<TestCase>(move(suite_name), move(case_name), move(tester)));
+    m_test_cases.add(make_shared<TestCase>(move(suite_name), move(case_name), move(tester), false));
 }
 
-int TestManager::spawn(Function<void()> before_exec, String path) {
+void TestManager::register_skipped_test_case(String suite_name, String case_name, Function<void()> tester) {
+    m_test_cases.add(make_shared<TestCase>(move(suite_name), move(case_name), move(tester), true));
+}
+
+int TestManager::spawn_process_and_block(Function<void()> before_exec, String path) {
     pid_t child = fork();
     assert(child >= 0);
 
@@ -35,6 +40,23 @@ int TestManager::spawn(Function<void()> before_exec, String path) {
         return WTERMSIG(status);
     }
     return WEXITSTATUS(status);
+}
+
+void* TestManager::spawn_thread_and_block(Function<void(pthread_t)> after_spawn_before_join, Function<void()> thread_body) {
+    pthread_t id;
+    assert(pthread_create(
+               &id, nullptr,
+               [](void* arg) -> void* {
+                   (*(Function<void()>*) arg)();
+                   return nullptr;
+               },
+               &thread_body) == 0);
+
+    after_spawn_before_join.safe_call(id);
+
+    void* result;
+    assert(pthread_join(id, &result) == 0);
+    return result;
 }
 
 void TestManager::test_did_fail() {
