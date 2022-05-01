@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <pthread.h>
 #include <signal.h>
 #include <test/test.h>
@@ -5,10 +6,11 @@
 
 TEST(kill, basic) {
     static pthread_t id;
+    static bool done;
 
     signal(SIGUSR1, [](int) {
         EXPECT_EQ(pthread_self(), id);
-        pthread_exit(nullptr);
+        done = true;
     });
 
     Test::TestManager::the().spawn_thread_and_block(
@@ -17,6 +19,7 @@ TEST(kill, basic) {
             EXPECT_EQ(pthread_kill(id, SIGUSR1), 0);
         },
         [] {
-            sleep(10);
+            while (!done)
+                asm volatile("" ::: "memory");
         });
 }
