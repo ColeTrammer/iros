@@ -12,17 +12,32 @@ got_resolver:
     mov 16(%esp), %eax
     shr $3, %eax
 
-    push %eax
-    push 16(%esp)
-    
-    # FIXME: ensure the stack is 16 byte aligned
+    # Get the dynamic object pointer
+    mov 12(%esp), %edx
+
+    # Ensure stack is 16 byte aligned
+    push %ebp
+    mov %esp, %ebp
+    sub $8, %esp
+    and $0xFFFFFFF0, %esp
+
+    # Write arguments
+    mov %eax, 4(%esp)
+    mov %edx, 0(%esp)
+
     call do_got_resolve
-    mov %eax, %ebx
+    mov %ebp, %esp
+    pop %ebp
+
+    # Since all registers must be preserved, store the
+    # new pointer on the stack, and ret to it later.
+    mov %eax, 16(%esp)
 
     pop %edx
     pop %ecx
     pop %eax
 
-    add $8, %esp
-    jmp *%ebx
+    # Set the stack to written return address.
+    lea 4(%esp), %esp
+    ret
 .size got_resolver, . - got_resolver

@@ -194,7 +194,7 @@ int do_process_relocations(struct dynamic_elf_object *self, bool bind_now) {
     }
 
     size_t plt_count = plt_relocation_count(self);
-    if (1 || bind_now) {
+    if (bind_now) {
         for (size_t i = 0; i < plt_count; i++) {
             const Elf32_Rel *rel = plt_relocation_at(self, i);
             if (do_rel(self, rel)) {
