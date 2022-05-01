@@ -792,6 +792,7 @@ void task_do_sig(struct task *task, int signum) {
     switch (behavior) {
         case TERMINATE_AND_DUMP:
             elf64_stack_trace(task, false);
+            dump_process_regions(task->process);
 #ifdef __x86_64__
             if (task == get_current_task() && atomic_load(&task->process->should_profile)) {
                 spin_lock(&task->process->profile_buffer_lock);
