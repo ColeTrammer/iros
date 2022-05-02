@@ -10,6 +10,9 @@ typedef int (*exec_function_t)(const char *path, char *const argv[], char *const
 int __posix_spawn_internal(pid_t *__restrict pidp, const char *__restrict path, const posix_spawn_file_actions_t *fileacts,
                            const posix_spawnattr_t *__restrict attr, char *const args[], char *const envp[], int use_execvpe) {
     exec_function_t do_exec = use_execvpe ? execvpe : execve;
+    if (!envp) {
+        envp = environ;
+    }
 
     pid_t pid = fork();
     if (pid < 0) {
@@ -72,9 +75,10 @@ int __posix_spawn_internal(pid_t *__restrict pidp, const char *__restrict path, 
                         }
                         break;
                     case __SPAWN_FILE_ACTION_OPEN:
-                        if (close(action->__fd0) < 0) {
-                            _exit(SPAWN_FAILURE_EXIT_STATUS);
-                        }
+                        // This close could very well fail with EBADF, but
+                        // POSIX requires that if there is a file, it be closed.
+                        close(action->__fd0);
+
                         int new_fd = open(action->__path, action->__oflags, action->__mode);
                         if (new_fd < 0) {
                             _exit(SPAWN_FAILURE_EXIT_STATUS);
