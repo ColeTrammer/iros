@@ -10,9 +10,6 @@ typedef int (*exec_function_t)(const char *path, char *const argv[], char *const
 int __posix_spawn_internal(pid_t *__restrict pidp, const char *__restrict path, const posix_spawn_file_actions_t *fileacts,
                            const posix_spawnattr_t *__restrict attr, char *const args[], char *const envp[], int use_execvpe) {
     exec_function_t do_exec = use_execvpe ? execvpe : execve;
-    if (!envp) {
-        envp = environ;
-    }
 
     pid_t pid = fork();
     if (pid < 0) {

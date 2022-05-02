@@ -46,7 +46,7 @@ TEST(spawn, basic) {
     char* const args[] = { (char*) BINARY_DIR "/test_spawn_basic_helper", NULL };
 
     pid_t pid;
-    EXPECT_EQ(posix_spawn(&pid, args[0], &acts, &attr, args, nullptr), 0);
+    EXPECT_EQ(posix_spawn(&pid, args[0], &acts, &attr, args, environ), 0);
 
     EXPECT_EQ(close(fds[1]), 0);
 
