@@ -413,6 +413,7 @@ SYS_CALL(close) {
 
     SYS_PARAM1_TRANSFORM(struct file_descriptor *, desc, int, get_file_desc);
 
+    // NOTE: the file descriptor is deallocated even on error.
     int error = fs_close(desc->file);
     desc->file = NULL;
 
@@ -572,7 +573,6 @@ SYS_CALL(mkdir) {
 SYS_CALL(dup2) {
     SYS_BEGIN();
 
-    // FIXME: validate oldfd?
     SYS_PARAM1(int, oldfd);
     SYS_PARAM2(int, newfd);
 
@@ -581,19 +581,26 @@ SYS_CALL(dup2) {
 #endif /* DUP_DEBUG */
 
     if (oldfd < 0 || oldfd >= FOPEN_MAX || newfd < 0 || newfd >= FOPEN_MAX) {
-        SYS_RETURN((uint64_t) -EBADFD);
+        SYS_RETURN(-EBADF);
     }
 
     struct task *task = get_current_task();
+    if (!task->process->files[oldfd].file) {
+        SYS_RETURN(-EBADF);
+    }
+
+    if (oldfd == newfd) {
+        SYS_RETURN(newfd);
+    }
+
     if (task->process->files[newfd].file != NULL) {
-        int ret = fs_close(task->process->files[newfd].file);
-        if (ret != 0) {
-            SYS_RETURN((uint64_t) ret);
-        }
+        // Explicitly ignore any errors when closing, as semantically closing the file
+        // descriptor occurs regardless of whether or close succeeds.
+        fs_close(task->process->files[newfd].file);
     }
 
     task->process->files[newfd] = fs_dup(task->process->files[oldfd]);
-    SYS_RETURN(0);
+    SYS_RETURN(newfd);
 }
 
 SYS_CALL(pipe) {
