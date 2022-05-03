@@ -816,8 +816,10 @@ void task_do_sig(struct task *task, int signum) {
             if (task->sched_state == STOPPED) {
                 break;
             }
-            task_set_state_to_stopped(task);
+            // FIXME: proc_set_process_state takes a mutex, which it cannot to
+            //        since this is called from the scheduler.
             proc_set_process_state(task->process, PS_STOPPED, signum, false);
+            task_set_state_to_stopped(task);
             break;
         case IGNORE:
             break;
