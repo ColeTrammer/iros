@@ -22,7 +22,7 @@ TEST(detached, basic) {
 
     EXPECT_EQ(pthread_join(id, nullptr), EINVAL);
 
-    usleep(500000);
+    usleep(TEST_SLEEP_SCHED_DELAY_US);
 
     EXPECT_EQ(ran, true);
 }

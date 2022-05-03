@@ -40,7 +40,7 @@ TEST(mutex, robust) {
 
     Test::TestManager::the().spawn_thread_and_block(
         [](auto) {
-            usleep(500000);
+            usleep(TEST_SLEEP_SCHED_DELAY_US);
 
             EXPECT_EQ(pthread_mutex_lock(&mutex), EOWNERDEAD);
             EXPECT_EQ(pthread_mutex_unlock(&mutex), 0);
@@ -64,7 +64,7 @@ TEST(mutex, robust_consistent) {
 
     Test::TestManager::the().spawn_thread_and_block(
         [](auto) {
-            usleep(500000);
+            usleep(TEST_SLEEP_SCHED_DELAY_US);
 
             EXPECT_EQ(pthread_mutex_lock(&mutex), EOWNERDEAD);
             EXPECT_EQ(pthread_mutex_consistent(&mutex), 0);

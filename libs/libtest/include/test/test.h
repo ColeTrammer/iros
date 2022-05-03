@@ -4,6 +4,8 @@
 #include <test/test_case.h>
 #include <test/test_manager.h>
 
+#define TEST_SLEEP_SCHED_DELAY_US 10000
+
 #define TEST(suite_name, case_name)                                                                           \
     static void suite_name##_##case_name();                                                                   \
     static __attribute__((constructor)) void __register_##suite_name##_##case_name() {                        \

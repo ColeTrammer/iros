@@ -10,7 +10,7 @@ TEST(condition, basic) {
 
     Test::TestManager::the().spawn_thread_and_block(
         [](auto) {
-            usleep(500000);
+            usleep(TEST_SLEEP_SCHED_DELAY_US);
 
             Test::TestManager::the().spawn_thread_and_block(nullptr, [] {
                 EXPECT_EQ(pthread_mutex_lock(&mutex), 0);

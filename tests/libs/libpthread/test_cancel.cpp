@@ -10,7 +10,7 @@ static void do_cancel_test(Function<void()> thread_body) {
     auto* result = Test::TestManager::the().spawn_thread_and_block(
         [](pthread_t id) {
             // Wait before cancelling
-            usleep(500000);
+            usleep(TEST_SLEEP_SCHED_DELAY_US);
 
             EXPECT_EQ(pthread_cancel(id), 0);
         },
@@ -62,7 +62,7 @@ TEST(cancel, after_enabling) {
     static bool did_reach;
     do_cancel_test([] {
         EXPECT_EQ(pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, nullptr), 0);
-        usleep(600000);
+        usleep(TEST_SLEEP_SCHED_DELAY_US * 2);
         did_reach = true;
         EXPECT_EQ(pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr), 0);
         EXPECT_EQ(0, 1);
