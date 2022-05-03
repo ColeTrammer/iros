@@ -482,6 +482,7 @@ else()
         unistd/truncate.c
         unistd/ttyname_r.c
         unistd/ttyname.c
+        unistd/ualarm.c
         unistd/unlink.c
         unistd/usleep.c
         unistd/write.c
