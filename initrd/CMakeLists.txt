@@ -7,7 +7,6 @@ set(INITRD_PROGRAMS
     dlopen_test.c
     event_loop_timer_test.cpp
     event_loop_thread_test.cpp
-    execve_waitpid_test.c
     fault_test.c
     fread_test.c
     fwrite.c
@@ -77,7 +76,6 @@ set(INITRD_PROGRAMS
     udp_test.c
     vector_test.cpp
     vm_internet_test.c
-    waitpid_test.c
     we_test.c
 )
 
