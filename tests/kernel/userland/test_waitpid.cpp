@@ -43,7 +43,7 @@ static void do_waitpid_test(Function<void(pid_t)> before_wait, Function<void()> 
         EXPECT_EQ(errno, ECHILD);
     }
 
-    _exit(68);
+    _exit(runner_status);
 }
 
 TEST(waitpid, basic) {

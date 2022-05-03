@@ -19,7 +19,7 @@ TEST(alarm, basic) {
     sigdelset(&set, SIGINT);
 
     EXPECT(!did_get_alarm);
-    alarm(1);
+    ualarm(TEST_SLEEP_SCHED_DELAY_US, 0);
     EXPECT(sigsuspend(&set) == -1);
     EXPECT_EQ(errno, EINTR);
     EXPECT(did_get_alarm);
@@ -32,16 +32,16 @@ TEST(alarm, cancel) {
     });
 
     EXPECT(!did_get_alarm);
-    alarm(1);
-    alarm(0);
-    usleep(1000500);
+    ualarm(TEST_SLEEP_SCHED_DELAY_US, 0);
+    ualarm(0, 0);
+    usleep(TEST_SLEEP_SCHED_DELAY_US + 500);
     EXPECT(!did_get_alarm);
 }
 
 TEST(alarm, exec) {
     auto exit_status = Test::TestManager::the().spawn_process_and_block(
         [] {
-            alarm(1);
+            ualarm(TEST_SLEEP_SCHED_DELAY_US, 0);
         },
         BINARY_DIR "/test_alarm_exec_helper");
     EXPECT_EQ(exit_status, 0);
