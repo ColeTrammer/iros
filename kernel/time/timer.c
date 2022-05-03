@@ -386,8 +386,6 @@ int time_wakeup_after(int clockid, struct timespec *delta) {
     int ret = wait_prepare_interruptible(timer.task);
     if (!ret) {
         ret = wait_do(timer.task);
-    } else {
-        __wait_cancel(timer.task);
     }
 
     if (time_is_timer_armed(&timer)) {
