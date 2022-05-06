@@ -22,11 +22,12 @@ if [ $IROS_QUIET_KERNEL ]; then
     CMDLINE="disable_serial_debug=1;$CMDLINE"
 fi
 
-if [ $IROS_REPORT_STATUTS ]; then
+if [ $IROS_REPORT_STATUS ]; then
     ! IROS_CMDLINE="$CMDLINE" \
     IROS_DISABLE_GRAPHICS=1 \
     "$ROOT/scripts/qemu.sh" \
-    | tail -n +9 | grep -q FAIL
+    | tee /dev/stderr \
+    | grep -q FAIL
 else
     IROS_CMDLINE="$CMDLINE" \
     IROS_DISABLE_GRAPHICS=1 \
