@@ -38,6 +38,7 @@ export IROS_TARGET="$IROS_ARCH-$IROS_TARGET_OS"
 export IROS_AS=${OS_AS:-"$IROS_ARCH-$IROS_TARGET_OS-as"}
 export IROS_CC=${OS_CC:-"$IROS_ARCH-$IROS_TARGET_OS-gcc"}
 export IROS_CXX=${OS_CXX:-"$IROS_ARCH-$IROS_TARGET_OS-g++"}
+export IROS_CI_BUILD=${IROS_CI_BUILD:-FALSE}
 
 if [ "$FORCE_BUILD_TOOLCHAIN" ]; then
     build_toolchain
@@ -54,7 +55,7 @@ fi
 
 GENERATOR="${GENERATOR:-$DEFAULT_GENERATOR}"
 
-cmake -S cmake/super_build -B "$IROS_BUILD" -G "$GENERATOR" || die "Failed to do create cmake project at ./build"
+cmake -S cmake/super_build -B "$IROS_BUILD" -G "$GENERATOR" -DCI_BUILD="$IROS_CI_BUILD" || die "Failed to do create cmake project at ./build"
 
 if [ "$BUILD_TOOLCHAIN" ];
 then

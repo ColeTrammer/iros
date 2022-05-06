@@ -18,6 +18,8 @@ get_filename_component(
     ABSOLUTE CACHE
 )
 
+set(CI_BUILD FALSE CACHE STRING "")
+
 include(ExternalProject)
 
 ExternalProject_Add(
@@ -28,6 +30,7 @@ ExternalProject_Add(
     CMAKE_CACHE_DEFAULT_ARGS
         "-DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>"
         "-DMINIMAL_BUILD:BOOL=TRUE"
+        "-DCI_BUILD:BOOL=${CI_BUILD}"
     BUILD_ALWAYS YES
     STEP_TARGETS install
 )
@@ -43,6 +46,7 @@ ExternalProject_Add(
         "-DNATIVE_TOOLS_PREFIX:PATH=${NATIVE_TOOLS_PREFIX}"
         "-DCMAKE_C_COMPILER_WORKS:BOOL=TRUE"
         "-DCMAKE_CXX_COMPILER_WORKS:BOOL=TRUE"
+        "-DCI_BUILD:BOOL=${CI_BUILD}"
     BUILD_ALWAYS YES
     DEPENDS native-install
     STEP_TARGETS bootstrap-core-libs

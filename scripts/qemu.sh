@@ -65,17 +65,28 @@ if [ "$ARCH" = "i686" ]; then
     ARCH="i386"
 fi
 
+PORT_FORWARD=""
+if [ "$IROS_PORT_FORWARDING" ]; then
+    PORT_FORWARD=",hostfwd=udp:127.0.0.1:8888-10.0.2.15:8888,hostfwd=tcp:127.0.0.1:8823-10.0.2.15:8823"
+fi
+
+NETWORK="-netdev user,id=netw -device e1000,netdev=netw$PORT_FORWARD"
+if [ "$IROS_DISABLE_NETWORKING" ]; then
+    NETWORK="-nic none"
+fi
+if [ "$IROS_NETWORK_CAPTURE" ]; then
+    NETWORK="$NETWORK -object filter-dump,id=f1,netdev=netw,file=$IROS_NETWORK_CAPTURE"
+fi
+
 qemu-system-$ARCH \
     $KERNEL_ARG \
     $CDROM \
-    -d guest_errors \
     $RUN_SMP \
     $ENABLE_KVM \
     $GRAPHICS \
     $SERIAL \
     $HARDDRIVE \
     $BOOT \
+    $NETWORK \
+    -d guest_errors \
     -no-reboot \
-    -netdev user,id=breh,hostfwd=udp:127.0.0.1:8888-10.0.2.15:8888,hostfwd=tcp:127.0.0.1:8823-10.0.2.15:8823 \
-    -object filter-dump,id=f1,netdev=breh,file=e1000.pcap \
-    -device e1000,netdev=breh
