@@ -39,6 +39,11 @@ TEST(alarm, cancel) {
 }
 
 TEST(alarm, exec) {
+    sigset_t set;
+    EXPECT_EQ(sigemptyset(&set), 0);
+    EXPECT_EQ(sigaddset(&set, SIGALRM), 0);
+    EXPECT_EQ(sigprocmask(SIG_BLOCK, &set, nullptr), 0);
+
     auto exit_status = Test::TestManager::the().spawn_process_and_block(
         [] {
             ualarm(TEST_SLEEP_SCHED_DELAY_US, 0);
