@@ -39,18 +39,16 @@ My second attempt to create an OS
 # Features
 
 -   Multiboot2 boot loader compliant
--   Supports singularly x86_64
 -   Memory management system (physical and virtual memory)
 -   Preemptive scheduling with SMP support
--   fork and exec
--   vfs implementation
--   many unix system calls
+-   Unix process primitives (fork and exec)
+-   Vfs supporting an initrd, ext2, tmpfs, devfs, sockets, and pipes
+-   Many posix system calls
 -   IPV4 (UDP + TCP + ICMP) and Unix sockets
 -   DHCP client
--   ext2 read/write support (for smaller files)
--   x86 pic devices (PS2 kbd/mouse, PIT, ATA, CMOS, serial ports, local APIC, IO APIC)
--   pci devices (E1000 network card, BGA Device)
--   C standard library
+-   x86 PC devices (PS2 kbd/mouse, PIT, ATA, CMOS, isa serial ports, local APIC, IO APIC)
+-   PCI devices (E1000 network card, BGA Graphics Device)
+-   C standard library, supporting a wide subset of POSIX
 -   Shell that supports the POSIX grammar, job control, word expansion, etc.
 -   Some posix standard utilities
 -   Basic Desktop enviornment (with themes)
@@ -66,8 +64,10 @@ My second attempt to create an OS
 -   USB subsystem
 -   improved SMP handling
 -   more advanced scheduler
--   AHCI SATA
+-   AHCI, SATA
 -   Sound subsystem
 -   IP v6 networking support
-
+-   Better GUI library
+-   Better drawing primities
+-   TTF fonts
 

@@ -1,36 +1,27 @@
 # Build Instructions
 
+## Building Iros
+-   Compiling the system requires an os specific gcc toolchain and several dependencies. See the project's root Dockerfile for a full list of requirements, but there is no need to install them locally.
+-   Producing a docker image capable of developing the system can be done by running `docker build -t iros_toolchain .`, but this is not required, since an up-to-date Docker image is available as `ghcr.io/ColeTrammer/iros_toolchain`. This is built and published automatically in CI whenever the toolchain files change.
+-   Inside the docker container, all that is needed is to run `IROS_ARCH=<x86_64|i686> ./scripts/setup.sh`, and then run `ninja` in the build directory.
+-   Since the system depends on various code generators, the build directory contains 2 relevant sub builds. `native` compiles
+    only these code generators, while `iros` contains the actual build for the operating system. Once `native` is compiled once, there's usually no reason
+    to touch it, and you run `ninja` commands directly in the `iros` folder of the build.
+-   Building a disk image is possible by running `ninja image` in the `iros` subdirectory of the build. The shortcut target `bi` is provided to both fully build the system and produce a disk image.
+
+## Development using VS Code Remote Container Extension
+-   Since all the dependencies are nicely in a Dockerfile, it is best to develop the system using VS Code's remote container support. The provided
+    .devcontainer directory makes this extremely easy to use.
+-   However, since the container won't be connected directly to any GUI, Iros can't run in graphical mode inside the container. Instead, after
+    creating build images, run `IROS_ARCH=<x86_64|i686> ./qemu.sh` in the `scripts/` directory on your local machine. This requires install qemu if it is not already present.
+-   This can be worked around by trying to mount the X11 socker directly into the container, but is rather complicated due to X11 authorization.
+
 ## Building Natively
 
 -   To be able run some command lines tools (like the shell or text editor) on your host machine, perform a normal cmake build in the project root.
--   `cmake -B build && cd build && make`
+-   `cmake -B build_native -G Ninja -S . && cd build_native && ninja`
 -   The build requires at least GCC version 10 for coroutine support.
 -   Note that the system has two optional dependencies when compliing natively:
     -   SDL2 is used to run GUI apps locally.
     -   X11 is used by libclipboard for getting/setting the clipboard contents.
 -   Even without these libraries, the command line utilities are fully functional.
-
-## Building the Toolchain
-
--   Before compiling the system, you need to build the os specific toolchain. This includes binutils, gcc, and cmake.
--   The dependencies for GCC are listed on the [OSDev Wiki](https://wiki.osdev.org/GCC_Cross-Compiler#Preparing_for_the_build), and must be installed.
--   CMake tries to build its dependencies automatically, but its build of libcurl may fail. In that happens, try to install libcurl manually.
--   To properly bootstrap the system, the `patchelf` binary is used. This must be installed for the toolchain to fully build. On Ubuntu, this can
-    be installed using `sudo apt install patchelf`.
--   The default architecture is x86_64, but this can be overriden by setting `IROS_ARCH=i686`.
--   Run `./scripts/setup.sh`, which will prompt you to build the toolchain and bootstrap the system.
-    Note that this must be run from the root directory, or the script will be confused.
-
-## Building the OS
-
--   The setup script creates one build directory: build/$IROS_ARCH/, which contains 2 other build directories. The native tools are handled by build/$IROS_ARCH/native/, while the cross compiled os kernel and userland are built in build/$IROS_ARCH/iros/.
--   The system can be fully built by running `make` in the build directory, but this is often uneeded.
--   Most of the time, you should run commands directly in the build\_$IROS_ARCH/iros/ directory. A full build is only required when specific tools are modified (namely anything in the gen/ directory).
-
-## Running the OS
-
--   The OS can be run with either qemu-system-$IROS_ARCH or bochs. Creating a bootable image requires the grub tools (grub-file and grub-mkrescue). Creating an ext2fs requires parted, mke2fs, losetup, and being able to mount an ext2fs.
--   The OS is booted from an ISO (cdrom) file, which can be created with `make iso`. This contains grub2 as well as the kernel object file, and is output to iros.iso in the iros build directory.
--   The OS additionally must mount a root file system. A suitable hard disk image can be created using `make image`. This command requires sudo becuase it mounts iros.img directly, and writes to its using regular file system APIs.
--   With both an iso and disk image, the OS can be run using `make run` (for qemu) or `make brun` (for bochs).
--   In addition, the aliases `make frun` and `make bfrun` can be used to fully build the system (image and iso included), and also start an emulator instance.

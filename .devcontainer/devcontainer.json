@@ -20,14 +20,18 @@
 			"**/.git": true,
 			"build*/**": true,
 			"ports/build/**": true,
-			"/usr/include/**": true,
+			"/usr/include/**": true
 		},
+		"cmakeExplorer.buildDir": "/build/iros/build_docker",
+		"cmakeExplorer.suiteDelimiter": ":",
+		"testExplorer.useNativeTesting": true
 	},
 	"extensions": [
 		"jeff-hykin.better-cpp-syntax",
 		"ms-vscode.cpptools",
 		"eamodio.gitlens",
-		"xaver.clang-format",
+		"hbenl.vscode-test-explorer",
+		"twxs.cmake"
 	],
-	"remoteUser": "iris",
+	"remoteUser": "iris"
 }
