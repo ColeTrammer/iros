@@ -386,8 +386,6 @@ void Display::set_search_text(String text) {
 }
 
 void Display::install_document_listeners(Document& new_document) {
-    bridge().install_document_listeners(new_document);
-
     listen<DeleteLines>(new_document, [this](const DeleteLines& event) {
         m_rendered_lines.remove_count(event.line_index(), event.line_count());
         invalidate_all_line_rects();
@@ -447,6 +445,8 @@ void Display::install_document_listeners(Document& new_document) {
     });
 
     cursors().install_document_listeners(new_document);
+
+    bridge().install_document_listeners(new_document);
 }
 
 void Display::uninstall_document_listeners(Document& document) {
