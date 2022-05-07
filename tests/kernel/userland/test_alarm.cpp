@@ -23,6 +23,7 @@ TEST(alarm, basic) {
     EXPECT(sigsuspend(&set) == -1);
     EXPECT_EQ(errno, EINTR);
     EXPECT(did_get_alarm);
+    ualarm(0, 0);
 }
 
 TEST(alarm, cancel) {

@@ -20,7 +20,6 @@ set(INITRD_PROGRAMS
     hash_map_test.cpp
     if_test.c
     ipc_test.cpp
-    itimer_test.cpp
     json_test.cpp
     linked_list_test_a.cpp
     local_socket_client_test.c
@@ -68,8 +67,6 @@ set(INITRD_PROGRAMS
     test_argv.c
     test_cpp_a.cpp
     threaded_execve.c
-    timer_overrun_test.c
-    timer_test.cpp
     times_test.c
     tmpnam_test.c
     tui_test.cpp
@@ -98,7 +95,6 @@ target_link_libraries(getcpuclockid_test ${PTHREAD_LIB})
 target_link_libraries(graphics_test libgui)
 target_link_libraries(hash_map_test libliim)
 target_link_libraries(ipc_test libipc)
-target_link_libraries(itimer_test libapp)
 target_link_libraries(json_test libext)
 target_link_libraries(linked_list_test_a libliim)
 target_link_libraries(map_shared_test ${PTHREAD_LIB})
@@ -114,7 +110,5 @@ target_link_libraries(smart_pointer_test libliim)
 target_link_libraries(string_test libliim)
 target_link_libraries(threaded_execve ${PTHREAD_LIB})
 target_link_libraries(test_cpp_a ${PTHREAD_LIB})
-target_link_libraries(timer_overrun_test ${REALTIME_LIB})
-target_link_libraries(timer_test ${REALTIME_LIB})
 target_link_libraries(tui_test libtui)
 target_link_libraries(vector_test libliim)
