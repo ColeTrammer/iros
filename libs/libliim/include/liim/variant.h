@@ -1,6 +1,7 @@
 #pragma once
 
 #include <assert.h>
+#include <liim/maybe.h>
 #include <liim/tuple.h>
 #include <liim/type_list.h>
 #include <liim/utilities.h>
@@ -185,22 +186,22 @@ public:
     }
 
     template<typename T>
-    constexpr T* get_if() {
+    constexpr Maybe<T&> get_if() {
         constexpr size_t index = TypeList::Index<T, Types...>::value;
         static_assert(index != -1);
         if (m_value_index != index) {
             return nullptr;
         }
-        return &this->get<index>();
+        return this->get<index>();
     }
     template<typename T>
-    constexpr const T* get_if() const {
+    constexpr Maybe<const T&> get_if() const {
         constexpr size_t index = TypeList::Index<T, Types...>::value;
         static_assert(index != -1);
         if (m_value_index != index) {
             return nullptr;
         }
-        return &this->get<index>();
+        return this->get<index>();
     }
 
     template<typename T>
