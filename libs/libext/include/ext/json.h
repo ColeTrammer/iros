@@ -28,21 +28,29 @@ namespace Json {
             m_map.put(name, move(value));
         }
 
-        Value* get(const String& name) { return const_cast<Value*>(const_cast<const Object&>(*this).get(name)); }
-        const Value* get(const String& name) const {
-            auto result = m_map.get(name);
-            if (!result) {
-                return nullptr;
-            }
-            return result->get();
+        Maybe<Value&> get(const String& name) {
+            return m_map.get(name).map([](auto& x) -> Value& {
+                return *x;
+            });
+        }
+        Maybe<const Value&> get(const String& name) const {
+            return m_map.get(name).map([](auto& x) -> const Value& {
+                return *x;
+            });
         }
 
         template<typename T>
-        T* get_as(const String& name) {
-            return const_cast<T*>(const_cast<const Object&>(*this).get_as<T>(name));
+        Maybe<T&> get_as(const String& name) {
+            return m_map.get(name).and_then([](auto& x) {
+                return x->template get_if<T>();
+            });
         }
         template<typename T>
-        const T* get_as(const String& name) const;
+        Maybe<const T&> get_as(const String& name) const {
+            return m_map.get(name).and_then([](auto& x) {
+                return x->template get_if<T>();
+            });
+        }
 
         template<typename T>
         T get_or(const String& name, T alt) const;
@@ -70,20 +78,8 @@ namespace Json {
     };
 
     template<typename T>
-    const T* Object::get_as(const String& name) const {
-        auto v = get(name);
-        if (!v) {
-            return nullptr;
-        }
-        if (!v->is<T>()) {
-            return nullptr;
-        }
-        return &v->as<T>();
-    }
-
-    template<typename T>
     T Object::get_or(const String& name, T alt) const {
-        auto* result = get_as<T>(name);
+        auto result = get_as<T>(name);
         if (!result) {
             return move(alt);
         }
