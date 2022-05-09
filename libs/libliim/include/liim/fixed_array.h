@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stddef.h>
 
+namespace LIIM {
 template<typename T, size_t max_elements>
 class FixedArray {
 public:
@@ -39,3 +40,6 @@ private:
     size_t m_size { 0 };
     T m_array[max_elements];
 };
+}
+
+using LIIM::FixedArray;

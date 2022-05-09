@@ -217,11 +217,9 @@ namespace Json {
         return result;
     }
     static inline LIIM::String stringify(const Value& value, int step, int indent) {
-        return LIIM::visit(
-            [&](auto&& x) {
-                return stringify(x, step, indent);
-            },
-            value);
+        return value.visit([&](auto&& x) {
+            return stringify(x, step, indent);
+        });
     }
 
     static inline Maybe<Null> parse_null(InputStream& stream) {

@@ -7,6 +7,7 @@ set(TEST_FILES
     test_string.cpp
     test_task.cpp
     test_utf8_view.cpp
+    test_variant.cpp
 )
 
 add_os_tests(libliim ${TEST_FILES})

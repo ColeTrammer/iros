@@ -27,6 +27,11 @@ void* calloc(size_t n, size_t sz);
 
 namespace std {
 typedef decltype(nullptr) nullptr_t;
+
+template<typename T, typename... Args>
+constexpr T* construct_at(T* location, Args&&... args) {
+    return ::new (const_cast<void*>(static_cast<const volatile void*>(location))) T(forward<Args>(args)...);
+}
 }
 
 namespace LIIM {
@@ -543,6 +548,8 @@ struct in_place_index_t {
 };
 template<size_t I>
 inline constexpr in_place_index_t<I> in_place_index {};
+
+using std::construct_at;
 
 template<typename T>
 constexpr void swap(T& a, T& b) {
