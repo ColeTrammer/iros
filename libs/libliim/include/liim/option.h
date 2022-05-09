@@ -8,33 +8,141 @@ namespace LIIM {
 class None {};
 
 template<typename T>
-requires(!IsLValueReference<T>::value) class Option<T> {
+union MaybeUninit {
+    T value;
+    None uninit;
+
+    constexpr MaybeUninit() : uninit({}) {}
+    constexpr ~MaybeUninit() {}
+};
+
+namespace Detail {
+    template<typename T>
+    class OptionStorage {
+    public:
+        using ValuePointer = T*;
+        using ConstValuePointer = const T*;
+
+        constexpr OptionStorage() {}
+        constexpr ~OptionStorage() { reset(); }
+
+        constexpr bool has_value() const { return m_has_value; }
+
+        constexpr T& value() { return m_storage.value; }
+        constexpr const T& value() const { return m_storage.value; }
+
+        template<typename... Args>
+        constexpr T& emplace(Args&&... args) {
+            construct_at(&m_storage.value, forward<Args>(args)...);
+            m_has_value = true;
+            return value();
+        }
+
+        constexpr void reset() {
+            if (m_has_value) {
+                m_storage.value.~T();
+            }
+            m_has_value = false;
+            m_storage.uninit = {};
+        }
+
+        constexpr void assign(const T& other) {
+            if (m_has_value) {
+                m_storage.value = other;
+            } else {
+                emplace(other);
+                m_has_value = true;
+            }
+        }
+
+        constexpr void assign(T&& other) {
+            if (m_has_value) {
+                m_storage.value = move(other);
+            } else {
+                emplace(move(other));
+                m_has_value = false;
+            }
+        }
+
+    private:
+        MaybeUninit<T> m_storage;
+        bool m_has_value { false };
+    };
+
+    template<typename T>
+    requires(IsLValueReference<T>::value) class OptionStorage<T> {
+    public:
+        using Value = typename RemoveReference<T>::type;
+        using Storage = Value*;
+        using ValuePointer = Value*;
+        using ConstValuePointer = const Value*;
+
+        constexpr OptionStorage() {}
+        constexpr ~OptionStorage() {}
+
+        constexpr bool has_value() const { return !!m_storage; }
+
+        constexpr T value() { return *m_storage; }
+        constexpr const T value() const { return *m_storage; }
+
+        constexpr T emplace(T value) {
+            m_storage = &value;
+            return value;
+        }
+
+        constexpr void reset() { m_storage = nullptr; }
+
+        constexpr void assign(T other) { emplace(other); }
+
+    private:
+        Storage m_storage { nullptr };
+    };
+}
+
+template<typename T>
+class Option {
 public:
+    using Storage = Detail::OptionStorage<T>;
+    using ValuePointer = Storage::ValuePointer;
+    using ConstValuePointer = Storage::ConstValuePointer;
+
     constexpr Option() {}
     constexpr Option(None) {}
-    constexpr Option(const T& value) : m_value(value), m_has_value(true) {}
-    constexpr Option(T&& value) : m_value(move(value)), m_has_value(true) {}
-    constexpr Option(const Option& other) : m_has_value(other.has_value()) {
-        if (other.has_value()) {
-            new (&m_value) T { other.value() };
+    constexpr Option(const T& value) { emplace(value); }
+
+    constexpr Option(T&& value) requires(!IsLValueReference<T>::value) { emplace(move(value)); }
+
+    template<typename U>
+    requires(IsLValueReference<T>::value) constexpr Option(U* pointer) {
+        if (pointer) {
+            emplace(*pointer);
         }
     }
-    constexpr Option(Option&& other) : m_has_value(other.has_value()) {
-        if (m_has_value) {
-            new (&m_value) T { LIIM::move(other.value()) };
+
+    constexpr Option(std::nullptr_t) requires(IsLValueReference<T>::value) {}
+
+    constexpr Option(const Option& other) {
+        if (other.has_value()) {
+            emplace(other.value());
+        }
+    }
+    constexpr Option(Option&& other) {
+        if (other.has_value()) {
+            emplace(move(other.value()));
             other.reset();
         }
     }
+
     template<typename U>
-    constexpr Option(const Option<U>& other) : m_has_value(other.has_value()) {
+    constexpr Option(const Option<U>& other) {
         if (other.has_value()) {
-            new (&m_value) T { other.value() };
+            emplace(other.value());
         }
     }
     template<typename U>
-    constexpr Option(Option<U>&& other) : m_has_value(other.has_value()) {
-        if (m_has_value) {
-            new (&m_value) T { LIIM::move(other.value()) };
+    constexpr Option(Option<U>&& other) {
+        if (other.has_value()) {
+            emplace(move(other.value()));
             other.reset();
         }
     }
@@ -44,14 +152,9 @@ public:
 
     constexpr ~Option() { reset(); }
 
-    constexpr void reset() {
-        if (has_value()) {
-            value().~T();
-            m_has_value = false;
-        }
-    }
+    constexpr void reset() { m_storage.reset(); }
 
-    constexpr Option<T>& operator=(const Option<T>& other) {
+    constexpr Option& operator=(const Option& other) {
         if (this != &other) {
             Option<T> temp { other };
             swap(temp);
@@ -59,17 +162,17 @@ public:
         return *this;
     }
 
-    constexpr Option<T>& operator=(Option<T>&& other) {
+    constexpr Option& operator=(Option&& other) {
         if (this != &other) {
-            Option<T> temp { LIIM::move(other) };
+            Option<T> temp { move(other) };
             swap(temp);
         }
         return *this;
     }
 
-    constexpr bool has_value() const { return m_has_value; }
-    constexpr bool operator!() const { return !m_has_value; }
-    constexpr operator bool() const { return m_has_value; }
+    constexpr bool has_value() const { return m_storage.has_value(); }
+    constexpr bool operator!() const { return !has_value(); }
+    constexpr operator bool() const { return has_value(); }
 
     constexpr bool operator==(const Option& other) const {
         if (!this->has_value() && !other.has_value()) {
@@ -84,25 +187,17 @@ public:
     constexpr T& operator*() { return value(); }
     constexpr const T& operator*() const { return value(); }
 
-    constexpr T* operator->() { return &value(); }
-    constexpr const T* operator->() const { return &value(); }
+    constexpr ValuePointer operator->() { return &value(); }
+    constexpr ConstValuePointer operator->() const { return &value(); }
 
-    constexpr T& value() {
-        assert(m_has_value);
-        return m_value;
-    }
-    constexpr const T& value() const { return const_cast<Option<T>&>(*this).value(); }
+    constexpr T& value() { return m_storage.value(); }
+    constexpr const T& value() const { return m_storage.value(); }
 
     constexpr T value_or(T default_value) const { return has_value() ? T { value() } : T { move(default_value) }; }
 
     template<typename... Args>
     constexpr T& emplace(Args&&... args) {
-        if (has_value()) {
-            reset();
-        }
-        new (&m_value) T { forward<Args>(args)... };
-        m_has_value = true;
-        return value();
+        return m_storage.emplace(forward<Args>(args)...);
     }
 
     constexpr void swap(Option& other) {
@@ -147,116 +242,13 @@ public:
     }
 
 private:
-    union {
-        char m_empty;
-        T m_value;
-    };
-    bool m_has_value { false };
+    Storage m_storage;
 };
 
 template<typename T>
 constexpr void swap(Option<T>& a, Option<T>& b) {
     a.swap(b);
 }
-
-template<typename T>
-requires(IsLValueReference<T>::value) class Option<T> {
-public:
-    using ValueType = RemoveReference<T>::type;
-
-    constexpr Option() {}
-    constexpr Option(None) {}
-    constexpr Option(T value) : m_value(&value) {}
-    constexpr Option(ValueType* value) : m_value(value) {}
-    constexpr Option(const Option& other) : m_value(other.m_value) {}
-    constexpr Option(Option&& other) : m_value(exchange(other.m_value, nullptr)) {}
-
-    template<typename U>
-    requires(IsLValueReference<U>::value) constexpr Option(const Option<U>& other) : m_value(other.m_value) {}
-    template<typename U>
-    requires(IsLValueReference<U>::value) constexpr Option(Option<U>&& other) : m_value(exchange(other.m_value, nullptr)) {}
-
-    template<typename U>
-    friend class Option;
-
-    constexpr ~Option() { reset(); }
-
-    constexpr void reset() { m_value = nullptr; }
-
-    constexpr Option<T>& operator=(const Option<T>& other) {
-        if (this != &other) {
-            Option<T> temp { other };
-            swap(temp);
-        }
-        return *this;
-    }
-
-    constexpr Option<T>& operator=(Option<T>&& other) {
-        if (this != &other) {
-            Option<T> temp { LIIM::move(other) };
-            swap(temp);
-        }
-        return *this;
-    }
-
-    constexpr bool has_value() const { return !!m_value; }
-    constexpr bool operator!() const { return !has_value(); }
-    constexpr operator bool() const { return has_value(); }
-
-    constexpr bool operator==(const Option& other) const { return this->m_value == other.m_value; }
-    constexpr bool operator==(const T& other) const { return this->m_value == &other; }
-    constexpr bool operator!=(const Option& other) const { return !(*this == other); }
-    constexpr bool operator!=(const T& other) const { return !(*this == other); }
-
-    constexpr T& operator*() const { return value(); }
-    constexpr ValueType* operator->() const { return &value(); }
-
-    constexpr T value() const {
-        assert(has_value());
-        return *m_value;
-    }
-
-    constexpr ValueType& value_or(T default_value) const { return has_value() ? T { value() } : T { move(default_value) }; }
-
-    template<typename... Args>
-    constexpr ValueType& emplace(T& value) {
-        m_value = &value;
-    }
-
-    constexpr void swap(Option& other) { LIIM::swap(this->m_value, other.m_value); }
-
-    template<typename C, typename R = InvokeResult<C, T>::type>
-    constexpr Option<R> map(C mapper) const {
-        if (!has_value()) {
-            return {};
-        }
-        return Option<R> { mapper(value()) };
-    }
-
-    template<typename C, typename R = InvokeResult<C, T>::type>
-    constexpr R and_then(C mapper) const {
-        if (!has_value()) {
-            return {};
-        }
-        return mapper(value());
-    }
-
-    template<typename C, typename R = InvokeResult<C>::type>
-    constexpr Result<T, R> unwrap_or_else(C mapper) {
-        if (has_value()) {
-            return { move(value()) };
-        }
-        return { mapper() };
-    }
-
-    constexpr None error() const {
-        assert(!has_value());
-        return {};
-    }
-
-private:
-    ValueType* m_value { nullptr };
-};
 }
 
 using LIIM::None;

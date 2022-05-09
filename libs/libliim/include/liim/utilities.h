@@ -25,15 +25,6 @@ void* calloc(size_t n, size_t sz);
 }
 #endif /* __is_libc */
 
-namespace std {
-typedef decltype(nullptr) nullptr_t;
-
-template<typename T, typename... Args>
-constexpr T* construct_at(T* location, Args&&... args) {
-    return ::new (const_cast<void*>(static_cast<const volatile void*>(location))) T(forward<Args>(args)...);
-}
-}
-
 namespace LIIM {
 
 typedef __SIZE_TYPE__ size_t;
@@ -338,7 +329,18 @@ template<typename T>
 inline constexpr typename RemoveReference<T>::type&& move(T&& arg) {
     return static_cast<typename RemoveReference<T>::type&&>(arg);
 }
+}
 
+namespace std {
+typedef decltype(nullptr) nullptr_t;
+
+template<typename T, typename... Args>
+constexpr T* construct_at(T* location, Args&&... args) {
+    return ::new (const_cast<void*>(static_cast<const volatile void*>(location))) T(LIIM::forward<Args>(args)...);
+}
+}
+
+namespace LIIM {
 template<size_t... Ints>
 struct IndexSequence {
     static constexpr int size() { return sizeof...(Ints); }

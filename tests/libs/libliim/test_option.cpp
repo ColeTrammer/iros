@@ -1,4 +1,5 @@
 #include <liim/option.h>
+#include <liim/variant.h>
 #include <test/test.h>
 
 static_assert(Option<int> { 5 } == Option<int> { 5 });
@@ -7,7 +8,16 @@ static_assert(Option<int> { 5 } != Option<int> {});
 static_assert(Option<int> { 5 }.value() == 5);
 static_assert(!Option<int> {}.has_value());
 
-TEST(maybe, basic_getters) {
+static_assert(Option<Variant<int, float>> { Variant<int, float> { 3.0f } }.value() == 3.0f);
+
+static_assert([] {
+    Option<int> x;
+    Option<int> y(5);
+    x.swap(y);
+    return x.value();
+}() == 5);
+
+TEST(option, basic_getters) {
     auto none = Option<int> {};
     auto some = Option<int> { 5 };
 
@@ -20,7 +30,7 @@ TEST(maybe, basic_getters) {
     EXPECT_EQ(none.value_or(3), 3);
 }
 
-TEST(maybe, basic_setters) {
+TEST(option, basic_setters) {
     auto none = Option<int> {};
     auto some = Option<int> { 5 };
     auto copy = some;
@@ -32,7 +42,7 @@ TEST(maybe, basic_setters) {
     EXPECT_EQ(moved.value_or(0), 5);
 }
 
-TEST(maybe, equivalence) {
+TEST(option, equivalence) {
     auto none = Option<int> {};
     auto one = Option<int> { 1 };
     auto two = Option<int> { 2 };
@@ -43,7 +53,7 @@ TEST(maybe, equivalence) {
     EXPECT_NOT_EQ(one, none);
 }
 
-TEST(maybe, functional) {
+TEST(option, functional) {
     auto none = Option<int> {};
     auto one = Option<int> { 1 };
 
@@ -65,7 +75,7 @@ TEST(maybe, functional) {
     }));
 }
 
-TEST(maybe, references) {
+TEST(option, references) {
     int v = 42;
     auto x = Option<int&> { v };
     EXPECT_EQ(x.value(), 42);
