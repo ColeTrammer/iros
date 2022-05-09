@@ -287,7 +287,7 @@ const Vector<ShRepl::Dirent> &ShRepl::ensure_directory_entries(const String &dir
         directory = "./";
     }
 
-    auto *result = m_cached_directories.get(directory);
+    auto result = m_cached_directories.get(directory);
     if (result) {
         return *result;
     }

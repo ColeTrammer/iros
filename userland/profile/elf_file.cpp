@@ -8,7 +8,7 @@
 static HashMap<FileId, ElfFile*> s_elf_file_map;
 
 SharedPtr<ElfFile> ElfFile::find_or_create(FileId id) {
-    auto* ret = s_elf_file_map.get(id);
+    auto ret = s_elf_file_map.get(id);
     if (ret) {
         return (*ret)->shared_from_this();
     }

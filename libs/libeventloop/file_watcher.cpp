@@ -82,7 +82,7 @@ bool FileWatcher::watch(const String& path) {
 }
 
 bool FileWatcher::unwatch(const String& path) {
-    auto* identifier_p = m_path_to_indentifier.get(path);
+    auto identifier_p = m_path_to_indentifier.get(path);
     if (!identifier_p) {
         return false;
     }
@@ -132,7 +132,7 @@ void FileWatcher::initialize() {
             for (char* ptr = buffer; ptr < buffer + ret; ptr += sizeof(inotify_event) + event->len) {
                 event = (struct inotify_event*) ptr;
 
-                auto* path_p = m_identifier_to_path.get(event->wd);
+                auto path_p = m_identifier_to_path.get(event->wd);
                 if (!path_p) {
                     continue;
                 }
@@ -169,7 +169,7 @@ bool FileWatcher::watch(const String& path) {
 }
 
 bool FileWatcher::unwatch(const String& path) {
-    auto* identifer_p = m_path_to_indentifier.get(path);
+    auto identifer_p = m_path_to_indentifier.get(path);
     if (!identifer_p) {
         return false;
     }

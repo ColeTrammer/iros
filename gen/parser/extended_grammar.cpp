@@ -24,7 +24,7 @@ ExtendedGrammar::ExtendedGrammar(const Vector<SharedPtr<ItemSet>>& sets, const V
 
             int start_set = set->number();
             rule.components().for_each([&](const StringView& part) {
-                const int* end_set = m_sets.get(start_set)->table().get(part);
+                auto end_set = m_sets.get(start_set)->table().get(part);
                 if (!end_set) {
                     fprintf(stderr, "Error: Symbol `%s` never appears in grammar (rule: %s)\n", String(part).string(),
                             rule.stringify().string());
@@ -161,7 +161,7 @@ void ExtendedGrammar::compute_first_sets() {
         to_add.for_each_key([&](const ExtendedInfo& info) {
             const Vector<ExtendedInfo>& need_to_add = *to_add.get(info);
             need_to_add.for_each([&](const ExtendedInfo& add) {
-                bool* did_something_last_round = was_updated.get(add);
+                auto did_something_last_round = was_updated.get(add);
                 if (first_round || (did_something_last_round && *did_something_last_round)) {
                     bool did_something = make_union(**m_first_sets.get(info), **m_first_sets.get(add));
                     if (did_something) {
@@ -241,7 +241,7 @@ void ExtendedGrammar::compute_follow_sets() {
         to_add.for_each_key([&](const ExtendedInfo& info) {
             const Vector<ExtendedInfo>& need_to_add = *to_add.get(info);
             need_to_add.for_each([&](const ExtendedInfo& add) {
-                bool* did_something_last_round = was_updated.get(add);
+                auto did_something_last_round = was_updated.get(add);
                 if (first_round || (did_something_last_round && *did_something_last_round)) {
                     bool did_something = make_union(**m_follow_sets.get(info), **m_follow_sets.get(add));
                     if (did_something) {

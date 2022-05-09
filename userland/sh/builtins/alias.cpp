@@ -20,7 +20,7 @@ static int op_alias(int argc, char **argv) {
         String arg(argv[i]);
         auto equal_index = arg.index_of('=');
         if (!equal_index.has_value()) {
-            auto *alias_name = g_aliases.get(arg);
+            auto alias_name = g_aliases.get(arg);
             if (!alias_name) {
                 any_failed = true;
                 continue;

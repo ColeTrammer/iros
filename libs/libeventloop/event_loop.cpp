@@ -148,7 +148,7 @@ void EventLoop::do_select(bool block) {
                     int signo = s_signal_number;
                     s_signal_number = 0;
 
-                    auto* handler = s_watched_signals.get(signo);
+                    auto handler = s_watched_signals.get(signo);
                     assert(handler);
                     (*handler)();
                 } else if (s_timer_fired_id) {
@@ -157,7 +157,7 @@ void EventLoop::do_select(bool block) {
 
                     int extra_times_expired = timer_getoverrun(timer_id);
                     assert(extra_times_expired >= 0);
-                    auto* target = s_timer_objects.get(timer_id);
+                    auto target = s_timer_objects.get(timer_id);
                     assert(target);
                     EventLoop::queue_event(*target, make_unique<TimerEvent>(1 + extra_times_expired));
                 }

@@ -46,7 +46,7 @@ void BuiltInManager::unregister_builtin(const String &name) {
     m_builtins.remove(String(name));
 }
 
-BuiltInOperation *BuiltInManager::find(const String &name) {
+Maybe<BuiltInOperation &> BuiltInManager::find(const String &name) {
     return m_builtins.get(name);
 }
 }

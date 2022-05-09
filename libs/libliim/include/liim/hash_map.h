@@ -31,19 +31,15 @@ public:
     void put(const K& key, const V& val) { m_set.put({ key, val }); }
     void put(const K& key, V&& val) { m_set.put({ key, move(val) }); }
 
-    V* get(const K& key) {
-        auto* obj = m_set.get(key);
-        if (obj) {
-            return &obj->m_value;
-        }
-        return nullptr;
+    Maybe<V&> get(const K& key) {
+        return m_set.get(key).map([](auto& x) -> V& {
+            return x.m_value;
+        });
     }
-    const V* get(const K& key) const {
-        auto* obj = m_set.get(key);
-        if (obj) {
-            return &obj->m_value;
-        }
-        return nullptr;
+    Maybe<const V&> get(const K& key) const {
+        return m_set.get(key).map([](auto& x) -> const V& {
+            return x.m_value;
+        });
     }
 
     V& get_or(const K& key, V& val) {

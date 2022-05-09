@@ -275,7 +275,7 @@ void WindowManager::swap_buffers() {
 }
 
 SharedPtr<Window> WindowManager::find_by_wid(wid_t id) {
-    auto* ret = m_window_map.get(id);
+    auto ret = m_window_map.get(id);
     return ret ? *ret : nullptr;
 }
 

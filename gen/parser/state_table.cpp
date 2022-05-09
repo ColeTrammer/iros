@@ -20,7 +20,7 @@ StateTable::StateTable(const ExtendedGrammar& grammar, const Vector<StringView>&
     : m_grammar(grammar), m_identifiers(identifiers) {
     m_grammar.rules().for_each([&](auto& rule) {
         FinalRule new_rule(rule, **m_grammar.follow_sets().get(rule.lhs()));
-        auto* rules = m_rules.get(new_rule.number());
+        auto rules = m_rules.get(new_rule.number());
         if (rules) {
             auto* to_merge = rules->first_match([&](const auto& t) {
                 return t == new_rule;
@@ -43,18 +43,18 @@ StateTable::StateTable(const ExtendedGrammar& grammar, const Vector<StringView>&
         m_table.add(m);
         auto& row = m_table.last();
         identifiers.for_each([&](const StringView& id) {
-            const int* jump_number = set->table().get(id);
+            auto jump_number = set->table().get(id);
             if (jump_number) {
                 row.put(id, { token_types.includes(id) ? Action::Type::Shift : Action::Type::Jump, *jump_number });
                 return;
             }
 
-            const Vector<FinalRule>* reduce_table = m_rules.get(set->number());
+            auto reduce_table = m_rules.get(set->number());
             if (!reduce_table) {
                 return;
             }
 
-            const FinalRule* match = reduce_table->first_match([&](const FinalRule& rule) {
+            auto match = reduce_table->first_match([&](const FinalRule& rule) {
                 return !!rule.follow_set().get(id);
             });
 
@@ -95,7 +95,7 @@ String StateTable::stringify() {
     for (int i = 0; i < m_table.size(); i++) {
         ret += String::format("%-12d", i);
         m_identifiers.for_each([&](const auto& id) {
-            Action* action = m_table.get(i).get(id);
+            auto action = m_table.get(i).get(id);
             ret += String::format(" %-12s", action ? action->stringify().string() : " ");
         });
         ret += "\n";

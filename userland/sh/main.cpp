@@ -133,7 +133,7 @@ int main(int argc, char** argv) {
             path += "/.sh_init";
             if (!access(path.string(), F_OK)) {
                 char* args[3] = { const_cast<char*>("."), path.string(), nullptr };
-                auto* op_dot = Sh::BuiltInManager::the().find(".");
+                auto op_dot = Sh::BuiltInManager::the().find(".");
                 assert(op_dot);
                 op_dot->execute(2, args);
             }

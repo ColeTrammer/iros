@@ -268,7 +268,7 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
     bool gone_once = false;
     Function<bool()> expand_alias = [&]() -> bool {
         String first_word(we.we_wordv[0]);
-        auto* alias = g_aliases.get(first_word);
+        auto alias = g_aliases.get(first_word);
         if (alias && !expanded.get(*alias)) {
             free(we.we_wordv[0]);
             we.we_wordv[0] = strdup(alias->string());
@@ -313,7 +313,7 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
         }
     }
 
-    auto* function_body = g_functions.get(String(we.we_wordv[0]));
+    auto function_body = g_functions.get(String(we.we_wordv[0]));
     if (function_body) {
         *was_builtin = true;
         command_push_position_params(PositionArgs(we.we_wordv + 1, we.we_wordc - 1));
@@ -325,7 +325,7 @@ static pid_t __do_simple_command(ShValue::SimpleCommand& command, ShValue::List:
         return ret;
     }
 
-    auto* op = Sh::BuiltInManager::the().find(we.we_wordv[0]);
+    auto op = Sh::BuiltInManager::the().find(we.we_wordv[0]);
     if (op) {
         if (op->name() == "exec") {
             if (we.we_wordc > 1) {

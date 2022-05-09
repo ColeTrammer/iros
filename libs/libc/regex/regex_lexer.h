@@ -41,7 +41,7 @@ public:
     int group_at_position(size_t index) const {
         ssize_t i = static_cast<ssize_t>(index);
         for (; i >= 0; i--) {
-            const int* group_index = m_group_incidices.get(static_cast<size_t>(i));
+            auto group_index = m_group_incidices.get(static_cast<size_t>(i));
             if (group_index) {
                 return *group_index;
             }

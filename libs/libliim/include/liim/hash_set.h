@@ -2,6 +2,7 @@
 
 #include <liim/forward.h>
 #include <liim/linked_list.h>
+#include <liim/maybe.h>
 #include <liim/traits.h>
 #include <liim/vector.h>
 
@@ -46,10 +47,10 @@ public:
             }
         }
 
-        T* slot = get(val);
+        auto slot = get(val);
         if (slot) {
             slot->~T();
-            new (slot) T(val);
+            new (&*slot) T(val);
             return;
         }
 
@@ -67,10 +68,10 @@ public:
             }
         }
 
-        T* slot = get(val);
+        auto slot = get(val);
         if (slot) {
             slot->~T();
-            new (slot) T(move(val));
+            new (&*slot) T(move(val));
             return;
         }
 
@@ -91,9 +92,9 @@ public:
     }
 
     template<Hashable U>
-    T* get(const U& key) {
+    Maybe<T&> get(const U& key) {
         if (m_buckets.size() == 0) {
-            return nullptr;
+            return {};
         }
 
         int bucket = Traits<U>::hash(key) % m_buckets.size();
@@ -103,12 +104,11 @@ public:
                 val = &obj;
             }
         });
-
         return val;
     }
 
     template<Hashable U>
-    const T* get(const U& key) const {
+    Maybe<const T&> get(const U& key) const {
         return const_cast<HashSet<T>&>(*this).get(key);
     }
 

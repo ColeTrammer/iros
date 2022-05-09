@@ -25,7 +25,7 @@ public:
     void register_builtin(String name, Function<int(int, char**)> entry);
     void unregister_builtin(const String& name);
 
-    BuiltInOperation* find(const String& name);
+    Maybe<BuiltInOperation&> find(const String& name);
     const HashMap<String, BuiltInOperation>& builtins() const { return m_builtins; }
 
 private:
