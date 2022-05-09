@@ -40,13 +40,13 @@ TEST(string_view, contains) {
 TEST(string_view, find) {
     auto haystack = "interesting"sv;
     EXPECT(!haystack.index_of('z'));
-    EXPECT_EQ(haystack.index_of('i'), Maybe<size_t> { 0 });
-    EXPECT_EQ(haystack.index_of('t'), Maybe<size_t> { 2 });
+    EXPECT_EQ(haystack.index_of('i'), Option<size_t> { 0 });
+    EXPECT_EQ(haystack.index_of('t'), Option<size_t> { 2 });
 
     EXPECT(!haystack.last_index_of('z'));
-    EXPECT_EQ(haystack.last_index_of('t'), Maybe<size_t> { 7 });
-    EXPECT_EQ(haystack.last_index_of('g'), Maybe<size_t> { 10 });
-    EXPECT_EQ("abc"sv.last_index_of('a'), Maybe<size_t> { 0 });
+    EXPECT_EQ(haystack.last_index_of('t'), Option<size_t> { 7 });
+    EXPECT_EQ(haystack.last_index_of('g'), Option<size_t> { 10 });
+    EXPECT_EQ("abc"sv.last_index_of('a'), Option<size_t> { 0 });
 }
 
 TEST(string_view, split) {

@@ -86,8 +86,8 @@ static void print_usage(const char* name) {
 
 int TestManager::do_main(int argc, char** argv) {
     auto list_simple = false;
-    auto suite_name = Maybe<String> {};
-    auto case_name = Maybe<String> {};
+    auto suite_name = Option<String> {};
+    auto case_name = Option<String> {};
 
     int opt;
     while ((opt = getopt(argc, argv, ":Ls:t:")) != -1) {

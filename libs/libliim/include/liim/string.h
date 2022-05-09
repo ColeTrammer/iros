@@ -2,7 +2,7 @@
 
 #include <assert.h>
 #include <ctype.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/pointers.h>
 #include <liim/string_view.h>
 #include <liim/traits.h>
@@ -138,8 +138,8 @@ public:
     String& to_lower_case();
     String& to_title_case();
 
-    Maybe<size_t> index_of(char c) const { return view().index_of(c); }
-    Maybe<size_t> last_index_of(char c) const { return view().last_index_of(c); }
+    Option<size_t> index_of(char c) const { return view().index_of(c); }
+    Option<size_t> last_index_of(char c) const { return view().last_index_of(c); }
 
     void swap(String& other);
 

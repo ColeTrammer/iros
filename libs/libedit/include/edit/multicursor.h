@@ -3,7 +3,7 @@
 #include <edit/cursor.h>
 #include <edit/forward.h>
 #include <liim/forward.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/vector.h>
 
 namespace Edit {
@@ -42,7 +42,7 @@ public:
     Cursor* add_cursor_at(Document& document, const TextIndex& index, const TextIndex& selection_start);
 
     bool should_show_auto_complete_text_at(const Document& document, const Line& line, int index_into_line) const;
-    Maybe<String> preview_auto_complete_text() const;
+    Option<String> preview_auto_complete_text() const;
 
     TextRangeCollection cursor_text_ranges() const;
     TextRangeCollection selections() const;

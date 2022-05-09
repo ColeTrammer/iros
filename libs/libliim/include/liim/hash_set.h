@@ -2,7 +2,7 @@
 
 #include <liim/forward.h>
 #include <liim/linked_list.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/traits.h>
 #include <liim/vector.h>
 
@@ -92,7 +92,7 @@ public:
     }
 
     template<Hashable U>
-    Maybe<T&> get(const U& key) {
+    Option<T&> get(const U& key) {
         if (m_buckets.size() == 0) {
             return {};
         }
@@ -108,7 +108,7 @@ public:
     }
 
     template<Hashable U>
-    Maybe<const T&> get(const U& key) const {
+    Option<const T&> get(const U& key) const {
         return const_cast<HashSet<T>&>(*this).get(key);
     }
 

@@ -59,11 +59,11 @@ FontMetrics Font::font_metrics() {
     return font_metrics;
 }
 
-Maybe<uint32_t> Font::fallback_glyph_id() {
+Option<uint32_t> Font::fallback_glyph_id() {
     return glyph_id_for_code_point('?');
 }
 
-Maybe<uint32_t> Font::glyph_id_for_code_point(uint32_t code_point) {
+Option<uint32_t> Font::glyph_id_for_code_point(uint32_t code_point) {
     if (code_point < 256) {
         return code_point;
     }

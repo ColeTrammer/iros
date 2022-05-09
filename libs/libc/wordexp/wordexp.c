@@ -1705,7 +1705,7 @@ int we_expand(const char *s, int flags, char **expanded, word_special_t *special
                     case '7':
                     case '8':
                     case '9':
-                        if ((size_t)(s[i + 1] - '1') >= special->position_args_size) {
+                        if ((size_t) (s[i + 1] - '1') >= special->position_args_size) {
                             to_add = "";
                         } else {
                             to_add = special->position_args[s[i + 1] - '1'];

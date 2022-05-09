@@ -44,7 +44,7 @@ public:
 
 private:
     enum class ColorRole { Foreground, Background };
-    String color_string(Maybe<Color> color, ColorRole role) const;
+    String color_string(Option<Color> color, ColorRole role) const;
 
     UniquePtr<Ext::File> m_file;
     SharedPtr<App::FdWrapper> m_selectable;

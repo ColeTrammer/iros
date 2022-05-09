@@ -17,8 +17,8 @@ public:
     virtual ~Font() override;
 
     virtual FontMetrics font_metrics() override;
-    virtual Maybe<uint32_t> fallback_glyph_id() override;
-    virtual Maybe<uint32_t> glyph_id_for_code_point(uint32_t code_point) override;
+    virtual Option<uint32_t> fallback_glyph_id() override;
+    virtual Option<uint32_t> glyph_id_for_code_point(uint32_t code_point) override;
     virtual GlyphMetrics glyph_metrics(uint32_t glyph_id) override;
     virtual SharedPtr<Bitmap> rasterize_glyph(uint32_t glyph_id, Color color) override;
 

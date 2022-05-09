@@ -1,6 +1,6 @@
 #pragma once
 
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/string.h>
 #include <liim/string_view.h>
 #include <liim/variant.h>
@@ -109,7 +109,7 @@ public:
                 Else,
             };
 
-            Maybe<ShValue::List> condition;
+            Option<ShValue::List> condition;
             Type type;
             ShValue::List action;
         };
@@ -277,7 +277,7 @@ public:
         return *this;
     }
 
-    ShValue& create_if_clause(Maybe<ShValue::List> condition, ShValue::IfClause::Condition::Type type, ShValue::List action) {
+    ShValue& create_if_clause(Option<ShValue::List> condition, ShValue::IfClause::Condition::Type type, ShValue::List action) {
         IfClause::Condition part = IfClause::Condition { condition, type, action };
         IfClause if_clause;
         if_clause.conditions.add(part);
@@ -467,5 +467,5 @@ public:
 private:
     Variant<Monostate, IoRedirect, CaseClause::CaseItem, RedirectList, Command, Pipeline, ListComponent, List, List::Combinator, Program>
         m_variant;
-    Maybe<Token> m_token;
+    Option<Token> m_token;
 };

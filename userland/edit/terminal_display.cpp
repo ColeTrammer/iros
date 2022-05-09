@@ -140,7 +140,7 @@ void TerminalDisplay::send_status_message(String message) {
     TerminalStatusBar::the().set_status_message(move(message));
 }
 
-Maybe<Point> TerminalDisplay::cursor_position() {
+Option<Point> TerminalDisplay::cursor_position() {
     if (!document()) {
         return {};
     }
@@ -316,7 +316,7 @@ void TerminalDisplay::hide_search_panel() {
     m_search_panel = nullptr;
 }
 
-Task<Maybe<String>> TerminalDisplay::prompt(String message, String initial_value) {
+Task<Option<String>> TerminalDisplay::prompt(String message, String initial_value) {
     if (m_prompt_panel) {
         hide_prompt_panel();
     }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <liim/format/builtin_formatters.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/variant.h>
 
 namespace LIIM {

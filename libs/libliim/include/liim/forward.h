@@ -47,7 +47,7 @@ template<typename T>
 class LinkedList;
 
 template<typename T>
-class Maybe;
+class Option;
 
 template<typename T, typename E>
 class Result;
@@ -98,7 +98,7 @@ using LIIM::HashSet;
 using LIIM::InlineLinkedList;
 using LIIM::InlineQueue;
 using LIIM::LinkedList;
-using LIIM::Maybe;
+using LIIM::Option;
 using LIIM::RingBuffer;
 using LIIM::SharedPtr;
 using LIIM::Span;

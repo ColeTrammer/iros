@@ -83,7 +83,7 @@ void SuggestionsPanel::render() {
                 match_index_start++;
             }
             return TInput::TerminalTextStyle {
-                .foreground = part_of_match ? Maybe<Color> { VGA_COLOR_RED } : Maybe<Color> {},
+                .foreground = part_of_match ? Option<Color> { VGA_COLOR_RED } : Option<Color> {},
                 .background = {},
                 .bold = bold,
                 .invert = false,

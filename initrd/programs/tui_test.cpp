@@ -33,7 +33,7 @@ public:
         TUI::Frame::did_attach();
     }
 
-    virtual Maybe<Point> cursor_position() override { return { relative_inner_rect().top_left() }; }
+    virtual Option<Point> cursor_position() override { return { relative_inner_rect().top_left() }; }
 
     virtual void render() override {
         Frame::render();

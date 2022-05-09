@@ -61,10 +61,10 @@ public:
 
     virtual FontMetrics font_metrics() = 0;
 
-    virtual Maybe<uint32_t> fallback_glyph_id() = 0;
+    virtual Option<uint32_t> fallback_glyph_id() = 0;
 
     // FIXME: variation selectors/zero width join characters/ligatures make this API require more information.
-    virtual Maybe<uint32_t> glyph_id_for_code_point(uint32_t code_point) = 0;
+    virtual Option<uint32_t> glyph_id_for_code_point(uint32_t code_point) = 0;
 
     // FIXME: this will depend on the font size being rendered, for true type fonts.
     virtual GlyphMetrics glyph_metrics(uint32_t glyph_id) = 0;

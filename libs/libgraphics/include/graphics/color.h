@@ -1,6 +1,6 @@
 #pragma once
 
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/string_view.h>
 #include <stdint.h>
 
@@ -16,7 +16,7 @@ enum class ColorValue {
 
 class Color {
 public:
-    static Maybe<Color> parse(const StringView& view);
+    static Option<Color> parse(const StringView& view);
 
     constexpr Color() : Color(0xFF, 0xFF, 0xFF) {}
     constexpr Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0xFF) { set(r, g, b, a); }
@@ -55,7 +55,7 @@ public:
     constexpr uint8_t g() const { return (m_color & 0x0000FF00U) >> 8; }
     constexpr uint8_t b() const { return (m_color & 0x000000FFU); }
 
-    Maybe<vga_color> to_vga_color() const;
+    Option<vga_color> to_vga_color() const;
 
     constexpr bool is(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0xFF) const {
         return this->r() == r && this->g() == g && this->b() == b && this->a() == a;

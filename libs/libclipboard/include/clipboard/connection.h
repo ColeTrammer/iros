@@ -1,6 +1,6 @@
 #pragma once
 
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/string.h>
 
 namespace Clipboard {
@@ -10,7 +10,7 @@ public:
     static Connection& the();
 
     bool set_clipboard_contents_to_text(const String& text);
-    Maybe<String> get_clipboard_contents_as_text();
+    Option<String> get_clipboard_contents_as_text();
 };
 
 }

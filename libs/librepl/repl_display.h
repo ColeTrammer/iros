@@ -4,7 +4,7 @@
 #include <edit/display_bridge.h>
 #include <eventloop/event.h>
 #include <liim/hash_map.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/variant.h>
 #include <liim/vector.h>
 #include <repl/repl_base.h>
@@ -29,7 +29,7 @@ public:
     virtual ~ReplDisplay() override;
 
     // ^TUI::Panel
-    virtual Maybe<Point> cursor_position() override;
+    virtual Option<Point> cursor_position() override;
     virtual void render() override;
 
     // ^Edit::Display
@@ -45,7 +45,7 @@ public:
     virtual void send_status_message(String message) override;
     virtual void enter_search(String starting_text) override;
 
-    virtual Task<Maybe<String>> prompt(String message, String initial_value) override;
+    virtual Task<Option<String>> prompt(String message, String initial_value) override;
     virtual App::ObjectBoundCoroutine do_open_prompt() override;
     virtual App::ObjectBoundCoroutine quit() override;
 
@@ -63,7 +63,7 @@ public:
 
 private:
     virtual void document_did_change() override;
-    virtual void suggestions_did_change(const Maybe<Edit::TextRange>& old_text_range) override;
+    virtual void suggestions_did_change(const Option<Edit::TextRange>& old_text_range) override;
 
     void move_up_rows(int count);
 

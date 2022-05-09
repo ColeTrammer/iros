@@ -46,7 +46,7 @@ UniquePtr<GlyphMappingFormat4> GlyphMappingFormat4::try_create(const ByteBuffer&
     return make_unique<GlyphMappingFormat4>(*format4_table);
 }
 
-Maybe<uint16_t> GlyphMappingFormat4::lookup_code_point(uint32_t code_point) {
+Option<uint16_t> GlyphMappingFormat4::lookup_code_point(uint32_t code_point) {
     for (uint16_t i = 0; i < table().segment_count(); i++) {
         auto segment_end = table().end_character_code(i);
         if (segment_end < code_point) {

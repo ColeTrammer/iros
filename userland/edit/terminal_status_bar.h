@@ -23,6 +23,6 @@ public:
 
 private:
     WeakPtr<Edit::Display> m_active_display;
-    Maybe<String> m_status_message;
+    Option<String> m_status_message;
     SharedPtr<App::Timer> m_status_message_timer;
 };

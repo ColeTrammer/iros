@@ -44,13 +44,13 @@ TEST(string, contains) {
 
 TEST(string, find) {
     auto haystack = "haystack"s;
-    EXPECT_EQ(haystack.index_of('h'), Maybe<size_t> { 0 });
-    EXPECT_EQ(haystack.index_of('a'), Maybe<size_t> { 1 });
-    EXPECT_EQ(haystack.index_of('k'), Maybe<size_t> { 7 });
+    EXPECT_EQ(haystack.index_of('h'), Option<size_t> { 0 });
+    EXPECT_EQ(haystack.index_of('a'), Option<size_t> { 1 });
+    EXPECT_EQ(haystack.index_of('k'), Option<size_t> { 7 });
     EXPECT(!haystack.index_of('z'));
 
-    EXPECT_EQ(haystack.last_index_of('h'), Maybe<size_t> { 0 });
-    EXPECT_EQ(haystack.last_index_of('a'), Maybe<size_t> { 5 });
+    EXPECT_EQ(haystack.last_index_of('h'), Option<size_t> { 0 });
+    EXPECT_EQ(haystack.last_index_of('a'), Option<size_t> { 5 });
     EXPECT(!haystack.last_index_of('z'));
 }
 

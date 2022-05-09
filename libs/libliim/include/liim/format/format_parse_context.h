@@ -1,7 +1,7 @@
 #pragma once
 
 #include <liim/character_type.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/string.h>
 #include <liim/string_view.h>
 #include <stdlib.h>
@@ -9,7 +9,7 @@
 namespace LIIM::Format {
 class FormatParseContext {
 public:
-    constexpr Maybe<size_t> parse_arg_index(const StringView& view) {
+    constexpr Option<size_t> parse_arg_index(const StringView& view) {
         m_view = view;
 
         auto index = parse_number();
@@ -42,7 +42,7 @@ public:
         return true;
     }
 
-    constexpr Maybe<size_t> parse_number() {
+    constexpr Option<size_t> parse_number() {
         size_t digit_count = 0;
         while (peek(digit_count) && is_digit(*peek(digit_count))) {
             digit_count++;
@@ -51,7 +51,7 @@ public:
     }
 
     constexpr bool empty() const { return m_view.empty(); }
-    constexpr Maybe<char> peek(size_t lookahead = 0) const {
+    constexpr Option<char> peek(size_t lookahead = 0) const {
         if (lookahead >= m_view.size()) {
             return {};
         }

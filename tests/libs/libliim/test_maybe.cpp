@@ -1,15 +1,15 @@
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <test/test.h>
 
-static_assert(Maybe<int> { 5 } == Maybe<int> { 5 });
-static_assert(Maybe<int> { 5 } != Maybe<int> { 6 });
-static_assert(Maybe<int> { 5 } != Maybe<int> {});
-static_assert(Maybe<int> { 5 }.value() == 5);
-static_assert(!Maybe<int> {}.has_value());
+static_assert(Option<int> { 5 } == Option<int> { 5 });
+static_assert(Option<int> { 5 } != Option<int> { 6 });
+static_assert(Option<int> { 5 } != Option<int> {});
+static_assert(Option<int> { 5 }.value() == 5);
+static_assert(!Option<int> {}.has_value());
 
 TEST(maybe, basic_getters) {
-    auto none = Maybe<int> {};
-    auto some = Maybe<int> { 5 };
+    auto none = Option<int> {};
+    auto some = Option<int> { 5 };
 
     EXPECT(!none);
     EXPECT(!none.has_value());
@@ -21,10 +21,10 @@ TEST(maybe, basic_getters) {
 }
 
 TEST(maybe, basic_setters) {
-    auto none = Maybe<int> {};
-    auto some = Maybe<int> { 5 };
+    auto none = Option<int> {};
+    auto some = Option<int> { 5 };
     auto copy = some;
-    auto moved = Maybe<int> { move(some) };
+    auto moved = Option<int> { move(some) };
 
     EXPECT(!none);
     EXPECT(!some);
@@ -33,45 +33,45 @@ TEST(maybe, basic_setters) {
 }
 
 TEST(maybe, equivalence) {
-    auto none = Maybe<int> {};
-    auto one = Maybe<int> { 1 };
-    auto two = Maybe<int> { 2 };
-    EXPECT_EQ(none, Maybe<int> {});
-    EXPECT_EQ(one, Maybe<int> { 1 });
+    auto none = Option<int> {};
+    auto one = Option<int> { 1 };
+    auto two = Option<int> { 2 };
+    EXPECT_EQ(none, Option<int> {});
+    EXPECT_EQ(one, Option<int> { 1 });
     EXPECT_EQ(two, 2);
     EXPECT_NOT_EQ(one, two);
     EXPECT_NOT_EQ(one, none);
 }
 
 TEST(maybe, functional) {
-    auto none = Maybe<int> {};
-    auto one = Maybe<int> { 1 };
+    auto none = Option<int> {};
+    auto one = Option<int> { 1 };
 
-    EXPECT_EQ(Maybe<int> {}, none.map([](auto) {
+    EXPECT_EQ(Option<int> {}, none.map([](auto) {
         return 2;
     }));
     EXPECT_EQ(2, one.map([](auto) {
         return 2;
     }));
 
-    EXPECT_EQ(Maybe<int> {}, none.and_then([](auto) -> Maybe<int> {
+    EXPECT_EQ(Option<int> {}, none.and_then([](auto) -> Option<int> {
         return { 3 };
     }));
-    EXPECT_EQ(Maybe<int> {}, one.and_then([](auto) -> Maybe<int> {
+    EXPECT_EQ(Option<int> {}, one.and_then([](auto) -> Option<int> {
         return {};
     }));
-    EXPECT_EQ(3, one.and_then([](auto) -> Maybe<int> {
+    EXPECT_EQ(3, one.and_then([](auto) -> Option<int> {
         return { 3 };
     }));
 }
 
 TEST(maybe, references) {
     int v = 42;
-    auto x = Maybe<int&> { v };
+    auto x = Option<int&> { v };
     EXPECT_EQ(x.value(), 42);
 
     int w = 42;
-    auto y = Maybe<int&> { w };
+    auto y = Option<int&> { w };
     EXPECT_EQ(y.value(), 42);
 
     EXPECT_NOT_EQ(x, y);

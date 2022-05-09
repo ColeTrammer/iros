@@ -1,6 +1,6 @@
 #pragma once
 
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/string.h>
 #include <liim/variant.h>
 #include <liim/vector.h>
@@ -84,12 +84,12 @@ public:
     Variant<mode_t, SymbolicMode>& impl() { return m_mode; }
     const Variant<mode_t, SymbolicMode>& impl() const { return m_mode; }
 
-    mode_t resolve(mode_t reference, Maybe<mode_t> umask_value = {}) const;
+    mode_t resolve(mode_t reference, Option<mode_t> umask_value = {}) const;
 
 private:
     Variant<mode_t, SymbolicMode> m_mode;
 };
 
-Maybe<Mode> parse_mode(const String& string);
+Option<Mode> parse_mode(const String& string);
 
 }

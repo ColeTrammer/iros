@@ -117,7 +117,7 @@ ElfFile::~ElfFile() {
     s_elf_file_map.remove(m_file_id);
 }
 
-Maybe<ElfFile::LookupResult> ElfFile::lookup_symbol(uintptr_t addr) const {
+Option<ElfFile::LookupResult> ElfFile::lookup_symbol(uintptr_t addr) const {
     if (!m_string_table || !m_symbol_table) {
         return {};
     }

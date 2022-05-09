@@ -38,7 +38,7 @@ SharedPtr<Bitmap> decode_png_image(uint8_t* data, size_t size) {
     ByteBuffer image_data;
     Ext::ZLibStreamDecoder idat_decoder;
 
-    auto get = [&](size_t bytes) -> Maybe<uint64_t> {
+    auto get = [&](size_t bytes) -> Option<uint64_t> {
         if (offset + bytes > size) {
             return {};
         }

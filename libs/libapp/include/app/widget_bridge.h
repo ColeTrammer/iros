@@ -3,7 +3,7 @@
 #include <app/widget_bridge_interface.h>
 #include <eventloop/forward.h>
 #include <graphics/point.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 
 #define APP_WIDGET_BASE_IMPL(BaseType, ParentType, Self, ...)                                  \
 public:                                                                                        \
@@ -130,7 +130,7 @@ public:
     // iros reflect begin
     virtual bool steals_focus() { return false; }
 
-    virtual Maybe<Point> cursor_position() { return {}; }
+    virtual Option<Point> cursor_position() { return {}; }
     // iros reflect end
 
     virtual void render() {}

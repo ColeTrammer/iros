@@ -3,7 +3,7 @@
 #include <unistd.h>
 
 namespace Ext {
-Maybe<Path> Path::resolve(const String& path) {
+Option<Path> Path::resolve(const String& path) {
     if (path[0] == '/') {
         return { Path(path) };
     }

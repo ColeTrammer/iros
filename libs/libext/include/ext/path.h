@@ -8,7 +8,7 @@
 namespace Ext {
 class Path {
 public:
-    static Maybe<Path> resolve(const String& path);
+    static Option<Path> resolve(const String& path);
     static Path root();
 
     Path();

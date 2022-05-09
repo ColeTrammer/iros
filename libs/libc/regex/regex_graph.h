@@ -1,6 +1,6 @@
 #pragma once
 
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/pointers.h>
 #include <liim/vector.h>
 
@@ -36,7 +36,7 @@ public:
 
 private:
     Vector<SharedPtr<RegexTransition>> m_transitions;
-    Maybe<Vector<int>> m_groups_to_match;
+    Option<Vector<int>> m_groups_to_match;
 };
 
 class RegexTransition {
@@ -66,7 +66,7 @@ protected:
 
     virtual size_t num_characters_matched() const { return 1; }
 
-    virtual Maybe<size_t> do_try_transition(const char* s, size_t index, int flags, Vector<regmatch_t>& dest_matches) const = 0;
+    virtual Option<size_t> do_try_transition(const char* s, size_t index, int flags, Vector<regmatch_t>& dest_matches) const = 0;
 
 private:
     int m_state {};
@@ -78,14 +78,14 @@ public:
 
     void dump() const;
 
-    Maybe<Vector<regmatch_t>> do_match(const char* str, int eflags) const;
+    Option<Vector<regmatch_t>> do_match(const char* str, int eflags) const;
 
     bool compile();
 
     int error_code() const { return m_error_code; }
 
 private:
-    Maybe<size_t> try_match_at(const char* s, size_t index, int cflags, int state, Vector<regmatch_t>& dest_matches) const;
+    Option<size_t> try_match_at(const char* s, size_t index, int cflags, int state, Vector<regmatch_t>& dest_matches) const;
 
     const ParsedRegex& m_regex_base;
     Vector<RegexState> m_states;

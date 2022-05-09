@@ -1,7 +1,7 @@
 #pragma once
 
 #include <liim/character_type.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/traits.h>
 #include <liim/utilities.h>
 #include <liim/vector.h>
@@ -96,7 +96,7 @@ public:
         return true;
     }
 
-    constexpr Maybe<size_t> index_of(char c) const {
+    constexpr Option<size_t> index_of(char c) const {
         for (size_t i = 0; i < size(); i++) {
             if (char_at(i) == c) {
                 return { i };
@@ -106,7 +106,7 @@ public:
         return {};
     }
 
-    constexpr Maybe<size_t> last_index_of(char c) const {
+    constexpr Option<size_t> last_index_of(char c) const {
         for (size_t i = size(); i > 0; i--) {
             if (char_at(i - 1) == c) {
                 return { i - 1 };
@@ -150,7 +150,7 @@ private:
     size_t m_size;
 };
 
-constexpr Maybe<size_t> parse_number(const StringView& view) {
+constexpr Option<size_t> parse_number(const StringView& view) {
     if (view.empty()) {
         return {};
     }

@@ -41,7 +41,7 @@ void TerminalPrompt::did_attach() {
     Panel::did_attach();
 }
 
-Task<Maybe<String>> TerminalPrompt::block_until_result(App::Object& coroutine_owner) {
+Task<Option<String>> TerminalPrompt::block_until_result(App::Object& coroutine_owner) {
     auto event = co_await block_until_event<Edit::PromptResult>(coroutine_owner);
     co_return event.result();
 }

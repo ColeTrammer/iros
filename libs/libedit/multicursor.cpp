@@ -220,7 +220,7 @@ bool MultiCursor::should_show_auto_complete_text_at(const Document& document, co
            main_cursor().index_into_line() == index_into_line;
 }
 
-Maybe<String> MultiCursor::preview_auto_complete_text() const {
+Option<String> MultiCursor::preview_auto_complete_text() const {
     m_display.compute_suggestions();
     auto& suggestions = m_display.suggestions();
     if (suggestions.size() != 1) {

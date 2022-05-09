@@ -2,7 +2,7 @@
 
 #include <edit/forward.h>
 #include <edit/text_range.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/string.h>
 #include <liim/vector.h>
 
@@ -61,14 +61,14 @@ public:
         m_matched_suggestions.clear();
     }
 
-    const Maybe<TextRange>& current_text_range() const { return m_current_text_range; }
-    void set_current_text_range(Maybe<TextRange> text_range) { m_current_text_range = move(text_range); }
+    const Option<TextRange>& current_text_range() const { return m_current_text_range; }
+    void set_current_text_range(Option<TextRange> text_range) { m_current_text_range = move(text_range); }
 
 private:
     void do_match(const Suggestion& suggestion, StringView reference_text);
 
     Vector<Suggestion> m_suggestions;
     Vector<MatchedSuggestion> m_matched_suggestions;
-    Maybe<TextRange> m_current_text_range;
+    Option<TextRange> m_current_text_range;
 };
 }

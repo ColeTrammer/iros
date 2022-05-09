@@ -66,7 +66,7 @@ public:
 
 private:
     TextIndex m_index;
-    Maybe<TextIndex> m_selection_anchor;
+    Option<TextIndex> m_selection_anchor;
     int m_max_col { 0 };
 };
 };

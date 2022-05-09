@@ -6,7 +6,7 @@
 #include <liim/byte_io.h>
 #include <liim/fixed_array.h>
 #include <liim/generator.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/ring_buffer.h>
 #include <liim/string.h>
 #include <liim/vector.h>

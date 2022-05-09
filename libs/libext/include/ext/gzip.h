@@ -2,9 +2,9 @@
 
 namespace Ext {
 struct GZipData {
-    Maybe<ByteBuffer> extra_data;
-    Maybe<String> name;
-    Maybe<String> comment;
+    Option<ByteBuffer> extra_data;
+    Option<String> name;
+    Option<String> comment;
     time_t time_last_modified;
 };
 

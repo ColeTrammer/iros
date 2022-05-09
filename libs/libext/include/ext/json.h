@@ -28,25 +28,25 @@ namespace Json {
             m_map.put(name, move(value));
         }
 
-        Maybe<Value&> get(const String& name) {
+        Option<Value&> get(const String& name) {
             return m_map.get(name).map([](auto& x) -> Value& {
                 return *x;
             });
         }
-        Maybe<const Value&> get(const String& name) const {
+        Option<const Value&> get(const String& name) const {
             return m_map.get(name).map([](auto& x) -> const Value& {
                 return *x;
             });
         }
 
         template<typename T>
-        Maybe<T&> get_as(const String& name) {
+        Option<T&> get_as(const String& name) {
             return m_map.get(name).and_then([](auto& x) {
                 return x->template get_if<T>();
             });
         }
         template<typename T>
-        Maybe<const T&> get_as(const String& name) const {
+        Option<const T&> get_as(const String& name) const {
             return m_map.get(name).and_then([](auto& x) {
                 return x->template get_if<T>();
             });
@@ -128,7 +128,7 @@ namespace Json {
         }
 
         void skip(size_t n) { m_index += n; }
-        Maybe<char> peek(size_t i = 0) const {
+        Option<char> peek(size_t i = 0) const {
             if (m_index + i >= m_input.size()) {
                 return {};
             }
@@ -155,14 +155,14 @@ namespace Json {
     static inline LIIM::String stringify(const Object& o, int step = 4, int indent = 0);
     static inline LIIM::String stringify(const Value& value, int step = 4, int indent = 0);
 
-    static inline Maybe<Null> parse_null(InputStream& stream);
-    static inline Maybe<Boolean> parse_boolean(InputStream& stream);
-    static inline Maybe<Number> parse_number(InputStream& stream);
-    static inline Maybe<String> parse_string(InputStream& stream);
-    static inline Maybe<Array> parse_array(InputStream& stream);
-    static inline Maybe<Object> parse_object(InputStream& stream);
-    static inline Maybe<Value> parse_value(InputStream& stream);
-    static inline Maybe<Object> parse(const StringView& view);
+    static inline Option<Null> parse_null(InputStream& stream);
+    static inline Option<Boolean> parse_boolean(InputStream& stream);
+    static inline Option<Number> parse_number(InputStream& stream);
+    static inline Option<String> parse_string(InputStream& stream);
+    static inline Option<Array> parse_array(InputStream& stream);
+    static inline Option<Object> parse_object(InputStream& stream);
+    static inline Option<Value> parse_value(InputStream& stream);
+    static inline Option<Object> parse(const StringView& view);
 
     static inline LIIM::String stringify(const Null&, int, int) { return "null"; }
     static inline LIIM::String stringify(const Boolean& b, int, int) { return b ? "true" : "false"; }
@@ -222,13 +222,13 @@ namespace Json {
         });
     }
 
-    static inline Maybe<Null> parse_null(InputStream& stream) {
+    static inline Option<Null> parse_null(InputStream& stream) {
         if (!stream.starts_with("null")) {
             return {};
         }
         return Null();
     }
-    static inline Maybe<Boolean> parse_boolean(InputStream& stream) {
+    static inline Option<Boolean> parse_boolean(InputStream& stream) {
         if (stream.starts_with("false")) {
             return false;
         } else if (stream.starts_with("true")) {
@@ -236,7 +236,7 @@ namespace Json {
         }
         return {};
     }
-    static inline Maybe<Number> parse_number(InputStream& stream) {
+    static inline Option<Number> parse_number(InputStream& stream) {
         String acc;
         if (stream.consume("-")) {
             acc += "-";
@@ -290,7 +290,7 @@ namespace Json {
 
         return strtod(acc.string(), nullptr);
     }
-    static inline Maybe<String> parse_string(InputStream& stream) {
+    static inline Option<String> parse_string(InputStream& stream) {
         if (!stream.consume("\"")) {
             return {};
         }
@@ -307,7 +307,7 @@ namespace Json {
         }
         return acc;
     }
-    static inline Maybe<Array> parse_array(InputStream& stream) {
+    static inline Option<Array> parse_array(InputStream& stream) {
         if (!stream.consume("[")) {
             return {};
         }
@@ -330,7 +330,7 @@ namespace Json {
         }
         return array;
     }
-    static inline Maybe<Object> parse_object(InputStream& stream) {
+    static inline Option<Object> parse_object(InputStream& stream) {
         if (!stream.consume("{")) {
             return {};
         }
@@ -362,7 +362,7 @@ namespace Json {
         }
         return object;
     }
-    static inline Maybe<Value> parse_value(InputStream& stream) {
+    static inline Option<Value> parse_value(InputStream& stream) {
         auto first = stream.peek();
         if (!first.has_value()) {
             return {};
@@ -383,7 +383,7 @@ namespace Json {
                 return parse_number(stream);
         }
     }
-    static inline Maybe<Object> parse(const StringView& view) {
+    static inline Option<Object> parse(const StringView& view) {
         auto stream = InputStream(view);
         stream.skip_white_space();
         auto result = parse_object(stream);
@@ -394,7 +394,7 @@ namespace Json {
         return result;
     }
 
-    static inline Maybe<Object> parse_file(const String& path) {
+    static inline Option<Object> parse_file(const String& path) {
         auto file = try_map_file(path, PROT_READ, MAP_SHARED);
         if (!file) {
             return {};

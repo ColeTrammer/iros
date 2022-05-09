@@ -14,7 +14,7 @@ void SplitterLayoutEngine::layout() {
     }
 }
 
-void SplitterLayoutEngine::add_impl(Maybe<int> fixed_width, Widget& widget) {
+void SplitterLayoutEngine::add_impl(Option<int> fixed_width, Widget& widget) {
     if (fixed_width) {
         if (direction() == Direction::Horizontal) {
             widget.set_layout_constraint({ *fixed_width, LayoutConstraint::AutoSize });
@@ -50,7 +50,7 @@ void SplitterLayoutEngine::do_remove(Widget& widget) {
     remove_widget_at_index(*found_index);
 }
 
-Maybe<HoldStart> SplitterLayoutEngine::compute_hold_start(const Point& origin) const {
+Option<HoldStart> SplitterLayoutEngine::compute_hold_start(const Point& origin) const {
     for (int i = 0; i < item_count() - 1; i++) {
         auto first_item = m_items[i];
         auto second_item = m_items[i + 1];
@@ -174,7 +174,7 @@ void SplitterLayoutEngine::remove_widget_at_index(int index) {
     }
 }
 
-Maybe<int> SplitterLayoutEngine::find_index_of_item(Widget& widget) const {
+Option<int> SplitterLayoutEngine::find_index_of_item(Widget& widget) const {
     int i = 0;
     int j = 0;
     while (i < item_count() && j < parent().children().size()) {

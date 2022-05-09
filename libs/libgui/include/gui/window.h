@@ -6,7 +6,7 @@
 #include <graphics/bitmap.h>
 #include <gui/forward.h>
 #include <liim/hash_map.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/string.h>
 #include <sys/mman.h>
 #include <window_server/message.h>
@@ -27,7 +27,7 @@ class Window : public App::Window {
     APP_OBJECT(Window);
 
 public:
-    static Maybe<SharedPtr<Window>> find_by_wid(wid_t wid);
+    static Option<SharedPtr<Window>> find_by_wid(wid_t wid);
     static void for_each_window(Function<void(Window&)>);
 
     virtual void initialize() override;

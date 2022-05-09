@@ -1,6 +1,6 @@
 #pragma once
 
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/string_view.h>
 #include <liim/utilities.h>
 #include <stdint.h>
@@ -24,8 +24,8 @@ public:
     constexpr const char* data() const { return m_data; }
     constexpr size_t size_in_bytes() const { return m_size_in_bytes; }
     constexpr bool empty() const { return size_in_bytes() == 0; }
-    constexpr Maybe<char> byte_at(size_t byte_offset) const {
-        return byte_offset < size_in_bytes() ? Maybe<char> { data()[byte_offset] } : Maybe<char> {};
+    constexpr Option<char> byte_at(size_t byte_offset) const {
+        return byte_offset < size_in_bytes() ? Option<char> { data()[byte_offset] } : Option<char> {};
     }
 
     constexpr Utf8ViewIterator begin() const;
@@ -42,12 +42,12 @@ private:
 class Utf8ViewIterator {
 public:
     struct CodePointInfo {
-        Maybe<uint32_t> codepoint;
+        Option<uint32_t> codepoint;
         size_t bytes_used;
     };
 
     constexpr CodePointInfo current_code_point_info() const;
-    constexpr Maybe<uint32_t> current_code_point() const { return current_code_point_info().codepoint; }
+    constexpr Option<uint32_t> current_code_point() const { return current_code_point_info().codepoint; }
     constexpr void advance() { m_byte_offset += current_code_point_info().bytes_used; }
 
     constexpr uint32_t operator*() const { return current_code_point().value_or(Utf8View::replacement_character); }
@@ -144,7 +144,7 @@ constexpr Utf8ViewIterator::CodePointInfo Utf8ViewIterator::current_code_point_i
         }
     };
 
-    auto expected_byte_count = [](uint8_t first_byte) -> Maybe<size_t> {
+    auto expected_byte_count = [](uint8_t first_byte) -> Option<size_t> {
         if (first_byte == 0xC0 || first_byte == 0xC1 || first_byte >= 0xF5) {
             return {};
         }

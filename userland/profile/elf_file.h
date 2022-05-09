@@ -1,7 +1,7 @@
 #include <elf.h>
 #include <ext/mapped_file.h>
 #include <liim/hash_map.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/pointers.h>
 #include <liim/string.h>
 #include <sys/types.h>
@@ -67,7 +67,7 @@ public:
         uintptr_t offset;
     };
 
-    Maybe<LookupResult> lookup_symbol(uintptr_t offset) const;
+    Option<LookupResult> lookup_symbol(uintptr_t offset) const;
     bool relocatable() const { return elf_header()->e_type == ET_DYN; }
 
     const String& path() const { return m_path; }

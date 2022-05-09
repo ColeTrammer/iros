@@ -179,7 +179,7 @@ void IOTerminal::move_cursor_to(const Point& position) {
     m_cursor_position = position;
 }
 
-String IOTerminal::color_string(Maybe<Color> color, ColorRole role) const {
+String IOTerminal::color_string(Option<Color> color, ColorRole role) const {
     auto offset = role == ColorRole::Background ? 10 : 0;
     if (!color) {
         return String::format("%d", 39 + offset);

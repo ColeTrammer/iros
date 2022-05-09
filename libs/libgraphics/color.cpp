@@ -1,7 +1,7 @@
 #include <ctype.h>
 #include <graphics/color.h>
 
-Maybe<Color> Color::parse(const StringView& view) {
+Option<Color> Color::parse(const StringView& view) {
     if (view.size() != 7) {
         return {};
     }
@@ -80,7 +80,7 @@ Color::Color(enum vga_color color) {
     }
 }
 
-Maybe<vga_color> Color::to_vga_color() const {
+Option<vga_color> Color::to_vga_color() const {
     if (is(0, 0, 0)) {
         return VGA_COLOR_BLACK;
     }

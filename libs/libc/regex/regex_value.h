@@ -1,6 +1,6 @@
 #pragma once
 
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/pointers.h>
 #include <liim/string.h>
 #include <liim/string_view.h>
@@ -59,7 +59,7 @@ struct RegexSingleExpression {
     enum class Type { OrdinaryCharacter, QuotedCharacter, Any, BracketExpression, Backreference, Group, LeftAnchor, RightAnchor };
     Type type;
     Variant<char, BracketExpression, int, ParsedRegex> expression;
-    Maybe<DuplicateCount> duplicate;
+    Option<DuplicateCount> duplicate;
 };
 
 using RegexValue = Variant<Monostate, TokenInfo, DuplicateCount, SharedPtr<RegexSingleExpression>, RegexExpression, ParsedRegex,

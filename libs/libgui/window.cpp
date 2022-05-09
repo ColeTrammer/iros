@@ -29,7 +29,7 @@ void Window::unregister_window(wid_t wid) {
     pthread_mutex_unlock(&s_windows_lock);
 }
 
-Maybe<SharedPtr<Window>> Window::find_by_wid(wid_t wid) {
+Option<SharedPtr<Window>> Window::find_by_wid(wid_t wid) {
     pthread_mutex_lock(&s_windows_lock);
     auto result = s_windows.get(wid);
     pthread_mutex_unlock(&s_windows_lock);

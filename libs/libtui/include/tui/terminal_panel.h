@@ -16,7 +16,7 @@ public:
     TerminalPanel();
 
     // ^TUI::Panel
-    virtual Maybe<Point> cursor_position() override;
+    virtual Option<Point> cursor_position() override;
     virtual void render() override;
 
     // ^App::TerminalWidgetBridge

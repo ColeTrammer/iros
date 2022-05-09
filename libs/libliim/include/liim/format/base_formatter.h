@@ -2,7 +2,7 @@
 
 #include <liim/format/format_context.h>
 #include <liim/format/format_parse_context.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/utilities.h>
 
 namespace LIIM::Format {
@@ -46,14 +46,14 @@ namespace Detail {
 
     class BaseOptions {
     public:
-        constexpr Maybe<char> fill() const { return m_fill; }
-        constexpr Maybe<Align> align() const { return m_align; }
+        constexpr Option<char> fill() const { return m_fill; }
+        constexpr Option<Align> align() const { return m_align; }
         constexpr Sign sign() const { return m_sign; }
         constexpr bool alternate_form() const { return m_alternate_form; }
         constexpr bool zero_pad() const { return m_zero_pad; }
-        constexpr Maybe<LengthSpecifier> width() const { return m_width; }
-        constexpr Maybe<LengthSpecifier> precision() const { return m_precision; }
-        constexpr Maybe<PresentationType> presentation_type() const { return m_presentation_type; }
+        constexpr Option<LengthSpecifier> width() const { return m_width; }
+        constexpr Option<LengthSpecifier> precision() const { return m_precision; }
+        constexpr Option<PresentationType> presentation_type() const { return m_presentation_type; }
 
         constexpr void set_fill(char c) { m_fill = c; }
         constexpr void set_align(Align align) { m_align = align; }
@@ -65,14 +65,14 @@ namespace Detail {
         constexpr void set_presentation_type(PresentationType type) { m_presentation_type = type; }
 
     private:
-        Maybe<char> m_fill;
-        Maybe<Align> m_align;
+        Option<char> m_fill;
+        Option<Align> m_align;
         Sign m_sign { Sign::OnlyMinus };
         bool m_alternate_form { false };
         bool m_zero_pad { false };
-        Maybe<LengthSpecifier> m_width;
-        Maybe<LengthSpecifier> m_precision;
-        Maybe<PresentationType> m_presentation_type;
+        Option<LengthSpecifier> m_width;
+        Option<LengthSpecifier> m_precision;
+        Option<PresentationType> m_presentation_type;
     };
 }
 
@@ -91,7 +91,7 @@ struct BaseFormatter {
     }
 
     constexpr void parse_fill_and_align(FormatParseContext& context) {
-        auto convert_char_to_align = [](char c) -> Maybe<Detail::Align> {
+        auto convert_char_to_align = [](char c) -> Option<Detail::Align> {
             switch (c) {
                 case '<':
                     return Detail::Align::Left;
@@ -115,7 +115,7 @@ struct BaseFormatter {
     }
 
     constexpr void parse_flags(FormatParseContext& context) {
-        auto convert_char_to_sign = [](char c) -> Maybe<Detail::Sign> {
+        auto convert_char_to_sign = [](char c) -> Option<Detail::Sign> {
             switch (c) {
                 case '+':
                     return Detail::Sign::MinusOrPlus;
@@ -133,12 +133,12 @@ struct BaseFormatter {
             context.take();
         }
 
-        if (context.peek() == Maybe<char> { '#' }) {
+        if (context.peek() == Option<char> { '#' }) {
             options.set_alternate_form();
             context.take();
         }
 
-        if (context.peek() == Maybe<char> { '0' }) {
+        if (context.peek() == Option<char> { '0' }) {
             options.set_zero_pad();
             context.take();
         }
@@ -152,7 +152,7 @@ struct BaseFormatter {
     }
 
     constexpr void parse_precision(FormatParseContext& context) {
-        if (context.peek() != Maybe<char> { '.' }) {
+        if (context.peek() != Option<char> { '.' }) {
             return;
         }
         context.take();
@@ -166,7 +166,7 @@ struct BaseFormatter {
     }
 
     constexpr void parse_presentation_type(FormatParseContext& context) {
-        auto convert_char_to_presentation_type = [](char c) -> Maybe<Detail::PresentationType> {
+        auto convert_char_to_presentation_type = [](char c) -> Option<Detail::PresentationType> {
             switch (c) {
                 case 's':
                     return Detail::PresentationType::String;
@@ -210,7 +210,7 @@ struct BaseFormatter {
             }
         };
 
-        if (context.peek() == Maybe<char> { 'L' }) {
+        if (context.peek() == Option<char> { 'L' }) {
             // Error: locale aware formatting is unsupported
             assert(false);
         }

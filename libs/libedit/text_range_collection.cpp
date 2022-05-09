@@ -16,7 +16,7 @@ void TextRangeCollection::sort() {
     });
 }
 
-Maybe<int> TextRangeCollection::range_index_at_text_index(const TextIndex& index) const {
+Option<int> TextRangeCollection::range_index_at_text_index(const TextIndex& index) const {
     for (int i = 0; i < m_ranges.size(); i++) {
         if (m_ranges[i].includes(index)) {
             return i;
@@ -25,7 +25,7 @@ Maybe<int> TextRangeCollection::range_index_at_text_index(const TextIndex& index
     return {};
 }
 
-Maybe<TextRange> TextRangeCollection::range_at_text_index(const TextIndex& index) const {
+Option<TextRange> TextRangeCollection::range_at_text_index(const TextIndex& index) const {
     for (auto& range : m_ranges) {
         if (range.includes(index)) {
             return range;

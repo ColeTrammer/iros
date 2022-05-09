@@ -1,7 +1,7 @@
 #pragma once
 
 #include <liim/byte_buffer.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/utilities.h>
 
 namespace LIIM {
@@ -36,7 +36,7 @@ public:
         m_data = move(data);
     }
 
-    Maybe<uint8_t> next_byte() {
+    Option<uint8_t> next_byte() {
         if (m_bit_offset) {
             m_bit_offset = 0;
             m_bit_buffer = 0;
@@ -45,7 +45,7 @@ public:
         return next_byte_impl();
     }
 
-    Maybe<bool> next_bit() {
+    Option<bool> next_bit() {
         if (m_bit_offset == 0) {
             auto byte = next_byte_impl();
             if (!byte) {
@@ -78,7 +78,7 @@ public:
     }
 
 private:
-    Maybe<uint8_t> next_byte_impl() {
+    Option<uint8_t> next_byte_impl() {
         if (m_byte_offset >= m_data.size()) {
             return {};
         }

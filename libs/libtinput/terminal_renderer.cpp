@@ -67,7 +67,7 @@ static TerminalGlyph box_glyphs_array[6][8] = {
     },
 };
 
-void TerminalRenderer::draw_rect(const Rect& rect_in, Maybe<Color> color, BoxStyle box_style) {
+void TerminalRenderer::draw_rect(const Rect& rect_in, Option<Color> color, BoxStyle box_style) {
     if (rect_in.width() < 1 || rect_in.height() < 1) {
         return clear_rect(rect_in, color);
     }
@@ -135,7 +135,7 @@ void TerminalRenderer::draw_rect(const Rect& rect_in, Maybe<Color> color, BoxSty
     }
 }
 
-void TerminalRenderer::clear_rect(const Rect& rect_in, Maybe<Color> color) {
+void TerminalRenderer::clear_rect(const Rect& rect_in, Option<Color> color) {
     auto style = TerminalTextStyle { .foreground = {}, .background = color, .bold = false };
 
     for (auto& dirty_rect : m_dirty_rects) {

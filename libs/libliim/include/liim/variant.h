@@ -2,7 +2,7 @@
 
 #include <assert.h>
 #include <liim/fixed_array.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/tuple.h>
 #include <liim/type_list.h>
 #include <liim/utilities.h>
@@ -203,7 +203,7 @@ public:
     }
 
     template<typename T>
-    constexpr Maybe<T&> get_if() {
+    constexpr Option<T&> get_if() {
         constexpr size_t index = TypeList::Index<T, Types...>::value;
         static_assert(index != -1);
         if (m_value_index != index) {
@@ -212,7 +212,7 @@ public:
         return this->get<index>();
     }
     template<typename T>
-    constexpr Maybe<const T&> get_if() const {
+    constexpr Option<const T&> get_if() const {
         constexpr size_t index = TypeList::Index<T, Types...>::value;
         static_assert(index != -1);
         if (m_value_index != index) {

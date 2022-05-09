@@ -2,7 +2,7 @@
 
 #include <graphics/ttf/forward.h>
 #include <liim/forward.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 
 namespace TTF {
 class GlyphMapping {
@@ -12,7 +12,7 @@ public:
     virtual ~GlyphMapping() {}
 
     // FIXME: support unicode variation sequenecs
-    virtual Maybe<uint16_t> lookup_code_point(uint32_t code_point) = 0;
+    virtual Option<uint16_t> lookup_code_point(uint32_t code_point) = 0;
 
 protected:
     GlyphMapping() = default;
@@ -26,7 +26,7 @@ public:
     explicit GlyphMappingFormat4(const CmapSubtable4& table) : m_table(table) {}
     virtual ~GlyphMappingFormat4() override {}
 
-    virtual Maybe<uint16_t> lookup_code_point(uint32_t code_point) override;
+    virtual Option<uint16_t> lookup_code_point(uint32_t code_point) override;
 
     const CmapSubtable4& table() const { return m_table; }
 

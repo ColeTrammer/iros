@@ -412,7 +412,7 @@ public:
         private:
             Object* m_target_object { nullptr };
             Object* m_coroutine_owner { nullptr };
-            Maybe<Ev> m_event;
+            Option<Ev> m_event;
             int m_callback_token { 0 };
         };
         return EventWaiter { *this, coroutine_owner };
@@ -455,7 +455,7 @@ protected:
     }
 
     template<typename... Ev, typename HandlerCallback>
-    int on_unchecked_impl(HandlerCallback&& handler, ListenerOrdering ordering, Maybe<WeakPtr<Object>> listener = {}) {
+    int on_unchecked_impl(HandlerCallback&& handler, ListenerOrdering ordering, Option<WeakPtr<Object>> listener = {}) {
         auto token = m_next_callback_token++;
         (
             [&] {

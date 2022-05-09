@@ -52,7 +52,7 @@ public:
     }
     virtual int enter() override;
     virtual void send_status_message(String message) override;
-    virtual Task<Maybe<String>> prompt(String message, String initial_value) override;
+    virtual Task<Option<String>> prompt(String message, String initial_value) override;
     virtual void enter_search(String starting_text) override;
 
     virtual App::ObjectBoundCoroutine quit() override;

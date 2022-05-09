@@ -143,7 +143,7 @@ App::ObjectBoundCoroutine AppDisplay::do_open_prompt() {
 
 void AppDisplay::send_status_message(String) {}
 
-Task<Maybe<String>> AppDisplay::prompt(String, String) {
+Task<Option<String>> AppDisplay::prompt(String, String) {
     co_return {};
 }
 

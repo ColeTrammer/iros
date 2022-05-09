@@ -3,7 +3,7 @@
 #include <liim/byte_buffer.h>
 #include <liim/format.h>
 #include <liim/forward.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/pointers.h>
 #include <liim/string.h>
 #include <stdio.h>
@@ -31,7 +31,7 @@ public:
         return error;
     }
 
-    Maybe<ByteBuffer> read_all();
+    Option<ByteBuffer> read_all();
     bool read_all_lines(Function<bool(String)>, StripTrailingNewlines strip_newlines);
     bool close();
 

@@ -27,7 +27,7 @@ static __attribute__((constructor)) void __init_signals() {
     });
 }
 
-static Maybe<int> signal_from_number(const char* num) {
+static Option<int> signal_from_number(const char* num) {
     auto n = atoi(num);
     if (n < 0 || n >= _NSIG) {
         return {};
@@ -35,7 +35,7 @@ static Maybe<int> signal_from_number(const char* num) {
     return n;
 }
 
-static Maybe<int> signal_from_name(const char* name) {
+static Option<int> signal_from_name(const char* name) {
     for (auto& signal : signals) {
         if (StringView(name) == signal.name) {
             return signal.number;
@@ -44,7 +44,7 @@ static Maybe<int> signal_from_name(const char* name) {
     return {};
 }
 
-static Maybe<int> signal_from_specifier(const char* specifier) {
+static Option<int> signal_from_specifier(const char* specifier) {
     if (isdigit(specifier[0])) {
         return signal_from_number(specifier);
     }
@@ -90,7 +90,7 @@ int SH_BUILTIN_MAIN(op_kill)(int argc, char** argv) {
     }
 
     bool list = false;
-    Maybe<int> list_signal;
+    Option<int> list_signal;
     int signal = SIGTERM;
 
     auto first_arg = StringView { argv[1] };

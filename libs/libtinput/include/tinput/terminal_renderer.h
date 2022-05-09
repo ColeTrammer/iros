@@ -24,9 +24,9 @@ public:
         ThinDashed,
         Ascii,
     };
-    void draw_rect(const Rect& rect, Maybe<Color> color = {}, BoxStyle style = BoxStyle::Thick);
+    void draw_rect(const Rect& rect, Option<Color> color = {}, BoxStyle style = BoxStyle::Thick);
 
-    void clear_rect(const Rect& rect, Maybe<Color> color = {});
+    void clear_rect(const Rect& rect, Option<Color> color = {});
 
     void put_glyph(const Point& point, const TerminalGlyph& glyph, const TerminalTextStyle& style = {});
     void render_text(const Rect& rect, const StringView& text, const TerminalTextStyle& style = {},

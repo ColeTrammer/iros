@@ -19,7 +19,7 @@ File::~File() {
     }
 }
 
-Maybe<ByteBuffer> File::read_all() {
+Option<ByteBuffer> File::read_all() {
     return {};
 }
 

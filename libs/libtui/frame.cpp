@@ -25,7 +25,7 @@ Rect Frame::positioned_inner_rect() const {
     return positioned_rect().adjusted(-1);
 }
 
-void Frame::set_frame_color(Maybe<Color> c) {
+void Frame::set_frame_color(Option<Color> c) {
     m_frame_color = c;
     invalidate();
 }

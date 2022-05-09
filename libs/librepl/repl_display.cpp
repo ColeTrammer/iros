@@ -129,7 +129,7 @@ App::ObjectBoundCoroutine ReplDisplay::do_open_prompt() {
     co_return;
 }
 
-Task<Maybe<String>> ReplDisplay::prompt(String, String) {
+Task<Option<String>> ReplDisplay::prompt(String, String) {
     co_return {};
 }
 
@@ -138,7 +138,7 @@ int ReplDisplay::enter() {
     return 0;
 }
 
-Maybe<Point> ReplDisplay::cursor_position() {
+Option<Point> ReplDisplay::cursor_position() {
     if (!document()) {
         return {};
     }
@@ -258,7 +258,7 @@ void ReplDisplay::output_line(int row, int col_offset, const Edit::RenderedLine&
     renderer.clear_rect(clear_rect);
 }
 
-void ReplDisplay::suggestions_did_change(const Maybe<Edit::TextRange>& old_text_range) {
+void ReplDisplay::suggestions_did_change(const Option<Edit::TextRange>& old_text_range) {
     if (m_suggestions_panel) {
         if (m_suggest_based_on_history) {
             m_suggestions_panel->did_update_suggestions();

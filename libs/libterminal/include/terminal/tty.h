@@ -2,7 +2,7 @@
 
 #include <graphics/color.h>
 #include <liim/function.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/pointers.h>
 #include <liim/string.h>
 #include <liim/vector.h>
@@ -13,8 +13,8 @@ namespace Terminal {
 class TTY : public TTYParserDispatcher {
 public:
     struct Cell {
-        Maybe<Color> fg;
-        Maybe<Color> bg;
+        Option<Color> fg;
+        Option<Color> bg;
         char ch { ' ' };
         bool bold : 1 { false };
         bool inverted : 1 { false };
@@ -111,8 +111,8 @@ private:
     void reset_bg() { m_bg.reset(); }
     void reset_fg() { m_fg.reset(); }
 
-    void set_bg(Maybe<Color> c) { m_bg = c; }
-    void set_fg(Maybe<Color> c) { m_fg = c; }
+    void set_bg(Option<Color> c) { m_bg = c; }
+    void set_fg(Option<Color> c) { m_fg = c; }
 
     void set_inverted(bool b) { m_inverted = b; }
     void set_bold(bool b) { m_bold = b; }
@@ -192,8 +192,8 @@ private:
 
     bool m_inverted { false };
     bool m_bold { false };
-    Maybe<Color> m_fg;
-    Maybe<Color> m_bg;
+    Option<Color> m_fg;
+    Option<Color> m_bg;
 
     Vector<Row> m_rows_below;
     Vector<Row> m_rows_above;

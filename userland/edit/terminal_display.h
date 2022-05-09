@@ -4,7 +4,7 @@
 #include <edit/display_bridge.h>
 #include <eventloop/event.h>
 #include <liim/hash_map.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/variant.h>
 #include <liim/vector.h>
 #include <time.h>
@@ -29,7 +29,7 @@ public:
     // ^TUI::Panel
     virtual bool steals_focus() override { return m_steals_focus; };
     virtual void render() override;
-    virtual Maybe<Point> cursor_position() override;
+    virtual Option<Point> cursor_position() override;
 
     // ^Edit::DisplayBridge
     virtual int rows() const override { return sized_rect().height(); }
@@ -42,7 +42,7 @@ public:
     virtual void invalidate_line_rect(int row_in_display) override;
     virtual int enter() override;
     virtual void send_status_message(String message) override;
-    virtual Task<Maybe<String>> prompt(String message, String initial_value = "") override;
+    virtual Task<Option<String>> prompt(String message, String initial_value = "") override;
     virtual void enter_search(String starting_text) override;
     virtual App::ObjectBoundCoroutine do_open_prompt() override;
     virtual void install_document_listeners(Edit::Document& document) override;

@@ -16,7 +16,7 @@
 #include <graphics/forward.h>
 #include <liim/forward.h>
 #include <liim/function.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 #include <liim/pointers.h>
 
 APP_EVENT(Edit, SplitDisplayEvent, App::Event, (), (), ())
@@ -37,8 +37,8 @@ public:
     virtual ~Display();
 
     struct RenderingInfo {
-        Maybe<Color> fg;
-        Maybe<Color> bg;
+        Option<Color> fg;
+        Option<Color> bg;
         bool bold { false };
         bool main_cursor { false };
         bool secondary_cursor { false };

@@ -533,7 +533,7 @@ void Document::insert_text_at_cursor(Display& display, const String& text) {
             String left;
             String right;
         };
-        auto insert_around_result = [&]() -> Maybe<InsertAround> {
+        auto insert_around_result = [&]() -> Option<InsertAround> {
             if (text.view() == "<") {
                 return InsertAround { "<", ">" };
             }

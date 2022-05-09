@@ -32,7 +32,7 @@ bool Connection::set_clipboard_contents_to_text(const String& text) {
     return response.has_value() && response.value().success;
 }
 
-Maybe<String> Connection::get_clipboard_contents_as_text() {
+Option<String> Connection::get_clipboard_contents_as_text() {
     auto response = endpoint().send_then_wait<ClipboardServer::Client::GetContentsRequest, ClipboardServer::Server::GetContentsResponse>(
         { .type = "text/plain" });
     if (!response.has_value()) {
@@ -65,7 +65,7 @@ static Atom s_atom_atom;
 static pthread_t s_thread_id;
 static pthread_mutex_t s_clipboard_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t s_get_clipboard_condition = PTHREAD_COND_INITIALIZER;
-static Maybe<String> s_clipboard_contents;
+static Option<String> s_clipboard_contents;
 static bool s_clipboard_contents_get_request_completed;
 static bool s_currently_own_clipboard;
 
@@ -230,7 +230,7 @@ Connection& Connection::the() {
     return *s_connection;
 }
 
-Maybe<String> Connection::get_clipboard_contents_as_text() {
+Option<String> Connection::get_clipboard_contents_as_text() {
     pthread_mutex_lock(&s_clipboard_mutex);
 
     if (s_currently_own_clipboard) {
@@ -290,7 +290,7 @@ bool Connection::set_clipboard_contents_to_text(const String& text) {
     return true;
 }
 
-Maybe<String> Connection::get_clipboard_contents_as_text() {
+Option<String> Connection::get_clipboard_contents_as_text() {
     return s_clipboard_text;
 }
 }

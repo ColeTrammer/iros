@@ -14,7 +14,7 @@ class EpsilonTransition final : public RegexTransition {
 public:
     EpsilonTransition(int state, bool forward) : RegexTransition(state), m_forward(forward) {}
 
-    virtual Maybe<size_t> do_try_transition(const char* s, size_t i, int, Vector<regmatch_t>&) const override {
+    virtual Option<size_t> do_try_transition(const char* s, size_t i, int, Vector<regmatch_t>&) const override {
         if (m_forward || s[i] != '\0')
             return { 0 };
         return {};
@@ -36,7 +36,7 @@ class LeftAnchorTransition final : public RegexTransition {
 public:
     LeftAnchorTransition(int state) : RegexTransition(state) {}
 
-    virtual Maybe<size_t> do_try_transition(const char* s, size_t index, int flags, Vector<regmatch_t>&) const override {
+    virtual Option<size_t> do_try_transition(const char* s, size_t index, int flags, Vector<regmatch_t>&) const override {
         if (((flags & REG_NEWLINE) && s[index] == '\n') || (index == 0 && !(flags & REG_NOTBOL)))
             return { 0 };
         return {};
@@ -53,7 +53,7 @@ class RightAnchorTransition final : public RegexTransition {
 public:
     RightAnchorTransition(int state) : RegexTransition(state) {}
 
-    virtual Maybe<size_t> do_try_transition(const char* s, size_t index, int flags, Vector<regmatch_t>&) const override {
+    virtual Option<size_t> do_try_transition(const char* s, size_t index, int flags, Vector<regmatch_t>&) const override {
         if (((flags & REG_NEWLINE) && s[index] == '\n') || (s[index] == '\0' && !(flags & REG_NOTEOL)))
             return { 0 };
         return {};
@@ -70,7 +70,7 @@ class OrdinaryCharacterTransition final : public RegexTransition {
 public:
     OrdinaryCharacterTransition(int state, char to_match) : RegexTransition(state), m_to_match(to_match) {}
 
-    virtual Maybe<size_t> do_try_transition(const char* s, size_t index, int flags, Vector<regmatch_t>&) const override {
+    virtual Option<size_t> do_try_transition(const char* s, size_t index, int flags, Vector<regmatch_t>&) const override {
         if (flags & REG_ICASE) {
             if (tolower(s[index]) == tolower(m_to_match))
                 return { 1 };
@@ -95,7 +95,7 @@ class SpaceCharacterTransition final : public RegexTransition {
 public:
     SpaceCharacterTransition(int state, bool inverted) : RegexTransition(state), m_inverted(inverted) {}
 
-    virtual Maybe<size_t> do_try_transition(const char* s, size_t index, int, Vector<regmatch_t>&) const override {
+    virtual Option<size_t> do_try_transition(const char* s, size_t index, int, Vector<regmatch_t>&) const override {
         char ch = s[index];
         if (ch == '\0') {
             return {};
@@ -120,7 +120,7 @@ class WordCharacterTransition final : public RegexTransition {
 public:
     WordCharacterTransition(int state, bool inverted) : RegexTransition(state), m_inverted(inverted) {}
 
-    virtual Maybe<size_t> do_try_transition(const char* s, size_t index, int, Vector<regmatch_t>&) const override {
+    virtual Option<size_t> do_try_transition(const char* s, size_t index, int, Vector<regmatch_t>&) const override {
         char ch = s[index];
         if (ch == '\0') {
             return {};
@@ -145,7 +145,7 @@ class DigitCharacterTransition final : public RegexTransition {
 public:
     DigitCharacterTransition(int state, bool inverted) : RegexTransition(state), m_inverted(inverted) {}
 
-    virtual Maybe<size_t> do_try_transition(const char* s, size_t index, int, Vector<regmatch_t>&) const override {
+    virtual Option<size_t> do_try_transition(const char* s, size_t index, int, Vector<regmatch_t>&) const override {
         char ch = s[index];
         if (ch == '\0') {
             return {};
@@ -170,7 +170,7 @@ class WordBoundaryTransition final : public RegexTransition {
 public:
     WordBoundaryTransition(int state, bool inverted) : RegexTransition(state), m_inverted(inverted) {}
 
-    virtual Maybe<size_t> do_try_transition(const char* s, size_t index, int, Vector<regmatch_t>&) const override {
+    virtual Option<size_t> do_try_transition(const char* s, size_t index, int, Vector<regmatch_t>&) const override {
         char ch = s[index];
         if (ch == '\0' || index == 0) {
             if (!m_inverted)
@@ -200,7 +200,7 @@ class AnyCharacterTransition final : public RegexTransition {
 public:
     AnyCharacterTransition(int state) : RegexTransition(state) {}
 
-    virtual Maybe<size_t> do_try_transition(const char* s, size_t index, int flags, Vector<regmatch_t>&) const override {
+    virtual Option<size_t> do_try_transition(const char* s, size_t index, int flags, Vector<regmatch_t>&) const override {
         if ((!(flags & REG_NEWLINE) || s[index] != '\n') && s[index] != '\0')
             return { 1 };
         return {};
@@ -217,7 +217,7 @@ class BeginGroupCaptureTransition final : public RegexTransition {
 public:
     BeginGroupCaptureTransition(int state, int group) : RegexTransition(state), m_group(group) {}
 
-    virtual Maybe<size_t> do_try_transition(const char*, size_t index, int, Vector<regmatch_t>& matches) const override {
+    virtual Option<size_t> do_try_transition(const char*, size_t index, int, Vector<regmatch_t>& matches) const override {
         matches[m_group].rm_so = index;
         return { 0 };
     }
@@ -236,7 +236,7 @@ class EndGroupCaptureTransition final : public RegexTransition {
 public:
     EndGroupCaptureTransition(int state, int group) : RegexTransition(state), m_group(group) {}
 
-    virtual Maybe<size_t> do_try_transition(const char*, size_t index, int, Vector<regmatch_t>& matches) const override {
+    virtual Option<size_t> do_try_transition(const char*, size_t index, int, Vector<regmatch_t>& matches) const override {
         matches[m_group].rm_eo = index;
         return { 0 };
     }
@@ -255,7 +255,7 @@ class BackreferenceTransition final : public RegexTransition {
 public:
     BackreferenceTransition(int state, int group) : RegexTransition(state), m_group(group) {}
 
-    virtual Maybe<size_t> do_try_transition(const char* s, size_t index, int, Vector<regmatch_t>& matches) const override {
+    virtual Option<size_t> do_try_transition(const char* s, size_t index, int, Vector<regmatch_t>& matches) const override {
         regmatch_t match = matches[m_group];
         if (match.rm_eo == -1 || match.rm_so == -1) {
             return {};
@@ -285,7 +285,7 @@ private:
 
 class BracketItemMatcher {
 public:
-    virtual Maybe<size_t> matches(const char* s, size_t index, int flags) const = 0;
+    virtual Option<size_t> matches(const char* s, size_t index, int flags) const = 0;
 
     virtual ~BracketItemMatcher() {}
 };
@@ -300,7 +300,7 @@ public:
         max = LIIM::max(c, d);
     }
 
-    virtual Maybe<size_t> matches(const char* s, size_t index, int flags) const override {
+    virtual Option<size_t> matches(const char* s, size_t index, int flags) const override {
         // FIXME: fix non linear collating sequences
         if (flags & REG_ICASE) {
             if (tolower(s[index]) >= tolower(min) && tolower(s[index]) <= tolower(max))
@@ -321,7 +321,7 @@ class BracketSingleCollateMatcher final : public BracketItemMatcher {
 public:
     BracketSingleCollateMatcher(StringView sv, int&) { to_match = sv[0]; }
 
-    virtual Maybe<size_t> matches(const char* s, size_t index, int flags) const override {
+    virtual Option<size_t> matches(const char* s, size_t index, int flags) const override {
         if (flags & REG_ICASE) {
             if (tolower(s[index]) == tolower(to_match))
                 return { 1 };
@@ -340,7 +340,7 @@ class BracketEquivalenceClassMatcher final : public BracketItemMatcher {
 public:
     BracketEquivalenceClassMatcher(StringView sv, int&) { to_match = sv.first(); }
 
-    virtual Maybe<size_t> matches(const char* s, size_t index, int flags) const override {
+    virtual Option<size_t> matches(const char* s, size_t index, int flags) const override {
         // FIXME: what even are equivalence classes anyway?
         if (flags & REG_ICASE) {
             if (tolower(s[index]) == tolower(to_match))
@@ -387,7 +387,7 @@ public:
             error = REG_ECTYPE;
     }
 
-    virtual Maybe<size_t> matches(const char* s, size_t index, int) const override {
+    virtual Option<size_t> matches(const char* s, size_t index, int) const override {
         // FIXME: Should [:upper:] or [:lower:] always match if REG_ICASE is set?
         if (match_function(s[index]))
             return { 1 };
@@ -412,7 +412,7 @@ public:
         return { move(static_cast<SharedPtr<RegexTransition>>(ptr)) };
     }
 
-    virtual Maybe<size_t> do_try_transition(const char* s, size_t index, int flags, Vector<regmatch_t>&) const override {
+    virtual Option<size_t> do_try_transition(const char* s, size_t index, int flags, Vector<regmatch_t>&) const override {
         // We shouldn't be able to match the null terminator, even when the bracket expression is inverted.
         if (s[index] == '\0') {
             return {};
@@ -695,7 +695,7 @@ bool RegexGraph::compile() {
     return build_graph(m_regex_base, Vector<int>());
 }
 
-Maybe<size_t> RegexGraph::try_match_at(const char* str, size_t index, int eflags, int state, Vector<regmatch_t>& dest_matches) const {
+Option<size_t> RegexGraph::try_match_at(const char* str, size_t index, int eflags, int state, Vector<regmatch_t>& dest_matches) const {
     const RegexState& current_state = m_states[state];
     if (current_state.transitions().empty()) {
         return { index };
@@ -716,7 +716,7 @@ Maybe<size_t> RegexGraph::try_match_at(const char* str, size_t index, int eflags
     return {};
 }
 
-Maybe<Vector<regmatch_t>> RegexGraph::do_match(const char* str, int eflags) const {
+Option<Vector<regmatch_t>> RegexGraph::do_match(const char* str, int eflags) const {
     Vector<regmatch_t> matches(m_num_groups + 1);
     for (int i = 0; i < matches.capacity(); i++) {
         matches.add({ -1, -1 });
@@ -724,7 +724,7 @@ Maybe<Vector<regmatch_t>> RegexGraph::do_match(const char* str, int eflags) cons
 
     size_t i = 0;
     do {
-        Maybe<size_t> result = try_match_at(str, i, eflags, 0, matches);
+        Option<size_t> result = try_match_at(str, i, eflags, 0, matches);
         if (result.has_value()) {
             matches[0] = { (regoff_t) i, (regoff_t) result.value() };
             for (int i = 0; i < matches.size(); i++) {

@@ -1,12 +1,12 @@
 #pragma once
 
 #include <graphics/color.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 
 namespace TInput {
 struct TerminalTextStyle {
-    Maybe<Color> foreground;
-    Maybe<Color> background;
+    Option<Color> foreground;
+    Option<Color> background;
     bool bold { false };
     bool invert { false };
 

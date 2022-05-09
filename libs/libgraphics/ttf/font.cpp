@@ -107,11 +107,11 @@ FontMetrics Font::font_metrics() {
     return font_metrics;
 }
 
-Maybe<uint32_t> Font::fallback_glyph_id() {
+Option<uint32_t> Font::fallback_glyph_id() {
     return 0;
 }
 
-Maybe<uint32_t> Font::glyph_id_for_code_point(uint32_t code_point) {
+Option<uint32_t> Font::glyph_id_for_code_point(uint32_t code_point) {
     return m_glyph_mapping->lookup_code_point(code_point);
 }
 

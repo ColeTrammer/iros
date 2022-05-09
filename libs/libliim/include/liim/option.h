@@ -8,31 +8,31 @@ namespace LIIM {
 class None {};
 
 template<typename T>
-requires(!IsLValueReference<T>::value) class Maybe<T> {
+requires(!IsLValueReference<T>::value) class Option<T> {
 public:
-    constexpr Maybe() {}
-    constexpr Maybe(None) {}
-    constexpr Maybe(const T& value) : m_value(value), m_has_value(true) {}
-    constexpr Maybe(T&& value) : m_value(move(value)), m_has_value(true) {}
-    constexpr Maybe(const Maybe& other) : m_has_value(other.has_value()) {
+    constexpr Option() {}
+    constexpr Option(None) {}
+    constexpr Option(const T& value) : m_value(value), m_has_value(true) {}
+    constexpr Option(T&& value) : m_value(move(value)), m_has_value(true) {}
+    constexpr Option(const Option& other) : m_has_value(other.has_value()) {
         if (other.has_value()) {
             new (&m_value) T { other.value() };
         }
     }
-    constexpr Maybe(Maybe&& other) : m_has_value(other.has_value()) {
+    constexpr Option(Option&& other) : m_has_value(other.has_value()) {
         if (m_has_value) {
             new (&m_value) T { LIIM::move(other.value()) };
             other.reset();
         }
     }
     template<typename U>
-    constexpr Maybe(const Maybe<U>& other) : m_has_value(other.has_value()) {
+    constexpr Option(const Option<U>& other) : m_has_value(other.has_value()) {
         if (other.has_value()) {
             new (&m_value) T { other.value() };
         }
     }
     template<typename U>
-    constexpr Maybe(Maybe<U>&& other) : m_has_value(other.has_value()) {
+    constexpr Option(Option<U>&& other) : m_has_value(other.has_value()) {
         if (m_has_value) {
             new (&m_value) T { LIIM::move(other.value()) };
             other.reset();
@@ -40,9 +40,9 @@ public:
     }
 
     template<typename U>
-    friend class Maybe;
+    friend class Option;
 
-    constexpr ~Maybe() { reset(); }
+    constexpr ~Option() { reset(); }
 
     constexpr void reset() {
         if (has_value()) {
@@ -51,17 +51,17 @@ public:
         }
     }
 
-    constexpr Maybe<T>& operator=(const Maybe<T>& other) {
+    constexpr Option<T>& operator=(const Option<T>& other) {
         if (this != &other) {
-            Maybe<T> temp { other };
+            Option<T> temp { other };
             swap(temp);
         }
         return *this;
     }
 
-    constexpr Maybe<T>& operator=(Maybe<T>&& other) {
+    constexpr Option<T>& operator=(Option<T>&& other) {
         if (this != &other) {
-            Maybe<T> temp { LIIM::move(other) };
+            Option<T> temp { LIIM::move(other) };
             swap(temp);
         }
         return *this;
@@ -71,14 +71,14 @@ public:
     constexpr bool operator!() const { return !m_has_value; }
     constexpr operator bool() const { return m_has_value; }
 
-    constexpr bool operator==(const Maybe& other) const {
+    constexpr bool operator==(const Option& other) const {
         if (!this->has_value() && !other.has_value()) {
             return true;
         }
         return this->has_value() && other.has_value() && this->value() == other.value();
     }
     constexpr bool operator==(const T& other) const { return this->has_value() && this->value() == other; }
-    constexpr bool operator!=(const Maybe& other) const { return !(*this == other); }
+    constexpr bool operator!=(const Option& other) const { return !(*this == other); }
     constexpr bool operator!=(const T& other) const { return !(*this == other); }
 
     constexpr T& operator*() { return value(); }
@@ -91,7 +91,7 @@ public:
         assert(m_has_value);
         return m_value;
     }
-    constexpr const T& value() const { return const_cast<Maybe<T>&>(*this).value(); }
+    constexpr const T& value() const { return const_cast<Option<T>&>(*this).value(); }
 
     constexpr T value_or(T default_value) const { return has_value() ? T { value() } : T { move(default_value) }; }
 
@@ -105,7 +105,7 @@ public:
         return value();
     }
 
-    constexpr void swap(Maybe& other) {
+    constexpr void swap(Option& other) {
         if (this->has_value() && other.has_value()) {
             LIIM::swap(this->value(), other.value());
         } else if (this->has_value()) {
@@ -118,11 +118,11 @@ public:
     }
 
     template<typename C, typename R = InvokeResult<C, T>::type>
-    constexpr Maybe<R> map(C mapper) const {
+    constexpr Option<R> map(C mapper) const {
         if (!has_value()) {
             return {};
         }
-        return Maybe<R> { mapper(value()) };
+        return Option<R> { mapper(value()) };
     }
 
     template<typename C, typename R = InvokeResult<C, T>::type>
@@ -155,45 +155,45 @@ private:
 };
 
 template<typename T>
-constexpr void swap(Maybe<T>& a, Maybe<T>& b) {
+constexpr void swap(Option<T>& a, Option<T>& b) {
     a.swap(b);
 }
 
 template<typename T>
-requires(IsLValueReference<T>::value) class Maybe<T> {
+requires(IsLValueReference<T>::value) class Option<T> {
 public:
     using ValueType = RemoveReference<T>::type;
 
-    constexpr Maybe() {}
-    constexpr Maybe(None) {}
-    constexpr Maybe(T value) : m_value(&value) {}
-    constexpr Maybe(ValueType* value) : m_value(value) {}
-    constexpr Maybe(const Maybe& other) : m_value(other.m_value) {}
-    constexpr Maybe(Maybe&& other) : m_value(exchange(other.m_value, nullptr)) {}
+    constexpr Option() {}
+    constexpr Option(None) {}
+    constexpr Option(T value) : m_value(&value) {}
+    constexpr Option(ValueType* value) : m_value(value) {}
+    constexpr Option(const Option& other) : m_value(other.m_value) {}
+    constexpr Option(Option&& other) : m_value(exchange(other.m_value, nullptr)) {}
 
     template<typename U>
-    requires(IsLValueReference<U>::value) constexpr Maybe(const Maybe<U>& other) : m_value(other.m_value) {}
+    requires(IsLValueReference<U>::value) constexpr Option(const Option<U>& other) : m_value(other.m_value) {}
     template<typename U>
-    requires(IsLValueReference<U>::value) constexpr Maybe(Maybe<U>&& other) : m_value(exchange(other.m_value, nullptr)) {}
+    requires(IsLValueReference<U>::value) constexpr Option(Option<U>&& other) : m_value(exchange(other.m_value, nullptr)) {}
 
     template<typename U>
-    friend class Maybe;
+    friend class Option;
 
-    constexpr ~Maybe() { reset(); }
+    constexpr ~Option() { reset(); }
 
     constexpr void reset() { m_value = nullptr; }
 
-    constexpr Maybe<T>& operator=(const Maybe<T>& other) {
+    constexpr Option<T>& operator=(const Option<T>& other) {
         if (this != &other) {
-            Maybe<T> temp { other };
+            Option<T> temp { other };
             swap(temp);
         }
         return *this;
     }
 
-    constexpr Maybe<T>& operator=(Maybe<T>&& other) {
+    constexpr Option<T>& operator=(Option<T>&& other) {
         if (this != &other) {
-            Maybe<T> temp { LIIM::move(other) };
+            Option<T> temp { LIIM::move(other) };
             swap(temp);
         }
         return *this;
@@ -203,9 +203,9 @@ public:
     constexpr bool operator!() const { return !has_value(); }
     constexpr operator bool() const { return has_value(); }
 
-    constexpr bool operator==(const Maybe& other) const { return this->m_value == other.m_value; }
+    constexpr bool operator==(const Option& other) const { return this->m_value == other.m_value; }
     constexpr bool operator==(const T& other) const { return this->m_value == &other; }
-    constexpr bool operator!=(const Maybe& other) const { return !(*this == other); }
+    constexpr bool operator!=(const Option& other) const { return !(*this == other); }
     constexpr bool operator!=(const T& other) const { return !(*this == other); }
 
     constexpr T& operator*() const { return value(); }
@@ -223,14 +223,14 @@ public:
         m_value = &value;
     }
 
-    constexpr void swap(Maybe& other) { LIIM::swap(this->m_value, other.m_value); }
+    constexpr void swap(Option& other) { LIIM::swap(this->m_value, other.m_value); }
 
     template<typename C, typename R = InvokeResult<C, T>::type>
-    constexpr Maybe<R> map(C mapper) const {
+    constexpr Option<R> map(C mapper) const {
         if (!has_value()) {
             return {};
         }
-        return Maybe<R> { mapper(value()) };
+        return Option<R> { mapper(value()) };
     }
 
     template<typename C, typename R = InvokeResult<C, T>::type>
@@ -259,5 +259,5 @@ private:
 };
 }
 
-using LIIM::Maybe;
 using LIIM::None;
+using LIIM::Option;

@@ -6,7 +6,7 @@
 
 class TerminalDisplay;
 
-APP_EVENT(Edit, PromptResult, App::Event, (), ((Maybe<String>, result)), ())
+APP_EVENT(Edit, PromptResult, App::Event, (), ((Option<String>, result)), ())
 
 class TerminalPrompt final : public TUI::Frame {
     APP_WIDGET_EMITS(TUI::Frame, TerminalPrompt, (Edit::PromptResult))
@@ -16,7 +16,7 @@ public:
     virtual void did_attach() override;
     virtual ~TerminalPrompt() override;
 
-    Task<Maybe<String>> block_until_result(App::Object& coroutine_owner);
+    Task<Option<String>> block_until_result(App::Object& coroutine_owner);
 
 private:
     TerminalDisplay& m_host_display;

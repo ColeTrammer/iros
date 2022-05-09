@@ -21,7 +21,7 @@ public:
     virtual void invalidate_line_rect(int row_in_display) = 0;
     virtual int enter() = 0;
     virtual void send_status_message(String message) = 0;
-    virtual Task<Maybe<String>> prompt(String message, String initial_value) = 0;
+    virtual Task<Option<String>> prompt(String message, String initial_value) = 0;
     virtual void enter_search(String starting_text) = 0;
 
     virtual void do_compute_suggestions() {}
@@ -37,7 +37,7 @@ public:
 
     // FIXME: these should be proper events
     virtual void document_did_change() {}
-    virtual void suggestions_did_change(const Maybe<TextRange>&) {}
+    virtual void suggestions_did_change(const Option<TextRange>&) {}
     virtual void did_set_show_line_numbers() {}
 
     virtual void install_document_listeners(Document&) {}

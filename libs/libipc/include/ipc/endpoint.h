@@ -3,7 +3,7 @@
 #include <eventloop/unix_socket.h>
 #include <ipc/message.h>
 #include <liim/function.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 
 namespace IPC {
 
@@ -33,7 +33,7 @@ public:
     }
 
     template<ConcreteMessage T>
-    Maybe<T> wait_for_response() {
+    Option<T> wait_for_response() {
         auto message = wait_for_response_impl(static_cast<uint32_t>(T::message_type()));
         if (!message) {
             return {};
@@ -47,7 +47,7 @@ public:
     }
 
     template<ConcreteMessage S, ConcreteMessage R>
-    Maybe<R> send_then_wait(const S& message) {
+    Option<R> send_then_wait(const S& message) {
         if (!send(message)) {
             return {};
         }

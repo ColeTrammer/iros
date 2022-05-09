@@ -5,7 +5,7 @@
 namespace TUI {
 TerminalPanel::TerminalPanel() {}
 
-Maybe<Point> TerminalPanel::cursor_position() {
+Option<Point> TerminalPanel::cursor_position() {
     if (tty().cursor_hidden()) {
         return {};
     }

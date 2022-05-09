@@ -167,7 +167,7 @@ public:
     }
 };
 
-Maybe<Mode> parse_mode(const String& string) {
+Option<Mode> parse_mode(const String& string) {
     if (string.empty()) {
         return {};
     }
@@ -317,7 +317,7 @@ mode_t SymbolicMode::resolve(mode_t reference, mode_t mask) const {
     return reference;
 }
 
-mode_t Mode::resolve(mode_t reference, Maybe<mode_t> umask_value) const {
+mode_t Mode::resolve(mode_t reference, Option<mode_t> umask_value) const {
     if (impl().is<mode_t>()) {
         return impl().as<mode_t>() & 07777;
     }

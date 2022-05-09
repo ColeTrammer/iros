@@ -31,12 +31,12 @@ public:
     void put(const K& key, const V& val) { m_set.put({ key, val }); }
     void put(const K& key, V&& val) { m_set.put({ key, move(val) }); }
 
-    Maybe<V&> get(const K& key) {
+    Option<V&> get(const K& key) {
         return m_set.get(key).map([](auto& x) -> V& {
             return x.m_value;
         });
     }
-    Maybe<const V&> get(const K& key) const {
+    Option<const V&> get(const K& key) const {
         return m_set.get(key).map([](auto& x) -> const V& {
             return x.m_value;
         });

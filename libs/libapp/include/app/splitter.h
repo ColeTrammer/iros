@@ -7,7 +7,7 @@
 #include <app/widget.h>
 #include <graphics/point.h>
 #include <graphics/rect.h>
-#include <liim/maybe.h>
+#include <liim/option.h>
 
 namespace App::Detail {
 struct HoldStart {
@@ -30,11 +30,11 @@ public:
     Direction direction() const { return m_direction; }
     void set_direction(Direction direction) { m_direction = direction; }
 
-    Maybe<HoldStart> compute_hold_start(const Point& origin) const;
+    Option<HoldStart> compute_hold_start(const Point& origin) const;
     void adjust_size_and_position(const HoldStart& start, const Point& drag_point);
 
     template<typename WidgetType, typename... Args>
-    SharedPtr<WidgetType> add(Maybe<int> fixed_width, Args&&... args) {
+    SharedPtr<WidgetType> add(Option<int> fixed_width, Args&&... args) {
         auto result = WidgetType::create_owned(&parent(), forward<Args>(args)...);
         add_impl(fixed_width, result->base());
         schedule_layout();
@@ -48,11 +48,11 @@ private:
         SharedPtr<Widget> widget;
     };
 
-    void add_impl(Maybe<int> fixed_width, Widget& widget);
+    void add_impl(Option<int> fixed_width, Widget& widget);
 
     void insert_widget(Widget& widget, int index);
     void remove_widget_at_index(int index);
-    Maybe<int> find_index_of_item(Widget& widget) const;
+    Option<int> find_index_of_item(Widget& widget) const;
 
     int item_count() const { return m_items.size(); }
     int flexible_item_count() const;
@@ -117,6 +117,6 @@ private:
 
     SharedPtr<SplitterBridge> m_bridge;
     Direction m_direction { Direction::Horizontal };
-    Maybe<Detail::HoldStart> m_hold_start;
+    Option<Detail::HoldStart> m_hold_start;
 };
 }
