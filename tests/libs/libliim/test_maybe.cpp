@@ -64,3 +64,18 @@ TEST(maybe, functional) {
         return { 3 };
     }));
 }
+
+TEST(maybe, references) {
+    int v = 42;
+    auto x = Maybe<int&> { v };
+    EXPECT_EQ(x.value(), 42);
+
+    int w = 42;
+    auto y = Maybe<int&> { w };
+    EXPECT_EQ(y.value(), 42);
+
+    EXPECT_NOT_EQ(x, y);
+
+    v = 11;
+    EXPECT_EQ(x.value(), 11);
+}

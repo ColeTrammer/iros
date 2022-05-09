@@ -49,6 +49,9 @@ class LinkedList;
 template<typename T>
 class Maybe;
 
+template<typename T, typename E>
+class Result;
+
 template<typename T, size_t N>
 class RingBuffer;
 

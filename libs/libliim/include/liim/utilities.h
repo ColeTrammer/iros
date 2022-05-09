@@ -88,10 +88,15 @@ struct IsFunction {
     enum { value = !IsConst<const T>::value && !IsReference<T>::value };
 };
 
-template<class T>
+template<typename T>
 struct IsRValueReference : FalseType {};
-template<class T>
+template<typename T>
 struct IsRValueReference<T&&> : TrueType {};
+
+template<typename T>
+struct IsLValueReference : FalseType {};
+template<typename T>
+struct IsLValueReference<T&> : TrueType {};
 
 template<typename T>
 struct RemovePointer {
@@ -302,7 +307,7 @@ namespace details {
 template<typename From, typename To>
 struct IsConvertible {
     static constexpr bool value =
-        (decltype(details::test_returnable<To>(0))::value&& decltype(details::test_nonvoid_convertible<From, To>(0))::value);
+        (decltype(details::test_returnable<To>(0))::value && decltype(details::test_nonvoid_convertible<From, To>(0))::value);
 };
 
 template<typename T>
