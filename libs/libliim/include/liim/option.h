@@ -64,6 +64,10 @@ namespace Detail {
             }
         }
 
+        constexpr bool operator==(const OptionStorage& other) const {
+            return (!this->m_has_value && !other.m_has_value) || (this->m_has_value && other.m_has_value && this->value() == other.value());
+        }
+
     private:
         MaybeUninit<T> m_storage;
         bool m_has_value { false };
@@ -93,6 +97,8 @@ namespace Detail {
         constexpr void reset() { m_storage = nullptr; }
 
         constexpr void assign(T other) { emplace(other); }
+
+        constexpr bool operator==(const OptionStorage& other) const { return this->m_storage == other.m_storage; }
 
     private:
         Storage m_storage { nullptr };
@@ -174,15 +180,13 @@ public:
     constexpr bool operator!() const { return !has_value(); }
     constexpr operator bool() const { return has_value(); }
 
-    constexpr bool operator==(const Option& other) const {
-        if (!this->has_value() && !other.has_value()) {
-            return true;
-        }
-        return this->has_value() && other.has_value() && this->value() == other.value();
-    }
-    constexpr bool operator==(const T& other) const { return this->has_value() && this->value() == other; }
+    constexpr bool operator==(const Option& other) const { return this->m_storage == other.m_storage; }
     constexpr bool operator!=(const Option& other) const { return !(*this == other); }
-    constexpr bool operator!=(const T& other) const { return !(*this == other); }
+
+    constexpr bool operator==(const T& other) const requires(!IsLValueReference<T>::value) {
+        return this->has_value() && this->value() == other;
+    }
+    constexpr bool operator!=(const T& other) const requires(!IsLValueReference<T>::value) { return !(*this == other); }
 
     constexpr T& operator*() { return value(); }
     constexpr const T& operator*() const { return value(); }
