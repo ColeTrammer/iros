@@ -1,0 +1,114 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "properties": {
+        "name": {
+            "type": "string"
+        },
+        "version": {
+            "type": "string"
+        },
+        "download": {
+            "oneOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "enum": [
+                                "git"
+                            ]
+                        },
+                        "url": {
+                            "type": "string",
+                            "format": "uri"
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "url"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "enum": [
+                                "tarball"
+                            ]
+                        },
+                        "kind": {
+                            "type": "string",
+                            "enum": [
+                                "gz",
+                                "xz"
+                            ]
+                        },
+                        "url": {
+                            "type": "string",
+                            "format": "uri"
+                        },
+                        "signature": {
+                            "type": "string",
+                            "format": "uri"
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "kind",
+                        "url"
+                    ]
+                }
+            ]
+        },
+        "patches": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "pattern": "^.+\\.patch$"
+            }
+        },
+        "buildSystem": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "autoconf",
+                        "basic",
+                        "cmake"
+                    ]
+                },
+                "configure": {
+                    "env": {
+                        "$ref": "#/definitions/key_value_pairs"
+                    },
+                    "settings": {
+                        "$ref": "#/definitions/key_value_pairs"
+                    }
+                },
+                "build": {},
+                "install": {}
+            },
+            "required": [
+                "type"
+            ]
+        },
+        "dependencies": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
+    },
+    "definitions": {
+        "key_value_pairs": {
+            "type": "object",
+            "patternProperties": {
+                ".+": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

@@ -6,6 +6,7 @@ endif()
 
 set(OS_LIBS
     ${OS_LIBS}
+    libext
     libliim
 )
 
@@ -18,7 +19,6 @@ if (NOT ${MINIMAL_BUILD})
         libclipboard
         libedit
         libeventloop
-        libext
         libgraphics
         libgui
         libipc

@@ -1,6 +1,7 @@
 set(TARGETS
     initrd
     parser
+    port_manager
 )
 
 add_all_targets()
