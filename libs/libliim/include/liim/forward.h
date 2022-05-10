@@ -85,12 +85,20 @@ class Vector;
 template<typename T>
 class WeakPtr;
 
+struct None;
+
+template<typename T>
+struct Err;
+
+template<typename T>
+struct Ok;
 }
 
 using LIIM::Bitset;
 using LIIM::ByteBuffer;
 using LIIM::ByteReader;
 using LIIM::ByteWriter;
+using LIIM::Err;
 using LIIM::Function;
 using LIIM::Generator;
 using LIIM::HashMap;
@@ -98,6 +106,8 @@ using LIIM::HashSet;
 using LIIM::InlineLinkedList;
 using LIIM::InlineQueue;
 using LIIM::LinkedList;
+using LIIM::None;
+using LIIM::Ok;
 using LIIM::Option;
 using LIIM::RingBuffer;
 using LIIM::SharedPtr;

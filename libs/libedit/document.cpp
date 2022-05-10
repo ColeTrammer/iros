@@ -36,15 +36,15 @@ Result<SharedPtr<Document>, int> Document::create_from_stdin(const String& path)
         Ext::StripTrailingNewlines::Yes);
 
     if (!result) {
-        return int { errno };
+        return Err(errno);
     }
-    return Document::create(nullptr, move(lines), path, InputMode::Document);
+    return Ok(Document::create(nullptr, move(lines), path, InputMode::Document));
 }
 
 Result<SharedPtr<Document>, int> Document::create_from_file(const String& path) {
     auto file = Ext::File::create(path, "r");
     if (!file) {
-        return int { errno };
+        return Err(errno);
     }
 
     Vector<Line> lines;
@@ -56,12 +56,12 @@ Result<SharedPtr<Document>, int> Document::create_from_file(const String& path) 
         Ext::StripTrailingNewlines::Yes);
 
     if (!result) {
-        return int { errno };
+        return Err(errno);
     }
     if (!file->close()) {
-        return int { errno };
+        return Err(errno);
     }
-    return Document::create(nullptr, move(lines), path, InputMode::Document);
+    return Ok(Document::create(nullptr, move(lines), path, InputMode::Document));
 }
 
 SharedPtr<Document> Document::create_from_text(const String& text) {

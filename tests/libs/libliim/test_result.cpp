@@ -3,8 +3,8 @@
 #include <test/test.h>
 
 TEST(result, basic_getters) {
-    auto ok = Result<int, String> { 5 };
-    auto err = Result<int, String> { "hello"s };
+    auto ok = Result<int, String> { Ok(5) };
+    auto err = Result<int, String> { Err("hello"s) };
 
     EXPECT(ok);
     EXPECT(!!ok);
@@ -17,22 +17,22 @@ TEST(result, basic_getters) {
 }
 
 TEST(result, functional) {
-    auto ok = Result<int, String> { 5 };
-    auto err = Result<int, String> { "error"s };
+    auto ok = Result<int, String> { Ok(5) };
+    auto err = Result<int, String> { Err("error"s) };
 
-    EXPECT_EQ((Result<int, String> { 10 }), ok.map([](auto x) {
+    EXPECT_EQ((Result<int, String> { Ok(10) }), ok.map([](auto x) {
         return x * 2;
     }));
 
-    EXPECT_EQ((Result<int, String> { "error"s }), err.map([](auto x) {
+    EXPECT_EQ((Result<int, String> { Err("error"s) }), err.map([](auto x) {
         return x * 2;
     }));
 
-    EXPECT_EQ((Result<int, String> { 5 }), ok.map_error([](auto x) {
+    EXPECT_EQ((Result<int, String> { Ok(5) }), ok.map_error([](auto x) {
         return format("{} plus", x);
     }));
 
-    EXPECT_EQ((Result<int, String> { "error plus"s }), err.map_error([](auto x) {
+    EXPECT_EQ((Result<int, String> { Err("error plus"s) }), err.map_error([](auto x) {
         return format("{} plus", x);
     }));
 }

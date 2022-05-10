@@ -5,11 +5,27 @@
 #include <liim/variant.h>
 
 namespace LIIM {
+template<typename T>
+struct Ok {
+    T ok;
+};
+
+template<typename T>
+Ok(T) -> Ok<T>;
+
+template<typename E>
+struct Err {
+    E err;
+};
+
+template<typename E>
+Err(E) -> Err<E>;
+
 template<typename T, typename E>
 class Result {
 public:
-    constexpr Result(T&& value) : m_impl(move(value)) {}
-    constexpr Result(E&& error) : m_impl(move(error)) {}
+    constexpr Result(Ok<T>&& value) : m_impl(in_place_index<0>, move(value.ok)) {}
+    constexpr Result(Err<E>&& error) : m_impl(in_place_index<1>, move(error.err)) {}
 
     constexpr bool operator==(const Result& other) const { return this->m_impl == other.m_impl; }
     constexpr bool operator!=(const Result& other) const { return this->m_impl != other.m_impl; }
@@ -28,21 +44,26 @@ public:
     template<typename C, typename R = InvokeResult<C, T>::type>
     constexpr Result<R, E> map(C mapper) const {
         if (!is_ok()) {
-            return Result<R, E>(E(error()));
+            return Err(move(error()));
         }
-        return Result<R, E>(mapper(T(value())));
+        return Ok(mapper(move(value())));
     }
 
     template<typename C, typename R = InvokeResult<C, E>::type>
     constexpr Result<T, R> map_error(C mapper) const {
         if (!is_error()) {
-            return Result<T, R>(T(value()));
+            return Ok(move(value()));
         }
-        return Result<T, R>(mapper(E(error())));
+        return Err(mapper(move(error())));
     }
 
     constexpr operator bool() const { return is_ok(); }
     constexpr bool operator!() const { return !is_ok(); }
+
+    constexpr Err<E> try_did_fail() {
+        assert(is_error());
+        return Err(move(error()));
+    }
 
 private:
     Variant<T, E> m_impl;
@@ -61,4 +82,6 @@ struct Formatter<Result<T, E>> : public BaseFormatter {
 };
 }
 
+using LIIM::Err;
+using LIIM::Ok;
 using LIIM::Result;

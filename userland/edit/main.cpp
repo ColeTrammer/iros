@@ -93,19 +93,19 @@ int main(int argc, char** argv) {
             if (result.is_error()) {
                 if (result.error() == EISDIR) {
                     is_directory = true;
-                    return format("Opened directory: `{}'", path);
+                    return Err(format("Opened directory: `{}'", path));
                 }
                 if (result.error() == ENOENT) {
-                    return format("Create new file: `{}'", path);
+                    return Err(format("Create new file: `{}'", path));
                 }
                 path = "";
                 return move(result).map_error([&](int error_code) {
                     return format("Failed to open `{}': {}", path, strerror(error_code));
                 });
             }
-            return move(result.value());
+            return Ok(move(result.value()));
         }
-        return Edit::Document::create_empty();
+        return Ok(Edit::Document::create_empty());
     }();
 
     auto base_file_path = [&]() -> String {
