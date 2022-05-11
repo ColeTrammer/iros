@@ -91,7 +91,7 @@ template<typename T, typename E>
 struct Formatter<Result<T, E>> : public BaseFormatter {
     void format(const Result<T, E>& value, FormatContext& context) {
         if (value.is_error()) {
-            return format_string_view(Format::format("Error({})", value.error()).view(), context);
+            return format_string_view(Format::format("Err({})", value.error()).view(), context);
         }
         return format_string_view(Format::format("Ok({})", value.value()).view(), context);
     }

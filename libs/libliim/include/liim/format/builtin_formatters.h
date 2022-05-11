@@ -33,7 +33,7 @@ struct Formatter<Option<T>> : public BaseFormatter {
         if (!value) {
             return format_string_view("None", context);
         }
-        return format_string_view(Format::format("{}", *value).view(), context);
+        return format_string_view(Format::format("Some({})", *value).view(), context);
     }
 };
 
