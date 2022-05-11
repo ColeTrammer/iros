@@ -22,7 +22,7 @@ namespace Json {
     class Object {
     public:
         template<typename T, typename... Args>
-        void put(const String& name, Args... args) {
+        void put(const String& name, Args&&... args) {
             auto raw_value = T(forward<Args>(args)...);
             auto value = make_unique<Value>(move(raw_value));
             m_map.put(name, move(value));

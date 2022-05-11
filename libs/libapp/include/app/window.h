@@ -36,7 +36,7 @@ public:
     SharedPtr<Widget> focused_widget();
 
     template<typename T, typename... Args>
-    T& set_main_widget(Args... args) {
+    T& set_main_widget(Args&&... args) {
         auto [result_base, result] = T::create_both_owned(this, forward<Args>(args)...);
         result_base->set_positioned_rect(rect());
         set_focused_widget(result_base.get());

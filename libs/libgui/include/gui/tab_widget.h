@@ -14,7 +14,7 @@ public:
     virtual void render() override;
 
     template<typename T, typename... Args>
-    T& add_tab(String name, Args... args) {
+    T& add_tab(String name, Args&&... args) {
         auto widget = create_widget_owned<T>(forward<Args>(args)...);
         if (active_tab() != -1 && m_tabs.size() != active_tab()) {
             widget->set_hidden(true);

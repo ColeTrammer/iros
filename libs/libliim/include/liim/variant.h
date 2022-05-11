@@ -61,13 +61,12 @@ namespace details {
             static_assert(index < TypeList::Count<T, Rest...>::value);
             if constexpr (index == 0) {
                 if constexpr (is_reference) {
-                    T ref = T(forward<Args>(args)...);
-                    m_value = &ref;
+                    m_value = &T(forward<Args>(args)...);
                 } else {
                     construct_at(&m_value, forward<Args>(args)...);
                 }
             } else {
-                m_rest.template emplace<index - 1, Args...>(forward<Args>(args)...);
+                m_rest.template emplace<index - 1>(forward<Args>(args)...);
             }
         }
 
@@ -130,28 +129,28 @@ public:
     constexpr Variant() { m_storage.template emplace<0>(); }
 
     constexpr Variant(const Variant& other) : m_value_index(other.m_value_index) {
-        const_cast<Variant&>(other).visit_by_index([&]<size_t index>(in_place_index_t<index>, auto&& other) {
+        other.visit_by_index([&]<size_t index>(in_place_index_t<index>, auto&& other) {
             m_storage.template emplace<index>(other.template get<index>());
         });
     }
 
     constexpr Variant(Variant&& other) : m_value_index(other.m_value_index) {
-        const_cast<Variant&>(other).visit_by_index([&]<size_t index>(in_place_index_t<index>, auto&& other) {
+        other.visit_by_index([&]<size_t index>(in_place_index_t<index>, auto&& other) {
             m_storage.template emplace<index>(move(other.template get<index>()));
         });
     }
 
     template<typename T, typename... Args>
-    constexpr Variant(in_place_type_t<T>, Args... args, typename EnableIf<TypeList::Index<T, Types...>::value != -1>::type* = 0) {
+    constexpr Variant(in_place_type_t<T>, Args&&... args, typename EnableIf<TypeList::Index<T, Types...>::value != -1>::type* = 0) {
         constexpr size_t index = TypeList::Index<T, Types...>::value;
         static_assert(index != -1);
-        m_storage.template emplace<index, Args...>(forward<Args>(args)...);
+        m_storage.template emplace<index>(forward<Args>(args)...);
         m_value_index = index;
     }
 
     template<size_t index, typename... Args>
-    constexpr Variant(in_place_index_t<index>, Args... args) {
-        m_storage.template emplace<index, Args...>(forward<Args>(args)...);
+    constexpr Variant(in_place_index_t<index>, Args&&... args) {
+        m_storage.template emplace<index>(forward<Args>(args)...);
         m_value_index = index;
     }
 
@@ -307,7 +306,7 @@ public:
     constexpr void emplace(Args&&... args) {
         this->destroy();
         constexpr size_t index = TypeList::Index<T, Types...>::value;
-        m_storage.template emplace<index, Args...>(forward<Args>(args)...);
+        m_storage.template emplace<index>(forward<Args>(args)...);
         m_value_index = index;
     }
 

@@ -185,7 +185,7 @@ private:
     void guess_type_from_name();
 
     template<typename C, typename... Args>
-    void push_command(Display& display, Args... args) {
+    void push_command(Display& display, Args&&... args) {
         auto command = make_unique<C>(*this, forward<Args>(args)...);
         push_command(display, move(command));
     }

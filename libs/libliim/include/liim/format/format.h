@@ -34,7 +34,7 @@ inline String vformat(StringView format_string, FormatArgs format_args) {
 }
 
 template<typename... Args>
-String format(StringView format_string, Args... args) {
-    return vformat(format_string, make_format_args(args...));
+String format(StringView format_string, Args&&... args) {
+    return vformat(format_string, make_format_args(forward<Args>(args)...));
 }
 }

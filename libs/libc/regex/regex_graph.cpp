@@ -494,7 +494,7 @@ bool RegexGraph::compile() {
     m_states.add(RegexState());
     RegexState* current_state = &m_states.last();
 
-    auto add_forward_transition = [&]<typename Transition, typename... Args>(in_place_type_t<Transition>, Args... args) {
+    auto add_forward_transition = [&]<typename Transition, typename... Args>(in_place_type_t<Transition>, Args && ... args) {
         current_state->transitions().add(make_shared<Transition>(m_states.size(), forward<Args>(args)...));
         m_states.add(RegexState());
         current_state = &m_states.last();

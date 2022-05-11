@@ -136,7 +136,7 @@ private:
 public:                                                                                                       \
     template<typename ObjectType, typename... Args>                                                           \
     SharedPtr<ObjectType> add(Args&&... args) {                                                               \
-        return o.add<ObjectType, Args...>(forward<Args>(args)...);                                            \
+        return o.add<ObjectType>(forward<Args>(args)...);                                                     \
     }                                                                                                         \
                                                                                                               \
     const Vector<SharedPtr<App::Object>>& children() const { return o.children(); }                           \
@@ -151,7 +151,7 @@ public:                                                                         
                                                                                                               \
     template<typename Ev, typename... Args>                                                                   \
     bool emit(Args&&... args) const {                                                                         \
-        return o.emit<Ev, Args...>(forward<Args>(args)...);                                                   \
+        return o.emit<Ev>(forward<Args>(args)...);                                                            \
     }                                                                                                         \
                                                                                                               \
     bool forward_to(const App::Object& to, const App::Event& event) const { return o.forward_to(to, event); } \
