@@ -40,7 +40,7 @@ Cursor& MultiCursor::main_cursor() {
 Cursor* MultiCursor::add_cursor(Document& document, AddCursorMode mode) {
     switch (mode) {
         case AddCursorMode::Up:
-            m_cursors.insert(m_cursors.first(), 0);
+            m_cursors.insert(Cursor { m_cursors.first() }, 0);
             document.move_cursor_up(m_display, m_cursors.first());
             m_main_cursor_index++;
             return &m_cursors.first();
