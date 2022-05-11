@@ -315,7 +315,7 @@ public:
     constexpr void swap(Variant& other) {
         visit_by_index([&other]<size_t this_index>(in_place_index_t<this_index>, auto&& self) {
             other.template visit_by_index([&]<size_t other_index>(in_place_index_t<other_index>, auto&& other) {
-                auto temp = move(self.template get<this_index>());
+                auto&& temp = move(self.template get<this_index>());
                 self.destroy();
                 self.m_storage.template emplace<other_index>(move(other.template get<other_index>()));
                 other.template destroy();
@@ -330,10 +330,9 @@ public:
 
     constexpr bool operator!=(const Variant& other) const { return !(*this == other); }
     constexpr bool operator==(const Variant& other) const {
-        return this->m_value_index == other.m_value_index &&
-               this->visit_by_index([other]<size_t index>(in_place_index_t<index>, auto&& self) {
-                   return self.template get<index>() == other.template get<index>();
-               });
+        return this->m_value_index == other.m_value_index && this->visit_by_index([&]<size_t index>(in_place_index_t<index>, auto&& self) {
+            return self.template get<index>() == other.template get<index>();
+        });
     }
     constexpr bool operator<=(const Variant& other) const {
         return LIIM::visit(
