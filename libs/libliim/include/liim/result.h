@@ -8,6 +8,9 @@ namespace LIIM {
 template<typename T>
 struct Ok {
     T ok;
+
+    constexpr T&& try_move_out() { return move(ok); }
+    constexpr T try_move_out() requires(IsLValueReference<T>::value) { return ok; }
 };
 
 template<typename T>
@@ -33,11 +36,11 @@ public:
     constexpr bool is_ok() const { return m_impl.template is<0>(); }
     constexpr bool is_error() const { return m_impl.template is<1>(); }
 
-    constexpr T& value() { return m_impl.template get<0>(); }
-    constexpr const T& value() const { return m_impl.template get<0>(); }
+    constexpr decltype(auto) value() { return m_impl.template get<0>(); }
+    constexpr decltype(auto) value() const { return m_impl.template get<0>(); }
 
-    constexpr E& error() { return m_impl.template get<1>(); }
-    constexpr const E& error() const { return m_impl.template get<1>(); }
+    constexpr decltype(auto) error() { return m_impl.template get<1>(); }
+    constexpr decltype(auto) error() const { return m_impl.template get<1>(); }
 
     constexpr void swap(Result& other) { this->m_impl.swap(other.m_impl); }
 
@@ -62,11 +65,24 @@ public:
 
     constexpr Err<E> try_did_fail() {
         assert(is_error());
-        return Err(move(error()));
+        if constexpr (IsLValueReference<E>::value) {
+            return Err(error());
+        } else {
+            return Err(move(error()));
+        }
     }
 
-private:
-    Variant<T, E> m_impl;
+    constexpr Ok<T> try_did_succeed() {
+        assert(is_ok());
+        return Ok(move(value()));
+    }
+
+    constexpr Ok<T> try_did_succeed() requires(IsLValueReference<T>::value) {
+        assert(is_ok());
+        return Ok<T>(value());
+    }
+
+private : Variant<T, E> m_impl;
 };
 }
 
