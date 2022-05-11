@@ -3,10 +3,20 @@
 
 constexpr auto xxx = [] {
     Variant<int, float, double> x;
-    x = 4;
+    x = 8;
+    Variant<int, float, double> y;
+    y = 4;
+    x.swap(y);
+
+    Variant<int, float, double> z(x);
+    if (z != 4) {
+        return 12;
+    }
     return x.as<int>();
 }();
 static_assert(xxx == 4);
+
+static_assert(Variant<int, float> { 3 } == 3);
 
 TEST(variant, basic) {
     Variant<int, float, double> v;

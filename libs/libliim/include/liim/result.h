@@ -30,6 +30,18 @@ public:
     constexpr Result(Ok<T>&& value) : m_impl(in_place_index<0>, move(value.ok)) {}
     constexpr Result(Err<E>&& error) : m_impl(in_place_index<1>, move(error.err)) {}
 
+    template<typename U, typename F>
+    constexpr Result(Result<U, F>&& other) {
+        if (other.is_ok()) {
+            m_impl.emplace(in_place_index<0>, move(other.value()));
+        } else {
+            m_impl.emplace(in_place_index<1>, move(other.error()));
+        }
+    }
+
+    template<typename U, typename F>
+    friend class Result;
+
     constexpr bool operator==(const Result& other) const { return this->m_impl == other.m_impl; }
     constexpr bool operator!=(const Result& other) const { return this->m_impl != other.m_impl; }
 

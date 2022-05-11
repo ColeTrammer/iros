@@ -310,6 +310,13 @@ public:
         m_value_index = index;
     }
 
+    template<size_t index, typename... Args>
+    constexpr void emplace(in_place_index_t<index>, Args&&... args) {
+        this->destroy();
+        m_storage.template emplace<index>(forward<Args>(args)...);
+        m_value_index = index;
+    }
+
     constexpr size_t index() const { return m_value_index; }
 
     constexpr void swap(Variant& other) {

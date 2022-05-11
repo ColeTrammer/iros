@@ -36,3 +36,10 @@ TEST(result, functional) {
         return format("{} plus", x);
     }));
 }
+
+TEST(result, conversion) {
+    char c = 5;
+    auto x = Result<char, Monostate> { Ok(c) };
+    Result<int, Monostate> y = move(x);
+    EXPECT_EQ(y.value(), 5);
+}
