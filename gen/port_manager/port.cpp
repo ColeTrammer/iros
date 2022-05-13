@@ -15,14 +15,25 @@ Result<Port, String> Port::try_create(const Ext::Path& path) {
 
     auto get_string_key = [&](const Ext::Json::Object& object, const String& name) {
         return object.get_as<Ext::Json::String>(name).unwrap_or_else([&] {
-            return format("Failed to find key `{}' in JSON file: `{}'", name, path);
+            return format("Failed to find key string `{}' in JSON file: `{}'", name, path);
         });
     };
 
-    auto name = TRY(get_string_key(json, "name"));
-    auto version = TRY(get_string_key(json, "version"));
+    auto get_object_key = [&](const Ext::Json::Object& object, const String& name) {
+        return object.get_as<Ext::Json::Object>(name).unwrap_or_else([&] {
+            return format("Failed to find object key `{}' in JSON file: `{}'", name, path);
+        });
+    };
 
-    return Ok(Port(move(name), move(version), {}));
+    auto& name = TRY(get_string_key(json, "name"));
+    auto& version = TRY(get_string_key(json, "version"));
+
+    auto& download_object = TRY(get_object_key(json, "download"));
+    auto steps = Vector<UniquePtr<Step>> {};
+
+    steps.add(TRY(DownloadStep::try_create(download_object)));
+
+    return Ok(Port(move(name), move(version), move(steps)));
 }
 
 Port::Port(String name, String version, Vector<UniquePtr<Step>> steps)

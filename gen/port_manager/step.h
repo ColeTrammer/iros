@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ext/json.h>
 #include <liim/result.h>
 #include <liim/span.h>
 #include <liim/string.h>
@@ -17,11 +18,18 @@ public:
 
 class DownloadStep : public Step {
 public:
+    static Result<UniquePtr<DownloadStep>, String> try_create(const Ext::Json::Object& object);
+
     virtual StringView name() const override { return "step"sv; }
 };
 
-class GitDownloadStep : public Step {
+class GitDownloadStep : public DownloadStep {
 public:
+    static Result<UniquePtr<GitDownloadStep>, String> try_create(const Ext::Json::Object& object);
+
+    explicit GitDownloadStep(String url);
+    virtual ~GitDownloadStep() override;
+
     virtual Result<Monostate, String> act(Context& context) override;
 
 private:
