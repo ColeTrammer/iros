@@ -10,7 +10,7 @@
 namespace PortManager {
 class Port {
 public:
-    static Result<Port, String> try_create(const Ext::Path& path);
+    static Result<Port, Error> try_create(Ext::Path path);
     Port(const Port&) = delete;
     Port(Port&&) = default;
     ~Port();
@@ -18,7 +18,7 @@ public:
     const String& name() const { return m_name; }
     const String& version() const { return m_version; }
 
-    Result<Monostate, String> build();
+    Result<Monostate, Error> build();
 
 private:
     Port(String name, String version, Vector<UniquePtr<Step>> steps);

@@ -4,16 +4,17 @@
 #include <liim/try.h>
 
 #include "context.h"
+#include "error.h"
 #include "port.h"
 #include "step.h"
 
 namespace PortManager {
-Result<Monostate, String> main(String json_path) {
+Result<Monostate, Error> main(String json_path) {
     auto path = TRY(Ext::Path::resolve(json_path).unwrap_or_else([&] {
-        return format("Failed to lookup path: `{}'", json_path);
+        return StringError(format("Failed to lookup path: `{}'", json_path));
     }));
 
-    auto port = TRY(Port::try_create(path));
+    auto port = TRY(Port::try_create(move(path)));
     return port.build();
 }
 }

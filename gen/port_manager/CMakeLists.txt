@@ -1,5 +1,6 @@
 set(SOURCES
     context.cpp
+    json_reader.cpp
     main.cpp
     port.cpp
     step.cpp
