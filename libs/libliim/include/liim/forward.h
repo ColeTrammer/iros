@@ -46,6 +46,8 @@ class InlineQueue;
 template<typename T>
 class LinkedList;
 
+struct Monostate;
+
 template<typename T>
 class Option;
 
@@ -106,9 +108,11 @@ using LIIM::HashSet;
 using LIIM::InlineLinkedList;
 using LIIM::InlineQueue;
 using LIIM::LinkedList;
+using LIIM::Monostate;
 using LIIM::None;
 using LIIM::Ok;
 using LIIM::Option;
+using LIIM::Result;
 using LIIM::RingBuffer;
 using LIIM::SharedPtr;
 using LIIM::Span;
