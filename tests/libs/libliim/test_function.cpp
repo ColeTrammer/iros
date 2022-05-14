@@ -1,6 +1,7 @@
 #include <liim/function.h>
 #include <test/test.h>
 
+#if 0
 TEST(function, constexpr) {
     constexpr int x = [] {
         int y = 12;
@@ -12,3 +13,4 @@ TEST(function, constexpr) {
 
     EXPECT_EQ(x, 42);
 }
+#endif
