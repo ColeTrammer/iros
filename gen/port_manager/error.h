@@ -21,7 +21,7 @@ class JsonLookupError {
 public:
     JsonLookupError(Ext::Path path, String key, StringView type) : m_path(move(path)), m_key(move(key)), m_type(type) {}
 
-    String to_message() const { return format("Missing required {} key `{}' in json file `{}'", m_type, m_path, m_path); }
+    String to_message() const { return format("Missing required {} key `{}' in json file `{}'", m_type, m_key, m_path); }
 
 private:
     Ext::Path m_path;

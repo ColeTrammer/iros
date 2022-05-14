@@ -17,12 +17,25 @@ Result<Port, Error> Port::try_create(const Config& config, Ext::Path json_path) 
 
     auto& download_object = TRY(reader.lookup<Ext::Json::Object>(reader.json(), "download"));
     auto patch_object = reader.lookup<Ext::Json::Object>(reader.json(), "patch");
+    auto& build_system_object = TRY(reader.lookup<Ext::Json::Object>(reader.json(), "buildSystem"));
+
+    auto build_system_type = TRY(reader.lookup<Ext::Json::String>(build_system_object, "type"));
+    if (build_system_type.view() != "cmake"sv) {
+        return Err(StringError(format("Invalid build system type `{}' in json file `{}'", build_system_type, json_path)));
+    }
+
+    auto& configure_object = TRY(reader.lookup<Ext::Json::Object>(build_system_object, "configure"));
+    auto& build_object = TRY(reader.lookup<Ext::Json::Object>(build_system_object, "build"));
+    auto& install_object = TRY(reader.lookup<Ext::Json::Object>(build_system_object, "install"));
 
     auto steps = Vector<UniquePtr<Step>> {};
     steps.add(TRY(DownloadStep::try_create(reader, download_object)));
     if (patch_object.is_ok()) {
         steps.add(TRY(PatchStep::try_create(reader, patch_object.value())));
     }
+    steps.add(TRY(CMakeConfigureStep::try_create(reader, configure_object)));
+    steps.add(TRY(CMakeBuildStep::try_create(reader, build_object)));
+    steps.add(TRY(CMakeInstallStep::try_create(reader, install_object)));
 
     auto definition_directory = json_path.dirname();
     auto base_directory = config.base_directory_for_port(name.view(), version.view());

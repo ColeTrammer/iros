@@ -24,19 +24,22 @@ Result<Config, Error> Config::try_create() {
     auto iros_sysroot = iros_build_directory.join_component("sysroot");
     auto port_build_directory = iros_build_directory.join_component("ports");
 
+    auto install_prefix = "/usr";
+
     // FIXME: allow the user to override these variables
     //        through command line arguments or environment
     //        variables.
     return Ok(Config(move(iros_source_directory), move(iros_build_directory), move(iros_sysroot), move(port_build_directory),
-                     move(target_architecture)));
+                     move(install_prefix), move(target_architecture)));
 }
 
 Config::Config(Ext::Path iros_source_directory, Ext::Path iros_build_directory, Ext::Path iros_sysroot, Ext::Path port_build_directory,
-               String target_architecture)
+               String install_prefix, String target_architecture)
     : m_iros_source_directory(move(iros_source_directory))
     , m_iros_build_directory(move(iros_build_directory))
     , m_iros_sysroot(move(iros_sysroot))
     , m_port_build_directory(move(port_build_directory))
+    , m_install_prefix(move(install_prefix))
     , m_target_architecture(move(target_architecture)) {}
 
 Config::~Config() {}

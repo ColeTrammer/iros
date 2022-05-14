@@ -30,7 +30,7 @@ GitDownloadStep::GitDownloadStep(String url) : m_url(move(url)) {}
 GitDownloadStep::~GitDownloadStep() {}
 
 Result<Monostate, Error> GitDownloadStep::act(Context& context, const Port& port) {
-    return context.run_command(format("git clone --depth=1 {} {}", m_url, port.source_directory())).map_error([&](auto) {
+    return context.run_command(format("git clone --depth=1 \"{}\" \"{}\"", m_url, port.source_directory())).map_error([&](auto) {
         return StringError(format("git clone on url `{}' failed", m_url));
     });
 }
@@ -60,7 +60,7 @@ Result<Monostate, Error> PatchStep::act(Context& context, const Port& port) {
         }));
 
         for (auto& patch_file : m_patch_files) {
-            TRY(context.run_command(format("git apply {}/{}", port.definition_directory(), patch_file)).map_error([&](auto) {
+            TRY(context.run_command(format("git apply \"{}/{}\"", port.definition_directory(), patch_file)).map_error([&](auto) {
                 return StringError(format("git patch failed with patch file `{}'", patch_file));
             }));
         }
@@ -71,5 +71,64 @@ Result<Monostate, Error> PatchStep::act(Context& context, const Port& port) {
 Span<const StringView> PatchStep::dependencies() const {
     static constexpr FixedArray storage = { "download"sv };
     return storage.span();
+}
+
+Span<const StringView> ConfigureStep::dependencies() const {
+    static constexpr FixedArray storage = { "download"sv, "patch"sv };
+    return storage.span();
+}
+
+Result<UniquePtr<CMakeConfigureStep>, Error> CMakeConfigureStep::try_create(const JsonReader&, const Ext::Json::Object&) {
+    return Ok(make_unique<CMakeConfigureStep>());
+}
+
+CMakeConfigureStep::~CMakeConfigureStep() {}
+
+Result<Monostate, Error> CMakeConfigureStep::act(Context& context, const Port& port) {
+    auto& config = context.config();
+
+    auto toolchain_file = config.iros_source_directory().join_component("cmake").join_component(
+        format("CMakeToolchain_{}.txt", config.target_architecture()));
+    return context
+        .run_command(format("cmake -S \"{}\" -B \"{}\" -DCMAKE_INSTALL_PREFIX=\"{}\" -DCMAKE_TOOLCHAIN_FILE=\"{}\"",
+                            port.source_directory(), port.build_directory(), config.install_prefix(), toolchain_file))
+        .map_error([&](auto) {
+            return StringError(format("cmake configure failed"));
+        });
+}
+
+Span<const StringView> BuildStep::dependencies() const {
+    static constexpr FixedArray storage = { "download"sv, "patch"sv, "configure"sv };
+    return storage.span();
+}
+
+Result<UniquePtr<CMakeBuildStep>, Error> CMakeBuildStep::try_create(const JsonReader&, const Ext::Json::Object&) {
+    return Ok(make_unique<CMakeBuildStep>());
+}
+
+CMakeBuildStep::~CMakeBuildStep() {}
+
+Result<Monostate, Error> CMakeBuildStep::act(Context& context, const Port& port) {
+    return context.run_command(format("cmake --build \"{}\"", port.build_directory())).map_error([&](auto) {
+        return StringError(format("cmake build failed"));
+    });
+}
+
+Span<const StringView> InstallStep::dependencies() const {
+    static constexpr FixedArray storage = { "download"sv, "patch"sv, "configure"sv, "build"sv };
+    return storage.span();
+}
+
+Result<UniquePtr<CMakeInstallStep>, Error> CMakeInstallStep::try_create(const JsonReader&, const Ext::Json::Object&) {
+    return Ok(make_unique<CMakeInstallStep>());
+}
+
+CMakeInstallStep::~CMakeInstallStep() {}
+
+Result<Monostate, Error> CMakeInstallStep::act(Context& context, const Port& port) {
+    return context.run_command(format("DESTDIR=\"{}\" cmake --install \"{}\"", context.config().iros_sysroot(), port.build_directory()))
+        .map_error([&](auto) {
+            return StringError(format("cmake build failed"));
+        });
 }
 }

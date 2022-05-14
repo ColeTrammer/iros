@@ -99,7 +99,10 @@
                 "install": {}
             },
             "required": [
-                "type"
+                "type",
+                "configure",
+                "build",
+                "install"
             ]
         },
         "dependencies": {
