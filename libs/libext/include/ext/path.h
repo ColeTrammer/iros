@@ -16,8 +16,7 @@ public:
 
     String basename() const;
 
-    enum class SlashTerminated { No, Yes };
-    String dirname(SlashTerminated slash_terminated = SlashTerminated::No) const;
+    Path dirname() const;
 
     String to_string() const;
 
@@ -27,7 +26,8 @@ public:
     const Vector<String>& components() const { return m_components; }
 
 private:
-    Path(const String& path);
+    explicit Path(const String& path);
+    explicit Path(Vector<String> path);
 
     Vector<String> m_components;
 };

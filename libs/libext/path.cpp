@@ -24,6 +24,8 @@ Path::Path(const String& path) {
     m_components = path.split('/');
 }
 
+Path::Path(Vector<String> components) : m_components(move(components)) {}
+
 Path::Path() {}
 
 Path::~Path() {}
@@ -41,20 +43,14 @@ String Path::basename() const {
     return m_components.last();
 }
 
-String Path::dirname(SlashTerminated slash_terminated) const {
+Path Path::dirname() const {
     if (m_components.size() <= 1) {
-        return "/";
+        return root();
     }
 
-    auto string = String {};
-    for (int i = 0; i < m_components.size() - 1; i++) {
-        string += "/";
-        string += m_components[i];
-    }
-    if (slash_terminated == SlashTerminated::Yes) {
-        string += "/";
-    }
-    return string;
+    auto new_components = m_components;
+    new_components.remove_last();
+    return Path { move(new_components) };
 }
 
 String Path::to_string() const {

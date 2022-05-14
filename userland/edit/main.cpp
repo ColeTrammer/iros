@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
                 if (is_directory) {
                     return maybe_path.value().to_string();
                 }
-                return maybe_path.value().dirname();
+                return maybe_path.value().dirname().to_string();
             }
         }
         return "./";
