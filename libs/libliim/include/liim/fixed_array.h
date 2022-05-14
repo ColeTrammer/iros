@@ -1,13 +1,27 @@
 #pragma once
 
 #include <assert.h>
+#include <liim/span.h>
 #include <stddef.h>
+
+#if !defined(__is_libc) && !defined(__is_libk)
+#include <initializer_list>
+#endif
 
 namespace LIIM {
 template<typename T, size_t max_elements>
 class FixedArray {
 public:
     constexpr FixedArray(size_t size = max_elements) : m_size(size), m_array() { assert(size <= max_elements); }
+
+#if !defined(__is_libc) && !defined(__is_libk)
+    constexpr FixedArray(std::initializer_list<T> elements) : m_size(elements.size()), m_array() {
+        size_t i = 0;
+        for (auto it = elements.begin(); it != elements.end(); ++it, i++) {
+            m_array[i] = *it;
+        }
+    }
+#endif
 
     constexpr T& operator[](size_t index) {
         assert(index < m_size);
@@ -36,10 +50,16 @@ public:
     constexpr const T* cbegin() const { return &m_array[0]; }
     constexpr const T* cend() const { return &m_array[m_size]; }
 
+    constexpr Span<T> span() { return { begin(), size() }; }
+    constexpr Span<const T> span() const { return { begin(), size() }; }
+
 private:
     size_t m_size { 0 };
     T m_array[max_elements];
 };
+
+template<class T, class... U>
+FixedArray(T, U...) -> FixedArray<T, 1 + sizeof...(U)>;
 }
 
 using LIIM::FixedArray;
