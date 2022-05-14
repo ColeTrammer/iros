@@ -61,12 +61,20 @@
                 }
             ]
         },
-        "patches": {
-            "type": "array",
-            "items": {
-                "type": "string",
-                "pattern": "^.+\\.patch$"
-            }
+        "patch": {
+            "type": "object",
+            "properties": {
+                "files": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "pattern": "^.+\\.patch$"
+                    }
+                }
+            },
+            "required": [
+                "files"
+            ]
         },
         "buildSystem": {
             "type": "object",
