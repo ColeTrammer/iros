@@ -9,84 +9,84 @@ namespace LIIM {
 template<typename T>
 class UniquePtr {
 public:
-    explicit UniquePtr(T* ptr = nullptr) : m_ptr(ptr) {}
+    constexpr explicit UniquePtr(T* ptr = nullptr) : m_ptr(ptr) {}
 
-    UniquePtr(std::nullptr_t) : m_ptr(nullptr) {}
+    constexpr UniquePtr(std::nullptr_t) : m_ptr(nullptr) {}
 
-    UniquePtr(UniquePtr&& other) : m_ptr(other.m_ptr) { other.m_ptr = nullptr; }
+    constexpr UniquePtr(UniquePtr&& other) : m_ptr(other.m_ptr) { other.m_ptr = nullptr; }
     template<typename U>
-    UniquePtr(UniquePtr<U>&& other) : m_ptr(static_cast<T*>(other.m_ptr)) {
+    constexpr UniquePtr(UniquePtr<U>&& other) : m_ptr(static_cast<T*>(other.m_ptr)) {
         other.m_ptr = nullptr;
     }
 
-    ~UniquePtr() {
+    constexpr ~UniquePtr() {
         auto ptr = m_ptr;
         m_ptr = nullptr;
         delete ptr;
     }
 
-    UniquePtr& operator=(std::nullptr_t) {
+    constexpr UniquePtr& operator=(std::nullptr_t) {
         UniquePtr<T> temp;
         swap(temp);
         return *this;
     }
 
-    UniquePtr& operator=(const UniquePtr& other) = delete;
+    constexpr UniquePtr& operator=(const UniquePtr& other) = delete;
     template<typename U>
-    UniquePtr& operator=(const UniquePtr<U>& other) = delete;
+    constexpr UniquePtr& operator=(const UniquePtr<U>& other) = delete;
 
     template<typename U>
-    UniquePtr& operator=(UniquePtr<U>&& other) {
+    constexpr UniquePtr& operator=(UniquePtr<U>&& other) {
         UniquePtr<T> temp(move(other));
         swap(temp);
         return *this;
     }
 
-    UniquePtr& operator=(UniquePtr&& other) {
+    constexpr UniquePtr& operator=(UniquePtr&& other) {
         UniquePtr<T> temp(move(other));
         swap(temp);
         return *this;
     }
 
-    void swap(UniquePtr& other) { LIIM::swap(m_ptr, other.m_ptr); }
+    constexpr void swap(UniquePtr& other) { LIIM::swap(m_ptr, other.m_ptr); }
 
-    T& operator*() {
+    constexpr T& operator*() {
         assert(m_ptr);
         return *m_ptr;
     }
 
-    const T& operator*() const {
+    constexpr const T& operator*() const {
         assert(m_ptr);
         return *m_ptr;
     }
 
-    T* operator->() {
+    constexpr T* operator->() {
         assert(m_ptr);
         return m_ptr;
     }
 
-    const T* operator->() const {
+    constexpr const T* operator->() const {
         assert(m_ptr);
         return m_ptr;
     }
 
-    T* get() { return m_ptr; }
-    const T* get() const { return m_ptr; }
+    constexpr T* get() { return m_ptr; }
+    constexpr const T* get() const { return m_ptr; }
 
-    bool operator!() const { return !m_ptr; }
-    operator bool() const { return !!m_ptr; }
+    constexpr bool operator!() const { return !m_ptr; }
+    constexpr operator bool() const { return !!m_ptr; }
 
     template<typename U>
-    bool operator==(const UniquePtr<U>& other) const {
+    constexpr bool operator==(const UniquePtr<U>& other) const {
         return m_ptr == other.m_ptr;
     }
-    bool operator==(const UniquePtr& other) { return m_ptr == other.m_ptr; }
+    constexpr bool operator==(const UniquePtr& other) { return m_ptr == other.m_ptr; }
 
     template<typename U>
-    bool operator!=(const UniquePtr<U>& other) const {
+    constexpr bool operator!=(const UniquePtr<U>& other) const {
         return m_ptr != other.m_ptr;
     }
-    bool operator!=(const UniquePtr& other) { return m_ptr != other.m_ptr; }
+    constexpr bool operator!=(const UniquePtr& other) { return m_ptr != other.m_ptr; }
 
 private:
     template<typename U>
@@ -96,12 +96,12 @@ private:
 };
 
 template<typename T>
-void swap(UniquePtr<T>& a, UniquePtr<T>& b) {
+constexpr void swap(UniquePtr<T>& a, UniquePtr<T>& b) {
     a.swap(b);
 }
 
 template<typename T, class... Args>
-UniquePtr<T> make_unique(Args&&... args) {
+constexpr UniquePtr<T> make_unique(Args&&... args) {
     return UniquePtr<T>(new T(forward<Args>(args)...));
 }
 
