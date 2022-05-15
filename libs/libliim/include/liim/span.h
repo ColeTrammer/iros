@@ -1,6 +1,7 @@
 #pragma once
 
 #include <assert.h>
+#include <liim/option.h>
 #include <stddef.h>
 
 namespace LIIM {
@@ -39,6 +40,20 @@ public:
     constexpr Span subspan(size_t index, size_t count) const {
         assert(index + count <= m_size);
         return Span(m_data + index, count);
+    }
+
+    constexpr Option<T&> get(size_t index) {
+        if (index >= size()) {
+            return None {};
+        }
+        return m_data[index];
+    }
+
+    constexpr Option<const T&> get(size_t index) const {
+        if (index >= size()) {
+            return None {};
+        }
+        return m_data[index];
     }
 
     constexpr operator Span<const T>() { return { data(), size() }; }
