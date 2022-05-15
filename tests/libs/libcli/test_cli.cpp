@@ -13,10 +13,10 @@ static Args args;
 constexpr auto cli_parser = [] {
     using namespace Cli;
 
-    auto a_flag = Flag::boolean(args.c, 'c', "crash"sv, "Cause the program to crash"sv);
-    auto b_flag = Flag::value<int>(args.i, 'i', "int"sv, "The number of iterations"sv);
+    Flag a_flag = Flag::boolean(args.c).short_name('c').long_name("crash").description("Cause the program to crash");
+    Flag b_flag = Flag::value<int>(args.i).short_name('i').long_name("int").description("The number of iterations");
 
-    auto dest_arg = Argument::with<StringView>(args.dest, "dest"sv, "destination to destroy"sv);
+    Argument dest_arg = Argument::single<StringView>(args.dest, "dest").description("destination to destroy");
 
     return Parser { FixedArray { a_flag, b_flag }, FixedArray { dest_arg } };
 }();
