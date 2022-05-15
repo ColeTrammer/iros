@@ -17,6 +17,7 @@ if (NOT ${MINIMAL_BUILD})
         libc
         libclanguage
         libclipboard
+        libcli
         libedit
         libeventloop
         libgraphics
