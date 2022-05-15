@@ -9,7 +9,7 @@ public:
     ParserImpl(Span<const Flag> flags, Span<const Argument> arguments);
     ~ParserImpl();
 
-    Result<Monostate, Error> parse(Span<StringView> input) const;
+    Result<Monostate, Error> parse(Span<StringView> input, void* output) const;
 
 private:
     Result<const Flag&, UnexpectedLongFlag> lookup_long_flag(StringView name) const;

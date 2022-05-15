@@ -7,6 +7,6 @@ class Argument;
 
 class Flag;
 
-template<size_t flag_count, size_t argument_count>
+template<typename T, size_t flag_count, size_t argument_count>
 class Parser;
 }

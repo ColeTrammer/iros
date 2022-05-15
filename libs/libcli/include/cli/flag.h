@@ -5,16 +5,57 @@
 #include <liim/option.h>
 #include <liim/result.h>
 #include <liim/string_view.h>
+#include <liim/try.h>
 
 namespace Cli {
+template<typename T>
+struct IsOption {
+    using Type = T;
+    static constexpr bool value = false;
+};
+
+template<typename T>
+struct IsOption<Option<T>> {
+    using Type = T;
+    static constexpr bool value = true;
+};
+
 class Flag {
 private:
     using ParserCallback = Result<Monostate, Error> (*)(Option<StringView>, void*);
 
-    class FlagBuilder {
+    template<auto member>
+    class FlagBuilder {};
+
+    template<typename StructType, typename ValueType, ValueType StructType::*member>
+    class FlagBuilder<member> {
+    private:
+        static constexpr bool is_option = IsOption<ValueType>::value;
+        using ParserType = IsOption<ValueType>::Type;
+
     public:
-        constexpr FlagBuilder(ParserCallback parser, void* parser_closure, bool requires_value)
-            : m_parser(parser), m_parser_closure(parser_closure), m_requires_value(requires_value) {}
+        constexpr static FlagBuilder boolean() requires(LIIM::IsSame<ValueType, bool>::value) {
+            return FlagBuilder(
+                [](auto, void* output_ptr) -> Result<Monostate, Error> {
+                    StructType& output = *static_cast<StructType*>(output_ptr);
+                    output.*member = true;
+                    return Ok(Monostate {});
+                },
+                false);
+        }
+
+        constexpr static FlagBuilder value() requires(is_option) {
+            return FlagBuilder(
+                [](auto input, void* output_ptr) -> Result<Monostate, Error> {
+                    StructType& output = *static_cast<StructType*>(output_ptr);
+                    auto value = TRY(Ext::parse<ParserType>(*input));
+                    output.*member = move(value);
+                    return Ok(Monostate {});
+                },
+                true);
+        }
+
+        constexpr FlagBuilder(ParserCallback parser, bool requires_value) : m_parser(parser), m_requires_value(requires_value) {}
 
         constexpr FlagBuilder& short_name(char name) {
             m_short_name = name;
@@ -31,15 +72,12 @@ private:
             return *this;
         }
 
-        constexpr Flag flag() const {
-            return Flag(m_parser, m_parser_closure, move(m_short_name), move(m_long_name), move(m_description), m_requires_value);
-        }
+        constexpr Flag flag() const { return Flag(m_parser, move(m_short_name), move(m_long_name), move(m_description), m_requires_value); }
 
         constexpr operator Flag() const { return flag(); }
 
     private:
         ParserCallback m_parser;
-        void* m_parser_closure { nullptr };
         Option<char> m_short_name;
         Option<StringView> m_long_name;
         Option<StringView> m_description;
@@ -47,22 +85,14 @@ private:
     };
 
 public:
-    static constexpr FlagBuilder boolean(bool& value_out) {
-        return FlagBuilder(
-            [](auto, void* value_out) -> Result<Monostate, Error> {
-                *static_cast<bool*>(value_out) = true;
-                return Ok(Monostate {});
-            },
-            &value_out, false);
+    template<auto member>
+    static constexpr FlagBuilder<member> boolean() {
+        return FlagBuilder<member>::boolean();
     }
 
-    template<typename T>
-    static constexpr FlagBuilder value(Option<T>& value_out) {
-        return FlagBuilder(
-            [](auto, void*) -> Result<Monostate, Error> {
-                return Ok(Monostate {});
-            },
-            &value_out, true);
+    template<auto member>
+    static constexpr FlagBuilder<member> value() {
+        return FlagBuilder<member>::value();
     }
 
     constexpr Flag() = default;
@@ -71,22 +101,20 @@ public:
     constexpr Option<StringView> long_name() const { return m_long_name; }
     constexpr Option<StringView> description() const { return m_description; }
 
-    constexpr bool requires_value() const { return false; }
+    constexpr bool requires_value() const { return m_requires_value; }
 
-    constexpr Result<Monostate, Error> validate(Option<StringView> value) const { return m_parser(move(value), m_parser_closure); }
+    constexpr Result<Monostate, Error> validate(Option<StringView> value, void* output) const { return m_parser(move(value), output); }
 
 private:
-    constexpr Flag(ParserCallback parser, void* parser_closure, Option<char> short_name, Option<StringView> long_name,
-                   Option<StringView> description, bool requires_value)
+    constexpr Flag(ParserCallback parser, Option<char> short_name, Option<StringView> long_name, Option<StringView> description,
+                   bool requires_value)
         : m_parser(parser)
-        , m_parser_closure(parser_closure)
         , m_short_name(move(short_name))
         , m_long_name(move(long_name))
         , m_description(move(description))
         , m_requires_value(requires_value) {}
 
     ParserCallback m_parser;
-    void* m_parser_closure { nullptr };
     Option<char> m_short_name;
     Option<StringView> m_long_name;
     Option<StringView> m_description;

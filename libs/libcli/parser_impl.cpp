@@ -29,7 +29,7 @@ Result<const Flag&, UnexpectedShortFlag> ParserImpl::lookup_short_flag(char name
     return Err(UnexpectedShortFlag(name));
 }
 
-Result<Monostate, Error> ParserImpl::parse(Span<StringView> input) const {
+Result<Monostate, Error> ParserImpl::parse(Span<StringView> input, void* output) const {
     constexpr auto position_argument_only_marker = "--"sv;
     constexpr auto long_flag_prefix = "--"sv;
     constexpr auto long_flag_value_marker = '=';
@@ -80,7 +80,7 @@ Result<Monostate, Error> ParserImpl::parse(Span<StringView> input) const {
                 return Err(LongFlagRequiresValue(flag_name));
             }
 
-            TRY(flag.validate(value));
+            TRY(flag.validate(value, output));
             continue;
         }
 
@@ -100,7 +100,7 @@ Result<Monostate, Error> ParserImpl::parse(Span<StringView> input) const {
                     }
 
                     // Skip this flag character, and see if anything is left over.
-                    auto possible_value = item.substring(++j);
+                    auto possible_value = item.substring(j + 1);
                     if (!possible_value.empty()) {
                         return possible_value;
                     }
@@ -112,7 +112,12 @@ Result<Monostate, Error> ParserImpl::parse(Span<StringView> input) const {
                     return Err(ShortFlagRequiresValue(flag_name));
                 }
 
-                TRY(flag.validate(value));
+                TRY(flag.validate(value, output));
+
+                // If a value was encountered, there are no short options left to parse in this item.
+                if (value) {
+                    break;
+                }
             }
             continue;
         }
@@ -128,7 +133,7 @@ Result<Monostate, Error> ParserImpl::parse(Span<StringView> input) const {
          argument_index++, input_positional_index++) {
         auto item = positional_arguments[input_positional_index];
         auto& argument = m_arguments[argument_index];
-        TRY(argument.validate(item));
+        TRY(argument.validate(item, output));
     }
 
     // Return errors if there are either too many or missing positional arguments.

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cli/forward.h>
+#include <ext/parser.h>
 #include <liim/format.h>
 #include <liim/string.h>
 #include <liim/variant.h>
@@ -12,6 +13,8 @@ public:
 
     String to_message() const { return format("Encountered unexpected flag `-{}'", String { m_flag }); }
 
+    char flag() const { return m_flag; }
+
 private:
     char m_flag;
 };
@@ -21,6 +24,8 @@ public:
     explicit UnexpectedLongFlag(StringView flag) : m_flag(flag) {}
 
     String to_message() const { return format("Encountered unexpected flag `--{}'", m_flag); }
+
+    StringView flag() const { return m_flag; }
 
 private:
     StringView m_flag;
@@ -32,6 +37,8 @@ public:
 
     String to_message() const { return format("Flag `--{}' requires value, but none provided", m_flag); }
 
+    StringView flag() const { return m_flag; }
+
 private:
     StringView m_flag;
 };
@@ -41,6 +48,8 @@ public:
     explicit ShortFlagRequiresValue(char flag) : m_flag(flag) {}
 
     String to_message() const { return format("Flag `-{}' requires value, but none provided", String { m_flag }); }
+
+    char flag() const { return m_flag; }
 
 private:
     char m_flag;
@@ -52,22 +61,26 @@ public:
 
     String to_message() const { return format("Encountered unexpected positional argument `{}'", m_value); }
 
+    StringView value() const { return m_value; }
+
 private:
     StringView m_value;
 };
 
 class MissingPositionalArgument {
 public:
-    explicit MissingPositionalArgument(StringView name) : m_name(name) {}
+    explicit MissingPositionalArgument(StringView argument_name) : m_argument_name(argument_name) {}
 
-    String to_message() const { return format("Positional argument `{}' requires value, but none provided", m_name); }
+    String to_message() const { return format("Positional argument `{}' requires value, but none provided", m_argument_name); }
+
+    StringView argument_name() const { return m_argument_name; }
 
 private:
-    StringView m_name;
+    StringView m_argument_name;
 };
 
-using Error = Variant<UnexpectedShortFlag, UnexpectedLongFlag, ShortFlagRequiresValue, LongFlagRequiresValue, UnexpectedPositionalArgument,
-                      MissingPositionalArgument>;
+using Error = Variant<Ext::ParserError, UnexpectedShortFlag, UnexpectedLongFlag, ShortFlagRequiresValue, LongFlagRequiresValue,
+                      UnexpectedPositionalArgument, Ext::ParserError, MissingPositionalArgument>;
 }
 
 namespace LIIM::Format {
