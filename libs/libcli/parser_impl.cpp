@@ -127,6 +127,45 @@ Result<Monostate, Error> ParserImpl::parse(Span<StringView> input, void* output)
     }
 
     // Parse the positional arguments
+    if (m_arguments.size() == 0) {
+        return Ok(Monostate {});
+    }
+
+    // Variable arguments come first.
+    if (m_arguments.first(1)[0].is_list()) {
+        if (static_cast<size_t>(positional_arguments.size()) < m_arguments.size() - 1) {
+            return Err(MissingPositionalArgument(m_arguments[positional_arguments.size()].name()));
+        }
+
+        auto variable_arguments = Vector<StringView> {};
+        for (size_t i = 0; i < positional_arguments.size() - m_arguments.size() + 1; i++) {
+            variable_arguments.add(positional_arguments[i]);
+        }
+        TRY(m_arguments.first(1)[0].validate(variable_arguments.span(), output));
+        for (size_t i = 1; i < m_arguments.size(); i++) {
+            TRY(m_arguments[i].validate(positional_arguments[variable_arguments.size() + i - 1], output));
+        }
+        return Ok(Monostate {});
+    }
+
+    // Variables arguments come last.
+    if (m_arguments.last(1)[0].is_list()) {
+        if (static_cast<size_t>(positional_arguments.size()) < m_arguments.size() - 1) {
+            return Err(MissingPositionalArgument(m_arguments[positional_arguments.size() - 1].name()));
+        }
+
+        for (size_t i = 0; i < m_arguments.size() - 1; i++) {
+            TRY(m_arguments[i].validate(positional_arguments[i], output));
+        }
+        auto variable_arguments = Vector<StringView> {};
+        for (size_t i = m_arguments.size() - 1; i < static_cast<size_t>(positional_arguments.size()); i++) {
+            variable_arguments.add(positional_arguments[i]);
+        }
+        TRY(m_arguments.last(1)[0].validate(variable_arguments.span(), output));
+        return Ok(Monostate {});
+    }
+
+    // No argument lists, this means that optional positional arguments are allowed.
     int input_positional_index = 0;
     size_t argument_index = 0;
     for (; argument_index < m_arguments.size() && input_positional_index < positional_arguments.size();

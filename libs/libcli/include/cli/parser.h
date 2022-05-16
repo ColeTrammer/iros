@@ -12,6 +12,8 @@ namespace Cli {
 template<typename T, size_t flag_count, size_t argument_count>
 class Parser {
 public:
+    using OutputType = T;
+
     constexpr Parser(FixedArray<Flag, flag_count> flags, FixedArray<Argument, argument_count> arguments)
         : m_flags(move(flags)), m_arguments(move(arguments)) {}
 

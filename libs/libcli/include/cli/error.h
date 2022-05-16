@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cli/forward.h>
+#include <ext/error.h>
 #include <ext/parser.h>
 #include <liim/format.h>
 #include <liim/string.h>
@@ -79,18 +80,18 @@ private:
     StringView m_argument_name;
 };
 
-using Error = Variant<Ext::ParserError, UnexpectedShortFlag, UnexpectedLongFlag, ShortFlagRequiresValue, LongFlagRequiresValue,
-                      UnexpectedPositionalArgument, Ext::ParserError, MissingPositionalArgument>;
-}
+class EmptyPositionalArgumentList {
+public:
+    explicit EmptyPositionalArgumentList(StringView argument_name) : m_argument_name(argument_name) {}
 
-namespace LIIM::Format {
-template<>
-struct Formatter<Cli::Error> : Formatter<StringView> {
-    void format(const Cli::Error& value, FormatContext& context) {
-        auto message = value.visit([](auto&& error) {
-            return error.to_message();
-        });
-        return format_string_view(message.view(), context);
-    }
+    String to_message() const { return format("Positional argument list `{}' requires at least one value", m_argument_name); }
+
+    StringView argument_name() const { return m_argument_name; }
+
+private:
+    StringView m_argument_name;
 };
+
+using Error = Variant<Ext::ParserError, UnexpectedShortFlag, UnexpectedLongFlag, ShortFlagRequiresValue, LongFlagRequiresValue,
+                      UnexpectedPositionalArgument, MissingPositionalArgument, EmptyPositionalArgumentList>;
 }

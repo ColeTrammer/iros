@@ -7,36 +7,74 @@
 #include <liim/vector.h>
 
 namespace Cli {
+template<typename T>
+struct IsVector {
+    using Type = T;
+    static constexpr bool value = false;
+};
+
+template<typename T>
+struct IsVector<Vector<T>> {
+    using Type = T;
+    static constexpr bool value = true;
+};
+
 class Argument {
 private:
-    using ParserCallback = Result<Monostate, Error> (*)(StringView, void*);
+    using SingleParserCallback = Result<Monostate, Error> (*)(StringView, void*);
+    using ListParserCallback = Result<Monostate, Error> (*)(Span<StringView>, void*, StringView name);
+
+    using ParserCallback = union {
+        SingleParserCallback single;
+        ListParserCallback list;
+    };
 
     template<auto member>
     class ArgumentBuilder {};
 
     template<typename StructType, typename ValueType, ValueType StructType::*member>
     class ArgumentBuilder<member> {
+    private:
+        static constexpr bool is_list = IsVector<ValueType>::value;
+        using ParserType = IsVector<ValueType>::Type;
+
+        constexpr ArgumentBuilder(SingleParserCallback parser, StringView name) : m_parser({ .single = parser }), m_name(name) {}
+        constexpr ArgumentBuilder(ListParserCallback parser, StringView name) : m_parser({ .list = parser }), m_name(name) {}
+
     public:
-        static constexpr ArgumentBuilder single(StringView name) {
+        static constexpr ArgumentBuilder single(StringView name) requires(!is_list) {
             return ArgumentBuilder(
-                [](auto input, void* output_ptr) -> Result<Monostate, Error> {
+                [](StringView input, void* output_ptr) -> Result<Monostate, Error> {
                     auto& output = *static_cast<StructType*>(output_ptr);
-                    auto value = TRY(Ext::parse<ValueType>(input));
+                    auto value = TRY(Ext::parse<ParserType>(input));
                     output.*member = move(value);
                     return Ok(Monostate {});
                 },
-                name, false);
+                name);
         }
 
-        constexpr ArgumentBuilder(ParserCallback parser, StringView name, bool is_list)
-            : m_parser(parser), m_name(name), m_is_list(is_list) {}
+        static constexpr ArgumentBuilder list(StringView name) requires(is_list) {
+            return ArgumentBuilder(
+                [](Span<StringView> input_list, void* output_ptr, StringView name) -> Result<Monostate, Error> {
+                    auto& output = *static_cast<StructType*>(output_ptr);
+                    if (input_list.empty()) {
+                        return Err(EmptyPositionalArgumentList(name));
+                    }
+                    for (auto& input : input_list) {
+                        auto value = TRY(Ext::parse<ParserType>(input));
+                        (output.*member).add(move(value));
+                    }
+                    return Ok(Monostate {});
+                },
+                name);
+        }
 
         constexpr ArgumentBuilder& description(StringView description) {
             m_description = description;
             return *this;
         }
 
-        constexpr Argument argument() const { return Argument(m_parser, m_name, move(m_description), m_is_list); }
+        constexpr Argument argument() const { return Argument(m_parser, m_name, move(m_description), is_list); }
 
         constexpr operator Argument() const { return argument(); }
 
@@ -44,7 +82,6 @@ private:
         ParserCallback m_parser;
         StringView m_name;
         Option<StringView> m_description;
-        bool m_is_list { false };
     };
 
 public:
@@ -53,13 +90,19 @@ public:
         return ArgumentBuilder<member>::single(positional_name);
     }
 
+    template<auto member>
+    static constexpr ArgumentBuilder<member> list(StringView positional_name) {
+        return ArgumentBuilder<member>::list(positional_name);
+    }
+
     constexpr Argument() = default;
 
     constexpr StringView name() const { return m_name; }
     constexpr Option<StringView> description() const { return m_description; }
     constexpr bool is_list() const { return m_is_list; }
 
-    constexpr Result<Monostate, Error> validate(StringView value, void* output) const { return m_parser(value, output); }
+    Result<Monostate, Error> validate(StringView value, void* output) const { return m_parser.single(value, output); }
+    Result<Monostate, Error> validate(Span<StringView> value, void* output) const { return m_parser.list(value, output, name()); }
 
 private:
     constexpr Argument(ParserCallback parser, StringView positional_name, Option<StringView> description, bool is_list)
