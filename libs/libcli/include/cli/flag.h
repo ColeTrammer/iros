@@ -31,33 +31,39 @@ private:
     class FlagBuilder<member> {
     private:
         static constexpr bool is_option = IsOption<ValueType>::value;
+        static constexpr bool is_bool = LIIM::IsSame<ValueType, bool>::value;
         using ParserType = IsOption<ValueType>::Type;
 
+        constexpr FlagBuilder(ParserCallback parser) : m_parser(parser) {}
+
     public:
-        constexpr static FlagBuilder boolean() requires(LIIM::IsSame<ValueType, bool>::value) {
-            return FlagBuilder(
-                [](auto, void* output_ptr) -> Result<Monostate, Error> {
-                    StructType& output = *static_cast<StructType*>(output_ptr);
-                    output.*member = true;
-                    return Ok(Monostate {});
-                },
-                false);
+        constexpr static FlagBuilder boolean(bool) requires(is_bool) {
+            return FlagBuilder([](auto, void* output_ptr) -> Result<Monostate, Error> {
+                StructType& output = *static_cast<StructType*>(output_ptr);
+                output.*member = true;
+                return Ok(Monostate {});
+            });
         }
 
-        constexpr static FlagBuilder value() requires(is_option) {
-            return FlagBuilder(
-                [](auto input, void* output_ptr) -> Result<Monostate, Error> {
-                    StructType& output = *static_cast<StructType*>(output_ptr);
-                    auto value = TRY(Ext::parse<ParserType>(*input));
-                    output.*member = move(value);
-                    return Ok(Monostate {});
-                },
-                true);
+        constexpr static FlagBuilder optional() requires(is_option) {
+            return FlagBuilder([](auto input, void* output_ptr) -> Result<Monostate, Error> {
+                StructType& output = *static_cast<StructType*>(output_ptr);
+                auto value = TRY(Ext::parse<ParserType>(*input));
+                output.*member = move(value);
+                return Ok(Monostate {});
+            });
         }
 
-        constexpr FlagBuilder(ParserCallback parser, bool requires_value) : m_parser(parser), m_requires_value(requires_value) {}
+        constexpr static FlagBuilder defaulted() requires(!is_option && !is_bool) {
+            return FlagBuilder([](auto input, void* output_ptr) -> Result<Monostate, Error> {
+                StructType& output = *static_cast<StructType*>(output_ptr);
+                auto value = TRY(Ext::parse<ParserType>(*input));
+                output.*member = move(value);
+                return Ok(Monostate {});
+            });
+        }
 
-        constexpr FlagBuilder& short_name(char name) {
+    public : constexpr FlagBuilder& short_name(char name) {
             m_short_name = name;
             return *this;
         }
@@ -72,7 +78,10 @@ private:
             return *this;
         }
 
-        constexpr Flag flag() const { return Flag(m_parser, move(m_short_name), move(m_long_name), move(m_description), m_requires_value); }
+        constexpr Flag flag() const {
+            auto requires_value = !is_bool;
+            return Flag(m_parser, move(m_short_name), move(m_long_name), move(m_description), requires_value);
+        }
 
         constexpr operator Flag() const { return flag(); }
 
@@ -81,18 +90,22 @@ private:
         Option<char> m_short_name;
         Option<StringView> m_long_name;
         Option<StringView> m_description;
-        bool m_requires_value { false };
     };
 
 public:
     template<auto member>
-    static constexpr FlagBuilder<member> boolean() {
-        return FlagBuilder<member>::boolean();
+    static constexpr FlagBuilder<member> boolean(bool default_value = false) {
+        return FlagBuilder<member>::boolean(default_value);
     }
 
     template<auto member>
-    static constexpr FlagBuilder<member> value() {
-        return FlagBuilder<member>::value();
+    static constexpr FlagBuilder<member> optional() {
+        return FlagBuilder<member>::optional();
+    }
+
+    template<auto member>
+    static constexpr FlagBuilder<member> defaulted() {
+        return FlagBuilder<member>::defaulted();
     }
 
     constexpr Flag() = default;

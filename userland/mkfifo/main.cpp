@@ -33,7 +33,8 @@ static auto mkfifo_main(Arguments arguments) {
 }
 
 CLI_MAIN(mkfifo_main, [] {
-    Cli::Flag mode_flag = Cli::Flag::value<&Arguments::mode>().short_name('m').long_name("mode").description("Mode to create fifos with");
+    Cli::Flag mode_flag =
+        Cli::Flag::optional<&Arguments::mode>().short_name('m').long_name("mode").description("Mode to create fifos with");
     Cli::Argument files_argument = Cli::Argument::list<&Arguments::files>("files").description("Fifos to create");
 
     return make_parser<Arguments>(FixedArray { mode_flag }, FixedArray { files_argument });

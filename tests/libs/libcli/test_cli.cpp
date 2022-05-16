@@ -3,7 +3,7 @@
 #include <test/test.h>
 
 struct Args {
-    bool c;
+    bool c { false };
     Option<int> i;
     StringView dest;
 };
@@ -12,7 +12,7 @@ constexpr auto cli_parser = [] {
     using namespace Cli;
 
     Flag a_flag = Flag::boolean<&Args::c>().short_name('c').long_name("crash").description("Cause the program to crash");
-    Flag b_flag = Flag::value<&Args::i>().short_name('i').long_name("int").description("The number of iterations");
+    Flag b_flag = Flag::optional<&Args::i>().short_name('i').long_name("int").description("The number of iterations");
 
     Argument dest_arg = Argument::single<&Args::dest>("dest").description("destination to destroy");
 
@@ -140,7 +140,7 @@ TEST(cli, extra_long_flag) {
 }
 
 struct Args2 {
-    bool c;
+    bool c { false };
     Option<int> i;
     StringView source;
     Vector<StringView> dest;
@@ -150,7 +150,7 @@ constexpr auto right_parser = [] {
     using namespace Cli;
 
     Flag a_flag = Flag::boolean<&Args::c>().short_name('c').long_name("crash").description("Cause the program to crash");
-    Flag b_flag = Flag::value<&Args::i>().short_name('i').long_name("int").description("The number of iterations");
+    Flag b_flag = Flag::optional<&Args::i>().short_name('i').long_name("int").description("The number of iterations");
 
     Argument source_arg = Argument::single<&Args2::source>("source").description("source to destroy");
     Argument dest_arg = Argument::list<&Args2::dest>("dest").description("destination to destroy");
@@ -162,7 +162,7 @@ constexpr auto left_parser = [] {
     using namespace Cli;
 
     Flag a_flag = Flag::boolean<&Args::c>().short_name('c').long_name("crash").description("Cause the program to crash");
-    Flag b_flag = Flag::value<&Args::i>().short_name('i').long_name("int").description("The number of iterations");
+    Flag b_flag = Flag::optional<&Args::i>().short_name('i').long_name("int").description("The number of iterations");
 
     Argument dest_arg = Argument::list<&Args2::dest>("dest").description("destination to destroy");
     Argument source_arg = Argument::single<&Args2::source>("source").description("source to destroy");
@@ -207,5 +207,28 @@ TEST(cli, empty_left_positional_argument_list) {
     FixedArray input = { "program"sv, "-ci42"sv, "ss"sv };
     do_cli_fail_test<Cli::EmptyPositionalArgumentList>(left_parser, input.span(), [](auto& error) {
         EXPECT_EQ(error.argument_name(), "dest"sv);
+    });
+}
+
+struct Args3 {
+    int i { 42 };
+};
+
+constexpr auto defaulted_parser = [] {
+    auto i_flag = Cli::Flag::defaulted<&Args3::i>().short_name('i').flag();
+    return Cli::make_parser<Args3>(FixedArray { i_flag }, FixedArray<Cli::Argument, 0> {});
+}();
+
+TEST(cli, defaulted_value) {
+    FixedArray input = { "program"sv };
+    do_cli_test(defaulted_parser, input.span(), [](auto& args) {
+        EXPECT_EQ(args.i, 42);
+    });
+}
+
+TEST(cli, defaulted_with_value) {
+    FixedArray input = { "program"sv, "-i"sv, "32"sv };
+    do_cli_test(defaulted_parser, input.span(), [](auto& args) {
+        EXPECT_EQ(args.i, 32);
     });
 }
