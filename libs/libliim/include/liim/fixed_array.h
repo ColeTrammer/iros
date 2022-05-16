@@ -43,12 +43,12 @@ public:
         assert(m_size <= max_elements);
     }
 
-    constexpr T* begin() { return &m_array[0]; }
-    constexpr T* end() { return &m_array[m_size]; }
-    constexpr const T* begin() const { return &m_array[0]; }
-    constexpr const T* end() const { return &m_array[m_size]; }
-    constexpr const T* cbegin() const { return &m_array[0]; }
-    constexpr const T* cend() const { return &m_array[m_size]; }
+    constexpr T* begin() { return m_array; }
+    constexpr T* end() { return m_array + m_size; }
+    constexpr const T* begin() const { return m_array; }
+    constexpr const T* end() const { return m_array + m_size; }
+    constexpr const T* cbegin() const { return m_array; }
+    constexpr const T* cend() const { return m_array + m_size; }
 
     constexpr Span<T> span() { return { begin(), size() }; }
     constexpr Span<const T> span() const { return { begin(), size() }; }
