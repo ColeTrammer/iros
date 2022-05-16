@@ -55,6 +55,9 @@ struct IsSame : FalseType {};
 template<typename T>
 struct IsSame<T, T> : TrueType {};
 
+template<typename T, typename U>
+concept SameAs = IsSame<T, U>::value;
+
 template<typename T>
 struct IsArray : FalseType {};
 template<typename T>

@@ -27,6 +27,9 @@ Err(E) -> Err<E>;
 template<typename T, typename E>
 class Result {
 public:
+    using ValueType = T;
+    using ErrorType = E;
+
     constexpr Result(Ok<T>&& value) : m_impl(in_place_index<0>, move(value.ok)) {}
     constexpr Result(Err<E>&& error) : m_impl(in_place_index<1>, move(error.err)) {}
 
