@@ -4,6 +4,7 @@
 #include <cli/error.h>
 #include <cli/flag.h>
 #include <cli/parser.h>
+#include <liim/vector.h>
 
 // Requirements for command line argument parser:
 // Handle boolean flags: -a, -v, --help, etc.
@@ -20,4 +21,23 @@
 // Extra features: handle alternate syntaxes (+e vs. -e), (-longopt), (posix find style arguments), (more weird posix utilities)
 //                 sub-commands (git add, git remote, ...), powerful enough to implement libc getopt/getopt_long
 
-namespace Cli {}
+#define CLI_MAIN(main_function, argument_parser)                         \
+    int main(int argc, char** argv) {                                    \
+        auto args = Vector<StringView> {};                               \
+        for (int i = 0; i < argc; i++) {                                 \
+            args.add(StringView { argv[i] });                            \
+        }                                                                \
+                                                                         \
+        auto parse_result = argument_parser.parse(args.span());          \
+        if (!parse_result) {                                             \
+            error_log("{}: {}", args[0], parse_result.error());          \
+            return 2;                                                    \
+        }                                                                \
+                                                                         \
+        auto program_result = main_function(move(parse_result.value())); \
+        if (!program_result) {                                           \
+            error_log("{}: {}", args[0], program_result.error());        \
+            return 1;                                                    \
+        }                                                                \
+        return 0;                                                        \
+    }
