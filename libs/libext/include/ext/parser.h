@@ -128,6 +128,6 @@ struct ParserAdapter<int> {
 
 template<typename T>
 requires(LIIM::IsOneOf<T, String, StringView>::value) struct ParserAdapter<T> {
-    static Result<T, ParserError> parse(Parser& parser) { return Ok<T>(parser.consume_all()); }
+    static Result<T, ParserError> parse(Parser& parser) { return Ok<T>(T { parser.consume_all() }); }
 };
 }

@@ -3,4 +3,4 @@ set(SOURCES
 )
 
 add_os_executable(mkfifo bin)
-target_link_libraries(mkfifo libext)
+target_link_libraries(mkfifo libext libcli)

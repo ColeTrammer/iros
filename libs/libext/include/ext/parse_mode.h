@@ -1,7 +1,9 @@
 #pragma once
 
+#include <ext/parser.h>
 #include <liim/option.h>
 #include <liim/string.h>
+#include <liim/string_view.h>
 #include <liim/variant.h>
 #include <liim/vector.h>
 #include <sys/types.h>
@@ -90,6 +92,15 @@ private:
     Variant<mode_t, SymbolicMode> m_mode;
 };
 
-Option<Mode> parse_mode(const String& string);
+Option<Mode> parse_mode(const String& view);
 
+template<>
+struct ParserAdapter<Mode> {
+    static Result<Mode, ParserError> parse(Parser& parser) {
+        auto view = parser.consume_all();
+        return parse_mode(String { view }).unwrap_or_else([&] {
+            return parser.error("Failed to parse mode");
+        });
+    }
+};
 }

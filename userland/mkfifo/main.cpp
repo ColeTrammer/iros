@@ -1,3 +1,4 @@
+#include <cli/cli.h>
 #include <errno.h>
 #include <ext/parse_mode.h>
 #include <stdbool.h>
@@ -7,45 +8,33 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-void print_usage_and_exit(const char *s) {
-    fprintf(stderr, "Usage: %s [-m mode] <names...>\n", s);
-    exit(2);
+static Result<Monostate, Ext::StringError> mkfifo(const String& file, mode_t mode) {
+    if (mkfifo(file.string(), mode)) {
+        return Err(Ext::StringError(format("Failed to create `{}': {}", file, strerror(errno))));
+    }
+    return Ok(Monostate {});
 }
 
-int main(int argc, char **argv) {
+struct Arguments {
+    Option<Ext::Mode> mode;
+    Vector<String> files;
+};
+
+static auto mkfifo_main(Arguments arguments) {
     mode_t umask_value = umask(0);
     mode_t mode = 0666 & ~umask_value;
-
-    int opt;
-    while ((opt = getopt(argc, argv, ":m:")) != -1) {
-        switch (opt) {
-            case 'm': {
-                auto fancy_mode = Ext::parse_mode(optarg);
-                if (!fancy_mode.has_value()) {
-                    fprintf(stderr, "%s: failed to parse mode: `%s'\n", *argv, optarg);
-                    return 1;
-                }
-                mode = fancy_mode.value().resolve(mode, umask_value);
-                break;
-            }
-            case ':':
-            case '?':
-                print_usage_and_exit(*argv);
-                break;
-        }
+    if (arguments.mode) {
+        mode = arguments.mode->resolve(mode, umask_value);
     }
 
-    if (optind == argc) {
-        print_usage_and_exit(*argv);
-    }
-
-    bool any_failed = false;
-    for (; optind < argc; optind++) {
-        if (mkfifo(argv[optind], mode)) {
-            fprintf(stderr, "%s: Failed to create `%s': %s\n", *argv, argv[optind], strerror(errno));
-            any_failed = true;
-        }
-    }
-
-    return any_failed;
+    return Ext::collect_errors(arguments.files, [&](auto& file) {
+        return mkfifo(file, mode);
+    });
 }
+
+CLI_MAIN(mkfifo_main, [] {
+    Cli::Flag mode_flag = Cli::Flag::value<&Arguments::mode>().short_name('m').long_name("mode").description("Mode to create fifos with");
+    Cli::Argument files_argument = Cli::Argument::list<&Arguments::files>("files").description("Fifos to create");
+
+    return make_parser<Arguments>(FixedArray { mode_flag }, FixedArray { files_argument });
+}())
