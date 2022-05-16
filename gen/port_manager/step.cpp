@@ -17,7 +17,7 @@ Result<UniquePtr<DownloadStep>, Error> DownloadStep::try_create(const JsonReader
         return GitDownloadStep::try_create(reader, object);
     }
 
-    return Err(StringError(format("Unknown download type: `{}'", type)));
+    return Err(Ext::StringError(format("Unknown download type: `{}'", type)));
 }
 
 Result<UniquePtr<GitDownloadStep>, Error> GitDownloadStep::try_create(const JsonReader& reader, const Ext::Json::Object& object) {
@@ -31,7 +31,7 @@ GitDownloadStep::~GitDownloadStep() {}
 
 Result<Monostate, Error> GitDownloadStep::act(Context& context, const Port& port) {
     return context.run_command(format("git clone --depth=1 \"{}\" \"{}\"", m_url, port.source_directory())).map_error([&](auto) {
-        return StringError(format("git clone on url `{}' failed", m_url));
+        return Ext::StringError(format("git clone on url `{}' failed", m_url));
     });
 }
 
@@ -41,7 +41,7 @@ Result<UniquePtr<PatchStep>, Error> PatchStep::try_create(const JsonReader& read
     auto patch_files = Vector<String> {};
     for (auto& file : files) {
         if (!file.is<Ext::Json::String>()) {
-            return Err(StringError("encountered non-string value when parsing patch files"));
+            return Err(Ext::StringError("encountered non-string value when parsing patch files"));
         }
         patch_files.add(file.as<Ext::Json::String>());
     }
@@ -56,12 +56,12 @@ PatchStep::~PatchStep() {}
 Result<Monostate, Error> PatchStep::act(Context& context, const Port& port) {
     return context.with_working_directory(port.source_directory(), [&]() -> Result<Monostate, Error> {
         TRY(context.run_command("git init").map_error([&](auto) {
-            return StringError("git init failed");
+            return Ext::StringError("git init failed");
         }));
 
         for (auto& patch_file : m_patch_files) {
             TRY(context.run_command(format("git apply \"{}/{}\"", port.definition_directory(), patch_file)).map_error([&](auto) {
-                return StringError(format("git patch failed with patch file `{}'", patch_file));
+                return Ext::StringError(format("git patch failed with patch file `{}'", patch_file));
             }));
         }
         return Ok(Monostate {});
@@ -93,7 +93,7 @@ Result<Monostate, Error> CMakeConfigureStep::act(Context& context, const Port& p
         .run_command(format("cmake -S \"{}\" -B \"{}\" -DCMAKE_INSTALL_PREFIX=\"{}\" -DCMAKE_TOOLCHAIN_FILE=\"{}\"",
                             port.source_directory(), port.build_directory(), config.install_prefix(), toolchain_file))
         .map_error([&](auto) {
-            return StringError(format("cmake configure failed"));
+            return Ext::StringError(format("cmake configure failed"));
         });
 }
 
@@ -110,7 +110,7 @@ CMakeBuildStep::~CMakeBuildStep() {}
 
 Result<Monostate, Error> CMakeBuildStep::act(Context& context, const Port& port) {
     return context.run_command(format("cmake --build \"{}\"", port.build_directory())).map_error([&](auto) {
-        return StringError(format("cmake build failed"));
+        return Ext::StringError(format("cmake build failed"));
     });
 }
 
@@ -128,7 +128,7 @@ CMakeInstallStep::~CMakeInstallStep() {}
 Result<Monostate, Error> CMakeInstallStep::act(Context& context, const Port& port) {
     return context.run_command(format("DESTDIR=\"{}\" cmake --install \"{}\"", context.config().iros_sysroot(), port.build_directory()))
         .map_error([&](auto) {
-            return StringError(format("cmake build failed"));
+            return Ext::StringError(format("cmake build failed"));
         });
 }
 }

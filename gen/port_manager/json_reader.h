@@ -9,7 +9,7 @@
 namespace PortManager {
 class JsonReader {
 public:
-    static Result<JsonReader, StringError> try_create(Ext::Path path);
+    static Result<JsonReader, Error> try_create(Ext::Path path);
 
     JsonReader(const JsonReader&) = delete;
     JsonReader(JsonReader&&) = default;

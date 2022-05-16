@@ -21,7 +21,7 @@ Result<Port, Error> Port::try_create(const Config& config, Ext::Path json_path) 
 
     auto build_system_type = TRY(reader.lookup<Ext::Json::String>(build_system_object, "type"));
     if (build_system_type.view() != "cmake"sv) {
-        return Err(StringError(format("Invalid build system type `{}' in json file `{}'", build_system_type, json_path)));
+        return Err(Ext::StringError(format("Invalid build system type `{}' in json file `{}'", build_system_type, json_path)));
     }
 
     auto& configure_object = TRY(reader.lookup<Ext::Json::Object>(build_system_object, "configure"));

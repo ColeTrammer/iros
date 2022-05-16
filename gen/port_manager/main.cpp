@@ -14,7 +14,7 @@ Result<Monostate, Error> main(String json_path) {
     auto context = Context(TRY(Config::try_create()));
 
     auto path = TRY(Ext::Path::resolve(json_path).unwrap_or_else([&] {
-        return StringError(format("Failed to lookup path: `{}'", json_path));
+        return Ext::StringError(format("Failed to lookup path: `{}'", json_path));
     }));
 
     auto port = TRY(Port::try_create(context.config(), move(path)));

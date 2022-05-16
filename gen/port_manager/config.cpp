@@ -7,7 +7,7 @@ namespace PortManager {
 Result<Config, Error> Config::try_create() {
     auto resolve_path = [&](const String& path) {
         return Ext::Path::resolve(path).unwrap_or_else([&] {
-            return StringError(format("Unable to resolve path `{}'", path));
+            return Ext::StringError(format("Unable to resolve path `{}'", path));
         });
     };
 

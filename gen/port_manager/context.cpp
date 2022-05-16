@@ -20,13 +20,13 @@ Result<Monostate, Monostate> Context::run_command(const String& command) {
 Result<Monostate, Error> Context::with_working_directory(const Ext::Path& working_directory, Function<Result<Monostate, Error>()> body) {
     auto old_working_directory = String::wrap_malloced_chars(getcwd(nullptr, 0));
     if (chdir(working_directory.to_string().string())) {
-        return Err(StringError(format("Failed to cd to `{}': {}", working_directory, strerror(errno))));
+        return Err(Ext::StringError(format("Failed to cd to `{}': {}", working_directory, strerror(errno))));
     }
 
     auto result = body();
 
     if (chdir(old_working_directory->string())) {
-        return Err(StringError(format("Failed to cd to `{}': {}", *old_working_directory, strerror(errno))));
+        return Err(Ext::StringError(format("Failed to cd to `{}': {}", *old_working_directory, strerror(errno))));
     }
 
     return result;

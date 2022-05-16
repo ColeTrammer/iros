@@ -7,9 +7,9 @@
 #include "json_reader.h"
 
 namespace PortManager {
-Result<JsonReader, StringError> JsonReader::try_create(Ext::Path path) {
+Result<JsonReader, Error> JsonReader::try_create(Ext::Path path) {
     auto json = TRY(Ext::Json::parse_file(path.to_string()).unwrap_or_else([&] {
-        return StringError(format("Failed to load JSON file: `{}'", path));
+        return Ext::StringError(format("Failed to load JSON file: `{}'", path));
     }));
 
     return Ok(JsonReader(move(json), move(path)));
