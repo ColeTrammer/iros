@@ -22,7 +22,7 @@ public:
         void return_void() {}
     };
 
-    ObjectBoundCoroutine(ObjectBoundCoroutine&& other) : m_handle(exchange(other.m_handle, nullptr)) {}
+    ObjectBoundCoroutine(ObjectBoundCoroutine&& other) : m_handle(LIIM::exchange(other.m_handle, nullptr)) {}
 
     ~ObjectBoundCoroutine() {
         if (m_handle) {

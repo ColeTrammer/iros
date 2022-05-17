@@ -107,7 +107,8 @@ public:
         void return_void() { returned = true; }
     };
 
-    Generator(Generator&& other) : m_root_handle(exchange(other.m_root_handle, nullptr)), m_has_value(exchange(other.m_has_value, false)) {}
+    Generator(Generator&& other)
+        : m_root_handle(LIIM::exchange(other.m_root_handle, nullptr)), m_has_value(exchange(other.m_has_value, false)) {}
 
     ~Generator() {
         if (m_root_handle) {

@@ -3,6 +3,11 @@
 #include <assert.h>
 #include <liim/utilities.h>
 
+#if __GNUC__ >= 12
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuse-after-free"
+#endif
+
 #ifndef STD_POINTERS
 namespace LIIM {
 
@@ -414,4 +419,8 @@ template<typename T>
 using WeakPtr = std::weak_ptr<T>;
 using std::make_shared;
 using std::make_unique;
+#endif
+
+#if __GNUC__ >= 12
+#pragma GCC diagnostic pop
 #endif

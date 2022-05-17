@@ -1,6 +1,7 @@
 #pragma once
 
 #if !defined(__is_libc) && !defined(__is_libk)
+#include <memory>
 #include <new>
 #include <stdlib.h>
 #else
@@ -337,10 +338,12 @@ inline constexpr typename RemoveReference<T>::type&& move(T&& arg) {
 namespace std {
 typedef decltype(nullptr) nullptr_t;
 
+#if defined(__is_libc) || defined(__is_libk)
 template<typename T, typename... Args>
 constexpr T* construct_at(T* location, Args&&... args) {
     return ::new (const_cast<void*>(static_cast<const volatile void*>(location))) T(LIIM::forward<Args>(args)...);
 }
+#endif
 }
 
 namespace LIIM {
