@@ -10,13 +10,10 @@ struct Args {
 
 constexpr auto cli_parser = [] {
     using namespace Cli;
-
-    Flag a_flag = Flag::boolean<&Args::c>().short_name('c').long_name("crash").description("Cause the program to crash");
-    Flag b_flag = Flag::optional<&Args::i>().short_name('i').long_name("int").description("The number of iterations");
-
-    Argument dest_arg = Argument::single<&Args::dest>("dest").description("destination to destroy");
-
-    return make_parser<Args>(FixedArray { a_flag, b_flag }, FixedArray { dest_arg });
+    return Parser::of<Args>()
+        .flag(Flag::boolean<&Args::c>().short_name('c').long_name("crash").description("Cause the program to crash"))
+        .flag(Flag::optional<&Args::i>().short_name('i').long_name("int").description("The number of iterations"))
+        .argument(Argument::single<&Args::dest>("dest").description("destination to destroy"));
 }();
 
 template<typename Parser>
@@ -148,26 +145,20 @@ struct Args2 {
 
 constexpr auto right_parser = [] {
     using namespace Cli;
-
-    Flag a_flag = Flag::boolean<&Args::c>().short_name('c').long_name("crash").description("Cause the program to crash");
-    Flag b_flag = Flag::optional<&Args::i>().short_name('i').long_name("int").description("The number of iterations");
-
-    Argument source_arg = Argument::single<&Args2::source>("source").description("source to destroy");
-    Argument dest_arg = Argument::list<&Args2::dest>("dest").description("destination to destroy");
-
-    return make_parser<Args2>(FixedArray { a_flag, b_flag }, FixedArray { source_arg, dest_arg });
+    return Parser::of<Args2>()
+        .flag(Flag::boolean<&Args2::c>().short_name('c').long_name("crash").description("Cause the program to crash"))
+        .flag(Flag::optional<&Args2::i>().short_name('i').long_name("int").description("The number of iterations"))
+        .argument(Argument::single<&Args2::source>("source").description("source to destroy"))
+        .argument(Argument::list<&Args2::dest>("dest").description("destination to destroy"));
 }();
 
 constexpr auto left_parser = [] {
     using namespace Cli;
-
-    Flag a_flag = Flag::boolean<&Args::c>().short_name('c').long_name("crash").description("Cause the program to crash");
-    Flag b_flag = Flag::optional<&Args::i>().short_name('i').long_name("int").description("The number of iterations");
-
-    Argument dest_arg = Argument::list<&Args2::dest>("dest").description("destination to destroy");
-    Argument source_arg = Argument::single<&Args2::source>("source").description("source to destroy");
-
-    return make_parser<Args2>(FixedArray { a_flag, b_flag }, FixedArray { dest_arg, source_arg });
+    return Parser::of<Args2>()
+        .flag(Flag::boolean<&Args2::c>().short_name('c').long_name("crash").description("Cause the program to crash"))
+        .flag(Flag::optional<&Args2::i>().short_name('i').long_name("int").description("The number of iterations"))
+        .argument(Argument::list<&Args2::dest>("dest").description("destination to destroy"))
+        .argument(Argument::single<&Args2::source>("source").description("source to destroy"));
 }();
 
 TEST(cli, variable_right_position_arguments) {
@@ -215,8 +206,7 @@ struct Args3 {
 };
 
 constexpr auto defaulted_parser = [] {
-    auto i_flag = Cli::Flag::defaulted<&Args3::i>().short_name('i').flag();
-    return Cli::make_parser<Args3>(FixedArray { i_flag }, FixedArray<Cli::Argument, 0> {});
+    return Cli::Parser::of<Args3>().flag(Cli::Flag::defaulted<&Args3::i>().short_name('i'));
 }();
 
 TEST(cli, defaulted_value) {
