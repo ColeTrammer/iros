@@ -12,9 +12,7 @@
 ## Development using VS Code Remote Container Extension
 -   Since all the dependencies are nicely in a Dockerfile, it is best to develop the system using VS Code's remote container support. The provided
     .devcontainer directory makes this extremely easy to use.
--   However, since the container won't be connected directly to any GUI, Iros can't run in graphical mode inside the container. Instead, after
-    creating build images, run `IROS_ARCH=<x86_64|i686> ./qemu.sh` in the `scripts/` directory on your local machine. This requires install qemu if it is not already present.
--   This can be worked around by trying to mount the X11 socker directly into the container, but is rather complicated due to X11 authorization.
+-   The repo provides proper configuration for vscode, including a tasks.json and a c_cpp_properties.json. The c++ configuration file defines 4 separate configurations, 2 for the differnt supported Iros architectures, 1 for building inside the docker container, and 1 for building natively. Switching between these configurations changes the compile_commands.json used by the intellisense engine to the correct file. The tasks.json file provides tasks to build and run the system, and reads the current c++ configuration to know which architecture to use.
 
 ## Building Natively
 

@@ -24,14 +24,22 @@
 		},
 		"cmakeExplorer.buildDir": "/build/iros/build_docker",
 		"cmakeExplorer.suiteDelimiter": ":",
-		"testExplorer.useNativeTesting": true
+		"testExplorer.useNativeTesting": true,
+		"json.schemas": [
+			{
+				"fileMatch": [
+					"/ports/*/port.json"
+				],
+				"url": "/gen/port_manager/schema.json"
+			}
+		]
 	},
 	"extensions": [
 		"jeff-hykin.better-cpp-syntax",
 		"ms-vscode.cpptools",
 		"eamodio.gitlens",
-		"hbenl.vscode-test-explorer",
-		"twxs.cmake"
+		"twxs.cmake",
+		"fredericbonnet.cmake-test-adapter"
 	],
 	"remoteUser": "iris"
 }

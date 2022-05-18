@@ -1,0 +1,125 @@
+{
+    "configurations": [
+        {
+            "name": "Iros x86_64",
+            "compileCommands": "${workspaceFolder}/build_x86_64/iros/compile_commands.json",
+            "customConfigurationVariables": {
+                "buildDirectory": "${workspaceFolder}/build_x86_64/iros",
+                "buildTarget": "bi",
+                "irosArchitecture": "x86_64",
+                "buildIros": "true"
+            },
+            "includePath": [
+                "${workspaceFolder}/libs/libapp/include",
+                "${workspaceFolder}/libs/libclanguage/include",
+                "${workspaceFolder}/libs/libclipboard/include",
+                "${workspaceFolder}/libs/libcli/include",
+                "${workspaceFolder}/libs/libedit/include",
+                "${workspaceFolder}/libs/libeventloop/include",
+                "${workspaceFolder}/libs/libext/include",
+                "${workspaceFolder}/libs/libgraphics/include",
+                "${workspaceFolder}/libs/libgui/include",
+                "${workspaceFolder}/libs/libipc/include",
+                "${workspaceFolder}/libs/libliim/include",
+                "${workspaceFolder}/libs/libprocinfo/include",
+                "${workspaceFolder}/libs/librepl/include",
+                "${workspaceFolder}/libs/libsh/include",
+                "${workspaceFolder}/libs/libterminal/include",
+                "${workspaceFolder}/libs/libtest/include",
+                "${workspaceFolder}/libs/libthread/include",
+                "${workspaceFolder}/libs/libtinput/include",
+                "${workspaceFolder}/libs/libtui/include"
+            ]
+        },
+        {
+            "name": "Iros i686",
+            "compileCommands": "${workspaceRoot}/build_i686/iros/compile_commands.json",
+            "customConfigurationVariables": {
+                "buildDirectory": "${workspaceFolder}/build_i686/iros",
+                "buildTarget": "bi",
+                "irosArchitecture": "i686",
+                "buildIros": "true"
+            },
+            "includePath": [
+                "${workspaceFolder}/libs/libapp/include",
+                "${workspaceFolder}/libs/libclanguage/include",
+                "${workspaceFolder}/libs/libclipboard/include",
+                "${workspaceFolder}/libs/libcli/include",
+                "${workspaceFolder}/libs/libedit/include",
+                "${workspaceFolder}/libs/libeventloop/include",
+                "${workspaceFolder}/libs/libext/include",
+                "${workspaceFolder}/libs/libgraphics/include",
+                "${workspaceFolder}/libs/libgui/include",
+                "${workspaceFolder}/libs/libipc/include",
+                "${workspaceFolder}/libs/libliim/include",
+                "${workspaceFolder}/libs/libprocinfo/include",
+                "${workspaceFolder}/libs/librepl/include",
+                "${workspaceFolder}/libs/libsh/include",
+                "${workspaceFolder}/libs/libterminal/include",
+                "${workspaceFolder}/libs/libtest/include",
+                "${workspaceFolder}/libs/libthread/include",
+                "${workspaceFolder}/libs/libtinput/include",
+                "${workspaceFolder}/libs/libtui/include"
+            ]
+        },
+        {
+            "name": "Docker",
+            "compileCommands": "${workspaceRoot}/build_docker/compile_commands.json",
+            "customConfigurationVariables": {
+                "buildDirectory": "${workspaceFolder}/build_docker",
+                "buildTarget": "all"
+            },
+            "includePath": [
+                "${workspaceFolder}/libs/libapp/include",
+                "${workspaceFolder}/libs/libclanguage/include",
+                "${workspaceFolder}/libs/libclipboard/include",
+                "${workspaceFolder}/libs/libcli/include",
+                "${workspaceFolder}/libs/libedit/include",
+                "${workspaceFolder}/libs/libeventloop/include",
+                "${workspaceFolder}/libs/libext/include",
+                "${workspaceFolder}/libs/libgraphics/include",
+                "${workspaceFolder}/libs/libgui/include",
+                "${workspaceFolder}/libs/libipc/include",
+                "${workspaceFolder}/libs/libliim/include",
+                "${workspaceFolder}/libs/libprocinfo/include",
+                "${workspaceFolder}/libs/librepl/include",
+                "${workspaceFolder}/libs/libsh/include",
+                "${workspaceFolder}/libs/libterminal/include",
+                "${workspaceFolder}/libs/libtest/include",
+                "${workspaceFolder}/libs/libthread/include",
+                "${workspaceFolder}/libs/libtinput/include",
+                "${workspaceFolder}/libs/libtui/include"
+            ]
+        },
+        {
+            "name": "Native",
+            "compileCommands": "${workspaceRoot}/build_native/compile_commands.json",
+            "customConfigurationVariables": {
+                "buildDirectory": "${workspaceFolder}/build_native",
+                "buildTarget": "all"
+            },
+            "includePath": [
+                "${workspaceFolder}/libs/libapp/include",
+                "${workspaceFolder}/libs/libclanguage/include",
+                "${workspaceFolder}/libs/libclipboard/include",
+                "${workspaceFolder}/libs/libcli/include",
+                "${workspaceFolder}/libs/libedit/include",
+                "${workspaceFolder}/libs/libeventloop/include",
+                "${workspaceFolder}/libs/libext/include",
+                "${workspaceFolder}/libs/libgraphics/include",
+                "${workspaceFolder}/libs/libgui/include",
+                "${workspaceFolder}/libs/libipc/include",
+                "${workspaceFolder}/libs/libliim/include",
+                "${workspaceFolder}/libs/libprocinfo/include",
+                "${workspaceFolder}/libs/librepl/include",
+                "${workspaceFolder}/libs/libsh/include",
+                "${workspaceFolder}/libs/libterminal/include",
+                "${workspaceFolder}/libs/libtest/include",
+                "${workspaceFolder}/libs/libthread/include",
+                "${workspaceFolder}/libs/libtinput/include",
+                "${workspaceFolder}/libs/libtui/include"
+            ]
+        }
+    ],
+    "version": 4
+}
