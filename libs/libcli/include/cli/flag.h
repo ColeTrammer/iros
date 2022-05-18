@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cli/error.h>
+#include <cli/meta.h>
 #include <liim/function.h>
 #include <liim/option.h>
 #include <liim/result.h>
@@ -8,18 +9,6 @@
 #include <liim/try.h>
 
 namespace Cli {
-template<typename T>
-struct IsOption {
-    using Type = T;
-    static constexpr bool value = false;
-};
-
-template<typename T>
-struct IsOption<Option<T>> {
-    using Type = T;
-    static constexpr bool value = true;
-};
-
 class Flag {
 private:
     using ParserCallback = Result<Monostate, Error> (*)(Option<StringView>, void*);

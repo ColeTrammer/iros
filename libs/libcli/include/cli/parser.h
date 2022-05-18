@@ -14,8 +14,9 @@ class ParserBuilder {
 public:
     using OutputType = T;
 
-    constexpr ParserBuilder(FixedArray<Flag, flag_count> flags, FixedArray<Argument, argument_count> arguments)
-        : m_flags(move(flags)), m_arguments(move(arguments)) {}
+    constexpr ParserBuilder(FixedArray<Flag, flag_count> flags, FixedArray<Argument, argument_count> arguments, bool help_flag,
+                            bool version_flag)
+        : m_flags(move(flags)), m_arguments(move(arguments)), m_help_flag(help_flag), m_version_flag(version_flag) {}
 
     constexpr auto flag(Flag flag) {
         FixedArray<Flag, flag_count + 1> new_flags;
@@ -23,7 +24,7 @@ public:
             new_flags[i] = move(m_flags[i]);
         }
         new_flags[flag_count] = move(flag);
-        return ParserBuilder<T, flag_count + 1, argument_count>(move(new_flags), move(m_arguments));
+        return ParserBuilder<T, flag_count + 1, argument_count>(move(new_flags), move(m_arguments), m_help_flag, m_version_flag);
     }
 
     constexpr auto argument(Argument argument) {
@@ -32,12 +33,12 @@ public:
             new_arguments[i] = move(m_arguments[i]);
         }
         new_arguments[argument_count] = move(argument);
-        return ParserBuilder<T, flag_count, argument_count + 1>(move(m_flags), move(new_arguments));
+        return ParserBuilder<T, flag_count, argument_count + 1>(move(m_flags), move(new_arguments), m_help_flag, m_version_flag);
     }
 
     Result<T, Error> parse(Span<StringView> input) const {
         auto output = T {};
-        ParserImpl parser_impl { m_flags.span(), m_arguments.span() };
+        ParserImpl parser_impl { m_flags.span(), m_arguments.span(), m_help_flag, m_version_flag };
         return parser_impl.parse(input, &output).map([&output](auto) -> T {
             return move(output);
         });

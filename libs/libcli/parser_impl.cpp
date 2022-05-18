@@ -166,21 +166,41 @@ Result<Monostate, Error> ParserImpl::parse(Span<StringView> input, void* output)
     }
 
     // No argument lists, this means that optional positional arguments are allowed.
-    int input_positional_index = 0;
-    size_t argument_index = 0;
-    for (; argument_index < m_arguments.size() && input_positional_index < positional_arguments.size();
-         argument_index++, input_positional_index++) {
-        auto item = positional_arguments[input_positional_index];
-        auto& argument = m_arguments[argument_index];
-        TRY(argument.validate(item, output));
+    if (m_arguments.size() < static_cast<size_t>(positional_arguments.size())) {
+        return Err(UnexpectedPositionalArgument(positional_arguments[m_arguments.size()]));
     }
 
-    // Return errors if there are either too many or missing positional arguments.
-    if (input_positional_index < positional_arguments.size()) {
-        return Err(UnexpectedPositionalArgument(positional_arguments[input_positional_index]));
+    size_t required_argument_count = 0;
+    for (auto& argument : m_arguments) {
+        if (!argument.is_optional()) {
+            required_argument_count++;
+        }
     }
-    if (argument_index < m_arguments.size()) {
-        return Err(MissingPositionalArgument(m_arguments[argument_index].name()));
+    if (static_cast<size_t>(positional_arguments.size()) < required_argument_count) {
+        size_t required_argument_index = 0;
+        for (auto& argument : m_arguments) {
+            if (!argument.is_optional()) {
+                if (++required_argument_index == static_cast<size_t>(positional_arguments.size())) {
+                    return Err(MissingPositionalArgument(argument.name()));
+                }
+            }
+        }
+    }
+
+    int input_positional_index = 0;
+    size_t argument_index = 0;
+    for (; argument_index < m_arguments.size() && input_positional_index < positional_arguments.size(); argument_index++) {
+        auto remaining_arguments = static_cast<size_t>(positional_arguments.size() - input_positional_index);
+        auto& argument = m_arguments[argument_index];
+        if (argument.is_optional() && remaining_arguments < required_argument_count) {
+            continue;
+        }
+        auto item = positional_arguments[input_positional_index];
+        TRY(argument.validate(item, output));
+        if (!argument.is_optional()) {
+            required_argument_count--;
+        }
+        input_positional_index++;
     }
 
     return Ok(Monostate {});
