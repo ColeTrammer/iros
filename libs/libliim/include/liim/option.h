@@ -14,6 +14,11 @@ union MaybeUninit {
 
     constexpr MaybeUninit() : uninit({}) {}
     constexpr ~MaybeUninit() {}
+
+    constexpr void destroy() {
+        value.~T();
+        uninit = {};
+    }
 };
 
 namespace Detail {
@@ -40,10 +45,9 @@ namespace Detail {
 
         constexpr void reset() {
             if (m_has_value) {
-                m_storage.value.~T();
+                m_storage.destroy();
+                m_has_value = false;
             }
-            m_has_value = false;
-            m_storage.uninit = {};
         }
 
         constexpr void assign(const T& other) {
