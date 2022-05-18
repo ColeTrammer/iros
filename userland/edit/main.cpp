@@ -1,5 +1,6 @@
 #include <app/file_system_model.h>
 #include <app/flex_layout_engine.h>
+#include <cli/cli.h>
 #include <edit/document.h>
 #include <errno.h>
 #include <gui/application.h>
@@ -41,54 +42,23 @@ public:
     }
 };
 
-void print_usage_and_exit(const char* s) {
-    error_log("Usage: {} [-ig] [text-file]", s);
-    exit(2);
-}
+struct Arguments {
+    bool read_from_stdin { false };
+    bool use_graphics_mode { false };
+    Option<String> path;
+};
 
-int main(int argc, char** argv) {
-    bool read_from_stdin = false;
-    bool use_graphics_mode = false;
-    (void) use_graphics_mode;
-
-    int opt;
-    while ((opt = getopt(argc, argv, ":ig")) != -1) {
-        switch (opt) {
-            case 'i':
-                read_from_stdin = true;
-                break;
-            case 'g':
-                use_graphics_mode = true;
-                break;
-            case '?':
-            case ':':
-                print_usage_and_exit(*argv);
-                break;
-        }
-    }
-
-    if (argc - optind > 1) {
-        print_usage_and_exit(*argv);
-    }
-
-    auto path = [&] {
-        if (read_from_stdin) {
-            return argv[optind] ? String(argv[optind]) : String("");
-        }
-        if (argc - optind == 1) {
-            return String(argv[optind]);
-        }
-        return String("");
-    }();
+int edit_main(Arguments arguments) {
+    auto path = arguments.path.value_or("");
 
     bool is_directory = false;
     auto document_or_error = [&]() -> Result<SharedPtr<Edit::Document>, String> {
-        if (read_from_stdin) {
+        if (arguments.read_from_stdin) {
             return Edit::Document::create_from_stdin(path).map_error([&](int error_code) {
                 return format("Failed to open `{}': {}", path, strerror(error_code));
             });
         }
-        if (argc - optind == 1) {
+        if (arguments.path) {
             auto result = Edit::Document::create_from_file(path);
             if (result.is_error()) {
                 if (result.error() == EISDIR) {
@@ -98,6 +68,7 @@ int main(int argc, char** argv) {
                 if (result.error() == ENOENT) {
                     return Err(format("Create new file: `{}'", path));
                 }
+                arguments.path = {};
                 path = "";
                 return move(result).map_error([&](int error_code) {
                     return format("Failed to open `{}': {}", path, strerror(error_code));
@@ -109,11 +80,11 @@ int main(int argc, char** argv) {
     }();
 
     auto base_file_path = [&]() -> String {
-        if (read_from_stdin) {
+        if (arguments.read_from_stdin) {
             return "./";
         }
-        if (argc - optind == 1) {
-            if (auto maybe_path = Ext::Path::resolve(argv[optind])) {
+        if (arguments.path) {
+            if (auto maybe_path = Ext::Path::resolve(path)) {
                 if (is_directory) {
                     return maybe_path.value().to_string();
                 }
@@ -128,7 +99,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    if (use_graphics_mode) {
+    if (arguments.use_graphics_mode) {
         auto app = GUI::Application::create();
 
         auto window = GUI::Window::create(nullptr, 250, 250, 400, 400, "Edit");
@@ -336,3 +307,11 @@ int main(int argc, char** argv) {
     app->enter();
     return 0;
 }
+
+CLI_MAIN_LEGACY(edit_main, [] {
+    using namespace Cli;
+    return Parser::of<Arguments>()
+        .flag(Flag::boolean<&Arguments::read_from_stdin>().short_name('i').long_name("stdin").description("Read input from stdin"))
+        .flag(Flag::boolean<&Arguments::use_graphics_mode>().short_name('g').long_name("graphics").description("Render in graphical mode"))
+        .argument(Argument::optional<&Arguments::path>("path").description("Path to open or the location to save a newly created file"));
+}());

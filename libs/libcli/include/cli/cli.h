@@ -41,3 +41,19 @@
         }                                                                \
         return 0;                                                        \
     }
+
+#define CLI_MAIN_LEGACY(main_function, argument_parser)         \
+    int main(int argc, char** argv) {                           \
+        auto args = Vector<StringView> {};                      \
+        for (int i = 0; i < argc; i++) {                        \
+            args.add(StringView { argv[i] });                   \
+        }                                                       \
+                                                                \
+        auto parse_result = argument_parser.parse(args.span()); \
+        if (!parse_result) {                                    \
+            error_log("{}: {}", args[0], parse_result.error()); \
+            return 2;                                           \
+        }                                                       \
+                                                                \
+        return main_function(move(parse_result.value()));       \
+    }

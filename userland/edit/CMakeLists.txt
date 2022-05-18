@@ -8,4 +8,4 @@ set(SOURCES
 )
 
 add_os_executable(edit bin)
-target_link_libraries(edit libapp libedit libclipboard libtui libgui)
+target_link_libraries(edit libapp libedit libclipboard libtui libgui libcli)
