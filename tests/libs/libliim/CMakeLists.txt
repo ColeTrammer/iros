@@ -1,6 +1,7 @@
 set(TEST_FILES
     test_format.cpp
     test_function.cpp
+    test_new_vector.cpp
     test_option.cpp
     test_preprocessor.cpp
     test_result.cpp
