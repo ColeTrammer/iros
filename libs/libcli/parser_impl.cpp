@@ -181,7 +181,7 @@ Result<Monostate, Error> ParserImpl::parse(Span<StringView> input, void* output)
         size_t required_argument_index = 0;
         for (auto& argument : m_arguments) {
             if (!argument.is_optional()) {
-                if (++required_argument_index == static_cast<size_t>(positional_arguments.size())) {
+                if (required_argument_index++ == static_cast<size_t>(positional_arguments.size())) {
                     return Err(MissingPositionalArgument(argument.name()));
                 }
             }
