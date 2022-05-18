@@ -47,12 +47,14 @@ public:
 private:
     FixedArray<Flag, flag_count> m_flags;
     FixedArray<Argument, argument_count> m_arguments;
+    bool m_help_flag { false };
+    bool m_version_flag { false };
 };
 }
 
 namespace Cli::Parser {
 template<typename T>
 static constexpr auto of() {
-    return Cli::Detail::ParserBuilder<T, 0, 0>({}, {});
+    return Cli::Detail::ParserBuilder<T, 0, 0>({}, {}, true, true);
 }
 }

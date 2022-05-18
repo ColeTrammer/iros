@@ -7,7 +7,8 @@
 #include <liim/try.h>
 
 namespace Cli::Detail {
-ParserImpl::ParserImpl(Span<const Flag> flags, Span<const Argument> arguments) : m_flags(flags), m_arguments(arguments) {}
+ParserImpl::ParserImpl(Span<const Flag> flags, Span<const Argument> arguments, bool help_flag, bool version_flag)
+    : m_flags(flags), m_arguments(arguments), m_help_flag(help_flag), m_version_flag(version_flag) {}
 
 ParserImpl::~ParserImpl() {}
 
