@@ -2,7 +2,7 @@
 
 #include <initializer_list>
 #include <liim/option.h>
-#include <vector>
+#include <liim/span.h>
 
 namespace LIIM {
 template<typename Iter>
@@ -144,6 +144,9 @@ public:
 
     T* data() { return reinterpret_cast<T*>(m_data); }
     const T* data() const { return reinterpret_cast<const T*>(m_data); }
+
+    Span<T> span() { return { data(), size() }; }
+    Span<const T> span() const { return { data(), size() }; }
 
     constexpr T& operator[](size_t index) {
         assert(index < size());
@@ -295,18 +298,10 @@ constexpr void NewVector<T>::reserve(size_t new_capacity) {
 template<typename T>
 constexpr void NewVector<T>::move_objects(MaybeUninit<T>* destination, MaybeUninit<T>* source, size_t count) {
     // NOTE: this should use memmove for trivial types when not in constant evaluated context.
-    if (source < destination) {
-        // Loop backwards, explitly use unsigned underflow in the loop.
-        for (size_t i = count - 1; i < count; i--) {
-            construct_at(&destination[i].value, move(source[i].value));
-            source[i].destroy();
-        }
-    } else {
-        // Loop forwards
-        for (size_t i = 0; i < count; i++) {
-            construct_at(&destination[i].value, move(source[i].value));
-            source[i].destroy();
-        }
+    // Loop backwards, explitly use unsigned underflow in the loop.
+    for (size_t i = count - 1; i < count; i--) {
+        construct_at(&destination[i].value, move(source[i].value));
+        source[i].destroy();
     }
 }
 
@@ -387,6 +382,15 @@ constexpr Option<T> NewVector<T>::pop_back() {
         return None {};
     }
     return move(m_data[--m_size].value);
+}
+
+template<typename T>
+constexpr void NewVector<T>::resize(size_t n, const T& value) {
+    if (size() > n) {
+        erase_count(n, size() - n);
+    } else {
+        insert(size(), n - size(), value);
+    }
 }
 
 template<typename T>

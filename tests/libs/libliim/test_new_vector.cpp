@@ -86,6 +86,19 @@ constexpr void mutate() {
     EXPECT_EQ(v.size(), 6u);
     EXPECT(v.erase_count(3, 3) == v.end());
     EXPECT_EQ(v.size(), 3u);
+
+    v.resize(201);
+    EXPECT_EQ(v.size(), 201u);
+    EXPECT_EQ(v.back(), 0);
+    v.resize(2);
+    EXPECT_EQ(v.size(), 2u);
+
+    v = { 1, 2, 3, 4 };
+    v.erase_unstable(1);
+    EXPECT_EQ(v[0], 1);
+    EXPECT_EQ(v[1], 4);
+    EXPECT_EQ(v[2], 3);
+    EXPECT_EQ(v.size(), 3u);
 }
 
 TEST_CONSTEXPR(new_vector, basic, basic)
