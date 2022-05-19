@@ -87,11 +87,12 @@ CMakeConfigureStep::~CMakeConfigureStep() {}
 Result<Monostate, Error> CMakeConfigureStep::act(Context& context, const Port& port) {
     auto& config = context.config();
 
+    auto cmake_generator = "Ninja";
     auto toolchain_file = config.iros_source_directory().join_component("cmake").join_component(
         format("CMakeToolchain_{}.txt", config.target_architecture()));
     return context
-        .run_command(format("cmake -S \"{}\" -B \"{}\" -DCMAKE_INSTALL_PREFIX=\"{}\" -DCMAKE_TOOLCHAIN_FILE=\"{}\"",
-                            port.source_directory(), port.build_directory(), config.install_prefix(), toolchain_file))
+        .run_command(format("cmake -S \"{}\" -B \"{}\" -G \"{}\" -DCMAKE_INSTALL_PREFIX=\"{}\" -DCMAKE_TOOLCHAIN_FILE=\"{}\"",
+                            port.source_directory(), port.build_directory(), cmake_generator, config.install_prefix(), toolchain_file))
         .map_error([&](auto) {
             return Ext::StringError(format("cmake configure failed"));
         });
@@ -130,5 +131,17 @@ Result<Monostate, Error> CMakeInstallStep::act(Context& context, const Port& por
         .map_error([&](auto) {
             return Ext::StringError(format("cmake build failed"));
         });
+}
+
+Result<UniquePtr<CleanStep>, Error> CleanStep::try_create() {
+    return Ok(make_unique<CleanStep>());
+}
+
+CleanStep::~CleanStep() {}
+
+Result<Monostate, Error> CleanStep::act(Context& context, const Port& port) {
+    return context.run_command(format("rm -rf \"{}\"", port.base_directory())).map_error([&](auto) {
+        return Ext::StringError(format("Failed to remove directory: `{}'", port.base_directory()));
+    });
 }
 }

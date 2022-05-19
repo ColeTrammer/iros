@@ -94,4 +94,14 @@ public:
 
     virtual Result<Monostate, Error> act(Context& context, const Port& port) override;
 };
+
+class CleanStep : public Step {
+public:
+    static Result<UniquePtr<CleanStep>, Error> try_create();
+
+    virtual ~CleanStep();
+
+    virtual StringView name() const override { return "clean"; }
+    virtual Result<Monostate, Error> act(Context& context, const Port& port) override;
+};
 }

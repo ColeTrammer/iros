@@ -42,6 +42,7 @@ Result<Port, Error> Port::try_create(const Config& config, Ext::Path json_path) 
     add_step(TRY(CMakeConfigureStep::try_create(reader, configure_object)));
     add_step(TRY(CMakeBuildStep::try_create(reader, build_object)));
     add_step(TRY(CMakeInstallStep::try_create(reader, install_object)));
+    add_step(TRY(CleanStep::try_create()));
 
     auto definition_directory = json_path.dirname();
     auto base_directory = config.base_directory_for_port(name.view(), version.view());
