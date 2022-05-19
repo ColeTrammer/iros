@@ -15,6 +15,7 @@ TEST(detached, basic) {
                   &id, &attr,
                   [](void*) -> void* {
                       ran = true;
+                      usleep(TEST_SLEEP_SCHED_DELAY_US);
                       return nullptr;
                   },
                   nullptr),
@@ -22,7 +23,7 @@ TEST(detached, basic) {
 
     EXPECT_EQ(pthread_join(id, nullptr), EINVAL);
 
-    usleep(TEST_SLEEP_SCHED_DELAY_US);
+    usleep(2 * TEST_SLEEP_SCHED_DELAY_US);
 
     EXPECT_EQ(ran, true);
 }
