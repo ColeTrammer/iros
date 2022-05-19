@@ -1,3 +1,4 @@
+#include <cli/cli.h>
 #include <ext/json.h>
 #include <ext/path.h>
 #include <liim/result.h>
@@ -10,11 +11,20 @@
 #include "step.h"
 
 namespace PortManager {
-Result<Monostate, Error> main(String json_path) {
+struct Arguments {
+    String json_path;
+};
+
+constexpr auto argument_parser = [] {
+    using namespace Cli;
+    return Parser::of<Arguments>().argument(Argument::single<&Arguments::json_path>("port.json").description("path to port json file"));
+}();
+
+Result<Monostate, Error> main(Arguments arguments) {
     auto context = Context(TRY(Config::try_create()));
 
-    auto path = TRY(Ext::Path::resolve(json_path).unwrap_or_else([&] {
-        return Ext::StringError(format("Failed to lookup path: `{}'", json_path));
+    auto path = TRY(Ext::Path::resolve(arguments.json_path).unwrap_or_else([&] {
+        return Ext::StringError(format("Failed to lookup path: `{}'", arguments.json_path));
     }));
 
     auto port = TRY(Port::try_create(context.config(), move(path)));
@@ -22,20 +32,4 @@ Result<Monostate, Error> main(String json_path) {
 }
 }
 
-static void print_usage_and_exit(const char* name) {
-    error_log("Usage: {} <port-json-file>", name);
-    exit(2);
-}
-
-int main(int argc, char** argv) {
-    if (argc != 2) {
-        print_usage_and_exit(*argv);
-    }
-
-    auto result = PortManager::main(argv[1]);
-    if (result.is_error()) {
-        error_log("{}: {}", argv[0], result.error());
-        return 1;
-    }
-    return 0;
-}
+CLI_MAIN(PortManager::main, PortManager::argument_parser)

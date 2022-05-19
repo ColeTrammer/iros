@@ -8,5 +8,5 @@ set(SOURCES
 )
 
 add_os_executable(port_manager bin)
-target_link_libraries(port_manager libliim libext)
+target_link_libraries(port_manager PRIVATE libcli libliim libext)
 target_compile_definitions(port_manager PRIVATE "IROS_ROOT=\"${ROOT}\"" "IROS_ARCH=\"${ARCH}\"")
