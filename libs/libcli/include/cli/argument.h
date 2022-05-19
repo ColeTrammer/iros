@@ -29,11 +29,12 @@ private:
         static constexpr bool is_option = IsOption<VectorParserType>::value;
         using ParserType = IsOption<VectorParserType>::Type;
 
-        constexpr ArgumentBuilder(SingleParserCallback parser, StringView name) : m_parser({ .single = parser }), m_name(name) {}
+        constexpr ArgumentBuilder(SingleParserCallback parser, StringView name, bool is_optional = is_option)
+            : m_parser({ .single = parser }), m_name(name), m_is_optional(is_optional) {}
         constexpr ArgumentBuilder(ListParserCallback parser, StringView name) : m_parser({ .list = parser }), m_name(name) {}
 
     public:
-        static constexpr ArgumentBuilder single(StringView name) requires(!is_list) {
+        static constexpr ArgumentBuilder single(StringView name) requires(!is_list && !is_option) {
             return ArgumentBuilder(
                 [](StringView input, void* output_ptr) -> Result<Monostate, Error> {
                     auto& output = *static_cast<StructType*>(output_ptr);
@@ -44,7 +45,7 @@ private:
                 name);
         }
 
-        static constexpr ArgumentBuilder optional(StringView name) requires(is_option) {
+        static constexpr ArgumentBuilder optional(StringView name) requires(is_option && !is_list) {
             return ArgumentBuilder(
                 [](StringView input, void* output_ptr) -> Result<Monostate, Error> {
                     auto& output = *static_cast<StructType*>(output_ptr);
@@ -53,6 +54,17 @@ private:
                     return Ok(Monostate {});
                 },
                 name);
+        }
+
+        static constexpr ArgumentBuilder defaulted(StringView name) requires(!is_option && !is_list) {
+            return ArgumentBuilder(
+                [](StringView input, void* output_ptr) -> Result<Monostate, Error> {
+                    auto& output = *static_cast<StructType*>(output_ptr);
+                    auto value = TRY(Ext::parse<ParserType>(input));
+                    output.*member = move(value);
+                    return Ok(Monostate {});
+                },
+                name, true);
         }
 
         static constexpr ArgumentBuilder list(StringView name) requires(is_list) {
@@ -76,7 +88,7 @@ private:
             return *this;
         }
 
-        constexpr Argument argument() const { return Argument(m_parser, m_name, move(m_description), is_list, is_option); }
+        constexpr Argument argument() const { return Argument(m_parser, m_name, move(m_description), is_list, m_is_optional); }
 
         constexpr operator Argument() const { return argument(); }
 
@@ -84,6 +96,7 @@ private:
         ParserCallback m_parser;
         StringView m_name;
         Option<StringView> m_description;
+        bool m_is_optional { false };
     };
 
 public:
@@ -95,6 +108,11 @@ public:
     template<auto member>
     static constexpr ArgumentBuilder<member> optional(StringView positional_name) {
         return ArgumentBuilder<member>::optional(positional_name);
+    }
+
+    template<auto member>
+    static constexpr ArgumentBuilder<member> defaulted(StringView positional_name) {
+        return ArgumentBuilder<member>::defaulted(positional_name);
     }
 
     template<auto member>
