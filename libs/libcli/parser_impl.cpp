@@ -130,6 +130,9 @@ Result<Monostate, Error> ParserImpl::parse(Span<StringView> input, void* output)
 
     // Parse the positional arguments
     if (m_arguments.size() == 0) {
+        if (positional_arguments.size() > 0) {
+            return Err(UnexpectedPositionalArgument(positional_arguments.back()));
+        }
         return Ok(Monostate {});
     }
 
