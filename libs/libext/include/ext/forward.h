@@ -12,5 +12,6 @@ class Path;
 class StreamDecoder;
 class StreamEncoder;
 class Stream;
+class StringError;
 class ZLibStreamDecoder;
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ext/forward.h>
 #include <liim/forward.h>
 #include <liim/vector.h>
 #include <test/forward.h>
@@ -19,7 +20,13 @@ public:
     void* spawn_thread_and_block(Function<void(pthread_t)> after_spawn_before_join, Function<void()> thread_body);
     void spawn_threads_and_block(int thread_count, Function<void()>);
 
-    int do_main(int argc, char** argv);
+    struct Arguments {
+        bool list_simple { false };
+        Option<String> suite_name;
+        Option<String> case_name;
+    };
+
+    Result<Monostate, Ext::StringError> do_main(Arguments arguments);
 
     TestCase& current_test_case() { return *m_current_test_case; }
 

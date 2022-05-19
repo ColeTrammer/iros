@@ -1,3 +1,4 @@
+#include <cli/cli.h>
 #include <liim/format.h>
 #include <pthread.h>
 #include <sys/wait.h>
@@ -80,38 +81,8 @@ void TestManager::test_did_fail() {
     m_fail_count++;
 }
 
-static void print_usage(const char* name) {
-    error_log("Usage: {} [-L] [-s SUITE] [-t TESTCASE]", name);
-}
-
-int TestManager::do_main(int argc, char** argv) {
-    auto list_simple = false;
-    auto suite_name = Option<String> {};
-    auto case_name = Option<String> {};
-
-    int opt;
-    while ((opt = getopt(argc, argv, ":Ls:t:")) != -1) {
-        switch (opt) {
-            case 'L':
-                list_simple = true;
-                break;
-            case 's':
-                suite_name = { optarg };
-                break;
-            case 't':
-                case_name = { optarg };
-                break;
-            case ':':
-            case '?':
-                print_usage(*argv);
-                return 2;
-        }
-    }
-
-    if (optind != argc) {
-        print_usage(*argv);
-        return 2;
-    }
+Result<Monostate, Ext::StringError> TestManager::do_main(Arguments arguments) {
+    auto [list_simple, suite_name, case_name] = arguments;
 
     auto test_cases = m_test_cases;
     test_cases.remove_if([&](auto& test_case) {
@@ -131,15 +102,14 @@ int TestManager::do_main(int argc, char** argv) {
     });
 
     if (test_cases.empty() && (suite_name || case_name)) {
-        error_log("{}: No test cases match filter: [suite={}] [case={}]", *argv, suite_name, case_name);
-        return 1;
+        return Err(Ext::StringError(format("No test cases match filter: [suite={}] [case={}]", suite_name, case_name)));
     }
 
     if (list_simple) {
         for (auto& test_case : test_cases) {
             out_log("{}:{}", test_case->suite_name(), test_case->case_name());
         }
-        return 0;
+        return Ok(Monostate {});
     }
 
     for (auto& test_case : test_cases) {
@@ -159,6 +129,6 @@ int TestManager::do_main(int argc, char** argv) {
     printf("\n\033[1m%d\033[0m / \033[1m%d\033[0m Tests Passed: %s\n", test_cases.size() - m_fail_count, test_cases.size(),
            m_fail_count ? "\033[31;1mTests Failed\033[0m" : "\033[32;1mTests Passed\033[0m");
 
-    return m_fail_count ? 1 : 0;
+    exit(m_fail_count ? 1 : 0);
 }
 }
