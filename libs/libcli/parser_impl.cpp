@@ -1,6 +1,7 @@
 #include <cli/argument.h>
 #include <cli/flag.h>
 #include <cli/parser_impl.h>
+#include <liim/new_vector.h>
 #include <liim/result.h>
 #include <liim/span.h>
 #include <liim/string_view.h>
@@ -41,7 +42,7 @@ Result<Monostate, Error> ParserImpl::parse(Span<StringView> input, void* output)
     // Skip the program name
     input = input.subspan(1);
 
-    Vector<StringView> positional_arguments;
+    auto positional_arguments = NewVector<StringView> {};
 
     // Parse flags denoted by the long or short flag prefixes
     // and store anything else in the positional argument vector.
@@ -51,7 +52,7 @@ Result<Monostate, Error> ParserImpl::parse(Span<StringView> input, void* output)
         // Skip the remaining input if we recieve the positional argument marker ('--').
         if (item == position_argument_only_marker) {
             while (++i < input.size()) {
-                positional_arguments.add(input[i]);
+                positional_arguments.push_back(input[i]);
             }
             break;
         }
@@ -124,7 +125,7 @@ Result<Monostate, Error> ParserImpl::parse(Span<StringView> input, void* output)
         }
 
         // This is a positional argument, just add it to be processed later.
-        positional_arguments.add(item);
+        positional_arguments.push_back(item);
     }
 
     // Parse the positional arguments
@@ -134,7 +135,7 @@ Result<Monostate, Error> ParserImpl::parse(Span<StringView> input, void* output)
 
     // Variable arguments come first.
     if (m_arguments.first(1)[0].is_list()) {
-        if (static_cast<size_t>(positional_arguments.size()) < m_arguments.size() - 1) {
+        if (positional_arguments.size() < m_arguments.size() - 1) {
             return Err(MissingPositionalArgument(m_arguments[positional_arguments.size()].name()));
         }
 
@@ -151,7 +152,7 @@ Result<Monostate, Error> ParserImpl::parse(Span<StringView> input, void* output)
 
     // Variables arguments come last.
     if (m_arguments.last(1)[0].is_list()) {
-        if (static_cast<size_t>(positional_arguments.size()) < m_arguments.size() - 1) {
+        if (positional_arguments.size() < m_arguments.size() - 1) {
             return Err(MissingPositionalArgument(m_arguments[positional_arguments.size() - 1].name()));
         }
 
@@ -159,7 +160,7 @@ Result<Monostate, Error> ParserImpl::parse(Span<StringView> input, void* output)
             TRY(m_arguments[i].validate(positional_arguments[i], output));
         }
         auto variable_arguments = Vector<StringView> {};
-        for (size_t i = m_arguments.size() - 1; i < static_cast<size_t>(positional_arguments.size()); i++) {
+        for (size_t i = m_arguments.size() - 1; i < positional_arguments.size(); i++) {
             variable_arguments.add(positional_arguments[i]);
         }
         TRY(m_arguments.last(1)[0].validate(variable_arguments.span(), output));
@@ -167,7 +168,7 @@ Result<Monostate, Error> ParserImpl::parse(Span<StringView> input, void* output)
     }
 
     // No argument lists, this means that optional positional arguments are allowed.
-    if (m_arguments.size() < static_cast<size_t>(positional_arguments.size())) {
+    if (m_arguments.size() < positional_arguments.size()) {
         return Err(UnexpectedPositionalArgument(positional_arguments[m_arguments.size()]));
     }
 
@@ -177,21 +178,21 @@ Result<Monostate, Error> ParserImpl::parse(Span<StringView> input, void* output)
             required_argument_count++;
         }
     }
-    if (static_cast<size_t>(positional_arguments.size()) < required_argument_count) {
+    if (positional_arguments.size() < required_argument_count) {
         size_t required_argument_index = 0;
         for (auto& argument : m_arguments) {
             if (!argument.is_optional()) {
-                if (required_argument_index++ == static_cast<size_t>(positional_arguments.size())) {
+                if (required_argument_index++ == positional_arguments.size()) {
                     return Err(MissingPositionalArgument(argument.name()));
                 }
             }
         }
     }
 
-    int input_positional_index = 0;
+    size_t input_positional_index = 0;
     size_t argument_index = 0;
     for (; argument_index < m_arguments.size() && input_positional_index < positional_arguments.size(); argument_index++) {
-        auto remaining_arguments = static_cast<size_t>(positional_arguments.size() - input_positional_index);
+        auto remaining_arguments = positional_arguments.size() - input_positional_index;
         auto& argument = m_arguments[argument_index];
         if (argument.is_optional() && remaining_arguments < required_argument_count) {
             continue;
