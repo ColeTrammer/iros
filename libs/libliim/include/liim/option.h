@@ -239,7 +239,7 @@ public:
     template<typename C, typename R = InvokeResult<C>::type>
     constexpr Result<T, R> unwrap_or_else(C mapper) {
         if (has_value()) {
-            return Ok<T>(move(value()));
+            return Ok<T>(forward<T&&>(value()));
         }
         return Err<R>(mapper());
     }
