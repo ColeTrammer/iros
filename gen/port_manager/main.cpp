@@ -12,12 +12,15 @@
 
 namespace PortManager {
 struct Arguments {
-    String json_path;
+    String json_path { "port.json" };
+    StringView build_step { "install" };
 };
 
 constexpr auto argument_parser = [] {
     using namespace Cli;
-    return Parser::of<Arguments>().argument(Argument::single<&Arguments::json_path>("port.json").description("path to port json file"));
+    return Parser::of<Arguments>()
+        .flag(Flag::defaulted<&Arguments::json_path>().short_name('f').long_name("port-json").description("path to port json file"))
+        .argument(Argument::defaulted<&Arguments::build_step>("step").description("build step to perform"));
 }();
 
 Result<Monostate, Error> main(Arguments arguments) {
@@ -28,7 +31,7 @@ Result<Monostate, Error> main(Arguments arguments) {
     }));
 
     auto port = TRY(Port::try_create(context.config(), move(path)));
-    return port.build(context);
+    return port.build(context, arguments.build_step);
 }
 }
 
