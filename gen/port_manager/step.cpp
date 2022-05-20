@@ -8,6 +8,7 @@
 #include "error.h"
 #include "json_reader.h"
 #include "port.h"
+#include "process.h"
 #include "step.h"
 
 namespace PortManager {
@@ -34,9 +35,7 @@ Result<bool, Error> GitDownloadStep::should_skip(Context&, const Port& port) {
 }
 
 Result<Monostate, Error> GitDownloadStep::act(Context& context, const Port& port) {
-    return context.run_command(format("git clone --depth=1 \"{}\" \"{}\"", m_url, port.source_directory())).map_error([&](auto) {
-        return Ext::StringError(format("git clone on url `{}' failed", m_url));
-    });
+    return context.run_process(Process::command("git", "clone", "--depth=1", m_url, port.source_directory()));
 }
 
 Result<UniquePtr<PatchStep>, Error> PatchStep::try_create(const JsonReader& reader, const Ext::Json::Object& object) {
@@ -68,23 +67,16 @@ Result<bool, Error> PatchStep::should_skip(Context&, const Port& port) {
 
 Result<Monostate, Error> PatchStep::act(Context& context, const Port& port) {
     return context.with_working_directory(port.source_directory(), [&]() -> Result<Monostate, Error> {
-        TRY(context.run_command("git init").map_error([&](auto) {
-            return Ext::StringError("git init failed");
-        }));
+        TRY(context.run_process(Process::command("git", "init")));
 
-        for (auto& patch_file : m_patch_files) {
+        return Ext::stop_on_error(m_patch_files, [&](auto& patch_file) -> Result<Monostate, Error> {
             auto marker_path = patch_marker_path(port, patch_file);
             if (marker_path.exists()) {
-                continue;
+                return Ok(Monostate {});
             }
-            TRY(context
-                    .run_command(
-                        format("git apply \"{}\" && touch \"{}\"", patch_path(port, patch_file), patch_marker_path(port, patch_file)))
-                    .map_error([&](auto) {
-                        return Ext::StringError(format("git patch failed with patch file `{}'", patch_file));
-                    }));
-        }
-        return Ok(Monostate {});
+            TRY(context.run_process(Process::command("git", "apply", patch_path(port, patch_file))));
+            return context.run_process(Process::command("touch", patch_marker_path(port, patch_file)));
+        });
     });
 }
 
@@ -122,12 +114,9 @@ Result<Monostate, Error> CMakeConfigureStep::act(Context& context, const Port& p
     auto cmake_generator = "Ninja";
     auto toolchain_file = config.iros_source_directory().join_component("cmake").join_component(
         format("CMakeToolchain_{}.txt", config.target_architecture()));
-    return context
-        .run_command(format("cmake -S \"{}\" -B \"{}\" -G \"{}\" -DCMAKE_INSTALL_PREFIX=\"{}\" -DCMAKE_TOOLCHAIN_FILE=\"{}\"",
-                            port.source_directory(), port.build_directory(), cmake_generator, config.install_prefix(), toolchain_file))
-        .map_error([&](auto) {
-            return Ext::StringError(format("cmake configure failed"));
-        });
+    return context.run_process(Process::command("cmake", "-S", port.source_directory(), "-B", port.build_directory(), "-G", cmake_generator,
+                                                format("-DCMAKE_INSTALL_PREFIX={}", config.install_prefix()),
+                                                format("-DCMAKE_TOOLCHAIN_FILE={}", toolchain_file)));
 }
 
 Span<const StringView> BuildStep::dependencies() const {
@@ -142,9 +131,7 @@ Result<UniquePtr<CMakeBuildStep>, Error> CMakeBuildStep::try_create(const JsonRe
 CMakeBuildStep::~CMakeBuildStep() {}
 
 Result<Monostate, Error> CMakeBuildStep::act(Context& context, const Port& port) {
-    return context.run_command(format("cmake --build \"{}\"", port.build_directory())).map_error([&](auto) {
-        return Ext::StringError(format("cmake build failed"));
-    });
+    return context.run_process(Process::command("cmake", "--build", port.build_directory()));
 }
 
 Span<const StringView> InstallStep::dependencies() const {
@@ -159,10 +146,8 @@ Result<UniquePtr<CMakeInstallStep>, Error> CMakeInstallStep::try_create(const Js
 CMakeInstallStep::~CMakeInstallStep() {}
 
 Result<Monostate, Error> CMakeInstallStep::act(Context& context, const Port& port) {
-    return context.run_command(format("DESTDIR=\"{}\" cmake --install \"{}\"", context.config().iros_sysroot(), port.build_directory()))
-        .map_error([&](auto) {
-            return Ext::StringError(format("cmake build failed"));
-        });
+    return context.run_process(
+        Process::shell_command(format("DESTDIR=\"{}\" cmake --install \"{}\"", context.config().iros_sysroot(), port.build_directory())));
 }
 
 Result<UniquePtr<CleanStep>, Error> CleanStep::try_create() {
@@ -172,8 +157,6 @@ Result<UniquePtr<CleanStep>, Error> CleanStep::try_create() {
 CleanStep::~CleanStep() {}
 
 Result<Monostate, Error> CleanStep::act(Context& context, const Port& port) {
-    return context.run_command(format("rm -rf \"{}\"", port.base_directory())).map_error([&](auto) {
-        return Ext::StringError(format("Failed to remove directory: `{}'", port.base_directory()));
-    });
+    return context.run_process(Process::command("rm", "-rf", port.base_directory().to_string()));
 }
 }

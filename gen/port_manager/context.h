@@ -8,9 +8,9 @@
 namespace PortManager {
 class Context {
 public:
-    Context(Config config) : m_config(move(config)) {}
+    explicit Context(Config config) : m_config(move(config)) {}
 
-    Result<Monostate, Monostate> run_command(const String& command);
+    Result<Monostate, Error> run_process(Process process);
 
     Result<Monostate, Error> with_working_directory(const Ext::Path& working_directory, Function<Result<Monostate, Error>()> body);
 

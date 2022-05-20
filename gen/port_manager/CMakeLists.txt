@@ -4,6 +4,7 @@ set(SOURCES
     json_reader.cpp
     main.cpp
     port.cpp
+    process.cpp
     step.cpp
 )
 

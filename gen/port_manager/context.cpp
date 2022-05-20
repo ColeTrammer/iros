@@ -7,14 +7,11 @@
 #include <unistd.h>
 
 #include "context.h"
+#include "process.h"
 
 namespace PortManager {
-Result<Monostate, Monostate> Context::run_command(const String& command) {
-    int status = system(command.string());
-    if (status) {
-        return Err(Monostate {});
-    }
-    return Ok(Monostate {});
+Result<Monostate, Error> Context::run_process(Process process) {
+    return process.spawn_and_wait();
 }
 
 Result<Monostate, Error> Context::with_working_directory(const Ext::Path& working_directory, Function<Result<Monostate, Error>()> body) {
