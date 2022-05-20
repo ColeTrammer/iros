@@ -1,9 +1,12 @@
 #pragma once
 
+#include <errno.h>
 #include <ext/forward.h>
 #include <liim/format.h>
 #include <liim/forward.h>
+#include <liim/new_vector.h>
 #include <liim/result.h>
+#include <liim/source_location.h>
 #include <liim/string.h>
 #include <liim/utilities.h>
 #include <liim/variant.h>
@@ -41,6 +44,41 @@ public:
 
 private:
     String m_message;
+};
+
+class SystemError {
+public:
+    static SystemError from_error_code(int error_code, NewVector<String> arguments = {},
+                                       SourceLocation location = SourceLocation::current()) {
+        return SystemError(move(arguments), location.function_name(), error_code);
+    }
+    static SystemError from_errno(NewVector<String> arguments = {}, SourceLocation location = SourceLocation::current()) {
+        return SystemError(move(arguments), location.function_name(), errno);
+    }
+
+    StringView system_call() const { return m_system_call; }
+    int error_code() const { return m_error_code; }
+
+    String to_message() const {
+        String arguments;
+        bool first = true;
+        for (auto& argument : m_arguments) {
+            if (!first) {
+                arguments += ", ";
+            }
+            arguments += argument;
+            first = false;
+        }
+        return format("{}({}) failed: {}", m_system_call, arguments, strerror(m_error_code));
+    }
+
+private:
+    SystemError(NewVector<String> arguments, StringView system_call, int error_code)
+        : m_arguments(move(arguments)), m_system_call(system_call), m_error_code(error_code) {}
+
+    NewVector<String> m_arguments;
+    StringView m_system_call;
+    int m_error_code { 0 };
 };
 
 template<typename T, typename C, typename E = LIIM::InvokeResult<C, const T&>::type::ErrorType>

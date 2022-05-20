@@ -28,6 +28,7 @@ set(SOURCES
     stream_decoder.cpp
     stream_encoder.cpp
     stream.cpp
+    system.cpp
     zlib_stream.cpp
 )
 

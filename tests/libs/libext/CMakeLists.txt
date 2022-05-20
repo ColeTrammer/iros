@@ -1,5 +1,6 @@
 set(TEST_FILES
     test_parser.cpp
+    test_system.cpp
 )
 
 add_os_tests(libext ${TEST_FILES})
