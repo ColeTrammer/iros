@@ -25,6 +25,8 @@ public:
     Path join_component(const String& name) const;
     const Vector<String>& components() const { return m_components; }
 
+    bool exists() const;
+
 private:
     explicit Path(const String& path);
     explicit Path(Vector<String> path);

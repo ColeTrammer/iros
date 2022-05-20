@@ -63,4 +63,9 @@ Path Path::join_component(const String& name) const {
     }
     return Path { String::format("%s/%s", to_string().string(), name.string()) };
 }
+
+bool Path::exists() const {
+    // FIXME: should this function return errors?
+    return access(to_string().string(), F_OK) == F_OK;
+}
 }
