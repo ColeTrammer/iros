@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ext/json.h>
+#include <liim/new_vector.h>
 #include <liim/result.h>
 #include <liim/span.h>
 #include <liim/string.h>
@@ -13,6 +14,7 @@ public:
     virtual ~Step() {}
 
     virtual StringView name() const;
+    virtual Result<bool, Error> should_skip(Context&, const Port&) { return Ok(false); }
     virtual Result<Monostate, Error> act(Context& context, const Port& port) = 0;
     virtual Span<const StringView> dependencies() const { return {}; }
 };
@@ -31,6 +33,7 @@ public:
     explicit GitDownloadStep(String url);
     virtual ~GitDownloadStep() override;
 
+    virtual Result<bool, Error> should_skip(Context& context, const Port& port) override;
     virtual Result<Monostate, Error> act(Context& context, const Port& port) override;
 
 private:
@@ -41,15 +44,19 @@ class PatchStep : public Step {
 public:
     static Result<UniquePtr<PatchStep>, Error> try_create(const JsonReader& reader, const Ext::Json::Object& object);
 
-    explicit PatchStep(Vector<String> patch_files);
+    explicit PatchStep(NewVector<String> patch_files);
     virtual ~PatchStep() override;
 
     virtual StringView name() const override { return "patch"sv; }
+    virtual Result<bool, Error> should_skip(Context& context, const Port& port) override;
     virtual Result<Monostate, Error> act(Context& context, const Port& port) override;
     virtual Span<const StringView> dependencies() const override;
 
 private:
-    Vector<String> m_patch_files;
+    Ext::Path patch_path(const Port& port, const String& patch_name) const;
+    Ext::Path patch_marker_path(const Port& port, const String& patch_name) const;
+
+    NewVector<String> m_patch_files;
 };
 
 class ConfigureStep : public Step {
@@ -64,6 +71,7 @@ public:
 
     virtual ~CMakeConfigureStep() override;
 
+    virtual Result<bool, Error> should_skip(Context& context, const Port& port) override;
     virtual Result<Monostate, Error> act(Context& context, const Port& port) override;
 };
 

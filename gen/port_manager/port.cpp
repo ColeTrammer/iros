@@ -83,8 +83,11 @@ Result<Monostate, Error> Port::build(Context& context, StringView build_step) {
     auto step_count = steps.size();
     for (size_t i = 0; i < step_count; i++) {
         auto& step = *steps[i];
-        debug_log("Run step [{} / {}]: {}", i + 1, step_count, step.name());
-        TRY(step.act(context, *this));
+        auto should_skip = TRY(step.should_skip(context, *this));
+        debug_log("{} step [{} / {}]: {}", should_skip ? "Skip" : "Run", i + 1, step_count, step.name());
+        if (!should_skip) {
+            TRY(step.act(context, *this));
+        }
     }
     return Ok(Monostate {});
 }

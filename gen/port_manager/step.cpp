@@ -29,6 +29,10 @@ GitDownloadStep::GitDownloadStep(String url) : m_url(move(url)) {}
 
 GitDownloadStep::~GitDownloadStep() {}
 
+Result<bool, Error> GitDownloadStep::should_skip(Context&, const Port& port) {
+    return Ok(port.source_directory().exists());
+}
+
 Result<Monostate, Error> GitDownloadStep::act(Context& context, const Port& port) {
     return context.run_command(format("git clone --depth=1 \"{}\" \"{}\"", m_url, port.source_directory())).map_error([&](auto) {
         return Ext::StringError(format("git clone on url `{}' failed", m_url));
@@ -38,20 +42,29 @@ Result<Monostate, Error> GitDownloadStep::act(Context& context, const Port& port
 Result<UniquePtr<PatchStep>, Error> PatchStep::try_create(const JsonReader& reader, const Ext::Json::Object& object) {
     auto& files = TRY(reader.lookup<Ext::Json::Array>(object, "files"));
 
-    auto patch_files = Vector<String> {};
+    auto patch_files = NewVector<String> {};
     for (auto& file : files) {
         if (!file.is<Ext::Json::String>()) {
             return Err(Ext::StringError("encountered non-string value when parsing patch files"));
         }
-        patch_files.add(file.as<Ext::Json::String>());
+        patch_files.push_back(file.as<Ext::Json::String>());
     }
 
     return Ok(make_unique<PatchStep>(move(patch_files)));
 }
 
-PatchStep::PatchStep(Vector<String> patch_files) : m_patch_files(move(patch_files)) {}
+PatchStep::PatchStep(NewVector<String> patch_files) : m_patch_files(move(patch_files)) {}
 
 PatchStep::~PatchStep() {}
+
+Result<bool, Error> PatchStep::should_skip(Context&, const Port& port) {
+    for (auto& patch_file : m_patch_files) {
+        if (!patch_marker_path(port, patch_file).exists()) {
+            return Ok(false);
+        }
+    }
+    return Ok(true);
+}
 
 Result<Monostate, Error> PatchStep::act(Context& context, const Port& port) {
     return context.with_working_directory(port.source_directory(), [&]() -> Result<Monostate, Error> {
@@ -60,9 +73,16 @@ Result<Monostate, Error> PatchStep::act(Context& context, const Port& port) {
         }));
 
         for (auto& patch_file : m_patch_files) {
-            TRY(context.run_command(format("git apply \"{}/{}\"", port.definition_directory(), patch_file)).map_error([&](auto) {
-                return Ext::StringError(format("git patch failed with patch file `{}'", patch_file));
-            }));
+            auto marker_path = patch_marker_path(port, patch_file);
+            if (marker_path.exists()) {
+                continue;
+            }
+            TRY(context
+                    .run_command(
+                        format("git apply \"{}\" && touch \"{}\"", patch_path(port, patch_file), patch_marker_path(port, patch_file)))
+                    .map_error([&](auto) {
+                        return Ext::StringError(format("git patch failed with patch file `{}'", patch_file));
+                    }));
         }
         return Ok(Monostate {});
     });
@@ -71,6 +91,14 @@ Result<Monostate, Error> PatchStep::act(Context& context, const Port& port) {
 Span<const StringView> PatchStep::dependencies() const {
     static constexpr FixedArray storage = { "download"sv };
     return storage.span();
+}
+
+Ext::Path PatchStep::patch_path(const Port& port, const String& patch_name) const {
+    return port.definition_directory().join_component(patch_name);
+}
+
+Ext::Path PatchStep::patch_marker_path(const Port& port, const String& patch_name) const {
+    return port.source_directory().join_component(format(".did_{}", patch_name));
 }
 
 Span<const StringView> ConfigureStep::dependencies() const {
@@ -83,6 +111,10 @@ Result<UniquePtr<CMakeConfigureStep>, Error> CMakeConfigureStep::try_create(cons
 }
 
 CMakeConfigureStep::~CMakeConfigureStep() {}
+
+Result<bool, Error> CMakeConfigureStep::should_skip(Context&, const Port& port) {
+    return Ok(port.build_directory().exists());
+}
 
 Result<Monostate, Error> CMakeConfigureStep::act(Context& context, const Port& port) {
     auto& config = context.config();
