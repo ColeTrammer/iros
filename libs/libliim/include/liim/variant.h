@@ -322,11 +322,13 @@ public:
     constexpr void swap(Variant& other) {
         visit_by_index([&other]<size_t this_index>(in_place_index_t<this_index>, auto&& self) {
             other.template visit_by_index([&]<size_t other_index>(in_place_index_t<other_index>, auto&& other) {
-                auto&& temp = move(self.template get<this_index>());
+                using T = TypeList::TypeAtIndex<this_index, Types...>::type;
+                using U = TypeList::TypeAtIndex<other_index, Types...>::type;
+                T temp = forward<T&&>(self.template get<this_index>());
                 self.destroy();
-                self.m_storage.template emplace<other_index>(move(other.template get<other_index>()));
+                self.m_storage.template emplace<other_index>(forward<U&&>(other.template get<other_index>()));
                 other.template destroy();
-                other.m_storage.template emplace<this_index>(move(temp));
+                other.m_storage.template emplace<this_index>(forward<T&&>(temp));
             });
         });
 
