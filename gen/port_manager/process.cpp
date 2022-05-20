@@ -1,6 +1,7 @@
 #include <liim/try.h>
 #include <spawn.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 #include "process.h"
 
