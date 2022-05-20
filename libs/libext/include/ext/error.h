@@ -57,6 +57,15 @@ Result<Monostate, Vector<E>> collect_errors(const Vector<T>& input, C mapper) {
     }
     return Ok(Monostate {});
 }
+
+template<typename Collection, typename C,
+         typename R = LIIM::InvokeResult<C, decltype(*LIIM::declval<const Collection&>().begin())>::type::ErrorType>
+Result<Monostate, R> stop_on_error(const Collection& input, C mapper) {
+    for (auto& t : input) {
+        TRY(mapper(t));
+    }
+    return Ok(Monostate {});
+}
 }
 
 namespace LIIM {
