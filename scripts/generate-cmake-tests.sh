@@ -18,6 +18,7 @@ if [ "$NATIVE" = "TRUE" ]; then
    test_cases=`$1 -L`
 else
    test_cases=`grep -hoE 'TEST\(.+,.+\)' $IROS_GREP_SOURCES | cut -c 6- | rev | cut -c 2- | rev | tr -d ' ' | tr ',' ':'`
+   test_cases="$test_cases `grep -hoE 'TEST_CONSTEXPR\(.+,.+\)' $IROS_GREP_SOURCES | cut -c 16- | rev | cut -c 2- | rev | tr -d ' ' | tr ',' ':'`"
 fi
 if [ ! "$test_cases" ];
 then
