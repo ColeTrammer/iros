@@ -3,7 +3,6 @@
 #include <assert.h>
 #include <liim/fixed_array.h>
 #include <liim/option.h>
-#include <liim/tuple.h>
 #include <liim/type_list.h>
 #include <liim/utilities.h>
 #include <stddef.h>

@@ -8,6 +8,7 @@ set(TEST_FILES
     test_string_view.cpp
     test_string.cpp
     test_task.cpp
+    test_tuple.cpp
     test_utf8_view.cpp
     test_variant.cpp
 )
