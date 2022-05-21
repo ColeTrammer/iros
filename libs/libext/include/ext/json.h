@@ -251,12 +251,15 @@ static inline Option<Null> parse_null(InputStream& stream) {
     if (!stream.starts_with("null")) {
         return {};
     }
+    stream.consume("null");
     return Null();
 }
 static inline Option<Boolean> parse_boolean(InputStream& stream) {
     if (stream.starts_with("false")) {
+        stream.consume("false");
         return false;
     } else if (stream.starts_with("true")) {
+        stream.consume("true");
         return true;
     }
     return {};
