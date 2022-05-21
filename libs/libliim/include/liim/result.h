@@ -65,6 +65,13 @@ public:
 
     constexpr void swap(Result& other) { this->m_impl.swap(other.m_impl); }
 
+    constexpr T value_or(T other) {
+        if (is_ok()) {
+            return move(value());
+        }
+        return move(other);
+    }
+
     template<typename C, typename R = InvokeResult<C, T>::type>
     constexpr Result<R, E> map(C mapper) const {
         if (!is_ok()) {
