@@ -84,7 +84,8 @@ constexpr void mutate() {
     EXPECT_EQ(v.size(), 9u);
     EXPECT_EQ(v.erase(v.iterator(3), v.iterator(6)) - v.begin(), 3);
     EXPECT_EQ(v.size(), 6u);
-    EXPECT(v.erase_count(3, 3) == v.end());
+    auto a = v.erase_count(3, 3);
+    EXPECT(a == v.end());
     EXPECT_EQ(v.size(), 3u);
 
     v.resize(201);
