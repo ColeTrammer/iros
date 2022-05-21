@@ -20,18 +20,18 @@
     }                                                                                                                 \
     static void suite_name##_##case_name()
 
-#define TEST_CONSTEXPR(suite_name, case_name, constexpr_test)                                                         \
-    static void suite_name##_##case_name();                                                                           \
-    static __attribute__((constructor)) void __register_##suite_name##_##case_name() {                                \
-        Test::TestManager::the().register_skipped_test_case("" #suite_name, "" #case_name, suite_name##_##case_name); \
-    }                                                                                                                 \
-    static void suite_name##_##case_name() {                                                                          \
-        constexpr int __dummy = [] {                                                                                  \
-            constexpr_test();                                                                                         \
-            return 0;                                                                                                 \
-        }();                                                                                                          \
-        (void) __dummy;                                                                                               \
-        constexpr_test();                                                                                             \
+#define TEST_CONSTEXPR(suite_name, case_name, constexpr_test)                                                 \
+    static void suite_name##_##case_name();                                                                   \
+    static __attribute__((constructor)) void __register_##suite_name##_##case_name() {                        \
+        Test::TestManager::the().register_test_case("" #suite_name, "" #case_name, suite_name##_##case_name); \
+    }                                                                                                         \
+    static void suite_name##_##case_name() {                                                                  \
+        constexpr int __dummy = [] {                                                                          \
+            constexpr_test();                                                                                 \
+            return 0;                                                                                         \
+        }();                                                                                                  \
+        (void) __dummy;                                                                                       \
+        constexpr_test();                                                                                     \
     }
 
 #define EXPECT(...)                                                                                                                        \
