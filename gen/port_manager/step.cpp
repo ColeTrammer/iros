@@ -146,8 +146,8 @@ Result<UniquePtr<CMakeInstallStep>, Error> CMakeInstallStep::try_create(const Js
 CMakeInstallStep::~CMakeInstallStep() {}
 
 Result<Monostate, Error> CMakeInstallStep::act(Context& context, const Port& port) {
-    return context.run_process(
-        Process::shell_command(format("DESTDIR=\"{}\" cmake --install \"{}\"", context.config().iros_sysroot(), port.build_directory())));
+    auto enviornment = Enviornment::current().set("DESTDIR", port.build_directory().to_string());
+    return context.run_process(Process::command("cmake", "--install", port.build_directory()).with_enviornment(move(enviornment)));
 }
 
 Result<UniquePtr<CleanStep>, Error> CleanStep::try_create() {
