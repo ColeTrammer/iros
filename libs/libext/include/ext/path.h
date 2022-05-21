@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ext/error.h>
 #include <liim/format.h>
 #include <liim/forward.h>
 #include <liim/string.h>
@@ -8,7 +9,7 @@
 namespace Ext {
 class Path {
 public:
-    static Option<Path> resolve(const String& path);
+    static Result<Path, SystemError> resolve(const String& path);
     static Path root();
 
     Path();

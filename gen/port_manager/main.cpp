@@ -26,9 +26,7 @@ constexpr auto argument_parser = [] {
 Result<Monostate, Error> main(Arguments arguments) {
     auto context = Context(TRY(Config::try_create()));
 
-    auto path = TRY(Ext::Path::resolve(arguments.json_path).unwrap_or_else([&] {
-        return Ext::StringError(format("Failed to lookup path: `{}'", arguments.json_path));
-    }));
+    auto path = TRY(Ext::Path::resolve(arguments.json_path));
 
     auto port = TRY(Port::try_create(context.config(), move(path)));
     return port.build(context, arguments.build_step);

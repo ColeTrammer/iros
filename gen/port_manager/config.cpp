@@ -5,15 +5,9 @@
 
 namespace PortManager {
 Result<Config, Error> Config::try_create() {
-    auto resolve_path = [&](const String& path) {
-        return Ext::Path::resolve(path).unwrap_or_else([&] {
-            return Ext::StringError(format("Unable to resolve path `{}'", path));
-        });
-    };
-
     // NOTE: this is source directory which built the program.
     auto default_iros_source_directory = IROS_ROOT;
-    auto iros_source_directory = TRY(resolve_path(default_iros_source_directory));
+    auto iros_source_directory = TRY(Ext::Path::resolve(default_iros_source_directory));
 
     // NOTE: this is the architecture the program was built under.
     auto default_target_architecture = IROS_ARCH;

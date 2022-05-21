@@ -89,7 +89,7 @@ FileSystemObject* FileSystemModel::load_initial_data(const String& string_path) 
         return nullptr;
     }
 
-    auto& path = *maybe_path;
+    auto& path = maybe_path.value();
 
     set_root(make_unique<FileSystemObject>(m_text_file_icon, "/", "root", "root", 0666, 4096));
     auto* object = typed_root<FileSystemObject>();

@@ -1,19 +1,17 @@
 #include <ext/path.h>
+#include <ext/system.h>
+#include <liim/try.h>
 #include <limits.h>
 #include <unistd.h>
 
 namespace Ext {
-Option<Path> Path::resolve(const String& path) {
+Result<Path, SystemError> Path::resolve(const String& path) {
     if (path[0] == '/') {
-        return { Path(path) };
+        return Ok(Path(path));
     }
 
-    char buffer[PATH_MAX];
-    if (!realpath(path.string(), buffer)) {
-        return {};
-    }
-
-    return { Path(buffer) };
+    auto resolved = TRY(realpath(path.string()));
+    return Ok(Path(move(resolved)));
 }
 
 Path Path::root() {
