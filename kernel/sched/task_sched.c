@@ -362,11 +362,6 @@ int queue_signal_process(pid_t pid, int signum, void *val) {
 }
 
 void exit_process(struct process *process, struct task *exclude) {
-    if (process->pid == 1) {
-        debug_log("PID 1 exited, panicking\n");
-        abort();
-    }
-
     list_for_each_entry(&process->task_list, task, struct task, process_list) {
         if (task != exclude) {
             task_set_state_to_exiting(task);

@@ -101,6 +101,11 @@ void proc_drop_process(struct process *process, struct task *task, bool free_pag
         mutex_unlock(&process->lock);
 
         if (no_remaining_tasks) {
+            if (process->pid == 1) {
+                debug_log("PID 1 exited, panicking\n");
+                abort();
+            }
+
 #ifdef PROCESSES_DEBUG
             debug_log("Destroying process: [ %d ]\n", process->pid);
 #endif /* PROCESSES_DEBUG */
