@@ -198,8 +198,14 @@ public:
     constexpr ValuePointer operator->() { return &value(); }
     constexpr ConstValuePointer operator->() const { return &value(); }
 
-    constexpr T& value() { return m_storage.value(); }
-    constexpr const T& value() const { return m_storage.value(); }
+    constexpr T& value() {
+        assert(has_value());
+        return m_storage.value();
+    }
+    constexpr const T& value() const {
+        assert(has_value());
+        return m_storage.value();
+    }
 
     constexpr T value_or(T default_value) const { return has_value() ? T { value() } : T { move(default_value) }; }
 
