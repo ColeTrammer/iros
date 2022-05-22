@@ -51,6 +51,19 @@ public:
         });
     }
 
+    template<typename... Types>
+    Option<Variant<Types&...>> get_one_of(const String& name) {
+        return m_map.get(name).and_then([](auto& x) {
+            return x->template get_subvariant<Types...>();
+        });
+    }
+    template<typename... Types>
+    Option<Variant<const Types&...>> get_one_of(const String& name) const {
+        return m_map.get(name).and_then([](auto& x) {
+            return x->template get_subvariant<Types...>();
+        });
+    }
+
     template<typename T>
     T get_or(const String& name, T alt) const;
 
