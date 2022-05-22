@@ -1,8 +1,8 @@
 #pragma once
 
-#define TRY(option)                   \
+#define TRY(...)                      \
     ({                                \
-        auto _v = (option);           \
+        auto _v = (__VA_ARGS__);      \
         if (!_v) {                    \
             return _v.try_did_fail(); \
         }                             \
