@@ -25,10 +25,11 @@ public:
     Ext::Path build_directory_for_port(StringView name, StringView version) const;
 
     const String& target_architecture() const { return m_target_architecture; }
+    const String& target_host() const { return m_target_host; }
 
 private:
     Config(Ext::Path iros_source_directory, Ext::Path iros_build_directory, Ext::Path iros_sysroot, Ext::Path port_build_directory,
-           String install_prefix, String target_architecture);
+           String install_prefix, String target_architecture, String target_host);
 
     Ext::Path m_iros_source_directory;
     Ext::Path m_iros_build_directory;
@@ -36,5 +37,6 @@ private:
     Ext::Path m_port_build_directory;
     String m_install_prefix;
     String m_target_architecture;
+    String m_target_host;
 };
 }

@@ -17,6 +17,14 @@ Enviornment Enviornment::current() {
     return Enviornment(move(enviornment));
 }
 
+Result<Enviornment, Error> Enviornment::from_json(const JsonReader&, const Ext::Json::Object& object) {
+    auto result = current();
+    object.for_each([&](auto& key, auto& value) {
+        result = move(result).set(key, Ext::Json::stringify(value));
+    });
+    return Ok(result);
+}
+
 Enviornment::Enviornment(HashMap<String, String> enviornment) : m_enviornment(move(enviornment)) {}
 
 Enviornment Enviornment::set(String key, String value) && {
@@ -39,6 +47,10 @@ auto Enviornment::get_c_style_envp() -> CStyleEnvp {
 
 Process Process::shell_command(String command) {
     return Process::command("sh", "-c", move(command));
+}
+
+Process Process::from_arguments(NewVector<String> arguments) {
+    return Process(move(arguments), {});
 }
 
 Process::Process(NewVector<String> arguments, Option<Enviornment> enviornment)

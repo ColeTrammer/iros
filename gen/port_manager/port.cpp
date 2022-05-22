@@ -3,6 +3,7 @@
 #include <liim/new_vector.h>
 #include <liim/pointers.h>
 #include <liim/try.h>
+#include <liim/tuple.h>
 
 #include "context.h"
 #include "json_reader.h"
@@ -20,10 +21,19 @@ Result<Port, Error> Port::try_create(const Config& config, Ext::Path json_path) 
     auto patch_object = reader.lookup<Ext::Json::Object>(reader.json(), "patch");
     auto& build_system_object = TRY(reader.lookup<Ext::Json::Object>(reader.json(), "buildSystem"));
 
+    using StepConstructor = Result<UniquePtr<Step>, Error> (*)(const JsonReader&, const Ext::Json::Object&);
+    using BuildSystemConstructors = Tuple<StepConstructor, StepConstructor, StepConstructor>;
+
     auto build_system_type = TRY(reader.lookup<Ext::Json::String>(build_system_object, "type"));
-    if (build_system_type.view() != "cmake"sv) {
+    auto [make_configure_step, make_build_step, make_install_step] = TRY([&]() -> Result<BuildSystemConstructors, Error> {
+        if (build_system_type.view() == "cmake"sv) {
+            return Ok(BuildSystemConstructors(CMakeConfigureStep::try_create, CMakeBuildStep::try_create, CMakeInstallStep::try_create));
+        } else if (build_system_type.view() == "autoconf"sv) {
+            return Ok(
+                BuildSystemConstructors(AutoconfConfigureStep::try_create, AutoconfBuildStep::try_create, AutoconfInstallStep::try_create));
+        }
         return Err(Ext::StringError(format("Invalid build system type `{}' in json file `{}'", build_system_type, json_path)));
-    }
+    }());
 
     auto& configure_object = TRY(reader.lookup<Ext::Json::Object>(build_system_object, "configure"));
     auto& build_object = TRY(reader.lookup<Ext::Json::Object>(build_system_object, "build"));
@@ -39,9 +49,9 @@ Result<Port, Error> Port::try_create(const Config& config, Ext::Path json_path) 
     if (patch_object.is_ok()) {
         add_step(TRY(PatchStep::try_create(reader, patch_object.value())));
     }
-    add_step(TRY(CMakeConfigureStep::try_create(reader, configure_object)));
-    add_step(TRY(CMakeBuildStep::try_create(reader, build_object)));
-    add_step(TRY(CMakeInstallStep::try_create(reader, install_object)));
+    add_step(TRY(make_configure_step(reader, configure_object)));
+    add_step(TRY(make_build_step(reader, build_object)));
+    add_step(TRY(make_install_step(reader, install_object)));
     add_step(TRY(CleanStep::try_create()));
 
     auto definition_directory = json_path.dirname();

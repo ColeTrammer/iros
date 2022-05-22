@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ext/json.h>
 #include <liim/format.h>
 #include <liim/hash_map.h>
 #include <liim/new_vector.h>
@@ -12,6 +13,7 @@ namespace PortManager {
 class Enviornment {
 public:
     static Enviornment current();
+    static Result<Enviornment, Error> from_json(const JsonReader& reader, const Ext::Json::Object& object);
 
     Enviornment set(String key, String value) &&;
 
@@ -36,6 +38,7 @@ public:
         return Process(move(arguments), None {});
     }
     static Process shell_command(String command);
+    static Process from_arguments(NewVector<String> arguments);
 
     Process with_enviornment(Enviornment enviornment) &&;
 

@@ -20,7 +20,26 @@ public:
     template<typename T>
     Result<const T&, JsonLookupError> lookup(const Ext::Json::Object& object, const String& key) const {
         return object.get_as<T>(key).unwrap_or_else([&] {
-            return JsonLookupError(m_path, key, Ext::Json::type_to_name<T>);
+            return JsonLookupError(m_path, key, String(Ext::Json::type_to_name<T>));
+        });
+    }
+
+    template<typename... Types>
+    Result<Variant<const Types&...>, JsonLookupError> lookup_one_of(const Ext::Json::Object& object, const String& key) const {
+        return object.get_one_of<Types...>(key).unwrap_or_else([&] {
+            auto type_strings = NewVector<StringView> {};
+            (type_strings.push_back(Ext::Json::type_to_name<Types>), ...);
+            auto type = "["s;
+            bool first = true;
+            for (auto& s : type_strings) {
+                if (!first) {
+                    type += " or ";
+                }
+                type += String(s);
+                first = false;
+            }
+            type += "]";
+            return JsonLookupError(m_path, key, move(type));
         });
     }
 

@@ -51,6 +51,9 @@
                         "signature": {
                             "type": "string",
                             "format": "uri"
+                        },
+                        "sourceDirectory": {
+                            "type": "string"
                         }
                     },
                     "required": [

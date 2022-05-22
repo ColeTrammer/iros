@@ -6,7 +6,7 @@
 #include <liim/span.h>
 #include <liim/string.h>
 #include "error.h"
-#include "forward.h"
+#include "process.h"
 
 namespace PortManager {
 class Step {
@@ -40,6 +40,34 @@ private:
     String m_url;
 };
 
+class TarDownloadStep : public DownloadStep {
+private:
+    enum Kind {
+        Gz,
+    };
+
+    static String kind_to_string(Kind kind);
+    static Result<Kind, Ext::StringError> kind_from_string(const String& string);
+
+public:
+    static Result<UniquePtr<Step>, Error> try_create(const JsonReader& reader, const Ext::Json::Object& object);
+
+    explicit TarDownloadStep(String url, Kind kind, String signature_url, String sourece_directory_in_tarball);
+    virtual ~TarDownloadStep() override;
+
+    virtual Result<bool, Error> should_skip(Context& context, const Port& port) override;
+    virtual Result<Monostate, Error> act(Context& context, const Port& port) override;
+
+private:
+    Ext::Path download_destination(const Port& port) const;
+    Ext::Path signature_download_destination(const Port& port) const;
+
+    String m_url;
+    Kind m_kind { Kind::Gz };
+    String m_signature_url;
+    String m_source_directory_in_tarball;
+};
+
 class PatchStep : public Step {
 public:
     static Result<UniquePtr<PatchStep>, Error> try_create(const JsonReader& reader, const Ext::Json::Object& object);
@@ -67,12 +95,33 @@ public:
 
 class CMakeConfigureStep : public ConfigureStep {
 public:
-    static Result<UniquePtr<CMakeConfigureStep>, Error> try_create(const JsonReader& reader, const Ext::Json::Object& object);
+    static Result<UniquePtr<Step>, Error> try_create(const JsonReader& reader, const Ext::Json::Object& object);
 
     virtual ~CMakeConfigureStep() override;
 
     virtual Result<bool, Error> should_skip(Context& context, const Port& port) override;
     virtual Result<Monostate, Error> act(Context& context, const Port& port) override;
+};
+
+class AutoconfConfigureStep : public ConfigureStep {
+private:
+    using Setting = Variant<bool, String>;
+    using Settings = HashMap<String, Setting>;
+
+public:
+    static Result<Enviornment, Error> parse_enviornment(const JsonReader& reader, const Ext::Json::Object& object);
+    static Result<Settings, Error> parse_settings(const JsonReader& reader, const Ext::Json::Object& object);
+    static Result<UniquePtr<Step>, Error> try_create(const JsonReader& reader, const Ext::Json::Object& object);
+
+    AutoconfConfigureStep(Enviornment enviornment, Settings settings);
+    virtual ~AutoconfConfigureStep() override;
+
+    virtual Result<bool, Error> should_skip(Context& context, const Port& port) override;
+    virtual Result<Monostate, Error> act(Context& context, const Port& port) override;
+
+private:
+    Enviornment m_enviornment;
+    Settings m_settings;
 };
 
 class BuildStep : public Step {
@@ -82,9 +131,18 @@ class BuildStep : public Step {
 
 class CMakeBuildStep : public BuildStep {
 public:
-    static Result<UniquePtr<CMakeBuildStep>, Error> try_create(const JsonReader& reader, const Ext::Json::Object& object);
+    static Result<UniquePtr<Step>, Error> try_create(const JsonReader& reader, const Ext::Json::Object& object);
 
     virtual ~CMakeBuildStep() override;
+
+    virtual Result<Monostate, Error> act(Context& context, const Port& port) override;
+};
+
+class AutoconfBuildStep : public BuildStep {
+public:
+    static Result<UniquePtr<Step>, Error> try_create(const JsonReader& reader, const Ext::Json::Object& object);
+
+    virtual ~AutoconfBuildStep() override;
 
     virtual Result<Monostate, Error> act(Context& context, const Port& port) override;
 };
@@ -96,9 +154,18 @@ class InstallStep : public Step {
 
 class CMakeInstallStep : public InstallStep {
 public:
-    static Result<UniquePtr<CMakeInstallStep>, Error> try_create(const JsonReader& reader, const Ext::Json::Object& object);
+    static Result<UniquePtr<Step>, Error> try_create(const JsonReader& reader, const Ext::Json::Object& object);
 
     virtual ~CMakeInstallStep() override;
+
+    virtual Result<Monostate, Error> act(Context& context, const Port& port) override;
+};
+
+class AutoconfInstallStep : public InstallStep {
+public:
+    static Result<UniquePtr<Step>, Error> try_create(const JsonReader& reader, const Ext::Json::Object& object);
+
+    virtual ~AutoconfInstallStep() override;
 
     virtual Result<Monostate, Error> act(Context& context, const Port& port) override;
 };
