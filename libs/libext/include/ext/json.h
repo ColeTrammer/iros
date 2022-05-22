@@ -97,6 +97,8 @@ constexpr StringView type_to_name = [] {
         return "Number"sv;
     } else if constexpr (IsSame<T, Object>::value) {
         return "Object"sv;
+    } else if constexpr (IsSame<T, String>::value) {
+        return "String"sv;
     } else {
         return "Invalid JSON Type"sv;
     }
