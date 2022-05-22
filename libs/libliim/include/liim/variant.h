@@ -219,6 +219,30 @@ public:
         return this->get<index>();
     }
 
+    template<typename... Subtypes>
+    constexpr Option<Variant<Subtypes&...>> get_subvariant() {
+        return this->visit_by_index([&]<size_t index>(in_place_index_t<index>, auto&& self) -> Option<Variant<Subtypes&...>> {
+            using Type = TypeList::TypeAtIndex<index, Types...>::type;
+            if constexpr (TypeList::Index<Type, Subtypes...>::value != static_cast<size_t>(-1)) {
+                return Variant<Subtypes&...>(self.template get<index>());
+            } else {
+                return None {};
+            }
+        });
+    }
+
+    template<typename... Subtypes>
+    constexpr Option<Variant<const Subtypes&...>> get_subvariant() const {
+        return this->visit_by_index([&]<size_t index>(in_place_index_t<index>, auto&& self) -> Option<Variant<const Subtypes&...>> {
+            using Type = TypeList::TypeAtIndex<index, Types...>::type;
+            if constexpr (TypeList::Index<Type, Subtypes...>::value != static_cast<size_t>(-1)) {
+                return Variant<const Subtypes&...>(self.template get<index>());
+            } else {
+                return None {};
+            }
+        });
+    }
+
     template<typename T>
     constexpr T get_or(T value) {
         constexpr size_t index = TypeList::Index<T, Types...>::value;

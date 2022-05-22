@@ -66,3 +66,16 @@ TEST(variant, references) {
     EXPECT_EQ(s, 42);
     EXPECT_EQ(v.as<const int&>(), 88);
 }
+
+constexpr void subvariant() {
+    int i = 5;
+    Variant<int&, long&, double&> v(i);
+    EXPECT(!v.get_subvariant<long&, double&>());
+
+    auto w = v.get_subvariant<int&, double&>();
+    EXPECT(w.has_value());
+    EXPECT(w->is<int&>());
+    EXPECT_EQ(w->as<int&>(), 5);
+}
+
+TEST_CONSTEXPR(variant, subvariant, subvariant)
