@@ -319,6 +319,22 @@ constexpr void NewVector<T>::grow_to(size_t new_size) {
 }
 
 template<typename T>
+constexpr Option<T&> NewVector<T>::at(size_t index) {
+    if (index >= size()) {
+        return None {};
+    }
+    return Option<T&>((*this)[index]);
+}
+
+template<typename T>
+constexpr Option<const T&> NewVector<T>::at(size_t index) const {
+    if (index >= size()) {
+        return None {};
+    }
+    return Option<const T&>((*this)[index]);
+}
+
+template<typename T>
 constexpr void NewVector<T>::clear() {
     erase(begin(), end());
 

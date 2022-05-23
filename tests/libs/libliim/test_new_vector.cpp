@@ -19,6 +19,12 @@ constexpr void basic() {
     auto y = NewVector { 1, 2 };
     EXPECT_EQ(y.front(), 1);
     EXPECT_EQ(y.back(), 2);
+
+    EXPECT(y.at(0));
+    EXPECT_EQ(*y.at(0), 1);
+    EXPECT(y.at(1));
+    EXPECT_EQ(*y.at(1), 2);
+    EXPECT(!y.at(2));
 }
 
 constexpr void iterator() {
