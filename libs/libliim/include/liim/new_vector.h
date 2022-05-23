@@ -388,6 +388,9 @@ constexpr auto NewVector<T>::erase_count(size_t index, size_t count) -> Iterator
         (*this)[index + i] = move((*this)[index + i + count]);
         m_data[index + i + count].destroy();
     }
+    for (size_t i = index + leftover_elements; i < m_size; i++) {
+        m_data[i].destroy();
+    }
     m_size -= count;
     return iterator(min(index, size()));
 }
@@ -397,7 +400,11 @@ constexpr Option<T> NewVector<T>::pop_back() {
     if (empty()) {
         return None {};
     }
-    return move(m_data[--m_size].value);
+
+    auto& slot = m_data[--m_size];
+    auto value = Option<T>(move(slot.value));
+    slot.destroy();
+    return value;
 }
 
 template<typename T>
