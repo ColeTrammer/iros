@@ -109,9 +109,7 @@ constexpr void mutate() {
 }
 
 constexpr void container() {
-    // FIXME: allow passing the range directory without creating a tempory variable
-    auto r = range(2, 6);
-    auto v = NewVector<int> { r };
+    auto v = NewVector<int> { range(2, 6) };
     EXPECT_EQ(v.size(), 4u);
     EXPECT_EQ(v.front(), 2);
 
@@ -123,15 +121,13 @@ constexpr void container() {
     EXPECT_EQ(v[3], 7);
     EXPECT_EQ(v[4], 3);
 
-    auto rr = range(3);
-    v.assign(rr);
+    v.assign(range(3));
     EXPECT_EQ(v.size(), 3u);
     EXPECT_EQ(v[0], 0);
     EXPECT_EQ(v[1], 1);
     EXPECT_EQ(v[2], 2);
 
-    auto rrr = range(2);
-    v = rrr;
+    v = range(2);
     EXPECT_EQ(v.size(), 2u);
     EXPECT_EQ(v[0], 0);
     EXPECT_EQ(v[1], 1);

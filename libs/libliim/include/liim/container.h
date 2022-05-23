@@ -86,8 +86,10 @@ private:
 template<Iterator Iter>
 class MoveIterator {
 public:
-    using BaseValueType = Iter::ValueType;
-    using ValueType = RemoveReference<BaseValueType>::type&&;
+    using BaseValueType = IteratorTraits<Iter>::ValueType;
+    static constexpr bool is_reference = IsReference<BaseValueType>::value;
+
+    using ValueType = Conditional<is_reference, typename RemoveReference<BaseValueType>::type&&, BaseValueType>::type;
 
     constexpr explicit MoveIterator(Iter iter) : m_iterator(move(iter)) {}
 
