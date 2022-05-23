@@ -1,11 +1,22 @@
 #pragma once
 
+#include <liim/initializer_list.h>
 #include <liim/utilities.h>
 
 namespace LIIM {
 template<typename T>
+struct IteratorTraits {
+    using ValueType = T::ValueType;
+};
+
+template<typename T>
+struct IteratorTraits<T*> {
+    using ValueType = T&;
+};
+
+template<typename T>
 concept Iterator = requires(T iterator, T other) {
-    { *iterator } -> SameAs<typename T::ValueType>;
+    { *iterator } -> SameAs<typename IteratorTraits<T>::ValueType>;
     { ++iterator } -> SameAs<T&>;
     { iterator++ } -> SameAs<T>;
     { iterator == other } -> SameAs<bool>;
@@ -233,7 +244,7 @@ private:
 template<Container C>
 class Reversed {
 public:
-    explicit constexpr Reversed(C container) : m_container(forward<C&&>(container)) {}
+    explicit constexpr Reversed(C container) : m_container(::forward<C&&>(container)) {}
 
     constexpr auto begin() const {
         if constexpr (requires { m_container.rbegin(); }) {
@@ -259,7 +270,7 @@ private : C m_container;
 template<Container C>
 class MoveElements {
 public:
-    explicit constexpr MoveElements(C&& container) : m_container(move(container)) {}
+    explicit constexpr MoveElements(C&& container) : m_container(::move(container)) {}
 
     constexpr auto begin() { return MoveIterator(m_container.begin()); }
     constexpr auto end() { return MoveIterator(m_container.end()); }
@@ -330,12 +341,12 @@ constexpr Range<T> range(T start, T end) {
 
 template<Container T>
 constexpr Reversed<T> reversed(T&& container) {
-    return Reversed<T>(forward<T>(container));
+    return Reversed<T>(::forward<T>(container));
 }
 
 template<Container T>
 constexpr MoveElements<T> move_elements(T&& container) {
-    return MoveElements<T>(forward<T>(container));
+    return MoveElements<T>(::forward<T>(container));
 }
 
 template<Iterator Iter>
@@ -358,6 +369,8 @@ constexpr auto iterator_container(Iter begin, Iter end, size_t size) {
 }
 
 using LIIM::Container;
+using LIIM::Iterator;
+using LIIM::IteratorTraits;
 using LIIM::MoveIterator;
 using LIIM::Range;
 using LIIM::range;

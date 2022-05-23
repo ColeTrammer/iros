@@ -89,8 +89,27 @@ constexpr void iterator_container() {
     EXPECT_EQ(*it++, 4);
 }
 
+constexpr void initializer_list() {
+    auto l = std::initializer_list<int> { 2, 3, 4 };
+    EXPECT_EQ(l.size(), 3u);
+    auto it = l.begin();
+    EXPECT_EQ(*it++, 2);
+    EXPECT_EQ(*it++, 3);
+    EXPECT_EQ(*it++, 4);
+
+    auto v = NewVector<int> {};
+    for (auto& x : LIIM::reversed(l)) {
+        v.push_back(x);
+    }
+    EXPECT_EQ(v.size(), 3u);
+    EXPECT_EQ(v[0], 4);
+    EXPECT_EQ(v[1], 3);
+    EXPECT_EQ(v[2], 2);
+}
+
 TEST_CONSTEXPR(container, range, range)
 TEST_CONSTEXPR(container, repeat, repeat)
 TEST_CONSTEXPR(container, reversed, reversed)
 TEST_CONSTEXPR(container, move_elements, move_elements)
 TEST_CONSTEXPR(container, iterator_container, iterator_container)
+TEST_CONSTEXPR(container, initializer_list, initializer_list)

@@ -1,12 +1,9 @@
 #pragma once
 
 #include <assert.h>
+#include <liim/initializer_list.h>
 #include <liim/span.h>
 #include <stddef.h>
-
-#if !defined(__is_libc) && !defined(__is_libk)
-#include <initializer_list>
-#endif
 
 namespace LIIM {
 template<typename T, size_t max_elements>
@@ -14,14 +11,12 @@ class FixedArray {
 public:
     constexpr FixedArray(size_t size = max_elements) : m_size(size), m_array() { assert(size <= max_elements); }
 
-#if !defined(__is_libc) && !defined(__is_libk)
     constexpr FixedArray(std::initializer_list<T> elements) : m_size(elements.size()), m_array() {
         size_t i = 0;
         for (auto it = elements.begin(); it != elements.end(); ++it, i++) {
             m_array[i] = *it;
         }
     }
-#endif
 
     constexpr T& operator[](size_t index) {
         assert(index < m_size);

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <liim/initializer_list.h>
+
 #if !defined(__is_libc) && !defined(__is_libk)
 #include <memory>
 #include <new>
