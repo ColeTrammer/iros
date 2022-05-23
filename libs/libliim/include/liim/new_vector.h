@@ -76,14 +76,28 @@ public:
     using ValueType = T;
 
     constexpr NewVector() = default;
+
     explicit constexpr NewVector(size_t count, const T& value = T()) { insert(begin(), count, value); }
     constexpr NewVector(std::initializer_list<T> list) { insert(begin(), list); }
+
+    template<Container C>
+    explicit constexpr NewVector(C&& container) {
+        insert(begin(), forward<C>(container));
+    }
+
+    template<Iterator Iter>
+    explicit constexpr NewVector(Iter start, Iter end) {
+        insert(begin(), move(start), move(end));
+    }
+
     constexpr NewVector(const NewVector&);
     constexpr NewVector(NewVector&&);
 
     constexpr ~NewVector() { clear(); }
 
-    constexpr NewVector& operator=(std::initializer_list<T>);
+    template<Container C>
+    constexpr NewVector& operator=(C&& container);
+    constexpr NewVector& operator=(std::initializer_list<T> list);
     constexpr NewVector& operator=(const NewVector&);
     constexpr NewVector& operator=(NewVector&&);
 
@@ -91,8 +105,18 @@ public:
         auto temp = NewVector(count, value);
         swap(temp);
     }
-    constexpr void assign(std::initializer_list<T> list) {
-        auto temp = NewVector(list);
+
+    constexpr void assign(std::initializer_list<T> list) { assign(iterator_container(list.begin(), list.end())); }
+
+    template<Container C>
+    constexpr void assign(C&& container) {
+        auto temp = NewVector(forward<C>(container));
+        swap(temp);
+    }
+
+    template<Iterator Iter>
+    constexpr void assign(Iter begin, Iter end) {
+        auto temp = NewVector(move(begin), move(end));
         swap(temp);
     }
 
@@ -155,10 +179,30 @@ public:
     }
     constexpr Iterator insert(ConstIterator position, std::initializer_list<T> list) { return insert(iterator_index(position), list); }
 
+    template<Container C>
+    constexpr Iterator insert(ConstIterator position, C&& container) {
+        return insert(iterator_index(position), forward<C>(container));
+    }
+
+    template<::Iterator Iter>
+    constexpr Iterator insert(ConstIterator position, Iter begin, Iter end) {
+        return insert(iterator_index(position), move(begin), move(end));
+    }
+
     constexpr Iterator insert(size_t index, const T& value) { return emplace(index, value); }
     constexpr Iterator insert(size_t index, T&& value) { return emplace(index, move(value)); }
-    constexpr Iterator insert(size_t index, size_t count, const T& value);
-    constexpr Iterator insert(size_t index, std::initializer_list<T> list);
+    constexpr Iterator insert(size_t index, size_t count, const T& value) { return insert(index, repeat(count, value)); }
+    constexpr Iterator insert(size_t index, std::initializer_list<T> list) {
+        return insert(index, iterator_container(list.begin(), list.end()));
+    }
+
+    template<Container C>
+    constexpr Iterator insert(size_t index, C&& container);
+
+    template<::Iterator Iter>
+    constexpr Iterator insert(size_t index, Iter begin, Iter end) {
+        return insert(index, iterator_container(move(begin), move(end)));
+    }
 
     constexpr Iterator erase(ConstIterator position) { return erase(position, position + 1); }
     constexpr Iterator erase(ConstIterator start, ConstIterator end) { return erase_count(iterator_index(start), end - start); }
@@ -212,6 +256,13 @@ constexpr NewVector<T>::NewVector(const NewVector<T>& other) {
 template<typename T>
 constexpr NewVector<T>::NewVector(NewVector<T>&& other)
     : m_size(exchange(other.m_size, 0)), m_capacity(exchange(other.m_capacity, 0)), m_data(exchange(other.m_data, nullptr)) {}
+
+template<typename T>
+template<Container C>
+constexpr NewVector<T>& NewVector<T>::operator=(C&& container) {
+    assign(forward<C>(container));
+    return *this;
+}
 
 template<typename T>
 constexpr NewVector<T>& NewVector<T>::operator=(std::initializer_list<T> list) {
@@ -301,23 +352,21 @@ constexpr void NewVector<T>::clear() {
 }
 
 template<typename T>
-constexpr auto NewVector<T>::insert(size_t index, size_t count, const T& value) -> Iterator {
-    grow_to(size() + count);
-
-    move_objects(m_data + index + count, m_data + index, size() - index);
-    for (size_t i = 0; i < count; i++) {
-        construct_at(&m_data[index + i].value, value);
-    }
-    m_size += count;
-
-    return iterator(index);
-}
-
-template<typename T>
-constexpr auto NewVector<T>::insert(size_t index, std::initializer_list<T> list) -> Iterator {
+template<Container C>
+constexpr auto NewVector<T>::insert(size_t index, C&& container) -> Iterator {
     auto result = index;
-    for (auto& value : list) {
-        insert(index++, value);
+
+    using ValueType = IteratorTraits<decltype(container.begin())>::ValueType;
+    constexpr bool is_const = IsConst<typename RemoveReference<ValueType>::type>::value;
+
+    if constexpr (!is_const && !IsLValueReference<C>::value && !IsConst<decay_t<C>>::value) {
+        for (auto&& value : move_elements(move(container))) {
+            insert(index++, move(value));
+        }
+    } else {
+        for (const auto& value : container) {
+            insert(index++, value);
+        }
     }
     return iterator(result);
 }

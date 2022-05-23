@@ -283,7 +283,7 @@ private : C m_container;
 template<Iterator Iter>
 class IteratorContainer {
 public:
-    explicit constexpr IteratorContainer(Iter begin, Iter end) : m_begin(begin), m_end(end) {}
+    explicit constexpr IteratorContainer(Iter begin, Iter end) : m_begin(move(begin)), m_end(move(end)) {}
 
     constexpr Iter begin() const { return m_begin; }
     constexpr Iter end() const { return m_end; }
@@ -296,7 +296,7 @@ private:
 template<Iterator Iter>
 class AutoSizedIteratorContainer {
 public:
-    explicit constexpr AutoSizedIteratorContainer(Iter begin, Iter end) : m_begin(begin), m_end(end) {}
+    explicit constexpr AutoSizedIteratorContainer(Iter begin, Iter end) : m_begin(move(begin)), m_end(move(end)) {}
 
     constexpr Iter begin() const { return m_begin; }
     constexpr Iter end() const { return m_end; }
@@ -311,7 +311,8 @@ private:
 template<Iterator Iter>
 class ExplicitlySizedIteratorContainer {
 public:
-    explicit constexpr ExplicitlySizedIteratorContainer(Iter begin, Iter end, size_t size) : m_begin(begin), m_end(end), m_size(size) {}
+    explicit constexpr ExplicitlySizedIteratorContainer(Iter begin, Iter end, size_t size)
+        : m_begin(move(begin)), m_end(move(end)), m_size(size) {}
 
     constexpr Iter begin() const { return m_begin; }
     constexpr Iter end() const { return m_end; }
@@ -352,18 +353,18 @@ constexpr MoveElements<T> move_elements(T&& container) {
 template<Iterator Iter>
 constexpr auto iterator_container(Iter begin, Iter end) {
     if constexpr (requires { end - begin; }) {
-        return AutoSizedIteratorContainer(begin, end);
+        return AutoSizedIteratorContainer(move(begin), move(end));
     } else {
-        return IteratorContainer(begin, end);
+        return IteratorContainer(move(begin), move(end));
     }
 }
 
 template<Iterator Iter>
 constexpr auto iterator_container(Iter begin, Iter end, size_t size) {
     if constexpr (requires { end - begin; }) {
-        return AutoSizedIteratorContainer(begin, end);
+        return AutoSizedIteratorContainer(move(begin), move(end));
     } else {
-        return ExplicitlySizedIteratorContainer(begin, end, size);
+        return ExplicitlySizedIteratorContainer(move(begin), move(end), size);
     }
 }
 }

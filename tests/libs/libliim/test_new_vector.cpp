@@ -108,7 +108,48 @@ constexpr void mutate() {
     EXPECT_EQ(v.size(), 3u);
 }
 
+constexpr void container() {
+    // FIXME: allow passing the range directory without creating a tempory variable
+    auto r = range(2, 6);
+    auto v = NewVector<int> { r };
+    EXPECT_EQ(v.size(), 4u);
+    EXPECT_EQ(v.front(), 2);
+
+    v.insert(1, repeat(3, 7));
+    EXPECT_EQ(v.size(), 7u);
+    EXPECT_EQ(v[0], 2);
+    EXPECT_EQ(v[1], 7);
+    EXPECT_EQ(v[2], 7);
+    EXPECT_EQ(v[3], 7);
+    EXPECT_EQ(v[4], 3);
+
+    auto rr = range(3);
+    v.assign(rr);
+    EXPECT_EQ(v.size(), 3u);
+    EXPECT_EQ(v[0], 0);
+    EXPECT_EQ(v[1], 1);
+    EXPECT_EQ(v[2], 2);
+
+    auto rrr = range(2);
+    v = rrr;
+    EXPECT_EQ(v.size(), 2u);
+    EXPECT_EQ(v[0], 0);
+    EXPECT_EQ(v[1], 1);
+
+    auto w = NewVector<UniquePtr<int>> {};
+    w.push_back(make_unique<int>(4));
+    w.push_back(make_unique<int>(8));
+
+    auto z = NewVector<UniquePtr<int>> {};
+    z.push_back(make_unique<int>(6));
+
+    w.insert(1, move(z));
+    EXPECT_EQ(w.size(), 3u);
+    EXPECT_EQ(*w[1], 6);
+}
+
 TEST_CONSTEXPR(new_vector, basic, basic)
 TEST_CONSTEXPR(new_vector, iterator, iterator)
 TEST_CONSTEXPR(new_vector, assign, assign)
 TEST_CONSTEXPR(new_vector, mutate, mutate)
+TEST_CONSTEXPR(new_vector, container, container)

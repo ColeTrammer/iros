@@ -82,7 +82,7 @@ constexpr void move_elements() {
 constexpr void iterator_container() {
     auto v = NewVector { 2, 3, 4 };
     auto c = iterator_container(v.begin(), v.end());
-    EXPECT_EQ(c.size(), 3u);
+    EXPECT_EQ(c.size(), 3);
     auto it = c.begin();
     EXPECT_EQ(*it++, 2);
     EXPECT_EQ(*it++, 3);
