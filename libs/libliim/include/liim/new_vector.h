@@ -1,65 +1,20 @@
 #pragma once
 
 #include <initializer_list>
+#include <liim/container.h>
 #include <liim/option.h>
 #include <liim/span.h>
 
 namespace LIIM {
-template<typename Iter>
-class ReverseIterator {
-public:
-    constexpr explicit ReverseIterator(Iter iter) : m_iterator(move(iter)) {}
-
-    constexpr Iter base() const { return m_iterator; }
-
-    constexpr decltype(auto) operator*() const { return m_iterator[-1]; }
-    constexpr decltype(auto) operator->() const { return &m_iterator[-1]; }
-
-    constexpr decltype(auto) operator[](ssize_t index) const { return m_iterator[-index]; }
-
-    constexpr ReverseIterator& operator++() {
-        --m_iterator;
-        return *this;
-    }
-    constexpr ReverseIterator& operator--() {
-        ++m_iterator;
-        return *this;
-    }
-
-    constexpr ReverseIterator operator++(int) const { return ReverseIterator(m_iterator--); }
-    constexpr ReverseIterator operator--(int) const { return ReverseIterator(m_iterator++); }
-
-    constexpr ReverseIterator operator+(ssize_t n) const { return ReverseIterator(m_iterator - n); }
-    constexpr ReverseIterator operator-(ssize_t n) const { return ReverseIterator(m_iterator + n); }
-
-    constexpr ssize_t operator-(const ReverseIterator& other) const { return other.base() - *this.base(); }
-
-    constexpr ReverseIterator& operator+=(ssize_t n) {
-        m_iterator -= n;
-        return *this;
-    }
-    constexpr ReverseIterator& operator-=(ssize_t n) {
-        m_iterator += n;
-        return *this;
-    }
-
-    constexpr bool operator==(const ReverseIterator& other) const { return this->m_iterator == other.m_iterator; }
-    constexpr bool operator!=(const ReverseIterator& other) const { return this->m_iterator != other.m_iterator; }
-    constexpr bool operator<=(const ReverseIterator& other) const { return this->m_iterator >= other.m_iterator; }
-    constexpr bool operator<(const ReverseIterator& other) const { return this->m_iterator > other.m_iterator; }
-    constexpr bool operator>=(const ReverseIterator& other) const { return this->m_iterator <= other.m_iterator; }
-    constexpr bool operator>(const ReverseIterator& other) const { return this->m_iterator < other.m_iterator; }
-
-private:
-    Iter m_iterator;
-};
-
 template<typename T>
 class NewVector;
 
 template<typename VectorType>
 class NewVectorIterator {
 public:
+    using VectorValueType = VectorType::ValueType;
+    using ValueType = Conditional<IsConst<VectorType>::value, const VectorValueType&, VectorValueType&>::type;
+
     constexpr operator NewVectorIterator<const VectorType>() requires(!IsConst<VectorType>::value) {
         return NewVectorIterator<const VectorType>(m_vector, m_index);
     }
@@ -118,6 +73,8 @@ private:
 template<typename T>
 class NewVector {
 public:
+    using ValueType = T;
+
     constexpr NewVector() = default;
     explicit constexpr NewVector(size_t count, const T& value = T()) { insert(begin(), count, value); }
     constexpr NewVector(std::initializer_list<T> list) { insert(begin(), list); }
