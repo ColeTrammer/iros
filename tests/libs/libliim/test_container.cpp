@@ -21,6 +21,17 @@ constexpr void range() {
     EXPECT_EQ(v.size(), 2u);
     EXPECT_EQ(v[0], 3);
     EXPECT_EQ(v[1], 4);
+
+    v.clear();
+    for (auto i : range(-1)) {
+        v.push_back(i);
+    }
+    EXPECT_EQ(v.size(), 0u);
+
+    for (auto i : range(4, 2)) {
+        v.push_back(i);
+    }
+    EXPECT_EQ(v.size(), 0u);
 }
 
 constexpr void repeat() {

@@ -61,7 +61,7 @@ public:
     constexpr ReverseIterator operator+(ssize_t n) const { return ReverseIterator(m_iterator - n); }
     constexpr ReverseIterator operator-(ssize_t n) const { return ReverseIterator(m_iterator + n); }
 
-    constexpr ssize_t operator-(const ReverseIterator& other) const { return other.base() - *this.base(); }
+    constexpr ssize_t operator-(const ReverseIterator& other) const { return other.base() - this->base(); }
 
     constexpr ReverseIterator& operator+=(ssize_t n) {
         m_iterator -= n;
@@ -180,7 +180,6 @@ private:
 template<typename T>
 class Range {
 public:
-    explicit constexpr Range(T end) : m_start(), m_end(move(end)) {}
     explicit constexpr Range(T start, T end) : m_start(start), m_end(end) {}
 
     class Iterator {
@@ -333,13 +332,16 @@ constexpr Repeat<T> repeat(size_t count, T value) {
 }
 
 template<typename T>
-constexpr Range<T> range(T start) {
-    return Range(move(start));
+constexpr Range<T> range(T start, T end) {
+    if (end < start) {
+        return Range(start, start);
+    }
+    return Range(move(start), move(end));
 }
 
 template<typename T>
-constexpr Range<T> range(T start, T end) {
-    return Range(move(start), move(end));
+constexpr Range<T> range(T start) {
+    return range(0, move(start));
 }
 
 template<Container T>
