@@ -4,6 +4,7 @@ set(TEST_FILES
     test_function.cpp
     test_new_vector.cpp
     test_option.cpp
+    test_pair.cpp
     test_preprocessor.cpp
     test_result.cpp
     test_string_view.cpp
