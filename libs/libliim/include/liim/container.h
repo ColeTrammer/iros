@@ -1,6 +1,7 @@
 #pragma once
 
 #include <liim/initializer_list.h>
+#include <liim/tuple.h>
 #include <liim/utilities.h>
 
 namespace LIIM {
@@ -314,6 +315,65 @@ public:
 private : C m_container;
 };
 
+template<Iterator... Iters>
+class ZipIterator {
+private:
+    Tuple<Iters...> m_iterators;
+
+public:
+    explicit constexpr ZipIterator(Tuple<Iters...> iterators) : m_iterators(move(iterators)) {}
+
+    constexpr auto operator*() const {
+        return tuple_map(m_iterators, [](auto&& iterator) -> decltype(auto) {
+            return (*iterator);
+        });
+    }
+
+    using ValueType = decltype(*declval<ZipIterator>());
+
+    constexpr ZipIterator& operator++() {
+        tuple_map(m_iterators, [](auto& iterator) {
+            ++iterator;
+            return 0;
+        });
+        return *this;
+    }
+
+    constexpr ZipIterator operator++(int) const {
+        auto result = *this;
+        ++*this;
+        return result;
+    }
+
+    constexpr bool operator==(const ZipIterator& other) const {
+        auto helper = [&]<size_t... indices>(IndexSequence<indices...>)->bool {
+            return ((this->m_iterators.template get<indices>() == other.m_iterators.template get<indices>()) || ...);
+        };
+        return helper(make_index_sequence<sizeof...(Iters)>());
+    }
+    constexpr bool operator!=(const ZipIterator& other) const { return !(*this == other); }
+};
+
+template<Container... Cs>
+class Zip {
+public:
+    explicit constexpr Zip(Cs&&... containers) : m_containers(::forward<Cs>(containers)...) {}
+
+    constexpr auto begin() {
+        return ZipIterator(tuple_map(m_containers, [](auto&& container) {
+            return container.begin();
+        }));
+    }
+    constexpr auto end() {
+        return ZipIterator(tuple_map(m_containers, [](auto&& container) {
+            return container.end();
+        }));
+    }
+
+private:
+    Tuple<Cs...> m_containers;
+};
+
 template<Container C>
 class MoveElements {
 public:
@@ -403,6 +463,11 @@ constexpr Enumerate<T> enumerate(T&& container) {
 template<Container T>
 constexpr MoveElements<T> move_elements(T&& container) {
     return MoveElements<T>(::forward<T>(container));
+}
+
+template<Container... Cs>
+constexpr Zip<Cs...> zip(Cs&&... containers) {
+    return Zip<Cs...>(::forward<Cs>(containers)...);
 }
 
 template<Iterator Iter>
