@@ -115,6 +115,9 @@ constexpr void zip() {
     y.push_back(make_unique<int>(6));
     y.push_back(make_unique<int>(2));
 
+    for (auto [a, b] : zip(y, z)) {
+        EXPECT_EQ(*a + *b, 8);
+    }
     for (auto [a, b] : zip(move_elements(move(y)), move_elements(move(z)))) {
         EXPECT_EQ(*a + *b, 8);
     }
