@@ -14,13 +14,43 @@ namespace Detail {
         constexpr TupleImpl(T&& value, Rest&&... rest) : m_value(forward<T>(value)), m_rest(forward<Rest>(rest)...) {}
         constexpr ~TupleImpl() = default;
 
-        template<size_t index, typename Impl>
-        static constexpr decltype(auto) get(Impl&& impl) {
+        template<size_t index>
+        static constexpr typename TypeList::TypeAtIndex<index, T, Rest...>::type& get(TupleImpl& impl) {
             static_assert(index < TypeList::Count<T, Rest...>::value, "Tuple get index is too high");
             if constexpr (index == 0) {
-                return (forward<Impl>(impl).m_value);
+                return impl.m_value;
             } else {
-                return get<index - 1>(forward<Impl>(impl).m_rest);
+                return TupleImpl<Rest...>::template get<index - 1>(impl.m_rest);
+            }
+        }
+
+        template<size_t index>
+        static constexpr typename TypeList::TypeAtIndex<index, T, Rest...>::type&& get(TupleImpl&& impl) {
+            static_assert(index < TypeList::Count<T, Rest...>::value, "Tuple get index is too high");
+            if constexpr (index == 0) {
+                return forward<T&&>(impl.m_value);
+            } else {
+                return TupleImpl<Rest...>::template get<index - 1>(move(impl).m_rest);
+            }
+        }
+
+        template<size_t index>
+        static constexpr const typename TypeList::TypeAtIndex<index, T, Rest...>::type& get(const TupleImpl& impl) {
+            static_assert(index < TypeList::Count<T, Rest...>::value, "Tuple get index is too high");
+            if constexpr (index == 0) {
+                return impl.m_value;
+            } else {
+                return TupleImpl<Rest...>::template get<index - 1>(impl.m_rest);
+            }
+        }
+
+        template<size_t index>
+        static constexpr const typename TypeList::TypeAtIndex<index, T, Rest...>::type&& get(const TupleImpl&& impl) {
+            static_assert(index < TypeList::Count<T, Rest...>::value, "Tuple get index is too high");
+            if constexpr (index == 0) {
+                return forward<const T&&>(impl.m_value);
+            } else {
+                return TupleImpl<Rest...>::template get<index - 1>(move(impl).m_rest);
             }
         }
 
@@ -39,6 +69,8 @@ namespace Detail {
 template<typename... Types>
 class Tuple {
 public:
+    static constexpr size_t size() { return TypeList::Count<Types...>::value; }
+
     constexpr Tuple() = default;
     constexpr Tuple(Types&&... types) : m_impl(forward<Types>(types)...) {}
     constexpr ~Tuple() = default;
@@ -69,6 +101,15 @@ private:
 
 template<class... Types>
 Tuple(Types...) -> Tuple<Types...>;
+
+template<typename C, typename Tuple>
+constexpr auto tuple_map(Tuple&& tuple, C&& mapper) {
+    auto helper = [&]<size_t... indices>(IndexSequence<indices...>)->decltype(auto) {
+        using ReturnTuple = LIIM::Tuple<decltype(mapper(forward<Tuple>(tuple).template get<indices>()))...>;
+        return ReturnTuple(mapper(forward<Tuple>(tuple).template get<indices>())...);
+    };
+    return helper(make_index_sequence<decay_t<Tuple>::size()>());
+}
 };
 
 namespace std {
