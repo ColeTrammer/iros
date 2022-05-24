@@ -96,6 +96,30 @@ constexpr void enumerate() {
     }
 }
 
+constexpr void zip() {
+    auto v = NewVector { 2, 4, 6 };
+    auto w = NewVector { 6, 4, 2 };
+
+    for (auto [a, b] : zip(v, w)) {
+        EXPECT_EQ(a + b, 8);
+    }
+
+    int sum = 0;
+    for (auto [a, b, c] : zip(range(5), range(3), range(2))) {
+        sum += a + b + c;
+    }
+    EXPECT_EQ(sum, 3);
+
+    auto y = NewVector<UniquePtr<int>> {};
+    auto z = NewVector<UniquePtr<int>> {};
+    y.push_back(make_unique<int>(6));
+    y.push_back(make_unique<int>(2));
+
+    for (auto [a, b] : zip(move_elements(move(y)), move_elements(move(z)))) {
+        EXPECT_EQ(*a + *b, 8);
+    }
+}
+
 constexpr void move_elements() {
     auto v = NewVector<UniquePtr<int>> {};
     v.push_back(make_unique<int>(42));
@@ -147,6 +171,7 @@ TEST_CONSTEXPR(container, range, range)
 TEST_CONSTEXPR(container, repeat, repeat)
 TEST_CONSTEXPR(container, reversed, reversed)
 TEST_CONSTEXPR(container, enumerate, enumerate)
+TEST_CONSTEXPR(container, zip, zip)
 TEST_CONSTEXPR(container, move_elements, move_elements)
 TEST_CONSTEXPR(container, iterator_container, iterator_container)
 TEST_CONSTEXPR(container, initializer_list, initializer_list)
