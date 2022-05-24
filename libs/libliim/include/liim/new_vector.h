@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/compare.h>
 #include <liim/container.h>
 #include <liim/initializer_list.h>
 #include <liim/option.h>
@@ -235,6 +236,9 @@ public:
 
     constexpr void swap(NewVector&);
 
+    constexpr bool operator==(const NewVector& other) const requires(EqualComparable<T>);
+    constexpr auto operator<=>(const NewVector& other) const requires(Comparable<T>);
+
 private:
     constexpr void move_objects(MaybeUninit<T>* destination, MaybeUninit<T>* source, size_t count);
     constexpr void grow_to(size_t new_size);
@@ -420,6 +424,29 @@ constexpr void NewVector<T>::resize(size_t n, const T& value) {
     } else {
         insert(size(), n - size(), value);
     }
+}
+
+template<typename T>
+constexpr bool NewVector<T>::operator==(const NewVector& other) const requires(EqualComparable<T>) {
+    if (this->size() != other.size()) {
+        return false;
+    }
+    for (auto [left, right] : zip(*this, other)) {
+        if (left != right) {
+            return false;
+        }
+    }
+    return true;
+}
+
+template<typename T>
+constexpr auto NewVector<T>::operator<=>(const NewVector& other) const requires(Comparable<T>) {
+    for (auto [left, right] : zip(*this, other)) {
+        if (auto result = left <=> right; result != 0) {
+            return result;
+        }
+    }
+    return static_cast<ThreeWayCompareResult<T>>(this->size() <=> other.size());
 }
 
 template<typename T>

@@ -144,8 +144,31 @@ constexpr void container() {
     EXPECT_EQ(*w[1], 6);
 }
 
+constexpr void compare() {
+    auto v = NewVector<int> { 2, 3, 4 };
+    auto w = v;
+
+    EXPECT(v == w);
+
+    w.push_back(5);
+    EXPECT(v != w);
+    EXPECT(v < w);
+
+    auto z = v;
+    z[0] = 1;
+    EXPECT(z < v);
+
+    auto a = NewVector<float> { 1.0, 2.0 };
+    auto b = a;
+    EXPECT(a == b);
+    auto c = a;
+    c[0] = 0.0;
+    EXPECT(c < a);
+}
+
 TEST_CONSTEXPR(new_vector, basic, basic)
 TEST_CONSTEXPR(new_vector, iterator, iterator)
 TEST_CONSTEXPR(new_vector, assign, assign)
 TEST_CONSTEXPR(new_vector, mutate, mutate)
 TEST_CONSTEXPR(new_vector, container, container)
+TEST_CONSTEXPR(new_vector, compare, compare)
