@@ -111,6 +111,39 @@ private:
     Iter m_iterator;
 };
 
+template<Iterator Iter>
+class CountingIterator {
+public:
+    explicit constexpr CountingIterator(Iter iterator) : CountingIterator(move(iterator), 0) {}
+
+    using BaseValueType = IteratorTraits<Iter>::ValueType;
+    struct ValueType {
+        size_t index;
+        BaseValueType value;
+    };
+
+    constexpr Iter base() const { return m_iterator; }
+
+    constexpr ValueType operator*() const { return ValueType { m_index, *m_iterator }; }
+
+    constexpr CountingIterator& operator++() {
+        ++m_iterator;
+        ++m_index;
+        return *this;
+    }
+
+    constexpr CountingIterator operator++(int) const { return CountingIterator(m_iterator++, m_index + 1); }
+
+    constexpr bool operator==(const CountingIterator& other) const { return this->m_iterator == other.m_iterator; }
+    constexpr bool operator!=(const CountingIterator& other) const { return this->m_iterator != other.m_iterator; }
+
+private:
+    constexpr CountingIterator(Iter iterator, size_t index) : m_iterator(move(iterator)), m_index(index) {}
+
+    Iter m_iterator;
+    size_t m_index { 0 };
+};
+
 template<typename T>
 class Repeat {
 public:
@@ -243,11 +276,24 @@ private:
 };
 
 template<Container C>
+class Enumerate {
+public:
+    explicit constexpr Enumerate(C container) : m_container(::forward<C&&>(container)) {}
+
+    constexpr auto begin() { return CountingIterator(m_container.begin()); }
+    constexpr auto end() { return CountingIterator(m_container.end()); }
+
+    constexpr auto size() const requires(SizedContainer<C>) { return m_container.size(); }
+
+private : C m_container;
+};
+
+template<Container C>
 class Reversed {
 public:
     explicit constexpr Reversed(C container) : m_container(::forward<C&&>(container)) {}
 
-    constexpr auto begin() const {
+    constexpr auto begin() {
         if constexpr (requires { m_container.rbegin(); }) {
             return m_container.rbegin();
         } else {
@@ -255,7 +301,7 @@ public:
         }
     }
 
-    constexpr auto end() const {
+    constexpr auto end() {
         if constexpr (requires { m_container.rend(); }) {
             return m_container.rend();
         } else {
@@ -341,12 +387,17 @@ constexpr Range<T> range(T start, T end) {
 
 template<typename T>
 constexpr Range<T> range(T start) {
-    return range(0, move(start));
+    return range(T {}, move(start));
 }
 
 template<Container T>
 constexpr Reversed<T> reversed(T&& container) {
     return Reversed<T>(::forward<T>(container));
+}
+
+template<Container T>
+constexpr Enumerate<T> enumerate(T&& container) {
+    return Enumerate<T>(::forward<T>(container));
 }
 
 template<Container T>
@@ -374,12 +425,14 @@ constexpr auto iterator_container(Iter begin, Iter end, size_t size) {
 }
 
 using LIIM::Container;
+using LIIM::enumerate;
 using LIIM::Iterator;
+using LIIM::iterator_container;
 using LIIM::IteratorTraits;
+using LIIM::move_elements;
 using LIIM::MoveIterator;
-using LIIM::Range;
 using LIIM::range;
-using LIIM::Repeat;
 using LIIM::repeat;
+using LIIM::reversed;
 using LIIM::ReverseIterator;
 using LIIM::SizedContainer;

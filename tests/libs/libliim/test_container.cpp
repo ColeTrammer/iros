@@ -71,6 +71,31 @@ constexpr void reversed() {
     EXPECT_EQ(w[4], 4);
 }
 
+constexpr void enumerate() {
+    auto v = NewVector<size_t> { 5lu, 6lu, 7lu, 8lu };
+    for (auto [i, x] : enumerate(v)) {
+        EXPECT_EQ(i + 5, x);
+        ++x;
+    }
+    for (auto [i, x] : enumerate(v)) {
+        EXPECT_EQ(i + 6, x);
+    }
+
+    auto w = NewVector<UniquePtr<size_t>> {};
+    w.push_back(make_unique<size_t>(10));
+    w.push_back(make_unique<size_t>(20));
+    for (auto [i, p] : enumerate(w)) {
+        EXPECT_EQ((i + 1) * 10, *p);
+    }
+    for (auto [i, p] : enumerate(move_elements(move(w)))) {
+        EXPECT_EQ((i + 1) * 10, *p);
+    }
+
+    for (auto [i, x] : enumerate(range(5lu))) {
+        EXPECT_EQ(i, x);
+    }
+}
+
 constexpr void move_elements() {
     auto v = NewVector<UniquePtr<int>> {};
     v.push_back(make_unique<int>(42));
@@ -121,6 +146,7 @@ constexpr void initializer_list() {
 TEST_CONSTEXPR(container, range, range)
 TEST_CONSTEXPR(container, repeat, repeat)
 TEST_CONSTEXPR(container, reversed, reversed)
+TEST_CONSTEXPR(container, enumerate, enumerate)
 TEST_CONSTEXPR(container, move_elements, move_elements)
 TEST_CONSTEXPR(container, iterator_container, iterator_container)
 TEST_CONSTEXPR(container, initializer_list, initializer_list)
