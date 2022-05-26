@@ -108,7 +108,7 @@ auto TarDownloadStep::kind_from_string(const String& string) -> Result<Kind, Ext
     if (string == "gz") {
         return Ok(Kind::Gz);
     }
-    return Err(Ext::StringError(format("Unknown tarball download kind: `'", string)));
+    return Err(Ext::StringError(format("Unknown tarball download kind: `{}'", string)));
 }
 
 Result<UniquePtr<PatchStep>, Error> PatchStep::try_create(const JsonReader& reader, const Ext::Json::Object& object) {
