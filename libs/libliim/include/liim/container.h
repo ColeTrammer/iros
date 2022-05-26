@@ -1,6 +1,7 @@
 #pragma once
 
 #include <liim/initializer_list.h>
+#include <liim/option.h>
 #include <liim/tuple.h>
 #include <liim/utilities.h>
 
@@ -19,9 +20,14 @@ template<typename T>
 concept Iterator = requires(T iterator, T other) {
     { *iterator } -> SameAs<typename IteratorTraits<T>::ValueType>;
     { ++iterator } -> SameAs<T&>;
-    { iterator++ } -> SameAs<T>;
     { iterator == other } -> SameAs<bool>;
     { iterator != other } -> SameAs<bool>;
+};
+
+template<typename T>
+concept ValueIterator = requires(T iterator) {
+    typename T::ValueType;
+    { iterator.next() } -> SameAs<Option<typename T::ValueType>>;
 };
 
 template<typename T>
@@ -125,7 +131,7 @@ public:
 
     constexpr Iter base() const { return m_iterator; }
 
-    constexpr ValueType operator*() const { return ValueType { m_index, *m_iterator }; }
+    constexpr ValueType operator*() { return ValueType { m_index, *m_iterator }; }
 
     constexpr CountingIterator& operator++() {
         ++m_iterator;
@@ -136,7 +142,6 @@ public:
     constexpr CountingIterator operator++(int) const { return CountingIterator(m_iterator++, m_index + 1); }
 
     constexpr bool operator==(const CountingIterator& other) const { return this->m_iterator == other.m_iterator; }
-    constexpr bool operator!=(const CountingIterator& other) const { return this->m_iterator != other.m_iterator; }
 
 private:
     constexpr CountingIterator(Iter iterator, size_t index) : m_iterator(move(iterator)), m_index(index) {}
@@ -432,6 +437,41 @@ private:
     size_t m_size;
 };
 
+template<typename Producer>
+class ValueIteratorAdapterIterator {
+public:
+    explicit constexpr ValueIteratorAdapterIterator(Option<Producer&> producer) : m_producer(move(producer)) {
+        if (m_producer) {
+            ++(*this);
+        }
+    }
+
+    using ValueType = Producer::ValueType;
+
+    constexpr ValueType operator*() { return *m_cache; }
+
+    constexpr ValueIteratorAdapterIterator& operator++() {
+        assert(m_producer);
+        m_cache = m_producer->next();
+        return *this;
+    }
+
+    constexpr bool operator==(const ValueIteratorAdapterIterator& other) const {
+        return (!this->m_producer || !this->m_cache) && (!other.m_producer || !other.m_cache);
+    }
+
+private:
+    Option<Producer&> m_producer;
+    Option<ValueType> m_cache;
+};
+
+template<typename Producer>
+class ValueIteratorAdapter {
+public:
+    constexpr auto begin() { return ValueIteratorAdapterIterator<Producer>(static_cast<Producer&>(*this)); }
+    constexpr auto end() { return ValueIteratorAdapterIterator<Producer>({}); }
+};
+
 template<typename T>
 constexpr Repeat<T> repeat(size_t count, T value) {
     return Repeat(count, move(value));
@@ -501,3 +541,5 @@ using LIIM::repeat;
 using LIIM::reversed;
 using LIIM::ReverseIterator;
 using LIIM::SizedContainer;
+using LIIM::ValueIterator;
+using LIIM::ValueIteratorAdapter;

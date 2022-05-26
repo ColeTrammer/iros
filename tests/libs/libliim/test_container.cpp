@@ -170,6 +170,62 @@ constexpr void initializer_list() {
     EXPECT_EQ(v[2], 2);
 }
 
+constexpr void value_iterator() {
+    struct Iter : public LIIM::ValueIteratorAdapter<Iter> {
+        using ValueType = size_t;
+        constexpr Option<ValueType> next() { return i++; }
+
+        ValueType i { 0 };
+    };
+
+    size_t sum = 0;
+    for (auto [i, x] : enumerate(Iter {})) {
+        EXPECT_EQ(i, x);
+        sum += x;
+        if (x == 10) {
+            break;
+        }
+    }
+    EXPECT_EQ(sum, 10lu * 11lu / 2lu);
+
+    struct Iter2 : public LIIM::ValueIteratorAdapter<Iter2> {
+        using ValueType = size_t;
+        constexpr Option<ValueType> next() {
+            if (i <= 10) {
+                return i++;
+            }
+            return None {};
+        }
+
+        ValueType i { 0 };
+    };
+
+    sum = 0;
+    for (auto x : Iter2 {}) {
+        sum += x;
+    }
+    EXPECT_EQ(sum, 10lu * 11lu / 2lu);
+
+    struct Iter3 : public LIIM::ValueIteratorAdapter<Iter3> {
+        using ValueType = size_t&;
+        constexpr Option<size_t&> next() {
+            if (i < 10) {
+                ++i;
+                return i;
+            }
+            return None {};
+        }
+
+        size_t i { 0 };
+    };
+
+    sum = 0;
+    for (auto& x : Iter3 {}) {
+        sum += x;
+    }
+    EXPECT_EQ(sum, 10lu * 11lu / 2lu);
+}
+
 TEST_CONSTEXPR(container, range, range)
 TEST_CONSTEXPR(container, repeat, repeat)
 TEST_CONSTEXPR(container, reversed, reversed)
@@ -178,3 +234,4 @@ TEST_CONSTEXPR(container, zip, zip)
 TEST_CONSTEXPR(container, move_elements, move_elements)
 TEST_CONSTEXPR(container, iterator_container, iterator_container)
 TEST_CONSTEXPR(container, initializer_list, initializer_list)
+TEST_CONSTEXPR(container, value_iterator, value_iterator)
