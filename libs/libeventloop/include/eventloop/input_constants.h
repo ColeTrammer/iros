@@ -1,5 +1,7 @@
 #pragma once
 
+#include <liim/enum.h>
+
 namespace App {
 namespace MouseButton {
     enum {
@@ -18,128 +20,131 @@ namespace KeyModifier {
         Meta = 8,
     };
 }
-
-enum class Key {
-    None = 0,
-    A,
-    B,
-    C,
-    D,
-    E,
-    F,
-    G,
-    H,
-    I,
-    J,
-    K,
-    L,
-    M,
-    N,
-    O,
-    P,
-    Q,
-    R,
-    S,
-    T,
-    U,
-    V,
-    W,
-    X,
-    Y,
-    Z,
-    _1,
-    _2,
-    _3,
-    _4,
-    _5,
-    _6,
-    _7,
-    _8,
-    _9,
-    _0,
-    Enter,
-    Escape,
-    Backspace,
-    Tab,
-    Space,
-    Minus,
-    Equals,
-    LeftBracket,
-    RightBracket,
-    Backslash,
-    NonUS_Pound,
-    SemiColon,
-    Quote,
-    Backtick,
-    Comma,
-    Period,
-    Slash,
-    CapsLock,
-    F1,
-    F2,
-    F3,
-    F4,
-    F5,
-    F6,
-    F7,
-    F8,
-    F9,
-    F10,
-    F11,
-    F12,
-    PrintScreen,
-    ScrollLock,
-    Pause,
-    Insert,
-    Home,
-    PageUp,
-    Delete,
-    End,
-    PageDown,
-    RightArrow,
-    LeftArrow,
-    DownArrow,
-    UpArrow,
-    NumLock,
-    Numpad_Slash,
-    Numpad_Star,
-    Numpad_Minus,
-    Numpad_Plus,
-    Numpad_Enter,
-    Numpad_1,
-    Numpad_2,
-    Numpad_3,
-    Numpad_4,
-    Numpad_5,
-    Numpad_6,
-    Numpad_7,
-    Numpad_8,
-    Numpad_9,
-    Numpad_0,
-    Numpad_Period,
-    NonUS_Backslash,
-    Application,
-    Power,
-    Numpad_Equals,
-    F13,
-    F14,
-    F15,
-    F16,
-    F17,
-    F18,
-    F19,
-    F20,
-    F21,
-    F22,
-    F23,
-    F24,
-    LeftControl,
-    LeftShift,
-    LeftAlt,
-    LeftMeta,
-    RightControl,
-    RightShift,
-    RightAlt,
-    RightMeta,
-};
 }
+
+// clang-format off
+#define __APP_ENUM_KEY(m) \
+    m(None) \
+    m(A) \
+    m(B) \
+    m(C) \
+    m(D) \
+    m(E) \
+    m(F) \
+    m(G) \
+    m(H) \
+    m(I) \
+    m(J) \
+    m(K) \
+    m(L) \
+    m(M) \
+    m(N) \
+    m(O) \
+    m(P) \
+    m(Q) \
+    m(R) \
+    m(S) \
+    m(T) \
+    m(U) \
+    m(V) \
+    m(W) \
+    m(X) \
+    m(Y) \
+    m(Z) \
+    m(_1) \
+    m(_2) \
+    m(_3) \
+    m(_4) \
+    m(_5) \
+    m(_6) \
+    m(_7) \
+    m(_8) \
+    m(_9) \
+    m(_0) \
+    m(Enter) \
+    m(Escape) \
+    m(Backspace) \
+    m(Tab) \
+    m(Space) \
+    m(Minus) \
+    m(Equals) \
+    m(LeftBracket) \
+    m(RightBracket) \
+    m(Backslash) \
+    m(NonUS_Pound) \
+    m(SemiColon) \
+    m(Quote) \
+    m(Backtick) \
+    m(Comma) \
+    m(Period) \
+    m(Slash) \
+    m(CapsLock) \
+    m(F1) \
+    m(F2) \
+    m(F3) \
+    m(F4) \
+    m(F5) \
+    m(F6) \
+    m(F7) \
+    m(F8) \
+    m(F9) \
+    m(F10) \
+    m(F11) \
+    m(F12) \
+    m(PrintScreen) \
+    m(ScrollLock) \
+    m(Pause) \
+    m(Insert) \
+    m(Home) \
+    m(PageUp) \
+    m(Delete) \
+    m(End) \
+    m(PageDown) \
+    m(RightArrow) \
+    m(LeftArrow) \
+    m(DownArrow) \
+    m(UpArrow) \
+    m(NumLock) \
+    m(Numpad_Slash) \
+    m(Numpad_Star) \
+    m(Numpad_Minus) \
+    m(Numpad_Plus) \
+    m(Numpad_Enter) \
+    m(Numpad_1) \
+    m(Numpad_2) \
+    m(Numpad_3) \
+    m(Numpad_4) \
+    m(Numpad_5) \
+    m(Numpad_6) \
+    m(Numpad_7) \
+    m(Numpad_8) \
+    m(Numpad_9) \
+    m(Numpad_0) \
+    m(Numpad_Period) \
+    m(NonUS_Backslash) \
+    m(Application) \
+    m(Power) \
+    m(Numpad_Equals) \
+    m(F13) \
+    m(F14) \
+    m(F15) \
+    m(F16) \
+    m(F17) \
+    m(F18) \
+    m(F19) \
+    m(F20) \
+    m(F21) \
+    m(F22) \
+    m(F23) \
+    m(F24) \
+    m(LeftControl) \
+    m(LeftShift) \
+    m(LeftAlt) \
+    m(LeftMeta) \
+    m(RightControl) \
+    m(RightShift) \
+    m(RightAlt) \
+    m(RightMeta)
+// clang-format on
+
+LIIM_ENUM(App, Key, __APP_ENUM_KEY)
