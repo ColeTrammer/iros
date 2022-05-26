@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/format/builtin_formatters.h>
 #include <liim/format/format.h>
 #include <stdio.h>
 

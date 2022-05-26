@@ -18,7 +18,5 @@ class FormatArgs;
 class FormatContext;
 class FormatParseContext;
 
-template<typename... Args>
-String format(StringView, Args&&...);
 String vformat(StringView, FormatArgs);
 }
