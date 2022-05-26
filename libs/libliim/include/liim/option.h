@@ -138,7 +138,7 @@ public:
     }
     constexpr Option(Option&& other) {
         if (other.has_value()) {
-            emplace(move(other.value()));
+            emplace(forward<T&&>(other.value()));
             other.reset();
         }
     }
@@ -152,7 +152,7 @@ public:
     template<typename U>
     constexpr Option(Option<U>&& other) {
         if (other.has_value()) {
-            emplace(move(other.value()));
+            emplace(forward<U&&>(other.value()));
             other.reset();
         }
     }
@@ -207,7 +207,7 @@ public:
         return m_storage.value();
     }
 
-    constexpr T value_or(T default_value) const { return has_value() ? T { value() } : T { move(default_value) }; }
+    constexpr T value_or(T default_value) const { return has_value() ? T { value() } : T { forward<T&&>(default_value) }; }
 
     template<typename... Args>
     constexpr T& emplace(Args&&... args) {
@@ -218,10 +218,10 @@ public:
         if (this->has_value() && other.has_value()) {
             LIIM::swap(this->value(), other.value());
         } else if (this->has_value()) {
-            other.emplace(LIIM::move(this->value()));
+            other.emplace(LIIM::forward<T&&>(this->value()));
             this->reset();
         } else if (other.has_value()) {
-            this->emplace(LIIM::move(other.value()));
+            this->emplace(LIIM::forward<T&&>(other.value()));
             other.reset();
         }
     }
