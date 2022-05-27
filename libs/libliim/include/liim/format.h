@@ -30,4 +30,5 @@ using LIIM::out_log;
 using LIIM::Format::format;
 using LIIM::Format::Formattable;
 using LIIM::Format::make_format_args;
+using LIIM::Format::to_string;
 using LIIM::Format::vformat;

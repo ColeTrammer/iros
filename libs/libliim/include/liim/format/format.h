@@ -155,4 +155,14 @@ template<Formattable... Args>
 String format(FormatString<Args...> format_string, Args&&... args) {
     return vformat(format_string.data(), make_format_args(forward<Args>(args)...));
 }
+
+template<Formattable T>
+String to_string(const T& value) {
+    return format("{}", value);
+}
+
+template<Formattable T>
+String to_string(const T& value, Format::FormatString<T> format_string) {
+    return vformat(format_string.data(), make_format_args(value));
+}
 }

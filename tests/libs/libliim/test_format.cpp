@@ -1,4 +1,5 @@
 #include <liim/format.h>
+#include <liim/new_vector.h>
 #include <test/test.h>
 
 TEST(format, automatic_indexing) {
@@ -59,4 +60,15 @@ TEST(format, escape_braces) {
     EXPECT_EQ(format("xyz}}"), "xyz}");
     EXPECT_EQ(format("}}}}xyz}}"), "}}xyz}");
     EXPECT_EQ(format("{{x{{y}}z}}"), "{x{y}z}");
+}
+
+TEST(format, to_string) {
+    EXPECT_EQ(to_string(5), "5");
+    EXPECT_EQ(to_string(9, "{:*^3}"), "*9*");
+
+    auto v = NewVector<Option<int>> {};
+    v.push_back(5);
+    v.push_back(6);
+    v.push_back(None {});
+    EXPECT_EQ(to_string(v), "[ Some(5), Some(6), None ]");
 }
