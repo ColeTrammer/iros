@@ -2,6 +2,7 @@
 
 #include <liim/compare.h>
 #include <liim/container.h>
+#include <liim/format.h>
 #include <liim/initializer_list.h>
 #include <liim/option.h>
 #include <liim/span.h>
@@ -460,6 +461,28 @@ template<typename T>
 constexpr void swap(NewVector<T>& a, NewVector<T>& b) {
     a.swap(b);
 }
+}
+
+namespace LIIM::Format {
+template<Formattable T>
+struct Formatter<NewVector<T>> {
+    constexpr void parse(FormatParseContext& context) { m_formatter.parse(context); }
+
+    void format(const NewVector<T>& vector, FormatContext& context) {
+        context.put("[ ");
+        bool first = true;
+        for (auto& item : vector) {
+            if (!first) {
+                context.put(", ");
+            }
+            m_formatter.format(item, context);
+            first = false;
+        }
+        context.put(" ]");
+    }
+
+    Formatter<T> m_formatter;
+};
 }
 
 using LIIM::NewVector;

@@ -166,9 +166,18 @@ constexpr void compare() {
     EXPECT(c < a);
 }
 
+void format() {
+    auto v = NewVector<int> { 2, 3, 4 };
+    EXPECT_EQ(format("{}", v), "[ 2, 3, 4 ]");
+    EXPECT_EQ(format("{:#04x}", v), "[ 0x02, 0x03, 0x04 ]");
+}
+
 TEST_CONSTEXPR(new_vector, basic, basic)
 TEST_CONSTEXPR(new_vector, iterator, iterator)
 TEST_CONSTEXPR(new_vector, assign, assign)
 TEST_CONSTEXPR(new_vector, mutate, mutate)
 TEST_CONSTEXPR(new_vector, container, container)
 TEST_CONSTEXPR(new_vector, compare, compare)
+TEST(new_vector, format) {
+    format();
+}
