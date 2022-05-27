@@ -24,8 +24,7 @@ public:
     struct PlaceHolder {
         StringView contents;
     };
-    using ValueTypeInner = Variant<Literal, PlaceHolder>;
-    using ValueType = Option<ValueTypeInner>;
+    using ValueType = Variant<Literal, PlaceHolder>;
 
     constexpr FormatStringIterator(StringView format_string) : m_format_string(format_string) {}
 
@@ -34,33 +33,39 @@ public:
             return {};
         }
 
+        auto process_literal = [&](size_t literal_size) -> ValueType {
+            auto literal = m_format_string.first(literal_size);
+            if (auto right_brace = literal.index_of('}')) {
+                assert(literal.substring(*right_brace).starts_with("}}"));
+                auto result = Literal(literal.first(*right_brace + 1));
+                m_format_string = m_format_string.substring(*right_brace + 2);
+                return { result };
+            }
+            m_format_string = m_format_string.substring(literal_size);
+            return { Literal(literal) };
+        };
+
         auto left_brace = m_format_string.index_of('{');
         if (!left_brace) {
-            auto result = ValueTypeInner(Literal(m_format_string));
-            m_format_string = {};
-            return { result };
+            return process_literal(m_format_string.size());
         }
 
         if (*left_brace > 0) {
-            auto result = ValueTypeInner(Literal(m_format_string.first(*left_brace)));
-            m_format_string = m_format_string.substring(*left_brace);
-            return { result };
+            return process_literal(*left_brace);
         }
 
         m_format_string = m_format_string.substring(1);
         if (m_format_string.starts_with("{")) {
-            auto result = ValueTypeInner(Literal("{"sv));
-            m_format_string = m_format_string.substring(1);
-            return { result };
+            return process_literal(1);
         }
 
         auto right_brace = m_format_string.index_of('}');
         if (!right_brace) {
             // Error: unmatched left brace in format string
-            return { None {} };
+            assert(false);
         }
 
-        auto result = ValueTypeInner(PlaceHolder(m_format_string.first(*right_brace)));
+        auto result = PlaceHolder(m_format_string.first(*right_brace));
         m_format_string = m_format_string.substring(*right_brace + 1);
         return { result };
     }
@@ -73,10 +78,9 @@ inline void vformat_to_context(FormatContext& context, StringView format_string,
     auto parse_context = FormatParseContext {};
 
     for (auto piece : FormatStringIterator(format_string)) {
-        assert(piece);
-        if (auto literal = piece->get_if<FormatStringIterator::Literal>()) {
+        if (auto literal = piece.get_if<FormatStringIterator::Literal>()) {
             context.put(literal->contents);
-        } else if (auto placeholder = piece->get_if<FormatStringIterator::PlaceHolder>()) {
+        } else if (auto placeholder = piece.get_if<FormatStringIterator::PlaceHolder>()) {
             auto format_specifier = placeholder->contents;
             auto arg_index = parse_context.parse_arg_index(format_specifier);
             assert(parse_context.parse_colon());
@@ -116,11 +120,7 @@ public:
         bool argument_was_used[sizeof...(Args)] = {};
 
         for (auto piece : FormatStringIterator(m_data)) {
-            if (!piece) {
-                assert(false);
-            }
-
-            if (auto placeholder = piece.value().template get_if<FormatStringIterator::PlaceHolder>()) {
+            if (auto placeholder = piece.template get_if<FormatStringIterator::PlaceHolder>()) {
                 auto format_specifier = placeholder->contents;
                 auto arg_index = parse_context.parse_arg_index(format_specifier);
                 assert(arg_index);

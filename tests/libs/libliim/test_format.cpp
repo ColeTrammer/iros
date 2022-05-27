@@ -47,3 +47,16 @@ TEST(format, integers) {
     EXPECT_EQ(format("{:+#08x}", 0x234), "+0x00234");
     EXPECT_EQ(format("{:*^5}", 234), "*234*");
 }
+
+TEST(format, characters) {
+    EXPECT_EQ(format("{}", 'e'), "e");
+    EXPECT_EQ(format("{:*>3}", '3'), "**3");
+}
+
+TEST(format, escape_braces) {
+    EXPECT_EQ(format("{{"), "{");
+    EXPECT_EQ(format("{{}}"), "{}");
+    EXPECT_EQ(format("xyz}}"), "xyz}");
+    EXPECT_EQ(format("}}}}xyz}}"), "}}xyz}");
+    EXPECT_EQ(format("{{x{{y}}z}}"), "{x{y}z}");
+}
