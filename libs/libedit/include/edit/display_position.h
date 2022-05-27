@@ -53,9 +53,9 @@ private:
 
 namespace LIIM::Format {
 template<>
-struct Formatter<Edit::DisplayPosition> : public Formatter<String> {
+struct Formatter<Edit::DisplayPosition> : public BaseFormatter {
     void format(const Edit::DisplayPosition& p, FormatContext& context) {
-        return Formatter<String>::format(::format("DisplayPosition <row={} col={}>", p.row(), p.col()), context);
+        return format_to_context(context, "DisplayPosition <row={} col={}>", p.row(), p.col());
     }
 };
 }

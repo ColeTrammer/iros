@@ -28,5 +28,6 @@ using LIIM::debug_log;
 using LIIM::error_log;
 using LIIM::out_log;
 using LIIM::Format::format;
+using LIIM::Format::Formattable;
 using LIIM::Format::make_format_args;
 using LIIM::Format::vformat;

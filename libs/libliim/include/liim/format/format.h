@@ -7,6 +7,15 @@
 #include <liim/variant.h>
 
 namespace LIIM::Format {
+template<typename T>
+using FormatterType = Formatter<typename RemoveCVRef<T>::type>;
+
+template<typename T>
+concept Formattable = requires(T value, FormatterType<T> formatter, FormatParseContext parse_context, FormatContext context) {
+    formatter.parse(parse_context);
+    formatter.format(value, context);
+};
+
 class FormatStringIterator : public ValueIteratorAdapter<FormatStringIterator> {
 public:
     struct Literal {
@@ -40,7 +49,7 @@ public:
 
         m_format_string = m_format_string.substring(1);
         if (m_format_string.starts_with("{")) {
-            auto result = ValueTypeInner(Literal("{{"sv));
+            auto result = ValueTypeInner(Literal("{"sv));
             m_format_string = m_format_string.substring(1);
             return { result };
         }
@@ -60,9 +69,8 @@ private:
     StringView m_format_string;
 };
 
-inline String vformat(StringView format_string, FormatArgs format_args) {
+inline void vformat_to_context(FormatContext& context, StringView format_string, FormatArgs format_args) {
     auto parse_context = FormatParseContext {};
-    auto context = FormatContext {};
 
     for (auto piece : FormatStringIterator(format_string)) {
         assert(piece);
@@ -80,11 +88,19 @@ inline String vformat(StringView format_string, FormatArgs format_args) {
             arg->do_format(context, parse_context);
         }
     }
-
-    return context.take_accumulator();
 }
 
-template<typename... Args>
+inline String vformat(StringView format_string, FormatArgs format_args) {
+    auto result = ""s;
+    auto context = FormatContext { [](StringView piece, void* result_ptr) {
+                                      *static_cast<String*>(result_ptr) += String(piece);
+                                  },
+                                   &result };
+    vformat_to_context(context, format_string, move(format_args));
+    return result;
+}
+
+template<Formattable... Args>
 class FormatStringImpl {
 public:
     template<typename T>
@@ -127,10 +143,15 @@ private:
     StringView m_data;
 };
 
-template<typename... Args>
+template<Formattable... Args>
 using FormatString = FormatStringImpl<typename TypeIdentity<Args>::type...>;
 
-template<typename... Args>
+template<Formattable... Args>
+void format_to_context(FormatContext& context, FormatString<Args...> format_string, Args&&... args) {
+    return vformat_to_context(context, format_string.data(), make_format_args(forward<Args>(args)...));
+}
+
+template<Formattable... Args>
 String format(FormatString<Args...> format_string, Args&&... args) {
     return vformat(format_string.data(), make_format_args(forward<Args>(args)...));
 }

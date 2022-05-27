@@ -117,7 +117,7 @@ String to_message(const Vector<T>& errors) {
 }
 
 template<typename... Types>
-String to_message(const Variant<Types...> error) {
+String to_message(const Variant<Types...>& error) {
     return error.visit([](auto&& error) {
         return Ext::to_message_impl(error);
     });

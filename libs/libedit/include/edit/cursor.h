@@ -73,11 +73,10 @@ private:
 
 namespace LIIM::Format {
 template<>
-struct Formatter<Edit::Cursor> : public Formatter<String> {
+struct Formatter<Edit::Cursor> : public BaseFormatter {
     void format(const Edit::Cursor& cursor, FormatContext& context) {
-        return Formatter<String>::format(
-            ::format("Cursor <index={} selection_anchor={} max_col={}>", cursor.index(), cursor.selection_anchor(), cursor.max_col()),
-            context);
+        return format_to_context(context, "Cursor <index={} selection_anchor={} max_col={}>", cursor.index(), cursor.selection_anchor(),
+                                 cursor.max_col());
     }
 };
 }

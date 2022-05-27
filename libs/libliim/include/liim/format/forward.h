@@ -17,6 +17,4 @@ class FormatArgsStorage;
 class FormatArgs;
 class FormatContext;
 class FormatParseContext;
-
-String vformat(StringView, FormatArgs);
 }

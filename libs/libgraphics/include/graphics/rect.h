@@ -101,7 +101,7 @@ namespace LIIM::Format {
 template<>
 struct Formatter<Rect> : public Formatter<String> {
     void format(const Rect& r, FormatContext& context) {
-        return Formatter<String>::format(::format("Rect <x={} y={} width={} height={}>", r.x(), r.y(), r.width(), r.height()), context);
+        return format_to_context(context, "Rect <x={} y={} width={} height={}>", r.x(), r.y(), r.width(), r.height());
     }
 };
 }

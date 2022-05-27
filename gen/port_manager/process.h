@@ -56,12 +56,3 @@ private:
     Option<pid_t> m_pid;
 };
 }
-
-namespace LIIM::Format {
-template<>
-struct Formatter<PortManager::Process> : public Formatter<String> {
-    void format(const PortManager::Process& process, FormatContext& context) {
-        return Formatter<String>::format(::format("{}", process.to_string()), context);
-    }
-};
-}

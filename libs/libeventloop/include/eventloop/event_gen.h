@@ -16,11 +16,6 @@ template<typename T>
 struct GetterType<T*> {
     using type = T*;
 };
-
-template<typename Type>
-concept Formattable = requires(Type value, LIIM::Format::FormatContext context, LIIM::Format::Formatter<Type> formatter) {
-    formatter.format(value, context);
-};
 }
 
 #define __APP_EVENT_PARAM(type, name)       type name
@@ -65,12 +60,9 @@ concept Formattable = requires(Type value, LIIM::Format::FormatContext context, 
 
 #define __APP_EVENT_METHODS(methods) LIIM_EVAL(LIIM_LIST_FOR_EACH(LIIM_ID, methods))
 
-#define __APP_EVENT_FIELD_STRING(Type, name)                                        \
-    if constexpr (App::Detail::Formattable<Type>) {                                 \
-        vector.add(FieldString { "" #name, LIIM::Format::format("{}", m_##name) }); \
-    } else {                                                                        \
-        vector.add(FieldString { "" #name, "<>" });                                 \
-    }
+#define __APP_EVENT_FIELD_STRING(Type, name) \
+    static_assert(Formattable<Type>);        \
+    vector.add(FieldString { "" #name, LIIM::Format::format("{}", m_##name) });
 
 #define __APP_EVENT_FIELD_STRINGS(Base, fields)                                        \
     virtual Vector<FieldString> field_strings() const override {                       \

@@ -6,7 +6,7 @@
 #define __LIIM_GENERATE_ENUM(x) x,
 #define __LIIM_FORMAT_ENUM(x) \
     case x:                   \
-        return Formatter<StringView>::format(StringView("" #x), context);
+        return format_string_view("" #x, context);
 
 #define LIIM_ENUM(Namespace, Name, macro)                                         \
     namespace Namespace {                                                         \

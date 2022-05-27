@@ -28,13 +28,13 @@ struct Formatter<char*> : public Formatter<StringView> {};
 template<size_t N>
 struct Formatter<char[N]> : public Formatter<StringView> {};
 
-template<typename T>
+template<Formattable T>
 struct Formatter<Option<T>> : public BaseFormatter {
     void format(const Option<T>& value, FormatContext& context) {
         if (!value) {
             return format_string_view("None", context);
         }
-        return format_string_view(Format::format("Some({})", *value).view(), context);
+        return format_to_context(context, "Some({})", *value);
     }
 };
 
@@ -60,10 +60,21 @@ requires(!SameAs<T*, char> && !SameAs<T*, const char>) struct Formatter<T*> : pu
             return format_string_view("Null"sv, context);
         }
         if constexpr (sizeof(uintptr_t) == 8) {
-            return format_string_view(Format::format("{:#.16X}", (uintptr_t) value).view(), context);
+            return format_to_context(context, "{:#.16X}", (uintptr_t) value);
         } else {
-            return format_string_view(Format::format("{:#.8X}", (uintptr_t) value).view(), context);
+            return format_to_context(context, "{:#.8X}", (uintptr_t) value);
         }
     }
+};
+
+template<typename T>
+concept HasToString = requires(const T& x) {
+    { x.to_string() } -> SameAs<String>;
+};
+
+template<HasToString T>
+struct Formatter<T> {
+    constexpr void parse(FormatParseContext&) {}
+    void format(const T& value, FormatContext& context) { return context.put(value.to_string().view()); }
 };
 }

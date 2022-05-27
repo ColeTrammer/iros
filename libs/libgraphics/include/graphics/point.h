@@ -35,8 +35,6 @@ private:
 namespace LIIM::Format {
 template<>
 struct Formatter<Point> : public Formatter<String> {
-    void format(const Point& p, FormatContext& context) {
-        return Formatter<String>::format(::format("Point <x={} y={}>", p.x(), p.y()), context);
-    }
+    void format(const Point& p, FormatContext& context) { return format_to_context(context, "Point <x={} y={}>", p.x(), p.y()); }
 };
 }

@@ -35,12 +35,3 @@ private:
     Vector<String> m_components;
 };
 }
-
-namespace LIIM::Format {
-template<>
-struct Formatter<Ext::Path> : public Formatter<String> {
-    void format(const Ext::Path& path, FormatContext& context) {
-        return Formatter<String>::format(::format("{}", path.to_string()), context);
-    }
-};
-}

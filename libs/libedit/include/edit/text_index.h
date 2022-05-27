@@ -61,8 +61,7 @@ namespace LIIM::Format {
 template<>
 struct Formatter<Edit::TextIndex> : public Formatter<String> {
     void format(const Edit::TextIndex& index, FormatContext& context) {
-        return Formatter<String>::format(
-            ::format("TextIndex <line_index={} index_into_line={}>", index.line_index(), index.index_into_line()), context);
+        return format_to_context(context, "TextIndex <line_index={} index_into_line={}>", index.line_index(), index.index_into_line());
     }
 };
 }

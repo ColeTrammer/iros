@@ -115,13 +115,13 @@ private : Variant<T, E> m_impl;
 }
 
 namespace LIIM::Format {
-template<typename T, typename E>
+template<Formattable T, Formattable E>
 struct Formatter<Result<T, E>> : public BaseFormatter {
     void format(const Result<T, E>& value, FormatContext& context) {
         if (value.is_error()) {
-            return format_string_view(Format::format("Err({})", value.error()).view(), context);
+            return format_to_context(context, "Err({})", value.error());
         }
-        return format_string_view(Format::format("Ok({})", value.value()).view(), context);
+        return format_to_context(context, "Ok({})", value.value());
     }
 };
 }

@@ -6,11 +6,14 @@
 namespace LIIM::Format {
 class FormatContext {
 public:
-    void put(StringView view) { m_accumulator += String(view); }
+    using WriteFunction = void (*)(StringView, void*);
 
-    String take_accumulator() { return move(m_accumulator); }
+    constexpr explicit FormatContext(WriteFunction do_write, void* closure) : m_do_write(do_write), m_closure(closure) {}
+
+    constexpr void put(StringView view) { m_do_write(view, m_closure); }
 
 private:
-    String m_accumulator;
+    WriteFunction m_do_write { nullptr };
+    void* m_closure { nullptr };
 };
 }

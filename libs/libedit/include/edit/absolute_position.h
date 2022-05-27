@@ -68,10 +68,10 @@ private:
 
 namespace LIIM::Format {
 template<>
-struct Formatter<Edit::AbsolutePosition> : public Formatter<String> {
+struct Formatter<Edit::AbsolutePosition> : public BaseFormatter {
     void format(const Edit::AbsolutePosition& p, FormatContext& context) {
-        return Formatter<String>::format(
-            ::format("AbsolutePosition <line_index={} row={} col={}>", p.line_index(), p.relative_row(), p.relative_col()), context);
+        return format_to_context(context, "AbsolutePosition <line_index={} row={} col={}>", p.line_index(), p.relative_row(),
+                                 p.relative_col());
     }
 };
 }
