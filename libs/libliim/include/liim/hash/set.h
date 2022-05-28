@@ -37,13 +37,15 @@ public:
     constexpr void erase(ConstIterator start, ConstIterator end);
     constexpr Option<T> erase(const T& key) { return m_table.erase(key); }
 
-    constexpr Option<T&> insert(const T& value) { return m_table.insert(value); }
-    constexpr Option<T&> insert(T&& value) { return m_table.insert(move(value)); }
+    template<Detail::CanInsert<T> U>
+    constexpr Option<T&> insert(U&& value) {
+        return m_table.insert(forward<U>(value));
+    }
 
     template<::Iterator Iter>
     constexpr void insert(Iter begin, Iter end);
     template<Container C>
-    constexpr void insert(C&& container);
+    constexpr void insert(C&& container) requires(!Detail::CanInsert<C, T>);
     constexpr void insert(std::initializer_list<T> list);
 
     template<typename... Args>
@@ -51,8 +53,14 @@ public:
         return m_table.insert(T(forward<Args>(args)...));
     }
 
-    constexpr Option<T&> find(const T& needle) { return m_table.find(needle); }
-    constexpr Option<const T&> find(const T& needle) const { return m_table.find(needle); }
+    template<typename U>
+    constexpr Option<T&> find(U&& needle) {
+        return m_table.find(needle);
+    }
+    template<typename U>
+    constexpr Option<const T&> find(U&& needle) const {
+        return m_table.find(needle);
+    }
 
     constexpr bool contains(const T& needle) const { return !!m_table.find(needle); }
 
@@ -96,7 +104,7 @@ constexpr void Set<T>::insert(std::initializer_list<T> list) {
 
 template<Hashable T>
 template<Container C>
-constexpr void Set<T>::insert(C&& container) {
+constexpr void Set<T>::insert(C&& container) requires(!Detail::CanInsert<C, T>) {
     using ValueType = IteratorTraits<decltype(container.begin())>::ValueType;
     constexpr bool is_const = IsConst<typename RemoveReference<ValueType>::type>::value;
 

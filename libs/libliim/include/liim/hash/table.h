@@ -73,6 +73,17 @@ public:
     friend TableIterator<typename RemoveConst<Table>::type>;
 };
 
+template<typename T, typename... Args>
+concept ConstructibleFrom = requires(Args&&... args) {
+    T(forward<Args>(args)...);
+};
+
+template<typename TransparentKey, typename Base>
+concept CanLookup = HashableLike<TransparentKey, Base> && EqualComparable<TransparentKey, Base>;
+
+template<typename TransparentKey, typename Base>
+concept CanInsert = CanLookup<TransparentKey, Base> && ConstructibleFrom<Base, TransparentKey>;
+
 template<Hashable T>
 class Table {
 private:
@@ -119,96 +130,38 @@ public:
 
     constexpr void clear();
 
-    constexpr Option<T&> insert(const T& to_insert) {
-        auto [hash_high, hash_low] = hash(to_insert);
+    template<CanLookup<T> U, typename Factory>
+    constexpr Option<T&> insert_with_factory(U&& needle, Factory&& factory);
 
-        auto entry = find_impl<FindType::FindToInsert>(hash_high, hash_low, to_insert);
-        if (!entry) {
-            grow_and_rehash();
-            entry = find_impl<FindType::FindToInsert>(hash_high, hash_low, to_insert);
-            assert(entry);
-        }
+    template<CanInsert<T> U>
+    constexpr Option<T&> insert(U&& to_insert);
 
-        if (entry->info().present()) {
-            return value(entry->value_index());
-        }
+    template<CanLookup<T> U>
+    constexpr Option<T&> find(U&& needle);
 
-        construct_at(value_pointer_for_init(entry->value_index()), to_insert);
-        entry->info().set_present(hash_low);
-        m_size++;
-        m_used_values++;
-        return None {};
-    }
-
-    constexpr Option<T&> insert(T&& to_insert) {
-        auto [hash_high, hash_low] = hash(to_insert);
-
-        auto entry = find_impl<FindType::FindToInsert>(hash_high, hash_low, to_insert);
-        if (!entry) {
-            grow_and_rehash();
-            entry = find_impl<FindType::FindToInsert>(hash_high, hash_low, to_insert);
-            assert(entry);
-        }
-
-        if (entry->info().present()) {
-            return value(entry->value_index());
-        }
-
-        construct_at(value_pointer_for_init(entry->value_index()), move(to_insert));
-        entry->info().set_present(hash_low);
-        m_size++;
-        m_used_values++;
-        return None {};
-    }
-
-    constexpr Option<T&> find(const T& needle) {
-        auto [hash_high, hash_low] = hash(needle);
-        auto entry = find_impl<FindType::PureFind>(hash_high, hash_low, needle);
-        return entry.map([&](auto entry) -> T& {
-            return value(entry.value_index());
-        });
-    }
-
-    constexpr Option<const T&> find(const T& needle) const {
-        auto [hash_high, hash_low] = hash(needle);
-        auto entry = find_impl<FindType::PureFind>(hash_high, hash_low, needle);
-        return entry.map([&](auto entry) -> const T& {
-            return value(entry.value_index());
-        });
-    }
+    template<CanLookup<T> U>
+    constexpr Option<const T&> find(U&& needle) const;
 
     constexpr Option<T> erase(ConstIterator iterator);
     constexpr Option<T> erase(const T& needle);
 
-    constexpr void swap(Table& other) {
-        ::swap(this->m_groups, other.m_groups);
-        ::swap(this->m_values, other.m_values);
-        ::swap(this->m_size, other.m_size);
-        ::swap(this->m_used_values, other.m_used_values);
-        ::swap(this->m_capacity, other.m_capacity);
-    }
+    constexpr void swap(Table& other);
 
 private:
     explicit constexpr Table(size_t capacity);
 
-    template<FindType find_type, typename U>
+    template<FindType find_type, EqualComparable<T> U>
     constexpr auto find_impl(uint64_t hash_high, uint8_t hash_low, U&& needle) const -> Option<Entry>;
 
     constexpr void grow_and_rehash();
     constexpr Option<T> erase(Entry entry);
     constexpr Entry entry_from_iterator(ConstIterator iterator) const;
 
-    constexpr HashSplit hash(const T& value) const {
-        auto hasher = Hasher {};
-        HashForType<T>::hash(hasher, value);
-        uint64_t hash = hasher.finish();
-        return { hash & ~0x7F, static_cast<uint8_t>(hash & 0x7F) };
-    }
+    template<HashableLike<T> U>
+    constexpr HashSplit hash(U&& value) const;
 
     template<EqualComparable<T> U>
-    constexpr bool equal(const T& value, U&& other) const {
-        return value == other;
-    }
+    constexpr bool equal(const T& value, U&& other) const;
 
     constexpr size_t group_count() const { return m_capacity; }
 
@@ -289,6 +242,55 @@ constexpr auto Table<T>::entry_from_iterator(ConstIterator iterator) const -> En
 }
 
 template<Hashable T>
+template<CanLookup<T> U, typename Factory>
+constexpr Option<T&> Table<T>::insert_with_factory(U&& needle, Factory&& factory) {
+    auto [hash_high, hash_low] = hash(forward<U>(needle));
+
+    auto entry = find_impl<FindType::FindToInsert>(hash_high, hash_low, forward<U>(needle));
+    if (!entry) {
+        grow_and_rehash();
+        entry = find_impl<FindType::FindToInsert>(hash_high, hash_low, forward<U>(needle));
+        assert(entry);
+    }
+
+    if (entry->info().present()) {
+        return value(entry->value_index());
+    }
+
+    forward<Factory>(factory)(value_pointer_for_init(entry->value_index()), forward<U>(needle));
+    entry->info().set_present(hash_low);
+    m_size++;
+    m_used_values++;
+    return None {};
+}
+
+template<Hashable T>
+template<CanInsert<T> U>
+constexpr Option<T&> Table<T>::insert(U&& to_insert) {
+    return insert_with_factory(forward<U>(to_insert), [](T* pointer, U&& value) {
+        construct_at(pointer, value);
+    });
+}
+
+template<Hashable T>
+template<CanLookup<T> U>
+constexpr Option<T&> Table<T>::find(U&& needle) {
+    return const_cast<const Table&>(*this).find(forward<U>(needle)).map([](const T& value) -> T& {
+        return const_cast<T&>(value);
+    });
+}
+
+template<Hashable T>
+template<CanLookup<T> U>
+constexpr Option<const T&> Table<T>::find(U&& needle) const {
+    auto [hash_high, hash_low] = hash(needle);
+    auto entry = find_impl<FindType::PureFind>(hash_high, hash_low, needle);
+    return entry.map([&](auto entry) -> const T& {
+        return value(entry.value_index());
+    });
+}
+
+template<Hashable T>
 constexpr Option<T> Table<T>::erase(ConstIterator iterator) {
     return erase(entry_from_iterator(iterator));
 }
@@ -327,7 +329,7 @@ constexpr void Table<T>::clear() {
 }
 
 template<Hashable T>
-template<FindType find_type, typename U>
+template<FindType find_type, EqualComparable<T> U>
 constexpr auto Table<T>::find_impl(uint64_t hash_high, uint8_t hash_low, U&& needle) const -> Option<Entry> {
     if (group_count() == 0) {
         return None {};
@@ -375,5 +377,29 @@ constexpr auto Table<T>::find_impl(uint64_t hash_high, uint8_t hash_low, U&& nee
     } while (start_group_index != group_index);
 
     return None {};
+}
+
+template<Hashable T>
+template<HashableLike<T> U>
+constexpr HashSplit Table<T>::hash(U&& value) const {
+    auto hasher = Hasher {};
+    HashForType<U>::hash(hasher, forward<U>(value));
+    uint64_t hash = hasher.finish();
+    return { hash & ~0x7F, static_cast<uint8_t>(hash & 0x7F) };
+}
+
+template<Hashable T>
+template<EqualComparable<T> U>
+constexpr bool Table<T>::equal(const T& value, U&& other) const {
+    return value == other;
+}
+
+template<Hashable T>
+constexpr void Table<T>::swap(Table& other) {
+    ::swap(this->m_groups, other.m_groups);
+    ::swap(this->m_values, other.m_values);
+    ::swap(this->m_size, other.m_size);
+    ::swap(this->m_used_values, other.m_used_values);
+    ::swap(this->m_capacity, other.m_capacity);
 }
 }

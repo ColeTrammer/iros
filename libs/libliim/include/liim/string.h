@@ -57,10 +57,9 @@ public:
         return *this;
     }
 
-    bool operator==(const String& other) const {
-        return this->size() == other.size() && memcmp(this->string(), other.string(), this->size()) == 0;
-    }
-    bool operator!=(const String& other) const { return !(*this == other); }
+    bool operator==(const String& other) const { return this->view() == other.view(); }
+    bool operator==(StringView other) const { return this->view() == other; }
+    bool operator==(const char* other) const { return this->view() == other; }
 
     char& operator[](size_t index) {
         assert(index <= size());

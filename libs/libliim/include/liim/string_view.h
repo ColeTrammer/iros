@@ -33,7 +33,7 @@ public:
         }
         return true;
     }
-    constexpr bool operator!=(const StringView& other) const { return !(*this == other); }
+    constexpr bool operator==(const char* c_string) const { return *this == StringView(c_string); }
 
     constexpr size_t size() const { return m_size; }
     constexpr bool empty() const { return size() == 0; }

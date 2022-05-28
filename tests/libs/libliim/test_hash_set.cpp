@@ -1,12 +1,34 @@
 #include <liim/hash/hashable.h>
 #include <liim/hash/hasher.h>
 #include <liim/hash/set.h>
+#include <liim/string.h>
 #include <test/test.h>
 
 namespace LIIM::Hash {
 template<>
 struct HashFunction<int> {
     static constexpr void hash(Hasher&, int) {}
+};
+
+template<>
+struct HashFunction<String> {
+    static constexpr void hash(Hasher&, const String&) {}
+
+    using Matches = Tuple<StringView, const char*>;
+};
+
+template<>
+struct HashFunction<StringView> {
+    static constexpr void hash(Hasher&, StringView) {}
+
+    using Matches = Tuple<String, const char*>;
+};
+
+template<>
+struct HashFunction<const char*> {
+    static constexpr void hash(Hasher&, const char*) {}
+
+    using Matches = Tuple<StringView, String>;
 };
 }
 
@@ -69,6 +91,26 @@ constexpr void comparison() {
     EXPECT_NOT_EQ(a, b);
 }
 
+static void transparent() {
+    static_assert(LIIM::Hash::Detail::CanInsert<StringView, String>);
+
+    auto a = LIIM::Hash::Set<String> { "abc"s, "def"s };
+    EXPECT_EQ(*a.find("abc"sv), "abc"s);
+    EXPECT(!a.find("aaa"sv));
+    EXPECT_EQ(*a.insert("abc"sv), "abc");
+    EXPECT(!a.insert("xyz"sv));
+    EXPECT_EQ(*a.find("xyz"sv), "xyz"sv);
+
+    auto b = LIIM::Hash::Set { "xyz"sv, "sv"sv };
+    EXPECT_EQ(*b.find("xyz"s), "xyz"sv);
+    EXPECT_EQ(*b.find("xyz"), "xyz"sv);
+    EXPECT(!b.find("xyzz"));
+
+    auto c = LIIM::Hash::Set { "abc", "def" };
+    EXPECT_EQ(*c.find("abc"sv), "abc"sv);
+    EXPECT(!b.find("xyzz"s));
+}
+
 static void format() {
     auto a = LIIM::Hash::Set { 2, 3, 4 };
     EXPECT_EQ(to_string(a), "{ 2, 3, 4 }");
@@ -79,6 +121,9 @@ TEST_CONSTEXPR(hash_set, basic, basic)
 TEST_CONSTEXPR(hash_set, containers, containers)
 TEST_CONSTEXPR(hash_set, erase, erase)
 TEST_CONSTEXPR(hash_set, comparison, comparison)
+TEST(hash_set, transparent) {
+    transparent();
+}
 TEST(hash_set, format) {
     format();
 }
