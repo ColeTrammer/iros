@@ -7,6 +7,9 @@
 namespace LIIM::Hash {
 template<Hashable T>
 class Set {
+private:
+    using Table = Detail::Table<T, Detail::TableType::Set>;
+
 public:
     constexpr Set() {}
     constexpr Set(const Set&) = default;
@@ -17,8 +20,8 @@ public:
     constexpr Set& operator=(Set&&) = default;
     constexpr Set& operator=(std::initializer_list<T> list);
 
-    using Iterator = Detail::Table<T>::Iterator;
-    using ConstIterator = Detail::Table<T>::ConstIterator;
+    using Iterator = Table::Iterator;
+    using ConstIterator = Table::ConstIterator;
 
     constexpr auto begin() { return m_table.begin(); }
     constexpr auto begin() const { return m_table.begin(); }
@@ -73,7 +76,7 @@ public:
     constexpr bool operator==(const Set& other) const requires(EqualComparable<T>);
 
 private:
-    Detail::Table<T> m_table;
+    Table m_table;
 };
 
 template<Hashable T>
