@@ -4,80 +4,13 @@
 
 #include <liim/compare.h>
 #include <liim/container.h>
+#include <liim/hash/entry.h>
 #include <liim/hash/group_info.h>
 #include <liim/hash/hashable.h>
 #include <liim/hash/hasher.h>
+#include <liim/hash/table_iterator.h>
 
 namespace LIIM::Hash::Detail {
-enum class FindType {
-    PureFind,
-    FindToInsert,
-};
-
-struct HashSplit {
-    uint64_t hash_high;
-    uint8_t hash_low;
-};
-
-template<typename Table>
-class TableIterator {
-private:
-    Table& m_table;
-    size_t m_group_index { 0 };
-    uint8_t m_index_into_group { 0 };
-
-    constexpr TableIterator(Table& table, size_t group_index, uint8_t index_into_group)
-        : m_table(table), m_group_index(group_index), m_index_into_group(index_into_group) {}
-
-    constexpr TableIterator(Table& table) : m_table(table) {
-        if (table.group_count() != 0 && !table.m_groups[0].entry(0).present()) {
-            ++*this;
-        }
-    }
-
-public:
-    constexpr operator TableIterator<const Table>() const requires(!IsConst<Table>::value) {
-        return TableIterator<const Table>(m_table, m_group_index, m_index_into_group);
-    }
-
-    constexpr decltype(auto) operator*() { return m_table.value(m_table.value_index(m_group_index, m_index_into_group)); }
-
-    using ValueType = decltype(*declval<TableIterator>());
-
-    constexpr TableIterator& operator++() {
-        for (;;) {
-            if (++m_index_into_group == GroupInfo::entry_count) {
-                m_index_into_group = 0;
-                if (++m_group_index == m_table.group_count()) {
-                    break;
-                }
-            }
-            if (m_table.m_groups[m_group_index].entry(m_index_into_group).present()) {
-                break;
-            }
-        }
-        return *this;
-    }
-
-    constexpr TableIterator operator++(int) {
-        auto result = TableIterator(*this);
-        ++*this;
-        return result;
-    }
-
-    constexpr bool operator==(const TableIterator& other) {
-        return this->m_group_index == other.m_group_index && this->m_index_into_group == other.m_index_into_group;
-    }
-
-    friend Table;
-    friend TableIterator<typename RemoveConst<Table>::type>;
-};
-
-template<typename T, typename... Args>
-concept ConstructibleFrom = requires(Args&&... args) {
-    T(forward<Args>(args)...);
-};
-
 template<typename TransparentKey, typename Base>
 concept CanLookup = HashableLike<TransparentKey, Base> && EqualComparable<TransparentKey, Base>;
 
@@ -86,20 +19,6 @@ concept CanInsert = CanLookup<TransparentKey, Base> && ConstructibleFrom<Base, T
 
 template<Hashable T>
 class Table {
-private:
-    class Entry {
-    public:
-        constexpr Entry(EntryInfo& info, size_t value_index) : m_info(&info), m_value_index(value_index) {}
-
-        constexpr EntryInfo& info() { return *m_info; }
-        constexpr const EntryInfo& info() const { return *m_info; }
-        constexpr size_t value_index() const { return m_value_index; }
-
-    private:
-        EntryInfo* m_info { nullptr };
-        size_t m_value_index { 0 };
-    };
-
 public:
     using ValueType = T;
 
@@ -150,12 +69,22 @@ public:
 private:
     explicit constexpr Table(size_t capacity);
 
+    enum class FindType {
+        PureFind,
+        FindToInsert,
+    };
+
     template<FindType find_type, EqualComparable<T> U>
     constexpr auto find_impl(uint64_t hash_high, uint8_t hash_low, U&& needle) const -> Option<Entry>;
 
     constexpr void grow_and_rehash();
     constexpr Option<T> erase(Entry entry);
     constexpr Entry entry_from_iterator(ConstIterator iterator) const;
+
+    struct HashSplit {
+        uint64_t hash_high;
+        uint8_t hash_low;
+    };
 
     template<HashableLike<T> U>
     constexpr HashSplit hash(U&& value) const;
@@ -329,8 +258,8 @@ constexpr void Table<T>::clear() {
 }
 
 template<Hashable T>
-template<FindType find_type, EqualComparable<T> U>
-constexpr auto Table<T>::find_impl(uint64_t hash_high, uint8_t hash_low, U&& needle) const -> Option<Entry> {
+template<Table<T>::FindType find_type, EqualComparable<T> U>
+constexpr Option<Entry> Table<T>::find_impl(uint64_t hash_high, uint8_t hash_low, U&& needle) const {
     if (group_count() == 0) {
         return None {};
     }
@@ -381,7 +310,7 @@ constexpr auto Table<T>::find_impl(uint64_t hash_high, uint8_t hash_low, U&& nee
 
 template<Hashable T>
 template<HashableLike<T> U>
-constexpr HashSplit Table<T>::hash(U&& value) const {
+constexpr auto Table<T>::hash(U&& value) const -> HashSplit {
     auto hasher = Hasher {};
     HashForType<U>::hash(hasher, forward<U>(value));
     uint64_t hash = hasher.finish();
