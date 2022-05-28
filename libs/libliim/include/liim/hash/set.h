@@ -35,7 +35,11 @@ public:
 
     constexpr Option<T> erase(ConstIterator position) { return m_table.erase(position); }
     constexpr void erase(ConstIterator start, ConstIterator end);
-    constexpr Option<T> erase(const T& key) { return m_table.erase(key); }
+
+    template<Detail::CanLookup<T> U>
+    constexpr Option<T> erase(U&& key) {
+        return m_table.erase(forward<U>(key));
+    }
 
     template<Detail::CanInsert<T> U>
     constexpr Option<T&> insert(U&& value) {

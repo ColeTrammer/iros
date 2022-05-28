@@ -100,6 +100,8 @@ static void transparent() {
     EXPECT_EQ(*a.insert("abc"sv), "abc");
     EXPECT(!a.insert("xyz"sv));
     EXPECT_EQ(*a.find("xyz"sv), "xyz"sv);
+    EXPECT_EQ(a.erase("xyz"sv), "xyz"s);
+    EXPECT(!a.erase("xyz"sv));
 
     auto b = LIIM::Hash::Set { "xyz"sv, "sv"sv };
     EXPECT_EQ(*b.find("xyz"s), "xyz"sv);

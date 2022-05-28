@@ -312,6 +312,11 @@ struct IsConvertible {
         (decltype(details::test_returnable<To>(0))::value && decltype(details::test_nonvoid_convertible<From, To>(0))::value);
 };
 
+template<typename T, typename... Args>
+concept ConstructibleFrom = requires(Args&&... args) {
+    T(forward<Args>(args)...);
+};
+
 template<typename T>
 struct Decay {
 private:

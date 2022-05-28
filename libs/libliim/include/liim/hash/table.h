@@ -62,7 +62,9 @@ public:
     constexpr Option<const T&> find(U&& needle) const;
 
     constexpr Option<T> erase(ConstIterator iterator);
-    constexpr Option<T> erase(const T& needle);
+
+    template<CanLookup<T> U>
+    constexpr Option<T> erase(U&& needle);
 
     constexpr void swap(Table& other);
 
@@ -225,9 +227,10 @@ constexpr Option<T> Table<T>::erase(ConstIterator iterator) {
 }
 
 template<Hashable T>
-constexpr Option<T> Table<T>::erase(const T& key) {
-    auto [hash_high, hash_low] = hash(key);
-    return find_impl<FindType::PureFind>(hash_high, hash_low, key).and_then([&](auto& entry) {
+template<CanLookup<T> U>
+constexpr Option<T> Table<T>::erase(U&& needle) {
+    auto [hash_high, hash_low] = hash(forward<U>(needle));
+    return find_impl<FindType::PureFind>(hash_high, hash_low, forward<U>(needle)).and_then([&](auto& entry) {
         return erase(entry);
     });
 }
