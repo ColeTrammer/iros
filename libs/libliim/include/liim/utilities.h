@@ -564,6 +564,11 @@ struct in_place_index_t {
 template<size_t I>
 inline constexpr in_place_index_t<I> in_place_index {};
 
+struct piecewise_construct_t {
+    explicit piecewise_construct_t() = default;
+};
+inline constexpr piecewise_construct_t piecewise_construct {};
+
 using std::construct_at;
 
 template<typename T>
@@ -626,4 +631,6 @@ using LIIM::in_place_type_t;
 using LIIM::max;
 using LIIM::min;
 using LIIM::move;
+using LIIM::piecewise_construct;
+using LIIM::piecewise_construct_t;
 using LIIM::swap;

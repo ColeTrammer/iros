@@ -15,6 +15,10 @@ public:
     constexpr Set(const Set&) = default;
     constexpr Set(Set&&) = default;
     constexpr Set(std::initializer_list<T> list);
+    template<Container C>
+    constexpr Set(C&& container);
+    template<Iterator Iter>
+    constexpr Set(Iter begin, Iter end);
 
     constexpr Set& operator=(const Set&) = default;
     constexpr Set& operator=(Set&&) = default;
@@ -60,16 +64,28 @@ public:
         return m_table.insert(T(forward<Args>(args)...));
     }
 
-    template<typename U>
-    constexpr Option<T&> find(U&& needle) {
-        return m_table.find(needle);
+    template<Detail::CanLookup<T> U>
+    constexpr auto at(U&& needle) {
+        return m_table.at(forward<U>(needle));
     }
-    template<typename U>
-    constexpr Option<const T&> find(U&& needle) const {
-        return m_table.find(needle);
+    template<Detail::CanLookup<T> U>
+    constexpr auto at(U&& needle) const {
+        return m_table.at(forward<U>(needle));
     }
 
-    constexpr bool contains(const T& needle) const { return !!m_table.find(needle); }
+    template<Detail::CanLookup<T> U>
+    constexpr auto find(U&& needle) {
+        return m_table.find(forward<U>(needle));
+    }
+    template<Detail::CanLookup<T> U>
+    constexpr auto find(U&& needle) const {
+        return m_table.find(forward<U>(needle));
+    }
+
+    template<Detail::CanLookup<T> U>
+    constexpr bool contains(U&& needle) const {
+        return !!m_table.at(forward<U>(needle));
+    }
 
     constexpr void swap(Set& other) { this->m_table.swap(other.m_table); }
 
@@ -82,6 +98,18 @@ private:
 template<Hashable T>
 constexpr Set<T>::Set(std::initializer_list<T> list) {
     insert(list.begin(), list.end());
+}
+
+template<Hashable T>
+template<Container C>
+constexpr Set<T>::Set(C&& container) {
+    insert(forward<C>(container));
+}
+
+template<Hashable T>
+template<Iterator Iter>
+constexpr Set<T>::Set(Iter begin, Iter end) {
+    insert(move(begin), move(end));
 }
 
 template<Hashable T>

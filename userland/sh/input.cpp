@@ -362,7 +362,7 @@ Vector<Edit::Suggestion> ShRepl::suggest_path_for(const String &input, const Edi
 
     const char *last_slash = strrchr(input.string(), '/');
     if (last_slash) {
-        directory = { input.string(), static_cast<size_t>(last_slash - input.string() + 1) };
+        directory = StringView { input.string(), static_cast<size_t>(last_slash - input.string() + 1) };
         component = String(last_slash + 1);
     }
 

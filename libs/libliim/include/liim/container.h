@@ -2,6 +2,7 @@
 
 #include <liim/initializer_list.h>
 #include <liim/option.h>
+#include <liim/pair.h>
 #include <liim/tuple.h>
 #include <liim/utilities.h>
 
@@ -137,7 +138,7 @@ public:
 
     constexpr Iter base() const { return m_iterator; }
 
-    constexpr ValueType operator*() const { return move(*m_iterator); }
+    constexpr ValueType operator*() { return move(*m_iterator); }
 
     constexpr MoveIterator& operator++() {
         ++m_iterator;
@@ -364,7 +365,34 @@ public:
         };
         return helper(make_index_sequence<sizeof...(Iters)>());
     }
-    constexpr bool operator!=(const ZipIterator& other) const { return !(*this == other); }
+};
+
+template<Iterator I, Iterator J>
+class ZipIterator<I, J> {
+private:
+    I m_a;
+    J m_b;
+
+public:
+    explicit constexpr ZipIterator(I a, J b) : m_a(move(a)), m_b(move(b)) {}
+
+    using ValueType = Pair<typename IteratorTraits<I>::ValueType, typename IteratorTraits<J>::ValueType>;
+
+    constexpr ValueType operator*() { return ValueType(*m_a, *m_b); }
+
+    constexpr ZipIterator& operator++() {
+        ++m_a;
+        ++m_b;
+        return *this;
+    }
+
+    constexpr ZipIterator operator++(int) const {
+        auto result = *this;
+        ++*this;
+        return result;
+    }
+
+    constexpr bool operator==(const ZipIterator& other) const { return this->m_a == other.m_a || this->m_b == other.m_b; }
 };
 
 template<Container... Cs>
@@ -385,6 +413,21 @@ public:
 
 private:
     Tuple<Cs...> m_containers;
+};
+
+template<Container C, Container D>
+class Zip<C, D> {
+public:
+    explicit constexpr Zip(C&& c, D&& d) : m_c(::forward<C>(c)), m_d(::forward<D>(d)) {}
+
+    using Iterator = ZipIterator<decltype(declval<C>().begin()), decltype(declval<D>().begin())>;
+
+    constexpr auto begin() { return Iterator(m_c.begin(), m_d.begin()); }
+    constexpr auto end() { return Iterator(m_c.end(), m_d.end()); }
+
+private:
+    C m_c;
+    D m_d;
 };
 
 template<Container C>
@@ -521,3 +564,4 @@ using LIIM::ReverseIterator;
 using LIIM::SizedContainer;
 using LIIM::ValueIterator;
 using LIIM::ValueIteratorAdapter;
+using LIIM::zip;

@@ -110,6 +110,11 @@ constexpr auto tuple_map(Tuple&& tuple, C&& mapper) {
     };
     return helper(make_index_sequence<decay_t<Tuple>::size()>());
 }
+
+template<typename... Args>
+constexpr Tuple<Args&&...> forward_as_tuple(Args&&... args) {
+    return Tuple<Args&&...>(forward<Args>(args)...);
+}
 };
 
 namespace std {
@@ -124,4 +129,5 @@ struct tuple_element<index, LIIM::Tuple<Types...>> {
 };
 }
 
+using LIIM::forward_as_tuple;
 using LIIM::Tuple;

@@ -1,3 +1,4 @@
+#include <liim/new_vector.h>
 #include <liim/pair.h>
 #include <test/test.h>
 
@@ -26,6 +27,8 @@ constexpr void basic() {
     auto [e, f] = d;
     EXPECT_EQ(e, 3);
     EXPECT_EQ(f, 6);
+
+    Pair<NewVector<int>, int> www(LIIM::piecewise_construct, Tuple { 5, 3 }, Tuple { 4 });
 }
 
 TEST_CONSTEXPR(pair, basic, basic)

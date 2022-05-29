@@ -3,6 +3,7 @@ set(TEST_FILES
     test_enum.cpp
     test_format.cpp
     test_function.cpp
+    test_hash_map.cpp
     test_hash_set.cpp
     test_new_vector.cpp
     test_option.cpp

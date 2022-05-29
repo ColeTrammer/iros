@@ -207,7 +207,13 @@ public:
         return m_storage.value();
     }
 
-    constexpr T value_or(T default_value) const { return has_value() ? T { value() } : T { forward<T&&>(default_value) }; }
+    constexpr T value_or(T default_value) const {
+        if (has_value()) {
+            return value();
+        } else {
+            return forward<T&&>(default_value);
+        }
+    }
 
     template<typename... Args>
     constexpr T& emplace(Args&&... args) {
@@ -224,6 +230,14 @@ public:
             this->emplace(LIIM::forward<T&&>(other.value()));
             other.reset();
         }
+    }
+
+    template<typename C, typename R = InvokeResult<C, T>::type>
+    constexpr Option<R> map(C mapper) {
+        if (!has_value()) {
+            return {};
+        }
+        return Option<R> { mapper(value()) };
     }
 
     template<typename C, typename R = InvokeResult<C, T>::type>

@@ -71,16 +71,18 @@ constexpr void erase() {
 
     EXPECT_EQ(set.erase(7), 7);
     EXPECT_EQ(set.size(), 4u);
+    EXPECT_EQ(set.erase(set.find(9)), 9);
+    EXPECT_EQ(set.size(), 3u);
     EXPECT(!set.contains(7));
 
     auto it = set.begin();
     ++it;
     ++it;
     set.erase(set.begin(), it);
-    EXPECT_EQ(set.size(), 2u);
+    EXPECT_EQ(set.size(), 1u);
 
     set.erase(set.begin());
-    EXPECT_EQ(set.size(), 1u);
+    EXPECT_EQ(set.size(), 0u);
 }
 
 constexpr void comparison() {
@@ -95,22 +97,22 @@ static void transparent() {
     static_assert(LIIM::Hash::Detail::CanInsert<StringView, String>);
 
     auto a = LIIM::Hash::Set<String> { "abc"s, "def"s };
-    EXPECT_EQ(*a.find("abc"sv), "abc"s);
-    EXPECT(!a.find("aaa"sv));
+    EXPECT_EQ(*a.at("abc"sv), "abc"s);
+    EXPECT(!a.at("aaa"sv));
     EXPECT_EQ(*a.insert("abc"sv), "abc");
     EXPECT(!a.insert("xyz"sv));
-    EXPECT_EQ(*a.find("xyz"sv), "xyz"sv);
+    EXPECT_EQ(*a.at("xyz"sv), "xyz"sv);
     EXPECT_EQ(a.erase("xyz"sv), "xyz"s);
     EXPECT(!a.erase("xyz"sv));
 
     auto b = LIIM::Hash::Set { "xyz"sv, "sv"sv };
-    EXPECT_EQ(*b.find("xyz"s), "xyz"sv);
-    EXPECT_EQ(*b.find("xyz"), "xyz"sv);
-    EXPECT(!b.find("xyzz"));
+    EXPECT_EQ(*b.at("xyz"s), "xyz"sv);
+    EXPECT_EQ(*b.at("xyz"), "xyz"sv);
+    EXPECT(!b.at("xyzz"));
 
     auto c = LIIM::Hash::Set { "abc", "def" };
-    EXPECT_EQ(*c.find("abc"sv), "abc"sv);
-    EXPECT(!b.find("xyzz"s));
+    EXPECT_EQ(*c.at("abc"sv), "abc"sv);
+    EXPECT(!b.at("xyzz"s));
 }
 
 static void format() {
