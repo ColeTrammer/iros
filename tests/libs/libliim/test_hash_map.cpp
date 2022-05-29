@@ -1,4 +1,5 @@
 #include <liim/hash/map.h>
+#include <liim/hash/set.h>
 #include <liim/new_vector.h>
 #include <liim/string.h>
 #include <test/test.h>
@@ -80,6 +81,14 @@ constexpr void comparison() {
     EXPECT_NOT_EQ(a, b);
 }
 
+constexpr void subcontainers() {
+    auto keys = LIIM::Hash::Set<int> { range(4) };
+    auto values = LIIM::Hash::Set<int> { range(4, 8) };
+    auto a = LIIM::Hash::Map<int, int> { zip(keys, values) };
+    EXPECT_EQ(LIIM::Hash::Set<int> { a.keys() }, keys);
+    EXPECT_EQ(LIIM::Hash::Set<int> { a.values() }, values);
+}
+
 static void transparent() {
     {
         auto x = LIIM::Hash::Map<String, String> { zip(std::initializer_list { "hello"sv, "world"sv },
@@ -120,6 +129,7 @@ TEST_CONSTEXPR(hash_map, basic, basic)
 TEST_CONSTEXPR(hash_map, containers, containers)
 TEST_CONSTEXPR(hash_map, erase, erase)
 TEST_CONSTEXPR(hash_map, comparison, comparison)
+TEST_CONSTEXPR(hash_map, subcontainers, subcontainers)
 TEST(hash_map, transparent) {
     transparent();
 }

@@ -91,6 +91,11 @@ public:
     template<Detail::CanInsert<K> U, typename... Args>
     constexpr Option<V&> try_emplace(U&& needle, Args&&... args);
 
+    constexpr auto values();
+    constexpr auto values() const;
+    constexpr auto cvalues() const { return values(); }
+    constexpr auto keys() const;
+
     constexpr void swap(Map& other) { m_table.swap(other.m_table); }
 
     constexpr bool operator==(const Map& other) const requires(EqualComparable<V>);
@@ -236,6 +241,27 @@ constexpr Option<V&> Map<K, V>::try_emplace(U&& needle, Args&&... args) {
         .map([](auto& value) -> V& {
             return value.second;
         });
+}
+
+template<typename K, typename V>
+constexpr auto Map<K, V>::values() {
+    return transform(*this, [](auto& pair) -> V& {
+        return pair.second;
+    });
+}
+
+template<typename K, typename V>
+constexpr auto Map<K, V>::values() const {
+    return transform(*this, [](const auto& pair) -> const V& {
+        return pair.second;
+    });
+}
+
+template<typename K, typename V>
+constexpr auto Map<K, V>::keys() const {
+    return transform(*this, [](const auto& pair) -> const K& {
+        return pair.first;
+    });
 }
 
 template<typename K, typename V>

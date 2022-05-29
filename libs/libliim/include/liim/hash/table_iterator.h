@@ -49,7 +49,7 @@ public:
         return result;
     }
 
-    constexpr bool operator==(const TableIterator& other) {
+    constexpr bool operator==(const TableIterator& other) const {
         return this->m_group_index == other.m_group_index && this->m_index_into_group == other.m_index_into_group;
     }
 
