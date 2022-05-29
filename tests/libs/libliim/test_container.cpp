@@ -96,6 +96,50 @@ constexpr void enumerate() {
     }
 }
 
+constexpr void transform() {
+    for (auto [x, y] : zip(transform(range(5),
+                                     [](auto x) {
+                                         return x + 1;
+                                     }),
+                           range(1, 6))) {
+        EXPECT_EQ(x, y);
+    }
+
+    auto w = NewVector<UniquePtr<size_t>> {};
+    w.push_back(make_unique<size_t>(42));
+    w.push_back(make_unique<size_t>(84));
+    for (auto [x, y] : enumerate(transform(w, [](auto& p) {
+             return *p;
+         }))) {
+        EXPECT_EQ((x + 1) * 42, y);
+    }
+    for (auto [x, y] : enumerate(transform(move_elements(move(w)), [](auto&& p) {
+             return *p;
+         }))) {
+        EXPECT_EQ((x + 1) * 42, y);
+    }
+
+    {
+        int sum = 0;
+        for (auto x : transform(FixedArray { 3, 4, 5 }, [](auto x) {
+                 return x * 2;
+             })) {
+            sum += x;
+        }
+        EXPECT_EQ(sum, 24);
+    }
+    {
+        int sum = 0;
+        auto m = transform(FixedArray { 3, 4, 5 }, [](auto x) {
+            return x * 2;
+        });
+        for (auto x : m) {
+            sum += x;
+        }
+        EXPECT_EQ(sum, 24);
+    }
+}
+
 constexpr void zip() {
     auto v = NewVector { 2, 4, 6 };
     auto w = NewVector { 6, 4, 2 };
@@ -230,6 +274,7 @@ TEST_CONSTEXPR(container, range, range)
 TEST_CONSTEXPR(container, repeat, repeat)
 TEST_CONSTEXPR(container, reversed, reversed)
 TEST_CONSTEXPR(container, enumerate, enumerate)
+TEST_CONSTEXPR(container, transform, transform)
 TEST_CONSTEXPR(container, zip, zip)
 TEST_CONSTEXPR(container, move_elements, move_elements)
 TEST_CONSTEXPR(container, iterator_container, iterator_container)
