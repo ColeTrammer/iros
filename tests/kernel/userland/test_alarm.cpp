@@ -35,7 +35,8 @@ TEST(alarm, cancel) {
     EXPECT(!did_get_alarm);
     ualarm(TEST_SLEEP_SCHED_DELAY_US, 0);
     ualarm(0, 0);
-    usleep(TEST_SLEEP_SCHED_DELAY_US + 500);
+    did_get_alarm = 0;
+    usleep(3 * TEST_SLEEP_SCHED_DELAY_US / 2);
     EXPECT(!did_get_alarm);
 }
 
