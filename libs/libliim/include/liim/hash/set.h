@@ -12,17 +12,16 @@ private:
 
 public:
     constexpr Set() {}
-    constexpr Set(const Set&) = default;
     constexpr Set(Set&&) = default;
-    constexpr Set(std::initializer_list<T> list);
-    template<Container C>
-    constexpr Set(C&& container);
-    template<Iterator Iter>
-    constexpr Set(Iter begin, Iter end);
 
-    constexpr Set& operator=(const Set&) = default;
+    static constexpr Set create(std::initializer_list<T> list);
+    template<Iterator Iter>
+    static constexpr Set create(Iter begin, Iter end, Option<size_t> known_size = {});
+
+    constexpr Set clone() const requires(Cloneable<T>) { return Set(m_table.clone()); }
+
     constexpr Set& operator=(Set&&) = default;
-    constexpr Set& operator=(std::initializer_list<T> list);
+    constexpr Set& assign(std::initializer_list<T> list);
 
     using Iterator = Table::Iterator;
     using ConstIterator = Table::ConstIterator;
@@ -48,20 +47,30 @@ public:
         return m_table.erase(forward<U>(key));
     }
 
-    template<Detail::CanInsert<T> U>
+    template<Detail::CanInsertIntoSet<T> U>
     constexpr Option<T&> insert(U&& value) {
         return m_table.insert(forward<U>(value));
     }
+    template<Detail::CanInsertIntoSet<T> U>
+    constexpr Iterator insert(ConstIterator hint, U&& value) {
+        return m_table.insert(hint, forward<U>(value));
+    }
 
     template<::Iterator Iter>
-    constexpr void insert(Iter begin, Iter end);
-    template<Container C>
-    constexpr void insert(C&& container) requires(!Detail::CanInsert<C, T>);
+    constexpr void insert(Iter begin, Iter end, Option<size_t> known_size = {}) {
+        return m_table.insert(move(begin), move(end), known_size);
+    }
+
+    template<::Iterator Iter>
+    constexpr Iterator insert(ConstIterator hint, Iter begin, Iter end, Option<size_t> known_size = {}) {
+        return m_table.insert(hint, move(begin), move(end), known_size);
+    }
+
     constexpr void insert(std::initializer_list<T> list);
 
     template<typename... Args>
     constexpr Option<T&> emplace(Args&&... args) {
-        return m_table.insert(T(forward<Args>(args)...));
+        return m_table.insert(create<T>(forward<Args>(args)...));
     }
 
     template<Detail::CanLookup<T> U>
@@ -92,31 +101,27 @@ public:
     constexpr bool operator==(const Set& other) const requires(EqualComparable<T>);
 
 private:
+    explicit constexpr Set(Table&& table) : m_table(move(table)) {}
+
     Table m_table;
 };
 
 template<Hashable T>
-constexpr Set<T>::Set(std::initializer_list<T> list) {
-    insert(list.begin(), list.end());
-}
-
-template<Hashable T>
-template<Container C>
-constexpr Set<T>::Set(C&& container) {
-    insert(forward<C>(container));
+constexpr auto Set<T>::create(std::initializer_list<T> list) -> Set {
+    return Set::create(list.begin(), list.end());
 }
 
 template<Hashable T>
 template<Iterator Iter>
-constexpr Set<T>::Set(Iter begin, Iter end) {
-    insert(move(begin), move(end));
+constexpr auto Set<T>::create(Iter begin, Iter end, Option<size_t> known_size) -> Set {
+    Set result;
+    result.insert(move(begin), move(end), known_size);
+    return result;
 }
 
 template<Hashable T>
-constexpr auto Set<T>::operator=(std::initializer_list<T> list) -> Set& {
-    auto result = Set(list);
-    swap(result);
-    return *this;
+constexpr auto Set<T>::assign(std::initializer_list<T> list) -> Set& {
+    return *this = Set::create(list);
 }
 
 template<Hashable T>
@@ -127,31 +132,8 @@ constexpr void Set<T>::erase(ConstIterator start, ConstIterator end) {
 }
 
 template<Hashable T>
-template<Iterator Iter>
-constexpr void Set<T>::insert(Iter begin, Iter end) {
-    return insert(iterator_container(move(begin), move(end)));
-}
-
-template<Hashable T>
 constexpr void Set<T>::insert(std::initializer_list<T> list) {
     insert(list.begin(), list.end());
-}
-
-template<Hashable T>
-template<Container C>
-constexpr void Set<T>::insert(C&& container) requires(!Detail::CanInsert<C, T>) {
-    using ValueType = IteratorTraits<decltype(container.begin())>::ValueType;
-    constexpr bool is_const = IsConst<typename RemoveReference<ValueType>::type>::value;
-
-    if constexpr (!is_const && !IsLValueReference<C>::value && !IsConst<decay_t<C>>::value) {
-        for (auto&& value : move_elements(move(container))) {
-            insert(move(value));
-        }
-    } else {
-        for (const auto& value : container) {
-            insert(value);
-        }
-    }
 }
 
 template<Hashable T>
@@ -165,6 +147,23 @@ constexpr bool Set<T>::operator==(const Set& other) const requires(EqualComparab
         }
     }
     return true;
+}
+
+template<typename T>
+constexpr Set<T> make_hash_set(std::initializer_list<T> list) {
+    return Set<T>::create(list);
+}
+
+template<Iterator Iter>
+constexpr auto make_hash_set(Iter start, Iter end, Option<size_t> known_size = {}) {
+    using SetType = Set<decay_t<IteratorValueType<Iter>>>;
+    return SetType::create(move(start), move(end), known_size);
+}
+
+template<Container C>
+constexpr auto collect_hash_set(C&& container) {
+    using SetType = Set<decay_t<ContainerValueType<C>>>;
+    return collect<SetType>(forward<C>(container));
 }
 }
 

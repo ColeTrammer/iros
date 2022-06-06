@@ -51,8 +51,6 @@ public:
 
     String& operator=(const String& other);
     String& operator=(String&& other);
-    String& operator=(const char* other);
-    String& operator=(StringView other);
 
     String& operator+=(const String& other) {
         insert(other, size());
@@ -243,18 +241,6 @@ inline String& String::operator=(String&& other) {
         String temp(move(other));
         swap(temp);
     }
-    return *this;
-}
-
-inline String& String::operator=(const char* other) {
-    String temp(other);
-    swap(temp);
-    return *this;
-}
-
-inline String& String::operator=(StringView other) {
-    String temp(other);
-    swap(temp);
     return *this;
 }
 

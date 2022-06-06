@@ -3,8 +3,8 @@
 
 TEST(string, basic_getters) {
     EXPECT(""s.empty());
-    EXPECT_EQ("str"s[2], 'r');
-    EXPECT_EQ("str"s[1], 't');
+    EXPECT_EQ(char("str"s[2]), 'r');
+    EXPECT_EQ(char("str"s[1]), 't');
     EXPECT_EQ("str"s.size(), 3lu);
     EXPECT_EQ("abc"s.first(), 'a');
     EXPECT_EQ("abc"s.last(), 'c');
@@ -100,7 +100,8 @@ TEST(string, case_conversions) {
     EXPECT_EQ(camelCase.to_upper_case(), "WHATCASE"s);
     EXPECT_EQ(camelCase, "WHATCASE"s);
 
-    EXPECT_EQ("aaa_bb_cc_"s.to_title_case(), "AaaBbCc");
+    auto s = "aaa_bb_cc_"s;
+    EXPECT_EQ(s.to_title_case(), "AaaBbCc");
 }
 
 TEST(string, mutators) {

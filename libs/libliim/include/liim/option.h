@@ -1,6 +1,7 @@
 #pragma once
 
 #include <assert.h>
+#include <liim/construct.h>
 #include <liim/forward.h>
 #include <liim/utilities.h>
 
@@ -37,8 +38,8 @@ namespace Detail {
         constexpr const T& value() const { return m_storage.value; }
 
         template<typename... Args>
-        constexpr T& emplace(Args&&... args) {
-            construct_at(&m_storage.value, forward<Args>(args)...);
+        requires(CreateableFrom<T, Args...>) constexpr T& emplace(Args&&... args) {
+            create_at(&m_storage.value, forward<Args>(args)...);
             m_has_value = true;
             return value();
         }

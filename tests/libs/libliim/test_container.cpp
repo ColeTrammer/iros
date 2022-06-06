@@ -2,6 +2,23 @@
 #include <liim/new_vector.h>
 #include <test/test.h>
 
+constexpr void collect() {
+    auto v = collect<NewVector<int>>(range(5));
+    EXPECT_EQ(v.clone(), make_vector({ 0, 1, 2, 3, 4 }));
+
+    auto x = NewVector<UniquePtr<int>> {};
+    x.push_back(make_unique<int>(43));
+    x.push_back(make_unique<int>(45));
+    auto w = collect_vector(move(x));
+    EXPECT_EQ(*w[0], 43);
+    EXPECT_EQ(*w[1], 45);
+    EXPECT_EQ(w.size(), 2u);
+
+    const auto r = repeat(3lu, 5);
+    auto z = collect_vector(r);
+    EXPECT_EQ(z.clone(), make_vector({ 5, 5, 5 }));
+}
+
 constexpr void range() {
     auto v = NewVector<int> {};
     for (auto i : range(5)) {
@@ -72,7 +89,7 @@ constexpr void reversed() {
 }
 
 constexpr void enumerate() {
-    auto v = NewVector<size_t> { 5lu, 6lu, 7lu, 8lu };
+    auto v = make_vector<size_t>({ 5lu, 6lu, 7lu, 8lu });
     for (auto [i, x] : enumerate(v)) {
         EXPECT_EQ(i + 5, x);
         ++x;
@@ -141,8 +158,8 @@ constexpr void transform() {
 }
 
 constexpr void zip() {
-    auto v = NewVector { 2, 4, 6 };
-    auto w = NewVector { 6, 4, 2 };
+    auto v = make_vector({ 2, 4, 6 });
+    auto w = make_vector({ 6, 4, 2 });
 
     for (auto [a, b] : zip(v, w)) {
         EXPECT_EQ(a + b, 8);
@@ -187,7 +204,7 @@ constexpr void move_elements() {
 }
 
 constexpr void iterator_container() {
-    auto v = NewVector { 2, 3, 4 };
+    auto v = make_vector({ 2, 3, 4 });
     auto c = iterator_container(v.begin(), v.end());
     EXPECT_EQ(c.size(), 3);
     auto it = c.begin();
@@ -270,6 +287,7 @@ constexpr void value_iterator() {
     EXPECT_EQ(sum, 10lu * 11lu / 2lu);
 }
 
+TEST_CONSTEXPR(container, collect, collect)
 TEST_CONSTEXPR(container, range, range)
 TEST_CONSTEXPR(container, repeat, repeat)
 TEST_CONSTEXPR(container, reversed, reversed)

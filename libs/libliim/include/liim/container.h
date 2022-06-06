@@ -42,6 +42,28 @@ concept SizedContainer = Container<T> && requires(T container) {
     { container.size() } -> SameAs<size_t>;
 };
 
+template<Container C>
+using IteratorForContainer = decltype(declval<C>().begin());
+
+template<Container C>
+using ConstIteratorForContainer = decltype(declval<const C>().begin());
+
+template<Iterator Iter>
+using IteratorValueType = IteratorTraits<Iter>::ValueType;
+
+template<Container C>
+using ContainerValueType = IteratorValueType<IteratorForContainer<C>>;
+
+template<typename T>
+concept Clearable = Container<T> && requires(T& container) {
+    container.clear();
+};
+
+template<typename C, typename T>
+concept InsertableFor = Container<C> && requires(C& container, IteratorForContainer<C> iter, T&& value) {
+    { container.insert(iter, forward<T>(value)) } -> SameAs<IteratorForContainer<C>>;
+};
+
 template<typename Producer>
 class ValueIteratorAdapterIterator {
 public:
@@ -440,7 +462,10 @@ public:
 
     constexpr auto size() const requires(SizedContainer<C>) { return m_container.size(); }
 
-private : C m_container;
+    constexpr C& base() { return m_container; }
+
+private:
+    C m_container;
 };
 
 template<Iterator Iter, typename F>
@@ -595,10 +620,35 @@ constexpr auto iterator_container(Iter begin, Iter end, size_t size) {
         return ExplicitlySizedIteratorContainer(move(begin), move(end), size);
     }
 }
+
+template<typename C, Container OtherContainer>
+requires(InsertableFor<C, ContainerValueType<MoveElements<OtherContainer>>>) constexpr IteratorForContainer<C> insert(
+    C& container, ConstIteratorForContainer<C> position, OtherContainer&& other_container) {
+    auto move_container = move_elements(::forward<OtherContainer>(other_container));
+    auto result = container.insert(position, move_container.begin(), move_container.end());
+    if constexpr (Clearable<OtherContainer> && IsRValueReference<OtherContainer>::value) {
+        move_container.base().clear();
+    }
+    return result;
 }
 
+template<typename T, Container C>
+constexpr T collect(C&& container) {
+    auto result = T();
+    insert(result, result.begin(), ::forward<C>(container));
+    return result;
+}
+
+template<typename T, Container C>
+constexpr T& assign_to(T& output, C&& container) requires(!AssignableFrom<T, C>) {
+    return output = collect<T, C>(::forward<C>(container));
+}
+}
+
+using LIIM::collect;
 using LIIM::Container;
 using LIIM::enumerate;
+using LIIM::insert;
 using LIIM::Iterator;
 using LIIM::iterator_container;
 using LIIM::IteratorTraits;

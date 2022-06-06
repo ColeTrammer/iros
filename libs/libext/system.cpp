@@ -8,7 +8,7 @@ Result<String, SystemError> realpath(StringView view) {
     auto path = String(view);
     char* result = ::realpath(path.string(), nullptr);
     if (!result) {
-        return Err(SystemError::from_errno({ move(path) }));
+        return Err(SystemError::from_errno(make_vector({ move(path) })));
     }
     auto ret = String(result);
     free(result);

@@ -47,8 +47,8 @@
 
 #define EXPECT_EQ(a, b)                                                                                                                    \
     do {                                                                                                                                   \
-        auto a_result = (a);                                                                                                               \
-        auto b_result = (b);                                                                                                               \
+        const auto& a_result = (a);                                                                                                        \
+        const auto& b_result = (b);                                                                                                        \
         if (a_result != b_result) {                                                                                                        \
             error_log("\033[31;1mFAIL\033[0m: \033[1m{}\033[0m: {}: {}:{}: {} != {} => '{}' != '{}'",                                      \
                       Test::TestManager::the().current_test_case().suite_name(), Test::TestManager::the().current_test_case().case_name(), \
@@ -60,8 +60,8 @@
 
 #define EXPECT_NOT_EQ(a, b)                                                                                                                \
     do {                                                                                                                                   \
-        auto a_result = (a);                                                                                                               \
-        auto b_result = (b);                                                                                                               \
+        const auto& a_result = (a);                                                                                                        \
+        const auto& b_result = (b);                                                                                                        \
         if (a_result == b_result) {                                                                                                        \
             error_log("\033[31;1mFAIL\033[0m: \033[1m{}\033[0m: {}: {}:{}: {} != {} => '{}' == '{}'",                                      \
                       Test::TestManager::the().current_test_case().suite_name(), Test::TestManager::the().current_test_case().case_name(), \

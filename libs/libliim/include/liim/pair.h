@@ -1,8 +1,8 @@
 #pragma once
 
+#include <liim/construct.h>
 #include <liim/tuple.h>
 #include <liim/utilities.h>
-#include <tuple>
 
 namespace LIIM {
 template<typename T, typename U>
@@ -16,6 +16,14 @@ struct Pair {
     constexpr Pair() : first(), second() {}
     constexpr Pair(const Pair&) = default;
     constexpr Pair(Pair&&) = default;
+
+    constexpr Pair clone() const requires(Cloneable<T>&& Cloneable<U>) { return Pair(::clone(first), ::clone(second)); }
+
+    template<typename... TArgs, typename... UArgs>
+    static constexpr Pair create(piecewise_construct_t, Tuple<TArgs...>&& first_args, Tuple<UArgs...>&& second_args) {
+        return Pair::create(move(first_args), move(second_args), make_index_sequence<sizeof...(TArgs)>(),
+                            make_index_sequence<sizeof...(UArgs)>());
+    }
 
     template<typename X = T, typename Y = U>
     constexpr Pair(X&& x, Y&& y) : first(forward<X>(x)), second(forward<Y>(y)) {}
@@ -96,6 +104,14 @@ struct Pair {
     constexpr auto operator<=>(const Pair&) const = default;
 
 private:
+    template<typename... TArgs, typename... UArgs, size_t... tindices, size_t... uindices>
+    constexpr Pair create(Tuple<TArgs...>&& first_args, Tuple<UArgs...>&& second_args, IndexSequence<tindices...>,
+                          IndexSequence<uindices...>) {
+        auto first = create(forward<TArgs>(first_args.template get<tindices>())...);
+        auto second = create(forward<UArgs>(second_args.template get<uindices>())...);
+        return Pair(forward<T&&>(first), forward<U&&>(second));
+    }
+
     template<typename... TArgs, typename... UArgs, size_t... tindices, size_t... uindices>
     constexpr Pair(Tuple<TArgs...>&& first_args, Tuple<UArgs...>&& second_args, IndexSequence<tindices...>, IndexSequence<uindices...>)
         : first(forward<TArgs>(first_args.template get<tindices>())...), second(forward<UArgs>(second_args.template get<uindices>())...) {}

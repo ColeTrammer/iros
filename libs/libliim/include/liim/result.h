@@ -73,19 +73,35 @@ public:
     }
 
     template<typename C, typename R = InvokeResult<C, T>::type>
-    constexpr Result<R, E> map(C mapper) const {
+    constexpr Result<R, E> map(C mapper) && {
         if (!is_ok()) {
-            return Err(move(error()));
+            return Err(forward<E&&>(error()));
         }
-        return Ok(mapper(move(value())));
+        return Ok(mapper(forward<T&&>(value())));
+    }
+
+    template<typename C, typename R = InvokeResult<C, T>::type>
+    constexpr Result<R, E> map(C mapper) const& {
+        if (!is_ok()) {
+            return Err(error());
+        }
+        return Ok(mapper(value()));
     }
 
     template<typename C, typename R = InvokeResult<C, E>::type>
-    constexpr Result<T, R> map_error(C mapper) const {
+    constexpr Result<T, R> map_error(C mapper) && {
         if (!is_error()) {
-            return Ok(move(value()));
+            return Ok(forward<T&&>(value()));
         }
-        return Err(mapper(move(error())));
+        return Err(mapper(forward<E&&>(error())));
+    }
+
+    template<typename C, typename R = InvokeResult<C, E>::type>
+    constexpr Result<T, R> map_error(C mapper) const& {
+        if (!is_error()) {
+            return Ok(value());
+        }
+        return Err(mapper(error()));
     }
 
     constexpr operator bool() const { return is_ok(); }

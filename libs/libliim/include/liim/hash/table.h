@@ -14,8 +14,15 @@ namespace LIIM::Hash::Detail {
 template<typename TransparentKey, typename Base>
 concept CanLookup = HashableLike<TransparentKey, Base> && EqualComparable<TransparentKey, Base>;
 
-template<typename TransparentKey, typename Base>
-concept CanInsert = CanLookup<TransparentKey, Base> && ConstructibleFrom<Base, TransparentKey>;
+template<typename TransparentKey, typename KeyType>
+concept CanInsertIntoSet = CanLookup<TransparentKey, KeyType> && CreateableFrom<KeyType, TransparentKey>;
+
+template<typename Pair, typename KeyType, typename StorageType>
+concept CanInsertIntoMap = CanLookup<typename decay_t<Pair>::FirstType, KeyType> && CreateableFrom<StorageType, Pair>;
+
+template<typename U, typename Table>
+concept CanInsert = (Table::is_set && CanInsertIntoSet<U, typename Table::ValueType>) ||
+                    (Table::is_map && CanInsertIntoMap<U, typename Table::KeyType, typename Table::ValueType>);
 
 enum class TableType {
     Set,
@@ -42,12 +49,12 @@ public:
     using KeyType = TableKeyType<T, type>::type;
 
     constexpr Table() {}
-    constexpr Table(const Table&);
     constexpr Table(Table&&);
     constexpr ~Table();
 
-    constexpr Table& operator=(const Table&);
     constexpr Table& operator=(Table&&);
+
+    constexpr Table clone() const requires(Cloneable<ValueType>);
 
     constexpr bool empty() const { return size() == 0; }
     constexpr size_t size() const { return m_size; }
@@ -71,12 +78,18 @@ public:
     template<typename U, typename Factory>
     constexpr Option<T&> insert_with_factory(U&& needle, Factory&& factory) requires(CanLookup<U, KeyType>);
 
-    template<CanInsert<T> U>
-    constexpr Option<T&> insert(U&& to_insert) requires(is_set);
+    template<typename U>
+    constexpr Option<T&> insert(U&& to_insert) requires(CanInsert<U, Table>);
 
-    template<typename Pair>
-    constexpr Option<T&>
-    insert(Pair&& to_insert) requires(is_map&& CanLookup<typename decay_t<Pair>::FirstType, KeyType>&& ConstructibleFrom<T, Pair>);
+    template<typename U>
+    constexpr Iterator insert(ConstIterator hint, U&& to_insert) requires(CanInsert<U, Table>);
+
+    template<::Iterator Iter>
+    constexpr void insert(Iter start, Iter end, Option<size_t> known_size) requires(CanInsert<IteratorValueType<Iter>, Table>);
+
+    template<::Iterator Iter>
+    constexpr Iterator insert(ConstIterator hint, Iter start, Iter end,
+                              Option<size_t> known_size) requires(CanInsert<IteratorValueType<Iter>, Table>);
 
     template<typename U>
     constexpr Option<T&> at(U&& needle) requires(CanLookup<U, KeyType>);
@@ -145,13 +158,6 @@ private:
 };
 
 template<typename T, TableType type>
-constexpr Table<T, type>::Table(const Table& other) {
-    for (auto& value : other) {
-        insert(value);
-    }
-}
-
-template<typename T, TableType type>
 constexpr Table<T, type>::Table(Table&& other)
     : m_groups(exchange(other.m_groups, nullptr))
     , m_values(exchange(other.m_values, nullptr))
@@ -171,12 +177,12 @@ constexpr Table<T, type>::~Table() {
 }
 
 template<typename T, TableType type>
-constexpr auto Table<T, type>::operator=(const Table& other) -> Table& {
-    if (this != other) {
-        auto new_table = Table(other);
-        swap(new_table);
+constexpr auto Table<T, type>::clone() const -> Table requires(Cloneable<T>) {
+    Table result;
+    for (auto& value : *this) {
+        result.insert(value);
     }
-    return *this;
+    return result;
 }
 
 template<typename T, TableType type>
@@ -238,20 +244,40 @@ constexpr Option<T&> Table<T, type>::insert_with_factory(U&& needle, Factory&& f
 }
 
 template<typename T, TableType type>
-template<CanInsert<T> U>
-constexpr Option<T&> Table<T, type>::insert(U&& to_insert) requires(is_set) {
-    return insert_with_factory(forward<U>(to_insert), [&](T* pointer) {
-        construct_at(pointer, forward<U>(to_insert));
-    });
+template<typename U>
+constexpr Option<T&> Table<T, type>::insert(U&& to_insert) requires(CanInsert<U, Table>) {
+    if constexpr (is_set) {
+        return insert_with_factory(forward<U>(to_insert), [&](T* pointer) {
+            create_at(pointer, forward<U>(to_insert));
+        });
+    } else {
+        return insert_with_factory(forward<U>(to_insert).first, [&](T* pointer) {
+            create_at(pointer, forward<U>(to_insert));
+        });
+    }
 }
 
 template<typename T, TableType type>
-template<typename Pair>
-constexpr Option<T&> Table<T, type>::insert(Pair&& to_insert) requires(
-    is_map&& CanLookup<typename decay_t<Pair>::FirstType, KeyType>&& ConstructibleFrom<T, Pair>) {
-    return insert_with_factory(forward<Pair>(to_insert).first, [&](T* pointer) {
-        construct_at(pointer, forward<Pair>(to_insert));
-    });
+template<typename U>
+constexpr auto Table<T, type>::insert(ConstIterator, U&& to_insert) -> Iterator requires(CanInsert<U, Table>) {
+    insert(forward<U>(to_insert));
+    return end();
+}
+
+template<typename T, TableType type>
+template<::Iterator Iter>
+constexpr void Table<T, type>::insert(Iter start, Iter end, Option<size_t>) requires(CanInsert<IteratorValueType<Iter>, Table>) {
+    for (auto it = move(start); it != end; ++it) {
+        insert(*it);
+    }
+}
+
+template<typename T, TableType type>
+template<::Iterator Iter>
+constexpr auto Table<T, type>::insert(ConstIterator, Iter start, Iter end, Option<size_t> size_hint) -> Iterator
+    requires(CanInsert<IteratorValueType<Iter>, Table>) {
+    insert(move(start), move(end), size_hint);
+    return this->end();
 }
 
 template<typename T, TableType type>
