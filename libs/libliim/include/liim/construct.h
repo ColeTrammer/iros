@@ -41,29 +41,29 @@ concept AssignableFrom = OperatorAssignableFrom<T, U> || MemberAssignableFrom<T,
 template<typename T, typename... Args>
 constexpr void create_at(T* location, Args&&... args) requires(CreateableFrom<T, Args...>) {
     if constexpr (ConstructibleFrom<T, Args...>) {
-        construct_at(location, ::forward<Args>(args)...);
+        construct_at(location, forward<Args>(args)...);
     } else if constexpr (MemberCreateableFrom<T, Args...>) {
-        construct_at(location, T::create(::forward<Args>(args)...));
+        construct_at(location, T::create(forward<Args>(args)...));
     }
 }
 
 template<typename T, typename... Args>
 constexpr T create(Args&&... args) requires(CreateableFrom<T, Args...>) {
     if constexpr (ConstructibleFrom<T, Args...>) {
-        return T(::forward<Args>(args)...);
+        return T(forward<Args>(args)...);
     } else if constexpr (CreateableFrom<T, Args...>) {
-        return T::create(::forward<Args>(args)...);
+        return T::create(forward<Args>(args)...);
     }
 }
 
 template<typename T, typename U>
 constexpr T& assign_to(T& lvalue, U&& rvalue) requires(AssignableFrom<T, U>) {
     if constexpr (OperatorAssignableFrom<T, U>) {
-        return lvalue = ::forward<U>(rvalue);
+        return lvalue = forward<U>(rvalue);
     } else if constexpr (MemberAssignableFrom<T, U>) {
-        return lvalue.assign(::forward<U>(rvalue));
+        return lvalue.assign(forward<U>(rvalue));
     } else if constexpr (Moveable<T> && CreateableFrom<T, U>) {
-        return lvalue = create<T>(::forward<U>(rvalue));
+        return lvalue = create<T>(forward<U>(rvalue));
     }
 }
 

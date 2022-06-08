@@ -113,7 +113,7 @@ template<typename T>
 T Object::get_or(const String& name, T alt) const {
     auto result = get_as<T>(name);
     if (!result) {
-        return move(alt);
+        return alt;
     }
     return *result;
 }

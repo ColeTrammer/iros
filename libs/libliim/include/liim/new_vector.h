@@ -179,7 +179,7 @@ public:
 
     template<typename... Args>
     constexpr Iterator emplace(ConstIterator position, Args&&... args) {
-        return emplace(iterator_index(position), ::forward<Args>(args)...);
+        return emplace(iterator_index(position), forward<Args>(args)...);
     }
     template<typename... Args>
     constexpr Iterator emplace(size_t index, Args&&... args);
@@ -189,7 +189,7 @@ public:
 
     template<typename... Args>
     constexpr T& emplace_back(Args&&... args) {
-        return *emplace(end(), ::forward<Args>(args)...);
+        return *emplace(end(), forward<Args>(args)...);
     }
 
     constexpr Option<T> pop_back();
@@ -334,7 +334,7 @@ constexpr auto NewVector<T>::emplace(size_t index, Args&&... args) -> Iterator {
     grow_to(size() + 1);
 
     move_objects(m_data + index + 1, m_data + index, size() - index);
-    create_at(&m_data[index].value, ::forward<Args>(args)...);
+    create_at(&m_data[index].value, forward<Args>(args)...);
     m_size++;
 
     return iterator(index);

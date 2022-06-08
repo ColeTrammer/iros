@@ -86,7 +86,7 @@ SharedPtr<Bitmap> Font::rasterize_glyph(uint32_t glyph_id, Color color) {
             bitmap->put_pixel(x, y, bit ? color : ColorValue::Clear);
         }
     }
-    return move(bitmap);
+    return bitmap;
 }
 
 Bitset<uint8_t>& Font::bitset_for_glyph_id(uint32_t glyph_id) {

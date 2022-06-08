@@ -202,7 +202,7 @@ constexpr void Map<K, V>::erase(ConstIterator start, ConstIterator end) {
 template<typename K, typename V>
 template<typename P>
 constexpr Option<V&> Map<K, V>::insert(P&& pair) {
-    return m_table.insert(::forward<P>(pair)).map([](auto& value) -> V& {
+    return m_table.insert(forward<P>(pair)).map([](auto& value) -> V& {
         return value.second;
     });
 }
@@ -210,7 +210,7 @@ constexpr Option<V&> Map<K, V>::insert(P&& pair) {
 template<typename K, typename V>
 template<typename P>
 constexpr auto Map<K, V>::insert(ConstIterator hint, P&& pair) -> Iterator {
-    return m_table.insert(hint, ::forward<P>(pair));
+    return m_table.insert(hint, forward<P>(pair));
 }
 
 template<typename K, typename V>

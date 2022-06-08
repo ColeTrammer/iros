@@ -328,7 +328,7 @@ private:
 template<Container C>
 class Reversed {
 public:
-    explicit constexpr Reversed(C container) : m_container(::forward<C&&>(container)) {}
+    explicit constexpr Reversed(C container) : m_container(forward<C&&>(container)) {}
 
     constexpr auto begin() {
         if constexpr (requires { m_container.rbegin(); }) {
@@ -420,7 +420,7 @@ public:
 template<Container... Cs>
 class Zip {
 public:
-    explicit constexpr Zip(Cs&&... containers) : m_containers(::forward<Cs>(containers)...) {}
+    explicit constexpr Zip(Cs&&... containers) : m_containers(forward<Cs>(containers)...) {}
 
     constexpr auto begin() {
         return ZipIterator(tuple_map(m_containers, [](auto&& container) {
@@ -440,7 +440,7 @@ private:
 template<Container C, Container D>
 class Zip<C, D> {
 public:
-    explicit constexpr Zip(C&& c, D&& d) : m_c(::forward<C>(c)), m_d(::forward<D>(d)) {}
+    explicit constexpr Zip(C&& c, D&& d) : m_c(forward<C>(c)), m_d(forward<D>(d)) {}
 
     using Iterator = ZipIterator<decltype(declval<C>().begin()), decltype(declval<D>().begin())>;
 
@@ -455,7 +455,7 @@ private:
 template<Container C>
 class MoveElements {
 public:
-    explicit constexpr MoveElements(C&& container) : m_container(::move(container)) {}
+    explicit constexpr MoveElements(C&& container) : m_container(move(container)) {}
 
     constexpr auto begin() { return MoveIterator(m_container.begin()); }
     constexpr auto end() { return MoveIterator(m_container.end()); }
@@ -499,7 +499,7 @@ template<Container C, typename F>
 class Transform {
 public:
     explicit constexpr Transform(C&& container, F&& transformer)
-        : m_container(::forward<C>(container)), m_transformer(forward<F>(transformer)) {}
+        : m_container(forward<C>(container)), m_transformer(forward<F>(transformer)) {}
 
     constexpr auto begin() { return TransformIterator(m_container.begin(), m_transformer); }
     constexpr auto end() { return TransformIterator(m_container.end(), m_transformer); }
@@ -580,22 +580,22 @@ constexpr Sequence<T> sequence(T start, T step = static_cast<T>(1)) {
 
 template<Container T>
 constexpr Reversed<T> reversed(T&& container) {
-    return Reversed<T>(::forward<T>(container));
+    return Reversed<T>(forward<T>(container));
 }
 
 template<Container T>
 constexpr MoveElements<T> move_elements(T&& container) {
-    return MoveElements<T>(::forward<T>(container));
+    return MoveElements<T>(forward<T>(container));
 }
 
 template<Container T, typename F>
 constexpr Transform<T, F> transform(T&& container, F&& transformer) {
-    return Transform<T, F>(::forward<T>(container), ::forward<F>(transformer));
+    return Transform<T, F>(forward<T>(container), forward<F>(transformer));
 }
 
 template<Container... Cs>
 constexpr Zip<Cs...> zip(Cs&&... containers) {
-    return Zip<Cs...>(::forward<Cs>(containers)...);
+    return Zip<Cs...>(forward<Cs>(containers)...);
 }
 
 template<Container T>
@@ -624,7 +624,7 @@ constexpr auto iterator_container(Iter begin, Iter end, size_t size) {
 template<typename C, Container OtherContainer>
 requires(InsertableFor<C, ContainerValueType<MoveElements<OtherContainer>>>) constexpr IteratorForContainer<C> insert(
     C& container, ConstIteratorForContainer<C> position, OtherContainer&& other_container) {
-    auto move_container = move_elements(::forward<OtherContainer>(other_container));
+    auto move_container = move_elements(forward<OtherContainer>(other_container));
     auto result = container.insert(position, move_container.begin(), move_container.end());
     if constexpr (Clearable<OtherContainer> && IsRValueReference<OtherContainer>::value) {
         move_container.base().clear();
@@ -635,13 +635,13 @@ requires(InsertableFor<C, ContainerValueType<MoveElements<OtherContainer>>>) con
 template<typename T, Container C>
 constexpr T collect(C&& container) {
     auto result = T();
-    insert(result, result.begin(), ::forward<C>(container));
+    insert(result, result.begin(), forward<C>(container));
     return result;
 }
 
 template<typename T, Container C>
 constexpr T& assign_to(T& output, C&& container) requires(!AssignableFrom<T, C>) {
-    return output = collect<T, C>(::forward<C>(container));
+    return output = collect<T, C>(forward<C>(container));
 }
 }
 

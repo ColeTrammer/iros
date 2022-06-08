@@ -69,7 +69,7 @@ public:
         if (is_ok()) {
             return move(value());
         }
-        return move(other);
+        return other;
     }
 
     template<typename C, typename R = InvokeResult<C, T>::type>

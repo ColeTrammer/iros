@@ -330,25 +330,25 @@ public:
 
 template<typename T>
 using decay_t = typename Decay<T>::type;
-
-template<typename T>
-inline constexpr T&& forward(typename TypeIdentity<T>::type& param) {
-    return static_cast<T&&>(param);
-}
-
-template<typename T>
-inline constexpr typename RemoveReference<T>::type&& move(T&& arg) {
-    return static_cast<typename RemoveReference<T>::type&&>(arg);
-}
 }
 
 namespace std {
 typedef decltype(nullptr) nullptr_t;
 
 #if defined(__is_libc) || defined(__is_libk)
+template<typename T>
+inline constexpr T&& forward(typename LIIM::TypeIdentity<T>::type& param) {
+    return static_cast<T&&>(param);
+}
+
+template<typename T>
+inline constexpr typename LIIM::RemoveReference<T>::type&& move(T&& arg) {
+    return static_cast<typename LIIM::RemoveReference<T>::type&&>(arg);
+}
+
 template<typename T, typename... Args>
 constexpr T* construct_at(T* location, Args&&... args) {
-    return ::new (const_cast<void*>(static_cast<const volatile void*>(location))) T(LIIM::forward<Args>(args)...);
+    return ::new (const_cast<void*>(static_cast<const volatile void*>(location))) T(std::forward<Args>(args)...);
 }
 #endif
 }
@@ -570,6 +570,8 @@ struct piecewise_construct_t {
 inline constexpr piecewise_construct_t piecewise_construct {};
 
 using std::construct_at;
+using std::forward;
+using std::move;
 
 template<typename T>
 constexpr void swap(T& a, T& b) {
