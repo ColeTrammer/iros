@@ -1,0 +1,34 @@
+{
+    "name": "bash",
+    "version": "5.0",
+    "download": {
+        "type": "tarball",
+        "kind": "gz",
+        "url": "https://ftp.gnu.org/gnu/bash/bash-5.0.tar.gz",
+        "signature": "https://ftp.gnu.org/gnu/bash/bash-5.0.tar.gz.sig",
+        "sourceDirectory": "bash-5.0"
+    },
+    "patch": {
+        "files": [
+            "bash-5.0-loadables.patch",
+            "bash-5.0.patch"
+        ]
+    },
+    "buildSystem": {
+        "type": "autoconf",
+        "configure": {
+            "env": {
+                "bash_cv_getcwd_malloc": "yes"
+            },
+            "settings": {
+                "--disable-nls": true,
+                "--without-bash-malloc": true
+            }
+        },
+        "build": {},
+        "install": {}
+    },
+    "dependencies": [
+        "ncurses"
+    ]
+}

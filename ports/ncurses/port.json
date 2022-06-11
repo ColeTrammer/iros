@@ -1,0 +1,27 @@
+{
+    "name": "ncurses",
+    "version": "6.2",
+    "download": {
+        "type": "tarball",
+        "url": "ftp://ftp.invisible-island.net/ncurses/ncurses-6.2.tar.gz",
+        "kind": "gz",
+        "signature": "ftp://ftp.invisible-island.net/ncurses/ncurses-6.2.tar.gz.asc",
+        "sourceDirectory": "ncurses-6.2"
+    },
+    "patch": {
+        "files": [
+            "ncurses-6.2.patch"
+        ]
+    },
+    "buildSystem": {
+        "type": "autoconf",
+        "configure": {
+            "settings": {
+                "--with-termlib": true,
+                "--with-shared": true
+            }
+        },
+        "build": {},
+        "install": {}
+    }
+}
