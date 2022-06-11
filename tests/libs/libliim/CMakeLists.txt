@@ -1,6 +1,7 @@
 set(TEST_FILES
     test_container.cpp
     test_enum.cpp
+    test_error.cpp
     test_format.cpp
     test_function.cpp
     test_hash_map.cpp
