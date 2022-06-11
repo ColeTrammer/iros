@@ -7,7 +7,7 @@ index 1d8e98b..9bd45b8 100755
  	      | -*vms* | -sco* | -esix* | -isc* | -aix* | -cnk* | -sunos | -sunos[34]*\
  	      | -hpux* | -unos* | -osf* | -luna* | -dgux* | -auroraux* | -solaris* \
 -	      | -sym* | -kopensolaris* | -plan9* \
-+	      | -sym* | -kopensolaris* | -plan9* | -os_2* \
++	      | -sym* | -kopensolaris* | -plan9* | -iros* \
  	      | -amigaos* | -amigados* | -msdos* | -newsos* | -unicos* | -aof* \
  	      | -aos* | -aros* | -cloudabi* | -sortix* \
  	      | -nindy* | -vxsim* | -vxworks* | -ebmon* | -hms* | -mvs* \
@@ -19,7 +19,7 @@ index afec788..eaa3227 100755
    lt_cv_deplibs_check_method=pass_all
    ;;
  
-+os_2*)
++iros*)
 +  lt_cv_deplibs_check_method=pass_all
 +  ;;
 +
@@ -30,7 +30,7 @@ index afec788..eaa3227 100755
    dynamic_linker=no
    ;;
  
-+os_2*)
++iros*)
 +  version_type=linux
 +  need_lib_prefix=no
 +  need_version=no

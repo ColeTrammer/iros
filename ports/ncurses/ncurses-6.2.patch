@@ -7,7 +7,7 @@ index 0f2234c..2176b17 100755
  	     | *vms* | esix* | aix* | cnk* | sunos | sunos[34]*\
  	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* \
 -	     | sym* | kopensolaris* | plan9* \
-+	     | sym* | kopensolaris* | plan9* | os_2* \
++	     | sym* | kopensolaris* | plan9* | iros* \
  	     | amigaos* | amigados* | msdos* | newsos* | unicos* | aof* \
  	     | aos* | aros* | cloudabi* | sortix* | twizzler* \
  	     | nindy* | vxsim* | vxworks* | ebmon* | hms* | mvs* \
@@ -19,7 +19,7 @@ index 06f344f..7255d62 100755
  
  		MK_SHARED_LIB='${CC} ${LDFLAGS} ${CFLAGS} -shared -Wl,-soname,'$cf_cv_shared_soname',-stats,-lc -o $@'
  		;;
-+  (os_2*)
++  (iros*)
 +		CC_SHARED_OPTS="-fPIC"
 +    cf_cv_shared_soname='`basename $@`'
 +		MK_SHARED_LIB='${CC} ${LDFLAGS} ${CFLAGS} -shared -Wl,-soname,'$cf_cv_shared_soname',-lc -o $@'

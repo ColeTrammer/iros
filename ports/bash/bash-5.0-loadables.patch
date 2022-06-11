@@ -6,7 +6,7 @@ index 2f62662..06243b1 100755
  		fi ;;
  freebsdelf*)	LOCAL_LDFLAGS=-rdynamic ;;	# allow dynamic loading
  dragonfly*)	LOCAL_LDFLAGS=-rdynamic ;;	# allow dynamic loading
-+os_2*)	LOCAL_LDFLAGS=-rdynamic ;;	# allow dynamic loading
++iros*)	LOCAL_LDFLAGS=-rdynamic ;;	# allow dynamic loading
  esac
  
  case "$host_cpu" in
@@ -31,7 +31,7 @@ index 7920f1b..f69a46c 100755
  
  # All versions of Linux (including Gentoo/FreeBSD) or the semi-mythical GNU Hurd.
 -linux*-*|gnu*-*|k*bsd*-gnu-*|freebsd*-gentoo)
-+linux*-*|gnu*-*|k*bsd*-gnu-*|freebsd*-gentoo|os_2*)
++linux*-*|gnu*-*|k*bsd*-gnu-*|freebsd*-gentoo|iros*)
  	SHOBJ_CFLAGS=-fPIC
  	SHOBJ_LD='${CC}'
  	SHOBJ_LDFLAGS='-shared -Wl,-soname,$@'

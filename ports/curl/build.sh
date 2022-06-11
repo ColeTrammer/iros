@@ -9,7 +9,7 @@ export curl_disallow_getaddrinfo=yes # currently, getaddrinfo() doesn't support 
 
 download() {
     # Download tar.gz
-    curl https://curl.haxx.se/download/curl-7.71.1.tar.gz --output curl-7.71.1.tar.gz
+    curl https://curl.haxx.se/download/curl-7.71.1.tar.gz.asc --output curl-7.71.1.tar.gz
 
     # Extract contents
     tar -xzvf curl-7.71.1.tar.gz

@@ -7,7 +7,7 @@ index 0f2234c..2176b17 100755
  	     | *vms* | esix* | aix* | cnk* | sunos | sunos[34]*\
  	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* \
 -	     | sym* | kopensolaris* | plan9* \
-+	     | sym* | kopensolaris* | plan9* | os_2* \
++	     | sym* | kopensolaris* | plan9* | iros* \
  	     | amigaos* | amigados* | msdos* | newsos* | unicos* | aof* \
  	     | aos* | aros* | cloudabi* | sortix* | twizzler* \
  	     | nindy* | vxsim* | vxworks* | ebmon* | hms* | mvs* \
