@@ -5,7 +5,26 @@
 
 # Iros
 
-My second attempt to create an OS
+Hobby OS written in C and C++, with a POSIX libc and growing userland.
+
+# Features
+
+-   Multiboot2 boot loader compliant
+-   Runs on x86 (32 and 64)
+-   Memory management system (physical and virtual memory)
+-   Preemptive scheduling with SMP support
+-   Unix process primitives (fork and exec)
+-   Vfs supporting an initrd, ext2, tmpfs, devfs, sockets, and pipes
+-   Many posix system calls
+-   IPV4 (UDP + TCP + ICMP) and Unix sockets
+-   DHCP client
+-   x86 PC devices (PS2 kbd/mouse, PIT, ATA, CMOS, isa serial ports, local APIC, IO APIC)
+-   PCI devices (E1000 network card, BGA Graphics Device)
+-   C standard library, supporting a wide subset of POSIX
+-   Shell that supports the POSIX grammar, job control, word expansion, etc.
+-   Some posix standard utilities
+-   Basic Desktop enviornment (with themes)
+-   Portable userland programs which build and run on linux.
 
 # Demos
 
@@ -33,28 +52,6 @@ My second attempt to create an OS
 
 [GUI Demo](https://user-images.githubusercontent.com/18405484/129427196-777ef90a-c22a-4e2c-a5b9-eff8dfaf5365.mp4)
 
-# Supported Architectures
-
--   x86 (32 and 64 bit)
-
-# Features
-
--   Multiboot2 boot loader compliant
--   Memory management system (physical and virtual memory)
--   Preemptive scheduling with SMP support
--   Unix process primitives (fork and exec)
--   Vfs supporting an initrd, ext2, tmpfs, devfs, sockets, and pipes
--   Many posix system calls
--   IPV4 (UDP + TCP + ICMP) and Unix sockets
--   DHCP client
--   x86 PC devices (PS2 kbd/mouse, PIT, ATA, CMOS, isa serial ports, local APIC, IO APIC)
--   PCI devices (E1000 network card, BGA Graphics Device)
--   C standard library, supporting a wide subset of POSIX
--   Shell that supports the POSIX grammar, job control, word expansion, etc.
--   Some posix standard utilities
--   Basic Desktop enviornment (with themes)
--   Portable userland programs which build and run on linux.
-
 # To build
 
 -   [See this document](docs/build.md)
@@ -71,4 +68,4 @@ My second attempt to create an OS
 -   Better GUI library
 -   Better drawing primities
 -   TTF fonts
-
+-   Implement a web based shell into the system (for development inside a container), like ssh
