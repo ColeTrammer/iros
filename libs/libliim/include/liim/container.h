@@ -43,10 +43,10 @@ concept SizedContainer = Container<T> && requires(T container) {
 };
 
 template<Container C>
-using IteratorForContainer = decltype(declval<C>().begin());
+using IteratorForContainer = decltype(declval<C>().end());
 
 template<Container C>
-using ConstIteratorForContainer = decltype(declval<const C>().begin());
+using ConstIteratorForContainer = decltype(declval<const C>().end());
 
 template<Iterator Iter>
 using IteratorValueType = IteratorTraits<Iter>::ValueType;
@@ -92,16 +92,21 @@ private:
     Option<ValueType> m_cache;
 };
 
-template<typename Producer>
+template<typename Self>
 class ValueIteratorAdapter {
 public:
-    constexpr auto begin() { return ValueIteratorAdapterIterator<Producer>(static_cast<Producer&>(*this)); }
-    constexpr auto end() { return ValueIteratorAdapterIterator<Producer>({}); }
+    using Iterator = ValueIteratorAdapterIterator<Self>;
+    using ConstIterator = Iterator;
+
+    constexpr auto begin() { return Iterator(static_cast<Self&>(*this)); }
+    constexpr auto end() const { return ConstIterator({}); }
 };
 
 template<Iterator Iter>
 class ReverseIterator {
 public:
+    using ValueType = IteratorValueType<Iter>;
+
     constexpr explicit ReverseIterator(Iter iter) : m_iterator(move(iter)) {}
 
     constexpr Iter base() const { return m_iterator; }
@@ -348,7 +353,8 @@ public:
 
     constexpr auto size() const requires(SizedContainer<C>) { return m_container.size(); }
 
-private : C m_container;
+private:
+    C m_container;
 };
 
 template<Iterator... Iters>
@@ -506,7 +512,8 @@ public:
 
     constexpr auto size() const requires(SizedContainer<C>) { return m_container.size(); }
 
-private : C m_container;
+private:
+    C m_container;
     F m_transformer;
 };
 
@@ -635,7 +642,7 @@ requires(InsertableFor<C, ContainerValueType<MoveElements<OtherContainer>>>) con
 template<typename T, Container C>
 constexpr T collect(C&& container) {
     auto result = T();
-    insert(result, result.begin(), forward<C>(container));
+    insert(result, result.end(), forward<C>(container));
     return result;
 }
 

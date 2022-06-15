@@ -10,6 +10,7 @@ set(TEST_FILES
     test_option.cpp
     test_pair.cpp
     test_preprocessor.cpp
+    test_priority_queue.cpp
     test_result.cpp
     test_string_view.cpp
     test_string.cpp
