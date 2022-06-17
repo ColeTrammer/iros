@@ -27,10 +27,10 @@ Result<Port, Error> Port::try_create(const Config& config, Ext::Path json_path) 
     auto build_system_type = TRY(reader.lookup<Ext::Json::String>(build_system_object, "type"));
     auto [make_configure_step, make_build_step, make_install_step] = TRY([&]() -> Result<BuildSystemConstructors, Error> {
         if (build_system_type.view() == "cmake"sv) {
-            return Ok(BuildSystemConstructors(CMakeConfigureStep::try_create, CMakeBuildStep::try_create, CMakeInstallStep::try_create));
+            return BuildSystemConstructors(CMakeConfigureStep::try_create, CMakeBuildStep::try_create, CMakeInstallStep::try_create);
         } else if (build_system_type.view() == "autoconf"sv) {
-            return Ok(
-                BuildSystemConstructors(AutoconfConfigureStep::try_create, AutoconfBuildStep::try_create, AutoconfInstallStep::try_create));
+            return BuildSystemConstructors(AutoconfConfigureStep::try_create, AutoconfBuildStep::try_create,
+                                           AutoconfInstallStep::try_create);
         }
         return Err(Ext::StringError(format("Invalid build system type `{}' in json file `{}'", build_system_type, json_path)));
     }());
@@ -46,7 +46,7 @@ Result<Port, Error> Port::try_create(const Config& config, Ext::Path json_path) 
     };
 
     add_step(TRY(DownloadStep::try_create(reader, download_object)));
-    if (patch_object.is_ok()) {
+    if (patch_object.has_value()) {
         add_step(TRY(PatchStep::try_create(reader, patch_object.value())));
     }
     add_step(TRY(make_configure_step(reader, configure_object)));
@@ -59,8 +59,8 @@ Result<Port, Error> Port::try_create(const Config& config, Ext::Path json_path) 
     auto source_directory = config.source_directory_for_port(name.view(), version.view());
     auto build_directory = config.build_directory_for_port(name.view(), version.view());
 
-    return Ok(Port(move(name), move(version), move(json_path), move(definition_directory), move(base_directory), move(source_directory),
-                   move(build_directory), move(steps)));
+    return Port(move(name), move(version), move(json_path), move(definition_directory), move(base_directory), move(source_directory),
+                move(build_directory), move(steps));
 }
 
 Port::Port(String name, String version, Ext::Path definition_file, Ext::Path definition_directory, Ext::Path base_directory,
@@ -76,7 +76,7 @@ Port::Port(String name, String version, Ext::Path definition_file, Ext::Path def
 
 Port::~Port() {}
 
-Result<Monostate, Error> Port::build(Context& context, StringView build_step) {
+Result<void, Error> Port::build(Context& context, StringView build_step) {
     // FIXME: it would be better to topologically sort the step and its
     //        dependencies rather than just assume everything is in order
     //        and dependencies don't have their won dependencies.
@@ -97,7 +97,7 @@ Result<Monostate, Error> Port::build(Context& context, StringView build_step) {
             TRY(step->act(context, *this));
         }
     }
-    return Ok(Monostate {});
+    return {};
 }
 
 Result<Step&, BuildStepNotFound> Port::lookup_step(StringView step_name) {

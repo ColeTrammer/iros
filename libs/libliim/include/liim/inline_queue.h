@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stddef.h>
 
+namespace LIIM {
 template<typename T>
 class InlineLinkedListNode {
 public:
@@ -99,3 +100,7 @@ private:
     T** m_tail { &m_head };
     size_t m_size { 0 };
 };
+}
+
+using LIIM::InlineLinkedListNode;
+using LIIM::InlineQueue;

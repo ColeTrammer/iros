@@ -54,7 +54,7 @@ int edit_main(Arguments arguments) {
     bool is_directory = false;
     auto document_or_error = [&]() -> Result<SharedPtr<Edit::Document>, String> {
         if (arguments.read_from_stdin) {
-            return Edit::Document::create_from_stdin(path).map_error([&](int error_code) {
+            return Edit::Document::create_from_stdin(path).transform_error([&](int error_code) {
                 return format("Failed to open `{}': {}", path, strerror(error_code));
             });
         }
@@ -70,13 +70,13 @@ int edit_main(Arguments arguments) {
                 }
                 arguments.path = {};
                 path = "";
-                return move(result).map_error([&](int error_code) {
+                return move(result).transform_error([&](int error_code) {
                     return format("Failed to open `{}': {}", path, strerror(error_code));
                 });
             }
-            return Ok(move(result.value()));
+            return move(result).value();
         }
-        return Ok(Edit::Document::create_empty());
+        return Edit::Document::create_empty();
     }();
 
     auto base_file_path = [&]() -> String {

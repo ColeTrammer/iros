@@ -1,20 +1,7 @@
 #pragma once
 
-#include <liim/error.h>
-#include <liim/result.h>
-#include <liim/variant.h>
-
-namespace LIIM::Error::Detail {
-template<typename T>
-struct IsResult {
-    constexpr static bool value = false;
-};
-
-template<typename T, typename E>
-struct IsResult<Result<T, E>> {
-    constexpr static bool value = true;
-};
-};
+#include <liim/forward.h>
+#include <liim/utilities.h>
 
 namespace LIIM::Error::Detail {
 template<typename T, typename E>
@@ -24,7 +11,7 @@ struct ResultFor {
 
 template<typename E>
 struct ResultFor<void, E> {
-    using Type = Result<Monostate, E>;
+    using Type = Result<void, E>;
 };
 
 template<typename T, typename U>
@@ -71,7 +58,7 @@ struct CommonResultHelper;
 
 template<typename ReturnValue, typename Result, typename... Results>
 struct CommonResultHelper<ReturnValue, Result, Results...> {
-    using NextReturnType = CommonResultImpl<ReturnValue, Result, (IsResult<ReturnValue>::value << 1) | IsResult<Result>::value>::Type;
+    using NextReturnType = CommonResultImpl<ReturnValue, Result, (IsResult<ReturnValue> << 1) | IsResult<Result>>::Type;
     using Type = CommonResultHelper<NextReturnType, Results...>::Type;
 };
 
@@ -83,7 +70,7 @@ struct CommonResultHelper<ReturnValue> {
 
 namespace LIIM::Error {
 template<typename ReturnValue, typename... Results>
-using CommonResult = Detail::CommonResultHelper<ReturnValue, Results...>::Type;
+using CommonResult = Detail::CommonResultHelper<ReturnValue, decay_t<Results>...>::Type;
 }
 
 using LIIM::Error::CommonResult;

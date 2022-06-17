@@ -273,7 +273,7 @@ App::ObjectBoundCoroutine TerminalDisplay::do_open_prompt() {
         }
 
         return format("{}/", Ext::Path::resolve(".")
-                                 .map([](auto p) {
+                                 .transform([](auto p) {
                                      return p.to_string();
                                  })
                                  .value_or("."));

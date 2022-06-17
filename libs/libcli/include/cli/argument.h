@@ -10,8 +10,8 @@
 namespace Cli {
 class Argument {
 private:
-    using SingleParserCallback = Result<Monostate, Error> (*)(StringView, void*);
-    using ListParserCallback = Result<Monostate, Error> (*)(Span<StringView>, void*, StringView name);
+    using SingleParserCallback = Result<void, Error> (*)(StringView, void*);
+    using ListParserCallback = Result<void, Error> (*)(Span<StringView>, void*, StringView name);
 
     using ParserCallback = union {
         SingleParserCallback single;
@@ -36,40 +36,40 @@ private:
     public:
         static constexpr ArgumentBuilder single(StringView name) requires(!is_list && !is_option) {
             return ArgumentBuilder(
-                [](StringView input, void* output_ptr) -> Result<Monostate, Error> {
+                [](StringView input, void* output_ptr) -> Result<void, Error> {
                     auto& output = *static_cast<StructType*>(output_ptr);
                     auto value = TRY(Ext::parse<ParserType>(input));
                     output.*member = move(value);
-                    return Ok(Monostate {});
+                    return {};
                 },
                 name);
         }
 
         static constexpr ArgumentBuilder optional(StringView name) requires(is_option && !is_list) {
             return ArgumentBuilder(
-                [](StringView input, void* output_ptr) -> Result<Monostate, Error> {
+                [](StringView input, void* output_ptr) -> Result<void, Error> {
                     auto& output = *static_cast<StructType*>(output_ptr);
                     auto value = TRY(Ext::parse<ParserType>(input));
                     output.*member = move(value);
-                    return Ok(Monostate {});
+                    return {};
                 },
                 name);
         }
 
         static constexpr ArgumentBuilder defaulted(StringView name) requires(!is_option && !is_list) {
             return ArgumentBuilder(
-                [](StringView input, void* output_ptr) -> Result<Monostate, Error> {
+                [](StringView input, void* output_ptr) -> Result<void, Error> {
                     auto& output = *static_cast<StructType*>(output_ptr);
                     auto value = TRY(Ext::parse<ParserType>(input));
                     output.*member = move(value);
-                    return Ok(Monostate {});
+                    return {};
                 },
                 name, true);
         }
 
         static constexpr ArgumentBuilder list(StringView name) requires(is_list) {
             return ArgumentBuilder(
-                [](Span<StringView> input_list, void* output_ptr, StringView name) -> Result<Monostate, Error> {
+                [](Span<StringView> input_list, void* output_ptr, StringView name) -> Result<void, Error> {
                     auto& output = *static_cast<StructType*>(output_ptr);
                     if (input_list.empty()) {
                         return Err(EmptyPositionalArgumentList(name));
@@ -78,7 +78,7 @@ private:
                         auto value = TRY(Ext::parse<ParserType>(input));
                         (output.*member).add(move(value));
                     }
-                    return Ok(Monostate {});
+                    return {};
                 },
                 name);
         }
@@ -127,8 +127,8 @@ public:
     constexpr bool is_list() const { return m_is_list; }
     constexpr bool is_optional() const { return m_is_optional; }
 
-    Result<Monostate, Error> validate(StringView value, void* output) const { return m_parser.single(value, output); }
-    Result<Monostate, Error> validate(Span<StringView> value, void* output) const { return m_parser.list(value, output, name()); }
+    Result<void, Error> validate(StringView value, void* output) const { return m_parser.single(value, output); }
+    Result<void, Error> validate(Span<StringView> value, void* output) const { return m_parser.list(value, output, name()); }
 
 private:
     constexpr Argument(ParserCallback parser, StringView positional_name, Option<StringView> description, bool is_list, bool is_optional)

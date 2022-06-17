@@ -14,8 +14,8 @@ public:
     virtual ~Step() {}
 
     virtual StringView name() const;
-    virtual Result<bool, Error> should_skip(Context&, const Port&) { return Ok(false); }
-    virtual Result<Monostate, Error> act(Context& context, const Port& port) = 0;
+    virtual Result<bool, Error> should_skip(Context&, const Port&) { return false; }
+    virtual Result<void, Error> act(Context& context, const Port& port) = 0;
     virtual Span<const StringView> dependencies() const { return {}; }
 };
 
@@ -34,7 +34,7 @@ public:
     virtual ~GitDownloadStep() override;
 
     virtual Result<bool, Error> should_skip(Context& context, const Port& port) override;
-    virtual Result<Monostate, Error> act(Context& context, const Port& port) override;
+    virtual Result<void, Error> act(Context& context, const Port& port) override;
 
 private:
     String m_url;
@@ -56,7 +56,7 @@ public:
     virtual ~TarDownloadStep() override;
 
     virtual Result<bool, Error> should_skip(Context& context, const Port& port) override;
-    virtual Result<Monostate, Error> act(Context& context, const Port& port) override;
+    virtual Result<void, Error> act(Context& context, const Port& port) override;
 
 private:
     Ext::Path download_destination(const Port& port) const;
@@ -77,7 +77,7 @@ public:
 
     virtual StringView name() const override { return "patch"sv; }
     virtual Result<bool, Error> should_skip(Context& context, const Port& port) override;
-    virtual Result<Monostate, Error> act(Context& context, const Port& port) override;
+    virtual Result<void, Error> act(Context& context, const Port& port) override;
     virtual Span<const StringView> dependencies() const override;
 
 private:
@@ -100,7 +100,7 @@ public:
     virtual ~CMakeConfigureStep() override;
 
     virtual Result<bool, Error> should_skip(Context& context, const Port& port) override;
-    virtual Result<Monostate, Error> act(Context& context, const Port& port) override;
+    virtual Result<void, Error> act(Context& context, const Port& port) override;
 };
 
 class AutoconfConfigureStep : public ConfigureStep {
@@ -117,7 +117,7 @@ public:
     virtual ~AutoconfConfigureStep() override;
 
     virtual Result<bool, Error> should_skip(Context& context, const Port& port) override;
-    virtual Result<Monostate, Error> act(Context& context, const Port& port) override;
+    virtual Result<void, Error> act(Context& context, const Port& port) override;
 
 private:
     Enviornment m_enviornment;
@@ -135,7 +135,7 @@ public:
 
     virtual ~CMakeBuildStep() override;
 
-    virtual Result<Monostate, Error> act(Context& context, const Port& port) override;
+    virtual Result<void, Error> act(Context& context, const Port& port) override;
 };
 
 class AutoconfBuildStep : public BuildStep {
@@ -144,7 +144,7 @@ public:
 
     virtual ~AutoconfBuildStep() override;
 
-    virtual Result<Monostate, Error> act(Context& context, const Port& port) override;
+    virtual Result<void, Error> act(Context& context, const Port& port) override;
 };
 
 class InstallStep : public Step {
@@ -158,7 +158,7 @@ public:
 
     virtual ~CMakeInstallStep() override;
 
-    virtual Result<Monostate, Error> act(Context& context, const Port& port) override;
+    virtual Result<void, Error> act(Context& context, const Port& port) override;
 };
 
 class AutoconfInstallStep : public InstallStep {
@@ -167,7 +167,7 @@ public:
 
     virtual ~AutoconfInstallStep() override;
 
-    virtual Result<Monostate, Error> act(Context& context, const Port& port) override;
+    virtual Result<void, Error> act(Context& context, const Port& port) override;
 };
 
 class CleanStep : public Step {
@@ -177,6 +177,6 @@ public:
     virtual ~CleanStep();
 
     virtual StringView name() const override { return "clean"; }
-    virtual Result<Monostate, Error> act(Context& context, const Port& port) override;
+    virtual Result<void, Error> act(Context& context, const Port& port) override;
 };
 }

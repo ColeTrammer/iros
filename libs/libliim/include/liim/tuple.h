@@ -102,6 +102,11 @@ private:
 template<class... Types>
 Tuple(Types...) -> Tuple<Types...>;
 
+template<typename... Args>
+constexpr Tuple<Args&&...> forward_as_tuple(Args&&... args) {
+    return Tuple<Args&&...>(forward<Args>(args)...);
+}
+
 template<typename C, typename Tuple>
 constexpr auto tuple_map(Tuple&& tuple, C&& mapper) {
     auto helper = [&]<size_t... indices>(IndexSequence<indices...>)->decltype(auto) {
@@ -111,9 +116,20 @@ constexpr auto tuple_map(Tuple&& tuple, C&& mapper) {
     return helper(make_index_sequence<decay_t<Tuple>::size()>());
 }
 
-template<typename... Args>
-constexpr Tuple<Args&&...> forward_as_tuple(Args&&... args) {
-    return Tuple<Args&&...>(forward<Args>(args)...);
+template<typename C, typename Tuple>
+constexpr decltype(auto) apply(C&& callable, Tuple&& tuple) {
+    auto helper = [&]<size_t... indices>(IndexSequence<indices...>)->decltype(auto) {
+        return forward<C>(callable)(forward<Tuple>(tuple).template get<indices>()...);
+    };
+    return helper(make_index_sequence<decay_t<Tuple>::size()>());
+}
+
+template<typename T, typename Tuple>
+constexpr T make_from_tuple(Tuple&& tuple) {
+    auto helper = [&]<size_t... indices>(IndexSequence<indices...>)->T {
+        return T(forward<Tuple>(tuple).template get<indices>()...);
+    };
+    return helper(make_index_sequence<decay_t<Tuple>::size()>());
 }
 };
 

@@ -38,7 +38,7 @@ Result<SharedPtr<Document>, int> Document::create_from_stdin(const String& path)
     if (!result) {
         return Err(errno);
     }
-    return Ok(Document::create(nullptr, move(lines), path, InputMode::Document));
+    return Document::create(nullptr, move(lines), path, InputMode::Document);
 }
 
 Result<SharedPtr<Document>, int> Document::create_from_file(const String& path) {
@@ -61,7 +61,7 @@ Result<SharedPtr<Document>, int> Document::create_from_file(const String& path) 
     if (!file->close()) {
         return Err(errno);
     }
-    return Ok(Document::create(nullptr, move(lines), path, InputMode::Document));
+    return Document::create(nullptr, move(lines), path, InputMode::Document);
 }
 
 SharedPtr<Document> Document::create_from_text(const String& text) {

@@ -11,7 +11,7 @@
 namespace Cli {
 class Flag {
 private:
-    using ParserCallback = Result<Monostate, Error> (*)(Option<StringView>, void*);
+    using ParserCallback = Result<void, Error> (*)(Option<StringView>, void*);
 
     template<auto member>
     class FlagBuilder {};
@@ -27,32 +27,33 @@ private:
 
     public:
         constexpr static FlagBuilder boolean(bool) requires(is_bool) {
-            return FlagBuilder([](auto, void* output_ptr) -> Result<Monostate, Error> {
+            return FlagBuilder([](auto, void* output_ptr) -> Result<void, Error> {
                 StructType& output = *static_cast<StructType*>(output_ptr);
                 output.*member = true;
-                return Ok(Monostate {});
+                return {};
             });
         }
 
         constexpr static FlagBuilder optional() requires(is_option) {
-            return FlagBuilder([](auto input, void* output_ptr) -> Result<Monostate, Error> {
+            return FlagBuilder([](auto input, void* output_ptr) -> Result<void, Error> {
                 StructType& output = *static_cast<StructType*>(output_ptr);
                 auto value = TRY(Ext::parse<ParserType>(*input));
                 output.*member = move(value);
-                return Ok(Monostate {});
+                return {};
             });
         }
 
         constexpr static FlagBuilder defaulted() requires(!is_option && !is_bool) {
-            return FlagBuilder([](auto input, void* output_ptr) -> Result<Monostate, Error> {
+            return FlagBuilder([](auto input, void* output_ptr) -> Result<void, Error> {
                 StructType& output = *static_cast<StructType*>(output_ptr);
                 auto value = TRY(Ext::parse<ParserType>(*input));
                 output.*member = move(value);
-                return Ok(Monostate {});
+                return {};
             });
         }
 
-    public : constexpr FlagBuilder& short_name(char name) {
+    public:
+        constexpr FlagBuilder& short_name(char name) {
             m_short_name = name;
             return *this;
         }
@@ -105,7 +106,7 @@ public:
 
     constexpr bool requires_value() const { return m_requires_value; }
 
-    constexpr Result<Monostate, Error> validate(Option<StringView> value, void* output) const { return m_parser(move(value), output); }
+    constexpr Result<void, Error> validate(Option<StringView> value, void* output) const { return m_parser(move(value), output); }
 
 private:
     constexpr Flag(ParserCallback parser, Option<char> short_name, Option<StringView> long_name, Option<StringView> description,

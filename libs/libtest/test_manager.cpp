@@ -81,7 +81,7 @@ void TestManager::test_did_fail() {
     m_fail_count++;
 }
 
-Result<Monostate, Ext::StringError> TestManager::do_main(Arguments arguments) {
+Result<void, Ext::StringError> TestManager::do_main(Arguments arguments) {
     auto [list_simple, suite_name, case_name] = arguments;
 
     auto test_cases = m_test_cases;
@@ -109,7 +109,7 @@ Result<Monostate, Ext::StringError> TestManager::do_main(Arguments arguments) {
         for (auto& test_case : test_cases) {
             out_log("{}:{}", test_case->suite_name(), test_case->case_name());
         }
-        return Ok(Monostate {});
+        return {};
     }
 
     for (auto& test_case : test_cases) {

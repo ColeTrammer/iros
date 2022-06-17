@@ -12,6 +12,6 @@ Result<String, SystemError> realpath(StringView view) {
     }
     auto ret = String(result);
     free(result);
-    return Ok(move(ret));
+    return ret;
 }
 }

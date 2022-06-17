@@ -39,7 +39,7 @@ public:
     Result<T, Error> parse(Span<StringView> input) const {
         auto output = T {};
         ParserImpl parser_impl { m_flags.span(), m_arguments.span(), m_help_flag, m_version_flag };
-        return parser_impl.parse(input, &output).map([&output](auto) -> T {
+        return parser_impl.parse(input, &output).transform([&output]() -> T {
             return move(output);
         });
     }

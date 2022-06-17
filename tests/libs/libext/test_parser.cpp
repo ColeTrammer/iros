@@ -19,7 +19,7 @@ struct ParserAdapter<T::X> {
         auto b = TRY(Ext::parse_partial<int>(parser));
         TRY(parser.consume(":"sv));
         auto c = TRY(Ext::parse_partial<int>(parser));
-        return Ok(T::X(a, b, c));
+        return T::X(a, b, c);
     }
 };
 }
@@ -28,7 +28,7 @@ TEST(parser, basic) {
     auto input = "43:2:1"sv;
 
     auto result = Ext::parse<T::X>(input);
-    if (!result.is_ok()) {
+    if (!result.has_value()) {
         auto message = result.error().message();
         EXPECT_EQ(message, "Not an error");
         EXPECT(false);

@@ -35,11 +35,11 @@ public:
         });
     }
 
-    Result<Monostate, ParserError> consume_end() const {
+    Result<void, ParserError> consume_end() const {
         if (peek()) {
             return result_error(format("Expected end of input"));
         }
-        return Ok(Monostate {});
+        return {};
     }
 
     constexpr Option<StringView> peek(size_t n = 1) const {
@@ -98,7 +98,7 @@ Result<T, ParserError> parse(StringView input) {
     auto parser = Ext::Parser { input };
     auto result = TRY(parse_partial<T>(parser));
     TRY(parser.consume_end());
-    return Ok<T>(move(result));
+    return result;
 }
 
 template<>
@@ -122,12 +122,12 @@ struct ParserAdapter<int> {
             result *= 10;
             result += (c - '0');
         }
-        return Ok(sign * result);
+        return sign * result;
     }
 };
 
 template<typename T>
 requires(LIIM::IsOneOf<T, String, StringView>::value) struct ParserAdapter<T> {
-    static Result<T, ParserError> parse(Parser& parser) { return Ok<T>(T { parser.consume_all() }); }
+    static Result<T, ParserError> parse(Parser& parser) { return T { parser.consume_all() }; }
 };
 }

@@ -82,7 +82,7 @@ private:
 };
 
 template<typename T, typename C, typename E = LIIM::InvokeResult<C, const T&>::type::ErrorType>
-Result<Monostate, Vector<E>> collect_errors(const Vector<T>& input, C mapper) {
+Result<void, Vector<E>> collect_errors(const Vector<T>& input, C mapper) {
     Vector<E> output;
     for (auto& t : input) {
         auto result = mapper(t);
@@ -93,16 +93,16 @@ Result<Monostate, Vector<E>> collect_errors(const Vector<T>& input, C mapper) {
     if (!output.empty()) {
         return Err(move(output));
     }
-    return Ok(Monostate {});
+    return {};
 }
 
 template<typename Collection, typename C,
          typename R = LIIM::InvokeResult<C, decltype(*LIIM::declval<const Collection&>().begin())>::type::ErrorType>
-Result<Monostate, R> stop_on_error(const Collection& input, C mapper) {
+Result<void, R> stop_on_error(const Collection& input, C mapper) {
     for (auto& t : input) {
         TRY(mapper(t));
     }
-    return Ok(Monostate {});
+    return {};
 }
 }
 

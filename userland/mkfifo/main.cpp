@@ -8,11 +8,11 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-static Result<Monostate, Ext::StringError> mkfifo(const String& file, mode_t mode) {
+static Result<void, Ext::StringError> mkfifo(const String& file, mode_t mode) {
     if (mkfifo(file.string(), mode)) {
         return Err(Ext::StringError(format("Failed to create `{}': {}", file, strerror(errno))));
     }
-    return Ok(Monostate {});
+    return {};
 }
 
 struct Arguments {

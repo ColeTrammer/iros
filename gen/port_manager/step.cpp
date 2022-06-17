@@ -25,7 +25,7 @@ Result<UniquePtr<DownloadStep>, Error> DownloadStep::try_create(const JsonReader
 
 Result<UniquePtr<GitDownloadStep>, Error> GitDownloadStep::try_create(const JsonReader& reader, const Ext::Json::Object& object) {
     auto& url = TRY(reader.lookup<Ext::Json::String>(object, "url"));
-    return Ok(make_unique<GitDownloadStep>(move(url)));
+    return make_unique<GitDownloadStep>(move(url));
 }
 
 GitDownloadStep::GitDownloadStep(String url) : m_url(move(url)) {}
@@ -33,10 +33,10 @@ GitDownloadStep::GitDownloadStep(String url) : m_url(move(url)) {}
 GitDownloadStep::~GitDownloadStep() {}
 
 Result<bool, Error> GitDownloadStep::should_skip(Context&, const Port& port) {
-    return Ok(port.source_directory().exists());
+    return port.source_directory().exists();
 }
 
-Result<Monostate, Error> GitDownloadStep::act(Context& context, const Port& port) {
+Result<void, Error> GitDownloadStep::act(Context& context, const Port& port) {
     return context.run_process(Process::command("git", "clone", "--depth=1", m_url, port.source_directory()));
 }
 
@@ -45,7 +45,7 @@ Result<UniquePtr<Step>, Error> TarDownloadStep::try_create(const JsonReader& rea
     auto kind = TRY(kind_from_string(TRY(reader.lookup<Ext::Json::String>(object, "kind"))));
     auto& signature_url = TRY(reader.lookup<Ext::Json::String>(object, "signature"));
     auto& source_directory_in_tarball = TRY(reader.lookup<Ext::Json::String>(object, "sourceDirectory"));
-    return Ok(make_unique<TarDownloadStep>(move(url), kind, move(signature_url), move(source_directory_in_tarball)));
+    return make_unique<TarDownloadStep>(move(url), kind, move(signature_url), move(source_directory_in_tarball));
 }
 
 TarDownloadStep::TarDownloadStep(String url, Kind kind, String signature_url, String source_directory_in_tarball)
@@ -54,10 +54,10 @@ TarDownloadStep::TarDownloadStep(String url, Kind kind, String signature_url, St
 TarDownloadStep::~TarDownloadStep() {}
 
 Result<bool, Error> TarDownloadStep::should_skip(Context&, const Port& port) {
-    return Ok(download_destination(port).exists() && signature_download_destination(port).exists() && port.source_directory().exists());
+    return download_destination(port).exists() && signature_download_destination(port).exists() && port.source_directory().exists();
 }
 
-Result<Monostate, Error> TarDownloadStep::act(Context& context, const Port& port) {
+Result<void, Error> TarDownloadStep::act(Context& context, const Port& port) {
     auto base_directory = port.base_directory();
     TRY(context.run_process(Process::command("mkdir", "-p", base_directory)));
     switch (m_kind) {
@@ -84,7 +84,7 @@ Result<Monostate, Error> TarDownloadStep::act(Context& context, const Port& port
         default:
             assert(false);
     }
-    return Ok(Monostate {});
+    return {};
 }
 
 Ext::Path TarDownloadStep::download_destination(const Port& port) const {
@@ -106,7 +106,7 @@ String TarDownloadStep::kind_to_string(Kind kind) {
 
 auto TarDownloadStep::kind_from_string(const String& string) -> Result<Kind, Ext::StringError> {
     if (string == "gz") {
-        return Ok(Kind::Gz);
+        return Kind::Gz;
     }
     return Err(Ext::StringError(format("Unknown tarball download kind: `{}'", string)));
 }
@@ -122,7 +122,7 @@ Result<UniquePtr<PatchStep>, Error> PatchStep::try_create(const JsonReader& read
         patch_files.push_back(file.as<Ext::Json::String>());
     }
 
-    return Ok(make_unique<PatchStep>(move(patch_files)));
+    return make_unique<PatchStep>(move(patch_files));
 }
 
 PatchStep::PatchStep(NewVector<String> patch_files) : m_patch_files(move(patch_files)) {}
@@ -132,20 +132,20 @@ PatchStep::~PatchStep() {}
 Result<bool, Error> PatchStep::should_skip(Context&, const Port& port) {
     for (auto& patch_file : m_patch_files) {
         if (!patch_marker_path(port, patch_file).exists()) {
-            return Ok(false);
+            return false;
         }
     }
-    return Ok(true);
+    return true;
 }
 
-Result<Monostate, Error> PatchStep::act(Context& context, const Port& port) {
-    return context.with_working_directory(port.source_directory(), [&]() -> Result<Monostate, Error> {
+Result<void, Error> PatchStep::act(Context& context, const Port& port) {
+    return context.with_working_directory(port.source_directory(), [&]() -> Result<void, Error> {
         TRY(context.run_process(Process::command("git", "init")));
 
-        return Ext::stop_on_error(m_patch_files, [&](auto& patch_file) -> Result<Monostate, Error> {
+        return Ext::stop_on_error(m_patch_files, [&](auto& patch_file) -> Result<void, Error> {
             auto marker_path = patch_marker_path(port, patch_file);
             if (marker_path.exists()) {
-                return Ok(Monostate {});
+                return {};
             }
             TRY(context.run_process(Process::command("git", "apply", patch_path(port, patch_file))));
             return context.run_process(Process::command("touch", patch_marker_path(port, patch_file)));
@@ -172,16 +172,16 @@ Span<const StringView> ConfigureStep::dependencies() const {
 }
 
 Result<UniquePtr<Step>, Error> CMakeConfigureStep::try_create(const JsonReader&, const Ext::Json::Object&) {
-    return Ok(make_unique<CMakeConfigureStep>());
+    return make_unique<CMakeConfigureStep>();
 }
 
 CMakeConfigureStep::~CMakeConfigureStep() {}
 
 Result<bool, Error> CMakeConfigureStep::should_skip(Context&, const Port& port) {
-    return Ok(port.build_directory().exists());
+    return port.build_directory().exists();
 }
 
-Result<Monostate, Error> CMakeConfigureStep::act(Context& context, const Port& port) {
+Result<void, Error> CMakeConfigureStep::act(Context& context, const Port& port) {
     auto& config = context.config();
 
     auto cmake_generator = "Ninja";
@@ -194,7 +194,7 @@ Result<Monostate, Error> CMakeConfigureStep::act(Context& context, const Port& p
 
 Result<Enviornment, Error> AutoconfConfigureStep::parse_enviornment(const JsonReader& reader, const Ext::Json::Object& object) {
     if (!object.get("env")) {
-        return Ok(Enviornment::current());
+        return Enviornment::current();
     }
     auto& enviornment = TRY(reader.lookup<Ext::Json::Object>(object, "env"));
     return Enviornment::from_json(reader, enviornment);
@@ -215,13 +215,13 @@ auto AutoconfConfigureStep::parse_settings(const JsonReader& reader, const Ext::
                 }));
         }
     }
-    return Ok(move(settings));
+    return settings;
 }
 
 Result<UniquePtr<Step>, Error> AutoconfConfigureStep::try_create(const JsonReader& reader, const Ext::Json::Object& object) {
     auto enviornment = TRY(parse_enviornment(reader, object));
     auto settings = TRY(parse_settings(reader, object));
-    return Ok(make_unique<AutoconfConfigureStep>(move(enviornment), move(settings)));
+    return make_unique<AutoconfConfigureStep>(move(enviornment), move(settings));
 }
 
 AutoconfConfigureStep::AutoconfConfigureStep(Enviornment enviornment, Settings settings)
@@ -230,10 +230,10 @@ AutoconfConfigureStep::AutoconfConfigureStep(Enviornment enviornment, Settings s
 AutoconfConfigureStep::~AutoconfConfigureStep() {}
 
 Result<bool, Error> AutoconfConfigureStep::should_skip(Context&, const Port& port) {
-    return Ok(port.build_directory().exists());
+    return port.build_directory().exists();
 }
 
-Result<Monostate, Error> AutoconfConfigureStep::act(Context& context, const Port& port) {
+Result<void, Error> AutoconfConfigureStep::act(Context& context, const Port& port) {
     auto& config = context.config();
     auto host = config.target_host();
     auto install_prefix = config.install_prefix();
@@ -272,22 +272,22 @@ Span<const StringView> BuildStep::dependencies() const {
 }
 
 Result<UniquePtr<Step>, Error> CMakeBuildStep::try_create(const JsonReader&, const Ext::Json::Object&) {
-    return Ok(make_unique<CMakeBuildStep>());
+    return make_unique<CMakeBuildStep>();
 }
 
 CMakeBuildStep::~CMakeBuildStep() {}
 
-Result<Monostate, Error> CMakeBuildStep::act(Context& context, const Port& port) {
+Result<void, Error> CMakeBuildStep::act(Context& context, const Port& port) {
     return context.run_process(Process::command("cmake", "--build", port.build_directory()));
 }
 
 Result<UniquePtr<Step>, Error> AutoconfBuildStep::try_create(const JsonReader&, const Ext::Json::Object&) {
-    return Ok(make_unique<AutoconfBuildStep>());
+    return make_unique<AutoconfBuildStep>();
 }
 
 AutoconfBuildStep::~AutoconfBuildStep() {}
 
-Result<Monostate, Error> AutoconfBuildStep::act(Context& context, const Port& port) {
+Result<void, Error> AutoconfBuildStep::act(Context& context, const Port& port) {
     return context.run_process(Process::command("make", "-C", port.build_directory()));
 }
 
@@ -297,34 +297,34 @@ Span<const StringView> InstallStep::dependencies() const {
 }
 
 Result<UniquePtr<Step>, Error> CMakeInstallStep::try_create(const JsonReader&, const Ext::Json::Object&) {
-    return Ok(make_unique<CMakeInstallStep>());
+    return make_unique<CMakeInstallStep>();
 }
 
 CMakeInstallStep::~CMakeInstallStep() {}
 
-Result<Monostate, Error> CMakeInstallStep::act(Context& context, const Port& port) {
+Result<void, Error> CMakeInstallStep::act(Context& context, const Port& port) {
     auto enviornment = Enviornment::current().set("DESTDIR", context.config().iros_sysroot().to_string());
     return context.run_process(Process::command("cmake", "--install", port.build_directory()).with_enviornment(move(enviornment)));
 }
 
 Result<UniquePtr<Step>, Error> AutoconfInstallStep::try_create(const JsonReader&, const Ext::Json::Object&) {
-    return Ok(make_unique<AutoconfInstallStep>());
+    return make_unique<AutoconfInstallStep>();
 }
 
 AutoconfInstallStep::~AutoconfInstallStep() {}
 
-Result<Monostate, Error> AutoconfInstallStep::act(Context& context, const Port& port) {
+Result<void, Error> AutoconfInstallStep::act(Context& context, const Port& port) {
     auto destination_argument = format("DESTDIR={}", context.config().iros_sysroot());
     return context.run_process(Process::command("make", "-C", port.build_directory(), "install", destination_argument));
 }
 
 Result<UniquePtr<CleanStep>, Error> CleanStep::try_create() {
-    return Ok(make_unique<CleanStep>());
+    return make_unique<CleanStep>();
 }
 
 CleanStep::~CleanStep() {}
 
-Result<Monostate, Error> CleanStep::act(Context& context, const Port& port) {
+Result<void, Error> CleanStep::act(Context& context, const Port& port) {
     return context.run_process(Process::command("rm", "-rf", port.base_directory().to_string()));
 }
 }

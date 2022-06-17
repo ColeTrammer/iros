@@ -9,7 +9,7 @@ public:
     ParserImpl(Span<const Flag> flags, Span<const Argument> arguments, bool help_flag, bool version_flag);
     ~ParserImpl();
 
-    Result<Monostate, Error> parse(Span<StringView> input, void* output) const;
+    Result<void, Error> parse(Span<StringView> input, void* output) const;
 
 private:
     void print_usage();

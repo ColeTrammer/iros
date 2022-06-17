@@ -17,6 +17,6 @@ TEST(system, realpath) {
     EXPECT_EQ(result.error().error_code(), ENOENT);
 
     result = Ext::realpath("/proc/self/exe");
-    EXPECT(result.is_ok());
+    EXPECT(result.has_value());
     EXPECT(result.value().ends_with("test_libext"));
 }

@@ -24,8 +24,8 @@ Result<Config, Error> Config::try_create() {
     // FIXME: allow the user to override these variables
     //        through command line arguments or environment
     //        variables.
-    return Ok(Config(move(iros_source_directory), move(iros_build_directory), move(iros_sysroot), move(port_build_directory),
-                     move(install_prefix), move(target_architecture), move(target_host)));
+    return Config(move(iros_source_directory), move(iros_build_directory), move(iros_sysroot), move(port_build_directory),
+                  move(install_prefix), move(target_architecture), move(target_host));
 }
 
 Config::Config(Ext::Path iros_source_directory, Ext::Path iros_build_directory, Ext::Path iros_sysroot, Ext::Path port_build_directory,

@@ -24,7 +24,7 @@ public:
     const Ext::Path& source_directory() const { return m_source_directory; }
     const Ext::Path& build_directory() const { return m_build_directory; }
 
-    Result<Monostate, Error> build(Context& context, StringView build_step);
+    Result<void, Error> build(Context& context, StringView build_step);
     Result<Step&, BuildStepNotFound> lookup_step(StringView step_name);
 
 private:

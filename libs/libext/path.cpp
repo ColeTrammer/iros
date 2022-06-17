@@ -7,11 +7,11 @@
 namespace Ext {
 Result<Path, SystemError> Path::resolve(const String& path) {
     if (path[0] == '/') {
-        return Ok(Path(path));
+        return Path(path);
     }
 
     auto resolved = TRY(realpath(path.string()));
-    return Ok(Path(move(resolved)));
+    return Path(move(resolved));
 }
 
 Path Path::root() {

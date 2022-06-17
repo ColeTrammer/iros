@@ -16,7 +16,7 @@ ParserImpl::~ParserImpl() {}
 Result<const Flag&, UnexpectedLongFlag> ParserImpl::lookup_long_flag(StringView name) const {
     for (auto& flag : m_flags) {
         if (flag.long_name() == name) {
-            return Ok<const Flag&>(flag);
+            return flag;
         }
     }
     return Err(UnexpectedLongFlag(name));
@@ -25,13 +25,13 @@ Result<const Flag&, UnexpectedLongFlag> ParserImpl::lookup_long_flag(StringView 
 Result<const Flag&, UnexpectedShortFlag> ParserImpl::lookup_short_flag(char name) const {
     for (auto& flag : m_flags) {
         if (flag.short_name() == name) {
-            return Ok<const Flag&>(flag);
+            return flag;
         }
     }
     return Err(UnexpectedShortFlag(name));
 }
 
-Result<Monostate, Error> ParserImpl::parse(Span<StringView> input, void* output) const {
+Result<void, Error> ParserImpl::parse(Span<StringView> input, void* output) const {
     constexpr auto position_argument_only_marker = "--"sv;
     constexpr auto long_flag_prefix = "--"sv;
     constexpr auto long_flag_value_marker = '=';
@@ -133,7 +133,7 @@ Result<Monostate, Error> ParserImpl::parse(Span<StringView> input, void* output)
         if (positional_arguments.size() > 0) {
             return Err(UnexpectedPositionalArgument(positional_arguments.back()));
         }
-        return Ok(Monostate {});
+        return {};
     }
 
     // Variable arguments come first.
@@ -150,7 +150,7 @@ Result<Monostate, Error> ParserImpl::parse(Span<StringView> input, void* output)
         for (size_t i = 1; i < m_arguments.size(); i++) {
             TRY(m_arguments[i].validate(positional_arguments[variable_arguments.size() + i - 1], output));
         }
-        return Ok(Monostate {});
+        return {};
     }
 
     // Variables arguments come last.
@@ -167,7 +167,7 @@ Result<Monostate, Error> ParserImpl::parse(Span<StringView> input, void* output)
             variable_arguments.add(positional_arguments[i]);
         }
         TRY(m_arguments.last(1)[0].validate(variable_arguments.span(), output));
-        return Ok(Monostate {});
+        return {};
     }
 
     // No argument lists, this means that optional positional arguments are allowed.
@@ -208,6 +208,6 @@ Result<Monostate, Error> ParserImpl::parse(Span<StringView> input, void* output)
         input_positional_index++;
     }
 
-    return Ok(Monostate {});
+    return {};
 }
 }

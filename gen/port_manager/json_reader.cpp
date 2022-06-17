@@ -12,7 +12,7 @@ Result<JsonReader, Error> JsonReader::try_create(Ext::Path path) {
         return Ext::StringError(format("Failed to load JSON file: `{}'", path));
     }));
 
-    return Ok(JsonReader(move(json), move(path)));
+    return JsonReader(move(json), move(path));
 }
 
 JsonReader::JsonReader(Ext::Json::Object json, Ext::Path path) : m_json(move(json)), m_path(move(path)) {}

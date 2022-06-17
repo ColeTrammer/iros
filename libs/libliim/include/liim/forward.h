@@ -93,9 +93,6 @@ struct None;
 
 template<typename T>
 struct Err;
-
-template<typename T>
-struct Ok;
 }
 
 using LIIM::Bitset;
@@ -112,7 +109,6 @@ using LIIM::InlineQueue;
 using LIIM::LinkedList;
 using LIIM::Monostate;
 using LIIM::None;
-using LIIM::Ok;
 using LIIM::Option;
 using LIIM::Result;
 using LIIM::RingBuffer;

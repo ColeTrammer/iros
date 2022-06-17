@@ -26,7 +26,7 @@ public:
         Option<String> case_name;
     };
 
-    Result<Monostate, Ext::StringError> do_main(Arguments arguments);
+    Result<void, Ext::StringError> do_main(Arguments arguments);
 
     TestCase& current_test_case() { return *m_current_test_case; }
 

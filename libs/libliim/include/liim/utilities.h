@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/forward.h>
 #include <liim/initializer_list.h>
 
 #if !defined(__is_libc) && !defined(__is_libk)
@@ -193,7 +194,7 @@ struct IsOneOf<T> {
 
 template<typename T>
 struct IsIntegral
-    : IsOneOf<typename RemoveCV<T>::type, bool, char, short, int long, long long, unsigned char, unsigned short, unsigned int,
+    : IsOneOf<typename RemoveCV<T>::type, bool, char, short, int, long, long long, unsigned char, unsigned short, unsigned int,
               unsigned long, unsigned long long> {};
 
 template<typename T>
@@ -354,6 +355,39 @@ constexpr T* construct_at(T* location, Args&&... args) {
 }
 
 namespace LIIM {
+namespace Detail {
+    template<typename T>
+    struct IsResultHelper {
+        constexpr static bool value = false;
+    };
+
+    template<typename T, typename U>
+    struct IsResultHelper<Result<T, U>> {
+        constexpr static bool value = true;
+    };
+}
+
+template<typename T>
+concept IsResult = Detail::IsResultHelper<decay_t<T>>::value;
+
+template<typename Res, typename T>
+concept ResultOf = IsResult<Res> && SameAs<typename Res::ValueType, T>;
+
+namespace Detail {
+    template<typename T>
+    struct UnwrapResultHelper {
+        using Type = T;
+    };
+
+    template<IsResult T>
+    struct UnwrapResultHelper<T> {
+        using Type = decay_t<T>::ValueType;
+    };
+}
+
+template<typename T>
+using UnwrapResult = Detail::UnwrapResultHelper<T>::Type;
+
 template<size_t... Ints>
 struct IndexSequence {
     static constexpr int size() { return sizeof...(Ints); }

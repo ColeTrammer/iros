@@ -2,6 +2,7 @@
 
 #include <liim/error/domain.h>
 #include <liim/error/transport.h>
+#include <liim/string_view.h>
 
 namespace LIIM::Error {
 template<>

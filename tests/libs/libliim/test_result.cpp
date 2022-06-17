@@ -1,9 +1,10 @@
+#include <liim/construct.h>
 #include <liim/result.h>
 #include <liim/string.h>
 #include <test/test.h>
 
 TEST(result, basic_getters) {
-    auto ok = Result<int, String> { Ok(5) };
+    auto ok = Result<int, String> { 5 };
     auto err = Result<int, String> { Err("hello"s) };
 
     EXPECT(ok);
@@ -17,29 +18,60 @@ TEST(result, basic_getters) {
 }
 
 TEST(result, functional) {
-    auto ok = Result<int, String> { Ok(5) };
-    auto err = Result<int, String> { Err("error"s) };
+    auto make_ok = [] {
+        return Result<int, String> { 5 };
+    };
+    auto make_err = [] {
+        return Result<int, String> { Err("error"s) };
+    };
 
-    EXPECT_EQ((Result<int, String> { Ok(10) }), ok.map([](auto x) {
+    EXPECT_EQ((Result<int, String> { 10 }), make_ok().transform([](auto x) {
         return x * 2;
     }));
 
-    EXPECT_EQ((Result<int, String> { Err("error"s) }), err.map([](auto x) {
+    EXPECT_EQ((Result<int, String> { Err("error"s) }), make_err().transform([](auto x) {
         return x * 2;
     }));
 
-    EXPECT_EQ((Result<int, String> { Ok(5) }), ok.map_error([](auto x) {
+    EXPECT_EQ((Result<int, String> { 5 }), make_ok().transform_error([](auto x) {
         return format("{} plus", x);
     }));
 
-    EXPECT_EQ((Result<int, String> { Err("error plus"s) }), err.map_error([](auto x) {
+    EXPECT_EQ((Result<int, String> { Err("error plus"s) }), make_err().transform_error([](auto x) {
         return format("{} plus", x);
     }));
 }
 
 TEST(result, conversion) {
     char c = 5;
-    auto x = Result<char, Monostate> { Ok(c) };
+    auto x = Result<char, Monostate> { c };
     Result<int, Monostate> y = move(x);
     EXPECT_EQ(y.value(), 5);
 }
+
+constexpr void construct() {
+    struct X {
+        constexpr static Result<X, StringView> create(int x) {
+            if (x != 0) {
+                return Err("fail"sv);
+            }
+            return X {};
+        }
+    };
+
+    EXPECT(X::create(42).is_error());
+    EXPECT(create<X>(42).is_error());
+
+    int z = 5;
+    auto y = Result<int, StringView> { Err("fail"sv) };
+    auto x = tuple_result_sequence(z, y);
+    EXPECT_EQ(x.error(), "fail"sv);
+
+    auto a = create<X>(Result<int, int>(Err(42)));
+    EXPECT_EQ(a.error().as<int>(), 42);
+
+    auto b = create<X>(Result<int, int>(0));
+    EXPECT(b);
+}
+
+TEST_CONSTEXPR(result, construct, construct)

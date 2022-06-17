@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/error/error.h>
 #include <liim/error/transport.h>
 #include <liim/string_view.h>
 

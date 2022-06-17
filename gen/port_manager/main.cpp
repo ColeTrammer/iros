@@ -23,7 +23,7 @@ constexpr auto argument_parser = [] {
         .argument(Argument::defaulted<&Arguments::build_step>("step").description("build step to perform"));
 }();
 
-Result<Monostate, Error> main(Arguments arguments) {
+Result<void, Error> main(Arguments arguments) {
     auto context = Context(TRY(Config::try_create()));
 
     auto path = TRY(Ext::Path::resolve(arguments.json_path));

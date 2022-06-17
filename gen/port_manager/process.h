@@ -42,9 +42,9 @@ public:
 
     Process with_enviornment(Enviornment enviornment) &&;
 
-    Result<Monostate, Error> spawn_and_wait();
+    Result<void, Error> spawn_and_wait();
     Result<pid_t, Error> spawn();
-    Result<Monostate, Error> wait();
+    Result<void, Error> wait();
 
     String to_string() const;
 

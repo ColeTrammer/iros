@@ -22,7 +22,7 @@ Result<Enviornment, Error> Enviornment::from_json(const JsonReader&, const Ext::
     object.for_each([&](auto& key, auto& value) {
         result = move(result).set(key, Ext::Json::stringify(value));
     });
-    return Ok(result);
+    return result;
 }
 
 Enviornment::Enviornment(HashMap<String, String> enviornment) : m_enviornment(move(enviornment)) {}
@@ -61,7 +61,7 @@ Process Process::with_enviornment(Enviornment enviornment) && {
     return Process(move(m_arguments), move(enviornment));
 }
 
-Result<Monostate, Error> Process::spawn_and_wait() {
+Result<void, Error> Process::spawn_and_wait() {
     m_pid = TRY(spawn());
     return wait();
 }
@@ -84,10 +84,10 @@ Result<pid_t, Error> Process::spawn() {
     if (result != 0) {
         return Err(Ext::StringError(format("Failed to spawn process \"{}\": {}", *this, strerror(result))));
     }
-    return Ok(pid);
+    return pid;
 }
 
-Result<Monostate, Error> Process::wait() {
+Result<void, Error> Process::wait() {
     assert(m_pid);
     int status;
     pid_t result = waitpid(*m_pid, &status, 0);
@@ -106,7 +106,7 @@ Result<Monostate, Error> Process::wait() {
     }
 
     m_pid.reset();
-    return Ok(Monostate {});
+    return {};
 }
 
 String Process::to_string() const {

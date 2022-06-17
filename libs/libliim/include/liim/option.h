@@ -34,8 +34,10 @@ namespace Detail {
 
         constexpr bool has_value() const { return m_has_value; }
 
-        constexpr T& value() { return m_storage.value; }
-        constexpr const T& value() const { return m_storage.value; }
+        constexpr T& value() & { return m_storage.value; }
+        constexpr const T& value() const& { return m_storage.value; }
+        constexpr T&& value() && { return move(m_storage).value; }
+        constexpr const T&& value() const&& { return move(m_storage).value; }
 
         template<typename... Args>
         requires(CreateableFrom<T, Args...>) constexpr T& emplace(Args&&... args) {
@@ -199,13 +201,21 @@ public:
     constexpr ValuePointer operator->() { return &value(); }
     constexpr ConstValuePointer operator->() const { return &value(); }
 
-    constexpr T& value() {
+    constexpr T& value() & {
         assert(has_value());
         return m_storage.value();
     }
-    constexpr const T& value() const {
+    constexpr const T& value() const& {
         assert(has_value());
         return m_storage.value();
+    }
+    constexpr T&& value() && {
+        assert(has_value());
+        return move(m_storage).value();
+    }
+    constexpr const T&& value() const&& {
+        assert(has_value());
+        return move(m_storage).value();
     }
 
     constexpr T value_or(T default_value) const {
@@ -260,7 +270,7 @@ public:
     template<typename C, typename R = InvokeResult<C>::type>
     constexpr Result<T, R> unwrap_or_else(C mapper) {
         if (has_value()) {
-            return Ok<T>(forward<T&&>(value()));
+            return forward<T&&>(value());
         }
         return Err<R>(mapper());
     }
@@ -277,7 +287,8 @@ public:
     constexpr T&& try_move_out() { return move(value()); }
     constexpr T try_move_out() requires(IsLValueReference<T>::value) { return value(); }
 
-private : Storage m_storage;
+private:
+    Storage m_storage;
 };
 
 template<typename T>

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/error/common_result.h>
 #include <liim/utilities.h>
 
 namespace LIIM {
@@ -20,6 +21,11 @@ concept MemberCloneable = Moveable<T> && requires(const T& clvalue) {
 };
 
 template<typename T>
+concept FalliblyCloneable = Moveable<T> && requires(const T& clvalue) {
+    { clvalue.clone() } -> ResultOf<T>;
+};
+
+template<typename T>
 concept Cloneable = Copyable<T> || MemberCloneable<T>;
 
 template<typename T, typename... Args>
@@ -28,12 +34,26 @@ concept MemberCreateableFrom = Moveable<T> && requires(Args&&... args) {
 };
 
 template<typename T, typename... Args>
+concept FalliblyMemberCreateableFrom = Moveable<T> && requires(Args&&... args) {
+    { T::create(static_cast<Args&&>(args)...) } -> ResultOf<T>;
+};
+
+template<typename T, typename... Args>
+concept CreateableFrom = ConstructibleFrom<T, Args...> || MemberCreateableFrom<T, Args...>;
+
+template<typename T, typename... Args>
+concept FalliblyCreateableFrom =
+    !CreateableFrom<T, Args...> && (CreateableFrom<T, UnwrapResult<Args>...> || FalliblyMemberCreateableFrom<T, UnwrapResult<Args>...>);
+
+template<typename T, typename... Args>
 concept MemberAssignableFrom = requires(T& lvalue, Args&&... args) {
     { lvalue.assign(static_cast<Args&&>(args)...) } -> SameAs<T&>;
 };
 
 template<typename T, typename... Args>
-concept CreateableFrom = ConstructibleFrom<T, Args...> || MemberCreateableFrom<T, Args...>;
+concept FalliblyMemberAssignableFrom = requires(T& lvalue, Args&&... args) {
+    { lvalue.assign(static_cast<Args&&>(args)...) } -> ResultOf<T&>;
+};
 
 template<typename T, typename U>
 concept AssignableFrom = OperatorAssignableFrom<T, U> || MemberAssignableFrom<T, U> ||(Moveable<T>&& CreateableFrom<T, U>);
@@ -54,6 +74,11 @@ constexpr T create(Args&&... args) requires(CreateableFrom<T, Args...>) {
     } else if constexpr (CreateableFrom<T, Args...>) {
         return T::create(forward<Args>(args)...);
     }
+}
+
+template<typename T, typename... Args>
+constexpr auto create(Args&&... args) requires(FalliblyMemberCreateableFrom<T, Args...>) {
+    return T::create(args...);
 }
 
 template<typename T, typename U>

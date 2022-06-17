@@ -2,6 +2,9 @@
 
 #include <liim/compare.h>
 #include <liim/container/container.h>
+#include <liim/error/common_result.h>
+#include <liim/error/error.h>
+#include <liim/error/system_domain.h>
 #include <liim/format.h>
 #include <liim/initializer_list.h>
 #include <liim/option.h>
@@ -76,6 +79,7 @@ template<typename T>
 class NewVector {
 public:
     using ValueType = T;
+    using AllocateResult = MaybeUninit<T>*;
 
     constexpr NewVector() = default;
     constexpr NewVector(NewVector&&);
