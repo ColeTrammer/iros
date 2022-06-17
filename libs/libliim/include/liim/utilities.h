@@ -550,6 +550,19 @@ ReferenceWrapper(T&) -> ReferenceWrapper<T>;
 template<typename Derived, typename Base>
 concept DerivedFrom = IsBaseOf<Base, Derived>::value && IsConvertible<const volatile Derived*, const volatile Base*>::value;
 
+template<typename T>
+struct IsTriviallyRelocatable {
+    constexpr static bool value = false;
+};
+
+template<Integral T>
+struct IsTriviallyRelocatable<T> {
+    constexpr static bool value = true;
+};
+
+template<typename T>
+concept TriviallyRelocatable = IsTriviallyRelocatable<T>::value;
+
 template<class T>
 struct in_place_type_t {
     explicit in_place_type_t() = default;
@@ -635,4 +648,6 @@ using LIIM::min;
 using LIIM::move;
 using LIIM::piecewise_construct;
 using LIIM::piecewise_construct_t;
+using LIIM::SameAs;
 using LIIM::swap;
+using LIIM::TriviallyRelocatable;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/error/forward.h>
 #include <liim/format/forward.h>
 #include <liim/traits.h>
 

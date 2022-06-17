@@ -105,6 +105,11 @@ constexpr void swap(UniquePtr<T>& a, UniquePtr<T>& b) {
     a.swap(b);
 }
 
+template<typename T>
+struct IsTriviallyRelocatable<UniquePtr<T>> {
+    constexpr static bool value = true;
+};
+
 template<typename T, class... Args>
 constexpr UniquePtr<T> make_unique(Args&&... args) {
     return UniquePtr<T>(new T(forward<Args>(args)...));
