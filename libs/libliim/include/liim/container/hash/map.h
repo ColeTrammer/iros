@@ -1,10 +1,10 @@
 #pragma once
 
+#include <liim/container/hash/table.h>
 #include <liim/format.h>
-#include <liim/hash/table.h>
 #include <liim/pair.h>
 
-namespace LIIM::Hash {
+namespace LIIM::Container::Hash {
 template<typename K, typename V>
 class Map {
 public:
@@ -321,10 +321,10 @@ constexpr auto collect_hash_map(C&& container) {
 
 namespace LIIM::Format {
 template<Formattable K, Formattable V>
-struct Formatter<LIIM::Hash::Map<K, V>> {
+struct Formatter<LIIM::Container::Hash::Map<K, V>> {
     constexpr void parse(FormatParseContext&) {}
 
-    void format(const LIIM::Hash::Map<K, V>& map, FormatContext& context) {
+    void format(const LIIM::Container::Hash::Map<K, V>& map, FormatContext& context) {
         context.put("{ ");
         bool first = true;
         for (auto& [key, value] : map) {

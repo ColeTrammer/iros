@@ -3,14 +3,14 @@
 // Hash Table implementation modelled from https://www.youtube.com/watch?v=ncHmEUmJZf4.
 
 #include <liim/compare.h>
-#include <liim/container.h>
-#include <liim/hash/entry.h>
-#include <liim/hash/group_info.h>
-#include <liim/hash/hashable.h>
-#include <liim/hash/hasher.h>
-#include <liim/hash/table_iterator.h>
+#include <liim/container/container.h>
+#include <liim/container/hash/entry.h>
+#include <liim/container/hash/group_info.h>
+#include <liim/container/hash/hashable.h>
+#include <liim/container/hash/hasher.h>
+#include <liim/container/hash/table_iterator.h>
 
-namespace LIIM::Hash::Detail {
+namespace LIIM::Container::Hash::Detail {
 template<typename TransparentKey, typename Base>
 concept CanLookup = HashableLike<TransparentKey, Base> && EqualComparable<TransparentKey, Base>;
 

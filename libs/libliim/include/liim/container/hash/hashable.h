@@ -1,10 +1,10 @@
 #pragma once
 
-#include <liim/hash/forward.h>
+#include <liim/container/hash/forward.h>
 #include <liim/tuple.h>
 #include <liim/utilities.h>
 
-namespace LIIM::Hash {
+namespace LIIM::Container::Hash {
 template<typename T>
 struct HashFunction {};
 
@@ -29,7 +29,9 @@ concept HashableLike = Hashable<Base> && Hashable<TransparentKey> && []() -> boo
         return true;
     }
     if constexpr (requires { typename HashForType<TransparentKey>::Matches; }) {
-        auto helper = []<typename... Types>(Tuple<Types...>) { return TypeList::IsValid<decay_t<Base>, Types...> {}; };
+        auto helper = []<typename... Types>(Tuple<Types...>) {
+            return TypeList::IsValid<decay_t<Base>, Types...> {};
+        };
         return decltype(helper(declval<typename HashForType<TransparentKey>::Matches>()))::value;
     }
     return false;

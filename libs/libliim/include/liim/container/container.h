@@ -6,7 +6,7 @@
 #include <liim/tuple.h>
 #include <liim/utilities.h>
 
-namespace LIIM {
+namespace LIIM::Container {
 template<typename T>
 struct IteratorTraits {
     using ValueType = T::ValueType;
@@ -645,28 +645,31 @@ constexpr T collect(C&& container) {
     insert(result, result.end(), forward<C>(container));
     return result;
 }
+}
 
-template<typename T, Container C>
+namespace LIIM {
+template<typename T, LIIM::Container::Container C>
 constexpr T& assign_to(T& output, C&& container) requires(!AssignableFrom<T, C>) {
-    return output = collect<T, C>(forward<C>(container));
+    return output = LIIM::Container::collect<T, C>(forward<C>(container));
 }
 }
 
-using LIIM::collect;
-using LIIM::Container;
-using LIIM::enumerate;
-using LIIM::insert;
-using LIIM::Iterator;
-using LIIM::iterator_container;
-using LIIM::IteratorTraits;
-using LIIM::move_elements;
-using LIIM::MoveIterator;
-using LIIM::range;
-using LIIM::repeat;
-using LIIM::reversed;
-using LIIM::ReverseIterator;
-using LIIM::SizedContainer;
-using LIIM::transform;
-using LIIM::ValueIterator;
-using LIIM::ValueIteratorAdapter;
-using LIIM::zip;
+using LIIM::assign_to;
+using LIIM::Container::collect;
+using LIIM::Container::Container;
+using LIIM::Container::enumerate;
+using LIIM::Container::insert;
+using LIIM::Container::Iterator;
+using LIIM::Container::iterator_container;
+using LIIM::Container::IteratorTraits;
+using LIIM::Container::move_elements;
+using LIIM::Container::MoveIterator;
+using LIIM::Container::range;
+using LIIM::Container::repeat;
+using LIIM::Container::reversed;
+using LIIM::Container::ReverseIterator;
+using LIIM::Container::SizedContainer;
+using LIIM::Container::transform;
+using LIIM::Container::ValueIterator;
+using LIIM::Container::ValueIteratorAdapter;
+using LIIM::Container::zip;

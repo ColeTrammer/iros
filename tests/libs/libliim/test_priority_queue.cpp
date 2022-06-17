@@ -1,4 +1,4 @@
-#include <liim/priority_queue.h>
+#include <liim/container/priority_queue.h>
 #include <test/test.h>
 
 constexpr void basic() {

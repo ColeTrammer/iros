@@ -1,8 +1,9 @@
 #pragma once
 
-#include <liim/new_vector.h>
+#include <liim/compare.h>
+#include <liim/container/new_vector.h>
 
-namespace LIIM {
+namespace LIIM::Container {
 template<typename T, ComparatorFor<T> Comp = Less<T>>
 class PriorityQueue : public ValueIteratorAdapter<PriorityQueue<T, Comp>> {
 public:
@@ -185,6 +186,6 @@ constexpr auto collect_priority_queue(C&& container, Comp&& comparator) {
 }
 }
 
-using LIIM::collect_priority_queue;
-using LIIM::make_priority_queue;
-using LIIM::PriorityQueue;
+using LIIM::Container::collect_priority_queue;
+using LIIM::Container::make_priority_queue;
+using LIIM::Container::PriorityQueue;

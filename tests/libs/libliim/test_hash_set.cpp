@@ -1,10 +1,10 @@
-#include <liim/hash/hashable.h>
-#include <liim/hash/hasher.h>
-#include <liim/hash/set.h>
+#include <liim/container/hash/hashable.h>
+#include <liim/container/hash/hasher.h>
+#include <liim/container/hash_set.h>
 #include <liim/string.h>
 #include <test/test.h>
 
-namespace LIIM::Hash {
+namespace LIIM::Container::Hash {
 template<>
 struct HashFunction<int> {
     static constexpr void hash(Hasher&, int) {}
@@ -32,10 +32,8 @@ struct HashFunction<const char*> {
 };
 }
 
-using namespace LIIM::Hash;
-
 constexpr void basic() {
-    auto set = Set<int> {};
+    auto set = LIIM::Container::HashSet<int> {};
     for (auto i : range(50, 55)) {
         set.insert(i);
     }
@@ -48,7 +46,7 @@ constexpr void basic() {
     set.clear();
     EXPECT_EQ(set.size(), 0u);
 
-    set = make_hash_set({ 1, 2, 3 });
+    set = LIIM::Container::make_hash_set({ 1, 2, 3 });
     EXPECT_EQ(set.size(), 3u);
     EXPECT(set.contains(2));
     set.insert({ 3, 4, 5 });
@@ -57,7 +55,7 @@ constexpr void basic() {
 }
 
 constexpr void containers() {
-    auto set = Set<int> {};
+    auto set = LIIM::Container::HashSet<int> {};
     insert(set, set.end(), range(50, 55));
     for (auto i : range(50, 55)) {
         set.contains(i);

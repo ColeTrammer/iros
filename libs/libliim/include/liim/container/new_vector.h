@@ -1,13 +1,13 @@
 #pragma once
 
 #include <liim/compare.h>
-#include <liim/container.h>
+#include <liim/container/container.h>
 #include <liim/format.h>
 #include <liim/initializer_list.h>
 #include <liim/option.h>
 #include <liim/span.h>
 
-namespace LIIM {
+namespace LIIM::Container {
 template<typename T>
 class NewVector;
 
@@ -375,7 +375,7 @@ constexpr void NewVector<T>::resize(size_t n, const T& value) {
     if (size() > n) {
         erase_count(n, size() - n);
     } else {
-        LIIM::insert(*this, end(), repeat(n - size(), value));
+        ::insert(*this, end(), repeat(n - size(), value));
     }
 }
 
@@ -435,10 +435,10 @@ constexpr void swap(NewVector<T>& a, NewVector<T>& b) {
 
 namespace LIIM::Format {
 template<Formattable T>
-struct Formatter<NewVector<T>> {
+struct Formatter<LIIM::Container::NewVector<T>> {
     constexpr void parse(FormatParseContext& context) { m_formatter.parse(context); }
 
-    void format(const NewVector<T>& vector, FormatContext& context) {
+    void format(const LIIM::Container::NewVector<T>& vector, FormatContext& context) {
         context.put("[ ");
         bool first = true;
         for (auto& item : vector) {
@@ -455,6 +455,6 @@ struct Formatter<NewVector<T>> {
 };
 }
 
-using LIIM::collect_vector;
-using LIIM::make_vector;
-using LIIM::NewVector;
+using LIIM::Container::collect_vector;
+using LIIM::Container::make_vector;
+using LIIM::Container::NewVector;

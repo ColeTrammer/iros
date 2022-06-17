@@ -2,9 +2,9 @@
 
 #include <errno.h>
 #include <ext/forward.h>
+#include <liim/container/new_vector.h>
 #include <liim/format.h>
 #include <liim/forward.h>
-#include <liim/new_vector.h>
 #include <liim/result.h>
 #include <liim/source_location.h>
 #include <liim/string.h>

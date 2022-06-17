@@ -1,5 +1,5 @@
-#include <liim/container.h>
-#include <liim/new_vector.h>
+#include <liim/container/container.h>
+#include <liim/container/new_vector.h>
 #include <test/test.h>
 
 constexpr void collect() {
@@ -222,7 +222,7 @@ constexpr void initializer_list() {
     EXPECT_EQ(*it++, 4);
 
     auto v = NewVector<int> {};
-    for (auto& x : LIIM::reversed(l)) {
+    for (auto& x : reversed(l)) {
         v.push_back(x);
     }
     EXPECT_EQ(v.size(), 3u);
@@ -232,7 +232,7 @@ constexpr void initializer_list() {
 }
 
 constexpr void value_iterator() {
-    struct Iter : public LIIM::ValueIteratorAdapter<Iter> {
+    struct Iter : public ValueIteratorAdapter<Iter> {
         using ValueType = size_t;
         constexpr Option<ValueType> next() { return i++; }
 
@@ -249,7 +249,7 @@ constexpr void value_iterator() {
     }
     EXPECT_EQ(sum, 10lu * 11lu / 2lu);
 
-    struct Iter2 : public LIIM::ValueIteratorAdapter<Iter2> {
+    struct Iter2 : public ValueIteratorAdapter<Iter2> {
         using ValueType = size_t;
         constexpr Option<ValueType> next() {
             if (i <= 10) {
@@ -267,7 +267,7 @@ constexpr void value_iterator() {
     }
     EXPECT_EQ(sum, 10lu * 11lu / 2lu);
 
-    struct Iter3 : public LIIM::ValueIteratorAdapter<Iter3> {
+    struct Iter3 : public ValueIteratorAdapter<Iter3> {
         using ValueType = size_t&;
         constexpr Option<size_t&> next() {
             if (i < 10) {

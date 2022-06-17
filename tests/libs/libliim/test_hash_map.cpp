@@ -1,10 +1,10 @@
-#include <liim/hash/map.h>
-#include <liim/hash/set.h>
-#include <liim/new_vector.h>
+#include <liim/container/hash_map.h>
+#include <liim/container/hash_set.h>
+#include <liim/container/new_vector.h>
 #include <liim/string.h>
 #include <test/test.h>
 
-namespace LIIM::Hash {
+namespace LIIM::Container::Hash {
 template<>
 struct HashFunction<int> {
     static constexpr void hash(Hasher&, int) {}
@@ -32,10 +32,10 @@ struct HashFunction<const char*> {
 };
 }
 
-using namespace LIIM::Hash;
+using namespace LIIM::Container;
 
 constexpr void basic() {
-    auto map = Map<int, int> {};
+    auto map = LIIM::Container::HashMap<int, int> {};
     EXPECT(!map.contains(0));
 
     EXPECT_EQ(map[2], 0);
@@ -84,7 +84,6 @@ constexpr void comparison() {
 }
 
 constexpr void subcontainers() {
-    using LIIM::Hash::collect_hash_set;
     auto keys = collect_hash_set(range(4));
     auto values = collect_hash_set(range(4, 8));
     auto a = collect_hash_map(zip(keys, values));
@@ -94,8 +93,8 @@ constexpr void subcontainers() {
 
 static void transparent() {
     {
-        auto x =
-            collect<Map<String, String>>(zip(std::initializer_list { "hello"sv, "world"sv }, std::initializer_list { "xxx"sv, "yyy"sv }));
+        auto x = collect<LIIM::Container::HashMap<String, String>>(
+            zip(std::initializer_list { "hello"sv, "world"sv }, std::initializer_list { "xxx"sv, "yyy"sv }));
 
         EXPECT_EQ(*x.at("hello"sv), "xxx");
         EXPECT_EQ(x["world"sv], "yyy");

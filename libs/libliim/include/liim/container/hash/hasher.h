@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-namespace LIIM::Hash {
+namespace LIIM::Container::Hash {
 class Hasher {
 public:
     constexpr Hasher() {}

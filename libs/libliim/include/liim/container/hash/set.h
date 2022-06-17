@@ -1,10 +1,10 @@
 #pragma once
 
+#include <liim/container/hash/table.h>
 #include <liim/format.h>
-#include <liim/hash/table.h>
 #include <liim/initializer_list.h>
 
-namespace LIIM::Hash {
+namespace LIIM::Container::Hash {
 template<Hashable T>
 class Set {
 private:
@@ -169,10 +169,10 @@ constexpr auto collect_hash_set(C&& container) {
 
 namespace LIIM::Format {
 template<Formattable T>
-struct Formatter<LIIM::Hash::Set<T>> {
+struct Formatter<LIIM::Container::Hash::Set<T>> {
     constexpr void parse(FormatParseContext& context) { m_formatter.parse(context); }
 
-    void format(const LIIM::Hash::Set<T>& set, FormatContext& context) {
+    void format(const LIIM::Container::Hash::Set<T>& set, FormatContext& context) {
         context.put("{ ");
         bool first = true;
         for (auto& item : set) {

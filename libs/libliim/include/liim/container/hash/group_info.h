@@ -1,8 +1,8 @@
 #pragma once
 
-#include <liim/hash/entry_info.h>
+#include <liim/container/hash/entry_info.h>
 
-namespace LIIM::Hash::Detail {
+namespace LIIM::Container::Hash::Detail {
 class GroupInfo {
 public:
     constexpr GroupInfo() {}

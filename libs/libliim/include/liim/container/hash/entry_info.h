@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <stdint.h>
 
-namespace LIIM::Hash::Detail {
+namespace LIIM::Container::Hash::Detail {
 class EntryInfo {
 public:
     constexpr EntryInfo() {}

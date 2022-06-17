@@ -1,8 +1,8 @@
 #pragma once
 
-#include <liim/hash/group_info.h>
+#include <liim/container/hash/group_info.h>
 
-namespace LIIM::Hash::Detail {
+namespace LIIM::Container::Hash::Detail {
 template<typename Table>
 class TableIterator {
 private:

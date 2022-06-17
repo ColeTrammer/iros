@@ -1,8 +1,8 @@
 #pragma once
 
-#include <liim/hash/entry_info.h>
+#include <liim/container/hash/entry_info.h>
 
-namespace LIIM::Hash::Detail {
+namespace LIIM::Container::Hash::Detail {
 class Entry {
 public:
     constexpr Entry(EntryInfo& info, size_t value_index) : m_info(&info), m_value_index(value_index) {}

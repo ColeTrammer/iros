@@ -1,5 +1,5 @@
+#include <liim/container/new_vector.h>
 #include <liim/format.h>
-#include <liim/new_vector.h>
 #include <test/test.h>
 
 TEST(format, automatic_indexing) {
