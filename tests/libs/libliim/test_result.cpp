@@ -74,4 +74,19 @@ constexpr void construct() {
     EXPECT(b);
 }
 
+constexpr void result_and_then_test() {
+    EXPECT_EQ(5, result_and_then(5, [](auto x) {
+                  return x;
+              }));
+
+    EXPECT_EQ((Result<int, int>(2)), result_and_then(Result<int, int>(2), [](auto x) {
+                  return x;
+              }));
+
+    EXPECT_EQ((Result<int, StringView>(Err("xxx"sv))), result_and_then(Result<int, StringView>(2), [](auto) {
+                  return Result<int, StringView>(Err("xxx"sv));
+              }));
+}
+
 TEST_CONSTEXPR(result, construct, construct)
+TEST_CONSTEXPR(result, result_and_then_test, result_and_then_test)

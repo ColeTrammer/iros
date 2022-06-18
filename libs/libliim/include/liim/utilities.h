@@ -388,6 +388,56 @@ namespace Detail {
 template<typename T>
 using UnwrapResult = Detail::UnwrapResultHelper<T>::Type;
 
+namespace Detail {
+    template<typename T, typename U>
+    struct LikeHelper {
+        using Type = U;
+    };
+
+    template<typename T, typename U>
+    struct LikeHelper<T&, U> {
+        using Type = U&;
+    };
+
+    template<typename T, typename U>
+    struct LikeHelper<const T&, U> {
+        using Type = const U&;
+    };
+
+    template<typename T, typename U>
+    struct LikeHelper<T&&, U> {
+        using Type = U&&;
+    };
+
+    template<typename T, typename U>
+    struct LikeHelper<const T&&, U> {
+        using Type = const U&&;
+    };
+}
+
+template<typename T, typename U>
+using Like = Detail::LikeHelper<T, U>::Type;
+
+struct Void {};
+
+namespace Detail {
+    template<typename T>
+    struct WrapVoidHelper {
+        using Type = Conditional<IsVoid<T>::value, Void, T>::type;
+    };
+
+    template<typename T>
+    struct UnwrapVoidHelper {
+        using Type = Conditional<SameAs<T, Void>, void, T>::type;
+    };
+}
+
+template<typename T>
+using WrapVoid = Detail::WrapVoidHelper<T>::Type;
+
+template<typename T>
+using UnwrapVoid = Detail::WrapVoidHelper<T>::Type;
+
 template<size_t... Ints>
 struct IndexSequence {
     static constexpr int size() { return sizeof...(Ints); }

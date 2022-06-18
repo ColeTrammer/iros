@@ -422,6 +422,33 @@ constexpr CommonResult<Tuple<UnwrapResult<Types>...>, Types...> tuple_result_seq
     });
 }
 
+namespace Detail {
+    template<typename F, typename T>
+    struct ResultAndThenReturn {
+        using Type = InvokeResult<F, T>::type;
+    };
+
+    template<typename F, IsResult T>
+    struct ResultAndThenReturn<F, T> {
+        using ValueType = decay_t<T>::ValueType;
+        using FReturn = InvokeResult<F, Like<T, ValueType>>::type;
+        using Type = CommonResult<FReturn, T>;
+    };
+}
+
+template<typename T, typename F>
+constexpr Detail::ResultAndThenReturn<F, T>::Type result_and_then(T&& value, F&& callable) {
+    if constexpr (IsResult<T>) {
+        if (value) {
+            return forward<F>(callable)(forward<T>(value).value());
+        } else {
+            return Err(forward<T>(value).error());
+        }
+    } else {
+        return forward<F>(callable)(forward<T>(value));
+    }
+}
+
 template<typename T, typename... Args>
 constexpr CommonResult<decltype(create<T>(declval<UnwrapResult<Args>>()...)), Args...>
 create(Args&&... args) requires(!FalliblyMemberCreateableFrom<T, Args...> && FalliblyCreateableFrom<T, Args...>) {
@@ -435,6 +462,36 @@ create(Args&&... args) requires(!FalliblyMemberCreateableFrom<T, Args...> && Fal
             return T::create(forward<decltype(args)&&>(args)...);
         },
         move(arguments).value());
+}
+
+template<typename T, typename... Args>
+requires(FalliblyCreateableFrom<T, Args...>) constexpr CommonResult<void, decltype(create<T>(declval<Args>()...))> create_at(
+    T* location, Args&&... args) {
+    auto result = create<T>(forward<Args>(args)...);
+    if (!result) {
+        return result.try_did_fail();
+    }
+    construct_at(location, move(result).value());
+    return {};
+}
+
+template<typename T, typename U>
+constexpr auto assign_to(T& lvalue, U&& other) requires(FalliblyMemberAssignableFrom<T, U>) {
+    return lvalue.assign(forward<U>(other));
+}
+
+template<typename T, typename U>
+constexpr CommonResult<T&, decltype(create<T>(declval<U>()))> assign_to(T& lvalue, U&& other) requires(FalliblyCreateableFrom<T, U>) {
+    auto result = create<T>(forward<U>(other));
+    if (!result) {
+        return result.try_did_fail();
+    }
+    return lvalue = move(result).value();
+}
+
+template<typename T>
+constexpr auto clone(const T& value) requires(FalliblyCloneable<T>) {
+    return value.clone();
 }
 }
 
@@ -452,4 +509,5 @@ struct Formatter<Result<T, E>> : public BaseFormatter {
 
 using LIIM::Err;
 using LIIM::Result;
+using LIIM::result_and_then;
 using LIIM::tuple_result_sequence;

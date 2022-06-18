@@ -21,12 +21,12 @@ concept MemberCloneable = Moveable<T> && requires(const T& clvalue) {
 };
 
 template<typename T>
-concept FalliblyCloneable = Moveable<T> && requires(const T& clvalue) {
-    { clvalue.clone() } -> ResultOf<T>;
-};
+concept Cloneable = Copyable<T> || MemberCloneable<T>;
 
 template<typename T>
-concept Cloneable = Copyable<T> || MemberCloneable<T>;
+concept FalliblyCloneable = !Cloneable<T> && Moveable<T> && requires(const T& clvalue) {
+    { clvalue.clone() } -> ResultOf<T>;
+};
 
 template<typename T, typename... Args>
 concept MemberCreateableFrom = Moveable<T> && requires(Args&&... args) {
@@ -57,6 +57,12 @@ concept FalliblyMemberAssignableFrom = requires(T& lvalue, Args&&... args) {
 
 template<typename T, typename U>
 concept AssignableFrom = OperatorAssignableFrom<T, U> || MemberAssignableFrom<T, U> ||(Moveable<T>&& CreateableFrom<T, U>);
+
+template<typename T, typename U>
+concept FalliblyAssignableFrom = !AssignableFrom<T, U> && (FalliblyMemberAssignableFrom<T, U> || FalliblyCreateableFrom<T, U>);
+
+template<typename T, typename... Args>
+requires(CreateableFrom<T, Args...> || FalliblyCreateableFrom<T, Args...>) using CreateResult = decltype(create<T>(declval<Args&&>()...));
 
 template<typename T, typename... Args>
 constexpr void create_at(T* location, Args&&... args) requires(CreateableFrom<T, Args...>) {

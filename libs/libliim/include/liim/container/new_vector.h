@@ -8,6 +8,7 @@
 #include <liim/format.h>
 #include <liim/initializer_list.h>
 #include <liim/option.h>
+#include <liim/result.h>
 #include <liim/span.h>
 
 namespace LIIM::Container {
@@ -79,24 +80,35 @@ template<typename T>
 class NewVector {
 public:
     using ValueType = T;
-    using AllocateResult = MaybeUninit<T>*;
+    using ReserveResult = void;
+
+    using Iterator = NewVectorIterator<NewVector<T>>;
+    using ConstIterator = NewVectorIterator<const NewVector<T>>;
+
+    template<typename V, typename... Args>
+    using InsertResult = CommonResult<V, CreateResult<T, Args...>>;
+
+    template<typename V, ::Iterator Iter>
+    using IteratorInsertResult = InsertResult<V, IteratorValueType<Iter>>;
 
     constexpr NewVector() = default;
     constexpr NewVector(NewVector&&);
 
-    constexpr static NewVector create(std::initializer_list<T> list);
-    template<Iterator Iter>
-    constexpr static NewVector create(Iter start, Iter end, Option<size_t> known_size = {});
+    template<typename = void>
+    constexpr static InsertResult<NewVector, const T&> create(std::initializer_list<T> list);
+    template<::Iterator Iter>
+    constexpr static IteratorInsertResult<NewVector, Iter> create(Iter start, Iter end, Option<size_t> known_size = {});
 
     constexpr ~NewVector() { clear(); }
 
+    template<typename = void>
     constexpr auto clone() const requires(Cloneable<T>);
 
     constexpr NewVector& operator=(NewVector&&);
 
-    constexpr NewVector& assign(std::initializer_list<T> list) { return assign(list.begin(), list.end()); }
-    template<Iterator Iter>
-    constexpr NewVector& assign(Iter start, Iter end, Option<size_t> known_size = {});
+    constexpr decltype(auto) assign(std::initializer_list<T> list) { return assign(list.begin(), list.end()); }
+    template<::Iterator Iter>
+    constexpr IteratorInsertResult<NewVector&, Iter> assign(Iter start, Iter end, Option<size_t> known_size = {});
 
     constexpr Option<T&> at(size_t index);
     constexpr Option<const T&> at(size_t index) const;
@@ -126,9 +138,6 @@ public:
     constexpr size_t size() const { return m_size; }
     constexpr size_t capacity() const { return m_capacity; }
 
-    using Iterator = NewVectorIterator<NewVector<T>>;
-    using ConstIterator = NewVectorIterator<const NewVector<T>>;
-
     constexpr auto begin() { return Iterator(*this, 0lu); }
     constexpr auto end() { return Iterator(*this, size()); }
     constexpr auto begin() const { return ConstIterator(*this, 0lu); }
@@ -150,26 +159,21 @@ public:
 
     constexpr void clear();
 
-    constexpr Iterator insert(ConstIterator position, const T& value) { return emplace(position, value); }
-    constexpr Iterator insert(ConstIterator position, T&& value) { return emplace(position, move(value)); }
-    constexpr Iterator insert(ConstIterator position, std::initializer_list<T> list) { return insert(iterator_index(position), list); }
-
-    template<Container C>
-    constexpr Iterator insert(ConstIterator position, C&& container) {
-        return insert(iterator_index(position), forward<C>(container));
-    }
+    constexpr auto insert(ConstIterator position, const T& value) { return emplace(position, value); }
+    constexpr auto insert(ConstIterator position, T&& value) { return emplace(position, move(value)); }
+    constexpr auto insert(ConstIterator position, std::initializer_list<T> list) { return insert(iterator_index(position), list); }
 
     template<::Iterator Iter>
-    constexpr Iterator insert(ConstIterator position, Iter begin, Iter end, Option<size_t> known_size = {}) {
+    constexpr auto insert(ConstIterator position, Iter begin, Iter end, Option<size_t> known_size = {}) {
         return insert(iterator_index(position), move(begin), move(end), known_size);
     }
 
-    constexpr Iterator insert(size_t index, const T& value) { return emplace(index, value); }
-    constexpr Iterator insert(size_t index, T&& value) { return emplace(index, move(value)); }
-    constexpr Iterator insert(size_t index, std::initializer_list<T> list) { return insert(index, list.begin(), list.end()); }
+    constexpr auto insert(size_t index, const T& value) { return emplace(index, value); }
+    constexpr auto insert(size_t index, T&& value) { return emplace(index, move(value)); }
+    constexpr auto insert(size_t index, std::initializer_list<T> list) { return insert(index, list.begin(), list.end()); }
 
     template<::Iterator Iter>
-    constexpr Iterator insert(size_t index, Iter begin, Iter end, Option<size_t> known_size = {});
+    constexpr IteratorInsertResult<Iterator, Iter> insert(size_t index, Iter begin, Iter end, Option<size_t> known_size = {});
 
     constexpr Iterator erase(ConstIterator position) { return erase(position, position + 1); }
     constexpr Iterator erase(ConstIterator start, ConstIterator end) { return erase_count(iterator_index(start), end - start); }
@@ -182,23 +186,25 @@ public:
     }
 
     template<typename... Args>
-    constexpr Iterator emplace(ConstIterator position, Args&&... args) {
+    constexpr auto emplace(ConstIterator position, Args&&... args) {
         return emplace(iterator_index(position), forward<Args>(args)...);
     }
     template<typename... Args>
-    constexpr Iterator emplace(size_t index, Args&&... args);
+    constexpr InsertResult<Iterator, Args...> emplace(size_t index, Args&&... args);
 
-    constexpr void push_back(const T& value) { emplace_back(value); }
-    constexpr void push_back(T&& value) { emplace_back(::move(value)); }
+    constexpr decltype(auto) push_back(const T& value) { return emplace_back(value); }
+    constexpr decltype(auto) push_back(T&& value) { return emplace_back(::move(value)); }
 
     template<typename... Args>
-    constexpr T& emplace_back(Args&&... args) {
-        return *emplace(end(), forward<Args>(args)...);
+    constexpr InsertResult<T&, Args...> emplace_back(Args&&... args) {
+        return result_and_then(emplace(end(), forward<Args>(args)...), [](auto it) -> T& {
+            return *it;
+        });
     }
 
     constexpr Option<T> pop_back();
 
-    constexpr void resize(size_t count, const T& value = T());
+    constexpr InsertResult<void, const T&> resize(size_t count, const T& value = T());
 
     constexpr void swap(NewVector&);
 
@@ -220,7 +226,7 @@ constexpr NewVector<T>::NewVector(NewVector<T>&& other)
     : m_size(exchange(other.m_size, 0)), m_capacity(exchange(other.m_capacity, 0)), m_data(exchange(other.m_data, nullptr)) {}
 
 template<typename T>
-constexpr auto NewVector<T>::create(std::initializer_list<T> list) -> NewVector {
+constexpr auto NewVector<T>::create(std::initializer_list<T> list) -> InsertResult<NewVector, const T&> {
     auto result = NewVector {};
     result.insert(result.begin(), list);
     return result;
@@ -228,7 +234,7 @@ constexpr auto NewVector<T>::create(std::initializer_list<T> list) -> NewVector 
 
 template<typename T>
 template<Iterator Iter>
-constexpr auto NewVector<T>::create(Iter start, Iter end, Option<size_t> known_size) -> NewVector {
+constexpr auto NewVector<T>::create(Iter start, Iter end, Option<size_t> known_size) -> IteratorInsertResult<NewVector, Iter> {
     auto result = NewVector {};
     result.insert(result.begin(), move(start), move(end), known_size);
     return result;
@@ -245,18 +251,18 @@ constexpr NewVector<T>& NewVector<T>::operator=(NewVector<T>&& other) {
 
 template<typename T>
 template<Iterator Iter>
-constexpr auto NewVector<T>::assign(Iter start, Iter end, Option<size_t> known_size) -> NewVector& {
-    return *this = NewVector::create(move(start), move(end), known_size);
+constexpr auto NewVector<T>::assign(Iter start, Iter end, Option<size_t> known_size) -> IteratorInsertResult<NewVector&, Iter> {
+    clear();
+    return result_and_then(insert(this->end(), move(start), move(end), known_size), [this](auto) -> NewVector& {
+        return *this;
+    });
 }
 
 template<typename T>
 constexpr auto NewVector<T>::clone() const requires(Cloneable<T>) {
-    auto result = NewVector<T> {};
-    result.reserve(size());
-    for (auto& x : *this) {
-        result.push_back(::clone(x));
-    }
-    return result;
+    return collect<NewVector<T>>(transform(*this, [](const auto& v) {
+        return ::clone(v);
+    }));
 }
 
 template<typename T>
@@ -291,9 +297,9 @@ constexpr void NewVector<T>::grow_to(size_t new_size) {
     }
 
     if (m_capacity == 0 || 2 * m_capacity < new_size) {
-        reserve(max(20lu, new_size));
+        return reserve(max(20lu, new_size));
     } else {
-        reserve(3 * m_capacity / 2);
+        return reserve(3 * m_capacity / 2);
     }
 }
 
@@ -302,7 +308,7 @@ constexpr Option<T&> NewVector<T>::at(size_t index) {
     if (index >= size()) {
         return None {};
     }
-    return Option<T&>((*this)[index]);
+    return (*this)[index];
 }
 
 template<typename T>
@@ -310,7 +316,7 @@ constexpr Option<const T&> NewVector<T>::at(size_t index) const {
     if (index >= size()) {
         return None {};
     }
-    return Option<const T&>((*this)[index]);
+    return (*this)[index];
 }
 
 template<typename T>
@@ -324,7 +330,7 @@ constexpr void NewVector<T>::clear() {
 
 template<typename T>
 template<Iterator Iter>
-constexpr auto NewVector<T>::insert(size_t index, Iter start, Iter end, Option<size_t>) -> Iterator {
+constexpr auto NewVector<T>::insert(size_t index, Iter start, Iter end, Option<size_t>) -> IteratorInsertResult<Iterator, Iter> {
     auto result = index;
     for (auto&& value : iterator_container(move(start), move(end))) {
         insert(index++, static_cast<decltype(value)&&>(value));
@@ -334,7 +340,7 @@ constexpr auto NewVector<T>::insert(size_t index, Iter start, Iter end, Option<s
 
 template<typename T>
 template<typename... Args>
-constexpr auto NewVector<T>::emplace(size_t index, Args&&... args) -> Iterator {
+constexpr auto NewVector<T>::emplace(size_t index, Args&&... args) -> InsertResult<Iterator, Args...> {
     grow_to(size() + 1);
 
     move_objects(m_data + index + 1, m_data + index, size() - index);
@@ -375,7 +381,7 @@ constexpr Option<T> NewVector<T>::pop_back() {
 }
 
 template<typename T>
-constexpr void NewVector<T>::resize(size_t n, const T& value) {
+constexpr auto NewVector<T>::resize(size_t n, const T& value) -> InsertResult<void, const T&> {
     if (size() > n) {
         erase_count(n, size() - n);
     } else {
