@@ -1,8 +1,10 @@
 #pragma once
 
+#include <liim/compare.h>
 #include <liim/initializer_list.h>
 #include <liim/option.h>
 #include <liim/pair.h>
+#include <liim/result.h>
 #include <liim/tuple.h>
 #include <liim/utilities.h>
 
@@ -18,11 +20,19 @@ struct IteratorTraits<T*> {
 };
 
 template<typename T>
-concept Iterator = requires(T iterator, T other) {
+concept Iterator = EqualComparable<T> && requires(T iterator) {
     { *iterator } -> SameAs<typename IteratorTraits<T>::ValueType>;
     { ++iterator } -> SameAs<T&>;
-    { iterator == other } -> SameAs<bool>;
-    { iterator != other } -> SameAs<bool>;
+};
+
+template<typename T>
+concept DoubleEndedIterator = Iterator<T> && requires(T iterator) {
+    { --iterator } -> SameAs<T&>;
+};
+
+template<typename T>
+concept RandomAccessIterator = DoubleEndedIterator<T> && Comparable<T> && requires(T iterator, size_t index) {
+    { iterator[index] } -> SameAs<typename IteratorTraits<T>::ValueType>;
 };
 
 template<typename T>
@@ -35,6 +45,18 @@ template<typename T>
 concept Container = requires(T container) {
     { container.begin() } -> Iterator;
     { container.end() } -> Iterator;
+};
+
+template<typename T>
+concept DoubleEndedContainer = requires(T container) {
+    { container.begin() } -> DoubleEndedIterator;
+    { container.end() } -> DoubleEndedIterator;
+};
+
+template<typename T>
+concept RandomAccessContainer = requires(T container) {
+    { container.begin() } -> RandomAccessIterator;
+    { container.end() } -> RandomAccessIterator;
 };
 
 template<typename T>
@@ -60,8 +82,13 @@ concept Clearable = Container<T> && requires(T& container) {
 };
 
 template<typename C, typename T>
-concept InsertableFor = Container<C> && requires(C& container, IteratorForContainer<C> iter, T&& value) {
-    { container.insert(iter, forward<T>(value)) } -> SameAs<IteratorForContainer<C>>;
+concept InsertableFor = Container<C> && requires(C& container, IteratorForContainer<C> iter) {
+    { container.insert(iter, declval<T>()) } -> SameAs<IteratorForContainer<C>>;
+};
+
+template<typename C, typename T>
+concept FalliblyInsertableFor = Container<C> && requires(C& container, IteratorForContainer<C> iter) {
+    { container.insert(iter, declval<T>()) } -> ResultOf<IteratorForContainer<C>>;
 };
 
 template<typename Producer>
@@ -102,7 +129,7 @@ public:
     constexpr auto end() const { return ConstIterator({}); }
 };
 
-template<Iterator Iter>
+template<RandomAccessIterator Iter>
 class ReverseIterator {
 public:
     using ValueType = IteratorValueType<Iter>;
@@ -143,11 +170,7 @@ public:
     }
 
     constexpr bool operator==(const ReverseIterator& other) const { return this->m_iterator == other.m_iterator; }
-    constexpr bool operator!=(const ReverseIterator& other) const { return this->m_iterator != other.m_iterator; }
-    constexpr bool operator<=(const ReverseIterator& other) const { return this->m_iterator >= other.m_iterator; }
-    constexpr bool operator<(const ReverseIterator& other) const { return this->m_iterator > other.m_iterator; }
-    constexpr bool operator>=(const ReverseIterator& other) const { return this->m_iterator <= other.m_iterator; }
-    constexpr bool operator>(const ReverseIterator& other) const { return this->m_iterator < other.m_iterator; }
+    constexpr auto operator<=>(const ReverseIterator& other) const { return other.m_iterator <=> this->m_iterator; }
 
 private:
     Iter m_iterator;
@@ -175,7 +198,6 @@ public:
     constexpr MoveIterator operator++(int) const { return MoveIterator(m_iterator++); }
 
     constexpr bool operator==(const MoveIterator& other) const { return this->m_iterator == other.m_iterator; }
-    constexpr bool operator!=(const MoveIterator& other) const { return this->m_iterator != other.m_iterator; }
 
 private:
     Iter m_iterator;
@@ -222,11 +244,7 @@ public:
         }
 
         constexpr bool operator==(const Iterator& other) const { return this->m_index == other.m_index; }
-        constexpr bool operator!=(const Iterator& other) const { return this->m_index != other.m_index; }
-        constexpr bool operator<=(const Iterator& other) const { return this->m_index <= other.m_index; }
-        constexpr bool operator<(const Iterator& other) const { return this->m_index > other.m_index; }
-        constexpr bool operator>=(const Iterator& other) const { return this->m_index >= other.m_index; }
-        constexpr bool operator>(const Iterator& other) const { return this->m_index > other.m_index; }
+        constexpr auto operator<=>(const Iterator& other) const { return this->m_index <=> other.m_index; }
 
     private:
         constexpr Iterator(size_t index, ValueType value) : m_index(index), m_value(value) {}
@@ -288,14 +306,10 @@ public:
         }
 
         constexpr bool operator==(const Iterator& other) const { return this->m_value == other.m_value; }
-        constexpr bool operator!=(const Iterator& other) const { return this->m_value != other.m_value; }
-        constexpr bool operator<=(const Iterator& other) const { return this->m_value <= other.m_value; }
-        constexpr bool operator<(const Iterator& other) const { return this->m_value > other.m_value; }
-        constexpr bool operator>=(const Iterator& other) const { return this->m_value >= other.m_value; }
-        constexpr bool operator>(const Iterator& other) const { return this->m_value > other.m_value; }
+        constexpr auto operator<=>(const Iterator& other) const { return this->m_value <=> other.m_value; }
 
     private:
-        constexpr Iterator(T value) : m_value(move(value)) {}
+        constexpr explicit Iterator(T value) : m_value(move(value)) {}
 
         friend Range;
 
@@ -610,6 +624,33 @@ constexpr auto enumerate(T&& container) {
     return zip(sequence(static_cast<size_t>(0)), forward<T>(container));
 }
 
+template<DoubleEndedContainer C>
+constexpr void reverse(C&& container) {
+    auto left = forward<C>(container).begin();
+    auto right = forward<C>(container).end();
+
+    while (left != right) {
+        --right;
+        if (left == right) {
+            break;
+        }
+        swap(*left, *right);
+        ++left;
+    }
+}
+
+template<RandomAccessContainer C>
+constexpr auto rotate(C&& container, IteratorForContainer<C> middle) {
+    auto start = forward<C>(container).begin();
+    auto end = forward<C>(container).end();
+
+    auto to_rotate = end - middle;
+    reverse(forward<C>(container));
+    reverse(iterator_container(start, start + to_rotate));
+    reverse(iterator_container(start + to_rotate, end));
+    return start + to_rotate;
+}
+
 template<Iterator Iter>
 constexpr auto iterator_container(Iter begin, Iter end) {
     if constexpr (requires { end - begin; }) {
@@ -629,8 +670,11 @@ constexpr auto iterator_container(Iter begin, Iter end, size_t size) {
 }
 
 template<typename C, Container OtherContainer>
-requires(InsertableFor<C, ContainerValueType<MoveElements<OtherContainer>>>) constexpr IteratorForContainer<C> insert(
-    C& container, ConstIteratorForContainer<C> position, OtherContainer&& other_container) {
+requires(
+    InsertableFor<C, ContainerValueType<MoveElements<OtherContainer>>> ||
+    FalliblyInsertableFor<C, ContainerValueType<MoveElements<OtherContainer>>>) constexpr auto insert(C& container,
+                                                                                                      ConstIteratorForContainer<C> position,
+                                                                                                      OtherContainer&& other_container) {
     auto move_container = move_elements(forward<OtherContainer>(other_container));
     auto result = container.insert(position, move_container.begin(), move_container.end());
     if constexpr (Clearable<OtherContainer> && IsRValueReference<OtherContainer>::value) {
@@ -640,17 +684,20 @@ requires(InsertableFor<C, ContainerValueType<MoveElements<OtherContainer>>>) con
 }
 
 template<typename T, Container C>
-constexpr T collect(C&& container) {
+constexpr auto collect(C&& container) {
     auto result = T();
-    insert(result, result.end(), forward<C>(container));
-    return result;
+    return result_and_then(insert(result, result.end(), forward<C>(container)), [&](auto) -> T {
+        return move(result);
+    });
 }
 }
 
 namespace LIIM {
 template<typename T, LIIM::Container::Container C>
-constexpr T& assign_to(T& output, C&& container) requires(!AssignableFrom<T, C>) {
-    return output = LIIM::Container::collect<T, C>(forward<C>(container));
+constexpr decltype(auto) assign_to(T& output, C&& container) requires(!AssignableFrom<T, C>) {
+    return result_and_then(LIIM::Container::collect<T>(forward<C>(container)), [&](auto&& result) -> T& {
+        return output = forward<decltype(result)&&>(result);
+    });
 }
 }
 
@@ -666,8 +713,10 @@ using LIIM::Container::move_elements;
 using LIIM::Container::MoveIterator;
 using LIIM::Container::range;
 using LIIM::Container::repeat;
+using LIIM::Container::reverse;
 using LIIM::Container::reversed;
 using LIIM::Container::ReverseIterator;
+using LIIM::Container::rotate;
 using LIIM::Container::SizedContainer;
 using LIIM::Container::transform;
 using LIIM::Container::ValueIterator;

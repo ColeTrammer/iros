@@ -12,7 +12,7 @@
 
 namespace LIIM::Container::Hash::Detail {
 template<typename TransparentKey, typename Base>
-concept CanLookup = HashableLike<TransparentKey, Base> && EqualComparable<TransparentKey, Base>;
+concept CanLookup = HashableLike<TransparentKey, Base> && EqualComparableWith<TransparentKey, Base>;
 
 template<typename TransparentKey, typename KeyType>
 concept CanInsertIntoSet = CanLookup<TransparentKey, KeyType> && CreateableFrom<KeyType, TransparentKey>;
@@ -120,7 +120,7 @@ private:
 
     template<FindType find_type, typename U>
     constexpr auto find_impl(uint64_t hash_high, uint8_t hash_low, U&& needle) const -> Option<Entry>
-    requires(EqualComparable<U, KeyType>);
+    requires(EqualComparableWith<U, KeyType>);
 
     constexpr void grow_and_rehash();
     constexpr Option<T> erase(Entry entry);
@@ -137,7 +137,7 @@ private:
     constexpr HashSplit hash(U&& value) const requires(HashableLike<U, KeyType>);
 
     template<typename U>
-    constexpr bool equal(const T& value, U&& other) const requires(EqualComparable<U, KeyType>);
+    constexpr bool equal(const T& value, U&& other) const requires(EqualComparableWith<U, KeyType>);
 
     constexpr size_t group_count() const { return m_capacity; }
 
@@ -362,7 +362,7 @@ constexpr void Table<T, type>::clear() {
 template<typename T, TableType type>
 template<Table<T, type>::FindType find_type, typename U>
 constexpr Option<Entry> Table<T, type>::find_impl(uint64_t hash_high, uint8_t hash_low, U&& needle) const
-    requires(EqualComparable<U, KeyType>) {
+    requires(EqualComparableWith<U, KeyType>) {
     if (group_count() == 0) {
         return None {};
     }
@@ -422,7 +422,7 @@ constexpr auto Table<T, type>::hash(U&& value) const -> HashSplit requires(Hasha
 
 template<typename T, TableType type>
 template<typename U>
-constexpr bool Table<T, type>::equal(const T& value, U&& other) const requires(EqualComparable<U, KeyType>) {
+constexpr bool Table<T, type>::equal(const T& value, U&& other) const requires(EqualComparableWith<U, KeyType>) {
     if constexpr (is_set) {
         return value == other;
     } else {

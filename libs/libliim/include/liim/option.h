@@ -243,7 +243,7 @@ public:
         }
     }
 
-    template<typename C, typename R = InvokeResult<C, T>::type>
+    template<typename C, typename R = InvokeResult<C, T&>::type>
     constexpr Option<R> map(C mapper) {
         if (!has_value()) {
             return {};
@@ -251,7 +251,7 @@ public:
         return Option<R> { mapper(value()) };
     }
 
-    template<typename C, typename R = InvokeResult<C, T>::type>
+    template<typename C, typename R = InvokeResult<C, const T&>::type>
     constexpr Option<R> map(C mapper) const {
         if (!has_value()) {
             return {};
@@ -259,7 +259,7 @@ public:
         return Option<R> { mapper(value()) };
     }
 
-    template<typename C, typename R = InvokeResult<C, T>::type>
+    template<typename C, typename R = InvokeResult<C, const T&>::type>
     constexpr R and_then(C mapper) const {
         if (!has_value()) {
             return {};

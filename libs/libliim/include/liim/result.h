@@ -1,7 +1,6 @@
 #pragma once
 
 #include <liim/compare.h>
-#include <liim/format/builtin_formatters.h>
 #include <liim/option.h>
 #include <liim/tuple.h>
 #include <liim/utilities.h>
@@ -21,7 +20,7 @@ public:
     constexpr const E&& error() const&& { return static_cast<const E&&>(m_error); }
     constexpr E&& error() && { return static_cast<E&&>(m_error); }
 
-    template<EqualComparable<E> U>
+    template<EqualComparableWith<E> U>
     friend constexpr bool operator==(const Err& a, const Err<U>& b) {
         return a.error() == b.error();
     }
@@ -161,41 +160,41 @@ public:
         return m_value.pointer();
     }
 
-    constexpr T& operator*() & {
+    constexpr decltype(auto) operator*() & {
         assert(has_value());
         return m_value.value();
     }
-    constexpr const T& operator*() const& {
+    constexpr decltype(auto) operator*() const& {
         assert(has_value());
         return m_value.value();
     }
-    constexpr T&& operator*() && {
+    constexpr decltype(auto) operator*() && {
         assert(has_value());
         return move(m_value).value();
     }
-    constexpr const T&& operator*() const&& {
+    constexpr decltype(auto) operator*() const&& {
         assert(has_value());
         return move(m_value).value();
     }
 
-    constexpr T& value() & { return **this; }
-    constexpr const T& value() const& { return **this; }
-    constexpr T&& value() && { return *move(*this); }
-    constexpr const T&& value() const&& { return *move(*this); }
+    constexpr decltype(auto) value() & { return **this; }
+    constexpr decltype(auto) value() const& { return **this; }
+    constexpr decltype(auto) value() && { return *move(*this); }
+    constexpr decltype(auto) value() const&& { return *move(*this); }
 
-    constexpr E& error() & {
+    constexpr decltype(auto) error() & {
         assert(is_error());
         return m_error.value();
     }
-    constexpr const E& error() const& {
+    constexpr decltype(auto) error() const& {
         assert(is_error());
         return m_error.value();
     }
-    constexpr E&& error() && {
+    constexpr decltype(auto) error() && {
         assert(is_error());
         return move(m_error).value();
     }
-    constexpr const E&& error() const&& {
+    constexpr decltype(auto) error() const&& {
         assert(is_error());
         return move(m_error).value();
     }
@@ -209,25 +208,25 @@ public:
         }
     }
 
-    template<EqualComparable<T> U, EqualComparable<E> G>
-    friend constexpr bool operator==(const Result& a, const Result<U, G>& b) {
-        if (a.has_value() && b.has_value()) {
-            return a.value() == b.value();
-        } else if (a.is_error() && b.is_error()) {
-            return a.error() == b.error();
+    template<EqualComparableWith<T> U, EqualComparableWith<E> G>
+    constexpr bool operator==(const Result<U, G>& b) const {
+        if (this->has_value() && b.has_value()) {
+            return this->value() == b.value();
+        } else if (this->is_error() && b.is_error()) {
+            return this->error() == b.error();
         } else {
             return false;
         }
     }
 
     template<typename U>
-    requires(!IsResult<U> && EqualComparable<T, U>) friend constexpr bool operator==(const Result& a, const U& b) {
-        return a.has_value() && a.value() == b;
+    requires(!IsResult<U> && EqualComparableWith<T, U>) constexpr bool operator==(const U& b) const {
+        return this->has_value() && this->value() == b;
     }
 
     template<typename G>
-    requires(!IsResult<G> && EqualComparable<E, G>) friend constexpr bool operator==(const Result& a, const Err<G>& b) {
-        return a.is_error() && a.error() == b.error();
+    requires(!IsResult<G> && EqualComparableWith<E, G>) constexpr bool operator==(const Err<G>& b) const {
+        return this->is_error() && this->error() == b.error();
     }
 
     template<typename F>
@@ -329,12 +328,12 @@ public:
     constexpr const E&& error() const&& { return move(m_error).value(); }
     constexpr E&& error() && { return move(m_error).value(); }
 
-    template<EqualComparable<E> G>
+    template<EqualComparableWith<E> G>
     friend constexpr bool operator==(const Result& a, const Result<void, G>& b) {
         return a.m_error == b.m_error;
     }
 
-    template<EqualComparable<E> G>
+    template<EqualComparableWith<E> G>
     friend constexpr bool operator==(const Result& a, const Err<G>& b) {
         return a.is_error() && a.error() == b.error();
     }
@@ -431,8 +430,8 @@ namespace Detail {
     template<typename F, IsResult T>
     struct ResultAndThenReturn<F, T> {
         using ValueType = decay_t<T>::ValueType;
-        using FReturn = InvokeResult<F, Like<T, ValueType>>::type;
-        using Type = CommonResult<FReturn, T>;
+        using FReturn = InvokeResult<F, Like<T&&, ValueType>>::type;
+        using Type = CommonResult<UnwrapResult<FReturn>, FReturn, T>;
     };
 }
 
@@ -450,7 +449,7 @@ constexpr Detail::ResultAndThenReturn<F, T>::Type result_and_then(T&& value, F&&
 }
 
 template<typename T, typename... Args>
-constexpr CommonResult<decltype(create<T>(declval<UnwrapResult<Args>>()...)), Args...>
+constexpr CommonResult<T, decltype(create<T>(declval<UnwrapResult<Args>>()...)), Args...>
 create(Args&&... args) requires(!FalliblyMemberCreateableFrom<T, Args...> && FalliblyCreateableFrom<T, Args...>) {
     auto arguments = tuple_result_sequence(forward<Args>(args)...);
     if (arguments.is_error()) {
@@ -459,7 +458,7 @@ create(Args&&... args) requires(!FalliblyMemberCreateableFrom<T, Args...> && Fal
 
     return apply(
         [](auto&&... args) {
-            return T::create(forward<decltype(args)&&>(args)...);
+            return create<T>(forward<decltype(args)&&>(args)...);
         },
         move(arguments).value());
 }
@@ -493,18 +492,6 @@ template<typename T>
 constexpr auto clone(const T& value) requires(FalliblyCloneable<T>) {
     return value.clone();
 }
-}
-
-namespace LIIM::Format {
-template<Formattable T, Formattable E>
-struct Formatter<Result<T, E>> : public BaseFormatter {
-    void format(const Result<T, E>& value, FormatContext& context) {
-        if (value.is_error()) {
-            return format_to_context(context, "Err({})", value.error());
-        }
-        return format_to_context(context, "Ok({})", value.value());
-    }
-};
 }
 
 using LIIM::Err;

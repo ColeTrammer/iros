@@ -288,7 +288,7 @@ struct Conditional<true, A, B> {
 };
 
 template<typename T>
-T& declval() {
+T&& declval() {
     return 0;
 }
 
@@ -314,8 +314,8 @@ struct IsConvertible {
 };
 
 template<typename T, typename... Args>
-concept ConstructibleFrom = requires(Args&&... args) {
-    T(forward<Args>(args)...);
+concept ConstructibleFrom = requires {
+    T(declval<Args>()...);
 };
 
 template<typename T>

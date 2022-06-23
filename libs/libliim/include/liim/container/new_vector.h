@@ -57,11 +57,7 @@ public:
     }
 
     constexpr bool operator==(const NewVectorIterator& other) const { return this->m_index == other.m_index; }
-    constexpr bool operator!=(const NewVectorIterator& other) const { return this->m_index != other.m_index; }
-    constexpr bool operator<=(const NewVectorIterator& other) const { return this->m_index <= other.m_index; }
-    constexpr bool operator<(const NewVectorIterator& other) const { return this->m_index > other.m_index; }
-    constexpr bool operator>=(const NewVectorIterator& other) const { return this->m_index >= other.m_index; }
-    constexpr bool operator>(const NewVectorIterator& other) const { return this->m_index > other.m_index; }
+    constexpr auto operator<=>(const NewVectorIterator& other) const { return this->m_index <=> other.m_index; }
 
 private:
     explicit constexpr NewVectorIterator(VectorType& vector, size_t index) : m_vector(vector), m_index(index) {}
@@ -86,7 +82,7 @@ public:
     using ConstIterator = NewVectorIterator<const NewVector<T>>;
 
     template<typename V, typename... Args>
-    using InsertResult = CommonResult<V, CreateResult<T, Args...>>;
+    using InsertResult = CommonResult<V, CreateAtResultDefault<T, Args...>>;
 
     template<typename V, ::Iterator Iter>
     using IteratorInsertResult = InsertResult<V, IteratorValueType<Iter>>;
@@ -94,19 +90,27 @@ public:
     constexpr NewVector() = default;
     constexpr NewVector(NewVector&&);
 
-    template<typename = void>
-    constexpr static InsertResult<NewVector, const T&> create(std::initializer_list<T> list);
+    constexpr static InsertResult<NewVector, const T&> create(std::initializer_list<T> list) requires(Copyable<T>) {
+        auto result = NewVector {};
+        result.insert(result.begin(), list);
+        return result;
+    }
+
     template<::Iterator Iter>
     constexpr static IteratorInsertResult<NewVector, Iter> create(Iter start, Iter end, Option<size_t> known_size = {});
 
     constexpr ~NewVector() { clear(); }
 
-    template<typename = void>
-    constexpr auto clone() const requires(Cloneable<T>);
+    constexpr auto clone() const requires(Cloneable<T> || FalliblyCloneable<T>) {
+        return collect<NewVector<T>>(transform(*this, [](const auto& v) {
+            return ::clone(v);
+        }));
+    }
 
     constexpr NewVector& operator=(NewVector&&);
 
-    constexpr decltype(auto) assign(std::initializer_list<T> list) { return assign(list.begin(), list.end()); }
+    constexpr decltype(auto) assign(std::initializer_list<T> list) requires(Copyable<T>) { return assign(list.begin(), list.end()); }
+
     template<::Iterator Iter>
     constexpr IteratorInsertResult<NewVector&, Iter> assign(Iter start, Iter end, Option<size_t> known_size = {});
 
@@ -155,22 +159,34 @@ public:
     constexpr auto iterator(size_t index) const { return begin() + index; }
     constexpr auto citerator(size_t index) const { return begin() + index; }
 
-    constexpr void reserve(size_t capacity);
+    constexpr size_t iterator_index(ConstIterator iterator) const { return iterator - begin(); }
+
+    constexpr ReserveResult reserve(size_t capacity);
 
     constexpr void clear();
 
-    constexpr auto insert(ConstIterator position, const T& value) { return emplace(position, value); }
-    constexpr auto insert(ConstIterator position, T&& value) { return emplace(position, move(value)); }
-    constexpr auto insert(ConstIterator position, std::initializer_list<T> list) { return insert(iterator_index(position), list); }
+    template<typename U>
+    constexpr auto insert(ConstIterator position, U&& value) {
+        return emplace(position, forward<U>(value));
+    }
+
+    constexpr auto insert(ConstIterator position, std::initializer_list<T> list) requires(Copyable<T>) {
+        return insert(iterator_index(position), list);
+    }
 
     template<::Iterator Iter>
     constexpr auto insert(ConstIterator position, Iter begin, Iter end, Option<size_t> known_size = {}) {
         return insert(iterator_index(position), move(begin), move(end), known_size);
     }
 
-    constexpr auto insert(size_t index, const T& value) { return emplace(index, value); }
-    constexpr auto insert(size_t index, T&& value) { return emplace(index, move(value)); }
-    constexpr auto insert(size_t index, std::initializer_list<T> list) { return insert(index, list.begin(), list.end()); }
+    template<typename U>
+    constexpr auto insert(size_t index, U&& value) {
+        return emplace(index, forward<U>(value));
+    }
+
+    constexpr auto insert(size_t index, std::initializer_list<T> list) requires(Copyable<T>) {
+        return insert(index, list.begin(), list.end());
+    }
 
     template<::Iterator Iter>
     constexpr IteratorInsertResult<Iterator, Iter> insert(size_t index, Iter begin, Iter end, Option<size_t> known_size = {});
@@ -192,19 +208,23 @@ public:
     template<typename... Args>
     constexpr InsertResult<Iterator, Args...> emplace(size_t index, Args&&... args);
 
-    constexpr decltype(auto) push_back(const T& value) { return emplace_back(value); }
-    constexpr decltype(auto) push_back(T&& value) { return emplace_back(::move(value)); }
+    constexpr decltype(auto) push_back(const T& value) requires(Copyable<T>) { return emplace_back(value); }
+    constexpr decltype(auto) push_back(T&& value) { return emplace_back(move(value)); }
 
     template<typename... Args>
     constexpr InsertResult<T&, Args...> emplace_back(Args&&... args) {
-        return result_and_then(emplace(end(), forward<Args>(args)...), [](auto it) -> T& {
-            return *it;
-        });
+        if constexpr (CreateableFrom<T, Args...>) {
+            return *emplace(end(), forward<Args>(args)...);
+        } else {
+            return result_and_then(emplace(end(), forward<Args>(args)...), [](auto it) -> T& {
+                return *it;
+            });
+        }
     }
 
     constexpr Option<T> pop_back();
 
-    constexpr InsertResult<void, const T&> resize(size_t count, const T& value = T());
+    constexpr InsertResult<void, const T&> resize(size_t count, const T& value = T()) requires(Copyable<T>);
 
     constexpr void swap(NewVector&);
 
@@ -213,8 +233,7 @@ public:
 
 private:
     constexpr void move_objects(MaybeUninit<T>* destination, MaybeUninit<T>* source, size_t count);
-    constexpr void grow_to(size_t new_size);
-    constexpr size_t iterator_index(ConstIterator iterator) const { return iterator - begin(); }
+    constexpr ReserveResult grow_to(size_t new_size);
 
     size_t m_size { 0 };
     size_t m_capacity { 0 };
@@ -224,13 +243,6 @@ private:
 template<typename T>
 constexpr NewVector<T>::NewVector(NewVector<T>&& other)
     : m_size(exchange(other.m_size, 0)), m_capacity(exchange(other.m_capacity, 0)), m_data(exchange(other.m_data, nullptr)) {}
-
-template<typename T>
-constexpr auto NewVector<T>::create(std::initializer_list<T> list) -> InsertResult<NewVector, const T&> {
-    auto result = NewVector {};
-    result.insert(result.begin(), list);
-    return result;
-}
 
 template<typename T>
 template<Iterator Iter>
@@ -256,13 +268,6 @@ constexpr auto NewVector<T>::assign(Iter start, Iter end, Option<size_t> known_s
     return result_and_then(insert(this->end(), move(start), move(end), known_size), [this](auto) -> NewVector& {
         return *this;
     });
-}
-
-template<typename T>
-constexpr auto NewVector<T>::clone() const requires(Cloneable<T>) {
-    return collect<NewVector<T>>(transform(*this, [](const auto& v) {
-        return ::clone(v);
-    }));
 }
 
 template<typename T>
@@ -332,8 +337,20 @@ template<typename T>
 template<Iterator Iter>
 constexpr auto NewVector<T>::insert(size_t index, Iter start, Iter end, Option<size_t>) -> IteratorInsertResult<Iterator, Iter> {
     auto result = index;
-    for (auto&& value : iterator_container(move(start), move(end))) {
-        insert(index++, static_cast<decltype(value)&&>(value));
+    if constexpr (CreateableFrom<T, IteratorValueType<Iter>>) {
+        for (auto&& value : iterator_container(move(start), move(end))) {
+            emplace(index++, static_cast<decltype(value)&&>(value));
+        }
+    } else if constexpr (FalliblyCreateableFrom<T, IteratorValueType<Iter>>) {
+        auto old_end = this->end();
+        for (auto it = move(start); it != end; ++it) {
+            auto outcome = emplace_back(*it);
+            if (!outcome) {
+                erase(old_end, this->end());
+                return move(outcome).try_did_fail();
+            }
+        }
+        rotate(iterator_container(iterator(index), this->end()), old_end);
     }
     return iterator(result);
 }
@@ -341,13 +358,19 @@ constexpr auto NewVector<T>::insert(size_t index, Iter start, Iter end, Option<s
 template<typename T>
 template<typename... Args>
 constexpr auto NewVector<T>::emplace(size_t index, Args&&... args) -> InsertResult<Iterator, Args...> {
-    grow_to(size() + 1);
+    if constexpr (CreateableFrom<T, Args...>) {
+        grow_to(size() + 1);
 
-    move_objects(m_data + index + 1, m_data + index, size() - index);
-    create_at(&m_data[index].value, forward<Args>(args)...);
-    m_size++;
+        move_objects(m_data + index + 1, m_data + index, size() - index);
+        create_at(&m_data[index].value, forward<Args>(args)...);
 
-    return iterator(index);
+        m_size++;
+        return iterator(index);
+    } else {
+        return result_and_then(LIIM::create<T>(forward<Args>(args)...), [&](T&& value) {
+            return emplace(index, move(value));
+        });
+    }
 }
 
 template<typename T>
@@ -381,7 +404,8 @@ constexpr Option<T> NewVector<T>::pop_back() {
 }
 
 template<typename T>
-constexpr auto NewVector<T>::resize(size_t n, const T& value) -> InsertResult<void, const T&> {
+constexpr auto NewVector<T>::resize(size_t n, const T& value) -> InsertResult<void, const T&>
+requires(Copyable<T>) {
     if (size() > n) {
         erase_count(n, size() - n);
     } else {
@@ -419,7 +443,7 @@ constexpr void NewVector<T>::swap(NewVector<T>& other) {
     ::swap(this->m_data, other.m_data);
 }
 
-template<typename T>
+template<Copyable T>
 constexpr auto make_vector(std::initializer_list<T> list) {
     return NewVector<T>::create(list);
 }

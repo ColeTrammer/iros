@@ -152,6 +152,26 @@ constexpr void container() {
     EXPECT(z.empty());
 }
 
+constexpr void fallible() {
+    auto v = NewVector<int> {};
+    EXPECT_EQ(v.emplace_back(Result<int, StringView>(1)), (Result<int, StringView>(1)));
+    EXPECT_EQ(v.emplace_back(Result<int, StringView>(Err("xx"sv))), (Result<int, StringView>(Err("xx"sv))));
+
+    auto w = NewVector<Result<int, StringView>> {};
+    w.emplace_back(42);
+    w.emplace_back(11);
+    w.emplace_back(Err("xyz"sv));
+
+    EXPECT_EQ(v.size(), 1u);
+    EXPECT(!insert(v, v.end(), move_elements(move(w))));
+    EXPECT_EQ(v.size(), 1u);
+
+    w.emplace_back(42);
+    w.emplace_back(11);
+    EXPECT(insert(v, v.end(), move_elements(move(w))));
+    EXPECT_EQ(v.size(), 3u);
+}
+
 constexpr void compare() {
     auto v = make_vector({ 2, 3, 4 });
     auto w = v.clone();
@@ -185,6 +205,9 @@ TEST_CONSTEXPR(new_vector, iterator, iterator)
 TEST_CONSTEXPR(new_vector, assign, assign)
 TEST_CONSTEXPR(new_vector, mutate, mutate)
 TEST_CONSTEXPR(new_vector, container, container)
+TEST(new_vector, fallible) {
+    fallible();
+}
 TEST_CONSTEXPR(new_vector, compare, compare)
 TEST(new_vector, format) {
     format();

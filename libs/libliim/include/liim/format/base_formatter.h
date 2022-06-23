@@ -91,7 +91,7 @@ struct BaseFormatter {
     }
 
     constexpr void parse_fill_and_align(FormatParseContext& context) {
-        auto convert_char_to_align = [](char c) -> Option<Detail::Align> {
+        auto convert_char_to_align = [](auto&& c) -> Option<Detail::Align> {
             switch (c) {
                 case '<':
                     return Detail::Align::Left;
@@ -103,6 +103,8 @@ struct BaseFormatter {
                     return {};
             }
         };
+
+        static_assert(SameAs<InvokeResult<decltype(convert_char_to_align), char>::type, Option<Detail::Align>>);
 
         if (context.peek(1).and_then(convert_char_to_align)) {
             options.set_fill(context.take().first());

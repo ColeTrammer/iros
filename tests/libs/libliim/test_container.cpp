@@ -88,6 +88,30 @@ constexpr void reversed() {
     EXPECT_EQ(w[4], 4);
 }
 
+constexpr void reverse() {
+    auto v = collect_vector(range(5));
+    reverse(v);
+    EXPECT_EQ(v, collect_vector(reversed(range(5))));
+
+    assign_to(v, range(6));
+    reverse(v);
+    EXPECT_EQ(v, collect_vector(reversed(range(6))));
+
+    auto w = NewVector<UniquePtr<int>> {};
+    w.push_back(make_unique<int>(4));
+    w.push_back(make_unique<int>(5));
+    reverse(w);
+    EXPECT_EQ(*w.front(), 5);
+    EXPECT_EQ(*w.back(), 4);
+}
+
+constexpr void rotate() {
+    auto v = collect_vector(range(5));
+    auto r = rotate(v, v.iterator(2));
+    EXPECT_EQ(v, make_vector({ 2, 3, 4, 0, 1 }));
+    EXPECT_EQ(v.iterator_index(r), 3u);
+}
+
 constexpr void enumerate() {
     auto v = make_vector<size_t>({ 5lu, 6lu, 7lu, 8lu });
     for (auto [i, x] : enumerate(v)) {
@@ -291,6 +315,8 @@ TEST_CONSTEXPR(container, collect, collect)
 TEST_CONSTEXPR(container, range, range)
 TEST_CONSTEXPR(container, repeat, repeat)
 TEST_CONSTEXPR(container, reversed, reversed)
+TEST_CONSTEXPR(container, reverse, reverse)
+TEST_CONSTEXPR(container, rotate, rotate)
 TEST_CONSTEXPR(container, enumerate, enumerate)
 TEST_CONSTEXPR(container, transform, transform)
 TEST_CONSTEXPR(container, zip, zip)

@@ -53,12 +53,14 @@ struct CommonResultImpl<ReturnValue, Result, 3 /* Both are results */> {
     using Type = ResultFor<typename ReturnValue::ValueType, Error>::Type;
 };
 
-template<typename ReturnValue, typename... Results>
-struct CommonResultHelper;
+template<typename Acc, typename... Results>
+struct CommonResultHelper {
+    using Type = Acc;
+};
 
-template<typename ReturnValue, typename Result, typename... Results>
-struct CommonResultHelper<ReturnValue, Result, Results...> {
-    using NextReturnType = CommonResultImpl<ReturnValue, Result, (IsResult<ReturnValue> << 1) | IsResult<Result>>::Type;
+template<typename Acc, typename Result, typename... Results>
+struct CommonResultHelper<Acc, Result, Results...> {
+    using NextReturnType = CommonResultImpl<Acc, Result, (IsResult<Acc> << 1) | IsResult<Result>>::Type;
     using Type = CommonResultHelper<NextReturnType, Results...>::Type;
 };
 
@@ -66,11 +68,21 @@ template<typename ReturnValue>
 struct CommonResultHelper<ReturnValue> {
     using Type = ReturnValue;
 };
+
+template<typename ReturnValue, typename Error>
+struct TransferError {
+    using Type = ReturnValue;
+};
+
+template<typename ReturnValue, IsResult Result>
+struct TransferError<ReturnValue, Result> {
+    using Type = ResultFor<ReturnValue, typename Result::ErrorType>::Type;
+};
 }
 
 namespace LIIM::Error {
 template<typename ReturnValue, typename... Results>
-using CommonResult = Detail::CommonResultHelper<ReturnValue, decay_t<Results>...>::Type;
+using CommonResult = Detail::TransferError<ReturnValue, typename Detail::CommonResultHelper<decay_t<Results>...>::Type>::Type;
 }
 
 using LIIM::Error::CommonResult;

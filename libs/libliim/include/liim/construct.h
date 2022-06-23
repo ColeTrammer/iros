@@ -29,13 +29,13 @@ concept FalliblyCloneable = !Cloneable<T> && Moveable<T> && requires(const T& cl
 };
 
 template<typename T, typename... Args>
-concept MemberCreateableFrom = Moveable<T> && requires(Args&&... args) {
-    { T::create(static_cast<Args&&>(args)...) } -> SameAs<T>;
+concept MemberCreateableFrom = Moveable<T> && requires {
+    { T::create(declval<Args>()...) } -> SameAs<T>;
 };
 
 template<typename T, typename... Args>
-concept FalliblyMemberCreateableFrom = Moveable<T> && requires(Args&&... args) {
-    { T::create(static_cast<Args&&>(args)...) } -> ResultOf<T>;
+concept FalliblyMemberCreateableFrom = Moveable<T> && requires {
+    { T::create(declval<Args>()...) } -> ResultOf<T>;
 };
 
 template<typename T, typename... Args>
@@ -62,7 +62,24 @@ template<typename T, typename U>
 concept FalliblyAssignableFrom = !AssignableFrom<T, U> && (FalliblyMemberAssignableFrom<T, U> || FalliblyCreateableFrom<T, U>);
 
 template<typename T, typename... Args>
-requires(CreateableFrom<T, Args...> || FalliblyCreateableFrom<T, Args...>) using CreateResult = decltype(create<T>(declval<Args&&>()...));
+requires(CreateableFrom<T, Args...> ||
+         FalliblyCreateableFrom<T, Args...>) using CreateAtResult = decltype(create_at<T>(declval<T*>(),
+                                                                                          forward<Args>(declval<Args>())...));
+
+namespace Detail {
+    template<typename T, typename... Args>
+    struct CreateAtResultDefaultHelper {
+        using Type = void;
+    };
+
+    template<typename T, typename... Args>
+    requires(CreateableFrom<T, Args...> || FalliblyCreateableFrom<T, Args...>) struct CreateAtResultDefaultHelper<T, Args...> {
+        using Type = CreateAtResult<T, Args...>;
+    };
+}
+
+template<typename T, typename... Args>
+using CreateAtResultDefault = Detail::CreateAtResultDefaultHelper<T, Args...>::Type;
 
 template<typename T, typename... Args>
 constexpr void create_at(T* location, Args&&... args) requires(CreateableFrom<T, Args...>) {

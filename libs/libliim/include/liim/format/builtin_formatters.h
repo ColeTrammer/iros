@@ -5,6 +5,7 @@
 #include <liim/format/format_args.h>
 #include <liim/format/format_context.h>
 #include <liim/option.h>
+#include <liim/result.h>
 #include <liim/string.h>
 #include <liim/string_view.h>
 
@@ -36,6 +37,21 @@ struct Formatter<Option<T>> : public BaseFormatter {
         }
         return format_to_context(context, "Some({})", *value);
     }
+};
+
+template<Formattable T, Formattable E>
+struct Formatter<Result<T, E>> : public BaseFormatter {
+    void format(const Result<T, E>& value, FormatContext& context) {
+        if (value.is_error()) {
+            return format_to_context(context, "Err({})", value.error());
+        }
+        return format_to_context(context, "Ok({})", value.value());
+    }
+};
+
+template<Formattable E>
+struct Formatter<Err<E>> : public BaseFormatter {
+    void format(const Err<E>& value, FormatContext& context) { return format_to_context(context, "Err({})", value.error()); }
 };
 
 template<>
