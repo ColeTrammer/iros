@@ -24,7 +24,7 @@ public:
         return TableIterator<const Table>(m_table, m_group_index, m_index_into_group);
     }
 
-    constexpr decltype(auto) operator*() { return m_table.value(m_table.value_index(m_group_index, m_index_into_group)); }
+    constexpr decltype(auto) operator*() { return m_table.value_internal(m_table.value_index(m_group_index, m_index_into_group)); }
 
     using ValueType = decltype(*declval<TableIterator>());
 
