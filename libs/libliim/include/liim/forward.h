@@ -95,6 +95,14 @@ template<typename T>
 struct Err;
 }
 
+namespace std {
+template<typename T>
+struct tuple_size;
+
+template<LIIM::size_t index, typename T>
+struct tuple_element;
+}
+
 using LIIM::Bitset;
 using LIIM::ByteBuffer;
 using LIIM::ByteReader;
