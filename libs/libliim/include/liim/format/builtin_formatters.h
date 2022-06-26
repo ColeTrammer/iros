@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/container/array.h>
 #include <liim/format/base_formatter.h>
 #include <liim/format/format.h>
 #include <liim/format/format_args.h>
@@ -28,6 +29,31 @@ struct Formatter<char*> : public Formatter<StringView> {};
 
 template<size_t N>
 struct Formatter<char[N]> : public Formatter<StringView> {};
+
+template<>
+struct Formatter<None> : public BaseFormatter {
+    void format(None, FormatContext& context) { return format_string_view("None", context); }
+};
+
+template<Formattable T, size_t N>
+struct Formatter<LIIM::Container::Array<T, N>> {
+    constexpr void parse(FormatParseContext& context) { m_formatter.parse(context); }
+
+    void format(const LIIM::Container::Array<T, N>& array, FormatContext& context) {
+        context.put("[ ");
+        bool first = true;
+        for (auto& item : array) {
+            if (!first) {
+                context.put(", ");
+            }
+            m_formatter.format(item, context);
+            first = false;
+        }
+        context.put(" ]");
+    }
+
+    Formatter<T> m_formatter;
+};
 
 template<Formattable T>
 struct Formatter<Option<T>> : public BaseFormatter {

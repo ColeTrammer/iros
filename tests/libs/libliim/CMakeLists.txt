@@ -1,4 +1,5 @@
 set(TEST_FILES
+    test_array.cpp
     test_container.cpp
     test_enum.cpp
     test_error.cpp
