@@ -15,13 +15,13 @@ public:
     using ConstIterator = Table::ConstIterator;
 
     template<Detail::CanInsertIntoSet<K> U>
-    constexpr V& operator[](U&& needle);
+    constexpr decltype(auto) operator[](U&& needle);
 
     template<Detail::CanInsertIntoSet<K> U, typename W>
-    constexpr Option<V> insert_or_assign(U&& needle, W&& value) requires(AssignableFrom<V, W>);
+    constexpr auto insert_or_assign(U&& needle, W&& value) requires(AssignableFrom<V, W>);
 
     template<Detail::CanInsertIntoSet<K> U, typename... Args>
-    constexpr Option<V&> try_emplace(U&& needle, Args&&... args) requires(CreateableFrom<V, Args...>);
+    constexpr auto try_emplace(U&& needle, Args&&... args) requires(CreateableFrom<V, Args...>);
 
     constexpr auto values();
     constexpr auto values() const;
@@ -33,29 +33,34 @@ public:
 
 template<typename K, typename V>
 template<Detail::CanInsertIntoSet<K> U>
-constexpr V& Map<K, V>::operator[](U&& needle) {
+constexpr decltype(auto) Map<K, V>::operator[](U&& needle) {
     ValueType* value_location = nullptr;
-    return Table::insert_with_factory(forward<U>(needle),
-                                      [&](auto* pointer) {
-                                          value_location = pointer;
-                                          create_at(pointer, forward<U>(needle), V());
-                                      })
-        .value_or(value_location->second);
+    return result_and_then(Table::insert_with_factory(forward<U>(needle),
+                                                      [&](auto* pointer) {
+                                                          value_location = pointer;
+                                                          create_at(pointer, forward<U>(needle), V());
+                                                      }),
+                           [&](auto&& optional_value) -> V& {
+                               return move(optional_value).value_or(value_location->second);
+                           });
 }
 
 template<typename K, typename V>
 template<Detail::CanInsertIntoSet<K> U, typename W>
-constexpr Option<V> Map<K, V>::insert_or_assign(U&& needle, W&& value) requires(AssignableFrom<V, W>) {
-    return try_emplace(forward<U>(needle), forward<W>(value)).map([&](auto& value_reference) {
-        auto result = V(move(value_reference));
-        assign_to(value_reference, forward<W>(value));
-        return result;
+constexpr auto Map<K, V>::insert_or_assign(U&& needle, W&& value) requires(AssignableFrom<V, W>) {
+    return result_and_then(try_emplace(forward<U>(needle), forward<W>(value)), [&](auto&& optional_value_reference) {
+        return result_option_and_then(move(optional_value_reference), [&](V& value_reference) {
+            auto result = V(move(value_reference));
+            return result_and_then(assign_to(value_reference, forward<W>(value)), [&](auto&&) -> V {
+                return move(result);
+            });
+        });
     });
 }
 
 template<typename K, typename V>
 template<Detail::CanInsertIntoSet<K> U, typename... Args>
-constexpr Option<V&> Map<K, V>::try_emplace(U&& needle, Args&&... args) requires(CreateableFrom<V, Args...>) {
+constexpr auto Map<K, V>::try_emplace(U&& needle, Args&&... args) requires(CreateableFrom<V, Args...>) {
     return Table::insert_with_factory(forward<U>(needle), [&](ValueType* pointer) {
         create_at(pointer, piecewise_construct, forward_as_tuple<U>(forward<U>(needle)), forward_as_tuple<Args...>(forward<Args>(args)...));
     });

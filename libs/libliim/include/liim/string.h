@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <liim/container/hash.h>
 #include <liim/option.h>
 #include <liim/pointers.h>
 #include <liim/string_view.h>
@@ -413,6 +414,15 @@ struct Traits<String> {
         return v;
     }
 };
+
+namespace Container::Hash {
+    template<>
+    struct HashFunction<String> {
+        static void hash(Hasher& hasher, const String& string) { hasher.add({ string.string(), string.size() }); }
+
+        using Matches = Tuple<const char*, StringView>;
+    };
+}
 }
 
 inline LIIM::String operator""s(const char* string, size_t size) {

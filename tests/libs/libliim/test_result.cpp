@@ -88,5 +88,24 @@ constexpr void result_and_then_test() {
               }));
 }
 
+constexpr void result_option_and_then_test() {
+    EXPECT_EQ(Option<int>(5), result_option_and_then(Option<int>(5), [](auto x) {
+                  return x;
+              }));
+
+    EXPECT_EQ(None {}, result_option_and_then(Option<int> {}, [](auto x) {
+                  return x;
+              }));
+
+    EXPECT_EQ((Result<Option<int>, int>(Err(5))), (result_option_and_then(Option<int>(5), [](auto x) -> Result<int, int> {
+                  return Err(x);
+              })));
+
+    EXPECT_EQ((Result<Option<int>, int>(Option<int>())), (result_option_and_then(Option<int>(), [](auto x) -> Result<int, int> {
+                  return Err(x);
+              })));
+}
+
 TEST_CONSTEXPR(result, construct, construct)
 TEST_CONSTEXPR(result, result_and_then_test, result_and_then_test)
+TEST_CONSTEXPR(result, result_option_and_then_test, result_option_and_then_test)

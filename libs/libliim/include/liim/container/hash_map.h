@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/container/hash.h>
 #include <liim/container/hash/map.h>
 
 namespace LIIM::Container {

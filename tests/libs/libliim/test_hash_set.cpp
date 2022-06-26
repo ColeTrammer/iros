@@ -4,34 +4,6 @@
 #include <liim/string.h>
 #include <test/test.h>
 
-namespace LIIM::Container::Hash {
-template<>
-struct HashFunction<int> {
-    static constexpr void hash(Hasher&, int) {}
-};
-
-template<>
-struct HashFunction<String> {
-    static constexpr void hash(Hasher&, const String&) {}
-
-    using Matches = Tuple<StringView, const char*>;
-};
-
-template<>
-struct HashFunction<StringView> {
-    static constexpr void hash(Hasher&, StringView) {}
-
-    using Matches = Tuple<String, const char*>;
-};
-
-template<>
-struct HashFunction<const char*> {
-    static constexpr void hash(Hasher&, const char*) {}
-
-    using Matches = Tuple<StringView, String>;
-};
-}
-
 constexpr void basic() {
     auto set = LIIM::Container::HashSet<int> {};
     for (auto i : range(50, 55)) {
@@ -123,7 +95,7 @@ TEST_CONSTEXPR(hash_set, basic, basic)
 TEST_CONSTEXPR(hash_set, containers, containers)
 TEST_CONSTEXPR(hash_set, erase, erase)
 TEST_CONSTEXPR(hash_set, comparison, comparison)
-TEST_SKIP(hash_set, transparent) {
+TEST(hash_set, transparent) {
     transparent();
 }
 TEST(hash_set, format) {

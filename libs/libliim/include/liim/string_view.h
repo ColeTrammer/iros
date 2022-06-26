@@ -1,6 +1,7 @@
 #pragma once
 
 #include <liim/character_type.h>
+#include <liim/container/hash.h>
 #include <liim/option.h>
 #include <liim/traits.h>
 #include <liim/utilities.h>
@@ -180,6 +181,15 @@ struct Traits<StringView> {
         return v;
     }
 };
+
+namespace Container::Hash {
+    template<>
+    struct HashFunction<StringView> {
+        constexpr static void hash(Hasher& hasher, StringView string) { hasher.add({ string.data(), string.size() }); }
+
+        using Matches = Tuple<const char*, String>;
+    };
+}
 }
 
 constexpr LIIM::StringView operator""sv(const char* data, size_t size) {

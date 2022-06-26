@@ -358,11 +358,25 @@ namespace LIIM {
 namespace Detail {
     template<typename T>
     struct IsResultHelper {
+        using Type = T;
         constexpr static bool value = false;
     };
 
     template<typename T, typename U>
     struct IsResultHelper<Result<T, U>> {
+        using Type = T;
+        constexpr static bool value = true;
+    };
+
+    template<typename T>
+    struct IsOptionHelper {
+        using Type = T;
+        constexpr static bool value = false;
+    };
+
+    template<typename T>
+    struct IsOptionHelper<Option<T>> {
+        using Type = T;
         constexpr static bool value = true;
     };
 }
@@ -370,8 +384,20 @@ namespace Detail {
 template<typename T>
 concept IsResult = Detail::IsResultHelper<decay_t<T>>::value;
 
+template<typename T>
+concept IsOption = Detail::IsOptionHelper<decay_t<T>>::value;
+
 template<typename Res, typename T>
-concept ResultOf = IsResult<Res> && SameAs<typename Res::ValueType, T>;
+concept ResultOf = IsResult<Res> && SameAs<typename decay_t<Res>::ValueType, T>;
+
+template<typename Opt, typename T>
+concept OptionOf = IsOption<Opt> && SameAs<typename decay_t<Opt>::ValueType, T>;
+
+template<typename T>
+using ResultValueType = Detail::IsResultHelper<decay_t<T>>::Type;
+
+template<typename T>
+using OptionValueType = Detail::IsOptionHelper<decay_t<T>>::Type;
 
 namespace Detail {
     template<typename T>
@@ -670,6 +696,11 @@ using std::construct_at;
 using std::forward;
 using std::move;
 
+template<typename U, typename T>
+constexpr U bit_cast(const T& value) {
+    return __builtin_bit_cast(U, value);
+}
+
 template<typename T>
 constexpr void swap(T& a, T& b) {
     T temp(move(a));
@@ -720,6 +751,7 @@ constexpr T abs(T x) {
 }
 
 using LIIM::abs;
+using LIIM::bit_cast;
 using LIIM::clamp;
 using LIIM::exchange;
 using LIIM::forward;
@@ -727,11 +759,15 @@ using LIIM::in_place_index;
 using LIIM::in_place_index_t;
 using LIIM::in_place_type;
 using LIIM::in_place_type_t;
+using LIIM::IsOption;
+using LIIM::IsResult;
 using LIIM::max;
 using LIIM::min;
 using LIIM::move;
+using LIIM::OptionOf;
 using LIIM::piecewise_construct;
 using LIIM::piecewise_construct_t;
+using LIIM::ResultOf;
 using LIIM::SameAs;
 using LIIM::swap;
 using LIIM::TriviallyRelocatable;

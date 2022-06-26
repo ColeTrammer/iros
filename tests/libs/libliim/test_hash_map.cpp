@@ -4,34 +4,6 @@
 #include <liim/string.h>
 #include <test/test.h>
 
-namespace LIIM::Container::Hash {
-template<>
-struct HashFunction<int> {
-    static constexpr void hash(Hasher&, int) {}
-};
-
-template<>
-struct HashFunction<String> {
-    static constexpr void hash(Hasher&, const String&) {}
-
-    using Matches = Tuple<StringView, const char*>;
-};
-
-template<>
-struct HashFunction<StringView> {
-    static constexpr void hash(Hasher&, StringView) {}
-
-    using Matches = Tuple<String, const char*>;
-};
-
-template<>
-struct HashFunction<const char*> {
-    static constexpr void hash(Hasher&, const char*) {}
-
-    using Matches = Tuple<StringView, String>;
-};
-}
-
 using namespace LIIM::Container;
 
 constexpr void basic() {
@@ -103,8 +75,9 @@ static void transparent() {
 
         EXPECT(x.contains("hello"sv));
         EXPECT_EQ(*x.try_emplace("hello"sv, "zzz"sv), "xxx");
-        EXPECT_EQ(*x.insert_or_assign("hello"sv, "zzz"sv), "xxx");
-        EXPECT_EQ(*x.try_emplace("hello"sv, "www"sv), "zzz");
+        EXPECT_EQ(x.insert_or_assign("hello"sv, "yyy"sv), "xxx");
+        EXPECT_EQ(x["hello"sv], "yyy");
+        EXPECT_EQ(*x.try_emplace("hello"sv, "www"sv), "yyy");
     }
 
     {
@@ -118,7 +91,8 @@ static void transparent() {
 
         auto z = collect_hash_map(zip(move_elements(move(x)), move_elements(move(y))));
         EXPECT_EQ(**z.at("hello"sv), 42);
-        EXPECT_EQ(**z.erase("hello"sv), 42);
+        auto r = **z.erase("hello"sv);
+        EXPECT_EQ(r, 42);
     }
 }
 
@@ -132,7 +106,7 @@ TEST_CONSTEXPR(hash_map, containers, containers)
 TEST_CONSTEXPR(hash_map, erase, erase)
 TEST_CONSTEXPR(hash_map, comparison, comparison)
 TEST_CONSTEXPR(hash_map, subcontainers, subcontainers)
-TEST_SKIP(hash_map, transparent) {
+TEST(hash_map, transparent) {
     transparent();
 }
 TEST(hash_map, format) {

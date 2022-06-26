@@ -116,6 +116,7 @@ template<typename T>
 class Option {
 public:
     using Storage = Detail::OptionStorage<T>;
+    using ValueType = T;
     using ValuePointer = Storage::ValuePointer;
     using ConstValuePointer = Storage::ConstValuePointer;
 
@@ -195,8 +196,10 @@ public:
     }
     constexpr bool operator!=(const T& other) const requires(!IsLValueReference<T>::value) { return !(*this == other); }
 
-    constexpr T& operator*() { return value(); }
-    constexpr const T& operator*() const { return value(); }
+    constexpr decltype(auto) operator*() & { return value(); }
+    constexpr decltype(auto) operator*() const& { return value(); }
+    constexpr decltype(auto) operator*() && { return move(*this).value(); }
+    constexpr decltype(auto) operator*() const&& { return move(*this).value(); }
 
     constexpr ValuePointer operator->() { return &value(); }
     constexpr ConstValuePointer operator->() const { return &value(); }

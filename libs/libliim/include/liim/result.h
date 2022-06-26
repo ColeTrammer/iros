@@ -448,6 +448,26 @@ constexpr Detail::ResultAndThenReturn<F, T>::Type result_and_then(T&& value, F&&
     }
 }
 
+namespace Detail {
+    template<typename F, typename T>
+    struct OptionAndThenReturn {
+        using ReturnType = InvokeResult<F, Like<T&&, typename decay_t<T>::ValueType>>::type;
+        using Type = CommonResult<Option<ResultValueType<ReturnType>>, ReturnType>;
+    };
+}
+
+// Option<T> -> (T -> Result<U, E>) -> Result<Option<U>, E>
+template<IsOption T, typename F>
+constexpr Detail::OptionAndThenReturn<F, T>::Type result_option_and_then(T&& option, F&& callable) {
+    if (!option) {
+        return { None {} };
+    }
+    return result_and_then(forward<F>(callable)(forward<T>(option).value()),
+                           [](auto&& value) -> ResultValueType<typename Detail::OptionAndThenReturn<F, T>::Type> {
+                               return forward<decltype(value)>(value);
+                           });
+}
+
 template<typename T, typename... Args>
 constexpr CommonResult<T, decltype(create<T>(declval<UnwrapResult<Args>>()...)), Args...>
 create(Args&&... args) requires(!FalliblyMemberCreateableFrom<T, Args...> && FalliblyCreateableFrom<T, Args...>) {
@@ -456,7 +476,7 @@ create(Args&&... args) requires(!FalliblyMemberCreateableFrom<T, Args...> && Fal
         return move(arguments).try_did_fail();
     }
 
-    return apply(
+    return tuple_apply(
         [](auto&&... args) {
             return create<T>(forward<decltype(args)&&>(args)...);
         },
