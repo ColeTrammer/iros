@@ -2,6 +2,7 @@
 
 int main() {
     using namespace Ext::Json;
+    using Ext::Json::Array;
 
     Value v = Number(10);
     assert(v.is<Number>());
