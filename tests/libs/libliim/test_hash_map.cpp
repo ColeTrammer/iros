@@ -63,6 +63,41 @@ constexpr void subcontainers() {
     EXPECT_EQ(collect_hash_set(a.values()), move(values));
 }
 
+constexpr void fallible() {
+    auto x = LIIM::Container::HashMap<int, int> {};
+    auto w = NewVector<Result<Pair<int, int>, StringView>> {};
+    w.emplace_back(Pair { 1, 4 });
+    w.emplace_back(Pair { 2, 9 });
+    w.emplace_back(Err("fail"sv));
+
+    auto r = x.insert(Result<Pair<int, int>, StringView>(Err("fail"sv)));
+    EXPECT_EQ(r.error(), "fail"sv);
+    EXPECT(x.empty());
+
+    auto q = insert(x, x.end(), move_elements(move(w)));
+    EXPECT_EQ(q.error(), "fail"sv);
+    EXPECT(x.empty());
+
+    w.emplace_back(Pair { 1, 4 });
+    w.emplace_back(Pair { 2, 9 });
+    auto l = insert(x, x.end(), move_elements(move(w)));
+    EXPECT(l);
+    EXPECT_EQ(x[1], 4);
+    EXPECT_EQ(x[2], 9);
+
+    auto a = x.try_emplace(5, Result<int, StringView>(Err("fail"sv)));
+    EXPECT_EQ(a, Err("fail"sv));
+
+    auto b = x.try_emplace(5, Result<int, StringView>(36));
+    EXPECT_EQ(x[5], 36);
+
+    auto c = x.insert_or_assign(5, Result<int, StringView>(Err("fail"sv)));
+    EXPECT_EQ(c, Err("fail"sv));
+
+    auto d = x.insert_or_assign(5, Result<int, StringView>(49));
+    EXPECT_EQ(x[5], 49);
+}
+
 static void transparent() {
     {
         auto x = collect<LIIM::Container::HashMap<String, String>>(
@@ -106,6 +141,7 @@ TEST_CONSTEXPR(hash_map, containers, containers)
 TEST_CONSTEXPR(hash_map, erase, erase)
 TEST_CONSTEXPR(hash_map, comparison, comparison)
 TEST_CONSTEXPR(hash_map, subcontainers, subcontainers)
+TEST_CONSTEXPR(hash_map, fallible, fallible);
 TEST(hash_map, transparent) {
     transparent();
 }

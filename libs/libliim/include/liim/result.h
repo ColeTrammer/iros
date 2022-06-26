@@ -484,14 +484,14 @@ create(Args&&... args) requires(!FalliblyMemberCreateableFrom<T, Args...> && Fal
 }
 
 template<typename T, typename... Args>
-requires(FalliblyCreateableFrom<T, Args...>) constexpr CommonResult<void, decltype(create<T>(declval<Args>()...))> create_at(
+requires(FalliblyCreateableFrom<T, Args...>) constexpr CommonResult<Void, decltype(create<T>(declval<Args>()...))> create_at(
     T* location, Args&&... args) {
     auto result = create<T>(forward<Args>(args)...);
     if (!result) {
-        return result.try_did_fail();
+        return move(result).try_did_fail();
     }
     construct_at(location, move(result).value());
-    return {};
+    return Void {};
 }
 
 template<typename T, typename U>
@@ -503,7 +503,7 @@ template<typename T, typename U>
 constexpr CommonResult<T&, decltype(create<T>(declval<U>()))> assign_to(T& lvalue, U&& other) requires(FalliblyCreateableFrom<T, U>) {
     auto result = create<T>(forward<U>(other));
     if (!result) {
-        return result.try_did_fail();
+        return move(result).try_did_fail();
     }
     return lvalue = move(result).value();
 }

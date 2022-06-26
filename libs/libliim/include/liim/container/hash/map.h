@@ -18,10 +18,10 @@ public:
     constexpr decltype(auto) operator[](U&& needle);
 
     template<Detail::CanInsertIntoSet<K> U, typename W>
-    constexpr auto insert_or_assign(U&& needle, W&& value) requires(AssignableFrom<V, W>);
+    constexpr auto insert_or_assign(U&& needle, W&& value) requires(AssignableFrom<V, W> || FalliblyAssignableFrom<V, W>);
 
     template<Detail::CanInsertIntoSet<K> U, typename... Args>
-    constexpr auto try_emplace(U&& needle, Args&&... args) requires(CreateableFrom<V, Args...>);
+    constexpr auto try_emplace(U&& needle, Args&&... args) requires(CreateableFrom<V, Args...> || FalliblyCreateableFrom<V, Args...>);
 
     constexpr auto values();
     constexpr auto values() const;
@@ -38,16 +38,20 @@ constexpr decltype(auto) Map<K, V>::operator[](U&& needle) {
     return result_and_then(Table::insert_with_factory(forward<U>(needle),
                                                       [&](auto* pointer) {
                                                           value_location = pointer;
-                                                          create_at(pointer, forward<U>(needle), V());
+                                                          return create_at(pointer, forward<U>(needle), V());
                                                       }),
                            [&](auto&& optional_value) -> V& {
-                               return move(optional_value).value_or(value_location->second);
+                               if (optional_value) {
+                                   return *optional_value;
+                               } else {
+                                   return value_location->second;
+                               }
                            });
 }
 
 template<typename K, typename V>
 template<Detail::CanInsertIntoSet<K> U, typename W>
-constexpr auto Map<K, V>::insert_or_assign(U&& needle, W&& value) requires(AssignableFrom<V, W>) {
+constexpr auto Map<K, V>::insert_or_assign(U&& needle, W&& value) requires(AssignableFrom<V, W> || FalliblyAssignableFrom<V, W>) {
     return result_and_then(try_emplace(forward<U>(needle), forward<W>(value)), [&](auto&& optional_value_reference) {
         return result_option_and_then(move(optional_value_reference), [&](V& value_reference) {
             auto result = V(move(value_reference));
@@ -60,9 +64,11 @@ constexpr auto Map<K, V>::insert_or_assign(U&& needle, W&& value) requires(Assig
 
 template<typename K, typename V>
 template<Detail::CanInsertIntoSet<K> U, typename... Args>
-constexpr auto Map<K, V>::try_emplace(U&& needle, Args&&... args) requires(CreateableFrom<V, Args...>) {
+constexpr auto Map<K, V>::try_emplace(U&& needle,
+                                      Args&&... args) requires(CreateableFrom<V, Args...> || FalliblyCreateableFrom<V, Args...>) {
     return Table::insert_with_factory(forward<U>(needle), [&](ValueType* pointer) {
-        create_at(pointer, piecewise_construct, forward_as_tuple<U>(forward<U>(needle)), forward_as_tuple<Args...>(forward<Args>(args)...));
+        return create_at(pointer, piecewise_construct, forward_as_tuple<U>(forward<U>(needle)),
+                         forward_as_tuple<Args...>(forward<Args>(args)...));
     });
 }
 

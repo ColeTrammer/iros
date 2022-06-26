@@ -9,6 +9,7 @@
 #include <liim/container/hash/hashable.h>
 #include <liim/container/hash/hasher.h>
 #include <liim/container/hash/table_iterator.h>
+#include <liim/container/new_vector.h>
 #include <liim/result.h>
 
 namespace LIIM::Container::Hash::Detail {
@@ -16,10 +17,14 @@ template<typename TransparentKey, typename Base>
 concept CanLookup = HashableLike<TransparentKey, Base> && EqualComparableWith<TransparentKey, Base>;
 
 template<typename TransparentKey, typename KeyType>
-concept CanInsertIntoSet = CanLookup<TransparentKey, KeyType> && CreateableFrom<KeyType, TransparentKey>;
+concept CanInsertIntoSet = (CanLookup<TransparentKey, KeyType> &&
+                                (CreateableFrom<KeyType, TransparentKey> || FalliblyCreateableFrom<KeyType, TransparentKey>) ||
+                            FalliblyCreateableFrom<KeyType, TransparentKey>);
 
 template<typename Pair, typename KeyType, typename StorageType>
-concept CanInsertIntoMap = CanLookup<typename decay_t<Pair>::FirstType, KeyType> && CreateableFrom<StorageType, Pair>;
+concept CanInsertIntoMap = (CanLookup<typename decay_t<Pair>::FirstType, KeyType> &&
+                                (CreateableFrom<StorageType, Pair> || FalliblyCreateableFrom<StorageType, Pair>) ||
+                            FalliblyCreateableFrom<StorageType, Pair>);
 
 template<typename U, typename Table>
 concept CanInsert = (Table::is_set && CanInsertIntoSet<U, typename Table::ValueType>) ||
@@ -37,7 +42,7 @@ struct TableKeyType {
 
 template<typename T>
 struct TableKeyType<T, TableType::Map> {
-    using Type = T::FirstType;
+    using Type = RemoveConst<typename T::FirstType>::type;
 };
 
 template<typename T, TableType table_type>
@@ -60,14 +65,18 @@ public:
     using ValueType = T;
     using KeyType = TableKeyType<T, type>::Type;
     using Value = TableValue<T, type>::Type;
+    using Iterator = TableIterator<Table>;
+    using ConstIterator = TableIterator<const Table>;
+    using AllocatorResult = Void;
 
     constexpr static auto create(std::initializer_list<T> list) { return create(list.begin(), list.end()); }
 
     template<::Iterator Iter>
     constexpr static auto create(Iter start, Iter end, Option<size_t> known_size = {}) {
-        Self result;
-        result.insert(move(start), move(end), known_size);
-        return result;
+        auto result = Self {};
+        return result_and_then(result.insert(move(start), move(end), known_size), [&](auto&&) -> Self {
+            return move(result);
+        });
     }
 
     constexpr Table() {}
@@ -83,9 +92,6 @@ public:
     constexpr bool empty() const { return size() == 0; }
     constexpr size_t size() const { return m_size; }
 
-    using Iterator = TableIterator<Table>;
-    using ConstIterator = TableIterator<const Table>;
-
     friend Iterator;
     friend ConstIterator;
 
@@ -100,26 +106,28 @@ public:
     constexpr void clear();
 
     template<typename U, typename Factory>
-    constexpr Option<Value&> insert_with_factory(U&& needle, Factory&& factory) requires(CanLookup<U, KeyType>);
+    constexpr CommonResult<Option<Value&>, AllocatorResult, typename InvokeResult<Factory, T*>::type>
+    insert_with_factory(U&& needle, Factory&& factory) requires(CanLookup<U, KeyType>);
 
     template<typename U>
-    constexpr Option<Value&> insert(U&& to_insert) requires(CanInsert<U, Table>);
+    constexpr auto insert(U&& to_insert) requires(CanInsert<U, Table>);
 
     template<typename U>
-    constexpr Iterator insert(ConstIterator hint, U&& to_insert) requires(CanInsert<U, Table>);
+    constexpr auto insert(ConstIterator hint, U&& to_insert) requires(CanInsert<U, Table>);
 
     template<::Iterator Iter>
-    constexpr void insert(Iter start, Iter end, Option<size_t> known_size = {}) requires(CanInsert<IteratorValueType<Iter>, Table>);
+    constexpr CommonResult<Void, AllocatorResult, CreateAtResult<T, IteratorValueType<Iter>>>
+    insert(Iter start, Iter end, Option<size_t> known_size = {}) requires(CanInsert<IteratorValueType<Iter>, Table>);
 
     template<::Iterator Iter>
-    constexpr Iterator insert(ConstIterator hint, Iter start, Iter end,
-                              Option<size_t> known_size = {}) requires(CanInsert<IteratorValueType<Iter>, Table>);
+    constexpr auto insert(ConstIterator hint, Iter start, Iter end,
+                          Option<size_t> known_size = {}) requires(CanInsert<IteratorValueType<Iter>, Table>);
 
-    constexpr void insert(std::initializer_list<T> list) { return insert(list.begin(), list.end()); }
-    constexpr Iterator insert(ConstIterator hint, std::initializer_list<T> list) { return insert(hint, list.begin(), list.end()); }
+    constexpr auto insert(std::initializer_list<T> list) { return insert(list.begin(), list.end()); }
+    constexpr auto insert(ConstIterator hint, std::initializer_list<T> list) { return insert(hint, list.begin(), list.end()); }
 
     template<typename... Args>
-    constexpr Option<Value&> emplace(Args&&... args) requires(CreateableFrom<ValueType, Args...>);
+    constexpr auto emplace(Args&&... args) requires(CreateableFrom<ValueType, Args...>);
 
     template<typename U>
     constexpr Option<Value&> at(U&& needle) requires(CanLookup<U, KeyType>);
@@ -269,7 +277,8 @@ constexpr auto Table<T, Self, type>::value(size_t index) const -> const Value& {
 
 template<typename T, typename Self, TableType type>
 template<typename U, typename Factory>
-constexpr auto Table<T, Self, type>::insert_with_factory(U&& needle, Factory&& factory) -> Option<Value&>
+constexpr auto Table<T, Self, type>::insert_with_factory(U&& needle, Factory&& factory)
+    -> CommonResult<Option<Value&>, AllocatorResult, typename InvokeResult<Factory, T*>::type>
 requires(CanLookup<U, KeyType>) {
     auto [hash_high, hash_low] = hash(forward<U>(needle));
 
@@ -281,58 +290,86 @@ requires(CanLookup<U, KeyType>) {
     }
 
     if (entry->info().present()) {
-        return value(entry->value_index());
+        return { value(entry->value_index()) };
     }
 
-    forward<Factory>(factory)(value_pointer_for_init(entry->value_index()));
-    entry->info().set_present(hash_low);
-    m_size++;
-    m_used_values++;
-    return None {};
+    return result_and_then(forward<Factory>(factory)(value_pointer_for_init(entry->value_index())), [&](auto&&) -> Option<Value&> {
+        entry->info().set_present(hash_low);
+        m_size++;
+        m_used_values++;
+        return None {};
+    });
 }
 
 template<typename T, typename Self, TableType type>
 template<typename U>
-constexpr auto Table<T, Self, type>::insert(U&& to_insert) -> Option<Value&>
-requires(CanInsert<U, Table>) {
+constexpr auto Table<T, Self, type>::insert(U&& to_insert) requires(CanInsert<U, Table>) {
+
     if constexpr (is_set) {
-        return insert_with_factory(forward<U>(to_insert), [&](T* pointer) {
-            create_at(pointer, forward<U>(to_insert));
-        });
+        if constexpr (!CanLookup<U, Table>) {
+            return result_and_then(LIIM::create<T>(forward<U>(to_insert)), [&](auto&& value) {
+                return insert_with_factory(move(value), [&](T* pointer) {
+                    return create_at(pointer, move(value));
+                });
+            });
+        } else {
+            return insert_with_factory(forward<U>(to_insert), [&](T* pointer) {
+                return create_at(pointer, forward<U>(to_insert));
+            });
+        }
     } else {
-        return insert_with_factory(forward<U>(to_insert).first, [&](T* pointer) {
-            create_at(pointer, forward<U>(to_insert));
-        });
+        if constexpr (!requires { to_insert.first; }) {
+            return result_and_then(LIIM::create<Pair<KeyType, Value>>(forward<U>(to_insert)), [&](auto&& value) {
+                return insert_with_factory(move(value).first, [&](T* pointer) {
+                    return create_at(pointer, move(value));
+                });
+            });
+        } else {
+            return insert_with_factory(forward<U>(to_insert).first, [&](T* pointer) {
+                return create_at(pointer, forward<U>(to_insert));
+            });
+        }
     }
 }
 
 template<typename T, typename Self, TableType type>
 template<typename U>
-constexpr auto Table<T, Self, type>::insert(ConstIterator, U&& to_insert) -> Iterator requires(CanInsert<U, Table>) {
-    insert(forward<U>(to_insert));
-    return end();
+constexpr auto Table<T, Self, type>::insert(ConstIterator, U&& to_insert) requires(CanInsert<U, Table>) {
+    return result_and_then(insert(forward<U>(to_insert)), [&](auto&&) {
+        return end();
+    });
 }
 
 template<typename T, typename Self, TableType type>
 template<::Iterator Iter>
-constexpr void Table<T, Self, type>::insert(Iter start, Iter end, Option<size_t>) requires(CanInsert<IteratorValueType<Iter>, Table>) {
-    for (auto it = move(start); it != end; ++it) {
-        insert(*it);
+constexpr auto Table<T, Self, type>::insert(Iter start, Iter end, Option<size_t> known_size)
+    -> CommonResult<Void, AllocatorResult, CreateAtResult<T, IteratorValueType<Iter>>>
+requires(CanInsert<IteratorValueType<Iter>, Table>) {
+    if constexpr (CreateableFrom<T, IteratorValueType<Iter>>) {
+        for (auto it = move(start); it != end; ++it) {
+            insert(*it);
+        }
+        return {};
+    } else {
+        return result_and_then(collect<NewVector<Pair<KeyType, Value>>>(iterator_container(move(start), move(end))), [&](auto&& elements) {
+            auto container = move_elements(move(elements));
+            return insert(container.begin(), container.end(), known_size);
+        });
     }
 }
 
 template<typename T, typename Self, TableType type>
 template<::Iterator Iter>
-constexpr auto Table<T, Self, type>::insert(ConstIterator, Iter start, Iter end, Option<size_t> size_hint) -> Iterator
-    requires(CanInsert<IteratorValueType<Iter>, Table>) {
-    insert(move(start), move(end), size_hint);
-    return this->end();
+constexpr auto Table<T, Self, type>::insert(ConstIterator, Iter start, Iter end,
+                                            Option<size_t> size_hint) requires(CanInsert<IteratorValueType<Iter>, Table>) {
+    return result_and_then(insert(move(start), move(end), size_hint), [&](auto&&) {
+        return this->end();
+    });
 }
 
 template<typename T, typename Self, TableType type>
 template<typename... Args>
-constexpr auto Table<T, Self, type>::emplace(Args&&... args) -> Option<Value&>
-requires(CreateableFrom<ValueType, Args...>) {
+constexpr auto Table<T, Self, type>::emplace(Args&&... args) requires(CreateableFrom<ValueType, Args...>) {
     return insert(create<T>(forward<Args>(args)...));
 }
 

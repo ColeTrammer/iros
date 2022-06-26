@@ -66,6 +66,10 @@ requires(CreateableFrom<T, Args...> ||
          FalliblyCreateableFrom<T, Args...>) using CreateAtResult = decltype(create_at<T>(declval<T*>(),
                                                                                           forward<Args>(declval<Args>())...));
 
+template<typename T, typename... Args>
+requires(CreateableFrom<T, Args...> ||
+         FalliblyCreateableFrom<T, Args...>) using CreateResult = decltype(create<T>(forward<Args>(declval<Args>())...));
+
 namespace Detail {
     template<typename T, typename... Args>
     struct CreateAtResultDefaultHelper {
@@ -82,12 +86,13 @@ template<typename T, typename... Args>
 using CreateAtResultDefault = Detail::CreateAtResultDefaultHelper<T, Args...>::Type;
 
 template<typename T, typename... Args>
-constexpr void create_at(T* location, Args&&... args) requires(CreateableFrom<T, Args...>) {
+constexpr Void create_at(T* location, Args&&... args) requires(CreateableFrom<T, Args...>) {
     if constexpr (ConstructibleFrom<T, Args...>) {
         construct_at(location, forward<Args>(args)...);
     } else if constexpr (MemberCreateableFrom<T, Args...>) {
         construct_at(location, T::create(forward<Args>(args)...));
     }
+    return {};
 }
 
 template<typename T, typename... Args>
@@ -101,7 +106,7 @@ constexpr T create(Args&&... args) requires(CreateableFrom<T, Args...>) {
 
 template<typename T, typename... Args>
 constexpr auto create(Args&&... args) requires(FalliblyMemberCreateableFrom<T, Args...>) {
-    return T::create(args...);
+    return T::create(forward<Args>(args)...);
 }
 
 template<typename T, typename U>
