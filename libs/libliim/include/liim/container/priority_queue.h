@@ -11,11 +11,11 @@ public:
     using Iterator = ValueIteratorAdapter<PriorityQueue<T, Comp>>::Iterator;
     using ConstIterator = ValueIteratorAdapter<PriorityQueue<T, Comp>>::ConstIterator;
 
-    constexpr static PriorityQueue create(std::initializer_list<T> list, Comp&& comparator = Comp()) {
+    constexpr static auto create(std::initializer_list<T> list, Comp&& comparator = Comp()) {
         return create(list.begin(), list.end(), {}, forward<Comp>(comparator));
     }
     template<::Iterator Iter>
-    constexpr static PriorityQueue create(Iter start, Iter end, Option<size_t> known_size = {}, Comp&& compator = Comp());
+    constexpr static auto create(Iter start, Iter end, Option<size_t> known_size = {}, Comp&& compator = Comp());
 
     constexpr PriorityQueue() = default;
     constexpr PriorityQueue(Comp&& comparator) : m_comparator(forward<Comp>(comparator)) {}
@@ -23,7 +23,7 @@ public:
 
     constexpr PriorityQueue& operator=(PriorityQueue&&) = default;
 
-    constexpr PriorityQueue clone() const requires(Cloneable<Comp>);
+    constexpr auto clone() const requires(Cloneable<Comp>);
 
     constexpr bool empty() const { return size() == 0; }
     constexpr size_t size() const { return m_data.size(); }
@@ -36,14 +36,16 @@ public:
     constexpr T& top() { return m_data[0]; }
     constexpr const T& top() const { return m_data[0]; }
 
-    constexpr void push(const T& value) { insert(this->end(), value); }
-    constexpr void push(T&& value) { insert(this->end(), move(value)); }
+    constexpr auto push(const T& value) requires(Copyable<T>) { return insert(this->end(), value); }
+    constexpr auto push(T&& value) { return insert(this->end(), move(value)); }
 
     template<typename... Args>
-    requires(CreateableFrom<T, Args...>) constexpr void emplace(Args&&... args) { insert(this->end(), forward<Args>(args)...); }
+    requires(CreateableFrom<T, Args...> || FalliblyCreateableFrom<T, Args...>) constexpr auto emplace(Args&&... args) {
+        return insert(this->end(), forward<Args>(args)...);
+    }
 
     template<typename... Args>
-    requires(CreateableFrom<T, Args...>) constexpr Iterator insert(ConstIterator hint, Args&&... args);
+    requires(CreateableFrom<T, Args...> || FalliblyCreateableFrom<T, Args...>) constexpr auto insert(ConstIterator hint, Args&&... args);
 
     template<::Iterator Iter>
     constexpr Iterator insert(ConstIterator hint, Iter start, Iter end, Option<size_t> known_size = {});
@@ -52,6 +54,7 @@ public:
     constexpr Option<T> maybe_pop();
 
 private:
+    constexpr void bubble_up(size_t index);
     constexpr size_t parent_index(size_t index) const;
     constexpr Pair<Option<size_t>, Option<size_t>> child_indices(size_t index) const;
     constexpr bool greater_than(const T& a, const T& b) const;
@@ -62,38 +65,44 @@ private:
 
 template<typename T, ComparatorFor<T> Comp>
 template<Iterator Iter>
-constexpr auto PriorityQueue<T, Comp>::create(Iter start, Iter end, Option<size_t> known_size, Comp&& comp) -> PriorityQueue {
+constexpr auto PriorityQueue<T, Comp>::create(Iter start, Iter end, Option<size_t> known_size, Comp&& comp) {
     auto result = PriorityQueue(forward<Comp>(comp));
-    result.insert(result.end(), move(start), move(end), known_size);
-    return result;
+    return result_and_then(result.insert(result.end(), move(start), move(end), known_size), [&](auto&&) -> PriorityQueue {
+        return move(result);
+    });
 }
 
 template<typename T, ComparatorFor<T> Comp>
-constexpr auto PriorityQueue<T, Comp>::clone() const -> PriorityQueue requires(Cloneable<Comp>) {
-    auto result = PriorityQueue { ::clone(m_comparator) };
-    result.m_data = m_data.clone();
-    return result;
+constexpr auto PriorityQueue<T, Comp>::clone() const requires(Cloneable<Comp>) {
+    return result_and_then(::clone(m_comparator), [&](auto&& comparator) {
+        auto result = PriorityQueue { move(comparator) };
+        return result_and_then(m_data.clone(), [&](auto&& data) -> PriorityQueue {
+            result.m_data = move(data);
+            return move(result);
+        });
+    });
 }
 
 template<typename T, ComparatorFor<T> Comp>
 template<typename... Args>
-requires(CreateableFrom<T, Args...>) constexpr auto PriorityQueue<T, Comp>::insert(ConstIterator, Args&&... args) -> Iterator {
-    m_data.emplace_back(forward<Args>(args)...);
-
-    for (size_t index = m_data.size() - 1; index && greater_than(m_data[index], m_data[parent_index(index)]); index = parent_index(index)) {
-        ::swap(m_data[index], m_data[parent_index(index)]);
-    }
-
-    return this->end();
+requires(CreateableFrom<T, Args...> || FalliblyCreateableFrom<T, Args...>) constexpr auto PriorityQueue<T, Comp>::insert(ConstIterator,
+                                                                                                                         Args&&... args) {
+    return result_and_then(m_data.emplace_back(forward<Args>(args)...), [&](auto&&) {
+        bubble_up(size() - 1);
+        return this->end();
+    });
 }
 
 template<typename T, ComparatorFor<T> Comp>
 template<Iterator Iter>
-constexpr auto PriorityQueue<T, Comp>::insert(ConstIterator, Iter start, Iter end, Option<size_t>) -> Iterator {
-    for (auto it = move(start); it != end; ++it) {
-        push(*it);
-    }
-    return this->end();
+constexpr auto PriorityQueue<T, Comp>::insert(ConstIterator, Iter start, Iter end, Option<size_t> known_size) -> Iterator {
+    auto old_size = this->size();
+    return result_and_then(m_data.insert(m_data.end(), move(start), move(end), known_size), [&](auto&&) {
+        for (auto i : range(old_size, size())) {
+            bubble_up(i);
+        }
+        return this->end();
+    });
 }
 
 template<typename T, ComparatorFor<T> Comp>
@@ -132,6 +141,13 @@ constexpr Option<T> PriorityQueue<T, Comp>::maybe_pop() {
         return None {};
     }
     return pop();
+}
+
+template<typename T, ComparatorFor<T> Comp>
+constexpr void PriorityQueue<T, Comp>::bubble_up(size_t index) {
+    for (; index && greater_than(m_data[index], m_data[parent_index(index)]); index = parent_index(index)) {
+        ::swap(m_data[index], m_data[parent_index(index)]);
+    }
 }
 
 template<typename T, ComparatorFor<T> Comp>
@@ -181,8 +197,9 @@ constexpr auto collect_priority_queue(C&& container) {
 template<Container C, typename Comp>
 constexpr auto collect_priority_queue(C&& container, Comp&& comparator) {
     auto result = PriorityQueue<decay_t<ContainerValueType<C>>, Comp>(forward<Comp>(comparator));
-    insert(result, result.end(), forward<C>(container));
-    return result;
+    return result_and_then(insert(result, result.end(), forward<C>(container)), [&](auto&&) {
+        return move(result);
+    });
 }
 }
 
