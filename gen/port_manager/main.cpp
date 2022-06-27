@@ -28,7 +28,7 @@ Result<void, Error> main(Arguments arguments) {
 
     auto path = TRY(Ext::Path::resolve(arguments.json_path));
 
-    auto port = TRY(Port::try_create(context.config(), move(path)));
+    auto port = TRY(Port::try_create(context, move(path)));
     return port.build(context, arguments.build_step);
 }
 }

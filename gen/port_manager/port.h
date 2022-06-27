@@ -1,16 +1,16 @@
 #pragma once
 
 #include <ext/forward.h>
+#include <liim/container/hash_map.h>
 #include <liim/result.h>
 #include <liim/string.h>
-#include <liim/vector.h>
 
 #include "forward.h"
 
 namespace PortManager {
 class Port {
 public:
-    static Result<Port, Error> try_create(const Config& config, Ext::Path json_path);
+    static Result<Port, Error> try_create(Context& context, Ext::Path json_path);
     Port(const Port&) = delete;
     Port(Port&&) = default;
     ~Port();
@@ -29,7 +29,7 @@ public:
 
 private:
     Port(String name, String version, Ext::Path definition_file, Ext::Path definition_directory, Ext::Path base_directory,
-         Ext::Path source_directory, Ext::Path build_directory, HashMap<StringView, UniquePtr<Step>> steps);
+         Ext::Path source_directory, Ext::Path build_directory, LIIM::Container::HashMap<StringView, UniquePtr<Step>> steps);
 
     String m_name;
     String m_version;
@@ -38,6 +38,6 @@ private:
     Ext::Path m_base_directory;
     Ext::Path m_source_directory;
     Ext::Path m_build_directory;
-    HashMap<StringView, UniquePtr<Step>> m_steps;
+    LIIM::Container::HashMap<StringView, UniquePtr<Step>> m_steps;
 };
 }

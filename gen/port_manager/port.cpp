@@ -11,7 +11,8 @@
 #include "step.h"
 
 namespace PortManager {
-Result<Port, Error> Port::try_create(const Config& config, Ext::Path json_path) {
+Result<Port, Error> Port::try_create(Context& context, Ext::Path json_path) {
+
     auto reader = TRY(JsonReader::try_create(json_path));
 
     auto& name = TRY(reader.lookup<Ext::Json::String>(reader.json(), "name"));
@@ -39,10 +40,10 @@ Result<Port, Error> Port::try_create(const Config& config, Ext::Path json_path) 
     auto& build_object = TRY(reader.lookup<Ext::Json::Object>(build_system_object, "build"));
     auto& install_object = TRY(reader.lookup<Ext::Json::Object>(build_system_object, "install"));
 
-    auto steps = HashMap<StringView, UniquePtr<Step>> {};
+    auto steps = LIIM::Container::HashMap<StringView, UniquePtr<Step>> {};
     auto add_step = [&](UniquePtr<Step> step) {
         auto name = step->name();
-        steps.put(name, move(step));
+        steps.insert_or_assign(name, move(step));
     };
 
     add_step(TRY(DownloadStep::try_create(reader, download_object)));
@@ -54,6 +55,7 @@ Result<Port, Error> Port::try_create(const Config& config, Ext::Path json_path) 
     add_step(TRY(make_install_step(reader, install_object)));
     add_step(TRY(CleanStep::try_create()));
 
+    auto& config = context.config();
     auto definition_directory = json_path.dirname();
     auto base_directory = config.base_directory_for_port(name.view(), version.view());
     auto source_directory = config.source_directory_for_port(name.view(), version.view());
@@ -64,7 +66,7 @@ Result<Port, Error> Port::try_create(const Config& config, Ext::Path json_path) 
 }
 
 Port::Port(String name, String version, Ext::Path definition_file, Ext::Path definition_directory, Ext::Path base_directory,
-           Ext::Path source_directory, Ext::Path build_directory, HashMap<StringView, UniquePtr<Step>> steps)
+           Ext::Path source_directory, Ext::Path build_directory, LIIM::Container::HashMap<StringView, UniquePtr<Step>> steps)
     : m_name(move(name))
     , m_version(move(version))
     , m_definition_file(move(definition_file))
@@ -80,12 +82,13 @@ Result<void, Error> Port::build(Context& context, StringView build_step) {
     // FIXME: it would be better to topologically sort the step and its
     //        dependencies rather than just assume everything is in order
     //        and dependencies don't have their won dependencies.
-    auto steps = NewVector<Step*> {};
     auto& base_step = TRY(lookup_step(build_step));
     auto dependencies = base_step.dependencies();
-    for (auto dependency : dependencies) {
-        steps.push_back(&TRY(lookup_step(dependency)));
-    }
+    auto steps = TRY(collect<NewVector<Step*>>(transform(dependencies, [&](auto dependency) {
+        return lookup_step(dependency).transform([](auto& step) {
+            return &step;
+        });
+    })));
     steps.push_back(&base_step);
 
     debug_log("Building step `{}' for port `{} {}'", build_step, name(), version());
@@ -101,7 +104,7 @@ Result<void, Error> Port::build(Context& context, StringView build_step) {
 }
 
 Result<Step&, BuildStepNotFound> Port::lookup_step(StringView step_name) {
-    return m_steps.get(step_name)
+    return m_steps.at(step_name)
         .map([](auto& x) -> Step& {
             return *x;
         })

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ext/json.h>
+#include <liim/container/hash_map.h>
 #include <liim/container/new_vector.h>
 #include <liim/result.h>
 #include <liim/span.h>
@@ -106,7 +107,7 @@ public:
 class AutoconfConfigureStep : public ConfigureStep {
 private:
     using Setting = Variant<bool, String>;
-    using Settings = HashMap<String, Setting>;
+    using Settings = LIIM::Container::HashMap<String, Setting>;
 
 public:
     static Result<Enviornment, Error> parse_enviornment(const JsonReader& reader, const Ext::Json::Object& object);

@@ -7,11 +7,11 @@
 
 namespace PortManager {
 Enviornment Enviornment::current() {
-    HashMap<String, String> enviornment;
+    auto enviornment = LIIM::Container::HashMap<String, String> {};
     for (auto** pair = environ; *pair; pair++) {
         auto key_equal_value = String(*pair);
         if (auto equal_index = key_equal_value.index_of('=')) {
-            enviornment.put(key_equal_value.first(*equal_index), key_equal_value.substring(*equal_index + 1));
+            enviornment.try_emplace(key_equal_value.first(*equal_index), key_equal_value.substring(*equal_index + 1));
         }
     }
     return Enviornment(move(enviornment));
@@ -25,23 +25,23 @@ Result<Enviornment, Error> Enviornment::from_json(const JsonReader&, const Ext::
     return result;
 }
 
-Enviornment::Enviornment(HashMap<String, String> enviornment) : m_enviornment(move(enviornment)) {}
+Enviornment::Enviornment(LIIM::Container::HashMap<String, String> enviornment) : m_enviornment(move(enviornment)) {}
 
 Enviornment Enviornment::set(String key, String value) && {
-    m_enviornment.put(move(key), move(value));
+    m_enviornment.insert_or_assign(move(key), move(value));
     return Enviornment(move(m_enviornment));
 }
 
 auto Enviornment::get_c_style_envp() -> CStyleEnvp {
-    NewVector<String> storage;
-    m_enviornment.for_each_key([&](auto& key) {
-        storage.push_back(format("{}={}", key, *m_enviornment.get(key)));
-    });
-    NewVector<char*> envp;
-    for (auto& value : storage) {
-        envp.push_back(value.string());
-    }
+    auto storage = collect_vector(transform(m_enviornment, [](auto& pair) {
+        return format("{}={}", pair.first, pair.second);
+    }));
+
+    auto envp = collect_vector(transform(storage, [](auto& value) {
+        return value.string();
+    }));
     envp.push_back(nullptr);
+
     return { move(storage), move(envp) };
 }
 

@@ -4,7 +4,7 @@ set -e
 
 ROOT="${ROOT:-$PWD/../..}"
 TARGET="${IROS_TARGET:-`$ROOT/scripts/default-host.sh`}"
-VERSION="11.1.0"
+VERSION="12.1.0"
 DOWNLOAD_URL="http://ftp.gnu.org/gnu/gcc/gcc-$VERSION/gcc-$VERSION.tar.gz"
 DOWNLOAD_DEST=gcc.tar.gz
 SRC="gcc-$VERSION"

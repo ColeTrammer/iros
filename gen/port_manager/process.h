@@ -1,9 +1,9 @@
 #pragma once
 
 #include <ext/json.h>
+#include <liim/container/hash_map.h>
 #include <liim/container/new_vector.h>
 #include <liim/format.h>
-#include <liim/hash_map.h>
 #include <liim/result.h>
 #include <liim/string.h>
 
@@ -15,6 +15,8 @@ public:
     static Enviornment current();
     static Result<Enviornment, Error> from_json(const JsonReader& reader, const Ext::Json::Object& object);
 
+    Enviornment clone() const { return Enviornment(m_enviornment.clone()); }
+
     Enviornment set(String key, String value) &&;
 
     struct CStyleEnvp {
@@ -24,9 +26,9 @@ public:
     CStyleEnvp get_c_style_envp();
 
 private:
-    explicit Enviornment(HashMap<String, String> enviornment);
+    explicit Enviornment(LIIM::Container::HashMap<String, String> enviornment);
 
-    HashMap<String, String> m_enviornment;
+    LIIM::Container::HashMap<String, String> m_enviornment;
 };
 
 class Process {

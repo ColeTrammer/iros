@@ -209,7 +209,7 @@ auto AutoconfConfigureStep::parse_settings(const JsonReader& reader, const Ext::
             keys.push_back(key);
         });
         for (auto& key : keys) {
-            settings.put(
+            settings.insert_or_assign(
                 key, TRY(reader.lookup_one_of<Ext::Json::Boolean, Ext::Json::String>(user_settings, key)).visit([](auto&& x) -> Setting {
                     return x;
                 }));
@@ -225,7 +225,7 @@ Result<UniquePtr<Step>, Error> AutoconfConfigureStep::try_create(const JsonReade
 }
 
 AutoconfConfigureStep::AutoconfConfigureStep(Enviornment enviornment, Settings settings)
-    : m_enviornment(enviornment), m_settings(move(settings)) {}
+    : m_enviornment(move(enviornment)), m_settings(move(settings)) {}
 
 AutoconfConfigureStep::~AutoconfConfigureStep() {}
 
@@ -242,11 +242,10 @@ Result<void, Error> AutoconfConfigureStep::act(Context& context, const Port& por
 
     auto arguments = NewVector<String> {};
     arguments.push_back(configure_script.to_string());
-    auto settings = m_settings;
-    settings.put("--host", host);
-    settings.put("--prefix", install_prefix);
-    settings.for_each_key([&](auto& name) {
-        auto& setting = *settings.get(name);
+    auto settings = m_settings.clone();
+    settings.try_emplace("--host", move(host));
+    settings.try_emplace("--prefix", move(install_prefix));
+    for (auto& [name, setting] : settings) {
         if (auto as_bool = setting.template get_if<bool>()) {
             if (*as_bool) {
                 arguments.push_back(name);
@@ -254,11 +253,11 @@ Result<void, Error> AutoconfConfigureStep::act(Context& context, const Port& por
         } else if (auto as_string = setting.template get_if<String>()) {
             arguments.push_back(format("{}={}", name, *as_string));
         }
-    });
+    }
 
     TRY(context.run_process(Process::command("mkdir", "-p", build_directory)));
     auto result = context.with_working_directory(build_directory, [&] {
-        return context.run_process(Process::from_arguments(move(arguments)).with_enviornment(m_enviornment));
+        return context.run_process(Process::from_arguments(move(arguments)).with_enviornment(m_enviornment.clone()));
     });
     if (result.is_error()) {
         TRY(context.run_process(Process::command("rm", "-rf", build_directory)));
