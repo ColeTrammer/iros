@@ -24,12 +24,11 @@ constexpr auto argument_parser = [] {
 }();
 
 Result<void, Error> main(Arguments arguments) {
-    auto context = Context(TRY(Config::try_create()));
+    auto context = Context(TRY(Config::create()));
 
     auto path = TRY(Ext::Path::resolve(arguments.json_path));
-
-    auto port = TRY(Port::try_create(context, move(path)));
-    return port.build(context, arguments.build_step);
+    auto handle = TRY(context.load_port(move(path)));
+    return context.build_port(handle, arguments.build_step);
 }
 }
 

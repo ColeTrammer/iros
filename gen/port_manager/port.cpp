@@ -1,3 +1,4 @@
+#include <ext/error.h>
 #include <ext/json.h>
 #include <ext/path.h>
 #include <liim/container/new_vector.h>
@@ -11,9 +12,8 @@
 #include "step.h"
 
 namespace PortManager {
-Result<Port, Error> Port::try_create(Context& context, Ext::Path json_path) {
-
-    auto reader = TRY(JsonReader::try_create(json_path));
+Result<Port, Error> Port::create(Context& context, Ext::Path json_path) {
+    auto reader = TRY(JsonReader::create(json_path));
 
     auto& name = TRY(reader.lookup<Ext::Json::String>(reader.json(), "name"));
     auto& version = TRY(reader.lookup<Ext::Json::String>(reader.json(), "version"));
@@ -28,10 +28,9 @@ Result<Port, Error> Port::try_create(Context& context, Ext::Path json_path) {
     auto build_system_type = TRY(reader.lookup<Ext::Json::String>(build_system_object, "type"));
     auto [make_configure_step, make_build_step, make_install_step] = TRY([&]() -> Result<BuildSystemConstructors, Error> {
         if (build_system_type.view() == "cmake"sv) {
-            return BuildSystemConstructors(CMakeConfigureStep::try_create, CMakeBuildStep::try_create, CMakeInstallStep::try_create);
+            return BuildSystemConstructors(CMakeConfigureStep::create, CMakeBuildStep::create, CMakeInstallStep::create);
         } else if (build_system_type.view() == "autoconf"sv) {
-            return BuildSystemConstructors(AutoconfConfigureStep::try_create, AutoconfBuildStep::try_create,
-                                           AutoconfInstallStep::try_create);
+            return BuildSystemConstructors(AutoconfConfigureStep::create, AutoconfBuildStep::create, AutoconfInstallStep::create);
         }
         return Err(Ext::StringError(format("Invalid build system type `{}' in json file `{}'", build_system_type, json_path)));
     }());
@@ -46,14 +45,23 @@ Result<Port, Error> Port::try_create(Context& context, Ext::Path json_path) {
         steps.insert_or_assign(name, move(step));
     };
 
-    add_step(TRY(DownloadStep::try_create(reader, download_object)));
+    add_step(TRY(DownloadStep::create(reader, download_object)));
     if (patch_object.has_value()) {
-        add_step(TRY(PatchStep::try_create(reader, patch_object.value())));
+        add_step(TRY(PatchStep::create(reader, patch_object.value())));
     }
     add_step(TRY(make_configure_step(reader, configure_object)));
     add_step(TRY(make_build_step(reader, build_object)));
     add_step(TRY(make_install_step(reader, install_object)));
-    add_step(TRY(CleanStep::try_create()));
+    add_step(TRY(CleanStep::create()));
+
+    auto dependencies = NewVector<PortHandle> {};
+    if (reader.json().get("dependencies")) {
+        TRY(assign_to(dependencies, transform(TRY(reader.lookup<Ext::Json::Array>(reader.json(), "dependencies")), [&](auto& value) {
+                          return value.template get_if<String>().unwrap_or_else([&] {
+                              return format("Expected dependcy item `{}' for `{}' to be a string", Ext::Json::stringify(value), name);
+                          });
+                      })));
+    }
 
     auto& config = context.config();
     auto definition_directory = json_path.dirname();
@@ -62,11 +70,12 @@ Result<Port, Error> Port::try_create(Context& context, Ext::Path json_path) {
     auto build_directory = config.build_directory_for_port(name.view(), version.view());
 
     return Port(move(name), move(version), move(json_path), move(definition_directory), move(base_directory), move(source_directory),
-                move(build_directory), move(steps));
+                move(build_directory), move(steps), move(dependencies));
 }
 
 Port::Port(String name, String version, Ext::Path definition_file, Ext::Path definition_directory, Ext::Path base_directory,
-           Ext::Path source_directory, Ext::Path build_directory, LIIM::Container::HashMap<StringView, UniquePtr<Step>> steps)
+           Ext::Path source_directory, Ext::Path build_directory, LIIM::Container::HashMap<StringView, UniquePtr<Step>> steps,
+           NewVector<PortHandle> dependencies)
     : m_name(move(name))
     , m_version(move(version))
     , m_definition_file(move(definition_file))
@@ -74,7 +83,8 @@ Port::Port(String name, String version, Ext::Path definition_file, Ext::Path def
     , m_base_directory(move(base_directory))
     , m_source_directory(move(source_directory))
     , m_build_directory(move(build_directory))
-    , m_steps(move(steps)) {}
+    , m_steps(move(steps))
+    , m_dependencies(move(dependencies)) {}
 
 Port::~Port() {}
 
@@ -101,6 +111,18 @@ Result<void, Error> Port::build(Context& context, StringView build_step) {
         }
     }
     return {};
+}
+
+Result<void, Error> Port::load_dependencies(Context& context) {
+    if (m_loaded_dependencies) {
+        return {};
+    }
+    m_loaded_dependencies = true;
+
+    auto our_handle = this->handle();
+    return Ext::stop_on_error(m_dependencies, [&](auto& dependency) {
+        return context.load_port_dependency(dependency, our_handle);
+    });
 }
 
 Result<Step&, BuildStepNotFound> Port::lookup_step(StringView step_name) {

@@ -8,6 +8,7 @@
 #include <liim/result.h>
 #include <liim/source_location.h>
 #include <liim/string.h>
+#include <liim/try.h>
 #include <liim/utilities.h>
 #include <liim/variant.h>
 #include <liim/vector.h>

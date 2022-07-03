@@ -22,14 +22,14 @@ public:
 
 class DownloadStep : public Step {
 public:
-    static Result<UniquePtr<DownloadStep>, Error> try_create(const JsonReader& reader, const Ext::Json::Object& object);
+    static Result<UniquePtr<DownloadStep>, Error> create(const JsonReader& reader, const Ext::Json::Object& object);
 
     virtual StringView name() const override { return "download"sv; }
 };
 
 class GitDownloadStep : public DownloadStep {
 public:
-    static Result<UniquePtr<GitDownloadStep>, Error> try_create(const JsonReader& reader, const Ext::Json::Object& object);
+    static Result<UniquePtr<GitDownloadStep>, Error> create(const JsonReader& reader, const Ext::Json::Object& object);
 
     explicit GitDownloadStep(String url);
     virtual ~GitDownloadStep() override;
@@ -51,7 +51,7 @@ private:
     static Result<Kind, Ext::StringError> kind_from_string(const String& string);
 
 public:
-    static Result<UniquePtr<Step>, Error> try_create(const JsonReader& reader, const Ext::Json::Object& object);
+    static Result<UniquePtr<Step>, Error> create(const JsonReader& reader, const Ext::Json::Object& object);
 
     explicit TarDownloadStep(String url, Kind kind, String signature_url, String sourece_directory_in_tarball);
     virtual ~TarDownloadStep() override;
@@ -71,7 +71,7 @@ private:
 
 class PatchStep : public Step {
 public:
-    static Result<UniquePtr<PatchStep>, Error> try_create(const JsonReader& reader, const Ext::Json::Object& object);
+    static Result<UniquePtr<PatchStep>, Error> create(const JsonReader& reader, const Ext::Json::Object& object);
 
     explicit PatchStep(NewVector<String> patch_files);
     virtual ~PatchStep() override;
@@ -96,7 +96,7 @@ public:
 
 class CMakeConfigureStep : public ConfigureStep {
 public:
-    static Result<UniquePtr<Step>, Error> try_create(const JsonReader& reader, const Ext::Json::Object& object);
+    static Result<UniquePtr<Step>, Error> create(const JsonReader& reader, const Ext::Json::Object& object);
 
     virtual ~CMakeConfigureStep() override;
 
@@ -112,7 +112,7 @@ private:
 public:
     static Result<Enviornment, Error> parse_enviornment(const JsonReader& reader, const Ext::Json::Object& object);
     static Result<Settings, Error> parse_settings(const JsonReader& reader, const Ext::Json::Object& object);
-    static Result<UniquePtr<Step>, Error> try_create(const JsonReader& reader, const Ext::Json::Object& object);
+    static Result<UniquePtr<Step>, Error> create(const JsonReader& reader, const Ext::Json::Object& object);
 
     AutoconfConfigureStep(Enviornment enviornment, Settings settings);
     virtual ~AutoconfConfigureStep() override;
@@ -132,7 +132,7 @@ class BuildStep : public Step {
 
 class CMakeBuildStep : public BuildStep {
 public:
-    static Result<UniquePtr<Step>, Error> try_create(const JsonReader& reader, const Ext::Json::Object& object);
+    static Result<UniquePtr<Step>, Error> create(const JsonReader& reader, const Ext::Json::Object& object);
 
     virtual ~CMakeBuildStep() override;
 
@@ -141,7 +141,7 @@ public:
 
 class AutoconfBuildStep : public BuildStep {
 public:
-    static Result<UniquePtr<Step>, Error> try_create(const JsonReader& reader, const Ext::Json::Object& object);
+    static Result<UniquePtr<Step>, Error> create(const JsonReader& reader, const Ext::Json::Object& object);
 
     virtual ~AutoconfBuildStep() override;
 
@@ -155,7 +155,7 @@ class InstallStep : public Step {
 
 class CMakeInstallStep : public InstallStep {
 public:
-    static Result<UniquePtr<Step>, Error> try_create(const JsonReader& reader, const Ext::Json::Object& object);
+    static Result<UniquePtr<Step>, Error> create(const JsonReader& reader, const Ext::Json::Object& object);
 
     virtual ~CMakeInstallStep() override;
 
@@ -164,7 +164,7 @@ public:
 
 class AutoconfInstallStep : public InstallStep {
 public:
-    static Result<UniquePtr<Step>, Error> try_create(const JsonReader& reader, const Ext::Json::Object& object);
+    static Result<UniquePtr<Step>, Error> create(const JsonReader& reader, const Ext::Json::Object& object);
 
     virtual ~AutoconfInstallStep() override;
 
@@ -173,7 +173,7 @@ public:
 
 class CleanStep : public Step {
 public:
-    static Result<UniquePtr<CleanStep>, Error> try_create();
+    static Result<UniquePtr<CleanStep>, Error> create();
 
     virtual ~CleanStep();
 

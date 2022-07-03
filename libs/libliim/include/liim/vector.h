@@ -525,7 +525,10 @@ void swap(Vector<T>& a, Vector<T>& b) {
 template<typename VectorType, typename T>
 class VectorIterator {
 public:
+    using ValueType = T&;
+
     VectorIterator(VectorType& vector, int offset) : m_vector(vector), m_offset(offset) {}
+    VectorIterator(const VectorIterator&) = default;
 
     bool operator!=(const VectorIterator& other) const { return !(*this == other); }
     bool operator==(const VectorIterator& other) const { return m_offset == other.m_offset; }

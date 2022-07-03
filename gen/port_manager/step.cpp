@@ -12,18 +12,18 @@
 #include "step.h"
 
 namespace PortManager {
-Result<UniquePtr<DownloadStep>, Error> DownloadStep::try_create(const JsonReader& reader, const Ext::Json::Object& object) {
+Result<UniquePtr<DownloadStep>, Error> DownloadStep::create(const JsonReader& reader, const Ext::Json::Object& object) {
     auto& type = TRY(reader.lookup<Ext::Json::String>(object, "type"));
     if (type.view() == "git"sv) {
-        return GitDownloadStep::try_create(reader, object);
+        return GitDownloadStep::create(reader, object);
     } else if (type.view() == "tarball"sv) {
-        return TarDownloadStep::try_create(reader, object);
+        return TarDownloadStep::create(reader, object);
     }
 
     return Err(Ext::StringError(format("Unknown download type: `{}'", type)));
 }
 
-Result<UniquePtr<GitDownloadStep>, Error> GitDownloadStep::try_create(const JsonReader& reader, const Ext::Json::Object& object) {
+Result<UniquePtr<GitDownloadStep>, Error> GitDownloadStep::create(const JsonReader& reader, const Ext::Json::Object& object) {
     auto& url = TRY(reader.lookup<Ext::Json::String>(object, "url"));
     return make_unique<GitDownloadStep>(move(url));
 }
@@ -40,7 +40,7 @@ Result<void, Error> GitDownloadStep::act(Context& context, const Port& port) {
     return context.run_process(Process::command("git", "clone", "--depth=1", m_url, port.source_directory()));
 }
 
-Result<UniquePtr<Step>, Error> TarDownloadStep::try_create(const JsonReader& reader, const Ext::Json::Object& object) {
+Result<UniquePtr<Step>, Error> TarDownloadStep::create(const JsonReader& reader, const Ext::Json::Object& object) {
     auto& url = TRY(reader.lookup<Ext::Json::String>(object, "url"));
     auto kind = TRY(kind_from_string(TRY(reader.lookup<Ext::Json::String>(object, "kind"))));
     auto& signature_url = TRY(reader.lookup<Ext::Json::String>(object, "signature"));
@@ -111,7 +111,7 @@ auto TarDownloadStep::kind_from_string(const String& string) -> Result<Kind, Ext
     return Err(Ext::StringError(format("Unknown tarball download kind: `{}'", string)));
 }
 
-Result<UniquePtr<PatchStep>, Error> PatchStep::try_create(const JsonReader& reader, const Ext::Json::Object& object) {
+Result<UniquePtr<PatchStep>, Error> PatchStep::create(const JsonReader& reader, const Ext::Json::Object& object) {
     auto& files = TRY(reader.lookup<Ext::Json::Array>(object, "files"));
 
     auto patch_files = NewVector<String> {};
@@ -171,7 +171,7 @@ Span<const StringView> ConfigureStep::dependencies() const {
     return storage.span();
 }
 
-Result<UniquePtr<Step>, Error> CMakeConfigureStep::try_create(const JsonReader&, const Ext::Json::Object&) {
+Result<UniquePtr<Step>, Error> CMakeConfigureStep::create(const JsonReader&, const Ext::Json::Object&) {
     return make_unique<CMakeConfigureStep>();
 }
 
@@ -218,7 +218,7 @@ auto AutoconfConfigureStep::parse_settings(const JsonReader& reader, const Ext::
     return settings;
 }
 
-Result<UniquePtr<Step>, Error> AutoconfConfigureStep::try_create(const JsonReader& reader, const Ext::Json::Object& object) {
+Result<UniquePtr<Step>, Error> AutoconfConfigureStep::create(const JsonReader& reader, const Ext::Json::Object& object) {
     auto enviornment = TRY(parse_enviornment(reader, object));
     auto settings = TRY(parse_settings(reader, object));
     return make_unique<AutoconfConfigureStep>(move(enviornment), move(settings));
@@ -270,7 +270,7 @@ Span<const StringView> BuildStep::dependencies() const {
     return storage.span();
 }
 
-Result<UniquePtr<Step>, Error> CMakeBuildStep::try_create(const JsonReader&, const Ext::Json::Object&) {
+Result<UniquePtr<Step>, Error> CMakeBuildStep::create(const JsonReader&, const Ext::Json::Object&) {
     return make_unique<CMakeBuildStep>();
 }
 
@@ -280,7 +280,7 @@ Result<void, Error> CMakeBuildStep::act(Context& context, const Port& port) {
     return context.run_process(Process::command("cmake", "--build", port.build_directory()));
 }
 
-Result<UniquePtr<Step>, Error> AutoconfBuildStep::try_create(const JsonReader&, const Ext::Json::Object&) {
+Result<UniquePtr<Step>, Error> AutoconfBuildStep::create(const JsonReader&, const Ext::Json::Object&) {
     return make_unique<AutoconfBuildStep>();
 }
 
@@ -295,7 +295,7 @@ Span<const StringView> InstallStep::dependencies() const {
     return storage.span();
 }
 
-Result<UniquePtr<Step>, Error> CMakeInstallStep::try_create(const JsonReader&, const Ext::Json::Object&) {
+Result<UniquePtr<Step>, Error> CMakeInstallStep::create(const JsonReader&, const Ext::Json::Object&) {
     return make_unique<CMakeInstallStep>();
 }
 
@@ -306,7 +306,7 @@ Result<void, Error> CMakeInstallStep::act(Context& context, const Port& port) {
     return context.run_process(Process::command("cmake", "--install", port.build_directory()).with_enviornment(move(enviornment)));
 }
 
-Result<UniquePtr<Step>, Error> AutoconfInstallStep::try_create(const JsonReader&, const Ext::Json::Object&) {
+Result<UniquePtr<Step>, Error> AutoconfInstallStep::create(const JsonReader&, const Ext::Json::Object&) {
     return make_unique<AutoconfInstallStep>();
 }
 
@@ -317,7 +317,7 @@ Result<void, Error> AutoconfInstallStep::act(Context& context, const Port& port)
     return context.run_process(Process::command("make", "-C", port.build_directory(), "install", destination_argument));
 }
 
-Result<UniquePtr<CleanStep>, Error> CleanStep::try_create() {
+Result<UniquePtr<CleanStep>, Error> CleanStep::create() {
     return make_unique<CleanStep>();
 }
 
