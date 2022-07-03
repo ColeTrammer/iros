@@ -104,8 +104,6 @@ struct BaseFormatter {
             }
         };
 
-        static_assert(SameAs<InvokeResult<decltype(convert_char_to_align), char>::type, Option<Detail::Align>>);
-
         if (context.peek(1).and_then(convert_char_to_align)) {
             options.set_fill(context.take().first());
         }

@@ -12,6 +12,7 @@ RUN apt-get update -y && apt-get install -y \
     libmpfr-dev \
     libssl-dev \
     tar \
+    texinfo \
     && rm -rf /var/lib/apt/lists/* \
     && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 900 --slave /usr/bin/g++ g++ /usr/bin/g++-12
 ADD / build/iros
@@ -25,6 +26,7 @@ RUN apt-get update -y && apt-get install -y \
     build-essential \
     ccache \
     clang-format \
+    curl \
     g++-12 \
     gcc-12 \
     genext2fs \
@@ -40,6 +42,7 @@ RUN apt-get update -y && apt-get install -y \
     sudo \
     udev \
     xorriso \
+    valgrind \
     && rm -rf /var/lib/apt/lists/* \
     && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 900 --slave /usr/bin/g++ g++ /usr/bin/g++-12
 COPY --from=toolchain_build /usr/local /usr/local

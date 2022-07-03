@@ -1,8 +1,14 @@
+commit d8e54844380e8de1c620bc0b5c192849b02b87b4
+Author: ColeTrammer <cole.trammer@gmail.com>
+Date:   Sun Jul 3 05:33:50 2022 +0000
+
+    patch gcc
+
 diff --git a/config.sub b/config.sub
-index 63c1f1c8b..dc467bbe2 100755
+index 38f3d037a..a325f7005 100755
 --- a/config.sub
 +++ b/config.sub
-@@ -1697,7 +1697,7 @@ case $os in
+@@ -1720,7 +1720,7 @@ case $os in
  	# Each alternative MUST end in a * to match a version number.
  	gnu* | android* | bsd* | mach* | minix* | genix* | ultrix* | irix* \
  	     | *vms* | esix* | aix* | cnk* | sunos | sunos[34]* \
@@ -24,10 +30,10 @@ index df90720b7..1a58946cd 100755
      powerpc-*-eabi*    | \
      powerpc-*-rtems*   | \
 diff --git a/gcc/config.gcc b/gcc/config.gcc
-index 357b0bed0..4295fa3d0 100644
+index c5064dd37..42f159e6e 100644
 --- a/gcc/config.gcc
 +++ b/gcc/config.gcc
-@@ -984,6 +984,13 @@ case ${target} in
+@@ -994,6 +994,13 @@ case ${target} in
    esac
    target_has_targetdm=yes
    ;;
@@ -41,7 +47,7 @@ index 357b0bed0..4295fa3d0 100644
  *-*-*vms*)
    extra_options="${extra_options} vms/vms.opt"
    xmake_file=vms/x-vms
-@@ -2094,6 +2101,16 @@ i[34567]86-*-solaris2* | x86_64-*-solaris2*)
+@@ -2096,6 +2103,16 @@ i[34567]86-*-solaris2* | x86_64-*-solaris2*)
  		esac
  	fi
  	;;
@@ -96,23 +102,24 @@ index 000000000..5ffbbd363
 +        builtin_assert("system=posix"); \
 +    } while (0);
 diff --git a/gcc/configure.ac b/gcc/configure.ac
-index 96a6f62b0..898d77936 100644
+index 23bee7010..d574ade9b 100644
 --- a/gcc/configure.ac
 +++ b/gcc/configure.ac
-@@ -6807,7 +6807,7 @@ case "$target" in
+@@ -7059,6 +7059,9 @@ case "$target" in
        gcc_cv_target_dl_iterate_phdr=no
      fi
      ;;
--  *-linux-musl*)
-+  *-linux-musl* | *-*-iros*)
-     gcc_cv_target_dl_iterate_phdr=yes
-     ;;
- esac
++  *-*-iros*)
++    gcc_cv_target_dl_iterate_phdr=yes
++    ;;
+   *-*-dragonfly* | *-*-freebsd*)
+     if grep dl_iterate_phdr $target_header_dir/sys/link_elf.h > /dev/null 2>&1; then
+       gcc_cv_target_dl_iterate_phdr=yes
 diff --git a/libgcc/config.host b/libgcc/config.host
-index f808b61be..0d2989a0e 100644
+index 8c56fcae5..852487057 100644
 --- a/libgcc/config.host
 +++ b/libgcc/config.host
-@@ -775,6 +775,16 @@ i[34567]86-*-solaris2* | x86_64-*-solaris2*)
+@@ -797,6 +797,16 @@ i[34567]86-*-solaris2* | x86_64-*-solaris2*)
  	tm_file="${tm_file} i386/elf-lib.h"
  	md_unwind_header=i386/sol2-unwind.h
  	;;
@@ -130,7 +137,7 @@ index f808b61be..0d2989a0e 100644
  	;;
  i[34567]86-*-cygwin*)
 diff --git a/libgcc/unwind-dw2-fde-dip.c b/libgcc/unwind-dw2-fde-dip.c
-index 5095b6830..d41e53f28 100644
+index 7f9be5e6b..fbe46f5f3 100644
 --- a/libgcc/unwind-dw2-fde-dip.c
 +++ b/libgcc/unwind-dw2-fde-dip.c
 @@ -83,6 +83,12 @@
@@ -147,7 +154,7 @@ index 5095b6830..d41e53f28 100644
  
  #include <link.h>
 diff --git a/libitm/configure.tgt b/libitm/configure.tgt
-index a3d84896c..419788748 100644
+index 06e90973e..d17b588fb 100644
 --- a/libitm/configure.tgt
 +++ b/libitm/configure.tgt
 @@ -142,7 +142,7 @@ case "${target}" in
@@ -160,10 +167,10 @@ index a3d84896c..419788748 100644
  	;;
  
 diff --git a/libstdc++-v3/acinclude.m4 b/libstdc++-v3/acinclude.m4
-index 1c0a4c130..0053e3b25 100644
+index 138bd58d8..1b20d0d3a 100644
 --- a/libstdc++-v3/acinclude.m4
 +++ b/libstdc++-v3/acinclude.m4
-@@ -1442,7 +1442,7 @@ AC_DEFUN([GLIBCXX_ENABLE_LIBSTDCXX_TIME], [
+@@ -1374,7 +1374,7 @@ AC_DEFUN([GLIBCXX_ENABLE_LIBSTDCXX_TIME], [
          ac_has_nanosleep=yes
          ac_has_sched_yield=yes
          ;;
@@ -172,18 +179,19 @@ index 1c0a4c130..0053e3b25 100644
          ac_has_clock_monotonic=yes
          ac_has_clock_realtime=yes
          ac_has_nanosleep=yes
-@@ -4576,7 +4576,7 @@ AC_DEFUN([GLIBCXX_ENABLE_FILESYSTEM_TS], [
-       rtems*)
+@@ -4522,6 +4522,9 @@ AC_DEFUN([GLIBCXX_ENABLE_FILESYSTEM_TS], [
+       solaris*)
          enable_libstdcxx_filesystem_ts=yes
          ;;
--      solaris*)
-+      solaris*|iros*)
-         enable_libstdcxx_filesystem_ts=yes
-         ;;
++      iros*)
++        enable_libstdcxx_filesystem_ts=yes
++        ;;
        mingw*)
+         enable_libstdcxx_filesystem_ts=yes
+         ;;
 diff --git a/libstdc++-v3/config/os/iros/ctype_base.h b/libstdc++-v3/config/os/iros/ctype_base.h
 new file mode 100644
-index 000000000..62fce6080
+index 000000000..23ea21f48
 --- /dev/null
 +++ b/libstdc++-v3/config/os/iros/ctype_base.h
 @@ -0,0 +1,59 @@
@@ -246,9 +254,10 @@ index 000000000..62fce6080
 +
 +_GLIBCXX_END_NAMESPACE_VERSION
 +} // namespace
+\ No newline at end of file
 diff --git a/libstdc++-v3/config/os/iros/ctype_configure_char.cc b/libstdc++-v3/config/os/iros/ctype_configure_char.cc
 new file mode 100644
-index 000000000..b12c0bd43
+index 000000000..bf5df12b8
 --- /dev/null
 +++ b/libstdc++-v3/config/os/iros/ctype_configure_char.cc
 @@ -0,0 +1,99 @@
@@ -351,9 +360,10 @@ index 000000000..b12c0bd43
 +
 +_GLIBCXX_END_NAMESPACE_VERSION
 +} // namespace
+\ No newline at end of file
 diff --git a/libstdc++-v3/config/os/iros/ctype_inline.h b/libstdc++-v3/config/os/iros/ctype_inline.h
 new file mode 100644
-index 000000000..b6ad988d8
+index 000000000..524c7a9a8
 --- /dev/null
 +++ b/libstdc++-v3/config/os/iros/ctype_inline.h
 @@ -0,0 +1,173 @@
@@ -530,9 +540,10 @@ index 000000000..b6ad988d8
 +
 +_GLIBCXX_END_NAMESPACE_VERSION
 +} // namespace
+\ No newline at end of file
 diff --git a/libstdc++-v3/config/os/iros/error_constants.h b/libstdc++-v3/config/os/iros/error_constants.h
 new file mode 100644
-index 000000000..9d01c16ee
+index 000000000..802eb4016
 --- /dev/null
 +++ b/libstdc++-v3/config/os/iros/error_constants.h
 @@ -0,0 +1,178 @@
@@ -714,9 +725,10 @@ index 000000000..9d01c16ee
 +} // namespace
 +
 +#endif
+\ No newline at end of file
 diff --git a/libstdc++-v3/config/os/iros/os_defines.h b/libstdc++-v3/config/os/iros/os_defines.h
 new file mode 100644
-index 000000000..508526305
+index 000000000..9ad2f35c6
 --- /dev/null
 +++ b/libstdc++-v3/config/os/iros/os_defines.h
 @@ -0,0 +1,38 @@
@@ -758,6 +770,7 @@ index 000000000..508526305
 +#define _GLIBCXX_GTHREAD_USE_WEAK 1
 +
 +#endif
+\ No newline at end of file
 diff --git a/libstdc++-v3/configure.host b/libstdc++-v3/configure.host
 index ec32980aa..4fd922a4f 100644
 --- a/libstdc++-v3/configure.host
@@ -773,10 +786,10 @@ index ec32980aa..4fd922a4f 100644
      os_include_dir="os/tpf"
      ;;
 diff --git a/libstdc++-v3/crossconfig.m4 b/libstdc++-v3/crossconfig.m4
-index ff44d5ae0..3f341e50b 100644
+index ae5283b7a..f886dc116 100644
 --- a/libstdc++-v3/crossconfig.m4
 +++ b/libstdc++-v3/crossconfig.m4
-@@ -198,6 +198,17 @@ case "${host}" in
+@@ -198,6 +198,20 @@ case "${host}" in
      AC_CHECK_FUNCS(uselocale)
      AM_ICONV
      ;;
@@ -790,16 +803,19 @@ index ff44d5ae0..3f341e50b 100644
 +    GCC_CHECK_TLS
 +    AC_CHECK_FUNCS(__cxa_thread_atexit_impl)
 +    AC_CHECK_FUNCS(aligned_alloc posix_memalign memalign _aligned_malloc)
++    AC_CHECK_FUNCS(timespec_get)
++    AC_CHECK_FUNCS(sockatmark)
++    AC_CHECK_FUNCS(uselocale)
 +    ;;
    *-mingw32*)
      GLIBCXX_CHECK_LINKER_FEATURES
      GLIBCXX_CHECK_MATH_SUPPORT
 diff --git a/libtool.m4 b/libtool.m4
-index 17f8e5f30..35fc2d3aa 100644
+index 17f8e5f30..6df43459f 100644
 --- a/libtool.m4
 +++ b/libtool.m4
-@@ -2578,6 +2578,17 @@ rdos*)
-   dynamic_linker=no
+@@ -2591,6 +2591,18 @@ solaris*)
+   postinstall_cmds='chmod +x $lib'
    ;;
  
 +iros*)
@@ -813,10 +829,11 @@ index 17f8e5f30..35fc2d3aa 100644
 +  hardcode_into_libs=yes
 +  ;;
 +
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -3124,6 +3135,10 @@ rdos*)
++
+ sunos4*)
+   version_type=sunos
+   library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${shared_ext}$versuffix'
+@@ -3128,6 +3140,10 @@ solaris*)
    lt_cv_deplibs_check_method=pass_all
    ;;
  
@@ -824,6 +841,6 @@ index 17f8e5f30..35fc2d3aa 100644
 +  lt_cv_deplibs_check_method=pass_all
 +  ;;
 +
- solaris*)
+ sysv5* | sco3.2v5* | sco5v6* | unixware* | OpenUNIX* | sysv4*uw2*)
    lt_cv_deplibs_check_method=pass_all
    ;;

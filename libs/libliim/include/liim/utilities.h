@@ -355,6 +355,10 @@ constexpr T* construct_at(T* location, Args&&... args) {
 }
 
 namespace LIIM {
+using std::construct_at;
+using std::forward;
+using std::move;
+
 namespace Detail {
     template<typename T>
     struct IsResultHelper {
@@ -546,49 +550,6 @@ struct IsBaseOf {
 };
 
 namespace details {
-    namespace invoke {
-
-        template<typename T>
-        struct InvokeImpl {
-            template<typename F, typename... Args>
-            static auto call(F&& f, Args&&... args) -> decltype(forward<F>(f)(forward<Args>(args)...));
-        };
-
-        template<typename B, typename MT>
-        struct InvokeImpl<MT B::*> {
-            template<typename T, typename Td = typename Decay<T>::type, typename = typename EnableIf<IsBaseOf<B, Td>::value>::type>
-            static auto get(T&& t) -> T&&;
-
-            template<typename T, typename Td = typename Decay<T>::type, typename = typename EnableIf<IsReferenceWrapper<Td>::value>::type>
-            static auto get(T&& t) -> decltype(t.get());
-
-            template<typename T, typename Td = typename Decay<T>::type, class = typename EnableIf<!IsBaseOf<B, Td>::value>::type,
-                     typename = typename EnableIf<!IsReferenceWrapper<Td>::value>::type>
-            static auto get(T&& t) -> decltype(*forward<T>(t));
-
-            template<typename T, typename... Args, typename MT1, typename = typename EnableIf<IsFunction<MT1>::value>::type>
-            static auto call(MT1 B::*pmf, T&& t, Args&&... args) -> decltype((InvokeImpl::get(forward<T>(t)).*pmf)(forward<Args>(args)...));
-
-            template<typename T>
-            static auto call(MT B::*pmd, T&& t) -> decltype(InvokeImpl::get(forward<T>(t)).*pmd);
-        };
-
-        template<typename F, typename... Args, typename Fd = typename Decay<F>::type>
-        auto INVOKE(F&& f, Args&&... args) -> decltype(InvokeImpl<Fd>::call(forward<F>(f), forward<Args>(args)...));
-
-        template<typename AlwaysVoid, typename, typename...>
-        struct InvokeResult {};
-        template<typename F, typename... Args>
-        struct InvokeResult<decltype(void(invoke::INVOKE(LIIM::declval<F>(), LIIM::declval<Args>()...))), F, Args...> {
-            using type = decltype(invoke::INVOKE(LIIM::declval<F>(), LIIM::declval<Args>()...));
-        };
-    }
-}
-
-template<typename F, typename... ArgTypes>
-struct InvokeResult : details::invoke::InvokeResult<void, F, ArgTypes...> {};
-
-namespace details {
     template<typename T, typename Type, typename T1, typename... Args>
     constexpr decltype(auto) INVOKE(Type T::*f, T1&& t1, Args&&... args) {
         if constexpr (IsMemberFunctionPointer<decltype(f)>::value) {
@@ -615,6 +576,11 @@ namespace details {
         return forward<F>(f)(forward<Args>(args)...);
     }
 }
+
+template<typename F, typename... Args>
+struct InvokeResult {
+    using type = decltype(details::INVOKE(declval<F>(), declval<Args>()...));
+};
 
 template<class F, class... Args>
 constexpr typename InvokeResult<F, Args...>::type invoke(F&& f, Args&&... args) {
@@ -691,10 +657,6 @@ struct piecewise_construct_t {
     explicit piecewise_construct_t() = default;
 };
 inline constexpr piecewise_construct_t piecewise_construct {};
-
-using std::construct_at;
-using std::forward;
-using std::move;
 
 template<typename U, typename T>
 constexpr U bit_cast(const T& value) {

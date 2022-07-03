@@ -512,6 +512,30 @@ template<typename T>
 constexpr auto clone(const T& value) requires(FalliblyCloneable<T>) {
     return value.clone();
 }
+
+template<typename T, typename... Args>
+requires(CreateableFrom<T, Args...> ||
+         FalliblyCreateableFrom<T, Args...>) using CreateAtResult = decltype(create_at<T>(declval<T*>(),
+                                                                                          forward<Args>(declval<Args>())...));
+
+template<typename T, typename... Args>
+requires(CreateableFrom<T, Args...> ||
+         FalliblyCreateableFrom<T, Args...>) using CreateResult = decltype(create<T>(forward<Args>(declval<Args>())...));
+
+namespace Detail {
+    template<typename T, typename... Args>
+    struct CreateAtResultDefaultHelper {
+        using Type = void;
+    };
+
+    template<typename T, typename... Args>
+    requires(CreateableFrom<T, Args...> || FalliblyCreateableFrom<T, Args...>) struct CreateAtResultDefaultHelper<T, Args...> {
+        using Type = CreateAtResult<T, Args...>;
+    };
+}
+
+template<typename T, typename... Args>
+using CreateAtResultDefault = Detail::CreateAtResultDefaultHelper<T, Args...>::Type;
 }
 
 using LIIM::Err;

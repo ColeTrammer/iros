@@ -1,2267 +1,14 @@
-diff --git a/configure b/configure
-index 504f64102..1be51708c 100755
---- a/configure
-+++ b/configure
-@@ -756,6 +756,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -922,6 +923,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE}'
-@@ -1174,6 +1176,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1311,7 +1322,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1471,6 +1482,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-diff --git a/gcc/configure b/gcc/configure
-index e8ecb3b02..318651a74 100755
---- a/gcc/configure
-+++ b/gcc/configure
-@@ -911,6 +911,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -1085,6 +1086,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE}'
-@@ -1337,6 +1339,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1474,7 +1485,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1627,6 +1638,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-@@ -5981,7 +5993,7 @@ else
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -6027,7 +6039,7 @@ else
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -6051,7 +6063,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -6096,7 +6108,7 @@ else
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -6120,7 +6132,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -14402,6 +14414,10 @@ rdos*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
- 
-+iros*)
-+  lt_cv_deplibs_check_method=pass_all
-+  ;;
-+
- solaris*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
-@@ -18854,6 +18870,17 @@ rdos*)
-   dynamic_linker=no
-   ;;
- 
-+iros*)
-+  version_type=linux
-+  need_lib_prefix=no
-+  need_version=no
-+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
-+  soname_spec='${libname}${release}${shared_ext}$major'
-+  shlibpath_var=LD_LIBRARY_PATH
-+  shlibpath_overrides_runpath=yes
-+  hardcode_into_libs=yes
-+  ;;
-+
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -19392,7 +19419,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 19395 "configure"
-+#line 19422 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -19498,7 +19525,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 19501 "configure"
-+#line 19528 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -22509,6 +22536,17 @@ rdos*)
-   dynamic_linker=no
-   ;;
- 
-+iros*)
-+  version_type=linux
-+  need_lib_prefix=no
-+  need_version=no
-+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
-+  soname_spec='${libname}${release}${shared_ext}$major'
-+  shlibpath_var=LD_LIBRARY_PATH
-+  shlibpath_overrides_runpath=yes
-+  hardcode_into_libs=yes
-+  ;;
-+
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -30979,7 +31017,7 @@ case "$target" in
-       gcc_cv_target_dl_iterate_phdr=no
-     fi
-     ;;
--  *-linux-musl*)
-+  *-linux-musl* | *-*-iros*)
-     gcc_cv_target_dl_iterate_phdr=yes
-     ;;
- esac
-diff --git a/gnattools/configure b/gnattools/configure
-index c2d755b72..7b3dfacee 100755
---- a/gnattools/configure
-+++ b/gnattools/configure
-@@ -634,6 +634,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -704,6 +705,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE}'
-@@ -956,6 +958,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1093,7 +1104,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1246,6 +1257,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-diff --git a/gotools/configure b/gotools/configure
-index ff71d2ae8..2f2aefa78 100755
---- a/gotools/configure
-+++ b/gotools/configure
-@@ -674,6 +674,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -748,6 +749,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
-@@ -1000,6 +1002,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1137,7 +1148,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1290,6 +1301,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-diff --git a/intl/configure b/intl/configure
-index 1e1003953..d141e1d7f 100755
---- a/intl/configure
-+++ b/intl/configure
-@@ -696,6 +696,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -776,6 +777,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE}'
-@@ -1028,6 +1030,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1165,7 +1176,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1318,6 +1329,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-@@ -4658,6 +4670,8 @@ main ()
-     if (*(data + i) != *(data3 + i))
-       return 14;
-   close (fd);
-+  free (data);
-+  free (data3);
-   return 0;
- }
- _ACEOF
-diff --git a/libada/configure b/libada/configure
-index 162d9731f..b1c289c91 100755
---- a/libada/configure
-+++ b/libada/configure
-@@ -679,6 +679,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -753,6 +754,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE}'
-@@ -1005,6 +1007,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1142,7 +1153,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1295,6 +1306,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-diff --git a/libatomic/configure b/libatomic/configure
-index 5867e69ac..4b2edf630 100755
---- a/libatomic/configure
-+++ b/libatomic/configure
-@@ -769,6 +769,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -851,6 +852,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
-@@ -1103,6 +1105,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1240,7 +1251,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1393,6 +1404,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-@@ -6121,6 +6133,10 @@ rdos*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
- 
-+iros*)
-+  lt_cv_deplibs_check_method=pass_all
-+  ;;
-+
- solaris*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
-@@ -10842,6 +10858,17 @@ rdos*)
-   dynamic_linker=no
-   ;;
- 
-+iros*)
-+  version_type=linux
-+  need_lib_prefix=no
-+  need_version=no
-+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
-+  soname_spec='${libname}${release}${shared_ext}$major'
-+  shlibpath_var=LD_LIBRARY_PATH
-+  shlibpath_overrides_runpath=yes
-+  hardcode_into_libs=yes
-+  ;;
-+
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -11380,7 +11407,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 11393 "configure"
-+#line 11410 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -11486,7 +11513,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 11499 "configure"
-+#line 11516 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -15588,7 +15615,7 @@ case "$host" in
-     case "$enable_cet" in
-       auto)
- 	# Check if target supports multi-byte NOPs
--	# and if assembler supports CET insn.
-+	# and if compiler and assembler support CET insn.
- 	cet_save_CFLAGS="$CFLAGS"
- 	CFLAGS="$CFLAGS -fcf-protection"
- 	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-diff --git a/libbacktrace/configure b/libbacktrace/configure
-index 9b66bf556..bdd859d25 100755
---- a/libbacktrace/configure
-+++ b/libbacktrace/configure
-@@ -767,6 +767,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -854,6 +855,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
-@@ -1106,6 +1108,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1243,7 +1254,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1396,6 +1407,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-@@ -6518,6 +6530,10 @@ rdos*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
- 
-+iros*)
-+  lt_cv_deplibs_check_method=pass_all
-+  ;;
-+
- solaris*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
-@@ -10971,6 +10987,17 @@ rdos*)
-   dynamic_linker=no
-   ;;
- 
-+iros*)
-+  version_type=linux
-+  need_lib_prefix=no
-+  need_version=no
-+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
-+  soname_spec='${libname}${release}${shared_ext}$major'
-+  shlibpath_var=LD_LIBRARY_PATH
-+  shlibpath_overrides_runpath=yes
-+  hardcode_into_libs=yes
-+  ;;
-+
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -11509,7 +11536,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 11512 "configure"
-+#line 11539 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -11615,7 +11642,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 11618 "configure"
-+#line 11645 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -11879,7 +11906,7 @@ else
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -11925,7 +11952,7 @@ else
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -11949,7 +11976,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -11994,7 +12021,7 @@ else
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -12018,7 +12045,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-diff --git a/libcc1/configure b/libcc1/configure
-index 021ec2655..b511ecd53 100755
---- a/libcc1/configure
-+++ b/libcc1/configure
-@@ -755,6 +755,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -844,6 +845,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
-@@ -1096,6 +1098,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1233,7 +1244,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1386,6 +1397,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-@@ -5787,6 +5799,10 @@ rdos*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
- 
-+iros*)
-+  lt_cv_deplibs_check_method=pass_all
-+  ;;
-+
- solaris*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
-@@ -10239,6 +10255,17 @@ rdos*)
-   dynamic_linker=no
-   ;;
- 
-+iros*)
-+  version_type=linux
-+  need_lib_prefix=no
-+  need_version=no
-+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
-+  soname_spec='${libname}${release}${shared_ext}$major'
-+  shlibpath_var=LD_LIBRARY_PATH
-+  shlibpath_overrides_runpath=yes
-+  hardcode_into_libs=yes
-+  ;;
-+
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -10777,7 +10804,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 10790 "configure"
-+#line 10807 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -10883,7 +10910,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 10896 "configure"
-+#line 10913 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -14028,16 +14055,6 @@ freebsd* | dragonfly*)
-   esac
-   ;;
- 
--gnu*)
--  version_type=linux
--  need_lib_prefix=no
--  need_version=no
--  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}${major} ${libname}${shared_ext}'
--  soname_spec='${libname}${release}${shared_ext}$major'
--  shlibpath_var=LD_LIBRARY_PATH
--  hardcode_into_libs=yes
--  ;;
--
- haiku*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -14159,7 +14176,7 @@ linux*oldld* | linux*aout* | linux*coff*)
- # project, but have not yet been accepted: they are GCC-local changes
- # for the time being.  (See
- # https://lists.gnu.org/archive/html/libtool-patches/2018-05/msg00000.html)
--linux* | k*bsd*-gnu | kopensolaris*-gnu | uclinuxfdpiceabi)
-+linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu* | uclinuxfdpiceabi)
-   version_type=linux
-   need_lib_prefix=no
-   need_version=no
-@@ -14310,6 +14327,17 @@ rdos*)
-   dynamic_linker=no
-   ;;
- 
-+iros*)
-+  version_type=linux
-+  need_lib_prefix=no
-+  need_version=no
-+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
-+  soname_spec='${libname}${release}${shared_ext}$major'
-+  shlibpath_var=LD_LIBRARY_PATH
-+  shlibpath_overrides_runpath=yes
-+  hardcode_into_libs=yes
-+  ;;
-+
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-diff --git a/libcody/configure b/libcody/configure
-index da52a5cfc..4c88f3b88 100755
---- a/libcody/configure
-+++ b/libcody/configure
-@@ -627,6 +627,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -702,6 +703,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
-@@ -954,6 +956,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1091,7 +1102,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1244,6 +1255,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-diff --git a/libcpp/configure b/libcpp/configure
-index 7e28606f6..8a94077ff 100755
---- a/libcpp/configure
-+++ b/libcpp/configure
-@@ -705,6 +705,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -790,6 +791,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
-@@ -1042,6 +1044,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1179,7 +1190,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1332,6 +1343,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-@@ -4589,7 +4601,7 @@ else
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -4635,7 +4647,7 @@ else
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -4659,7 +4671,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -4704,7 +4716,7 @@ else
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -4728,7 +4740,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-diff --git a/libdecnumber/configure b/libdecnumber/configure
-index 6b62f8ba6..aa9c4d12a 100755
---- a/libdecnumber/configure
-+++ b/libdecnumber/configure
-@@ -680,6 +680,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -755,6 +756,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
-@@ -1007,6 +1009,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1144,7 +1155,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1297,6 +1308,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-diff --git a/libffi/configure b/libffi/configure
-index 8d52ec4f4..c8d2d4204 100755
---- a/libffi/configure
-+++ b/libffi/configure
-@@ -775,6 +775,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -863,6 +864,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
-@@ -1115,6 +1117,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1252,7 +1263,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1405,6 +1416,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-@@ -6293,6 +6305,10 @@ rdos*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
- 
-+iros*)
-+  lt_cv_deplibs_check_method=pass_all
-+  ;;
-+
- solaris*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
-@@ -11015,6 +11031,17 @@ rdos*)
-   dynamic_linker=no
-   ;;
- 
-+iros*)
-+  version_type=linux
-+  need_lib_prefix=no
-+  need_version=no
-+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
-+  soname_spec='${libname}${release}${shared_ext}$major'
-+  shlibpath_var=LD_LIBRARY_PATH
-+  shlibpath_overrides_runpath=yes
-+  hardcode_into_libs=yes
-+  ;;
-+
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -11553,7 +11580,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 11566 "configure"
-+#line 11583 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -11659,7 +11686,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 11672 "configure"
-+#line 11689 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -14398,16 +14425,6 @@ freebsd* | dragonfly*)
-   esac
-   ;;
- 
--gnu*)
--  version_type=linux
--  need_lib_prefix=no
--  need_version=no
--  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}${major} ${libname}${shared_ext}'
--  soname_spec='${libname}${release}${shared_ext}$major'
--  shlibpath_var=LD_LIBRARY_PATH
--  hardcode_into_libs=yes
--  ;;
--
- haiku*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -14529,7 +14546,7 @@ linux*oldld* | linux*aout* | linux*coff*)
- # project, but have not yet been accepted: they are GCC-local changes
- # for the time being.  (See
- # https://lists.gnu.org/archive/html/libtool-patches/2018-05/msg00000.html)
--linux* | k*bsd*-gnu | kopensolaris*-gnu | uclinuxfdpiceabi)
-+linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu* | uclinuxfdpiceabi)
-   version_type=linux
-   need_lib_prefix=no
-   need_version=no
-@@ -14680,6 +14697,17 @@ rdos*)
-   dynamic_linker=no
-   ;;
- 
-+iros*)
-+  version_type=linux
-+  need_lib_prefix=no
-+  need_version=no
-+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
-+  soname_spec='${libname}${release}${shared_ext}$major'
-+  shlibpath_var=LD_LIBRARY_PATH
-+  shlibpath_overrides_runpath=yes
-+  hardcode_into_libs=yes
-+  ;;
-+
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-diff --git a/libgcc/configure b/libgcc/configure
-index dd3afb2c9..f09f0dd08 100755
---- a/libgcc/configure
-+++ b/libgcc/configure
-@@ -675,6 +675,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -766,6 +767,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
-@@ -1018,6 +1020,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1155,7 +1166,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1308,6 +1319,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-@@ -4207,7 +4219,7 @@ else
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -4253,7 +4265,7 @@ else
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -4277,7 +4289,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -4322,7 +4334,7 @@ else
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -4346,7 +4358,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-diff --git a/libiberty/configure b/libiberty/configure
-index 2ea7c1198..a49cff297 100755
---- a/libiberty/configure
-+++ b/libiberty/configure
-@@ -681,6 +681,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -760,6 +761,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE}'
-@@ -1012,6 +1014,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1149,7 +1160,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1302,6 +1313,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-@@ -4283,7 +4295,7 @@ else
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -4329,7 +4341,7 @@ else
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -4353,7 +4365,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -4398,7 +4410,7 @@ else
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -4422,7 +4434,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -7518,6 +7530,8 @@ main ()
-     if (*(data + i) != *(data3 + i))
-       return 14;
-   close (fd);
-+  free (data);
-+  free (data3);
-   return 0;
- }
- _ACEOF
-diff --git a/libitm/configure b/libitm/configure
-index b8f1e2360..cb97c36c7 100755
---- a/libitm/configure
-+++ b/libitm/configure
-@@ -776,6 +776,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -861,6 +862,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
-@@ -1113,6 +1115,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1250,7 +1261,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1403,6 +1414,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-@@ -6796,6 +6808,10 @@ rdos*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
- 
-+iros*)
-+  lt_cv_deplibs_check_method=pass_all
-+  ;;
-+
- solaris*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
-@@ -11518,6 +11534,17 @@ rdos*)
-   dynamic_linker=no
-   ;;
- 
-+iros*)
-+  version_type=linux
-+  need_lib_prefix=no
-+  need_version=no
-+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
-+  soname_spec='${libname}${release}${shared_ext}$major'
-+  shlibpath_var=LD_LIBRARY_PATH
-+  shlibpath_overrides_runpath=yes
-+  hardcode_into_libs=yes
-+  ;;
-+
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -12056,7 +12083,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 12069 "configure"
-+#line 12086 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -12162,7 +12189,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 12175 "configure"
-+#line 12192 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -14901,16 +14928,6 @@ freebsd* | dragonfly*)
-   esac
-   ;;
- 
--gnu*)
--  version_type=linux
--  need_lib_prefix=no
--  need_version=no
--  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}${major} ${libname}${shared_ext}'
--  soname_spec='${libname}${release}${shared_ext}$major'
--  shlibpath_var=LD_LIBRARY_PATH
--  hardcode_into_libs=yes
--  ;;
--
- haiku*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -15032,7 +15049,7 @@ linux*oldld* | linux*aout* | linux*coff*)
- # project, but have not yet been accepted: they are GCC-local changes
- # for the time being.  (See
- # https://lists.gnu.org/archive/html/libtool-patches/2018-05/msg00000.html)
--linux* | k*bsd*-gnu | kopensolaris*-gnu | uclinuxfdpiceabi)
-+linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu* | uclinuxfdpiceabi)
-   version_type=linux
-   need_lib_prefix=no
-   need_version=no
-@@ -15183,6 +15200,17 @@ rdos*)
-   dynamic_linker=no
-   ;;
- 
-+iros*)
-+  version_type=linux
-+  need_lib_prefix=no
-+  need_version=no
-+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
-+  soname_spec='${libname}${release}${shared_ext}$major'
-+  shlibpath_var=LD_LIBRARY_PATH
-+  shlibpath_overrides_runpath=yes
-+  hardcode_into_libs=yes
-+  ;;
-+
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -17882,7 +17910,7 @@ case "$host" in
-     case "$enable_cet" in
-       auto)
- 	# Check if target supports multi-byte NOPs
--	# and if assembler supports CET insn.
-+	# and if compiler and assembler support CET insn.
- 	cet_save_CFLAGS="$CFLAGS"
- 	CFLAGS="$CFLAGS -fcf-protection"
- 	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-diff --git a/liboffloadmic/configure b/liboffloadmic/configure
-old mode 100644
-new mode 100755
-index dfa8287fd..346f7923d
---- a/liboffloadmic/configure
-+++ b/liboffloadmic/configure
-@@ -748,6 +748,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -835,6 +836,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
-@@ -1087,6 +1089,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1224,7 +1235,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1377,6 +1388,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-@@ -6432,6 +6444,10 @@ rdos*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
- 
-+iros*)
-+  lt_cv_deplibs_check_method=pass_all
-+  ;;
-+
- solaris*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
-@@ -7900,23 +7916,25 @@ _LT_EOF
- fi
- { $as_echo "$as_me:${as_lineno-$LINENO}: result: $lt_cv_ld_force_load" >&5
- $as_echo "$lt_cv_ld_force_load" >&6; }
--    case $host_os in
--    rhapsody* | darwin1.[012])
-+    # Allow for Darwin 4-7 (macOS 10.0-10.3) although these are not expect to
-+    # build without first building modern cctools / linker.
-+    case $host_cpu-$host_os in
-+    *-rhapsody* | *-darwin1.[012])
-       _lt_dar_allow_undefined='${wl}-undefined ${wl}suppress' ;;
--    darwin1.*)
-+    *-darwin1.*)
-       _lt_dar_allow_undefined='${wl}-flat_namespace ${wl}-undefined ${wl}suppress' ;;
--    darwin*) # darwin 5.x on
--      # if running on 10.5 or later, the deployment target defaults
--      # to the OS version, if on x86, and 10.4, the deployment
--      # target defaults to 10.4. Don't you love it?
--      case ${MACOSX_DEPLOYMENT_TARGET-10.0},$host in
--	10.0,*86*-darwin8*|10.0,*-darwin[91]*)
--	  _lt_dar_allow_undefined='${wl}-undefined ${wl}dynamic_lookup' ;;
-+    *-darwin*)
-+      # darwin 5.x (macOS 10.1) onwards we only need to adjust when the
-+      # deployment target is forced to an earlier version.
-+      case ${MACOSX_DEPLOYMENT_TARGET-UNSET},$host in
-+	UNSET,*-darwin[89]*|UNSET,*-darwin[12][0123456789]*)
-+	  ;;
- 	10.[012][,.]*)
--	  _lt_dar_allow_undefined='${wl}-flat_namespace ${wl}-undefined ${wl}suppress' ;;
--	10.*)
--	  _lt_dar_allow_undefined='${wl}-undefined ${wl}dynamic_lookup' ;;
--      esac
-+	  _lt_dar_allow_undefined='${wl}-flat_namespace ${wl}-undefined ${wl}suppress'
-+	  ;;
-+	*)
-+	  ;;
-+     esac
-     ;;
-   esac
-     if test "$lt_cv_apple_cc_single_mod" = "yes"; then
-@@ -10882,6 +10900,17 @@ rdos*)
-   dynamic_linker=no
-   ;;
- 
-+iros*)
-+  version_type=linux
-+  need_lib_prefix=no
-+  need_version=no
-+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
-+  soname_spec='${libname}${release}${shared_ext}$major'
-+  shlibpath_var=LD_LIBRARY_PATH
-+  shlibpath_overrides_runpath=yes
-+  hardcode_into_libs=yes
-+  ;;
-+
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -11420,7 +11449,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 11433 "configure"
-+#line 11452 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -11526,7 +11555,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 11539 "configure"
-+#line 11558 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -14265,16 +14294,6 @@ freebsd* | dragonfly*)
-   esac
-   ;;
- 
--gnu*)
--  version_type=linux
--  need_lib_prefix=no
--  need_version=no
--  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}${major} ${libname}${shared_ext}'
--  soname_spec='${libname}${release}${shared_ext}$major'
--  shlibpath_var=LD_LIBRARY_PATH
--  hardcode_into_libs=yes
--  ;;
--
- haiku*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -14396,7 +14415,7 @@ linux*oldld* | linux*aout* | linux*coff*)
- # project, but have not yet been accepted: they are GCC-local changes
- # for the time being.  (See
- # https://lists.gnu.org/archive/html/libtool-patches/2018-05/msg00000.html)
--linux* | k*bsd*-gnu | kopensolaris*-gnu | uclinuxfdpiceabi)
-+linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu* | uclinuxfdpiceabi)
-   version_type=linux
-   need_lib_prefix=no
-   need_version=no
-@@ -14547,6 +14566,17 @@ rdos*)
-   dynamic_linker=no
-   ;;
- 
-+iros*)
-+  version_type=linux
-+  need_lib_prefix=no
-+  need_version=no
-+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
-+  soname_spec='${libname}${release}${shared_ext}$major'
-+  shlibpath_var=LD_LIBRARY_PATH
-+  shlibpath_overrides_runpath=yes
-+  hardcode_into_libs=yes
-+  ;;
-+
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-diff --git a/libphobos/configure b/libphobos/configure
-index b1c8ecb56..eded3b14a 100755
---- a/libphobos/configure
-+++ b/libphobos/configure
-@@ -806,6 +806,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -897,6 +898,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
-@@ -1149,6 +1151,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1286,7 +1297,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1439,6 +1450,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-@@ -6760,6 +6772,10 @@ rdos*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
- 
-+iros*)
-+  lt_cv_deplibs_check_method=pass_all
-+  ;;
-+
- solaris*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
-@@ -11212,6 +11228,17 @@ rdos*)
-   dynamic_linker=no
-   ;;
- 
-+iros*)
-+  version_type=linux
-+  need_lib_prefix=no
-+  need_version=no
-+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
-+  soname_spec='${libname}${release}${shared_ext}$major'
-+  shlibpath_var=LD_LIBRARY_PATH
-+  shlibpath_overrides_runpath=yes
-+  hardcode_into_libs=yes
-+  ;;
-+
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -11750,7 +11777,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 11753 "configure"
-+#line 11780 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -11856,7 +11883,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 11859 "configure"
-+#line 11886 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-diff --git a/libquadmath/configure b/libquadmath/configure
-index 31918507f..ca0b858d7 100755
---- a/libquadmath/configure
-+++ b/libquadmath/configure
-@@ -752,6 +752,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -839,6 +840,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
-@@ -1091,6 +1093,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1228,7 +1239,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1381,6 +1392,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-@@ -5782,6 +5794,10 @@ rdos*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
- 
-+iros*)
-+  lt_cv_deplibs_check_method=pass_all
-+  ;;
-+
- solaris*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
-@@ -10253,6 +10269,17 @@ rdos*)
-   dynamic_linker=no
-   ;;
- 
-+iros*)
-+  version_type=linux
-+  need_lib_prefix=no
-+  need_version=no
-+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
-+  soname_spec='${libname}${release}${shared_ext}$major'
-+  shlibpath_var=LD_LIBRARY_PATH
-+  shlibpath_overrides_runpath=yes
-+  hardcode_into_libs=yes
-+  ;;
-+
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -10806,7 +10833,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 10819 "configure"
-+#line 10836 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -10912,7 +10939,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 10925 "configure"
-+#line 10942 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -13031,7 +13058,7 @@ case "$host" in
-     case "$enable_cet" in
-       auto)
- 	# Check if target supports multi-byte NOPs
--	# and if assembler supports CET insn.
-+	# and if compiler and assembler support CET insn.
- 	cet_save_CFLAGS="$CFLAGS"
- 	CFLAGS="$CFLAGS -fcf-protection"
- 	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-diff --git a/libsanitizer/configure b/libsanitizer/configure
-index 1d9ae59be..6da795472 100755
---- a/libsanitizer/configure
-+++ b/libsanitizer/configure
-@@ -782,6 +782,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -872,6 +873,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
-@@ -1124,6 +1126,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1261,7 +1272,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1414,6 +1425,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-@@ -7366,6 +7378,10 @@ rdos*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
- 
-+iros*)
-+  lt_cv_deplibs_check_method=pass_all
-+  ;;
-+
- solaris*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
-@@ -11818,6 +11834,17 @@ rdos*)
-   dynamic_linker=no
-   ;;
- 
-+iros*)
-+  version_type=linux
-+  need_lib_prefix=no
-+  need_version=no
-+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
-+  soname_spec='${libname}${release}${shared_ext}$major'
-+  shlibpath_var=LD_LIBRARY_PATH
-+  shlibpath_overrides_runpath=yes
-+  hardcode_into_libs=yes
-+  ;;
-+
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -12356,7 +12383,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 12369 "configure"
-+#line 12386 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -12462,7 +12489,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 12475 "configure"
-+#line 12492 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -15201,16 +15228,6 @@ freebsd* | dragonfly*)
-   esac
-   ;;
- 
--gnu*)
--  version_type=linux
--  need_lib_prefix=no
--  need_version=no
--  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}${major} ${libname}${shared_ext}'
--  soname_spec='${libname}${release}${shared_ext}$major'
--  shlibpath_var=LD_LIBRARY_PATH
--  hardcode_into_libs=yes
--  ;;
--
- haiku*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -15332,7 +15349,7 @@ linux*oldld* | linux*aout* | linux*coff*)
- # project, but have not yet been accepted: they are GCC-local changes
- # for the time being.  (See
- # https://lists.gnu.org/archive/html/libtool-patches/2018-05/msg00000.html)
--linux* | k*bsd*-gnu | kopensolaris*-gnu | uclinuxfdpiceabi)
-+linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu* | uclinuxfdpiceabi)
-   version_type=linux
-   need_lib_prefix=no
-   need_version=no
-@@ -15483,6 +15500,17 @@ rdos*)
-   dynamic_linker=no
-   ;;
- 
-+iros*)
-+  version_type=linux
-+  need_lib_prefix=no
-+  need_version=no
-+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
-+  soname_spec='${libname}${release}${shared_ext}$major'
-+  shlibpath_var=LD_LIBRARY_PATH
-+  shlibpath_overrides_runpath=yes
-+  hardcode_into_libs=yes
-+  ;;
-+
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-diff --git a/libssp/configure b/libssp/configure
-index 10ba209bd..891eab73d 100755
---- a/libssp/configure
-+++ b/libssp/configure
-@@ -746,6 +746,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -827,6 +828,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
-@@ -1079,6 +1081,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1216,7 +1227,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1369,6 +1380,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-@@ -4338,7 +4350,7 @@ case "$host" in
-     case "$enable_cet" in
-       auto)
- 	# Check if target supports multi-byte NOPs
--	# and if assembler supports CET insn.
-+	# and if compiler and assembler support CET insn.
- 	cet_save_CFLAGS="$CFLAGS"
- 	CFLAGS="$CFLAGS -fcf-protection"
- 	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-@@ -5968,6 +5980,10 @@ rdos*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
- 
-+iros*)
-+  lt_cv_deplibs_check_method=pass_all
-+  ;;
-+
- solaris*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
-@@ -10439,6 +10455,17 @@ rdos*)
-   dynamic_linker=no
-   ;;
- 
-+iros*)
-+  version_type=linux
-+  need_lib_prefix=no
-+  need_version=no
-+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
-+  soname_spec='${libname}${release}${shared_ext}$major'
-+  shlibpath_var=LD_LIBRARY_PATH
-+  shlibpath_overrides_runpath=yes
-+  hardcode_into_libs=yes
-+  ;;
-+
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -10992,7 +11019,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 11005 "configure"
-+#line 11022 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -11098,7 +11125,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 11111 "configure"
-+#line 11128 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-diff --git a/libstdc++-v3/Makefile.in b/libstdc++-v3/Makefile.in
-index a1955dddd..4a11dd1c7 100644
---- a/libstdc++-v3/Makefile.in
-+++ b/libstdc++-v3/Makefile.in
-@@ -369,6 +369,7 @@ prefix = @prefix@
- program_transform_name = @program_transform_name@
- psdir = @psdir@
- python_mod_dir = @python_mod_dir@
-+runstatedir = @runstatedir@
- sbindir = @sbindir@
- sharedstatedir = @sharedstatedir@
- srcdir = @srcdir@
+commit 4c0d32583e3b8baf60658003e6c931ff5b431bf8
+Author: ColeTrammer <cole.trammer@gmail.com>
+Date:   Sun Jul 3 05:57:09 2022 +0000
+
+    run autoconf
+
 diff --git a/libstdc++-v3/configure b/libstdc++-v3/configure
-index 326a279c5..07bbfdebe 100755
+index 9b94fd71e..eae4cc70d 100755
 --- a/libstdc++-v3/configure
 +++ b/libstdc++-v3/configure
-@@ -876,6 +876,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -1004,6 +1005,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
-@@ -1256,6 +1258,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1393,7 +1404,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1546,6 +1557,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-@@ -5041,7 +5053,7 @@ else
+@@ -5100,7 +5100,7 @@ else
      We can't simply define LARGE_OFF_T to be 9223372036854775807,
      since some C++ compilers masquerading as C compilers
      incorrectly reject 9223372036854775807.  */
@@ -2270,7 +17,7 @@ index 326a279c5..07bbfdebe 100755
    int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
  		       && LARGE_OFF_T % 2147483647 == 1)
  		      ? 1 : -1];
-@@ -5087,7 +5099,7 @@ else
+@@ -5146,7 +5146,7 @@ else
      We can't simply define LARGE_OFF_T to be 9223372036854775807,
      since some C++ compilers masquerading as C compilers
      incorrectly reject 9223372036854775807.  */
@@ -2279,7 +26,7 @@ index 326a279c5..07bbfdebe 100755
    int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
  		       && LARGE_OFF_T % 2147483647 == 1)
  		      ? 1 : -1];
-@@ -5111,7 +5123,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+@@ -5170,7 +5170,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
      We can't simply define LARGE_OFF_T to be 9223372036854775807,
      since some C++ compilers masquerading as C compilers
      incorrectly reject 9223372036854775807.  */
@@ -2288,7 +35,7 @@ index 326a279c5..07bbfdebe 100755
    int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
  		       && LARGE_OFF_T % 2147483647 == 1)
  		      ? 1 : -1];
-@@ -5156,7 +5168,7 @@ else
+@@ -5215,7 +5215,7 @@ else
      We can't simply define LARGE_OFF_T to be 9223372036854775807,
      since some C++ compilers masquerading as C compilers
      incorrectly reject 9223372036854775807.  */
@@ -2297,7 +44,7 @@ index 326a279c5..07bbfdebe 100755
    int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
  		       && LARGE_OFF_T % 2147483647 == 1)
  		      ? 1 : -1];
-@@ -5180,7 +5192,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+@@ -5239,7 +5239,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
      We can't simply define LARGE_OFF_T to be 9223372036854775807,
      since some C++ compilers masquerading as C compilers
      incorrectly reject 9223372036854775807.  */
@@ -2306,7 +53,7 @@ index 326a279c5..07bbfdebe 100755
    int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
  		       && LARGE_OFF_T % 2147483647 == 1)
  		      ? 1 : -1];
-@@ -6978,6 +6990,10 @@ rdos*)
+@@ -7043,6 +7043,10 @@ solaris*)
    lt_cv_deplibs_check_method=pass_all
    ;;
  
@@ -2314,11 +61,11 @@ index 326a279c5..07bbfdebe 100755
 +  lt_cv_deplibs_check_method=pass_all
 +  ;;
 +
- solaris*)
+ sysv5* | sco3.2v5* | sco5v6* | unixware* | OpenUNIX* | sysv4*uw2*)
    lt_cv_deplibs_check_method=pass_all
    ;;
-@@ -11577,6 +11593,17 @@ rdos*)
-   dynamic_linker=no
+@@ -11651,6 +11655,18 @@ solaris*)
+   postinstall_cmds='chmod +x $lib'
    ;;
  
 +iros*)
@@ -2332,29 +79,30 @@ index 326a279c5..07bbfdebe 100755
 +  hardcode_into_libs=yes
 +  ;;
 +
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -12130,7 +12157,7 @@ else
++
+ sunos4*)
+   version_type=sunos
+   library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${shared_ext}$versuffix'
+@@ -12191,7 +12207,7 @@ else
    lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
    lt_status=$lt_dlunknown
    cat > conftest.$ac_ext <<_LT_EOF
--#line 12133 "configure"
-+#line 12160 "configure"
+-#line 12194 "configure"
++#line 12210 "configure"
  #include "confdefs.h"
  
  #if HAVE_DLFCN_H
-@@ -12236,7 +12263,7 @@ else
+@@ -12297,7 +12313,7 @@ else
    lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
    lt_status=$lt_dlunknown
    cat > conftest.$ac_ext <<_LT_EOF
--#line 12239 "configure"
-+#line 12266 "configure"
+-#line 12300 "configure"
++#line 12316 "configure"
  #include "confdefs.h"
  
  #if HAVE_DLFCN_H
-@@ -15256,6 +15283,17 @@ rdos*)
-   dynamic_linker=no
+@@ -15330,6 +15346,18 @@ solaris*)
+   postinstall_cmds='chmod +x $lib'
    ;;
  
 +iros*)
@@ -2368,73 +116,65 @@ index 326a279c5..07bbfdebe 100755
 +  hardcode_into_libs=yes
 +  ;;
 +
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -15918,7 +15956,7 @@ $as_echo "$glibcxx_cv_atomic_long_long" >&6; }
++
+ sunos4*)
+   version_type=sunos
+   library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${shared_ext}$versuffix'
+@@ -15981,7 +16009,7 @@ $as_echo "$glibcxx_cv_atomic_long_long" >&6; }
    # Fake what AC_TRY_COMPILE does.
  
      cat > conftest.$ac_ext << EOF
--#line 15921 "configure"
-+#line 15959 "configure"
+-#line 15984 "configure"
++#line 16012 "configure"
  int main()
  {
    typedef bool atomic_type;
-@@ -15953,7 +15991,7 @@ $as_echo "$glibcxx_cv_atomic_bool" >&6; }
+@@ -16016,7 +16044,7 @@ $as_echo "$glibcxx_cv_atomic_bool" >&6; }
      rm -f conftest*
  
      cat > conftest.$ac_ext << EOF
--#line 15956 "configure"
-+#line 15994 "configure"
+-#line 16019 "configure"
++#line 16047 "configure"
  int main()
  {
    typedef short atomic_type;
-@@ -15988,7 +16026,7 @@ $as_echo "$glibcxx_cv_atomic_short" >&6; }
+@@ -16051,7 +16079,7 @@ $as_echo "$glibcxx_cv_atomic_short" >&6; }
      rm -f conftest*
  
      cat > conftest.$ac_ext << EOF
--#line 15991 "configure"
-+#line 16029 "configure"
+-#line 16054 "configure"
++#line 16082 "configure"
  int main()
  {
    // NB: _Atomic_word not necessarily int.
-@@ -16024,7 +16062,7 @@ $as_echo "$glibcxx_cv_atomic_int" >&6; }
+@@ -16087,7 +16115,7 @@ $as_echo "$glibcxx_cv_atomic_int" >&6; }
      rm -f conftest*
  
      cat > conftest.$ac_ext << EOF
--#line 16027 "configure"
-+#line 16065 "configure"
+-#line 16090 "configure"
++#line 16118 "configure"
  int main()
  {
    typedef long long atomic_type;
-@@ -16177,7 +16215,7 @@ $as_echo "mutex" >&6; }
+@@ -16243,7 +16271,7 @@ $as_echo "mutex" >&6; }
    # unnecessary for this test.
  
      cat > conftest.$ac_ext << EOF
--#line 16180 "configure"
-+#line 16218 "configure"
+-#line 16246 "configure"
++#line 16274 "configure"
  int main()
  {
    _Decimal32 d1;
-@@ -16219,7 +16257,7 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+@@ -16285,7 +16313,7 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
    # unnecessary for this test.
  
-     cat > conftest.$ac_ext << EOF
--#line 16222 "configure"
-+#line 16260 "configure"
+   cat > conftest.$ac_ext << EOF
+-#line 16288 "configure"
++#line 16316 "configure"
  template<typename T1, typename T2>
    struct same
    { typedef T2 type; };
-@@ -16253,7 +16291,7 @@ $as_echo "$enable_int128" >&6; }
-     rm -f conftest*
- 
-     cat > conftest.$ac_ext << EOF
--#line 16256 "configure"
-+#line 16294 "configure"
- template<typename T1, typename T2>
-   struct same
-   { typedef T2 type; };
-@@ -20601,7 +20639,7 @@ fi
+@@ -20569,7 +20597,7 @@ fi
          ac_has_nanosleep=yes
          ac_has_sched_yield=yes
          ;;
@@ -2443,7 +183,7 @@ index 326a279c5..07bbfdebe 100755
          ac_has_clock_monotonic=yes
          ac_has_clock_realtime=yes
          ac_has_nanosleep=yes
-@@ -54393,7 +54431,62 @@ _ACEOF
+@@ -54379,7 +54407,62 @@ _ACEOF
    fi
  
      ;;
@@ -2507,255 +247,42 @@ index 326a279c5..07bbfdebe 100755
  
    # If we're not using GNU ld, then there's no point in even trying these
    # tests.  Check for that first.  We should have already tested for gld
-@@ -60307,472 +60400,6622 @@ done
+@@ -60296,28 +60379,9 @@ done
  
    CXXFLAGS="$ac_save_CXXFLAGS"
  
 -    for ac_func in aligned_alloc posix_memalign memalign _aligned_malloc
-+    $as_echo "#define _GLIBCXX_USE_DEV_RANDOM 1" >>confdefs.h
-+
-+    $as_echo "#define _GLIBCXX_USE_RANDOM_TR1 1" >>confdefs.h
-+
-+
-+
-+   # Check whether --enable-tls was given.
-+if test "${enable_tls+set}" = set; then :
-+  enableval=$enable_tls;
-+      case "$enableval" in
-+       yes|no) ;;
-+       *) as_fn_error $? "Argument to enable/disable tls must be yes or no" "$LINENO" 5 ;;
-+      esac
-+
-+else
-+  enable_tls=yes
-+fi
-+
-+
-+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the target supports thread-local storage" >&5
-+$as_echo_n "checking whether the target supports thread-local storage... " >&6; }
-+if ${gcc_cv_have_tls+:} false; then :
-+  $as_echo_n "(cached) " >&6
-+else
-+
-+    if test "$cross_compiling" = yes; then :
-+                if test x$gcc_no_link = xyes; then
-+  as_fn_error $? "Link tests are not allowed after GCC_NO_EXECUTABLES." "$LINENO" 5
-+fi
-+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-+/* end confdefs.h.  */
-+__thread int a; int b; int main() { return a = b; }
-+_ACEOF
-+if ac_fn_c_try_link "$LINENO"; then :
-+  chktls_save_LDFLAGS="$LDFLAGS"
-+	  	  	  case $host in
-+	    *-*-linux* | -*-uclinuxfdpic*)
-+	      LDFLAGS="-shared -Wl,--no-undefined $LDFLAGS"
-+	      ;;
-+	  esac
-+	  chktls_save_CFLAGS="$CFLAGS"
-+	  CFLAGS="-fPIC $CFLAGS"
-+	  	  if test x$gcc_no_link = xyes; then
-+  as_fn_error $? "Link tests are not allowed after GCC_NO_EXECUTABLES." "$LINENO" 5
-+fi
-+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-+/* end confdefs.h.  */
-+int f() { return 0; }
-+_ACEOF
-+if ac_fn_c_try_link "$LINENO"; then :
-+  if test x$gcc_no_link = xyes; then
-+  as_fn_error $? "Link tests are not allowed after GCC_NO_EXECUTABLES." "$LINENO" 5
-+fi
-+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-+/* end confdefs.h.  */
-+__thread int a; int b; int f() { return a = b; }
-+_ACEOF
-+if ac_fn_c_try_link "$LINENO"; then :
-+  gcc_cv_have_tls=yes
-+else
-+  gcc_cv_have_tls=no
-+fi
-+rm -f core conftest.err conftest.$ac_objext \
-+    conftest$ac_exeext conftest.$ac_ext
-+else
-+  gcc_cv_have_tls=yes
-+fi
-+rm -f core conftest.err conftest.$ac_objext \
-+    conftest$ac_exeext conftest.$ac_ext
-+	  CFLAGS="$chktls_save_CFLAGS"
-+	  LDFLAGS="$chktls_save_LDFLAGS"
-+else
-+  gcc_cv_have_tls=no
-+fi
-+rm -f core conftest.err conftest.$ac_objext \
-+    conftest$ac_exeext conftest.$ac_ext
-+
-+
-+else
-+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-+/* end confdefs.h.  */
-+__thread int a; int b; int main() { return a = b; }
-+_ACEOF
-+if ac_fn_c_try_run "$LINENO"; then :
-+                      chktls_save_LDFLAGS="$LDFLAGS"
-+      LDFLAGS="-static $LDFLAGS"
-+      if test x$gcc_no_link = xyes; then
-+  as_fn_error $? "Link tests are not allowed after GCC_NO_EXECUTABLES." "$LINENO" 5
-+fi
-+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-+/* end confdefs.h.  */
-+int main() { return 0; }
-+_ACEOF
-+if ac_fn_c_try_link "$LINENO"; then :
-+  if test "$cross_compiling" = yes; then :
-+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-+as_fn_error $? "cannot run test program while cross compiling
-+See \`config.log' for more details" "$LINENO" 5; }
-+else
-+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-+/* end confdefs.h.  */
-+__thread int a; int b; int main() { return a = b; }
-+_ACEOF
-+if ac_fn_c_try_run "$LINENO"; then :
-+  gcc_cv_have_tls=yes
-+else
-+  gcc_cv_have_tls=no
-+fi
-+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-+  conftest.$ac_objext conftest.beam conftest.$ac_ext
-+fi
-+
-+else
-+  gcc_cv_have_tls=yes
-+fi
-+rm -f core conftest.err conftest.$ac_objext \
-+    conftest$ac_exeext conftest.$ac_ext
-+      LDFLAGS="$chktls_save_LDFLAGS"
-+      if test $gcc_cv_have_tls = yes; then
-+						chktls_save_CFLAGS="$CFLAGS"
-+	thread_CFLAGS=failed
-+	for flag in '' '-pthread' '-lpthread'; do
-+	  CFLAGS="$flag $chktls_save_CFLAGS"
-+	  if test x$gcc_no_link = xyes; then
-+  as_fn_error $? "Link tests are not allowed after GCC_NO_EXECUTABLES." "$LINENO" 5
-+fi
-+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-+/* end confdefs.h.  */
-+#include <pthread.h>
-+		void *g(void *d) { return NULL; }
-+int
-+main ()
-+{
-+pthread_t t; pthread_create(&t,NULL,g,NULL);
-+  ;
-+  return 0;
-+}
-+_ACEOF
-+if ac_fn_c_try_link "$LINENO"; then :
-+  thread_CFLAGS="$flag"
-+fi
-+rm -f core conftest.err conftest.$ac_objext \
-+    conftest$ac_exeext conftest.$ac_ext
-+	  if test "X$thread_CFLAGS" != Xfailed; then
-+	    break
-+	  fi
-+	done
-+	CFLAGS="$chktls_save_CFLAGS"
-+	if test "X$thread_CFLAGS" != Xfailed; then
-+	  CFLAGS="$thread_CFLAGS $chktls_save_CFLAGS"
-+ 	  	  	  	  	  	  if test "$cross_compiling" = yes; then :
-+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
-+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
-+as_fn_error $? "cannot run test program while cross compiling
-+See \`config.log' for more details" "$LINENO" 5; }
-+else
-+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-+/* end confdefs.h.  */
-+#include <pthread.h>
-+		__thread int a;
-+		static int *volatile a_in_other_thread;
-+		static void *
-+		thread_func (void *arg)
-+		{
-+		  a_in_other_thread = &a;
-+		  return (void *)0;
-+		}
-+int
-+main ()
-+{
-+pthread_t thread;
-+		void *thread_retval;
-+		int *volatile a_in_main_thread;
-+		a_in_main_thread = &a;
-+		if (pthread_create (&thread, (pthread_attr_t *)0,
-+				    thread_func, (void *)0))
-+		  return 0;
-+		if (pthread_join (thread, &thread_retval))
-+		  return 0;
-+		return (a_in_other_thread == a_in_main_thread);
-+  ;
-+  return 0;
-+}
-+_ACEOF
-+if ac_fn_c_try_run "$LINENO"; then :
-+  gcc_cv_have_tls=yes
-+else
-+  gcc_cv_have_tls=no
-+fi
-+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-+  conftest.$ac_objext conftest.beam conftest.$ac_ext
-+fi
-+
-+	  CFLAGS="$chktls_save_CFLAGS"
-+	fi
-+      fi
-+else
-+  gcc_cv_have_tls=no
-+fi
-+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-+  conftest.$ac_objext conftest.beam conftest.$ac_ext
-+fi
-+
-+fi
-+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gcc_cv_have_tls" >&5
-+$as_echo "$gcc_cv_have_tls" >&6; }
-+  if test "$enable_tls $gcc_cv_have_tls" = "yes yes"; then
-+
-+$as_echo "#define HAVE_TLS 1" >>confdefs.h
-+
-+  fi
-+    for ac_func in __cxa_thread_atexit_impl
- do :
+-do :
 -  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 -ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
 -if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
-+  ac_fn_c_check_func "$LINENO" "__cxa_thread_atexit_impl" "ac_cv_func___cxa_thread_atexit_impl"
-+if test "x$ac_cv_func___cxa_thread_atexit_impl" = xyes; then :
-   cat >>confdefs.h <<_ACEOF
+-  cat >>confdefs.h <<_ACEOF
 -#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
-+#define HAVE___CXA_THREAD_ATEXIT_IMPL 1
- _ACEOF
- 
- fi
- done
- 
+-_ACEOF
+-
+-fi
+-done
+-
 -    for ac_func in _wfopen
-+    for ac_func in aligned_alloc posix_memalign memalign _aligned_malloc
- do :
+-do :
 -  ac_fn_c_check_func "$LINENO" "_wfopen" "ac_cv_func__wfopen"
 -if test "x$ac_cv_func__wfopen" = xyes; then :
-+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
-   cat >>confdefs.h <<_ACEOF
+-  cat >>confdefs.h <<_ACEOF
 -#define HAVE__WFOPEN 1
-+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
- _ACEOF
+-_ACEOF
++    $as_echo "#define _GLIBCXX_USE_DEV_RANDOM 1" >>confdefs.h
  
- fi
- done
+-fi
+-done
++    $as_echo "#define _GLIBCXX_USE_RANDOM_TR1 1" >>confdefs.h
  
-     ;;
+ 
+ 
+@@ -60527,185 +60591,6390 @@ $as_echo "$gcc_cv_have_tls" >&6; }
+ $as_echo "#define HAVE_TLS 1" >>confdefs.h
+ 
+   fi
+-    ;;
 -  *-netbsd* | *-openbsd*)
 -    SECTION_FLAGS='-ffunction-sections -fdata-sections'
 -
@@ -2786,12 +313,15 @@ index 326a279c5..07bbfdebe 100755
 -  # Start by getting the version number.  I think the libtool test already
 -  # does some of this, but throws away the result.
 -  glibcxx_ld_is_gold=no
+-  glibcxx_ld_is_mold=no
 -  if test x"$with_gnu_ld" = x"yes"; then
 -    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ld version" >&5
 -$as_echo_n "checking for ld version... " >&6; }
 -
 -    if $LD --version 2>/dev/null | grep 'GNU gold' >/dev/null 2>&1; then
 -      glibcxx_ld_is_gold=yes
+-    elif $LD --version 2>/dev/null | grep 'mold' >/dev/null 2>&1; then
+-      glibcxx_ld_is_mold=yes
 -    fi
 -    ldver=`$LD --version 2>/dev/null |
 -	   sed -e 's/[. ][0-9]\{8\}$//;s/.* \([^ ]\{1,\}\)$/\1/; q'`
@@ -2804,7 +334,7 @@ index 326a279c5..07bbfdebe 100755
 -
 -  # Set --gc-sections.
 -  glibcxx_have_gc_sections=no
--  if test "$glibcxx_ld_is_gold" = "yes"; then
+-  if test "$glibcxx_ld_is_gold" = "yes" || test "$glibcxx_ld_is_mold" = "yes" ; then
 -    if $LD --help 2>/dev/null | grep gc-sections >/dev/null 2>&1; then
 -      glibcxx_have_gc_sections=yes
 -    fi
@@ -2842,7 +372,13 @@ index 326a279c5..07bbfdebe 100755
 -  ;
 -  return 0;
 -}
--_ACEOF
++    for ac_func in __cxa_thread_atexit_impl
++do :
++  ac_fn_c_check_func "$LINENO" "__cxa_thread_atexit_impl" "ac_cv_func___cxa_thread_atexit_impl"
++if test "x$ac_cv_func___cxa_thread_atexit_impl" = xyes; then :
++  cat >>confdefs.h <<_ACEOF
++#define HAVE___CXA_THREAD_ATEXIT_IMPL 1
+ _ACEOF
 -if ac_fn_c_try_link "$LINENO"; then :
 -  ac_gcsections=yes
 -else
@@ -2922,282 +458,63 @@ index 326a279c5..07bbfdebe 100755
 -    $as_echo "#define HAVE_ISNAN 1" >>confdefs.h
 -
 -    $as_echo "#define HAVE_ISNANF 1" >>confdefs.h
--
+ 
 -    if test x"long_double_math_on_this_cpu" = x"yes"; then
 -      $as_echo "#define HAVE_FINITEL 1" >>confdefs.h
 -
 -      $as_echo "#define HAVE_ISINFL 1" >>confdefs.h
 -
 -      $as_echo "#define HAVE_ISNANL 1" >>confdefs.h
--
++fi
++done
+ 
 -    fi
--    for ac_func in aligned_alloc posix_memalign memalign _aligned_malloc
--do :
--  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
--ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
--if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
--  cat >>confdefs.h <<_ACEOF
--#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
--_ACEOF
--
--fi
--done
--
--    for ac_func in timespec_get
--do :
--  ac_fn_c_check_func "$LINENO" "timespec_get" "ac_cv_func_timespec_get"
--if test "x$ac_cv_func_timespec_get" = xyes; then :
--  cat >>confdefs.h <<_ACEOF
--#define HAVE_TIMESPEC_GET 1
--_ACEOF
--
--fi
--done
--
--    for ac_func in sockatmark
--do :
--  ac_fn_c_check_func "$LINENO" "sockatmark" "ac_cv_func_sockatmark"
--if test "x$ac_cv_func_sockatmark" = xyes; then :
--  cat >>confdefs.h <<_ACEOF
--#define HAVE_SOCKATMARK 1
--_ACEOF
--
--fi
--done
--
--    ;;
--  *-qnx6.1* | *-qnx6.2*)
--    SECTION_FLAGS='-ffunction-sections -fdata-sections'
--
--
--  # If we're not using GNU ld, then there's no point in even trying these
--  # tests.  Check for that first.  We should have already tested for gld
--  # by now (in libtool), but require it now just to be safe...
--  test -z "$SECTION_LDFLAGS" && SECTION_LDFLAGS=''
--  test -z "$OPT_LDFLAGS" && OPT_LDFLAGS=''
--
--
--
--  # The name set by libtool depends on the version of libtool.  Shame on us
--  # for depending on an impl detail, but c'est la vie.  Older versions used
--  # ac_cv_prog_gnu_ld, but now it's lt_cv_prog_gnu_ld, and is copied back on
--  # top of with_gnu_ld (which is also set by --with-gnu-ld, so that actually
--  # makes sense).  We'll test with_gnu_ld everywhere else, so if that isn't
--  # set (hence we're using an older libtool), then set it.
--  if test x${with_gnu_ld+set} != xset; then
--    if test x${ac_cv_prog_gnu_ld+set} != xset; then
--      # We got through "ac_require(ac_prog_ld)" and still not set?  Huh?
--      with_gnu_ld=no
--    else
--      with_gnu_ld=$ac_cv_prog_gnu_ld
--    fi
--  fi
--
--  # Start by getting the version number.  I think the libtool test already
--  # does some of this, but throws away the result.
--  glibcxx_ld_is_gold=no
--  if test x"$with_gnu_ld" = x"yes"; then
--    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ld version" >&5
--$as_echo_n "checking for ld version... " >&6; }
--
--    if $LD --version 2>/dev/null | grep 'GNU gold' >/dev/null 2>&1; then
--      glibcxx_ld_is_gold=yes
--    fi
--    ldver=`$LD --version 2>/dev/null |
--	   sed -e 's/[. ][0-9]\{8\}$//;s/.* \([^ ]\{1,\}\)$/\1/; q'`
--
--    glibcxx_gnu_ld_version=`echo $ldver | \
--	   $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
--    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $glibcxx_gnu_ld_version" >&5
--$as_echo "$glibcxx_gnu_ld_version" >&6; }
--  fi
--
--  # Set --gc-sections.
--  glibcxx_have_gc_sections=no
--  if test "$glibcxx_ld_is_gold" = "yes"; then
--    if $LD --help 2>/dev/null | grep gc-sections >/dev/null 2>&1; then
--      glibcxx_have_gc_sections=yes
--    fi
--  else
--    glibcxx_gcsections_min_ld=21602
--    if test x"$with_gnu_ld" = x"yes" &&
--	test $glibcxx_gnu_ld_version -gt $glibcxx_gcsections_min_ld ; then
--      glibcxx_have_gc_sections=yes
--    fi
--  fi
--  if test "$glibcxx_have_gc_sections" = "yes"; then
--    # Sufficiently young GNU ld it is!  Joy and bunny rabbits!
--    # NB: This flag only works reliably after 2.16.1. Configure tests
--    # for this are difficult, so hard wire a value that should work.
--
--    ac_test_CFLAGS="${CFLAGS+set}"
--    ac_save_CFLAGS="$CFLAGS"
--    CFLAGS='-Wl,--gc-sections'
--
--    # Check for -Wl,--gc-sections
--    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ld that supports -Wl,--gc-sections" >&5
--$as_echo_n "checking for ld that supports -Wl,--gc-sections... " >&6; }
--    if test x$gcc_no_link = xyes; then
--  as_fn_error $? "Link tests are not allowed after GCC_NO_EXECUTABLES." "$LINENO" 5
--fi
--cat confdefs.h - <<_ACEOF >conftest.$ac_ext
--/* end confdefs.h.  */
-- int one(void) { return 1; }
--     int two(void) { return 2; }
--
--int
--main ()
--{
-- two();
--  ;
--  return 0;
--}
--_ACEOF
--if ac_fn_c_try_link "$LINENO"; then :
--  ac_gcsections=yes
--else
--  ac_gcsections=no
--fi
--rm -f core conftest.err conftest.$ac_objext \
--    conftest$ac_exeext conftest.$ac_ext
--    if test "$ac_gcsections" = "yes"; then
--      rm -f conftest.c
--      touch conftest.c
--      if $CC -c conftest.c; then
--	if $LD --gc-sections -o conftest conftest.o 2>&1 | \
--	   grep "Warning: gc-sections option ignored" > /dev/null; then
--	  ac_gcsections=no
--	fi
--      fi
--      rm -f conftest.c conftest.o conftest
--    fi
--    if test "$ac_gcsections" = "yes"; then
--      SECTION_LDFLAGS="-Wl,--gc-sections $SECTION_LDFLAGS"
--    fi
--    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_gcsections" >&5
--$as_echo "$ac_gcsections" >&6; }
--
--    if test "$ac_test_CFLAGS" = set; then
--      CFLAGS="$ac_save_CFLAGS"
--    else
--      # this is the suspicious part
--      CFLAGS=''
--    fi
--  fi
--
--  # Set -z,relro.
--  # Note this is only for shared objects.
--  ac_ld_relro=no
--  if test x"$with_gnu_ld" = x"yes"; then
--    # cygwin and mingw uses PE, which has no ELF relro support,
--    # multi target ld may confuse configure machinery
--    case "$host" in
--    *-*-cygwin*)
--     ;;
--    *-*-mingw*)
--     ;;
--    *)
--      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ld that supports -Wl,-z,relro" >&5
--$as_echo_n "checking for ld that supports -Wl,-z,relro... " >&6; }
--      cxx_z_relo=`$LD -v --help 2>/dev/null | grep "z relro"`
--      if test -n "$cxx_z_relo"; then
--        OPT_LDFLAGS="-Wl,-z,relro"
--        ac_ld_relro=yes
--      fi
--      { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ld_relro" >&5
--$as_echo "$ac_ld_relro" >&6; }
--    esac
--  fi
--
--  # Set linker optimization flags.
--  if test x"$with_gnu_ld" = x"yes"; then
--    OPT_LDFLAGS="-Wl,-O1 $OPT_LDFLAGS"
--  fi
--
--
--
--
--    $as_echo "#define HAVE_COSF 1" >>confdefs.h
--
--    $as_echo "#define HAVE_COSL 1" >>confdefs.h
--
--    $as_echo "#define HAVE_COSHF 1" >>confdefs.h
--
--    $as_echo "#define HAVE_COSHL 1" >>confdefs.h
--
--    $as_echo "#define HAVE_LOGF 1" >>confdefs.h
--
--    $as_echo "#define HAVE_LOGL 1" >>confdefs.h
--
--    $as_echo "#define HAVE_LOG10F 1" >>confdefs.h
--
--    $as_echo "#define HAVE_LOG10L 1" >>confdefs.h
--
--    $as_echo "#define HAVE_SINF 1" >>confdefs.h
--
--    $as_echo "#define HAVE_SINL 1" >>confdefs.h
--
--    $as_echo "#define HAVE_SINHF 1" >>confdefs.h
--
--    $as_echo "#define HAVE_SINHL 1" >>confdefs.h
--
--    ;;
--  *-rtems*)
--
--  # All these tests are for C++; save the language and the compiler flags.
--  # The CXXFLAGS thing is suspicious, but based on similar bits previously
--  # found in GLIBCXX_CONFIGURE.
--
--  ac_ext=cpp
--ac_cpp='$CXXCPP $CPPFLAGS'
--ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
--ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
--ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
--
--  ac_test_CXXFLAGS="${CXXFLAGS+set}"
--  ac_save_CXXFLAGS="$CXXFLAGS"
--
--  # Check for -ffunction-sections -fdata-sections
--  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for g++ that supports -ffunction-sections -fdata-sections" >&5
--$as_echo_n "checking for g++ that supports -ffunction-sections -fdata-sections... " >&6; }
--  CXXFLAGS='-g -Werror -ffunction-sections -fdata-sections'
--  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
--/* end confdefs.h.  */
--int foo; void bar() { };
--int
--main ()
--{
--
--  ;
--  return 0;
--}
--_ACEOF
--if ac_fn_cxx_try_compile "$LINENO"; then :
--  ac_fdsections=yes
--else
--  ac_fdsections=no
--fi
--rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
--  if test "$ac_test_CXXFLAGS" = set; then
--    CXXFLAGS="$ac_save_CXXFLAGS"
--  else
--    # this is the suspicious part
--    CXXFLAGS=''
--  fi
--  if test x"$ac_fdsections" = x"yes"; then
--    SECTION_FLAGS='-ffunction-sections -fdata-sections'
--  fi
--  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_fdsections" >&5
--$as_echo "$ac_fdsections" >&6; }
--
--  ac_ext=c
--ac_cpp='$CPP $CPPFLAGS'
--ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
--ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
--ac_compiler_gnu=$ac_cv_c_compiler_gnu
--
--
--
++    for ac_func in aligned_alloc posix_memalign memalign _aligned_malloc
++do :
++  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
++ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
++if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
++  cat >>confdefs.h <<_ACEOF
++#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
++_ACEOF
++
++fi
++done
++
++    for ac_func in timespec_get
++do :
++  ac_fn_c_check_func "$LINENO" "timespec_get" "ac_cv_func_timespec_get"
++if test "x$ac_cv_func_timespec_get" = xyes; then :
++  cat >>confdefs.h <<_ACEOF
++#define HAVE_TIMESPEC_GET 1
++_ACEOF
++
++fi
++done
++
++    for ac_func in sockatmark
++do :
++  ac_fn_c_check_func "$LINENO" "sockatmark" "ac_cv_func_sockatmark"
++if test "x$ac_cv_func_sockatmark" = xyes; then :
++  cat >>confdefs.h <<_ACEOF
++#define HAVE_SOCKATMARK 1
++_ACEOF
++
++fi
++done
++
++    for ac_func in uselocale
++do :
++  ac_fn_c_check_func "$LINENO" "uselocale" "ac_cv_func_uselocale"
++if test "x$ac_cv_func_uselocale" = xyes; then :
++  cat >>confdefs.h <<_ACEOF
++#define HAVE_USELOCALE 1
++_ACEOF
++
++fi
++done
++
++    ;;
 +  *-mingw32*)
 +
 +  # If we're not using GNU ld, then there's no point in even trying these
@@ -3226,12 +543,15 @@ index 326a279c5..07bbfdebe 100755
 +  # Start by getting the version number.  I think the libtool test already
 +  # does some of this, but throws away the result.
 +  glibcxx_ld_is_gold=no
++  glibcxx_ld_is_mold=no
 +  if test x"$with_gnu_ld" = x"yes"; then
 +    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ld version" >&5
 +$as_echo_n "checking for ld version... " >&6; }
 +
 +    if $LD --version 2>/dev/null | grep 'GNU gold' >/dev/null 2>&1; then
 +      glibcxx_ld_is_gold=yes
++    elif $LD --version 2>/dev/null | grep 'mold' >/dev/null 2>&1; then
++      glibcxx_ld_is_mold=yes
 +    fi
 +    ldver=`$LD --version 2>/dev/null |
 +	   sed -e 's/[. ][0-9]\{8\}$//;s/.* \([^ ]\{1,\}\)$/\1/; q'`
@@ -3244,7 +564,7 @@ index 326a279c5..07bbfdebe 100755
 +
 +  # Set --gc-sections.
 +  glibcxx_have_gc_sections=no
-+  if test "$glibcxx_ld_is_gold" = "yes"; then
++  if test "$glibcxx_ld_is_gold" = "yes" || test "$glibcxx_ld_is_mold" = "yes" ; then
 +    if $LD --help 2>/dev/null | grep gc-sections >/dev/null 2>&1; then
 +      glibcxx_have_gc_sections=yes
 +    fi
@@ -9135,6 +6455,214 @@ index 326a279c5..07bbfdebe 100755
 +fi
 +done
 +
++
++
++   # Check whether --enable-tls was given.
++if test "${enable_tls+set}" = set; then :
++  enableval=$enable_tls;
++      case "$enableval" in
++       yes|no) ;;
++       *) as_fn_error $? "Argument to enable/disable tls must be yes or no" "$LINENO" 5 ;;
++      esac
++
++else
++  enable_tls=yes
++fi
++
++
++  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the target supports thread-local storage" >&5
++$as_echo_n "checking whether the target supports thread-local storage... " >&6; }
++if ${gcc_cv_have_tls+:} false; then :
++  $as_echo_n "(cached) " >&6
++else
++
++    if test "$cross_compiling" = yes; then :
++                if test x$gcc_no_link = xyes; then
++  as_fn_error $? "Link tests are not allowed after GCC_NO_EXECUTABLES." "$LINENO" 5
++fi
++cat confdefs.h - <<_ACEOF >conftest.$ac_ext
++/* end confdefs.h.  */
++__thread int a; int b; int main() { return a = b; }
++_ACEOF
++if ac_fn_c_try_link "$LINENO"; then :
++  chktls_save_LDFLAGS="$LDFLAGS"
++	  	  	  case $host in
++	    *-*-linux* | -*-uclinuxfdpic*)
++	      LDFLAGS="-shared -Wl,--no-undefined $LDFLAGS"
++	      ;;
++	  esac
++	  chktls_save_CFLAGS="$CFLAGS"
++	  CFLAGS="-fPIC $CFLAGS"
++	  	  if test x$gcc_no_link = xyes; then
++  as_fn_error $? "Link tests are not allowed after GCC_NO_EXECUTABLES." "$LINENO" 5
++fi
++cat confdefs.h - <<_ACEOF >conftest.$ac_ext
++/* end confdefs.h.  */
++int f() { return 0; }
++_ACEOF
++if ac_fn_c_try_link "$LINENO"; then :
++  if test x$gcc_no_link = xyes; then
++  as_fn_error $? "Link tests are not allowed after GCC_NO_EXECUTABLES." "$LINENO" 5
++fi
++cat confdefs.h - <<_ACEOF >conftest.$ac_ext
++/* end confdefs.h.  */
++__thread int a; int b; int f() { return a = b; }
++_ACEOF
++if ac_fn_c_try_link "$LINENO"; then :
++  gcc_cv_have_tls=yes
++else
++  gcc_cv_have_tls=no
++fi
++rm -f core conftest.err conftest.$ac_objext \
++    conftest$ac_exeext conftest.$ac_ext
++else
++  gcc_cv_have_tls=yes
++fi
++rm -f core conftest.err conftest.$ac_objext \
++    conftest$ac_exeext conftest.$ac_ext
++	  CFLAGS="$chktls_save_CFLAGS"
++	  LDFLAGS="$chktls_save_LDFLAGS"
++else
++  gcc_cv_have_tls=no
++fi
++rm -f core conftest.err conftest.$ac_objext \
++    conftest$ac_exeext conftest.$ac_ext
++
++
++else
++  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
++/* end confdefs.h.  */
++__thread int a; int b; int main() { return a = b; }
++_ACEOF
++if ac_fn_c_try_run "$LINENO"; then :
++                      chktls_save_LDFLAGS="$LDFLAGS"
++      LDFLAGS="-static $LDFLAGS"
++      if test x$gcc_no_link = xyes; then
++  as_fn_error $? "Link tests are not allowed after GCC_NO_EXECUTABLES." "$LINENO" 5
++fi
++cat confdefs.h - <<_ACEOF >conftest.$ac_ext
++/* end confdefs.h.  */
++int main() { return 0; }
++_ACEOF
++if ac_fn_c_try_link "$LINENO"; then :
++  if test "$cross_compiling" = yes; then :
++  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
++$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
++as_fn_error $? "cannot run test program while cross compiling
++See \`config.log' for more details" "$LINENO" 5; }
++else
++  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
++/* end confdefs.h.  */
++__thread int a; int b; int main() { return a = b; }
++_ACEOF
++if ac_fn_c_try_run "$LINENO"; then :
++  gcc_cv_have_tls=yes
++else
++  gcc_cv_have_tls=no
++fi
++rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
++  conftest.$ac_objext conftest.beam conftest.$ac_ext
++fi
++
++else
++  gcc_cv_have_tls=yes
++fi
++rm -f core conftest.err conftest.$ac_objext \
++    conftest$ac_exeext conftest.$ac_ext
++      LDFLAGS="$chktls_save_LDFLAGS"
++      if test $gcc_cv_have_tls = yes; then
++						chktls_save_CFLAGS="$CFLAGS"
++	thread_CFLAGS=failed
++	for flag in '' '-pthread' '-lpthread'; do
++	  CFLAGS="$flag $chktls_save_CFLAGS"
++	  if test x$gcc_no_link = xyes; then
++  as_fn_error $? "Link tests are not allowed after GCC_NO_EXECUTABLES." "$LINENO" 5
++fi
++cat confdefs.h - <<_ACEOF >conftest.$ac_ext
++/* end confdefs.h.  */
++#include <pthread.h>
++		void *g(void *d) { return NULL; }
++int
++main ()
++{
++pthread_t t; pthread_create(&t,NULL,g,NULL);
++  ;
++  return 0;
++}
++_ACEOF
++if ac_fn_c_try_link "$LINENO"; then :
++  thread_CFLAGS="$flag"
++fi
++rm -f core conftest.err conftest.$ac_objext \
++    conftest$ac_exeext conftest.$ac_ext
++	  if test "X$thread_CFLAGS" != Xfailed; then
++	    break
++	  fi
++	done
++	CFLAGS="$chktls_save_CFLAGS"
++	if test "X$thread_CFLAGS" != Xfailed; then
++	  CFLAGS="$thread_CFLAGS $chktls_save_CFLAGS"
++ 	  	  	  	  	  	  if test "$cross_compiling" = yes; then :
++  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
++$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
++as_fn_error $? "cannot run test program while cross compiling
++See \`config.log' for more details" "$LINENO" 5; }
++else
++  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
++/* end confdefs.h.  */
++#include <pthread.h>
++		__thread int a;
++		static int *volatile a_in_other_thread;
++		static void *
++		thread_func (void *arg)
++		{
++		  a_in_other_thread = &a;
++		  return (void *)0;
++		}
++int
++main ()
++{
++pthread_t thread;
++		void *thread_retval;
++		int *volatile a_in_main_thread;
++		a_in_main_thread = &a;
++		if (pthread_create (&thread, (pthread_attr_t *)0,
++				    thread_func, (void *)0))
++		  return 0;
++		if (pthread_join (thread, &thread_retval))
++		  return 0;
++		return (a_in_other_thread == a_in_main_thread);
++  ;
++  return 0;
++}
++_ACEOF
++if ac_fn_c_try_run "$LINENO"; then :
++  gcc_cv_have_tls=yes
++else
++  gcc_cv_have_tls=no
++fi
++rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
++  conftest.$ac_objext conftest.beam conftest.$ac_ext
++fi
++
++	  CFLAGS="$chktls_save_CFLAGS"
++	fi
++      fi
++else
++  gcc_cv_have_tls=no
++fi
++rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
++  conftest.$ac_objext conftest.beam conftest.$ac_ext
++fi
++
++fi
++{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $gcc_cv_have_tls" >&5
++$as_echo "$gcc_cv_have_tls" >&6; }
++  if test "$enable_tls $gcc_cv_have_tls" = "yes yes"; then
++
++$as_echo "#define HAVE_TLS 1" >>confdefs.h
++
++  fi
 +    ;;
 +  *-netbsd* | *-openbsd*)
 +    SECTION_FLAGS='-ffunction-sections -fdata-sections'
@@ -9166,12 +6694,15 @@ index 326a279c5..07bbfdebe 100755
 +  # Start by getting the version number.  I think the libtool test already
 +  # does some of this, but throws away the result.
 +  glibcxx_ld_is_gold=no
++  glibcxx_ld_is_mold=no
 +  if test x"$with_gnu_ld" = x"yes"; then
 +    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ld version" >&5
 +$as_echo_n "checking for ld version... " >&6; }
 +
 +    if $LD --version 2>/dev/null | grep 'GNU gold' >/dev/null 2>&1; then
 +      glibcxx_ld_is_gold=yes
++    elif $LD --version 2>/dev/null | grep 'mold' >/dev/null 2>&1; then
++      glibcxx_ld_is_mold=yes
 +    fi
 +    ldver=`$LD --version 2>/dev/null |
 +	   sed -e 's/[. ][0-9]\{8\}$//;s/.* \([^ ]\{1,\}\)$/\1/; q'`
@@ -9184,7 +6715,7 @@ index 326a279c5..07bbfdebe 100755
 +
 +  # Set --gc-sections.
 +  glibcxx_have_gc_sections=no
-+  if test "$glibcxx_ld_is_gold" = "yes"; then
++  if test "$glibcxx_ld_is_gold" = "yes" || test "$glibcxx_ld_is_mold" = "yes" ; then
 +    if $LD --help 2>/dev/null | grep gc-sections >/dev/null 2>&1; then
 +      glibcxx_have_gc_sections=yes
 +    fi
@@ -9311,764 +6842,16 @@ index 326a279c5..07bbfdebe 100755
 +      $as_echo "#define HAVE_ISNANL 1" >>confdefs.h
 +
 +    fi
-+    for ac_func in aligned_alloc posix_memalign memalign _aligned_malloc
-+do :
-+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
-+  cat >>confdefs.h <<_ACEOF
-+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
-+_ACEOF
-+
-+fi
-+done
-+
-+    for ac_func in timespec_get
-+do :
-+  ac_fn_c_check_func "$LINENO" "timespec_get" "ac_cv_func_timespec_get"
-+if test "x$ac_cv_func_timespec_get" = xyes; then :
-+  cat >>confdefs.h <<_ACEOF
-+#define HAVE_TIMESPEC_GET 1
-+_ACEOF
-+
-+fi
-+done
-+
-+    for ac_func in sockatmark
-+do :
-+  ac_fn_c_check_func "$LINENO" "sockatmark" "ac_cv_func_sockatmark"
-+if test "x$ac_cv_func_sockatmark" = xyes; then :
-+  cat >>confdefs.h <<_ACEOF
-+#define HAVE_SOCKATMARK 1
-+_ACEOF
-+
-+fi
-+done
-+
-+    ;;
-+  *-qnx6.1* | *-qnx6.2*)
-+    SECTION_FLAGS='-ffunction-sections -fdata-sections'
-+
-+
-+  # If we're not using GNU ld, then there's no point in even trying these
-+  # tests.  Check for that first.  We should have already tested for gld
-+  # by now (in libtool), but require it now just to be safe...
-+  test -z "$SECTION_LDFLAGS" && SECTION_LDFLAGS=''
-+  test -z "$OPT_LDFLAGS" && OPT_LDFLAGS=''
-+
-+
-+
-+  # The name set by libtool depends on the version of libtool.  Shame on us
-+  # for depending on an impl detail, but c'est la vie.  Older versions used
-+  # ac_cv_prog_gnu_ld, but now it's lt_cv_prog_gnu_ld, and is copied back on
-+  # top of with_gnu_ld (which is also set by --with-gnu-ld, so that actually
-+  # makes sense).  We'll test with_gnu_ld everywhere else, so if that isn't
-+  # set (hence we're using an older libtool), then set it.
-+  if test x${with_gnu_ld+set} != xset; then
-+    if test x${ac_cv_prog_gnu_ld+set} != xset; then
-+      # We got through "ac_require(ac_prog_ld)" and still not set?  Huh?
-+      with_gnu_ld=no
-+    else
-+      with_gnu_ld=$ac_cv_prog_gnu_ld
-+    fi
-+  fi
-+
-+  # Start by getting the version number.  I think the libtool test already
-+  # does some of this, but throws away the result.
-+  glibcxx_ld_is_gold=no
-+  if test x"$with_gnu_ld" = x"yes"; then
-+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ld version" >&5
-+$as_echo_n "checking for ld version... " >&6; }
-+
-+    if $LD --version 2>/dev/null | grep 'GNU gold' >/dev/null 2>&1; then
-+      glibcxx_ld_is_gold=yes
-+    fi
-+    ldver=`$LD --version 2>/dev/null |
-+	   sed -e 's/[. ][0-9]\{8\}$//;s/.* \([^ ]\{1,\}\)$/\1/; q'`
-+
-+    glibcxx_gnu_ld_version=`echo $ldver | \
-+	   $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
-+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $glibcxx_gnu_ld_version" >&5
-+$as_echo "$glibcxx_gnu_ld_version" >&6; }
-+  fi
-+
-+  # Set --gc-sections.
-+  glibcxx_have_gc_sections=no
-+  if test "$glibcxx_ld_is_gold" = "yes"; then
-+    if $LD --help 2>/dev/null | grep gc-sections >/dev/null 2>&1; then
-+      glibcxx_have_gc_sections=yes
-+    fi
-+  else
-+    glibcxx_gcsections_min_ld=21602
-+    if test x"$with_gnu_ld" = x"yes" &&
-+	test $glibcxx_gnu_ld_version -gt $glibcxx_gcsections_min_ld ; then
-+      glibcxx_have_gc_sections=yes
-+    fi
-+  fi
-+  if test "$glibcxx_have_gc_sections" = "yes"; then
-+    # Sufficiently young GNU ld it is!  Joy and bunny rabbits!
-+    # NB: This flag only works reliably after 2.16.1. Configure tests
-+    # for this are difficult, so hard wire a value that should work.
-+
-+    ac_test_CFLAGS="${CFLAGS+set}"
-+    ac_save_CFLAGS="$CFLAGS"
-+    CFLAGS='-Wl,--gc-sections'
-+
-+    # Check for -Wl,--gc-sections
-+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ld that supports -Wl,--gc-sections" >&5
-+$as_echo_n "checking for ld that supports -Wl,--gc-sections... " >&6; }
-+    if test x$gcc_no_link = xyes; then
-+  as_fn_error $? "Link tests are not allowed after GCC_NO_EXECUTABLES." "$LINENO" 5
-+fi
-+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-+/* end confdefs.h.  */
-+ int one(void) { return 1; }
-+     int two(void) { return 2; }
-+
-+int
-+main ()
-+{
-+ two();
-+  ;
-+  return 0;
-+}
-+_ACEOF
-+if ac_fn_c_try_link "$LINENO"; then :
-+  ac_gcsections=yes
-+else
-+  ac_gcsections=no
-+fi
-+rm -f core conftest.err conftest.$ac_objext \
-+    conftest$ac_exeext conftest.$ac_ext
-+    if test "$ac_gcsections" = "yes"; then
-+      rm -f conftest.c
-+      touch conftest.c
-+      if $CC -c conftest.c; then
-+	if $LD --gc-sections -o conftest conftest.o 2>&1 | \
-+	   grep "Warning: gc-sections option ignored" > /dev/null; then
-+	  ac_gcsections=no
-+	fi
-+      fi
-+      rm -f conftest.c conftest.o conftest
-+    fi
-+    if test "$ac_gcsections" = "yes"; then
-+      SECTION_LDFLAGS="-Wl,--gc-sections $SECTION_LDFLAGS"
-+    fi
-+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_gcsections" >&5
-+$as_echo "$ac_gcsections" >&6; }
-+
-+    if test "$ac_test_CFLAGS" = set; then
-+      CFLAGS="$ac_save_CFLAGS"
-+    else
-+      # this is the suspicious part
-+      CFLAGS=''
-+    fi
-+  fi
-+
-+  # Set -z,relro.
-+  # Note this is only for shared objects.
-+  ac_ld_relro=no
-+  if test x"$with_gnu_ld" = x"yes"; then
-+    # cygwin and mingw uses PE, which has no ELF relro support,
-+    # multi target ld may confuse configure machinery
-+    case "$host" in
-+    *-*-cygwin*)
-+     ;;
-+    *-*-mingw*)
-+     ;;
-+    *)
-+      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ld that supports -Wl,-z,relro" >&5
-+$as_echo_n "checking for ld that supports -Wl,-z,relro... " >&6; }
-+      cxx_z_relo=`$LD -v --help 2>/dev/null | grep "z relro"`
-+      if test -n "$cxx_z_relo"; then
-+        OPT_LDFLAGS="-Wl,-z,relro"
-+        ac_ld_relro=yes
-+      fi
-+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_ld_relro" >&5
-+$as_echo "$ac_ld_relro" >&6; }
-+    esac
-+  fi
-+
-+  # Set linker optimization flags.
-+  if test x"$with_gnu_ld" = x"yes"; then
-+    OPT_LDFLAGS="-Wl,-O1 $OPT_LDFLAGS"
-+  fi
-+
-+
-+
-+
-+    $as_echo "#define HAVE_COSF 1" >>confdefs.h
-+
-+    $as_echo "#define HAVE_COSL 1" >>confdefs.h
-+
-+    $as_echo "#define HAVE_COSHF 1" >>confdefs.h
-+
-+    $as_echo "#define HAVE_COSHL 1" >>confdefs.h
-+
-+    $as_echo "#define HAVE_LOGF 1" >>confdefs.h
-+
-+    $as_echo "#define HAVE_LOGL 1" >>confdefs.h
-+
-+    $as_echo "#define HAVE_LOG10F 1" >>confdefs.h
-+
-+    $as_echo "#define HAVE_LOG10L 1" >>confdefs.h
-+
-+    $as_echo "#define HAVE_SINF 1" >>confdefs.h
-+
-+    $as_echo "#define HAVE_SINL 1" >>confdefs.h
-+
-+    $as_echo "#define HAVE_SINHF 1" >>confdefs.h
-+
-+    $as_echo "#define HAVE_SINHL 1" >>confdefs.h
-+
-+    ;;
-+  *-rtems*)
-+
-+  # All these tests are for C++; save the language and the compiler flags.
-+  # The CXXFLAGS thing is suspicious, but based on similar bits previously
-+  # found in GLIBCXX_CONFIGURE.
-+
-+  ac_ext=cpp
-+ac_cpp='$CXXCPP $CPPFLAGS'
-+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-+
-+  ac_test_CXXFLAGS="${CXXFLAGS+set}"
-+  ac_save_CXXFLAGS="$CXXFLAGS"
-+
-+  # Check for -ffunction-sections -fdata-sections
-+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for g++ that supports -ffunction-sections -fdata-sections" >&5
-+$as_echo_n "checking for g++ that supports -ffunction-sections -fdata-sections... " >&6; }
-+  CXXFLAGS='-g -Werror -ffunction-sections -fdata-sections'
-+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-+/* end confdefs.h.  */
-+int foo; void bar() { };
-+int
-+main ()
-+{
-+
-+  ;
-+  return 0;
-+}
-+_ACEOF
-+if ac_fn_cxx_try_compile "$LINENO"; then :
-+  ac_fdsections=yes
-+else
-+  ac_fdsections=no
-+fi
-+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-+  if test "$ac_test_CXXFLAGS" = set; then
-+    CXXFLAGS="$ac_save_CXXFLAGS"
-+  else
-+    # this is the suspicious part
-+    CXXFLAGS=''
-+  fi
-+  if test x"$ac_fdsections" = x"yes"; then
-+    SECTION_FLAGS='-ffunction-sections -fdata-sections'
-+  fi
-+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_fdsections" >&5
-+$as_echo "$ac_fdsections" >&6; }
-+
-+  ac_ext=c
-+ac_cpp='$CPP $CPPFLAGS'
-+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-+ac_compiler_gnu=$ac_cv_c_compiler_gnu
-+
-+
-+
- 
-   # If we're not using GNU ld, then there's no point in even trying these
-   # tests.  Check for that first.  We should have already tested for gld
-@@ -75896,7 +82139,7 @@ $as_echo_n "checking whether to build Filesystem TS support... " >&6; }
-       rtems*)
+     for ac_func in aligned_alloc posix_memalign memalign _aligned_malloc
+ do :
+   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+@@ -76255,6 +82524,9 @@ $as_echo_n "checking whether to build Filesystem TS support... " >&6; }
+       solaris*)
          enable_libstdcxx_filesystem_ts=yes
          ;;
--      solaris*)
-+      solaris*|iros*)
-         enable_libstdcxx_filesystem_ts=yes
-         ;;
++      iros*)
++        enable_libstdcxx_filesystem_ts=yes
++        ;;
        mingw*)
-diff --git a/libstdc++-v3/doc/Makefile.in b/libstdc++-v3/doc/Makefile.in
-index 956b641c1..50464a132 100644
---- a/libstdc++-v3/doc/Makefile.in
-+++ b/libstdc++-v3/doc/Makefile.in
-@@ -338,6 +338,7 @@ prefix = @prefix@
- program_transform_name = @program_transform_name@
- psdir = @psdir@
- python_mod_dir = @python_mod_dir@
-+runstatedir = @runstatedir@
- sbindir = @sbindir@
- sharedstatedir = @sharedstatedir@
- srcdir = @srcdir@
-diff --git a/libstdc++-v3/include/Makefile.in b/libstdc++-v3/include/Makefile.in
-index fcd2b5b2d..830ad65c6 100644
---- a/libstdc++-v3/include/Makefile.in
-+++ b/libstdc++-v3/include/Makefile.in
-@@ -328,6 +328,7 @@ prefix = @prefix@
- program_transform_name = @program_transform_name@
- psdir = @psdir@
- python_mod_dir = @python_mod_dir@
-+runstatedir = @runstatedir@
- sbindir = @sbindir@
- sharedstatedir = @sharedstatedir@
- srcdir = @srcdir@
-diff --git a/libstdc++-v3/libsupc++/Makefile.in b/libstdc++-v3/libsupc++/Makefile.in
-index 5776a5628..8ce0cf9f8 100644
---- a/libstdc++-v3/libsupc++/Makefile.in
-+++ b/libstdc++-v3/libsupc++/Makefile.in
-@@ -437,6 +437,7 @@ prefix = @prefix@
- program_transform_name = @program_transform_name@
- psdir = @psdir@
- python_mod_dir = @python_mod_dir@
-+runstatedir = @runstatedir@
- sbindir = @sbindir@
- sharedstatedir = @sharedstatedir@
- srcdir = @srcdir@
-diff --git a/libstdc++-v3/po/Makefile.in b/libstdc++-v3/po/Makefile.in
-index 8edd2e056..a433aa874 100644
---- a/libstdc++-v3/po/Makefile.in
-+++ b/libstdc++-v3/po/Makefile.in
-@@ -328,6 +328,7 @@ prefix = @prefix@
- program_transform_name = @program_transform_name@
- psdir = @psdir@
- python_mod_dir = @python_mod_dir@
-+runstatedir = @runstatedir@
- sbindir = @sbindir@
- sharedstatedir = @sharedstatedir@
- srcdir = @srcdir@
-diff --git a/libstdc++-v3/python/Makefile.in b/libstdc++-v3/python/Makefile.in
-index c35dbe559..c6f37a089 100644
---- a/libstdc++-v3/python/Makefile.in
-+++ b/libstdc++-v3/python/Makefile.in
-@@ -358,6 +358,7 @@ prefix = @prefix@
- program_transform_name = @program_transform_name@
- psdir = @psdir@
- python_mod_dir = @python_mod_dir@
-+runstatedir = @runstatedir@
- sbindir = @sbindir@
- sharedstatedir = @sharedstatedir@
- srcdir = @srcdir@
-diff --git a/libstdc++-v3/src/Makefile.in b/libstdc++-v3/src/Makefile.in
-index 4df5c829a..8cd5a112b 100644
---- a/libstdc++-v3/src/Makefile.in
-+++ b/libstdc++-v3/src/Makefile.in
-@@ -427,6 +427,7 @@ prefix = @prefix@
- program_transform_name = @program_transform_name@
- psdir = @psdir@
- python_mod_dir = @python_mod_dir@
-+runstatedir = @runstatedir@
- sbindir = @sbindir@
- sharedstatedir = @sharedstatedir@
- srcdir = @srcdir@
-diff --git a/libstdc++-v3/src/c++11/Makefile.in b/libstdc++-v3/src/c++11/Makefile.in
-index 86540509e..58e50f55b 100644
---- a/libstdc++-v3/src/c++11/Makefile.in
-+++ b/libstdc++-v3/src/c++11/Makefile.in
-@@ -394,6 +394,7 @@ prefix = @prefix@
- program_transform_name = @program_transform_name@
- psdir = @psdir@
- python_mod_dir = @python_mod_dir@
-+runstatedir = @runstatedir@
- sbindir = @sbindir@
- sharedstatedir = @sharedstatedir@
- srcdir = @srcdir@
-diff --git a/libstdc++-v3/src/c++17/Makefile.in b/libstdc++-v3/src/c++17/Makefile.in
-index 63984ecd5..58193e802 100644
---- a/libstdc++-v3/src/c++17/Makefile.in
-+++ b/libstdc++-v3/src/c++17/Makefile.in
-@@ -374,6 +374,7 @@ prefix = @prefix@
- program_transform_name = @program_transform_name@
- psdir = @psdir@
- python_mod_dir = @python_mod_dir@
-+runstatedir = @runstatedir@
- sbindir = @sbindir@
- sharedstatedir = @sharedstatedir@
- srcdir = @srcdir@
-diff --git a/libstdc++-v3/src/c++20/Makefile.in b/libstdc++-v3/src/c++20/Makefile.in
-index e6892d370..7b365dabe 100644
---- a/libstdc++-v3/src/c++20/Makefile.in
-+++ b/libstdc++-v3/src/c++20/Makefile.in
-@@ -369,6 +369,7 @@ prefix = @prefix@
- program_transform_name = @program_transform_name@
- psdir = @psdir@
- python_mod_dir = @python_mod_dir@
-+runstatedir = @runstatedir@
- sbindir = @sbindir@
- sharedstatedir = @sharedstatedir@
- srcdir = @srcdir@
-diff --git a/libstdc++-v3/src/c++98/Makefile.in b/libstdc++-v3/src/c++98/Makefile.in
-index 94c68487f..2218da375 100644
---- a/libstdc++-v3/src/c++98/Makefile.in
-+++ b/libstdc++-v3/src/c++98/Makefile.in
-@@ -390,6 +390,7 @@ prefix = @prefix@
- program_transform_name = @program_transform_name@
- psdir = @psdir@
- python_mod_dir = @python_mod_dir@
-+runstatedir = @runstatedir@
- sbindir = @sbindir@
- sharedstatedir = @sharedstatedir@
- srcdir = @srcdir@
-diff --git a/libstdc++-v3/src/filesystem/Makefile.in b/libstdc++-v3/src/filesystem/Makefile.in
-index 74a6d2765..bbad8937c 100644
---- a/libstdc++-v3/src/filesystem/Makefile.in
-+++ b/libstdc++-v3/src/filesystem/Makefile.in
-@@ -398,6 +398,7 @@ prefix = @prefix@
- program_transform_name = @program_transform_name@
- psdir = @psdir@
- python_mod_dir = @python_mod_dir@
-+runstatedir = @runstatedir@
- sbindir = @sbindir@
- sharedstatedir = @sharedstatedir@
- srcdir = @srcdir@
-diff --git a/libstdc++-v3/testsuite/Makefile.in b/libstdc++-v3/testsuite/Makefile.in
-index c9dd7f5da..80073e575 100644
---- a/libstdc++-v3/testsuite/Makefile.in
-+++ b/libstdc++-v3/testsuite/Makefile.in
-@@ -328,6 +328,7 @@ prefix = @prefix@
- program_transform_name = @program_transform_name@
- psdir = @psdir@
- python_mod_dir = @python_mod_dir@
-+runstatedir = @runstatedir@
- sbindir = @sbindir@
- sharedstatedir = @sharedstatedir@
- srcdir = @srcdir@
-diff --git a/libvtv/configure b/libvtv/configure
-index d64b4af5c..c0eab68fa 100755
---- a/libvtv/configure
-+++ b/libvtv/configure
-@@ -762,6 +762,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -848,6 +849,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
-@@ -1100,6 +1102,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1237,7 +1248,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1390,6 +1401,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-@@ -7264,6 +7276,10 @@ rdos*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
- 
-+iros*)
-+  lt_cv_deplibs_check_method=pass_all
-+  ;;
-+
- solaris*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
-@@ -11716,6 +11732,17 @@ rdos*)
-   dynamic_linker=no
-   ;;
- 
-+iros*)
-+  version_type=linux
-+  need_lib_prefix=no
-+  need_version=no
-+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
-+  soname_spec='${libname}${release}${shared_ext}$major'
-+  shlibpath_var=LD_LIBRARY_PATH
-+  shlibpath_overrides_runpath=yes
-+  hardcode_into_libs=yes
-+  ;;
-+
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -12254,7 +12281,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 12267 "configure"
-+#line 12284 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -12360,7 +12387,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 12373 "configure"
-+#line 12390 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -15099,16 +15126,6 @@ freebsd* | dragonfly*)
-   esac
-   ;;
- 
--gnu*)
--  version_type=linux
--  need_lib_prefix=no
--  need_version=no
--  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}${major} ${libname}${shared_ext}'
--  soname_spec='${libname}${release}${shared_ext}$major'
--  shlibpath_var=LD_LIBRARY_PATH
--  hardcode_into_libs=yes
--  ;;
--
- haiku*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -15230,7 +15247,7 @@ linux*oldld* | linux*aout* | linux*coff*)
- # project, but have not yet been accepted: they are GCC-local changes
- # for the time being.  (See
- # https://lists.gnu.org/archive/html/libtool-patches/2018-05/msg00000.html)
--linux* | k*bsd*-gnu | kopensolaris*-gnu | uclinuxfdpiceabi)
-+linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu* | uclinuxfdpiceabi)
-   version_type=linux
-   need_lib_prefix=no
-   need_version=no
-@@ -15381,6 +15398,17 @@ rdos*)
-   dynamic_linker=no
-   ;;
- 
-+iros*)
-+  version_type=linux
-+  need_lib_prefix=no
-+  need_version=no
-+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
-+  soname_spec='${libname}${release}${shared_ext}$major'
-+  shlibpath_var=LD_LIBRARY_PATH
-+  shlibpath_overrides_runpath=yes
-+  hardcode_into_libs=yes
-+  ;;
-+
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -15672,7 +15700,7 @@ case "$host" in
-     case "$enable_cet" in
-       auto)
- 	# Check if target supports multi-byte NOPs
--	# and if assembler supports CET insn.
-+	# and if compiler and assembler support CET insn.
- 	cet_save_CFLAGS="$CFLAGS"
- 	CFLAGS="$CFLAGS -fcf-protection"
- 	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-diff --git a/lto-plugin/configure b/lto-plugin/configure
-index baa84adbb..a36d89c75 100755
---- a/lto-plugin/configure
-+++ b/lto-plugin/configure
-@@ -743,6 +743,7 @@ infodir
- docdir
- oldincludedir
- includedir
-+runstatedir
- localstatedir
- sharedstatedir
- sysconfdir
-@@ -827,6 +828,7 @@ datadir='${datarootdir}'
- sysconfdir='${prefix}/etc'
- sharedstatedir='${prefix}/com'
- localstatedir='${prefix}/var'
-+runstatedir='${localstatedir}/run'
- includedir='${prefix}/include'
- oldincludedir='/usr/include'
- docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
-@@ -1079,6 +1081,15 @@ do
-   | -silent | --silent | --silen | --sile | --sil)
-     silent=yes ;;
- 
-+  -runstatedir | --runstatedir | --runstatedi | --runstated \
-+  | --runstate | --runstat | --runsta | --runst | --runs \
-+  | --run | --ru | --r)
-+    ac_prev=runstatedir ;;
-+  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-+  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-+  | --run=* | --ru=* | --r=*)
-+    runstatedir=$ac_optarg ;;
-+
-   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
-     ac_prev=sbindir ;;
-   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
-@@ -1216,7 +1227,7 @@ fi
- for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
- 		datadir sysconfdir sharedstatedir localstatedir includedir \
- 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
--		libdir localedir mandir
-+		libdir localedir mandir runstatedir
- do
-   eval ac_val=\$$ac_var
-   # Remove trailing slashes.
-@@ -1369,6 +1380,7 @@ Fine tuning of the installation directories:
-   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
-   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
-   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-+  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
-   --libdir=DIR            object code libraries [EPREFIX/lib]
-   --includedir=DIR        C header files [PREFIX/include]
-   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
-@@ -5404,7 +5416,7 @@ else
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -5450,7 +5462,7 @@ else
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -5474,7 +5486,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -5519,7 +5531,7 @@ else
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -5543,7 +5555,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-     We can't simply define LARGE_OFF_T to be 9223372036854775807,
-     since some C++ compilers masquerading as C compilers
-     incorrectly reject 9223372036854775807.  */
--#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
-+#define LARGE_OFF_T ((((off_t) 1 << 31) << 31) - 1 + (((off_t) 1 << 31) << 31))
-   int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721
- 		       && LARGE_OFF_T % 2147483647 == 1)
- 		      ? 1 : -1];
-@@ -6961,6 +6973,10 @@ rdos*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
- 
-+iros*)
-+  lt_cv_deplibs_check_method=pass_all
-+  ;;
-+
- solaris*)
-   lt_cv_deplibs_check_method=pass_all
-   ;;
-@@ -8429,23 +8445,25 @@ _LT_EOF
- fi
- { $as_echo "$as_me:${as_lineno-$LINENO}: result: $lt_cv_ld_force_load" >&5
- $as_echo "$lt_cv_ld_force_load" >&6; }
--    case $host_os in
--    rhapsody* | darwin1.[012])
-+    # Allow for Darwin 4-7 (macOS 10.0-10.3) although these are not expect to
-+    # build without first building modern cctools / linker.
-+    case $host_cpu-$host_os in
-+    *-rhapsody* | *-darwin1.[012])
-       _lt_dar_allow_undefined='${wl}-undefined ${wl}suppress' ;;
--    darwin1.*)
-+    *-darwin1.*)
-       _lt_dar_allow_undefined='${wl}-flat_namespace ${wl}-undefined ${wl}suppress' ;;
--    darwin*) # darwin 5.x on
--      # if running on 10.5 or later, the deployment target defaults
--      # to the OS version, if on x86, and 10.4, the deployment
--      # target defaults to 10.4. Don't you love it?
--      case ${MACOSX_DEPLOYMENT_TARGET-10.0},$host in
--	10.0,*86*-darwin8*|10.0,*-darwin[91]*)
--	  _lt_dar_allow_undefined='${wl}-undefined ${wl}dynamic_lookup' ;;
-+    *-darwin*)
-+      # darwin 5.x (macOS 10.1) onwards we only need to adjust when the
-+      # deployment target is forced to an earlier version.
-+      case ${MACOSX_DEPLOYMENT_TARGET-UNSET},$host in
-+	UNSET,*-darwin[89]*|UNSET,*-darwin[12][0123456789]*)
-+	  ;;
- 	10.[012][,.]*)
--	  _lt_dar_allow_undefined='${wl}-flat_namespace ${wl}-undefined ${wl}suppress' ;;
--	10.*)
--	  _lt_dar_allow_undefined='${wl}-undefined ${wl}dynamic_lookup' ;;
--      esac
-+	  _lt_dar_allow_undefined='${wl}-flat_namespace ${wl}-undefined ${wl}suppress'
-+	  ;;
-+	*)
-+	  ;;
-+     esac
-     ;;
-   esac
-     if test "$lt_cv_apple_cc_single_mod" = "yes"; then
-@@ -11412,6 +11430,17 @@ rdos*)
-   dynamic_linker=no
-   ;;
- 
-+iros*)
-+  version_type=linux
-+  need_lib_prefix=no
-+  need_version=no
-+  library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
-+  soname_spec='${libname}${release}${shared_ext}$major'
-+  shlibpath_var=LD_LIBRARY_PATH
-+  shlibpath_overrides_runpath=yes
-+  hardcode_into_libs=yes
-+  ;;
-+
- solaris*)
-   version_type=linux
-   need_lib_prefix=no
-@@ -11950,7 +11979,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 11963 "configure"
-+#line 11982 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
-@@ -12056,7 +12085,7 @@ else
-   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
-   lt_status=$lt_dlunknown
-   cat > conftest.$ac_ext <<_LT_EOF
--#line 12069 "configure"
-+#line 12088 "configure"
- #include "confdefs.h"
- 
- #if HAVE_DLFCN_H
+         enable_libstdcxx_filesystem_ts=yes
+         ;;

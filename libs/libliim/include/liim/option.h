@@ -270,6 +270,14 @@ public:
         return mapper(value());
     }
 
+    template<typename C, typename R = InvokeResult<C, T&>::type>
+    constexpr R and_then(C mapper) {
+        if (!has_value()) {
+            return {};
+        }
+        return mapper(value());
+    }
+
     template<typename C, typename R = InvokeResult<C>::type>
     constexpr Result<T, R> unwrap_or_else(C mapper) {
         if (has_value()) {

@@ -12,9 +12,9 @@ TEST(preprocessor, logic) {
     EXPECT_EQ(LIIM_BOOL(5), 1);
     EXPECT_EQ(LIIM_BOOL(0), 0);
 
-    EXPECT_EQ(LIIM_IF(x)("true")("false"), "true");
-    EXPECT_EQ(LIIM_IF(1)("true")("false"), "true");
-    EXPECT_EQ(LIIM_IF(0)("true")("false"), "false");
+    EXPECT_EQ(LIIM_IF(x)("true")("false"), "true"sv);
+    EXPECT_EQ(LIIM_IF(1)("true")("false"), "true"sv);
+    EXPECT_EQ(LIIM_IF(0)("true")("false"), "false"sv);
 }
 
 TEST(preprocessor, detection) {

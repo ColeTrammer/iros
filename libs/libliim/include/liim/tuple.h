@@ -103,6 +103,11 @@ template<class... Types>
 Tuple(Types...) -> Tuple<Types...>;
 
 template<typename... Args>
+constexpr Tuple<decay_t<Args>...> make_tuple(Args&&... args) {
+    return Tuple<decay_t<Args>...>(forward<Args>(args)...);
+}
+
+template<typename... Args>
 constexpr Tuple<Args&&...> forward_as_tuple(Args&&... args) {
     return Tuple<Args&&...>(forward<Args>(args)...);
 }
@@ -147,6 +152,7 @@ struct tuple_element<index, LIIM::Tuple<Types...>> {
 
 using LIIM::forward_as_tuple;
 using LIIM::make_from_tuple;
+using LIIM::make_tuple;
 using LIIM::Tuple;
 using LIIM::tuple_apply;
 using LIIM::tuple_map;

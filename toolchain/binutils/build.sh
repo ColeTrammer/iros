@@ -4,7 +4,7 @@ set -e
 
 ROOT="${ROOT:-$PWD/../..}"
 TARGET="${IROS_TARGET:-`$ROOT/scripts/default-host.sh`}"
-VERSION="2.36.1"
+VERSION="2.38"
 DOWNLOAD_URL="http://ftp.gnu.org/gnu/binutils/binutils-$VERSION.tar.gz"
 DOWNLOAD_DEST=binutils.tar.gz
 SRC="binutils-$VERSION"

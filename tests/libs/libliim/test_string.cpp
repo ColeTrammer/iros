@@ -6,10 +6,10 @@ TEST(string, basic_getters) {
     EXPECT_EQ(char("str"s[2]), 'r');
     EXPECT_EQ(char("str"s[1]), 't');
     EXPECT_EQ("str"s.size(), 3lu);
-    EXPECT_EQ("abc"s.first(), 'a');
-    EXPECT_EQ("abc"s.last(), 'c');
-    EXPECT_EQ(""s[0], '\0');
-    EXPECT_EQ("abc"s[3], '\0');
+    EXPECT_EQ(char("abc"s.first()), 'a');
+    EXPECT_EQ(char("abc"s.last()), 'c');
+    EXPECT_EQ(char(""s[0]), '\0');
+    EXPECT_EQ(char("abc"s[3]), '\0');
 }
 
 TEST(string, comparisons) {
