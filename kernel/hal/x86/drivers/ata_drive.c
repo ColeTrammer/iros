@@ -144,6 +144,7 @@ done:
 static int64_t ata_read_sectors_dma(struct block_device *self, void *buffer, uint64_t n, off_t sector_offset) {
     struct ata_drive *drive = self->private_data;
     size_t sectors = n;
+    int ret = 1;
     if (n == 0) {
         return 0;
     } else if (n > DMA_BUFFER_PAGES * PAGE_SIZE / self->block_size) {
@@ -170,7 +171,7 @@ static int64_t ata_read_sectors_dma(struct block_device *self, void *buffer, uin
     // Start bus master (Disable interrupts so that the irq doesn't come before we sleep)
     uint64_t save = disable_interrupts_save();
     outb(drive->channel->location.ide_bus_master, ATA_BUS_MASTER_COMMAND_START | ATA_BUS_MASTER_COMMAND_WRITE);
-    int ret = ata_wait_irq(drive->channel);
+    ret = ata_wait_irq(drive->channel);
     interrupts_restore(save);
 
     if (ret) {
