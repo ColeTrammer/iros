@@ -2,6 +2,7 @@
 #include <ext/json.h>
 #include <ext/path.h>
 #include <liim/container/new_vector.h>
+#include <liim/generator.h>
 #include <liim/pointers.h>
 #include <liim/try.h>
 #include <liim/tuple.h>
@@ -21,38 +22,39 @@ Result<Port, Error> Port::create(Context& context, Ext::Path json_path) {
     auto& download_object = TRY(reader.lookup<Ext::Json::Object>(reader.json(), "download"));
     auto patch_object = reader.lookup<Ext::Json::Object>(reader.json(), "patch");
     auto& build_system_object = TRY(reader.lookup<Ext::Json::Object>(reader.json(), "buildSystem"));
-
-    using StepConstructor = Result<UniquePtr<Step>, Error> (*)(const JsonReader&, const Ext::Json::Object&);
-    using BuildSystemConstructors = Tuple<StepConstructor, StepConstructor, StepConstructor>;
-
-    auto build_system_type = TRY(reader.lookup<Ext::Json::String>(build_system_object, "type"));
-    auto [make_configure_step, make_build_step, make_install_step] = TRY([&]() -> Result<BuildSystemConstructors, Error> {
-        if (build_system_type.view() == "cmake"sv) {
-            return BuildSystemConstructors(CMakeConfigureStep::create, CMakeBuildStep::create, CMakeInstallStep::create);
-        } else if (build_system_type.view() == "autoconf"sv) {
-            return BuildSystemConstructors(AutoconfConfigureStep::create, AutoconfBuildStep::create, AutoconfInstallStep::create);
-        }
-        return Err(Ext::StringError(format("Invalid build system type `{}' in json file `{}'", build_system_type, json_path)));
-    }());
-
     auto& configure_object = TRY(reader.lookup<Ext::Json::Object>(build_system_object, "configure"));
     auto& build_object = TRY(reader.lookup<Ext::Json::Object>(build_system_object, "build"));
     auto& install_object = TRY(reader.lookup<Ext::Json::Object>(build_system_object, "install"));
 
-    auto steps = LIIM::Container::HashMap<StringView, UniquePtr<Step>> {};
-    auto add_step = [&](UniquePtr<Step> step) {
-        auto name = step->name();
-        steps.insert_or_assign(name, move(step));
+    auto build_system_type = TRY(reader.lookup<Ext::Json::String>(build_system_object, "type"));
+
+    auto generate_steps = [&]() -> Generator<Result<UniquePtr<Step>, Error>> {
+        co_yield DownloadStep::create(reader, download_object);
+        if (patch_object.has_value()) {
+            co_yield PatchStep::create(reader, patch_object.value());
+        }
+
+        if (build_system_type == "cmake"sv) {
+            co_yield CMakeConfigureStep::create(reader, configure_object);
+            co_yield CMakeBuildStep::create(reader, build_object);
+            co_yield CMakeInstallStep::create(reader, install_object);
+        } else if (build_system_type == "autoconf"sv) {
+            co_yield AutoconfConfigureStep::create(reader, configure_object);
+            co_yield AutoconfBuildStep::create(reader, build_object);
+            co_yield AutoconfInstallStep::create(reader, install_object);
+
+        } else {
+            co_yield Err(Ext::StringError(format("Invalid build system type `{}' in json file `{}'", build_system_type, json_path)));
+        }
+
+        co_yield CleanStep::create();
     };
 
-    add_step(TRY(DownloadStep::create(reader, download_object)));
-    if (patch_object.has_value()) {
-        add_step(TRY(PatchStep::create(reader, patch_object.value())));
-    }
-    add_step(TRY(make_configure_step(reader, configure_object)));
-    add_step(TRY(make_build_step(reader, build_object)));
-    add_step(TRY(make_install_step(reader, install_object)));
-    add_step(TRY(CleanStep::create()));
+    auto steps = TRY(collect<LIIM::Container::HashMap<StringView, UniquePtr<Step>>>(transform(generate_steps(), [&](auto&& step_result) {
+        return move(step_result).transform([](auto&& step) {
+            return Pair { step->name(), move(step) };
+        });
+    })));
 
     auto dependencies = NewVector<PortHandle> {};
     if (reader.json().get("dependencies")) {
@@ -91,7 +93,7 @@ Port::~Port() {}
 Result<void, Error> Port::build(Context& context, StringView build_step) {
     // FIXME: it would be better to topologically sort the step and its
     //        dependencies rather than just assume everything is in order
-    //        and dependencies don't have their won dependencies.
+    //        and dependencies don't have their own dependencies.
     auto& base_step = TRY(lookup_step(build_step));
     auto dependencies = base_step.dependencies();
     auto steps = TRY(collect<NewVector<Step*>>(transform(dependencies, [&](auto dependency) {
