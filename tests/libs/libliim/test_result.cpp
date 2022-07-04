@@ -72,6 +72,10 @@ constexpr void construct() {
 
     auto b = create<X>(Result<int, int>(0));
     EXPECT(b);
+
+    auto s = Tuple<UniquePtr<int>> {};
+    auto r = Result<Tuple<UniquePtr<int>>, int>(move(s));
+    EXPECT_EQ(r.value().get<0>().get(), nullptr);
 }
 
 constexpr void result_and_then_test() {

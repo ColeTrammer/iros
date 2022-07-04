@@ -404,7 +404,6 @@ namespace Detail {
 
 template<typename... Types>
 constexpr CommonResult<Tuple<UnwrapResult<Types>...>, Types...> tuple_result_sequence(Types&&... values) {
-
     auto values_tuple = Tuple<Types&...>(values...);
 
     auto result = Detail::ResultSequenceHelper<0, Types&...> {}(values_tuple);
@@ -412,13 +411,13 @@ constexpr CommonResult<Tuple<UnwrapResult<Types>...>, Types...> tuple_result_seq
         return move(result).try_did_fail();
     }
 
-    return tuple_map(values_tuple, [](auto&& value) -> UnwrapResult<decltype(value)> {
+    return CommonResult<Tuple<UnwrapResult<Types>...>, Types...>(tuple_map(values_tuple, [](auto&& value) -> UnwrapResult<decltype(value)> {
         if constexpr (IsResult<decltype(value)>) {
             return move(value).value();
         } else {
             return value;
         }
-    });
+    }));
 }
 
 namespace Detail {

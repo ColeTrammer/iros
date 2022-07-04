@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/container/container.h>
 #include <liim/coroutine.h>
 
 namespace LIIM {
@@ -43,15 +44,16 @@ namespace LIIM {
 //     |-> return 0
 
 template<typename T>
-class Generator {
+class Generator : public ValueIteratorAdapter<Generator<T>> {
 public:
     struct Promise;
 
+    using ValueType = T;
     using Handle = CoroutineHandle<Promise>;
     using promise_type = Promise;
 
     struct Promise {
-        T value;
+        Option<T> value;
         Handle child_handle { nullptr };
         Handle parent_handle { nullptr };
         bool returned { false };
@@ -127,15 +129,22 @@ public:
         return value();
     }
 
+    Option<T> next() {
+        if (finished()) {
+            return {};
+        }
+        return (*this)();
+    }
+
 private:
     Generator(Promise& promise) : m_root_handle(Handle::from_promise(promise)) {}
 
     T value() {
         auto* child = current_child();
         if (*child) {
-            return child->promise().value;
+            return *move(child->promise().value);
         }
-        return m_root_handle.promise().value;
+        return *move(m_root_handle.promise().value);
     }
 
     void maybe_get_value() {

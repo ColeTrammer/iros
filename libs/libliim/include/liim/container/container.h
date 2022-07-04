@@ -83,12 +83,12 @@ concept Clearable = Container<T> && requires(T& container) {
 
 template<typename C, typename T>
 concept InsertableFor = Container<C> && requires(C& container, IteratorForContainer<C> iter) {
-    { container.insert(iter, declval<T>()) } -> SameAs<IteratorForContainer<C>>;
+    { container.insert(move(iter), declval<T>()) } -> SameAs<IteratorForContainer<C>>;
 };
 
 template<typename C, typename T>
 concept FalliblyInsertableFor = Container<C> && requires(C& container, IteratorForContainer<C> iter) {
-    { container.insert(iter, declval<T>()) } -> ResultOf<IteratorForContainer<C>>;
+    { container.insert(move(iter), declval<T>()) } -> ResultOf<IteratorForContainer<C>>;
 };
 
 template<typename Producer>
@@ -100,9 +100,15 @@ public:
         }
     }
 
+    constexpr ValueIteratorAdapterIterator(const ValueIteratorAdapterIterator&) = delete;
+    constexpr ValueIteratorAdapterIterator(ValueIteratorAdapterIterator&&) = default;
+
+    constexpr ValueIteratorAdapterIterator& operator=(const ValueIteratorAdapterIterator&) = delete;
+    constexpr ValueIteratorAdapterIterator& operator=(ValueIteratorAdapterIterator&&) = default;
+
     using ValueType = Producer::ValueType;
 
-    constexpr ValueType operator*() { return *m_cache; }
+    constexpr ValueType operator*() { return *move(m_cache); }
 
     constexpr ValueIteratorAdapterIterator& operator++() {
         assert(m_producer);
@@ -491,11 +497,11 @@ private:
 template<Iterator Iter, typename F>
 class TransformIterator {
 public:
-    explicit constexpr TransformIterator(Iter iterator, F& transformer) : m_iterator(move(iterator)), m_transformer(transformer) {}
+    explicit constexpr TransformIterator(Iter iterator, F& transformer) : m_iterator(move(iterator)), m_transformer(&transformer) {}
 
     using ValueType = InvokeResult<F, typename IteratorTraits<Iter>::ValueType>::type;
 
-    constexpr ValueType operator*() { return m_transformer(*m_iterator); }
+    constexpr ValueType operator*() { return (*m_transformer)(*m_iterator); }
 
     constexpr TransformIterator& operator++() {
         ++m_iterator;
@@ -512,7 +518,7 @@ public:
 
 private:
     Iter m_iterator;
-    F& m_transformer;
+    F* m_transformer;
 };
 
 template<Container C, typename F>
@@ -536,8 +542,11 @@ class IteratorContainer {
 public:
     explicit constexpr IteratorContainer(Iter begin, Iter end) : m_begin(move(begin)), m_end(move(end)) {}
 
-    constexpr Iter begin() const { return m_begin; }
-    constexpr Iter end() const { return m_end; }
+    constexpr Iter begin() const requires(Copyable<Iter>) { return m_begin; }
+    constexpr Iter end() const requires(Copyable<Iter>) { return m_end; }
+
+    constexpr Iter begin() requires(!Copyable<Iter>) { return move(m_begin); }
+    constexpr Iter end() requires(!Copyable<Iter>) { return move(m_end); }
 
 private:
     Iter m_begin;
@@ -676,7 +685,7 @@ requires(
                                                                                                       ConstIteratorForContainer<C> position,
                                                                                                       OtherContainer&& other_container) {
     auto move_container = move_elements(forward<OtherContainer>(other_container));
-    auto result = container.insert(position, move_container.begin(), move_container.end());
+    auto result = container.insert(move(position), move_container.begin(), move_container.end());
     if constexpr (Clearable<OtherContainer> && IsRValueReference<OtherContainer>::value) {
         move_container.base().clear();
     }

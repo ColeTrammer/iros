@@ -351,9 +351,10 @@ requires(CanInsert<IteratorValueType<Iter>, Table>) {
         }
         return {};
     } else {
-        return result_and_then(collect<NewVector<Pair<KeyType, Value>>>(iterator_container(move(start), move(end))), [&](auto&& elements) {
+        auto vector = collect<NewVector<Pair<KeyType, Value>>>(iterator_container(move(start), move(end)));
+        return result_and_then(move(vector), [&](auto&& elements) {
             auto container = move_elements(move(elements));
-            return insert(container.begin(), container.end(), known_size);
+            return this->insert(container.begin(), container.end(), known_size);
         });
     }
 }
