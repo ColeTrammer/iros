@@ -80,6 +80,8 @@ class Tuple;
 template<typename T>
 class UniquePtr;
 
+class Utf8View;
+
 template<typename... Types>
 class Variant;
 
@@ -128,6 +130,7 @@ using LIIM::StringView;
 using LIIM::Task;
 using LIIM::Tuple;
 using LIIM::UniquePtr;
+using LIIM::Utf8View;
 using LIIM::Variant;
 using LIIM::Vector;
 using LIIM::WeakPtr;
