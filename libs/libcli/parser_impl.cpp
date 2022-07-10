@@ -43,6 +43,7 @@ Result<void, Error> ParserImpl::parse(Span<StringView> input, void* output) cons
     input = input.subspan(1);
 
     auto positional_arguments = NewVector<StringView> {};
+    auto provided_flags = NewVector<const Flag*> {};
 
     // Parse flags denoted by the long or short flag prefixes
     // and store anything else in the positional argument vector.
@@ -83,6 +84,7 @@ Result<void, Error> ParserImpl::parse(Span<StringView> input, void* output) cons
             }
 
             TRY(flag.validate(value, output));
+            provided_flags.push_back(&flag);
             continue;
         }
 
@@ -115,6 +117,7 @@ Result<void, Error> ParserImpl::parse(Span<StringView> input, void* output) cons
                 }
 
                 TRY(flag.validate(value, output));
+                provided_flags.push_back(&flag);
 
                 // If a value was encountered, there are no short options left to parse in this item.
                 if (value) {
@@ -128,7 +131,14 @@ Result<void, Error> ParserImpl::parse(Span<StringView> input, void* output) cons
         positional_arguments.push_back(item);
     }
 
-    // Parse the positional arguments
+    // Validate required flags were provided.
+    for (auto& flag : m_flags) {
+        if (flag.required() && !contains(provided_flags, &flag)) {
+            return Err(MissingRequiredFlag(flag.short_name(), flag.long_name()));
+        }
+    }
+
+    // Parse the positional arguments.
     if (m_arguments.size() == 0) {
         if (positional_arguments.size() > 0) {
             return Err(UnexpectedPositionalArgument(positional_arguments.back()));

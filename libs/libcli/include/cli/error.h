@@ -56,6 +56,35 @@ private:
     char m_flag;
 };
 
+class MissingRequiredFlag {
+public:
+    explicit MissingRequiredFlag(Option<char> short_name, Option<StringView> long_name)
+        : m_short_name(short_name), m_long_name(long_name) {}
+
+    String to_message() const {
+        auto flag_name = [&] {
+            if (m_short_name && m_long_name) {
+                return format("-{}/--{}", *m_short_name, *m_long_name);
+            } else if (m_short_name) {
+                return format("-{}", *m_short_name);
+            } else if (m_long_name) {
+                return format("--{}", *m_long_name);
+            } else {
+                return format("{}", "[Invalid Flag]");
+            }
+        }();
+
+        return format("Flag `{}' is required, but was not provided", flag_name);
+    }
+
+    Option<char> short_name() const { return m_short_name; }
+    Option<StringView> long_name() const { return m_long_name; }
+
+private:
+    Option<char> m_short_name;
+    Option<StringView> m_long_name;
+};
+
 class UnexpectedPositionalArgument {
 public:
     explicit UnexpectedPositionalArgument(StringView value) : m_value(value) {}
@@ -93,5 +122,5 @@ private:
 };
 
 using Error = Variant<Ext::ParserError, UnexpectedShortFlag, UnexpectedLongFlag, ShortFlagRequiresValue, LongFlagRequiresValue,
-                      UnexpectedPositionalArgument, MissingPositionalArgument, EmptyPositionalArgumentList>;
+                      MissingRequiredFlag, UnexpectedPositionalArgument, MissingPositionalArgument, EmptyPositionalArgumentList>;
 }
