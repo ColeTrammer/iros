@@ -27,10 +27,10 @@ constexpr void comparator() {
     EXPECT_EQ(collect_vector(range(3, 10)), collect_vector(move(y)));
     EXPECT(y.empty());
 
-    auto z = make_priority_queue({ 3, 4, 5 }, Greater<int> {});
+    auto z = make_priority_queue({ 3, 4, 5 }, Greater {});
     EXPECT_EQ(make_vector({ 3, 4, 5 }), collect_vector(z.clone()));
 
-    auto x = make_priority_queue<long, Greater<long>>({ 1, 2, 3 });
+    auto x = make_priority_queue<long, Greater>({ 1, 2, 3 });
     EXPECT_EQ(make_vector<long>({ 1, 2, 3 }), collect_vector(x.clone()));
 }
 

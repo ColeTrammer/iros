@@ -153,24 +153,48 @@ concept ComparableWith = requires(const T& t, const U& u) {
     t <=> u;
 };
 
-template<typename Comp, typename T>
-concept ComparatorFor = requires(const Comp& comparator, const T& a, const T& b) {
+template<typename Comp, typename T, typename U = T>
+concept ComparatorFor = requires(const Comp& comparator, const T& a, const U& b) {
     { comparator(a, b) } -> SameAs<bool>;
 };
 
-template<Comparable T>
+template<typename Comp, typename T, typename U = T>
+concept ThreeWayComparatorFor = requires(const Comp& comparator, const T& a, const U& b) {
+    { comparator(a, b) } -> OneOf<std::strong_ordering, std::weak_ordering, std::partial_ordering>;
+};
+
 struct Less {
-    template<ComparableWith<T> U>
+    template<typename T, ComparableWith<T> U>
     constexpr bool operator()(const T& a, const U& b) const {
         return a < b;
     }
 };
 
-template<Comparable T>
 struct Greater {
-    template<ComparableWith<T> U>
+    template<typename T, ComparableWith<T> U>
     constexpr bool operator()(const T& a, const U& b) const {
         return a > b;
+    }
+};
+
+struct Equal {
+    template<typename T, EqualComparableWith<T> U>
+    constexpr bool operator()(const T& a, const U& b) const {
+        return a == b;
+    }
+};
+
+struct CompareThreeWay {
+    template<typename T, ComparableWith<T> U>
+    constexpr auto operator()(const T& a, const U& b) const {
+        return a <=> b;
+    }
+};
+
+struct CompareThreeWayBackwards {
+    template<typename T, ComparableWith<T> U>
+    constexpr auto operator()(const T& a, const U& b) const {
+        return b <=> a;
     }
 };
 }
@@ -178,8 +202,12 @@ struct Greater {
 using LIIM::Comparable;
 using LIIM::ComparableWith;
 using LIIM::ComparatorFor;
+using LIIM::CompareThreeWay;
+using LIIM::CompareThreeWayBackwards;
+using LIIM::Equal;
 using LIIM::EqualComparable;
 using LIIM::EqualComparableWith;
 using LIIM::Greater;
 using LIIM::Less;
+using LIIM::ThreeWayComparatorFor;
 using LIIM::ThreeWayCompareResult;

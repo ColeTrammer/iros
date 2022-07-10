@@ -1,5 +1,8 @@
 #pragma once
 
+#include <liim/container/algorithm/contains.h>
+#include <liim/container/algorithm/equal.h>
+#include <liim/container/algorithm/lexographic_compare.h>
 #include <liim/container/algorithm/reverse.h>
 #include <liim/container/algorithm/rotate.h>
 #include <liim/container/concepts.h>

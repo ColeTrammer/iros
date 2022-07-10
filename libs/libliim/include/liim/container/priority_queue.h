@@ -4,7 +4,7 @@
 #include <liim/container/new_vector.h>
 
 namespace LIIM::Container {
-template<typename T, ComparatorFor<T> Comp = Less<T>>
+template<typename T, ComparatorFor<T> Comp = Less>
 class PriorityQueue : public ValueIteratorAdapter<PriorityQueue<T, Comp>> {
 public:
     using ValueType = T;
@@ -177,12 +177,12 @@ constexpr bool PriorityQueue<T, Comp>::greater_than(const T& a, const T& b) cons
     return !m_comparator(a, b);
 }
 
-template<typename T, ComparatorFor<T> Comp = Less<T>>
+template<typename T, ComparatorFor<T> Comp = Less>
 constexpr auto make_priority_queue(std::initializer_list<T> list, Comp&& comp = Comp()) {
     return PriorityQueue<T, Comp>::create(list, forward<Comp>(comp));
 }
 
-template<Iterator Iter, typename Comp = Less<decay_t<IteratorValueType<Iter>>>>
+template<Iterator Iter, typename Comp = Less>
 constexpr auto make_priority_queue(Iter start, Iter end, Option<size_t> known_size = {}, Comp&& comparator = Comp()) {
     using ValueType = IteratorValueType<Iter>;
     using QueueType = PriorityQueue<decay_t<ValueType>, Comp>;

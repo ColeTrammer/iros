@@ -192,6 +192,9 @@ struct IsOneOf<T> {
     static constexpr bool value = false;
 };
 
+template<typename T, typename... Args>
+concept OneOf = IsOneOf<T, Args...>::value;
+
 template<typename T>
 struct IsIntegral
     : IsOneOf<typename RemoveCV<T>::type, bool, char, short, int, long, long long, unsigned char, unsigned short, unsigned int,

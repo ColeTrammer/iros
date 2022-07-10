@@ -1,5 +1,7 @@
+#include <liim/container/array.h>
 #include <liim/container/container.h>
 #include <liim/container/new_vector.h>
+#include <liim/container/priority_queue.h>
 #include <test/test.h>
 
 constexpr void collect() {
@@ -17,6 +19,48 @@ constexpr void collect() {
     const auto r = repeat(3lu, 5);
     auto z = collect_vector(r);
     EXPECT_EQ(z.clone(), make_vector({ 5, 5, 5 }));
+}
+
+constexpr void contains() {
+    EXPECT(contains(range(5), 0));
+    EXPECT(contains(range(5), 1));
+    EXPECT(contains(range(5), 4));
+
+    EXPECT(!contains(repeat(5, 1), 2));
+
+    EXPECT(!contains(make_priority_queue({ 1, 2, 3 }), 4));
+    EXPECT(contains(make_priority_queue({ 1, 2, 3 }), 2));
+
+    EXPECT(contains(range(2, 7), "4"sv, [](int a, StringView b) {
+        return a == b[0] - '0';
+    }));
+}
+
+constexpr void equal() {
+    EXPECT(equal(range(5), range(5)));
+
+    EXPECT(equal(Array { 2, 2, 2 }, repeat(3, 2)));
+    EXPECT(!equal(Array { 2, 2, 2, 2 }, repeat(3, 2)));
+    EXPECT(!equal(Array { 2, 2 }, repeat(3, 2)));
+    EXPECT(!equal(Array { 2, 2 }, repeat(3, 2)));
+
+    EXPECT(equal(make_priority_queue({ 1, 2, 3 }), Array { 3, 2, 1 }));
+
+    EXPECT(equal(range(2, 7), Array { "2"sv, "3"sv, "4"sv, "5"sv, "6"sv }, [](int a, StringView b) {
+        return a == b[0] - '0';
+    }));
+}
+
+constexpr void lexographic_compare() {
+    EXPECT(lexographic_compare(range(5), range(5)) == 0);
+    EXPECT(lexographic_compare(range(4), range(5)) < 0);
+    EXPECT(lexographic_compare(range(6), range(5)) > 0);
+
+    EXPECT(lexographic_compare(Array { 2, 3, 3 }, Array { 2, 3, 4 }) < 0);
+    EXPECT(lexographic_compare(Array { 2, 3, 5 }, Array { 2, 3, 4 }) > 0);
+
+    EXPECT(lexographic_compare(Array { 2, 3, 3 }, Array { 2, 3, 4 }, CompareThreeWayBackwards {}) > 0);
+    EXPECT(lexographic_compare(Array { 2, 3, 5 }, Array { 2, 3, 4 }, CompareThreeWayBackwards {}) < 0);
 }
 
 constexpr void range() {
@@ -312,6 +356,9 @@ constexpr void value_iterator() {
 }
 
 TEST_CONSTEXPR(container, collect, collect)
+TEST_CONSTEXPR(container, contains, contains)
+TEST_CONSTEXPR(container, equal, equal)
+TEST_CONSTEXPR(container, lexographic_compare, lexographic_compare)
 TEST_CONSTEXPR(container, range, range)
 TEST_CONSTEXPR(container, repeat, repeat)
 TEST_CONSTEXPR(container, reversed, reversed)

@@ -415,25 +415,12 @@ requires(Copyable<T>) {
 
 template<typename T>
 constexpr bool NewVector<T>::operator==(const NewVector& other) const requires(EqualComparable<T>) {
-    if (this->size() != other.size()) {
-        return false;
-    }
-    for (auto [left, right] : zip(*this, other)) {
-        if (left != right) {
-            return false;
-        }
-    }
-    return true;
+    return equal(*this, other);
 }
 
 template<typename T>
 constexpr auto NewVector<T>::operator<=>(const NewVector& other) const requires(Comparable<T>) {
-    for (auto [left, right] : zip(*this, other)) {
-        if (auto result = left <=> right; result != 0) {
-            return result;
-        }
-    }
-    return static_cast<ThreeWayCompareResult<T>>(this->size() <=> other.size());
+    return lexographic_compare(*this, other);
 }
 
 template<typename T>

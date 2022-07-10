@@ -1,5 +1,7 @@
 #pragma once
 
+#include <liim/container/algorithm/equal.h>
+#include <liim/container/algorithm/lexographic_compare.h>
 #include <liim/container/iterator/reverse_iterator.h>
 #include <liim/container/view/zip.h>
 #include <liim/option.h>
@@ -81,34 +83,31 @@ struct Array {
         }
     }
 
-    constexpr bool operator==(const Array& other) const requires(EqualComparable<T>) {
-        for (auto [a, b] : zip(*this, other)) {
-            if (a != b) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    constexpr auto operator<=>(const Array& other) const requires(Comparable<T>) {
-        for (auto [a, b] : zip(*this, other)) {
-            if (auto result = a <=> b; result != 0) {
-                return result;
-            }
-        }
-        return 0;
-    }
+    constexpr bool operator==(const Array& other) const requires(EqualComparable<T>) { return equal(*this, other); }
+    constexpr auto operator<=>(const Array& other) const requires(Comparable<T>) { return lexographic_compare(*this, other); }
 
     template<size_t index>
-    constexpr decltype(auto) get() {
+    constexpr decltype(auto) get() & {
         static_assert(index < N);
         return (*this)[index];
     }
 
     template<size_t index>
-    constexpr decltype(auto) get() const {
+    constexpr decltype(auto) get() const& {
         static_assert(index < N);
         return (*this)[index];
+    }
+
+    template<size_t index>
+    constexpr decltype(auto) get() && {
+        static_assert(index < N);
+        return move((*this)[index]);
+    }
+
+    template<size_t index>
+    constexpr decltype(auto) get() const&& {
+        static_assert(index < N);
+        return move((*this)[index]);
     }
 
     T m_data[N];
