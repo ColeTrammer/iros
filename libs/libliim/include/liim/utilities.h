@@ -2,6 +2,8 @@
 
 #include <liim/forward.h>
 #include <liim/initializer_list.h>
+#include <stddef.h>
+#include <sys/types.h>
 
 #if !defined(__is_libc) && !defined(__is_libk)
 #include <memory>

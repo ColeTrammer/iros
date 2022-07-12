@@ -1,6 +1,7 @@
 #pragma once
 
 #include <assert.h>
+#include <liim/container/iterator/continuous_iterator.h>
 #include <liim/span.h>
 #include <liim/traits.h>
 #include <liim/utilities.h>
@@ -523,56 +524,17 @@ void swap(Vector<T>& a, Vector<T>& b) {
 }
 
 template<typename VectorType, typename T>
-class VectorIterator {
+class VectorIterator : public ContinuousIteratorAdapter<VectorIterator<VectorType, T>> {
 public:
     using ValueType = T&;
 
-    VectorIterator(VectorType& vector, int offset) : m_vector(vector), m_offset(offset) {}
-    VectorIterator(const VectorIterator&) = default;
+    VectorIterator(VectorType& vector, int index) : ContinuousIteratorAdapter<VectorIterator>(index), m_vector(&vector) {}
 
-    bool operator!=(const VectorIterator& other) const { return !(*this == other); }
-    bool operator==(const VectorIterator& other) const { return m_offset == other.m_offset; }
-    bool operator<(const VectorIterator& other) const { return m_offset < other.m_offset; }
-    bool operator>(const VectorIterator& other) const { return m_offset > other.m_offset; }
-    bool operator<=(const VectorIterator& other) const { return !(*this > other); }
-    bool operator>=(const VectorIterator& other) const { return !(*this < other); }
-
-    VectorIterator& operator++() {
-        m_offset++;
-        return *this;
-    }
-
-    VectorIterator operator++(int) {
-        VectorIterator ret(*this);
-        m_offset++;
-        return ret;
-    }
-
-    VectorIterator operator--() {
-        m_offset--;
-        return *this;
-    }
-
-    VectorIterator operator--(int) {
-        VectorIterator ret(*this);
-        m_offset--;
-        return ret;
-    }
-
-    VectorIterator operator+(int offset) { return { m_vector, m_offset + offset }; }
-    VectorIterator operator-(int offset) { return { m_vector, m_offset - offset }; }
-
-    VectorIterator& operator=(const VectorIterator& other) {
-        m_offset = other.m_offset;
-        return *this;
-    }
-
-    T& operator*() { return m_vector[m_offset]; }
-    T* operator->() { return &m_vector[m_offset]; }
+    T& operator*() { return (*m_vector)[this->index()]; }
+    T* operator->() { return &(*m_vector)[this->index()]; }
 
 private:
-    VectorType& m_vector;
-    int m_offset;
+    VectorType* m_vector { nullptr };
 };
 
 }

@@ -62,6 +62,10 @@ public:
     bool operator==(StringView other) const { return this->view() == other; }
     bool operator==(const char* other) const { return this->view() == other; }
 
+    auto operator<=>(const String& other) const { return this->view() <=> other.view(); }
+    auto operator<=>(StringView other) const { return this->view() <=> other; }
+    auto operator<=>(const char* other) const { return this->view() <=> other; }
+
     char& operator[](size_t index) {
         assert(index <= size());
         return string()[index];

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <liim/character_type.h>
+#include <liim/compare.h>
+#include <liim/container/algorithm/lexographic_compare.h>
 #include <liim/container/hash.h>
 #include <liim/option.h>
 #include <liim/traits.h>
@@ -22,7 +24,7 @@ public:
     constexpr StringView(const char* data, const char* last) : m_data(data), m_size(static_cast<size_t>(last - data)) {}
     constexpr StringView(const char* data, size_t size) : m_data(data), m_size(size) {}
 
-    constexpr bool operator==(const StringView& other) const {
+    constexpr bool operator==(StringView other) const {
         if (other.size() != this->size()) {
             return false;
         }
@@ -35,6 +37,9 @@ public:
         return true;
     }
     constexpr bool operator==(const char* c_string) const { return *this == StringView(c_string); }
+
+    constexpr std::strong_ordering operator<=>(StringView other) const { return lexographic_compare(*this, other); }
+    constexpr std::strong_ordering operator<=>(const char* c_string) const { return *this <=> StringView(c_string); }
 
     constexpr size_t size() const { return m_size; }
     constexpr bool empty() const { return size() == 0; }

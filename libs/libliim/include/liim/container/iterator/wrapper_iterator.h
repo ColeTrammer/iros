@@ -10,7 +10,7 @@ public:
     constexpr Iter& base() { return m_base; }
     constexpr const Iter& base() const { return m_base; }
 
-    constexpr decltype(auto) operator[](ssize_t index) requires(RandomAccessIterator<Iter>) { return *(*this + index); }
+    constexpr decltype(auto) operator[](ssize_t index) const requires(RandomAccessIterator<Iter>) { return *(*this + index); }
 
     constexpr Self& operator++() {
         ++m_base;

@@ -13,8 +13,7 @@ public:
 
     constexpr Iter base() const { return m_iterator; }
 
-    constexpr decltype(auto) operator*() const { return m_iterator[-1]; }
-    constexpr decltype(auto) operator->() const { return &m_iterator[-1]; }
+    constexpr decltype(auto) operator*() { return m_iterator[-1]; }
 
     constexpr decltype(auto) operator[](ssize_t index) const { return m_iterator[-1 - index]; }
 
