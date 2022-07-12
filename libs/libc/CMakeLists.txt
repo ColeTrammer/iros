@@ -70,6 +70,7 @@ else()
         stdlib/malloc.c
         stdlib/mbstowcs.c
         stdlib/mbtowc.c
+        stdlib/qsort.cpp
         stdlib/stdlib.c
         stdlib/wcstombs.c
         stdlib/wctomb.c
@@ -507,19 +508,19 @@ else()
     add_os_static_library(libc_static c FALSE)
     target_compile_definitions(libc_static PRIVATE __is_libc)
     target_include_directories(libc_static PUBLIC include)
-    target_link_libraries(libc_static libwordexp libregex dns_service_headers kernel_headers)
+    target_link_libraries(libc_static libwordexp libregex libliim dns_service_headers kernel_headers)
     add_dependencies(libc_static crt0_object)
 
     add_os_core_library(libc c TRUE)
     target_compile_definitions(libc PRIVATE __is_libc)
     target_include_directories(libc PUBLIC include)
-    target_link_libraries(libc libwordexp libregex dns_service_headers kernel_headers)
+    target_link_libraries(libc libwordexp libregex libliim dns_service_headers kernel_headers)
     target_link_options(libc PRIVATE -nostartfiles -nostdlib)
     add_dependencies(libc crt0_object)
 
     target_compile_definitions(libk PRIVATE __is_libk)
     set_target_properties(libk PROPERTIES COMPILE_OPTIONS "${KERNEL_ARCH_CFLAGS}")
-    target_link_libraries(libk PRIVATE kernel_headers)
+    target_link_libraries(libk PRIVATE libliim kernel_headers)
     target_include_directories(libk PUBLIC ../libext/include ../libliim/include)
 
     set(SOURCES bits/empty_library_stub.c)
