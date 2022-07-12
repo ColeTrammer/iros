@@ -2,45 +2,41 @@
 #include <test/test.h>
 
 constexpr void basic() {
-    auto x = make_priority_queue({ 1, 2, 3, 4, 5 });
+    auto x = make_priority_queue({ 5, 4, 3, 2, 1 });
     EXPECT_EQ(x.size(), 5u);
-    EXPECT_EQ(x.top(), 5);
-    x.push(8);
-    EXPECT_EQ(x.pop(), 8);
-    EXPECT_EQ(x.pop(), 5);
-    EXPECT_EQ(x.pop(), 4);
-    EXPECT_EQ(x.pop(), 3);
-    EXPECT_EQ(x.pop(), 2);
+    EXPECT_EQ(x.top(), 1);
+    x.push(-1);
+    EXPECT_EQ(x.pop(), -1);
     EXPECT_EQ(x.pop(), 1);
+    EXPECT_EQ(x.pop(), 2);
+    EXPECT_EQ(x.pop(), 3);
+    EXPECT_EQ(x.pop(), 4);
+    EXPECT_EQ(x.pop(), 5);
 }
 
 constexpr void containers() {
     auto x = collect_priority_queue(reversed(range(5, 10)));
-    EXPECT_EQ(collect_vector(reversed(range(5, 10))), collect_vector(move(x)));
+    EXPECT_EQ(collect_vector(range(5, 10)), collect_vector(move(x)));
     EXPECT(x.empty());
 }
 
 constexpr void comparator() {
     auto y = collect_priority_queue(range(3, 10), [](auto x, auto y) {
-        return x > y;
+        return y <=> x;
     });
-    EXPECT_EQ(collect_vector(range(3, 10)), collect_vector(move(y)));
+    EXPECT_EQ(collect_vector(reversed(range(3, 10))), collect_vector(move(y)));
     EXPECT(y.empty());
 
-    auto z = make_priority_queue({ 3, 4, 5 }, Greater {});
-    EXPECT_EQ(make_vector({ 3, 4, 5 }), collect_vector(z.clone()));
+    auto z = make_priority_queue({ 3, 4, 5 }, CompareThreeWayBackwards {});
+    EXPECT_EQ(make_vector({ 5, 4, 3 }), collect_vector(z.clone()));
 
-    auto x = make_priority_queue<long, Greater>({ 1, 2, 3 });
-    EXPECT_EQ(make_vector<long>({ 1, 2, 3 }), collect_vector(x.clone()));
+    auto x = make_priority_queue<long, CompareThreeWayBackwards>({ 1, 2, 3 });
+    EXPECT_EQ(make_vector<long>({ 3, 2, 1 }), collect_vector(x.clone()));
 }
 
 constexpr void stress() {
-    auto x = collect_priority_queue(range(50, 200));
-    auto prev = 501;
-    for (auto z : x) {
-        EXPECT(z < prev);
-        prev = z;
-    }
+    auto x = collect_priority_queue(reversed(range(50, 200)));
+    EXPECT(is_sorted(x));
     EXPECT(x.empty());
 
     auto y = collect_priority_queue(repeat(120, 5));

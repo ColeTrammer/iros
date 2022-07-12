@@ -2,9 +2,12 @@
 
 #include <liim/container/algorithm/contains.h>
 #include <liim/container/algorithm/equal.h>
+#include <liim/container/algorithm/insertion_sort.h>
+#include <liim/container/algorithm/is_sorted.h>
 #include <liim/container/algorithm/lexographic_compare.h>
 #include <liim/container/algorithm/reverse.h>
 #include <liim/container/algorithm/rotate.h>
+#include <liim/container/algorithm/sort.h>
 #include <liim/container/concepts.h>
 #include <liim/container/consumer/assign_to.h>
 #include <liim/container/consumer/collect.h>

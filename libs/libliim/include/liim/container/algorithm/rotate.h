@@ -4,7 +4,7 @@
 #include <liim/container/producer/iterator_container.h>
 
 namespace LIIM::Container::Algorithm {
-template<RandomAccessContainer C>
+template<MutableRandomAccessContainer C>
 constexpr auto rotate(C&& container, IteratorForContainer<C> middle) {
     auto start = forward<C>(container).begin();
     auto end = forward<C>(container).end();

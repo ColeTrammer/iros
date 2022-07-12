@@ -1,32 +1,20 @@
 #pragma once
 
 #include <liim/container/concepts.h>
+#include <liim/container/iterator/wrapper_iterator.h>
 
 namespace LIIM::Container::View {
 template<Iterator Iter, typename F>
-class TransformIterator {
+class TransformIterator : public WrapperIteratorAdapter<TransformIterator<Iter, F>, Iter> {
 public:
-    explicit constexpr TransformIterator(Iter iterator, F& transformer) : m_iterator(move(iterator)), m_transformer(&transformer) {}
+    explicit constexpr TransformIterator(Iter iterator, F& transformer)
+        : WrapperIteratorAdapter<TransformIterator, Iter>(move(iterator)), m_transformer(&transformer) {}
 
     using ValueType = InvokeResult<F, typename IteratorTraits<Iter>::ValueType>::type;
 
-    constexpr ValueType operator*() { return (*m_transformer)(*m_iterator); }
-
-    constexpr TransformIterator& operator++() {
-        ++m_iterator;
-        return *this;
-    }
-
-    constexpr TransformIterator operator++(int) {
-        auto result = TransformIterator(*this);
-        ++*this;
-        return result;
-    }
-
-    constexpr bool operator==(const TransformIterator& other) const { return this->m_iterator == other.m_iterator; }
+    constexpr ValueType operator*() { return invoke(*m_transformer, *this->base()); }
 
 private:
-    Iter m_iterator;
     F* m_transformer;
 };
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <liim/container/concepts.h>
+#include <liim/container/iterator/swap_iterator_contents.h>
 
 namespace LIIM::Container::Iterators {
 template<RandomAccessIterator Iter>
@@ -15,7 +16,7 @@ public:
     constexpr decltype(auto) operator*() const { return m_iterator[-1]; }
     constexpr decltype(auto) operator->() const { return &m_iterator[-1]; }
 
-    constexpr decltype(auto) operator[](ssize_t index) const { return m_iterator[-index]; }
+    constexpr decltype(auto) operator[](ssize_t index) const { return m_iterator[-1 - index]; }
 
     constexpr ReverseIterator& operator++() {
         --m_iterator;
@@ -26,8 +27,8 @@ public:
         return *this;
     }
 
-    constexpr ReverseIterator operator++(int) const { return ReverseIterator(m_iterator--); }
-    constexpr ReverseIterator operator--(int) const { return ReverseIterator(m_iterator++); }
+    constexpr ReverseIterator operator++(int) { return ReverseIterator(m_iterator--); }
+    constexpr ReverseIterator operator--(int) { return ReverseIterator(m_iterator++); }
 
     constexpr ReverseIterator operator+(ssize_t n) const { return ReverseIterator(m_iterator - n); }
     constexpr ReverseIterator operator-(ssize_t n) const { return ReverseIterator(m_iterator + n); }
@@ -45,6 +46,12 @@ public:
 
     constexpr bool operator==(const ReverseIterator& other) const { return this->m_iterator == other.m_iterator; }
     constexpr auto operator<=>(const ReverseIterator& other) const { return other.m_iterator <=> this->m_iterator; }
+
+    constexpr void swap_contents(ReverseIterator other) requires(MutableIterator<Iter>) {
+        auto it = this->m_iterator - 1;
+        auto jt = other.m_iterator - 1;
+        swap_iterator_contents(it, jt);
+    }
 
 private:
     Iter m_iterator;

@@ -44,7 +44,7 @@ constexpr void equal() {
     EXPECT(!equal(Array { 2, 2 }, repeat(3, 2)));
     EXPECT(!equal(Array { 2, 2 }, repeat(3, 2)));
 
-    EXPECT(equal(make_priority_queue({ 1, 2, 3 }), Array { 3, 2, 1 }));
+    EXPECT(equal(make_priority_queue({ 3, 2, 1 }), Array { 1, 2, 3 }));
 
     EXPECT(equal(range(2, 7), Array { "2"sv, "3"sv, "4"sv, "5"sv, "6"sv }, [](int a, StringView b) {
         return a == b[0] - '0';
@@ -61,6 +61,49 @@ constexpr void lexographic_compare() {
 
     EXPECT(lexographic_compare(Array { 2, 3, 3 }, Array { 2, 3, 4 }, CompareThreeWayBackwards {}) > 0);
     EXPECT(lexographic_compare(Array { 2, 3, 5 }, Array { 2, 3, 4 }, CompareThreeWayBackwards {}) < 0);
+}
+
+constexpr void sort() {
+    auto v = make_vector({ 3, 5, 1, 2 });
+    sort(v);
+    EXPECT_EQ(v, make_vector({ 1, 2, 3, 5 }));
+
+    auto w = make_vector({ 8, 7, 6, 5, 4, 3, 2, 1, 0 });
+    sort(w);
+    EXPECT_EQ(w, collect_vector(range(9)));
+
+    sort(w, CompareThreeWayBackwards {});
+    EXPECT_EQ(w, collect_vector(reversed(range(9))));
+
+    auto x = collect_vector(range(128));
+    sort(x, CompareThreeWayBackwards {});
+    EXPECT_EQ(x, collect_vector(reversed(range(128))));
+    EXPECT(is_sorted(reversed(x)));
+
+    auto y = collect_vector(reversed(range(56)));
+    insert(y, y.end(), range(56));
+    sort(y);
+    EXPECT(is_sorted(y));
+
+    auto z = collect_vector(range(56));
+    insert(z, z.end(), range(56));
+    sort(z);
+    EXPECT(is_sorted(z));
+
+    EXPECT(is_sorted(range(1, 10)));
+    EXPECT(!is_sorted(Array { 1, 2, 0 }));
+    EXPECT(is_sorted(reversed(range(1, 10)), CompareThreeWayBackwards {}));
+
+    EXPECT(is_sorted(collect_priority_queue(reversed(range(32)))));
+
+    auto a = make_vector({ 5, 4, 3, 2, 1 });
+    sort(transform(a, [](auto x) {
+        return x + 1;
+    }));
+    EXPECT_EQ(a, make_vector({ 1, 2, 3, 4, 5 }));
+
+    sort(reversed(a));
+    EXPECT_EQ(a, make_vector({ 5, 4, 3, 2, 1 }));
 }
 
 constexpr void range() {
@@ -359,6 +402,7 @@ TEST_CONSTEXPR(container, collect, collect)
 TEST_CONSTEXPR(container, contains, contains)
 TEST_CONSTEXPR(container, equal, equal)
 TEST_CONSTEXPR(container, lexographic_compare, lexographic_compare)
+TEST_CONSTEXPR(container, sort, sort)
 TEST_CONSTEXPR(container, range, range)
 TEST_CONSTEXPR(container, repeat, repeat)
 TEST_CONSTEXPR(container, reversed, reversed)

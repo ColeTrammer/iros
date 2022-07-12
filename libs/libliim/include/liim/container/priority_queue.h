@@ -4,7 +4,7 @@
 #include <liim/container/new_vector.h>
 
 namespace LIIM::Container {
-template<typename T, ComparatorFor<T> Comp = Less>
+template<typename T, ThreeWayComparatorFor<T> Comp = CompareThreeWay>
 class PriorityQueue : public ValueIteratorAdapter<PriorityQueue<T, Comp>> {
 public:
     using ValueType = T;
@@ -57,13 +57,13 @@ private:
     constexpr void bubble_up(size_t index);
     constexpr size_t parent_index(size_t index) const;
     constexpr Pair<Option<size_t>, Option<size_t>> child_indices(size_t index) const;
-    constexpr bool greater_than(const T& a, const T& b) const;
+    constexpr bool less_than(const T& a, const T& b) const;
 
     NewVector<T> m_data;
     Comp m_comparator;
 };
 
-template<typename T, ComparatorFor<T> Comp>
+template<typename T, ThreeWayComparatorFor<T> Comp>
 template<Iterator Iter>
 constexpr auto PriorityQueue<T, Comp>::create(Iter start, Iter end, Option<size_t> known_size, Comp&& comp) {
     auto result = PriorityQueue(forward<Comp>(comp));
@@ -72,7 +72,7 @@ constexpr auto PriorityQueue<T, Comp>::create(Iter start, Iter end, Option<size_
     });
 }
 
-template<typename T, ComparatorFor<T> Comp>
+template<typename T, ThreeWayComparatorFor<T> Comp>
 constexpr auto PriorityQueue<T, Comp>::clone() const requires(Cloneable<Comp>) {
     return result_and_then(::clone(m_comparator), [&](auto&& comparator) {
         auto result = PriorityQueue { move(comparator) };
@@ -83,7 +83,7 @@ constexpr auto PriorityQueue<T, Comp>::clone() const requires(Cloneable<Comp>) {
     });
 }
 
-template<typename T, ComparatorFor<T> Comp>
+template<typename T, ThreeWayComparatorFor<T> Comp>
 template<typename... Args>
 requires(CreateableFrom<T, Args...> || FalliblyCreateableFrom<T, Args...>) constexpr auto PriorityQueue<T, Comp>::insert(ConstIterator,
                                                                                                                          Args&&... args) {
@@ -93,7 +93,7 @@ requires(CreateableFrom<T, Args...> || FalliblyCreateableFrom<T, Args...>) const
     });
 }
 
-template<typename T, ComparatorFor<T> Comp>
+template<typename T, ThreeWayComparatorFor<T> Comp>
 template<Iterator Iter>
 constexpr auto PriorityQueue<T, Comp>::insert(ConstIterator, Iter start, Iter end, Option<size_t> known_size) -> Iterator {
     auto old_size = this->size();
@@ -105,7 +105,7 @@ constexpr auto PriorityQueue<T, Comp>::insert(ConstIterator, Iter start, Iter en
     });
 }
 
-template<typename T, ComparatorFor<T> Comp>
+template<typename T, ThreeWayComparatorFor<T> Comp>
 constexpr T PriorityQueue<T, Comp>::pop() {
     assert(!empty());
     auto result = T(move(top()));
@@ -118,14 +118,14 @@ constexpr T PriorityQueue<T, Comp>::pop() {
             break;
         }
         if (!right_child) {
-            if (greater_than(m_data[*left_child], m_data[index])) {
+            if (less_than(m_data[*left_child], m_data[index])) {
                 ::swap(m_data[*left_child], m_data[index]);
             }
             break;
         }
 
-        size_t smallest_child = greater_than(m_data[*left_child], m_data[*right_child]) ? *left_child : *right_child;
-        if (greater_than(m_data[index], m_data[smallest_child])) {
+        size_t smallest_child = less_than(m_data[*left_child], m_data[*right_child]) ? *left_child : *right_child;
+        if (less_than(m_data[index], m_data[smallest_child])) {
             break;
         }
         ::swap(m_data[index], m_data[smallest_child]);
@@ -135,7 +135,7 @@ constexpr T PriorityQueue<T, Comp>::pop() {
     return result;
 }
 
-template<typename T, ComparatorFor<T> Comp>
+template<typename T, ThreeWayComparatorFor<T> Comp>
 constexpr Option<T> PriorityQueue<T, Comp>::maybe_pop() {
     if (empty()) {
         return None {};
@@ -143,14 +143,14 @@ constexpr Option<T> PriorityQueue<T, Comp>::maybe_pop() {
     return pop();
 }
 
-template<typename T, ComparatorFor<T> Comp>
+template<typename T, ThreeWayComparatorFor<T> Comp>
 constexpr void PriorityQueue<T, Comp>::bubble_up(size_t index) {
-    for (; index && greater_than(m_data[index], m_data[parent_index(index)]); index = parent_index(index)) {
+    for (; index && less_than(m_data[index], m_data[parent_index(index)]); index = parent_index(index)) {
         ::swap(m_data[index], m_data[parent_index(index)]);
     }
 }
 
-template<typename T, ComparatorFor<T> Comp>
+template<typename T, ThreeWayComparatorFor<T> Comp>
 constexpr size_t PriorityQueue<T, Comp>::parent_index(size_t index) const {
     if (index == 0) {
         return 0;
@@ -158,7 +158,7 @@ constexpr size_t PriorityQueue<T, Comp>::parent_index(size_t index) const {
     return (index + 1) / 2 - 1;
 }
 
-template<typename T, ComparatorFor<T> Comp>
+template<typename T, ThreeWayComparatorFor<T> Comp>
 constexpr Pair<Option<size_t>, Option<size_t>> PriorityQueue<T, Comp>::child_indices(size_t index) const {
     auto left_index = 2 * (index + 1) - 1;
     auto right_index = 2 * (index + 1);
@@ -172,17 +172,17 @@ constexpr Pair<Option<size_t>, Option<size_t>> PriorityQueue<T, Comp>::child_ind
     return { maybe_index(left_index), maybe_index(right_index) };
 }
 
-template<typename T, ComparatorFor<T> Comp>
-constexpr bool PriorityQueue<T, Comp>::greater_than(const T& a, const T& b) const {
-    return !m_comparator(a, b);
+template<typename T, ThreeWayComparatorFor<T> Comp>
+constexpr bool PriorityQueue<T, Comp>::less_than(const T& a, const T& b) const {
+    return invoke(m_comparator, a, b) < 0;
 }
 
-template<typename T, ComparatorFor<T> Comp = Less>
+template<typename T, ThreeWayComparatorFor<T> Comp = CompareThreeWay>
 constexpr auto make_priority_queue(std::initializer_list<T> list, Comp&& comp = Comp()) {
     return PriorityQueue<T, Comp>::create(list, forward<Comp>(comp));
 }
 
-template<Iterator Iter, typename Comp = Less>
+template<Iterator Iter, typename Comp = CompareThreeWay>
 constexpr auto make_priority_queue(Iter start, Iter end, Option<size_t> known_size = {}, Comp&& comparator = Comp()) {
     using ValueType = IteratorValueType<Iter>;
     using QueueType = PriorityQueue<decay_t<ValueType>, Comp>;

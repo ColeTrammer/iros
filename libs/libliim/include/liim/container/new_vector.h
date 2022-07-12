@@ -2,6 +2,7 @@
 
 #include <liim/compare.h>
 #include <liim/container/container.h>
+#include <liim/container/iterator/continuous_iterator.h>
 #include <liim/error/common_result.h>
 #include <liim/error/error.h>
 #include <liim/error/system_domain.h>
@@ -16,51 +17,21 @@ template<typename T>
 class NewVector;
 
 template<typename VectorType>
-class NewVectorIterator {
+class NewVectorIterator : public ContinuousIteratorAdapter<NewVectorIterator<VectorType>> {
 public:
     using VectorValueType = VectorType::ValueType;
     using ValueType = Conditional<IsConst<VectorType>::value, const VectorValueType&, VectorValueType&>::type;
 
     constexpr operator NewVectorIterator<const VectorType>() requires(!IsConst<VectorType>::value) {
-        return NewVectorIterator<const VectorType>(m_vector, m_index);
+        return NewVectorIterator<const VectorType>(*m_vector, this->index());
     }
 
-    constexpr decltype(auto) operator*() const { return m_vector[m_index]; }
-    constexpr decltype(auto) operator->() const { return &m_vector[m_index]; }
-
-    constexpr decltype(auto) operator[](ssize_t index) const { return m_vector[m_index + index]; }
-
-    constexpr NewVectorIterator& operator++() {
-        ++m_index;
-        return *this;
-    }
-    constexpr NewVectorIterator& operator--() {
-        --m_index;
-        return *this;
-    }
-
-    constexpr NewVectorIterator operator++(int) { return NewVectorIterator(m_vector, m_index++); }
-    constexpr NewVectorIterator operator--(int) { return NewVectorIterator(m_vector, m_index--); }
-
-    constexpr NewVectorIterator operator+(ssize_t n) const { return NewVectorIterator(m_vector, m_index + n); }
-    constexpr NewVectorIterator operator-(ssize_t n) const { return NewVectorIterator(m_vector, m_index - n); }
-
-    constexpr ssize_t operator-(const NewVectorIterator& other) const { return this->m_index - other.m_index; }
-
-    constexpr NewVectorIterator& operator+=(ssize_t n) {
-        m_index += n;
-        return *this;
-    }
-    constexpr NewVectorIterator& operator-=(ssize_t n) {
-        m_index -= n;
-        return *this;
-    }
-
-    constexpr bool operator==(const NewVectorIterator& other) const { return this->m_index == other.m_index; }
-    constexpr auto operator<=>(const NewVectorIterator& other) const { return this->m_index <=> other.m_index; }
+    constexpr decltype(auto) operator*() const { return (*m_vector)[this->index()]; }
+    constexpr decltype(auto) operator->() const { return &(*m_vector)[this->index()]; }
 
 private:
-    explicit constexpr NewVectorIterator(VectorType& vector, size_t index) : m_vector(vector), m_index(index) {}
+    explicit constexpr NewVectorIterator(VectorType& vector, size_t index)
+        : ContinuousIteratorAdapter<NewVectorIterator>(index), m_vector(&vector) {}
 
     template<typename T>
     friend class NewVectorIterator;
@@ -68,8 +39,7 @@ private:
     template<typename>
     friend class NewVector;
 
-    VectorType& m_vector;
-    size_t m_index { 0 };
+    VectorType* m_vector;
 };
 
 template<typename T>

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <liim/compare.h>
+#include <liim/construct.h>
 #include <liim/utilities.h>
 
 namespace LIIM::Container {
@@ -26,8 +27,9 @@ concept DoubleEndedIterator = Iterator<T> && requires(T iterator) {
 };
 
 template<typename T>
-concept RandomAccessIterator = DoubleEndedIterator<T> && Comparable<T> && requires(T iterator, size_t index) {
+concept RandomAccessIterator = DoubleEndedIterator<T> && Copyable<T> && Comparable<T> && requires(T iterator, T other, size_t index) {
     { iterator[index] } -> SameAs<typename IteratorTraits<T>::ValueType>;
+    { iterator - other } -> SameAs<ssize_t>;
 };
 
 template<typename T>
@@ -53,6 +55,11 @@ concept SizedContainer = Container<T> && requires(T container) {
     { container.size() } -> SameAs<size_t>;
 };
 
+template<typename T>
+concept MemberContentSwappableIterator = Iterator<T> && Copyable<T> && requires(T a, T b) {
+    a.swap_contents(b);
+};
+
 template<Container C>
 using IteratorForContainer = decltype(declval<C>().end());
 
@@ -64,6 +71,27 @@ using IteratorValueType = IteratorTraits<Iter>::ValueType;
 
 template<Container C>
 using ContainerValueType = IteratorValueType<IteratorForContainer<C>>;
+
+template<typename T>
+concept MutableIterator = Iterator<T> &&(MemberContentSwappableIterator<T> || IsLValueReference<IteratorValueType<T>>::value);
+
+template<typename T>
+concept MutableContainer = Container<T> && requires(T container) {
+    { container.begin() } -> MutableIterator;
+    { container.end() } -> MutableIterator;
+};
+
+template<typename T>
+concept MutableDoubleEndedIterator = MutableIterator<T> && DoubleEndedIterator<T>;
+
+template<typename T>
+concept MutableDoubleEndedContainer = MutableContainer<T> && DoubleEndedContainer<T>;
+
+template<typename T>
+concept MutableRandomAccessIterator = MutableIterator<T> && RandomAccessIterator<T>;
+
+template<typename T>
+concept MutableRandomAccessContainer = MutableContainer<T> && RandomAccessContainer<T>;
 
 template<typename T>
 concept Clearable = Container<T> && requires(T& container) {
@@ -90,5 +118,11 @@ using LIIM::Container::DoubleEndedIterator;
 using LIIM::Container::Iterator;
 using LIIM::Container::IteratorForContainer;
 using LIIM::Container::IteratorValueType;
+using LIIM::Container::MutableContainer;
+using LIIM::Container::MutableDoubleEndedContainer;
+using LIIM::Container::MutableDoubleEndedIterator;
+using LIIM::Container::MutableIterator;
+using LIIM::Container::MutableRandomAccessContainer;
+using LIIM::Container::MutableRandomAccessIterator;
 using LIIM::Container::RandomAccessContainer;
 using LIIM::Container::RandomAccessIterator;

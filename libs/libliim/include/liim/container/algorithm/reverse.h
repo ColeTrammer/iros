@@ -1,9 +1,10 @@
 #pragma once
 
 #include <liim/container/concepts.h>
+#include <liim/container/iterator/swap_iterator_contents.h>
 
 namespace LIIM::Container::Algorithm {
-template<DoubleEndedContainer C>
+template<MutableDoubleEndedContainer C>
 constexpr void reverse(C&& container) {
     auto left = forward<C>(container).begin();
     auto right = forward<C>(container).end();
@@ -13,7 +14,7 @@ constexpr void reverse(C&& container) {
         if (left == right) {
             break;
         }
-        swap(*left, *right);
+        swap_iterator_contents(left, right);
         ++left;
     }
 }
