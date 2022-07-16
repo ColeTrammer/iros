@@ -56,7 +56,7 @@ public:
 private:
     constexpr void bubble_up(size_t index);
     constexpr size_t parent_index(size_t index) const;
-    constexpr Pair<Option<size_t>, Option<size_t>> child_indices(size_t index) const;
+    constexpr Tuple<Option<size_t>, Option<size_t>> child_indices(size_t index) const;
     constexpr bool less_than(const T& a, const T& b) const;
 
     NewVector<T> m_data;
@@ -159,7 +159,7 @@ constexpr size_t PriorityQueue<T, Comp>::parent_index(size_t index) const {
 }
 
 template<typename T, ThreeWayComparatorFor<T> Comp>
-constexpr Pair<Option<size_t>, Option<size_t>> PriorityQueue<T, Comp>::child_indices(size_t index) const {
+constexpr Tuple<Option<size_t>, Option<size_t>> PriorityQueue<T, Comp>::child_indices(size_t index) const {
     auto left_index = 2 * (index + 1) - 1;
     auto right_index = 2 * (index + 1);
 

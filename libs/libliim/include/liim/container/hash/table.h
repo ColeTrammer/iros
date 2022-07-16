@@ -22,7 +22,7 @@ concept CanInsertIntoSet = (CanLookup<TransparentKey, KeyType> &&
                             FalliblyCreateableFrom<KeyType, TransparentKey>);
 
 template<typename Pair, typename KeyType, typename StorageType>
-concept CanInsertIntoMap = (CanLookup<typename decay_t<Pair>::FirstType, KeyType> &&
+concept CanInsertIntoMap = (PairLike<Pair> && CanLookup<TupleElement<0, Pair>, KeyType> &&
                                 (CreateableFrom<StorageType, Pair> || FalliblyCreateableFrom<StorageType, Pair>) ||
                             FalliblyCreateableFrom<StorageType, Pair>);
 
@@ -42,7 +42,7 @@ struct TableKeyType {
 
 template<typename T>
 struct TableKeyType<T, TableType::Map> {
-    using Type = RemoveConst<typename T::FirstType>::type;
+    using Type = RemoveConst<TupleElement<0, T>>::type;
 };
 
 template<typename T, TableType table_type>
@@ -52,7 +52,7 @@ struct TableValue {
 
 template<typename T>
 struct TableValue<T, TableType::Map> {
-    using Type = T::SecondType;
+    using Type = TupleElement<1, T>;
 };
 
 template<typename T, typename Self, TableType type>
@@ -269,7 +269,7 @@ constexpr auto Table<T, Self, type>::iterator_from_entry(Entry entry) const -> C
 template<typename T, typename Self, TableType type>
 constexpr auto Table<T, Self, type>::value(size_t index) const -> const Value& {
     if constexpr (is_map) {
-        return value_internal(index).second;
+        return tuple_get<1>(value_internal(index));
     } else {
         return value_internal(index);
     }
@@ -318,14 +318,14 @@ constexpr auto Table<T, Self, type>::insert(U&& to_insert) requires(CanInsert<U,
             });
         }
     } else {
-        if constexpr (!requires { to_insert.first; }) {
-            return result_and_then(LIIM::create<Pair<KeyType, Value>>(forward<U>(to_insert)), [&](auto&& value) {
-                return insert_with_factory(move(value).first, [&](T* pointer) {
+        if constexpr (!requires { tuple_get<0>(to_insert); }) {
+            return result_and_then(LIIM::create<Tuple<KeyType, Value>>(forward<U>(to_insert)), [&](auto&& value) {
+                return insert_with_factory(tuple_get<0>(move(value)), [&](T* pointer) {
                     return create_at(pointer, move(value));
                 });
             });
         } else {
-            return insert_with_factory(forward<U>(to_insert).first, [&](T* pointer) {
+            return insert_with_factory(tuple_get<0>(forward<U>(to_insert)), [&](T* pointer) {
                 return create_at(pointer, forward<U>(to_insert));
             });
         }
@@ -351,7 +351,7 @@ requires(CanInsert<IteratorValueType<Iter>, Table>) {
         }
         return {};
     } else {
-        auto vector = collect<NewVector<Pair<KeyType, Value>>>(iterator_container(move(start), move(end)));
+        auto vector = collect<NewVector<Tuple<KeyType, Value>>>(iterator_container(move(start), move(end)));
         return result_and_then(move(vector), [&](auto&& elements) {
             auto container = move_elements(move(elements));
             return this->insert(container.begin(), container.end(), known_size);
@@ -536,7 +536,7 @@ constexpr bool Table<T, Self, type>::equal(const T& value, U&& other) const requ
     if constexpr (is_set) {
         return value == other;
     } else {
-        return value.first == other;
+        return tuple_get<0>(value) == other;
     }
 }
 

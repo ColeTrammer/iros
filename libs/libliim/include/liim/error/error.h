@@ -16,6 +16,14 @@ public:
         }
     }
 
+    Error& operator=(Error&& other) {
+        if (this != &other) {
+            Error temp(move(other));
+            swap(temp);
+        }
+        return *this;
+    }
+
     StringView message() const {
         assert(m_domain);
         return m_domain->message(m_value);
@@ -23,6 +31,11 @@ public:
     StringView type() const {
         assert(m_domain);
         return m_domain->type();
+    }
+
+    void swap(Error& other) {
+        ::swap(this->m_value, other.m_value);
+        ::swap(this->m_domain, other.m_domain);
     }
 
 private:
@@ -37,8 +50,13 @@ public:
     constexpr Error(Error&& other) = default;
     constexpr ~Error() = default;
 
+    constexpr Error& operator=(Error&& other) = default;
+
     constexpr StringView message() const { return m_domain->message(m_value); }
     constexpr StringView type() const { return m_domain->type(); }
+
+    constexpr T& value() { return m_value; }
+    constexpr const T& value() const { return m_value; }
 
     operator Error<>() requires(Erasable<T>) {
         ErrorTransport<T> transport { move(m_value) };

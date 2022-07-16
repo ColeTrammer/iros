@@ -9,7 +9,6 @@ set(TEST_FILES
     test_hash_set.cpp
     test_new_vector.cpp
     test_option.cpp
-    test_pair.cpp
     test_preprocessor.cpp
     test_priority_queue.cpp
     test_result.cpp

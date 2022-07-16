@@ -10,13 +10,19 @@ concept OperatorAssignableFrom = requires(T& lvalue, U&& rvalue) {
 };
 
 template<typename T>
+concept DefaultConstructible = ConstructibleFrom<T>;
+
+template<typename T>
 concept Copyable = ConstructibleFrom<T, const T&>;
 
 template<typename T>
-concept Moveable = ConstructibleFrom<T, T&&> && OperatorAssignableFrom<T, T&&>;
+concept Moveable = ConstructibleFrom<T, T&&>;
 
 template<typename T>
-concept MemberCloneable = Moveable<T> && requires(const T& clvalue) {
+concept MoveAssignable = OperatorAssignableFrom<T, T&&>;
+
+template<typename T>
+concept MemberCloneable = requires(const T& clvalue) {
     { clvalue.clone() } -> SameAs<T>;
 };
 
@@ -29,7 +35,7 @@ concept FalliblyCloneable = !Cloneable<T> && Moveable<T> && requires(const T& cl
 };
 
 template<typename T, typename... Args>
-concept MemberCreateableFrom = Moveable<T> && requires {
+concept MemberCreateableFrom = requires {
     { T::create(declval<Args>()...) } -> SameAs<T>;
 };
 
@@ -43,7 +49,8 @@ concept CreateableFrom = ConstructibleFrom<T, Args...> || MemberCreateableFrom<T
 
 template<typename T, typename... Args>
 concept FalliblyCreateableFrom =
-    !CreateableFrom<T, Args...> && (CreateableFrom<T, UnwrapResult<Args>...> || FalliblyMemberCreateableFrom<T, UnwrapResult<Args>...>);
+    !CreateableFrom<T, Args...> && (CreateableFrom<T, UnwrapResult<Args>...> || FalliblyMemberCreateableFrom<T, Args...> ||
+                                    FalliblyMemberCreateableFrom<T, UnwrapResult<Args>...>);
 
 template<typename T, typename... Args>
 concept MemberAssignableFrom = requires(T& lvalue, Args&&... args) {
@@ -56,10 +63,11 @@ concept FalliblyMemberAssignableFrom = requires(T& lvalue, Args&&... args) {
 };
 
 template<typename T, typename U>
-concept AssignableFrom = OperatorAssignableFrom<T, U> || MemberAssignableFrom<T, U> ||(Moveable<T>&& CreateableFrom<T, U>);
+concept AssignableFrom = OperatorAssignableFrom<T, U> || MemberAssignableFrom<T, U> ||(MoveAssignable<T>&& CreateableFrom<T, U>);
 
 template<typename T, typename U>
-concept FalliblyAssignableFrom = !AssignableFrom<T, U> && (FalliblyMemberAssignableFrom<T, U> || FalliblyCreateableFrom<T, U>);
+concept FalliblyAssignableFrom =
+    !AssignableFrom<T, U> && (FalliblyMemberAssignableFrom<T, U> || (MoveAssignable<T> && FalliblyCreateableFrom<T, U>) );
 
 template<typename T, typename... Args>
 constexpr Void create_at(T* location, Args&&... args) requires(CreateableFrom<T, Args...>) {

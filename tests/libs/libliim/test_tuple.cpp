@@ -37,5 +37,26 @@ constexpr void destructing() {
     EXPECT_EQ(c.get<1>(), 7l);
 }
 
+constexpr void construct_piecewise() {
+    auto x = Tuple<int, int, int>(piecewise_construct, Tuple(32), Tuple(42), Tuple(52));
+    auto y = Tuple<int, int, int>::create(piecewise_construct, Tuple(Result<int, StringView>(32)), Tuple(Result<int, StringView>(42)),
+                                          Tuple(Result<int, StringView>(52)));
+    EXPECT(x == y);
+
+    LIIM::MaybeUninit<Tuple<const int, int>> z;
+    int a = 2;
+    auto b = Result<int, StringView>(4);
+    create_at(&z.value, piecewise_construct, Tuple<int&&>(move(a)), Tuple<Result<int, StringView>&&>(move(b)));
+
+    auto w = Tuple<const int, int>::create(piecewise_construct, Tuple<int&&>(move(a)), Tuple<Result<int, StringView>&&>(move(b)));
+}
+
+constexpr void comparison() {
+    auto x = Tuple { "abc"sv, "qwe" };
+    auto y = Tuple { "abc", "qwe"sv };
+    EXPECT(x == y);
+}
+
 TEST_CONSTEXPR(tuple, basic, basic)
 TEST_CONSTEXPR(tuple, destructing, destructing)
+TEST_CONSTEXPR(tuple, construct_piecewise, construct_piecewise)

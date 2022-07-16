@@ -34,7 +34,7 @@ Enviornment Enviornment::set(String key, String value) && {
 
 auto Enviornment::get_c_style_envp() -> CStyleEnvp {
     auto storage = collect_vector(transform(m_enviornment, [](auto& pair) {
-        return format("{}={}", pair.first, pair.second);
+        return format("{}={}", tuple_get<0>(pair), tuple_get<1>(pair));
     }));
 
     auto envp = collect_vector(transform(storage, [](auto& value) {

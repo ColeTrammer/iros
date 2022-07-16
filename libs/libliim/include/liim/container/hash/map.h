@@ -2,12 +2,12 @@
 
 #include <liim/container/hash/table.h>
 #include <liim/format.h>
-#include <liim/pair.h>
+#include <liim/tuple.h>
 
 namespace LIIM::Container::Hash {
 template<typename K, typename V>
-class Map : public Detail::Table<Pair<const K, V>, Map<K, V>, Detail::TableType::Map> {
-    using Table = Detail::Table<Pair<const K, V>, Map<K, V>, Detail::TableType::Map>;
+class Map : public Detail::Table<Tuple<const K, V>, Map<K, V>, Detail::TableType::Map> {
+    using Table = Detail::Table<Tuple<const K, V>, Map<K, V>, Detail::TableType::Map>;
 
 public:
     using ValueType = Table::ValueType;
@@ -44,7 +44,7 @@ constexpr decltype(auto) Map<K, V>::operator[](U&& needle) {
                                if (optional_value) {
                                    return *optional_value;
                                } else {
-                                   return value_location->second;
+                                   return tuple_get<1>(*value_location);
                                }
                            });
 }
@@ -75,21 +75,21 @@ constexpr auto Map<K, V>::try_emplace(U&& needle,
 template<typename K, typename V>
 constexpr auto Map<K, V>::values() {
     return transform(*this, [](auto& pair) -> V& {
-        return pair.second;
+        return tuple_get<1>(pair);
     });
 }
 
 template<typename K, typename V>
 constexpr auto Map<K, V>::values() const {
     return transform(*this, [](const auto& pair) -> const V& {
-        return pair.second;
+        return tuple_get<1>(pair);
     });
 }
 
 template<typename K, typename V>
 constexpr auto Map<K, V>::keys() const {
     return transform(*this, [](const auto& pair) -> const K& {
-        return pair.first;
+        return tuple_get<0>(pair);
     });
 }
 
@@ -110,23 +110,23 @@ constexpr bool Map<K, V>::operator==(const Map& other) const requires(EqualCompa
     return true;
 }
 
-template<typename ValueType>
+template<PairLike ValueType>
 constexpr auto make_hash_map(std::initializer_list<ValueType> list) {
-    using MapType = Map<const typename ValueType::FirstType, typename ValueType::SecondType>;
+    using MapType = Map<const DecayTupleElement<0, ValueType>, DecayTupleElement<1, ValueType>>;
     return MapType::create(list.begin(), list.end());
 }
 
 template<Iterator Iter>
 constexpr auto make_hash_map(Iter start, Iter end, Option<size_t> known_size = {}) {
     using ValueType = decay_t<IteratorValueType<Iter>>;
-    using MapType = Map<const typename ValueType::FirstType, typename ValueType::SecondType>;
+    using MapType = Map<const DecayTupleElement<0, ValueType>, DecayTupleElement<1, ValueType>>;
     return MapType::create(move(start), move(end), known_size);
 }
 
 template<Container C>
 constexpr auto collect_hash_map(C&& container) {
     using ValueType = decay_t<ContainerValueType<C>>;
-    using MapType = Map<decay_t<typename ValueType::FirstType>, decay_t<typename ValueType::SecondType>>;
+    using MapType = Map<const DecayTupleElement<0, ValueType>, DecayTupleElement<1, ValueType>>;
     return collect<MapType>(forward<C>(container));
 }
 }

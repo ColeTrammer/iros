@@ -455,6 +455,9 @@ using Like = Detail::LikeHelper<T, U>::Type;
 
 struct Void {};
 
+template<auto...>
+constexpr bool always_false = false;
+
 namespace Detail {
     template<typename T>
     struct WrapVoidHelper {
@@ -644,6 +647,34 @@ struct IsTriviallyRelocatable<T> {
 template<typename T>
 concept TriviallyRelocatable = IsTriviallyRelocatable<T>::value;
 
+namespace Detail {
+    template<bool... values>
+    struct ConjunctionHelper {
+        constexpr static bool value = true;
+    };
+
+    template<bool b, bool... values>
+    struct ConjunctionHelper<b, values...> {
+        constexpr static bool value = !b ? false : ConjunctionHelper<values...>::value;
+    };
+
+    template<bool... values>
+    struct DisjunctionHelper {
+        constexpr static bool value = false;
+    };
+
+    template<bool b, bool... values>
+    struct DisjunctionHelper<b, values...> {
+        constexpr static bool value = b ? true : DisjunctionHelper<values...>::value;
+    };
+}
+
+template<bool... values>
+constexpr inline bool conjunction = Detail::ConjunctionHelper<values...>::value;
+
+template<bool... values>
+constexpr inline bool disjunction = Detail::DisjunctionHelper<values...>::value;
+
 template<class T>
 struct in_place_type_t {
     explicit in_place_type_t() = default;
@@ -720,6 +751,8 @@ constexpr T abs(T x) {
 using LIIM::abs;
 using LIIM::bit_cast;
 using LIIM::clamp;
+using LIIM::conjunction;
+using LIIM::disjunction;
 using LIIM::exchange;
 using LIIM::forward;
 using LIIM::in_place_index;

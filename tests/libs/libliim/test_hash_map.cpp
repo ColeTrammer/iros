@@ -21,12 +21,12 @@ constexpr void basic() {
     EXPECT_EQ(map.insert_or_assign(3, 5), 4);
     EXPECT_EQ(*map.at(3), 5);
 
-    map.insert(make_pair(42, 400));
+    map.insert(make_tuple(42, 400));
     EXPECT(map.contains(42));
 }
 
 constexpr void containers() {
-    auto items = make_vector<Pair<int, int>>({ { 1, 1 }, { 2, 4 }, { 3, 9 } });
+    auto items = make_vector<Tuple<int, int>>({ { 1, 1 }, { 2, 4 }, { 3, 9 } });
     auto map = collect_hash_map(move(items));
     EXPECT_EQ(*map.at(1), 1);
 
@@ -65,12 +65,12 @@ constexpr void subcontainers() {
 
 constexpr void fallible() {
     auto x = LIIM::Container::HashMap<int, int> {};
-    auto w = NewVector<Result<Pair<int, int>, StringView>> {};
-    w.emplace_back(Pair { 1, 4 });
-    w.emplace_back(Pair { 2, 9 });
+    auto w = NewVector<Result<Tuple<int, int>, StringView>> {};
+    w.emplace_back(Tuple { 1, 4 });
+    w.emplace_back(Tuple { 2, 9 });
     w.emplace_back(Err("fail"sv));
 
-    auto r = x.insert(Result<Pair<int, int>, StringView>(Err("fail"sv)));
+    auto r = x.insert(Result<Tuple<int, int>, StringView>(Err("fail"sv)));
     EXPECT_EQ(r.error(), "fail"sv);
     EXPECT(x.empty());
 
@@ -78,8 +78,8 @@ constexpr void fallible() {
     EXPECT_EQ(q.error(), "fail"sv);
     EXPECT(x.empty());
 
-    w.emplace_back(Pair { 1, 4 });
-    w.emplace_back(Pair { 2, 9 });
+    w.emplace_back(Tuple { 1, 4 });
+    w.emplace_back(Tuple { 2, 9 });
     auto l = insert(x, x.end(), move_elements(move(w)));
     EXPECT(l);
     EXPECT_EQ(x[1], 4);
@@ -132,7 +132,7 @@ static void transparent() {
 }
 
 static void format() {
-    auto y = make_hash_map({ Pair { 20, 400 }, Pair { 400, 800 } });
+    auto y = make_hash_map({ Tuple { 20, 400 }, Tuple { 400, 800 } });
     EXPECT_EQ(to_string(y), "{ 20: 400, 400: 800 }");
 }
 
