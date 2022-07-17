@@ -701,11 +701,13 @@ constexpr U bit_cast(const T& value) {
 
 template<typename T>
 constexpr void swap(T& a, T& b) {
-    T temp(move(a));
-    a.~T();
-    std::construct_at(&a, move(b));
-    b.~T();
-    std::construct_at(&b, move(temp));
+    if (&a != &b) {
+        T temp(move(a));
+        a.~T();
+        std::construct_at(&a, move(b));
+        b.~T();
+        std::construct_at(&b, move(temp));
+    }
 }
 
 template<typename T, typename U = T>
