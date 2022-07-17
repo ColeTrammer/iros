@@ -1,3 +1,4 @@
+#include <liim/container/container.h>
 #include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -10,22 +11,23 @@ struct SignalDescriptor {
     const char* name;
 };
 
-static SignalDescriptor signals[] = {
-    { SIGHUP, "HUP" },       { SIGINT, "INT" },       { SIGQUIT, "QUIT" }, { SIGBUS, "BUS" },   { SIGTRAP, "TRAP" },   { SIGABRT, "ABRT" },
-    { SIGCONT, "CONT" },     { SIGFPE, "FPE" },       { SIGKILL, "KILL" }, { SIGTTIN, "TTIN" }, { SIGTTOU, "TTOU" },   { SIGILL, "ILL" },
-    { SIGPIPE, "PIPE" },     { SIGALRM, "ALRM" },     { SIGTERM, "TERM" }, { SIGSEGV, "SEGV" }, { SIGSTOP, "STOP" },   { SIGTSTP, "TSTP" },
-    { SIGUSR1, "USR1" },     { SIGUSR2, "USR2" },     { SIGPOLL, "POLL" }, { SIGPROF, "PROF" }, { SIGSYS, "SYS" },     { SIGURG, "URG" },
-    { SIGVTALRM, "VTALRM" }, { SIGXCPU, "XCPU" },     { SIGXFSZ, "FXSZ" }, { SIGCHLD, "CHLD" }, { SIGWINCH, "WINCH" },
+constexpr static auto signals = [] {
+    auto result = make_array<SignalDescriptor>({
+        { SIGHUP, "HUP" },   { SIGINT, "INT" },       { SIGQUIT, "QUIT" }, { SIGBUS, "BUS" },     { SIGTRAP, "TRAP" },
+        { SIGABRT, "ABRT" }, { SIGCONT, "CONT" },     { SIGFPE, "FPE" },   { SIGKILL, "KILL" },   { SIGTTIN, "TTIN" },
+        { SIGTTOU, "TTOU" }, { SIGILL, "ILL" },       { SIGPIPE, "PIPE" }, { SIGALRM, "ALRM" },   { SIGTERM, "TERM" },
+        { SIGSEGV, "SEGV" }, { SIGSTOP, "STOP" },     { SIGTSTP, "TSTP" }, { SIGUSR1, "USR1" },   { SIGUSR2, "USR2" },
+        { SIGPOLL, "POLL" }, { SIGPROF, "PROF" },     { SIGSYS, "SYS" },   { SIGURG, "URG" },     { SIGVTALRM, "VTALRM" },
+        { SIGXCPU, "XCPU" }, { SIGXFSZ, "FXSZ" },     { SIGCHLD, "CHLD" }, { SIGWINCH, "WINCH" },
 #ifdef __linux__
-    { SIGPWR, "PWR" },       { SIGSTKFLT, "STKFLT" },
+        { SIGPWR, "PWR" },   { SIGSTKFLT, "STKFLT" },
 #endif
-};
-
-static __attribute__((constructor)) void __init_signals() {
-    qsort(signals, sizeof(signals) / sizeof(signals[0]), sizeof(signals[0]), [](const void* s1, const void* s2) {
-        return reinterpret_cast<const SignalDescriptor*>(s1)->number - reinterpret_cast<const SignalDescriptor*>(s2)->number;
     });
-}
+    sort(result, [](auto& a, auto& b) {
+        return a.number <=> b.number;
+    });
+    return result;
+}();
 
 static Option<int> signal_from_number(const char* num) {
     auto n = atoi(num);

@@ -4,16 +4,7 @@
 
 namespace Edit {
 void TextRangeCollection::sort() {
-    qsort(m_ranges.vector(), m_ranges.size(), sizeof(TextRange), [](const void* k1, const void* k2) -> int {
-        auto& a = *reinterpret_cast<const TextRange*>(k1);
-        auto& b = *reinterpret_cast<const TextRange*>(k2);
-        if (a.start() < b.start()) {
-            return -1;
-        } else if (a.start() > b.start()) {
-            return 1;
-        }
-        return 0;
-    });
+    ::sort(transform(m_ranges, &TextRange::start));
 }
 
 Option<int> TextRangeCollection::range_index_at_text_index(const TextIndex& index) const {

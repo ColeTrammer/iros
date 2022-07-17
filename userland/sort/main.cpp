@@ -1,19 +1,10 @@
+#include <liim/container/algorithm/sort.h>
 #include <liim/string.h>
 #include <liim/vector.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-static int sort_compar(const void* aa, const void* bb) {
-    auto* a = reinterpret_cast<const String*>(aa);
-    auto* b = reinterpret_cast<const String*>(bb);
-    return strcmp(a->string(), b->string());
-}
-
-void do_sort(Vector<String>& lines) {
-    qsort(lines.vector(), lines.size(), sizeof(String), sort_compar);
-}
 
 int read_all_path(const char* path, Vector<String>& lines) {
     FILE* file;
@@ -84,7 +75,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    do_sort(lines);
+    sort(lines);
     lines.for_each([&](auto& s) {
         puts(s.string());
     });

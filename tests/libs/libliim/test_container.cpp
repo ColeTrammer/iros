@@ -104,6 +104,14 @@ constexpr void sort() {
 
     sort(reversed(a));
     EXPECT_EQ(a, make_vector({ 5, 4, 3, 2, 1 }));
+
+    auto scores = make_vector({ 50, 20, 70, 10 });
+    auto data = make_vector({ 37, 42, 60, 100, -1 });
+    sort(zip(scores, data));
+
+    EXPECT(is_sorted(zip(scores, data)));
+    EXPECT_EQ(scores, make_vector({ 10, 20, 50, 70 }));
+    EXPECT_EQ(data, make_vector({ 100, 42, 37, 60, -1 }));
 }
 
 constexpr void range() {

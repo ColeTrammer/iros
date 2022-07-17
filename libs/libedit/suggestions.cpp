@@ -34,23 +34,11 @@ void Suggestions::compute_matches(const Document& document, const Cursor& cursor
         do_match(suggestion, reference_text.view());
     }
 
-    ::qsort(m_matched_suggestions.vector(), m_matched_suggestions.size(), sizeof(m_matched_suggestions[0]),
-            [](const void* p1, const void* p2) -> int {
-                auto& a = *static_cast<const MatchedSuggestion*>(p1);
-                auto& b = *static_cast<const MatchedSuggestion*>(p2);
-
-                if (a.score() < b.score()) {
-                    return -1;
-                } else if (a.score() > b.score()) {
-                    return 1;
-                }
-
-                if (a.content().size() < b.content().size()) {
-                    return -1;
-                } else if (a.content().size() > b.content().size()) {
-                    return 1;
-                }
-                return strcasecmp(a.content().string(), b.content().string());
-            });
+    sort(m_matched_suggestions, [](auto& a, auto& b) {
+        if (auto result = Tuple { a.score(), a.content().size() } <=> Tuple { b.score(), b.content().size() }; result != 0) {
+            return result;
+        }
+        return strcasecmp(a.content().string(), b.content().string()) <=> 0;
+    });
 }
 }

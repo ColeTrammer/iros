@@ -245,26 +245,13 @@ void highlight_sh(StringView contents, TextRangeCollection& syntax_ranges) {
         return;
     }
 
-    auto do_sort = [](const void* a, const void* b) -> int {
-        auto t1 = reinterpret_cast<const ShLexer::Token*>(a);
-        auto t2 = reinterpret_cast<const ShLexer::Token*>(b);
-
-        assert(t1->value().has_text());
-        assert(t2->value().has_text());
-
-        if (t1->value().start_line() < t2->value().start_line()) {
-            return -1;
-        } else if (t1->value().start_line() > t2->value().start_line()) {
-            return 1;
-        }
-        return t1->value().start_col() - t2->value().start_col();
-    };
-
     while (lexer.peek_next_token_type() != ShTokenType::End) {
         lexer.advance();
     }
 
-    qsort(const_cast<ShLexer::Token*>(lexer.tokens().vector()), lexer.tokens().size(), sizeof(ShLexer::Token), do_sort);
+    sort(const_cast<Vector<ShLexer::Token>&>(lexer.tokens()), [](auto& a, auto& b) {
+        return Tuple { a.value().start_line(), a.value().start_col() } <=> Tuple { b.value().start_line(), b.value().start_col() };
+    });
 
     for (int i = 0; i < lexer.tokens().size(); i++) {
         int flags = sh_flags_for_token_type(lexer, i);

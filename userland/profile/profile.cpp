@@ -1,4 +1,5 @@
 #include <ext/mapped_file.h>
+#include <liim/container/container.h>
 #include <liim/hash_map.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -177,11 +178,7 @@ void ProfileNode::dump(int level) const {
 }
 
 void ProfileNode::sort() {
-    qsort(m_nodes.vector(), m_nodes.size(), sizeof(ProfileNode), [](const void* k1, const void* k2) {
-        int a = ((const ProfileNode*) k1)->total_count();
-        int b = ((const ProfileNode*) k2)->total_count();
-        return a < b ? 1 : a == b ? 0 : -1;
-    });
+    ::sort(reversed(transform(m_nodes, &ProfileNode::total_count)));
 
     for (auto& node : m_nodes) {
         node.sort();

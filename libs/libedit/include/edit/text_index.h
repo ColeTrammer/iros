@@ -23,33 +23,10 @@ public:
     }
 
     bool operator==(const TextIndex& other) const = default;
-    bool operator!=(const TextIndex& other) const = default;
-    bool operator<(const TextIndex& other) const { return this->is_before(other); }
-    bool operator<=(const TextIndex& other) const { return (*this == other) || this->is_before(other); }
-    bool operator>(const TextIndex& other) const { return this->is_after(other); }
-    bool operator>=(const TextIndex& other) const { return (*this == other) || this->is_after(other); }
+    std::strong_ordering operator<=>(const TextIndex& other) const = default;
 
-    bool is_before(const TextIndex& other) const {
-        if (this->line_index() < other.line_index()) {
-            return true;
-        }
-
-        if (this->line_index() == other.line_index()) {
-            return this->index_into_line() < other.index_into_line();
-        }
-        return false;
-    }
-
-    bool is_after(const TextIndex& other) const {
-        if (this->line_index() > other.line_index()) {
-            return true;
-        }
-
-        if (this->line_index() == other.line_index()) {
-            return this->index_into_line() > other.index_into_line();
-        }
-        return false;
-    }
+    bool is_before(const TextIndex& other) const { return *this < other; }
+    bool is_after(const TextIndex& other) const { return *this > other; }
 
 private:
     int m_line_index { 0 };
