@@ -55,8 +55,19 @@ constexpr void comparison() {
     auto x = Tuple { "abc"sv, "qwe" };
     auto y = Tuple { "abc", "qwe"sv };
     EXPECT(x == y);
+
+    auto a = Tuple { 2, 4, 0.1 };
+    auto b = Tuple { 1, 4, 0.1 };
+    auto r = a <=> b;
+    EXPECT(r == std::partial_ordering::greater);
+
+    auto c = Tuple { "xxx"sv, 42 };
+    auto d = Tuple { "xxx", 42l };
+    auto w = c <=> d;
+    EXPECT(w == std::strong_ordering::equal);
 }
 
 TEST_CONSTEXPR(tuple, basic, basic)
 TEST_CONSTEXPR(tuple, destructing, destructing)
 TEST_CONSTEXPR(tuple, construct_piecewise, construct_piecewise)
+TEST_CONSTEXPR(tuple, comparison, comparison)

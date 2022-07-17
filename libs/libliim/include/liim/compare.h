@@ -158,10 +158,38 @@ concept ComparatorFor = requires(const Comp& comparator, const T& a, const U& b)
     { comparator(a, b) } -> SameAs<bool>;
 };
 
+template<typename T>
+concept ComparisonCategory = OneOf<T, std::strong_ordering, std::weak_ordering, std::partial_ordering>;
+
 template<typename Comp, typename T, typename U = T>
 concept ThreeWayComparatorFor = requires(const Comp& comparator, const T& a, const U& b) {
-    { comparator(a, b) } -> OneOf<std::strong_ordering, std::weak_ordering, std::partial_ordering>;
+    { comparator(a, b) } -> ComparisonCategory;
 };
+
+namespace Detail {
+    template<ComparisonCategory A, ComparisonCategory B>
+    struct CommonComparisonCategoryImpl {
+        using type = Conditional<SameAs<A, std::partial_ordering> || SameAs<B, std::partial_ordering>, std::partial_ordering,
+                                 typename Conditional<SameAs<A, std::weak_ordering> || SameAs<B, std::weak_ordering>, std::weak_ordering,
+                                                      std::strong_ordering>::type>::type;
+    };
+
+    template<ComparisonCategory... Categories>
+    struct CommonComparisonCategoryHelper;
+
+    template<ComparisonCategory Acc, ComparisonCategory... Rest>
+    struct CommonComparisonCategoryHelper<Acc, Rest...> {
+        using type = CommonComparisonCategoryImpl<Acc, typename CommonComparisonCategoryHelper<Rest...>::type>::type;
+    };
+
+    template<ComparisonCategory Acc>
+    struct CommonComparisonCategoryHelper<Acc> {
+        using type = Acc;
+    };
+}
+
+template<ComparisonCategory... Categories>
+using CommonComparisonCategory = Detail::CommonComparisonCategoryHelper<std::strong_ordering, Categories...>::type;
 
 struct Less {
     template<typename T, ComparableWith<T> U>
@@ -199,11 +227,13 @@ struct CompareThreeWayBackwards {
 };
 }
 
+using LIIM::CommonComparisonCategory;
 using LIIM::Comparable;
 using LIIM::ComparableWith;
 using LIIM::ComparatorFor;
 using LIIM::CompareThreeWay;
 using LIIM::CompareThreeWayBackwards;
+using LIIM::ComparisonCategory;
 using LIIM::Equal;
 using LIIM::EqualComparable;
 using LIIM::EqualComparableWith;

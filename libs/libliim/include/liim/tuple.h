@@ -189,6 +189,26 @@ public:
         return helper(make_index_sequence<tuple_size<Tup>>());
     }
 
+    template<TupleLike Tup>
+    requires(Detail::tuple_pairwise_satisified<Detail::TupleSatisfiesOp::Compare, Tuple, Tup>) constexpr auto
+    operator<=>(const Tup& other) const {
+        auto helper = [&]<size_t... indices>(IndexSequence<indices...>) {
+            using ReturnType = CommonComparisonCategory<decltype(tuple_get<indices>(*this) <=> tuple_get<indices>(other))...>;
+            auto result = ReturnType::equivalent;
+            auto visitor = [&](const auto& a, const auto& b) {
+                if (result != 0) {
+                    return;
+                }
+                if (auto r = a <=> b; r != 0) {
+                    result = r;
+                }
+            };
+            (visitor(tuple_get<indices>(*this), tuple_get<indices>(other)), ...);
+            return result;
+        };
+        return helper(make_index_sequence<tuple_size<Tup>>());
+    }
+
 private:
     template<TupleLike Tup, size_t... indices>
     constexpr Tuple(IndexSequence<indices...>, Tup&& value) : Tuple(tuple_get<indices>(forward<Tup>(value))...) {}
@@ -235,6 +255,9 @@ public:
 
     template<TupleLike Tup>
     requires(tuple_size<Tup> == 0) constexpr bool operator==(const Tup&) const { return true; }
+
+    template<TupleLike Tup>
+    requires(tuple_size<Tup> == 0) constexpr auto operator<=>(const Tup&) const { return std::strong_ordering::equal; }
 
 private:
     template<size_t index, typename Tup>
