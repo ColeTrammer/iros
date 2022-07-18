@@ -47,41 +47,6 @@ private:
     String m_message;
 };
 
-class SystemError {
-public:
-    static SystemError from_error_code(int error_code, NewVector<String> arguments = {},
-                                       SourceLocation location = SourceLocation::current()) {
-        return SystemError(move(arguments), location.function_name(), error_code);
-    }
-    static SystemError from_errno(NewVector<String> arguments = {}, SourceLocation location = SourceLocation::current()) {
-        return SystemError(move(arguments), location.function_name(), errno);
-    }
-
-    StringView system_call() const { return m_system_call; }
-    int error_code() const { return m_error_code; }
-
-    String to_message() const {
-        String arguments;
-        bool first = true;
-        for (auto& argument : m_arguments) {
-            if (!first) {
-                arguments += ", ";
-            }
-            arguments += argument;
-            first = false;
-        }
-        return format("{}({}) failed: {}", m_system_call, arguments, strerror(m_error_code));
-    }
-
-private:
-    SystemError(NewVector<String> arguments, StringView system_call, int error_code)
-        : m_arguments(move(arguments)), m_system_call(system_call), m_error_code(error_code) {}
-
-    NewVector<String> m_arguments;
-    StringView m_system_call;
-    int m_error_code { 0 };
-};
-
 template<typename T, typename C, typename E = LIIM::InvokeResult<C, const T&>::type::ErrorType>
 Result<void, Vector<E>> collect_errors(const Vector<T>& input, C mapper) {
     Vector<E> output;
@@ -122,6 +87,13 @@ String to_message(const Variant<Types...>& error) {
     return error.visit([](auto&& error) {
         return Ext::to_message_impl(error);
     });
+}
+}
+
+namespace LIIM::Error {
+template<typename T, typename Domain>
+String to_message(const Error<T, Domain>& error) {
+    return String(error.message());
 }
 }
 

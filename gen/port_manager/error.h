@@ -35,5 +35,5 @@ private:
     String m_build_step;
 };
 
-using Error = Variant<Ext::StringError, Ext::SystemError, JsonLookupError, BuildStepNotFound>;
+using Error = Variant<Ext::StringError, SystemError, JsonLookupError, BuildStepNotFound>;
 }

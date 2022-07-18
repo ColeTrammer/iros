@@ -12,9 +12,7 @@ TEST(system, realpath) {
 #endif
 
     auto result = Ext::realpath("/proc/self/exed");
-    EXPECT(result.is_error());
-    EXPECT_EQ(result.error().system_call(), "realpath");
-    EXPECT_EQ(result.error().error_code(), ENOENT);
+    EXPECT_EQ(result.error().value(), ENOENT);
 
     result = Ext::realpath("/proc/self/exe");
     EXPECT(result.has_value());
