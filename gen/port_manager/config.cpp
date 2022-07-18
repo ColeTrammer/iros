@@ -7,7 +7,10 @@ namespace PortManager {
 Result<Config, Error> Config::create() {
     // NOTE: this is source directory which built the program.
     auto default_iros_source_directory = IROS_ROOT;
-    auto iros_source_directory = TRY(Ext::Path::resolve(default_iros_source_directory));
+    auto iros_source_directory = TRY(Ext::Path::resolve(default_iros_source_directory).transform_error([&](auto system_error) {
+        return make_string_error("Failed to resolve source directory path `{}': `{}'", default_iros_source_directory,
+                                 system_error.message());
+    }));
 
     // NOTE: this is the architecture the program was built under.
     auto default_target_architecture = IROS_ARCH;

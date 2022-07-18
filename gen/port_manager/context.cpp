@@ -21,13 +21,13 @@ Result<void, Error> Context::run_process(Process process) {
 Result<void, Error> Context::with_working_directory(const Ext::Path& working_directory, Function<Result<void, Error>()> body) {
     auto old_working_directory = String::wrap_malloced_chars(getcwd(nullptr, 0));
     if (chdir(working_directory.to_string().string())) {
-        return Err(Ext::StringError(format("Failed to cd to `{}': {}", working_directory, strerror(errno))));
+        return Err(make_string_error("Failed to cd to `{}': {}", working_directory, strerror(errno)));
     }
 
     auto result = body();
 
     if (chdir(old_working_directory->string())) {
-        return Err(Ext::StringError(format("Failed to cd to `{}': {}", *old_working_directory, strerror(errno))));
+        return Err(make_string_error("Failed to cd to `{}': {}", *old_working_directory, strerror(errno)));
     }
 
     return result;
@@ -70,7 +70,7 @@ Result<void, Error> Context::build_port(const PortHandle& handle, StringView bui
                 continue;
             }
             if (temp_visited_ports.contains(dependency)) {
-                return Err(Ext::StringError(format("Cyclic dependency detected between `{}' and `{}'", handle, dependency)));
+                return Err(make_string_error("Cyclic dependency detected between `{}' and `{}'", handle, dependency));
             }
             TRY(visit(dependency));
         }

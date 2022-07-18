@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ext/forward.h>
+#include <liim/error/string_domain.h>
 #include <liim/forward.h>
 #include <liim/vector.h>
 #include <test/forward.h>
@@ -26,7 +27,7 @@ public:
         Option<String> case_name;
     };
 
-    Result<void, Ext::StringError> do_main(Arguments arguments);
+    Result<void, StringError> do_main(Arguments arguments);
 
     TestCase& current_test_case() { return *m_current_test_case; }
 

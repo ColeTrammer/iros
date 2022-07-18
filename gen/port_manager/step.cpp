@@ -20,7 +20,7 @@ Result<UniquePtr<DownloadStep>, Error> DownloadStep::create(const JsonReader& re
         return TarDownloadStep::create(reader, object);
     }
 
-    return Err(Ext::StringError(format("Unknown download type: `{}'", type)));
+    return Err(make_string_error("Unknown download type: `{}'", type));
 }
 
 Result<UniquePtr<GitDownloadStep>, Error> GitDownloadStep::create(const JsonReader& reader, const Ext::Json::Object& object) {
@@ -104,11 +104,11 @@ String TarDownloadStep::kind_to_string(Kind kind) {
     }
 }
 
-auto TarDownloadStep::kind_from_string(const String& string) -> Result<Kind, Ext::StringError> {
+auto TarDownloadStep::kind_from_string(const String& string) -> Result<Kind, StringError> {
     if (string == "gz") {
         return Kind::Gz;
     }
-    return Err(Ext::StringError(format("Unknown tarball download kind: `{}'", string)));
+    return Err(make_string_error("Unknown tarball download kind: `{}'", string));
 }
 
 Result<UniquePtr<PatchStep>, Error> PatchStep::create(const JsonReader& reader, const Ext::Json::Object& object) {
@@ -117,7 +117,7 @@ Result<UniquePtr<PatchStep>, Error> PatchStep::create(const JsonReader& reader, 
     auto patch_files = NewVector<String> {};
     for (auto& file : files) {
         if (!file.is<Ext::Json::String>()) {
-            return Err(Ext::StringError("encountered non-string value when parsing patch files"));
+            return Err(make_string_error("encountered non-string value when parsing patch files"));
         }
         patch_files.push_back(file.as<Ext::Json::String>());
     }

@@ -23,3 +23,4 @@ static StringError make_string_error(LIIM::Format::FormatString<Args...> pattern
 }
 
 using LIIM::Error::make_string_error;
+using LIIM::Error::StringError;

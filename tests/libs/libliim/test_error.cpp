@@ -21,11 +21,13 @@ TEST(error, system) {
     EXPECT_EQ(e.message(), strerror(EBADF));
 }
 
-using X = CommonResult<void, Result<void, Ext::StringError>, Result<void, int>>;
-static_assert(SameAs<X, Result<void, Variant<Ext::StringError, int>>>);
+using Type = struct {};
+
+using X = CommonResult<void, Result<void, Type>, Result<void, int>>;
+static_assert(SameAs<X, Result<void, Variant<Type, int>>>);
 
 using Y = CommonResult<void, void, int>;
 static_assert(SameAs<Y, void>);
 
-using Z = CommonResult<int, Result<void, LIIM::Error::StringError>, float, Result<void, Error<>>>;
+using Z = CommonResult<int, Result<void, StringError>, float, Result<void, Error<>>>;
 static_assert(SameAs<Z, Result<int, Error<>>>);

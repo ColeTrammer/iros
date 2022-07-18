@@ -26,7 +26,9 @@ constexpr auto argument_parser = [] {
 Result<void, Error> main(Arguments arguments) {
     auto context = Context(TRY(Config::create()));
 
-    auto path = TRY(Ext::Path::resolve(arguments.json_path));
+    auto path = TRY(Ext::Path::resolve(arguments.json_path).transform_error([&](auto system_error) {
+        return make_string_error("Failed to resolve path `{}': `{}'", arguments.json_path, system_error.message());
+    }));
     auto handle = TRY(context.load_port(move(path)));
     return context.build_port(handle, arguments.build_step);
 }

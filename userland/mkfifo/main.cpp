@@ -1,6 +1,7 @@
 #include <cli/cli.h>
 #include <errno.h>
 #include <ext/parse_mode.h>
+#include <liim/error/string_domain.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,9 +9,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-static Result<void, Ext::StringError> mkfifo(const String& file, mode_t mode) {
+static Result<void, StringError> mkfifo(const String& file, mode_t mode) {
     if (mkfifo(file.string(), mode)) {
-        return Err(Ext::StringError(format("Failed to create `{}': {}", file, strerror(errno))));
+        return Err(make_string_error("Failed to create `{}': {}", file, strerror(errno)));
     }
     return {};
 }

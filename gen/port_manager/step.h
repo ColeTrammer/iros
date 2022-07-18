@@ -48,7 +48,7 @@ private:
     };
 
     static String kind_to_string(Kind kind);
-    static Result<Kind, Ext::StringError> kind_from_string(const String& string);
+    static Result<Kind, StringError> kind_from_string(const String& string);
 
 public:
     static Result<UniquePtr<Step>, Error> create(const JsonReader& reader, const Ext::Json::Object& object);

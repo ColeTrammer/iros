@@ -9,7 +9,7 @@
 namespace PortManager {
 Result<JsonReader, Error> JsonReader::create(Ext::Path path) {
     auto json = TRY(Ext::Json::parse_file(path.to_string()).unwrap_or_else([&] {
-        return Ext::StringError(format("Failed to load JSON file: `{}'", path));
+        return make_string_error("Failed to load JSON file: `{}'", path);
     }));
 
     return JsonReader(move(json), move(path));

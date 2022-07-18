@@ -42,9 +42,8 @@ Result<Port, Error> Port::create(Context& context, Ext::Path json_path) {
             co_yield AutoconfConfigureStep::create(reader, configure_object);
             co_yield AutoconfBuildStep::create(reader, build_object);
             co_yield AutoconfInstallStep::create(reader, install_object);
-
         } else {
-            co_yield Err(Ext::StringError(format("Invalid build system type `{}' in json file `{}'", build_system_type, json_path)));
+            co_yield Err(make_string_error("Invalid build system type `{}' in json file `{}'", build_system_type, json_path));
         }
 
         co_yield CleanStep::create();
@@ -60,7 +59,8 @@ Result<Port, Error> Port::create(Context& context, Ext::Path json_path) {
     if (reader.json().get("dependencies")) {
         TRY(assign_to(dependencies, transform(TRY(reader.lookup<Ext::Json::Array>(reader.json(), "dependencies")), [&](auto& value) {
                           return value.template get_if<String>().unwrap_or_else([&] {
-                              return format("Expected dependcy item `{}' for `{}' to be a string", Ext::Json::stringify(value), name);
+                              return make_string_error("Expected dependcy item `{}' for `{}' to be a string", Ext::Json::stringify(value),
+                                                       name);
                           });
                       })));
     }

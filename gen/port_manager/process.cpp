@@ -82,7 +82,7 @@ Result<pid_t, Error> Process::spawn() {
         result = posix_spawnp(&pid, m_arguments[0].string(), nullptr, nullptr, arguments.data(), environ);
     }
     if (result != 0) {
-        return Err(Ext::StringError(format("Failed to spawn process \"{}\": {}", *this, strerror(result))));
+        return Err(make_string_error("Failed to spawn process \"{}\": {}", *this, strerror(result)));
     }
     return pid;
 }
@@ -92,17 +92,17 @@ Result<void, Error> Process::wait() {
     int status;
     pid_t result = waitpid(*m_pid, &status, 0);
     if (result < 0) {
-        return Err(Ext::StringError(format("Failed to wait on pid '{}': {}", *m_pid, strerror(errno))));
+        return Err(make_string_error("Failed to wait on pid '{}': {}", *m_pid, strerror(errno)));
     } else if (result != *m_pid) {
-        return Err(Ext::StringError(format("Waited on wrong pid: got {}, but expected {}", result, *m_pid)));
+        return Err(make_string_error("Waited on wrong pid: got {}, but expected {}", result, *m_pid));
     }
 
     if (WIFSIGNALED(status)) {
-        return Err(Ext::StringError(format("Process \"{}\" was sent fatal signal: {}", *this, strsignal(WTERMSIG(status)))));
+        return Err(make_string_error("Process \"{}\" was sent fatal signal: {}", *this, strsignal(WTERMSIG(status))));
     }
     assert(WIFEXITED(status));
     if (WEXITSTATUS(status) != 0) {
-        return Err(Ext::StringError(format("Process \"{}\" terminated with non-zero exit code {}", *this, WEXITSTATUS(status))));
+        return Err(make_string_error("Process \"{}\" terminated with non-zero exit code {}", *this, WEXITSTATUS(status)));
     }
 
     m_pid.reset();

@@ -2,6 +2,8 @@
 
 #include <ext/error.h>
 #include <ext/path.h>
+#include <liim/error/string_domain.h>
+#include <liim/error/system_domain.h>
 #include <liim/format.h>
 #include <liim/variant.h>
 
@@ -35,5 +37,5 @@ private:
     String m_build_step;
 };
 
-using Error = Variant<Ext::StringError, SystemError, JsonLookupError, BuildStepNotFound>;
+using Error = Variant<StringError, JsonLookupError, BuildStepNotFound>;
 }

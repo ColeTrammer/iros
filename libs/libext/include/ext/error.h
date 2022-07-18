@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <ext/forward.h>
 #include <liim/container/new_vector.h>
+#include <liim/error.h>
 #include <liim/format.h>
 #include <liim/forward.h>
 #include <liim/result.h>
@@ -36,16 +37,6 @@ String to_message_impl(const T& error) {
 
 template<typename T>
 concept ErrorType = ClassErrorType<T> || FreeErrorType<T>;
-
-class StringError {
-public:
-    StringError(String message) : m_message(move(message)) {}
-
-    String to_message() const { return m_message; }
-
-private:
-    String m_message;
-};
 
 template<typename T, typename C, typename E = LIIM::InvokeResult<C, const T&>::type::ErrorType>
 Result<void, Vector<E>> collect_errors(const Vector<T>& input, C mapper) {

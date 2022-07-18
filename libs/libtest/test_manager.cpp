@@ -1,4 +1,5 @@
 #include <cli/cli.h>
+#include <liim/error/string_domain.h>
 #include <liim/format.h>
 #include <pthread.h>
 #include <sys/wait.h>
@@ -81,7 +82,7 @@ void TestManager::test_did_fail() {
     m_fail_count++;
 }
 
-Result<void, Ext::StringError> TestManager::do_main(Arguments arguments) {
+Result<void, StringError> TestManager::do_main(Arguments arguments) {
     auto [list_simple, suite_name, case_name] = arguments;
 
     auto test_cases = m_test_cases;
@@ -102,7 +103,7 @@ Result<void, Ext::StringError> TestManager::do_main(Arguments arguments) {
     });
 
     if (test_cases.empty() && (suite_name || case_name)) {
-        return Err(Ext::StringError(format("No test cases match filter: [suite={}] [case={}]", suite_name, case_name)));
+        return Err(make_string_error("No test cases match filter: [suite={}] [case={}]", suite_name, case_name));
     }
 
     if (list_simple) {
