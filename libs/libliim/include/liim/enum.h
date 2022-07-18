@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <liim/format.h>
+#include <liim/utilities.h>
 
 #define __LIIM_GENERATE_ENUM(x) x,
 #define __LIIM_FORMAT_ENUM(x) \
@@ -20,4 +21,28 @@
             switch (value) { macro(__LIIM_FORMAT_ENUM) default : assert(false); } \
         }                                                                         \
     };                                                                            \
+    }
+
+#define LIIM_DEFINE_BITWISE_OPERATIONS(Enum)                           \
+    static_assert(Enumeration<Enum>);                                  \
+    constexpr Enum operator~(Enum a) {                                 \
+        return static_cast<Enum>(~to_underlying(a));                   \
+    }                                                                  \
+    constexpr Enum operator|(Enum a, Enum b) {                         \
+        return static_cast<Enum>(to_underlying(a) | to_underlying(b)); \
+    }                                                                  \
+    constexpr Enum operator&(Enum a, Enum b) {                         \
+        return static_cast<Enum>(to_underlying(a) & to_underlying(b)); \
+    }                                                                  \
+    constexpr Enum operator^(Enum a, Enum b) {                         \
+        return static_cast<Enum>(to_underlying(a) ^ to_underlying(b)); \
+    }                                                                  \
+    constexpr Enum& operator|=(Enum& a, Enum b) {                      \
+        return a = a | b;                                              \
+    }                                                                  \
+    constexpr Enum& operator&=(Enum& a, Enum b) {                      \
+        return a = a & b;                                              \
+    }                                                                  \
+    constexpr Enum& operator^=(Enum& a, Enum b) {                      \
+        return a = a ^ b;                                              \
     }

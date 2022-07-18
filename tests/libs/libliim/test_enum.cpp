@@ -11,3 +11,22 @@ TEST(enum, basic) {
     EXPECT_EQ(format("{}", X::Enum::Y), "Y");
     EXPECT_EQ(format("{}", X::Enum::Z), "Z");
 }
+
+enum class Flags { X = 1, Y = 2, Z = 4 };
+
+LIIM_DEFINE_BITWISE_OPERATIONS(Flags)
+
+constexpr void flags() {
+    auto x = Flags::Y;
+    x |= Flags::X;
+    EXPECT(to_underlying(x & Flags::X));
+
+    x &= ~Flags::X;
+    EXPECT(~to_underlying(x & Flags::X));
+
+    x ^= Flags::X | Flags::Y;
+    EXPECT(x == Flags::X);
+    EXPECT(!to_underlying(x ^ Flags::X));
+}
+
+TEST_CONSTEXPR(enum, flags, flags)

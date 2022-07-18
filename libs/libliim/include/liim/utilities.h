@@ -476,6 +476,24 @@ using WrapVoid = Detail::WrapVoidHelper<T>::Type;
 template<typename T>
 using UnwrapVoid = Detail::WrapVoidHelper<T>::Type;
 
+namespace Detail {
+    template<typename T>
+    struct IsEnumerationHelper {
+        constexpr static bool value = __is_enum(T);
+    };
+}
+
+template<typename T>
+concept Enumeration = Detail::IsEnumerationHelper<T>::value;
+
+template<Enumeration T>
+using UnderlyingType = __underlying_type(T);
+
+template<Enumeration T>
+constexpr auto to_underlying(T value) {
+    return static_cast<UnderlyingType<T>>(value);
+}
+
 template<size_t... Ints>
 struct IndexSequence {
     static constexpr int size() { return sizeof...(Ints); }
@@ -757,6 +775,7 @@ using LIIM::bit_cast;
 using LIIM::clamp;
 using LIIM::conjunction;
 using LIIM::disjunction;
+using LIIM::Enumeration;
 using LIIM::exchange;
 using LIIM::forward;
 using LIIM::in_place_index;
@@ -774,4 +793,6 @@ using LIIM::piecewise_construct_t;
 using LIIM::ResultOf;
 using LIIM::SameAs;
 using LIIM::swap;
+using LIIM::to_underlying;
 using LIIM::TriviallyRelocatable;
+using LIIM::UnderlyingType;
