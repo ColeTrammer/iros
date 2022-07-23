@@ -50,6 +50,8 @@ public:
     ParserError error(String message) const { return ParserError(m_working_buffer, m_original_buffer, move(message)); }
     Err<ParserError> result_error(String message) const { return Err(error(move(message))); }
 
+    constexpr bool at_eof() const { return m_working_buffer.empty(); }
+
     Result<StringView, ParserError> consume(StringView view) {
         return try_consume(view).unwrap_or_else([&] {
             return error(format("Expected token `{}'", view));
@@ -99,6 +101,27 @@ public:
         return *try_consume(count);
     }
 
+    constexpr StringView consume_until(StringView set) {
+        size_t count = 0;
+        for (;; count++) {
+            auto last_char = peek(count + 1).map([](auto& sv) {
+                return sv.last();
+            });
+            if (!last_char || set.index_of(*last_char)) {
+                break;
+            }
+        }
+        return *try_consume(count);
+    }
+
+    constexpr StringView consume_line() {
+        auto result = consume_until("\n");
+        if (!at_eof()) {
+            consume("\n");
+        }
+        return result;
+    }
+
     constexpr StringView consume_all() { return *try_consume(m_working_buffer.size()); }
 
 private:
@@ -122,6 +145,10 @@ Result<T, ParserError> parse(StringView input) {
     return result;
 }
 
+struct HexNumber {
+    uint32_t value;
+};
+
 template<>
 struct ParserAdapter<int> {
     static Result<int, ParserError> parse(Parser& parser) {
@@ -144,6 +171,30 @@ struct ParserAdapter<int> {
             result += (c - '0');
         }
         return sign * result;
+    }
+};
+
+template<>
+struct ParserAdapter<HexNumber> {
+    static Result<HexNumber, ParserError> parse(Parser& parser) {
+        auto digits = parser.consume_matching("0123456789ABCDEFabcdef");
+        if (digits.empty()) {
+            return parser.result_error("Expected a hexidecimal digit");
+        }
+
+        // FIXME: handle overflow
+        uint32_t result = 0;
+        for (auto c : digits) {
+            result *= 16;
+            if (c >= 'a' && c <= 'f') {
+                result += 10 + (c - 'a');
+            } else if (c >= 'A' && c <= 'F') {
+                result += 10 + (c - 'A');
+            } else {
+                result += (c - '0');
+            }
+        }
+        return { result };
     }
 };
 
