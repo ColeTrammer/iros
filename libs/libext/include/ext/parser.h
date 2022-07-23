@@ -1,5 +1,8 @@
 #pragma once
 
+#include <ext/forward.h>
+#include <liim/error.h>
+#include <liim/error/typed_domain.h>
 #include <liim/format.h>
 #include <liim/result.h>
 #include <liim/string.h>
@@ -7,20 +10,38 @@
 #include <liim/try.h>
 
 namespace Ext {
+class ParserErrorDomain : public TypedErrorDomain<ParserErrorDomain, UniquePtr<ParserError>> {
+public:
+    constexpr virtual ~ParserErrorDomain() override {}
+
+    virtual ErasedString type() const override { return "ParserErorr"sv; }
+    ErasedString message(const UniquePtr<ParserError>& value) const;
+};
+
+constexpr inline ParserErrorDomain parser_error_domain {};
+
 class ParserError {
 public:
     ParserError(StringView working_buffer, StringView original_buffer, String message)
         : m_working_buffer(working_buffer), m_original_buffer(original_buffer), m_message(message) {}
 
-    const String& message() const { return m_message; }
+    StringView message() const { return m_message.view(); }
 
     String to_message() const { return format("Error parsing `{}': {}", m_original_buffer, m_message); }
 
 private:
-    StringView m_working_buffer;
-    StringView m_original_buffer;
+    friend Error<> tag_invoke(Tag<into_erased_error>, ParserError&& value) {
+        return ParserErrorDomain::Error(make_unique<ParserError>(move(value)), &parser_error_domain);
+    }
+
+    String m_working_buffer;
+    String m_original_buffer;
     String m_message;
 };
+
+inline ErasedString ParserErrorDomain::message(const UniquePtr<ParserError>& value) const {
+    return value->to_message();
+}
 
 class Parser {
 public:

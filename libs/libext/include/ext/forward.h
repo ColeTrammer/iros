@@ -8,6 +8,7 @@ class GZipEncoder;
 class File;
 class MappedFile;
 class Mode;
+class ParserError;
 class Path;
 class StreamDecoder;
 class StreamEncoder;
