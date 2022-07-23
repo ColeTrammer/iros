@@ -8,17 +8,27 @@
 
 TEST(error, typed) {
     auto s = make_string_error("{}", "hello");
-    EXPECT_EQ(s.message(), "hello");
+    EXPECT_EQ(s.message(), "hello"sv);
 }
 
 TEST(error, erased) {
     Error<> e = make_string_error("{}", "hello");
-    EXPECT_EQ(e.message(), "hello");
+    EXPECT_EQ(e.message(), "hello"sv);
 }
 
 TEST(error, system) {
     Error<> e = make_system_error(EBADF);
-    EXPECT_EQ(e.message(), strerror(EBADF));
+    EXPECT_EQ(e.message(), StringView(strerror(EBADF)));
+}
+
+struct XError {
+private:
+    friend Error<> tag_invoke(Tag<into_erased_error>, XError&&) { return make_string_error("XError"); }
+};
+
+TEST(error, into_erased) {
+    Error<> e = XError {};
+    EXPECT_EQ(e.message(), "XError"sv);
 }
 
 using Type = struct {};

@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <liim/container/erased_string.h>
 #include <liim/container/hash.h>
 #include <liim/option.h>
 #include <liim/pointers.h>
@@ -17,6 +18,11 @@ namespace LIIM {
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 
 enum class JoinPrependDelimiter { No, Yes };
+
+template<>
+struct IsTriviallyRelocatable<String> {
+    constexpr static bool value = true;
+};
 
 class String {
 public:
@@ -47,6 +53,20 @@ public:
     String(const char* chars, size_t length);
     String(const String& other);
     String(String&& other);
+
+    operator ErasedString() const {
+        return ErasedString(
+            LIIM::Container::Detail::ErasedStringStorage<UniquePtr<String>>(make_unique<String>(*this)),
+            [](auto storage) -> const char* {
+                return LIIM::Container::Detail::erased_string_storage_cast<UniquePtr<String>>(storage).value->string();
+            },
+            [](auto storage) -> size_t {
+                return LIIM::Container::Detail::erased_string_storage_cast<UniquePtr<String>>(storage).value->size();
+            },
+            [](auto storage) {
+                LIIM::Container::Detail::erased_string_storage_cast<UniquePtr<String>>(storage).value.~UniquePtr<String>();
+            });
+    }
 
     ~String() { clear(); }
 

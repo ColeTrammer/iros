@@ -1,6 +1,7 @@
 #pragma once
 
 #include <liim/container/array.h>
+#include <liim/container/erased_string.h>
 #include <liim/format/base_formatter.h>
 #include <liim/format/format.h>
 #include <liim/format/format_args.h>
@@ -29,6 +30,11 @@ struct Formatter<char*> : public Formatter<StringView> {};
 
 template<size_t N>
 struct Formatter<char[N]> : public Formatter<StringView> {};
+
+template<>
+struct Formatter<ErasedString> : public BaseFormatter {
+    void format(const ErasedString& value, FormatContext& context) { format_string_view({ value.data(), value.size() }, context); }
+};
 
 template<>
 struct Formatter<None> : public BaseFormatter {

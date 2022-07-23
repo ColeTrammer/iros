@@ -3,6 +3,7 @@
 #include <liim/character_type.h>
 #include <liim/compare.h>
 #include <liim/container/algorithm/lexographic_compare.h>
+#include <liim/container/erased_string.h>
 #include <liim/container/hash.h>
 #include <liim/option.h>
 #include <liim/traits.h>
@@ -12,6 +13,11 @@
 
 namespace LIIM {
 enum SplitMethod { KeepEmpty, RemoveEmpty };
+
+template<>
+struct IsTriviallyRelocatable<StringView> {
+    constexpr static bool value = true;
+};
 
 class StringView {
 public:
@@ -23,6 +29,20 @@ public:
     }
     constexpr StringView(const char* data, const char* last) : m_data(data), m_size(static_cast<size_t>(last - data)) {}
     constexpr StringView(const char* data, size_t size) : m_data(data), m_size(size) {}
+
+    StringView(const ErasedString& value) : m_data(value.data()), m_size(value.size()) {}
+
+    operator ErasedString() const {
+        return ErasedString(
+            LIIM::Container::Detail::ErasedStringStorage<StringView>(StringView(*this)),
+            [](auto storage) {
+                return LIIM::Container::Detail::erased_string_storage_cast<StringView>(storage).value.data();
+            },
+            [](auto storage) {
+                return LIIM::Container::Detail::erased_string_storage_cast<StringView>(storage).value.size();
+            },
+            [](auto) {});
+    }
 
     constexpr bool operator==(StringView other) const {
         if (other.size() != this->size()) {

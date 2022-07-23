@@ -1,8 +1,8 @@
 #pragma once
 
+#include <liim/container/erased_string.h>
 #include <liim/error/error.h>
 #include <liim/error/transport.h>
-#include <liim/string_view.h>
 
 namespace LIIM::Error {
 template<typename Self, Erasable Err>
@@ -13,7 +13,7 @@ public:
 
     constexpr virtual ~TypedErrorDomain() {}
     virtual void destroy_error(ErrorTransport<>& value) const override { error_transport_cast<ErrorType>(value).value.~ErrorType(); }
-    virtual StringView message(const ErrorTransport<>& value) const override {
+    virtual ErasedString message(const ErrorTransport<>& value) const override {
         return static_cast<const Self&>(*this).message(error_transport_cast<ErrorType>(value).value);
     }
 };

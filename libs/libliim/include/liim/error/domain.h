@@ -1,5 +1,6 @@
 #pragma once
 
+#include <liim/error/transport.h>
 #include <liim/forward.h>
 
 namespace LIIM::Error {
@@ -9,7 +10,7 @@ public:
     constexpr virtual ~ErrorDomain() {}
 
     virtual void destroy_error(ErrorTransport<>& value) const = 0;
-    virtual StringView message(const ErrorTransport<>& value) const = 0;
-    constexpr virtual StringView type() const = 0;
+    virtual ErasedString message(const ErrorTransport<>& value) const = 0;
+    virtual ErasedString type() const = 0;
 };
 }

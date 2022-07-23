@@ -2,13 +2,14 @@
 
 #include <errno.h>
 #include <liim/error/typed_domain.h>
+#include <liim/string_view.h>
 
 namespace LIIM::Error {
 class SystemErrorDomain : public TypedErrorDomain<SystemErrorDomain, int> {
 public:
     constexpr virtual ~SystemErrorDomain() {}
-    StringView message(int code) const { return strerror(code); }
-    constexpr virtual StringView type() const override { return "SystemError"; }
+    ErasedString message(int code) const { return StringView(strerror(code)); }
+    virtual ErasedString type() const override { return "SystemError"sv; }
 };
 
 using SystemError = SystemErrorDomain::Error;

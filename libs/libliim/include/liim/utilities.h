@@ -613,6 +613,11 @@ constexpr typename InvokeResult<F, Args...>::type invoke(F&& f, Args&&... args) 
     return details::INVOKE(forward<F>(f), forward<Args>(args)...);
 }
 
+template<typename F, typename... Args>
+concept Invokable = requires {
+    invoke(declval<F>(), declval<Args>()...);
+};
+
 namespace details {
     template<class T>
     constexpr T& FUN(T& t) {

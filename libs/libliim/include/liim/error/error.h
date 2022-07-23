@@ -1,10 +1,18 @@
 #pragma once
 
+#include <liim/container/erased_string.h>
 #include <liim/error/domain.h>
 #include <liim/error/transport.h>
-#include <liim/string_view.h>
+#include <liim/tag_invoke.h>
 
 namespace LIIM::Error {
+inline constexpr struct IntoErasedError {
+    template<typename T>
+    constexpr auto operator()(T&& value) const -> TagInvokeResult<IntoErasedError, T&&> {
+        return LIIM::tag_invoke(*this, forward<T>(value));
+    }
+} into_erased_error {};
+
 template<>
 class Error<void, ErrorDomain> {
 public:
@@ -16,6 +24,9 @@ public:
         }
     }
 
+    template<typename T>
+    requires(SameAs<TagInvokeResult<Tag<into_erased_error>, T>, Error>) Error(T&& value) : Error(into_erased_error(forward<T>(value))) {}
+
     Error& operator=(Error&& other) {
         if (this != &other) {
             Error temp(move(other));
@@ -24,11 +35,11 @@ public:
         return *this;
     }
 
-    StringView message() const {
+    ErasedString message() const {
         assert(m_domain);
         return m_domain->message(m_value);
     }
-    StringView type() const {
+    ErasedString type() const {
         assert(m_domain);
         return m_domain->type();
     }
@@ -52,8 +63,8 @@ public:
 
     constexpr Error& operator=(Error&& other) = default;
 
-    constexpr StringView message() const { return m_domain->message(m_value); }
-    constexpr StringView type() const { return m_domain->type(); }
+    constexpr ErasedString message() const { return m_domain->message(m_value); }
+    constexpr ErasedString type() const { return m_domain->type(); }
 
     constexpr T& value() { return m_value; }
     constexpr const T& value() const { return m_value; }

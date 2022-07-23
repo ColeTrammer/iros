@@ -2,13 +2,14 @@
 
 #include <liim/error/error.h>
 #include <liim/error/typed_domain.h>
+#include <liim/string_view.h>
 
 namespace LIIM::Error {
 class StringErrorDomain : public TypedErrorDomain<StringErrorDomain, UniquePtr<String>> {
 public:
     constexpr virtual ~StringErrorDomain() {}
-    virtual StringView message(const ErrorType& value) const { return value->view(); }
-    constexpr virtual StringView type() const { return "StringError"sv; }
+    virtual ErasedString message(const ErrorType& value) const { return value->view(); }
+    virtual ErasedString type() const { return "StringError"sv; }
 };
 
 using StringError = StringErrorDomain::Error;
