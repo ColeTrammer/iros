@@ -10,7 +10,7 @@ Result<Path, SystemError> Path::resolve(const String& path) {
         return Path(path);
     }
 
-    auto resolved = TRY(realpath(path.string()));
+    auto resolved = TRY(System::realpath(path.string()));
     return Path(move(resolved));
 }
 
