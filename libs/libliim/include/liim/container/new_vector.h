@@ -198,8 +198,10 @@ public:
 
     constexpr void swap(NewVector&);
 
-    constexpr bool operator==(const NewVector& other) const requires(EqualComparable<T>);
-    constexpr auto operator<=>(const NewVector& other) const requires(Comparable<T>);
+    template<EqualComparableWith<T> U>
+    constexpr bool operator==(const NewVector<U>& other) const requires(EqualComparable<T>);
+    template<ComparableWith<T> U>
+    constexpr auto operator<=>(const NewVector<U>& other) const requires(Comparable<T>);
 
 private:
     constexpr void move_objects(MaybeUninit<T>* destination, MaybeUninit<T>* source, size_t count);
@@ -384,12 +386,14 @@ requires(Copyable<T>) {
 }
 
 template<typename T>
-constexpr bool NewVector<T>::operator==(const NewVector& other) const requires(EqualComparable<T>) {
+template<EqualComparableWith<T> U>
+constexpr bool NewVector<T>::operator==(const NewVector<U>& other) const requires(EqualComparable<T>) {
     return equal(*this, other);
 }
 
 template<typename T>
-constexpr auto NewVector<T>::operator<=>(const NewVector& other) const requires(Comparable<T>) {
+template<ComparableWith<T> U>
+constexpr auto NewVector<T>::operator<=>(const NewVector<U>& other) const requires(Comparable<T>) {
     return lexographic_compare(*this, other);
 }
 

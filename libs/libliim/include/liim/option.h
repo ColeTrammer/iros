@@ -291,11 +291,11 @@ public:
         return {};
     }
 
-    constexpr Option<T&&> try_did_succeed() { return move(value()); }
+    constexpr Option<T> try_did_succeed() { return move(value()); }
 
     constexpr Option<T> try_did_succeed() requires(IsLValueReference<T>::value) { return value(); }
 
-    constexpr T&& try_move_out() { return move(value()); }
+    constexpr T try_move_out() { return move(value()); }
     constexpr T try_move_out() requires(IsLValueReference<T>::value) { return value(); }
 
 private:

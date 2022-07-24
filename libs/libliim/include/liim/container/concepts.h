@@ -22,12 +22,12 @@ concept Iterator = EqualComparable<T> && requires(T iterator) {
 };
 
 template<typename T>
-concept DoubleEndedIterator = Iterator<T> && requires(T iterator) {
+concept DoubleEndedIterator = Iterator<T> && Copyable<T> && requires(T iterator) {
     { --iterator } -> SameAs<T&>;
 };
 
 template<typename T>
-concept RandomAccessIterator = DoubleEndedIterator<T> && Copyable<T> && Comparable<T> && requires(T iterator, T other, size_t index) {
+concept RandomAccessIterator = DoubleEndedIterator<T> && Comparable<T> && requires(T iterator, T other, size_t index) {
     { iterator[index] } -> SameAs<typename IteratorTraits<T>::ValueType>;
     { iterator - other } -> SameAs<ssize_t>;
 };
