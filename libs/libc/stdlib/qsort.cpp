@@ -30,7 +30,7 @@ extern "C" void qsort(void* base, size_t nmemb, size_t size, int (*compar)(const
         return;
     }
 
-    sort(iterator_container(CIterator(base, 0, size), CIterator(base, nmemb, size)), [&](auto* a, auto* b) {
+    Alg::sort(iterator_container(CIterator(base, 0, size), CIterator(base, nmemb, size)), [&](auto* a, auto* b) {
         return compar(a, b) <=> 0;
     });
 }
