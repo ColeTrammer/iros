@@ -34,6 +34,11 @@ public:
     Option<StringView> extension() const { return view().extension(); }
     Option<StringView> stem() const { return view().stem(); }
 
+    bool starts_with(PathView prefix) const { return view().starts_with(prefix); }
+    bool ends_with(PathView suffix) const { return view().ends_with(suffix); }
+
+    bool filename_ends_with(StringView suffix) const { return view().filename_ends_with(suffix); }
+
     friend bool operator==(const Path& a, const Path& b) { return a.view() == b.view(); }
     friend std::strong_ordering operator<=>(const Path& a, const Path& b) { return a.view() <=> b.view(); }
 

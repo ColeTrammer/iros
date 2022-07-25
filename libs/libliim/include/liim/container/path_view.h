@@ -1,7 +1,9 @@
 #pragma once
 
+#include <liim/container/algorithm/ends_with.h>
 #include <liim/container/algorithm/equal.h>
 #include <liim/container/algorithm/lexographic_compare.h>
+#include <liim/container/algorithm/starts_with.h>
 #include <liim/container/path_view_iterator.h>
 #include <liim/format/builtin_formatters.h>
 #include <liim/string.h>
@@ -58,6 +60,17 @@ public:
             return None {};
         }
         return result;
+    }
+
+    constexpr bool starts_with(PathView prefix) const { return Alg::starts_with(*this, prefix); }
+    constexpr bool ends_with(PathView suffix) const { return Alg::ends_with(*this, suffix); }
+
+    constexpr bool filename_ends_with(StringView suffix) const {
+        return filename()
+            .map([&](auto& filename) {
+                return filename.ends_with(suffix);
+            })
+            .value_or(false);
     }
 
     constexpr friend bool operator==(PathView a, PathView b) { return Alg::equal(a, b); }

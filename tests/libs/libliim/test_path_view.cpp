@@ -114,6 +114,31 @@ constexpr void stem() {
     EXPECT_EQ("/a/b/test."_pv.stem(), "test");
 }
 
+constexpr void starts_with() {
+    EXPECT("/a/b/c"_pv.starts_with("/a/"_pv));
+    EXPECT("/a/b/c"_pv.starts_with("///a///b///"_pv));
+    EXPECT("/a/b/c"_pv.starts_with("///a///b///c///"_pv));
+    EXPECT(!"/a/b/c"_pv.starts_with("a/b/"_pv));
+    EXPECT(!"/a/b/c"_pv.starts_with("a/b/c/d"_pv));
+
+    EXPECT("./a/b"_pv.starts_with("./a"_pv));
+    EXPECT(!"./a/b"_pv.starts_with("a"_pv));
+}
+
+constexpr void ends_with() {
+    EXPECT("/etc/resolv.conf"_pv.ends_with("resolv.conf"_pv));
+    EXPECT("/etc/resolv.conf"_pv.ends_with("etc/resolv.conf"_pv));
+    EXPECT("/etc/resolv.conf"_pv.ends_with("///etc///resolv.conf//"_pv));
+    EXPECT(!"/etc/resolv.conf"_pv.ends_with(".conf"_pv));
+    EXPECT(!"/etc/resolv.conf"_pv.ends_with("/etc"_pv));
+}
+
+constexpr void filename_ends_with() {
+    EXPECT("/opt/bash.tar.gz"_pv.filename_ends_with(".tar.gz"));
+    EXPECT(!"/opt/bash.tar.gz/"_pv.filename_ends_with(".tar.gz"));
+    EXPECT(!"/opt/bash.gz/"_pv.filename_ends_with(".tar.gz"));
+}
+
 TEST_CONSTEXPR(pathview, compare, compare)
 TEST_CONSTEXPR(pathview, equal, equal)
 TEST_CONSTEXPR(pathview, extension, extension)
@@ -122,3 +147,6 @@ TEST_CONSTEXPR(pathview, is_absolute, is_absolute)
 TEST_CONSTEXPR(pathview, iterator, iterator)
 TEST_CONSTEXPR(pathview, parent, parent)
 TEST_CONSTEXPR(pathview, stem, stem)
+TEST_CONSTEXPR(pathview, starts_with, starts_with)
+TEST_CONSTEXPR(pathview, ends_with, ends_with)
+TEST_CONSTEXPR(pathview, filename_ends_with, filename_ends_with)
