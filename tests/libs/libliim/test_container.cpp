@@ -86,6 +86,27 @@ constexpr void starts_with() {
     EXPECT(Alg::starts_with(Array { X { 3 }, X { 4 } }, Array { Y { 3 } }, Equal {}, &X::a, &Y::b));
 }
 
+constexpr void ends_with() {
+    EXPECT(Alg::ends_with(range(5), range(2, 5)));
+    EXPECT(!Alg::ends_with(range(5), range(6)));
+    EXPECT(!Alg::ends_with(range(5), range(4)));
+
+    EXPECT(Alg::ends_with(collect_vector(make_priority_queue({ 4, 3, 1 })), Array { 3, 4 }));
+
+    EXPECT(Alg::ends_with(range(2, 7), Array { "4"sv, "5"sv, "6"sv }, [](int a, StringView b) {
+        return a == b[0] - '0';
+    }));
+
+    struct X {
+        int a;
+    };
+    struct Y {
+        int b;
+    };
+
+    EXPECT(Alg::ends_with(Array { X { 3 }, X { 4 } }, Array { Y { 4 } }, Equal {}, &X::a, &Y::b));
+}
+
 constexpr void lexographic_compare() {
     EXPECT(Alg::lexographic_compare(range(5), range(5)) == 0);
     EXPECT(Alg::lexographic_compare(range(4), range(5)) < 0);
@@ -458,6 +479,7 @@ TEST_CONSTEXPR(container, collect, collect)
 TEST_CONSTEXPR(container, contains, contains)
 TEST_CONSTEXPR(container, equal, equal)
 TEST_CONSTEXPR(container, starts_with, starts_with)
+TEST_CONSTEXPR(container, ends_with, ends_with)
 TEST_CONSTEXPR(container, lexographic_compare, lexographic_compare)
 TEST_CONSTEXPR(container, sort, sort)
 TEST_CONSTEXPR(container, range, range)
