@@ -8,6 +8,7 @@
 #include <liim/container/algorithm/reverse.h>
 #include <liim/container/algorithm/rotate.h>
 #include <liim/container/algorithm/sort.h>
+#include <liim/container/algorithm/starts_with.h>
 #include <liim/container/concepts.h>
 #include <liim/container/consumer/assign_to.h>
 #include <liim/container/consumer/collect.h>
