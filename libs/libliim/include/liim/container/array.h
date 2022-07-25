@@ -83,8 +83,8 @@ struct Array {
         }
     }
 
-    constexpr bool operator==(const Array& other) const requires(EqualComparable<T>) { return equal(*this, other); }
-    constexpr auto operator<=>(const Array& other) const requires(Comparable<T>) { return lexographic_compare(*this, other); }
+    constexpr bool operator==(const Array& other) const requires(EqualComparable<T>) { return Alg::equal(*this, other); }
+    constexpr auto operator<=>(const Array& other) const requires(Comparable<T>) { return Alg::lexographic_compare(*this, other); }
 
     template<size_t index>
     constexpr decltype(auto) get() & {

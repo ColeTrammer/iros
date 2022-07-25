@@ -36,7 +36,7 @@ constexpr void comparator() {
 
 constexpr void stress() {
     auto x = collect_priority_queue(reversed(range(50, 200)));
-    EXPECT(is_sorted(x));
+    EXPECT(Alg::is_sorted(x));
     EXPECT(x.empty());
 
     auto y = collect_priority_queue(repeat(120, 5));

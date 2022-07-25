@@ -30,7 +30,7 @@ constexpr void compare() {
         "CMakeLists.txt"_pv,
     });
 
-    sort(paths);
+    Alg::sort(paths);
 
     EXPECT_EQ(paths, sorted_paths);
 }

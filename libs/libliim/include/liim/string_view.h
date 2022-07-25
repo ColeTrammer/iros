@@ -58,7 +58,7 @@ public:
     }
     constexpr bool operator==(const char* c_string) const { return *this == StringView(c_string); }
 
-    constexpr std::strong_ordering operator<=>(StringView other) const { return lexographic_compare(*this, other); }
+    constexpr std::strong_ordering operator<=>(StringView other) const { return Alg::lexographic_compare(*this, other); }
     constexpr std::strong_ordering operator<=>(const char* c_string) const { return *this <=> StringView(c_string); }
 
     constexpr size_t size() const { return m_size; }

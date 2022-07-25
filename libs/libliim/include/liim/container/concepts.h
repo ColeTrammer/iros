@@ -107,6 +107,19 @@ template<typename C, typename T>
 concept FalliblyInsertableFor = Container<C> && requires(C& container, IteratorForContainer<C> iter) {
     { container.insert(move(iter), declval<T>()) } -> ResultOf<IteratorForContainer<C>>;
 };
+
+template<typename T, typename F>
+concept ProjectionFor = !IsVoid<InvokeResult<F, T>>::value;
+
+template<typename F, typename T>
+requires(ProjectionFor<T, F>) using Projected = InvokeResult<F, T>::type;
+
+struct Identity {
+    template<typename T>
+    constexpr T&& operator()(T&& value) const {
+        return static_cast<T&&>(value);
+    }
+};
 }
 
 using LIIM::Container::Clearable;

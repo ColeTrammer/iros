@@ -133,7 +133,7 @@ Result<void, Error> ParserImpl::parse(Span<StringView> input, void* output) cons
 
     // Validate required flags were provided.
     for (auto& flag : m_flags) {
-        if (flag.required() && !contains(provided_flags, &flag)) {
+        if (flag.required() && !Alg::contains(provided_flags, &flag)) {
             return Err(MissingRequiredFlag(flag.short_name(), flag.long_name()));
         }
     }

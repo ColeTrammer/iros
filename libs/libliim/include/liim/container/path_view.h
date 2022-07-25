@@ -60,8 +60,8 @@ public:
         return result;
     }
 
-    constexpr friend bool operator==(PathView a, PathView b) { return equal(a, b); }
-    constexpr friend std::strong_ordering operator<=>(PathView a, PathView b) { return lexographic_compare(a, b); }
+    constexpr friend bool operator==(PathView a, PathView b) { return Alg::equal(a, b); }
+    constexpr friend std::strong_ordering operator<=>(PathView a, PathView b) { return Alg::lexographic_compare(a, b); }
 
 private:
     constexpr static Tuple<Option<StringView>, Option<StringView>> split_filename(StringView filename) {

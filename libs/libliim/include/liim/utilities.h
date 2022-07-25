@@ -615,7 +615,7 @@ constexpr typename InvokeResult<F, Args...>::type invoke(F&& f, Args&&... args) 
 
 template<typename F, typename... Args>
 concept Invokable = requires {
-    invoke(declval<F>(), declval<Args>()...);
+    InvokeResult<F, Args...>::type;
 };
 
 namespace details {

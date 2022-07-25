@@ -322,7 +322,7 @@ constexpr auto NewVector<T>::insert(size_t index, Iter start, Iter end, Option<s
                 return move(outcome).try_did_fail();
             }
         }
-        rotate(iterator_container(iterator(index), this->end()), old_end);
+        Alg::rotate(iterator_container(iterator(index), this->end()), old_end);
     }
     return iterator(result);
 }
@@ -388,13 +388,13 @@ requires(Copyable<T>) {
 template<typename T>
 template<EqualComparableWith<T> U>
 constexpr bool NewVector<T>::operator==(const NewVector<U>& other) const requires(EqualComparable<T>) {
-    return equal(*this, other);
+    return Alg::equal(*this, other);
 }
 
 template<typename T>
 template<ComparableWith<T> U>
 constexpr auto NewVector<T>::operator<=>(const NewVector<U>& other) const requires(Comparable<T>) {
-    return lexographic_compare(*this, other);
+    return Alg::lexographic_compare(*this, other);
 }
 
 template<typename T>

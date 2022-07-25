@@ -23,9 +23,7 @@ constexpr static auto signals = [] {
         { SIGPWR, "PWR" },   { SIGSTKFLT, "STKFLT" },
 #endif
     });
-    sort(result, [](auto& a, auto& b) {
-        return a.number <=> b.number;
-    });
+    Alg::sort(result, CompareThreeWay {}, &SignalDescriptor::number);
     return result;
 }();
 

@@ -249,7 +249,7 @@ void highlight_sh(StringView contents, TextRangeCollection& syntax_ranges) {
         lexer.advance();
     }
 
-    sort(const_cast<Vector<ShLexer::Token>&>(lexer.tokens()), [](auto& a, auto& b) {
+    Alg::sort(const_cast<Vector<ShLexer::Token>&>(lexer.tokens()), [](auto& a, auto& b) {
         return Tuple { a.value().start_line(), a.value().start_col() } <=> Tuple { b.value().start_line(), b.value().start_col() };
     });
 

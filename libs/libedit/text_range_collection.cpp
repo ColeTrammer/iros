@@ -4,7 +4,7 @@
 
 namespace Edit {
 void TextRangeCollection::sort() {
-    ::sort(transform(m_ranges, &TextRange::start));
+    Alg::sort(m_ranges, CompareThreeWay {}, &TextRange::start);
 }
 
 Option<int> TextRangeCollection::range_index_at_text_index(const TextIndex& index) const {

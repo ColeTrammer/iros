@@ -22,96 +22,123 @@ constexpr void collect() {
 }
 
 constexpr void contains() {
-    EXPECT(contains(range(5), 0));
-    EXPECT(contains(range(5), 1));
-    EXPECT(contains(range(5), 4));
+    EXPECT(Alg::contains(range(5), 0));
+    EXPECT(Alg::contains(range(5), 1));
+    EXPECT(Alg::contains(range(5), 4));
 
-    EXPECT(!contains(repeat(5, 1), 2));
+    EXPECT(!Alg::contains(repeat(5, 1), 2));
 
-    EXPECT(!contains(make_priority_queue({ 1, 2, 3 }), 4));
-    EXPECT(contains(make_priority_queue({ 1, 2, 3 }), 2));
+    EXPECT(!Alg::contains(make_priority_queue({ 1, 2, 3 }), 4));
+    EXPECT(Alg::contains(make_priority_queue({ 1, 2, 3 }), 2));
 
-    EXPECT(contains(range(2, 7), "4"sv, [](int a, StringView b) {
+    EXPECT(Alg::contains(range(2, 7), "4"sv, [](int a, StringView b) {
         return a == b[0] - '0';
     }));
+
+    struct X {
+        int a;
+    };
+    EXPECT(Alg::contains(Array { X { 5 }, X { 7 } }, 5, Equal {}, &X::a));
 }
 
 constexpr void equal() {
-    EXPECT(equal(range(5), range(5)));
+    EXPECT(Alg::equal(range(5), range(5)));
 
-    EXPECT(equal(Array { 2, 2, 2 }, repeat(3, 2)));
-    EXPECT(!equal(Array { 2, 2, 2, 2 }, repeat(3, 2)));
-    EXPECT(!equal(Array { 2, 2 }, repeat(3, 2)));
-    EXPECT(!equal(Array { 2, 2 }, repeat(3, 2)));
+    EXPECT(Alg::equal(Array { 2, 2, 2 }, repeat(3, 2)));
+    EXPECT(!Alg::equal(Array { 2, 2, 2, 2 }, repeat(3, 2)));
+    EXPECT(!Alg::equal(Array { 2, 2 }, repeat(3, 2)));
+    EXPECT(!Alg::equal(Array { 2, 2 }, repeat(3, 2)));
 
-    EXPECT(equal(make_priority_queue({ 3, 2, 1 }), Array { 1, 2, 3 }));
+    EXPECT(Alg::equal(make_priority_queue({ 3, 2, 1 }), Array { 1, 2, 3 }));
 
-    EXPECT(equal(range(2, 7), Array { "2"sv, "3"sv, "4"sv, "5"sv, "6"sv }, [](int a, StringView b) {
+    EXPECT(Alg::equal(range(2, 7), Array { "2"sv, "3"sv, "4"sv, "5"sv, "6"sv }, [](int a, StringView b) {
         return a == b[0] - '0';
     }));
+
+    struct X {
+        int a;
+    };
+    struct Y {
+        int b;
+    };
+
+    EXPECT(Alg::equal(Array { X { 3 }, X { 4 } }, Array { Y { 3 }, Y { 4 } }, Equal {}, &X::a, &Y::b));
 }
 
 constexpr void lexographic_compare() {
-    EXPECT(lexographic_compare(range(5), range(5)) == 0);
-    EXPECT(lexographic_compare(range(4), range(5)) < 0);
-    EXPECT(lexographic_compare(range(6), range(5)) > 0);
+    EXPECT(Alg::lexographic_compare(range(5), range(5)) == 0);
+    EXPECT(Alg::lexographic_compare(range(4), range(5)) < 0);
+    EXPECT(Alg::lexographic_compare(range(6), range(5)) > 0);
 
-    EXPECT(lexographic_compare(Array { 2, 3, 3 }, Array { 2, 3, 4 }) < 0);
-    EXPECT(lexographic_compare(Array { 2, 3, 5 }, Array { 2, 3, 4 }) > 0);
+    EXPECT(Alg::lexographic_compare(Array { 2, 3, 3 }, Array { 2, 3, 4 }) < 0);
+    EXPECT(Alg::lexographic_compare(Array { 2, 3, 5 }, Array { 2, 3, 4 }) > 0);
 
-    EXPECT(lexographic_compare(Array { 2, 3, 3 }, Array { 2, 3, 4 }, CompareThreeWayBackwards {}) > 0);
-    EXPECT(lexographic_compare(Array { 2, 3, 5 }, Array { 2, 3, 4 }, CompareThreeWayBackwards {}) < 0);
+    EXPECT(Alg::lexographic_compare(Array { 2, 3, 3 }, Array { 2, 3, 4 }, CompareThreeWayBackwards {}) > 0);
+    EXPECT(Alg::lexographic_compare(Array { 2, 3, 5 }, Array { 2, 3, 4 }, CompareThreeWayBackwards {}) < 0);
+
+    struct X {
+        int a;
+    };
+    EXPECT(Alg::lexographic_compare(Array { X { 1 }, X { 2 }, X { 3 } }, Array { X { 1 }, X { 3 }, X { 3 } }, CompareThreeWay {}, &X::a,
+                                    &X::a) < 0);
 }
 
 constexpr void sort() {
     auto v = make_vector({ 3, 5, 1, 2 });
-    sort(v);
+    Alg::sort(v);
     EXPECT_EQ(v, make_vector({ 1, 2, 3, 5 }));
 
     auto w = make_vector({ 8, 7, 6, 5, 4, 3, 2, 1, 0 });
-    sort(w);
+    Alg::sort(w);
     EXPECT_EQ(w, collect_vector(range(9)));
 
-    sort(w, CompareThreeWayBackwards {});
+    Alg::sort(w, CompareThreeWayBackwards {});
     EXPECT_EQ(w, collect_vector(reversed(range(9))));
 
     auto x = collect_vector(range(128));
-    sort(x, CompareThreeWayBackwards {});
+    Alg::sort(x, CompareThreeWayBackwards {});
     EXPECT_EQ(x, collect_vector(reversed(range(128))));
-    EXPECT(is_sorted(reversed(x)));
+    EXPECT(Alg::is_sorted(reversed(x)));
 
     auto y = collect_vector(reversed(range(56)));
     insert(y, y.end(), range(56));
-    sort(y);
-    EXPECT(is_sorted(y));
+    Alg::sort(y);
+    EXPECT(Alg::is_sorted(y));
 
     auto z = collect_vector(range(56));
     insert(z, z.end(), range(56));
-    sort(z);
-    EXPECT(is_sorted(z));
+    Alg::sort(z);
+    EXPECT(Alg::is_sorted(z));
 
-    EXPECT(is_sorted(range(1, 10)));
-    EXPECT(!is_sorted(Array { 1, 2, 0 }));
-    EXPECT(is_sorted(reversed(range(1, 10)), CompareThreeWayBackwards {}));
+    EXPECT(Alg::is_sorted(range(1, 10)));
+    EXPECT(!Alg::is_sorted(Array { 1, 2, 0 }));
+    EXPECT(Alg::is_sorted(reversed(range(1, 10)), CompareThreeWayBackwards {}));
 
-    EXPECT(is_sorted(collect_priority_queue(reversed(range(32)))));
+    EXPECT(Alg::is_sorted(collect_priority_queue(reversed(range(32)))));
 
     auto a = make_vector({ 5, 4, 3, 2, 1 });
-    sort(transform(a, [](auto x) {
+    Alg::sort(transform(a, [](auto x) {
         return x + 1;
     }));
     EXPECT_EQ(a, make_vector({ 1, 2, 3, 4, 5 }));
 
-    sort(reversed(a));
+    Alg::sort(reversed(a));
     EXPECT_EQ(a, make_vector({ 5, 4, 3, 2, 1 }));
 
     auto scores = make_vector({ 50, 20, 70, 10 });
     auto data = make_vector({ 37, 42, 60, 100, -1 });
-    sort(zip(scores, data));
+    Alg::sort(zip(scores, data));
 
-    EXPECT(is_sorted(zip(scores, data)));
+    EXPECT(Alg::is_sorted(zip(scores, data)));
     EXPECT_EQ(scores, make_vector({ 10, 20, 50, 70 }));
     EXPECT_EQ(data, make_vector({ 100, 42, 37, 60, -1 }));
+
+    struct X {
+        int a;
+    };
+    auto s = Array { X { 5 }, X { 4 }, X { 2 }, X { 3 } };
+    Alg::sort(s, CompareThreeWay {}, &X::a);
+    EXPECT(Alg::is_sorted(s, CompareThreeWay {}, &X::a));
 }
 
 constexpr void range() {
@@ -185,24 +212,24 @@ constexpr void reversed() {
 
 constexpr void reverse() {
     auto v = collect_vector(range(5));
-    reverse(v);
+    Alg::reverse(v);
     EXPECT_EQ(v, collect_vector(reversed(range(5))));
 
     assign_to(v, range(6));
-    reverse(v);
+    Alg::reverse(v);
     EXPECT_EQ(v, collect_vector(reversed(range(6))));
 
     auto w = NewVector<UniquePtr<int>> {};
     w.push_back(make_unique<int>(4));
     w.push_back(make_unique<int>(5));
-    reverse(w);
+    Alg::reverse(w);
     EXPECT_EQ(*w.front(), 5);
     EXPECT_EQ(*w.back(), 4);
 }
 
 constexpr void rotate() {
     auto v = collect_vector(range(5));
-    auto r = rotate(v, v.iterator(2));
+    auto r = Alg::rotate(v, v.iterator(2));
     EXPECT_EQ(v, make_vector({ 2, 3, 4, 0, 1 }));
     EXPECT_EQ(v.iterator_index(r), 3u);
 }

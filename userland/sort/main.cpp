@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    sort(lines);
+    Alg::sort(lines);
     lines.for_each([&](auto& s) {
         puts(s.string());
     });

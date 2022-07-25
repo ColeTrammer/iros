@@ -34,7 +34,7 @@ void Suggestions::compute_matches(const Document& document, const Cursor& cursor
         do_match(suggestion, reference_text.view());
     }
 
-    sort(m_matched_suggestions, [](auto& a, auto& b) {
+    Alg::sort(m_matched_suggestions, [](auto& a, auto& b) {
         if (auto result = Tuple { a.score(), a.content().size() } <=> Tuple { b.score(), b.content().size() }; result != 0) {
             return result;
         }

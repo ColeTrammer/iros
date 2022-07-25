@@ -5,26 +5,29 @@
 #include <liim/container/producer/iterator_container.h>
 
 namespace LIIM::Container::Algorithm {
-template<MutableRandomAccessContainer C, ThreeWayComparatorFor<ContainerValueType<C>> Comp = CompareThreeWay>
-constexpr void insertion_sort(C&& container, Comp compartor = {}) {
-    auto start = container.begin();
-    auto end = container.end();
-    auto size = end - start;
-    if (size <= 1) {
-        return;
-    }
+struct InsertionSortFunction {
+    template<MutableRandomAccessContainer C, ProjectionFor<ContainerValueType<C>> Proj = Identity,
+             ThreeWayComparatorFor<Projected<Proj, ContainerValueType<C>>> Comp = CompareThreeWay>
+    constexpr void operator()(C&& container, Comp compartor = {}, Proj projection = {}) const {
+        auto start = container.begin();
+        auto end = container.end();
+        auto size = end - start;
+        if (size <= 1) {
+            return;
+        }
 
-    for (auto it = start + 1; it != end; ++it) {
-        auto jt = it;
-        auto kt = it;
-        do {
-            if (invoke(compartor, *--jt, *kt) <= 0) {
-                break;
-            }
-            swap_iterator_contents(jt, kt--);
-        } while (jt != start);
+        for (auto it = start + 1; it != end; ++it) {
+            auto jt = it;
+            auto kt = it;
+            do {
+                if (invoke(compartor, invoke(projection, *--jt), invoke(projection, *kt)) <= 0) {
+                    break;
+                }
+                swap_iterator_contents(jt, kt--);
+            } while (jt != start);
+        }
     }
-}
-}
+};
 
-using LIIM::Container::Algorithm::insertion_sort;
+constexpr inline auto insertion_sort = InsertionSortFunction {};
+}
