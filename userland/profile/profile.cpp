@@ -178,7 +178,7 @@ void ProfileNode::dump(int level) const {
 }
 
 void ProfileNode::sort() {
-    ::sort(reversed(transform(m_nodes, &ProfileNode::total_count)));
+    Alg::sort(m_nodes, CompareThreeWayBackwards {}, &ProfileNode::total_count);
 
     for (auto& node : m_nodes) {
         node.sort();
