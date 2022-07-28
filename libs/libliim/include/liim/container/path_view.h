@@ -73,6 +73,11 @@ public:
             .value_or(false);
     }
 
+    template<Format::Formattable... Args>
+    requires(sizeof...(Args) > 0) Path join(Format::FormatString<Args...> format_string, const Args&...)
+    const;
+    Path join(PathView path) const;
+
     constexpr friend bool operator==(PathView a, PathView b) { return Alg::equal(a, b); }
     constexpr friend std::strong_ordering operator<=>(PathView a, PathView b) { return Alg::lexographic_compare(a, b); }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <liim/container/path_view.h>
+#include <liim/format.h>
 #include <liim/string.h>
 
 namespace LIIM::Container {
@@ -33,6 +34,7 @@ public:
     Option<StringView> filename() const { return view().filename(); }
     Option<StringView> extension() const { return view().extension(); }
     Option<StringView> stem() const { return view().stem(); }
+    Option<PathView> parent_path() const { return view().parent_path(); }
 
     bool starts_with(PathView prefix) const { return view().starts_with(prefix); }
     bool ends_with(PathView suffix) const { return view().ends_with(suffix); }
@@ -42,9 +44,62 @@ public:
     friend bool operator==(const Path& a, const Path& b) { return a.view() == b.view(); }
     friend std::strong_ordering operator<=>(const Path& a, const Path& b) { return a.view() <=> b.view(); }
 
+    void clear() { m_data.clear(); }
+
+    template<Format::Formattable... Args>
+    requires(sizeof...(Args) > 0) Path join(Format::FormatString<Args...> format_string, const Args&... args)
+    const { return view().join(format_string, args...); }
+    Path join(PathView path) const { return view().join(path); }
+
+    template<Format::Formattable... Args>
+    requires(sizeof...(Args) > 0) Path& append(Format::FormatString<Args...> format_string, const Args&... args);
+    Path& append(PathView path);
+
+    Path& replace_with_parent_path();
+
 private:
     String m_data;
 };
+
+inline Path& Path::append(PathView path) {
+    if (path.is_absolute()) {
+        m_data = String(path.data());
+    } else {
+        if (m_data.ends_with("/")) {
+            m_data += String(path.data());
+        } else {
+            m_data += "/"s;
+            m_data += String(path.data());
+        }
+    }
+    return *this;
+}
+
+template<Format::Formattable... Args>
+requires(sizeof...(Args) > 0) Path& Path::append(Format::FormatString<Args...> format_string, const Args&... args) {
+    auto to_append = vformat(format_string.data(), make_format_args(args...));
+    return this->append(to_append);
+}
+
+inline Path& Path::replace_with_parent_path() {
+    if (auto new_path = this->parent_path()) {
+        m_data = String(new_path->data());
+    }
+    return *this;
+}
+
+inline Path PathView::join(PathView path) const {
+    auto result = Path::create(*this);
+    result.append(path);
+    return result;
+}
+
+template<Format::Formattable... Args>
+requires(sizeof...(Args) > 0) inline Path PathView::join(Format::FormatString<Args...> format_string, const Args&... args) const {
+    auto result = Path::create(*this);
+    result.append(format_string, args...);
+    return result;
+}
 }
 
 namespace LIIM::Format {
