@@ -25,6 +25,9 @@ public:
     operator PathView() const { return view(); }
     PathView view() const { return PathView(m_data); }
 
+    String into_string() && { return String(move(m_data)); }
+    const char* c_str() const { return m_data.string(); }
+
     PathViewIterator begin() const { return view().begin(); }
     PathViewIterator end() const { return view().end(); }
 

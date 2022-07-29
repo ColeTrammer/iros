@@ -3,8 +3,10 @@
 #include <cli/cli.h>
 #include <edit/document.h>
 #include <errno.h>
+#include <ext/system.h>
 #include <gui/application.h>
 #include <gui/window.h>
+#include <liim/container/path.h>
 #include <liim/string_view.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -84,11 +86,11 @@ int edit_main(Arguments arguments) {
             return "./";
         }
         if (arguments.path) {
-            if (auto maybe_path = Ext::Path::resolve(path)) {
-                if (is_directory) {
-                    return maybe_path.value().to_string();
+            if (auto maybe_path = Ext::System::realpath(path)) {
+                if (!is_directory) {
+                    maybe_path.value().replace_with_parent_path();
                 }
-                return maybe_path.value().dirname().to_string();
+                return move(maybe_path).value().into_string();
             }
         }
         return "./";
@@ -150,7 +152,7 @@ int edit_main(Arguments arguments) {
         auto& item = static_cast<App::FileSystemObject&>(*event.item());
         auto path = file_system_model->full_path(item);
 
-        auto document_or_error = Edit::Document::create_from_file(path.to_string());
+        auto document_or_error = Edit::Document::create_from_file(path.clone().into_string());
         auto& active_display = TerminalStatusBar::the().active_display();
         if (document_or_error.is_error()) {
             active_display.send_status_message(format("Failed to open `{}': {}", path, strerror(document_or_error.error())));

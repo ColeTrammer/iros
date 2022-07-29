@@ -1,6 +1,6 @@
 #include <cli/cli.h>
 #include <ext/json.h>
-#include <ext/path.h>
+#include <ext/system.h>
 #include <liim/result.h>
 #include <liim/try.h>
 
@@ -12,7 +12,7 @@
 
 namespace PortManager {
 struct Arguments {
-    String json_path { "port.json" };
+    Path json_path { "port.json" };
     StringView build_step { "install" };
 };
 
@@ -26,9 +26,10 @@ constexpr auto argument_parser = [] {
 Result<void, Error> main(Arguments arguments) {
     auto context = Context(TRY(Config::create()));
 
-    auto path = TRY(Ext::Path::resolve(arguments.json_path).transform_error([&](auto system_error) {
-        return make_string_error("Failed to resolve path `{}': `{}'", arguments.json_path, system_error.message());
+    auto path = TRY(Ext::System::realpath(arguments.json_path).transform_error([&](auto error) {
+        return make_string_error("Failed to resolve json path `{}': {}", arguments.json_path, error.message());
     }));
+
     auto handle = TRY(context.load_port(move(path)));
     return context.build_port(handle, arguments.build_step);
 }

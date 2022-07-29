@@ -11,7 +11,7 @@ namespace Ext::System {
 template<typename T>
 using Result = LIIM::Result<T, SystemError>;
 
-Result<String> realpath(StringView path);
+Result<Path> realpath(PathView path);
 
 enum class OpenMode : int {
     Create = O_CREAT,
@@ -31,7 +31,7 @@ enum class OpenMode : int {
 
 LIIM_DEFINE_BITWISE_OPERATIONS(OpenMode)
 
-Result<int> open(StringView path, OpenMode open_mode, mode_t create_mode = 0666);
+Result<int> open(PathView path, OpenMode open_mode, mode_t create_mode = 0666);
 
 enum class Protection : int {
     None = PROT_NONE,
@@ -55,4 +55,8 @@ LIIM_DEFINE_BITWISE_OPERATIONS(MapFlags)
 Result<void*> mmap(void* addr, size_t length, Protection protection, MapFlags flags, Option<int> fd, off_t offset);
 
 Result<struct stat> fstat(int fd);
+
+Result<void> chdir(PathView path);
+
+Result<bool> exists(PathView path);
 }

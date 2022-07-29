@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ext/json.h>
-#include <ext/path.h>
+#include <liim/container/path.h>
 #include <liim/forward.h>
 
 #include "error.h"
@@ -9,7 +9,7 @@
 namespace PortManager {
 class JsonReader {
 public:
-    static Result<JsonReader, Error> create(Ext::Path path);
+    static Result<JsonReader, Error> create(Path path);
 
     JsonReader(const JsonReader&) = delete;
     JsonReader(JsonReader&&) = default;
@@ -20,7 +20,7 @@ public:
     template<typename T>
     Result<const T&, JsonLookupError> lookup(const Ext::Json::Object& object, const String& key) const {
         return object.get_as<T>(key).unwrap_or_else([&] {
-            return JsonLookupError(m_path, key, String(Ext::Json::type_to_name<T>));
+            return JsonLookupError(m_path.clone(), key, String(Ext::Json::type_to_name<T>));
         });
     }
 
@@ -39,14 +39,14 @@ public:
                 first = false;
             }
             type += "]";
-            return JsonLookupError(m_path, key, move(type));
+            return JsonLookupError(m_path.clone(), key, move(type));
         });
     }
 
 private:
-    JsonReader(Ext::Json::Object object, Ext::Path path);
+    JsonReader(Ext::Json::Object object, Path path);
 
     Ext::Json::Object m_json;
-    Ext::Path m_path;
+    Path m_path;
 };
 }

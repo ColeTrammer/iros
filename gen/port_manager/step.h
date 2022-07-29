@@ -60,8 +60,8 @@ public:
     virtual Result<void, Error> act(Context& context, const Port& port) override;
 
 private:
-    Ext::Path download_destination(const Port& port) const;
-    Ext::Path signature_download_destination(const Port& port) const;
+    Path download_destination(const Port& port) const;
+    Path signature_download_destination(const Port& port) const;
 
     String m_url;
     Kind m_kind { Kind::Gz };
@@ -82,8 +82,8 @@ public:
     virtual Span<const StringView> dependencies() const override;
 
 private:
-    Ext::Path patch_path(const Port& port, const String& patch_name) const;
-    Ext::Path patch_marker_path(const Port& port, const String& patch_name) const;
+    Path patch_path(const Port& port, StringView patch_name) const;
+    Path patch_marker_path(const Port& port, StringView patch_name) const;
 
     NewVector<String> m_patch_files;
 };

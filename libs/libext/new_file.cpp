@@ -3,6 +3,7 @@
 #include <ext/system.h>
 #include <fcntl.h>
 #include <liim/byte_buffer.h>
+#include <liim/container/path.h>
 #include <liim/span.h>
 #include <liim/string_view.h>
 #include <liim/try.h>
@@ -17,7 +18,7 @@ namespace Ext {
         }                                         \
     } while (0)
 
-System::Result<NewFile> NewFile::create(StringView path, OpenMode open_mode, mode_t create_mode) {
+System::Result<NewFile> NewFile::create(PathView path, OpenMode open_mode, mode_t create_mode) {
     auto [open_mode_flags, open_mode_string] = [&]() -> Tuple<System::OpenMode, const char*> {
         switch (open_mode) {
             case OpenMode::Readonly:

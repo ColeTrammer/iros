@@ -7,7 +7,8 @@
 #include <edit/line_renderer.h>
 #include <edit/text_range_collection.h>
 #include <eventloop/event.h>
-#include <ext/path.h>
+#include <ext/system.h>
+#include <liim/container/path.h>
 #include <liim/utf8_view.h>
 #include <stdlib.h>
 #include <tinput/terminal_glyph.h>
@@ -272,9 +273,9 @@ App::ObjectBoundCoroutine TerminalDisplay::do_open_prompt() {
             return "";
         }
 
-        return format("{}/", Ext::Path::resolve(".")
+        return format("{}/", Ext::System::realpath("."_pv)
                                  .transform([](auto p) {
-                                     return p.to_string();
+                                     return move(p).into_string();
                                  })
                                  .value_or("."));
     }();

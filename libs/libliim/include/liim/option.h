@@ -221,11 +221,19 @@ public:
         return move(m_storage).value();
     }
 
-    constexpr T value_or(T default_value) const {
+    constexpr T value_or(T default_value) const& {
         if (has_value()) {
             return value();
         } else {
             return forward<T&&>(default_value);
+        }
+    }
+
+    constexpr T value_or(T&& default_value) && {
+        if (has_value()) {
+            return move(*this).value();
+        } else {
+            return forward<T>(default_value);
         }
     }
 

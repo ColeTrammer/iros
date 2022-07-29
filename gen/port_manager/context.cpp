@@ -1,6 +1,7 @@
 #include <errno.h>
-#include <ext/path.h>
+#include <ext/system.h>
 #include <liim/container/hash_set.h>
+#include <liim/container/path.h>
 #include <liim/function.h>
 #include <liim/result.h>
 #include <liim/string.h>
@@ -18,22 +19,23 @@ Result<void, Error> Context::run_process(Process process) {
     return process.spawn_and_wait();
 }
 
-Result<void, Error> Context::with_working_directory(const Ext::Path& working_directory, Function<Result<void, Error>()> body) {
+Result<void, Error> Context::with_working_directory(PathView working_directory, Function<Result<void, Error>()> body) {
     auto old_working_directory = String::wrap_malloced_chars(getcwd(nullptr, 0));
-    if (chdir(working_directory.to_string().string())) {
-        return Err(make_string_error("Failed to cd to `{}': {}", working_directory, strerror(errno)));
-    }
+
+    TRY(Ext::System::chdir(working_directory).transform_error([&](auto error) {
+        return make_string_error("Failed to cd to `{}': {}", working_directory, error.message());
+    }));
 
     auto result = body();
 
-    if (chdir(old_working_directory->string())) {
-        return Err(make_string_error("Failed to cd to `{}': {}", *old_working_directory, strerror(errno)));
-    }
+    TRY(Ext::System::chdir(*old_working_directory).transform_error([&](auto error) {
+        return make_string_error("Failed to cd to `{}': {}", *old_working_directory, error.message());
+    }));
 
     return result;
 }
 
-Result<PortHandle, Error> Context::load_port(Ext::Path path) {
+Result<PortHandle, Error> Context::load_port(Path path) {
     auto port = TRY(Port::create(*this, move(path)));
     auto handle = port.handle();
     m_ports.try_emplace(clone(handle), move(port));
@@ -46,7 +48,7 @@ Result<void, Error> Context::load_port_dependency(PortHandle handle, const PortH
     TRY(m_ports.insert_with_factory(handle, [&](auto* pointer) {
         out_log("Loading dependency of `{}': `{}'", parent, handle);
         return LIIM::create_at(pointer, piecewise_construct, forward_as_tuple<const PortHandle&>(handle),
-                               forward_as_tuple<Context&, Ext::Path>(*this, move(path)));
+                               forward_as_tuple<Context&, Path>(*this, move(path)));
     }));
     return m_ports.at(handle)->load_dependencies(*this);
 }

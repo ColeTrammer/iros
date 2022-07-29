@@ -10,7 +10,7 @@ namespace Ext {
 class NewFile {
 public:
     enum class OpenMode { Readonly, WriteNew, WriteClobber, ReadWrite, AppendOnly };
-    static System::Result<NewFile> create(StringView path, OpenMode open_mode, mode_t create_mode = 0666);
+    static System::Result<NewFile> create(PathView path, OpenMode open_mode, mode_t create_mode = 0666);
 
     NewFile(NewFile&& other) : m_file(exchange(other.m_file, nullptr)) {}
 

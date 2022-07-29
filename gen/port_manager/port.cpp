@@ -1,7 +1,8 @@
 #include <ext/error.h>
 #include <ext/json.h>
-#include <ext/path.h>
+#include <ext/system.h>
 #include <liim/container/new_vector.h>
+#include <liim/container/path.h>
 #include <liim/generator.h>
 #include <liim/pointers.h>
 #include <liim/try.h>
@@ -13,8 +14,10 @@
 #include "step.h"
 
 namespace PortManager {
-Result<Port, Error> Port::create(Context& context, Ext::Path json_path) {
-    auto reader = TRY(JsonReader::create(json_path));
+Result<Port, Error> Port::create(Context& context, Path json_path) {
+    assert(json_path.is_absolute());
+
+    auto reader = TRY(JsonReader::create(json_path.clone()));
 
     auto& name = TRY(reader.lookup<Ext::Json::String>(reader.json(), "name"));
     auto& version = TRY(reader.lookup<Ext::Json::String>(reader.json(), "version"));
@@ -66,7 +69,9 @@ Result<Port, Error> Port::create(Context& context, Ext::Path json_path) {
     }
 
     auto& config = context.config();
-    auto definition_directory = json_path.dirname();
+    auto definition_directory = TRY(json_path.parent_path().map(Path::create).unwrap_or_else([&] {
+        return make_string_error("Invalid json path `{}' has no parent directory.", json_path);
+    }));
     auto base_directory = config.base_directory_for_port(name.view(), version.view());
     auto source_directory = config.source_directory_for_port(name.view(), version.view());
     auto build_directory = config.build_directory_for_port(name.view(), version.view());
@@ -75,9 +80,8 @@ Result<Port, Error> Port::create(Context& context, Ext::Path json_path) {
                 move(build_directory), move(steps), move(dependencies));
 }
 
-Port::Port(String name, String version, Ext::Path definition_file, Ext::Path definition_directory, Ext::Path base_directory,
-           Ext::Path source_directory, Ext::Path build_directory, LIIM::Container::HashMap<StringView, UniquePtr<Step>> steps,
-           NewVector<PortHandle> dependencies)
+Port::Port(String name, String version, Path definition_file, Path definition_directory, Path base_directory, Path source_directory,
+           Path build_directory, LIIM::Container::HashMap<StringView, UniquePtr<Step>> steps, NewVector<PortHandle> dependencies)
     : m_name(move(name))
     , m_version(move(version))
     , m_definition_file(move(definition_file))
@@ -133,7 +137,7 @@ Result<Step&, BuildStepNotFound> Port::lookup_step(StringView step_name) {
             return *x;
         })
         .unwrap_or_else([&] {
-            return BuildStepNotFound(definition_file(), name(), String { step_name });
+            return BuildStepNotFound(Path::create(definition_file()), String { name() }, String { step_name });
         });
 }
 }

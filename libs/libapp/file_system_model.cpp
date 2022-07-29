@@ -1,8 +1,10 @@
 #include <app/file_system_model.h>
 #include <app/tree_view.h>
 #include <dirent.h>
+#include <ext/system.h>
 #include <graphics/png.h>
 #include <grp.h>
+#include <liim/container/path.h>
 #include <pwd.h>
 #include <sys/stat.h>
 
@@ -16,13 +18,14 @@ FileSystemModel::FileSystemModel() {
 
 FileSystemModel::~FileSystemModel() {}
 
-Ext::Path FileSystemModel::full_path(const FileSystemObject& object) {
+Path FileSystemModel::full_path(const FileSystemObject& object) {
     if (!object.parent()) {
-        return Ext::Path::root();
+        return "/"_p;
     }
 
     auto base = full_path(*object.typed_parent<FileSystemObject>());
-    return base.join_component(object.name());
+    base.append(object.name());
+    return base;
 }
 
 ModelItemInfo FileSystemObject::info(int field, int request) const {
@@ -84,7 +87,7 @@ static int ignore_dots(const dirent* a) {
 }
 
 FileSystemObject* FileSystemModel::load_initial_data(const String& string_path) {
-    auto maybe_path = Ext::Path::resolve(string_path);
+    auto maybe_path = Ext::System::realpath(string_path);
     if (!maybe_path) {
         return nullptr;
     }
@@ -93,7 +96,7 @@ FileSystemObject* FileSystemModel::load_initial_data(const String& string_path) 
 
     set_root(make_unique<FileSystemObject>(m_text_file_icon, "/", "root", "root", 0666, 4096));
     auto* object = typed_root<FileSystemObject>();
-    for (auto part : path.components()) {
+    for (auto part : path) {
         load_data(*object);
 
         for (int i = 0; i < object->item_count(); i++) {
@@ -123,15 +126,15 @@ void FileSystemModel::load_data(FileSystemObject& object) {
 
     dirent** dirents;
     int dirent_count;
-    if ((dirent_count = scandir(base_path.to_string().string(), &dirents, ignore_dots, &alphasort)) == -1) {
+    if ((dirent_count = scandir(base_path.c_str(), &dirents, ignore_dots, &alphasort)) == -1) {
         return;
     }
 
     for (int i = 0; i < dirent_count; i++) {
         auto* dirent = dirents[i];
-        auto path = base_path.join_component(dirent->d_name);
+        auto path = base_path.join(StringView(dirent->d_name));
         struct stat st;
-        if (lstat(path.to_string().string(), &st) == 0) {
+        if (lstat(path.c_str(), &st) == 0) {
             passwd* pwd = getpwuid(st.st_uid);
             group* grp = getgrgid(st.st_gid);
             add_child<FileSystemObject>(object, m_text_file_icon, dirent->d_name, pwd ? pwd->pw_name : "Unknown",

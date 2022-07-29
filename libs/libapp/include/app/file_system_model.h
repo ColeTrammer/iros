@@ -1,7 +1,6 @@
 #pragma once
 
 #include <app/model.h>
-#include <ext/path.h>
 #include <liim/vector.h>
 #include <sys/types.h>
 
@@ -52,7 +51,7 @@ public:
     virtual int field_count() const override { return Column::__Count; }
     virtual ModelItemInfo header_info(int field, int request) const override;
 
-    Ext::Path full_path(const FileSystemObject& object);
+    Path full_path(const FileSystemObject& object);
 
     FileSystemObject* load_initial_data(const String& path);
     void load_data(FileSystemObject& object);

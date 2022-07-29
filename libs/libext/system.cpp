@@ -1,23 +1,24 @@
 #include <ext/system.h>
 #include <fcntl.h>
+#include <liim/container/path.h>
 #include <liim/string.h>
 #include <liim/string_view.h>
 #include <unistd.h>
 
 namespace Ext::System {
-Result<String> realpath(StringView view) {
-    auto path = String(view);
+Result<Path> realpath(PathView view) {
+    auto path = String(view.data());
     char* result = ::realpath(path.string(), nullptr);
     if (!result) {
         return Err(make_system_error_from_errno());
     }
-    auto ret = String(result);
+    auto ret = Path::create(String(result));
     free(result);
     return ret;
 }
 
-Result<int> open(StringView view, OpenMode open_mode, mode_t create_mode) {
-    auto path = String(view);
+Result<int> open(PathView view, OpenMode open_mode, mode_t create_mode) {
+    auto path = String(view.data());
     int fd = ::open(path.string(), to_underlying(open_mode), create_mode);
     if (fd < 0) {
         return Err(make_system_error_from_errno());
@@ -40,5 +41,23 @@ Result<struct stat> fstat(int fd) {
         return Err(make_system_error_from_errno());
     }
     return st;
+}
+
+Result<void> chdir(PathView view) {
+    auto path = String(view.data());
+    int result = ::chdir(path.string());
+    if (result < 0) {
+        return Err(make_system_error_from_errno());
+    }
+    return {};
+}
+
+Result<bool> exists(PathView view) {
+    auto path = String(view.data());
+    int result = ::access(path.string(), F_OK);
+    if (result < 0 && errno != ENOENT) {
+        return Err(make_system_error_from_errno());
+    }
+    return result == F_OK;
 }
 }

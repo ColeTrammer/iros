@@ -1,5 +1,5 @@
-#include <ext/path.h>
 #include <ext/system.h>
+#include <liim/container/path.h>
 #include <sys/mount.h>
 #include <test/test.h>
 #include <unistd.h>
@@ -11,10 +11,10 @@ TEST(system, realpath) {
     }
 #endif
 
-    auto result = Ext::System::realpath("/proc/self/exed");
+    auto result = Ext::System::realpath("/proc/self/exed"_pv);
     EXPECT_EQ(result.error().value(), ENOENT);
 
-    result = Ext::System::realpath("/proc/self/exe");
+    result = Ext::System::realpath("/proc/self/exe"_pv);
     EXPECT(result.has_value());
-    EXPECT(result.value().ends_with("test_libext"));
+    EXPECT_EQ(result.value().filename(), "test_libext"sv);
 }

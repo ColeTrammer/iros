@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ext/forward.h>
+#include <liim/container/path.h>
 #include <liim/error.h>
 #include <liim/error/typed_domain.h>
 #include <liim/format.h>
@@ -199,7 +200,7 @@ struct ParserAdapter<HexNumber> {
 };
 
 template<typename T>
-requires(LIIM::IsOneOf<T, String, StringView>::value) struct ParserAdapter<T> {
-    static Result<T, ParserError> parse(Parser& parser) { return T { parser.consume_all() }; }
+requires(LIIM::IsOneOf<T, String, StringView, Path, PathView>::value) struct ParserAdapter<T> {
+    static Result<T, ParserError> parse(Parser& parser) { return create<T>(parser.consume_all()); }
 };
 }
