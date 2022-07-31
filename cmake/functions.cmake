@@ -106,6 +106,8 @@ function(add_os_executable name dest_dir)
         add_dependencies(${name} add-gcc-libs-to-sysroot)
         target_compile_options(${name} PRIVATE "-rdynamic")
         target_link_options(${name} PRIVATE "-rdynamic" "-Wl,-rpath-link" "${ROOT}/base/usr/lib") # Make the linker stop complaining about libgcc_s.so
+    else()
+        set_target_properties(${name} PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/usr/lib")
     endif()
     install(TARGETS ${name} RUNTIME DESTINATION ${dest_dir})
 endfunction()

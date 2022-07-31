@@ -2,6 +2,7 @@ set(TARGETS
     initrd
     parser
     port_manager
+    unicode
 )
 
 add_all_targets()

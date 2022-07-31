@@ -28,7 +28,8 @@
                 "${workspaceFolder}/libs/libtest/include",
                 "${workspaceFolder}/libs/libthread/include",
                 "${workspaceFolder}/libs/libtinput/include",
-                "${workspaceFolder}/libs/libtui/include"
+                "${workspaceFolder}/libs/libtui/include",
+                "${workspaceFolder}/libs/libunicode/include"
             ]
         },
         {
@@ -59,7 +60,8 @@
                 "${workspaceFolder}/libs/libtest/include",
                 "${workspaceFolder}/libs/libthread/include",
                 "${workspaceFolder}/libs/libtinput/include",
-                "${workspaceFolder}/libs/libtui/include"
+                "${workspaceFolder}/libs/libtui/include",
+                "${workspaceFolder}/libs/libunicode/include"
             ]
         },
         {
@@ -88,7 +90,8 @@
                 "${workspaceFolder}/libs/libtest/include",
                 "${workspaceFolder}/libs/libthread/include",
                 "${workspaceFolder}/libs/libtinput/include",
-                "${workspaceFolder}/libs/libtui/include"
+                "${workspaceFolder}/libs/libtui/include",
+                "${workspaceFolder}/libs/libunicode/include"
             ]
         },
         {
@@ -117,7 +120,8 @@
                 "${workspaceFolder}/libs/libtest/include",
                 "${workspaceFolder}/libs/libthread/include",
                 "${workspaceFolder}/libs/libtinput/include",
-                "${workspaceFolder}/libs/libtui/include"
+                "${workspaceFolder}/libs/libtui/include",
+                "${workspaceFolder}/libs/libunicode/include"
             ]
         }
     ],

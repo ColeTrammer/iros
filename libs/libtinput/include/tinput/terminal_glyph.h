@@ -6,7 +6,7 @@
 namespace TInput {
 class TerminalGlyph {
 public:
-    TerminalGlyph(String text, int width) : m_text(move(text)), m_width(width) {}
+    TerminalGlyph(String text, size_t width) : m_text(move(text)), m_width(width) {}
 
     String& text() { return m_text; }
     const String& text() const { return m_text; }
@@ -14,7 +14,7 @@ public:
 
 private:
     String m_text;
-    int m_width { 0 };
+    size_t m_width { 0 };
 };
 
 class Glyphs {

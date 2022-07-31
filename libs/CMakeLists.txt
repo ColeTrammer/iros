@@ -33,6 +33,7 @@ if (NOT ${MINIMAL_BUILD})
         libthread
         libtinput
         libtui
+        libunicode
     )
 endif()
 

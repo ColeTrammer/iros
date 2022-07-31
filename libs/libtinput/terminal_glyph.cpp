@@ -2,6 +2,7 @@
 #include <liim/format.h>
 #include <liim/utf8_view.h>
 #include <tinput/terminal_glyph.h>
+#include <unicode/terminal_width.h>
 
 namespace TInput {
 static bool is_unicode_mark(uint32_t code_point) {
@@ -33,7 +34,7 @@ Glyphs convert_to_glyphs(const StringView& view) {
             glyphs.add({ String { view.substring(start, it.byte_offset() - start + 1) }, 0 });
             continue;
         }
-        glyphs.add({ String { view.substring(it.byte_offset(), info.bytes_used) }, 1 });
+        glyphs.add({ String { view.substring(it.byte_offset(), info.bytes_used) }, Unicode::terminal_code_point_width(*it) });
     }
     return glyphs;
 }

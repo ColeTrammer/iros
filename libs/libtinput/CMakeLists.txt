@@ -7,4 +7,4 @@ set(SOURCES
 
 add_os_library(libtinput tinput TRUE)
 
-target_link_libraries(libtinput PUBLIC libapp libedit libclipboard)
+target_link_libraries(libtinput PUBLIC libapp libedit libclipboard libunicode)

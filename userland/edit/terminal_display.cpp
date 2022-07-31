@@ -205,7 +205,7 @@ void TerminalDisplay::output_line(int row, int col_offset, const Edit::RenderedL
 
         auto glyph = TInput::TerminalGlyph { line.rendered_lines()[line_index].substring(range.byte_offset_in_rendered_string,
                                                                                          range.byte_count_in_rendered_string),
-                                             range.end.col() - range.start.col() };
+                                             static_cast<size_t>(range.end.col() - range.start.col()) };
         renderer.put_glyph(text_rect.top_left().translated(range.start.col(), 0), glyph, style);
     }
 
