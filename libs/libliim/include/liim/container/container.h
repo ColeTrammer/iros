@@ -3,6 +3,7 @@
 #include <liim/container/algorithm/contains.h>
 #include <liim/container/algorithm/ends_with.h>
 #include <liim/container/algorithm/equal.h>
+#include <liim/container/algorithm/fold.h>
 #include <liim/container/algorithm/insertion_sort.h>
 #include <liim/container/algorithm/is_sorted.h>
 #include <liim/container/algorithm/lexographic_compare.h>

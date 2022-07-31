@@ -46,12 +46,17 @@ public:
         size_t bytes_used;
     };
 
+    using ValueType = uint32_t;
+
     constexpr CodePointInfo current_code_point_info() const;
     constexpr Option<uint32_t> current_code_point() const { return current_code_point_info().codepoint; }
     constexpr void advance() { m_byte_offset += current_code_point_info().bytes_used; }
 
     constexpr uint32_t operator*() const { return current_code_point().value_or(Utf8View::replacement_character); }
-    constexpr void operator++() { advance(); }
+    constexpr Utf8ViewIterator& operator++() {
+        advance();
+        return *this;
+    }
     constexpr Utf8ViewIterator operator++(int) {
         auto save = *this;
         advance();

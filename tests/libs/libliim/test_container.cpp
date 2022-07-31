@@ -107,6 +107,12 @@ constexpr void ends_with() {
     EXPECT(Alg::ends_with(Array { X { 3 }, X { 4 } }, Array { Y { 4 } }, Equal {}, &X::a, &Y::b));
 }
 
+constexpr void fold() {
+    EXPECT_EQ(Alg::fold(range(5), 0, Plus {}), 10);
+    EXPECT_EQ(Alg::fold(range(6), 0L, Plus {}), 15L);
+    EXPECT_EQ(Alg::fold(range(6L), 0, Plus {}), 15L);
+}
+
 constexpr void lexographic_compare() {
     EXPECT(Alg::lexographic_compare(range(5), range(5)) == 0);
     EXPECT(Alg::lexographic_compare(range(4), range(5)) < 0);
@@ -480,6 +486,7 @@ TEST_CONSTEXPR(container, contains, contains)
 TEST_CONSTEXPR(container, equal, equal)
 TEST_CONSTEXPR(container, starts_with, starts_with)
 TEST_CONSTEXPR(container, ends_with, ends_with)
+TEST_CONSTEXPR(container, fold, fold)
 TEST_CONSTEXPR(container, lexographic_compare, lexographic_compare)
 TEST_CONSTEXPR(container, sort, sort)
 TEST_CONSTEXPR(container, range, range)

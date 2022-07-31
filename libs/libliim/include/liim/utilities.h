@@ -615,7 +615,14 @@ constexpr typename InvokeResult<F, Args...>::type invoke(F&& f, Args&&... args) 
 
 template<typename F, typename... Args>
 concept Invokable = requires {
-    InvokeResult<F, Args...>::type;
+    typename InvokeResult<F, Args...>::type;
+};
+
+struct Plus {
+    template<typename T, typename U>
+    constexpr auto operator()(T&& a, U&& b) const {
+        return forward<T>(a) + forward<U>(b);
+    }
 };
 
 namespace details {
@@ -795,6 +802,7 @@ using LIIM::move;
 using LIIM::OptionOf;
 using LIIM::piecewise_construct;
 using LIIM::piecewise_construct_t;
+using LIIM::Plus;
 using LIIM::ResultOf;
 using LIIM::SameAs;
 using LIIM::swap;
