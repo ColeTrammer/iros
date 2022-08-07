@@ -21,8 +21,8 @@ private:
 };
 
 template<Container T>
-constexpr MoveElements<T> move_elements(T&& container) {
-    return MoveElements<T>(forward<T>(container));
+constexpr MoveElements<T> move_elements(T container) {
+    return MoveElements<T>(move(container));
 }
 }
 
