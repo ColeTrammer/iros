@@ -116,6 +116,11 @@ requires(!SameAs<T*, char> && !SameAs<T*, const char>) struct Formatter<T*> : pu
 };
 
 template<>
+struct Formatter<char32_t> : public BaseFormatter {
+    void format(char32_t value, FormatContext& context) { return format_unsigned_integer(static_cast<uint32_t>(value), context); }
+};
+
+template<>
 struct Formatter<std::nullptr_t> : public BaseFormatter {
     void format(std::nullptr_t, FormatContext& context) { return format_string_view("Null"sv, context); }
 };
