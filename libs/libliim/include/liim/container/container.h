@@ -9,6 +9,7 @@
 #include <liim/container/algorithm/lexographic_compare.h>
 #include <liim/container/algorithm/reverse.h>
 #include <liim/container/algorithm/rotate.h>
+#include <liim/container/algorithm/size.h>
 #include <liim/container/algorithm/sort.h>
 #include <liim/container/algorithm/starts_with.h>
 #include <liim/container/concepts.h>
