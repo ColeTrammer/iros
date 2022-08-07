@@ -209,10 +209,10 @@ struct Traits<StringView> {
 
 namespace Container::Hash {
     template<>
-    struct HashFunction<StringView> {
-        constexpr static void hash(Hasher& hasher, StringView string) { hasher.add({ string.data(), string.size() }); }
+    struct HashFunction<LIIM::StringView> {
+        constexpr static void hash(Hasher& hasher, LIIM::StringView string) { hasher.add({ string.data(), string.size() }); }
 
-        using Matches = Tuple<const char*, String>;
+        using Matches = Tuple<const char*, LIIM::String>;
     };
 }
 }
