@@ -16,6 +16,7 @@ set(TEST_FILES
     test_result.cpp
     test_string_view.cpp
     test_string.cpp
+    test_strings.cpp
     test_task.cpp
     test_tuple.cpp
     test_utf8_view.cpp
