@@ -192,6 +192,8 @@ public:
 
     constexpr Option<ValueType> current_code_point() const { return Utf8::code_point_value(m_data.subspan(m_index)); }
 
+    constexpr size_t current_code_unit_offset() const { return m_index; }
+
     constexpr Utf8Iterator& operator++() {
         do {
             ++m_index;
@@ -250,5 +252,12 @@ struct Utf8Encoding {
     }
 
     constexpr static bool is_valid_byte_offset(Span<char const> data, size_t index) { return Utf8::is_valid_byte_offset(data, index); }
+
+    constexpr static Option<Iterator> iterator_at_offset(Span<char const> data, size_t offset) {
+        if (!is_valid_byte_offset(data, offset)) {
+            return None {};
+        }
+        return Utf8Iterator(data, offset);
+    }
 };
 }

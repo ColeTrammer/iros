@@ -23,7 +23,8 @@ public:
 
     constexpr StringViewImpl() = default;
     constexpr StringViewImpl(AssumeProperlyEncoded, CodeUnitType const* data, size_t size_in_code_units)
-        : m_data(data), m_size_in_code_units(size_in_code_units) {}
+        : m_data({ data, size_in_code_units }) {}
+    constexpr StringViewImpl(AssumeProperlyEncoded, Span<CodeUnitType const> data) : m_data(data) {}
 
     constexpr StringViewImpl(StringViewImpl const&) = default;
     constexpr StringViewImpl(StringViewImpl&&) = default;
@@ -33,14 +34,13 @@ public:
 
     constexpr operator Span<CodeUnitType const>() const { return span(); }
 
-    constexpr CodeUnitType const* data() const { return m_data; }
+    constexpr CodeUnitType const* data() const { return m_data.data(); }
     constexpr size_t size_in_bytes() const { return size_in_code_units() * sizeof(CodeUnitType); }
-    constexpr size_t size_in_code_units() const { return m_size_in_code_units; }
+    constexpr size_t size_in_code_units() const { return m_data.size(); }
 
     constexpr Span<CodeUnitType const> span() const { return { data(), size_in_bytes() }; }
 
 private:
-    CodeUnitType const* m_data { nullptr };
-    size_t m_size_in_code_units { 0 };
+    Span<CodeUnitType const> m_data;
 };
 }
