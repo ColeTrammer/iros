@@ -27,6 +27,8 @@ constexpr void ascii() {
     EXPECT(!""_av.front());
     EXPECT(!""_av.back());
 
+    EXPECT(x.substr(*x.iterator_at_offset(1), *x.iterator_at_offset(4)) == "ell"_av);
+
     for (auto c : x) {
         EXPECT(c > 32);
     }
@@ -57,6 +59,13 @@ constexpr void utf8() {
 
     EXPECT_EQ(x.size_in_bytes(), 10u);
     EXPECT_EQ(x.size_in_code_points(), 4u);
+
+    EXPECT("¢€"_sv == x.substr(*x.iterator_at_offset(1), *x.iterator_at_offset(6)));
+    EXPECT(!x.iterator_at_offset(2));
+    EXPECT(!x.iterator_at_offset(4));
+
+    EXPECT(x.substr(x.begin(), *x.iterator_at_offset(1)) == "$"_sv);
+    EXPECT(x.substr(*x.iterator_at_offset(1)) == "¢€𐍈"_sv);
 
     auto vec = collect_vector("$¢€𐍈"_sv);
     do_utf8_test("$¢€𐍈"_sv, collect_vector(Array {
