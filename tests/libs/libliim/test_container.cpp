@@ -86,6 +86,25 @@ constexpr void starts_with() {
     EXPECT(Alg::starts_with(Array { X { 3 }, X { 4 } }, Array { Y { 3 } }, Equal {}, &X::a, &Y::b));
 }
 
+constexpr void contains_subrange() {
+    EXPECT(Alg::contains_subrange(range(5), range(1, 3)));
+    EXPECT(!Alg::contains_subrange(range(5), range(6)));
+    EXPECT(Alg::contains_subrange(range(5), range(1, 5)));
+
+    EXPECT(Alg::contains_subrange(range(2, 7), Array { "3"sv, "4"sv, "5"sv }, [](int a, StringView b) {
+        return a == b[0] - '0';
+    }));
+
+    struct X {
+        int a;
+    };
+    struct Y {
+        int b;
+    };
+
+    EXPECT(Alg::contains_subrange(Array { X { 3 }, X { 4 } }, Array { Y { 3 } }, Equal {}, &X::a, &Y::b));
+}
+
 constexpr void ends_with() {
     EXPECT(Alg::ends_with(range(5), range(2, 5)));
     EXPECT(!Alg::ends_with(range(5), range(6)));
@@ -105,6 +124,112 @@ constexpr void ends_with() {
     };
 
     EXPECT(Alg::ends_with(Array { X { 3 }, X { 4 } }, Array { Y { 4 } }, Equal {}, &X::a, &Y::b));
+}
+
+constexpr void find() {
+    auto collection = Array { 5, 4, 3, 2, 1 };
+    auto it = Alg::find(collection, 3);
+    EXPECT_EQ(**it, 3);
+
+    it = Alg::find(collection, 6);
+    EXPECT(!it);
+
+    it = Alg::find(collection, 3, Equal {}, [](auto x) {
+        return x + 1;
+    });
+    EXPECT_EQ(**it, 2);
+}
+
+constexpr void find_last() {
+    auto collection = Array { 5, 4, 3, 2, 1, 5, 4, 3, 2, 1 };
+    auto it = Alg::find_last(collection, 3);
+    EXPECT_EQ(**it, 3);
+    EXPECT_EQ(&**it, &collection[7]);
+
+    it = Alg::find_last(collection, 6);
+    EXPECT(!it);
+
+    it = Alg::find_last(collection, 3, Equal {}, [](auto x) {
+        return x + 1;
+    });
+    EXPECT_EQ(**it, 2);
+}
+
+constexpr void find_subrange() {
+    auto collection = Array { 1, 2, 3, 4, 5 };
+    auto subrange = Alg::find_subrange(collection, Array { 3, 4 });
+    EXPECT(subrange);
+    EXPECT_EQ(*subrange->begin(), 3);
+    EXPECT_EQ(*subrange->end(), 5);
+}
+
+constexpr void find_last_subrange() {
+    auto collection = Array { 1, 2, 3, 4, 5, 1, 2, 3, 4, 5 };
+    auto subrange = Alg::find_last_subrange(collection, Array { 3, 4 });
+    EXPECT(subrange);
+    EXPECT_EQ(*subrange->begin(), 3);
+    EXPECT_EQ(*subrange->end(), 5);
+    EXPECT_EQ(&*subrange->begin(), &collection[7]);
+}
+
+constexpr void find_if() {
+    auto collection = Array { 1, 2, 3, 4, 5 };
+    auto it = Alg::find_if(collection, [](auto x) {
+        return x == 2;
+    });
+    EXPECT_EQ(**it, 2);
+}
+
+constexpr void find_if_not() {
+    auto collection = Array { 1, 2, 3, 4, 5 };
+    auto it = Alg::find_if_not(collection, [](auto x) {
+        return x == 2;
+    });
+    EXPECT_EQ(**it, 1);
+}
+
+constexpr void find_last_if() {
+    auto collection = Array { 1, 2, 3, 4, 5, 1, 2, 3, 4, 5 };
+    auto it = Alg::find_last_if(collection, [](auto x) {
+        return x == 2;
+    });
+    EXPECT_EQ(**it, 2);
+    EXPECT_EQ(&**it, &collection[6]);
+}
+
+constexpr void find_last_if_not() {
+    auto collection = Array { 1, 2, 3, 4, 5, 1, 2, 3, 4, 5 };
+    auto it = Alg::find_last_if_not(collection, [](auto x) {
+        return x == 2;
+    });
+    EXPECT_EQ(**it, 5);
+    EXPECT_EQ(&**it, &collection[9]);
+}
+
+constexpr void find_first_of() {
+    auto collection = Array { 1, 2, 3, 4, 5 };
+    auto it = Alg::find_first_of(collection, Array { 5, 4, 2 });
+    EXPECT_EQ(**it, 2);
+}
+
+constexpr void find_first_not_of() {
+    auto collection = Array { 1, 2, 3, 4, 5 };
+    auto it = Alg::find_first_not_of(collection, Array { 5, 4, 2 });
+    EXPECT_EQ(**it, 1);
+}
+
+constexpr void find_last_of() {
+    auto collection = Array { 1, 2, 3, 4, 5, 1, 2, 3, 4, 5 };
+    auto it = Alg::find_last_of(collection, Array { 5, 4, 2 });
+    EXPECT_EQ(**it, 5);
+    EXPECT_EQ(&**it, &collection[9]);
+}
+
+constexpr void find_last_not_of() {
+    auto collection = Array { 1, 2, 3, 4, 5, 1, 2, 3, 4, 5 };
+    auto it = Alg::find_last_not_of(collection, Array { 5, 4, 2 });
+    EXPECT_EQ(**it, 3);
+    EXPECT_EQ(&**it, &collection[7]);
 }
 
 constexpr void fold() {
@@ -483,9 +608,22 @@ constexpr void value_iterator() {
 
 TEST_CONSTEXPR(container, collect, collect)
 TEST_CONSTEXPR(container, contains, contains)
+TEST_CONSTEXPR(container, contains_subrange, contains_subrange)
 TEST_CONSTEXPR(container, equal, equal)
 TEST_CONSTEXPR(container, starts_with, starts_with)
 TEST_CONSTEXPR(container, ends_with, ends_with)
+TEST_CONSTEXPR(container, find, find)
+TEST_CONSTEXPR(container, find_last, find_last)
+TEST_CONSTEXPR(container, find_subrange, find_subrange)
+TEST_CONSTEXPR(container, find_last_subrange, find_last_subrange)
+TEST_CONSTEXPR(container, find_if, find_if)
+TEST_CONSTEXPR(container, find_if_not, find_if_not)
+TEST_CONSTEXPR(container, find_last_if, find_last_if)
+TEST_CONSTEXPR(container, find_last_if_not, find_last_if_not)
+TEST_CONSTEXPR(container, find_first_of, find_first_of)
+TEST_CONSTEXPR(container, find_first_not_of, find_first_not_of)
+TEST_CONSTEXPR(container, find_last_of, find_last_of)
+TEST_CONSTEXPR(container, find_last_not_of, find_last_not_of)
 TEST_CONSTEXPR(container, fold, fold)
 TEST_CONSTEXPR(container, lexographic_compare, lexographic_compare)
 TEST_CONSTEXPR(container, sort, sort)
