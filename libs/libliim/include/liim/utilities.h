@@ -618,6 +618,9 @@ concept Invokable = requires {
     typename InvokeResult<F, Args...>::type;
 };
 
+template<typename... Args>
+concept PredicateFor = SameAs<bool, typename InvokeResult<Args...>::type>;
+
 struct Plus {
     template<typename T, typename U>
     constexpr auto operator()(T&& a, U&& b) const {
