@@ -23,8 +23,8 @@ private:
 };
 
 struct AsciiEncoding {
-    using CodeUnitType = char;
-    using CodePointType = char;
+    using CodeUnit = char;
+    using CodePoint = char;
     using Iterator = AsciiIterator;
 
     constexpr static bool is_valid(Span<char const>) { return true; }
