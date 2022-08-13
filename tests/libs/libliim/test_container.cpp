@@ -346,6 +346,10 @@ constexpr void range() {
     EXPECT_EQ(v.size(), 0u);
 }
 
+constexpr void single() {
+    EXPECT_EQ(collect_vector(Array { 1 }), collect_vector(single(1)));
+}
+
 constexpr void repeat() {
     auto v = NewVector<int> {};
     for (auto i : repeat(5, 2)) {
@@ -628,6 +632,7 @@ TEST_CONSTEXPR(container, fold, fold)
 TEST_CONSTEXPR(container, lexographic_compare, lexographic_compare)
 TEST_CONSTEXPR(container, sort, sort)
 TEST_CONSTEXPR(container, range, range)
+TEST_CONSTEXPR(container, single, single)
 TEST_CONSTEXPR(container, repeat, repeat)
 TEST_CONSTEXPR(container, reversed, reversed)
 TEST_CONSTEXPR(container, reverse, reverse)
