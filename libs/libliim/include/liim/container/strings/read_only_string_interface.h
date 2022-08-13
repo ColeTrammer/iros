@@ -9,9 +9,9 @@ class StringViewImpl;
 template<typename Self, Encoding Enc>
 class ReadonlyStringInterface {
 public:
-    using Iterator = EncodingIteratorType<Enc>;
-    using CodeUnit = EncodingCodeUnitType<Enc>;
-    using CodePoint = EncodingCodePointType<Enc>;
+    using Iterator = EncodingIterator<Enc>;
+    using CodeUnit = EncodingCodeUnit<Enc>;
+    using CodePoint = EncodingCodePoint<Enc>;
 
     constexpr Span<CodeUnit const> span() const { return static_cast<Self const&>(*this).span(); }
 

@@ -12,24 +12,24 @@ struct EncodingUnit {
 
 template<typename T>
 concept Encoding = requires {
-    typename T::CodeUnitType;
-    typename T::CodePointType;
+    typename T::CodeUnit;
+    typename T::CodePoint;
     typename T::Iterator;
 
-    { T::is_valid(declval<Span<typename T::CodeUnitType const>>()) } -> SameAs<bool>;
-    { T::code_point_iterators(declval<Span<typename T::CodeUnitType const>>()) } -> Container;
-    { T::is_valid_byte_offset(declval<Span<typename T::CodeUnitType const>>(), declval<size_t>()) } -> SameAs<bool>;
-    { T::iterator_at_offset(declval<Span<typename T::CodeUnitType const>>(), declval<size_t>()) } -> SameAs<Option<typename T::Iterator>>;
+    { T::is_valid(declval<Span<typename T::CodeUnit const>>()) } -> SameAs<bool>;
+    { T::code_point_iterators(declval<Span<typename T::CodeUnit const>>()) } -> Container;
+    { T::is_valid_byte_offset(declval<Span<typename T::CodeUnit const>>(), declval<size_t>()) } -> SameAs<bool>;
+    { T::iterator_at_offset(declval<Span<typename T::CodeUnit const>>(), declval<size_t>()) } -> SameAs<Option<typename T::Iterator>>;
 };
 
 struct AssumeProperlyEncoded {};
 
 template<Encoding Enc>
-using EncodingCodeUnitType = Enc::CodeUnitType;
+using EncodingCodeUnit = Enc::CodeUnit;
 
 template<Encoding Enc>
-using EncodingCodePointType = Enc::CodePointType;
+using EncodingCodePoint = Enc::CodePoint;
 
 template<Encoding Enc>
-using EncodingIteratorType = Enc::Iterator;
+using EncodingIterator = Enc::Iterator;
 }

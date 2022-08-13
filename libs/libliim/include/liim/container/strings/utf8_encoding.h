@@ -233,8 +233,8 @@ private:
 };
 
 struct Utf8Encoding {
-    using CodeUnitType = char;
-    using CodePointType = char32_t;
+    using CodeUnit = char;
+    using CodePoint = char32_t;
     using Iterator = Utf8Iterator;
 
     constexpr static auto code_point_iterators(Span<char const> data) {
