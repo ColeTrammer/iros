@@ -3,6 +3,12 @@
 #include <liim/container/algorithm/contains.h>
 #include <liim/container/algorithm/ends_with.h>
 #include <liim/container/algorithm/equal.h>
+#include <liim/container/algorithm/find_first_not_of.h>
+#include <liim/container/algorithm/find_first_of.h>
+#include <liim/container/algorithm/find_last_not_of.h>
+#include <liim/container/algorithm/find_last_of.h>
+#include <liim/container/algorithm/find_last_subrange.h>
+#include <liim/container/algorithm/find_subrange.h>
 #include <liim/container/algorithm/lexographic_compare.h>
 #include <liim/container/algorithm/size.h>
 #include <liim/container/algorithm/starts_with.h>
@@ -50,29 +56,109 @@ constexpr std::strong_ordering compare(Enc, Span<EncodingCodeUnitType<Enc> const
     return Alg::lexographic_compare(Enc::code_point_iterators(a), Enc::code_point_iterators(b));
 }
 
-template<Encoding Enc>
-constexpr bool starts_with(Enc, Span<EncodingCodeUnitType<Enc> const> a, Span<EncodingCodeUnitType<Enc> const> b) {
-    return Alg::starts_with(Enc::code_point_iterators(a), Enc::code_point_iterators(b));
-}
+struct StartsWithFunction {
+    template<Encoding Enc>
+    constexpr auto operator()(Enc, Span<EncodingCodeUnitType<Enc> const> haystack, Span<EncodingCodeUnitType<Enc> const> needle) const {
+        return Alg::starts_with(Enc::code_point_iterators(haystack), Enc::code_point_iterators(needle));
+    }
 
-template<Encoding Enc>
-constexpr bool ends_with(Enc, Span<EncodingCodeUnitType<Enc> const> a, Span<EncodingCodeUnitType<Enc> const> b) {
-    return Alg::ends_with(Enc::code_point_iterators(a), Enc::code_point_iterators(b));
-}
+    template<Encoding Enc>
+    constexpr auto operator()(Enc encoding, Span<EncodingCodeUnitType<Enc> const> haystack, EncodingCodePointType<Enc> needle) const {
+        return Algorithm::front(encoding, haystack) == needle;
+    }
+};
 
-template<Encoding Enc>
-constexpr bool contains(Enc, Span<EncodingCodeUnitType<Enc> const> a, Span<EncodingCodeUnitType<Enc> const> b) {
-    return Alg::contains(Enc::code_point_iterators(a), Enc::code_point_iterators(b));
-}
+constexpr inline auto starts_with = StartsWithFunction {};
+
+struct EndsWithFunction {
+    template<Encoding Enc>
+    constexpr auto operator()(Enc, Span<EncodingCodeUnitType<Enc> const> haystack, Span<EncodingCodeUnitType<Enc> const> needle) const {
+        return Alg::ends_with(Enc::code_point_iterators(haystack), Enc::code_point_iterators(needle));
+    }
+
+    template<Encoding Enc>
+    constexpr auto operator()(Enc encoding, Span<EncodingCodeUnitType<Enc> const> haystack, EncodingCodePointType<Enc> needle) const {
+        return Algorithm::back(encoding, haystack) == needle;
+    }
+};
+
+constexpr inline auto ends_with = EndsWithFunction {};
+
+struct ContainsFunction {
+    template<Encoding Enc>
+    constexpr auto operator()(Enc, Span<EncodingCodeUnitType<Enc> const> haystack, Span<EncodingCodeUnitType<Enc> const> needle) const {
+        return Alg::contains_subrange(Enc::code_point_iterators(haystack), Enc::code_point_iterators(needle));
+    }
+
+    template<Encoding Enc>
+    constexpr auto operator()(Enc, Span<EncodingCodeUnitType<Enc> const> haystack, EncodingCodePointType<Enc> needle) const {
+        return Alg::contains(Enc::code_point_iterators(haystack), needle);
+    }
+};
+
+constexpr inline auto contains = ContainsFunction {};
 
 struct FindFunction {
-    // template<Encoding Enc>
-    // constexpr EncodingIteratorType<Enc> operator()(Span<EncodingCodeUnitType<Enc> const> haystack, Span<EncodingCodeUnitType<Enc> const>
-    // needle,
-    //                                                Option<EncodingIteratorType<Enc>> offset = {}) const {
+    template<Encoding Enc>
+    constexpr auto operator()(Enc, Span<EncodingCodeUnitType<Enc> const> haystack, Span<EncodingCodeUnitType<Enc> const> needle) const {
+        return Alg::find_subrange(Enc::code_point_iterators(haystack), Enc::code_point_iterators(needle));
+    }
 
-    // }
+    template<Encoding Enc>
+    constexpr auto operator()(Enc, Span<EncodingCodeUnitType<Enc> const> haystack, EncodingCodePointType<Enc> needle) const {
+        return Alg::find_subrange(Enc::code_point_iterators(haystack), single(needle));
+    }
 };
 
 constexpr inline auto find = FindFunction {};
+
+struct RFindFunction {
+    template<Encoding Enc>
+    constexpr auto operator()(Enc, Span<EncodingCodeUnitType<Enc> const> haystack, Span<EncodingCodeUnitType<Enc> const> needle) const {
+        return Alg::find_last_subrange(Enc::code_point_iterators(haystack), Enc::code_point_iterators(needle));
+    }
+
+    template<Encoding Enc>
+    constexpr auto operator()(Enc, Span<EncodingCodeUnitType<Enc> const> haystack, EncodingCodePointType<Enc> needle) const {
+        return Alg::find_last_subrange(Enc::code_point_iterators(haystack), single(needle));
+    }
+};
+
+constexpr inline auto rfind = RFindFunction {};
+
+struct FindFirstOfFunction {
+    template<Encoding Enc>
+    constexpr auto operator()(Enc, Span<EncodingCodeUnitType<Enc> const> haystack, Span<EncodingCodeUnitType<Enc> const> needle) const {
+        return Alg::find_first_of(Enc::code_point_iterators(haystack), Enc::code_point_iterators(needle));
+    }
+};
+
+constexpr inline auto find_first_of = FindFirstOfFunction {};
+
+struct FindLastOf {
+    template<Encoding Enc>
+    constexpr auto operator()(Enc, Span<EncodingCodeUnitType<Enc> const> haystack, Span<EncodingCodeUnitType<Enc> const> needle) const {
+        return Alg::find_last_of(Enc::code_point_iterators(haystack), Enc::code_point_iterators(needle));
+    }
+};
+
+constexpr inline auto find_last_of = FindLastOf {};
+
+struct FindFirstNotOf {
+    template<Encoding Enc>
+    constexpr auto operator()(Enc, Span<EncodingCodeUnitType<Enc> const> haystack, Span<EncodingCodeUnitType<Enc> const> needle) const {
+        return Alg::find_first_not_of(Enc::code_point_iterators(haystack), Enc::code_point_iterators(needle));
+    }
+};
+
+constexpr inline auto find_first_not_of = FindFirstNotOf {};
+
+struct FindLastNotOf {
+    template<Encoding Enc>
+    constexpr auto operator()(Enc, Span<EncodingCodeUnitType<Enc> const> haystack, Span<EncodingCodeUnitType<Enc> const> needle) const {
+        return Alg::find_last_not_of(Enc::code_point_iterators(haystack), Enc::code_point_iterators(needle));
+    }
+};
+
+constexpr inline auto find_last_not_of = FindLastNotOf {};
 }

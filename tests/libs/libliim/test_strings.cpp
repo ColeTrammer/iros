@@ -18,7 +18,7 @@ constexpr void ascii() {
     EXPECT(x.starts_with("hel"_av));
     EXPECT(x.ends_with("llo"_av));
 
-    EXPECT("hello"_av <=> "hel"_av > 0);
+    EXPECT(("hello"_av <=> "hel"_av) > 0);
     EXPECT("hello"_av.size_in_code_points(), 5);
 
     EXPECT(""_av.empty());
@@ -132,6 +132,30 @@ constexpr void utf8_replace_character_substitution_of_maximal_subparts() {
                                                                                                            }));
 }
 
+constexpr void readonly_api() {
+    auto s = "Hello, 世界, Hello 友達!"_sv;
+
+    EXPECT(s.starts_with("Hel"_sv));
+    EXPECT(s.starts_with(U'H'));
+
+    EXPECT(s.ends_with("友達!"_sv));
+    EXPECT(s.ends_with(U'!'));
+
+    EXPECT(s.contains("世界"_sv));
+
+    EXPECT_EQ(s.find("Hello"_sv).value().begin().current_code_unit_offset(), 0u);
+    EXPECT_EQ(s.find(U'界').value().begin().current_code_unit_offset(), "Hello, 世"_sv.size_in_code_units());
+
+    EXPECT_EQ(s.rfind("llo"_sv).value().begin().current_code_unit_offset(), "Hello, 世界, He"_sv.size_in_code_units());
+
+    EXPECT_EQ(**s.find_first_of("o達"_sv), U'o');
+    EXPECT_EQ(**s.find_last_of("o達"_sv), U'達');
+
+    EXPECT_EQ(**s.find_first_not_of("o達!"_sv), U'H');
+    EXPECT_EQ(**s.find_last_not_of("o達!"_sv), U'友');
+}
+
 TEST_CONSTEXPR(strings, ascii, ascii)
 TEST_CONSTEXPR(strings, utf8, utf8)
 TEST_CONSTEXPR(strings, utf8_replace_character_substitution_of_maximal_subparts, utf8_replace_character_substitution_of_maximal_subparts)
+TEST_CONSTEXPR(strings, readonly_api, readonly_api)
