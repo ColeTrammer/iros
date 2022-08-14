@@ -54,6 +54,12 @@ constexpr void utf8() {
     EXPECT(x.ends_with("€𐍈"_sv));
     EXPECT(!x.ends_with("¢"_sv));
 
+    // Test that conversion from UTF-32 to UTF-8 works correctly.
+    EXPECT(x.contains(LIIM::Container::Strings::Utf8Encoding::code_point_to_code_units(U'$').span()));
+    EXPECT(x.contains(LIIM::Container::Strings::Utf8Encoding::code_point_to_code_units(U'¢').span()));
+    EXPECT(x.contains(LIIM::Container::Strings::Utf8Encoding::code_point_to_code_units(U'€').span()));
+    EXPECT(x.contains(LIIM::Container::Strings::Utf8Encoding::code_point_to_code_units(U'𐍈').span()));
+
     EXPECT_EQ(x.front(), U'$');
     EXPECT_EQ(x.back(), U'𐍈');
 
