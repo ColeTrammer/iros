@@ -20,6 +20,7 @@ concept Encoding = requires {
     { T::code_point_iterators(declval<Span<typename T::CodeUnit const>>()) } -> Container;
     { T::is_valid_byte_offset(declval<Span<typename T::CodeUnit const>>(), declval<size_t>()) } -> SameAs<bool>;
     { T::iterator_at_offset(declval<Span<typename T::CodeUnit const>>(), declval<size_t>()) } -> SameAs<Option<typename T::Iterator>>;
+    { T::code_point_to_code_units(declval<typename T::CodePoint>()) } -> Container;
 };
 
 struct AssumeProperlyEncoded {};

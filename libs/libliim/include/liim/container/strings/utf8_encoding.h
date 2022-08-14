@@ -2,6 +2,7 @@
 
 #include <liim/container/producer/iterator_container.h>
 #include <liim/container/strings/encoding.h>
+#include <liim/fixed_array.h>
 #include <liim/option.h>
 #include <liim/span.h>
 
@@ -182,6 +183,31 @@ namespace Utf8 {
 
         return None {};
     }
+
+    constexpr static auto from_utf32_code_point(char32_t code_point) {
+        auto result = FixedArray<char, 4>();
+        auto code_point_value = static_cast<uint32_t>(code_point);
+        if (code_point_value <= 0x7F) {
+            result.resize(1);
+            result[0] = code_point_value;
+        } else if (code_point_value <= 0x7FF) {
+            result.resize(2);
+            result[0] = 0b11000000 | (code_point_value >> 6);
+            result[1] = 0b10000000 | (code_point_value & 0x3F);
+        } else if (code_point_value <= 0xFFFF) {
+            result.resize(3);
+            result[0] = 0b11100000 | (code_point_value >> 12);
+            result[1] = 0b10000000 | ((code_point_value >> 6) & 0x3F);
+            result[2] = 0b10000000 | (code_point_value & 0x3F);
+        } else {
+            result.resize(4);
+            result[0] = 0b11110000 | (code_point_value >> 18);
+            result[1] = 0b10000000 | ((code_point_value >> 12) & 0x3F);
+            result[2] = 0b10000000 | ((code_point_value >> 6) & 0x3F);
+            result[3] = 0b10000000 | (code_point_value & 0x3F);
+        }
+        return result;
+    }
 }
 
 class Utf8Iterator {
@@ -237,11 +263,11 @@ struct Utf8Encoding {
     using CodePoint = char32_t;
     using Iterator = Utf8Iterator;
 
-    constexpr static auto code_point_iterators(Span<char const> data) {
+    constexpr static auto code_point_iterators(Span<CodeUnit const> data) {
         return iterator_container(Utf8Iterator(data, 0), Utf8Iterator(data, data.size()));
     }
 
-    constexpr static bool is_valid(Span<char const> data) {
+    constexpr static bool is_valid(Span<CodeUnit const> data) {
         auto [start, end] = code_point_iterators(data);
         for (auto it = start; it != end; ++it) {
             if (!it.current_code_point().has_value()) {
@@ -251,13 +277,15 @@ struct Utf8Encoding {
         return true;
     }
 
-    constexpr static bool is_valid_byte_offset(Span<char const> data, size_t index) { return Utf8::is_valid_byte_offset(data, index); }
+    constexpr static bool is_valid_byte_offset(Span<CodeUnit const> data, size_t index) { return Utf8::is_valid_byte_offset(data, index); }
 
-    constexpr static Option<Iterator> iterator_at_offset(Span<char const> data, size_t offset) {
+    constexpr static Option<Iterator> iterator_at_offset(Span<CodeUnit const> data, size_t offset) {
         if (!is_valid_byte_offset(data, offset)) {
             return None {};
         }
         return Utf8Iterator(data, offset);
     }
+
+    constexpr static auto code_point_to_code_units(CodePoint code_point) { return Utf8::from_utf32_code_point(code_point); }
 };
 }

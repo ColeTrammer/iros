@@ -2,6 +2,7 @@
 
 #include <liim/container/iterator/wrapper_iterator.h>
 #include <liim/container/producer/iterator_container.h>
+#include <liim/container/producer/single.h>
 #include <liim/container/strings/encoding.h>
 #include <liim/span.h>
 
@@ -38,5 +39,6 @@ struct AsciiEncoding {
         }
         return AsciiIterator(data, offset);
     }
+    constexpr static auto code_point_to_code_units(char code_point) { return single(code_point); }
 };
 }
