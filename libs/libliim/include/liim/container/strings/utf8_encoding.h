@@ -218,8 +218,6 @@ public:
 
     constexpr Option<ValueType> current_code_point() const { return Utf8::code_point_value(m_data.subspan(m_index)); }
 
-    constexpr size_t current_code_unit_offset() const { return m_index; }
-
     constexpr Utf8Iterator& operator++() {
         do {
             ++m_index;
@@ -287,5 +285,7 @@ struct Utf8Encoding {
     }
 
     constexpr static auto code_point_to_code_units(CodePoint code_point) { return Utf8::from_utf32_code_point(code_point); }
+
+    constexpr static auto iterator_code_unit_offset(Span<CodeUnit const>, Iterator iterator) { return iterator.m_index; }
 };
 }

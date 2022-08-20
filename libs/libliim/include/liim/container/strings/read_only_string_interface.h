@@ -15,11 +15,16 @@ public:
 
     constexpr Span<CodeUnit const> span() const { return static_cast<Self const&>(*this).span(); }
 
+    constexpr operator Span<CodeUnit const>() const { return span(); }
+
+    constexpr auto data() const { return span().data(); }
+    constexpr auto empty() const { return Algorithm::empty(Enc(), span()); }
+    constexpr auto size_in_bytes() const { return span().size_in_bytes(); }
+    constexpr auto size_in_code_units() const { return span().size(); }
+    constexpr auto size_in_code_points() const { return Algorithm::size_in_code_points(Enc(), span()); }
+
     constexpr auto front() const { return Algorithm::front(Enc(), span()); }
     constexpr auto back() const { return Algorithm::back(Enc(), span()); }
-
-    constexpr auto empty() const { return Algorithm::empty(Enc(), span()); }
-    constexpr auto size_in_code_points() const { return Algorithm::size_in_code_points(Enc(), span()); }
 
     constexpr auto starts_with(CodePoint needle) const { return Algorithm::starts_with(Enc(), span(), needle); }
     constexpr auto starts_with(Span<CodeUnit const> needle) const { return Algorithm::starts_with(Enc(), span(), needle); }
@@ -51,8 +56,8 @@ public:
     }
 
     constexpr StringViewImpl<Enc> substr(Iterator start, Option<Iterator> end = {}) const {
-        auto start_offset = start.current_code_unit_offset();
-        auto end_offset = end.value_or(this->end()).current_code_unit_offset();
+        auto start_offset = Enc::iterator_code_unit_offset(span(), start);
+        auto end_offset = Enc::iterator_code_unit_offset(span(), end.value_or(this->end()));
         return StringViewImpl<Enc>(AssumeProperlyEncoded {}, span().subspan(start_offset, end_offset - start_offset));
     }
 
@@ -61,8 +66,13 @@ public:
     }
 
     constexpr friend bool operator==(Self const& a, Self const& b) { return Algorithm::equal(Enc(), a.span(), b.span()); }
+    constexpr friend bool operator==(Self const& a, Span<CodeUnit const> b) { return Algorithm::equal(Enc(), a.span(), b); }
+
     constexpr friend std::strong_ordering operator<=>(Self const& a, Self const& b) {
         return Algorithm::compare(Enc(), a.span(), b.span());
+    }
+    constexpr friend std::strong_ordering operator<=>(Self const& a, Span<CodeUnit const> b) {
+        return Algorithm::compare(Enc(), a.span(), b);
     }
 };
 }
