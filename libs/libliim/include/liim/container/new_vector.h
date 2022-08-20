@@ -1,6 +1,7 @@
 #pragma once
 
 #include <liim/compare.h>
+#include <liim/container/allocator.h>
 #include <liim/container/container.h>
 #include <liim/container/iterator/continuous_iterator.h>
 #include <liim/error/common_result.h>
@@ -13,7 +14,7 @@
 #include <liim/span.h>
 
 namespace LIIM::Container {
-template<typename T>
+template<typename T, AllocatorOf<T> Alloc = StandardAllocator<T>>
 class NewVector;
 
 template<typename VectorType>
@@ -36,20 +37,20 @@ private:
     template<typename T>
     friend class NewVectorIterator;
 
-    template<typename>
+    template<typename T, AllocatorOf<T> Alloc>
     friend class NewVector;
 
     VectorType* m_vector;
 };
 
-template<typename T>
+template<typename T, AllocatorOf<T> Alloc>
 class NewVector {
 public:
     using ValueType = T;
     using ReserveResult = void;
 
-    using Iterator = NewVectorIterator<NewVector<T>>;
-    using ConstIterator = NewVectorIterator<const NewVector<T>>;
+    using Iterator = NewVectorIterator<NewVector<T, Alloc>>;
+    using ConstIterator = NewVectorIterator<const NewVector<T, Alloc>>;
 
     template<typename V, typename... Args>
     using InsertResult = CommonResult<V, CreateAtResultDefault<T, Args...>>;
@@ -72,7 +73,7 @@ public:
     constexpr ~NewVector() { clear(); }
 
     constexpr auto clone() const requires(Cloneable<T> || FalliblyCloneable<T>) {
-        return collect<NewVector<T>>(transform(*this, [](const auto& v) {
+        return collect<NewVector<T, Alloc>>(transform(*this, [](const auto& v) {
             return ::clone(v);
         }));
     }
@@ -87,19 +88,19 @@ public:
     constexpr Option<T&> at(size_t index);
     constexpr Option<const T&> at(size_t index) const;
 
-    T* data() { return reinterpret_cast<T*>(m_data); }
-    const T* data() const { return reinterpret_cast<const T*>(m_data); }
+    constexpr T* data() { return m_data; }
+    constexpr const T* data() const { return m_data; }
 
-    Span<T> span() { return { data(), size() }; }
-    Span<const T> span() const { return { data(), size() }; }
+    constexpr Span<T> span() { return { data(), size() }; }
+    constexpr Span<const T> span() const { return { data(), size() }; }
 
     constexpr T& operator[](size_t index) {
         assert(index < size());
-        return m_data[index].value;
+        return m_data[index];
     }
     constexpr const T& operator[](size_t index) const {
         assert(index < size());
-        return m_data[index].value;
+        return m_data[index];
     }
 
     constexpr T& front() { return (*this)[0]; }
@@ -204,71 +205,74 @@ public:
     constexpr auto operator<=>(const NewVector<U>& other) const requires(Comparable<T>);
 
 private:
-    constexpr void move_objects(MaybeUninit<T>* destination, MaybeUninit<T>* source, size_t count);
+    constexpr void move_objects(T* destination, T* source, size_t count);
     constexpr ReserveResult grow_to(size_t new_size);
 
     size_t m_size { 0 };
     size_t m_capacity { 0 };
-    MaybeUninit<T>* m_data { nullptr };
+    T* m_data { nullptr };
 };
 
-template<typename T>
-constexpr NewVector<T>::NewVector(NewVector<T>&& other)
+template<typename T, AllocatorOf<T> Alloc>
+constexpr NewVector<T, Alloc>::NewVector(NewVector<T, Alloc>&& other)
     : m_size(exchange(other.m_size, 0)), m_capacity(exchange(other.m_capacity, 0)), m_data(exchange(other.m_data, nullptr)) {}
 
-template<typename T>
+template<typename T, AllocatorOf<T> Alloc>
 template<Iterator Iter>
-constexpr auto NewVector<T>::create(Iter start, Iter end, Option<size_t> known_size) -> IteratorInsertResult<NewVector, Iter> {
+constexpr auto NewVector<T, Alloc>::create(Iter start, Iter end, Option<size_t> known_size) -> IteratorInsertResult<NewVector, Iter> {
     auto result = NewVector {};
     result.insert(result.begin(), move(start), move(end), known_size);
     return result;
 }
 
-template<typename T>
-constexpr NewVector<T>& NewVector<T>::operator=(NewVector<T>&& other) {
+template<typename T, AllocatorOf<T> Alloc>
+constexpr NewVector<T, Alloc>& NewVector<T, Alloc>::operator=(NewVector<T, Alloc>&& other) {
     if (this != &other) {
-        NewVector<T> temp(move(other));
+        NewVector<T, Alloc> temp(move(other));
         swap(temp);
     }
     return *this;
 }
 
-template<typename T>
+template<typename T, AllocatorOf<T> Alloc>
 template<Iterator Iter>
-constexpr auto NewVector<T>::assign(Iter start, Iter end, Option<size_t> known_size) -> IteratorInsertResult<NewVector&, Iter> {
+constexpr auto NewVector<T, Alloc>::assign(Iter start, Iter end, Option<size_t> known_size) -> IteratorInsertResult<NewVector&, Iter> {
     clear();
     return result_and_then(insert(this->end(), move(start), move(end), known_size), [this](auto) -> NewVector& {
         return *this;
     });
 }
 
-template<typename T>
-constexpr void NewVector<T>::reserve(size_t new_capacity) {
-    if (new_capacity <= m_capacity) {
+template<typename T, AllocatorOf<T> Alloc>
+constexpr void NewVector<T, Alloc>::reserve(size_t min_capacity) {
+    if (min_capacity <= m_capacity) {
         return;
     }
 
     auto* old_buffer = m_data;
-    auto* new_buffer = new MaybeUninit<T>[new_capacity];
+    auto old_capacity = m_capacity;
+    auto [new_buffer, new_capacity] = Alloc().allocate(min_capacity);
     move_objects(new_buffer, old_buffer, size());
     m_capacity = new_capacity;
     m_data = new_buffer;
 
-    delete[] old_buffer;
-}
-
-template<typename T>
-constexpr void NewVector<T>::move_objects(MaybeUninit<T>* destination, MaybeUninit<T>* source, size_t count) {
-    // NOTE: this should use memmove for trivial types when not in constant evaluated context.
-    // Loop backwards, explitly use unsigned underflow in the loop.
-    for (size_t i = count - 1; i < count; i--) {
-        construct_at(&destination[i].value, move(source[i].value));
-        source[i].destroy();
+    if (old_buffer) {
+        Alloc().deallocate(old_buffer, old_capacity);
     }
 }
 
-template<typename T>
-constexpr void NewVector<T>::grow_to(size_t new_size) {
+template<typename T, AllocatorOf<T> Alloc>
+constexpr void NewVector<T, Alloc>::move_objects(T* destination, T* source, size_t count) {
+    // NOTE: this should use memmove for trivial types when not in constant evaluated context.
+    // Loop backwards, explitly use unsigned underflow in the loop.
+    for (size_t i = count - 1; i < count; i--) {
+        construct_at(&destination[i], move(source[i]));
+        source[i].~T();
+    }
+}
+
+template<typename T, AllocatorOf<T> Alloc>
+constexpr void NewVector<T, Alloc>::grow_to(size_t new_size) {
     if (new_size <= m_capacity) {
         return;
     }
@@ -280,34 +284,36 @@ constexpr void NewVector<T>::grow_to(size_t new_size) {
     }
 }
 
-template<typename T>
-constexpr Option<T&> NewVector<T>::at(size_t index) {
+template<typename T, AllocatorOf<T> Alloc>
+constexpr Option<T&> NewVector<T, Alloc>::at(size_t index) {
     if (index >= size()) {
         return None {};
     }
     return (*this)[index];
 }
 
-template<typename T>
-constexpr Option<const T&> NewVector<T>::at(size_t index) const {
+template<typename T, AllocatorOf<T> Alloc>
+constexpr Option<const T&> NewVector<T, Alloc>::at(size_t index) const {
     if (index >= size()) {
         return None {};
     }
     return (*this)[index];
 }
 
-template<typename T>
-constexpr void NewVector<T>::clear() {
+template<typename T, AllocatorOf<T> Alloc>
+constexpr void NewVector<T, Alloc>::clear() {
     erase(begin(), end());
 
-    delete[] m_data;
+    if (m_data) {
+        Alloc().deallocate(m_data, m_capacity);
+    }
     m_capacity = 0;
     m_data = nullptr;
 }
 
-template<typename T>
+template<typename T, AllocatorOf<T> Alloc>
 template<Iterator Iter>
-constexpr auto NewVector<T>::insert(size_t index, Iter start, Iter end, Option<size_t>) -> IteratorInsertResult<Iterator, Iter> {
+constexpr auto NewVector<T, Alloc>::insert(size_t index, Iter start, Iter end, Option<size_t>) -> IteratorInsertResult<Iterator, Iter> {
     auto result = index;
     if constexpr (CreateableFrom<T, IteratorValueType<Iter>>) {
         for (auto&& value : iterator_container(move(start), move(end))) {
@@ -327,14 +333,14 @@ constexpr auto NewVector<T>::insert(size_t index, Iter start, Iter end, Option<s
     return iterator(result);
 }
 
-template<typename T>
+template<typename T, AllocatorOf<T> Alloc>
 template<typename... Args>
-constexpr auto NewVector<T>::emplace(size_t index, Args&&... args) -> InsertResult<Iterator, Args...> {
+constexpr auto NewVector<T, Alloc>::emplace(size_t index, Args&&... args) -> InsertResult<Iterator, Args...> {
     if constexpr (CreateableFrom<T, Args...>) {
         grow_to(size() + 1);
 
         move_objects(m_data + index + 1, m_data + index, size() - index);
-        create_at(&m_data[index].value, forward<Args>(args)...);
+        create_at(&m_data[index], forward<Args>(args)...);
 
         m_size++;
         return iterator(index);
@@ -345,8 +351,8 @@ constexpr auto NewVector<T>::emplace(size_t index, Args&&... args) -> InsertResu
     }
 }
 
-template<typename T>
-constexpr auto NewVector<T>::erase_count(size_t index, size_t count) -> Iterator {
+template<typename T, AllocatorOf<T> Alloc>
+constexpr auto NewVector<T, Alloc>::erase_count(size_t index, size_t count) -> Iterator {
     if (count == 0) {
         return iterator(index);
     }
@@ -354,29 +360,29 @@ constexpr auto NewVector<T>::erase_count(size_t index, size_t count) -> Iterator
     auto leftover_elements = size() - index - count;
     for (size_t i = 0; i < leftover_elements; i++) {
         (*this)[index + i] = move((*this)[index + i + count]);
-        m_data[index + i + count].destroy();
+        m_data[index + i + count].~T();
     }
     for (size_t i = index + leftover_elements; i < m_size; i++) {
-        m_data[i].destroy();
+        m_data[i].~T();
     }
     m_size -= count;
     return iterator(min(index, size()));
 }
 
-template<typename T>
-constexpr Option<T> NewVector<T>::pop_back() {
+template<typename T, AllocatorOf<T> Alloc>
+constexpr Option<T> NewVector<T, Alloc>::pop_back() {
     if (empty()) {
         return None {};
     }
 
     auto& slot = m_data[--m_size];
-    auto value = Option<T>(move(slot.value));
-    slot.destroy();
+    auto value = Option<T>(move(slot));
+    slot.~T();
     return value;
 }
 
-template<typename T>
-constexpr auto NewVector<T>::resize(size_t n, const T& value) -> InsertResult<void, const T&>
+template<typename T, AllocatorOf<T> Alloc>
+constexpr auto NewVector<T, Alloc>::resize(size_t n, const T& value) -> InsertResult<void, const T&>
 requires(Copyable<T>) {
     if (size() > n) {
         erase_count(n, size() - n);
@@ -385,20 +391,20 @@ requires(Copyable<T>) {
     }
 }
 
-template<typename T>
+template<typename T, AllocatorOf<T> Alloc>
 template<EqualComparableWith<T> U>
-constexpr bool NewVector<T>::operator==(const NewVector<U>& other) const requires(EqualComparable<T>) {
+constexpr bool NewVector<T, Alloc>::operator==(const NewVector<U>& other) const requires(EqualComparable<T>) {
     return Alg::equal(*this, other);
 }
 
-template<typename T>
+template<typename T, AllocatorOf<T> Alloc>
 template<ComparableWith<T> U>
-constexpr auto NewVector<T>::operator<=>(const NewVector<U>& other) const requires(Comparable<T>) {
+constexpr auto NewVector<T, Alloc>::operator<=>(const NewVector<U>& other) const requires(Comparable<T>) {
     return Alg::lexographic_compare(*this, other);
 }
 
-template<typename T>
-constexpr void NewVector<T>::swap(NewVector<T>& other) {
+template<typename T, AllocatorOf<T> Alloc>
+constexpr void NewVector<T, Alloc>::swap(NewVector<T, Alloc>& other) {
     ::swap(this->m_size, other.m_size);
     ::swap(this->m_capacity, other.m_capacity);
     ::swap(this->m_data, other.m_data);
@@ -422,18 +428,18 @@ constexpr auto collect_vector(C&& container) {
     return collect<NewVector<decay_t<ValueType>>>(forward<C>(container));
 }
 
-template<typename T>
-constexpr void swap(NewVector<T>& a, NewVector<T>& b) {
+template<typename T, AllocatorOf<T> Alloc>
+constexpr void swap(NewVector<T, Alloc>& a, NewVector<T, Alloc>& b) {
     a.swap(b);
 }
 }
 
 namespace LIIM::Format {
-template<Formattable T>
-struct Formatter<LIIM::Container::NewVector<T>> {
+template<Formattable T, LIIM::Container::AllocatorOf<T> Alloc>
+struct Formatter<LIIM::Container::NewVector<T, Alloc>> {
     constexpr void parse(FormatParseContext& context) { m_formatter.parse(context); }
 
-    void format(const LIIM::Container::NewVector<T>& vector, FormatContext& context) {
+    void format(const LIIM::Container::NewVector<T, Alloc>& vector, FormatContext& context) {
         context.put("[ ");
         bool first = true;
         for (auto& item : vector) {
