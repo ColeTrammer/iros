@@ -13,8 +13,6 @@ public:
 
     constexpr ValueType operator*() const { return m_data[this->index()]; }
 
-    constexpr size_t current_code_unit_offset() const { return this->index(); }
-
 private:
     constexpr AsciiIterator(Span<char const> data, size_t index) : ContinuousIteratorAdapter<AsciiIterator>(index), m_data(data) {}
 
@@ -40,5 +38,7 @@ struct AsciiEncoding {
         return AsciiIterator(data, offset);
     }
     constexpr static auto code_point_to_code_units(char code_point) { return single(code_point); }
+
+    constexpr static auto iterator_code_unit_offset(Span<CodeUnit const>, Iterator iterator) { return iterator.index(); }
 };
 }

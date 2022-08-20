@@ -26,19 +26,7 @@ public:
         : m_data({ data, size_in_code_units }) {}
     constexpr StringViewImpl(AssumeProperlyEncoded, Span<CodeUnit const> data) : m_data(data) {}
 
-    constexpr StringViewImpl(StringViewImpl const&) = default;
-    constexpr StringViewImpl(StringViewImpl&&) = default;
-
-    constexpr StringViewImpl& operator=(StringViewImpl const&) = default;
-    constexpr StringViewImpl& operator=(StringViewImpl&&) = default;
-
-    constexpr operator Span<CodeUnit const>() const { return span(); }
-
-    constexpr CodeUnit const* data() const { return m_data.data(); }
-    constexpr size_t size_in_bytes() const { return size_in_code_units() * sizeof(CodeUnit); }
-    constexpr size_t size_in_code_units() const { return m_data.size(); }
-
-    constexpr Span<CodeUnit const> span() const { return { data(), size_in_bytes() }; }
+    constexpr Span<CodeUnit const> span() const { return m_data; }
 
 private:
     Span<CodeUnit const> m_data;
