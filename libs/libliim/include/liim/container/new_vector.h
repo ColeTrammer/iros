@@ -197,6 +197,8 @@ public:
 
     constexpr InsertResult<void, const T&> resize(size_t count, const T& value = T()) requires(Copyable<T>);
 
+    constexpr void assume_size(size_t size) { m_size = size; }
+
     constexpr void swap(NewVector&);
 
     template<EqualComparableWith<T> U>

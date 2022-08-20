@@ -1,5 +1,6 @@
 #include <liim/container/algorithm/reverse.h>
 #include <liim/container/array.h>
+#include <liim/container/heap_string.h>
 #include <liim/container/new_vector.h>
 #include <liim/container/string_view.h>
 #include <test/test.h>
@@ -11,6 +12,11 @@ constexpr LIIM::Container::AsciiStringView operator""_av(char const* data, size_
 constexpr LIIM::Container::StringView operator""_sv(char const* data, size_t size) {
     assert(LIIM::Container::Strings::Utf8Encoding::is_valid({ data, size }));
     return { LIIM::Container::Strings::AssumeProperlyEncoded {}, data, size };
+}
+
+constexpr LIIM::Container::HeapString operator""_hs(char const* data, size_t size) {
+    assert(LIIM::Container::Strings::Utf8Encoding::is_valid({ data, size }));
+    return LIIM::Container::HeapString::create({ LIIM::Container::Strings::AssumeProperlyEncoded {}, data, size });
 }
 
 constexpr void ascii() {
@@ -149,10 +155,10 @@ constexpr void readonly_api() {
 
     EXPECT(s.contains("世界"_sv));
 
-    EXPECT_EQ(s.find("Hello"_sv).value().begin().current_code_unit_offset(), 0u);
-    EXPECT_EQ(s.find(U'界').value().begin().current_code_unit_offset(), "Hello, 世"_sv.size_in_code_units());
+    EXPECT(s.find("Hello"_sv).value().begin() == s.iterator_at_offset(0));
+    EXPECT(s.find(U'界') == s.iterator_at_offset("Hello, 世"_sv.size_in_code_units()));
 
-    EXPECT_EQ(s.rfind("llo"_sv).value().begin().current_code_unit_offset(), "Hello, 世界, He"_sv.size_in_code_units());
+    EXPECT(s.rfind("llo"_sv).value().begin() == s.iterator_at_offset("Hello, 世界, He"_sv.size_in_code_units()));
 
     EXPECT_EQ(**s.find_first_of("o達"_sv), U'o');
     EXPECT_EQ(**s.find_last_of("o達"_sv), U'達');
@@ -161,7 +167,42 @@ constexpr void readonly_api() {
     EXPECT_EQ(**s.find_last_not_of("o達!"_sv), U'友');
 }
 
+constexpr void heap_string() {
+    auto s = "Hello, 世界, Hello 友達"_hs;
+    s.push_back(U'!');
+
+    EXPECT_EQ(s.pop_back(), U'!');
+    EXPECT(s == "Hello, 世界, Hello 友達"_sv);
+
+    EXPECT_EQ(s.pop_back(), U'達');
+    EXPECT(s == "Hello, 世界, Hello 友"_sv);
+
+    s.erase(*s.find(U'世'));
+    EXPECT(s == "Hello, 界, Hello 友"_sv);
+
+    s.erase(*s.iterator_at_offset(2), *s.iterator_at_offset(5));
+    EXPECT(s == "He, 界, Hello 友"_sv);
+
+    auto word = s.find("Hello"_sv);
+    s.replace(word->begin(), word->end(), "こんにちは"_sv);
+
+    EXPECT(s == "He, 界, こんにちは 友"_sv);
+
+    s.append(" world"_sv);
+    EXPECT(s == "He, 界, こんにちは 友 world"_sv);
+
+    s.insert(*s.find(U'w'), "Hello "_sv);
+    EXPECT(s == "He, 界, こんにちは 友 Hello world"_sv);
+
+    s.insert(*s.rfind(' '), ',');
+    EXPECT(s == "He, 界, こんにちは 友 Hello, world"_sv);
+
+    s.clear();
+    EXPECT_EQ(s.pop_back(), None {});
+}
+
 TEST_CONSTEXPR(strings, ascii, ascii)
 TEST_CONSTEXPR(strings, utf8, utf8)
 TEST_CONSTEXPR(strings, utf8_replace_character_substitution_of_maximal_subparts, utf8_replace_character_substitution_of_maximal_subparts)
 TEST_CONSTEXPR(strings, readonly_api, readonly_api)
+TEST_CONSTEXPR(strings, heap_string, heap_string)
