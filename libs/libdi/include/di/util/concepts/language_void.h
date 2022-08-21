@@ -7,12 +7,12 @@
 namespace di::util::concepts {
 namespace detail {
     template<typename T>
-    struct PointerHelper : meta::FalseType {};
+    struct LanguageVoidHelper : meta::FalseType {};
 
-    template<typename T>
-    struct PointerHelper<T*> : meta::TrueType {};
+    template<>
+    struct LanguageVoidHelper<void> : meta::TrueType {};
 }
 
 template<typename T>
-concept Pointer = detail::PointerHelper<meta::RemoveCV<T>>::value;
+concept LanguageVoid = detail::LanguageVoidHelper<meta::RemoveCV<T>>::value;
 }

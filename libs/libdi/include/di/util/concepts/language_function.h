@@ -5,5 +5,5 @@
 
 namespace di::util::concepts {
 template<typename T>
-concept LanguageFunction = !Const<T const> && !Reference<T>;
+concept LanguageFunction = (!Const<T const> && !Reference<T>);
 }

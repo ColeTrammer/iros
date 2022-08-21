@@ -3,7 +3,7 @@
 #include <di/util/meta/remove_reference.h>
 
 #ifdef DI_USE_STD
-#include <utilities>
+#include <utility>
 #else
 namespace std {
 template<typename T>

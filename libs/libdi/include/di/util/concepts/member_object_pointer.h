@@ -5,5 +5,5 @@
 
 namespace di::util::concepts {
 template<typename T>
-concept MemberObjectPointer = MemberPointer<T> && !MemberFunctionPointer<T>;
+concept MemberObjectPointer = (MemberPointer<T> && !MemberFunctionPointer<T>);
 }

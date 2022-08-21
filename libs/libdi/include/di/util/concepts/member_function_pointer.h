@@ -1,19 +1,10 @@
 #pragma once
 
 #include <di/util/concepts/language_function.h>
-#include <di/util/meta/bool_constant.h>
-#include <di/util/meta/false_type.h>
-#include <di/util/meta/remove_cv.h>
+#include <di/util/concepts/member_pointer.h>
+#include <di/util/meta/member_pointer_value.h>
 
 namespace di::util::concepts {
-namespace detail {
-    template<typename T>
-    struct MemberFunctionPointer : meta::FalseType {};
-
-    template<typename T, typename U>
-    struct MemberFunctionPointer<T U::*> : meta::BoolConstant<LanguageFunction<T>> {};
-}
-
 template<typename T>
-concept MemberFunctionPointer = detail::MemberFunctionPointer<meta::RemoveCV<T>>::value;
+concept MemberFunctionPointer = MemberPointer<T> && LanguageFunction<meta::MemberPointerValue<T>>;
 }

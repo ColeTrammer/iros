@@ -2,6 +2,7 @@
 
 #include <di/util/declval.h>
 #include <di/util/forward.h>
+#include <di/util/invoke.h>
 #include <di/util/move.h>
 #include <di/util/types.h>
 
@@ -14,6 +15,7 @@ namespace conc = di::util::concepts;
 
 using util::declval;
 using util::forward;
+using util::invoke;
 using util::move;
 }
 

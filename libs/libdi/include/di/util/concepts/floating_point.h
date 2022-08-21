@@ -5,6 +5,5 @@
 
 namespace di::util::concepts {
 template<typename T>
-concept FloatingPoint = OneOf < meta::RemoveCV<T>,
-float, double, long double > ;
+concept FloatingPoint = OneOf<meta::RemoveCV<T>, float, double, long double>;
 }

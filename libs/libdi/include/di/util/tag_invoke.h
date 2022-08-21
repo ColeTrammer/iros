@@ -25,11 +25,9 @@ template<auto& T>
 using Tag = di::util::meta::Decay<decltype(T)>;
 
 template<typename Tag, typename... Args>
-concept TagInvokable = requires(Tag tag, Args&&... args) {
-    di::util::tag_invoke(tag, di::util::forward<Args>(args)...);
-};
+concept TagInvokable = requires(Tag tag, Args&&... args) { di::util::tag_invoke(tag, util::forward<Args>(args)...); };
 
 template<typename Tag, typename... Args>
-requires(TagInvokable<Tag, Args...>) using TagInvokeResult = decltype(di::util::tag_invoke(di::util::declval<Tag>(),
-                                                                                           di::util::declval<Args>()...));
+requires(TagInvokable<Tag, Args...>)
+using TagInvokeResult = decltype(di::util::tag_invoke(util::declval<Tag>(), util::declval<Args>()...));
 }

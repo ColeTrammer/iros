@@ -9,8 +9,8 @@ namespace detail {
     struct AddRValueReferenceHelper : TypeConstant<T> {};
 
     template<typename T>
-    requires(requires { typename TypeIdentity<T&&>; }) struct AddRValueReferenceHelper<T> : TypeConstant<T&&> {
-    };
+    requires(requires { typename TypeIdentity<T&&>; })
+    struct AddRValueReferenceHelper<T> : TypeConstant<T&&> {};
 }
 
 template<typename T>
