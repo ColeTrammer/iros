@@ -14,6 +14,7 @@
                 "${workspaceFolder}/libs/libclanguage/include",
                 "${workspaceFolder}/libs/libclipboard/include",
                 "${workspaceFolder}/libs/libcli/include",
+                "${workspaceFolder}/libs/libdi/include",
                 "${workspaceFolder}/libs/libedit/include",
                 "${workspaceFolder}/libs/libeventloop/include",
                 "${workspaceFolder}/libs/libext/include",
@@ -30,7 +31,8 @@
                 "${workspaceFolder}/libs/libtinput/include",
                 "${workspaceFolder}/libs/libtui/include",
                 "${workspaceFolder}/libs/libunicode/include"
-            ]
+            ],
+            "cppStandard": "gnu++23"
         },
         {
             "name": "Iros i686",
@@ -46,6 +48,7 @@
                 "${workspaceFolder}/libs/libclanguage/include",
                 "${workspaceFolder}/libs/libclipboard/include",
                 "${workspaceFolder}/libs/libcli/include",
+                "${workspaceFolder}/libs/libdi/include",
                 "${workspaceFolder}/libs/libedit/include",
                 "${workspaceFolder}/libs/libeventloop/include",
                 "${workspaceFolder}/libs/libext/include",
@@ -62,7 +65,8 @@
                 "${workspaceFolder}/libs/libtinput/include",
                 "${workspaceFolder}/libs/libtui/include",
                 "${workspaceFolder}/libs/libunicode/include"
-            ]
+            ],
+            "cppStandard": "gnu++23"
         },
         {
             "name": "Docker",
@@ -76,6 +80,7 @@
                 "${workspaceFolder}/libs/libclanguage/include",
                 "${workspaceFolder}/libs/libclipboard/include",
                 "${workspaceFolder}/libs/libcli/include",
+                "${workspaceFolder}/libs/libdi/include",
                 "${workspaceFolder}/libs/libedit/include",
                 "${workspaceFolder}/libs/libeventloop/include",
                 "${workspaceFolder}/libs/libext/include",
@@ -92,7 +97,8 @@
                 "${workspaceFolder}/libs/libtinput/include",
                 "${workspaceFolder}/libs/libtui/include",
                 "${workspaceFolder}/libs/libunicode/include"
-            ]
+            ],
+            "cppStandard": "gnu++23"
         },
         {
             "name": "Native",
@@ -106,6 +112,7 @@
                 "${workspaceFolder}/libs/libclanguage/include",
                 "${workspaceFolder}/libs/libclipboard/include",
                 "${workspaceFolder}/libs/libcli/include",
+                "${workspaceFolder}/libs/libdi/include",
                 "${workspaceFolder}/libs/libedit/include",
                 "${workspaceFolder}/libs/libeventloop/include",
                 "${workspaceFolder}/libs/libext/include",
@@ -122,7 +129,8 @@
                 "${workspaceFolder}/libs/libtinput/include",
                 "${workspaceFolder}/libs/libtui/include",
                 "${workspaceFolder}/libs/libunicode/include"
-            ]
+            ],
+            "cppStandard": "gnu++23"
         }
     ],
     "version": 4

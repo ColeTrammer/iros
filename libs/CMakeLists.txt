@@ -7,6 +7,7 @@ endif()
 set(OS_LIBS
     ${OS_LIBS}
     libcli
+    libdi
     libext
     libliim
 )
