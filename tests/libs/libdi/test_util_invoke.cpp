@@ -35,6 +35,7 @@ constexpr void member_object() {
 
     static_assert(di::conc::Invocable<decltype(f), X>);
     static_assert(di::conc::Invocable<decltype(f), Y>);
+    static_assert(di::conc::Invocable<decltype(f), di::ReferenceWrapper<Y>>);
     static_assert(!di::conc::Invocable<decltype(f), Z>);
     static_assert(!di::conc::Invocable<decltype(f)>);
     static_assert(!di::conc::Invocable<decltype(f), X, X>);
@@ -42,10 +43,12 @@ constexpr void member_object() {
 
     auto x = X { 42 };
     EXPECT_EQ(di::invoke(f, x), 42);
+    EXPECT_EQ(di::invoke(f, di::cref(di::ref(x))), 42);
     EXPECT_EQ(di::invoke(f, &x), 42);
 
     auto y = Y { 13 };
     EXPECT_EQ(di::invoke(f, y), 13);
+    EXPECT_EQ(di::invoke(f, di::cref(y)), 13);
     EXPECT_EQ(di::invoke(f, &y), 13);
 }
 
@@ -53,6 +56,7 @@ constexpr void member_function() {
     auto f = &X::z;
 
     static_assert(di::conc::Invocable<decltype(f), X, int>);
+    static_assert(di::conc::Invocable<decltype(f), di::ReferenceWrapper<Y>, int>);
     static_assert(di::conc::Invocable<decltype(f), Y, int>);
     static_assert(!di::conc::Invocable<decltype(f), Z, int>);
     static_assert(!di::conc::Invocable<decltype(f), X>);
@@ -61,13 +65,26 @@ constexpr void member_function() {
 
     auto x = X { 42 };
     EXPECT_EQ(di::invoke(f, x, 5), 47);
+    EXPECT_EQ(di::invoke(f, di::ref(x), 5), 47);
     EXPECT_EQ(di::invoke(f, &x, 5), 47);
 
     auto y = Y { 13 };
     EXPECT_EQ(di::invoke(f, y, 3), 16);
+    EXPECT_EQ(di::invoke(f, di::cref(y), 3), 16);
     EXPECT_EQ(di::invoke(f, &y, 3), 16);
+}
+
+constexpr void invoke_r_void() {
+    auto f = [] {
+        return 32;
+    };
+
+    static_assert(di::conc::InvocableTo<decltype(f), void>);
+
+    di::invoke_r<void>(f);
 }
 
 TEST_CONSTEXPR(util_invoke, function, function)
 TEST_CONSTEXPR(util_invoke, member_object, member_object)
 TEST_CONSTEXPR(util_invoke, member_function, member_function)
+TEST_CONSTEXPR(util_invoke, invoke_r_void, invoke_r_void)

@@ -69,7 +69,7 @@ namespace meta {
 
 namespace concepts {
     template<typename F, typename R, typename... Args>
-    concept InvocableTo = Invocable<F, Args...> && ImplicitlyConvertibleTo<meta::InvokeResult<F, Args...>, R>;
+    concept InvocableTo = Invocable<F, Args...> && (LanguageVoid<R> || ImplicitlyConvertibleTo<meta::InvokeResult<F, Args...>, R>);
 }
 
 template<typename F, typename... Args>
