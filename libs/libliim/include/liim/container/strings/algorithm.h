@@ -177,7 +177,7 @@ constexpr void clear(Enc, Str& string) {
 
 template<Encoding Enc, Vector::VectorStorageOf<EncodingCodeUnit<Enc>> Str>
 constexpr void append(Enc, Str& string, Span<EncodingCodeUnit<Enc> const> data) {
-    return Vector::Algorithm::append_container(string, Enc::code_point_iterators(data));
+    return Vector::Algorithm::append_container(string, data);
 }
 
 template<Encoding Enc, Vector::VectorStorageOf<EncodingCodeUnit<Enc>> Str>
@@ -221,8 +221,7 @@ constexpr void insert(Enc encoding, Str& string, EncodingIterator<Enc> position,
 
 template<Encoding Enc, Vector::VectorStorageOf<EncodingCodeUnit<Enc>> Str>
 constexpr void insert(Enc encoding, Str& string, EncodingIterator<Enc> position, Span<EncodingCodeUnit<Enc> const> data) {
-    return Vector::Algorithm::insert_container(string, Detail::into_vector_iterator(encoding, string, position),
-                                               Enc::code_point_iterators(data));
+    return Vector::Algorithm::insert_container(string, Detail::into_vector_iterator(encoding, string, position), data);
 }
 
 template<Encoding Enc, Vector::VectorStorageOf<EncodingCodeUnit<Enc>> Str>

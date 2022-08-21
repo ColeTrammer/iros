@@ -17,9 +17,9 @@ public:
     using VectorValue = CodeUnit;
 
     constexpr static auto create(StringViewImpl<Enc> view) {
-        return result_and_then(collect_vector(view.span()), [](auto&& code_units) {
-            return HeapStringImpl(move(code_units));
-        });
+        auto result = HeapStringImpl();
+        result.append(view);
+        return result;
     }
 
     constexpr HeapStringImpl() = default;
