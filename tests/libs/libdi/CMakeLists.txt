@@ -2,6 +2,7 @@ set(TEST_FILES
     test_util_concepts.cpp
     test_util_invoke.cpp
     test_util_meta.cpp
+    test_util_swap.cpp
     test_util_tag_invoke.cpp
 )
 

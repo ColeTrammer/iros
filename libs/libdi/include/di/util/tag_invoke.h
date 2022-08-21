@@ -24,10 +24,14 @@ inline namespace tag_invoke_ns {
 template<auto& T>
 using Tag = di::util::meta::Decay<decltype(T)>;
 
-template<typename Tag, typename... Args>
-concept TagInvokable = requires(Tag tag, Args&&... args) { di::util::tag_invoke(tag, util::forward<Args>(args)...); };
+namespace concepts {
+    template<typename Tag, typename... Args>
+    concept TagInvocable = requires(Tag tag, Args&&... args) { di::util::tag_invoke(tag, util::forward<Args>(args)...); };
+}
 
-template<typename Tag, typename... Args>
-requires(TagInvokable<Tag, Args...>)
-using TagInvokeResult = decltype(di::util::tag_invoke(util::declval<Tag>(), util::declval<Args>()...));
+namespace meta {
+    template<typename Tag, typename... Args>
+    requires(concepts::TagInvocable<Tag, Args...>)
+    using TagInvokeResult = decltype(di::util::tag_invoke(util::declval<Tag>(), util::declval<Args>()...));
+}
 }
