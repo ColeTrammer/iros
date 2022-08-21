@@ -43,6 +43,11 @@ class [[gnu::packed]] BigEndian {
 public:
     constexpr explicit BigEndian(T value) : m_big_endian_value(host_to_big_endian(value)) {}
 
+    constexpr BigEndian& operator=(T value) {
+        m_big_endian_value = host_to_big_endian(value);
+        return *this;
+    }
+
     constexpr operator T() const { return big_endian_to_host(m_big_endian_value); }
 
 private:
@@ -53,6 +58,11 @@ template<Integral T>
 class [[gnu::packed]] LittleEndian {
 public:
     constexpr explicit LittleEndian(T value) : m_little_endian_value(host_to_little_endian(value)) {}
+
+    constexpr LittleEndian& operator=(T value) {
+        m_little_endian_value = host_to_little_endian(value);
+        return *this;
+    }
 
     constexpr operator T() const { return little_endian_to_host(m_little_endian_value); }
 
