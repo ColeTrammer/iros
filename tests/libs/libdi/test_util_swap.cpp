@@ -4,7 +4,7 @@
 constexpr void basic() {
     static_assert(di::conc::Swappable<int>);
     static_assert(di::conc::SwappableWith<int, long>);
-    static_assert(!di::conc::SwappableWith<int, char const*>);
+    static_assert(!di::conc::SwappableWith<char, char const*>);
 
     int a = 13;
     int b = 26;
