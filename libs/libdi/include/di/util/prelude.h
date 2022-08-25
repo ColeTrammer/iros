@@ -21,11 +21,15 @@ namespace conc = di::util::concepts;
 using util::in_place;
 using util::in_place_index;
 using util::in_place_type;
+using util::nullptr_t;
+using util::partial_ordering;
 using util::piecewise_construct;
 using util::ptrdiff_t;
 using util::ReferenceWrapper;
 using util::size_t;
+using util::strong_ordering;
 using util::Tag;
+using util::weak_ordering;
 
 using util::as_const;
 using util::cref;
