@@ -1,8 +1,8 @@
 #pragma once
 
 #include <di/util/addressof.h>
+#include <di/util/concepts/convertible_to.h>
 #include <di/util/concepts/copyable.h>
-#include <di/util/concepts/explicitly_convertible.h>
 #include <di/util/concepts/one_of.h>
 #include <di/util/concepts/scalar.h>
 #include <di/util/concepts/trivially_copy_assignable.h>
@@ -154,13 +154,13 @@ public:
     constexpr decltype(auto) value() && { return get_value(util::move(m_storage)); }
     constexpr decltype(auto) value() const&& { return get_value(util::move(m_storage)); }
 
-    template<util::concepts::ExplicitlyConvertibleTo<T> U>
+    template<util::concepts::ConvertibleTo<T> U>
     requires(util::concepts::Copyable<T>)
     constexpr T value_or(U&& fallback) const& {
         return has_value() ? value() : static_cast<T>(util::forward<U>(fallback));
     }
 
-    template<util::concepts::ExplicitlyConvertibleTo<T> U>
+    template<util::concepts::ConvertibleTo<T> U>
     constexpr T value_or(U&& fallback) && {
         return has_value() ? util::move(*this).value() : static_cast<T>(util::forward<U>(fallback));
     }
