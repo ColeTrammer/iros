@@ -13,6 +13,10 @@ extern "C" {
 
 typedef long ptrdiff_t;
 
+typedef struct {
+    long long __place_holder __attribute__((__aligned__(16)));
+} max_align_t;
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
