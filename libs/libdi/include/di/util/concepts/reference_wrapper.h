@@ -18,5 +18,5 @@ namespace detail {
 }
 
 template<typename T>
-concept ReferenceWrapper = detail::ReferenceWrapperHelper<T>::value;
+concept ReferenceWrapper = detail::ReferenceWrapperHelper<meta::RemoveCV<T>>::value;
 }

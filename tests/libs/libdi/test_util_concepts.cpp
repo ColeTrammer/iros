@@ -1,3 +1,4 @@
+#include <di/prelude.h>
 #include <di/util/concepts/conjunction.h>
 #include <di/util/concepts/const.h>
 #include <di/util/concepts/disjunction.h>
@@ -8,7 +9,6 @@
 #include <di/util/concepts/member_object_pointer.h>
 #include <di/util/concepts/one_of.h>
 #include <di/util/concepts/reference.h>
-#include <di/util/prelude.h>
 
 static_assert(di::conc::Reference<i32&&>);
 static_assert(di::conc::Const<i32 const>);

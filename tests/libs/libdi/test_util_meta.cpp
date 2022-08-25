@@ -1,9 +1,9 @@
+#include <di/prelude.h>
 #include <di/util/concepts/same_as.h>
 #include <di/util/meta/add_lvalue_reference.h>
 #include <di/util/meta/add_rvalue_reference.h>
 #include <di/util/meta/decay.h>
 #include <di/util/meta/like.h>
-#include <di/util/prelude.h>
 
 static_assert(di::conc::SameAs<di::meta::Decay<int const&&>, int>);
 static_assert(di::conc::SameAs<di::meta::Decay<bool[42]>, bool*>);

@@ -2,5 +2,5 @@
 
 namespace di::util::concepts {
 template<typename T>
-concept Enumeration = __is_enum(T);
+concept Enum = __is_enum(T);
 }

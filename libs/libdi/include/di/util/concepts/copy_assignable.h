@@ -4,5 +4,5 @@
 
 namespace di::util::concepts {
 template<typename T>
-concept MoveAssignable = AssignableFrom<T&, T&&>;
+concept CopyAssignable = AssignableFrom<T&, T const&>;
 }

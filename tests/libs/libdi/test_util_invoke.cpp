@@ -1,6 +1,6 @@
+#include <di/prelude.h>
 #include <di/util/concepts/same_as.h>
 #include <di/util/invoke.h>
-#include <di/util/prelude.h>
 #include <test/test.h>
 
 struct X {

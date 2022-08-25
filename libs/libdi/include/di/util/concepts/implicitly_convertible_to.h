@@ -5,8 +5,6 @@
 #include <di/util/forward.h>
 
 namespace di::util::concepts {
-namespace detail {}
-
 // Implicit conversion for this test refers to the ability to return a value of function
 // from a type. In particular, []() -> long { return static_cast<int>(0); }, is valid
 // because 'int' is implicitly convertible to 'long'. In addition, one can pass 'int'

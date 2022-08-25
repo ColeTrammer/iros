@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/util/concepts/implicitly_convertible_to.h>
 #include <di/util/declval.h>
 #include <di/util/forward.h>
 #include <di/util/meta/decay.h>
@@ -33,5 +34,10 @@ namespace meta {
     template<typename Tag, typename... Args>
     requires(concepts::TagInvocable<Tag, Args...>)
     using TagInvokeResult = decltype(di::util::tag_invoke(util::declval<Tag>(), util::declval<Args>()...));
+}
+
+namespace concepts {
+    template<typename Tag, typename R, typename... Args>
+    concept TagInvocableTo = TagInvocable<Tag, Args...> && ImplicitlyConvertibleTo<R, meta::TagInvokeResult<Tag, Args...>>;
 }
 }
