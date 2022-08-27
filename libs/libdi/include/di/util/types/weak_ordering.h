@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/util/types/compare_outcome.h>
+#include <di/util/types/partial_ordering.h>
 
 #ifdef DI_USE_STD
 #include <compare>
@@ -29,6 +30,8 @@ public:
 
     friend constexpr weak_ordering operator<=>(weak_ordering v, int) { return v; }
     friend constexpr weak_ordering operator<=>(int, weak_ordering v) { return weak_ordering(-v.m_value); }
+
+    constexpr operator partial_ordering() const { return partial_ordering(m_value); }
 
 private:
     explicit constexpr weak_ordering(char value) : m_value(value) {}

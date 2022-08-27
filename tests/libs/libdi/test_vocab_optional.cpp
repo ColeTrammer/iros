@@ -179,13 +179,32 @@ constexpr void compare() {
     static_assert(!di::conc::EqualityComparableWith<di::Optional<X>, di::Optional<X>>);
     auto x = di::make_optional(3);
     auto y = di::make_optional(3l);
+    auto z = di::Optional<di::Optional<di::Optional<int>>> { di::in_place, di::in_place, di::in_place, 2 };
+
     EXPECT(x == y);
     EXPECT(x != di::nullopt);
     EXPECT(x == 3);
 
-    auto z = di::Optional<di::Optional<di::Optional<int>>> { di::in_place, di::in_place, di::in_place, 2 };
     EXPECT(z == 2);
     EXPECT(z != 1);
+
+    static_assert(di::conc::ThreeWayComparable<di::Optional<int>>);
+    static_assert(di::conc::ThreeWayComparableWith<di::Optional<int>, di::Optional<long>>);
+    static_assert(di::conc::ThreeWayComparableWith<di::Optional<int>, di::vocab::optional::NullOpt>);
+    static_assert(di::conc::ThreeWayComparableWith<di::Optional<int>, int>);
+    static_assert(di::conc::ThreeWayComparableWith<di::Optional<di::Optional<int>>, di::Optional<int>>);
+    static_assert(di::conc::ThreeWayComparableWith<di::Optional<di::Optional<int>>, int>);
+    static_assert(!di::conc::ThreeWayComparableWith<X, X>);
+    static_assert(!di::conc::ThreeWayComparableWith<di::Optional<X>, di::Optional<X>>);
+
+    EXPECT(x <= y);
+    EXPECT(x < di::make_optional(4l));
+    EXPECT(x > di::Optional<int>(di::nullopt));
+    EXPECT(x > di::nullopt);
+    EXPECT(x >= 2);
+
+    EXPECT(z < 3);
+    EXPECT(z > 1);
 }
 
 TEST_CONSTEXPR(vocab_optional, basic, basic)

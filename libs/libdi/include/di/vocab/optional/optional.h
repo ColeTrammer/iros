@@ -6,12 +6,14 @@
 #include <di/util/concepts/equality_comparable_with.h>
 #include <di/util/concepts/one_of.h>
 #include <di/util/concepts/scalar.h>
+#include <di/util/concepts/three_way_comparable_with.h>
 #include <di/util/concepts/trivially_copy_assignable.h>
 #include <di/util/concepts/trivially_copy_constructible.h>
 #include <di/util/concepts/trivially_destructible.h>
 #include <di/util/concepts/trivially_move_assignable.h>
 #include <di/util/concepts/trivially_move_constructible.h>
 #include <di/util/invoke.h>
+#include <di/util/meta/compare_three_way_result.h>
 #include <di/util/meta/decay.h>
 #include <di/util/meta/optional_rank.h>
 #include <di/util/meta/remove_cvref.h>
@@ -302,6 +304,31 @@ template<typename T, typename U>
 requires((util::meta::OptionalRank<T> >= util::meta::OptionalRank<U>) && util::concepts::EqualityComparableWith<T, U>)
 constexpr bool operator==(Optional<T> const& a, U const& b) {
     return a.has_value() && *a == b;
+}
+
+template<typename T, util::concepts::ThreeWayComparableWith<T> U>
+constexpr util::meta::CompareThreeWayResult<T, U> operator<=>(Optional<T> const& a, Optional<U> const& b) {
+    if (!a && !b) {
+        return util::strong_ordering::equal;
+    }
+    if (auto result = a.has_value() <=> b.has_value(); result != 0) {
+        return result;
+    }
+    return *a <=> *b;
+}
+
+template<typename T>
+constexpr util::strong_ordering operator<=>(Optional<T> const& a, NullOpt) {
+    return a.has_value() <=> false;
+}
+
+template<typename T, typename U>
+requires((util::meta::OptionalRank<T> >= util::meta::OptionalRank<U>) && util::concepts::ThreeWayComparableWith<T, U>)
+constexpr util::meta::CompareThreeWayResult<T, U> operator<=>(Optional<T> const& a, U const& b) {
+    if (!a.has_value()) {
+        return util::strong_ordering::less;
+    }
+    return *a <=> b;
 }
 
 template<class T>
