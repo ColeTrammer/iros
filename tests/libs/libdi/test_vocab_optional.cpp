@@ -166,6 +166,28 @@ constexpr void swap() {
     EXPECT_EQ(*y, 3);
 }
 
+struct X {};
+
+constexpr void compare() {
+    static_assert(di::conc::EqualityComparable<di::Optional<int>>);
+    static_assert(di::conc::EqualityComparableWith<di::Optional<int>, di::Optional<long>>);
+    static_assert(di::conc::EqualityComparableWith<di::Optional<int>, di::vocab::optional::NullOpt>);
+    static_assert(di::conc::EqualityComparableWith<di::Optional<int>, int>);
+    static_assert(di::conc::EqualityComparableWith<di::Optional<di::Optional<int>>, di::Optional<int>>);
+    static_assert(di::conc::EqualityComparableWith<di::Optional<di::Optional<int>>, int>);
+    static_assert(!di::conc::EqualityComparableWith<X, X>);
+    static_assert(!di::conc::EqualityComparableWith<di::Optional<X>, di::Optional<X>>);
+    auto x = di::make_optional(3);
+    auto y = di::make_optional(3l);
+    EXPECT(x == y);
+    EXPECT(x != di::nullopt);
+    EXPECT(x == 3);
+
+    auto z = di::Optional<di::Optional<di::Optional<int>>> { di::in_place, di::in_place, di::in_place, 2 };
+    EXPECT(z == 2);
+    EXPECT(z != 1);
+}
+
 TEST_CONSTEXPR(vocab_optional, basic, basic)
 TEST_CONSTEXPR(vocab_optional, conversions, conversions)
 TEST_CONSTEXPR(vocab_optional, make_optional, make_optional)
@@ -173,3 +195,4 @@ TEST_CONSTEXPR(vocab_optional, references, references)
 TEST_CONSTEXPR(vocab_optional, trivial, trivial)
 TEST_CONSTEXPR(vocab_optional, monad, monad)
 TEST_CONSTEXPR(vocab_optional, swap, swap)
+TEST_CONSTEXPR(vocab_optional, compare, compare)

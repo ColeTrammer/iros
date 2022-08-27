@@ -3,6 +3,7 @@
 #include <di/util/addressof.h>
 #include <di/util/concepts/convertible_to.h>
 #include <di/util/concepts/copyable.h>
+#include <di/util/concepts/equality_comparable_with.h>
 #include <di/util/concepts/one_of.h>
 #include <di/util/concepts/scalar.h>
 #include <di/util/concepts/trivially_copy_assignable.h>
@@ -12,6 +13,7 @@
 #include <di/util/concepts/trivially_move_constructible.h>
 #include <di/util/invoke.h>
 #include <di/util/meta/decay.h>
+#include <di/util/meta/optional_rank.h>
 #include <di/util/meta/remove_cvref.h>
 #include <di/util/move.h>
 #include <di/util/swap.h>
@@ -285,6 +287,22 @@ private:
 
     Storage m_storage { nullopt };
 };
+
+template<typename T, util::concepts::EqualityComparableWith<T> U>
+constexpr bool operator==(Optional<T> const& a, Optional<U> const& b) {
+    return (!a && !b) || (a && b && *a == *b);
+}
+
+template<typename T>
+constexpr bool operator==(Optional<T> const& a, NullOpt) {
+    return !a;
+}
+
+template<typename T, typename U>
+requires((util::meta::OptionalRank<T> >= util::meta::OptionalRank<U>) && util::concepts::EqualityComparableWith<T, U>)
+constexpr bool operator==(Optional<T> const& a, U const& b) {
+    return a.has_value() && *a == b;
+}
 
 template<class T>
 Optional(T) -> Optional<T>;
