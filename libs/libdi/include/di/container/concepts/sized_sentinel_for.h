@@ -7,7 +7,7 @@
 namespace di::concepts {
 template<typename Sent, typename Iter>
 concept SizedSentinelFor = SentinelFor<Sent, Iter> && requires(Iter const& iterator, Sent const& sentinel) {
-                                                          { sentinel - iterator } -> SameAs<types::ssize_t>;
-                                                          { iterator - sentinel } -> SameAs<types::ssize_t>;
+                                                          { sentinel - iterator } -> SameAs<meta::IteratorSSizeType<Iter>>;
+                                                          { iterator - sentinel } -> SameAs<meta::IteratorSSizeType<Iter>>;
                                                       };
 }

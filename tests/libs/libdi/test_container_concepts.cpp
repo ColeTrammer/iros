@@ -25,6 +25,7 @@ struct I {
 private:
     constexpr friend bool tag_invoke(di::Tag<di::container::iterator::iterator_value>, di::InPlaceType<I>);
     constexpr friend di::types::ForwardIteratorTag tag_invoke(di::Tag<di::container::iterator::iterator_category>, di::InPlaceType<I>);
+    constexpr friend di::ssize_t tag_invoke(di::Tag<di::container::iterator::iterator_ssize_type>, di::InPlaceType<I>);
 };
 
 static_assert(di::concepts::InputIterator<I>);
@@ -42,6 +43,7 @@ struct J {
 private:
     constexpr friend bool tag_invoke(di::Tag<di::container::iterator::iterator_value>, di::InPlaceType<J>);
     constexpr friend di::types::InputIteratorTag tag_invoke(di::Tag<di::container::iterator::iterator_category>, di::InPlaceType<J>);
+    constexpr friend di::ssize_t tag_invoke(di::Tag<di::container::iterator::iterator_ssize_type>, di::InPlaceType<J>);
 };
 
 static_assert(di::concepts::InputIterator<J>);

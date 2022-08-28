@@ -9,6 +9,7 @@
 #include <di/container/interface/end.h>
 #include <di/container/meta/container_iterator.h>
 #include <di/container/meta/container_sentinel.h>
+#include <di/container/meta/iterator_size_type.h>
 #include <di/meta/extent.h>
 #include <di/meta/remove_reference.h>
 #include <di/types/size_t.h>
@@ -22,11 +23,13 @@ namespace detail {
     concept ArraySize = concepts::BoundedLanguageArray<meta::RemoveReference<T>>;
 
     template<typename T>
-    concept CustomSize = concepts::TagInvocableTo<SizeFunction, types::size_t, T>;
+    concept CustomSize = concepts::TagInvocableTo<SizeFunction, meta::IteratorSizeType<meta::ContainerIterator<T>>, T>;
 
     template<typename T>
     concept MemberSize = requires(T&& container) {
-                             { util::forward<T>(container).size() } -> concepts::ImplicitlyConvertibleTo<types::size_t>;
+                             {
+                                 util::forward<T>(container).size()
+                                 } -> concepts::ImplicitlyConvertibleTo<meta::IteratorSizeType<meta::ContainerIterator<T>>>;
                          };
 
     template<typename T>
@@ -37,7 +40,7 @@ namespace detail {
 struct SizeFunction {
     template<typename T>
     requires(detail::ArraySize<T> || detail::CustomSize<T> || detail::MemberSize<T> || detail::IteratorSize<T>)
-    constexpr types::size_t operator()(T&& container) const {
+    constexpr meta::IteratorSizeType<meta::ContainerIterator<T>> operator()(T&& container) const {
         if constexpr (detail::ArraySize<T>) {
             return meta::Extent<meta::RemoveReference<T>>;
         } else if constexpr (detail::CustomSize<T>) {
