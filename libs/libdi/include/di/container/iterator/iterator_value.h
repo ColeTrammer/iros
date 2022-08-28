@@ -3,7 +3,7 @@
 #include <di/types/in_place_type.h>
 #include <di/util/tag_invoke.h>
 
-namespace di::container::iterator {
+namespace di::container {
 constexpr inline struct IteratorValueFunction {
     template<typename T>
     requires(concepts::TagInvocable<IteratorValueFunction, types::InPlaceType<T>>)

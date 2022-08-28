@@ -11,7 +11,7 @@ namespace detail {
     struct WrapReference : TypeConstant<T> {};
 
     template<concepts::LValueReference T>
-    struct WrapReference<T> : TypeConstant<ReferenceWrapper<RemoveReference<T>>> {};
+    struct WrapReference<T> : TypeConstant<util::ReferenceWrapper<RemoveReference<T>>> {};
 }
 
 template<typename T>

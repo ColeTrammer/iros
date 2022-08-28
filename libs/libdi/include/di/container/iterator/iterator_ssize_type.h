@@ -4,7 +4,7 @@
 #include <di/types/ssize_t.h>
 #include <di/util/tag_invoke.h>
 
-namespace di::container::iterator {
+namespace di::container {
 constexpr inline struct IteratorSSizeTypeFunction {
     template<typename T>
     requires(concepts::TagInvocable<IteratorSSizeTypeFunction, types::InPlaceType<T>>)

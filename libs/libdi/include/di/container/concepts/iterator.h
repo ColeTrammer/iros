@@ -9,7 +9,7 @@
 #include <di/meta/remove_cvref.h>
 #include <di/util/as_const.h>
 
-namespace di::concepts::detail {
+namespace di::concepts {
 template<typename Iter>
 concept Iterator = Movable<Iter> && requires(meta::RemoveCVRef<Iter> it) {
                                         typename meta::IteratorCategory<Iter>;

@@ -5,5 +5,5 @@
 
 namespace di::meta {
 template<typename T>
-using ContainerSentinel = decltype(container::end(util::declval<T>()));
+using ContainerSentinel = decltype(container::end(util::declval<T&>()));
 }

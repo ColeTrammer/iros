@@ -2,6 +2,7 @@
 
 #include <di/concepts/language_array.h>
 #include <di/container/concepts/iterator.h>
+#include <di/container/interface/enable_borrowed_container.h>
 #include <di/meta/decay.h>
 #include <di/meta/remove_reference.h>
 #include <di/util/forward.h>
@@ -16,17 +17,18 @@ namespace detail {
 
     template<typename T>
     concept CustomBegin =
-        concepts::TagInvocable<BeginFunction, T> && concepts::detail::Iterator<meta::Decay<meta::TagInvokeResult<BeginFunction, T>>>;
+        concepts::TagInvocable<BeginFunction, T> && concepts::Iterator<meta::Decay<meta::TagInvokeResult<BeginFunction, T>>>;
 
     template<typename T>
     concept MemberBegin = requires(T&& container) {
-                              { util::forward<T>(container).begin() } -> concepts::detail::Iterator;
+                              { util::forward<T>(container).begin() } -> concepts::Iterator;
                           };
 }
 
 struct BeginFunction {
     template<typename T>
-    requires(detail::ArrayBegin<T> || detail::CustomBegin<T> || detail::MemberBegin<T>)
+    requires(enable_borrowed_container(types::in_place_type<T>) &&
+             (detail::ArrayBegin<T> || detail::CustomBegin<T> || detail::MemberBegin<T>) )
     constexpr auto operator()(T&& container) const {
         if constexpr (detail::ArrayBegin<T>) {
             return container + 0;

@@ -2,7 +2,7 @@
 
 #include <di/concepts/same_as.h>
 #include <di/container/concepts/sentinel_for.h>
-#include <di/types/ssize_t.h>
+#include <di/container/meta/iterator_ssize_type.h>
 
 namespace di::concepts {
 template<typename Sent, typename Iter>

@@ -44,5 +44,5 @@ namespace detail {
 }
 
 template<typename T>
-using MakeUnsigned = detail::MakeSignedHelper<RemoveCV<T>>::Type;
+using MakeSigned = detail::MakeSignedHelper<RemoveCV<T>>::Type;
 }

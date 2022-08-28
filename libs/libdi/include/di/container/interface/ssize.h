@@ -18,7 +18,7 @@ namespace detail {
     concept SizeSSize = requires { typename meta::ContainerSizeType<T>; };
 }
 
-struct SizeFunction {
+struct SSizeFunction {
     template<typename T>
     requires(detail::CustomSSize<T> || detail::SizeSSize<T>)
     constexpr meta::MakeUnsigned<meta::ContainerSizeType<T>> operator()(T&& container) const {

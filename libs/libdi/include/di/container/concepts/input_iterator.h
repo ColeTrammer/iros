@@ -6,5 +6,5 @@
 
 namespace di::concepts {
 template<typename Iter>
-concept InputIterator = detail::Iterator<Iter> && DerivedFrom<meta::IteratorCategory<Iter>, types::InputIteratorTag>;
+concept InputIterator = Iterator<Iter> && DerivedFrom<meta::IteratorCategory<Iter>, types::InputIteratorTag>;
 }

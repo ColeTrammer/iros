@@ -5,5 +5,5 @@
 
 namespace di::meta {
 template<typename T>
-using ContainerIterator = decltype(container::begin(util::declval<T>()));
+using ContainerIterator = decltype(container::begin(util::declval<T&>()));
 }

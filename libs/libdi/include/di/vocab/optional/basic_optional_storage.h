@@ -26,15 +26,15 @@ public:
     constexpr BasicOptionalStorage& operator=(BasicOptionalStorage&&) = default;
 
 private:
-    constexpr friend bool tag_invoke(util::Tag<is_nullopt>, BasicOptionalStorage const& self) { return !self.m_has_value; }
+    constexpr friend bool tag_invoke(types::Tag<is_nullopt>, BasicOptionalStorage const& self) { return !self.m_has_value; }
 
     template<typename Self>
     requires(concepts::SameAs<meta::Decay<Self>, BasicOptionalStorage>)
-    constexpr friend decltype(auto) tag_invoke(util::Tag<get_value>, Self&& self) {
+    constexpr friend decltype(auto) tag_invoke(types::Tag<get_value>, Self&& self) {
         return util::forward_like<Self>(self.m_value);
     }
 
-    constexpr friend void tag_invoke(util::Tag<set_nullopt>, BasicOptionalStorage& self) {
+    constexpr friend void tag_invoke(types::Tag<set_nullopt>, BasicOptionalStorage& self) {
         if (self.m_has_value) {
             util::destroy_at(&self.m_value);
         }
@@ -43,7 +43,7 @@ private:
 
     template<typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...>)
-    constexpr friend void tag_invoke(util::Tag<set_value>, BasicOptionalStorage& self, Args&&... args) {
+    constexpr friend void tag_invoke(types::Tag<set_value>, BasicOptionalStorage& self, Args&&... args) {
         util::construct_at(&self.m_value, util::forward<Args>(args)...);
         self.m_has_value = true;
     }

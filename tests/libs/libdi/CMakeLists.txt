@@ -1,6 +1,7 @@
 set(TEST_FILES
     test_concepts.cpp
     test_container_concepts.cpp
+    test_container_view.cpp
     test_meta.cpp
     test_util_invoke.cpp
     test_util_swap.cpp

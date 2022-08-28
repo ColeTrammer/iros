@@ -5,5 +5,5 @@
 
 namespace di::meta {
 template<typename T>
-using IteratorSSizeType = decltype(container::iterator::iterator_ssize_type(types::in_place_type<meta::RemoveCVRef<T>>));
+using IteratorSSizeType = decltype(container::iterator_ssize_type(types::in_place_type<meta::RemoveCVRef<T>>));
 }

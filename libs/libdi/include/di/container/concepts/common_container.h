@@ -1,0 +1,11 @@
+#pragma once
+
+#include <di/concepts/same_as.h>
+#include <di/container/concepts/container.h>
+#include <di/container/meta/container_iterator.h>
+#include <di/container/meta/container_sentinel.h>
+
+namespace di::concepts {
+template<typename T>
+concept CommonContainer = Container<T> && SameAs<meta::ContainerIterator<T>, meta::ContainerSentinel<T>>;
+}

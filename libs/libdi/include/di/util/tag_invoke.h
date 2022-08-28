@@ -21,7 +21,9 @@ namespace tag_invoke_detail {
 inline namespace tag_invoke_ns {
     inline constexpr tag_invoke_detail::TagInvokeFn tag_invoke {};
 }
+}
 
+namespace di::types {
 template<auto& T>
 using Tag = di::meta::Decay<decltype(T)>;
 }

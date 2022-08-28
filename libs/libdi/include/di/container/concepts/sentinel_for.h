@@ -6,5 +6,5 @@
 
 namespace di::concepts {
 template<typename Sent, typename Iter>
-concept SentinelFor = Semiregular<Sent> && detail::Iterator<Iter> && detail::WeaklyEqualityComparableWith<Sent, Iter>;
+concept SentinelFor = Semiregular<Sent> && Iterator<Iter> && detail::WeaklyEqualityComparableWith<Sent, Iter>;
 }

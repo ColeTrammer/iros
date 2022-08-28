@@ -4,7 +4,7 @@
 #include <di/types/in_place_type.h>
 #include <di/util/tag_invoke.h>
 
-namespace di::container::iterator {
+namespace di::container {
 constexpr inline struct IteratorCategoryFunction {
     template<typename T>
     constexpr auto operator()(types::InPlaceType<T> x) const -> decltype(util::tag_invoke(*this, x));

@@ -269,7 +269,7 @@ public:
     }
 
 private:
-    constexpr friend void tag_invoke(util::Tag<util::swap>, Optional& a, Optional& b)
+    constexpr friend void tag_invoke(types::Tag<util::swap>, Optional& a, Optional& b)
     requires(concepts::Swappable<T>)
     {
         if (a.has_value() && b.has_value()) {

@@ -44,10 +44,10 @@ public:
 
 private:
     // Implement di::vocab::optional::OptionalStorage.
-    constexpr friend bool tag_invoke(util::Tag<vocab::optional::is_nullopt>, ReferenceWrapper const& self) { return !self.m_pointer; }
-    constexpr friend T& tag_invoke(util::Tag<vocab::optional::get_value>, ReferenceWrapper const& self) { return *self.m_pointer; }
-    constexpr friend void tag_invoke(util::Tag<vocab::optional::set_nullopt>, ReferenceWrapper& self) { self.m_pointer = nullptr; }
-    constexpr friend void tag_invoke(util::Tag<vocab::optional::set_value>, ReferenceWrapper& self, T& value) {
+    constexpr friend bool tag_invoke(types::Tag<vocab::optional::is_nullopt>, ReferenceWrapper const& self) { return !self.m_pointer; }
+    constexpr friend T& tag_invoke(types::Tag<vocab::optional::get_value>, ReferenceWrapper const& self) { return *self.m_pointer; }
+    constexpr friend void tag_invoke(types::Tag<vocab::optional::set_nullopt>, ReferenceWrapper& self) { self.m_pointer = nullptr; }
+    constexpr friend void tag_invoke(types::Tag<vocab::optional::set_value>, ReferenceWrapper& self, T& value) {
         self.m_pointer = util::addressof(value);
     }
 
