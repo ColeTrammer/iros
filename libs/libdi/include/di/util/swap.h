@@ -1,13 +1,13 @@
 #pragma once
 
-#include <di/util/concepts/constructible_from.h>
-#include <di/util/concepts/movable.h>
-#include <di/util/concepts/move_assignable.h>
-#include <di/util/concepts/move_constructible.h>
+#include <di/concepts/constructible_from.h>
+#include <di/concepts/movable.h>
+#include <di/concepts/move_assignable.h>
+#include <di/concepts/move_constructible.h>
+#include <di/meta/decay.h>
 #include <di/util/construct_at.h>
 #include <di/util/destroy_at.h>
 #include <di/util/forward.h>
-#include <di/util/meta/decay.h>
 #include <di/util/relocate.h>
 #include <di/util/tag_invoke.h>
 
@@ -40,17 +40,17 @@ inline constexpr struct SwapFunction {
         }
     }
 } swap;
-
-namespace concepts {
-    template<typename T>
-    concept Swappable = requires(T& a, T& b) { di::util::swap(a, b); };
-
-    template<typename T, typename U>
-    concept SwappableWith = requires(T&& a, U&& b) {
-                                di::util::swap(util::forward<T>(a), util::forward<T>(a));
-                                di::util::swap(util::forward<T>(a), util::forward<U>(b));
-                                di::util::swap(util::forward<U>(b), util::forward<T>(a));
-                                di::util::swap(util::forward<U>(b), util::forward<U>(b));
-                            };
 }
+
+namespace di::concepts {
+template<typename T>
+concept Swappable = requires(T& a, T& b) { di::util::swap(a, b); };
+
+template<typename T, typename U>
+concept SwappableWith = requires(T&& a, U&& b) {
+                            di::util::swap(util::forward<T>(a), util::forward<T>(a));
+                            di::util::swap(util::forward<T>(a), util::forward<U>(b));
+                            di::util::swap(util::forward<U>(b), util::forward<T>(a));
+                            di::util::swap(util::forward<U>(b), util::forward<U>(b));
+                        };
 }

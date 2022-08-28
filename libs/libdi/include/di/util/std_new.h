@@ -1,13 +1,13 @@
 #pragma once
 
-#include <di/util/types.h>
+#include <di/types/size_t.h>
 #ifdef DI_USE_STD
 #include <new>
 #else
-inline void* operator new(di::util::size_t, void* p) {
+inline void* operator new(di::types::size_t, void* p) {
     return p;
 }
-inline void* operator new[](di::util::size_t, void* p) {
+inline void* operator new[](di::types::size_t, void* p) {
     return p;
 }
 

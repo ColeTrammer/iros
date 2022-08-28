@@ -1,15 +1,15 @@
 #pragma once
 
-#include <di/util/concepts/base_of.h>
-#include <di/util/concepts/implicitly_convertible_to.h>
-#include <di/util/concepts/member_function_pointer.h>
-#include <di/util/concepts/member_object_pointer.h>
-#include <di/util/concepts/member_pointer.h>
-#include <di/util/concepts/reference_wrapper.h>
+#include <di/concepts/base_of.h>
+#include <di/concepts/implicitly_convertible_to.h>
+#include <di/concepts/member_function_pointer.h>
+#include <di/concepts/member_object_pointer.h>
+#include <di/concepts/member_pointer.h>
+#include <di/concepts/reference_wrapper.h>
+#include <di/meta/decay.h>
+#include <di/meta/member_pointer_class.h>
 #include <di/util/declval.h>
 #include <di/util/forward.h>
-#include <di/util/meta/decay.h>
-#include <di/util/meta/member_pointer_class.h>
 
 namespace di::util {
 namespace detail {
@@ -54,24 +54,25 @@ namespace detail {
         return util::forward<F>(f)(util::forward<Args>(args)...);
     }
 }
-
-namespace concepts {
-    template<typename F, typename... Args>
-    concept Invocable =
-        requires(F&& f, Args&&... args) { di::util::detail::invoke_impl(util::forward<F>(f), util::forward<Args>(args)...); };
 }
 
-namespace meta {
-    template<typename F, typename... Args>
-    requires(concepts::Invocable<F, Args...>)
-    using InvokeResult = decltype(di::util::detail::invoke_impl(util::declval<F>(), util::declval<Args>()...));
+namespace di::concepts {
+template<typename F, typename... Args>
+concept Invocable = requires(F&& f, Args&&... args) { di::util::detail::invoke_impl(util::forward<F>(f), util::forward<Args>(args)...); };
 }
 
-namespace concepts {
-    template<typename F, typename R, typename... Args>
-    concept InvocableTo = Invocable<F, Args...> && (LanguageVoid<R> || ImplicitlyConvertibleTo<meta::InvokeResult<F, Args...>, R>);
+namespace di::meta {
+template<typename F, typename... Args>
+requires(concepts::Invocable<F, Args...>)
+using InvokeResult = decltype(di::util::detail::invoke_impl(util::declval<F>(), util::declval<Args>()...));
 }
 
+namespace di::concepts {
+template<typename F, typename R, typename... Args>
+concept InvocableTo = Invocable<F, Args...> && (LanguageVoid<R> || ImplicitlyConvertibleTo<meta::InvokeResult<F, Args...>, R>);
+}
+
+namespace di::util {
 template<typename F, typename... Args>
 requires(concepts::Invocable<F, Args...>)
 constexpr meta::InvokeResult<F, Args...> invoke(F&& f, Args&&... args) {

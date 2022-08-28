@@ -1,15 +1,18 @@
 #pragma once
 
+#include <di/concepts/prelude.h>
+#include <di/meta/prelude.h>
+#include <di/types/prelude.h>
 #include <di/util/prelude.h>
 #include <di/vocab/prelude.h>
 
-using di::util::i16;
-using di::util::i32;
-using di::util::i64;
-using di::util::i8;
-using di::util::ptrdiff_t;
-using di::util::size_t;
-using di::util::u16;
-using di::util::u32;
-using di::util::u64;
-using di::util::u8;
+using di::types::i16;
+using di::types::i32;
+using di::types::i64;
+using di::types::i8;
+using di::types::ptrdiff_t;
+using di::types::size_t;
+using di::types::u16;
+using di::types::u32;
+using di::types::u64;
+using di::types::u8;

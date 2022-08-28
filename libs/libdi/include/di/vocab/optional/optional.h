@@ -1,25 +1,25 @@
 #pragma once
 
+#include <di/concepts/convertible_to.h>
+#include <di/concepts/copyable.h>
+#include <di/concepts/equality_comparable_with.h>
+#include <di/concepts/one_of.h>
+#include <di/concepts/scalar.h>
+#include <di/concepts/three_way_comparable_with.h>
+#include <di/concepts/trivially_copy_assignable.h>
+#include <di/concepts/trivially_copy_constructible.h>
+#include <di/concepts/trivially_destructible.h>
+#include <di/concepts/trivially_move_assignable.h>
+#include <di/concepts/trivially_move_constructible.h>
+#include <di/meta/compare_three_way_result.h>
+#include <di/meta/decay.h>
+#include <di/meta/optional_rank.h>
+#include <di/meta/remove_cvref.h>
+#include <di/types/in_place.h>
 #include <di/util/addressof.h>
-#include <di/util/concepts/convertible_to.h>
-#include <di/util/concepts/copyable.h>
-#include <di/util/concepts/equality_comparable_with.h>
-#include <di/util/concepts/one_of.h>
-#include <di/util/concepts/scalar.h>
-#include <di/util/concepts/three_way_comparable_with.h>
-#include <di/util/concepts/trivially_copy_assignable.h>
-#include <di/util/concepts/trivially_copy_constructible.h>
-#include <di/util/concepts/trivially_destructible.h>
-#include <di/util/concepts/trivially_move_assignable.h>
-#include <di/util/concepts/trivially_move_constructible.h>
 #include <di/util/invoke.h>
-#include <di/util/meta/compare_three_way_result.h>
-#include <di/util/meta/decay.h>
-#include <di/util/meta/optional_rank.h>
-#include <di/util/meta/remove_cvref.h>
 #include <di/util/move.h>
 #include <di/util/swap.h>
-#include <di/util/types.h>
 #include <di/vocab/optional/constructible_from_cref_optional.h>
 #include <di/vocab/optional/storage_for.h>
 
@@ -45,7 +45,7 @@ public:
     constexpr ~Optional() = default;
 
     constexpr Optional(Optional const& other)
-    requires(util::concepts::Copyable<T> && !util::concepts::TriviallyCopyConstructible<Storage>)
+    requires(concepts::Copyable<T> && !concepts::TriviallyCopyConstructible<Storage>)
     {
         if (other.has_value()) {
             emplace(other.value());
@@ -53,7 +53,7 @@ public:
     }
 
     constexpr Optional(Optional&& other)
-    requires(!util::concepts::TriviallyMoveConstructible<Storage>)
+    requires(!concepts::TriviallyMoveConstructible<Storage>)
     {
         if (other.has_value()) {
             emplace(util::move(other).value());
@@ -61,34 +61,34 @@ public:
     }
 
     template<typename U>
-    requires(util::concepts::ConstructibleFrom<T, U const&> && !ConstructibleFromCRefOptional<T, Optional<U>>)
-    constexpr explicit(!util::concepts::ImplicitlyConvertibleTo<U const&, T>) Optional(Optional<U> const& other) {
+    requires(concepts::ConstructibleFrom<T, U const&> && !ConstructibleFromCRefOptional<T, Optional<U>>)
+    constexpr explicit(!concepts::ImplicitlyConvertibleTo<U const&, T>) Optional(Optional<U> const& other) {
         if (other.has_value()) {
             emplace(other.value());
         }
     }
 
     template<typename U>
-    requires(util::concepts::ConstructibleFrom<T, U &&> && !ConstructibleFromCRefOptional<T, Optional<U>>)
-    constexpr explicit(!util::concepts::ImplicitlyConvertibleTo<U&&, T>) Optional(Optional<U>&& other) {
+    requires(concepts::ConstructibleFrom<T, U &&> && !ConstructibleFromCRefOptional<T, Optional<U>>)
+    constexpr explicit(!concepts::ImplicitlyConvertibleTo<U&&, T>) Optional(Optional<U>&& other) {
         if (other.has_value()) {
             emplace(util::move(other).value());
         }
     }
 
     template<typename... Args>
-    constexpr Optional(util::InPlace, Args&&... args) {
+    constexpr Optional(types::InPlace, Args&&... args) {
         emplace(util::forward<Args>(args)...);
     }
 
     template<typename U = T>
-    requires(util::concepts::ConstructibleFrom<T, U &&> && !util::concepts::OneOf<util::meta::Decay<U>, Optional, util::InPlace>)
-    constexpr explicit(!util::concepts::ImplicitlyConvertibleTo<U&&, T>) Optional(U&& value) {
+    requires(concepts::ConstructibleFrom<T, U &&> && !concepts::OneOf<meta::Decay<U>, Optional, types::InPlace>)
+    constexpr explicit(!concepts::ImplicitlyConvertibleTo<U&&, T>) Optional(U&& value) {
         emplace(util::forward<U>(value));
     }
 
     constexpr ~Optional()
-    requires(!util::concepts::TriviallyDestructible<Storage>)
+    requires(!concepts::TriviallyDestructible<Storage>)
     {
         reset();
     }
@@ -99,7 +99,7 @@ public:
     }
 
     constexpr Optional& operator=(Optional const& other)
-    requires(util::concepts::Copyable<T> && !util::concepts::TriviallyCopyAssignable<Storage>)
+    requires(concepts::Copyable<T> && !concepts::TriviallyCopyAssignable<Storage>)
     {
         if (other.has_value()) {
             emplace(other.value());
@@ -108,7 +108,7 @@ public:
     }
 
     constexpr Optional& operator=(Optional&& other)
-    requires(!util::concepts::TriviallyMoveAssignable<Storage>)
+    requires(!concepts::TriviallyMoveAssignable<Storage>)
     {
         if (other.has_value()) {
             emplace(util::move(other).value());
@@ -117,15 +117,15 @@ public:
     }
 
     template<typename U = T>
-    requires(util::concepts::ConstructibleFrom<T, U> && !util::concepts::SameAs<util::meta::RemoveCVRef<U>, Optional> &&
-             (!util::concepts::Scalar<T> || !util::concepts::SameAs<util::meta::Decay<U>, T>) )
+    requires(concepts::ConstructibleFrom<T, U> && !concepts::SameAs<meta::RemoveCVRef<U>, Optional> &&
+             (!concepts::Scalar<T> || !concepts::SameAs<meta::Decay<U>, T>) )
     constexpr Optional& operator=(U&& value) {
         emplace(util::forward<U>(value));
         return *this;
     }
 
     template<typename U>
-    requires(util::concepts::ConstructibleFrom<T, U const&> && !ConstructibleFromCRefOptional<T, Optional<U>>)
+    requires(concepts::ConstructibleFrom<T, U const&> && !ConstructibleFromCRefOptional<T, Optional<U>>)
     constexpr Optional& operator=(Optional<U> const& other) {
         if (other.has_value()) {
             emplace(other.value());
@@ -134,7 +134,7 @@ public:
     }
 
     template<typename U>
-    requires(util::concepts::ConstructibleFrom<T, U &&> && !ConstructibleFromCRefOptional<T, Optional<U>>)
+    requires(concepts::ConstructibleFrom<T, U &&> && !ConstructibleFromCRefOptional<T, Optional<U>>)
     constexpr Optional& operator=(Optional<U>&& other) {
         if (other.has_value()) {
             emplace(util::move(other).value());
@@ -158,19 +158,19 @@ public:
     constexpr decltype(auto) value() && { return get_value(util::move(m_storage)); }
     constexpr decltype(auto) value() const&& { return get_value(util::move(m_storage)); }
 
-    template<util::concepts::ConvertibleTo<T> U>
-    requires(util::concepts::Copyable<T>)
+    template<concepts::ConvertibleTo<T> U>
+    requires(concepts::Copyable<T>)
     constexpr T value_or(U&& fallback) const& {
         return has_value() ? value() : static_cast<T>(util::forward<U>(fallback));
     }
 
-    template<util::concepts::ConvertibleTo<T> U>
+    template<concepts::ConvertibleTo<T> U>
     constexpr T value_or(U&& fallback) && {
         return has_value() ? util::move(*this).value() : static_cast<T>(util::forward<U>(fallback));
     }
 
-    template<util::concepts::Invocable<OptionalGetValue<Storage&>> F, typename R = util::meta::InvokeResult<F, OptionalGetValue<Storage&>>>
-    requires(util::concepts::Optional<R>)
+    template<concepts::Invocable<OptionalGetValue<Storage&>> F, typename R = meta::InvokeResult<F, OptionalGetValue<Storage&>>>
+    requires(concepts::Optional<R>)
     constexpr R and_then(F&& f) & {
         if (has_value()) {
             return util::invoke(util::forward<F>(f), value());
@@ -179,9 +179,8 @@ public:
         }
     }
 
-    template<util::concepts::Invocable<OptionalGetValue<Storage const&>> F,
-             typename R = util::meta::InvokeResult<F, OptionalGetValue<Storage const&>>>
-    requires(util::concepts::Optional<R>)
+    template<concepts::Invocable<OptionalGetValue<Storage const&>> F, typename R = meta::InvokeResult<F, OptionalGetValue<Storage const&>>>
+    requires(concepts::Optional<R>)
     constexpr R and_then(F&& f) const& {
         if (has_value()) {
             return util::invoke(util::forward<F>(f), value());
@@ -190,9 +189,8 @@ public:
         }
     }
 
-    template<util::concepts::Invocable<OptionalGetValue<Storage&&>> F,
-             typename R = util::meta::InvokeResult<F, OptionalGetValue<Storage&&>>>
-    requires(util::concepts::Optional<R>)
+    template<concepts::Invocable<OptionalGetValue<Storage&&>> F, typename R = meta::InvokeResult<F, OptionalGetValue<Storage&&>>>
+    requires(concepts::Optional<R>)
     constexpr R and_then(F&& f) && {
         if (has_value()) {
             return util::invoke(util::forward<F>(f), util::move(*this).value());
@@ -201,9 +199,9 @@ public:
         }
     }
 
-    template<util::concepts::Invocable<OptionalGetValue<Storage const&&>> F,
-             typename R = util::meta::InvokeResult<F, OptionalGetValue<Storage const&&>>>
-    requires(util::concepts::Optional<R>)
+    template<concepts::Invocable<OptionalGetValue<Storage const&&>> F,
+             typename R = meta::InvokeResult<F, OptionalGetValue<Storage const&&>>>
+    requires(concepts::Optional<R>)
     constexpr R and_then(F&& f) const&& {
         if (has_value()) {
             return util::invoke(util::forward<F>(f), util::move(*this).value());
@@ -212,53 +210,51 @@ public:
         }
     }
 
-    template<util::concepts::Invocable<OptionalGetValue<Storage&>> F, typename R = util::meta::InvokeResult<F, OptionalGetValue<Storage&>>>
+    template<concepts::Invocable<OptionalGetValue<Storage&>> F, typename R = meta::InvokeResult<F, OptionalGetValue<Storage&>>>
     constexpr Optional<R> transform(F&& f) & {
         if (has_value()) {
-            return Optional<R>(util::in_place, util::invoke(util::forward<F>(f), value()));
+            return Optional<R>(types::in_place, util::invoke(util::forward<F>(f), value()));
         } else {
             return nullopt;
         }
     }
 
-    template<util::concepts::Invocable<OptionalGetValue<Storage const&>> F,
-             typename R = util::meta::InvokeResult<F, OptionalGetValue<Storage const&>>>
+    template<concepts::Invocable<OptionalGetValue<Storage const&>> F, typename R = meta::InvokeResult<F, OptionalGetValue<Storage const&>>>
     constexpr Optional<R> transform(F&& f) const& {
         if (has_value()) {
-            return Optional<R>(util::in_place, util::invoke(util::forward<F>(f), value()));
+            return Optional<R>(types::in_place, util::invoke(util::forward<F>(f), value()));
         } else {
             return nullopt;
         }
     }
 
-    template<util::concepts::Invocable<OptionalGetValue<Storage&&>> F,
-             typename R = util::meta::InvokeResult<F, OptionalGetValue<Storage&&>>>
+    template<concepts::Invocable<OptionalGetValue<Storage&&>> F, typename R = meta::InvokeResult<F, OptionalGetValue<Storage&&>>>
     constexpr Optional<R> transform(F&& f) && {
         if (has_value()) {
-            return Optional<R>(util::in_place, util::invoke(util::forward<F>(f), util::move(*this).value()));
+            return Optional<R>(types::in_place, util::invoke(util::forward<F>(f), util::move(*this).value()));
         } else {
             return nullopt;
         }
     }
 
-    template<util::concepts::Invocable<OptionalGetValue<Storage const&&>> F,
-             typename R = util::meta::InvokeResult<F, OptionalGetValue<Storage const&&>>>
+    template<concepts::Invocable<OptionalGetValue<Storage const&&>> F,
+             typename R = meta::InvokeResult<F, OptionalGetValue<Storage const&&>>>
     constexpr Optional<R> transform(F&& f) const&& {
         if (has_value()) {
-            return Optional<R>(util::in_place, util::invoke(util::forward<F>(f), util::move(*this).value()));
+            return Optional<R>(types::in_place, util::invoke(util::forward<F>(f), util::move(*this).value()));
         } else {
             return nullopt;
         }
     }
 
-    template<util::concepts::InvocableTo<Optional> F>
-    requires(util::concepts::Copyable<Optional>)
+    template<concepts::InvocableTo<Optional> F>
+    requires(concepts::Copyable<Optional>)
     constexpr Optional or_else(F&& f) const& {
         return *this ? *this : util::invoke(util::forward<F>(f));
     }
 
-    template<util::concepts::InvocableTo<Optional> F>
-    requires(util::concepts::Movable<Optional>)
+    template<concepts::InvocableTo<Optional> F>
+    requires(concepts::Movable<Optional>)
     constexpr Optional or_else(F&& f) && {
         return *this ? util::move(*this) : util::invoke(util::forward<F>(f));
     }
@@ -274,7 +270,7 @@ public:
 
 private:
     constexpr friend void tag_invoke(util::Tag<util::swap>, Optional& a, Optional& b)
-    requires(util::concepts::Swappable<T>)
+    requires(concepts::Swappable<T>)
     {
         if (a.has_value() && b.has_value()) {
             util::swap(a.m_storage, b.m_storage);
@@ -290,7 +286,7 @@ private:
     Storage m_storage { nullopt };
 };
 
-template<typename T, util::concepts::EqualityComparableWith<T> U>
+template<typename T, concepts::EqualityComparableWith<T> U>
 constexpr bool operator==(Optional<T> const& a, Optional<U> const& b) {
     return (!a && !b) || (a && b && *a == *b);
 }
@@ -301,15 +297,15 @@ constexpr bool operator==(Optional<T> const& a, NullOpt) {
 }
 
 template<typename T, typename U>
-requires((util::meta::OptionalRank<T> >= util::meta::OptionalRank<U>) && util::concepts::EqualityComparableWith<T, U>)
+requires((meta::OptionalRank<T> >= meta::OptionalRank<U>) && concepts::EqualityComparableWith<T, U>)
 constexpr bool operator==(Optional<T> const& a, U const& b) {
     return a.has_value() && *a == b;
 }
 
-template<typename T, util::concepts::ThreeWayComparableWith<T> U>
-constexpr util::meta::CompareThreeWayResult<T, U> operator<=>(Optional<T> const& a, Optional<U> const& b) {
+template<typename T, concepts::ThreeWayComparableWith<T> U>
+constexpr meta::CompareThreeWayResult<T, U> operator<=>(Optional<T> const& a, Optional<U> const& b) {
     if (!a && !b) {
-        return util::strong_ordering::equal;
+        return types::strong_ordering::equal;
     }
     if (auto result = a.has_value() <=> b.has_value(); result != 0) {
         return result;
@@ -318,15 +314,15 @@ constexpr util::meta::CompareThreeWayResult<T, U> operator<=>(Optional<T> const&
 }
 
 template<typename T>
-constexpr util::strong_ordering operator<=>(Optional<T> const& a, NullOpt) {
+constexpr types::strong_ordering operator<=>(Optional<T> const& a, NullOpt) {
     return a.has_value() <=> false;
 }
 
 template<typename T, typename U>
-requires((util::meta::OptionalRank<T> >= util::meta::OptionalRank<U>) && util::concepts::ThreeWayComparableWith<T, U>)
-constexpr util::meta::CompareThreeWayResult<T, U> operator<=>(Optional<T> const& a, U const& b) {
+requires((meta::OptionalRank<T> >= meta::OptionalRank<U>) && concepts::ThreeWayComparableWith<T, U>)
+constexpr meta::CompareThreeWayResult<T, U> operator<=>(Optional<T> const& a, U const& b) {
     if (!a.has_value()) {
-        return util::strong_ordering::less;
+        return types::strong_ordering::less;
     }
     return *a <=> b;
 }

@@ -1,6 +1,6 @@
+#include <di/concepts/trivial.h>
+#include <di/concepts/trivially_default_constructible.h>
 #include <di/prelude.h>
-#include <di/util/concepts/trivial.h>
-#include <di/util/concepts/trivially_default_constructible.h>
 #include <test/test.h>
 
 constexpr void basic() {
@@ -84,21 +84,21 @@ struct Z {
 };
 
 constexpr void trivial() {
-    static_assert(!di::conc::TriviallyDefaultConstructible<di::Optional<int>>);
-    static_assert(di::conc::TriviallyCopyConstructible<di::Optional<int>>);
-    static_assert(di::conc::TriviallyMoveConstructible<di::Optional<int>>);
-    static_assert(di::conc::TriviallyCopyAssignable<di::Optional<int>>);
-    static_assert(di::conc::TriviallyMoveAssignable<di::Optional<int>>);
-    static_assert(di::conc::TriviallyDestructible<di::Optional<int>>);
-    static_assert(!di::conc::Trivial<di::Optional<int>>);
+    static_assert(!di::concepts::TriviallyDefaultConstructible<di::Optional<int>>);
+    static_assert(di::concepts::TriviallyCopyConstructible<di::Optional<int>>);
+    static_assert(di::concepts::TriviallyMoveConstructible<di::Optional<int>>);
+    static_assert(di::concepts::TriviallyCopyAssignable<di::Optional<int>>);
+    static_assert(di::concepts::TriviallyMoveAssignable<di::Optional<int>>);
+    static_assert(di::concepts::TriviallyDestructible<di::Optional<int>>);
+    static_assert(!di::concepts::Trivial<di::Optional<int>>);
 
-    static_assert(!di::conc::TriviallyDefaultConstructible<di::Optional<Z&>>);
-    static_assert(di::conc::TriviallyCopyConstructible<di::Optional<Z&>>);
-    static_assert(di::conc::TriviallyMoveConstructible<di::Optional<Z&>>);
-    static_assert(di::conc::TriviallyCopyAssignable<di::Optional<Z&>>);
-    static_assert(di::conc::TriviallyMoveAssignable<di::Optional<Z&>>);
-    static_assert(di::conc::TriviallyDestructible<di::Optional<Z&>>);
-    static_assert(!di::conc::Trivial<di::Optional<Z&>>);
+    static_assert(!di::concepts::TriviallyDefaultConstructible<di::Optional<Z&>>);
+    static_assert(di::concepts::TriviallyCopyConstructible<di::Optional<Z&>>);
+    static_assert(di::concepts::TriviallyMoveConstructible<di::Optional<Z&>>);
+    static_assert(di::concepts::TriviallyCopyAssignable<di::Optional<Z&>>);
+    static_assert(di::concepts::TriviallyMoveAssignable<di::Optional<Z&>>);
+    static_assert(di::concepts::TriviallyDestructible<di::Optional<Z&>>);
+    static_assert(!di::concepts::Trivial<di::Optional<Z&>>);
 
     auto y = di::Optional<Z&>();
     auto x = y;
@@ -169,14 +169,14 @@ constexpr void swap() {
 struct X {};
 
 constexpr void compare() {
-    static_assert(di::conc::EqualityComparable<di::Optional<int>>);
-    static_assert(di::conc::EqualityComparableWith<di::Optional<int>, di::Optional<long>>);
-    static_assert(di::conc::EqualityComparableWith<di::Optional<int>, di::vocab::optional::NullOpt>);
-    static_assert(di::conc::EqualityComparableWith<di::Optional<int>, int>);
-    static_assert(di::conc::EqualityComparableWith<di::Optional<di::Optional<int>>, di::Optional<int>>);
-    static_assert(di::conc::EqualityComparableWith<di::Optional<di::Optional<int>>, int>);
-    static_assert(!di::conc::EqualityComparableWith<X, X>);
-    static_assert(!di::conc::EqualityComparableWith<di::Optional<X>, di::Optional<X>>);
+    static_assert(di::concepts::EqualityComparable<di::Optional<int>>);
+    static_assert(di::concepts::EqualityComparableWith<di::Optional<int>, di::Optional<long>>);
+    static_assert(di::concepts::EqualityComparableWith<di::Optional<int>, di::vocab::optional::NullOpt>);
+    static_assert(di::concepts::EqualityComparableWith<di::Optional<int>, int>);
+    static_assert(di::concepts::EqualityComparableWith<di::Optional<di::Optional<int>>, di::Optional<int>>);
+    static_assert(di::concepts::EqualityComparableWith<di::Optional<di::Optional<int>>, int>);
+    static_assert(!di::concepts::EqualityComparableWith<X, X>);
+    static_assert(!di::concepts::EqualityComparableWith<di::Optional<X>, di::Optional<X>>);
     auto x = di::make_optional(3);
     auto y = di::make_optional(3l);
     auto z = di::Optional<di::Optional<di::Optional<int>>> { di::in_place, di::in_place, di::in_place, 2 };
@@ -188,14 +188,14 @@ constexpr void compare() {
     EXPECT(z == 2);
     EXPECT(z != 1);
 
-    static_assert(di::conc::ThreeWayComparable<di::Optional<int>>);
-    static_assert(di::conc::ThreeWayComparableWith<di::Optional<int>, di::Optional<long>>);
-    static_assert(di::conc::ThreeWayComparableWith<di::Optional<int>, di::vocab::optional::NullOpt>);
-    static_assert(di::conc::ThreeWayComparableWith<di::Optional<int>, int>);
-    static_assert(di::conc::ThreeWayComparableWith<di::Optional<di::Optional<int>>, di::Optional<int>>);
-    static_assert(di::conc::ThreeWayComparableWith<di::Optional<di::Optional<int>>, int>);
-    static_assert(!di::conc::ThreeWayComparableWith<X, X>);
-    static_assert(!di::conc::ThreeWayComparableWith<di::Optional<X>, di::Optional<X>>);
+    static_assert(di::concepts::ThreeWayComparable<di::Optional<int>>);
+    static_assert(di::concepts::ThreeWayComparableWith<di::Optional<int>, di::Optional<long>>);
+    static_assert(di::concepts::ThreeWayComparableWith<di::Optional<int>, di::vocab::optional::NullOpt>);
+    static_assert(di::concepts::ThreeWayComparableWith<di::Optional<int>, int>);
+    static_assert(di::concepts::ThreeWayComparableWith<di::Optional<di::Optional<int>>, di::Optional<int>>);
+    static_assert(di::concepts::ThreeWayComparableWith<di::Optional<di::Optional<int>>, int>);
+    static_assert(!di::concepts::ThreeWayComparableWith<X, X>);
+    static_assert(!di::concepts::ThreeWayComparableWith<di::Optional<X>, di::Optional<X>>);
 
     EXPECT(x <= y);
     EXPECT(x < di::make_optional(4l));

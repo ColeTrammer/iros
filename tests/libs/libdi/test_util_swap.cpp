@@ -2,9 +2,9 @@
 #include <test/test.h>
 
 constexpr void basic() {
-    static_assert(di::conc::Swappable<int>);
-    static_assert(di::conc::SwappableWith<int, long>);
-    static_assert(!di::conc::SwappableWith<char, char const*>);
+    static_assert(di::concepts::Swappable<int>);
+    static_assert(di::concepts::SwappableWith<int, long>);
+    static_assert(!di::concepts::SwappableWith<char, char const*>);
 
     int a = 13;
     int b = 26;
@@ -24,7 +24,7 @@ private:
 };
 
 constexpr void custom() {
-    static_assert(di::conc::Swappable<X>);
+    static_assert(di::concepts::Swappable<X>);
 
     int c = 0;
 
@@ -44,7 +44,7 @@ struct Y {
 };
 
 constexpr void non_assignable() {
-    static_assert(di::conc::Swappable<Y>);
+    static_assert(di::concepts::Swappable<Y>);
 
     auto a = Y { 3 };
     auto b = Y { 7 };
@@ -67,7 +67,7 @@ struct Z {
 };
 
 constexpr void move_only() {
-    static_assert(di::conc::Swappable<Z>);
+    static_assert(di::concepts::Swappable<Z>);
 
     auto a = Z { 2 };
     auto b = Z { 4 };

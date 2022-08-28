@@ -1,13 +1,13 @@
 #pragma once
 
-#include <di/util/meta/add_const.h>
+#include <di/meta/add_const.h>
 
 #ifdef DI_USE_STD
 #include <utility>
 #else
 namespace std {
 template<typename T>
-constexpr di::util::meta::AddConst<T>& move(T& value) noexcept {
+constexpr di::meta::AddConst<T>& move(T& value) noexcept {
     return value;
 }
 

@@ -1,7 +1,7 @@
 #pragma once
 
+#include <di/meta/decay.h>
 #include <di/util/destroy_at.h>
-#include <di/util/meta/decay.h>
 #include <di/util/move.h>
 
 namespace di::util {

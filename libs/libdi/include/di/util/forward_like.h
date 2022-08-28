@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/util/meta/like.h>
-#include <di/util/meta/remove_reference.h>
+#include <di/meta/like.h>
+#include <di/meta/remove_reference.h>
 
 namespace di::util {
 template<typename T, typename U>

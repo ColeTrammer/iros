@@ -1,5 +1,5 @@
+#include <di/concepts/same_as.h>
 #include <di/prelude.h>
-#include <di/util/concepts/same_as.h>
 #include <di/util/invoke.h>
 #include <test/test.h>
 
@@ -17,15 +17,15 @@ constexpr void function() {
         return y + z;
     };
 
-    static_assert(di::conc::Invocable<decltype(f), int, int>);
-    static_assert(di::conc::Invocable<decltype(f), int, short>);
-    static_assert(di::conc::InvocableTo<decltype(f), int, int, short>);
-    static_assert(di::conc::InvocableTo<decltype(f), long, int, short>);
-    static_assert(!di::conc::InvocableTo<decltype(f), char const*, int, short>);
-    static_assert(!di::conc::InvocableTo<decltype(f), Z, int, short>);
-    static_assert(!di::conc::Invocable<decltype(f), int, char const*>);
-    static_assert(!di::conc::Invocable<decltype(f), int, int, int>);
-    static_assert(di::conc::SameAs<int, di::meta::InvokeResult<decltype(f), int, int>>);
+    static_assert(di::concepts::Invocable<decltype(f), int, int>);
+    static_assert(di::concepts::Invocable<decltype(f), int, short>);
+    static_assert(di::concepts::InvocableTo<decltype(f), int, int, short>);
+    static_assert(di::concepts::InvocableTo<decltype(f), long, int, short>);
+    static_assert(!di::concepts::InvocableTo<decltype(f), char const*, int, short>);
+    static_assert(!di::concepts::InvocableTo<decltype(f), Z, int, short>);
+    static_assert(!di::concepts::Invocable<decltype(f), int, char const*>);
+    static_assert(!di::concepts::Invocable<decltype(f), int, int, int>);
+    static_assert(di::concepts::SameAs<int, di::meta::InvokeResult<decltype(f), int, int>>);
 
     EXPECT_EQ(di::invoke(f, 3, 6), 9);
 }
@@ -33,13 +33,13 @@ constexpr void function() {
 constexpr void member_object() {
     auto f = &X::y;
 
-    static_assert(di::conc::Invocable<decltype(f), X>);
-    static_assert(di::conc::Invocable<decltype(f), Y>);
-    static_assert(di::conc::Invocable<decltype(f), di::ReferenceWrapper<Y>>);
-    static_assert(!di::conc::Invocable<decltype(f), Z>);
-    static_assert(!di::conc::Invocable<decltype(f)>);
-    static_assert(!di::conc::Invocable<decltype(f), X, X>);
-    static_assert(di::conc::SameAs<int const&, di::meta::InvokeResult<decltype(f), X const&>>);
+    static_assert(di::concepts::Invocable<decltype(f), X>);
+    static_assert(di::concepts::Invocable<decltype(f), Y>);
+    static_assert(di::concepts::Invocable<decltype(f), di::ReferenceWrapper<Y>>);
+    static_assert(!di::concepts::Invocable<decltype(f), Z>);
+    static_assert(!di::concepts::Invocable<decltype(f)>);
+    static_assert(!di::concepts::Invocable<decltype(f), X, X>);
+    static_assert(di::concepts::SameAs<int const&, di::meta::InvokeResult<decltype(f), X const&>>);
 
     auto x = X { 42 };
     EXPECT_EQ(di::invoke(f, x), 42);
@@ -55,13 +55,13 @@ constexpr void member_object() {
 constexpr void member_function() {
     auto f = &X::z;
 
-    static_assert(di::conc::Invocable<decltype(f), X, int>);
-    static_assert(di::conc::Invocable<decltype(f), di::ReferenceWrapper<Y>, int>);
-    static_assert(di::conc::Invocable<decltype(f), Y, int>);
-    static_assert(!di::conc::Invocable<decltype(f), Z, int>);
-    static_assert(!di::conc::Invocable<decltype(f), X>);
-    static_assert(!di::conc::Invocable<decltype(f), X, int, int>);
-    static_assert(di::conc::SameAs<int, di::meta::InvokeResult<decltype(f), X, int>>);
+    static_assert(di::concepts::Invocable<decltype(f), X, int>);
+    static_assert(di::concepts::Invocable<decltype(f), di::ReferenceWrapper<Y>, int>);
+    static_assert(di::concepts::Invocable<decltype(f), Y, int>);
+    static_assert(!di::concepts::Invocable<decltype(f), Z, int>);
+    static_assert(!di::concepts::Invocable<decltype(f), X>);
+    static_assert(!di::concepts::Invocable<decltype(f), X, int, int>);
+    static_assert(di::concepts::SameAs<int, di::meta::InvokeResult<decltype(f), X, int>>);
 
     auto x = X { 42 };
     EXPECT_EQ(di::invoke(f, x, 5), 47);
@@ -79,7 +79,7 @@ constexpr void invoke_r_void() {
         return 32;
     };
 
-    static_assert(di::conc::InvocableTo<decltype(f), void>);
+    static_assert(di::concepts::InvocableTo<decltype(f), void>);
 
     di::invoke_r<void>(f);
 }

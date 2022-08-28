@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/util/concepts/implicitly_convertible_to.h>
+#include <di/concepts/implicitly_convertible_to.h>
+#include <di/meta/decay.h>
 #include <di/util/declval.h>
 #include <di/util/forward.h>
-#include <di/util/meta/decay.h>
 
 namespace di::util {
 namespace tag_invoke_detail {
@@ -23,21 +23,21 @@ inline namespace tag_invoke_ns {
 }
 
 template<auto& T>
-using Tag = di::util::meta::Decay<decltype(T)>;
-
-namespace concepts {
-    template<typename Tag, typename... Args>
-    concept TagInvocable = requires(Tag tag, Args&&... args) { di::util::tag_invoke(tag, util::forward<Args>(args)...); };
+using Tag = di::meta::Decay<decltype(T)>;
 }
 
-namespace meta {
-    template<typename Tag, typename... Args>
-    requires(concepts::TagInvocable<Tag, Args...>)
-    using TagInvokeResult = decltype(di::util::tag_invoke(util::declval<Tag>(), util::declval<Args>()...));
+namespace di::concepts {
+template<typename Tag, typename... Args>
+concept TagInvocable = requires(Tag tag, Args&&... args) { di::util::tag_invoke(tag, util::forward<Args>(args)...); };
 }
 
-namespace concepts {
-    template<typename Tag, typename R, typename... Args>
-    concept TagInvocableTo = TagInvocable<Tag, Args...> && ImplicitlyConvertibleTo<R, meta::TagInvokeResult<Tag, Args...>>;
+namespace di::meta {
+template<typename Tag, typename... Args>
+requires(concepts::TagInvocable<Tag, Args...>)
+using TagInvokeResult = decltype(di::util::tag_invoke(util::declval<Tag>(), util::declval<Args>()...));
 }
+
+namespace di::concepts {
+template<typename Tag, typename R, typename... Args>
+concept TagInvocableTo = TagInvocable<Tag, Args...> && ImplicitlyConvertibleTo<R, meta::TagInvokeResult<Tag, Args...>>;
 }
