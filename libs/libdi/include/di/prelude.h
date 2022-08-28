@@ -12,6 +12,7 @@ using di::types::i64;
 using di::types::i8;
 using di::types::ptrdiff_t;
 using di::types::size_t;
+using di::types::ssize_t;
 using di::types::u16;
 using di::types::u32;
 using di::types::u64;

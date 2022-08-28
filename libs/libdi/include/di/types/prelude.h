@@ -9,6 +9,7 @@
 #include <di/types/piecewise_construct.h>
 #include <di/types/ptrdiff_t.h>
 #include <di/types/size_t.h>
+#include <di/types/ssize_t.h>
 #include <di/types/strong_ordering.h>
 #include <di/types/weak_ordering.h>
 
@@ -16,11 +17,17 @@ namespace di {
 using types::in_place;
 using types::in_place_index;
 using types::in_place_type;
+using types::piecewise_construct;
+
+using types::InPlace;
+using types::InPlaceIndex;
+using types::InPlaceType;
 using types::nullptr_t;
 using types::partial_ordering;
-using types::piecewise_construct;
+using types::PiecewiseConstruct;
 using types::ptrdiff_t;
 using types::size_t;
+using types::ssize_t;
 using types::strong_ordering;
 using types::weak_ordering;
 }
