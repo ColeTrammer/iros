@@ -1,5 +1,7 @@
 #include <di/container/interface/begin.h>
 #include <di/container/interface/end.h>
+#include <di/container/view/owning_view.h>
+#include <di/container/view/ref_view.h>
 #include <di/container/view/view.h>
 #include <test/test.h>
 

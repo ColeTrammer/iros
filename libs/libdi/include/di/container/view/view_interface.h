@@ -6,6 +6,7 @@
 #include <di/container/concepts/common_container.h>
 #include <di/container/concepts/contiguous_iterator.h>
 #include <di/container/concepts/forward_container.h>
+#include <di/container/concepts/has_empty_container.h>
 #include <di/container/concepts/random_access_container.h>
 #include <di/container/concepts/sized_container.h>
 #include <di/container/interface/empty.h>
@@ -44,13 +45,13 @@ public:
     }
 
     constexpr explicit operator bool()
-    requires(requires(Self& self) { container::empty(self); })
+    requires(concepts::HasEmptyContainer<Self>)
     {
         return !container::empty(self);
     }
 
     constexpr explicit operator bool() const
-    requires(requires(Self const& self) { container::empty(self); })
+    requires(concepts::HasEmptyContainer<Self const>)
     {
         return !container::empty(self);
     }
