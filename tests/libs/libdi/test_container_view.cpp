@@ -9,6 +9,10 @@ constexpr void basic() {
     int arr[] = { 1, 2, 3, 4, 5 };
     auto x = di::container::View { di::container::begin(arr), di::container::end(arr) };
 
+    auto [s, e] = x;
+    EXPECT_EQ(s, arr + 0);
+    EXPECT_EQ(e, arr + 5);
+
     {
         auto sum = 0;
         for (auto z : x) {

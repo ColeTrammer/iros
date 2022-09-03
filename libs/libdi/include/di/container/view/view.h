@@ -19,15 +19,20 @@
 #include <di/container/meta/iterator_size_type.h>
 #include <di/container/meta/iterator_ssize_type.h>
 #include <di/container/view/view_interface.h>
+#include <di/meta/add_member_get.h>
+#include <di/meta/like.h>
+#include <di/util/forward_like.h>
 #include <di/util/move.h>
 #include <di/util/store_if.h>
+#include <di/vocab/tuple/enable_generate_structed_bindings.h>
 
 namespace di::container {
 template<concepts::Iterator Iter, concepts::SentinelFor<Iter> Sent, bool is_sized = concepts::SizedSentinelFor<Sent, Iter>>
 requires(is_sized || !concepts::SizedSentinelFor<Sent, Iter>)
 class View
     : public ViewInterface<View<Iter, Sent, is_sized>>
-    , public meta::EnableBorrowedContainer<View<Iter, Sent, is_sized>> {
+    , public meta::EnableBorrowedContainer<View<Iter, Sent, is_sized>>
+    , public meta::AddMemberGet<View<Iter, Sent, is_sized>> {
 private:
     constexpr static bool store_size = is_sized && !concepts::SizedSentinelFor<Sent, Iter>;
 
@@ -119,6 +124,32 @@ public:
     }
 
 private:
+    constexpr friend Iter tag_invoke(types::Tag<vocab::tuple::tuple_element>, types::InPlaceType<View>, types::InPlaceIndex<0>) {}
+
+    constexpr friend Sent tag_invoke(types::Tag<vocab::tuple::tuple_element>, types::InPlaceType<View>, types::InPlaceIndex<1>) {}
+
+    constexpr friend types::size_t tag_invoke(types::Tag<vocab::tuple::tuple_size>, types::InPlaceType<View>) { return 2; }
+
+    template<concepts::DecaySameAs<View> Self>
+    constexpr friend meta::Like<Self, Iter> tag_invoke(types::Tag<util::get_in_place>, types::InPlaceIndex<0>, Self&& self) {
+        return util::forward_like<Self>(self.m_iterator);
+    }
+
+    template<concepts::DecaySameAs<View> Self>
+    constexpr friend meta::Like<Self, Sent> tag_invoke(types::Tag<util::get_in_place>, types::InPlaceIndex<1>, Self&& self) {
+        return util::forward_like<Self>(self.m_sentinel);
+    }
+
+    template<concepts::DecaySameAs<View> Self, typename T>
+    requires(!concepts::SameAs<Iter, Sent> && (concepts::SameAs<T, Iter> || concepts::SameAs<T, Sent>) )
+    constexpr friend decltype(auto) tag_invoke(types::Tag<util::get_in_place>, types::InPlaceType<T>, Self&& self) {
+        if constexpr (concepts::SameAs<T, Iter>) {
+            return util::get<0>(util::forward<Self>(self));
+        } else {
+            return util::get<1>(util::forward<Self>(self));
+        }
+    }
+
     Iter m_iterator;
     Sent m_sentinel;
     [[no_unique_address]] util::StoreIf<SizeType, store_size> m_size;
