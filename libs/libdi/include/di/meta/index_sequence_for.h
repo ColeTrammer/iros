@@ -4,5 +4,5 @@
 
 namespace di::meta {
 template<typename... Types>
-using IndexSequenceFor = MakeIndexSequence<sizeof...(T)>;
+using IndexSequenceFor = MakeIndexSequence<sizeof...(Types)>;
 }

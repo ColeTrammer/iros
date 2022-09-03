@@ -4,6 +4,7 @@
 #include <di/util/declval.h>
 #include <di/util/exchange.h>
 #include <di/util/forward.h>
+#include <di/util/get.h>
 #include <di/util/initializer_list.h>
 #include <di/util/invoke.h>
 #include <di/util/move.h>
@@ -34,6 +35,7 @@ using util::as_const;
 using util::declval;
 using util::exchange;
 using util::forward;
+using util::get;
 using util::move;
 using util::swap;
 using util::unreachable;

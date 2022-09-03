@@ -7,6 +7,7 @@ set(TEST_FILES
     test_util_swap.cpp
     test_util_tag_invoke.cpp
     test_vocab_optional.cpp
+    test_vocab_tuple.cpp
 )
 
 add_os_tests(libdi ${TEST_FILES})
