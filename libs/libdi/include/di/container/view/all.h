@@ -17,9 +17,7 @@ namespace detail {
     template<typename Con>
     concept AllOwningView = requires(Con&& container) { OwningView { util::forward<Con>(container) }; };
 
-    struct AllFunction
-        : view_adapter::ViewAdapter<AllFunction>
-        , view_adapter::EnableViewClosure {
+    struct AllFunction : view_adapter::EnableViewClosure {
         template<concepts::ViewableContainer Con>
         requires(concepts::View<meta::Decay<Con>> || AllRefView<Con> || AllOwningView<Con>)
         constexpr auto operator()(Con&& container) const {
@@ -31,8 +29,6 @@ namespace detail {
                 return OwningView { util::forward<Con>(container) };
             }
         }
-
-        using view_adapter::ViewAdapter<AllFunction>::operator();
     };
 }
 

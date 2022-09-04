@@ -136,7 +136,7 @@ public:
     }
 
 private:
-    Self& self() { return static_cast<Self&>(*this); }
-    Self const& self() const { return static_cast<Self const&>(*this); }
+    constexpr Self& self() { return static_cast<Self&>(*this); }
+    constexpr Self const& self() const { return static_cast<Self const&>(*this); }
 };
 }

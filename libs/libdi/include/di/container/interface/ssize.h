@@ -12,7 +12,7 @@ struct SSizeFunction;
 
 namespace detail {
     template<typename T>
-    concept CustomSSize = concepts::TagInvocableTo<SSizeFunction, meta::IteratorSSizeType<meta::ContainerIterator<T>>>;
+    concept CustomSSize = concepts::TagInvocableTo<SSizeFunction, meta::IteratorSSizeType<meta::ContainerIterator<T>>, T>;
 
     template<typename T>
     concept SizeSSize = requires { typename meta::ContainerSizeType<T>; };
