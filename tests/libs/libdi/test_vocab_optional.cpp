@@ -3,6 +3,8 @@
 #include <di/prelude.h>
 #include <test/test.h>
 
+static_assert(sizeof(di::Optional<int&>) == sizeof(int*));
+
 constexpr void basic() {
     auto x = di::Optional<int> {};
     EXPECT(!x.has_value());
@@ -207,6 +209,32 @@ constexpr void compare() {
     EXPECT(z > 1);
 }
 
+constexpr void container() {
+    auto x = di::make_optional(2);
+    EXPECT(!x.empty());
+    EXPECT_EQ(x.size(), 1u);
+    for (auto y : x) {
+        EXPECT_EQ(y, 2);
+    }
+
+    auto& y = *x.front();
+    EXPECT_EQ(y, 2);
+
+    auto z = di::make_optional(di::ref(*x));
+    for (auto& y : x) {
+        EXPECT_EQ(y, 2);
+        y = 3;
+    }
+
+    EXPECT_EQ(*x, 3);
+
+    auto a = di::Optional<int> {};
+    for (auto y : a) {
+        (void) y;
+        EXPECT(false);
+    }
+}
+
 TEST_CONSTEXPR(vocab_optional, basic, basic)
 TEST_CONSTEXPR(vocab_optional, conversions, conversions)
 TEST_CONSTEXPR(vocab_optional, make_optional, make_optional)
@@ -215,3 +243,4 @@ TEST_CONSTEXPR(vocab_optional, trivial, trivial)
 TEST_CONSTEXPR(vocab_optional, monad, monad)
 TEST_CONSTEXPR(vocab_optional, swap, swap)
 TEST_CONSTEXPR(vocab_optional, compare, compare)
+TEST_CONSTEXPR(vocab_optional, container, container)

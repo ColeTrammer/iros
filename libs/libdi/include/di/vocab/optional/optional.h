@@ -3,6 +3,7 @@
 #include <di/concepts/convertible_to.h>
 #include <di/concepts/copyable.h>
 #include <di/concepts/equality_comparable_with.h>
+#include <di/concepts/lvalue_reference.h>
 #include <di/concepts/one_of.h>
 #include <di/concepts/scalar.h>
 #include <di/concepts/three_way_comparable_with.h>
@@ -11,12 +12,15 @@
 #include <di/concepts/trivially_destructible.h>
 #include <di/concepts/trivially_move_assignable.h>
 #include <di/concepts/trivially_move_constructible.h>
+#include <di/container/meta/enable_borrowed_container.h>
+#include <di/container/meta/enable_view.h>
 #include <di/meta/compare_three_way_result.h>
 #include <di/meta/decay.h>
 #include <di/meta/optional_rank.h>
 #include <di/meta/remove_cvref.h>
 #include <di/types/in_place.h>
 #include <di/util/addressof.h>
+#include <di/util/declval.h>
 #include <di/util/invoke.h>
 #include <di/util/move.h>
 #include <di/util/swap.h>
@@ -25,7 +29,9 @@
 
 namespace di::vocab::optional {
 template<typename T>
-class Optional {
+class Optional
+    : public meta::EnableView<Optional<T>>
+    , public meta::EnableBorrowedContainer<Optional<T>, concepts::LValueReference<T>> {
 private:
     using Storage = StorageFor<T>;
     static_assert(OptionalStorage<Storage, T>);
@@ -142,11 +148,18 @@ public:
         return *this;
     }
 
+    // Accessors
     constexpr bool has_value() const { return !is_nullopt(m_storage); }
     constexpr explicit operator bool() const { return has_value(); }
 
-    constexpr auto operator->() { return util::addressof(value()); }
-    constexpr auto operator->() const { return util::addressof(value()); }
+    using Reference = decltype(get_value(util::declval<Storage&>()));
+    using ConstReference = decltype(get_value(util::declval<Storage const&>()));
+
+    using Pointer = decltype(util::addressof(util::declval<Reference>()));
+    using ConstPointer = decltype(util::addressof(util::declval<ConstReference>()));
+
+    constexpr Pointer operator->() { return util::addressof(value()); }
+    constexpr ConstPointer operator->() const { return util::addressof(value()); }
 
     constexpr decltype(auto) operator*() & { return value(); }
     constexpr decltype(auto) operator*() const& { return value(); }
@@ -169,6 +182,75 @@ public:
         return has_value() ? util::move(*this).value() : static_cast<T>(util::forward<U>(fallback));
     }
 
+    // Container interface
+    constexpr Pointer begin() {
+        if (!has_value()) {
+            return nullptr;
+        }
+        return util::addressof(value());
+    }
+
+    constexpr ConstPointer begin() const {
+        if (!has_value()) {
+            return nullptr;
+        }
+        return util::addressof(value());
+    }
+
+    constexpr Pointer end() {
+        if (!has_value()) {
+            return nullptr;
+        }
+        return util::addressof(value()) + 1;
+    }
+
+    constexpr ConstPointer end() const {
+        if (!has_value()) {
+            return nullptr;
+        }
+        return util::addressof(value()) + 1;
+    }
+
+    constexpr bool empty() const { return !has_value(); }
+    constexpr types::size_t size() const { return has_value(); }
+
+    constexpr Pointer data() { return begin(); }
+    constexpr ConstPointer data() const { return begin(); }
+
+    constexpr Optional<Reference> front() {
+        if (!has_value()) {
+            return nullopt;
+        }
+        return **this;
+    }
+    constexpr Optional<ConstReference> front() const {
+        if (!has_value()) {
+            return nullopt;
+        }
+        return **this;
+    }
+
+    constexpr Optional<Reference> back() { return front(); }
+    constexpr Optional<ConstReference> back() const { return front(); }
+
+    constexpr Reference operator[](types::ssize_t index) { return *at(index); }
+    constexpr ConstReference operator[](types::ssize_t index) const { return *at(index); }
+
+    constexpr Optional<Reference> at(types::ssize_t index) {
+        if (index != 0) {
+            return nullopt;
+        }
+        return front();
+    }
+
+    constexpr Optional<ConstReference> at(types::ssize_t index) const {
+        if (index != 0) {
+            return nullopt;
+        }
+        return front();
+    }
+
+    // Monadic functions
     template<concepts::Invocable<OptionalGetValue<Storage&>> F, typename R = meta::InvokeResult<F, OptionalGetValue<Storage&>>>
     requires(concepts::Optional<R>)
     constexpr R and_then(F&& f) & {
