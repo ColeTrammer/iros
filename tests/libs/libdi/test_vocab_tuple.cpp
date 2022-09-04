@@ -30,9 +30,15 @@ constexpr void enable_structed_bindings() {
     auto x = X {};
     auto [y] = x;
 
+    auto const z = X {};
+    auto [zz] = z;
+
+    static_assert(di::concepts::SameAs<decltype(zz), int>);
+
     (void) x.get<0>();
 
     (void) y;
+    (void) zz;
 }
 
 struct XX {
@@ -100,6 +106,15 @@ constexpr void basic() {
     EXPECT_EQ(i, 1);
     EXPECT_EQ(j, 2);
     EXPECT_EQ(k, 3);
+
+    auto const z = di::make_tuple(9, 9);
+    auto& [n, m] = z;
+    EXPECT_EQ(n, 9);
+    EXPECT_EQ(m, 9);
+    static_assert(di::concepts::SameAs<decltype((n)), int const&>);
+    static_assert(di::concepts::SameAs<decltype((m)), int const&>);
+
+    static_assert(di::concepts::SameAs<std::tuple_element<0, di::Tuple<int, int> const>::type, int const>);
 }
 
 constexpr void assignment() {

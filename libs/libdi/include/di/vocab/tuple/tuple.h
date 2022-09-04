@@ -2,7 +2,11 @@
 
 #include <di/concepts/const_lvalue_refernece.h>
 #include <di/concepts/constructible_from.h>
+#include <di/concepts/copy_assignable.h>
+#include <di/concepts/copy_constructible.h>
 #include <di/concepts/decay_same_as.h>
+#include <di/concepts/move_assignable.h>
+#include <di/concepts/move_constructible.h>
 #include <di/concepts/mutable_rvalue_reference.h>
 #include <di/meta/add_member_get.h>
 #include <di/meta/index_sequence_for.h>
@@ -32,11 +36,12 @@ public:
     constexpr Tuple(Tuple&&) = default;
 
     constexpr Tuple(Types const&... args)
-    requires(concepts::Conjunction<concepts::CopyConstructible<Types>...>)
+    requires(sizeof...(Types) > 0 && concepts::Conjunction<concepts::CopyConstructible<Types>...>)
         : Base(construct_tuple_impl_valuewise, args...) {}
 
     template<typename... Args>
-    requires(sizeof...(Types) == sizeof...(Args) && concepts::Conjunction<concepts::ConstructibleFrom<Types, Args>...>)
+    requires(sizeof...(Types) == sizeof...(Args) && sizeof...(Types) > 0 &&
+             concepts::Conjunction<concepts::ConstructibleFrom<Types, Args>...>)
     constexpr Tuple(Args&&... args) : Base(construct_tuple_impl_valuewise, util::forward<Args>(args)...) {}
 
     template<typename Tup>
@@ -98,9 +103,10 @@ private:
 
     template<types::size_t index, concepts::DecaySameAs<Tuple> Self>
     requires(index < sizeof...(Types))
-    constexpr friend decltype(auto) tag_invoke(types::Tag<util::get_in_place>, types::InPlaceIndex<index>, Self&& self) {
-        using Base = TupleImpl<meta::IndexSequenceFor<Types...>, Types...>;
-        return Base::static_get(types::in_place_index<index>, util::forward_as_base<Self, Base>(self));
+    constexpr friend meta::Like<Self, meta::TupleElement<Self, index>>&& tag_invoke(types::Tag<util::get_in_place>,
+                                                                                    types::InPlaceIndex<index>, Self&& self) {
+        using Impl = detail::TupleImplBase<index, meta::IndexSequenceFor<Types...>, Types...>::Type;
+        return static_cast<meta::Like<Self, meta::TupleElement<Self, index>>&&>(Impl::static_get(util::forward_as_base<Self, Impl>(self)));
     }
 };
 

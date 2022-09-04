@@ -1,6 +1,8 @@
 #pragma once
 
 #include <di/util/as_const.h>
+#include <di/util/bind_back.h>
+#include <di/util/bind_front.h>
 #include <di/util/declval.h>
 #include <di/util/exchange.h>
 #include <di/util/forward.h>
@@ -13,6 +15,9 @@
 #include <di/util/unreachable.h>
 
 namespace di {
+using util::bind_back;
+using util::bind_front;
+
 using concepts::TagInvocable;
 using concepts::TagInvocableTo;
 using meta::TagInvokeResult;

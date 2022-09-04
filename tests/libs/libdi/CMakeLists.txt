@@ -3,6 +3,7 @@ set(TEST_FILES
     test_container_concepts.cpp
     test_container_view.cpp
     test_meta.cpp
+    test_util_bind.cpp
     test_util_invoke.cpp
     test_util_swap.cpp
     test_util_tag_invoke.cpp

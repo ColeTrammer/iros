@@ -10,6 +10,7 @@ using vocab::nullopt;
 using vocab::Optional;
 
 using vocab::forward_as_tuple;
+using vocab::make_decayed_tuple;
 using vocab::make_tuple;
 using vocab::tie;
 using vocab::Tuple;

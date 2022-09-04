@@ -8,6 +8,9 @@ namespace detail {
     struct LikeHelper : TypeConstant<U> {};
 
     template<typename T, typename U>
+    struct LikeHelper<T const, U> : TypeConstant<U const> {};
+
+    template<typename T, typename U>
     struct LikeHelper<T&, U> : TypeConstant<U&> {};
 
     template<typename T, typename U>
