@@ -1,8 +1,13 @@
+#include <di/container/concepts/random_access_container.h>
 #include <di/container/interface/begin.h>
 #include <di/container/interface/end.h>
 #include <di/container/view/all.h>
+#include <di/container/view/empty.h>
+#include <di/container/view/iota.h>
 #include <di/container/view/owning_view.h>
+#include <di/container/view/range.h>
 #include <di/container/view/ref_view.h>
+#include <di/container/view/single.h>
 #include <di/container/view/view.h>
 #include <di/prelude.h>
 #include <test/test.h>
@@ -87,5 +92,54 @@ constexpr void all() {
     }
 }
 
+constexpr void empty() {
+    auto c = di::container::view::empty<int>;
+    for (auto x : c) {
+        (void) x;
+        EXPECT(false);
+    }
+    EXPECT(c.empty());
+}
+
+constexpr void single() {
+    auto c = di::container::view::single(5);
+
+    {
+        auto sum = 0;
+        for (auto z : c | di::container::view::all) {
+            sum += z;
+        }
+        EXPECT_EQ(sum, 5);
+    }
+
+    EXPECT_EQ(c.size(), 1u);
+}
+
+constexpr void iota() {
+    static_assert(di::concepts::Iterator<decltype(di::container::view::iota(1, 6).begin())>);
+    static_assert(di::concepts::RandomAccessContainer<decltype(di::container::view::iota(1, 6))>);
+    static_assert(di::concepts::RandomAccessContainer<decltype(di::container::view::iota(1))>);
+    static_assert(!di::concepts::CommonContainer<decltype(di::container::view::iota(1))>);
+
+    {
+        auto sum = 0;
+        for (auto z : di::container::view::iota(1, 6)) {
+            sum += z;
+        }
+        EXPECT_EQ(sum, 15);
+    }
+
+    {
+        auto sum = 0;
+        for (auto z : di::container::view::range(6)) {
+            sum += z;
+        }
+        EXPECT_EQ(sum, 15);
+    }
+}
+
 TEST_CONSTEXPR(container_view, basic, basic)
 TEST_CONSTEXPR(container_view, all, all)
+TEST_CONSTEXPR(container_view, empty, empty)
+TEST_CONSTEXPR(container_view, single, single)
+TEST_CONSTEXPR(container_view, iota, iota)
