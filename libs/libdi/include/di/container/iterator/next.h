@@ -5,7 +5,7 @@
 #include <di/container/meta/iterator_ssize_type.h>
 
 namespace di::container {
-struct PrevFunction {
+struct NextFunction {
     template<concepts::Iterator Iter>
     constexpr Iter operator()(Iter iterator) const {
         ++iterator;
@@ -31,5 +31,5 @@ struct PrevFunction {
     }
 };
 
-constexpr inline auto prev = PrevFunction {};
+constexpr inline auto next = NextFunction {};
 }

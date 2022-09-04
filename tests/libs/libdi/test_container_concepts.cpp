@@ -1,21 +1,3 @@
-#include <di/container/concepts/bidirectional_iterator.h>
-#include <di/container/concepts/borrowed_container.h>
-#include <di/container/concepts/container.h>
-#include <di/container/concepts/contiguous_container.h>
-#include <di/container/concepts/contiguous_iterator.h>
-#include <di/container/concepts/forward_iterator.h>
-#include <di/container/concepts/input_iterator.h>
-#include <di/container/concepts/random_access_iterator.h>
-#include <di/container/concepts/sentinel_for.h>
-#include <di/container/concepts/sized_container.h>
-#include <di/container/concepts/view.h>
-#include <di/container/interface/begin.h>
-#include <di/container/interface/enable_view.h>
-#include <di/container/interface/end.h>
-#include <di/container/interface/size.h>
-#include <di/container/meta/enable_borrowed_container.h>
-#include <di/container/meta/enable_view.h>
-#include <di/container/view/view.h>
 #include <di/prelude.h>
 
 static_assert(di::concepts::InputIterator<int*>);
