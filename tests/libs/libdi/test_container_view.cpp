@@ -91,7 +91,7 @@ constexpr void empty() {
 }
 
 constexpr void single() {
-    auto c = di::view::single(5);
+    auto c = di::single(5);
 
     {
         auto sum = 0;
@@ -127,8 +127,22 @@ constexpr void iota() {
     }
 }
 
+constexpr void repeat() {
+    static_assert(di::concepts::RandomAccessContainer<decltype(di::repeat(5, 5))>);
+    static_assert(di::concepts::RandomAccessContainer<decltype(di::repeat(5))>);
+
+    {
+        auto sum = 0;
+        for (auto z : di::repeat(5, 5)) {
+            sum += z;
+        }
+        EXPECT_EQ(sum, 25);
+    }
+}
+
 TEST_CONSTEXPR(container_view, basic, basic)
 TEST_CONSTEXPR(container_view, all, all)
 TEST_CONSTEXPR(container_view, empty, empty)
 TEST_CONSTEXPR(container_view, single, single)
 TEST_CONSTEXPR(container_view, iota, iota)
+TEST_CONSTEXPR(container_view, repeat, repeat)

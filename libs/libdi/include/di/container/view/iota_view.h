@@ -147,6 +147,7 @@ private:
         }
 
     private:
+        friend class IotaView;
         friend class Sentinal;
 
         constexpr friend bool operator==(Iterator const& a, Iterator const& b)
@@ -219,6 +220,8 @@ private:
         constexpr explicit Sentinel(Bound bound) : m_bound(bound) {}
 
     private:
+        friend class IotaView;
+
         constexpr friend bool operator==(Iterator const& a, Sentinel const& b) { return a.m_value == b.m_bound; }
 
         constexpr friend SSizeType operator-(Iterator const& a, Sentinel const& b)
@@ -240,6 +243,18 @@ public:
     constexpr explicit IotaView(T value) : m_value(value) {}
 
     constexpr IotaView(meta::TypeIdentity<T> value, meta::TypeIdentity<Bound> bound) : m_value(value), m_bound(bound) {}
+
+    constexpr IotaView(Iterator first, Iterator last)
+    requires(concepts::SameAs<T, Bound>)
+        : m_value(first.m_value), m_bound(last.m_value) {}
+
+    constexpr IotaView(Iterator first, Sentinel last)
+    requires(!concepts::SameAs<T, Bound> && is_bounded)
+        : m_value(first.m_value), m_bound(last.m_bound) {}
+
+    constexpr IotaView(Iterator first, UnreachableSentinel)
+    requires(!is_bounded)
+        : m_value(first.m_value) {}
 
     constexpr Iterator begin() const { return Iterator(m_value); }
 
