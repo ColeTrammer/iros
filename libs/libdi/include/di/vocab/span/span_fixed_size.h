@@ -37,6 +37,8 @@ class Span<T, extent>
     , public meta::EnableBorrowedContainer<Span<T, extent>>
     , public meta::AddMemberGet<Span<T, extent>> {
 public:
+    using Element = T;
+
     constexpr explicit Span()
     requires(extent == 0)
     = default;

@@ -17,6 +17,7 @@
 #include <di/container/meta/enable_borrowed_container.h>
 #include <di/container/meta/enable_view.h>
 #include <di/container/meta/iterator_value.h>
+#include <di/container/vector/constant_vector_interface.h>
 #include <di/meta/remove_cvref.h>
 #include <di/meta/remove_reference.h>
 #include <di/types/size_t.h>
@@ -28,7 +29,8 @@ namespace di::vocab {
 template<typename T>
 class Span<T, dynamic_extent>
     : public meta::EnableView<Span<T, dynamic_extent>>
-    , public meta::EnableBorrowedContainer<Span<T, dynamic_extent>> {
+    , public meta::EnableBorrowedContainer<Span<T, dynamic_extent>>
+    , public container::ConstantVectorInterface<Span<T, dynamic_extent>, T, T> {
 public:
     constexpr Span() = default;
 
@@ -63,99 +65,10 @@ public:
 
     constexpr Span& operator=(Span const&) = default;
 
-    constexpr T* begin() const { return data(); }
-    constexpr T* end() const { return data() + size(); }
-
-    constexpr Optional<T&> front() const {
-        if (empty()) {
-            return nullopt;
-        }
-        return (*this)[0];
-    }
-
-    constexpr Optional<T&> back() const {
-        if (empty()) {
-            return nullopt;
-        }
-        return (*this)[size() - 1];
-    }
-
-    constexpr vocab::Optional<T&> at(types::size_t index) const {
-        if (index >= size()) {
-            return nullopt;
-        }
-        return (*this)[index];
-    }
-
-    constexpr T& operator[](types::size_t index) const {
-        // DI_ASSERT( index < size() )
-        return data()[index];
-    }
-
     constexpr T* data() const { return m_data; }
-
     constexpr types::size_t size() const { return m_size; }
-    constexpr types::size_t size_bytes() const { return sizeof(T) * m_size; }
-    [[nodiscard]] constexpr bool empty() const { return size() == 0; }
 
-    constexpr Optional<Span> first(types::size_t count) const {
-        if (count > size()) {
-            return nullopt;
-        }
-        return Span { data(), count };
-    }
-
-    constexpr Optional<Span> last(types::size_t count) const {
-        if (count > size()) {
-            return nullopt;
-        }
-        return Span { end() - count, count };
-    }
-
-    constexpr Optional<Span> subspan(types::size_t offset) const {
-        if (offset > size()) {
-            return nullopt;
-        }
-        return Span { data() + offset, size() - offset };
-    }
-
-    constexpr Optional<Span> subspan(types::size_t offset, types::size_t count) const {
-        if (offset + count > size()) {
-            return nullopt;
-        }
-        return Span { data() + offset, count };
-    }
-
-    template<types::size_t count>
-    constexpr Optional<Span<T, count>> first() const {
-        if (count > size()) {
-            return nullopt;
-        }
-        return Span<T, count> { data(), count };
-    }
-
-    template<types::size_t count>
-    constexpr Optional<Span<T, count>> last() const {
-        if (count > size()) {
-            return nullopt;
-        }
-        return Span<T, count> { end() - count, count };
-    }
-
-    template<types::size_t offset, types::size_t count = dynamic_extent>
-    constexpr Optional<Span<T, count>> subspan() const {
-        if constexpr (count == dynamic_extent) {
-            if (offset > size()) {
-                return nullopt;
-            }
-            return Span { data() + offset, end() };
-        } else {
-            if (offset + count > size()) {
-                return nullopt;
-            }
-            return Span<T, count> { data() + offset, count };
-        }
-    }
+    constexpr Span span() const { return *this; }
 
 private:
     T* m_data { nullptr };
