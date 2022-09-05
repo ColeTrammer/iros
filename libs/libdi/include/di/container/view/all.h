@@ -4,7 +4,7 @@
 #include <di/container/concepts/viewable_container.h>
 #include <di/container/view/owning_view.h>
 #include <di/container/view/ref_view.h>
-#include <di/container/view/view_adapter.h>
+#include <di/function/curry_back.h>
 #include <di/meta/decay.h>
 #include <di/util/declval.h>
 #include <di/util/forward.h>
@@ -17,7 +17,7 @@ namespace detail {
     template<typename Con>
     concept AllOwningView = requires(Con&& container) { OwningView { util::forward<Con>(container) }; };
 
-    struct AllFunction : view_adapter::EnableViewClosure {
+    struct AllFunction : function::CurryBack<AllFunction> {
         template<concepts::ViewableContainer Con>
         requires(concepts::View<meta::Decay<Con>> || AllRefView<Con> || AllOwningView<Con>)
         constexpr auto operator()(Con&& container) const {

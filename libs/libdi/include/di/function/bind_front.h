@@ -3,6 +3,7 @@
 #include <di/concepts/conjunction.h>
 #include <di/concepts/constructible_from.h>
 #include <di/function/invoke.h>
+#include <di/function/pipeable.h>
 #include <di/meta/decay.h>
 #include <di/meta/index_sequence.h>
 #include <di/meta/index_sequence_for.h>
@@ -19,7 +20,7 @@ namespace detail {
     class BindFrontFunction;
 
     template<types::size_t... indices, typename F, typename... BoundArgs>
-    class BindFrontFunction<meta::IndexSequence<indices...>, F, BoundArgs...> {
+    class BindFrontFunction<meta::IndexSequence<indices...>, F, BoundArgs...> : public pipeline::EnablePipeline {
     public:
         template<typename Fun, typename... Args>
         constexpr BindFrontFunction(types::InPlace, Fun&& function, Args&&... bound_arguments)

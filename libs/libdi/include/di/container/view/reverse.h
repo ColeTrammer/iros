@@ -3,8 +3,8 @@
 #include <di/container/concepts/view.h>
 #include <di/container/view/reverse_view.h>
 #include <di/container/view/view.h>
-#include <di/container/view/view_adapter.h>
-#include <di/container/view/view_closure.h>
+#include <di/function/curry_back.h>
+#include <di/function/pipeable.h>
 #include <di/meta/false_type.h>
 #include <di/meta/remove_cv.h>
 #include <di/meta/true_type.h>
@@ -34,7 +34,7 @@ namespace detail {
     template<typename T>
     concept CanReverseView = requires(T&& container) { ReverseView { util::forward<T>(container) }; };
 
-    struct ReverseFunction : view_adapter::EnableViewClosure {
+    struct ReverseFunction : function::CurryBack<ReverseFunction> {
         template<concepts::ViewableContainer Con>
         requires(IsReverseView<Con> || IsReverseRawView<Con> || CanReverseView<Con>)
         constexpr auto operator()(Con&& container) const {

@@ -2,12 +2,21 @@
 
 #include <di/function/bind_back.h>
 #include <di/function/bind_front.h>
+#include <di/function/compose.h>
+#include <di/function/curry.h>
+#include <di/function/curry_back.h>
 #include <di/function/invoke.h>
+#include <di/function/piped.h>
+#include <di/function/pipeline.h>
 #include <di/function/tag_invoke.h>
 
 namespace di {
 using function::bind_back;
 using function::bind_front;
+using function::compose;
+using function::curry;
+using function::curry_back;
+using function::piped;
 
 using concepts::TagInvocable;
 using concepts::TagInvocableTo;
