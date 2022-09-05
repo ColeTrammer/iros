@@ -1,12 +1,19 @@
 #pragma once
 
 #include <di/concepts/copyable.h>
-#include <di/container/vector/span_fixed_size.h>
+#include <di/concepts/decay_same_as.h>
 #include <di/types/size_t.h>
+#include <di/util/forward_like.h>
+#include <di/util/get_in_place.h>
+#include <di/util/move.h>
 #include <di/util/swap.h>
-#include <di/vocab/optional.h>
+#include <di/vocab/optional/prelude.h>
+#include <di/vocab/span/prelude.h>
+#include <di/vocab/tuple/enable_generate_structed_bindings.h>
+#include <di/vocab/tuple/tuple_element.h>
+#include <di/vocab/tuple/tuple_size.h>
 
-namespace di::vocab::array {
+namespace di::vocab {
 template<typename T, types::size_t extent>
 struct Array {
 public:
@@ -77,8 +84,20 @@ public:
         }
     }
 
-    constexpr container::Span<T, extent> span() { return container::Span { *this }; }
-    constexpr container::Span<T const, extent> span() const { return container::Span { *this }; }
+    constexpr auto span() { return Span { *this }; }
+    constexpr auto span() const { return Span { *this }; }
+
+    constexpr auto first(types::size_t count) { return span().first(count); }
+    constexpr auto first(types::size_t count) const { return span().first(count); }
+
+    constexpr auto last(types::size_t count) { return span().last(count); }
+    constexpr auto last(types::size_t count) const { return span().last(count); }
+
+    constexpr auto subspan(types::size_t offset) { return span().subspan(offset); }
+    constexpr auto subspan(types::size_t offset) const { return span().subspan(offset); }
+
+    constexpr auto subspan(types::size_t offset, types::size_t count) { return span().subspan(offset, count); }
+    constexpr auto subspan(types::size_t offset, types::size_t count) const { return span().subspan(offset, count); }
 
     template<types::size_t count>
     requires(count <= extent)
@@ -104,16 +123,40 @@ public:
         return this->span().template last<count>();
     }
 
-    template<types::size_t offset, types::size_t count = container::dynamic_extent>
-    requires(offset <= extent && (count == container::dynamic_extent || offset + count <= extent))
+    template<types::size_t offset, types::size_t count = dynamic_extent>
+    requires(offset <= extent && (count == dynamic_extent || offset + count <= extent))
     constexpr auto subspan() {
         return this->span().template subspan<offset, count>();
     }
 
-    template<types::size_t offset, types::size_t count = container::dynamic_extent>
-    requires(offset <= extent && (count == container::dynamic_extent || offset + count <= extent))
+    template<types::size_t offset, types::size_t count = dynamic_extent>
+    requires(offset <= extent && (count == dynamic_extent || offset + count <= extent))
     constexpr auto subspan() const {
         return this->span().template subspan<offset, count>();
+    }
+
+    template<types::size_t index>
+    requires(index < extent)
+    constexpr T& get() & {
+        return (*this)[index];
+    }
+
+    template<types::size_t index>
+    requires(index < extent)
+    constexpr T const& get() const& {
+        return (*this)[index];
+    }
+
+    template<types::size_t index>
+    requires(index < extent)
+    constexpr T&& get() && {
+        return util::move((*this)[index]);
+    }
+
+    template<types::size_t index>
+    requires(index < extent)
+    constexpr T const&& get() const&& {
+        return util::move((*this)[index]);
     }
 
 private:
@@ -123,6 +166,23 @@ private:
         for (types::size_t i = 0; i < extent; i++) {
             util::swap(a[i], b[i]);
         }
+    }
+
+    constexpr friend bool tag_invoke(types::Tag<vocab::enable_generate_structed_bindings>, types::InPlaceType<Array>) { return true; }
+    constexpr friend types::size_t tag_invoke(types::Tag<vocab::tuple_size>, types::InPlaceType<Array>) { return extent; }
+
+    template<types::size_t index>
+    requires(index < extent)
+    constexpr friend T tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<Array>, types::InPlaceIndex<index>);
+
+    template<types::size_t index>
+    requires(index < extent)
+    constexpr friend T const tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<Array const>, types::InPlaceIndex<index>);
+
+    template<concepts::DecaySameAs<Array> Self, types::size_t index>
+    requires(index < extent)
+    constexpr friend decltype(auto) tag_invoke(types::Tag<util::get_in_place>, types::InPlaceIndex<index>, Self&& self) {
+        return util::forward_like<Self>(self[index]);
     }
 };
 

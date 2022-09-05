@@ -13,7 +13,7 @@
 #include <di/vocab/optional/set_nullopt.h>
 #include <di/vocab/optional/set_value.h>
 
-namespace di::vocab::optional {
+namespace di::vocab {
 template<typename T>
 class BasicOptionalStorage {
 public:

@@ -2,7 +2,7 @@
 
 #include <di/types/strong_ordering.h>
 
-namespace di::vocab::optional {
+namespace di::vocab {
 struct NullOpt {
     constexpr explicit NullOpt(int) {}
 

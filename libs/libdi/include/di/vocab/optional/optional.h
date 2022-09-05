@@ -27,7 +27,7 @@
 #include <di/vocab/optional/constructible_from_cref_optional.h>
 #include <di/vocab/optional/storage_for.h>
 
-namespace di::vocab::optional {
+namespace di::vocab {
 template<typename T>
 class Optional
     : public meta::EnableView<Optional<T>>

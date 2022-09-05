@@ -124,11 +124,13 @@ public:
     }
 
 private:
-    constexpr friend Iter tag_invoke(types::Tag<vocab::tuple::tuple_element>, types::InPlaceType<View>, types::InPlaceIndex<0>) {}
+    constexpr friend Iter tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View>, types::InPlaceIndex<0>) {}
+    constexpr friend Sent tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View>, types::InPlaceIndex<1>) {}
 
-    constexpr friend Sent tag_invoke(types::Tag<vocab::tuple::tuple_element>, types::InPlaceType<View>, types::InPlaceIndex<1>) {}
+    constexpr friend Iter const tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View const>, types::InPlaceIndex<0>) {}
+    constexpr friend Sent const tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View const>, types::InPlaceIndex<1>) {}
 
-    constexpr friend types::size_t tag_invoke(types::Tag<vocab::tuple::tuple_size>, types::InPlaceType<View>) { return 2; }
+    constexpr friend types::size_t tag_invoke(types::Tag<vocab::tuple_size>, types::InPlaceType<View>) { return 2; }
 
     template<concepts::DecaySameAs<View> Self>
     constexpr friend meta::Like<Self, Iter> tag_invoke(types::Tag<util::get_in_place>, types::InPlaceIndex<0>, Self&& self) {

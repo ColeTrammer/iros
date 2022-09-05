@@ -9,6 +9,7 @@ set(TEST_FILES
     test_util_tag_invoke.cpp
     test_vocab_array.cpp
     test_vocab_optional.cpp
+    test_vocab_span.cpp
     test_vocab_tuple.cpp
 )
 

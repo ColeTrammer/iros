@@ -17,19 +17,25 @@
 #include <di/container/meta/enable_borrowed_container.h>
 #include <di/container/meta/enable_view.h>
 #include <di/container/meta/iterator_value.h>
-#include <di/container/vector/span_forward_declaration.h>
+#include <di/meta/add_member_get.h>
 #include <di/meta/remove_cvref.h>
 #include <di/meta/remove_reference.h>
 #include <di/types/size_t.h>
+#include <di/util/get_in_place.h>
 #include <di/util/to_address.h>
-#include <di/vocab/optional.h>
+#include <di/vocab/optional/prelude.h>
+#include <di/vocab/span/span_forward_declaration.h>
+#include <di/vocab/tuple/enable_generate_structed_bindings.h>
+#include <di/vocab/tuple/tuple_element.h>
+#include <di/vocab/tuple/tuple_size.h>
 
-namespace di::container {
+namespace di::vocab {
 template<typename T, types::size_t extent>
 requires(extent != dynamic_extent)
 class Span<T, extent>
     : public meta::EnableView<Span<T, extent>>
-    , public meta::EnableBorrowedContainer<Span<T, extent>> {
+    , public meta::EnableBorrowedContainer<Span<T, extent>>
+    , public meta::AddMemberGet<Span<T, extent>> {
 public:
     constexpr explicit Span()
     requires(extent == 0)
@@ -53,11 +59,11 @@ public:
 
     template<concepts::ConvertibleToNonSlicing<T> U, types::size_t size>
     requires(size == extent)
-    constexpr Span(vocab::array::Array<U, size>& array) : m_data(array.data()) {}
+    constexpr Span(vocab::Array<U, size>& array) : m_data(array.data()) {}
 
     template<typename U, types::size_t size>
     requires(size == extent && concepts::ConvertibleToNonSlicing<U const, T>)
-    constexpr Span(vocab::array::Array<U, size> const& array) : m_data(array.data()) {}
+    constexpr Span(vocab::Array<U, size> const& array) : m_data(array.data()) {}
 
     template<concepts::ContiguousContainer Con>
     requires(concepts::SizedContainer<Con> && (concepts::BorrowedContainer<Con> || concepts::Const<T>) && !concepts::Span<Con> &&
@@ -77,13 +83,13 @@ public:
 
     constexpr Span& operator=(Span const&) = default;
 
-    constexpr T* begin() const { return m_data; }
-    constexpr T* end() const { return m_data + extent; }
+    constexpr T* begin() const { return data(); }
+    constexpr T* end() const { return data() + extent; }
 
     constexpr T& front() const
     requires(extent > 0)
     {
-        return *begin();
+        return *data();
     }
 
     constexpr T& back() const
@@ -94,7 +100,7 @@ public:
 
     constexpr vocab::Optional<T&> at(types::size_t index) const {
         if (index >= extent) {
-            return vocab::nullopt;
+            return nullopt;
         }
         return (*this)[index];
     }
@@ -103,15 +109,43 @@ public:
     requires(extent > 0)
     {
         // DI_ASSSERT( index < extent )
-        return begin()[index];
+        return data()[index];
     }
 
-    constexpr T* data() const { return begin(); }
+    constexpr T* data() const { return m_data; }
 
     constexpr types::size_t size() const { return extent; }
-    constexpr types::size_t size_in_bytes() const { return sizeof(T) * extent; }
+    constexpr types::size_t size_bytes() const { return sizeof(T) * extent; }
 
     [[nodiscard]] constexpr bool empty() const { return extent == 0; }
+
+    constexpr Optional<Span<T>> first(types::size_t count) const {
+        if (count > extent) {
+            return nullopt;
+        }
+        return Span<T> { data(), count };
+    }
+
+    constexpr Optional<Span<T>> last(types::size_t count) const {
+        if (count > extent) {
+            return nullopt;
+        }
+        return Span<T> { end() - count, count };
+    }
+
+    constexpr Optional<Span<T>> subspan(types::size_t offset) const {
+        if (offset > extent) {
+            return nullopt;
+        }
+        return Span<T> { data() + offset, extent - offset };
+    }
+
+    constexpr Optional<Span<T>> subspan(types::size_t offset, types::size_t count) const {
+        if (offset + count > extent) {
+            return nullopt;
+        }
+        return Span<T> { data() + offset, count };
+    }
 
     template<types::size_t count>
     requires(count <= extent)
@@ -129,13 +163,29 @@ public:
     requires(offset <= extent && (count == dynamic_extent || offset + count <= extent))
     constexpr auto subspan() const {
         if constexpr (count == dynamic_extent) {
-            return Span<T, extent - offset> { begin(), end() };
+            return Span<T, extent - offset> { data() + offset, end() };
         } else {
-            return Span<T, count> { begin(), count };
+            return Span<T, count> { data() + offset, count };
         }
     }
 
 private:
+    template<types::size_t index>
+    requires(index < extent)
+    constexpr friend T tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Span>, types::InPlaceIndex<index>);
+
+    template<types::size_t index>
+    requires(index < extent)
+    constexpr friend T tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Span const>, types::InPlaceIndex<index>);
+
+    constexpr friend types::size_t tag_invoke(types::Tag<tuple_size>, types::InPlaceType<Span>) { return extent; }
+
+    template<types::size_t index>
+    requires(index < extent)
+    constexpr friend T& tag_invoke(types::Tag<util::get_in_place>, types::InPlaceIndex<index>, Span self) {
+        return self[index];
+    }
+
     T* m_data { nullptr };
 };
 
@@ -143,14 +193,8 @@ template<typename T, types::size_t size>
 Span(T (&)[size]) -> Span<T, size>;
 
 template<typename T, types::size_t size>
-Span(vocab::array::Array<T, size>&) -> Span<T, size>;
+Span(vocab::Array<T, size>&) -> Span<T, size>;
 
 template<typename T, types::size_t size>
-Span(vocab::array::Array<T, size> const&) -> Span<T const, size>;
-
-// template<typename Iter, typename SentOrSize>
-// Span(Iter, SentOrSize) -> Span<meta::RemoveReference<meta::IteratorValue<Iter>>>;
-
-// template<typename Con>
-// Span(Con&&) -> Span<meta::RemoveReference<meta::ContainerValue<Con>>>;
+Span(vocab::Array<T, size> const&) -> Span<T const, size>;
 }

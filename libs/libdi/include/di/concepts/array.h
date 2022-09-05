@@ -5,7 +5,7 @@
 #include <di/meta/true_type.h>
 #include <di/types/size_t.h>
 
-namespace di::vocab::array {
+namespace di::vocab {
 template<typename T, types::size_t size>
 struct Array;
 }
@@ -16,9 +16,9 @@ namespace detail {
     struct ArrayHelper : meta::FalseType {};
 
     template<typename T, types::size_t size>
-    struct ArrayHelper<vocab::array::Array<T, size>> : meta::TrueType {};
+    struct ArrayHelper<vocab::Array<T, size>> : meta::TrueType {};
 }
 
 template<typename T>
-concept Array = detail::ArrayHelper<meta::RemoveCV<T>>::value;
+concept Array = detail::ArrayHelper<meta::RemoveCVRef<T>>::value;
 }

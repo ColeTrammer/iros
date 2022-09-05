@@ -5,7 +5,7 @@
 #include <di/types/size_t.h>
 #include <di/util/tag_invoke.h>
 
-namespace di::vocab::tuple {
+namespace di::vocab {
 struct TupleSizeFunction {
     template<typename T>
     requires(concepts::TagInvocableTo<TupleSizeFunction, types::size_t, types::InPlaceType<T>>)
@@ -19,6 +19,6 @@ constexpr inline auto tuple_size = TupleSizeFunction {};
 
 namespace di::meta {
 template<typename T>
-requires(requires { vocab::tuple::tuple_size(types::in_place_type<meta::RemoveCVRef<T>>); })
-constexpr inline auto TupleSize = vocab::tuple::tuple_size(types::in_place_type<meta::RemoveCVRef<T>>);
+requires(requires { vocab::tuple_size(types::in_place_type<meta::RemoveCVRef<T>>); })
+constexpr inline auto TupleSize = vocab::tuple_size(types::in_place_type<meta::RemoveCVRef<T>>);
 }

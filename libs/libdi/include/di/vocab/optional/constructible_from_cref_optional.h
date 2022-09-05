@@ -4,7 +4,7 @@
 #include <di/concepts/implicitly_convertible_to.h>
 #include <di/concepts/optional.h>
 
-namespace di::vocab::optional {
+namespace di::vocab {
 template<typename T, typename U>
 concept ConstructibleFromCRefOptional = concepts::Optional<U> &&
                                         (concepts::ConstructibleFrom<T, U&> || concepts::ConstructibleFrom<T, U const&> ||

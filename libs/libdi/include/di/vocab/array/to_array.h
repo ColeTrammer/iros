@@ -9,7 +9,7 @@
 #include <di/util/move.h>
 #include <di/vocab/array/array.h>
 
-namespace di::vocab::array {
+namespace di::vocab {
 template<typename T, types::size_t size>
 requires(concepts::CopyConstructible<T> && !concepts::LanguageArray<T>)
 constexpr auto to_array(T (&array)[size]) {

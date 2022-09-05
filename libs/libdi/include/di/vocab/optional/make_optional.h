@@ -4,7 +4,7 @@
 #include <di/util/forward.h>
 #include <di/vocab/optional/optional.h>
 
-namespace di::vocab::optional {
+namespace di::vocab {
 template<typename T>
 constexpr auto make_optional(T&& value) {
     return Optional<meta::UnwrapRefDecay<T>> { util::forward<T>(value) };

@@ -33,6 +33,6 @@ namespace detail {
 }
 
 template<typename T>
-concept TupleLike = requires { vocab::tuple::tuple_size(types::in_place_type<meta::RemoveCVRef<T>>); } &&
+concept TupleLike = requires { vocab::tuple_size(types::in_place_type<meta::RemoveCVRef<T>>); } &&
                     detail::TupleLikeHelper<T, meta::MakeIndexSequence<meta::TupleSize<T>>>::value;
 }

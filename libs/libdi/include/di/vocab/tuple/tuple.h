@@ -19,7 +19,7 @@
 #include <di/vocab/tuple/tuple_impl.h>
 #include <di/vocab/tuple/tuple_size.h>
 
-namespace di::vocab::tuple {
+namespace di::vocab {
 template<typename... Types>
 class Tuple
     : public TupleImpl<meta::IndexSequenceFor<Types...>, Types...>
@@ -100,6 +100,10 @@ private:
     template<types::size_t index>
     constexpr friend meta::TypeList<Types...>::TypeAtIndex<index> tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Tuple>,
                                                                              types::InPlaceIndex<index>);
+
+    template<types::size_t index>
+    constexpr friend meta::TypeList<Types...>::TypeAtIndex<index> const
+        tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Tuple const>, types::InPlaceIndex<index>);
 
     template<types::size_t index, concepts::DecaySameAs<Tuple> Self>
     requires(index < sizeof...(Types))

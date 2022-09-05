@@ -4,7 +4,7 @@
 #include <di/util/forward.h>
 #include <di/util/tag_invoke.h>
 
-namespace di::vocab::optional {
+namespace di::vocab {
 constexpr inline struct GetValueFunction {
     template<typename T>
     constexpr auto operator()(T&& value) const -> di::meta::TagInvokeResult<GetValueFunction, T> {

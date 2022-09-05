@@ -5,13 +5,13 @@
 #include <di/meta/decay.h>
 #include <di/meta/index_sequence.h>
 #include <di/meta/index_sequence_for.h>
+#include <di/types/in_place.h>
 #include <di/types/size_t.h>
 #include <di/util/forward.h>
 #include <di/util/get.h>
 #include <di/util/invoke.h>
 #include <di/util/move.h>
-#include <di/vocab/tuple.h>
-#include <di/types/in_place.h>
+#include <di/vocab/tuple/prelude.h>
 
 namespace di::util {
 namespace detail {

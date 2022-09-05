@@ -173,7 +173,7 @@ struct X {};
 constexpr void compare() {
     static_assert(di::concepts::EqualityComparable<di::Optional<int>>);
     static_assert(di::concepts::EqualityComparableWith<di::Optional<int>, di::Optional<long>>);
-    static_assert(di::concepts::EqualityComparableWith<di::Optional<int>, di::vocab::optional::NullOpt>);
+    static_assert(di::concepts::EqualityComparableWith<di::Optional<int>, di::vocab::NullOpt>);
     static_assert(di::concepts::EqualityComparableWith<di::Optional<int>, int>);
     static_assert(di::concepts::EqualityComparableWith<di::Optional<di::Optional<int>>, di::Optional<int>>);
     static_assert(di::concepts::EqualityComparableWith<di::Optional<di::Optional<int>>, int>);
@@ -192,7 +192,7 @@ constexpr void compare() {
 
     static_assert(di::concepts::ThreeWayComparable<di::Optional<int>>);
     static_assert(di::concepts::ThreeWayComparableWith<di::Optional<int>, di::Optional<long>>);
-    static_assert(di::concepts::ThreeWayComparableWith<di::Optional<int>, di::vocab::optional::NullOpt>);
+    static_assert(di::concepts::ThreeWayComparableWith<di::Optional<int>, di::vocab::NullOpt>);
     static_assert(di::concepts::ThreeWayComparableWith<di::Optional<int>, int>);
     static_assert(di::concepts::ThreeWayComparableWith<di::Optional<di::Optional<int>>, di::Optional<int>>);
     static_assert(di::concepts::ThreeWayComparableWith<di::Optional<di::Optional<int>>, int>);

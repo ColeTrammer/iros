@@ -3,7 +3,7 @@
 #include <di/util/forward.h>
 #include <di/util/tag_invoke.h>
 
-namespace di::vocab::optional {
+namespace di::vocab {
 constexpr inline struct SetValueFunction {
     template<typename T, typename... Args>
     constexpr auto operator()(T& value, Args&&... args) const -> di::meta::TagInvokeResult<SetValueFunction, T&, Args...> {

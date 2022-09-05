@@ -9,7 +9,7 @@
 #include <di/vocab/tuple/tuple_like.h>
 #include <di/vocab/tuple/tuple_size.h>
 
-namespace di::vocab::tuple {
+namespace di::vocab {
 namespace detail {
     template<types::size_t... indices, typename F, concepts::TupleLike Tup>
     constexpr auto apply_impl(meta::IndexSequence<indices...>, F&& f, Tup&& tuple)

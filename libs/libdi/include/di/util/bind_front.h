@@ -11,7 +11,7 @@
 #include <di/util/get.h>
 #include <di/util/invoke.h>
 #include <di/util/move.h>
-#include <di/vocab/tuple.h>
+#include <di/vocab/tuple/prelude.h>
 
 namespace di::util {
 namespace detail {

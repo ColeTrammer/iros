@@ -64,6 +64,6 @@ public:
     }
 
 private:
-    constexpr friend bool tag_invoke(types::Tag<vocab::tuple::enable_generate_structed_bindings>, types::InPlaceType<Self>) { return true; }
+    constexpr friend bool tag_invoke(types::Tag<vocab::enable_generate_structed_bindings>, types::InPlaceType<Self>) { return true; }
 };
 }

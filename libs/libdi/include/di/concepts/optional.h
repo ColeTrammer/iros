@@ -4,7 +4,7 @@
 #include <di/meta/remove_cv.h>
 #include <di/meta/true_type.h>
 
-namespace di::vocab::optional {
+namespace di::vocab {
 template<typename T>
 class Optional;
 }
@@ -15,7 +15,7 @@ namespace detail {
     struct OptionalHelper : meta::FalseType {};
 
     template<typename T>
-    struct OptionalHelper<di::vocab::optional::Optional<T>> : meta::TrueType {};
+    struct OptionalHelper<di::vocab::Optional<T>> : meta::TrueType {};
 }
 
 template<typename T>

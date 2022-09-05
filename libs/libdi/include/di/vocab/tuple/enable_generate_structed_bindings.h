@@ -5,7 +5,8 @@
 #include <di/concepts/same_as.h>
 #include <di/meta/index_sequence.h>
 #include <di/meta/make_index_sequence.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/remove_cv.h>
+#include <di/meta/remove_reference.h>
 #include <di/types/in_place_type.h>
 #include <di/util/forward.h>
 #include <di/util/tag_invoke.h>
@@ -13,7 +14,7 @@
 #include <di/vocab/tuple/tuple_like.h>
 #include <di/vocab/tuple/tuple_size.h>
 
-namespace di::vocab::tuple {
+namespace di::vocab {
 constexpr inline struct EnableGenerateStructedBindingsFunction {
     template<typename T>
     constexpr auto operator()(types::InPlaceType<T> x) const {
@@ -39,8 +40,8 @@ struct CanStructuredBindHelper<T, meta::IndexSequence<indices...>> {
 };
 
 template<typename T>
-concept CanStructuredBind = SameAs<T, meta::RemoveCVRef<T>> && TupleLike<T> &&
-                            vocab::tuple::enable_generate_structed_bindings(types::in_place_type<T>) &&
+concept CanStructuredBind = SameAs<T, meta::RemoveReference<T>> && TupleLike<T> &&
+                            vocab::enable_generate_structed_bindings(types::in_place_type<meta::RemoveCV<T>>) &&
                             CanStructuredBindHelper<T, meta::MakeIndexSequence<meta::TupleSize<T>>>::value;
 }
 

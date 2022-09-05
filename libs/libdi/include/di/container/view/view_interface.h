@@ -17,7 +17,7 @@
 #include <di/container/meta/container_value.h>
 #include <di/container/meta/enable_view.h>
 #include <di/meta/remove_cv.h>
-#include <di/vocab/optional.h>
+#include <di/vocab/optional/prelude.h>
 
 namespace di::container {
 template<typename Self>

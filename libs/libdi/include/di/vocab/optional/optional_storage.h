@@ -11,7 +11,7 @@
 #include <di/vocab/optional/set_nullopt.h>
 #include <di/vocab/optional/set_value.h>
 
-namespace di::vocab::optional {
+namespace di::vocab {
 template<typename Storage, typename T>
 concept OptionalStorage = requires(Storage& storage, T&& value) {
                               { is_nullopt(util::as_const(storage)) } -> concepts::SameAs<bool>;

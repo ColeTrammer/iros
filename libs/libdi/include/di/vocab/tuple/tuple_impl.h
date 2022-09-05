@@ -11,8 +11,9 @@
 #include <di/util/forward_as_base.h>
 #include <di/util/forward_like.h>
 #include <di/vocab/tuple/tuple_like.h>
+#include <di/vocab/tuple/tuple_value.h>
 
-namespace di::vocab::tuple {
+namespace di::vocab {
 struct ConstructTupleImplValuewise {};
 
 constexpr inline auto construct_tuple_impl_valuewise = ConstructTupleImplValuewise {};
@@ -58,9 +59,8 @@ public:
         : Base(construct_tuple_impl_valuewise, util::forward<Args>(args)...), m_value(util::forward<Arg>(arg)) {}
 
     template<concepts::TupleLike Tup>
-    requires(sizeof...(Rest) + 1 == meta::TupleSize<Tup> &&
-             concepts::ConstructibleFrom<T, decltype(util::get<index>(util::declval<Tup>()))> &&
-             concepts::Conjunction<concepts::ConstructibleFrom<Rest, decltype(util::get<indices>(util::declval<Tup>()))>...>)
+    requires(sizeof...(Rest) + 1 == meta::TupleSize<Tup> && concepts::ConstructibleFrom<T, meta::TupleValue<Tup, index>> &&
+             concepts::Conjunction<concepts::ConstructibleFrom<Rest, meta::TupleValue<Tup, indices>>...>)
     constexpr TupleImpl(ConstructTupleImplFromTuplelike, Tup&& tuple)
         : Base(construct_tuple_impl_valuewise, util::get<indices>(util::forward<Tup>(tuple))...)
         , m_value(util::get<index>(util::forward<Tup>(tuple))) {}
@@ -77,10 +77,10 @@ protected:
     }
 
     template<concepts::DecaySameAs<TupleImpl> Self, concepts::TupleLike Tup>
-    requires(
-        sizeof...(Rest) + 1 == meta::TupleSize<Tup> && (concepts::ConstLValueReference<Tup> || concepts::MutableRValueReference<Tup&&>) &&
-        concepts::AssignableFrom<meta::Like<Self, T>, meta::Like<Tup, meta::TupleElement<Tup, index>> &&> &&
-        concepts::Conjunction<concepts::AssignableFrom<meta::Like<Self, Rest>, meta::Like<Tup, meta::TupleElement<Tup, indices>> &&>...>)
+    requires(sizeof...(Rest) + 1 == meta::TupleSize<Tup> &&
+             (concepts::ConstLValueReference<Tup> || concepts::MutableRValueReference<Tup&&>) &&
+             concepts::AssignableFrom<meta::Like<Self, T>, meta::TupleValue<Tup, index> &&> &&
+             concepts::Conjunction<concepts::AssignableFrom<meta::Like<Self, Rest>, meta::TupleValue<Tup, indices> &&>...>)
     constexpr static void static_assign(Self&& self, Tup&& other) {
         self.m_value = util::get<index>(util::forward<Tup>(other));
         Base::static_assign_unchecked(util::forward_as_base<Self, Base>(self), util::forward<Tup>(other));

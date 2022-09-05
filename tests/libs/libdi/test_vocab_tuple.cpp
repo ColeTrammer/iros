@@ -8,9 +8,9 @@
 class X : public di::meta::AddMemberGet<X> {
 public:
 private:
-    constexpr friend size_t tag_invoke(di::Tag<di::vocab::tuple::tuple_size>, di::InPlaceType<X>) { return 1zu; }
+    constexpr friend size_t tag_invoke(di::Tag<di::vocab::tuple_size>, di::InPlaceType<X>) { return 1zu; }
 
-    constexpr friend int tag_invoke(di::Tag<di::vocab::tuple::tuple_element>, di::InPlaceType<X>, di::InPlaceIndex<0>);
+    constexpr friend int tag_invoke(di::Tag<di::vocab::tuple_element>, di::InPlaceType<X>, di::InPlaceIndex<0>);
 
     template<di::concepts::DecaySameAs<X> Self>
     constexpr friend di::meta::Like<Self, int> tag_invoke(di::Tag<di::util::get_in_place>, di::InPlaceIndex<0>, Self&& self) {
@@ -93,9 +93,8 @@ constexpr void basic() {
     EXPECT_EQ(b, 0);
     EXPECT_EQ(c, 0);
 
-    using Z = di::vocab::tuple::TupleImpl<di::meta::IndexSequenceFor<int, int, int>, int, int, int>;
-    static_assert(
-        di::concepts::ConstructibleFrom<Z, di::vocab::tuple::ConstructTupleImplFromTuplelike, di::Tuple<short, short, int> const&>);
+    using Z = di::vocab::TupleImpl<di::meta::IndexSequenceFor<int, int, int>, int, int, int>;
+    static_assert(di::concepts::ConstructibleFrom<Z, di::vocab::ConstructTupleImplFromTuplelike, di::Tuple<short, short, int> const&>);
     static_assert(di::concepts::ConstructibleFrom<di::Tuple<int, int, int>, di::Tuple<short, short, int> const&>);
     static_assert(di::concepts::ConstructibleFrom<di::Tuple<int, int, int>, di::Tuple<short, short, int>&>);
     static_assert(di::concepts::ConstructibleFrom<di::Tuple<int, int, int>, di::Tuple<short, short, int> const&&>);

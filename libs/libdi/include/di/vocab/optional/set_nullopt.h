@@ -2,7 +2,7 @@
 
 #include <di/util/tag_invoke.h>
 
-namespace di::vocab::optional {
+namespace di::vocab {
 constexpr inline struct SetNulloptFunction {
     template<typename T>
     requires(di::concepts::TagInvocable<SetNulloptFunction, T&>)
