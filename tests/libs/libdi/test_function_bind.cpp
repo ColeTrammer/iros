@@ -66,6 +66,9 @@ constexpr void compose() {
     EXPECT_EQ(2, 5 | di::piped([](int) {
                      return 2;
                  }));
+
+    auto k = di::bind_front(f, 2) | di::piped(g);
+    EXPECT_EQ(k(1, 2, 3), 8);
 }
 
 constexpr void pipeline() {
