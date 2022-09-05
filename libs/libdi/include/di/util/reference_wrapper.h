@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/util/addressof.h>
+#include <di/util/address_of.h>
 #include <di/util/invoke.h>
 #include <di/vocab/optional/get_value.h>
 #include <di/vocab/optional/is_nullopt.h>
@@ -48,7 +48,7 @@ private:
     constexpr friend T& tag_invoke(types::Tag<vocab::optional::get_value>, ReferenceWrapper const& self) { return *self.m_pointer; }
     constexpr friend void tag_invoke(types::Tag<vocab::optional::set_nullopt>, ReferenceWrapper& self) { self.m_pointer = nullptr; }
     constexpr friend void tag_invoke(types::Tag<vocab::optional::set_value>, ReferenceWrapper& self, T& value) {
-        self.m_pointer = util::addressof(value);
+        self.m_pointer = util::address_of(value);
     }
 
     T* m_pointer { nullptr };

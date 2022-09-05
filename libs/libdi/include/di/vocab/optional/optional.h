@@ -19,7 +19,7 @@
 #include <di/meta/optional_rank.h>
 #include <di/meta/remove_cvref.h>
 #include <di/types/in_place.h>
-#include <di/util/addressof.h>
+#include <di/util/address_of.h>
 #include <di/util/declval.h>
 #include <di/util/invoke.h>
 #include <di/util/move.h>
@@ -155,11 +155,11 @@ public:
     using Reference = decltype(get_value(util::declval<Storage&>()));
     using ConstReference = decltype(get_value(util::declval<Storage const&>()));
 
-    using Pointer = decltype(util::addressof(util::declval<Reference>()));
-    using ConstPointer = decltype(util::addressof(util::declval<ConstReference>()));
+    using Pointer = decltype(util::address_of(util::declval<Reference>()));
+    using ConstPointer = decltype(util::address_of(util::declval<ConstReference>()));
 
-    constexpr Pointer operator->() { return util::addressof(value()); }
-    constexpr ConstPointer operator->() const { return util::addressof(value()); }
+    constexpr Pointer operator->() { return util::address_of(value()); }
+    constexpr ConstPointer operator->() const { return util::address_of(value()); }
 
     constexpr decltype(auto) operator*() & { return value(); }
     constexpr decltype(auto) operator*() const& { return value(); }
@@ -187,28 +187,28 @@ public:
         if (!has_value()) {
             return nullptr;
         }
-        return util::addressof(value());
+        return util::address_of(value());
     }
 
     constexpr ConstPointer begin() const {
         if (!has_value()) {
             return nullptr;
         }
-        return util::addressof(value());
+        return util::address_of(value());
     }
 
     constexpr Pointer end() {
         if (!has_value()) {
             return nullptr;
         }
-        return util::addressof(value()) + 1;
+        return util::address_of(value()) + 1;
     }
 
     constexpr ConstPointer end() const {
         if (!has_value()) {
             return nullptr;
         }
-        return util::addressof(value()) + 1;
+        return util::address_of(value()) + 1;
     }
 
     constexpr bool empty() const { return !has_value(); }
