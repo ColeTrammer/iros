@@ -5,10 +5,10 @@
 #include <di/container/interface/begin.h>
 #include <di/container/interface/enable_borrowed_container.h>
 #include <di/container/meta/container_value.h>
+#include <di/function/tag_invoke.h>
 #include <di/meta/add_pointer.h>
 #include <di/meta/remove_reference.h>
 #include <di/util/forward.h>
-#include <di/util/tag_invoke.h>
 
 namespace di::container {
 struct DataFunction;
@@ -39,7 +39,7 @@ struct DataFunction {
              (detail::CustomData<T> || detail::MemberData<T> || detail::BeginData<T>) )
     constexpr auto operator()(T&& container) const {
         if constexpr (detail::CustomData<T>) {
-            return util::tag_invoke(*this, util::forward<T>(container));
+            return function::tag_invoke(*this, util::forward<T>(container));
         } else if constexpr (detail::MemberData<T>) {
             return util::forward<T>(container).data();
         } else {

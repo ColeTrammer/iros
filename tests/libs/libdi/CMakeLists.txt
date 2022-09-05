@@ -2,11 +2,10 @@ set(TEST_FILES
     test_concepts.cpp
     test_container_concepts.cpp
     test_container_view.cpp
+    test_function_bind.cpp
+    test_function_invoke.cpp
     test_meta.cpp
-    test_util_bind.cpp
-    test_util_invoke.cpp
     test_util_swap.cpp
-    test_util_tag_invoke.cpp
     test_vocab_array.cpp
     test_vocab_optional.cpp
     test_vocab_span.cpp

@@ -1,9 +1,9 @@
 #pragma once
 
 #include <di/concepts/lvalue_reference.h>
+#include <di/function/tag_invoke.h>
 #include <di/meta/remove_cvref.h>
 #include <di/types/in_place_type.h>
-#include <di/util/tag_invoke.h>
 
 namespace di::container {
 constexpr inline struct EnableBorrowedContainer {
@@ -16,7 +16,7 @@ constexpr inline struct EnableBorrowedContainer {
         if constexpr (concepts::LValueReference<T>) {
             return true;
         } else if constexpr (concepts::TagInvocableTo<EnableBorrowedContainer, bool, types::InPlaceType<meta::RemoveCVRef<T>>>) {
-            return util::tag_invoke(*this, types::in_place_type<meta::RemoveCVRef<T>>);
+            return function::tag_invoke(*this, types::in_place_type<meta::RemoveCVRef<T>>);
         } else {
             return false;
         }

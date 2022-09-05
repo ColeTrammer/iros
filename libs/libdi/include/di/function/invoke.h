@@ -11,7 +11,7 @@
 #include <di/util/declval.h>
 #include <di/util/forward.h>
 
-namespace di::util {
+namespace di::function {
 namespace detail {
     template<concepts::MemberFunctionPointer F, typename FirstArg, typename... Args>
     requires(concepts::BaseOf<meta::MemberPointerClass<F>, meta::Decay<FirstArg>>)
@@ -58,13 +58,13 @@ namespace detail {
 
 namespace di::concepts {
 template<typename F, typename... Args>
-concept Invocable = requires(F&& f, Args&&... args) { di::util::detail::invoke_impl(util::forward<F>(f), util::forward<Args>(args)...); };
+concept Invocable = requires(F&& f, Args&&... args) { function::detail::invoke_impl(util::forward<F>(f), util::forward<Args>(args)...); };
 }
 
 namespace di::meta {
 template<typename F, typename... Args>
 requires(concepts::Invocable<F, Args...>)
-using InvokeResult = decltype(di::util::detail::invoke_impl(util::declval<F>(), util::declval<Args>()...));
+using InvokeResult = decltype(function::detail::invoke_impl(util::declval<F>(), util::declval<Args>()...));
 }
 
 namespace di::concepts {
@@ -72,20 +72,20 @@ template<typename F, typename R, typename... Args>
 concept InvocableTo = Invocable<F, Args...> && (LanguageVoid<R> || ImplicitlyConvertibleTo<meta::InvokeResult<F, Args...>, R>);
 }
 
-namespace di::util {
+namespace di::function {
 template<typename F, typename... Args>
 requires(concepts::Invocable<F, Args...>)
 constexpr meta::InvokeResult<F, Args...> invoke(F&& f, Args&&... args) {
-    return di::util::detail::invoke_impl(util::forward<F>(f), util::forward<Args>(args)...);
+    return function::detail::invoke_impl(util::forward<F>(f), util::forward<Args>(args)...);
 }
 
 template<typename R, typename F, typename... Args>
 requires(concepts::InvocableTo<F, R, Args...>)
 constexpr R invoke_r(F&& f, Args&&... args) {
     if constexpr (concepts::LanguageVoid<R>) {
-        di::util::detail::invoke_impl(util::forward<F>(f), util::forward<Args>(args)...);
+        function::detail::invoke_impl(util::forward<F>(f), util::forward<Args>(args)...);
     } else {
-        return di::util::detail::invoke_impl(util::forward<F>(f), util::forward<Args>(args)...);
+        return function::detail::invoke_impl(util::forward<F>(f), util::forward<Args>(args)...);
     }
 }
 }

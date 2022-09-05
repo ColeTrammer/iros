@@ -2,6 +2,7 @@
 
 #include <di/concepts/prelude.h>
 #include <di/container/prelude.h>
+#include <di/function/prelude.h>
 #include <di/math/prelude.h>
 #include <di/meta/prelude.h>
 #include <di/types/prelude.h>

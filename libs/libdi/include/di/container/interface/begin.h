@@ -3,10 +3,10 @@
 #include <di/concepts/language_array.h>
 #include <di/container/concepts/iterator.h>
 #include <di/container/interface/enable_borrowed_container.h>
+#include <di/function/tag_invoke.h>
 #include <di/meta/decay.h>
 #include <di/meta/remove_reference.h>
 #include <di/util/forward.h>
-#include <di/util/tag_invoke.h>
 
 namespace di::container {
 struct BeginFunction;
@@ -33,7 +33,7 @@ struct BeginFunction {
         if constexpr (detail::ArrayBegin<T>) {
             return container + 0;
         } else if constexpr (detail::CustomBegin<T>) {
-            return util::tag_invoke(*this, util::forward<T>(container));
+            return function::tag_invoke(*this, util::forward<T>(container));
         } else {
             return util::forward<T>(container).begin();
         }

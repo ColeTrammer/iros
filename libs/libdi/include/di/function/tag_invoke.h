@@ -5,7 +5,7 @@
 #include <di/util/declval.h>
 #include <di/util/forward.h>
 
-namespace di::util {
+namespace di::function {
 namespace tag_invoke_detail {
     void tag_invoke() = delete;
 
@@ -30,13 +30,13 @@ using Tag = di::meta::Decay<decltype(T)>;
 
 namespace di::concepts {
 template<typename Tag, typename... Args>
-concept TagInvocable = requires(Tag tag, Args&&... args) { di::util::tag_invoke(tag, util::forward<Args>(args)...); };
+concept TagInvocable = requires(Tag tag, Args&&... args) { di::function::tag_invoke(tag, util::forward<Args>(args)...); };
 }
 
 namespace di::meta {
 template<typename Tag, typename... Args>
 requires(concepts::TagInvocable<Tag, Args...>)
-using TagInvokeResult = decltype(di::util::tag_invoke(util::declval<Tag>(), util::declval<Args>()...));
+using TagInvokeResult = decltype(di::function::tag_invoke(util::declval<Tag>(), util::declval<Args>()...));
 }
 
 namespace di::concepts {

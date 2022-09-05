@@ -2,6 +2,7 @@
 
 #include <di/concepts/conjunction.h>
 #include <di/concepts/constructible_from.h>
+#include <di/function/invoke.h>
 #include <di/meta/decay.h>
 #include <di/meta/index_sequence.h>
 #include <di/meta/index_sequence_for.h>
@@ -9,11 +10,10 @@
 #include <di/types/size_t.h>
 #include <di/util/forward.h>
 #include <di/util/get.h>
-#include <di/util/invoke.h>
 #include <di/util/move.h>
 #include <di/vocab/tuple/prelude.h>
 
-namespace di::util {
+namespace di::function {
 namespace detail {
     template<typename Indices, typename F, typename... BoundArgs>
     class BindBackFunction;
@@ -34,25 +34,27 @@ namespace detail {
         template<typename... Args>
         requires(concepts::Invocable<F&, Args..., BoundArgs&...>)
         constexpr decltype(auto) operator()(Args&&... args) & {
-            return util::invoke(m_function, util::forward<Args>(args)..., util::get<indices>(m_bound_arguments)...);
+            return function::invoke(m_function, util::forward<Args>(args)..., util::get<indices>(m_bound_arguments)...);
         }
 
         template<typename... Args>
         requires(concepts::Invocable<F const&, Args..., BoundArgs const&...>)
         constexpr decltype(auto) operator()(Args&&... args) const& {
-            return util::invoke(m_function, util::forward<Args>(args)..., util::get<indices>(m_bound_arguments)...);
+            return function::invoke(m_function, util::forward<Args>(args)..., util::get<indices>(m_bound_arguments)...);
         }
 
         template<typename... Args>
         requires(concepts::Invocable<F &&, Args..., BoundArgs && ...>)
         constexpr decltype(auto) operator()(Args&&... args) && {
-            return util::invoke(util::move(m_function), util::forward<Args>(args)..., util::get<indices>(util::move(m_bound_arguments))...);
+            return function::invoke(util::move(m_function), util::forward<Args>(args)...,
+                                    util::get<indices>(util::move(m_bound_arguments))...);
         }
 
         template<typename... Args>
         requires(concepts::Invocable<F const &&, Args..., BoundArgs const && ...>)
         constexpr decltype(auto) operator()(Args&&... args) const&& {
-            return util::invoke(util::move(m_function), util::forward<Args>(args)..., util::get<indices>(util::move(m_bound_arguments))...);
+            return function::invoke(util::move(m_function), util::forward<Args>(args)...,
+                                    util::get<indices>(util::move(m_bound_arguments))...);
         }
 
     private:

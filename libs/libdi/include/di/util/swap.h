@@ -4,19 +4,19 @@
 #include <di/concepts/movable.h>
 #include <di/concepts/move_assignable.h>
 #include <di/concepts/move_constructible.h>
+#include <di/function/tag_invoke.h>
 #include <di/meta/decay.h>
 #include <di/util/construct_at.h>
 #include <di/util/destroy_at.h>
 #include <di/util/forward.h>
 #include <di/util/relocate.h>
-#include <di/util/tag_invoke.h>
 
 namespace di::util {
 inline constexpr struct SwapFunction {
     template<typename T, typename U>
     requires(concepts::TagInvocable<SwapFunction, T, U>)
     constexpr void operator()(T&& a, U&& b) const {
-        di::util::tag_invoke(*this, util::forward<T>(a), util::forward<U>(b));
+        di::function::tag_invoke(*this, util::forward<T>(a), util::forward<U>(b));
     }
 
     template<typename T, typename U>

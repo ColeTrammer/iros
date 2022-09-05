@@ -3,13 +3,13 @@
 
 #include <di/concepts/conjunction.h>
 #include <di/concepts/same_as.h>
+#include <di/function/tag_invoke.h>
 #include <di/meta/index_sequence.h>
 #include <di/meta/make_index_sequence.h>
 #include <di/meta/remove_cv.h>
 #include <di/meta/remove_reference.h>
 #include <di/types/in_place_type.h>
 #include <di/util/forward.h>
-#include <di/util/tag_invoke.h>
 #include <di/vocab/tuple/std_structed_binding.h>
 #include <di/vocab/tuple/tuple_like.h>
 #include <di/vocab/tuple/tuple_size.h>
@@ -19,7 +19,7 @@ constexpr inline struct EnableGenerateStructedBindingsFunction {
     template<typename T>
     constexpr auto operator()(types::InPlaceType<T> x) const {
         if constexpr (concepts::TagInvocableTo<EnableGenerateStructedBindingsFunction, bool, decltype(x)>) {
-            return util::tag_invoke(*this, x);
+            return function::tag_invoke(*this, x);
         } else {
             return false;
         }

@@ -14,6 +14,7 @@
 #include <di/concepts/trivially_move_constructible.h>
 #include <di/container/meta/enable_borrowed_container.h>
 #include <di/container/meta/enable_view.h>
+#include <di/function/invoke.h>
 #include <di/meta/compare_three_way_result.h>
 #include <di/meta/decay.h>
 #include <di/meta/optional_rank.h>
@@ -21,7 +22,6 @@
 #include <di/types/in_place.h>
 #include <di/util/address_of.h>
 #include <di/util/declval.h>
-#include <di/util/invoke.h>
 #include <di/util/move.h>
 #include <di/util/swap.h>
 #include <di/vocab/optional/constructible_from_cref_optional.h>
@@ -255,7 +255,7 @@ public:
     requires(concepts::Optional<R>)
     constexpr R and_then(F&& f) & {
         if (has_value()) {
-            return util::invoke(util::forward<F>(f), value());
+            return function::invoke(util::forward<F>(f), value());
         } else {
             return R();
         }
@@ -265,7 +265,7 @@ public:
     requires(concepts::Optional<R>)
     constexpr R and_then(F&& f) const& {
         if (has_value()) {
-            return util::invoke(util::forward<F>(f), value());
+            return function::invoke(util::forward<F>(f), value());
         } else {
             return R();
         }
@@ -275,7 +275,7 @@ public:
     requires(concepts::Optional<R>)
     constexpr R and_then(F&& f) && {
         if (has_value()) {
-            return util::invoke(util::forward<F>(f), util::move(*this).value());
+            return function::invoke(util::forward<F>(f), util::move(*this).value());
         } else {
             return R();
         }
@@ -286,7 +286,7 @@ public:
     requires(concepts::Optional<R>)
     constexpr R and_then(F&& f) const&& {
         if (has_value()) {
-            return util::invoke(util::forward<F>(f), util::move(*this).value());
+            return function::invoke(util::forward<F>(f), util::move(*this).value());
         } else {
             return R();
         }
@@ -295,7 +295,7 @@ public:
     template<concepts::Invocable<OptionalGetValue<Storage&>> F, typename R = meta::InvokeResult<F, OptionalGetValue<Storage&>>>
     constexpr Optional<R> transform(F&& f) & {
         if (has_value()) {
-            return Optional<R>(types::in_place, util::invoke(util::forward<F>(f), value()));
+            return Optional<R>(types::in_place, function::invoke(util::forward<F>(f), value()));
         } else {
             return nullopt;
         }
@@ -304,7 +304,7 @@ public:
     template<concepts::Invocable<OptionalGetValue<Storage const&>> F, typename R = meta::InvokeResult<F, OptionalGetValue<Storage const&>>>
     constexpr Optional<R> transform(F&& f) const& {
         if (has_value()) {
-            return Optional<R>(types::in_place, util::invoke(util::forward<F>(f), value()));
+            return Optional<R>(types::in_place, function::invoke(util::forward<F>(f), value()));
         } else {
             return nullopt;
         }
@@ -313,7 +313,7 @@ public:
     template<concepts::Invocable<OptionalGetValue<Storage&&>> F, typename R = meta::InvokeResult<F, OptionalGetValue<Storage&&>>>
     constexpr Optional<R> transform(F&& f) && {
         if (has_value()) {
-            return Optional<R>(types::in_place, util::invoke(util::forward<F>(f), util::move(*this).value()));
+            return Optional<R>(types::in_place, function::invoke(util::forward<F>(f), util::move(*this).value()));
         } else {
             return nullopt;
         }
@@ -323,7 +323,7 @@ public:
              typename R = meta::InvokeResult<F, OptionalGetValue<Storage const&&>>>
     constexpr Optional<R> transform(F&& f) const&& {
         if (has_value()) {
-            return Optional<R>(types::in_place, util::invoke(util::forward<F>(f), util::move(*this).value()));
+            return Optional<R>(types::in_place, function::invoke(util::forward<F>(f), util::move(*this).value()));
         } else {
             return nullopt;
         }
@@ -332,13 +332,13 @@ public:
     template<concepts::InvocableTo<Optional> F>
     requires(concepts::Copyable<Optional>)
     constexpr Optional or_else(F&& f) const& {
-        return *this ? *this : util::invoke(util::forward<F>(f));
+        return *this ? *this : function::invoke(util::forward<F>(f));
     }
 
     template<concepts::InvocableTo<Optional> F>
     requires(concepts::Movable<Optional>)
     constexpr Optional or_else(F&& f) && {
-        return *this ? util::move(*this) : util::invoke(util::forward<F>(f));
+        return *this ? util::move(*this) : function::invoke(util::forward<F>(f));
     }
 
     constexpr void reset() { set_nullopt(m_storage); }

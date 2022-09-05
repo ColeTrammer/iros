@@ -10,10 +10,10 @@
 #include <di/container/meta/container_iterator.h>
 #include <di/container/meta/container_sentinel.h>
 #include <di/container/meta/iterator_size_type.h>
+#include <di/function/tag_invoke.h>
 #include <di/meta/extent.h>
 #include <di/meta/remove_reference.h>
 #include <di/types/size_t.h>
-#include <di/util/tag_invoke.h>
 
 namespace di::container {
 struct SizeFunction;
@@ -44,7 +44,7 @@ struct SizeFunction {
         if constexpr (detail::ArraySize<T>) {
             return meta::Extent<meta::RemoveReference<T>>;
         } else if constexpr (detail::CustomSize<T>) {
-            return util::tag_invoke(*this, util::forward<T>(container));
+            return function::tag_invoke(*this, util::forward<T>(container));
         } else if constexpr (detail::MemberSize<T>) {
             return util::forward<T>(container).size();
         } else {

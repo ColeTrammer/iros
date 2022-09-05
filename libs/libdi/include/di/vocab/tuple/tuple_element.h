@@ -1,10 +1,10 @@
 #pragma once
 
+#include <di/function/tag_invoke.h>
 #include <di/meta/remove_cvref.h>
+#include <di/meta/remove_reference.h>
 #include <di/types/in_place_index.h>
 #include <di/types/in_place_type.h>
-#include <di/meta/remove_reference.h>
-#include <di/util/tag_invoke.h>
 
 namespace di::vocab {
 struct TupleElementFunction {

@@ -1,16 +1,16 @@
 #pragma once
 
+#include <di/function/tag_invoke.h>
 #include <di/meta/remove_cvref.h>
 #include <di/types/in_place_type.h>
 #include <di/types/size_t.h>
-#include <di/util/tag_invoke.h>
 
 namespace di::vocab {
 struct TupleSizeFunction {
     template<typename T>
     requires(concepts::TagInvocableTo<TupleSizeFunction, types::size_t, types::InPlaceType<T>>)
     constexpr types::size_t operator()(types::InPlaceType<T>) const {
-        return util::tag_invoke(*this, types::in_place_type<T>);
+        return function::tag_invoke(*this, types::in_place_type<T>);
     }
 };
 

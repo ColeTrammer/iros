@@ -1,16 +1,16 @@
 #pragma once
 
 #include <di/container/view/single_view.h>
+#include <di/function/tag_invoke.h>
 #include <di/meta/decay.h>
 #include <di/util/forward.h>
-#include <di/util/tag_invoke.h>
 
 namespace di::container::view {
 namespace detail {
     struct SingleFunction {
         template<typename T>
         constexpr meta::TagInvokeResult<SingleFunction, T> operator()(T&& value) const {
-            return util::tag_invoke(*this, util::forward<T>(value));
+            return function::tag_invoke(*this, util::forward<T>(value));
         }
 
         template<typename T>

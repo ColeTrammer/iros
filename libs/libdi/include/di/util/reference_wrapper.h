@@ -1,7 +1,7 @@
 #pragma once
 
+#include <di/function/invoke.h>
 #include <di/util/address_of.h>
-#include <di/util/invoke.h>
 #include <di/vocab/optional/get_value.h>
 #include <di/vocab/optional/is_nullopt.h>
 #include <di/vocab/optional/nullopt.h>
@@ -39,7 +39,7 @@ public:
     template<typename... Args>
     requires(concepts::Invocable<T&, Args...>)
     constexpr meta::InvokeResult<T&, Args...> operator()(Args&&... args) const {
-        return util::invoke(get(), util::forward<Args>(args)...);
+        return function::invoke(get(), util::forward<Args>(args)...);
     }
 
 private:
