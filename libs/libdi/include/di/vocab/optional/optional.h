@@ -2,6 +2,7 @@
 
 #include <di/concepts/convertible_to.h>
 #include <di/concepts/copyable.h>
+#include <di/concepts/decay_same_as.h>
 #include <di/concepts/equality_comparable_with.h>
 #include <di/concepts/lvalue_reference.h>
 #include <di/concepts/one_of.h>
@@ -15,7 +16,7 @@
 #include <di/container/meta/enable_borrowed_container.h>
 #include <di/container/meta/enable_view.h>
 #include <di/function/invoke.h>
-#include <di/function/monad.h>
+#include <di/function/monad/monad_interface.h>
 #include <di/meta/compare_three_way_result.h>
 #include <di/meta/decay.h>
 #include <di/meta/optional_rank.h>
@@ -34,14 +35,13 @@ template<typename T>
 class Optional
     : public meta::EnableView<Optional<T>>
     , public meta::EnableBorrowedContainer<Optional<T>, concepts::LValueReference<T>>
-    , public function::monad::EnableMonad {
+    , public function::monad::MonadInterface<Optional<T>> {
 private:
     using Storage = StorageFor<T>;
     static_assert(OptionalStorage<Storage, T>);
 
 public:
     using Value = T;
-    using UnitType = T;
 
     constexpr Optional() = default;
     constexpr Optional(NullOpt) {}
@@ -254,100 +254,6 @@ public:
         return front();
     }
 
-    // Monadic functions
-    template<concepts::Invocable<OptionalGetValue<Storage&>> F, typename R = meta::InvokeResult<F, OptionalGetValue<Storage&>>>
-    requires(concepts::Optional<R>)
-    constexpr R and_then(F&& f) & {
-        if (has_value()) {
-            return function::invoke(util::forward<F>(f), value());
-        } else {
-            return R();
-        }
-    }
-
-    template<concepts::Invocable<OptionalGetValue<Storage const&>> F, typename R = meta::InvokeResult<F, OptionalGetValue<Storage const&>>>
-    requires(concepts::Optional<R>)
-    constexpr R and_then(F&& f) const& {
-        if (has_value()) {
-            return function::invoke(util::forward<F>(f), value());
-        } else {
-            return R();
-        }
-    }
-
-    template<concepts::Invocable<OptionalGetValue<Storage&&>> F, typename R = meta::InvokeResult<F, OptionalGetValue<Storage&&>>>
-    requires(concepts::Optional<R>)
-    constexpr R and_then(F&& f) && {
-        if (has_value()) {
-            return function::invoke(util::forward<F>(f), util::move(*this).value());
-        } else {
-            return R();
-        }
-    }
-
-    template<concepts::Invocable<OptionalGetValue<Storage const&&>> F,
-             typename R = meta::InvokeResult<F, OptionalGetValue<Storage const&&>>>
-    requires(concepts::Optional<R>)
-    constexpr R and_then(F&& f) const&& {
-        if (has_value()) {
-            return function::invoke(util::forward<F>(f), util::move(*this).value());
-        } else {
-            return R();
-        }
-    }
-
-    template<concepts::Invocable<OptionalGetValue<Storage&>> F,
-             typename R = meta::UnwrapRefDecay<meta::InvokeResult<F, OptionalGetValue<Storage&>>>>
-    constexpr Optional<R> transform(F&& f) & {
-        if (has_value()) {
-            return Optional<R>(types::in_place, function::invoke(util::forward<F>(f), value()));
-        } else {
-            return nullopt;
-        }
-    }
-
-    template<concepts::Invocable<OptionalGetValue<Storage const&>> F,
-             typename R = meta::UnwrapRefDecay<meta::InvokeResult<F, OptionalGetValue<Storage const&>>>>
-    constexpr Optional<R> transform(F&& f) const& {
-        if (has_value()) {
-            return Optional<R>(types::in_place, function::invoke(util::forward<F>(f), value()));
-        } else {
-            return nullopt;
-        }
-    }
-
-    template<concepts::Invocable<OptionalGetValue<Storage&&>> F,
-             typename R = meta::UnwrapRefDecay<meta::InvokeResult<F, OptionalGetValue<Storage&&>>>>
-    constexpr Optional<R> transform(F&& f) && {
-        if (has_value()) {
-            return Optional<R>(types::in_place, function::invoke(util::forward<F>(f), util::move(*this).value()));
-        } else {
-            return nullopt;
-        }
-    }
-
-    template<concepts::Invocable<OptionalGetValue<Storage const&&>> F,
-             typename R = meta::UnwrapRefDecay<meta::InvokeResult<F, OptionalGetValue<Storage const&&>>>>
-    constexpr Optional<R> transform(F&& f) const&& {
-        if (has_value()) {
-            return Optional<R>(types::in_place, function::invoke(util::forward<F>(f), util::move(*this).value()));
-        } else {
-            return nullopt;
-        }
-    }
-
-    template<concepts::InvocableTo<Optional> F>
-    requires(concepts::Copyable<Optional>)
-    constexpr Optional or_else(F&& f) const& {
-        return *this ? *this : function::invoke(util::forward<F>(f));
-    }
-
-    template<concepts::InvocableTo<Optional> F>
-    requires(concepts::Movable<Optional>)
-    constexpr Optional or_else(F&& f) && {
-        return *this ? util::move(*this) : function::invoke(util::forward<F>(f));
-    }
-
     constexpr void reset() { set_nullopt(m_storage); }
 
     template<typename... Args>
@@ -370,6 +276,34 @@ private:
             a = util::move(b);
             b.reset();
         }
+    }
+
+    // Monadic interface
+    template<concepts::DecaySameAs<Optional> Self, concepts::Invocable<OptionalGetValue<meta::Like<Self, Storage>>> F,
+             typename R = meta::InvokeResult<F, OptionalGetValue<meta::Like<Self, Storage>>>>
+    requires(concepts::Optional<R>)
+    constexpr friend R tag_invoke(types::Tag<function::monad::bind>, Self&& self, F&& f) {
+        if (self.has_value()) {
+            return function::invoke(util::forward<F>(f), util::forward<Self>(self).value());
+        } else {
+            return R();
+        }
+    }
+
+    template<concepts::DecaySameAs<Optional> Self, concepts::Invocable<OptionalGetValue<meta::Like<Self, Storage>>> F,
+             typename R = meta::UnwrapRefDecay<meta::InvokeResult<F, OptionalGetValue<meta::Like<Self, Storage>>>>>
+    constexpr friend Optional<R> tag_invoke(types::Tag<function::monad::fmap>, Self&& self, F&& f) {
+        if (self.has_value()) {
+            return Optional<R>(types::in_place, function::invoke(util::forward<F>(f), util::forward<Self>(self).value()));
+        } else {
+            return nullopt;
+        }
+    }
+
+    template<concepts::DecaySameAs<Optional> Self, concepts::InvocableTo<Optional> F>
+    requires(concepts::ConstructibleFrom<Optional, Self>)
+    constexpr friend Optional tag_invoke(types::Tag<function::monad::fail>, Self&& self, F&& f) {
+        return self.has_value() ? util::forward<Self>(self) : function::invoke(util::forward<F>(f));
     }
 
     Storage m_storage { nullopt };

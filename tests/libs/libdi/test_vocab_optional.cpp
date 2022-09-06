@@ -161,16 +161,28 @@ constexpr void monad() {
     static_assert(di::concepts::Monad<di::Optional>);
     static_assert(di::concepts::MonadInstance<di::Optional<int>>);
 
-    auto yyy = di::unit<di::Optional>(5) % [](auto i) {
+    auto yyy = di::monad::unit<di::Optional>(5) % [](auto i) {
         return i + 5;
     } % [](auto x) {
         return x + 1;
     } % [](auto j) {
         return j - 2;
     } >> [](auto k) {
-        return di::unit<di::Optional>(k + 2);
+        return di::monad::unit<di::Optional>(k + 2);
+    } & [] {
+        return di::make_optional(0);
     };
     EXPECT_EQ(*yyy, 11);
+
+    auto xxx = di::Optional<int> {} % [](auto i) {
+        return i + 5;
+    } >> [](auto k) {
+        return di::monad::unit<di::Optional>(k + 2);
+    } & [] {
+        return di::make_optional(2);
+    };
+
+    EXPECT_EQ(*xxx, 2);
 }
 
 constexpr void swap() {
