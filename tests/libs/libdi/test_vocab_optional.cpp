@@ -157,6 +157,20 @@ constexpr void monad() {
         return di::make_optional(di::ref(zzz));
     });
     EXPECT_EQ(*a, zzz);
+
+    static_assert(di::concepts::Monad<di::Optional>);
+    static_assert(di::concepts::MonadInstance<di::Optional<int>>);
+
+    auto yyy = di::unit<di::Optional>(5) % [](auto i) {
+        return i + 5;
+    } % [](auto x) {
+        return x + 1;
+    } % [](auto j) {
+        return j - 2;
+    } >> [](auto k) {
+        return di::unit<di::Optional>(k + 2);
+    };
+    EXPECT_EQ(*yyy, 11);
 }
 
 constexpr void swap() {

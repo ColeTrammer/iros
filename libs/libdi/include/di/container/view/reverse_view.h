@@ -17,7 +17,7 @@
 #include <di/container/view/view_interface.h>
 #include <di/util/move.h>
 
-namespace di::container::view {
+namespace di::container {
 template<concepts::View View>
 requires(concepts::BidirectionalContainer<View>)
 class ReverseView

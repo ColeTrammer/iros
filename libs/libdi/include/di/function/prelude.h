@@ -5,7 +5,9 @@
 #include <di/function/compose.h>
 #include <di/function/curry.h>
 #include <di/function/curry_back.h>
+#include <di/function/id.h>
 #include <di/function/invoke.h>
+#include <di/function/monad.h>
 #include <di/function/piped.h>
 #include <di/function/pipeline.h>
 #include <di/function/tag_invoke.h>
@@ -16,7 +18,9 @@ using function::bind_front;
 using function::compose;
 using function::curry;
 using function::curry_back;
+using function::id;
 using function::piped;
+using function::unit;
 
 using concepts::TagInvocable;
 using concepts::TagInvocableTo;

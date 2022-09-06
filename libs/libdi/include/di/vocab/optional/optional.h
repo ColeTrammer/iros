@@ -15,10 +15,12 @@
 #include <di/container/meta/enable_borrowed_container.h>
 #include <di/container/meta/enable_view.h>
 #include <di/function/invoke.h>
+#include <di/function/monad.h>
 #include <di/meta/compare_three_way_result.h>
 #include <di/meta/decay.h>
 #include <di/meta/optional_rank.h>
 #include <di/meta/remove_cvref.h>
+#include <di/meta/unwrap_ref_decay.h>
 #include <di/types/in_place.h>
 #include <di/util/address_of.h>
 #include <di/util/declval.h>
@@ -31,13 +33,15 @@ namespace di::vocab {
 template<typename T>
 class Optional
     : public meta::EnableView<Optional<T>>
-    , public meta::EnableBorrowedContainer<Optional<T>, concepts::LValueReference<T>> {
+    , public meta::EnableBorrowedContainer<Optional<T>, concepts::LValueReference<T>>
+    , public function::monad::EnableMonad {
 private:
     using Storage = StorageFor<T>;
     static_assert(OptionalStorage<Storage, T>);
 
 public:
     using Value = T;
+    using UnitType = T;
 
     constexpr Optional() = default;
     constexpr Optional(NullOpt) {}
@@ -292,7 +296,8 @@ public:
         }
     }
 
-    template<concepts::Invocable<OptionalGetValue<Storage&>> F, typename R = meta::InvokeResult<F, OptionalGetValue<Storage&>>>
+    template<concepts::Invocable<OptionalGetValue<Storage&>> F,
+             typename R = meta::UnwrapRefDecay<meta::InvokeResult<F, OptionalGetValue<Storage&>>>>
     constexpr Optional<R> transform(F&& f) & {
         if (has_value()) {
             return Optional<R>(types::in_place, function::invoke(util::forward<F>(f), value()));
@@ -301,7 +306,8 @@ public:
         }
     }
 
-    template<concepts::Invocable<OptionalGetValue<Storage const&>> F, typename R = meta::InvokeResult<F, OptionalGetValue<Storage const&>>>
+    template<concepts::Invocable<OptionalGetValue<Storage const&>> F,
+             typename R = meta::UnwrapRefDecay<meta::InvokeResult<F, OptionalGetValue<Storage const&>>>>
     constexpr Optional<R> transform(F&& f) const& {
         if (has_value()) {
             return Optional<R>(types::in_place, function::invoke(util::forward<F>(f), value()));
@@ -310,7 +316,8 @@ public:
         }
     }
 
-    template<concepts::Invocable<OptionalGetValue<Storage&&>> F, typename R = meta::InvokeResult<F, OptionalGetValue<Storage&&>>>
+    template<concepts::Invocable<OptionalGetValue<Storage&&>> F,
+             typename R = meta::UnwrapRefDecay<meta::InvokeResult<F, OptionalGetValue<Storage&&>>>>
     constexpr Optional<R> transform(F&& f) && {
         if (has_value()) {
             return Optional<R>(types::in_place, function::invoke(util::forward<F>(f), util::move(*this).value()));
@@ -320,7 +327,7 @@ public:
     }
 
     template<concepts::Invocable<OptionalGetValue<Storage const&&>> F,
-             typename R = meta::InvokeResult<F, OptionalGetValue<Storage const&&>>>
+             typename R = meta::UnwrapRefDecay<meta::InvokeResult<F, OptionalGetValue<Storage const&&>>>>
     constexpr Optional<R> transform(F&& f) const&& {
         if (has_value()) {
             return Optional<R>(types::in_place, function::invoke(util::forward<F>(f), util::move(*this).value()));

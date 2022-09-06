@@ -11,6 +11,7 @@
 #include <di/types/size_t.h>
 #include <di/types/ssize_t.h>
 #include <di/types/strong_ordering.h>
+#include <di/types/void.h>
 #include <di/types/weak_ordering.h>
 
 namespace di {
@@ -29,5 +30,6 @@ using types::ptrdiff_t;
 using types::size_t;
 using types::ssize_t;
 using types::strong_ordering;
+using types::Void;
 using types::weak_ordering;
 }
