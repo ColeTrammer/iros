@@ -4,6 +4,7 @@
 #include <di/function/monad/monad_concept.h>
 #include <di/function/monad/monad_fail.h>
 #include <di/function/monad/monad_fmap.h>
+#include <di/function/monad/monad_fmap_right.h>
 #include <di/util/forward.h>
 
 namespace di::function::monad {
@@ -18,7 +19,12 @@ constexpr auto operator>>(M&& m, F&& f) -> decltype(bind(util::forward<M>(m), ut
 }
 
 template<concepts::MonadInstance M, typename F>
-constexpr auto operator&(M&& m, F&& f) -> decltype(fail(util::forward<M>(m), util::forward<F>(f))) {
+constexpr auto operator<<(M&& m, F&& f) -> decltype(fail(util::forward<M>(m), util::forward<F>(f))) {
     return fail(util::forward<M>(m), util::forward<F>(f));
+}
+
+template<concepts::MonadInstance M, typename F>
+constexpr auto operator&(M&& m, F&& f) -> decltype(fmap_right(util::forward<M>(m), util::forward<F>(f))) {
+    return fmap_right(util::forward<M>(m), util::forward<F>(f));
 }
 }

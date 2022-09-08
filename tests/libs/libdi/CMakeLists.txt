@@ -7,6 +7,7 @@ set(TEST_FILES
     test_meta.cpp
     test_util_swap.cpp
     test_vocab_array.cpp
+    test_vocab_expected.cpp
     test_vocab_optional.cpp
     test_vocab_span.cpp
     test_vocab_tuple.cpp

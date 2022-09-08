@@ -25,6 +25,7 @@
 #include <di/types/in_place.h>
 #include <di/util/address_of.h>
 #include <di/util/declval.h>
+#include <di/util/initializer_list.h>
 #include <di/util/move.h>
 #include <di/util/swap.h>
 #include <di/vocab/optional/constructible_from_cref_optional.h>
@@ -87,8 +88,15 @@ public:
     }
 
     template<typename... Args>
+    requires(concepts::ConstructibleFrom<T, Args...>)
     constexpr Optional(types::InPlace, Args&&... args) {
         emplace(util::forward<Args>(args)...);
+    }
+
+    template<typename U, typename... Args>
+    requires(concepts::ConstructibleFrom<T, util::InitializerList<U>, Args...>)
+    constexpr Optional(types::InPlace, util::InitializerList<U> list, Args&&... args) {
+        emplace(list, util::forward<Args>(args)...);
     }
 
     template<typename U = T>

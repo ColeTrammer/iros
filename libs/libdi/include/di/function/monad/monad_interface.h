@@ -5,6 +5,7 @@
 #include <di/function/monad/monad_enable.h>
 #include <di/function/monad/monad_fail.h>
 #include <di/function/monad/monad_fmap.h>
+#include <di/function/monad/monad_fmap_right.h>
 #include <di/function/tag_invoke.h>
 #include <di/util/forward.h>
 #include <di/util/move.h>
@@ -62,6 +63,12 @@ public:
     }
 
     template<typename F>
+    requires(concepts::Invocable<decltype(fail), Self&, F>)
+    constexpr decltype(auto) or_else(F&& function) & {
+        return fail(static_cast<Self&>(*this), util::forward<F>(function));
+    }
+
+    template<typename F>
     requires(concepts::Invocable<decltype(fail), Self const&, F>)
     constexpr decltype(auto) or_else(F&& function) const& {
         return fail(static_cast<Self const&>(*this), util::forward<F>(function));
@@ -71,6 +78,36 @@ public:
     requires(concepts::Invocable<decltype(fail), Self &&, F>)
     constexpr decltype(auto) or_else(F&& function) && {
         return fail(static_cast<Self&&>(*this), util::forward<F>(function));
+    }
+
+    template<typename F>
+    requires(concepts::Invocable<decltype(fail), Self const &&, F>)
+    constexpr decltype(auto) or_else(F&& function) const&& {
+        return fail(static_cast<Self const&&>(*this), util::forward<F>(function));
+    }
+
+    template<typename F>
+    requires(concepts::Invocable<decltype(fmap_right), Self&, F>)
+    constexpr decltype(auto) transform_or(F&& function) & {
+        return fmap_right(static_cast<Self&>(*this), util::forward<F>(function));
+    }
+
+    template<typename F>
+    requires(concepts::Invocable<decltype(fmap_right), Self const&, F>)
+    constexpr decltype(auto) transform_or(F&& function) const& {
+        return fmap_right(static_cast<Self const&>(*this), util::forward<F>(function));
+    }
+
+    template<typename F>
+    requires(concepts::Invocable<decltype(fmap_right), Self &&, F>)
+    constexpr decltype(auto) transform_or(F&& function) && {
+        return fmap_right(static_cast<Self&&>(*this), util::forward<F>(function));
+    }
+
+    template<typename F>
+    requires(concepts::Invocable<decltype(fmap_right), Self const &&, F>)
+    constexpr decltype(auto) transform_or(F&& function) const&& {
+        return fmap_right(static_cast<Self const&&>(*this), util::forward<F>(function));
     }
 
 private:

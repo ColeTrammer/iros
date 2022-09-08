@@ -169,7 +169,7 @@ constexpr void monad() {
         return j - 2;
     } >> [](auto k) {
         return di::monad::unit<di::Optional>(k + 2);
-    } & [] {
+    } << [] {
         return di::make_optional(0);
     };
     EXPECT_EQ(*yyy, 11);
@@ -178,7 +178,7 @@ constexpr void monad() {
         return i + 5;
     } >> [](auto k) {
         return di::monad::unit<di::Optional>(k + 2);
-    } & [] {
+    } << [] {
         return di::make_optional(2);
     };
 
