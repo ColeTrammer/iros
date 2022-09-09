@@ -19,6 +19,7 @@
 #include <di/util/swap.h>
 #include <di/vocab/expected/expected_can_convert_constructor.h>
 #include <di/vocab/expected/expected_forward_declaration.h>
+#include <di/vocab/expected/expected_void_void.h>
 #include <di/vocab/expected/unexpect.h>
 #include <di/vocab/expected/unexpected.h>
 #include <di/vocab/optional/optional.h>
@@ -78,6 +79,10 @@ public:
     requires(!concepts::CopyConstructible<E>)
     = delete;
     constexpr Expected& operator=(Expected const&)
+    requires(concepts::CopyConstructible<E>)
+    = default;
+
+    constexpr Expected& operator=(Expected&&)
     requires(concepts::MoveConstructible<E>)
     = default;
 

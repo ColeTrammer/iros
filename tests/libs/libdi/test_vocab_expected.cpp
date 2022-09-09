@@ -43,4 +43,35 @@ constexpr void void_value() {
     EXPECT(q == di::Unexpected { 8 });
 }
 
+constexpr void void_error() {
+    auto x = di::Expected { 2 };
+    EXPECT_EQ(*x, 2);
+
+    x = 8;
+    EXPECT_EQ(*x, 8);
+
+    EXPECT(x == 8);
+    EXPECT(x != di::Unexpected { 8 });
+
+    static_assert(di::concepts::Monad<di::Expected>);
+    static_assert(di::concepts::MonadInstance<di::Expected<int, void>>);
+    static_assert(di::concepts::MonadInstance<di::Expected<int, void>&>);
+
+    auto y = x % [](auto y) {
+        return y + 4;
+    };
+    EXPECT(y == 12);
+
+    auto z = x % [](auto z) {
+        return static_cast<long>(z + 2);
+    };
+    EXPECT(z == 10);
+
+    auto w = x >> [](auto x) {
+        return di::Expected<void, int> { di::unexpect, x };
+    };
+    EXPECT(w == di::Unexpected { 8 });
+}
+
 TEST_CONSTEXPR(vocab_expected, void_value, void_value)
+TEST_CONSTEXPR(vocab_expected, void_error, void_error)
