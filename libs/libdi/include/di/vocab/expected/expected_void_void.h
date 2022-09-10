@@ -1,14 +1,23 @@
 #pragma once
 
+#include <di/concepts/constructible_from.h>
+#include <di/concepts/language_void.h>
+#include <di/concepts/remove_cvref_same_as.h>
 #include <di/function/monad/monad_interface.h>
+#include <di/vocab/expected/expected_forward_declaration.h>
 
 namespace di::vocab {
 template<>
 class Expected<void, void> : public function::monad::MonadInterface<Expected<void, void>> {
 public:
+    using Value = void;
+    using Error = void;
+
     constexpr Expected() = default;
     constexpr Expected(Expected const&) = default;
     constexpr Expected(Expected&) = default;
+
+    constexpr explicit Expected(types::InPlace) {}
 
     constexpr ~Expected() = default;
 
@@ -24,6 +33,8 @@ public:
     constexpr void error() const& {}
     constexpr void error() && {}
 
+    constexpr void emplace() {}
+
 private:
     template<typename G>
     constexpr friend bool operator==(Expected const& a, Expected<void, G> const& b) {
@@ -37,7 +48,12 @@ private:
 
     template<concepts::RemoveCVRefSameAs<Expected> Self, typename F, typename U = meta::UnwrapRefDecay<meta::InvokeResult<F>>>
     constexpr friend Expected<U, void> tag_invoke(types::Tag<function::monad::fmap>, Self&& self, F&& function) {
-        return function::invoke(util::forward<F>(function));
+        if constexpr (concepts::LanguageVoid<U>) {
+            function::invoke(util::forward<F>(function));
+            return {};
+        } else {
+            return function::invoke(util::forward<F>(function));
+        }
     }
 
     template<concepts::RemoveCVRefSameAs<Expected> Self, typename F, typename R = meta::InvokeResult<F>>

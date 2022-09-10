@@ -84,9 +84,9 @@ public:
     template<typename U = T>
     requires(concepts::ConstructibleFrom<Storage, U> && !concepts::RemoveCVRefSameAs<RebindableBox, U> &&
              !concepts::RemoveCVRefSameAs<types::InPlace, U>)
-    constexpr explicit(!concepts::ConvertibleTo<U, Storage>) RebindableBox(U&& value) : m_storage(value) {}
+    constexpr explicit(!concepts::ConvertibleTo<U, Storage>) RebindableBox(U&& value) : m_storage(util::forward<U>(value)) {}
 
-    template<typename U, typename... Args>
+    template<typename... Args>
     requires(concepts::ConstructibleFrom<Storage, Args...>)
     constexpr RebindableBox(types::InPlace, Args&&... args) : m_storage(util::forward<Args>(args)...) {}
 
@@ -139,6 +139,22 @@ public:
     constexpr T const& value() const& { return m_storage; }
     constexpr T&& value() && { return util::move(m_storage); }
     constexpr T const&& value() const&& { return util::move(m_storage); }
+
+    template<typename... Args>
+    requires(concepts::ConstructibleFrom<T, Args...>)
+    constexpr T& emplace(Args&&... args) {
+        util::destroy_at(util::address_of(m_storage));
+        util::construct_at(util::address_of(m_storage), util::forward<Args>(args)...);
+        return value();
+    }
+
+    template<typename U, typename... Args>
+    requires(concepts::ConstructibleFrom<T, util::InitializerList<U>, Args...>)
+    constexpr T& emplace(util::InitializerList<U> list, Args&&... args) {
+        util::destroy_at(util::address_of(m_storage));
+        util::construct_at(util::address_of(m_storage), list, util::forward<Args>(args)...);
+        return value();
+    }
 
 private:
     template<typename U>

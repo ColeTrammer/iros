@@ -73,5 +73,62 @@ constexpr void void_error() {
     EXPECT(w == di::Unexpected { 8 });
 }
 
+constexpr void basic() {
+    auto x = di::Expected<int, int> { di::unexpect, 5 };
+    EXPECT(x == di::Unexpected { 5 });
+
+    x.emplace(7);
+    EXPECT(x == 7);
+
+    auto y = di::Expected<long, long>(x);
+    EXPECT(y == 7);
+
+    auto z = y % [](auto x) {
+        return x + 2;
+    } >> [](auto x) {
+        return di::Expected<long, int> { di::unexpect, x - 2 };
+    } << [](auto e) {
+        return di::Expected<long long, void> { e };
+    } & [](auto e) {
+        return e - 1;
+    };
+    EXPECT(z == di::Expected { 7 });
+
+    static_assert(di::concepts::TriviallyDestructible<di::Expected<int, int>>);
+    static_assert(di::concepts::TriviallyCopyConstructible<di::Expected<int, int>>);
+    static_assert(di::concepts::TriviallyMoveConstructible<di::Expected<int, int>>);
+}
+
+struct M {
+    constexpr M(int x_) : x(x_) {}
+
+    constexpr M(M const&) = delete;
+    constexpr M(M&& xx) : x(di::exchange(xx.x, 0)) {}
+
+    int x;
+
+    constexpr friend bool operator==(M const& a, M const& b) { return a.x == b.x; }
+};
+
+constexpr void move_only() {
+    auto x = di::Expected<M, int> { M(2) };
+    EXPECT(x == M(2));
+
+    auto y = di::Expected<M, long> { di::move(x) };
+    EXPECT(y == M(2));
+    EXPECT(x == M(0));
+
+    auto z = di::move(y) % [](M x) {
+        static_assert(di::SameAs<decltype(x), M>);
+        return x;
+    } >> [](M x) {
+        static_assert(di::SameAs<decltype(x), M>);
+        return di::Expected<M, int> { di::unexpect, x.x };
+    };
+    EXPECT(z == di::Unexpected { 2 });
+}
+
 TEST_CONSTEXPR(vocab_expected, void_value, void_value)
 TEST_CONSTEXPR(vocab_expected, void_error, void_error)
+TEST_CONSTEXPR(vocab_expected, basic, basic)
+TEST_CONSTEXPR(vocab_expected, move_only, move_only)

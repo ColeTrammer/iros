@@ -64,6 +64,8 @@ public:
     requires(concepts::ConstructibleFrom<E, G>)
     constexpr explicit(!concepts::ConvertibleTo<G, E>) Expected(Unexpected<G>&& error) : m_error(util::move(error).error()) {}
 
+    constexpr explicit Expected(types::InPlace) {}
+
     template<typename... Args>
     requires(concepts::ConstructibleFrom<E, Args...>)
     constexpr explicit Expected(types::Unexpect, Args&&... args) : m_error(types::in_place, util::forward<Args>(args)...) {}
@@ -151,7 +153,8 @@ private:
         if (!self) {
             return Expected<U, E> { types::unexpect, util::forward<Self>(self).error() };
         }
-        if constexpr (concepts::LanguageVoid<meta::InvokeResult<F>>) {
+        if constexpr (concepts::LanguageVoid<U>) {
+            function::invoke(util::forward<F>(function));
             return {};
         } else {
             return function::invoke(util::forward<F>(function));
@@ -186,7 +189,7 @@ private:
             function::invoke(util::forward<F>(function), util::forward<Self>(self).error());
             return {};
         } else {
-            return Expected<void, G>(types::unexpect, function::invoke(util::forward<F>(function), util::forward<Self>(self).error()));
+            return Expected<void, G> { types::unexpect, function::invoke(util::forward<F>(function), util::forward<Self>(self).error()) };
         }
     }
 

@@ -8,11 +8,13 @@
 #include <di/concepts/default_constructible.h>
 #include <di/concepts/equality_comparable_with.h>
 #include <di/concepts/expected.h>
+#include <di/concepts/language_void.h>
 #include <di/concepts/move_assignable.h>
 #include <di/concepts/move_constructible.h>
 #include <di/concepts/remove_cvref_same_as.h>
 #include <di/concepts/unexpected.h>
 #include <di/function/monad/monad_interface.h>
+#include <di/meta/expected_rank.h>
 #include <di/meta/unwrap_ref_decay.h>
 #include <di/util/address_of.h>
 #include <di/util/forward.h>
@@ -31,6 +33,9 @@ namespace di::vocab {
 template<typename T>
 class Expected<T, void> : public function::monad::MonadInterface<Expected<T, void>> {
 public:
+    using Value = T;
+    using Error = void;
+
     constexpr Expected()
     requires(concepts::DefaultConstructible<T>)
     = default;
@@ -86,20 +91,6 @@ public:
         return *this;
     }
 
-    template<typename U>
-    requires(!concepts::ConstructibleFrom<T, U const&>)
-    constexpr Expected& operator=(Expected<U, void> const& other) {
-        m_value = other.value();
-        return *this;
-    }
-
-    template<typename U>
-    requires(!concepts::ConstructibleFrom<T, U>)
-    constexpr Expected& operator=(Expected<U, void>&& other) {
-        m_value = util::move(other).value();
-        return *this;
-    }
-
     constexpr auto operator->() { return util::address_of(m_value.value()); }
     constexpr auto operator->() const { return util::address_of(m_value.value()); }
 
@@ -131,6 +122,18 @@ public:
         return *util::move(*this);
     }
 
+    template<typename... Args>
+    requires(concepts::ConstructibleFrom<T, Args...>)
+    constexpr T& emplace(Args&&... args) {
+        return m_value.emplace(util::forward<Args>(args)...);
+    }
+
+    template<typename U, typename... Args>
+    requires(concepts::ConstructibleFrom<T, util::InitializerList<U>, Args...>)
+    constexpr T& emplace(util::InitializerList<U> list, Args&&... args) {
+        return m_value.emplace(list, util::forward<Args>(args)...);
+    }
+
 private:
     template<typename U, typename G>
     friend class Expected;
@@ -146,6 +149,12 @@ private:
         return b.has_value() && *a == *b;
     }
 
+    template<typename U>
+    requires(meta::ExpectedRank<U> < meta::ExpectedRank<Expected> && concepts::EqualityComparableWith<T, U>)
+    constexpr friend bool operator==(Expected const& a, U const& b) {
+        return a.value() == b;
+    }
+
     template<typename G>
     constexpr friend bool operator==(Expected const&, Unexpected<G> const&) {
         return false;
@@ -154,7 +163,12 @@ private:
     template<concepts::RemoveCVRefSameAs<Expected> Self, typename F,
              typename U = meta::UnwrapRefDecay<meta::InvokeResult<F, meta::Like<Self, T>>>>
     constexpr friend Expected<U, void> tag_invoke(types::Tag<function::monad::fmap>, Self&& self, F&& function) {
-        return function::invoke(util::forward<F>(function), util::forward<Self>(self).value());
+        if constexpr (concepts::LanguageVoid<U>) {
+            function::invoke(util::forward<F>(function), util::forward<Self>(self).value());
+            return {};
+        } else {
+            return function::invoke(util::forward<F>(function), util::forward<Self>(self).value());
+        }
     }
 
     template<concepts::RemoveCVRefSameAs<Expected> Self, typename F, typename R = meta::InvokeResult<F, meta::Like<Self, T>>>
