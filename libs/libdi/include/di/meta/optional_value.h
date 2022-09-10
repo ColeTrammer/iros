@@ -5,5 +5,5 @@
 
 namespace di::meta {
 template<concepts::Optional T>
-using OptionalValue = meta::RemoveCV<T>::Value;
+using OptionalValue = meta::RemoveCVRef<T>::Value;
 }

@@ -5,5 +5,5 @@
 
 namespace di::meta {
 template<concepts::Expected T>
-using ExpectedError = meta::RemoveCV<T>::Error;
+using ExpectedError = meta::RemoveCVRef<T>::Error;
 }

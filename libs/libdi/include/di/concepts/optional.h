@@ -19,5 +19,5 @@ namespace detail {
 }
 
 template<typename T>
-concept Optional = detail::OptionalHelper<meta::RemoveCV<T>>::value;
+concept Optional = detail::OptionalHelper<meta::RemoveCVRef<T>>::value;
 }

@@ -15,5 +15,5 @@ namespace detail {
 }
 
 template<typename T>
-concept Expected = detail::ExpectedHelper<meta::RemoveCV<T>>::value;
+concept Expected = detail::ExpectedHelper<meta::RemoveCVRef<T>>::value;
 }

@@ -5,5 +5,5 @@
 
 namespace di::meta {
 template<concepts::Expected T>
-using ExpectedValue = meta::RemoveCV<T>::Value;
+using ExpectedValue = meta::RemoveCVRef<T>::Value;
 }

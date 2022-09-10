@@ -128,7 +128,33 @@ constexpr void move_only() {
     EXPECT(z == di::Unexpected { 2 });
 }
 
+constexpr void fallible() {
+    auto x = 2;
+    auto y = di::as_fallible(x);
+    static_assert(di::SameAs<decltype(y), di::Expected<int, void>>);
+    EXPECT_EQ(*y, 2);
+
+    auto z = di::as_fallible(y);
+    static_assert(di::SameAs<decltype(z), di::Expected<int, void>>);
+    EXPECT_EQ(*z, 2);
+
+    auto w = di::try_infallible(z);
+    EXPECT_EQ(w, 2);
+
+    auto a = di::Expected<int, int> { 2 };
+    auto b = di::try_infallible(a);
+    EXPECT(a == b);
+
+    auto c = di::as_fallible(2) % [](auto x) {
+        return x + 2;
+    } >> [](auto z) {
+        return di::Expected { z + 2 };
+    } | di::try_infallible;
+    EXPECT_EQ(c, 6);
+}
+
 TEST_CONSTEXPR(vocab_expected, void_value, void_value)
 TEST_CONSTEXPR(vocab_expected, void_error, void_error)
 TEST_CONSTEXPR(vocab_expected, basic, basic)
 TEST_CONSTEXPR(vocab_expected, move_only, move_only)
+TEST_CONSTEXPR(vocab_expected, fallible, fallible)
