@@ -153,8 +153,20 @@ constexpr void fallible() {
     EXPECT_EQ(c, 6);
 }
 
+constexpr void reference() {
+    int a = 2;
+    auto x = di::Expected { di::ref(a) };
+    EXPECT_EQ(*x, a);
+
+    int b = 3;
+    auto y = di::Expected<int&, int&>(b);
+    *y = 5;
+    EXPECT_EQ(b, 5);
+}
+
 TEST_CONSTEXPR(vocab_expected, void_value, void_value)
 TEST_CONSTEXPR(vocab_expected, void_error, void_error)
 TEST_CONSTEXPR(vocab_expected, basic, basic)
 TEST_CONSTEXPR(vocab_expected, move_only, move_only)
 TEST_CONSTEXPR(vocab_expected, fallible, fallible)
+TEST_CONSTEXPR(vocab_expected, reference, reference)
