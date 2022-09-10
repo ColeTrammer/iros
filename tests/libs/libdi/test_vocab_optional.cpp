@@ -261,6 +261,18 @@ constexpr void container() {
     }
 }
 
+constexpr void void_optional() {
+    auto x = di::lift_bool(true) % [] {
+        return 2;
+    };
+    EXPECT(x == 2);
+
+    auto y = di::lift_bool(false) % [] {
+        return 2;
+    };
+    EXPECT(!y);
+}
+
 TEST_CONSTEXPR(vocab_optional, basic, basic)
 TEST_CONSTEXPR(vocab_optional, conversions, conversions)
 TEST_CONSTEXPR(vocab_optional, make_optional, make_optional)
@@ -270,3 +282,4 @@ TEST_CONSTEXPR(vocab_optional, monad, monad)
 TEST_CONSTEXPR(vocab_optional, swap, swap)
 TEST_CONSTEXPR(vocab_optional, compare, compare)
 TEST_CONSTEXPR(vocab_optional, container, container)
+TEST_CONSTEXPR(vocab_optional, void_optional, void_optional)

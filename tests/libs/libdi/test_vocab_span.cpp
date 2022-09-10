@@ -11,6 +11,7 @@ constexpr void basic() {
     auto z = di::Span<int> { x };
     EXPECT_EQ(z.size(), 5u);
     EXPECT_EQ(z[3], x[3]);
+    EXPECT_EQ(*z.front(), 1);
     EXPECT_EQ(*z.back(), 5);
 
     auto a = z.subspan(1, 2);

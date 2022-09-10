@@ -30,8 +30,11 @@ template<typename T>
 class Span<T, dynamic_extent>
     : public meta::EnableView<Span<T, dynamic_extent>>
     , public meta::EnableBorrowedContainer<Span<T, dynamic_extent>>
-    , public container::ConstantVectorInterface<Span<T, dynamic_extent>, T, T> {
+    , public container::ConstantVectorInterface<Span<T, dynamic_extent>> {
 public:
+    using Value = T;
+    using ConstValue = T;
+
     constexpr Span() = default;
 
     template<concepts::ContiguousIterator Iter>

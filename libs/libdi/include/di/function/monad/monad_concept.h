@@ -10,6 +10,14 @@
 #include <di/util/forward.h>
 
 namespace di::concepts {
+namespace detail {
+    template<typename T>
+    struct MonadBindId {
+        constexpr T operator()(auto&& value) const { return T(util::forward<decltype(value)>(value)); }
+        constexpr T operator()() const { return T(); }
+    };
+}
+
 template<typename T>
 concept MonadInstance = requires(T&& value) {
                             // fmap (Haskell >>)
@@ -17,9 +25,7 @@ concept MonadInstance = requires(T&& value) {
 
                             // bind (Haskell >>=)
                             {
-                                function::monad::bind(util::forward<T>(value), [](auto&& value) {
-                                    return T(util::forward<decltype(value)>(value));
-                                })
+                                function::monad::bind(util::forward<T>(value), detail::MonadBindId<meta::RemoveCVRef<T>> {})
                                 } -> SameAs<meta::RemoveCVRef<T>>;
                         } && function::monad::enable_monad(types::in_place_type<meta::RemoveCVRef<T>>);
 

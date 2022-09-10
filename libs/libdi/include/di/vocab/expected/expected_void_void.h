@@ -27,6 +27,9 @@ public:
     constexpr explicit operator bool() const { return true; }
     constexpr bool has_value() const { return true; }
 
+    constexpr void operator*() const& {}
+    constexpr void operator*() && {}
+
     constexpr void value() const& {}
     constexpr void value() && {}
 

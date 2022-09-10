@@ -10,6 +10,8 @@ namespace detail {
         constexpr T&& operator()(T&& value) const {
             return util::forward<T>(value);
         }
+
+        constexpr void operator()() const {}
     };
 }
 

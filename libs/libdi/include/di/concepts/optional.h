@@ -3,11 +3,7 @@
 #include <di/meta/false_type.h>
 #include <di/meta/remove_cv.h>
 #include <di/meta/true_type.h>
-
-namespace di::vocab {
-template<typename T>
-class Optional;
-}
+#include <di/vocab/optional/optional_forward_declaration.h>
 
 namespace di::concepts {
 namespace detail {

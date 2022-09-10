@@ -4,6 +4,7 @@
 #include <di/concepts/copyable.h>
 #include <di/concepts/decay_same_as.h>
 #include <di/concepts/equality_comparable_with.h>
+#include <di/concepts/language_void.h>
 #include <di/concepts/lvalue_reference.h>
 #include <di/concepts/one_of.h>
 #include <di/concepts/scalar.h>
@@ -29,11 +30,13 @@
 #include <di/util/move.h>
 #include <di/util/swap.h>
 #include <di/vocab/optional/constructible_from_cref_optional.h>
+#include <di/vocab/optional/optional_forward_declaration.h>
 #include <di/vocab/optional/storage_for.h>
 
 namespace di::vocab {
 template<typename T>
-class Optional
+requires(!concepts::LanguageVoid<T>)
+class Optional<T>
     : public meta::EnableView<Optional<T>>
     , public meta::EnableBorrowedContainer<Optional<T>, concepts::LValueReference<T>>
     , public function::monad::MonadInterface<Optional<T>> {
@@ -302,7 +305,12 @@ private:
              typename R = meta::UnwrapRefDecay<meta::InvokeResult<F, OptionalGetValue<meta::Like<Self, Storage>>>>>
     constexpr friend Optional<R> tag_invoke(types::Tag<function::monad::fmap>, Self&& self, F&& f) {
         if (self.has_value()) {
-            return Optional<R>(types::in_place, function::invoke(util::forward<F>(f), util::forward<Self>(self).value()));
+            if constexpr (concepts::LanguageVoid<R>) {
+                function::invoke(util::forward<F>(f), util::forward<Self>(self).value());
+                return Optional<R>(types::in_place);
+            } else {
+                return Optional<R>(types::in_place, function::invoke(util::forward<F>(f), util::forward<Self>(self).value()));
+            }
         } else {
             return nullopt;
         }
