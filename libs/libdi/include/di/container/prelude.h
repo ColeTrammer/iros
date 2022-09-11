@@ -1,5 +1,8 @@
 #pragma once
 
+#include <di/container/action/prelude.h>
+#include <di/container/algorithm/prelude.h>
+#include <di/container/allocator/prelude.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/interface/prelude.h>
 #include <di/container/iterator/prelude.h>

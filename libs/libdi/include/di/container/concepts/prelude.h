@@ -5,6 +5,7 @@
 #include <di/container/concepts/borrowed_container.h>
 #include <di/container/concepts/common_container.h>
 #include <di/container/concepts/container.h>
+#include <di/container/concepts/container_compatible.h>
 #include <di/container/concepts/contiguous_container.h>
 #include <di/container/concepts/contiguous_iterator.h>
 #include <di/container/concepts/forward_container.h>

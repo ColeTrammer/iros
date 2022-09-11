@@ -2,8 +2,12 @@
 
 #include <di/container/allocator/allocator.h>
 #include <di/container/allocator/allocator_of.h>
+#include <di/container/concepts/prelude.h>
+#include <di/container/meta/prelude.h>
+#include <di/container/types/prelude.h>
 #include <di/container/vector/mutable_vector_interface.h>
 #include <di/types/prelude.h>
+#include <di/util/deduce_create.h>
 #include <di/util/exchange.h>
 #include <di/vocab/span/prelude.h>
 
@@ -55,4 +59,7 @@ private:
     size_t m_size { 0 };
     size_t m_capacity { 0 };
 };
+
+template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>>
+Vector<T> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<Vector>, Con&&);
 }

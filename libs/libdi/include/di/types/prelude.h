@@ -2,6 +2,7 @@
 
 #include <di/types/in_place.h>
 #include <di/types/in_place_index.h>
+#include <di/types/in_place_template.h>
 #include <di/types/in_place_type.h>
 #include <di/types/integers.h>
 #include <di/types/nullptr_t.h>
@@ -17,11 +18,13 @@
 namespace di {
 using types::in_place;
 using types::in_place_index;
+using types::in_place_template;
 using types::in_place_type;
 using types::piecewise_construct;
 
 using types::InPlace;
 using types::InPlaceIndex;
+using types::InPlaceTemplate;
 using types::InPlaceType;
 using types::nullptr_t;
 using types::partial_ordering;

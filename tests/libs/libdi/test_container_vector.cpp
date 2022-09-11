@@ -83,5 +83,38 @@ constexpr void move_only() {
     EXPECT(v.empty());
 }
 
+constexpr void to() {
+    auto v = di::create<di::Vector<int>>(di::range(6));
+    EXPECT(v.size() == 6u);
+    EXPECT_EQ(v[0], 0);
+    EXPECT_EQ(v[4], 4);
+
+    auto w = di::container::to<di::Vector<int>>(di::range(6));
+    EXPECT(w.size() == 6u);
+    EXPECT_EQ(w[0], 0);
+    EXPECT_EQ(w[4], 4);
+
+    auto x = di::create<di::Vector>(di::range(6));
+    EXPECT(x.size() == 6u);
+    EXPECT_EQ(x[0], 0);
+    EXPECT_EQ(x[4], 4);
+
+    auto y = di::container::to<di::Vector>(di::range(6));
+    EXPECT(y.size() == 6u);
+    EXPECT_EQ(y[0], 0);
+    EXPECT_EQ(y[4], 4);
+
+    auto u = di::range(6) | di::container::to<di::Vector<int>>();
+    EXPECT(u.size() == 6u);
+    EXPECT_EQ(u[0], 0);
+    EXPECT_EQ(u[4], 4);
+
+    auto z = di::range(6) | di::container::to<di::Vector>();
+    EXPECT(z.size() == 6u);
+    EXPECT_EQ(z[0], 0);
+    EXPECT_EQ(z[4], 4);
+}
+
 TEST_CONSTEXPR(container_vector, basic, basic)
 TEST_CONSTEXPR(container_vector, move_only, move_only)
+TEST_CONSTEXPR(container_vector, to, to)
