@@ -7,7 +7,7 @@
 #include <di/util/destroy.h>
 
 namespace di::container::vector {
-template<typename Vec = concepts::detail::MutableVector>
+template<concepts::detail::MutableVector Vec>
 constexpr void clear(Vec& vector) {
     if constexpr (concepts::TriviallyDestructible<meta::detail::VectorValue<Vec>>) {
         (void) vector;

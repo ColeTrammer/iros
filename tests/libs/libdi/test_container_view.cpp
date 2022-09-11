@@ -178,6 +178,34 @@ constexpr void reverse() {
     }
 }
 
+constexpr void as_rvalue() {
+    int arr[] = { 1, 2, 3, 4, 5 };
+    static_assert(!di::concepts::ContiguousIterator<di::container::MoveIterator<int*>>);
+    static_assert(di::concepts::RandomAccessIterator<di::container::MoveIterator<int*>>);
+    static_assert(di::concepts::BidirectionalContainer<decltype(di::as_rvalue(arr))>);
+    static_assert(di::concepts::SizedContainer<decltype(di::as_rvalue(arr))>);
+    static_assert(di::concepts::RandomAccessContainer<decltype(di::as_rvalue(arr))>);
+    static_assert(!di::concepts::ContiguousContainer<decltype(di::as_rvalue(arr))>);
+
+    static_assert(di::SameAs<di::meta::ContainerReference<decltype(di::as_rvalue(arr))>, int&&>);
+
+    {
+        auto sum = 0;
+        for (auto z : arr | di::as_rvalue) {
+            sum += z;
+        }
+        EXPECT_EQ(sum, 15);
+    }
+
+    {
+        auto sum = 0;
+        for (auto z : di::range(6) | di::as_rvalue) {
+            sum += z;
+        }
+        EXPECT_EQ(sum, 15);
+    }
+}
+
 TEST_CONSTEXPR(container_view, basic, basic)
 TEST_CONSTEXPR(container_view, all, all)
 TEST_CONSTEXPR(container_view, empty, empty)
@@ -185,3 +213,4 @@ TEST_CONSTEXPR(container_view, single, single)
 TEST_CONSTEXPR(container_view, iota, iota)
 TEST_CONSTEXPR(container_view, repeat, repeat)
 TEST_CONSTEXPR(container_view, reverse, reverse)
+TEST_CONSTEXPR(container_view, as_rvalue, as_rvalue)

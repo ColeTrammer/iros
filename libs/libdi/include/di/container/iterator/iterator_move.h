@@ -23,9 +23,7 @@ namespace detail {
                               };
 
     template<typename T>
-    concept DerefIterMove = requires(T&& value) {
-                                { *util::forward<T>(value) } -> concepts::RValueReference;
-                            };
+    concept DerefIterMove = requires(T&& value) { *util::forward<T>(value); };
 
     struct IteratorMoveFunction {
         template<typename T>

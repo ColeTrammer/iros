@@ -51,6 +51,9 @@ constexpr void basic() {
     EXPECT(v.size() == 2u);
     EXPECT_EQ(v[0], 1);
     EXPECT_EQ(v[1], 3);
+
+    v.clear();
+    EXPECT(v.empty());
 }
 
 struct M {
