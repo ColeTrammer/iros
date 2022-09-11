@@ -13,13 +13,13 @@
 #include <di/vocab/expected/prelude.h>
 
 namespace di::container::vector {
-template<typename Vec = concepts::detail::MutableVector, concepts::RemoveCVRefSameAs<meta::detail::VectorValue<Vec>> U>
-requires(concepts::ConstructibleFrom<meta::detail::VectorValue<Vec>, U>)
-constexpr decltype(auto) push_back(Vec& vector, U&& value) {
+template<typename Vec = concepts::detail::MutableVector, typename... Args>
+requires(concepts::ConstructibleFrom<meta::detail::VectorValue<Vec>, Args...>)
+constexpr decltype(auto) emplace_back(Vec& vector, Args&&... args) {
     auto size = vector::size(vector);
     vector::reserve(vector, size + 1);
     auto end = vector::data(vector) + size;
-    auto result = util::construct_at(end, util::forward<U>(value));
+    auto result = util::construct_at(end, util::forward<Args>(args)...);
     vector.assume_size(size + 1);
     return *result;
 }

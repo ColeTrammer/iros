@@ -9,6 +9,7 @@
 #include <di/container/vector/vector_end.h>
 #include <di/container/vector/vector_first.h>
 #include <di/container/vector/vector_front.h>
+#include <di/container/vector/vector_iterator.h>
 #include <di/container/vector/vector_last.h>
 #include <di/container/vector/vector_lookup.h>
 #include <di/container/vector/vector_size.h>
@@ -47,6 +48,10 @@ public:
 
     constexpr decltype(auto) operator[](size_t index) { return vector::lookup(self(), index); }
     constexpr decltype(auto) operator[](size_t index) const { return vector::lookup(self(), index); }
+
+    constexpr auto iterator(size_t index) { return vector::iterator(self(), index); }
+    constexpr auto iterator(size_t index) const { return vector::iterator(self(), index); }
+    constexpr auto citerator(size_t index) const { return vector::iterator(self(), index); }
 
     constexpr auto data() { return vector::data(self()); }
     constexpr auto data() const { return vector::data(self()); }

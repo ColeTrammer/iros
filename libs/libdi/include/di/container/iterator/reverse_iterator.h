@@ -8,6 +8,7 @@
 #include <di/concepts/same_as.h>
 #include <di/concepts/three_way_comparable_with.h>
 #include <di/container/concepts/bidirectional_iterator.h>
+#include <di/container/concepts/indirectly_swappable.h>
 #include <di/container/concepts/random_access_iterator.h>
 #include <di/container/iterator/iterator_category.h>
 #include <di/container/iterator/iterator_move.h>
@@ -125,6 +126,13 @@ private:
     {
         auto temp = self.base();
         return iterator_move(--temp);
+    }
+
+    template<concepts::IndirectlySwappable<Iter> Other>
+    constexpr friend void tag_invoke(types::Tag<iterator_swap>, ReverseIterator const& a, ReverseIterator<Other> const& b) {
+        auto t = a.base();
+        auto u = b.base();
+        iterator_swap(--t, --u);
     }
 
     Iter m_base {};

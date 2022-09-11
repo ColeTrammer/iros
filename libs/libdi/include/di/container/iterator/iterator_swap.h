@@ -6,9 +6,9 @@
 #include <di/container/meta/iterator_reference.h>
 #include <di/container/meta/iterator_rvalue.h>
 #include <di/function/tag_invoke.h>
+#include <di/meta/remove_cvref.h>
 #include <di/util/forward.h>
 #include <di/util/move.h>
-#include <di/util/remove_cvref.h>
 #include <di/util/swap.h>
 
 namespace di::container {
