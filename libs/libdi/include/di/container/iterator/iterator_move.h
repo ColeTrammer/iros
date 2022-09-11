@@ -5,6 +5,7 @@
 #include <di/concepts/lvalue_reference.h>
 #include <di/concepts/rvalue_reference.h>
 #include <di/function/tag_invoke.h>
+#include <di/meta/remove_cvref.h>
 #include <di/util/forward.h>
 #include <di/util/move.h>
 
@@ -13,7 +14,8 @@ namespace detail {
     struct IteratorMoveFunction;
 
     template<typename T>
-    concept CustomIterMove = (concepts::Class<T> || concepts::Enum<T>) && concepts::TagInvocable<IteratorMoveFunction, T>;
+    concept CustomIterMove =
+        (concepts::Class<meta::RemoveCVRef<T>> || concepts::Enum<meta::RemoveCVRef<T>>) && concepts::TagInvocable<IteratorMoveFunction, T>;
 
     template<typename T>
     concept RegularIterMove = requires(T&& value) {
