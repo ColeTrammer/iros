@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/meta/false_type.h>
-#include <di/meta/remove_cv.h>
+#include <di/meta/remove_cvref.h>
 #include <di/meta/true_type.h>
 #include <di/vocab/optional/optional_forward_declaration.h>
 

@@ -15,5 +15,15 @@ constexpr T* construct_at(T* location, Args&&... args) {
 #endif
 
 namespace di::util {
-using std::construct_at;
+namespace detail {
+    struct ConstructAtFunction {
+        template<typename T, typename... Args>
+        requires(requires(void* pointer, Args&&... args) { ::new (pointer) T(util::forward<Args>(args)...); })
+        constexpr T* operator()(T* location, Args&&... args) const {
+            return std::construct_at(location, util::forward<Args>(args)...);
+        }
+    };
+}
+
+constexpr inline auto construct_at = detail::ConstructAtFunction {};
 }

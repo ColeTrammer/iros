@@ -10,9 +10,12 @@
 #include <di/container/concepts/bidirectional_iterator.h>
 #include <di/container/concepts/random_access_iterator.h>
 #include <di/container/iterator/iterator_category.h>
+#include <di/container/iterator/iterator_move.h>
+#include <di/container/iterator/iterator_reference.h>
 #include <di/container/iterator/iterator_ssize_type.h>
 #include <di/container/iterator/iterator_value.h>
 #include <di/container/iterator/prev.h>
+#include <di/container/meta/iterator_rvalue.h>
 #include <di/container/meta/iterator_ssize_type.h>
 #include <di/container/types/prelude.h>
 
@@ -115,7 +118,14 @@ private:
         }
     }
     constexpr friend meta::IteratorValue<Iter> tag_invoke(types::Tag<iterator_value>, types::InPlaceType<ReverseIterator>) {}
+    constexpr friend meta::IteratorReference<Iter> tag_invoke(types::Tag<iterator_reference>, types::InPlaceType<ReverseIterator>) {}
     constexpr friend SSizeType tag_invoke(types::Tag<iterator_ssize_type>, types::InPlaceType<ReverseIterator>) {}
+    constexpr friend decltype(auto) tag_invoke(types::Tag<iterator_move>, ReverseIterator const& self)
+    requires(requires { typename meta::IteratorRValue<Iter>; })
+    {
+        auto temp = self.base();
+        return iterator_move(--temp);
+    }
 
     Iter m_base {};
 };

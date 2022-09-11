@@ -9,7 +9,6 @@
 #include <di/util/construct_at.h>
 #include <di/util/destroy_at.h>
 #include <di/util/forward.h>
-#include <di/util/relocate.h>
 
 namespace di::util {
 inline constexpr struct SwapFunction {
@@ -20,24 +19,12 @@ inline constexpr struct SwapFunction {
     }
 
     template<typename T, typename U>
-    requires(!concepts::TagInvocable<SwapFunction, T, U> && concepts::Movable<T> && concepts::Movable<U> &&
+    requires(!concepts::TagInvocable<SwapFunction, T&, U&> && concepts::Movable<T> && concepts::Movable<U> &&
              concepts::ConstructibleFrom<T, U> && concepts::ConstructibleFrom<U, T>)
-    constexpr void operator()(T&& a, U&& b) const {
+    constexpr void operator()(T& a, U& b) const {
         auto temp = auto(util::forward<T>(a));
         a = util::forward<U>(b);
         b = util::forward<T>(temp);
-    }
-
-    template<typename T, typename U>
-    requires(!concepts::TagInvocable<SwapFunction, T, U> && (!concepts::MoveAssignable<T> || !concepts::MoveAssignable<U>) &&
-             concepts::MoveConstructible<T> && concepts::MoveConstructible<U> && concepts::ConstructibleFrom<T, U> &&
-             concepts::ConstructibleFrom<U, T>)
-    constexpr void operator()(T&& a, U&& b) const {
-        if (&a != &b) {
-            auto temp = util::relocate(a);
-            util::construct_at(&a, util::relocate(b));
-            util::construct_at(&b, util::move(temp));
-        }
     }
 } swap;
 }

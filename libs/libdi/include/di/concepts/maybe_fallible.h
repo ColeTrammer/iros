@@ -5,5 +5,5 @@
 
 namespace di::concepts {
 template<typename Fal, typename T>
-concept MaybeFallible = SameAs<Fal, T> && ExpectedOf<Fal, T>;
+concept MaybeFallible = SameAs<Fal, T> || ExpectedOf<Fal, T>;
 }

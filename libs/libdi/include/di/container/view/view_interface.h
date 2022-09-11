@@ -13,8 +13,8 @@
 #include <di/container/interface/size.h>
 #include <di/container/iterator/prev.h>
 #include <di/container/meta/container_iterator.h>
+#include <di/container/meta/container_reference.h>
 #include <di/container/meta/container_ssize_type.h>
-#include <di/container/meta/container_value.h>
 #include <di/container/meta/enable_view.h>
 #include <di/meta/remove_cv.h>
 #include <di/vocab/optional/prelude.h>
@@ -84,7 +84,7 @@ public:
     constexpr auto front()
     requires(concepts::ForwardContainer<Self>)
     {
-        using Result = vocab::Optional<meta::ContainerValue<Self>>;
+        using Result = vocab::Optional<meta::ContainerReference<Self>>;
         if (this->empty()) {
             return Result(vocab::nullopt);
         } else {
@@ -95,7 +95,7 @@ public:
     constexpr auto front() const
     requires(concepts::ForwardContainer<Self const>)
     {
-        using Result = vocab::Optional<meta::ContainerValue<Self const>>;
+        using Result = vocab::Optional<meta::ContainerReference<Self const>>;
         if (this->empty()) {
             return Result(vocab::nullopt);
         } else {
@@ -106,7 +106,7 @@ public:
     constexpr auto back()
     requires(concepts::BidirectionalContainer<Self> && concepts::CommonContainer<Self>)
     {
-        using Result = vocab::Optional<meta::ContainerValue<Self>>;
+        using Result = vocab::Optional<meta::ContainerReference<Self>>;
         if (this->empty()) {
             return Result(vocab::nullopt);
         } else {
@@ -117,7 +117,7 @@ public:
     constexpr auto back() const
     requires(concepts::BidirectionalContainer<Self const> && concepts::CommonContainer<Self const>)
     {
-        using Result = vocab::Optional<meta::ContainerValue<Self const>>;
+        using Result = vocab::Optional<meta::ContainerReference<Self const>>;
         if (this->empty()) {
             return Result(vocab::nullopt);
         } else {

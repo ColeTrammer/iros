@@ -1,9 +1,10 @@
 #include <di/prelude.h>
+#include <di/util/rebindable_box.h>
 #include <test/test.h>
 
 constexpr void basic() {
     static_assert(di::concepts::Swappable<int>);
-    static_assert(di::concepts::SwappableWith<int, long>);
+    static_assert(!di::concepts::SwappableWith<int, long>);
     static_assert(!di::concepts::SwappableWith<char, char const*>);
 
     int a = 13;
@@ -44,14 +45,15 @@ struct Y {
 };
 
 constexpr void non_assignable() {
-    static_assert(di::concepts::Swappable<Y>);
+    static_assert(!di::concepts::Swappable<Y>);
+    static_assert(di::concepts::Swappable<di::util::RebindableBox<Y>>);
 
-    auto a = Y { 3 };
-    auto b = Y { 7 };
+    auto a = di::util::RebindableBox { Y { 3 } };
+    auto b = di::util::RebindableBox { Y { 7 } };
     di::swap(a, b);
 
-    EXPECT_EQ(a.x, 7);
-    EXPECT_EQ(b.x, 3);
+    EXPECT_EQ(a.value().x, 7);
+    EXPECT_EQ(b.value().x, 3);
 }
 
 struct Z {

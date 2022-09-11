@@ -13,10 +13,10 @@
 #include <di/container/concepts/sized_sentinel_for.h>
 #include <di/container/interface/data.h>
 #include <di/container/interface/size.h>
-#include <di/container/meta/container_value.h>
+#include <di/container/meta/container_reference.h>
 #include <di/container/meta/enable_borrowed_container.h>
 #include <di/container/meta/enable_view.h>
-#include <di/container/meta/iterator_value.h>
+#include <di/container/meta/iterator_reference.h>
 #include <di/container/vector/constant_vector_interface.h>
 #include <di/meta/remove_cvref.h>
 #include <di/meta/remove_reference.h>
@@ -38,11 +38,12 @@ public:
     constexpr Span() = default;
 
     template<concepts::ContiguousIterator Iter>
-    requires(concepts::ConvertibleToNonSlicing<meta::IteratorValue<Iter>, T>)
+    requires(concepts::ConvertibleToNonSlicing<meta::RemoveReference<meta::IteratorReference<Iter>>, T>)
     constexpr Span(Iter iterator, types::size_t size) : m_data(util::to_address(iterator)), m_size(size) {}
 
     template<concepts::ContiguousIterator Iter, concepts::SizedSentinelFor<Iter> Sent>
-    requires(concepts::ConvertibleToNonSlicing<meta::IteratorValue<Iter>, T> && !concepts::ConvertibleTo<Sent, types::size_t>)
+    requires(concepts::ConvertibleToNonSlicing<meta::RemoveReference<meta::IteratorReference<Iter>>, T> &&
+             !concepts::ConvertibleTo<Sent, types::size_t>)
     constexpr Span(Iter iterator, Sent sentinel) : m_data(util::to_address(iterator)), m_size(sentinel - iterator) {}
 
     template<types::size_t size>
@@ -58,7 +59,7 @@ public:
     template<concepts::ContiguousContainer Con>
     requires(concepts::SizedContainer<Con> && (concepts::BorrowedContainer<Con> || concepts::Const<T>) && !concepts::Span<Con> &&
              !concepts::Array<Con> && !concepts::LanguageArray<meta::RemoveCVRef<Con>> &&
-             concepts::ConvertibleToNonSlicing<meta::ContainerValue<Con>, T>)
+             concepts::ConvertibleToNonSlicing<meta::RemoveReference<meta::ContainerReference<Con>>, T>)
     constexpr explicit Span(Con&& container) : m_data(container::data(container)), m_size(container::size(container)) {}
 
     template<concepts::ConvertibleToNonSlicing<T> U, types::size_t other_extent>
@@ -79,8 +80,8 @@ private:
 };
 
 template<typename Iter, typename SentOrSize>
-Span(Iter, SentOrSize) -> Span<meta::RemoveReference<meta::IteratorValue<Iter>>>;
+Span(Iter, SentOrSize) -> Span<meta::RemoveReference<meta::IteratorReference<Iter>>>;
 
 template<typename Con>
-Span(Con&&) -> Span<meta::RemoveReference<meta::ContainerValue<Con>>>;
+Span(Con&&) -> Span<meta::RemoveReference<meta::ContainerReference<Con>>>;
 }

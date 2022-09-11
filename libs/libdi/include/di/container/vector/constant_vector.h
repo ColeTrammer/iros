@@ -16,4 +16,10 @@ using VectorValue = T::Value;
 
 template<concepts::detail::ConstantVector T>
 using VectorConstValue = T::ConstValue;
+
+template<concepts::detail::ConstantVector T>
+using VectorIterator = T::Value*;
+
+template<concepts::detail::ConstantVector T>
+using VectorConstIterator = T::ConstValue*;
 }

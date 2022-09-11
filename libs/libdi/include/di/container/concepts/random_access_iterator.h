@@ -17,6 +17,6 @@ concept RandomAccessIterator =
                                         { n + citerator } -> SameAs<Iter>;
                                         { iterator -= n } -> SameAs<Iter&>;
                                         { citerator - n } -> SameAs<Iter>;
-                                        { citerator[n] } -> SameAs<meta::IteratorValue<Iter>>;
+                                        { citerator[n] } -> SameAs<meta::IteratorReference<Iter>>;
                                     };
 }

@@ -4,7 +4,7 @@
 #include <di/container/concepts/contiguous_iterator.h>
 #include <di/container/interface/begin.h>
 #include <di/container/interface/enable_borrowed_container.h>
-#include <di/container/meta/container_value.h>
+#include <di/container/meta/container_reference.h>
 #include <di/function/tag_invoke.h>
 #include <di/meta/add_pointer.h>
 #include <di/meta/remove_reference.h>
@@ -15,13 +15,13 @@ struct DataFunction;
 
 namespace detail {
     template<typename T>
-    concept CustomData = concepts::TagInvocableTo<DataFunction, meta::AddPointer<meta::ContainerValue<T>>, T>;
+    concept CustomData = concepts::TagInvocableTo<DataFunction, meta::AddPointer<meta::ContainerReference<T>>, T>;
 
     template<typename T>
     concept MemberData = requires(T&& container) {
                              {
                                  util::forward<T>(container).data()
-                                 } -> concepts::ImplicitlyConvertibleTo<meta::AddPointer<meta::ContainerValue<T>>>;
+                                 } -> concepts::ImplicitlyConvertibleTo<meta::AddPointer<meta::ContainerReference<T>>>;
                          };
 
     template<typename T>
@@ -29,7 +29,7 @@ namespace detail {
                         requires(T&& container) {
                             {
                                 begin(util::forward<T>(container))
-                                } -> concepts::ImplicitlyConvertibleTo<meta::AddPointer<meta::ContainerValue<T>>>;
+                                } -> concepts::ImplicitlyConvertibleTo<meta::AddPointer<meta::ContainerReference<T>>>;
                         };
 }
 

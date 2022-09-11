@@ -7,5 +7,5 @@
 namespace di::concepts {
 template<typename Iter>
 concept ContiguousIterator = RandomAccessIterator<Iter> && DerivedFrom<meta::IteratorCategory<Iter>, types::ContiguousIteratorTag> &&
-                             LValueReference<meta::IteratorValue<Iter>>;
+                             LValueReference<meta::IteratorReference<Iter>>;
 }
