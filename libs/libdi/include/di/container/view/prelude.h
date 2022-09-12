@@ -7,6 +7,7 @@
 #include <di/container/view/repeat.h>
 #include <di/container/view/reverse.h>
 #include <di/container/view/single.h>
+#include <di/container/view/transform.h>
 #include <di/container/view/view.h>
 
 namespace di {
@@ -20,4 +21,5 @@ using view::range;
 using view::repeat;
 using view::reverse;
 using view::single;
+using view::transform;
 }

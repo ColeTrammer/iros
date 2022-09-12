@@ -4,6 +4,7 @@
 #include <di/container/concepts/prelude.h>
 #include <di/container/meta/prelude.h>
 #include <di/container/types/prelude.h>
+#include <di/container/view/transform.h>
 #include <di/function/bind_back.h>
 #include <di/util/create.h>
 #include <di/util/forward.h>
@@ -17,18 +18,21 @@ namespace detail {
     template<typename Out, typename Con, typename... Args>
     concept TagConstructTo = concepts::ConvertibleTo<meta::ContainerReference<Con>, meta::ContainerValue<Con>> &&
                              concepts::CreatableFrom<Out, FromContainer, Con, Args...>;
-
-    template<typename Out, typename Con, typename... Args>
-    concept CanTo = DirectConstructTo<Out, Con, Args...> || TagConstructTo<Out, Con, Args...>;
 }
 
 template<typename Out, concepts::InputContainer Con, typename... Args>
-requires(!concepts::View<Out> && detail::CanTo<Out, Con, Args...>)
+requires(!concepts::View<Out>)
 constexpr auto to(Con&& container, Args&&... args) {
-    if constexpr (concepts::CreatableFrom<Out, Con, Args...>) {
+    if constexpr (detail::DirectConstructTo<Out, Con, Args...>) {
         return util::create<Out>(util::forward<Con>(container), util::forward<Args>(args)...);
-    } else {
+    } else if constexpr (detail::TagConstructTo<Out, Con, Args...>) {
         return util::create<Out>(from_container, util::forward<Con>(container), util::forward<Args>(args)...);
+    } else {
+        return container::to<Out>(container | view::transform(
+                                                  []<typename T>(T&& value) {
+                                                      return container::to<meta::ContainerValue<Con>>(util::forward<T>(value));
+                                                  },
+                                                  util::forward<Args>(args)...));
     }
 }
 

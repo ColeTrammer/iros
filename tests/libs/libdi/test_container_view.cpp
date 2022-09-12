@@ -206,6 +206,24 @@ constexpr void as_rvalue() {
     }
 }
 
+constexpr void transform() {
+    int arr[] = { 0, 1, 2, 3, 4 };
+
+    static_assert(di::concepts::View<decltype(di::transform(di::view::all(arr), di::id))>);
+    static_assert(di::concepts::View<decltype(arr | di::transform(di::id))>);
+    static_assert(di::concepts::View<decltype(di::transform(di::id)(arr))>);
+
+    {
+        int sum = 0;
+        for (auto x : arr | di::transform([](auto x) {
+                          return x + 1;
+                      })) {
+            sum += x;
+        }
+        EXPECT_EQ(sum, 15);
+    }
+}
+
 TEST_CONSTEXPR(container_view, basic, basic)
 TEST_CONSTEXPR(container_view, all, all)
 TEST_CONSTEXPR(container_view, empty, empty)
@@ -214,3 +232,4 @@ TEST_CONSTEXPR(container_view, iota, iota)
 TEST_CONSTEXPR(container_view, repeat, repeat)
 TEST_CONSTEXPR(container_view, reverse, reverse)
 TEST_CONSTEXPR(container_view, as_rvalue, as_rvalue)
+TEST_CONSTEXPR(container_view, transform, transform)

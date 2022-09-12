@@ -113,6 +113,11 @@ constexpr void to() {
     EXPECT(z.size() == 6u);
     EXPECT_EQ(z[0], 0);
     EXPECT_EQ(z[4], 4);
+
+    auto a = di::range(6) | di::transform(di::compose(di::container::to<di::Vector>(), di::range)) | di::container::to<di::Vector>();
+    EXPECT(a.size() == 6u);
+    EXPECT(a[0].size() == 0);
+    EXPECT(a[4].size() == 4u);
 }
 
 TEST_CONSTEXPR(container_vector, basic, basic)

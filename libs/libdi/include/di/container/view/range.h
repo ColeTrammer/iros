@@ -7,7 +7,7 @@
 
 namespace di::container::view {
 namespace detail {
-    struct RangeFunction {
+    struct RangeFunction : function::pipeline::EnablePipeline {
         template<concepts::Integer T>
         constexpr auto operator()(T end) const {
             return view::iota(static_cast<T>(0), end);
