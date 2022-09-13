@@ -1,6 +1,7 @@
 set(TEST_FILES
     test_concepts.cpp
     test_container_concepts.cpp
+    test_container_string.cpp
     test_container_vector.cpp
     test_container_view.cpp
     test_function_bind.cpp

@@ -8,7 +8,7 @@
 #include <di/util/uninitialized_relocate.h>
 
 namespace di::container::vector {
-template<typename Vec = concepts::detail::MutableVector>
+template<concepts::detail::MutableVector Vec>
 constexpr void reserve(Vec& vector, size_t size) {
     if (size <= vector.capacity()) {
         return;

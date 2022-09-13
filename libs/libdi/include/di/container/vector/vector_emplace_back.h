@@ -13,7 +13,7 @@
 #include <di/vocab/expected/prelude.h>
 
 namespace di::container::vector {
-template<typename Vec = concepts::detail::MutableVector, typename... Args>
+template<concepts::detail::MutableVector Vec, typename... Args>
 requires(concepts::ConstructibleFrom<meta::detail::VectorValue<Vec>, Args...>)
 constexpr decltype(auto) emplace_back(Vec& vector, Args&&... args) {
     auto size = vector::size(vector);

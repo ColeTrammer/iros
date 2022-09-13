@@ -120,6 +120,25 @@ constexpr void to() {
     EXPECT(a[4].size() == 4u);
 }
 
+constexpr void clone() {
+    auto v = di::range(6) | di::container::to<di::Vector>();
+    EXPECT(v.size() == 6);
+
+    auto w = di::clone(v);
+    EXPECT(w.size() == 6);
+
+    auto a = di::range(6) | di::transform(di::compose(di::container::to<di::Vector>(), di::range)) | di::container::to<di::Vector>();
+    EXPECT(a.size() == 6u);
+    EXPECT(a[0].size() == 0);
+    EXPECT(a[4].size() == 4u);
+
+    auto b = di::clone(a);
+    EXPECT(b.size() == 6u);
+    EXPECT(b[0].size() == 0);
+    EXPECT(b[4].size() == 4u);
+}
+
 TEST_CONSTEXPR(container_vector, basic, basic)
 TEST_CONSTEXPR(container_vector, move_only, move_only)
 TEST_CONSTEXPR(container_vector, to, to)
+TEST_CONSTEXPR(container_vector, clone, clone)

@@ -16,7 +16,7 @@
 #include <di/vocab/expected/prelude.h>
 
 namespace di::container::vector {
-template<typename Vec = concepts::detail::MutableVector, typename... Args, typename CIter = meta::detail::VectorConstIterator<Vec>>
+template<concepts::detail::MutableVector Vec, typename... Args, typename CIter = meta::detail::VectorConstIterator<Vec>>
 requires(concepts::ConstructibleFrom<meta::detail::VectorValue<Vec>, Args...>)
 constexpr auto emplace(Vec& vector, CIter position, Args&&... args) {
     auto size = vector::size(vector);
