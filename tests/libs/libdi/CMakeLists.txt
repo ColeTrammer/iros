@@ -14,6 +14,7 @@ set(TEST_FILES
     test_vocab_optional.cpp
     test_vocab_span.cpp
     test_vocab_tuple.cpp
+    test_vocab_variant.cpp
 )
 
 add_os_tests(libdi ${TEST_FILES})

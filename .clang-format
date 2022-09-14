@@ -37,3 +37,5 @@ AllowShortFunctionsOnASingleLine: Inline
 AllowShortLambdasOnASingleLine: Empty
 AlwaysBreakTemplateDeclarations: Yes
 SpaceInEmptyBlock: false
+RequiresClausePosition: OwnLine
+IndentRequiresClause: false

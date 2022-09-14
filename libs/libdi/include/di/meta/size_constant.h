@@ -5,5 +5,5 @@
 
 namespace di::meta {
 template<size_t constant>
-struct SizeConstant : IntegralConstant<size_t, constant> {};
+using SizeConstant = IntegralConstant<size_t, constant>;
 }

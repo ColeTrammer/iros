@@ -4,5 +4,5 @@
 
 namespace di::meta {
 template<bool constant>
-struct BoolConstant : IntegralConstant<bool, constant> {};
+using BoolConstant = IntegralConstant<bool, constant>;
 }
