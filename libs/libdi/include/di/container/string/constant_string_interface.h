@@ -37,5 +37,7 @@ public:
     constexpr auto end() const { return string::end(self()); }
 
     constexpr auto view() const { return StringViewImpl<Enc>(self()); }
+
+    constexpr friend bool operator==(Self const&, Self const&) { return true; }
 };
 }

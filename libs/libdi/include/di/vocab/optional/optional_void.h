@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/assert/prelude.h>
 #include <di/concepts/language_void.h>
 #include <di/concepts/optional.h>
 #include <di/function/invoke.h>
@@ -42,16 +43,10 @@ public:
     constexpr bool has_value() const { return m_has_value; }
     constexpr explicit operator bool() const { return has_value(); }
 
-    constexpr void operator*() const {
-        // DI_ASSERT( has_value() )
-    }
+    constexpr void operator*() const { DI_ASSERT(has_value()); }
 
-    constexpr void value() const& {
-        // DI_ASSERT( has_value() )
-    }
-    constexpr void value() && {
-        // DI_ASSERT( has_value() )
-    }
+    constexpr void value() const& { DI_ASSERT(has_value()); }
+    constexpr void value() && { DI_ASSERT(has_value()); }
 
     constexpr void reset() { m_has_value = false; }
 

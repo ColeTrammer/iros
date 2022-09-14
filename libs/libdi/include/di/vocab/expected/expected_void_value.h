@@ -4,6 +4,7 @@
 #include <di/concepts/convertible_to.h>
 #include <di/concepts/copy_constructible.h>
 #include <di/concepts/equality_comparable_with.h>
+#include <di/assert/prelude.h>
 #include <di/concepts/expected.h>
 #include <di/concepts/move_constructible.h>
 #include <di/concepts/remove_cvref_same_as.h>
@@ -107,17 +108,11 @@ public:
 
     constexpr void emplace() { m_error.reset(); }
 
-    constexpr void operator*() const {
-        // DI_ASSERT( has_value() )
-    }
+    constexpr void operator*() const { DI_ASSERT(has_value()); }
 
-    constexpr void value() const& {
-        // DI_ASSERT( has_value() )
-    }
+    constexpr void value() const& { DI_ASSERT(has_value()); }
 
-    constexpr void value() && {
-        // DI_ASSERT( has_value() )
-    }
+    constexpr void value() && { DI_ASSERT(has_value()); }
 
     constexpr E& error() & { return *m_error; }
     constexpr E const& error() const& { return *m_error; }

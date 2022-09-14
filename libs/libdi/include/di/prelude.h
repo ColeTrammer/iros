@@ -1,13 +1,26 @@
 #pragma once
 
+#include <di/assert/prelude.h>
 #include <di/concepts/prelude.h>
 #include <di/container/prelude.h>
+#include <di/format/prelude.h>
 #include <di/function/prelude.h>
 #include <di/math/prelude.h>
 #include <di/meta/prelude.h>
 #include <di/types/prelude.h>
 #include <di/util/prelude.h>
 #include <di/vocab/prelude.h>
+
+#ifndef DI_NO_GLOBALS
+#define ASSERT        DI_ASSERT
+#define ASSERT_EQ     DI_ASSERT_EQ
+#define ASSERT_NOT_EQ DI_ASSERT_NOT_EQ
+#define ASSERT_LT     DI_ASSERT_LT
+#define ASSERT_LT_EQ  DI_ASSERT_LT_EQ
+#define ASSERT_GT     DI_ASSERT_GT
+#define ASSERT_GT_EQ  DI_ASSERT_GT_EQ
+
+using namespace di::literals;
 
 using di::types::i16;
 using di::types::i32;
@@ -20,3 +33,4 @@ using di::types::u16;
 using di::types::u32;
 using di::types::u64;
 using di::types::u8;
+#endif

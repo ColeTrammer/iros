@@ -171,4 +171,6 @@ using Encoding = meta::RemoveCVRef<T>::Encoding;
 
 namespace di::container::string::encoding {
 struct AssumeValid {};
+
+constexpr inline auto assume_valid = AssumeValid {};
 }

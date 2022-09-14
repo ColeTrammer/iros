@@ -10,6 +10,8 @@
 #include <di/util/initializer_list.h>
 #include <di/util/move.h>
 #include <di/util/reference_wrapper.h>
+#include <di/util/source_location.h>
+#include <di/util/compile_time_fail.h>
 #include <di/util/swap.h>
 #include <di/util/unreachable.h>
 
@@ -23,7 +25,10 @@ using util::ReferenceWrapper;
 
 using util::InitializerList;
 
+using util::SourceLocation;
+
 using util::as_const;
+using util::compile_time_fail;
 using util::declval;
 using util::exchange;
 using util::forward;

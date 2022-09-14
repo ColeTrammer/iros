@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/assert/prelude.h>
 #include <di/concepts/array.h>
 #include <di/concepts/const.h>
 #include <di/concepts/convertible_to.h>
@@ -45,15 +46,15 @@ public:
 
     template<concepts::ContiguousIterator Iter>
     requires(concepts::ConvertibleToNonSlicing<meta::RemoveReference<meta::IteratorReference<Iter>>, T>)
-    constexpr explicit Span(Iter first, types::size_t) : m_data(util::to_address(first)) {
-        // DI_ASSERT( count == extent )
+    constexpr explicit Span(Iter first, types::size_t count) : m_data(util::to_address(first)) {
+        DI_ASSERT(count == extent);
     }
 
     template<concepts::ContiguousIterator Iter, concepts::SizedSentinelFor<Iter> Sent>
     requires(concepts::ConvertibleToNonSlicing<meta::RemoveReference<meta::IteratorReference<Iter>>, T> &&
              !concepts::ConvertibleTo<Sent, types::size_t>)
     constexpr explicit Span(Iter it, Sent sent) : m_data(util::to_address(it)) {
-        // DI_ASSERT( sent - it == extent );
+        DI_ASSERT(sent - it == extent);
     }
 
     template<types::size_t size>
@@ -73,13 +74,13 @@ public:
              !concepts::Array<Con> && !concepts::LanguageArray<meta::RemoveCVRef<Con>> &&
              concepts::ConvertibleToNonSlicing<meta::RemoveReference<meta::ContainerReference<Con>>, T>)
     constexpr explicit Span(Con&& container) : m_data(container::data(container)) {
-        // DI_ASSERT( container::size(container) == extent )
+        DI_ASSERT(container::size(container) == extent);
     }
 
     template<concepts::ConvertibleToNonSlicing<T> U, types::size_t other_extent>
     requires((other_extent == dynamic_extent || extent == other_extent))
     constexpr explicit(other_extent == dynamic_extent) Span(Span<U, other_extent> const& other) : m_data(other.data()) {
-        // DI_ASSERT( other.size() == extent )
+        DI_ASSERT(other.size() == extent);
     }
 
     constexpr Span(Span const&) = default;

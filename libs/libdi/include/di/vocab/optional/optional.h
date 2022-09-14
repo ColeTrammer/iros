@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/assert/prelude.h>
 #include <di/concepts/convertible_to.h>
 #include <di/concepts/copyable.h>
 #include <di/concepts/decay_same_as.h>
@@ -181,10 +182,22 @@ public:
     constexpr decltype(auto) operator*() && { return util::move(*this).value(); }
     constexpr decltype(auto) operator*() const&& { return util::move(*this).value(); }
 
-    constexpr decltype(auto) value() & { return get_value(m_storage); }
-    constexpr decltype(auto) value() const& { return get_value(m_storage); }
-    constexpr decltype(auto) value() && { return get_value(util::move(m_storage)); }
-    constexpr decltype(auto) value() const&& { return get_value(util::move(m_storage)); }
+    constexpr decltype(auto) value() & {
+        DI_ASSERT(has_value());
+        return get_value(m_storage);
+    }
+    constexpr decltype(auto) value() const& {
+        DI_ASSERT(has_value());
+        return get_value(m_storage);
+    }
+    constexpr decltype(auto) value() && {
+        DI_ASSERT(has_value());
+        return get_value(util::move(m_storage));
+    }
+    constexpr decltype(auto) value() const&& {
+        DI_ASSERT(has_value());
+        return get_value(util::move(m_storage));
+    }
 
     template<concepts::ConvertibleTo<T> U>
     requires(concepts::Copyable<T>)

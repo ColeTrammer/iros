@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/assert/prelude.h>
 #include <di/concepts/convertible_to.h>
 #include <di/concepts/copy_constructible.h>
 #include <di/concepts/default_constructible.h>
@@ -161,36 +162,36 @@ public:
     constexpr bool has_value() const { return !m_has_error; }
 
     constexpr T& value() & {
-        // DI_ASSERT ( has_value() );
+        DI_ASSERT(has_value());
         return m_value.value();
     }
     constexpr T const& value() const& {
-        // DI_ASSERT ( has_value() );
+        DI_ASSERT(has_value());
         return m_value.value();
     }
     constexpr T&& value() && {
-        // DI_ASSERT ( has_value() );
+        DI_ASSERT(has_value());
         return util::move(m_value).value();
     }
     constexpr T const&& value() const&& {
-        // DI_ASSERT ( has_value() );
+        DI_ASSERT(has_value());
         return util::move(m_value).value();
     }
 
     constexpr E& error() & {
-        // DI_ASSERT ( !has_value() );
+        DI_ASSERT(!has_value());
         return m_error.value();
     }
     constexpr E const& error() const& {
-        // DI_ASSERT ( !has_value() );
+        DI_ASSERT(!has_value());
         return m_error.value();
     }
     constexpr E&& error() && {
-        // DI_ASSERT ( !has_value() );
+        DI_ASSERT(!has_value());
         return util::move(m_error).value();
     }
     constexpr E const&& error() const&& {
-        // DI_ASSERT ( !has_value() );
+        DI_ASSERT(!has_value());
         return util::move(m_error).value();
     }
 

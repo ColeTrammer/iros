@@ -4,6 +4,7 @@ set(TEST_FILES
     test_container_string.cpp
     test_container_vector.cpp
     test_container_view.cpp
+    test_format.cpp
     test_function_bind.cpp
     test_function_invoke.cpp
     test_meta.cpp

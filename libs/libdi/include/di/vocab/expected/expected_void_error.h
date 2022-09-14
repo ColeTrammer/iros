@@ -107,9 +107,6 @@ public:
     constexpr T&& value() && { return util::move(m_value.value()); }
     constexpr T const&& value() const&& { return util::move(m_value.value()); }
 
-    void error() const& {}
-    void error() && {}
-
     template<concepts::ConvertibleTo<T> U>
     requires(concepts::CopyConstructible<T>)
     constexpr T value_or(U&&) const& {

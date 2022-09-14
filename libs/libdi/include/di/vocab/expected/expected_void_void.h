@@ -33,9 +33,6 @@ public:
     constexpr void value() const& {}
     constexpr void value() && {}
 
-    constexpr void error() const& {}
-    constexpr void error() && {}
-
     constexpr void emplace() {}
 
 private:
