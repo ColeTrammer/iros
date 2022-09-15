@@ -3,17 +3,35 @@
 #include <test/test.h>
 
 constexpr void basic() {
-    // auto v = di::Variant<int, short, long>(di::in_place_index<1>, 1);
+    auto v = di::Variant<int, short, long>(di::in_place_index<1>, 1);
+    auto w = di::Variant<int, short, long>();
 
-    static_assert(di::SameAs<int, di::meta::At<di::meta::List<char, short, int>, 2>>);
+    auto s = di::get<1>(v);
+    EXPECT_EQ(s, 1);
 
-    static_assert(
-        di::SameAs<di::meta::List<di::meta::SizeConstant<0>, di::meta::SizeConstant<1>>, di::meta::AsList<di::meta::IndexSequence<0, 1>>>);
+    auto x = di::get<0>(w);
+    EXPECT_EQ(x, 0);
 
-    using namespace di::meta;
-    static_assert(di::SameAs<List<List<int, float>, List<float, int>>, Zip<List<int, float>, List<float, int>>>);
+    static_assert(di::vocab::detail::MemberVariantIndex<decltype(w)>);
+    static_assert(di::concepts::VariantLike<decltype(w)>);
 
-    static_assert(sizeof(di::Variant<int, short, long, long, long, long, long, long>) == 16);
+    EXPECT(di::holds_alternative<short>(v));
+    EXPECT(di::holds_alternative<int>(w));
+
+    EXPECT(di::get<int>(w) == 0);
+
+    EXPECT(di::get_if<short>(w) == di::nullopt);
+    EXPECT(di::get_if<int>(w) == 0);
+    EXPECT(di::get_if<int>(di::move(w)) == 0);
+
+    EXPECT(di::visit<int>(
+               [](auto x) {
+                   return x;
+               },
+               v) == 1);
+
+    static_assert(di::SameAs<unsigned char, di::math::SmallestUnsignedType<6>>);
+    static_assert(di::SameAs<unsigned short, di::math::SmallestUnsignedType<256>>);
 }
 
 TEST_CONSTEXPR(vocab_variant, basic, basic)

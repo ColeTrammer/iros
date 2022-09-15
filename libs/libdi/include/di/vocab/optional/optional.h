@@ -42,6 +42,8 @@ class Optional<T>
     , public meta::EnableBorrowedContainer<Optional<T>, concepts::LValueReference<T>>
     , public function::monad::MonadInterface<Optional<T>> {
 private:
+    static_assert(!concepts::RValueReference<T>);
+
     using Storage = StorageFor<T>;
     static_assert(OptionalStorage<Storage, T>);
 

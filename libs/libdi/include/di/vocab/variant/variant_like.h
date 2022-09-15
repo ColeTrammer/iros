@@ -10,6 +10,7 @@
 #include <di/vocab/variant/variant_alternative.h>
 #include <di/vocab/variant/variant_index.h>
 #include <di/vocab/variant/variant_size.h>
+#include <di/vocab/variant/variant_types.h>
 
 namespace di::concepts {
 namespace detail {
@@ -34,8 +35,10 @@ namespace detail {
 }
 
 template<typename T>
-concept VariantLike = requires { vocab::variant_size(types::in_place_type<meta::RemoveCVRef<T>>); } &&
-                      requires(T const& variant) {
-                          { variant_index(variant) } -> SameAs<size_t>;
-                      } && detail::VariantLikeHelper<T, meta::MakeIndexSequence<meta::VariantSize<T>>>::value;
+concept VariantLike = requires {
+                          typename meta::VariantTypes<T>;
+                          vocab::variant_size(types::in_place_type<meta::RemoveCVRef<T>>);
+                      } && requires(T const& variant) {
+                               { vocab::variant_index(variant) } -> SameAs<size_t>;
+                           } && detail::VariantLikeHelper<T, meta::MakeIndexSequence<meta::VariantSize<T>>>::value;
 }

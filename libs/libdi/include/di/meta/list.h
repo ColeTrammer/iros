@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/concepts/conjunction.h>
 #include <di/meta/false_type.h>
 #include <di/meta/integer_sequence.h>
 #include <di/meta/integral_constant.h>
@@ -37,6 +38,14 @@ namespace detail {
     struct AtHelper<index, T, Rest...> : AtHelper<index - 1, Rest...> {};
 }
 
+namespace detail {
+    template<typename Needle, typename... Types>
+    struct LookupHelper : SizeConstant<0> {};
+
+    template<typename Needle, typename T, typename... Rest>
+    struct LookupHelper<Needle, T, Rest...> : SizeConstant<concepts::SameAs<T, Needle> ? 0 : 1 + LookupHelper<Needle, Rest...>::value> {};
+}
+
 template<typename Head, typename... Rest>
 struct List<Head, Rest...> {
     using Front = Head;
@@ -45,6 +54,13 @@ struct List<Head, Rest...> {
 
     template<size_t index>
     using At = detail::AtHelper<index, Head, Rest...>::Type;
+
+    template<typename T>
+    constexpr static auto Lookup = detail::LookupHelper<T, Head, Rest...>::value;
+
+    template<typename T>
+    constexpr static bool UniqueType =
+        (static_cast<size_t>(concepts::SameAs<T, Head>) + ... + static_cast<size_t>(concepts::SameAs<T, Rest>)) == 1zu;
 };
 
 template<typename T>
@@ -55,6 +71,12 @@ struct List<T> {
 
     template<size_t index>
     using At = detail::AtHelper<index, T>::Type;
+
+    template<typename U>
+    constexpr static auto Lookup = detail::LookupHelper<U, T>::value;
+
+    template<typename U>
+    constexpr static bool UniqueType = concepts::SameAs<T, U>;
 };
 
 template<concepts::TypeList T>
@@ -107,4 +129,11 @@ namespace detail {
 template<concepts::TypeList T, concepts::TypeList U>
 requires(Size<T> == Size<U>)
 using Zip = detail::ZipHelper<T, U>::Type;
+
+template<typename T, concepts::TypeList List>
+constexpr static inline auto Lookup = List::template Lookup<T>;
+
+template<typename T, typename List>
+concept UniqueType = concepts::TypeList<List> && List::template
+UniqueType<T>;
 }

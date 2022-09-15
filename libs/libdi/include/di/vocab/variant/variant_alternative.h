@@ -8,10 +8,12 @@
 namespace di::vocab {
 namespace detail {
     struct VariantAlternativeFunction {
-        template<typename Tuple, size_t index>
-        requires(concepts::TagInvocable<VariantAlternativeFunction, InPlaceType<Tuple>, InPlaceIndex<index>>)
-        constexpr meta::TagInvokeResult<VariantAlternativeFunction, InPlaceType<Tuple>, InPlaceIndex<index>>
-        operator()(InPlaceType<Tuple>, InPlaceIndex<index>) const;
+        template<typename Variant, size_t index>
+        requires(concepts::TagInvocable<VariantAlternativeFunction, InPlaceType<Variant>, InPlaceIndex<index>>)
+        constexpr meta::TagInvokeResult<VariantAlternativeFunction, InPlaceType<Variant>, InPlaceIndex<index>>
+        operator()(InPlaceType<Variant>, InPlaceIndex<index>) const {
+            return function::tag_invoke(*this, in_place_type<Variant>, in_place_index<index>);
+        }
     };
 }
 
