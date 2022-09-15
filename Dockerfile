@@ -31,18 +31,26 @@ RUN apt-get update -y && apt-get install -y \
     gcc-12 \
     genext2fs \
     git \
+    gnupg \
     grub2 \
     libsdl2-dev \
+    lsb-release \
     ninja-build \
     nodejs \
     parted \
     qemu-system-i386 \
     qemu-system-x86 \
     qemu-utils \
+    software-properties-common \
     sudo \
     udev \
     xorriso \
     valgrind \
+    wget \
+    && wget https://apt.llvm.org/llvm.sh \
+    && chmod +x llvm.sh \
+    && ./llvm.sh 15 all \
+    && rm llvm.sh \
     && rm -rf /var/lib/apt/lists/* \
     && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 900 --slave /usr/bin/g++ g++ /usr/bin/g++-12
 COPY --from=toolchain_build /usr/local /usr/local
