@@ -14,7 +14,7 @@ namespace detail {
     template<concepts::Encoding Enc>
     struct PresentEncodedFunction {
         template<concepts::Formattable... Args>
-        constexpr concepts::MaybeFallible<container::string::StringImpl<Enc>> auto operator()(FormatStringImpl<Enc, Args...>,
+        constexpr concepts::MaybeFallible<container::string::StringImpl<Enc>> auto operator()(format::FormatStringImpl<Enc, Args...>,
                                                                                               Args&&... args_in) const {
             if consteval {
                 auto args = make_constexpr_format_args(args_in...);
