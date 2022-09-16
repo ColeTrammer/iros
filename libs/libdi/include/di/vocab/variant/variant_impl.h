@@ -14,7 +14,7 @@ class VariantImpl;
 template<typename T, typename... Rest>
 class VariantImpl<T, Rest...> {
 public:
-    constexpr VariantImpl() = default;
+    constexpr VariantImpl() {}
     constexpr VariantImpl(VariantImpl const&) = default;
     constexpr VariantImpl(VariantImpl&&) = default;
 
@@ -73,7 +73,7 @@ private:
 template<typename T>
 class VariantImpl<T> {
 public:
-    constexpr VariantImpl() = default;
+    constexpr VariantImpl() {}
     constexpr VariantImpl(VariantImpl const&) = default;
     constexpr VariantImpl(VariantImpl&&) = default;
 
@@ -89,7 +89,8 @@ public:
 
     template<typename... Args>
     constexpr T& emplace_impl(InPlaceIndex<0>, Args&&... args) {
-        return util::construct_at(util::address_of(m_value), in_place, util::forward<Args>(args)...);
+        util::construct_at(util::address_of(m_value), in_place, util::forward<Args>(args)...);
+        return m_value.value();
     }
 
 private:

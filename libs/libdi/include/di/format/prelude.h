@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/format/formattable.h>
+#include <di/format/concepts/formattable.h>
 #include <di/format/present.h>
 #include <di/format/to_string.h>
 

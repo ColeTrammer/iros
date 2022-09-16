@@ -2,7 +2,7 @@
 
 #include <di/assert/prelude.h>
 #include <di/container/string/string_view_impl.h>
-#include <di/format/formattable.h>
+#include <di/format/concepts/formattable.h>
 #include <di/meta/type_identity.h>
 
 namespace di::format {

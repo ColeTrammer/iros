@@ -1,8 +1,9 @@
 #pragma once
 
-#include <di/format/format_context.h>
+#include <di/format/concepts/formattable.h>
+#include <di/vocab/variant/prelude.h>
 
-namespace di::concepts {
-template<typename T>
-concept FormatArg = true;
+namespace di::format {
+template<concepts::Formattable... Types>
+using FormatArg = Variant<Types&...>;
 }

@@ -62,7 +62,7 @@ public:
     }
 
     constexpr Variant(Variant const& other)
-    requires(copyable)
+    requires(copyable && !trivially_copy_constructible)
     {
         function::index_dispatch<void, meta::Size<List>>(
             this->index(),
@@ -73,7 +73,7 @@ public:
     }
 
     constexpr Variant(Variant&& other)
-    requires(movable)
+    requires(movable && !trivially_move_constructible)
     {
         function::index_dispatch<void, meta::Size<List>>(
             this->index(),

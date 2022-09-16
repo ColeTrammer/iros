@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/format/format_context.h>
-#include <di/format/format_parse_context.h>
+#include <di/format/concepts/format_context.h>
+#include <di/format/concepts/format_parse_context.h>
 #include <di/format/formatter.h>
 
 namespace di::concepts {

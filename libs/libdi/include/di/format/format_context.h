@@ -1,20 +1,23 @@
 #pragma once
 
-#include <di/concepts/maybe_fallible.h>
-#include <di/container/string/encoding.h>
-
-namespace di::concepts {
-template<typename T>
-concept FormatContext = requires { typename meta::Encoding<T>; } && requires(T& context, char ascii_code_point) {
-                                                                        {
-                                                                            context.output(ascii_code_point)
-                                                                            } -> concepts::MaybeFallible<void>;
-                                                                    };
-}
+#include <di/container/string/string_impl.h>
+#include <di/format/format_args.h>
+#include <di/util/move.h>
 
 namespace di::format {
-struct ContextPlaceholder {
-    using Encoding = void;
-    void output(char);
+template<concepts::Encoding Enc>
+class FormatContext {
+private:
+    using Str = container::string::StringImpl<Enc>;
+
+public:
+    using Encoding = Enc;
+
+    constexpr void output(char c) { m_output.push_back(c); }
+
+    constexpr Str output() && { return util::move(m_output); }
+
+private:
+    Str m_output;
 };
 }

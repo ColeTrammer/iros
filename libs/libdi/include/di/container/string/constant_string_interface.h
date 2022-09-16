@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/container/string/constant_string.h>
 #include <di/container/string/encoding.h>
 #include <di/container/string/string_begin.h>
 #include <di/container/string/string_data.h>
@@ -38,6 +39,20 @@ public:
 
     constexpr auto view() const { return StringViewImpl<Enc>(self()); }
 
-    constexpr friend bool operator==(Self const&, Self const&) { return true; }
+private:
+    template<concepts::detail::ConstantString Other>
+    requires(concepts::SameAs<Enc, meta::Encoding<Other>>)
+    constexpr friend bool operator==(Self const& a, Other const& b) {
+        auto at = string::begin(a);
+        auto bt = string::begin(b);
+        auto ae = string::end(a);
+        auto be = string::end(b);
+        for (; at != ae && bt != be; ++at, ++bt) {
+            if (*at != *bt) {
+                return false;
+            }
+        }
+        return at == ae && bt == be;
+    }
 };
 }
