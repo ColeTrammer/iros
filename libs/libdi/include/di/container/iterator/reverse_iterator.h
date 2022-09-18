@@ -10,6 +10,7 @@
 #include <di/container/concepts/bidirectional_iterator.h>
 #include <di/container/concepts/indirectly_swappable.h>
 #include <di/container/concepts/random_access_iterator.h>
+#include <di/container/iterator/iterator_base.h>
 #include <di/container/iterator/iterator_category.h>
 #include <di/container/iterator/iterator_move.h>
 #include <di/container/iterator/iterator_ssize_type.h>
@@ -21,7 +22,7 @@
 
 namespace di::container {
 template<concepts::BidirectionalIterator Iter>
-class ReverseIterator {
+class ReverseIterator : public IteratorBase<ReverseIterator<Iter>, meta::IteratorValue<Iter>, meta::IteratorSSizeType<Iter>> {
 private:
     using SSizeType = meta::IteratorSSizeType<Iter>;
 
@@ -60,56 +61,16 @@ public:
         }
     }
 
-    constexpr decltype(auto) operator[](SSizeType index) const
-    requires(concepts::RandomAccessIterator<Iter>)
-    {
-        return m_base[-1 - index];
-    }
+    constexpr void advance_one() { --m_base; }
+    constexpr void back_one() { ++m_base; }
 
-    constexpr ReverseIterator& operator++() {
-        --m_base;
-        return *this;
-    }
-    constexpr ReverseIterator& operator--() {
-        ++m_base;
-        return *this;
-    }
-
-    constexpr ReverseIterator operator++(int) { return ReverseIterator(m_base--); }
-    constexpr ReverseIterator operator--(int) { return ReverseIterator(m_base++); }
-
-    constexpr ReverseIterator& operator+=(SSizeType n)
+    constexpr void advance_n(SSizeType n)
     requires(concepts::RandomAccessIterator<Iter>)
     {
         m_base -= n;
-        return *this;
-    }
-    constexpr ReverseIterator& operator-=(SSizeType n)
-    requires(concepts::RandomAccessIterator<Iter>)
-    {
-        m_base += n;
-        return *this;
     }
 
 private:
-    constexpr friend ReverseIterator operator+(ReverseIterator const& a, SSizeType n)
-    requires(concepts::RandomAccessIterator<Iter>)
-    {
-        return ReverseIterator(a.base() - n);
-    }
-
-    constexpr friend ReverseIterator operator+(SSizeType n, ReverseIterator const& a)
-    requires(concepts::RandomAccessIterator<Iter>)
-    {
-        return ReverseIterator(a.base() - n);
-    }
-
-    constexpr friend ReverseIterator operator-(ReverseIterator const& a, SSizeType n)
-    requires(concepts::RandomAccessIterator<Iter>)
-    {
-        return ReverseIterator(a.base() + n);
-    }
-
     constexpr friend auto tag_invoke(types::Tag<iterator_category>, types::InPlaceType<ReverseIterator>) {
         if constexpr (concepts::RandomAccessIterator<Iter>) {
             return types::RandomAccessIteratorTag {};
@@ -117,8 +78,7 @@ private:
             return types::BidirectionalIteratorTag {};
         }
     }
-    constexpr friend meta::IteratorValue<Iter> tag_invoke(types::Tag<iterator_value>, types::InPlaceType<ReverseIterator>) {}
-    constexpr friend SSizeType tag_invoke(types::Tag<iterator_ssize_type>, types::InPlaceType<ReverseIterator>) {}
+
     constexpr friend decltype(auto) tag_invoke(types::Tag<iterator_move>, ReverseIterator const& self)
     requires(requires { typename meta::IteratorRValue<Iter>; })
     {

@@ -8,8 +8,8 @@
 #include <di/concepts/three_way_comparable_with.h>
 #include <di/container/concepts/indirectly_swappable.h>
 #include <di/container/concepts/prelude.h>
+#include <di/container/iterator/iterator_base.h>
 #include <di/container/iterator/iterator_move.h>
-#include <di/container/iterator/move_sentinel.h>
 #include <di/container/meta/iterator_rvalue.h>
 #include <di/container/meta/iterator_ssize_type.h>
 #include <di/container/types/prelude.h>
@@ -17,7 +17,7 @@
 
 namespace di::container {
 template<concepts::InputIterator Iter>
-class MoveIterator {
+class MoveIterator : public IteratorBase<MoveIterator<Iter>, meta::IteratorValue<Iter>, meta::IteratorSSizeType<Iter>> {
 private:
     using SSizeType = meta::IteratorSSizeType<Iter>;
 
@@ -44,94 +44,23 @@ public:
 
     constexpr meta::IteratorRValue<Iter> operator*() const { return iterator_move(m_iterator); }
 
-    constexpr decltype(auto) operator[](SSizeType n) const
-    requires(concepts::RandomAccessIterator<Iter>)
-    {
-        return iterator_move(base() + n);
-    }
+    constexpr void advance_one() { ++m_iterator; }
 
-    constexpr MoveIterator& operator++() {
-        ++m_iterator;
-        return *this;
-    }
-
-    constexpr MoveIterator operator++(int)
-    requires(concepts::ForwardIterator<Iter>)
-    {
-        ++m_iterator;
-        return *this;
-    }
-
-    constexpr void operator++(int)
-    requires(!concepts::ForwardIterator<Iter>)
-    {
-        ++m_iterator;
-    }
-
-    constexpr MoveIterator& operator--()
+    constexpr void back_one()
     requires(concepts::BidirectionalIterator<Iter>)
     {
         --m_iterator;
-        return *this;
     }
 
-    constexpr MoveIterator operator--(int)
-    requires(concepts::BidirectionalIterator<Iter>)
-    {
-        --m_iterator;
-        return *this;
-    }
-
-    constexpr MoveIterator& operator+=(SSizeType n)
+    constexpr void advance_n(SSizeType n)
     requires(concepts::RandomAccessIterator<Iter>)
     {
         m_iterator += n;
-        return *this;
-    }
-
-    constexpr MoveIterator& operator-=(SSizeType n)
-    requires(concepts::RandomAccessIterator<Iter>)
-    {
-        m_iterator -= n;
-        return *this;
     }
 
 private:
     template<concepts::InputIterator Other>
     friend class MoveIterator;
-
-    constexpr friend MoveIterator operator+(MoveIterator const& a, SSizeType n)
-    requires(concepts::RandomAccessIterator<Iter>)
-    {
-        return MoveIterator(a.base() + n);
-    }
-
-    constexpr friend MoveIterator operator+(SSizeType n, MoveIterator const& a)
-    requires(concepts::RandomAccessIterator<Iter>)
-    {
-        return MoveIterator(a.base() + n);
-    }
-
-    constexpr friend MoveIterator operator-(MoveIterator const& a, SSizeType n)
-    requires(concepts::RandomAccessIterator<Iter>)
-    {
-        return MoveIterator(a.base() - n);
-    }
-
-    template<concepts::SentinelFor<Iter> Sent>
-    constexpr friend bool operator==(MoveIterator const& a, MoveSentinel<Sent> const& b) {
-        return a.base() == b.base();
-    }
-
-    template<concepts::SizedSentinelFor<Iter> Sent>
-    constexpr friend SSizeType operator-(MoveSentinel<Sent> const& a, MoveIterator const& b) {
-        return a.base() - b.base();
-    }
-
-    template<concepts::SizedSentinelFor<Iter> Sent>
-    constexpr friend SSizeType operator-(MoveIterator const& a, MoveSentinel<Sent> const& b) {
-        return b.base() - a.base();
-    }
 
     constexpr friend auto tag_invoke(types::Tag<iterator_category>, types::InPlaceType<MoveIterator>) {
         if constexpr (concepts::RandomAccessIterator<Iter>) {
@@ -144,8 +73,6 @@ private:
             return types::InputIteratorTag {};
         }
     }
-    constexpr friend meta::IteratorValue<Iter> tag_invoke(types::Tag<iterator_value>, types::InPlaceType<MoveIterator>) {}
-    constexpr friend SSizeType tag_invoke(types::Tag<iterator_ssize_type>, types::InPlaceType<MoveIterator>) {}
     constexpr friend decltype(auto) tag_invoke(types::Tag<iterator_move>, MoveIterator const& self)
     requires(requires { typename meta::IteratorRValue<Iter>; })
     {
