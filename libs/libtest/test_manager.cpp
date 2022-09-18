@@ -2,6 +2,7 @@
 #include <liim/error/string_domain.h>
 #include <liim/format.h>
 #include <pthread.h>
+#include <setjmp.h>
 #include <sys/wait.h>
 #include <test/test.h>
 #include <test/test_case.h>
@@ -82,6 +83,14 @@ void TestManager::test_did_fail() {
     m_fail_count++;
 }
 
+static jmp_buf s_jmpbuf;
+
+static void signal_handler(int signo) {
+    error_log("\033[31;1mFAIL\033[0m: \033[1m{}\033[0m: {}: {}", Test::TestManager::the().current_test_case().suite_name(),
+              Test::TestManager::the().current_test_case().case_name(), strsignal(signo));
+    longjmp(s_jmpbuf, 1);
+}
+
 Result<void, StringError> TestManager::do_main(Arguments arguments) {
     auto [list_simple, suite_name, case_name] = arguments;
 
@@ -113,9 +122,19 @@ Result<void, StringError> TestManager::do_main(Arguments arguments) {
         return {};
     }
 
+    signal(SIGSEGV, signal_handler);
+    signal(SIGFPE, signal_handler);
+    signal(SIGABRT, signal_handler);
+
     for (auto& test_case : test_cases) {
         auto start_fail_count = m_fail_count;
         m_current_test_case = test_case.get();
+
+        if (setjmp(s_jmpbuf) == 1) {
+            test_did_fail();
+            continue;
+        }
+
         test_case->execute();
 
         if (m_fail_count == start_fail_count) {
