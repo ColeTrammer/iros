@@ -145,7 +145,6 @@ private:
         }
     }
     constexpr friend meta::IteratorValue<Iter> tag_invoke(types::Tag<iterator_value>, types::InPlaceType<MoveIterator>) {}
-    constexpr friend meta::IteratorRValue<Iter> tag_invoke(types::Tag<iterator_reference>, types::InPlaceType<MoveIterator>) {}
     constexpr friend SSizeType tag_invoke(types::Tag<iterator_ssize_type>, types::InPlaceType<MoveIterator>) {}
     constexpr friend decltype(auto) tag_invoke(types::Tag<iterator_move>, MoveIterator const& self)
     requires(requires { typename meta::IteratorRValue<Iter>; })

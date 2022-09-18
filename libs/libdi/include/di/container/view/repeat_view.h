@@ -100,7 +100,6 @@ private:
             return types::RandomAccessIteratorTag {};
         }
         constexpr friend T tag_invoke(types::Tag<iterator_value>, types::InPlaceType<Iterator>) {}
-        constexpr friend T const& tag_invoke(types::Tag<iterator_reference>, types::InPlaceType<Iterator>) {}
         constexpr friend SSizeType tag_invoke(types::Tag<iterator_ssize_type>, types::InPlaceType<Iterator>) {}
 
         T const* m_value { nullptr };

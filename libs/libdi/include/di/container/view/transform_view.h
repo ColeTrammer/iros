@@ -116,8 +116,6 @@ private:
             return a.base() == b.base();
         }
 
-        using Reference = meta::InvokeResult<meta::MaybeConst<is_const, F>&, meta::ContainerReference<Base>>;
-
         constexpr friend auto tag_invoke(types::Tag<iterator_category>, types::InPlaceType<Iterator>) {
             if constexpr (concepts::RandomAccessContainer<Base>) {
                 return types::RandomAccessIteratorTag {};
@@ -129,8 +127,9 @@ private:
                 return types::InputIteratorTag {};
             }
         }
+
+        using Reference = meta::InvokeResult<meta::MaybeConst<is_const, F>&, meta::ContainerReference<Base>>;
         constexpr friend meta::RemoveCVRef<Reference> tag_invoke(types::Tag<iterator_value>, types::InPlaceType<Iterator>) {}
-        constexpr friend Reference tag_invoke(types::Tag<iterator_reference>, types::InPlaceType<Iterator>) {}
         constexpr friend SSizeType tag_invoke(types::Tag<iterator_ssize_type>, types::InPlaceType<Iterator>) {}
 
         Iter m_iterator {};
