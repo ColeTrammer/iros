@@ -3,22 +3,23 @@
 #include <di/types/size_t.h>
 
 namespace di::container {
-template<typename CodeUnit, types::size_t size>
+template<typename CodeUnit, types::size_t count>
 class FixedString {
 public:
-    CodeUnit m_data[size + 1];
+    CodeUnit m_data[count + 1];
 
-    constexpr FixedString(CodeUnit const (&data)[size + 1]) {
-        for (types::size_t i = 0; i < size; i++) {
+    constexpr FixedString(CodeUnit const (&data)[count + 1]) {
+        for (types::size_t i = 0; i < count; i++) {
             m_data[i] = data[i];
         }
-        m_data[size] = '\0';
+        m_data[count] = '\0';
     }
 
-    constexpr auto span() const { return m_data.span(); }
+    constexpr CodeUnit const* data() const { return m_data; }
+    constexpr auto size() const { return count; }
 
     template<types::size_t other_size>
-    requires(size != other_size)
+    requires(count != other_size)
     constexpr friend bool operator==(FixedString const&, FixedString<CodeUnit, other_size> const&) {
         return false;
     }

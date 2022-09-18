@@ -80,18 +80,18 @@ constexpr void basic() {
     auto x = di::Tuple<int, int, int> {};
 
     auto e = di::get<2>(x);
-    EXPECT_EQ(e, 0);
+    ASSERT_EQ(e, 0);
 
     auto f = x.get<0>();
-    EXPECT_EQ(f, 0);
+    ASSERT_EQ(f, 0);
 
     static_assert(di::concepts::detail::CanStructuredBindHelper<di::Tuple<int, int, int>, di::meta::IndexSequence<0, 1, 2>>::value);
     static_assert(di::concepts::detail::CanStructuredBind<di::Tuple<int, int, int>>);
 
     auto [a, b, c] = x;
-    EXPECT_EQ(a, 0);
-    EXPECT_EQ(b, 0);
-    EXPECT_EQ(c, 0);
+    ASSERT_EQ(a, 0);
+    ASSERT_EQ(b, 0);
+    ASSERT_EQ(c, 0);
 
     using Z = di::vocab::TupleImpl<di::meta::IndexSequenceFor<int, int, int>, int, int, int>;
     static_assert(di::concepts::ConstructibleFrom<Z, di::vocab::ConstructTupleImplFromTuplelike, di::Tuple<short, short, int> const&>);
@@ -102,14 +102,14 @@ constexpr void basic() {
 
     auto y = di::Tuple<int, int, int>(di::Tuple<short, short, int>(1, 2, 3));
     auto [i, j, k] = y;
-    EXPECT_EQ(i, 1);
-    EXPECT_EQ(j, 2);
-    EXPECT_EQ(k, 3);
+    ASSERT_EQ(i, 1);
+    ASSERT_EQ(j, 2);
+    ASSERT_EQ(k, 3);
 
     auto const z = di::make_tuple(9, 9);
     auto& [n, m] = z;
-    EXPECT_EQ(n, 9);
-    EXPECT_EQ(m, 9);
+    ASSERT_EQ(n, 9);
+    ASSERT_EQ(m, 9);
     static_assert(di::concepts::SameAs<decltype((n)), int const&>);
     static_assert(di::concepts::SameAs<decltype((m)), int const&>);
 
@@ -123,20 +123,20 @@ constexpr void assignment() {
     int d = 5, e = 6, f = 7;
     x = di::tie(d, e, f);
 
-    EXPECT_EQ(a, 5);
-    EXPECT_EQ(e, 6);
-    EXPECT_EQ(f, 7);
+    ASSERT_EQ(a, 5);
+    ASSERT_EQ(e, 6);
+    ASSERT_EQ(f, 7);
 
     auto y = di::make_tuple(6l, 5l, 4l);
     y = di::make_tuple(4l, 3l, 2l);
-    EXPECT_EQ(di::get<0>(y), 4);
-    EXPECT_EQ(di::get<1>(y), 3);
-    EXPECT_EQ(di::get<2>(y), 2);
+    ASSERT_EQ(di::get<0>(y), 4);
+    ASSERT_EQ(di::get<1>(y), 3);
+    ASSERT_EQ(di::get<2>(y), 2);
 
     y = di::make_tuple(3, 2, 1);
-    EXPECT_EQ(di::get<0>(y), 3);
-    EXPECT_EQ(di::get<1>(y), 2);
-    EXPECT_EQ(di::get<2>(y), 1);
+    ASSERT_EQ(di::get<0>(y), 3);
+    ASSERT_EQ(di::get<1>(y), 2);
+    ASSERT_EQ(di::get<2>(y), 1);
 }
 
 TEST_CONSTEXPR(vocab_tuple, enable_structed_bindings, enable_structed_bindings)

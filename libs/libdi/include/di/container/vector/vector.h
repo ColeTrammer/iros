@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/assert/prelude.h>
 #include <di/container/allocator/allocator.h>
 #include <di/container/allocator/allocator_of.h>
 #include <di/container/concepts/prelude.h>
@@ -7,7 +8,6 @@
 #include <di/container/types/prelude.h>
 #include <di/container/vector/mutable_vector_interface.h>
 #include <di/types/prelude.h>
-#include <di/assert/prelude.h>
 #include <di/util/deduce_create.h>
 #include <di/util/exchange.h>
 #include <di/vocab/span/prelude.h>
@@ -48,7 +48,7 @@ public:
     constexpr size_t max_size() const { return static_cast<size_t>(-1); }
 
     constexpr void reserve_from_nothing(size_t n) {
-        DI_ASSERT_EQ(capacity(), 0);
+        DI_ASSERT_EQ(capacity(), 0u);
         auto [data, new_capacity] = Alloc().allocate(n);
         m_data = data;
         m_capacity = new_capacity;

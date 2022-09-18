@@ -7,21 +7,21 @@ static_assert(sizeof(di::Optional<int&>) == sizeof(int*));
 
 constexpr void basic() {
     auto x = di::Optional<int> {};
-    EXPECT(!x.has_value());
+    ASSERT(!x.has_value());
 
-    EXPECT_EQ(x.value_or(4), 4);
+    ASSERT_EQ(x.value_or(4), 4);
 
-    EXPECT_EQ(x.emplace(8), 8);
-    EXPECT_EQ(x.value(), 8);
+    ASSERT_EQ(x.emplace(8), 8);
+    ASSERT_EQ(x.value(), 8);
 
     x = 3;
-    EXPECT_EQ(x.value(), 3);
+    ASSERT_EQ(x.value(), 3);
 
     x.reset();
-    EXPECT(!x);
+    ASSERT(!x);
 
     auto y = di::Optional<int>(2);
-    EXPECT_EQ(*y, 2);
+    ASSERT_EQ(*y, 2);
 }
 
 constexpr void conversions() {
@@ -36,44 +36,44 @@ constexpr void conversions() {
     };
 
     auto x = di::Optional<X>(di::in_place, 3);
-    EXPECT_EQ(x.value().x, 3);
+    ASSERT_EQ(x.value().x, 3);
 
     auto y = di::Optional<Y>(di::in_place, 4);
     x = y;
-    EXPECT_EQ(x.value().x, 4);
+    ASSERT_EQ(x.value().x, 4);
 
     auto z = di::Optional<X>(y);
-    EXPECT_EQ(z.value().x, 4);
+    ASSERT_EQ(z.value().x, 4);
 
     z = di::Optional<Y>(di::in_place, 5);
-    EXPECT_EQ(z.value().x, 5);
+    ASSERT_EQ(z.value().x, 5);
 }
 
 constexpr void make_optional() {
     auto x = di::make_optional(5);
-    EXPECT_EQ(x.value(), 5);
+    ASSERT_EQ(x.value(), 5);
 
     struct Y {
         int x, y;
     };
     auto y = di::make_optional<Y>(4, 3);
-    EXPECT_EQ(y->x + y->y, 7);
+    ASSERT_EQ(y->x + y->y, 7);
 
     int b = 2;
     auto a = di::make_optional(di::ref(b));
     *a = 3;
-    EXPECT_EQ(b, 3);
+    ASSERT_EQ(b, 3);
 }
 
 constexpr void references() {
     int i = 32;
     auto x = di::make_optional(di::ref(i));
-    EXPECT_EQ(*x, 32);
+    ASSERT_EQ(*x, 32);
 
     int j = 42;
     x = j;
-    EXPECT_EQ(*x, 42);
-    EXPECT_EQ(i, 32);
+    ASSERT_EQ(*x, 42);
+    ASSERT_EQ(i, 32);
 }
 
 struct Z {
@@ -105,9 +105,9 @@ constexpr void trivial() {
     auto y = di::Optional<Z&>();
     auto x = y;
     auto z = y;
-    EXPECT(!x.has_value());
-    EXPECT(!y.has_value());
-    EXPECT(!z.has_value());
+    ASSERT(!x.has_value());
+    ASSERT(!y.has_value());
+    ASSERT(!z.has_value());
 }
 
 struct M {
@@ -126,17 +126,17 @@ constexpr void monad() {
     auto y = x.or_else([] {
         return di::make_optional<int>(42);
     });
-    EXPECT_EQ(y.value(), 42);
+    ASSERT_EQ(y.value(), 42);
 
     auto z = y.transform([](auto x) {
         return x + 1;
     });
-    EXPECT_EQ(z.value(), 43);
+    ASSERT_EQ(z.value(), 43);
 
     auto w = z.and_then([](auto) -> di::Optional<Z&> {
         return di::nullopt;
     });
-    EXPECT(!w);
+    ASSERT(!w);
 
     auto m = di::Optional<M>();
     auto qq = di::move(m)
@@ -156,7 +156,7 @@ constexpr void monad() {
     a = a.and_then([&](auto&) {
         return di::make_optional(di::ref(zzz));
     });
-    EXPECT_EQ(*a, zzz);
+    ASSERT_EQ(*a, zzz);
 
     static_assert(di::concepts::Monad<di::Optional>);
     static_assert(di::concepts::MonadInstance<di::Optional<int>>);
@@ -172,7 +172,7 @@ constexpr void monad() {
     } << [] {
         return di::make_optional(0);
     };
-    EXPECT_EQ(*yyy, 11);
+    ASSERT_EQ(*yyy, 11);
 
     auto xxx = di::Optional<int> {} % [](auto i) {
         return i + 5;
@@ -182,7 +182,7 @@ constexpr void monad() {
         return di::make_optional(2);
     };
 
-    EXPECT_EQ(*xxx, 2);
+    ASSERT_EQ(*xxx, 2);
 }
 
 constexpr void swap() {
@@ -190,8 +190,8 @@ constexpr void swap() {
     auto y = di::make_optional(7);
     di::swap(x, y);
 
-    EXPECT_EQ(*x, 7);
-    EXPECT_EQ(*y, 3);
+    ASSERT_EQ(*x, 7);
+    ASSERT_EQ(*y, 3);
 }
 
 struct X {};
@@ -209,12 +209,12 @@ constexpr void compare() {
     auto y = di::make_optional(3l);
     auto z = di::Optional<di::Optional<di::Optional<int>>> { di::in_place, di::in_place, di::in_place, 2 };
 
-    EXPECT(x == y);
-    EXPECT(x != di::nullopt);
-    EXPECT(x == 3);
+    ASSERT_EQ(x, y);
+    ASSERT_NOT_EQ(x, di::nullopt);
+    ASSERT_EQ(x, 3);
 
-    EXPECT(z == 2);
-    EXPECT(z != 1);
+    ASSERT_EQ(z, 2);
+    ASSERT_NOT_EQ(z, 1);
 
     static_assert(di::concepts::ThreeWayComparable<di::Optional<int>>);
     static_assert(di::concepts::ThreeWayComparableWith<di::Optional<int>, di::Optional<long>>);
@@ -225,39 +225,39 @@ constexpr void compare() {
     static_assert(!di::concepts::ThreeWayComparableWith<X, X>);
     static_assert(!di::concepts::ThreeWayComparableWith<di::Optional<X>, di::Optional<X>>);
 
-    EXPECT(x <= y);
-    EXPECT(x < di::make_optional(4l));
-    EXPECT(x > di::Optional<int>(di::nullopt));
-    EXPECT(x > di::nullopt);
-    EXPECT(x >= 2);
+    ASSERT_LT_EQ(x, y);
+    ASSERT_LT(x, di::make_optional(4l));
+    ASSERT_GT(x, di::Optional<int>(di::nullopt));
+    ASSERT_GT(x, di::nullopt);
+    ASSERT_GT_EQ(x, 2);
 
-    EXPECT(z < 3);
-    EXPECT(z > 1);
+    ASSERT_LT(z, 3);
+    ASSERT_GT(z, 1);
 }
 
 constexpr void container() {
     auto x = di::make_optional(2);
-    EXPECT(!x.empty());
-    EXPECT_EQ(x.size(), 1u);
+    ASSERT(!x.empty());
+    ASSERT_EQ(x.size(), 1u);
     for (auto y : x) {
-        EXPECT_EQ(y, 2);
+        ASSERT_EQ(y, 2);
     }
 
     auto& y = *x.front();
-    EXPECT_EQ(y, 2);
+    ASSERT_EQ(y, 2);
 
     auto z = di::make_optional(di::ref(*x));
     for (auto& y : x) {
-        EXPECT_EQ(y, 2);
+        ASSERT_EQ(y, 2);
         y = 3;
     }
 
-    EXPECT_EQ(*x, 3);
+    ASSERT_EQ(*x, 3);
 
     auto a = di::Optional<int> {};
     for (auto y : a) {
         (void) y;
-        EXPECT(false);
+        ASSERT(false);
     }
 }
 
@@ -265,12 +265,12 @@ constexpr void void_optional() {
     auto x = di::lift_bool(true) % [] {
         return 2;
     };
-    EXPECT(x == 2);
+    ASSERT_EQ(x, 2);
 
     auto y = di::lift_bool(false) % [] {
         return 2;
     };
-    EXPECT(!y);
+    ASSERT(!y);
 }
 
 TEST_CONSTEXPR(vocab_optional, basic, basic)

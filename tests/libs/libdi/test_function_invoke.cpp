@@ -27,7 +27,7 @@ constexpr void function() {
     static_assert(!di::concepts::Invocable<decltype(f), int, int, int>);
     static_assert(di::concepts::SameAs<int, di::meta::InvokeResult<decltype(f), int, int>>);
 
-    EXPECT_EQ(di::invoke(f, 3, 6), 9);
+    ASSERT_EQ(di::invoke(f, 3, 6), 9);
 }
 
 constexpr void member_object() {
@@ -42,14 +42,14 @@ constexpr void member_object() {
     static_assert(di::concepts::SameAs<int const&, di::meta::InvokeResult<decltype(f), X const&>>);
 
     auto x = X { 42 };
-    EXPECT_EQ(di::invoke(f, x), 42);
-    EXPECT_EQ(di::invoke(f, di::cref(di::ref(x))), 42);
-    EXPECT_EQ(di::invoke(f, &x), 42);
+    ASSERT_EQ(di::invoke(f, x), 42);
+    ASSERT_EQ(di::invoke(f, di::cref(di::ref(x))), 42);
+    ASSERT_EQ(di::invoke(f, &x), 42);
 
     auto y = Y { 13 };
-    EXPECT_EQ(di::invoke(f, y), 13);
-    EXPECT_EQ(di::invoke(f, di::cref(y)), 13);
-    EXPECT_EQ(di::invoke(f, &y), 13);
+    ASSERT_EQ(di::invoke(f, y), 13);
+    ASSERT_EQ(di::invoke(f, di::cref(y)), 13);
+    ASSERT_EQ(di::invoke(f, &y), 13);
 }
 
 constexpr void member_function() {
@@ -64,14 +64,14 @@ constexpr void member_function() {
     static_assert(di::concepts::SameAs<int, di::meta::InvokeResult<decltype(f), X, int>>);
 
     auto x = X { 42 };
-    EXPECT_EQ(di::invoke(f, x, 5), 47);
-    EXPECT_EQ(di::invoke(f, di::ref(x), 5), 47);
-    EXPECT_EQ(di::invoke(f, &x, 5), 47);
+    ASSERT_EQ(di::invoke(f, x, 5), 47);
+    ASSERT_EQ(di::invoke(f, di::ref(x), 5), 47);
+    ASSERT_EQ(di::invoke(f, &x, 5), 47);
 
     auto y = Y { 13 };
-    EXPECT_EQ(di::invoke(f, y, 3), 16);
-    EXPECT_EQ(di::invoke(f, di::cref(y), 3), 16);
-    EXPECT_EQ(di::invoke(f, &y, 3), 16);
+    ASSERT_EQ(di::invoke(f, y, 3), 16);
+    ASSERT_EQ(di::invoke(f, di::cref(y), 3), 16);
+    ASSERT_EQ(di::invoke(f, &y, 3), 16);
 }
 
 constexpr void invoke_r_void() {

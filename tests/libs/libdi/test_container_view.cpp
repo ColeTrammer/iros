@@ -6,15 +6,15 @@ constexpr void basic() {
     auto x = di::View { di::begin(arr), di::end(arr) };
 
     auto [s, e] = x;
-    EXPECT_EQ(s, arr + 0);
-    EXPECT_EQ(e, arr + 5);
+    ASSERT_EQ(s, arr + 0);
+    ASSERT_EQ(e, arr + 5);
 
     {
         auto sum = 0;
         for (auto z : x) {
             sum += z;
         }
-        EXPECT_EQ(sum, 15);
+        ASSERT_EQ(sum, 15);
     }
     {
         x.advance(2);
@@ -22,7 +22,7 @@ constexpr void basic() {
         for (auto z : x) {
             sum += z;
         }
-        EXPECT_EQ(sum, 12);
+        ASSERT_EQ(sum, 12);
     }
 }
 
@@ -36,7 +36,7 @@ constexpr void all() {
         for (auto z : x) {
             sum += z;
         }
-        EXPECT_EQ(sum, 15);
+        ASSERT_EQ(sum, 15);
     }
 
     {
@@ -44,7 +44,7 @@ constexpr void all() {
         for (auto z : di::view::all(x)) {
             sum += z;
         }
-        EXPECT_EQ(sum, 15);
+        ASSERT_EQ(sum, 15);
     }
 
     {
@@ -61,7 +61,7 @@ constexpr void all() {
         for (auto z : v) {
             sum += z;
         }
-        EXPECT_EQ(sum, 15);
+        ASSERT_EQ(sum, 15);
     }
 
     {
@@ -69,7 +69,7 @@ constexpr void all() {
         for (auto z : arr | di::view::all) {
             sum += z;
         }
-        EXPECT_EQ(sum, 15);
+        ASSERT_EQ(sum, 15);
     }
 
     {
@@ -77,7 +77,7 @@ constexpr void all() {
         for (auto z : arr | (di::view::all | di::view::all)) {
             sum += z;
         }
-        EXPECT_EQ(sum, 15);
+        ASSERT_EQ(sum, 15);
     }
 }
 
@@ -85,9 +85,9 @@ constexpr void empty() {
     auto c = di::view::empty<int>;
     for (auto x : c) {
         (void) x;
-        EXPECT(false);
+        ASSERT(false);
     }
-    EXPECT(c.empty());
+    ASSERT(c.empty());
 }
 
 constexpr void single() {
@@ -98,10 +98,10 @@ constexpr void single() {
         for (auto z : c | di::view::all) {
             sum += z;
         }
-        EXPECT_EQ(sum, 5);
+        ASSERT_EQ(sum, 5);
     }
 
-    EXPECT_EQ(c.size(), 1u);
+    ASSERT_EQ(c.size(), 1u);
 }
 
 constexpr void iota() {
@@ -115,7 +115,7 @@ constexpr void iota() {
         for (auto z : di::view::iota(1, 6)) {
             sum += z;
         }
-        EXPECT_EQ(sum, 15);
+        ASSERT_EQ(sum, 15);
     }
 
     {
@@ -123,7 +123,7 @@ constexpr void iota() {
         for (auto z : di::range(6)) {
             sum += z;
         }
-        EXPECT_EQ(sum, 15);
+        ASSERT_EQ(sum, 15);
     }
 }
 
@@ -136,7 +136,7 @@ constexpr void repeat() {
         for (auto z : di::repeat(5, 5)) {
             sum += z;
         }
-        EXPECT_EQ(sum, 25);
+        ASSERT_EQ(sum, 25);
     }
 }
 
@@ -156,9 +156,9 @@ constexpr void reverse() {
 
     {
         auto v = arr | di::reverse;
-        EXPECT_EQ(v[0], 5);
-        EXPECT_EQ(v[1], 4);
-        EXPECT_EQ(v[2], 3);
+        ASSERT_EQ(v[0], 5);
+        ASSERT_EQ(v[1], 4);
+        ASSERT_EQ(v[2], 3);
     }
 
     {
@@ -166,7 +166,7 @@ constexpr void reverse() {
         for (auto z : di::range(6) | di::reverse) {
             sum += z;
         }
-        EXPECT_EQ(sum, 15);
+        ASSERT_EQ(sum, 15);
     }
 
     {
@@ -174,7 +174,7 @@ constexpr void reverse() {
         for (auto z : di::range(6) | di::reverse | di::reverse) {
             sum += z;
         }
-        EXPECT_EQ(sum, 15);
+        ASSERT_EQ(sum, 15);
     }
 }
 
@@ -194,7 +194,7 @@ constexpr void as_rvalue() {
         for (auto z : arr | di::as_rvalue) {
             sum += z;
         }
-        EXPECT_EQ(sum, 15);
+        ASSERT_EQ(sum, 15);
     }
 
     {
@@ -202,7 +202,7 @@ constexpr void as_rvalue() {
         for (auto z : di::range(6) | di::as_rvalue) {
             sum += z;
         }
-        EXPECT_EQ(sum, 15);
+        ASSERT_EQ(sum, 15);
     }
 }
 
@@ -220,7 +220,7 @@ constexpr void transform() {
                       })) {
             sum += x;
         }
-        EXPECT_EQ(sum, 15);
+        ASSERT_EQ(sum, 15);
     }
 }
 

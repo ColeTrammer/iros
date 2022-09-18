@@ -6,14 +6,14 @@ constexpr void basic() {
     auto x = "QWER"_sv;
     (void) x;
 
-    EXPECT(x.size() == 4);
+    ASSERT_EQ(x.size(), 4u);
 
     int c = 0;
     for (auto xx : x) {
         (void) xx;
         c++;
     }
-    EXPECT(c == 4);
+    ASSERT_EQ(c, 4);
 }
 
 constexpr void push_back() {
@@ -21,7 +21,7 @@ constexpr void push_back() {
     x.push_back('a');
     x.push_back('b');
     x.push_back('c');
-    EXPECT(x.size() == 3);
+    ASSERT_EQ(x.size(), 3u);
 }
 
 #define DI_COMPILE_STRING(exp)                                                            \

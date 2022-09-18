@@ -10,8 +10,8 @@ constexpr void basic() {
     int a = 13;
     int b = 26;
     di::swap(a, b);
-    EXPECT_EQ(a, 26);
-    EXPECT_EQ(b, 13);
+    ASSERT_EQ(a, 26);
+    ASSERT_EQ(b, 13);
 }
 
 struct X {
@@ -33,7 +33,7 @@ constexpr void custom() {
     auto b = X { &c };
     di::swap(a, b);
 
-    EXPECT_EQ(c, 1);
+    ASSERT_EQ(c, 1);
 }
 
 struct Y {
@@ -52,8 +52,8 @@ constexpr void non_assignable() {
     auto b = di::util::RebindableBox { Y { 7 } };
     di::swap(a, b);
 
-    EXPECT_EQ(a.value().x, 7);
-    EXPECT_EQ(b.value().x, 3);
+    ASSERT_EQ(a.value().x, 7);
+    ASSERT_EQ(b.value().x, 3);
 }
 
 struct Z {
@@ -75,8 +75,8 @@ constexpr void move_only() {
     auto b = Z { 4 };
     di::swap(a, b);
 
-    EXPECT_EQ(a.x, 4);
-    EXPECT_EQ(b.x, 2);
+    ASSERT_EQ(a.x, 4);
+    ASSERT_EQ(b.x, 2);
 }
 
 TEST_CONSTEXPR(util_swap, basic, basic)

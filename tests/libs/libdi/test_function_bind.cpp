@@ -16,9 +16,9 @@ constexpr void front() {
     };
 
     auto g = di::bind_front(f, 2, 4);
-    EXPECT_EQ(g(2), 8);
+    ASSERT_EQ(g(2), 8);
 
-    EXPECT(!di::concepts::Invocable<decltype(g), int, int>);
+    ASSERT(!di::concepts::Invocable<decltype(g), int, int>);
 
     auto h = [](auto const& x, auto const& y, auto const& z) {
         static_assert(di::SameAs<decltype(x), di::ReferenceWrapper<int> const&>);
@@ -27,7 +27,7 @@ constexpr void front() {
 
     auto a = 2, b = 3;
     auto j = di::bind_front(h, di::ref(a), di::ref(b));
-    EXPECT_EQ(j(4), 9);
+    ASSERT_EQ(j(4), 9);
 }
 
 constexpr void back() {
@@ -36,19 +36,19 @@ constexpr void back() {
     };
 
     auto g = di::bind_back(f, 2);
-    EXPECT_EQ(g(4), 2);
+    ASSERT_EQ(g(4), 2);
 
     auto h = [](M x, M y) {
         return x.x / y.x;
     };
 
     auto j = di::bind_back(h, M { 2 });
-    EXPECT_EQ(di::move(j)(M { 4 }), 2);
+    ASSERT_EQ(di::move(j)(M { 4 }), 2);
 
     static_assert(di::concepts::Invocable<decltype(j)&&, M&&>);
 
     auto a = g;
-    EXPECT_EQ(a(6), 3);
+    ASSERT_EQ(a(6), 3);
 }
 
 constexpr void compose() {
@@ -61,14 +61,14 @@ constexpr void compose() {
     };
 
     auto h = di::compose(di::bind_front(f, 2), di::bind_back(g, 4));
-    EXPECT_EQ(h(3, 7), 16);
+    ASSERT_EQ(h(3, 7), 16);
 
-    EXPECT_EQ(2, 5 | di::piped([](int) {
+    ASSERT_EQ(2, 5 | di::piped([](int) {
                      return 2;
                  }));
 
     auto k = di::bind_front(f, 2) | di::piped(g);
-    EXPECT_EQ(k(1, 2, 3), 8);
+    ASSERT_EQ(k(1, 2, 3), 8);
 }
 
 constexpr void pipeline() {
@@ -77,21 +77,21 @@ constexpr void pipeline() {
     };
     auto g = di::bind_back(f, 1, 2);
     auto x = 1 | g;
-    EXPECT_EQ(x, 4);
+    ASSERT_EQ(x, 4);
 }
 
 constexpr void curry() {
     auto f = [](int x, int y, int z) {
         return x + y + z;
     };
-    EXPECT_EQ(6, 3 | di::curry(f)(1)(2));
+    ASSERT_EQ(6, 3 | di::curry(f)(1)(2));
 }
 
 constexpr void curry_back() {
     auto f = [](int x, int y, int z) {
         return x + y + z;
     };
-    EXPECT_EQ(6, di::curry_back(f)(1)(2)(3));
+    ASSERT_EQ(6, di::curry_back(f)(1)(2)(3));
 }
 
 TEST_CONSTEXPR(util_bind, front, front)
