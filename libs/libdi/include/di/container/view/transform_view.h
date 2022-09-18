@@ -7,6 +7,9 @@
 #include <di/concepts/object.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/interface/prelude.h>
+#include <di/container/iterator/iterator_extension.h>
+#include <di/container/iterator/iterator_move.h>
+#include <di/container/iterator/sentinel_extension.h>
 #include <di/container/meta/prelude.h>
 #include <di/container/view/view_interface.h>
 #include <di/function/invoke.h>
@@ -22,118 +25,77 @@ requires(concepts::View<View> && concepts::Object<F> && concepts::Invocable<F&, 
 class TransformView : public ViewInterface<TransformView<View, F>> {
 private:
     template<bool is_const>
+    using Base = meta::MaybeConst<is_const, View>;
+
+    template<bool is_const>
+    using Iter = meta::ContainerIterator<Base<is_const>>;
+
+    template<bool is_const>
+    using Sent = meta::ContainerSentinel<Base<is_const>>;
+
+    template<bool is_const>
+    using SSizeType = meta::ContainerSSizeType<Base<is_const>>;
+
+    template<bool is_const>
+    using Parent = meta::MaybeConst<is_const, TransformView>;
+
+    template<bool is_const>
     class Sentinel;
 
     template<bool is_const>
     class Iterator;
 
     template<bool is_const>
-    class Sentinel {
+    class Sentinel : public SentinelExtension<Sentinel<is_const>, Sent<is_const>, Iterator<is_const>, Iter<is_const>> {
     private:
-        using Base = meta::MaybeConst<is_const, View>;
-        using Sent = meta::ContainerSentinel<Base>;
-        using SSizeType = meta::ContainerSSizeType<Base>;
+        using Base = SentinelExtension<Sentinel<is_const>, Sent<is_const>, Iterator<is_const>, Iter<is_const>>;
 
     public:
         constexpr Sentinel() = default;
 
-        constexpr explicit Sentinel(Sent sentinel) : m_sentinel(sentinel) {}
+        constexpr explicit Sentinel(Sent<is_const> sentinel) : Base(sentinel) {}
 
         constexpr Sentinel(Sentinel<!is_const> other)
-        requires(is_const && concepts::ConvertibleTo<meta::ContainerSentinel<View>, Sent>)
-            : m_sentinel(other.base()) {}
-
-        constexpr auto base() const { return m_sentinel; }
-
-    private:
-        constexpr friend bool operator==(Iterator<is_const> const& a, Sentinel const& b) { return a.base() == b.base(); }
-
-        constexpr friend SSizeType operator-(Iterator<is_const> const& a, Sentinel const& b)
-        requires(concepts::SizedSentinelFor<Sent, meta::ContainerIterator<Base>>)
-        {
-            return a.base() - b.base();
-        }
-
-        constexpr friend SSizeType operator-(Sentinel const& a, Iterator<is_const> const& b)
-        requires(concepts::SizedSentinelFor<Sent, meta::ContainerIterator<Base>>)
-        {
-            return b.base() - a.base();
-        }
-
-        Sent m_sentinel {};
+        requires(is_const && concepts::ConvertibleTo<Sent<is_const>, Sent<!is_const>>)
+            : Base(other.base()) {}
     };
 
     template<bool is_const>
-    class Iterator {
-    private:
-        using Base = meta::MaybeConst<is_const, View>;
-        using Parent = meta::MaybeConst<is_const, TransformView>;
-        using Iter = meta::ContainerIterator<Base>;
-        using SSizeType = meta::ContainerSSizeType<Base>;
+    class Iterator
+        : public IteratorExtension<
+              Iterator<is_const>, Iter<is_const>,
+              meta::RemoveCVRef<meta::InvokeResult<meta::MaybeConst<is_const, F>&, meta::IteratorReference<Iter<is_const>>>>> {
+        using Base = IteratorExtension<
+            Iterator<is_const>, Iter<is_const>,
+            meta::RemoveCVRef<meta::InvokeResult<meta::MaybeConst<is_const, F>&, meta::IteratorReference<Iter<is_const>>>>>;
 
     public:
         Iterator()
-        requires(concepts::DefaultInitializable<Iter>)
+        requires(concepts::DefaultInitializable<Iter<is_const>>)
         = default;
 
-        constexpr explicit Iterator(Parent& parent, Iter iterator) : m_iterator(util::move(iterator)), m_parent(util::address_of(parent)) {}
+        constexpr explicit Iterator(Parent<is_const>& parent, Iter<is_const> iterator)
+            : Base(util::move(iterator)), m_parent(util::address_of(parent)) {}
 
         constexpr Iterator(Iterator<!is_const> other)
-        requires(is_const && concepts::ConvertibleTo<Iter, meta::ContainerIterator<Base>>)
-            : m_iterator(util::move(other).base()), m_parent(other.m_parent) {}
+        requires(is_const && concepts::ConvertibleTo<Iter<is_const>, Iter<!is_const>>)
+            : Base(util::move(other).base()), m_parent(other.m_parent) {}
 
-        constexpr Iter const& base() const& { return m_iterator; }
-        constexpr Iter base() && { return util::move(m_iterator); }
-
-        constexpr decltype(auto) operator*() const { return function::invoke(m_parent->m_function.value(), *m_iterator); }
-
-        constexpr decltype(auto) operator[](SSizeType n) const
-        requires(concepts::RandomAccessContainer<Base>)
-        {
-            return function::invoke(m_parent->m_function.value(), m_iterator[n]);
-        }
-
-        constexpr Iterator& operator++() {
-            ++m_iterator;
-            return *this;
-        }
-
-        constexpr void operator++(int) { ++m_iterator; }
-        constexpr Iterator operator++(int)
-        requires(concepts::ForwardContainer<Base>)
-        {
-            ++m_iterator;
-            return *this;
-        }
+        constexpr decltype(auto) operator*() const { return function::invoke(m_parent->m_function.value(), *this->base()); }
 
     private:
         template<bool>
         friend class Iterator;
 
-        constexpr friend bool operator==(Iterator const& a, Iterator const& b)
-        requires(concepts::EqualityComparable<Iter>)
-        {
-            return a.base() == b.base();
-        }
-
-        constexpr friend auto tag_invoke(types::Tag<iterator_category>, types::InPlaceType<Iterator>) {
-            if constexpr (concepts::RandomAccessContainer<Base>) {
-                return types::RandomAccessIteratorTag {};
-            } else if constexpr (concepts::BidirectionalContainer<Base>) {
-                return types::BidirectionalIteratorTag {};
-            } else if constexpr (concepts::ForwardContainer<Base>) {
-                return types::ForwardIteratorTag {};
+        constexpr friend decltype(auto) tag_invoke(types::Tag<iterator_move>, Iterator const& self) {
+            if constexpr (concepts::LValueReference<decltype(*self)>) {
+                return util::move(*self);
             } else {
-                return types::InputIteratorTag {};
+                return *self;
             }
         }
 
-        using Reference = meta::InvokeResult<meta::MaybeConst<is_const, F>&, meta::ContainerReference<Base>>;
-        constexpr friend meta::RemoveCVRef<Reference> tag_invoke(types::Tag<iterator_value>, types::InPlaceType<Iterator>) {}
-        constexpr friend SSizeType tag_invoke(types::Tag<iterator_ssize_type>, types::InPlaceType<Iterator>) {}
-
-        Iter m_iterator {};
-        Parent* m_parent { nullptr };
+        Parent<is_const>* m_parent { nullptr };
     };
 
 public:

@@ -5,6 +5,7 @@
 #include <di/concepts/object.h>
 #include <di/concepts/same_as.h>
 #include <di/concepts/semiregular.h>
+#include <di/container/iterator/iterator_base.h>
 #include <di/container/iterator/iterator_category.h>
 #include <di/container/iterator/iterator_ssize_type.h>
 #include <di/container/iterator/iterator_value.h>
@@ -30,7 +31,7 @@ private:
     using IndexType = meta::Conditional<is_bounded, Bound, types::ssize_t>;
     using SSizeType = meta::MakeSigned<IndexType>;
 
-    class Iterator {
+    class Iterator : public IteratorBase<Iterator, T, SSizeType> {
     public:
         constexpr Iterator() = default;
 
@@ -38,59 +39,13 @@ private:
 
         constexpr T const& operator*() const { return *m_value; }
 
-        constexpr Iterator& operator++() {
-            ++m_current;
-            return *this;
-        }
-
-        constexpr Iterator operator++(int) {
-            auto temp = *this;
-            ++*this;
-            return temp;
-        }
-
-        constexpr Iterator& operator--() {
-            --m_value;
-            return *this;
-        }
-
-        constexpr Iterator operator--(int) {
-            auto temp = *this;
-            --*this;
-            return temp;
-        }
-
-        constexpr Iterator& operator+=(SSizeType n) {
-            m_value += n;
-            return *this;
-        }
-
-        constexpr Iterator& operator-=(SSizeType n) {
-            m_value += n;
-            return *this;
-        }
-
-        constexpr T const& operator[](SSizeType n) const { return *(*this + n); }
+        constexpr void advance_one() { ++m_current; }
+        constexpr void back_one() { --m_current; }
+        constexpr void advance_n(SSizeType n) { m_current += n; }
 
     private:
         constexpr friend bool operator==(Iterator const& a, Iterator const& b) { return a.m_current == b.m_current; }
-
         constexpr friend auto operator<=>(Iterator const& a, Iterator const& b) { return a.m_current <=> b.m_current; }
-
-        constexpr friend Iterator operator+(Iterator x, SSizeType n) {
-            x += n;
-            return x;
-        }
-
-        constexpr friend Iterator operator+(SSizeType n, Iterator x) {
-            x += n;
-            return x;
-        }
-
-        constexpr friend Iterator operator-(Iterator x, SSizeType n) {
-            x -= n;
-            return x;
-        }
 
         constexpr friend SSizeType operator-(Iterator const& a, Iterator const& b) {
             return static_cast<SSizeType>(a.m_current) - static_cast<SSizeType>(b.m_current);
@@ -99,8 +54,6 @@ private:
         constexpr friend types::RandomAccessIteratorTag tag_invoke(types::Tag<iterator_category>, types::InPlaceType<Iterator>) {
             return types::RandomAccessIteratorTag {};
         }
-        constexpr friend T tag_invoke(types::Tag<iterator_value>, types::InPlaceType<Iterator>) {}
-        constexpr friend SSizeType tag_invoke(types::Tag<iterator_ssize_type>, types::InPlaceType<Iterator>) {}
 
         T const* m_value { nullptr };
         IndexType m_current {};

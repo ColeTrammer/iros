@@ -13,9 +13,11 @@
 #include <di/concepts/unsigned_integer.h>
 #include <di/concepts/weakly_equality_comparable_with.h>
 #include <di/container/concepts/sized_sentinel_for.h>
+#include <di/container/iterator/iterator_base.h>
 #include <di/container/iterator/iterator_category.h>
 #include <di/container/iterator/iterator_ssize_type.h>
 #include <di/container/iterator/iterator_value.h>
+#include <di/container/iterator/sentinel_base.h>
 #include <di/container/iterator/unreachable_sentinel.h>
 #include <di/container/meta/enable_borrowed_container.h>
 #include <di/container/meta/iterator_ssize_type.h>
@@ -70,47 +72,39 @@ private:
 
     class Sentinel;
 
-    class Iterator {
+    class Iterator : public IteratorBase<Iterator, T, SSizeType> {
     public:
-        constexpr Iterator()
+        Iterator()
         requires(concepts::DefaultInitializable<T>)
         = default;
 
         constexpr explicit Iterator(T value) : m_value(value) {}
 
+        Iterator(Iterator const&) = default;
+        Iterator(Iterator&&) = default;
+
+        Iterator& operator=(Iterator const&) = default;
+        Iterator& operator=(Iterator&&) = default;
+
+        Iterator(Iterator const&)
+        requires(!detail::IotaIncrementable<T>)
+        = delete;
+
+        Iterator& operator=(Iterator const&)
+        requires(!detail::IotaIncrementable<T>)
+        = delete;
+
         constexpr T operator*() const { return m_value; }
 
-        constexpr Iterator& operator++() {
-            ++m_value;
-            return *this;
-        }
+        constexpr void advance_one() { ++m_value; }
 
-        constexpr void operator++(int) { ++m_value; }
-
-        constexpr Iterator operator++(int)
-        requires(detail::IotaIncrementable<T>)
-        {
-            auto temp = *this;
-            ++m_value;
-            return temp;
-        }
-
-        constexpr Iterator& operator--()
+        constexpr void back_one()
         requires(detail::IotaDecrementable<T>)
         {
             --m_value;
-            return *this;
         }
 
-        constexpr Iterator operator--(int)
-        requires(detail::IotaDecrementable<T>)
-        {
-            auto temp = *this;
-            --m_value;
-            return temp;
-        }
-
-        constexpr Iterator& operator+=(SSizeType n)
+        constexpr void advance_n(SSizeType n)
         requires(detail::IotaAdvancable<T>)
         {
             if constexpr (concepts::UnsignedInteger<T>) {
@@ -122,28 +116,6 @@ private:
             } else {
                 m_value += n;
             }
-            return *this;
-        }
-
-        constexpr Iterator& operator-=(SSizeType n)
-        requires(detail::IotaAdvancable<T>)
-        {
-            if constexpr (concepts::UnsignedInteger<T>) {
-                if (n >= 0) {
-                    m_value -= static_cast<T>(n);
-                } else {
-                    m_value += static_cast<T>(-n);
-                }
-            } else {
-                m_value -= n;
-            }
-            return *this;
-        }
-
-        constexpr T operator[](SSizeType n) const
-        requires(detail::IotaAdvancable<T>)
-        {
-            return T(m_value + n);
         }
 
     private:
@@ -160,27 +132,6 @@ private:
         requires(concepts::ThreeWayComparable<T>)
         {
             return a.m_value <=> b.m_value;
-        }
-
-        constexpr friend Iterator operator+(Iterator x, SSizeType n)
-        requires(detail::IotaAdvancable<T>)
-        {
-            x += n;
-            return x;
-        }
-
-        constexpr friend Iterator operator+(SSizeType n, Iterator x)
-        requires(detail::IotaAdvancable<T>)
-        {
-            x += n;
-            return x;
-        }
-
-        constexpr friend Iterator operator-(Iterator x, SSizeType n)
-        requires(detail::IotaAdvancable<T>)
-        {
-            x -= n;
-            return x;
         }
 
         constexpr friend SSizeType operator-(Iterator const& a, Iterator const& b)
@@ -208,29 +159,20 @@ private:
             }
         }
 
-        constexpr friend T tag_invoke(types::Tag<iterator_value>, types::InPlaceType<Iterator>) {}
-        constexpr friend SSizeType tag_invoke(types::Tag<iterator_ssize_type>, types::InPlaceType<Iterator>) {}
-
         T m_value;
     };
 
-    class Sentinel {
+    class Sentinel : public SentinelBase<Sentinel> {
     public:
         constexpr Sentinel() = default;
         constexpr explicit Sentinel(Bound bound) : m_bound(bound) {}
+
+        constexpr SSizeType difference(Iterator const& a) const { return -(a.m_value - this->m_bound); }
 
     private:
         friend class IotaView;
 
         constexpr friend bool operator==(Iterator const& a, Sentinel const& b) { return a.m_value == b.m_bound; }
-
-        constexpr friend SSizeType operator-(Iterator const& a, Sentinel const& b)
-        requires(concepts::SizedSentinelFor<Bound, T>)
-        {
-            return a.m_value - b.m_bound;
-        }
-
-        constexpr friend SSizeType operator-(Sentinel const& a, Iterator const& b) { return -(b.m_value - a.m_bound); }
 
         Bound m_bound;
     };

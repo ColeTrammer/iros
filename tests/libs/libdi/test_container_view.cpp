@@ -212,6 +212,8 @@ constexpr void transform() {
     static_assert(di::concepts::View<decltype(di::transform(di::view::all(arr), di::id))>);
     static_assert(di::concepts::View<decltype(arr | di::transform(di::id))>);
     static_assert(di::concepts::View<decltype(di::transform(di::id)(arr))>);
+    static_assert(di::concepts::RandomAccessContainer<decltype(di::transform(di::id)(arr))>);
+    static_assert(!di::concepts::ContiguousContainer<decltype(di::transform(di::id)(arr))>);
 
     {
         int sum = 0;
