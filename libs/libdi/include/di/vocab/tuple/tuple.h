@@ -5,11 +5,16 @@
 #include <di/concepts/copy_assignable.h>
 #include <di/concepts/copy_constructible.h>
 #include <di/concepts/decay_same_as.h>
+#include <di/concepts/equality_comparable_with.h>
 #include <di/concepts/move_assignable.h>
 #include <di/concepts/move_constructible.h>
 #include <di/concepts/mutable_rvalue_reference.h>
+#include <di/concepts/three_way_comparable_with.h>
+#include <di/function/unpack.h>
+#include <di/function/ycombinator.h>
 #include <di/meta/add_member_get.h>
 #include <di/meta/index_sequence_for.h>
+#include <di/meta/list.h>
 #include <di/meta/remove_cvref.h>
 #include <di/meta/type_list.h>
 #include <di/util/forward_as_base.h>
@@ -95,6 +100,37 @@ public:
     }
 
 private:
+    template<typename... Other>
+    requires(sizeof...(Types) == sizeof...(Other) &&
+             requires { requires concepts::Conjunction<concepts::EqualityComparableWith<Types, Other>...>; })
+    constexpr friend bool operator==(Tuple const& a, Tuple<Other...> const& b) {
+        return function::unpack<meta::MakeIndexSequence<sizeof...(Types)>>([&]<size_t... indices>(meta::IndexSequence<indices...>) {
+            return ((util::get<indices>(a) == util::get<indices>(b)) && ...);
+        });
+    }
+
+    template<typename... Other>
+    requires(sizeof...(Types) == sizeof...(Other) &&
+             requires { requires concepts::Conjunction<concepts::ThreeWayComparableWith<Types, Other>...>; })
+    constexpr friend meta::CommonComparisonCategory<meta::CompareThreeWayResult<Types, Other>...> operator<=>(Tuple const& a,
+                                                                                                              Tuple<Other...> const& b) {
+        if constexpr (sizeof...(Types) == 0) {
+            return di::strong_ordering::equal;
+        } else {
+            auto process = function::ycombinator([&]<size_t index>(auto& self, InPlaceIndex<index>) {
+                if (auto result = util::get<index>(a) <=> util::get<index>(b); result != 0) {
+                    return result;
+                }
+                if constexpr (index == sizeof...(Types) - 1) {
+                    return di::strong_ordering::equal;
+                } else {
+                    return self(in_place_index<index + 1>);
+                }
+            });
+            return process(in_place_index<0>);
+        }
+    }
+
     constexpr friend types::size_t tag_invoke(types::Tag<tuple_size>, types::InPlaceType<Tuple>) { return sizeof...(Types); }
 
     template<types::size_t index>

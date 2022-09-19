@@ -156,8 +156,25 @@ constexpr void tuple_for_each() {
     ASSERT_EQ(s, 6);
 }
 
+constexpr void tuple_equal() {
+    auto a = di::make_tuple(5, 3, 2);
+    auto b = di::make_tuple(5, 3, 2);
+    ASSERT_EQ(a, b);
+
+    auto c = di::make_tuple(5l, 3l, 2l);
+    ASSERT_EQ(a, c);
+
+    ASSERT_EQ(a <=> b, di::strong_ordering::equal);
+    auto d = di::make_tuple(5l, 3l, 3l);
+    ASSERT_EQ(a <=> d, di::strong_ordering::less);
+
+    static_assert(!di::concepts::EqualityComparableWith<di::Tuple<int>, di::Tuple<int, int>>);
+    static_assert(!di::concepts::EqualityComparableWith<di::Tuple<int, di::Void>, di::Tuple<int, int>>);
+}
+
 TEST_CONSTEXPR(vocab_tuple, enable_structed_bindings, enable_structed_bindings)
 TEST_CONSTEXPR(vocab_tuple, basic, basic)
 TEST_CONSTEXPR(vocab_tuple, assignment, assignment)
 TEST_CONSTEXPR(vocab_tuple, tuple_transform, tuple_transform)
 TEST_CONSTEXPR(vocab_tuple, tuple_for_each, tuple_for_each)
+TEST_CONSTEXPR(vocab_tuple, tuple_equal, tuple_equal)

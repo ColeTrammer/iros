@@ -18,6 +18,7 @@
 #include <di/function/piped.h>
 #include <di/function/pipeline.h>
 #include <di/function/tag_invoke.h>
+#include <di/function/ycombinator.h>
 
 namespace di {
 using function::bind_back;
@@ -27,6 +28,7 @@ using function::curry;
 using function::curry_back;
 using function::id;
 using function::piped;
+using function::ycombinator;
 
 using concepts::TagInvocable;
 using concepts::TagInvocableTo;

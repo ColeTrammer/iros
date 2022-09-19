@@ -79,6 +79,14 @@ struct List<T> {
     constexpr static bool UniqueType = concepts::SameAs<T, U>;
 };
 
+template<>
+struct List<> {
+    constexpr static size_t size = 0;
+
+    template<typename U>
+    constexpr static bool UniqueType = false;
+};
+
 template<concepts::TypeList T>
 using Front = T::Front;
 
