@@ -16,6 +16,8 @@
 #include <di/container/meta/enable_borrowed_container.h>
 #include <di/container/view/view_interface.h>
 #include <di/util/move.h>
+#include <di/util/non_propagating_cache.h>
+#include <di/util/store_if.h>
 
 namespace di::container {
 template<concepts::View View>
@@ -46,7 +48,12 @@ public:
     }
 
     constexpr ReverseIterator<Iter> begin() {
-        return container::make_reverse_iterator(container::next(container::begin(m_view), container::end(m_view)));
+        if (m_begin_cache.value.has_value()) {
+            return *m_begin_cache.value;
+        } else {
+            return m_begin_cache.value.emplace(
+                container::make_reverse_iterator(container::next(container::begin(m_view), container::end(m_view))));
+        }
     }
 
     constexpr ReverseIterator<Iter> begin()
@@ -83,6 +90,9 @@ public:
 
 private:
     View m_view {};
+    [[no_unique_address]] util::StoreIf<util::NonPropagatingCache<ReverseIterator<meta::ContainerIterator<View>>>,
+                                        !concepts::CommonContainer<View>>
+        m_begin_cache;
 };
 
 template<typename Con>
