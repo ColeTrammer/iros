@@ -47,6 +47,14 @@ constexpr void tuple() {
     static_assert(di::concepts::TupleLike<decltype(x)>);
 }
 
+constexpr void compare() {
+    auto a = di::to_array({ 1, 2, 3 });
+    auto b = di::to_array({ 1, 2, 4 });
+    ASSERT_NOT_EQ(a, b);
+    ASSERT_LT(a, b);
+}
+
 TEST_CONSTEXPR(vocab_array, to_array, to_array)
 TEST_CONSTEXPR(vocab_array, span, span)
 TEST_CONSTEXPR(vocab_array, tuple, tuple)
+TEST_CONSTEXPR(vocab_array, compare, compare)

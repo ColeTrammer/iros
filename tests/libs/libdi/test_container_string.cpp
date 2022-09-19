@@ -22,6 +22,7 @@ constexpr void push_back() {
     x.push_back('b');
     x.push_back('c');
     ASSERT_EQ(x.size(), 3u);
+    ASSERT_EQ(x, "abc"_sv);
 }
 
 #define DI_COMPILE_STRING(exp)                                                            \

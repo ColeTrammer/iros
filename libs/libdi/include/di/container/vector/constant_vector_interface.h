@@ -1,5 +1,9 @@
 #pragma once
 
+#include <di/concepts/equality_comparable.h>
+#include <di/concepts/three_way_comparable.h>
+#include <di/container/algorithm/compare.h>
+#include <di/container/algorithm/equal.h>
 #include <di/container/vector/constant_vector.h>
 #include <di/container/vector/vector_at.h>
 #include <di/container/vector/vector_back.h>
@@ -20,7 +24,7 @@
 #include <di/vocab/span/span_fixed_size.h>
 
 namespace di::container {
-template<typename Self>
+template<typename Self, typename Value>
 class ConstantVectorInterface {
 private:
     constexpr Self& self() { return static_cast<Self&>(*this); }
@@ -95,6 +99,19 @@ public:
     template<size_t offset, size_t count = vocab::dynamic_extent>
     constexpr auto subspan() const {
         return vector::subspan<offset, count>(self());
+    }
+
+private:
+    constexpr friend bool operator==(Self const& a, Self const& b)
+    requires(concepts::EqualityComparable<Value>)
+    {
+        return container::equal(a, b);
+    }
+
+    constexpr friend auto operator<=>(Self const& a, Self const& b)
+    requires(concepts::ThreeWayComparable<Value>)
+    {
+        return container::compare(a, b);
     }
 };
 }

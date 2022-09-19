@@ -5,8 +5,12 @@
 #include <di/concepts/const.h>
 #include <di/concepts/convertible_to.h>
 #include <di/concepts/convertible_to_non_slicing.h>
+#include <di/concepts/equality_comparable.h>
 #include <di/concepts/language_array.h>
 #include <di/concepts/span.h>
+#include <di/concepts/three_way_comparable.h>
+#include <di/container/algorithm/compare.h>
+#include <di/container/algorithm/equal.h>
 #include <di/container/concepts/borrowed_container.h>
 #include <di/container/concepts/contiguous_container.h>
 #include <di/container/concepts/contiguous_iterator.h>
@@ -174,6 +178,18 @@ public:
     }
 
 private:
+    constexpr friend bool operator==(Span a, Span b)
+    requires(concepts::EqualityComparable<T>)
+    {
+        return container::equal(a, b);
+    }
+
+    constexpr friend auto operator<=>(Span a, Span b)
+    requires(concepts::ThreeWayComparable<T>)
+    {
+        return container::compare(a, b);
+    }
+
     template<types::size_t index>
     requires(index < extent)
     constexpr friend T tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Span>, types::InPlaceIndex<index>);

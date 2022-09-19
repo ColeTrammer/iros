@@ -138,7 +138,18 @@ constexpr void clone() {
     ASSERT_EQ(b[4].size(), 4u);
 }
 
+constexpr void compare() {
+    auto a = di::create<di::Vector>(di::range(6));
+    auto b = di::create<di::Vector>(di::range(4));
+    auto c = di::create<di::Vector>(di::range(8, 100));
+    ASSERT_NOT_EQ(a, b);
+    ASSERT_EQ(a, a);
+    ASSERT_GT(a, b);
+    ASSERT_LT(a, c);
+}
+
 TEST_CONSTEXPR(container_vector, basic, basic)
 TEST_CONSTEXPR(container_vector, move_only, move_only)
 TEST_CONSTEXPR(container_vector, to, to)
 TEST_CONSTEXPR(container_vector, clone, clone)
+TEST_CONSTEXPR(container_vector, compare, compare)

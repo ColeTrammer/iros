@@ -3,6 +3,10 @@
 #include <di/assert/prelude.h>
 #include <di/concepts/copyable.h>
 #include <di/concepts/decay_same_as.h>
+#include <di/concepts/equality_comparable.h>
+#include <di/concepts/three_way_comparable.h>
+#include <di/container/algorithm/compare.h>
+#include <di/container/algorithm/equal.h>
 #include <di/types/size_t.h>
 #include <di/util/forward_like.h>
 #include <di/util/get_in_place.h>
@@ -161,6 +165,18 @@ public:
     }
 
 private:
+    constexpr friend bool operator==(Array const& a, Array const& b)
+    requires(concepts::EqualityComparable<T>)
+    {
+        return container::equal(a, b);
+    }
+
+    constexpr friend auto operator<=>(Array const& a, Array const& b)
+    requires(concepts::ThreeWayComparable<T>)
+    {
+        return container::compare(a, b);
+    }
+
     constexpr friend void tag_invoke(types::Tag<util::swap>, Array& a, Array& b)
     requires(concepts::Swappable<T>)
     {

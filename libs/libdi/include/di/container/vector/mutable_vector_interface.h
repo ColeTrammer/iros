@@ -26,7 +26,7 @@
 
 namespace di::container {
 template<typename Self, typename Value>
-class MutableVectorInterface : public ConstantVectorInterface<Self> {
+class MutableVectorInterface : public ConstantVectorInterface<Self, Value> {
 private:
     constexpr Self& self() { return static_cast<Self&>(*this); }
     constexpr Self const& self() const { return static_cast<Self const&>(*this); }
@@ -106,7 +106,7 @@ public:
         return vector::resize(self(), count, value);
     }
 
-    using ConstantVectorInterface<Self>::iterator;
+    using ConstantVectorInterface<Self, Value>::iterator;
     constexpr auto iterator(ConstIterator iter) { return vector::iterator(self(), iter); }
 
     constexpr auto reserve(size_t n) { return vector::reserve(self(), n); }
