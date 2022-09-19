@@ -26,7 +26,6 @@ using function::bind_front;
 using function::compose;
 using function::curry;
 using function::curry_back;
-using function::id;
 using function::piped;
 using function::ycombinator;
 
@@ -47,6 +46,7 @@ using function::Equal;
 using function::EqualOrGreater;
 using function::EqualOrLess;
 using function::Greater;
+using function::Identity;
 using function::Less;
 using function::NotEqual;
 
@@ -55,6 +55,7 @@ using function::equal;
 using function::equal_or_greater;
 using function::equal_or_less;
 using function::greater;
+using function::id;
 using function::less;
 using function::not_equal;
 }

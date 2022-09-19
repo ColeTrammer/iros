@@ -88,7 +88,7 @@ private:
     requires(detail::RandomAccess<Self, SSizeType>)
     {
         auto temp = self;
-        self.advance_n(n);
+        temp.advance_n(n);
         return temp;
     }
 
@@ -96,7 +96,7 @@ private:
     requires(detail::RandomAccess<Self, SSizeType>)
     {
         auto temp = self;
-        self.advance_n(n);
+        temp.advance_n(n);
         return temp;
     }
 
@@ -104,7 +104,7 @@ private:
     requires(detail::RandomAccess<Self, SSizeType>)
     {
         auto temp = self;
-        self.advance_n(-n);
+        temp.advance_n(-n);
         return temp;
     }
 

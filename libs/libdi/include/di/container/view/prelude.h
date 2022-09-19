@@ -9,6 +9,7 @@
 #include <di/container/view/single.h>
 #include <di/container/view/transform.h>
 #include <di/container/view/view.h>
+#include <di/container/view/zip.h>
 
 namespace di {
 namespace container::view {}
@@ -22,4 +23,5 @@ using view::repeat;
 using view::reverse;
 using view::single;
 using view::transform;
+using view::zip;
 }

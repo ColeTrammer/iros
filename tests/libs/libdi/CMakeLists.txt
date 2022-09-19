@@ -1,5 +1,6 @@
 set(TEST_FILES
     test_concepts.cpp
+    test_container_algorithm.cpp
     test_container_concepts.cpp
     test_container_string.cpp
     test_container_vector.cpp

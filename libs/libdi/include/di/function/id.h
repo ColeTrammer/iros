@@ -4,16 +4,14 @@
 #include <di/util/forward.h>
 
 namespace di::function {
-namespace detail {
-    struct IdFunction : pipeline::EnablePipeline {
-        template<typename T>
-        constexpr T&& operator()(T&& value) const {
-            return util::forward<T>(value);
-        }
+struct Identity : pipeline::EnablePipeline {
+    template<typename T>
+    constexpr T&& operator()(T&& value) const {
+        return util::forward<T>(value);
+    }
 
-        constexpr void operator()() const {}
-    };
-}
+    constexpr void operator()() const {}
+};
 
-constexpr inline auto id = detail::IdFunction {};
+constexpr inline auto id = Identity {};
 }

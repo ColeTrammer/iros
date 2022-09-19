@@ -226,6 +226,23 @@ constexpr void transform() {
     }
 }
 
+constexpr void zip() {
+    int arr[] = { 0, 1, 2, 3, 4 };
+    int ar[] = { 4, 3, 2, 1, 0 };
+
+    for (auto [a, b] : di::zip(arr, ar)) {
+        ASSERT_EQ(a + b, 4);
+    }
+
+    for (auto [a, b, c, d] : di::zip(di::range(5), arr, di::reverse(ar), di::range(100))) {
+        ASSERT_EQ(a, b);
+        ASSERT_EQ(a, c);
+        ASSERT_EQ(a, d);
+    }
+
+    static_assert(di::concepts::RandomAccessContainer<decltype(di::zip(arr, ar))>);
+}
+
 TEST_CONSTEXPR(container_view, basic, basic)
 TEST_CONSTEXPR(container_view, all, all)
 TEST_CONSTEXPR(container_view, empty, empty)
@@ -235,3 +252,4 @@ TEST_CONSTEXPR(container_view, repeat, repeat)
 TEST_CONSTEXPR(container_view, reverse, reverse)
 TEST_CONSTEXPR(container_view, as_rvalue, as_rvalue)
 TEST_CONSTEXPR(container_view, transform, transform)
+TEST_CONSTEXPR(container_view, zip, zip)
