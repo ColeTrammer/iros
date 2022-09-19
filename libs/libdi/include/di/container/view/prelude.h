@@ -2,6 +2,7 @@
 
 #include <di/container/view/all.h>
 #include <di/container/view/as_rvalue.h>
+#include <di/container/view/counted.h>
 #include <di/container/view/empty.h>
 #include <di/container/view/range.h>
 #include <di/container/view/repeat.h>

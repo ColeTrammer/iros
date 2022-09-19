@@ -243,6 +243,15 @@ constexpr void zip() {
     static_assert(di::concepts::RandomAccessContainer<decltype(di::zip(arr, ar))>);
 }
 
+constexpr void counted() {
+    auto x = di::Array { 5, 4, 3, 2, 1 };
+    auto y = di::view::counted(x.begin(), 3);
+    auto r = di::range(3, 8);
+    auto z = di::reverse(di::view::counted(r.begin(), 3));
+    ASSERT(di::container::equal(y, di::Array { 5, 4, 3 }));
+    ASSERT(di::container::equal(z, di::Array { 5, 4, 3 }));
+}
+
 TEST_CONSTEXPR(container_view, basic, basic)
 TEST_CONSTEXPR(container_view, all, all)
 TEST_CONSTEXPR(container_view, empty, empty)
@@ -253,3 +262,4 @@ TEST_CONSTEXPR(container_view, reverse, reverse)
 TEST_CONSTEXPR(container_view, as_rvalue, as_rvalue)
 TEST_CONSTEXPR(container_view, transform, transform)
 TEST_CONSTEXPR(container_view, zip, zip)
+TEST_CONSTEXPR(container_view, counted, counted)
