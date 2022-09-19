@@ -9,6 +9,10 @@ constexpr void minmax() {
     ASSERT_EQ(di::max(1, 2), 2);
     ASSERT_EQ(di::max({ 5, 4, 3, 2, 1 }), 5);
     ASSERT_EQ(di::max(di::range(5, 10)), 9);
+
+    ASSERT_EQ(di::clamp(2, 5, 7), 5);
+    ASSERT_EQ(di::clamp(6, 5, 7), 6);
+    ASSERT_EQ(di::clamp(10, 5, 7), 7);
 }
 
 TEST_CONSTEXPR(container_algorithm, minmax, minmax)
