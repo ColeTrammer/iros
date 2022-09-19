@@ -7,6 +7,7 @@
 #include <di/vocab/tuple/make_tuple.h>
 #include <di/vocab/tuple/tie.h>
 #include <di/vocab/tuple/tuple.h>
+#include <di/vocab/tuple/tuple_for_each.h>
 #include <di/vocab/tuple/tuple_transform.h>
 
 namespace di {
@@ -16,5 +17,6 @@ using vocab::make_decayed_tuple;
 using vocab::make_tuple;
 using vocab::tie;
 using vocab::Tuple;
+using vocab::tuple_for_each;
 using vocab::tuple_transform;
 }

@@ -145,7 +145,19 @@ constexpr void tuple_transform() {
     ASSERT_EQ(di::get<0>(x), di::get<0>(y));
 }
 
+constexpr void tuple_for_each() {
+    auto x = di::make_tuple(3, 2, 1);
+    auto s = 0;
+    di::tuple_for_each(
+        [&](auto i) {
+            s += i;
+        },
+        x);
+    ASSERT_EQ(s, 6);
+}
+
 TEST_CONSTEXPR(vocab_tuple, enable_structed_bindings, enable_structed_bindings)
 TEST_CONSTEXPR(vocab_tuple, basic, basic)
 TEST_CONSTEXPR(vocab_tuple, assignment, assignment)
 TEST_CONSTEXPR(vocab_tuple, tuple_transform, tuple_transform)
+TEST_CONSTEXPR(vocab_tuple, tuple_for_each, tuple_for_each)
