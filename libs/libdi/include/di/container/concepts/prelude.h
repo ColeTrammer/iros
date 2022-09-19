@@ -11,7 +11,9 @@
 #include <di/container/concepts/contiguous_iterator.h>
 #include <di/container/concepts/forward_container.h>
 #include <di/container/concepts/forward_iterator.h>
+#include <di/container/concepts/indirect_binary_predicate.h>
 #include <di/container/concepts/indirect_strict_weak_order.h>
+#include <di/container/concepts/indirectly_comparable.h>
 #include <di/container/concepts/indirectly_copyable.h>
 #include <di/container/concepts/indirectly_copyable_storable.h>
 #include <di/container/concepts/indirectly_movable.h>
