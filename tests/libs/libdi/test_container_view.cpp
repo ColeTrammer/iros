@@ -209,11 +209,11 @@ constexpr void as_rvalue() {
 constexpr void transform() {
     int arr[] = { 0, 1, 2, 3, 4 };
 
-    static_assert(di::concepts::View<decltype(di::transform(di::view::all(arr), di::id))>);
-    static_assert(di::concepts::View<decltype(arr | di::transform(di::id))>);
-    static_assert(di::concepts::View<decltype(di::transform(di::id)(arr))>);
-    static_assert(di::concepts::RandomAccessContainer<decltype(di::transform(di::id)(arr))>);
-    static_assert(!di::concepts::ContiguousContainer<decltype(di::transform(di::id)(arr))>);
+    static_assert(di::concepts::View<decltype(di::transform(di::view::all(arr), di::identity))>);
+    static_assert(di::concepts::View<decltype(arr | di::transform(di::identity))>);
+    static_assert(di::concepts::View<decltype(di::transform(di::identity)(arr))>);
+    static_assert(di::concepts::RandomAccessContainer<decltype(di::transform(di::identity)(arr))>);
+    static_assert(!di::concepts::ContiguousContainer<decltype(di::transform(di::identity)(arr))>);
 
     {
         int sum = 0;

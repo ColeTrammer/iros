@@ -141,7 +141,7 @@ constexpr void assignment() {
 
 constexpr void tuple_transform() {
     auto x = di::make_tuple(3, 2, 1);
-    auto y = di::tuple_transform(di::id, x);
+    auto y = di::tuple_transform(di::identity, x);
     ASSERT_EQ(di::get<0>(x), di::get<0>(y));
 }
 

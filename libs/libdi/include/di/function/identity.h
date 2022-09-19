@@ -13,5 +13,5 @@ struct Identity : pipeline::EnablePipeline {
     constexpr void operator()() const {}
 };
 
-constexpr inline auto id = Identity {};
+constexpr inline auto identity = Identity {};
 }

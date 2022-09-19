@@ -3,7 +3,7 @@
 #include <di/container/concepts/prelude.h>
 #include <di/container/meta/prelude.h>
 #include <di/function/compare.h>
-#include <di/function/id.h>
+#include <di/function/identity.h>
 
 namespace di::container {
 namespace detail {

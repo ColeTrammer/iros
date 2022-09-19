@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/container/algorithm/clamp.h>
+#include <di/container/algorithm/compare.h>
 #include <di/container/algorithm/equal.h>
 #include <di/container/algorithm/max.h>
 #include <di/container/algorithm/max_element.h>

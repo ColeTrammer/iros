@@ -26,6 +26,11 @@ constexpr void compare() {
     ASSERT(!di::container::equal(a, c));
     ASSERT(!di::container::equal(a, d));
     ASSERT(!di::container::equal(a, e));
+
+    ASSERT(di::container::compare(a, b) == 0);
+    ASSERT(di::container::compare(a, c) > 0);
+    ASSERT(di::container::compare(a, d) < 0);
+    ASSERT(di::container::compare(a, e) < 0);
 }
 
 TEST_CONSTEXPR(container_algorithm, minmax, minmax)

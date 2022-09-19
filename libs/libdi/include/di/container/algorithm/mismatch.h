@@ -4,6 +4,7 @@
 #include <di/container/concepts/prelude.h>
 #include <di/container/meta/prelude.h>
 #include <di/function/equal.h>
+#include <di/function/identity.h>
 #include <di/util/move.h>
 #include <di/util/reference_wrapper.h>
 

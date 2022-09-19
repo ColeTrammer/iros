@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/concepts/same_as.h>
-#include <di/function/id.h>
+#include <di/function/identity.h>
 #include <di/function/monad/monad_bind.h>
 #include <di/function/monad/monad_enable.h>
 #include <di/function/monad/monad_fmap.h>
@@ -21,7 +21,7 @@ namespace detail {
 template<typename T>
 concept MonadInstance = requires(T&& value) {
                             // fmap (Haskell >>)
-                            { function::monad::fmap(util::forward<T>(value), function::id) } -> SameAs<meta::RemoveCVRef<T>>;
+                            { function::monad::fmap(util::forward<T>(value), function::identity) } -> SameAs<meta::RemoveCVRef<T>>;
 
                             // bind (Haskell >>=)
                             {

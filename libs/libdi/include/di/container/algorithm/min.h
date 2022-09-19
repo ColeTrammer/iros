@@ -7,7 +7,7 @@
 #include <di/container/concepts/prelude.h>
 #include <di/container/meta/prelude.h>
 #include <di/function/compare.h>
-#include <di/function/id.h>
+#include <di/function/identity.h>
 #include <di/function/invoke.h>
 #include <di/util/initializer_list.h>
 #include <di/util/reference_wrapper.h>
