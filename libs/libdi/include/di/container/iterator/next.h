@@ -18,14 +18,14 @@ struct NextFunction {
         return iterator;
     }
 
-    template<concepts::Iterator Iter>
-    constexpr Iter operator()(Iter iterator, Iter bound) const {
+    template<concepts::Iterator Iter, concepts::SentinelFor<Iter> Sent>
+    constexpr Iter operator()(Iter iterator, Sent bound) const {
         container::advance(iterator, bound);
         return iterator;
     }
 
-    template<concepts::Iterator Iter>
-    constexpr Iter operator()(Iter iterator, meta::IteratorSSizeType<Iter> n, Iter bound) const {
+    template<concepts::Iterator Iter, concepts::SentinelFor<Iter> Sent>
+    constexpr Iter operator()(Iter iterator, meta::IteratorSSizeType<Iter> n, Sent bound) const {
         container::advance(iterator, n, bound);
         return iterator;
     }

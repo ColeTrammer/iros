@@ -49,7 +49,7 @@ struct AdvanceFunction {
             (*this)(iterator, distance);
             return n - bounded_distance;
         } else {
-            for (; n > 0 && iterator != bound; ++iterator) {}
+            for (; n > 0 && iterator != bound; --n, ++iterator) {}
             if constexpr (concepts::BidirectionalIterator<Iter>) {
                 for (; n < 0 && iterator != bound; ++n, --iterator) {}
             }

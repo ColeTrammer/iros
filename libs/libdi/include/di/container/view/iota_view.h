@@ -68,7 +68,7 @@ class IotaView
 private:
     using SSizeType = meta::IteratorSSizeType<T>;
 
-    constexpr static bool is_bounded = concepts::SameAs<Bound, UnreachableSentinel>;
+    constexpr static bool is_bounded = !concepts::SameAs<Bound, UnreachableSentinel>;
 
     class Sentinel;
 

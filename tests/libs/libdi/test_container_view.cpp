@@ -252,6 +252,22 @@ constexpr void counted() {
     ASSERT(di::container::equal(z, di::Array { 5, 4, 3 }));
 }
 
+constexpr void take() {
+    auto x = di::Array { 1, 2, 3, 4, 5 };
+    ASSERT(di::container::equal(x | di::take(3), di::Array { 1, 2, 3 }));
+
+    auto z = di::iota(1) | di::take(3);
+    ASSERT(di::container::equal(z, di::Array { 1, 2, 3 }));
+}
+
+constexpr void drop() {
+    auto x = di::Array { 1, 2, 3, 4, 5 };
+    ASSERT(di::container::equal(x | di::drop(2), di::Array { 3, 4, 5 }));
+
+    auto z = di::iota(1) | di::drop(2) | di::take(3);
+    ASSERT(di::container::equal(z, di::Array { 3, 4, 5 }));
+}
+
 TEST_CONSTEXPR(container_view, basic, basic)
 TEST_CONSTEXPR(container_view, all, all)
 TEST_CONSTEXPR(container_view, empty, empty)
@@ -263,3 +279,5 @@ TEST_CONSTEXPR(container_view, as_rvalue, as_rvalue)
 TEST_CONSTEXPR(container_view, transform, transform)
 TEST_CONSTEXPR(container_view, zip, zip)
 TEST_CONSTEXPR(container_view, counted, counted)
+TEST_CONSTEXPR(container_view, take, take)
+TEST_CONSTEXPR(container_view, drop, drop)
