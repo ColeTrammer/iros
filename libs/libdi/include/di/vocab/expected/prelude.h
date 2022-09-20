@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/vocab/expected/as_fallible.h>
+#include <di/vocab/expected/invoke_as_fallible.h>
 #include <di/vocab/expected/expected.h>
 #include <di/vocab/expected/expected_forward_declaration.h>
 #include <di/vocab/expected/expected_void_error.h>
@@ -17,5 +18,6 @@ using vocab::Expected;
 using vocab::Unexpected;
 
 using vocab::as_fallible;
+using vocab::invoke_as_fallible;
 using vocab::try_infallible;
 }

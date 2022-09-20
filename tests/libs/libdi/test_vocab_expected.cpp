@@ -130,7 +130,7 @@ constexpr void move_only() {
 
 constexpr void fallible() {
     auto x = 2;
-    auto y = di::as_fallible(x);
+    auto y = di::as_fallible(auto(x));
     static_assert(di::SameAs<decltype(y), di::Expected<int, void>>);
     ASSERT_EQ(*y, 2);
 

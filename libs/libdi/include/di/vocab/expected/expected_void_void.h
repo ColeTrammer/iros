@@ -8,7 +8,7 @@
 
 namespace di::vocab {
 template<>
-class Expected<void, void> : public function::monad::MonadInterface<Expected<void, void>> {
+class [[nodiscard]] Expected<void, void> : public function::monad::MonadInterface<Expected<void, void>> {
 public:
     using Value = void;
     using Error = void;
@@ -47,7 +47,7 @@ private:
     }
 
     template<concepts::RemoveCVRefSameAs<Expected> Self, typename F, typename U = meta::UnwrapRefDecay<meta::InvokeResult<F>>>
-    constexpr friend Expected<U, void> tag_invoke(types::Tag<function::monad::fmap>, Self&& self, F&& function) {
+    constexpr friend Expected<U, void> tag_invoke(types::Tag<function::monad::fmap>, Self&&, F&& function) {
         if constexpr (concepts::LanguageVoid<U>) {
             function::invoke(util::forward<F>(function));
             return {};

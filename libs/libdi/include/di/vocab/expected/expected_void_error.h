@@ -31,7 +31,7 @@ namespace di::vocab {
 // operations, while still accounting for potential errors, but
 // not wrapping its return value in expected unless necessary.
 template<typename T>
-class Expected<T, void> : public function::monad::MonadInterface<Expected<T, void>> {
+class [[nodiscard]] Expected<T, void> : public function::monad::MonadInterface<Expected<T, void>> {
 public:
     using Value = T;
     using Error = void;
@@ -104,8 +104,11 @@ public:
 
     constexpr T& value() & { return m_value.value(); }
     constexpr T const& value() const& { return m_value.value(); }
-    constexpr T&& value() && { return util::move(m_value.value()); }
-    constexpr T const&& value() const&& { return util::move(m_value.value()); }
+    constexpr T&& value() && { return util::move(m_value).value(); }
+    constexpr T const&& value() const&& { return util::move(m_value).value(); }
+
+    constexpr void error() const& {}
+    constexpr void error() && {}
 
     template<concepts::ConvertibleTo<T> U>
     requires(concepts::CopyConstructible<T>)

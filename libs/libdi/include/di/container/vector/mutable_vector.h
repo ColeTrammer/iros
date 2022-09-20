@@ -19,3 +19,8 @@ concept MutableVector =
                                                                                 { value.assume_size(n) } -> LanguageVoid;
                                                                             };
 }
+
+namespace di::meta::detail {
+template<concepts::detail::MutableVector T>
+using VectorAllocResult = decltype(util::declval<T&>().reserve_from_nothing(util::declval<size_t>()));
+}

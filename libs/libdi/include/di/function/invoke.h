@@ -83,7 +83,7 @@ template<typename R, typename F, typename... Args>
 requires(concepts::InvocableTo<F, R, Args...>)
 constexpr R invoke_r(F&& f, Args&&... args) {
     if constexpr (concepts::LanguageVoid<R>) {
-        function::detail::invoke_impl(util::forward<F>(f), util::forward<Args>(args)...);
+        (void) function::detail::invoke_impl(util::forward<F>(f), util::forward<Args>(args)...);
     } else {
         return function::detail::invoke_impl(util::forward<F>(f), util::forward<Args>(args)...);
     }

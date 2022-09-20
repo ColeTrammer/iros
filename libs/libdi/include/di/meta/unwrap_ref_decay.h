@@ -5,5 +5,5 @@
 
 namespace di::meta {
 template<typename T>
-using UnwrapRefDecay = UnwrapRererence<Decay<T>>;
+using UnwrapRefDecay = UnwrapReference<Decay<T>>;
 }

@@ -148,8 +148,30 @@ constexpr void compare() {
     ASSERT_LT(a, c);
 }
 
+constexpr void static_() {
+    auto a = di::StaticVector<int, di::meta::SizeConstant<2>> {};
+    (void) a.push_back(1);
+    (void) a.push_back(2);
+    (void) a.push_back(3);
+
+    auto b = di::StaticVector<int, di::meta::SizeConstant<2>> {};
+    (void) b.push_back(1);
+    (void) b.push_back(2);
+
+    ASSERT_EQ(a, b);
+
+    (void) a.resize(0);
+    ASSERT_EQ(a.size(), 0u);
+
+    (void) a.emplace(a.begin());
+    (void) a.emplace(a.begin());
+    (void) a.emplace(a.begin());
+    ASSERT_EQ(a.size(), 2u);
+}
+
 TEST_CONSTEXPR(container_vector, basic, basic)
 TEST_CONSTEXPR(container_vector, move_only, move_only)
 TEST_CONSTEXPR(container_vector, to, to)
 TEST_CONSTEXPR(container_vector, clone, clone)
 TEST_CONSTEXPR(container_vector, compare, compare)
+TEST_CONSTEXPR(container_vector, static_, static_)

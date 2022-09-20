@@ -1,10 +1,10 @@
 #pragma once
 
+#include <di/assert/prelude.h>
 #include <di/concepts/constructible_from.h>
 #include <di/concepts/convertible_to.h>
 #include <di/concepts/copy_constructible.h>
 #include <di/concepts/equality_comparable_with.h>
-#include <di/assert/prelude.h>
 #include <di/concepts/expected.h>
 #include <di/concepts/move_constructible.h>
 #include <di/concepts/remove_cvref_same_as.h>
@@ -27,7 +27,7 @@
 
 namespace di::vocab {
 template<typename E>
-class Expected<void, E> : public function::monad::MonadInterface<Expected<void, E>> {
+class [[nodiscard]] Expected<void, E> : public function::monad::MonadInterface<Expected<void, E>> {
 private:
     using ErrorStorage = Optional<E>;
 

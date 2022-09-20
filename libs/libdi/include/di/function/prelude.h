@@ -11,6 +11,7 @@
 #include <di/function/equal_or_less.h>
 #include <di/function/greater.h>
 #include <di/function/identity.h>
+#include <di/function/into_void.h>
 #include <di/function/invoke.h>
 #include <di/function/less.h>
 #include <di/function/monad/prelude.h>
@@ -58,4 +59,6 @@ using function::greater;
 using function::identity;
 using function::less;
 using function::not_equal;
+
+using function::into_void;
 }

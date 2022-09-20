@@ -32,7 +32,7 @@
 namespace di::vocab {
 template<typename T, typename E>
 requires(!concepts::LanguageVoid<T> && !concepts::LanguageVoid<E>)
-class Expected<T, E> : public function::monad::MonadInterface<Expected<T, E>> {
+class [[nodiscard]] Expected<T, E> : public function::monad::MonadInterface<Expected<T, E>> {
 public:
     using Value = T;
     using Error = E;

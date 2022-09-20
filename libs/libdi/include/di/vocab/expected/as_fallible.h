@@ -4,7 +4,7 @@
 #include <di/concepts/expected.h>
 #include <di/function/pipeable.h>
 #include <di/meta/decay.h>
-#include <di/meta/unwrap_ref_decay.h>
+#include <di/meta/unwrap_ref_rvalue.h>
 #include <di/vocab/expected/expected_void_error.h>
 
 namespace di::vocab {
@@ -16,7 +16,7 @@ namespace detail {
             return util::forward<T>(value);
         }
 
-        template<typename T, typename R = Expected<meta::UnwrapRefDecay<T>, void>>
+        template<typename T, typename R = Expected<meta::UnwrapRefRValue<T>, void>>
         requires(!concepts::Expected<T> && concepts::ConstructibleFrom<R, T>)
         constexpr R operator()(T&& value) const {
             return util::forward<T>(value);

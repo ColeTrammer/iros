@@ -19,7 +19,7 @@ namespace detail {
             return util::forward<T>(value).value();
         }
 
-        constexpr Expected<void, void> operator()(Expected<void, void>) const { return {}; }
+        constexpr void operator()(Expected<void, void>) const {}
 
         template<concepts::Expected T>
         requires(!concepts::LanguageVoid<meta::ExpectedError<T>> && concepts::ConstructibleFrom<meta::Decay<T>, T>)

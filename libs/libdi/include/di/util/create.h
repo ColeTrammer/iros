@@ -15,9 +15,11 @@ concept TemplateCreatableFrom = CreateDeducible<Template, Args...> && CreatableF
 
 namespace di::util {
 template<typename T, typename... Args>
-requires(concepts::CreatableFrom<T, Args...>)
+requires(concepts::LanguageVoid<T> || concepts::CreatableFrom<T, Args...>)
 constexpr auto create(Args&&... args) {
-    return create_in_place(in_place_type<T>, util::forward<Args>(args)...);
+    if constexpr (!concepts::LanguageVoid<T>) {
+        return create_in_place(in_place_type<T>, util::forward<Args>(args)...);
+    }
 }
 
 template<template<typename...> typename Template, typename... Args>

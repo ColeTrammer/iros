@@ -5,5 +5,5 @@ template<typename E>
 class Unexpected;
 
 template<typename T, typename E>
-class Expected;
+class [[nodiscard]] Expected;
 }
