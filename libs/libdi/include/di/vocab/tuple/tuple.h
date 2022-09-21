@@ -13,6 +13,7 @@
 #include <di/function/unpack.h>
 #include <di/function/ycombinator.h>
 #include <di/meta/add_member_get.h>
+#include <di/meta/common_type.h>
 #include <di/meta/index_sequence_for.h>
 #include <di/meta/list.h>
 #include <di/meta/remove_cvref.h>

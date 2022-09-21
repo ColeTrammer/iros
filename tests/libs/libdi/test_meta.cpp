@@ -33,3 +33,11 @@ static_assert(di::SameAs<di::meta::MakeIndexSequence<3>, di::meta::IndexSequence
 static_assert(di::SameAs<di::meta::MakeIndexSequence<2>, di::meta::IndexSequence<0, 1>>);
 static_assert(di::SameAs<di::meta::MakeIndexSequence<1>, di::meta::IndexSequence<0>>);
 static_assert(di::SameAs<di::meta::MakeIndexSequence<0>, di::meta::IndexSequence<>>);
+
+static_assert(
+    di::SameAs<unsigned long long, di::meta::CommonType<unsigned char, unsigned short, unsigned, unsigned long, unsigned long long>>);
+
+// static_assert(
+// di::SameAs<di::Tuple<long>, decltype(di::meta::common_type(di::in_place_type<di::Tuple<int>>, di::in_place_type<di::Tuple<long>>))>);
+
+// static_assert(di::SameAs<di::Tuple<long>, di::meta::CommonType<di::Tuple<int>, di::Tuple<long>>>);

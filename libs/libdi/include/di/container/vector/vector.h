@@ -10,6 +10,7 @@
 #include <di/types/prelude.h>
 #include <di/util/deduce_create.h>
 #include <di/util/exchange.h>
+#include <di/vocab/expected/prelude.h>
 #include <di/vocab/span/prelude.h>
 
 namespace di::container {
@@ -47,11 +48,13 @@ public:
     constexpr size_t capacity() const { return m_capacity; }
     constexpr size_t max_size() const { return static_cast<size_t>(-1); }
 
-    constexpr void reserve_from_nothing(size_t n) {
+    constexpr auto reserve_from_nothing(size_t n) {
         DI_ASSERT_EQ(capacity(), 0u);
-        auto [data, new_capacity] = Alloc().allocate(n);
-        m_data = data;
-        m_capacity = new_capacity;
+        return as_fallible(Alloc().allocate(n)) % [&](auto result) {
+            auto [data, new_capacity] = result;
+            m_data = data;
+            m_capacity = new_capacity;
+        } | try_infallible;
     }
     constexpr void assume_size(size_t size) { m_size = size; }
 

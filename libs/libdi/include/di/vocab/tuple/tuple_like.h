@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/concepts/conjunction.h>
+#include <di/concepts/tuple.h>
 #include <di/meta/index_sequence.h>
 #include <di/meta/make_index_sequence.h>
 #include <di/meta/remove_cvref.h>
@@ -33,6 +34,6 @@ namespace detail {
 }
 
 template<typename T>
-concept TupleLike = requires { vocab::tuple_size(types::in_place_type<meta::RemoveCVRef<T>>); } &&
-                    detail::TupleLikeHelper<T, meta::MakeIndexSequence<meta::TupleSize<T>>>::value;
+concept TupleLike = concepts::Tuple<T> || requires { vocab::tuple_size(types::in_place_type<meta::RemoveCVRef<T>>); } &&
+                                              detail::TupleLikeHelper<T, meta::MakeIndexSequence<meta::TupleSize<T>>>::value;
 }
