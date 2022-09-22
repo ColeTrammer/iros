@@ -7,7 +7,7 @@
 #else
 namespace std {
 template<typename T>
-constexpr di::meta::AddConst<T>& move(T& value) noexcept {
+constexpr di::meta::AddConst<T>& as_const(T& value) noexcept {
     return value;
 }
 

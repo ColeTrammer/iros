@@ -14,7 +14,7 @@
 namespace std {
 template<typename T, T v>
 struct integral_constant {
-    constexpr static value = v;
+    constexpr static T value = v;
     using value_type = T;
     using type = integral_constant;
     constexpr operator T() const noexcept { return value; }

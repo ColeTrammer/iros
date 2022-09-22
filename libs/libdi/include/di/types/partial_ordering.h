@@ -32,6 +32,9 @@ public:
     friend constexpr partial_ordering operator<=>(int, partial_ordering v) { return v.m_value == 2 ? v : partial_ordering(-v.m_value); }
 
 private:
+    friend class strong_ordering;
+    friend class weak_ordering;
+
     explicit constexpr partial_ordering(char value) : m_value(value) {}
     explicit constexpr partial_ordering(di::types::detail::CompareOutcome value) : m_value(static_cast<char>(value)) {}
 

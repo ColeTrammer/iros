@@ -34,6 +34,8 @@ public:
     constexpr operator partial_ordering() const { return partial_ordering(m_value); }
 
 private:
+    friend class strong_ordering;
+
     explicit constexpr weak_ordering(char value) : m_value(value) {}
     explicit constexpr weak_ordering(di::types::detail::CompareOutcome value) : m_value(static_cast<char>(value)) {}
 

@@ -12,7 +12,7 @@ constexpr T&& forward(di::meta::RemoveReference<T>& value) noexcept {
 }
 
 template<typename T>
-constexpr T&& forward(di::util::RemoveReference<T>&& value) noexcept {
+constexpr T&& forward(di::meta::RemoveReference<T>&& value) noexcept {
     return static_cast<T&&>(value);
 }
 }
