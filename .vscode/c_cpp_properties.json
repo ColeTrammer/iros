@@ -10,6 +10,8 @@
                 "buildIros": "true"
             },
             "includePath": [
+                "${workspaceFolder}/kernel/include",
+                "${workspaceFolder}/iris/include",
                 "${workspaceFolder}/libs/libapp/include",
                 "${workspaceFolder}/libs/libclanguage/include",
                 "${workspaceFolder}/libs/libclipboard/include",
@@ -44,6 +46,8 @@
                 "buildIros": "true"
             },
             "includePath": [
+                "${workspaceFolder}/kernel/include",
+                "${workspaceFolder}/iris/include",
                 "${workspaceFolder}/libs/libapp/include",
                 "${workspaceFolder}/libs/libclanguage/include",
                 "${workspaceFolder}/libs/libclipboard/include",
@@ -76,6 +80,8 @@
                 "buildTarget": "all"
             },
             "includePath": [
+                "${workspaceFolder}/kernel/include",
+                "${workspaceFolder}/iris/include",
                 "${workspaceFolder}/libs/libapp/include",
                 "${workspaceFolder}/libs/libclanguage/include",
                 "${workspaceFolder}/libs/libclipboard/include",
@@ -108,6 +114,8 @@
                 "buildTarget": "all"
             },
             "includePath": [
+                "${workspaceFolder}/kernel/include",
+                "${workspaceFolder}/iris/include",
                 "${workspaceFolder}/libs/libapp/include",
                 "${workspaceFolder}/libs/libclanguage/include",
                 "${workspaceFolder}/libs/libclipboard/include",

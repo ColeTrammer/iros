@@ -27,6 +27,7 @@ RUN apt-get update -y && apt-get install -y \
     ccache \
     clang-format \
     curl \
+    dosfstools \
     g++-12 \
     gcc-12 \
     genext2fs \

@@ -12,8 +12,9 @@
             "presentation": {
                 "reveal": "silent",
                 "panel": "shared",
-                "clear": true,
+                "clear": true
             },
+            "problemMatcher": []
         },
         {
             "label": "test",
@@ -30,7 +31,8 @@
             },
             "dependsOn": [
                 "build"
-            ]
+            ],
+            "problemMatcher": []
         },
         {
             "label": "run",
@@ -38,8 +40,9 @@
             "command": "cd ${workspaceFolder}/scripts && IROS_ARCH=${input:irosArchitecture} DISPLAY=${env:DISPLAY} ./qemu.sh",
             "presentation": {
                 "focus": true,
-                "panel": "shared",
-            }
+                "panel": "shared"
+            },
+            "problemMatcher": []
         },
         {
             "label": "build and run",
@@ -47,9 +50,44 @@
             "command": "cd ${workspaceFolder}/scripts && IROS_ARCH=${input:irosArchitecture} DISPLAY=${env:DISPLAY} ./qemu.sh",
             "presentation": {
                 "focus": true,
-                "panel": "shared",
+                "panel": "shared"
             },
             "dependsOn": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "iris build",
+            "type": "shell",
+            "command": "cd ${input:buildDirectory} && ninja && ninja iris_image",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared",
+                "clear": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "iris run",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/scripts && IRIS_ARCH=${input:irosArchitecture} IRIS_IMAGE=${input:buildDirectory}/iris/iris.img DISPLAY=${env:DISPLAY} ./run-iris.sh",
+            "presentation": {
+                "focus": true,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "iris build and run",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/scripts && IRIS_ARCH=${input:irosArchitecture} IRIS_IMAGE=${input:buildDirectory}/iris/iris.img DISPLAY=${env:DISPLAY} ./run-iris.sh",
+            "presentation": {
+                "focus": true,
+                "panel": "shared"
+            },
+            "dependsOn": [
+                "iris build"
+            ],
+            "problemMatcher": []
         },
         {
             "label": "refresh cmake test explorer",

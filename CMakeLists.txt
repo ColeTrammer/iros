@@ -72,6 +72,8 @@ if (NOT ${MINIMAL_BUILD})
 endif()
 
 if (NOT ${NATIVE_BUILD})
+    add_subdirectory(iris)
+
     add_custom_target(
         add-gcc-libs-to-sysroot
         COMMAND "ARCH=${ARCH}" "SYSROOT=${SYSROOT}" "${ROOT}/scripts/add-gcc-libs-to-sysroot.sh"
