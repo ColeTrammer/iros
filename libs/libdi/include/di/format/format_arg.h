@@ -5,5 +5,5 @@
 
 namespace di::format {
 template<concepts::Formattable... Types>
-using FormatArg = Variant<Types&...>;
+using FormatArg = Variant<Types&..., Void>;
 }

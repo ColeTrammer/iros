@@ -10,12 +10,20 @@ namespace di::format {
 namespace detail {
     struct FormatterInPlaceFunction {
         template<typename T, concepts::FormatParseContext ParseContext>
-        requires(concepts::SameAs<T, int> || concepts::TagInvocable<FormatterInPlaceFunction, InPlaceType<T>, ParseContext&>)
+        requires(concepts::SameAs<T, int> || concepts::SameAs<T, Void> ||
+                 concepts::TagInvocable<FormatterInPlaceFunction, InPlaceType<T>, ParseContext&>)
         constexpr auto operator()(InPlaceType<T>, ParseContext& context) const {
             if constexpr (concepts::SameAs<T, int>) {
-                return [](concepts::FormatParseContext auto& parse_context, int) {
-                    parse_context.output('4');
-                    parse_context.output('2');
+                return [](concepts::FormatContext auto& context, int) {
+                    context.output('4');
+                    context.output('2');
+                };
+            } else if constexpr (concepts::SameAs<T, Void>) {
+                return [](concepts::FormatContext auto& context, Void) {
+                    context.output('v');
+                    context.output('o');
+                    context.output('i');
+                    context.output('d');
                 };
             } else {
                 return function::tag_invoke(*this, in_place_type<T>, context);
