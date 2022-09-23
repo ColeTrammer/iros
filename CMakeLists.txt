@@ -72,7 +72,9 @@ if (NOT ${MINIMAL_BUILD})
 endif()
 
 if (NOT ${NATIVE_BUILD})
-    add_subdirectory(iris)
+    if(ARCH STREQUAL "x86_64")
+        add_subdirectory(iris)
+    endif()
 
     add_custom_target(
         add-gcc-libs-to-sysroot

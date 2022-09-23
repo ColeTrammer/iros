@@ -36,7 +36,7 @@ add_custom_target(
             LIMINE_DIR="${LIMINE_DIR}"
             "${ROOT}/scripts/make-iris-limine-img.sh"
     BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/iris.img"
-    DEPENDS install-all
+    DEPENDS iris install-all
     USES_TERMINAL
 )
 
@@ -46,6 +46,7 @@ add_custom_target(
     COMMAND IRIS_ARCH=${IRIS_ARCH}
             IRIS_IMAGE=${CMAKE_CURRENT_BINARY_DIR}/iris.img
             ${ROOT}/scripts/run-iris.sh
+    USES_TERMINAL
 )
 
 add_custom_target(
@@ -55,14 +56,17 @@ add_custom_target(
             IRIS_IMAGE=${CMAKE_CURRENT_BINARY_DIR}/iris.img
             ${ROOT}/scripts/run-iris.sh
     DEPENDS iris_image
+    USES_TERMINAL
 )
 
+add_os_headers(iris_headers)
 add_executable(iris ${SOURCES})
 
 target_compile_options(iris PRIVATE -ffreestanding ${IRIS_ARCH_CXXFLAGS})
 target_link_options(iris PRIVATE -nostdlib ${IRIS_ARCH_LDFLAGS})
-target_link_libraries(iris PRIVATE libdi)
+target_link_libraries(iris PRIVATE libdi iris_headers)
 target_include_directories(iris PRIVATE "${LIMINE_DIR}")
+target_compile_definitions(iris PRIVATE "DI_CUSTOM_ASSERT_HANDLER")
 add_dependencies(iris limine)
 
 set_target_properties(iris PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${IRIS_ARCH_DIR}/link.ld)

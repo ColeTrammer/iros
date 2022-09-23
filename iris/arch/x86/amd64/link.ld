@@ -29,6 +29,14 @@ SECTIONS
 
     .rodata : {
         *(.rodata .rodata.*)
+
+        PROVIDE(__iris_init_array_start = .);
+        *(.init_array)
+        PROVIDE(__iris_init_array_end = .);
+
+        PROVIDE(__iris_fini_array_start = .);
+        *(.fini_array)
+        PROVIDE(__iris_fini_array_end = .);
     } :rodata
 
     /* Move to the next memory page for .data */
