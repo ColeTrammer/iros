@@ -26,6 +26,7 @@ include("${IRIS_ARCH_DIR}/CMakeLists.txt")
 set(SOURCES
     ${IRIS_ARCH_SOURCES}
     boot/init.cpp
+    mm/page_frame_allocator.cpp
 )
 
 add_custom_target(
