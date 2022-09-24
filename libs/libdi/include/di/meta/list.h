@@ -4,6 +4,7 @@
 #include <di/meta/false_type.h>
 #include <di/meta/integer_sequence.h>
 #include <di/meta/integral_constant.h>
+#include <di/meta/size_constant.h>
 #include <di/meta/true_type.h>
 #include <di/meta/type_constant.h>
 #include <di/types/prelude.h>
@@ -144,4 +145,7 @@ constexpr static inline auto Lookup = List::template Lookup<T>;
 template<typename T, typename List>
 concept UniqueType = concepts::TypeList<List> && List::template
 UniqueType<T>;
+
+template<typename List, typename T>
+concept Contains = concepts::TypeList<List> && (Lookup<T, List> <= Size<List>);
 }

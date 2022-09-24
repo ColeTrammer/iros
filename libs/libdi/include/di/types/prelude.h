@@ -38,4 +38,13 @@ using types::ssize_t;
 using types::strong_ordering;
 using types::Void;
 using types::weak_ordering;
+
+using types::i16;
+using types::i32;
+using types::i64;
+using types::i8;
+using types::u16;
+using types::u32;
+using types::u64;
+using types::u8;
 }

@@ -2,6 +2,7 @@
 
 #include <di/util/as_const.h>
 #include <di/util/clone.h>
+#include <di/util/compile_time_fail.h>
 #include <di/util/create.h>
 #include <di/util/declval.h>
 #include <di/util/exchange.h>
@@ -11,8 +12,8 @@
 #include <di/util/move.h>
 #include <di/util/reference_wrapper.h>
 #include <di/util/source_location.h>
-#include <di/util/compile_time_fail.h>
 #include <di/util/swap.h>
+#include <di/util/to_underlying.h>
 #include <di/util/unreachable.h>
 
 namespace di {
@@ -35,5 +36,6 @@ using util::forward;
 using util::get;
 using util::move;
 using util::swap;
+using util::to_underlying;
 using util::unreachable;
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/assert/prelude.h>
+#include <di/bit/prelude.h>
 #include <di/concepts/prelude.h>
 #include <di/container/prelude.h>
 #include <di/format/prelude.h>
