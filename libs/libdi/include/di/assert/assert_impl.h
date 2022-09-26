@@ -53,6 +53,7 @@ constexpr void do_binary_assert(F op, T&& a, U&& b) {
             assert_write(source_text.data(), source_text.size());
             assert_write(&new_line, 1);
 
+#ifndef DI_NO_ASSERT_ALLOCATION
             if constexpr (concepts::Formattable<T> && concepts::Formattable<U>) {
                 auto s = di::format::to_string(a);
                 auto t = di::format::to_string(b);
@@ -64,6 +65,7 @@ constexpr void do_binary_assert(F op, T&& a, U&& b) {
                 assert_write(t.data(), t.size());
                 assert_write(&new_line, 1);
             }
+#endif
 
             assert_terminate();
         }
