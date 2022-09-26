@@ -123,7 +123,7 @@ public:
     }
 
 private:
-    View m_base;
+    View m_base {};
     util::RebindableBox<Pred> m_predicate;
     util::StoreIf<util::NonPropagatingCache<meta::ContainerIterator<View>>, concepts::ForwardContainer<View>> m_cache;
 };

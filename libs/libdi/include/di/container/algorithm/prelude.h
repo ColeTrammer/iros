@@ -4,6 +4,7 @@
 #include <di/container/algorithm/compare.h>
 #include <di/container/algorithm/equal.h>
 #include <di/container/algorithm/find_if.h>
+#include <di/container/algorithm/find_if_not.h>
 #include <di/container/algorithm/max.h>
 #include <di/container/algorithm/max_element.h>
 #include <di/container/algorithm/min.h>
@@ -13,6 +14,7 @@
 namespace di {
 using container::clamp;
 using container::find_if;
+using container::find_if_not;
 using container::max;
 using container::max_element;
 using container::min;

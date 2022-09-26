@@ -10,7 +10,7 @@
 #include <di/util/rebindable_box.h>
 
 namespace di::container {
-template<concepts::View View, class Pred>
+template<concepts::View View, typename Pred>
 requires(concepts::InputContainer<View> && concepts::Object<Pred> &&
          concepts::IndirectUnaryPredicate<Pred const, meta::ContainerIterator<View>>)
 class TakeWhileView : public ViewInterface<TakeWhileView<View, Pred>> {
