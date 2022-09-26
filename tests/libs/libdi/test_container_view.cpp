@@ -275,7 +275,7 @@ constexpr void filter() {
     });
 
     static_assert(di::concepts::Container<decltype(y)>);
-    ASSERT_EQ(di::container::distance(y), 3u);
+    ASSERT_EQ(di::container::distance(y), 3);
     ASSERT_EQ(*y.front(), 1);
 
     ASSERT(di::container::equal(x | di::filter([](auto x) {

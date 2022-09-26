@@ -11,6 +11,12 @@ constexpr void basic() {
     auto t = di::present("b{}b{}b"_sv, 42, 42);
     ASSERT_EQ(t.view(), "b42b42b"_sv);
     ASSERT_NOT_EQ(t.view(), "4243"_sv);
+
+    auto q = di::present("{}"_sv, -42);
+    ASSERT_EQ(q, "-42"_sv);
+
+    auto u = di::present("{}"_sv, 153u);
+    ASSERT_EQ(u, "153"_sv);
 }
 
 TEST_CONSTEXPR(format, basic, basic)
