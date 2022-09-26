@@ -3,7 +3,6 @@
 #include <di/container/concepts/view.h>
 #include <di/container/view/reverse_view.h>
 #include <di/container/view/view.h>
-#include <di/function/curry_back.h>
 #include <di/function/pipeable.h>
 #include <di/meta/false_type.h>
 #include <di/meta/remove_cv.h>
@@ -34,7 +33,7 @@ namespace detail {
     template<typename T>
     concept CanReverseView = requires(T&& container) { ReverseView { util::forward<T>(container) }; };
 
-    struct ReverseFunction : function::CurryBack<ReverseFunction> {
+    struct ReverseFunction : function::pipeline::EnablePipeline {
         template<concepts::ViewableContainer Con>
         requires(IsReverseView<Con> || IsReverseRawView<Con> || CanReverseView<Con>)
         constexpr auto operator()(Con&& container) const {

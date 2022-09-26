@@ -14,6 +14,12 @@ public:
     constexpr NonPropagatingCache(NonPropagatingCache const&) {}
     constexpr NonPropagatingCache(NonPropagatingCache&& other) { other.reset(); }
 
+    template<concepts::ConvertibleTo<T> U>
+    constexpr NonPropagatingCache& operator=(U&& value) {
+        this->emplace(util::forward<U>(value));
+        return *this;
+    }
+
     constexpr NonPropagatingCache& operator=(NonPropagatingCache const& other) {
         if (util::address_of(other) != this) {
             this->reset();

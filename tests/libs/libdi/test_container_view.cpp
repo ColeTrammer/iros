@@ -268,6 +268,30 @@ constexpr void drop() {
     ASSERT(di::container::equal(z, di::Array { 3, 4, 5 }));
 }
 
+constexpr void filter() {
+    auto x = di::Array { 1, 2, 3, 4, 5 };
+    auto y = di::filter(x, [](auto x) {
+        return x % 2 == 1;
+    });
+
+    static_assert(di::concepts::Container<decltype(y)>);
+    ASSERT_EQ(di::container::distance(y), 3u);
+    ASSERT_EQ(*y.front(), 1);
+
+    ASSERT(di::container::equal(x | di::filter([](auto x) {
+                                    return x % 2 == 1;
+                                }),
+                                di::Array { 1, 3, 5 }));
+    ASSERT(di::container::equal(x | di::reverse | di::filter([](auto x) {
+                                    return x % 2 == 1;
+                                }),
+                                di::Array { 5, 3, 1 }));
+    ASSERT(di::container::equal(x | di::filter([](auto x) {
+                                    return x % 2 == 1;
+                                }) | di::reverse,
+                                di::Array { 5, 3, 1 }));
+}
+
 TEST_CONSTEXPR(container_view, basic, basic)
 TEST_CONSTEXPR(container_view, all, all)
 TEST_CONSTEXPR(container_view, empty, empty)
@@ -281,3 +305,4 @@ TEST_CONSTEXPR(container_view, zip, zip)
 TEST_CONSTEXPR(container_view, counted, counted)
 TEST_CONSTEXPR(container_view, take, take)
 TEST_CONSTEXPR(container_view, drop, drop)
+TEST_CONSTEXPR(container_view, filter, filter)

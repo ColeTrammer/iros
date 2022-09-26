@@ -31,7 +31,7 @@ namespace detail {
         }
 
         template<concepts::Container Con>
-        constexpr meta::ContainerSSizeType<Con> operator()(Con&& container) {
+        constexpr meta::ContainerSSizeType<Con> operator()(Con&& container) const {
             if constexpr (concepts::SizedContainer<Con>) {
                 return container::ssize(container);
             } else {
