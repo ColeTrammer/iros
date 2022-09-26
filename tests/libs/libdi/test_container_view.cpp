@@ -292,6 +292,10 @@ constexpr void filter() {
                                 di::Array { 5, 3, 1 }));
 }
 
+constexpr void take_while() {
+    ASSERT(di::container::equal(di::range(10) | di::take_while(di::curry_back(di::less)(5)), di::Array { 0, 1, 2, 3, 4 }));
+}
+
 TEST_CONSTEXPR(container_view, basic, basic)
 TEST_CONSTEXPR(container_view, all, all)
 TEST_CONSTEXPR(container_view, empty, empty)
@@ -306,3 +310,4 @@ TEST_CONSTEXPR(container_view, counted, counted)
 TEST_CONSTEXPR(container_view, take, take)
 TEST_CONSTEXPR(container_view, drop, drop)
 TEST_CONSTEXPR(container_view, filter, filter)
+TEST_CONSTEXPR(container_view, take_while, take_while)

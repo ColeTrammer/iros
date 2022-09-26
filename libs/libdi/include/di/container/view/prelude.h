@@ -11,6 +11,7 @@
 #include <di/container/view/reverse.h>
 #include <di/container/view/single.h>
 #include <di/container/view/take.h>
+#include <di/container/view/take_while.h>
 #include <di/container/view/transform.h>
 #include <di/container/view/view.h>
 #include <di/container/view/zip.h>
@@ -30,6 +31,7 @@ using view::repeat;
 using view::reverse;
 using view::single;
 using view::take;
+using view::take_while;
 using view::transform;
 using view::zip;
 }
