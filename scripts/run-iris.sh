@@ -20,4 +20,6 @@ fi
 qemu-system-"$IRIS_ARCH" \
     "$ENABLE_KVM" \
     -drive file="$IRIS_IMAGE",format=raw,index=0,media=disk \
-    -debugcon stdio
+    -debugcon stdio \
+    -no-reboot \
+    -d guest_errors
