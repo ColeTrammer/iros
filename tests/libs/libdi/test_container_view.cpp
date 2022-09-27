@@ -300,6 +300,14 @@ constexpr void drop_while() {
     ASSERT(di::container::equal(di::range(10) | di::drop_while(di::curry_back(di::less)(5)), di::Array { 5, 6, 7, 8, 9 }));
 }
 
+constexpr void elements() {
+    auto x = di::zip(di::range(5), di::range(5));
+    auto y = x | di::to<di::Vector>();
+    ASSERT(di::container::equal(di::keys(x), di::values(x)));
+    ASSERT(di::container::equal(di::keys(y), di::values(y)));
+    ASSERT(di::container::equal(di::keys(y) | di::reverse, di::values(y) | di::reverse));
+}
+
 TEST_CONSTEXPR(container_view, basic, basic)
 TEST_CONSTEXPR(container_view, all, all)
 TEST_CONSTEXPR(container_view, empty, empty)
@@ -316,3 +324,4 @@ TEST_CONSTEXPR(container_view, drop, drop)
 TEST_CONSTEXPR(container_view, filter, filter)
 TEST_CONSTEXPR(container_view, take_while, take_while)
 TEST_CONSTEXPR(container_view, drop_while, drop_while)
+TEST_CONSTEXPR(container_view, elements, elements)
