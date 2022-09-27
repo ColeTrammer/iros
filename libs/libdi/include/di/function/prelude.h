@@ -9,6 +9,7 @@
 #include <di/function/equal.h>
 #include <di/function/equal_or_greater.h>
 #include <di/function/equal_or_less.h>
+#include <di/function/flip.h>
 #include <di/function/greater.h>
 #include <di/function/identity.h>
 #include <di/function/into_void.h>
@@ -18,6 +19,7 @@
 #include <di/function/not_equal.h>
 #include <di/function/piped.h>
 #include <di/function/pipeline.h>
+#include <di/function/plus.h>
 #include <di/function/tag_invoke.h>
 #include <di/function/ycombinator.h>
 
@@ -27,6 +29,7 @@ using function::bind_front;
 using function::compose;
 using function::curry;
 using function::curry_back;
+using function::flip;
 using function::piped;
 using function::ycombinator;
 
@@ -50,6 +53,7 @@ using function::Greater;
 using function::Identity;
 using function::Less;
 using function::NotEqual;
+using function::Plus;
 
 using function::compare;
 using function::equal;
@@ -59,6 +63,7 @@ using function::greater;
 using function::identity;
 using function::less;
 using function::not_equal;
+using function::plus;
 
 using function::into_void;
 }

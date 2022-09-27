@@ -33,5 +33,16 @@ constexpr void compare() {
     ASSERT(di::container::compare(a, e) < 0);
 }
 
+constexpr void fold() {
+    auto a = di::range(6);
+    ASSERT_EQ(di::sum(a), 15);
+    ASSERT_EQ(di::fold_left(a | di::drop(1), 1,
+                            [](int acc, int x) {
+                                return acc * x;
+                            }),
+              120);
+}
+
 TEST_CONSTEXPR(container_algorithm, minmax, minmax)
 TEST_CONSTEXPR(container_algorithm, compare, compare)
+TEST_CONSTEXPR(container_algorithm, fold, fold)

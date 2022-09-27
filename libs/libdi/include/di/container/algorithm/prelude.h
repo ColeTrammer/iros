@@ -5,19 +5,23 @@
 #include <di/container/algorithm/equal.h>
 #include <di/container/algorithm/find_if.h>
 #include <di/container/algorithm/find_if_not.h>
+#include <di/container/algorithm/fold_left.h>
 #include <di/container/algorithm/max.h>
 #include <di/container/algorithm/max_element.h>
 #include <di/container/algorithm/min.h>
 #include <di/container/algorithm/min_element.h>
 #include <di/container/algorithm/mismatch.h>
+#include <di/container/algorithm/sum.h>
 
 namespace di {
 using container::clamp;
 using container::find_if;
 using container::find_if_not;
+using container::fold_left;
 using container::max;
 using container::max_element;
 using container::min;
 using container::min_element;
 using container::mismatch;
+using container::sum;
 }

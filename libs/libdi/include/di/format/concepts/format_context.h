@@ -2,6 +2,7 @@
 
 #include <di/concepts/maybe_fallible.h>
 #include <di/container/string/encoding.h>
+#include <di/container/string/transparent_encoding.h>
 
 namespace di::concepts {
 template<typename T>
@@ -14,7 +15,7 @@ concept FormatContext = requires { typename meta::Encoding<T>; } && requires(T& 
 
 namespace di::format {
 struct ContextPlaceholder {
-    using Encoding = void;
+    using Encoding = container::string::TransparentEncoding;
     void output(char);
 };
 }

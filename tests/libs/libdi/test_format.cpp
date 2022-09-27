@@ -2,8 +2,6 @@
 #include <test/test.h>
 
 constexpr void basic() {
-    static_assert(di::Formattable<int>);
-
     auto s = di::present("a{}"_sv, 42);
     ASSERT_EQ(s.view(), "a42"_sv);
     ASSERT_NOT_EQ(s.view(), "43"_sv);
@@ -17,6 +15,9 @@ constexpr void basic() {
 
     auto u = di::present("{}"_sv, 153u);
     ASSERT_EQ(u, "153"_sv);
+
+    auto a = di::present("{}"_sv, di::Array { 1, 2, 3 });
+    ASSERT_EQ(a, "{ 1, 2, 3 }"_sv);
 }
 
 TEST_CONSTEXPR(format, basic, basic)
