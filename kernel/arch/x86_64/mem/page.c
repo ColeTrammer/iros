@@ -317,7 +317,7 @@ void vm_bootstrap_temp_page_mapping() {
         uint64_t *pdp_entry = RECURSIVE_PDP_BASE + (0x1000 * pml4_offset) / sizeof(uint64_t) + pdp_offset;
         uint64_t *pd_entry = RECURSIVE_PD_BASE + (0x200000 * pml4_offset + 0x1000 * pdp_offset) / sizeof(uint64_t) + pd_offset;
 
-        uint64_t mapping_flags = VM_WRITE | VM_GLOBAL | VM_NO_EXEC | 0x01;
+        uint64_t mapping_flags = VM_WRITE | VM_NO_EXEC | 0x01;
         if (!(*pml4_entry & 1)) {
             *pml4_entry = get_next_phys_page(&idle_kernel_process) | mapping_flags;
             invlpg((uintptr_t) pdp_entry);
@@ -335,7 +335,7 @@ void vm_bootstrap_temp_page_mapping() {
             memset(pd_entry - pd_offset, 0, PAGE_SIZE);
         }
 
-        *pd_entry = phys_addr | mapping_flags | VM_HUGE;
+        *pd_entry = phys_addr | mapping_flags | VM_GLOBAL | VM_HUGE;
     }
 
     // Flush thte entire TLB to ensure the new mappings take effect.
