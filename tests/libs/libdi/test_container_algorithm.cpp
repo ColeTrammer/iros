@@ -69,8 +69,22 @@ constexpr void contains() {
     ASSERT(!di::contains_subrange(a, di::range(3, 19)));
 }
 
+constexpr void predicate() {
+    ASSERT(di::all_of(di::range(5), di::curry_back(di::less)(5)));
+    ASSERT(di::none_of(di::range(5), di::curry_back(di::greater)(4)));
+    ASSERT(di::any_of(di::range(5), di::curry(di::equal)(4)));
+
+    ASSERT_EQ(di::count(di::range(5), 3), 1);
+    ASSERT_EQ(di::count_if(di::range(5),
+                           [](int x) {
+                               return x == 2 || x == 3;
+                           }),
+              2);
+}
+
 TEST_CONSTEXPR(container_algorithm, minmax, minmax)
 TEST_CONSTEXPR(container_algorithm, compare, compare)
 TEST_CONSTEXPR(container_algorithm, fold, fold)
 TEST_CONSTEXPR(container_algorithm, permute, permute)
 TEST_CONSTEXPR(container_algorithm, contains, contains)
+TEST_CONSTEXPR(container_algorithm, predicate, predicate)
