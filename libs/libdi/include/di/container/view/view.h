@@ -27,7 +27,7 @@
 #include <di/vocab/tuple/enable_generate_structed_bindings.h>
 
 namespace di::container {
-template<concepts::Iterator Iter, concepts::SentinelFor<Iter> Sent, bool is_sized = concepts::SizedSentinelFor<Sent, Iter>>
+template<concepts::Iterator Iter, concepts::SentinelFor<Iter> Sent = Iter, bool is_sized = concepts::SizedSentinelFor<Sent, Iter>>
 requires(is_sized || !concepts::SizedSentinelFor<Sent, Iter>)
 class View
     : public ViewInterface<View<Iter, Sent, is_sized>>

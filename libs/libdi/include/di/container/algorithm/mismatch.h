@@ -28,7 +28,7 @@ namespace detail {
         requires(concepts::IndirectlyComparable<meta::ContainerIterator<Con>, meta::ContainerIterator<Jon>, Pred, Proj, Jroj>)
         constexpr InInResult<meta::BorrowedIterator<Con>, meta::BorrowedIterator<Jon>> operator()(Con&& con, Jon&& jon, Pred pred = {},
                                                                                                   Proj proj = {}, Jroj jroj = {}) const {
-            return (*this)(container::begin(con), container::end(con), container::begin(con), container::end(jon), util::ref(pred),
+            return (*this)(container::begin(con), container::end(con), container::begin(jon), container::end(jon), util::ref(pred),
                            util::ref(proj), util::ref(jroj));
         }
     };

@@ -31,15 +31,15 @@ namespace detail {
         concepts::AssignableFrom<meta::IteratorValue<U>&, meta::IteratorRValue<T>>;
 
     struct IteratorSwapFunction {
-        template<typename T, typename U>
-        requires(CustomIteratorSwap<T, U> || DerefIteratorSwap<T, U> || CustomIteratorSwap<T, U>)
+        template<typename T, typename U, typename TT = meta::RemoveCVRef<T>, typename UU = meta::RemoveCVRef<U>>
+        requires(CustomIteratorSwap<TT, UU> || DerefIteratorSwap<TT, UU> || CustomIteratorSwap<T, U>)
         constexpr void operator()(T&& a, U&& b) const {
             if constexpr (CustomIteratorSwap<T, U>) {
                 (void) function::tag_invoke(*this, util::forward<T>(a), util::forward<U>(b));
-            } else if constexpr (DerefIteratorSwap<T, U>) {
+            } else if constexpr (DerefIteratorSwap<TT, UU>) {
                 util::swap(*a, *b);
             } else {
-                auto temp = meta::IteratorValue<T>(iterator_move(a));
+                auto temp = meta::IteratorValue<TT>(iterator_move(a));
                 *a = iterator_move(b);
                 *b = util::move(temp);
             }

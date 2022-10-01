@@ -43,6 +43,34 @@ constexpr void fold() {
               120);
 }
 
+constexpr void permute() {
+    auto a = di::Array { 1, 2, 3, 4, 5 };
+    auto b = a;
+    di::container::reverse(a);
+    ASSERT(di::container::equal(a, b | di::view::reverse));
+
+    di::container::reverse(a);
+    di::container::rotate(a, a.begin() + 2);
+    ASSERT_EQ(a, (di::Array { 3, 4, 5, 1, 2 }));
+}
+
+constexpr void contains() {
+    auto a = di::range(5);
+    auto b = di::range(3);
+    auto c = di::range(3, 5);
+    ASSERT(di::starts_with(a, b));
+    ASSERT(di::ends_with(a, c));
+
+    ASSERT(di::contains(a, 4));
+    ASSERT(!di::contains(a, 5));
+
+    ASSERT(di::contains_subrange(a, di::range(1, 3)));
+    ASSERT(!di::contains_subrange(a, di::range(6)));
+    ASSERT(!di::contains_subrange(a, di::range(3, 19)));
+}
+
 TEST_CONSTEXPR(container_algorithm, minmax, minmax)
 TEST_CONSTEXPR(container_algorithm, compare, compare)
 TEST_CONSTEXPR(container_algorithm, fold, fold)
+TEST_CONSTEXPR(container_algorithm, permute, permute)
+TEST_CONSTEXPR(container_algorithm, contains, contains)
