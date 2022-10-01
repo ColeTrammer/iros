@@ -14,6 +14,7 @@
 #include <di/container/algorithm/find_if.h>
 #include <di/container/algorithm/find_if_not.h>
 #include <di/container/algorithm/fold_left.h>
+#include <di/container/algorithm/for_each.h>
 #include <di/container/algorithm/max.h>
 #include <di/container/algorithm/max_element.h>
 #include <di/container/algorithm/min.h>
@@ -39,6 +40,7 @@ using container::find;
 using container::find_if;
 using container::find_if_not;
 using container::fold_left;
+using container::for_each;
 using container::max;
 using container::max_element;
 using container::min;

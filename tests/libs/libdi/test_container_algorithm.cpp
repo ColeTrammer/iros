@@ -82,9 +82,18 @@ constexpr void predicate() {
               2);
 }
 
+constexpr void for_each() {
+    int sum = 0;
+    di::for_each(di::range(6), [&](int x) {
+        sum += x;
+    });
+    ASSERT_EQ(sum, 15);
+}
+
 TEST_CONSTEXPR(container_algorithm, minmax, minmax)
 TEST_CONSTEXPR(container_algorithm, compare, compare)
 TEST_CONSTEXPR(container_algorithm, fold, fold)
 TEST_CONSTEXPR(container_algorithm, permute, permute)
 TEST_CONSTEXPR(container_algorithm, contains, contains)
 TEST_CONSTEXPR(container_algorithm, predicate, predicate)
+TEST_CONSTEXPR(container_algorithm, for_each, for_each)
