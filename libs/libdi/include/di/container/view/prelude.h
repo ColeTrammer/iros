@@ -7,6 +7,7 @@
 #include <di/container/view/drop_while.h>
 #include <di/container/view/elements.h>
 #include <di/container/view/empty.h>
+#include <di/container/view/enumerate.h>
 #include <di/container/view/filter.h>
 #include <di/container/view/keys.h>
 #include <di/container/view/range.h>
@@ -31,6 +32,7 @@ using view::as_rvalue;
 using view::drop;
 using view::drop_while;
 using view::elements;
+using view::enumerate;
 using view::filter;
 using view::iota;
 using view::keys;

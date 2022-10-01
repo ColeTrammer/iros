@@ -317,6 +317,12 @@ constexpr void stride() {
     ASSERT(di::container::equal(z, di::Array { 0, 1, 2, 3, 4 }));
 }
 
+constexpr void enumerate() {
+    ASSERT(di::all_of(di::range(10) | di::enumerate, [](auto value) {
+        return value.index == di::to_unsigned(value.value);
+    }));
+}
+
 TEST_CONSTEXPR(container_view, basic, basic)
 TEST_CONSTEXPR(container_view, all, all)
 TEST_CONSTEXPR(container_view, empty, empty)
@@ -335,3 +341,4 @@ TEST_CONSTEXPR(container_view, take_while, take_while)
 TEST_CONSTEXPR(container_view, drop_while, drop_while)
 TEST_CONSTEXPR(container_view, elements, elements)
 TEST_CONSTEXPR(container_view, stride, stride)
+TEST_CONSTEXPR(container_view, enumerate, enumerate)
