@@ -308,6 +308,15 @@ constexpr void elements() {
     ASSERT(di::container::equal(di::keys(y) | di::reverse, di::values(y) | di::reverse));
 }
 
+constexpr void stride() {
+    auto x = di::range(5) | di::stride(2);
+    auto y = di::range(5) | di::stride(3);
+    auto z = di::range(5) | di::stride(1);
+    ASSERT(di::container::equal(x, di::Array { 0, 2, 4 }));
+    ASSERT(di::container::equal(y, di::Array { 0, 3 }));
+    ASSERT(di::container::equal(z, di::Array { 0, 1, 2, 3, 4 }));
+}
+
 TEST_CONSTEXPR(container_view, basic, basic)
 TEST_CONSTEXPR(container_view, all, all)
 TEST_CONSTEXPR(container_view, empty, empty)
@@ -325,3 +334,4 @@ TEST_CONSTEXPR(container_view, filter, filter)
 TEST_CONSTEXPR(container_view, take_while, take_while)
 TEST_CONSTEXPR(container_view, drop_while, drop_while)
 TEST_CONSTEXPR(container_view, elements, elements)
+TEST_CONSTEXPR(container_view, stride, stride)

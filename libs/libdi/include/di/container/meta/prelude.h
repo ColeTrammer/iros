@@ -5,6 +5,7 @@
 #include <di/container/meta/borrowed_view.h>
 #include <di/container/meta/container_iterator.h>
 #include <di/container/meta/container_reference.h>
+#include <di/container/meta/container_rvalue.h>
 #include <di/container/meta/container_sentinel.h>
 #include <di/container/meta/container_size_type.h>
 #include <di/container/meta/container_ssize_type.h>

@@ -33,6 +33,7 @@
 #include <di/container/concepts/random_access_container.h>
 #include <di/container/concepts/random_access_iterator.h>
 #include <di/container/concepts/sentinel_for.h>
+#include <di/container/concepts/simple_view.h>
 #include <di/container/concepts/sized_container.h>
 #include <di/container/concepts/sized_sentinel_for.h>
 #include <di/container/concepts/sortable.h>
