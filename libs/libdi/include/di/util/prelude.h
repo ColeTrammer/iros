@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/util/as_const.h>
+#include <di/util/bit_cast.h>
 #include <di/util/clone.h>
 #include <di/util/compile_time_fail.h>
 #include <di/util/create.h>
@@ -17,6 +18,8 @@
 #include <di/util/unreachable.h>
 
 namespace di {
+using util::bit_cast;
+
 using util::clone;
 using util::create;
 
