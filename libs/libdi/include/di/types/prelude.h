@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/types/byte.h>
 #include <di/types/in_place.h>
 #include <di/types/in_place_index.h>
 #include <di/types/in_place_template.h>
@@ -17,6 +18,9 @@
 #include <di/types/weak_ordering.h>
 
 namespace di {
+using types::Byte;
+using types::to_integer;
+
 using types::in_place;
 using types::in_place_index;
 using types::in_place_template;
@@ -29,14 +33,17 @@ using types::InPlaceIndex;
 using types::InPlaceTemplate;
 using types::InPlaceType;
 using types::InPlaceValue;
-using types::nullptr_t;
-using types::partial_ordering;
 using types::PiecewiseConstruct;
+
+using types::Void;
+
+using types::nullptr_t;
 using types::ptrdiff_t;
 using types::size_t;
 using types::ssize_t;
+
+using types::partial_ordering;
 using types::strong_ordering;
-using types::Void;
 using types::weak_ordering;
 
 using types::i16;
