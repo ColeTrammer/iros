@@ -26,6 +26,8 @@
 #define ASSERT_GT     DI_ASSERT_GT
 #define ASSERT_GT_EQ  DI_ASSERT_GT_EQ
 
+#define TRY DI_TRY
+
 using namespace di::literals;
 
 using di::types::i16;

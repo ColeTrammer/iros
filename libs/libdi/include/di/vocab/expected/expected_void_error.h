@@ -20,6 +20,7 @@
 #include <di/util/forward.h>
 #include <di/util/move.h>
 #include <di/util/rebindable_box.h>
+#include <di/util/unreachable.h>
 #include <di/vocab/expected/expected_can_convert_constructor.h>
 #include <di/vocab/expected/expected_void_void.h>
 
@@ -133,6 +134,10 @@ public:
     constexpr T& emplace(util::InitializerList<U> list, Args&&... args) {
         return m_value.emplace(list, util::forward<Args>(args)...);
     }
+
+    Expected __try_did_fail() && { util::unreachable(); }
+    constexpr Expected __try_did_succeed() && { return Expected { in_place, util::move(*this).value() }; }
+    constexpr T&& __try_move_out() && { return util::move(*this).value(); }
 
 private:
     template<typename U, typename G>

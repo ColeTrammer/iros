@@ -4,6 +4,7 @@
 #include <di/concepts/language_void.h>
 #include <di/concepts/remove_cvref_same_as.h>
 #include <di/function/monad/monad_interface.h>
+#include <di/util/unreachable.h>
 #include <di/vocab/expected/expected_forward_declaration.h>
 
 namespace di::vocab {
@@ -34,6 +35,10 @@ public:
     constexpr void value() && {}
 
     constexpr void emplace() {}
+
+    Expected __try_did_fail() && { util::unreachable(); }
+    constexpr Expected __try_did_succeed() && { return Expected {}; }
+    constexpr void __try_move_out() && {}
 
 private:
     template<typename G>
