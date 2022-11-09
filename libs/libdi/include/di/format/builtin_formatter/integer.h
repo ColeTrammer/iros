@@ -22,7 +22,7 @@ constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<T>, concep
         }
         auto as_unsigned = math::to_unsigned(math::abs(value));
 
-        unsigned strength = 1;
+        u64 strength = 1;
         for (auto x = as_unsigned; x / strength >= 10; strength *= 10) {}
 
         for (; strength; strength /= 10) {

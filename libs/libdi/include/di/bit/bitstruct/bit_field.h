@@ -12,7 +12,7 @@ struct BitField {
     template<size_t bit_size>
     constexpr static void value_into_bits(BitSet<bit_size>& bit_set, Value value) {
         for (size_t i = 0; i < bit_count; i++) {
-            bit_set[index + i] = !!(value & (1u << i));
+            bit_set[index + i] = !!(value & (1ull << i));
         }
     }
 
