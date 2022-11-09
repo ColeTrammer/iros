@@ -3,8 +3,6 @@ OUTPUT_ARCH(i386:x86-64)
 
 ENTRY(iris_main)
 
-/* Define the program headers we want so the bootloader gives us the right */
-/* MMU permissions */
 PHDRS
 {
     text    PT_LOAD    FLAGS((1 << 0) | (1 << 2)) ; /* Execute + Read */
@@ -14,19 +12,19 @@ PHDRS
 
 SECTIONS
 {
-    /* We wanna be placed in the topmost 2GiB of the address space, for optimisations */
-    /* and because that is what the Limine spec mandates. */
-    /* Any address in this region will do, but often 0xffffffff80000000 is chosen as */
-    /* that is the beginning of the region. */
+    /* The Higher-Half kernel is mapped at -2 GiB for -mcmodel=kernel GCC optimization */
     . = 0xffffffff80000000;
 
+    PROVIDE(__iris_text_segment_start = .);
     .text : {
         *(.text .text.*)
     } :text
 
     /* Move to the next memory page for .rodata */
     . += CONSTANT(MAXPAGESIZE);
+    PROVIDE(__iris_text_segment_end = .);
 
+    PROVIDE(__iris_rodata_segment_start = .);
     .rodata : {
         *(.rodata .rodata.*)
 
@@ -41,7 +39,9 @@ SECTIONS
 
     /* Move to the next memory page for .data */
     . += CONSTANT(MAXPAGESIZE);
+    PROVIDE(__iris_rodata_segment_end = .);
 
+    PROVIDE(__iris_data_segment_start = .);
     .data : {
         *(.data .data.*)
     } :data
@@ -50,6 +50,10 @@ SECTIONS
         *(COMMON)
         *(.bss .bss.*)
     } :data
+
+    /* Move to the next memory page for alignment */
+    . += CONSTANT(MAXPAGESIZE);
+    PROVIDE(__iris_data_segment_end = .);
 
     /* Discard .note.* and .eh_frame since they may cause issues on some hosts. */
     /DISCARD/ : {

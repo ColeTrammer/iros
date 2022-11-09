@@ -1,7 +1,10 @@
 #include <di/prelude.h>
 #include <iris/arch/x86/amd64/idt.h>
 #include <iris/core/log.h>
+#include <iris/mm/address_space.h>
+#include <iris/mm/map_physical_address.h>
 #include <iris/mm/page_frame_allocator.h>
+#include <iris/mm/sections.h>
 #include <limine.h>
 
 [[noreturn]] static void done() {
@@ -29,6 +32,14 @@ static inline void load_idt(IDTR descriptor) {
 
 static auto idt = di::Array<iris::x86::amd64::idt::Entry, 256> {};
 
+static inline void load_cr3(u64 cr3) {
+    asm volatile("mov %0, %%rdx\n"
+                 "mov %%rdx, %%cr3\n"
+                 :
+                 : "m"(cr3)
+                 : "rdx");
+}
+
 extern "C" {
 static volatile limine_memmap_request memmap_request = {
     .id = LIMINE_MEMMAP_REQUEST,
@@ -36,7 +47,17 @@ static volatile limine_memmap_request memmap_request = {
     .response = nullptr,
 };
 
+static volatile limine_kernel_address_request kernel_address_request = {
+    .id = LIMINE_KERNEL_ADDRESS_REQUEST,
+    .revision = 0,
+    .response = nullptr,
+};
+
+static char __temp_stack[4 * 4096];
+
 void iris_main() {
+    asm volatile("mov %0, %%rsp" : : "r"(__temp_stack + sizeof(__temp_stack)) : "memory");
+
     iris::debug_log("Hello, World"_sv);
 
     using namespace iris::x86::amd64::idt;
@@ -90,13 +111,31 @@ void iris_main() {
         }
     }
 
-    auto x = *iris::mm::allocate_page_frame();
-    auto y = *iris::mm::allocate_page_frame();
-    auto z = *iris::mm::allocate_page_frame();
+    iris::mm::reserve_page_frames(iris::mm::PhysicalAddress(0), 16 * 16 * 2);
 
-    iris::mm::deallocate_page_frame(x);
-    iris::mm::deallocate_page_frame(y);
-    iris::mm::deallocate_page_frame(z);
+    auto new_address_space = iris::mm::AddressSpace(iris::mm::allocate_page_frame()->raw_address());
+
+    for (auto virtual_address = iris::mm::text_segment_start; virtual_address < iris::mm::text_segment_end; virtual_address += 4096) {
+        (void) new_address_space.map_physical_page(
+            virtual_address, iris::mm::PhysicalAddress(kernel_address_request.response->physical_base +
+                                                       (virtual_address.raw_address() - kernel_address_request.response->virtual_base)));
+    }
+
+    for (auto virtual_address = iris::mm::rodata_segment_start; virtual_address < iris::mm::rodata_segment_end; virtual_address += 4096) {
+        (void) new_address_space.map_physical_page(
+            virtual_address, iris::mm::PhysicalAddress(kernel_address_request.response->physical_base +
+                                                       (virtual_address.raw_address() - kernel_address_request.response->virtual_base)));
+    }
+
+    for (auto virtual_address = iris::mm::data_segment_start; virtual_address < iris::mm::data_segment_end; virtual_address += 4096) {
+        (void) new_address_space.map_physical_page(
+            virtual_address, iris::mm::PhysicalAddress(kernel_address_request.response->physical_base +
+                                                       (virtual_address.raw_address() - kernel_address_request.response->virtual_base)));
+    }
+
+    load_cr3(new_address_space.architecture_page_table_base());
+
+    iris::debug_log("Hello, World - again again"_sv);
 
     done();
 }

@@ -26,5 +26,5 @@ struct Present : BitFlag<47> {};
 struct TargetMid : BitField<48, 16> {};
 struct TargetHigh : BitField<64, 32> {};
 
-using Entry = di::bit::BitStruct<16, TargetLow, SegmentSelector, IST, Type, DPL, Present, TargetMid, TargetHigh>;
+using Entry = BitStruct<16, TargetLow, SegmentSelector, IST, Type, DPL, Present, TargetMid, TargetHigh>;
 }
