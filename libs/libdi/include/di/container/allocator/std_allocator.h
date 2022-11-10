@@ -8,9 +8,6 @@
 #else
 #include <di/util/std_new.h>
 
-// FIXME: remove this once ::operator new() and ::operator delete() are polyfilled.
-#include <stdlib.h>
-
 namespace std {
 template<typename T, T v>
 struct integral_constant {
@@ -39,20 +36,22 @@ struct allocator {
         if consteval {
             return static_cast<T*>(::operator new(count * sizeof(T)));
         }
-        // FIXME: this should call ::operator new() once this polyfilled.
         if constexpr (alignof(T) > alignof(void*)) {
-            return static_cast<T*>(aligned_alloc(alignof(T), count * sizeof(T)));
+            return static_cast<T*>(::operator new(count * sizeof(T), std::align_val_t { alignof(T) }));
         } else {
-            return static_cast<T*>(malloc(count * sizeof(T)));
+            return static_cast<T*>(::operator new(count * sizeof(T)));
         }
     }
 
-    constexpr void deallocate(T* pointer, size_t) {
+    constexpr void deallocate(T* pointer, size_t count) {
         if consteval {
             return ::operator delete(pointer);
         }
-        // FIXME: this should call ::operator delete() once this polyfilled.
-        free(pointer);
+        if constexpr (alignof(T) > alignof(void*)) {
+            return ::operator delete(pointer, count * sizeof(T), std::align_val_t { alignof(T) });
+        } else {
+            return ::operator delete(pointer, count * sizeof(T));
+        }
     }
 };
 
