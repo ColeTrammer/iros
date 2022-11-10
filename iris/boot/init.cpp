@@ -137,6 +137,12 @@ void iris_main() {
 
     iris::debug_log("Hello, World - again again"_sv);
 
+    auto* x = new (std::nothrow) int { 42 };
+    ASSERT(x == nullptr);
+    delete x;
+
+    iris::debug_log("Hello, World - again again again"_sv);
+
     done();
 }
 }

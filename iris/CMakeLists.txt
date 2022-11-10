@@ -27,6 +27,7 @@ set(SOURCES
     ${IRIS_ARCH_SOURCES}
     boot/init.cpp
     mm/page_frame_allocator.cpp
+    mm/heap.cpp
 )
 
 add_custom_target(
