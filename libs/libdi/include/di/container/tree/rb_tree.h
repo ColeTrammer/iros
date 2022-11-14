@@ -22,14 +22,8 @@ private:
 public:
     constexpr ~RBTree() { clear(); }
 
-    constexpr auto begin() {
-        auto* node = m_root;
-        while (node && node->left) {
-            node = node->left;
-        }
-        return Iterator(node);
-    }
-    constexpr auto end() { return Iterator(); }
+    constexpr auto begin() { return Iterator(m_root ? &m_root->find_min() : nullptr, !m_root); }
+    constexpr auto end() { return Iterator(m_root ? &m_root->find_max() : nullptr, true); }
 
     constexpr void clear() {
         auto end = this->end();
@@ -188,8 +182,8 @@ private:
             x = to_delete.left;
             transplant(to_delete, to_delete.left);
         } else {
-            // Case 3: find the smallest node in the right subtree and promote that.
-            y = &to_delete.right->find_min();
+            // Case 3: promote this node's successor
+            y = to_delete.successor();
             y_color = y->color;
             x = y->right;
 

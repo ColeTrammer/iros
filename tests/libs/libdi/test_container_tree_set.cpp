@@ -18,6 +18,7 @@ private:
 constexpr void basic() {
     di::TreeSet<int> x;
     x.clear();
+    ASSERT_EQ(di::distance(x), 0);
 
     x.insert(1);
     x.insert(2);
@@ -42,15 +43,17 @@ constexpr void property() {
         for (auto i : di::range(iterations)) {
             x.insert(rng.next());
             ASSERT(di::is_sorted(x));
+            ASSERT(di::is_sorted(di::reverse(x), di::compare_backwards));
             ASSERT_EQ(di::distance(x), i + 1);
+            ASSERT_EQ(di::distance(di::reverse(x)), i + 1);
         }
     };
 
     do_test(RNG(1));
-    do_test(RNG(2));
-    do_test(RNG(3));
 
     if (!di::is_constant_evaluated()) {
+        do_test(RNG(2));
+        do_test(RNG(3));
         do_test(RNG(4));
         do_test(RNG(5));
         do_test(RNG(6));

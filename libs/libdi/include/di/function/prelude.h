@@ -3,6 +3,7 @@
 #include <di/function/bind_back.h>
 #include <di/function/bind_front.h>
 #include <di/function/compare.h>
+#include <di/function/compare_backwards.h>
 #include <di/function/compose.h>
 #include <di/function/curry.h>
 #include <di/function/curry_back.h>
@@ -56,6 +57,7 @@ using function::NotEqual;
 using function::Plus;
 
 using function::compare;
+using function::compare_backwards;
 using function::equal;
 using function::equal_or_greater;
 using function::equal_or_less;

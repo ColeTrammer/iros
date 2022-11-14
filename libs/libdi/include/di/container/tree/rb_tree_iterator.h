@@ -13,37 +13,39 @@ private:
 public:
     RBTreeIterator() = default;
 
-    constexpr explicit RBTreeIterator(Node* current) : m_current(current) {}
+    constexpr explicit RBTreeIterator(Node* current, bool at_end) : m_current(current), m_at_end(at_end) {}
 
     constexpr Value& operator*() const { return m_current->value; }
     constexpr Node& node() const { return *m_current; }
 
     constexpr void advance_one() {
-        if (m_current->right != nullptr) {
-            // Find the minimum value of the right sub-tree.
-            m_current = m_current->right;
-            while (m_current && m_current->left) {
-                m_current = m_current->left;
-            }
+        auto* next = m_current->successor();
+        if (next) {
+            m_current = next;
+        } else {
+            m_at_end = true;
+        }
+    }
+
+    constexpr void back_one() {
+        if (m_at_end) {
+            m_at_end = false;
             return;
         }
 
-        auto* child = m_current;
-        auto* parent = child->parent;
-        while (parent != nullptr && child == parent->right) {
-            child = parent;
-            parent = parent->parent;
-        }
-        m_current = parent;
+        m_current = m_current->predecessor();
     }
 
 private:
-    constexpr friend bool operator==(RBTreeIterator const& a, RBTreeIterator const& b) { return a.m_current == b.m_current; }
+    constexpr friend bool operator==(RBTreeIterator const& a, RBTreeIterator const& b) {
+        return (a.m_at_end == b.m_at_end) && (a.m_current == b.m_current);
+    }
 
-    constexpr friend types::ForwardIteratorTag tag_invoke(types::Tag<iterator_category>, InPlaceType<RBTreeIterator>) {
-        return types::ForwardIteratorTag {};
+    constexpr friend types::BidirectionalIteratorTag tag_invoke(types::Tag<iterator_category>, InPlaceType<RBTreeIterator>) {
+        return types::BidirectionalIteratorTag {};
     }
 
     Node* m_current { nullptr };
+    bool m_at_end { true };
 };
 }

@@ -25,6 +25,34 @@ public:
         return *node;
     }
 
+    constexpr RBTreeNode* predecessor() const {
+        if (left) {
+            return &left->find_max();
+        }
+
+        auto* child = this;
+        auto* parent = this->parent;
+        while (parent && child->is_left_child()) {
+            child = parent;
+            parent = parent->parent;
+        }
+        return parent;
+    }
+
+    constexpr RBTreeNode* successor() const {
+        if (right) {
+            return &right->find_min();
+        }
+
+        auto* child = this;
+        auto* parent = this->parent;
+        while (parent && child->is_right_child()) {
+            child = parent;
+            parent = parent->parent;
+        }
+        return parent;
+    }
+
     Color color { Color::Red };
     RBTreeNode* parent { nullptr };
     RBTreeNode* left { nullptr };
