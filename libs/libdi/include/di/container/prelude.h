@@ -8,6 +8,7 @@
 #include <di/container/iterator/prelude.h>
 #include <di/container/meta/prelude.h>
 #include <di/container/string/prelude.h>
+#include <di/container/tree/prelude.h>
 #include <di/container/types/prelude.h>
 #include <di/container/vector/prelude.h>
 #include <di/container/view/prelude.h>

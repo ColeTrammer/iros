@@ -41,6 +41,17 @@ constexpr void fold() {
                                 return acc * x;
                             }),
               120);
+
+    auto e = di::range(6) | di::to<di::Vector>();
+    ASSERT_EQ(di::sum(e), 15);
+}
+
+constexpr void is_sorted() {
+    auto a = di::Array { 1, 2, 3, 4, 5 };
+    ASSERT(di::is_sorted(a));
+
+    auto b = di::Array { 1, 2, 3, 4, 3 };
+    ASSERT(!di::is_sorted(b));
 }
 
 constexpr void permute() {
@@ -93,6 +104,7 @@ constexpr void for_each() {
 TEST_CONSTEXPR(container_algorithm, minmax, minmax)
 TEST_CONSTEXPR(container_algorithm, compare, compare)
 TEST_CONSTEXPR(container_algorithm, fold, fold)
+TEST_CONSTEXPR(container_algorithm, is_sorted, is_sorted)
 TEST_CONSTEXPR(container_algorithm, permute, permute)
 TEST_CONSTEXPR(container_algorithm, contains, contains)
 TEST_CONSTEXPR(container_algorithm, predicate, predicate)

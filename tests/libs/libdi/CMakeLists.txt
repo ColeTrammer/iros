@@ -5,6 +5,7 @@ set(TEST_FILES
     test_container_algorithm.cpp
     test_container_concepts.cpp
     test_container_string.cpp
+    test_container_tree_set.cpp
     test_container_vector.cpp
     test_container_view.cpp
     test_format.cpp

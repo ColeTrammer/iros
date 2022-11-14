@@ -8,7 +8,7 @@ namespace di::container {
 namespace detail {
     struct SumFunction {
         template<concepts::InputIterator Iter, concepts::SentinelFor<Iter> Sent,
-                 concepts::DefaultConstructible T = meta::IteratorRValue<Iter>>
+                 concepts::DefaultConstructible T = meta::IteratorValue<Iter>>
         requires(concepts::IndirectlyBinaryLeftFoldable<function::Plus, T, Iter>)
         constexpr auto operator()(Iter first, Sent last) const {
             return container::fold_left(util::move(first), last, T(), function::plus);

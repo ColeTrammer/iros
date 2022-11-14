@@ -10,6 +10,7 @@
 #include <di/util/forward.h>
 #include <di/util/get.h>
 #include <di/util/initializer_list.h>
+#include <di/util/is_constant_evaluated.h>
 #include <di/util/move.h>
 #include <di/util/reference_wrapper.h>
 #include <di/util/source_location.h>
@@ -19,6 +20,7 @@
 
 namespace di {
 using util::bit_cast;
+using util::is_constant_evaluated;
 
 using util::clone;
 using util::create;
