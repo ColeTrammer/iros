@@ -39,13 +39,14 @@ constexpr void property() {
     auto do_test = [](auto rng) {
         auto x = di::TreeSet<unsigned int> {};
 
-        auto iterations = di::is_constant_evaluated() ? 99u : 345u;
+        auto iterations = di::is_constant_evaluated() ? 99 : 345;
         for (auto i : di::range(iterations)) {
             x.insert(rng.next());
             ASSERT(di::is_sorted(x));
             ASSERT(di::is_sorted(di::reverse(x), di::compare_backwards));
-            ASSERT_EQ(di::distance(x), i + 1);
-            ASSERT_EQ(di::distance(di::reverse(x)), i + 1);
+            ASSERT_EQ(di::distance(x.begin(), x.end()), i + 1);
+            ASSERT_EQ(di::distance(di::reverse(x).begin(), di::reverse(x).end()), i + 1);
+            ASSERT_EQ(di::size(x), di::to_unsigned(i) + 1);
         }
     };
 

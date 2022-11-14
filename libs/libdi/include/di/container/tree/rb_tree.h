@@ -22,8 +22,21 @@ private:
 public:
     constexpr ~RBTree() { clear(); }
 
-    constexpr auto begin() { return Iterator(m_root ? &m_root->find_min() : nullptr, !m_root); }
-    constexpr auto end() { return Iterator(m_root ? &m_root->find_max() : nullptr, true); }
+    constexpr size_t size() const { return m_size; }
+
+    constexpr Optional<Value&> front() {
+        return lift_bool(m_minimum) % [&] {
+            return m_minimum->value;
+        };
+    }
+    constexpr Optional<Value&> back() {
+        return lift_bool(m_maximum) % [&] {
+            return m_maximum->value;
+        };
+    }
+
+    constexpr auto begin() { return Iterator(m_minimum, !m_root); }
+    constexpr auto end() { return Iterator(m_maximum, true); }
 
     constexpr void clear() {
         auto end = this->end();
@@ -32,6 +45,9 @@ public:
             erase_node(to_delete);
             destroy_node(to_delete);
         }
+
+        m_root = m_minimum = m_maximum = nullptr;
+        m_size = 0;
     }
 
     constexpr void insert(Value&& value) { insert_node(*create_node(util::move(value))); }
@@ -103,7 +119,7 @@ private:
         // Step 2: actually insert the node.
         to_insert.parent = y;
         if (y == nullptr) {
-            m_root = &to_insert;
+            m_root = m_minimum = m_maximum = &to_insert;
         } else if (compare(to_insert, *y) < 0) {
             y->left = &to_insert;
         } else {
@@ -112,6 +128,15 @@ private:
 
         // Step 3: maintain the Red-Black properties.
         do_insert_rebalancing(&to_insert);
+
+        // Step 4: update cached values.
+        m_size++;
+        if (m_minimum->left) {
+            m_minimum = &to_insert;
+        }
+        if (m_maximum->right) {
+            m_maximum = &to_insert;
+        }
     }
 
     constexpr void do_insert_rebalancing(Node* node) {
@@ -173,6 +198,16 @@ private:
         auto* y = &to_delete;
         auto y_color = y->color;
 
+        // Step 1: Update cached values.
+        m_size--;
+        if (m_minimum == &to_delete) {
+            m_minimum = to_delete.successor();
+        }
+        if (m_maximum == &to_delete) {
+            m_maximum = to_delete.predecessor();
+        }
+
+        // Step 2: actually remove the node from the tree.
         if (to_delete.left == nullptr) {
             // Case 1: there is no left child, so promote the right child.
             x = to_delete.right;
@@ -201,6 +236,8 @@ private:
             y->left->parent = y;
             y->color = to_delete.color;
         }
+
+        // Step 3: maintain the Red-Black properties.
         if (y_color == Node::Color::Black && x) {
             do_erase_rebalancing(x);
         }
@@ -282,6 +319,9 @@ private:
     constexpr auto compare(Value const& a, Value const& b) { return function::invoke(m_comparator, a, b); }
 
     Node* m_root { nullptr };
+    Node* m_minimum { nullptr };
+    Node* m_maximum { nullptr };
+    size_t m_size { 0 };
     [[no_unique_address]] Comp m_comparator;
 };
 }
