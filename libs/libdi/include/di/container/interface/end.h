@@ -31,7 +31,8 @@ namespace detail {
 
 struct EndFunction {
     template<typename T>
-    requires(enable_borrowed_container(types::in_place_type<T>) && (detail::ArrayEnd<T> || detail::CustomEnd<T> || detail::MemberEnd<T>) )
+    requires(enable_borrowed_container(types::in_place_type<meta::RemoveCV<T>>) &&
+             (detail::ArrayEnd<T> || detail::CustomEnd<T> || detail::MemberEnd<T>) )
     constexpr auto operator()(T&& container) const {
         if constexpr (detail::ArrayEnd<T>) {
             return container + meta::Extent<meta::RemoveReference<T>>;

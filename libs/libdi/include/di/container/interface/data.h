@@ -35,7 +35,7 @@ namespace detail {
 
 struct DataFunction {
     template<typename T>
-    requires(enable_borrowed_container(types::in_place_type<T>) &&
+    requires(enable_borrowed_container(types::in_place_type<meta::RemoveCV<T>>) &&
              (detail::CustomData<T> || detail::MemberData<T> || detail::BeginData<T>) )
     constexpr auto operator()(T&& container) const {
         if constexpr (detail::CustomData<T>) {

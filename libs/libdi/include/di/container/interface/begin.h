@@ -27,7 +27,7 @@ namespace detail {
 
 struct BeginFunction {
     template<typename T>
-    requires(enable_borrowed_container(types::in_place_type<T>) &&
+    requires(enable_borrowed_container(types::in_place_type<meta::RemoveCV<T>>) &&
              (detail::ArrayBegin<T> || detail::CustomBegin<T> || detail::MemberBegin<T>) )
     constexpr auto operator()(T&& container) const {
         if constexpr (detail::ArrayBegin<T>) {
