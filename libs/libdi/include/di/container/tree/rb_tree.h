@@ -6,6 +6,7 @@
 #include <di/container/tree/rb_tree_iterator.h>
 #include <di/container/tree/rb_tree_node.h>
 #include <di/function/compare.h>
+#include <di/util/exchange.h>
 #include <di/vocab/optional/prelude.h>
 
 namespace di::container {
@@ -20,8 +21,32 @@ private:
     using Iterator = RBTreeIterator<Value>;
 
 public:
+    RBTree() = default;
+    RBTree(RBTree const&) = delete;
+    RBTree& operator=(RBTree const&) = delete;
+
+    constexpr explicit RBTree(Comp comparator) : m_comparator(comparator) {}
+
+    constexpr RBTree(RBTree&& other)
+        : m_root(util::exchange(other.m_root, nullptr))
+        , m_minimum(util::exchange(other.m_minimum, nullptr))
+        , m_maximum(util::exchange(other.m_maximum, nullptr))
+        , m_size(util::exchange(other.m_size, 0))
+        , m_comparator(other.m_comparator) {}
+
+    constexpr RBTree& operator=(RBTree&& other) {
+        this->clear();
+        m_root = util::exchange(other.m_root, nullptr);
+        m_minimum = util::exchange(other.m_minimum, nullptr);
+        m_maximum = util::exchange(other.m_maximum, nullptr);
+        m_size = util::exchange(other.m_size, 0);
+        m_comparator = other.m_comparator;
+        return *this;
+    }
+
     constexpr ~RBTree() { clear(); }
 
+    constexpr bool empty() const { return size() == 0; }
     constexpr size_t size() const { return m_size; }
 
     constexpr Optional<Value&> front() {
@@ -29,7 +54,17 @@ public:
             return m_minimum->value;
         };
     }
+    constexpr Optional<Value const&> front() const {
+        return lift_bool(m_minimum) % [&] {
+            return m_minimum->value;
+        };
+    }
     constexpr Optional<Value&> back() {
+        return lift_bool(m_maximum) % [&] {
+            return m_maximum->value;
+        };
+    }
+    constexpr Optional<Value const&> back() const {
         return lift_bool(m_maximum) % [&] {
             return m_maximum->value;
         };

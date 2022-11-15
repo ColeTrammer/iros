@@ -21,11 +21,11 @@ namespace detail {
 struct SSizeFunction {
     template<typename T>
     requires(detail::CustomSSize<T> || detail::SizeSSize<T>)
-    constexpr meta::MakeUnsigned<meta::ContainerSizeType<T>> operator()(T&& container) const {
+    constexpr meta::MakeSigned<meta::ContainerSizeType<T>> operator()(T&& container) const {
         if constexpr (detail::CustomSize<T>) {
             return function::tag_invoke(*this, util::forward<T>(container));
         } else {
-            return static_cast<meta::MakeUnsigned<meta::ContainerSizeType<T>>>(size(util::forward<T>(container)));
+            return static_cast<meta::MakeSigned<meta::ContainerSizeType<T>>>(size(util::forward<T>(container)));
         }
     }
 };

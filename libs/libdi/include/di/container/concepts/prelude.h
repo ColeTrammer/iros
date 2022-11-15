@@ -4,6 +4,7 @@
 #include <di/container/concepts/bidirectional_iterator.h>
 #include <di/container/concepts/borrowed_container.h>
 #include <di/container/concepts/common_container.h>
+#include <di/container/concepts/constant_container.h>
 #include <di/container/concepts/container.h>
 #include <di/container/concepts/container_compatible.h>
 #include <di/container/concepts/container_of.h>
