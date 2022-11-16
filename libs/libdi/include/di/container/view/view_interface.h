@@ -9,6 +9,8 @@
 #include <di/container/concepts/has_empty_container.h>
 #include <di/container/concepts/random_access_container.h>
 #include <di/container/concepts/sized_container.h>
+#include <di/container/interface/cbegin.h>
+#include <di/container/interface/cend.h>
 #include <di/container/interface/empty.h>
 #include <di/container/interface/size.h>
 #include <di/container/iterator/prev.h>
@@ -47,13 +49,27 @@ public:
     constexpr explicit operator bool()
     requires(concepts::HasEmptyContainer<Self>)
     {
-        return !container::empty(self);
+        return !container::empty(self());
     }
 
     constexpr explicit operator bool() const
     requires(concepts::HasEmptyContainer<Self const>)
     {
-        return !container::empty(self);
+        return !container::empty(self());
+    }
+
+    constexpr auto cbegin() { return container::cbegin(self()); }
+    constexpr auto cbegin() const
+    requires(concepts::Container<Self const>)
+    {
+        return container::cbegin(self());
+    }
+
+    constexpr auto cend() { return container::cend(self()); }
+    constexpr auto cend() const
+    requires(concepts::Container<Self const>)
+    {
+        return container::cend(self());
     }
 
     constexpr auto data()

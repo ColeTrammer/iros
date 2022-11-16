@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/util/as_const.h>
+#include <di/util/as_const_pointer.h>
 #include <di/util/bit_cast.h>
 #include <di/util/clone.h>
 #include <di/util/compile_time_fail.h>
@@ -34,6 +35,7 @@ using util::InitializerList;
 using util::SourceLocation;
 
 using util::as_const;
+using util::as_const_pointer;
 using util::compile_time_fail;
 using util::declval;
 using util::exchange;
