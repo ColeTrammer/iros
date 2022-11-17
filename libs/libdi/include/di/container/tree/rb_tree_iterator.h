@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/assert/prelude.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/iterator/iterator_base.h>
 #include <di/container/tree/rb_tree_node.h>
@@ -15,7 +16,10 @@ public:
 
     constexpr explicit RBTreeIterator(Node* current, bool at_end) : m_current(current), m_at_end(at_end) {}
 
-    constexpr Value& operator*() const { return m_current->value; }
+    constexpr Value& operator*() const {
+        DI_ASSERT(!m_at_end);
+        return m_current->value;
+    }
     constexpr Node& node() const { return *m_current; }
 
     constexpr void advance_one() {

@@ -19,6 +19,7 @@ class RBTree {
 private:
     using Node = RBTreeNode<Value>;
     using Iterator = RBTreeIterator<Value>;
+    using ConstIterator = RBTreeIterator<Value>;
 
 public:
     RBTree() = default;
@@ -49,29 +50,86 @@ public:
     constexpr bool empty() const { return size() == 0; }
     constexpr size_t size() const { return m_size; }
 
+    constexpr Iterator begin() { return begin_impl(); }
+    constexpr ConstIterator begin() const { return begin_impl(); }
+    constexpr Iterator end() { return end_impl(); }
+    constexpr ConstIterator end() const { return end_impl(); }
+
     constexpr Optional<Value&> front() {
         return lift_bool(m_minimum) % [&] {
-            return m_minimum->value;
+            return util::ref(m_minimum->value);
         };
     }
     constexpr Optional<Value const&> front() const {
         return lift_bool(m_minimum) % [&] {
-            return m_minimum->value;
+            return util::cref(m_minimum->value);
         };
     }
+
     constexpr Optional<Value&> back() {
         return lift_bool(m_maximum) % [&] {
-            return m_maximum->value;
+            return util::ref(m_maximum->value);
         };
     }
     constexpr Optional<Value const&> back() const {
         return lift_bool(m_maximum) % [&] {
-            return m_maximum->value;
+            return util::cref(m_maximum->value);
         };
     }
 
-    constexpr auto begin() { return Iterator(m_minimum, !m_root); }
-    constexpr auto end() { return Iterator(m_maximum, true); }
+    template<typename U>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
+    constexpr auto at(U const& needle) {
+        auto it = find_impl(needle);
+        return lift_bool(it != end()) % [&] {
+            return util::ref(*it);
+        };
+    }
+
+    template<typename U>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
+    constexpr auto at(U const& needle) const {
+        auto it = find_impl(needle);
+        return lift_bool(it != end()) % [&] {
+            return util::cref(*it);
+        };
+    }
+
+    template<typename U>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
+    constexpr bool contains(U const& needle) const {
+        return !!at(needle);
+    }
+
+    template<typename U>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
+    constexpr Iterator find(U const& needle) {
+        return find_impl(needle);
+    }
+
+    template<typename U>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
+    constexpr ConstIterator find(U const& needle) const {
+        return find_impl(needle);
+    }
+
+    template<typename U>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
+    constexpr Iterator lower_bound(U const& needle) {
+        return lower_bound_impl(needle);
+    }
+
+    template<typename U>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
+    constexpr Iterator upper_bound(U const& needle) {
+        return upper_bound_impl(needle);
+    }
+
+    template<typename U>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
+    constexpr View<Iterator> equal_range(U const& needle) {
+        return equal_range_impl(needle);
+    }
 
     constexpr void clear() {
         auto end = this->end();
@@ -85,6 +143,11 @@ public:
         m_size = 0;
     }
 
+    constexpr void insert(Value const& value)
+    requires(concepts::CopyConstructible<Value>)
+    {
+        insert_node(*create_node(value));
+    }
     constexpr void insert(Value&& value) { insert_node(*create_node(util::move(value))); }
 
 private:
@@ -136,6 +199,61 @@ private:
         }
         x.right = &y;
         y.parent = &x;
+    }
+
+    constexpr Iterator begin_impl() const { return Iterator(m_minimum, !m_root); }
+    constexpr Iterator end_impl() const { return Iterator(m_maximum, true); }
+
+    template<typename U>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
+    constexpr View<Iterator> equal_range_impl(U const& needle) const {
+        return { lower_bound_impl(needle), upper_bound_impl(needle) };
+    }
+
+    template<typename U>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
+    constexpr Iterator lower_bound_impl(U const& needle) const {
+        Node* result = nullptr;
+        for (auto* node = m_root; node;) {
+            if (compare(node->value, needle) > 0) {
+                node = node->left;
+            } else {
+                result = node;
+                node = node->right;
+            }
+        }
+        return result ? Iterator(result, false) : end_impl();
+    }
+
+    template<typename U>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
+    constexpr Iterator upper_bound_impl(U const& needle) const {
+        Node* result = nullptr;
+        for (auto* node = m_root; node;) {
+            if (compare(node->value, needle) <= 0) {
+                node = node->right;
+            } else if (node->left) {
+                result = node;
+                node = node->left;
+            }
+        }
+        return result ? Iterator(result, false) : end_impl();
+    }
+
+    template<typename U>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
+    constexpr Iterator find_impl(U const& needle) {
+        for (auto* node = m_root; node;) {
+            auto result = compare(needle, node->value);
+            if (result == 0) {
+                return Iterator(node, false);
+            } else if (result < 0) {
+                node = node->left;
+            } else {
+                node = node->right;
+            }
+        }
+        return end_impl();
     }
 
     constexpr void insert_node(Node& to_insert) {
@@ -337,6 +455,16 @@ private:
         x->color = Node::Color::Black;
     }
 
+    constexpr Node* create_node(Value const& value)
+    requires(concepts::CopyConstructible<Value>)
+    {
+        auto [pointer, allocated_nodes] = Alloc().allocate(1);
+        (void) allocated_nodes;
+
+        util::construct_at(pointer, Node::Color::Red, nullptr, nullptr, nullptr, util::move(value));
+        return pointer;
+    }
+
     constexpr Node* create_node(Value&& value) {
         auto [pointer, allocated_nodes] = Alloc().allocate(1);
         (void) allocated_nodes;
@@ -350,8 +478,8 @@ private:
         Alloc().deallocate(&node, 1);
     }
 
-    constexpr auto compare(Node const& a, Node const& b) { return compare(a.value, b.value); }
-    constexpr auto compare(Value const& a, Value const& b) { return function::invoke(m_comparator, a, b); }
+    constexpr auto compare(Node const& a, Node const& b) const { return compare(a.value, b.value); }
+    constexpr auto compare(Value const& a, Value const& b) const { return function::invoke(m_comparator, a, b); }
 
     Node* m_root { nullptr };
     Node* m_minimum { nullptr };

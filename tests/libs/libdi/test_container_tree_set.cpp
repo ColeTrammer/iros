@@ -35,6 +35,22 @@ constexpr void basic() {
     ASSERT(di::is_sorted(x));
 }
 
+constexpr void accessors() {
+    auto x = di::TreeSet<int> {};
+
+    for (auto i : di::range(1, 6)) {
+        x.insert(i);
+    }
+
+    ASSERT_EQ(*x.lower_bound(3), 3);
+    ASSERT_EQ(*x.upper_bound(3), 4);
+    ASSERT_EQ(*x.find(3), 3);
+    ASSERT_EQ(*x.at(3), 3);
+    ASSERT_EQ(x.at(6), di::nullopt);
+    ASSERT_EQ(*x.front(), 1);
+    ASSERT_EQ(*x.back(), 5);
+}
+
 constexpr void property() {
     auto do_test = [](auto rng) {
         auto x = di::TreeSet<unsigned int> {};
@@ -66,4 +82,5 @@ constexpr void property() {
 }
 
 TEST_CONSTEXPR(container_tree_set, basic, basic)
+TEST_CONSTEXPR(container_tree_set, accessors, accessors)
 TEST_CONSTEXPR(container_tree_set, property, property)
