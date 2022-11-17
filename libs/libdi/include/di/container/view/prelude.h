@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/container/view/all.h>
+#include <di/container/view/as_const.h>
 #include <di/container/view/as_rvalue.h>
 #include <di/container/view/counted.h>
 #include <di/container/view/drop.h>

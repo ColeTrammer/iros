@@ -4,7 +4,7 @@
 #include <di/container/meta/container_rvalue.h>
 #include <di/container/view/all.h>
 #include <di/container/view/as_rvalue_view.h>
-#include <di/function/curry_back.h>
+#include <di/function/pipeable.h>
 #include <di/util/forward.h>
 
 namespace di::container::view {
@@ -16,7 +16,7 @@ namespace detail {
     template<typename T>
     concept AsRValueViewAsRValue = requires(T&& container) { AsRValueView { util::forward<T>(container) }; };
 
-    struct AsRValueFunction : public function::CurryBack<AsRValueFunction> {
+    struct AsRValueFunction : public function::pipeline::EnablePipeline {
         template<concepts::ViewableContainer Con>
         requires(AllAsRValue<Con> || AsRValueViewAsRValue<Con>)
         constexpr concepts::View auto operator()(Con&& container) const {
