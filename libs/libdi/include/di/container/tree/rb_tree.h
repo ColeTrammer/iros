@@ -3,6 +3,7 @@
 #include <di/assert/prelude.h>
 #include <di/container/allocator/prelude.h>
 #include <di/container/concepts/prelude.h>
+#include <di/container/meta/const_iterator.h>
 #include <di/container/tree/rb_tree_iterator.h>
 #include <di/container/tree/rb_tree_node.h>
 #include <di/function/compare.h>
@@ -19,7 +20,7 @@ class RBTree {
 private:
     using Node = RBTreeNode<Value>;
     using Iterator = RBTreeIterator<Value>;
-    using ConstIterator = RBTreeIterator<Value>;
+    using ConstIterator = meta::ConstIterator<Iterator>;
 
 public:
     RBTree() = default;
@@ -121,13 +122,31 @@ public:
 
     template<typename U>
     requires(concepts::StrictWeakOrder<Comp&, Value, U>)
+    constexpr ConstIterator lower_bound(U const& needle) const {
+        return lower_bound_impl(needle);
+    }
+
+    template<typename U>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
     constexpr Iterator upper_bound(U const& needle) {
         return upper_bound_impl(needle);
     }
 
     template<typename U>
     requires(concepts::StrictWeakOrder<Comp&, Value, U>)
+    constexpr Iterator upper_bound(U const& needle) const {
+        return upper_bound_impl(needle);
+    }
+
+    template<typename U>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
     constexpr View<Iterator> equal_range(U const& needle) {
+        return equal_range_impl(needle);
+    }
+
+    template<typename U>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
+    constexpr View<ConstIterator> equal_range(U const& needle) const {
         return equal_range_impl(needle);
     }
 
@@ -242,7 +261,7 @@ private:
 
     template<typename U>
     requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr Iterator find_impl(U const& needle) {
+    constexpr Iterator find_impl(U const& needle) const {
         for (auto* node = m_root; node;) {
             auto result = compare(needle, node->value);
             if (result == 0) {

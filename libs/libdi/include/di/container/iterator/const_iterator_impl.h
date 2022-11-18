@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/concepts/common_with.h>
 #include <di/concepts/totally_ordered_with.h>
 #include <di/container/concepts/contiguous_iterator.h>
 #include <di/container/concepts/sized_sentinel_for.h>
@@ -8,6 +9,7 @@
 #include <di/container/meta/iterator_reference.h>
 #include <di/container/meta/iterator_ssize_type.h>
 #include <di/container/meta/iterator_value.h>
+#include <di/meta/common_type.h>
 #include <di/util/move.h>
 #include <di/util/to_address.h>
 
@@ -63,7 +65,7 @@ private:
     }
 
     template<typename Sent>
-    requires(!concepts::SameAs<Self, Sent> && concepts::SentinelFor<Iter, Sent>)
+    requires(!concepts::SameAs<Self, Sent> && concepts::SentinelFor<Sent, Iter>)
     constexpr friend bool operator==(Self const& a, Sent const& b) {
         return a.base() == b;
     }
@@ -86,13 +88,14 @@ private:
         return a.base() - b.base();
     }
 
-    template<concepts::SizedSentinelFor<Iter> Sent>
+    template<typename Sent>
+    requires(!concepts::SameAs<Sent, Iter> && concepts::SizedSentinelFor<Sent, Iter>)
     constexpr friend SSizeType operator-(Self const& a, Sent const& b) {
         return a.base() - b;
     }
 
-    template<concepts::SizedSentinelFor<Iter> Sent>
-    requires(!concepts::SameAs<Sent, Self>)
+    template<typename Sent>
+    requires(!concepts::SameAs<Sent, Self> && concepts::SizedSentinelFor<Sent, Iter>)
     constexpr friend SSizeType operator-(Sent const& a, Self const& b) {
         return a - b.base();
     }
@@ -114,3 +117,18 @@ private:
     Iter m_base;
 };
 }
+
+template<typename T, di::concepts::CommonWith<T> U>
+struct di::meta::CustomCommonType<di::container::ConstIteratorImpl<T>, U> {
+    using Type = di::container::ConstIteratorImpl<di::meta::CommonType<T, U>>;
+};
+
+template<typename T, di::concepts::CommonWith<T> U>
+struct di::meta::CustomCommonType<U, di::container::ConstIteratorImpl<T>> {
+    using Type = di::container::ConstIteratorImpl<di::meta::CommonType<T, U>>;
+};
+
+template<typename T, di::concepts::CommonWith<T> U>
+struct di::meta::CustomCommonType<di::container::ConstIteratorImpl<T>, di::container::ConstIteratorImpl<U>> {
+    using Type = di::container::ConstIteratorImpl<di::meta::CommonType<T, U>>;
+};

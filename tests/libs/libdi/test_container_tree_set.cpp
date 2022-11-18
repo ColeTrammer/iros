@@ -42,13 +42,14 @@ constexpr void accessors() {
         x.insert(i);
     }
 
-    ASSERT_EQ(*x.lower_bound(3), 3);
-    ASSERT_EQ(*x.upper_bound(3), 4);
-    ASSERT_EQ(*x.find(3), 3);
-    ASSERT_EQ(*x.at(3), 3);
-    ASSERT_EQ(x.at(6), di::nullopt);
-    ASSERT_EQ(*x.front(), 1);
-    ASSERT_EQ(*x.back(), 5);
+    auto const& y = x;
+    ASSERT_EQ(*y.lower_bound(3), 3);
+    ASSERT_EQ(*y.upper_bound(3), 4);
+    ASSERT_EQ(*y.find(3), 3);
+    ASSERT_EQ(*y.at(3), 3);
+    ASSERT_EQ(y.at(6), di::nullopt);
+    ASSERT_EQ(*y.front(), 1);
+    ASSERT_EQ(*y.back(), 5);
 }
 
 constexpr void property() {
