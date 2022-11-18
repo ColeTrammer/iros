@@ -9,6 +9,7 @@
 #include <di/meta/add_pointer.h>
 #include <di/meta/remove_reference.h>
 #include <di/util/forward.h>
+#include <di/util/to_address.h>
 
 namespace di::container {
 struct DataFunction;
@@ -28,7 +29,7 @@ namespace detail {
     concept BeginData = concepts::ContiguousIterator<meta::ContainerIterator<T>> &&
                         requires(T&& container) {
                             {
-                                begin(util::forward<T>(container))
+                                util::to_address(container::begin(util::forward<T>(container)))
                                 } -> concepts::ImplicitlyConvertibleTo<meta::AddPointer<meta::ContainerReference<T>>>;
                         };
 }
@@ -37,13 +38,13 @@ struct DataFunction {
     template<typename T>
     requires(enable_borrowed_container(types::in_place_type<meta::RemoveCV<T>>) &&
              (detail::CustomData<T> || detail::MemberData<T> || detail::BeginData<T>) )
-    constexpr auto operator()(T&& container) const {
+    constexpr meta::AddPointer<meta::ContainerReference<T>> operator()(T&& container) const {
         if constexpr (detail::CustomData<T>) {
             return function::tag_invoke(*this, util::forward<T>(container));
         } else if constexpr (detail::MemberData<T>) {
             return util::forward<T>(container).data();
         } else {
-            return begin(util::forward<T>(container));
+            return util::to_address(container::begin(util::forward<T>(container)));
         }
     }
 };

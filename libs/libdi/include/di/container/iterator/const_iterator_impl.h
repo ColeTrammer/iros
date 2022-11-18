@@ -23,13 +23,13 @@ public:
     ConstIteratorImpl()
     requires(concepts::DefaultInitializable<Iter>)
     = default;
-    ConstIteratorImpl(Iter iter) : m_base(util::move(iter)) {}
+    constexpr ConstIteratorImpl(Iter iter) : m_base(util::move(iter)) {}
 
     template<concepts::ConvertibleTo<Iter> Jt>
-    ConstIteratorImpl(ConstIteratorImpl<Jt> other) : m_base(util::move(other.base())) {}
+    constexpr ConstIteratorImpl(ConstIteratorImpl<Jt> other) : m_base(util::move(other.base())) {}
 
     template<concepts::ConvertibleTo<Iter> T>
-    ConstIteratorImpl(T&& other) : m_base(util::forward<T>(other)) {}
+    constexpr ConstIteratorImpl(T&& other) : m_base(util::forward<T>(other)) {}
 
     constexpr Iter const& base() const& { return m_base; }
     constexpr Iter base() && { return util::move(m_base); }
@@ -56,7 +56,14 @@ public:
     }
 
 private:
-    template<concepts::SentinelFor<Iter> Sent>
+    constexpr friend bool operator==(Self const& a, Self const& b)
+    requires(concepts::SentinelFor<Iter, Iter>)
+    {
+        return a.base() == b.base();
+    }
+
+    template<typename Sent>
+    requires(!concepts::SameAs<Self, Sent> && concepts::SentinelFor<Iter, Sent>)
     constexpr friend bool operator==(Self const& a, Sent const& b) {
         return a.base() == b;
     }

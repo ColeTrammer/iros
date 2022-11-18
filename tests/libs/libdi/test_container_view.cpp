@@ -178,6 +178,18 @@ constexpr void reverse() {
     }
 }
 
+constexpr void as_const() {
+    int arr[] = { 1, 2, 3, 4, 5 };
+
+    static_assert(di::concepts::BidirectionalContainer<decltype(di::view::as_const(arr))>);
+    static_assert(di::concepts::SizedContainer<decltype(di::view::as_const(arr))>);
+    static_assert(di::concepts::RandomAccessContainer<decltype(di::view::as_const(arr))>);
+    static_assert(di::SameAs<int const&, di::meta::ContainerReference<decltype(di::view::as_const(arr))>>);
+    static_assert(di::concepts::ContiguousContainer<decltype(di::view::as_const(arr))>);
+
+    ASSERT_EQ(di::sum(di::view::as_const(arr)), 15);
+}
+
 constexpr void as_rvalue() {
     int arr[] = { 1, 2, 3, 4, 5 };
     static_assert(!di::concepts::ContiguousIterator<di::container::MoveIterator<int*>>);
@@ -331,6 +343,7 @@ TEST_CONSTEXPR(container_view, iota, iota)
 TEST_CONSTEXPR(container_view, repeat, repeat)
 TEST_CONSTEXPR(container_view, reverse, reverse)
 TEST_CONSTEXPR(container_view, as_rvalue, as_rvalue)
+TEST_CONSTEXPR(container_view, as_const, as_const)
 TEST_CONSTEXPR(container_view, transform, transform)
 TEST_CONSTEXPR(container_view, zip, zip)
 TEST_CONSTEXPR(container_view, counted, counted)
