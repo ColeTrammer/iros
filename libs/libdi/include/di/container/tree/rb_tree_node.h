@@ -1,10 +1,18 @@
 #pragma once
 
+#include <di/concepts/constructible_from.h>
+#include <di/types/prelude.h>
+#include <di/util/forward.h>
+
 namespace di::container {
 template<typename Value>
 struct RBTreeNode {
 public:
     enum class Color { Red = 0, Black = 1 };
+
+    template<typename... Args>
+    requires(concepts::ConstructibleFrom<Value, Args...>)
+    constexpr explicit RBTreeNode(InPlace, Args&&... args) : value(util::forward<Args>(args)...) {}
 
     constexpr bool is_left_child() const { return parent && parent->left == this; }
     constexpr bool is_right_child() const { return parent && parent->right == this; }

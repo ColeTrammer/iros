@@ -4,6 +4,7 @@
 #include <di/container/allocator/prelude.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/iterator/distance.h>
+#include <di/container/iterator/next.h>
 #include <di/container/meta/const_iterator.h>
 #include <di/container/tree/rb_tree_iterator.h>
 #include <di/container/tree/rb_tree_node.h>
@@ -175,6 +176,34 @@ public:
         insert_node(*create_node(value));
     }
     constexpr void insert(Value&& value) { insert_node(*create_node(util::move(value))); }
+
+    constexpr Iterator erase(ConstIterator position) {
+        DI_ASSERT(position != end());
+
+        auto result = container::next(position).base();
+        auto& node = position.base().node();
+        erase_node(node);
+        destroy_node(node);
+        return result;
+    }
+
+    constexpr Iterator erase(ConstIterator start, ConstIterator end) {
+        for (auto it = start; it != end;) {
+            erase(it++);
+        }
+        return end.base();
+    }
+
+    template<typename U>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
+    constexpr size_t erase(U const& needle) {
+        auto [start, end] = equal_range(needle);
+        size_t result = 0;
+        for (auto it = start; it != end; ++result) {
+            erase(it++);
+        }
+        return result;
+    }
 
 private:
     // Compute the color of a node, defaulting to Black.
@@ -481,21 +510,13 @@ private:
         x->color = Node::Color::Black;
     }
 
-    constexpr Node* create_node(Value const& value)
-    requires(concepts::CopyConstructible<Value>)
-    {
+    template<typename... Args>
+    requires(concepts::ConstructibleFrom<Value, Args...>)
+    constexpr Node* create_node(Args&&... args) {
         auto [pointer, allocated_nodes] = Alloc().allocate(1);
         (void) allocated_nodes;
 
-        util::construct_at(pointer, Node::Color::Red, nullptr, nullptr, nullptr, util::move(value));
-        return pointer;
-    }
-
-    constexpr Node* create_node(Value&& value) {
-        auto [pointer, allocated_nodes] = Alloc().allocate(1);
-        (void) allocated_nodes;
-
-        util::construct_at(pointer, Node::Color::Red, nullptr, nullptr, nullptr, util::move(value));
+        util::construct_at(pointer, in_place, util::forward<Args>(args)...);
         return pointer;
     }
 
