@@ -5,6 +5,7 @@
 #include <di/container/tree/rb_tree.h>
 #include <di/container/view/transform.h>
 #include <di/function/compare.h>
+#include <di/util/deduce_create.h>
 #include <di/vocab/optional/prelude.h>
 
 namespace di::container {
@@ -16,6 +17,14 @@ private:
     using Node = RBTreeNode<Value>;
 
 public:
+    using Base::Base;
+
 private:
 };
+
+template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>>
+TreeSet<T> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<TreeSet>, Con&&);
+
+template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>, concepts::StrictWeakOrder<T> Comp>
+TreeSet<T, Comp> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<TreeSet>, Con&&, Comp);
 }

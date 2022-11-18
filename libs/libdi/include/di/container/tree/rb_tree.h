@@ -9,6 +9,7 @@
 #include <di/container/tree/rb_tree_iterator.h>
 #include <di/container/tree/rb_tree_node.h>
 #include <di/function/compare.h>
+#include <di/util/create.h>
 #include <di/util/exchange.h>
 #include <di/vocab/optional/prelude.h>
 
@@ -23,6 +24,14 @@ private:
     using Node = RBTreeNode<Value>;
     using Iterator = RBTreeIterator<Value>;
     using ConstIterator = meta::ConstIterator<Iterator>;
+
+    template<concepts::DerivedFrom<RBTree> Self, concepts::InputContainer Con, typename... Args>
+    requires(concepts::ContainerCompatible<Con, Value> && concepts::ConstructibleFrom<Self, Args...>)
+    constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<Self>, Con&& container, Args&&... args) {
+        auto result = Self(util::forward<Args>(args)...);
+        result.insert_container(util::forward<Con>(container));
+        return result;
+    }
 
 public:
     RBTree() = default;
@@ -173,9 +182,24 @@ public:
     constexpr void insert(Value const& value)
     requires(concepts::CopyConstructible<Value>)
     {
-        insert_node(*create_node(value));
+        insert_node(insert_position(value), *create_node(value));
     }
-    constexpr void insert(Value&& value) { insert_node(*create_node(util::move(value))); }
+    constexpr void insert(Value&& value) { insert_node(insert_position(value), *create_node(util::move(value))); }
+
+    template<typename... Args>
+    requires(concepts::ConstructibleFrom<Value, Args...>)
+    constexpr void emplace(Args&&... args) {
+        return insert(Value(util::forward<Args>(args)...));
+    }
+
+    template<concepts::InputContainer Con>
+    requires(concepts::ContainerCompatible<Con, Value>)
+    constexpr void insert_container(Con&& container) {
+        auto end = container::end(container);
+        for (auto it = container::begin(container); it != end; ++it) {
+            insert(*it);
+        }
+    }
 
     constexpr Iterator erase(ConstIterator position) {
         DI_ASSERT(position != end());
@@ -311,27 +335,50 @@ private:
         return end_impl();
     }
 
-    constexpr void insert_node(Node& to_insert) {
-        // Step 1: find the parent node to insert under.
+    struct InsertPosition {
+        Node* parent { nullptr };
+        bool left { true };
+    };
+
+    template<typename U>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
+    constexpr InsertPosition insert_position(U const& needle) const {
+        // Find the parent node to insert under.
         Node* y = nullptr;
         auto* x = m_root;
         while (x != nullptr) {
             y = x;
-            if (compare(to_insert, *x) < 0) {
+            if (compare(needle, x->value) < 0) {
                 x = x->left;
             } else {
                 x = x->right;
             }
         }
 
-        // Step 2: actually insert the node.
-        to_insert.parent = y;
-        if (y == nullptr) {
+        if (!y) {
+            return InsertPosition {};
+        }
+        if (compare(needle, y->value) < 0) {
+            return InsertPosition { y, true };
+        }
+        return InsertPosition { y, false };
+    }
+
+    constexpr void insert_node(InsertPosition position, Node& to_insert) {
+        // Step 1: check if inserting the first node.
+        if (position.parent == nullptr) {
             m_root = m_minimum = m_maximum = &to_insert;
-        } else if (compare(to_insert, *y) < 0) {
-            y->left = &to_insert;
+            m_size = 1;
+            return;
+        }
+
+        // Step 2: actually insert the node.
+        auto& parent = *position.parent;
+        to_insert.parent = &parent;
+        if (position.left) {
+            parent.left = &to_insert;
         } else {
-            y->right = &to_insert;
+            parent.right = &to_insert;
         }
 
         // Step 3: maintain the Red-Black properties.
@@ -526,7 +573,12 @@ private:
     }
 
     constexpr auto compare(Node const& a, Node const& b) const { return compare(a.value, b.value); }
-    constexpr auto compare(Value const& a, Value const& b) const { return function::invoke(m_comparator, a, b); }
+
+    template<typename T, typename U>
+    requires(concepts::StrictWeakOrder<Comp&, T, U>)
+    constexpr auto compare(T const& a, U const& b) const {
+        return function::invoke(m_comparator, a, b);
+    }
 
     Node* m_root { nullptr };
     Node* m_minimum { nullptr };
