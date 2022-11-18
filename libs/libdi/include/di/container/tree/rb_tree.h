@@ -3,6 +3,7 @@
 #include <di/assert/prelude.h>
 #include <di/container/allocator/prelude.h>
 #include <di/container/concepts/prelude.h>
+#include <di/container/iterator/distance.h>
 #include <di/container/meta/const_iterator.h>
 #include <di/container/tree/rb_tree_iterator.h>
 #include <di/container/tree/rb_tree_node.h>
@@ -106,6 +107,12 @@ public:
     requires(concepts::StrictWeakOrder<Comp&, Value, U>)
     constexpr Iterator find(U const& needle) {
         return find_impl(needle);
+    }
+
+    template<typename U>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
+    constexpr size_t count(U const& needle) const {
+        return container::distance(equal_range(needle));
     }
 
     template<typename U>
@@ -234,11 +241,11 @@ private:
     constexpr Iterator lower_bound_impl(U const& needle) const {
         Node* result = nullptr;
         for (auto* node = m_root; node;) {
-            if (compare(node->value, needle) > 0) {
-                node = node->left;
+            if (compare(node->value, needle) < 0) {
+                node = node->right;
             } else {
                 result = node;
-                node = node->right;
+                node = node->left;
             }
         }
         return result ? Iterator(result, false) : end_impl();
@@ -251,7 +258,7 @@ private:
         for (auto* node = m_root; node;) {
             if (compare(node->value, needle) <= 0) {
                 node = node->right;
-            } else if (node->left) {
+            } else {
                 result = node;
                 node = node->left;
             }

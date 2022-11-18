@@ -50,6 +50,10 @@ constexpr void accessors() {
     ASSERT_EQ(y.at(6), di::nullopt);
     ASSERT_EQ(*y.front(), 1);
     ASSERT_EQ(*y.back(), 5);
+    ASSERT_EQ(y.count(3), 1u);
+    ASSERT(y.lower_bound(10) == y.end());
+    ASSERT(y.upper_bound(10) == y.end());
+    ASSERT_EQ(y.count(10), 0u);
 }
 
 constexpr void property() {
