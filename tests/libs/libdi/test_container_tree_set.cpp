@@ -20,14 +20,7 @@ constexpr void basic() {
     x.clear();
     ASSERT_EQ(di::distance(x), 0);
 
-    x.insert(1);
-    x.insert(2);
-    x.insert(5);
-    x.insert(0);
-    x.insert(4);
-    x.insert(-6);
-    x.insert(6);
-    x.insert(3);
+    x.insert_container(di::Array { 1, 2, 5, 0, 4, -6, 6, 3 });
 
     ASSERT_EQ(di::distance(x), 8);
     ASSERT_EQ(di::sum(x), 15);
@@ -36,11 +29,7 @@ constexpr void basic() {
 }
 
 constexpr void accessors() {
-    auto x = di::TreeSet<int> {};
-
-    for (auto i : di::range(1, 6)) {
-        x.insert(i);
-    }
+    auto x = di::range(1, 6) | di::to<di::TreeSet>(di::compare);
 
     auto const& y = x;
     ASSERT_EQ(*y.lower_bound(3), 3);
@@ -57,11 +46,7 @@ constexpr void accessors() {
 }
 
 constexpr void erase() {
-    auto x = di::TreeSet<int> {};
-
-    for (auto i : di::range(1, 6)) {
-        x.insert(i);
-    }
+    auto x = di::to<di::TreeSet>(di::range(1, 6));
 
     ASSERT_EQ(*x.erase(x.find(2)), 3);
     ASSERT_EQ(*x.erase(x.find(3), x.find(5)), 5);
