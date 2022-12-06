@@ -3,7 +3,7 @@
 #include <di/container/concepts/view.h>
 #include <di/container/view/reverse_view.h>
 #include <di/container/view/view.h>
-#include <di/function/pipeable.h>
+#include <di/function/pipeline.h>
 #include <di/meta/false_type.h>
 #include <di/meta/remove_cv.h>
 #include <di/meta/true_type.h>

@@ -8,6 +8,7 @@
 #include <di/meta/true_type.h>
 #include <di/meta/type_constant.h>
 #include <di/types/prelude.h>
+#include <di/vocab/tuple/tuple_forward_declaration.h>
 
 namespace di::meta {
 template<typename...>
@@ -148,4 +149,33 @@ UniqueType<T>;
 
 template<typename List, typename T>
 concept Contains = concepts::TypeList<List> && (Lookup<T, List> <= Size<List>);
+
+namespace detail {
+    template<typename T, size_t N>
+    struct RepeatHelper;
+
+    template<typename T>
+    struct RepeatHelper<T, 0> : TypeConstant<List<>> {};
+
+    template<typename T>
+    struct RepeatHelper<T, 1> : TypeConstant<List<T>> {};
+
+    template<typename T, size_t N>
+    requires(N > 1)
+    struct RepeatHelper<T, N> : TypeConstant<Concat<typename RepeatHelper<T, N / 2>::Type, typename RepeatHelper<T, (N + 1) / 2>::Type>> {};
+}
+
+template<typename T, size_t N>
+using Repeat = detail::RepeatHelper<T, N>::Type;
+
+namespace detail {
+    template<typename T>
+    struct AsTupleHelper {};
+
+    template<typename... Types>
+    struct AsTupleHelper<List<Types...>> : TypeConstant<vocab::Tuple<Types...>> {};
+}
+
+template<concepts::TypeList T>
+using AsTuple = detail::AsTupleHelper<T>::Type;
 }

@@ -12,6 +12,7 @@
 #include <di/container/view/enumerate.h>
 #include <di/container/view/filter.h>
 #include <di/container/view/keys.h>
+#include <di/container/view/pairwise.h>
 #include <di/container/view/range.h>
 #include <di/container/view/repeat.h>
 #include <di/container/view/reverse.h>
@@ -30,6 +31,7 @@ namespace container::view {}
 namespace view = container::view;
 
 using container::View;
+using view::adjacent;
 using view::as_rvalue;
 using view::drop;
 using view::drop_while;
@@ -38,6 +40,7 @@ using view::enumerate;
 using view::filter;
 using view::iota;
 using view::keys;
+using view::pairwise;
 using view::range;
 using view::repeat;
 using view::reverse;

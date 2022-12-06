@@ -105,7 +105,7 @@ public:
         if constexpr (!concepts::CommonContainer<View>) {
             return Sentinel<false>(container::end(m_base));
         } else {
-            return Sentinel<false>(container::end(m_base));
+            return Iterator<false>(container::end(m_base));
         }
     }
 

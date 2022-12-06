@@ -255,6 +255,22 @@ constexpr void zip() {
     static_assert(di::concepts::RandomAccessContainer<decltype(di::zip(arr, ar))>);
 }
 
+constexpr void adjacent() {
+    int arr[] = { 1, 2, 3, 4, 5, 6 };
+
+    static_assert(di::concepts::RandomAccessContainer<decltype(di::pairwise(arr))>);
+
+    for (auto [a, b] : arr | di::pairwise) {
+        ASSERT_EQ(a + 1, b);
+    }
+
+    auto windows = arr | di::adjacent<3> | di::transform([](auto x) {
+                       auto [a, b, c] = x;
+                       return a + b + c;
+                   });
+    ASSERT(di::container::equal(windows, di::Array { 6, 9, 12, 15 }));
+}
+
 constexpr void counted() {
     auto x = di::Array { 5, 4, 3, 2, 1 };
     auto y = di::view::counted(x.begin(), 3);
@@ -347,6 +363,7 @@ TEST_CONSTEXPR(container_view, as_rvalue, as_rvalue)
 TEST_CONSTEXPR(container_view, as_const, as_const)
 TEST_CONSTEXPR(container_view, transform, transform)
 TEST_CONSTEXPR(container_view, zip, zip)
+TEST_CONSTEXPR(container_view, adjacent, adjacent)
 TEST_CONSTEXPR(container_view, counted, counted)
 TEST_CONSTEXPR(container_view, take, take)
 TEST_CONSTEXPR(container_view, drop, drop)
