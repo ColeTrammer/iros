@@ -330,8 +330,9 @@ constexpr void stride() {
 }
 
 constexpr void enumerate() {
-    ASSERT(di::all_of(di::range(10) | di::enumerate, [](auto value) {
-        return value.index == di::to_unsigned(value.value);
+    ASSERT(di::all_of(di::range(10) | di::enumerate, [](auto pair) {
+        auto [index, value] = pair;
+        return index == di::to_unsigned(value);
     }));
 }
 

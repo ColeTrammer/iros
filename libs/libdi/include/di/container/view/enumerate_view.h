@@ -5,7 +5,6 @@
 #include <di/container/iterator/sentinel_extension.h>
 #include <di/container/meta/enable_borrowed_container.h>
 #include <di/container/meta/prelude.h>
-#include <di/container/view/enumerate_result.h>
 #include <di/container/view/view_interface.h>
 #include <di/meta/make_unsigned.h>
 #include <di/meta/maybe_const.h>
@@ -52,7 +51,7 @@ private:
             : Base(other.base()), m_index(other.m_index) {}
 
         constexpr auto operator*() const {
-            return EnumerateResult<Index<is_const>, meta::IteratorReference<Iter<is_const>>> { m_index, *this->base() };
+            return Tuple<Index<is_const>, meta::IteratorReference<Iter<is_const>>> { m_index, *this->base() };
         }
 
         constexpr void advance_one() {

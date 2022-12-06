@@ -92,6 +92,7 @@ protected:
         Base::static_assign_unchecked(util::forward_as_base<Self, Base>(self), util::forward<Tup>(other));
     }
 
+private:
     [[no_unique_address]] T m_value;
 };
 
