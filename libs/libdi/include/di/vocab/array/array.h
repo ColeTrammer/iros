@@ -7,6 +7,7 @@
 #include <di/concepts/three_way_comparable.h>
 #include <di/container/algorithm/compare.h>
 #include <di/container/algorithm/equal.h>
+#include <di/container/interface/reconstruct.h>
 #include <di/types/size_t.h>
 #include <di/util/forward_like.h>
 #include <di/util/get_in_place.h>
@@ -187,6 +188,12 @@ private:
 
     constexpr friend bool tag_invoke(types::Tag<vocab::enable_generate_structed_bindings>, types::InPlaceType<Array>) { return true; }
     constexpr friend types::size_t tag_invoke(types::Tag<vocab::tuple_size>, types::InPlaceType<Array>) { return extent; }
+
+    template<concepts::ContiguousIterator It, concepts::SizedSentinelFor<It> Sent>
+    requires(concepts::ConvertibleToNonSlicing<It, T*>)
+    constexpr friend Span<T> tag_invoke(types::Tag<container::reconstruct>, InPlaceType<Array>, It first, Sent last) {
+        return Span<T>(util::move(first), util::move(last));
+    }
 
     template<types::size_t index>
     requires(index < extent)

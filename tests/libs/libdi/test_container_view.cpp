@@ -281,16 +281,18 @@ constexpr void counted() {
 }
 
 constexpr void take() {
-    auto x = di::Array { 1, 2, 3, 4, 5 };
-    ASSERT(di::container::equal(x | di::take(3), di::Array { 1, 2, 3 }));
+    auto x = di::Array { 1, 2, 3, 4, 5 } | di::take(3);
+    static_assert(di::SameAs<decltype(x), di::Span<int>>);
+    ASSERT(di::container::equal(x, di::Array { 1, 2, 3 }));
 
     auto z = di::iota(1) | di::take(3);
     ASSERT(di::container::equal(z, di::Array { 1, 2, 3 }));
 }
 
 constexpr void drop() {
-    auto x = di::Array { 1, 2, 3, 4, 5 };
-    ASSERT(di::container::equal(x | di::drop(2), di::Array { 3, 4, 5 }));
+    auto x = di::Array { 1, 2, 3, 4, 5 } | di::drop(2);
+    static_assert(di::SameAs<decltype(x), di::Span<int>>);
+    ASSERT(di::container::equal(x, di::Array { 3, 4, 5 }));
 
     auto z = di::iota(1) | di::drop(2) | di::take(3);
     ASSERT(di::container::equal(z, di::Array { 3, 4, 5 }));

@@ -13,6 +13,7 @@
 #include <di/concepts/unsigned_integer.h>
 #include <di/concepts/weakly_equality_comparable_with.h>
 #include <di/container/concepts/sized_sentinel_for.h>
+#include <di/container/interface/reconstruct.h>
 #include <di/container/iterator/iterator_base.h>
 #include <di/container/iterator/iterator_category.h>
 #include <di/container/iterator/iterator_ssize_type.h>
@@ -228,6 +229,15 @@ public:
     }
 
 private:
+    template<concepts::OneOf<Iterator, meta::Conditional<is_bounded, Sentinel, UnreachableSentinel>> Sent>
+    constexpr friend auto tag_invoke(types::Tag<container::reconstruct>, Iterator first, Sent last) {
+        if constexpr (concepts::SameAs<Iterator, Sent>) {
+            return IotaView<decltype(*util::move(first)), decltype(*util::move(last))>(*util::move(first), *util::move(last));
+        } else {
+            return IotaView(util::move(first), util::move(last));
+        }
+    }
+
     T m_value {};
     Bound m_bound {};
 };

@@ -4,6 +4,7 @@
 #include <di/concepts/three_way_comparable.h>
 #include <di/container/algorithm/compare.h>
 #include <di/container/algorithm/equal.h>
+#include <di/container/interface/reconstruct.h>
 #include <di/container/vector/constant_vector.h>
 #include <di/container/vector/vector_at.h>
 #include <di/container/vector/vector_back.h>
@@ -112,6 +113,12 @@ private:
     requires(concepts::ThreeWayComparable<Value>)
     {
         return container::compare(a, b);
+    }
+
+    template<concepts::ContiguousIterator It, concepts::SizedSentinelFor<It> Sent>
+    requires(concepts::ConvertibleToNonSlicing<It, Value*>)
+    constexpr friend vocab::Span<Value> tag_invoke(types::Tag<container::reconstruct>, InPlaceType<Self>, It first, Sent last) {
+        return vocab::Span<Value>(util::move(first), util::move(last));
     }
 };
 }

@@ -17,6 +17,7 @@
 #include <di/container/concepts/sized_container.h>
 #include <di/container/concepts/sized_sentinel_for.h>
 #include <di/container/interface/data.h>
+#include <di/container/interface/reconstruct.h>
 #include <di/container/interface/size.h>
 #include <di/container/meta/container_reference.h>
 #include <di/container/meta/enable_borrowed_container.h>
@@ -188,6 +189,12 @@ private:
     requires(concepts::ThreeWayComparable<T>)
     {
         return container::compare(a, b);
+    }
+
+    template<concepts::ContiguousIterator It, concepts::SizedSentinelFor<It> Sent>
+    requires(concepts::ConvertibleToNonSlicing<It, T*>)
+    constexpr friend Span<T> tag_invoke(types::Tag<container::reconstruct>, InPlaceType<Span>, It first, Sent last) {
+        return Span<T>(util::move(first), util::move(last));
     }
 
     template<types::size_t index>

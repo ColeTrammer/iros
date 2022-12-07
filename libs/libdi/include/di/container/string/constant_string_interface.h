@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/container/interface/reconstruct.h>
 #include <di/container/string/constant_string.h>
 #include <di/container/string/encoding.h>
 #include <di/container/string/string_begin.h>
@@ -52,6 +53,12 @@ private:
     requires(concepts::SameAs<Enc, meta::Encoding<Other>>)
     constexpr friend bool operator<=>(Self const& a, Other const& b) {
         return string::compare(a, b);
+    }
+
+    template<concepts::ContiguousIterator It, concepts::SizedSentinelFor<It> Sent>
+    requires(concepts::ConvertibleToNonSlicing<It, CodeUnit const*>)
+    constexpr friend StringViewImpl<Enc> tag_invoke(types::Tag<container::reconstruct>, InPlaceType<Self>, It first, Sent last) {
+        return StringViewImpl<Enc>(util::move(first), util::move(last));
     }
 };
 }

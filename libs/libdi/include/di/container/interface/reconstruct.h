@@ -55,7 +55,7 @@ struct ReconstructFunction {
                  { (*this)(in_place_type<Con>, util::forward<It>(iterator), util::forward<Sent>(sentinel)) } -> concepts::View;
              })
     {
-        if constexpr (detail::CustomReconstruct<InPlaceType<Con>, It, Sent>) {
+        if constexpr (detail::CustomReconstruct<InPlaceType<Con>, Con, It, Sent>) {
             return function::tag_invoke(*this, in_place_type<Con>, util::forward<T>(container), util::forward<It>(iterator),
                                         util::forward<Sent>(sentinel));
         } else {
