@@ -36,10 +36,14 @@ public:
     constexpr auto begin()
     requires(!concepts::SimpleView<View> || need_cache)
     {
-        if (m_begin_cache.value.has_value()) {
-            return m_begin_cache.value.value();
+        if constexpr (need_cache) {
+            if (m_begin_cache.value.has_value()) {
+                return m_begin_cache.value.value();
+            }
+            return m_begin_cache.value.emplace(container::next(container::begin(m_base), m_count, container::end(m_base)));
+        } else {
+            return container::next(container::begin(m_base), m_count, container::end(m_base));
         }
-        return m_begin_cache.value.emplace(container::next(container::begin(m_base), m_count, container::end(m_base)));
     }
 
     constexpr auto begin() const

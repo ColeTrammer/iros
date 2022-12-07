@@ -281,7 +281,8 @@ constexpr void counted() {
 }
 
 constexpr void take() {
-    auto x = di::Array { 1, 2, 3, 4, 5 } | di::take(3);
+    auto a = di::Array { 1, 2, 3, 4, 5 };
+    auto x = a | di::take(3);
     static_assert(di::SameAs<decltype(x), di::Span<int>>);
     ASSERT(di::container::equal(x, di::Array { 1, 2, 3 }));
 
@@ -290,7 +291,8 @@ constexpr void take() {
 }
 
 constexpr void drop() {
-    auto x = di::Array { 1, 2, 3, 4, 5 } | di::drop(2);
+    auto a = di::Array { 1, 2, 3, 4, 5 };
+    auto x = a | di::drop(2);
     static_assert(di::SameAs<decltype(x), di::Span<int>>);
     ASSERT(di::container::equal(x, di::Array { 3, 4, 5 }));
 
