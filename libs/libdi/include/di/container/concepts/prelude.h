@@ -7,6 +7,7 @@
 #include <di/container/concepts/constant_container.h>
 #include <di/container/concepts/container.h>
 #include <di/container/concepts/container_compatible.h>
+#include <di/container/concepts/container_iterator_reconstructible_container.h>
 #include <di/container/concepts/container_of.h>
 #include <di/container/concepts/contiguous_container.h>
 #include <di/container/concepts/contiguous_iterator.h>
@@ -30,9 +31,11 @@
 #include <di/container/concepts/input_container.h>
 #include <di/container/concepts/input_iterator.h>
 #include <di/container/concepts/iterator.h>
+#include <di/container/concepts/iterator_reconstructible_container.h>
 #include <di/container/concepts/permutable.h>
 #include <di/container/concepts/random_access_container.h>
 #include <di/container/concepts/random_access_iterator.h>
+#include <di/container/concepts/reconstructible_container.h>
 #include <di/container/concepts/sentinel_for.h>
 #include <di/container/concepts/simple_view.h>
 #include <di/container/concepts/sized_container.h>
