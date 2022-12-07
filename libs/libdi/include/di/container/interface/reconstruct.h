@@ -19,7 +19,7 @@ namespace detail {
     concept CustomReconstruct = concepts::TagInvocable<ReconstructFunction, Args...>;
 
     template<typename It, typename Sent>
-    concept ViewReconstruct = concepts::ConstructibleFrom<View<It, Sent>, It, Sent>;
+    concept ViewReconstruct = concepts::ConstructibleFrom<View<meta::RemoveCVRef<It>, meta::RemoveCVRef<Sent>>, It, Sent>;
 };
 
 struct ReconstructFunction {
@@ -30,7 +30,7 @@ struct ReconstructFunction {
         if constexpr (detail::CustomReconstruct<It, Sent>) {
             return function::tag_invoke(*this, util::forward<It>(iterator), util::forward<Sent>(sentinel));
         } else {
-            return View<It, Sent>(util::forward<It>(iterator), util::forward<Sent>(sentinel));
+            return View<meta::RemoveCVRef<It>, meta::RemoveCVRef<Sent>>(util::forward<It>(iterator), util::forward<Sent>(sentinel));
         }
     }
 
@@ -39,10 +39,12 @@ struct ReconstructFunction {
     requires(detail::CustomReconstruct<InPlaceType<Con>, It, Sent> ||
              requires {
                  { (*this)(util::forward<It>(iterator), util::forward<Sent>(sentinel)) } -> concepts::View;
-             })
+             } || detail::ViewReconstruct<It, Sent>)
     {
         if constexpr (detail::CustomReconstruct<InPlaceType<Con>, It, Sent>) {
             return function::tag_invoke(*this, in_place_type<Con>, util::forward<It>(iterator), util::forward<Sent>(sentinel));
+        } else if constexpr (detail::ViewReconstruct<It, Sent>) {
+            return View<meta::RemoveCVRef<It>, meta::RemoveCVRef<Sent>>(util::forward<It>(iterator), util::forward<Sent>(sentinel));
         } else {
             return (*this)(util::forward<It>(iterator), util::forward<Sent>(sentinel));
         }

@@ -25,7 +25,7 @@ public:
 
     constexpr StringViewImpl(Iterator begin, Iterator end, Enc encoding = {}) : m_encoding(encoding) {
         auto data = static_cast<CodeUnit const*>(begin);
-        auto last = static_cast<CodeUnit const*>(last);
+        auto last = static_cast<CodeUnit const*>(end);
         m_data = data;
         m_size = (last - data);
     }

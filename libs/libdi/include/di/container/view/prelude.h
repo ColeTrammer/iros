@@ -17,6 +17,7 @@
 #include <di/container/view/repeat.h>
 #include <di/container/view/reverse.h>
 #include <di/container/view/single.h>
+#include <di/container/view/split.h>
 #include <di/container/view/stride.h>
 #include <di/container/view/take.h>
 #include <di/container/view/take_while.h>
@@ -45,6 +46,7 @@ using view::range;
 using view::repeat;
 using view::reverse;
 using view::single;
+using view::split;
 using view::stride;
 using view::take;
 using view::take_while;

@@ -8,6 +8,7 @@
 #include <di/container/concepts/contiguous_container.h>
 #include <di/container/concepts/has_empty_container.h>
 #include <di/container/concepts/sized_container.h>
+#include <di/container/interface/reconstruct.h>
 #include <di/container/meta/container_value.h>
 #include <di/container/meta/enable_borrowed_container.h>
 #include <di/container/view/view_interface.h>
@@ -83,6 +84,12 @@ public:
     }
 
 private:
+    template<typename T, typename U>
+    requires(!concepts::SameAs<OwningView, Cont> && concepts::Invocable<decltype(container::reconstruct), InPlaceType<Cont>, T, U>)
+    constexpr friend auto tag_invoke(types::Tag<container::reconstruct>, InPlaceType<OwningView>, T&& t, U&& u) {
+        return container::reconstruct(in_place_type<Cont>, util::forward<T>(t), util::forward<U>(u));
+    }
+
     Cont m_container;
 };
 }

@@ -300,6 +300,22 @@ constexpr void drop() {
     ASSERT(di::container::equal(z, di::Array { 3, 4, 5 }));
 }
 
+constexpr void split() {
+    auto a = di::Array { 1, 2, 4, 3, 5, 4, 1, 2, 4, 4, 4, 4 } | di::split(4);
+    auto b = di::move(a) | di::transform(di::sum);
+
+    static_assert(di::SameAs<decltype(*a.begin()), di::Span<int>>);
+
+    ASSERT(di::container::equal(b, di::Array { 3, 8, 3, 0, 0, 0, 0 }));
+
+    auto c = "Hello, world, friends"_sv;
+    auto d = c | di::split(", "_sv);
+
+    static_assert(di::SameAs<decltype(*d.begin()), decltype("Hello"_sv)>);
+
+    ASSERT(di::container::equal(d, di::Array { "Hello"_sv, "world"_sv, "friends"_sv }));
+}
+
 constexpr void filter() {
     auto x = di::Array { 1, 2, 3, 4, 5 };
     auto y = di::filter(x, [](auto x) {
@@ -371,6 +387,7 @@ TEST_CONSTEXPR(container_view, adjacent, adjacent)
 TEST_CONSTEXPR(container_view, counted, counted)
 TEST_CONSTEXPR(container_view, take, take)
 TEST_CONSTEXPR(container_view, drop, drop)
+TEST_CONSTEXPR(container_view, split, split)
 TEST_CONSTEXPR(container_view, filter, filter)
 TEST_CONSTEXPR(container_view, take_while, take_while)
 TEST_CONSTEXPR(container_view, drop_while, drop_while)
