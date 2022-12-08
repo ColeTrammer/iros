@@ -11,6 +11,7 @@
 #include <di/container/view/empty.h>
 #include <di/container/view/enumerate.h>
 #include <di/container/view/filter.h>
+#include <di/container/view/join.h>
 #include <di/container/view/keys.h>
 #include <di/container/view/pairwise.h>
 #include <di/container/view/range.h>
@@ -40,6 +41,7 @@ using view::elements;
 using view::enumerate;
 using view::filter;
 using view::iota;
+using view::join;
 using view::keys;
 using view::pairwise;
 using view::range;
