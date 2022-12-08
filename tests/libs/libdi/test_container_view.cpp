@@ -327,6 +327,17 @@ constexpr void join() {
     ASSERT(di::container::equal(b | di::join, di::Array { 1, 2, 1, 2 }));
 }
 
+constexpr void join_with() {
+    auto a = di::Array { di::Array { 1, 2 }, di::Array { 3, 4 } };
+
+    ASSERT(di::container::equal(a | di::join_with(5), di::Array { 1, 2, 5, 3, 4 }));
+
+    auto b = di::range(2) | di::transform([](auto) {
+                 return di::Array { 1, 2 };
+             });
+    ASSERT(di::container::equal(b | di::join_with(di::Array { 3, 4 }), di::Array { 1, 2, 3, 4, 1, 2 }));
+}
+
 constexpr void filter() {
     auto x = di::Array { 1, 2, 3, 4, 5 };
     auto y = di::filter(x, [](auto x) {
@@ -400,6 +411,7 @@ TEST_CONSTEXPR(container_view, take, take)
 TEST_CONSTEXPR(container_view, drop, drop)
 TEST_CONSTEXPR(container_view, split, split)
 TEST_CONSTEXPR(container_view, join, join)
+TEST_CONSTEXPR(container_view, join_with, join_with)
 TEST_CONSTEXPR(container_view, filter, filter)
 TEST_CONSTEXPR(container_view, take_while, take_while)
 TEST_CONSTEXPR(container_view, drop_while, drop_while)

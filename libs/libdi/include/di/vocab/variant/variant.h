@@ -115,28 +115,28 @@ public:
     requires(concepts::ConstructibleFrom<T, Args...>)
     constexpr T& emplace(Args&&... args) {
         destroy();
-        do_emplace(in_place_index<index>, util::forward<Args>(args)...);
+        return do_emplace(in_place_index<index>, util::forward<Args>(args)...);
     }
 
     template<size_t index, typename U, typename... Args, typename T = meta::At<List, index>>
     requires(concepts::ConstructibleFrom<T, util::InitializerList<U>, Args...>)
     constexpr T& emplace(util::InitializerList<U> list, Args&&... args) {
         destroy();
-        do_emplace(in_place_index<index>, list, util::forward<Args>(args)...);
+        return do_emplace(in_place_index<index>, list, util::forward<Args>(args)...);
     }
 
     template<typename T, typename... Args, auto index = meta::Lookup<T, List>>
     requires(meta::UniqueType<T, List> && concepts::ConstructibleFrom<T, Args...>)
     constexpr T& emplace(Args&&... args) {
         destroy();
-        do_emplace(in_place_index<index>, util::forward<Args>(args)...);
+        return do_emplace(in_place_index<index>, util::forward<Args>(args)...);
     }
 
     template<typename T, typename U, typename... Args, auto index = meta::Lookup<T, List>>
     requires(meta::UniqueType<T, List> && concepts::ConstructibleFrom<T, util::InitializerList<U>, Args...>)
     constexpr T& emplace(util::InitializerList<U> list, Args&&... args) {
         destroy();
-        do_emplace(in_place_index<index>, list, util::forward<Args>(args)...);
+        return do_emplace(in_place_index<index>, list, util::forward<Args>(args)...);
     }
 
 private:

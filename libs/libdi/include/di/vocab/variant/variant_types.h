@@ -22,5 +22,5 @@ constexpr inline auto variant_types = detail::VariantTypesFunction {};
 
 namespace di::meta {
 template<typename T>
-using VariantTypes = decltype(vocab::variant_types(in_place_type<meta::RemoveReference<T>>));
+using VariantTypes = decltype(vocab::variant_types(in_place_type<meta::RemoveCVRef<T>>));
 }
