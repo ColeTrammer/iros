@@ -28,5 +28,14 @@ constexpr void push_back() {
     ASSERT_EQ(x, "abcdef"_sv);
 }
 
+constexpr void to() {
+    auto x = "abc"_sv | di::to<di::String>();
+    ASSERT_EQ(x, "abc"_sv);
+
+    auto y = "abc"_sv | di::to<di::String>(di::encoding::assume_valid);
+    ASSERT_EQ(y, "abc"_sv);
+}
+
 TEST_CONSTEXPR(container_string, basic, basic)
 TEST_CONSTEXPR(container_string, push_back, push_back)
+TEST_CONSTEXPR(container_string, to, to)

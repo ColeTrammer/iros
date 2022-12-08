@@ -7,6 +7,8 @@
 #include <di/container/string/transparent_encoding.h>
 
 namespace di {
+namespace encoding = container::string::encoding;
+
 using container::FixedString;
 using container::String;
 using container::StringView;
