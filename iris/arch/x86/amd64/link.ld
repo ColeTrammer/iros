@@ -15,6 +15,7 @@ SECTIONS
     /* The Higher-Half kernel is mapped at -2 GiB for -mcmodel=kernel GCC optimization */
     . = 0xffffffff80000000;
 
+    PROVIDE(__iris_kernel_start = .);
     PROVIDE(__iris_text_segment_start = .);
     .text : {
         *(.text .text.*)
@@ -54,6 +55,7 @@ SECTIONS
     /* Move to the next memory page for alignment */
     . += CONSTANT(MAXPAGESIZE);
     PROVIDE(__iris_data_segment_end = .);
+    PROVIDE(__iris_kernel_end = .);
 
     /* Discard .note.* and .eh_frame since they may cause issues on some hosts. */
     /DISCARD/ : {

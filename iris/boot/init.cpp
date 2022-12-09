@@ -1,5 +1,6 @@
 #include <di/prelude.h>
 #include <iris/arch/x86/amd64/idt.h>
+#include <iris/boot/cxx_init.h>
 #include <iris/core/log.h>
 #include <iris/mm/address_space.h>
 #include <iris/mm/map_physical_address.h>
@@ -58,6 +59,8 @@ static char __temp_stack[4 * 4096];
 void iris_main() {
     asm volatile("mov %0, %%rsp" : : "r"(__temp_stack + sizeof(__temp_stack)) : "memory");
 
+    iris::arch::cxx_init();
+
     iris::debug_log("Hello, World"_sv);
 
     using namespace iris::x86::amd64::idt;
@@ -75,6 +78,13 @@ void iris_main() {
     iris::debug_log("Hello, World - again"_sv);
 
     auto memory_map = di::Span { memmap_request.response->entries, memmap_request.response->entry_count };
+
+    ASSERT(!memory_map.empty());
+    auto max_physical_address = di::max(memory_map | di::transform([](auto* entry) {
+                                            return entry->base + entry->length;
+                                        }));
+    (void) max_physical_address;
+
     for (auto* memory_map_entry : memory_map) {
         switch (memory_map_entry->type) {
             case LIMINE_MEMMAP_USABLE:
@@ -138,7 +148,7 @@ void iris_main() {
     iris::debug_log("Hello, World - again again"_sv);
 
     auto* x = new (std::nothrow) int { 42 };
-    ASSERT(x == nullptr);
+    ASSERT(x != nullptr);
     delete x;
 
     iris::debug_log("Hello, World - again again again"_sv);
