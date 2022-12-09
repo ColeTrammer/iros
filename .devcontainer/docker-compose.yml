@@ -24,15 +24,20 @@ services:
       # Update this to wherever you want VS Code to mount the folder of your project
       - ..:/build/iros
 
+      # Uncomment the next line to use Docker from inside the container. See https://aka.ms/vscode-remote/samples/docker-from-docker-compose for details.
+      # - /var/run/docker.sock:/var/run/docker.sock 
+
+      # Change 1000 to your uid (run `id`), and uncomment the next line to enable wayland support
+      # - /run/user/1000/wayland-1:/tmp/wayland-1
+
     environment:
       - DISPLAY
+      - WAYLAND_DISPLAY
+      - XDG_RUNTIME_DIR=/tmp
 
     network_mode: host
 
     privileged: true
-
-      # Uncomment the next line to use Docker from inside the container. See https://aka.ms/vscode-remote/samples/docker-from-docker-compose for details.
-      # - /var/run/docker.sock:/var/run/docker.sock 
 
     # Uncomment the next four lines if you will use a ptrace-based debugger like C++, Go, and Rust.
     # cap_add:
