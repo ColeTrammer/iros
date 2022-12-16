@@ -5,7 +5,7 @@
 #include <di/parser/concepts/parser_context.h>
 #include <di/util/declval.h>
 
-namespace di::parser {
+namespace di::meta {
 template<concepts::ParserContext Context, concepts::Parser<Context> Parser>
 using ParserValue = meta::ExpectedValue<decltype(util::declval<Parser&>().parse(util::declval<Context&>()))>;
 }
