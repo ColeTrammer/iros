@@ -11,6 +11,9 @@
 #include <di/container/string/string_equal.h>
 #include <di/container/string/string_size.h>
 #include <di/container/string/string_size_code_units.h>
+#include <di/container/string/string_unicode_code_points.h>
+#include <di/parser/into_parser_context.h>
+#include <di/parser/string_view_parser_context.h>
 
 namespace di::container::string {
 template<concepts::Encoding Enc>
@@ -42,6 +45,8 @@ public:
 
     constexpr auto view() const { return StringViewImpl<Enc>(self()); }
 
+    constexpr auto unicode_code_points() const { return string::unicode_code_points(self()); }
+
 private:
     template<concepts::detail::ConstantString Other>
     requires(concepts::SameAs<Enc, meta::Encoding<Other>>)
@@ -53,6 +58,10 @@ private:
     requires(concepts::SameAs<Enc, meta::Encoding<Other>>)
     constexpr friend bool operator<=>(Self const& a, Other const& b) {
         return string::compare(a, b);
+    }
+
+    constexpr friend auto tag_invoke(types::Tag<parser::into_parser_context>, Self const& self) {
+        return parser::StringViewParserContext<Enc>(self.view());
     }
 
     template<concepts::ContiguousIterator It, concepts::SizedSentinelFor<It> Sent>

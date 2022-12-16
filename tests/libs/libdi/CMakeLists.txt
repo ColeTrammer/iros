@@ -12,6 +12,7 @@ set(TEST_FILES
     test_function_bind.cpp
     test_function_invoke.cpp
     test_meta.cpp
+    test_parser.cpp
     test_util_swap.cpp
     test_vocab_array.cpp
     test_vocab_expected.cpp

@@ -5,6 +5,7 @@
 #include <di/concepts/same_as.h>
 #include <di/concepts/semiregular.h>
 #include <di/container/view/single.h>
+#include <di/container/view/transform.h>
 #include <di/container/view/view.h>
 #include <di/function/tag_invoke.h>
 #include <di/meta/remove_cvref.h>
@@ -139,6 +140,30 @@ constexpr inline auto make_iterator = detail::MakeIteratorFunction {};
 constexpr inline auto iterator_data = detail::IteratorDataFunction {};
 constexpr inline auto convert_to_code_units = detail::ConvertToCodeUnitsFunction {};
 constexpr inline auto code_point_view = detail::CodePointViewFunction {};
+
+namespace detail {
+    template<typename V>
+    concept UnicodeCodePointView = concepts::ContainerOf<V, char32_t> && concepts::View<V> && concepts::ForwardContainer<V>;
+
+    struct UnicodeCodePointViewFunction {
+        template<typename T, typename U = meta::EncodingCodePoint<T>, typename P = meta::EncodingCodePoint<T>>
+        requires(concepts::TagInvocable<UnicodeCodePointViewFunction, T const&, Span<U const>> || concepts::SameAs<P, char32_t> ||
+                 concepts::ConstructibleFrom<char32_t, P>)
+        constexpr UnicodeCodePointView auto operator()(T const& encoding, Span<U const> code_units) const {
+            if constexpr (concepts::TagInvocable<UnicodeCodePointViewFunction, T const&, Span<U const>>) {
+                return function::tag_invoke(*this, encoding, code_units);
+            } else if constexpr (concepts::SameAs<P, char32_t>) {
+                return code_point_view(encoding, code_units);
+            } else {
+                return code_point_view(encoding, code_units) | view::transform([](auto code_point) {
+                           return char32_t(code_point);
+                       });
+            }
+        }
+    };
+}
+
+constexpr inline auto unicode_code_point_view = detail::UnicodeCodePointViewFunction {};
 }
 
 namespace di::concepts {
@@ -158,6 +183,7 @@ concept Encoding = concepts::Semiregular<T> &&
                        container::string::encoding::iterator_data(encoding, mutable_code_units, iterator);
                        container::string::encoding::convert_to_code_units(encoding, code_point);
                        container::string::encoding::code_point_view(encoding, code_units);
+                       container::string::encoding::unicode_code_point_view(encoding, code_units);
                    };
 
 template<typename T>
