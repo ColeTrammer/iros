@@ -1,6 +1,8 @@
 #pragma once
 
 #include <di/concepts/integer.h>
+#include <di/math/numeric_limits.h>
+#include <di/math/to_unsigned.h>
 #include <di/parser/basic/match_one.h>
 #include <di/parser/basic/match_one_or_more.h>
 #include <di/parser/combinator/optional.h>
@@ -25,28 +27,43 @@ namespace detail {
             auto digits = '0'_m - '9'_m;
 
             return and_then(sequence(optional(match_one(sign)), match_one_or_more(digits)),
-                            []<concepts::ParserContext Context>(Context&, auto results) -> meta::ParserContextResult<T, Context> {
+                            []<concepts::ParserContext Context>(Context& context, auto results) -> meta::ParserContextResult<T, Context> {
                                 auto [sign, digits] = results;
 
-                                T sign_value = 1;
+                                bool negative = false;
                                 if constexpr (concepts::Signed<T>) {
                                     if (sign && *sign == '-') {
-                                        sign_value = -1;
+                                        negative = true;
                                     }
                                 }
 
-                                T result = 0;
+                                using Acc = meta::MakeUnsigned<T>;
+                                Acc result = 0;
 
                                 auto sent = container::end(digits);
                                 for (auto it = container::begin(digits); it != sent; ++it) {
+                                    auto prev_result = result;
+
                                     // FIXME: support other radixes.
-                                    // FIXME: check for overflow.
                                     result *= 10;
                                     result += (*it - U'0');
+
+                                    // Unsigned overflow occurred.
+                                    if (prev_result > result) {
+                                        return Unexpected(context.make_error());
+                                    }
                                 }
 
-                                // FIXME: handle the INT_MIN case correctly.
-                                return result * sign_value;
+                                if constexpr (concepts::UnsignedInteger<T>) {
+                                    (void) negative;
+                                    return result;
+                                } else {
+                                    auto max_magnitude = math::to_unsigned(math::NumericLimits<T>::max) + negative;
+                                    if (result > max_magnitude) {
+                                        return Unexpected(context.make_error());
+                                    }
+                                    return static_cast<T>(negative ? -result : result);
+                                }
                             });
         }
     };
