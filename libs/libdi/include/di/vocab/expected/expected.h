@@ -28,6 +28,7 @@
 #include <di/vocab/expected/expected_forward_declaration.h>
 #include <di/vocab/expected/unexpect.h>
 #include <di/vocab/expected/unexpected.h>
+#include <di/vocab/optional/prelude.h>
 
 namespace di::vocab {
 template<typename T, typename E>
@@ -205,6 +206,18 @@ public:
     requires(concepts::MoveConstructible<T>)
     constexpr T value_or(U&& default_value) && {
         return has_value() ? *util::move(*this) : static_cast<T>(util::forward<U>(default_value));
+    }
+
+    constexpr Optional<T> optional_value() const&
+    requires(concepts::CopyConstructible<T>)
+    {
+        return has_value() ? Optional<T> { in_place, **this } : nullopt;
+    }
+
+    constexpr Optional<T> optional_value() &&
+        requires(concepts::MoveConstructible<T>)
+    {
+        return has_value() ? Optional<T> { in_place, *util::move(*this) } : nullopt;
     }
 
     template<typename... Args>

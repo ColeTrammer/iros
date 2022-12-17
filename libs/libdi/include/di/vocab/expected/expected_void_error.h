@@ -23,6 +23,7 @@
 #include <di/util/unreachable.h>
 #include <di/vocab/expected/expected_can_convert_constructor.h>
 #include <di/vocab/expected/expected_void_void.h>
+#include <di/vocab/optional/prelude.h>
 
 namespace di::vocab {
 // Expected<T, void> is used to denote an expected value
@@ -122,6 +123,8 @@ public:
     constexpr T value_or(U&&) && {
         return *util::move(*this);
     }
+
+    constexpr auto optional_value() const { return Optional<void>(has_value()); }
 
     template<typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...>)

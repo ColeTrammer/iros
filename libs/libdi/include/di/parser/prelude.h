@@ -2,7 +2,13 @@
 
 #include <di/parser/basic/code_point_parser.h>
 #include <di/parser/basic/eof_parser.h>
+#include <di/parser/basic/match_one.h>
+#include <di/parser/basic/match_one_or_more.h>
+#include <di/parser/combinator/and_then.h>
+#include <di/parser/combinator/ignore.h>
+#include <di/parser/combinator/optional.h>
 #include <di/parser/combinator/sequence.h>
+#include <di/parser/combinator/transform.h>
 #include <di/parser/concepts/parser.h>
 #include <di/parser/concepts/parser_context.h>
 #include <di/parser/create_parser.h>

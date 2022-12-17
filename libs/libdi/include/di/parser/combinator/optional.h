@@ -1,0 +1,36 @@
+#pragma once
+
+#include <di/parser/concepts/parser.h>
+#include <di/parser/concepts/parser_context.h>
+#include <di/parser/meta/parser_context_result.h>
+#include <di/parser/meta/parser_value.h>
+#include <di/parser/parser_base.h>
+#include <di/vocab/optional/prelude.h>
+
+namespace di::parser {
+namespace detail {
+    template<typename Parser>
+    class OptionalParser : public ParserBase<OptionalParser<Parser>> {
+    public:
+        constexpr explicit OptionalParser(Parser&& parser) : m_parser(util::move(parser)) {}
+
+        template<concepts::ParserContext Context, typename Value = meta::ParserValue<Context, Parser>>
+        requires(concepts::Parser<Parser, Context>)
+        constexpr auto parse(Context& context) const -> meta::ParserContextResult<Optional<Value>, Context> {
+            return m_parser.parse(context).optional_value();
+        }
+
+    private:
+        Parser m_parser;
+    };
+
+    struct OptionalFunction {
+        template<typename Parser>
+        constexpr auto operator()(Parser&& parser) const {
+            return OptionalParser<meta::UnwrapRefDecay<Parser>>(util::forward<Parser>(parser));
+        }
+    };
+}
+
+constexpr inline auto optional = detail::OptionalFunction {};
+}

@@ -28,6 +28,12 @@ public:
     constexpr auto make_error() { return Error {}; }
 
 private:
+    template<typename Iter, typename Sent>
+    requires(concepts::ReconstructibleContainer<View, Iter, Sent>)
+    constexpr friend auto tag_invoke(types::Tag<reconstruct>, InPlaceType<StringViewParserContext>, Iter&& iter, Sent&& sent) {
+        return reconstruct(in_place_type<View>, util::forward<Iter>(iter), util::forward<Sent>(sent));
+    }
+
     CodePoints m_code_points;
     Iter m_iterator;
 };
