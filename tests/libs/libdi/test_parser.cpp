@@ -16,4 +16,11 @@ constexpr void set() {
     ASSERT(not_alpha_num(U'-'));
 }
 
+constexpr void code_point() {
+    ASSERT(!di::parse<char32_t>(""_sv));
+    ASSERT_EQ(*di::parse<char32_t>("A"_sv), U'A');
+    ASSERT(!di::parse<char32_t>("AB"_sv));
+}
+
 TEST_CONSTEXPR(parser, set, set)
+TEST_CONSTEXPR(parser, code_point, code_point)

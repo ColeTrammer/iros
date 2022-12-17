@@ -1,5 +1,8 @@
 #pragma once
 
+#include <di/parser/basic/code_point_parser.h>
+#include <di/parser/basic/eof_parser.h>
+#include <di/parser/combinator/sequence.h>
 #include <di/parser/concepts/parser.h>
 #include <di/parser/concepts/parser_context.h>
 #include <di/parser/create_parser.h>
