@@ -16,6 +16,7 @@
 #include <di/function/into_void.h>
 #include <di/function/invoke.h>
 #include <di/function/less.h>
+#include <di/function/overload.h>
 #include <di/function/monad/prelude.h>
 #include <di/function/not_equal.h>
 #include <di/function/piped.h>
@@ -32,6 +33,7 @@ using function::curry;
 using function::curry_back;
 using function::flip;
 using function::piped;
+using function::overload;
 using function::ycombinator;
 
 using concepts::TagInvocable;
