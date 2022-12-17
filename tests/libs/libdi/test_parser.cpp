@@ -11,7 +11,7 @@ constexpr void set() {
     ASSERT(alpha_num(U'3'));
     ASSERT(!alpha_num(U'-'));
 
-    auto not_alpha_num = !alpha_num;
+    auto not_alpha_num = ~alpha_num;
     ASSERT(!not_alpha_num(U'3'));
     ASSERT(not_alpha_num(U'-'));
 }

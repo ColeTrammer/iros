@@ -13,14 +13,13 @@ namespace detail {
         template<concepts::Predicate<char32_t> Pred>
         requires(concepts::DecayConstructible<Pred>)
         constexpr auto operator()(Pred&& predicate) const {
-            return and_then(code_point(),
-                            [predicate = auto(util::forward<Pred>(predicate))]<concepts::ParserContext Context>(
-                                Context& context, char32_t code_point) -> meta::ParserContextResult<char32_t, Context> {
-                                if (!predicate(code_point)) {
-                                    return Unexpected(context.make_error());
-                                }
-                                return code_point;
-                            });
+            return code_point() << [predicate = auto(util::forward<Pred>(predicate))]<concepts::ParserContext Context>(
+                                       Context& context, char32_t code_point) -> meta::ParserContextResult<char32_t, Context> {
+                if (!predicate(code_point)) {
+                    return Unexpected(context.make_error());
+                }
+                return code_point;
+            };
         }
     };
 }

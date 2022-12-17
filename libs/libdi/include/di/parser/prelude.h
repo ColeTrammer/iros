@@ -5,6 +5,7 @@
 #include <di/parser/basic/integer.h>
 #include <di/parser/basic/match_one.h>
 #include <di/parser/basic/match_one_or_more.h>
+#include <di/parser/basic/match_zero_or_more.h>
 #include <di/parser/combinator/and_then.h>
 #include <di/parser/combinator/ignore.h>
 #include <di/parser/combinator/optional.h>

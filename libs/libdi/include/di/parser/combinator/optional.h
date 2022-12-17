@@ -35,4 +35,10 @@ namespace detail {
 }
 
 constexpr inline auto optional = detail::OptionalFunction {};
+
+template<concepts::DecayConstructible Parser>
+requires(concepts::DerivedFrom<Parser, ParserBase<Parser>>)
+constexpr auto operator-(Parser&& parser) {
+    return optional(util::forward<Parser>(parser));
+}
 }

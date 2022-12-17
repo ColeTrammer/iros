@@ -44,17 +44,17 @@ struct InvertedIntegralSet {
 };
 
 template<concepts::Integral T>
-constexpr auto operator!(MatchOne<T> value) {
+constexpr auto operator~(MatchOne<T> value) {
     return InvertedIntegralSet<T, 1> { IntegralSet<T, 1> { MatchRange<T> { value.value, value.value } } };
 }
 
 template<concepts::Integral T>
-constexpr auto operator!(MatchRange<T> value) {
+constexpr auto operator~(MatchRange<T> value) {
     return InvertedIntegralSet<T, 1> { IntegralSet<T, 1> { value } };
 }
 
 template<concepts::Integral T, size_t N>
-constexpr auto operator!(IntegralSet<T, N> value) {
+constexpr auto operator~(IntegralSet<T, N> value) {
     return InvertedIntegralSet<T, N> { value };
 }
 

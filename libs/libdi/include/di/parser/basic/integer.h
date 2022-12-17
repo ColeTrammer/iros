@@ -26,45 +26,45 @@ namespace detail {
             }();
             auto digits = '0'_m - '9'_m;
 
-            return and_then(sequence(optional(match_one(sign)), match_one_or_more(digits)),
-                            []<concepts::ParserContext Context>(Context& context, auto results) -> meta::ParserContextResult<T, Context> {
-                                auto [sign, digits] = results;
+            return (-match_one(sign) >> match_one_or_more(digits))
+                       << []<concepts::ParserContext Context>(Context& context, auto results) -> meta::ParserContextResult<T, Context> {
+                auto [sign, digits] = results;
 
-                                bool negative = false;
-                                if constexpr (concepts::Signed<T>) {
-                                    if (sign && *sign == '-') {
-                                        negative = true;
-                                    }
-                                }
+                bool negative = false;
+                if constexpr (concepts::Signed<T>) {
+                    if (sign && *sign == '-') {
+                        negative = true;
+                    }
+                }
 
-                                using Acc = meta::MakeUnsigned<T>;
-                                Acc result = 0;
+                using Acc = meta::MakeUnsigned<T>;
+                Acc result = 0;
 
-                                auto sent = container::end(digits);
-                                for (auto it = container::begin(digits); it != sent; ++it) {
-                                    auto prev_result = result;
+                auto sent = container::end(digits);
+                for (auto it = container::begin(digits); it != sent; ++it) {
+                    auto prev_result = result;
 
-                                    // FIXME: support other radixes.
-                                    result *= 10;
-                                    result += (*it - U'0');
+                    // FIXME: support other radixes.
+                    result *= 10;
+                    result += (*it - U'0');
 
-                                    // Unsigned overflow occurred.
-                                    if (prev_result > result) {
-                                        return Unexpected(context.make_error());
-                                    }
-                                }
+                    // Unsigned overflow occurred.
+                    if (prev_result > result) {
+                        return Unexpected(context.make_error());
+                    }
+                }
 
-                                if constexpr (concepts::UnsignedInteger<T>) {
-                                    (void) negative;
-                                    return result;
-                                } else {
-                                    auto max_magnitude = math::to_unsigned(math::NumericLimits<T>::max) + negative;
-                                    if (result > max_magnitude) {
-                                        return Unexpected(context.make_error());
-                                    }
-                                    return static_cast<T>(negative ? -result : result);
-                                }
-                            });
+                if constexpr (concepts::UnsignedInteger<T>) {
+                    (void) negative;
+                    return result;
+                } else {
+                    auto max_magnitude = math::to_unsigned(math::NumericLimits<T>::max) + negative;
+                    if (result > max_magnitude) {
+                        return Unexpected(context.make_error());
+                    }
+                    return static_cast<T>(negative ? -result : result);
+                }
+            };
         }
     };
 }

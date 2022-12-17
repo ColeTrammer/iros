@@ -5,12 +5,18 @@
 namespace di::parser {
 namespace detail {
     struct IgnoreFunction {
-        template<typename Parser>
+        template<concepts::DecayConstructible Parser>
         constexpr auto operator()(Parser&& parser) const {
-            return transform(util::forward<Parser>(parser), [](auto&&...) {});
+            return util::forward<Parser>(parser) % [](auto&&...) {};
         }
     };
 }
 
 constexpr inline auto ignore = detail::IgnoreFunction {};
+
+template<concepts::DecayConstructible Parser>
+requires(concepts::DerivedFrom<Parser, ParserBase<Parser>>)
+constexpr auto operator~(Parser&& parser) {
+    return ignore(util::forward<Parser>(parser));
+}
 }

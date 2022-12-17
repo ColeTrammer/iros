@@ -36,4 +36,11 @@ namespace detail {
 }
 
 constexpr inline auto transform = detail::TransformFunction {};
+
+
+template<concepts::DecayConstructible Parser, concepts::DecayConstructible Fun>
+requires(concepts::DerivedFrom<Parser, ParserBase<Parser>>)
+constexpr auto operator%(Parser&& parser, Fun&& function) {
+    return transform(util::forward<Parser>(parser), util::forward<Fun>(function));
+}
 }

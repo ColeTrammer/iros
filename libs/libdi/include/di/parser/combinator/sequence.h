@@ -8,8 +8,12 @@
 
 namespace di::parser {
 namespace detail {
+    struct SequenceParserMarker {};
+
     template<typename... Parsers>
-    class SequenceParser : public ParserBase<SequenceParser<Parsers...>> {
+    class SequenceParser
+        : public ParserBase<SequenceParser<Parsers...>>
+        , public SequenceParserMarker {
     public:
         template<typename... Ps>
         constexpr explicit SequenceParser(InPlace, Ps&&... parsers) : m_parsers(util::forward<Ps>(parsers)...) {}
@@ -46,7 +50,6 @@ namespace detail {
             return process_index(in_place_index<0>);
         }
 
-    private:
         Tuple<Parsers...> m_parsers;
     };
 
@@ -59,4 +62,47 @@ namespace detail {
 }
 
 constexpr inline auto sequence = detail::SequenceFunction {};
+
+template<concepts::DecayConstructible Left, concepts::DecayConstructible Right>
+requires(concepts::DerivedFrom<Left, ParserBase<Left>> && concepts::DerivedFrom<Right, ParserBase<Right>>)
+constexpr auto operator>>(Left&& left, Right&& right) {
+    return sequence(util::forward<Left>(left), util::forward<Right>(right));
+}
+
+template<concepts::DecayConstructible Left, concepts::DecayConstructible Right>
+requires(concepts::DerivedFrom<Left, ParserBase<Left>> && concepts::DerivedFrom<Right, ParserBase<Right>> &&
+         !concepts::DerivedFrom<Left, detail::SequenceParserMarker> && concepts::DerivedFrom<Right, detail::SequenceParserMarker>)
+constexpr auto operator>>(Left&& left, Right&& right) {
+    return vocab::apply(
+        [&]<typename... Rs>(Rs&&... rs) {
+            return sequence(util::forward<Left>(left), util::forward<Rs>(rs)...);
+        },
+        util::forward<Right>(right).m_parsers);
+}
+
+template<concepts::DecayConstructible Left, concepts::DecayConstructible Right>
+requires(concepts::DerivedFrom<Left, ParserBase<Left>> && concepts::DerivedFrom<Right, ParserBase<Right>> &&
+         concepts::DerivedFrom<Left, detail::SequenceParserMarker> && !concepts::DerivedFrom<Right, detail::SequenceParserMarker>)
+constexpr auto operator>>(Left&& left, Right&& right) {
+    return vocab::apply(
+        [&]<typename... Ls>(Ls&&... ls) {
+            return sequence(util::forward<Ls>(ls)..., util::forward<Right>(right));
+        },
+        util::forward<Left>(left).m_parsers);
+}
+
+template<concepts::DecayConstructible Left, concepts::DecayConstructible Right>
+requires(concepts::DerivedFrom<Left, ParserBase<Left>> && concepts::DerivedFrom<Right, ParserBase<Right>> &&
+         concepts::DerivedFrom<Left, detail::SequenceParserMarker> && concepts::DerivedFrom<Right, detail::SequenceParserMarker>)
+constexpr auto operator>>(Left&& left, Right&& right) {
+    return vocab::apply(
+        [&]<typename... Ls>(Ls&&... ls) {
+            return vocab::apply(
+                [&]<typename... Rs>(Rs&&... rs) {
+                    return sequence(util::forward<Ls>(ls)..., util::forward<Rs>(rs)...);
+                },
+                util::forward<Right>(right).m_parsers);
+        },
+        util::forward<Left>(left).m_parsers);
+}
 }
