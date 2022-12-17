@@ -14,7 +14,8 @@ namespace detail {
     template<concepts::Predicate<char32_t> Pred>
     class MatchOneOrMoreParser : public ParserBase<MatchOneOrMoreParser<Pred>> {
     public:
-        constexpr explicit MatchOneOrMoreParser(Pred&& predicate) : m_predicate(util::move(predicate)) {}
+        template<typename P>
+        constexpr explicit MatchOneOrMoreParser(InPlace, P&& predicate) : m_predicate(util::forward<P>(predicate)) {}
 
         template<concepts::ParserContext Context>
         constexpr auto parse(Context& context) const
@@ -28,9 +29,11 @@ namespace detail {
                 ++it;
             }
 
-            if (it == sent) {
+            if (it == start) {
                 return Unexpected(context.make_error());
             }
+
+            context.advance(it);
             return container::reconstruct(in_place_type<Context>, start, it);
         }
 
@@ -40,8 +43,9 @@ namespace detail {
 
     struct MatchOneOrMoreFunction {
         template<concepts::Predicate<char32_t> Pred>
+        requires(concepts::DecayConstructible<Pred>)
         constexpr auto operator()(Pred&& predicate) const {
-            return MatchOneOrMoreParser<meta::UnwrapRefDecay<Pred>> { util::forward<Pred>(predicate) };
+            return MatchOneOrMoreParser<meta::Decay<Pred>> { in_place, util::forward<Pred>(predicate) };
         }
     };
 }

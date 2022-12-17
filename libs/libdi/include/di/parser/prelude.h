@@ -2,6 +2,7 @@
 
 #include <di/parser/basic/code_point_parser.h>
 #include <di/parser/basic/eof_parser.h>
+#include <di/parser/basic/integer.h>
 #include <di/parser/basic/match_one.h>
 #include <di/parser/basic/match_one_or_more.h>
 #include <di/parser/combinator/and_then.h>

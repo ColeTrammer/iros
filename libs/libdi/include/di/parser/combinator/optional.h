@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/concepts/decay_constructible.h>
 #include <di/parser/concepts/parser.h>
 #include <di/parser/concepts/parser_context.h>
 #include <di/parser/meta/parser_context_result.h>
@@ -12,7 +13,8 @@ namespace detail {
     template<typename Parser>
     class OptionalParser : public ParserBase<OptionalParser<Parser>> {
     public:
-        constexpr explicit OptionalParser(Parser&& parser) : m_parser(util::move(parser)) {}
+        template<typename P>
+        constexpr explicit OptionalParser(InPlace, P&& parser) : m_parser(util::forward<P>(parser)) {}
 
         template<concepts::ParserContext Context, typename Value = meta::ParserValue<Context, Parser>>
         requires(concepts::Parser<Parser, Context>)
@@ -25,9 +27,9 @@ namespace detail {
     };
 
     struct OptionalFunction {
-        template<typename Parser>
+        template<concepts::DecayConstructible Parser>
         constexpr auto operator()(Parser&& parser) const {
-            return OptionalParser<meta::UnwrapRefDecay<Parser>>(util::forward<Parser>(parser));
+            return OptionalParser<meta::Decay<Parser>>(in_place, util::forward<Parser>(parser));
         }
     };
 }

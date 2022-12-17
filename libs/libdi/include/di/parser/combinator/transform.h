@@ -11,8 +11,9 @@ namespace detail {
     template<typename Parser, typename Fun>
     class TransformParser : public ParserBase<TransformParser<Parser, Fun>> {
     public:
-        constexpr explicit TransformParser(Parser&& parser, Fun&& function)
-            : m_parser(util::move(parser)), m_function(util::move(function)) {}
+        template<typename P, typename F>
+        constexpr explicit TransformParser(InPlace, P&& parser, F&& function)
+            : m_parser(util::forward<P>(parser)), m_function(util::forward<F>(function)) {}
 
         template<concepts::ParserContext Context, typename Value = meta::ParserValue<Context, Parser>>
         requires(concepts::Parser<Parser, Context>)
@@ -26,10 +27,10 @@ namespace detail {
     };
 
     struct TransformFunction {
-        template<typename Parser, typename Fun>
+        template<concepts::DecayConstructible Parser, concepts::DecayConstructible Fun>
         constexpr auto operator()(Parser&& parser, Fun&& function) const {
-            return TransformParser<meta::UnwrapRefDecay<Parser>, meta::UnwrapRefDecay<Fun>>(util::forward<Parser>(parser),
-                                                                                            util::forward<Fun>(function));
+            return TransformParser<meta::Decay<Parser>, meta::Decay<Fun>>(in_place, util::forward<Parser>(parser),
+                                                                          util::forward<Fun>(function));
         }
     };
 }

@@ -26,5 +26,16 @@ constexpr void code_point() {
     ASSERT_EQ(*di::parse_partial<char32_t>("AB"_sv), U'A');
 }
 
+constexpr void integer() {
+    ASSERT_EQ(*di::parse<i32>("0"_sv), 0);
+    ASSERT(!di::parse<i32>("0qwer"_sv));
+    ASSERT_EQ(*di::parse<i32>("123"_sv), 123);
+    ASSERT_EQ(*di::parse<i32>("-123"_sv), -123);
+
+    ASSERT(!di::parse<u32>("-123"_sv));
+    ASSERT_EQ(di::parse<u32>("+123"_sv), 123u);
+}
+
 TEST_CONSTEXPR(parser, set, set)
 TEST_CONSTEXPR(parser, code_point, code_point)
+TEST_CONSTEXPR(parser, integer, integer)

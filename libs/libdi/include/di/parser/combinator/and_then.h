@@ -11,15 +11,31 @@ namespace detail {
     template<typename Parser, typename Fun>
     class AndThenParser : public ParserBase<AndThenParser<Parser, Fun>> {
     public:
-        constexpr explicit AndThenParser(Parser&& parser, Fun&& function)
-            : m_parser(util::move(parser)), m_function(util::move(function)) {}
+        template<typename P, typename F>
+        constexpr explicit AndThenParser(InPlace, P&& parser, F&& function)
+            : m_parser(util::forward<P>(parser)), m_function(util::forward<F>(function)) {}
 
         template<concepts::ParserContext Context, typename Value = meta::ParserValue<Context, Parser>>
         requires(concepts::Parser<Parser, Context>)
         constexpr auto parse(Context& context) const {
-            return m_parser.parse(context).and_then([&]<typename... Types>(Types&&... values) {
-                return m_function(context, util::forward<Types>(values)...);
-            });
+            auto begin_save = container::begin(context);
+            if constexpr (concepts::LanguageVoid<Value>) {
+                return m_parser.parse(context).and_then([&] {
+                    auto result = m_function(context);
+                    if (!result) {
+                        context.advance(begin_save);
+                    }
+                    return result;
+                });
+            } else {
+                return m_parser.parse(context).and_then([&](Value&& value) {
+                    auto result = m_function(context, util::forward<Value>(value));
+                    if (!result) {
+                        context.advance(begin_save);
+                    }
+                    return result;
+                });
+            }
         }
 
     private:
@@ -28,10 +44,10 @@ namespace detail {
     };
 
     struct AndThenFunction {
-        template<typename Parser, typename Fun>
+        template<concepts::DecayConstructible Parser, concepts::DecayConstructible Fun>
         constexpr auto operator()(Parser&& parser, Fun&& function) const {
-            return AndThenParser<meta::UnwrapRefDecay<Parser>, meta::UnwrapRefDecay<Fun>>(util::forward<Parser>(parser),
-                                                                                          util::forward<Fun>(function));
+            return AndThenParser<meta::Decay<Parser>, meta::Decay<Fun>>(in_place, util::forward<Parser>(parser),
+                                                                        util::forward<Fun>(function));
         }
     };
 }

@@ -24,7 +24,7 @@ namespace detail {
     };
 
     struct CodePointFunction {
-        constexpr auto operator()() const { return CodePointFunction {}; }
+        constexpr auto operator()() const { return CodePointParser {}; }
     };
 
     constexpr auto tag_invoke(types::Tag<create_parser_in_place>, InPlaceType<char32_t>, concepts::ParserContext auto&) {

@@ -11,7 +11,8 @@ namespace detail {
     template<typename... Parsers>
     class SequenceParser : public ParserBase<SequenceParser<Parsers...>> {
     public:
-        constexpr explicit SequenceParser(Parsers&&... parsers) : m_parsers(util::forward<Parsers>(parsers)...) {}
+        template<typename... Ps>
+        constexpr explicit SequenceParser(InPlace, Ps&&... parsers) : m_parsers(util::forward<Ps>(parsers)...) {}
 
         template<concepts::ParserContext Context>
         requires(concepts::Conjunction<concepts::Parser<Parsers, Context>...>)
@@ -50,9 +51,9 @@ namespace detail {
     };
 
     struct SequenceFunction {
-        template<typename... Parsers>
+        template<concepts::DecayConstructible... Parsers>
         constexpr auto operator()(Parsers&&... parsers) const {
-            return SequenceParser<meta::UnwrapRefDecay<Parsers>...>(util::forward<Parsers>(parsers)...);
+            return SequenceParser<meta::Decay<Parsers>...>(in_place, util::forward<Parsers>(parsers)...);
         }
     };
 }
