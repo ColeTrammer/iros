@@ -20,6 +20,10 @@ constexpr void code_point() {
     ASSERT(!di::parse<char32_t>(""_sv));
     ASSERT_EQ(*di::parse<char32_t>("A"_sv), U'A');
     ASSERT(!di::parse<char32_t>("AB"_sv));
+
+    ASSERT(!di::parse_partial<char32_t>(""_sv));
+    ASSERT_EQ(*di::parse_partial<char32_t>("A"_sv), U'A');
+    ASSERT_EQ(*di::parse_partial<char32_t>("AB"_sv), U'A');
 }
 
 TEST_CONSTEXPR(parser, set, set)
