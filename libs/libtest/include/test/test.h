@@ -34,6 +34,9 @@
         constexpr_test();                                                                                     \
     }
 
+#define TEST_CONSTEXPRX(suite, name, f) \
+    TEST(suite, name) { f(); }
+
 #define EXPECT(...)                                                                                                                        \
     do {                                                                                                                                   \
         if (!(__VA_ARGS__)) {                                                                                                              \

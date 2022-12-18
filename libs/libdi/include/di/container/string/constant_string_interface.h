@@ -35,6 +35,7 @@ public:
         return string::size(self());
     }
 
+    constexpr size_t size_bytes() const { return size_code_units() * sizeof(CodeUnit); }
     constexpr size_t size_code_units() const { return string::size_code_units(self()); }
     constexpr bool empty() const { return string::empty(self()); }
 
@@ -64,9 +65,7 @@ private:
         return parser::StringViewParserContext<Enc>(self.view());
     }
 
-    template<concepts::ContiguousIterator It, concepts::SizedSentinelFor<It> Sent>
-    requires(concepts::ConvertibleToNonSlicing<It, CodeUnit const*>)
-    constexpr friend StringViewImpl<Enc> tag_invoke(types::Tag<container::reconstruct>, InPlaceType<Self>, It first, Sent last) {
+    constexpr friend StringViewImpl<Enc> tag_invoke(types::Tag<container::reconstruct>, InPlaceType<Self>, Iterator first, Iterator last) {
         return StringViewImpl<Enc>(util::move(first), util::move(last));
     }
 };

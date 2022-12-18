@@ -167,6 +167,17 @@ constexpr void static_() {
     (void) a.emplace(a.begin());
     (void) a.emplace(a.begin());
     ASSERT_EQ(a.size(), 2u);
+
+    auto v = di::StaticVector<char8_t, di::meta::SizeConstant<4>> {};
+    (void) v.resize(1);
+    v[0] = 9;
+
+    ASSERT_EQ(v.size(), 1u);
+
+    auto w = v;
+    (void) w.append_container(di::move(v));
+
+    ASSERT_EQ(w.size(), 2u);
 }
 
 TEST_CONSTEXPR(container_vector, basic, basic)

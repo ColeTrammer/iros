@@ -69,6 +69,12 @@ public:
         return vector::emplace_back(self(), util::forward<Args>(args)...);
     }
 
+    template<concepts::InputContainer Con>
+    requires(concepts::ContainerCompatible<Con, Value>)
+    constexpr auto append_container(Con&& container) {
+        return vector::append_container(self(), util::forward<Con>(container));
+    }
+
     constexpr auto insert(ConstIterator position, Value const& value)
     requires(concepts::CopyConstructible<Value>)
     {

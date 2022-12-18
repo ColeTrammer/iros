@@ -121,7 +121,7 @@ private:
 
     private:
         friend class IotaView;
-        friend class Sentinal;
+        friend class Sentinel;
 
         constexpr friend bool operator==(Iterator const& a, Iterator const& b)
         requires(concepts::EqualityComparable<T>)
@@ -160,6 +160,7 @@ private:
             }
         }
 
+    public:
         T m_value;
     };
 

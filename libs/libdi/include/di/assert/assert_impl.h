@@ -60,9 +60,9 @@ constexpr void do_binary_assert(F op, T&& a, U&& b) {
                 char lhs_text[] = "\033[1mLHS\033[0m: ";
                 char rhs_text[] = "\n\033[1mRHS\033[0m: ";
                 assert_write(lhs_text, sizeof(lhs_text) - 1);
-                assert_write(s.data(), s.size());
+                assert_write(reinterpret_cast<char const*>(s.data()), s.size_bytes());
                 assert_write(rhs_text, sizeof(rhs_text) - 1);
-                assert_write(t.data(), t.size());
+                assert_write(reinterpret_cast<char const*>(t.data()), t.size_bytes());
                 assert_write(&new_line, 1);
             }
 #endif

@@ -21,7 +21,7 @@ constexpr R reserve(Vec& vector, size_t size) {
                return temp.reserve_from_nothing(size);
            }) % [&] {
         auto new_buffer = vector::data(temp);
-        util::uninitialized_relocate(vector.begin(), vector.end(), new_buffer, new_buffer + size);
+        util::uninitialized_relocate(vector::begin(vector), vector::end(vector), new_buffer, new_buffer + size);
         vector.assume_size(0);
         util::swap(vector, temp);
     } | try_infallible;

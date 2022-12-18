@@ -4,6 +4,7 @@
 #include <di/container/concepts/input_container.h>
 #include <di/container/meta/container_reference.h>
 #include <di/container/string/constant_string.h>
+#include <di/container/string/string_view.h>
 #include <di/format/concepts/formattable.h>
 #include <di/format/formatter.h>
 #include <di/format/make_constexpr_format_args.h>
@@ -23,7 +24,7 @@ constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<Con>, conc
                 context.output(' ');
             }
             first = false;
-            vpresent_encoded_context<meta::Encoding<decltype(context)>>("{}"_sv, make_constexpr_format_args(value), context);
+            vpresent_encoded_context<meta::Encoding<decltype(context)>>(u8"{}"_sv, make_constexpr_format_args(value), context);
         }
         context.output(' ');
         context.output('}');

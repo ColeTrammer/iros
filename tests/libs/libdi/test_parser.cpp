@@ -17,39 +17,36 @@ constexpr void set() {
 }
 
 constexpr void code_point() {
-    ASSERT(!di::parse<char32_t>(""_sv));
-    ASSERT_EQ(*di::parse<char32_t>("A"_sv), U'A');
-    ASSERT(!di::parse<char32_t>("AB"_sv));
+    ASSERT(!di::parse<char32_t>(u8""_sv));
+    ASSERT_EQ(*di::parse<char32_t>(u8"A"_sv), U'A');
+    ASSERT(!di::parse<char32_t>(u8"AB"_sv));
 
-    ASSERT(!di::parse_partial<char32_t>(""_sv));
-    ASSERT_EQ(*di::parse_partial<char32_t>("A"_sv), U'A');
-    ASSERT_EQ(*di::parse_partial<char32_t>("AB"_sv), U'A');
+    ASSERT(!di::parse_partial<char32_t>(u8""_sv));
+    ASSERT_EQ(*di::parse_partial<char32_t>(u8"A"_sv), U'A');
+    ASSERT_EQ(*di::parse_partial<char32_t>(u8"AB"_sv), U'A');
 }
 
 constexpr void integer() {
-    ASSERT_EQ(*di::parse<i32>("0"_sv), 0);
-    ASSERT(!di::parse<i32>("0qwer"_sv));
-    ASSERT_EQ(*di::parse<i32>("123"_sv), 123);
-    ASSERT_EQ(*di::parse<i32>("-123"_sv), -123);
+    ASSERT_EQ(*di::parse<i32>(u8"0"_sv), 0);
+    ASSERT(!di::parse<i32>(u8"0qwer"_sv));
+    ASSERT_EQ(*di::parse<i32>(u8"123"_sv), 123);
+    ASSERT_EQ(*di::parse<i32>(u8"-123"_sv), -123);
 
-    ASSERT(!di::parse<u32>("-123"_sv));
-    ASSERT_EQ(di::parse<u32>("+123"_sv), 123u);
+    ASSERT(!di::parse<u32>(u8"-123"_sv));
+    ASSERT_EQ(di::parse<u32>(u8"+123"_sv), 123u);
 
-    ASSERT_EQ(di::parse<i32>("2147483647"_sv), di::NumericLimits<i32>::max);
-    ASSERT_EQ(di::parse<i32>("-2147483648"_sv), di::NumericLimits<i32>::min);
-    ASSERT(!di::parse<i32>("2147483648"_sv));
-    ASSERT(!di::parse<i32>("-2147483649"_sv));
-    ASSERT(!di::parse<i32>("1111111111111111111111"_sv));
+    ASSERT_EQ(di::parse<i32>(u8"2147483647"_sv), di::NumericLimits<i32>::max);
+    ASSERT_EQ(di::parse<i32>(u8"-2147483648"_sv), di::NumericLimits<i32>::min);
+    ASSERT(!di::parse<i32>(u8"2147483648"_sv));
+    ASSERT(!di::parse<i32>(u8"-2147483649"_sv));
+    ASSERT(!di::parse<i32>(u8"1111111111111111111111"_sv));
 
-    ASSERT_EQ(di::parse<u32>("4294967295"_sv), di::NumericLimits<u32>::max);
-    ASSERT(!di::parse<u32>("4294967296"_sv));
+    ASSERT_EQ(di::parse<u32>(u8"4294967295"_sv), di::NumericLimits<u32>::max);
+    ASSERT(!di::parse<u32>(u8"4294967296"_sv));
 
-    ASSERT_EQ(di::parse<u8>("255"_sv), 255u);
-    ASSERT(!di::parse<u8>("256"_sv));
+    ASSERT_EQ(di::parse<u8>(u8"255"_sv), 255u);
+    ASSERT(!di::parse<u8>(u8"256"_sv));
 }
-
-#define TEST_CONSTEXPRX(suite, name, f) \
-    TEST(suite, name) { f(); }
 
 TEST_CONSTEXPR(parser, set, set)
 TEST_CONSTEXPR(parser, code_point, code_point)

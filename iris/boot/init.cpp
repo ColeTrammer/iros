@@ -18,7 +18,7 @@
 }
 
 static void handler() {
-    iris::debug_log("Hello, World - from interrupt"_sv);
+    iris::debug_log(u8"Hello, World - from interrupt"_sv);
     done();
 }
 
@@ -61,7 +61,7 @@ void iris_main() {
 
     iris::arch::cxx_init();
 
-    iris::debug_log("Hello, World"_sv);
+    iris::debug_log(u8"Hello, World"_sv);
 
     using namespace iris::x86::amd64::idt;
 
@@ -75,7 +75,7 @@ void iris_main() {
     auto idtr = IDTR { sizeof(idt) - 1, reinterpret_cast<u64>(idt.data()) };
     load_idt(idtr);
 
-    iris::debug_log("Hello, World - again"_sv);
+    iris::debug_log(u8"Hello, World - again"_sv);
 
     auto memory_map = di::Span { memmap_request.response->entries, memmap_request.response->entry_count };
 
@@ -88,28 +88,28 @@ void iris_main() {
     for (auto* memory_map_entry : memory_map) {
         switch (memory_map_entry->type) {
             case LIMINE_MEMMAP_USABLE:
-                iris::debug_log("usable"_sv);
+                iris::debug_log(u8"usable"_sv);
                 break;
             case LIMINE_MEMMAP_RESERVED:
-                iris::debug_log("reserved"_sv);
+                iris::debug_log(u8"reserved"_sv);
                 break;
             case LIMINE_MEMMAP_ACPI_RECLAIMABLE:
-                iris::debug_log("ACPI reclaimable"_sv);
+                iris::debug_log(u8"ACPI reclaimable"_sv);
                 break;
             case LIMINE_MEMMAP_ACPI_NVS:
-                iris::debug_log("ACPI NVS"_sv);
+                iris::debug_log(u8"ACPI NVS"_sv);
                 break;
             case LIMINE_MEMMAP_BAD_MEMORY:
-                iris::debug_log("bad memory"_sv);
+                iris::debug_log(u8"bad memory"_sv);
                 break;
             case LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE:
-                iris::debug_log("boot loader reclaimable"_sv);
+                iris::debug_log(u8"boot loader reclaimable"_sv);
                 break;
             case LIMINE_MEMMAP_KERNEL_AND_MODULES:
-                iris::debug_log("kernel and modules"_sv);
+                iris::debug_log(u8"kernel and modules"_sv);
                 break;
             case LIMINE_MEMMAP_FRAMEBUFFER:
-                iris::debug_log("frame buffer"_sv);
+                iris::debug_log(u8"frame buffer"_sv);
                 break;
             default:
                 di::unreachable();
@@ -145,13 +145,13 @@ void iris_main() {
 
     load_cr3(new_address_space.architecture_page_table_base());
 
-    iris::debug_log("Hello, World - again again"_sv);
+    iris::debug_log(u8"Hello, World - again again"_sv);
 
     auto* x = new (std::nothrow) int { 42 };
     ASSERT(x != nullptr);
     delete x;
 
-    iris::debug_log("Hello, World - again again again"_sv);
+    iris::debug_log(u8"Hello, World - again again again"_sv);
 
     done();
 }

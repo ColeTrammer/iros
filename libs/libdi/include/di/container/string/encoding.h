@@ -98,7 +98,7 @@ namespace detail {
 
     struct IteratorDataFunction {
         template<typename T, typename U = meta::EncodingCodeUnit<T>, typename Iter = meta::EncodingIterator<T>>
-        requires(concepts::ConvertibleTo<Iter, U const*>)
+        requires(concepts::ExplicitlyConvertibleTo<Iter, U const*>)
         constexpr U* operator()(T const& encoding, Span<U>, Iter iterator) const {
             // NOTE: this is safe since we have a "mutable" storage to the underlying code units.
             return const_cast<U*>(static_cast<U const*>(iterator));
@@ -106,7 +106,7 @@ namespace detail {
     };
 
     struct ConvertToCodeUnitsFunction {
-        template<typename T, typename U = meta::EncodingCodePoint<T>, typename P = meta::EncodingCodePoint<T>>
+        template<typename T, typename U = meta::EncodingCodeUnit<T>, typename P = meta::EncodingCodePoint<T>>
         requires(concepts::TagInvocable<ConvertToCodeUnitsFunction, T const&, P> || concepts::SameAs<U, P>)
         constexpr concepts::ContainerOf<U> auto operator()(T const& encoding, P code_point) const {
             if constexpr (concepts::TagInvocable<ConvertToCodeUnitsFunction, T const&, P>) {
@@ -116,29 +116,32 @@ namespace detail {
             }
         }
     };
+}
+constexpr inline auto validate = detail::ValidateFunction {};
+constexpr inline auto valid_byte_offset = detail::ValidByteOffsetFunction {};
+constexpr inline auto make_iterator = detail::MakeIteratorFunction {};
+constexpr inline auto iterator_data = detail::IteratorDataFunction {};
+constexpr inline auto convert_to_code_units = detail::ConvertToCodeUnitsFunction {};
 
+namespace detail {
     template<typename V, typename P>
     concept CodePointView = concepts::ContainerOf<V, P> && concepts::View<V> && concepts::BidirectionalContainer<V> &&
                             concepts::TupleLike<V> && (meta::TupleSize<V> == 2);
 
     struct CodePointViewFunction {
         template<typename T, typename U = meta::EncodingCodeUnit<T>, typename P = meta::EncodingCodePoint<T>>
-        requires(concepts::TagInvocable<CodePointViewFunction, T const&, Span<U const>> || concepts::SameAs<U, P>)
         constexpr CodePointView<P> auto operator()(T const& encoding, Span<U const> code_units) const {
             if constexpr (concepts::TagInvocable<CodePointViewFunction, T const&, Span<U const>>) {
                 return function::tag_invoke(*this, encoding, code_units);
-            } else {
+            } else if constexpr (concepts::SameAs<U, P>) {
                 return container::View(code_units);
+            } else {
+                return container::View(make_iterator(encoding, code_units, 0), make_iterator(encoding, code_units, code_units.size()));
             }
         }
     };
 }
 
-constexpr inline auto validate = detail::ValidateFunction {};
-constexpr inline auto valid_byte_offset = detail::ValidByteOffsetFunction {};
-constexpr inline auto make_iterator = detail::MakeIteratorFunction {};
-constexpr inline auto iterator_data = detail::IteratorDataFunction {};
-constexpr inline auto convert_to_code_units = detail::ConvertToCodeUnitsFunction {};
 constexpr inline auto code_point_view = detail::CodePointViewFunction {};
 
 namespace detail {

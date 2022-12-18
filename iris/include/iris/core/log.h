@@ -3,15 +3,15 @@
 #include <di/prelude.h>
 
 namespace iris {
-using Encoding = di::container::string::TransparentEncoding;
+using Encoding = di::container::string::Utf8Encoding;
 
-void log_output_character(char);
+void log_output_character(char32_t);
 
 namespace detail {
     struct DebugFormatContext {
         using Encoding = iris::Encoding;
 
-        void output(char value) { log_output_character(value); }
+        void output(char32_t value) { log_output_character(value); }
     };
 }
 

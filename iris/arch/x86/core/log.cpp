@@ -5,8 +5,10 @@ static inline void outb(u16 port, u8 value) {
     asm volatile("outb %0, %1" : : "a"(value), "Nd"(port));
 }
 
-void log_output_character(char value) {
-    outb(0xE9, value);
+void log_output_character(char32_t value) {
+    for (auto byte : di::encoding::convert_to_code_units(di::container::string::Utf8Encoding {}, value)) {
+        outb(0xE9, byte);
+    }
 }
 }
 

@@ -308,12 +308,12 @@ constexpr void split() {
 
     ASSERT(di::container::equal(b, di::Array { 3, 8, 3, 0, 0, 0, 0 }));
 
-    auto c = "Hello, world, friends"_sv;
-    auto d = c | di::split(", "_sv);
+    auto c = u8"Hello, world, friends"_sv;
+    auto d = c | di::split(u8", "_sv);
 
-    static_assert(di::SameAs<decltype(*d.begin()), decltype("Hello"_sv)>);
+    static_assert(di::SameAs<decltype(*d.begin()), decltype(u8"Hello"_sv)>);
 
-    ASSERT(di::container::equal(d, di::Array { "Hello"_sv, "world"_sv, "friends"_sv }));
+    ASSERT(di::container::equal(d, di::Array { u8"Hello"_sv, u8"world"_sv, u8"friends"_sv }));
 }
 
 constexpr void join() {

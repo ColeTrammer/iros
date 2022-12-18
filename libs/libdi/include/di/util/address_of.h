@@ -8,6 +8,6 @@ constexpr T* address_of(T& value) {
 }
 
 // Disallow getting the address of a temporary.
-template<class T>
-void address_of(const T&&) = delete;
+// template<class T>
+// void address_of(const T&&) = delete;
 }
