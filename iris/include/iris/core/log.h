@@ -5,13 +5,13 @@
 namespace iris {
 using Encoding = di::container::string::Utf8Encoding;
 
-void log_output_character(char32_t);
+void log_output_character(c32);
 
 namespace detail {
     struct DebugFormatContext {
         using Encoding = iris::Encoding;
 
-        void output(char32_t value) { log_output_character(value); }
+        void output(c32 value) { log_output_character(value); }
     };
 }
 

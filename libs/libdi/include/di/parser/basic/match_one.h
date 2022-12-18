@@ -10,11 +10,11 @@
 namespace di::parser {
 namespace detail {
     struct MatchOneFunction {
-        template<concepts::Predicate<char32_t> Pred>
+        template<concepts::Predicate<c32> Pred>
         requires(concepts::DecayConstructible<Pred>)
         constexpr auto operator()(Pred&& predicate) const {
             return code_point() << [predicate = auto(util::forward<Pred>(predicate))]<concepts::ParserContext Context>(
-                                       Context& context, char32_t code_point) -> meta::ParserContextResult<char32_t, Context> {
+                                       Context& context, c32 code_point) -> meta::ParserContextResult<c32, Context> {
                 if (!predicate(code_point)) {
                     return Unexpected(context.make_error());
                 }

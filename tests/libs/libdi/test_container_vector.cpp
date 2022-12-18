@@ -168,7 +168,7 @@ constexpr void static_() {
     (void) a.emplace(a.begin());
     ASSERT_EQ(a.size(), 2u);
 
-    auto v = di::StaticVector<char8_t, di::meta::SizeConstant<4>> {};
+    auto v = di::StaticVector<c8, di::meta::SizeConstant<4>> {};
     (void) v.resize(1);
     v[0] = 9;
 

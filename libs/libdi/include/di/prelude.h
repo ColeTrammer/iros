@@ -31,6 +31,9 @@
 
 using namespace di::literals;
 
+using di::types::c16;
+using di::types::c32;
+using di::types::c8;
 using di::types::i16;
 using di::types::i32;
 using di::types::i64;

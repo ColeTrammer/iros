@@ -12,7 +12,7 @@ namespace detail {
     class CodePointParser : public ParserBase<CodePointParser> {
     public:
         template<concepts::ParserContext Context>
-        constexpr auto parse(Context& context) const -> meta::ParserContextResult<char32_t, Context> {
+        constexpr auto parse(Context& context) const -> meta::ParserContextResult<c32, Context> {
             if (container::empty(context)) {
                 return vocab::Unexpected(context.make_error());
             }
@@ -27,7 +27,7 @@ namespace detail {
         constexpr auto operator()() const { return CodePointParser {}; }
     };
 
-    constexpr auto tag_invoke(types::Tag<create_parser_in_place>, InPlaceType<char32_t>, concepts::ParserContext auto&) {
+    constexpr auto tag_invoke(types::Tag<create_parser_in_place>, InPlaceType<c32>, concepts::ParserContext auto&) {
         return CodePointParser {};
     }
 }

@@ -10,31 +10,31 @@ namespace di::container::string {
 // NOTE: see https://www.unicode.org/versions/Unicode14.0.0/UnicodeStandard-14.0.pdf for details on the UTF-8 encoding.
 //       In particular, section 3.9, table 3-6, and table 3-7.
 namespace utf8 {
-    constexpr static bool is_start_of_one_byte_sequence(char8_t byte) {
+    constexpr static bool is_start_of_one_byte_sequence(c8 byte) {
         return byte <= 0x7F;
     }
 
-    constexpr static bool is_start_of_two_byte_sequence(char8_t byte) {
+    constexpr static bool is_start_of_two_byte_sequence(c8 byte) {
         return byte >= 0xC2 && byte <= 0xDF;
     }
 
-    constexpr static bool is_start_of_three_byte_sequence(char8_t byte) {
+    constexpr static bool is_start_of_three_byte_sequence(c8 byte) {
         return byte >= 0xE0 && byte <= 0xEF;
     }
 
-    constexpr static bool is_start_of_four_byte_sequence(char8_t byte) {
+    constexpr static bool is_start_of_four_byte_sequence(c8 byte) {
         return byte >= 0xF0 && byte <= 0xF4;
     }
 
-    constexpr static bool is_start_of_multi_byte_sequence(char8_t byte) {
+    constexpr static bool is_start_of_multi_byte_sequence(c8 byte) {
         return is_start_of_two_byte_sequence(byte) || is_start_of_three_byte_sequence(byte) || is_start_of_four_byte_sequence(byte);
     }
 
-    constexpr static bool is_valid_first_byte(char8_t byte) {
+    constexpr static bool is_valid_first_byte(c8 byte) {
         return is_start_of_one_byte_sequence(byte) || is_start_of_multi_byte_sequence(byte);
     }
 
-    constexpr static bool is_valid_second_byte(char8_t first_byte, char8_t second_byte) {
+    constexpr static bool is_valid_second_byte(c8 first_byte, c8 second_byte) {
         switch (first_byte) {
             case 0xE0:
                 return second_byte >= 0xA0 && second_byte <= 0xBF;
@@ -49,30 +49,30 @@ namespace utf8 {
         }
     }
 
-    constexpr static bool is_valid_third_byte([[maybe_unused]] char8_t first_byte, char8_t third_byte) {
+    constexpr static bool is_valid_third_byte([[maybe_unused]] c8 first_byte, c8 third_byte) {
         return third_byte >= 0x80 && third_byte <= 0xBF;
     }
 
-    constexpr static bool is_valid_fourth_byte([[maybe_unused]] char8_t first_byte, char8_t fourth_byte) {
+    constexpr static bool is_valid_fourth_byte([[maybe_unused]] c8 first_byte, c8 fourth_byte) {
         return fourth_byte >= 0x80 && fourth_byte <= 0xBF;
     }
 
-    constexpr static u8 byte_sequence_length(char8_t first_byte) {
+    constexpr static u8 byte_sequence_length(c8 first_byte) {
         return is_start_of_one_byte_sequence(first_byte)     ? 1
                : is_start_of_two_byte_sequence(first_byte)   ? 2
                : is_start_of_three_byte_sequence(first_byte) ? 3
                                                              : 4;
     }
 
-    class Utf8Iterator : public IteratorBase<Utf8Iterator, char32_t, ssize_t> {
+    class Utf8Iterator : public IteratorBase<Utf8Iterator, c32, ssize_t> {
     public:
         Utf8Iterator() = default;
-        constexpr explicit Utf8Iterator(char8_t const* data) : m_data(data) {}
+        constexpr explicit Utf8Iterator(c8 const* data) : m_data(data) {}
 
-        constexpr char32_t operator*() const {
+        constexpr c32 operator*() const {
             auto length = byte_sequence_length(*m_data);
             auto first_byte_mask = 0b11111111 >> length;
-            auto result = static_cast<char32_t>(*m_data & first_byte_mask);
+            auto result = static_cast<c32>(*m_data & first_byte_mask);
             for (auto i : view::range(1u, length)) {
                 result <<= 6;
                 result |= m_data[i] & 0b00111111;
@@ -87,9 +87,9 @@ namespace utf8 {
             } while (!is_valid_first_byte(*m_data));
         }
 
-        constexpr char8_t const* data() const { return m_data; }
+        constexpr c8 const* data() const { return m_data; }
 
-        constexpr explicit operator char8_t const*() const { return data(); }
+        constexpr explicit operator c8 const*() const { return data(); }
 
     private:
         constexpr friend bool operator==(Utf8Iterator const& a, Utf8Iterator const& b) { return a.data() == b.data(); }
@@ -99,19 +99,19 @@ namespace utf8 {
             return types::BidirectionalIteratorTag {};
         }
 
-        char8_t const* m_data { nullptr };
+        c8 const* m_data { nullptr };
     };
 }
 
 class Utf8Encoding {
 public:
-    using CodeUnit = char8_t;
-    using CodePoint = char32_t;
+    using CodeUnit = c8;
+    using CodePoint = c32;
     using Iterator = utf8::Utf8Iterator;
 
 private:
     template<typename = void>
-    constexpr friend bool tag_invoke(types::Tag<encoding::validate>, Utf8Encoding const&, Span<char8_t const> data) {
+    constexpr friend bool tag_invoke(types::Tag<encoding::validate>, Utf8Encoding const&, Span<c8 const> data) {
         size_t i = 0;
         while (i < data.size()) {
             auto first_byte = data.data()[i];
@@ -141,17 +141,16 @@ private:
         return true;
     }
 
-    constexpr friend bool tag_invoke(types::Tag<encoding::valid_byte_offset>, Utf8Encoding const&, Span<char8_t const> data,
-                                     size_t offset) {
-        // NOTE: this function can assume the underlying char8_t data is valid UTF-8.
+    constexpr friend bool tag_invoke(types::Tag<encoding::valid_byte_offset>, Utf8Encoding const&, Span<c8 const> data, size_t offset) {
+        // NOTE: this function can assume the underlying c8 data is valid UTF-8.
         if (offset >= data.size()) {
             return offset == data.size();
         }
         return utf8::is_valid_first_byte(data[offset]);
     }
 
-    constexpr friend auto tag_invoke(types::Tag<encoding::convert_to_code_units>, Utf8Encoding const&, char32_t code_point) {
-        auto result = container::StaticVector<char8_t, meta::SizeConstant<4>> {};
+    constexpr friend auto tag_invoke(types::Tag<encoding::convert_to_code_units>, Utf8Encoding const&, c32 code_point) {
+        auto result = container::StaticVector<c8, meta::SizeConstant<4>> {};
         auto code_point_value = static_cast<u32>(code_point);
         if (code_point_value <= 0x7F) {
             (void) result.resize(1);

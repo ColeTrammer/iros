@@ -146,20 +146,20 @@ constexpr inline auto code_point_view = detail::CodePointViewFunction {};
 
 namespace detail {
     template<typename V>
-    concept UnicodeCodePointView = concepts::ContainerOf<V, char32_t> && concepts::View<V> && concepts::ForwardContainer<V>;
+    concept UnicodeCodePointView = concepts::ContainerOf<V, c32> && concepts::View<V> && concepts::ForwardContainer<V>;
 
     struct UnicodeCodePointViewFunction {
         template<typename T, typename U = meta::EncodingCodePoint<T>, typename P = meta::EncodingCodePoint<T>>
-        requires(concepts::TagInvocable<UnicodeCodePointViewFunction, T const&, Span<U const>> || concepts::SameAs<P, char32_t> ||
-                 concepts::ConstructibleFrom<char32_t, P>)
+        requires(concepts::TagInvocable<UnicodeCodePointViewFunction, T const&, Span<U const>> || concepts::SameAs<P, c32> ||
+                 concepts::ConstructibleFrom<c32, P>)
         constexpr UnicodeCodePointView auto operator()(T const& encoding, Span<U const> code_units) const {
             if constexpr (concepts::TagInvocable<UnicodeCodePointViewFunction, T const&, Span<U const>>) {
                 return function::tag_invoke(*this, encoding, code_units);
-            } else if constexpr (concepts::SameAs<P, char32_t>) {
+            } else if constexpr (concepts::SameAs<P, c32>) {
                 return code_point_view(encoding, code_units);
             } else {
                 return code_point_view(encoding, code_units) | view::transform([](auto code_point) {
-                           return char32_t(code_point);
+                           return c32(code_point);
                        });
             }
         }

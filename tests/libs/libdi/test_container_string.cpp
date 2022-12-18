@@ -86,7 +86,7 @@ constexpr void utf8() {
                                U'\x10348',
                            } | di::to<di::Vector>());
 
-    auto validate = [](char8_t const* x, size_t n) {
+    auto validate = [](c8 const* x, size_t n) {
         auto span = di::Span(x, n);
         auto encoding = di::container::string::Utf8Encoding {};
         return di::encoding::validate(encoding, span);

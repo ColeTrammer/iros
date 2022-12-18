@@ -124,8 +124,8 @@ inline namespace literals {
     constexpr auto operator"" name(input_kind value) { return parser::MatchOne<output_kind> { (output_kind) (value) }; }
 
         __DI_DEFINE_INTEGRAL_OP(char, char, _mc)
-        __DI_DEFINE_INTEGRAL_OP(char, char32_t, _m)
-        __DI_DEFINE_INTEGRAL_OP(char32_t, char32_t, _m)
+        __DI_DEFINE_INTEGRAL_OP(char, c32, _m)
+        __DI_DEFINE_INTEGRAL_OP(c32, c32, _m)
         __DI_DEFINE_INTEGRAL_OP(unsigned long long, unsigned long long, _mu)
 
 #undef __DI_DEFINE_INTEGRAL_OP

@@ -14,7 +14,7 @@
 namespace di::parser {
 namespace detail {
     struct MatchOneOrMoreFunction {
-        template<concepts::Predicate<char32_t> Pred>
+        template<concepts::Predicate<c32> Pred>
         requires(concepts::DecayConstructible<Pred>)
         constexpr auto operator()(Pred&& predicate) const {
             return match_zero_or_more(util::forward<Pred>(predicate))

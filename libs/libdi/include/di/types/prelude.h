@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/types/byte.h>
+#include <di/types/char.h>
 #include <di/types/in_place.h>
 #include <di/types/in_place_index.h>
 #include <di/types/in_place_template.h>
@@ -54,4 +55,8 @@ using types::u16;
 using types::u32;
 using types::u64;
 using types::u8;
+
+using types::c16;
+using types::c32;
+using types::c8;
 }

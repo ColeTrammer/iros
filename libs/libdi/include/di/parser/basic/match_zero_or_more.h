@@ -11,7 +11,7 @@
 
 namespace di::parser {
 namespace detail {
-    template<concepts::Predicate<char32_t> Pred>
+    template<concepts::Predicate<c32> Pred>
     class MatchZeroOrMoreParser : public ParserBase<MatchZeroOrMoreParser<Pred>> {
     public:
         template<typename P>
@@ -38,7 +38,7 @@ namespace detail {
     };
 
     struct MatchZeroOrMoreFunction {
-        template<concepts::Predicate<char32_t> Pred>
+        template<concepts::Predicate<c32> Pred>
         requires(concepts::DecayConstructible<Pred>)
         constexpr auto operator()(Pred&& predicate) const {
             return MatchZeroOrMoreParser<meta::Decay<Pred>> { in_place, util::forward<Pred>(predicate) };

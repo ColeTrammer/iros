@@ -18,14 +18,14 @@ protected:
 
     using ThunkFunction = void (*)(ErasedString* dest, ErasedString const* src, ThunkOp op);
 
-    Span<char8_t const> m_data {};
+    Span<c8 const> m_data {};
     void* m_state[3] {};
     ThunkFunction const m_thunk { nullptr };
 
     constexpr explicit ErasedString(ThunkFunction thunk) : m_thunk(thunk) {}
 
 public:
-    constexpr explicit ErasedString(Span<char8_t const> data = {}, void* state0 = nullptr, void* state1 = nullptr, void* state2 = nullptr,
+    constexpr explicit ErasedString(Span<c8 const> data = {}, void* state0 = nullptr, void* state1 = nullptr, void* state2 = nullptr,
                                     ThunkFunction thunk = nullptr)
         : m_data(data), m_state(state0, state1, state2), m_thunk(thunk) {}
 

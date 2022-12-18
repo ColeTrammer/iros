@@ -17,13 +17,13 @@ constexpr void set() {
 }
 
 constexpr void code_point() {
-    ASSERT(!di::parse<char32_t>(u8""_sv));
-    ASSERT_EQ(*di::parse<char32_t>(u8"A"_sv), U'A');
-    ASSERT(!di::parse<char32_t>(u8"AB"_sv));
+    ASSERT(!di::parse<c32>(u8""_sv));
+    ASSERT_EQ(*di::parse<c32>(u8"A"_sv), U'A');
+    ASSERT(!di::parse<c32>(u8"AB"_sv));
 
-    ASSERT(!di::parse_partial<char32_t>(u8""_sv));
-    ASSERT_EQ(*di::parse_partial<char32_t>(u8"A"_sv), U'A');
-    ASSERT_EQ(*di::parse_partial<char32_t>(u8"AB"_sv), U'A');
+    ASSERT(!di::parse_partial<c32>(u8""_sv));
+    ASSERT_EQ(*di::parse_partial<c32>(u8"A"_sv), U'A');
+    ASSERT_EQ(*di::parse_partial<c32>(u8"AB"_sv), U'A');
 }
 
 constexpr void integer() {
