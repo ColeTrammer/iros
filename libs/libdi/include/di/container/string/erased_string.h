@@ -5,10 +5,10 @@
 #include <di/container/string/utf8_encoding.h>
 #include <di/vocab/span/prelude.h>
 
-namespace di::container::string {
-class ErasedString : public ConstantStringInterface<ErasedString, Utf8Encoding> {
+namespace di::container {
+class ErasedString : public string::ConstantStringInterface<ErasedString, string::Utf8Encoding> {
 public:
-    using Encoding = Utf8Encoding;
+    using Encoding = string::Utf8Encoding;
 
     constexpr auto encoding() const { return Encoding {}; }
     constexpr auto span() const { return m_data; }
@@ -29,7 +29,7 @@ public:
                                     ThunkFunction thunk = nullptr)
         : m_data(data), m_state(state0, state1, state2), m_thunk(thunk) {}
 
-    constexpr ErasedString(StringViewImpl<Utf8Encoding> view) : ErasedString(view.span()) {}
+    constexpr ErasedString(string::StringViewImpl<string::Utf8Encoding> view) : ErasedString(view.span()) {}
 
     constexpr ErasedString(ErasedString&& other)
         : m_data(other.m_data), m_state(other.m_state[0], other.m_state[1], other.m_state[2]), m_thunk(other.m_thunk) {

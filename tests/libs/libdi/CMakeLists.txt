@@ -15,6 +15,7 @@ set(TEST_FILES
     test_parser.cpp
     test_util_swap.cpp
     test_vocab_array.cpp
+    test_vocab_error.cpp
     test_vocab_expected.cpp
     test_vocab_optional.cpp
     test_vocab_span.cpp

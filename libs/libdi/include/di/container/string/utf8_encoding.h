@@ -127,10 +127,12 @@ private:
                     if (!utf8::is_valid_fourth_byte(first_byte, data.data()[i + 3])) {
                         return false;
                     }
+                    [[fallthrough]];
                 case 3:
                     if (!utf8::is_valid_third_byte(first_byte, data.data()[i + 2])) {
                         return false;
                     }
+                    [[fallthrough]];
                 case 2:
                     if (!utf8::is_valid_second_byte(first_byte, data.data()[i + 1])) {
                         return false;

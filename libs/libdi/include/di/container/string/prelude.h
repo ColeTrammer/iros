@@ -11,10 +11,10 @@
 namespace di {
 namespace encoding = container::string::encoding;
 
+using container::ErasedString;
 using container::FixedString;
 using container::String;
 using container::StringView;
 using container::TransparentString;
 using container::TransparentStringView;
-using container::string::ErasedString;
 }
