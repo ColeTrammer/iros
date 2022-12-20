@@ -18,7 +18,7 @@ template<auto source_text, typename F, typename T, typename U>
 constexpr void do_binary_assert(F op, T&& a, U&& b);
 }
 
-#define DI_ASSERT(...) di::assert::detail::do_assert<di::container::FixedString { "" #__VA_ARGS__ }>(__VA_ARGS__)
+#define DI_ASSERT(...) di::assert::detail::do_assert<di::container::FixedString { "" #__VA_ARGS__ }>(bool(__VA_ARGS__))
 #define DI_ASSERT_EQ(a, b) \
     di::assert::detail::do_binary_assert<di::container::FixedString { "" #a " == " #b }>(di::function::equal, (a), (b))
 #define DI_ASSERT_NOT_EQ(a, b) \

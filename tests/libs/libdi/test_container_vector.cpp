@@ -56,6 +56,15 @@ constexpr void basic() {
     ASSERT(v.empty());
 }
 
+constexpr void reserve() {
+    auto v = di::Vector<int> {};
+    v.push_back(0);
+    v.push_back(1);
+
+    v.reserve(v.capacity() * 2);
+    ASSERT_EQ(v, (di::Array { 0, 1 } | di::to<di::Vector>()));
+}
+
 struct M {
     constexpr M(int x_) : x(x_) {}
 
@@ -181,6 +190,7 @@ constexpr void static_() {
 }
 
 TEST_CONSTEXPR(container_vector, basic, basic)
+TEST_CONSTEXPR(container_vector, reserve, reserve)
 TEST_CONSTEXPR(container_vector, move_only, move_only)
 TEST_CONSTEXPR(container_vector, to, to)
 TEST_CONSTEXPR(container_vector, clone, clone)

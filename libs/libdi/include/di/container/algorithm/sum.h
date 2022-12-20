@@ -2,11 +2,12 @@
 
 #include <di/concepts/default_constructible.h>
 #include <di/container/algorithm/fold_left.h>
+#include <di/function/pipeline.h>
 #include <di/function/plus.h>
 
 namespace di::container {
 namespace detail {
-    struct SumFunction {
+    struct SumFunction : function::pipeline::EnablePipeline {
         template<concepts::InputIterator Iter, concepts::SentinelFor<Iter> Sent,
                  concepts::DefaultConstructible T = meta::IteratorValue<Iter>>
         requires(concepts::IndirectlyBinaryLeftFoldable<function::Plus, T, Iter>)
