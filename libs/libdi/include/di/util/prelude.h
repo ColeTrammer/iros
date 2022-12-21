@@ -15,6 +15,7 @@
 #include <di/util/maybe_clone.h>
 #include <di/util/move.h>
 #include <di/util/reference_wrapper.h>
+#include <di/util/scope_exit.h>
 #include <di/util/source_location.h>
 #include <di/util/swap.h>
 #include <di/util/to_underlying.h>
@@ -33,6 +34,8 @@ using util::ref;
 using util::ReferenceWrapper;
 
 using util::InitializerList;
+
+using util::ScopeExit;
 
 using util::SourceLocation;
 

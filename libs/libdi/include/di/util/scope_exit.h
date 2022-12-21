@@ -1,0 +1,40 @@
+#pragma once
+
+#include <di/concepts/constructible_from.h>
+#include <di/concepts/move_constructible.h>
+#include <di/concepts/remove_cvref_same_as.h>
+#include <di/function/invoke.h>
+#include <di/util/exchange.h>
+#include <di/util/forward.h>
+#include <di/util/move.h>
+
+namespace di::util {
+template<concepts::InvocableTo<void> F>
+class ScopeExit {
+public:
+    template<typename G>
+    requires(!concepts::RemoveCVRefSameAs<G, ScopeExit> && concepts::ConstructibleFrom<F, G>)
+    constexpr explicit ScopeExit(G&& function) : m_function(util::forward<F>(function)) {}
+
+    constexpr ScopeExit(ScopeExit&& other)
+    requires(concepts::MoveConstructible<F>)
+        : m_function(util::move(other.m_function)), m_released(util::exchange(other.m_released, false)) {}
+
+    constexpr ~ScopeExit() {
+        if (!m_released) {
+            function::invoke(util::move(m_function));
+        }
+    }
+
+    ScopeExit& operator=(ScopeExit&&) = delete;
+
+    constexpr void release() { m_released = true; }
+
+private:
+    F m_function;
+    bool m_released { false };
+};
+
+template<typename F>
+ScopeExit(F) -> ScopeExit<F>;
+}
