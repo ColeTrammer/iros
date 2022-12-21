@@ -12,6 +12,7 @@
 #include <di/util/get.h>
 #include <di/util/initializer_list.h>
 #include <di/util/is_constant_evaluated.h>
+#include <di/util/maybe_clone.h>
 #include <di/util/move.h>
 #include <di/util/reference_wrapper.h>
 #include <di/util/source_location.h>
@@ -25,6 +26,7 @@ using util::is_constant_evaluated;
 
 using util::clone;
 using util::create;
+using util::maybe_clone;
 
 using util::cref;
 using util::ref;
