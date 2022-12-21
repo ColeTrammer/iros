@@ -8,6 +8,7 @@ set(OS_LIBS
     ${OS_LIBS}
     libcli
     libdi
+    libdius
     libext
     libliim
 )
