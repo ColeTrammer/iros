@@ -18,10 +18,11 @@ public:
 
     constexpr ScopeExit(ScopeExit&& other)
     requires(concepts::MoveConstructible<F>)
-        : m_function(util::move(other.m_function)), m_released(util::exchange(other.m_released, false)) {}
+        : m_function(util::move(other.m_function)), m_released(util::exchange(other.m_released, true)) {}
 
     constexpr ~ScopeExit() {
-        if (!m_released) {
+        bool released = util::exchange(m_released, true);
+        if (!released) {
             function::invoke(util::move(m_function));
         }
     }

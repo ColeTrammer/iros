@@ -98,8 +98,8 @@ public:
 
     constexpr T& operator*() & { return m_value.value(); }
     constexpr T const& operator*() const& { return m_value.value(); }
-    constexpr T&& operator*() && { return util::move(m_value.value()); }
-    constexpr T const&& operator*() const&& { return util::move(m_value.value()); }
+    constexpr T&& operator*() && { return util::move(m_value).value(); }
+    constexpr T const&& operator*() const&& { return util::move(m_value).value(); }
 
     constexpr explicit operator bool() const { return true; }
     constexpr bool has_value() const { return true; }

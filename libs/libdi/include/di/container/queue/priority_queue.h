@@ -89,10 +89,7 @@ public:
     template<typename... Args>
     requires(concepts::ConstructibleFrom<Value, Args...>)
     constexpr decltype(auto) emplace(Args&&... args) {
-        return invoke_as_fallible([&] {
-                   return m_container.emplace_back(util::forward<Args>(args)...);
-               }) |
-               if_success([&](auto&&...) {
+        return as_fallible(m_container.emplace_back(util::forward<Args>(args)...)) | if_success([&](auto&&...) {
                    container::push_heap(m_container, util::ref(m_comp));
                }) |
                try_infallible;
