@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/assert/prelude.h>
+#include <di/container/string/string_view.h>
 #include <di/vocab/error/status_code_domain.h>
 
 namespace di::vocab {
@@ -18,6 +19,7 @@ public:
     [[nodiscard]] constexpr bool empty() const { return m_domain == nullptr; }
 
     constexpr auto message() const {
+        using namespace di::string_literals;
         if (!empty()) {
             return domain().do_message(*this);
         }

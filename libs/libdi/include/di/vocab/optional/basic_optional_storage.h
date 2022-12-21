@@ -19,11 +19,17 @@ class BasicOptionalStorage {
 public:
     constexpr explicit BasicOptionalStorage(NullOpt) {}
 
-    constexpr BasicOptionalStorage(BasicOptionalStorage const&) = default;
-    constexpr BasicOptionalStorage(BasicOptionalStorage&&) = default;
+    BasicOptionalStorage(BasicOptionalStorage const&) = default;
+    BasicOptionalStorage(BasicOptionalStorage&&) = default;
 
-    constexpr BasicOptionalStorage& operator=(BasicOptionalStorage const&) = default;
-    constexpr BasicOptionalStorage& operator=(BasicOptionalStorage&&) = default;
+    BasicOptionalStorage& operator=(BasicOptionalStorage const&) = default;
+    BasicOptionalStorage& operator=(BasicOptionalStorage&&) = default;
+
+    ~BasicOptionalStorage() = default;
+
+    constexpr ~BasicOptionalStorage()
+    requires(!concepts::TriviallyDestructible<T>)
+    {}
 
 private:
     constexpr friend bool tag_invoke(types::Tag<is_nullopt>, BasicOptionalStorage const& self) { return !self.m_has_value; }

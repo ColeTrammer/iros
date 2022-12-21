@@ -6,6 +6,7 @@
 #include <di/container/prelude.h>
 #include <di/format/prelude.h>
 #include <di/function/prelude.h>
+#include <di/io/prelude.h>
 #include <di/math/prelude.h>
 #include <di/meta/prelude.h>
 #include <di/parser/prelude.h>

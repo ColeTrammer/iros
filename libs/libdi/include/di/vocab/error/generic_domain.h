@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/container/algorithm/max.h>
+#include <di/container/string/string_view.h>
 #include <di/types/prelude.h>
 #include <di/vocab/error/status_code.h>
 #include <di/vocab/error/status_code_domain.h>
@@ -55,6 +56,8 @@ protected:
     }
 
     constexpr virtual container::ErasedString do_message(StatusCode<void> const& code) const override {
+        using namespace di::string_literals;
+
         auto value = down_cast(code).value();
         switch (value) {
             case BasicError::Success:

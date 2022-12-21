@@ -3,6 +3,7 @@
 #include <di/vocab/error/erased_status_code.h>
 #include <di/vocab/error/error.h>
 #include <di/vocab/error/generic_domain.h>
+#include <di/vocab/error/result.h>
 #include <di/vocab/error/status_code.h>
 #include <di/vocab/error/status_code_domain.h>
 #include <di/vocab/error/status_code_equality.h>
@@ -15,6 +16,7 @@ namespace di {
 using vocab::BasicError;
 using vocab::Error;
 using vocab::GenericCode;
+using vocab::Result;
 using vocab::StatusCode;
 using vocab::StatusCodeDomain;
 }

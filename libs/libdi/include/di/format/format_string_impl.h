@@ -20,6 +20,8 @@ namespace detail {
 
         constexpr operator StringView() const { return m_view; }
 
+        constexpr auto encoding() const { return m_view.encoding(); }
+
     private:
         StringView m_view;
     };
