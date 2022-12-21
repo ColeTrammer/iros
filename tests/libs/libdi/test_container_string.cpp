@@ -32,8 +32,8 @@ constexpr void to() {
     auto x = u8"abc"_sv | di::to<di::String>();
     ASSERT_EQ(x, u8"abc"_sv);
 
-    auto y = u8"abc"_sv | di::to<di::String>(di::encoding::assume_valid);
-    ASSERT_EQ(y, u8"abc"_sv);
+    auto y = "abc"_sv | di::to<di::String>(di::encoding::assume_valid);
+    ASSERT_EQ(y, "abc"_sv);
 }
 
 constexpr void erased() {

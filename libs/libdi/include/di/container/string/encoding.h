@@ -60,9 +60,9 @@ concept Contiguous = contiguous(in_place_type<meta::RemoveCVRef<T>>);
 
 namespace detail {
     struct ValidateFunction {
-        template<typename T, typename U = meta::EncodingCodeUnit<T>>
-        requires(Universal<T> || concepts::TagInvocableTo<ValidateFunction, bool, T const&, Span<U const>>)
-        constexpr bool operator()(T const& encoding, Span<U const> code_units) const {
+        template<typename T>
+        requires(Universal<T> || concepts::TagInvocableTo<ValidateFunction, bool, T const&, Span<meta::EncodingCodeUnit<T> const>>)
+        constexpr bool operator()(T const& encoding, Span<meta::EncodingCodeUnit<T> const> code_units) const {
             if constexpr (universal(in_place_type<T>)) {
                 return true;
             } else {
