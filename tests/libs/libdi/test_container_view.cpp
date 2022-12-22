@@ -394,6 +394,24 @@ constexpr void enumerate() {
     }));
 }
 
+constexpr void cycle() {
+    auto x = di::Array { 1, 2, 3, 4, 5 } | di::cycle;
+
+    auto y = di::move(x) | di::take(15) | di::to<di::Vector>();
+    auto ex1 = di::Array { 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5 } | di::to<di::Vector>();
+    ASSERT_EQ(y, ex1);
+
+    auto z = di::move(x) | di::take(15) | di::reverse | di::to<di::Vector>();
+    auto ex2 = di::Array { 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5 } | di::reverse | di::to<di::Vector>();
+    ASSERT_EQ(z, ex2);
+
+    auto a = x.begin();
+    auto b = a + 50;
+
+    ASSERT_EQ(a[20], 1);
+    ASSERT_EQ(di::distance(a, b), 50);
+}
+
 TEST_CONSTEXPR(container_view, basic, basic)
 TEST_CONSTEXPR(container_view, all, all)
 TEST_CONSTEXPR(container_view, empty, empty)
@@ -418,3 +436,4 @@ TEST_CONSTEXPR(container_view, drop_while, drop_while)
 TEST_CONSTEXPR(container_view, elements, elements)
 TEST_CONSTEXPR(container_view, stride, stride)
 TEST_CONSTEXPR(container_view, enumerate, enumerate)
+TEST_CONSTEXPR(container_view, cycle, cycle)
