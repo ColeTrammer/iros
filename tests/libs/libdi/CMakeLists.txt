@@ -4,6 +4,7 @@ set(TEST_FILES
     test_concepts.cpp
     test_container_algorithm.cpp
     test_container_concepts.cpp
+    test_container_linked_list.cpp
     test_container_queue.cpp
     test_container_string.cpp
     test_container_tree_set.cpp
@@ -27,5 +28,5 @@ set(TEST_FILES
 )
 
 add_os_tests(libdi ${TEST_FILES})
-target_link_libraries(test_libdi PRIVATE libdi)
+target_link_libraries(test_libdi PRIVATE libdi libdius)
 target_compile_definitions(test_libdi PRIVATE DI_USE_STD)

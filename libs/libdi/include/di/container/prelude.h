@@ -6,6 +6,7 @@
 #include <di/container/concepts/prelude.h>
 #include <di/container/interface/prelude.h>
 #include <di/container/iterator/prelude.h>
+#include <di/container/linked/prelude.h>
 #include <di/container/meta/prelude.h>
 #include <di/container/queue/prelude.h>
 #include <di/container/string/prelude.h>

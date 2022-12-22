@@ -3,41 +3,43 @@
 #include <di/container/action/to.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/iterator/iterator_base.h>
+#include <di/container/linked/linked_list.h>
 #include <di/container/meta/prelude.h>
-#include <di/container/vector/vector.h>
 #include <di/util/deduce_create.h>
 #include <di/vocab/optional/prelude.h>
 
 namespace di::container {
 namespace detail {
     template<typename Con, typename Value>
-    concept StackCompatible = concepts::Container<Con> && concepts::SameAs<Value, meta::ContainerValue<Con>> &&
+    concept QueueCompatible = concepts::Container<Con> && concepts::SameAs<Value, meta::ContainerValue<Con>> &&
                               requires(Con& container, Value&& value) {
+                                  { container.front() } -> concepts::SameAs<Optional<Value&>>;
+                                  { util::as_const(container).front() } -> concepts::SameAs<Optional<Value const&>>;
                                   { container.back() } -> concepts::SameAs<Optional<Value&>>;
                                   { util::as_const(container).back() } -> concepts::SameAs<Optional<Value const&>>;
                                   container.emplace_back(util::move(value));
                                   { container.append_container(util::move(container)) } -> concepts::MaybeFallible<void>;
-                                  { container.pop_back() } -> concepts::SameAs<Optional<Value>>;
+                                  { container.pop_front() } -> concepts::SameAs<Optional<Value>>;
                                   { container.size() } -> concepts::UnsignedInteger;
                               };
 }
 
-template<typename Value, detail::StackCompatible<Value> Con = container::Vector<Value>>
-class Stack {
+template<typename Value, detail::QueueCompatible<Value> Con = container::LinkedList<Value>>
+class Queue {
 private:
     template<concepts::InputContainer Other>
     requires(concepts::ContainerCompatible<Other, Value>)
-    constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<Stack>, Other&& other) {
+    constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<Queue>, Other&& other) {
         return as_fallible(util::forward<Other>(other) | container::to<Con>()) % [&](Con&& container) {
-            return Stack(util::move(container));
+            return Queue(util::move(container));
         } | try_infallible;
     }
 
     struct Iterator : public IteratorBase<Iterator, Value, meta::ContainerSSizeType<Con>> {
     private:
-        friend class Stack;
+        friend class Queue;
 
-        constexpr explicit Iterator(Stack& base) : m_base(util::address_of(base)) {}
+        constexpr explicit Iterator(Queue& base) : m_base(util::address_of(base)) {}
 
     public:
         Iterator() = default;
@@ -47,7 +49,7 @@ private:
         Iterator& operator=(Iterator const&) = delete;
         Iterator& operator=(Iterator&&) = default;
 
-        constexpr Value& operator*() const { return *m_base->top(); }
+        constexpr Value& operator*() const { return *m_base->front(); }
 
         constexpr void advance_one() { m_base->pop(); }
 
@@ -56,16 +58,25 @@ private:
 
         constexpr friend auto tag_invoke(types::Tag<iterator_category>, InPlaceType<Iterator>) { return types::InputIteratorTag {}; }
 
-        Stack* m_base { nullptr };
+        Queue* m_base { nullptr };
     };
 
 public:
-    Stack() = default;
+    Queue() = default;
 
-    constexpr explicit Stack(Con&& container) : m_container(util::move(container)) {}
+    Queue(Queue&&) = default;
 
-    constexpr Optional<Value&> top() { return m_container.back(); }
-    constexpr Optional<Value const&> top() const { return m_container.back(); }
+    constexpr explicit Queue(Con&& container) : m_container(util::move(container)) {}
+
+    ~Queue() = default;
+
+    Queue& operator=(Queue&&) = default;
+
+    constexpr Optional<Value&> front() { return m_container.front(); }
+    constexpr Optional<Value const&> front() const { return m_container.front(); }
+
+    constexpr Optional<Value&> back() { return m_container.back(); }
+    constexpr Optional<Value const&> back() const { return m_container.back(); }
 
     constexpr bool empty() const { return size() == 0u; }
     constexpr auto size() const { return m_container.size(); }
@@ -88,7 +99,7 @@ public:
         return m_container.append_container(util::forward<Other>(container));
     }
 
-    constexpr auto pop() { return m_container.pop_back(); }
+    constexpr auto pop() { return m_container.pop_front(); }
 
     constexpr auto begin() { return Iterator(*this); }
     constexpr auto end() { return default_sentinel; }
@@ -96,15 +107,15 @@ public:
     constexpr Con const& base() const { return m_container; }
 
 private:
-    constexpr friend auto tag_invoke(types::Tag<util::clone>, Stack const& self) { return self | container::to<Stack>(); }
+    constexpr friend auto tag_invoke(types::Tag<util::clone>, Queue const& self) { return self | container::to<Queue>(); }
 
     Con m_container {};
 };
 
 template<concepts::Container Con, typename T = meta::ContainerValue<Con>>
-requires(detail::StackCompatible<Con, T>)
-Stack(Con) -> Stack<T, Con>;
+requires(detail::QueueCompatible<Con, T>)
+Queue(Con) -> Queue<T, Con>;
 
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>>
-Stack<T> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<Stack>, Con&&);
+Queue<T> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<Queue>, Con&&);
 }

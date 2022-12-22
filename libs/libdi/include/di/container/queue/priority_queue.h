@@ -14,16 +14,20 @@
 namespace di::container {
 namespace detail {
     template<typename Con, typename Value>
-    concept PriorityQueueCompatible = concepts::RandomAccessContainer<Con> && concepts::Permutable<meta::ContainerIterator<Con>> &&
-                                      concepts::SameAs<Value, meta::ContainerValue<Con>> && requires(Con& container, Value&& value) {
-                                                                                                container.front();
-                                                                                                util::as_const(container).front();
-                                                                                                container.emplace_back(util::move(value));
-                                                                                                container.pop_back();
-                                                                                                {
-                                                                                                    container.size()
-                                                                                                    } -> concepts::UnsignedInteger;
-                                                                                            };
+    concept PriorityQueueCompatible =
+        concepts::RandomAccessContainer<Con> && concepts::Permutable<meta::ContainerIterator<Con>> &&
+        concepts::SameAs<Value, meta::ContainerValue<Con>> && requires(Con& container, Value&& value) {
+                                                                  { container.front() } -> concepts::SameAs<Optional<Value&>>;
+                                                                  {
+                                                                      util::as_const(container).front()
+                                                                      } -> concepts::SameAs<Optional<Value const&>>;
+                                                                  container.emplace_back(util::move(value));
+                                                                  {
+                                                                      container.append_container(util::move(container))
+                                                                      } -> concepts::MaybeFallible<void>;
+                                                                  { container.pop_back() } -> concepts::SameAs<Optional<Value>>;
+                                                                  { container.size() } -> concepts::UnsignedInteger;
+                                                              };
 }
 
 template<typename Value, detail::PriorityQueueCompatible<Value> Con = container::Vector<Value>,
@@ -95,6 +99,18 @@ public:
                try_infallible;
     }
 
+    template<concepts::ContainerCompatible<Value> Other>
+    constexpr auto push_container(Other&& container) {
+        auto old_size = size();
+        return invoke_as_fallible([&] {
+                   return m_container.append_container(util::forward<Other>(container));
+               }) % [&] {
+            for (auto i = old_size + 1u; i <= size(); i++) {
+                container::push_heap(m_container.begin(), m_container.begin() + i, util::ref(m_comp));
+            }
+        } | try_infallible;
+    }
+
     constexpr Optional<Value> pop() {
         if (empty()) {
             return nullopt;
@@ -123,6 +139,10 @@ private:
     Con m_container {};
     [[no_unique_address]] Comp m_comp {};
 };
+
+template<concepts::Container Con, typename T = meta::ContainerValue<Con>, concepts::StrictWeakOrder<T> Comp>
+requires(detail::PriorityQueueCompatible<Con, T>)
+PriorityQueue(Comp, Con) -> PriorityQueue<T, Con, Comp>;
 
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>>
 PriorityQueue<T> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<PriorityQueue>, Con&&);

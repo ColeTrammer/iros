@@ -50,6 +50,25 @@ constexpr void stack() {
     ASSERT(b.empty());
 }
 
+constexpr void queue() {
+    auto queue = di::Queue<int> {};
+    queue.push(1);
+    queue.push(2);
+    queue.push(3);
+
+    ASSERT_EQ(queue.size(), 3u);
+    ASSERT_EQ(queue.pop(), 1);
+    ASSERT_EQ(queue.pop(), 2);
+    ASSERT_EQ(queue.pop(), 3);
+    ASSERT(queue.empty());
+
+    auto b = di::range(5) | di::to<di::Queue>();
+
+    ASSERT(di::is_sorted(b | di::to<di::Vector>()));
+    ASSERT(b.empty());
+}
+
 TEST_CONSTEXPR(container_queue, priority_queue_basic, priority_queue_basic)
 TEST_CONSTEXPR(container_queue, priority_queue_to, priority_queue_to)
 TEST_CONSTEXPR(container_queue, stack, stack)
+TEST_CONSTEXPRX(container_queue, queue, queue)

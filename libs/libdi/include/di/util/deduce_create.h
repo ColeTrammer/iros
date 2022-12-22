@@ -6,8 +6,16 @@
 
 namespace di::util {
 namespace detail {
+    template<template<typename...> typename Template, typename... Args>
+    concept CTADDeducible = requires(Args&&... args) { Template(util::forward<Args>(args)...); };
+
     struct DeduceCreateFunction {
         template<template<typename...> typename Template, typename... Args>
+        requires(CTADDeducible<Template, Args...>)
+        constexpr auto operator()(InPlaceTemplate<Template>, Args&&... args) const -> decltype(Template(util::forward<Args>(args)...));
+
+        template<template<typename...> typename Template, typename... Args>
+        requires(!CTADDeducible<Template, Args...>)
         constexpr meta::TagInvokeResult<DeduceCreateFunction, InPlaceTemplate<Template>, Args...> operator()(InPlaceTemplate<Template>,
                                                                                                              Args&&...) const;
     };

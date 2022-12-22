@@ -2,11 +2,17 @@
 #include <test/test.h>
 
 struct X {
+    constexpr explicit X(int x_) : x(x_) {}
+
+    constexpr virtual ~X() {}
+
     int x;
 };
 
 struct Y : X {
     constexpr explicit Y(int x_, int y_) : X(x_), y(y_) {}
+
+    constexpr virtual ~Y() override {}
 
     int y;
 };
