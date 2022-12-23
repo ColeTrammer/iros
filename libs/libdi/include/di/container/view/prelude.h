@@ -4,6 +4,7 @@
 #include <di/container/view/all.h>
 #include <di/container/view/as_const.h>
 #include <di/container/view/as_rvalue.h>
+#include <di/container/view/chunk.h>
 #include <di/container/view/counted.h>
 #include <di/container/view/cycle.h>
 #include <di/container/view/drop.h>
@@ -37,6 +38,7 @@ namespace view = container::view;
 using container::View;
 using view::adjacent;
 using view::as_rvalue;
+using view::chunk;
 using view::cycle;
 using view::drop;
 using view::drop_while;

@@ -153,7 +153,9 @@ private:
     };
 
 public:
-    constexpr explicit StrideView(View base, SSizeType<false> stride) : m_base(util::move(base)), m_stride(stride) {}
+    constexpr explicit StrideView(View base, SSizeType<false> stride) : m_base(util::move(base)), m_stride(stride) {
+        DI_ASSERT_GT(stride, 0);
+    }
 
     constexpr View base() const&
     requires(concepts::CopyConstructible<View>)
@@ -170,7 +172,7 @@ public:
         return Iterator<false>(this, container::begin(m_base));
     }
 
-    constexpr auto begin()
+    constexpr auto begin() const
     requires(concepts::Container<View const>)
     {
         return Iterator<true>(this, container::begin(m_base));
@@ -179,11 +181,10 @@ public:
     constexpr auto end()
     requires(!concepts::SimpleView<View>)
     {
-        if constexpr (concepts::CommonContainer<View const> && concepts::SizedContainer<View const> &&
-                      concepts::ForwardContainer<View const>) {
+        if constexpr (concepts::CommonContainer<View> && concepts::SizedContainer<View> && concepts::ForwardContainer<View>) {
             auto missing = (m_stride - container::distance(m_base) % m_stride) % m_stride;
             return Iterator<false>(this, container::end(m_base), missing);
-        } else if constexpr (concepts::CommonContainer<View const> && !concepts::BidirectionalContainer<View const>) {
+        } else if constexpr (concepts::CommonContainer<View> && !concepts::BidirectionalContainer<View>) {
             return Iterator<false>(this, container::end(m_base));
         } else {
             return default_sentinel;
@@ -193,10 +194,11 @@ public:
     constexpr auto end() const
     requires(concepts::Container<View const>)
     {
-        if constexpr (concepts::CommonContainer<View> && concepts::SizedContainer<View> && concepts::ForwardContainer<View>) {
+        if constexpr (concepts::CommonContainer<View const> && concepts::SizedContainer<View const> &&
+                      concepts::ForwardContainer<View const>) {
             auto missing = (m_stride - container::distance(m_base) % m_stride) % m_stride;
             return Iterator<true>(this, container::end(m_base), missing);
-        } else if constexpr (concepts::CommonContainer<View> && !concepts::BidirectionalContainer<View>) {
+        } else if constexpr (concepts::CommonContainer<View const> && !concepts::BidirectionalContainer<View const>) {
             return Iterator<true>(this, container::end(m_base));
         } else {
             return default_sentinel;
@@ -209,7 +211,7 @@ public:
         return math::to_unsigned(math::divide_round_up(container::distance(m_base), m_stride));
     }
 
-    constexpr auto size()
+    constexpr auto size() const
     requires(concepts::SizedContainer<View const>)
     {
         return math::to_unsigned(math::divide_round_up(container::distance(m_base), m_stride));

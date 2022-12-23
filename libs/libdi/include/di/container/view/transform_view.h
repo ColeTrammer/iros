@@ -131,7 +131,7 @@ public:
     constexpr auto end() const
     requires(concepts::Container<View const> && concepts::Invocable<F const&, meta::ContainerReference<View const>>)
     {
-        return Sentinel<true>(container::begin(m_base));
+        return Sentinel<true>(container::end(m_base));
     }
 
     constexpr auto end() const

@@ -412,6 +412,37 @@ constexpr void cycle() {
     ASSERT_EQ(di::distance(a, b), 50);
 }
 
+constexpr void chunk() {
+    auto in1 = di::Array { 1, 2, 3, 8, 2, -3, 9, -1 };
+
+    auto r1 = in1 | di::chunk(3) | di::transform(di::sum) | di::to<di::Vector>();
+    auto ex1 = di::Array { 6, 7, 8 } | di::to<di::Vector>();
+    ASSERT_EQ(r1, ex1);
+
+    auto r2 = in1 | di::chunk(3) | di::reverse | di::transform(di::sum) | di::to<di::Vector>();
+    auto ex2 = di::Array { 8, 7, 6 } | di::to<di::Vector>();
+    ASSERT_EQ(r2, ex2);
+
+    ASSERT_EQ(di::size(in1 | di::chunk(3)), 3u);
+}
+
+void chunk_generator() {
+    auto in3 = []() -> di::Generator<int> {
+        co_yield 1;
+        co_yield 2;
+        co_yield 3;
+        co_yield 8;
+        co_yield 2;
+        co_yield -3;
+        co_yield 9;
+        co_yield -1;
+    }();
+
+    auto r3 = di::move(in3) | di::chunk(3) | di::transform(di::sum) | di::to<di::Vector>();
+    auto ex3 = di::Array { 6, 7, 8 } | di::to<di::Vector>();
+    ASSERT_EQ(r3, ex3);
+}
+
 TEST_CONSTEXPR(container_view, basic, basic)
 TEST_CONSTEXPR(container_view, all, all)
 TEST_CONSTEXPR(container_view, empty, empty)
@@ -437,3 +468,5 @@ TEST_CONSTEXPR(container_view, elements, elements)
 TEST_CONSTEXPR(container_view, stride, stride)
 TEST_CONSTEXPR(container_view, enumerate, enumerate)
 TEST_CONSTEXPR(container_view, cycle, cycle)
+TEST_CONSTEXPR(container_view, chunk, chunk)
+TEST_CONSTEXPRX(container_view, chunk_generator, chunk_generator)

@@ -22,7 +22,7 @@ public:
     }
 
 private:
-    constexpr friend bool operator==(Sent const& a, WrappedIter const& b) { return a.base() == b.base(); }
+    constexpr friend bool operator==(Self const& a, WrappedIter const& b) { return a.base() == b.base(); }
 
     Sent m_base;
 };
