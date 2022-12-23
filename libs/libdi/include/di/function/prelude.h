@@ -11,14 +11,15 @@
 #include <di/function/equal_or_greater.h>
 #include <di/function/equal_or_less.h>
 #include <di/function/flip.h>
+#include <di/function/generator.h>
 #include <di/function/greater.h>
 #include <di/function/identity.h>
 #include <di/function/into_void.h>
 #include <di/function/invoke.h>
 #include <di/function/less.h>
-#include <di/function/overload.h>
 #include <di/function/monad/prelude.h>
 #include <di/function/not_equal.h>
+#include <di/function/overload.h>
 #include <di/function/piped.h>
 #include <di/function/pipeline.h>
 #include <di/function/plus.h>
@@ -32,8 +33,8 @@ using function::compose;
 using function::curry;
 using function::curry_back;
 using function::flip;
-using function::piped;
 using function::overload;
+using function::piped;
 using function::ycombinator;
 
 using concepts::TagInvocable;
@@ -70,4 +71,6 @@ using function::not_equal;
 using function::plus;
 
 using function::into_void;
+
+using function::Generator;
 }

@@ -12,6 +12,7 @@ set(TEST_FILES
     test_container_view.cpp
     test_format.cpp
     test_function_bind.cpp
+    test_function_generator.cpp
     test_function_invoke.cpp
     test_meta.cpp
     test_parser.cpp

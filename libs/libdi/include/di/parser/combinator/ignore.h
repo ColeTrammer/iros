@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/function/into_void.h>
 #include <di/parser/combinator/transform.h>
 
 namespace di::parser {
@@ -7,7 +8,7 @@ namespace detail {
     struct IgnoreFunction {
         template<concepts::DecayConstructible Parser>
         constexpr auto operator()(Parser&& parser) const {
-            return util::forward<Parser>(parser) % [](auto&&...) {};
+            return util::forward<Parser>(parser) % function::into_void;
         }
     };
 }

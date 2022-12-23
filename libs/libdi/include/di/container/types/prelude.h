@@ -2,6 +2,7 @@
 
 #include <di/container/types/bidirectional_iterator_tag.h>
 #include <di/container/types/contiguous_iterator_tag.h>
+#include <di/container/types/elements_of.h>
 #include <di/container/types/forward_iterator_tag.h>
 #include <di/container/types/from_container.h>
 #include <di/container/types/input_iterator_tag.h>
@@ -15,5 +16,6 @@ using types::FromContainer;
 using types::InputIteratorTag;
 using types::RandomAccessIteratorTag;
 
+using types::ElementsOf;
 using types::from_container;
 }
