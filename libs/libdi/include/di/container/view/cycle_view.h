@@ -154,6 +154,7 @@ public:
     }
 
     constexpr View& base_ref() { return m_base; }
+    constexpr View const& base_ref() const { return m_base; }
 
     constexpr auto begin()
     requires(!concepts::SimpleView<View> || !concepts::CommonContainer<View const>)

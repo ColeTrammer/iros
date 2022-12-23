@@ -5,6 +5,7 @@
 #include <di/util/bit_cast.h>
 #include <di/util/clone.h>
 #include <di/util/compile_time_fail.h>
+#include <di/util/coroutine.h>
 #include <di/util/create.h>
 #include <di/util/declval.h>
 #include <di/util/exchange.h>
