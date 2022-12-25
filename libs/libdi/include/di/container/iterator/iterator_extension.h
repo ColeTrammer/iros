@@ -10,7 +10,13 @@
 
 namespace di::container {
 template<typename Self, concepts::Iterator Iter, typename Value>
-class IteratorExtension : public IteratorBase<Self, Value, meta::IteratorSSizeType<Iter>> {
+class IteratorExtension
+    : public IteratorBase<
+          Self,
+          meta::Conditional<concepts::RandomAccessIterator<Iter>, RandomAccessIteratorTag,
+                            meta::Conditional<concepts::BidirectionalIterator<Iter>, BidirectionalIteratorTag,
+                                              meta::Conditional<concepts::ForwardIterator<Iter>, ForwardIteratorTag, InputIteratorTag>>>,
+          Value, meta::IteratorSSizeType<Iter>> {
 private:
     using SSizeType = meta::IteratorSSizeType<Iter>;
 
@@ -55,18 +61,6 @@ private:
     requires(concepts::ThreeWayComparable<Iter>)
     {
         return a.base() <=> b.base();
-    }
-
-    constexpr friend auto tag_invoke(types::Tag<iterator_category>, InPlaceType<Self>) {
-        if constexpr (concepts::RandomAccessIterator<Iter>) {
-            return types::RandomAccessIteratorTag {};
-        } else if constexpr (concepts::BidirectionalIterator<Iter>) {
-            return types::BidirectionalIteratorTag {};
-        } else if constexpr (concepts::ForwardIterator<Iter>) {
-            return types::ForwardIteratorTag {};
-        } else {
-            return types::InputIteratorTag {};
-        }
     }
 
     Iter m_base;

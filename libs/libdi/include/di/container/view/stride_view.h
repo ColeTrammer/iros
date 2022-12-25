@@ -34,7 +34,14 @@ private:
     using ValueType = meta::ContainerValue<meta::MaybeConst<is_const, View>>;
 
     template<bool is_const>
-    class Iterator : public IteratorBase<Iterator<is_const>, ValueType<is_const>, SSizeType<is_const>> {
+    class Iterator
+        : public IteratorBase<
+              Iterator<is_const>,
+              meta::Conditional<
+                  concepts::RandomAccessIterator<Iter<is_const>>, RandomAccessIteratorTag,
+                  meta::Conditional<concepts::BidirectionalIterator<Iter<is_const>>, BidirectionalIteratorTag,
+                                    meta::Conditional<concepts::ForwardIterator<Iter<is_const>>, ForwardIteratorTag, InputIteratorTag>>>,
+              ValueType<is_const>, SSizeType<is_const>> {
     private:
         friend class StrideView;
 
@@ -122,18 +129,6 @@ private:
             return math::divide_round_up(b.m_base - b.m_current, b.m_stride);
         }
         constexpr friend SSizeType<is_const> operator-(Iterator const& a, DefaultSentinel) { return -(default_sentinel - a); }
-
-        constexpr friend auto tag_invoke(types::Tag<container::iterator_category>, InPlaceType<Iterator>) {
-            if constexpr (concepts::RandomAccessIterator<Iter<is_const>>) {
-                return RandomAccessIteratorTag {};
-            } else if constexpr (concepts::BidirectionalIterator<Iter<is_const>>) {
-                return BidirectionalIteratorTag {};
-            } else if constexpr (concepts::ForwardIterator<Iter<is_const>>) {
-                return ForwardIteratorTag {};
-            } else {
-                return InputIteratorTag {};
-            }
-        }
 
         constexpr friend meta::ContainerRValue<meta::MaybeConst<is_const, View>> tag_invoke(types::Tag<container::iterator_move>,
                                                                                             Iterator const& a) {

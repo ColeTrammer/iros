@@ -41,7 +41,11 @@ private:
                                       concepts::ForwardContainer<meta::ContainerReference<Con>>;
 
     template<bool is_const>
-    class Iterator : public IteratorBase<Iterator<is_const>, Value<is_const>, SSizeType<is_const>> {
+    class Iterator
+        : public IteratorBase<Iterator<is_const>,
+                              meta::Conditional<IsBidirectional<Base<is_const>>, BidirectionalIteratorTag,
+                                                meta::Conditional<IsForward<Base<is_const>>, ForwardIteratorTag, InputIteratorTag>>,
+                              Value<is_const>, SSizeType<is_const>> {
     private:
         using Parent = meta::MaybeConst<is_const, JoinView>;
         using Outer = meta::ContainerIterator<Base<is_const>>;
@@ -154,16 +158,6 @@ private:
         requires(concepts::IndirectlySwappable<Inner>)
         {
             return container::iterator_swap(a.m_inner, b.m_inner);
-        }
-
-        constexpr friend auto tag_invoke(types::Tag<iterator_category>, InPlaceType<Iterator>) {
-            if constexpr (IsBidirectional<Base<is_const>>) {
-                return types::BidirectionalIteratorTag {};
-            } else if constexpr (IsForward<Base<is_const>>) {
-                return types::ForwardIteratorTag {};
-            } else {
-                return types::InputIteratorTag {};
-            }
         }
 
         Parent* m_parent { nullptr };

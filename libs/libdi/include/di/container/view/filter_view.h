@@ -27,7 +27,11 @@ private:
     using Iter = meta::ContainerIterator<View>;
     using Sent = meta::ContainerSentinel<View>;
 
-    class Iterator : public IteratorBase<Iterator, Value, SSizeType> {
+    class Iterator
+        : public IteratorBase<Iterator,
+                              meta::Conditional<concepts::BidirectionalIterator<Iter>, BidirectionalIteratorTag,
+                                                meta::Conditional<concepts::ForwardIterator<Iter>, ForwardIteratorTag, InputIteratorTag>>,
+                              Value, SSizeType> {
     public:
         Iterator()
         requires(concepts::DefaultInitializable<Iter>)
@@ -60,16 +64,6 @@ private:
 
     private:
         constexpr friend bool operator==(Iterator const& a, Iterator const& b) { return a.base() == b.base(); }
-
-        constexpr friend auto tag_invoke(types::Tag<iterator_category>, InPlaceType<Iterator>) {
-            if constexpr (concepts::BidirectionalIterator<Iter>) {
-                return BidirectionalIteratorTag {};
-            } else if constexpr (concepts::ForwardIterator<Iter>) {
-                return ForwardIteratorTag {};
-            } else {
-                return InputIteratorTag {};
-            }
-        }
 
         constexpr friend meta::IteratorRValue<Iter> tag_invoke(types::Tag<iterator_move>, Iterator const& a) {
             return container::iterator_move(a);

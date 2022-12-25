@@ -7,7 +7,7 @@
 
 namespace di::container {
 template<typename Value>
-class RBTreeIterator : public IteratorBase<RBTreeIterator<Value>, Value, ssize_t> {
+class RBTreeIterator : public IteratorBase<RBTreeIterator<Value>, BidirectionalIteratorTag, Value, ssize_t> {
 private:
     using Node = RBTreeNode<Value>;
 
@@ -43,10 +43,6 @@ public:
 private:
     constexpr friend bool operator==(RBTreeIterator const& a, RBTreeIterator const& b) {
         return (a.m_at_end == b.m_at_end) && (a.m_current == b.m_current);
-    }
-
-    constexpr friend types::BidirectionalIteratorTag tag_invoke(types::Tag<iterator_category>, InPlaceType<RBTreeIterator>) {
-        return types::BidirectionalIteratorTag {};
     }
 
     Node* m_current { nullptr };

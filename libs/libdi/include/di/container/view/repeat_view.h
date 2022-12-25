@@ -31,7 +31,7 @@ private:
     using IndexType = meta::Conditional<is_bounded, Bound, types::ssize_t>;
     using SSizeType = meta::MakeSigned<IndexType>;
 
-    class Iterator : public IteratorBase<Iterator, T, SSizeType> {
+    class Iterator : public IteratorBase<Iterator, RandomAccessIteratorTag, T, SSizeType> {
     public:
         constexpr Iterator() = default;
 
@@ -49,10 +49,6 @@ private:
 
         constexpr friend SSizeType operator-(Iterator const& a, Iterator const& b) {
             return static_cast<SSizeType>(a.m_current) - static_cast<SSizeType>(b.m_current);
-        }
-
-        constexpr friend types::RandomAccessIteratorTag tag_invoke(types::Tag<iterator_category>, types::InPlaceType<Iterator>) {
-            return types::RandomAccessIteratorTag {};
         }
 
         T const* m_value { nullptr };

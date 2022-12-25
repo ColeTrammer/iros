@@ -22,7 +22,10 @@
 
 namespace di::container {
 template<concepts::BidirectionalIterator Iter>
-class ReverseIterator : public IteratorBase<ReverseIterator<Iter>, meta::IteratorValue<Iter>, meta::IteratorSSizeType<Iter>> {
+class ReverseIterator
+    : public IteratorBase<ReverseIterator<Iter>,
+                          meta::Conditional<concepts::RandomAccessIterator<Iter>, RandomAccessIteratorTag, BidirectionalIteratorTag>,
+                          meta::IteratorValue<Iter>, meta::IteratorSSizeType<Iter>> {
 private:
     using SSizeType = meta::IteratorSSizeType<Iter>;
 
@@ -71,14 +74,6 @@ public:
     }
 
 private:
-    constexpr friend auto tag_invoke(types::Tag<iterator_category>, types::InPlaceType<ReverseIterator>) {
-        if constexpr (concepts::RandomAccessIterator<Iter>) {
-            return types::RandomAccessIteratorTag {};
-        } else {
-            return types::BidirectionalIteratorTag {};
-        }
-    }
-
     constexpr friend decltype(auto) tag_invoke(types::Tag<iterator_move>, ReverseIterator const& self)
     requires(requires { typename meta::IteratorRValue<Iter>; })
     {

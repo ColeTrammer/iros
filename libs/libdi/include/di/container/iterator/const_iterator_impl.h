@@ -15,7 +15,8 @@
 
 namespace di::container {
 template<concepts::InputIterator Iter>
-class ConstIteratorImpl : public IteratorBase<ConstIteratorImpl<Iter>, meta::IteratorValue<Iter>, meta::IteratorSSizeType<Iter>> {
+class ConstIteratorImpl
+    : public IteratorBase<ConstIteratorImpl<Iter>, meta::IteratorCategory<Iter>, meta::IteratorValue<Iter>, meta::IteratorSSizeType<Iter>> {
 private:
     using Self = ConstIteratorImpl;
     using SSizeType = meta::IteratorSSizeType<Iter>;
@@ -98,20 +99,6 @@ private:
     requires(!concepts::SameAs<Sent, Self> && concepts::SizedSentinelFor<Sent, Iter>)
     constexpr friend SSizeType operator-(Sent const& a, Self const& b) {
         return a - b.base();
-    }
-
-    constexpr friend auto tag_invoke(types::Tag<iterator_category>, InPlaceType<Self>) {
-        if constexpr (concepts::ContiguousIterator<Iter>) {
-            return types::ContiguousIteratorTag {};
-        } else if constexpr (concepts::RandomAccessIterator<Iter>) {
-            return types::RandomAccessIteratorTag {};
-        } else if constexpr (concepts::BidirectionalIterator<Iter>) {
-            return types::BidirectionalIteratorTag {};
-        } else if constexpr (concepts::ForwardIterator<Iter>) {
-            return types::ForwardIteratorTag {};
-        } else {
-            return types::InputIteratorTag {};
-        }
     }
 
     Iter m_base;

@@ -73,7 +73,13 @@ private:
 
     class Sentinel;
 
-    class Iterator : public IteratorBase<Iterator, T, SSizeType> {
+    class Iterator
+        : public IteratorBase<
+              Iterator,
+              meta::Conditional<detail::IotaAdvancable<T>, RandomAccessIteratorTag,
+                                meta::Conditional<detail::IotaDecrementable<T>, BidirectionalIteratorTag,
+                                                  meta::Conditional<detail::IotaIncrementable<T>, ForwardIteratorTag, InputIteratorTag>>>,
+              T, SSizeType> {
     public:
         Iterator()
         requires(concepts::DefaultInitializable<T>)
@@ -145,18 +151,6 @@ private:
                                              : static_cast<SSizeType>(a.m_value - b.m_value);
             } else {
                 return a.m_value - b.m_value;
-            }
-        }
-
-        constexpr friend auto tag_invoke(types::Tag<iterator_category>, types::InPlaceType<Iterator>) {
-            if constexpr (detail::IotaAdvancable<T>) {
-                return types::RandomAccessIteratorTag {};
-            } else if constexpr (detail::IotaDecrementable<T>) {
-                return types::BidirectionalIteratorTag {};
-            } else if constexpr (detail::IotaIncrementable<T>) {
-                return types::ForwardIteratorTag {};
-            } else {
-                return types::InputIteratorTag {};
             }
         }
 

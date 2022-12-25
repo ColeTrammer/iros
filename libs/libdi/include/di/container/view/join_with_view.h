@@ -36,12 +36,24 @@ private:
 
     template<bool is_const>
     class Iterator
-        : public IteratorBase<Iterator<is_const>,
-                              meta::CommonType<meta::ContainerValue<meta::ContainerReference<meta::MaybeConst<is_const, View>>>,
-                                               meta::ContainerValue<meta::MaybeConst<is_const, Pattern>>>,
-                              meta::CommonType<meta::ContainerSSizeType<meta::MaybeConst<is_const, View>>,
-                                               meta::ContainerSSizeType<meta::ContainerReference<meta::MaybeConst<is_const, View>>>,
-                                               meta::ContainerSSizeType<meta::MaybeConst<is_const, Pattern>>>> {
+        : public IteratorBase<
+              Iterator<is_const>,
+              meta::Conditional<
+                  concepts::Reference<meta::ContainerReference<meta::MaybeConst<is_const, View>>> &&
+                      concepts::BidirectionalContainer<meta::MaybeConst<is_const, View>> &&
+                      detail::BidirectionalCommon<meta::ContainerReference<meta::MaybeConst<is_const, View>>> &&
+                      detail::BidirectionalCommon<meta::MaybeConst<is_const, Pattern>>,
+                  BidirectionalIteratorTag,
+                  meta::Conditional<
+                      concepts::Reference<meta::ContainerReference<meta::MaybeConst<is_const, View>>> &&
+                          concepts::ForwardIterator<meta::ContainerIterator<meta::MaybeConst<is_const, View>>> &&
+                          concepts::ForwardIterator<meta::ContainerIterator<meta::ContainerReference<meta::MaybeConst<is_const, View>>>>,
+                      ForwardIteratorTag, InputIteratorTag>>,
+              meta::CommonType<meta::ContainerValue<meta::ContainerReference<meta::MaybeConst<is_const, View>>>,
+                               meta::ContainerValue<meta::MaybeConst<is_const, Pattern>>>,
+              meta::CommonType<meta::ContainerSSizeType<meta::MaybeConst<is_const, View>>,
+                               meta::ContainerSSizeType<meta::ContainerReference<meta::MaybeConst<is_const, View>>>,
+                               meta::ContainerSSizeType<meta::MaybeConst<is_const, Pattern>>>> {
     private:
         using Parent = meta::MaybeConst<is_const, JoinWithView>;
         using Base = meta::MaybeConst<is_const, View>;
@@ -209,17 +221,6 @@ private:
         requires(concepts::IndirectlySwappable<InnerIter, PatternIter>)
         {
             visit(container::iterator_swap, x.m_inner, y.m_inner);
-        }
-
-        constexpr friend auto tag_invoke(types::Tag<iterator_category>, InPlaceType<Iterator>) {
-            if constexpr (ref_is_glvalue && concepts::BidirectionalContainer<Base> && detail::BidirectionalCommon<InnerBase> &&
-                          detail::BidirectionalCommon<PatternBase>) {
-                return BidirectionalIteratorTag {};
-            } else if constexpr (ref_is_glvalue && concepts::ForwardIterator<OuterIter> && concepts::ForwardIterator<InnerIter>) {
-                return ForwardIteratorTag {};
-            } else {
-                return InputIteratorTag {};
-            }
         }
 
         Parent* m_parent { nullptr };

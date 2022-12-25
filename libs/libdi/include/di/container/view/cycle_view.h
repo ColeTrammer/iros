@@ -29,7 +29,12 @@ private:
     using Parent = meta::MaybeConst<is_const, CycleView>;
 
     template<bool is_const>
-    class Iterator : public IteratorBase<Iterator<is_const>, Value<is_const>, SSizeType<is_const>> {
+    class Iterator
+        : public IteratorBase<Iterator<is_const>,
+                              meta::Conditional<concepts::RandomAccessIterator<Iter<is_const>>, RandomAccessIteratorTag,
+                                                meta::Conditional<concepts::BidirectionalIterator<Iter<is_const>>, BidirectionalIteratorTag,
+                                                                  ForwardIteratorTag>>,
+                              Value<is_const>, SSizeType<is_const>> {
     private:
         friend class CycleView;
 
@@ -117,16 +122,6 @@ private:
             auto size = container::distance(start, container::end(a.m_parent->base_ref()));
 
             return (a.m_cycle_number - b.m_cycle_number) * size + (a.m_base - b.m_base);
-        }
-
-        constexpr friend auto tag_invoke(types::Tag<iterator_category>, InPlaceType<Iterator>) {
-            if constexpr (concepts::RandomAccessIterator<Iter<is_const>>) {
-                return types::RandomAccessIteratorTag {};
-            } else if constexpr (concepts::BidirectionalIterator<Iter<is_const>>) {
-                return types::BidirectionalIteratorTag {};
-            } else {
-                return types::ForwardIteratorTag {};
-            }
         }
 
         Parent<is_const>* m_parent { nullptr };

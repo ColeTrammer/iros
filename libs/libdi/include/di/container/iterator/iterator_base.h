@@ -4,34 +4,32 @@
 #include <di/concepts/same_as.h>
 #include <di/container/iterator/iterator_ssize_type.h>
 #include <di/container/iterator/iterator_value.h>
+#include <di/container/types/prelude.h>
 #include <di/types/prelude.h>
 #include <di/util/declval.h>
 
 namespace di::container {
-namespace detail {
-    template<typename T>
-    concept Input = requires(T& iterator, T const& citerator) {
-                        *citerator;
-                        iterator.advance_one();
-                    };
-
-    template<typename T>
-    concept Forward = Input<T> && concepts::Copyable<T>;
-
-    template<typename T>
-    concept Bidirectional = Forward<T> && requires(T& iterator) { iterator.back_one(); };
-
-    template<typename T, typename SSizeType>
-    concept RandomAccess = Bidirectional<T> && requires(T& iterator, SSizeType n) { iterator.advance_n(n); };
-}
-
-template<typename Self, typename ValueType, typename SSizeType>
+template<typename Self, typename Category, typename ValueType, typename SSizeType>
 struct IteratorBase {
 private:
     constexpr Self& self() { return static_cast<Self&>(*this); }
     constexpr Self const& self() const { return static_cast<Self const&>(*this); }
 
 public:
+    IteratorBase() = default;
+    IteratorBase(IteratorBase const&) = default;
+    IteratorBase(IteratorBase&&) = default;
+
+    IteratorBase& operator=(IteratorBase const&) = default;
+    IteratorBase& operator=(IteratorBase&&) = default;
+
+    IteratorBase(IteratorBase const&)
+    requires(concepts::SameAs<Category, InputIteratorTag>)
+    = delete;
+    IteratorBase& operator=(IteratorBase const&)
+    requires(concepts::SameAs<Category, InputIteratorTag>)
+    = delete;
+
     constexpr Self& operator++() {
         self().advance_one();
         return self();
@@ -39,7 +37,7 @@ public:
     constexpr void operator++(int) { self().advance_one(); }
 
     constexpr Self operator++(int)
-    requires(detail::Forward<Self>)
+    requires(concepts::DerivedFrom<Category, ForwardIteratorTag>)
     {
         auto temp = self();
         self().advance_one();
@@ -47,14 +45,14 @@ public:
     }
 
     constexpr Self& operator--()
-    requires(detail::Bidirectional<Self>)
+    requires(concepts::DerivedFrom<Category, BidirectionalIteratorTag>)
     {
         self().back_one();
         return self();
     }
 
     constexpr Self operator--(int)
-    requires(detail::Bidirectional<Self>)
+    requires(concepts::DerivedFrom<Category, BidirectionalIteratorTag>)
     {
         auto temp = self();
         self().back_one();
@@ -62,7 +60,7 @@ public:
     }
 
     constexpr decltype(auto) operator[](SSizeType n) const
-    requires(detail::RandomAccess<Self, SSizeType>)
+    requires(concepts::DerivedFrom<Category, RandomAccessIteratorTag>)
     {
         auto copy = self();
         copy.advance_n(n);
@@ -70,14 +68,14 @@ public:
     }
 
     constexpr Self& operator+=(SSizeType n)
-    requires(detail::RandomAccess<Self, SSizeType>)
+    requires(concepts::DerivedFrom<Category, RandomAccessIteratorTag>)
     {
         self().advance_n(n);
         return self();
     }
 
     constexpr Self& operator-=(SSizeType n)
-    requires(detail::RandomAccess<Self, SSizeType>)
+    requires(concepts::DerivedFrom<Category, RandomAccessIteratorTag>)
     {
         self().advance_n(-n);
         return self();
@@ -85,7 +83,7 @@ public:
 
 private:
     constexpr friend Self operator+(Self const& self, SSizeType n)
-    requires(detail::RandomAccess<Self, SSizeType>)
+    requires(concepts::DerivedFrom<Category, RandomAccessIteratorTag>)
     {
         auto temp = self;
         temp.advance_n(n);
@@ -93,7 +91,7 @@ private:
     }
 
     constexpr friend Self operator+(SSizeType n, Self const& self)
-    requires(detail::RandomAccess<Self, SSizeType>)
+    requires(concepts::DerivedFrom<Category, RandomAccessIteratorTag>)
     {
         auto temp = self;
         temp.advance_n(n);
@@ -101,7 +99,7 @@ private:
     }
 
     constexpr friend Self operator-(Self const& self, SSizeType n)
-    requires(detail::RandomAccess<Self, SSizeType>)
+    requires(concepts::DerivedFrom<Category, RandomAccessIteratorTag>)
     {
         auto temp = self;
         temp.advance_n(-n);
@@ -110,5 +108,6 @@ private:
 
     friend SSizeType tag_invoke(types::Tag<iterator_ssize_type>, InPlaceType<Self>) { return util::declval<SSizeType>(); }
     friend ValueType tag_invoke(types::Tag<iterator_value>, InPlaceType<Self>) { return util::declval<ValueType>(); }
+    friend Category tag_invoke(types::Tag<iterator_category>, InPlaceType<Self>) { return util::declval<Category>(); }
 };
 }

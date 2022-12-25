@@ -64,7 +64,7 @@ namespace utf8 {
                                                              : 4;
     }
 
-    class Utf8Iterator : public IteratorBase<Utf8Iterator, c32, ssize_t> {
+    class Utf8Iterator : public IteratorBase<Utf8Iterator, BidirectionalIteratorTag, c32, ssize_t> {
     public:
         Utf8Iterator() = default;
         constexpr explicit Utf8Iterator(c8 const* data) : m_data(data) {}
@@ -94,10 +94,6 @@ namespace utf8 {
     private:
         constexpr friend bool operator==(Utf8Iterator const& a, Utf8Iterator const& b) { return a.data() == b.data(); }
         constexpr friend auto operator<=>(Utf8Iterator const& a, Utf8Iterator const& b) { return a.data() <=> b.data(); }
-
-        constexpr friend auto tag_invoke(types::Tag<container::iterator_category>, InPlaceType<Utf8Iterator>) {
-            return types::BidirectionalIteratorTag {};
-        }
 
         c8 const* m_data { nullptr };
     };

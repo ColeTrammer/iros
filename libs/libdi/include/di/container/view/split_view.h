@@ -21,7 +21,7 @@ private:
 
     using Value = meta::Reconstructed<View, meta::ContainerIterator<View>, meta::ContainerIterator<View>>;
 
-    struct Iterator : public IteratorBase<Iterator, Value, meta::ContainerSSizeType<View>> {
+    struct Iterator : public IteratorBase<Iterator, ForwardIteratorTag, Value, meta::ContainerSSizeType<View>> {
     public:
         Iterator() = default;
 
@@ -53,8 +53,6 @@ private:
         constexpr friend bool operator==(Iterator const& a, Iterator const& b) {
             return a.m_base == b.m_base && a.m_trailing_empty == b.m_trailing_empty;
         }
-
-        constexpr friend auto tag_invoke(types::Tag<iterator_category>, InPlaceType<Iterator>) { return types::ForwardIteratorTag {}; }
 
         SplitView* m_parent { nullptr };
         meta::ContainerIterator<View> m_base;

@@ -13,10 +13,12 @@
 
 namespace di::container {
 template<concepts::Iterator Iter>
-class CountedIterator : public IteratorBase<CountedIterator<Iter>, meta::IteratorValue<Iter>, meta::IteratorSSizeType<Iter>> {
-public:
+class CountedIterator
+    : public IteratorBase<CountedIterator<Iter>, meta::IteratorCategory<Iter>, meta::IteratorValue<Iter>, meta::IteratorSSizeType<Iter>> {
+private:
     using SSizeType = meta::IteratorSSizeType<Iter>;
 
+public:
     CountedIterator()
     requires(concepts::DefaultInitializable<Iter>)
     = default;
@@ -106,10 +108,6 @@ private:
         DI_ASSERT_GT(a.count(), 0);
         DI_ASSERT_GT(b.count(), 0);
         iterator_swap(a.base(), b.base());
-    }
-
-    constexpr friend auto tag_invoke(types::Tag<iterator_category>, InPlaceType<CountedIterator>) {
-        return meta::IteratorCategory<Iter> {};
     }
 
     Iter m_iterator;

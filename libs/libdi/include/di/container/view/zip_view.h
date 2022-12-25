@@ -59,7 +59,13 @@ private:
     class Sentinel;
 
     template<bool is_const>
-    class Iterator : public IteratorBase<Iterator<is_const>, Value<is_const>, SSizeType<is_const>> {
+    class Iterator
+        : public IteratorBase<
+              Iterator<is_const>,
+              meta::Conditional<all_random_access<is_const>, RandomAccessIteratorTag,
+                                meta::Conditional<all_bidirectional<is_const>, BidirectionalIteratorTag,
+                                                  meta::Conditional<all_forward<is_const>, ForwardIteratorTag, InputIteratorTag>>>,
+              Value<is_const>, SSizeType<is_const>> {
     private:
         using Storage = Tuple<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>...>;
 
@@ -168,18 +174,6 @@ private:
             return function::unpack<meta::MakeIndexSequence<sizeof...(Views)>>([&]<size_t... indices>(meta::IndexSequence<indices...>) {
                 return (void) (iterator_swap(util::get<indices>(a.m_iterators), util::get<indices>(a.m_iterators)), ...);
             });
-        }
-
-        constexpr friend auto tag_invoke(types::Tag<iterator_category>, InPlaceType<Iterator>) {
-            if constexpr (all_random_access<is_const>) {
-                return RandomAccessIteratorTag {};
-            } else if constexpr (all_bidirectional<is_const>) {
-                return BidirectionalIteratorTag {};
-            } else if constexpr (all_forward<is_const>) {
-                return ForwardIteratorTag {};
-            } else {
-                return InputIteratorTag {};
-            }
         }
 
         Storage m_iterators;

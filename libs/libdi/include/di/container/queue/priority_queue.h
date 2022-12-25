@@ -42,7 +42,7 @@ private:
         } | try_infallible;
     }
 
-    struct Iterator : public IteratorBase<Iterator, Value, meta::ContainerSSizeType<Con>> {
+    struct Iterator : public IteratorBase<Iterator, InputIteratorTag, Value, meta::ContainerSSizeType<Con>> {
     private:
         friend class PriorityQueue;
 
@@ -50,11 +50,6 @@ private:
 
     public:
         Iterator() = default;
-        Iterator(Iterator const&) = delete;
-        Iterator(Iterator&&) = default;
-
-        Iterator& operator=(Iterator const&) = delete;
-        Iterator& operator=(Iterator&&) = default;
 
         constexpr Value& operator*() const { return *m_base->top(); }
 
@@ -62,8 +57,6 @@ private:
 
     private:
         constexpr friend bool operator==(Iterator const& a, DefaultSentinel const&) { return a.m_base->empty(); }
-
-        constexpr friend auto tag_invoke(types::Tag<iterator_category>, InPlaceType<Iterator>) { return types::InputIteratorTag {}; }
 
         PriorityQueue* m_base { nullptr };
     };

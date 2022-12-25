@@ -17,7 +17,9 @@
 
 namespace di::container {
 template<concepts::InputIterator Iter>
-class MoveIterator : public IteratorBase<MoveIterator<Iter>, meta::IteratorValue<Iter>, meta::IteratorSSizeType<Iter>> {
+class MoveIterator : public IteratorBase<MoveIterator<Iter>,meta::Conditional<concepts::RandomAccessIterator<Iter>, RandomAccessIteratorTag,
+                            meta::Conditional<concepts::BidirectionalIterator<Iter>, BidirectionalIteratorTag,
+                                              meta::Conditional<concepts::ForwardIterator<Iter>, ForwardIteratorTag, InputIteratorTag>>>, meta::IteratorValue<Iter>, meta::IteratorSSizeType<Iter>> {
 private:
     using SSizeType = meta::IteratorSSizeType<Iter>;
 
@@ -62,17 +64,6 @@ private:
     template<concepts::InputIterator Other>
     friend class MoveIterator;
 
-    constexpr friend auto tag_invoke(types::Tag<iterator_category>, types::InPlaceType<MoveIterator>) {
-        if constexpr (concepts::RandomAccessIterator<Iter>) {
-            return types::RandomAccessIteratorTag {};
-        } else if constexpr (concepts::BidirectionalIterator<Iter>) {
-            return types::BidirectionalIteratorTag {};
-        } else if constexpr (concepts::ForwardIterator<Iter>) {
-            return types::ForwardIteratorTag {};
-        } else {
-            return types::InputIteratorTag {};
-        }
-    }
     constexpr friend decltype(auto) tag_invoke(types::Tag<iterator_move>, MoveIterator const& self)
     requires(requires { typename meta::IteratorRValue<Iter>; })
     {

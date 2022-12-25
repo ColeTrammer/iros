@@ -23,7 +23,7 @@ private:
     using Sent = meta::ContainerIterator<View>;
     using SSizeType = meta::ContainerSSizeType<View>;
 
-    class InnerIterator : public IteratorBase<InnerIterator, meta::ContainerValue<View>, SSizeType> {
+    class InnerIterator : public IteratorBase<InnerIterator, InputIteratorTag, meta::ContainerValue<View>, SSizeType> {
     private:
         friend class ChunkView;
 
@@ -67,8 +67,6 @@ private:
             return -(default_sentinel - a);
         }
 
-        constexpr friend auto tag_invoke(types::Tag<iterator_category>, InPlaceType<InnerIterator>) { return InputIteratorTag {}; }
-
         ChunkView* m_parent { nullptr };
     };
 
@@ -92,7 +90,7 @@ private:
         ChunkView* m_parent { nullptr };
     };
 
-    class OuterIterator : public IteratorBase<OuterIterator, ValueType, SSizeType> {
+    class OuterIterator : public IteratorBase<OuterIterator, InputIteratorTag, ValueType, SSizeType> {
     private:
         friend class ChunkView;
 
@@ -134,8 +132,6 @@ private:
         {
             return -(default_sentinel - a);
         }
-
-        constexpr friend auto tag_invoke(types::Tag<iterator_category>, InPlaceType<OuterIterator>) { return InputIteratorTag {}; }
 
         ChunkView* m_parent { nullptr };
     };
@@ -209,7 +205,12 @@ private:
         util::declval<SSizeType<is_const> const&>()));
 
     template<bool is_const>
-    class Iterator : public IteratorBase<Iterator<is_const>, ValueType<is_const>, SSizeType<is_const>> {
+    class Iterator
+        : public IteratorBase<Iterator<is_const>,
+                              meta::Conditional<concepts::RandomAccessIterator<Iter<is_const>>, RandomAccessIteratorTag,
+                                                meta::Conditional<concepts::BidirectionalIterator<Iter<is_const>>, BidirectionalIteratorTag,
+                                                                  ForwardIteratorTag>>,
+                              ValueType<is_const>, SSizeType<is_const>> {
     private:
         friend class ChunkView;
 
@@ -276,16 +277,6 @@ private:
             return math::divide_round_up(b.m_base - b.m_current, b.m_chunk_size);
         }
         constexpr friend SSizeType<is_const> operator-(Iterator const& a, DefaultSentinel) { return -(default_sentinel - a); }
-
-        constexpr friend auto tag_invoke(types::Tag<container::iterator_category>, InPlaceType<Iterator>) {
-            if constexpr (concepts::RandomAccessIterator<Iter<is_const>>) {
-                return RandomAccessIteratorTag {};
-            } else if constexpr (concepts::BidirectionalIterator<Iter<is_const>>) {
-                return BidirectionalIteratorTag {};
-            } else {
-                return ForwardIteratorTag {};
-            }
-        }
 
         Iter<is_const> m_base {};
         Sent<is_const> m_end {};

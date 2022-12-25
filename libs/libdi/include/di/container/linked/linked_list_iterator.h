@@ -7,7 +7,7 @@
 
 namespace di::container {
 template<typename Value>
-class LinkedListIterator : public IteratorBase<LinkedListIterator<Value>, Value, ssize_t> {
+class LinkedListIterator : public IteratorBase<LinkedListIterator<Value>, BidirectionalIteratorTag, Value, ssize_t> {
 public:
     LinkedListIterator() = default;
 
@@ -24,10 +24,6 @@ public:
 
 private:
     constexpr friend bool operator==(LinkedListIterator const& a, LinkedListIterator const& b) { return a.m_node == b.m_node; }
-
-    constexpr friend auto tag_invoke(types::Tag<iterator_category>, InPlaceType<LinkedListIterator>) {
-        return types::BidirectionalIteratorTag {};
-    }
 
     LinkedListNode* m_node { nullptr };
 };

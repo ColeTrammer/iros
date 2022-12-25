@@ -53,7 +53,8 @@ namespace detail {
     };
 
     template<typename Ref, typename Value>
-    class GeneratorIterator : public container::IteratorBase<GeneratorIterator<Ref, Value>, GeneratorValue<Ref, Value>, ssize_t> {
+    class GeneratorIterator
+        : public container::IteratorBase<GeneratorIterator<Ref, Value>, InputIteratorTag, GeneratorValue<Ref, Value>, ssize_t> {
     private:
         using Handle = CoroutineHandle<GeneratorPromiseBase<GeneratorYield<Ref>>>;
 
@@ -79,10 +80,6 @@ namespace detail {
 
     private:
         friend bool operator==(GeneratorIterator const& a, container::DefaultSentinel) { return a.m_coroutine.done(); }
-
-        constexpr friend auto tag_invoke(types::Tag<container::iterator_category>, InPlaceType<GeneratorIterator>) {
-            return InputIteratorTag {};
-        }
 
         Handle m_coroutine;
     };
