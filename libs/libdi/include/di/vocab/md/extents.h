@@ -18,7 +18,7 @@ public:
     constexpr static size_t rank() { return sizeof...(extents); }
     constexpr static size_t rank_dynamic() { return dynamic_index(rank()); }
 
-    constexpr Extents() = default;
+    constexpr Extents() { m_dynamic_extents.fill(0); }
 
     template<typename OtherSizeType, size_t... other_extents>
     requires(sizeof...(other_extents) == rank() &&
@@ -75,8 +75,11 @@ public:
         auto extent = static_extent(index);
         if (extent != dynamic_extent) {
             return extent;
+        } else if constexpr (rank_dynamic() != 0) {
+            return m_dynamic_extents[dynamic_index(index)];
+        } else {
+            util::unreachable();
         }
-        return m_dynamic_extents[dynamic_index(index)];
     }
 
     constexpr size_t fwd_prod_of_extents(size_t i) const {

@@ -285,6 +285,10 @@ private:
     };
 
 public:
+    ChunkView()
+    requires(concepts::DefaultInitializable<View>)
+    = default;
+
     constexpr explicit ChunkView(View base, SSizeType<false> chunk_size) : m_base(util::move(base)), m_chunk_size(chunk_size) {
         DI_ASSERT_GT(chunk_size, 0);
     }

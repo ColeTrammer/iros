@@ -443,6 +443,23 @@ void chunk_generator() {
     ASSERT_EQ(r3, ex3);
 }
 
+constexpr void slide() {
+    auto in1 = di::Array { 1, 2, 3, 4, 5 };
+    auto r1 = in1 | di::slide(3) | di::transform(di::sum) | di::to<di::Vector>();
+    auto ex1 = di::Array { 6, 9, 12 } | di::to<di::Vector>();
+    ASSERT_EQ(r1, ex1);
+
+    auto in2 = "abcde"_sv;
+    auto r2 = in2 | di::slide(3) | di::to<di::Vector>();
+    auto ex2 = di::Array { "abc"_sv, "bcd"_sv, "cde"_sv } | di::to<di::Vector>();
+    ASSERT_EQ(r2, ex2);
+
+    auto in3 = "abcde"_sv;
+    auto r3 = in3 | di::slide(3) | di::reverse | di::to<di::Vector>();
+    auto ex3 = di::Array { "abc"_sv, "bcd"_sv, "cde"_sv } | di::reverse | di::to<di::Vector>();
+    ASSERT_EQ(r3, ex3);
+}
+
 TEST_CONSTEXPR(container_view, basic, basic)
 TEST_CONSTEXPR(container_view, all, all)
 TEST_CONSTEXPR(container_view, empty, empty)
@@ -470,3 +487,4 @@ TEST_CONSTEXPR(container_view, enumerate, enumerate)
 TEST_CONSTEXPR(container_view, cycle, cycle)
 TEST_CONSTEXPR(container_view, chunk, chunk)
 TEST_CONSTEXPRX(container_view, chunk_generator, chunk_generator)
+TEST_CONSTEXPR(container_view, slide, slide)
