@@ -107,6 +107,24 @@ public:
         do_emplace(in_place_index<index>, list, util::forward<Args>(args)...);
     }
 
+    template<typename... Other>
+    requires(sizeof...(Types) == sizeof...(Other) &&
+             requires { requires concepts::Conjunction<concepts::ConstructibleFrom<Types, Other const&>...>; })
+    constexpr explicit(!concepts::Conjunction<concepts::ConvertibleTo<Other const&, Types>...>) Variant(Variant<Other...> const& other) {
+        function::index_dispatch<void, sizeof...(Types)>(other.index(), [&]<size_t index>(InPlaceIndex<index>) {
+            do_emplace(in_place_index<index>, util::get<index>(other));
+        });
+    }
+
+    template<typename... Other>
+    requires(sizeof...(Types) == sizeof...(Other) &&
+             requires { requires concepts::Conjunction<concepts::ConstructibleFrom<Types, Other>...>; })
+    constexpr explicit(!concepts::Conjunction<concepts::ConvertibleTo<Other, Types>...>) Variant(Variant<Other...>&& other) {
+        function::index_dispatch<void, sizeof...(Types)>(other.index(), [&]<size_t index>(InPlaceIndex<index>) {
+            do_emplace(in_place_index<index>, util::get<index>(util::move(other)));
+        });
+    }
+
     constexpr ~Variant() { destroy(); }
 
     constexpr size_t index() const { return m_index; }
@@ -140,6 +158,31 @@ public:
     }
 
 private:
+    template<typename... Other>
+    requires(sizeof...(Types) == sizeof...(Other) &&
+             requires { requires concepts::Conjunction<concepts::EqualityComparableWith<Types, Other>...>; })
+    constexpr friend bool operator==(Variant const& a, Variant<Other...> const& b) {
+        if (a.index() != b.index()) {
+            return false;
+        }
+        return function::index_dispatch<bool, sizeof...(Types)>(a.index(), [&]<size_t index>(InPlaceIndex<index>) {
+            return util::get<index>(a) == util::get<index>(b);
+        });
+    }
+
+    template<typename... Other>
+    requires(sizeof...(Types) == sizeof...(Other) &&
+             requires { requires concepts::Conjunction<concepts::ThreeWayComparableWith<Types, Other>...>; })
+    constexpr friend auto operator<=>(Variant const& a, Variant<Other...> const& b) {
+        using Result = meta::CommonComparisonCategory<meta::CompareThreeWayResult<Types, Other>...>;
+        if (auto result = a.index() <=> b.index(); result != 0) {
+            return Result(result);
+        }
+        return function::index_dispatch<Result, sizeof...(Types)>(a.index(), [&]<size_t index>(InPlaceIndex<index>) -> Result {
+            return util::get<index>(a) <=> util::get<index>(b);
+        });
+    }
+
     template<size_t index>
     friend meta::At<List, index> tag_invoke(types::Tag<variant_alternative>, InPlaceType<Variant>, InPlaceIndex<index>);
 

@@ -21,6 +21,7 @@ set(TEST_FILES
     test_vocab_array.cpp
     test_vocab_error.cpp
     test_vocab_expected.cpp
+    test_vocab_md.cpp
     test_vocab_optional.cpp
     test_vocab_pointer.cpp
     test_vocab_span.cpp

@@ -11,6 +11,9 @@
 #include <di/vocab/tuple/tuple_forward_declaration.h>
 
 namespace di::meta {
+template<template<typename...> typename>
+struct Quote;
+
 template<typename...>
 struct List;
 }
@@ -28,7 +31,39 @@ template<typename T>
 concept TypeList = detail::TypeListHelper<T>::value;
 }
 
+namespace di::concepts::detail {
+template<template<typename...> typename Fun, typename... Args>
+concept Valid = requires { typename Fun<Args...>; };
+
+template<typename T>
+concept Trait = requires { typename T::Type; };
+
+template<typename T>
+concept MetaInvocable = requires { typename meta::Quote<T::template Invoke>; };
+}
+
 namespace di::meta {
+namespace detail {
+    template<template<typename...> typename, typename...>
+    struct DeferHelper {};
+
+    template<template<typename...> typename Fun, typename... Args>
+    requires(concepts::detail::Valid<Fun, Args...>)
+    struct DeferHelper<Fun, Args...> : TypeConstant<Fun<Args...>> {};
+}
+
+template<template<typename...> typename Fun, typename... Args>
+struct Defer : detail::DeferHelper<Fun, Args...> {};
+
+template<template<typename...> typename Fun>
+struct Quote {
+    template<typename... Args>
+    using Invoke = typename Defer<Fun, Args...>::Type;
+};
+
+template<concepts::detail::MetaInvocable Fun, typename... Args>
+using Invoke = typename Fun::template Invoke<Args...>;
+
 namespace detail {
     template<types::size_t index, typename... Types>
     struct AtHelper {};
@@ -116,6 +151,24 @@ namespace detail {
 template<concepts::TypeList... Lists>
 using Concat = detail::ConcatHelper<Lists...>::Type;
 
+template<concepts::TypeList L, typename T>
+using PushBack = Concat<L, List<T>>;
+
+template<concepts::TypeList L, typename T>
+using PushFront = Concat<List<T>, L>;
+
+namespace detail {
+    template<typename...>
+    struct TransformHelper {};
+
+    template<typename... Types, typename Fun>
+    requires(concepts::detail::MetaInvocable<Fun> && concepts::Conjunction<concepts::detail::Valid<Invoke, Fun, Types>...>)
+    struct TransformHelper<List<Types...>, Fun> : TypeConstant<List<Invoke<Fun, Types>...>> {};
+}
+
+template<concepts::TypeList List, typename Function>
+using Transform = detail::TransformHelper<List, Function>::Type;
+
 namespace detail {
     template<typename T>
     struct AsListHelper {};
@@ -178,4 +231,28 @@ namespace detail {
 
 template<concepts::TypeList T>
 using AsTuple = detail::AsTupleHelper<T>::Type;
+
+namespace detail {
+    template<typename T>
+    struct DoPushFront {
+        template<concepts::TypeList List>
+        using Invoke = PushFront<List, T>;
+    };
+
+    template<typename... Types>
+    struct CartesianProductHelper {};
+
+    template<>
+    struct CartesianProductHelper<> : TypeConstant<List<List<>>> {};
+
+    template<typename... Types>
+    struct CartesianProductHelper<List<Types...>> : TypeConstant<List<List<Types>...>> {};
+
+    template<typename... Ts, typename... Rest>
+    struct CartesianProductHelper<List<Ts...>, Rest...>
+        : TypeConstant<Concat<Transform<typename CartesianProductHelper<Rest...>::Type, DoPushFront<Ts>>...>> {};
+}
+
+template<concepts::TypeList... Types>
+using CartesianProduct = detail::CartesianProductHelper<Types...>::Type;
 }

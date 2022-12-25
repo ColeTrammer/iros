@@ -37,6 +37,11 @@ static_assert(di::SameAs<di::meta::MakeIndexSequence<0>, di::meta::IndexSequence
 static_assert(
     di::SameAs<unsigned long long, di::meta::CommonType<unsigned char, unsigned short, unsigned, unsigned long, unsigned long long>>);
 
+static_assert(di::SameAs<di::meta::List<di::meta::List<u8, u16, u32>, di::meta::List<u8, u16, i32>, di::meta::List<u8, i16, u32>,
+                                        di::meta::List<u8, i16, i32>, di::meta::List<i8, u16, u32>, di::meta::List<i8, u16, i32>,
+                                        di::meta::List<i8, i16, u32>, di::meta::List<i8, i16, i32>>,
+                         di::meta::CartesianProduct<di::meta::List<u8, i8>, di::meta::List<u16, i16>, di::meta::List<u32, i32>>>);
+
 // static_assert(
 // di::SameAs<di::Tuple<long>, decltype(di::meta::common_type(di::in_place_type<di::Tuple<int>>, di::in_place_type<di::Tuple<long>>))>);
 

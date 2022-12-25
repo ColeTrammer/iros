@@ -84,17 +84,11 @@ private:
         requires(is_const && concepts::ConvertibleTo<meta::ContainerIterator<View>, OuterIter> &&
                  concepts::ConvertibleTo<meta::ContainerIterator<InnerContainer>, InnerIter> &&
                  concepts::ConvertibleTo<meta::ContainerIterator<Pattern>, PatternIter>)
-            : m_parent(other.m_parent), m_outer(util::move(other.m_outer)) {
-            if (other.m_inner.index() == 0) {
-                m_inner.template emplace<0>(util::get<0>(util::move(other.m_inner)));
-            } else {
-                m_inner.template emplace<1>(util::get<1>(util::move(other.m_inner)));
-            }
-        }
+            : m_parent(other.m_parent), m_outer(util::move(other.m_outer)), m_inner(util::move(other.m_inner)) {}
 
         constexpr decltype(auto) operator*() const {
             using Reference = meta::CommonReference<meta::IteratorReference<InnerIter>, meta::IteratorReference<PatternIter>>;
-            return visit<Reference>(
+            return visit(
                 [](auto& it) -> Reference {
                     return *it;
                 },
@@ -102,7 +96,7 @@ private:
         }
 
         constexpr void advance_one() {
-            visit<void>(
+            visit(
                 [](auto& it) {
                     ++it;
                 },
@@ -139,7 +133,7 @@ private:
                 }
             }
 
-            visit<void>(
+            visit(
                 [](auto& it) {
                     --it;
                 },
@@ -203,9 +197,7 @@ private:
         constexpr friend bool operator==(Iterator const& x, Iterator const& y)
         requires(ref_is_glvalue && concepts::EqualityComparable<OuterIter> && concepts::EqualityComparable<InnerIter>)
         {
-            return x.m_outer == y.m_outer &&
-                   ((x.m_inner.index() == 0 && y.m_inner.index() == 0 && util::get<0>(x.m_inner) == util::get<0>(y.m_inner)) ||
-                    (x.m_inner.index() == 1 && y.m_inner.index() == 1 && util::get<1>(x.m_inner) == util::get<1>(y.m_inner)));
+            return x.m_outer == y.m_outer && x.m_inner == y.m_inner;
         }
 
         constexpr friend decltype(auto) tag_invoke(types::Tag<iterator_move>, Iterator const& x) {

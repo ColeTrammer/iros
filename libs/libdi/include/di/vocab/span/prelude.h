@@ -5,6 +5,7 @@
 #include <di/vocab/span/span_fixed_size.h>
 
 namespace di {
+using vocab::dynamic_extent;
 using vocab::fixed_span;
 using vocab::Span;
 }

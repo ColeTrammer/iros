@@ -30,6 +30,29 @@ constexpr void basic() {
                      },
                      v)));
 
+    ASSERT_EQ(1, (di::visit<int>(
+                     [](auto x, auto y) {
+                         return x + y;
+                     },
+                     v, w)));
+
+    bool called = false;
+    di::visit(
+        [&](auto, auto) {
+            called = true;
+        },
+        v, w);
+    ASSERT(called);
+
+    auto a = di::Variant<int, long>(di::in_place_type<int>, 42);
+    auto b = di::Variant<int, long>(di::in_place_type<int>, 45);
+    auto c = di::Variant<int, long>(di::in_place_type<int>, 42);
+    auto d = di::Variant<int, long>(di::in_place_type<long>, 1l);
+    ASSERT_NOT_EQ(a, b);
+    ASSERT_LT(a, b);
+    ASSERT_EQ(a, c);
+    ASSERT_LT(a, d);
+
     static_assert(di::SameAs<unsigned char, di::math::SmallestUnsignedType<6>>);
     static_assert(di::SameAs<unsigned short, di::math::SmallestUnsignedType<256>>);
 }
