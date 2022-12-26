@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/concepts/implicitly_convertible_to.h>
+#include <di/function/curry_back.h>
 
 namespace di::function {
 struct Equal {
@@ -14,5 +15,5 @@ struct Equal {
     }
 };
 
-constexpr inline auto equal = Equal {};
+constexpr inline auto equal = curry_back(Equal {}, meta::size_constant<2>);
 }

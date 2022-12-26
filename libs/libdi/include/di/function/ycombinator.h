@@ -6,6 +6,7 @@
 #include <di/meta/decay.h>
 #include <di/types/prelude.h>
 #include <di/util/forward.h>
+#include <di/util/move.h>
 
 namespace di::function {
 namespace detail {

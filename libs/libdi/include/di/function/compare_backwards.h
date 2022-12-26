@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/concepts/three_way_comparable_with.h>
+#include <di/function/curry_back.h>
 #include <di/meta/compare_three_way_result.h>
 
 namespace di::function {
@@ -11,5 +12,5 @@ struct CompareBackwards {
     }
 };
 
-constexpr inline auto compare_backwards = CompareBackwards {};
+constexpr inline auto compare_backwards = function::curry_back(CompareBackwards {}, meta::size_constant<2>);
 }

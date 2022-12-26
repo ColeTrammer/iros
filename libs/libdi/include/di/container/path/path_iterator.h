@@ -28,9 +28,7 @@ public:
     constexpr void advance_one() {
         do {
             DI_ASSERT_NOT_EQ(m_current.begin(), m_bounds.end());
-            auto new_start = find_if_not(m_current.end(), m_bounds.end(), [](auto x) {
-                return x == CodePoint('/');
-            });
+            auto new_start = find_if_not(m_current.end(), m_bounds.end(), function::equal(CodePoint('/')));
 
             // No more components, now produce end iterator.
             if (new_start == m_bounds.end()) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/concepts/implicitly_convertible_to.h>
+#include <di/function/curry_back.h>
 
 namespace di::function {
 struct NotEqual {
@@ -14,5 +15,5 @@ struct NotEqual {
     }
 };
 
-constexpr inline auto not_equal = NotEqual {};
+constexpr inline auto not_equal = curry_back(NotEqual {}, meta::size_constant<2>);
 }

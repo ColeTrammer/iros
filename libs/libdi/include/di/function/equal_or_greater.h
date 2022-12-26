@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/concepts/implicitly_convertible_to.h>
+#include <di/function/curry_back.h>
 
 namespace di::function {
 struct EqualOrGreater {
@@ -14,5 +15,5 @@ struct EqualOrGreater {
     }
 };
 
-constexpr inline auto equal_or_greater = EqualOrGreater {};
+constexpr inline auto equal_or_greater = curry_back(EqualOrGreater {}, meta::size_constant<2>);
 }
