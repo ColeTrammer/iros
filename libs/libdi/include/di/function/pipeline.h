@@ -15,6 +15,6 @@ constexpr decltype(auto) operator|(T&& value, F&& function) {
 template<Pipeable F, Pipeable G>
 requires(!concepts::Invocable<G, F>)
 constexpr auto operator|(F&& f, G&& g) {
-    return function::compose(util::forward<F>(f), util::forward<G>(g));
+    return function::compose(util::forward<G>(g), util::forward<F>(f));
 }
 }

@@ -32,5 +32,5 @@ namespace detail {
     };
 }
 
-constexpr inline auto join_with = function::curry_back(detail::JoinWithFunction {});
+constexpr inline auto join_with = function::curry_back(detail::JoinWithFunction {}, meta::size_constant<2>);
 }

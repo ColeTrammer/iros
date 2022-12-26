@@ -86,7 +86,7 @@ public:
 private:
     constexpr friend bool operator==(CountedIterator const& a, CountedIterator const& b) { return a.count() == b.count(); }
 
-    constexpr friend bool operator==(CountedIterator const& a, DefaultSentinel b) { return a.count() == 0; }
+    constexpr friend bool operator==(CountedIterator const& a, DefaultSentinel) { return a.count() == 0; }
 
     constexpr friend strong_ordering operator<=>(CountedIterator const& a, CountedIterator const& b) { return a.count() <=> b.count(); }
 

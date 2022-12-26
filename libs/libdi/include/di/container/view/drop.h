@@ -30,5 +30,5 @@ namespace detail {
     };
 }
 
-constexpr inline auto drop = function::curry_back(detail::DropFunction {});
+constexpr inline auto drop = function::curry_back(detail::DropFunction {}, meta::size_constant<2>);
 }

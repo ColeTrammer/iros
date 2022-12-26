@@ -67,7 +67,7 @@ constexpr void compose() {
                      return 2;
                  }));
 
-    auto k = di::bind_front(f, 2) | di::piped(g);
+    auto k = di::piped(g) | di::bind_front(f, 2);
     ASSERT_EQ(k(1, 2, 3), 8);
 }
 

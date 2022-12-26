@@ -48,6 +48,12 @@ constexpr void integer() {
     ASSERT(!di::parse<u8>(u8"256"_sv));
 }
 
+constexpr void integral_constant() {
+    ASSERT_EQ(1_zic, 1u);
+    ASSERT_EQ(4161_zic, 4161u);
+}
+
 TEST_CONSTEXPR(parser, set, set)
 TEST_CONSTEXPR(parser, code_point, code_point)
 TEST_CONSTEXPR(parser, integer, integer)
+TEST_CONSTEXPR(parser, integral_constant, integral_constant)
