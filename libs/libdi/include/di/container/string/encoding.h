@@ -75,7 +75,7 @@ namespace detail {
         template<typename T, typename U = meta::EncodingCodeUnit<T>>
         requires(Contiguous<T> || concepts::TagInvocableTo<ValidByteOffsetFunction, bool, T const&, Span<U const>, size_t>)
         constexpr bool operator()(T const& encoding, Span<U const> code_units, size_t offset) const {
-            if constexpr (contigous(in_place_type<T>)) {
+            if constexpr (Contiguous<T>) {
                 return offset <= code_units.size();
             } else {
                 return function::tag_invoke(*this, encoding, code_units, offset);

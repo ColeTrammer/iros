@@ -29,5 +29,5 @@ namespace detail {
     };
 }
 
-constexpr inline auto take = function::curry_back(detail::TakeFunction {});
+constexpr inline auto take = function::curry_back(detail::TakeFunction {}, meta::size_constant<2>);
 }

@@ -55,22 +55,22 @@ constexpr void do_utf8_test(di::StringView view, di::Vector<char32_t> const& des
 constexpr void utf8() {
     auto x = u8"$¢€𐍈"_sv;
 
-    // ASSERT(x.starts_with(u8"$"_sv));
-    // ASSERT(x.ends_with(u8"€𐍈"_sv));
-    // ASSERT(!x.ends_with(u8"¢"_sv));
+    ASSERT(x.starts_with(u8"$"_sv));
+    ASSERT(x.ends_with(u8"€𐍈"_sv));
+    ASSERT(!x.ends_with(u8"¢"_sv));
 
-    // ASSERT_EQ(x.front(), U'$');
-    // ASSERT_EQ(x.back(), U'𐍈');
+    ASSERT_EQ(x.front(), U'$');
+    ASSERT_EQ(x.back(), U'𐍈');
 
     ASSERT_EQ(x.size_bytes(), 10u);
     ASSERT_EQ(di::distance(x), 4);
 
-    // ASSERT("¢€"_sv == x.substr(*x.iterator_at_offset(1), *x.iterator_at_offset(6)));
-    // ASSERT(!x.iterator_at_offset(2));
-    // ASSERT(!x.iterator_at_offset(4));
+    ASSERT(u8"¢€"_sv == x.substr(*x.iterator_at_offset(1), *x.iterator_at_offset(6)));
+    ASSERT(!x.iterator_at_offset(2));
+    ASSERT(!x.iterator_at_offset(4));
 
-    // ASSERT(x.substr(x.begin(), *x.iterator_at_offset(1)) == u8"$"_sv);
-    // ASSERT(x.substr(*x.iterator_at_offset(1)) == u8"¢€𐍈"_sv);
+    ASSERT(x.substr(x.begin(), *x.iterator_at_offset(1)) == u8"$"_sv);
+    ASSERT(x.substr(*x.iterator_at_offset(1)) == u8"¢€𐍈"_sv);
 
     auto s = di::String {};
     s.push_back(U'$');
@@ -98,8 +98,34 @@ constexpr void utf8() {
     ASSERT(!validate(u8"\xF0\x82\x82\xAC", 4));
 }
 
+constexpr void readonly_api() {
+    auto s = u8"Hello, 世界, Hello 友達!"_sv;
+
+    ASSERT(s.starts_with("Hel"_sv));
+    ASSERT(s.starts_with(U'H'));
+
+    ASSERT(s.ends_with(u8"友達!"_sv));
+    ASSERT(s.ends_with(U'!'));
+
+    ASSERT(s.contains(u8"世界"_sv));
+
+    ASSERT_EQ(s.find("Hello"_sv).begin(), s.iterator_at_offset(0));
+    ASSERT_EQ(s.find(U'界').begin(), s.iterator_at_offset(u8"Hello, 世"_sv.size_code_units()));
+
+    ASSERT_EQ(s.rfind("llo"_sv).begin(), s.iterator_at_offset(u8"Hello, 世界, He"_sv.size_code_units()));
+    ASSERT_EQ(s.rfind("llo"_sv).end(), s.iterator_at_offset(u8"Hello, 世界, Hello"_sv.size_code_units()));
+    ASSERT_EQ(s.rfind(U'l').begin(), s.iterator_at_offset(u8"Hello, 世界, Hel"_sv.size_code_units()));
+
+    // ASSERT_EQ(*s.find_first_of(u8"o達"_sv), U'o');
+    // ASSERT_EQ(*s.find_last_of(u8"o達"_sv), U'達');
+
+    // ASSERT_EQ(*s.find_first_not_of(u8"o達!"_sv), U'H');
+    // ASSERT_EQ(*s.find_last_not_of(u8"o達!"_sv), U'友');
+}
+
 TEST_CONSTEXPR(container_string, basic, basic)
 TEST_CONSTEXPR(container_string, push_back, push_back)
 TEST_CONSTEXPR(container_string, to, to)
 TEST_CONSTEXPR(container_string, erased, erased)
-TEST_CONSTEXPR(container_string, utf8, utf8)
+TEST_CONSTEXPRX(container_string, utf8, utf8)
+TEST_CONSTEXPR(container_string, readonly_api, readonly_api)

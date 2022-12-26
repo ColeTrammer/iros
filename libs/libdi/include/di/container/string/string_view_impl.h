@@ -69,6 +69,9 @@ public:
     constexpr auto span() const { return Span { m_data, m_size }; }
     constexpr Enc encoding() const { return m_encoding; }
 
+    constexpr void replace_begin(Iterator new_begin) { *this = { new_begin, this->end(), m_encoding }; }
+    constexpr void replace_end(Iterator new_end) { *this = { this->begin(), new_end, m_encoding }; }
+
 private:
     CodeUnit const* m_data { nullptr };
     size_t m_size { 0 };

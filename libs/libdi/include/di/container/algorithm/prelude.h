@@ -11,8 +11,10 @@
 #include <di/container/algorithm/ends_with.h>
 #include <di/container/algorithm/equal.h>
 #include <di/container/algorithm/find.h>
+#include <di/container/algorithm/find_end.h>
 #include <di/container/algorithm/find_if.h>
 #include <di/container/algorithm/find_if_not.h>
+#include <di/container/algorithm/find_last.h>
 #include <di/container/algorithm/fold_left.h>
 #include <di/container/algorithm/for_each.h>
 #include <di/container/algorithm/is_sorted.h>
@@ -42,8 +44,10 @@ using container::count;
 using container::count_if;
 using container::ends_with;
 using container::find;
+using container::find_end;
 using container::find_if;
 using container::find_if_not;
+using container::find_last;
 using container::fold_left;
 using container::for_each;
 using container::is_sorted;

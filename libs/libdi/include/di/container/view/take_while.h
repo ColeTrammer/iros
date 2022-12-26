@@ -30,5 +30,5 @@ namespace detail {
     };
 }
 
-constexpr inline auto take_while = function::curry_back(detail::TakeWhileFunction {});
+constexpr inline auto take_while = function::curry_back(detail::TakeWhileFunction {}, meta::size_constant<2>);
 }

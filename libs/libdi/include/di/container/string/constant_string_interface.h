@@ -3,6 +3,7 @@
 #include <di/container/interface/reconstruct.h>
 #include <di/container/string/constant_string.h>
 #include <di/container/string/encoding.h>
+#include <di/container/string/string_back.h>
 #include <di/container/string/string_begin.h>
 #include <di/container/string/string_compare.h>
 #include <di/container/string/string_contains.h>
@@ -11,17 +12,19 @@
 #include <di/container/string/string_end.h>
 #include <di/container/string/string_ends_with.h>
 #include <di/container/string/string_equal.h>
+#include <di/container/string/string_find.h>
+#include <di/container/string/string_front.h>
+#include <di/container/string/string_iterator_at_offset.h>
+#include <di/container/string/string_rfind.h>
 #include <di/container/string/string_size.h>
 #include <di/container/string/string_size_code_units.h>
 #include <di/container/string/string_starts_with.h>
+#include <di/container/string/string_substr.h>
 #include <di/container/string/string_unicode_code_points.h>
 #include <di/parser/into_parser_context.h>
 #include <di/parser/string_view_parser_context.h>
 
 namespace di::container::string {
-template<concepts::Encoding Enc>
-class StringViewImpl;
-
 template<typename Self, concepts::Encoding Enc>
 class ConstantStringInterface {
 private:
@@ -47,31 +50,54 @@ public:
     constexpr auto begin() const { return string::begin(self()); }
     constexpr auto end() const { return string::end(self()); }
 
-    constexpr bool starts_with(CodePoint code_point) { return string::starts_with(self(), code_point); }
+    constexpr auto front() const { return string::front(self()); }
+    constexpr auto back() const { return string::back(self()); }
+
+    constexpr bool starts_with(CodePoint code_point) const { return string::starts_with(self(), code_point); }
 
     template<concepts::ContainerCompatible<CodePoint> Con>
     requires(concepts::SameAs<meta::Encoding<Con>, Enc>)
-    constexpr bool starts_with(Con&& container) {
+    constexpr bool starts_with(Con&& container) const {
         return string::starts_with(self(), util::forward<Con>(container));
     }
 
-    constexpr bool ends_with(CodePoint code_point) { return string::ends_with(self(), code_point); }
+    constexpr bool ends_with(CodePoint code_point) const { return string::ends_with(self(), code_point); }
 
     template<concepts::ContainerCompatible<CodePoint> Con>
     requires(concepts::SameAs<meta::Encoding<Con>, Enc>)
-    constexpr bool ends_with(Con&& container) {
+    constexpr bool ends_with(Con&& container) const {
         return string::ends_with(self(), util::forward<Con>(container));
     }
 
-    constexpr bool contains(CodePoint code_point) { return string::contains(self(), code_point); }
+    constexpr bool contains(CodePoint code_point) const { return string::contains(self(), code_point); }
 
     template<concepts::ContainerCompatible<CodePoint> Con>
     requires(concepts::SameAs<meta::Encoding<Con>, Enc> && concepts::ForwardContainer<Con>)
-    constexpr bool contains(Con&& container) {
+    constexpr bool contains(Con&& container) const {
         return string::contains(self(), util::forward<Con>(container));
     }
 
+    constexpr auto substr(Iterator first, Optional<Iterator> last = {}) const { return string::substr(self(), first, last); }
+
+    constexpr auto find(CodePoint code_point) const { return string::find(self(), code_point); }
+
+    template<concepts::ContainerCompatible<CodePoint> Con>
+    requires(concepts::SameAs<meta::Encoding<Con>, Enc> && concepts::ForwardContainer<Con>)
+    constexpr auto find(Con&& container) const {
+        return string::find(self(), util::forward<Con>(container));
+    }
+
+    constexpr auto rfind(CodePoint code_point) const { return string::rfind(self(), code_point); }
+
+    template<concepts::ContainerCompatible<CodePoint> Con>
+    requires(concepts::SameAs<meta::Encoding<Con>, Enc> && concepts::ForwardContainer<Con>)
+    constexpr auto rfind(Con&& container) const {
+        return string::rfind(self(), util::forward<Con>(container));
+    }
+
     constexpr auto view() const { return StringViewImpl<Enc>(self()); }
+
+    constexpr auto iterator_at_offset(size_t index) const { return string::iterator_at_offset(self(), index); }
 
     constexpr auto unicode_code_points() const { return string::unicode_code_points(self()); }
 
