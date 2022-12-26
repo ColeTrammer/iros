@@ -172,7 +172,7 @@ private:
                                                                      meta::ContainerIterator<meta::MaybeConst<is_const, Views>>>...>)
         {
             return function::unpack<meta::MakeIndexSequence<sizeof...(Views)>>([&]<size_t... indices>(meta::IndexSequence<indices...>) {
-                return (void) (iterator_swap(util::get<indices>(a.m_iterators), util::get<indices>(a.m_iterators)), ...);
+                return (void) (iterator_swap(util::get<indices>(a.m_iterators), util::get<indices>(b.m_iterators)), ...);
             });
         }
 

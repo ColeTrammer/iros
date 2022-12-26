@@ -110,7 +110,7 @@ private:
 
     template<concepts::detail::ConstantString Other>
     requires(concepts::SameAs<Enc, meta::Encoding<Other>>)
-    constexpr friend bool operator<=>(Self const& a, Other const& b) {
+    constexpr friend auto operator<=>(Self const& a, Other const& b) {
         return string::compare(a, b);
     }
 

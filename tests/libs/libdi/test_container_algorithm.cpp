@@ -101,6 +101,44 @@ constexpr void for_each() {
     ASSERT_EQ(sum, 15);
 }
 
+constexpr void sort() {
+    auto v = di::Array { 3, 5, 1, 2 };
+    di::sort(v);
+    ASSERT_EQ(v, (di::Array { 1, 2, 3, 5 }));
+
+    auto w = di::Array { 8, 7, 6, 5, 4, 3, 2, 1, 0 } | di::to<di::Vector>();
+    di::sort(w);
+    ASSERT_EQ(w, di::range(9) | di::to<di::Vector>());
+
+    di::sort(w, di::compare_backwards);
+    ASSERT_EQ(w, di::range(9) | di::reverse | di::to<di::Vector>());
+
+    auto x = di::range(128) | di::to<di::Vector>();
+    di::sort(x, di::compare_backwards);
+    ASSERT_EQ(x, di::range(128) | di::reverse | di::to<di::Vector>());
+    ASSERT(di::is_sorted(x | di::reverse));
+
+    auto y = di::range(56) | di::to<di::Vector>();
+    y.append_container(di::range(56));
+    di::sort(y);
+    ASSERT(di::is_sorted(y));
+
+    auto scores = di::Array { 50, 20, 70, 10 };
+    auto data = di::Array { 37, 42, 60, 100, -1 };
+    di::sort(di::zip(scores, data));
+
+    ASSERT(di::is_sorted(di::zip(scores, data)));
+    ASSERT_EQ(scores, (di::Array { 10, 20, 50, 70 }));
+    ASSERT_EQ(data, (di::Array { 100, 42, 37, 60, -1 }));
+
+    struct X {
+        int a;
+    };
+    auto s = di::Array { X { 5 }, X { 4 }, X { 2 }, X { 3 } };
+    di::sort(s, di::compare, &X::a);
+    ASSERT(di::is_sorted(s, di::compare, &X::a));
+}
+
 TEST_CONSTEXPR(container_algorithm, minmax, minmax)
 TEST_CONSTEXPR(container_algorithm, compare, compare)
 TEST_CONSTEXPR(container_algorithm, fold, fold)
@@ -109,3 +147,4 @@ TEST_CONSTEXPR(container_algorithm, permute, permute)
 TEST_CONSTEXPR(container_algorithm, contains, contains)
 TEST_CONSTEXPR(container_algorithm, predicate, predicate)
 TEST_CONSTEXPR(container_algorithm, for_each, for_each)
+TEST_CONSTEXPR(container_algorithm, sort, sort)

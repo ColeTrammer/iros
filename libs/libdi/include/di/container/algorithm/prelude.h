@@ -31,6 +31,8 @@
 #include <di/container/algorithm/reverse.h>
 #include <di/container/algorithm/rotate.h>
 #include <di/container/algorithm/search.h>
+#include <di/container/algorithm/sort.h>
+#include <di/container/algorithm/sort_heap.h>
 #include <di/container/algorithm/starts_with.h>
 #include <di/container/algorithm/sum.h>
 
@@ -63,6 +65,8 @@ using container::pop_heap;
 using container::push_heap;
 using container::rotate;
 using container::search;
+using container::sort;
+using container::sort_heap;
 using container::starts_with;
 using container::sum;
 }

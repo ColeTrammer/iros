@@ -95,7 +95,7 @@ public:
     template<concepts::TupleLike Tup>
     requires(!concepts::DecaySameAs<Tup, Tuple> &&
              requires(Base const& self, Tup&& other) { Base::static_assign(self, util::forward<Tup>(other)); })
-    constexpr Tuple const& operator=(Tup&& other) {
+    constexpr Tuple const& operator=(Tup&& other) const {
         Base::static_assign(util::forward_as_base<Tuple const&, Base>(*this), util::forward<Tup>(other));
         return *this;
     }

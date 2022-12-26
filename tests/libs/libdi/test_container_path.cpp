@@ -17,7 +17,7 @@ constexpr void iteration() {
     do_test("a//b////"_pv, Array { "a"_tsv, "b"_tsv });
     do_test(".//a//b////"_pv, Array { "."_tsv, "a"_tsv, "b"_tsv });
     do_test("./a/b/.."_pv, Array { "."_tsv, "a"_tsv, "b"_tsv, ".."_tsv });
-    // do_test("./a/././b/./../."_pv, Array { "."_tsv, "a"_tsv, "b"_tsv, ".."_tsv });
+    do_test("./a/././b/./../."_pv, Array { "."_tsv, "a"_tsv, "b"_tsv, ".."_tsv });
 }
 
 constexpr void equal() {
@@ -28,9 +28,33 @@ constexpr void equal() {
     ASSERT_NOT_EQ("a/b/ttt"_pv, "/a/b/ttt"_pv);
     ASSERT_NOT_EQ("a/b/"_pv, "/a/b/ttt"_pv);
 
-    // ASSERT_EQ("./a/././b//."_pv, "./a/b"_pv);
+    ASSERT_EQ("./a/././b//."_pv, "./a/b"_pv);
 
     ASSERT_NOT_EQ("/a/b/.."_pv, "/a/"_pv);
+}
+
+constexpr void compare() {
+    auto paths = di::Array {
+        "/etc/resolv.conf"_pv, "/etc/passwd"_pv,    "/usr"_pv, "/usr/include/unistd.h"_pv, "/"_pv, "./.bashrc"_pv,
+        "./Downloads/"_pv,     "CMakeLists.txt"_pv, ""_pv,     "/usr/include/"_pv,
+    };
+
+    auto sorted_paths = di::Array {
+        ""_pv,
+        "./.bashrc"_pv,
+        "./Downloads/"_pv,
+        "/"_pv,
+        "/etc/passwd"_pv,
+        "/etc/resolv.conf"_pv,
+        "/usr"_pv,
+        "/usr/include/"_pv,
+        "/usr/include/unistd.h"_pv,
+        "CMakeLists.txt"_pv,
+    };
+
+    di::sort(paths);
+
+    ASSERT_EQ(paths, sorted_paths);
 }
 
 constexpr void extension() {
@@ -112,6 +136,7 @@ constexpr void filename_ends_with() {
 
 TEST_CONSTEXPR(container_path, iteration, iteration)
 TEST_CONSTEXPR(container_path, equal, equal)
+TEST_CONSTEXPRX(container_path, compare, compare)
 TEST_CONSTEXPR(container_path, extension, extension)
 TEST_CONSTEXPR(container_path, filename, filename)
 TEST_CONSTEXPR(container_path, is_absolute, is_absolute)
