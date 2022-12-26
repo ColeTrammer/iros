@@ -63,7 +63,7 @@ private:
 
     template<concepts::RemoveCVRefSameAs<Expected> Self, typename F, typename R = meta::InvokeResult<F>>
     requires(concepts::Expected<R>)
-    constexpr friend R tag_invoke(types::Tag<function::monad::bind>, Self&& self, F&& function) {
+    constexpr friend R tag_invoke(types::Tag<function::monad::bind>, Self&&, F&& function) {
         return function::invoke(util::forward<F>(function));
     }
 

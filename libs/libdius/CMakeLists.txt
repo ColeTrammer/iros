@@ -1,5 +1,5 @@
 set(SOURCES
-    fd_writer.cpp
+    fd_read_writer.cpp
 )
 
 add_os_library(libdius dius TRUE)
