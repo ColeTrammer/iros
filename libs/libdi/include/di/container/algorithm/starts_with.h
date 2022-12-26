@@ -16,7 +16,7 @@ namespace detail {
                  typename Proj = function::Identity, typename Jroj = function::Identity>
         requires(concepts::IndirectlyComparable<meta::ContainerIterator<Con>, meta::ContainerIterator<Jon>, Pred, Proj, Jroj>)
         constexpr bool operator()(Con&& con, Jon&& jon, Pred pred = {}, Proj proj = {}, Jroj jroj = {}) const {
-            return (*this)(container::begin(con), container::end(con), container::begin(con), container::end(jon), util::ref(pred),
+            return (*this)(container::begin(con), container::end(con), container::begin(jon), container::end(jon), util::ref(pred),
                            util::ref(proj), util::ref(jroj));
         }
     };

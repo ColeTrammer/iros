@@ -36,6 +36,11 @@ inline namespace literals {
             DI_ASSERT(container::string::encoding::validate(container::string::Utf8Encoding(), span));
             return container::StringView { container::string::encoding::assume_valid, span };
         }
+
+        constexpr auto operator""_tsv(char const* data, size_t size) {
+            auto span = di::Span { data, size };
+            return container::TransparentStringView { span };
+        }
     }
 }
 }

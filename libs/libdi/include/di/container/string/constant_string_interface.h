@@ -5,12 +5,15 @@
 #include <di/container/string/encoding.h>
 #include <di/container/string/string_begin.h>
 #include <di/container/string/string_compare.h>
+#include <di/container/string/string_contains.h>
 #include <di/container/string/string_data.h>
 #include <di/container/string/string_empty.h>
 #include <di/container/string/string_end.h>
+#include <di/container/string/string_ends_with.h>
 #include <di/container/string/string_equal.h>
 #include <di/container/string/string_size.h>
 #include <di/container/string/string_size_code_units.h>
+#include <di/container/string/string_starts_with.h>
 #include <di/container/string/string_unicode_code_points.h>
 #include <di/parser/into_parser_context.h>
 #include <di/parser/string_view_parser_context.h>
@@ -43,6 +46,30 @@ public:
 
     constexpr auto begin() const { return string::begin(self()); }
     constexpr auto end() const { return string::end(self()); }
+
+    constexpr bool starts_with(CodePoint code_point) { return string::starts_with(self(), code_point); }
+
+    template<concepts::ContainerCompatible<CodePoint> Con>
+    requires(concepts::SameAs<meta::Encoding<Con>, Enc>)
+    constexpr bool starts_with(Con&& container) {
+        return string::starts_with(self(), util::forward<Con>(container));
+    }
+
+    constexpr bool ends_with(CodePoint code_point) { return string::ends_with(self(), code_point); }
+
+    template<concepts::ContainerCompatible<CodePoint> Con>
+    requires(concepts::SameAs<meta::Encoding<Con>, Enc>)
+    constexpr bool ends_with(Con&& container) {
+        return string::ends_with(self(), util::forward<Con>(container));
+    }
+
+    constexpr bool contains(CodePoint code_point) { return string::contains(self(), code_point); }
+
+    template<concepts::ContainerCompatible<CodePoint> Con>
+    requires(concepts::SameAs<meta::Encoding<Con>, Enc> && concepts::ForwardContainer<Con>)
+    constexpr bool contains(Con&& container) {
+        return string::contains(self(), util::forward<Con>(container));
+    }
 
     constexpr auto view() const { return StringViewImpl<Enc>(self()); }
 
