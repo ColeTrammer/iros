@@ -14,12 +14,22 @@
 #include <di/vocab/optional/prelude.h>
 
 namespace di::container {
+namespace detail {
+    template<typename Value, typename Comp>
+    struct RBTreeValidForLookup {
+        template<typename U>
+        struct Type {
+            constexpr static inline bool value = concepts::StrictWeakOrder<Comp&, Value, U>;
+        };
+    };
+}
+
 // The book Introduction to Algorithms, Third Edition (by Thomas H. Cormen, et al.)
 // was heavily referenced in this class's implementation of a Red-Black tree.
 // See https://mitpress.mit.edu/9780262046305/introduction-to-algorithms/.
-template<typename Value, concepts::StrictWeakOrder<Value> Comp = function::Compare,
-         concepts::AllocatorOf<RBTreeNode<Value>> Alloc = Allocator<RBTreeNode<Value>>>
-class RBTree {
+template<typename Value, concepts::StrictWeakOrder<Value> Comp, concepts::AllocatorOf<RBTreeNode<Value>> Alloc, typename Interface,
+         bool is_multi>
+class RBTree : public Interface {
 private:
     using Node = RBTreeNode<Value>;
     using Iterator = RBTreeIterator<Value>;
@@ -57,151 +67,37 @@ public:
         return *this;
     }
 
-    constexpr ~RBTree() { clear(); }
+    constexpr ~RBTree() { this->clear(); }
 
-    constexpr bool empty() const { return size() == 0; }
     constexpr size_t size() const { return m_size; }
 
-    constexpr Iterator begin() { return begin_impl(); }
-    constexpr ConstIterator begin() const { return begin_impl(); }
-    constexpr Iterator end() { return end_impl(); }
-    constexpr ConstIterator end() const { return end_impl(); }
+    constexpr Iterator begin() { return unconst_iterator(util::as_const(*this).begin()); }
+    constexpr ConstIterator begin() const { return Iterator(m_minimum, !m_root); }
+    constexpr Iterator end() { return unconst_iterator(util::as_const(*this).end()); }
+    constexpr ConstIterator end() const { return Iterator(m_maximum, true); }
 
-    constexpr Optional<Value&> front() {
-        return lift_bool(m_minimum) % [&] {
-            return util::ref(m_minimum->value);
-        };
-    }
-    constexpr Optional<Value const&> front() const {
-        return lift_bool(m_minimum) % [&] {
-            return util::cref(m_minimum->value);
-        };
-    }
+    constexpr Iterator unconst_iterator(ConstIterator it) { return it.base(); }
 
-    constexpr Optional<Value&> back() {
-        return lift_bool(m_maximum) % [&] {
-            return util::ref(m_maximum->value);
-        };
-    }
-    constexpr Optional<Value const&> back() const {
-        return lift_bool(m_maximum) % [&] {
-            return util::cref(m_maximum->value);
-        };
-    }
-
-    template<typename U>
-    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr auto at(U const& needle) {
-        auto it = find_impl(needle);
-        return lift_bool(it != end()) % [&] {
-            return util::ref(*it);
-        };
-    }
-
-    template<typename U>
-    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr auto at(U const& needle) const {
-        auto it = find_impl(needle);
-        return lift_bool(it != end()) % [&] {
-            return util::cref(*it);
-        };
-    }
-
-    template<typename U>
-    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr bool contains(U const& needle) const {
-        return !!at(needle);
-    }
-
-    template<typename U>
-    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr Iterator find(U const& needle) {
-        return find_impl(needle);
-    }
-
-    template<typename U>
-    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr size_t count(U const& needle) const {
-        return container::distance(equal_range(needle));
-    }
-
-    template<typename U>
-    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr ConstIterator find(U const& needle) const {
-        return find_impl(needle);
-    }
-
-    template<typename U>
-    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr Iterator lower_bound(U const& needle) {
-        return lower_bound_impl(needle);
-    }
-
-    template<typename U>
-    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr ConstIterator lower_bound(U const& needle) const {
-        return lower_bound_impl(needle);
-    }
-
-    template<typename U>
-    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr Iterator upper_bound(U const& needle) {
-        return upper_bound_impl(needle);
-    }
-
-    template<typename U>
-    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr Iterator upper_bound(U const& needle) const {
-        return upper_bound_impl(needle);
-    }
-
-    template<typename U>
-    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr View<Iterator> equal_range(U const& needle) {
-        return equal_range_impl(needle);
-    }
-
-    template<typename U>
-    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr View<ConstIterator> equal_range(U const& needle) const {
-        return equal_range_impl(needle);
-    }
-
-    constexpr void clear() {
-        auto end = this->end();
-        for (auto it = this->begin(); it != end;) {
-            auto& to_delete = (it++).node();
-            erase_node(to_delete);
-            destroy_node(to_delete);
+    template<typename U, concepts::Invocable F>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U> && concepts::MaybeFallible<meta::InvokeResult<F>, Value>)
+    constexpr auto insert_with_factory(U&& needle, F&& factory) {
+        auto position = insert_position(needle);
+        if constexpr (!is_multi) {
+            if (position.parent && compare(position.parent->value, needle) == 0) {
+                return Tuple(Iterator(position.parent, false), false);
+            }
         }
 
-        m_root = m_minimum = m_maximum = nullptr;
-        m_size = 0;
-    }
-
-    constexpr void insert(Value const& value)
-    requires(concepts::CopyConstructible<Value>)
-    {
-        insert_node(insert_position(value), *create_node(value));
-    }
-    constexpr void insert(Value&& value) { insert_node(insert_position(value), *create_node(util::move(value))); }
-
-    template<typename... Args>
-    requires(concepts::ConstructibleFrom<Value, Args...>)
-    constexpr void emplace(Args&&... args) {
-        return insert(Value(util::forward<Args>(args)...));
-    }
-
-    template<concepts::InputContainer Con>
-    requires(concepts::ContainerCompatible<Con, Value>)
-    constexpr void insert_container(Con&& container) {
-        auto end = container::end(container);
-        for (auto it = container::begin(container); it != end; ++it) {
-            insert(*it);
+        auto* node = create_node(function::invoke(util::forward<F>(factory)));
+        insert_node(position, *node);
+        if constexpr (!is_multi) {
+            return Tuple(Iterator(node, false), true);
+        } else {
+            return Iterator(node, false);
         }
     }
 
-    constexpr Iterator erase(ConstIterator position) {
+    constexpr Iterator erase_impl(ConstIterator position) {
         DI_ASSERT(position != end());
 
         auto result = container::next(position).base();
@@ -211,22 +107,56 @@ public:
         return result;
     }
 
-    constexpr Iterator erase(ConstIterator start, ConstIterator end) {
-        for (auto it = start; it != end;) {
-            erase(it++);
-        }
-        return end.base();
+    template<typename U>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
+    constexpr View<ConstIterator> equal_range_impl(U&& needle) const {
+        return { lower_bound_impl(needle), upper_bound_impl(needle) };
     }
 
     template<typename U>
     requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr size_t erase(U const& needle) {
-        auto [start, end] = equal_range(needle);
-        size_t result = 0;
-        for (auto it = start; it != end; ++result) {
-            erase(it++);
+    constexpr ConstIterator lower_bound_impl(U&& needle) const {
+        Node* result = nullptr;
+        for (auto* node = m_root; node;) {
+            if (compare(node->value, needle) < 0) {
+                node = node->right;
+            } else {
+                result = node;
+                node = node->left;
+            }
         }
-        return result;
+        return result ? Iterator(result, false) : end();
+    }
+
+    template<typename U>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
+    constexpr ConstIterator upper_bound_impl(U&& needle) const {
+        Node* result = nullptr;
+        for (auto* node = m_root; node;) {
+            if (compare(node->value, needle) <= 0) {
+                node = node->right;
+            } else {
+                result = node;
+                node = node->left;
+            }
+        }
+        return result ? Iterator(result, false) : end();
+    }
+
+    template<typename U>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
+    constexpr ConstIterator find_impl(U&& needle) const {
+        for (auto* node = m_root; node;) {
+            auto result = compare(needle, node->value);
+            if (result == 0) {
+                return Iterator(node, false);
+            } else if (result < 0) {
+                node = node->left;
+            } else {
+                node = node->right;
+            }
+        }
+        return end();
     }
 
 private:
@@ -280,61 +210,6 @@ private:
         y.parent = &x;
     }
 
-    constexpr Iterator begin_impl() const { return Iterator(m_minimum, !m_root); }
-    constexpr Iterator end_impl() const { return Iterator(m_maximum, true); }
-
-    template<typename U>
-    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr View<Iterator> equal_range_impl(U const& needle) const {
-        return { lower_bound_impl(needle), upper_bound_impl(needle) };
-    }
-
-    template<typename U>
-    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr Iterator lower_bound_impl(U const& needle) const {
-        Node* result = nullptr;
-        for (auto* node = m_root; node;) {
-            if (compare(node->value, needle) < 0) {
-                node = node->right;
-            } else {
-                result = node;
-                node = node->left;
-            }
-        }
-        return result ? Iterator(result, false) : end_impl();
-    }
-
-    template<typename U>
-    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr Iterator upper_bound_impl(U const& needle) const {
-        Node* result = nullptr;
-        for (auto* node = m_root; node;) {
-            if (compare(node->value, needle) <= 0) {
-                node = node->right;
-            } else {
-                result = node;
-                node = node->left;
-            }
-        }
-        return result ? Iterator(result, false) : end_impl();
-    }
-
-    template<typename U>
-    requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr Iterator find_impl(U const& needle) const {
-        for (auto* node = m_root; node;) {
-            auto result = compare(needle, node->value);
-            if (result == 0) {
-                return Iterator(node, false);
-            } else if (result < 0) {
-                node = node->left;
-            } else {
-                node = node->right;
-            }
-        }
-        return end_impl();
-    }
-
     struct InsertPosition {
         Node* parent { nullptr };
         bool left { true };
@@ -342,7 +217,7 @@ private:
 
     template<typename U>
     requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr InsertPosition insert_position(U const& needle) const {
+    constexpr InsertPosition insert_position(U&& needle) const {
         // Find the parent node to insert under.
         Node* y = nullptr;
         auto* x = m_root;
@@ -576,7 +451,7 @@ private:
 
     template<typename T, typename U>
     requires(concepts::StrictWeakOrder<Comp&, T, U>)
-    constexpr auto compare(T const& a, U const& b) const {
+    constexpr auto compare(T const& a, U&& b) const {
         return function::invoke(m_comparator, a, b);
     }
 

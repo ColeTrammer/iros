@@ -22,6 +22,10 @@ constexpr void basic() {
 
     x.insert_container(di::Array { 1, 2, 5, 0, 4, -6, 6, 3 });
 
+    auto [it, did_insert] = x.insert(3);
+    ASSERT_EQ(*it, 3);
+    ASSERT(!did_insert);
+
     ASSERT_EQ(di::distance(x), 8);
     ASSERT_EQ(di::sum(x), 15);
 
