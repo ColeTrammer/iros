@@ -8,6 +8,7 @@ set(TEST_FILES
     test_container_path.cpp
     test_container_queue.cpp
     test_container_string.cpp
+    test_container_tree_map.cpp
     test_container_tree_set.cpp
     test_container_vector.cpp
     test_container_view.cpp

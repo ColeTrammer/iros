@@ -97,6 +97,21 @@ public:
         }
     }
 
+    template<typename U, concepts::Invocable F>
+    requires(concepts::StrictWeakOrder<Comp&, Value, U> && concepts::MaybeFallible<meta::InvokeResult<F>, Value>)
+    constexpr auto insert_with_factory(ConstIterator, U&& needle, F&& factory) {
+        auto position = insert_position(needle);
+        if constexpr (!is_multi) {
+            if (position.parent && compare(position.parent->value, needle) == 0) {
+                return Iterator(position.parent, false);
+            }
+        }
+
+        auto* node = create_node(function::invoke(util::forward<F>(factory)));
+        insert_node(position, *node);
+        return Iterator(node, false);
+    }
+
     constexpr Iterator erase_impl(ConstIterator position) {
         DI_ASSERT(position != end());
 

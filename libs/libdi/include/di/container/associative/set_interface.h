@@ -60,59 +60,23 @@ public:
     constexpr auto insert(ConstIterator hint, Value const& value)
     requires(concepts::Clonable<Value>)
     {
-        if constexpr (requires {
-                          self().insert_with_factory(hint, value, [&] {
-                              return util::clone(value);
-                          });
-                      }) {
-            return self().insert_with_factory(hint, value, [&] {
-                return util::clone(value);
-            });
-        } else if constexpr (!is_multi) {
-            return as_fallible(this->insert(value)) % [](auto result) {
-                return util::get<0>(result);
-            } | try_infallible;
-        } else {
-            return this->insert(value);
-        }
+        return self().insert_with_factory(hint, value, [&] {
+            return util::clone(value);
+        });
     }
 
     constexpr auto insert(ConstIterator hint, Value&& value) {
-        if constexpr (requires {
-                          self().insert_with_factory(hint, value, [&] {
-                              return util::move(value);
-                          });
-                      }) {
-            return self().insert_with_factory(hint, value, [&] {
-                return util::move(value);
-            });
-        } else if constexpr (!is_multi) {
-            return as_fallible(this->insert(util::move(value))) % [](auto result) {
-                return util::get<0>(result);
-            } | try_infallible;
-        } else {
-            return this->insert(util::move(value));
-        }
+        return self().insert_with_factory(hint, value, [&] {
+            return util::move(value);
+        });
     }
 
     template<typename U>
     requires(valid<U> && concepts::CreatableFrom<Value, U>)
     constexpr auto insert(ConstIterator hint, U&& value) {
-        if constexpr (requires {
-                          self().insert_with_factory(hint, value, [&] {
-                              return util::create<Value>(util::forward<U>(value));
-                          });
-                      }) {
-            return self().insert_with_factory(hint, value, [&] {
-                return util::create<Value>(util::forward<U>(value));
-            });
-        } else if constexpr (!is_multi) {
-            return as_fallible(this->insert(util::forward<U>(value))) % [](auto result) {
-                return util::get<0>(result);
-            } | try_infallible;
-        } else {
-            return this->insert(util::forward<U>(value));
-        }
+        return self().insert_with_factory(hint, value, [&] {
+            return util::create<Value>(util::forward<U>(value));
+        });
     }
 
     template<typename... Args>
