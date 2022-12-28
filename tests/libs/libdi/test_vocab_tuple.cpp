@@ -172,9 +172,22 @@ constexpr void tuple_equal() {
     static_assert(!di::concepts::EqualityComparableWith<di::Tuple<int, di::Void>, di::Tuple<int, int>>);
 }
 
+constexpr void tuple_cat() {
+    auto a = di::make_tuple(1, 2);
+    int x = 5;
+    int y = 6;
+    int z = 7;
+    auto b = di::tie(x, y);
+    auto c = di::forward_as_tuple<int>(di::move(z));
+
+    auto r = di::tuple_cat(a, b, di::move(c));
+    static_assert(di::SameAs<decltype(r), di::Tuple<int, int, int&, int&, int&&>>);
+    ASSERT_EQ(r, di::make_tuple(1, 2, 5, 6, 7));
+}
+
 TEST_CONSTEXPR(vocab_tuple, enable_structed_bindings, enable_structed_bindings)
 TEST_CONSTEXPR(vocab_tuple, basic, basic)
 TEST_CONSTEXPR(vocab_tuple, assignment, assignment)
 TEST_CONSTEXPR(vocab_tuple, tuple_transform, tuple_transform)
 TEST_CONSTEXPR(vocab_tuple, tuple_for_each, tuple_for_each)
-TEST_CONSTEXPR(vocab_tuple, tuple_equal, tuple_equal)
+TEST_CONSTEXPR(vocab_tuple, tuple_equal, tuple_equal) TEST_CONSTEXPR(vocab_tuple, tuple_cat, tuple_cat)

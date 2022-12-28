@@ -120,7 +120,7 @@ public:
     constexpr E const&& error() const&& { return *util::move(m_error); }
 
     constexpr Unexpected<E> __try_did_fail() && { return Unexpected<E> { in_place, util::move(*this).error() }; }
-    constexpr Expected __try_did_succeed() && { return Expected { in_place, util::move(*this).value() }; }
+    constexpr Expected __try_did_succeed() && { return Expected {}; }
     constexpr void __try_move_out() && { return util::move(*this).value(); }
 
 private:

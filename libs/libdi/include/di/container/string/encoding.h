@@ -164,9 +164,25 @@ namespace detail {
             }
         }
     };
+
+    struct UnicodeCodePointUnwrapFunction {
+        template<typename T, typename Input, typename U = meta::EncodingCodePoint<T>, typename P = meta::EncodingCodePoint<T>>
+        requires(concepts::TagInvocable<UnicodeCodePointUnwrapFunction, T const&, Input> || concepts::SameAs<P, c32> ||
+                 concepts::ConstructibleFrom<c32, P>)
+        constexpr meta::EncodingIterator<T> operator()(T const& encoding, Input it) const {
+            if constexpr (concepts::TagInvocable<UnicodeCodePointViewFunction, T const&, Input>) {
+                return function::tag_invoke(*this, encoding, util::move(it));
+            } else if constexpr (concepts::SameAs<P, c32>) {
+                return it;
+            } else {
+                return it.base();
+            }
+        }
+    };
 }
 
 constexpr inline auto unicode_code_point_view = detail::UnicodeCodePointViewFunction {};
+constexpr inline auto unicode_code_point_unwrap = detail::UnicodeCodePointUnwrapFunction {};
 }
 
 namespace di::concepts {
@@ -187,6 +203,7 @@ concept Encoding = concepts::Semiregular<T> &&
                        container::string::encoding::convert_to_code_units(encoding, code_point);
                        container::string::encoding::code_point_view(encoding, code_units);
                        container::string::encoding::unicode_code_point_view(encoding, code_units);
+                       container::string::encoding::unicode_code_point_unwrap(encoding, iterator);
                    };
 
 template<typename T>

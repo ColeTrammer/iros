@@ -12,6 +12,7 @@ inline namespace generic_error {
         Success = 0,
         FailedAllocation,
         OutOfRange,
+        Invalid,
     };
 
     template<typename = void>
@@ -61,13 +62,15 @@ protected:
         auto value = down_cast(code).value();
         switch (value) {
             case BasicError::Success:
-                return u8"Success"_sv;
+                return "Success"_sv;
             case BasicError::FailedAllocation:
-                return u8"Allocation Failed"_sv;
+                return "Allocation Failed"_sv;
             case BasicError::OutOfRange:
-                return u8"Out of Range"_sv;
+                return "Out of Range"_sv;
+            case BasicError::Invalid:
+                return "Invalid"_sv;
             default:
-                return u8"Unknown"_sv;
+                return "Unknown"_sv;
         }
     }
 

@@ -17,7 +17,12 @@ namespace di::vocab {
 template<typename T>
 class BasicOptionalStorage {
 public:
-    constexpr explicit BasicOptionalStorage(NullOpt) {}
+    constexpr explicit BasicOptionalStorage(NullOpt) {
+        // Suppress uninialized variable warnings by zero-initializing the storage.
+        for (size_t i = 0; i < sizeof(T); i++) {
+            m_array[i] = Byte(0);
+        }
+    }
 
     BasicOptionalStorage(BasicOptionalStorage const&) = default;
     BasicOptionalStorage(BasicOptionalStorage&&) = default;
@@ -57,6 +62,7 @@ private:
     bool m_has_value { false };
     union {
         T m_value;
+        Byte m_array[sizeof(T)];
     };
 };
 }

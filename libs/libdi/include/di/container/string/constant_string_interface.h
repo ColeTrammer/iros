@@ -22,7 +22,6 @@
 #include <di/container/string/string_substr.h>
 #include <di/container/string/string_unicode_code_points.h>
 #include <di/parser/into_parser_context.h>
-#include <di/parser/string_view_parser_context.h>
 
 namespace di::container::string {
 template<typename Self, concepts::Encoding Enc>
@@ -39,6 +38,12 @@ public:
     requires(encoding::Contiguous<Enc>)
     {
         return string::size(self());
+    }
+
+    constexpr CodePoint operator[](size_t index) const
+    requires(encoding::Contiguous<Enc>)
+    {
+        return begin()[index];
     }
 
     constexpr size_t size_bytes() const { return size_code_units() * sizeof(CodeUnit); }
@@ -112,10 +117,6 @@ private:
     requires(concepts::SameAs<Enc, meta::Encoding<Other>>)
     constexpr friend auto operator<=>(Self const& a, Other const& b) {
         return string::compare(a, b);
-    }
-
-    constexpr friend auto tag_invoke(types::Tag<parser::into_parser_context>, Self const& self) {
-        return parser::StringViewParserContext<Enc>(self.view());
     }
 
     constexpr friend StringViewImpl<Enc> tag_invoke(types::Tag<container::reconstruct>, InPlaceType<Self>, Iterator first, Iterator last) {

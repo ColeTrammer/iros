@@ -8,11 +8,12 @@
 
 namespace di::concepts {
 template<typename T>
-concept ParserContext =
-    concepts::ContainerOf<T, c32> && concepts::ForwardContainer<T> && requires(T& context, meta::ContainerIterator<T> it) {
-                                                                          typename T::Error;
+concept ParserContext = concepts::ContainerOf<T, c32> && concepts::HasEncoding<T> && concepts::ForwardContainer<T> &&
+                        requires(T& context, meta::ContainerIterator<T> it) {
+                            typename T::Error;
 
-                                                                          { context.advance(it) } -> LanguageVoid;
-                                                                          { context.make_error() } -> SameAs<typename T::Error>;
-                                                                      };
+                            { context.encoding() } -> SameAs<meta::Encoding<T>>;
+                            { context.advance(it) } -> LanguageVoid;
+                            { context.make_error() } -> SameAs<typename T::Error>;
+                        };
 }
