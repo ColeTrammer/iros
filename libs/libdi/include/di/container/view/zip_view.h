@@ -133,6 +133,8 @@ private:
                 m_iterators);
         }
 
+        constexpr Storage const& iterators() const { return m_iterators; }
+
     private:
         constexpr friend bool operator==(Iterator const& a, Iterator const& b)
         requires(concepts::Conjunction<concepts::EqualityComparable<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>>...>)

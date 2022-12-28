@@ -30,6 +30,7 @@
 #include <di/container/view/values.h>
 #include <di/container/view/view.h>
 #include <di/container/view/zip.h>
+#include <di/container/view/zip_transform.h>
 
 namespace di {
 namespace container::view {}
@@ -63,4 +64,5 @@ using view::take_while;
 using view::transform;
 using view::values;
 using view::zip;
+using view::zip_transform;
 }
