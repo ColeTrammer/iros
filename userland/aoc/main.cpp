@@ -23,8 +23,10 @@ struct Args {
 
 di::Result<void> main(Args& args) {
     auto default_path = args.test ? "test.txt"_pv : "input.txt"_pv;
-    auto file = TRY(dius::open_sync(args.input.value_or(default_path), dius::OpenMode::Readonly));
-    auto string = TRY(di::read_to_string(file));
+    auto path = args.input.value_or(default_path);
+    auto string = TRY(dius::read_to_string(path) | di::if_error([&](auto&& error) {
+                          dius::error_log("Failed to read input file '{}': {}"_sv, path.data(), error.message());
+                      }));
 
     auto solver = AocProblemRegistry::the().lookup({ args.year, args.day, args.part_b });
     if (!solver) {

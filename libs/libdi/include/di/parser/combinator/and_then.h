@@ -21,19 +21,15 @@ namespace detail {
             auto begin_save = container::begin(context);
             if constexpr (concepts::LanguageVoid<Value>) {
                 return m_parser.parse(context).and_then([&] {
-                    auto result = m_function(context);
-                    if (!result) {
-                        context.advance(begin_save);
-                    }
-                    return result;
+                    return m_function(context) | if_error([&](auto&&) {
+                               context.advance(begin_save);
+                           });
                 });
             } else {
                 return m_parser.parse(context).and_then([&](Value&& value) {
-                    auto result = m_function(context, util::forward<Value>(value));
-                    if (!result) {
-                        context.advance(begin_save);
-                    }
-                    return result;
+                    return m_function(context, util::forward<Value>(value)) | if_error([&](auto&&) {
+                               context.advance(begin_save);
+                           });
                 });
             }
         }
