@@ -13,7 +13,7 @@ struct Args {
 };
 
 constexpr void basic() {
-    auto parser = Args::get_cli_parser();
+    auto parser = di::get_cli_parser<Args>();
 
     {
         auto args = di::Array { "test"_tsv, "-e"_tsv };
@@ -31,6 +31,13 @@ constexpr void basic() {
 
     {
         auto args = di::Array { "test"_tsv, "-ei"_tsv, "input.txt"_tsv };
+        auto result = *parser.parse(args);
+        ASSERT(result.enable);
+        ASSERT_EQ(result.input, "input.txt"_pv);
+    }
+
+    {
+        auto args = di::Array { "test"_tsv, "-e"_tsv, "-i"_tsv, "input.txt"_tsv };
         auto result = *parser.parse(args);
         ASSERT(result.enable);
         ASSERT_EQ(result.input, "input.txt"_pv);

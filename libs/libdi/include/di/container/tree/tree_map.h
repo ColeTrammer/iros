@@ -62,14 +62,15 @@ namespace detail {
 template<typename Key, typename Value, concepts::StrictWeakOrder<Key> Comp = function::Compare,
          concepts::AllocatorOf<RBTreeNode<Tuple<Key, Value>>> Alloc = Allocator<RBTreeNode<Tuple<Key, Value>>>>
 class TreeMap
-    : public RBTree<Tuple<Key, Value>, detail::TreeMapCompAdapter<Comp, Key>, Alloc,
-                    MapInterface<TreeMap<Key, Value, Comp, Alloc>, Tuple<Key, Value>, RBTreeIterator<Tuple<Key, Value>>,
-                                 meta::ConstIterator<RBTreeIterator<Tuple<Key, Value>>>,
-                                 detail::RBTreeValidForLookup<Tuple<Key, Value>, detail::TreeMapCompAdapter<Comp, Key>>::template Type, false>,
-                    false> {
+    : public RBTree<
+          Tuple<Key, Value>, detail::TreeMapCompAdapter<Comp, Key>, Alloc,
+          MapInterface<TreeMap<Key, Value, Comp, Alloc>, Tuple<Key, Value>, RBTreeIterator<Tuple<Key, Value>>,
+                       meta::ConstIterator<RBTreeIterator<Tuple<Key, Value>>>,
+                       detail::RBTreeValidForLookup<Tuple<Key, Value>, detail::TreeMapCompAdapter<Comp, Key>>::template Type, false>,
+          false> {
 private:
     using Base = RBTree<
-        Tuple<Key, Value>, Comp, Alloc,
+        Tuple<Key, Value>, detail::TreeMapCompAdapter<Comp, Key>, Alloc,
         MapInterface<TreeMap<Key, Value, Comp, Alloc>, Tuple<Key, Value>, RBTreeIterator<Tuple<Key, Value>>,
                      meta::ConstIterator<RBTreeIterator<Tuple<Key, Value>>>, detail::RBTreeValidForLookup<Key, Comp>::template Type, false>,
         false>;

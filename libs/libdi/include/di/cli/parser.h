@@ -19,8 +19,8 @@ namespace detail {
         template<auto member>
         requires(concepts::MemberObjectPointer<decltype(member)> && concepts::SameAs<Base, meta::MemberPointerClass<decltype(member)>>)
         constexpr auto flag(Optional<char> short_name, Optional<TransparentStringView> long_name = {},
-                            Optional<StringView> description = {}) {
-            auto new_option = Option<member> { short_name, long_name, description };
+                            Optional<StringView> description = {}, bool required = false) {
+            auto new_option = Option<member> { short_name, long_name, description, required };
             return Parser<Base, meta::List<Options..., decltype(new_option)>, meta::List<Arguments...>> {
                 m_app_name, m_description, tuple_cat(m_options, make_tuple(new_option)), m_arguments
             };
@@ -51,14 +51,14 @@ namespace detail {
 
                         // Parse boolean flag.
                         if (option_boolean(*index)) {
-                            DI_TRY(option_parse(*index, &result, {}));
+                            DI_TRY(option_parse(*index, seen_arguments, &result, {}));
                             continue;
                         }
 
                         // Parse short option with directly specified value: '-iinput.txt'
                         auto value_view = arg.substr(arg.begin() + char_index + 1);
                         if (!value_view.empty()) {
-                            DI_TRY(option_parse(*index, &result, value_view));
+                            DI_TRY(option_parse(*index, seen_arguments, &result, value_view));
                             break;
                         }
 
@@ -68,7 +68,7 @@ namespace detail {
                         }
 
                         // Use the next argument as the value.
-                        DI_TRY(option_parse(*index, &result, args[++i]));
+                        DI_TRY(option_parse(*index, seen_arguments, &result, args[++i]));
                     }
                     continue;
                 }
@@ -96,7 +96,7 @@ namespace detail {
                     if (equal) {
                         return Unexpected(BasicError::Invalid);
                     }
-                    DI_TRY(option_parse(*index, &result, {}));
+                    DI_TRY(option_parse(*index, seen_arguments, &result, {}));
                     continue;
                 }
 
@@ -109,7 +109,7 @@ namespace detail {
                     value = arg.substr(equal.end());
                 }
 
-                DI_TRY(option_parse(*index, &result, value));
+                DI_TRY(option_parse(*index, seen_arguments, &result, value));
             }
 
             // Validate all required arguments were processed.
@@ -135,10 +135,15 @@ namespace detail {
             });
         }
 
-        constexpr Result<void> option_parse(size_t index, Base* output, Optional<TransparentStringView> input) const {
-            return function::index_dispatch<Result<void>, sizeof...(Options)>(index, [&]<size_t i>(InPlaceIndex<i>) {
-                return util::get<i>(m_options).parse(output, input);
-            });
+        constexpr Result<void> option_parse(size_t index, Span<bool> seen_arguments, Base* output,
+                                            Optional<TransparentStringView> input) const {
+            return function::index_dispatch<Result<void>, sizeof...(Options)>(index,
+                                                                              [&]<size_t i>(InPlaceIndex<i>) {
+                                                                                  return util::get<i>(m_options).parse(output, input);
+                                                                              }) |
+                   if_success([&] {
+                       seen_arguments[index] = true;
+                   });
         }
 
         constexpr Optional<size_t> lookup_short_name(char short_name) const {

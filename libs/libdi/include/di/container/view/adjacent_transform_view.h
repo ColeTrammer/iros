@@ -12,7 +12,7 @@ namespace detail {
     template<typename F, typename... Rs>
     requires(concepts::Invocable<F, Rs...>)
     struct CanInvokeRepeatHelper<F, meta::List<Rs...>> : meta::TrueType {
-        using Type = meta::TypeConstant<meta::InvokeResult<F, Rs...>>;
+        using Type = meta::InvokeResult<F, Rs...>;
     };
 
     template<typename F, typename V, size_t N>

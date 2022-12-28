@@ -18,6 +18,15 @@ namespace detail {
             }
             return util::forward<T>(expected);
         }
+
+        template<concepts::Expected T, concepts::InvocableTo<void> F>
+        requires(concepts::DecayConstructible<T> && concepts::LanguageVoid<meta::ExpectedValue<T>>)
+        constexpr auto operator()(T&& expected, F&& function) const {
+            if (expected) {
+                function::invoke(util::forward<F>(function));
+            }
+            return util::forward<T>(expected);
+        }
     };
 }
 

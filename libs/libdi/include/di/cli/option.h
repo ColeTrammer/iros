@@ -26,7 +26,11 @@ public:
             return {};
         } else {
             DI_ASSERT(input);
-            (*output).*member = DI_TRY(parser::parse<Value>(*input));
+            if constexpr (concepts::Optional<Value>) {
+                (*output).*member = DI_TRY(parser::parse<meta::OptionalValue<Value>>(*input));
+            } else {
+                (*output).*member = DI_TRY(parser::parse<Value>(*input));
+            }
             return {};
         }
     }
