@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/container/view/adjacent.h>
+#include <di/container/view/adjacent_transform.h>
 #include <di/container/view/all.h>
 #include <di/container/view/as_const.h>
 #include <di/container/view/as_rvalue.h>
@@ -17,6 +18,7 @@
 #include <di/container/view/join_with.h>
 #include <di/container/view/keys.h>
 #include <di/container/view/pairwise.h>
+#include <di/container/view/pairwise_transform.h>
 #include <di/container/view/range.h>
 #include <di/container/view/repeat.h>
 #include <di/container/view/reverse.h>
@@ -39,6 +41,7 @@ namespace view = container::view;
 
 using container::View;
 using view::adjacent;
+using view::adjacent_transform;
 using view::as_rvalue;
 using view::chunk;
 using view::cycle;
@@ -52,6 +55,7 @@ using view::join;
 using view::join_with;
 using view::keys;
 using view::pairwise;
+using view::pairwise_transform;
 using view::range;
 using view::repeat;
 using view::reverse;

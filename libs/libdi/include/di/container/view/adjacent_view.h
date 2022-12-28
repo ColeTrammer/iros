@@ -110,6 +110,8 @@ private:
                 m_iterators);
         }
 
+        constexpr Array<Iter<is_const>, N> const& iterators() const { return m_iterators; }
+
     private:
         constexpr friend bool operator==(Iterator const& a, Iterator const& b)
         requires(concepts::EqualityComparable<Iter<is_const>>)
