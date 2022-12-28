@@ -15,7 +15,7 @@ namespace detail {
     public:
         consteval FormatStringImpl(StringView view) : m_view(view) {
             // FIXME: actually validate the format string is valid for the given arguments.
-            DI_ASSERT(true);
+            // DI_ASSERT(true);
         }
 
         constexpr operator StringView() const { return m_view; }

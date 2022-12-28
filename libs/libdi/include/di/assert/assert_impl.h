@@ -25,8 +25,20 @@ inline void assert_terminate() {
 }
 #endif
 
+inline StringView cstring_to_utf8_view(char const* s) {
+    size_t len = 0;
+    while (s[len] != '\0') {
+        len++;
+    }
+
+    // NOTE: this is safe since the caller passes in pointers to the program's
+    //       source text. Since the text itself is UTF-8, this is safe.
+    auto* p = reinterpret_cast<char8_t const*>(s);
+    return StringView(encoding::assume_valid, p, len);
+}
+
 template<auto source_text>
-constexpr void do_assert(bool b) {
+constexpr void do_assert(bool b, util::SourceLocation loc) {
     if (!b) {
         if consteval {
             di::util::compile_time_fail<source_text>();
@@ -35,6 +47,14 @@ constexpr void do_assert(bool b) {
             char text[] = "\033[31;1mASSERT\033[0m: ";
             assert_write(text, sizeof(text) - 1);
             assert_write(source_text.data(), source_text.size());
+#ifndef DI_NO_ASSERT_ALLOCATION
+            constexpr auto fs = di::StringView(encoding::assume_valid, u8": {}: {}:{}:{}", 14);
+            auto t = di::format::present(fs, cstring_to_utf8_view(loc.function_name()), cstring_to_utf8_view(loc.file_name()), loc.line(),
+                                         loc.column());
+            assert_write(reinterpret_cast<char const*>(t.data()), t.size_bytes());
+#else
+            (void) loc;
+#endif
             assert_write(&new_line, 1);
             assert_terminate();
         }
@@ -42,7 +62,7 @@ constexpr void do_assert(bool b) {
 }
 
 template<auto source_text, typename F, typename T, typename U>
-constexpr void do_binary_assert(F op, T&& a, U&& b) {
+constexpr void do_binary_assert(F op, T&& a, U&& b, util::SourceLocation loc) {
     if (!op(a, b)) {
         if consteval {
             di::util::compile_time_fail<source_text>();
@@ -51,6 +71,13 @@ constexpr void do_binary_assert(F op, T&& a, U&& b) {
             char text[] = "\033[31;1mASSERT\033[0m: ";
             assert_write(text, sizeof(text) - 1);
             assert_write(source_text.data(), source_text.size());
+#ifndef DI_NO_ASSERT_ALLOCATION
+            auto t = di::format::present(": {}: {}:{}:{}"_sv, cstring_to_utf8_view(loc.function_name()),
+                                         cstring_to_utf8_view(loc.file_name()), loc.line(), loc.column());
+            assert_write(reinterpret_cast<char const*>(t.data()), t.size_bytes());
+#else
+            (void) loc;
+#endif
             assert_write(&new_line, 1);
 
 #ifndef DI_NO_ASSERT_ALLOCATION
