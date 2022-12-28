@@ -34,7 +34,7 @@ public:
     constexpr static bool boolean() { return concepts::SameAs<Value, bool>; }
 
     constexpr auto short_name() const { return m_short_name; }
-    constexpr auto long_name() const { return m_short_name; }
+    constexpr auto long_name() const { return m_long_name; }
     constexpr auto description() const { return m_description; }
     constexpr auto required() const { return m_required; }
 

@@ -72,6 +72,44 @@ namespace detail {
                     }
                     continue;
                 }
+
+                // Handle exactly "--".
+                if (arg == "--"_tsv) {
+                    continue;
+                }
+
+                // Handle long arguments.
+                auto equal = arg.find('=');
+                auto name = ""_tsv;
+                if (!equal) {
+                    name = arg.substr(arg.begin() + 2);
+                } else {
+                    name = arg.substr(arg.begin() + 2, equal.begin());
+                }
+
+                auto index = lookup_long_name(name);
+                if (!index) {
+                    return Unexpected(BasicError::Invalid);
+                }
+
+                if (option_boolean(*index)) {
+                    if (equal) {
+                        return Unexpected(BasicError::Invalid);
+                    }
+                    DI_TRY(option_parse(*index, &result, {}));
+                    continue;
+                }
+
+                auto value = ""_tsv;
+                if (!equal && i + 1 >= args.size()) {
+                    return Unexpected(BasicError::Invalid);
+                } else if (!equal) {
+                    value = args[++i];
+                } else {
+                    value = arg.substr(equal.end());
+                }
+
+                DI_TRY(option_parse(*index, &result, value));
             }
 
             // Validate all required arguments were processed.
@@ -109,6 +147,20 @@ namespace detail {
             tuple_for_each(
                 [&](auto& flag) {
                     if (flag.short_name() == short_name) {
+                        result = index;
+                    }
+                    index++;
+                },
+                m_options);
+            return result;
+        }
+
+        constexpr Optional<size_t> lookup_long_name(TransparentStringView long_name) const {
+            auto result = Optional<size_t> {};
+            size_t index = 0;
+            tuple_for_each(
+                [&](auto& flag) {
+                    if (flag.long_name() == long_name) {
                         result = index;
                     }
                     index++;

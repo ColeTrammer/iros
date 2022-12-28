@@ -35,6 +35,20 @@ constexpr void basic() {
         ASSERT(result.enable);
         ASSERT_EQ(result.input, "input.txt"_pv);
     }
+
+    {
+        auto args = di::Array { "test"_tsv, "--enable"_tsv, "--input"_tsv, "input.txt"_tsv };
+        auto result = *parser.parse(args);
+        ASSERT(result.enable);
+        ASSERT_EQ(result.input, "input.txt"_pv);
+    }
+
+    {
+        auto args = di::Array { "test"_tsv, "--enable"_tsv, "--input=input.txt"_tsv };
+        auto result = *parser.parse(args);
+        ASSERT(result.enable);
+        ASSERT_EQ(result.input, "input.txt"_pv);
+    }
 }
 
 TEST_CONSTEXPR(cli, basic, basic);
