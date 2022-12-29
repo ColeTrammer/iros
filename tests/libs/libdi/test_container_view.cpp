@@ -505,6 +505,35 @@ constexpr void chunk_by() {
     ASSERT_EQ(r2, ex2);
 }
 
+constexpr void cartesian_product() {
+    auto r1 = di::cartesian_product(di::range(2), di::range(2), di::range(2)) | di::to<di::Vector>();
+    auto ex1 = di::Array {
+        di::Tuple { 0, 0, 0 }, di::Tuple { 0, 0, 1 }, di::Tuple { 0, 1, 0 }, di::Tuple { 0, 1, 1 },
+        di::Tuple { 1, 0, 0 }, di::Tuple { 1, 0, 1 }, di::Tuple { 1, 1, 0 }, di::Tuple { 1, 1, 1 },
+    } | di::to<di::Vector>();
+
+    ASSERT_EQ(r1, ex1);
+
+    auto r2 = di::cartesian_product(di::range(2), di::range(3), di::range(4), di::range(5));
+    auto ex2 = r2 | di::to<di::Vector>();
+
+    ASSERT_EQ(r2.size(), 2u * 3u * 4u * 5u);
+
+    auto b = r2.begin();
+    auto e = r2.end();
+
+    ASSERT_EQ(b + 120, e);
+    for (ssize_t i = 0; i < di::ssize(r2); i++) {
+        ASSERT_EQ(b[i], ex2[i]);
+        ASSERT_EQ(e[-(di::ssize(r2) - i)], ex2[i]);
+        ASSERT_EQ((b + i) - b, i);
+        ASSERT_EQ((e - (di::ssize(r2) - i)) - b, i);
+    }
+
+    auto r3 = di::cartesian_product(di::range(5), di::view::empty<int>);
+    ASSERT_EQ(r3.begin(), r3.end());
+}
+
 TEST_CONSTEXPR(container_view, basic, basic)
 TEST_CONSTEXPR(container_view, all, all)
 TEST_CONSTEXPR(container_view, empty, empty)
@@ -536,3 +565,4 @@ TEST_CONSTEXPR(container_view, chunk, chunk)
 TEST_CONSTEXPRX(container_view, chunk_generator, chunk_generator)
 TEST_CONSTEXPR(container_view, slide, slide)
 TEST_CONSTEXPR(container_view, chunk_by, chunk_by)
+TEST_CONSTEXPR(container_view, cartesian_product, cartesian_product)

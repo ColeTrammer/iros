@@ -5,6 +5,7 @@
 #include <di/container/view/all.h>
 #include <di/container/view/as_const.h>
 #include <di/container/view/as_rvalue.h>
+#include <di/container/view/cartesian_product.h>
 #include <di/container/view/chunk.h>
 #include <di/container/view/chunk_by.h>
 #include <di/container/view/counted.h>
@@ -45,6 +46,7 @@ using container::View;
 using view::adjacent;
 using view::adjacent_transform;
 using view::as_rvalue;
+using view::cartesian_product;
 using view::chunk;
 using view::chunk_by;
 using view::cycle;

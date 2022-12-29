@@ -26,6 +26,8 @@
 #include <di/parser/string_view_parser_context.h>
 
 namespace di {
+using parser::create_parser;
+using parser::create_parser_in_place;
 using parser::parse;
 using parser::parse_partial;
 using parser::parse_unchecked;
