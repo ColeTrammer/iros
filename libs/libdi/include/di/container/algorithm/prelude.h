@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/container/algorithm/adjacent_find.h>
 #include <di/container/algorithm/all_of.h>
 #include <di/container/algorithm/any_of.h>
 #include <di/container/algorithm/clamp.h>
@@ -37,6 +38,7 @@
 #include <di/container/algorithm/sum.h>
 
 namespace di {
+using container::adjacent_find;
 using container::all_of;
 using container::any_of;
 using container::clamp;

@@ -7,7 +7,7 @@
 #include <di/container/meta/iterator_value.h>
 
 namespace di::concepts {
-template<typename F, typename It, typename Jt>
+template<typename F, typename It, typename Jt = It>
 concept IndirectBinaryPredicate = IndirectlyReadable<It> && IndirectlyReadable<Jt> && CopyConstructible<F> &&
                                   Predicate<F&, meta::IteratorValue<It>&, meta::IteratorValue<Jt>&> &&
                                   Predicate<F&, meta::IteratorValue<It>&, meta::IteratorReference<Jt>> &&

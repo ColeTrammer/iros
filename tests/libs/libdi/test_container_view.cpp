@@ -494,6 +494,17 @@ constexpr void slide() {
     ASSERT_EQ(r3, ex3);
 }
 
+constexpr void chunk_by() {
+    auto in1 = di::Array { 1, 2, 2, 3, 0, 4, 5, 2 };
+    auto r1 = di::chunk_by(in1, di::equal_or_less) | di::to<di::Vector>();
+    auto ex1 = di::Array { *in1.subspan(0, 4), *in1.subspan(4, 3), *in1.subspan(7) } | di::to<di::Vector>();
+    ASSERT_EQ(r1, ex1);
+
+    auto r2 = di::chunk_by(in1, di::equal_or_less) | di::reverse | di::to<di::Vector>();
+    auto ex2 = di::Array { *in1.subspan(0, 4), *in1.subspan(4, 3), *in1.subspan(7) } | di::reverse | di::to<di::Vector>();
+    ASSERT_EQ(r2, ex2);
+}
+
 TEST_CONSTEXPR(container_view, basic, basic)
 TEST_CONSTEXPR(container_view, all, all)
 TEST_CONSTEXPR(container_view, empty, empty)
@@ -524,3 +535,4 @@ TEST_CONSTEXPR(container_view, cycle, cycle)
 TEST_CONSTEXPR(container_view, chunk, chunk)
 TEST_CONSTEXPRX(container_view, chunk_generator, chunk_generator)
 TEST_CONSTEXPR(container_view, slide, slide)
+TEST_CONSTEXPR(container_view, chunk_by, chunk_by)

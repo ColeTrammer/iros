@@ -50,7 +50,7 @@ public:
 
     constexpr auto reserve_from_nothing(size_t n) {
         DI_ASSERT_EQ(capacity(), 0u);
-        return as_fallible(Alloc().allocate(n)) % [&](auto result) {
+        return as_fallible(Alloc().allocate(n)) % [&](Allocation<T> result) {
             auto [data, new_capacity] = result;
             m_data = data;
             m_capacity = new_capacity;

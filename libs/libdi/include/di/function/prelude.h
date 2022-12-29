@@ -19,6 +19,7 @@
 #include <di/function/less.h>
 #include <di/function/monad/prelude.h>
 #include <di/function/not_equal.h>
+#include <di/function/not_fn.h>
 #include <di/function/overload.h>
 #include <di/function/piped.h>
 #include <di/function/pipeline.h>
@@ -33,6 +34,7 @@ using function::compose;
 using function::curry;
 using function::curry_back;
 using function::flip;
+using function::not_fn;
 using function::overload;
 using function::piped;
 using function::ycombinator;
