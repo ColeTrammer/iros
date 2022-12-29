@@ -17,6 +17,9 @@
 #include <di/container/algorithm/find_if_not.h>
 #include <di/container/algorithm/find_last.h>
 #include <di/container/algorithm/fold_left.h>
+#include <di/container/algorithm/fold_left_first.h>
+#include <di/container/algorithm/fold_left_first_with_iter.h>
+#include <di/container/algorithm/fold_left_with_iter.h>
 #include <di/container/algorithm/for_each.h>
 #include <di/container/algorithm/is_sorted.h>
 #include <di/container/algorithm/is_sorted_until.h>
@@ -28,6 +31,7 @@
 #include <di/container/algorithm/mismatch.h>
 #include <di/container/algorithm/none_of.h>
 #include <di/container/algorithm/pop_heap.h>
+#include <di/container/algorithm/product.h>
 #include <di/container/algorithm/push_heap.h>
 #include <di/container/algorithm/reverse.h>
 #include <di/container/algorithm/rotate.h>
@@ -53,6 +57,9 @@ using container::find_if;
 using container::find_if_not;
 using container::find_last;
 using container::fold_left;
+using container::fold_left_first;
+using container::fold_left_first_with_iter;
+using container::fold_left_with_iter;
 using container::for_each;
 using container::is_sorted;
 using container::is_sorted_until;
@@ -64,6 +71,7 @@ using container::min_element;
 using container::mismatch;
 using container::none_of;
 using container::pop_heap;
+using container::product;
 using container::push_heap;
 using container::rotate;
 using container::search;

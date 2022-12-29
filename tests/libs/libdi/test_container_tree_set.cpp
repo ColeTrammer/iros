@@ -88,22 +88,7 @@ constexpr void property() {
     }
 }
 
-constexpr void xx() {
-    auto x = di::Array { U'C', U'D', U'D', U'F', U'J', U'L', U'N', U'S', U'V', U'b', U'd',
-                         U'g', U'g', U'j', U'j', U'm', U'p', U's', U't', U'v', U'w' } |
-             di::to<di::TreeSet>();
-    auto y = di::Array { U'B', U'N', U'Q', U'W', U'Z', U'b', U'c', U'f', U'j', U's', U's', U't', U'w' } | di::to<di::TreeSet>();
-
-    auto z = di::Array { U'B', U'C', U'D', U'F', U'F', U'G', U'H', U'M', U'M', U'N', U'Q',
-                         U'Q', U'R', U'V', U'V', U'W', U'f', U'l', U'p', U'p', U'r' } |
-             di::to<di::TreeSet>();
-
-    x &= y;
-    x &= z;
-}
-
 TEST_CONSTEXPR(container_tree_set, basic, basic)
 TEST_CONSTEXPR(container_tree_set, accessors, accessors)
 TEST_CONSTEXPR(container_tree_set, erase, erase)
 TEST_CONSTEXPR(container_tree_set, property, property)
-TEST_CONSTEXPR(container_tree_set, xx, xx)

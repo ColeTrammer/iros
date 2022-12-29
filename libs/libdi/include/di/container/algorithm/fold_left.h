@@ -1,12 +1,7 @@
 #pragma once
 
-#include <di/container/concepts/prelude.h>
-#include <di/container/meta/prelude.h>
-#include <di/function/identity.h>
-#include <di/function/invoke.h>
-#include <di/meta/decay.h>
-#include <di/util/move.h>
-#include <di/util/reference_wrapper.h>
+#include <di/container/algorithm/fold_left_with_iter.h>
+#include <di/function/curry_back.h>
 
 namespace di::container {
 namespace detail {
@@ -14,16 +9,7 @@ namespace detail {
         template<concepts::InputIterator Iter, concepts::SentinelFor<Iter> Sent, typename T,
                  concepts::IndirectlyBinaryLeftFoldable<T, Iter> Op>
         constexpr auto operator()(Iter first, Sent last, T init, Op op) const {
-            using R = meta::Decay<meta::InvokeResult<Op&, meta::IteratorReference<Iter>, T>>;
-            if (first == last) {
-                return R(util::move(init));
-            }
-
-            R result = function::invoke(op, util::move(init), *first);
-            for (++first; first != last; ++first) {
-                result = function::invoke(op, util::move(result), *first);
-            }
-            return result;
+            return util::move(fold_left_with_iter(util::move(first), util::move(last), util::move(init), util::ref(op)).value);
         }
 
         template<concepts::InputContainer Con, typename T, concepts::IndirectlyBinaryLeftFoldable<T, meta::ContainerIterator<Con>> Op>
@@ -33,5 +19,5 @@ namespace detail {
     };
 }
 
-constexpr inline auto fold_left = detail::FoldLeftFunction {};
+constexpr inline auto fold_left = function::curry_back(detail::FoldLeftFunction {}, meta::size_constant<3>);
 }

@@ -2,6 +2,7 @@
 
 #include <di/function/bind_back.h>
 #include <di/function/bind_front.h>
+#include <di/function/bit_and.h>
 #include <di/function/compare.h>
 #include <di/function/compare_backwards.h>
 #include <di/function/compose.h>
@@ -18,6 +19,7 @@
 #include <di/function/invoke.h>
 #include <di/function/less.h>
 #include <di/function/monad/prelude.h>
+#include <di/function/multiplies.h>
 #include <di/function/not_equal.h>
 #include <di/function/not_fn.h>
 #include <di/function/overload.h>
@@ -51,6 +53,7 @@ using function::invoke;
 using function::invoke_r;
 using meta::InvokeResult;
 
+using function::BitAnd;
 using function::Compare;
 using function::Equal;
 using function::EqualOrGreater;
@@ -58,9 +61,11 @@ using function::EqualOrLess;
 using function::Greater;
 using function::Identity;
 using function::Less;
+using function::Multiplies;
 using function::NotEqual;
 using function::Plus;
 
+using function::bit_and;
 using function::compare;
 using function::compare_backwards;
 using function::equal;
@@ -69,6 +74,7 @@ using function::equal_or_less;
 using function::greater;
 using function::identity;
 using function::less;
+using function::multiplies;
 using function::not_equal;
 using function::plus;
 

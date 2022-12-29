@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/function/curry_back.h>
 #include <di/util/forward.h>
 
 namespace di::function {
@@ -11,5 +12,5 @@ struct Plus {
     }
 };
 
-constexpr inline auto plus = Plus {};
+constexpr inline auto plus = function::curry_back(Plus {}, meta::size_constant<2>);
 }

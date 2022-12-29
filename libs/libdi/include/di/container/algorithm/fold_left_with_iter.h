@@ -16,19 +16,21 @@ namespace detail {
                  concepts::IndirectlyBinaryLeftFoldable<T, Iter> Op>
         constexpr auto operator()(Iter first, Sent last, T init, Op op) const {
             using R = meta::Decay<meta::InvokeResult<Op&, meta::IteratorReference<Iter>, T>>;
+            using Res = InValueResult<Iter, R>;
             if (first == last) {
-                return R(util::move(init));
+                return Res(util::move(first), R(util::move(init)));
             }
 
             R result = function::invoke(op, util::move(init), *first);
             for (++first; first != last; ++first) {
                 result = function::invoke(op, util::move(result), *first);
             }
-            return result;
+            return Res(util::move(first), util::move(result));
         }
 
         template<concepts::InputContainer Con, typename T, concepts::IndirectlyBinaryLeftFoldable<T, meta::ContainerIterator<Con>> Op>
-        constexpr auto operator()(Con&& container, T init, Op op) const {
+        constexpr InValueResult<meta::BorrowedIterator<Con>, meta::Decay<meta::InvokeResult<Op&, meta::ContainerReference<Con>, T>>>
+        operator()(Con&& container, T init, Op op) const {
             return (*this)(container::begin(container), container::end(container), util::move(init), util::ref(op));
         }
     };

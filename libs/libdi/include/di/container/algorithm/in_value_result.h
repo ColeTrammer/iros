@@ -3,6 +3,7 @@
 #include <di/concepts/convertible_to.h>
 #include <di/util/move.h>
 
+namespace di {
 template<typename In, typename Val>
 struct InValueResult {
     template<typename I, typename V>
@@ -14,9 +15,10 @@ struct InValueResult {
     template<typename I, typename V>
     requires(concepts::ConvertibleTo<I, In> && concepts::ConvertibleTo<V, Val>)
     constexpr operator InValueResult<I, V>() && {
-        return { util::move(in), util::move(val) };
+        return { util::move(in), util::move(value) };
     }
 
     [[no_unique_address]] In in;
     [[no_unique_address]] Val value;
 };
+}

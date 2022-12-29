@@ -36,14 +36,12 @@ constexpr void compare() {
 constexpr void fold() {
     auto a = di::range(6);
     ASSERT_EQ(di::sum(a), 15);
-    ASSERT_EQ(di::fold_left(a | di::drop(1), 1,
-                            [](int acc, int x) {
-                                return acc * x;
-                            }),
-              120);
+    ASSERT_EQ(di::fold_left(a | di::drop(1), 1, di::multiplies), 120);
 
     auto e = di::range(6) | di::to<di::Vector>();
     ASSERT_EQ(di::sum(e), 15);
+
+    ASSERT_EQ(*di::fold_left_first(a | di::drop(1), di::multiplies), 120);
 }
 
 constexpr void is_sorted() {
