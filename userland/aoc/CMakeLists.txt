@@ -1,6 +1,7 @@
 set(SOURCES
     2022/01/solution.cpp
     2022/02/solution.cpp
+    2022/03/solution.cpp
     2022/20/solution.cpp
     main.cpp
 )

@@ -35,14 +35,6 @@ private:
     using Iterator = RBTreeIterator<Value>;
     using ConstIterator = meta::ConstIterator<Iterator>;
 
-    template<concepts::DerivedFrom<RBTree> Self, concepts::InputContainer Con, typename... Args>
-    requires(concepts::ContainerCompatible<Con, Value> && concepts::ConstructibleFrom<Self, Args...>)
-    constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<Self>, Con&& container, Args&&... args) {
-        auto result = Self(util::forward<Args>(args)...);
-        result.insert_container(util::forward<Con>(container));
-        return result;
-    }
-
 public:
     RBTree() = default;
     RBTree(RBTree const&) = delete;
@@ -174,6 +166,28 @@ public:
         return end();
     }
 
+    constexpr void merge_impl(RBTree&& other) {
+        if (!m_root) {
+            *this = util::move(other);
+            return;
+        }
+
+        auto it = other.begin();
+        auto last = other.end();
+        while (it != last) {
+            auto save = it++;
+
+            auto position = insert_position(*save);
+            if constexpr (is_multi) {
+                insert_node(position, save.node());
+            } else if (position.parent && compare(position.parent->value, *save) == 0) {
+                erase_impl(save);
+            } else {
+                insert_node(position, save.node());
+            }
+        }
+    }
+
 private:
     // Compute the color of a node, defaulting to Black.
     constexpr Node::Color node_color(Node* node) const {
@@ -238,6 +252,15 @@ private:
         auto* x = m_root;
         while (x != nullptr) {
             y = x;
+
+            // Early return to the caller if we're inserting a duplicate, making
+            // sure to provide the caller a node that is equal to needle.
+            if constexpr (!is_multi) {
+                if (compare(needle, x->value) == 0) {
+                    return InsertPosition { x, false };
+                }
+            }
+
             if (compare(needle, x->value) < 0) {
                 x = x->left;
             } else {
@@ -393,7 +416,11 @@ private:
         while (x != m_root && x->color == Node::Color::Black) {
             if (x->is_left_child()) {
                 auto* w = x->parent->right;
-                DI_ASSERT(w);
+                // FIXME: this NULL check appears to be necessary, but is not part of the reference implementation.
+                if (!w) {
+                    break;
+                }
+
                 if (w->color == Node::Color::Red) {
                     x->color = Node::Color::Black;
                     x->parent->color = Node::Color::Red;
@@ -417,10 +444,11 @@ private:
                 }
             } else {
                 auto* w = x->parent->left;
+                // FIXME: this NULL check appears to be necessary, but is not part of the reference implementation.
                 if (!w) {
-                    x = x->parent;
-                    continue;
+                    break;
                 }
+
                 if (w->color == Node::Color::Red) {
                     x->color = Node::Color::Black;
                     x->parent->color = Node::Color::Red;

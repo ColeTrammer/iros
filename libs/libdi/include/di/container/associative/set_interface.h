@@ -30,6 +30,14 @@ private:
 
     constexpr size_t size() const { return self().size(); }
 
+    template<concepts::ContainerCompatible<Value> Con, typename... Args>
+    requires(concepts::ConstructibleFrom<Self, Args...>)
+    constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<Self>, Con&& container, Args&&... args) {
+        auto result = Self(util::forward<Args>(args)...);
+        result.insert_container(util::forward<Con>(container));
+        return result;
+    }
+
 public:
     constexpr bool empty() const { return size() == 0; }
 
@@ -92,22 +100,42 @@ public:
     }
 
     template<concepts::ContainerCompatible<Value> Con>
-    constexpr void insert_container(Con&& container) {
-        auto first = container::begin(container);
-        auto last = container::end(container);
-        for (; first != last; ++first) {
-            insert(*first);
+    constexpr auto insert_container(Con&& container) {
+        if constexpr (concepts::Expected<decltype(insert(*container::begin(container)))>) {
+            auto temp_container = Self {};
+            return container::sequence(util::forward<Con>(container),
+                                       [&]<typename X>(X&& value) {
+                                           return temp_container.insert(util::forward<X>(value));
+                                       }) >>
+                   [&] {
+                       return invoke_as_fallible([&] {
+                           return self().merge_impl(util::move(temp_container));
+                       });
+                   };
+        } else {
+            auto first = container::begin(container);
+            auto last = container::end(container);
+            for (; first != last; ++first) {
+                insert(*first);
+            }
         }
     }
 
     template<concepts::ContainerCompatible<Value> Con>
     constexpr void insert_container(ConstIterator hint, Con&& container) {
-        auto first = container::begin(container);
-        auto last = container::end(container);
-        for (; first != last; ++first) {
-            hint = insert(hint, *first);
+        if constexpr (concepts::Expected<decltype(insert(hint, *container::begin(container)))>) {
+            return insert_container(util::forward<Con>(container));
+        } else {
+            auto first = container::begin(container);
+            auto last = container::end(container);
+            for (; first != last; ++first) {
+                hint = insert(hint, *first);
+            }
         }
     }
+
+    constexpr auto merge(Self& self) { return self().merge_impl(util::move(self)); }
+    constexpr auto merge(Self&& self) { return self().merge_impl(util::move(self)); }
 
     constexpr auto erase(Iterator position) { return self().erase_impl(util::move(position)); }
 
@@ -352,6 +380,84 @@ public:
              })
     {
         return self().upper_bound_impl(needle);
+    }
+
+    constexpr void intersect(Self const& b)
+    requires(!is_multi)
+    {
+        auto it = begin();
+        auto last = end();
+        while (it != last) {
+            auto save = it++;
+            if (!b.contains(*save)) {
+                erase(save);
+            }
+        }
+    }
+
+    constexpr void subtract(Self const& b)
+    requires(!is_multi)
+    {
+        auto it = begin();
+        auto last = end();
+        while (it != last) {
+            auto save = it++;
+            if (b.contains(*save)) {
+                erase(save);
+            }
+        }
+    }
+
+private:
+    // Set union.
+    constexpr friend auto operator|(Self&& a, Self&& b) {
+        return invoke_as_fallible([&] {
+                   return a.merge(util::move(b));
+               }) |
+               [&] {
+                   return util::move(a);
+               } |
+               try_infallible;
+    }
+
+    constexpr friend decltype(auto) operator|=(Self& a, Self&& b) {
+        return invoke_as_fallible([&] {
+                   return a.merge(util::move(b));
+               }) |
+               [&] {
+                   return util::ref(a);
+               } |
+               try_infallible;
+    }
+
+    // Set intersection.
+    constexpr friend auto operator&(Self&& a, Self const& b)
+    requires(!is_multi)
+    {
+        a.intersect(b);
+        return util::move(a);
+    }
+
+    constexpr friend Self& operator&=(Self& a, Self const& b)
+    requires(!is_multi)
+    {
+        a.intersect(b);
+        return a;
+    }
+
+    // Set differerce.
+    constexpr friend auto operator-(Self&& a, Self const& b)
+    requires(!is_multi)
+    {
+        a.subtract(b);
+        return util::move(a);
+    }
+
+    constexpr friend Self& operator-=(Self& a, Self const& b)
+    requires(!is_multi)
+    {
+        a.subtract(b);
+        return a;
     }
 };
 }

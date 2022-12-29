@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/format/builtin_formatter/char.h>
 #include <di/format/builtin_formatter/container.h>
 #include <di/format/builtin_formatter/integer.h>
 #include <di/format/builtin_formatter/string.h>
