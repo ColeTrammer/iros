@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/container/iterator/advance.h>
+#include <di/container/iterator/common_iterator.h>
 #include <di/container/iterator/default_sentinel.h>
 #include <di/container/iterator/distance.h>
 #include <di/container/iterator/iterator_base.h>

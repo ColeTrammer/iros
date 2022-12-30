@@ -534,6 +534,15 @@ constexpr void cartesian_product() {
     ASSERT_EQ(r3.begin(), r3.end());
 }
 
+constexpr void common() {
+    auto in1 = di::range(1, 4) | di::cycle | di::take(9) | di::common;
+    static_assert(di::concepts::CommonContainer<decltype(in1)>);
+
+    auto r3 = di::move(in1) | di::chunk(3) | di::transform(di::sum) | di::to<di::Vector>();
+    auto ex3 = di::Array { 6, 6, 6 } | di::to<di::Vector>();
+    ASSERT_EQ(r3, ex3);
+}
+
 TEST_CONSTEXPR(container_view, basic, basic)
 TEST_CONSTEXPR(container_view, all, all)
 TEST_CONSTEXPR(container_view, empty, empty)
@@ -566,3 +575,4 @@ TEST_CONSTEXPRX(container_view, chunk_generator, chunk_generator)
 TEST_CONSTEXPR(container_view, slide, slide)
 TEST_CONSTEXPR(container_view, chunk_by, chunk_by)
 TEST_CONSTEXPR(container_view, cartesian_product, cartesian_product)
+TEST_CONSTEXPR(container_view, common, common)

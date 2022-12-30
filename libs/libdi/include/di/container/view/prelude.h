@@ -8,6 +8,7 @@
 #include <di/container/view/cartesian_product.h>
 #include <di/container/view/chunk.h>
 #include <di/container/view/chunk_by.h>
+#include <di/container/view/common.h>
 #include <di/container/view/counted.h>
 #include <di/container/view/cycle.h>
 #include <di/container/view/drop.h>
@@ -49,6 +50,7 @@ using view::as_rvalue;
 using view::cartesian_product;
 using view::chunk;
 using view::chunk_by;
+using view::common;
 using view::cycle;
 using view::drop;
 using view::drop_while;
