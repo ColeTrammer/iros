@@ -11,9 +11,9 @@
 #include <di/format/vpresent_encoded_context.h>
 
 namespace di::format {
-template<concepts::InputContainer Con>
+template<concepts::InputContainer Con, concepts::Encoding Enc>
 requires(!concepts::detail::ConstantString<Con> && concepts::Formattable<meta::ContainerReference<Con>>)
-constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<Con>, concepts::FormatParseContext auto&) {
+constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<Con>, FormatParseContext<Enc>&) {
     return [](concepts::FormatContext auto& context, concepts::RemoveCVRefSameAs<Con> auto&& container) {
         context.output('{');
         context.output(' ');

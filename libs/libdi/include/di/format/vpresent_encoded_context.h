@@ -3,6 +3,7 @@
 #include <di/assert/prelude.h>
 #include <di/container/string/string_view_impl.h>
 #include <di/format/concepts/format_args.h>
+#include <di/format/format_parse_context.h>
 #include <di/format/formatter.h>
 #include <di/vocab/optional/prelude.h>
 
@@ -13,7 +14,7 @@ namespace detail {
         using View = container::string::StringViewImpl<Enc>;
 
         constexpr void operator()(View format, concepts::FormatArgs auto args, concepts::FormatContext auto& context) const {
-            auto parse_context = format::ParseContextPlaceholder {};
+            auto parse_context = FormatParseContext<Enc> { format, args.size() };
 
             size_t index = 0;
             for (auto it = format.begin(); it != format.end(); ++it) {

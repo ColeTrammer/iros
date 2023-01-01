@@ -11,8 +11,8 @@
 #include <di/vocab/tuple/prelude.h>
 
 namespace di::format {
-template<concepts::Formattable... Types>
-constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<Tuple<Types...>>, concepts::FormatParseContext auto&) {
+template<concepts::Formattable... Types, concepts::Encoding Enc>
+constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<Tuple<Types...>>, FormatParseContext<Enc>&) {
     return [](concepts::FormatContext auto& context, concepts::DecaySameAs<Tuple<Types...>> auto&& tuple) {
         context.output('(');
         context.output(' ');

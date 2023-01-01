@@ -7,8 +7,8 @@
 #include <di/math/to_unsigned.h>
 
 namespace di::format {
-template<concepts::Integer T>
-constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<T>, concepts::FormatParseContext auto&) {
+template<concepts::Integer T, concepts::Encoding Enc>
+constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<T>, FormatParseContext<Enc>&) {
     return [](concepts::FormatContext auto& context, T value) {
         if (value == 0) {
             context.output('0');

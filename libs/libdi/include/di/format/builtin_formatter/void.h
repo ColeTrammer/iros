@@ -4,7 +4,8 @@
 #include <di/types/prelude.h>
 
 namespace di::format {
-constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<Void>, concepts::FormatParseContext auto&) {
+template<concepts::Encoding Enc>
+constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<Void>, FormatParseContext<Enc>&) {
     return [](concepts::FormatContext auto& context, Void) {
         context.output('v');
         context.output('o');
