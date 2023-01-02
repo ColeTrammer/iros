@@ -16,24 +16,25 @@ namespace detail {
         constexpr void operator()(View format, concepts::FormatArgs auto args, concepts::FormatContext auto& context) const {
             auto parse_context = FormatParseContext<Enc> { format, args.size() };
 
-            size_t index = 0;
-            for (auto it = format.begin(); it != format.end(); ++it) {
-                auto ch = *it;
-                if (ch != '{') {
-                    context.output(ch);
-                } else {
-                    ++it;
-                    DI_ASSERT(*it == '}');
+            for (auto value : parse_context) {
+                DI_ASSERT(value);
 
-                    DI_ASSERT(index < args.size());
-                    auto arg = args[index++];
-                    visit<void>(
-                        [&]<typename T>(T&& value) {
-                            auto formatter = format::formatter<meta::RemoveCVRef<T>>(parse_context);
-                            formatter(context, value);
-                        },
-                        arg);
+                // Literal text.
+                if (value->index() == 0) {
+                    for (auto code_point : util::get<0>(*value)) {
+                        context.output(code_point);
+                    }
+                    continue;
                 }
+
+                // Format argument.
+                auto arg_index = util::get<1>(*value).index;
+                visit(
+                    [&]<typename T>(T&& value) {
+                        auto formatter = format::formatter<meta::RemoveCVRef<T>>(parse_context);
+                        formatter(context, value);
+                    },
+                    args[arg_index]);
             }
         }
     };

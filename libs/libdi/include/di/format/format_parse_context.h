@@ -45,10 +45,13 @@ public:
 
         Iterator() = default;
 
-        constexpr Value&& operator*() const { return util::move(m_value); }
+        constexpr Value&& operator*() const { return util::move(m_parent->m_current_value); }
 
         constexpr void advance_one() {
-            DI_ASSERT_NOT_EQ(m_position, m_data.end());
+            if (m_position == m_data.end()) {
+                m_at_end = true;
+                return;
+            }
 
             auto start = m_position;
 
@@ -149,8 +152,7 @@ public:
         }
 
     private:
-        constexpr friend bool operator==(Iterator const& a, Iterator const& b) { return a.m_position == b.m_position; }
-        constexpr friend bool operator==(Iterator const& a, container::DefaultSentinel) { return a.m_position == a.m_data.end(); }
+        constexpr friend bool operator==(Iterator const& a, container::DefaultSentinel) { return a.m_at_end; }
 
         constexpr void set_error(Error error) {
             if consteval {
@@ -166,8 +168,8 @@ public:
 
         View m_data {};
         Iter m_position {};
-        Value m_value;
         FormatParseContext* m_parent { nullptr };
+        bool m_at_end { false };
     };
 
     constexpr auto begin() { return Iterator(m_view, *this); }
@@ -200,6 +202,7 @@ public:
         if (index >= m_arg_count) {
             return Unexpected(BasicError::Invalid);
         }
+        return {};
     }
 
 private:

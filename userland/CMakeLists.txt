@@ -9,8 +9,9 @@ if (NOT ${NATIVE_BUILD})
 endif()
 
 set(TARGETS
-    about
     ${OS_TARGETS}
+    about
+    aoc
     basename
     cat
     chmod

@@ -3,6 +3,7 @@
 #include <di/assert/prelude.h>
 #include <di/container/string/string_view_impl.h>
 #include <di/format/concepts/formattable.h>
+#include <di/format/format_parse_context.h>
 #include <di/meta/type_identity.h>
 
 namespace di::format {
@@ -14,8 +15,14 @@ namespace detail {
 
     public:
         consteval FormatStringImpl(StringView view) : m_view(view) {
-            // FIXME: actually validate the format string is valid for the given arguments.
-            // DI_ASSERT(true);
+            auto parse_context = format::FormatParseContext<Enc> { view, sizeof...(Args) };
+            for (auto part : parse_context) {
+                if (!part) {
+                    util::compile_time_fail<FixedString { "Invalid format string." }>();
+                } else if (part->index() == 0) {
+                    continue;
+                }
+            }
         }
 
         constexpr operator StringView() const { return m_view; }

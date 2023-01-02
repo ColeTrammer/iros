@@ -49,8 +49,9 @@ constexpr void do_assert(bool b, util::SourceLocation loc) {
             assert_write(source_text.data(), source_text.size());
 #ifndef DI_NO_ASSERT_ALLOCATION
             constexpr auto fs = di::StringView(encoding::assume_valid, u8": {}: {}:{}:{}", 14);
-            auto t = di::format::present(fs, cstring_to_utf8_view(loc.function_name()), cstring_to_utf8_view(loc.file_name()), loc.line(),
-                                         loc.column());
+            auto t = di::format::vpresent_encoded<container::string::Utf8Encoding>(
+                fs, di::format::make_constexpr_format_args(cstring_to_utf8_view(loc.function_name()), cstring_to_utf8_view(loc.file_name()),
+                                                           loc.line(), loc.column()));
             assert_write(reinterpret_cast<char const*>(t.data()), t.size_bytes());
 #else
             (void) loc;
@@ -72,8 +73,10 @@ constexpr void do_binary_assert(F op, T&& a, U&& b, util::SourceLocation loc) {
             assert_write(text, sizeof(text) - 1);
             assert_write(source_text.data(), source_text.size());
 #ifndef DI_NO_ASSERT_ALLOCATION
-            auto t = di::format::present(": {}: {}:{}:{}"_sv, cstring_to_utf8_view(loc.function_name()),
-                                         cstring_to_utf8_view(loc.file_name()), loc.line(), loc.column());
+            auto t = di::format::vpresent_encoded<container::string::Utf8Encoding>(
+                ": {}: {}:{}:{}"_sv,
+                di::format::make_constexpr_format_args(cstring_to_utf8_view(loc.function_name()), cstring_to_utf8_view(loc.file_name()),
+                                                       loc.line(), loc.column()));
             assert_write(reinterpret_cast<char const*>(t.data()), t.size_bytes());
 #else
             (void) loc;
