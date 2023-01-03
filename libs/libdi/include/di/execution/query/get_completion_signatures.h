@@ -17,7 +17,7 @@ namespace detail {
         }
 
         template<typename Sender, typename Env>
-        constexpr auto operator()(Sender&& sender, Env&& env) const {
+        constexpr auto operator()(Sender&&, Env&&) const {
             if constexpr (requires { meta::TagInvokeResult<GetCompletionSignaturesFunction, Sender, Env> {}; }) {
                 using Result = meta::TagInvokeResult<GetCompletionSignaturesFunction, Sender, Env>;
                 static_assert(concepts::InstanceOf<Result, types::CompletionSignatures> ||

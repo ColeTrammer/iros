@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/execution/algorithm/prelude.h>
 #include <di/execution/concepts/prelude.h>
 #include <di/execution/interface/prelude.h>
 #include <di/execution/meta/prelude.h>
