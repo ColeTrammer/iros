@@ -12,6 +12,7 @@
 #include <di/math/prelude.h>
 #include <di/meta/prelude.h>
 #include <di/parser/prelude.h>
+#include <di/sync/prelude.h>
 #include <di/types/prelude.h>
 #include <di/util/prelude.h>
 #include <di/vocab/prelude.h>
