@@ -7,7 +7,7 @@
 namespace di::format {
 namespace detail {
     struct ToStringFunction {
-        constexpr auto operator()(concepts::Formattable auto&& value) const { return present(u8"{}"_sv, value); }
+        constexpr auto operator()(concepts::Formattable auto&& value) const { return *present(u8"{}"_sv, value); }
     };
 }
 

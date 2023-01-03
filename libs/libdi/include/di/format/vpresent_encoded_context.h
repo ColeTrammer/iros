@@ -13,7 +13,7 @@ namespace detail {
     struct VPresentEncodedContextFunction {
         using View = container::string::StringViewImpl<Enc>;
 
-        constexpr void operator()(View format, concepts::FormatArgs auto args, concepts::FormatContext auto& context) const {
+        constexpr Result<void> operator()(View format, concepts::FormatArgs auto args, concepts::FormatContext auto& context) const {
             auto parse_context = FormatParseContext<Enc> { format, args.size() };
 
             for (auto value : parse_context) {
@@ -29,13 +29,14 @@ namespace detail {
 
                 // Format argument.
                 auto arg_index = util::get<1>(*value).index;
-                visit(
-                    [&]<typename T>(T&& value) {
-                        auto formatter = format::formatter<meta::RemoveCVRef<T>>(parse_context);
-                        formatter(context, value);
+                DI_TRY(visit(
+                    [&]<typename T>(T&& value) -> Result<void> {
+                        auto formatter = DI_TRY(format::formatter<meta::RemoveCVRef<T>>(parse_context));
+                        return formatter(context, value);
                     },
-                    args[arg_index]);
+                    args[arg_index]));
             }
+            return {};
         }
     };
 }

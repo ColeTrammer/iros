@@ -9,10 +9,10 @@
 namespace di::format {
 template<concepts::Integer T, concepts::Encoding Enc>
 constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<T>, FormatParseContext<Enc>&) {
-    return [](concepts::FormatContext auto& context, T value) {
+    auto do_output = [](concepts::FormatContext auto& context, T value) -> Result<void> {
         if (value == 0) {
             context.output('0');
-            return;
+            return {};
         }
 
         if constexpr (concepts::SignedInteger<T>) {
@@ -28,6 +28,8 @@ constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<T>, Format
         for (; strength; strength /= 10) {
             context.output((as_unsigned / strength) % 10 + '0');
         }
+        return {};
     };
+    return Result<decltype(do_output)>(util::move(do_output));
 }
 }

@@ -13,9 +13,9 @@ namespace detail {
         using View = container::string::StringViewImpl<Enc>;
         using Str = container::string::StringImpl<Enc>;
 
-        constexpr concepts::MaybeFallible<Str> auto operator()(View format, concepts::FormatArgs auto args) const {
+        constexpr Result<Str> operator()(View format, concepts::FormatArgs auto args) const {
             auto context = FormatContext<Enc> {};
-            vpresent_encoded_context<Enc>(format, util::move(args), context);
+            DI_TRY(vpresent_encoded_context<Enc>(format, util::move(args), context));
             return util::move(context).output();
         }
     };

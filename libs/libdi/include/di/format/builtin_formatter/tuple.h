@@ -13,22 +13,26 @@
 namespace di::format {
 template<concepts::Formattable... Types, concepts::Encoding Enc>
 constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<Tuple<Types...>>, FormatParseContext<Enc>&) {
-    return [](concepts::FormatContext auto& context, concepts::DecaySameAs<Tuple<Types...>> auto&& tuple) {
+    auto do_output = [](concepts::FormatContext auto& context, concepts::DecaySameAs<Tuple<Types...>> auto&& tuple) -> Result<void> {
         context.output('(');
         context.output(' ');
         bool first = true;
-        tuple_for_each(
-            [&](auto&& value) {
+        auto results = tuple_transform(
+            [&](auto&& value) -> Result<void> {
                 if (!first) {
                     context.output(',');
                     context.output(' ');
                 }
                 first = false;
-                vpresent_encoded_context<meta::Encoding<decltype(context)>>(u8"{}"_sv, make_constexpr_format_args(value), context);
+                return vpresent_encoded_context<meta::Encoding<decltype(context)>>(u8"{}"_sv, make_constexpr_format_args(value), context);
             },
             util::forward<decltype(tuple)>(tuple));
+        (void) results;
+
         context.output(' ');
         context.output(')');
+        return {};
     };
+    return Result<decltype(do_output)>(util::move(do_output));
 }
 }

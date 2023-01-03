@@ -52,7 +52,9 @@ constexpr void do_assert(bool b, util::SourceLocation loc) {
             auto t = di::format::vpresent_encoded<container::string::Utf8Encoding>(
                 fs, di::format::make_constexpr_format_args(cstring_to_utf8_view(loc.function_name()), cstring_to_utf8_view(loc.file_name()),
                                                            loc.line(), loc.column()));
-            assert_write(reinterpret_cast<char const*>(t.data()), t.size_bytes());
+            if (t) {
+                assert_write(reinterpret_cast<char const*>(t->data()), t->size_bytes());
+            }
 #else
             (void) loc;
 #endif
@@ -77,7 +79,9 @@ constexpr void do_binary_assert(F op, T&& a, U&& b, util::SourceLocation loc) {
                 ": {}: {}:{}:{}"_sv,
                 di::format::make_constexpr_format_args(cstring_to_utf8_view(loc.function_name()), cstring_to_utf8_view(loc.file_name()),
                                                        loc.line(), loc.column()));
-            assert_write(reinterpret_cast<char const*>(t.data()), t.size_bytes());
+            if (t) {
+                assert_write(reinterpret_cast<char const*>(t->data()), t->size_bytes());
+            }
 #else
             (void) loc;
 #endif

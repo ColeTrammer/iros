@@ -7,9 +7,7 @@
 namespace di::concepts {
 template<typename T>
 concept FormatContext = requires { typename meta::Encoding<T>; } && requires(T& context, char ascii_code_point) {
-                                                                        {
-                                                                            context.output(ascii_code_point)
-                                                                            } -> concepts::MaybeFallible<void>;
+                                                                        { context.output(ascii_code_point) } -> SameAs<void>;
                                                                     };
 }
 

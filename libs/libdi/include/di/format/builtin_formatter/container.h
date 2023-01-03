@@ -14,7 +14,7 @@ namespace di::format {
 template<concepts::InputContainer Con, concepts::Encoding Enc>
 requires(!concepts::detail::ConstantString<Con> && concepts::Formattable<meta::ContainerReference<Con>>)
 constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<Con>, FormatParseContext<Enc>&) {
-    return [](concepts::FormatContext auto& context, concepts::RemoveCVRefSameAs<Con> auto&& container) {
+    auto do_output = [](concepts::FormatContext auto& context, concepts::RemoveCVRefSameAs<Con> auto&& container) -> Result<void> {
         context.output('{');
         context.output(' ');
         bool first = true;
@@ -24,10 +24,12 @@ constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<Con>, Form
                 context.output(' ');
             }
             first = false;
-            vpresent_encoded_context<meta::Encoding<decltype(context)>>(u8"{}"_sv, make_constexpr_format_args(value), context);
+            DI_TRY(vpresent_encoded_context<meta::Encoding<decltype(context)>>(u8"{}"_sv, make_constexpr_format_args(value), context));
         }
         context.output(' ');
         context.output('}');
+        return {};
     };
+    return Result<decltype(do_output)>(util::move(do_output));
 }
 }
