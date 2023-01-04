@@ -9,7 +9,7 @@
 #include <di/function/index_dispatch.h>
 #include <di/math/smallest_unsigned_type.h>
 #include <di/meta/add_member_get.h>
-#include <di/meta/list.h>
+#include <di/meta/list/prelude.h>
 #include <di/util/forward.h>
 #include <di/util/get.h>
 #include <di/util/initializer_list.h>

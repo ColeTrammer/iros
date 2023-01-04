@@ -2,7 +2,7 @@
 
 #include <di/function/index_dispatch.h>
 #include <di/function/invoke.h>
-#include <di/meta/list.h>
+#include <di/meta/list/prelude.h>
 #include <di/meta/make_index_sequence.h>
 #include <di/vocab/array/array.h>
 #include <di/vocab/md/prelude.h>

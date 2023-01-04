@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/meta/list.h>
+#include <di/meta/list/prelude.h>
 #include <di/meta/size_constant.h>
 #include <di/vocab/md/extents_forward_declaration.h>
 
