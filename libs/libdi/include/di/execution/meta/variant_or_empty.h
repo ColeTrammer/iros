@@ -9,13 +9,16 @@ namespace detail {
         EmptyVariant() = delete;
     };
 
+    template<typename List>
+    struct VariantOrEmptyHelper;
+
     template<typename... Types>
-    struct VariantOrEmptyHelper : TypeConstant<vocab::Variant<Types...>> {};
+    struct VariantOrEmptyHelper<List<Types...>> : TypeConstant<vocab::Variant<Types...>> {};
 
     template<>
-    struct VariantOrEmptyHelper<> : TypeConstant<EmptyVariant> {};
+    struct VariantOrEmptyHelper<List<>> : TypeConstant<EmptyVariant> {};
 }
 
 template<typename... Types>
-using VariantOrEmpty = detail::VariantOrEmptyHelper<Types...>::Type;
+using VariantOrEmpty = detail::VariantOrEmptyHelper<meta::Unique<meta::List<Types...>>>::Type;
 }

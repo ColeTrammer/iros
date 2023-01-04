@@ -15,6 +15,12 @@ static void meta() {
     static_assert(di::SameAs<di::meta::ErrorTypesOf<decltype(sender3)>, di::Variant<int>>);
     static_assert(!di::SendsStopped<decltype(sender3)>);
     static_assert(di::SendsStopped<decltype(sender4)>);
+
+    static_assert(di::SameAs<di::meta::Unique<di::meta::List<int, short, int, int>>, di::meta::List<int, short>>);
+
+    using A = di::meta::MakeCompletionSignatures<decltype(sender), di::types::NoEnv,
+                                                 di::CompletionSignatures<di::SetValue(i64), di::SetStopped(), di::SetValue(i64)>>;
+    static_assert(di::SameAs<A, di::types::CompletionSignatures<di::SetValue(i64), di::SetStopped(), di::SetValue(int)>>);
 }
 
 TEST_CONSTEXPRX(execution, meta, meta)

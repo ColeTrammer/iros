@@ -3,4 +3,5 @@
 #include <di/execution/meta/completion_signatures_of.h>
 #include <di/execution/meta/env_of.h>
 #include <di/execution/meta/error_types_of.h>
+#include <di/execution/meta/make_completion_signatures.h>
 #include <di/execution/meta/value_types_of.h>

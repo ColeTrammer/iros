@@ -70,6 +70,13 @@ struct List<> {
     template<size_t index>
     requires(index != index)
     using At = void;
+
+    template<size_t index>
+    requires(index != index)
+    using Front = void;
+
+    template<typename U>
+    constexpr static size_t Lookup = 0;
 };
 
 template<concepts::TypeList T>
@@ -90,5 +97,5 @@ concept UniqueType = concepts::TypeList<List> && List::template
 UniqueType<T>;
 
 template<typename List, typename T>
-concept Contains = concepts::TypeList<List> && (Lookup<T, List> <= Size<List>);
+concept Contains = concepts::TypeList<List> && (Lookup<T, List> < Size<List>);
 }

@@ -7,6 +7,7 @@
 #include <di/meta/list/cartesian_product.h>
 #include <di/meta/list/concat.h>
 #include <di/meta/list/defer.h>
+#include <di/meta/list/fold.h>
 #include <di/meta/list/id.h>
 #include <di/meta/list/invoke.h>
 #include <di/meta/list/list.h>
@@ -16,4 +17,5 @@
 #include <di/meta/list/repeat.h>
 #include <di/meta/list/transform.h>
 #include <di/meta/list/type.h>
+#include <di/meta/list/unique.h>
 #include <di/meta/list/zip.h>
