@@ -122,6 +122,10 @@ struct List<> {
 
     template<typename U>
     constexpr static bool UniqueType = false;
+
+    template<size_t index>
+    requires(index != index)
+    using At = void;
 };
 
 template<concepts::TypeList T>

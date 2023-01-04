@@ -32,20 +32,23 @@ namespace detail {
                     return meta::ParserContextResult<Tuple<Types...>, Context>(in_place, util::forward<Types>(values)...);
                 });
 
-            auto process_index = function::ycombinator([&]<size_t index, typename... Types>(auto& self, InPlaceIndex<index>,
-                                                                                            Types&&... values) {
-                if constexpr (index >= sizeof...(Parsers)) {
-                    return make_result(util::forward<Types>(values)...);
-                } else if constexpr (concepts::LanguageVoid<meta::ExpectedValue<decltype(util::get<index>(m_parsers).parse(context))>>) {
-                    return util::get<index>(m_parsers).parse(context).and_then([&] {
-                        return self(in_place_index<index + 1>, util::forward<Types>(values)...);
-                    });
-                } else {
-                    return util::get<index>(m_parsers).parse(context).and_then([&]<typename T>(T&& value) {
-                        return self(in_place_index<index + 1>, util::forward<Types>(values)..., util::forward<T>(value));
-                    });
-                }
-            });
+            auto process_index =
+                function::ycombinator([&]<size_t index, typename... Types>(auto& self, InPlaceIndex<index>, Types&&... values) {
+                    if constexpr (index >= sizeof...(Parsers)) {
+                        return make_result(util::forward<Types>(values)...);
+                    } else {
+                        using Value = meta::ExpectedValue<decltype(util::get<index>(m_parsers).parse(context))>;
+                        if constexpr (concepts::LanguageVoid<Value>) {
+                            return util::get<index>(m_parsers).parse(context).and_then([&] {
+                                return self(in_place_index<index + 1>, util::forward<Types>(values)...);
+                            });
+                        } else {
+                            return util::get<index>(m_parsers).parse(context).and_then([&](Value&& value) {
+                                return self(in_place_index<index + 1>, util::forward<Types>(values)..., util::forward<Value>(value));
+                            });
+                        }
+                    }
+                });
 
             return process_index(in_place_index<0>);
         }

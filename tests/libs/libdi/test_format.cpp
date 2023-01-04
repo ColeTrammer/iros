@@ -23,6 +23,16 @@ constexpr void basic() {
 
     auto b = di::present("{0:} {0:} {0:} {1:}"_sv, 1, 2);
     ASSERT_EQ(b, "1 1 1 2"_sv);
+
+    auto c = di::present("{:.1}"_sv, "xxx"_sv);
+    ASSERT_EQ(c, "x"_sv);
+
+    ASSERT_EQ(di::present("{:*>10s}"_sv, "HELLO"_sv), "HELLO*****"_sv);
+    ASSERT_EQ(di::present("{:*^10s}"_sv, "HELLO"_sv), "**HELLO***"_sv);
+    ASSERT_EQ(di::present("{:*<10s}"_sv, "HELLO"_sv), "*****HELLO"_sv);
+
+    ASSERT_EQ(di::present("{:5c}"_sv, U'a'), "    a"_sv);
+    ASSERT_EQ(di::present("{}"_sv, false), "false"_sv);
 }
 
 TEST_CONSTEXPR(format, basic, basic)

@@ -8,6 +8,7 @@
 
 namespace di::format {
 template<concepts::Integer T, concepts::Encoding Enc>
+requires(!concepts::OneOf<T, char, c32>)
 constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<T>, FormatParseContext<Enc>&) {
     auto do_output = [](concepts::FormatContext auto& context, T value) -> Result<void> {
         if (value == 0) {

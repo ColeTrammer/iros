@@ -89,14 +89,18 @@ constexpr void do_binary_assert(F op, T&& a, U&& b, util::SourceLocation loc) {
 
 #ifndef DI_NO_ASSERT_ALLOCATION
             if constexpr (concepts::Formattable<T> && concepts::Formattable<U>) {
-                auto s = di::format::to_string(a);
-                auto t = di::format::to_string(b);
+                auto s = di::format::vpresent_encoded<container::string::Utf8Encoding>("{}"_sv, di::format::make_constexpr_format_args(a));
+                auto t = di::format::vpresent_encoded<container::string::Utf8Encoding>("{}"_sv, di::format::make_constexpr_format_args(b));
                 char lhs_text[] = "\033[1mLHS\033[0m: ";
                 char rhs_text[] = "\n\033[1mRHS\033[0m: ";
                 assert_write(lhs_text, sizeof(lhs_text) - 1);
-                assert_write(reinterpret_cast<char const*>(s.data()), s.size_bytes());
+                if (s) {
+                    assert_write(reinterpret_cast<char const*>(s->data()), s->size_bytes());
+                }
                 assert_write(rhs_text, sizeof(rhs_text) - 1);
-                assert_write(reinterpret_cast<char const*>(t.data()), t.size_bytes());
+                if (t) {
+                    assert_write(reinterpret_cast<char const*>(t->data()), t->size_bytes());
+                }
                 assert_write(&new_line, 1);
             }
 #endif

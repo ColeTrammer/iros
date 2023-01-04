@@ -163,7 +163,10 @@ public:
         }
 
         constexpr void set_value(View view) { m_parent->m_current_value.emplace(in_place_index<0>, view); }
-        constexpr void set_value(Argument argument) { m_parent->m_current_value.emplace(in_place_index<1>, argument); }
+        constexpr void set_value(Argument argument) {
+            m_parent->m_current_format_string = argument.format_string;
+            m_parent->m_current_value.emplace(in_place_index<1>, argument);
+        }
         constexpr void set_value(Error error) { m_parent->m_current_value = Unexpected(util::move(error)); }
 
         View m_data {};
@@ -175,10 +178,8 @@ public:
     constexpr auto begin() { return Iterator(m_view, *this); }
     constexpr auto end() const { return container::default_sentinel; }
 
-    constexpr View current_format_string() const {
-        DI_ASSERT(m_current_value.has_value() && m_current_value.value().index() == 1);
-        return util::get<Argument>(*m_current_value).format_string;
-    }
+    constexpr void set_current_format_string(View view) { m_current_format_string = view; }
+    constexpr View current_format_string() const { return m_current_format_string; }
 
     constexpr Result<size_t> next_arg_index() {
         if (m_indexing_mode == IndexingMode::Manual) {
@@ -209,6 +210,7 @@ private:
     View m_view;
     IndexingMode m_indexing_mode { IndexingMode::Unknown };
     Value m_current_value;
+    View m_current_format_string;
     size_t m_next_arg_index { 0 };
     size_t m_arg_count { 0 };
 };

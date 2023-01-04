@@ -17,6 +17,8 @@ public:
 
     constexpr Str output() && { return util::move(m_output); }
 
+    constexpr Encoding encoding() const { return m_output.encoding(); }
+
 private:
     Str m_output;
 };

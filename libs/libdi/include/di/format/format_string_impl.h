@@ -22,6 +22,14 @@ namespace detail {
                 } else if (part->index() == 0) {
                     continue;
                 }
+
+                auto arg_index = util::get<1>(*part).index;
+                function::index_dispatch<void, sizeof...(Args)>(arg_index, [&]<size_t index>(InPlaceIndex<index>) {
+                    auto formatter = format::formatter<meta::At<meta::List<Args...>, index>>(parse_context);
+                    if (!formatter) {
+                        util::compile_time_fail<FixedString { "Invalid format string argument format." }>();
+                    }
+                });
             }
         }
 

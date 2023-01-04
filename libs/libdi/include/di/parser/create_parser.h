@@ -7,9 +7,20 @@ namespace di::parser {
 namespace detail {
     struct CreateParserInPlaceFunction {
         template<typename T, concepts::ParserContext Context>
-        requires(concepts::TagInvocable<CreateParserInPlaceFunction, InPlaceType<T>, Context&>)
+        requires(concepts::TagInvocable<CreateParserInPlaceFunction, InPlaceType<T>, Context&> ||
+                 concepts::TagInvocable<CreateParserInPlaceFunction, InPlaceType<T>>)
         constexpr concepts::Parser<Context> auto operator()(InPlaceType<T>, Context& context) const {
-            return function::tag_invoke(*this, in_place_type<T>, context);
+            if constexpr (concepts::TagInvocable<CreateParserInPlaceFunction, InPlaceType<T>, Context&>) {
+                return function::tag_invoke(*this, in_place_type<T>, context);
+            } else {
+                return (*this)(in_place_type<T>);
+            }
+        }
+
+        template<typename T>
+        requires(concepts::TagInvocable<CreateParserInPlaceFunction, InPlaceType<T>>)
+        constexpr auto operator()(InPlaceType<T>) const {
+            return function::tag_invoke(*this, in_place_type<T>);
         }
     };
 }
@@ -30,6 +41,12 @@ namespace detail {
         requires(concepts::Parsable<T, Context>)
         constexpr auto operator()(Context& context) const {
             return create_parser_in_place(in_place_type<T>, context);
+        }
+
+        constexpr auto operator()() const
+        requires(requires { create_parser_in_place(in_place_type<T>); })
+        {
+            return create_parser_in_place(in_place_type<T>);
         }
     };
 }

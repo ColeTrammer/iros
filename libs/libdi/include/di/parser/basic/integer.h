@@ -74,7 +74,7 @@ constexpr inline auto integer = detail::IntegerFunction<T> {};
 
 namespace detail {
     template<concepts::Integer T>
-    constexpr auto tag_invoke(types::Tag<create_parser_in_place>, InPlaceType<T>, concepts::ParserContext auto&) {
+    constexpr auto tag_invoke(types::Tag<create_parser_in_place>, InPlaceType<T>) {
         return integer<T>();
     }
 }

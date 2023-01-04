@@ -15,7 +15,7 @@ public:
     constexpr explicit StringViewParserContext(View view)
         : m_code_points(view.unicode_code_points()), m_iterator(container::begin(m_code_points)), m_encoding(view.encoding()) {}
 
-    using Error = StatusCode<vocab::GenericDomain>;
+    using Error = vocab::Error;
     using Encoding = Enc;
 
     constexpr auto begin() const { return m_iterator; }

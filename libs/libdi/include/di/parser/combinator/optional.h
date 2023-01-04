@@ -19,7 +19,11 @@ namespace detail {
         template<concepts::ParserContext Context, typename Value = meta::ParserValue<Context, Parser>>
         requires(concepts::Parser<Parser, Context>)
         constexpr auto parse(Context& context) const -> meta::ParserContextResult<Optional<Value>, Context> {
-            return m_parser.parse(context).optional_value();
+            auto begin_save = container::begin(context);
+            return (m_parser.parse(context) | if_error([&](auto&&) {
+                        context.advance(begin_save);
+                    }))
+                .optional_value();
         }
 
     private:

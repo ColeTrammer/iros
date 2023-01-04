@@ -24,6 +24,8 @@ public:
         }
     }
 
+    constexpr auto encoding() const { return m_encoding; }
+
 private:
     Writer& m_writer;
     [[no_unique_address]] Enc m_encoding;
