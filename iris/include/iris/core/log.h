@@ -12,6 +12,8 @@ namespace detail {
         using Encoding = iris::Encoding;
 
         void output(c32 value) { log_output_character(value); }
+
+        auto encoding() const { return Encoding {}; }
     };
 }
 
