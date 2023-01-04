@@ -1,17 +1,13 @@
 #pragma once
 
+#include <di/meta/list/bind_back.h>
 #include <di/meta/list/list.h>
 #include <di/meta/list/push_front.h>
+#include <di/meta/list/quote.h>
 #include <di/meta/list/transform.h>
 
 namespace di::meta {
 namespace detail {
-    template<typename T>
-    struct DoPushFront {
-        template<concepts::TypeList List>
-        using Invoke = PushFront<List, T>;
-    };
-
     template<typename... Types>
     struct CartesianProductHelper {};
 
@@ -23,7 +19,7 @@ namespace detail {
 
     template<typename... Ts, typename... Rest>
     struct CartesianProductHelper<List<Ts...>, Rest...>
-        : TypeConstant<Concat<Transform<typename CartesianProductHelper<Rest...>::Type, DoPushFront<Ts>>...>> {};
+        : TypeConstant<Concat<Transform<typename CartesianProductHelper<Rest...>::Type, BindBack<Quote<PushFront>, Ts>>...>> {};
 }
 
 template<concepts::TypeList... Types>

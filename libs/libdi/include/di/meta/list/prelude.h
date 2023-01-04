@@ -2,9 +2,12 @@
 
 #include <di/meta/list/as_list.h>
 #include <di/meta/list/as_tuple.h>
+#include <di/meta/list/bind_back.h>
+#include <di/meta/list/bind_front.h>
 #include <di/meta/list/cartesian_product.h>
 #include <di/meta/list/concat.h>
 #include <di/meta/list/defer.h>
+#include <di/meta/list/id.h>
 #include <di/meta/list/invoke.h>
 #include <di/meta/list/list.h>
 #include <di/meta/list/push_back.h>

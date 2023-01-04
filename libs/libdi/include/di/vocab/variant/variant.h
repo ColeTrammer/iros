@@ -15,6 +15,7 @@
 #include <di/util/initializer_list.h>
 #include <di/util/move.h>
 #include <di/vocab/variant/variant_alternative.h>
+#include <di/vocab/variant/variant_forward_declaration.h>
 #include <di/vocab/variant/variant_impl.h>
 #include <di/vocab/variant/variant_index.h>
 #include <di/vocab/variant/variant_size.h>
