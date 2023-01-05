@@ -9,12 +9,9 @@ namespace detail {
     struct GetEnvFunction {
         template<typename T>
         requires(concepts::TagInvocable<GetEnvFunction, T const&>)
-        constexpr /* concepts::NotSameAs<types::NoEnv> */ auto operator()(T const& value) const {
+        constexpr concepts::NotSameAs<types::NoEnv> auto operator()(T const& value) const {
             return function::tag_invoke(*this, value);
         }
-
-        // FIXME: is this really necessary?
-        constexpr types::NoEnv operator()(auto const&) const { return {}; }
     };
 }
 

@@ -12,8 +12,8 @@ namespace lazy_ns {
     template<typename T = void>
     class Lazy;
 
-    template<typename T>
-    class PromiseBase : public WithAwaitableSenders<PromiseBase<T>> {
+    template<typename Self, typename T>
+    class PromiseBase : public WithAwaitableSenders<Self> {
     public:
         PromiseBase() = default;
 
@@ -61,8 +61,8 @@ namespace lazy_ns {
         Optional<T> m_data;
     };
 
-    template<>
-    class PromiseBase<void> : public WithAwaitableSenders<PromiseBase<void>> {
+    template<typename Self>
+    class PromiseBase<Self, void> : public WithAwaitableSenders<Self> {
     public:
         PromiseBase() = default;
 
@@ -108,12 +108,17 @@ namespace lazy_ns {
     template<typename T>
     class [[nodiscard]] Lazy {
     private:
-        using PromiseBase = lazy_ns::PromiseBase<T>;
+        struct Promise;
+
+        using PromiseBase = lazy_ns::PromiseBase<Promise, T>;
 
         struct Promise : PromiseBase {
-            using PromiseBase::await_transform;
-
             Lazy get_return_object() noexcept { return Lazy { CoroutineHandle<Promise>::from_promise(*this) }; }
+
+        private:
+            struct Env {};
+
+            constexpr friend auto tag_invoke(types::Tag<get_env>, Promise const&) { return Env {}; }
         };
 
         using Handle = CoroutineHandle<Promise>;
