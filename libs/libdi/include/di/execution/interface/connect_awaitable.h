@@ -9,6 +9,10 @@
 #include <di/util/unreachable.h>
 
 namespace di::execution {
+namespace as_awaitable_ns {
+    struct Function;
+}
+
 namespace connect_awaitable_ns {
     template<typename Receiver>
     struct OperationState : util::Immovable {
@@ -31,6 +35,28 @@ namespace connect_awaitable_ns {
                 };
 
                 return Awaiter { util::forward<Fn>(function) };
+            }
+
+            CoroutineHandle<> unhandled_error(Error error) {
+                set_error(util::move(receiver), util::move(error));
+                return noop_coroutine();
+            }
+
+            CoroutineHandle<> unhandled_stopped() {
+                set_stopped(util::move(receiver));
+                return noop_coroutine();
+            }
+
+            template<typename Awaitable>
+            decltype(auto) await_transform(Awaitable&& awaitable) {
+                return util::forward<Awaitable>(awaitable);
+            }
+
+            template<typename Awaitable, typename Tag = as_awaitable_ns::Function>
+            decltype(auto) await_transform(Awaitable&& awaitable)
+            requires(concepts::TagInvocable<Tag, Awaitable, Promise&>)
+            {
+                return function::tag_invoke(Tag {}, util::forward<Awaitable>(awaitable), *this);
             }
 
             SuspendAlways initial_suspend() noexcept { return {}; }

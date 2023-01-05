@@ -29,19 +29,19 @@ namespace sync_wait_ns {
 
     private:
         template<typename... Values>
-        friend auto tag_invoke(types::Tag<set_value>, Receiver const& self, Values&&... values)
+        friend auto tag_invoke(types::Tag<set_value>, Receiver&& self, Values&&... values)
         requires(requires { self.m_result->emplace(util::forward<Values>(values)...); })
         {
             self.m_result->emplace(util::forward<Values>(values)...);
             self.m_run_loop->finish();
         }
 
-        friend auto tag_invoke(types::Tag<set_error>, Receiver const& self, Error error) {
+        friend auto tag_invoke(types::Tag<set_error>, Receiver&& self, Error error) {
             // FIXME: handle other error types than the generic type-erased error.
             *self.m_result = Unexpected(util::move(error));
             self.m_run_loop->finish();
         }
-        friend auto tag_invoke(types::Tag<set_stopped>, Receiver const& self) {
+        friend auto tag_invoke(types::Tag<set_stopped>, Receiver&& self) {
             *self.m_result = Unexpected(BasicError::Cancelled);
             self.m_run_loop->finish();
         }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/execution/coroutine/with_awaitable_senders.h>
 #include <di/util/coroutine.h>
 #include <di/util/exchange.h>
 #include <di/util/unreachable.h>
@@ -12,14 +13,14 @@ namespace lazy_ns {
     class Lazy;
 
     template<typename T>
-    class PromiseBase {
+    class PromiseBase : public WithAwaitableSenders<PromiseBase<T>> {
     public:
         PromiseBase() = default;
 
         SuspendAlways initial_suspend() noexcept { return {}; }
         auto final_suspend() noexcept { return FinalAwaiter {}; }
 
-        void return_value(T&& value) { m_data.template emplace<1>(util::forward<T>(value)); }
+        void return_value(T&& value) { m_data.emplace(util::forward<T>(value)); }
 
         void unhandled_exception() { util::unreachable(); }
 
@@ -33,7 +34,7 @@ namespace lazy_ns {
             template<typename Promise>
             CoroutineHandle<> await_suspend(CoroutineHandle<Promise> coroutine) noexcept {
                 PromiseBase& current = coroutine.promise();
-                return current.m_continuation ? current.m_continuation : noop_coroutine();
+                return current.continuation() ? current.continuation() : noop_coroutine();
             }
 
             void await_resume() noexcept {}
@@ -44,24 +45,24 @@ namespace lazy_ns {
 
             bool await_ready() noexcept { return !coroutine; }
 
-            CoroutineHandle<PromiseBase> await_suspend(CoroutineHandle<> continuation) noexcept {
-                coroutine.promise().m_continuation = continuation;
+            template<typename OtherPromise>
+            CoroutineHandle<PromiseBase> await_suspend(CoroutineHandle<OtherPromise> continuation) noexcept {
+                coroutine.promise().set_continuation(continuation);
                 return coroutine;
             }
 
             T await_resume() {
                 auto& promise = static_cast<PromiseBase&>(coroutine.promise());
-                DI_ASSERT(promise.m_data.index() == 1);
-                return util::get<1>(util::move(promise.m_data));
+                DI_ASSERT(promise.m_data);
+                return *util::move(promise.m_data);
             }
         };
 
-        Variant<Void, T, Error> m_data;
-        CoroutineHandle<> m_continuation;
+        Optional<T> m_data;
     };
 
     template<>
-    class PromiseBase<void> {
+    class PromiseBase<void> : public WithAwaitableSenders<PromiseBase<void>> {
     public:
         PromiseBase() = default;
 
@@ -81,7 +82,7 @@ namespace lazy_ns {
             template<typename Promise>
             CoroutineHandle<> await_suspend(CoroutineHandle<Promise> coroutine) noexcept {
                 PromiseBase& current = coroutine.promise();
-                return current.m_continuation ? current.m_continuation : noop_coroutine();
+                return current.continuation() ? current.continuation() : noop_coroutine();
             }
 
             void await_resume() noexcept {}
@@ -92,8 +93,9 @@ namespace lazy_ns {
 
             bool await_ready() noexcept { return !coroutine; }
 
-            CoroutineHandle<PromiseBase> await_suspend(CoroutineHandle<> continuation) noexcept {
-                coroutine.promise().m_continuation = continuation;
+            template<typename OtherPromise>
+            CoroutineHandle<PromiseBase> await_suspend(CoroutineHandle<OtherPromise> continuation) noexcept {
+                coroutine.promise().set_continuation(continuation);
                 return coroutine;
             }
 
@@ -109,6 +111,8 @@ namespace lazy_ns {
         using PromiseBase = lazy_ns::PromiseBase<T>;
 
         struct Promise : PromiseBase {
+            using PromiseBase::await_transform;
+
             Lazy get_return_object() noexcept { return Lazy { CoroutineHandle<Promise>::from_promise(*this) }; }
         };
 

@@ -4,10 +4,10 @@
 
 namespace di::execution {
 struct SetStopped {
-    template<typename Receiver, typename Arg>
+    template<typename Receiver>
     requires(concepts::TagInvocable<SetStopped, Receiver>)
     constexpr void operator()(Receiver&& receiver) const {
-        return function::tag_invoke(util::forward<Receiver>(receiver));
+        return function::tag_invoke(*this, util::forward<Receiver>(receiver));
     }
 };
 

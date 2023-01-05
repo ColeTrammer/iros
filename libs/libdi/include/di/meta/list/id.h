@@ -8,5 +8,7 @@ template<typename T>
 struct Id {
     template<typename...>
     using Invoke = T;
+
+    using Type = T;
 };
 }
