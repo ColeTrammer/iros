@@ -7,7 +7,7 @@ struct SetError {
     template<typename Receiver, typename Arg>
     requires(concepts::TagInvocable<SetError, Receiver, Arg>)
     constexpr void operator()(Receiver&& receiver, Arg&& arg) const {
-        return function::tag_invoke(util::forward<Receiver>(receiver), util::forward<Arg>(arg));
+        return function::tag_invoke(*this, util::forward<Receiver>(receiver), util::forward<Arg>(arg));
     }
 };
 

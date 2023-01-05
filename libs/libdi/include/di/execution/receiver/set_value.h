@@ -7,7 +7,7 @@ struct SetValue {
     template<typename Receiver, typename... Args>
     requires(concepts::TagInvocable<SetValue, Receiver, Args...>)
     constexpr void operator()(Receiver&& receiver, Args&&... args) const {
-        return function::tag_invoke(util::forward<Receiver>(receiver), util::forward<Args>(args)...);
+        return function::tag_invoke(*this, util::forward<Receiver>(receiver), util::forward<Args>(args)...);
     }
 };
 

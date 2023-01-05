@@ -21,6 +21,22 @@ static void meta() {
     using A = di::meta::MakeCompletionSignatures<decltype(sender), di::types::NoEnv,
                                                  di::CompletionSignatures<di::SetValue(i64), di::SetStopped(), di::SetValue(i64)>>;
     static_assert(di::SameAs<A, di::types::CompletionSignatures<di::SetValue(i64), di::SetStopped(), di::SetValue(int)>>);
+
+    static_assert(di::SameAs<di::meta::AsList<di::Tuple<>>, di::meta::List<>>);
+
+    using S = decltype(di::declval<di::RunLoop<>>().get_scheduler());
+    using SS = decltype(di::execution::schedule(di::declval<S const&>()));
+    static_assert(di::Sender<SS>);
+    static_assert(di::TagInvocable<di::Tag<di::execution::get_completion_scheduler<di::SetValue>>, SS const&>);
+    static_assert(di::SameAs<S, decltype(di::execution::get_completion_scheduler<di::SetValue>(di::declval<SS const&>()))>);
+    static_assert(di::Scheduler<S>);
+}
+
+static void sync_wait() {
+    namespace ex = di::execution;
+
+    ASSERT_EQ(ex::sync_wait(ex::just(42)), 42);
 }
 
 TEST_CONSTEXPRX(execution, meta, meta)
+TEST_CONSTEXPRX(execution, sync_wait, sync_wait)

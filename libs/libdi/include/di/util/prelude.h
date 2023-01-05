@@ -12,6 +12,7 @@
 #include <di/util/exchange.h>
 #include <di/util/forward.h>
 #include <di/util/get.h>
+#include <di/util/immovable.h>
 #include <di/util/initializer_list.h>
 #include <di/util/is_constant_evaluated.h>
 #include <di/util/maybe_clone.h>
@@ -38,6 +39,7 @@ using util::ReferenceWrapper;
 using util::InitializerList;
 
 using util::Badge;
+using util::Immovable;
 using util::ScopeExit;
 
 using util::SourceLocation;

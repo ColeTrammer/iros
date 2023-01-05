@@ -13,6 +13,7 @@ inline namespace generic_error {
         FailedAllocation,
         OutOfRange,
         Invalid,
+        Cancelled,
     };
 
     template<typename = void>
