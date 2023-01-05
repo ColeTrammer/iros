@@ -36,6 +36,8 @@ static void sync_wait() {
     namespace ex = di::execution;
 
     ASSERT_EQ(ex::sync_wait(ex::just(42)), 42);
+
+    ASSERT(ex::sync_wait(ex::get_scheduler()));
 }
 
 TEST_CONSTEXPRX(execution, meta, meta)
