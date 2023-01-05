@@ -217,7 +217,7 @@ private:
         function::index_dispatch<void, meta::Size<List>>(
             this->index(),
             []<size_t index>(InPlaceIndex<index>, Impl& impl) {
-                impl.destroy(in_place_index<index>);
+                impl.destroy_impl(in_place_index<index>);
             },
             m_impl);
     }

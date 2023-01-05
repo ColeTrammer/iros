@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/concepts/disjunction.h>
 #include <di/concepts/remove_cvref_same_as.h>
 #include <di/meta/like.h>
 #include <di/types/prelude.h>
@@ -20,6 +21,12 @@ public:
 
     constexpr VariantImpl& operator=(VariantImpl const&) = default;
     constexpr VariantImpl& operator=(VariantImpl&&) = default;
+
+    ~VariantImpl() = default;
+
+    constexpr ~VariantImpl()
+    requires(concepts::Disjunction<!concepts::TriviallyDestructible<T>, !concepts::TriviallyDestructible<Rest>...>)
+    {}
 
     template<concepts::RemoveCVRefSameAs<VariantImpl> Self>
     constexpr static meta::Like<Self, T>&& static_get(InPlaceIndex<0>, Self&& self) {
@@ -79,6 +86,12 @@ public:
 
     constexpr VariantImpl& operator=(VariantImpl const&) = default;
     constexpr VariantImpl& operator=(VariantImpl&&) = default;
+
+    ~VariantImpl() = default;
+
+    constexpr ~VariantImpl()
+    requires(!concepts::TriviallyDestructible<T>)
+    {}
 
     template<concepts::RemoveCVRefSameAs<VariantImpl> Self>
     constexpr static meta::Like<Self, T>&& static_get(InPlaceIndex<0>, Self&& self) {

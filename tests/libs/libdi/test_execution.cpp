@@ -30,6 +30,22 @@ static void meta() {
     static_assert(di::TagInvocable<di::Tag<di::execution::get_completion_scheduler<di::SetValue>>, SS const&>);
     static_assert(di::SameAs<S, decltype(di::execution::get_completion_scheduler<di::SetValue>(di::declval<SS const&>()))>);
     static_assert(di::Scheduler<S>);
+
+    static_assert(di::concepts::Awaitable<di::Lazy<i32>>);
+    static_assert(di::SameAs<di::CompletionSignatures<di::SetValue(i32), di::SetError(di::Error), di::SetStopped()>,
+                             decltype(di::execution::get_completion_signatures(di::declval<di::Lazy<i32>>()))>);
+
+    static_assert(di::SameAs<di::CompletionSignatures<di::SetValue(i32), di::SetError(di::Error), di::SetStopped()>,
+                             di::meta::Type<di::execution::connect_awaitable_ns::CompletionSignatures<di::Lazy<i32>, i32>>>);
+
+    static_assert(di::SameAs<di::CompletionSignatures<di::SetValue(), di::SetError(di::Error), di::SetStopped()>,
+                             di::meta::Type<di::execution::connect_awaitable_ns::CompletionSignatures<di::Lazy<>, i32>>>);
+
+    using R = di::execution::sync_wait_ns::Receiver<di::Lazy<i32>>;
+
+    static_assert(di::concepts::Receiver<R>);
+    static_assert(di::concepts::ReceiverOf<R, di::CompletionSignatures<di::SetValue(i32), di::SetError(di::Error), di::SetStopped()>>);
+    static_assert(di::concepts::ReceiverOf<R, di::CompletionSignatures<di::SetValue(), di::SetError(di::Error), di::SetStopped()>>);
 }
 
 static void sync_wait() {
@@ -41,5 +57,20 @@ static void sync_wait() {
     ASSERT(ex::sync_wait(ex::get_stop_token()));
 }
 
+static void lazy() {
+    constexpr static auto t2 = [] -> di::Lazy<> {
+        co_return;
+    };
+
+    constexpr static auto task = [] -> di::Lazy<i32> {
+        co_await t2();
+        co_return 42;
+    };
+
+    ASSERT(di::sync_wait(t2()));
+    ASSERT_EQ(di::sync_wait(task()), 42);
+}
+
 TEST_CONSTEXPRX(execution, meta, meta)
 TEST_CONSTEXPRX(execution, sync_wait, sync_wait)
+TEST_CONSTEXPRX(execution, lazy, lazy)

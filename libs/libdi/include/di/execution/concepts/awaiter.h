@@ -28,6 +28,6 @@ template<typename T, typename Promise = void>
 concept Awaiter = requires(T& awaiter) {
                       { awaiter.await_ready() } -> BooleanTestable;
                       { detail::do_await_suspend<Promise>(awaiter) } -> detail::ValidAwaitSuspendResult;
-                      { awaiter.await_resume() } -> LanguageVoid;
+                      awaiter.await_resume();
                   };
 }
