@@ -1,10 +1,13 @@
 #pragma once
 
 #include <di/concepts/instance_of.h>
+#include <di/execution/concepts/awaitable.h>
+#include <di/execution/meta/await_result.h>
 #include <di/execution/types/completion_signuatures.h>
 #include <di/execution/types/dependent_completion_signatures.h>
 #include <di/execution/types/no_env.h>
 #include <di/function/tag_invoke.h>
+#include <di/vocab/error/prelude.h>
 
 namespace di::execution {
 namespace detail {
@@ -30,8 +33,13 @@ namespace detail {
                                   concepts::SameAs<Result, types::DependentCompletionSignatures<Env>>,
                               "A sender's CompletionSignatures typedef must be an instance of di::CompletionSignatures.");
                 return Result {};
+            } else if constexpr (concepts::Awaitable<Sender>) {
+                if constexpr (concepts::LanguageVoid<meta::AwaitResult<Sender>>) {
+                    return types::CompletionSignatures<SetValue(), SetError(Error), SetStopped()> {};
+                } else {
+                    return types::CompletionSignatures<SetValue(meta::AwaitResult<Sender>), SetError(Error), SetStopped()> {};
+                }
             } else {
-                // TODO: also handle completion signatures for awaitables.
                 return NoCompletionSignatures {};
             }
         }

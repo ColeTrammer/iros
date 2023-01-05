@@ -23,6 +23,7 @@
 #include <di/util/swap.h>
 #include <di/util/to_underlying.h>
 #include <di/util/unreachable.h>
+#include <di/util/voidify.h>
 
 namespace di {
 using util::bit_cast;
@@ -55,4 +56,5 @@ using util::move;
 using util::swap;
 using util::to_underlying;
 using util::unreachable;
+using util::voidify;
 }

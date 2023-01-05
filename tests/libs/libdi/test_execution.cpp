@@ -38,6 +38,7 @@ static void sync_wait() {
     ASSERT_EQ(ex::sync_wait(ex::just(42)), 42);
 
     ASSERT(ex::sync_wait(ex::get_scheduler()));
+    ASSERT(ex::sync_wait(ex::get_stop_token()));
 }
 
 TEST_CONSTEXPRX(execution, meta, meta)

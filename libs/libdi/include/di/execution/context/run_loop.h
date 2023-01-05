@@ -24,8 +24,11 @@ private:
         OperationState(RunLoop* parent, Receiver&& receiver) : RunLoop { parent, nullptr }, m_receiver(util::move(receiver)) {}
 
         virtual void execute() override {
-            // FIXME: check for cancellation with get_stop_token().stop_requested().
-            set_value(util::move(m_receiver));
+            if (get_stop_token(m_receiver).stop_requested()) {
+                set_stopped(util::move(m_receiver));
+            } else {
+                set_value(util::move(m_receiver));
+            }
         }
 
     private:

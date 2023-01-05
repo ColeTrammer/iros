@@ -9,6 +9,7 @@
 #include <di/execution/query/get_delegatee_scheduler.h>
 #include <di/execution/query/get_env.h>
 #include <di/execution/query/get_scheduler.h>
+#include <di/execution/query/get_stop_token.h>
 #include <di/function/invoke.h>
 
 namespace di::execution {
@@ -57,6 +58,10 @@ namespace detail {
 
     constexpr auto GetDelegateeSchedulerFunction::operator()() const {
         return read(get_delegatee_scheduler);
+    }
+
+    constexpr auto GetStopTokenFunction::operator()() const {
+        return read(get_stop_token);
     }
 }
 }

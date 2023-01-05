@@ -1,5 +1,7 @@
 #pragma once
 
+#include <di/execution/concepts/awaitable.h>
+#include <di/execution/concepts/awaiter.h>
 #include <di/execution/concepts/completion_signature.h>
 #include <di/execution/concepts/receiver.h>
 #include <di/execution/concepts/receiver_of.h>
