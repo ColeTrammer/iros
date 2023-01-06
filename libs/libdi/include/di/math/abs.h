@@ -4,9 +4,9 @@
 #include <di/concepts/signed_integer.h>
 
 namespace di::math {
-template<concepts::Integer T>
+template<concepts::Integral T>
 constexpr T abs(T value) {
-    if constexpr (concepts::SignedInteger<T>) {
+    if constexpr (concepts::SignedIntegral<T>) {
         if (value < 0) {
             return -value;
         }

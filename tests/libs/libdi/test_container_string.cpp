@@ -26,6 +26,11 @@ constexpr void push_back() {
 
     x.append(u8"def"_sv);
     ASSERT_EQ(x, u8"abcdef"_sv);
+
+    auto y = di::container::string::StringImpl<di::container::string::Utf8Encoding, di::StaticVector<c8, di::meta::SizeConstant<64>>> {};
+    (void) y.push_back(U'a');
+
+    ASSERT_EQ(y, "a"_sv);
 }
 
 constexpr void to() {

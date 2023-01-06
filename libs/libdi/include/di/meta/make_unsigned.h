@@ -22,6 +22,9 @@ namespace detail {
     struct MakeUnsignedHelper<char> : TypeConstant<unsigned char> {};
 
     template<>
+    struct MakeUnsignedHelper<signed char> : TypeConstant<unsigned char> {};
+
+    template<>
     struct MakeUnsignedHelper<short> : TypeConstant<unsigned short> {};
 
     template<>

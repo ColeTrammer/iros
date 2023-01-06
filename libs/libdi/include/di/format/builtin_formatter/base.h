@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/format/vpresent_encoded_context.h>
+#include <di/math/abs.h>
 #include <di/math/divide_round_up.h>
 #include <di/parser/prelude.h>
 
@@ -273,7 +274,7 @@ namespace detail {
 
     private:
         constexpr friend auto tag_invoke(types::Tag<create_parser_in_place>, InPlaceType<PointerFormat>) {
-            return (-create_parser<FillAndAlign>() >> create_parser<Width>() >> create_parser<PointerType>()) %
+            return (-create_parser<FillAndAlign>() >> -create_parser<Width>() >> create_parser<PointerType>()) %
                    make_from_tuple<PointerFormat>;
         }
     };
@@ -324,11 +325,11 @@ namespace detail {
         auto [left_pad, right_pad] = [&]() -> Tuple<size_t, size_t> {
             switch (align) {
                 case FillAndAlign::Align::Left:
-                    return { chars_to_pad, 0 };
+                    return { 0, chars_to_pad };
                 case FillAndAlign::Align::Center:
                     return { chars_to_pad / 2, math::divide_round_up(chars_to_pad, 2u) };
                 case FillAndAlign::Align::Right:
-                    return { 0, chars_to_pad };
+                    return { chars_to_pad, 0 };
                 default:
                     util::unreachable();
             }
@@ -360,10 +361,126 @@ namespace detail {
             return present_character_to<Enc>(context, fill_and_align, width, debug, static_cast<c32>(value));
         }
 
-        (void) sign;
-        (void) hash_tag;
-        (void) zero;
-        return {};
+        using CodePoint = meta::EncodingCodePoint<Enc>;
+
+        // The maximum number of digits a number can have is 64 (u64::max() printed in binary).
+        // Add 3 extra characters to account for a prefix, like -0x.
+        auto buffer = container::string::StringImpl<Enc, container::StaticVector<meta::EncodingCodeUnit<Enc>, meta::SizeConstant<67>>> {};
+
+        using UnsignedType = meta::MakeUnsigned<T>;
+        auto as_unsigned = math::to_unsigned(math::abs(value));
+
+        auto const negative = [&] {
+            if constexpr (concepts::Signed<T>) {
+                return value < 0;
+            }
+            return false;
+        }();
+
+        auto do_sign = [&] {
+            switch (sign) {
+                case Sign::Minus:
+                    if (negative) {
+                        (void) buffer.push_back(CodePoint('-'));
+                    }
+                    break;
+                case Sign::Plus:
+                    if (negative) {
+                        (void) buffer.push_back(CodePoint('-'));
+                    } else {
+                        (void) buffer.push_back(CodePoint('+'));
+                    }
+                    break;
+                case Sign::Space:
+                    if (negative) {
+                        (void) buffer.push_back(CodePoint('-'));
+                    } else {
+                        (void) buffer.push_back(CodePoint(' '));
+                    }
+                    break;
+            }
+        };
+
+        auto do_prefix = [&] {
+            if (hash_tag == HashTag::No) {
+                return;
+            }
+            switch (type) {
+                case IntegerType::BinaryLower:
+                    (void) buffer.push_back(CodePoint('0'));
+                    (void) buffer.push_back(CodePoint('b'));
+                    break;
+                case IntegerType::BinaryUpper:
+                    (void) buffer.push_back(CodePoint('0'));
+                    (void) buffer.push_back(CodePoint('B'));
+                    break;
+                case IntegerType::Octal:
+                    (void) buffer.push_back(CodePoint('0'));
+                    break;
+                case IntegerType::HexLower:
+                    (void) buffer.push_back(CodePoint('0'));
+                    (void) buffer.push_back(CodePoint('x'));
+                    break;
+                case IntegerType::HexUpper:
+                    (void) buffer.push_back(CodePoint('0'));
+                    (void) buffer.push_back(CodePoint('X'));
+                    break;
+                default:
+                    break;
+            }
+        };
+
+        bool zero_pad = zero == Zero::Yes && !fill_and_align;
+
+        do_sign();
+        do_prefix();
+
+        if (zero_pad) {
+            for (auto ch : buffer) {
+                context.output(ch);
+            }
+            auto code_points = math::to_unsigned(container::distance(buffer));
+            if (width && *width > code_points) {
+                *width -= code_points;
+            }
+            buffer.clear();
+        }
+
+        auto const radix = [&] -> UnsignedType {
+            switch (type) {
+                case IntegerType::BinaryLower:
+                case IntegerType::BinaryUpper:
+                    return 2;
+                case IntegerType::Octal:
+                    return 8;
+                case IntegerType::HexLower:
+                case IntegerType::HexUpper:
+                    return 16;
+                default:
+                    return 10;
+            }
+        }();
+
+        auto to_digit = [&](UnsignedType value) -> meta::EncodingCodePoint<Enc> {
+            switch (type) {
+                case IntegerType::HexLower:
+                    return (value >= 10) ? ('a' + (value - 10)) : ('0' + value);
+                case IntegerType::HexUpper:
+                    return (value >= 10) ? ('A' + (value - 10)) : ('0' + value);
+                default:
+                    return ('0' + value);
+            }
+        };
+
+        UnsignedType strength = 1;
+        for (auto x = as_unsigned; x / strength >= radix; strength *= radix) {}
+
+        for (; strength; strength /= radix) {
+            (void) buffer.push_back(to_digit((as_unsigned / strength) % radix));
+        }
+
+        auto backup_fill_and_align = FillAndAlign { zero_pad ? U'0' : U' ', FillAndAlign::Align::Right };
+        return present_string_view_to<Enc>(context, fill_and_align.value_or(backup_fill_and_align), width, nullopt, false, buffer);
     }
 
     template<concepts::Encoding Enc>

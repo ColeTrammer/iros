@@ -2,35 +2,19 @@
 
 #include <di/concepts/integer.h>
 #include <di/concepts/signed_integer.h>
+#include <di/format/builtin_formatter/base.h>
 #include <di/format/formatter.h>
-#include <di/math/abs.h>
-#include <di/math/to_unsigned.h>
 
 namespace di::format {
 template<concepts::Integer T, concepts::Encoding Enc>
 requires(!concepts::OneOf<T, char, c32>)
-constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<T>, FormatParseContext<Enc>&) {
-    auto do_output = [](concepts::FormatContext auto& context, T value) -> Result<void> {
-        if (value == 0) {
-            context.output('0');
-            return {};
-        }
-
-        if constexpr (concepts::SignedInteger<T>) {
-            if (value < 0) {
-                context.output('-');
-            }
-        }
-        auto as_unsigned = math::to_unsigned(math::abs(value));
-
-        u64 strength = 1;
-        for (auto x = as_unsigned; x / strength >= 10; strength *= 10) {}
-
-        for (; strength; strength /= 10) {
-            context.output((as_unsigned / strength) % 10 + '0');
-        }
-        return {};
+constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<T>, FormatParseContext<Enc>& parse_context) {
+    return parse<detail::IntegerFormat>(parse_context.current_format_string()) % [](detail::IntegerFormat format) {
+        return [=](concepts::FormatContext auto& context, T value) -> Result<void> {
+            auto width = format.width.transform(&detail::Width::value);
+            return detail::present_integer_to<Enc>(context, format.fill_and_align, format.sign, format.hash_tag, format.zero, width,
+                                                   format.type, false, value);
+        };
     };
-    return Result<decltype(do_output)>(util::move(do_output));
 }
 }
