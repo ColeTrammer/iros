@@ -9,7 +9,7 @@
 namespace di::execution {
 namespace as_awaitable_ns {
     template<typename Send, typename Promise>
-    struct AwaitableReceiver {
+    struct AwaitableReceiver<Send, Promise>::Type {
         using Value = meta::SingleSenderValueType<Send, meta::EnvOf<Promise>>;
         using Result = meta::Conditional<concepts::LanguageVoid<Value>, Void, Value>;
 
@@ -19,21 +19,21 @@ namespace as_awaitable_ns {
     private:
         template<typename... Args>
         requires(concepts::ConstructibleFrom<Result, Args...>)
-        friend void tag_invoke(SetValue, AwaitableReceiver&& self, Args&&... args) {
+        friend void tag_invoke(SetValue, Type&& self, Args&&... args) {
             self.result_pointer->emplace(util::forward<Args>(args)...);
             self.continuation.resume();
         }
 
-        friend void tag_invoke(SetError, AwaitableReceiver&& self, Error error) {
+        friend void tag_invoke(SetError, Type&& self, Error error) {
             static_cast<CoroutineHandle<>>(self.continuation.promise().unhandled_error(util::move(error))).resume();
         }
 
-        friend void tag_invoke(SetStopped, AwaitableReceiver&& self) {
+        friend void tag_invoke(SetStopped, Type&& self) {
             static_cast<CoroutineHandle<>>(self.continuation.promise().unhandled_stopped()).resume();
         }
 
         template<concepts::ForwardingReceiverQuery Tag, typename... Args>
-        constexpr friend auto tag_invoke(Tag tag, AwaitableReceiver const& self, Args&&... args)
+        constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
             -> decltype(tag(self.continuation.promise(), util::forward<Args>(args)...)) {
             return tag(self.continuation.promise(), util::forward<Args>(args)...);
         }
@@ -42,7 +42,7 @@ namespace as_awaitable_ns {
     template<typename Send, typename Promise>
     class SenderAwaitable {
     private:
-        using Receiver = AwaitableReceiver<Send, Promise>;
+        using Receiver = meta::Type<AwaitableReceiver<Send, Promise>>;
         using Value = meta::SingleSenderValueType<Send, meta::EnvOf<Promise>>;
         using Result = meta::Conditional<concepts::LanguageVoid<Value>, Void, Value>;
 

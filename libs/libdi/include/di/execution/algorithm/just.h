@@ -7,66 +7,70 @@
 #include <di/vocab/tuple/prelude.h>
 
 namespace di::execution {
-namespace detail {
+namespace just_ns {
     template<typename CPO, typename... Types>
-    class JustSender {
-    public:
-        using CompletionSignatures = types::CompletionSignatures<CPO(Types...)>;
-
-        [[no_unique_address]] Tuple<Types...> values;
-
-    private:
-        template<typename Rec>
-        class OperationState {
+    struct SenderT {
+        struct Type {
         public:
+            using CompletionSignatures = types::CompletionSignatures<CPO(Types...)>;
+
             [[no_unique_address]] Tuple<Types...> values;
-            [[no_unique_address]] Rec receiver;
 
         private:
-            constexpr friend void tag_invoke(types::Tag<execution::start>, OperationState& state) {
-                apply(
-                    [&](Types&... values) {
-                        CPO {}(util::move(state.receiver), util::move(values)...);
-                    },
-                    state.values);
+            template<typename Rec>
+            class OperationState {
+            public:
+                [[no_unique_address]] Tuple<Types...> values;
+                [[no_unique_address]] Rec receiver;
+
+            private:
+                constexpr friend void tag_invoke(types::Tag<execution::start>, OperationState& state) {
+                    apply(
+                        [&](Types&... values) {
+                            CPO {}(util::move(state.receiver), util::move(values)...);
+                        },
+                        state.values);
+                }
+            };
+
+        private:
+            template<concepts::ReceiverOf<CompletionSignatures> Rec>
+            requires(concepts::Conjunction<concepts::CopyConstructible<Types>...>)
+            constexpr friend auto tag_invoke(types::Tag<execution::connect>, Type const& sender, Rec&& receiver) {
+                return OperationState<meta::Decay<Rec>> { sender.values, util::forward<Rec>(receiver) };
+            }
+
+            template<concepts::ReceiverOf<CompletionSignatures> Rec>
+            requires(concepts::Conjunction<concepts::CopyConstructible<Types>...>)
+            constexpr friend auto tag_invoke(types::Tag<execution::connect>, Type&& sender, Rec&& receiver) {
+                return OperationState<meta::Decay<Rec>> { util::move(sender.values), util::forward<Rec>(receiver) };
             }
         };
-
-    public:
-    private:
-        template<concepts::ReceiverOf<CompletionSignatures> Rec>
-        requires(concepts::Conjunction<concepts::CopyConstructible<Types>...>)
-        constexpr friend auto tag_invoke(types::Tag<execution::connect>, JustSender const& sender, Rec&& receiver) {
-            return OperationState<meta::Decay<Rec>> { sender.values, util::forward<Rec>(receiver) };
-        }
-
-        template<concepts::ReceiverOf<CompletionSignatures> Rec>
-        requires(concepts::Conjunction<concepts::CopyConstructible<Types>...>)
-        constexpr friend auto tag_invoke(types::Tag<execution::connect>, JustSender&& sender, Rec&& receiver) {
-            return OperationState<meta::Decay<Rec>> { util::move(sender.values), util::forward<Rec>(receiver) };
-        }
     };
 
-    struct JustFunction {
+    template<typename CPO, typename... Types>
+    using Sender = meta::Type<SenderT<CPO, Types...>>;
+
+    struct Function {
         template<concepts::MovableValue... Values>
         constexpr concepts::Sender auto operator()(Values&&... values) const {
-            return JustSender<SetValue, meta::Decay<Values>...> { { util::forward<Values>(values)... } };
+            return Sender<SetValue, meta::Decay<Values>...> { { util::forward<Values>(values)... } };
         }
     };
 
-    struct JustErrorFunction {
+    struct ErrorFunction {
         template<concepts::MovableValue Error>
         constexpr concepts::Sender auto operator()(Error&& error) const {
-            return JustSender<SetError, meta::Decay<Error>> { { util::forward<Error>(error) } };
+            return Sender<SetError, meta::Decay<Error>> { { util::forward<Error>(error) } };
         }
     };
 
-    struct JustStoppedFunction {
-        constexpr concepts::Sender auto operator()() const { return JustSender<SetStopped> { {} }; }
+    struct StoppedFunction {
+        constexpr concepts::Sender auto operator()() const { return Sender<SetStopped> { {} }; }
     };
 }
 
-constexpr inline auto just = detail::JustFunction {};
-constexpr inline auto just_error = detail::JustErrorFunction {};
-constexpr inline auto just_stopped = detail::JustStoppedFunction {};
+constexpr inline auto just = just_ns::Function {};
+constexpr inline auto just_error = just_ns::ErrorFunction {};
+constexpr inline auto just_stopped = just_ns::StoppedFunction {};
 }

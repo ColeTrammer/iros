@@ -18,24 +18,29 @@ private:
         OperationStateBase* next { nullptr };
     };
 
-    template<concepts::Receiver Receiver>
-    struct OperationState : OperationStateBase {
-    public:
-        OperationState(RunLoop* parent, Receiver&& receiver) : RunLoop { parent, nullptr }, m_receiver(util::move(receiver)) {}
+    template<typename Receiver>
+    struct OperationStateT {
+        struct Type : OperationStateBase {
+        public:
+            Type(RunLoop* parent, Receiver&& receiver) : RunLoop { parent, nullptr }, m_receiver(util::move(receiver)) {}
 
-        virtual void execute() override {
-            if (get_stop_token(m_receiver).stop_requested()) {
-                set_stopped(util::move(m_receiver));
-            } else {
-                set_value(util::move(m_receiver));
+            virtual void execute() override {
+                if (get_stop_token(m_receiver).stop_requested()) {
+                    set_stopped(util::move(m_receiver));
+                } else {
+                    set_value(util::move(m_receiver));
+                }
             }
-        }
 
-    private:
-        friend void tag_invoke(types::Tag<start>, OperationState& self) { self.parent->push_back(util::address_of(self)); }
+        private:
+            friend void tag_invoke(types::Tag<start>, Type& self) { self.parent->push_back(util::address_of(self)); }
 
-        [[no_unique_address]] Receiver m_receiver;
+            [[no_unique_address]] Receiver m_receiver;
+        };
     };
+
+    template<typename Receiver>
+    using OperationState = meta::Type<OperationStateT<Receiver>>;
 
     struct Scheduler {
     private:

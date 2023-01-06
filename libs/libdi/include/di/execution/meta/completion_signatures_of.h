@@ -5,7 +5,7 @@
 #include <di/util/declval.h>
 
 namespace di::meta {
-template<typename Sender, typename Env>
+template<typename Sender, typename Env = types::NoEnv>
 requires(requires {
              {
                  execution::get_completion_signatures(util::declval<Sender>(), util::declval<Env>())

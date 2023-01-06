@@ -15,31 +15,41 @@
 namespace di::execution {
 namespace read_ns {
     template<typename Tag>
-    struct Sender {
-        template<typename Receiver>
-        struct OperationState {
-            Receiver receiver;
+    struct SenderT {
+        struct Type {
+            template<typename Receiver>
+            struct OperationStateT {
+                struct Type {
+                    Receiver receiver;
 
-        private:
-            friend void tag_invoke(types::Tag<execution::start>, OperationState& self) {
-                set_value(util::move(self.receiver), auto(Tag {}(get_env(self.receiver))));
+                private:
+                    friend void tag_invoke(types::Tag<execution::start>, Type& self) {
+                        set_value(util::move(self.receiver), auto(Tag {}(get_env(self.receiver))));
+                    }
+                };
+            };
+
+            template<typename Receiver>
+            using OperationState = meta::Type<OperationStateT<Receiver>>;
+
+            template<concepts::Receiver Receiver>
+            requires(concepts::DecayConstructible<Receiver>)
+            friend auto tag_invoke(types::Tag<connect>, Type, Receiver&& receiver) {
+                return OperationState<meta::Decay<Receiver>> { util::forward<Receiver>(receiver) };
             }
+
+            template<typename Env>
+            friend auto tag_invoke(types::Tag<get_completion_signatures>, Type, Env) -> types::DependentCompletionSignatures<Env>;
+
+            template<typename Env>
+            requires(concepts::Invocable<Tag, Env>)
+            friend auto tag_invoke(types::Tag<get_completion_signatures>, Type, Env)
+                -> types::CompletionSignatures<SetValue(meta::InvokeResult<Tag, Env>)>;
         };
-
-        template<concepts::Receiver Receiver>
-        requires(concepts::DecayConstructible<Receiver>)
-        friend auto tag_invoke(types::Tag<connect>, Sender, Receiver&& receiver) {
-            return OperationState<meta::Decay<Receiver>> { util::forward<Receiver>(receiver) };
-        }
-
-        template<typename Env>
-        friend auto tag_invoke(types::Tag<get_completion_signatures>, Sender, Env) -> types::DependentCompletionSignatures<Env>;
-
-        template<typename Env>
-        requires(concepts::Invocable<Tag, Env>)
-        friend auto tag_invoke(types::Tag<get_completion_signatures>, Sender, Env)
-            -> types::CompletionSignatures<SetValue(meta::InvokeResult<Tag, Env>)>;
     };
+
+    template<typename Tag>
+    using Sender = meta::Type<SenderT<Tag>>;
 
     struct Function {
         template<typename Tag>

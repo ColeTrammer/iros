@@ -35,7 +35,7 @@ static void meta() {
     static_assert(di::SameAs<di::CompletionSignatures<di::SetValue(i32), di::SetError(di::Error), di::SetStopped()>,
                              decltype(di::execution::get_completion_signatures(di::declval<di::Lazy<i32>>()))>);
 
-    using R = di::execution::sync_wait_ns::Receiver<di::Lazy<i32>>;
+    using R = di::meta::Type<di::execution::sync_wait_ns::Receiver<di::execution::sync_wait_ns::ResultType<di::Lazy<i32>>>>;
 
     static_assert(di::SameAs<di::CompletionSignatures<di::SetValue(i32), di::SetError(di::Error), di::SetStopped()>,
                              di::meta::Type<di::execution::connect_awaitable_ns::CompletionSignatures<di::Lazy<i32>, R>>>);
@@ -98,7 +98,21 @@ static void coroutine() {
     ASSERT_EQ(di::sync_wait(stopped()), di::Unexpected(di::BasicError::Cancelled));
 }
 
+static void then() {
+    namespace ex = di::execution;
+
+    di::Sender auto work = ex::just(42) | ex::then([](int x) {
+                               return x * 2;
+                           });
+
+    di::Sender auto w2 = ex::just(42) | ex::then(di::into_void);
+
+    ASSERT_EQ(ex::sync_wait(di::move(work)), 84);
+    ASSERT(ex::sync_wait(di::move(w2)));
+}
+
 TEST_CONSTEXPRX(execution, meta, meta)
 TEST_CONSTEXPRX(execution, sync_wait, sync_wait)
 TEST_CONSTEXPRX(execution, lazy, lazy)
 TEST_CONSTEXPRX(execution, coroutine, coroutine)
+TEST_CONSTEXPRX(execution, then, then)

@@ -42,6 +42,10 @@ static void basic() {
     ASSERT_EQ(di::present("{:+}"_sv, 0), "+0"_sv);
     ASSERT_EQ(di::present("{: }"_sv, 0), " 0"_sv);
     ASSERT_EQ(di::present("{:#04x}"_sv, 0x01), "0x01"_sv);
+    ASSERT_EQ(di::present("{}"_sv, di::NumericLimits<i8>::min), "-128"_sv);
+    ASSERT_EQ(di::present("{}"_sv, di::NumericLimits<i32>::min), "-2147483648"_sv);
+    ASSERT_EQ(di::present("{}"_sv, di::NumericLimits<i32>::max), "2147483647"_sv);
+    ASSERT_EQ(di::present("{}"_sv, di::NumericLimits<u32>::max), "4294967295"_sv);
 }
 
 TEST_CONSTEXPRX(format, basic, basic)
