@@ -118,8 +118,20 @@ static void then() {
 
     di::Sender auto w2 = ex::just(42) | ex::then(di::into_void);
 
-    ASSERT_EQ(*ex::sync_wait(di::move(work)), 84);
+    ASSERT_EQ(ex::sync_wait(di::move(work)), 84);
     ASSERT(ex::sync_wait(di::move(w2)));
+}
+
+static void inline_scheduler() {
+    namespace ex = di::execution;
+
+    auto scheduler = di::InlineScheduler {};
+
+    auto work = ex::schedule(scheduler) | ex::then([] {
+                    return 42;
+                });
+
+    ASSERT_EQ(ex::sync_wait(di::move(work)), 42);
 }
 
 TEST_CONSTEXPRX(execution, meta, meta)
@@ -127,3 +139,4 @@ TEST_CONSTEXPRX(execution, sync_wait, sync_wait)
 TEST_CONSTEXPRX(execution, lazy, lazy)
 TEST_CONSTEXPRX(execution, coroutine, coroutine)
 TEST_CONSTEXPRX(execution, then, then)
+TEST_CONSTEXPRX(execution, inline_scheduler, inline_scheduler)
