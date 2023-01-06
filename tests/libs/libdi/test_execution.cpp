@@ -105,9 +105,20 @@ static void then() {
                                return x * 2;
                            });
 
+    using S = decltype(work);
+
+    using R = ex::then_ns::Receiver<ex::sync_wait_ns::Receiver<di::Result<di::Tuple<int>>>, di::Identity>;
+
+    static_assert(di::Receiver<R>);
+
+    static_assert(requires { ex::set_value(di::declval<R>(), 1); });
+    static_assert(di::ReceiverOf<R, di::CompletionSignatures<di::SetStopped()>>);
+    static_assert(di::ReceiverOf<R, di::CompletionSignatures<di::SetValue(i32)>>);
+    static_assert(di::SenderTo<S, R>);
+
     di::Sender auto w2 = ex::just(42) | ex::then(di::into_void);
 
-    ASSERT_EQ(ex::sync_wait(di::move(work)), 84);
+    ASSERT_EQ(*ex::sync_wait(di::move(work)), 84);
     ASSERT(ex::sync_wait(di::move(w2)));
 }
 

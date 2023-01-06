@@ -10,46 +10,38 @@
 #include <di/execution/meta/connect_result.h>
 #include <di/execution/meta/make_completion_signatures.h>
 #include <di/execution/query/get_completion_scheduler.h>
+#include <di/execution/receiver/receiver_adaptor.h>
 #include <di/function/curry_back.h>
 
 namespace di::execution {
 namespace then_ns {
-    template<typename Rec, typename Fun>
+    template<concepts::Receiver Rec, typename Fun>
     struct ReceiverT {
-        struct Type {
+        struct Type : private ReceiverAdaptor<Type, Rec> {
+        private:
+            using Base = ReceiverAdaptor<Type, Rec>;
+            friend Base;
+
         public:
-            [[no_unique_address]] Rec receiver;
-            [[no_unique_address]] Fun function;
+            explicit Type(Rec receiver, Fun function) : Base(util::move(receiver)), m_function(util::move(function)) {}
 
         private:
             template<typename... Args>
             requires(concepts::Invocable<Fun, Args...> && concepts::LanguageVoid<meta::InvokeResult<Fun, Args...>> &&
                      concepts::ReceiverOf<Rec, types::CompletionSignatures<SetValue()>>)
-            friend void tag_invoke(SetValue, Type&& self, Args&&... args) {
-                function::invoke(util::move(self.function), util::forward<Args>(args)...);
-                set_value(util::move(self.receiver));
+            void set_value(Args&&... args) && {
+                function::invoke(util::move(m_function), util::forward<Args>(args)...);
+                execution::set_value(util::move(*this).base());
             }
 
             template<typename... Args>
-            friend void tag_invoke(SetValue, Type&& self, Args&&... args)
             requires(concepts::Invocable<Fun, Args...> &&
                      concepts::ReceiverOf<Rec, types::CompletionSignatures<SetValue(meta::InvokeResult<Fun, Args...>)>>)
-            {
-                set_value(util::move(self.receiver), function::invoke(util::move(self.function), util::forward<Args>(args)...));
+            void set_value(Args&&... args) && {
+                execution::set_value(util::move(*this).base(), function::invoke(util::move(m_function), util::forward<Args>(args)...));
             }
 
-            template<concepts::OneOf<SetError, SetStopped> Tag, typename... Args>
-            friend void tag_invoke(Tag tag, Type&& self, Args&&... args)
-            requires(requires { tag(util::move(self.receiver), util::forward<Args>(args)...); })
-            {
-                tag(util::move(self.receiver), util::forward<Args>(args)...);
-            }
-
-            template<concepts::ForwardingReceiverQuery Tag, typename... Args>
-            constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
-                -> decltype(tag(self.receiver, util::forward<Args>(args)...)) {
-                return tag(self.receiver, util::forward<Args>(args)...);
-            }
+            [[no_unique_address]] Fun m_function;
         };
     };
 

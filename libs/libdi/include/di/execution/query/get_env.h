@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/concepts/not_same_as.h>
+#include <di/execution/query/forwarding_receiver_query.h>
 #include <di/execution/types/no_env.h>
 #include <di/function/tag_invoke.h>
 
@@ -12,6 +13,9 @@ namespace detail {
         constexpr concepts::NotSameAs<types::NoEnv> auto operator()(T const& value) const {
             return function::tag_invoke(*this, value);
         }
+
+    private:
+        constexpr friend bool tag_invoke(types::Tag<forwarding_receiver_query>, GetEnvFunction) { return true; }
     };
 }
 

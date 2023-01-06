@@ -9,6 +9,7 @@
 #include <di/util/coroutine.h>
 #include <di/util/create.h>
 #include <di/util/declval.h>
+#include <di/util/defer_construct.h>
 #include <di/util/exchange.h>
 #include <di/util/forward.h>
 #include <di/util/get.h>
@@ -40,6 +41,7 @@ using util::ReferenceWrapper;
 using util::InitializerList;
 
 using util::Badge;
+using util::DeferConstruct;
 using util::Immovable;
 using util::ScopeExit;
 

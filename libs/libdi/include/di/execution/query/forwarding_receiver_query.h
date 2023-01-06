@@ -14,7 +14,7 @@ namespace detail {
             if constexpr (concepts::TagInvocableTo<ForwardingReceiverQuery, bool, T>) {
                 return function::tag_invoke(*this, tag);
             } else {
-                return !concepts::OneOf<T, SetValue, SetError, SetStopped>;
+                return false;
             }
         }
     };

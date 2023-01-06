@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/execution/coroutine/with_awaitable_senders.h>
+#include <di/execution/types/prelude.h>
 #include <di/util/coroutine.h>
 #include <di/util/exchange.h>
 #include <di/util/unreachable.h>
@@ -116,9 +117,7 @@ namespace lazy_ns {
             Lazy get_return_object() noexcept { return Lazy { CoroutineHandle<Promise>::from_promise(*this) }; }
 
         private:
-            struct Env {};
-
-            constexpr friend auto tag_invoke(types::Tag<get_env>, Promise const&) { return Env {}; }
+            constexpr friend auto tag_invoke(types::Tag<get_env>, Promise const&) { return EmptyEnv {}; }
         };
 
         using Handle = CoroutineHandle<Promise>;
