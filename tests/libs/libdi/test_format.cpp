@@ -3,7 +3,7 @@
 
 #include <dius/prelude.h>
 
-static void basic() {
+constexpr void basic() {
     auto s = di::present(u8"a{}"_sv, 42);
     ASSERT_EQ(s, u8"a42"_sv);
     ASSERT_NOT_EQ(s, u8"43"_sv);
@@ -46,6 +46,9 @@ static void basic() {
     ASSERT_EQ(di::present("{}"_sv, di::NumericLimits<i32>::min), "-2147483648"_sv);
     ASSERT_EQ(di::present("{}"_sv, di::NumericLimits<i32>::max), "2147483647"_sv);
     ASSERT_EQ(di::present("{}"_sv, di::NumericLimits<u32>::max), "4294967295"_sv);
+
+    ASSERT_EQ(di::present("{:?}"_sv, "abc"_sv), "\"abc\""_sv);
+    ASSERT_EQ(di::present("{:?}"_sv, U'x'), "'x'"_sv);
 }
 
-TEST_CONSTEXPRX(format, basic, basic)
+TEST_CONSTEXPR(format, basic, basic)

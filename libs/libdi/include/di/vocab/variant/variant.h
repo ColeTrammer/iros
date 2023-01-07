@@ -51,19 +51,19 @@ private:
 
 public:
     // conditionally trivial special member functions.
-    constexpr Variant(Variant const&)
+    Variant(Variant const&)
     requires(trivially_copy_constructible)
     = default;
-    constexpr Variant(Variant&&)
+    Variant(Variant&&)
     requires(trivially_move_constructible)
     = default;
-    constexpr ~Variant()
+    ~Variant()
     requires(trivially_destructible)
     = default;
-    constexpr Variant& operator=(Variant const&)
+    Variant& operator=(Variant const&)
     requires(trivially_copy_assignable)
     = default;
-    constexpr Variant& operator=(Variant&&)
+    Variant& operator=(Variant&&)
     requires(trivially_move_assignable)
     = default;
 

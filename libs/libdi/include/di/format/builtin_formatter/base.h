@@ -1,7 +1,10 @@
 #pragma once
 
+#include <di/container/view/concat.h>
 #include <di/format/vpresent_encoded_context.h>
+#include <di/function/value.h>
 #include <di/math/abs.h>
+#include <di/math/abs_unsigned.h>
 #include <di/math/divide_round_up.h>
 #include <di/parser/prelude.h>
 
@@ -282,8 +285,11 @@ namespace detail {
     template<concepts::Encoding Enc>
     constexpr Result<void> present_string_view_to(concepts::FormatContext auto& context, Optional<FillAndAlign> fill_and_align,
                                                   Optional<size_t> width, Optional<size_t> precision, bool debug,
-                                                  container::string::StringViewImpl<Enc> view) {
+                                                  container::string::StringViewImpl<Enc> view_in, char32_t delimit_code_point = U'"') {
         using CodePoint = meta::EncodingCodePoint<Enc>;
+
+        auto delimit = lift_bool(debug) % function::value(delimit_code_point);
+        auto view = view::concat(delimit, view_in, delimit);
 
         auto measure_code_point = [&](CodePoint) -> size_t {
             (void) debug;
@@ -351,7 +357,7 @@ namespace detail {
         auto as_code_units = container::string::encoding::convert_to_code_units(encoding, value);
         auto [first, last] = container::string::encoding::code_point_view(encoding, { as_code_units.data(), as_code_units.size() });
         auto as_string_view = container::string::StringViewImpl<Enc> { first, last, encoding };
-        return present_string_view_to(context, fill_and_align, width, nullopt, debug, as_string_view);
+        return present_string_view_to(context, fill_and_align, width, nullopt, debug, as_string_view, U'\'');
     }
 
     template<concepts::Encoding Enc, concepts::Integral T>
@@ -368,7 +374,7 @@ namespace detail {
         auto buffer = container::string::StringImpl<Enc, container::StaticVector<meta::EncodingCodeUnit<Enc>, meta::SizeConstant<67>>> {};
 
         using UnsignedType = meta::MakeUnsigned<T>;
-        auto as_unsigned = math::to_unsigned(math::abs(value));
+        auto as_unsigned = math::abs_unsigned(value);
 
         auto const negative = [&] {
             if constexpr (concepts::Signed<T>) {

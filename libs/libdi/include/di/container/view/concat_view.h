@@ -152,7 +152,7 @@ private:
             : m_parent(parent), m_base(util::forward<Args>(args)...) {}
 
     public:
-        Iterator()
+        constexpr Iterator()
         requires(concepts::DefaultInitializable<BaseIter>)
         = default;
 
@@ -281,6 +281,7 @@ private:
 
         constexpr friend decltype(auto) tag_invoke(Iterator const& a) { return visit<RValue>(iterator_move, a.m_base); }
 
+        template<typename = void>
         constexpr friend void tag_invoke(Iterator const& a, Iterator const& b)
         requires(requires { visit(iterator_swap, a.m_base, b.m_base); })
         {

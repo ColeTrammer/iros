@@ -572,6 +572,16 @@ constexpr void concat() {
     ASSERT_EQ(in1, di::to_array({ 0, 1, 2 }));
     ASSERT_EQ(in2, di::to_array({ 3, 4, 5 }));
     ASSERT_EQ(in3, di::to_array({ 6, 7, 8 }));
+
+    auto x = di::Array { 4, 4, 4 } | di::to<di::Vector>();
+    auto v2 = di::concat(di::Optional { 5 }, di::move(x), di::Optional { 3 });
+
+    static_assert(di::SameAs<int&, di::meta::ContainerReference<decltype(v2)>>);
+
+    auto r2 = di::move(v2) | di::to<di::Vector>();
+    auto ex2 = di::Array { 5, 4, 4, 4, 3 } | di::to<di::Vector>();
+
+    ASSERT_EQ(r2, ex2);
 }
 
 TEST_CONSTEXPR(container_view, basic, basic)
