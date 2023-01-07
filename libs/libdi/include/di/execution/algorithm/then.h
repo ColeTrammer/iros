@@ -66,7 +66,7 @@ namespace then_ns {
             using SetValueCompletions = types::CompletionSignatures<meta::Type<ComplSig<SetValue, meta::InvokeResult<Fun, Args...>>>>;
 
             template<concepts::DecaysTo<Type> Self, typename Rec>
-            requires(concepts::SenderTo<meta::Like<Self, Send>, Receiver<Rec, Fun>>)
+            requires(concepts::DecayConstructible<meta::Like<Self, Send>> && concepts::SenderTo<meta::Like<Self, Send>, Receiver<Rec, Fun>>)
             friend auto tag_invoke(types::Tag<connect>, Self&& self, Rec receiver) {
                 return connect(util::forward<Self>(self).sender,
                                Receiver<Rec, Fun> { util::move(receiver), util::forward<Self>(self).function });

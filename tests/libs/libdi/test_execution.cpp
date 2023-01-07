@@ -131,7 +131,10 @@ static void inline_scheduler() {
                     return 42;
                 });
 
+    auto w2 = ex::on(scheduler, ex::just(42));
+
     ASSERT_EQ(ex::sync_wait(di::move(work)), 42);
+    ASSERT_EQ(ex::sync_wait(di::move(w2)), 42);
 }
 
 TEST_CONSTEXPRX(execution, meta, meta)

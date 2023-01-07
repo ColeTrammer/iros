@@ -16,4 +16,7 @@ public:
 private:
     Fun m_function;
 };
+
+template<typename T>
+DeferConstruct(T) -> DeferConstruct<T>;
 }
