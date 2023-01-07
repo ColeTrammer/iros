@@ -12,6 +12,7 @@
 #include <di/container/view/counted.h>
 #include <di/container/view/cycle.h>
 #include <di/container/view/drop.h>
+#include <di/container/view/concat.h>
 #include <di/container/view/drop_while.h>
 #include <di/container/view/elements.h>
 #include <di/container/view/empty.h>
@@ -51,6 +52,7 @@ using view::cartesian_product;
 using view::chunk;
 using view::chunk_by;
 using view::common;
+using view::concat;
 using view::cycle;
 using view::drop;
 using view::drop_while;

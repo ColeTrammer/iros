@@ -18,6 +18,7 @@
 #include <di/function/into_void.h>
 #include <di/function/invoke.h>
 #include <di/function/less.h>
+#include <di/function/minus.h>
 #include <di/function/monad/prelude.h>
 #include <di/function/multiplies.h>
 #include <di/function/not_equal.h>
@@ -27,6 +28,7 @@
 #include <di/function/pipeline.h>
 #include <di/function/plus.h>
 #include <di/function/tag_invoke.h>
+#include <di/function/value.h>
 #include <di/function/ycombinator.h>
 
 namespace di {
@@ -61,6 +63,7 @@ using function::EqualOrLess;
 using function::Greater;
 using function::Identity;
 using function::Less;
+using function::Minus;
 using function::Multiplies;
 using function::NotEqual;
 using function::Plus;
@@ -74,6 +77,7 @@ using function::equal_or_less;
 using function::greater;
 using function::identity;
 using function::less;
+using function::minus;
 using function::multiplies;
 using function::not_equal;
 using function::plus;

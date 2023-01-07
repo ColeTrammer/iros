@@ -12,9 +12,14 @@
 namespace di::vocab {
 namespace detail {
     template<typename Idx, typename R, typename Vis, typename... Vars>
-    struct VisitHelper;
+    struct VisitHelper {};
 
     template<size_t... indices, typename R, typename Vis, typename... Vars>
+    requires(requires {
+                 {
+                     function::invoke(util::declval<Vis>(), util::get<indices>(util::declval<Vars>())...)
+                     } -> concepts::ImplicitlyConvertibleTo<R>;
+             })
     struct VisitHelper<meta::List<meta::SizeConstant<indices>...>, R, Vis, Vars...> {
         constexpr static R call(Vis&& visitor, Vars&&... variants) {
             return function::invoke(util::forward<Vis>(visitor), util::get<indices>(util::forward<Vars>(variants))...);
@@ -22,11 +27,16 @@ namespace detail {
     };
 }
 
-template<typename R, typename Vis, concepts::VariantLike... Vars>
+template<typename R, typename Vis, concepts::VariantLike... Vars,
+         typename Indices = meta::CartesianProduct<meta::AsList<meta::MakeIndexSequence<meta::VariantSize<Vars>>>...>>
+requires(requires {
+             []<concepts::TypeList... Idx>(meta::List<Idx...>) {
+                 return Array { (&detail::VisitHelper<Idx, R, Vis, Vars...>::call)... };
+             }
+             (Indices {});
+         })
 constexpr R visit(Vis&& visitor, Vars&&... variants) {
-    using Indices = meta::CartesianProduct<meta::AsList<meta::MakeIndexSequence<meta::VariantSize<Vars>>>...>;
-
-    constexpr auto table = [&]<concepts::TypeList... Idx>(meta::List<Idx...>) {
+    constexpr auto table = []<concepts::TypeList... Idx>(meta::List<Idx...>) {
         return Array { (&detail::VisitHelper<Idx, R, Vis, Vars...>::call)... };
     }
     (Indices {});
@@ -37,9 +47,11 @@ constexpr R visit(Vis&& visitor, Vars&&... variants) {
     return f(util::forward<Vis>(visitor), util::forward<Vars>(variants)...);
 }
 
-template<typename Vis, concepts::VariantLike... Vars>
-constexpr decltype(auto) visit(Vis&& visitor, Vars&&... variants) {
-    using R = decltype(function::invoke(util::forward<Vis>(visitor), util::get<0>(util::forward<Vars>(variants))...));
+template<typename Vis, concepts::VariantLike... Vars,
+         typename R = decltype(function::invoke(util::declval<Vis>(), util::get<0>(util::declval<Vars>())...))>
+constexpr decltype(auto) visit(Vis&& visitor, Vars&&... variants)
+requires(requires { visit<R>(util::forward<Vis>(visitor), util::forward<Vars>(variants)...); })
+{
     return visit<R>(util::forward<Vis>(visitor), util::forward<Vars>(variants)...);
 }
 }

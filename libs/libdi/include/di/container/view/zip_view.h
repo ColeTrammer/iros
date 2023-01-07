@@ -228,7 +228,7 @@ public:
     requires(concepts::Disjunction<!concepts::DefaultConstructible<Views>...>)
     = delete;
 
-    constexpr ZipView(Views... views) : m_views(util::move(views)...) {}
+    constexpr explicit ZipView(Views... views) : m_views(util::move(views)...) {}
 
     constexpr auto begin()
     requires(!all_simple)

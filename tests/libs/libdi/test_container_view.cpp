@@ -543,6 +543,37 @@ constexpr void common() {
     ASSERT_EQ(r3, ex3);
 }
 
+constexpr void concat() {
+    auto in1 = di::Array { 2, 3, 4 };
+    auto in2 = di::Array { 7, 6, 5 };
+    auto in3 = di::Array { 1, 8, 0 };
+
+    auto v1 = di::concat(in1, in2, in3);
+    static_assert(di::concepts::View<decltype(v1)>);
+    static_assert(di::concepts::RandomAccessContainer<decltype(v1)>);
+    static_assert(di::concepts::SizedContainer<decltype(v1)>);
+    static_assert(di::SameAs<int&, di::meta::ContainerReference<decltype(v1)>>);
+    static_assert(di::concepts::Permutable<decltype(v1.begin())>);
+
+    auto r1 = di::move(v1) | di::to<di::Vector>();
+    auto ex1 = di::Array { 2, 3, 4, 7, 6, 5, 1, 8, 0 } | di::to<di::Vector>();
+    ASSERT_EQ(r1, ex1);
+
+    ASSERT_EQ(v1.size(), 9u);
+
+    ASSERT_EQ((v1.begin() + 6) - (v1.begin() + 1), 5);
+    ASSERT_EQ((v1.begin() + 7) - (v1.begin() + 2), 5);
+    ASSERT_EQ((v1.begin() + 7) - (v1.begin() + 4), 3);
+    ASSERT_EQ((v1.begin() + 7) - (di::container::default_sentinel), -2);
+    ASSERT_EQ((v1.begin() + 6) - (di::container::default_sentinel), -3);
+    ASSERT_EQ((v1.begin() + 5) - (di::container::default_sentinel), -4);
+
+    di::sort(v1);
+    ASSERT_EQ(in1, di::to_array({ 0, 1, 2 }));
+    ASSERT_EQ(in2, di::to_array({ 3, 4, 5 }));
+    ASSERT_EQ(in3, di::to_array({ 6, 7, 8 }));
+}
+
 TEST_CONSTEXPR(container_view, basic, basic)
 TEST_CONSTEXPR(container_view, all, all)
 TEST_CONSTEXPR(container_view, empty, empty)
@@ -576,3 +607,4 @@ TEST_CONSTEXPR(container_view, slide, slide)
 TEST_CONSTEXPR(container_view, chunk_by, chunk_by)
 TEST_CONSTEXPR(container_view, cartesian_product, cartesian_product)
 TEST_CONSTEXPR(container_view, common, common)
+TEST_CONSTEXPR(container_view, concat, concat)

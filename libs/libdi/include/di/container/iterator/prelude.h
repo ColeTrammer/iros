@@ -16,4 +16,7 @@ using container::advance;
 using container::distance;
 using container::next;
 using container::prev;
+
+using container::default_sentinel;
+using container::DefaultSentinel;
 }

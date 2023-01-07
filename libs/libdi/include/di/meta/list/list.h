@@ -27,9 +27,22 @@ namespace detail {
     struct LookupHelper<Needle, T, Rest...> : SizeConstant<concepts::SameAs<T, Needle> ? 0 : 1 + LookupHelper<Needle, Rest...>::value> {};
 }
 
+namespace detail {
+    template<typename... Types>
+    struct BackHelper {};
+
+    template<typename T>
+    struct BackHelper<T> : TypeConstant<T> {};
+
+    template<typename Head, typename... Tail>
+    struct BackHelper<Head, Tail...> : BackHelper<Tail...> {};
+}
+
 template<typename Head, typename... Rest>
 struct List<Head, Rest...> {
     using Front = Head;
+
+    using Back = detail::BackHelper<Rest...>::Type;
 
     constexpr static size_t size = sizeof...(Rest) + 1;
 
@@ -47,6 +60,7 @@ struct List<Head, Rest...> {
 template<typename T>
 struct List<T> {
     using Front = T;
+    using Back = T;
 
     constexpr static size_t size = 1;
 
@@ -75,12 +89,19 @@ struct List<> {
     requires(index != index)
     using Front = void;
 
+    template<size_t index>
+    requires(index != index)
+    using Back = void;
+
     template<typename U>
     constexpr static size_t Lookup = 0;
 };
 
 template<concepts::TypeList T>
 using Front = T::Front;
+
+template<concepts::TypeList T>
+using Back = T::Back;
 
 template<concepts::TypeList T>
 constexpr inline size_t Size = T::size;

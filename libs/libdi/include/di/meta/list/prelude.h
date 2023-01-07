@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/meta/list/all.h>
 #include <di/meta/list/as_list.h>
 #include <di/meta/list/as_tuple.h>
 #include <di/meta/list/bind_back.h>
@@ -11,6 +12,8 @@
 #include <di/meta/list/id.h>
 #include <di/meta/list/invoke.h>
 #include <di/meta/list/list.h>
+#include <di/meta/list/pop_back.h>
+#include <di/meta/list/pop_front.h>
 #include <di/meta/list/push_back.h>
 #include <di/meta/list/push_front.h>
 #include <di/meta/list/quote.h>

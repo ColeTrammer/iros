@@ -128,7 +128,7 @@ namespace detail {
 
     template<typename T, typename U, typename W, typename... Rest>
     requires(requires { typename CommonReferenceHelper<T, U>::Type; })
-    struct CommonReferenceHelper<T, U, W, Rest...> : CommonReferenceHelper<typename CommonTypeHelper<T, U>::Type, W, Rest...> {};
+    struct CommonReferenceHelper<T, U, W, Rest...> : CommonReferenceHelper<typename CommonReferenceHelper<T, U>::Type, W, Rest...> {};
 }
 
 template<typename... Types>
