@@ -50,8 +50,10 @@ private:
             RunLoop* parent;
 
         private:
-            template<concepts::Receiver Receiver>
-            friend auto tag_invoke(types::Tag<connect>, Sender const& self, Receiver receiver) {}
+            template<concepts::ReceiverOf<CompletionSignatures> Receiver>
+            friend auto tag_invoke(types::Tag<connect>, Sender, Receiver receiver) {
+                return OperationState<Receiver> { util::move(receiver) };
+            }
 
             template<typename CPO>
             constexpr friend auto tag_invoke(GetCompletionScheduler<CPO>, Sender const& self) {

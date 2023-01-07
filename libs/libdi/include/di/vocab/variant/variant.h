@@ -1,6 +1,8 @@
 #pragma once
 
 #include <di/concepts/default_constructible.h>
+#include <di/concepts/instance_of.h>
+#include <di/concepts/instance_of_v.h>
 #include <di/concepts/trivially_copy_assignable.h>
 #include <di/concepts/trivially_copy_constructible.h>
 #include <di/concepts/trivially_destructible.h>
@@ -22,6 +24,11 @@
 #include <di/vocab/variant/variant_types.h>
 
 namespace di::vocab {
+namespace detail {
+    template<typename T, typename U>
+    concept VariantValidOverload = requires { (T[1]) { util::declval<U>() }; };
+}
+
 template<typename... Types>
 requires(sizeof...(Types) > 0)
 class Variant : public meta::AddMemberGet<Variant<Types...>> {
@@ -36,7 +43,11 @@ private:
     constexpr static bool trivially_destructible = concepts::Conjunction<concepts::TriviallyDestructible<Types>...>;
 
     constexpr static bool copyable = concepts::Conjunction<concepts::CopyConstructible<Types>...>;
-    constexpr static bool movable = concepts::Conjunction<concepts::CopyConstructible<Types>...>;
+    constexpr static bool movable = concepts::Conjunction<concepts::MoveConstructible<Types>...>;
+
+    template<typename U>
+    constexpr static auto selector =
+        function::overload(([](Types y) -> Types requires(detail::VariantValidOverload<Types, U>) { return y; })...);
 
 public:
     // conditionally trivial special member functions.
@@ -84,6 +95,11 @@ public:
             *this, util::move(other()));
     }
 
+    template<typename U>
+    requires(!concepts::RemoveCVRefSameAs<U, Variant> && !concepts::InstanceOf<U, InPlaceType> && !concepts::InstanceOfV<U, InPlaceIndex> &&
+             requires { selector<U>(util::declval<U>()); } && concepts::ConstructibleFrom<decltype(selector<U>(util::declval<U>())), U>)
+    constexpr Variant(U&& value) : Variant(in_place_type<decltype(selector<U>(util::declval<U>()))>, util::forward<U>(value)) {}
+
     template<size_t index, typename... Args, typename T = meta::At<List, index>>
     requires(concepts::ConstructibleFrom<T, Args...>)
     constexpr explicit Variant(InPlaceIndex<index>, Args&&... args) {
@@ -127,6 +143,34 @@ public:
     }
 
     constexpr ~Variant() { destroy(); }
+
+    constexpr Variant& operator=(Variant const& other)
+    requires(!trivially_copy_assignable && copyable)
+    {
+        destroy();
+        function::index_dispatch<void, sizeof...(Types)>(other.index(), [&]<size_t index>(InPlaceIndex<index>) {
+            do_emplace(in_place_index<index>, util::get<index>(other));
+        });
+        return *this;
+    }
+
+    constexpr Variant& operator=(Variant&& other)
+    requires(!trivially_move_assignable && movable)
+    {
+        destroy();
+        function::index_dispatch<void, sizeof...(Types)>(other.index(), [&]<size_t index>(InPlaceIndex<index>) {
+            do_emplace(in_place_index<index>, util::get<index>(util::move(other)));
+        });
+        return *this;
+    }
+
+    template<typename U>
+    requires(!concepts::RemoveCVRefSameAs<U, Variant> && !concepts::InstanceOf<U, InPlaceType> && !concepts::InstanceOfV<U, InPlaceIndex> &&
+             requires { selector<U>(util::declval<U>()); } && concepts::ConstructibleFrom<decltype(selector<U>(util::declval<U>())), U>)
+    constexpr Variant& operator=(U&& value) {
+        this->template emplace<decltype(selector<U>(util::declval<U>()))>(util::forward<U>(value));
+        return *this;
+    }
 
     constexpr size_t index() const { return m_index; }
 

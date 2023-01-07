@@ -53,6 +53,18 @@ constexpr void basic() {
     ASSERT_EQ(a, c);
     ASSERT_LT(a, d);
 
+    auto e = di::Variant<int, double>(1);
+    ASSERT_EQ(e.index(), 0u);
+    ASSERT_EQ(e, 1);
+
+    auto f = di::Variant<int, double>(1.5);
+    ASSERT_EQ(f.index(), 1u);
+    ASSERT_EQ(f, 1.5);
+
+    f = 1;
+    ASSERT_EQ(f.index(), 0u);
+    ASSERT_EQ(f, 1);
+
     static_assert(di::SameAs<unsigned char, di::math::SmallestUnsignedType<6>>);
     static_assert(di::SameAs<unsigned short, di::math::SmallestUnsignedType<256>>);
 }
