@@ -51,12 +51,15 @@ using types::partial_ordering;
 using types::strong_ordering;
 using types::weak_ordering;
 
+#ifdef DI_HAVE_128_BIT_INTEGERS
 using types::i128;
+using types::u128;
+#endif
+
 using types::i16;
 using types::i32;
 using types::i64;
 using types::i8;
-using types::u128;
 using types::u16;
 using types::u32;
 using types::u64;

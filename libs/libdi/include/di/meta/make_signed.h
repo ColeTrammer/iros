@@ -33,8 +33,10 @@ namespace detail {
     template<>
     struct MakeSignedHelper<unsigned long long> : TypeConstant<long long> {};
 
+#ifdef DI_HAVE_128_BIT_INTEGERS
     template<>
     struct MakeSignedHelper<types::u128> : TypeConstant<types::i128> {};
+#endif
 
     template<>
     struct MakeSignedHelper<char8_t> : TypeConstant<types::i8> {};

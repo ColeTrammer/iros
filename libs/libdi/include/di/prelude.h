@@ -38,7 +38,6 @@ using namespace di::literals;
 using di::types::c16;
 using di::types::c32;
 using di::types::c8;
-using di::types::i128;
 using di::types::i16;
 using di::types::i32;
 using di::types::i64;
@@ -47,10 +46,14 @@ using di::types::intptr_t;
 using di::types::ptrdiff_t;
 using di::types::size_t;
 using di::types::ssize_t;
-using di::types::u128;
 using di::types::u16;
 using di::types::u32;
 using di::types::u64;
 using di::types::u8;
 using di::types::uintptr_t;
+
+#ifdef DI_HAVE_128_BIT_INTEGERS
+using di::types::i128;
+using di::types::u128;
+#endif
 #endif

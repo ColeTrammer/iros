@@ -36,8 +36,10 @@ namespace detail {
     template<>
     struct MakeUnsignedHelper<long long> : TypeConstant<unsigned long long> {};
 
+#ifdef DI_HAVE_128_BIT_INTEGERS
     template<>
     struct MakeUnsignedHelper<types::i128> : TypeConstant<types::u128> {};
+#endif
 
     template<>
     struct MakeUnsignedHelper<char8_t> : TypeConstant<types::u8> {};
