@@ -7,6 +7,6 @@
 #include <di/meta/type_identity.h>
 
 namespace di::concepts {
-template<typename Send, typename Val, typename Env = types::NoEnv>
-concept SenderOf = Sender<Send, Env> && SameAs<meta::List<Val>, meta::ValueTypesOf<Send, Env, meta::List, meta::TypeIdentity>>;
+template<typename Send, typename Env, typename... Values>
+concept SenderOf = Sender<Send, Env> && SameAs<meta::List<Values...>, meta::ValueTypesOf<Send, Env, meta::List, meta::TypeIdentity>>;
 }

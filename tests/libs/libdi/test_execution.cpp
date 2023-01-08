@@ -9,7 +9,7 @@ static void meta() {
     auto sender4 = di::execution::just_stopped();
 
     static_assert(di::SameAs<di::meta::ValueTypesOf<decltype(sender)>, di::Variant<di::Tuple<int>>>);
-    static_assert(di::concepts::SenderOf<decltype(sender), int>);
+    static_assert(di::concepts::SenderOf<decltype(sender), di::NoEnv, int>);
     static_assert(di::SameAs<di::meta::ValueTypesOf<decltype(sender2)>, di::Variant<di::Tuple<int, int>>>);
     static_assert(di::SameAs<di::meta::ValueTypesOf<decltype(sender3)>, di::meta::detail::EmptyVariant>);
     static_assert(di::SameAs<di::meta::ErrorTypesOf<decltype(sender3)>, di::Variant<int>>);
@@ -135,6 +135,11 @@ static void inline_scheduler() {
 
     ASSERT_EQ(ex::sync_wait(di::move(work)), 42);
     ASSERT_EQ(ex::sync_wait(di::move(w2)), 42);
+
+    auto v = ex::on(scheduler, ex::just() | ex::let_value([] {
+                                   return ex::get_scheduler();
+                               }));
+    ASSERT_EQ(*ex::sync_wait(di::move(v)), di::make_tuple(scheduler));
 }
 
 static void let() {
@@ -170,6 +175,16 @@ static void let() {
     ASSERT_EQ(ex::sync_wait(di::move(y)), 42);
 }
 
+static void transfer() {
+    namespace ex = di::execution;
+
+    auto scheduler = di::InlineScheduler {};
+
+    auto w = ex::transfer_just(scheduler, 42);
+
+    ASSERT_EQ(ex::sync_wait(di::move(w)), 42);
+}
+
 TEST_CONSTEXPRX(execution, meta, meta)
 TEST_CONSTEXPRX(execution, sync_wait, sync_wait)
 TEST_CONSTEXPRX(execution, lazy, lazy)
@@ -177,3 +192,4 @@ TEST_CONSTEXPRX(execution, coroutine, coroutine)
 TEST_CONSTEXPRX(execution, then, then)
 TEST_CONSTEXPRX(execution, inline_scheduler, inline_scheduler)
 TEST_CONSTEXPRX(execution, let, let)
+TEST_CONSTEXPRX(execution, transfer, transfer)
