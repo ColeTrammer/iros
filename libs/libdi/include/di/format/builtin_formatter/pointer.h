@@ -3,6 +3,7 @@
 #include <di/concepts/signed_integer.h>
 #include <di/format/builtin_formatter/base.h>
 #include <di/format/formatter.h>
+#include <di/types/prelude.h>
 
 namespace di::format {
 template<typename T, concepts::Encoding Enc>

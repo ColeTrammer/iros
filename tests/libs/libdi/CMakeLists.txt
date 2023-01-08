@@ -18,6 +18,7 @@ set(TEST_FILES
     test_function_bind.cpp
     test_function_generator.cpp
     test_function_invoke.cpp
+    test_math_rational.cpp
     test_meta.cpp
     test_parser.cpp
     test_util_swap.cpp

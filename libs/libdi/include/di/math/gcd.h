@@ -8,8 +8,8 @@ namespace di::math {
 namespace detail {
     struct GcdFunction {
         template<concepts::Integer T>
-        constexpr auto operator()(T m) const {
-            return m;
+        constexpr auto operator()(T) const {
+            return T(1);
         }
 
         template<concepts::Integer T, concepts::Integer U>

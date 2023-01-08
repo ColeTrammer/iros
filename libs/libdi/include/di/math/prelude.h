@@ -6,6 +6,7 @@
 #include <di/math/gcd.h>
 #include <di/math/lcm.h>
 #include <di/math/numeric_limits.h>
+#include <di/math/rational/prelude.h>
 #include <di/math/to_unsigned.h>
 
 namespace di {

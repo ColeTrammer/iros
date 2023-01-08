@@ -34,6 +34,9 @@ namespace detail {
     struct MakeSignedHelper<unsigned long long> : TypeConstant<long long> {};
 
     template<>
+    struct MakeSignedHelper<types::u128> : TypeConstant<types::i128> {};
+
+    template<>
     struct MakeSignedHelper<char8_t> : TypeConstant<types::i8> {};
 
     template<>
