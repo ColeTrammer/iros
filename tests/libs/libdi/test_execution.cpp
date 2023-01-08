@@ -151,6 +151,23 @@ static void let() {
                         });
              });
     ASSERT_EQ(ex::sync_wait(di::move(v)), 43);
+
+    auto y = ex::schedule(scheduler) | ex::let_value([] {
+                 return ex::just_error(di::BasicError::Invalid);
+             }) |
+             ex::let_error([](auto) {
+                 return ex::just(42);
+             }) |
+             ex::let_value([](auto) {
+                 return ex::just_error(di::BasicError::Invalid);
+             }) |
+             ex::let_error([](auto) {
+                 return ex::just_stopped();
+             }) |
+             ex::let_stopped([] {
+                 return ex::just(42);
+             });
+    ASSERT_EQ(ex::sync_wait(di::move(y)), 42);
 }
 
 TEST_CONSTEXPRX(execution, meta, meta)

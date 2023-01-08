@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/execution/algorithm/into_variant.h>
 #include <di/execution/algorithm/just.h>
 #include <di/execution/algorithm/let.h>
 #include <di/execution/algorithm/on.h>
@@ -9,4 +10,5 @@
 
 namespace di {
 using execution::sync_wait;
+using execution::sync_wait_with_variant;
 }

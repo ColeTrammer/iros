@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/execution/algorithm/into_variant.h>
 #include <di/execution/context/run_loop.h>
 #include <di/execution/query/get_delegatee_scheduler.h>
 #include <di/execution/query/get_scheduler.h>
@@ -58,6 +59,9 @@ namespace sync_wait_ns {
     template<concepts::Sender<Env> Send>
     using ResultType = Result<meta::ValueTypesOf<Send, Env, meta::DecayedTuple, meta::TypeIdentity>>;
 
+    template<concepts::Sender<Env> Send>
+    using WithVariantResultType = Result<into_variant_ns::IntoVariantType<Send, Env>>;
+
     template<typename T>
     struct Uninit {
         T value;
@@ -86,7 +90,23 @@ namespace sync_wait_ns {
             }
         }
     };
+
+    struct WithVariantFunction {
+        template<concepts::Sender<Env> Send>
+        concepts::SameAs<WithVariantResultType<Send>> auto operator()(Send&& sender) const {
+            if constexpr (requires {
+                              function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender), util::forward<Send>(sender));
+                          }) {
+                return function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender), util::forward<Send>(sender));
+            } else if constexpr (requires { function::tag_invoke(*this, util::forward<Send>(sender)); }) {
+                return function::tag_invoke(*this, util::forward<Send>(sender));
+            } else {
+                return Function {}(execution::into_variant(util::forward<Send>(sender)));
+            }
+        }
+    };
 }
 
 constexpr inline auto sync_wait = sync_wait_ns::Function {};
+constexpr inline auto sync_wait_with_variant = sync_wait_ns::WithVariantFunction {};
 }
