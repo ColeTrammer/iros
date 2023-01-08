@@ -13,6 +13,9 @@ namespace detail {
 
     template<template<typename...> typename Template, typename... Types>
     struct AsListHelper<Template<Types...>> : TypeConstant<List<Types...>> {};
+
+    template<typename R, typename... Args>
+    struct AsListHelper<R(Args...)> : TypeConstant<List<Args...>> {};
 }
 
 template<typename T>

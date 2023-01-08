@@ -42,6 +42,16 @@ static_assert(di::SameAs<di::meta::List<di::meta::List<u8, u16, u32>, di::meta::
                                         di::meta::List<i8, i16, u32>, di::meta::List<i8, i16, i32>>,
                          di::meta::CartesianProduct<di::meta::List<u8, i8>, di::meta::List<u16, i16>, di::meta::List<u32, i32>>>);
 
+struct P {
+    template<typename T>
+    using Invoke = di::meta::BoolConstant<!di::SameAs<T, i32>>;
+};
+
+static_assert(di::SameAs<di::meta::Filter<di::meta::List<i32, i64, i32, i16, i32>, P>, di::meta::List<i64, i16>>);
+
+static_assert(di::SameAs<di::meta::Transform<di::meta::List<i32, i64>, di::meta::BindBack<di::meta::Quote<di::meta::AddLValueReference>>>,
+                         di::meta::List<i32&, i64&>>);
+
 // static_assert(
 // di::SameAs<di::Tuple<long>, decltype(di::meta::common_type(di::in_place_type<di::Tuple<int>>, di::in_place_type<di::Tuple<long>>))>);
 

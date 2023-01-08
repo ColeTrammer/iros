@@ -12,6 +12,8 @@ class RunLoop {
 private:
     struct OperationStateBase : util::Immovable {
     public:
+        OperationStateBase(RunLoop* parent_) : parent(parent_) {}
+
         virtual void execute() = 0;
 
         RunLoop* parent { nullptr };
@@ -22,7 +24,7 @@ private:
     struct OperationStateT {
         struct Type : OperationStateBase {
         public:
-            Type(RunLoop* parent, Receiver&& receiver) : RunLoop { parent, nullptr }, m_receiver(util::move(receiver)) {}
+            Type(RunLoop* parent, Receiver&& receiver) : OperationStateBase(parent), m_receiver(util::move(receiver)) {}
 
             virtual void execute() override {
                 if (get_stop_token(m_receiver).stop_requested()) {
@@ -33,7 +35,9 @@ private:
             }
 
         private:
-            friend void tag_invoke(types::Tag<start>, Type& self) { self.parent->push_back(util::address_of(self)); }
+            void do_start() { this->parent->push_back(this); }
+
+            friend void tag_invoke(types::Tag<start>, Type& self) { self.do_start(); }
 
             [[no_unique_address]] Receiver m_receiver;
         };
@@ -51,8 +55,8 @@ private:
 
         private:
             template<concepts::ReceiverOf<CompletionSignatures> Receiver>
-            friend auto tag_invoke(types::Tag<connect>, Sender, Receiver receiver) {
-                return OperationState<Receiver> { util::move(receiver) };
+            friend auto tag_invoke(types::Tag<connect>, Sender self, Receiver receiver) {
+                return OperationState<Receiver> { self.parent, util::move(receiver) };
             }
 
             template<typename CPO>

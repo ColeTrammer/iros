@@ -137,9 +137,26 @@ static void inline_scheduler() {
     ASSERT_EQ(ex::sync_wait(di::move(w2)), 42);
 }
 
+static void let() {
+    namespace ex = di::execution;
+
+    auto w = ex::just(42) | ex::let_value(ex::just);
+    ASSERT_EQ(ex::sync_wait(di::move(w)), 42);
+
+    auto scheduler = di::InlineScheduler {};
+
+    auto v = ex::schedule(scheduler) | ex::let_value(ex::get_scheduler) | ex::let_value([](di::Scheduler auto& scheduler) {
+                 return ex::schedule(scheduler) | ex::then([] {
+                            return 43;
+                        });
+             });
+    ASSERT_EQ(ex::sync_wait(di::move(v)), 43);
+}
+
 TEST_CONSTEXPRX(execution, meta, meta)
 TEST_CONSTEXPRX(execution, sync_wait, sync_wait)
 TEST_CONSTEXPRX(execution, lazy, lazy)
 TEST_CONSTEXPRX(execution, coroutine, coroutine)
 TEST_CONSTEXPRX(execution, then, then)
 TEST_CONSTEXPRX(execution, inline_scheduler, inline_scheduler)
+TEST_CONSTEXPRX(execution, let, let)
