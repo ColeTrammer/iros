@@ -53,7 +53,7 @@ private:
 
         constexpr Node* node() const { return m_node; }
 
-        Node* m_node;
+        Node* m_node { nullptr };
     };
 
     using ConstIterator = meta::ConstIterator<Iterator>;
@@ -105,6 +105,7 @@ public:
         auto* node = static_cast<Node*>(util::address_of(value));
         *m_tail = node;
         m_tail = util::address_of(node->next);
+        node->next = nullptr;
     }
 
     constexpr void push_front(T& value) {
@@ -135,7 +136,9 @@ public:
 
     constexpr void append_container(IntrusiveForwardList&& other) {
         if (!other.empty()) {
-            this->push_back(other.head());
+            auto* node = other.head();
+            *m_tail = node;
+            m_tail = util::address_of(node->next);
             other.clear();
         }
     }
@@ -175,7 +178,7 @@ public:
             m_tail = util::address_of(prev->next);
         }
         prev->next = end;
-        return last;
+        return last.base();
     }
 
 private:
