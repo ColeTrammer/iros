@@ -185,6 +185,19 @@ static void transfer() {
     ASSERT_EQ(ex::sync_wait(di::move(w)), 42);
 }
 
+static void as() {
+    namespace ex = di::execution;
+
+    auto w = ex::just_stopped() | ex::stopped_as_optional;
+    ASSERT_EQ(ex::sync_wait(di::move(w)), di::make_tuple(di::nullopt));
+
+    auto v = ex::just_stopped() | ex::stopped_as_error(42) | ex::let_error([](int x) {
+                 DI_ASSERT_EQ(x, 42);
+                 return ex::just(x);
+             });
+    ASSERT_EQ(ex::sync_wait(di::move(v)), di::make_tuple(42));
+}
+
 TEST_CONSTEXPRX(execution, meta, meta)
 TEST_CONSTEXPRX(execution, sync_wait, sync_wait)
 TEST_CONSTEXPRX(execution, lazy, lazy)
@@ -193,3 +206,4 @@ TEST_CONSTEXPRX(execution, then, then)
 TEST_CONSTEXPRX(execution, inline_scheduler, inline_scheduler)
 TEST_CONSTEXPRX(execution, let, let)
 TEST_CONSTEXPRX(execution, transfer, transfer)
+TEST_CONSTEXPRX(execution, as, as)

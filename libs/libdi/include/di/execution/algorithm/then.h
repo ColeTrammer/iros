@@ -12,6 +12,7 @@
 #include <di/execution/query/get_completion_scheduler.h>
 #include <di/execution/receiver/receiver_adaptor.h>
 #include <di/function/curry_back.h>
+#include <di/meta/unwrap_expected.h>
 
 namespace di::execution {
 namespace then_ns {
@@ -27,18 +28,36 @@ namespace then_ns {
 
         private:
             template<typename... Args>
-            requires(concepts::Invocable<Fun, Args...> && concepts::LanguageVoid<meta::InvokeResult<Fun, Args...>> &&
+            requires(concepts::Invocable<Fun, Args...> && concepts::LanguageVoid<meta::UnwrapExpected<InvokeResult<Fun, Args...>>> &&
                      concepts::ReceiverOf<Rec, types::CompletionSignatures<SetValue()>>)
             void set_value(Args&&... args) && {
-                function::invoke(util::move(m_function), util::forward<Args>(args)...);
-                execution::set_value(util::move(*this).base());
+                if constexpr (concepts::Expected<meta::InvokeResult<Fun, Args...>>) {
+                    auto result = function::invoke(util::move(m_function), util::forward<Args>(args)...);
+                    if (!result) {
+                        execution::set_error(util::move(*this).base(), util::move(result).error());
+                    } else {
+                        execution::set_value(util::move(*this).base());
+                    }
+                } else {
+                    function::invoke(util::move(m_function), util::forward<Args>(args)...);
+                    execution::set_value(util::move(*this).base());
+                }
             }
 
             template<typename... Args>
             requires(concepts::Invocable<Fun, Args...> &&
-                     concepts::ReceiverOf<Rec, types::CompletionSignatures<SetValue(meta::InvokeResult<Fun, Args...>)>>)
+                     concepts::ReceiverOf<Rec, types::CompletionSignatures<SetValue(meta::UnwrapExpected<InvokeResult<Fun, Args...>>)>>)
             void set_value(Args&&... args) && {
-                execution::set_value(util::move(*this).base(), function::invoke(util::move(m_function), util::forward<Args>(args)...));
+                if constexpr (concepts::Expected<meta::InvokeResult<Fun, Args...>>) {
+                    auto result = function::invoke(util::move(m_function), util::forward<Args>(args)...);
+                    if (!result) {
+                        execution::set_error(util::move(*this).base(), util::move(result).error());
+                    } else {
+                        execution::set_value(util::move(*this).base(), util::move(result).value());
+                    }
+                } else {
+                    execution::set_value(util::move(*this).base(), function::invoke(util::move(m_function), util::forward<Args>(args)...));
+                }
             }
 
             [[no_unique_address]] Fun m_function;
@@ -54,6 +73,13 @@ namespace then_ns {
     template<typename Tag>
     struct ComplSig<Tag, void> : meta::TypeConstant<Tag()> {};
 
+    template<typename R>
+    struct ErrorComplSigs : meta::TypeConstant<meta::List<>> {};
+
+    template<concepts::Expected R>
+    requires(!concepts::LanguageVoid<meta::ExpectedError<R>>)
+    struct ErrorComplSigs<R> : meta::TypeConstant<meta::List<SetError(meta::ExpectedError<R>)>> {};
+
     template<typename Send, typename Fun>
     struct SenderT {
         struct Type {
@@ -63,7 +89,14 @@ namespace then_ns {
 
         private:
             template<typename... Args>
-            using SetValueCompletions = types::CompletionSignatures<meta::Type<ComplSig<SetValue, meta::InvokeResult<Fun, Args...>>>>;
+            using ValueCompletion = meta::List<meta::Type<ComplSig<SetValue, meta::UnwrapExpected<meta::InvokeResult<Fun, Args...>>>>>;
+
+            template<typename... Args>
+            using ValueErrorCompletion = meta::Type<ErrorComplSigs<meta::InvokeResult<Fun, Args...>>>;
+
+            template<typename... Args>
+            using SetValueCompletions =
+                meta::AsTemplate<CompletionSignatures, meta::Concat<ValueCompletion<Args...>, ValueErrorCompletion<Args...>>>;
 
             template<concepts::DecaysTo<Type> Self, typename Rec>
             requires(concepts::DecayConstructible<meta::Like<Self, Send>> && concepts::SenderTo<meta::Like<Self, Send>, Receiver<Rec, Fun>>)

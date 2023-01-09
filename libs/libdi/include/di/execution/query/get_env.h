@@ -14,6 +14,8 @@ namespace detail {
             return function::tag_invoke(*this, value);
         }
 
+        constexpr auto operator()() const;
+
     private:
         constexpr friend bool tag_invoke(types::Tag<forwarding_receiver_query>, GetEnvFunction) { return true; }
     };

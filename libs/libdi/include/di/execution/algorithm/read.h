@@ -73,5 +73,9 @@ namespace detail {
     constexpr auto GetStopTokenFunction::operator()() const {
         return read(get_stop_token);
     }
+
+    constexpr auto GetEnvFunction::operator()() const {
+        return read(function::identity);
+    }
 }
 }
