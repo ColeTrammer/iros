@@ -23,6 +23,7 @@ set(TARGETS
     comm
     compress
     cp
+    cps
     cut
     date
     decompress
