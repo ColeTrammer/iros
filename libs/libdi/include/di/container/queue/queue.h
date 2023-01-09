@@ -15,18 +15,15 @@ namespace detail {
                               requires(Con& container, Value&& value) {
                                   { container.front() } -> concepts::SameAs<Optional<Value&>>;
                                   { util::as_const(container).front() } -> concepts::SameAs<Optional<Value const&>>;
-                                  { container.back() } -> concepts::SameAs<Optional<Value&>>;
-                                  { util::as_const(container).back() } -> concepts::SameAs<Optional<Value const&>>;
-                                  container.emplace_back(util::move(value));
-                                  { container.append_container(util::move(container)) } -> concepts::MaybeFallible<void>;
-                                  { container.pop_front() } -> concepts::SameAs<Optional<Value>>;
-                                  { container.size() } -> concepts::UnsignedInteger;
+                                  container.pop_front();
                               };
 }
 
 template<typename Value, detail::QueueCompatible<Value> Con = container::LinkedList<Value>>
 class Queue {
 private:
+    Con m_container {};
+
     template<concepts::InputContainer Other>
     requires(concepts::ContainerCompatible<Other, Value>)
     constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<Queue>, Other&& other) {
@@ -65,29 +62,54 @@ public:
 
     Queue& operator=(Queue&&) = default;
 
-    constexpr Optional<Value&> front() { return m_container.front(); }
-    constexpr Optional<Value const&> front() const { return m_container.front(); }
+    constexpr auto front() { return m_container.front(); }
+    constexpr auto front() const { return m_container.front(); }
 
-    constexpr Optional<Value&> back() { return m_container.back(); }
-    constexpr Optional<Value const&> back() const { return m_container.back(); }
+    constexpr auto back()
+    requires(requires { m_container.back(); })
+    {
+        return m_container.back();
+    }
+    constexpr auto back() const
+    requires(requires { m_container.back(); })
+    {
+        return m_container.back();
+    }
 
-    constexpr bool empty() const { return size() == 0u; }
-    constexpr auto size() const { return m_container.size(); }
+    constexpr bool empty() const { return m_container.empty(); }
+    constexpr auto size() const
+    requires(concepts::SizedContainer<Con>)
+    {
+        return m_container.size();
+    }
+
+    constexpr decltype(auto) push(Value& value)
+    requires(!concepts::CopyConstructible<Value> && !concepts::MoveConstructible<Value>)
+    {
+        return m_container.push_back(value);
+    }
 
     constexpr decltype(auto) push(Value const& value)
     requires(concepts::CopyConstructible<Value>)
     {
-        return emplace(value);
+        return m_container.push_back(value);
     }
-    constexpr decltype(auto) push(Value&& value) { return emplace(util::move(value)); }
+
+    constexpr decltype(auto) push(Value&& value)
+    requires(concepts::MoveConstructible<Value>)
+    {
+        return m_container.push_back(util::move(value));
+    }
 
     template<typename... Args>
-    requires(concepts::ConstructibleFrom<Value, Args...>)
-    constexpr decltype(auto) emplace(Args&&... args) {
+    constexpr decltype(auto) emplace(Args&&... args)
+    requires(requires { m_container.emplace_back(util::forward<Args>(args)...); })
+    {
         return m_container.emplace_back(util::forward<Args>(args)...);
     }
 
     template<concepts::ContainerCompatible<Value> Other>
+    requires(requires { m_container.append_container(util::forward<Other>(m_container)); })
     constexpr auto push_container(Other&& container) {
         return m_container.append_container(util::forward<Other>(container));
     }
@@ -100,9 +122,11 @@ public:
     constexpr Con const& base() const { return m_container; }
 
 private:
-    constexpr friend auto tag_invoke(types::Tag<util::clone>, Queue const& self) { return self | container::to<Queue>(); }
-
-    Con m_container {};
+    constexpr friend auto tag_invoke(types::Tag<util::clone>, Queue const& self)
+    requires(concepts::Clonable<Value>)
+    {
+        return self | container::to<Queue>();
+    }
 };
 
 template<concepts::Container Con, typename T = meta::ContainerValue<Con>>

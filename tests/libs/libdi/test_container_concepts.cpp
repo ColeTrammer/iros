@@ -14,7 +14,7 @@ struct I {
     constexpr friend bool operator==(I, I) { return true; }
 
 private:
-    constexpr friend bool tag_invoke(di::Tag<di::container::iterator_value>, di::InPlaceType<I>);
+    constexpr friend di::InPlaceType<bool> tag_invoke(di::Tag<di::container::iterator_value>, di::InPlaceType<I>);
     constexpr friend di::types::ForwardIteratorTag tag_invoke(di::Tag<di::container::iterator_category>, di::InPlaceType<I>);
     constexpr friend di::ssize_t tag_invoke(di::Tag<di::container::iterator_ssize_type>, di::InPlaceType<I>);
 };
@@ -32,7 +32,7 @@ struct J {
     constexpr J& operator++(int) { return *this; }
 
 private:
-    constexpr friend bool tag_invoke(di::Tag<di::container::iterator_value>, di::InPlaceType<J>);
+    constexpr friend di::InPlaceType<bool> tag_invoke(di::Tag<di::container::iterator_value>, di::InPlaceType<J>);
     constexpr friend di::types::InputIteratorTag tag_invoke(di::Tag<di::container::iterator_category>, di::InPlaceType<J>);
     constexpr friend di::ssize_t tag_invoke(di::Tag<di::container::iterator_ssize_type>, di::InPlaceType<J>);
 };

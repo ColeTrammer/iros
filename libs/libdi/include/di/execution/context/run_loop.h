@@ -1,5 +1,7 @@
 #pragma once
 
+#include <di/container/intrusive/prelude.h>
+#include <di/container/queue/prelude.h>
 #include <di/execution/concepts/receiver.h>
 #include <di/execution/query/get_completion_scheduler.h>
 #include <di/sync/dumb_spinlock.h>
@@ -10,14 +12,13 @@ namespace di::execution {
 template<concepts::Lock Lock = sync::DumbSpinlock>
 class RunLoop {
 private:
-    struct OperationStateBase : util::Immovable {
+    struct OperationStateBase : IntrusiveForwardListElement<> {
     public:
         OperationStateBase(RunLoop* parent_) : parent(parent_) {}
 
         virtual void execute() = 0;
 
         RunLoop* parent { nullptr };
-        OperationStateBase* next { nullptr };
     };
 
     template<typename Receiver>
@@ -75,8 +76,7 @@ private:
     };
 
     struct State {
-        OperationStateBase* head { nullptr };
-        OperationStateBase* tail { nullptr };
+        Queue<OperationStateBase, IntrusiveForwardList<OperationStateBase>> queue;
         bool stopped { false };
     };
 
@@ -106,17 +106,10 @@ private:
                 if (state.stopped) {
                     return make_tuple(nullptr, true);
                 }
-                if (!state.head) {
+                if (state.queue.empty()) {
                     return make_tuple(nullptr, false);
                 }
-                if (state.head == state.tail) {
-                    auto* operation = state.head;
-                    state.head = state.tail = nullptr;
-                    return make_tuple(operation, false);
-                }
-                auto* operation = state.head;
-                state.head = operation->next;
-                return make_tuple(operation, false);
+                return make_tuple(util::address_of(*state.queue.pop()), false);
             });
 
             if (is_stopped) {
@@ -129,12 +122,7 @@ private:
 
     void push_back(OperationStateBase* operation) {
         m_state.with_lock([&](State& state) {
-            if (!state.head) {
-                state.head = state.tail = operation;
-            } else {
-                state.tail->next = operation;
-                state.tail = operation;
-            }
+            state.queue.push(*operation);
         });
     }
 

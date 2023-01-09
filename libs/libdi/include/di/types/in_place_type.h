@@ -3,6 +3,8 @@
 namespace di::types {
 template<typename T>
 struct InPlaceType {
+    using Type = T;
+
     explicit InPlaceType() = default;
 };
 

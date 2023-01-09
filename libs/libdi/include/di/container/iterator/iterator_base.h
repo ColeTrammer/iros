@@ -107,7 +107,7 @@ private:
     }
 
     friend SSizeType tag_invoke(types::Tag<iterator_ssize_type>, InPlaceType<Self>) { return util::declval<SSizeType>(); }
-    friend ValueType tag_invoke(types::Tag<iterator_value>, InPlaceType<Self>) { return util::declval<ValueType>(); }
+    friend InPlaceType<ValueType> tag_invoke(types::Tag<iterator_value>, InPlaceType<Self>) { return in_place_type<ValueType>; }
     friend Category tag_invoke(types::Tag<iterator_category>, InPlaceType<Self>) { return util::declval<Category>(); }
 };
 }

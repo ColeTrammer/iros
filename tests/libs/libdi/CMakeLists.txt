@@ -5,6 +5,7 @@ set(TEST_FILES
     test_concepts.cpp
     test_container_algorithm.cpp
     test_container_concepts.cpp
+    test_container_intrusive.cpp
     test_container_linked_list.cpp
     test_container_path.cpp
     test_container_queue.cpp

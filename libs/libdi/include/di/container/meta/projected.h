@@ -18,7 +18,9 @@ struct Projected {
 
     Reference operator*() const;
 
-    constexpr friend Value tag_invoke(types::Tag<container::iterator_value>, InPlaceType<Projected>) { return util::declval<Value>(); }
+    constexpr friend InPlaceType<Value> tag_invoke(types::Tag<container::iterator_value>, InPlaceType<Projected>) {
+        return in_place_type<Value>;
+    }
     constexpr friend SSizeType tag_invoke(types::Tag<container::iterator_ssize_type>, InPlaceType<Projected>) {
         return util::declval<SSizeType>();
     }
