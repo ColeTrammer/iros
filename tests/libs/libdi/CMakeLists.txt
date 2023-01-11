@@ -2,6 +2,7 @@ set(TEST_FILES
     test_bit_bitset.cpp
     test_bit_bitstruct.cpp
     test_cli.cpp
+    test_chrono_duration.cpp
     test_concepts.cpp
     test_container_algorithm.cpp
     test_container_concepts.cpp
