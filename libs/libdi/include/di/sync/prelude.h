@@ -5,6 +5,9 @@
 #include <di/sync/concepts/stoppable_token_for.h>
 #include <di/sync/concepts/unstoppable_token.h>
 #include <di/sync/dumb_spinlock.h>
+#include <di/sync/in_place_stop_callback.h>
+#include <di/sync/in_place_stop_source.h>
+#include <di/sync/in_place_stop_token.h>
 #include <di/sync/memory_order.h>
 #include <di/sync/never_stop_token.h>
 #include <di/sync/scoped_lock.h>
@@ -13,6 +16,9 @@
 namespace di {
 using sync::Atomic;
 using sync::DumbSpinlock;
+using sync::InPlaceStopCallback;
+using sync::InPlaceStopSource;
+using sync::InPlaceStopToken;
 using sync::MemoryOrder;
 using sync::NeverStopToken;
 using sync::ScopedLock;

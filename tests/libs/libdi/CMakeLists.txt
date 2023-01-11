@@ -22,6 +22,7 @@ set(TEST_FILES
     test_math_rational.cpp
     test_meta.cpp
     test_parser.cpp
+    test_sync_in_place_stop_source.cpp
     test_util_swap.cpp
     test_util.cpp
     test_vocab_array.cpp
