@@ -16,4 +16,12 @@ using i64 = __INT64_TYPE__;
 using u128 = __uint128_t;
 using i128 = __int128_t;
 #endif
+
+#ifdef DI_HAVE_128_BIT_INTEGERS
+using intmax_t = i128;
+using uintmax_t = u128;
+#else
+using intmax_t = i64;
+using uintmax_t = u64;
+#endif
 }

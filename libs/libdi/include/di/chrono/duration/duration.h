@@ -3,6 +3,7 @@
 #include <di/chrono/duration/duration_common_type.h>
 #include <di/concepts/common_with.h>
 #include <di/concepts/three_way_comparable.h>
+#include <di/math/numeric_limits.h>
 #include <di/math/rational/prelude.h>
 #include <di/meta/common_type.h>
 
@@ -12,6 +13,10 @@ class Duration {
 public:
     using Representation = Rep;
     using Period = Per::Type;
+
+    constexpr static auto zero = Duration(Representation(0));
+    constexpr static auto min = Duration(math::NumericLimits<Representation>::min);
+    constexpr static auto max = Duration(math::NumericLimits<Representation>::max);
 
     Duration() = default;
     Duration(Duration const&) = default;

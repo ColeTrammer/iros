@@ -2,15 +2,22 @@
 
 #include <di/concepts/integer.h>
 #include <di/concepts/signed_integer.h>
+#include <di/function/tag_invoke.h>
 
 namespace di::math {
-template<concepts::Integral T>
-constexpr T abs(T value) {
-    if constexpr (concepts::SignedIntegral<T>) {
-        if (value < 0) {
-            return -value;
+namespace detail {
+    struct AbsFunction {
+        template<typename T>
+        requires(concepts::TagInvocable<AbsFunction, T> || concepts::SignedIntegral<meta::RemoveCVRef<T>>)
+        constexpr auto operator()(T&& value) const {
+            if constexpr (concepts::TagInvocable<AbsFunction, T>) {
+                return function::tag_invoke(*this, util::forward<T>(value));
+            } else {
+                return value < 0 ? -value : value;
+            }
         }
-    }
-    return value;
+    };
 }
+
+constexpr inline auto abs = detail::AbsFunction {};
 }

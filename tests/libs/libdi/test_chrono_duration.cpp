@@ -10,6 +10,9 @@ constexpr void basic() {
     x += 1_s;
 
     ASSERT_EQ(x, 1150_ms);
+
+    auto y = di::duration_cast<di::Seconds>(x);
+    ASSERT_EQ(y, 1000_ms);
 }
 
 TEST_CONSTEXPR(chrono_duration, basic, basic)

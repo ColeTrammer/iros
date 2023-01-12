@@ -60,10 +60,12 @@ using types::i16;
 using types::i32;
 using types::i64;
 using types::i8;
+using types::intmax_t;
 using types::u16;
 using types::u32;
 using types::u64;
 using types::u8;
+using types::uintmax_t;
 
 using types::c16;
 using types::c32;
