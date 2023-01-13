@@ -14,9 +14,9 @@ public:
     using Representation = Rep;
     using Period = Per::Type;
 
-    constexpr static auto zero = Duration(Representation(0));
-    constexpr static auto min = Duration(math::NumericLimits<Representation>::min);
-    constexpr static auto max = Duration(math::NumericLimits<Representation>::max);
+    constexpr static Duration zero = Duration(Representation(0));
+    constexpr static Duration min = Duration(math::NumericLimits<Representation>::min);
+    constexpr static Duration max = Duration(math::NumericLimits<Representation>::max);
 
     Duration() = default;
     Duration(Duration const&) = default;

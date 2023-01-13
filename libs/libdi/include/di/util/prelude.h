@@ -47,6 +47,7 @@ using util::ScopeExit;
 
 using util::SourceLocation;
 
+using util::address_of;
 using util::as_const;
 using util::as_const_pointer;
 using util::compile_time_fail;
