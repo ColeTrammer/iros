@@ -23,11 +23,15 @@ public:
     constexpr bool valid() const { return m_fd != -1; }
     constexpr explicit operator bool() const { return valid(); }
 
+    constexpr int file_descriptor() const { return m_fd; }
+
     di::Result<void> close();
 
-    di::Result<di::size_t> read(di::Span<di::Byte>) const;
+    di::Result<u64> read(u64 offset, di::Span<di::Byte>) const;
+    di::Result<u64> read(di::Span<di::Byte>) const;
+    di::Result<u64> write(u64 offset, di::Span<di::Byte const>) const;
+    di::Result<u64> write(di::Span<di::Byte const>) const;
 
-    di::Result<di::size_t> write(di::Span<di::Byte const>) const;
     di::Result<void> flush() const { return {}; }
 
 private:

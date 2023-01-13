@@ -19,8 +19,20 @@ di::Result<size_t> SyncFile::read(di::Span<di::Byte> data) const {
     return di::to_unsigned(result);
 }
 
+di::Result<size_t> SyncFile::read(u64 offset, di::Span<di::Byte> data) const {
+    auto result = ::pread(m_fd, data.data(), data.size(), offset);
+    (void) result;
+    return di::to_unsigned(result);
+}
+
 di::Result<size_t> SyncFile::write(di::Span<di::Byte const> data) const {
     auto result = ::write(m_fd, data.data(), data.size());
+    (void) result;
+    return data.size();
+}
+
+di::Result<size_t> SyncFile::write(u64 offset, di::Span<di::Byte const> data) const {
+    auto result = ::pwrite(m_fd, data.data(), data.size(), offset);
     (void) result;
     return data.size();
 }
