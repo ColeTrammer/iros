@@ -27,10 +27,10 @@ public:
 
     di::Result<void> close();
 
-    di::Result<u64> read(u64 offset, di::Span<di::Byte>) const;
-    di::Result<u64> read(di::Span<di::Byte>) const;
-    di::Result<u64> write(u64 offset, di::Span<di::Byte const>) const;
-    di::Result<u64> write(di::Span<di::Byte const>) const;
+    di::Result<size_t> read(u64 offset, di::Span<di::Byte>) const;
+    di::Result<size_t> read(di::Span<di::Byte>) const;
+    di::Result<size_t> write(u64 offset, di::Span<di::Byte const>) const;
+    di::Result<size_t> write(di::Span<di::Byte const>) const;
 
     di::Result<void> flush() const { return {}; }
 
