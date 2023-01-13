@@ -48,7 +48,7 @@ private:
 public:
     struct AsyncReadSender {
     public:
-        using CompletionSignatures = di::CompletionSignatures<di::SetValue(u64), di::SetError(di::Error)>;
+        using CompletionSignatures = di::CompletionSignatures<di::SetValue(size_t), di::SetError(di::Error)>;
 
         IoContext* parent;
         int file_descriptor;
@@ -100,7 +100,7 @@ public:
 
     struct AsyncWriteSender {
     public:
-        using CompletionSignatures = di::CompletionSignatures<di::SetValue(u64), di::SetError(di::Error)>;
+        using CompletionSignatures = di::CompletionSignatures<di::SetValue(size_t), di::SetError(di::Error)>;
 
         IoContext* parent;
         int file_descriptor;
