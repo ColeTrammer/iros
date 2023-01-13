@@ -23,6 +23,7 @@ set(TARGETS
     comm
     compress
     cp
+    cpa
     cps
     cut
     date
