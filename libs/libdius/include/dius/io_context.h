@@ -94,7 +94,7 @@ public:
 
         template<typename CPO>
         constexpr friend auto tag_invoke(execution::GetCompletionScheduler<CPO>, AsyncReadSender const& self) {
-            return Scheduler { self.parent };
+            return self.parent->get_scheduler();
         }
     };
 
@@ -146,7 +146,7 @@ public:
 
         template<typename CPO>
         constexpr friend auto tag_invoke(execution::GetCompletionScheduler<CPO>, AsyncWriteSender const& self) {
-            return Scheduler { self.parent };
+            return self.parent->get_scheduler();
         }
     };
 
@@ -166,7 +166,7 @@ private:
 
             template<typename CPO>
             constexpr friend auto tag_invoke(execution::GetCompletionScheduler<CPO>, Sender const& self) {
-                return Scheduler { self.parent };
+                return self.parent->get_scheduler();
             }
         };
 
