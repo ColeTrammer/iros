@@ -8,6 +8,27 @@
 
 namespace di::execution {
 namespace just_ns {
+    template<typename CPO, typename Rec, typename... Types>
+    struct OperationStateT {
+        struct Type {
+        public:
+            [[no_unique_address]] Tuple<Types...> values;
+            [[no_unique_address]] Rec receiver;
+
+        private:
+            constexpr friend void tag_invoke(types::Tag<execution::start>, Type& self) {
+                apply(
+                    [&](Types&... values) {
+                        CPO {}(util::move(self.receiver), util::move(values)...);
+                    },
+                    self.values);
+            }
+        };
+    };
+
+    template<concepts::OneOf<SetValue, SetStopped, SetError> CPO, concepts::Receiver Rec, typename... Types>
+    using OperationState = meta::Type<OperationStateT<CPO, Rec, Types...>>;
+
     template<typename CPO, typename... Types>
     struct SenderT {
         struct Type {
@@ -17,38 +38,21 @@ namespace just_ns {
             [[no_unique_address]] Tuple<Types...> values;
 
         private:
-            template<typename Rec>
-            class OperationState {
-            public:
-                [[no_unique_address]] Tuple<Types...> values;
-                [[no_unique_address]] Rec receiver;
-
-            private:
-                constexpr friend void tag_invoke(types::Tag<execution::start>, OperationState& state) {
-                    apply(
-                        [&](Types&... values) {
-                            CPO {}(util::move(state.receiver), util::move(values)...);
-                        },
-                        state.values);
-                }
-            };
-
-        private:
             template<concepts::ReceiverOf<CompletionSignatures> Rec>
             requires(concepts::Conjunction<concepts::CopyConstructible<Types>...>)
-            constexpr friend auto tag_invoke(types::Tag<execution::connect>, Type const& sender, Rec&& receiver) {
-                return OperationState<meta::Decay<Rec>> { sender.values, util::forward<Rec>(receiver) };
+            constexpr friend auto tag_invoke(types::Tag<execution::connect>, Type const& sender, Rec receiver) {
+                return OperationState<CPO, Rec, Types...> { sender.values, util::move(receiver) };
             }
 
             template<concepts::ReceiverOf<CompletionSignatures> Rec>
             requires(concepts::Conjunction<concepts::CopyConstructible<Types>...>)
-            constexpr friend auto tag_invoke(types::Tag<execution::connect>, Type&& sender, Rec&& receiver) {
-                return OperationState<meta::Decay<Rec>> { util::move(sender.values), util::forward<Rec>(receiver) };
+            constexpr friend auto tag_invoke(types::Tag<execution::connect>, Type&& sender, Rec receiver) {
+                return OperationState<CPO, Rec, Types...> { util::move(sender.values), util::move(receiver) };
             }
         };
     };
 
-    template<typename CPO, typename... Types>
+    template<concepts::OneOf<SetValue, SetStopped, SetError> CPO, typename... Types>
     using Sender = meta::Type<SenderT<CPO, Types...>>;
 
     struct Function {

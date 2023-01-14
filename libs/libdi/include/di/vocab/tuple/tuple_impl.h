@@ -93,7 +93,7 @@ protected:
     }
 
 private:
-    [[no_unique_address]] T m_value;
+    [[no_unique_address]] T m_value {};
 };
 
 template<>

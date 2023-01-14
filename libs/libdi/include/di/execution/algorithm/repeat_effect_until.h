@@ -57,7 +57,6 @@ namespace repeat_effect_until_ns {
             m_op_state2.emplace(util::DeferConstruct([&] {
                 return execution::connect(util::as_const(m_sender), Receiver<Send, Rec, Pred>(this));
             }));
-            restart();
         }
 
         void repeat_effect() {
@@ -65,6 +64,7 @@ namespace repeat_effect_until_ns {
                 execution::set_value(util::move(m_receiver));
             } else {
                 reconnect();
+                restart();
             }
         }
 

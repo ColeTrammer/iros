@@ -173,7 +173,7 @@ private:
         }
     }
 
-    Storage m_storage;
+    Storage m_storage {};
 };
 
 template<typename T>

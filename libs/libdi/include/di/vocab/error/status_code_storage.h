@@ -55,6 +55,6 @@ protected:
 
     ~StatusCodeStorage() = default;
 
-    Value m_value;
+    Value m_value {};
 };
 }

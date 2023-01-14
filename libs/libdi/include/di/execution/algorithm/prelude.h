@@ -2,6 +2,7 @@
 
 #include <di/execution/algorithm/into_variant.h>
 #include <di/execution/algorithm/just.h>
+#include <di/execution/algorithm/just_void_or_stopped.h>
 #include <di/execution/algorithm/let.h>
 #include <di/execution/algorithm/on.h>
 #include <di/execution/algorithm/read.h>
