@@ -157,9 +157,6 @@ static void let() {
              });
     ASSERT_EQ(ex::sync_wait(di::move(v)), 43);
 
-    // static_assert(di::SameAs<void, ex::let_ns::SenderTypes<di::SetValue, decltype(ex::just),
-    //    di::CompletionSignatures<di::SetValue(i64), di::SetError(di::Error)>>>);
-
     auto z = ex::just() | ex::then([] {
                  return di::Result<long>(44);
              }) |
@@ -167,8 +164,6 @@ static void let() {
                  return ex::just(44);
              });
 
-    // static_assert(di::SameAs<void, di::meta::CompletionSignaturesOf<decltype(z)>>);
-    // static_assert(di::concepts::SenderTo<decltype(z), ex::sync_wait_ns::Receiver<di::Result<int>>>);
     ASSERT_EQ(ex::sync_wait(di::move(z)), 44);
 
     auto y = ex::schedule(scheduler) | ex::let_value([] {
@@ -187,6 +182,16 @@ static void let() {
                  return ex::just(42);
              });
     ASSERT_EQ(ex::sync_wait(di::move(y)), 42);
+
+    auto a = ex::let_value_with(
+        [] {
+            return 42;
+        },
+        [](int& x) {
+            return ex::just(x);
+        });
+
+    ASSERT_EQ(ex::sync_wait(di::move(a)), 42);
 }
 
 static void transfer() {

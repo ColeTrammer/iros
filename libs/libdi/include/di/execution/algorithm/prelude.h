@@ -4,6 +4,7 @@
 #include <di/execution/algorithm/just.h>
 #include <di/execution/algorithm/just_void_or_stopped.h>
 #include <di/execution/algorithm/let.h>
+#include <di/execution/algorithm/let_value_with.h>
 #include <di/execution/algorithm/on.h>
 #include <di/execution/algorithm/read.h>
 #include <di/execution/algorithm/repeat_effect.h>
