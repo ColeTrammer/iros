@@ -212,6 +212,29 @@ static void as() {
     ASSERT_EQ(ex::sync_wait(di::move(v)), di::make_tuple(42));
 }
 
+struct AsyncI32 {
+    i32 value;
+
+private:
+    friend auto tag_invoke(di::Tag<di::execution::async_create_in_place>, di::InPlaceType<AsyncI32>, i32 value) {
+        return di::execution::just(AsyncI32 { value });
+    }
+
+    friend auto tag_invoke(di::Tag<di::execution::async_destroy_in_place>, di::InPlaceType<AsyncI32>, AsyncI32&) {
+        return di::execution::just();
+    }
+};
+
+static void with() {
+    namespace ex = di::execution;
+
+    auto w = ex::async_create<AsyncI32>(42) | ex::with([](AsyncI32& value) {
+                 return ex::just(value.value);
+             });
+
+    ASSERT_EQ(ex::sync_wait(di::move(w)), di::make_tuple(42));
+}
+
 TEST_CONSTEXPRX(execution, meta, meta)
 TEST_CONSTEXPRX(execution, sync_wait, sync_wait)
 TEST_CONSTEXPRX(execution, lazy, lazy)
@@ -221,3 +244,4 @@ TEST_CONSTEXPRX(execution, inline_scheduler, inline_scheduler)
 TEST_CONSTEXPRX(execution, let, let)
 TEST_CONSTEXPRX(execution, transfer, transfer)
 TEST_CONSTEXPRX(execution, as, as)
+TEST_CONSTEXPRX(execution, with, with)

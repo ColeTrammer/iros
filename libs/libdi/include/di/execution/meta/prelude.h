@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/execution/meta/async_destroy_result.h>
 #include <di/execution/meta/await_result.h>
 #include <di/execution/meta/completion_signatures_of.h>
 #include <di/execution/meta/connect_result.h>

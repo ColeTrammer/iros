@@ -13,6 +13,7 @@
 #include <di/execution/algorithm/then.h>
 #include <di/execution/algorithm/transfer.h>
 #include <di/execution/algorithm/transfer_just.h>
+#include <di/execution/algorithm/with.h>
 
 namespace di {
 using execution::sync_wait;
