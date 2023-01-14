@@ -76,9 +76,9 @@ namespace let_ns {
 
             template<concepts::OneOf<SetValue, SetError, SetStopped> Tag, typename... Args>
             friend void tag_invoke(Tag tag, Type&& self, Args&&... args)
-            requires(!concepts::SameAs<Tag, CPO> && requires { tag(util::move(self.data->receiver), util::forward<Args>(args)...); })
+            requires(!concepts::SameAs<Tag, CPO> && requires { tag(util::move(self.data->out_r), util::forward<Args>(args)...); })
             {
-                return tag(util::move(self.data->receiver), util::forward<Args>(args)...);
+                return tag(util::move(self.data->out_r), util::forward<Args>(args)...);
             }
 
             template<concepts::ForwardingReceiverQuery Tag, typename... Args>

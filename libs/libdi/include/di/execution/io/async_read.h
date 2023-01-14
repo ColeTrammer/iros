@@ -10,7 +10,7 @@ namespace async_read_ns {
     struct Function {
         template<concepts::Scheduler Sched>
         requires(concepts::TagInvocable<Function, Sched, int, Span<Byte>, Optional<u64>>)
-        concepts::Sender auto operator()(Sched&& scheduler, int file_descriptor, Span<Byte> buffer, Optional<u64> offset = {}) const {
+        concepts::SenderOf<NoEnv, size_t> auto operator()(Sched&& scheduler, int file_descriptor, Span<Byte> buffer, Optional<u64> offset = {}) const {
             return function::tag_invoke(*this, util::forward<Sched>(scheduler), file_descriptor, buffer, offset);
         }
     };
