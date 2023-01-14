@@ -68,17 +68,11 @@ public:
             private:
                 friend void tag_invoke(di::Tag<execution::start>, Type& self) {
                     auto sync_file = SyncFile(SyncFile::Owned::No, self.file_descriptor);
-                    auto result = [&] {
-                        if (self.offset) {
-                            return sync_file.read(self.offset.value(), self.buffer);
-                        } else {
-                            return sync_file.read(self.buffer);
-                        }
-                    }();
-                    if (!result) {
+                    auto result = self.offset ? sync_file.read(self.offset.value(), self.buffer) : sync_file.read(self.buffer);
+                    if (!result.has_value()) {
                         execution::set_error(di::move(self.receiver), di::move(result).error());
                     } else {
-                        execution::set_value(di::move(self.receiver), result.value());
+                        execution::set_value(di::move(self.receiver), di::move(result).value());
                     }
                 }
             };
@@ -120,17 +114,11 @@ public:
             private:
                 friend void tag_invoke(di::Tag<execution::start>, Type& self) {
                     auto sync_file = SyncFile(SyncFile::Owned::No, self.file_descriptor);
-                    auto result = [&] {
-                        if (self.offset) {
-                            return sync_file.write(self.offset.value(), self.buffer);
-                        } else {
-                            return sync_file.write(self.buffer);
-                        }
-                    }();
+                    auto result = self.offset ? sync_file.write(self.offset.value(), self.buffer) : sync_file.write(self.buffer);
                     if (!result) {
                         execution::set_error(di::move(self.receiver), di::move(result).error());
                     } else {
-                        execution::set_value(di::move(self.receiver), result.value());
+                        execution::set_value(di::move(self.receiver), di::move(result).value());
                     }
                 }
             };

@@ -28,18 +28,17 @@ di::Result<void> main(Args const& args) {
 
     auto buffer = di::StaticVector<di::Byte, decltype(131072_zic)> {};
 
-    bool should_stop = false;
-    auto task = di::execution::async_read(scheduler, source.file_descriptor(), di::Span { buffer.data(), buffer.capacity() }) |
-                di::execution::let_value([&](size_t nread) {
-                    if (nread == 0) {
-                        should_stop = true;
-                    }
-                    return di::execution::async_write(scheduler, destination.file_descriptor(), di::Span { buffer.data(), nread }) |
-                           di::execution::then(di::into_void);
-                }) |
-                di::execution::repeat_effect_until([&] {
-                    return should_stop;
-                });
+    auto task =
+        di::execution::async_read(scheduler, source.file_descriptor(), di::Span { buffer.data(), buffer.capacity() }) |
+        di::execution::let_value([&](size_t& nread) {
+            return di::execution::just_void_or_stopped(nread == 0) | di::execution::let_value([&] {
+                       return di::execution::async_write(scheduler, destination.file_descriptor(), di::Span { buffer.data(), nread }) |
+                              di::execution::then(di::into_void);
+                   });
+        }) |
+        di::execution::repeat_effect | di::execution::let_stopped([] {
+            return di::execution::just();
+        });
 
     // FIXME: this should call a sync_wait_with_context function.
     return di::sync_wait(di::move(task)) % di::into_void;
