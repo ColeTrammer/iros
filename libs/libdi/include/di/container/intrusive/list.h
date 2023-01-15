@@ -80,7 +80,7 @@ public:
 
     ~IntrusiveList() = default;
 
-    constexpr bool empty() const { return !head(); }
+    constexpr bool empty() const { return head() == util::address_of(m_head); }
 
     constexpr Iterator begin() { return Iterator(head()); }
     constexpr Iterator end() { return Iterator(util::address_of(m_head)); }
@@ -115,9 +115,9 @@ public:
 
     constexpr auto pop_front() {
         return lift_bool(!empty()) % [&] {
-            auto* front = head();
-            erase(*front);
-            return util::ref(front->template down_cast<T>());
+            auto it = begin();
+            erase(it);
+            return util::ref(*it);
         };
     }
 
@@ -136,10 +136,14 @@ public:
         return Iterator(node);
     }
 
-    constexpr Iterator erase(ConstIterator position) { return erase_after(position, container::next(position)); }
+    constexpr Iterator erase(T& value) {
+        auto* node = static_cast<Node*>(util::address_of(value));
+        return erase(Iterator(node));
+    }
+    constexpr Iterator erase(ConstIterator position) { return erase(position, container::next(position)); }
     constexpr Iterator erase(ConstIterator first, ConstIterator last) {
         if (first == last) {
-            return last;
+            return last.base();
         }
 
         auto* prev = first.base().node()->prev;

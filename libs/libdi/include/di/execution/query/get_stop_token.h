@@ -2,7 +2,7 @@
 
 #include <di/function/tag_invoke.h>
 #include <di/sync/concepts/stoppable_token.h>
-#include <di/sync/never_stop_token.h>
+#include <di/sync/stop_token/never_stop_token.h>
 
 namespace di::execution {
 namespace detail {

@@ -1,11 +1,8 @@
 #pragma once
 
-#include <di/sync/in_place_stop_source.h>
+#include <di/sync/stop_token/in_place_stop_source.h>
 
 namespace di::sync {
-template<typename Callback>
-class InPlaceStopCallback;
-
 class InPlaceStopToken {
 private:
     friend class InPlaceStopSource;
@@ -22,8 +19,8 @@ public:
     InPlaceStopToken() = default;
     ~InPlaceStopToken() = default;
 
-    [[nodiscard]] bool stop_requested() const { return m_source && m_source->stop_requested(); }
-    [[nodiscard]] bool stop_possible() const { return m_source && m_source->stop_possible(); }
+    [[nodiscard]] bool stop_requested() const { return !!m_source && m_source->stop_requested(); }
+    [[nodiscard]] bool stop_possible() const { return !!m_source; }
 
     [[nodiscard]] bool operator==(InPlaceStopToken const&) const = default;
 

@@ -4,6 +4,50 @@
 static void basic() {
     static_assert(di::concepts::StoppableToken<di::InPlaceStopToken>);
     static_assert(di::concepts::StoppableTokenFor<di::InPlaceStopToken, di::Identity>);
+
+    auto source = di::InPlaceStopSource {};
+
+    auto token = source.get_stop_token();
+
+    bool did_happen1 = false;
+    bool did_happen2 = false;
+
+    auto callback = di::InPlaceStopCallback(token, [&] {
+        did_happen1 = true;
+    });
+
+    {
+        auto callback2 = di::InPlaceStopCallback(token, [&] {
+            did_happen2 = true;
+        });
+    }
+
+    // FIXME: enable this test once in-place stop token is deadlock proof.
+    // struct ErasedDeleter {
+    //     void* obj;
+    //     void (*deleter)(void*);
+    // };
+
+    // ErasedDeleter xx;
+
+    // auto bad_cb = di::InPlaceStopCallback(token, [&] {
+    //     xx.deleter(xx.obj);
+    // });
+
+    // xx.obj = di::address_of(bad_cb);
+
+    // xx.deleter = [](void* ptr) {
+    //     return di::util::destroy_at(static_cast<decltype(bad_cb)*>(ptr));
+    // };
+
+    ASSERT(!source.stop_requested());
+    ASSERT(source.request_stop());
+    ASSERT(!source.request_stop());
+    ASSERT(source.stop_requested());
+    ASSERT(token.stop_possible());
+    ASSERT(token.stop_requested());
+    ASSERT(did_happen1);
+    ASSERT(!did_happen2);
 }
 
 TEST_CONSTEXPRX(sync_in_place_stop_source, basic, basic)
