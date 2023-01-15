@@ -21,6 +21,6 @@ private:
 
     ErasedCallback m_execute { nullptr };
     Atomic<bool> m_already_executed { false };
-    Atomic<bool> m_going_to_execute { false };
+    Atomic<bool*> m_did_destruct_in_same_thread { nullptr };
 };
 }

@@ -4,12 +4,13 @@
 #include <di/container/queue/prelude.h>
 #include <di/execution/concepts/receiver.h>
 #include <di/execution/query/get_completion_scheduler.h>
+#include <di/platform/prelude.h>
 #include <di/sync/dumb_spinlock.h>
 #include <di/sync/synchronized.h>
 #include <di/util/immovable.h>
 
 namespace di::execution {
-template<concepts::Lock Lock = sync::DumbSpinlock>
+template<concepts::Lock Lock = DefaultLock>
 class RunLoop {
 private:
     struct OperationStateBase : IntrusiveForwardListElement<> {

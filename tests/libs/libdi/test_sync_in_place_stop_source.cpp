@@ -22,23 +22,22 @@ static void basic() {
         });
     }
 
-    // FIXME: enable this test once in-place stop token is deadlock proof.
-    // struct ErasedDeleter {
-    //     void* obj;
-    //     void (*deleter)(void*);
-    // };
+    struct ErasedDeleter {
+        void* obj;
+        void (*deleter)(void*);
+    };
 
-    // ErasedDeleter xx;
+    ErasedDeleter xx;
 
-    // auto bad_cb = di::InPlaceStopCallback(token, [&] {
-    //     xx.deleter(xx.obj);
-    // });
+    auto bad_cb = di::InPlaceStopCallback(token, [&] {
+        xx.deleter(xx.obj);
+    });
 
-    // xx.obj = di::address_of(bad_cb);
+    xx.obj = di::address_of(bad_cb);
 
-    // xx.deleter = [](void* ptr) {
-    //     return di::util::destroy_at(static_cast<decltype(bad_cb)*>(ptr));
-    // };
+    xx.deleter = [](void* ptr) {
+        return di::util::destroy_at(static_cast<decltype(bad_cb)*>(ptr));
+    };
 
     ASSERT(!source.stop_requested());
     ASSERT(source.request_stop());

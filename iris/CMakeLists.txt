@@ -68,7 +68,7 @@ target_compile_options(iris PRIVATE -ffreestanding ${IRIS_ARCH_CXXFLAGS})
 target_link_options(iris PRIVATE -nostdlib ${IRIS_ARCH_LDFLAGS})
 target_link_libraries(iris PRIVATE libdi iris_headers)
 target_include_directories(iris PRIVATE "${LIMINE_DIR}")
-target_compile_definitions(iris PRIVATE "DI_CUSTOM_ASSERT_HANDLER" "DI_NO_ASSERT_ALLOCATION")
+target_compile_definitions(iris PRIVATE "DI_CUSTOM_ASSERT_HANDLER" "DI_NO_ASSERT_ALLOCATION" "DI_CUSTOM_PLATFORM=<iris/core/platform.h>")
 add_dependencies(iris limine)
 
 set_target_properties(iris PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${IRIS_ARCH_DIR}/link.ld)

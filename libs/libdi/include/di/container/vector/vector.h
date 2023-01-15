@@ -7,6 +7,7 @@
 #include <di/container/meta/prelude.h>
 #include <di/container/types/prelude.h>
 #include <di/container/vector/mutable_vector_interface.h>
+#include <di/platform/prelude.h>
 #include <di/types/prelude.h>
 #include <di/util/deduce_create.h>
 #include <di/util/exchange.h>
@@ -14,7 +15,7 @@
 #include <di/vocab/span/prelude.h>
 
 namespace di::container {
-template<typename T, concepts::AllocatorOf<T> Alloc = Allocator<T>>
+template<typename T, concepts::AllocatorOf<T> Alloc = DefaultAllocator<T>>
 class Vector : public MutableVectorInterface<Vector<T>, T> {
 public:
     using Value = T;

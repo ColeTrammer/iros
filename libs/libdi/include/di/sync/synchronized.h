@@ -5,11 +5,12 @@
 #include <di/concepts/default_constructible.h>
 #include <di/concepts/move_constructible.h>
 #include <di/function/invoke.h>
+#include <di/platform/prelude.h>
 #include <di/sync/concepts/lock.h>
 #include <di/sync/scoped_lock.h>
 
 namespace di::sync {
-template<typename Value, concepts::Lock Lock>
+template<typename Value, concepts::Lock Lock = DefaultLock>
 class Synchronized {
 public:
     Synchronized()

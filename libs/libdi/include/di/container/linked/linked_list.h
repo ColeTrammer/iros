@@ -9,12 +9,13 @@
 #include <di/container/linked/linked_list_node.h>
 #include <di/container/meta/prelude.h>
 #include <di/math/numeric_limits.h>
+#include <di/platform/prelude.h>
 #include <di/util/exchange.h>
 #include <di/util/reference_wrapper.h>
 #include <di/vocab/optional/prelude.h>
 
 namespace di::container {
-template<typename T, concepts::AllocatorOf<ConcreteLinkedListNode<T>> Alloc = Allocator<ConcreteLinkedListNode<T>>>
+template<typename T, concepts::AllocatorOf<ConcreteLinkedListNode<T>> Alloc = DefaultAllocator<ConcreteLinkedListNode<T>>>
 class LinkedList {
 private:
     using Node = ConcreteLinkedListNode<T>;

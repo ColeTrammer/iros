@@ -6,6 +6,7 @@
 #include <di/container/tree/rb_tree.h>
 #include <di/container/view/transform.h>
 #include <di/function/compare.h>
+#include <di/platform/prelude.h>
 #include <di/util/deduce_create.h>
 #include <di/vocab/optional/prelude.h>
 
@@ -60,7 +61,7 @@ namespace detail {
 }
 
 template<typename Key, typename Value, concepts::StrictWeakOrder<Key> Comp = function::Compare,
-         concepts::AllocatorOf<RBTreeNode<Tuple<Key, Value>>> Alloc = Allocator<RBTreeNode<Tuple<Key, Value>>>>
+         concepts::AllocatorOf<RBTreeNode<Tuple<Key, Value>>> Alloc = DefaultAllocator<RBTreeNode<Tuple<Key, Value>>>>
 class TreeMap
     : public RBTree<
           Tuple<Key, Value>, detail::TreeMapCompAdapter<Comp, Key>, Alloc,

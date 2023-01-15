@@ -12,6 +12,7 @@ public:
 
     constexpr Allocation<T> allocate(size_t count) const {
         auto* data = std::allocator<T>().allocate(count);
+        DI_ASSERT(data);
         return { data, count };
     }
 

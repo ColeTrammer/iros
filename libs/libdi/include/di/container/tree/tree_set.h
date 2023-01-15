@@ -6,12 +6,13 @@
 #include <di/container/tree/rb_tree.h>
 #include <di/container/view/transform.h>
 #include <di/function/compare.h>
+#include <di/platform/prelude.h>
 #include <di/util/deduce_create.h>
 #include <di/vocab/optional/prelude.h>
 
 namespace di::container {
 template<typename Value, concepts::StrictWeakOrder<Value> Comp = function::Compare,
-         concepts::AllocatorOf<RBTreeNode<Value>> Alloc = Allocator<RBTreeNode<Value>>>
+         concepts::AllocatorOf<RBTreeNode<Value>> Alloc = DefaultAllocator<RBTreeNode<Value>>>
 class TreeSet
     : public RBTree<Value, Comp, Alloc,
                     SetInterface<TreeSet<Value, Comp, Alloc>, Value, RBTreeIterator<Value>, meta::ConstIterator<RBTreeIterator<Value>>,

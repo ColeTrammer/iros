@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/container/intrusive/prelude.h>
+#include <di/platform/prelude.h>
 #include <di/sync/atomic.h>
 #include <di/sync/stop_token/forward_declaration.h>
 #include <di/sync/stop_token/in_place_stop_callback_base.h>
@@ -33,13 +34,20 @@ public:
             return false;
         }
 
+        // Remember the thread id which requested the stop.
+        m_stopper_thread = get_current_thread_id();
+
         // With the lock now aquired, iterate through each stop callback.
         while (!m_callbacks.empty()) {
             auto& callback = *m_callbacks.front();
 
             // Mark the callback as being executed, with relaxed memory order
             // since this is synchronized by the spin lock.
-            callback.m_going_to_execute.store(true, MemoryOrder::Relaxed);
+            bool did_destroy_itself = false;
+            callback.m_did_destruct_in_same_thread.store(util::address_of(did_destroy_itself), MemoryOrder::Relaxed);
+
+            // Remove the current callback from the list.
+            m_callbacks.pop_front();
 
             // Unlock the list, allowing callback destructors the ability to
             // lock the list and remove themselves.
@@ -48,16 +56,13 @@ public:
             // Execute the callback.
             callback.execute();
 
-            // Mark the callback as already done.
-            callback.m_already_executed.store(true, MemoryOrder::Release);
+            // Mark the callback as already done, if the object still exists.
+            if (!did_destroy_itself) {
+                callback.m_already_executed.store(true, MemoryOrder::Release);
+            }
 
             // Reaquire the lock.
             lock(true);
-
-            // Remove the first callback in the list. This must be the one
-            // that was just executed, because callbacks won't remove themselves
-            // once we set the m_going_to_execute flag.
-            m_callbacks.pop_front();
         }
 
         unlock(true);
@@ -88,7 +93,9 @@ private:
         // If a stop request occurred, synchronize on the spin lock.
         lock(true);
 
-        bool going_to_be_executed = callback->m_going_to_execute.load(MemoryOrder::Relaxed);
+        auto stopper_thread = m_stopper_thread;
+        auto* did_destruct_in_same_thread = callback->m_did_destruct_in_same_thread.load(MemoryOrder::Relaxed);
+        bool going_to_be_executed = !!did_destruct_in_same_thread;
 
         // If we're not going to be executed, just remove immediately.
         if (!going_to_be_executed) {
@@ -98,13 +105,16 @@ private:
         // Now unlock the spin lock.
         unlock(true);
 
-        // If we were being executed, wait for that to complete before finishing.
-        // FIXME: handle the case where the thread which called this destructor is
-        //        the same as the thread that called request_stop(), by not spin waiting
-        //        here, and notifying the execute loop that this object no longer exists.
         if (going_to_be_executed) {
-            while (!callback->m_already_executed.load(MemoryOrder::Acquire))
-                ;
+            // If we are being executed by the current thread, remove ourselves from the
+            // list and don't wait.
+            if (stopper_thread == get_current_thread_id()) {
+                *did_destruct_in_same_thread = true;
+            } else {
+                // Wait for the callback's execution to complete before finishing.
+                while (!callback->m_already_executed.load(MemoryOrder::Acquire))
+                    ;
+            }
         }
     }
 
@@ -138,5 +148,6 @@ private:
 
     mutable container::IntrusiveList<detail::InPlaceStopCallbackBase> m_callbacks;
     mutable Atomic<u8> m_state;
+    ThreadId m_stopper_thread {};
 };
 }
