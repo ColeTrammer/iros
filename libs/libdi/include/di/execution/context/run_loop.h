@@ -103,13 +103,17 @@ private:
         // FIXME: block instead of busy polling the queue when it is empty.
         for (;;) {
             auto [operation, is_stopped] = m_state.with_lock([](State& state) -> Tuple<OperationStateBase*, bool> {
+                // NOTE: even if a stop is requested, we must continue first empty the queue
+                //       before returning stopping execution. Otherwise, the receiver contract
+                //       will be violated (operation state will be destroyed without completion
+                //       ever occuring).
+                if (!state.queue.empty()) {
+                    return make_tuple(util::address_of(*state.queue.pop()), false);
+                }
                 if (state.stopped) {
                     return make_tuple(nullptr, true);
                 }
-                if (state.queue.empty()) {
-                    return make_tuple(nullptr, false);
-                }
-                return make_tuple(util::address_of(*state.queue.pop()), false);
+                return make_tuple(nullptr, false);
             });
 
             if (is_stopped) {

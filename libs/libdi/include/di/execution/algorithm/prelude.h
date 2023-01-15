@@ -19,5 +19,7 @@
 
 namespace di {
 using execution::sync_wait;
+using execution::sync_wait_on;
 using execution::sync_wait_with_variant;
+using execution::sync_wait_with_variant_on;
 }

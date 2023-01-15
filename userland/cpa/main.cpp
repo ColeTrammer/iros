@@ -44,8 +44,7 @@ di::Result<void> main(Args const& args) {
                            });
                 });
 
-    // FIXME: this should call a sync_wait_with_context function.
-    return di::sync_wait(di::move(task)) % di::into_void;
+    return di::sync_wait_on(context, di::move(task)) % di::into_void;
 }
 }
 
