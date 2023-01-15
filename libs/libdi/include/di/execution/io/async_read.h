@@ -8,10 +8,10 @@
 namespace di::execution {
 namespace async_read_ns {
     struct Function {
-        template<concepts::Scheduler Sched>
-        requires(concepts::TagInvocable<Function, Sched, int, Span<Byte>, Optional<u64>>)
-        concepts::SenderOf<NoEnv, size_t> auto operator()(Sched&& scheduler, int file_descriptor, Span<Byte> buffer, Optional<u64> offset = {}) const {
-            return function::tag_invoke(*this, util::forward<Sched>(scheduler), file_descriptor, buffer, offset);
+        template<typename File>
+        requires(concepts::TagInvocable<Function, File, Span<Byte>, Optional<u64>>)
+        concepts::SenderOf<NoEnv, size_t> auto operator()(File&& handle, Span<Byte> buffer, Optional<u64> offset = {}) const {
+            return function::tag_invoke(*this, util::forward<File>(handle), buffer, offset);
         }
     };
 }

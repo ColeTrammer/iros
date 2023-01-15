@@ -24,6 +24,10 @@ public:
     constexpr explicit operator bool() const { return valid(); }
 
     constexpr int file_descriptor() const { return m_fd; }
+    constexpr int leak_file_descriptor() {
+        m_owned = Owned::No;
+        return m_fd;
+    }
 
     di::Result<void> close();
 

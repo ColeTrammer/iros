@@ -232,14 +232,14 @@ namespace with_ns {
     using Sender = meta::Type<SenderT<Send, Fun>>;
 
     struct Function {
-        template<concepts::SingleSender Send, concepts::Movable Fun>
-        requires(concepts::AsyncDestroyable<meta::SingleSenderValueType<Send>> &&
-                 requires {
-                     {
-                         function::invoke(util::declval<meta::Decay<Fun>&>(), util::declval<meta::SingleSenderValueType<Send>&>())
-                         } -> concepts::Sender;
-                 })
-        concepts::Sender auto operator()(Send&& sender, Fun&& function) const {
+        template</* concepts::SingleSender */ typename Send, /* concepts::Movable */ typename Fun>
+        // requires(concepts::AsyncDestroyable<meta::SingleSenderValueType<Send>> &&
+        //          requires {
+        //              {
+        //                  function::invoke(util::declval<meta::Decay<Fun>&>(), util::declval<meta::SingleSenderValueType<Send>&>())
+        //                  } -> concepts::Sender;
+        //          })
+        /* concepts::Sender */ auto operator()(Send&& sender, Fun&& function) const {
             if constexpr (requires {
                               function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender), util::forward<Send>(sender),
                                                    util::forward<Fun>(function));

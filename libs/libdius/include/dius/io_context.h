@@ -46,96 +46,119 @@ private:
     struct Scheduler;
 
 public:
-    struct AsyncReadSender {
+    class AsyncFile {
     public:
-        using CompletionSignatures = di::CompletionSignatures<di::SetValue(size_t), di::SetError(di::Error)>;
-
-        IoContext* parent;
-        int file_descriptor;
-        di::Span<di::Byte> buffer;
-        di::Optional<u64> offset;
+        explicit AsyncFile(IoContext* parent, int fd) : m_parent(parent), m_fd(fd) {}
 
     private:
-        template<typename Rec>
-        struct OperationStateT {
-            struct Type {
-                IoContext* parent;
-                int file_descriptor;
-                di::Span<di::Byte> buffer;
-                di::Optional<u64> offset;
-                [[no_unique_address]] Rec receiver;
+        struct ReadSender {
+        public:
+            using CompletionSignatures = di::CompletionSignatures<di::SetValue(size_t), di::SetError(di::Error)>;
 
-            private:
-                friend void tag_invoke(di::Tag<execution::start>, Type& self) {
-                    auto sync_file = SyncFile(SyncFile::Owned::No, self.file_descriptor);
-                    auto result = self.offset ? sync_file.read(self.offset.value(), self.buffer) : sync_file.read(self.buffer);
-                    if (!result.has_value()) {
-                        execution::set_error(di::move(self.receiver), di::move(result).error());
-                    } else {
-                        execution::set_value(di::move(self.receiver), di::move(result).value());
+            IoContext* parent;
+            int file_descriptor;
+            di::Span<di::Byte> buffer;
+            di::Optional<u64> offset;
+
+        private:
+            template<typename Rec>
+            struct OperationStateT {
+                struct Type {
+                    IoContext* parent;
+                    int file_descriptor;
+                    di::Span<di::Byte> buffer;
+                    di::Optional<u64> offset;
+                    [[no_unique_address]] Rec receiver;
+
+                private:
+                    friend void tag_invoke(di::Tag<execution::start>, Type& self) {
+                        auto sync_file = SyncFile(SyncFile::Owned::No, self.file_descriptor);
+                        auto result = self.offset ? sync_file.read(self.offset.value(), self.buffer) : sync_file.read(self.buffer);
+                        if (!result.has_value()) {
+                            execution::set_error(di::move(self.receiver), di::move(result).error());
+                        } else {
+                            execution::set_value(di::move(self.receiver), di::move(result).value());
+                        }
                     }
-                }
+                };
             };
+
+            template<di::ReceiverOf<CompletionSignatures> Receiver>
+            using OperationState = di::meta::Type<OperationStateT<Receiver>>;
+
+            template<di::ReceiverOf<CompletionSignatures> Receiver>
+            friend auto tag_invoke(di::Tag<execution::connect>, ReadSender self, Receiver receiver) {
+                return OperationState<Receiver> { self.parent, self.file_descriptor, self.buffer, self.offset, di::move(receiver) };
+            }
+
+            template<typename CPO>
+            constexpr friend auto tag_invoke(execution::GetCompletionScheduler<CPO>, ReadSender const& self) {
+                return self.parent->get_scheduler();
+            }
         };
 
-        template<di::ReceiverOf<CompletionSignatures> Receiver>
-        using OperationState = di::meta::Type<OperationStateT<Receiver>>;
+        struct WriteSender {
+        public:
+            using CompletionSignatures = di::CompletionSignatures<di::SetValue(size_t), di::SetError(di::Error)>;
 
-        template<di::ReceiverOf<CompletionSignatures> Receiver>
-        friend auto tag_invoke(di::Tag<execution::connect>, AsyncReadSender self, Receiver receiver) {
-            return OperationState<Receiver> { self.parent, self.file_descriptor, self.buffer, self.offset, di::move(receiver) };
-        }
+            IoContext* parent;
+            int file_descriptor;
+            di::Span<di::Byte const> buffer;
+            di::Optional<u64> offset;
 
-        template<typename CPO>
-        constexpr friend auto tag_invoke(execution::GetCompletionScheduler<CPO>, AsyncReadSender const& self) {
-            return self.parent->get_scheduler();
-        }
-    };
+        private:
+            template<typename Rec>
+            struct OperationStateT {
+                struct Type {
+                    IoContext* parent;
+                    int file_descriptor;
+                    di::Span<di::Byte const> buffer;
+                    di::Optional<u64> offset;
+                    [[no_unique_address]] Rec receiver;
 
-    struct AsyncWriteSender {
-    public:
-        using CompletionSignatures = di::CompletionSignatures<di::SetValue(size_t), di::SetError(di::Error)>;
-
-        IoContext* parent;
-        int file_descriptor;
-        di::Span<di::Byte const> buffer;
-        di::Optional<u64> offset;
-
-    private:
-        template<typename Rec>
-        struct OperationStateT {
-            struct Type {
-                IoContext* parent;
-                int file_descriptor;
-                di::Span<di::Byte const> buffer;
-                di::Optional<u64> offset;
-                [[no_unique_address]] Rec receiver;
-
-            private:
-                friend void tag_invoke(di::Tag<execution::start>, Type& self) {
-                    auto sync_file = SyncFile(SyncFile::Owned::No, self.file_descriptor);
-                    auto result = self.offset ? sync_file.write(self.offset.value(), self.buffer) : sync_file.write(self.buffer);
-                    if (!result) {
-                        execution::set_error(di::move(self.receiver), di::move(result).error());
-                    } else {
-                        execution::set_value(di::move(self.receiver), di::move(result).value());
+                private:
+                    friend void tag_invoke(di::Tag<execution::start>, Type& self) {
+                        auto sync_file = SyncFile(SyncFile::Owned::No, self.file_descriptor);
+                        auto result = self.offset ? sync_file.write(self.offset.value(), self.buffer) : sync_file.write(self.buffer);
+                        if (!result) {
+                            execution::set_error(di::move(self.receiver), di::move(result).error());
+                        } else {
+                            execution::set_value(di::move(self.receiver), di::move(result).value());
+                        }
                     }
-                }
+                };
             };
+
+            template<di::ReceiverOf<CompletionSignatures> Receiver>
+            using OperationState = di::meta::Type<OperationStateT<Receiver>>;
+
+            template<di::ReceiverOf<CompletionSignatures> Receiver>
+            friend auto tag_invoke(di::Tag<execution::connect>, WriteSender self, Receiver receiver) {
+                return OperationState<Receiver> { self.parent, self.file_descriptor, self.buffer, self.offset, di::move(receiver) };
+            }
+
+            template<typename CPO>
+            constexpr friend auto tag_invoke(execution::GetCompletionScheduler<CPO>, WriteSender const& self) {
+                return self.parent->get_scheduler();
+            }
         };
 
-        template<di::ReceiverOf<CompletionSignatures> Receiver>
-        using OperationState = di::meta::Type<OperationStateT<Receiver>>;
-
-        template<di::ReceiverOf<CompletionSignatures> Receiver>
-        friend auto tag_invoke(di::Tag<execution::connect>, AsyncWriteSender self, Receiver receiver) {
-            return OperationState<Receiver> { self.parent, self.file_descriptor, self.buffer, self.offset, di::move(receiver) };
+        friend auto tag_invoke(di::Tag<di::execution::async_read>, AsyncFile self, di::Span<di::Byte> buffer, di::Optional<u64> offset) {
+            return ReadSender { self.m_parent, self.m_fd, buffer, offset };
         }
 
-        template<typename CPO>
-        constexpr friend auto tag_invoke(execution::GetCompletionScheduler<CPO>, AsyncWriteSender const& self) {
-            return self.parent->get_scheduler();
+        friend auto tag_invoke(di::Tag<di::execution::async_write>, AsyncFile self, di::Span<di::Byte const> buffer,
+                               di::Optional<u64> offset) {
+            return WriteSender { self.m_parent, self.m_fd, buffer, offset };
         }
+
+        friend auto tag_invoke(di::Tag<di::execution::async_destroy_in_place>, di::InPlaceType<AsyncFile>, AsyncFile& self) {
+            auto file = SyncFile(SyncFile::Owned::Yes, self.m_fd);
+            return di::execution::just();
+        }
+
+        IoContext* m_parent { nullptr };
+        int m_fd { -1 };
     };
 
 private:
@@ -158,20 +181,60 @@ private:
             }
         };
 
+        struct OpenSender {
+        public:
+            using CompletionSignatures = di::CompletionSignatures<di::SetValue(AsyncFile), di::SetError(di::Error)>;
+
+            IoContext* parent;
+            di::PathView path;
+            OpenMode mode;
+            u16 create_mode;
+
+        private:
+            template<typename Rec>
+            struct OperationStateT {
+                struct Type {
+                    IoContext* parent;
+                    di::PathView path;
+                    OpenMode mode;
+                    u16 create_mode;
+                    [[no_unique_address]] Rec receiver;
+
+                private:
+                    friend void tag_invoke(di::Tag<execution::start>, Type& self) {
+                        auto result = open_sync(self.path, self.mode, self.create_mode);
+                        if (!result) {
+                            execution::set_error(di::move(self.receiver), di::move(result).error());
+                        } else {
+                            execution::set_value(di::move(self.receiver), AsyncFile { self.parent, result->leak_file_descriptor() });
+                        }
+                    }
+                };
+            };
+
+            template<di::ReceiverOf<CompletionSignatures> Receiver>
+            using OperationState = di::meta::Type<OperationStateT<Receiver>>;
+
+            template<di::ReceiverOf<CompletionSignatures> Receiver>
+            friend auto tag_invoke(di::Tag<execution::connect>, OpenSender self, Receiver receiver) {
+                return OperationState<Receiver> { self.parent, self.path, self.mode, self.create_mode, di::move(receiver) };
+            }
+
+            template<typename CPO>
+            constexpr friend auto tag_invoke(execution::GetCompletionScheduler<CPO>, OpenSender const& self) {
+                return self.parent->get_scheduler();
+            }
+        };
+
     public:
         IoContext* parent { nullptr };
 
     private:
         friend auto tag_invoke(di::Tag<execution::schedule>, Scheduler const& self) { return Sender { self.parent }; }
 
-        friend auto tag_invoke(di::Tag<execution::async_read>, Scheduler const& self, int file_descriptor, di::Span<di::Byte> buffer,
-                               di::Optional<u64> offset) {
-            return AsyncReadSender { self.parent, file_descriptor, buffer, offset };
-        }
-
-        friend auto tag_invoke(di::Tag<execution::async_write>, Scheduler const& self, int file_descriptor, di::Span<di::Byte const> buffer,
-                               di::Optional<u64> offset) {
-            return AsyncWriteSender { self.parent, file_descriptor, buffer, offset };
+        friend auto tag_invoke(di::Tag<execution::async_open>, Scheduler const& self, di::PathView path, OpenMode mode,
+                               u16 create_mode = 0666) {
+            return OpenSender { self.parent, path, mode, create_mode };
         }
 
         constexpr friend bool operator==(Scheduler const&, Scheduler const&) = default;
