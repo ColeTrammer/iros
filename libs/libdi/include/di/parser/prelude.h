@@ -7,6 +7,7 @@
 #include <di/parser/basic/match_one_or_more.h>
 #include <di/parser/basic/match_zero_or_more.h>
 #include <di/parser/basic/string.h>
+#include <di/parser/combinator/alternation.h>
 #include <di/parser/combinator/and_then.h>
 #include <di/parser/combinator/ignore.h>
 #include <di/parser/combinator/optional.h>
@@ -23,6 +24,9 @@
 #include <di/parser/parse.h>
 #include <di/parser/parse_partial.h>
 #include <di/parser/parse_unchecked.h>
+#include <di/parser/run_parser.h>
+#include <di/parser/run_parser_partial.h>
+#include <di/parser/run_parser_unchecked.h>
 #include <di/parser/string_view_parser_context.h>
 
 namespace di {
@@ -31,4 +35,7 @@ using parser::create_parser_in_place;
 using parser::parse;
 using parser::parse_partial;
 using parser::parse_unchecked;
+using parser::run_parser;
+using parser::run_parser_partial;
+using parser::run_parser_unchecked;
 }

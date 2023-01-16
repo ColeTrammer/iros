@@ -53,7 +53,16 @@ constexpr void integral_constant() {
     ASSERT_EQ(4161_zic, 4161u);
 }
 
+constexpr void alternation() {
+    auto parser = di::parser::integer<i32>() | di::parser::match_one('='_m);
+
+    ASSERT_EQ(*di::run_parser(parser, "128"_sv), 128);
+    ASSERT_EQ(*di::run_parser(parser, "="_sv), U'=');
+    ASSERT(!di::run_parser(parser, "!"_sv));
+}
+
 TEST_CONSTEXPR(parser, set, set)
 TEST_CONSTEXPR(parser, code_point, code_point)
 TEST_CONSTEXPR(parser, integer, integer)
 TEST_CONSTEXPR(parser, integral_constant, integral_constant)
+TEST_CONSTEXPR(parser, alternation, alternation)
