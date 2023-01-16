@@ -56,6 +56,9 @@ constexpr void void_error() {
     static_assert(di::concepts::Monad<di::Expected>);
     static_assert(di::concepts::MonadInstance<di::Expected<int, void>>);
     static_assert(di::concepts::MonadInstance<di::Expected<int, void>&>);
+    static_assert(di::concepts::MonadInstance<di::Expected<int, void>&&>);
+    static_assert(di::concepts::MonadInstance<di::Expected<int&, void>&>);
+    static_assert(di::concepts::MonadInstance<di::Expected<int&, void>&&>);
 
     auto y = x % [](auto y) {
         return y + 4;

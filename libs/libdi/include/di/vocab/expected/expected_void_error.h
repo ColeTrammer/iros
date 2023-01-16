@@ -175,7 +175,7 @@ private:
             function::invoke(util::forward<F>(function), util::forward<Self>(self).value());
             return {};
         } else {
-            return function::invoke(util::forward<F>(function), util::forward<Self>(self).value());
+            return Expected<U, void>(in_place, function::invoke(util::forward<F>(function), util::forward<Self>(self).value()));
         }
     }
 

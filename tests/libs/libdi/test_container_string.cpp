@@ -128,9 +128,20 @@ constexpr void readonly_api() {
     // ASSERT_EQ(*s.find_last_not_of(u8"o達!"_sv), U'友');
 }
 
+static void null_terminated() {
+    auto s = di::TransparentString {};
+
+    s.push_back('a');
+    ASSERT_EQ(::strlen(s.c_str()), 1u);
+
+    s.push_back('b');
+    ASSERT_EQ(::strlen(s.c_str()), 2u);
+}
+
 TEST_CONSTEXPR(container_string, basic, basic)
 TEST_CONSTEXPR(container_string, push_back, push_back)
 TEST_CONSTEXPR(container_string, to, to)
 TEST_CONSTEXPR(container_string, erased, erased)
-TEST_CONSTEXPRX(container_string, utf8, utf8)
+TEST_CONSTEXPR(container_string, utf8, utf8)
 TEST_CONSTEXPR(container_string, readonly_api, readonly_api)
+TEST_CONSTEXPRX(container_string, null_terminated, null_terminated)

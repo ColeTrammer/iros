@@ -47,16 +47,31 @@ namespace detail {
             }
         }
     };
+
+    struct NullTerminatedFunction {
+        template<typename T>
+        constexpr bool operator()(InPlaceType<T>) const {
+            if constexpr (concepts::TagInvocable<NullTerminatedFunction, InPlaceType<T>>) {
+                return function::tag_invoke(*this, in_place_type<T>);
+            } else {
+                return false;
+            }
+        }
+    };
 }
 
 constexpr inline auto universal = detail::UniversalFunction {};
 constexpr inline auto contiguous = detail::ContiguousFunction {};
+constexpr inline auto null_terminated = detail::NullTerminatedFunction {};
 
 template<typename T>
 concept Universal = universal(in_place_type<meta::RemoveCVRef<T>>);
 
 template<typename T>
 concept Contiguous = contiguous(in_place_type<meta::RemoveCVRef<T>>);
+
+template<typename T>
+concept NullTerminated = null_terminated(in_place_type<meta::RemoveCVRef<T>>);
 
 namespace detail {
     struct ValidateFunction {
