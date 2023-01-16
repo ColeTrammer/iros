@@ -23,7 +23,7 @@ di::Result<void> main(Args const& args) {
     auto destination = TRY_OR_ERROR_LOG(dius::open_sync(args.destination, dius::OpenMode::WriteClobber),
                                         "Failed to open file `{}' for writing: {}"_sv, args.destination);
 
-    auto context = dius::IoContext {};
+    auto context = TRY_OR_ERROR_LOG(di::create<dius::IoContext>(), "Failed to create execution context: {}"_sv);
     auto scheduler = context.get_scheduler();
 
     auto buffer = di::StaticVector<di::Byte, decltype(131072_zic)> {};

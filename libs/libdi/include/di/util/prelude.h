@@ -17,7 +17,9 @@
 #include <di/util/initializer_list.h>
 #include <di/util/is_constant_evaluated.h>
 #include <di/util/maybe_clone.h>
+#include <di/util/movable_box.h>
 #include <di/util/move.h>
+#include <di/util/rebindable_box.h>
 #include <di/util/reference_wrapper.h>
 #include <di/util/scope_exit.h>
 #include <di/util/source_location.h>
@@ -43,6 +45,8 @@ using util::InitializerList;
 using util::Badge;
 using util::DeferConstruct;
 using util::Immovable;
+using util::MovableBox;
+using util::RebindableBox;
 using util::ScopeExit;
 
 using util::SourceLocation;

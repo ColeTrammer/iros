@@ -110,7 +110,7 @@ namespace let_ns {
             void friend tag_invoke(types::Tag<start>, Type& self) { execution::start(self.m_op_state2); }
 
             [[no_unique_address]] Data<CPO, Rec, Fun, Completions> m_data;
-            [[no_unique_address]] meta::ConnectResult<Send, Receiver<CPO, Rec, Fun, Completions>> m_op_state2;
+            meta::ConnectResult<Send, Receiver<CPO, Rec, Fun, Completions>> m_op_state2;
         };
     };
 

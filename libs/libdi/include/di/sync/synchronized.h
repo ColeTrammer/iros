@@ -29,6 +29,8 @@ public:
     requires(concepts::ConstructibleFrom<Value, Args...>)
     constexpr explicit Synchronized(InPlace, Args&&... args) : m_value(util::forward<Args>(args)...) {}
 
+    Synchronized(Synchronized&&) = delete;
+
     template<concepts::Invocable<Value&> Fun>
     constexpr meta::InvokeResult<Fun, Value&> with_lock(Fun&& function) {
         auto guard = ScopedLock(m_lock);

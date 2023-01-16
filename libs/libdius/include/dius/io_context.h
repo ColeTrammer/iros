@@ -1,11 +1,15 @@
 #pragma once
 
 #include <di/prelude.h>
+#include <dius/linux/io_uring_context.h>
 #include <dius/sync_file.h>
 
 namespace dius {
 namespace execution = di::execution;
 
+#ifdef DIUS_HAVE_LIBURING
+using IoContext = linux_::IoUringContext;
+#else
 class IoContext {
 private:
     struct OperationStateBase : di::IntrusiveForwardListElement<> {
@@ -241,13 +245,18 @@ private:
     };
 
     struct State {
+        State() {};
+
         di::Queue<OperationStateBase, di::IntrusiveForwardList<OperationStateBase>> queue;
         bool stopped { false };
     };
 
+    di::Synchronized<State>& state() { return m_state.value(); }
+
 public:
-    IoContext() {}
-    IoContext(IoContext&&) = delete;
+    static di::Result<IoContext> create() { return IoContext {}; }
+
+    IoContext(IoContext&&) = default;
 
     Scheduler get_scheduler() { return Scheduler { this }; }
 
@@ -258,16 +267,18 @@ public:
     }
 
     void finish() {
-        m_state.with_lock([](State& state) {
+        state().with_lock([](State& state) {
             state.stopped = true;
         });
     }
 
 private:
+    IoContext() {}
+
     OperationStateBase* pop_front() {
         // FIXME: block instead of busy polling the queue when it is empty.
         for (;;) {
-            auto [operation, is_stopped] = m_state.with_lock([](State& state) -> di::Tuple<OperationStateBase*, bool> {
+            auto [operation, is_stopped] = state().with_lock([](State& state) -> di::Tuple<OperationStateBase*, bool> {
                 if (!state.queue.empty()) {
                     return di::make_tuple(di::address_of(*state.queue.pop()), false);
                 }
@@ -286,11 +297,12 @@ private:
     }
 
     void push_back(OperationStateBase* operation) {
-        m_state.with_lock([&](State& state) {
+        state().with_lock([&](State& state) {
             state.queue.push(*operation);
         });
     }
 
-    di::Synchronized<State, di::sync::DumbSpinlock> m_state;
+    di::MovableBox<di::Synchronized<State>> m_state;
 };
+#endif
 }
