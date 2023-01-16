@@ -88,25 +88,25 @@ public:
 
     template<typename F>
     requires(concepts::Invocable<decltype(fmap_right), Self&, F>)
-    constexpr decltype(auto) transform_or(F&& function) & {
+    constexpr decltype(auto) transform_error(F&& function) & {
         return fmap_right(static_cast<Self&>(*this), util::forward<F>(function));
     }
 
     template<typename F>
     requires(concepts::Invocable<decltype(fmap_right), Self const&, F>)
-    constexpr decltype(auto) transform_or(F&& function) const& {
+    constexpr decltype(auto) transform_error(F&& function) const& {
         return fmap_right(static_cast<Self const&>(*this), util::forward<F>(function));
     }
 
     template<typename F>
     requires(concepts::Invocable<decltype(fmap_right), Self &&, F>)
-    constexpr decltype(auto) transform_or(F&& function) && {
+    constexpr decltype(auto) transform_error(F&& function) && {
         return fmap_right(static_cast<Self&&>(*this), util::forward<F>(function));
     }
 
     template<typename F>
     requires(concepts::Invocable<decltype(fmap_right), Self const &&, F>)
-    constexpr decltype(auto) transform_or(F&& function) const&& {
+    constexpr decltype(auto) transform_error(F&& function) const&& {
         return fmap_right(static_cast<Self const&&>(*this), util::forward<F>(function));
     }
 

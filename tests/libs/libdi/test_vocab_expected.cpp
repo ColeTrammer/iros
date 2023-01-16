@@ -37,7 +37,7 @@ constexpr void void_value() {
     });
     ASSERT(v.has_value());
 
-    auto q = z.transform_or([](auto) {
+    auto q = z.transform_error([](auto) {
         return 8;
     });
     ASSERT_EQ(q, di::Unexpected { 8 });
