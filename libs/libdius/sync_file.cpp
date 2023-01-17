@@ -49,6 +49,14 @@ di::Result<size_t> SyncFile::write(u64 offset, di::Span<di::Byte const> data) co
     return data.size();
 }
 
+di::Result<MemoryRegion> SyncFile::map(u64 offset, size_t size, Protection protection, MapFlags flags) const {
+    auto result = ::mmap(nullptr, size, di::to_underlying(protection), di::to_underlying(flags), m_fd, offset);
+    if (result == reinterpret_cast<void*>(-1)) {
+        return di::Unexpected(PosixError(errno));
+    }
+    return MemoryRegion(di::Span { reinterpret_cast<di::Byte*>(result), size });
+}
+
 di::Result<SyncFile> open_sync(di::PathView path, OpenMode open_mode, u16 create_mode) {
     auto open_mode_flags = [&] {
         switch (open_mode) {

@@ -1,8 +1,34 @@
 #pragma once
 
 #include <di/prelude.h>
+#include <dius/memory_region.h>
+
+#include <sys/mman.h>
 
 namespace dius {
+enum class Protection : int {
+    None = PROT_NONE,
+    Executable = PROT_EXEC,
+    Readable = PROT_READ,
+    Writeable = PROT_WRITE,
+};
+
+DI_DEFINE_ENUM_BITWISE_OPERATIONS(Protection)
+
+enum class MapFlags : int {
+    None = 0,
+    Shared = MAP_SHARED,
+    Private = MAP_PRIVATE,
+    Fixed = MAP_FIXED,
+    Anonymous = MAP_ANON,
+    Stack = MAP_STACK,
+#ifdef MAP_POPULATE
+    Populate = MAP_POPULATE,
+#endif
+};
+
+DI_DEFINE_ENUM_BITWISE_OPERATIONS(MapFlags)
+
 class SyncFile {
 public:
     enum class Owned { Yes, No };
@@ -35,6 +61,8 @@ public:
     di::Result<size_t> read(di::Span<di::Byte>) const;
     di::Result<size_t> write(u64 offset, di::Span<di::Byte const>) const;
     di::Result<size_t> write(di::Span<di::Byte const>) const;
+
+    di::Result<MemoryRegion> map(u64 offset, size_t size, Protection protection, MapFlags flags) const;
 
     di::Result<void> flush() const { return {}; }
 

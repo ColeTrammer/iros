@@ -4,6 +4,7 @@
 #include <di/util/as_const_pointer.h>
 #include <di/util/badge.h>
 #include <di/util/bit_cast.h>
+#include <di/util/bitwise_enum.h>
 #include <di/util/clone.h>
 #include <di/util/compile_time_fail.h>
 #include <di/util/coroutine.h>

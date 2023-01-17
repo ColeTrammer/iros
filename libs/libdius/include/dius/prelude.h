@@ -4,3 +4,4 @@
 #include <dius/io_context.h>
 #include <dius/log.h>
 #include <dius/main.h>
+#include <dius/memory_region.h>

@@ -2,6 +2,7 @@ include(ExternalProject)
 
 set(SOURCES
     di_assert_impl.cpp
+    memory_region.cpp
     sync_file.cpp
 )
 
