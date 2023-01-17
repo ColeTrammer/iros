@@ -18,11 +18,6 @@ struct Args {
         }))
 
 di::Result<void> main(Args const& args) {
-    auto source = TRY_OR_ERROR_LOG(dius::open_sync(args.source, dius::OpenMode::Readonly), "Failed to open file `{}' for reading: {}"_sv,
-                                   args.source);
-    auto destination = TRY_OR_ERROR_LOG(dius::open_sync(args.destination, dius::OpenMode::WriteClobber),
-                                        "Failed to open file `{}' for writing: {}"_sv, args.destination);
-
     auto context = TRY_OR_ERROR_LOG(di::create<dius::IoContext>(), "Failed to create execution context: {}"_sv);
     auto scheduler = context.get_scheduler();
 

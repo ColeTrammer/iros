@@ -68,11 +68,12 @@ public:
     IntrusiveForwardList& operator=(IntrusiveForwardList const&) = delete;
 
     constexpr IntrusiveForwardList& operator=(IntrusiveForwardList&& other) {
-        set_head(util::exchange(other.m_head.next, nullptr));
-        m_tail = util::exchange(other.m_tail, util::address_of(other.m_head));
+        m_head.next = util::exchange(other.m_head.next, nullptr);
+        m_tail = other.m_tail;
         if (empty()) {
             reset_tail();
         }
+        other.reset_tail();
         return *this;
     }
 

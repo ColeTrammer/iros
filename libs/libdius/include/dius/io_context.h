@@ -7,7 +7,7 @@
 namespace dius {
 namespace execution = di::execution;
 
-#ifdef DIUS_HAVE_LIBURING
+#ifdef __linux__
 using IoContext = linux_::IoUringContext;
 #else
 class IoContext {

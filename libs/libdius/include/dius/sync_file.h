@@ -33,6 +33,8 @@ class SyncFile {
 public:
     enum class Owned { Yes, No };
 
+    constexpr SyncFile() {};
+
     constexpr explicit SyncFile(Owned owned, int fd) : m_owned(owned), m_fd(fd) {}
 
     constexpr SyncFile(SyncFile&& other) : m_owned(di::exchange(other.m_owned, Owned::No)), m_fd(di::exchange(other.m_fd, -1)) {}

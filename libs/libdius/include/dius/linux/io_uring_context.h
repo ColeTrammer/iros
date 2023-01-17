@@ -1,13 +1,12 @@
 #pragma once
 
-#ifdef DIUS_HAVE_LIBURING
+#ifdef __linux__
 
 #include <di/prelude.h>
 #include <dius/error.h>
+#include <dius/linux/io_uring.h>
 #include <dius/log.h>
 #include <dius/sync_file.h>
-
-#include <liburing.h>
 
 namespace dius::linux_ {
 struct IoUringContext;
@@ -15,7 +14,7 @@ struct IoUringContextImpl;
 struct OperationStateBase;
 struct IoUringScheduler;
 
-template<di::concepts::Invocable<io_uring_sqe*> Fun>
+template<di::concepts::Invocable<io_uring::SQE*> Fun>
 static void enqueue_io_operation(IoUringContext*, OperationStateBase* op, Fun&& function);
 
 void enqueue_operation(IoUringContext*, OperationStateBase*);
@@ -25,7 +24,7 @@ IoUringScheduler get_scheduler(IoUringContext*);
 struct OperationStateBase : di::IntrusiveForwardListElement<> {
 public:
     virtual void execute() = 0;
-    virtual void did_complete(io_uring_cqe const*) {}
+    virtual void did_complete(io_uring::CQE const*) {}
 };
 
 struct ReadSomeSender {
@@ -54,12 +53,16 @@ private:
                 } else {
                     // Enqueue io_uring sqe with the read request.
                     enqueue_io_operation(m_parent, this, [&](auto* sqe) {
-                        io_uring_prep_read(sqe, m_file_descriptor, m_buffer.data(), m_buffer.size(), m_offset.value_or((u64) -1));
+                        sqe->opcode = IORING_OP_READ;
+                        sqe->fd = m_file_descriptor;
+                        sqe->off = m_offset.value_or((u64) -1);
+                        sqe->addr = reinterpret_cast<u64>(m_buffer.data());
+                        sqe->len = m_buffer.size();
                     });
                 }
             }
 
-            virtual void did_complete(io_uring_cqe const* cqe) override {
+            virtual void did_complete(io_uring::CQE const* cqe) override {
                 if (cqe->res < 0) {
                     di::execution::set_error(di::move(m_receiver), di::Error(PosixError(-cqe->res)));
                 } else {
@@ -117,14 +120,18 @@ private:
                 if (di::execution::get_stop_token(m_receiver).stop_requested()) {
                     di::execution::set_stopped(di::move(m_receiver));
                 } else {
-                    // Enqueue io_uring sqe with the read request.
+                    // Enqueue io_uring sqe with the write request.
                     enqueue_io_operation(m_parent, this, [&](auto* sqe) {
-                        io_uring_prep_write(sqe, m_file_descriptor, m_buffer.data(), m_buffer.size(), m_offset.value_or((u64) -1));
+                        sqe->opcode = IORING_OP_WRITE;
+                        sqe->fd = m_file_descriptor;
+                        sqe->off = m_offset.value_or((u64) -1);
+                        sqe->addr = reinterpret_cast<u64>(m_buffer.data());
+                        sqe->len = m_buffer.size();
                     });
                 }
             }
 
-            virtual void did_complete(io_uring_cqe const* cqe) override {
+            virtual void did_complete(io_uring::CQE const* cqe) override {
                 if (cqe->res < 0) {
                     di::execution::set_error(di::move(m_receiver), di::Error(PosixError(-cqe->res)));
                 } else {
@@ -211,28 +218,15 @@ public:
     IoUringScheduler get_scheduler();
 
     void run();
-    void finish();
+    void finish() { m_done = true; }
 
 private:
-    explicit IoUringContext(di::Box<IoUringContextImpl>);
+    IoUringContext(io_uring::IoUringHandle handle) : m_handle(di::move(handle)) {};
 
 public:
-    di::Box<IoUringContextImpl> m_pimpl;
-};
-
-struct IoUringContextImpl {
-    io_uring ring;
-    di::Queue<OperationStateBase, di::IntrusiveForwardList<OperationStateBase>> queue;
-    bool done { false };
-
-    IoUringContextImpl() = default;
-
-    IoUringContextImpl(IoUringContextImpl&&) = delete;
-
-    void run();
-    void finish() { done = true; }
-
-    ~IoUringContextImpl() { io_uring_queue_exit(&ring); }
+    io_uring::IoUringHandle m_handle;
+    di::Queue<OperationStateBase, di::IntrusiveForwardList<OperationStateBase>> m_queue;
+    bool m_done { false };
 };
 
 class AsyncFile {
@@ -319,56 +313,45 @@ private:
 };
 
 inline di::Result<IoUringContext> IoUringContext::create() {
-    auto pimpl = di::make_box<IoUringContextImpl>();
-
-    int res = io_uring_queue_init(256, &pimpl->ring, 0);
-    if (res < 0) {
-        return di::Unexpected(PosixError(-res));
-    }
-
-    return IoUringContext(di::move(pimpl));
+    return IoUringContext(TRY(io_uring::IoUringHandle::create()));
 }
-
-inline IoUringContext::IoUringContext(di::Box<IoUringContextImpl> pimpl) : m_pimpl(di::move(pimpl)) {}
 
 inline IoUringContext::~IoUringContext() {}
 
-inline void IoUringContextImpl::run() {
+inline void IoUringContext::run() {
     for (;;) {
         // Reap any pending completions.
-        io_uring_cqe* cqe;
-        while (!io_uring_peek_cqe(&ring, &cqe)) {
+        while (auto cqe = m_handle.get_next_cqe()) {
             auto* as_operation = reinterpret_cast<OperationStateBase*>(cqe->user_data);
-            as_operation->did_complete(cqe);
-            io_uring_cqe_seen(&ring, cqe);
+            as_operation->did_complete(cqe.data());
         }
 
         // Run locally available operations.
-        while (!queue.empty()) {
-            auto& item = *queue.pop();
+        while (!m_queue.empty()) {
+            auto& item = *m_queue.pop();
             item.execute();
         }
 
         // If we're done, we're done.
-        if (done) {
+        if (m_done) {
             break;
         }
 
         // Wait for some event to happen.
-        io_uring_submit_and_wait(&ring, 1);
+        (void) m_handle.submit_and_wait();
     }
 }
 
-template<di::concepts::Invocable<io_uring_sqe*> Fun>
+template<di::concepts::Invocable<io_uring::SQE*> Fun>
 static void enqueue_io_operation(IoUringContext* context, OperationStateBase* op, Fun&& function) {
-    auto* sqe = io_uring_get_sqe(&context->m_pimpl->ring);
+    auto sqe = context->m_handle.get_next_sqe();
     ASSERT(sqe);
-    di::invoke(di::move(function), sqe);
+    di::invoke(di::move(function), sqe.data());
     sqe->user_data = reinterpret_cast<uintptr_t>(op);
 }
 
 inline void enqueue_operation(IoUringContext* context, OperationStateBase* op) {
-    context->m_pimpl->queue.push(*op);
+    context->m_queue.push(*op);
 }
 
 inline IoUringScheduler get_scheduler(IoUringContext* context) {
@@ -377,14 +360,6 @@ inline IoUringScheduler get_scheduler(IoUringContext* context) {
 
 inline IoUringScheduler IoUringContext::get_scheduler() {
     return IoUringScheduler(this);
-}
-
-inline void IoUringContext::run() {
-    return m_pimpl->run();
-}
-
-inline void IoUringContext::finish() {
-    return m_pimpl->finish();
 }
 }
 #endif

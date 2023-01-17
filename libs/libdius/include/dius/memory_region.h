@@ -5,6 +5,8 @@
 namespace dius {
 class MemoryRegion {
 public:
+    MemoryRegion() = default;
+
     constexpr explicit MemoryRegion(di::Span<di::Byte> data) : m_data(data) {}
 
     constexpr MemoryRegion(MemoryRegion&& other) : m_data(di::exchange(other.m_data, {})) {}

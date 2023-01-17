@@ -74,6 +74,36 @@ public:
 
     constexpr Span span() const { return *this; }
 
+    template<concepts::TriviallyDestructible U>
+    requires(concepts::SameAs<Byte, T>)
+    Optional<U*> typed_pointer(size_t byte_offset) const {
+        if (byte_offset + sizeof(U) >= size()) {
+            return nullopt;
+        }
+        return reinterpret_cast<U*>(m_data + byte_offset);
+    }
+
+    template<concepts::TriviallyDestructible U>
+    requires(concepts::SameAs<Byte const, T>)
+    Optional<U const*> typed_pointer(size_t byte_offset) const {
+        if (byte_offset + sizeof(U) >= size()) {
+            return nullopt;
+        }
+        return reinterpret_cast<U const*>(m_data + byte_offset);
+    }
+
+    template<concepts::TriviallyDestructible U>
+    requires(concepts::SameAs<Byte, T>)
+    U* typed_pointer_unchecked(size_t byte_offset) const {
+        return reinterpret_cast<U*>(m_data + byte_offset);
+    }
+
+    template<concepts::TriviallyDestructible U>
+    requires(concepts::SameAs<Byte const, T>)
+    U const* typed_pointer_unchecked(size_t byte_offset) const {
+        return reinterpret_cast<U const*>(m_data + byte_offset);
+    }
+
 private:
     T* m_data { nullptr };
     types::size_t m_size { 0 };
