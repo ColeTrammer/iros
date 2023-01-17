@@ -70,6 +70,16 @@ const char *sys_errlist[] = { "Success",
                               "Unrecoverable state",
                               "Owner dead",
                               "Overflow",
+                              "Identifier removed",
+                              "Bad message",
+                              "Not a link",
+                              "No message in stream",
+                              "Not enough streams",
+                              "Not a stream",
+                              "Cancelled",
+                              "Protocol error",
+                              "Stream timeout",
+                              "Text file busy",
                               "Errno end" };
 
 int sys_nerr = EMAXERRNO;

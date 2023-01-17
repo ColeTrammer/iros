@@ -3,6 +3,7 @@
 #ifdef DIUS_HAVE_LIBURING
 
 #include <di/prelude.h>
+#include <dius/error.h>
 #include <dius/log.h>
 #include <dius/sync_file.h>
 
@@ -60,7 +61,7 @@ private:
 
             virtual void did_complete(io_uring_cqe const* cqe) override {
                 if (cqe->res < 0) {
-                    di::execution::set_error(di::move(m_receiver), di::Error(di::BasicError(-cqe->res)));
+                    di::execution::set_error(di::move(m_receiver), di::Error(PosixError(-cqe->res)));
                 } else {
                     di::execution::set_value(di::move(m_receiver), static_cast<size_t>(cqe->res));
                 }
@@ -125,7 +126,7 @@ private:
 
             virtual void did_complete(io_uring_cqe const* cqe) override {
                 if (cqe->res < 0) {
-                    di::execution::set_error(di::move(m_receiver), di::Error(di::BasicError(-cqe->res)));
+                    di::execution::set_error(di::move(m_receiver), di::Error(PosixError(-cqe->res)));
                 } else {
                     di::execution::set_value(di::move(m_receiver), static_cast<size_t>(cqe->res));
                 }
@@ -322,7 +323,7 @@ inline di::Result<IoUringContext> IoUringContext::create() {
 
     int res = io_uring_queue_init(256, &pimpl->ring, 0);
     if (res < 0) {
-        return di::Unexpected(di::BasicError(-res));
+        return di::Unexpected(PosixError(-res));
     }
 
     return IoUringContext(di::move(pimpl));

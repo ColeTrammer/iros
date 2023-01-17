@@ -1,3 +1,4 @@
+#include <dius/error.h>
 #include <dius/sync_file.h>
 #include <fcntl.h>
 #include <string.h>
@@ -5,35 +6,46 @@
 
 namespace dius {
 di::Result<void> SyncFile::close() {
-    if (m_owned == Owned::Yes && m_fd != -1) {
-        (void) ::close(m_fd);
+    auto owned = di::exchange(m_owned, Owned::No);
+    auto fd = di::exchange(m_fd, -1);
+
+    if (owned == Owned::Yes && fd != -1) {
+        if (::close(fd)) {
+            return di::Unexpected(PosixError(errno));
+        }
     }
-    m_owned = Owned::No;
-    m_fd = -1;
     return {};
 }
 
 di::Result<size_t> SyncFile::read(di::Span<di::Byte> data) const {
     auto result = ::read(m_fd, data.data(), data.size());
-    (void) result;
+    if (result < 0) {
+        return di::Unexpected(PosixError(errno));
+    }
     return di::to_unsigned(result);
 }
 
 di::Result<size_t> SyncFile::read(u64 offset, di::Span<di::Byte> data) const {
     auto result = ::pread(m_fd, data.data(), data.size(), offset);
-    (void) result;
+    if (result < 0) {
+        return di::Unexpected(PosixError(errno));
+    }
     return di::to_unsigned(result);
 }
 
 di::Result<size_t> SyncFile::write(di::Span<di::Byte const> data) const {
     auto result = ::write(m_fd, data.data(), data.size());
-    (void) result;
+    if (result < 0) {
+        return di::Unexpected(PosixError(errno));
+    }
     return data.size();
 }
 
 di::Result<size_t> SyncFile::write(u64 offset, di::Span<di::Byte const> data) const {
     auto result = ::pwrite(m_fd, data.data(), data.size(), offset);
-    (void) result;
+    if (result < 0) {
+        return di::Unexpected(PosixError(errno));
+    }
     return data.size();
 }
 
@@ -61,9 +73,10 @@ di::Result<SyncFile> open_sync(di::PathView path, OpenMode open_mode, u16 create
 
     memcpy(null_terminated_string, raw_data.data(), raw_data.size());
     null_terminated_string[raw_data.size()] = '\0';
+
     int fd = ::open(null_terminated_string, open_mode_flags, create_mode);
     if (fd < 0) {
-        return di::Unexpected(di::BasicError::Invalid);
+        return di::Unexpected(PosixError(errno));
     }
     return SyncFile { SyncFile::Owned::Yes, fd };
 }

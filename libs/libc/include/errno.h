@@ -71,7 +71,17 @@
 #define ENOTRECOVERABLE 66
 #define EOWNERDEAD      67
 #define EOVERFLOW       68
-#define EMAXERRNO       69
+#define EIDRM           69
+#define EBADMSG         70
+#define ENOLINK         71
+#define ENODATA         72
+#define ENOSR           73
+#define ENOSTR          74
+#define ECANCELED       75
+#define EPROTO          76
+#define ETIME           77
+#define ETXTBSY         78
+#define EMAXERRNO       79
 
 #ifdef __cplusplus
 extern "C" {

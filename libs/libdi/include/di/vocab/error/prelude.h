@@ -19,4 +19,6 @@ using vocab::GenericCode;
 using vocab::Result;
 using vocab::StatusCode;
 using vocab::StatusCodeDomain;
+
+using vocab::into_status_code;
 }
