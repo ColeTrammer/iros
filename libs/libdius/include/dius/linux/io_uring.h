@@ -6,6 +6,7 @@
 #include <dius/memory_region.h>
 #include <dius/sync_file.h>
 
+#include <fcntl.h>
 #include <linux/io_uring.h>
 
 namespace dius::linux_ {

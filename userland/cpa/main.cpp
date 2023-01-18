@@ -23,8 +23,11 @@ di::Result<void> main(Args const& args) {
 
     auto buffer = di::StaticVector<di::Byte, decltype(131072_zic)> {};
 
-    auto task = di::execution::async_open(scheduler, args.source, dius::OpenMode::Readonly) | di::execution::with([&](auto& source) {
-                    return di::execution::async_open(scheduler, args.destination, dius::OpenMode::WriteClobber) |
+    auto source = args.source | di::to<di::Path>();
+    auto destination = args.destination | di::to<di::Path>();
+
+    auto task = di::execution::async_open(scheduler, di::move(source), dius::OpenMode::Readonly) | di::execution::with([&](auto& source) {
+                    return di::execution::async_open(scheduler, di::move(destination), dius::OpenMode::WriteClobber) |
                            di::execution::with([&](auto& destination) {
                                return di::execution::async_read(source, di::Span { buffer.data(), buffer.capacity() }) |
                                       di::execution::let_value([&](size_t& nread) {
