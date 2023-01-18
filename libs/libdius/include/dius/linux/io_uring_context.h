@@ -291,11 +291,12 @@ public:
     explicit AsyncFile(IoUringContext* parent, int fd) : m_parent(parent), m_fd(fd) {}
 
 private:
-    friend auto tag_invoke(di::Tag<di::execution::async_read>, AsyncFile self, di::Span<di::Byte> buffer, di::Optional<u64> offset) {
+    friend auto tag_invoke(di::Tag<di::execution::async_read_some>, AsyncFile self, di::Span<di::Byte> buffer, di::Optional<u64> offset) {
         return ReadSomeSender { self.m_parent, self.m_fd, buffer, offset };
     }
 
-    friend auto tag_invoke(di::Tag<di::execution::async_write>, AsyncFile self, di::Span<di::Byte const> buffer, di::Optional<u64> offset) {
+    friend auto tag_invoke(di::Tag<di::execution::async_write_some>, AsyncFile self, di::Span<di::Byte const> buffer,
+                           di::Optional<u64> offset) {
         return WriteSomeSender { self.m_parent, self.m_fd, buffer, offset };
     }
 

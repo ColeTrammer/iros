@@ -20,7 +20,7 @@ public:
 
         for (auto code_unit : code_units) {
             auto bytes = util::bit_cast<Array<Byte, sizeof(code_unit)>>(code_unit);
-            (void) m_writer.write(bytes.span());
+            (void) m_writer.write_some(bytes.span());
         }
     }
 

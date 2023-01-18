@@ -21,7 +21,7 @@ namespace detail {
 
             for (;;) {
                 auto nread = DI_TRY(try_reserve_more_capacity() >> [&] {
-                    return reader.read({ buffer.end(), buffer.begin() + buffer.capacity() });
+                    return reader.read_some({ buffer.end(), buffer.begin() + buffer.capacity() });
                 } | if_success([&](auto nread) {
                                         buffer.assume_size(buffer.size() + nread);
                                     }));

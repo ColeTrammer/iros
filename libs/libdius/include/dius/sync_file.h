@@ -59,10 +59,15 @@ public:
 
     di::Result<void> close();
 
-    di::Result<size_t> read(u64 offset, di::Span<di::Byte>) const;
-    di::Result<size_t> read(di::Span<di::Byte>) const;
-    di::Result<size_t> write(u64 offset, di::Span<di::Byte const>) const;
-    di::Result<size_t> write(di::Span<di::Byte const>) const;
+    di::Result<size_t> read_some(u64 offset, di::Span<di::Byte>) const;
+    di::Result<size_t> read_some(di::Span<di::Byte>) const;
+    di::Result<size_t> write_some(u64 offset, di::Span<di::Byte const>) const;
+    di::Result<size_t> write_some(di::Span<di::Byte const>) const;
+
+    di::Result<void> read_exactly(u64 offset, di::Span<di::Byte>) const;
+    di::Result<void> read_exactly(di::Span<di::Byte>) const;
+    di::Result<void> write_exactly(u64 offset, di::Span<di::Byte const>) const;
+    di::Result<void> write_exactly(di::Span<di::Byte const>) const;
 
     di::Result<MemoryRegion> map(u64 offset, size_t size, Protection protection, MapFlags flags) const;
 

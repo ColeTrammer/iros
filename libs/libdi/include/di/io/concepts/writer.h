@@ -7,7 +7,7 @@
 namespace di::concepts {
 template<typename T>
 concept Writer = requires(T& writer, vocab::Span<Byte const> data) {
-                     { writer.write(data) } -> SameAs<Result<size_t>>;
+                     { writer.write_some(data) } -> SameAs<Result<size_t>>;
                      { writer.flush() } -> SameAs<Result<void>>;
                  };
 }

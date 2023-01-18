@@ -26,8 +26,8 @@ di::Result<void> main(Args const& args) {
     auto buffer = di::StaticVector<di::Byte, decltype(131072_zic)> {};
 
     while (auto nread =
-               TRY_OR_ERROR_LOG(source.read({ buffer.data(), buffer.capacity() }), "Failed to read from `{}': {}"_sv, args.source)) {
-        TRY_OR_ERROR_LOG(destination.write({ buffer.data(), nread }), "Failed to write to `{}': {}"_sv, args.destination);
+               TRY_OR_ERROR_LOG(source.read_some({ buffer.data(), buffer.capacity() }), "Failed to read from `{}': {}"_sv, args.source)) {
+        TRY_OR_ERROR_LOG(destination.write_exactly({ buffer.data(), nread }), "Failed to write to `{}': {}"_sv, args.destination);
     }
 
     return {};

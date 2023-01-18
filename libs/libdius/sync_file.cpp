@@ -17,7 +17,7 @@ di::Result<void> SyncFile::close() {
     return {};
 }
 
-di::Result<size_t> SyncFile::read(di::Span<di::Byte> data) const {
+di::Result<size_t> SyncFile::read_some(di::Span<di::Byte> data) const {
     auto result = ::read(m_fd, data.data(), data.size());
     if (result < 0) {
         return di::Unexpected(PosixError(errno));
@@ -25,7 +25,7 @@ di::Result<size_t> SyncFile::read(di::Span<di::Byte> data) const {
     return di::to_unsigned(result);
 }
 
-di::Result<size_t> SyncFile::read(u64 offset, di::Span<di::Byte> data) const {
+di::Result<size_t> SyncFile::read_some(u64 offset, di::Span<di::Byte> data) const {
     auto result = ::pread(m_fd, data.data(), data.size(), offset);
     if (result < 0) {
         return di::Unexpected(PosixError(errno));
@@ -33,7 +33,7 @@ di::Result<size_t> SyncFile::read(u64 offset, di::Span<di::Byte> data) const {
     return di::to_unsigned(result);
 }
 
-di::Result<size_t> SyncFile::write(di::Span<di::Byte const> data) const {
+di::Result<size_t> SyncFile::write_some(di::Span<di::Byte const> data) const {
     auto result = ::write(m_fd, data.data(), data.size());
     if (result < 0) {
         return di::Unexpected(PosixError(errno));
@@ -41,12 +41,46 @@ di::Result<size_t> SyncFile::write(di::Span<di::Byte const> data) const {
     return data.size();
 }
 
-di::Result<size_t> SyncFile::write(u64 offset, di::Span<di::Byte const> data) const {
+di::Result<size_t> SyncFile::write_some(u64 offset, di::Span<di::Byte const> data) const {
     auto result = ::pwrite(m_fd, data.data(), data.size(), offset);
     if (result < 0) {
         return di::Unexpected(PosixError(errno));
     }
     return data.size();
+}
+
+di::Result<void> SyncFile::read_exactly(u64 offset, di::Span<di::Byte> data) const {
+    while (!data.empty()) {
+        auto nread = TRY(read_some(offset, data));
+        data = *data.subspan(nread);
+        offset += nread;
+    }
+    return {};
+}
+
+di::Result<void> SyncFile::read_exactly(di::Span<di::Byte> data) const {
+    while (!data.empty()) {
+        auto nread = TRY(read_some(data));
+        data = *data.subspan(nread);
+    }
+    return {};
+}
+
+di::Result<void> SyncFile::write_exactly(u64 offset, di::Span<di::Byte const> data) const {
+    while (!data.empty()) {
+        auto nread = TRY(write_some(offset, data));
+        data = *data.subspan(nread);
+        offset += nread;
+    }
+    return {};
+}
+
+di::Result<void> SyncFile::write_exactly(di::Span<di::Byte const> data) const {
+    while (!data.empty()) {
+        auto nread = TRY(write_some(data));
+        data = *data.subspan(nread);
+    }
+    return {};
 }
 
 di::Result<MemoryRegion> SyncFile::map(u64 offset, size_t size, Protection protection, MapFlags flags) const {

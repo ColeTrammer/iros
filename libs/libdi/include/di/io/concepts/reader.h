@@ -7,6 +7,6 @@
 namespace di::concepts {
 template<typename T>
 concept Reader = requires(T& reader, vocab::Span<Byte> buffer) {
-                     { reader.read(buffer) } -> SameAs<Result<size_t>>;
+                     { reader.read_some(buffer) } -> SameAs<Result<size_t>>;
                  };
 }
