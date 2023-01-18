@@ -134,9 +134,14 @@ constexpr void filename_ends_with() {
     ASSERT(!"/opt/bash.gz/"_pv.filename_ends_with(".tar.gz"_tsv));
 }
 
+constexpr void path_basic() {
+    auto path = "/opt/bash.tar.gz"_tsv | di::to<di::Path>();
+    ASSERT_EQ(path, "/opt/bash.tar.gz"_pv);
+}
+
 TEST_CONSTEXPR(container_path, iteration, iteration)
 TEST_CONSTEXPR(container_path, equal, equal)
-TEST_CONSTEXPRX(container_path, compare, compare)
+TEST_CONSTEXPR(container_path, compare, compare)
 TEST_CONSTEXPR(container_path, extension, extension)
 TEST_CONSTEXPR(container_path, filename, filename)
 TEST_CONSTEXPR(container_path, is_absolute, is_absolute)
@@ -145,3 +150,4 @@ TEST_CONSTEXPR(container_path, stem, stem)
 TEST_CONSTEXPR(container_path, starts_with, starts_with)
 TEST_CONSTEXPR(container_path, ends_with, ends_with)
 TEST_CONSTEXPR(container_path, filename_ends_with, filename_ends_with)
+TEST_CONSTEXPR(container_path, path_basic, path_basic)

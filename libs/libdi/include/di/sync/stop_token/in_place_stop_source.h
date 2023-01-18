@@ -97,21 +97,19 @@ private:
         auto* did_destruct_in_same_thread = callback->m_did_destruct_in_same_thread.load(MemoryOrder::Relaxed);
         bool going_to_be_executed = !!did_destruct_in_same_thread;
 
-        // If we're not going to be executed, just remove immediately.
-        if (!going_to_be_executed) {
-            m_callbacks.erase(*callback);
-        }
+        // Remove ourselves from the list with the lock held.
+        m_callbacks.erase(*callback);
 
         // Now unlock the spin lock.
         unlock(true);
 
         if (going_to_be_executed) {
-            // If we are being executed by the current thread, remove ourselves from the
-            // list and don't wait.
+            // If we are being executed by the current thread, notify the callback runner this object
+            // has been destroyed. This is not synchronized because we must running on the same thread.
             if (stopper_thread == get_current_thread_id()) {
                 *did_destruct_in_same_thread = true;
             } else {
-                // Wait for the callback's execution to complete before finishing.
+                // Otherwise, wait for the callback's execution to complete before finishing.
                 while (!callback->m_already_executed.load(MemoryOrder::Acquire))
                     ;
             }
