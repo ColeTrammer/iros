@@ -85,12 +85,12 @@ a single-processor system, this requires at least 4 context switches.
 
 However, imagine instead this scenario with a 16 core machine that is actively reading an entire 32 MiB
 file. When doing sufficently large amounts of IO, the effective operation cost be bounded by the speed
-of the disk itself. The read the 32 MiB file as quickly as possible, it is enough to ensure the disk's
+of the disk itself. To read the 32 MiB file as quickly as possible, it is enough to ensure the disk's
 queue of read requests is always full. During this scenario, the separate processes will run on separate
 cores, communicating with each other through lock-less SPSC queues (think Linux io_uring). In this scenario,
 throughput is maximized, since the file system driver can submit multiple blocks to be read at once.
 
-Notice, this requires the underlying application use asynchronous IO itself, will allows it to drive more
+Notice, this requires the underlying application uses asynchronous IO itself, will allows it to drive more
 and more requests for data. When using a synchronous IO, the kernel would have to specutively prefetch
 subsequent sectors to acheive a similar effect.
 
@@ -135,3 +135,18 @@ within the kernel. Therefore, the kernel will only handle scheduling, memory man
 
 The core IPC mechanism needs to be fast and scalable. This minimizes
 any performance loss caused by using a micro-kernel.
+
+# Long Term Goals (Relative to the Old Kernel)
+
+The main question here is why abandon development of the old kernel written in C for a new one. There are 2 primary reasons:
+
+1. The old kernel was unmaintainable, and C++'s ability to add safe abstractions will improve the situtation. For one, RAII and the Result class make handling errors without leaking resources effectively trivial. Smart pointers should make memory safety bugs significantly less likely, and class templates like di::Synchronized should make thread-safety simpler.
+2. The old kernel was modelled strictly off of POSIX, which includes an extremely large body of obsolete and duplicate functionality. Writing a kernel with asynchronicity in mind, and leaving userspace to emulate POSIX APIs, many of which are duplicated (think SYS-V semaphores vs. POSIX semaphores), will result in a much cleaner design.
+
+The current issues with the old kernel are mostly around poor handling of error conditions and frequent concurrency issues, which make the system very unstable when trying to do something like run GCC. Due to performance issues in the kernel, running GCC takes at least 10x longer than it would on linux, and that is only considering compiling a single file. Attempting to compile the entire code base would would most likely take hours, but GCC would crash first anyway, even on a single core processor.
+
+There are also several missing features, like support for USB, newer hardware platforms like AHCI, or nvme, IP v6 networking, or even any form of audio playback. The benefits of using a microkernel architecture are that prototyping these sorts of drivers can be done in userspace, which makes common concerns like thread-safety, handling error conditions, and avoiding memory allocations at all cost, much less problematic.
+
+If a new AHCI driver crashes, the system will still be operational and the driver can simply be restarted. Thread-safety is irrelevant if the driver only has 1 thread, and only communicates with the kernel through a pair of SPSC queues. Hypothetically, a userspace program could actually be debugged using gdb, without freezing the entire system. This will make developing this functionality way more managable.
+
+Ultimately, the goal of this new kernel is to acheive good performance while also making development of new features easier.
