@@ -34,8 +34,7 @@ di::Result<void> main(Args const& args) {
             return di::execution::async_read_some(source, di::Span { buffer.data(), buffer.capacity() }) |
                    di::execution::let_value([&](size_t& nread) {
                        return di::execution::just_void_or_stopped(nread == 0) | di::execution::let_value([&] {
-                                  return di::execution::async_write_some(destination, di::Span { buffer.data(), nread }) |
-                                         di::execution::then(di::into_void);
+                                  return di::execution::async_write_exactly(destination, di::Span { buffer.data(), nread });
                               });
                    }) |
                    di::execution::repeat_effect | di::execution::let_stopped([] {

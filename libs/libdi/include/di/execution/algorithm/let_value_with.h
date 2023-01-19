@@ -58,7 +58,7 @@ namespace let_value_with_ns {
         template<concepts::MovableValue Factory, concepts::MovableValue Fun>
         using Sender = meta::Type<SenderT<Factory, Fun>>;
 
-        template<concepts::MovableValue Factory, concepts::Movable Fun, typename DF = meta::Decay<Factory>,
+        template<concepts::MovableValue Factory, concepts::MovableValue Fun, typename DF = meta::Decay<Factory>,
                  typename DFun = meta::Decay<Fun>>
         requires(concepts::Invocable<DF&> && concepts::Invocable<DFun&, meta::InvokeResult<DF>&> &&
                  concepts::Sender<meta::InvokeResult<DFun&, meta::InvokeResult<DF>&>>)

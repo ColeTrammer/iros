@@ -52,6 +52,9 @@ di::Result<size_t> SyncFile::write_some(u64 offset, di::Span<di::Byte const> dat
 di::Result<void> SyncFile::read_exactly(u64 offset, di::Span<di::Byte> data) const {
     while (!data.empty()) {
         auto nread = TRY(read_some(offset, data));
+        if (nread == 0) {
+            return di::Unexpected(PosixError::IoError);
+        }
         data = *data.subspan(nread);
         offset += nread;
     }
@@ -61,6 +64,9 @@ di::Result<void> SyncFile::read_exactly(u64 offset, di::Span<di::Byte> data) con
 di::Result<void> SyncFile::read_exactly(di::Span<di::Byte> data) const {
     while (!data.empty()) {
         auto nread = TRY(read_some(data));
+        if (nread == 0) {
+            return di::Unexpected(PosixError::IoError);
+        }
         data = *data.subspan(nread);
     }
     return {};
@@ -68,17 +74,23 @@ di::Result<void> SyncFile::read_exactly(di::Span<di::Byte> data) const {
 
 di::Result<void> SyncFile::write_exactly(u64 offset, di::Span<di::Byte const> data) const {
     while (!data.empty()) {
-        auto nread = TRY(write_some(offset, data));
-        data = *data.subspan(nread);
-        offset += nread;
+        auto nwritten = TRY(write_some(offset, data));
+        if (nwritten == 0) {
+            return di::Unexpected(PosixError::IoError);
+        }
+        data = *data.subspan(nwritten);
+        offset += nwritten;
     }
     return {};
 }
 
 di::Result<void> SyncFile::write_exactly(di::Span<di::Byte const> data) const {
     while (!data.empty()) {
-        auto nread = TRY(write_some(data));
-        data = *data.subspan(nread);
+        auto nwritten = TRY(write_some(data));
+        if (nwritten == 0) {
+            return di::Unexpected(PosixError::IoError);
+        }
+        data = *data.subspan(nwritten);
     }
     return {};
 }

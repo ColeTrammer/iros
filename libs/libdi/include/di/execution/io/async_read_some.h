@@ -2,6 +2,7 @@
 
 #include <di/execution/concepts/scheduler.h>
 #include <di/execution/concepts/sender_of.h>
+#include <di/execution/types/prelude.h>
 #include <di/function/tag_invoke.h>
 #include <di/types/prelude.h>
 
