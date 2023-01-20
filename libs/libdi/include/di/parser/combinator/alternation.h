@@ -33,7 +33,7 @@ namespace detail {
                 if constexpr (index >= sizeof...(Parsers)) {
                     return Result(Unexpected(context.make_error()));
                 } else {
-                    using Value = meta::ExpectedValue<decltype(util::get<index>(m_parsers).parse(context))>;
+                    using Value = meta::ExpectedValue<decltype(util::get<index>(util::declval<Tuple<Parsers...> const&>()).parse(context))>;
                     auto result = util::get<index>(m_parsers).parse(context);
                     if (!result) {
                         return self(in_place_index<index + 1>);

@@ -37,7 +37,8 @@ namespace detail {
                     if constexpr (index >= sizeof...(Parsers)) {
                         return make_result(util::forward<Types>(values)...);
                     } else {
-                        using Value = meta::ExpectedValue<decltype(util::get<index>(m_parsers).parse(context))>;
+                        using Value =
+                            meta::ExpectedValue<decltype(util::get<index>(util::declval<Tuple<Parsers...> const&>()).parse(context))>;
                         if constexpr (concepts::LanguageVoid<Value>) {
                             return util::get<index>(m_parsers).parse(context).and_then([&] {
                                 return self(in_place_index<index + 1>, util::forward<Types>(values)...);

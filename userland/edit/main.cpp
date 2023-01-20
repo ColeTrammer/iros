@@ -96,10 +96,10 @@ int edit_main(Arguments arguments) {
         return "./";
     }();
 
-    if (chdir(base_file_path.string())) {
-        perror("edit: chdir");
-        return 1;
-    }
+    // if (chdir(base_file_path.string())) {
+    //     perror("edit: chdir");
+    //     return 1;
+    // }
 
     if (arguments.use_graphics_mode) {
         auto app = GUI::Application::create();
