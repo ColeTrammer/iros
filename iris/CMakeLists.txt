@@ -7,6 +7,7 @@ ExternalProject_Add(limine
     BUILD_IN_SOURCE TRUE
     CONFIGURE_COMMAND ""
     BUILD_COMMAND "make"
+    UPDATE_COMMAND ""
     INSTALL_COMMAND ""
 )
 set(LIMINE_DIR "${CMAKE_CURRENT_BINARY_DIR}/limine-prefix/src/limine")
