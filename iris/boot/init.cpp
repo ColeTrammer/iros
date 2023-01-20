@@ -25,6 +25,12 @@ static void handler() {
     done();
 }
 
+static void do_task() {
+    iris::debug_log("Doing task after context switch"_sv);
+    asm volatile("int $0x80");
+    done();
+}
+
 struct [[gnu::packed]] IDTR {
     u16 size;
     u64 virtual_address;
@@ -72,7 +78,7 @@ static volatile limine_kernel_address_request kernel_address_request = {
     .response = nullptr,
 };
 
-static char __temp_stack[4 * 4096];
+static char __temp_stack[4 * 4096] alignas(4096);
 
 void iris_main() {
     iris::arch::cxx_init();
@@ -82,25 +88,32 @@ void iris_main() {
     {
         using namespace iris::x86::amd64::idt;
 
-        auto handler_address = reinterpret_cast<u64>(&handler);
-        auto pf_entry = Entry(Present(true), Type(Type::InterruptGate), SegmentSelector(0x28), TargetLow(handler_address & 0xFFFF),
-                              TargetMid((handler_address >> 16) & 0xFFFF), TargetHigh(handler_address >> 32));
+        auto handler_address = di::to_uintptr(&handler);
+        auto pf_entry = Entry(Present(true), Type(Type::InterruptGate), SegmentSelector(5 * 8), TargetLow(handler_address & 0xFFFF),
+                              TargetMid((handler_address >> 16) & 0xFFFF), TargetHigh(handler_address >> 32), DPL(3));
         for (auto& entry : idt) {
             entry = pf_entry;
         }
 
-        auto idtr = IDTR { sizeof(idt) - 1, reinterpret_cast<u64>(idt.data()) };
+        auto idtr = IDTR { sizeof(idt) - 1, di::to_uintptr(idt.data()) };
         load_idt(idtr);
     }
 
     {
         using namespace iris::x86::amd64::ssd;
 
+        // Setup TSS.
+        tss.io_map_base = sizeof(tss);
+        tss.rsp[0] = di::to_uintptr(__temp_stack);
+        tss.rsp[1] = di::to_uintptr(__temp_stack);
+        tss.rsp[2] = di::to_uintptr(__temp_stack);
+        tss.ist[0] = di::to_uintptr(__temp_stack);
+
         // TSS Descriptor Setup.
         auto tss_descriptor = reinterpret_cast<SystemSegmentDescriptor*>(&gdt[9]);
-        auto tss_address = reinterpret_cast<u64>(&tss);
+        auto tss_address = di::to_uintptr(&tss);
         *tss_descriptor =
-            SystemSegmentDescriptor(LimitLow(sizeof(tss)), BaseLow(tss_address & 0xFF), BaseMidLow((tss_address >> 16) & 0xFF),
+            SystemSegmentDescriptor(LimitLow(sizeof(tss)), BaseLow(tss_address & 0xFFFF), BaseMidLow((tss_address >> 16) & 0xFF),
                                     Type(Type::TSS), Present(true), BaseMidHigh((tss_address >> 24) & 0xFF), BaseHigh((tss_address >> 32)));
     }
 
@@ -113,46 +126,60 @@ void iris_main() {
         gdt[0] = SegmentDescriptor();
 
         // 16 bit Code Descriptor.
-        gdt[1] =
-            SegmentDescriptor(LimitLow(0xFFFF), Readable(true), Code(true), MustBeOne(true), Present(true), LimitHigh(0xF), Granular(true));
+        gdt[1] = SegmentDescriptor(LimitLow(0xFFFF), Readable(true), Code(true), DataOrCodeSegment(true), Present(true), LimitHigh(0xF),
+                                   Granular(true));
 
         // 16 bit Data Descriptor.
-        gdt[2] = SegmentDescriptor(LimitLow(0xFFFF), Writable(true), MustBeOne(true), Present(true), LimitHigh(0xF), Granular(true));
+        gdt[2] =
+            SegmentDescriptor(LimitLow(0xFFFF), Writable(true), DataOrCodeSegment(true), Present(true), LimitHigh(0xF), Granular(true));
 
         // 32 bit Code Descriptor.
-        gdt[3] = SegmentDescriptor(LimitLow(0xFFFF), Readable(true), Code(true), MustBeOne(true), Present(true), LimitHigh(0xF),
+        gdt[3] = SegmentDescriptor(LimitLow(0xFFFF), Readable(true), Code(true), DataOrCodeSegment(true), Present(true), LimitHigh(0xF),
                                    Not16Bit(true), Granular(true));
 
         // 32 bit Data Descriptor.
-        gdt[4] = SegmentDescriptor(LimitLow(0xFFFF), Writable(true), MustBeOne(true), Present(true), LimitHigh(0xF), Not16Bit(true),
+        gdt[4] = SegmentDescriptor(LimitLow(0xFFFF), Writable(true), DataOrCodeSegment(true), Present(true), LimitHigh(0xF), Not16Bit(true),
                                    Granular(true));
 
         // 64 bit Code Descriptor.
-        gdt[5] = SegmentDescriptor(LimitLow(0xFFFF), Readable(true), Code(true), MustBeOne(true), Present(true), LimitHigh(0xF),
+        gdt[5] = SegmentDescriptor(LimitLow(0xFFFF), Readable(true), Code(true), DataOrCodeSegment(true), Present(true), LimitHigh(0xF),
                                    LongMode(true), Granular(true));
 
         // 64 bit Data Descriptor.
-        gdt[6] = SegmentDescriptor(LimitLow(0xFFFF), Writable(true), MustBeOne(true), Present(true), LimitHigh(0xF), Not16Bit(true),
+        gdt[6] = SegmentDescriptor(LimitLow(0xFFFF), Writable(true), DataOrCodeSegment(true), Present(true), LimitHigh(0xF), Not16Bit(true),
                                    Granular(true));
 
         // 64 bit User Code Descriptor.
-        gdt[7] = SegmentDescriptor(LimitLow(0xFFFF), Readable(true), Code(true), MustBeOne(true), DPL(3), Present(true), LimitHigh(0xF),
-                                   LongMode(true), Granular(true));
+        gdt[7] = SegmentDescriptor(LimitLow(0xFFFF), Readable(true), Code(true), DataOrCodeSegment(true), DPL(3), Present(true),
+                                   LimitHigh(0xF), LongMode(true), Granular(true));
 
         // 64 bit User Data Descriptor.
-        gdt[8] = SegmentDescriptor(LimitLow(0xFFFF), Writable(true), MustBeOne(true), DPL(3), Present(true), LimitHigh(0xF), Not16Bit(true),
-                                   Granular(true));
+        gdt[8] = SegmentDescriptor(LimitLow(0xFFFF), Writable(true), DataOrCodeSegment(true), DPL(3), Present(true), LimitHigh(0xF),
+                                   Not16Bit(true), Granular(true));
 
-        auto gdtr = GDTR { sizeof(gdt) - 1, reinterpret_cast<u64>(gdt.data()) };
+        iris::debug_log("Gdt[5][0] = {:032b}\n"
+                        "Gdt[5][1] = {:032b}"_sv,
+                        reinterpret_cast<u32*>(gdt.data())[10], reinterpret_cast<u32*>(gdt.data())[11]);
+
+        iris::debug_log("Gdt[7][0] = {:032b}\n"
+                        "Gdt[7][1] = {:032b}"_sv,
+                        reinterpret_cast<u32*>(gdt.data())[14], reinterpret_cast<u32*>(gdt.data())[15]);
+
+        iris::debug_log("Gdt[6][0] = {:032b}\n"
+                        "Gdt[6][1] = {:032b}"_sv,
+                        reinterpret_cast<u32*>(gdt.data())[12], reinterpret_cast<u32*>(gdt.data())[13]);
+
+        iris::debug_log("Gdt[8][0] = {:032b}\n"
+                        "Gdt[8][1] = {:032b}"_sv,
+                        reinterpret_cast<u32*>(gdt.data())[16], reinterpret_cast<u32*>(gdt.data())[17]);
+
+        auto gdtr = GDTR { sizeof(gdt) - 1, di::to_uintptr(gdt.data()) };
         load_gdt(gdtr);
-
-        // Setup TSS.
-        tss.io_map_base = sizeof(tss);
 
         // Load TSS.
         load_tr(9 * 8);
 
-        // Load the data segments, loading the code segments is would require using iretq.
+        // Load the data segments with NULL segment selector.
         asm volatile("mov %0, %%dx\n"
                      "mov %%dx, %%ds\n"
                      "mov %%dx, %%es\n"
@@ -160,7 +187,7 @@ void iris_main() {
                      "mov %%dx, %%ss\n"
                      "mov %%dx, %%gs\n"
                      :
-                     : "i"(6 * 8)
+                     : "i"(0)
                      : "memory", "edx");
     }
 
@@ -247,6 +274,18 @@ void iris_main() {
     delete x;
 
     iris::debug_log(u8"Hello, World - again again again"_sv);
+
+    auto task_address = di::to_uintptr(&do_task);
+    asm volatile("mov %0, %%rdx\n"
+                 "push %1\n"
+                 "push %2\n"
+                 "push $0\n"
+                 "push %3\n"
+                 "push %%rdx\n"
+                 "iretq\n"
+                 :
+                 : "r"(task_address), "i"(8 * 8 + 3), "r"(di::to_uintptr(__temp_stack)), "i"(7 * 8 + 3)
+                 : "rdx", "memory");
 
     done();
 }

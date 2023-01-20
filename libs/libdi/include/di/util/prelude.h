@@ -25,6 +25,7 @@
 #include <di/util/scope_exit.h>
 #include <di/util/source_location.h>
 #include <di/util/swap.h>
+#include <di/util/to_uintptr.h>
 #include <di/util/to_underlying.h>
 #include <di/util/unreachable.h>
 #include <di/util/voidify.h>
@@ -62,6 +63,7 @@ using util::forward;
 using util::get;
 using util::move;
 using util::swap;
+using util::to_uintptr;
 using util::to_underlying;
 using util::unreachable;
 using util::voidify;

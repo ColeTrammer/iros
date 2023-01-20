@@ -33,7 +33,7 @@ struct ExpandDown : BitFlag<42> {};
 // The segment loaded into the %cs register must have this bit set.
 struct Code : BitFlag<43> {};
 
-struct MustBeOne : BitFlag<44> {};
+struct DataOrCodeSegment : BitFlag<44> {};
 
 struct DPL : BitField<45, 2> {};
 struct Present : BitFlag<47> {};
@@ -48,6 +48,6 @@ struct Granular : BitFlag<55> {};
 
 struct BaseHigh : BitField<56, 8> {};
 
-using SegmentDescriptor = BitStruct<8, LimitLow, BaseLow, Accessed, Readable, Writable, Conforming, ExpandDown, Code, MustBeOne, DPL,
-                                    Present, LimitHigh, Available, LongMode, Not16Bit, Granular>;
+using SegmentDescriptor = BitStruct<8, LimitLow, BaseLow, Accessed, Readable, Writable, Conforming, ExpandDown, Code, DataOrCodeSegment,
+                                    DPL, Present, LimitHigh, Available, LongMode, Not16Bit, Granular>;
 }
