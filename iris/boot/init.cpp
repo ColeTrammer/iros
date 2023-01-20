@@ -1,6 +1,8 @@
 #include <di/prelude.h>
 #include <iris/arch/x86/amd64/idt.h>
 #include <iris/arch/x86/amd64/segment_descriptor.h>
+#include <iris/arch/x86/amd64/system_segment_descriptor.h>
+#include <iris/arch/x86/amd64/tss.h>
 #include <iris/boot/cxx_init.h>
 #include <iris/core/log.h>
 #include <iris/mm/address_space.h>
@@ -41,8 +43,13 @@ static inline void load_gdt(GDTR descriptor) {
     asm("lgdt %0" : : "m"(descriptor));
 }
 
+static inline void load_tr(u16 selector) {
+    asm("ltr %0" : : "m"(selector));
+}
+
 static auto idt = di::Array<iris::x86::amd64::idt::Entry, 256> {};
-static auto gdt = di::Array<iris::x86::amd64::sd::SegmentDescriptor, 10> {};
+static auto gdt = di::Array<iris::x86::amd64::sd::SegmentDescriptor, 11> {};
+static auto tss = iris::x86::amd64::TSS {};
 
 static inline void load_cr3(u64 cr3) {
     asm volatile("mov %0, %%rdx\n"
@@ -87,6 +94,17 @@ void iris_main() {
     }
 
     {
+        using namespace iris::x86::amd64::ssd;
+
+        // TSS Descriptor Setup.
+        auto tss_descriptor = reinterpret_cast<SystemSegmentDescriptor*>(&gdt[9]);
+        auto tss_address = reinterpret_cast<u64>(&tss);
+        *tss_descriptor =
+            SystemSegmentDescriptor(LimitLow(sizeof(tss)), BaseLow(tss_address & 0xFF), BaseMidLow((tss_address >> 16) & 0xFF),
+                                    Type(Type::TSS), Present(true), BaseMidHigh((tss_address >> 24) & 0xFF), BaseHigh((tss_address >> 32)));
+    }
+
+    {
         using namespace iris::x86::amd64::sd;
 
         // The layout of the GDT matches the limine boot protocol, although this is not strictly necessary.
@@ -127,6 +145,12 @@ void iris_main() {
 
         auto gdtr = GDTR { sizeof(gdt) - 1, reinterpret_cast<u64>(gdt.data()) };
         load_gdt(gdtr);
+
+        // Setup TSS.
+        tss.io_map_base = sizeof(tss);
+
+        // Load TSS.
+        load_tr(9 * 8);
 
         // Load the data segments, loading the code segments is would require using iretq.
         asm volatile("mov %0, %%dx\n"

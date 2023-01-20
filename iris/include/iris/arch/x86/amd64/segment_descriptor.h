@@ -14,7 +14,8 @@ using namespace di::bit;
 // 32 bit and 64 bit x86, but in 64 bit mode, most fields are ignored.
 
 struct LimitLow : BitField<0, 16> {};
-struct BaseLow : BitField<16, 24> {};
+struct BaseLow : BitField<16, 16> {};
+struct BaseMid : BitField<32, 8> {};
 
 // This is ignored on x86_64.
 struct Accessed : BitFlag<40> {};
