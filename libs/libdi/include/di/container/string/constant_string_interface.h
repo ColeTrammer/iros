@@ -13,6 +13,10 @@
 #include <di/container/string/string_ends_with.h>
 #include <di/container/string/string_equal.h>
 #include <di/container/string/string_find.h>
+#include <di/container/string/string_find_first_not_of.h>
+#include <di/container/string/string_find_first_of.h>
+#include <di/container/string/string_find_last_not_of.h>
+#include <di/container/string/string_find_last_of.h>
 #include <di/container/string/string_front.h>
 #include <di/container/string/string_iterator_at_offset.h>
 #include <di/container/string/string_rfind.h>
@@ -98,6 +102,38 @@ public:
     requires(concepts::SameAs<meta::Encoding<Con>, Enc> && concepts::ForwardContainer<Con>)
     constexpr auto rfind(Con&& container) const {
         return string::rfind(self(), util::forward<Con>(container));
+    }
+
+    constexpr auto find_first_of(CodePoint code_point) const { return string::find_first_of(self(), code_point); }
+
+    template<concepts::ContainerCompatible<CodePoint> Con>
+    requires(concepts::SameAs<meta::Encoding<Con>, Enc> && concepts::ForwardContainer<Con>)
+    constexpr auto find_first_of(Con&& container) const {
+        return string::find_first_of(self(), util::forward<Con>(container));
+    }
+
+    constexpr auto find_first_not_of(CodePoint code_point) const { return string::find_first_not_of(self(), code_point); }
+
+    template<concepts::ContainerCompatible<CodePoint> Con>
+    requires(concepts::SameAs<meta::Encoding<Con>, Enc> && concepts::ForwardContainer<Con>)
+    constexpr auto find_first_not_of(Con&& container) const {
+        return string::find_first_not_of(self(), util::forward<Con>(container));
+    }
+
+    constexpr auto find_last_of(CodePoint code_point) const { return string::find_last_of(self(), code_point); }
+
+    template<concepts::ContainerCompatible<CodePoint> Con>
+    requires(concepts::SameAs<meta::Encoding<Con>, Enc> && concepts::ForwardContainer<Con>)
+    constexpr auto find_last_of(Con&& container) const {
+        return string::find_last_of(self(), util::forward<Con>(container));
+    }
+
+    constexpr auto find_last_not_of(CodePoint code_point) const { return string::find_last_not_of(self(), code_point); }
+
+    template<concepts::ContainerCompatible<CodePoint> Con>
+    requires(concepts::SameAs<meta::Encoding<Con>, Enc> && concepts::ForwardContainer<Con>)
+    constexpr auto find_last_not_of(Con&& container) const {
+        return string::find_last_not_of(self(), util::forward<Con>(container));
     }
 
     constexpr auto view() const { return StringViewImpl<Enc>(self()); }

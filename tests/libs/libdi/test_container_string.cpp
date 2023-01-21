@@ -121,11 +121,11 @@ constexpr void readonly_api() {
     ASSERT_EQ(s.rfind("llo"_sv).end(), s.iterator_at_offset(u8"Hello, 世界, Hello"_sv.size_code_units()));
     ASSERT_EQ(s.rfind(U'l').begin(), s.iterator_at_offset(u8"Hello, 世界, Hel"_sv.size_code_units()));
 
-    // ASSERT_EQ(*s.find_first_of(u8"o達"_sv), U'o');
-    // ASSERT_EQ(*s.find_last_of(u8"o達"_sv), U'達');
+    ASSERT_EQ(*s.find_first_of(u8"o達"_sv), U'o');
+    ASSERT_EQ(*s.find_last_of(u8"o達"_sv), U'達');
 
-    // ASSERT_EQ(*s.find_first_not_of(u8"o達!"_sv), U'H');
-    // ASSERT_EQ(*s.find_last_not_of(u8"o達!"_sv), U'友');
+    ASSERT_EQ(*s.find_first_not_of(u8"o達!"_sv), U'H');
+    ASSERT_EQ(*s.find_last_not_of(u8"o達!"_sv), U'友');
 }
 
 static void null_terminated() {

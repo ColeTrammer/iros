@@ -16,11 +16,12 @@ namespace detail {
         requires(concepts::IndirectBinaryPredicate<function::Equal, meta::Projected<Iter, Proj>, T const*>)
         constexpr View<Iter> operator()(Iter first, Sent last, T const& needle, Proj proj = {}) const {
             if constexpr (concepts::BidirectionalIterator<Iter> && concepts::SameAs<Iter, Sent>) {
-                auto it = find(make_reverse_iterator(first), make_reverse_iterator(last), needle, util::ref(proj)).base();
-                if (it == last) {
+                auto rlast = make_reverse_iterator(first);
+                auto it = container::find(make_reverse_iterator(last), rlast, needle, util::ref(proj));
+                if (it == rlast) {
                     return { last, last };
                 }
-                return { --it, last };
+                return { container::prev(it.base()), last };
             } else {
                 Iter result {};
                 for (; first != last; ++first) {

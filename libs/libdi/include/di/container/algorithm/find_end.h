@@ -17,14 +17,15 @@ namespace detail {
                 auto last = container::next(it, ed);
                 return { last, last };
             }
-            if constexpr (concepts::BidirectionalContainer<It> && concepts::SameAs<It, Sent> && concepts::BidirectionalContainer<Jt> &&
+            if constexpr (concepts::BidirectionalIterator<It> && concepts::SameAs<It, Sent> && concepts::BidirectionalIterator<Jt> &&
                           concepts::SameAs<Jt, Jent>) {
-                auto result = container::search(make_reverse_iterator(it), make_reverse_iterator(ed), make_reverse_iterator(jt),
-                                                make_reverse_iterator(fd), util::ref(pred), util::ref(proj), util::ref(jroj));
+                auto result = container::search(make_reverse_iterator(ed), make_reverse_iterator(it), make_reverse_iterator(fd),
+                                                make_reverse_iterator(jt), util::ref(pred), util::ref(proj), util::ref(jroj));
                 if (!result) {
-                    return { fd, fd };
+                    return { ed, ed };
                 }
-                return { --result.base(), --result.base() };
+                auto [a, b] = result;
+                return { b.base(), a.base() };
             } else {
                 auto r1 = It {};
                 auto r2 = It {};
