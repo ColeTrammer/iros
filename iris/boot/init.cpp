@@ -5,6 +5,7 @@
 #include <iris/arch/x86/amd64/tss.h>
 #include <iris/boot/cxx_init.h>
 #include <iris/core/log.h>
+#include <iris/core/task.h>
 #include <iris/mm/address_space.h>
 #include <iris/mm/map_physical_address.h>
 #include <iris/mm/page_frame_allocator.h>
@@ -26,7 +27,7 @@ static void handler() {
 }
 
 static void do_task() {
-    iris::debug_log("Doing task after context switch"_sv);
+    asm volatile("mov $0x13370420, %%rax" ::: "rax");
     asm volatile("int $0x80");
     done();
 }
@@ -276,21 +277,18 @@ void iris_main() {
     iris::debug_log(u8"Hello, World - again again again"_sv);
 
     auto task_address = di::to_uintptr(&do_task);
-    asm volatile("mov %0, %%rdx\n"
-                 "push %1\n"
-                 "push %2\n"
-                 "push $0\n"
-                 "push %3\n"
-                 "push %%rdx\n"
-                 "iretq\n"
-                 :
-                 : "r"(task_address), "i"(8 * 8 + 3), "r"(di::to_uintptr(__temp_stack)), "i"(7 * 8 + 3)
-                 : "rdx", "memory");
+
+    auto task = iris::Task(task_address, di::to_uintptr(__temp_stack), true);
+
+    auto task_list = di::IntrusiveList<iris::Task> {};
+    task_list.push_back(task);
+
+    task.context_switch_to();
 
     done();
 }
 
-void iris_entry() {
+[[gnu::naked]] void iris_entry() {
     asm volatile("mov %0, %%rsp\n"
                  "push $0\n"
                  "call iris_main\n"
