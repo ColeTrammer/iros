@@ -29,10 +29,13 @@ SECTIONS
     .rodata : {
         *(.rodata .rodata.*)
 
+        /* The provided addresses for these arrays must be 8 byte aligned, or else there will be unfortunate padding. */
+        . = ALIGN(., 8);
         PROVIDE(__iris_init_array_start = .);
         *(.init_array)
         PROVIDE(__iris_init_array_end = .);
 
+        . = ALIGN(., 8);
         PROVIDE(__iris_fini_array_start = .);
         *(.fini_array)
         PROVIDE(__iris_fini_array_end = .);

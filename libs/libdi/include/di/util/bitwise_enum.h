@@ -10,4 +10,5 @@
     constexpr Type operator^(Type a, Type b) { return static_cast<Type>(::di::util::to_underlying(a) ^ ::di::util::to_underlying(b)); } \
     constexpr Type& operator|=(Type& a, Type b) { return a = a | b; }                                                                   \
     constexpr Type& operator&=(Type& a, Type b) { return a = a & b; }                                                                   \
-    constexpr Type& operator^=(Type& a, Type b) { return a = a ^ b; }
+    constexpr Type& operator^=(Type& a, Type b) { return a = a ^ b; }                                                                   \
+    constexpr bool operator!(Type a) { return !::di::util::to_underlying(a); }

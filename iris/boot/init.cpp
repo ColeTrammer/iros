@@ -28,7 +28,8 @@ static void handler() {
 
 static void do_task() {
     asm volatile("mov $0x13370420, %%rax" ::: "rax");
-    asm volatile("int $0x80");
+    asm volatile("push $0\n"
+                 "int $0x80");
     done();
 }
 
@@ -278,10 +279,14 @@ void iris_main() {
 
     auto task_address = di::to_uintptr(&do_task);
 
-    auto task = iris::Task(task_address, di::to_uintptr(__temp_stack), true);
+    auto task_stack = *new_address_space.allocate_region(0x2000);
+
+    auto task = iris::Task(task_address, task_stack.raw_address(), true);
 
     auto task_list = di::IntrusiveList<iris::Task> {};
     task_list.push_back(task);
+
+    iris::debug_log("preparing to context switch"_sv);
 
     task.context_switch_to();
 

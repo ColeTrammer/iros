@@ -27,6 +27,7 @@ include("${IRIS_ARCH_DIR}/CMakeLists.txt")
 set(SOURCES
     ${IRIS_ARCH_SOURCES}
     boot/init.cpp
+    mm/address_space.cpp
     mm/page_frame_allocator.cpp
     mm/heap.cpp
 )

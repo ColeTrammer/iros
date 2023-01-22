@@ -3,6 +3,7 @@
 #include <di/prelude.h>
 #include <iris/core/error.h>
 #include <iris/mm/physical_address.h>
+#include <iris/mm/region.h>
 #include <iris/mm/virtual_address.h>
 
 namespace iris::mm {
@@ -14,7 +15,10 @@ public:
 
     Expected<void> map_physical_page(VirtualAddress location, PhysicalAddress physical_address);
 
+    Expected<VirtualAddress> allocate_region(size_t page_aligned_length);
+
 private:
     u64 m_architecture_page_table_base;
+    di::TreeSet<Region> m_regions;
 };
 }
