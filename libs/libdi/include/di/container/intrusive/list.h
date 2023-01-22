@@ -95,7 +95,7 @@ public:
     }
     constexpr auto front() const {
         return lift_bool(!empty()) % [&] {
-            return util::ref(*begin());
+            return util::cref(*begin());
         };
     }
 
@@ -106,7 +106,7 @@ public:
     }
     constexpr auto back() const {
         return lift_bool(!empty()) % [&] {
-            return util::ref(*container::prev(end()));
+            return util::cref(*container::prev(end()));
         };
     }
 
