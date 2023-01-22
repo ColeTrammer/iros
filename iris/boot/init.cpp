@@ -5,6 +5,7 @@
 #include <iris/arch/x86/amd64/tss.h>
 #include <iris/boot/cxx_init.h>
 #include <iris/core/log.h>
+#include <iris/core/scheduler.h>
 #include <iris/core/task.h>
 #include <iris/mm/address_space.h>
 #include <iris/mm/map_physical_address.h>
@@ -26,10 +27,15 @@ static void handler() {
     done();
 }
 
+static iris::Scheduler scheduler;
+
+static int counter = 0;
+
 static void do_task() {
-    asm volatile("mov $0x13370420, %%rax" ::: "rax");
-    asm volatile("push $0\n"
-                 "int $0x80");
+    for (int i = 0; i < 3; i++) {
+        iris::debug_log("counter: {}"_sv, ++counter);
+        scheduler.yield();
+    }
     done();
 }
 
@@ -279,16 +285,28 @@ void iris_main() {
 
     auto task_address = di::to_uintptr(&do_task);
 
-    auto task_stack = *new_address_space.allocate_region(0x2000);
+    auto task_stack1 = *new_address_space.allocate_region(0x2000);
+    auto task1 = iris::Task(task_address, task_stack1.raw_address() + 0x2000, false);
 
-    auto task = iris::Task(task_address, task_stack.raw_address(), true);
+    scheduler.schedule_task(task1);
 
-    auto task_list = di::IntrusiveList<iris::Task> {};
-    task_list.push_back(task);
+    auto task_stack2 = *new_address_space.allocate_region(0x2000);
+    auto task2 = iris::Task(task_address, task_stack2.raw_address() + 0x2000, false);
+
+    scheduler.schedule_task(task2);
+
+    auto task_stack3 = *new_address_space.allocate_region(0x2000);
+    auto task3 = iris::Task(task_address, task_stack3.raw_address() + 0x2000, false);
+
+    scheduler.schedule_task(task3);
 
     iris::debug_log("preparing to context switch"_sv);
 
-    task.context_switch_to();
+    iris::debug_log("stack1={:x}"_sv, task_stack1.raw_address());
+    iris::debug_log("stack2={:x}"_sv, task_stack2.raw_address());
+    iris::debug_log("stack3={:x}"_sv, task_stack3.raw_address());
+
+    scheduler.start();
 
     done();
 }

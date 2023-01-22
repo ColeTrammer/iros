@@ -1,9 +1,10 @@
+#include <iris/core/log.h>
 #include <iris/mm/address_space.h>
 #include <iris/mm/page_frame_allocator.h>
 #include <iris/mm/sections.h>
 
 namespace iris::mm {
-static auto const heap_start = iris::mm::kernel_end + 4096;
+static auto const heap_start = VirtualAddress((iris::mm::kernel_end.raw_address() / 4096 * 4096) + 4096);
 
 Expected<VirtualAddress> AddressSpace::allocate_region(usize page_aligned_length) {
     // Basic hack algorithm: allocate the new region at a large fixed offset from the old region.
@@ -11,6 +12,8 @@ Expected<VirtualAddress> AddressSpace::allocate_region(usize page_aligned_length
 
     auto last_virtual_address = m_regions.back().transform(&Region::end).value_or(heap_start);
     auto new_virtual_address = last_virtual_address + 8192 * 0x1000;
+
+    iris::debug_log("sz={}"_sv, m_regions.size());
 
     // TODO: provide the flags as a parameter.
     auto [new_region, did_insert] =

@@ -44,6 +44,8 @@ public:
 
     [[noreturn]] void context_switch_to() { m_task_state.context_switch_to(); }
 
+    void set_task_state(arch::TaskState const& state) { m_task_state = state; }
+
 private:
     arch::TaskState m_task_state;
 };

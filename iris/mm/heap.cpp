@@ -9,8 +9,8 @@
 // void* operator new(std::size_t size);
 // void* operator new(std::size_t size, std::align_val_t alignment);
 
-static auto heap_start = iris::mm::kernel_end + 4096;
-static auto heap_end = iris::mm::kernel_end + 4096;
+static auto const heap_start = iris::mm::VirtualAddress((iris::mm::kernel_end.raw_address() / 4096 * 4096) + 4096);
+static auto heap_end = heap_start;
 
 static inline u64 get_cr3() {
     u64 cr3;
