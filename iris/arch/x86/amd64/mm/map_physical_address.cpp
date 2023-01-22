@@ -13,7 +13,7 @@ static volatile limine_hhdm_request hhdm_request = {
 }
 
 namespace iris::mm {
-Expected<PhysicalAddressMapping> map_physical_address(PhysicalAddress address, size_t byte_size) {
+Expected<PhysicalAddressMapping> map_physical_address(PhysicalAddress address, usize byte_size) {
     // FIXME: this only works with the bootloader's page tables for now.
     // FIXME: validate that the physical address mapping is reasonable (only up to 4 GiB if only 4 GiB of memory are available).
     auto virtual_address = reinterpret_cast<di::Byte*>(hhdm_request.response->offset + address.raw_address());

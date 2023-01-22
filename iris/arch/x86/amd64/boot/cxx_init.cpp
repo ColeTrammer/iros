@@ -11,9 +11,8 @@ extern init_function_t __iris_init_array_end[];
 
 namespace iris::arch {
 void cxx_init() {
-    ssize_t init_size = __iris_init_array_end - __iris_init_array_start;
-    for (ssize_t i = 0; i < init_size; i++) {
-        iris::debug_log("exec: {}"_sv, __iris_init_array_start[i]);
+    iptr init_size = __iris_init_array_end - __iris_init_array_start;
+    for (iptr i = 0; i < init_size; i++) {
         (*__iris_init_array_start[i])();
     }
 }

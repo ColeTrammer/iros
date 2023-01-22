@@ -15,15 +15,15 @@ DI_DEFINE_ENUM_BITWISE_OPERATIONS(RegionFlags)
 
 class Region {
 public:
-    constexpr explicit Region(VirtualAddress base, size_t length, RegionFlags flags) : m_base(base), m_length(length), m_flags(flags) {
+    constexpr explicit Region(VirtualAddress base, usize length, RegionFlags flags) : m_base(base), m_length(length), m_flags(flags) {
         DI_ASSERT_GT(length, 0u);
         DI_ASSERT_EQ(length % 0x1000, 0u);
     }
 
     constexpr VirtualAddress base() const { return m_base; }
     constexpr VirtualAddress end() const { return m_base + length(); }
-    constexpr size_t length() const { return m_length; }
-    constexpr size_t pages() const { return length() / 0x1000; }
+    constexpr usize length() const { return m_length; }
+    constexpr usize pages() const { return length() / 0x1000; }
 
     constexpr auto each_page() const { return di::iota(base(), end()) | di::stride(0x1000z); }
 
@@ -61,7 +61,7 @@ private:
     constexpr friend di::strong_ordering operator<=>(Region const& a, VirtualAddress b) { return a.compare_with_address(b); }
 
     VirtualAddress m_base;
-    size_t m_length { 0 };
+    usize m_length { 0 };
     RegionFlags m_flags {};
 };
 }

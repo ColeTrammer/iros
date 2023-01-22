@@ -21,7 +21,7 @@ class DefaultAllocator {
 public:
     using Value = T;
 
-    constexpr di::container::Allocation<T> allocate(size_t count) const {
+    constexpr di::container::Allocation<T> allocate(types::usize count) const {
         if consteval {
             return di::container::Allocator<T>().allocate(count);
         } else {
@@ -36,7 +36,7 @@ public:
         }
     }
 
-    constexpr void deallocate(T* data, size_t count) const {
+    constexpr void deallocate(T* data, types::usize count) const {
         if consteval {
             return di::container::Allocator<T>().deallocate(data, count);
         } else {

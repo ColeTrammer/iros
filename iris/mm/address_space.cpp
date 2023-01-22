@@ -5,7 +5,7 @@
 namespace iris::mm {
 static auto const heap_start = iris::mm::kernel_end + 4096;
 
-Expected<VirtualAddress> AddressSpace::allocate_region(size_t page_aligned_length) {
+Expected<VirtualAddress> AddressSpace::allocate_region(usize page_aligned_length) {
     // Basic hack algorithm: allocate the new region at a large fixed offset from the old region.
     // Additionally, immediately fill in the newly created pages.
 

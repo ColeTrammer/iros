@@ -9,7 +9,7 @@
 namespace iris::mm {
 struct PhysicalAddressMapping;
 
-Expected<PhysicalAddressMapping> map_physical_address(PhysicalAddress, size_t byte_size);
+Expected<PhysicalAddressMapping> map_physical_address(PhysicalAddress, usize byte_size);
 
 struct PhysicalAddressMapping {
 public:

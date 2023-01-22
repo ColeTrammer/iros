@@ -1,5 +1,10 @@
 #pragma once
 
+#include <di/types/ptrdiff_t.h>
+#include <di/types/size_t.h>
+#include <di/types/ssize_t.h>
+#include <di/types/uintptr_t.h>
+
 namespace di::types {
 using u8 = __UINT8_TYPE__;
 using u16 = __UINT16_TYPE__;
@@ -24,4 +29,13 @@ using uintmax_t = u128;
 using intmax_t = i64;
 using uintmax_t = u64;
 #endif
+
+using usize = size_t;
+using isize = ssize_t;
+
+using uptr = uintptr_t;
+using iptr = ptrdiff_t;
+
+using umax = uintmax_t;
+using imax = intmax_t;
 }

@@ -44,7 +44,10 @@ using di::types::i16;
 using di::types::i32;
 using di::types::i64;
 using di::types::i8;
+using di::types::imax;
 using di::types::intptr_t;
+using di::types::iptr;
+using di::types::isize;
 using di::types::ptrdiff_t;
 using di::types::size_t;
 using di::types::ssize_t;
@@ -53,6 +56,9 @@ using di::types::u32;
 using di::types::u64;
 using di::types::u8;
 using di::types::uintptr_t;
+using di::types::umax;
+using di::types::uptr;
+using di::types::usize;
 
 #ifdef DI_HAVE_128_BIT_INTEGERS
 using di::types::i128;
