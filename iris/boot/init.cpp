@@ -156,6 +156,8 @@ static iris::Scheduler scheduler;
 
 static int counter = 0;
 
+static auto userspace_test_program_data_storage = di::Array<di::Byte, 0x4000> {};
+
 static void do_task() {
     for (int i = 0; i < 3; i++) {
         iris::debug_log("counter: {}"_sv, ++counter);
@@ -207,6 +209,12 @@ static volatile limine_memmap_request memmap_request = {
 
 static volatile limine_kernel_address_request kernel_address_request = {
     .id = LIMINE_KERNEL_ADDRESS_REQUEST,
+    .revision = 0,
+    .response = nullptr,
+};
+
+static volatile limine_module_request module_request = {
+    .id = LIMINE_MODULE_REQUEST,
     .revision = 0,
     .response = nullptr,
 };
@@ -373,6 +381,15 @@ void iris_main() {
     }
 
     iris::mm::reserve_page_frames(iris::mm::PhysicalAddress(0), 16 * 16 * 2);
+
+    DI_ASSERT_GT(module_request.response->module_count, 0u);
+    auto userspace_test_program = *module_request.response->modules[0];
+    DI_ASSERT_LT_EQ(userspace_test_program.size, userspace_test_program_data_storage.size());
+    for (auto i : di::range(userspace_test_program.size)) {
+        userspace_test_program_data_storage[i] = reinterpret_cast<di::Byte const*>(userspace_test_program.address)[i];
+    }
+    auto test_program_data = di::Span { userspace_test_program_data_storage.data(), userspace_test_program.size };
+    (void) test_program_data;
 
     auto new_address_space = iris::mm::AddressSpace(iris::mm::allocate_page_frame()->raw_address());
 

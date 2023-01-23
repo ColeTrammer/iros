@@ -77,3 +77,8 @@ add_dependencies(iris limine)
 set_target_properties(iris PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${IRIS_ARCH_DIR}/link.ld)
 
 install(TARGETS iris RUNTIME DESTINATION boot)
+
+add_executable(test_userspace test_userspace.cpp )
+target_compile_options(test_userspace PRIVATE "-ffreestanding" "-nostdlib" "-nostartfiles" "-static")
+target_link_options(test_userspace PRIVATE "-ffreestanding" "-nostdlib" "-nostartfiles" "-static")
+install(TARGETS test_userspace RUNTIME DESTINATION boot)

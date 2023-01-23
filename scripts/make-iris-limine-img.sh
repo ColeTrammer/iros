@@ -57,7 +57,7 @@ mkdir -p "$BUILD_DIR/mnt"
 mount "$LOOP_DEV"p1 "$BUILD_DIR/mnt"
 
 sudo mkdir -p "$BUILD_DIR"/mnt/EFI/BOOT
-sudo cp "$BUILD_DIR"/iris "$ROOT/iris/boot/limine.cfg" "$LIMINE_DIR"/limine.sys "$BUILD_DIR"/mnt
+sudo cp "$BUILD_DIR"/iris "$BUILD_DIR"/test_userspace "$ROOT/iris/boot/limine.cfg" "$LIMINE_DIR"/limine.sys "$BUILD_DIR"/mnt
 sudo cp "$LIMINE_DIR"/BOOTX64.EFI "$BUILD_DIR"/mnt/EFI/BOOT
 
 chmod 777 "$IMAGE"
