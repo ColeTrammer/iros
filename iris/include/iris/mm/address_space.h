@@ -15,7 +15,8 @@ public:
 
     Expected<void> map_physical_page(VirtualAddress location, PhysicalAddress physical_address);
 
-    Expected<VirtualAddress> allocate_region(size_t page_aligned_length);
+    Expected<VirtualAddress> allocate_region(usize page_aligned_length);
+    Expected<void> allocate_region_at(VirtualAddress location, usize page_aligned_length);
 
 private:
     u64 m_architecture_page_table_base;

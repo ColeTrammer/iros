@@ -13,6 +13,45 @@
 #include <iris/mm/sections.h>
 #include <limine.h>
 
+namespace elf64 {
+using Addr = u64;
+using Off = i64;
+using Half = u16;
+using Word = u32;
+using Sword = i32;
+using Xword = u64;
+using Sxword = i64;
+using Byte = di::Byte;
+
+struct ElfHeader {
+    Byte ident[16];
+    Half type;
+    Half machine;
+    Word version;
+    Addr entry;
+    Off program_table_off;
+    Off section_table_off;
+    Word flags;
+    Half elf_header_size;
+    Half program_entry_size;
+    Half program_entry_count;
+    Half section_entry_size;
+    Half section_entry_count;
+    Half string_table_section_index;
+};
+
+struct ProgramHeader {
+    Word type;
+    Word flags;
+    Off offset;
+    Addr virtual_addr;
+    Addr physical_addr;
+    Xword file_size;
+    Xword memory_size;
+    Xword align;
+};
+}
+
 [[noreturn]] static void done() {
     for (;;) {
         asm volatile("mov $52, %eax\n"
@@ -389,7 +428,6 @@ void iris_main() {
         userspace_test_program_data_storage[i] = reinterpret_cast<di::Byte const*>(userspace_test_program.address)[i];
     }
     auto test_program_data = di::Span { userspace_test_program_data_storage.data(), userspace_test_program.size };
-    (void) test_program_data;
 
     auto new_address_space = iris::mm::AddressSpace(iris::mm::allocate_page_frame()->raw_address());
 
@@ -443,6 +481,32 @@ void iris_main() {
     auto task3 = iris::Task(task_address, task_stack3.raw_address() + 0x2000, false);
 
     scheduler.schedule_task(task3);
+
+    auto* elf_header = test_program_data.typed_pointer_unchecked<elf64::ElfHeader>(0);
+    iris::debug_log("entry={:x}"_sv, elf_header->entry);
+    ASSERT_EQ(sizeof(elf64::ProgramHeader), elf_header->program_entry_size);
+
+    auto program_headers =
+        test_program_data.typed_span_unchecked<elf64::ProgramHeader>(elf_header->program_table_off, elf_header->program_entry_count);
+    for (auto& program_header : program_headers) {
+        iris::debug_log("type={}"_sv, program_header.type);
+        iris::debug_log("addr={:x}"_sv, program_header.virtual_addr);
+        iris::debug_log("file={:x}"_sv, program_header.file_size);
+        iris::debug_log("memory={:x}"_sv, program_header.memory_size);
+
+        auto aligned_size = (program_header.memory_size + 4095) / 4096 * 4096;
+        (void) new_address_space.allocate_region_at(iris::mm::VirtualAddress(program_header.virtual_addr), aligned_size);
+
+        auto data = di::Span { reinterpret_cast<di::Byte*>(program_header.virtual_addr), aligned_size };
+        for (auto i : di::range(program_header.file_size)) {
+            data[i] = test_program_data[program_header.offset + i];
+        }
+    }
+
+    auto task_stack4 = *new_address_space.allocate_region(0x2000);
+    auto task4 = iris::Task(elf_header->entry, task_stack4.raw_address(), true);
+
+    scheduler.schedule_task(task4);
 
     iris::debug_log("preparing to context switch"_sv);
 

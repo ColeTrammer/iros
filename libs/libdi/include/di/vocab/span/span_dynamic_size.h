@@ -104,6 +104,36 @@ public:
         return reinterpret_cast<U const*>(m_data + byte_offset);
     }
 
+    template<concepts::TriviallyDestructible U>
+    requires(concepts::SameAs<Byte, T>)
+    Optional<Span<U>> typed_span(size_t byte_offset, size_t count) const {
+        if (byte_offset + sizeof(U) * count >= size()) {
+            return nullopt;
+        }
+        return Span<U> { typed_pointer_unchecked<U>(byte_offset), count };
+    }
+
+    template<concepts::TriviallyDestructible U>
+    requires(concepts::SameAs<Byte const, T>)
+    Optional<Span<U const>> typed_span(size_t byte_offset, size_t count) const {
+        if (byte_offset + sizeof(U) * count >= size()) {
+            return nullopt;
+        }
+        return Span<U const> { typed_pointer_unchecked<U const>(byte_offset), count };
+    }
+
+    template<concepts::TriviallyDestructible U>
+    requires(concepts::SameAs<Byte, T>)
+    Span<U> typed_span_unchecked(size_t byte_offset, size_t count) const {
+        return Span<U> { typed_pointer_unchecked<U>(byte_offset), count };
+    }
+
+    template<concepts::TriviallyDestructible U>
+    requires(concepts::SameAs<Byte const, T>)
+    Span<U const> typed_span_unchecked(size_t byte_offset, size_t count) const {
+        return Span<U const> { typed_pointer_unchecked<U const>(byte_offset), count };
+    }
+
 private:
     T* m_data { nullptr };
     types::size_t m_size { 0 };
