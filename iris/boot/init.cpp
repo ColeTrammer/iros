@@ -424,9 +424,8 @@ void iris_main() {
     DI_ASSERT_GT(module_request.response->module_count, 0u);
     auto userspace_test_program = *module_request.response->modules[0];
     DI_ASSERT_LT_EQ(userspace_test_program.size, userspace_test_program_data_storage.size());
-    for (auto i : di::range(userspace_test_program.size)) {
-        userspace_test_program_data_storage[i] = reinterpret_cast<di::Byte const*>(userspace_test_program.address)[i];
-    }
+    di::copy(di::Span { reinterpret_cast<di::Byte const*>(userspace_test_program.address), userspace_test_program.size },
+             userspace_test_program_data_storage.data());
     auto test_program_data = di::Span { userspace_test_program_data_storage.data(), userspace_test_program.size };
 
     auto new_address_space = iris::mm::AddressSpace(iris::mm::allocate_page_frame()->raw_address());
@@ -498,9 +497,7 @@ void iris_main() {
         (void) new_address_space.allocate_region_at(iris::mm::VirtualAddress(program_header.virtual_addr), aligned_size);
 
         auto data = di::Span { reinterpret_cast<di::Byte*>(program_header.virtual_addr), aligned_size };
-        for (auto i : di::range(program_header.file_size)) {
-            data[i] = test_program_data[program_header.offset + i];
-        }
+        di::copy(test_program_data, data.data());
     }
 
     auto task_stack4 = *new_address_space.allocate_region(0x2000);

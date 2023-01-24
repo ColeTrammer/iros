@@ -32,6 +32,8 @@
 #include <di/container/concepts/input_iterator.h>
 #include <di/container/concepts/iterator.h>
 #include <di/container/concepts/iterator_reconstructible_container.h>
+#include <di/container/concepts/output_container.h>
+#include <di/container/concepts/output_iterator.h>
 #include <di/container/concepts/permutable.h>
 #include <di/container/concepts/random_access_container.h>
 #include <di/container/concepts/random_access_iterator.h>
@@ -43,3 +45,4 @@
 #include <di/container/concepts/sortable.h>
 #include <di/container/concepts/view.h>
 #include <di/container/concepts/viewable_container.h>
+#include <di/container/concepts/weakly_incrementable.h>

@@ -13,6 +13,27 @@ constexpr void minmax() {
     ASSERT_EQ(di::clamp(2, 5, 7), 5);
     ASSERT_EQ(di::clamp(6, 5, 7), 6);
     ASSERT_EQ(di::clamp(10, 5, 7), 7);
+
+    {
+        auto [a, b] = di::minmax({ 1, 1, 2, 2, 3, 3, 4, 4, 4 });
+        ASSERT_EQ(a, 1);
+        ASSERT_EQ(b, 4);
+    }
+    {
+        auto [a, b] = di::minmax({ 1 });
+        ASSERT_EQ(a, 1);
+        ASSERT_EQ(b, 1);
+    }
+    {
+        auto [a, b] = di::minmax({ 1, 2 });
+        ASSERT_EQ(a, 1);
+        ASSERT_EQ(b, 2);
+    }
+    {
+        auto [a, b] = di::minmax({ 4, 3, 2, 1 });
+        ASSERT_EQ(a, 1);
+        ASSERT_EQ(b, 4);
+    }
 }
 
 constexpr void compare() {
