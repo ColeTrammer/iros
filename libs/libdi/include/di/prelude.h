@@ -14,6 +14,7 @@
 #include <di/meta/prelude.h>
 #include <di/parser/prelude.h>
 #include <di/platform/prelude.h>
+#include <di/random/prelude.h>
 #include <di/sync/prelude.h>
 #include <di/types/prelude.h>
 #include <di/util/prelude.h>
