@@ -414,7 +414,7 @@ void iris_main() {
         }
 
         if (memory_map_entry->type != LIMINE_MEMMAP_USABLE) {
-            iris::mm::reserve_page_frames(iris::mm::PhysicalAddress(memory_map_entry->base / 4096 * 4096),
+            iris::mm::reserve_page_frames(iris::mm::PhysicalAddress(di::align_down(memory_map_entry->base, 4096)),
                                           di::divide_round_up(memory_map_entry->length, 4096));
         }
     }
@@ -493,7 +493,7 @@ void iris_main() {
         iris::debug_log("file={:x}"_sv, program_header.file_size);
         iris::debug_log("memory={:x}"_sv, program_header.memory_size);
 
-        auto aligned_size = (program_header.memory_size + 4095) / 4096 * 4096;
+        auto aligned_size = di::align_up(program_header.memory_size, 4096);
         (void) new_address_space.allocate_region_at(iris::mm::VirtualAddress(program_header.virtual_addr), aligned_size);
 
         auto data = di::Span { reinterpret_cast<di::Byte*>(program_header.virtual_addr), aligned_size };
