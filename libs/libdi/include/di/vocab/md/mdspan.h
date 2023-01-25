@@ -1,5 +1,8 @@
 #pragma once
 
+#include <di/container/view/cartesian_product.h>
+#include <di/container/view/transform.h>
+#include <di/function/uncurry.h>
 #include <di/meta/array_rank.h>
 #include <di/vocab/md/concepts/extents.h>
 #include <di/vocab/md/concepts/md_accessor.h>
@@ -100,6 +103,15 @@ public:
     requires(concepts::ConvertibleTo<OtherSizeType const&, SizeType>)
     constexpr Reference operator[](Array<OtherSizeType, rank()> const& indices) const {
         return (*this)[indices.span()];
+    }
+
+    constexpr auto each() const {
+        return function::unpack<meta::MakeIndexSequence<rank()>>([&]<usize... rank_indices>(meta::IndexSequence<rank_indices...>) {
+            return container::view::cartesian_product(container::view::range(extent(rank_indices))...) |
+                   container::view::transform(function::uncurry([&](auto... indices) -> Reference {
+                       return (*this)[indices...];
+                   }));
+        });
     }
 
     constexpr size_t size() const { return extents().fwd_prod_of_extents(rank()); }

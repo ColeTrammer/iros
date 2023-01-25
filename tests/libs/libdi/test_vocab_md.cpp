@@ -93,6 +93,15 @@ constexpr void mdspan() {
     ASSERT_EQ((lspan[1, 1, 1]), 8);
     ASSERT_EQ(lspan.size(), 8u);
     ASSERT(!lspan.empty());
+
+    auto r = lspan.each() | di::to<di::Vector>();
+    auto ex = di::Array { 1, 5, 3, 7, 2, 6, 4, 8 } | di::to<di::Vector>();
+    ASSERT_EQ(r, ex);
+
+    auto sspan = di::MDSpan { storage.data(), di::LayoutStride::Mapping(di::Extents<size_t, 2> {}, di::Array { 4 }) };
+    auto r2 = sspan.each() | di::to<di::Vector>();
+    auto ex2 = di::Array { 1, 5 } | di::to<di::Vector>();
+    ASSERT_EQ(r2, ex2);
 }
 
 TEST_CONSTEXPR(vocab_md, extents, extents)

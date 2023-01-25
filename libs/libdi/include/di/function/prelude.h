@@ -28,6 +28,7 @@
 #include <di/function/pipeline.h>
 #include <di/function/plus.h>
 #include <di/function/tag_invoke.h>
+#include <di/function/uncurry.h>
 #include <di/function/value.h>
 #include <di/function/ycombinator.h>
 
@@ -41,6 +42,7 @@ using function::flip;
 using function::not_fn;
 using function::overload;
 using function::piped;
+using function::uncurry;
 using function::ycombinator;
 
 using concepts::TagInvocable;

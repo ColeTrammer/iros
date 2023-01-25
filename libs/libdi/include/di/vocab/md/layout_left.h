@@ -67,6 +67,6 @@ private:
         return a.extents() == b.extents();
     }
 
-    ExtentsType m_extents;
+    [[no_unique_address]] ExtentsType m_extents;
 };
 }
