@@ -35,22 +35,22 @@ public:
     constexpr void reset() {}
 
     template<typename Gen>
-    requires(concepts::UniformRandomBitGenerator<meta::RemoveCVRef<Gen>>)
+    requires(concepts::UniformRandomBitGenerator<meta::RemoveReference<Gen>>)
     constexpr T operator()(Gen&& generator) const {
         return (*this)(generator, param());
     }
 
     template<typename Gen>
-    requires(concepts::UniformRandomBitGenerator<meta::RemoveCVRef<Gen>>)
+    requires(concepts::UniformRandomBitGenerator<meta::RemoveReference<Gen>>)
     constexpr T operator()(Gen&& generator, Param const& param) const {
-        using U = meta::CommonType<meta::MakeUnsigned<T>, typename meta::RemoveCVRef<Gen>::Result>;
+        using U = meta::CommonType<meta::MakeUnsigned<T>, typename meta::RemoveReference<Gen>::Result>;
 
         // TODO: adopt a more sophisticated approach for implementing this function
         //       which does not naively retry the number generation on out of bounds.
         //       See 2018 paper: Fast Random Integer Generation in an Interval
         //       DANIEL LEMIRE, Université du Québec (TELUQ), Canada
-        constexpr U generated_min = meta::RemoveCVRef<Gen>::min();
-        constexpr U generated_max = meta::RemoveCVRef<Gen>::max();
+        constexpr U generated_min = meta::RemoveReference<Gen>::min();
+        constexpr U generated_max = meta::RemoveReference<Gen>::max();
         constexpr U generated_range = generated_max - generated_min;
 
         // A general simplification of generating an integer in the range

@@ -78,7 +78,43 @@ constexpr void property() {
     }
 }
 
+constexpr void property2() {
+    auto do_test = [](di::UniformRandomBitGenerator auto rng) {
+        auto x = di::TreeSet<unsigned int> {};
+
+        auto iterations = di::is_constant_evaluated() ? 99 : 345;
+        auto vector = di::range(0, iterations) | di::to<di::Vector>();
+
+        rng.discard(1);
+        di::shuffle(vector, rng);
+
+        for (auto [i, new_value] : di::enumerate(vector)) {
+            x.insert(new_value);
+            ASSERT(di::is_sorted(x));
+            ASSERT(di::is_sorted(di::reverse(x), di::compare_backwards));
+            ASSERT_EQ(di::to_unsigned(di::distance(x.begin(), x.end())), i + 1);
+            ASSERT_EQ(di::to_unsigned(di::distance(di::reverse(x).begin(), di::reverse(x).end())), i + 1);
+            ASSERT_EQ(di::size(x), di::to_unsigned(i) + 1);
+        }
+    };
+
+    do_test(di::MinstdRand(1));
+
+    if (!di::is_constant_evaluated()) {
+        do_test(di::MinstdRand(2));
+        do_test(di::MinstdRand(3));
+        do_test(di::MinstdRand(4));
+        do_test(di::MinstdRand(5));
+        do_test(di::MinstdRand(6));
+        do_test(di::MinstdRand(7));
+        do_test(di::MinstdRand(8));
+        do_test(di::MinstdRand(9));
+        do_test(di::MinstdRand(10));
+    }
+}
+
 TEST_CONSTEXPR(container_tree_set, basic, basic)
 TEST_CONSTEXPR(container_tree_set, accessors, accessors)
 TEST_CONSTEXPR(container_tree_set, erase, erase)
 TEST_CONSTEXPR(container_tree_set, property, property)
+TEST_CONSTEXPR(container_tree_set, property2, property2)
