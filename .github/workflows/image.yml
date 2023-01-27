@@ -11,7 +11,7 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                arch: [i686, x86_64]
+                arch: [x86_64]
         container:
             image: ghcr.io/coletrammer/iros_toolchain
             options: --privileged
