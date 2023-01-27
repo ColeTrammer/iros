@@ -30,6 +30,7 @@
 #include <di/util/to_underlying.h>
 #include <di/util/unreachable.h>
 #include <di/util/voidify.h>
+#include <di/util/black_box.h>
 
 namespace di {
 using util::bit_cast;
@@ -57,6 +58,7 @@ using util::SourceLocation;
 using util::address_of;
 using util::as_const;
 using util::as_const_pointer;
+using util::black_box;
 using util::compile_time_fail;
 using util::declval;
 using util::exchange;
