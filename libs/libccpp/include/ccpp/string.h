@@ -4,6 +4,7 @@
 
 __CCPP_BEGIN_DECLARATIONS
 
-char* strchr(char const* str, int ch);
+char* strchr(char const* haystack, int needle);
+char* strstr(char const* haystack, char const* needle);
 
 __CCPP_END_DECLARATIONS

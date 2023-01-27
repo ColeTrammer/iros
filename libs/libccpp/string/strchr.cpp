@@ -1,17 +1,16 @@
-extern "C" char* strchr(char const* str, int ch) {
+extern "C" unsigned char const* strchr(unsigned char const* str, int ch) {
     auto needle = (char) ch;
-    auto ustr = (unsigned char const*) str;
 
-    if (*ustr == needle) {
-        return (char*) ustr;
-    } else if (*ustr == '\0') {
+    if (*str == needle) {
+        return str;
+    } else if (*str == '\0') {
         return nullptr;
     }
 
     do {
-        if (*++ustr == needle) {
-            return (char*) ustr;
+        if (*++str == needle) {
+            return str;
         }
-    } while (*ustr != '\0');
+    } while (*str != '\0');
     return nullptr;
 }

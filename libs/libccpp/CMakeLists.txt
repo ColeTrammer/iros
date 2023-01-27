@@ -1,5 +1,6 @@
 set(SOURCES
     string/strchr.cpp
+    string/strstr.cpp
 )
 
 add_os_library(libccpp ccpp FALSE)

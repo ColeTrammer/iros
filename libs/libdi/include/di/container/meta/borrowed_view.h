@@ -9,6 +9,5 @@
 
 namespace di::meta {
 template<concepts::Container Con>
-using BorrowedView =
-    Conditional<concepts::BorrowedContainer<Con>, container::View<ContainerIterator<Con>, ContainerSentinel<Con>>, container::Dangling>;
+using BorrowedView = Conditional<concepts::BorrowedContainer<Con>, container::View<ContainerIterator<Con>>, container::Dangling>;
 }

@@ -5,6 +5,10 @@
     return strchr(s, ch);
 }
 
+[[gnu::noinline]] static char const* do_strstr(char const* s, char const* t) {
+    return strstr(s, t);
+}
+
 static void strchr_() {
     auto s = di::black_box((char const*) "Hello");
 
@@ -30,4 +34,33 @@ static void strchr_() {
     ASSERT_EQ(r5, e5);
 }
 
-DIUS_TEST(string_h, strchr_)
+static void strstr_() {
+    auto s = di::black_box((char const*) "Hello");
+    auto t = di::black_box((char const*) "ell");
+    auto v = di::black_box((char const*) "lll");
+    auto u = di::black_box((char const*) "Helloo");
+    auto e = di::black_box((char const*) "");
+
+    auto r1 = do_strstr(s, t);
+    auto e1 = s + 1;
+    ASSERT_EQ(r1, e1);
+
+    auto r2 = do_strstr(s, v);
+    auto e2 = nullptr;
+    ASSERT_EQ(r2, e2);
+
+    auto r3 = do_strstr(s, u);
+    auto e3 = nullptr;
+    ASSERT_EQ(r3, e3);
+
+    auto r4 = do_strstr(s, e);
+    auto e4 = s;
+    ASSERT_EQ(r4, e4);
+
+    auto r5 = do_strstr(e, e);
+    auto e5 = e;
+    ASSERT_EQ(r5, e5);
+}
+
+TEST(string_h, strchr_)
+TEST(string_h, strstr_)
