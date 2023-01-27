@@ -1,5 +1,6 @@
 set(SOURCES
     string/strchr.cpp
+    string/strlen.cpp
     string/strstr.cpp
 )
 

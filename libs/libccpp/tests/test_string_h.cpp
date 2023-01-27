@@ -9,6 +9,10 @@
     return strstr(s, t);
 }
 
+[[gnu::noinline]] static size_t do_strlen(char const* s) {
+    return strlen(s);
+}
+
 static void strchr_() {
     auto s = di::black_box((char const*) "Hello");
 
@@ -62,5 +66,19 @@ static void strstr_() {
     ASSERT_EQ(r5, e5);
 }
 
+static void strlen_() {
+    auto s = di::black_box((char const*) "Hello");
+    auto e = di::black_box((char const*) "");
+
+    auto r1 = do_strlen(s);
+    auto e1 = 5u;
+    ASSERT_EQ(r1, e1);
+
+    auto r2 = do_strlen(e);
+    auto e2 = 0u;
+    ASSERT_EQ(r2, e2);
+}
+
 TEST(string_h, strchr_)
 TEST(string_h, strstr_)
+TEST(string_h, strlen_)
