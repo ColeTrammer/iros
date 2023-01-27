@@ -1,5 +1,5 @@
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 constexpr void minmax() {
     ASSERT_EQ(di::min(1, 2), 1);
@@ -158,12 +158,12 @@ constexpr void sort() {
     ASSERT(di::is_sorted(s, di::compare, &X::a));
 }
 
-TEST_CONSTEXPR(container_algorithm, minmax, minmax)
-TEST_CONSTEXPR(container_algorithm, compare, compare)
-TEST_CONSTEXPR(container_algorithm, fold, fold)
-TEST_CONSTEXPR(container_algorithm, is_sorted, is_sorted)
-TEST_CONSTEXPR(container_algorithm, permute, permute)
-TEST_CONSTEXPR(container_algorithm, contains, contains)
-TEST_CONSTEXPR(container_algorithm, predicate, predicate)
-TEST_CONSTEXPR(container_algorithm, for_each, for_each)
-TEST_CONSTEXPR(container_algorithm, sort, sort)
+TESTC(container_algorithm, minmax)
+TESTC(container_algorithm, compare)
+TESTC(container_algorithm, fold)
+TESTC(container_algorithm, is_sorted)
+TESTC(container_algorithm, permute)
+TESTC(container_algorithm, contains)
+TESTC(container_algorithm, predicate)
+TESTC(container_algorithm, for_each)
+TESTC(container_algorithm, sort)

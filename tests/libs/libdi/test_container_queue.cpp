@@ -1,7 +1,5 @@
 #include <di/prelude.h>
-#include <test/test.h>
-
-#include <liim/container/new_vector.h>
+#include <dius/test/prelude.h>
 
 constexpr void priority_queue_basic() {
     auto x = di::PriorityQueue<i32> {};
@@ -68,7 +66,7 @@ constexpr void queue() {
     ASSERT(b.empty());
 }
 
-TEST_CONSTEXPR(container_queue, priority_queue_basic, priority_queue_basic)
-TEST_CONSTEXPR(container_queue, priority_queue_to, priority_queue_to)
-TEST_CONSTEXPR(container_queue, stack, stack)
-TEST_CONSTEXPRX(container_queue, queue, queue)
+TESTC(container_queue, priority_queue_basic)
+TESTC(container_queue, priority_queue_to)
+TESTC(container_queue, stack)
+TEST(container_queue, queue)

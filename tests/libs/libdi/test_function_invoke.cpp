@@ -1,7 +1,7 @@
 #include <di/concepts/same_as.h>
 #include <di/function/invoke.h>
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 struct X {
     int y;
@@ -84,7 +84,7 @@ constexpr void invoke_r_void() {
     di::invoke_r<void>(f);
 }
 
-TEST_CONSTEXPR(util_invoke, function, function)
-TEST_CONSTEXPR(util_invoke, member_object, member_object)
-TEST_CONSTEXPR(util_invoke, member_function, member_function)
-TEST_CONSTEXPR(util_invoke, invoke_r_void, invoke_r_void)
+TESTC(util_invoke, function)
+TESTC(util_invoke, member_object)
+TESTC(util_invoke, member_function)
+TESTC(util_invoke, invoke_r_void)

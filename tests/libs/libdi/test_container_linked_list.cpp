@@ -1,6 +1,6 @@
 #include <di/prelude.h>
 #include <dius/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 constexpr void basic() {
     auto x = di::LinkedList<int> {};
@@ -61,5 +61,5 @@ constexpr void splice() {
     ASSERT_EQ(a, ex3);
 }
 
-TEST_CONSTEXPRX(container_linked_list, basic, basic)
-TEST_CONSTEXPRX(container_linked_list, splice, splice)
+TEST(container_linked_list, basic)
+TEST(container_linked_list, splice)

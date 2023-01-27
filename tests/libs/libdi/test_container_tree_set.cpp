@@ -1,6 +1,5 @@
 #include <di/prelude.h>
-#include <dius/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 constexpr void basic() {
     di::TreeSet<int> x;
@@ -113,8 +112,8 @@ constexpr void property2() {
     }
 }
 
-TEST_CONSTEXPR(container_tree_set, basic, basic)
-TEST_CONSTEXPR(container_tree_set, accessors, accessors)
-TEST_CONSTEXPR(container_tree_set, erase, erase)
-TEST_CONSTEXPR(container_tree_set, property, property)
-TEST_CONSTEXPR(container_tree_set, property2, property2)
+TESTC(container_tree_set, basic)
+TESTC(container_tree_set, accessors)
+TESTC(container_tree_set, erase)
+TESTC(container_tree_set, property)
+TESTC(container_tree_set, property2)

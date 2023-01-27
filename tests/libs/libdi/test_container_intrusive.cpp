@@ -1,5 +1,5 @@
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 constexpr void forward_list() {
     struct Node : di::IntrusiveForwardListElement<> {
@@ -71,5 +71,5 @@ constexpr void list() {
     ASSERT_EQ(list.pop_front().transform(&Node::value), di::nullopt);
 }
 
-TEST_CONSTEXPR(container_intrusive, forward_list, forward_list)
-TEST_CONSTEXPR(container_intrusive, list, list)
+TESTC(container_intrusive, forward_list)
+TESTC(container_intrusive, list)

@@ -1,5 +1,5 @@
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 constexpr void void_value() {
     auto x = di::Expected<void, int> {};
@@ -167,9 +167,9 @@ constexpr void reference() {
     ASSERT_EQ(b, 5);
 }
 
-TEST_CONSTEXPR(vocab_expected, void_value, void_value)
-TEST_CONSTEXPR(vocab_expected, void_error, void_error)
-TEST_CONSTEXPR(vocab_expected, basic, basic)
-TEST_CONSTEXPR(vocab_expected, move_only, move_only)
-TEST_CONSTEXPR(vocab_expected, fallible, fallible)
-TEST_CONSTEXPR(vocab_expected, reference, reference)
+TESTC(vocab_expected, void_value)
+TESTC(vocab_expected, void_error)
+TESTC(vocab_expected, basic)
+TESTC(vocab_expected, move_only)
+TESTC(vocab_expected, fallible)
+TESTC(vocab_expected, reference)

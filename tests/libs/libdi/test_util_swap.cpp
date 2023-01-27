@@ -1,6 +1,6 @@
 #include <di/prelude.h>
 #include <di/util/rebindable_box.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 constexpr void basic() {
     static_assert(di::concepts::Swappable<int>);
@@ -79,7 +79,7 @@ constexpr void move_only() {
     ASSERT_EQ(b.x, 2);
 }
 
-TEST_CONSTEXPR(util_swap, basic, basic)
-TEST_CONSTEXPR(util_swap, custom, custom)
-TEST_CONSTEXPR(util_swap, non_assignable, non_assignable)
-TEST_CONSTEXPR(util_swap, move_only, move_only)
+TESTC(util_swap, basic)
+TESTC(util_swap, custom)
+TESTC(util_swap, non_assignable)
+TESTC(util_swap, move_only)

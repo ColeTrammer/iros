@@ -76,6 +76,36 @@ function(add_os_tests name)
     endif()
 endfunction()
 
+function(add_dius_tests name)
+    set(test_name "test_${name}")
+    set(test_executable "${CMAKE_CURRENT_BINARY_DIR}/${test_name}")
+    set(test_include_file "${CMAKE_CURRENT_BINARY_DIR}/${test_name}.cmake")
+    set(test_generate_script "${CMAKE_SOURCE_DIR}/scripts/generate-cmake-tests.sh")
+
+    set(SOURCES ${TEST_FILES})
+    add_os_executable("${test_name}" bin)
+    target_link_libraries("${test_name}" PRIVATE libdius_test_main)
+    if(${CI_BUILD} AND NOT ${NATIVE_BUILD})
+        add_test(NAME ${test_name} COMMAND /bin/sh -c "IROS_ROOT=${CMAKE_SOURCE_DIR} IROS_INITRD=${IROS_INITRD} IROS_KERNEL=${IROS_KERNEL} IROS_ARCH=${ARCH} IROS_QUIET_KERNEL=1 IROS_REPORT_STATUS=1 ${CMAKE_SOURCE_DIR}/scripts/run-test.sh ${test_executable}")
+        set_tests_properties(${test_name} PROPERTIES TIMEOUT 30 RUN_SERIAL TRUE)
+    else()
+        list(TRANSFORM TEST_FILES PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
+        add_custom_command(
+            TARGET "test_${name}"
+            POST_BUILD
+            COMMAND "IROS_ROOT=${ROOT}" "NATIVE=${NATIVE_BUILD}" "IROS_INITRD=${IROS_INITRD}" IROS_KERNEL="${IROS_KERNEL}" IROS_GREP_SOURCES="${TEST_FILES}" "IROS_ARCH=${ARCH}" "${test_generate_script}" "${test_executable}" "${test_name}" "${test_include_file}"
+            DEPENDS "${test_generate_script}"
+        )
+        set_property(DIRECTORY APPEND PROPERTY TEST_INCLUDE_FILES "${test_include_file}")
+    endif()
+
+    if (${NATIVE_BUILD})
+        target_compile_definitions("${test_name}" PRIVATE "BINARY_DIR=\"${CMAKE_CURRENT_BINARY_DIR}\"")
+    else()
+        target_compile_definitions("${test_name}" PRIVATE "BINARY_DIR=\"/bin\"")
+    endif()
+endfunction()
+
 function(add_os_core_library target_name short_name has_headers)
     add_os_library_impl(${target_name} ${short_name} ${has_headers} TRUE)
 endfunction()

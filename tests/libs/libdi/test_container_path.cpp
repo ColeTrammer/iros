@@ -1,5 +1,5 @@
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 constexpr void iteration() {
     auto do_test = [](auto&& path_view, auto&& expected_components) {
@@ -12,12 +12,12 @@ constexpr void iteration() {
         ASSERT_EQ(r2, ex2);
     };
 
-    do_test("//a//b//test.txt"_pv, Array { "/"_tsv, "a"_tsv, "b"_tsv, "test.txt"_tsv });
-    do_test("a//b//test.txt"_pv, Array { "a"_tsv, "b"_tsv, "test.txt"_tsv });
-    do_test("a//b////"_pv, Array { "a"_tsv, "b"_tsv });
-    do_test(".//a//b////"_pv, Array { "."_tsv, "a"_tsv, "b"_tsv });
-    do_test("./a/b/.."_pv, Array { "."_tsv, "a"_tsv, "b"_tsv, ".."_tsv });
-    do_test("./a/././b/./../."_pv, Array { "."_tsv, "a"_tsv, "b"_tsv, ".."_tsv });
+    do_test("//a//b//test.txt"_pv, di::Array { "/"_tsv, "a"_tsv, "b"_tsv, "test.txt"_tsv });
+    do_test("a//b//test.txt"_pv, di::Array { "a"_tsv, "b"_tsv, "test.txt"_tsv });
+    do_test("a//b////"_pv, di::Array { "a"_tsv, "b"_tsv });
+    do_test(".//a//b////"_pv, di::Array { "."_tsv, "a"_tsv, "b"_tsv });
+    do_test("./a/b/.."_pv, di::Array { "."_tsv, "a"_tsv, "b"_tsv, ".."_tsv });
+    do_test("./a/././b/./../."_pv, di::Array { "."_tsv, "a"_tsv, "b"_tsv, ".."_tsv });
 }
 
 constexpr void equal() {
@@ -139,15 +139,15 @@ constexpr void path_basic() {
     ASSERT_EQ(path, "/opt/bash.tar.gz"_pv);
 }
 
-TEST_CONSTEXPR(container_path, iteration, iteration)
-TEST_CONSTEXPR(container_path, equal, equal)
-TEST_CONSTEXPR(container_path, compare, compare)
-TEST_CONSTEXPR(container_path, extension, extension)
-TEST_CONSTEXPR(container_path, filename, filename)
-TEST_CONSTEXPR(container_path, is_absolute, is_absolute)
-TEST_CONSTEXPR(container_path, parent, parent)
-TEST_CONSTEXPR(container_path, stem, stem)
-TEST_CONSTEXPR(container_path, starts_with, starts_with)
-TEST_CONSTEXPR(container_path, ends_with, ends_with)
-TEST_CONSTEXPR(container_path, filename_ends_with, filename_ends_with)
-TEST_CONSTEXPR(container_path, path_basic, path_basic)
+TESTC(container_path, iteration)
+TESTC(container_path, equal)
+TESTC(container_path, compare)
+TESTC(container_path, extension)
+TESTC(container_path, filename)
+TESTC(container_path, is_absolute)
+TESTC(container_path, parent)
+TESTC(container_path, stem)
+TESTC(container_path, starts_with)
+TESTC(container_path, ends_with)
+TESTC(container_path, filename_ends_with)
+TESTC(container_path, path_basic)

@@ -1,6 +1,6 @@
 #include <di/prelude.h>
 #include <dius/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 static void meta() {
     auto sender = di::execution::just(5);
@@ -241,13 +241,13 @@ static void with() {
     ASSERT_EQ(ex::sync_wait(di::move(w)), di::make_tuple(42));
 }
 
-TEST_CONSTEXPRX(execution, meta, meta)
-TEST_CONSTEXPRX(execution, sync_wait, sync_wait)
-TEST_CONSTEXPRX(execution, lazy, lazy)
-TEST_CONSTEXPRX(execution, coroutine, coroutine)
-TEST_CONSTEXPRX(execution, then, then)
-TEST_CONSTEXPRX(execution, inline_scheduler, inline_scheduler)
-TEST_CONSTEXPRX(execution, let, let)
-TEST_CONSTEXPRX(execution, transfer, transfer)
-TEST_CONSTEXPRX(execution, as, as)
-TEST_CONSTEXPRX(execution, with, with)
+TEST(execution, meta)
+TEST(execution, sync_wait)
+TEST(execution, lazy)
+TEST(execution, coroutine)
+TEST(execution, then)
+TEST(execution, inline_scheduler)
+TEST(execution, let)
+TEST(execution, transfer)
+TEST(execution, as)
+TEST(execution, with)

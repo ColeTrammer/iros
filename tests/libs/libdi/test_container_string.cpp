@@ -1,6 +1,6 @@
 #include <di/concepts/always_true.h>
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 constexpr void basic() {
     auto x = u8"QWER"_sv;
@@ -138,10 +138,10 @@ static void null_terminated() {
     ASSERT_EQ(::strlen(s.c_str()), 2u);
 }
 
-TEST_CONSTEXPR(container_string, basic, basic)
-TEST_CONSTEXPR(container_string, push_back, push_back)
-TEST_CONSTEXPR(container_string, to, to)
-TEST_CONSTEXPR(container_string, erased, erased)
-TEST_CONSTEXPR(container_string, utf8, utf8)
-TEST_CONSTEXPR(container_string, readonly_api, readonly_api)
-TEST_CONSTEXPRX(container_string, null_terminated, null_terminated)
+TESTC(container_string, basic)
+TESTC(container_string, push_back)
+TESTC(container_string, to)
+TESTC(container_string, erased)
+TESTC(container_string, utf8)
+TESTC(container_string, readonly_api)
+TEST(container_string, null_terminated)

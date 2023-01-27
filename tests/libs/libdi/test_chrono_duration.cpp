@@ -1,5 +1,5 @@
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 constexpr void basic() {
     auto x = 100_ms;
@@ -15,4 +15,4 @@ constexpr void basic() {
     ASSERT_EQ(y, 1000_ms);
 }
 
-TEST_CONSTEXPR(chrono_duration, basic, basic)
+TESTC(chrono_duration, basic)

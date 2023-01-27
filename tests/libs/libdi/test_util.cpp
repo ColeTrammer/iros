@@ -1,5 +1,5 @@
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 constexpr void scope_exit() {
     int value = 5;
@@ -21,4 +21,4 @@ constexpr void scope_exit() {
     ASSERT_EQ(value, 42);
 }
 
-TEST_CONSTEXPR(util, scope_exit, scope_exit)
+TESTC(util, scope_exit)

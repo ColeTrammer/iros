@@ -1,5 +1,5 @@
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 struct Granular : di::BitFlag<32 + 23> {};
 
@@ -17,4 +17,4 @@ constexpr void basic() {
     ASSERT_EQ(x.get<Type>(), IdtType::Y);
 }
 
-TEST_CONSTEXPR(bit_bitstruct, basic, basic)
+TESTC(bit_bitstruct, basic)

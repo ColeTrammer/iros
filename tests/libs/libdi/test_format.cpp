@@ -1,5 +1,5 @@
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 #include <dius/prelude.h>
 
@@ -51,4 +51,4 @@ constexpr void basic() {
     ASSERT_EQ(di::present("{:?}"_sv, U'x'), "'x'"_sv);
 }
 
-TEST_CONSTEXPR(format, basic, basic)
+TESTC(format, basic)

@@ -1,5 +1,5 @@
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 constexpr void to_array() {
     {
@@ -54,7 +54,7 @@ constexpr void compare() {
     ASSERT_LT(a, b);
 }
 
-TEST_CONSTEXPR(vocab_array, to_array, to_array)
-TEST_CONSTEXPR(vocab_array, span, span)
-TEST_CONSTEXPR(vocab_array, tuple, tuple)
-TEST_CONSTEXPR(vocab_array, compare, compare)
+TESTC(vocab_array, to_array)
+TESTC(vocab_array, span)
+TESTC(vocab_array, tuple)
+TESTC(vocab_array, compare)

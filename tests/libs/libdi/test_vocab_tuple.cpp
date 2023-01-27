@@ -1,6 +1,5 @@
 #include <di/prelude.h>
-#include <di/util/forward_like.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 class X : public di::meta::AddMemberGet<X> {
 public:
@@ -182,9 +181,10 @@ constexpr void tuple_cat() {
     ASSERT_EQ(r, di::make_tuple(1, 2, 5, 6, 7));
 }
 
-TEST_CONSTEXPR(vocab_tuple, enable_structed_bindings, enable_structed_bindings)
-TEST_CONSTEXPR(vocab_tuple, basic, basic)
-TEST_CONSTEXPR(vocab_tuple, assignment, assignment)
-TEST_CONSTEXPR(vocab_tuple, tuple_transform, tuple_transform)
-TEST_CONSTEXPR(vocab_tuple, tuple_for_each, tuple_for_each)
-TEST_CONSTEXPR(vocab_tuple, tuple_equal, tuple_equal) TEST_CONSTEXPR(vocab_tuple, tuple_cat, tuple_cat)
+TESTC(vocab_tuple, enable_structed_bindings)
+TESTC(vocab_tuple, basic)
+TESTC(vocab_tuple, assignment)
+TESTC(vocab_tuple, tuple_transform)
+TESTC(vocab_tuple, tuple_for_each)
+TESTC(vocab_tuple, tuple_equal)
+TESTC(vocab_tuple, tuple_cat)

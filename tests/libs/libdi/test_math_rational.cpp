@@ -1,5 +1,5 @@
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 constexpr void basic() {
     auto a = di::Rational { 3, 6 };
@@ -41,5 +41,5 @@ constexpr void ratio() {
     static_assert(Z::rational == di::Rational(1, 5));
 }
 
-TEST_CONSTEXPR(math_rational, basic, basic)
-TEST_CONSTEXPRX(math_rational, ratio, ratio)
+TESTC(math_rational, basic)
+TESTC(math_rational, ratio)

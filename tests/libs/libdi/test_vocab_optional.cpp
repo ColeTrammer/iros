@@ -1,7 +1,7 @@
 #include <di/concepts/trivial.h>
 #include <di/concepts/trivially_default_constructible.h>
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 static_assert(sizeof(di::Optional<int&>) == sizeof(int*));
 
@@ -273,13 +273,13 @@ constexpr void void_optional() {
     ASSERT(!y);
 }
 
-TEST_CONSTEXPR(vocab_optional, basic, basic)
-TEST_CONSTEXPR(vocab_optional, conversions, conversions)
-TEST_CONSTEXPR(vocab_optional, make_optional, make_optional)
-TEST_CONSTEXPR(vocab_optional, references, references)
-TEST_CONSTEXPR(vocab_optional, trivial, trivial)
-TEST_CONSTEXPR(vocab_optional, monad, monad)
-TEST_CONSTEXPR(vocab_optional, swap, swap)
-TEST_CONSTEXPR(vocab_optional, compare, compare)
-TEST_CONSTEXPR(vocab_optional, container, container)
-TEST_CONSTEXPR(vocab_optional, void_optional, void_optional)
+TESTC(vocab_optional, basic)
+TESTC(vocab_optional, conversions)
+TESTC(vocab_optional, make_optional)
+TESTC(vocab_optional, references)
+TESTC(vocab_optional, trivial)
+TESTC(vocab_optional, monad)
+TESTC(vocab_optional, swap)
+TESTC(vocab_optional, compare)
+TESTC(vocab_optional, container)
+TESTC(vocab_optional, void_optional)

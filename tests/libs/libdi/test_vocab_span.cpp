@@ -1,5 +1,5 @@
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 constexpr void basic() {
     auto x = di::to_array({ 1, 2, 3, 4, 5 });
@@ -39,5 +39,5 @@ constexpr void tuple() {
     ASSERT_EQ(i, 8);
 }
 
-TEST_CONSTEXPR(vocab_span, basic, basic)
-TEST_CONSTEXPR(vocab_span, tuple, tuple)
+TESTC(vocab_span, basic)
+TESTC(vocab_span, tuple)

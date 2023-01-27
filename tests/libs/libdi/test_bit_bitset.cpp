@@ -1,5 +1,5 @@
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 constexpr void basic() {
     auto set = di::BitSet<13> {};
@@ -16,3 +16,6 @@ constexpr void wide() {
 
     ASSERT_EQ(0x8000000000000002LLU, di::bit_cast<u64>(set));
 }
+
+TESTC(bitset, basic)
+TESTC(bitset, wide)

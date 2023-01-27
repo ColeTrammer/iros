@@ -1,5 +1,5 @@
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 di::Generator<int> f() {
     co_yield 1;
@@ -18,6 +18,4 @@ void basic() {
     ASSERT(di::container::equal(f(), di::Array { 1, 2, 3 }));
 }
 
-TEST(function_generator, basic) {
-    basic();
-}
+TEST(function_generator, basic)

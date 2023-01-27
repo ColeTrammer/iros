@@ -1,5 +1,5 @@
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 struct Args {
     bool enable { false };
@@ -58,4 +58,4 @@ constexpr void basic() {
     }
 }
 
-TEST_CONSTEXPR(cli, basic, basic);
+TESTC(cli, basic);

@@ -1,5 +1,5 @@
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 constexpr void extents() {
     static_assert(di::SameAs<di::Dextents<size_t, 5>, di::Extents<size_t, di::dynamic_extent, di::dynamic_extent, di::dynamic_extent,
@@ -104,8 +104,8 @@ constexpr void mdspan() {
     ASSERT_EQ(r2, ex2);
 }
 
-TEST_CONSTEXPR(vocab_md, extents, extents)
-TEST_CONSTEXPR(vocab_md, layout_left, layout_left)
-TEST_CONSTEXPR(vocab_md, layout_right, layout_right)
-TEST_CONSTEXPR(vocab_md, default_accessor, default_accessor)
-TEST_CONSTEXPR(vocab_md, mdspan, mdspan)
+TESTC(vocab_md, extents)
+TESTC(vocab_md, layout_left)
+TESTC(vocab_md, layout_right)
+TESTC(vocab_md, default_accessor)
+TESTC(vocab_md, mdspan)

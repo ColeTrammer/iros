@@ -1,5 +1,5 @@
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 struct M {
     int x;
@@ -94,9 +94,9 @@ constexpr void curry_back() {
     ASSERT_EQ(6, di::curry_back(f)(1)(2)(3));
 }
 
-TEST_CONSTEXPR(util_bind, front, front)
-TEST_CONSTEXPR(util_bind, back, back)
-TEST_CONSTEXPR(util_bind, compose, compose)
-TEST_CONSTEXPR(util_bind, pipeline, pipeline)
-TEST_CONSTEXPR(util_bind, curry, curry)
-TEST_CONSTEXPR(util_bind, curry_back, curry_back)
+TESTC(util_bind, front)
+TESTC(util_bind, back)
+TESTC(util_bind, compose)
+TESTC(util_bind, pipeline)
+TESTC(util_bind, curry)
+TESTC(util_bind, curry_back)

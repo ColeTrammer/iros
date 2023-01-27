@@ -1,5 +1,5 @@
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 constexpr void basic() {
     auto x = di::zip(di::range(4), di::range(4)) | di::to<di::TreeMap>();
@@ -24,4 +24,4 @@ constexpr void basic() {
     ASSERT_EQ(y.at("hello"_sv), "world"_sv);
 }
 
-TEST_CONSTEXPRX(container_tree_map, basic, basic)
+TESTC(container_tree_map, basic)

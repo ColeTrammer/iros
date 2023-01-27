@@ -1,6 +1,6 @@
 #include <di/container/vector/prelude.h>
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 constexpr void basic() {
     auto v = di::Vector<int> {};
@@ -89,7 +89,7 @@ constexpr void move_only() {
 
     auto w = di::move(v);
     ASSERT_EQ(w.size(), 2u);
-    EXPECT(v.empty());
+    ASSERT(v.empty());
 }
 
 constexpr void to() {
@@ -189,10 +189,10 @@ constexpr void static_() {
     ASSERT_EQ(w.size(), 2u);
 }
 
-TEST_CONSTEXPR(container_vector, basic, basic)
-TEST_CONSTEXPR(container_vector, reserve, reserve)
-TEST_CONSTEXPR(container_vector, move_only, move_only)
-TEST_CONSTEXPR(container_vector, to, to)
-TEST_CONSTEXPR(container_vector, clone, clone)
-TEST_CONSTEXPR(container_vector, compare, compare)
-TEST_CONSTEXPR(container_vector, static_, static_)
+TESTC(container_vector, basic)
+TESTC(container_vector, reserve)
+TESTC(container_vector, move_only)
+TESTC(container_vector, to)
+TESTC(container_vector, clone)
+TESTC(container_vector, compare)
+TESTC(container_vector, static_)

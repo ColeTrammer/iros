@@ -1,5 +1,5 @@
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 constexpr void basic() {
     di::GenericCode e = di::BasicError::OutOfRange;
@@ -19,7 +19,5 @@ void erased() {
     ASSERT_NOT_EQ(di::BasicError::Success, e);
 }
 
-TEST_CONSTEXPR(vocab_error, basic, basic)
-TEST(vocab_error, erased) {
-    erased();
-}
+TESTC(vocab_error, basic)
+TEST(vocab_error, erased)

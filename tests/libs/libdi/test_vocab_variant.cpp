@@ -1,6 +1,6 @@
 #include <di/function/index_dispatch.h>
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 constexpr void basic() {
     auto v = di::Variant<int, short, long>(di::in_place_index<1>, 1);
@@ -71,4 +71,4 @@ constexpr void basic() {
     static_assert(di::SameAs<unsigned short, di::math::SmallestUnsignedType<256>>);
 }
 
-TEST_CONSTEXPR(vocab_variant, basic, basic)
+TESTC(vocab_variant, basic)

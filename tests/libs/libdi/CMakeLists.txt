@@ -37,6 +37,5 @@ set(TEST_FILES
     test_vocab_variant.cpp
 )
 
-add_os_tests(libdi ${TEST_FILES})
+add_dius_tests(libdi ${TEST_FILES})
 target_link_libraries(test_libdi PRIVATE libdi libdius)
-target_compile_definitions(test_libdi PRIVATE DI_USE_STD)

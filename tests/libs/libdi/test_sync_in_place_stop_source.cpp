@@ -1,5 +1,5 @@
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 static void basic() {
     static_assert(di::concepts::StoppableToken<di::InPlaceStopToken>);
@@ -49,4 +49,4 @@ static void basic() {
     ASSERT(!did_happen2);
 }
 
-TEST_CONSTEXPRX(sync_in_place_stop_source, basic, basic)
+TEST(sync_in_place_stop_source, basic)

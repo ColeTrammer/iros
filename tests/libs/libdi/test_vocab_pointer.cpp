@@ -1,5 +1,5 @@
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 struct X {
     constexpr explicit X(int x_) : x(x_) {}
@@ -39,4 +39,4 @@ constexpr void box() {
     ASSERT_EQ(*z, 13);
 }
 
-TEST_CONSTEXPR(vocab_pointer, box, box)
+TESTC(vocab_pointer, box)

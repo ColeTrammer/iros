@@ -1,5 +1,5 @@
 #include <di/prelude.h>
-#include <test/test.h>
+#include <dius/test/prelude.h>
 
 constexpr void set() {
     auto pred = U'A'_m - U'Z'_m;
@@ -61,8 +61,8 @@ constexpr void alternation() {
     ASSERT(!di::run_parser(parser, "!"_sv));
 }
 
-TEST_CONSTEXPR(parser, set, set)
-TEST_CONSTEXPR(parser, code_point, code_point)
-TEST_CONSTEXPR(parser, integer, integer)
-TEST_CONSTEXPR(parser, integral_constant, integral_constant)
-TEST_CONSTEXPR(parser, alternation, alternation)
+TESTC(parser, set)
+TESTC(parser, code_point)
+TESTC(parser, integer)
+TESTC(parser, integral_constant)
+TESTC(parser, alternation)
