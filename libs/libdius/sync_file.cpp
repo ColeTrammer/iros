@@ -1,52 +1,65 @@
-#include <dius/error.h>
-#include <dius/sync_file.h>
-#include <fcntl.h>
-#include <string.h>
-#include <unistd.h>
+#include <dius/prelude.h>
 
 namespace dius {
+di::Result<size_t> sys_read(int fd, di::Span<di::Byte> data) {
+    return system::system_call<size_t>(system::Number::read, fd, data.data(), data.size());
+}
+
+di::Result<size_t> sys_write(int fd, di::Span<di::Byte const> data) {
+    return system::system_call<size_t>(system::Number::write, fd, data.data(), data.size());
+}
+
+di::Result<size_t> sys_pread(int fd, u64 offset, di::Span<di::Byte> data) {
+    return system::system_call<size_t>(system::Number::pread, fd, data.data(), data.size(), offset);
+}
+
+di::Result<size_t> sys_pwrite(int fd, u64 offset, di::Span<di::Byte const> data) {
+    return system::system_call<size_t>(system::Number::pwrite, fd, data.data(), data.size(), offset);
+}
+
+di::Result<void> sys_close(int fd) {
+    return system::system_call<int>(system::Number::close, fd) % di::into_void;
+}
+
+di::Result<int> sys_open(di::PathView path, int flags, u16 create_mode) {
+    auto raw_data = path.data();
+    char null_terminated_string[4097];
+    ASSERT_LT(raw_data.size(), sizeof(null_terminated_string) - 1);
+
+    di::copy(raw_data, null_terminated_string);
+    null_terminated_string[raw_data.size()] = '\0';
+
+    return system::system_call<int>(system::Number::openat, AT_FDCWD, null_terminated_string, flags, create_mode);
+}
+
+di::Result<di::Byte*> sys_mmap(void* addr, size_t length, Protection prot, MapFlags flags, int fd, u64 offset) {
+    return system::system_call<di::Byte*>(system::Number::mmap, addr, length, prot, flags, fd, offset);
+}
+
 di::Result<void> SyncFile::close() {
     auto owned = di::exchange(m_owned, Owned::No);
     auto fd = di::exchange(m_fd, -1);
 
     if (owned == Owned::Yes && fd != -1) {
-        if (::close(fd)) {
-            return di::Unexpected(PosixError(errno));
-        }
+        return sys_close(fd);
     }
     return {};
 }
 
 di::Result<size_t> SyncFile::read_some(di::Span<di::Byte> data) const {
-    auto result = ::read(m_fd, data.data(), data.size());
-    if (result < 0) {
-        return di::Unexpected(PosixError(errno));
-    }
-    return di::to_unsigned(result);
+    return sys_read(m_fd, data);
 }
 
 di::Result<size_t> SyncFile::read_some(u64 offset, di::Span<di::Byte> data) const {
-    auto result = ::pread(m_fd, data.data(), data.size(), offset);
-    if (result < 0) {
-        return di::Unexpected(PosixError(errno));
-    }
-    return di::to_unsigned(result);
+    return sys_pread(m_fd, offset, data);
 }
 
 di::Result<size_t> SyncFile::write_some(di::Span<di::Byte const> data) const {
-    auto result = ::write(m_fd, data.data(), data.size());
-    if (result < 0) {
-        return di::Unexpected(PosixError(errno));
-    }
-    return data.size();
+    return sys_write(m_fd, data);
 }
 
 di::Result<size_t> SyncFile::write_some(u64 offset, di::Span<di::Byte const> data) const {
-    auto result = ::pwrite(m_fd, data.data(), data.size(), offset);
-    if (result < 0) {
-        return di::Unexpected(PosixError(errno));
-    }
-    return data.size();
+    return sys_pwrite(m_fd, offset, data);
 }
 
 di::Result<void> SyncFile::read_exactly(u64 offset, di::Span<di::Byte> data) const {
@@ -96,11 +109,8 @@ di::Result<void> SyncFile::write_exactly(di::Span<di::Byte const> data) const {
 }
 
 di::Result<MemoryRegion> SyncFile::map(u64 offset, size_t size, Protection protection, MapFlags flags) const {
-    auto result = ::mmap(nullptr, size, di::to_underlying(protection), di::to_underlying(flags), m_fd, offset);
-    if (result == reinterpret_cast<void*>(-1)) {
-        return di::Unexpected(PosixError(errno));
-    }
-    return MemoryRegion(di::Span { reinterpret_cast<di::Byte*>(result), size });
+    auto* base = TRY(sys_mmap(nullptr, size, protection, flags, m_fd, offset));
+    return MemoryRegion(di::Span { base, size });
 }
 
 di::Result<SyncFile> open_sync(di::PathView path, OpenMode open_mode, u16 create_mode) {
@@ -121,17 +131,7 @@ di::Result<SyncFile> open_sync(di::PathView path, OpenMode open_mode, u16 create
         }
     }();
 
-    auto raw_data = path.data();
-    char null_terminated_string[4096];
-    ASSERT_LT(raw_data.size(), sizeof(null_terminated_string) - 1);
-
-    memcpy(null_terminated_string, raw_data.data(), raw_data.size());
-    null_terminated_string[raw_data.size()] = '\0';
-
-    int fd = ::open(null_terminated_string, open_mode_flags, create_mode);
-    if (fd < 0) {
-        return di::Unexpected(PosixError(errno));
-    }
+    auto fd = TRY(sys_open(path, open_mode_flags, create_mode));
     return SyncFile { SyncFile::Owned::Yes, fd };
 }
 

@@ -1,14 +1,15 @@
 #pragma once
 
 #include <di/prelude.h>
+#include <dius/config.h>
 #include <dius/linux/io_uring_context.h>
 #include <dius/sync_file.h>
 
 namespace dius {
 namespace execution = di::execution;
 
-#ifdef __linux__
-using IoContext = linux_::IoUringContext;
+#ifdef DIUS_PLATFORM_LINUX
+using IoContext = linux::IoUringContext;
 #else
 class IoContext {
 private:

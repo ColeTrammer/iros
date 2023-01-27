@@ -1,9 +1,10 @@
 #pragma once
 
 #include <di/prelude.h>
+#include <dius/config.h>
 #include <dius/memory_region.h>
 
-#include <sys/mman.h>
+#include DIUS_PLATFORM_PATH(system_call.h)
 
 namespace dius {
 enum class Protection : int {
@@ -20,7 +21,7 @@ enum class MapFlags : int {
     Shared = MAP_SHARED,
     Private = MAP_PRIVATE,
     Fixed = MAP_FIXED,
-    Anonymous = MAP_ANON,
+    Anonymous = MAP_ANONYMOUS,
     Stack = MAP_STACK,
 #ifdef MAP_POPULATE
     Populate = MAP_POPULATE,

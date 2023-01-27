@@ -5,9 +5,12 @@
 #include <unistd.h>
 #endif
 
+#include <di/container/iterator/distance.h>
 #include <di/container/string/fixed_string.h>
+#include <di/container/string/zstring.h>
 #include <di/format/concepts/formattable.h>
 #include <di/format/to_string.h>
+#include <di/math/to_unsigned.h>
 #include <di/util/compile_time_fail.h>
 
 namespace di::assert::detail {
@@ -26,15 +29,12 @@ inline void assert_terminate() {
 #endif
 
 inline StringView cstring_to_utf8_view(char const* s) {
-    size_t len = 0;
-    while (s[len] != '\0') {
-        len++;
-    }
+    auto length = di::math::to_unsigned(di::container::distance(ZString { s }));
 
     // NOTE: this is safe since the caller passes in pointers to the program's
     //       source text. Since the text itself is UTF-8, this is safe.
     auto* p = reinterpret_cast<char8_t const*>(s);
-    return StringView(encoding::assume_valid, p, len);
+    return StringView(encoding::assume_valid, p, length);
 }
 
 template<auto source_text>

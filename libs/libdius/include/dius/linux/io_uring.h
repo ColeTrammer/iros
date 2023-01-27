@@ -1,15 +1,14 @@
 #pragma once
 
-#ifdef __linux__
+#include <dius/platform.h>
+
+#ifdef DIUS_PLATFORM_LINUX
 
 #include <di/prelude.h>
 #include <dius/memory_region.h>
 #include <dius/sync_file.h>
 
-#include <fcntl.h>
-#include <linux/io_uring.h>
-
-namespace dius::linux_ {
+namespace dius::linux {
 namespace io_uring {
     using SQE = struct io_uring_sqe;
     using CQE = struct io_uring_cqe;

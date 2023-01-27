@@ -1,37 +1,25 @@
-#ifdef __linux__
+#include <dius/config.h>
+
+#ifdef DIUS_PLATFORM_LINUX
 
 #include <dius/error.h>
 #include <dius/linux/io_uring.h>
 #include <dius/log.h>
+#include <dius/system/system_call.h>
 
-#include <asm/unistd.h>
-#include <sys/syscall.h>
-#include <unistd.h>
-
-namespace dius::linux_::io_uring {
+namespace dius::linux::io_uring {
 di::Result<int> sys_enter(unsigned int fd, unsigned int to_submit, unsigned int min_complete, unsigned int flags, void const* arg,
                           size_t arg_size) {
-    int result = syscall(__NR_io_uring_enter, fd, to_submit, min_complete, flags, arg, arg_size);
-    if (result < 0) {
-        return di::Unexpected(PosixError(-errno));
-    }
-    return result;
+    return system::system_call<int>(system::Number::io_uring_enter, fd, to_submit, min_complete, flags, arg, arg_size);
 }
 
 di::Result<int> sys_register(unsigned int fd, unsigned int op_code, void* arg, unsigned int nr_args) {
-    int result = syscall(__NR_io_uring_register, fd, op_code, arg, nr_args);
-    if (result < 0) {
-        return di::Unexpected(PosixError(-errno));
-    }
-    return result;
+    return system::system_call<int>(system::Number::io_uring_register, fd, op_code, arg, nr_args);
 }
 
 di::Result<SyncFile> sys_setup(u32 entries, SetupParams* params) {
-    int result = syscall(__NR_io_uring_setup, entries, params);
-    if (result < 0) {
-        return di::Unexpected(PosixError(-errno));
-    }
-    return SyncFile(SyncFile::Owned::Yes, result);
+    int fd = TRY(system::system_call<int>(system::Number(__NR_io_uring_setup), entries, params));
+    return SyncFile(SyncFile::Owned::Yes, fd);
 }
 
 di::Optional<SQE&> IoUringHandle::get_next_sqe() {

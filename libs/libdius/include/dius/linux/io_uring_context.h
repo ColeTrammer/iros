@@ -1,6 +1,8 @@
 #pragma once
 
-#ifdef __linux__
+#include <dius/config.h>
+
+#ifdef DIUS_PLATFORM_LINUX
 
 #include <di/prelude.h>
 #include <dius/error.h>
@@ -8,7 +10,7 @@
 #include <dius/log.h>
 #include <dius/sync_file.h>
 
-namespace dius::linux_ {
+namespace dius::linux {
 struct IoUringContext;
 struct IoUringContextImpl;
 struct OperationStateBase;
