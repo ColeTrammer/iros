@@ -1,6 +1,4 @@
-add_subdirectory(libccpp)
 add_subdirectory(libcli)
-add_subdirectory(libdi)
 add_subdirectory(libeventloop)
 add_subdirectory(libext)
 add_subdirectory(libgraphics)

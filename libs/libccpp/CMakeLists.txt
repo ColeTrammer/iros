@@ -8,3 +8,5 @@ target_link_libraries(libccpp libdius)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffreestanding")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffreestanding -nostdinc++")
+
+add_subdirectory(tests)
