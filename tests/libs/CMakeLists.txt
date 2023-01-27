@@ -1,3 +1,4 @@
+add_subdirectory(libccpp)
 add_subdirectory(libcli)
 add_subdirectory(libdi)
 add_subdirectory(libeventloop)

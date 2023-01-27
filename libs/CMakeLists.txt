@@ -18,6 +18,7 @@ if (NOT ${MINIMAL_BUILD})
         ${OS_LIBS}
         libapp
         libc
+        libccpp
         libclanguage
         libclipboard
         libedit
