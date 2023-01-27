@@ -197,11 +197,12 @@ private:
 
     template<types::size_t index>
     requires(index < extent)
-    constexpr friend T tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<Array>, types::InPlaceIndex<index>);
+    constexpr friend InPlaceType<T> tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<Array>, types::InPlaceIndex<index>);
 
     template<types::size_t index>
     requires(index < extent)
-    constexpr friend T const tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<Array const>, types::InPlaceIndex<index>);
+    constexpr friend InPlaceType<T const> tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<Array const>,
+                                                     types::InPlaceIndex<index>);
 
     template<concepts::DecaySameAs<Array> Self, types::size_t index>
     requires(index < extent)

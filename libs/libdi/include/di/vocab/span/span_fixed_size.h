@@ -199,11 +199,11 @@ private:
 
     template<types::size_t index>
     requires(index < extent)
-    constexpr friend T tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Span>, types::InPlaceIndex<index>);
+    constexpr friend InPlaceType<T> tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Span>, types::InPlaceIndex<index>);
 
     template<types::size_t index>
     requires(index < extent)
-    constexpr friend T tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Span const>, types::InPlaceIndex<index>);
+    constexpr friend InPlaceType<T> tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Span const>, types::InPlaceIndex<index>);
 
     constexpr friend types::size_t tag_invoke(types::Tag<tuple_size>, types::InPlaceType<Span>) { return extent; }
 

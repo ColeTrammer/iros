@@ -19,5 +19,5 @@ constexpr inline auto tuple_element = TupleElementFunction {};
 
 namespace di::meta {
 template<typename T, types::size_t index>
-using TupleElement = decltype(vocab::tuple_element(types::in_place_type<meta::RemoveReference<T>>, types::in_place_index<index>));
+using TupleElement = decltype(vocab::tuple_element(types::in_place_type<meta::RemoveReference<T>>, types::in_place_index<index>))::Type;
 }

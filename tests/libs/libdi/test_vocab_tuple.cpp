@@ -1,6 +1,3 @@
-#include <di/concepts/decay_same_as.h>
-#include <di/meta/add_member_get.h>
-#include <di/meta/like.h>
 #include <di/prelude.h>
 #include <di/util/forward_like.h>
 #include <test/test.h>
@@ -10,7 +7,7 @@ public:
 private:
     constexpr friend size_t tag_invoke(di::Tag<di::vocab::tuple_size>, di::InPlaceType<X>) { return 1zu; }
 
-    constexpr friend int tag_invoke(di::Tag<di::vocab::tuple_element>, di::InPlaceType<X>, di::InPlaceIndex<0>);
+    constexpr friend di::InPlaceType<int> tag_invoke(di::Tag<di::vocab::tuple_element>, di::InPlaceType<X>, di::InPlaceIndex<0>);
 
     template<di::concepts::DecaySameAs<X> Self>
     constexpr friend di::meta::Like<Self, int> tag_invoke(di::Tag<di::util::get_in_place>, di::InPlaceIndex<0>, Self&& self) {

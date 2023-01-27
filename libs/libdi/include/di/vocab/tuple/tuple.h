@@ -136,11 +136,11 @@ private:
     constexpr friend types::size_t tag_invoke(types::Tag<tuple_size>, types::InPlaceType<Tuple>) { return sizeof...(Types); }
 
     template<types::size_t index>
-    constexpr friend meta::TypeList<Types...>::TypeAtIndex<index> tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Tuple>,
-                                                                             types::InPlaceIndex<index>);
+    constexpr friend InPlaceType<typename meta::TypeList<Types...>::TypeAtIndex<index>>
+        tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Tuple>, types::InPlaceIndex<index>);
 
     template<types::size_t index>
-    constexpr friend meta::TypeList<Types...>::TypeAtIndex<index> const
+    constexpr friend InPlaceType<typename meta::TypeList<Types...>::TypeAtIndex<index> const>
         tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Tuple const>, types::InPlaceIndex<index>);
 
     template<types::size_t index, concepts::DecaySameAs<Tuple> Self>
