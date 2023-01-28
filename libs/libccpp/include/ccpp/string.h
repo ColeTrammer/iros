@@ -5,6 +5,10 @@
 
 __CCPP_BEGIN_DECLARATIONS
 
+void* memcpy(void* __CCPP_RESTRICT dest, void const* __CCPP_RESTRICT str, size_t count);
+void* memmove(void* dest, void const* str, size_t count);
+void* memset(void* dest, int ch, size_t count);
+
 char* strchr(char const* haystack, int needle);
 char* strstr(char const* haystack, char const* needle);
 

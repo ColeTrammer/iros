@@ -1,4 +1,7 @@
 set(SOURCES
+    string/memcpy.cpp
+    string/memmove.cpp
+    string/memset.cpp
     string/strchr.cpp
     string/strlen.cpp
     string/strstr.cpp
