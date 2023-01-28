@@ -7,8 +7,6 @@ endif()
 set(OS_LIBS
     ${OS_LIBS}
     libcli
-    libdi
-    libdius
     libext
     libliim
 )
@@ -18,7 +16,6 @@ if (NOT ${MINIMAL_BUILD})
         ${OS_LIBS}
         libapp
         libc
-        libccpp
         libclanguage
         libclipboard
         libedit

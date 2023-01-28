@@ -11,7 +11,6 @@ endif()
 set(TARGETS
     ${OS_TARGETS}
     about
-    aoc
     basename
     cat
     chmod
@@ -23,8 +22,6 @@ set(TARGETS
     comm
     compress
     cp
-    cpa
-    cps
     cut
     date
     decompress
