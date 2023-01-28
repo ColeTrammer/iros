@@ -15,7 +15,8 @@ namespace detail {
     concept SlideCachesNothing = concepts::RandomAccessContainer<T> && concepts::SizedContainer<T>;
 
     template<typename T>
-    concept SlideCachesLast = (!SlideCachesNothing<T>) && concepts::BidirectionalContainer<T> && concepts::CommonContainer<T>;
+    concept SlideCachesLast =
+        (!SlideCachesNothing<T>) && concepts::BidirectionalContainer<T> && concepts::CommonContainer<T>;
 
     template<typename T>
     concept SlideCachesFirst = (!SlideCachesNothing<T>);
@@ -40,8 +41,8 @@ private:
     using SSizeType = meta::ContainerSSizeType<Base<is_const>>;
 
     template<bool is_const>
-    using ValueType = decltype(container::reconstruct(in_place_type<Base<is_const>>, util::declval<Iter<is_const> const&>(),
-                                                      util::declval<Iter<is_const> const&>()));
+    using ValueType = decltype(container::reconstruct(
+        in_place_type<Base<is_const>>, util::declval<Iter<is_const> const&>(), util::declval<Iter<is_const> const&>()));
 
     class Sentinel;
 
@@ -49,8 +50,8 @@ private:
     class Iterator
         : public IteratorBase<Iterator<is_const>,
                               meta::Conditional<concepts::RandomAccessIterator<Iter<is_const>>, RandomAccessIteratorTag,
-                                                meta::Conditional<concepts::BidirectionalIterator<Iter<is_const>>, BidirectionalIteratorTag,
-                                                                  ForwardIteratorTag>>,
+                                                meta::Conditional<concepts::BidirectionalIterator<Iter<is_const>>,
+                                                                  BidirectionalIteratorTag, ForwardIteratorTag>>,
                               ValueType<is_const>, SSizeType<is_const>> {
     private:
         constexpr Iterator(Iter<is_const> current, SSizeType<is_const> window_size)
@@ -70,7 +71,8 @@ private:
 
         constexpr auto operator*() const {
             if constexpr (detail::SlideCachesFirst<Base<is_const>>) {
-                return container::reconstruct(in_place_type<Base<is_const>>, m_current, container::next(m_last_element.value));
+                return container::reconstruct(in_place_type<Base<is_const>>, m_current,
+                                              container::next(m_last_element.value));
             } else {
                 return container::reconstruct(in_place_type<Base<is_const>>, m_current, m_current + m_window_size);
             }
@@ -164,7 +166,8 @@ public:
     requires(concepts::DefaultInitializable<View>)
     = default;
 
-    constexpr explicit SlideView(View base, SSizeType<false> window_size) : m_base(util::move(base)), m_window_size(window_size) {
+    constexpr explicit SlideView(View base, SSizeType<false> window_size)
+        : m_base(util::move(base)), m_window_size(window_size) {
         DI_ASSERT_GT(window_size, 0);
     }
 
@@ -182,9 +185,10 @@ public:
     {
         if constexpr (detail::SlideCachesFirst<View>) {
             if (!m_begin_cache.value) {
-                m_begin_cache.value.emplace(
-                    Iterator<false>(container::begin(m_base),
-                                    container::next(container::begin(m_base), m_window_size - 1, container::end(m_base)), m_window_size));
+                m_begin_cache.value.emplace(Iterator<false>(
+                    container::begin(m_base),
+                    container::next(container::begin(m_base), m_window_size - 1, container::end(m_base)),
+                    m_window_size));
             }
             return m_begin_cache.value.value();
         } else {
@@ -205,9 +209,9 @@ public:
             return Iterator<false>(container::begin(m_base) + SSizeType<false>(size()), m_window_size);
         } else if constexpr (detail::SlideCachesLast<View>) {
             if (!m_end_cache.value) {
-                m_end_cache.value.emplace(
-                    Iterator<false>(container::prev(container::end(m_base), m_window_size - 1, container::begin(m_base)),
-                                    container::end(m_base), m_window_size));
+                m_end_cache.value.emplace(Iterator<false>(
+                    container::prev(container::end(m_base), m_window_size - 1, container::begin(m_base)),
+                    container::end(m_base), m_window_size));
             }
             return m_end_cache.value.value();
         } else if constexpr (concepts::CommonContainer<View>) {
@@ -246,8 +250,10 @@ public:
 private:
     View m_base;
     SSizeType<false> m_window_size {};
-    [[no_unique_address]] util::StoreIf<util::NonPropagatingCache<Iterator<false>>, !detail::SlideCachesNothing<View>> m_end_cache;
-    [[no_unique_address]] util::StoreIf<util::NonPropagatingCache<Iterator<false>>, !detail::SlideCachesNothing<View>> m_begin_cache;
+    [[no_unique_address]] util::StoreIf<util::NonPropagatingCache<Iterator<false>>, !detail::SlideCachesNothing<View>>
+        m_end_cache;
+    [[no_unique_address]] util::StoreIf<util::NonPropagatingCache<Iterator<false>>, !detail::SlideCachesNothing<View>>
+        m_begin_cache;
 };
 
 template<typename Con>

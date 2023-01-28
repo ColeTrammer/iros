@@ -26,7 +26,8 @@ private:
     class Iterator;
 
     template<bool is_const>
-    class Sentinel : public SentinelExtension<Sentinel<is_const>, Zentinel<is_const>, Iterator<is_const>, Ziperator<is_const>> {
+    class Sentinel
+        : public SentinelExtension<Sentinel<is_const>, Zentinel<is_const>, Iterator<is_const>, Ziperator<is_const>> {
     private:
         using Base = SentinelExtension<Sentinel<is_const>, Zentinel<is_const>, Iterator<is_const>, Ziperator<is_const>>;
 
@@ -44,13 +45,14 @@ private:
 
     template<bool is_const>
     class Iterator
-        : public IteratorExtension<Iterator<is_const>, Ziperator<is_const>,
-                                   meta::RemoveCVRef<meta::InvokeResult<meta::MaybeConst<is_const, F>&,
-                                                                        meta::ContainerReference<meta::MaybeConst<is_const, Views>>...>>> {
-        using Base =
-            IteratorExtension<Iterator<is_const>, Ziperator<is_const>,
-                              meta::RemoveCVRef<meta::InvokeResult<meta::MaybeConst<is_const, F>&,
-                                                                   meta::ContainerReference<meta::MaybeConst<is_const, Views>>...>>>;
+        : public IteratorExtension<
+              Iterator<is_const>, Ziperator<is_const>,
+              meta::RemoveCVRef<meta::InvokeResult<meta::MaybeConst<is_const, F>&,
+                                                   meta::ContainerReference<meta::MaybeConst<is_const, Views>>...>>> {
+        using Base = IteratorExtension<
+            Iterator<is_const>, Ziperator<is_const>,
+            meta::RemoveCVRef<meta::InvokeResult<meta::MaybeConst<is_const, F>&,
+                                                 meta::ContainerReference<meta::MaybeConst<is_const, Views>>...>>>;
 
         friend class ZipTransformView;
 
@@ -92,12 +94,14 @@ private:
 public:
     ZipTransformView() = default;
 
-    constexpr explicit ZipTransformView(F function, Views... views) : m_function(util::move(function)), m_zip(util::move(views)...) {}
+    constexpr explicit ZipTransformView(F function, Views... views)
+        : m_function(util::move(function)), m_zip(util::move(views)...) {}
 
     constexpr auto begin() { return Iterator<false>(*this, m_zip.begin()); }
 
     constexpr auto begin() const
-    requires(concepts::Container<InnerView const> && concepts::Invocable<F const&, meta::ContainerReference<Views const>...>)
+    requires(concepts::Container<InnerView const> &&
+             concepts::Invocable<F const&, meta::ContainerReference<Views const>...>)
     {
         return Iterator<true>(*this, m_zip.begin());
     }
@@ -111,7 +115,8 @@ public:
     }
 
     constexpr auto end() const
-    requires(concepts::Container<InnerView const> && concepts::Invocable<F const&, meta::ContainerReference<Views const>...>)
+    requires(concepts::Container<InnerView const> &&
+             concepts::Invocable<F const&, meta::ContainerReference<Views const>...>)
     {
         if constexpr (concepts::CommonContainer<InnerView const>) {
             return Iterator<true>(*this, m_zip.end());

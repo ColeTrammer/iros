@@ -40,8 +40,8 @@ private:
     class Iterator
         : public IteratorBase<Iterator<is_const>,
                               meta::Conditional<concepts::RandomAccessIterator<Iter<is_const>>, RandomAccessIteratorTag,
-                                                meta::Conditional<concepts::BidirectionalIterator<Iter<is_const>>, BidirectionalIteratorTag,
-                                                                  ForwardIteratorTag>>,
+                                                meta::Conditional<concepts::BidirectionalIterator<Iter<is_const>>,
+                                                                  BidirectionalIteratorTag, ForwardIteratorTag>>,
                               meta::AsTuple<meta::Repeat<Value<is_const>, N>>, SSizeType<is_const>> {
     public:
         Iterator() = default;
@@ -141,8 +141,10 @@ private:
         constexpr friend void tag_invoke(types::Tag<iterator_swap>, Iterator const& a, Iterator const& b)
         requires(concepts::IndirectlySwappable<Iter<is_const>>)
         {
-            return function::unpack<meta::MakeIndexSequence<N>>([&]<size_t... indices>(meta::IndexSequence<indices...>) {
-                return (void) (iterator_swap(util::get<indices>(a.m_iterators), util::get<indices>(a.m_iterators)), ...);
+            return function::unpack<meta::MakeIndexSequence<N>>([&]<size_t... indices>(
+                meta::IndexSequence<indices...>) {
+                return (void) (iterator_swap(util::get<indices>(a.m_iterators), util::get<indices>(a.m_iterators)),
+                               ...);
             });
         }
 

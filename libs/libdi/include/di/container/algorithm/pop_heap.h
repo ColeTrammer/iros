@@ -17,7 +17,8 @@ namespace detail {
             return impl(util::move(first), util::ref(comp), util::ref(proj), container::distance(first, last));
         }
 
-        template<concepts::RandomAccessContainer Con, typename Comp = function::Compare, typename Proj = function::Identity>
+        template<concepts::RandomAccessContainer Con, typename Comp = function::Compare,
+                 typename Proj = function::Identity>
         requires(concepts::Sortable<meta::ContainerIterator<Con>, Comp, Proj>)
         constexpr meta::BorrowedIterator<Con> operator()(Con&& container, Comp comp = {}, Proj proj = {}) const {
             return impl(container::begin(container), util::ref(comp), util::ref(proj), container::distance(container));
@@ -48,17 +49,19 @@ namespace detail {
                     break;
                 }
                 if (!right_child) {
-                    if (function::invoke(comp, function::invoke(proj, first[*left_child]), function::invoke(proj, first[index])) > 0) {
+                    if (function::invoke(comp, function::invoke(proj, first[*left_child]),
+                                         function::invoke(proj, first[index])) > 0) {
                         container::iterator_swap(first + *left_child, first + index);
                     }
                     break;
                 }
 
-                auto largest_child =
-                    function::invoke(comp, function::invoke(proj, first[*left_child]), function::invoke(proj, first[*right_child])) > 0
-                        ? *left_child
-                        : *right_child;
-                if (function::invoke(comp, function::invoke(proj, first[index]), function::invoke(proj, first[largest_child])) > 0) {
+                auto largest_child = function::invoke(comp, function::invoke(proj, first[*left_child]),
+                                                      function::invoke(proj, first[*right_child])) > 0
+                                         ? *left_child
+                                         : *right_child;
+                if (function::invoke(comp, function::invoke(proj, first[index]),
+                                     function::invoke(proj, first[largest_child])) > 0) {
                     break;
                 }
                 container::iterator_swap(first + index, first + largest_child);

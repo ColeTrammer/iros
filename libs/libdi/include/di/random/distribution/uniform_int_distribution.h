@@ -123,7 +123,9 @@ public:
     constexpr T max() const { return b(); }
 
 private:
-    constexpr friend bool operator==(UniformIntDistribution const& a, UniformIntDistribution const& b) { return a.param() == b.param(); }
+    constexpr friend bool operator==(UniformIntDistribution const& a, UniformIntDistribution const& b) {
+        return a.param() == b.param();
+    }
 
     Param m_param {};
 };

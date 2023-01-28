@@ -57,8 +57,8 @@ public:
     constexpr Span(vocab::Array<U, size> const& array) : m_data(array.data()), m_size(size) {}
 
     template<concepts::ContiguousContainer Con>
-    requires(concepts::SizedContainer<Con> && (concepts::BorrowedContainer<Con> || concepts::Const<T>) && !concepts::Span<Con> &&
-             !concepts::Array<Con> && !concepts::LanguageArray<meta::RemoveCVRef<Con>> &&
+    requires(concepts::SizedContainer<Con> && (concepts::BorrowedContainer<Con> || concepts::Const<T>) &&
+             !concepts::Span<Con> && !concepts::Array<Con> && !concepts::LanguageArray<meta::RemoveCVRef<Con>> &&
              concepts::ConvertibleToNonSlicing<meta::RemoveReference<meta::ContainerReference<Con>>, T>)
     constexpr explicit Span(Con&& container) : m_data(container::data(container)), m_size(container::size(container)) {}
 

@@ -106,7 +106,8 @@ constexpr auto operator||(MatchRange<T> a, IntegralSet<T, N> b) {
 template<concepts::Integral T, size_t N1, size_t N2>
 constexpr auto operator||(IntegralSet<T, N1> a, IntegralSet<T, N2> b) {
     return function::unpack<meta::MakeIndexSequence<N1>>([&]<size_t... a_indices>(meta::IndexSequence<a_indices...>) {
-        return function::unpack<meta::MakeIndexSequence<N2>>([&]<size_t... b_indices>(meta::IndexSequence<b_indices...>) {
+        return function::unpack<meta::MakeIndexSequence<N2>>([&]<size_t... b_indices>(
+            meta::IndexSequence<b_indices...>) {
             return IntegralSet<T, N1 + N2> {
                 a.ranges[a_indices]...,
                 b.ranges[b_indices]...,

@@ -13,7 +13,8 @@ namespace detail {
     struct FoldHelper<List<>, Acc, MetaFn> : TypeConstant<Acc> {};
 
     template<typename T, typename... Rest, typename Acc, typename MetaFn>
-    struct FoldHelper<List<T, Rest...>, Acc, MetaFn> : TypeConstant<Type<FoldHelper<List<Rest...>, Invoke<MetaFn, Acc, T>, MetaFn>>> {};
+    struct FoldHelper<List<T, Rest...>, Acc, MetaFn>
+        : TypeConstant<Type<FoldHelper<List<Rest...>, Invoke<MetaFn, Acc, T>, MetaFn>>> {};
 }
 
 template<concepts::TypeList List, typename Init, concepts::MetaInvocable MetaFn>

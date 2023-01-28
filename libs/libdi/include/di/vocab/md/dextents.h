@@ -10,7 +10,8 @@ namespace detail {
     struct DextentsHelper;
 
     template<typename SizeType, size_t... extents>
-    struct DextentsHelper<SizeType, meta::List<meta::SizeConstant<extents>...>> : meta::TypeConstant<Extents<SizeType, extents...>> {};
+    struct DextentsHelper<SizeType, meta::List<meta::SizeConstant<extents>...>>
+        : meta::TypeConstant<Extents<SizeType, extents...>> {};
 }
 
 template<typename SizeType, size_t rank>

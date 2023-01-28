@@ -10,8 +10,8 @@
 #include <di/vocab/optional/prelude.h>
 
 namespace di::container {
-template<typename Self, typename Value, typename Iterator, typename ConstIterator, template<typename> typename ValidForLookup,
-         bool is_multi>
+template<typename Self, typename Value, typename Iterator, typename ConstIterator,
+         template<typename> typename ValidForLookup, bool is_multi>
 class MapInterface {
 private:
     using Key = meta::TupleElement<Value, 0>;
@@ -35,7 +35,8 @@ private:
 
     template<concepts::ContainerCompatible<Value> Con, typename... Args>
     requires(concepts::ConstructibleFrom<Self, Args...>)
-    constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<Self>, Con&& container, Args&&... args) {
+    constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<Self>, Con&& container,
+                                     Args&&... args) {
         auto result = Self(util::forward<Args>(args)...);
         result.insert_container(util::forward<Con>(container));
         return result;
@@ -118,16 +119,16 @@ public:
     requires(!is_multi && concepts::Clonable<Key> && concepts::CreatableFrom<Val, U>)
     constexpr auto insert_or_assign(Key const& needle, U&& value) {
         bool did_insert = false;
-        return as_fallible(self().insert_with_factory(needle,
-                                                      [&] {
-                                                          did_insert = true;
-                                                          return as_fallible(util::clone(needle)) % [&](Key&& key) {
-                                                              return as_fallible(util::create<Val>(util::forward<U>(value))) %
-                                                                     [&](Val&& value) {
-                                                                         return Value(util::move(key), util::move(value));
-                                                                     };
-                                                          } | try_infallible;
-                                                      })) |
+        return as_fallible(self().insert_with_factory(
+                   needle,
+                   [&] {
+                       did_insert = true;
+                       return as_fallible(util::clone(needle)) % [&](Key&& key) {
+                           return as_fallible(util::create<Val>(util::forward<U>(value))) % [&](Val&& value) {
+                               return Value(util::move(key), util::move(value));
+                           };
+                       } | try_infallible;
+                   })) |
                if_success([&](auto&& result) {
                    if (!did_insert) {
                        util::get<1>(*util::get<0>(result)) = Val(util::forward<U>(value));
@@ -140,14 +141,14 @@ public:
     requires(!is_multi && concepts::CreatableFrom<Val, U>)
     constexpr auto insert_or_assign(Key&& needle, U&& value) {
         bool did_insert = false;
-        return as_fallible(
-                   self().insert_with_factory(needle,
-                                              [&] {
-                                                  did_insert = true;
-                                                  return as_fallible(util::create<Val>(util::forward<U>(value))) % [&](Val&& value) {
-                                                      return Value(util::move(needle), util::move(value));
-                                                  } | try_infallible;
-                                              })) |
+        return as_fallible(self().insert_with_factory(
+                   needle,
+                   [&] {
+                       did_insert = true;
+                       return as_fallible(util::create<Val>(util::forward<U>(value))) % [&](Val&& value) {
+                           return Value(util::move(needle), util::move(value));
+                       } | try_infallible;
+                   })) |
                if_success([&](auto&& result) {
                    if (!did_insert) {
                        util::get<1>(*util::get<0>(result)) = Val(util::forward<U>(value));
@@ -160,16 +161,16 @@ public:
     requires(!is_multi && valid<K> && concepts::CreatableFrom<Key, K> && concepts::CreatableFrom<Val, U>)
     constexpr auto insert_or_assign(K&& needle, U&& value) {
         bool did_insert = false;
-        return as_fallible(self().insert_with_factory(needle,
-                                                      [&] {
-                                                          did_insert = true;
-                                                          return as_fallible(util::create<Key>(needle)) % [&](Key&& key) {
-                                                              return as_fallible(util::create<Val>(util::forward<U>(value))) %
-                                                                     [&](Val&& value) {
-                                                                         return Value(util::move(key), util::move(value));
-                                                                     };
-                                                          } | try_infallible;
-                                                      })) |
+        return as_fallible(self().insert_with_factory(
+                   needle,
+                   [&] {
+                       did_insert = true;
+                       return as_fallible(util::create<Key>(needle)) % [&](Key&& key) {
+                           return as_fallible(util::create<Val>(util::forward<U>(value))) % [&](Val&& value) {
+                               return Value(util::move(key), util::move(value));
+                           };
+                       } | try_infallible;
+                   })) |
                if_success([&](auto&& result) {
                    if (!did_insert) {
                        util::get<1>(*util::get<0>(result)) = Val(util::forward<U>(value));
@@ -182,16 +183,16 @@ public:
     requires(!is_multi && concepts::Clonable<Key> && concepts::CreatableFrom<Val, U>)
     constexpr auto insert_or_assign(ConstIterator hint, Key const& needle, U&& value) {
         bool did_insert = false;
-        return as_fallible(self().insert_with_factory(hint, needle,
-                                                      [&] {
-                                                          did_insert = true;
-                                                          return as_fallible(util::clone(needle)) % [&](Key&& key) {
-                                                              return as_fallible(util::create<Val>(util::forward<U>(value))) %
-                                                                     [&](Val&& value) {
-                                                                         return Value(util::move(key), util::move(value));
-                                                                     };
-                                                          } | try_infallible;
-                                                      })) |
+        return as_fallible(self().insert_with_factory(
+                   hint, needle,
+                   [&] {
+                       did_insert = true;
+                       return as_fallible(util::clone(needle)) % [&](Key&& key) {
+                           return as_fallible(util::create<Val>(util::forward<U>(value))) % [&](Val&& value) {
+                               return Value(util::move(key), util::move(value));
+                           };
+                       } | try_infallible;
+                   })) |
                if_success([&](auto&& result) {
                    if (!did_insert) {
                        util::get<1>(*result) = Val(util::forward<U>(value));
@@ -204,14 +205,14 @@ public:
     requires(!is_multi && concepts::CreatableFrom<Val, U>)
     constexpr auto insert_or_assign(ConstIterator hint, Key&& needle, U&& value) {
         bool did_insert = false;
-        return as_fallible(
-                   self().insert_with_factory(hint, needle,
-                                              [&] {
-                                                  did_insert = true;
-                                                  return as_fallible(util::create<Val>(util::forward<U>(value))) % [&](Val&& value) {
-                                                      return Value(util::move(needle), util::move(value));
-                                                  } | try_infallible;
-                                              })) |
+        return as_fallible(self().insert_with_factory(
+                   hint, needle,
+                   [&] {
+                       did_insert = true;
+                       return as_fallible(util::create<Val>(util::forward<U>(value))) % [&](Val&& value) {
+                           return Value(util::move(needle), util::move(value));
+                       } | try_infallible;
+                   })) |
                if_success([&](auto&& result) {
                    if (!did_insert) {
                        util::get<1>(*result) = Val(util::forward<U>(value));
@@ -224,16 +225,16 @@ public:
     requires(!is_multi && valid<K> && concepts::CreatableFrom<Key, K> && concepts::CreatableFrom<Val, U>)
     constexpr auto insert_or_assign(ConstIterator hint, K&& needle, U&& value) {
         bool did_insert = false;
-        return as_fallible(self().insert_with_factory(needle,
-                                                      [&] {
-                                                          did_insert = true;
-                                                          return as_fallible(util::create<Key>(needle)) >> [&](Key&& key) {
-                                                              return as_fallible(util::create<Val>(util::forward<U>(value))) %
-                                                                     [&](Val&& value) {
-                                                                         return Value(util::move(key), util::move(value));
-                                                                     };
-                                                          } | try_infallible;
-                                                      })) |
+        return as_fallible(self().insert_with_factory(
+                   needle,
+                   [&] {
+                       did_insert = true;
+                       return as_fallible(util::create<Key>(needle)) >> [&](Key&& key) {
+                           return as_fallible(util::create<Val>(util::forward<U>(value))) % [&](Val&& value) {
+                               return Value(util::move(key), util::move(value));
+                           };
+                       } | try_infallible;
+                   })) |
                if_success([&](auto&& result) {
                    if (!did_insert) {
                        util::get<1>(*result) = Val(util::forward<U>(value));

@@ -59,7 +59,8 @@ di::Result<void> TestManager::run_tests(Args& args) {
         auto start_fail_count = m_fail_count;
 
         if (setjmp(s_jmpbuf) == 1) {
-            dius::eprintln("\033[31;1mFAIL\033[0m: \033[1m{}\033[0m: {}"_sv, test_case.suite_name(), test_case.case_name());
+            dius::eprintln("\033[31;1mFAIL\033[0m: \033[1m{}\033[0m: {}"_sv, test_case.suite_name(),
+                           test_case.case_name());
             m_fail_count++;
             continue;
         }
@@ -67,11 +68,13 @@ di::Result<void> TestManager::run_tests(Args& args) {
         test_case.execute();
 
         if (m_fail_count == start_fail_count) {
-            dius::eprintln("\033[1;32mPASS\033[0m: \033[1m{}\033[0m: {}"_sv, test_case.suite_name(), test_case.case_name());
+            dius::eprintln("\033[1;32mPASS\033[0m: \033[1m{}\033[0m: {}"_sv, test_case.suite_name(),
+                           test_case.case_name());
         }
     }
 
-    dius::println("\n\033[1m{}\033[0m / \033[1m{}\033[0m Tests Passed: {}"_sv, m_test_cases.size() - m_fail_count, m_test_cases.size(),
+    dius::println("\n\033[1m{}\033[0m / \033[1m{}\033[0m Tests Passed: {}"_sv, m_test_cases.size() - m_fail_count,
+                  m_test_cases.size(),
                   m_fail_count ? "\033[31;1mTests Failed\033[0m"_sv : "\033[32;1mTests Passed\033[0m"_sv);
 
     if (m_fail_count) {

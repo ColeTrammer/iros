@@ -15,7 +15,8 @@ class IteratorExtension
           Self,
           meta::Conditional<concepts::RandomAccessIterator<Iter>, RandomAccessIteratorTag,
                             meta::Conditional<concepts::BidirectionalIterator<Iter>, BidirectionalIteratorTag,
-                                              meta::Conditional<concepts::ForwardIterator<Iter>, ForwardIteratorTag, InputIteratorTag>>>,
+                                              meta::Conditional<concepts::ForwardIterator<Iter>, ForwardIteratorTag,
+                                                                InputIteratorTag>>>,
           Value, meta::IteratorSSizeType<Iter>> {
 private:
     using SSizeType = meta::IteratorSSizeType<Iter>;

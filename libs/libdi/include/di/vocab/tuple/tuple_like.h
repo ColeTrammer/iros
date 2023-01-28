@@ -29,11 +29,13 @@ namespace detail {
 
     template<typename T, types::size_t... indices>
     struct TupleLikeHelper<T, meta::IndexSequence<indices...>> {
-        constexpr static bool value = Conjunction<HasTupleElement<T, indices>...> && Conjunction<HasTupleGet<T, indices>...>;
+        constexpr static bool value =
+            Conjunction<HasTupleElement<T, indices>...> && Conjunction<HasTupleGet<T, indices>...>;
     };
 }
 
 template<typename T>
-concept TupleLike = concepts::Tuple<T> || requires { vocab::tuple_size(types::in_place_type<meta::RemoveCVRef<T>>); } &&
-                                              detail::TupleLikeHelper<T, meta::MakeIndexSequence<meta::TupleSize<T>>>::value;
+concept TupleLike =
+    concepts::Tuple<T> || requires { vocab::tuple_size(types::in_place_type<meta::RemoveCVRef<T>>); } &&
+                              detail::TupleLikeHelper<T, meta::MakeIndexSequence<meta::TupleSize<T>>>::value;
 }

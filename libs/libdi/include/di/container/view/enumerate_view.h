@@ -36,7 +36,8 @@ private:
     using Index = meta::MakeUnsigned<SSizeType<is_const>>;
 
     template<bool is_const>
-    class Iterator : public IteratorExtension<Iterator<is_const>, Iter<is_const>, Tuple<Index<is_const>, Value<is_const>>> {
+    class Iterator
+        : public IteratorExtension<Iterator<is_const>, Iter<is_const>, Tuple<Index<is_const>, Value<is_const>>> {
     private:
         using Base = IteratorExtension<Iterator<is_const>, Iter<is_const>, Tuple<Index<is_const>, Value<is_const>>>;
 

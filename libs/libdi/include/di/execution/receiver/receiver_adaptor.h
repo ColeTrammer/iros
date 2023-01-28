@@ -39,7 +39,8 @@ namespace receiver_interface_ns {
             using GetDerivedBase = decltype(util::declval<S>().base());
 
             template<typename S>
-            using BaseTypeImpl = meta::Conditional<has_base, meta::BindBack<meta::Quote<meta::Like>, Base>, meta::Quote<GetDerivedBase>>;
+            using BaseTypeImpl =
+                meta::Conditional<has_base, meta::BindBack<meta::Quote<meta::Like>, Base>, meta::Quote<GetDerivedBase>>;
 
             template<typename S>
             using BaseType = meta::Invoke<BaseTypeImpl<S>, S&&>;
@@ -121,11 +122,13 @@ namespace receiver_interface_ns {
             }
 
             template<typename S, typename... Args>
-            static auto do_set_value(S&& self, Args&&... args) -> decltype(util::forward<S>(self).set_value(util::forward<Args>(args)...)) {
+            static auto do_set_value(S&& self, Args&&... args)
+                -> decltype(util::forward<S>(self).set_value(util::forward<Args>(args)...)) {
                 return util::forward<S>(self).set_value(util::forward<Args>(args)...);
             }
             template<typename S, typename... Args>
-            static auto do_set_error(S&& self, Args&&... args) -> decltype(util::forward<S>(self).set_error(util::forward<Args>(args)...)) {
+            static auto do_set_error(S&& self, Args&&... args)
+                -> decltype(util::forward<S>(self).set_error(util::forward<Args>(args)...)) {
                 return util::forward<S>(self).set_error(util::forward<Args>(args)...);
             }
             template<typename S, typename... Args>
@@ -134,7 +137,8 @@ namespace receiver_interface_ns {
                 return util::forward<S>(self).set_stopped(util::forward<Args>(args)...);
             }
             template<typename S, typename... Args>
-            static auto do_get_env(S&& self, Args&&... args) -> decltype(util::forward<S>(self).get_env(util::forward<Args>(args)...)) {
+            static auto do_get_env(S&& self, Args&&... args)
+                -> decltype(util::forward<S>(self).get_env(util::forward<Args>(args)...)) {
                 return util::forward<S>(self).get_env(util::forward<Args>(args)...);
             }
 

@@ -26,7 +26,8 @@ private:
     public:
         Sentinel() = default;
 
-        constexpr explicit Sentinel(Sent<is_const> base, Pred const* predicate) : m_base(base), m_predicate(predicate) {}
+        constexpr explicit Sentinel(Sent<is_const> base, Pred const* predicate)
+            : m_base(base), m_predicate(predicate) {}
 
         constexpr Sentinel(Sentinel<!is_const> other)
         requires(is_const && concepts::ConvertibleTo<Sent<false>, Sent<true>>)
@@ -48,7 +49,8 @@ public:
     requires(concepts::DefaultInitializable<View> && concepts::DefaultInitializable<Pred>)
     = default;
 
-    constexpr explicit TakeWhileView(View base, Pred predicate) : m_base(util::move(base)), m_predicate(util::move(predicate)) {}
+    constexpr explicit TakeWhileView(View base, Pred predicate)
+        : m_base(util::move(base)), m_predicate(util::move(predicate)) {}
 
     constexpr View base() const&
     requires(concepts::CopyConstructible<View>)

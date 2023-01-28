@@ -31,7 +31,9 @@ namespace with_ns {
         struct Type {
         private:
             using List = meta::AsList<Completions>;
-            using Tags = meta::Transform<List, meta::Compose<meta::Quote<meta::List>, meta::Quote<meta::LanguageFunctionReturn>>>;
+            using Tags =
+                meta::Transform<List,
+                                meta::Compose<meta::Quote<meta::List>, meta::Quote<meta::LanguageFunctionReturn>>>;
             using Args = meta::Transform<List, meta::Quote<meta::AsList>>;
             using Combined = meta::Transform<meta::Zip<Tags, Args>, meta::Quote<meta::Join>>;
             using Tupls = meta::Transform<Combined, meta::Uncurry<meta::Quote<meta::DecayedTuple>>>;
@@ -39,7 +41,8 @@ namespace with_ns {
 
             using Sender2 = meta::InvokeResult<Fun&, Value&>;
             using OpState3 = meta::ConnectResult<Sender2, Receiver<Rec, Fun, Value, Completions>>;
-            using OpState4 = meta::ConnectResult<meta::AsyncDestroyResult<Value>, DestroyReceiver<Rec, Fun, Value, Completions>>;
+            using OpState4 =
+                meta::ConnectResult<meta::AsyncDestroyResult<Value>, DestroyReceiver<Rec, Fun, Value, Completions>>;
 
         public:
             explicit Type(Fun function_, Rec out_r_) : function(util::move(function_)), out_r(util::move(out_r_)) {}
@@ -70,7 +73,8 @@ namespace with_ns {
                 auto& v = this->value.emplace(util::move(value));
 
                 auto& op_state = op_state3.template emplace(util::DeferConstruct([&] {
-                    return execution::connect(function::invoke(function, v), Receiver<Rec, Fun, Value, Completions> { this });
+                    return execution::connect(function::invoke(function, v),
+                                              Receiver<Rec, Fun, Value, Completions> { this });
                 }));
 
                 execution::start(op_state);
@@ -178,8 +182,9 @@ namespace with_ns {
             template<typename S>
             explicit Type(Fun function, Rec receiver, S&& sender)
                 : m_data(util::move(function), util::move(receiver))
-                , m_op_state2(execution::connect(util::forward<S>(sender),
-                                                 CreateReceiver<Rec, Fun, Value, Completions> { util::address_of(m_data) })) {}
+                , m_op_state2(
+                      execution::connect(util::forward<S>(sender),
+                                         CreateReceiver<Rec, Fun, Value, Completions> { util::address_of(m_data) })) {}
 
         private:
             Data<Rec, Fun, Value, Completions> m_data;
@@ -189,7 +194,8 @@ namespace with_ns {
         };
     };
 
-    template<concepts::Sender Send, concepts::Receiver Rec, concepts::MovableValue Fun, concepts::AsyncDestroyable Value>
+    template<concepts::Sender Send, concepts::Receiver Rec, concepts::MovableValue Fun,
+             concepts::AsyncDestroyable Value>
     using OperationState = meta::Type<OperationStateT<Send, Rec, Fun, Value>>;
 
     template<typename Send, typename Fun>
@@ -206,18 +212,22 @@ namespace with_ns {
 
         private:
             template<typename Env>
-            friend auto tag_invoke(types::Tag<get_completion_signatures>, Type&&, Env) -> meta::MakeCompletionSignatures<
-                Send, Env,
-                meta::MakeCompletionSignatures<Sender2, Env,
-                                               meta::MakeCompletionSignatures<Sender3, Env, CompletionSignatures<>,
-                                                                              meta::Id<CompletionSignatures<>>::template Invoke>>,
-                meta::Id<CompletionSignatures<>>::template Invoke>;
+            friend auto tag_invoke(types::Tag<get_completion_signatures>, Type&&, Env)
+                -> meta::MakeCompletionSignatures<
+                    Send, Env,
+                    meta::MakeCompletionSignatures<
+                        Sender2, Env,
+                        meta::MakeCompletionSignatures<Sender3, Env, CompletionSignatures<>,
+                                                       meta::Id<CompletionSignatures<>>::template Invoke>>,
+                    meta::Id<CompletionSignatures<>>::template Invoke>;
 
             template<typename Rec>
             requires(concepts::DecayConstructible<Send> &&
-                     concepts::SenderTo<Send, CreateReceiver<Rec, Fun, Value, meta::CompletionSignaturesOf<Sender2, meta::EnvOf<Rec>>>>)
+                     concepts::SenderTo<Send, CreateReceiver<Rec, Fun, Value,
+                                                             meta::CompletionSignaturesOf<Sender2, meta::EnvOf<Rec>>>>)
             friend auto tag_invoke(types::Tag<connect>, Type&& self, Rec receiver) {
-                return OperationState<Send, Rec, Fun, Value> { util::move(self).function, util::move(receiver), util::move(self).sender };
+                return OperationState<Send, Rec, Fun, Value> { util::move(self).function, util::move(receiver),
+                                                               util::move(self).sender };
             }
 
             template<concepts::ForwardingSenderQuery Tag, typename... Args>
@@ -236,17 +246,21 @@ namespace with_ns {
         requires(concepts::AsyncDestroyable<meta::SingleSenderValueType<Send>> &&
                  requires {
                      {
-                         function::invoke(util::declval<meta::Decay<Fun>&>(), util::declval<meta::SingleSenderValueType<Send>&>())
+                         function::invoke(util::declval<meta::Decay<Fun>&>(),
+                                          util::declval<meta::SingleSenderValueType<Send>&>())
                          } -> concepts::Sender;
                  })
         concepts::Sender auto operator()(Send&& sender, Fun&& function) const {
             if constexpr (requires {
-                              function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender), util::forward<Send>(sender),
-                                                   util::forward<Fun>(function));
+                              function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender),
+                                                   util::forward<Send>(sender), util::forward<Fun>(function));
                           }) {
-                return function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender), util::forward<Send>(sender),
-                                            util::forward<Fun>(function));
-            } else if constexpr (requires { function::tag_invoke(*this, util::forward<Send>(sender), util::forward<Fun>(function)); }) {
+                return function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender),
+                                            util::forward<Send>(sender), util::forward<Fun>(function));
+            } else if constexpr (requires {
+                                     function::tag_invoke(*this, util::forward<Send>(sender),
+                                                          util::forward<Fun>(function));
+                                 }) {
                 return function::tag_invoke(*this, util::forward<Send>(sender), util::forward<Fun>(function));
             } else {
                 return Sender<Send, Fun> { util::forward<Send>(sender), util::forward<Fun>(function) };

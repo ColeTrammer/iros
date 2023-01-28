@@ -324,7 +324,8 @@ private:
                 function::invoke(util::forward<F>(f), util::forward<Self>(self).value());
                 return Optional<R>(types::in_place);
             } else {
-                return Optional<R>(types::in_place, function::invoke(util::forward<F>(f), util::forward<Self>(self).value()));
+                return Optional<R>(types::in_place,
+                                   function::invoke(util::forward<F>(f), util::forward<Self>(self).value()));
             }
         } else {
             return nullopt;

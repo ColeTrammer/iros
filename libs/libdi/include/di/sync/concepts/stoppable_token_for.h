@@ -6,9 +6,10 @@
 
 namespace di::concepts {
 template<typename T, typename Callback, typename Init = Callback>
-concept StoppableTokenFor = StoppableToken<T> && Invocable<Callback> && requires { typename T::template CallbackType<Callback>; } &&
-                            ConstructibleFrom<Callback, Init> && ConstructibleFrom<typename T::template CallbackType<Callback>, T, Init> &&
-                            ConstructibleFrom<typename T::template CallbackType<Callback>, T&, Init> &&
-                            ConstructibleFrom<typename T::template CallbackType<Callback>, T const, Init> &&
-                            ConstructibleFrom<typename T::template CallbackType<Callback>, T const&, Init>;
+concept StoppableTokenFor =
+    StoppableToken<T> && Invocable<Callback> && requires { typename T::template CallbackType<Callback>; } &&
+    ConstructibleFrom<Callback, Init> && ConstructibleFrom<typename T::template CallbackType<Callback>, T, Init> &&
+    ConstructibleFrom<typename T::template CallbackType<Callback>, T&, Init> &&
+    ConstructibleFrom<typename T::template CallbackType<Callback>, T const, Init> &&
+    ConstructibleFrom<typename T::template CallbackType<Callback>, T const&, Init>;
 }

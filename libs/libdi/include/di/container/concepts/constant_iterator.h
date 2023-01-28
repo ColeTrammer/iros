@@ -7,5 +7,6 @@
 
 namespace di::concepts {
 template<typename Iter>
-concept ConstantIterator = InputIterator<Iter> && SameAs<meta::IteratorConstReference<Iter>, meta::IteratorReference<Iter>>;
+concept ConstantIterator =
+    InputIterator<Iter> && SameAs<meta::IteratorConstReference<Iter>, meta::IteratorReference<Iter>>;
 }

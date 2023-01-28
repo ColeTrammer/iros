@@ -27,8 +27,8 @@ private:
 
     template<concepts::InputContainer Con, typename... Args>
     requires(concepts::ContainerCompatible<Con, CodeUnit> && concepts::ConstructibleFrom<Self, Args...>)
-    constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<Self>, Con&& container, encoding::AssumeValid,
-                                     Args&&... args) {
+    constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<Self>, Con&& container,
+                                     encoding::AssumeValid, Args&&... args) {
         auto result = Self(util::forward<Args>(args)...);
         vector::append_container(result, util::forward<Con>(container));
         if (encoding::NullTerminated<Enc>) {
@@ -39,7 +39,8 @@ private:
 
     template<concepts::InputContainer Con, typename... Args>
     requires(concepts::ContainerCompatible<Con, CodePoint> && concepts::ConstructibleFrom<Self, Args...>)
-    constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<Self>, Con&& container, Args&&... args) {
+    constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<Self>, Con&& container,
+                                     Args&&... args) {
         auto result = Self(util::forward<Args>(args)...);
         string::append(result, util::forward<Con>(container));
         return result;

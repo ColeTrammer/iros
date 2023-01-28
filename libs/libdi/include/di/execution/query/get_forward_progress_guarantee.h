@@ -13,8 +13,9 @@ namespace detail {
         template<concepts::Scheduler Sched>
         constexpr ForwardProgressGuarantee operator()(Sched const& scheduler) const {
             if constexpr (concepts::TagInvocable<GetForwardProgressGuaranteeFunction, Sched const&>) {
-                static_assert(concepts::TagInvocable<GetForwardProgressGuaranteeFunction, Sched const&>,
-                              "Customizations of get_forward_progress_guarantee() must return di::ForwardProgressGuarantee.");
+                static_assert(
+                    concepts::TagInvocable<GetForwardProgressGuaranteeFunction, Sched const&>,
+                    "Customizations of get_forward_progress_guarantee() must return di::ForwardProgressGuarantee.");
                 return function::tag_invoke(*this, scheduler);
             } else {
                 return ForwardProgressGuarantee::WeaklyParallel;

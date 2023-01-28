@@ -18,8 +18,8 @@ namespace detail {
         requires(concepts::DecayConstructible<Pred>)
         constexpr auto operator()(Pred&& predicate) const {
             return match_zero_or_more(util::forward<Pred>(predicate))
-                       << []<concepts::ParserContext Context, typename View>(Context& context,
-                                                                             View view) -> meta::ParserContextResult<View, Context> {
+                       << []<concepts::ParserContext Context, typename View>(
+                              Context& context, View view) -> meta::ParserContextResult<View, Context> {
                 if (container::empty(view)) {
                     return Unexpected(context.make_error());
                 }

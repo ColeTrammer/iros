@@ -22,6 +22,7 @@ constexpr inline struct IteratorSSizeTypeFunction {
              requires(T const& a, T const& b) {
                  { a - b } -> concepts::Integral;
              })
-    constexpr meta::MakeSigned<decltype(util::declval<T>() - util::declval<T>())> operator()(types::InPlaceType<T>) const;
+    constexpr meta::MakeSigned<decltype(util::declval<T>() - util::declval<T>())>
+    operator()(types::InPlaceType<T>) const;
 } iterator_ssize_type;
 }

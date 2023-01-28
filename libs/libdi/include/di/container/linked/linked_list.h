@@ -15,7 +15,8 @@
 #include <di/vocab/optional/prelude.h>
 
 namespace di::container {
-template<typename T, concepts::AllocatorOf<ConcreteLinkedListNode<T>> Alloc = DefaultAllocator<ConcreteLinkedListNode<T>>>
+template<typename T,
+         concepts::AllocatorOf<ConcreteLinkedListNode<T>> Alloc = DefaultAllocator<ConcreteLinkedListNode<T>>>
 class LinkedList {
 private:
     using Node = ConcreteLinkedListNode<T>;
@@ -206,9 +207,13 @@ public:
     }
 
     constexpr void splice(ConstIterator position, LinkedList& other) { splice(position, util::move(other)); }
-    constexpr void splice(ConstIterator position, LinkedList&& other) { splice(position, other, other.begin(), other.end()); }
+    constexpr void splice(ConstIterator position, LinkedList&& other) {
+        splice(position, other, other.begin(), other.end());
+    }
 
-    constexpr void splice(ConstIterator position, LinkedList& other, ConstIterator it) { splice(position, util::move(other), it); }
+    constexpr void splice(ConstIterator position, LinkedList& other, ConstIterator it) {
+        splice(position, util::move(other), it);
+    }
     constexpr void splice(ConstIterator position, LinkedList&& other, ConstIterator it) {
         splice(position, other, it, container::next(it, 1));
     }

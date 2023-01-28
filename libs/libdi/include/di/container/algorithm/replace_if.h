@@ -7,8 +7,8 @@
 namespace di::container {
 namespace detail {
     struct ReplaceIfFunction {
-        template<concepts::InputIterator It, concepts::SentinelFor<It> Sent, typename U, typename Proj = function::Identity,
-                 concepts::IndirectUnaryPredicate<meta::Projected<It, Proj>> Pred>
+        template<concepts::InputIterator It, concepts::SentinelFor<It> Sent, typename U,
+                 typename Proj = function::Identity, concepts::IndirectUnaryPredicate<meta::Projected<It, Proj>> Pred>
         requires(concepts::IndirectlyWritable<It, U const&>)
         constexpr It operator()(It first, Sent last, Pred pred, U const& new_value, Proj proj = {}) const {
             for (; first != last; ++first) {
@@ -22,7 +22,8 @@ namespace detail {
         template<concepts::InputContainer Con, typename U, typename Proj = function::Identity,
                  concepts::IndirectUnaryPredicate<meta::Projected<meta::ContainerIterator<Con>, Proj>> Pred>
         requires(concepts::IndirectlyWritable<meta::ContainerIterator<Con>, U const&>)
-        constexpr meta::BorrowedIterator<Con> operator()(Con&& container, Pred pred, U const& new_value, Proj proj = {}) const {
+        constexpr meta::BorrowedIterator<Con> operator()(Con&& container, Pred pred, U const& new_value,
+                                                         Proj proj = {}) const {
             return (*this)(container::begin(container), container::end(container), util::ref(pred), new_value, proj);
         }
     };

@@ -9,5 +9,6 @@
 namespace di::concepts {
 template<typename F, typename It>
 concept IndirectlyUnaryInvocable =
-    IndirectlyReadable<It> && CopyConstructible<F> && Invocable<F&, meta::IteratorValue<It>&> && Invocable<F&, meta::IteratorReference<It>>;
+    IndirectlyReadable<It> && CopyConstructible<F> && Invocable<F&, meta::IteratorValue<It>&> &&
+    Invocable<F&, meta::IteratorReference<It>>;
 }

@@ -14,7 +14,8 @@ namespace detail {
         }
 
         template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>>
-        requires(concepts::IndirectlyBinaryLeftFoldable<function::Multiplies, T, meta::ContainerIterator<Con>> && requires { T(1); })
+        requires(concepts::IndirectlyBinaryLeftFoldable<function::Multiplies, T, meta::ContainerIterator<Con>> &&
+                 requires { T(1); })
         constexpr auto operator()(Con&& container) const {
             return (*this)(container::begin(container), container::end(container));
         }

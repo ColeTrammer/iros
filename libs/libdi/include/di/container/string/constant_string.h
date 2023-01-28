@@ -5,10 +5,11 @@
 
 namespace di::concepts::detail {
 template<typename T>
-concept ConstantString = HasEncoding<T> && requires(T const& string) {
-                                               { string.encoding() } -> ConvertibleTo<meta::Encoding<T>>;
-                                               {
-                                                   string.span()
-                                                   } -> ConvertibleTo<vocab::Span<meta::EncodingCodeUnit<meta::Encoding<T>> const>>;
-                                           };
+concept ConstantString =
+    HasEncoding<T> && requires(T const& string) {
+                          { string.encoding() } -> ConvertibleTo<meta::Encoding<T>>;
+                          {
+                              string.span()
+                              } -> ConvertibleTo<vocab::Span<meta::EncodingCodeUnit<meta::Encoding<T>> const>>;
+                      };
 }

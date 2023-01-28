@@ -6,8 +6,9 @@
 namespace di::concepts {
 template<typename Iter>
 concept BidirectionalIterator =
-    ForwardIterator<Iter> && DerivedFrom<meta::IteratorCategory<Iter>, types::BidirectionalIteratorTag> && requires(Iter iter) {
-                                                                                                               { --iter } -> SameAs<Iter&>;
-                                                                                                               { iter-- } -> SameAs<Iter>;
-                                                                                                           };
+    ForwardIterator<Iter> && DerivedFrom<meta::IteratorCategory<Iter>, types::BidirectionalIteratorTag> &&
+    requires(Iter iter) {
+        { --iter } -> SameAs<Iter&>;
+        { iter-- } -> SameAs<Iter>;
+    };
 }

@@ -8,11 +8,12 @@
 namespace di::container {
 namespace detail {
     struct RemoveCopyFunction {
-        template<concepts::InputIterator It, concepts::SentinelFor<It> Sent, concepts::WeaklyIncrementable Out, typename T,
-                 typename Proj = function::Identity>
+        template<concepts::InputIterator It, concepts::SentinelFor<It> Sent, concepts::WeaklyIncrementable Out,
+                 typename T, typename Proj = function::Identity>
         requires(concepts::IndirectlyCopyable<It, Out> &&
                  concepts::IndirectBinaryPredicate<function::Equal, meta::Projected<It, Proj>, T const*>)
-        constexpr InOutResult<It, Out> operator()(It first, Sent last, Out output, T const& value, Proj proj = {}) const {
+        constexpr InOutResult<It, Out> operator()(It first, Sent last, Out output, T const& value,
+                                                  Proj proj = {}) const {
             for (; first != last; ++first) {
                 if (value != function::invoke(proj, *first)) {
                     *output = *first;
@@ -22,12 +23,15 @@ namespace detail {
             return { util::move(first), util::move(output) };
         }
 
-        template<concepts::ForwardContainer Con, concepts::WeaklyIncrementable Out, typename T, typename Proj = function::Identity>
+        template<concepts::ForwardContainer Con, concepts::WeaklyIncrementable Out, typename T,
+                 typename Proj = function::Identity>
         requires(concepts::IndirectlyCopyable<meta::ContainerIterator<Con>, Out> &&
-                 concepts::IndirectBinaryPredicate<function::Equal, meta::Projected<meta::ContainerIterator<Con>, Proj>, T const*>)
+                 concepts::IndirectBinaryPredicate<function::Equal, meta::Projected<meta::ContainerIterator<Con>, Proj>,
+                                                   T const*>)
         constexpr InOutResult<meta::BorrowedIterator<Con>, Out> operator()(Con&& container, Out output, T const& value,
                                                                            Proj proj = {}) const {
-            return (*this)(container::begin(container), container::end(container), util::move(output), value, util::ref(proj));
+            return (*this)(container::begin(container), container::end(container), util::move(output), value,
+                           util::ref(proj));
         }
     };
 }

@@ -14,7 +14,8 @@
 namespace di::container {
 template<concepts::Iterator Iter>
 class CountedIterator
-    : public IteratorBase<CountedIterator<Iter>, meta::IteratorCategory<Iter>, meta::IteratorValue<Iter>, meta::IteratorSSizeType<Iter>> {
+    : public IteratorBase<CountedIterator<Iter>, meta::IteratorCategory<Iter>, meta::IteratorValue<Iter>,
+                          meta::IteratorSSizeType<Iter>> {
 private:
     using SSizeType = meta::IteratorSSizeType<Iter>;
 
@@ -84,13 +85,19 @@ public:
     }
 
 private:
-    constexpr friend bool operator==(CountedIterator const& a, CountedIterator const& b) { return a.count() == b.count(); }
+    constexpr friend bool operator==(CountedIterator const& a, CountedIterator const& b) {
+        return a.count() == b.count();
+    }
 
     constexpr friend bool operator==(CountedIterator const& a, DefaultSentinel) { return a.count() == 0; }
 
-    constexpr friend strong_ordering operator<=>(CountedIterator const& a, CountedIterator const& b) { return a.count() <=> b.count(); }
+    constexpr friend strong_ordering operator<=>(CountedIterator const& a, CountedIterator const& b) {
+        return a.count() <=> b.count();
+    }
 
-    constexpr friend SSizeType operator-(CountedIterator const& a, CountedIterator const& b) { return b.count() - a.count(); }
+    constexpr friend SSizeType operator-(CountedIterator const& a, CountedIterator const& b) {
+        return b.count() - a.count();
+    }
 
     constexpr friend SSizeType operator-(CountedIterator const& a, DefaultSentinel) { return -a.count(); }
 
@@ -104,7 +111,8 @@ private:
     }
 
     template<concepts::IndirectlySwappable<Iter> It>
-    constexpr friend void tag_invoke(types::Tag<iterator_swap>, CountedIterator const& a, CountedIterator<It> const& b) {
+    constexpr friend void tag_invoke(types::Tag<iterator_swap>, CountedIterator const& a,
+                                     CountedIterator<It> const& b) {
         DI_ASSERT_GT(a.count(), 0);
         DI_ASSERT_GT(b.count(), 0);
         iterator_swap(a.base(), b.base());

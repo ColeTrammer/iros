@@ -10,8 +10,8 @@
 #include <di/vocab/optional/prelude.h>
 
 namespace di::container {
-template<typename Self, typename Value, typename Iterator, typename ConstIterator, template<typename> typename ValidForLookup,
-         bool is_multi>
+template<typename Self, typename Value, typename Iterator, typename ConstIterator,
+         template<typename> typename ValidForLookup, bool is_multi>
 class SetInterface {
 private:
     template<typename T>
@@ -32,7 +32,8 @@ private:
 
     template<concepts::ContainerCompatible<Value> Con, typename... Args>
     requires(concepts::ConstructibleFrom<Self, Args...>)
-    constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<Self>, Con&& container, Args&&... args) {
+    constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<Self>, Con&& container,
+                                     Args&&... args) {
         auto result = Self(util::forward<Args>(args)...);
         result.insert_container(util::forward<Con>(container));
         return result;

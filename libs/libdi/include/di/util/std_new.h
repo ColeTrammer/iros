@@ -53,7 +53,8 @@ inline void operator delete(void* pointer, std::align_val_t alignment, std::noth
 [[nodiscard]] inline void* operator new[](std::size_t size, std::nothrow_t const&) noexcept {
     return ::operator new(size, std::nothrow);
 }
-[[nodiscard]] inline void* operator new[](std::size_t size, std::align_val_t alignment, std::nothrow_t const&) noexcept {
+[[nodiscard]] inline void* operator new[](std::size_t size, std::align_val_t alignment,
+                                          std::nothrow_t const&) noexcept {
     return ::operator new(size, alignment, std::nothrow);
 }
 

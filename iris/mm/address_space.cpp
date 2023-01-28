@@ -16,8 +16,8 @@ Expected<VirtualAddress> AddressSpace::allocate_region(usize page_aligned_length
     iris::println("sz={}"_sv, m_regions.size());
 
     // TODO: provide the flags as a parameter.
-    auto [new_region, did_insert] =
-        m_regions.emplace(new_virtual_address, page_aligned_length, RegionFlags::Readable | RegionFlags::Writable | RegionFlags::User);
+    auto [new_region, did_insert] = m_regions.emplace(
+        new_virtual_address, page_aligned_length, RegionFlags::Readable | RegionFlags::Writable | RegionFlags::User);
 
     for (auto virtual_address : (*new_region).each_page()) {
         TRY(map_physical_page(virtual_address, TRY(allocate_page_frame())));
@@ -28,8 +28,8 @@ Expected<VirtualAddress> AddressSpace::allocate_region(usize page_aligned_length
 
 Expected<void> AddressSpace::allocate_region_at(VirtualAddress location, usize page_aligned_length) {
     // TODO: provide the flags as a parameter.
-    auto [new_region, did_insert] =
-        m_regions.emplace(location, page_aligned_length, RegionFlags::Readable | RegionFlags::Writable | RegionFlags::User);
+    auto [new_region, did_insert] = m_regions.emplace(
+        location, page_aligned_length, RegionFlags::Readable | RegionFlags::Writable | RegionFlags::User);
 
     for (auto virtual_address : (*new_region).each_page()) {
         TRY(map_physical_page(virtual_address, TRY(allocate_page_frame())));

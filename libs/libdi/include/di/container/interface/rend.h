@@ -21,7 +21,8 @@ namespace detail {
     concept ValidREndReturn = concepts::SentinelFor<R, decltype(container::rbegin(util::declval<T>()))>;
 
     template<typename T>
-    concept CustomREnd = concepts::TagInvocable<REndFunction, T> && ValidREndReturn<meta::Decay<meta::TagInvokeResult<REndFunction, T>>, T>;
+    concept CustomREnd = concepts::TagInvocable<REndFunction, T> &&
+                         ValidREndReturn<meta::Decay<meta::TagInvokeResult<REndFunction, T>>, T>;
 
     template<typename T>
     concept MemberREnd = requires(T&& container) {
@@ -29,12 +30,13 @@ namespace detail {
                          };
 
     template<typename T>
-    concept ReverseIteratorREnd = requires(T&& container) {
-                                      { container::begin(util::forward<T>(container)) } -> concepts::BidirectionalIterator;
-                                      {
-                                          container::end(util::forward<T>(container))
-                                          } -> concepts::SameAs<decltype(container::begin(util::forward<T>(container)))>;
-                                  };
+    concept ReverseIteratorREnd =
+        requires(T&& container) {
+            { container::begin(util::forward<T>(container)) } -> concepts::BidirectionalIterator;
+            {
+                container::end(util::forward<T>(container))
+                } -> concepts::SameAs<decltype(container::begin(util::forward<T>(container)))>;
+        };
 }
 
 struct REndFunction {

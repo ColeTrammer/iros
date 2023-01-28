@@ -397,11 +397,13 @@ constexpr void filter() {
 }
 
 constexpr void take_while() {
-    ASSERT(di::container::equal(di::range(10) | di::take_while(di::curry_back(di::less)(5)), di::Array { 0, 1, 2, 3, 4 }));
+    ASSERT(
+        di::container::equal(di::range(10) | di::take_while(di::curry_back(di::less)(5)), di::Array { 0, 1, 2, 3, 4 }));
 }
 
 constexpr void drop_while() {
-    ASSERT(di::container::equal(di::range(10) | di::drop_while(di::curry_back(di::less)(5)), di::Array { 5, 6, 7, 8, 9 }));
+    ASSERT(
+        di::container::equal(di::range(10) | di::drop_while(di::curry_back(di::less)(5)), di::Array { 5, 6, 7, 8, 9 }));
 }
 
 constexpr void elements() {
@@ -501,7 +503,8 @@ constexpr void chunk_by() {
     ASSERT_EQ(r1, ex1);
 
     auto r2 = di::chunk_by(in1, di::equal_or_less) | di::reverse | di::to<di::Vector>();
-    auto ex2 = di::Array { *in1.subspan(0, 4), *in1.subspan(4, 3), *in1.subspan(7) } | di::reverse | di::to<di::Vector>();
+    auto ex2 =
+        di::Array { *in1.subspan(0, 4), *in1.subspan(4, 3), *in1.subspan(7) } | di::reverse | di::to<di::Vector>();
     ASSERT_EQ(r2, ex2);
 }
 

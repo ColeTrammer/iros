@@ -28,7 +28,8 @@ namespace detail {
         }
 
         template<concepts::RandomAccessContainer Con, typename Gen>
-        requires(concepts::Permutable<meta::ContainerIterator<Con>> && concepts::UniformRandomBitGenerator<meta::RemoveReference<Gen>>)
+        requires(concepts::Permutable<meta::ContainerIterator<Con>> &&
+                 concepts::UniformRandomBitGenerator<meta::RemoveReference<Gen>>)
         constexpr meta::BorrowedIterator<Con> operator()(Con&& container, Gen&& generator) const {
             return (*this)(container::begin(container), container::end(container), generator);
         }

@@ -9,7 +9,8 @@
 namespace iris::mm {
 class AddressSpace {
 public:
-    explicit AddressSpace(u64 architecture_page_table_base) : m_architecture_page_table_base(architecture_page_table_base) {}
+    explicit AddressSpace(u64 architecture_page_table_base)
+        : m_architecture_page_table_base(architecture_page_table_base) {}
 
     u64 architecture_page_table_base() const { return m_architecture_page_table_base; }
 

@@ -12,8 +12,8 @@
 namespace di::container {
 namespace detail {
     template<typename Out, typename Con, typename... Args>
-    concept DirectConstructTo =
-        concepts::ConvertibleTo<meta::ContainerReference<Con>, meta::ContainerValue<Con>> && concepts::CreatableFrom<Out, Con, Args...>;
+    concept DirectConstructTo = concepts::ConvertibleTo<meta::ContainerReference<Con>, meta::ContainerValue<Con>> &&
+                                concepts::CreatableFrom<Out, Con, Args...>;
 
     template<typename Out, typename Con, typename... Args>
     concept TagConstructTo = concepts::ConvertibleTo<meta::ContainerReference<Con>, meta::ContainerValue<Con>> &&
@@ -28,16 +28,18 @@ constexpr auto to(Con&& container, Args&&... args) {
     } else if constexpr (detail::TagConstructTo<Out, Con, Args...>) {
         return util::create<Out>(from_container, util::forward<Con>(container), util::forward<Args>(args)...);
     } else {
-        return container::to<Out>(container | view::transform(
-                                                  []<typename T>(T&& value) {
-                                                      return container::to<meta::ContainerValue<Con>>(util::forward<T>(value));
-                                                  },
-                                                  util::forward<Args>(args)...));
+        return container::to<Out>(container |
+                                  view::transform(
+                                      []<typename T>(T&& value) {
+                                          return container::to<meta::ContainerValue<Con>>(util::forward<T>(value));
+                                      },
+                                      util::forward<Args>(args)...));
     }
 }
 
 template<template<typename...> typename Template, concepts::InputContainer Con, typename... Args>
-requires(concepts::CreateDeducible<Template, Con, Args...> || concepts::CreateDeducible<Template, FromContainer, Con, Args...>)
+requires(concepts::CreateDeducible<Template, Con, Args...> ||
+         concepts::CreateDeducible<Template, FromContainer, Con, Args...>)
 constexpr auto to(Con&& container, Args&&... args) {
     if constexpr (concepts::CreateDeducible<Template, Con, Args...>) {
         using Out = meta::DeduceCreate<Template, Con, Args...>;

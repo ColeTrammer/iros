@@ -50,26 +50,32 @@ public:
     = default;
 
     template<typename F>
-    requires(concepts::ConstructibleFrom<E, F const&> && concepts::detail::ExpectedCanConvertConstructor<void, E, void, F>)
-    constexpr explicit(!concepts::ConvertibleTo<F const&, E>) Expected(Expected<void, F> const& other) : m_error(other.m_error) {}
+    requires(concepts::ConstructibleFrom<E, F const&> &&
+             concepts::detail::ExpectedCanConvertConstructor<void, E, void, F>)
+    constexpr explicit(!concepts::ConvertibleTo<F const&, E>) Expected(Expected<void, F> const& other)
+        : m_error(other.m_error) {}
 
     template<typename F>
     requires(concepts::ConstructibleFrom<E, F> && concepts::detail::ExpectedCanConvertConstructor<void, E, void, F>)
-    constexpr explicit(!concepts::ConvertibleTo<F, E>) Expected(Expected<void, F>&& other) : m_error(util::move(other).m_error) {}
+    constexpr explicit(!concepts::ConvertibleTo<F, E>) Expected(Expected<void, F>&& other)
+        : m_error(util::move(other).m_error) {}
 
     template<typename G>
     requires(concepts::ConstructibleFrom<E, G const&>)
-    constexpr explicit(!concepts::ConvertibleTo<G const&, E>) Expected(Unexpected<G> const& error) : m_error(error.error()) {}
+    constexpr explicit(!concepts::ConvertibleTo<G const&, E>) Expected(Unexpected<G> const& error)
+        : m_error(error.error()) {}
 
     template<typename G>
     requires(concepts::ConstructibleFrom<E, G>)
-    constexpr explicit(!concepts::ConvertibleTo<G, E>) Expected(Unexpected<G>&& error) : m_error(util::move(error).error()) {}
+    constexpr explicit(!concepts::ConvertibleTo<G, E>) Expected(Unexpected<G>&& error)
+        : m_error(util::move(error).error()) {}
 
     constexpr explicit Expected(types::InPlace) {}
 
     template<typename... Args>
     requires(concepts::ConstructibleFrom<E, Args...>)
-    constexpr explicit Expected(types::Unexpect, Args&&... args) : m_error(types::in_place, util::forward<Args>(args)...) {}
+    constexpr explicit Expected(types::Unexpect, Args&&... args)
+        : m_error(types::in_place, util::forward<Args>(args)...) {}
 
     template<typename U, typename... Args>
     requires(concepts::ConstructibleFrom<E, util::InitializerList<U>, Args...>)
@@ -146,7 +152,8 @@ private:
         return !a && a.error() == b.error();
     }
 
-    template<concepts::RemoveCVRefSameAs<Expected> Self, typename F, typename U = meta::UnwrapRefDecay<meta::InvokeResult<F>>>
+    template<concepts::RemoveCVRefSameAs<Expected> Self, typename F,
+             typename U = meta::UnwrapRefDecay<meta::InvokeResult<F>>>
     requires(concepts::ConstructibleFrom<E, meta::Like<Self, E>>)
     constexpr friend Expected<U, E> tag_invoke(types::Tag<function::monad::fmap>, Self&& self, F&& function) {
         if (!self) {
@@ -169,7 +176,8 @@ private:
         return function::invoke(util::forward<F>(function));
     }
 
-    template<concepts::RemoveCVRefSameAs<Expected> Self, typename F, typename R = meta::InvokeResult<F, meta::Like<Self, E>>>
+    template<concepts::RemoveCVRefSameAs<Expected> Self, typename F,
+             typename R = meta::InvokeResult<F, meta::Like<Self, E>>>
     requires(concepts::Expected<R> && concepts::LanguageVoid<meta::ExpectedValue<R>>)
     constexpr friend R tag_invoke(types::Tag<function::monad::fail>, Self&& self, F&& function) {
         if (self) {
@@ -188,7 +196,8 @@ private:
             function::invoke(util::forward<F>(function), util::forward<Self>(self).error());
             return {};
         } else {
-            return Expected<void, G> { types::unexpect, function::invoke(util::forward<F>(function), util::forward<Self>(self).error()) };
+            return Expected<void, G> { types::unexpect, function::invoke(util::forward<F>(function),
+                                                                         util::forward<Self>(self).error()) };
         }
     }
 

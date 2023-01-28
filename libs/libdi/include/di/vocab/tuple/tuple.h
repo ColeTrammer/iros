@@ -52,7 +52,8 @@ public:
     constexpr Tuple(Args&&... args) : Base(construct_tuple_impl_valuewise, util::forward<Args>(args)...) {}
 
     template<typename Tup>
-    requires(concepts::ConstructibleFrom<Base, ConstructTupleImplFromTuplelike, Tup> && !concepts::DecaySameAs<Tuple, Tup>)
+    requires(concepts::ConstructibleFrom<Base, ConstructTupleImplFromTuplelike, Tup> &&
+             !concepts::DecaySameAs<Tuple, Tup>)
     constexpr Tuple(Tup&& value) : Base(construct_tuple_impl_from_tuplelike, util::forward<Tup>(value)) {}
 
     constexpr ~Tuple() = default;
@@ -106,16 +107,15 @@ private:
     requires(sizeof...(Types) == sizeof...(Other) &&
              requires { requires concepts::Conjunction<concepts::EqualityComparableWith<Types, Other>...>; })
     constexpr friend bool operator==(Tuple const& a, Tuple<Other...> const& b) {
-        return function::unpack<meta::MakeIndexSequence<sizeof...(Types)>>([&]<size_t... indices>(meta::IndexSequence<indices...>) {
-            return ((util::get<indices>(a) == util::get<indices>(b)) && ...);
-        });
+        return function::unpack<meta::MakeIndexSequence<sizeof...(Types)>>([&]<size_t... indices>(
+            meta::IndexSequence<indices...>) { return ((util::get<indices>(a) == util::get<indices>(b)) && ...); });
     }
 
     template<typename... Other>
     requires(sizeof...(Types) == sizeof...(Other) &&
              requires { requires concepts::Conjunction<concepts::ThreeWayComparableWith<Types, Other>...>; })
-    constexpr friend meta::CommonComparisonCategory<meta::CompareThreeWayResult<Types, Other>...> operator<=>(Tuple const& a,
-                                                                                                              Tuple<Other...> const& b) {
+    constexpr friend meta::CommonComparisonCategory<meta::CompareThreeWayResult<Types, Other>...>
+    operator<=>(Tuple const& a, Tuple<Other...> const& b) {
         if constexpr (sizeof...(Types) == 0) {
             return di::strong_ordering::equal;
         } else {
@@ -133,7 +133,9 @@ private:
         }
     }
 
-    constexpr friend types::size_t tag_invoke(types::Tag<tuple_size>, types::InPlaceType<Tuple>) { return sizeof...(Types); }
+    constexpr friend types::size_t tag_invoke(types::Tag<tuple_size>, types::InPlaceType<Tuple>) {
+        return sizeof...(Types);
+    }
 
     template<types::size_t index>
     constexpr friend InPlaceType<typename meta::TypeList<Types...>::TypeAtIndex<index>>
@@ -146,9 +148,11 @@ private:
     template<types::size_t index, concepts::DecaySameAs<Tuple> Self>
     requires(index < sizeof...(Types))
     constexpr friend meta::Like<Self, meta::TupleElement<Self, index>>&& tag_invoke(types::Tag<util::get_in_place>,
-                                                                                    types::InPlaceIndex<index>, Self&& self) {
+                                                                                    types::InPlaceIndex<index>,
+                                                                                    Self&& self) {
         using Impl = detail::TupleImplBase<index, meta::IndexSequenceFor<Types...>, Types...>::Type;
-        return static_cast<meta::Like<Self, meta::TupleElement<Self, index>>&&>(Impl::static_get(util::forward_as_base<Self, Impl>(self)));
+        return static_cast<meta::Like<Self, meta::TupleElement<Self, index>>&&>(
+            Impl::static_get(util::forward_as_base<Self, Impl>(self)));
     }
 };
 

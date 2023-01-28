@@ -85,7 +85,8 @@ public:
 
 private:
     template<typename T, typename U>
-    requires(!concepts::SameAs<OwningView, Cont> && concepts::Invocable<decltype(container::reconstruct), InPlaceType<Cont>, T, U>)
+    requires(!concepts::SameAs<OwningView, Cont> &&
+             concepts::Invocable<decltype(container::reconstruct), InPlaceType<Cont>, T, U>)
     constexpr friend auto tag_invoke(types::Tag<container::reconstruct>, InPlaceType<OwningView>, T&& t, U&& u) {
         return container::reconstruct(in_place_type<Cont>, util::forward<T>(t), util::forward<U>(u));
     }

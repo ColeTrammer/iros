@@ -21,19 +21,21 @@ namespace detail {
         template<concepts::ParserContext Context>
         requires(concepts::Conjunction<concepts::Parser<Parsers, Context>...>)
         constexpr auto parse(Context& context) const {
-            constexpr bool should_be_void = concepts::Conjunction<concepts::LanguageVoid<meta::ParserValue<Context, Parsers>>...>;
+            constexpr bool should_be_void =
+                concepts::Conjunction<concepts::LanguageVoid<meta::ParserValue<Context, Parsers>>...>;
 
             using Result = meta::ParserContextResult<
                 meta::Conditional<should_be_void, void,
-                                  Variant<meta::Conditional<concepts::LanguageVoid<meta::ParserValue<Context, Parsers>>, Void,
-                                                            meta::ParserValue<Context, Parsers>>...>>,
+                                  Variant<meta::Conditional<concepts::LanguageVoid<meta::ParserValue<Context, Parsers>>,
+                                                            Void, meta::ParserValue<Context, Parsers>>...>>,
                 Context>;
 
             auto process_index = function::ycombinator([&]<size_t index>(auto& self, InPlaceIndex<index>) -> Result {
                 if constexpr (index >= sizeof...(Parsers)) {
                     return Result(Unexpected(context.make_error()));
                 } else {
-                    using Value = meta::ExpectedValue<decltype(util::get<index>(util::declval<Tuple<Parsers...> const&>()).parse(context))>;
+                    using Value = meta::ExpectedValue<
+                        decltype(util::get<index>(util::declval<Tuple<Parsers...> const&>()).parse(context))>;
                     auto result = util::get<index>(m_parsers).parse(context);
                     if (!result) {
                         return self(in_place_index<index + 1>);
@@ -69,7 +71,8 @@ constexpr auto operator|(Left&& left, Right&& right) {
 
 template<concepts::DecayConstructible Left, concepts::DecayConstructible Right>
 requires(concepts::DerivedFrom<Left, ParserBase<Left>> && concepts::DerivedFrom<Right, ParserBase<Right>> &&
-         !concepts::DerivedFrom<Left, detail::AlternationParserMarker> && concepts::DerivedFrom<Right, detail::AlternationParserMarker>)
+         !concepts::DerivedFrom<Left, detail::AlternationParserMarker> &&
+         concepts::DerivedFrom<Right, detail::AlternationParserMarker>)
 constexpr auto operator|(Left&& left, Right&& right) {
     return vocab::apply(
         [&]<typename... Rs>(Rs&&... rs) {
@@ -80,7 +83,8 @@ constexpr auto operator|(Left&& left, Right&& right) {
 
 template<concepts::DecayConstructible Left, concepts::DecayConstructible Right>
 requires(concepts::DerivedFrom<Left, ParserBase<Left>> && concepts::DerivedFrom<Right, ParserBase<Right>> &&
-         concepts::DerivedFrom<Left, detail::AlternationParserMarker> && !concepts::DerivedFrom<Right, detail::AlternationParserMarker>)
+         concepts::DerivedFrom<Left, detail::AlternationParserMarker> &&
+         !concepts::DerivedFrom<Right, detail::AlternationParserMarker>)
 constexpr auto operator|(Left&& left, Right&& right) {
     return vocab::apply(
         [&]<typename... Ls>(Ls&&... ls) {
@@ -91,7 +95,8 @@ constexpr auto operator|(Left&& left, Right&& right) {
 
 template<concepts::DecayConstructible Left, concepts::DecayConstructible Right>
 requires(concepts::DerivedFrom<Left, ParserBase<Left>> && concepts::DerivedFrom<Right, ParserBase<Right>> &&
-         concepts::DerivedFrom<Left, detail::AlternationParserMarker> && concepts::DerivedFrom<Right, detail::AlternationParserMarker>)
+         concepts::DerivedFrom<Left, detail::AlternationParserMarker> &&
+         concepts::DerivedFrom<Right, detail::AlternationParserMarker>)
 constexpr auto operator|(Left&& left, Right&& right) {
     return vocab::apply(
         [&]<typename... Ls>(Ls&&... ls) {

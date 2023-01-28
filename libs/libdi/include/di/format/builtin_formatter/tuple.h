@@ -13,7 +13,8 @@
 namespace di::format {
 template<concepts::Formattable... Types, concepts::Encoding Enc>
 constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<Tuple<Types...>>, FormatParseContext<Enc>&) {
-    auto do_output = [](concepts::FormatContext auto& context, concepts::DecaySameAs<Tuple<Types...>> auto&& tuple) -> Result<void> {
+    auto do_output = [](concepts::FormatContext auto& context,
+                        concepts::DecaySameAs<Tuple<Types...>> auto&& tuple) -> Result<void> {
         context.output('(');
         context.output(' ');
         bool first = true;
@@ -24,7 +25,8 @@ constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<Tuple<Type
                     context.output(' ');
                 }
                 first = false;
-                return vpresent_encoded_context<meta::Encoding<decltype(context)>>(u8"{}"_sv, make_constexpr_format_args(value), context);
+                return vpresent_encoded_context<meta::Encoding<decltype(context)>>(
+                    u8"{}"_sv, make_constexpr_format_args(value), context);
             },
             util::forward<decltype(tuple)>(tuple));
         (void) results;

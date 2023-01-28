@@ -18,8 +18,12 @@ concept MDLayoutMapping = Copyable<M> && EqualityComparable<M> && requires(M con
                                                                       typename M::RankType;
                                                                       typename M::LayoutType;
 
-                                                                      { m.extents() } -> SameAs<typename M::ExtentsType const&>;
-                                                                      { m.required_span_size() } -> SameAs<typename M::SizeType>;
+                                                                      {
+                                                                          m.extents()
+                                                                          } -> SameAs<typename M::ExtentsType const&>;
+                                                                      {
+                                                                          m.required_span_size()
+                                                                          } -> SameAs<typename M::SizeType>;
                                                                       { m.is_unique() } -> SameAs<bool>;
                                                                       { m.is_exhaustive() } -> SameAs<bool>;
                                                                       { m.is_strided() } -> SameAs<bool>;

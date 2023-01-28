@@ -43,13 +43,14 @@ struct PhysicalAddress : BitField<12, 40> {};
 
 struct NotExecutable : BitFlag<63> {};
 
-using StructureEntry = BitStruct<8, Present, Writable, User, WriteThrough, CacheDisable, Accessed, PhysicalAddress, NotExecutable>;
+using StructureEntry =
+    BitStruct<8, Present, Writable, User, WriteThrough, CacheDisable, Accessed, PhysicalAddress, NotExecutable>;
 
 using PageStructureTable = di::Array<StructureEntry, 512>;
 
 // This includes the extra fields from the regular page structure: dirty, huge, global
-using FinalEntry =
-    BitStruct<8, Present, Writable, User, WriteThrough, CacheDisable, Accessed, Dirty, HugePage, Global, PhysicalAddress, NotExecutable>;
+using FinalEntry = BitStruct<8, Present, Writable, User, WriteThrough, CacheDisable, Accessed, Dirty, HugePage, Global,
+                             PhysicalAddress, NotExecutable>;
 
 using FinalTable = di::Array<StructureEntry, 512>;
 

@@ -14,12 +14,14 @@ namespace detail {
 
     template<typename F, typename... Cons>
     concept EmptyZipTransform = sizeof
-    ...(Cons) == 0 && concepts::Invocable<meta::Decay<F>&>&& concepts::Object<meta::Decay<meta::InvokeResult<meta::Decay<F>&>>>;
+    ...(Cons) == 0 &&
+        concepts::Invocable<meta::Decay<F>&>&& concepts::Object<meta::Decay<meta::InvokeResult<meta::Decay<F>&>>>;
 
     template<typename F, typename... Cons>
     concept ViewZipTransform = sizeof
-    ...(Cons) > 0 &&
-        requires(F&& function, Cons&&... containers) { ZipTransformView(util::forward<F>(function), util::forward<Cons>(containers)...); };
+    ...(Cons) > 0 && requires(F&& function, Cons&&... containers) {
+                         ZipTransformView(util::forward<F>(function), util::forward<Cons>(containers)...);
+                     };
 
     struct ZipTransformFunction {
         template<typename F, concepts::ViewableContainer... Cons>

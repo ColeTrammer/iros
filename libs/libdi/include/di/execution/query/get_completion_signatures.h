@@ -23,21 +23,24 @@ namespace detail {
         constexpr auto operator()(Sender&&, Env&&) const {
             if constexpr (requires { meta::TagInvokeResult<GetCompletionSignaturesFunction, Sender, Env> {}; }) {
                 using Result = meta::TagInvokeResult<GetCompletionSignaturesFunction, Sender, Env>;
-                static_assert(concepts::InstanceOf<Result, types::CompletionSignatures> ||
-                                  concepts::SameAs<Result, types::DependentCompletionSignatures<Env>>,
-                              "A customized get_completion_signatures() must return an instance of di::CompletionSignatures.");
+                static_assert(
+                    concepts::InstanceOf<Result, types::CompletionSignatures> ||
+                        concepts::SameAs<Result, types::DependentCompletionSignatures<Env>>,
+                    "A customized get_completion_signatures() must return an instance of di::CompletionSignatures.");
                 return Result {};
             } else if constexpr (requires { typename meta::RemoveCVRef<Sender>::CompletionSignatures; }) {
                 using Result = meta::RemoveCVRef<Sender>::CompletionSignatures;
-                static_assert(concepts::InstanceOf<Result, types::CompletionSignatures> ||
-                                  concepts::SameAs<Result, types::DependentCompletionSignatures<Env>>,
-                              "A sender's CompletionSignatures typedef must be an instance of di::CompletionSignatures.");
+                static_assert(
+                    concepts::InstanceOf<Result, types::CompletionSignatures> ||
+                        concepts::SameAs<Result, types::DependentCompletionSignatures<Env>>,
+                    "A sender's CompletionSignatures typedef must be an instance of di::CompletionSignatures.");
                 return Result {};
             } else if constexpr (concepts::Awaitable<Sender>) {
                 if constexpr (concepts::LanguageVoid<meta::AwaitResult<Sender>>) {
                     return types::CompletionSignatures<SetValue(), SetError(Error), SetStopped()> {};
                 } else {
-                    return types::CompletionSignatures<SetValue(meta::AwaitResult<Sender>), SetError(Error), SetStopped()> {};
+                    return types::CompletionSignatures<SetValue(meta::AwaitResult<Sender>), SetError(Error),
+                                                       SetStopped()> {};
                 }
             } else {
                 return NoCompletionSignatures {};

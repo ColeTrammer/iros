@@ -22,7 +22,8 @@ namespace detail {
 
     template<concepts::MemberFunctionPointer F, typename FirstArg, typename... Args>
     requires(concepts::ReferenceWrapper<meta::Decay<FirstArg>>)
-    constexpr auto invoke_impl(F f, FirstArg&& first_arg, Args&&... args) -> decltype((first_arg.get().*f)(util::forward<Args>(args)...)) {
+    constexpr auto invoke_impl(F f, FirstArg&& first_arg, Args&&... args)
+        -> decltype((first_arg.get().*f)(util::forward<Args>(args)...)) {
         return (first_arg.get().*f)(util::forward<Args>(args)...);
     }
 
@@ -58,7 +59,9 @@ namespace detail {
 
 namespace di::concepts {
 template<typename F, typename... Args>
-concept Invocable = requires(F&& f, Args&&... args) { function::detail::invoke_impl(util::forward<F>(f), util::forward<Args>(args)...); };
+concept Invocable = requires(F&& f, Args&&... args) {
+                        function::detail::invoke_impl(util::forward<F>(f), util::forward<Args>(args)...);
+                    };
 }
 
 namespace di::meta {
@@ -69,7 +72,8 @@ using InvokeResult = decltype(function::detail::invoke_impl(util::declval<F>(), 
 
 namespace di::concepts {
 template<typename F, typename R, typename... Args>
-concept InvocableTo = Invocable<F, Args...> && (LanguageVoid<R> || ImplicitlyConvertibleTo<meta::InvokeResult<F, Args...>, R>);
+concept InvocableTo = Invocable<F, Args...> &&
+                      (LanguageVoid<R> || ImplicitlyConvertibleTo<meta::InvokeResult<F, Args...>, R>);
 }
 
 namespace di::function {

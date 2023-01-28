@@ -16,7 +16,8 @@ namespace detail {
     ...(Cons) == 0;
 
     template<typename... Cons>
-    concept ViewCartesianProduct = requires(Cons&&... containers) { CartesianProductView { util::forward<Cons>(containers)... }; };
+    concept ViewCartesianProduct =
+        requires(Cons&&... containers) { CartesianProductView { util::forward<Cons>(containers)... }; };
 
     struct CartesianProductFunction {
         template<concepts::ViewableContainer... Cons>

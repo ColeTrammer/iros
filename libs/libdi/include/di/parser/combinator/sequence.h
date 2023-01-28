@@ -29,27 +29,29 @@ namespace detail {
                     return meta::ParserContextResult<T, Context>(in_place, util::forward<T>(value));
                 },
                 []<typename... Types>(Types&&... values) {
-                    return meta::ParserContextResult<Tuple<Types...>, Context>(in_place, util::forward<Types>(values)...);
+                    return meta::ParserContextResult<Tuple<Types...>, Context>(in_place,
+                                                                               util::forward<Types>(values)...);
                 });
 
-            auto process_index =
-                function::ycombinator([&]<size_t index, typename... Types>(auto& self, InPlaceIndex<index>, Types&&... values) {
-                    if constexpr (index >= sizeof...(Parsers)) {
-                        return make_result(util::forward<Types>(values)...);
+            auto process_index = function::ycombinator([&]<size_t index, typename... Types>(
+                auto& self, InPlaceIndex<index>, Types&&... values) {
+                if constexpr (index >= sizeof...(Parsers)) {
+                    return make_result(util::forward<Types>(values)...);
+                } else {
+                    using Value = meta::ExpectedValue<
+                        decltype(util::get<index>(util::declval<Tuple<Parsers...> const&>()).parse(context))>;
+                    if constexpr (concepts::LanguageVoid<Value>) {
+                        return util::get<index>(m_parsers).parse(context).and_then([&] {
+                            return self(in_place_index<index + 1>, util::forward<Types>(values)...);
+                        });
                     } else {
-                        using Value =
-                            meta::ExpectedValue<decltype(util::get<index>(util::declval<Tuple<Parsers...> const&>()).parse(context))>;
-                        if constexpr (concepts::LanguageVoid<Value>) {
-                            return util::get<index>(m_parsers).parse(context).and_then([&] {
-                                return self(in_place_index<index + 1>, util::forward<Types>(values)...);
-                            });
-                        } else {
-                            return util::get<index>(m_parsers).parse(context).and_then([&](Value&& value) {
-                                return self(in_place_index<index + 1>, util::forward<Types>(values)..., util::forward<Value>(value));
-                            });
-                        }
+                        return util::get<index>(m_parsers).parse(context).and_then([&](Value&& value) {
+                            return self(in_place_index<index + 1>, util::forward<Types>(values)...,
+                                        util::forward<Value>(value));
+                        });
                     }
-                });
+                }
+            });
 
             return process_index(in_place_index<0>);
         }
@@ -75,7 +77,8 @@ constexpr auto operator>>(Left&& left, Right&& right) {
 
 template<concepts::DecayConstructible Left, concepts::DecayConstructible Right>
 requires(concepts::DerivedFrom<Left, ParserBase<Left>> && concepts::DerivedFrom<Right, ParserBase<Right>> &&
-         !concepts::DerivedFrom<Left, detail::SequenceParserMarker> && concepts::DerivedFrom<Right, detail::SequenceParserMarker>)
+         !concepts::DerivedFrom<Left, detail::SequenceParserMarker> &&
+         concepts::DerivedFrom<Right, detail::SequenceParserMarker>)
 constexpr auto operator>>(Left&& left, Right&& right) {
     return vocab::apply(
         [&]<typename... Rs>(Rs&&... rs) {
@@ -86,7 +89,8 @@ constexpr auto operator>>(Left&& left, Right&& right) {
 
 template<concepts::DecayConstructible Left, concepts::DecayConstructible Right>
 requires(concepts::DerivedFrom<Left, ParserBase<Left>> && concepts::DerivedFrom<Right, ParserBase<Right>> &&
-         concepts::DerivedFrom<Left, detail::SequenceParserMarker> && !concepts::DerivedFrom<Right, detail::SequenceParserMarker>)
+         concepts::DerivedFrom<Left, detail::SequenceParserMarker> &&
+         !concepts::DerivedFrom<Right, detail::SequenceParserMarker>)
 constexpr auto operator>>(Left&& left, Right&& right) {
     return vocab::apply(
         [&]<typename... Ls>(Ls&&... ls) {
@@ -97,7 +101,8 @@ constexpr auto operator>>(Left&& left, Right&& right) {
 
 template<concepts::DecayConstructible Left, concepts::DecayConstructible Right>
 requires(concepts::DerivedFrom<Left, ParserBase<Left>> && concepts::DerivedFrom<Right, ParserBase<Right>> &&
-         concepts::DerivedFrom<Left, detail::SequenceParserMarker> && concepts::DerivedFrom<Right, detail::SequenceParserMarker>)
+         concepts::DerivedFrom<Left, detail::SequenceParserMarker> &&
+         concepts::DerivedFrom<Right, detail::SequenceParserMarker>)
 constexpr auto operator>>(Left&& left, Right&& right) {
     return vocab::apply(
         [&]<typename... Ls>(Ls&&... ls) {

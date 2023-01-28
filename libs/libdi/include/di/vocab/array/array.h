@@ -186,8 +186,12 @@ private:
         }
     }
 
-    constexpr friend bool tag_invoke(types::Tag<vocab::enable_generate_structed_bindings>, types::InPlaceType<Array>) { return true; }
-    constexpr friend types::size_t tag_invoke(types::Tag<vocab::tuple_size>, types::InPlaceType<Array>) { return extent; }
+    constexpr friend bool tag_invoke(types::Tag<vocab::enable_generate_structed_bindings>, types::InPlaceType<Array>) {
+        return true;
+    }
+    constexpr friend types::size_t tag_invoke(types::Tag<vocab::tuple_size>, types::InPlaceType<Array>) {
+        return extent;
+    }
 
     template<concepts::ContiguousIterator It, concepts::SizedSentinelFor<It> Sent>
     requires(concepts::ConvertibleToNonSlicing<It, T*>)
@@ -197,7 +201,8 @@ private:
 
     template<types::size_t index>
     requires(index < extent)
-    constexpr friend InPlaceType<T> tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<Array>, types::InPlaceIndex<index>);
+    constexpr friend InPlaceType<T> tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<Array>,
+                                               types::InPlaceIndex<index>);
 
     template<types::size_t index>
     requires(index < extent)
@@ -206,7 +211,8 @@ private:
 
     template<concepts::DecaySameAs<Array> Self, types::size_t index>
     requires(index < extent)
-    constexpr friend decltype(auto) tag_invoke(types::Tag<util::get_in_place>, types::InPlaceIndex<index>, Self&& self) {
+    constexpr friend decltype(auto)
+        tag_invoke(types::Tag<util::get_in_place>, types::InPlaceIndex<index>, Self&& self) {
         return util::forward_like<Self>(self[index]);
     }
 };

@@ -15,7 +15,8 @@ class DropView
     : public ViewInterface<DropView<View>>
     , public meta::EnableBorrowedContainer<DropView<View>, concepts::BorrowedContainer<View>> {
 private:
-    constexpr static bool need_cache = !concepts::RandomAccessContainer<View const> || !concepts::SizedContainer<View const>;
+    constexpr static bool need_cache =
+        !concepts::RandomAccessContainer<View const> || !concepts::SizedContainer<View const>;
 
     using SSizeType = meta::ContainerSSizeType<View>;
 
@@ -40,7 +41,8 @@ public:
             if (m_begin_cache.value.has_value()) {
                 return m_begin_cache.value.value();
             }
-            return m_begin_cache.value.emplace(container::next(container::begin(m_base), m_count, container::end(m_base)));
+            return m_begin_cache.value.emplace(
+                container::next(container::begin(m_base), m_count, container::end(m_base)));
         } else {
             return container::next(container::begin(m_base), m_count, container::end(m_base));
         }
@@ -85,7 +87,8 @@ public:
 private:
     View m_base;
     SSizeType m_count { 0 };
-    [[no_unique_address]] util::StoreIf<util::NonPropagatingCache<meta::ContainerIterator<View>>, need_cache> m_begin_cache;
+    [[no_unique_address]] util::StoreIf<util::NonPropagatingCache<meta::ContainerIterator<View>>, need_cache>
+        m_begin_cache;
 };
 
 template<typename Con>

@@ -23,7 +23,9 @@ public:
     constexpr LinkedListNode* node() const { return m_node; }
 
 private:
-    constexpr friend bool operator==(LinkedListIterator const& a, LinkedListIterator const& b) { return a.m_node == b.m_node; }
+    constexpr friend bool operator==(LinkedListIterator const& a, LinkedListIterator const& b) {
+        return a.m_node == b.m_node;
+    }
 
     LinkedListNode* m_node { nullptr };
 };

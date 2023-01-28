@@ -10,15 +10,16 @@
 namespace di::execution {
 namespace let_ns {
     template<typename CPO, typename Completions>
-    using ArgTypes =
-        meta::Unique<meta::Transform<meta::Filter<meta::AsList<Completions>, meta::IsFunctionTo<CPO>>,
-                                     meta::Compose<meta::Uncurry<meta::Quote<meta::DecayedTuple>>, meta::Quote<meta::AsList>>>>;
+    using ArgTypes = meta::Unique<
+        meta::Transform<meta::Filter<meta::AsList<Completions>, meta::IsFunctionTo<CPO>>,
+                        meta::Compose<meta::Uncurry<meta::Quote<meta::DecayedTuple>>, meta::Quote<meta::AsList>>>>;
 
     template<typename CPO, typename Fun, typename Completions>
     using SenderTypes = meta::Transform<
         ArgTypes<CPO, Completions>,
         meta::Compose<meta::Uncurry<meta::BindFront<meta::Quote<meta::InvokeResult>, Fun>>,
-                      meta::BindBack<meta::Quote<meta::Transform>, meta::Quote<meta::AddLValueReference>>, meta::Quote<meta::AsList>>>;
+                      meta::BindBack<meta::Quote<meta::Transform>, meta::Quote<meta::AddLValueReference>>,
+                      meta::Quote<meta::AsList>>>;
 
     template<typename CPO, typename Rec, typename Fun, typename Completions>
     struct DataT {
@@ -26,8 +27,8 @@ namespace let_ns {
         private:
             using ArgsStorage = meta::AsTemplate<Variant, meta::PushFront<ArgTypes<CPO, Completions>, Void>>;
 
-            using ConnectResults =
-                meta::Unique<meta::Transform<SenderTypes<CPO, Fun, Completions>, meta::BindBack<meta::Quote<meta::ConnectResult>, Rec>>>;
+            using ConnectResults = meta::Unique<meta::Transform<SenderTypes<CPO, Fun, Completions>,
+                                                                meta::BindBack<meta::Quote<meta::ConnectResult>, Rec>>>;
 
             using OpStateStorage = meta::AsTemplate<Variant, meta::PushFront<ConnectResults, Void>>;
 
@@ -40,7 +41,8 @@ namespace let_ns {
             [[no_unique_address]] OpStateStorage op_state3 {};
 
             template<typename... Args>
-            requires(concepts::Conjunction<concepts::DecayConstructible<Args>...> && concepts::Invocable<Fun, meta::Decay<Args>&...>)
+            requires(concepts::Conjunction<concepts::DecayConstructible<Args>...> &&
+                     concepts::Invocable<Fun, meta::Decay<Args>&...>)
             void phase2(Args&&... args) {
                 using Tuple = meta::DecayedTuple<Args...>;
                 auto& decayed_args = this->args.template emplace<Tuple>(util::forward<Args>(args)...);
@@ -76,7 +78,8 @@ namespace let_ns {
 
             template<concepts::OneOf<SetValue, SetError, SetStopped> Tag, typename... Args>
             friend void tag_invoke(Tag tag, Type&& self, Args&&... args)
-            requires(!concepts::SameAs<Tag, CPO> && requires { tag(util::move(self.data->out_r), util::forward<Args>(args)...); })
+            requires(!concepts::SameAs<Tag, CPO> &&
+                     requires { tag(util::move(self.data->out_r), util::forward<Args>(args)...); })
             {
                 return tag(util::move(self.data->out_r), util::forward<Args>(args)...);
             }
@@ -103,8 +106,8 @@ namespace let_ns {
             template<typename S>
             explicit Type(Fun f, Rec out_r, S&& sender)
                 : m_data(util::move(f), util::move(out_r))
-                , m_op_state2(
-                      execution::connect(util::forward<S>(sender), Receiver<CPO, Rec, Fun, Completions> { util::address_of(m_data) })) {}
+                , m_op_state2(execution::connect(util::forward<S>(sender),
+                                                 Receiver<CPO, Rec, Fun, Completions> { util::address_of(m_data) })) {}
 
         private:
             void friend tag_invoke(types::Tag<start>, Type& self) { execution::start(self.m_op_state2); }
@@ -114,7 +117,8 @@ namespace let_ns {
         };
     };
 
-    template<concepts::OneOf<SetValue, SetError, SetStopped> CPO, concepts::Sender Send, concepts::Receiver Rec, concepts::MovableValue Fun>
+    template<concepts::OneOf<SetValue, SetError, SetStopped> CPO, concepts::Sender Send, concepts::Receiver Rec,
+             concepts::MovableValue Fun>
     using OperationState = meta::Type<OperationStateT<CPO, Send, Rec, Fun>>;
 
     template<typename CPO, typename Send, typename Fun>
@@ -127,29 +131,35 @@ namespace let_ns {
         private:
             template<concepts::DecaysTo<Type> Self, typename Env>
             using BaseCompletionSignatures =
-                meta::Filter<meta::AsList<meta::CompletionSignaturesOf<meta::Like<Self, Send>, Env>>, meta::Not<meta::IsFunctionTo<CPO>>>;
+                meta::Filter<meta::AsList<meta::CompletionSignaturesOf<meta::Like<Self, Send>, Env>>,
+                             meta::Not<meta::IsFunctionTo<CPO>>>;
 
             template<concepts::DecaysTo<Type> Self, typename Env>
             using InvokeCompletionSignatures = meta::Join<
                 meta::Transform<SenderTypes<CPO, Fun, meta::CompletionSignaturesOf<meta::Like<Self, Send>, Env>>,
-                                meta::Compose<meta::Quote<meta::AsList>, meta::BindBack<meta::Quote<meta::CompletionSignaturesOf>, Env>>>>;
+                                meta::Compose<meta::Quote<meta::AsList>,
+                                              meta::BindBack<meta::Quote<meta::CompletionSignaturesOf>, Env>>>>;
 
             template<concepts::DecaysTo<Type> Self, typename Env>
-            using CompletionSignatures =
-                meta::AsTemplate<CompletionSignatures,
-                                 meta::Unique<meta::Concat<BaseCompletionSignatures<Self, Env>, InvokeCompletionSignatures<Self, Env>>>>;
+            using CompletionSignatures = meta::AsTemplate<
+                CompletionSignatures,
+                meta::Unique<meta::Concat<BaseCompletionSignatures<Self, Env>, InvokeCompletionSignatures<Self, Env>>>>;
 
             template<concepts::DecaysTo<Type> Self, typename Env>
-            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env) -> DependentCompletionSignatures<Env>;
+            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env)
+                -> DependentCompletionSignatures<Env>;
 
             template<concepts::DecaysTo<Type> Self, typename Env>
-            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env) -> CompletionSignatures<Self, Env>
+            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env)
+                -> CompletionSignatures<Self, Env>
             requires(true);
 
             template<concepts::DecaysTo<Type> Self, typename Rec>
-            requires(concepts::DecayConstructible<meta::Like<Self, Send>> &&
-                     concepts::SenderTo<meta::Like<Self, Send>,
-                                        Receiver<CPO, Rec, Fun, meta::CompletionSignaturesOf<meta::Like<Self, Send>, meta::EnvOf<Rec>>>>)
+            requires(
+                concepts::DecayConstructible<meta::Like<Self, Send>> &&
+                concepts::SenderTo<
+                    meta::Like<Self, Send>,
+                    Receiver<CPO, Rec, Fun, meta::CompletionSignaturesOf<meta::Like<Self, Send>, meta::EnvOf<Rec>>>>)
             friend auto tag_invoke(types::Tag<connect>, Self&& self, Rec receiver) {
                 return OperationState<CPO, Send, Rec, Fun> { util::forward<Self>(self).function, util::move(receiver),
                                                              util::forward<Self>(self).sender };
@@ -171,12 +181,15 @@ namespace let_ns {
         template<concepts::Sender Send, concepts::MovableValue Fun>
         concepts::Sender auto operator()(Send&& sender, Fun&& function) const {
             if constexpr (requires {
-                              function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender), util::forward<Send>(sender),
-                                                   util::forward<Fun>(function));
+                              function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender),
+                                                   util::forward<Send>(sender), util::forward<Fun>(function));
                           }) {
-                return function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender), util::forward<Send>(sender),
-                                            util::forward<Fun>(function));
-            } else if constexpr (requires { function::tag_invoke(*this, util::forward<Send>(sender), util::forward<Fun>(function)); }) {
+                return function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender),
+                                            util::forward<Send>(sender), util::forward<Fun>(function));
+            } else if constexpr (requires {
+                                     function::tag_invoke(*this, util::forward<Send>(sender),
+                                                          util::forward<Fun>(function));
+                                 }) {
                 return function::tag_invoke(*this, util::forward<Send>(sender), util::forward<Fun>(function));
             } else {
                 return Sender<CPO, Send, Fun> { util::forward<Send>(sender), util::forward<Fun>(function) };

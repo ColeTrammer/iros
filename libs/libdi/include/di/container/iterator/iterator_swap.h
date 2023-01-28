@@ -20,15 +20,15 @@ namespace detail {
                                  concepts::TagInvocable<IteratorSwapFunction, T, U>;
 
     template<typename T, typename U>
-    concept DerefIteratorSwap =
-        concepts::Iterator<T> && concepts::Iterator<U> && concepts::SwappableWith<meta::IteratorReference<T>, meta::IteratorReference<U>>;
+    concept DerefIteratorSwap = concepts::Iterator<T> && concepts::Iterator<U> &&
+                                concepts::SwappableWith<meta::IteratorReference<T>, meta::IteratorReference<U>>;
 
     template<typename T, typename U>
-    concept ExchangeIteratorSwap =
-        concepts::Iterator<T> && concepts::Iterator<U> && concepts::ConstructibleFrom<meta::IteratorValue<T>, meta::IteratorRValue<U>> &&
-        concepts::ConstructibleFrom<meta::IteratorValue<U>, meta::IteratorRValue<T>> &&
-        concepts::AssignableFrom<meta::IteratorValue<T>&, meta::IteratorRValue<U>> &&
-        concepts::AssignableFrom<meta::IteratorValue<U>&, meta::IteratorRValue<T>>;
+    concept ExchangeIteratorSwap = concepts::Iterator<T> && concepts::Iterator<U> &&
+                                   concepts::ConstructibleFrom<meta::IteratorValue<T>, meta::IteratorRValue<U>> &&
+                                   concepts::ConstructibleFrom<meta::IteratorValue<U>, meta::IteratorRValue<T>> &&
+                                   concepts::AssignableFrom<meta::IteratorValue<T>&, meta::IteratorRValue<U>> &&
+                                   concepts::AssignableFrom<meta::IteratorValue<U>&, meta::IteratorRValue<T>>;
 
     struct IteratorSwapFunction {
         template<typename T, typename U, typename TT = meta::RemoveCVRef<T>, typename UU = meta::RemoveCVRef<U>>

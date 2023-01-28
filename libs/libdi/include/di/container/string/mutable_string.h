@@ -5,6 +5,6 @@
 
 namespace di::concepts::detail {
 template<typename T>
-concept MutableString =
-    ConstantString<T> && MutableVector<T> && SameAs<meta::EncodingCodeUnit<meta::Encoding<T>>, meta::detail::VectorValue<T>>;
+concept MutableString = ConstantString<T> && MutableVector<T> &&
+                        SameAs<meta::EncodingCodeUnit<meta::Encoding<T>>, meta::detail::VectorValue<T>>;
 }

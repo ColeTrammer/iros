@@ -27,8 +27,8 @@ namespace detail {
 // The book Introduction to Algorithms, Third Edition (by Thomas H. Cormen, et al.)
 // was heavily referenced in this class's implementation of a Red-Black tree.
 // See https://mitpress.mit.edu/9780262046305/introduction-to-algorithms/.
-template<typename Value, concepts::StrictWeakOrder<Value> Comp, concepts::AllocatorOf<RBTreeNode<Value>> Alloc, typename Interface,
-         bool is_multi>
+template<typename Value, concepts::StrictWeakOrder<Value> Comp, concepts::AllocatorOf<RBTreeNode<Value>> Alloc,
+         typename Interface, bool is_multi>
 class RBTree : public Interface {
 private:
     using Node = RBTreeNode<Value>;

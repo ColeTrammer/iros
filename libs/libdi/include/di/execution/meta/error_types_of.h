@@ -22,10 +22,12 @@ namespace detail {
 
     template<typename Error, typename... Rest, typename Env>
     struct ErrorTypesOfHelper<types::CompletionSignatures<execution::SetError(Error), Rest...>, Env>
-        : TypeConstant<PushFront<typename ErrorTypesOfHelper<types::CompletionSignatures<Rest...>, Env>::Type, Error>> {};
+        : TypeConstant<PushFront<typename ErrorTypesOfHelper<types::CompletionSignatures<Rest...>, Env>::Type, Error>> {
+    };
 }
 
 template<typename Sender, typename Env = types::NoEnv, template<typename...> typename Var = meta::VariantOrEmpty>
 requires(concepts::Sender<Sender, Env>)
-using ErrorTypesOf = AsTemplate<Var, typename detail::ErrorTypesOfHelper<meta::CompletionSignaturesOf<Sender, Env>, Env>::Type>;
+using ErrorTypesOf =
+    AsTemplate<Var, typename detail::ErrorTypesOfHelper<meta::CompletionSignaturesOf<Sender, Env>, Env>::Type>;
 }

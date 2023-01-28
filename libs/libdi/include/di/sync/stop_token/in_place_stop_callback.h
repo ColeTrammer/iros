@@ -13,7 +13,8 @@ public:
     explicit InPlaceStopCallback(InPlaceStopToken token, C&& callback)
         : detail::InPlaceStopCallbackBase(token.m_source,
                                           [](void* self) {
-                                              function::invoke(util::move(static_cast<InPlaceStopCallback*>(self)->m_callback));
+                                              function::invoke(
+                                                  util::move(static_cast<InPlaceStopCallback*>(self)->m_callback));
                                           })
         , m_callback(util::forward<C>(callback)) {
         if (m_parent) {

@@ -53,7 +53,9 @@ namespace on_ns {
             Rec const& base() const& { return m_operation_state->receiver; }
             Rec&& base() && { return util::move(m_operation_state->receiver); }
 
-            Env<meta::EnvOf<Rec>, Sched> get_env() const { return { execution::get_env(base()), m_operation_state->scheduler }; }
+            Env<meta::EnvOf<Rec>, Sched> get_env() const {
+                return { execution::get_env(base()), m_operation_state->scheduler };
+            }
 
             OperationState<Send, Rec, Sched>* m_operation_state;
         };
@@ -102,7 +104,8 @@ namespace on_ns {
             , sender(util::move(sender_))
             , receiver(util::move(receiver_))
             , operation_state(in_place_index<0>, util::DeferConstruct([&] {
-                                  return execution::connect(execution::schedule(scheduler), Receiver<Send, Rec, Sched> { this });
+                                  return execution::connect(execution::schedule(scheduler),
+                                                            Receiver<Send, Rec, Sched> { this });
                               })) {}
 
         void phase2() {
@@ -113,7 +116,9 @@ namespace on_ns {
         }
 
     private:
-        friend void tag_invoke(types::Tag<execution::start>, Type& self) { execution::start(util::get<0>(self.operation_state)); }
+        friend void tag_invoke(types::Tag<execution::start>, Type& self) {
+            execution::start(util::get<0>(self.operation_state));
+        }
     };
 
     template<typename Send, typename Sched>
@@ -127,15 +132,15 @@ namespace on_ns {
             requires(concepts::DecayConstructible<meta::Like<Self, Send>> &&
                      concepts::SenderTo<meta::Like<Self, Send>, ReceiverWithEnv<Send, Rec, Sched>>)
             friend auto tag_invoke(types::Tag<connect>, Self&& self, Rec receiver) {
-                return OperationState<Send, Rec, Sched> { util::forward<Self>(self).scheduler, util::forward<Self>(self).sender,
-                                                          util::move(receiver) };
+                return OperationState<Send, Rec, Sched> { util::forward<Self>(self).scheduler,
+                                                          util::forward<Self>(self).sender, util::move(receiver) };
             }
 
             template<concepts::DecaysTo<Type> Self, typename E>
-            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, E)
-                -> meta::MakeCompletionSignatures<meta::Like<Self, Send>, Env<E, Sched>,
-                                                  meta::MakeCompletionSignatures<meta::ScheduleResult<Sched>, E, CompletionSignatures<>,
-                                                                                 meta::Id<CompletionSignatures<>>::template Invoke>>;
+            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, E) -> meta::MakeCompletionSignatures<
+                meta::Like<Self, Send>, Env<E, Sched>,
+                meta::MakeCompletionSignatures<meta::ScheduleResult<Sched>, E, CompletionSignatures<>,
+                                               meta::Id<CompletionSignatures<>>::template Invoke>>;
 
             template<concepts::ForwardingSenderQuery Tag, typename... Args>
             constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
@@ -154,7 +159,8 @@ namespace on_ns {
             if constexpr (concepts::TagInvocable<Function, Sched, Send>) {
                 return function::tag_invoke(*this, util::forward<Sched>(scheduler), util::forward<Send>(sender));
             } else {
-                return Sender<meta::Decay<Send>, meta::Decay<Sched>> { util::forward<Sched>(scheduler), util::forward<Send>(sender) };
+                return Sender<meta::Decay<Send>, meta::Decay<Sched>> { util::forward<Sched>(scheduler),
+                                                                       util::forward<Send>(sender) };
             }
         }
     };

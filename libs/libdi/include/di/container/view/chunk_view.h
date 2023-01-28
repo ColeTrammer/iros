@@ -108,7 +108,9 @@ private:
         }
 
     private:
-        constexpr bool at_end() const { return *m_parent->m_current == container::end(m_parent->m_base) && m_parent->m_remainder != 0; }
+        constexpr bool at_end() const {
+            return *m_parent->m_current == container::end(m_parent->m_base) && m_parent->m_remainder != 0;
+        }
 
         constexpr SSizeType distance() const {
             auto const distance = container::end(m_parent->m_base) - *m_parent->m_current;
@@ -200,28 +202,34 @@ private:
     using SSizeType = meta::ContainerSSizeType<Base<is_const>>;
 
     template<bool is_const>
-    using ValueType = decltype(view::take(
-        reconstruct(in_place_type<Base<is_const>>, util::declval<Iter<is_const> const&>(), util::declval<Sent<is_const> const&>()),
-        util::declval<SSizeType<is_const> const&>()));
+    using ValueType =
+        decltype(view::take(reconstruct(in_place_type<Base<is_const>>, util::declval<Iter<is_const> const&>(),
+                                        util::declval<Sent<is_const> const&>()),
+                            util::declval<SSizeType<is_const> const&>()));
 
     template<bool is_const>
     class Iterator
         : public IteratorBase<Iterator<is_const>,
                               meta::Conditional<concepts::RandomAccessIterator<Iter<is_const>>, RandomAccessIteratorTag,
-                                                meta::Conditional<concepts::BidirectionalIterator<Iter<is_const>>, BidirectionalIteratorTag,
-                                                                  ForwardIteratorTag>>,
+                                                meta::Conditional<concepts::BidirectionalIterator<Iter<is_const>>,
+                                                                  BidirectionalIteratorTag, ForwardIteratorTag>>,
                               ValueType<is_const>, SSizeType<is_const>> {
     private:
         friend class ChunkView;
 
-        constexpr Iterator(meta::MaybeConst<is_const, ChunkView>* parent, Iter<is_const> base, SSizeType<is_const> missing = 0)
-            : m_base(util::move(base)), m_end(container::end(parent->m_base)), m_chunk_size(parent->chunk_size()), m_missing(missing) {}
+        constexpr Iterator(meta::MaybeConst<is_const, ChunkView>* parent, Iter<is_const> base,
+                           SSizeType<is_const> missing = 0)
+            : m_base(util::move(base))
+            , m_end(container::end(parent->m_base))
+            , m_chunk_size(parent->chunk_size())
+            , m_missing(missing) {}
 
     public:
         Iterator() = default;
 
         constexpr Iterator(Iterator<!is_const> other)
-        requires(is_const && concepts::ConvertibleTo<Iter<false>, Iter<true>> && concepts::ConvertibleTo<Sent<false>, Sent<true>>)
+        requires(is_const && concepts::ConvertibleTo<Iter<false>, Iter<true>> &&
+                 concepts::ConvertibleTo<Sent<false>, Sent<true>>)
             : m_base(util::move(other.m_base))
             , m_end(util::move(other.m_end))
             , m_chunk_size(other.m_chunk_size)
@@ -276,7 +284,9 @@ private:
         constexpr friend SSizeType<is_const> operator-(DefaultSentinel, Iterator const& b) {
             return math::divide_round_up(b.m_base - b.m_current, b.m_chunk_size);
         }
-        constexpr friend SSizeType<is_const> operator-(Iterator const& a, DefaultSentinel) { return -(default_sentinel - a); }
+        constexpr friend SSizeType<is_const> operator-(Iterator const& a, DefaultSentinel) {
+            return -(default_sentinel - a);
+        }
 
         Iter<is_const> m_base {};
         Sent<is_const> m_end {};
@@ -289,7 +299,8 @@ public:
     requires(concepts::DefaultInitializable<View>)
     = default;
 
-    constexpr explicit ChunkView(View base, SSizeType<false> chunk_size) : m_base(util::move(base)), m_chunk_size(chunk_size) {
+    constexpr explicit ChunkView(View base, SSizeType<false> chunk_size)
+        : m_base(util::move(base)), m_chunk_size(chunk_size) {
         DI_ASSERT_GT(chunk_size, 0);
     }
 

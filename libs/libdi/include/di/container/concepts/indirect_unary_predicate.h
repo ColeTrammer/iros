@@ -8,6 +8,7 @@
 
 namespace di::concepts {
 template<typename F, typename Iter>
-concept IndirectUnaryPredicate = IndirectlyReadable<Iter> && CopyConstructible<F> && Predicate<F&, meta::IteratorValue<Iter>> &&
-                                 Predicate<F&, meta::IteratorReference<Iter>>;
+concept IndirectUnaryPredicate =
+    IndirectlyReadable<Iter> && CopyConstructible<F> && Predicate<F&, meta::IteratorValue<Iter>> &&
+    Predicate<F&, meta::IteratorReference<Iter>>;
 }

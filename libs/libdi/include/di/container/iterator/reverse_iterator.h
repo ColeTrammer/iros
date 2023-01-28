@@ -23,9 +23,10 @@
 namespace di::container {
 template<concepts::BidirectionalIterator Iter>
 class ReverseIterator
-    : public IteratorBase<ReverseIterator<Iter>,
-                          meta::Conditional<concepts::RandomAccessIterator<Iter>, RandomAccessIteratorTag, BidirectionalIteratorTag>,
-                          meta::IteratorValue<Iter>, meta::IteratorSSizeType<Iter>> {
+    : public IteratorBase<
+          ReverseIterator<Iter>,
+          meta::Conditional<concepts::RandomAccessIterator<Iter>, RandomAccessIteratorTag, BidirectionalIteratorTag>,
+          meta::IteratorValue<Iter>, meta::IteratorSSizeType<Iter>> {
 private:
     using SSizeType = meta::IteratorSSizeType<Iter>;
 
@@ -41,7 +42,8 @@ public:
     constexpr ReverseIterator(ReverseIterator<U> const& other) : m_base(other.base()) {}
 
     template<typename U>
-    requires(!concepts::SameAs<Iter, U> && concepts::ConvertibleTo<U const&, Iter> && concepts::AssignableFrom<Iter&, U const&>)
+    requires(!concepts::SameAs<Iter, U> && concepts::ConvertibleTo<U const&, Iter> &&
+             concepts::AssignableFrom<Iter&, U const&>)
     constexpr ReverseIterator& operator=(ReverseIterator<U> const& other) {
         m_base = other.base();
         return *this;
@@ -82,7 +84,8 @@ private:
     }
 
     template<concepts::IndirectlySwappable<Iter> Other>
-    constexpr friend void tag_invoke(types::Tag<iterator_swap>, ReverseIterator const& a, ReverseIterator<Other> const& b) {
+    constexpr friend void tag_invoke(types::Tag<iterator_swap>, ReverseIterator const& a,
+                                     ReverseIterator<Other> const& b) {
         auto t = a.base();
         auto u = b.base();
         iterator_swap(--t, --u);

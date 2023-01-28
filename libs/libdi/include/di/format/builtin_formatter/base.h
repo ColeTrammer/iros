@@ -118,80 +118,83 @@ namespace detail {
 
     constexpr auto tag_invoke(types::Tag<create_parser_in_place>, InPlaceType<IntegerType>) {
         using namespace integral_set_literals;
-        return (-parser::match_one('b'_m || 'B'_m || 'c'_m || 'd'_m || 'o'_m || 'x'_m || 'X'_m)) % [](Optional<char32_t> ch) {
-            switch (ch.value_or(U'd')) {
-                case U'b':
-                    return IntegerType::BinaryLower;
-                case U'B':
-                    return IntegerType::BinaryUpper;
-                case U'c':
-                    return IntegerType::Character;
-                case U'd':
-                    return IntegerType::Decimal;
-                case U'o':
-                    return IntegerType::Octal;
-                case U'x':
-                    return IntegerType::HexLower;
-                case U'X':
-                    return IntegerType::HexUpper;
-                default:
-                    util::unreachable();
-            }
-        };
+        return (-parser::match_one('b'_m || 'B'_m || 'c'_m || 'd'_m || 'o'_m || 'x'_m || 'X'_m)) %
+               [](Optional<char32_t> ch) {
+                   switch (ch.value_or(U'd')) {
+                       case U'b':
+                           return IntegerType::BinaryLower;
+                       case U'B':
+                           return IntegerType::BinaryUpper;
+                       case U'c':
+                           return IntegerType::Character;
+                       case U'd':
+                           return IntegerType::Decimal;
+                       case U'o':
+                           return IntegerType::Octal;
+                       case U'x':
+                           return IntegerType::HexLower;
+                       case U'X':
+                           return IntegerType::HexUpper;
+                       default:
+                           util::unreachable();
+                   }
+               };
     }
 
     enum class CharacterType { BinaryLower, BinaryUpper, Character, Decimal, Octal, HexLower, HexUpper, Debug };
 
     constexpr auto tag_invoke(types::Tag<create_parser_in_place>, InPlaceType<CharacterType>) {
         using namespace integral_set_literals;
-        return (-parser::match_one('b'_m || 'B'_m || 'c'_m || 'd'_m || 'o'_m || 'x'_m || 'X'_m || '?'_m)) % [](Optional<char32_t> ch) {
-            switch (ch.value_or(U'c')) {
-                case U'b':
-                    return CharacterType::BinaryLower;
-                case U'B':
-                    return CharacterType::BinaryUpper;
-                case U'c':
-                    return CharacterType::Character;
-                case U'd':
-                    return CharacterType::Decimal;
-                case U'o':
-                    return CharacterType::Octal;
-                case U'x':
-                    return CharacterType::HexLower;
-                case U'X':
-                    return CharacterType::HexUpper;
-                case U'?':
-                    return CharacterType::Debug;
-                default:
-                    util::unreachable();
-            }
-        };
+        return (-parser::match_one('b'_m || 'B'_m || 'c'_m || 'd'_m || 'o'_m || 'x'_m || 'X'_m || '?'_m)) %
+               [](Optional<char32_t> ch) {
+                   switch (ch.value_or(U'c')) {
+                       case U'b':
+                           return CharacterType::BinaryLower;
+                       case U'B':
+                           return CharacterType::BinaryUpper;
+                       case U'c':
+                           return CharacterType::Character;
+                       case U'd':
+                           return CharacterType::Decimal;
+                       case U'o':
+                           return CharacterType::Octal;
+                       case U'x':
+                           return CharacterType::HexLower;
+                       case U'X':
+                           return CharacterType::HexUpper;
+                       case U'?':
+                           return CharacterType::Debug;
+                       default:
+                           util::unreachable();
+                   }
+               };
     }
 
     enum class BoolType { BinaryLower, BinaryUpper, String, Decimal, Octal, HexLower, HexUpper };
 
     constexpr auto tag_invoke(types::Tag<create_parser_in_place>, InPlaceType<BoolType>) {
         using namespace integral_set_literals;
-        return (-parser::match_one('b'_m || 'B'_m || 'd'_m || 'o'_m || 's'_m || 'x'_m || 'X'_m)) % [](Optional<char32_t> ch) {
-            switch (ch.value_or(U's')) {
-                case U'b':
-                    return BoolType::BinaryLower;
-                case U'B':
-                    return BoolType::BinaryUpper;
-                case U'd':
-                    return BoolType::Decimal;
-                case U'o':
-                    return BoolType::Octal;
-                case U's':
-                    return BoolType::String;
-                case U'x':
-                    return BoolType::HexLower;
-                case U'X':
-                    return BoolType::HexUpper;
-                default:
-                    util::unreachable();
-            }
-        };
+        return (-parser::match_one('b'_m || 'B'_m || 'd'_m || 'o'_m || 's'_m || 'x'_m || 'X'_m)) %
+               [](Optional<char32_t> ch) {
+                   switch (ch.value_or(U's')) {
+                       case U'b':
+                           return BoolType::BinaryLower;
+                       case U'B':
+                           return BoolType::BinaryUpper;
+                       case U'd':
+                           return BoolType::Decimal;
+                       case U'o':
+                           return BoolType::Octal;
+                       case U's':
+                           return BoolType::String;
+                       case U'x':
+                           return BoolType::HexLower;
+                       case U'X':
+                           return BoolType::HexUpper;
+                       default:
+                           util::unreachable();
+                   }
+               };
     }
 
     enum class PointerType { HexLower };
@@ -232,8 +235,8 @@ namespace detail {
 
     private:
         constexpr friend auto tag_invoke(types::Tag<create_parser_in_place>, InPlaceType<IntegerFormat>) {
-            return (-create_parser<FillAndAlign>() >> create_parser<Sign>() >> create_parser<HashTag>() >> create_parser<Zero>() >>
-                    -create_parser<Width>() >> create_parser<IntegerType>()) %
+            return (-create_parser<FillAndAlign>() >> create_parser<Sign>() >> create_parser<HashTag>() >>
+                    create_parser<Zero>() >> -create_parser<Width>() >> create_parser<IntegerType>()) %
                    make_from_tuple<IntegerFormat>;
         }
     };
@@ -248,8 +251,8 @@ namespace detail {
 
     private:
         constexpr friend auto tag_invoke(types::Tag<create_parser_in_place>, InPlaceType<CharacterFormat>) {
-            return (-create_parser<FillAndAlign>() >> create_parser<Sign>() >> create_parser<HashTag>() >> create_parser<Zero>() >>
-                    -create_parser<Width>() >> create_parser<CharacterType>()) %
+            return (-create_parser<FillAndAlign>() >> create_parser<Sign>() >> create_parser<HashTag>() >>
+                    create_parser<Zero>() >> -create_parser<Width>() >> create_parser<CharacterType>()) %
                    make_from_tuple<CharacterFormat>;
         }
     };
@@ -264,8 +267,8 @@ namespace detail {
 
     private:
         constexpr friend auto tag_invoke(types::Tag<create_parser_in_place>, InPlaceType<BoolFormat>) {
-            return (-create_parser<FillAndAlign>() >> create_parser<Sign>() >> create_parser<HashTag>() >> create_parser<Zero>() >>
-                    -create_parser<Width>() >> create_parser<BoolType>()) %
+            return (-create_parser<FillAndAlign>() >> create_parser<Sign>() >> create_parser<HashTag>() >>
+                    create_parser<Zero>() >> -create_parser<Width>() >> create_parser<BoolType>()) %
                    make_from_tuple<BoolFormat>;
         }
     };
@@ -283,9 +286,10 @@ namespace detail {
     };
 
     template<concepts::Encoding Enc>
-    constexpr Result<void> present_string_view_to(concepts::FormatContext auto& context, Optional<FillAndAlign> fill_and_align,
-                                                  Optional<size_t> width, Optional<size_t> precision, bool debug,
-                                                  container::string::StringViewImpl<Enc> view_in, char32_t delimit_code_point = U'"') {
+    constexpr Result<void>
+    present_string_view_to(concepts::FormatContext auto& context, Optional<FillAndAlign> fill_and_align,
+                           Optional<size_t> width, Optional<size_t> precision, bool debug,
+                           container::string::StringViewImpl<Enc> view_in, char32_t delimit_code_point = U'"') {
         using CodePoint = meta::EncodingCodePoint<Enc>;
 
         auto delimit = lift_bool(debug) % function::value(delimit_code_point);
@@ -351,18 +355,21 @@ namespace detail {
     }
 
     template<concepts::Encoding Enc>
-    constexpr Result<void> present_character_to(concepts::FormatContext auto& context, Optional<FillAndAlign> fill_and_align,
-                                                Optional<size_t> width, bool debug, c32 value) {
+    constexpr Result<void> present_character_to(concepts::FormatContext auto& context,
+                                                Optional<FillAndAlign> fill_and_align, Optional<size_t> width,
+                                                bool debug, c32 value) {
         auto encoding = context.encoding();
         auto as_code_units = container::string::encoding::convert_to_code_units(encoding, value);
-        auto [first, last] = container::string::encoding::code_point_view(encoding, { as_code_units.data(), as_code_units.size() });
+        auto [first, last] =
+            container::string::encoding::code_point_view(encoding, { as_code_units.data(), as_code_units.size() });
         auto as_string_view = container::string::StringViewImpl<Enc> { first, last, encoding };
         return present_string_view_to(context, fill_and_align, width, nullopt, debug, as_string_view, U'\'');
     }
 
     template<concepts::Encoding Enc, concepts::Integral T>
-    constexpr Result<void> present_integer_to(concepts::FormatContext auto& context, Optional<FillAndAlign> fill_and_align, Sign sign,
-                                              HashTag hash_tag, Zero zero, Optional<size_t> width, IntegerType type, bool debug, T value) {
+    constexpr Result<void>
+    present_integer_to(concepts::FormatContext auto& context, Optional<FillAndAlign> fill_and_align, Sign sign,
+                       HashTag hash_tag, Zero zero, Optional<size_t> width, IntegerType type, bool debug, T value) {
         if (type == IntegerType::Character) {
             return present_character_to<Enc>(context, fill_and_align, width, debug, static_cast<c32>(value));
         }
@@ -371,7 +378,8 @@ namespace detail {
 
         // The maximum number of digits a number can have is 64 (u64::max() printed in binary).
         // Add 3 extra characters to account for a prefix, like -0x.
-        auto buffer = container::string::StringImpl<Enc, container::StaticVector<meta::EncodingCodeUnit<Enc>, meta::SizeConstant<67>>> {};
+        auto buffer = container::string::StringImpl<
+            Enc, container::StaticVector<meta::EncodingCodeUnit<Enc>, meta::SizeConstant<67>>> {};
 
         using UnsignedType = meta::MakeUnsigned<T>;
         auto as_unsigned = math::abs_unsigned(value);
@@ -486,12 +494,14 @@ namespace detail {
         }
 
         auto backup_fill_and_align = FillAndAlign { zero_pad ? U'0' : U' ', FillAndAlign::Align::Right };
-        return present_string_view_to<Enc>(context, fill_and_align.value_or(backup_fill_and_align), width, nullopt, false, buffer);
+        return present_string_view_to<Enc>(context, fill_and_align.value_or(backup_fill_and_align), width, nullopt,
+                                           false, buffer);
     }
 
     template<concepts::Encoding Enc>
-    constexpr Result<void> present_formatted_to(concepts::FormatContext auto& context, Optional<FillAndAlign> fill_and_align,
-                                                Optional<size_t> width, Optional<size_t> precision,
+    constexpr Result<void> present_formatted_to(concepts::FormatContext auto& context,
+                                                Optional<FillAndAlign> fill_and_align, Optional<size_t> width,
+                                                Optional<size_t> precision,
                                                 container::string::StringViewImpl<Enc> format_string, auto&&... args) {
         // If there is no width, fill_and_align is ignored, so no temporary buffer is needed.
 

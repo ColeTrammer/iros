@@ -10,13 +10,14 @@
 namespace di::concepts {
 template<typename Iter>
 concept RandomAccessIterator =
-    BidirectionalIterator<Iter> && DerivedFrom<meta::IteratorCategory<Iter>, types::RandomAccessIteratorTag> && TotallyOrdered<Iter> &&
-    SizedSentinelFor<Iter, Iter> && requires(Iter iterator, Iter const citerator, meta::IteratorSSizeType<Iter> const n) {
-                                        { iterator += n } -> SameAs<Iter&>;
-                                        { citerator + n } -> SameAs<Iter>;
-                                        { n + citerator } -> SameAs<Iter>;
-                                        { iterator -= n } -> SameAs<Iter&>;
-                                        { citerator - n } -> SameAs<Iter>;
-                                        { citerator[n] } -> SameAs<meta::IteratorReference<Iter>>;
-                                    };
+    BidirectionalIterator<Iter> && DerivedFrom<meta::IteratorCategory<Iter>, types::RandomAccessIteratorTag> &&
+    TotallyOrdered<Iter> && SizedSentinelFor<Iter, Iter> &&
+    requires(Iter iterator, Iter const citerator, meta::IteratorSSizeType<Iter> const n) {
+        { iterator += n } -> SameAs<Iter&>;
+        { citerator + n } -> SameAs<Iter>;
+        { n + citerator } -> SameAs<Iter>;
+        { iterator -= n } -> SameAs<Iter&>;
+        { citerator - n } -> SameAs<Iter>;
+        { citerator[n] } -> SameAs<meta::IteratorReference<Iter>>;
+    };
 }

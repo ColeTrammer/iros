@@ -7,7 +7,8 @@ namespace di::container {
 template<typename In1, typename In2, typename O>
 struct InInOutResult {
     template<typename I1, typename I2, typename OO>
-    requires(concepts::ConvertibleTo<In1 const&, I1> && concepts::ConvertibleTo<In2 const&, I2> && concepts::ConvertibleTo<O const&, OO>)
+    requires(concepts::ConvertibleTo<In1 const&, I1> && concepts::ConvertibleTo<In2 const&, I2> &&
+             concepts::ConvertibleTo<O const&, OO>)
     constexpr operator InInResult<I1, I2>() const& {
         return { in1, in2, out };
     }

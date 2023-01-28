@@ -16,7 +16,9 @@ namespace detail {
                                   { container.back() } -> concepts::SameAs<Optional<Value&>>;
                                   { util::as_const(container).back() } -> concepts::SameAs<Optional<Value const&>>;
                                   container.emplace_back(util::move(value));
-                                  { container.append_container(util::move(container)) } -> concepts::MaybeFallible<void>;
+                                  {
+                                      container.append_container(util::move(container))
+                                      } -> concepts::MaybeFallible<void>;
                                   { container.pop_back() } -> concepts::SameAs<Optional<Value>>;
                                   { container.size() } -> concepts::UnsignedInteger;
                               };
@@ -89,7 +91,9 @@ public:
     constexpr Con const& base() const { return m_container; }
 
 private:
-    constexpr friend auto tag_invoke(types::Tag<util::clone>, Stack const& self) { return self | container::to<Stack>(); }
+    constexpr friend auto tag_invoke(types::Tag<util::clone>, Stack const& self) {
+        return self | container::to<Stack>();
+    }
 
     Con m_container {};
 };

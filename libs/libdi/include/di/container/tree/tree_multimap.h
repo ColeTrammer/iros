@@ -17,16 +17,19 @@ template<typename Key, typename Value, concepts::StrictWeakOrder<Key> Comp = fun
 class TreeMultiMap
     : public RBTree<
           Tuple<Key, Value>, detail::TreeMapCompAdapter<Comp, Key>, Alloc,
-          MapInterface<TreeMultiMap<Key, Value, Comp, Alloc>, Tuple<Key, Value>, RBTreeIterator<Tuple<Key, Value>>,
-                       meta::ConstIterator<RBTreeIterator<Tuple<Key, Value>>>,
-                       detail::RBTreeValidForLookup<Tuple<Key, Value>, detail::TreeMapCompAdapter<Comp, Key>>::template Type, true>,
+          MapInterface<
+              TreeMultiMap<Key, Value, Comp, Alloc>, Tuple<Key, Value>, RBTreeIterator<Tuple<Key, Value>>,
+              meta::ConstIterator<RBTreeIterator<Tuple<Key, Value>>>,
+              detail::RBTreeValidForLookup<Tuple<Key, Value>, detail::TreeMapCompAdapter<Comp, Key>>::template Type,
+              true>,
           true> {
 private:
-    using Base = RBTree<
-        Tuple<Key, Value>, detail::TreeMapCompAdapter<Comp, Key>, Alloc,
-        MapInterface<TreeMultiMap<Key, Value, Comp, Alloc>, Tuple<Key, Value>, RBTreeIterator<Tuple<Key, Value>>,
-                     meta::ConstIterator<RBTreeIterator<Tuple<Key, Value>>>, detail::RBTreeValidForLookup<Key, Comp>::template Type, true>,
-        true>;
+    using Base =
+        RBTree<Tuple<Key, Value>, detail::TreeMapCompAdapter<Comp, Key>, Alloc,
+               MapInterface<TreeMultiMap<Key, Value, Comp, Alloc>, Tuple<Key, Value>, RBTreeIterator<Tuple<Key, Value>>,
+                            meta::ConstIterator<RBTreeIterator<Tuple<Key, Value>>>,
+                            detail::RBTreeValidForLookup<Key, Comp>::template Type, true>,
+               true>;
 
 public:
     TreeMultiMap() = default;
@@ -36,11 +39,13 @@ public:
 
 template<concepts::InputContainer Con, concepts::TupleLike T = meta::ContainerValue<Con>>
 requires(meta::TupleSize<T> == 2)
-TreeMultiMap<meta::TupleElement<T, 0>, meta::TupleElement<T, 1>> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<TreeMultiMap>,
-                                                                            Con&&);
+TreeMultiMap<meta::TupleElement<T, 0>, meta::TupleElement<T, 1>> tag_invoke(types::Tag<util::deduce_create>,
+                                                                            InPlaceTemplate<TreeMultiMap>, Con&&);
 
-template<concepts::InputContainer Con, concepts::TupleLike T = meta::ContainerValue<Con>, concepts::StrictWeakOrder<T> Comp>
+template<concepts::InputContainer Con, concepts::TupleLike T = meta::ContainerValue<Con>,
+         concepts::StrictWeakOrder<T> Comp>
 requires(meta::TupleSize<T> == 2)
 TreeMultiMap<meta::TupleElement<T, 0>, meta::TupleElement<T, 1>, Comp> tag_invoke(types::Tag<util::deduce_create>,
-                                                                                  InPlaceTemplate<TreeMultiMap>, Con&&, Comp);
+                                                                                  InPlaceTemplate<TreeMultiMap>, Con&&,
+                                                                                  Comp);
 }

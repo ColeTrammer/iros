@@ -47,12 +47,14 @@ template<typename T>
 concept MonadInstance = requires(T&& value) {
                             // fmap (Haskell >>)
                             {
-                                function::monad::fmap(util::forward<T>(value), detail::MonadFmapId<meta::RemoveCVRef<T>> {})
+                                function::monad::fmap(util::forward<T>(value),
+                                                      detail::MonadFmapId<meta::RemoveCVRef<T>> {})
                                 } -> SameAs<meta::RemoveCVRef<T>>;
 
                             // bind (Haskell >>=)
                             {
-                                function::monad::bind(util::forward<T>(value), detail::MonadBindId<meta::RemoveCVRef<T>> {})
+                                function::monad::bind(util::forward<T>(value),
+                                                      detail::MonadBindId<meta::RemoveCVRef<T>> {})
                                 } -> SameAs<meta::RemoveCVRef<T>>;
                         } && function::monad::enable_monad(types::in_place_type<meta::RemoveCVRef<T>>);
 

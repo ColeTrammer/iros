@@ -21,5 +21,6 @@ template<typename F, typename T, typename Iter>
 concept IndirectlyBinaryLeftFoldable =
     CopyConstructible<F> && IndirectlyReadable<Iter> && Invocable<F&, T, meta::IteratorReference<Iter>> &&
     DecayConvertible<meta::InvokeResult<F&, T, meta::IteratorReference<Iter>>> &&
-    detail::IndirectlyBinaryLeftFoldableHelper<F, T, Iter, meta::Decay<meta::InvokeResult<F&, T, meta::IteratorReference<Iter>>>>;
+    detail::IndirectlyBinaryLeftFoldableHelper<F, T, Iter,
+                                               meta::Decay<meta::InvokeResult<F&, T, meta::IteratorReference<Iter>>>>;
 }

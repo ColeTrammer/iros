@@ -51,7 +51,8 @@ private:
         return false;
     }
 
-    template<concepts::RemoveCVRefSameAs<Expected> Self, typename F, typename U = meta::UnwrapRefDecay<meta::InvokeResult<F>>>
+    template<concepts::RemoveCVRefSameAs<Expected> Self, typename F,
+             typename U = meta::UnwrapRefDecay<meta::InvokeResult<F>>>
     constexpr friend Expected<U, void> tag_invoke(types::Tag<function::monad::fmap>, Self&&, F&& function) {
         if constexpr (concepts::LanguageVoid<U>) {
             function::invoke(util::forward<F>(function));

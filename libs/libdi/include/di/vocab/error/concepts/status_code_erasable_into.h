@@ -11,7 +11,8 @@ namespace detail {
     concept StatusCodeErasableIntoHelper = (!LanguageVoid<From> && !LanguageVoid<To> &&
                                             TriviallyRelocatable<meta::StatusCodeDomainValue<From>> &&
                                             TriviallyRelocatable<meta::StatusCodeDomainValue<To>> &&
-                                            sizeof(vocab::detail::StatusCodeStorage<From>) <= sizeof(vocab::detail::StatusCodeStorage<To>));
+                                            sizeof(vocab::detail::StatusCodeStorage<From>) <=
+                                                sizeof(vocab::detail::StatusCodeStorage<To>));
 }
 
 template<typename From, typename To>

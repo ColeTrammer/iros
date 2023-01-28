@@ -25,7 +25,8 @@ private:
     template<typename, typename>
     friend class IntrusiveList;
 
-    constexpr IntrusiveListElement(IntrusiveListElement* next_, IntrusiveListElement* prev_) : next(next_), prev(prev_) {}
+    constexpr IntrusiveListElement(IntrusiveListElement* next_, IntrusiveListElement* prev_)
+        : next(next_), prev(prev_) {}
 
     IntrusiveListElement* next;
     IntrusiveListElement* prev;

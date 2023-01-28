@@ -15,8 +15,8 @@ struct RBeginFunction;
 
 namespace detail {
     template<typename T>
-    concept CustomRBegin =
-        concepts::TagInvocable<RBeginFunction, T> && concepts::Iterator<meta::Decay<meta::TagInvokeResult<RBeginFunction, T>>>;
+    concept CustomRBegin = concepts::TagInvocable<RBeginFunction, T> &&
+                           concepts::Iterator<meta::Decay<meta::TagInvokeResult<RBeginFunction, T>>>;
 
     template<typename T>
     concept MemberRBegin = requires(T&& container) {
@@ -24,12 +24,13 @@ namespace detail {
                            };
 
     template<typename T>
-    concept ReverseIteratorRBegin = requires(T&& container) {
-                                        { container::begin(util::forward<T>(container)) } -> concepts::BidirectionalIterator;
-                                        {
-                                            container::end(util::forward<T>(container))
-                                            } -> concepts::SameAs<decltype(container::begin(util::forward<T>(container)))>;
-                                    };
+    concept ReverseIteratorRBegin =
+        requires(T&& container) {
+            { container::begin(util::forward<T>(container)) } -> concepts::BidirectionalIterator;
+            {
+                container::end(util::forward<T>(container))
+                } -> concepts::SameAs<decltype(container::begin(util::forward<T>(container)))>;
+        };
 }
 
 struct RBeginFunction {

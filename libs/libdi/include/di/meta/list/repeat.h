@@ -15,7 +15,8 @@ namespace detail {
 
     template<typename T, size_t N>
     requires(N > 1)
-    struct RepeatHelper<T, N> : TypeConstant<Concat<typename RepeatHelper<T, N / 2>::Type, typename RepeatHelper<T, (N + 1) / 2>::Type>> {};
+    struct RepeatHelper<T, N>
+        : TypeConstant<Concat<typename RepeatHelper<T, N / 2>::Type, typename RepeatHelper<T, (N + 1) / 2>::Type>> {};
 }
 
 template<typename T, size_t N>

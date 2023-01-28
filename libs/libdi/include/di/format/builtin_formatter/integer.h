@@ -12,8 +12,8 @@ constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<T>, Format
     return parse<detail::IntegerFormat>(parse_context.current_format_string()) % [](detail::IntegerFormat format) {
         return [=](concepts::FormatContext auto& context, T value) -> Result<void> {
             auto width = format.width.transform(&detail::Width::value);
-            return detail::present_integer_to<Enc>(context, format.fill_and_align, format.sign, format.hash_tag, format.zero, width,
-                                                   format.type, false, value);
+            return detail::present_integer_to<Enc>(context, format.fill_and_align, format.sign, format.hash_tag,
+                                                   format.zero, width, format.type, false, value);
         };
     };
 }

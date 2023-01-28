@@ -50,7 +50,9 @@ private:
     friend class StatusCode;
 
     constexpr friend bool operator==(StatusCodeDomain const& a, StatusCodeDomain const& b) { return a.id() == b.id(); }
-    constexpr friend strong_ordering operator<=>(StatusCodeDomain const& a, StatusCodeDomain const& b) { return a.id() <=> b.id(); }
+    constexpr friend strong_ordering operator<=>(StatusCodeDomain const& a, StatusCodeDomain const& b) {
+        return a.id() <=> b.id();
+    }
 
     UniqueId m_id;
 };

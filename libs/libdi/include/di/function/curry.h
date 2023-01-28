@@ -29,7 +29,8 @@ public:
 
     template<typename... Args>
     requires(/* !concepts::Invocable<Self&, Args...> && */ concepts::ConstructibleFrom<Self, Self&> &&
-             concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Args>, Args>...> && sizeof...(Args) < max_arity)
+             concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Args>, Args>...> &&
+             sizeof...(Args) < max_arity)
     constexpr auto operator()(Args&&... args) & {
         return curry(bind_front(static_cast<Self&>(*this), util::forward<Args>(args)...),
                      meta::size_constant<new_arity<max_arity - sizeof...(Args)>>);
@@ -37,7 +38,8 @@ public:
 
     template<typename... Args>
     requires(/* !concepts::Invocable<Self const&, Args...> && */ concepts::ConstructibleFrom<Self, Self const&> &&
-             concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Args>, Args>...> && sizeof...(Args) < max_arity)
+             concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Args>, Args>...> &&
+             sizeof...(Args) < max_arity)
     constexpr auto operator()(Args&&... args) const& {
         return curry(bind_front(static_cast<Self const&>(*this), util::forward<Args>(args)...),
                      meta::size_constant<new_arity<max_arity - sizeof...(Args)>>);
@@ -45,7 +47,8 @@ public:
 
     template<typename... Args>
     requires(/* !concepts::Invocable<Self &&, Args...> && */ concepts::ConstructibleFrom<Self, Self &&> &&
-             concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Args>, Args>...> && sizeof...(Args) < max_arity)
+             concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Args>, Args>...> &&
+             sizeof...(Args) < max_arity)
     constexpr auto operator()(Args&&... args) && {
         return curry(bind_front(static_cast<Self&&>(*this), util::forward<Args>(args)...),
                      meta::size_constant<new_arity<max_arity - sizeof...(Args)>>);
@@ -53,7 +56,8 @@ public:
 
     template<typename... Args>
     requires(/* !concepts::Invocable<Self const &&, Args...> && */ concepts::ConstructibleFrom<Self, Self const &&> &&
-             concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Args>, Args>...> && sizeof...(Args) < max_arity)
+             concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Args>, Args>...> &&
+             sizeof...(Args) < max_arity)
     constexpr auto operator()(Args&&... args) const&& {
         return curry(bind_front(static_cast<Self const&&>(*this), util::forward<Args>(args)...),
                      meta::size_constant<new_arity<max_arity - sizeof...(Args)>>);

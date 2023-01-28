@@ -62,12 +62,12 @@ private:
 
     template<bool is_const>
     class Iterator
-        : public IteratorExtension<
-              Iterator<is_const>, Iter<is_const>,
-              meta::RemoveCVRef<meta::InvokeResult<meta::MaybeConst<is_const, F>&, meta::IteratorReference<Iter<is_const>>>>> {
-        using Base = IteratorExtension<
-            Iterator<is_const>, Iter<is_const>,
-            meta::RemoveCVRef<meta::InvokeResult<meta::MaybeConst<is_const, F>&, meta::IteratorReference<Iter<is_const>>>>>;
+        : public IteratorExtension<Iterator<is_const>, Iter<is_const>,
+                                   meta::RemoveCVRef<meta::InvokeResult<meta::MaybeConst<is_const, F>&,
+                                                                        meta::IteratorReference<Iter<is_const>>>>> {
+        using Base = IteratorExtension<Iterator<is_const>, Iter<is_const>,
+                                       meta::RemoveCVRef<meta::InvokeResult<meta::MaybeConst<is_const, F>&,
+                                                                            meta::IteratorReference<Iter<is_const>>>>>;
 
     public:
         Iterator()
@@ -81,7 +81,9 @@ private:
         requires(is_const && concepts::ConvertibleTo<Iter<is_const>, Iter<!is_const>>)
             : Base(util::move(other).base()), m_parent(other.m_parent) {}
 
-        constexpr decltype(auto) operator*() const { return function::invoke(m_parent->m_function.value(), *this->base()); }
+        constexpr decltype(auto) operator*() const {
+            return function::invoke(m_parent->m_function.value(), *this->base());
+        }
 
     private:
         template<bool>

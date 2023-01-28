@@ -8,5 +8,6 @@
 
 namespace di::concepts {
 template<typename Send, typename Env, typename... Values>
-concept SenderOf = Sender<Send, Env> && SameAs<meta::List<Values...>, meta::ValueTypesOf<Send, Env, meta::List, meta::TypeIdentity>>;
+concept SenderOf =
+    Sender<Send, Env> && SameAs<meta::List<Values...>, meta::ValueTypesOf<Send, Env, meta::List, meta::TypeIdentity>>;
 }

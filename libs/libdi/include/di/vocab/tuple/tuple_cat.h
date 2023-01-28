@@ -15,9 +15,12 @@ constexpr auto tuple_cat(Tups&&... tuples) {
             return x;
         },
         []<typename X, typename Y>(X&& x, Y&& y) {
-            return function::unpack<meta::MakeIndexSequence<meta::TupleSize<X>>>([&]<size_t... xs>(meta::IndexSequence<xs...>) {
-                return function::unpack<meta::MakeIndexSequence<meta::TupleSize<Y>>>([&]<size_t... ys>(meta::IndexSequence<ys...>) {
-                    return Tuple<meta::TupleElement<meta::RemoveCVRef<X>, xs>..., meta::TupleElement<meta::RemoveCVRef<Y>, ys>...> {
+            return function::unpack<meta::MakeIndexSequence<meta::TupleSize<X>>>([&]<size_t... xs>(
+                meta::IndexSequence<xs...>) {
+                return function::unpack<meta::MakeIndexSequence<meta::TupleSize<Y>>>([&]<size_t... ys>(
+                    meta::IndexSequence<ys...>) {
+                    return Tuple<meta::TupleElement<meta::RemoveCVRef<X>, xs>...,
+                                 meta::TupleElement<meta::RemoveCVRef<Y>, ys>...> {
                         util::get<xs>(util::forward<X>(x))..., util::get<ys>(util::forward<Y>(y))...
                     };
                 });

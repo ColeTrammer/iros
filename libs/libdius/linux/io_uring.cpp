@@ -6,8 +6,8 @@
 #include <dius/prelude.h>
 
 namespace dius::linux::io_uring {
-di::Result<int> sys_enter(unsigned int fd, unsigned int to_submit, unsigned int min_complete, unsigned int flags, void const* arg,
-                          size_t arg_size) {
+di::Result<int> sys_enter(unsigned int fd, unsigned int to_submit, unsigned int min_complete, unsigned int flags,
+                          void const* arg, size_t arg_size) {
     return system::system_call<int>(system::Number::io_uring_enter, fd, to_submit, min_complete, flags, arg, arg_size);
 }
 
@@ -69,8 +69,8 @@ di::Result<IoUringHandle> IoUringHandle::create() {
     result.fd = TRY(sys_setup(256, di::address_of(params)));
 
     auto cq_size = params.cq_off.cqes + params.cq_entries * sizeof(CQE);
-    result.cq_region = TRY(
-        result.fd.map(IORING_OFF_CQ_RING, cq_size, Protection::Readable | Protection::Writeable, MapFlags::Shared | MapFlags::Populate));
+    result.cq_region = TRY(result.fd.map(IORING_OFF_CQ_RING, cq_size, Protection::Readable | Protection::Writeable,
+                                         MapFlags::Shared | MapFlags::Populate));
 
     auto cq_memory = result.cq_region.span();
 
@@ -82,8 +82,8 @@ di::Result<IoUringHandle> IoUringHandle::create() {
     result.cq_array = cq_memory.typed_pointer_unchecked<CQE>(params.cq_off.cqes);
 
     auto sq_size = params.sq_off.array + params.sq_entries * sizeof(u32);
-    result.sq_region = TRY(
-        result.fd.map(IORING_OFF_SQ_RING, sq_size, Protection::Readable | Protection::Writeable, MapFlags::Shared | MapFlags::Populate));
+    result.sq_region = TRY(result.fd.map(IORING_OFF_SQ_RING, sq_size, Protection::Readable | Protection::Writeable,
+                                         MapFlags::Shared | MapFlags::Populate));
 
     auto sq_memory = result.sq_region.span();
 
@@ -95,8 +95,8 @@ di::Result<IoUringHandle> IoUringHandle::create() {
     result.sq_index_array = sq_memory.typed_pointer_unchecked<u32>(params.sq_off.array);
 
     auto sqe_size = params.sq_entries * sizeof(SQE);
-    result.sqe_region =
-        TRY(result.fd.map(IORING_OFF_SQES, sqe_size, Protection::Readable | Protection::Writeable, MapFlags::Shared | MapFlags::Populate));
+    result.sqe_region = TRY(result.fd.map(IORING_OFF_SQES, sqe_size, Protection::Readable | Protection::Writeable,
+                                          MapFlags::Shared | MapFlags::Populate));
 
     result.sq_array = result.sqe_region.span().typed_pointer_unchecked<SQE>(0);
 

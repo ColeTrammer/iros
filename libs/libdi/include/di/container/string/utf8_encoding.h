@@ -27,7 +27,8 @@ namespace utf8 {
     }
 
     constexpr static bool is_start_of_multi_byte_sequence(c8 byte) {
-        return is_start_of_two_byte_sequence(byte) || is_start_of_three_byte_sequence(byte) || is_start_of_four_byte_sequence(byte);
+        return is_start_of_two_byte_sequence(byte) || is_start_of_three_byte_sequence(byte) ||
+               is_start_of_four_byte_sequence(byte);
     }
 
     constexpr static bool is_valid_first_byte(c8 byte) {
@@ -93,7 +94,9 @@ namespace utf8 {
 
     private:
         constexpr friend bool operator==(Utf8Iterator const& a, Utf8Iterator const& b) { return a.data() == b.data(); }
-        constexpr friend auto operator<=>(Utf8Iterator const& a, Utf8Iterator const& b) { return a.data() <=> b.data(); }
+        constexpr friend auto operator<=>(Utf8Iterator const& a, Utf8Iterator const& b) {
+            return a.data() <=> b.data();
+        }
 
         c8 const* m_data { nullptr };
     };
@@ -139,7 +142,8 @@ private:
         return true;
     }
 
-    constexpr friend bool tag_invoke(types::Tag<encoding::valid_byte_offset>, Utf8Encoding const&, Span<c8 const> data, size_t offset) {
+    constexpr friend bool tag_invoke(types::Tag<encoding::valid_byte_offset>, Utf8Encoding const&, Span<c8 const> data,
+                                     size_t offset) {
         // NOTE: this function can assume the underlying c8 data is valid UTF-8.
         if (offset >= data.size()) {
             return offset == data.size();

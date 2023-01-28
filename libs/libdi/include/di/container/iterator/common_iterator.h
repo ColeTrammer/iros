@@ -111,7 +111,8 @@ private:
     }
 
     template<concepts::IndirectlySwappable<Iter> It, typename St>
-    constexpr friend void tag_invoke(types::Tag<iterator_swap>, CommonIterator const& a, CommonIterator<It, St> const& b) {
+    constexpr friend void tag_invoke(types::Tag<iterator_swap>, CommonIterator const& a,
+                                     CommonIterator<It, St> const& b) {
         return iterator_swap(util::get<0>(a.m_state), util::get<0>(b.m_state));
     }
 

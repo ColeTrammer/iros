@@ -7,8 +7,10 @@
 namespace di::util {
 class SourceLocation {
 public:
-    consteval static SourceLocation current(char const* file_name = __builtin_FILE(), char const* function_name = __builtin_FUNCTION(),
-                                            unsigned int line = __builtin_LINE(), unsigned int column = __builtin_COLUMN()) {
+    consteval static SourceLocation current(char const* file_name = __builtin_FILE(),
+                                            char const* function_name = __builtin_FUNCTION(),
+                                            unsigned int line = __builtin_LINE(),
+                                            unsigned int column = __builtin_COLUMN()) {
         auto result = SourceLocation();
         result.m_file_name = file_name;
         result.m_function_name = function_name;

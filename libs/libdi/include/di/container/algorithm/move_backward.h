@@ -11,7 +11,8 @@ using MoveBackwardResult = InOutResult<In, Out>;
 
 namespace detail {
     struct MoveBackwardFunction {
-        template<concepts::BidirectionalIterator In, concepts::SentinelFor<In> Sent, concepts::BidirectionalIterator Out>
+        template<concepts::BidirectionalIterator In, concepts::SentinelFor<In> Sent,
+                 concepts::BidirectionalIterator Out>
         requires(concepts::IndirectlyMovable<In, Out>)
         constexpr MoveBackwardResult<In, Out> operator()(In first, Sent last, Out output) const {
             auto last_it = container::next(first, last);

@@ -11,8 +11,9 @@ namespace detail {
     struct CreateInPlaceFunction;
 
     template<typename T, typename... Args>
-    concept CustomCreatable = concepts::TagInvocable<CreateInPlaceFunction, InPlaceType<T>, Args...> &&
-                              concepts::MaybeFallible<meta::TagInvokeResult<CreateInPlaceFunction, InPlaceType<T>, Args...>, T>;
+    concept CustomCreatable =
+        concepts::TagInvocable<CreateInPlaceFunction, InPlaceType<T>, Args...> &&
+        concepts::MaybeFallible<meta::TagInvokeResult<CreateInPlaceFunction, InPlaceType<T>, Args...>, T>;
 
     template<typename T, typename... Args>
     concept StaticCreatable = requires(Args&&... args) {

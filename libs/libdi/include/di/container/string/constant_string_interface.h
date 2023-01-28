@@ -86,7 +86,9 @@ public:
         return string::contains(self(), util::forward<Con>(container));
     }
 
-    constexpr auto substr(Iterator first, Optional<Iterator> last = {}) const { return string::substr(self(), first, last); }
+    constexpr auto substr(Iterator first, Optional<Iterator> last = {}) const {
+        return string::substr(self(), first, last);
+    }
 
     constexpr auto find(CodePoint code_point) const { return string::find(self(), code_point); }
 
@@ -112,7 +114,9 @@ public:
         return string::find_first_of(self(), util::forward<Con>(container));
     }
 
-    constexpr auto find_first_not_of(CodePoint code_point) const { return string::find_first_not_of(self(), code_point); }
+    constexpr auto find_first_not_of(CodePoint code_point) const {
+        return string::find_first_not_of(self(), code_point);
+    }
 
     template<concepts::ContainerCompatible<CodePoint> Con>
     requires(concepts::SameAs<meta::Encoding<Con>, Enc> && concepts::ForwardContainer<Con>)
@@ -155,7 +159,8 @@ private:
         return string::compare(a, b);
     }
 
-    constexpr friend StringViewImpl<Enc> tag_invoke(types::Tag<container::reconstruct>, InPlaceType<Self>, Iterator first, Iterator last) {
+    constexpr friend StringViewImpl<Enc> tag_invoke(types::Tag<container::reconstruct>, InPlaceType<Self>,
+                                                    Iterator first, Iterator last) {
         return StringViewImpl<Enc>(util::move(first), util::move(last));
     }
 };

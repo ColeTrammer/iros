@@ -16,8 +16,9 @@ constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<bool>, For
                 return detail::present_string_view_to(context, format.fill_and_align, width, nullopt, false,
                                                       value ? "true"_sv : "false"_sv);
             } else {
-                return detail::present_integer_to<Enc>(context, format.fill_and_align, format.sign, format.hash_tag, format.zero, width,
-                                                       static_cast<detail::IntegerType>(type), false, static_cast<i8>(value));
+                return detail::present_integer_to<Enc>(context, format.fill_and_align, format.sign, format.hash_tag,
+                                                       format.zero, width, static_cast<detail::IntegerType>(type),
+                                                       false, static_cast<i8>(value));
             }
         };
     };

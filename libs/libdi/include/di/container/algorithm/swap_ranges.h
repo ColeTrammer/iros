@@ -20,8 +20,8 @@ namespace detail {
 
         template<concepts::InputContainer Con1, concepts::InputContainer Con2>
         requires(concepts::IndirectlySwappable<meta::ContainerIterator<Con1>, meta::ContainerIterator<Con2>>)
-        constexpr InInResult<meta::BorrowedIterator<Con1>, meta::BorrowedIterator<Con2>> operator()(Con1&& container1,
-                                                                                                    Con2&& container2) const {
+        constexpr InInResult<meta::BorrowedIterator<Con1>, meta::BorrowedIterator<Con2>>
+        operator()(Con1&& container1, Con2&& container2) const {
             return (*this)(container::begin(container1), container::end(container1), container::begin(container2),
                            container::end(container2));
         }

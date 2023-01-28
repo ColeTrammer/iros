@@ -47,13 +47,15 @@ public:
     constexpr Mapping(ExtentsType const& extents) : m_extents(extents) {}
 
     template<typename OtherSizeType>
-    requires(concepts::ConvertibleTo<OtherSizeType const&, SizeType> && concepts::ConstructibleFrom<SizeType, OtherSizeType const&>)
+    requires(concepts::ConvertibleTo<OtherSizeType const&, SizeType> &&
+             concepts::ConstructibleFrom<SizeType, OtherSizeType const&>)
     constexpr Mapping(ExtentsType const& extents, Span<OtherSizeType, rank> strides) : m_extents(extents) {
         container::copy(strides, m_strides.data());
     }
 
     template<typename OtherSizeType>
-    requires(concepts::ConvertibleTo<OtherSizeType const&, SizeType> && concepts::ConstructibleFrom<SizeType, OtherSizeType const&>)
+    requires(concepts::ConvertibleTo<OtherSizeType const&, SizeType> &&
+             concepts::ConstructibleFrom<SizeType, OtherSizeType const&>)
     constexpr Mapping(ExtentsType const& extents, Array<OtherSizeType, rank> const& strides) : m_extents(extents) {
         container::copy(strides, m_strides.data());
     }
@@ -62,7 +64,8 @@ public:
     requires(concepts::ConstructibleFrom<ExtentsType, typename StridedLayoutMapping::ExtentsType> &&
              StridedLayoutMapping::is_always_unique() && StridedLayoutMapping::is_always_strided())
     constexpr explicit((!concepts::ConvertibleTo<typename StridedLayoutMapping::ExtentsType, ExtentsType>) &&(
-        detail::IsMappingOf<LayoutLeft, StridedLayoutMapping> || detail::IsMappingOf<LayoutRight, StridedLayoutMapping> ||
+        detail::IsMappingOf<LayoutLeft, StridedLayoutMapping> ||
+        detail::IsMappingOf<LayoutRight, StridedLayoutMapping> ||
         detail::IsMappingOf<LayoutStride, StridedLayoutMapping>) ) Mapping(StridedLayoutMapping const& other)
         : m_extents(other.extents()) {
         for (auto d : container::view::range(rank)) {
@@ -87,11 +90,11 @@ public:
     }
 
     template<typename... Indices>
-    requires(sizeof...(Indices) == ExtentsType::rank() && concepts::Conjunction<concepts::ConvertibleTo<Indices, SizeType>...>)
+    requires(sizeof...(Indices) == ExtentsType::rank() &&
+             concepts::Conjunction<concepts::ConvertibleTo<Indices, SizeType>...>)
     constexpr SizeType operator()(Indices... indices) const {
-        return function::unpack<meta::MakeIndexSequence<sizeof...(Indices)>>([&]<size_t... i>(meta::IndexSequence<i...>) {
-            return ((static_cast<SizeType>(indices) * stride(i)) + ... + 0);
-        });
+        return function::unpack<meta::MakeIndexSequence<sizeof...(Indices)>>([&]<size_t... i>(
+            meta::IndexSequence<i...>) { return ((static_cast<SizeType>(indices) * stride(i)) + ... + 0); });
     }
 
     constexpr static bool is_always_unique() { return true; }

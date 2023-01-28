@@ -52,16 +52,19 @@ public:
     = default;
 
     template<typename U>
-    requires(concepts::ConstructibleFrom<T, U const&> && concepts::detail::ExpectedCanConvertConstructor<T, void, U, void>)
-    constexpr explicit(!concepts::ConvertibleTo<U const&, T>) Expected(Expected<U, void> const& other) : m_value(other.value()) {}
+    requires(concepts::ConstructibleFrom<T, U const&> &&
+             concepts::detail::ExpectedCanConvertConstructor<T, void, U, void>)
+    constexpr explicit(!concepts::ConvertibleTo<U const&, T>) Expected(Expected<U, void> const& other)
+        : m_value(other.value()) {}
 
     template<typename U>
     requires(concepts::ConstructibleFrom<T, U> && concepts::detail::ExpectedCanConvertConstructor<T, void, U, void>)
-    constexpr explicit(!concepts::ConvertibleTo<U, T>) Expected(Expected<U, void>&& other) : m_value(util::move(other).value()) {}
+    constexpr explicit(!concepts::ConvertibleTo<U, T>) Expected(Expected<U, void>&& other)
+        : m_value(util::move(other).value()) {}
 
     template<typename U = T>
-    requires(!concepts::RemoveCVRefSameAs<U, types::InPlace> && !concepts::RemoveCVRefSameAs<U, Expected> && !concepts::Unexpected<U> &&
-             concepts::ConstructibleFrom<T, U>)
+    requires(!concepts::RemoveCVRefSameAs<U, types::InPlace> && !concepts::RemoveCVRefSameAs<U, Expected> &&
+             !concepts::Unexpected<U> && concepts::ConstructibleFrom<T, U>)
     constexpr explicit(!concepts::ConvertibleTo<U, T>) Expected(U&& value) : m_value(util::forward<U>(value)) {}
 
     template<typename... Args>
@@ -175,11 +178,13 @@ private:
             function::invoke(util::forward<F>(function), util::forward<Self>(self).value());
             return {};
         } else {
-            return Expected<U, void>(in_place, function::invoke(util::forward<F>(function), util::forward<Self>(self).value()));
+            return Expected<U, void>(in_place,
+                                     function::invoke(util::forward<F>(function), util::forward<Self>(self).value()));
         }
     }
 
-    template<concepts::RemoveCVRefSameAs<Expected> Self, typename F, typename R = meta::InvokeResult<F, meta::Like<Self, T>>>
+    template<concepts::RemoveCVRefSameAs<Expected> Self, typename F,
+             typename R = meta::InvokeResult<F, meta::Like<Self, T>>>
     requires(concepts::Expected<R>)
     constexpr friend R tag_invoke(types::Tag<function::monad::bind>, Self&& self, F&& function) {
         return function::invoke(util::forward<F>(function), util::forward<Self>(self).value());

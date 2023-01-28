@@ -32,9 +32,9 @@ namespace detail {
     concept CartesianProductIsSized = concepts::Conjunction<concepts::SizedContainer<Cons>...>;
 
     template<typename First, typename... Cons>
-    concept CartesianSentinelIsSized =
-        concepts::Conjunction<concepts::SizedSentinelFor<meta::ContainerSentinel<First>, meta::ContainerIterator<First>>,
-                              concepts::SizedContainer<Cons>...>;
+    concept CartesianSentinelIsSized = concepts::Conjunction<
+        concepts::SizedSentinelFor<meta::ContainerSentinel<First>, meta::ContainerIterator<First>>,
+        concepts::SizedContainer<Cons>...>;
 
     template<CartesianProductCommonArg Con>
     constexpr auto cartiesian_common_arg_end(Con&& con) {
@@ -55,21 +55,22 @@ private:
         : public IteratorBase<
               Iterator<is_const>,
               meta::Conditional<
-                  detail::CartesianProductIsRandomAccess<meta::MaybeConst<is_const, First>, meta::MaybeConst<is_const, Rest>...>,
+                  detail::CartesianProductIsRandomAccess<meta::MaybeConst<is_const, First>,
+                                                         meta::MaybeConst<is_const, Rest>...>,
                   RandomAccessIteratorTag,
-                  meta::Conditional<
-                      detail::CartesianProductIsBidirectional<meta::MaybeConst<is_const, First>, meta::MaybeConst<is_const, Rest>...>,
-                      RandomAccessIteratorTag,
-                      meta::Conditional<concepts::ForwardContainer<meta::MaybeConst<is_const, First>>, ForwardIteratorTag,
-                                        InputIteratorTag>>>,
+                  meta::Conditional<detail::CartesianProductIsBidirectional<meta::MaybeConst<is_const, First>,
+                                                                            meta::MaybeConst<is_const, Rest>...>,
+                                    RandomAccessIteratorTag,
+                                    meta::Conditional<concepts::ForwardContainer<meta::MaybeConst<is_const, First>>,
+                                                      ForwardIteratorTag, InputIteratorTag>>>,
               Tuple<meta::ContainerValue<First>, meta::ContainerValue<Rest>...>, ssize_t> {
     private:
         friend class CartesianProductView;
 
         using Parent = meta::MaybeConst<is_const, CartesianProductView>;
 
-        using Storage =
-            Tuple<meta::ContainerIterator<meta::MaybeConst<is_const, First>>, meta::ContainerIterator<meta::MaybeConst<is_const, Rest>>...>;
+        using Storage = Tuple<meta::ContainerIterator<meta::MaybeConst<is_const, First>>,
+                              meta::ContainerIterator<meta::MaybeConst<is_const, Rest>>...>;
 
         constexpr explicit Iterator(Parent& parent, Storage storage)
             : m_parent(util::address_of(parent)), m_iterators(util::move(storage)) {}
@@ -79,8 +80,9 @@ private:
 
         constexpr Iterator(Iterator<!is_const> other)
         requires(is_const &&
-                 concepts::Conjunction<concepts::ConvertibleTo<meta::ContainerIterator<First>, meta::ContainerIterator<First const>>,
-                                       concepts::ConvertibleTo<meta::ContainerIterator<Rest>, meta::ContainerIterator<Rest const>>...>)
+                 concepts::Conjunction<
+                     concepts::ConvertibleTo<meta::ContainerIterator<First>, meta::ContainerIterator<First const>>,
+                     concepts::ConvertibleTo<meta::ContainerIterator<Rest>, meta::ContainerIterator<Rest const>>...>)
             : m_parent(other.m_parent), m_iterators(util::move(other)) {}
 
         constexpr auto operator*() const {
@@ -94,13 +96,15 @@ private:
         constexpr void advance_one() { this->next(); }
 
         constexpr void back_one()
-        requires(detail::CartesianProductIsBidirectional<meta::MaybeConst<is_const, First>, meta::MaybeConst<is_const, Rest>...>)
+        requires(detail::CartesianProductIsBidirectional<meta::MaybeConst<is_const, First>,
+                                                         meta::MaybeConst<is_const, Rest>...>)
         {
             this->prev();
         }
 
         constexpr void advance_n(ssize_t n)
-        requires(detail::CartesianProductIsRandomAccess<meta::MaybeConst<is_const, First>, meta::MaybeConst<is_const, Rest>...>)
+        requires(detail::CartesianProductIsRandomAccess<meta::MaybeConst<is_const, First>,
+                                                        meta::MaybeConst<is_const, Rest>...>)
         {
             if (n == 0) {
                 return;
@@ -116,40 +120,50 @@ private:
         }
 
     private:
-        constexpr friend bool operator==(Iterator const& a, Iterator const& b) { return a.m_iterators == b.m_iterators; }
+        constexpr friend bool operator==(Iterator const& a, Iterator const& b) {
+            return a.m_iterators == b.m_iterators;
+        }
 
         constexpr friend auto operator<=>(Iterator const& a, Iterator const& b)
-        requires(concepts::Conjunction<concepts::ThreeWayComparable<meta::ContainerIterator<meta::MaybeConst<is_const, First>>>,
-                                       concepts::ThreeWayComparable<meta::ContainerIterator<meta::MaybeConst<is_const, Rest>>>...>)
+        requires(concepts::Conjunction<
+                 concepts::ThreeWayComparable<meta::ContainerIterator<meta::MaybeConst<is_const, First>>>,
+                 concepts::ThreeWayComparable<meta::ContainerIterator<meta::MaybeConst<is_const, Rest>>>...>)
         {
             return a.m_iterators <=> b.m_iterators;
         }
 
         constexpr friend ssize_t operator-(Iterator const& a, Iterator const& b)
-        requires(concepts::Conjunction<concepts::SizedSentinelFor<meta::ContainerIterator<meta::MaybeConst<is_const, First>>,
-                                                                  meta::ContainerIterator<meta::MaybeConst<is_const, First>>>,
-                                       concepts::SizedSentinelFor<meta::ContainerIterator<meta::MaybeConst<is_const, Rest>>,
-                                                                  meta::ContainerIterator<meta::MaybeConst<is_const, Rest>>>...>)
+        requires(concepts::Conjunction<
+                 concepts::SizedSentinelFor<meta::ContainerIterator<meta::MaybeConst<is_const, First>>,
+                                            meta::ContainerIterator<meta::MaybeConst<is_const, First>>>,
+                 concepts::SizedSentinelFor<meta::ContainerIterator<meta::MaybeConst<is_const, Rest>>,
+                                            meta::ContainerIterator<meta::MaybeConst<is_const, Rest>>>...>)
         {
             return a.distance_from(b.m_iterators);
         }
 
         constexpr friend bool operator==(Iterator const& a, DefaultSentinel) {
-            return function::unpack<meta::MakeIndexSequence<1 + sizeof...(Rest)>>([&]<size_t... indices>(meta::IndexSequence<indices...>) {
-                return ((util::get<indices>(a.m_iterators) == container::end(util::get<indices>(m_parent->m_bases))) || ...);
+            return function::unpack<meta::MakeIndexSequence<1 + sizeof...(Rest)>>([&]<size_t... indices>(
+                meta::IndexSequence<indices...>) {
+                return ((util::get<indices>(a.m_iterators) == container::end(util::get<indices>(m_parent->m_bases))) ||
+                        ...);
             });
         }
 
         constexpr friend auto operator-(Iterator const& a, DefaultSentinel)
-        requires(detail::CartesianSentinelIsSized<meta::MaybeConst<is_const, First>, meta::MaybeConst<is_const, Rest>...>)
+        requires(
+            detail::CartesianSentinelIsSized<meta::MaybeConst<is_const, First>, meta::MaybeConst<is_const, Rest>...>)
         {
             auto end_tuple = function::unpack<meta::MakeIndexSequence<1 + sizeof...(Rest)>>([&]<size_t... indices>(
-                meta::IndexSequence<indices...>) { return make_tuple(container::end(util::get<indices>(m_parent->m_bases))...); });
+                meta::IndexSequence<indices...>) {
+                return make_tuple(container::end(util::get<indices>(m_parent->m_bases))...);
+            });
             return a.distance_to(end_tuple);
         }
 
         constexpr friend auto operator-(DefaultSentinel, Iterator const& b)
-        requires(detail::CartesianSentinelIsSized<meta::MaybeConst<is_const, First>, meta::MaybeConst<is_const, Rest>...>)
+        requires(
+            detail::CartesianSentinelIsSized<meta::MaybeConst<is_const, First>, meta::MaybeConst<is_const, Rest>...>)
         {
             return -(b - default_sentinel);
         }
@@ -159,11 +173,14 @@ private:
         }
 
         constexpr friend void tag_invoke(types::Tag<iterator_swap>, Iterator const& a, Iterator const& b)
-        requires(concepts::Conjunction<concepts::IndirectlySwappable<meta::ContainerIterator<meta::MaybeConst<is_const, First>>>,
-                                       concepts::IndirectlySwappable<meta::ContainerIterator<meta::MaybeConst<is_const, Rest>>>...>)
+        requires(concepts::Conjunction<
+                 concepts::IndirectlySwappable<meta::ContainerIterator<meta::MaybeConst<is_const, First>>>,
+                 concepts::IndirectlySwappable<meta::ContainerIterator<meta::MaybeConst<is_const, Rest>>>...>)
         {
-            return function::unpack<meta::MakeIndexSequence<1 + sizeof...(Rest)>>([&]<size_t... indices>(meta::IndexSequence<indices...>) {
-                return (void) (iterator_swap(util::get<indices>(a.m_iterators), util::get<indices>(b.m_iterators)), ...);
+            return function::unpack<meta::MakeIndexSequence<1 + sizeof...(Rest)>>([&]<size_t... indices>(
+                meta::IndexSequence<indices...>) {
+                return (void) (iterator_swap(util::get<indices>(a.m_iterators), util::get<indices>(b.m_iterators)),
+                               ...);
             });
         }
 
@@ -229,7 +246,8 @@ private:
 public:
     CartesianProductView() = default;
 
-    constexpr explicit CartesianProductView(First first, Rest... bases) : m_bases(util::move(first), util::move(bases)...) {}
+    constexpr explicit CartesianProductView(First first, Rest... bases)
+        : m_bases(util::move(first), util::move(bases)...) {}
 
     constexpr auto begin()
     requires(concepts::Disjunction<!concepts::SimpleView<First>, !concepts::SimpleView<Rest>...>)

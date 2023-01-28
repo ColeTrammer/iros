@@ -8,7 +8,8 @@
 #include <di/util/declval.h>
 
 namespace di::meta {
-template<typename T, typename Tag = meta::RemoveCVRef<T>, typename It = ContainerIterator<T>, typename Sent = ContainerSentinel<T>>
+template<typename T, typename Tag = meta::RemoveCVRef<T>, typename It = ContainerIterator<T>,
+         typename Sent = ContainerSentinel<T>>
 using ContainerIteratorReconstructed =
     decltype(container::reconstruct(in_place_type<Tag>, util::declval<T>, util::declval<It>(), util::declval<Sent>()));
 }

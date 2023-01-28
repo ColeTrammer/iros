@@ -12,7 +12,8 @@ private:
     using ErasedCallback = void (*)(void*);
 
 protected:
-    explicit InPlaceStopCallbackBase(InPlaceStopSource const* parent, ErasedCallback execute) : m_parent(parent), m_execute(execute) {}
+    explicit InPlaceStopCallbackBase(InPlaceStopSource const* parent, ErasedCallback execute)
+        : m_parent(parent), m_execute(execute) {}
 
     InPlaceStopSource const* m_parent { nullptr };
 

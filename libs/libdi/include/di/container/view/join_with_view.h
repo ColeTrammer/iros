@@ -47,7 +47,8 @@ private:
                   meta::Conditional<
                       concepts::Reference<meta::ContainerReference<meta::MaybeConst<is_const, View>>> &&
                           concepts::ForwardIterator<meta::ContainerIterator<meta::MaybeConst<is_const, View>>> &&
-                          concepts::ForwardIterator<meta::ContainerIterator<meta::ContainerReference<meta::MaybeConst<is_const, View>>>>,
+                          concepts::ForwardIterator<
+                              meta::ContainerIterator<meta::ContainerReference<meta::MaybeConst<is_const, View>>>>,
                       ForwardIteratorTag, InputIteratorTag>>,
               meta::CommonType<meta::ContainerValue<meta::ContainerReference<meta::MaybeConst<is_const, View>>>,
                                meta::ContainerValue<meta::MaybeConst<is_const, Pattern>>>,
@@ -66,7 +67,8 @@ private:
 
         constexpr static bool ref_is_glvalue = concepts::Reference<InnerBase>;
 
-        constexpr Iterator(Parent& parent, OuterIter outer) : m_parent(util::address_of(parent)), m_outer(util::move(outer)) {
+        constexpr Iterator(Parent& parent, OuterIter outer)
+            : m_parent(util::address_of(parent)), m_outer(util::move(outer)) {
             if (m_outer != container::end(parent.m_base)) {
                 auto&& inner = this->update_inner(m_outer);
                 m_inner.template emplace<1>(container::begin(inner));
@@ -99,7 +101,8 @@ private:
             : m_parent(other.m_parent), m_outer(util::move(other.m_outer)), m_inner(util::move(other.m_inner)) {}
 
         constexpr decltype(auto) operator*() const {
-            using Reference = meta::CommonReference<meta::IteratorReference<InnerIter>, meta::IteratorReference<PatternIter>>;
+            using Reference =
+                meta::CommonReference<meta::IteratorReference<InnerIter>, meta::IteratorReference<PatternIter>>;
             return visit(
                 [](auto& it) -> Reference {
                     return *it;
@@ -253,7 +256,8 @@ private:
         friend class JoinWithView;
 
         template<bool other_is_const>
-        requires(concepts::SentinelFor<meta::ContainerSentinel<Base>, meta::ContainerIterator<meta::MaybeConst<other_is_const, View>>>)
+        requires(concepts::SentinelFor<meta::ContainerSentinel<Base>,
+                                       meta::ContainerIterator<meta::MaybeConst<other_is_const, View>>>)
         constexpr friend bool operator==(Iterator<other_is_const> const& x, Sentinel const& y) {
             return x.outer() == y.m_base;
         }
@@ -282,7 +286,8 @@ public:
     constexpr View base() && { return util::move(m_base); }
 
     constexpr auto begin() {
-        constexpr bool is_const = concepts::SimpleView<View> && concepts::Reference<InnerContainer> && concepts::SimpleView<Pattern>;
+        constexpr bool is_const =
+            concepts::SimpleView<View> && concepts::Reference<InnerContainer> && concepts::SimpleView<Pattern>;
         return Iterator<is_const>(*this, container::begin(m_base));
     }
 
@@ -297,7 +302,8 @@ public:
         if constexpr (concepts::ForwardContainer<View> && concepts::Reference<InnerContainer> &&
                       concepts::ForwardContainer<InnerContainer> && concepts::CommonContainer<View> &&
                       concepts::CommonContainer<InnerContainer>) {
-            return Iterator<(concepts::SimpleView<View> && concepts::SimpleView<Pattern>)>(*this, container::end(m_base));
+            return Iterator<(concepts::SimpleView<View> && concepts::SimpleView<Pattern>)>(*this,
+                                                                                           container::end(m_base));
         } else {
             return Sentinel<(concepts::SimpleView<View> && concepts::SimpleView<Pattern>)>(*this);
         }
@@ -322,7 +328,8 @@ private:
 
     View m_base;
     Pattern m_pattern;
-    util::StoreIf<util::NonPropagatingCache<meta::RemoveCVRef<InnerContainer>>, !concepts::Reference<InnerContainer>> m_inner;
+    util::StoreIf<util::NonPropagatingCache<meta::RemoveCVRef<InnerContainer>>, !concepts::Reference<InnerContainer>>
+        m_inner;
 };
 
 template<typename Con, typename Pattern>

@@ -21,7 +21,8 @@ namespace detail {
     concept ViewCounted = concepts::RandomAccessIterator<It>;
 
     struct CountedFunction {
-        template<typename Iter, typename It = meta::Decay<Iter>, concepts::ConvertibleTo<meta::IteratorSSizeType<It>> Diff>
+        template<typename Iter, typename It = meta::Decay<Iter>,
+                 concepts::ConvertibleTo<meta::IteratorSSizeType<It>> Diff>
         constexpr concepts::View auto operator()(Iter&& it, Diff&& n_in) const {
             using SSizeType = meta::IteratorSSizeType<It>;
             auto n = static_cast<SSizeType>(n_in);

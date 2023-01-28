@@ -17,17 +17,19 @@ namespace detail {
     template<typename A, typename B, typename C, typename D>
     struct MakeCompletionSignaturesHelper : TypeConstant<types::DependentCompletionSignatures<types::NoEnv>> {};
 
-    template<concepts::InstanceOf<types::CompletionSignatures> As, concepts::InstanceOf<types::CompletionSignatures>... Bs,
-             concepts::InstanceOf<types::CompletionSignatures>... Cs, concepts::InstanceOf<types::CompletionSignatures> Ds>
+    template<
+        concepts::InstanceOf<types::CompletionSignatures> As, concepts::InstanceOf<types::CompletionSignatures>... Bs,
+        concepts::InstanceOf<types::CompletionSignatures>... Cs, concepts::InstanceOf<types::CompletionSignatures> Ds>
     struct MakeCompletionSignaturesHelper<As, meta::List<Bs...>, meta::List<Cs...>, Ds>
-        : TypeConstant<
-              meta::AsTemplate<types::CompletionSignatures,
-                               meta::Unique<meta::Concat<meta::AsList<As>, meta::AsList<Bs>..., meta::AsList<Cs>..., meta::AsList<Ds>>>>> {
-    };
+        : TypeConstant<meta::AsTemplate<types::CompletionSignatures,
+                                        meta::Unique<meta::Concat<meta::AsList<As>, meta::AsList<Bs>...,
+                                                                  meta::AsList<Cs>..., meta::AsList<Ds>>>>> {};
 }
 
-template<typename Send, typename Env = types::NoEnv, concepts::ValidCompletionSignatures<Env> ExtraSigs = types::CompletionSignatures<>,
-         template<typename...> typename SetValue = detail::DefaultSetValue, template<typename> typename SetError = detail::DefaultSetError,
+template<typename Send, typename Env = types::NoEnv,
+         concepts::ValidCompletionSignatures<Env> ExtraSigs = types::CompletionSignatures<>,
+         template<typename...> typename SetValue = detail::DefaultSetValue,
+         template<typename> typename SetError = detail::DefaultSetError,
          concepts::ValidCompletionSignatures<Env> SetStopped = types::CompletionSignatures<execution::SetStopped()>>
 requires(concepts::Sender<Send, Env>)
 using MakeCompletionSignatures = Type<detail::MakeCompletionSignaturesHelper<

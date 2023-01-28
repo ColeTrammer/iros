@@ -9,10 +9,10 @@
 #include <di/container/view/chunk.h>
 #include <di/container/view/chunk_by.h>
 #include <di/container/view/common.h>
+#include <di/container/view/concat.h>
 #include <di/container/view/counted.h>
 #include <di/container/view/cycle.h>
 #include <di/container/view/drop.h>
-#include <di/container/view/concat.h>
 #include <di/container/view/drop_while.h>
 #include <di/container/view/elements.h>
 #include <di/container/view/empty.h>

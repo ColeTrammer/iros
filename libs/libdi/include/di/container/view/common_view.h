@@ -30,7 +30,8 @@ public:
         if constexpr (concepts::RandomAccessContainer<View> && concepts::SizedContainer<View>) {
             return container::begin(m_view);
         } else {
-            return CommonIterator<meta::ContainerIterator<View>, meta::ContainerSentinel<View>>(container::begin(m_view));
+            return CommonIterator<meta::ContainerIterator<View>, meta::ContainerSentinel<View>>(
+                container::begin(m_view));
         }
     }
 
@@ -40,7 +41,8 @@ public:
         if constexpr (concepts::RandomAccessContainer<View const> && concepts::SizedContainer<View const>) {
             return container::begin(m_view);
         } else {
-            return CommonIterator<meta::ContainerIterator<View const>, meta::ContainerSentinel<View const>>(container::begin(m_view));
+            return CommonIterator<meta::ContainerIterator<View const>, meta::ContainerSentinel<View const>>(
+                container::begin(m_view));
         }
     }
 
@@ -60,7 +62,8 @@ public:
         if constexpr (concepts::RandomAccessContainer<View const> && concepts::SizedContainer<View const>) {
             return container::begin(m_view) + container::size(m_view);
         } else {
-            return CommonIterator<meta::ContainerIterator<View const>, meta::ContainerSentinel<View const>>(container::end(m_view));
+            return CommonIterator<meta::ContainerIterator<View const>, meta::ContainerSentinel<View const>>(
+                container::end(m_view));
         }
     }
 

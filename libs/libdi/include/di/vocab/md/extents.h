@@ -9,7 +9,8 @@
 
 namespace di::vocab {
 template<concepts::Integer T, size_t... extents>
-requires(concepts::Conjunction<(extents == dynamic_extent || extents <= math::to_unsigned(math::NumericLimits<T>::max))...>)
+requires(
+    concepts::Conjunction<(extents == dynamic_extent || extents <= math::to_unsigned(math::NumericLimits<T>::max))...>)
 class Extents {
 public:
     using SizeType = T;
@@ -22,9 +23,11 @@ public:
 
     template<typename OtherSizeType, size_t... other_extents>
     requires(sizeof...(other_extents) == rank() &&
-             concepts::Conjunction<(other_extents == dynamic_extent || extents == dynamic_extent || other_extents == extents)...>)
+             concepts::Conjunction<(other_extents == dynamic_extent || extents == dynamic_extent ||
+                                    other_extents == extents)...>)
     constexpr explicit(concepts::Disjunction<((extents != dynamic_extent) && (other_extents == dynamic_extent))...> ||
-                       math::to_unsigned(math::NumericLimits<SizeType>::max) < math::to_unsigned(math::NumericLimits<OtherSizeType>::max))
+                       math::to_unsigned(math::NumericLimits<SizeType>::max) <
+                           math::to_unsigned(math::NumericLimits<OtherSizeType>::max))
         Extents(Extents<OtherSizeType, other_extents...> const& other) {
         for (auto i : container::view::range(rank())) {
             if (static_extent(i) == dynamic_extent) {
@@ -53,7 +56,8 @@ public:
     template<typename OtherSizeType, size_t N>
     requires(concepts::ConvertibleTo<OtherSizeType const&, SizeType> && (N == rank_dynamic() || N == rank()))
     constexpr explicit(N != rank_dynamic()) Extents(Span<OtherSizeType, N> extents_array) {
-        function::unpack<meta::MakeIndexSequence<rank_dynamic()>>([&]<size_t... indices>(meta::IndexSequence<indices...>) {
+        function::unpack<meta::MakeIndexSequence<rank_dynamic()>>([&]<size_t... indices>(
+            meta::IndexSequence<indices...>) {
             if constexpr (N == rank_dynamic()) {
                 m_dynamic_extents = { util::as_const(extents_array[indices])... };
             } else {
@@ -64,7 +68,8 @@ public:
 
     template<typename OtherSizeType, size_t N>
     requires(concepts::ConvertibleTo<OtherSizeType const&, SizeType> && (N == rank_dynamic() || N == rank()))
-    constexpr explicit(N != rank_dynamic()) Extents(Array<OtherSizeType, N> const& extents_array) : Extents(extents_array.span()) {}
+    constexpr explicit(N != rank_dynamic()) Extents(Array<OtherSizeType, N> const& extents_array)
+        : Extents(extents_array.span()) {}
 
     constexpr static size_t static_extent(size_t index) {
         auto result = Array { extents... };

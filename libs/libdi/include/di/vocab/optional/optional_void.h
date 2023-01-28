@@ -57,7 +57,9 @@ private:
     constexpr friend bool operator==(Optional const& a, bool b) { return bool(a) == b; }
     constexpr friend bool operator==(Optional const& a, NullOpt) { return !a.has_value(); }
 
-    constexpr friend strong_ordering operator<=>(Optional const& a, Optional const& b) { return a.has_value() <=> b.has_value(); }
+    constexpr friend strong_ordering operator<=>(Optional const& a, Optional const& b) {
+        return a.has_value() <=> b.has_value();
+    }
     constexpr friend strong_ordering operator<=>(Optional const& a, bool b) { return bool(a) <=> b; }
     constexpr friend strong_ordering operator<=>(Optional const& a, NullOpt) { return bool(a) <=> false; }
 

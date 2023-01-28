@@ -10,7 +10,8 @@
 namespace di::container::view {
 namespace detail {
     template<typename T>
-    concept AllAsConst = requires(T&& container) { all(util::forward<T>(container)); } && concepts::ConstantContainer<meta::AsView<T>>;
+    concept AllAsConst =
+        requires(T&& container) { all(util::forward<T>(container)); } && concepts::ConstantContainer<meta::AsView<T>>;
 
     template<typename T>
     concept AsConstViewAsConst = requires(T&& container) { AsConstView { util::forward<T>(container) }; };

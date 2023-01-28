@@ -32,13 +32,14 @@ private:
     class Iterator
         : public IteratorBase<Iterator<is_const>,
                               meta::Conditional<concepts::RandomAccessIterator<Iter<is_const>>, RandomAccessIteratorTag,
-                                                meta::Conditional<concepts::BidirectionalIterator<Iter<is_const>>, BidirectionalIteratorTag,
-                                                                  ForwardIteratorTag>>,
+                                                meta::Conditional<concepts::BidirectionalIterator<Iter<is_const>>,
+                                                                  BidirectionalIteratorTag, ForwardIteratorTag>>,
                               Value<is_const>, SSizeType<is_const>> {
     private:
         friend class CycleView;
 
-        constexpr explicit Iterator(Parent<is_const>* parent, Iter<is_const> base) : m_parent(parent), m_base(util::move(base)) {}
+        constexpr explicit Iterator(Parent<is_const>* parent, Iter<is_const> base)
+            : m_parent(parent), m_base(util::move(base)) {}
 
         constexpr auto get_end() {
             if constexpr (concepts::CommonContainer<Base<is_const>>) {

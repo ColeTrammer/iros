@@ -24,8 +24,10 @@ namespace detail {
         template<concepts::ForwardContainer Con, concepts::WeaklyIncrementable Out, typename Proj = function::Identity,
                  concepts::IndirectUnaryPredicate<meta::Projected<meta::ContainerIterator<Con>, Proj>> Pred>
         requires(concepts::IndirectlyCopyable<meta::ContainerIterator<Con>, Out>)
-        constexpr InOutResult<meta::BorrowedIterator<Con>, Out> operator()(Con&& container, Out output, Pred pred, Proj proj = {}) const {
-            return (*this)(container::begin(container), container::end(container), util::move(output), util::ref(pred), util::ref(proj));
+        constexpr InOutResult<meta::BorrowedIterator<Con>, Out> operator()(Con&& container, Out output, Pred pred,
+                                                                           Proj proj = {}) const {
+            return (*this)(container::begin(container), container::end(container), util::move(output), util::ref(pred),
+                           util::ref(proj));
         }
     };
 }

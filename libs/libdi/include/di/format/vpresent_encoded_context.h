@@ -13,7 +13,8 @@ namespace detail {
     struct VPresentEncodedContextFunction {
         using View = container::string::StringViewImpl<Enc>;
 
-        constexpr Result<void> operator()(View format, concepts::FormatArgs auto args, concepts::FormatContext auto& context) const {
+        constexpr Result<void> operator()(View format, concepts::FormatArgs auto args,
+                                          concepts::FormatContext auto& context) const {
             auto parse_context = FormatParseContext<Enc> { format, args.size() };
 
             for (auto value : parse_context) {

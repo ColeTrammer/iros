@@ -11,13 +11,13 @@
 
 namespace di::concepts::detail {
 template<typename T>
-concept MutableVector =
-    ConstantVector<T> && DefaultConstructible<T> && MoveConstructible<T> && requires(T& value, T const& cvalue, size_t n) {
-                                                                                { cvalue.capacity() } -> SameAs<size_t>;
-                                                                                { cvalue.max_size() } -> SameAs<size_t>;
-                                                                                { value.reserve_from_nothing(n) } -> MaybeFallible<void>;
-                                                                                { value.assume_size(n) } -> LanguageVoid;
-                                                                            };
+concept MutableVector = ConstantVector<T> && DefaultConstructible<T> && MoveConstructible<T> &&
+                        requires(T& value, T const& cvalue, size_t n) {
+                            { cvalue.capacity() } -> SameAs<size_t>;
+                            { cvalue.max_size() } -> SameAs<size_t>;
+                            { value.reserve_from_nothing(n) } -> MaybeFallible<void>;
+                            { value.assume_size(n) } -> LanguageVoid;
+                        };
 }
 
 namespace di::meta::detail {

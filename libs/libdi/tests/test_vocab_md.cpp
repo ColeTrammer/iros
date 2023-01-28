@@ -2,8 +2,9 @@
 #include <dius/test/prelude.h>
 
 constexpr void extents() {
-    static_assert(di::SameAs<di::Dextents<size_t, 5>, di::Extents<size_t, di::dynamic_extent, di::dynamic_extent, di::dynamic_extent,
-                                                                  di::dynamic_extent, di::dynamic_extent>>);
+    static_assert(
+        di::SameAs<di::Dextents<size_t, 5>, di::Extents<size_t, di::dynamic_extent, di::dynamic_extent,
+                                                        di::dynamic_extent, di::dynamic_extent, di::dynamic_extent>>);
 
     auto a = di::Extents { 1, 2, 3, 4, 5 };
     ASSERT_EQ(a.extent(0), 1u);
@@ -19,8 +20,9 @@ constexpr void extents() {
     ASSERT_EQ(b.extent(3), 5u);
     ASSERT_EQ(b.extent(4), 6u);
 
-    auto c =
-        di::Extents<size_t, di::dynamic_extent, 3, di::dynamic_extent, 5, di::dynamic_extent> { di::to_array<size_t>({ 2, 3, 4, 5, 6 }) };
+    auto c = di::Extents<size_t, di::dynamic_extent, 3, di::dynamic_extent, 5, di::dynamic_extent> {
+        di::to_array<size_t>({ 2, 3, 4, 5, 6 })
+    };
     ASSERT_EQ(c.extent(0), 2u);
     ASSERT_EQ(c.extent(1), 3u);
     ASSERT_EQ(c.extent(2), 4u);

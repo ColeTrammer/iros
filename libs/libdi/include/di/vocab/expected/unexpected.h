@@ -24,7 +24,8 @@ public:
 
     template<typename... Args>
     requires(concepts::ConstructibleFrom<E, Args...>)
-    constexpr explicit Unexpected(types::InPlace, Args&&... args) : m_error(types::in_place, util::forward<Args>(args)...) {}
+    constexpr explicit Unexpected(types::InPlace, Args&&... args)
+        : m_error(types::in_place, util::forward<Args>(args)...) {}
 
     template<typename T, typename... Args>
     requires(concepts::ConstructibleFrom<E, util::InitializerList<T>, Args...>)

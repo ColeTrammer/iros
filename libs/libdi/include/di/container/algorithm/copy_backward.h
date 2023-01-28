@@ -8,7 +8,8 @@
 namespace di::container {
 namespace detail {
     struct CopyBackwardFunction {
-        template<concepts::BidirectionalIterator It, concepts::SentinelFor<It> Sent, concepts::BidirectionalIterator Out>
+        template<concepts::BidirectionalIterator It, concepts::SentinelFor<It> Sent,
+                 concepts::BidirectionalIterator Out>
         requires(concepts::IndirectlyCopyable<It, Out>)
         constexpr InOutResult<It, Out> operator()(It first, Sent last, Out output) const {
             // FIXME: use vectorized byte copy (::memcpy_backwards) when provided contiguous

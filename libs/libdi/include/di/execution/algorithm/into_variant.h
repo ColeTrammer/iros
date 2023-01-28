@@ -54,7 +54,8 @@ namespace into_variant_ns {
             requires(concepts::DecayConstructible<meta::Like<Self, Send>> &&
                      concepts::SenderTo<meta::Like<Self, Send>, Receiver<Value, Rec>>)
             friend auto tag_invoke(types::Tag<connect>, Self&& self, Rec receiver) {
-                return execution::connect(util::forward<Self>(self).sender, Receiver<Value, Rec> { util::move(receiver) });
+                return execution::connect(util::forward<Self>(self).sender,
+                                          Receiver<Value, Rec> { util::move(receiver) });
             }
 
             template<concepts::ForwardingSenderQuery Tag, typename... Args>

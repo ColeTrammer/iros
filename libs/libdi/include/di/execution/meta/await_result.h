@@ -6,5 +6,6 @@
 namespace di::meta {
 template<typename Awaitable, typename Promise = void>
 requires(concepts::Awaitable<Awaitable, Promise>)
-using AwaitResult = decltype(concepts::detail::get_awaiter(util::declval<Awaitable>(), util::declval<Promise*>()).await_resume());
+using AwaitResult =
+    decltype(concepts::detail::get_awaiter(util::declval<Awaitable>(), util::declval<Promise*>()).await_resume());
 }

@@ -13,10 +13,12 @@ struct AwaitableReceiver {
 
 namespace di::concepts {
 template<typename Send, typename Promise>
-concept AwaitableSender =
-    SingleSender<Send, meta::EnvOf<Promise>> && SenderTo<Send, meta::Type<execution::as_awaitable_ns::AwaitableReceiver<Send, Promise>>> &&
-    requires(Promise& promise, Error error) {
-        { promise.unhandled_stopped() } -> concepts::ConvertibleTo<CoroutineHandle<>>;
-        { promise.unhandled_error(util::move(error)) } -> concepts::ConvertibleTo<CoroutineHandle<>>;
-    };
+concept AwaitableSender = SingleSender<Send, meta::EnvOf<Promise>> &&
+                          SenderTo<Send, meta::Type<execution::as_awaitable_ns::AwaitableReceiver<Send, Promise>>> &&
+                          requires(Promise& promise, Error error) {
+                              { promise.unhandled_stopped() } -> concepts::ConvertibleTo<CoroutineHandle<>>;
+                              {
+                                  promise.unhandled_error(util::move(error))
+                                  } -> concepts::ConvertibleTo<CoroutineHandle<>>;
+                          };
 }

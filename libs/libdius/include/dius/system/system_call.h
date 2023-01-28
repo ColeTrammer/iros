@@ -61,7 +61,8 @@ di::Expected<R, dius::PosixError> system_call(Number number, T1&& a1, T2&& a2) {
     return R(res);
 }
 
-template<detail::SystemCallResult R, detail::SystemCallArgument T1, detail::SystemCallArgument T2, detail::SystemCallArgument T3>
+template<detail::SystemCallResult R, detail::SystemCallArgument T1, detail::SystemCallArgument T2,
+         detail::SystemCallArgument T3>
 di::Expected<R, dius::PosixError> system_call(Number number, T1&& a1, T2&& a2, T3&& a3) {
     SystemCallResult res;
     SystemCallArg y1 = SystemCallArg(a1);
@@ -80,8 +81,8 @@ di::Expected<R, dius::PosixError> system_call(Number number, T1&& a1, T2&& a2, T
     return R(res);
 }
 
-template<detail::SystemCallResult R, detail::SystemCallArgument T1, detail::SystemCallArgument T2, detail::SystemCallArgument T3,
-         detail::SystemCallArgument T4>
+template<detail::SystemCallResult R, detail::SystemCallArgument T1, detail::SystemCallArgument T2,
+         detail::SystemCallArgument T3, detail::SystemCallArgument T4>
 di::Expected<R, dius::PosixError> system_call(Number number, T1&& a1, T2&& a2, T3&& a3, T4&& a4) {
     SystemCallResult res;
     SystemCallArg y1 = SystemCallArg(a1);
@@ -102,8 +103,8 @@ di::Expected<R, dius::PosixError> system_call(Number number, T1&& a1, T2&& a2, T
     return R(res);
 }
 
-template<detail::SystemCallResult R, detail::SystemCallArgument T1, detail::SystemCallArgument T2, detail::SystemCallArgument T3,
-         detail::SystemCallArgument T4, detail::SystemCallArgument T5>
+template<detail::SystemCallResult R, detail::SystemCallArgument T1, detail::SystemCallArgument T2,
+         detail::SystemCallArgument T3, detail::SystemCallArgument T4, detail::SystemCallArgument T5>
 di::Expected<R, dius::PosixError> system_call(Number number, T1&& a1, T2&& a2, T3&& a3, T4&& a4, T5&& a5) {
     SystemCallResult res;
     SystemCallArg y1 = SystemCallArg(a1);
@@ -126,8 +127,9 @@ di::Expected<R, dius::PosixError> system_call(Number number, T1&& a1, T2&& a2, T
     return R(res);
 }
 
-template<detail::SystemCallResult R, detail::SystemCallArgument T1, detail::SystemCallArgument T2, detail::SystemCallArgument T3,
-         detail::SystemCallArgument T4, detail::SystemCallArgument T5, detail::SystemCallArgument T6>
+template<detail::SystemCallResult R, detail::SystemCallArgument T1, detail::SystemCallArgument T2,
+         detail::SystemCallArgument T3, detail::SystemCallArgument T4, detail::SystemCallArgument T5,
+         detail::SystemCallArgument T6>
 di::Expected<R, dius::PosixError> system_call(Number number, T1&& a1, T2&& a2, T3&& a3, T4&& a4, T5&& a5, T6&& a6) {
     SystemCallResult res;
     SystemCallArg y1 = SystemCallArg(a1);

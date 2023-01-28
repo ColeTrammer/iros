@@ -5,6 +5,7 @@
 #include <di/util/badge.h>
 #include <di/util/bit_cast.h>
 #include <di/util/bitwise_enum.h>
+#include <di/util/black_box.h>
 #include <di/util/clone.h>
 #include <di/util/compile_time_fail.h>
 #include <di/util/coroutine.h>
@@ -30,7 +31,6 @@
 #include <di/util/to_underlying.h>
 #include <di/util/unreachable.h>
 #include <di/util/voidify.h>
-#include <di/util/black_box.h>
 
 namespace di {
 using util::bit_cast;

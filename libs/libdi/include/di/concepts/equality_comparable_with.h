@@ -5,5 +5,6 @@
 
 namespace di::concepts {
 template<typename T, typename U>
-concept EqualityComparableWith = EqualityComparable<T> && EqualityComparable<U> && detail::WeaklyEqualityComparableWith<T, U>;
+concept EqualityComparableWith =
+    EqualityComparable<T> && EqualityComparable<U> && detail::WeaklyEqualityComparableWith<T, U>;
 }

@@ -17,8 +17,8 @@ constexpr Optional<meta::RemoveRValueReference<Res>> get_if(Var&& variant) {
     return util::get<index>(util::forward<Var>(variant));
 }
 
-template<typename T, concepts::VariantLike Var, typename List = meta::VariantTypes<Var>, auto index = meta::Lookup<T, List>,
-         typename Res = meta::VariantValue<Var, index>>
+template<typename T, concepts::VariantLike Var, typename List = meta::VariantTypes<Var>,
+         auto index = meta::Lookup<T, List>, typename Res = meta::VariantValue<Var, index>>
 requires(meta::UniqueType<T, List>)
 constexpr Optional<meta::RemoveRValueReference<Res>> get_if(Var&& variant) {
     if (variant_index(variant) != index) {

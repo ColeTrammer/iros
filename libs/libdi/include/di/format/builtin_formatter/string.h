@@ -12,7 +12,8 @@ constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<T>, Format
             auto width = format.width.transform(&detail::Width::value);
             auto precision = format.precision.transform(&detail::Precision::value);
             auto debug = format.type == detail::StringType::Debug;
-            return detail::present_string_view_to(context, format.fill_and_align, width, precision, debug, value.view());
+            return detail::present_string_view_to(context, format.fill_and_align, width, precision, debug,
+                                                  value.view());
         };
     };
 }

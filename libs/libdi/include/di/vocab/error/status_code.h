@@ -21,7 +21,8 @@ public:
     template<typename U, typename... Args>
     requires(!concepts::DecaySameAs<U, StatusCode> && !concepts::DecaySameAs<U, InPlace> &&
              concepts::ConvertibleToStatusCode<StatusCode, U, Args...>)
-    constexpr StatusCode(U&& v, Args&&... args) : StatusCode(into_status_code(util::forward<U>(v), util::forward<Args>(args)...)) {}
+    constexpr StatusCode(U&& v, Args&&... args)
+        : StatusCode(into_status_code(util::forward<U>(v), util::forward<Args>(args)...)) {}
 
     template<typename... Args>
     requires(concepts::ConstructibleFrom<Value, Args...>)

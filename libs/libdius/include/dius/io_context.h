@@ -78,8 +78,8 @@ public:
                 private:
                     friend void tag_invoke(di::Tag<execution::start>, Type& self) {
                         auto sync_file = SyncFile(SyncFile::Owned::No, self.file_descriptor);
-                        auto result =
-                            self.offset ? sync_file.read_some(self.offset.value(), self.buffer) : sync_file.read_some(self.buffer);
+                        auto result = self.offset ? sync_file.read_some(self.offset.value(), self.buffer)
+                                                  : sync_file.read_some(self.buffer);
                         if (!result.has_value()) {
                             execution::set_error(di::move(self.receiver), di::move(result).error());
                         } else {
@@ -94,7 +94,8 @@ public:
 
             template<di::ReceiverOf<CompletionSignatures> Receiver>
             friend auto tag_invoke(di::Tag<execution::connect>, ReadSomeSender self, Receiver receiver) {
-                return OperationState<Receiver> { self.parent, self.file_descriptor, self.buffer, self.offset, di::move(receiver) };
+                return OperationState<Receiver> { self.parent, self.file_descriptor, self.buffer, self.offset,
+                                                  di::move(receiver) };
             }
 
             template<typename CPO>
@@ -125,8 +126,8 @@ public:
                 private:
                     friend void tag_invoke(di::Tag<execution::start>, Type& self) {
                         auto sync_file = SyncFile(SyncFile::Owned::No, self.file_descriptor);
-                        auto result =
-                            self.offset ? sync_file.write_some(self.offset.value(), self.buffer) : sync_file.write_some(self.buffer);
+                        auto result = self.offset ? sync_file.write_some(self.offset.value(), self.buffer)
+                                                  : sync_file.write_some(self.buffer);
                         if (!result) {
                             execution::set_error(di::move(self.receiver), di::move(result).error());
                         } else {
@@ -141,7 +142,8 @@ public:
 
             template<di::ReceiverOf<CompletionSignatures> Receiver>
             friend auto tag_invoke(di::Tag<execution::connect>, WriteSomeSender self, Receiver receiver) {
-                return OperationState<Receiver> { self.parent, self.file_descriptor, self.buffer, self.offset, di::move(receiver) };
+                return OperationState<Receiver> { self.parent, self.file_descriptor, self.buffer, self.offset,
+                                                  di::move(receiver) };
             }
 
             template<typename CPO>
@@ -155,12 +157,13 @@ public:
             return ReadSomeSender { self.m_parent, self.m_fd, buffer, offset };
         }
 
-        friend auto tag_invoke(di::Tag<di::execution::async_write_some>, AsyncFile self, di::Span<di::Byte const> buffer,
-                               di::Optional<u64> offset) {
+        friend auto tag_invoke(di::Tag<di::execution::async_write_some>, AsyncFile self,
+                               di::Span<di::Byte const> buffer, di::Optional<u64> offset) {
             return WriteSomeSender { self.m_parent, self.m_fd, buffer, offset };
         }
 
-        friend auto tag_invoke(di::Tag<di::execution::async_destroy_in_place>, di::InPlaceType<AsyncFile>, AsyncFile& self) {
+        friend auto tag_invoke(di::Tag<di::execution::async_destroy_in_place>, di::InPlaceType<AsyncFile>,
+                               AsyncFile& self) {
             auto file = SyncFile(SyncFile::Owned::Yes, self.m_fd);
             return di::execution::just();
         }
@@ -214,7 +217,8 @@ private:
                         if (!result) {
                             execution::set_error(di::move(self.receiver), di::move(result).error());
                         } else {
-                            execution::set_value(di::move(self.receiver), AsyncFile { self.parent, result->leak_file_descriptor() });
+                            execution::set_value(di::move(self.receiver),
+                                                 AsyncFile { self.parent, result->leak_file_descriptor() });
                         }
                     }
                 };
@@ -225,7 +229,8 @@ private:
 
             template<di::ReceiverOf<CompletionSignatures> Receiver>
             friend auto tag_invoke(di::Tag<execution::connect>, OpenSender self, Receiver receiver) {
-                return OperationState<Receiver> { self.parent, self.path, self.mode, self.create_mode, di::move(receiver) };
+                return OperationState<Receiver> { self.parent, self.path, self.mode, self.create_mode,
+                                                  di::move(receiver) };
             }
 
             template<typename CPO>

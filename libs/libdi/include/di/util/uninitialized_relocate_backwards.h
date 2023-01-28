@@ -19,11 +19,12 @@ using UninitializedRelocateBackwardsResult = container::InOutResult<In, Out>;
 
 namespace detail {
     struct UninitializedRelocateBackwardsFunction {
-        template<concepts::BidirectionalIterator In, concepts::SentinelFor<In> Sent, concepts::BidirectionalIterator Out,
-                 concepts::SentinelFor<Out> OutSent>
+        template<concepts::BidirectionalIterator In, concepts::SentinelFor<In> Sent,
+                 concepts::BidirectionalIterator Out, concepts::SentinelFor<Out> OutSent>
         requires(concepts::ConstructibleFrom<meta::IteratorValue<Out>, meta::IteratorRValue<In>> &&
                  concepts::Destructible<meta::IteratorValue<In>>)
-        constexpr UninitializedRelocateBackwardsResult<In, Out> operator()(In input, Sent in_sent, Out output, OutSent out_sent) const {
+        constexpr UninitializedRelocateBackwardsResult<In, Out> operator()(In input, Sent in_sent, Out output,
+                                                                           OutSent out_sent) const {
             auto in = input + container::distance(input, in_sent);
             auto out = output + container::distance(output, out_sent);
 

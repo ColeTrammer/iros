@@ -25,7 +25,8 @@ namespace detail {
         }
 
         template<concepts::ForwardContainer Con, typename Proj = function::Identity,
-                 concepts::IndirectBinaryPredicate<meta::Projected<meta::ContainerIterator<Con>, Proj>> Pred = function::Equal>
+                 concepts::IndirectBinaryPredicate<meta::Projected<meta::ContainerIterator<Con>, Proj>> Pred =
+                     function::Equal>
         constexpr meta::BorrowedIterator<Con> operator()(Con&& r, Pred pred = {}, Proj proj = {}) const {
             return (*this)(container::begin(r), container::end(r), util::ref(pred), util::ref(proj));
         }

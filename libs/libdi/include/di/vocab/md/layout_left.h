@@ -24,17 +24,20 @@ public:
 
     template<concepts::Extents OtherExtents>
     requires(concepts::ConstructibleFrom<ExtentsType, OtherExtents>)
-    constexpr explicit(!concepts::ConvertibleTo<OtherExtents, ExtentsType>) Mapping(Mapping<OtherExtents> const& extents)
+    constexpr explicit(!concepts::ConvertibleTo<OtherExtents, ExtentsType>)
+        Mapping(Mapping<OtherExtents> const& extents)
         : m_extents(extents) {}
 
     template<concepts::Extents OtherExtents>
     requires(ExtentsType::rank() <= 1 && concepts::ConstructibleFrom<ExtentsType, OtherExtents>)
-    constexpr explicit(!concepts::ConvertibleTo<OtherExtents, ExtentsType>) Mapping(LayoutRight::Mapping<OtherExtents> const& other)
+    constexpr explicit(!concepts::ConvertibleTo<OtherExtents, ExtentsType>)
+        Mapping(LayoutRight::Mapping<OtherExtents> const& other)
         : m_extents(other.extents()) {}
 
     template<concepts::Extents OtherExtents>
     requires(concepts::ConstructibleFrom<ExtentsType, OtherExtents>)
-    constexpr explicit(ExtentsType::rank() > 0) Mapping(LayoutStride::Mapping<OtherExtents> const& other) : m_extents(other.extents()) {}
+    constexpr explicit(ExtentsType::rank() > 0) Mapping(LayoutStride::Mapping<OtherExtents> const& other)
+        : m_extents(other.extents()) {}
 
     Mapping& operator=(Mapping const&) = default;
 
@@ -43,11 +46,11 @@ public:
     constexpr SizeType required_span_size() const { return extents().fwd_prod_of_extents(extents().rank()); }
 
     template<typename... Indices>
-    requires(sizeof...(Indices) == ExtentsType::rank() && concepts::Conjunction<concepts::ConvertibleTo<Indices, SizeType>...>)
+    requires(sizeof...(Indices) == ExtentsType::rank() &&
+             concepts::Conjunction<concepts::ConvertibleTo<Indices, SizeType>...>)
     constexpr SizeType operator()(Indices... indices) const {
-        return function::unpack<meta::MakeIndexSequence<sizeof...(Indices)>>([&]<size_t... i>(meta::IndexSequence<i...>) {
-            return ((static_cast<SizeType>(indices) * stride(i)) + ... + 0);
-        });
+        return function::unpack<meta::MakeIndexSequence<sizeof...(Indices)>>([&]<size_t... i>(
+            meta::IndexSequence<i...>) { return ((static_cast<SizeType>(indices) * stride(i)) + ... + 0); });
     }
 
     constexpr static bool is_always_unique() { return true; }

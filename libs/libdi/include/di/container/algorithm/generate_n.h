@@ -7,7 +7,8 @@
 namespace di::container {
 namespace detail {
     struct GenerateNFunction {
-        template<concepts::Iterator Out, typename SSizeType = meta::IteratorSSizeType<Out>, concepts::CopyConstructible F>
+        template<concepts::Iterator Out, typename SSizeType = meta::IteratorSSizeType<Out>,
+                 concepts::CopyConstructible F>
         requires(concepts::Invocable<F&> && concepts::IndirectlyWritable<Out, meta::InvokeResult<F&>>)
         constexpr Out operator()(Out output, meta::TypeIdentity<SSizeType> n, F gen) const {
             for (SSizeType i = 0; i < n; ++i, ++output) {

@@ -12,12 +12,13 @@ namespace detail {
     class Parser<Base, meta::List<Options...>, meta::List<Arguments...>> {
     private:
     public:
-        constexpr explicit Parser(Optional<StringView> app_name, Optional<StringView> description, Tuple<Options...> options,
-                                  Tuple<Arguments...> arguments)
+        constexpr explicit Parser(Optional<StringView> app_name, Optional<StringView> description,
+                                  Tuple<Options...> options, Tuple<Arguments...> arguments)
             : m_app_name(app_name), m_description(description), m_options(options), m_arguments(arguments) {}
 
         template<auto member>
-        requires(concepts::MemberObjectPointer<decltype(member)> && concepts::SameAs<Base, meta::MemberPointerClass<decltype(member)>>)
+        requires(concepts::MemberObjectPointer<decltype(member)> &&
+                 concepts::SameAs<Base, meta::MemberPointerClass<decltype(member)>>)
         constexpr auto flag(Optional<char> short_name, Optional<TransparentStringView> long_name = {},
                             Optional<StringView> description = {}, bool required = false) {
             auto new_option = Option<member> { short_name, long_name, description, required };
@@ -139,7 +140,8 @@ namespace detail {
                                             Optional<TransparentStringView> input) const {
             return function::index_dispatch<Result<void>, sizeof...(Options)>(index,
                                                                               [&]<size_t i>(InPlaceIndex<i>) {
-                                                                                  return util::get<i>(m_options).parse(output, input);
+                                                                                  return util::get<i>(m_options).parse(
+                                                                                      output, input);
                                                                               }) |
                    if_success([&] {
                        seen_arguments[index] = true;

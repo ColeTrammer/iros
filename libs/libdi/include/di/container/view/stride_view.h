@@ -40,13 +40,18 @@ private:
               meta::Conditional<
                   concepts::RandomAccessIterator<Iter<is_const>>, RandomAccessIteratorTag,
                   meta::Conditional<concepts::BidirectionalIterator<Iter<is_const>>, BidirectionalIteratorTag,
-                                    meta::Conditional<concepts::ForwardIterator<Iter<is_const>>, ForwardIteratorTag, InputIteratorTag>>>,
+                                    meta::Conditional<concepts::ForwardIterator<Iter<is_const>>, ForwardIteratorTag,
+                                                      InputIteratorTag>>>,
               ValueType<is_const>, SSizeType<is_const>> {
     private:
         friend class StrideView;
 
-        constexpr Iterator(meta::MaybeConst<is_const, StrideView>* parent, Iter<is_const> base, SSizeType<is_const> missing = 0)
-            : m_base(util::move(base)), m_end(container::end(parent->m_base)), m_stride(parent->stride()), m_missing(missing) {}
+        constexpr Iterator(meta::MaybeConst<is_const, StrideView>* parent, Iter<is_const> base,
+                           SSizeType<is_const> missing = 0)
+            : m_base(util::move(base))
+            , m_end(container::end(parent->m_base))
+            , m_stride(parent->stride())
+            , m_missing(missing) {}
 
     public:
         Iterator()
@@ -54,8 +59,12 @@ private:
         = default;
 
         constexpr Iterator(Iterator<!is_const> other)
-        requires(is_const && concepts::ConvertibleTo<Iter<false>, Iter<true>> && concepts::ConvertibleTo<Sent<false>, Sent<true>>)
-            : m_base(util::move(other.m_base)), m_end(util::move(other.m_end)), m_stride(other.m_stride), m_missing(other.m_missing) {}
+        requires(is_const && concepts::ConvertibleTo<Iter<false>, Iter<true>> &&
+                 concepts::ConvertibleTo<Sent<false>, Sent<true>>)
+            : m_base(util::move(other.m_base))
+            , m_end(util::move(other.m_end))
+            , m_stride(other.m_stride)
+            , m_missing(other.m_missing) {}
 
         Iterator(Iterator const&) = default;
         Iterator(Iterator&&) = default;
@@ -128,10 +137,12 @@ private:
         constexpr friend SSizeType<is_const> operator-(DefaultSentinel, Iterator const& b) {
             return math::divide_round_up(b.m_base - b.m_current, b.m_stride);
         }
-        constexpr friend SSizeType<is_const> operator-(Iterator const& a, DefaultSentinel) { return -(default_sentinel - a); }
+        constexpr friend SSizeType<is_const> operator-(Iterator const& a, DefaultSentinel) {
+            return -(default_sentinel - a);
+        }
 
-        constexpr friend meta::ContainerRValue<meta::MaybeConst<is_const, View>> tag_invoke(types::Tag<container::iterator_move>,
-                                                                                            Iterator const& a) {
+        constexpr friend meta::ContainerRValue<meta::MaybeConst<is_const, View>>
+        tag_invoke(types::Tag<container::iterator_move>, Iterator const& a) {
             return container::iterator_move(a);
         }
 
@@ -176,7 +187,8 @@ public:
     constexpr auto end()
     requires(!concepts::SimpleView<View>)
     {
-        if constexpr (concepts::CommonContainer<View> && concepts::SizedContainer<View> && concepts::ForwardContainer<View>) {
+        if constexpr (concepts::CommonContainer<View> && concepts::SizedContainer<View> &&
+                      concepts::ForwardContainer<View>) {
             auto missing = (m_stride - container::distance(m_base) % m_stride) % m_stride;
             return Iterator<false>(this, container::end(m_base), missing);
         } else if constexpr (concepts::CommonContainer<View> && !concepts::BidirectionalContainer<View>) {

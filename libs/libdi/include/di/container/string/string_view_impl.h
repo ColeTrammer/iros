@@ -33,7 +33,8 @@ public:
     template<concepts::detail::ConstantString Other>
     requires(!concepts::RemoveCVRefSameAs<StringViewImpl, Other> && concepts::SameAs<meta::Encoding<Other>, Enc> &&
              concepts::BorrowedContainer<Other>)
-    constexpr StringViewImpl(Other&& other) : m_data(other.span().data()), m_size(other.span().size()), m_encoding(other.encoding()) {}
+    constexpr StringViewImpl(Other&& other)
+        : m_data(other.span().data()), m_size(other.span().size()), m_encoding(other.encoding()) {}
 
     constexpr StringViewImpl(CodeUnit const* data, size_t count, Enc encoding = {})
     requires(encoding::Universal<Enc>)
@@ -42,12 +43,14 @@ public:
     template<concepts::ContiguousIterator It, concepts::SizedSentinelFor<It> Sent>
     requires(!concepts::SameAs<It, Iterator> && concepts::SameAs<meta::IteratorValue<It>, CodeUnit> &&
              !concepts::ConvertibleTo<Sent, size_t> && encoding::Universal<Enc>)
-    constexpr StringViewImpl(It it, Sent sent, Enc encoding = {}) : m_data(util::to_address(it)), m_size(sent - it), m_encoding(encoding) {}
+    constexpr StringViewImpl(It it, Sent sent, Enc encoding = {})
+        : m_data(util::to_address(it)), m_size(sent - it), m_encoding(encoding) {}
 
     template<concepts::ContiguousContainer Con>
     requires(!concepts::RemoveCVRefSameAs<StringViewImpl, Con> &&
-             (!concepts::detail::ConstantString<Con> || !concepts::SameAs<meta::Encoding<Con>, Enc>) && concepts::SizedContainer<Con> &&
-             concepts::ContainerOf<Con, CodeUnit> && concepts::BorrowedContainer<Con> && encoding::Universal<Enc>)
+             (!concepts::detail::ConstantString<Con> || !concepts::SameAs<meta::Encoding<Con>, Enc>) &&
+             concepts::SizedContainer<Con> && concepts::ContainerOf<Con, CodeUnit> &&
+             concepts::BorrowedContainer<Con> && encoding::Universal<Enc>)
     constexpr StringViewImpl(Con&& container, Enc encoding = {})
         : m_data(container::data(container)), m_size(container::size(container)), m_encoding(encoding) {}
 

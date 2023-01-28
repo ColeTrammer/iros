@@ -8,7 +8,9 @@ namespace detail {
     template<size_t index>
     struct ElementsFunction : function::pipeline::EnablePipeline {
         template<concepts::ViewableContainer Con>
-        requires(requires(Con&& container) { ElementsView<meta::AsView<Con>, index> { util::forward<Con>(container) }; })
+        requires(requires(Con&& container) {
+                     ElementsView<meta::AsView<Con>, index> { util::forward<Con>(container) };
+                 })
         constexpr auto operator()(Con&& container) const {
             return ElementsView<meta::AsView<Con>, index> { util::forward<Con>(container) };
         }

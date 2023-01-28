@@ -27,7 +27,8 @@
 #include <di/vocab/tuple/enable_generate_structed_bindings.h>
 
 namespace di::container {
-template<concepts::Iterator Iter, concepts::SentinelFor<Iter> Sent = Iter, bool is_sized = concepts::SizedSentinelFor<Sent, Iter>>
+template<concepts::Iterator Iter, concepts::SentinelFor<Iter> Sent = Iter,
+         bool is_sized = concepts::SizedSentinelFor<Sent, Iter>>
 requires(is_sized || !concepts::SizedSentinelFor<Sent, Iter>)
 class View
     : public ViewInterface<View<Iter, Sent, is_sized>>
@@ -124,23 +125,27 @@ public:
     }
 
 private:
-    constexpr friend InPlaceType<Iter> tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View>, types::InPlaceIndex<0>) {}
-    constexpr friend InPlaceType<Sent> tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View>, types::InPlaceIndex<1>) {}
+    constexpr friend InPlaceType<Iter> tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View>,
+                                                  types::InPlaceIndex<0>) {}
+    constexpr friend InPlaceType<Sent> tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View>,
+                                                  types::InPlaceIndex<1>) {}
 
-    constexpr friend InPlaceType<Iter const> tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View const>,
-                                                        types::InPlaceIndex<0>) {}
-    constexpr friend InPlaceType<Sent const> tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View const>,
-                                                        types::InPlaceIndex<1>) {}
+    constexpr friend InPlaceType<Iter const> tag_invoke(types::Tag<vocab::tuple_element>,
+                                                        types::InPlaceType<View const>, types::InPlaceIndex<0>) {}
+    constexpr friend InPlaceType<Sent const> tag_invoke(types::Tag<vocab::tuple_element>,
+                                                        types::InPlaceType<View const>, types::InPlaceIndex<1>) {}
 
     constexpr friend types::size_t tag_invoke(types::Tag<vocab::tuple_size>, types::InPlaceType<View>) { return 2; }
 
     template<concepts::DecaySameAs<View> Self>
-    constexpr friend meta::Like<Self, Iter> tag_invoke(types::Tag<util::get_in_place>, types::InPlaceIndex<0>, Self&& self) {
+    constexpr friend meta::Like<Self, Iter> tag_invoke(types::Tag<util::get_in_place>, types::InPlaceIndex<0>,
+                                                       Self&& self) {
         return util::forward_like<Self>(self.m_iterator);
     }
 
     template<concepts::DecaySameAs<View> Self>
-    constexpr friend meta::Like<Self, Sent> tag_invoke(types::Tag<util::get_in_place>, types::InPlaceIndex<1>, Self&& self) {
+    constexpr friend meta::Like<Self, Sent> tag_invoke(types::Tag<util::get_in_place>, types::InPlaceIndex<1>,
+                                                       Self&& self) {
         return util::forward_like<Self>(self.m_sentinel);
     }
 
@@ -166,9 +171,9 @@ template<concepts::Iterator Iter, concepts::SentinelFor<Iter> Sent>
 View(Iter, Sent, meta::IteratorSizeType<Iter>) -> View<Iter, Sent, true>;
 
 template<concepts::BorrowedContainer Cont>
-View(Cont&&)
-    -> View<meta::ContainerIterator<Cont>, meta::ContainerSentinel<Cont>,
-            concepts::SizedContainer<Cont> || concepts::SizedSentinelFor<meta::ContainerSentinel<Cont>, meta::ContainerIterator<Cont>>>;
+View(Cont&&) -> View<meta::ContainerIterator<Cont>, meta::ContainerSentinel<Cont>,
+                     concepts::SizedContainer<Cont> ||
+                         concepts::SizedSentinelFor<meta::ContainerSentinel<Cont>, meta::ContainerIterator<Cont>>>;
 
 template<concepts::BorrowedContainer Cont>
 View(Cont&&, meta::ContainerSizeType<Cont>) -> View<meta::ContainerIterator<Cont>, meta::ContainerSentinel<Cont>, true>;

@@ -30,7 +30,8 @@ namespace detail {
 
     template<typename T, size_t... indices>
     struct VariantLikeHelper<T, meta::IndexSequence<indices...>> {
-        constexpr static bool value = Conjunction<HasVariantAlernative<T, indices>...> && Conjunction<HasVariantGet<T, indices>...>;
+        constexpr static bool value =
+            Conjunction<HasVariantAlernative<T, indices>...> && Conjunction<HasVariantGet<T, indices>...>;
     };
 }
 

@@ -20,8 +20,9 @@ namespace detail {
     concept ArrayEnd = concepts::BoundedLanguageArray<meta::RemoveReference<T>>;
 
     template<typename T>
-    concept CustomEnd = concepts::TagInvocable<EndFunction, T> &&
-                        concepts::SentinelFor<meta::Decay<meta::TagInvokeResult<EndFunction, T>>, meta::ContainerIterator<T>>;
+    concept CustomEnd =
+        concepts::TagInvocable<EndFunction, T> &&
+        concepts::SentinelFor<meta::Decay<meta::TagInvokeResult<EndFunction, T>>, meta::ContainerIterator<T>>;
 
     template<typename T>
     concept MemberEnd = requires(T&& container) {

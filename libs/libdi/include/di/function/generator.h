@@ -54,7 +54,8 @@ namespace detail {
 
     template<typename Ref, typename Value>
     class GeneratorIterator
-        : public container::IteratorBase<GeneratorIterator<Ref, Value>, InputIteratorTag, GeneratorValue<Ref, Value>, ssize_t> {
+        : public container::IteratorBase<GeneratorIterator<Ref, Value>, InputIteratorTag, GeneratorValue<Ref, Value>,
+                                         ssize_t> {
     private:
         using Handle = CoroutineHandle<GeneratorPromiseBase<GeneratorYield<Ref>>>;
 
@@ -90,7 +91,9 @@ class Generator : public container::ViewInterface<Generator<Ref, Value>> {
     using BasePromiseType = detail::GeneratorPromiseBase<detail::GeneratorYield<Ref>>;
 
     struct PromiseType : BasePromiseType {
-        Generator get_return_object() noexcept { return Generator { in_place, CoroutineHandle<PromiseType>::from_promise(*this) }; }
+        Generator get_return_object() noexcept {
+            return Generator { in_place, CoroutineHandle<PromiseType>::from_promise(*this) };
+        }
     };
 
 public:
@@ -112,7 +115,8 @@ public:
     auto begin() {
         DI_ASSERT(m_coroutine);
         m_coroutine.resume();
-        return detail::GeneratorIterator<Ref, Value> { in_place, CoroutineHandle<BasePromiseType>::from_address(m_coroutine.address()) };
+        return detail::GeneratorIterator<Ref, Value> { in_place, CoroutineHandle<BasePromiseType>::from_address(
+                                                                     m_coroutine.address()) };
     }
 
     auto end() const { return container::default_sentinel; }

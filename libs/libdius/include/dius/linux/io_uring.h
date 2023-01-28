@@ -14,8 +14,8 @@ namespace io_uring {
     using CQE = struct io_uring_cqe;
     using SetupParams = struct io_uring_params;
 
-    di::Result<int> sys_enter(unsigned int fd, unsigned int to_submit, unsigned int min_complete, unsigned int flags, void const* arg,
-                              size_t arg_size);
+    di::Result<int> sys_enter(unsigned int fd, unsigned int to_submit, unsigned int min_complete, unsigned int flags,
+                              void const* arg, size_t arg_size);
     di::Result<int> sys_register(unsigned int fd, unsigned int op_code, void* arg, unsigned int nr_args);
     di::Result<SyncFile> sys_setup(u32 entries, SetupParams* params);
 

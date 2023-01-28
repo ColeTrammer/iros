@@ -12,8 +12,9 @@
 
 namespace di::container {
 template<concepts::ForwardContainer View, concepts::ForwardContainer Pattern>
-requires(concepts::View<View> && concepts::View<Pattern> &&
-         concepts::IndirectlyComparable<meta::ContainerIterator<View>, meta::ContainerIterator<Pattern>, function::Equal>)
+requires(
+    concepts::View<View> && concepts::View<Pattern> &&
+    concepts::IndirectlyComparable<meta::ContainerIterator<View>, meta::ContainerIterator<Pattern>, function::Equal>)
 class SplitView : public ViewInterface<SplitView<View, Pattern>> {
 private:
     friend struct Sentinel;
@@ -30,7 +31,9 @@ private:
 
         constexpr auto base() const { return m_base; }
 
-        constexpr Value operator*() const { return container::reconstruct(in_place_type<View>, m_base, container::begin(m_next)); }
+        constexpr Value operator*() const {
+            return container::reconstruct(in_place_type<View>, m_base, container::begin(m_next));
+        }
 
         constexpr void advance_one() {
             m_base = container::begin(m_next);
@@ -67,7 +70,9 @@ private:
         constexpr explicit Sentinel(SplitView& parent) : m_base(container::end(parent.m_base)) {}
 
     private:
-        constexpr friend bool operator==(Iterator const& a, Sentinel const& b) { return a.m_base == b.m_base && !a.m_trailing_empty; }
+        constexpr friend bool operator==(Iterator const& a, Sentinel const& b) {
+            return a.m_base == b.m_base && !a.m_trailing_empty;
+        }
 
         meta::ContainerSentinel<View> m_base;
     };
@@ -102,7 +107,8 @@ public:
     constexpr auto end() {
         if constexpr (concepts::CommonContainer<View>) {
             return Iterator { *this, container::end(m_base),
-                              container::reconstruct(in_place_type<View>, container::end(m_base), container::end(m_base)) };
+                              container::reconstruct(in_place_type<View>, container::end(m_base),
+                                                     container::end(m_base)) };
         } else {
             return Sentinel { *this };
         }

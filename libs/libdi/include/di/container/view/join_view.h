@@ -24,28 +24,32 @@ private:
     using Sent = meta::ContainerSentinel<Base<is_const>>;
 
     template<bool is_const>
-    using SSizeType =
-        meta::CommonType<meta::ContainerSSizeType<Base<is_const>>, meta::ContainerSSizeType<meta::ContainerReference<Base<is_const>>>>;
+    using SSizeType = meta::CommonType<meta::ContainerSSizeType<Base<is_const>>,
+                                       meta::ContainerSSizeType<meta::ContainerReference<Base<is_const>>>>;
 
     template<typename Con>
-    constexpr static bool IsCommon = concepts::ForwardContainer<Con> && concepts::Reference<meta::ContainerReference<Con>> &&
-                                     concepts::ForwardContainer<meta::ContainerReference<Con>> && concepts::CommonContainer<Con> &&
-                                     concepts::CommonContainer<meta::ContainerReference<Con>>;
+    constexpr static bool IsCommon =
+        concepts::ForwardContainer<Con> && concepts::Reference<meta::ContainerReference<Con>> &&
+        concepts::ForwardContainer<meta::ContainerReference<Con>> && concepts::CommonContainer<Con> &&
+        concepts::CommonContainer<meta::ContainerReference<Con>>;
 
     template<typename Con>
-    constexpr static bool IsBidirectional = concepts::Reference<meta::ContainerReference<Con>> && concepts::BidirectionalContainer<Con> &&
-                                            concepts::BidirectionalContainer<meta::ContainerReference<Con>>;
+    constexpr static bool IsBidirectional =
+        concepts::Reference<meta::ContainerReference<Con>> && concepts::BidirectionalContainer<Con> &&
+        concepts::BidirectionalContainer<meta::ContainerReference<Con>>;
 
     template<typename Con>
-    constexpr static bool IsForward = concepts::Reference<meta::ContainerReference<Con>> && concepts::ForwardContainer<Con> &&
-                                      concepts::ForwardContainer<meta::ContainerReference<Con>>;
+    constexpr static bool IsForward =
+        concepts::Reference<meta::ContainerReference<Con>> && concepts::ForwardContainer<Con> &&
+        concepts::ForwardContainer<meta::ContainerReference<Con>>;
 
     template<bool is_const>
     class Iterator
-        : public IteratorBase<Iterator<is_const>,
-                              meta::Conditional<IsBidirectional<Base<is_const>>, BidirectionalIteratorTag,
-                                                meta::Conditional<IsForward<Base<is_const>>, ForwardIteratorTag, InputIteratorTag>>,
-                              Value<is_const>, SSizeType<is_const>> {
+        : public IteratorBase<
+              Iterator<is_const>,
+              meta::Conditional<IsBidirectional<Base<is_const>>, BidirectionalIteratorTag,
+                                meta::Conditional<IsForward<Base<is_const>>, ForwardIteratorTag, InputIteratorTag>>,
+              Value<is_const>, SSizeType<is_const>> {
     private:
         using Parent = meta::MaybeConst<is_const, JoinView>;
         using Outer = meta::ContainerIterator<Base<is_const>>;
@@ -71,7 +75,8 @@ private:
         Iterator(Iterator&&) = default;
         Iterator& operator=(Iterator&&) = default;
 
-        constexpr Iterator(Parent& parent, Outer outer) : m_parent(util::address_of(parent)), m_outer(util::move(outer)) {
+        constexpr Iterator(Parent& parent, Outer outer)
+            : m_parent(util::address_of(parent)), m_outer(util::move(outer)) {
             this->satisfy();
         }
 
@@ -182,7 +187,9 @@ private:
         constexpr auto base() const { return m_base; }
 
     private:
-        constexpr friend bool operator==(Iterator<is_const> const& a, Sentinel const& b) { return a.outer() == b.m_base; }
+        constexpr friend bool operator==(Iterator<is_const> const& a, Sentinel const& b) {
+            return a.outer() == b.m_base;
+        }
 
         Sent<is_const> m_base;
     };

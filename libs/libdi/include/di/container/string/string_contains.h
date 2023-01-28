@@ -17,6 +17,7 @@ template<concepts::detail::ConstantString Str, typename Enc = meta::Encoding<Str
          concepts::ContainerCompatible<meta::EncodingCodePoint<Enc>> Con>
 requires(concepts::SameAs<Enc, meta::Encoding<Con>>)
 constexpr bool contains(Str const& string, Con&& container) {
-    return container::contains_subrange(View(string::begin(string), string::end(string)), util::forward<Con>(container));
+    return container::contains_subrange(View(string::begin(string), string::end(string)),
+                                        util::forward<Con>(container));
 }
 }

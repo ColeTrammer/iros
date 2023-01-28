@@ -12,12 +12,13 @@ namespace detail {
     struct DeduceCreateFunction {
         template<template<typename...> typename Template, typename... Args>
         requires(CTADDeducible<Template, Args...>)
-        constexpr auto operator()(InPlaceTemplate<Template>, Args&&... args) const -> decltype(Template(util::forward<Args>(args)...));
+        constexpr auto operator()(InPlaceTemplate<Template>, Args&&... args) const
+            -> decltype(Template(util::forward<Args>(args)...));
 
         template<template<typename...> typename Template, typename... Args>
         requires(!CTADDeducible<Template, Args...>)
-        constexpr meta::TagInvokeResult<DeduceCreateFunction, InPlaceTemplate<Template>, Args...> operator()(InPlaceTemplate<Template>,
-                                                                                                             Args&&...) const;
+        constexpr meta::TagInvokeResult<DeduceCreateFunction, InPlaceTemplate<Template>, Args...>
+        operator()(InPlaceTemplate<Template>, Args&&...) const;
     };
 }
 

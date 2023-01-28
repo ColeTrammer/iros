@@ -9,5 +9,6 @@
 
 namespace di::vocab {
 template<typename T>
-using StorageFor = meta::Conditional<OptionalStorage<meta::WrapReference<T>, T>, meta::WrapReference<T>, BasicOptionalStorage<T>>;
+using StorageFor =
+    meta::Conditional<OptionalStorage<meta::WrapReference<T>, T>, meta::WrapReference<T>, BasicOptionalStorage<T>>;
 }

@@ -9,5 +9,6 @@ namespace di::function::pipeline {
 struct EnablePipeline {};
 
 template<typename T>
-concept Pipeable = concepts::DerivedFrom<meta::RemoveCVRef<T>, EnablePipeline> && concepts::ConstructibleFrom<T, meta::Decay<T>>;
+concept Pipeable =
+    concepts::DerivedFrom<meta::RemoveCVRef<T>, EnablePipeline> && concepts::ConstructibleFrom<T, meta::Decay<T>>;
 }

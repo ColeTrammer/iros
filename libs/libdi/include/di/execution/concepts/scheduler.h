@@ -20,6 +20,8 @@ template<typename T>
 concept Scheduler = CopyConstructible<meta::RemoveCVRef<T>> && EqualityComparable<meta::RemoveCVRef<T>> &&
                     requires(T&& scheduler, execution::GetCompletionScheduler<execution::SetValue> const tag) {
                         { execution::schedule(util::forward<T>(scheduler)) } -> Sender;
-                        { function::tag_invoke(tag, execution::schedule(util::forward<T>(scheduler))) } -> SameAs<meta::RemoveCVRef<T>>;
+                        {
+                            function::tag_invoke(tag, execution::schedule(util::forward<T>(scheduler)))
+                            } -> SameAs<meta::RemoveCVRef<T>>;
                     };
 }

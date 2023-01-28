@@ -11,7 +11,11 @@ public:
 
 private:
     constexpr friend bool tag_invoke(types::Tag<encoding::universal>, InPlaceType<TransparentEncoding>) { return true; }
-    constexpr friend bool tag_invoke(types::Tag<encoding::contiguous>, InPlaceType<TransparentEncoding>) { return true; }
-    constexpr friend bool tag_invoke(types::Tag<encoding::null_terminated>, InPlaceType<TransparentEncoding>) { return true; }
+    constexpr friend bool tag_invoke(types::Tag<encoding::contiguous>, InPlaceType<TransparentEncoding>) {
+        return true;
+    }
+    constexpr friend bool tag_invoke(types::Tag<encoding::null_terminated>, InPlaceType<TransparentEncoding>) {
+        return true;
+    }
 };
 }

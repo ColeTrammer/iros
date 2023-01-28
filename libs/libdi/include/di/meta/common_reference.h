@@ -63,16 +63,18 @@ namespace detail {
     struct SimpleCommonReference {};
 
     template<concepts::LValueReference T, concepts::LValueReference U>
-    requires(
-        requires {
-            false ? util::declval<typename UnionCV<meta::RemoveReference<T>, meta::RemoveReference<U>, meta::RemoveReference<T>>::Type&>()
-                  : util::declval<typename UnionCV<meta::RemoveReference<T>, meta::RemoveReference<U>, meta::RemoveReference<U>>::Type&>();
-        })
+    requires(requires {
+                 false ? util::declval<typename UnionCV<meta::RemoveReference<T>, meta::RemoveReference<U>,
+                                                        meta::RemoveReference<T>>::Type&>()
+                       : util::declval<typename UnionCV<meta::RemoveReference<T>, meta::RemoveReference<U>,
+                                                        meta::RemoveReference<U>>::Type&>();
+             })
     struct SimpleCommonReference<T, U>
-        : TypeConstant<decltype(false ? util::declval<typename UnionCV<meta::RemoveReference<T>, meta::RemoveReference<U>,
-                                                                       meta::RemoveReference<T>>::Type&>()
-                                      : util::declval<typename UnionCV<meta::RemoveReference<T>, meta::RemoveReference<U>,
-                                                                       meta::RemoveReference<U>>::Type&>())> {};
+        : TypeConstant<decltype(false
+                                    ? util::declval<typename UnionCV<meta::RemoveReference<T>, meta::RemoveReference<U>,
+                                                                     meta::RemoveReference<T>>::Type&>()
+                                    : util::declval<typename UnionCV<meta::RemoveReference<T>, meta::RemoveReference<U>,
+                                                                     meta::RemoveReference<U>>::Type&>())> {};
 
     template<concepts::RValueReference T, concepts::RValueReference U>
     requires(requires { typename SimpleCommonReference<T&, U&>::Type; } &&
@@ -82,8 +84,10 @@ namespace detail {
 
     template<concepts::LValueReference T, concepts::RValueReference U>
     requires(requires { typename SimpleCommonReference<T, meta::RemoveReference<U> const&>::Type; } &&
-             concepts::ImplicitlyConvertibleTo<U &&, typename SimpleCommonReference<T, meta::RemoveReference<U> const&>::Type>)
-    struct SimpleCommonReference<T, U> : TypeConstant<typename SimpleCommonReference<T, meta::RemoveReference<U> const&>::Type> {};
+             concepts::ImplicitlyConvertibleTo<
+                 U &&, typename SimpleCommonReference<T, meta::RemoveReference<U> const&>::Type>)
+    struct SimpleCommonReference<T, U>
+        : TypeConstant<typename SimpleCommonReference<T, meta::RemoveReference<U> const&>::Type> {};
 
     template<concepts::RValueReference T, concepts::LValueReference U>
     struct SimpleCommonReference<T, U> : SimpleCommonReference<U, T> {};
@@ -92,8 +96,10 @@ namespace detail {
     concept HasSimpleCommonReference = requires { typename SimpleCommonReference<T, U>::Type; };
 
     template<typename T, typename U>
-    concept HasCustomCommonReference =
-        requires { typename CustomCommonReference<T, U, ProjectQualifiers<T>::template Type, ProjectQualifiers<U>::template Type>::Type; };
+    concept HasCustomCommonReference = requires {
+                                           typename CustomCommonReference<T, U, ProjectQualifiers<T>::template Type,
+                                                                          ProjectQualifiers<U>::template Type>::Type;
+                                       };
 
     template<typename T, typename U>
     concept HasValueCommonReference = requires { false ? __get_value<T>() : __get_value<U>(); };
@@ -114,8 +120,8 @@ namespace detail {
     template<typename T, typename U>
     requires(!HasSimpleCommonReference<T, U> && HasCustomCommonReference<T, U>)
     struct CommonReferenceHelper<T, U>
-        : TypeConstant<
-              typename CustomCommonReference<T, U, ProjectQualifiers<T>::template Type, ProjectQualifiers<U>::template Type>::Type> {};
+        : TypeConstant<typename CustomCommonReference<T, U, ProjectQualifiers<T>::template Type,
+                                                      ProjectQualifiers<U>::template Type>::Type> {};
 
     template<typename T, typename U>
     requires(!HasSimpleCommonReference<T, U> && !HasCustomCommonReference<T, U> && HasValueCommonReference<T, U>)
@@ -128,7 +134,8 @@ namespace detail {
 
     template<typename T, typename U, typename W, typename... Rest>
     requires(requires { typename CommonReferenceHelper<T, U>::Type; })
-    struct CommonReferenceHelper<T, U, W, Rest...> : CommonReferenceHelper<typename CommonReferenceHelper<T, U>::Type, W, Rest...> {};
+    struct CommonReferenceHelper<T, U, W, Rest...>
+        : CommonReferenceHelper<typename CommonReferenceHelper<T, U>::Type, W, Rest...> {};
 }
 
 template<typename... Types>

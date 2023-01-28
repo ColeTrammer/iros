@@ -10,7 +10,8 @@ namespace detail {
         template<concepts::Writer Writer, typename... Args, typename Sv = container::string::StringViewImpl<Enc>>
         constexpr void operator()(Writer& writer, Sv format_string, Args&&... args) const {
             auto context = WriterFormatContext<Writer, Enc>(writer, format_string.encoding());
-            (void) format::vpresent_encoded_context<Enc>(format_string, format::make_constexpr_format_args(args...), context);
+            (void) format::vpresent_encoded_context<Enc>(format_string, format::make_constexpr_format_args(args...),
+                                                         context);
         }
     };
 }

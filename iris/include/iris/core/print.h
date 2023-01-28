@@ -20,13 +20,15 @@ namespace detail {
 template<typename... Args>
 void print(di::format::FormatStringImpl<Encoding, Args...> format, Args&&... args) {
     auto context = detail::DebugFormatContext {};
-    (void) di::format::vpresent_encoded_context<Encoding>(format, di::format::make_constexpr_format_args(args...), context);
+    (void) di::format::vpresent_encoded_context<Encoding>(format, di::format::make_constexpr_format_args(args...),
+                                                          context);
 }
 
 template<typename... Args>
 void println(di::format::FormatStringImpl<Encoding, Args...> format, Args&&... args) {
     auto context = detail::DebugFormatContext {};
-    (void) di::format::vpresent_encoded_context<Encoding>(format, di::format::make_constexpr_format_args(args...), context);
+    (void) di::format::vpresent_encoded_context<Encoding>(format, di::format::make_constexpr_format_args(args...),
+                                                          context);
     context.output('\n');
 }
 }

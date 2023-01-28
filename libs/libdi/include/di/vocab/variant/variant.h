@@ -36,10 +36,14 @@ private:
     using Impl = detail::VariantImpl<Types...>;
     using List = meta::List<Types...>;
 
-    constexpr static bool trivially_copy_constructible = concepts::Conjunction<concepts::TriviallyCopyConstructible<Types>...>;
-    constexpr static bool trivially_move_constructible = concepts::Conjunction<concepts::TriviallyMoveConstructible<Types>...>;
-    constexpr static bool trivially_copy_assignable = concepts::Conjunction<concepts::TriviallyCopyAssignable<Types>...>;
-    constexpr static bool trivially_move_assignable = concepts::Conjunction<concepts::TriviallyMoveAssignable<Types>...>;
+    constexpr static bool trivially_copy_constructible =
+        concepts::Conjunction<concepts::TriviallyCopyConstructible<Types>...>;
+    constexpr static bool trivially_move_constructible =
+        concepts::Conjunction<concepts::TriviallyMoveConstructible<Types>...>;
+    constexpr static bool trivially_copy_assignable =
+        concepts::Conjunction<concepts::TriviallyCopyAssignable<Types>...>;
+    constexpr static bool trivially_move_assignable =
+        concepts::Conjunction<concepts::TriviallyMoveAssignable<Types>...>;
     constexpr static bool trivially_destructible = concepts::Conjunction<concepts::TriviallyDestructible<Types>...>;
 
     constexpr static bool copyable = concepts::Conjunction<concepts::CopyConstructible<Types>...>;
@@ -96,9 +100,11 @@ public:
     }
 
     template<typename U>
-    requires(!concepts::RemoveCVRefSameAs<U, Variant> && !concepts::InstanceOf<U, InPlaceType> && !concepts::InstanceOfV<U, InPlaceIndex> &&
-             requires { selector<U>(util::declval<U>()); } && concepts::ConstructibleFrom<decltype(selector<U>(util::declval<U>())), U>)
-    constexpr Variant(U&& value) : Variant(in_place_type<decltype(selector<U>(util::declval<U>()))>, util::forward<U>(value)) {}
+    requires(!concepts::RemoveCVRefSameAs<U, Variant> && !concepts::InstanceOf<U, InPlaceType> &&
+             !concepts::InstanceOfV<U, InPlaceIndex> && requires { selector<U>(util::declval<U>()); } &&
+             concepts::ConstructibleFrom<decltype(selector<U>(util::declval<U>())), U>)
+    constexpr Variant(U&& value)
+        : Variant(in_place_type<decltype(selector<U>(util::declval<U>()))>, util::forward<U>(value)) {}
 
     template<size_t index, typename... Args, typename T = meta::At<List, index>>
     requires(concepts::ConstructibleFrom<T, Args...>)
@@ -127,7 +133,8 @@ public:
     template<typename... Other>
     requires(sizeof...(Types) == sizeof...(Other) &&
              requires { requires concepts::Conjunction<concepts::ConstructibleFrom<Types, Other const&>...>; })
-    constexpr explicit(!concepts::Conjunction<concepts::ConvertibleTo<Other const&, Types>...>) Variant(Variant<Other...> const& other) {
+    constexpr explicit(!concepts::Conjunction<concepts::ConvertibleTo<Other const&, Types>...>)
+        Variant(Variant<Other...> const& other) {
         function::index_dispatch<void, sizeof...(Types)>(other.index(), [&]<size_t index>(InPlaceIndex<index>) {
             do_emplace(in_place_index<index>, util::get<index>(other));
         });
@@ -136,7 +143,8 @@ public:
     template<typename... Other>
     requires(sizeof...(Types) == sizeof...(Other) &&
              requires { requires concepts::Conjunction<concepts::ConstructibleFrom<Types, Other>...>; })
-    constexpr explicit(!concepts::Conjunction<concepts::ConvertibleTo<Other, Types>...>) Variant(Variant<Other...>&& other) {
+    constexpr explicit(!concepts::Conjunction<concepts::ConvertibleTo<Other, Types>...>)
+        Variant(Variant<Other...>&& other) {
         function::index_dispatch<void, sizeof...(Types)>(other.index(), [&]<size_t index>(InPlaceIndex<index>) {
             do_emplace(in_place_index<index>, util::get<index>(util::move(other)));
         });
@@ -165,8 +173,9 @@ public:
     }
 
     template<typename U>
-    requires(!concepts::RemoveCVRefSameAs<U, Variant> && !concepts::InstanceOf<U, InPlaceType> && !concepts::InstanceOfV<U, InPlaceIndex> &&
-             requires { selector<U>(util::declval<U>()); } && concepts::ConstructibleFrom<decltype(selector<U>(util::declval<U>())), U>)
+    requires(!concepts::RemoveCVRefSameAs<U, Variant> && !concepts::InstanceOf<U, InPlaceType> &&
+             !concepts::InstanceOfV<U, InPlaceIndex> && requires { selector<U>(util::declval<U>()); } &&
+             concepts::ConstructibleFrom<decltype(selector<U>(util::declval<U>())), U>)
     constexpr Variant& operator=(U&& value) {
         this->template emplace<decltype(selector<U>(util::declval<U>()))>(util::forward<U>(value));
         return *this;
@@ -223,22 +232,24 @@ private:
         if (auto result = a.index() <=> b.index(); result != 0) {
             return Result(result);
         }
-        return function::index_dispatch<Result, sizeof...(Types)>(a.index(), [&]<size_t index>(InPlaceIndex<index>) -> Result {
-            return util::get<index>(a) <=> util::get<index>(b);
-        });
+        return function::index_dispatch<Result, sizeof...(Types)>(
+            a.index(), [&]<size_t index>(InPlaceIndex<index>) -> Result {
+                return util::get<index>(a) <=> util::get<index>(b);
+            });
     }
 
     template<size_t index>
     friend meta::At<List, index> tag_invoke(types::Tag<variant_alternative>, InPlaceType<Variant>, InPlaceIndex<index>);
 
     template<size_t index>
-    friend meta::At<List, index> const tag_invoke(types::Tag<variant_alternative>, InPlaceType<Variant const>, InPlaceIndex<index>);
+    friend meta::At<List, index> const tag_invoke(types::Tag<variant_alternative>, InPlaceType<Variant const>,
+                                                  InPlaceIndex<index>);
 
     constexpr friend size_t tag_invoke(types::Tag<variant_size>, InPlaceType<Variant>) { return meta::Size<List>; }
 
     template<concepts::RemoveCVRefSameAs<Variant> Self, size_t index>
-    constexpr friend meta::Like<Self, meta::At<List, index>>&& tag_invoke(types::Tag<util::get_in_place>, InPlaceIndex<index>,
-                                                                          Self&& self) {
+    constexpr friend meta::Like<Self, meta::At<List, index>>&& tag_invoke(types::Tag<util::get_in_place>,
+                                                                          InPlaceIndex<index>, Self&& self) {
         DI_ASSERT(index == self.m_index);
         return Impl::static_get(in_place_index<index>, util::forward<Self>(self).m_impl);
     }

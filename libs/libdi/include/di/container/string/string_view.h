@@ -20,15 +20,16 @@ inline namespace literals {
 
         template<container::FixedString literal>
         constexpr auto operator""_sv() {
-            return function::unpack<meta::MakeIndexSequence<literal.size()>>([]<size_t... indices>(meta::IndexSequence<indices...>) {
-                if constexpr (literal.size() == 0) {
-                    return container::StringView {};
-                } else {
-                    auto span = Span { as_u8_buffer<literal, indices...> };
-                    DI_ASSERT(container::string::encoding::validate(container::string::Utf8Encoding(), span));
-                    return container::StringView { container::string::encoding::assume_valid, span };
-                }
-            });
+            return function::unpack<meta::MakeIndexSequence<literal.size()>>(
+                []<size_t... indices>(meta::IndexSequence<indices...>) {
+                    if constexpr (literal.size() == 0) {
+                        return container::StringView {};
+                    } else {
+                        auto span = Span { as_u8_buffer<literal, indices...> };
+                        DI_ASSERT(container::string::encoding::validate(container::string::Utf8Encoding(), span));
+                        return container::StringView { container::string::encoding::assume_valid, span };
+                    }
+                });
         }
 
         constexpr auto operator""_sv(c8 const* data, size_t size) {

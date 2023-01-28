@@ -25,8 +25,8 @@ protected:
     constexpr explicit ErasedString(ThunkFunction thunk) : m_thunk(thunk) {}
 
 public:
-    constexpr explicit ErasedString(Span<c8 const> data = {}, void* state0 = nullptr, void* state1 = nullptr, void* state2 = nullptr,
-                                    ThunkFunction thunk = nullptr)
+    constexpr explicit ErasedString(Span<c8 const> data = {}, void* state0 = nullptr, void* state1 = nullptr,
+                                    void* state2 = nullptr, ThunkFunction thunk = nullptr)
         : m_data(data), m_state(state0, state1, state2), m_thunk(thunk) {}
 
     constexpr ErasedString(string::StringViewImpl<string::Utf8Encoding> view) : ErasedString(view.span()) {}

@@ -18,7 +18,8 @@ namespace detail {
 }
 
 template<concepts::InputContainer View, size_t index>
-requires(concepts::View<View> && concepts::TupleLike<meta::ContainerValue<View>> && concepts::TupleLike<meta::ContainerReference<View>>)
+requires(concepts::View<View> && concepts::TupleLike<meta::ContainerValue<View>> &&
+         concepts::TupleLike<meta::ContainerReference<View>>)
 class ElementsView
     : public ViewInterface<ElementsView<View, index>>
     , public meta::EnableBorrowedContainer<ElementsView<View, index>, concepts::BorrowedContainer<View>> {
@@ -34,8 +35,10 @@ private:
 
     template<bool is_const>
     class Iterator
-        : public IteratorExtension<Iterator<is_const>, Iter<is_const>, meta::RemoveCVRef<meta::TupleElement<Value<is_const>, index>>> {
-        using Base = IteratorExtension<Iterator<is_const>, Iter<is_const>, meta::RemoveCVRef<meta::TupleElement<Value<is_const>, index>>>;
+        : public IteratorExtension<Iterator<is_const>, Iter<is_const>,
+                                   meta::RemoveCVRef<meta::TupleElement<Value<is_const>, index>>> {
+        using Base = IteratorExtension<Iterator<is_const>, Iter<is_const>,
+                                       meta::RemoveCVRef<meta::TupleElement<Value<is_const>, index>>>;
 
     public:
         Iterator()

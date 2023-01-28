@@ -31,9 +31,10 @@ private:
     using Value = meta::Reconstructed<View, Iter>;
 
     class Iterator
-        : public IteratorBase<Iterator,
-                              meta::Conditional<concepts::BidirectionalIterator<Iter>, BidirectionalIteratorTag, ForwardIteratorTag>, Value,
-                              SSizeType> {
+        : public IteratorBase<
+              Iterator,
+              meta::Conditional<concepts::BidirectionalIterator<Iter>, BidirectionalIteratorTag, ForwardIteratorTag>,
+              Value, SSizeType> {
     private:
         friend class ChunkByView;
 
@@ -45,7 +46,9 @@ private:
         requires(concepts::DefaultInitializable<Iter>)
         = default;
 
-        constexpr decltype(auto) operator*() const { return container::reconstruct(in_place_type<View>, m_current, m_next); }
+        constexpr decltype(auto) operator*() const {
+            return container::reconstruct(in_place_type<View>, m_current, m_next);
+        }
 
         constexpr void advance_one() {
             m_current = m_next;
@@ -73,7 +76,8 @@ public:
     requires(concepts::DefaultInitializable<View> && concepts::DefaultInitializable<Pred>)
     = default;
 
-    constexpr explicit ChunkByView(View base, Pred predicate) : m_base(util::move(base)), m_predicate(util::move(predicate)) {}
+    constexpr explicit ChunkByView(View base, Pred predicate)
+        : m_base(util::move(base)), m_predicate(util::move(predicate)) {}
 
     constexpr View base() const&
     requires(concepts::CopyConstructible<View>)
@@ -101,16 +105,18 @@ public:
 
 private:
     constexpr Iter find_next(Iter current) {
-        return container::next(container::adjacent_find(current, container::end(m_base), function::not_fn(util::ref(m_predicate.value()))),
-                               1, container::end(m_base));
+        return container::next(
+            container::adjacent_find(current, container::end(m_base), function::not_fn(util::ref(m_predicate.value()))),
+            1, container::end(m_base));
     }
 
     constexpr Iter find_prev(Iter current)
     requires(concepts::BidirectionalContainer<View>)
     {
         auto reversed = container::View(container::begin(m_base), current) | view::reverse;
-        return container::prev(container::adjacent_find(reversed, function::not_fn(function::flip(util::ref(m_predicate.value())))).base(),
-                               1, container::begin(m_base));
+        return container::prev(
+            container::adjacent_find(reversed, function::not_fn(function::flip(util::ref(m_predicate.value())))).base(),
+            1, container::begin(m_base));
     }
 
     View m_base {};

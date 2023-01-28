@@ -94,7 +94,8 @@ namespace connect_awaitable_ns {
     using Promise = OperationState<Receiver>::promise_type;
 
     template<typename Awaitable, typename Receiver, typename Result = meta::AwaitResult<Awaitable, Promise<Receiver>>>
-    struct CompletionSignatures : meta::TypeConstant<types::CompletionSignatures<SetValue(Result), SetError(Error), SetStopped()>> {};
+    struct CompletionSignatures
+        : meta::TypeConstant<types::CompletionSignatures<SetValue(Result), SetError(Error), SetStopped()>> {};
 
     template<typename Awaitable, typename Receiver, typename Result>
     requires(concepts::LanguageVoid<Result>)

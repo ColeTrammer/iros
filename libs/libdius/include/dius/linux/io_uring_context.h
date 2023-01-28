@@ -29,7 +29,8 @@ public:
 
 struct ReadSomeSender {
 public:
-    using CompletionSignatures = di::CompletionSignatures<di::SetValue(size_t), di::SetError(di::Error), di::SetStopped()>;
+    using CompletionSignatures =
+        di::CompletionSignatures<di::SetValue(size_t), di::SetError(di::Error), di::SetStopped()>;
 
     IoUringContext* parent { nullptr };
     int file_descriptor { -1 };
@@ -40,7 +41,8 @@ private:
     template<typename Rec>
     struct OperationStateT {
         struct Type : OperationStateBase {
-            explicit Type(IoUringContext* parent, int file_descriptor, di::Span<di::Byte> buffer, di::Optional<u64> offset, Rec receiver)
+            explicit Type(IoUringContext* parent, int file_descriptor, di::Span<di::Byte> buffer,
+                          di::Optional<u64> offset, Rec receiver)
                 : m_parent(parent)
                 , m_file_descriptor(file_descriptor)
                 , m_buffer(buffer)
@@ -71,7 +73,9 @@ private:
             }
 
         private:
-            friend void tag_invoke(di::Tag<di::execution::start>, Type& self) { enqueue_operation(self.m_parent, di::address_of(self)); }
+            friend void tag_invoke(di::Tag<di::execution::start>, Type& self) {
+                enqueue_operation(self.m_parent, di::address_of(self));
+            }
 
             IoUringContext* m_parent;
             int m_file_descriptor;
@@ -86,7 +90,8 @@ private:
 
     template<di::ReceiverOf<CompletionSignatures> Receiver>
     friend auto tag_invoke(di::Tag<di::execution::connect>, ReadSomeSender self, Receiver receiver) {
-        return OperationState<Receiver> { self.parent, self.file_descriptor, self.buffer, self.offset, di::move(receiver) };
+        return OperationState<Receiver> { self.parent, self.file_descriptor, self.buffer, self.offset,
+                                          di::move(receiver) };
     }
 
     template<typename CPO>
@@ -97,7 +102,8 @@ private:
 
 struct WriteSomeSender {
 public:
-    using CompletionSignatures = di::CompletionSignatures<di::SetValue(size_t), di::SetError(di::Error), di::SetStopped()>;
+    using CompletionSignatures =
+        di::CompletionSignatures<di::SetValue(size_t), di::SetError(di::Error), di::SetStopped()>;
 
     IoUringContext* parent { nullptr };
     int file_descriptor { -1 };
@@ -108,8 +114,8 @@ private:
     template<typename Rec>
     struct OperationStateT {
         struct Type : OperationStateBase {
-            explicit Type(IoUringContext* parent, int file_descriptor, di::Span<di::Byte const> buffer, di::Optional<u64> offset,
-                          Rec receiver)
+            explicit Type(IoUringContext* parent, int file_descriptor, di::Span<di::Byte const> buffer,
+                          di::Optional<u64> offset, Rec receiver)
                 : m_parent(parent)
                 , m_file_descriptor(file_descriptor)
                 , m_buffer(buffer)
@@ -140,7 +146,9 @@ private:
             }
 
         private:
-            friend void tag_invoke(di::Tag<di::execution::start>, Type& self) { enqueue_operation(self.m_parent, di::address_of(self)); }
+            friend void tag_invoke(di::Tag<di::execution::start>, Type& self) {
+                enqueue_operation(self.m_parent, di::address_of(self));
+            }
 
             IoUringContext* m_parent;
             int m_file_descriptor;
@@ -155,7 +163,8 @@ private:
 
     template<di::ReceiverOf<CompletionSignatures> Receiver>
     friend auto tag_invoke(di::Tag<di::execution::connect>, WriteSomeSender self, Receiver receiver) {
-        return OperationState<Receiver> { self.parent, self.file_descriptor, self.buffer, self.offset, di::move(receiver) };
+        return OperationState<Receiver> { self.parent, self.file_descriptor, self.buffer, self.offset,
+                                          di::move(receiver) };
     }
 
     template<typename CPO>
@@ -199,7 +208,9 @@ private:
             }
 
         private:
-            friend void tag_invoke(di::Tag<di::execution::start>, Type& self) { enqueue_operation(self.m_parent, di::address_of(self)); }
+            friend void tag_invoke(di::Tag<di::execution::start>, Type& self) {
+                enqueue_operation(self.m_parent, di::address_of(self));
+            }
 
             IoUringContext* m_parent;
             int m_file_descriptor;
@@ -243,7 +254,9 @@ private:
             }
 
         private:
-            friend void tag_invoke(di::Tag<di::execution::start>, Type& self) { enqueue_operation(self.m_parent, di::address_of(self)); }
+            friend void tag_invoke(di::Tag<di::execution::start>, Type& self) {
+                enqueue_operation(self.m_parent, di::address_of(self));
+            }
 
             IoUringContext* m_parent { nullptr };
             [[no_unique_address]] Rec m_receiver;
@@ -291,7 +304,8 @@ public:
     explicit AsyncFile(IoUringContext* parent, int fd) : m_parent(parent), m_fd(fd) {}
 
 private:
-    friend auto tag_invoke(di::Tag<di::execution::async_read_some>, AsyncFile self, di::Span<di::Byte> buffer, di::Optional<u64> offset) {
+    friend auto tag_invoke(di::Tag<di::execution::async_read_some>, AsyncFile self, di::Span<di::Byte> buffer,
+                           di::Optional<u64> offset) {
         return ReadSomeSender { self.m_parent, self.m_fd, buffer, offset };
     }
 
@@ -300,7 +314,8 @@ private:
         return WriteSomeSender { self.m_parent, self.m_fd, buffer, offset };
     }
 
-    friend auto tag_invoke(di::Tag<di::execution::async_destroy_in_place>, di::InPlaceType<AsyncFile>, AsyncFile& self) {
+    friend auto tag_invoke(di::Tag<di::execution::async_destroy_in_place>, di::InPlaceType<AsyncFile>,
+                           AsyncFile& self) {
         return CloseSender { self.m_parent, self.m_fd };
     }
 
@@ -310,7 +325,8 @@ private:
 
 struct OpenSender {
 public:
-    using CompletionSignatures = di::CompletionSignatures<di::SetValue(AsyncFile), di::SetError(di::Error), di::SetStopped()>;
+    using CompletionSignatures =
+        di::CompletionSignatures<di::SetValue(AsyncFile), di::SetError(di::Error), di::SetStopped()>;
 
     IoUringContext* parent;
     di::Path path;
@@ -322,7 +338,11 @@ private:
     struct OperationStateT {
         struct Type : OperationStateBase {
             explicit Type(IoUringContext* parent, di::Path path, OpenMode mode, u16 create_mode, Rec receiver)
-                : m_parent(parent), m_path(di::move(path)), m_mode(mode), m_create_mode(create_mode), m_receiver(di::move(receiver)) {}
+                : m_parent(parent)
+                , m_path(di::move(path))
+                , m_mode(mode)
+                , m_create_mode(create_mode)
+                , m_receiver(di::move(receiver)) {}
 
             virtual void execute() override {
                 if (di::execution::get_stop_token(m_receiver).stop_requested()) {
@@ -365,7 +385,9 @@ private:
             }
 
         private:
-            friend void tag_invoke(di::Tag<di::execution::start>, Type& self) { enqueue_operation(self.m_parent, di::address_of(self)); }
+            friend void tag_invoke(di::Tag<di::execution::start>, Type& self) {
+                enqueue_operation(self.m_parent, di::address_of(self));
+            }
 
             IoUringContext* m_parent;
             di::Path m_path;
@@ -380,7 +402,8 @@ private:
 
     template<di::ReceiverOf<CompletionSignatures> Receiver>
     friend auto tag_invoke(di::Tag<di::execution::connect>, OpenSender self, Receiver receiver) {
-        return OperationState<Receiver> { self.parent, di::move(self.path), self.mode, self.create_mode, di::move(receiver) };
+        return OperationState<Receiver> { self.parent, di::move(self.path), self.mode, self.create_mode,
+                                          di::move(receiver) };
     }
 
     template<typename CPO>
@@ -395,10 +418,12 @@ public:
     IoUringContext* parent { nullptr };
 
 private:
-    friend auto tag_invoke(di::Tag<di::execution::schedule>, IoUringScheduler const& self) { return ScheduleSender { self.parent }; }
+    friend auto tag_invoke(di::Tag<di::execution::schedule>, IoUringScheduler const& self) {
+        return ScheduleSender { self.parent };
+    }
 
-    friend auto tag_invoke(di::Tag<di::execution::async_open>, IoUringScheduler const& self, di::Path path, OpenMode mode,
-                           u16 create_mode = 0666) {
+    friend auto tag_invoke(di::Tag<di::execution::async_open>, IoUringScheduler const& self, di::Path path,
+                           OpenMode mode, u16 create_mode = 0666) {
         return OpenSender { self.parent, di::move(path), mode, create_mode };
     }
 

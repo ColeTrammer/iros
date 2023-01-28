@@ -18,10 +18,12 @@ using UninitializedRelocateResult = container::InOutResult<In, Out>;
 
 namespace detail {
     struct UninitializedRelocateFunction {
-        template<concepts::InputIterator In, concepts::SentinelFor<In> Sent, concepts::Iterator Out, concepts::SentinelFor<Out> OutSent>
+        template<concepts::InputIterator In, concepts::SentinelFor<In> Sent, concepts::Iterator Out,
+                 concepts::SentinelFor<Out> OutSent>
         requires(concepts::ConstructibleFrom<meta::IteratorValue<Out>, meta::IteratorRValue<In>> &&
                  concepts::Destructible<meta::IteratorValue<In>>)
-        constexpr UninitializedRelocateResult<In, Out> operator()(In input, Sent in_sent, Out output, OutSent out_sent) const {
+        constexpr UninitializedRelocateResult<In, Out> operator()(In input, Sent in_sent, Out output,
+                                                                  OutSent out_sent) const {
             // FIXME: add specical support for trivially relocatable types when not in constexpr context.
             for (; input != in_sent && output != out_sent; ++input, ++output) {
                 construct_at(address_of(*output), container::iterator_move(input));

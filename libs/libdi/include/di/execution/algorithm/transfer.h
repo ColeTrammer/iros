@@ -13,11 +13,11 @@ namespace transfer_ns {
         template<concepts::Scheduler Sched, concepts::Sender Send>
         concepts::Sender auto operator()(Send&& sender, Sched&& scheduler) const {
             if constexpr (requires {
-                              function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender), util::forward<Send>(sender),
-                                                   util::forward<Sched>(scheduler));
+                              function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender),
+                                                   util::forward<Send>(sender), util::forward<Sched>(scheduler));
                           }) {
-                return function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender), util::forward<Send>(sender),
-                                            util::forward<Sched>(scheduler));
+                return function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender),
+                                            util::forward<Send>(sender), util::forward<Sched>(scheduler));
             } else if constexpr (concepts::TagInvocable<Function, Send, Sched>) {
                 return function::tag_invoke(*this, util::forward<Send>(sender), util::forward<Sched>(scheduler));
             } else {

@@ -26,7 +26,8 @@ public:
                           { other.unhandled_error(util::move(error)) } -> concepts::ConvertibleTo<CoroutineHandle<>>;
                       }) {
             m_error_handler = [](void* address, Error error) -> CoroutineHandle<> {
-                return CoroutineHandle<OtherPromise>::from_address(address).promise().unhandled_error(util::move(error));
+                return CoroutineHandle<OtherPromise>::from_address(address).promise().unhandled_error(
+                    util::move(error));
             };
         } else {
             m_error_handler = default_unhandled_error;
@@ -35,7 +36,9 @@ public:
 
     CoroutineHandle<> continuation() const { return m_continuation; }
     CoroutineHandle<> unhandled_stopped() { return m_stopped_handler(m_continuation.address()); }
-    CoroutineHandle<> unhandled_error(Error error) { return m_error_handler(m_continuation.address(), util::move(error)); }
+    CoroutineHandle<> unhandled_error(Error error) {
+        return m_error_handler(m_continuation.address(), util::move(error));
+    }
 
     template<typename Value>
     decltype(auto) await_transform(Value&& value) {

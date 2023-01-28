@@ -123,7 +123,8 @@ constexpr void to() {
     ASSERT_EQ(z[0], 0);
     ASSERT_EQ(z[4], 4);
 
-    auto a = di::range(6) | di::transform(di::compose(di::container::to<di::Vector>(), di::range)) | di::container::to<di::Vector>();
+    auto a = di::range(6) | di::transform(di::compose(di::container::to<di::Vector>(), di::range)) |
+             di::container::to<di::Vector>();
     ASSERT_EQ(a.size(), 6u);
     ASSERT_EQ(a[0].size(), 0u);
     ASSERT_EQ(a[4].size(), 4u);
@@ -136,7 +137,8 @@ constexpr void clone() {
     auto w = di::clone(v);
     ASSERT_EQ(w.size(), 6u);
 
-    auto a = di::range(6) | di::transform(di::compose(di::container::to<di::Vector>(), di::range)) | di::container::to<di::Vector>();
+    auto a = di::range(6) | di::transform(di::compose(di::container::to<di::Vector>(), di::range)) |
+             di::container::to<di::Vector>();
     ASSERT_EQ(a.size(), 6u);
     ASSERT_EQ(a[0].size(), 0u);
     ASSERT_EQ(a[4].size(), 4u);

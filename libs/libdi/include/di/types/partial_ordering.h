@@ -29,7 +29,9 @@ public:
     friend constexpr bool operator>=(int, partial_ordering v) { return v <= 0; }
 
     friend constexpr partial_ordering operator<=>(partial_ordering v, int) { return v; }
-    friend constexpr partial_ordering operator<=>(int, partial_ordering v) { return v.m_value == 2 ? v : partial_ordering(-v.m_value); }
+    friend constexpr partial_ordering operator<=>(int, partial_ordering v) {
+        return v.m_value == 2 ? v : partial_ordering(-v.m_value);
+    }
 
 private:
     friend class strong_ordering;

@@ -27,7 +27,8 @@ namespace detail {
             auto digits = '0'_m - '9'_m;
 
             return (-match_one(sign) >> match_one_or_more(digits))
-                       << []<concepts::ParserContext Context>(Context& context, auto results) -> meta::ParserContextResult<T, Context> {
+                       << []<concepts::ParserContext Context>(Context& context,
+                                                              auto results) -> meta::ParserContextResult<T, Context> {
                 auto [sign, digits] = results;
 
                 bool negative = false;

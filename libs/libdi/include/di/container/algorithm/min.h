@@ -28,7 +28,8 @@ namespace detail {
         }
 
         template<concepts::InputContainer Con, typename Proj = function::Identity,
-                 concepts::IndirectStrictWeakOrder<meta::Projected<meta::ContainerIterator<Con>, Proj>> Comp = function::Compare>
+                 concepts::IndirectStrictWeakOrder<meta::Projected<meta::ContainerIterator<Con>, Proj>> Comp =
+                     function::Compare>
         requires(concepts::IndirectlyCopyableStorable<meta::ContainerIterator<Con>, meta::ContainerValue<Con>*>)
         constexpr meta::ContainerValue<Con> operator()(Con&& container, Comp comp = {}, Proj proj = {}) const {
             auto it = container::begin(container);

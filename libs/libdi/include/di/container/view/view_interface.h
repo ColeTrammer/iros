@@ -85,7 +85,8 @@ public:
     }
 
     constexpr auto size()
-    requires(concepts::ForwardContainer<Self> && concepts::SizedSentinelFor<meta::ContainerIterator<Self>, meta::ContainerSentinel<Self>>)
+    requires(concepts::ForwardContainer<Self> &&
+             concepts::SizedSentinelFor<meta::ContainerIterator<Self>, meta::ContainerSentinel<Self>>)
     {
         return container::end(self()) - container::begin(self());
     }

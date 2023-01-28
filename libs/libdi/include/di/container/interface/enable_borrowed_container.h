@@ -15,7 +15,8 @@ constexpr inline struct EnableBorrowedContainer {
     constexpr auto operator()(types::InPlaceType<T>) const {
         if constexpr (concepts::LValueReference<T>) {
             return true;
-        } else if constexpr (concepts::TagInvocableTo<EnableBorrowedContainer, bool, types::InPlaceType<meta::RemoveCVRef<T>>>) {
+        } else if constexpr (concepts::TagInvocableTo<EnableBorrowedContainer, bool,
+                                                      types::InPlaceType<meta::RemoveCVRef<T>>>) {
             return function::tag_invoke(*this, types::in_place_type<meta::RemoveCVRef<T>>);
         } else {
             return false;

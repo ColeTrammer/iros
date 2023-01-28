@@ -8,7 +8,8 @@ namespace detail {
     template<int fd>
     struct PrintFunction {
         template<typename... Args>
-        void operator()(di::format::FormatStringImpl<di::container::string::Utf8Encoding, Args...> format_string, Args&&... args) const {
+        void operator()(di::format::FormatStringImpl<di::container::string::Utf8Encoding, Args...> format_string,
+                        Args&&... args) const {
             auto fd_writer = SyncFile(SyncFile::Owned::No, fd);
             (void) di::vwriter_print<di::container::string::Utf8Encoding>(fd_writer, format_string, args...);
         }
@@ -17,7 +18,8 @@ namespace detail {
     template<int fd>
     struct PrintlnFunction {
         template<typename... Args>
-        void operator()(di::format::FormatStringImpl<di::container::string::Utf8Encoding, Args...> format_string, Args&&... args) const {
+        void operator()(di::format::FormatStringImpl<di::container::string::Utf8Encoding, Args...> format_string,
+                        Args&&... args) const {
             auto fd_writer = SyncFile(SyncFile::Owned::No, fd);
             (void) di::vwriter_println<di::container::string::Utf8Encoding>(fd_writer, format_string, args...);
         }

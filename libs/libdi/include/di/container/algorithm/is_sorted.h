@@ -18,7 +18,8 @@ namespace detail {
         }
 
         template<concepts::ForwardContainer Con, typename Proj = function::Identity,
-                 concepts::IndirectStrictWeakOrder<meta::Projected<meta::ContainerIterator<Con>, Proj>> Comp = function::Compare>
+                 concepts::IndirectStrictWeakOrder<meta::Projected<meta::ContainerIterator<Con>, Proj>> Comp =
+                     function::Compare>
         constexpr bool operator()(Con&& container, Comp comp = {}, Proj proj = {}) const {
             return (*this)(container::begin(container), container::end(container), util::ref(comp), util::ref(proj));
         }

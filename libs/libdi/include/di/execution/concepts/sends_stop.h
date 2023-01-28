@@ -15,7 +15,8 @@ namespace detail {
     struct SendsStopHelper<types::CompletionSignatures<>> : meta::FalseType {};
 
     template<typename T, typename... Rest>
-    struct SendsStopHelper<types::CompletionSignatures<T, Rest...>> : SendsStopHelper<types::CompletionSignatures<Rest...>> {};
+    struct SendsStopHelper<types::CompletionSignatures<T, Rest...>>
+        : SendsStopHelper<types::CompletionSignatures<Rest...>> {};
 
     template<typename... Rest>
     struct SendsStopHelper<types::CompletionSignatures<execution::SetStopped(), Rest...>> : meta::TrueType {};

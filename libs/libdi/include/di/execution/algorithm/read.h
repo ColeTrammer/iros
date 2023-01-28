@@ -39,7 +39,8 @@ namespace read_ns {
             }
 
             template<typename Env>
-            friend auto tag_invoke(types::Tag<get_completion_signatures>, Type, Env) -> types::DependentCompletionSignatures<Env>;
+            friend auto tag_invoke(types::Tag<get_completion_signatures>, Type, Env)
+                -> types::DependentCompletionSignatures<Env>;
 
             template<typename Env>
             requires(concepts::Invocable<Tag, Env>)

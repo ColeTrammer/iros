@@ -11,7 +11,8 @@ public:
 
     template<concepts::SameAs<Arg>... Args>
     requires(sizeof...(Args) == count)
-    constexpr FormatArgsStorage(Args&&... args) : FormatArgs<Arg>(m_storage.span()), m_storage { util::forward<Args>(args)... } {}
+    constexpr FormatArgsStorage(Args&&... args)
+        : FormatArgs<Arg>(m_storage.span()), m_storage { util::forward<Args>(args)... } {}
 
 private:
     Array<Arg, count> m_storage;

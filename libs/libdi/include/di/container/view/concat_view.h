@@ -36,8 +36,8 @@ namespace detail {
         concepts::CommonReferenceWith<ConcatReference<Cons...>&&, ConcatValue<Cons...>&> &&
         concepts::CommonReferenceWith<ConcatReference<Cons...>&&, ConcatRValue<Cons...>&&> &&
         concepts::CommonReferenceWith<ConcatRValue<Cons...>&&, ConcatValue<Cons...> const&> &&
-        concepts::Conjunction<
-            ConcatIndirectlyReadableImpl<ConcatReference<Cons...>, ConcatRValue<Cons...>, meta::ContainerIterator<Cons>>...>;
+        concepts::Conjunction<ConcatIndirectlyReadableImpl<ConcatReference<Cons...>, ConcatRValue<Cons...>,
+                                                           meta::ContainerIterator<Cons>>...>;
 
     template<typename... Cons>
     concept Concatable = requires {
@@ -47,7 +47,8 @@ namespace detail {
                          } && ConcatIndirectlyReadable<Cons...>;
 
     template<typename... Cons>
-    concept ConcatRandomAccess = concepts::Conjunction<(concepts::RandomAccessContainer<Cons> && concepts::SizedContainer<Cons>) ...>;
+    concept ConcatRandomAccess =
+        concepts::Conjunction<(concepts::RandomAccessContainer<Cons> && concepts::SizedContainer<Cons>) ...>;
 
     struct ConstantTimeReversible {
         template<typename Con>
@@ -72,8 +73,9 @@ private:
                   detail::ConcatRandomAccess<meta::MaybeConst<is_const, Views>...>, RandomAccessIteratorTag,
                   meta::Conditional<
                       detail::ConcatBidirectional<meta::MaybeConst<is_const, Views>...>, BidirectionalIteratorTag,
-                      meta::Conditional<concepts::Conjunction<concepts::ForwardContainer<meta::MaybeConst<is_const, Views>>...>,
-                                        ForwardIteratorTag, InputIteratorTag>>>,
+                      meta::Conditional<
+                          concepts::Conjunction<concepts::ForwardContainer<meta::MaybeConst<is_const, Views>>...>,
+                          ForwardIteratorTag, InputIteratorTag>>>,
               detail::ConcatValue<meta::MaybeConst<is_const, Views>...>,
               meta::CommonType<meta::ContainerSSizeType<meta::MaybeConst<is_const, Views>>...>> {
     private:
@@ -106,8 +108,9 @@ private:
                     if constexpr (concepts::CommonContainer<PrevView>) {
                         m_base.template emplace<N - 1>(container::end(util::get<N - 1>(m_parent->m_views)));
                     } else {
-                        m_base.template emplace<N - 1>(container::next(container::begin(util::get<N - 1>(m_parent->m_views)),
-                                                                       container::size(util::get<N - 1>(m_parent->m_views))));
+                        m_base.template emplace<N - 1>(
+                            container::next(container::begin(util::get<N - 1>(m_parent->m_views)),
+                                            container::size(util::get<N - 1>(m_parent->m_views))));
                     }
                     prev<N - 1>();
                 } else {
@@ -141,7 +144,8 @@ private:
                 } else {
                     m_base.template emplace<N - 1>(container::begin(util::get<N - 1>(m_parent->m_views)) +
                                                    container::size(util::get<N - 1>(m_parent->m_views)));
-                    advance_bwd<N - 1>(static_cast<SSizeType>(container::size(util::get<N - 1>(m_parent->m_views))), steps - offset);
+                    advance_bwd<N - 1>(static_cast<SSizeType>(container::size(util::get<N - 1>(m_parent->m_views))),
+                                       steps - offset);
                 }
             }
         }
@@ -158,7 +162,8 @@ private:
 
         constexpr Iterator(Iterator<!is_const> other)
         requires(is_const &&
-                 concepts::Conjunction<concepts::ConvertibleTo<meta::ContainerIterator<Views>, meta::ContainerIterator<Views const>>...>)
+                 concepts::Conjunction<
+                     concepts::ConvertibleTo<meta::ContainerIterator<Views>, meta::ContainerIterator<Views const>>...>)
             : m_parent(other.m_parent), m_base(util::move(other.m_base)) {}
 
         constexpr decltype(auto) operator*() const {
@@ -189,29 +194,34 @@ private:
         {
             function::index_dispatch<void, sizeof...(Views)>(m_base.index(), [&]<size_t i>(InPlaceIndex<i>) {
                 if (n > 0) {
-                    this->template advance_fwd<i>(util::get<i>(m_base) - container::begin(util::get<i>(m_parent->m_views)), n);
+                    this->template advance_fwd<i>(
+                        util::get<i>(m_base) - container::begin(util::get<i>(m_parent->m_views)), n);
                 } else if (n < 0) {
-                    this->template advance_bwd<i>(util::get<i>(m_base) - container::begin(util::get<i>(m_parent->m_views)), -n);
+                    this->template advance_bwd<i>(
+                        util::get<i>(m_base) - container::begin(util::get<i>(m_parent->m_views)), -n);
                 }
             });
         }
 
     private:
         constexpr friend bool operator==(Iterator const& a, Iterator const& b)
-        requires(concepts::Conjunction<concepts::EqualityComparable<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>>...>)
+        requires(concepts::Conjunction<
+                 concepts::EqualityComparable<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>>...>)
         {
             return a.m_base == b.m_base;
         }
 
         constexpr bool at_end() const {
             constexpr auto last_index = sizeof...(Views) - 1;
-            return m_base.index() == last_index && util::get<last_index>(m_base) == container::end(util::get<last_index>(m_parent.m_views));
+            return m_base.index() == last_index &&
+                   util::get<last_index>(m_base) == container::end(util::get<last_index>(m_parent.m_views));
         }
 
         constexpr friend bool operator==(Iterator const& a, DefaultSentinel) { return a.at_end(); }
 
         constexpr friend auto operator<=>(Iterator const& a, Iterator const& b)
-        requires(concepts::Conjunction<concepts::ThreeWayComparable<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>>...>)
+        requires(concepts::Conjunction<
+                 concepts::ThreeWayComparable<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>>...>)
         {
             return a.m_base <=> b.m_base;
         }
@@ -228,20 +238,24 @@ private:
                     m_parent->m_views);
 
                 auto b_to_a = container::sum(sizes | view::drop(bi + 1) | view::take(ai - bi - 1));
-                auto b_to_its_end = function::index_dispatch<SSizeType, sizeof...(Views)>(bi, [&]<size_t index>(InPlaceIndex<index>) {
-                    return sizes[index] - (util::get<index>(b.m_base) - container::begin(util::get<index>(m_parent->m_views)));
-                });
-                auto a_to_its_start = function::index_dispatch<SSizeType, sizeof...(Views)>(ai, [&]<size_t index>(InPlaceIndex<index>) {
-                    return util::get<index>(this->m_base) - container::begin(util::get<index>(m_parent->m_views));
-                });
+                auto b_to_its_end =
+                    function::index_dispatch<SSizeType, sizeof...(Views)>(bi, [&]<size_t index>(InPlaceIndex<index>) {
+                        return sizes[index] -
+                               (util::get<index>(b.m_base) - container::begin(util::get<index>(m_parent->m_views)));
+                    });
+                auto a_to_its_start =
+                    function::index_dispatch<SSizeType, sizeof...(Views)>(ai, [&]<size_t index>(InPlaceIndex<index>) {
+                        return util::get<index>(this->m_base) - container::begin(util::get<index>(m_parent->m_views));
+                    });
 
                 return b_to_its_end + b_to_a + a_to_its_start;
             } else if (ai < bi) {
                 return b.distance_from(*this);
             } else {
-                return function::index_dispatch<SSizeType, sizeof...(Views)>(ai, [&]<size_t index>(InPlaceIndex<index>) {
-                    return util::get<index>(this->m_base) - util::get<index>(b.m_base);
-                });
+                return function::index_dispatch<SSizeType, sizeof...(Views)>(
+                    ai, [&]<size_t index>(InPlaceIndex<index>) {
+                        return util::get<index>(this->m_base) - util::get<index>(b.m_base);
+                    });
             }
         }
 
@@ -254,9 +268,11 @@ private:
 
             auto index = m_base.index();
             auto rest_to_end = container::sum(sizes | view::drop(index + 1));
-            auto current_to_its_end = function::index_dispatch<SSizeType, sizeof...(Views)>(index, [&]<size_t index>(InPlaceIndex<index>) {
-                return sizes[index] - (util::get<index>(m_base) - container::begin(util::get<index>(m_parent->m_views)));
-            });
+            auto current_to_its_end =
+                function::index_dispatch<SSizeType, sizeof...(Views)>(index, [&]<size_t index>(InPlaceIndex<index>) {
+                    return sizes[index] -
+                           (util::get<index>(m_base) - container::begin(util::get<index>(m_parent->m_views)));
+                });
 
             return -(rest_to_end + current_to_its_end);
         }

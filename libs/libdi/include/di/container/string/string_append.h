@@ -7,15 +7,17 @@
 #include <di/function/bind_front.h>
 
 namespace di::container::string {
-template<concepts::detail::MutableString Str, typename Enc = meta::Encoding<Str>, typename P = meta::EncodingCodePoint<Enc>,
-         concepts::ContainerCompatible<P> Con>
+template<concepts::detail::MutableString Str, typename Enc = meta::Encoding<Str>,
+         typename P = meta::EncodingCodePoint<Enc>, concepts::ContainerCompatible<P> Con>
 requires(concepts::SameAs<Enc, meta::Encoding<Con>>)
 constexpr auto append(Str& string, Con&& container) {
     if constexpr (encoding::NullTerminated<Enc>) {
         return invoke_as_fallible([&] {
                    return vector::append_container(
-                       string, util::forward<Con>(container) |
-                                   view::transform(function::bind_front(encoding::convert_to_code_units, string.encoding())) | view::join);
+                       string,
+                       util::forward<Con>(container) |
+                           view::transform(function::bind_front(encoding::convert_to_code_units, string.encoding())) |
+                           view::join);
                }) >>
                    [&] {
                        return as_fallible(vector::emplace_back(string)) % [&](auto&) {
@@ -26,7 +28,8 @@ constexpr auto append(Str& string, Con&& container) {
     } else {
         return vector::append_container(
             string, util::forward<Con>(container) |
-                        view::transform(function::bind_front(encoding::convert_to_code_units, string.encoding())) | view::join);
+                        view::transform(function::bind_front(encoding::convert_to_code_units, string.encoding())) |
+                        view::join);
     }
 }
 }

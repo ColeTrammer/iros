@@ -19,7 +19,8 @@ namespace detail {
 
     template<typename... Ts, typename... Rest>
     struct CartesianProductHelper<List<Ts...>, Rest...>
-        : TypeConstant<Concat<Transform<typename CartesianProductHelper<Rest...>::Type, BindBack<Quote<PushFront>, Ts>>...>> {};
+        : TypeConstant<
+              Concat<Transform<typename CartesianProductHelper<Rest...>::Type, BindBack<Quote<PushFront>, Ts>>...>> {};
 }
 
 template<concepts::TypeList... Types>

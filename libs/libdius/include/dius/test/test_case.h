@@ -7,7 +7,8 @@ using TestCaseFunction = void (*)();
 
 class TestCase {
 public:
-    constexpr explicit TestCase(di::TransparentStringView suite_name, di::TransparentStringView case_name, TestCaseFunction function)
+    constexpr explicit TestCase(di::TransparentStringView suite_name, di::TransparentStringView case_name,
+                                TestCaseFunction function)
         : m_suite_name(di::move(suite_name)), m_case_name(di::move(case_name)), m_function(function) {}
 
     constexpr di::TransparentStringView suite_name() const { return m_suite_name; }

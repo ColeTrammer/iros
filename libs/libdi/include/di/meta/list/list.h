@@ -24,7 +24,8 @@ namespace detail {
     struct LookupHelper : SizeConstant<0> {};
 
     template<typename Needle, typename T, typename... Rest>
-    struct LookupHelper<Needle, T, Rest...> : SizeConstant<concepts::SameAs<T, Needle> ? 0 : 1 + LookupHelper<Needle, Rest...>::value> {};
+    struct LookupHelper<Needle, T, Rest...>
+        : SizeConstant<concepts::SameAs<T, Needle> ? 0 : 1 + LookupHelper<Needle, Rest...>::value> {};
 }
 
 namespace detail {

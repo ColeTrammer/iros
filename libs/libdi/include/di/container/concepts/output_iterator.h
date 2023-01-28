@@ -6,5 +6,6 @@
 
 namespace di::concepts {
 template<typename It, typename T>
-concept OutputIterator = Iterator<It> && IndirectlyWritable<It, T> && requires(It it, T&& value) { *it++ = util::forward<T>(value); };
+concept OutputIterator =
+    Iterator<It> && IndirectlyWritable<It, T> && requires(It it, T&& value) { *it++ = util::forward<T>(value); };
 }

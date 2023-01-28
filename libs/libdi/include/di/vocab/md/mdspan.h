@@ -34,8 +34,8 @@ public:
     constexpr SizeType extent(RankType r) const { return extents().extent(r); }
 
     MDSpan()
-    requires(rank_dynamic() > 0 && concepts::DefaultConstructible<DataHandle> && concepts::DefaultConstructible<MappingType> &&
-             concepts::DefaultConstructible<AccessorType>)
+    requires(rank_dynamic() > 0 && concepts::DefaultConstructible<DataHandle> &&
+             concepts::DefaultConstructible<MappingType> && concepts::DefaultConstructible<AccessorType>)
     = default;
 
     MDSpan(MDSpan const&) = default;
@@ -76,15 +76,17 @@ public:
     requires(concepts::ConstructibleFrom<MappingType, typename OtherLayout::template Mapping<OtherExtents> const&> &&
              concepts::ConstructibleFrom<AccessorType, OtherAccessor const&>)
     explicit(!concepts::ConvertibleTo<typename OtherLayout::template Mapping<OtherExtents> const&, MappingType> ||
-             !concepts::ConvertibleTo<OtherAccessor const&, AccessorType>) constexpr MDSpan(MDSpan<OtherElementType, OtherExtents,
-                                                                                                   OtherLayout, OtherAccessor> const& other)
+             !concepts::ConvertibleTo<OtherAccessor const&,
+                                      AccessorType>) constexpr MDSpan(MDSpan<OtherElementType, OtherExtents,
+                                                                             OtherLayout, OtherAccessor> const& other)
         : m_data_handle(other.data()), m_mapping(other.mapping()), m_accessor(other.accessor()) {}
 
     MDSpan& operator=(MDSpan const&) = default;
     MDSpan& operator=(MDSpan&&) = default;
 
     template<typename... OtherSizeTypes>
-    requires(sizeof...(OtherSizeTypes) == rank() && concepts::Conjunction<concepts::ConvertibleTo<OtherSizeTypes, SizeType>...>)
+    requires(sizeof...(OtherSizeTypes) == rank() &&
+             concepts::Conjunction<concepts::ConvertibleTo<OtherSizeTypes, SizeType>...>)
     constexpr Reference operator[](OtherSizeTypes... indices) const {
         auto index = m_mapping(ExtentsType::index_cast(util::move(indices))...);
         DI_ASSERT_LT(index, m_mapping.required_span_size());
@@ -106,7 +108,8 @@ public:
     }
 
     constexpr auto each() const {
-        return function::unpack<meta::MakeIndexSequence<rank()>>([&]<usize... rank_indices>(meta::IndexSequence<rank_indices...>) {
+        return function::unpack<meta::MakeIndexSequence<rank()>>([&]<usize... rank_indices>(
+            meta::IndexSequence<rank_indices...>) {
             return container::view::cartesian_product(container::view::range(extent(rank_indices))...) |
                    container::view::transform(function::uncurry([&](auto... indices) -> Reference {
                        return (*this)[indices...];
@@ -159,9 +162,11 @@ template<typename ElementType, typename SizeType, size_t... extents>
 MDSpan(ElementType*, Extents<SizeType, extents...> const&) -> MDSpan<ElementType, Extents<SizeType, extents...>>;
 
 template<class ElementType, class MappingType>
-MDSpan(ElementType*, MappingType const&) -> MDSpan<ElementType, typename MappingType::ExtentsType, typename MappingType::LayoutType>;
+MDSpan(ElementType*, MappingType const&)
+    -> MDSpan<ElementType, typename MappingType::ExtentsType, typename MappingType::LayoutType>;
 
 template<class MappingType, class AccessorType>
 MDSpan(typename AccessorType::DataHandle const&, MappingType const&, AccessorType const&)
-    -> MDSpan<typename AccessorType::ElementType, typename MappingType::ExtentsType, typename MappingType::LayoutType, AccessorType>;
+    -> MDSpan<typename AccessorType::ElementType, typename MappingType::ExtentsType, typename MappingType::LayoutType,
+              AccessorType>;
 }

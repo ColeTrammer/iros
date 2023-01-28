@@ -22,17 +22,22 @@ public:
     StatusCode(StatusCode&&) = default;
 
     template<typename Domain>
-    requires(concepts::StatusCodeErasableInto<Domain, Erased<T>> && !concepts::ErasedStatusCode<StatusCode<meta::Decay<Domain>>>)
-    constexpr StatusCode(StatusCode<Domain> const& other) : Base(in_place, other.m_domain, detail::erasure_cast<Value>(other.value())) {}
+    requires(concepts::StatusCodeErasableInto<Domain, Erased<T>> &&
+             !concepts::ErasedStatusCode<StatusCode<meta::Decay<Domain>>>)
+    constexpr StatusCode(StatusCode<Domain> const& other)
+        : Base(in_place, other.m_domain, detail::erasure_cast<Value>(other.value())) {}
 
     template<typename Domain>
-    requires(concepts::StatusCodeErasableInto<Domain, Erased<T>> && !concepts::ErasedStatusCode<StatusCode<meta::Decay<Domain>>>)
-    constexpr StatusCode(StatusCode<Domain>&& other) : Base(in_place, other.m_domain, detail::erasure_cast<Value>(other.value())) {}
+    requires(concepts::StatusCodeErasableInto<Domain, Erased<T>> &&
+             !concepts::ErasedStatusCode<StatusCode<meta::Decay<Domain>>>)
+    constexpr StatusCode(StatusCode<Domain>&& other)
+        : Base(in_place, other.m_domain, detail::erasure_cast<Value>(other.value())) {}
 
     template<typename U, typename... Args>
     requires(!concepts::DecaySameAs<U, StatusCode> && !concepts::DecaySameAs<U, Value> &&
              concepts::ConvertibleToStatusCode<StatusCode, U, Args...>)
-    constexpr StatusCode(U&& v, Args&&... args) : StatusCode(into_status_code(util::forward<U>(v), util::forward<Args>(args)...)) {}
+    constexpr StatusCode(U&& v, Args&&... args)
+        : StatusCode(into_status_code(util::forward<U>(v), util::forward<Args>(args)...)) {}
 
     StatusCode& operator=(StatusCode const&) = delete;
     StatusCode& operator=(StatusCode&&) = default;

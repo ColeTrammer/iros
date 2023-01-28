@@ -13,7 +13,9 @@ private:
 
 public:
     constexpr explicit StringViewParserContext(View view)
-        : m_code_points(view.unicode_code_points()), m_iterator(container::begin(m_code_points)), m_encoding(view.encoding()) {}
+        : m_code_points(view.unicode_code_points())
+        , m_iterator(container::begin(m_code_points))
+        , m_encoding(view.encoding()) {}
 
     using Error = vocab::Error;
     using Encoding = Enc;
@@ -28,7 +30,8 @@ public:
 private:
     template<typename Iter, typename Sent>
     requires(concepts::ReconstructibleContainer<View, Iter, Sent>)
-    constexpr friend auto tag_invoke(types::Tag<reconstruct>, InPlaceType<StringViewParserContext>, Iter&& iter, Sent&& sent) {
+    constexpr friend auto tag_invoke(types::Tag<reconstruct>, InPlaceType<StringViewParserContext>, Iter&& iter,
+                                     Sent&& sent) {
         return reconstruct(in_place_type<View>, util::forward<Iter>(iter), util::forward<Sent>(sent));
     }
 
@@ -40,7 +43,8 @@ private:
 
 namespace di::container::string {
 template<typename T>
-requires(concepts::HasEncoding<T> && concepts::DerivedFrom<T, container::string::ConstantStringInterface<T, meta::Encoding<T>>>)
+requires(concepts::HasEncoding<T> &&
+         concepts::DerivedFrom<T, container::string::ConstantStringInterface<T, meta::Encoding<T>>>)
 constexpr auto tag_invoke(types::Tag<parser::into_parser_context>, T const& self) {
     return parser::StringViewParserContext<meta::Encoding<T>> { self.view() };
 }

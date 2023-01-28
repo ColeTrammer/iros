@@ -24,25 +24,31 @@ template<concepts::InputContainer... Views>
 requires(concepts::Conjunction<concepts::View<Views>...> && sizeof...(Views) > 0)
 class ZipView
     : public ViewInterface<ZipView<Views...>>
-    , public meta::EnableBorrowedContainer<ZipView<Views...>, concepts::Conjunction<concepts::BorrowedContainer<Views>...>> {
+    , public meta::EnableBorrowedContainer<ZipView<Views...>,
+                                           concepts::Conjunction<concepts::BorrowedContainer<Views>...>> {
 private:
     constexpr static bool all_simple = concepts::Conjunction<concepts::SimpleView<Views>...>;
     constexpr static bool all_const = concepts::Conjunction<concepts::Container<Views const>...>;
 
     template<bool is_const>
-    constexpr static bool all_sized = concepts::Conjunction<concepts::SizedContainer<meta::MaybeConst<is_const, Views>>...>;
+    constexpr static bool all_sized =
+        concepts::Conjunction<concepts::SizedContainer<meta::MaybeConst<is_const, Views>>...>;
 
     template<bool is_const>
-    constexpr static bool all_forward = concepts::Conjunction<concepts::ForwardContainer<meta::MaybeConst<is_const, Views>>...>;
+    constexpr static bool all_forward =
+        concepts::Conjunction<concepts::ForwardContainer<meta::MaybeConst<is_const, Views>>...>;
 
     template<bool is_const>
-    constexpr static bool all_bidirectional = concepts::Conjunction<concepts::BidirectionalContainer<meta::MaybeConst<is_const, Views>>...>;
+    constexpr static bool all_bidirectional =
+        concepts::Conjunction<concepts::BidirectionalContainer<meta::MaybeConst<is_const, Views>>...>;
 
     template<bool is_const>
-    constexpr static bool all_random_access = concepts::Conjunction<concepts::RandomAccessContainer<meta::MaybeConst<is_const, Views>>...>;
+    constexpr static bool all_random_access =
+        concepts::Conjunction<concepts::RandomAccessContainer<meta::MaybeConst<is_const, Views>>...>;
 
     template<bool is_const>
-    constexpr static bool all_common = concepts::Conjunction<concepts::CommonContainer<meta::MaybeConst<is_const, Views>>...>;
+    constexpr static bool all_common =
+        concepts::Conjunction<concepts::CommonContainer<meta::MaybeConst<is_const, Views>>...>;
 
     template<bool is_const>
     constexpr static bool is_common =
@@ -62,9 +68,10 @@ private:
     class Iterator
         : public IteratorBase<
               Iterator<is_const>,
-              meta::Conditional<all_random_access<is_const>, RandomAccessIteratorTag,
-                                meta::Conditional<all_bidirectional<is_const>, BidirectionalIteratorTag,
-                                                  meta::Conditional<all_forward<is_const>, ForwardIteratorTag, InputIteratorTag>>>,
+              meta::Conditional<
+                  all_random_access<is_const>, RandomAccessIteratorTag,
+                  meta::Conditional<all_bidirectional<is_const>, BidirectionalIteratorTag,
+                                    meta::Conditional<all_forward<is_const>, ForwardIteratorTag, InputIteratorTag>>>,
               Value<is_const>, SSizeType<is_const>> {
     private:
         using Storage = Tuple<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>...>;
@@ -80,8 +87,9 @@ private:
         Iterator() = default;
 
         constexpr Iterator(Iterator<!is_const> other)
-        requires(is_const && concepts::Conjunction<concepts::ConvertibleTo<meta::ContainerIterator<Views>,
-                                                                           meta::ContainerIterator<meta::MaybeConst<is_const, Views>>>...>)
+        requires(is_const &&
+                 concepts::Conjunction<concepts::ConvertibleTo<
+                     meta::ContainerIterator<Views>, meta::ContainerIterator<meta::MaybeConst<is_const, Views>>>...>)
             : m_iterators(util::move(other)) {}
 
         Iterator(Iterator const&) = default;
@@ -137,12 +145,14 @@ private:
 
     private:
         constexpr friend bool operator==(Iterator const& a, Iterator const& b)
-        requires(concepts::Conjunction<concepts::EqualityComparable<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>>...>)
+        requires(concepts::Conjunction<
+                 concepts::EqualityComparable<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>>...>)
         {
             if constexpr (all_bidirectional<is_const>) {
                 return a.m_iterators == b.m_iterators;
             } else {
-                return function::unpack<meta::MakeIndexSequence<sizeof...(Views)>>([&]<size_t... indices>(meta::IndexSequence<indices...>) {
+                return function::unpack<meta::MakeIndexSequence<sizeof...(Views)>>([&]<size_t... indices>(
+                    meta::IndexSequence<indices...>) {
                     return ((util::get<indices>(a.m_iterators) <= util::get<indices>(b.m_iterators)) || ...);
                 });
             }
@@ -150,18 +160,21 @@ private:
 
         constexpr friend auto operator<=>(Iterator const& a, Iterator const& b)
         requires(all_random_access<is_const> &&
-                 concepts::Conjunction<concepts::ThreeWayComparable<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>>...>)
+                 concepts::Conjunction<
+                     concepts::ThreeWayComparable<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>>...>)
         {
             return a.m_iterators <=> b.m_iterators;
         }
 
         constexpr friend SSizeType<is_const> operator-(Iterator const& a, Iterator const& b)
-        requires(concepts::Conjunction<concepts::SizedSentinelFor<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>,
-                                                                  meta::ContainerIterator<meta::MaybeConst<is_const, Views>>>...>)
+        requires(concepts::Conjunction<
+                 concepts::SizedSentinelFor<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>,
+                                            meta::ContainerIterator<meta::MaybeConst<is_const, Views>>>...>)
         {
-            return function::unpack<meta::MakeIndexSequence<sizeof...(Views)>>([&]<size_t... indices>(meta::IndexSequence<indices...>) {
-                return container::min(
-                    { static_cast<SSizeType<is_const>>(util::get<indices>(a.m_iterators) - util::get<indices>(b.m_iterators))... });
+            return function::unpack<meta::MakeIndexSequence<sizeof...(Views)>>([&]<size_t... indices>(
+                meta::IndexSequence<indices...>) {
+                return container::min({ static_cast<SSizeType<is_const>>(util::get<indices>(a.m_iterators) -
+                                                                         util::get<indices>(b.m_iterators))... });
             });
         }
 
@@ -170,11 +183,14 @@ private:
         }
 
         constexpr friend void tag_invoke(types::Tag<iterator_swap>, Iterator const& a, Iterator const& b)
-        requires(concepts::Conjunction<concepts::IndirectlySwappable<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>,
-                                                                     meta::ContainerIterator<meta::MaybeConst<is_const, Views>>>...>)
+        requires(concepts::Conjunction<
+                 concepts::IndirectlySwappable<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>,
+                                               meta::ContainerIterator<meta::MaybeConst<is_const, Views>>>...>)
         {
-            return function::unpack<meta::MakeIndexSequence<sizeof...(Views)>>([&]<size_t... indices>(meta::IndexSequence<indices...>) {
-                return (void) (iterator_swap(util::get<indices>(a.m_iterators), util::get<indices>(b.m_iterators)), ...);
+            return function::unpack<meta::MakeIndexSequence<sizeof...(Views)>>([&]<size_t... indices>(
+                meta::IndexSequence<indices...>) {
+                return (void) (iterator_swap(util::get<indices>(a.m_iterators), util::get<indices>(b.m_iterators)),
+                               ...);
             });
         }
 
@@ -194,26 +210,31 @@ private:
         Sentinel() = default;
 
         constexpr Sentinel(Sentinel<!is_const> other)
-        requires(is_const && concepts::Conjunction<concepts::ConvertibleTo<meta::ContainerSentinel<Views>,
-                                                                           meta::ContainerSentinel<meta::MaybeConst<is_const, Views>>>...>)
+        requires(is_const &&
+                 concepts::Conjunction<concepts::ConvertibleTo<
+                     meta::ContainerSentinel<Views>, meta::ContainerSentinel<meta::MaybeConst<is_const, Views>>>...>)
             : m_sentinels(util::move(other)) {}
 
         template<bool other_is_const>
-        requires(concepts::Conjunction<concepts::SizedSentinelFor<meta::ContainerSentinel<meta::MaybeConst<is_const, Views>>,
-                                                                  meta::ContainerIterator<meta::MaybeConst<other_is_const, Views>>>...>)
+        requires(concepts::Conjunction<
+                 concepts::SizedSentinelFor<meta::ContainerSentinel<meta::MaybeConst<is_const, Views>>,
+                                            meta::ContainerIterator<meta::MaybeConst<other_is_const, Views>>>...>)
         constexpr auto difference(Iterator<other_is_const> const& a) const {
-            return function::unpack<meta::MakeIndexSequence<sizeof...(Views)>>([&]<size_t... indices>(meta::IndexSequence<indices...>) {
-                return container::min(
-                    { static_cast<SSizeType<is_const>>(util::get<indices>(this->m_sentinels) - util::get<indices>(a.m_iterators))... });
+            return function::unpack<meta::MakeIndexSequence<sizeof...(Views)>>([&]<size_t... indices>(
+                meta::IndexSequence<indices...>) {
+                return container::min({ static_cast<SSizeType<is_const>>(util::get<indices>(this->m_sentinels) -
+                                                                         util::get<indices>(a.m_iterators))... });
             });
         }
 
     private:
         template<bool other_is_const>
-        requires(concepts::Conjunction<concepts::SentinelFor<meta::ContainerSentinel<meta::MaybeConst<is_const, Views>>,
-                                                             meta::ContainerIterator<meta::MaybeConst<other_is_const, Views>>>...>)
+        requires(concepts::Conjunction<
+                 concepts::SentinelFor<meta::ContainerSentinel<meta::MaybeConst<is_const, Views>>,
+                                       meta::ContainerIterator<meta::MaybeConst<other_is_const, Views>>>...>)
         constexpr friend bool operator==(Iterator<other_is_const> const& a, Sentinel const& b) {
-            return function::unpack<meta::MakeIndexSequence<sizeof...(Views)>>([&]<size_t... indices>(meta::IndexSequence<indices...>) {
+            return function::unpack<meta::MakeIndexSequence<sizeof...(Views)>>([&]<size_t... indices>(
+                meta::IndexSequence<indices...>) {
                 return ((util::get<indices>(a.m_iterators) == util::get<indices>(b.m_sentinels)) || ...);
             });
         }

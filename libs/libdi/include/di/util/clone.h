@@ -10,8 +10,8 @@ namespace detail {
     struct CloneFunction;
 
     template<typename T>
-    concept CustomClonable =
-        concepts::TagInvocable<CloneFunction, T const&> && concepts::MaybeFallible<meta::TagInvokeResult<CloneFunction, T const&>, T>;
+    concept CustomClonable = concepts::TagInvocable<CloneFunction, T const&> &&
+                             concepts::MaybeFallible<meta::TagInvokeResult<CloneFunction, T const&>, T>;
 
     template<typename T>
     concept MemberClonable = requires(T const& value) {
@@ -20,7 +20,8 @@ namespace detail {
 
     struct CloneFunction {
         template<typename T>
-        requires(concepts::CopyConstructible<T> || CustomClonable<T> || MemberClonable<T> || concepts::CreatableFrom<T, T const&>)
+        requires(concepts::CopyConstructible<T> || CustomClonable<T> || MemberClonable<T> ||
+                 concepts::CreatableFrom<T, T const&>)
         constexpr auto operator()(T const& value) const {
             if constexpr (concepts::CopyConstructible<T>) {
                 return value;

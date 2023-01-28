@@ -37,7 +37,9 @@ public:
     {}
 
 private:
-    constexpr friend bool tag_invoke(types::Tag<is_nullopt>, BasicOptionalStorage const& self) { return !self.m_has_value; }
+    constexpr friend bool tag_invoke(types::Tag<is_nullopt>, BasicOptionalStorage const& self) {
+        return !self.m_has_value;
+    }
 
     template<typename Self>
     requires(concepts::SameAs<meta::Decay<Self>, BasicOptionalStorage>)

@@ -20,11 +20,13 @@ namespace detail {
 
     template<typename... Types>
     struct CommonComparisonCategoryHelper<types::weak_ordering, Types...>
-        : TypeConstant<Conditional<concepts::SameAs<types::partial_ordering, typename CommonComparisonCategoryHelper<Types...>::Type>,
-                                   types::partial_ordering, types::weak_ordering>> {};
+        : TypeConstant<Conditional<
+              concepts::SameAs<types::partial_ordering, typename CommonComparisonCategoryHelper<Types...>::Type>,
+              types::partial_ordering, types::weak_ordering>> {};
 
     template<typename... Types>
-    struct CommonComparisonCategoryHelper<types::strong_ordering, Types...> : CommonComparisonCategoryHelper<Types...> {};
+    struct CommonComparisonCategoryHelper<types::strong_ordering, Types...>
+        : CommonComparisonCategoryHelper<Types...> {};
 }
 
 template<typename... Types>

@@ -27,9 +27,11 @@ namespace detail {
         }
 
         template<concepts::InputContainer Con, typename Proj = function::Identity,
-                 concepts::IndirectStrictWeakOrder<meta::Projected<meta::ContainerIterator<Con>, Proj>> Comp = function::Compare>
+                 concepts::IndirectStrictWeakOrder<meta::Projected<meta::ContainerIterator<Con>, Proj>> Comp =
+                     function::Compare>
         requires(concepts::IndirectlyCopyableStorable<meta::ContainerIterator<Con>, meta::ContainerValue<Con>*>)
-        constexpr MinMaxResult<meta::ContainerValue<Con>> operator()(Con&& container, Comp comp = {}, Proj proj = {}) const {
+        constexpr MinMaxResult<meta::ContainerValue<Con>> operator()(Con&& container, Comp comp = {},
+                                                                     Proj proj = {}) const {
             auto result = container::minmax_element(container, util::ref(comp), util::ref(proj));
             return { util::move(*result.min), util::move(*result.max) };
         }

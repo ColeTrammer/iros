@@ -22,5 +22,6 @@ constexpr inline auto variant_alternative = detail::VariantAlternativeFunction {
 
 namespace di::meta {
 template<typename T, size_t index>
-using VariantAlternative = decltype(vocab::variant_alternative(in_place_type<meta::RemoveReference<T>>, in_place_index<index>));
+using VariantAlternative =
+    decltype(vocab::variant_alternative(in_place_type<meta::RemoveReference<T>>, in_place_index<index>));
 }

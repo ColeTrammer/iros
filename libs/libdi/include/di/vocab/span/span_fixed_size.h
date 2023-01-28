@@ -75,8 +75,8 @@ public:
     constexpr Span(vocab::Array<U, size> const& array) : m_data(array.data()) {}
 
     template<concepts::ContiguousContainer Con>
-    requires(concepts::SizedContainer<Con> && (concepts::BorrowedContainer<Con> || concepts::Const<T>) && !concepts::Span<Con> &&
-             !concepts::Array<Con> && !concepts::LanguageArray<meta::RemoveCVRef<Con>> &&
+    requires(concepts::SizedContainer<Con> && (concepts::BorrowedContainer<Con> || concepts::Const<T>) &&
+             !concepts::Span<Con> && !concepts::Array<Con> && !concepts::LanguageArray<meta::RemoveCVRef<Con>> &&
              concepts::ConvertibleToNonSlicing<meta::RemoveReference<meta::ContainerReference<Con>>, T>)
     constexpr explicit Span(Con&& container) : m_data(container::data(container)) {
         DI_ASSERT(container::size(container) == extent);
@@ -199,11 +199,13 @@ private:
 
     template<types::size_t index>
     requires(index < extent)
-    constexpr friend InPlaceType<T> tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Span>, types::InPlaceIndex<index>);
+    constexpr friend InPlaceType<T> tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Span>,
+                                               types::InPlaceIndex<index>);
 
     template<types::size_t index>
     requires(index < extent)
-    constexpr friend InPlaceType<T> tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Span const>, types::InPlaceIndex<index>);
+    constexpr friend InPlaceType<T> tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Span const>,
+                                               types::InPlaceIndex<index>);
 
     constexpr friend types::size_t tag_invoke(types::Tag<tuple_size>, types::InPlaceType<Span>) { return extent; }
 

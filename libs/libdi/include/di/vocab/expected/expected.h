@@ -50,15 +50,15 @@ public:
     = delete;
 
     constexpr Expected(Expected const& other)
-    requires((!concepts::TriviallyCopyConstructible<T> || !concepts::TriviallyCopyConstructible<E>) && concepts::CopyConstructible<T> &&
-             concepts::CopyConstructible<E>)
+    requires((!concepts::TriviallyCopyConstructible<T> || !concepts::TriviallyCopyConstructible<E>) &&
+             concepts::CopyConstructible<T> && concepts::CopyConstructible<E>)
     {
         internal_construct_from_expected(other);
     }
 
     constexpr Expected(Expected&& other)
-    requires((!concepts::TriviallyMoveConstructible<T> || !concepts::TriviallyMoveConstructible<E>) && concepts::MoveConstructible<T> &&
-             concepts::MoveConstructible<E>)
+    requires((!concepts::TriviallyMoveConstructible<T> || !concepts::TriviallyMoveConstructible<E>) &&
+             concepts::MoveConstructible<T> && concepts::MoveConstructible<E>)
     {
         internal_construct_from_expected(util::move(other));
     }
@@ -74,14 +74,16 @@ public:
     template<typename U, typename G>
     requires(concepts::ConstructibleFrom<T, U> && concepts::ConstructibleFrom<E, G> &&
              concepts::detail::ExpectedCanConvertConstructor<T, E, U, G>)
-    constexpr explicit(!concepts::ConvertibleTo<U, T> || !concepts::ConvertibleTo<G, E>) Expected(Expected<U, G>&& other) {
+    constexpr explicit(!concepts::ConvertibleTo<U, T> || !concepts::ConvertibleTo<G, E>)
+        Expected(Expected<U, G>&& other) {
         internal_construct_from_expected(util::move(other));
     }
 
     template<typename U = T>
-    requires(!concepts::RemoveCVRefSameAs<U, types::InPlace> && !concepts::RemoveCVRefSameAs<U, Expected> && !concepts::Unexpected<U> &&
-             concepts::ConstructibleFrom<T, U>)
-    constexpr explicit(!concepts::ConvertibleTo<U, T>) Expected(U&& value) : m_has_error(false), m_value(util::forward<U>(value)) {}
+    requires(!concepts::RemoveCVRefSameAs<U, types::InPlace> && !concepts::RemoveCVRefSameAs<U, Expected> &&
+             !concepts::Unexpected<U> && concepts::ConstructibleFrom<T, U>)
+    constexpr explicit(!concepts::ConvertibleTo<U, T>) Expected(U&& value)
+        : m_has_error(false), m_value(util::forward<U>(value)) {}
 
     template<typename G>
     requires(concepts::ConstructibleFrom<E, G const&>)
@@ -277,7 +279,8 @@ private:
         }
     }
 
-    template<concepts::RemoveCVRefSameAs<Expected> Self, typename F, typename R = meta::InvokeResult<F, meta::Like<Self, T>>>
+    template<concepts::RemoveCVRefSameAs<Expected> Self, typename F,
+             typename R = meta::InvokeResult<F, meta::Like<Self, T>>>
     requires(concepts::Expected<R> && concepts::ConvertibleTo<meta::Like<Self, E>, meta::ExpectedError<R>>)
     constexpr friend R tag_invoke(types::Tag<function::monad::bind>, Self&& self, F&& function) {
         if (!self) {
@@ -286,7 +289,8 @@ private:
         return function::invoke(util::forward<F>(function), util::forward<Self>(self).value());
     }
 
-    template<concepts::RemoveCVRefSameAs<Expected> Self, typename F, typename R = meta::InvokeResult<F, meta::Like<Self, E>>>
+    template<concepts::RemoveCVRefSameAs<Expected> Self, typename F,
+             typename R = meta::InvokeResult<F, meta::Like<Self, E>>>
     requires(concepts::Expected<R> && concepts::ConvertibleTo<meta::Like<Self, T>, meta::ExpectedValue<R>>)
     constexpr friend R tag_invoke(types::Tag<function::monad::fail>, Self&& self, F&& function) {
         if (self) {
@@ -305,7 +309,8 @@ private:
             function::invoke(util::forward<F>(function), util::forward<Self>(self).error());
             return Expected<T, G> { types::in_place, util::forward<Self>(self).value() };
         } else {
-            return Expected<T, G> { types::unexpect, function::invoke(util::forward<F>(function), util::forward<Self>(self).error()) };
+            return Expected<T, G> { types::unexpect,
+                                    function::invoke(util::forward<F>(function), util::forward<Self>(self).error()) };
         }
     }
 

@@ -76,7 +76,8 @@ concept NullTerminated = null_terminated(in_place_type<meta::RemoveCVRef<T>>);
 namespace detail {
     struct ValidateFunction {
         template<typename T>
-        requires(Universal<T> || concepts::TagInvocableTo<ValidateFunction, bool, T const&, Span<meta::EncodingCodeUnit<T> const>>)
+        requires(Universal<T> ||
+                 concepts::TagInvocableTo<ValidateFunction, bool, T const&, Span<meta::EncodingCodeUnit<T> const>>)
         constexpr bool operator()(T const& encoding, Span<meta::EncodingCodeUnit<T> const> code_units) const {
             if constexpr (universal(in_place_type<T>)) {
                 return true;
@@ -88,7 +89,8 @@ namespace detail {
 
     struct ValidByteOffsetFunction {
         template<typename T, typename U = meta::EncodingCodeUnit<T>>
-        requires(Contiguous<T> || concepts::TagInvocableTo<ValidByteOffsetFunction, bool, T const&, Span<U const>, size_t>)
+        requires(Contiguous<T> ||
+                 concepts::TagInvocableTo<ValidByteOffsetFunction, bool, T const&, Span<U const>, size_t>)
         constexpr bool operator()(T const& encoding, Span<U const> code_units, size_t offset) const {
             if constexpr (Contiguous<T>) {
                 return offset <= code_units.size();
@@ -151,7 +153,8 @@ namespace detail {
             } else if constexpr (concepts::SameAs<U, P>) {
                 return container::View(code_units);
             } else {
-                return container::View(make_iterator(encoding, code_units, 0), make_iterator(encoding, code_units, code_units.size()));
+                return container::View(make_iterator(encoding, code_units, 0),
+                                       make_iterator(encoding, code_units, code_units.size()));
             }
         }
     };
@@ -165,8 +168,8 @@ namespace detail {
 
     struct UnicodeCodePointViewFunction {
         template<typename T, typename U = meta::EncodingCodePoint<T>, typename P = meta::EncodingCodePoint<T>>
-        requires(concepts::TagInvocable<UnicodeCodePointViewFunction, T const&, Span<U const>> || concepts::SameAs<P, c32> ||
-                 concepts::ConstructibleFrom<c32, P>)
+        requires(concepts::TagInvocable<UnicodeCodePointViewFunction, T const&, Span<U const>> ||
+                 concepts::SameAs<P, c32> || concepts::ConstructibleFrom<c32, P>)
         constexpr UnicodeCodePointView auto operator()(T const& encoding, Span<U const> code_units) const {
             if constexpr (concepts::TagInvocable<UnicodeCodePointViewFunction, T const&, Span<U const>>) {
                 return function::tag_invoke(*this, encoding, code_units);
@@ -181,7 +184,8 @@ namespace detail {
     };
 
     struct UnicodeCodePointUnwrapFunction {
-        template<typename T, typename Input, typename U = meta::EncodingCodePoint<T>, typename P = meta::EncodingCodePoint<T>>
+        template<typename T, typename Input, typename U = meta::EncodingCodePoint<T>,
+                 typename P = meta::EncodingCodePoint<T>>
         requires(concepts::TagInvocable<UnicodeCodePointUnwrapFunction, T const&, Input> || concepts::SameAs<P, c32> ||
                  concepts::ConstructibleFrom<c32, P>)
         constexpr meta::EncodingIterator<T> operator()(T const& encoding, Input it) const {
@@ -209,8 +213,8 @@ concept Encoding = concepts::Semiregular<T> &&
                        typename meta::EncodingIterator<T>;
                    } &&
                    requires(T const& encoding, size_t offset, vocab::Span<meta::EncodingCodeUnit<T> const> code_units,
-                            vocab::Span<meta::EncodingCodeUnit<T>> mutable_code_units, meta::EncodingCodePoint<T> code_point,
-                            meta::EncodingIterator<T> iterator) {
+                            vocab::Span<meta::EncodingCodeUnit<T>> mutable_code_units,
+                            meta::EncodingCodePoint<T> code_point, meta::EncodingIterator<T> iterator) {
                        container::string::encoding::validate(encoding, code_units);
                        container::string::encoding::valid_byte_offset(encoding, code_units, offset);
                        container::string::encoding::make_iterator(encoding, code_units, offset);

@@ -10,6 +10,7 @@
 
 namespace di::meta {
 template<typename T>
-using Decay = Conditional<concepts::LanguageArray<RemoveReference<T>>, RemoveExtent<RemoveReference<T>>*,
-                          Conditional<concepts::LanguageFunction<RemoveReference<T>>, AddPointer<RemoveReference<T>>, RemoveCVRef<T>>>;
+using Decay = Conditional<
+    concepts::LanguageArray<RemoveReference<T>>, RemoveExtent<RemoveReference<T>>*,
+    Conditional<concepts::LanguageFunction<RemoveReference<T>>, AddPointer<RemoveReference<T>>, RemoveCVRef<T>>>;
 }

@@ -6,10 +6,12 @@
 namespace di::container {
 namespace detail {
     struct FindFirstOfFunction {
-        template<concepts::InputIterator It, concepts::SentinelFor<It> Sent, concepts::ForwardIterator Jt, concepts::SentinelFor<Jt> Jent,
-                 typename Pred = function::Equal, typename Proj = function::Identity, typename Jroj = function::Identity>
+        template<concepts::InputIterator It, concepts::SentinelFor<It> Sent, concepts::ForwardIterator Jt,
+                 concepts::SentinelFor<Jt> Jent, typename Pred = function::Equal, typename Proj = function::Identity,
+                 typename Jroj = function::Identity>
         requires(concepts::IndirectlyComparable<It, Jt, Pred, Proj, Jroj>)
-        constexpr It operator()(It it, Sent sent, Jt jt, Jent jent, Pred pred = {}, Proj proj = {}, Jroj jroj = {}) const {
+        constexpr It operator()(It it, Sent sent, Jt jt, Jent jent, Pred pred = {}, Proj proj = {},
+                                Jroj jroj = {}) const {
             return container::find_if(
                 util::move(it), sent,
                 [&]<typename T>(T&& value) {
@@ -25,11 +27,12 @@ namespace detail {
 
         template<concepts::InputContainer Con, concepts::ForwardContainer Needles, typename Pred = function::Equal,
                  typename Proj1 = function::Identity, typename Proj2 = function::Identity>
-        requires(concepts::IndirectlyComparable<meta::ContainerIterator<Con>, meta::ContainerIterator<Needles>, Pred, Proj1, Proj2>)
-        constexpr meta::BorrowedIterator<Con> operator()(Con&& container, Needles&& needles, Pred pred = {}, Proj1 proj1 = {},
-                                                         Proj2 proj2 = {}) const {
-            return (*this)(container::begin(container), container::end(container), container::begin(needles), container::end(needles),
-                           util::ref(pred), util::ref(proj1), util::ref(proj2));
+        requires(concepts::IndirectlyComparable<meta::ContainerIterator<Con>, meta::ContainerIterator<Needles>, Pred,
+                                                Proj1, Proj2>)
+        constexpr meta::BorrowedIterator<Con> operator()(Con&& container, Needles&& needles, Pred pred = {},
+                                                         Proj1 proj1 = {}, Proj2 proj2 = {}) const {
+            return (*this)(container::begin(container), container::end(container), container::begin(needles),
+                           container::end(needles), util::ref(pred), util::ref(proj1), util::ref(proj2));
         }
     };
 }

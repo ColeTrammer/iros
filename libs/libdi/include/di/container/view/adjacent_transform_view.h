@@ -42,9 +42,12 @@ private:
     class Iterator;
 
     template<bool is_const>
-    class Sentinel : public SentinelExtension<Sentinel<is_const>, InnerSentinel<is_const>, Iterator<is_const>, InnerIterator<is_const>> {
+    class Sentinel
+        : public SentinelExtension<Sentinel<is_const>, InnerSentinel<is_const>, Iterator<is_const>,
+                                   InnerIterator<is_const>> {
     private:
-        using Base = SentinelExtension<Sentinel<is_const>, InnerSentinel<is_const>, Iterator<is_const>, InnerIterator<is_const>>;
+        using Base =
+            SentinelExtension<Sentinel<is_const>, InnerSentinel<is_const>, Iterator<is_const>, InnerIterator<is_const>>;
 
         friend class AdjacentTransformView;
 
@@ -60,17 +63,19 @@ private:
 
     template<bool is_const>
     class Iterator
-        : public IteratorExtension<Iterator<is_const>, InnerIterator<is_const>,
-                                   meta::RemoveCVRef<detail::InvokeRepeatResult<
-                                       meta::MaybeConst<is_const, F>&, meta::ContainerReference<meta::MaybeConst<is_const, View>>, N>>> {
-        using Base =
-            IteratorExtension<Iterator<is_const>, InnerIterator<is_const>,
-                              meta::RemoveCVRef<detail::InvokeRepeatResult<meta::MaybeConst<is_const, F>&,
-                                                                           meta::ContainerReference<meta::MaybeConst<is_const, View>>, N>>>;
+        : public IteratorExtension<
+              Iterator<is_const>, InnerIterator<is_const>,
+              meta::RemoveCVRef<detail::InvokeRepeatResult<
+                  meta::MaybeConst<is_const, F>&, meta::ContainerReference<meta::MaybeConst<is_const, View>>, N>>> {
+        using Base = IteratorExtension<
+            Iterator<is_const>, InnerIterator<is_const>,
+            meta::RemoveCVRef<detail::InvokeRepeatResult<
+                meta::MaybeConst<is_const, F>&, meta::ContainerReference<meta::MaybeConst<is_const, View>>, N>>>;
 
         friend class AdjacentTransformView;
 
-        constexpr explicit Iterator(meta::MaybeConst<is_const, AdjacentTransformView>& parent, InnerIterator<is_const> iterator)
+        constexpr explicit Iterator(meta::MaybeConst<is_const, AdjacentTransformView>& parent,
+                                    InnerIterator<is_const> iterator)
             : Base(util::move(iterator)), m_parent(util::address_of(parent)) {}
 
     public:
@@ -108,12 +113,14 @@ private:
 public:
     AdjacentTransformView() = default;
 
-    constexpr explicit AdjacentTransformView(View view, F function) : m_inner(util::move(view)), m_function(util::move(function)) {}
+    constexpr explicit AdjacentTransformView(View view, F function)
+        : m_inner(util::move(view)), m_function(util::move(function)) {}
 
     constexpr auto begin() { return Iterator<false>(*this, m_inner.begin()); }
 
     constexpr auto begin() const
-    requires(concepts::Container<InnerView const> && detail::CanInvokeRepeat<F const&, meta::ContainerReference<View const>, N>)
+    requires(concepts::Container<InnerView const> &&
+             detail::CanInvokeRepeat<F const&, meta::ContainerReference<View const>, N>)
     {
         return Iterator<true>(*this, m_inner.begin());
     }
@@ -127,7 +134,8 @@ public:
     }
 
     constexpr auto end() const
-    requires(concepts::Container<InnerView const> && detail::CanInvokeRepeat<F const&, meta::ContainerReference<View const>, N>)
+    requires(concepts::Container<InnerView const> &&
+             detail::CanInvokeRepeat<F const&, meta::ContainerReference<View const>, N>)
     {
         if constexpr (concepts::CommonContainer<InnerView const>) {
             return Iterator<true>(*this, m_inner.end());

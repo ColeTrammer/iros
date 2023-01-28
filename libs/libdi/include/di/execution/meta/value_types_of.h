@@ -22,11 +22,13 @@ namespace detail {
 
     template<typename... Values, typename... Rest, typename Env, template<typename...> typename Tup>
     struct ValueTypesOfHelper<types::CompletionSignatures<execution::SetValue(Values...), Rest...>, Env, Tup>
-        : TypeConstant<PushFront<typename ValueTypesOfHelper<types::CompletionSignatures<Rest...>, Env, Tup>::Type, Tup<Values...>>> {};
+        : TypeConstant<PushFront<typename ValueTypesOfHelper<types::CompletionSignatures<Rest...>, Env, Tup>::Type,
+                                 Tup<Values...>>> {};
 }
 
 template<typename Sender, typename Env = types::NoEnv, template<typename...> typename Tup = meta::DecayedTuple,
          template<typename...> typename Var = meta::VariantOrEmpty>
 requires(concepts::Sender<Sender, Env>)
-using ValueTypesOf = AsTemplate<Var, typename detail::ValueTypesOfHelper<meta::CompletionSignaturesOf<Sender, Env>, Env, Tup>::Type>;
+using ValueTypesOf =
+    AsTemplate<Var, typename detail::ValueTypesOfHelper<meta::CompletionSignaturesOf<Sender, Env>, Env, Tup>::Type>;
 }

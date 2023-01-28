@@ -6,5 +6,6 @@
 
 namespace di::concepts {
 template<typename T>
-concept OperationState = concepts::Destructible<T> && concepts::Object<T> && requires(T& op_state) { execution::start(op_state); };
+concept OperationState =
+    concepts::Destructible<T> && concepts::Object<T> && requires(T& op_state) { execution::start(op_state); };
 }

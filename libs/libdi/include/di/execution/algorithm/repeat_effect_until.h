@@ -86,14 +86,16 @@ namespace repeat_effect_until_ns {
 
         private:
             template<concepts::DecaysTo<Type> Self, typename Rec>
-            requires(concepts::DecayConstructible<Send const&> && concepts::SenderTo<Send const&, Receiver<Send, Rec, Pred>>)
+            requires(concepts::DecayConstructible<Send const&> &&
+                     concepts::SenderTo<Send const&, Receiver<Send, Rec, Pred>>)
             friend auto tag_invoke(types::Tag<connect>, Self&& self, Rec receiver) {
                 return OperationState<Send, Rec, Pred> { util::forward<Self>(self).predicate, util::move(receiver),
                                                          util::forward<Self>(self).sender };
             }
 
             template<concepts::DecaysTo<Type> Self, typename Env>
-            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env) -> meta::MakeCompletionSignatures<Send const&, Env>;
+            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env)
+                -> meta::MakeCompletionSignatures<Send const&, Env>;
 
             template<concepts::ForwardingSenderQuery Tag, typename... Args>
             constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
@@ -113,11 +115,13 @@ namespace repeat_effect_until_ns {
             if constexpr (concepts::TagInvocable<Function, Send, Pred>) {
                 return function::tag_invoke(*this, util::forward<Send>(sender), util::forward<Pred>(predicate));
             } else {
-                return Sender<meta::Decay<Send>, meta::Decay<Pred>> { util::forward<Send>(sender), util::forward<Pred>(predicate) };
+                return Sender<meta::Decay<Send>, meta::Decay<Pred>> { util::forward<Send>(sender),
+                                                                      util::forward<Pred>(predicate) };
             }
         }
     };
 }
 
-constexpr inline auto repeat_effect_until = function::curry_back(repeat_effect_until_ns::Function {}, meta::size_constant<2>);
+constexpr inline auto repeat_effect_until =
+    function::curry_back(repeat_effect_until_ns::Function {}, meta::size_constant<2>);
 }

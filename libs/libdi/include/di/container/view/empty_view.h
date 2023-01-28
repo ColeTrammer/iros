@@ -20,14 +20,17 @@ public:
     constexpr static bool empty() { return true; }
 
 private:
-    constexpr friend EmptyView tag_invoke(types::Tag<container::reconstruct>, InPlaceType<EmptyView>, T*, T*) { return EmptyView {}; }
+    constexpr friend EmptyView tag_invoke(types::Tag<container::reconstruct>, InPlaceType<EmptyView>, T*, T*) {
+        return EmptyView {};
+    }
     constexpr friend EmptyView tag_invoke(types::Tag<container::reconstruct>, InPlaceType<EmptyView>, nullptr_t, T*) {
         return EmptyView {};
     }
     constexpr friend EmptyView tag_invoke(types::Tag<container::reconstruct>, InPlaceType<EmptyView>, T*, nullptr_t) {
         return EmptyView {};
     }
-    constexpr friend EmptyView tag_invoke(types::Tag<container::reconstruct>, InPlaceType<EmptyView>, nullptr_t, nullptr_t) {
+    constexpr friend EmptyView tag_invoke(types::Tag<container::reconstruct>, InPlaceType<EmptyView>, nullptr_t,
+                                          nullptr_t) {
         return EmptyView {};
     }
 };

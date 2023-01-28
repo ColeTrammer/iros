@@ -21,13 +21,16 @@ namespace schedule_from_ns {
         struct Type {
         private:
             using List = meta::AsList<Completions>;
-            using Tags = meta::Transform<List, meta::Compose<meta::Quote<meta::List>, meta::Quote<meta::LanguageFunctionReturn>>>;
+            using Tags =
+                meta::Transform<List,
+                                meta::Compose<meta::Quote<meta::List>, meta::Quote<meta::LanguageFunctionReturn>>>;
             using Args = meta::Transform<List, meta::Quote<meta::AsList>>;
             using Combined = meta::Transform<meta::Zip<Tags, Args>, meta::Quote<meta::Join>>;
             using Tupls = meta::Transform<Combined, meta::Uncurry<meta::Quote<meta::DecayedTuple>>>;
             using ArgsStorage = meta::AsTemplate<meta::VariantOrEmpty, meta::PushFront<Tupls, Tuple<Void>>>;
 
-            using OpState3 = meta::ConnectResult<meta::ScheduleResult<Sched>, ScheduleReceiver<Rec, Sched, Completions>>;
+            using OpState3 =
+                meta::ConnectResult<meta::ScheduleResult<Sched>, ScheduleReceiver<Rec, Sched, Completions>>;
 
         public:
             explicit Type(Sched sch_, Rec out_r_) : sch(util::move(sch_)), out_r(util::move(out_r_)) {}
@@ -45,7 +48,8 @@ namespace schedule_from_ns {
                 args.template emplace<Tup>(tag, util::forward<Args>(values)...);
 
                 auto& op_state = op_state3.emplace(util::DeferConstruct([&] {
-                    return execution::connect(execution::schedule(sch), ScheduleReceiver<Rec, Sched, Completions> { this });
+                    return execution::connect(execution::schedule(sch),
+                                              ScheduleReceiver<Rec, Sched, Completions> { this });
                 }));
 
                 execution::start(op_state);
@@ -114,7 +118,8 @@ namespace schedule_from_ns {
                 return m_data->phase2(SetError {}, util::forward<Error>(error));
             }
 
-            void set_stopped() && requires(requires { m_data->phase2(SetStopped {}); }) { return m_data->phase2(SetStopped {}); }
+            void set_stopped() &&
+                requires(requires { m_data->phase2(SetStopped {}); }) { return m_data->phase2(SetStopped {}); }
         };
     };
 
@@ -133,8 +138,8 @@ namespace schedule_from_ns {
             template<typename S>
             explicit Type(Sched scheduler, Rec receiver, S&& sender)
                 : m_data(util::move(scheduler), util::move(receiver))
-                , m_op_state2(
-                      execution::connect(util::forward<S>(sender), Receiver<Rec, Sched, Completions> { util::address_of(m_data) })) {}
+                , m_op_state2(execution::connect(util::forward<S>(sender),
+                                                 Receiver<Rec, Sched, Completions> { util::address_of(m_data) })) {}
 
         private:
             friend void tag_invoke(types::Tag<execution::start>, Type& self) { execution::start(self.m_op_state2); }
@@ -157,14 +162,16 @@ namespace schedule_from_ns {
         private:
             template<concepts::DecaysTo<Type> Self, typename Env>
             friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env)
-                -> meta::MakeCompletionSignatures<meta::Like<Self, Send>, Env,
-                                                  meta::MakeCompletionSignatures<meta::ScheduleResult<Sched>, Env, CompletionSignatures<>,
-                                                                                 meta::Id<CompletionSignatures<>>::template Invoke>>;
+                -> meta::MakeCompletionSignatures<
+                    meta::Like<Self, Send>, Env,
+                    meta::MakeCompletionSignatures<meta::ScheduleResult<Sched>, Env, CompletionSignatures<>,
+                                                   meta::Id<CompletionSignatures<>>::template Invoke>>;
 
             template<concepts::DecaysTo<Type> Self, typename Rec>
             requires(concepts::DecayConstructible<meta::Like<Self, Send>> &&
-                     concepts::SenderTo<meta::Like<Self, Send>,
-                                        Receiver<Rec, Sched, meta::CompletionSignaturesOf<meta::Like<Self, Send>, meta::EnvOf<Rec>>>>)
+                     concepts::SenderTo<
+                         meta::Like<Self, Send>,
+                         Receiver<Rec, Sched, meta::CompletionSignaturesOf<meta::Like<Self, Send>, meta::EnvOf<Rec>>>>)
             friend auto tag_invoke(types::Tag<connect>, Self&& self, Rec receiver) {
                 return OperationState<Send, Rec, Sched> { util::forward<Self>(self).scheduler, util::move(receiver),
                                                           util::forward<Self>(self).sender };
@@ -194,7 +201,8 @@ namespace schedule_from_ns {
             if constexpr (concepts::TagInvocable<Function, Sched, Send>) {
                 return function::tag_invoke(*this, util::forward<Sched>(scheduler), util::forward<Send>(sender));
             } else {
-                return Sender<meta::Decay<Send>, meta::Decay<Sched>> { util::forward<Send>(sender), util::forward<Sched>(scheduler) };
+                return Sender<meta::Decay<Send>, meta::Decay<Sched>> { util::forward<Send>(sender),
+                                                                       util::forward<Sched>(scheduler) };
             }
         }
     };

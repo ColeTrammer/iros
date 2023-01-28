@@ -34,7 +34,8 @@ namespace detail {
         using Type = TupleImpl<meta::IndexSequence<indices...>, Types...>;
     };
 
-    template<types::size_t index_head, types::size_t... indices, types::size_t index_to_find, typename T, typename... Rest>
+    template<types::size_t index_head, types::size_t... indices, types::size_t index_to_find, typename T,
+             typename... Rest>
     requires(index_to_find != 0)
     struct TupleImplBase<index_to_find, meta::IndexSequence<index_head, indices...>, T, Rest...>
         : TupleImplBase<index_to_find - 1, meta::IndexSequence<indices...>, Rest...> {};
@@ -42,7 +43,8 @@ namespace detail {
 }
 
 template<types::size_t index, types::size_t... indices, typename T, typename... Rest>
-class TupleImpl<meta::IndexSequence<index, indices...>, T, Rest...> : public TupleImpl<meta::IndexSequence<indices...>, Rest...> {
+class TupleImpl<meta::IndexSequence<index, indices...>, T, Rest...>
+    : public TupleImpl<meta::IndexSequence<indices...>, Rest...> {
 private:
     using Base = TupleImpl<meta::IndexSequence<indices...>, Rest...>;
 
@@ -59,7 +61,8 @@ public:
         : Base(construct_tuple_impl_valuewise, util::forward<Args>(args)...), m_value(util::forward<Arg>(arg)) {}
 
     template<concepts::TupleLike Tup>
-    requires(sizeof...(Rest) + 1 == meta::TupleSize<Tup> && concepts::ConstructibleFrom<T, meta::TupleValue<Tup, index>> &&
+    requires(sizeof...(Rest) + 1 == meta::TupleSize<Tup> &&
+             concepts::ConstructibleFrom<T, meta::TupleValue<Tup, index>> &&
              concepts::Conjunction<concepts::ConstructibleFrom<Rest, meta::TupleValue<Tup, indices>>...>)
     constexpr TupleImpl(ConstructTupleImplFromTuplelike, Tup&& tuple)
         : Base(construct_tuple_impl_valuewise, util::get<indices>(util::forward<Tup>(tuple))...)
@@ -77,10 +80,11 @@ protected:
     }
 
     template<concepts::DecaySameAs<TupleImpl> Self, concepts::TupleLike Tup>
-    requires(sizeof...(Rest) + 1 == meta::TupleSize<Tup> &&
-             (concepts::ConstLValueReference<Tup> || concepts::MutableRValueReference<Tup&&>) &&
-             concepts::AssignableFrom<meta::Like<Self, T>, meta::TupleValue<Tup, index> &&> &&
-             concepts::Conjunction<concepts::AssignableFrom<meta::Like<Self, Rest>, meta::TupleValue<Tup, indices> &&>...>)
+    requires(
+        sizeof...(Rest) + 1 == meta::TupleSize<Tup> &&
+        (concepts::ConstLValueReference<Tup> || concepts::MutableRValueReference<Tup&&>) &&
+        concepts::AssignableFrom<meta::Like<Self, T>, meta::TupleValue<Tup, index> &&> &&
+        concepts::Conjunction<concepts::AssignableFrom<meta::Like<Self, Rest>, meta::TupleValue<Tup, indices> &&>...>)
     constexpr static void static_assign(Self&& self, Tup&& other) {
         self.m_value = util::get<index>(util::forward<Tup>(other));
         Base::static_assign_unchecked(util::forward_as_base<Self, Base>(self), util::forward<Tup>(other));
@@ -116,7 +120,8 @@ public:
 
 protected:
     template<concepts::DecaySameAs<TupleImpl> Self, concepts::TupleLike Tup>
-    requires(meta::TupleSize<Tup> == 0 && (concepts::ConstLValueReference<Tup> || concepts::MutableRValueReference<Tup&&>) )
+    requires(meta::TupleSize<Tup> == 0 &&
+             (concepts::ConstLValueReference<Tup> || concepts::MutableRValueReference<Tup&&>) )
     constexpr static void static_assign(Self&&, Tup&&) {}
 
     template<typename Self, typename Tup>

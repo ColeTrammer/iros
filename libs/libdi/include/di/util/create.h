@@ -7,10 +7,12 @@
 
 namespace di::concepts {
 template<typename T, typename... Args>
-concept CreatableFrom = requires(Args&&... args) { util::create_in_place(in_place_type<T>, util::forward<Args>(args)...); };
+concept CreatableFrom =
+    requires(Args&&... args) { util::create_in_place(in_place_type<T>, util::forward<Args>(args)...); };
 
 template<template<typename...> typename Template, typename... Args>
-concept TemplateCreatableFrom = CreateDeducible<Template, Args...> && CreatableFrom<meta::DeduceCreate<Template, Args...>, Args...>;
+concept TemplateCreatableFrom =
+    CreateDeducible<Template, Args...> && CreatableFrom<meta::DeduceCreate<Template, Args...>, Args...>;
 }
 
 namespace di::util {

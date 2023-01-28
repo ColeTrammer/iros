@@ -19,41 +19,44 @@ Expected<void> AddressSpace::map_physical_page(VirtualAddress location, Physical
 
     auto decomposed = decompose_virtual_address(location);
     auto pml4_offset = decomposed.get<page_structure::Pml4Offset>();
-    auto& pml4 =
-        TRY(map_physical_address(PhysicalAddress(architecture_page_table_base()), 0x1000)).typed<page_structure::PageStructureTable>();
+    auto& pml4 = TRY(map_physical_address(PhysicalAddress(architecture_page_table_base()), 0x1000))
+                     .typed<page_structure::PageStructureTable>();
     if (!pml4[pml4_offset].get<page_structure::Present>()) {
-        pml4[pml4_offset] =
-            page_structure::StructureEntry(page_structure::PhysicalAddress(TRY(allocate_page_frame()).raw_address() >> 12),
-                                           page_structure::Present(true), page_structure::Writable(true), page_structure::User(true));
+        pml4[pml4_offset] = page_structure::StructureEntry(
+            page_structure::PhysicalAddress(TRY(allocate_page_frame()).raw_address() >> 12),
+            page_structure::Present(true), page_structure::Writable(true), page_structure::User(true));
     }
 
     auto pdp_offset = decomposed.get<page_structure::PdpOffset>();
-    auto& pdp = TRY(map_physical_address(PhysicalAddress(pml4[pml4_offset].get<page_structure::PhysicalAddress>() << 12), 0x1000))
+    auto& pdp = TRY(map_physical_address(
+                        PhysicalAddress(pml4[pml4_offset].get<page_structure::PhysicalAddress>() << 12), 0x1000))
                     .typed<page_structure::PageStructureTable>();
     if (!pdp[pdp_offset].get<page_structure::Present>()) {
-        pdp[pdp_offset] =
-            page_structure::StructureEntry(page_structure::PhysicalAddress(TRY(allocate_page_frame()).raw_address() >> 12),
-                                           page_structure::Present(true), page_structure::Writable(true), page_structure::User(true));
+        pdp[pdp_offset] = page_structure::StructureEntry(
+            page_structure::PhysicalAddress(TRY(allocate_page_frame()).raw_address() >> 12),
+            page_structure::Present(true), page_structure::Writable(true), page_structure::User(true));
     }
 
     auto pd_offset = decomposed.get<page_structure::PdOffset>();
-    auto& pd = TRY(map_physical_address(PhysicalAddress(pdp[pdp_offset].get<page_structure::PhysicalAddress>() << 12), 0x1000))
-                   .typed<page_structure::PageStructureTable>();
+    auto& pd =
+        TRY(map_physical_address(PhysicalAddress(pdp[pdp_offset].get<page_structure::PhysicalAddress>() << 12), 0x1000))
+            .typed<page_structure::PageStructureTable>();
     if (!pd[pd_offset].get<page_structure::Present>()) {
-        pd[pd_offset] =
-            page_structure::StructureEntry(page_structure::PhysicalAddress(TRY(allocate_page_frame()).raw_address() >> 12),
-                                           page_structure::Present(true), page_structure::Writable(true), page_structure::User(true));
+        pd[pd_offset] = page_structure::StructureEntry(
+            page_structure::PhysicalAddress(TRY(allocate_page_frame()).raw_address() >> 12),
+            page_structure::Present(true), page_structure::Writable(true), page_structure::User(true));
     }
 
     auto pt_offset = decomposed.get<page_structure::PtOffset>();
-    auto& pt = TRY(map_physical_address(PhysicalAddress(pd[pd_offset].get<page_structure::PhysicalAddress>() << 12), 0x1000))
-                   .typed<page_structure::FinalTable>();
+    auto& pt =
+        TRY(map_physical_address(PhysicalAddress(pd[pd_offset].get<page_structure::PhysicalAddress>() << 12), 0x1000))
+            .typed<page_structure::FinalTable>();
     if (pt[pt_offset].get<page_structure::Present>()) {
         println(u8"Already allocated."_sv);
     }
-    pt[pt_offset] =
-        page_structure::StructureEntry(page_structure::PhysicalAddress(physical_address.raw_address() >> 12), page_structure::Present(true),
-                                       page_structure::Writable(true), page_structure::User(true));
+    pt[pt_offset] = page_structure::StructureEntry(
+        page_structure::PhysicalAddress(physical_address.raw_address() >> 12), page_structure::Present(true),
+        page_structure::Writable(true), page_structure::User(true));
 
     return {};
 }

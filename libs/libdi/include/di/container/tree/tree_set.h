@@ -15,12 +15,14 @@ template<typename Value, concepts::StrictWeakOrder<Value> Comp = function::Compa
          concepts::AllocatorOf<RBTreeNode<Value>> Alloc = DefaultAllocator<RBTreeNode<Value>>>
 class TreeSet
     : public RBTree<Value, Comp, Alloc,
-                    SetInterface<TreeSet<Value, Comp, Alloc>, Value, RBTreeIterator<Value>, meta::ConstIterator<RBTreeIterator<Value>>,
+                    SetInterface<TreeSet<Value, Comp, Alloc>, Value, RBTreeIterator<Value>,
+                                 meta::ConstIterator<RBTreeIterator<Value>>,
                                  detail::RBTreeValidForLookup<Value, Comp>::template Type, false>,
                     false> {
 private:
     using Base = RBTree<Value, Comp, Alloc,
-                        SetInterface<TreeSet<Value, Comp, Alloc>, Value, RBTreeIterator<Value>, meta::ConstIterator<RBTreeIterator<Value>>,
+                        SetInterface<TreeSet<Value, Comp, Alloc>, Value, RBTreeIterator<Value>,
+                                     meta::ConstIterator<RBTreeIterator<Value>>,
                                      detail::RBTreeValidForLookup<Value, Comp>::template Type, false>,
                         false>;
 

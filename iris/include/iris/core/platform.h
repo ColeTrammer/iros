@@ -25,7 +25,8 @@ public:
         if consteval {
             return di::container::Allocator<T>().allocate(count);
         } else {
-            auto* data = ::operator new(sizeof(T) * count, std::align_val_t { di::max(alignof(T), alignof(void*)) }, std::nothrow);
+            auto* data = ::operator new(sizeof(T) * count, std::align_val_t { di::max(alignof(T), alignof(void*)) },
+                                        std::nothrow);
             DI_ASSERT(data);
 
             // FIXME: propagate allocation failure, when di::TreeSet<> supports fallible allocation properly.

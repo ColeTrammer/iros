@@ -6,10 +6,12 @@ public:
 private:
     constexpr friend size_t tag_invoke(di::Tag<di::vocab::tuple_size>, di::InPlaceType<X>) { return 1zu; }
 
-    constexpr friend di::InPlaceType<int> tag_invoke(di::Tag<di::vocab::tuple_element>, di::InPlaceType<X>, di::InPlaceIndex<0>);
+    constexpr friend di::InPlaceType<int> tag_invoke(di::Tag<di::vocab::tuple_element>, di::InPlaceType<X>,
+                                                     di::InPlaceIndex<0>);
 
     template<di::concepts::DecaySameAs<X> Self>
-    constexpr friend di::meta::Like<Self, int> tag_invoke(di::Tag<di::util::get_in_place>, di::InPlaceIndex<0>, Self&& self) {
+    constexpr friend di::meta::Like<Self, int> tag_invoke(di::Tag<di::util::get_in_place>, di::InPlaceIndex<0>,
+                                                          Self&& self) {
         return di::util::forward_like<Self>(self.x);
     }
 
@@ -81,7 +83,8 @@ constexpr void basic() {
     auto f = x.get<0>();
     ASSERT_EQ(f, 0);
 
-    static_assert(di::concepts::detail::CanStructuredBindHelper<di::Tuple<int, int, int>, di::meta::IndexSequence<0, 1, 2>>::value);
+    static_assert(di::concepts::detail::CanStructuredBindHelper<di::Tuple<int, int, int>,
+                                                                di::meta::IndexSequence<0, 1, 2>>::value);
     static_assert(di::concepts::detail::CanStructuredBind<di::Tuple<int, int, int>>);
 
     auto [a, b, c] = x;
@@ -90,7 +93,8 @@ constexpr void basic() {
     ASSERT_EQ(c, 0);
 
     using Z = di::vocab::TupleImpl<di::meta::IndexSequenceFor<int, int, int>, int, int, int>;
-    static_assert(di::concepts::ConstructibleFrom<Z, di::vocab::ConstructTupleImplFromTuplelike, di::Tuple<short, short, int> const&>);
+    static_assert(di::concepts::ConstructibleFrom<Z, di::vocab::ConstructTupleImplFromTuplelike,
+                                                  di::Tuple<short, short, int> const&>);
     static_assert(di::concepts::ConstructibleFrom<di::Tuple<int, int, int>, di::Tuple<short, short, int> const&>);
     static_assert(di::concepts::ConstructibleFrom<di::Tuple<int, int, int>, di::Tuple<short, short, int>&>);
     static_assert(di::concepts::ConstructibleFrom<di::Tuple<int, int, int>, di::Tuple<short, short, int> const&&>);

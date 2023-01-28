@@ -117,7 +117,8 @@ private:
 
     template<concepts::ContiguousIterator It, concepts::SizedSentinelFor<It> Sent>
     requires(concepts::ConvertibleToNonSlicing<It, Value*>)
-    constexpr friend vocab::Span<Value> tag_invoke(types::Tag<container::reconstruct>, InPlaceType<Self>, It first, Sent last) {
+    constexpr friend vocab::Span<Value> tag_invoke(types::Tag<container::reconstruct>, InPlaceType<Self>, It first,
+                                                   Sent last) {
         return vocab::Span<Value>(util::move(first), util::move(last));
     }
 };

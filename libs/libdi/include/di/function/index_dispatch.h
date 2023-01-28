@@ -16,7 +16,8 @@ constexpr R index_dispatch(size_t index, F&& function, Args&&... args) {
             if constexpr (concepts::LanguageVoid<R>) {
                 function::invoke(util::forward<F>(function), in_place_index<indices>, util::forward<Args>(args)...);
             } else {
-                return function::invoke(util::forward<F>(function), in_place_index<indices>, util::forward<Args>(args)...);
+                return function::invoke(util::forward<F>(function), in_place_index<indices>,
+                                        util::forward<Args>(args)...);
             }
         })... };
     }

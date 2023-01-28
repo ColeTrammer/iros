@@ -47,10 +47,12 @@ namespace let_value_with_ns {
                 }
 
                 template<concepts::DecaysTo<Type> Self, typename Env>
-                friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env) -> types::DependentCompletionSignatures<Env>;
+                friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env)
+                    -> types::DependentCompletionSignatures<Env>;
 
                 template<concepts::DecaysTo<Type> Self, typename Env>
-                friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env) -> meta::CompletionSignaturesOf<Send, Env>
+                friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env)
+                    -> meta::CompletionSignaturesOf<Send, Env>
                 requires(true);
             };
         };

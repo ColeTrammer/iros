@@ -48,7 +48,8 @@ void* operator new(std::size_t size, std::align_val_t alignment, std::nothrow_t 
 
             iris::mm::AddressSpace current(get_cr3() & ~0xFFFULL);
             auto physical_page = iris::mm::allocate_page_frame().value();
-            iris::println(u8"Mapping physical page {} to {}"_sv, physical_page.raw_address(), virtual_address.raw_address());
+            iris::println(u8"Mapping physical page {} to {}"_sv, physical_page.raw_address(),
+                          virtual_address.raw_address());
             if (!current.map_physical_page(virtual_address, physical_page)) {
                 iris::println(u8"Failed to map physical page in ::new()"_sv);
                 return nullptr;

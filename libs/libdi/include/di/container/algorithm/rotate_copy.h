@@ -19,9 +19,10 @@ namespace detail {
 
         template<concepts::ForwardContainer Con, concepts::WeaklyIncrementable Out>
         requires(concepts::IndirectlyCopyable<meta::ContainerIterator<Con>, Out>)
-        constexpr InOutResult<meta::BorrowedIterator<Con>, Out> operator()(Con&& container, meta::ContainerIterator<Con> middle,
-                                                                           Out output) const {
-            return (*this)(container::begin(container), util::move(middle), container::end(container), util::move(output));
+        constexpr InOutResult<meta::BorrowedIterator<Con>, Out>
+        operator()(Con&& container, meta::ContainerIterator<Con> middle, Out output) const {
+            return (*this)(container::begin(container), util::move(middle), container::end(container),
+                           util::move(output));
         }
     };
 }

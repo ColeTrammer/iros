@@ -45,16 +45,16 @@ namespace detail {
                                                         };
 
     template<typename T>
-    concept IotaAdvancable =
-        IotaDecrementable<T> && concepts::TotallyOrdered<T> && requires(T i, T const ci, meta::IteratorSSizeType<T> const n) {
-                                                                   { i += n } -> concepts::SameAs<T&>;
-                                                                   { i -= n } -> concepts::SameAs<T&>;
-                                                                   T(ci + n);
-                                                                   T(n + ci);
-                                                                   T(ci - n);
-                                                                   T(n - ci);
-                                                                   { ci - ci } -> concepts::ConvertibleTo<meta::IteratorSSizeType<T>>;
-                                                               };
+    concept IotaAdvancable = IotaDecrementable<T> && concepts::TotallyOrdered<T> &&
+                             requires(T i, T const ci, meta::IteratorSSizeType<T> const n) {
+                                 { i += n } -> concepts::SameAs<T&>;
+                                 { i -= n } -> concepts::SameAs<T&>;
+                                 T(ci + n);
+                                 T(n + ci);
+                                 T(ci - n);
+                                 T(n - ci);
+                                 { ci - ci } -> concepts::ConvertibleTo<meta::IteratorSSizeType<T>>;
+                             };
 }
 
 template<concepts::Copyable T, concepts::Semiregular Bound = UnreachableSentinel>
@@ -78,7 +78,8 @@ private:
               Iterator,
               meta::Conditional<detail::IotaAdvancable<T>, RandomAccessIteratorTag,
                                 meta::Conditional<detail::IotaDecrementable<T>, BidirectionalIteratorTag,
-                                                  meta::Conditional<detail::IotaIncrementable<T>, ForwardIteratorTag, InputIteratorTag>>>,
+                                                  meta::Conditional<detail::IotaIncrementable<T>, ForwardIteratorTag,
+                                                                    InputIteratorTag>>>,
               T, SSizeType> {
     public:
         Iterator()
@@ -211,8 +212,8 @@ public:
     }
 
     constexpr auto size() const
-    requires((concepts::SameAs<T, Bound> && detail::IotaAdvancable<T>) || (concepts::Integer<T> && concepts::Integer<Bound>) ||
-             (concepts::SizedSentinelFor<Bound, T>) )
+    requires((concepts::SameAs<T, Bound> && detail::IotaAdvancable<T>) ||
+             (concepts::Integer<T> && concepts::Integer<Bound>) || (concepts::SizedSentinelFor<Bound, T>) )
     {
         if constexpr (concepts::Integer<T> && concepts::Integer<Bound>) {
             return (m_value < 0) ? ((m_bound < 0) ? math::to_unsigned(-m_value) - math::to_unsigned(-m_value)
@@ -227,7 +228,8 @@ private:
     template<concepts::OneOf<Iterator, meta::Conditional<is_bounded, Sentinel, UnreachableSentinel>> Sent>
     constexpr friend auto tag_invoke(types::Tag<container::reconstruct>, Iterator first, Sent last) {
         if constexpr (concepts::SameAs<Iterator, Sent>) {
-            return IotaView<decltype(*util::move(first)), decltype(*util::move(last))>(*util::move(first), *util::move(last));
+            return IotaView<decltype(*util::move(first)), decltype(*util::move(last))>(*util::move(first),
+                                                                                       *util::move(last));
         } else {
             return IotaView(util::move(first), util::move(last));
         }
@@ -238,6 +240,7 @@ private:
 };
 
 template<typename T, typename Bound>
-requires(!concepts::Integer<T> || !concepts::Integer<Bound> || concepts::SignedInteger<T> == concepts::SignedInteger<Bound>)
+requires(!concepts::Integer<T> || !concepts::Integer<Bound> ||
+         concepts::SignedInteger<T> == concepts::SignedInteger<Bound>)
 IotaView(T, Bound) -> IotaView<T, Bound>;
 }

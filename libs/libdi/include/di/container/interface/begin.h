@@ -16,8 +16,8 @@ namespace detail {
     concept ArrayBegin = concepts::LanguageArray<meta::RemoveReference<T>>;
 
     template<typename T>
-    concept CustomBegin =
-        concepts::TagInvocable<BeginFunction, T> && concepts::Iterator<meta::Decay<meta::TagInvokeResult<BeginFunction, T>>>;
+    concept CustomBegin = concepts::TagInvocable<BeginFunction, T> &&
+                          concepts::Iterator<meta::Decay<meta::TagInvokeResult<BeginFunction, T>>>;
 
     template<typename T>
     concept MemberBegin = requires(T&& container) {

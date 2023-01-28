@@ -15,7 +15,8 @@ namespace detail {
             return container::sort_heap(first, last, util::ref(comp), util::ref(proj));
         }
 
-        template<concepts::RandomAccessContainer Con, typename Comp = function::Compare, typename Proj = function::Identity>
+        template<concepts::RandomAccessContainer Con, typename Comp = function::Compare,
+                 typename Proj = function::Identity>
         requires(concepts::Sortable<meta::ContainerIterator<Con>, Comp, Proj>)
         constexpr meta::BorrowedIterator<Con> operator()(Con&& container, Comp comp = {}, Proj proj = {}) const {
             return (*this)(container::begin(container), container::end(container), util::ref(comp), util::ref(proj));

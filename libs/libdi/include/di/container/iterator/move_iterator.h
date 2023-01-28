@@ -17,9 +17,14 @@
 
 namespace di::container {
 template<concepts::InputIterator Iter>
-class MoveIterator : public IteratorBase<MoveIterator<Iter>,meta::Conditional<concepts::RandomAccessIterator<Iter>, RandomAccessIteratorTag,
+class MoveIterator
+    : public IteratorBase<
+          MoveIterator<Iter>,
+          meta::Conditional<concepts::RandomAccessIterator<Iter>, RandomAccessIteratorTag,
                             meta::Conditional<concepts::BidirectionalIterator<Iter>, BidirectionalIteratorTag,
-                                              meta::Conditional<concepts::ForwardIterator<Iter>, ForwardIteratorTag, InputIteratorTag>>>, meta::IteratorValue<Iter>, meta::IteratorSSizeType<Iter>> {
+                                              meta::Conditional<concepts::ForwardIterator<Iter>, ForwardIteratorTag,
+                                                                InputIteratorTag>>>,
+          meta::IteratorValue<Iter>, meta::IteratorSSizeType<Iter>> {
 private:
     using SSizeType = meta::IteratorSSizeType<Iter>;
 
@@ -35,7 +40,8 @@ public:
     constexpr MoveIterator(MoveIterator<Other> const& other) : m_iterator(other.m_iterator) {}
 
     template<typename Other>
-    requires(!concepts::SameAs<Iter, Other> && concepts::ConvertibleTo<Other const&, Iter> && concepts::AssignableFrom<Iter&, Other const&>)
+    requires(!concepts::SameAs<Iter, Other> && concepts::ConvertibleTo<Other const&, Iter> &&
+             concepts::AssignableFrom<Iter&, Other const&>)
     constexpr MoveIterator& operator=(MoveIterator<Other> const& other) {
         this->m_iterator = other.m_iterator;
         return *this;

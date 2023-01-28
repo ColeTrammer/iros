@@ -16,7 +16,8 @@ namespace detail {
     ...(Cons) == 0;
 
     template<typename... Cons>
-    concept ViewZip = requires(Cons&&... containers) { ZipView<meta::AsView<Cons>...>(util::forward<Cons>(containers)...); };
+    concept ViewZip =
+        requires(Cons&&... containers) { ZipView<meta::AsView<Cons>...>(util::forward<Cons>(containers)...); };
 
     struct ZipFunction {
         template<concepts::ViewableContainer... Cons>

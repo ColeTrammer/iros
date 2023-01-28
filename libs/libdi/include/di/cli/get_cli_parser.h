@@ -7,7 +7,8 @@ namespace di::cli {
 namespace detail {
     struct GetCliParserInPlaceFunction {
         template<typename T>
-        requires(concepts::TagInvocable<GetCliParserInPlaceFunction, InPlaceType<T>> || requires { T::get_cli_parser(); })
+        requires(concepts::TagInvocable<GetCliParserInPlaceFunction, InPlaceType<T>> ||
+                 requires { T::get_cli_parser(); })
         constexpr auto operator()(InPlaceType<T>) const {
             if constexpr (concepts::TagInvocable<GetCliParserInPlaceFunction, InPlaceType<T>>) {
                 return function::tag_invoke(*this, in_place_type<T>);

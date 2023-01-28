@@ -28,7 +28,8 @@ namespace then_ns {
 
         private:
             template<typename... Args>
-            requires(concepts::Invocable<Fun, Args...> && concepts::LanguageVoid<meta::UnwrapExpected<InvokeResult<Fun, Args...>>> &&
+            requires(concepts::Invocable<Fun, Args...> &&
+                     concepts::LanguageVoid<meta::UnwrapExpected<InvokeResult<Fun, Args...>>> &&
                      concepts::ReceiverOf<Rec, types::CompletionSignatures<SetValue()>>)
             void set_value(Args&&... args) && {
                 if constexpr (concepts::Expected<meta::InvokeResult<Fun, Args...>>) {
@@ -46,7 +47,8 @@ namespace then_ns {
 
             template<typename... Args>
             requires(concepts::Invocable<Fun, Args...> &&
-                     concepts::ReceiverOf<Rec, types::CompletionSignatures<SetValue(meta::UnwrapExpected<InvokeResult<Fun, Args...>>)>>)
+                     concepts::ReceiverOf<
+                         Rec, types::CompletionSignatures<SetValue(meta::UnwrapExpected<InvokeResult<Fun, Args...>>)>>)
             void set_value(Args&&... args) && {
                 if constexpr (concepts::Expected<meta::InvokeResult<Fun, Args...>>) {
                     auto result = function::invoke(util::move(m_function), util::forward<Args>(args)...);
@@ -56,7 +58,8 @@ namespace then_ns {
                         execution::set_value(util::move(*this).base(), util::move(result).value());
                     }
                 } else {
-                    execution::set_value(util::move(*this).base(), function::invoke(util::move(m_function), util::forward<Args>(args)...));
+                    execution::set_value(util::move(*this).base(),
+                                         function::invoke(util::move(m_function), util::forward<Args>(args)...));
                 }
             }
 
@@ -89,17 +92,20 @@ namespace then_ns {
 
         private:
             template<typename... Args>
-            using ValueCompletion = meta::List<meta::Type<ComplSig<SetValue, meta::UnwrapExpected<meta::InvokeResult<Fun, Args...>>>>>;
+            using ValueCompletion =
+                meta::List<meta::Type<ComplSig<SetValue, meta::UnwrapExpected<meta::InvokeResult<Fun, Args...>>>>>;
 
             template<typename... Args>
             using ValueErrorCompletion = meta::Type<ErrorComplSigs<meta::InvokeResult<Fun, Args...>>>;
 
             template<typename... Args>
             using SetValueCompletions =
-                meta::AsTemplate<CompletionSignatures, meta::Concat<ValueCompletion<Args...>, ValueErrorCompletion<Args...>>>;
+                meta::AsTemplate<CompletionSignatures,
+                                 meta::Concat<ValueCompletion<Args...>, ValueErrorCompletion<Args...>>>;
 
             template<concepts::DecaysTo<Type> Self, typename Rec>
-            requires(concepts::DecayConstructible<meta::Like<Self, Send>> && concepts::SenderTo<meta::Like<Self, Send>, Receiver<Rec, Fun>>)
+            requires(concepts::DecayConstructible<meta::Like<Self, Send>> &&
+                     concepts::SenderTo<meta::Like<Self, Send>, Receiver<Rec, Fun>>)
             friend auto tag_invoke(types::Tag<connect>, Self&& self, Rec receiver) {
                 return connect(util::forward<Self>(self).sender,
                                Receiver<Rec, Fun> { util::move(receiver), util::forward<Self>(self).function });
@@ -107,7 +113,8 @@ namespace then_ns {
 
             template<concepts::DecaysTo<Type> Self, typename Env>
             friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env)
-                -> meta::MakeCompletionSignatures<meta::Like<Self, Send>, Env, types::CompletionSignatures<>, SetValueCompletions>;
+                -> meta::MakeCompletionSignatures<meta::Like<Self, Send>, Env, types::CompletionSignatures<>,
+                                                  SetValueCompletions>;
 
             template<concepts::ForwardingSenderQuery Tag, typename... Args>
             constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
@@ -124,12 +131,15 @@ namespace then_ns {
         template<concepts::Sender Send, concepts::MovableValue Fun>
         concepts::Sender auto operator()(Send&& sender, Fun&& function) const {
             if constexpr (requires {
-                              function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender), util::forward<Send>(sender),
-                                                   util::forward<Fun>(function));
+                              function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender),
+                                                   util::forward<Send>(sender), util::forward<Fun>(function));
                           }) {
-                return function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender), util::forward<Send>(sender),
-                                            util::forward<Fun>(function));
-            } else if constexpr (requires { function::tag_invoke(*this, util::forward<Send>(sender), util::forward<Fun>(function)); }) {
+                return function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender),
+                                            util::forward<Send>(sender), util::forward<Fun>(function));
+            } else if constexpr (requires {
+                                     function::tag_invoke(*this, util::forward<Send>(sender),
+                                                          util::forward<Fun>(function));
+                                 }) {
                 return function::tag_invoke(*this, util::forward<Send>(sender), util::forward<Fun>(function));
             } else {
                 return Sender<Send, Fun> { util::forward<Send>(sender), util::forward<Fun>(function) };

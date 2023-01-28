@@ -17,7 +17,8 @@ namespace detail {
 
 template<class T, class Completions>
 concept ReceiverOf =
-    Receiver<T> && requires(Completions* completions) {
-                       []<detail::ValidCompletionFor<T>... Signatures>(types::CompletionSignatures<Signatures...>*) {}(completions);
-                   };
+    Receiver<T> &&
+    requires(Completions* completions) {
+        []<detail::ValidCompletionFor<T>... Signatures>(types::CompletionSignatures<Signatures...>*) {}(completions);
+    };
 }

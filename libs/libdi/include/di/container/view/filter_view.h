@@ -30,28 +30,31 @@ private:
     class Iterator
         : public IteratorBase<Iterator,
                               meta::Conditional<concepts::BidirectionalIterator<Iter>, BidirectionalIteratorTag,
-                                                meta::Conditional<concepts::ForwardIterator<Iter>, ForwardIteratorTag, InputIteratorTag>>,
+                                                meta::Conditional<concepts::ForwardIterator<Iter>, ForwardIteratorTag,
+                                                                  InputIteratorTag>>,
                               Value, SSizeType> {
     public:
         Iterator()
         requires(concepts::DefaultInitializable<Iter>)
         = default;
 
-        constexpr Iterator(FilterView& parent, Iter base) : m_parent(util::address_of(parent)), m_base(util::move(base)) {}
+        constexpr Iterator(FilterView& parent, Iter base)
+            : m_parent(util::address_of(parent)), m_base(util::move(base)) {}
 
         constexpr Iter const& base() const& { return m_base; }
         constexpr Iter base() && { return util::move(m_base); }
 
         constexpr decltype(auto) operator*() const { return *m_base; }
         constexpr Iter operator->() const
-        requires(concepts::ForwardIterator<Iter> && (concepts::Pointer<Iter> || requires(Iter iter) { iter.operator->(); }) &&
-                 concepts::Copyable<Iter>)
+        requires(concepts::ForwardIterator<Iter> &&
+                 (concepts::Pointer<Iter> || requires(Iter iter) { iter.operator->(); }) && concepts::Copyable<Iter>)
         {
             return m_base;
         }
 
         constexpr void advance_one() {
-            m_base = container::find_if(util::move(++m_base), container::end(m_parent->m_base), util::ref(m_parent->m_predicate.value()));
+            m_base = container::find_if(util::move(++m_base), container::end(m_parent->m_base),
+                                        util::ref(m_parent->m_predicate.value()));
         }
 
         constexpr void back_one()
@@ -86,7 +89,8 @@ public:
     requires(concepts::DefaultInitializable<View> && concepts::DefaultInitializable<Pred>)
     = default;
 
-    constexpr explicit FilterView(View base, Pred predicate) : m_base(util::move(base)), m_predicate(util::move(predicate)) {}
+    constexpr explicit FilterView(View base, Pred predicate)
+        : m_base(util::move(base)), m_predicate(util::move(predicate)) {}
 
     constexpr View base() const&
     requires(concepts::CopyConstructible<View>)

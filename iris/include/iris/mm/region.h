@@ -15,7 +15,8 @@ DI_DEFINE_ENUM_BITWISE_OPERATIONS(RegionFlags)
 
 class Region {
 public:
-    constexpr explicit Region(VirtualAddress base, usize length, RegionFlags flags) : m_base(base), m_length(length), m_flags(flags) {
+    constexpr explicit Region(VirtualAddress base, usize length, RegionFlags flags)
+        : m_base(base), m_length(length), m_flags(flags) {
         DI_ASSERT_GT(length, 0u);
         DI_ASSERT_EQ(length % 0x1000, 0u);
     }
@@ -58,7 +59,9 @@ private:
     // There overloads are provided to enable heterogenous lookup of Region objects in a
     // di::TreeSet by a VirtualAddress.
     constexpr friend bool operator==(Region const& a, VirtualAddress b) { return a.contains(b); }
-    constexpr friend di::strong_ordering operator<=>(Region const& a, VirtualAddress b) { return a.compare_with_address(b); }
+    constexpr friend di::strong_ordering operator<=>(Region const& a, VirtualAddress b) {
+        return a.compare_with_address(b);
+    }
 
     VirtualAddress m_base;
     usize m_length { 0 };

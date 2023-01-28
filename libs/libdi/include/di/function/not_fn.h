@@ -27,17 +27,20 @@ namespace detail {
         constexpr NotFnFunction& operator=(NotFnFunction&&) = delete;
 
         template<typename... Args>
-        constexpr auto operator()(Args&&... args) & -> decltype(!function::invoke(m_function, util::forward<Args>(args)...)) {
+        constexpr auto operator()(Args&&... args) & -> decltype(!function::invoke(m_function,
+                                                                                  util::forward<Args>(args)...)) {
             return !function::invoke(m_function, util::forward<Args>(args)...);
         }
 
         template<typename... Args>
-        constexpr auto operator()(Args&&... args) const& -> decltype(!function::invoke(m_function, util::forward<Args>(args)...)) {
+        constexpr auto operator()(Args&&... args) const& -> decltype(!function::invoke(m_function,
+                                                                                       util::forward<Args>(args)...)) {
             return !function::invoke(m_function, util::forward<Args>(args)...);
         }
 
         template<typename... Args>
-        constexpr auto operator()(Args&&... args) && -> decltype(!function::invoke(util::move(m_function), util::forward<Args>(args)...)) {
+        constexpr auto operator()(Args&&... args) && -> decltype(!function::invoke(util::move(m_function),
+                                                                                   util::forward<Args>(args)...)) {
             return !function::invoke(util::move(m_function), util::forward<Args>(args)...);
         }
 

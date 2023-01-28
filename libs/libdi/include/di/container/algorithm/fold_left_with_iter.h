@@ -28,8 +28,10 @@ namespace detail {
             return Res(util::move(first), util::move(result));
         }
 
-        template<concepts::InputContainer Con, typename T, concepts::IndirectlyBinaryLeftFoldable<T, meta::ContainerIterator<Con>> Op>
-        constexpr InValueResult<meta::BorrowedIterator<Con>, meta::Decay<meta::InvokeResult<Op&, meta::ContainerReference<Con>, T>>>
+        template<concepts::InputContainer Con, typename T,
+                 concepts::IndirectlyBinaryLeftFoldable<T, meta::ContainerIterator<Con>> Op>
+        constexpr InValueResult<meta::BorrowedIterator<Con>,
+                                meta::Decay<meta::InvokeResult<Op&, meta::ContainerReference<Con>, T>>>
         operator()(Con&& container, T init, Op op) const {
             return (*this)(container::begin(container), container::end(container), util::move(init), util::ref(op));
         }

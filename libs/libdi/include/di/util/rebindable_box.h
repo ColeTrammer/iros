@@ -38,9 +38,10 @@ namespace detail {
     template<typename T, typename U>
     concept RebindableBoxCanConvertConstructor =
         (!concepts::ConstructibleFrom<T, RebindableBox<U>> && !concepts::ConstructibleFrom<T, RebindableBox<U> const> &&
-         !concepts::ConstructibleFrom<T, RebindableBox<U>&> && !concepts::ConstructibleFrom<T, RebindableBox<U> const&> &&
-         !concepts::ConvertibleTo<RebindableBox<U>, T> && !concepts::ConvertibleTo<RebindableBox<U> const, T> &&
-         !concepts::ConvertibleTo<RebindableBox<U>&, T> && !concepts::ConvertibleTo<RebindableBox<U> const&, T>);
+         !concepts::ConstructibleFrom<T, RebindableBox<U>&> &&
+         !concepts::ConstructibleFrom<T, RebindableBox<U> const&> && !concepts::ConvertibleTo<RebindableBox<U>, T> &&
+         !concepts::ConvertibleTo<RebindableBox<U> const, T> && !concepts::ConvertibleTo<RebindableBox<U>&, T> &&
+         !concepts::ConvertibleTo<RebindableBox<U> const&, T>);
 
     template<typename T>
     struct IsRebindableBoxHelper : meta::FalseType {};
@@ -84,7 +85,8 @@ public:
     template<typename U = T>
     requires(concepts::ConstructibleFrom<Storage, U> && !concepts::RemoveCVRefSameAs<RebindableBox, U> &&
              !concepts::RemoveCVRefSameAs<types::InPlace, U>)
-    constexpr explicit(!concepts::ConvertibleTo<U, Storage>) RebindableBox(U&& value) : m_storage(util::forward<U>(value)) {}
+    constexpr explicit(!concepts::ConvertibleTo<U, Storage>) RebindableBox(U&& value)
+        : m_storage(util::forward<U>(value)) {}
 
     template<typename... Args>
     requires(concepts::ConstructibleFrom<Storage, Args...>)
@@ -129,7 +131,8 @@ public:
     }
 
     template<typename U = T>
-    requires(!concepts::RemoveCVRefSameAs<U, RebindableBox> && !detail::IsRebindableBox<U> && concepts::ConstructibleFrom<Storage, U>)
+    requires(!concepts::RemoveCVRefSameAs<U, RebindableBox> && !detail::IsRebindableBox<U> &&
+             concepts::ConstructibleFrom<Storage, U>)
     constexpr RebindableBox& operator=(U&& value) {
         rebind(util::forward<U>(value));
         return *this;

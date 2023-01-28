@@ -18,9 +18,11 @@ static void meta() {
 
     static_assert(di::SameAs<di::meta::Unique<di::meta::List<int, short, int, int>>, di::meta::List<int, short>>);
 
-    using A = di::meta::MakeCompletionSignatures<decltype(sender), di::types::NoEnv,
-                                                 di::CompletionSignatures<di::SetValue(i64), di::SetStopped(), di::SetValue(i64)>>;
-    static_assert(di::SameAs<A, di::types::CompletionSignatures<di::SetValue(i64), di::SetStopped(), di::SetValue(int)>>);
+    using A = di::meta::MakeCompletionSignatures<
+        decltype(sender), di::types::NoEnv,
+        di::CompletionSignatures<di::SetValue(i64), di::SetStopped(), di::SetValue(i64)>>;
+    static_assert(
+        di::SameAs<A, di::types::CompletionSignatures<di::SetValue(i64), di::SetStopped(), di::SetValue(int)>>);
 
     static_assert(di::SameAs<di::meta::AsList<di::Tuple<>>, di::meta::List<>>);
 
@@ -28,7 +30,8 @@ static void meta() {
     using SS = decltype(di::execution::schedule(di::declval<S const&>()));
     static_assert(di::Sender<SS>);
     static_assert(di::TagInvocable<di::Tag<di::execution::get_completion_scheduler<di::SetValue>>, SS const&>);
-    static_assert(di::SameAs<S, decltype(di::execution::get_completion_scheduler<di::SetValue>(di::declval<SS const&>()))>);
+    static_assert(
+        di::SameAs<S, decltype(di::execution::get_completion_scheduler<di::SetValue>(di::declval<SS const&>()))>);
     static_assert(di::Scheduler<S>);
 
     static_assert(di::concepts::Awaitable<di::Lazy<i32>>);
@@ -38,18 +41,24 @@ static void meta() {
     using R = di::meta::Type<di::execution::sync_wait_ns::Receiver<
         di::execution::sync_wait_ns::ResultType<di::execution::RunLoop<>, di::Lazy<i32>>, di::execution::RunLoop<>>>;
 
-    static_assert(di::SameAs<di::CompletionSignatures<di::SetValue(i32), di::SetError(di::Error), di::SetStopped()>,
-                             di::meta::Type<di::execution::connect_awaitable_ns::CompletionSignatures<di::Lazy<i32>, R>>>);
+    static_assert(
+        di::SameAs<di::CompletionSignatures<di::SetValue(i32), di::SetError(di::Error), di::SetStopped()>,
+                   di::meta::Type<di::execution::connect_awaitable_ns::CompletionSignatures<di::Lazy<i32>, R>>>);
 
     static_assert(di::SameAs<di::CompletionSignatures<di::SetValue(), di::SetError(di::Error), di::SetStopped()>,
                              di::meta::Type<di::execution::connect_awaitable_ns::CompletionSignatures<di::Lazy<>, R>>>);
 
     static_assert(di::concepts::Receiver<R>);
-    static_assert(di::concepts::ReceiverOf<R, di::CompletionSignatures<di::SetValue(i32), di::SetError(di::Error), di::SetStopped()>>);
-    static_assert(di::concepts::ReceiverOf<R, di::CompletionSignatures<di::SetValue(), di::SetError(di::Error), di::SetStopped()>>);
+    static_assert(di::concepts::ReceiverOf<
+                  R, di::CompletionSignatures<di::SetValue(i32), di::SetError(di::Error), di::SetStopped()>>);
+    static_assert(
+        di::concepts::ReceiverOf<R,
+                                 di::CompletionSignatures<di::SetValue(), di::SetError(di::Error), di::SetStopped()>>);
 
-    static_assert(di::SameAs<void, di::meta::ValueTypesOf<di::Lazy<>, di::types::NoEnv, di::meta::detail::SingleSenderValueTypeHelper,
-                                                          di::meta::detail::SingleSenderValueTypeHelper>>);
+    static_assert(
+        di::SameAs<void,
+                   di::meta::ValueTypesOf<di::Lazy<>, di::types::NoEnv, di::meta::detail::SingleSenderValueTypeHelper,
+                                          di::meta::detail::SingleSenderValueTypeHelper>>);
     static_assert(di::concepts::SingleSender<di::Lazy<i32>>);
     static_assert(di::concepts::SingleSender<di::Lazy<>>);
 }
@@ -108,7 +117,8 @@ static void then() {
 
     using S = decltype(work);
 
-    using R = ex::then_ns::Receiver<ex::sync_wait_ns::Receiver<di::Result<di::Tuple<int>>, ex::RunLoop<>>, di::Identity>;
+    using R =
+        ex::then_ns::Receiver<ex::sync_wait_ns::Receiver<di::Result<di::Tuple<int>>, ex::RunLoop<>>, di::Identity>;
 
     static_assert(di::Receiver<R>);
 
@@ -151,11 +161,12 @@ static void let() {
 
     auto scheduler = di::InlineScheduler {};
 
-    auto v = ex::schedule(scheduler) | ex::let_value(ex::get_scheduler) | ex::let_value([](di::Scheduler auto& scheduler) {
-                 return ex::schedule(scheduler) | ex::then([] {
-                            return 43;
-                        });
-             });
+    auto v =
+        ex::schedule(scheduler) | ex::let_value(ex::get_scheduler) | ex::let_value([](di::Scheduler auto& scheduler) {
+            return ex::schedule(scheduler) | ex::then([] {
+                       return 43;
+                   });
+        });
     ASSERT_EQ(ex::sync_wait(di::move(v)), 43);
 
     auto z = ex::just() | ex::then([] {

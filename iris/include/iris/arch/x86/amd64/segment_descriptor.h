@@ -24,8 +24,8 @@ struct Readable : BitFlag<41> {};
 // This is ignored on x86_64, and should be set to 1. This is valid for data segments.
 struct Writable : BitFlag<41> {};
 
-// This bit allows a control flow transfer to a segment of higher privledge without changing the current privledge level.
-// This is valid for Code segments.
+// This bit allows a control flow transfer to a segment of higher privledge without changing the current privledge
+// level. This is valid for Code segments.
 struct Conforming : BitFlag<42> {};
 // This is ignored on x86_64, and should be set to 0. This is valid for Data segments.
 struct ExpandDown : BitFlag<42> {};
@@ -48,6 +48,7 @@ struct Granular : BitFlag<55> {};
 
 struct BaseHigh : BitField<56, 8> {};
 
-using SegmentDescriptor = BitStruct<8, LimitLow, BaseLow, Accessed, Readable, Writable, Conforming, ExpandDown, Code, DataOrCodeSegment,
-                                    DPL, Present, LimitHigh, Available, LongMode, Not16Bit, Granular>;
+using SegmentDescriptor =
+    BitStruct<8, LimitLow, BaseLow, Accessed, Readable, Writable, Conforming, ExpandDown, Code, DataOrCodeSegment, DPL,
+              Present, LimitHigh, Available, LongMode, Not16Bit, Granular>;
 }

@@ -26,28 +26,35 @@ namespace detail {
                 auto jt = container::next(it);
                 // Base case: only 1 element remains.
                 if (jt == last) {
-                    auto compare_with_max = function::invoke(comp, function::invoke(proj, *it), function::invoke(proj, *max_iter));
+                    auto compare_with_max =
+                        function::invoke(comp, function::invoke(proj, *it), function::invoke(proj, *max_iter));
                     if (compare_with_max >= 0) {
                         max_iter = it;
-                    } else if (function::invoke(comp, function::invoke(proj, *it), function::invoke(proj, *min_iter)) < 0) {
+                    } else if (function::invoke(comp, function::invoke(proj, *it), function::invoke(proj, *min_iter)) <
+                               0) {
                         min_iter = it;
                     }
                 } else {
-                    auto it_jt_result = function::invoke(comp, function::invoke(proj, *it), function::invoke(proj, *jt));
+                    auto it_jt_result =
+                        function::invoke(comp, function::invoke(proj, *it), function::invoke(proj, *jt));
                     if (it_jt_result < 0) {
                         // Compare it to min, jt to max.
-                        if (function::invoke(comp, function::invoke(proj, *it), function::invoke(proj, *min_iter)) < 0) {
+                        if (function::invoke(comp, function::invoke(proj, *it), function::invoke(proj, *min_iter)) <
+                            0) {
                             min_iter = it;
                         }
-                        if (function::invoke(comp, function::invoke(proj, *jt), function::invoke(proj, *max_iter)) >= 0) {
+                        if (function::invoke(comp, function::invoke(proj, *jt), function::invoke(proj, *max_iter)) >=
+                            0) {
                             max_iter = jt;
                         }
                     } else {
                         // Compare it to max, jt to min.
-                        if (function::invoke(comp, function::invoke(proj, *it), function::invoke(proj, *min_iter)) >= 0) {
+                        if (function::invoke(comp, function::invoke(proj, *it), function::invoke(proj, *min_iter)) >=
+                            0) {
                             max_iter = it;
                         }
-                        if (function::invoke(comp, function::invoke(proj, *jt), function::invoke(proj, *max_iter)) < 0) {
+                        if (function::invoke(comp, function::invoke(proj, *jt), function::invoke(proj, *max_iter)) <
+                            0) {
                             min_iter = jt;
                         }
                     }
@@ -58,8 +65,10 @@ namespace detail {
         }
 
         template<concepts::ForwardContainer Con, typename Proj = function::Identity,
-                 concepts::IndirectStrictWeakOrder<meta::Projected<meta::ContainerIterator<Con>, Proj>> Comp = function::Compare>
-        constexpr MinMaxResult<meta::BorrowedIterator<Con>> operator()(Con&& container, Comp comp = {}, Proj proj = {}) const {
+                 concepts::IndirectStrictWeakOrder<meta::Projected<meta::ContainerIterator<Con>, Proj>> Comp =
+                     function::Compare>
+        constexpr MinMaxResult<meta::BorrowedIterator<Con>> operator()(Con&& container, Comp comp = {},
+                                                                       Proj proj = {}) const {
             return (*this)(container::begin(container), container::end(container), util::ref(comp), util::ref(proj));
         }
     };

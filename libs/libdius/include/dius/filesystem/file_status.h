@@ -11,7 +11,8 @@ public:
     FileStatus(FileStatus const&) = default;
     FileStatus(FileStatus&&) = default;
 
-    constexpr explicit FileStatus(FileType type, Perms permissions = Perms::Unknown) : m_type(type), m_permsissions(permissions) {}
+    constexpr explicit FileStatus(FileType type, Perms permissions = Perms::Unknown)
+        : m_type(type), m_permsissions(permissions) {}
 
     FileStatus& operator=(FileStatus const&) = default;
     FileStatus& operator=(FileStatus&&) = default;

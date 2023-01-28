@@ -8,7 +8,8 @@
 namespace di::container {
 namespace detail {
     struct CopyNFunction {
-        template<concepts::InputIterator It, concepts::WeaklyIncrementable Out, typename SSizeType = meta::IteratorSSizeType<It>>
+        template<concepts::InputIterator It, concepts::WeaklyIncrementable Out,
+                 typename SSizeType = meta::IteratorSSizeType<It>>
         requires(concepts::IndirectlyCopyable<It, Out>)
         constexpr InOutResult<It, Out> operator()(It first, meta::TypeIdentity<SSizeType> n, Out output) const {
             // FIXME: use vectorized byte copy (::memcpy_forward) when provided contiguous

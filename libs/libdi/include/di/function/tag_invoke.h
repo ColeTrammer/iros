@@ -30,7 +30,8 @@ using Tag = di::meta::Decay<decltype(T)>;
 
 namespace di::concepts {
 template<typename Tag, typename... Args>
-concept TagInvocable = requires(Tag tag, Args&&... args) { di::function::tag_invoke(tag, util::forward<Args>(args)...); };
+concept TagInvocable =
+    requires(Tag tag, Args&&... args) { di::function::tag_invoke(tag, util::forward<Args>(args)...); };
 }
 
 namespace di::meta {

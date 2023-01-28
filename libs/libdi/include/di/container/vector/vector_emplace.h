@@ -18,7 +18,8 @@
 
 namespace di::container::vector {
 template<concepts::detail::MutableVector Vec, typename... Args, typename CIter = meta::detail::VectorConstIterator<Vec>,
-         typename R = meta::detail::VectorIterator<Vec>, typename G = meta::LikeExpected<meta::detail::VectorAllocResult<Vec>, R>>
+         typename R = meta::detail::VectorIterator<Vec>,
+         typename G = meta::LikeExpected<meta::detail::VectorAllocResult<Vec>, R>>
 requires(concepts::ConstructibleFrom<meta::detail::VectorValue<Vec>, Args...>)
 constexpr G emplace(Vec& vector, CIter position, Args&&... args) {
     auto size = vector::size(vector);
@@ -32,7 +33,8 @@ constexpr G emplace(Vec& vector, CIter position, Args&&... args) {
                }) % [&] {
             auto new_data = vector::data(new_vector);
             auto new_data_end = new_data + new_size;
-            auto [next_in, next_out] = util::uninitialized_relocate(vector::begin(vector), position, new_data, new_data_end);
+            auto [next_in, next_out] =
+                util::uninitialized_relocate(vector::begin(vector), position, new_data, new_data_end);
             util::uninitialized_relocate(next_in, end, next_out + 1, new_data_end);
             util::construct_at(next_out, util::forward<Args>(args)...);
             new_vector.assume_size(0);

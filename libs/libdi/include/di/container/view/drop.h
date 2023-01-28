@@ -16,15 +16,18 @@ namespace detail {
                 return function::tag_invoke(*this, util::forward<Con>(container), util::forward<Diff>(difference));
             } else if constexpr (concepts::SizedContainer<Con> && concepts::RandomAccessContainer<Con> &&
                                  concepts::BorrowedContainer<Con> &&
-                                 concepts::ContainerIteratorReconstructibleContainer<
-                                     Con, meta::RemoveCVRef<Con>, meta::ContainerIterator<Con>, meta::ContainerIterator<Con>>) {
+                                 concepts::ContainerIteratorReconstructibleContainer<Con, meta::RemoveCVRef<Con>,
+                                                                                     meta::ContainerIterator<Con>,
+                                                                                     meta::ContainerIterator<Con>>) {
                 return container::reconstruct(
                     in_place_type<meta::RemoveCVRef<Con>>, util::forward<Con>(container),
                     container::begin(container) +
-                        container::min(container::ssize(container), static_cast<meta::ContainerSSizeType<Con>>(difference)),
+                        container::min(container::ssize(container),
+                                       static_cast<meta::ContainerSSizeType<Con>>(difference)),
                     container::end(container));
             } else {
-                return DropView { util::forward<Con>(container), static_cast<meta::ContainerSSizeType<Con>>(difference) };
+                return DropView { util::forward<Con>(container),
+                                  static_cast<meta::ContainerSSizeType<Con>>(difference) };
             }
         }
     };

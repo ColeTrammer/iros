@@ -16,7 +16,8 @@
 namespace di::container {
 template<concepts::InputIterator Iter>
 class ConstIteratorImpl
-    : public IteratorBase<ConstIteratorImpl<Iter>, meta::IteratorCategory<Iter>, meta::IteratorValue<Iter>, meta::IteratorSSizeType<Iter>> {
+    : public IteratorBase<ConstIteratorImpl<Iter>, meta::IteratorCategory<Iter>, meta::IteratorValue<Iter>,
+                          meta::IteratorSSizeType<Iter>> {
 private:
     using Self = ConstIteratorImpl;
     using SSizeType = meta::IteratorSSizeType<Iter>;
@@ -78,7 +79,8 @@ private:
     }
 
     template<typename Other>
-    requires(!concepts::SameAs<Self, Other> && concepts::RandomAccessIterator<Iter> && concepts::TotallyOrderedWith<Iter, Other>)
+    requires(!concepts::SameAs<Self, Other> && concepts::RandomAccessIterator<Iter> &&
+             concepts::TotallyOrderedWith<Iter, Other>)
     constexpr friend auto operator<=>(Self const& a, Other const& b) {
         return a.base() <=> b;
     }

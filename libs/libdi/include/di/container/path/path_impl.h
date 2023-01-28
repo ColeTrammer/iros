@@ -13,10 +13,13 @@ private:
 
     template<concepts::ContainerCompatible<meta::EncodingCodeUnit<Enc>> Con, typename... Args>
     requires(concepts::CreatableFrom<Str, Con, Args...>)
-    constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<PathImpl>, Con&& container, Args&&... args) {
-        return as_fallible(util::create<Str>(util::forward<Con>(container), util::forward<Args>(args)...)) % [](Str&& string) {
-            return PathImpl(util::move(string));
-        } | try_infallible;
+    constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<PathImpl>, Con&& container,
+                                     Args&&... args) {
+        return as_fallible(util::create<Str>(util::forward<Con>(container), util::forward<Args>(args)...)) %
+                   [](Str&& string) {
+                       return PathImpl(util::move(string));
+                   } |
+               try_infallible;
     }
 
     constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<PathImpl>, PathViewImpl<Enc> view) {

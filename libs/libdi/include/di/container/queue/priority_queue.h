@@ -17,7 +17,9 @@ namespace detail {
     concept PriorityQueueCompatible =
         concepts::RandomAccessContainer<Con> && concepts::Permutable<meta::ContainerIterator<Con>> &&
         concepts::SameAs<Value, meta::ContainerValue<Con>> && requires(Con& container, Value&& value) {
-                                                                  { container.front() } -> concepts::SameAs<Optional<Value&>>;
+                                                                  {
+                                                                      container.front()
+                                                                      } -> concepts::SameAs<Optional<Value&>>;
                                                                   {
                                                                       util::as_const(container).front()
                                                                       } -> concepts::SameAs<Optional<Value const&>>;
@@ -25,7 +27,9 @@ namespace detail {
                                                                   {
                                                                       container.append_container(util::move(container))
                                                                       } -> concepts::MaybeFallible<void>;
-                                                                  { container.pop_back() } -> concepts::SameAs<Optional<Value>>;
+                                                                  {
+                                                                      container.pop_back()
+                                                                      } -> concepts::SameAs<Optional<Value>>;
                                                                   { container.size() } -> concepts::UnsignedInteger;
                                                               };
 }
@@ -36,7 +40,8 @@ class PriorityQueue {
 private:
     template<concepts::InputContainer Other>
     requires(concepts::ContainerCompatible<Other, Value>)
-    constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<PriorityQueue>, Other&& other, Comp const& comp = {}) {
+    constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<PriorityQueue>, Other&& other,
+                                     Comp const& comp = {}) {
         return as_fallible(util::forward<Other>(other) | container::to<Con>()) % [&](Con&& container) {
             return PriorityQueue(comp, util::move(container));
         } | try_infallible;
@@ -66,7 +71,8 @@ public:
 
     constexpr explicit PriorityQueue(Comp const& compare) : m_comp(compare) {}
 
-    constexpr explicit PriorityQueue(Comp const& compare, Con&& container) : m_container(util::move(container)), m_comp(compare) {
+    constexpr explicit PriorityQueue(Comp const& compare, Con&& container)
+        : m_container(util::move(container)), m_comp(compare) {
         container::make_heap(m_container, util::ref(m_comp));
     }
 
@@ -121,7 +127,8 @@ public:
     constexpr Comp const& comparator() const { return m_comp; }
 
 private:
-    constexpr explicit PriorityQueue(InPlace, Con&& container, Comp const& comp) : m_container(util::move(container)), m_comp(comp) {}
+    constexpr explicit PriorityQueue(InPlace, Con&& container, Comp const& comp)
+        : m_container(util::move(container)), m_comp(comp) {}
 
     constexpr friend auto tag_invoke(types::Tag<util::clone>, PriorityQueue const& self) {
         return as_fallible(util::clone(self.m_container)) % [&](Con&& container) {
@@ -141,5 +148,6 @@ template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>>
 PriorityQueue<T> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<PriorityQueue>, Con&&);
 
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>, concepts::StrictWeakOrder<T> Comp>
-PriorityQueue<T, container::Vector<T>, Comp> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<PriorityQueue>, Con&&, Comp);
+PriorityQueue<T, container::Vector<T>, Comp> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<PriorityQueue>,
+                                                        Con&&, Comp);
 }

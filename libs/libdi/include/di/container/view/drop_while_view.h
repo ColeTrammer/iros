@@ -21,7 +21,8 @@ public:
     requires(concepts::DefaultInitializable<View> && concepts::DefaultInitializable<Pred>)
     = default;
 
-    constexpr explicit DropWhileView(View base, Pred predicate) : m_base(util::move(base)), m_predicate(util::move(predicate)) {}
+    constexpr explicit DropWhileView(View base, Pred predicate)
+        : m_base(util::move(base)), m_predicate(util::move(predicate)) {}
 
     constexpr View base() const&
     requires(concepts::CopyConstructible<View>)

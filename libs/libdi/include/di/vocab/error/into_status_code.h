@@ -19,8 +19,10 @@ constexpr inline auto into_status_code = detail::IntoStatusCodeFunction {};
 
 namespace di::concepts {
 template<typename... Args>
-concept ConvertibleToAnyStatusCode = requires(Args&&... args) { vocab::into_status_code(util::forward<Args>(args)...); };
+concept ConvertibleToAnyStatusCode =
+    requires(Args&&... args) { vocab::into_status_code(util::forward<Args>(args)...); };
 
 template<typename Result, typename... Args>
-concept ConvertibleToStatusCode = requires(Args&&... args) { Result(vocab::into_status_code(util::forward<Args>(args)...)); };
+concept ConvertibleToStatusCode =
+    requires(Args&&... args) { Result(vocab::into_status_code(util::forward<Args>(args)...)); };
 }

@@ -35,7 +35,8 @@ private:
     public:
         constexpr Iterator() = default;
 
-        constexpr explicit Iterator(T const* value, IndexType current = IndexType()) : m_value(value), m_current(current) {}
+        constexpr explicit Iterator(T const* value, IndexType current = IndexType())
+            : m_value(value), m_current(current) {}
 
         constexpr T const& operator*() const { return *m_value; }
 

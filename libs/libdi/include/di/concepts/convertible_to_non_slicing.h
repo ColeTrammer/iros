@@ -11,7 +11,8 @@ namespace di::concepts {
 // to prevent slicing when treating pointers as iterators, since an
 // Cat[] can not be viewed the same as an Animal[].
 template<typename From, typename To>
-concept ConvertibleToNonSlicing = ConvertibleTo<From, To> &&
-                                  (!Pointer<meta::Decay<From>> || !Pointer<meta::Decay<To>> ||
-                                   ImplicitlyConvertibleTo<meta::RemovePointer<From> (*)[], meta::RemovePointer<To> (*)[]>);
+concept ConvertibleToNonSlicing =
+    ConvertibleTo<From, To> &&
+    (!Pointer<meta::Decay<From>> || !Pointer<meta::Decay<To>> ||
+     ImplicitlyConvertibleTo<meta::RemovePointer<From> (*)[], meta::RemovePointer<To> (*)[]>);
 }

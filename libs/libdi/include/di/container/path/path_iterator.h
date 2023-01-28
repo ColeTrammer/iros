@@ -13,7 +13,8 @@
 
 namespace di::container {
 template<concepts::Encoding Enc>
-class PathIterator : public IteratorBase<PathIterator<Enc>, BidirectionalIteratorTag, string::StringViewImpl<Enc>, ssize_t> {
+class PathIterator
+    : public IteratorBase<PathIterator<Enc>, BidirectionalIteratorTag, string::StringViewImpl<Enc>, ssize_t> {
 private:
     using View = string::StringViewImpl<Enc>;
     using CodePoint = meta::EncodingCodePoint<Enc>;
@@ -79,8 +80,12 @@ private:
     template<typename, concepts::Encoding>
     friend class ConstantPathInterface;
 
-    constexpr friend bool operator==(PathIterator const& a, PathIterator const& b) { return a.m_current == b.m_current; }
-    constexpr friend auto operator<=>(PathIterator const& a, PathIterator const& b) { return a.m_current.data() <=> b.m_current.data(); }
+    constexpr friend bool operator==(PathIterator const& a, PathIterator const& b) {
+        return a.m_current == b.m_current;
+    }
+    constexpr friend auto operator<=>(PathIterator const& a, PathIterator const& b) {
+        return a.m_current.data() <=> b.m_current.data();
+    }
 
     View m_bounds;
     View m_current;

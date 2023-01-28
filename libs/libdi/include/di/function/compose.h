@@ -30,7 +30,8 @@ namespace detail {
         }
 
         template<typename... Args>
-        requires(concepts::Invocable<G const&, Args...> && concepts::Invocable<F const&, meta::InvokeResult<G const&, Args...>>)
+        requires(concepts::Invocable<G const&, Args...> &&
+                 concepts::Invocable<F const&, meta::InvokeResult<G const&, Args...>>)
         constexpr decltype(auto) operator()(Args&&... args) const& {
             return function::invoke(m_f, function::invoke(m_g, util::forward<Args>(args)...));
         }
@@ -42,7 +43,8 @@ namespace detail {
         }
 
         template<typename... Args>
-        requires(concepts::Invocable<G const &&, Args...> && concepts::Invocable<F const &&, meta::InvokeResult<G const &&, Args...>>)
+        requires(concepts::Invocable<G const &&, Args...> &&
+                 concepts::Invocable<F const &&, meta::InvokeResult<G const &&, Args...>>)
         constexpr decltype(auto) operator()(Args&&... args) const&& {
             return function::invoke(util::move(m_f), function::invoke(util::move(m_g), util::forward<Args>(args)...));
         }
@@ -63,7 +65,8 @@ template<typename F, typename G, typename... Fs>
 requires(concepts::ConstructibleFrom<meta::Decay<F>, F> && concepts::ConstructibleFrom<meta::Decay<G>, G> &&
          concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Fs>, Fs>...>)
 constexpr auto compose(F&& f, G&& g, Fs&&... rest) {
-    return function::compose(detail::ComposeFunction<meta::Decay<F>, meta::Decay<G>>(util::forward<F>(f), util::forward<G>(g)),
-                             util::forward<Fs>(rest)...);
+    return function::compose(
+        detail::ComposeFunction<meta::Decay<F>, meta::Decay<G>>(util::forward<F>(f), util::forward<G>(g)),
+        util::forward<Fs>(rest)...);
 }
 }
