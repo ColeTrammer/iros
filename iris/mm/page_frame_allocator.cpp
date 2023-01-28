@@ -7,6 +7,7 @@ static auto page_frame_bitmap = di::BitSet<physical_page_count> {};
 
 void reserve_page_frames(PhysicalAddress base_address, usize page_count) {
     for (auto address = base_address; address < base_address + 4096 * page_count; address += 4096) {
+        ASSERT_LT(address.raw_address() / 4096, page_frame_bitmap.size() - 1);
         page_frame_bitmap[address.raw_address() / 4096] = true;
     }
 }

@@ -16,6 +16,12 @@ target_compile_features(di
     cxx_std_23
 )
 
+target_compile_options(di
+  INTERFACE
+    -fno-exceptions
+    -fno-rtti
+)
+
 install(
     TARGETS di
     EXPORT DiConfig

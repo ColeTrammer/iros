@@ -1,3 +1,7 @@
+cmake_minimum_required(VERSION 3.25.2)
+
+project(Iris CXX)
+
 include(ExternalProject)
 
 ExternalProject_Add(limine
@@ -12,26 +16,55 @@ ExternalProject_Add(limine
 )
 set(LIMINE_DIR "${CMAKE_CURRENT_BINARY_DIR}/limine-prefix/src/limine")
 
-set(IRIS_ARCH "${ARCH}")
+add_library(iris_headers INTERFACE)
+add_library(Iris::iris_headers ALIAS iris_headers)
 
-if(IRIS_ARCH STREQUAL "x86_64")
-    set(IRIS_ARCH_DIR "arch/x86/amd64")
-elseif(IRIS_ARCH STREQUAL "i686")
-    set(IRIS_ARCH_DIR "arch/x86/i686")
-else()
-    message(FATAL_ERROR "The Iris kernel does not support the \"" ${IRIS_ARCH} "\" architecture.")
-endif()
+target_include_directories(iris_headers
+  INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
 
-include("${IRIS_ARCH_DIR}/CMakeLists.txt")
+find_package(Di REQUIRED)
 
-set(SOURCES
-    ${IRIS_ARCH_SOURCES}
+target_link_libraries(iris_headers
+  INTERFACE
+    di
+)
+
+install(
+    TARGETS iris_headers
+    EXPORT IrisHeadersConfig
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+    INCLUDES DESTINATION include
+)
+install(
+    EXPORT IrisHeadersConfig
+    FILE IrisHeadersConfig.cmake
+    NAMESPACE IrisHeaders::
+    DESTINATION lib/cmake/IrisHeaders
+)
+install(
+    DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
+    DESTINATION "include"
+    FILES_MATCHING PATTERN "*.h"
+)
+
+add_executable(iris
     boot/init.cpp
     core/scheduler.cpp
     mm/address_space.cpp
     mm/page_frame_allocator.cpp
     mm/heap.cpp
 )
+
+if(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "x86_64")
+    include(arch/x86/amd64/CMakeLists.txt)
+else()
+    message(FATAL_ERROR "The Iris kernel does not support the \"" ${CMAKE_HOST_SYSTEM_PROCESSOR} "\" architecture.")
+endif()
 
 add_custom_target(
     iris_image
@@ -64,21 +97,63 @@ add_custom_target(
     USES_TERMINAL
 )
 
-add_os_headers(iris_headers)
-add_executable(iris ${SOURCES})
-
-target_compile_options(iris PRIVATE -ffreestanding ${IRIS_ARCH_CXXFLAGS})
-target_link_options(iris PRIVATE -nostdlib ${IRIS_ARCH_LDFLAGS})
-target_link_libraries(iris PRIVATE libdi iris_headers)
-target_include_directories(iris PRIVATE "${LIMINE_DIR}")
-target_compile_definitions(iris PRIVATE "DI_CUSTOM_ASSERT_HANDLER" "DI_NO_ASSERT_ALLOCATION" "DI_CUSTOM_PLATFORM=<iris/core/platform.h>")
+target_compile_options(iris
+  PRIVATE
+    -ffreestanding
+    -nostdlib
+    -fno-pic
+    -fno-pie
+    -static
+    -nostartfiles
+    -fno-stack-protector
+)
+target_link_options(iris
+  PRIVATE
+    -ffreestanding
+    -nostdlib
+    -fno-pic
+    -fno-pie
+    -static
+    -nostartfiles
+)
+target_link_libraries(iris
+  PRIVATE
+    di
+    iris_headers
+)
+target_include_directories(iris
+  PRIVATE 
+    "${LIMINE_DIR}"
+)
+target_compile_definitions(iris
+  PRIVATE
+    "DI_CUSTOM_ASSERT_HANDLER"
+    "DI_NO_ASSERT_ALLOCATION"
+    "DI_CUSTOM_PLATFORM=<iris/core/platform.h>"
+)
 add_dependencies(iris limine)
 
-set_target_properties(iris PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${IRIS_ARCH_DIR}/link.ld)
+install(TARGETS iris 
+    RUNTIME DESTINATION boot
+)
 
-install(TARGETS iris RUNTIME DESTINATION boot)
-
-add_executable(test_userspace test_userspace.cpp )
-target_compile_options(test_userspace PRIVATE "-ffreestanding" "-nostdlib" "-nostartfiles" "-static")
-target_link_options(test_userspace PRIVATE "-ffreestanding" "-nostdlib" "-nostartfiles" "-static")
-install(TARGETS test_userspace RUNTIME DESTINATION boot)
+add_executable(test_userspace 
+    test_userspace.cpp
+)
+target_compile_options(test_userspace
+  PRIVATE
+    -ffreestanding
+    -nostdlib
+    -nostartfiles
+    -static
+)
+target_link_options(test_userspace
+  PRIVATE
+    -ffreestanding
+    -nostdlib
+    -nostartfiles
+    -static
+)
+install(TARGETS test_userspace
+    RUNTIME DESTINATION boot
+)

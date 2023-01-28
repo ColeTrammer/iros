@@ -12,6 +12,7 @@ endmacro()
 
 enable_testing()
 
+add_subdirectory(iris)
 add_subdirectory(libs/ccpp)
 add_subdirectory(libs/di)
 add_subdirectory(libs/dius)
