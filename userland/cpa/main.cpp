@@ -12,9 +12,9 @@ struct Args {
     }
 };
 
-#define TRY_OR_ERROR_LOG(expr, format, ...)                                      \
-    TRY((expr) | di::if_error([&](auto const& error) {                           \
-            dius::error_log(format, __VA_ARGS__ __VA_OPT__(, ) error.message()); \
+#define TRY_OR_ERROR_LOG(expr, format, ...)                                     \
+    TRY((expr) | di::if_error([&](auto const& error) {                          \
+            dius::eprintln(format, __VA_ARGS__ __VA_OPT__(, ) error.message()); \
         }))
 
 di::Result<void> main(Args const& args) {

@@ -4,7 +4,7 @@
 #include <iris/arch/x86/amd64/system_segment_descriptor.h>
 #include <iris/arch/x86/amd64/tss.h>
 #include <iris/boot/cxx_init.h>
-#include <iris/core/log.h>
+#include <iris/core/print.h>
 #include <iris/core/scheduler.h>
 #include <iris/core/task.h>
 #include <iris/mm/address_space.h>
@@ -62,7 +62,7 @@ struct ProgramHeader {
 }
 
 extern "C" void generic_irq_handler(int irq, iris::arch::TaskState*, int error_code) {
-    iris::debug_log("got IRQ {}, error_code={}"_sv, irq, error_code);
+    iris::println("got IRQ {}, error_code={}"_sv, irq, error_code);
     done();
 }
 
@@ -199,7 +199,7 @@ static auto userspace_test_program_data_storage = di::Array<di::Byte, 0x4000> {}
 
 static void do_task() {
     for (int i = 0; i < 3; i++) {
-        iris::debug_log("counter: {}"_sv, ++counter);
+        iris::println("counter: {}"_sv, ++counter);
         scheduler.yield();
     }
     done();
@@ -263,7 +263,7 @@ static char __temp_stack[4 * 4096] alignas(4096);
 void iris_main() {
     iris::arch::cxx_init();
 
-    iris::debug_log(u8"Hello, World"_sv);
+    iris::println(u8"Hello, World"_sv);
 
     {
         using namespace iris::x86::amd64::idt;
@@ -339,21 +339,21 @@ void iris_main() {
         gdt[8] = SegmentDescriptor(LimitLow(0xFFFF), Writable(true), DataOrCodeSegment(true), DPL(3), Present(true), LimitHigh(0xF),
                                    Not16Bit(true), Granular(true));
 
-        iris::debug_log("Gdt[5][0] = {:032b}\n"
-                        "Gdt[5][1] = {:032b}"_sv,
-                        reinterpret_cast<u32*>(gdt.data())[10], reinterpret_cast<u32*>(gdt.data())[11]);
+        iris::println("Gdt[5][0] = {:032b}\n"
+                      "Gdt[5][1] = {:032b}"_sv,
+                      reinterpret_cast<u32*>(gdt.data())[10], reinterpret_cast<u32*>(gdt.data())[11]);
 
-        iris::debug_log("Gdt[7][0] = {:032b}\n"
-                        "Gdt[7][1] = {:032b}"_sv,
-                        reinterpret_cast<u32*>(gdt.data())[14], reinterpret_cast<u32*>(gdt.data())[15]);
+        iris::println("Gdt[7][0] = {:032b}\n"
+                      "Gdt[7][1] = {:032b}"_sv,
+                      reinterpret_cast<u32*>(gdt.data())[14], reinterpret_cast<u32*>(gdt.data())[15]);
 
-        iris::debug_log("Gdt[6][0] = {:032b}\n"
-                        "Gdt[6][1] = {:032b}"_sv,
-                        reinterpret_cast<u32*>(gdt.data())[12], reinterpret_cast<u32*>(gdt.data())[13]);
+        iris::println("Gdt[6][0] = {:032b}\n"
+                      "Gdt[6][1] = {:032b}"_sv,
+                      reinterpret_cast<u32*>(gdt.data())[12], reinterpret_cast<u32*>(gdt.data())[13]);
 
-        iris::debug_log("Gdt[8][0] = {:032b}\n"
-                        "Gdt[8][1] = {:032b}"_sv,
-                        reinterpret_cast<u32*>(gdt.data())[16], reinterpret_cast<u32*>(gdt.data())[17]);
+        iris::println("Gdt[8][0] = {:032b}\n"
+                      "Gdt[8][1] = {:032b}"_sv,
+                      reinterpret_cast<u32*>(gdt.data())[16], reinterpret_cast<u32*>(gdt.data())[17]);
 
         auto gdtr = GDTR { sizeof(gdt) - 1, di::to_uintptr(gdt.data()) };
         load_gdt(gdtr);
@@ -373,7 +373,7 @@ void iris_main() {
                      : "memory", "edx");
     }
 
-    iris::debug_log(u8"Hello, World - again"_sv);
+    iris::println(u8"Hello, World - again"_sv);
 
     auto memory_map = di::Span { memmap_request.response->entries, memmap_request.response->entry_count };
 
@@ -386,28 +386,28 @@ void iris_main() {
     for (auto* memory_map_entry : memory_map) {
         switch (memory_map_entry->type) {
             case LIMINE_MEMMAP_USABLE:
-                iris::debug_log(u8"usable"_sv);
+                iris::println(u8"usable"_sv);
                 break;
             case LIMINE_MEMMAP_RESERVED:
-                iris::debug_log(u8"reserved"_sv);
+                iris::println(u8"reserved"_sv);
                 break;
             case LIMINE_MEMMAP_ACPI_RECLAIMABLE:
-                iris::debug_log(u8"ACPI reclaimable"_sv);
+                iris::println(u8"ACPI reclaimable"_sv);
                 break;
             case LIMINE_MEMMAP_ACPI_NVS:
-                iris::debug_log(u8"ACPI NVS"_sv);
+                iris::println(u8"ACPI NVS"_sv);
                 break;
             case LIMINE_MEMMAP_BAD_MEMORY:
-                iris::debug_log(u8"bad memory"_sv);
+                iris::println(u8"bad memory"_sv);
                 break;
             case LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE:
-                iris::debug_log(u8"boot loader reclaimable"_sv);
+                iris::println(u8"boot loader reclaimable"_sv);
                 break;
             case LIMINE_MEMMAP_KERNEL_AND_MODULES:
-                iris::debug_log(u8"kernel and modules"_sv);
+                iris::println(u8"kernel and modules"_sv);
                 break;
             case LIMINE_MEMMAP_FRAMEBUFFER:
-                iris::debug_log(u8"frame buffer"_sv);
+                iris::println(u8"frame buffer"_sv);
                 break;
             default:
                 di::unreachable();
@@ -456,13 +456,13 @@ void iris_main() {
 
     load_cr3(new_address_space.architecture_page_table_base());
 
-    iris::debug_log(u8"Hello, World - again again"_sv);
+    iris::println(u8"Hello, World - again again"_sv);
 
     auto* x = new (std::nothrow) int { 42 };
     ASSERT(x != nullptr);
     delete x;
 
-    iris::debug_log(u8"Hello, World - again again again"_sv);
+    iris::println(u8"Hello, World - again again again"_sv);
 
     auto task_address = di::to_uintptr(&do_task);
 
@@ -482,16 +482,16 @@ void iris_main() {
     scheduler.schedule_task(task3);
 
     auto* elf_header = test_program_data.typed_pointer_unchecked<elf64::ElfHeader>(0);
-    iris::debug_log("entry={:x}"_sv, elf_header->entry);
+    iris::println("entry={:x}"_sv, elf_header->entry);
     ASSERT_EQ(sizeof(elf64::ProgramHeader), elf_header->program_entry_size);
 
     auto program_headers =
         test_program_data.typed_span_unchecked<elf64::ProgramHeader>(elf_header->program_table_off, elf_header->program_entry_count);
     for (auto& program_header : program_headers) {
-        iris::debug_log("type={}"_sv, program_header.type);
-        iris::debug_log("addr={:x}"_sv, program_header.virtual_addr);
-        iris::debug_log("file={:x}"_sv, program_header.file_size);
-        iris::debug_log("memory={:x}"_sv, program_header.memory_size);
+        iris::println("type={}"_sv, program_header.type);
+        iris::println("addr={:x}"_sv, program_header.virtual_addr);
+        iris::println("file={:x}"_sv, program_header.file_size);
+        iris::println("memory={:x}"_sv, program_header.memory_size);
 
         auto aligned_size = di::align_up(program_header.memory_size, 4096);
         (void) new_address_space.allocate_region_at(iris::mm::VirtualAddress(program_header.virtual_addr), aligned_size);
@@ -505,11 +505,11 @@ void iris_main() {
 
     scheduler.schedule_task(task4);
 
-    iris::debug_log("preparing to context switch"_sv);
+    iris::println("preparing to context switch"_sv);
 
-    iris::debug_log("stack1={:x}"_sv, task_stack1.raw_address());
-    iris::debug_log("stack2={:x}"_sv, task_stack2.raw_address());
-    iris::debug_log("stack3={:x}"_sv, task_stack3.raw_address());
+    iris::println("stack1={:x}"_sv, task_stack1.raw_address());
+    iris::println("stack2={:x}"_sv, task_stack2.raw_address());
+    iris::println("stack3={:x}"_sv, task_stack3.raw_address());
 
     scheduler.start();
 

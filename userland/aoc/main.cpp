@@ -25,12 +25,12 @@ di::Result<void> main(Args& args) {
     auto default_path = args.test ? "test.txt"_pv : "input.txt"_pv;
     auto path = args.input.value_or(default_path);
     auto string = TRY(dius::read_to_string(path) | di::if_error([&](auto&& error) {
-                          dius::error_log("Failed to read input file '{}': {}"_sv, path.data(), error.message());
+                          dius::eprintln("Failed to read input file '{}': {}"_sv, path.data(), error.message());
                       }));
 
     auto solver = AocProblemRegistry::the().lookup({ args.year, args.day, args.part_b });
     if (!solver) {
-        dius::error_log("No solver found for {} day {} part {}"_sv, args.year, args.day, args.part_b ? "b"_sv : "a"_sv);
+        dius::eprintln("No solver found for {} day {} part {}"_sv, args.year, args.day, args.part_b ? "b"_sv : "a"_sv);
         return di::Unexpected(di::BasicError::Invalid);
     }
 

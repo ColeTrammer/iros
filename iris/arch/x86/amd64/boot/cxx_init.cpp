@@ -1,6 +1,5 @@
 #include <di/prelude.h>
 #include <iris/boot/cxx_init.h>
-#include <iris/core/log.h>
 
 extern "C" {
 typedef void (*init_function_t)(void);

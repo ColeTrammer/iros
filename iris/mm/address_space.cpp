@@ -1,4 +1,4 @@
-#include <iris/core/log.h>
+#include <iris/core/print.h>
 #include <iris/mm/address_space.h>
 #include <iris/mm/page_frame_allocator.h>
 #include <iris/mm/sections.h>
@@ -13,7 +13,7 @@ Expected<VirtualAddress> AddressSpace::allocate_region(usize page_aligned_length
     auto last_virtual_address = m_regions.back().transform(&Region::end).value_or(heap_start);
     auto new_virtual_address = last_virtual_address + 8192 * 0x1000;
 
-    iris::debug_log("sz={}"_sv, m_regions.size());
+    iris::println("sz={}"_sv, m_regions.size());
 
     // TODO: provide the flags as a parameter.
     auto [new_region, did_insert] =

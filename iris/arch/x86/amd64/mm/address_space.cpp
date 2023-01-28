@@ -1,5 +1,5 @@
 #include <iris/arch/x86/amd64/page_structure.h>
-#include <iris/core/log.h>
+#include <iris/core/print.h>
 #include <iris/mm/address_space.h>
 #include <iris/mm/map_physical_address.h>
 #include <iris/mm/page_frame_allocator.h>
@@ -49,7 +49,7 @@ Expected<void> AddressSpace::map_physical_page(VirtualAddress location, Physical
     auto& pt = TRY(map_physical_address(PhysicalAddress(pd[pd_offset].get<page_structure::PhysicalAddress>() << 12), 0x1000))
                    .typed<page_structure::FinalTable>();
     if (pt[pt_offset].get<page_structure::Present>()) {
-        debug_log(u8"Already allocated."_sv);
+        println(u8"Already allocated."_sv);
     }
     pt[pt_offset] =
         page_structure::StructureEntry(page_structure::PhysicalAddress(physical_address.raw_address() >> 12), page_structure::Present(true),

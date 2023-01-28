@@ -30,7 +30,7 @@ private:
     static __attribute__((constructor)) void __registersolve_##year##_##day##_##part() {                                                   \
         aoc::AocProblemRegistry::the().register_solver({ year, day, "" #part ""_tsv == "a"_tsv ? false : true }, [](di::StringView view) { \
             auto result = solve_##year##_##day##_##part(view);                                                                             \
-            dius::out_log("" #year " day " #day " part " #part ": {}"_sv, result);                                                         \
+            dius::println("" #year " day " #day " part " #part ": {}"_sv, result);                                                         \
         });                                                                                                                                \
     }                                                                                                                                      \
     static Ret solve_##year##_##day##_##part(di::StringView input)

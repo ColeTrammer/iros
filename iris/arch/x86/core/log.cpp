@@ -1,4 +1,4 @@
-#include <iris/core/log.h>
+#include <iris/core/print.h>
 
 namespace iris {
 static inline void outb(u16 port, u8 value) {
