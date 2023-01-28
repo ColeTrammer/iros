@@ -1,9 +1,5 @@
 #pragma once
 
-#include <dius/config.h>
-
-#ifdef DIUS_PLATFORM_LINUX
-
 #include <di/prelude.h>
 #include <dius/linux/io_uring.h>
 #include <dius/prelude.h>
@@ -481,4 +477,3 @@ inline IoUringScheduler IoUringContext::get_scheduler() {
     return IoUringScheduler(this);
 }
 }
-#endif

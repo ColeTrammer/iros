@@ -1,7 +1,3 @@
-#include <dius/config.h>
-
-#ifdef DIUS_PLATFORM_LINUX
-
 #include <dius/linux/io_uring.h>
 #include <dius/prelude.h>
 
@@ -103,5 +99,3 @@ di::Result<IoUringHandle> IoUringHandle::create() {
     return result;
 }
 }
-
-#endif

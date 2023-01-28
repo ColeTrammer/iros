@@ -1,0 +1,15 @@
+{
+    "search.exclude": {
+        "**/.git": true,
+        "build/**": true,
+        "legacy/**": true,
+        "/usr/include/**": true,
+    },
+    "files.exclude": {
+        "**/.git": true,
+        "build/**": true,
+        "legacy/**": true,
+        "/usr/include/**": true
+    },
+    "testExplorer.useNativeTesting": true,
+}

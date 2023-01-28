@@ -1,9 +1,5 @@
 #pragma once
 
-#include <dius/platform.h>
-
-#ifdef DIUS_PLATFORM_LINUX
-
 #include <di/prelude.h>
 #include <dius/memory_region.h>
 #include <dius/sync_file.h>
@@ -57,4 +53,3 @@ namespace io_uring {
     };
 }
 }
-#endif

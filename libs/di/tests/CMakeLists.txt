@@ -1,4 +1,4 @@
-set(TEST_FILES
+add_executable(test_di
     test_bit_bitset.cpp
     test_bit_bitstruct.cpp
     test_cli.cpp
@@ -37,5 +37,15 @@ set(TEST_FILES
     test_vocab_variant.cpp
 )
 
-add_dius_tests(libdi ${TEST_FILES})
-target_link_libraries(test_libdi PRIVATE libdi libdius)
+find_package(Dius REQUIRED)
+
+target_link_libraries(test_di
+  PRIVATE
+    di
+    dius
+    dius_test_main
+)
+
+add_test(NAME test_di
+    COMMAND test_di
+)
