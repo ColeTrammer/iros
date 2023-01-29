@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <iris/arch/x86/amd64/idt.h>
 #include <iris/arch/x86/amd64/segment_descriptor.h>
+#include <iris/arch/x86/amd64/system_instructions.h>
 #include <iris/arch/x86/amd64/system_segment_descriptor.h>
 #include <iris/arch/x86/amd64/tss.h>
 #include <iris/boot/cxx_init.h>
@@ -212,39 +213,9 @@ static void do_task() {
     done();
 }
 
-struct [[gnu::packed]] IDTR {
-    u16 size;
-    u64 virtual_address;
-};
-
-static inline void load_idt(IDTR descriptor) {
-    asm("lidtq %0" : : "m"(descriptor));
-}
-
-struct [[gnu::packed]] GDTR {
-    u16 size;
-    u64 virtual_address;
-};
-
-static inline void load_gdt(GDTR descriptor) {
-    asm("lgdt %0" : : "m"(descriptor));
-}
-
-static inline void load_tr(u16 selector) {
-    asm("ltr %0" : : "m"(selector));
-}
-
 static auto idt = di::Array<iris::x86::amd64::idt::Entry, 256> {};
 static auto gdt = di::Array<iris::x86::amd64::sd::SegmentDescriptor, 11> {};
 static auto tss = iris::x86::amd64::TSS {};
-
-static inline void load_cr3(u64 cr3) {
-    asm volatile("mov %0, %%rdx\n"
-                 "mov %%rdx, %%cr3\n"
-                 :
-                 : "m"(cr3)
-                 : "rdx");
-}
 
 extern "C" {
 static volatile limine_memmap_request memmap_request = {
@@ -285,8 +256,8 @@ void iris_main() {
 
         FOR_EACH_INTEGER_LESS_THEN_256(IDT_ENTRY)
 
-        auto idtr = IDTR { sizeof(idt) - 1, di::to_uintptr(idt.data()) };
-        load_idt(idtr);
+        auto idtr = iris::arch::amd64::IDTR { sizeof(idt) - 1, di::to_uintptr(idt.data()) };
+        iris::arch::amd64::load_idt(idtr);
     }
 
     {
@@ -363,11 +334,11 @@ void iris_main() {
                       "Gdt[8][1] = {:032b}"_sv,
                       reinterpret_cast<u32*>(gdt.data())[16], reinterpret_cast<u32*>(gdt.data())[17]);
 
-        auto gdtr = GDTR { sizeof(gdt) - 1, di::to_uintptr(gdt.data()) };
-        load_gdt(gdtr);
+        auto gdtr = iris::arch::amd64::GDTR { sizeof(gdt) - 1, di::to_uintptr(gdt.data()) };
+        iris::arch::amd64::load_gdt(gdtr);
 
         // Load TSS.
-        load_tr(9 * 8);
+        iris::arch::amd64::load_tr(9 * 8);
 
         // Load the data segments with NULL segment selector.
         asm volatile("mov %0, %%dx\n"
@@ -470,7 +441,7 @@ void iris_main() {
                                       (virtual_address.raw_address() - kernel_address_request.response->virtual_base)));
     }
 
-    load_cr3(new_address_space.architecture_page_table_base());
+    iris::arch::amd64::load_cr3(new_address_space.architecture_page_table_base());
 
     iris::println(u8"Hello, World - again again"_sv);
 

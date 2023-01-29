@@ -27,7 +27,7 @@ macro(find_package)
     endif()
 endmacro()
 
-set(not_buildable_library ALIAS INTERFACE)
+set(not_buildable_library ALIAS INTERFACE IMPORTED)
 
 macro(add_library)
     _add_library(${ARGV})
@@ -49,19 +49,21 @@ endmacro()
 
 macro(add_executable)
     _add_executable(${ARGV})
-    target_compile_options(${ARGV0}
-      PRIVATE
-        ${IROS_DiagnosticFlags}
-        ${IROS_WarningFlags}
-        ${IROS_SanitizerFlags}
-    )
-    target_link_options(
-        ${ARGV0}
-      PRIVATE
-        ${IROS_DiagnosticFlags}
-        ${IROS_WarningFlags}
-        ${IROS_SanitizerFlags}
-    )
+    if (NOT "${ARGV1}" IN_LIST not_buildable_library)
+        target_compile_options(${ARGV0}
+          PRIVATE
+            ${IROS_DiagnosticFlags}
+            ${IROS_WarningFlags}
+            ${IROS_SanitizerFlags}
+        )
+        target_link_options(
+            ${ARGV0}
+          PRIVATE
+            ${IROS_DiagnosticFlags}
+            ${IROS_WarningFlags}
+            ${IROS_SanitizerFlags}
+        )
+    endif()
 endmacro()
 
 enable_testing()
