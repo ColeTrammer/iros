@@ -14,6 +14,7 @@ ExternalProject_Add(limine
     UPDATE_COMMAND ""
     INSTALL_COMMAND ""
 )
+set(LIMINE_DIR "${CMAKE_CURRENT_BINARY_DIR}/limine-prefix/src/limine" PARENT_SCOPE)
 set(LIMINE_DIR "${CMAKE_CURRENT_BINARY_DIR}/limine-prefix/src/limine")
 
 add_library(iris_headers INTERFACE)
@@ -65,37 +66,6 @@ if(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "x86_64")
 else()
     message(FATAL_ERROR "The Iris kernel does not support the \"" ${CMAKE_HOST_SYSTEM_PROCESSOR} "\" architecture.")
 endif()
-
-add_custom_target(
-    iris_image
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND sudo ROOT="${ROOT}"
-            BUILD_DIR="${CMAKE_CURRENT_BINARY_DIR}"
-            LIMINE_DIR="${LIMINE_DIR}"
-            "${ROOT}/scripts/make-iris-limine-img.sh"
-    BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/iris.img"
-    DEPENDS iris install-all
-    USES_TERMINAL
-)
-
-add_custom_target(
-    iris_run
-    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-    COMMAND IRIS_ARCH=${IRIS_ARCH}
-            IRIS_IMAGE=${CMAKE_CURRENT_BINARY_DIR}/iris.img
-            ${ROOT}/scripts/run-iris.sh
-    USES_TERMINAL
-)
-
-add_custom_target(
-    ibr
-    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-    COMMAND IRIS_ARCH=${IRIS_ARCH}
-            IRIS_IMAGE=${CMAKE_CURRENT_BINARY_DIR}/iris.img
-            ${ROOT}/scripts/run-iris.sh
-    DEPENDS iris_image
-    USES_TERMINAL
-)
 
 target_compile_options(iris
   PRIVATE

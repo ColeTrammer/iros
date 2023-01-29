@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "name": "Iros x86_64",
+            "includePath": [
+                "${workspaceFolder}/iris/include",
+                "${workspaceFolder}/libs/di/include",
+                "${workspaceFolder}/libs/dius/include"
+            ],
+            "cppStandard": "gnu++23"
+        }
+    ],
+    "version": 4
+}

@@ -440,7 +440,8 @@ void iris_main() {
     auto new_address_space = iris::mm::AddressSpace(iris::mm::allocate_page_frame()->raw_address());
 
     for (auto physical_address = iris::mm::PhysicalAddress(0);
-         physical_address < iris::mm::PhysicalAddress(max_physical_address); physical_address += 0x1000) {
+         physical_address < iris::mm::PhysicalAddress(di::min(max_physical_address, 0x1000000ul));
+         physical_address += 0x1000) {
         (void) new_address_space.map_physical_page(
             iris::mm::VirtualAddress(0xFFFF800000000000 + physical_address.raw_address()), physical_address);
     }
