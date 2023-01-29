@@ -4,7 +4,7 @@
 #include <iris/mm/sections.h>
 
 namespace iris::mm {
-static auto const heap_start = VirtualAddress((iris::mm::kernel_end.raw_address() / 4096 * 4096) + 4096);
+static auto const heap_start = VirtualAddress((kernel_end.raw_address() / 4096 * 4096) + 4096);
 
 Expected<VirtualAddress> AddressSpace::allocate_region(usize page_aligned_length) {
     // Basic hack algorithm: allocate the new region at a large fixed offset from the old region.
@@ -35,5 +35,34 @@ Expected<void> AddressSpace::allocate_region_at(VirtualAddress location, usize p
         TRY(map_physical_page(virtual_address, TRY(allocate_page_frame())));
     }
     return {};
+}
+
+Expected<AddressSpace> create_initial_kernel_address_space(PhysicalAddress kernel_physical_start,
+                                                           VirtualAddress kernel_virtual_start,
+                                                           PhysicalAddress max_physical_address) {
+    auto new_address_space = AddressSpace(allocate_page_frame()->raw_address());
+
+    for (auto physical_address = PhysicalAddress(0);
+         physical_address < di::min(max_physical_address, PhysicalAddress(0x1000000ul)); physical_address += 0x1000) {
+        TRY(new_address_space.map_physical_page(VirtualAddress(0xFFFF800000000000 + physical_address.raw_address()),
+                                                physical_address));
+    }
+
+    for (auto virtual_address = text_segment_start; virtual_address < text_segment_end; virtual_address += 4096) {
+        TRY(new_address_space.map_physical_page(
+            virtual_address, PhysicalAddress(kernel_physical_start + (virtual_address - kernel_virtual_start))));
+    }
+
+    for (auto virtual_address = rodata_segment_start; virtual_address < rodata_segment_end; virtual_address += 4096) {
+        TRY(new_address_space.map_physical_page(
+            virtual_address, PhysicalAddress(kernel_physical_start + (virtual_address - kernel_virtual_start))));
+    }
+
+    for (auto virtual_address = data_segment_start; virtual_address < data_segment_end; virtual_address += 4096) {
+        TRY(new_address_space.map_physical_page(
+            virtual_address, PhysicalAddress(kernel_physical_start + (virtual_address - kernel_virtual_start))));
+    }
+
+    return new_address_space;
 }
 }

@@ -58,7 +58,7 @@ void* operator new(std::size_t size, std::align_val_t alignment, std::nothrow_t 
         }
     }
 
-    return reinterpret_cast<void*>(result.raw_address());
+    return result.void_pointer();
 }
 
 // Deallocating delete.
@@ -66,5 +66,7 @@ void operator delete(void*) noexcept {
     di::unreachable();
 }
 void operator delete(void*, std::size_t) noexcept {}
-void operator delete(void*, std::align_val_t) noexcept {}
+void operator delete(void*, std::align_val_t) noexcept {
+    di::unreachable();
+}
 void operator delete(void*, std::size_t, std::align_val_t) noexcept {}

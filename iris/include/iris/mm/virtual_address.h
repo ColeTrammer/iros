@@ -42,6 +42,13 @@ public:
         return copy;
     }
 
+    template<di::concepts::TriviallyDestructible T>
+    T* typed_pointer() const {
+        return reinterpret_cast<T*>(m_address);
+    }
+
+    void* void_pointer() const { return reinterpret_cast<void*>(m_address); }
+
 private:
     constexpr friend VirtualAddress operator+(VirtualAddress a, iptr b) { return VirtualAddress(a.raw_address() + b); }
     constexpr friend VirtualAddress operator+(iptr a, VirtualAddress b) { return VirtualAddress(a + b.raw_address()); }

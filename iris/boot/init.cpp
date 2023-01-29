@@ -256,8 +256,8 @@ void iris_main() {
 
         FOR_EACH_INTEGER_LESS_THEN_256(IDT_ENTRY)
 
-        auto idtr = iris::arch::amd64::IDTR { sizeof(idt) - 1, di::to_uintptr(idt.data()) };
-        iris::arch::amd64::load_idt(idtr);
+        auto idtr = iris::x86::amd64::IDTR { sizeof(idt) - 1, di::to_uintptr(idt.data()) };
+        iris::x86::amd64::load_idt(idtr);
     }
 
     {
@@ -334,11 +334,11 @@ void iris_main() {
                       "Gdt[8][1] = {:032b}"_sv,
                       reinterpret_cast<u32*>(gdt.data())[16], reinterpret_cast<u32*>(gdt.data())[17]);
 
-        auto gdtr = iris::arch::amd64::GDTR { sizeof(gdt) - 1, di::to_uintptr(gdt.data()) };
-        iris::arch::amd64::load_gdt(gdtr);
+        auto gdtr = iris::x86::amd64::GDTR { sizeof(gdt) - 1, di::to_uintptr(gdt.data()) };
+        iris::x86::amd64::load_gdt(gdtr);
 
         // Load TSS.
-        iris::arch::amd64::load_tr(9 * 8);
+        iris::x86::amd64::load_tr(9 * 8);
 
         // Load the data segments with NULL segment selector.
         asm volatile("mov %0, %%dx\n"
@@ -408,40 +408,11 @@ void iris_main() {
         userspace_test_program_data_storage.data());
     auto test_program_data = di::Span { userspace_test_program_data_storage.data(), userspace_test_program.size };
 
-    auto new_address_space = iris::mm::AddressSpace(iris::mm::allocate_page_frame()->raw_address());
-
-    for (auto physical_address = iris::mm::PhysicalAddress(0);
-         physical_address < iris::mm::PhysicalAddress(di::min(max_physical_address, 0x1000000ul));
-         physical_address += 0x1000) {
-        (void) new_address_space.map_physical_page(
-            iris::mm::VirtualAddress(0xFFFF800000000000 + physical_address.raw_address()), physical_address);
-    }
-
-    for (auto virtual_address = iris::mm::text_segment_start; virtual_address < iris::mm::text_segment_end;
-         virtual_address += 4096) {
-        (void) new_address_space.map_physical_page(
-            virtual_address,
-            iris::mm::PhysicalAddress(kernel_address_request.response->physical_base +
-                                      (virtual_address.raw_address() - kernel_address_request.response->virtual_base)));
-    }
-
-    for (auto virtual_address = iris::mm::rodata_segment_start; virtual_address < iris::mm::rodata_segment_end;
-         virtual_address += 4096) {
-        (void) new_address_space.map_physical_page(
-            virtual_address,
-            iris::mm::PhysicalAddress(kernel_address_request.response->physical_base +
-                                      (virtual_address.raw_address() - kernel_address_request.response->virtual_base)));
-    }
-
-    for (auto virtual_address = iris::mm::data_segment_start; virtual_address < iris::mm::data_segment_end;
-         virtual_address += 4096) {
-        (void) new_address_space.map_physical_page(
-            virtual_address,
-            iris::mm::PhysicalAddress(kernel_address_request.response->physical_base +
-                                      (virtual_address.raw_address() - kernel_address_request.response->virtual_base)));
-    }
-
-    iris::arch::amd64::load_cr3(new_address_space.architecture_page_table_base());
+    auto new_address_space = *iris::mm::create_initial_kernel_address_space(
+        iris::mm::PhysicalAddress(kernel_address_request.response->physical_base),
+        iris::mm::VirtualAddress(kernel_address_request.response->virtual_base),
+        iris::mm::PhysicalAddress(max_physical_address));
+    new_address_space.load();
 
     iris::println(u8"Hello, World - again again"_sv);
 

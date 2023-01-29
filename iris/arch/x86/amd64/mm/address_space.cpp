@@ -1,4 +1,5 @@
 #include <iris/arch/x86/amd64/page_structure.h>
+#include <iris/arch/x86/amd64/system_instructions.h>
 #include <iris/core/print.h>
 #include <iris/mm/address_space.h>
 #include <iris/mm/map_physical_address.h>
@@ -9,6 +10,10 @@ using namespace x86::amd64;
 
 page_structure::VirtualAddressStructure decompose_virtual_address(VirtualAddress virtual_address) {
     return di::bit_cast<page_structure::VirtualAddressStructure>(virtual_address.raw_address());
+}
+
+void AddressSpace::load() {
+    load_cr3(m_architecture_page_table_base);
 }
 
 Expected<void> AddressSpace::map_physical_page(VirtualAddress location, PhysicalAddress physical_address) {

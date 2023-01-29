@@ -13,6 +13,7 @@ public:
         : m_architecture_page_table_base(architecture_page_table_base) {}
 
     u64 architecture_page_table_base() const { return m_architecture_page_table_base; }
+    void load();
 
     Expected<void> map_physical_page(VirtualAddress location, PhysicalAddress physical_address);
 
@@ -23,4 +24,8 @@ private:
     u64 m_architecture_page_table_base;
     di::TreeSet<Region> m_regions;
 };
+
+Expected<AddressSpace> create_initial_kernel_address_space(PhysicalAddress kernel_physical_start,
+                                                           VirtualAddress kernel_virtual_start,
+                                                           PhysicalAddress max_physical_address);
 }

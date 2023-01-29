@@ -2,7 +2,7 @@
 
 #include <di/prelude.h>
 
-namespace iris::arch::amd64 {
+namespace iris::x86::amd64 {
 struct [[gnu::packed]] IDTR {
     u16 size;
     u64 virtual_address;
