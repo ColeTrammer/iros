@@ -7,49 +7,65 @@
   },
   "configurePresets": [
     {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
+        "IROS_DiagnosticFlags": "-fdiagnostics-color=always",
+        "IROS_WarningFlags": "-Wall -Wextra"
+      }
+    },
+    {
+      "name": "release_base",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      },
+      "inherits": ["base"]
+    },
+    {
+      "name": "debug_base",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "inherits": ["base"]
+    },
+    {
       "name": "iros_x86_64",
       "displayName": "Iros x64_64",
       "description": "Compile Iros for x86_64",
-      "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/x86_64",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_CXX_FLAGS": "-fdiagnostics-color=always",
         "IROS_BuildIris": "ON"
-      }
+      },
+      "inherits": ["release_base"]
     },
     {
       "name": "release",
       "displayName": "Release Config",
       "description": "Default native release build",
-      "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/native/release",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_CXX_FLAGS": "-fdiagnostics-color=always"
-      }
+      "inherits": ["release_base"]
     },
     {
       "name": "debug",
       "displayName": "Debug Config",
       "description": "Native debug build",
-      "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/native/debug",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_CXX_FLAGS": "-fdiagnostics-color=always"
-      }
+      "inherits": ["debug_base"]
     },
     {
       "name": "asan",
       "displayName": "Address Sanitizer",
       "description": "Build with address sanitizer enabled",
-      "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/native/asan",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_CXX_FLAGS": "-fsanitize=address -fdiagnostics-color=always"
-      }
+        "IROS_BuildCcpp": "OFF",
+        "IROS_SanitizerFlags": "-fsanitize=address"
+      },
+      "inherits": ["debug_base"]
     }
   ]
 }
