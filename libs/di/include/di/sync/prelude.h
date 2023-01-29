@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/sync/atomic.h>
+#include <di/sync/atomic_ref.h>
 #include <di/sync/concepts/stoppable_token.h>
 #include <di/sync/concepts/stoppable_token_for.h>
 #include <di/sync/concepts/unstoppable_token.h>
@@ -12,6 +13,7 @@
 
 namespace di {
 using sync::Atomic;
+using sync::AtomicRef;
 using sync::DumbSpinlock;
 using sync::MemoryOrder;
 using sync::ScopedLock;
