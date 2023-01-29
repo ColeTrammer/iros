@@ -7,18 +7,49 @@
   },
   "configurePresets": [
     {
-      "name": "default",
-      "displayName": "Default Config",
-      "description": "Default build using Ninja generator",
+      "name": "iros_x86_64",
+      "displayName": "Iros x64_64",
+      "description": "Compile Iros for x86_64",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build",
-      "installDir": "${sourceDir}/build/sysroot/usr"
-    }
-  ],
-  "buildPresets": [
+      "binaryDir": "${sourceDir}/build/x86_64",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_FLAGS": "-fdiagnostics-color=always",
+        "IROS_BuildIris": "ON"
+      }
+    },
     {
-      "name": "default",
-      "configurePreset": "default"
+      "name": "release",
+      "displayName": "Release Config",
+      "description": "Default native release build",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/native/release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_FLAGS": "-fdiagnostics-color=always"
+      }
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug Config",
+      "description": "Native debug build",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/native/debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-fdiagnostics-color=always"
+      }
+    },
+    {
+      "name": "asan",
+      "displayName": "Address Sanitizer",
+      "description": "Build with address sanitizer enabled",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/native/asan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-fsanitize=address -fdiagnostics-color=always"
+      }
     }
   ]
 }

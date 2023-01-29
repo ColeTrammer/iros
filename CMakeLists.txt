@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.25.2)
 
 project(iros CXX)
 
+option(IROS_BuildIris "Build the iris kernel." OFF)
+
 set(as_subproject Di Dius)
 
 macro(find_package)
@@ -12,9 +14,11 @@ endmacro()
 
 enable_testing()
 
-add_subdirectory(iris)
 add_subdirectory(libs/ccpp)
 add_subdirectory(libs/di)
 add_subdirectory(libs/dius)
 
-include(meta/cmake/iris_commands.cmake)
+if(IROS_BuildIris)
+    add_subdirectory(iris)
+    include(meta/cmake/iris_commands.cmake)
+endif()
