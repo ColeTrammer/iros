@@ -3,6 +3,7 @@
 #include <di/concepts/integral.h>
 #include <di/concepts/object.h>
 #include <di/concepts/pointer.h>
+#include <di/function/curry_back.h>
 #include <di/meta/make_unsigned.h>
 #include <di/meta/remove_pointer.h>
 #include <di/types/prelude.h>
@@ -36,5 +37,5 @@ namespace detail {
     };
 }
 
-constexpr inline auto midpoint = detail::MidpointFunction {};
+constexpr inline auto midpoint = function::curry_back(detail::MidpointFunction {}, meta::size_constant<2>);
 }

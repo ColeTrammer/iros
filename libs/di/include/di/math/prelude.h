@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/math/abs.h>
+#include <di/math/abs_diff.h>
 #include <di/math/abs_unsigned.h>
 #include <di/math/align_down.h>
 #include <di/math/align_up.h>
@@ -17,6 +18,7 @@ namespace di {
 using math::NumericLimits;
 
 using math::abs;
+using math::abs_diff;
 using math::abs_unsigned;
 using math::align_down;
 using math::align_up;
