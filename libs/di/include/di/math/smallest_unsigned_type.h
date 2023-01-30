@@ -7,7 +7,7 @@
 namespace di::math {
 namespace detail {
     template<umax size>
-    constexpr auto smallest_unsigned_type_helper(InPlaceValue<size>) {
+    constexpr auto smallest_unsigned_type_helper(Nontype<size>) {
         if constexpr (size <= NumericLimits<u8>::max) {
             return (u8) 0;
         } else if constexpr (size <= NumericLimits<u16>::max) {
@@ -23,5 +23,5 @@ namespace detail {
 }
 
 template<umax size>
-using SmallestUnsignedType = decltype(detail::smallest_unsigned_type_helper(in_place_value<size>));
+using SmallestUnsignedType = decltype(detail::smallest_unsigned_type_helper(nontype<size>));
 }

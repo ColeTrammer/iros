@@ -58,22 +58,23 @@ namespace detail {
 }
 
 namespace di::concepts {
-template<typename F, typename... Args>
-concept Invocable = requires(F&& f, Args&&... args) {
-                        function::detail::invoke_impl(util::forward<F>(f), util::forward<Args>(args)...);
-                    };
+template<typename... Ts>
+concept Invocable = requires(Ts&&... ts) { function::detail::invoke_impl(util::forward<Ts>(ts)...); };
 }
 
 namespace di::meta {
-template<typename F, typename... Args>
-requires(concepts::Invocable<F, Args...>)
-using InvokeResult = decltype(function::detail::invoke_impl(util::declval<F>(), util::declval<Args>()...));
+template<typename... Ts>
+requires(concepts::Invocable<Ts...>)
+using InvokeResult = decltype(function::detail::invoke_impl(util::declval<Ts>()...));
 }
 
 namespace di::concepts {
 template<typename F, typename R, typename... Args>
 concept InvocableTo = Invocable<F, Args...> &&
                       (LanguageVoid<R> || ImplicitlyConvertibleTo<meta::InvokeResult<F, Args...>, R>);
+
+template<typename R, typename... Ts>
+concept InvocableR = Invocable<Ts...> && (LanguageVoid<R> || ImplicitlyConvertibleTo<meta::InvokeResult<Ts...>, R>);
 }
 
 namespace di::function {

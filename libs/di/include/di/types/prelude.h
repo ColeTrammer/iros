@@ -6,9 +6,9 @@
 #include <di/types/in_place_index.h>
 #include <di/types/in_place_template.h>
 #include <di/types/in_place_type.h>
-#include <di/types/in_place_value.h>
 #include <di/types/integers.h>
 #include <di/types/intptr_t.h>
+#include <di/types/nontype.h>
 #include <di/types/nullptr_t.h>
 #include <di/types/partial_ordering.h>
 #include <di/types/piecewise_construct.h>
@@ -28,14 +28,14 @@ using types::in_place;
 using types::in_place_index;
 using types::in_place_template;
 using types::in_place_type;
-using types::in_place_value;
+using types::nontype;
 using types::piecewise_construct;
 
 using types::InPlace;
 using types::InPlaceIndex;
 using types::InPlaceTemplate;
 using types::InPlaceType;
-using types::InPlaceValue;
+using types::Nontype;
 using types::PiecewiseConstruct;
 
 using types::Void;

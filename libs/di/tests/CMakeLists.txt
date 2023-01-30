@@ -18,6 +18,7 @@ add_executable(test_di
     test_execution.cpp
     test_format.cpp
     test_function_bind.cpp
+    test_function_container.cpp
     test_function_generator.cpp
     test_function_invoke.cpp
     test_math_rational.cpp

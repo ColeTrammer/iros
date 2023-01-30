@@ -6,6 +6,7 @@
 #include <di/function/compare.h>
 #include <di/function/compare_backwards.h>
 #include <di/function/compose.h>
+#include <di/function/container/prelude.h>
 #include <di/function/curry.h>
 #include <di/function/curry_back.h>
 #include <di/function/equal.h>
