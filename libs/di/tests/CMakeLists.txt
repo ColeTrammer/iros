@@ -21,6 +21,7 @@ add_executable(test_di
     test_function_generator.cpp
     test_function_invoke.cpp
     test_math_rational.cpp
+    test_math_integer.cpp
     test_meta.cpp
     test_parser.cpp
     test_sync_in_place_stop_source.cpp
