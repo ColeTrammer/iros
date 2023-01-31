@@ -75,6 +75,7 @@
 #include <di/container/algorithm/sum.h>
 #include <di/container/algorithm/swap_ranges.h>
 #include <di/container/algorithm/transform.h>
+#include <di/container/algorithm/unique.h>
 
 namespace di {
 using container::adjacent_find;
@@ -142,4 +143,5 @@ using container::sort_heap;
 using container::starts_with;
 using container::sum;
 using container::swap_ranges;
+using container::unique;
 }

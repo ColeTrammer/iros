@@ -14,6 +14,7 @@
 #include <di/container/concepts/forward_container.h>
 #include <di/container/concepts/forward_iterator.h>
 #include <di/container/concepts/indirect_binary_predicate.h>
+#include <di/container/concepts/indirect_equivalence_relation.h>
 #include <di/container/concepts/indirect_strict_weak_order.h>
 #include <di/container/concepts/indirect_unary_predicate.h>
 #include <di/container/concepts/indirectly_binary_left_foldable.h>

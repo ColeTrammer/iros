@@ -16,6 +16,7 @@
 #include <di/container/meta/container_ssize_type.h>
 #include <di/container/meta/container_value.h>
 #include <di/container/meta/iterator_category.h>
+#include <di/container/meta/iterator_common_reference.h>
 #include <di/container/meta/iterator_const_reference.h>
 #include <di/container/meta/iterator_reconstructed.h>
 #include <di/container/meta/iterator_reference.h>

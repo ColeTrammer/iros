@@ -11,17 +11,20 @@ namespace detail {
         template<concepts::Permutable It, concepts::SentinelFor<It> Sent, typename T,
                  typename Proj = function::Identity>
         requires(concepts::IndirectBinaryPredicate<function::Equal, meta::Projected<It, Proj>, T const*>)
-        constexpr View<It> operator()(It slow, Sent last, T const& value, Proj proj = {}) const {
-            slow = container::find(util::move(slow), last, value, util::ref(proj));
-            if (slow != last) {
-                for (auto fast = container::next(slow); fast != last; ++fast) {
-                    if (value != function::invoke(proj, *fast)) {
-                        *slow = container::iterator_move(fast);
-                        ++slow;
-                    }
+        constexpr View<It> operator()(It first, Sent last, T const& value, Proj proj = {}) const {
+            auto fast = container::find(util::move(first), last, value, util::ref(proj));
+            if (fast == last) {
+                return { fast, fast };
+            }
+
+            auto slow = fast++;
+            for (; fast != last; ++fast) {
+                if (value != function::invoke(proj, *fast)) {
+                    *slow = container::iterator_move(fast);
+                    ++slow;
                 }
             }
-            return { util::move(slow), util::move(last) };
+            return { util::move(slow), util::move(fast) };
         }
 
         template<concepts::ForwardContainer Con, typename T, typename Proj = function::Identity>

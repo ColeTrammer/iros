@@ -82,6 +82,24 @@ constexpr void permute() {
     di::container::reverse(a);
     di::container::rotate(a, a.begin() + 2);
     ASSERT_EQ(a, (di::Array { 3, 4, 5, 1, 2 }));
+
+    auto c = di::Array { 5, 5, 6, 6, 6, 7, 7 } | di::to<di::Vector>();
+    {
+        auto [s, e] = di::unique(c);
+        c.erase(s, e);
+    }
+
+    auto ex1 = di::Array { 5, 6, 7 } | di::to<di::Vector>();
+    ASSERT_EQ(c, ex1);
+
+    auto d = di::Array { 5, 5 } | di::to<di::Vector>();
+    {
+        auto [s, e] = di::unique(d);
+        d.erase(s, e);
+    }
+
+    auto ex2 = di::Array { 5 } | di::to<di::Vector>();
+    ASSERT_EQ(d, ex2);
 }
 
 constexpr void contains() {
@@ -232,4 +250,4 @@ TESTC(container_algorithm, contains)
 TESTC(container_algorithm, predicate)
 TESTC(container_algorithm, for_each)
 TESTC(container_algorithm, sort)
-TEST(container_algorithm, shift)
+TESTC(container_algorithm, shift)
