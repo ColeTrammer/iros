@@ -57,7 +57,7 @@ private:
         friend class ZipTransformView;
 
         constexpr explicit Iterator(meta::MaybeConst<is_const, ZipTransformView>& parent, Ziperator<is_const> iterator)
-            : Base(util::move(iterator)), m_parent(util::address_of(parent)) {}
+            : Base(util::move(iterator)), m_parent(util::addressof(parent)) {}
 
     public:
         Iterator()

@@ -6,7 +6,7 @@
 #include <di/meta/list/prelude.h>
 #include <di/meta/remove_function_qualifiers.h>
 #include <di/types/prelude.h>
-#include <di/util/address_of.h>
+#include <di/util/addressof.h>
 
 namespace di::function {
 namespace function_ref_ns {
@@ -147,7 +147,7 @@ namespace function_ref_ns {
         requires(!concepts::RemoveCVRefSameAs<F, FunctionRef> && !concepts::MemberPointer<T> &&
                  is_invocable<Qualified<F>>)
         constexpr FunctionRef(F&& function)
-            : m_storage(util::address_of(function))
+            : m_storage(util::addressof(function))
             , m_impl([](ErasedStorage storage, Args&&... args) noexcept(is_noexcept) -> R {
                 // Ensure we are invoking the object with the correct const and lvalue qualifications.
                 Qualified<T> object_reference = *down_cast<T>(storage);
@@ -168,7 +168,7 @@ namespace function_ref_ns {
         template<auto f, typename U, typename F = decltype(f), typename T = meta::RemoveReference<U>>
         requires(!concepts::RValueReference<U &&> && is_invocable<F, Qualified<T>>)
         constexpr FunctionRef(Nontype<f>, U&& object)
-            : m_storage(util::address_of(object))
+            : m_storage(util::addressof(object))
             , m_impl([](ErasedStorage storage, Args&&... args) noexcept(is_noexcept) -> R {
                 // Ensure we are invoking the object with the correct const and lvalue qualifications.
                 Qualified<T> object_reference = *down_cast<T>(storage);

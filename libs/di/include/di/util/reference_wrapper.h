@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/function/invoke.h>
-#include <di/util/address_of.h>
+#include <di/util/addressof.h>
 #include <di/vocab/optional/get_value.h>
 #include <di/vocab/optional/is_nullopt.h>
 #include <di/vocab/optional/nullopt.h>
@@ -54,7 +54,7 @@ private:
         self.m_pointer = nullptr;
     }
     constexpr friend void tag_invoke(types::Tag<vocab::set_value>, ReferenceWrapper& self, T& value) {
-        self.m_pointer = util::address_of(value);
+        self.m_pointer = util::addressof(value);
     }
 
     T* m_pointer { nullptr };

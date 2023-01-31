@@ -58,11 +58,11 @@ di::Result<void> IoUringHandle::submit_and_wait() {
 
 di::Result<IoUringHandle> IoUringHandle::create() {
     SetupParams params;
-    ::memset(di::address_of(params), 0, sizeof(params));
+    ::memset(di::addressof(params), 0, sizeof(params));
 
     auto result = IoUringHandle {};
 
-    result.fd = TRY(sys_setup(256, di::address_of(params)));
+    result.fd = TRY(sys_setup(256, di::addressof(params)));
 
     auto cq_size = params.cq_off.cqes + params.cq_entries * sizeof(CQE);
     result.cq_region = TRY(result.fd.map(IORING_OFF_CQ_RING, cq_size, Protection::Readable | Protection::Writeable,

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/container/iterator/prelude.h>
-#include <di/util/address_of.h>
+#include <di/util/addressof.h>
 #include <di/util/exchange.h>
 #include <di/util/immovable.h>
 #include <di/vocab/optional/prelude.h>
@@ -81,9 +81,9 @@ public:
 
     constexpr bool empty() const { return !head(); }
 
-    constexpr Iterator before_begin() { return Iterator(util::address_of(m_head)); }
+    constexpr Iterator before_begin() { return Iterator(util::addressof(m_head)); }
     constexpr ConstIterator before_begin() const { return cbefore_begin(); }
-    constexpr ConstIterator cbefore_begin() const { return Iterator(const_cast<Node*>(util::address_of(m_head))); }
+    constexpr ConstIterator cbefore_begin() const { return Iterator(const_cast<Node*>(util::addressof(m_head))); }
 
     constexpr Iterator begin() { return Iterator(head()); }
     constexpr Iterator end() { return Iterator(); }
@@ -103,14 +103,14 @@ public:
     }
 
     constexpr void push_back(T& value) {
-        auto* node = static_cast<Node*>(util::address_of(value));
+        auto* node = static_cast<Node*>(util::addressof(value));
         *m_tail = node;
-        m_tail = util::address_of(node->next);
+        m_tail = util::addressof(node->next);
         node->next = nullptr;
     }
 
     constexpr void push_front(T& value) {
-        auto* node = static_cast<Node*>(util::address_of(value));
+        auto* node = static_cast<Node*>(util::addressof(value));
         node->next = head();
         set_head(node);
     }
@@ -119,7 +119,7 @@ public:
         return lift_bool(!empty()) % [&] {
             auto* front = head();
             set_head(util::exchange(front->next, nullptr));
-            if (util::address_of(front->next) == m_tail) {
+            if (util::addressof(front->next) == m_tail) {
                 reset_tail();
             }
             return util::ref(front->template down_cast<T>());
@@ -139,7 +139,7 @@ public:
         if (!other.empty()) {
             auto* node = other.head();
             *m_tail = node;
-            m_tail = util::address_of(node->next);
+            m_tail = util::addressof(node->next);
             other.clear();
         }
     }
@@ -150,9 +150,9 @@ public:
     }
 
     constexpr Iterator insert_after(ConstIterator position, T& value) {
-        auto* node = static_cast<Node*>(util::address_of(value));
+        auto* node = static_cast<Node*>(util::addressof(value));
         auto* prev = position.base().node();
-        if (!prev || util::address_of(prev->next) == m_tail) {
+        if (!prev || util::addressof(prev->next) == m_tail) {
             push_back(value);
         } else {
             node->next = prev->next;
@@ -176,7 +176,7 @@ public:
         auto* prev = first.base().node();
         auto* end = last.base().node();
         if (!end) {
-            m_tail = util::address_of(prev->next);
+            m_tail = util::addressof(prev->next);
         }
         prev->next = end;
         return last.base();
@@ -186,7 +186,7 @@ private:
     constexpr Node* head() const { return m_head.next; }
     constexpr void set_head(Node* head) { m_head.next = head; }
 
-    constexpr void reset_tail() { m_tail = util::address_of(m_head.next); }
+    constexpr void reset_tail() { m_tail = util::addressof(m_head.next); }
 
     Node m_head;
     Node** m_tail;

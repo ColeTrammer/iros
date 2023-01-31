@@ -50,7 +50,7 @@ namespace as_awaitable_ns {
         explicit SenderAwaitable(Send&& sender, Promise& promise)
             : m_state(
                   connect(util::forward<Send>(sender),
-                          Receiver { util::address_of(m_result), CoroutineHandle<Promise>::from_promise(promise) })) {}
+                          Receiver { util::addressof(m_result), CoroutineHandle<Promise>::from_promise(promise) })) {}
 
         bool await_ready() const noexcept { return false; }
         void await_suspend(CoroutineHandle<>) noexcept { start(m_state); }

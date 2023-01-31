@@ -107,7 +107,7 @@ namespace let_ns {
             explicit Type(Fun f, Rec out_r, S&& sender)
                 : m_data(util::move(f), util::move(out_r))
                 , m_op_state2(execution::connect(util::forward<S>(sender),
-                                                 Receiver<CPO, Rec, Fun, Completions> { util::address_of(m_data) })) {}
+                                                 Receiver<CPO, Rec, Fun, Completions> { util::addressof(m_data) })) {}
 
         private:
             void friend tag_invoke(types::Tag<start>, Type& self) { execution::start(self.m_op_state2); }

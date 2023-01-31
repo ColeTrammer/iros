@@ -8,7 +8,7 @@
 #include <di/container/view/view_interface.h>
 #include <di/types/in_place.h>
 #include <di/types/size_t.h>
-#include <di/util/address_of.h>
+#include <di/util/addressof.h>
 #include <di/util/forward.h>
 #include <di/util/move.h>
 
@@ -31,8 +31,8 @@ public:
     requires(concepts::ConstructibleFrom<T, Args...>)
     constexpr explicit SingleView(types::InPlace, Args&&... args) : m_value(util::forward<Args>(args)...) {}
 
-    constexpr T* begin() { return util::address_of(m_value); }
-    constexpr T const* begin() const { return util::address_of(m_value); }
+    constexpr T* begin() { return util::addressof(m_value); }
+    constexpr T const* begin() const { return util::addressof(m_value); }
 
     constexpr auto end() { return begin() + 1; }
     constexpr auto end() const { return begin() + 1; }

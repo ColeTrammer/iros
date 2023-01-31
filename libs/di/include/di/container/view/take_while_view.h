@@ -6,7 +6,7 @@
 #include <di/container/view/view_interface.h>
 #include <di/function/invoke.h>
 #include <di/meta/maybe_const.h>
-#include <di/util/address_of.h>
+#include <di/util/addressof.h>
 #include <di/util/rebindable_box.h>
 
 namespace di::container {
@@ -76,13 +76,13 @@ public:
     constexpr auto end()
     requires(!concepts::SimpleView<View>)
     {
-        return Sentinel<false>(container::end(m_base), util::address_of(m_predicate.value()));
+        return Sentinel<false>(container::end(m_base), util::addressof(m_predicate.value()));
     }
 
     constexpr auto end() const
     requires(concepts::Container<View const> && concepts::IndirectUnaryPredicate<Pred const, Iter<true>>)
     {
-        return Sentinel<true>(container::end(m_base), util::address_of(m_predicate.value()));
+        return Sentinel<true>(container::end(m_base), util::addressof(m_predicate.value()));
     }
 
 private:

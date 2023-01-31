@@ -51,7 +51,7 @@ private:
     private:
         friend class PriorityQueue;
 
-        constexpr explicit Iterator(PriorityQueue& base) : m_base(util::address_of(base)) {}
+        constexpr explicit Iterator(PriorityQueue& base) : m_base(util::addressof(base)) {}
 
     public:
         Iterator() = default;

@@ -68,7 +68,7 @@ private:
         constexpr static bool ref_is_glvalue = concepts::Reference<InnerBase>;
 
         constexpr Iterator(Parent& parent, OuterIter outer)
-            : m_parent(util::address_of(parent)), m_outer(util::move(outer)) {
+            : m_parent(util::addressof(parent)), m_outer(util::move(outer)) {
             if (m_outer != container::end(parent.m_base)) {
                 auto&& inner = this->update_inner(m_outer);
                 m_inner.template emplace<1>(container::begin(inner));

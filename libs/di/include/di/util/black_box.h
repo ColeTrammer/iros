@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/concepts/copy_constructible.h>
-#include <di/util/address_of.h>
+#include <di/util/addressof.h>
 
 namespace di::util {
 template<concepts::CopyConstructible T>
@@ -10,7 +10,7 @@ template<concepts::CopyConstructible T>
     // This is done by passing a pointer through inline assembly, since the compiler won't realize
     // the pointer points to the original object.
     T const* result;
-    asm volatile("mov %1, %0\n" : "=r"(result) : "r"(util::address_of(value)) : "memory");
+    asm volatile("mov %1, %0\n" : "=r"(result) : "r"(util::addressof(value)) : "memory");
     return *result;
 }
 }

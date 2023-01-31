@@ -6,7 +6,7 @@
 #include <di/meta/conditional.h>
 #include <di/sync/memory_order.h>
 #include <di/types/prelude.h>
-#include <di/util/address_of.h>
+#include <di/util/addressof.h>
 #include <di/util/to_underlying.h>
 
 namespace di::sync {
@@ -29,7 +29,7 @@ private:
 public:
     AtomicRef(AtomicRef const&) = default;
 
-    constexpr explicit AtomicRef(T& value) : m_pointer(util::address_of(value)) {}
+    constexpr explicit AtomicRef(T& value) : m_pointer(util::addressof(value)) {}
 
     AtomicRef& operator=(AtomicRef const&) = delete;
 
@@ -46,7 +46,7 @@ public:
     }
 
     bool compare_exchange_weak(T& expected, T desired, MemoryOrder success, MemoryOrder failure) {
-        return __atomic_compare_exchange_n(m_pointer, util::address_of(expected), desired, true,
+        return __atomic_compare_exchange_n(m_pointer, util::addressof(expected), desired, true,
                                            util::to_underlying(success), util::to_underlying(failure));
     }
 
@@ -59,7 +59,7 @@ public:
     }
 
     bool compare_exchange_strong(T& expected, T desired, MemoryOrder success, MemoryOrder failure) {
-        return __atomic_compare_exchange_n(m_pointer, util::address_of(expected), desired, false,
+        return __atomic_compare_exchange_n(m_pointer, util::addressof(expected), desired, false,
                                            util::to_underlying(success), util::to_underlying(failure));
     }
 

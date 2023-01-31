@@ -9,7 +9,7 @@
 #include <di/container/iterator/distance.h>
 #include <di/container/meta/iterator_rvalue.h>
 #include <di/container/meta/iterator_value.h>
-#include <di/util/address_of.h>
+#include <di/util/addressof.h>
 #include <di/util/construct_at.h>
 #include <di/util/destroy_at.h>
 
@@ -30,8 +30,8 @@ namespace detail {
 
             // FIXME: add specical support for trivially relocatable types when not in constexpr context.
             while (in != input && out != output) {
-                construct_at(address_of(*--out), container::iterator_move(--in));
-                destroy_at(address_of(*in));
+                construct_at(addressof(*--out), container::iterator_move(--in));
+                destroy_at(addressof(*in));
             }
             return { util::move(in), util::move(out) };
         }

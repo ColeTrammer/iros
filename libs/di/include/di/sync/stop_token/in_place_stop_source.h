@@ -44,7 +44,7 @@ public:
             // Mark the callback as being executed, with relaxed memory order
             // since this is synchronized by the spin lock.
             bool did_destroy_itself = false;
-            callback.m_did_destruct_in_same_thread.store(util::address_of(did_destroy_itself), MemoryOrder::Relaxed);
+            callback.m_did_destruct_in_same_thread.store(util::addressof(did_destroy_itself), MemoryOrder::Relaxed);
 
             // Remove the current callback from the list.
             m_callbacks.pop_front();

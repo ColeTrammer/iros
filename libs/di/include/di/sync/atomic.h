@@ -6,7 +6,7 @@
 #include <di/meta/conditional.h>
 #include <di/sync/memory_order.h>
 #include <di/types/prelude.h>
-#include <di/util/address_of.h>
+#include <di/util/addressof.h>
 #include <di/util/to_underlying.h>
 
 namespace di::sync {
@@ -36,32 +36,32 @@ public:
     Atomic& operator=(Atomic const&) volatile = delete;
 
     void store(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) {
-        __atomic_store_n(util::address_of(m_value), value, util::to_underlying(order));
+        __atomic_store_n(util::addressof(m_value), value, util::to_underlying(order));
     }
     void store(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) volatile {
-        __atomic_store_n(util::address_of(m_value), value, util::to_underlying(order));
+        __atomic_store_n(util::addressof(m_value), value, util::to_underlying(order));
     }
 
     T load(MemoryOrder order = MemoryOrder::SequentialConsistency) const {
-        return __atomic_load_n(util::address_of(m_value), util::to_underlying(order));
+        return __atomic_load_n(util::addressof(m_value), util::to_underlying(order));
     }
     T load(MemoryOrder order = MemoryOrder::SequentialConsistency) const volatile {
-        return __atomic_load_n(util::address_of(m_value), util::to_underlying(order));
+        return __atomic_load_n(util::addressof(m_value), util::to_underlying(order));
     }
 
     T exchange(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) {
-        return __atomic_exchange_n(util::address_of(m_value), value, util::to_underlying(order));
+        return __atomic_exchange_n(util::addressof(m_value), value, util::to_underlying(order));
     }
     T exchange(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) volatile {
-        return __atomic_exchange_n(util::address_of(m_value), value, util::to_underlying(order));
+        return __atomic_exchange_n(util::addressof(m_value), value, util::to_underlying(order));
     }
 
     bool compare_exchange_weak(T& expected, T desired, MemoryOrder success, MemoryOrder failure) {
-        return __atomic_compare_exchange_n(util::address_of(m_value), util::address_of(expected), desired, true,
+        return __atomic_compare_exchange_n(util::addressof(m_value), util::addressof(expected), desired, true,
                                            util::to_underlying(success), util::to_underlying(failure));
     }
     bool compare_exchange_weak(T& expected, T desired, MemoryOrder success, MemoryOrder failure) volatile {
-        return __atomic_compare_exchange_n(util::address_of(m_value), util::address_of(expected), desired, true,
+        return __atomic_compare_exchange_n(util::addressof(m_value), util::addressof(expected), desired, true,
                                            util::to_underlying(success), util::to_underlying(failure));
     }
 
@@ -82,11 +82,11 @@ public:
     }
 
     bool compare_exchange_strong(T& expected, T desired, MemoryOrder success, MemoryOrder failure) {
-        return __atomic_compare_exchange_n(util::address_of(m_value), util::address_of(expected), desired, false,
+        return __atomic_compare_exchange_n(util::addressof(m_value), util::addressof(expected), desired, false,
                                            util::to_underlying(success), util::to_underlying(failure));
     }
     bool compare_exchange_strong(T& expected, T desired, MemoryOrder success, MemoryOrder failure) volatile {
-        return __atomic_compare_exchange_n(util::address_of(m_value), util::address_of(expected), desired, false,
+        return __atomic_compare_exchange_n(util::addressof(m_value), util::addressof(expected), desired, false,
                                            util::to_underlying(success), util::to_underlying(failure));
     }
 
@@ -111,56 +111,56 @@ public:
     constexpr T fetch_add(DeltaType delta, MemoryOrder order = MemoryOrder::SequentialConsistency)
     requires(concepts::Integral<T> || concepts::Pointer<T>)
     {
-        return __atomic_add_fetch(util::address_of(m_value), adjust_delta(delta), util::to_underlying(order));
+        return __atomic_add_fetch(util::addressof(m_value), adjust_delta(delta), util::to_underlying(order));
     }
     constexpr T fetch_add(DeltaType delta, MemoryOrder order = MemoryOrder::SequentialConsistency) DI_VOLATILE
     requires(concepts::Integral<T> || concepts::Pointer<T>)
     {
-        return __atomic_add_fetch(util::address_of(m_value), adjust_delta(delta), util::to_underlying(order));
+        return __atomic_add_fetch(util::addressof(m_value), adjust_delta(delta), util::to_underlying(order));
     }
 
     constexpr T fetch_sub(DeltaType delta, MemoryOrder order = MemoryOrder::SequentialConsistency)
     requires(concepts::Integral<T> || concepts::Pointer<T>)
     {
-        return __atomic_sub_fetch(util::address_of(m_value), adjust_delta(delta), util::to_underlying(order));
+        return __atomic_sub_fetch(util::addressof(m_value), adjust_delta(delta), util::to_underlying(order));
     }
     constexpr T fetch_sub(DeltaType delta, MemoryOrder order = MemoryOrder::SequentialConsistency) DI_VOLATILE
     requires(concepts::Integral<T> || concepts::Pointer<T>)
     {
-        return __atomic_sub_fetch(util::address_of(m_value), adjust_delta(delta), util::to_underlying(order));
+        return __atomic_sub_fetch(util::addressof(m_value), adjust_delta(delta), util::to_underlying(order));
     }
 
     constexpr T fetch_and(T value, MemoryOrder order = MemoryOrder::SequentialConsistency)
     requires(concepts::Integral<T>)
     {
-        return __atomic_and_fetch(util::address_of(m_value), value, util::to_underlying(order));
+        return __atomic_and_fetch(util::addressof(m_value), value, util::to_underlying(order));
     }
     constexpr T fetch_and(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) DI_VOLATILE
     requires(concepts::Integral<T>)
     {
-        return __atomic_and_fetch(util::address_of(m_value), value, util::to_underlying(order));
+        return __atomic_and_fetch(util::addressof(m_value), value, util::to_underlying(order));
     }
 
     constexpr T fetch_or(T value, MemoryOrder order = MemoryOrder::SequentialConsistency)
     requires(concepts::Integral<T>)
     {
-        return __atomic_or_fetch(util::address_of(m_value), value, util::to_underlying(order));
+        return __atomic_or_fetch(util::addressof(m_value), value, util::to_underlying(order));
     }
     constexpr T fetch_or(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) DI_VOLATILE
     requires(concepts::Integral<T>)
     {
-        return __atomic_or_fetch(util::address_of(m_value), value, util::to_underlying(order));
+        return __atomic_or_fetch(util::addressof(m_value), value, util::to_underlying(order));
     }
 
     constexpr T fetch_xor(T value, MemoryOrder order = MemoryOrder::SequentialConsistency)
     requires(concepts::Integral<T>)
     {
-        return __atomic_xor_fetch(util::address_of(m_value), value, util::to_underlying(order));
+        return __atomic_xor_fetch(util::addressof(m_value), value, util::to_underlying(order));
     }
     constexpr T fetch_xor(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) DI_VOLATILE
     requires(concepts::Integral<T>)
     {
-        return __atomic_xor_fetch(util::address_of(m_value), value, util::to_underlying(order));
+        return __atomic_xor_fetch(util::addressof(m_value), value, util::to_underlying(order));
     }
 
 #undef DI_VOLATILE

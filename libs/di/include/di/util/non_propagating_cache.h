@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/concepts/object.h>
-#include <di/util/address_of.h>
+#include <di/util/addressof.h>
 #include <di/vocab/optional/prelude.h>
 
 namespace di::util {
@@ -21,7 +21,7 @@ public:
     }
 
     constexpr NonPropagatingCache& operator=(NonPropagatingCache const& other) {
-        if (util::address_of(other) != this) {
+        if (util::addressof(other) != this) {
             this->reset();
         }
         return *this;

@@ -76,7 +76,7 @@ private:
 
         constexpr explicit Iterator(meta::MaybeConst<is_const, AdjacentTransformView>& parent,
                                     InnerIterator<is_const> iterator)
-            : Base(util::move(iterator)), m_parent(util::address_of(parent)) {}
+            : Base(util::move(iterator)), m_parent(util::addressof(parent)) {}
 
     public:
         Iterator()

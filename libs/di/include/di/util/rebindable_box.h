@@ -15,7 +15,7 @@
 #include <di/meta/unwrap_ref_decay.h>
 #include <di/meta/wrap_reference.h>
 #include <di/types/in_place.h>
-#include <di/util/address_of.h>
+#include <di/util/addressof.h>
 #include <di/util/construct_at.h>
 #include <di/util/destroy_at.h>
 #include <di/util/forward.h>
@@ -146,16 +146,16 @@ public:
     template<typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...>)
     constexpr T& emplace(Args&&... args) {
-        util::destroy_at(util::address_of(m_storage));
-        util::construct_at(util::address_of(m_storage), util::forward<Args>(args)...);
+        util::destroy_at(util::addressof(m_storage));
+        util::construct_at(util::addressof(m_storage), util::forward<Args>(args)...);
         return value();
     }
 
     template<typename U, typename... Args>
     requires(concepts::ConstructibleFrom<T, util::InitializerList<U>, Args...>)
     constexpr T& emplace(util::InitializerList<U> list, Args&&... args) {
-        util::destroy_at(util::address_of(m_storage));
-        util::construct_at(util::address_of(m_storage), list, util::forward<Args>(args)...);
+        util::destroy_at(util::addressof(m_storage));
+        util::construct_at(util::addressof(m_storage), list, util::forward<Args>(args)...);
         return value();
     }
 
@@ -169,8 +169,8 @@ private:
         // or a proxy reference. Therefore, it must be rebound. Also, rebinding is
         // required if the type is out-right not assignable.
         if constexpr (const_assignable || !assignable) {
-            util::destroy_at(util::address_of(this->value()));
-            util::construct_at(util::address_of(m_storage), util::forward<U>(new_value));
+            util::destroy_at(util::addressof(this->value()));
+            util::construct_at(util::addressof(m_storage), util::forward<U>(new_value));
         } else {
             m_storage = util::forward<U>(new_value);
         }

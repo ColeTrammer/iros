@@ -139,7 +139,7 @@ namespace schedule_from_ns {
             explicit Type(Sched scheduler, Rec receiver, S&& sender)
                 : m_data(util::move(scheduler), util::move(receiver))
                 , m_op_state2(execution::connect(util::forward<S>(sender),
-                                                 Receiver<Rec, Sched, Completions> { util::address_of(m_data) })) {}
+                                                 Receiver<Rec, Sched, Completions> { util::addressof(m_data) })) {}
 
         private:
             friend void tag_invoke(types::Tag<execution::start>, Type& self) { execution::start(self.m_op_state2); }

@@ -39,7 +39,7 @@ public:
         return VariantImpl<Rest...>::static_get(in_place_index<index - 1>, util::forward<Self>(self).m_rest);
     }
 
-    constexpr void destroy_impl(InPlaceIndex<0>) { util::destroy_at(util::address_of(m_value)); }
+    constexpr void destroy_impl(InPlaceIndex<0>) { util::destroy_at(util::addressof(m_value)); }
 
     template<size_t index>
     constexpr void destroy_impl(InPlaceIndex<index>) {
@@ -48,7 +48,7 @@ public:
 
     template<typename... Args>
     constexpr T& emplace_impl(InPlaceIndex<0>, Args&&... args) {
-        util::construct_at(util::address_of(m_value), in_place, util::forward<Args>(args)...);
+        util::construct_at(util::addressof(m_value), in_place, util::forward<Args>(args)...);
         return m_value.value();
     }
 
@@ -98,11 +98,11 @@ public:
         return util::forward<Self>(self).m_value.value();
     }
 
-    constexpr void destroy_impl(InPlaceIndex<0>) { util::destroy_at(util::address_of(m_value)); }
+    constexpr void destroy_impl(InPlaceIndex<0>) { util::destroy_at(util::addressof(m_value)); }
 
     template<typename... Args>
     constexpr T& emplace_impl(InPlaceIndex<0>, Args&&... args) {
-        util::construct_at(util::address_of(m_value), in_place, util::forward<Args>(args)...);
+        util::construct_at(util::addressof(m_value), in_place, util::forward<Args>(args)...);
         return m_value.value();
     }
 

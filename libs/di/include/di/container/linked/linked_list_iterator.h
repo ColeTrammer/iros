@@ -14,7 +14,7 @@ public:
     constexpr explicit LinkedListIterator(LinkedListNode* node) : m_node(node) {}
 
     constexpr Value& operator*() const { return concrete_node().value; }
-    constexpr Value* operator->() const { return util::address_of(**this); }
+    constexpr Value* operator->() const { return util::addressof(**this); }
 
     constexpr void advance_one() { m_node = m_node->next; }
     constexpr void back_one() { m_node = m_node->prev; }

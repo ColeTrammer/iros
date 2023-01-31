@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/util/addressof.h>
 #include <di/util/as_const.h>
 #include <di/util/as_const_pointer.h>
 #include <di/util/badge.h>
@@ -55,7 +56,7 @@ using util::ScopeExit;
 
 using util::SourceLocation;
 
-using util::address_of;
+using util::addressof;
 using util::as_const;
 using util::as_const_pointer;
 using util::black_box;

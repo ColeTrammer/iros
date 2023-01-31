@@ -14,7 +14,7 @@
 #include <di/function/flip.h>
 #include <di/function/invoke.h>
 #include <di/function/not_fn.h>
-#include <di/util/address_of.h>
+#include <di/util/addressof.h>
 #include <di/util/move.h>
 #include <di/util/non_propagating_cache.h>
 #include <di/util/rebindable_box.h>
@@ -39,7 +39,7 @@ private:
         friend class ChunkByView;
 
         constexpr Iterator(ChunkByView& parent, Iter current, Iter next)
-            : m_parent(util::address_of(parent)), m_current(util::move(current)), m_next(util::move(next)) {}
+            : m_parent(util::addressof(parent)), m_current(util::move(current)), m_next(util::move(next)) {}
 
     public:
         Iterator()

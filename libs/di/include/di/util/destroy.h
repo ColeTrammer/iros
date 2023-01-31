@@ -18,7 +18,7 @@ namespace detail {
         requires(concepts::Destructible<meta::IteratorValue<Iter>>)
         constexpr Iter operator()(Iter it, Sent sent) const {
             for (; it != sent; ++it) {
-                destroy_at(util::address_of(*it));
+                destroy_at(util::addressof(*it));
             }
             return it;
         }

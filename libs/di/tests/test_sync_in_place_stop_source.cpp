@@ -33,7 +33,7 @@ static void basic() {
         xx.deleter(xx.obj);
     });
 
-    xx.obj = di::address_of(bad_cb);
+    xx.obj = di::addressof(bad_cb);
 
     xx.deleter = [](void* ptr) {
         return di::util::destroy_at(static_cast<decltype(bad_cb)*>(ptr));

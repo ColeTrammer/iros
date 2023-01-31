@@ -17,7 +17,7 @@
 #include <di/meta/expected_rank.h>
 #include <di/meta/like.h>
 #include <di/meta/unwrap_ref_decay.h>
-#include <di/util/address_of.h>
+#include <di/util/addressof.h>
 #include <di/util/construct_at.h>
 #include <di/util/destroy_at.h>
 #include <di/util/forward.h>
@@ -153,8 +153,8 @@ public:
         return internal_assign_from_unexpected(util::move(error));
     }
 
-    constexpr auto operator->() { return util::address_of(value()); }
-    constexpr auto operator->() const { return util::address_of(value()); }
+    constexpr auto operator->() { return util::addressof(value()); }
+    constexpr auto operator->() const { return util::addressof(value()); }
 
     constexpr T& operator*() & { return value(); }
     constexpr T const& operator*() const& { return value(); }

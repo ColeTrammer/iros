@@ -75,7 +75,7 @@ private:
         = default;
 
         constexpr explicit Iterator(Parent<is_const>& parent, Iter<is_const> iterator)
-            : Base(util::move(iterator)), m_parent(util::address_of(parent)) {}
+            : Base(util::move(iterator)), m_parent(util::addressof(parent)) {}
 
         constexpr Iterator(Iterator<!is_const> other)
         requires(is_const && concepts::ConvertibleTo<Iter<is_const>, Iter<!is_const>>)

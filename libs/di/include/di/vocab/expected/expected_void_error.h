@@ -16,7 +16,7 @@
 #include <di/function/monad/monad_interface.h>
 #include <di/meta/expected_rank.h>
 #include <di/meta/unwrap_ref_decay.h>
-#include <di/util/address_of.h>
+#include <di/util/addressof.h>
 #include <di/util/forward.h>
 #include <di/util/move.h>
 #include <di/util/rebindable_box.h>
@@ -96,8 +96,8 @@ public:
         return *this;
     }
 
-    constexpr auto operator->() { return util::address_of(m_value.value()); }
-    constexpr auto operator->() const { return util::address_of(m_value.value()); }
+    constexpr auto operator->() { return util::addressof(m_value.value()); }
+    constexpr auto operator->() const { return util::addressof(m_value.value()); }
 
     constexpr T& operator*() & { return m_value.value(); }
     constexpr T const& operator*() const& { return m_value.value(); }

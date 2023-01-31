@@ -15,7 +15,7 @@
 #include <di/meta/unwrap_ref_decay.h>
 #include <di/meta/wrap_reference.h>
 #include <di/types/in_place.h>
-#include <di/util/address_of.h>
+#include <di/util/addressof.h>
 #include <di/util/construct_at.h>
 #include <di/util/destroy_at.h>
 #include <di/util/forward.h>

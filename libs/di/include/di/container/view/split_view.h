@@ -27,7 +27,7 @@ private:
         Iterator() = default;
 
         constexpr Iterator(SplitView& parent, meta::ContainerIterator<View> base, Value next)
-            : m_parent(util::address_of(parent)), m_base(util::move(base)), m_next(util::move(next)) {}
+            : m_parent(util::addressof(parent)), m_base(util::move(base)), m_next(util::move(next)) {}
 
         constexpr auto base() const { return m_base; }
 

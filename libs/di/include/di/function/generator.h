@@ -35,7 +35,7 @@ namespace detail {
         auto final_suspend() noexcept { return FinalAwaiter {}; }
 
         auto yield_value(Yield value) noexcept {
-            m_pointer = util::address_of(value);
+            m_pointer = util::addressof(value);
             return SuspendAlways {};
         }
 

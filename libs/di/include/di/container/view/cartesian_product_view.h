@@ -73,7 +73,7 @@ private:
                               meta::ContainerIterator<meta::MaybeConst<is_const, Rest>>...>;
 
         constexpr explicit Iterator(Parent& parent, Storage storage)
-            : m_parent(util::address_of(parent)), m_iterators(util::move(storage)) {}
+            : m_parent(util::addressof(parent)), m_iterators(util::move(storage)) {}
 
     public:
         Iterator() = default;

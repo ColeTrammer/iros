@@ -27,18 +27,18 @@ public:
     template<typename... Args>
     requires(concepts::ConstructibleFrom<Value, Args...>)
     constexpr explicit StatusCode(InPlace, Args&&... args)
-        : Base(in_place, util::address_of(Domain::get()), util::forward<Args>(args)...) {}
+        : Base(in_place, util::addressof(Domain::get()), util::forward<Args>(args)...) {}
 
     template<typename U, typename... Args>
     requires(concepts::ConstructibleFrom<Value, util::InitializerList<U>, Args...>)
     constexpr explicit StatusCode(InPlace, util::InitializerList<U> list, Args&&... args)
-        : Base(in_place, util::address_of(Domain::get()), list, util::forward<Args>(args)...) {}
+        : Base(in_place, util::addressof(Domain::get()), list, util::forward<Args>(args)...) {}
 
     constexpr explicit StatusCode(Value const& value)
     requires(concepts::CopyConstructible<Value>)
-        : Base(in_place, util::address_of(Domain::get()), value) {}
+        : Base(in_place, util::addressof(Domain::get()), value) {}
 
-    constexpr explicit StatusCode(Value&& value) : Base(in_place, util::address_of(Domain::get()), util::move(value)) {}
+    constexpr explicit StatusCode(Value&& value) : Base(in_place, util::addressof(Domain::get()), util::move(value)) {}
 
     StatusCode& operator=(StatusCode const&) = default;
     StatusCode& operator=(StatusCode&&) = default;

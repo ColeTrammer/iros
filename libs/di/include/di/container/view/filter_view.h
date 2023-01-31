@@ -10,7 +10,7 @@
 #include <di/container/types/prelude.h>
 #include <di/container/view/view_interface.h>
 #include <di/function/invoke.h>
-#include <di/util/address_of.h>
+#include <di/util/addressof.h>
 #include <di/util/move.h>
 #include <di/util/non_propagating_cache.h>
 #include <di/util/rebindable_box.h>
@@ -39,7 +39,7 @@ private:
         = default;
 
         constexpr Iterator(FilterView& parent, Iter base)
-            : m_parent(util::address_of(parent)), m_base(util::move(base)) {}
+            : m_parent(util::addressof(parent)), m_base(util::move(base)) {}
 
         constexpr Iter const& base() const& { return m_base; }
         constexpr Iter base() && { return util::move(m_base); }

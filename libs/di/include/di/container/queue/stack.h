@@ -39,7 +39,7 @@ private:
     private:
         friend class Stack;
 
-        constexpr explicit Iterator(Stack& base) : m_base(util::address_of(base)) {}
+        constexpr explicit Iterator(Stack& base) : m_base(util::addressof(base)) {}
 
     public:
         Iterator() = default;

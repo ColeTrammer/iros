@@ -70,7 +70,7 @@ private:
 
         private:
             friend void tag_invoke(di::Tag<di::execution::start>, Type& self) {
-                enqueue_operation(self.m_parent, di::address_of(self));
+                enqueue_operation(self.m_parent, di::addressof(self));
             }
 
             IoUringContext* m_parent;
@@ -143,7 +143,7 @@ private:
 
         private:
             friend void tag_invoke(di::Tag<di::execution::start>, Type& self) {
-                enqueue_operation(self.m_parent, di::address_of(self));
+                enqueue_operation(self.m_parent, di::addressof(self));
             }
 
             IoUringContext* m_parent;
@@ -205,7 +205,7 @@ private:
 
         private:
             friend void tag_invoke(di::Tag<di::execution::start>, Type& self) {
-                enqueue_operation(self.m_parent, di::address_of(self));
+                enqueue_operation(self.m_parent, di::addressof(self));
             }
 
             IoUringContext* m_parent;
@@ -251,7 +251,7 @@ private:
 
         private:
             friend void tag_invoke(di::Tag<di::execution::start>, Type& self) {
-                enqueue_operation(self.m_parent, di::address_of(self));
+                enqueue_operation(self.m_parent, di::addressof(self));
             }
 
             IoUringContext* m_parent { nullptr };
@@ -382,7 +382,7 @@ private:
 
         private:
             friend void tag_invoke(di::Tag<di::execution::start>, Type& self) {
-                enqueue_operation(self.m_parent, di::address_of(self));
+                enqueue_operation(self.m_parent, di::addressof(self));
             }
 
             IoUringContext* m_parent;

@@ -109,7 +109,7 @@ private:
                 //       will be violated (operation state will be destroyed without completion
                 //       ever occuring).
                 if (!state.queue.empty()) {
-                    return make_tuple(util::address_of(*state.queue.pop()), false);
+                    return make_tuple(util::addressof(*state.queue.pop()), false);
                 }
                 if (state.stopped) {
                     return make_tuple(nullptr, true);

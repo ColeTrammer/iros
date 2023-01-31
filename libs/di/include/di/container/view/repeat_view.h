@@ -17,7 +17,7 @@
 #include <di/meta/make_signed.h>
 #include <di/meta/remove_cv.h>
 #include <di/types/ssize_t.h>
-#include <di/util/address_of.h>
+#include <di/util/addressof.h>
 #include <di/util/move.h>
 
 namespace di::container {
@@ -67,9 +67,9 @@ public:
 
     constexpr explicit RepeatView(T&& value, Bound bound = Bound()) : m_value(util::move(value)), m_bound(bound) {}
 
-    constexpr Iterator begin() const { return Iterator(util::address_of(m_value)); }
+    constexpr Iterator begin() const { return Iterator(util::addressof(m_value)); }
 
-    constexpr Iterator end() const { return Iterator(util::address_of(m_value), m_bound); }
+    constexpr Iterator end() const { return Iterator(util::addressof(m_value), m_bound); }
     constexpr UnreachableSentinel end() const
     requires(!is_bounded)
     {

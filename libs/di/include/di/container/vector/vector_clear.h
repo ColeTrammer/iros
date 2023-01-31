@@ -3,7 +3,7 @@
 #include <di/concepts/trivially_destructible.h>
 #include <di/container/vector/mutable_vector.h>
 #include <di/container/view/view.h>
-#include <di/util/address_of.h>
+#include <di/util/addressof.h>
 #include <di/util/destroy.h>
 
 namespace di::container::vector {

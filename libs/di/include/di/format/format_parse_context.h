@@ -34,7 +34,7 @@ public:
     struct Iterator : public container::IteratorBase<Iterator, InputIteratorTag, Value, ssize_t> {
     private:
         constexpr explicit Iterator(View data, FormatParseContext& parent)
-            : m_data(data), m_position(data.begin()), m_parent(util::address_of(parent)) {
+            : m_data(data), m_position(data.begin()), m_parent(util::addressof(parent)) {
             advance_one();
         }
 

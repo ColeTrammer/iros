@@ -36,7 +36,7 @@ private:
     private:
         friend class Queue;
 
-        constexpr explicit Iterator(Queue& base) : m_base(util::address_of(base)) {}
+        constexpr explicit Iterator(Queue& base) : m_base(util::addressof(base)) {}
 
     public:
         Iterator() = default;

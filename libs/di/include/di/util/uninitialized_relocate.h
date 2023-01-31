@@ -8,7 +8,7 @@
 #include <di/container/concepts/sentinel_for.h>
 #include <di/container/meta/iterator_rvalue.h>
 #include <di/container/meta/iterator_value.h>
-#include <di/util/address_of.h>
+#include <di/util/addressof.h>
 #include <di/util/construct_at.h>
 #include <di/util/destroy_at.h>
 
@@ -26,8 +26,8 @@ namespace detail {
                                                                   OutSent out_sent) const {
             // FIXME: add specical support for trivially relocatable types when not in constexpr context.
             for (; input != in_sent && output != out_sent; ++input, ++output) {
-                construct_at(address_of(*output), container::iterator_move(input));
-                destroy_at(address_of(*input));
+                construct_at(addressof(*output), container::iterator_move(input));
+                destroy_at(addressof(*input));
             }
             return { util::move(input), util::move(output) };
         }

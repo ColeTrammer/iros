@@ -289,7 +289,7 @@ private:
         for (;;) {
             auto [operation, is_stopped] = state().with_lock([](State& state) -> di::Tuple<OperationStateBase*, bool> {
                 if (!state.queue.empty()) {
-                    return di::make_tuple(di::address_of(*state.queue.pop()), false);
+                    return di::make_tuple(di::addressof(*state.queue.pop()), false);
                 }
                 if (state.stopped) {
                     return di::make_tuple(nullptr, true);

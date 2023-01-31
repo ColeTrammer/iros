@@ -76,7 +76,7 @@ private:
         Iterator& operator=(Iterator&&) = default;
 
         constexpr Iterator(Parent& parent, Outer outer)
-            : m_parent(util::address_of(parent)), m_outer(util::move(outer)) {
+            : m_parent(util::addressof(parent)), m_outer(util::move(outer)) {
             this->satisfy();
         }
 

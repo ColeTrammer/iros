@@ -93,7 +93,7 @@ namespace sync_wait_ns {
 
                 auto operation = execution::connect(util::forward<Send>(sender),
                                                     Receiver<ResultType<Context, Send>, Context>(
-                                                        util::address_of(value.value), util::address_of(context)));
+                                                        util::addressof(value.value), util::addressof(context)));
                 execution::start(operation);
 
                 context.run();

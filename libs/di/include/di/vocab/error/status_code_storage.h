@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/util/address_of.h>
+#include <di/util/addressof.h>
 #include <di/util/destroy_at.h>
 #include <di/vocab/error/erased.h>
 #include <di/vocab/error/meta/status_code_domain.h>
@@ -24,9 +24,9 @@ public:
     }
 
     constexpr void clear() {
-        util::destroy_at(util::address_of(m_value));
+        util::destroy_at(util::addressof(m_value));
         m_domain = nullptr;
-        util::construct_at(util::address_of(m_value));
+        util::construct_at(util::addressof(m_value));
     }
 
     constexpr Value& value() & { return m_value; }
@@ -49,8 +49,8 @@ protected:
 
     StatusCodeStorage& operator=(StatusCodeStorage const&) = default;
     constexpr StatusCodeStorage& operator=(StatusCodeStorage&& other) {
-        util::destroy_at(util::address_of(m_value));
-        util::construct_at(util::address_of(m_value), util::move(other).value());
+        util::destroy_at(util::addressof(m_value));
+        util::construct_at(util::addressof(m_value), util::move(other).value());
         return *this;
     }
 

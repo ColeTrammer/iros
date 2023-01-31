@@ -43,11 +43,11 @@ public:
             return util::get<0>(m_state);
         } else if constexpr (concepts::Reference<meta::IteratorReference<Iter>>) {
             auto&& temp = *util::get<0>(m_state);
-            return util::address_of(temp);
+            return util::addressof(temp);
         } else {
             class Proxy {
             public:
-                constexpr meta::IteratorValue<Iter> const* operator->() const { return util::address_of(m_value); }
+                constexpr meta::IteratorValue<Iter> const* operator->() const { return util::addressof(m_value); }
 
             private:
                 constexpr Proxy(meta::IteratorReference<Iter>&& value) : m_value(util::move(value)) {}

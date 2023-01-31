@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/container/iterator/prelude.h>
-#include <di/util/address_of.h>
+#include <di/util/addressof.h>
 #include <di/util/exchange.h>
 #include <di/util/immovable.h>
 #include <di/vocab/optional/prelude.h>
@@ -71,8 +71,8 @@ public:
     IntrusiveList& operator=(IntrusiveList const&) = delete;
 
     constexpr IntrusiveList& operator=(IntrusiveList&& other) {
-        m_head.next = util::exchange(other.m_head.next, util::address_of(other.m_head));
-        m_head.prev = util::exchange(other.m_head.prev, util::address_of(other.m_head));
+        m_head.next = util::exchange(other.m_head.next, util::addressof(other.m_head));
+        m_head.prev = util::exchange(other.m_head.prev, util::addressof(other.m_head));
         if (empty()) {
             reset_head();
         }
@@ -81,13 +81,13 @@ public:
 
     ~IntrusiveList() = default;
 
-    constexpr bool empty() const { return head() == util::address_of(m_head); }
+    constexpr bool empty() const { return head() == util::addressof(m_head); }
 
     constexpr Iterator begin() { return Iterator(head()); }
-    constexpr Iterator end() { return Iterator(util::address_of(m_head)); }
+    constexpr Iterator end() { return Iterator(util::addressof(m_head)); }
 
     constexpr Iterator begin() const { return Iterator(head()); }
-    constexpr Iterator end() const { return Iterator(const_cast<Node*>(util::address_of(m_head))); }
+    constexpr Iterator end() const { return Iterator(const_cast<Node*>(util::addressof(m_head))); }
 
     constexpr auto front() {
         return lift_bool(!empty()) % [&] {
@@ -125,7 +125,7 @@ public:
     constexpr void clear() { reset_head(); }
 
     constexpr Iterator insert(ConstIterator position, T& value) {
-        auto* node = static_cast<Node*>(util::address_of(value));
+        auto* node = static_cast<Node*>(util::addressof(value));
         auto* next = position.base().node();
         auto* prev = next->prev;
 
@@ -138,7 +138,7 @@ public:
     }
 
     constexpr Iterator erase(T& value) {
-        auto* node = static_cast<Node*>(util::address_of(value));
+        auto* node = static_cast<Node*>(util::addressof(value));
         return erase(Iterator(node));
     }
     constexpr Iterator erase(ConstIterator position) { return erase(position, container::next(position)); }
@@ -158,7 +158,7 @@ private:
     constexpr Node* head() const { return m_head.next; }
     constexpr void set_head(Node* head) { m_head.next = head; }
 
-    constexpr void reset_head() { m_head.next = m_head.prev = util::address_of(m_head); }
+    constexpr void reset_head() { m_head.next = m_head.prev = util::addressof(m_head); }
 
     Node m_head;
 };

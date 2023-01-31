@@ -27,7 +27,7 @@ private:
     private:
         friend class ChunkView;
 
-        constexpr explicit InnerIterator(ChunkView& parent) : m_parent(util::address_of(parent)) {}
+        constexpr explicit InnerIterator(ChunkView& parent) : m_parent(util::addressof(parent)) {}
 
     public:
         InnerIterator(InnerIterator&&) = default;
@@ -73,7 +73,7 @@ private:
     class ValueType : public ViewInterface<ValueType> {
         friend class ChunkView;
 
-        constexpr explicit ValueType(ChunkView& parent) : m_parent(util::address_of(parent)) {}
+        constexpr explicit ValueType(ChunkView& parent) : m_parent(util::addressof(parent)) {}
 
     public:
         constexpr auto begin() const { return InnerIterator(*m_parent); }
@@ -94,7 +94,7 @@ private:
     private:
         friend class ChunkView;
 
-        constexpr explicit OuterIterator(ChunkView& parent) : m_parent(util::address_of(parent)) {}
+        constexpr explicit OuterIterator(ChunkView& parent) : m_parent(util::addressof(parent)) {}
 
     public:
         OuterIterator(OuterIterator&&) = default;

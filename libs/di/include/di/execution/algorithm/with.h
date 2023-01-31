@@ -184,7 +184,7 @@ namespace with_ns {
                 : m_data(util::move(function), util::move(receiver))
                 , m_op_state2(
                       execution::connect(util::forward<S>(sender),
-                                         CreateReceiver<Rec, Fun, Value, Completions> { util::address_of(m_data) })) {}
+                                         CreateReceiver<Rec, Fun, Value, Completions> { util::addressof(m_data) })) {}
 
         private:
             Data<Rec, Fun, Value, Completions> m_data;
