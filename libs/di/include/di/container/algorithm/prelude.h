@@ -37,6 +37,7 @@
 #include <di/container/algorithm/generate.h>
 #include <di/container/algorithm/generate_n.h>
 #include <di/container/algorithm/iota.h>
+#include <di/container/algorithm/is_partitioned.h>
 #include <di/container/algorithm/is_sorted.h>
 #include <di/container/algorithm/is_sorted_until.h>
 #include <di/container/algorithm/make_heap.h>
@@ -49,6 +50,9 @@
 #include <di/container/algorithm/mismatch.h>
 #include <di/container/algorithm/move_backward.h>
 #include <di/container/algorithm/none_of.h>
+#include <di/container/algorithm/partition.h>
+#include <di/container/algorithm/partition_copy.h>
+#include <di/container/algorithm/partition_point.h>
 #include <di/container/algorithm/pop_heap.h>
 #include <di/container/algorithm/product.h>
 #include <di/container/algorithm/push_heap.h>
@@ -71,11 +75,13 @@
 #include <di/container/algorithm/shuffle.h>
 #include <di/container/algorithm/sort.h>
 #include <di/container/algorithm/sort_heap.h>
+#include <di/container/algorithm/stable_partition.h>
 #include <di/container/algorithm/starts_with.h>
 #include <di/container/algorithm/sum.h>
 #include <di/container/algorithm/swap_ranges.h>
 #include <di/container/algorithm/transform.h>
 #include <di/container/algorithm/unique.h>
+#include <di/container/algorithm/unique_copy.h>
 
 namespace di {
 using container::adjacent_find;
@@ -110,6 +116,7 @@ using container::fold_left_first_with_iter;
 using container::fold_left_with_iter;
 using container::for_each;
 using container::for_each_n;
+using container::is_partitioned;
 using container::is_sorted;
 using container::is_sorted_until;
 using container::make_heap;
@@ -121,6 +128,9 @@ using container::minmax;
 using container::minmax_element;
 using container::mismatch;
 using container::none_of;
+using container::partition;
+using container::partition_copy;
+using container::partition_point;
 using container::pop_heap;
 using container::product;
 using container::push_heap;
@@ -140,8 +150,10 @@ using container::shift_right;
 using container::shuffle;
 using container::sort;
 using container::sort_heap;
+using container::stable_partition;
 using container::starts_with;
 using container::sum;
 using container::swap_ranges;
 using container::unique;
+using container::unique_copy;
 }

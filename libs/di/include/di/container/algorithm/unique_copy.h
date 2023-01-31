@@ -28,7 +28,7 @@ namespace detail {
 
                 *out = *first;
                 for (++first; first != last; ++first) {
-                    if (!function::invoke(pred, function::invoke(proj, *out), function::invoke(proj, *first))) {
+                    if (!function::invoke(comp, function::invoke(proj, *out), function::invoke(proj, *first))) {
                         *out = *first;
                         ++out;
                     }
@@ -42,7 +42,7 @@ namespace detail {
                 ++out;
                 auto prev = first;
                 for (++first; first != last; ++first) {
-                    if (!function::invoke(pred, function::invoke(proj, *prev), function::invoke(proj, *first))) {
+                    if (!function::invoke(comp, function::invoke(proj, *prev), function::invoke(proj, *first))) {
                         prev = first;
                         *out = *first;
                         ++out;
@@ -55,7 +55,7 @@ namespace detail {
                 *out = prev;
                 ++out;
                 for (++first; first != last; ++first) {
-                    if (!function::invoke(pred, function::invoke(proj, prev), function::invoke(proj, *first))) {
+                    if (!function::invoke(comp, function::invoke(proj, prev), function::invoke(proj, *first))) {
                         prev = *first;
                         *out = prev;
                         ++out;

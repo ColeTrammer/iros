@@ -241,6 +241,53 @@ constexpr void shift() {
     //        using di::ForwardList.
 }
 
+constexpr void partition() {
+    auto a = di::Array { 2, 1, 3, 4, 6, 5 };
+
+    auto r1 = di::partition(a, [](int x) {
+        return x % 2 == 1;
+    });
+    ASSERT_EQ(r1.begin(), a.begin() + 3);
+    ASSERT_EQ(r1.end(), a.end());
+    ASSERT(di::is_partitioned(a, [](int x) {
+        return x % 2 == 1;
+    }));
+    ASSERT(!di::is_partitioned(a, [](int x) {
+        return x % 3 == 0;
+    }));
+
+    a = di::Array { 1, 2, 3, 4, 5, 6 };
+    auto b = di::Array<int, 3> {};
+    auto c = di::Array<int, 3> {};
+    auto r2 = di::partition_copy(a, b.begin(), c.begin(), [](int x) {
+        return x % 2 == 0;
+    });
+
+    ASSERT_EQ(r2.in, a.end());
+    ASSERT_EQ(r2.out1, b.end());
+    ASSERT_EQ(r2.out2, c.end());
+
+    auto ex1 = di::Array { 2, 4, 6 };
+    auto ex2 = di::Array { 1, 3, 5 };
+    ASSERT_EQ(b, ex1);
+    ASSERT_EQ(c, ex2);
+
+    auto d = di::Array { 7, 1, 4, 2, 3, 5, 6 };
+    auto r3 = di::stable_partition(d, [](int x) {
+        return x % 2 == 0;
+    });
+    ASSERT_EQ(r3.begin(), d.begin() + 3);
+    ASSERT_EQ(r3.end(), d.end());
+
+    auto ex3 = di::Array { 4, 2, 6, 7, 1, 3, 5 };
+    ASSERT_EQ(d, ex3);
+
+    auto r4 = di::partition_point(d, [](int x) {
+        return x % 2 == 0;
+    });
+    ASSERT_EQ(r4, d.begin() + 3);
+}
+
 TESTC(container_algorithm, minmax)
 TESTC(container_algorithm, compare)
 TESTC(container_algorithm, fold)
@@ -251,3 +298,4 @@ TESTC(container_algorithm, predicate)
 TESTC(container_algorithm, for_each)
 TESTC(container_algorithm, sort)
 TESTC(container_algorithm, shift)
+TESTC(container_algorithm, partition)
