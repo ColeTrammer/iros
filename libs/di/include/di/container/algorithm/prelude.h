@@ -38,6 +38,8 @@
 #include <di/container/algorithm/generate.h>
 #include <di/container/algorithm/generate_n.h>
 #include <di/container/algorithm/iota.h>
+#include <di/container/algorithm/is_heap.h>
+#include <di/container/algorithm/is_heap_until.h>
 #include <di/container/algorithm/is_partitioned.h>
 #include <di/container/algorithm/is_sorted.h>
 #include <di/container/algorithm/is_sorted_until.h>
@@ -120,6 +122,8 @@ using container::fold_left_first_with_iter;
 using container::fold_left_with_iter;
 using container::for_each;
 using container::for_each_n;
+using container::is_heap;
+using container::is_heap_until;
 using container::is_partitioned;
 using container::is_sorted;
 using container::is_sorted_until;
