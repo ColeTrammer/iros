@@ -9,7 +9,6 @@
 
 namespace di::container {
 namespace detail {
-    // NOTE: see
     struct RotateFunction {
         template<concepts::Permutable Iter, concepts::SentinelFor<Iter> Sent>
         constexpr View<Iter> operator()(Iter first, Iter pivot, Sent last_sentinel) const {

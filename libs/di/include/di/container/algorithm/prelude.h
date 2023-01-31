@@ -65,6 +65,9 @@
 #include <di/container/algorithm/rotate.h>
 #include <di/container/algorithm/rotate_copy.h>
 #include <di/container/algorithm/search.h>
+#include <di/container/algorithm/search_n.h>
+#include <di/container/algorithm/shift_left.h>
+#include <di/container/algorithm/shift_right.h>
 #include <di/container/algorithm/shuffle.h>
 #include <di/container/algorithm/sort.h>
 #include <di/container/algorithm/sort_heap.h>
@@ -130,6 +133,9 @@ using container::reverse_copy;
 using container::rotate;
 using container::rotate_copy;
 using container::search;
+using container::search_n;
+using container::shift_left;
+using container::shift_right;
 using container::shuffle;
 using container::sort;
 using container::sort_heap;

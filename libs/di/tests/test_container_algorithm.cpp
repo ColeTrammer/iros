@@ -97,6 +97,12 @@ constexpr void contains() {
     ASSERT(di::contains_subrange(a, di::range(1, 3)));
     ASSERT(!di::contains_subrange(a, di::range(6)));
     ASSERT(!di::contains_subrange(a, di::range(3, 19)));
+
+    auto d = di::Array { 1, 1, 2, 2, 2, 3 };
+    auto r1 = di::search_n(d, 3, 2);
+    ASSERT(r1);
+    ASSERT_EQ(r1.begin(), d.begin() + 2);
+    ASSERT_EQ(r1.end(), d.begin() + 5);
 }
 
 constexpr void predicate() {
@@ -158,6 +164,65 @@ constexpr void sort() {
     ASSERT(di::is_sorted(s, di::compare, &X::a));
 }
 
+constexpr void shift() {
+    auto x = di::Array { 1, 2, 3, 4, 5 };
+
+    auto r1 = di::shift_left(x, 2);
+    ASSERT_EQ(r1.begin(), x.begin());
+    ASSERT_EQ(r1.end(), x.begin() + 3);
+
+    auto ex1 = di::Array { 3, 4, 5, 0, 0 };
+    di::fill(r1.end(), x.end(), 0);
+    ASSERT_EQ(x, ex1);
+
+    auto r2 = di::shift_left(x, 0);
+    ASSERT_EQ(r2.begin(), x.begin());
+    ASSERT_EQ(r2.end(), x.end());
+
+    auto ex2 = di::Array { 3, 4, 5, 0, 0 };
+    ASSERT_EQ(x, ex2);
+
+    auto y = di::Array { 1, 2, 3, 4, 5 };
+
+    auto r3 = di::shift_right(y, 2);
+    ASSERT_EQ(r3.begin(), y.begin() + 2);
+    ASSERT_EQ(r3.end(), y.end());
+
+    auto ex3 = di::Array { 0, 0, 1, 2, 3 };
+    di::fill(y.begin(), r3.begin(), 0);
+    ASSERT_EQ(y, ex3);
+
+    auto r4 = di::shift_right(y, 0);
+    ASSERT_EQ(r4.begin(), y.begin());
+    ASSERT_EQ(r4.end(), y.end());
+
+    auto ex4 = di::Array { 0, 0, 1, 2, 3 };
+    ASSERT_EQ(y, ex4);
+
+    auto z = di::Array { 1, 2, 3, 4, 5 };
+
+    auto r5 = di::shift_right(z, 4);
+    ASSERT_EQ(r5.begin(), z.begin() + 4);
+    ASSERT_EQ(r5.end(), z.end());
+
+    auto ex5 = di::Array { 0, 0, 0, 0, 1 };
+    di::fill(z.begin(), r5.begin(), 0);
+    ASSERT_EQ(z, ex5);
+
+    auto q = di::Array { 1, 2, 3, 4, 5 };
+
+    auto r6 = di::shift_left(q, 4);
+    ASSERT_EQ(r6.begin(), q.begin());
+    ASSERT_EQ(r6.end(), q.begin() + 1);
+
+    auto ex6 = di::Array { 5, 0, 0, 0, 0 };
+    di::fill(r6.end(), q.end(), 0);
+    ASSERT_EQ(q, ex6);
+
+    // FIXME: add tests for shift_right with forward containers
+    //        using di::ForwardList.
+}
+
 TESTC(container_algorithm, minmax)
 TESTC(container_algorithm, compare)
 TESTC(container_algorithm, fold)
@@ -167,3 +232,4 @@ TESTC(container_algorithm, contains)
 TESTC(container_algorithm, predicate)
 TESTC(container_algorithm, for_each)
 TESTC(container_algorithm, sort)
+TEST(container_algorithm, shift)
