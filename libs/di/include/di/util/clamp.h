@@ -5,7 +5,7 @@
 #include <di/function/compare.h>
 #include <di/function/identity.h>
 
-namespace di::container {
+namespace di::util {
 namespace detail {
     struct ClampFunction {
         template<typename T, typename Proj = function::Identity,

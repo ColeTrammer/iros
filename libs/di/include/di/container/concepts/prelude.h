@@ -44,6 +44,13 @@
 #include <di/container/concepts/sized_container.h>
 #include <di/container/concepts/sized_sentinel_for.h>
 #include <di/container/concepts/sortable.h>
+#include <di/container/concepts/uninit_bidirectional_container.h>
+#include <di/container/concepts/uninit_bidirectional_iterator.h>
+#include <di/container/concepts/uninit_forward_container.h>
+#include <di/container/concepts/uninit_forward_iterator.h>
+#include <di/container/concepts/uninit_input_container.h>
+#include <di/container/concepts/uninit_input_iterator.h>
+#include <di/container/concepts/uninit_sentinel_for.h>
 #include <di/container/concepts/view.h>
 #include <di/container/concepts/viewable_container.h>
 #include <di/container/concepts/weakly_incrementable.h>

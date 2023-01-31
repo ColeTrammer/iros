@@ -7,6 +7,7 @@
 #include <di/util/bit_cast.h>
 #include <di/util/bitwise_enum.h>
 #include <di/util/black_box.h>
+#include <di/util/clamp.h>
 #include <di/util/clone.h>
 #include <di/util/compile_time_fail.h>
 #include <di/util/coroutine.h>
@@ -60,6 +61,7 @@ using util::addressof;
 using util::as_const;
 using util::as_const_pointer;
 using util::black_box;
+using util::clamp;
 using util::compile_time_fail;
 using util::declval;
 using util::exchange;

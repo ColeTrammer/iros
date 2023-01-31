@@ -3,7 +3,6 @@
 #include <di/container/algorithm/adjacent_find.h>
 #include <di/container/algorithm/all_of.h>
 #include <di/container/algorithm/any_of.h>
-#include <di/container/algorithm/clamp.h>
 #include <di/container/algorithm/compare.h>
 #include <di/container/algorithm/contains.h>
 #include <di/container/algorithm/contains_subrange.h>
@@ -13,6 +12,8 @@
 #include <di/container/algorithm/copy_n.h>
 #include <di/container/algorithm/count.h>
 #include <di/container/algorithm/count_if.h>
+#include <di/container/algorithm/destroy.h>
+#include <di/container/algorithm/destroy_n.h>
 #include <di/container/algorithm/ends_with.h>
 #include <di/container/algorithm/equal.h>
 #include <di/container/algorithm/fill.h>
@@ -80,6 +81,8 @@
 #include <di/container/algorithm/sum.h>
 #include <di/container/algorithm/swap_ranges.h>
 #include <di/container/algorithm/transform.h>
+#include <di/container/algorithm/uninitialized_relocate.h>
+#include <di/container/algorithm/uninitialized_relocate_backwards.h>
 #include <di/container/algorithm/unique.h>
 #include <di/container/algorithm/unique_copy.h>
 
@@ -87,7 +90,6 @@ namespace di {
 using container::adjacent_find;
 using container::all_of;
 using container::any_of;
-using container::clamp;
 using container::contains;
 using container::contains_subrange;
 using container::copy;
@@ -96,6 +98,8 @@ using container::copy_if;
 using container::copy_n;
 using container::count;
 using container::count_if;
+using container::destroy;
+using container::destroy_n;
 using container::ends_with;
 using container::fill;
 using container::fill_n;
@@ -154,6 +158,8 @@ using container::stable_partition;
 using container::starts_with;
 using container::sum;
 using container::swap_ranges;
+using container::uninitialized_relocate;
+using container::uninitialized_relocate_backwards;
 using container::unique;
 using container::unique_copy;
 }
