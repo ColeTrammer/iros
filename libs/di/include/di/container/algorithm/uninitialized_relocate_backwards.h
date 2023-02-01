@@ -16,8 +16,8 @@ using UninitializedRelocateBackwardsResult = container::InOutResult<In, Out>;
 
 namespace detail {
     struct UninitializedRelocateBackwardsFunction {
-        template<concepts::UninitBidirectionalIterator In, concepts::UninitSentinelFor<In> Sent,
-                 concepts::BidirectionalIterator Out, concepts::SentinelFor<Out> OutSent>
+        template<concepts::BidirectionalIterator In, concepts::SentinelFor<In> Sent,
+                 concepts::UninitBidirectionalIterator Out, concepts::UninitSentinelFor<Out> OutSent>
         requires(concepts::ConstructibleFrom<meta::IteratorValue<Out>, meta::IteratorValue<In>> &&
                  concepts::Destructible<meta::IteratorValue<In>>)
         constexpr UninitializedRelocateBackwardsResult<In, Out> operator()(In input, Sent in_sent, Out output,
@@ -32,7 +32,7 @@ namespace detail {
             return { util::move(in), util::move(out) };
         }
 
-        template<concepts::UninitBidirectionalContainer Con, concepts::Container Out>
+        template<concepts::BidirectionalContainer Con, concepts::UninitBidirectionalContainer Out>
         requires(concepts::ConstructibleFrom<meta::ContainerValue<Out>, meta::ContainerValue<Con>> &&
                  concepts::Destructible<meta::ContainerValue<Con>>)
         constexpr UninitializedRelocateBackwardsResult<meta::BorrowedIterator<Con>, meta::BorrowedIterator<Out>>

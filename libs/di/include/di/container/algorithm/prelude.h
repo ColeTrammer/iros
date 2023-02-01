@@ -83,8 +83,18 @@
 #include <di/container/algorithm/sum.h>
 #include <di/container/algorithm/swap_ranges.h>
 #include <di/container/algorithm/transform.h>
+#include <di/container/algorithm/uninitialized_copy.h>
+#include <di/container/algorithm/uninitialized_copy_n.h>
+#include <di/container/algorithm/uninitialized_default_construct.h>
+#include <di/container/algorithm/uninitialized_default_construct_n.h>
+#include <di/container/algorithm/uninitialized_fill.h>
+#include <di/container/algorithm/uninitialized_fill_n.h>
+#include <di/container/algorithm/uninitialized_move.h>
+#include <di/container/algorithm/uninitialized_move_n.h>
 #include <di/container/algorithm/uninitialized_relocate.h>
 #include <di/container/algorithm/uninitialized_relocate_backwards.h>
+#include <di/container/algorithm/uninitialized_value_construct.h>
+#include <di/container/algorithm/uninitialized_value_construct_n.h>
 #include <di/container/algorithm/unique.h>
 #include <di/container/algorithm/unique_copy.h>
 
@@ -162,8 +172,18 @@ using container::stable_partition;
 using container::starts_with;
 using container::sum;
 using container::swap_ranges;
+using container::uninitialized_copy;
+using container::uninitialized_copy_n;
+using container::uninitialized_default_construct;
+using container::uninitialized_default_construct_n;
+using container::uninitialized_fill;
+using container::uninitialized_fill_n;
+using container::uninitialized_move;
+using container::uninitialized_move_n;
 using container::uninitialized_relocate;
 using container::uninitialized_relocate_backwards;
+using container::uninitialized_value_construct;
+using container::uninitialized_value_construct_n;
 using container::unique;
 using container::unique_copy;
 }

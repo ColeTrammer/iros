@@ -15,8 +15,8 @@ using UninitializedRelocateResult = container::InOutResult<In, Out>;
 
 namespace detail {
     struct UninitializedRelocateFunction {
-        template<concepts::UninitInputIterator In, concepts::UninitSentinelFor<In> Sent, concepts::Iterator Out,
-                 concepts::SentinelFor<Out> OutSent>
+        template<concepts::InputIterator In, concepts::SentinelFor<In> Sent, concepts::UninitForwardIterator Out,
+                 concepts::UninitSentinelFor<Out> OutSent>
         requires(concepts::ConstructibleFrom<meta::IteratorValue<Out>, meta::IteratorValue<In>> &&
                  concepts::Destructible<meta::IteratorValue<In>>)
         constexpr UninitializedRelocateResult<In, Out> operator()(In input, Sent in_sent, Out output,
@@ -28,7 +28,7 @@ namespace detail {
             return { util::move(input), util::move(output) };
         }
 
-        template<concepts::UninitInputContainer Con, concepts::Container Out>
+        template<concepts::InputContainer Con, concepts::UninitForwardContainer Out>
         requires(concepts::ConstructibleFrom<meta::ContainerValue<Out>, meta::ContainerValue<Con>> &&
                  concepts::Destructible<meta::ContainerValue<Con>>)
         constexpr UninitializedRelocateResult<meta::BorrowedIterator<Con>, meta::BorrowedIterator<Out>>

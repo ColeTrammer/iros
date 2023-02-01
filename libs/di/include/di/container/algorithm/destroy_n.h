@@ -14,9 +14,7 @@ namespace detail {
         requires(concepts::Destructible<meta::IteratorValue<It>>)
         constexpr It operator()(It it, meta::IteratorSSizeType<It> n) const {
             if constexpr (concepts::TriviallyDestructible<meta::IteratorValue<It>>) {
-                for (; n != 0; --n) {
-                    ++it;
-                }
+                container::advance(it, n);
                 return it;
             } else {
                 for (; n != 0; --n) {
