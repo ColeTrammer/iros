@@ -33,6 +33,8 @@
 #include <di/container/algorithm/fold_left_first.h>
 #include <di/container/algorithm/fold_left_first_with_iter.h>
 #include <di/container/algorithm/fold_left_with_iter.h>
+#include <di/container/algorithm/fold_right.h>
+#include <di/container/algorithm/fold_right_last.h>
 #include <di/container/algorithm/for_each.h>
 #include <di/container/algorithm/for_each_n.h>
 #include <di/container/algorithm/generate.h>
@@ -130,6 +132,8 @@ using container::fold_left;
 using container::fold_left_first;
 using container::fold_left_first_with_iter;
 using container::fold_left_with_iter;
+using container::fold_right;
+using container::fold_right_last;
 using container::for_each;
 using container::for_each_n;
 using container::is_heap;

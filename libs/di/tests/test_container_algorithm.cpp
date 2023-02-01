@@ -63,6 +63,16 @@ constexpr void fold() {
     ASSERT_EQ(di::sum(e), 15);
 
     ASSERT_EQ(*di::fold_left_first(a | di::drop(1), di::multiplies), 120);
+
+    auto g = di::range(6);
+    auto r1 = di::fold_right(g, 0, di::plus);
+    ASSERT_EQ(r1, 15);
+
+    auto r2 = di::fold_right_last(g, di::plus);
+    ASSERT_EQ(*r2, 15);
+
+    auto r3 = di::fold_left_first(g, di::plus);
+    ASSERT_EQ(*r3, 15);
 }
 
 constexpr void is_sorted() {
