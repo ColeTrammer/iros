@@ -57,7 +57,7 @@ void Scheduler::run_next() {
     ASSERT(!m_run_queue.empty());
 
     auto& next = *m_run_queue.pop();
-    m_current_task = di::address_of(next);
+    m_current_task = di::addressof(next);
     next.context_switch_to();
 }
 

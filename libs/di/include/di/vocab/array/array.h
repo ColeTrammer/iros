@@ -217,6 +217,60 @@ private:
     }
 };
 
+template<typename T>
+struct Array<T, 0> {
+    constexpr Optional<T&> at(types::size_t) { return nullopt; }
+    constexpr Optional<T const&> at(types::size_t) const { return nullopt; }
+
+    constexpr T* data() { return nullptr; }
+    constexpr T const* data() const { return nullptr; }
+
+    constexpr T* begin() { return data(); }
+    constexpr T const* begin() const { return data(); }
+
+    constexpr T* end() { return data(); }
+    constexpr T const* end() const { return data(); }
+
+    constexpr bool empty() const { return false; }
+    constexpr auto size() const { return 0zu; }
+    constexpr auto max_size() const { return 0; }
+
+    constexpr void fill(T const&)
+    requires(concepts::Copyable<T>)
+    {}
+
+    constexpr auto span() { return Span { *this }; }
+    constexpr auto span() const { return Span { *this }; }
+
+private:
+    constexpr friend bool operator==(Array const& a, Array const& b)
+    requires(concepts::EqualityComparable<T>)
+    {
+        return true;
+    }
+
+    constexpr friend auto operator<=>(Array const& a, Array const& b)
+    requires(concepts::ThreeWayComparable<T>)
+    {
+        return strong_ordering::equal;
+    }
+
+    constexpr friend void tag_invoke(types::Tag<util::swap>, Array& a, Array& b)
+    requires(concepts::Swappable<T>)
+    {}
+
+    constexpr friend bool tag_invoke(types::Tag<vocab::enable_generate_structed_bindings>, types::InPlaceType<Array>) {
+        return true;
+    }
+    constexpr friend types::size_t tag_invoke(types::Tag<vocab::tuple_size>, types::InPlaceType<Array>) { return 0; }
+
+    template<concepts::ContiguousIterator It, concepts::SizedSentinelFor<It> Sent>
+    requires(concepts::ConvertibleToNonSlicing<It, T*>)
+    constexpr friend Span<T> tag_invoke(types::Tag<container::reconstruct>, InPlaceType<Array>, It first, Sent last) {
+        return Span<T>(util::move(first), util::move(last));
+    }
+};
+
 template<typename T, typename... U>
 Array(T, U...) -> Array<T, 1 + sizeof...(U)>;
 }

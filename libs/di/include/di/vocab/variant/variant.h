@@ -25,8 +25,8 @@
 
 namespace di::vocab {
 namespace detail {
-    template<typename T, typename U>
-    concept VariantValidOverload = requires { (T[1]) { util::declval<U>() }; };
+    template<typename T, typename U, typename A = T[1]>
+    concept VariantValidOverload = requires { A { util::declval<U>() }; };
 }
 
 template<typename... Types>

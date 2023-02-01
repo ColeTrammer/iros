@@ -13,7 +13,7 @@
       "cacheVariables": {
         "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
         "IROS_DiagnosticFlags": "-fdiagnostics-color=always",
-        "IROS_WarningFlags": "-Wall -Wextra"
+        "IROS_WarningFlags": "-Wall -Wextra -Wpedantic"
       }
     },
     {

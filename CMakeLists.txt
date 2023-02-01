@@ -14,10 +14,14 @@ set(IROS_WarningFlags ""
 set(IROS_SanitizerFlags ""
     CACHE STRING "Extra compilation flags to enable sanitizers."
 )
+set(IROS_ExtraFlags ""
+    CACHE STRING "Extra compilation flags for any purpose."
+)
 
 separate_arguments(IROS_DiagnosticsFlags)
 separate_arguments(IROS_WarningFlags)
 separate_arguments(IROS_SanitizerFlags)
+separate_arguments(IROS_ExtraFlags)
 
 set(as_subproject Di Dius Iris)
 
@@ -37,12 +41,14 @@ macro(add_library)
             ${IROS_DiagnosticFlags}
             ${IROS_WarningFlags}
             ${IROS_SanitizerFlags}
+            ${IROS_ExtraFlags}
         )
         target_link_options(${ARGV0}
           PRIVATE
             ${IROS_DiagnosticFlags}
             ${IROS_WarningFlags}
             ${IROS_SanitizerFlags}
+            ${IROS_ExtraFlags}
         )
     endif()
 endmacro()
@@ -55,6 +61,7 @@ macro(add_executable)
             ${IROS_DiagnosticFlags}
             ${IROS_WarningFlags}
             ${IROS_SanitizerFlags}
+            ${IROS_ExtraFlags}
         )
         target_link_options(
             ${ARGV0}
@@ -62,6 +69,7 @@ macro(add_executable)
             ${IROS_DiagnosticFlags}
             ${IROS_WarningFlags}
             ${IROS_SanitizerFlags}
+            ${IROS_ExtraFlags}
         )
     endif()
 endmacro()
