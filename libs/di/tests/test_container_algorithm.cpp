@@ -298,6 +298,17 @@ constexpr void partition() {
     ASSERT_EQ(r4, d.begin() + 3);
 }
 
+constexpr void permutation() {
+    auto a = di::Array { 1, 5, 1, 2, 3 };
+    auto b = di::Array { 5, 3, 1, 1, 2 };
+    auto c = di::Array { 5, 1, 3, 1, 1 };
+    auto d = di::Array { 5, 1, 3, 1, 1, 2 };
+
+    ASSERT(di::is_permutation(a, b));
+    ASSERT(!di::is_permutation(a, c));
+    ASSERT(!di::is_permutation(a, d));
+}
+
 TESTC(container_algorithm, minmax)
 TESTC(container_algorithm, compare)
 TESTC(container_algorithm, fold)
@@ -309,3 +320,4 @@ TESTC(container_algorithm, for_each)
 TESTC(container_algorithm, sort)
 TESTC(container_algorithm, shift)
 TESTC(container_algorithm, partition)
+TESTC(container_algorithm, permutation)

@@ -43,6 +43,7 @@
 #include <di/container/algorithm/is_heap.h>
 #include <di/container/algorithm/is_heap_until.h>
 #include <di/container/algorithm/is_partitioned.h>
+#include <di/container/algorithm/is_permutation.h>
 #include <di/container/algorithm/is_sorted.h>
 #include <di/container/algorithm/is_sorted_until.h>
 #include <di/container/algorithm/make_heap.h>
@@ -139,6 +140,7 @@ using container::for_each_n;
 using container::is_heap;
 using container::is_heap_until;
 using container::is_partitioned;
+using container::is_permutation;
 using container::is_sorted;
 using container::is_sorted_until;
 using container::make_heap;
