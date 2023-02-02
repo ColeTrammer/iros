@@ -307,6 +307,120 @@ constexpr void permutation() {
     ASSERT(di::is_permutation(a, b));
     ASSERT(!di::is_permutation(a, c));
     ASSERT(!di::is_permutation(a, d));
+
+    auto e = di::Array { 1, 2, 3 };
+    {
+        auto r1 = di::next_permutation(e);
+        ASSERT_EQ(r1.in, e.end());
+        ASSERT_EQ(r1.found, true);
+        ASSERT_EQ(e, (di::Array { 1, 3, 2 }));
+    }
+    {
+        auto r1 = di::next_permutation(e);
+        ASSERT_EQ(r1.in, e.end());
+        ASSERT_EQ(r1.found, true);
+        ASSERT_EQ(e, (di::Array { 2, 1, 3 }));
+    }
+    {
+        auto r1 = di::next_permutation(e);
+        ASSERT_EQ(r1.in, e.end());
+        ASSERT_EQ(r1.found, true);
+        ASSERT_EQ(e, (di::Array { 2, 3, 1 }));
+    }
+    {
+        auto r1 = di::next_permutation(e);
+        ASSERT_EQ(r1.in, e.end());
+        ASSERT_EQ(r1.found, true);
+        ASSERT_EQ(e, (di::Array { 3, 1, 2 }));
+    }
+    {
+        auto r1 = di::next_permutation(e);
+        ASSERT_EQ(r1.in, e.end());
+        ASSERT_EQ(r1.found, true);
+        ASSERT_EQ(e, (di::Array { 3, 2, 1 }));
+    }
+    {
+        auto r1 = di::next_permutation(e);
+        ASSERT_EQ(r1.in, e.end());
+        ASSERT_EQ(r1.found, false);
+        ASSERT_EQ(e, (di::Array { 1, 2, 3 }));
+    }
+
+    e = di::Array { 3, 2, 1 };
+    {
+        auto r1 = di::prev_permutation(e);
+        ASSERT_EQ(r1.in, e.end());
+        ASSERT_EQ(r1.found, true);
+        ASSERT_EQ(e, (di::Array { 3, 1, 2 }));
+    }
+    {
+        auto r1 = di::prev_permutation(e);
+        ASSERT_EQ(r1.in, e.end());
+        ASSERT_EQ(r1.found, true);
+        ASSERT_EQ(e, (di::Array { 2, 3, 1 }));
+    }
+    {
+        auto r1 = di::prev_permutation(e);
+        ASSERT_EQ(r1.in, e.end());
+        ASSERT_EQ(r1.found, true);
+        ASSERT_EQ(e, (di::Array { 2, 1, 3 }));
+    }
+    {
+        auto r1 = di::prev_permutation(e);
+        ASSERT_EQ(r1.in, e.end());
+        ASSERT_EQ(r1.found, true);
+        ASSERT_EQ(e, (di::Array { 1, 3, 2 }));
+    }
+    {
+        auto r1 = di::prev_permutation(e);
+        ASSERT_EQ(r1.in, e.end());
+        ASSERT_EQ(r1.found, true);
+        ASSERT_EQ(e, (di::Array { 1, 2, 3 }));
+    }
+    {
+        auto r1 = di::prev_permutation(e);
+        ASSERT_EQ(r1.in, e.end());
+        ASSERT_EQ(r1.found, false);
+        ASSERT_EQ(e, (di::Array { 3, 2, 1 }));
+    }
+
+    auto f = di::Array { 1, 1, 2, 2 };
+    {
+        auto r1 = di::next_permutation(f);
+        ASSERT_EQ(r1.in, f.end());
+        ASSERT_EQ(r1.found, true);
+        ASSERT_EQ(f, (di::Array { 1, 2, 1, 2 }));
+    }
+    {
+        auto r1 = di::next_permutation(f);
+        ASSERT_EQ(r1.in, f.end());
+        ASSERT_EQ(r1.found, true);
+        ASSERT_EQ(f, (di::Array { 1, 2, 2, 1 }));
+    }
+    {
+        auto r1 = di::next_permutation(f);
+        ASSERT_EQ(r1.in, f.end());
+        ASSERT_EQ(r1.found, true);
+        ASSERT_EQ(f, (di::Array { 2, 1, 1, 2 }));
+    }
+    {
+        auto r1 = di::next_permutation(f);
+        ASSERT_EQ(r1.in, f.end());
+        ASSERT_EQ(r1.found, true);
+        ASSERT_EQ(f, (di::Array { 2, 1, 2, 1 }));
+    }
+    {
+        auto r1 = di::next_permutation(f);
+        ASSERT_EQ(r1.in, f.end());
+        ASSERT_EQ(r1.found, true);
+        ASSERT_EQ(f, (di::Array { 2, 2, 1, 1 }));
+    }
+    {
+        auto r1 = di::next_permutation(f);
+        ASSERT_EQ(r1.in, f.end());
+        ASSERT_EQ(r1.found, false);
+        ASSERT_EQ(f, (di::Array { 1, 1, 2, 2 }));
+    }
 }
 
 TESTC(container_algorithm, minmax)

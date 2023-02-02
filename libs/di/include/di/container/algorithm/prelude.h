@@ -55,11 +55,13 @@
 #include <di/container/algorithm/minmax_element.h>
 #include <di/container/algorithm/mismatch.h>
 #include <di/container/algorithm/move_backward.h>
+#include <di/container/algorithm/next_permutation.h>
 #include <di/container/algorithm/none_of.h>
 #include <di/container/algorithm/partition.h>
 #include <di/container/algorithm/partition_copy.h>
 #include <di/container/algorithm/partition_point.h>
 #include <di/container/algorithm/pop_heap.h>
+#include <di/container/algorithm/prev_permutation.h>
 #include <di/container/algorithm/product.h>
 #include <di/container/algorithm/push_heap.h>
 #include <di/container/algorithm/remove.h>
@@ -151,11 +153,13 @@ using container::min_element;
 using container::minmax;
 using container::minmax_element;
 using container::mismatch;
+using container::next_permutation;
 using container::none_of;
 using container::partition;
 using container::partition_copy;
 using container::partition_point;
 using container::pop_heap;
+using container::prev_permutation;
 using container::product;
 using container::push_heap;
 using container::remove_copy;
