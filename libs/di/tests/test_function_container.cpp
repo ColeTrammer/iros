@@ -82,6 +82,7 @@ static void function_basic() {
     auto const m = *di::try_make_function<i32(i32) const>(lambda);
     ASSERT_EQ(m(2), 18);
 
+#ifndef __SANITIZE_ADDRESS__
     struct AbsurdFunction {
         di::Array<di::Byte, 549755813888> way_too_big;
 
@@ -89,6 +90,7 @@ static void function_basic() {
     };
 
     ASSERT(!di::try_make_function<i32(i32) const>(di::in_place_type<AbsurdFunction>));
+#endif
 }
 
 TEST(function_container, function_ref_basic)

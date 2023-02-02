@@ -111,56 +111,56 @@ public:
     constexpr T fetch_add(DeltaType delta, MemoryOrder order = MemoryOrder::SequentialConsistency)
     requires(concepts::Integral<T> || concepts::Pointer<T>)
     {
-        return __atomic_add_fetch(util::addressof(m_value), adjust_delta(delta), util::to_underlying(order));
+        return __atomic_fetch_add(util::addressof(m_value), adjust_delta(delta), util::to_underlying(order));
     }
     constexpr T fetch_add(DeltaType delta, MemoryOrder order = MemoryOrder::SequentialConsistency) DI_VOLATILE
     requires(concepts::Integral<T> || concepts::Pointer<T>)
     {
-        return __atomic_add_fetch(util::addressof(m_value), adjust_delta(delta), util::to_underlying(order));
+        return __atomic_fetch_add(util::addressof(m_value), adjust_delta(delta), util::to_underlying(order));
     }
 
     constexpr T fetch_sub(DeltaType delta, MemoryOrder order = MemoryOrder::SequentialConsistency)
     requires(concepts::Integral<T> || concepts::Pointer<T>)
     {
-        return __atomic_sub_fetch(util::addressof(m_value), adjust_delta(delta), util::to_underlying(order));
+        return __atomic_fetch_sub(util::addressof(m_value), adjust_delta(delta), util::to_underlying(order));
     }
     constexpr T fetch_sub(DeltaType delta, MemoryOrder order = MemoryOrder::SequentialConsistency) DI_VOLATILE
     requires(concepts::Integral<T> || concepts::Pointer<T>)
     {
-        return __atomic_sub_fetch(util::addressof(m_value), adjust_delta(delta), util::to_underlying(order));
+        return __atomic_fetch_sub(util::addressof(m_value), adjust_delta(delta), util::to_underlying(order));
     }
 
-    constexpr T fetch_and(T value, MemoryOrder order = MemoryOrder::SequentialConsistency)
+    T fetch_and(T value, MemoryOrder order = MemoryOrder::SequentialConsistency)
     requires(concepts::Integral<T>)
     {
-        return __atomic_and_fetch(util::addressof(m_value), value, util::to_underlying(order));
+        return __atomic_fetch_and(util::addressof(m_value), value, util::to_underlying(order));
     }
-    constexpr T fetch_and(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) DI_VOLATILE
+    T fetch_and(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) DI_VOLATILE
     requires(concepts::Integral<T>)
     {
-        return __atomic_and_fetch(util::addressof(m_value), value, util::to_underlying(order));
-    }
-
-    constexpr T fetch_or(T value, MemoryOrder order = MemoryOrder::SequentialConsistency)
-    requires(concepts::Integral<T>)
-    {
-        return __atomic_or_fetch(util::addressof(m_value), value, util::to_underlying(order));
-    }
-    constexpr T fetch_or(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) DI_VOLATILE
-    requires(concepts::Integral<T>)
-    {
-        return __atomic_or_fetch(util::addressof(m_value), value, util::to_underlying(order));
+        return __atomic_fetch_and(util::addressof(m_value), value, util::to_underlying(order));
     }
 
-    constexpr T fetch_xor(T value, MemoryOrder order = MemoryOrder::SequentialConsistency)
+    T fetch_or(T value, MemoryOrder order = MemoryOrder::SequentialConsistency)
     requires(concepts::Integral<T>)
     {
-        return __atomic_xor_fetch(util::addressof(m_value), value, util::to_underlying(order));
+        return __atomic_fetch_or(util::addressof(m_value), value, util::to_underlying(order));
     }
-    constexpr T fetch_xor(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) DI_VOLATILE
+    T fetch_or(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) DI_VOLATILE
     requires(concepts::Integral<T>)
     {
-        return __atomic_xor_fetch(util::addressof(m_value), value, util::to_underlying(order));
+        return __atomic_fetch_or(util::addressof(m_value), value, util::to_underlying(order));
+    }
+
+    T fetch_xor(T value, MemoryOrder order = MemoryOrder::SequentialConsistency)
+    requires(concepts::Integral<T>)
+    {
+        return __atomic_fetch_xor(util::addressof(m_value), value, util::to_underlying(order));
+    }
+    T fetch_xor(T value, MemoryOrder order = MemoryOrder::SequentialConsistency) DI_VOLATILE
+    requires(concepts::Integral<T>)
+    {
+        return __atomic_fetch_xor(util::addressof(m_value), value, util::to_underlying(order));
     }
 
 #undef DI_VOLATILE
