@@ -423,6 +423,54 @@ constexpr void permutation() {
     }
 }
 
+constexpr void binary_search() {
+    auto a = di::Array { 1, 2, 3, 3, 3, 4, 6 };
+    for (auto& x : a) {
+        auto [it, found] = di::binary_search(a, x);
+        ASSERT(found);
+        ASSERT_EQ(*it, x);
+    }
+
+    auto b = di::Array { 1, 2, 3, 3, 3, 4, 6, 6 };
+    for (auto& x : b) {
+        auto [it, found] = di::binary_search(b, x);
+        ASSERT(found);
+        ASSERT_EQ(*it, x);
+    }
+
+    for (auto& a : di::Array<di::Span<int>, 2> { a.span(), b.span() }) {
+        {
+            auto [it, found] = di::binary_search(a, 0);
+            ASSERT_EQ(it, a.begin());
+            ASSERT(!found);
+        }
+        {
+            auto [it, found] = di::binary_search(a, 5);
+            ASSERT_EQ(it, a.begin() + 6);
+            ASSERT(!found);
+        }
+        {
+            auto [it, found] = di::binary_search(a, 7);
+            ASSERT_EQ(it, a.end());
+            ASSERT(!found);
+        }
+    }
+
+    {
+        auto it = di::lower_bound(a, 3);
+        ASSERT_EQ(it, a.begin() + 2);
+    }
+    {
+        auto it = di::upper_bound(a, 3);
+        ASSERT_EQ(it, a.begin() + 5);
+    }
+    {
+        auto [it, jt] = di::equal_range(a, 3);
+        ASSERT_EQ(it, a.begin() + 2);
+        ASSERT_EQ(jt, a.begin() + 5);
+    }
+}
+
 TESTC(container_algorithm, minmax)
 TESTC(container_algorithm, compare)
 TESTC(container_algorithm, fold)
@@ -435,3 +483,4 @@ TESTC(container_algorithm, sort)
 TESTC(container_algorithm, shift)
 TESTC(container_algorithm, partition)
 TESTC(container_algorithm, permutation)
+TESTC(container_algorithm, binary_search)

@@ -3,6 +3,7 @@
 #include <di/container/algorithm/adjacent_find.h>
 #include <di/container/algorithm/all_of.h>
 #include <di/container/algorithm/any_of.h>
+#include <di/container/algorithm/binary_search.h>
 #include <di/container/algorithm/compare.h>
 #include <di/container/algorithm/contains.h>
 #include <di/container/algorithm/contains_subrange.h>
@@ -16,6 +17,7 @@
 #include <di/container/algorithm/destroy_n.h>
 #include <di/container/algorithm/ends_with.h>
 #include <di/container/algorithm/equal.h>
+#include <di/container/algorithm/equal_range.h>
 #include <di/container/algorithm/fill.h>
 #include <di/container/algorithm/fill_n.h>
 #include <di/container/algorithm/find.h>
@@ -46,6 +48,7 @@
 #include <di/container/algorithm/is_permutation.h>
 #include <di/container/algorithm/is_sorted.h>
 #include <di/container/algorithm/is_sorted_until.h>
+#include <di/container/algorithm/lower_bound.h>
 #include <di/container/algorithm/make_heap.h>
 #include <di/container/algorithm/max.h>
 #include <di/container/algorithm/max_element.h>
@@ -102,11 +105,13 @@
 #include <di/container/algorithm/uninitialized_value_construct_n.h>
 #include <di/container/algorithm/unique.h>
 #include <di/container/algorithm/unique_copy.h>
+#include <di/container/algorithm/upper_bound.h>
 
 namespace di {
 using container::adjacent_find;
 using container::all_of;
 using container::any_of;
+using container::binary_search;
 using container::contains;
 using container::contains_subrange;
 using container::copy;
@@ -118,6 +123,7 @@ using container::count_if;
 using container::destroy;
 using container::destroy_n;
 using container::ends_with;
+using container::equal_range;
 using container::fill;
 using container::fill_n;
 using container::find;
@@ -145,6 +151,7 @@ using container::is_partitioned;
 using container::is_permutation;
 using container::is_sorted;
 using container::is_sorted_until;
+using container::lower_bound;
 using container::make_heap;
 using container::max;
 using container::max_element;
@@ -196,4 +203,5 @@ using container::uninitialized_value_construct;
 using container::uninitialized_value_construct_n;
 using container::unique;
 using container::unique_copy;
+using container::upper_bound;
 }
