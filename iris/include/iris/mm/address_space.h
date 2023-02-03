@@ -9,10 +9,12 @@
 namespace iris::mm {
 class AddressSpace {
 public:
-    explicit AddressSpace(u64 architecture_page_table_base)
+    constexpr explicit AddressSpace(u64 architecture_page_table_base)
         : m_architecture_page_table_base(architecture_page_table_base) {}
 
     u64 architecture_page_table_base() const { return m_architecture_page_table_base; }
+    void set_architecture_page_table_base(u64 value) { m_architecture_page_table_base = value; }
+
     void load();
 
     Expected<void> map_physical_page(VirtualAddress location, PhysicalAddress physical_address);
@@ -21,11 +23,11 @@ public:
     Expected<void> allocate_region_at(VirtualAddress location, usize page_aligned_length);
 
 private:
-    u64 m_architecture_page_table_base;
+    u64 m_architecture_page_table_base { 0 };
     di::TreeSet<Region> m_regions;
 };
 
-Expected<AddressSpace> create_initial_kernel_address_space(PhysicalAddress kernel_physical_start,
-                                                           VirtualAddress kernel_virtual_start,
-                                                           PhysicalAddress max_physical_address);
+Expected<void> init_and_load_initial_kernel_address_space(PhysicalAddress kernel_physical_start,
+                                                          VirtualAddress kernel_virtual_start,
+                                                          PhysicalAddress max_physical_address);
 }

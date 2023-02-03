@@ -55,6 +55,7 @@ install(
 
 add_executable(iris
     boot/init.cpp
+    core/global_state.cpp
     core/scheduler.cpp
     mm/address_space.cpp
     mm/page_frame_allocator.cpp

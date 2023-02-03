@@ -6,6 +6,7 @@
 #include <iris/arch/x86/amd64/tss.h>
 #include <iris/boot/cxx_init.h>
 #include <iris/boot/init.h>
+#include <iris/core/global_state.h>
 #include <iris/core/print.h>
 #include <iris/core/scheduler.h>
 #include <iris/core/task.h>
@@ -101,13 +102,16 @@ namespace iris {
 void iris_main() {
     iris::println(u8"Hello, World - again"_sv);
 
+    auto& global_state = global_state_in_boot();
+    global_state.heap_start = iris::mm::VirtualAddress(di::align_up(iris::mm::kernel_end.raw_address(), 4096));
+    global_state.heap_end = global_state.heap_start;
+
     auto memory_map = di::Span { memmap_request.response->entries, memmap_request.response->entry_count };
 
     ASSERT(!memory_map.empty());
-    auto max_physical_address = di::max(memory_map | di::transform([](auto* entry) {
-                                            return entry->base + entry->length;
-                                        }));
-    (void) max_physical_address;
+    global_state.max_physical_address = di::max(memory_map | di::transform([](auto* entry) {
+                                                    return mm::PhysicalAddress(entry->base) + entry->length;
+                                                }));
 
     for (auto* memory_map_entry : memory_map) {
         switch (memory_map_entry->type) {
@@ -155,11 +159,9 @@ void iris_main() {
         userspace_test_program_data_storage.data());
     auto test_program_data = di::Span { userspace_test_program_data_storage.data(), userspace_test_program.size };
 
-    auto new_address_space = *iris::mm::create_initial_kernel_address_space(
-        iris::mm::PhysicalAddress(kernel_address_request.response->physical_base),
-        iris::mm::VirtualAddress(kernel_address_request.response->virtual_base),
-        iris::mm::PhysicalAddress(max_physical_address));
-    new_address_space.load();
+    ASSERT(mm::init_and_load_initial_kernel_address_space(
+        mm::PhysicalAddress(kernel_address_request.response->physical_base),
+        mm::VirtualAddress(kernel_address_request.response->virtual_base), global_state.max_physical_address));
 
     iris::println(u8"Hello, World - again again"_sv);
 
@@ -171,17 +173,18 @@ void iris_main() {
 
     auto task_address = di::to_uintptr(&do_task);
 
-    auto task_stack1 = *new_address_space.allocate_region(0x2000);
+    auto& kernel_address_space = global_state.kernel_address_space;
+    auto task_stack1 = *kernel_address_space.allocate_region(0x2000);
     auto task1 = iris::Task(task_address, task_stack1.raw_address() + 0x2000, false);
 
     scheduler.schedule_task(task1);
 
-    auto task_stack2 = *new_address_space.allocate_region(0x2000);
+    auto task_stack2 = *kernel_address_space.allocate_region(0x2000);
     auto task2 = iris::Task(task_address, task_stack2.raw_address() + 0x2000, false);
 
     scheduler.schedule_task(task2);
 
-    auto task_stack3 = *new_address_space.allocate_region(0x2000);
+    auto task_stack3 = *kernel_address_space.allocate_region(0x2000);
     auto task3 = iris::Task(task_address, task_stack3.raw_address() + 0x2000, false);
 
     scheduler.schedule_task(task3);
@@ -199,14 +202,14 @@ void iris_main() {
         iris::println("memory={:x}"_sv, program_header.memory_size);
 
         auto aligned_size = di::align_up(program_header.memory_size, 4096);
-        (void) new_address_space.allocate_region_at(iris::mm::VirtualAddress(program_header.virtual_addr),
-                                                    aligned_size);
+        (void) kernel_address_space.allocate_region_at(iris::mm::VirtualAddress(program_header.virtual_addr),
+                                                       aligned_size);
 
         auto data = di::Span { reinterpret_cast<di::Byte*>(program_header.virtual_addr), aligned_size };
         di::copy(test_program_data, data.data());
     }
 
-    auto task_stack4 = *new_address_space.allocate_region(0x2000);
+    auto task_stack4 = *kernel_address_space.allocate_region(0x2000);
     auto task4 = iris::Task(elf_header->entry, task_stack4.raw_address(), true);
 
     scheduler.schedule_task(task4);
