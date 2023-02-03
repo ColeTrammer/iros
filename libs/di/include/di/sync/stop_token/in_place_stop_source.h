@@ -98,7 +98,9 @@ private:
         bool going_to_be_executed = !!did_destruct_in_same_thread;
 
         // Remove ourselves from the list with the lock held.
-        m_callbacks.erase(*callback);
+        if (!going_to_be_executed) {
+            m_callbacks.erase(*callback);
+        }
 
         // Now unlock the spin lock.
         unlock(true);
@@ -145,7 +147,7 @@ private:
     }
 
     mutable container::IntrusiveList<detail::InPlaceStopCallbackBase> m_callbacks;
-    mutable Atomic<u8> m_state;
+    mutable Atomic<u8> m_state { 0 };
     ThreadId m_stopper_thread {};
 };
 }

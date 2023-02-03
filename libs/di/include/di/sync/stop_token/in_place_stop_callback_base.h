@@ -16,12 +16,11 @@ protected:
         : m_parent(parent), m_execute(execute) {}
 
     InPlaceStopSource const* m_parent { nullptr };
-
-private:
-    void execute() { m_execute(this); }
-
     ErasedCallback m_execute { nullptr };
     Atomic<bool> m_already_executed { false };
     Atomic<bool*> m_did_destruct_in_same_thread { nullptr };
+
+private:
+    void execute() { m_execute(this); }
 };
 }

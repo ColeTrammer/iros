@@ -85,7 +85,19 @@ private:
     }
 };
 
+#ifdef DI_SANITIZER
+// When compiling with UBSAN, using the address of a constexpr inline variable fails.
+// This includes checking for nullptr. To work around this, do not declare the variable
+// as inline when compiling with a sanitizer.
+// See: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=71962.
+// As a side note, this means there will be multiple copies of the generic_domain object
+// in a user's program. This is perfectly fine, since we make sure to compare domains by
+// their unique id and not their address, which is necessary even for inline variables when
+// in the presence of dynamic linking.
+constexpr auto generic_domain = GenericDomain {};
+#else
 constexpr inline auto generic_domain = GenericDomain {};
+#endif
 
 constexpr inline GenericDomain const& GenericDomain::get() {
     return generic_domain;

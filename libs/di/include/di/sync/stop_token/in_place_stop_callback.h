@@ -27,7 +27,7 @@ public:
     InPlaceStopCallback(InPlaceStopCallback&&) = delete;
 
     ~InPlaceStopCallback() {
-        if (m_parent) {
+        if (m_parent && !m_already_executed.load(MemoryOrder::Acquire)) {
             m_parent->remove_callback(this);
         }
     }

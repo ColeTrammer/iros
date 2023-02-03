@@ -28,7 +28,8 @@
       "name": "debug_base",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "IROS_ExtraFlags": "-ffold-simple-inlines"
       },
       "inherits": ["base"]
     },
@@ -63,7 +64,29 @@
       "binaryDir": "${sourceDir}/build/native/asan",
       "cacheVariables": {
         "IROS_BuildCcpp": "OFF",
-        "IROS_SanitizerFlags": "-fsanitize=address"
+        "IROS_SanitizerFlags": "-fsanitize=address -DDI_SANITIZER"
+      },
+      "inherits": ["debug_base"]
+    },
+    {
+      "name": "tsan",
+      "displayName": "Thread Sanitizer",
+      "description": "Build with thread sanitizer enabled",
+      "binaryDir": "${sourceDir}/build/native/tsan",
+      "cacheVariables": {
+        "IROS_BuildCcpp": "OFF",
+        "IROS_SanitizerFlags": "-fsanitize=thread -DDI_SANITIZER"
+      },
+      "inherits": ["debug_base"]
+    },
+    {
+      "name": "ubsan",
+      "displayName": "Undefined Behavior Sanitizer",
+      "description": "Build with undefed behavior sanitizer enabled",
+      "binaryDir": "${sourceDir}/build/native/ubsan",
+      "cacheVariables": {
+        "IROS_BuildCcpp": "OFF",
+        "IROS_SanitizerFlags": "-fsanitize=undefined -DDI_SANITIZER"
       },
       "inherits": ["debug_base"]
     }

@@ -29,14 +29,14 @@ static void basic() {
 
     ErasedDeleter xx;
 
-    auto bad_cb = di::InPlaceStopCallback(token, [&] {
+    auto bad_cb = new di::InPlaceStopCallback(token, [&] {
         xx.deleter(xx.obj);
     });
 
-    xx.obj = di::addressof(bad_cb);
+    xx.obj = bad_cb;
 
     xx.deleter = [](void* ptr) {
-        return di::util::destroy_at(static_cast<decltype(bad_cb)*>(ptr));
+        return delete reinterpret_cast<decltype(bad_cb)>(ptr);
     };
 
     ASSERT(!source.stop_requested());
