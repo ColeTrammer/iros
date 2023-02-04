@@ -33,6 +33,7 @@
 #include <di/container/concepts/input_iterator.h>
 #include <di/container/concepts/iterator.h>
 #include <di/container/concepts/iterator_reconstructible_container.h>
+#include <di/container/concepts/mergeable.h>
 #include <di/container/concepts/output_container.h>
 #include <di/container/concepts/output_iterator.h>
 #include <di/container/concepts/permutable.h>

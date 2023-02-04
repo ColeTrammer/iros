@@ -8,9 +8,11 @@
 
 namespace di::concepts {
 template<typename F, typename It, typename Jt = It>
-concept IndirectStrictWeakOrder = IndirectlyReadable<It> && IndirectlyReadable<Jt> && CopyConstructible<F> &&
-                                  StrictWeakOrder<F&, meta::IteratorValue<It>&, meta::IteratorValue<Jt>&> &&
-                                  StrictWeakOrder<F&, meta::IteratorValue<It>&, meta::IteratorReference<Jt>> &&
-                                  StrictWeakOrder<F&, meta::IteratorReference<It>, meta::IteratorValue<Jt>&> &&
-                                  StrictWeakOrder<F&, meta::IteratorReference<It>, meta::IteratorReference<Jt>>;
+concept IndirectStrictWeakOrder =
+    IndirectlyReadable<It> && IndirectlyReadable<Jt> && CopyConstructible<F> &&
+    StrictWeakOrder<F&, meta::IteratorValue<It>&, meta::IteratorValue<Jt>&> &&
+    StrictWeakOrder<F&, meta::IteratorValue<It>&, meta::IteratorReference<Jt>> &&
+    StrictWeakOrder<F&, meta::IteratorReference<It>, meta::IteratorValue<Jt>&> &&
+    StrictWeakOrder<F&, meta::IteratorReference<It>, meta::IteratorReference<Jt>> &&
+    StrictWeakOrder<F&, meta::IteratorCommonReference<It>, meta::IteratorCommonReference<Jt>>;
 }

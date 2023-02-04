@@ -1,5 +1,7 @@
 #pragma once
 
+#include <di/concepts/common_reference_with.h>
+#include <di/concepts/common_with.h>
 #include <di/concepts/const_lvalue_refernece.h>
 #include <di/concepts/constructible_from.h>
 #include <di/concepts/copy_assignable.h>
@@ -13,6 +15,7 @@
 #include <di/function/unpack.h>
 #include <di/function/ycombinator.h>
 #include <di/meta/add_member_get.h>
+#include <di/meta/common_reference.h>
 #include <di/meta/common_type.h>
 #include <di/meta/compare_three_way_result.h>
 #include <di/meta/index_sequence_for.h>
@@ -23,6 +26,7 @@
 #include <di/util/get_in_place.h>
 #include <di/util/swap.h>
 #include <di/vocab/tuple/tuple_element.h>
+#include <di/vocab/tuple/tuple_elements.h>
 #include <di/vocab/tuple/tuple_impl.h>
 #include <di/vocab/tuple/tuple_size.h>
 
@@ -158,4 +162,52 @@ private:
 
 template<typename... Types>
 Tuple(Types...) -> Tuple<Types...>;
+}
+
+namespace di {
+namespace detail {
+    template<typename...>
+    struct HasCommonTypeHelper : meta::BoolConstant<false> {};
+
+    template<typename T, concepts::CommonWith<T> U>
+    struct HasCommonTypeHelper<T, U> : meta::BoolConstant<true> {};
+
+    struct HasCommonType {
+        template<typename... Types>
+        using Invoke = meta::BoolConstant<HasCommonTypeHelper<Types...>::value>;
+    };
+
+    template<typename...>
+    struct HasCommonReferenceHelper : meta::BoolConstant<false> {};
+
+    template<typename T, concepts::CommonWith<T> U>
+    struct HasCommonReferenceHelper<T, U> : meta::BoolConstant<true> {};
+
+    struct HasCommonReference {
+        template<typename... Types>
+        using Invoke = meta::BoolConstant<HasCommonReferenceHelper<Types...>::value>;
+    };
+}
+
+template<concepts::TupleLike A, concepts::TupleLike B>
+requires((concepts::InstanceOf<A, vocab::Tuple> || concepts::InstanceOf<B, vocab::Tuple>) &&
+         (meta::TupleSize<A> == meta::TupleSize<B>) &&
+         meta::All<meta::Zip<meta::TupleElements<A>, meta::TupleElements<B>>, meta::Uncurry<detail::HasCommonType>>)
+struct meta::CustomCommonType<A, B> {
+    using Type = meta::AsTuple<meta::Transform<meta::Zip<meta::TupleElements<A>, meta::TupleElements<B>>,
+                                               meta::Uncurry<meta::Quote<meta::CommonType>>>>;
+};
+
+template<concepts::TupleLike A, concepts::TupleLike B, template<typename> typename AQual,
+         template<typename> typename BQual>
+requires((concepts::InstanceOf<A, vocab::Tuple> || concepts::InstanceOf<B, vocab::Tuple>) &&
+         (meta::TupleSize<A> == meta::TupleSize<B>) &&
+         meta::All<meta::Zip<meta::Transform<meta::TupleElements<A>, meta::Quote<AQual>>,
+                             meta::Transform<meta::TupleElements<B>, meta::Quote<BQual>>>,
+                   meta::Uncurry<detail::HasCommonType>>)
+struct meta::CustomCommonReference<A, B, AQual, BQual> {
+    using Type = meta::AsTuple<meta::Transform<meta::Zip<meta::Transform<meta::TupleElements<A>, meta::Quote<AQual>>,
+                                                         meta::Transform<meta::TupleElements<B>, meta::Quote<BQual>>>,
+                                               meta::Uncurry<meta::Quote<meta::CommonReference>>>>;
+};
 }

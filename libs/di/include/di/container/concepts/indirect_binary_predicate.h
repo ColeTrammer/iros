@@ -3,6 +3,7 @@
 #include <di/concepts/copy_constructible.h>
 #include <di/concepts/predicate.h>
 #include <di/container/concepts/indirectly_readable.h>
+#include <di/container/meta/iterator_common_reference.h>
 #include <di/container/meta/iterator_reference.h>
 #include <di/container/meta/iterator_value.h>
 
@@ -12,5 +13,6 @@ concept IndirectBinaryPredicate = IndirectlyReadable<It> && IndirectlyReadable<J
                                   Predicate<F&, meta::IteratorValue<It>&, meta::IteratorValue<Jt>&> &&
                                   Predicate<F&, meta::IteratorValue<It>&, meta::IteratorReference<Jt>> &&
                                   Predicate<F&, meta::IteratorReference<It>, meta::IteratorValue<Jt>&> &&
-                                  Predicate<F&, meta::IteratorReference<It>, meta::IteratorReference<Jt>>;
+                                  Predicate<F&, meta::IteratorReference<It>, meta::IteratorReference<Jt>> &&
+                                  Predicate<F&, meta::IteratorCommonReference<It>, meta::IteratorReference<Jt>>;
 }

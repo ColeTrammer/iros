@@ -55,8 +55,7 @@ static_assert(di::SameAs<di::meta::Transform<di::meta::List<i32, i64>,
                                              di::meta::BindBack<di::meta::Quote<di::meta::AddLValueReference>>>,
                          di::meta::List<i32&, i64&>>);
 
-// static_assert(
-// di::SameAs<di::Tuple<long>, decltype(di::meta::common_type(di::in_place_type<di::Tuple<int>>,
-// di::in_place_type<di::Tuple<long>>))>);
-
-// static_assert(di::SameAs<di::Tuple<long>, di::meta::CommonType<di::Tuple<int>, di::Tuple<long>>>);
+static_assert(di::SameAs<di::meta::TupleElements<di::Tuple<int, long>>, di::meta::List<int, long>>);
+static_assert(di::SameAs<di::Tuple<long>, di::meta::Type<di::meta::CustomCommonType<di::Tuple<int>, di::Tuple<long>>>>);
+static_assert(di::SameAs<int const&, di::meta::CommonReference<int const&, int&&>>);
+static_assert(di::SameAs<di::Tuple<int const&>, di::meta::CommonReference<di::Tuple<int const&>, di::Tuple<int&&>>>);
