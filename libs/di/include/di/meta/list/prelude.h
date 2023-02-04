@@ -2,6 +2,7 @@
 
 #include <di/meta/list/all.h>
 #include <di/meta/list/apply.h>
+#include <di/meta/list/as_language_function.h>
 #include <di/meta/list/as_list.h>
 #include <di/meta/list/as_tuple.h>
 #include <di/meta/list/bind_back.h>
@@ -26,6 +27,9 @@
 #include <di/meta/list/push_front.h>
 #include <di/meta/list/quote.h>
 #include <di/meta/list/repeat.h>
+#include <di/meta/list/replace.h>
+#include <di/meta/list/replace_if.h>
+#include <di/meta/list/same_as.h>
 #include <di/meta/list/transform.h>
 #include <di/meta/list/type.h>
 #include <di/meta/list/uncurry.h>
