@@ -9,7 +9,9 @@
 #include <di/meta/list/cartesian_product.h>
 #include <di/meta/list/compose.h>
 #include <di/meta/list/concat.h>
+#include <di/meta/list/count.h>
 #include <di/meta/list/defer.h>
+#include <di/meta/list/exactly_once.h>
 #include <di/meta/list/filter.h>
 #include <di/meta/list/fold.h>
 #include <di/meta/list/id.h>

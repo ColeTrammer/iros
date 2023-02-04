@@ -1,4 +1,5 @@
 add_executable(test_di
+    test_any.cpp
     test_bit_bitset.cpp
     test_bit_bitstruct.cpp
     test_cli.cpp
