@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/container/algorithm/find_last.h>
+#include <di/container/algorithm/find_end.h>
 #include <di/container/string/constant_string.h>
 #include <di/container/string/string_begin.h>
 #include <di/container/string/string_end.h>

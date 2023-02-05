@@ -123,7 +123,34 @@ static void inline_() {
     ASSERT_EQ(yf(z), 6);
 }
 
+static void unique() {
+    using Any = di::any::AnyUnique<Interface>;
+
+    auto x = Any::create(4);
+
+    ASSERT_EQ(xf(x, 12), 16);
+    ASSERT_EQ(yf(x), 6);
+
+    auto y = Any::create(di::in_place_type<A>);
+
+    ASSERT_EQ(xf(y, 12), 16);
+    ASSERT_EQ(yf(y), 1);
+
+    auto z = di::move(y);
+    ASSERT(!y);
+
+    ASSERT_EQ(xf(z, 12), 16);
+    ASSERT_EQ(yf(z), 1);
+
+    z = di::move(x);
+    ASSERT(!x);
+
+    ASSERT_EQ(xf(z, 12), 16);
+    ASSERT_EQ(yf(z), 6);
+}
+
 TESTC(any, meta)
 TESTC(any, vtable)
 TEST(any, ref)
 TEST(any, inline_)
+TEST(any, unique)

@@ -28,15 +28,19 @@ public:
 
     template<concepts::Object T, concepts::ConvertibleTo<T&> U>
     requires(!concepts::Const<T>)
-    constexpr RefStorage(InPlaceType<T&>, U&& u) : m_pointer(util::addressof(static_cast<T&>(util::forward<U>(u)))) {}
+    constexpr static void init(RefStorage& self, InPlaceType<T&>, U&& u) {
+        self.m_pointer = util::addressof(static_cast<T&>(util::forward<U>(u)));
+    }
 
     template<concepts::Object T, concepts::ConvertibleTo<T const&> U>
-    constexpr RefStorage(InPlaceType<T const&>, T const& u)
-        : m_const_pointer(static_cast<T const&>(util::forward<U>(u))) {}
+    constexpr static void init(RefStorage& self, InPlaceType<T const&>, T const& u) {
+        self.m_const_pointer = util::addressof(static_cast<T const&>(util::forward<U>(u)));
+    }
 
     template<concepts::LanguageFunction T, concepts::ConvertibleTo<T*> U>
-    constexpr RefStorage(InPlaceType<T*>, T* u)
-        : m_function_pointer(reinterpret_cast<void (*)()>(static_cast<T*>(util::forward<U>(u)))) {}
+    constexpr static void init(RefStorage& self, InPlaceType<T*>, T* u) {
+        self.m_function_pointer = reinterpret_cast<void (*)()>(static_cast<T*>(util::forward<U>(u)));
+    }
 
     ~RefStorage() = default;
 

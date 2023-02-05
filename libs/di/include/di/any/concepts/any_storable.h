@@ -8,9 +8,9 @@
 
 namespace di::concepts {
 template<typename T, typename Storage>
-concept AnyStorable = AnyStorage<Storage> && requires {
-                                                 util::create<Storage>(in_place_type<T>, util::DeferConstruct([] -> T {
-                                                                           util::unreachable();
-                                                                       }));
+concept AnyStorable = AnyStorage<Storage> && requires(Storage& self) {
+                                                 Storage::init(self, in_place_type<T>, util::DeferConstruct([] -> T {
+                                                                   util::unreachable();
+                                                               }));
                                              };
 }
