@@ -4,5 +4,5 @@
 
 namespace di::any {
 template<concepts::Interface Interface>
-using AnyRef = Any<Interface, RefStorage, InlineVTable>;
+using AnyRef = Any<Interface, RefStorage, MaybeInlineVTable<2>>;
 }
