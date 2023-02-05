@@ -9,7 +9,7 @@ namespace di::concepts {
 template<typename T, typename Storage>
 concept AnyStorableInfallibly =
     AnyStorage<Storage> && requires {
-                               requires T::creation_is_fallible(in_place_type<T>);
+                               requires !T::creation_is_fallible(in_place_type<T>);
                                {
                                    util::create<Storage>(in_place_type<T>, util::DeferConstruct([] -> T {}))
                                    } -> SameAs<Storage>;

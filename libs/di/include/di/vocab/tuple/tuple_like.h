@@ -8,6 +8,7 @@
 #include <di/util/as_const.h>
 #include <di/util/forward.h>
 #include <di/util/get.h>
+#include <di/util/move.h>
 #include <di/vocab/tuple/tuple_element.h>
 #include <di/vocab/tuple/tuple_size.h>
 

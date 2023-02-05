@@ -1,20 +1,92 @@
 #include <dius/test/prelude.h>
 
+struct X {
+    X() = default;
+
+    using Type = di::Method<X, i32(di::This const&, i32)>;
+
+    template<typename T>
+    requires(di::concepts::TagInvocable<X, T const&, i32>)
+    inline i32 operator()(T const& self, i32 y) const {
+        return di::tag_invoke(*this, self, y);
+    }
+};
+
+constexpr inline auto xf = X {};
+
+struct A {};
+
+i32 tag_invoke(X, i32 const& x, i32 y) {
+    return x + y;
+}
+
+i32 tag_invoke(X, A const&, i32 y) {
+    return y + 4;
+}
+
+struct Y {
+    Y() = default;
+
+    template<typename T>
+    requires(di::concepts::TagInvocable<Y, T&>)
+    inline i32 operator()(T& self) const {
+        return di::tag_invoke(*this, self);
+    }
+};
+
+constexpr inline auto yf = Y {};
+
+i32 tag_invoke(Y, i32& x) {
+    return x + 2;
+}
+
+i32 tag_invoke(Y, A&) {
+    return 1;
+}
+
+using XM = di::meta::Type<X>;
+using YM = di::Method<Y, i32(di::This&)>;
+
+using Interface = di::meta::List<X, YM>;
+
 constexpr void meta() {
-    struct X {
-        using Type = di::Method<X, void(di::This const&)>;
-    };
-    struct Y {};
-
-    using Interface = di::meta::List<X, di::Method<Y, void(di::This &&)>>;
-
     static_assert(di::concepts::Interface<Interface>);
 
     using S = di::meta::MethodErasedSignature<di::meta::Type<X>>;
-    static_assert(di::SameAs<S, void(void*)>);
+    static_assert(di::SameAs<S, i32(void*, i32)>);
 
     static_assert(di::SameAs<di::meta::MethodErasedSignature<di::Method<Y, i32(i32, di::String const&, di::This&&)>>,
                              i32(i32, di::String const&, void*)>);
+
+    static_assert(di::concepts::MethodCallableWith<XM, i32>);
+    static_assert(di::concepts::MethodCallableWith<YM, i32>);
+}
+
+constexpr void vtable() {
+    using Storage = di::any::RefStorage;
+
+    using VTable = di::any::InlineVTable<Interface>;
+
+    constexpr di::concepts::VTableFor<Interface> auto vtable = VTable::create_for<Storage, i32&>();
+    (void) vtable;
+}
+
+static void ref() {
+    using Any = di::any::AnyRef<Interface>;
+
+    i32 v = 4;
+    auto x = Any(v);
+
+    ASSERT_EQ(xf(x, 12), 16);
+    ASSERT_EQ(yf(x), 6);
+
+    auto a = A {};
+    auto y = Any(a);
+
+    ASSERT_EQ(xf(y, 12), 16);
+    ASSERT_EQ(yf(y), 1);
 }
 
 TESTC(any, meta)
+TESTC(any, vtable)
+TEST(any, ref)

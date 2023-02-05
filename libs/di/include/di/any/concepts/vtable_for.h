@@ -10,9 +10,11 @@
 namespace di::concepts {
 namespace detail {
     template<typename M, typename T>
-    concept VTableValidFor = Method<M> && requires(T const vtable) {
-                                              { vtable[M {}] } -> SameAs<meta::MethodErasedSignature<M>>;
-                                          };
+    concept VTableValidFor = Method<meta::Type<M>> && requires(T const vtable) {
+                                                          {
+                                                              vtable[meta::Type<M> {}]
+                                                              } -> SameAs<meta::MethodErasedSignature<meta::Type<M>>*>;
+                                                      };
 }
 
 template<typename T, typename I>

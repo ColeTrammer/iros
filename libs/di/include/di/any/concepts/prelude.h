@@ -5,4 +5,5 @@
 #include <di/any/concepts/any_storage.h>
 #include <di/any/concepts/interface.h>
 #include <di/any/concepts/method.h>
+#include <di/any/concepts/method_callable_with.h>
 #include <di/any/concepts/vtable_for.h>
