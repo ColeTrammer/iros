@@ -30,7 +30,7 @@ struct ErasedCallImpl<Method<Tag, R(Self, BArgs...)>, Storage, T> {
         using QualifiedStorage = meta::MaybeConst<concepts::Const<meta::RemoveReference<This>>, Storage>;
         auto* typed_storage = reinterpret_cast<QualifiedStorage*>(storage);
         auto* object = typed_storage->template down_cast<meta::RemoveReference<T>>();
-        return function::invoke_r<R>(tag, util::forward_like<Self, T>(*object), util::forward<BArgs>(bargs)...);
+        return function::invoke_r<R>(tag, util::forward_like<Self>(*object), util::forward<BArgs>(bargs)...);
     }
 };
 }

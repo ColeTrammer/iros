@@ -278,3 +278,24 @@ Then, vtables will have an associated list of signature objects, which correspon
 The library will support merging vtables together, to enable erasing multiple traits into one object, and
 as an implementation detail, because owning structures will internally merge the user requested operations
 with the vtable for moving, destroying, copying, swapping, etc.
+
+### Object Categories
+
+To enable certain optimizations when storing type erased objects, it is necessary to categorize object functionality.
+
+| Category              | Requirements                                  | Optimization                                                                                     |
+| --------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Reference             | Reference must remain valid (unsafe to store) | Only need sizeof(void\*) bytes of storage, no destruction, trivial copy, non-null                |
+| Trivial               | Trivially Copyable, Destructible              | No need to erase lifetime operations (copy, move, destruct)                                      |
+| Trivially Relocatable | Move = memcpy                                 | No need to erase move operations, but destructor is still required                               |
+| Immovable             | Not copyable, movable                         | No need to erase move/copy, but objects cannot be copied/moved                                   |
+| Move Only             | Movable                                       | No need to erase copy operations                                                                 |
+| Copyable              | Movable and Copyable                          | Copying cannot return error, all lifetime operations cannot be merged into a single vtable entry |
+| Infallibly cloneable  | Clone returns `T`, not `Result<T>`            | Clone function can never return an error                                                         |
+| Cloneable             | Cloneable                                     | None                                                                                             |
+
+Trivially relocatable objects provide a significant improvement over having a type erased move constructor. Nearly all types in C++ are trivially relocatable, with the exception of linked lists (or any self-referential data structure). The downside is that trivial relocatability is not tracked by the compiler, and so every type must manually opt-in.
+
+The default object category will be move only, since this provides allow erasing nearly any object, while providing normal value semantics. This also prevents expensive copy operations from ever being called.
+
+If objects need to be copied, users can make the object category cloneable, in which case a vtable entry will handle cloning, or if shared pointer semantics are required, users can use `AnyShared`, which internally stores a ref-counted type-erased object.

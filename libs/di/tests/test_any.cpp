@@ -65,7 +65,7 @@ constexpr void meta() {
 constexpr void vtable() {
     using Storage = di::any::RefStorage;
 
-    using VTable = di::any::InlineVTable<Interface>;
+    using VTable = di::any::InlineVTable::Invoke<Interface>;
 
     constexpr di::concepts::VTableFor<Interface> auto vtable = VTable::create_for<Storage, i32&>();
     (void) vtable;
@@ -80,6 +80,11 @@ static void ref() {
     ASSERT_EQ(xf(x, 12), 16);
     ASSERT_EQ(yf(x), 6);
 
+    auto z = x;
+
+    ASSERT_EQ(xf(z, 12), 16);
+    ASSERT_EQ(yf(z), 6);
+
     auto a = A {};
     auto y = Any(a);
 
@@ -87,6 +92,33 @@ static void ref() {
     ASSERT_EQ(yf(y), 1);
 }
 
+static void inline_() {
+    using Any = di::any::AnyInline<Interface>;
+
+    auto x = Any(4);
+
+    ASSERT_EQ(xf(x, 12), 16);
+    ASSERT_EQ(yf(x), 6);
+
+    auto y = Any(di::in_place_type<A>);
+
+    ASSERT_EQ(xf(y, 12), 16);
+    ASSERT_EQ(yf(y), 1);
+
+    auto z = di::move(y);
+    ASSERT(!y);
+
+    ASSERT_EQ(xf(z, 12), 16);
+    ASSERT_EQ(yf(z), 1);
+
+    z = di::move(x);
+    ASSERT(!x);
+
+    ASSERT_EQ(xf(z, 12), 16);
+    ASSERT_EQ(yf(z), 6);
+}
+
 TESTC(any, meta)
 TESTC(any, vtable)
 TEST(any, ref)
+TEST(any, inline_)

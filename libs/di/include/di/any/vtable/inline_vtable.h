@@ -8,37 +8,39 @@
 #include <di/vocab/tuple/prelude.h>
 
 namespace di::any {
-template<typename Interface>
-class InlineVTable;
+struct InlineVTable {
+    template<typename Interface>
+    class Invoke;
 
-template<typename... Methods>
-requires(concepts::Conjunction<concepts::Method<meta::Type<Methods>>...>)
-class InlineVTable<meta::List<Methods...>> {
-    static_assert(sizeof...(Methods) > 0, "Cannot create an InlineVTable with 0 methods.");
+    template<typename... Methods>
+    requires(concepts::Conjunction<concepts::Method<meta::Type<Methods>>...>)
+    class Invoke<meta::List<Methods...>> {
+        static_assert(sizeof...(Methods) > 0, "Cannot create an InlineVTable with 0 methods.");
 
-private:
-    using Storage = Tuple<meta::MethodErasedSignature<meta::Type<Methods>>*...>;
+    private:
+        using Storage = Tuple<meta::MethodErasedSignature<meta::Type<Methods>>*...>;
 
-public:
-    template<typename Storage, concepts::AnyStorable<Storage> T>
-    constexpr static InlineVTable create_for() {
-        return InlineVTable(make_tuple(detail::ErasedCallImpl<meta::Type<Methods>, Storage, T>::call...));
-    }
+    public:
+        template<typename Storage, concepts::AnyStorable<Storage> T>
+        constexpr static Invoke create_for() {
+            return Invoke(make_tuple(detail::ErasedCallImpl<meta::Type<Methods>, Storage, T>::call...));
+        }
 
-    constexpr InlineVTable() { util::get<0>(m_storage) = nullptr; }
+        constexpr Invoke() { reset(); }
 
-    constexpr bool empty() const { return util::get<0>(m_storage) != nullptr; }
-    constexpr void reset() { util::get<0>(m_storage) = nullptr; }
+        constexpr bool empty() const { return util::get<0>(m_storage) == nullptr; }
+        constexpr void reset() { util::get<0>(m_storage) = nullptr; }
 
-    template<concepts::OneOf<meta::Type<Methods>...> Method>
-    constexpr auto operator[](Method) const {
-        constexpr auto index = meta::Lookup<Method, meta::List<meta::Type<Methods>...>>;
-        return util::get<index>(m_storage);
-    }
+        template<concepts::OneOf<meta::Type<Methods>...> Method>
+        constexpr auto operator[](Method) const {
+            constexpr auto index = meta::Lookup<Method, meta::List<meta::Type<Methods>...>>;
+            return util::get<index>(m_storage);
+        }
 
-private:
-    constexpr InlineVTable(Storage storage) : m_storage(storage) {}
+    private:
+        constexpr Invoke(Storage storage) : m_storage(storage) {}
 
-    Storage m_storage;
+        Storage m_storage;
+    };
 };
 }

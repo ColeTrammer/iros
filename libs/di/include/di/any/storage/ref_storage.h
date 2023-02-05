@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/any/concepts/vtable_for.h>
+#include <di/any/storage/storage_category.h>
 #include <di/concepts/convertible_to.h>
 #include <di/concepts/object.h>
 #include <di/concepts/reference.h>
@@ -13,12 +14,17 @@ class RefStorage {
 public:
     using Interface = meta::List<>;
 
+    constexpr static StorageCategory storage_category() { return StorageCategory::Reference; }
+
     template<typename T>
     constexpr static bool creation_is_fallible(InPlaceType<T>) {
         return false;
     }
 
     constexpr RefStorage() : m_pointer(nullptr) {}
+
+    RefStorage(RefStorage const&) = default;
+    RefStorage& operator=(RefStorage const&) = default;
 
     template<concepts::Object T, concepts::ConvertibleTo<T&> U>
     requires(!concepts::Const<T>)
@@ -34,28 +40,6 @@ public:
 
     ~RefStorage() = default;
 
-    constexpr static void copy_construct(concepts::VTableFor<Interface> auto const&, RefStorage* dest,
-                                         RefStorage const* source) {
-        *dest = *source;
-    }
-
-    constexpr static void copy_assign(concepts::VTableFor<Interface> auto const&, RefStorage* dest,
-                                      RefStorage const* source) {
-        *dest = *source;
-    }
-
-    constexpr static void move_construct(concepts::VTableFor<Interface> auto const&, RefStorage* dest,
-                                         RefStorage const* source) {
-        *dest = *source;
-    }
-
-    constexpr static void move_assign(concepts::VTableFor<Interface> auto const&, RefStorage* dest,
-                                      RefStorage const* source) {
-        *dest = *source;
-    }
-
-    constexpr static void destroy(concepts::VTableFor<Interface> auto const&, RefStorage*) {}
-
     template<typename T>
     T* down_cast() const {
         if constexpr (concepts::Const<T>) {
@@ -68,9 +52,6 @@ public:
     }
 
 private:
-    RefStorage(RefStorage const&) = default;
-    RefStorage& operator=(RefStorage const&) = default;
-
     union {
         void* m_pointer;
         void const* m_const_pointer;
