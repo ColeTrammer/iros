@@ -1,16 +1,6 @@
 #include <dius/test/prelude.h>
 
-struct X {
-    X() = default;
-
-    using Type = di::Method<X, i32(di::This const&, i32)>;
-
-    template<typename T>
-    requires(di::concepts::TagInvocable<X, T const&, i32>)
-    inline i32 operator()(T const& self, i32 y) const {
-        return di::tag_invoke(*this, self, y);
-    }
-};
+struct X : di::Dispatcher<X, i32(di::This const&, i32)> {};
 
 constexpr inline auto xf = X {};
 
@@ -24,15 +14,7 @@ i32 tag_invoke(X, A const&, i32 y) {
     return y + 4;
 }
 
-struct Y {
-    Y() = default;
-
-    template<typename T>
-    requires(di::concepts::TagInvocable<Y, T&>)
-    inline i32 operator()(T& self) const {
-        return di::tag_invoke(*this, self);
-    }
-};
+struct Y : di::Dispatcher<Y, i32(di::This&)> {};
 
 constexpr inline auto yf = Y {};
 

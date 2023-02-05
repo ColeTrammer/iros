@@ -33,7 +33,7 @@ namespace detail {
     };
 }
 
-template<concepts::Interface UserInterface, concepts::AnyStorage Storage, typename VTablePolicy>
+template<concepts::Interface UserInterface, concepts::AnyStorage Storage, typename VTablePolicy = MaybeInlineVTable<3>>
 class Any
     : private detail::MethodImpl<Any<UserInterface, Storage, VTablePolicy>,
                                  meta::MergeInterfaces<UserInterface, typename Storage::Interface>> {

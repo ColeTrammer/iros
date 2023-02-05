@@ -4,5 +4,5 @@
 
 namespace di::any {
 template<concepts::Interface Interface>
-using AnyUnique = Any<Interface, UniqueStorage, MaybeInlineVTable<3>>;
+using AnyUnique = Any<Interface, UniqueStorage>;
 }

@@ -40,6 +40,8 @@ class Circle {};
 class Sqaure {};
 
 struct Draw {
+    using Type = di::Method<Draw, void(di::This&)>;
+
     template<typename T>
     requires(di::concepts::TagInvocable<DrawFunction, T&>)
     void operator()(T& object) const {
@@ -49,9 +51,9 @@ struct Draw {
 
 constexpr inline auto draw = detail::DrawFunction {};
 
-using AnyDrawable = di::AnyValue<
-    Draw(di::Self&)
->;
+using DrawableRequirements = di::meta::List<Draw>;
+
+using AnyDrawable = di::Any<DrawableRequirements>;
 
 void tag_invoke(Draw, Circle& self) {
     std::println("Draw circle.");
@@ -67,15 +69,15 @@ void use_circle() {
 }
 
 void use_drawables() {
-    auto drawables = di::Vector<AnyDrawable> {};
+    auto drawables = std::vector<AnyDrawable> {};
     drawables.emplace_back(Circle {});
     drawables.emplace_back(Sqaure {});
 
-    di::for_each(drawables, draw);
+    std::for_each(drawables, draw);
 }
 ```
 
-Notice, drawables can be used directly as objects, and thus don't have to managed using smart pointers. Additionally, operations need to be defined inside the classes they operate on, which means Circle and Square can be pure data classes, and offer no functionality themselves. This allows seamlessly adding new operations without breaking code.
+Notice, drawables can be used directly as objects, and thus don't have to managed using smart pointers. Additionally, operations need not be defined inside the classes they operate on, which means Circle and Square can be pure data classes, and offer no functionality themselves. This allows seamlessly adding new operations without breaking code.
 
 Default operations can be expressed directly in the definition of the operation. By providing such a default operation, the Draw function object will be invocable for any object, and thus every object can be erased into a drawable.
 
@@ -106,11 +108,11 @@ public:
     virtual void debug_print() const {}
 };
 
-// Type erasure.
-struct Draw : di::Method<Draw, void(di::Self&)> {};
-struct GetArea : di::Method<GetArea, i32(di::Self const&)> {};
-struct DebugPrint : di::Method<DebugPrint,
-    void(di::Self const&),
+// Type erasure with method definition helper.
+struct Draw : di::Dispatcher<Draw, void(di::This&)> {};
+struct GetArea : di::Dispatcher<GetArea, i32(di::This const&)> {};
+struct DebugPrint : di::Dispatcher<DebugPrint,
+    void(di::This const&),
     di::Nontype<di::into_void>
 > {};
 
@@ -126,7 +128,7 @@ using Drawable = di::AnyValue<IDrawable>;
 using DrawableRef = di::AnyRef<IDrawable>;
 ```
 
-The idea is that the dispatch objects will implement the common CPO pattern, which is to attempt to call functions one after another. For DebugPrint, the final function object to call is di::into_void, which means that the default implenentation will just ignore arguments. This DSL for describing an interface can work without macros, and is in fact far more expressive than virtual methods.
+The idea is that the dispatch objects will implement the common CPO pattern, which is to attempt to call functions one after another. For DebugPrint, the final function object to call is di::into_void, which means that the default implenentation will just ignore arguments. This DSL for describing an interface can work without macros, and is in fact far more expressive than virtual methods, since the actual method call can use static dispatch (and so can use if constexpr).
 
 ### Templated Dispatch
 
@@ -137,8 +139,8 @@ For these cases, there needs to be a way to explicitly list the signature when d
 ```c++
 using Interface = di::meta::List<
     Method1, Method2,
-    void(FunctionObject, di::Self&),
-    i32(OtherFunction, di::Self const&, i32)
+    di::Method<FunctionObject, void(di::This&)>,
+    di::Method<OtherFunction, i32(di::This const&, i32)>
 >;
 ```
 
@@ -147,8 +149,8 @@ If we really wanted, it could be possible to overload operator-> on some sort of
 ```c++
 using Interface = di::meta::ValueList<
     method1, method2,
-    di::member<FunctionObject(di::Self&)> -> di::InPlaceType<void>,
-    di::member<OtherFunction(di::Self const&, i32)> -> di::InPlaceType<i32>
+    di::member<FunctionObject(di::This&)> -> di::InPlaceType<void>,
+    di::member<OtherFunction(di::This const&, i32)> -> di::InPlaceType<i32>
 >;
 ```
 
@@ -216,13 +218,15 @@ struct BeginMember {
     }
 };
 
-struct BeginFunction : Dipatcher<BeginFunction, meta::List<
-    BeginArray(meta::_1),
-    TagInvoke(meta::Self&, meta::_1),
-    BeginMemer(meta::_1)
+struct BeginFunction : TemplateDipatcher<BeginFunction, meta::List<
+    BeginArray(meta::_a),
+    TagInvoke(This, meta::_a),
+    BeginMemer(meta::_a)
 >> {};
 }
 ```
+
+This makes use of a placeholder syntax to implicitly define template parameters of the function. This API is not yet fully fleshed out.
 
 ## Multiple types of erased objects
 
@@ -251,26 +255,27 @@ In certain cases, one function is "hot" while the other erased functions are cal
 To store entries in the vtable, we need compile time meta programming facilities. Vtable entries will be represented in the following structure.
 
 ```c++
-namespace meta {
-// Usage: Signature<MyFunction, void(di::Self&)>
+namespace types {
+// Usage: Method<MyFunction, void(di::This&)>
 template<typename T, concepts::LanguageFunction S>
-struct Signature {
-    using Type = S;
+struct Method {
+    using Type = Method;
     using Tag = T;
+    using Signature = S;
 };
 }
 
 namespace concepts {
 template<typename T>
-concept Signature = InstanceOf<T, meta::Signature>;
+concept Method = InstanceOf<T, types::Method>;
 }
 
 namespace meta {
-template<concepts::Signature Sig>
-using SignatureTag = Sig::Tag;
+template<concepts::Method Method>
+using MethodTag = Method::Tag;
 
-template<concepts::Signature Sig>
-using SignatureType = meta::Type<Sig>;
+template<concepts::Method Method>
+using MethodSignature = Method::Signature;
 }
 ```
 
@@ -278,6 +283,8 @@ Then, vtables will have an associated list of signature objects, which correspon
 The library will support merging vtables together, to enable erasing multiple traits into one object, and
 as an implementation detail, because owning structures will internally merge the user requested operations
 with the vtable for moving, destroying, copying, swapping, etc.
+
+A list of methods will be represented directly use a `meta::List<>`. Thus, merging interfaces together is simply a matter of calling `meta::Concat<>` and `meta::Unique<>` on all the methods present in a list.
 
 ### Object Categories
 
@@ -299,3 +306,16 @@ Trivially relocatable objects provide a significant improvement over having a ty
 The default object category will be move only, since this provides allow erasing nearly any object, while providing normal value semantics. This also prevents expensive copy operations from ever being called.
 
 If objects need to be copied, users can make the object category cloneable, in which case a vtable entry will handle cloning, or if shared pointer semantics are required, users can use `AnyShared`, which internally stores a ref-counted type-erased object.
+
+### Any Type Summary
+
+The following table describes the type aliases provided by the library.
+
+| Name                                            | Alias                                                                            | Storage Category                 | Requirements on T                                           | Description                                                                                                                                                                  |
+| ----------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Any<I>`                                        | `Any<I, HybridStorage<2 * sizeof(void*), alignof(void*)>, MaybeInlineVTable<3>>` | Moveable                         | None                                                        | Owning polymorphic object with value semantics. This is the default storage and vtable policy used, and is good for storing any type of value.                               |
+| `AnyRef<I>`                                     | `Any<I, RefStorage>`                                                             | Trivial                          | Must be reference or function pointer                       | Non-owning reference to polymorphic object. Unsafe to store, so only use when passing a parameter.                                                                           |
+| `AnyInline<I, size, align>`                     | `Any<I, InlineStorage<size, align>>`                                             | Moveable                         | `sizeof(T) <= size` and `alignof(T) <= align` and Moveable  | Non-allocated owned storage. Use when the object sizes are guaranteed to be small or allocating is unacceptable, but note that objects which are too large cannot be stored. |
+| `AnyUnique<I>`                                  | `Any<I, UniqueStorage>`                                                          | Trivially Relocatable            | None                                                        | Always-allocated owned storage. Use when the object sizes are large or the move constructor needs to be called a lot.                                                        |
+| `AnyHybrid<I, size_threshold, align_threshold>` | `Any<I, HybridStorage<size_threshold, align_threshold>>`                         | Moveable                         | None (but T must be small and moveable to be stored inline) | Sometimes allocated owned storage. Use when the object size is unknown and can be small, which prevents allocating when storing some objects.                                |
+| `AnyShared<I>`                                  | `Any<I, SharedStorage>`                                                          | Trivially Relocatable + Copyable | None                                                        | Always-allocated shared storage. Use when shared ownership is required.                                                                                                      |
