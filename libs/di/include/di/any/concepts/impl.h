@@ -10,7 +10,7 @@ namespace detail {
 
     template<typename T, typename... Methods>
     struct ImplHelper<T, meta::List<Methods...>>
-        : meta::BoolConstant<Conjunction<MethodCallableWith<Methods, T>...>> {};
+        : meta::BoolConstant<Conjunction<MethodCallableWith<meta::Type<Methods>, T>...>> {};
 }
 
 template<typename T, typename Interface>

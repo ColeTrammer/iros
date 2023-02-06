@@ -100,6 +100,46 @@ public:
         }
     }
 
+    template<typename U, concepts::Impl<Interface> VU = RemoveConstructQualifiers<U>>
+    requires(!concepts::RemoveCVRefSameAs<U, Any> && !concepts::InstanceOf<meta::RemoveCVRef<U>, InPlaceType> &&
+             concepts::AnyStorable<VU, Storage> && concepts::ConstructibleFrom<VU, U>)
+    constexpr static Result<Any> try_create(U&& value) {
+        if constexpr (!concepts::AnyStorableInfallibly<VU, Storage>) {
+            auto result = Any {};
+            DI_TRY(Storage::init(result.m_storage, in_place_type<VU>, util::forward<U>(value)));
+            result.m_vtable = VTable::template create_for<Storage, VU>();
+            return result;
+        } else {
+            return Any(in_place_type<VU>, util::forward<U>(value));
+        }
+    }
+
+    template<typename T, typename... Args, concepts::Impl<Interface> VT = RemoveConstructQualifiers<T>>
+    requires(concepts::AnyStorable<VT, Storage> && concepts::ConstructibleFrom<VT, Args...>)
+    constexpr static Result<Any> try_create(InPlaceType<T>, Args&&... args) {
+        if constexpr (!concepts::AnyStorableInfallibly<VT, Storage>) {
+            auto result = Any {};
+            DI_TRY(Storage::init(result.m_storage, in_place_type<VT>, util::forward<Args>(args)...));
+            result.m_vtable = VTable::template create_for<Storage, VT>();
+            return result;
+        } else {
+            return Any(in_place_type<VT>, util::forward<Args>(args)...);
+        }
+    }
+
+    template<typename T, typename U, typename... Args, concepts::Impl<Interface> VT = RemoveConstructQualifiers<T>>
+    requires(concepts::AnyStorable<VT, Storage> && concepts::ConstructibleFrom<VT, util::InitializerList<U>&, Args...>)
+    constexpr static Result<Any> try_create(InPlaceType<T>, util::InitializerList<U> list, Args&&... args) {
+        if constexpr (!concepts::AnyStorableInfallibly<VT, Storage>) {
+            auto result = Any {};
+            DI_TRY(Storage::init(result.m_storage, in_place_type<VT>, list, util::forward<Args>(args)...));
+            result.m_vtable = VTable::template create_for<Storage, VT>();
+            return result;
+        } else {
+            return Any(in_place_type<VT>, list, util::forward<Args>(args)...);
+        }
+    }
+
     Any()
     requires(!is_reference)
     = default;
