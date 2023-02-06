@@ -46,8 +46,8 @@ public:
 
     template<typename T, typename... Args>
     requires(sizeof(T) <= inline_size && alignof(T) <= inline_align && concepts::ConstructibleFrom<T, Args...>)
-    constexpr static void init(InlineStorage& self, InPlaceType<T>, Args&&... args) {
-        util::construct_at(self.down_cast<T>(), util::forward<Args>(args)...);
+    constexpr static void init(InlineStorage* self, InPlaceType<T>, Args&&... args) {
+        util::construct_at(self->down_cast<T>(), util::forward<Args>(args)...);
     }
 
     ~InlineStorage() = default;

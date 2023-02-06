@@ -13,15 +13,17 @@
 
 namespace di::any {
 namespace detail {
-    template<typename E, typename Interface>
+    template<typename E, typename S, typename Interface>
     struct MethodImpl {};
 
-    template<typename E, typename Tag, typename R, concepts::RemoveCVRefSameAs<This> Self, typename... BArgs,
-             typename... Rest>
-    struct MethodImpl<E, meta::List<Method<Tag, R(Self, BArgs...)>, Rest...>> : MethodImpl<E, meta::List<Rest...>> {
+    template<typename E, typename S, typename Tag, typename R, concepts::RemoveCVRefSameAs<This> Self,
+             typename... BArgs, typename... Rest>
+    struct MethodImpl<E, S, meta::List<Method<Tag, R(Self, BArgs...)>, Rest...>>
+        : MethodImpl<E, S, meta::List<Rest...>> {
     private:
         constexpr static auto vtable(auto&& self) -> decltype(auto) { return (self.m_vtable); }
-        constexpr static auto storage(auto&& self) -> decltype(auto) { return (self.m_storage); }
+        constexpr static auto storage(E& self) -> S& { return self; }
+        constexpr static auto storage(E const& self) -> S const& { return self; }
 
         constexpr friend R tag_invoke(Tag, meta::Like<Self, E> self, BArgs... bargs) {
             auto const& vtable = MethodImpl::vtable(self);
@@ -35,8 +37,9 @@ namespace detail {
 
 template<concepts::Interface UserInterface, concepts::AnyStorage Storage, typename VTablePolicy = MaybeInlineVTable<3>>
 class Any
-    : private detail::MethodImpl<Any<UserInterface, Storage, VTablePolicy>,
-                                 meta::MergeInterfaces<UserInterface, typename Storage::Interface>> {
+    : private detail::MethodImpl<Any<UserInterface, Storage, VTablePolicy>, Storage,
+                                 meta::MergeInterfaces<UserInterface, typename Storage::Interface>>
+    , public Storage {
     template<typename, typename>
     friend struct detail::MethodImpl;
 
@@ -66,7 +69,7 @@ public:
     constexpr static Any create(U&& value) {
         if constexpr (!concepts::AnyStorableInfallibly<VU, Storage>) {
             auto result = Any {};
-            DI_ASSERT(Storage::init(result.m_storage, in_place_type<VU>, util::forward<U>(value)));
+            DI_ASSERT(Storage::init(util::addressof(result), in_place_type<VU>, util::forward<U>(value)));
             result.m_vtable = VTable::template create_for<Storage, VU>();
             return result;
         } else {
@@ -79,7 +82,7 @@ public:
     constexpr static Any create(InPlaceType<T>, Args&&... args) {
         if constexpr (!concepts::AnyStorableInfallibly<VT, Storage>) {
             auto result = Any {};
-            DI_ASSERT(Storage::init(result.m_storage, in_place_type<VT>, util::forward<Args>(args)...));
+            DI_ASSERT(Storage::init(util::addressof(result), in_place_type<VT>, util::forward<Args>(args)...));
             result.m_vtable = VTable::template create_for<Storage, VT>();
             return result;
         } else {
@@ -92,7 +95,7 @@ public:
     constexpr static Any create(InPlaceType<T>, util::InitializerList<U> list, Args&&... args) {
         if constexpr (!concepts::AnyStorableInfallibly<VT, Storage>) {
             auto result = Any {};
-            DI_ASSERT(Storage::init(result.m_storage, in_place_type<VT>, list, util::forward<Args>(args)...));
+            DI_ASSERT(Storage::init(util::addressof(result), in_place_type<VT>, list, util::forward<Args>(args)...));
             result.m_vtable = VTable::template create_for<Storage, VT>();
             return result;
         } else {
@@ -106,7 +109,7 @@ public:
     constexpr static Result<Any> try_create(U&& value) {
         if constexpr (!concepts::AnyStorableInfallibly<VU, Storage>) {
             auto result = Any {};
-            DI_TRY(Storage::init(result.m_storage, in_place_type<VU>, util::forward<U>(value)));
+            DI_TRY(Storage::init(util::addressof(result), in_place_type<VU>, util::forward<U>(value)));
             result.m_vtable = VTable::template create_for<Storage, VU>();
             return result;
         } else {
@@ -119,7 +122,7 @@ public:
     constexpr static Result<Any> try_create(InPlaceType<T>, Args&&... args) {
         if constexpr (!concepts::AnyStorableInfallibly<VT, Storage>) {
             auto result = Any {};
-            DI_TRY(Storage::init(result.m_storage, in_place_type<VT>, util::forward<Args>(args)...));
+            DI_TRY(Storage::init(util::addressof(result), in_place_type<VT>, util::forward<Args>(args)...));
             result.m_vtable = VTable::template create_for<Storage, VT>();
             return result;
         } else {
@@ -132,7 +135,7 @@ public:
     constexpr static Result<Any> try_create(InPlaceType<T>, util::InitializerList<U> list, Args&&... args) {
         if constexpr (!concepts::AnyStorableInfallibly<VT, Storage>) {
             auto result = Any {};
-            DI_TRY(Storage::init(result.m_storage, in_place_type<VT>, list, util::forward<Args>(args)...));
+            DI_TRY(Storage::init(util::addressof(result), in_place_type<VT>, list, util::forward<Args>(args)...));
             result.m_vtable = VTable::template create_for<Storage, VT>();
             return result;
         } else {
@@ -155,20 +158,20 @@ public:
     Any(Any&& other)
     requires(is_moveable)
         : m_vtable(other.m_vtable) {
-        Storage::move_construct(other.m_vtable, util::addressof(m_storage), util::addressof(other.m_storage));
+        Storage::move_construct(other.m_vtable, this, util::addressof(other));
     }
 
     template<typename U, concepts::Impl<Interface> VU = RemoveConstructQualifiers<U>>
     requires(!concepts::RemoveCVRefSameAs<U, Any> && !concepts::InstanceOf<meta::RemoveCVRef<U>, InPlaceType> &&
              concepts::AnyStorableInfallibly<VU, Storage> && concepts::ConstructibleFrom<VU, U>)
     constexpr Any(U&& value) : m_vtable(VTable::template create_for<Storage, VU>()) {
-        Storage::init(m_storage, in_place_type<VU>, util::forward<U>(value));
+        Storage::init(this, in_place_type<VU>, util::forward<U>(value));
     }
 
     template<typename T, typename... Args, concepts::Impl<Interface> VT = RemoveConstructQualifiers<T>>
     requires(concepts::AnyStorableInfallibly<VT, Storage> && concepts::ConstructibleFrom<VT, Args...>)
     constexpr Any(InPlaceType<T>, Args&&... args) : m_vtable(VTable::template create_for<Storage, VT>()) {
-        Storage::init(m_storage, in_place_type<VT>, util::forward<Args>(args)...);
+        Storage::init(this, in_place_type<VT>, util::forward<Args>(args)...);
     }
 
     template<typename T, typename U, typename... Args, concepts::Impl<Interface> VT = RemoveConstructQualifiers<T>>
@@ -176,7 +179,7 @@ public:
              concepts::ConstructibleFrom<VT, util::InitializerList<U>&, Args...>)
     constexpr Any(InPlaceType<T>, util::InitializerList<U> list, Args&&... args)
         : m_vtable(VTable::template create_for<Storage, VT>()) {
-        Storage::init(m_storage, in_place_type<VT>, list, util::forward<Args>(args)...);
+        Storage::init(this, in_place_type<VT>, list, util::forward<Args>(args)...);
     }
 
     ~Any()
@@ -186,7 +189,7 @@ public:
     ~Any()
     requires(!is_trivially_destructible)
     {
-        Storage::destroy(m_vtable, util::addressof(m_storage));
+        Storage::destroy(m_vtable, this);
     }
 
     Any& operator=(Any const&)
@@ -200,7 +203,7 @@ public:
     Any& operator=(Any&& other)
     requires(is_moveable)
     {
-        Storage::move_assign(m_vtable, util::addressof(m_storage), other.m_vtable, util::addressof(other.m_storage));
+        Storage::move_assign(m_vtable, this, other.m_vtable, util::addressof(other));
         return *this;
     }
 
@@ -209,10 +212,10 @@ public:
              concepts::AnyStorableInfallibly<VU, Storage> && concepts::ConstructibleFrom<VU, U>)
     Any& operator=(U&& value) {
         if (!is_trivially_destructible) {
-            Storage::destroy(m_vtable, util::addressof(m_storage));
+            Storage::destroy(m_vtable, this);
         }
         m_vtable = VTable::template create_for<Storage, VU>();
-        Storage::init(m_storage, in_place_type<VU>, util::forward<U>(value));
+        Storage::init(this, in_place_type<VU>, util::forward<U>(value));
         return *this;
     }
 
@@ -224,6 +227,5 @@ public:
 
 private:
     VTable m_vtable {};
-    Storage m_storage {};
 };
 }

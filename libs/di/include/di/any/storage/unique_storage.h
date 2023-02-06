@@ -43,15 +43,13 @@ public:
 
     template<typename T, typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...>)
-    constexpr static Result<void> init(UniqueStorage& self, InPlaceType<T>, Args&&... args) {
+    constexpr static Result<void> init(UniqueStorage* self, InPlaceType<T>, Args&&... args) {
         if consteval {
-            self.m_pointer = new T(util::forward<Args>(args)...);
+            self->m_pointer = new T(util::forward<Args>(args)...);
         } else {
-            auto* pointer = new (std::nothrow) T(util::forward<Args>(args)...);
-            if (!pointer) {
+            if (!(self->m_pointer = new (std::nothrow) T(util::forward<Args>(args)...))) {
                 return Unexpected(BasicError::FailedAllocation);
             }
-            self.m_pointer = pointer;
         }
         return {};
     }
