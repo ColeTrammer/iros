@@ -103,6 +103,10 @@ static void inline_() {
 
     ASSERT_EQ(xf(z, 12), 16);
     ASSERT_EQ(yf(z), 6);
+
+    z = 3;
+    ASSERT_EQ(xf(z, 12), 15);
+    ASSERT_EQ(yf(z), 5);
 }
 
 static void unique() {

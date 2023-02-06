@@ -14,7 +14,7 @@ namespace detail {
         using Type = Method<Tag, R(Self, Args...)>;
 
         template<typename T>
-        requires(concepts::TagInvocableTo<Tag, R, T, Args...>)
+        requires(concepts::TagInvocableTo<Tag, R, meta::Like<Self, T>, Args...>)
         constexpr R operator()(T&& self, Args&&... args) const {
             auto const tag = Tag {};
             return function::tag_invoke(tag, util::forward_like<Self>(self), util::forward<Args>(args)...);

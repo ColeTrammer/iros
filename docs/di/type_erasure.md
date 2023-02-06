@@ -51,9 +51,9 @@ struct Draw {
 
 constexpr inline auto draw = detail::DrawFunction {};
 
-using DrawableRequirements = di::meta::List<Draw>;
+using IDrawable = di::meta::List<Draw>;
 
-using AnyDrawable = di::Any<DrawableRequirements>;
+using AnyDrawable = di::Any<IDrawable>;
 
 void tag_invoke(Draw, Circle& self) {
     std::println("Draw circle.");
@@ -92,6 +92,28 @@ draw(object);
 ```
 
 Calling a free function is 2 characters shorter assuming we are already in the correct namespace, although otherwise it will be more characters to type.
+
+### Universality with Concepts
+
+When using OOP, the dispatch is always dynamic, and so relies on de-virtualization to optimize scenarios where the concrete object type is known. With type erasure, a concrete type and a polymorphic type can be used identically, and static dispatch can be used by making your function generic with a template.
+
+```c++
+// OOP: always use dynamic dispatch.
+void draw3(IDrawable& a) {
+    a.draw();
+    a.draw();
+    a.draw();
+}
+
+// Type erasure: maybe use dynamic dispatch, maybe not.
+void draw3(di::Impl<IDrawable> auto& a) {
+    draw(a);
+    draw(a);
+    draw(a);
+}
+```
+
+`di::Impl` is a concept which is only satisfied for types which meet the requirements laid out in the provided interface. The name is derived from rust, where traits can be required using the impl keyword.
 
 ## Ergonomic Concerns
 

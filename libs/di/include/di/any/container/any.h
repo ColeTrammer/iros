@@ -44,6 +44,9 @@ private:
     using Interface = meta::MergeInterfaces<UserInterface, typename Storage::Interface>;
     using VTable = meta::Invoke<VTablePolicy, Interface>;
 
+    static_assert(concepts::VTableFor<VTable, Interface>,
+                  "VTablePolicy policy returned an invalid VTable for the provided interface.");
+
     constexpr static auto storage_category = Storage::storage_category();
 
     constexpr static bool is_reference = storage_category == StorageCategory::Reference;
@@ -57,7 +60,7 @@ private:
     using RemoveConstructQualifiers = meta::Conditional<is_reference, T, meta::RemoveCVRef<T>>;
 
 public:
-    template<typename U, typename VU = RemoveConstructQualifiers<U>>
+    template<typename U, concepts::Impl<Interface> VU = RemoveConstructQualifiers<U>>
     requires(!concepts::RemoveCVRefSameAs<U, Any> && !concepts::InstanceOf<meta::RemoveCVRef<U>, InPlaceType> &&
              concepts::AnyStorable<VU, Storage> && concepts::ConstructibleFrom<VU, U>)
     constexpr static Any create(U&& value) {
@@ -71,7 +74,7 @@ public:
         }
     }
 
-    template<typename T, typename... Args, typename VT = RemoveConstructQualifiers<T>>
+    template<typename T, typename... Args, concepts::Impl<Interface> VT = RemoveConstructQualifiers<T>>
     requires(concepts::AnyStorable<VT, Storage> && concepts::ConstructibleFrom<VT, Args...>)
     constexpr static Any create(InPlaceType<T>, Args&&... args) {
         if constexpr (!concepts::AnyStorableInfallibly<VT, Storage>) {
@@ -84,7 +87,7 @@ public:
         }
     }
 
-    template<typename T, typename U, typename... Args, typename VT = RemoveConstructQualifiers<T>>
+    template<typename T, typename U, typename... Args, concepts::Impl<Interface> VT = RemoveConstructQualifiers<T>>
     requires(concepts::AnyStorable<VT, Storage> && concepts::ConstructibleFrom<VT, util::InitializerList<U>&, Args...>)
     constexpr static Any create(InPlaceType<T>, util::InitializerList<U> list, Args&&... args) {
         if constexpr (!concepts::AnyStorableInfallibly<VT, Storage>) {
@@ -115,20 +118,20 @@ public:
         Storage::move_construct(other.m_vtable, util::addressof(m_storage), util::addressof(other.m_storage));
     }
 
-    template<typename U, typename VU = RemoveConstructQualifiers<U>>
+    template<typename U, concepts::Impl<Interface> VU = RemoveConstructQualifiers<U>>
     requires(!concepts::RemoveCVRefSameAs<U, Any> && !concepts::InstanceOf<meta::RemoveCVRef<U>, InPlaceType> &&
              concepts::AnyStorableInfallibly<VU, Storage> && concepts::ConstructibleFrom<VU, U>)
     constexpr Any(U&& value) : m_vtable(VTable::template create_for<Storage, VU>()) {
         Storage::init(m_storage, in_place_type<VU>, util::forward<U>(value));
     }
 
-    template<typename T, typename... Args, typename VT = RemoveConstructQualifiers<T>>
+    template<typename T, typename... Args, concepts::Impl<Interface> VT = RemoveConstructQualifiers<T>>
     requires(concepts::AnyStorableInfallibly<VT, Storage> && concepts::ConstructibleFrom<VT, Args...>)
     constexpr Any(InPlaceType<T>, Args&&... args) : m_vtable(VTable::template create_for<Storage, VT>()) {
         Storage::init(m_storage, in_place_type<VT>, util::forward<Args>(args)...);
     }
 
-    template<typename T, typename U, typename... Args, typename VT = RemoveConstructQualifiers<T>>
+    template<typename T, typename U, typename... Args, concepts::Impl<Interface> VT = RemoveConstructQualifiers<T>>
     requires(concepts::AnyStorableInfallibly<VT, Storage> &&
              concepts::ConstructibleFrom<VT, util::InitializerList<U>&, Args...>)
     constexpr Any(InPlaceType<T>, util::InitializerList<U> list, Args&&... args)
@@ -158,6 +161,18 @@ public:
     requires(is_moveable)
     {
         Storage::move_assign(m_vtable, util::addressof(m_storage), other.m_vtable, util::addressof(other.m_storage));
+        return *this;
+    }
+
+    template<typename U, concepts::Impl<Interface> VU = RemoveConstructQualifiers<U>>
+    requires(!concepts::RemoveCVRefSameAs<U, Any> && !concepts::InstanceOf<meta::RemoveCVRef<U>, InPlaceType> &&
+             concepts::AnyStorableInfallibly<VU, Storage> && concepts::ConstructibleFrom<VU, U>)
+    Any& operator=(U&& value) {
+        if (!is_trivially_destructible) {
+            Storage::destroy(m_vtable, util::addressof(m_storage));
+        }
+        m_vtable = VTable::template create_for<Storage, VU>();
+        Storage::init(m_storage, in_place_type<VU>, util::forward<U>(value));
         return *this;
     }
 
