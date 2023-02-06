@@ -341,3 +341,68 @@ The following table describes the type aliases provided by the library.
 | `AnyUnique<I>`                                  | `Any<I, UniqueStorage>`                                                          | Trivially Relocatable            | None                                                        | Always-allocated owned storage. Use when the object sizes are large or the move constructor needs to be called a lot.                                                        |
 | `AnyHybrid<I, size_threshold, align_threshold>` | `Any<I, HybridStorage<size_threshold, align_threshold>>`                         | Moveable                         | None (but T must be small and moveable to be stored inline) | Sometimes allocated owned storage. Use when the object size is unknown and can be small, which prevents allocating when storing some objects.                                |
 | `AnyShared<I>`                                  | `Any<I, SharedStorage>`                                                          | Trivially Relocatable + Copyable | None                                                        | Always-allocated shared storage. Use when shared ownership is required.                                                                                                      |
+
+## A Practical Example
+
+Consider a concept which current exists in di, which conceptifies any object which can have bytes written to. This interface enables writing utility functions which work on anything which is byte writable, and in particular, is used by di::format to allow printing to stdout and stderr. But, a Writer can also be implemented using memory mapped IO, or even a temporary in memory buffer which has no disk backing.
+
+The C++ 20 concept definition for this trait is as follows:
+
+```c++
+template<typename T>
+concept Writer = requires(T& writer, vocab::Span<Byte const> data) {
+                     { writer.write_some(data) } -> SameAs<Result<size_t>>;
+                     { writer.flush() } -> SameAs<Result<void>>;
+                 };
+```
+
+However, this trait definition requires any generic algorithm to be templated, and does not allow switching a Writer implementation at runtime.
+
+A type erased API definition looks like this:
+
+```c++
+struct WriteSome : Dispatcher<WriteSome, Result<usize>(This&, Span<Byte const>)> {};
+struct Flush : Dispatcher<Flush, Result<void>(This&)> {};
+
+constexpr inline auto write_some = WriteSome {};
+constexpr inline auto flush = Flush {};
+
+using Writer = meta::List<WriteSome, Flush>;
+```
+
+Now imagine a BufferWriter class, which wraps any Writer and buffers repeated calls to write_some. This is done as follows:
+
+```c++
+// OLD: template<Writer W>
+template<Impl<Writer> W>
+class BufferWriter {
+public:
+    // OLD
+    // constexpr Result<usize> write_some(Span<Byte const> data) {
+    //    // memcpy to buffer.
+    // }
+    // constexpr Result<void> flush() {
+        // DI_TRY(m_writer.write_some(/* ... */));
+        // return m_writer.flush();
+    // }
+
+private:
+    constexpr friend Result<usize> tag_invoke(WriteSome, BufferWriter& self, Span<Byte const>> data) {
+        // memcpy to buffer.
+    }
+
+    constexpr friend Result<void> tag_invoke(Flush, BufferWriter& self) {
+        DI_TRY(write_some(m_writer, /* ... */));
+        return flush(m_writer);
+    }
+
+    W m_writer;
+    Array<Byte, 4096> m_buffer;
+};
+```
+
+By defining the writer concept as a type erasable interface, buffered writer can easily accept polymorphic types without difficulty. This increased flexibility makes composition more powerful. Buffered writer is itself a Writer, so it too can be erased into some polymorphic wrapper.
+
+Interestingly, the member cased CPO mechanism is an instance of duck-typing, where it will accept anything which matches the interface, even if the semantics are wrong. Where as the Any trait based solution requires specific opt-in to a particular method, so a type can never be a Writer by accident.
+
+As an additional bonus, extending the trait mechanism to include a default method implementation of `write_exactly()` is trivial. But since this method has a default implementation, it cannot easily be extended to member function based Writer. In practice, we would have to define `write_exactly` as a free function, and then users would have to know whether the method they wish to call is a free function or a member function. An alternative is to use CRTP, where every concrete writer class must inherit from `WriterInterface<Self>`. This does in fact work, but results in more code than the trait solution, while also not easily allowing polymorphic value types.

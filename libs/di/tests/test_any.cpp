@@ -14,16 +14,14 @@ i32 tag_invoke(X, A const&, i32 y) {
     return y + 4;
 }
 
-struct Y : di::Dispatcher<Y, i32(di::This&)> {};
+struct Y : di::Dispatcher<Y, i32(di::This&), decltype([](auto&) {
+                              return 1;
+                          })> {};
 
 constexpr inline auto yf = Y {};
 
 i32 tag_invoke(Y, i32& x) {
     return x + 2;
-}
-
-i32 tag_invoke(Y, A&) {
-    return 1;
 }
 
 using XM = di::meta::Type<X>;
