@@ -78,9 +78,10 @@ public:
     }
 
     constexpr static void destroy(concepts::VTableFor<Interface> auto& vtable, UniqueStorage* self) {
-        if (util::exchange(self->m_pointer, nullptr)) {
+        if (self->m_pointer) {
             auto const fp = vtable[Manage {}];
             fp(self);
+            self->m_pointer = nullptr;
         }
     }
 
@@ -104,7 +105,7 @@ namespace detail {
     template<typename UniqueStorage>
     template<typename T>
     void UniqueStorageManage<UniqueStorage>::operator()(T& a) const {
-        util::destroy_at(util::addressof(a));
+        delete util::addressof(a);
     }
 }
 }

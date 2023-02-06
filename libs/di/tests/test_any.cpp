@@ -133,6 +133,11 @@ static void unique() {
 
     ASSERT_EQ(xf(z, 12), 16);
     ASSERT_EQ(yf(z), 6);
+
+    z = Any::create(3);
+
+    ASSERT_EQ(xf(z, 12), 15);
+    ASSERT_EQ(yf(z), 5);
 }
 
 TESTC(any, meta)
