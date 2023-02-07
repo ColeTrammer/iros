@@ -18,16 +18,6 @@ struct GlobalState {
     mutable mm::VirtualAddress heap_end { 0 };
 };
 
-namespace detail {
-    union GlobalStateUnion {
-        [[gnu::always_inline]] constexpr GlobalStateUnion() {}
-        [[gnu::always_inline]] constexpr ~GlobalStateUnion() {}
-
-        di::Byte x { 0 };
-        GlobalState global_state;
-    };
-}
-
 /// This function returns a mutable reference to the global state. This is only
 /// valid during kernel boot, when no other tasks can execute.
 GlobalState& global_state_in_boot();

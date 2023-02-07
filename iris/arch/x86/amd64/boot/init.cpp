@@ -1,4 +1,5 @@
 #include <di/prelude.h>
+#include <iris/arch/x86/amd64/hw/pic.h>
 #include <iris/arch/x86/amd64/idt.h>
 #include <iris/arch/x86/amd64/segment_descriptor.h>
 #include <iris/arch/x86/amd64/system_instructions.h>
@@ -264,6 +265,9 @@ extern "C" void bsp_cpu_init() {
                      : "i"(0)
                      : "memory", "edx");
     }
+
+    iris::println("Waiting..."_sv);
+    iris::x86::amd64::init_pic();
 
     iris_main();
 }

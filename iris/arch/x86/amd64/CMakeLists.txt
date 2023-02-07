@@ -25,6 +25,7 @@ target_sources(iris
     arch/x86/amd64/boot/cxx_init.cpp
     arch/x86/amd64/boot/init.cpp
     arch/x86/amd64/core/task.cpp
+    arch/x86/amd64/hw/pic.cpp
     arch/x86/amd64/mm/address_space.cpp
     arch/x86/amd64/mm/map_physical_address.cpp
     arch/x86/core/log.cpp
