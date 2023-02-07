@@ -5,6 +5,9 @@ struct X : di::Dispatcher<X, i32(di::This const&, i32)> {};
 constexpr inline auto xf = X {};
 
 struct A {};
+struct B {
+    di::Array<di::Byte, 24> padding;
+};
 
 i32 tag_invoke(X, i32 const& x, i32 y) {
     return x + y;
@@ -12,6 +15,10 @@ i32 tag_invoke(X, i32 const& x, i32 y) {
 
 i32 tag_invoke(X, A const&, i32 y) {
     return y + 4;
+}
+
+i32 tag_invoke(X, B const&, i32 y) {
+    return y + 5;
 }
 
 struct Y : di::Dispatcher<Y, i32(di::This&), decltype([](auto&) {
@@ -138,8 +145,45 @@ static void unique() {
     ASSERT_EQ(yf(z), 5);
 }
 
+static void hybrid() {
+    using Any = di::Any<Interface>;
+
+    auto x = Any(4);
+
+    ASSERT_EQ(xf(x, 12), 16);
+    ASSERT_EQ(yf(x), 6);
+
+    auto y = Any(di::in_place_type<A>);
+
+    ASSERT_EQ(xf(y, 12), 16);
+    ASSERT_EQ(yf(y), 1);
+
+    auto z = di::move(y);
+    ASSERT(!y);
+
+    ASSERT_EQ(xf(z, 12), 16);
+    ASSERT_EQ(yf(z), 1);
+
+    z = di::move(x);
+    ASSERT(!x);
+
+    ASSERT_EQ(xf(z, 12), 16);
+    ASSERT_EQ(yf(z), 6);
+
+    z = Any(3);
+
+    ASSERT_EQ(xf(z, 12), 15);
+    ASSERT_EQ(yf(z), 5);
+
+    auto q = Any::create(B {});
+
+    ASSERT_EQ(xf(q, 12), 17);
+    ASSERT_EQ(yf(q), 1);
+}
+
 TESTC(any, meta)
 TESTC(any, vtable)
 TEST(any, ref)
 TEST(any, inline_)
 TEST(any, unique)
+TEST(any, hybrid)
