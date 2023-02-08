@@ -1,3 +1,4 @@
+#include <iris/core/print.h>
 #include <iris/core/scheduler.h>
 
 namespace iris {
@@ -58,10 +59,12 @@ void Scheduler::run_next() {
 
     auto& next = *m_run_queue.pop();
     m_current_task = di::addressof(next);
+    println("next={}"_sv, m_current_task);
     next.context_switch_to();
 }
 
 void Scheduler::save_state_and_run_next(arch::TaskState* task_state) {
+    asm volatile("cli");
     m_run_queue.push(*m_current_task);
     m_current_task->set_task_state(*task_state);
     run_next();

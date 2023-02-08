@@ -7,6 +7,7 @@
 #include <iris/arch/x86/amd64/tss.h>
 #include <iris/boot/cxx_init.h>
 #include <iris/boot/init.h>
+#include <iris/core/global_state.h>
 #include <iris/core/print.h>
 #include <iris/core/scheduler.h>
 #include <iris/core/task.h>
@@ -25,8 +26,17 @@ namespace iris::arch {
     di::unreachable();
 }
 
-extern "C" void generic_irq_handler(int irq, iris::arch::TaskState*, int error_code) {
+extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, int error_code) {
     iris::println("got IRQ {}, error_code={}"_sv, irq, error_code);
+
+    if (irq == 32) {
+        iris::x86::amd64::send_eoi(0);
+        iris::global_state().scheduler.save_state_and_run_next(task_state);
+    }
+
+    if (irq == 0x80) {
+        iris::global_state().scheduler.save_state_and_run_next(task_state);
+    }
     done();
 }
 

@@ -64,8 +64,6 @@ struct ProgramHeader {
     di::unreachable();
 }
 
-static iris::Scheduler scheduler;
-
 static int counter = 0;
 
 static auto userspace_test_program_data_storage = di::Array<di::Byte, 0x4000> {};
@@ -73,7 +71,7 @@ static auto userspace_test_program_data_storage = di::Array<di::Byte, 0x4000> {}
 static void do_task() {
     for (int i = 0; i < 3; i++) {
         iris::println("counter: {}"_sv, ++counter);
-        scheduler.yield();
+        asm volatile("sti\nhlt");
     }
     done();
 }
@@ -177,6 +175,7 @@ void iris_main() {
     auto task_stack1 = *kernel_address_space.allocate_region(0x2000);
     auto task1 = iris::Task(task_address, task_stack1.raw_address() + 0x2000, false);
 
+    auto& scheduler = global_state.scheduler;
     scheduler.schedule_task(task1);
 
     auto task_stack2 = *kernel_address_space.allocate_region(0x2000);
@@ -201,17 +200,25 @@ void iris_main() {
         iris::println("file={:x}"_sv, program_header.file_size);
         iris::println("memory={:x}"_sv, program_header.memory_size);
 
+        // PT_LOAD
+        if (program_header.type != 1) {
+            continue;
+        }
+
         auto aligned_size = di::align_up(program_header.memory_size, 4096);
         (void) kernel_address_space.allocate_region_at(iris::mm::VirtualAddress(program_header.virtual_addr),
                                                        aligned_size);
 
+        iris::println("copy..."_sv);
         auto data = di::Span { reinterpret_cast<di::Byte*>(program_header.virtual_addr), aligned_size };
-        di::copy(test_program_data, data.data());
+        di::copy(*test_program_data.subspan(program_header.offset, program_header.memory_size), data.data());
+        iris::println("done"_sv);
     }
 
     auto task_stack4 = *kernel_address_space.allocate_region(0x2000);
     auto task4 = iris::Task(elf_header->entry, task_stack4.raw_address(), true);
 
+    (void) task4;
     scheduler.schedule_task(task4);
 
     iris::println("preparing to context switch"_sv);

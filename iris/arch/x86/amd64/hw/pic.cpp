@@ -69,5 +69,13 @@ void init_pic() {
     remap(32, 40);
 
     di::for_each(di::range(16), disable_irq_line);
+
+    // Setup the PIT to fire every 1 ms.
+    auto divisor = 1193182 / 1000;
+    io_out(0x43, (u8) 0b00110110);
+    io_out(0x40, u8(divisor & 0xFF));
+    io_out(0x40, u8(divisor >> 8));
+
+    enable_irq_line(0);
 }
 }

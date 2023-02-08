@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/prelude.h>
+#include <iris/core/scheduler.h>
 #include <iris/mm/address_space.h>
 
 namespace iris {
@@ -16,6 +17,9 @@ struct GlobalState {
     // Mutable global state. Should be protected with di::Syncrhonized in the future.
     mutable mm::AddressSpace kernel_address_space { 0 };
     mutable mm::VirtualAddress heap_end { 0 };
+
+    // Mutable global state which should really be per-processor, once SMP is supported.
+    mutable Scheduler scheduler;
 };
 
 /// This function returns a mutable reference to the global state. This is only

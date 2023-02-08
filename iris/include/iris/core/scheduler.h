@@ -10,9 +10,10 @@ public:
     [[noreturn]] void start();
     void yield();
 
+    [[noreturn]] void save_state_and_run_next(arch::TaskState* state);
+
 private:
     [[noreturn]] void run_next();
-    [[noreturn]] void save_state_and_run_next(arch::TaskState* state);
 
     Task* m_current_task { nullptr };
     di::Queue<Task, di::IntrusiveList<Task>> m_run_queue;
