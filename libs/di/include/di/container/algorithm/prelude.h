@@ -41,6 +41,7 @@
 #include <di/container/algorithm/for_each_n.h>
 #include <di/container/algorithm/generate.h>
 #include <di/container/algorithm/generate_n.h>
+#include <di/container/algorithm/includes.h>
 #include <di/container/algorithm/iota.h>
 #include <di/container/algorithm/is_heap.h>
 #include <di/container/algorithm/is_heap_until.h>
@@ -52,6 +53,7 @@
 #include <di/container/algorithm/make_heap.h>
 #include <di/container/algorithm/max.h>
 #include <di/container/algorithm/max_element.h>
+#include <di/container/algorithm/merge.h>
 #include <di/container/algorithm/min.h>
 #include <di/container/algorithm/min_element.h>
 #include <di/container/algorithm/minmax.h>
@@ -81,6 +83,10 @@
 #include <di/container/algorithm/rotate_copy.h>
 #include <di/container/algorithm/search.h>
 #include <di/container/algorithm/search_n.h>
+#include <di/container/algorithm/set_difference.h>
+#include <di/container/algorithm/set_intersection.h>
+#include <di/container/algorithm/set_symmetric_difference.h>
+#include <di/container/algorithm/set_union.h>
 #include <di/container/algorithm/shift_left.h>
 #include <di/container/algorithm/shift_right.h>
 #include <di/container/algorithm/shuffle.h>
@@ -155,6 +161,7 @@ using container::lower_bound;
 using container::make_heap;
 using container::max;
 using container::max_element;
+using container::merge;
 using container::min;
 using container::min_element;
 using container::minmax;
@@ -180,6 +187,10 @@ using container::rotate;
 using container::rotate_copy;
 using container::search;
 using container::search_n;
+using container::set_difference;
+using container::set_intersection;
+using container::set_symmetric_difference;
+using container::set_union;
 using container::shift_left;
 using container::shift_right;
 using container::shuffle;

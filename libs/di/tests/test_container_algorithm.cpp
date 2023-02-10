@@ -471,6 +471,41 @@ constexpr void binary_search() {
     }
 }
 
+constexpr void set() {
+    auto a = di::Array { 1, 1, 2, 4, 5, 6 };
+    auto b = di::Array { 1, 2, 3, 4, 5 };
+
+    auto r1 = di::Array<int, a.size() + b.size()> {};
+    auto e1 = di::Array { 1, 1, 1, 2, 2, 3, 4, 4, 5, 5, 6 };
+
+    di::merge(a, b, r1.begin());
+    ASSERT_EQ(r1, e1);
+
+    auto r2 = di::Array<int, 2> {};
+    auto e2 = di::Array { 1, 6 };
+
+    di::set_difference(a, b, r2.begin());
+    ASSERT_EQ(r2, e2);
+
+    auto r3 = di::Array<int, 4> {};
+    auto e3 = di::Array { 1, 2, 4, 5 };
+
+    di::set_intersection(a, b, r3.begin());
+    ASSERT_EQ(r3, e3);
+
+    auto r4 = di::Array<int, 3> {};
+    auto e4 = di::Array { 1, 3, 6 };
+
+    di::set_symmetric_difference(a, b, r4.begin());
+    ASSERT_EQ(r4, e4);
+
+    auto c = di::Array { 1, 1, 4 };
+    auto d = di::Array { 1, 1, 1, 4 };
+
+    ASSERT(di::container::includes(a, c));
+    ASSERT(!di::container::includes(a, d));
+}
+
 TESTC(container_algorithm, minmax)
 TESTC(container_algorithm, compare)
 TESTC(container_algorithm, fold)
@@ -484,3 +519,4 @@ TESTC(container_algorithm, shift)
 TESTC(container_algorithm, partition)
 TESTC(container_algorithm, permutation)
 TESTC(container_algorithm, binary_search)
+TEST(container_algorithm, set)
