@@ -139,6 +139,18 @@ constexpr void path_basic() {
     ASSERT_EQ(path, "/opt/bash.tar.gz"_pv);
 }
 
+constexpr void path_addition() {
+    auto a = "/opt/"_tsv | di::to<di::Path>();
+    auto b = "opt/"_tsv | di::to<di::Path>();
+    auto c = "opt"_tsv | di::to<di::Path>();
+
+    ASSERT_EQ(a.append("hello/world"_pv), "hello/world"_pv);
+    ASSERT_EQ(b.append("hello/world"_pv), "opt/hello/world"_pv);
+    ASSERT_EQ(b.data(), "opt/hello/world"_tsv);
+    ASSERT_EQ(c.append("hello/world"_pv), "opt/hello/world"_pv);
+    ASSERT_EQ(c.data(), "opt/hello/world"_tsv);
+}
+
 TESTC(container_path, iteration)
 TESTC(container_path, equal)
 TESTC(container_path, compare)
@@ -151,3 +163,4 @@ TESTC(container_path, starts_with)
 TESTC(container_path, ends_with)
 TESTC(container_path, filename_ends_with)
 TESTC(container_path, path_basic)
+TESTC(container_path, path_addition)

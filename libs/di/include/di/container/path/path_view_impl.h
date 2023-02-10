@@ -21,6 +21,8 @@ private:
     using ViewIter = meta::ContainerIterator<View>;
 
 public:
+    using Encoding = Enc;
+
     PathViewImpl() = default;
 
     constexpr PathViewImpl(View view) : m_view(view) { this->compute_first_component_end(); }
