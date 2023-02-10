@@ -2,16 +2,17 @@
 
 #include <di/prelude.h>
 #include <dius/filesystem/file_status.h>
+#include <dius/filesystem/file_type.h>
 
 namespace dius::filesystem {
 
-class DirectionEntry {
+class DirectoryEntry {
 public:
-    DirectionEntry() = default;
+    DirectoryEntry() = default;
 
-    DirectionEntry(DirectionEntry&&) = default;
+    DirectoryEntry(DirectoryEntry&&) = default;
 
-    DirectionEntry& operator=(DirectionEntry&&) = default;
+    DirectoryEntry& operator=(DirectoryEntry&&) = default;
 
     constexpr di::Path const& path() const& { return m_path; }
     constexpr di::Path&& path() && { return di::move(m_path); }
@@ -22,6 +23,12 @@ public:
     constexpr operator di::PathView() const { return path_view(); }
 
 private:
+    friend struct DirectoryIterator;
+
+    explicit DirectoryEntry(di::Path&& path, FileType cached_type)
+        : m_path(di::move(path)), m_cached_type(cached_type) {}
+
     di::Path m_path;
+    FileType m_cached_type { FileType::None };
 };
 }

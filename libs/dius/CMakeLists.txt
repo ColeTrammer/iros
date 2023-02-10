@@ -27,6 +27,7 @@ target_compile_definitions(dius PUBLIC DI_CUSTOM_ASSERT_HANDLER DI_CUSTOM_PLATFO
 if(LINUX)
     target_sources(dius
       PRIVATE
+        linux/filesystem/directory_iterator.cpp
         linux/io_uring.cpp
     )
 endif()
