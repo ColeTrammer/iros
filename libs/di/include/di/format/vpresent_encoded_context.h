@@ -5,6 +5,7 @@
 #include <di/format/concepts/format_args.h>
 #include <di/format/format_parse_context.h>
 #include <di/format/formatter.h>
+#include <di/function/monad/monad_try.h>
 #include <di/vocab/optional/prelude.h>
 
 namespace di::format {

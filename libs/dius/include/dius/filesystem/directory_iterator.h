@@ -15,8 +15,12 @@ class DirectoryIterator
 public:
     static di::Result<DirectoryIterator> create(di::Path path, DirectoryOptions options = DirectoryOptions::None);
 
+    DirectoryIterator() = default;
+
+    DirectoryIterator(DirectoryIterator const&) = delete;
     DirectoryIterator(DirectoryIterator&&) = default;
 
+    DirectoryIterator& operator=(DirectoryIterator const&) = delete;
     DirectoryIterator& operator=(DirectoryIterator&&) = default;
 
     di::Expected<DirectoryEntry const&, PosixCode> operator*() const {
@@ -26,23 +30,30 @@ public:
     }
     di::Expected<DirectoryEntry, PosixCode>* operator->() { return di::addressof(m_current); }
 
-    DirectoryIterator begin() && { return di::move(*this); }
-    constexpr di::DefaultSentinel end() const { return {}; }
+    DirectoryIterator begin() { return di::move(*this); }
+    DirectoryIterator end() const { return {}; }
 
     void advance_one();
 
 private:
-    explicit DirectoryIterator(di::Path&& path, SyncFile&& directory_handle, DirectoryOptions options)
-        : m_path(di::move(path)), m_directory_handle(di::move(directory_handle)), m_options(options), m_at_end(false) {}
+    explicit DirectoryIterator(di::Path&& path, di::Vector<di::Byte>&& buffer, SyncFile&& directory_handle,
+                               DirectoryOptions options)
+        : m_path(di::move(path))
+        , m_buffer(di::move(buffer))
+        , m_directory_handle(di::move(directory_handle))
+        , m_options(options)
+        , m_at_end(false) {}
 
     constexpr friend bool operator==(DirectoryIterator const& a, DirectoryIterator const& b) {
         return a.m_at_end == b.m_at_end;
     }
 
     di::Path m_path;
+    di::Vector<di::Byte> m_buffer;
     SyncFile m_directory_handle;
     di::Expected<DirectoryEntry, PosixCode> m_current { di::unexpect, PosixError::Success };
     DirectoryOptions m_options { DirectoryOptions::None };
+    usize m_current_offset { 0 };
     bool m_at_end { true };
 };
 }

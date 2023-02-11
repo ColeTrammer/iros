@@ -28,6 +28,16 @@ private:
     explicit DirectoryEntry(di::Path&& path, FileType cached_type)
         : m_path(di::move(path)), m_cached_type(cached_type) {}
 
+    template<di::concepts::Encoding Enc>
+    constexpr friend auto tag_invoke(di::Tag<di::formatter_in_place>, di::InPlaceType<DirectoryEntry>,
+                                     di::FormatParseContext<Enc>& context) {
+        return di::format::formatter<di::PathView, Enc>(context) % [](di::concepts::Copyable auto formatter) {
+            return [=](di::FormatContext auto& context, DirectoryEntry const& a) {
+                return formatter(context, a.path_view());
+            };
+        };
+    }
+
     di::Path m_path;
     FileType m_cached_type { FileType::None };
 };
