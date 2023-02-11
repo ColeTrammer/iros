@@ -36,6 +36,8 @@ public:
     void advance_one();
 
 private:
+    void advance();
+
     explicit DirectoryIterator(di::Path&& path, di::Vector<di::Byte>&& buffer, SyncFile&& directory_handle,
                                DirectoryOptions options)
         : m_path(di::move(path))

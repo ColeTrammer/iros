@@ -1,0 +1,15 @@
+#include <dius/filesystem/query/exists.h>
+#include <dius/filesystem/query/file_size.h>
+#include <dius/filesystem/query/hard_link_count.h>
+#include <dius/filesystem/query/is_block_file.h>
+#include <dius/filesystem/query/is_character_file.h>
+#include <dius/filesystem/query/is_directory.h>
+#include <dius/filesystem/query/is_empty.h>
+#include <dius/filesystem/query/is_fifo.h>
+#include <dius/filesystem/query/is_other.h>
+#include <dius/filesystem/query/is_regular_file.h>
+#include <dius/filesystem/query/is_socket.h>
+#include <dius/filesystem/query/is_symlink.h>
+#include <dius/filesystem/query/status.h>
+#include <dius/filesystem/query/status_known.h>
+#include <dius/filesystem/query/symlink_status.h>

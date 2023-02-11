@@ -36,6 +36,21 @@ di::Result<DirectoryIterator> DirectoryIterator::create(di::Path path, Directory
 }
 
 void DirectoryIterator::advance_one() {
+    for (;;) {
+        advance();
+
+        if (m_at_end || !m_current) {
+            break;
+        }
+
+        if (m_current->path_view().filename() == "."_tsv || m_current->path_view().filename() == ".."_tsv) {
+            continue;
+        }
+        break;
+    }
+}
+
+void DirectoryIterator::advance() {
     // Re-fill the buffer of directory entries.
     if (m_buffer.size() == 0) {
         auto result = linux::sys_getdents64(m_directory_handle.file_descriptor(), m_buffer.data(), m_buffer.capacity());

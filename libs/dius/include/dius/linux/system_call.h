@@ -18,7 +18,8 @@ enum class Number : int {
     openat = __NR_openat,
     mmap = __NR_mmap,
     munmap = __NR_munmap,
-    getdents64 = __NR_getdents64
+    getdents64 = __NR_getdents64,
+    fstatat64 = __NR_newfstatat
 };
 
 using SystemCallArg = unsigned long;

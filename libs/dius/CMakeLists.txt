@@ -28,6 +28,7 @@ if(LINUX)
     target_sources(dius
       PRIVATE
         linux/filesystem/directory_iterator.cpp
+        linux/filesystem/query.cpp
         linux/io_uring.cpp
     )
 endif()
