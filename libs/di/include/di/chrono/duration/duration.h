@@ -40,10 +40,10 @@ public:
     constexpr auto operator-() const { return meta::CommonType<Duration> { -count() }; }
 
     constexpr Duration& operator++() { return ++m_count, *this; }
-    constexpr Duration& operator++(int) { return Duration(m_count++); }
+    constexpr Duration operator++(int) { return Duration(m_count++); }
 
     constexpr Duration& operator--() { return --m_count, *this; }
-    constexpr Duration& operator--(int) { return Duration(m_count--); }
+    constexpr Duration operator--(int) { return Duration(m_count--); }
 
     constexpr Duration& operator+=(Duration const& other) { return m_count += other.count(), *this; }
     constexpr Duration& operator-=(Duration const& other) { return m_count -= other.count(), *this; }
