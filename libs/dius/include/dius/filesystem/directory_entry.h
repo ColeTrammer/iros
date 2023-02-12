@@ -95,6 +95,13 @@ public:
 private:
     friend struct DirectoryIterator;
 
+    constexpr friend bool operator==(DirectoryEntry const& a, DirectoryEntry const& b) {
+        return a.path_view() == b.path_view();
+    }
+    constexpr friend di::strong_ordering operator<=>(DirectoryEntry const& a, DirectoryEntry const& b) {
+        return a.path_view() <=> b.path_view();
+    }
+
     explicit DirectoryEntry(di::Path&& path, FileType cached_type)
         : m_path(di::move(path)), m_cached_type(cached_type) {}
 
@@ -108,7 +115,7 @@ private:
     template<di::concepts::Encoding Enc>
     constexpr friend auto tag_invoke(di::Tag<di::formatter_in_place>, di::InPlaceType<DirectoryEntry>,
                                      di::FormatParseContext<Enc>& context) {
-        return di::format::formatter<di::PathView, Enc>(context) % [](di::concepts::Copyable auto formatter) {
+        return di::format::formatter<di::PathView, Enc>(context) % [](di::concepts::CopyConstructible auto formatter) {
             return [=](di::FormatContext auto& context, DirectoryEntry const& a) {
                 return formatter(context, a.path_view());
             };

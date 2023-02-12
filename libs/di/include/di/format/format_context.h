@@ -1,7 +1,6 @@
 #pragma once
 
 #include <di/container/string/string_impl.h>
-#include <di/format/format_args.h>
 #include <di/util/move.h>
 
 namespace di::format {

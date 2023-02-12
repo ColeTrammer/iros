@@ -14,7 +14,8 @@ namespace detail {
         using View = container::string::StringViewImpl<Enc>;
         using Str = container::string::StringImpl<Enc>;
 
-        constexpr Result<Str> operator()(View format, concepts::FormatArgs auto args) const {
+        template<concepts::FormatArg Arg>
+        constexpr Result<Str> operator()(View format, FormatArgs<Arg> args) const {
             auto context = FormatContext<Enc> {};
             DI_TRY(vpresent_encoded_context<Enc>(format, util::move(args), context));
             return util::move(context).output();

@@ -50,9 +50,9 @@ constexpr void do_assert(bool b, util::SourceLocation loc) {
 #ifndef DI_NO_ASSERT_ALLOCATION
             constexpr auto fs = di::StringView(encoding::assume_valid, u8": {}: {}:{}:{}", 14);
             auto t = di::format::vpresent_encoded<container::string::Utf8Encoding>(
-                fs, di::format::make_constexpr_format_args(cstring_to_utf8_view(loc.function_name()),
-                                                           cstring_to_utf8_view(loc.file_name()), loc.line(),
-                                                           loc.column()));
+                fs, di::format::make_format_args<di::format::FormatContext<container::string::Utf8Encoding>>(
+                        cstring_to_utf8_view(loc.function_name()), cstring_to_utf8_view(loc.file_name()), loc.line(),
+                        loc.column()));
             if (t) {
                 assert_write(reinterpret_cast<char const*>(t->data()), t->size_bytes());
             }
@@ -77,9 +77,10 @@ constexpr void do_binary_assert(F op, T&& a, U&& b, util::SourceLocation loc) {
             assert_write(source_text.data(), source_text.size());
 #ifndef DI_NO_ASSERT_ALLOCATION
             auto t = di::format::vpresent_encoded<container::string::Utf8Encoding>(
-                ": {}: {}:{}:{}"_sv, di::format::make_constexpr_format_args(cstring_to_utf8_view(loc.function_name()),
-                                                                            cstring_to_utf8_view(loc.file_name()),
-                                                                            loc.line(), loc.column()));
+                ": {}: {}:{}:{}"_sv,
+                di::format::make_format_args<di::format::FormatContext<container::string::Utf8Encoding>>(
+                    cstring_to_utf8_view(loc.function_name()), cstring_to_utf8_view(loc.file_name()), loc.line(),
+                    loc.column()));
             if (t) {
                 assert_write(reinterpret_cast<char const*>(t->data()), t->size_bytes());
             }
@@ -91,9 +92,11 @@ constexpr void do_binary_assert(F op, T&& a, U&& b, util::SourceLocation loc) {
 #ifndef DI_NO_ASSERT_ALLOCATION
             if constexpr (concepts::Formattable<T> && concepts::Formattable<U>) {
                 auto s = di::format::vpresent_encoded<container::string::Utf8Encoding>(
-                    "{}"_sv, di::format::make_constexpr_format_args(a));
+                    "{}"_sv,
+                    di::format::make_format_args<di::format::FormatContext<container::string::Utf8Encoding>>(a));
                 auto t = di::format::vpresent_encoded<container::string::Utf8Encoding>(
-                    "{}"_sv, di::format::make_constexpr_format_args(b));
+                    "{}"_sv,
+                    di::format::make_format_args<di::format::FormatContext<container::string::Utf8Encoding>>(b));
                 char lhs_text[] = "\033[1mLHS\033[0m: ";
                 char rhs_text[] = "\n\033[1mRHS\033[0m: ";
                 assert_write(lhs_text, sizeof(lhs_text) - 1);

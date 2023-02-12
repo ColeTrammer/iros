@@ -11,7 +11,7 @@ namespace detail {
         void operator()(di::format::FormatStringImpl<di::container::string::Utf8Encoding, Args...> format_string,
                         Args&&... args) const {
             auto fd_writer = SyncFile(SyncFile::Owned::No, fd);
-            (void) di::vwriter_print<di::container::string::Utf8Encoding>(fd_writer, format_string, args...);
+            (void) di::writer_print<di::container::string::Utf8Encoding>(fd_writer, format_string, args...);
         }
     };
 
@@ -21,7 +21,7 @@ namespace detail {
         void operator()(di::format::FormatStringImpl<di::container::string::Utf8Encoding, Args...> format_string,
                         Args&&... args) const {
             auto fd_writer = SyncFile(SyncFile::Owned::No, fd);
-            (void) di::vwriter_println<di::container::string::Utf8Encoding>(fd_writer, format_string, args...);
+            (void) di::writer_println<di::container::string::Utf8Encoding>(fd_writer, format_string, args...);
         }
     };
 }

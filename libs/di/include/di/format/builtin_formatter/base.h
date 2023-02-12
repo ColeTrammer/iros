@@ -102,8 +102,8 @@ namespace detail {
 
     constexpr auto tag_invoke(types::Tag<create_parser_in_place>, InPlaceType<StringType>) {
         using namespace integral_set_literals;
-        return (-parser::match_one('s'_m || '?'_m)) % [](Optional<char32_t> ch) {
-            switch (ch.value_or(U's')) {
+        return (parser::match_one('s'_m || '?'_m)) % [](char32_t ch) {
+            switch (ch) {
                 case U's':
                     return StringType::String;
                 case U'?':
@@ -145,9 +145,9 @@ namespace detail {
 
     constexpr auto tag_invoke(types::Tag<create_parser_in_place>, InPlaceType<CharacterType>) {
         using namespace integral_set_literals;
-        return (-parser::match_one('b'_m || 'B'_m || 'c'_m || 'd'_m || 'o'_m || 'x'_m || 'X'_m || '?'_m)) %
-               [](Optional<char32_t> ch) {
-                   switch (ch.value_or(U'c')) {
+        return (parser::match_one('b'_m || 'B'_m || 'c'_m || 'd'_m || 'o'_m || 'x'_m || 'X'_m || '?'_m)) %
+               [](char32_t ch) {
+                   switch (ch) {
                        case U'b':
                            return CharacterType::BinaryLower;
                        case U'B':
@@ -215,12 +215,12 @@ namespace detail {
         Optional<FillAndAlign> fill_and_align;
         Optional<Width> width;
         Optional<Precision> precision;
-        StringType type;
+        Optional<StringType> type;
 
     private:
         constexpr friend auto tag_invoke(types::Tag<create_parser_in_place>, InPlaceType<StringFormat>) {
             return (-create_parser<FillAndAlign>() >> -create_parser<Width>() >> -create_parser<Precision>() >>
-                    create_parser<StringType>()) %
+                    -create_parser<StringType>()) %
                    make_from_tuple<StringFormat>;
         }
     };
@@ -247,12 +247,12 @@ namespace detail {
         HashTag hash_tag;
         Zero zero;
         Optional<Width> width;
-        CharacterType type;
+        Optional<CharacterType> type;
 
     private:
         constexpr friend auto tag_invoke(types::Tag<create_parser_in_place>, InPlaceType<CharacterFormat>) {
             return (-create_parser<FillAndAlign>() >> create_parser<Sign>() >> create_parser<HashTag>() >>
-                    create_parser<Zero>() >> -create_parser<Width>() >> create_parser<CharacterType>()) %
+                    create_parser<Zero>() >> -create_parser<Width>() >> -create_parser<CharacterType>()) %
                    make_from_tuple<CharacterFormat>;
         }
     };

@@ -6,17 +6,22 @@
 namespace di::io {
 namespace detail {
     template<concepts::Encoding Enc>
-    struct VWriterPrintlnFunction {
+    struct WriterPrintlnFunction {
         template<Impl<Writer> Writer, typename... Args, typename Sv = container::string::StringViewImpl<Enc>>
         constexpr void operator()(Writer& writer, Sv format_string, Args&&... args) const {
             auto context = WriterFormatContext<Writer, Enc>(writer, format_string.encoding());
-            (void) format::vpresent_encoded_context<Enc>(format_string, format::make_constexpr_format_args(args...),
-                                                         context);
+            if consteval {
+                (void) format::vpresent_encoded_context<Enc>(format_string, format::make_constexpr_format_args(args...),
+                                                             context);
+            } else {
+                (void) format::vpresent_encoded_context<Enc>(
+                    format_string, format::make_format_args<WriterFormatContext<Writer, Enc>>(args...), context);
+            }
             (void) context.output('\n');
         }
     };
 }
 
 template<concepts::Encoding Enc>
-constexpr inline auto vwriter_println = detail::VWriterPrintlnFunction<Enc> {};
+constexpr inline auto writer_println = detail::WriterPrintlnFunction<Enc> {};
 }
