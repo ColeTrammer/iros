@@ -7,6 +7,7 @@
 #include <di/math/align_up.h>
 #include <di/math/divide_round_up.h>
 #include <di/math/gcd.h>
+#include <di/math/intcmp/prelude.h>
 #include <di/math/lcm.h>
 #include <di/math/midpoint.h>
 #include <di/math/numeric_limits.h>

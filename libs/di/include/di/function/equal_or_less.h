@@ -2,6 +2,7 @@
 
 #include <di/concepts/implicitly_convertible_to.h>
 #include <di/function/curry_back.h>
+#include <di/math/intcmp/cmp_less_equal.h>
 
 namespace di::function {
 struct EqualOrLess {
@@ -11,7 +12,11 @@ struct EqualOrLess {
                  { a <= b } -> concepts::ImplicitlyConvertibleTo<bool>;
              })
     {
-        return a <= b;
+        if constexpr (concepts::Integer<T> && concepts::Integer<U>) {
+            return math::cmp_less_equal(a, b);
+        } else {
+            return a <= b;
+        }
     }
 };
 
