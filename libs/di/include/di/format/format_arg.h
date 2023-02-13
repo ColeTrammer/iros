@@ -3,6 +3,7 @@
 #include <di/container/string/string_view_impl.h>
 #include <di/format/concepts/format_context.h>
 #include <di/format/concepts/formattable.h>
+#include <di/function/monad/monad_try.h>
 #include <di/util/voidify.h>
 #include <di/vocab/variant/prelude.h>
 

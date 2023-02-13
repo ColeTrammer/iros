@@ -8,15 +8,12 @@
 #include <di/bit/operation/countl_zero.h>
 #include <di/bit/operation/countr_one.h>
 #include <di/bit/operation/countr_zero.h>
-#include <di/bit/operation/endian.h>
 #include <di/bit/operation/has_single_bit.h>
 #include <di/bit/operation/popcount.h>
 #include <di/bit/operation/rotl.h>
 #include <di/bit/operation/rotr.h>
 
 namespace di {
-using bit::Endian;
-
 using bit::bit_ceil;
 using bit::bit_floor;
 using bit::bit_width;
