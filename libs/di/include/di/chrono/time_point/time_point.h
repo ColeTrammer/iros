@@ -6,7 +6,7 @@
 #include <di/concepts/three_way_comparable_with.h>
 
 namespace di::chrono {
-template<concepts::Clock C, concepts::InstanceOf<Duration> Dur>
+template<typename C, concepts::InstanceOf<Duration> Dur>
 class TimePoint {
 public:
     using Clock = C;
