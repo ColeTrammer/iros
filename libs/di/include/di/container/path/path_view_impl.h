@@ -6,15 +6,20 @@
 #include <di/container/path/constant_path_interface.h>
 #include <di/container/path/path_iterator.h>
 #include <di/container/string/string_view.h>
+#include <di/util/to_owned.h>
 #include <di/vocab/optional/prelude.h>
 #include <di/vocab/tuple/prelude.h>
 
 namespace di::container {
+template<concepts::InstanceOf<string::StringImpl> Str>
+class PathImpl;
+
 template<concepts::Encoding Enc>
 class PathViewImpl
     : public meta::EnableView<PathViewImpl<Enc>>
     , public meta::EnableBorrowedContainer<PathViewImpl<Enc>>
-    , public ConstantPathInterface<PathViewImpl<Enc>, Enc> {
+    , public ConstantPathInterface<PathViewImpl<Enc>, Enc>
+    , public util::OwnedType<PathViewImpl<Enc>, PathImpl<string::StringImpl<Enc>>> {
 private:
     using View = string::StringViewImpl<Enc>;
     using CodePoint = meta::EncodingCodePoint<Enc>;

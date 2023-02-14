@@ -14,6 +14,9 @@ constexpr void basic() {
         c++;
     }
     ASSERT_EQ(c, 4);
+
+    auto y = x.to_owned();
+    ASSERT_EQ(x, y);
 }
 
 constexpr void push_back() {

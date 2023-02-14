@@ -29,6 +29,7 @@
 #include <di/util/scope_exit.h>
 #include <di/util/source_location.h>
 #include <di/util/swap.h>
+#include <di/util/to_owned.h>
 #include <di/util/to_uintptr.h>
 #include <di/util/to_underlying.h>
 #include <di/util/unreachable.h>
@@ -41,6 +42,7 @@ using util::is_constant_evaluated;
 using util::clone;
 using util::create;
 using util::maybe_clone;
+using util::to_owned;
 
 using util::cref;
 using util::ref;

@@ -21,6 +21,9 @@ constexpr void basic() {
     auto b = z.last(2);
     ASSERT_EQ((*b)[0], 4);
     ASSERT_EQ((*b)[1], 5);
+
+    auto c = y.to_owned();
+    ASSERT_EQ(c, x);
 }
 
 constexpr void tuple() {

@@ -31,11 +31,15 @@
 #include <di/util/to_address.h>
 #include <di/vocab/optional/prelude.h>
 #include <di/vocab/span/span_forward_declaration.h>
+#include <di/vocab/tuple/apply.h>
 #include <di/vocab/tuple/enable_generate_structed_bindings.h>
 #include <di/vocab/tuple/tuple_element.h>
 #include <di/vocab/tuple/tuple_size.h>
 
 namespace di::vocab {
+template<typename T, types::size_t extent>
+struct Array;
+
 template<typename T, types::size_t extent>
 requires(extent != dynamic_extent)
 class Span<T, extent>
@@ -176,6 +180,16 @@ public:
         } else {
             return Span<T, count> { data() + offset, count };
         }
+    }
+
+    template<typename = void>
+    requires(concepts::CopyConstructible<T>)
+    constexpr Array<T, extent> to_owned() const {
+        return apply(
+            [](auto const&... args) {
+                return Array<T, extent> { args... };
+            },
+            *this);
     }
 
 private:

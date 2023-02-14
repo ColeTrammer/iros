@@ -2,6 +2,7 @@
 
 #include <di/container/string/mutable_string.h>
 #include <di/container/vector/vector_append_container.h>
+#include <di/container/vector/vector_pop_back.h>
 #include <di/container/view/join.h>
 #include <di/container/view/transform.h>
 #include <di/function/bind_front.h>

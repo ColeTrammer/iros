@@ -6,14 +6,17 @@
 #include <di/container/meta/prelude.h>
 #include <di/container/string/constant_string.h>
 #include <di/container/string/constant_string_interface.h>
+#include <di/container/string/string_impl_forward_declaration.h>
 #include <di/util/to_address.h>
+#include <di/util/to_owned.h>
 
 namespace di::container::string {
 template<concepts::Encoding Enc>
 class StringViewImpl
     : public ConstantStringInterface<StringViewImpl<Enc>, Enc>
     , public meta::EnableView<StringViewImpl<Enc>>
-    , public meta::EnableBorrowedContainer<StringViewImpl<Enc>> {
+    , public meta::EnableBorrowedContainer<StringViewImpl<Enc>>
+    , public util::OwnedType<StringViewImpl<Enc>, StringImpl<Enc>> {
 public:
     using Encoding = Enc;
     using CodeUnit = meta::EncodingCodeUnit<Enc>;

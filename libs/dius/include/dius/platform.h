@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/container/allocator/allocator.h>
 #include <di/container/allocator/forward_declaration.h>
 #include <pthread.h>
 
