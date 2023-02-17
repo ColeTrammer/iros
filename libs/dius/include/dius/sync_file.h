@@ -2,6 +2,7 @@
 
 #include <di/prelude.h>
 #include <dius/config.h>
+#include <dius/error.h>
 #include <dius/memory_region.h>
 
 #include DIUS_PLATFORM_PATH(system_call.h)
@@ -84,7 +85,7 @@ private:
 
 enum class OpenMode { Readonly, WriteNew, WriteClobber, ReadWrite, AppendOnly };
 
-di::Result<SyncFile> open_sync(di::PathView path, OpenMode open_mode, u16 create_mode = 0666);
+di::Expected<SyncFile, PosixCode> open_sync(di::PathView path, OpenMode open_mode, u16 create_mode = 0666);
 di::Result<di::String> read_to_string(di::PathView path);
 
 inline auto stdin = SyncFile { SyncFile::Owned::No, 0 };

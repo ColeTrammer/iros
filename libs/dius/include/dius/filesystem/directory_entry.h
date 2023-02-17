@@ -94,7 +94,8 @@ public:
     di::Result<FileStatus> symlink_status() const { return filesystem::symlink_status(path_view()); }
 
 private:
-    friend struct DirectoryIterator;
+    friend class DirectoryIterator;
+    friend class RecursiveDirectoryIterator;
 
     constexpr friend bool operator==(DirectoryEntry const& a, DirectoryEntry const& b) {
         return a.path_view() == b.path_view();
@@ -105,6 +106,15 @@ private:
 
     explicit DirectoryEntry(di::Path&& path, FileType cached_type)
         : m_path(di::move(path)), m_cached_type(cached_type) {}
+
+    di::Expected<bool, PosixCode> is_non_symlink_directory() const {
+        if (m_cached_type != FileType::Unknown) {
+            return m_cached_type == FileType::Directory;
+        }
+        // FIXME: this cast seems extremely dubious, and most likely
+        //        is not performing the intended behavior.
+        return di::Expected<bool, PosixCode>(is_directory());
+    }
 
     constexpr bool has_cached_type() const {
         // NOTE: if the file type is a symlink, then we have to follow that symlink when

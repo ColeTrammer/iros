@@ -12,8 +12,11 @@ class DirectoryIterator
                                          di::Expected<DirectoryEntry, PosixCode>, i64>
     , public di::meta::EnableBorrowedContainer<DirectoryIterator>
     , public di::meta::EnableView<DirectoryIterator> {
+    friend class RecursiveDirectoryIterator;
+
 public:
-    static di::Result<DirectoryIterator> create(di::Path path, DirectoryOptions options = DirectoryOptions::None);
+    static di::Expected<DirectoryIterator, PosixCode> create(di::Path path,
+                                                             DirectoryOptions options = DirectoryOptions::None);
 
     DirectoryIterator() = default;
 
@@ -28,7 +31,6 @@ public:
             return di::cref(value);
         });
     }
-    di::Expected<DirectoryEntry, PosixCode>* operator->() { return di::addressof(m_current); }
 
     DirectoryIterator begin() { return di::move(*this); }
     DirectoryIterator end() const { return {}; }
@@ -38,12 +40,10 @@ public:
 private:
     void advance();
 
-    explicit DirectoryIterator(di::Path&& path, di::Vector<di::Byte>&& buffer, SyncFile&& directory_handle,
-                               DirectoryOptions options)
+    explicit DirectoryIterator(di::Path&& path, di::Vector<di::Byte>&& buffer, SyncFile&& directory_handle)
         : m_path(di::move(path))
         , m_buffer(di::move(buffer))
         , m_directory_handle(di::move(directory_handle))
-        , m_options(options)
         , m_at_end(false) {}
 
     constexpr friend bool operator==(DirectoryIterator const& a, DirectoryIterator const& b) {
@@ -54,7 +54,6 @@ private:
     di::Vector<di::Byte> m_buffer;
     SyncFile m_directory_handle;
     di::Expected<DirectoryEntry, PosixCode> m_current { di::unexpect, PosixError::Success };
-    DirectoryOptions m_options { DirectoryOptions::None };
     usize m_current_offset { 0 };
     bool m_at_end { true };
 };

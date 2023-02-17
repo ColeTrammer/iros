@@ -21,7 +21,7 @@ di::Result<void> sys_close(int fd) {
     return system::system_call<int>(system::Number::close, fd) % di::into_void;
 }
 
-di::Result<int> sys_open(di::PathView path, int flags, u16 create_mode) {
+di::Expected<int, PosixCode> sys_open(di::PathView path, int flags, u16 create_mode) {
     auto raw_data = path.data();
     char null_terminated_string[4097];
     ASSERT_LT(raw_data.size(), sizeof(null_terminated_string) - 1);
@@ -121,7 +121,7 @@ di::Result<MemoryRegion> SyncFile::map(u64 offset, size_t size, Protection prote
     return MemoryRegion(di::Span { base, size });
 }
 
-di::Result<SyncFile> open_sync(di::PathView path, OpenMode open_mode, u16 create_mode) {
+di::Expected<SyncFile, PosixCode> open_sync(di::PathView path, OpenMode open_mode, u16 create_mode) {
     auto open_mode_flags = [&] {
         switch (open_mode) {
             case OpenMode::Readonly:

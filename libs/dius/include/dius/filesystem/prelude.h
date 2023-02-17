@@ -6,6 +6,7 @@
 #include <dius/filesystem/file_type.h>
 #include <dius/filesystem/perms.h>
 #include <dius/filesystem/query/prelude.h>
+#include <dius/filesystem/recursive_directory_iterator.h>
 
 namespace dius {
 namespace fs = filesystem;

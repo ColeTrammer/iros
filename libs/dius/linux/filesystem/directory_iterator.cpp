@@ -22,20 +22,27 @@ static di::Expected<usize, PosixCode> sys_getdents64(int fd, void* buffer, usize
 
 namespace dius::filesystem {
 
-di::Result<DirectoryIterator> DirectoryIterator::create(di::Path path, DirectoryOptions options) {
+di::Expected<DirectoryIterator, PosixCode> DirectoryIterator::create(di::Path path, DirectoryOptions options) {
     // FIXME: handle the directory options.
+    (void) options;
     auto file_handle = TRY(open_sync(path, OpenMode::Readonly));
 
     auto buffer = di::Vector<di::Byte> {};
     buffer.reserve(4096);
 
-    auto result = DirectoryIterator(di::move(path), di::move(buffer), di::move(file_handle), options);
+    auto result = DirectoryIterator(di::move(path), di::move(buffer), di::move(file_handle));
     ++result;
 
     return result;
 }
 
 void DirectoryIterator::advance_one() {
+    // If the result is an actual error object, simply advance to the end.
+    if (!m_current && m_current != di::Unexpected(PosixError::Success)) {
+        m_at_end = true;
+        return;
+    }
+
     for (;;) {
         advance();
 
