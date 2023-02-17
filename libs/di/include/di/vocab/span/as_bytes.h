@@ -1,0 +1,17 @@
+#pragma once
+
+#include <di/vocab/span/span_dynamic_size.h>
+#include <di/vocab/span/span_fixed_size.h>
+
+namespace di::vocab {
+namespace detail {
+    struct AsBytesFunction {
+        template<typename T, size_t N, size_t S = N == dynamic_extent ? dynamic_extent : sizeof(T) * N>
+        Span<Byte const, S> operator()(Span<T, N> span) const {
+            return { reinterpret_cast<Byte const*>(span.data()), span.size_bytes() };
+        }
+    };
+}
+
+constexpr inline auto as_bytes = detail::AsBytesFunction {};
+}
