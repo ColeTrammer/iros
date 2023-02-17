@@ -18,6 +18,7 @@ public:
     constexpr di::Path const& path() const& { return m_path; }
     constexpr di::Path&& path() && { return di::move(m_path); }
     constexpr di::PathView path_view() const { return m_path.view(); }
+    constexpr di::Optional<di::PathView> filename() const { return path_view().filename(); }
 
     constexpr operator di::Path const&() const& { return path(); }
     constexpr operator di::Path&&() && { return di::move(*this).path(); }

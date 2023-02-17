@@ -71,6 +71,8 @@ public:
     di::Result<void> write_exactly(u64 offset, di::Span<di::Byte const>) const;
     di::Result<void> write_exactly(di::Span<di::Byte const>) const;
 
+    di::Result<void> resize_file(u64 new_size) const;
+
     di::Result<MemoryRegion> map(u64 offset, size_t size, Protection protection, MapFlags flags) const;
 
     di::Result<void> flush() const { return {}; }

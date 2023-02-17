@@ -32,6 +32,10 @@ di::Result<int> sys_open(di::PathView path, int flags, u16 create_mode) {
     return system::system_call<int>(system::Number::openat, AT_FDCWD, null_terminated_string, flags, create_mode);
 }
 
+di::Result<void> sys_ftruncate(int fd, u64 size) {
+    return system::system_call<int>(system::Number::ftruncate, fd, size) % di::into_void;
+}
+
 di::Result<di::Byte*> sys_mmap(void* addr, size_t length, Protection prot, MapFlags flags, int fd, u64 offset) {
     return system::system_call<di::Byte*>(system::Number::mmap, addr, length, prot, flags, fd, offset);
 }
@@ -106,6 +110,10 @@ di::Result<void> SyncFile::write_exactly(di::Span<di::Byte const> data) const {
         data = *data.subspan(nwritten);
     }
     return {};
+}
+
+di::Result<void> SyncFile::resize_file(u64 new_size) const {
+    return sys_ftruncate(file_descriptor(), new_size);
 }
 
 di::Result<MemoryRegion> SyncFile::map(u64 offset, size_t size, Protection protection, MapFlags flags) const {
