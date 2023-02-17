@@ -120,18 +120,53 @@ static di::Result<void> write_super_block(FSNode& root, dius::SyncFile& output, 
     return output.write_exactly(0, di::as_bytes(di::Span { &super_block, 1 }));
 }
 
+di::Result<FSNode&> find_parent(FSNode& root, di::PathView path) {
+    if (path.empty()) {
+        return root;
+    }
+
+    auto first = *path.begin();
+    for (auto& child : root.children) {
+        if (child.type == Type::Directory && child.path.filename() == first) {
+            return find_parent(child, *path.strip_prefix(first));
+        }
+    }
+
+    dius::eprintln("Could not find path {} in directory tree."_sv, path);
+    return di::Unexpected(di::BasicError::Invalid);
+}
+
 di::Result<void> main(Args& args) {
     auto root = FSNode {};
     root.type = Type::Directory;
 
-    auto iterator = TRY(di::create<dius::fs::DirectoryIterator>(args.path.to_owned()));
+    auto iterator = TRY(di::create<dius::fs::RecursiveDirectoryIterator>(args.path.to_owned()));
     for (auto directory : iterator) {
         auto const& entry = TRY(directory);
 
+        auto is_invalid = TRY(entry.is_symlink()) || TRY(entry.is_other());
+        if (is_invalid) {
+            dius::eprintln("Cannot create initrd consisting of irregular file: {}"_sv, entry);
+            return di::Unexpected(di::BasicError::Invalid);
+        }
+
+        auto is_directory = TRY(entry.is_directory());
         auto child = FSNode {};
-        child.size = TRY(entry.file_size());
         child.path = entry.path_view().to_owned();
-        root.children.push_back(di::move(child));
+        if (!is_directory) {
+            child.size = TRY(entry.file_size());
+            child.type = Type::Regular;
+        } else {
+            child.type = Type::Directory;
+        }
+
+        dius::println("Adding {}."_sv, entry);
+
+        auto relative_path = entry.path_view().strip_prefix(args.path).value_or(entry.path_view());
+        auto parent_path = relative_path.parent_path().value_or(""_pv);
+
+        auto& parent = TRY(find_parent(root, parent_path));
+        parent.children.push_back(di::move(child));
     }
 
     root.compute_sizes();
