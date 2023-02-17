@@ -79,6 +79,7 @@ enable_testing()
 add_subdirectory(libs/di)
 add_subdirectory(libs/dius)
 add_subdirectory(userland/core)
+add_subdirectory(userland/tools)
 
 if(IROS_BuildCcpp)
     add_subdirectory(libs/ccpp)
