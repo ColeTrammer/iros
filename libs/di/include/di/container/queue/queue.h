@@ -121,6 +121,8 @@ public:
 
     constexpr Con const& base() const { return m_container; }
 
+    constexpr void clear() { m_container.clear(); }
+
 private:
     constexpr friend auto tag_invoke(types::Tag<util::clone>, Queue const& self)
     requires(concepts::Clonable<Value>)

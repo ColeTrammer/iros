@@ -25,9 +25,6 @@ namespace detail {
                                                                       } -> concepts::SameAs<Optional<Value const&>>;
                                                                   container.emplace_back(util::move(value));
                                                                   {
-                                                                      container.append_container(util::move(container))
-                                                                      } -> concepts::MaybeFallible<void>;
-                                                                  {
                                                                       container.pop_back()
                                                                       } -> concepts::SameAs<Optional<Value>>;
                                                                   { container.size() } -> concepts::UnsignedInteger;
@@ -125,6 +122,8 @@ public:
 
     constexpr Con const& base() const { return m_container; }
     constexpr Comp const& comparator() const { return m_comp; }
+
+    constexpr void clear() { m_container.clear(); }
 
 private:
     constexpr explicit PriorityQueue(InPlace, Con&& container, Comp const& comp)

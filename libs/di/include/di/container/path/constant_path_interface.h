@@ -83,6 +83,14 @@ public:
         } == true;
     }
 
+    constexpr Optional<PathView> strip_prefix(PathView prefix) {
+        auto [a, b] = container::mismatch(*this, prefix);
+        if (b != prefix.end()) {
+            return nullopt;
+        }
+        return PathView(View(a.current_data(), this->end().current_data()));
+    }
+
 protected:
     constexpr void compute_first_component_end() {
         if (data().starts_with(CodePoint('/'))) {

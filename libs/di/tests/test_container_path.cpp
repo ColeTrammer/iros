@@ -151,6 +151,14 @@ constexpr void path_addition() {
     ASSERT_EQ(c.data(), "opt/hello/world"_tsv);
 }
 
+constexpr void strip_prefix() {
+    ASSERT_EQ("hello/world"_pv.strip_prefix("hello"_pv), "world"_pv);
+    ASSERT_EQ("/hello/world"_pv.strip_prefix("/hello"_pv), "world"_pv);
+    ASSERT_EQ("/hello/world"_pv.strip_prefix("/"_pv), "hello/world"_pv);
+    ASSERT_EQ("/hello/world"_pv.strip_prefix("/bello"_pv), di::nullopt);
+    ASSERT_EQ("/hello/world"_pv.strip_prefix("hello"_pv), di::nullopt);
+}
+
 TESTC(container_path, iteration)
 TESTC(container_path, equal)
 TESTC(container_path, compare)
@@ -164,3 +172,4 @@ TESTC(container_path, ends_with)
 TESTC(container_path, filename_ends_with)
 TESTC(container_path, path_basic)
 TESTC(container_path, path_addition)
+TESTC(container_path, strip_prefix)

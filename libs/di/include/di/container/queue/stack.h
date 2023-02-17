@@ -5,6 +5,7 @@
 #include <di/container/iterator/iterator_base.h>
 #include <di/container/meta/prelude.h>
 #include <di/container/vector/vector.h>
+#include <di/container/view/as_rvalue.h>
 #include <di/util/deduce_create.h>
 #include <di/vocab/optional/prelude.h>
 
@@ -16,9 +17,6 @@ namespace detail {
                                   { container.back() } -> concepts::SameAs<Optional<Value&>>;
                                   { util::as_const(container).back() } -> concepts::SameAs<Optional<Value const&>>;
                                   container.emplace_back(util::move(value));
-                                  {
-                                      container.append_container(util::move(container))
-                                      } -> concepts::MaybeFallible<void>;
                                   { container.pop_back() } -> concepts::SameAs<Optional<Value>>;
                                   { container.size() } -> concepts::UnsignedInteger;
                               };
@@ -89,6 +87,8 @@ public:
     constexpr auto end() { return default_sentinel; }
 
     constexpr Con const& base() const { return m_container; }
+
+    constexpr void clear() { m_container.clear(); }
 
 private:
     constexpr friend auto tag_invoke(types::Tag<util::clone>, Stack const& self) {

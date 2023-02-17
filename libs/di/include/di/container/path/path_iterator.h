@@ -26,6 +26,8 @@ public:
 
     constexpr auto operator*() const { return m_current; }
 
+    constexpr auto current_data() { return m_current.data(); }
+
     constexpr void advance_one() {
         do {
             DI_ASSERT_NOT_EQ(m_current.begin(), m_bounds.end());
