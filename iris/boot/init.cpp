@@ -66,8 +66,6 @@ struct ProgramHeader {
 
 static int counter = 0;
 
-static auto userspace_test_program_data_storage = di::Array<di::Byte, 5 * 0x4000> {};
-
 static void do_task() {
     for (int i = 0; i < 3; i++) {
         iris::println("counter: {}"_sv, ++counter);
@@ -141,6 +139,8 @@ void iris_main() {
                 di::unreachable();
         }
 
+        iris::println("base={:#018x} size={:#x}"_sv, memory_map_entry->base, memory_map_entry->length);
+
         if (memory_map_entry->type != LIMINE_MEMMAP_USABLE) {
             iris::mm::reserve_page_frames(iris::mm::PhysicalAddress(di::align_down(memory_map_entry->base, 4096)),
                                           di::divide_round_up(memory_map_entry->length, 4096));
@@ -150,12 +150,17 @@ void iris_main() {
     iris::mm::reserve_page_frames(iris::mm::PhysicalAddress(0), 16 * 16 * 2);
 
     DI_ASSERT_GT(module_request.response->module_count, 0u);
-    auto userspace_test_program = *module_request.response->modules[0];
-    DI_ASSERT_LT_EQ(userspace_test_program.size, userspace_test_program_data_storage.size());
-    di::copy(
-        di::Span { reinterpret_cast<di::Byte const*>(userspace_test_program.address), userspace_test_program.size },
-        userspace_test_program_data_storage.data());
-    auto test_program_data = di::Span { userspace_test_program_data_storage.data(), userspace_test_program.size };
+    auto initrd_module = *module_request.response->modules[0];
+
+    iris::println("Kernel virtual base: {:#018x}"_sv, kernel_address_request.response->virtual_base);
+    iris::println("Kernel physical base: {:#018x}"_sv, kernel_address_request.response->physical_base);
+    iris::println("Max physical memory: {:#018x}"_sv, global_state.max_physical_address.raw_address());
+    iris::println("Module base address: {}"_sv, initrd_module.address);
+
+    // NOTE: the limine boot loader places the module in the HHDM, and marks the region and kernel+modules,
+    //       so we can safely access its provided virtual address after unloading the boot loader. This relies
+    //       on limine placing its HHDM at the same location we do, which is unsafe but works for now.
+    auto initrd = di::Span { reinterpret_cast<di::Byte const*>(initrd_module.address), initrd_module.size };
 
     ASSERT(mm::init_and_load_initial_kernel_address_space(
         mm::PhysicalAddress(kernel_address_request.response->physical_base),
@@ -187,39 +192,6 @@ void iris_main() {
     auto task3 = iris::Task(task_address, task_stack3.raw_address() + 0x2000, false);
 
     scheduler.schedule_task(task3);
-
-    auto* elf_header = test_program_data.typed_pointer_unchecked<elf64::ElfHeader>(0);
-    iris::println("entry={:x}"_sv, elf_header->entry);
-    ASSERT_EQ(sizeof(elf64::ProgramHeader), elf_header->program_entry_size);
-
-    auto program_headers = test_program_data.typed_span_unchecked<elf64::ProgramHeader>(
-        elf_header->program_table_off, elf_header->program_entry_count);
-    for (auto& program_header : program_headers) {
-        iris::println("type={}"_sv, program_header.type);
-        iris::println("addr={:x}"_sv, program_header.virtual_addr);
-        iris::println("file={:x}"_sv, program_header.file_size);
-        iris::println("memory={:x}"_sv, program_header.memory_size);
-
-        // PT_LOAD
-        if (program_header.type != 1) {
-            continue;
-        }
-
-        auto aligned_size = di::align_up(program_header.memory_size, 4096);
-        (void) kernel_address_space.allocate_region_at(iris::mm::VirtualAddress(program_header.virtual_addr),
-                                                       aligned_size);
-
-        iris::println("copy..."_sv);
-        auto data = di::Span { reinterpret_cast<di::Byte*>(program_header.virtual_addr), aligned_size };
-        di::copy(*test_program_data.subspan(program_header.offset, program_header.memory_size), data.data());
-        iris::println("done"_sv);
-    }
-
-    auto task_stack4 = *kernel_address_space.allocate_region(0x2000);
-    auto task4 = iris::Task(elf_header->entry, task_stack4.raw_address(), true);
-
-    (void) task4;
-    scheduler.schedule_task(task4);
 
     iris::println("preparing to context switch"_sv);
 
