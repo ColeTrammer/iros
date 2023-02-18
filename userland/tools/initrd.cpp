@@ -102,11 +102,14 @@ struct FSNode {
 };
 
 static di::Result<void> write_super_block(FSNode& root, dius::SyncFile& output, usize total_blocks) {
+    // FIXME: Seed the randon number generate properly, or use /dev/urandom on Linux.
+    auto uuid_generation = di::generate_uuid(di::MinstdRand {});
+    dius::println("Generating super block with id {}"_sv, uuid_generation);
+
     auto super_block = SuperBlock {};
-    // FIXME: Chose a proper UUID signature.
-    super_block.signature.fill(di::Byte(0x1E));
-    // FIXME: Generate a random UUID.
-    super_block.generation.fill(di::Byte(0x24));
+    super_block.signature = signature;
+    super_block.generation = uuid_generation;
+
     // FIXME: Get the current time.
     super_block.created_at_seconds_since_epoch = 0;
     super_block.version = 0;

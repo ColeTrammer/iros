@@ -10,6 +10,10 @@
 #include <di/vocab/array/prelude.h>
 
 namespace di::util {
+namespace detail {
+    struct GenerateUUIDFunction;
+}
+
 class UUID {
 private:
     using ByteArray = di::Array<di::Byte, 16>;
@@ -35,7 +39,7 @@ public:
     constexpr void clear() { *this = UUID(); }
 
 private:
-    friend struct GenerateUUIDFunction;
+    friend struct detail::GenerateUUIDFunction;
 
     constexpr friend bool operator==(UUID a, UUID b) {
         return util::bit_cast<ByteArray>(a) == util::bit_cast<ByteArray>(b);

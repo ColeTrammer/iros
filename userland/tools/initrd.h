@@ -3,8 +3,9 @@
 #include <di/prelude.h>
 
 namespace iris::initrd {
-using UUID = di::Array<di::Byte, 16>;
+using UUID = di::UUID;
 
+constexpr inline auto signature = "b2bf882c-c789-4728-b4a0-b3b944078e29"_uuid;
 constexpr inline auto block_size = usize(4096);
 constexpr inline auto directory_entry_align = usize(8);
 
