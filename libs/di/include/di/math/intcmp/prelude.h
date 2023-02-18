@@ -7,3 +7,4 @@
 #include <di/math/intcmp/cmp_less_equal.h>
 #include <di/math/intcmp/cmp_not_equal.h>
 #include <di/math/intcmp/cmp_three_way.h>
+#include <di/math/intcmp/representable_as.h>

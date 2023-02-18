@@ -5,6 +5,22 @@
 #include <di/format/prelude.h>
 
 namespace di::bit {
+namespace detail {
+    struct HostToLittleEndianFunction {
+        template<concepts::Integral T>
+        constexpr T operator()(T value) const {
+            if constexpr (Endian::Native == Endian::Little) {
+                return value;
+            } else {
+                return byteswap(value);
+            }
+        }
+    };
+}
+
+constexpr inline auto host_to_little_endian = detail::HostToLittleEndianFunction {};
+constexpr inline auto little_endian_to_host = detail::HostToLittleEndianFunction {};
+
 template<concepts::Integral T>
 class [[gnu::packed]] LittleEndian {
 public:
@@ -13,21 +29,11 @@ public:
     constexpr LittleEndian(T value) { *this = value; }
 
     constexpr LittleEndian operator=(T value) {
-        if constexpr (Endian::Native == Endian::Little) {
-            m_value = value;
-        } else {
-            m_value = byteswap(value);
-        }
+        m_value = host_to_little_endian(value);
         return *this;
     }
 
-    constexpr operator T() const {
-        if constexpr (Endian::Native == Endian::Little) {
-            return m_value;
-        } else {
-            return byteswap(m_value);
-        }
-    }
+    constexpr operator T() const { return little_endian_to_host(m_value); }
 
 private:
     template<concepts::Encoding Enc>

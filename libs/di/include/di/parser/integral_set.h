@@ -109,8 +109,8 @@ constexpr auto operator||(IntegralSet<T, N1> a, IntegralSet<T, N2> b) {
         return function::unpack<meta::MakeIndexSequence<N2>>([&]<size_t... b_indices>(
             meta::IndexSequence<b_indices...>) {
             return IntegralSet<T, N1 + N2> {
-                a.ranges[a_indices]...,
-                b.ranges[b_indices]...,
+                util::get<a_indices>(a.ranges)...,
+                util::get<b_indices>(b.ranges)...,
             };
         });
     });

@@ -5,6 +5,22 @@
 #include <di/format/prelude.h>
 
 namespace di::bit {
+namespace detail {
+    struct HostToBigEndianFunction {
+        template<concepts::Integral T>
+        constexpr T operator()(T value) const {
+            if constexpr (Endian::Native == Endian::Big) {
+                return value;
+            } else {
+                return byteswap(value);
+            }
+        }
+    };
+}
+
+constexpr inline auto host_to_big_endian = detail::HostToBigEndianFunction {};
+constexpr inline auto big_endian_to_host = detail::HostToBigEndianFunction {};
+
 template<concepts::Integral T>
 class [[gnu::packed]] BigEndian {
 public:
@@ -13,21 +29,11 @@ public:
     constexpr BigEndian(T value) { *this = value; }
 
     constexpr BigEndian operator=(T value) {
-        if constexpr (Endian::Native == Endian::Big) {
-            m_value = value;
-        } else {
-            m_value = byteswap(value);
-        }
+        m_value = host_to_big_endian(value);
         return *this;
     }
 
-    constexpr operator T() const {
-        if constexpr (Endian::Native == Endian::Big) {
-            return m_value;
-        } else {
-            return byteswap(m_value);
-        }
-    }
+    constexpr operator T() const { return big_endian_to_host(m_value); }
 
 private:
     template<concepts::Encoding Enc>

@@ -33,6 +33,7 @@
 #include <di/util/to_uintptr.h>
 #include <di/util/to_underlying.h>
 #include <di/util/unreachable.h>
+#include <di/util/uuid.h>
 #include <di/util/voidify.h>
 
 namespace di {
@@ -56,6 +57,7 @@ using util::Immovable;
 using util::MovableBox;
 using util::RebindableBox;
 using util::ScopeExit;
+using util::UUID;
 
 using util::SourceLocation;
 
@@ -68,6 +70,7 @@ using util::compile_time_fail;
 using util::declval;
 using util::exchange;
 using util::forward;
+using util::generate_uuid;
 using util::get;
 using util::move;
 using util::swap;

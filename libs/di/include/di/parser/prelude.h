@@ -3,6 +3,7 @@
 #include <di/parser/basic/code_point_parser.h>
 #include <di/parser/basic/eof_parser.h>
 #include <di/parser/basic/integer.h>
+#include <di/parser/basic/match_exactly.h>
 #include <di/parser/basic/match_one.h>
 #include <di/parser/basic/match_one_or_more.h>
 #include <di/parser/basic/match_zero_or_more.h>
@@ -16,6 +17,7 @@
 #include <di/parser/concepts/parser.h>
 #include <di/parser/concepts/parser_context.h>
 #include <di/parser/create_parser.h>
+#include <di/parser/integral.h>
 #include <di/parser/integral_constant.h>
 #include <di/parser/integral_set.h>
 #include <di/parser/into_parser_context.h>

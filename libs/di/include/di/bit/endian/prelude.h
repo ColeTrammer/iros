@@ -8,4 +8,9 @@ namespace di {
 using bit::BigEndian;
 using bit::Endian;
 using bit::LittleEndian;
+
+using bit::big_endian_to_host;
+using bit::host_to_big_endian;
+using bit::host_to_little_endian;
+using bit::little_endian_to_host;
 }

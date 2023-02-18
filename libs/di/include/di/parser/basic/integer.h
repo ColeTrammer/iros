@@ -11,8 +11,7 @@
 
 namespace di::parser {
 namespace detail {
-
-    template<concepts::Integer T>
+    template<concepts::Integer T, i32 radix = 10>
     struct IntegerFunction {
         constexpr auto operator()() const {
             using namespace di::literals;
@@ -24,11 +23,40 @@ namespace detail {
                     return '+'_m;
                 }
             }();
-            auto digits = '0'_m - '9'_m;
+
+            auto digits = [] {
+                if constexpr (radix == 10) {
+                    return '0'_m - '9'_m;
+                } else if constexpr (radix == 8) {
+                    return '0'_m - '7'_m;
+                } else if constexpr (radix == 2) {
+                    return '0'_m - '1'_m;
+                } else if constexpr (radix == 16) {
+                    return '0'_m - '9'_m || 'a'_m - 'f'_m || 'A'_m - 'F'_m;
+                } else {
+                    static_assert(concepts::AlwaysFalse<Nontype<radix>>, "Invalid radix for integer parser.");
+                }
+            }();
+
+            auto to_digit = [](c32 code_point) {
+                if constexpr (radix <= 10) {
+                    return code_point - '0';
+                } else if constexpr (radix <= 16) {
+                    if (code_point >= 'a') {
+                        return code_point - 'a' + 10;
+                    } else if (code_point >= 'A') {
+                        return code_point - 'A' + 10;
+                    } else {
+                        return code_point - '0';
+                    }
+                } else {
+                    static_assert(concepts::AlwaysFalse<Nontype<radix>>, "Invalid radix for integer parser.");
+                }
+            };
 
             return (-match_one(sign) >> match_one_or_more(digits))
-                       << []<concepts::ParserContext Context>(Context& context,
-                                                              auto results) -> meta::ParserContextResult<T, Context> {
+                       << [to_digit]<concepts::ParserContext Context>(
+                              Context& context, auto results) -> meta::ParserContextResult<T, Context> {
                 auto [sign, digits] = results;
 
                 bool negative = false;
@@ -45,9 +73,8 @@ namespace detail {
                 for (auto it = container::begin(digits); it != sent; ++it) {
                     auto prev_result = result;
 
-                    // FIXME: support other radixes.
-                    result *= 10;
-                    result += (*it - U'0');
+                    result *= radix;
+                    result += to_digit(*it);
 
                     // Unsigned overflow occurred.
                     if (prev_result > result) {
@@ -70,8 +97,8 @@ namespace detail {
     };
 }
 
-template<concepts::Integer T>
-constexpr inline auto integer = detail::IntegerFunction<T> {};
+template<concepts::Integer T, i32 radix = 10>
+constexpr inline auto integer = detail::IntegerFunction<T, radix> {};
 
 namespace detail {
     template<concepts::Integer T>

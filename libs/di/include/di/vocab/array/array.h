@@ -213,7 +213,7 @@ private:
     requires(index < extent)
     constexpr friend decltype(auto)
         tag_invoke(types::Tag<util::get_in_place>, types::InPlaceIndex<index>, Self&& self) {
-        return util::forward_like<Self>(self[index]);
+        return util::forward_like<Self>(self.data()[index]);
     }
 };
 
