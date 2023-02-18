@@ -66,7 +66,7 @@ struct ProgramHeader {
 
 static int counter = 0;
 
-static auto userspace_test_program_data_storage = di::Array<di::Byte, 0x4000> {};
+static auto userspace_test_program_data_storage = di::Array<di::Byte, 5 * 0x4000> {};
 
 static void do_task() {
     for (int i = 0; i < 3; i++) {

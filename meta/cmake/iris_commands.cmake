@@ -1,4 +1,13 @@
 add_custom_target(
+    generate-initrd
+    COMMAND mkdir -p "${CMAKE_CURRENT_BINARY_DIR}/initrd"
+    COMMAND cd "${CMAKE_CURRENT_BINARY_DIR}/initrd"
+    COMMAND cp "${CMAKE_CURRENT_BINARY_DIR}/iris/test_userspace" .
+    COMMAND rm -f "${CMAKE_CURRENT_BINARY_DIR}/initrd/initrd.bin"
+    COMMAND initrd
+)
+
+add_custom_target(
     image
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMAND sudo IROS_ROOT="${CMAKE_CURRENT_SOURCE_DIR}"
@@ -25,6 +34,6 @@ add_custom_target(
     COMMAND IRIS_ARCH=${CMAKE_HOST_SYSTEM_PROCESSOR}
             IRIS_IMAGE=${CMAKE_CURRENT_BINARY_DIR}/iris/iris.img
             "${CMAKE_CURRENT_SOURCE_DIR}/meta/run-iris.sh"
-    DEPENDS image
+    DEPENDS image generate-initrd
     USES_TERMINAL
 )

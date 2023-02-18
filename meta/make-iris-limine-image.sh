@@ -57,7 +57,7 @@ mkdir -p "$IROS_BUILD_DIR/mnt"
 mount "$LOOP_DEV"p1 "$IROS_BUILD_DIR/mnt"
 
 sudo mkdir -p "$IROS_BUILD_DIR"/mnt/EFI/BOOT
-sudo cp "$IROS_BUILD_DIR"/iris/iris "$IROS_BUILD_DIR"/iris/test_userspace "$IROS_ROOT/iris/boot/limine.cfg" "$IROS_LIMINE_DIR"/limine.sys "$IROS_BUILD_DIR"/mnt
+sudo cp "$IROS_BUILD_DIR"/iris/iris "$IROS_BUILD_DIR"/initrd/initrd.bin "$IROS_ROOT/iris/boot/limine.cfg" "$IROS_LIMINE_DIR"/limine.sys "$IROS_BUILD_DIR"/mnt
 sudo cp "$IROS_LIMINE_DIR"/BOOTX64.EFI "$IROS_BUILD_DIR"/mnt/EFI/BOOT
 
 chmod 777 "$IMAGE"

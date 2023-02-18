@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/container/algorithm/max.h>
 #include <di/container/allocator/forward_declaration.h>
 #include <di/types/integers.h>
 #include <di/util/std_new.h>
@@ -25,8 +26,8 @@ public:
         if consteval {
             return di::container::Allocator<T>().allocate(count);
         } else {
-            auto* data = ::operator new(sizeof(T) * count, std::align_val_t { di::max(alignof(T), alignof(void*)) },
-                                        std::nothrow);
+            auto* data = ::operator new(
+                sizeof(T) * count, std::align_val_t { di::container::max(alignof(T), alignof(void*)) }, std::nothrow);
             DI_ASSERT(data);
 
             // FIXME: propagate allocation failure, when di::TreeSet<> supports fallible allocation properly.
@@ -41,7 +42,8 @@ public:
         if consteval {
             return di::container::Allocator<T>().deallocate(data, count);
         } else {
-            ::operator delete(data, sizeof(T) * count, std::align_val_t { di::max(alignof(T), alignof(void*)) });
+            ::operator delete(data, sizeof(T) * count,
+                              std::align_val_t { di::container::max(alignof(T), alignof(void*)) });
         }
     }
 };
