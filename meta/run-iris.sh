@@ -22,4 +22,5 @@ qemu-system-"$IRIS_ARCH" \
     -drive file="$IRIS_IMAGE",format=raw,index=0,media=disk \
     -debugcon stdio \
     -no-reboot \
-    -d guest_errors
+    -d guest_errors \
+    -display none

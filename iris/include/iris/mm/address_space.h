@@ -7,7 +7,7 @@
 #include <iris/mm/virtual_address.h>
 
 namespace iris::mm {
-class AddressSpace {
+class AddressSpace : public di::IntrusiveRefCount<AddressSpace> {
 public:
     constexpr explicit AddressSpace(u64 architecture_page_table_base)
         : m_architecture_page_table_base(architecture_page_table_base) {}

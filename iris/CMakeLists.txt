@@ -58,6 +58,7 @@ if(IROS_BuildIris)
   add_executable(iris
       boot/init.cpp
       core/global_state.cpp
+      core/task.cpp
       core/scheduler.cpp
       fs/initrd.cpp
       mm/address_space.cpp

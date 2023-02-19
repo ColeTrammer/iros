@@ -77,7 +77,9 @@ macro(add_executable)
     endif()
 endmacro()
 
-enable_testing()
+if (IROS_BuildTests)
+    enable_testing()
+endif()
 
 add_subdirectory(libs/di)
 

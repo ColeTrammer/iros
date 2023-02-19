@@ -30,4 +30,7 @@ using DefaultLock = sync::DumbSpinlock;
 
 template<typename T>
 using DefaultAllocator = container::Allocator<T>;
+
+template<typename T>
+using DefaultFallibleAllocator = container::FallibleAllocator<T>;
 }

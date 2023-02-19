@@ -7,6 +7,7 @@
 #if __GNUC__ >= 12
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wuse-after-free"
+#pragma GCC diagnostic ignored "-Wfree-nonheap-object"
 #endif
 
 namespace di::vocab {

@@ -4,6 +4,8 @@
 #include DI_CUSTOM_PLATFORM
 #else
 #include <di/container/allocator/forward_declaration.h>
+#include <di/vocab/error/generic_domain.h>
+#include <di/vocab/expected/expected_forward_declaration.h>
 
 #include <mutex>
 #include <thread>
@@ -19,5 +21,8 @@ using DefaultLock = std::mutex;
 
 template<typename T>
 using DefaultAllocator = container::Allocator<T>;
+
+template<typename T>
+using DefaultFallibleAllocator = container::FallibleAllocator<T>;
 }
 #endif

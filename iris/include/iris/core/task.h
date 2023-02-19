@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/prelude.h>
+#include <iris/mm/address_space.h>
 
 namespace iris {
 namespace arch {
@@ -40,13 +41,22 @@ namespace arch {
 
 class Task : public di::IntrusiveListElement<> {
 public:
-    explicit Task(uintptr_t entry, uintptr_t stack, bool userspace) : m_task_state(entry, stack, userspace) {}
+    explicit Task(mm::VirtualAddress entry, mm::VirtualAddress stack, bool userspace,
+                  di::Arc<mm::AddressSpace> address_space)
+        : m_task_state(entry.raw_address(), stack.raw_address(), userspace), m_address_space(di::move(address_space)) {}
 
-    [[noreturn]] void context_switch_to() { m_task_state.context_switch_to(); }
+    [[noreturn]] void context_switch_to() {
+        // m_address_space->load();
+        m_task_state.context_switch_to();
+    }
 
     void set_task_state(arch::TaskState const& state) { m_task_state = state; }
 
 private:
     arch::TaskState m_task_state;
+    di::Arc<mm::AddressSpace> m_address_space;
 };
+
+Expected<di::Box<Task>> create_kernel_task(void (*entry)());
+Expected<di::Box<Task>> create_user_task(di::PathView path);
 }

@@ -17,8 +17,10 @@ extern ThreadId get_current_thread_id();
 
 using DefaultLock = sync::DumbSpinlock;
 
+// FIXME: make the default allocator fallible as well
+//        once di::TreeSet<> supports fallible allocation.
 template<typename T>
-class DefaultAllocator {
+struct DefaultAllocator {
 public:
     using Value = T;
 
@@ -29,11 +31,34 @@ public:
             auto* data = ::operator new(
                 sizeof(T) * count, std::align_val_t { di::container::max(alignof(T), alignof(void*)) }, std::nothrow);
             DI_ASSERT(data);
+            return di::container::Allocation<T> { reinterpret_cast<T*>(data), count };
+        }
+    }
 
-            // FIXME: propagate allocation failure, when di::TreeSet<> supports fallible allocation properly.
-            // if (!data) {
-            // return di::Unexpected(iris::Error::OutOfMemory);
-            // }
+    constexpr void deallocate(T* data, types::usize count) const {
+        if consteval {
+            return di::container::Allocator<T>().deallocate(data, count);
+        } else {
+            ::operator delete(data, sizeof(T) * count,
+                              std::align_val_t { di::container::max(alignof(T), alignof(void*)) });
+        }
+    }
+};
+
+template<typename T>
+class DefaultFallibleAllocator {
+public:
+    using Value = T;
+
+    constexpr iris::Expected<di::container::Allocation<T>> allocate(types::usize count) const {
+        if consteval {
+            return di::container::Allocator<T>().allocate(count);
+        } else {
+            auto* data = ::operator new(
+                sizeof(T) * count, std::align_val_t { di::container::max(alignof(T), alignof(void*)) }, std::nothrow);
+            if (!data) {
+                return di::Unexpected(iris::Error::OutOfMemory);
+            }
             return di::container::Allocation<T> { reinterpret_cast<T*>(data), count };
         }
     }

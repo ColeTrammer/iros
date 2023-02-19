@@ -2,6 +2,7 @@
 
 #include <di/assert/prelude.h>
 #include <di/concepts/language_array.h>
+#include <di/platform/prelude.h>
 #include <di/types/prelude.h>
 #include <di/util/exchange.h>
 #include <di/util/std_new.h>
@@ -99,15 +100,10 @@ constexpr auto make_box(Args&&... args) {
 
 template<typename T, typename... Args>
 requires(!concepts::LanguageArray<T> && concepts::ConstructibleFrom<T, Args...>)
-constexpr Result<Box<T>> try_box(Args&&... args) {
-    if consteval {
-        return Box<T>(new T(util::forward<Args>(args)...));
-    } else {
-        auto* pointer = new (std::nothrow) T(util::forward<Args>(args)...);
-        if (!pointer) {
-            return Unexpected(BasicError::FailedAllocation);
-        }
-        return Box<T>(pointer);
-    }
+constexpr auto try_box(Args&&... args) {
+    return platform::DefaultFallibleAllocator<T>().allocate(1) % [&](container::Allocation<T> result) {
+        util::construct_at(result.data, util::forward<Args>(args)...);
+        return Box<T>(result.data);
+    };
 }
 }
