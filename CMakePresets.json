@@ -44,6 +44,8 @@
       "cacheVariables": {
         "IROS_BuildIris": "ON",
         "IROS_BuildUserspace": "OFF",
+        "IROS_BuildTests": "OFF",
+        "IROS_BuildTools": "OFF",
         "IROS_BuildCcpp": "OFF",
         "CMAKE_CXX_COMPILER_WORKS": "ON"
       },
@@ -55,6 +57,20 @@
       "description": "Default native release build",
       "binaryDir": "${sourceDir}/build/native/release",
       "installDir": "${sourceDir}/build/native/release-install",
+      "inherits": ["release_base"]
+    },
+    {
+      "name": "tools",
+      "displayName": "Tools Config",
+      "description": "Build only native tools required to cross compile",
+      "binaryDir": "${sourceDir}/build/native/tools",
+      "installDir": "${sourceDir}/build/native/tools-install",
+      "cacheVariables": {
+        "IROS_BuildTests": "OFF",
+        "IROS_BuildUserspace": "OFF",
+        "IROS_BuildTools": "ON",
+        "IROS_BuildCcpp": "OFF"
+      },
       "inherits": ["release_base"]
     },
     {

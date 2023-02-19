@@ -4,6 +4,8 @@ project(iros CXX)
 
 option(IROS_BuildIris "Build the iris kernel." OFF)
 option(IROS_BuildUserspace "Build userspace libaries and programs." ON)
+option(IROS_BuildTests "Build test programs." ON)
+option(IROS_BuildTools "Build tools required native tools." ON)
 option(IROS_BuildCcpp "Build the c++ libc." ON)
 
 set(IROS_DiagnosticFlags ""
@@ -79,9 +81,15 @@ enable_testing()
 
 add_subdirectory(libs/di)
 
-if(IROS_BuildUserspace)
+if(IROS_BuildUserspace OR IROS_BuildTools OR IROS_BuildCcpp)
     add_subdirectory(libs/dius)
+endif()
+
+if(IROS_BuildUserspace)
     add_subdirectory(userland/core)
+endif()
+
+if(IROS_BuildTools)
     add_subdirectory(userland/tools)
 endif()
 

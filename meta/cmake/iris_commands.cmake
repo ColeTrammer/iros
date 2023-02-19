@@ -4,17 +4,17 @@ if(CMAKE_CROSSCOMPILING)
     ExternalProject_Add(
         native
         SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}"
-        BINARY_DIR "../native/release"
-        INSTALL_DIR "../native/release-install"
+        BINARY_DIR "../native/tools"
+        INSTALL_DIR "../native/tools-install"
         CMAKE_ARGS
-            "--preset=release"
+            "--preset=tools"
         CMAKE_CACHE_ARGS
             "-DCMAKE_INSTALL_PREFIX:STRING=<INSTALL_DIR>"
         BUILD_ALWAYS YES
         STEP_TARGETS install
     )
 
-    set(INITRD_COMMAND "${CMAKE_CURRENT_BINARY_DIR}/../native/release-install/bin/initrd")
+    set(INITRD_COMMAND "${CMAKE_CURRENT_BINARY_DIR}/../native/tools-install/bin/initrd")
     set(INITRD_TARGET native-install)
 else()
     set(INITRD_COMMAND initrd)
