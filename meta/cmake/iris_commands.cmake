@@ -1,11 +1,34 @@
+if(CMAKE_CROSSCOMPILING)
+    include(ExternalProject)
+
+    ExternalProject_Add(
+        native
+        SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}"
+        BINARY_DIR "../native/release"
+        INSTALL_DIR "../native/release-install"
+        CMAKE_ARGS
+            "--preset=release"
+        CMAKE_CACHE_ARGS
+            "-DCMAKE_INSTALL_PREFIX:STRING=<INSTALL_DIR>"
+        BUILD_ALWAYS YES
+        STEP_TARGETS install
+    )
+
+    set(INITRD_COMMAND "${CMAKE_CURRENT_BINARY_DIR}/../native/release-install/bin/initrd")
+    set(INITRD_TARGET native-install)
+else()
+    set(INITRD_COMMAND initrd)
+    set(INITRD_TARGET initrd)
+endif()
+
 add_custom_target(
     generate-initrd
     COMMAND mkdir -p "${CMAKE_CURRENT_BINARY_DIR}/initrd"
     COMMAND cd "${CMAKE_CURRENT_BINARY_DIR}/initrd"
     COMMAND cp "${CMAKE_CURRENT_BINARY_DIR}/iris/test_userspace" .
     COMMAND rm -f "${CMAKE_CURRENT_BINARY_DIR}/initrd/initrd.bin"
-    COMMAND initrd
-    DEPENDS initrd test_userspace
+    COMMAND ${INITRD_COMMAND}
+    DEPENDS ${INITRD_TARGET} test_userspace
 )
 
 add_custom_target(

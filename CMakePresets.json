@@ -12,6 +12,7 @@
       "generator": "Ninja",
       "cacheVariables": {
         "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_INSTALL_MESSAGE": "NEVER",
         "IROS_DiagnosticFlags": "-fdiagnostics-color=always",
         "IROS_WarningFlags": "-Wall -Wextra -Wpedantic"
       }
@@ -38,8 +39,13 @@
       "displayName": "Iros x64_64",
       "description": "Compile Iros for x86_64",
       "binaryDir": "${sourceDir}/build/x86_64",
+      "installDir": "${sourceDir}/build/x86_64/sysroot",
+      "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_x86_64.txt",
       "cacheVariables": {
-        "IROS_BuildIris": "ON"
+        "IROS_BuildIris": "ON",
+        "IROS_BuildUserspace": "OFF",
+        "IROS_BuildCcpp": "OFF",
+        "CMAKE_CXX_COMPILER_WORKS": "ON"
       },
       "inherits": ["release_base"]
     },
@@ -48,6 +54,7 @@
       "displayName": "Release Config",
       "description": "Default native release build",
       "binaryDir": "${sourceDir}/build/native/release",
+      "installDir": "${sourceDir}/build/native/release-install",
       "inherits": ["release_base"]
     },
     {
@@ -55,6 +62,7 @@
       "displayName": "Debug Config",
       "description": "Native debug build",
       "binaryDir": "${sourceDir}/build/native/debug",
+      "installDir": "${sourceDir}/bulid/native/debug-install",
       "inherits": ["debug_base"]
     },
     {
@@ -62,6 +70,7 @@
       "displayName": "Address Sanitizer",
       "description": "Build with address sanitizer enabled",
       "binaryDir": "${sourceDir}/build/native/asan",
+      "installDir": "${sourceDir}/bulid/native/asan-install",
       "cacheVariables": {
         "IROS_BuildCcpp": "OFF",
         "IROS_SanitizerFlags": "-fsanitize=address -DDI_SANITIZER"
@@ -73,6 +82,7 @@
       "displayName": "Thread Sanitizer",
       "description": "Build with thread sanitizer enabled",
       "binaryDir": "${sourceDir}/build/native/tsan",
+      "installDir": "${sourceDir}/bulid/native/tsan-install",
       "cacheVariables": {
         "IROS_BuildCcpp": "OFF",
         "IROS_SanitizerFlags": "-fsanitize=thread -DDI_SANITIZER"
@@ -84,6 +94,7 @@
       "displayName": "Undefined Behavior Sanitizer",
       "description": "Build with undefed behavior sanitizer enabled",
       "binaryDir": "${sourceDir}/build/native/ubsan",
+      "installDir": "${sourceDir}/bulid/native/ubsan-install",
       "cacheVariables": {
         "IROS_BuildCcpp": "OFF",
         "IROS_SanitizerFlags": "-fsanitize=undefined -DDI_SANITIZER"

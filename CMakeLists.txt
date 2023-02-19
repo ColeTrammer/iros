@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.25.2)
 project(iros CXX)
 
 option(IROS_BuildIris "Build the iris kernel." OFF)
+option(IROS_BuildUserspace "Build userspace libaries and programs." ON)
 option(IROS_BuildCcpp "Build the c++ libc." ON)
 
 set(IROS_DiagnosticFlags ""
@@ -77,15 +78,18 @@ endmacro()
 enable_testing()
 
 add_subdirectory(libs/di)
-add_subdirectory(libs/dius)
-add_subdirectory(userland/core)
-add_subdirectory(userland/tools)
+
+if(IROS_BuildUserspace)
+    add_subdirectory(libs/dius)
+    add_subdirectory(userland/core)
+    add_subdirectory(userland/tools)
+endif()
 
 if(IROS_BuildCcpp)
     add_subdirectory(libs/ccpp)
 endif()
 
+add_subdirectory(iris)
 if(IROS_BuildIris)
-    add_subdirectory(iris)
     include(meta/cmake/iris_commands.cmake)
 endif()

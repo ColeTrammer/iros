@@ -51,4 +51,6 @@ install(
     FILES_MATCHING PATTERN "*.h"
 )
 
-add_subdirectory(tests)
+if (NOT CMAKE_SYSTEM_NAME STREQUAL "Iros")
+    add_subdirectory(tests)
+endif()

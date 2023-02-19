@@ -1,0 +1,171 @@
+From cb6831c3f932f2f5cd19e696c3742314f4254e36 Mon Sep 17 00:00:00 2001
+From: ColeTrammer <cole.trammer@gmail.com>
+Date: Sun, 19 Feb 2023 01:21:22 -0800
+Subject: [PATCH 1/2] Add support for Iros to the gcc compiler proper and
+ libgcc
+
+---
+ config.sub                  |  2 +-
+ fixincludes/mkfixinc.sh     |  1 +
+ gcc/config.gcc              | 17 +++++++++++++++++
+ gcc/config/iros.h           | 33 +++++++++++++++++++++++++++++++++
+ gcc/configure.ac            |  3 +++
+ libgcc/config.host          | 10 ++++++++++
+ libgcc/unwind-dw2-fde-dip.c |  6 ++++++
+ 7 files changed, 71 insertions(+), 1 deletion(-)
+ create mode 100644 gcc/config/iros.h
+
+diff --git a/config.sub b/config.sub
+index 38f3d037a78..0e5abacc78c 100755
+--- a/config.sub
++++ b/config.sub
+@@ -1723,7 +1723,7 @@ case $os in
+ 	     | hpux* | unos* | osf* | luna* | dgux* | auroraux* | solaris* \
+ 	     | sym* |  plan9* | psp* | sim* | xray* | os68k* | v88r* \
+ 	     | hiux* | abug | nacl* | netware* | windows* \
+-	     | os9* | macos* | osx* | ios* \
++	     | os9* | macos* | osx* | ios* | iros* \
+ 	     | mpw* | magic* | mmixware* | mon960* | lnews* \
+ 	     | amigaos* | amigados* | msdos* | newsos* | unicos* | aof* \
+ 	     | aos* | aros* | cloudabi* | sortix* | twizzler* \
+diff --git a/fixincludes/mkfixinc.sh b/fixincludes/mkfixinc.sh
+index df90720b716..7911274f791 100755
+--- a/fixincludes/mkfixinc.sh
++++ b/fixincludes/mkfixinc.sh
+@@ -19,6 +19,7 @@ case $machine in
+     powerpc-*-rtems*   | \
+     powerpcle-*-eabisim* | \
+     powerpcle-*-eabi* | \
++    *-*-iros* | \
+     *-*-vxworks7* | \
+     *-musl* )
+ 	#  IF there is no include fixing,
+diff --git a/gcc/config.gcc b/gcc/config.gcc
+index c5064dd3766..50756c50d71 100644
+--- a/gcc/config.gcc
++++ b/gcc/config.gcc
+@@ -827,6 +827,13 @@ case ${target} in
+ *-*-fuchsia*)
+   native_system_header_dir=/include
+   ;;
++*-*-iros*)
++  gas=yes
++  gnu_ld=yes
++  default_use_cxa_atexit=yes
++  use_gcc_stdint=wrap
++  gcc_cv_initfini_array=yes
++  ;;
+ *-*-linux* | frv-*-*linux* | *-*-kfreebsd*-gnu | *-*-gnu* | *-*-kopensolaris*-gnu | *-*-uclinuxfdpiceabi)
+   extra_options="$extra_options gnu-user.opt"
+   gas=yes
+@@ -1947,6 +1954,16 @@ x86_64-*-openbsd*)
+ 	gas=yes
+ 	gnu_ld=yes
+ 	;;
++i[34567]86-*-iros*)
++    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h iros.h"
++	tmake_file="${tmake_file} t-slibgcc"
++	extra_options="${extra_options} gnu-user.opt"
++    ;;
++x86_64-*-iros*)
++    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h i386/x86-64.h iros.h"
++	tmake_file="${tmake_file} t-slibgcc"
++	extra_options="${extra_options} gnu-user.opt"
++    ;;
+ i[34567]86-*-linux* | i[34567]86-*-kfreebsd*-gnu | i[34567]86-*-gnu* | i[34567]86-*-kopensolaris*-gnu)
+ 			# Intel 80386's running GNU/*
+ 			# with ELF format using glibc 2
+diff --git a/gcc/config/iros.h b/gcc/config/iros.h
+new file mode 100644
+index 00000000000..5df344f41cd
+--- /dev/null
++++ b/gcc/config/iros.h
+@@ -0,0 +1,33 @@
++#undef TARGET_IROS
++#define TARGET_IROS 1
++
++#undef LIB_SPEC
++#define LIB_SPEC "%{pthread:-lpthread} -lc"
++
++#undef STARTFILE_SPEC
++#define STARTFILE_SPEC "%{!shared:crt0.o%s} crti.o%s %{!shared:crtbegin.o%s} %{shared:crtbeginS.o%s}"
++
++#undef ENDFILE_SPEC
++#define ENDFILE_SPEC "%{!shared:crtend.o%s} %{shared:crtendS.o%s} crtn.o%s"
++
++#define DYNAMIC_LINKER "/lib/loader.so"
++
++#undef LINK_SPEC
++#define LINK_SPEC                                                                                   \
++    "%{shared:-shared} %{static:-static} %{!shared:%{!static:-dynamic-linker " DYNAMIC_LINKER "}} " \
++    "%{!shared: %{!static: %{rdynamic:-export-dynamic}}}"
++
++/* Use --as-needed -lgcc_s for eh support. */
++#ifdef HAVE_LD_AS_NEEDED
++#define USE_LD_AS_NEEDED 1
++#endif
++
++#undef TARGET_OS_CPP_BUILTINS
++#define TARGET_OS_CPP_BUILTINS()        \
++    do {                                \
++        builtin_define("__iros__");     \
++        builtin_define("__unix__");     \
++        builtin_assert("system=iros");  \
++        builtin_assert("system=unix");  \
++        builtin_assert("system=posix"); \
++    } while (0);
+diff --git a/gcc/configure.ac b/gcc/configure.ac
+index 23bee7010a3..766fd8cf70c 100644
+--- a/gcc/configure.ac
++++ b/gcc/configure.ac
+@@ -7069,6 +7069,9 @@ case "$target" in
+   *-linux-musl*)
+     gcc_cv_target_dl_iterate_phdr=yes
+     ;;
++  *-*-iros*)
++    gcc_cv_target_dl_iterate_phdr=yes
++    ;;
+ esac
+ GCC_TARGET_TEMPLATE([TARGET_DL_ITERATE_PHDR])
+ if test x$gcc_cv_target_dl_iterate_phdr = xyes; then
+diff --git a/libgcc/config.host b/libgcc/config.host
+index 8c56fcae5d2..2244c549cf5 100644
+--- a/libgcc/config.host
++++ b/libgcc/config.host
+@@ -751,6 +751,16 @@ i[34567]86-*-openbsd*)
+ 	;;
+ x86_64-*-openbsd*)
+ 	;;
++i[34567]86-*-iros*)
++	extra_parts="$extra_parts crti.o crtbegin.o crtbeginS.o crtend.o crtendS.o crtn.o"
++	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic t-slibgcc t-slibgcc-gld-nover t-eh-dw2-dip"
++	tm_file="${tm_file} i386/elf-lib.h"
++	;;
++x86_64-*-iros*)
++	extra_parts="$extra_parts crti.o crtbegin.o crtbeginS.o crtend.o crtendS.o crtn.o"
++	tmake_file="$tmake_file i386/t-crtstuff t-crtstuff-pic t-libgcc-pic t-slibgcc t-slibgcc-gld-nover t-eh-dw2-dip"
++	tm_file="${tm_file} i386/elf-lib.h"
++	;;
+ i[34567]86-*-linux*)
+ 	extra_parts="$extra_parts crtprec32.o crtprec64.o crtprec80.o crtfastmath.o"
+ 	tmake_file="${tmake_file} i386/t-crtpc t-crtfm i386/t-crtstuff t-dfprules"
+diff --git a/libgcc/unwind-dw2-fde-dip.c b/libgcc/unwind-dw2-fde-dip.c
+index 7f9be5e6b02..fbe46f5f382 100644
+--- a/libgcc/unwind-dw2-fde-dip.c
++++ b/libgcc/unwind-dw2-fde-dip.c
+@@ -83,6 +83,12 @@
+ # define USE_PT_GNU_EH_FRAME
+ #endif
+ 
++#if !defined(inihibit_libc) && defined(HAVE_LD_EH_FRAME_HDR) \
++    && defined(TARGET_DL_ITERATE_PHDR) \
++    && defined(__iros__)
++# define USE_PT_GNU_EH_FRAME
++#endif
++
+ #if defined(USE_PT_GNU_EH_FRAME)
+ 
+ #include <link.h>
+-- 
+2.39.2
+
