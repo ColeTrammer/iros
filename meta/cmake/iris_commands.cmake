@@ -5,7 +5,7 @@ add_custom_target(
     COMMAND cp "${CMAKE_CURRENT_BINARY_DIR}/iris/test_userspace" .
     COMMAND rm -f "${CMAKE_CURRENT_BINARY_DIR}/initrd/initrd.bin"
     COMMAND initrd
-    DEPENDS initrd
+    DEPENDS initrd test_userspace
 )
 
 add_custom_target(

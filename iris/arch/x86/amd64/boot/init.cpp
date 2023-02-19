@@ -35,6 +35,12 @@ extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, 
     }
 
     if (irq == 0x80) {
+        // System call.
+        auto string_base = task_state->rdi;
+        auto string_length = task_state->rsi;
+        auto string = di::TransparentStringView { reinterpret_cast<char const*>(string_base), string_length };
+        iris::print("{}"_sv, string);
+
         iris::global_state().scheduler.save_state_and_run_next(task_state);
     }
     done();

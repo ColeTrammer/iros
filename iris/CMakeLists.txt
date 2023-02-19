@@ -117,6 +117,8 @@ target_compile_options(test_userspace
     -ffreestanding
     -nostdlib
     -nostartfiles
+    -fno-pic
+    -fno-pie
     -static
 )
 target_link_options(test_userspace
@@ -124,6 +126,8 @@ target_link_options(test_userspace
     -ffreestanding
     -nostdlib
     -nostartfiles
+    -fno-pic
+    -fno-pie
     -static
 )
 install(TARGETS test_userspace
