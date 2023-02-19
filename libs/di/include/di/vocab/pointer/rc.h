@@ -43,14 +43,13 @@ private:
     }
 
     template<typename... Args>
-    constexpr static T* make(Args&&... args)
+    constexpr static auto make(Args&&... args)
     requires(requires { T(util::forward<Args>(args)...); })
     {
-        if consteval {
-            return new T(util::forward<Args>(args)...);
-        } else {
-            return ::new (std::nothrow) T(util::forward<Args>(args)...);
-        }
+        return platform::DefaultFallibleAllocator<T>().allocate(1) % [&](container::Allocation<T> result) {
+            util::construct_at(result.data, util::forward<Args>(args)...);
+            return result.data;
+        };
     }
 
     usize m_ref_count { 1 };
@@ -60,25 +59,23 @@ template<typename T>
 struct MakeRcFunction {
     template<typename... Args>
     constexpr Rc<T> operator()(Args&&... args) const
-    requires(requires { IntrusiveThreadUnsafeRefCount<T>::make(util::forward<Args>(args)...); })
+    requires(requires { IntrusiveRefCount<T>::make(util::forward<Args>(args)...); })
     {
-        auto* pointer = IntrusiveThreadUnsafeRefCount<T>::make(util::forward<Args>(args)...);
-        DI_ASSERT(pointer);
-        return Rc<T>(pointer, retain_object);
+        auto result = IntrusiveRefCount<T>::make(util::forward<Args>(args)...);
+        DI_ASSERT(result);
+        return Rc<T>(*result, retain_object);
     }
 };
 
 template<typename T>
 struct TryMakeRcFunction {
     template<typename... Args>
-    constexpr Result<Rc<T>> operator()(Args&&... args) const
-    requires(requires { IntrusiveThreadUnsafeRefCount<T>::make(util::forward<Args>(args)...); })
+    constexpr auto operator()(Args&&... args) const
+    requires(requires { IntrusiveRefCount<T>::make(util::forward<Args>(args)...); })
     {
-        auto* pointer = IntrusiveThreadUnsafeRefCount<T>::make(util::forward<Args>(args)...);
-        if (!pointer) {
-            return Unexpected(BasicError::FailedAllocation);
-        }
-        return Rc<T>(pointer, retain_object);
+        return IntrusiveRefCount<T>::make(util::forward<Args>(args)...) % [](auto* pointer) {
+            return Rc<T>(pointer, retain_object);
+        };
     }
 };
 

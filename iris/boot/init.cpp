@@ -145,40 +145,8 @@ void iris_main() {
     scheduler.schedule_task(*task2);
     scheduler.schedule_task(*task3);
 
-    // auto test_program_data = *iris::lookup_in_initrd("/test_userspace"_pv);
-
-    // auto* elf_header = test_program_data.typed_pointer_unchecked<elf64::ElfHeader>(0);
-    // iris::println("entry={:x}"_sv, elf_header->entry);
-    // ASSERT_EQ(sizeof(elf64::ProgramHeader), elf_header->program_entry_size);
-
-    // auto program_headers = test_program_data.typed_span_unchecked<elf64::ProgramHeader>(
-    //     elf_header->program_table_off, elf_header->program_entry_count);
-    // for (auto& program_header : program_headers) {
-    //     iris::println("type={}"_sv, program_header.type);
-    //     iris::println("addr={:x}"_sv, program_header.virtual_addr);
-    //     iris::println("file={:x}"_sv, program_header.file_size);
-    //     iris::println("memory={:x}"_sv, program_header.memory_size);
-
-    //     // PT_LOAD
-    //     if (program_header.type != 1) {
-    //         continue;
-    //     }
-
-    //     auto aligned_size = di::align_up(program_header.memory_size, 4096);
-    //     (void) kernel_address_space->allocate_region_at(iris::mm::VirtualAddress(program_header.virtual_addr),
-    //                                                     aligned_size);
-
-    //     iris::println("copy..."_sv);
-    //     auto data = di::Span { reinterpret_cast<di::Byte*>(program_header.virtual_addr), aligned_size };
-    //     di::copy(*test_program_data.subspan(program_header.offset, program_header.memory_size), data.data());
-    //     iris::println("done"_sv);
-    // }
-
-    // auto task_stack4 = *kernel_address_space->allocate_region(0x2000);
-    // auto task4 = iris::Task(elf_header->entry, task_stack4.raw_address(), true, kernel_address_space);
-
-    // (void) task4;
-    // scheduler.schedule_task(task4);
+    auto task4 = *iris::create_user_task("/test_userspace"_pv);
+    scheduler.schedule_task(*task4);
 
     iris::println("preparing to context switch"_sv);
 

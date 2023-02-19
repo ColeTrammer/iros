@@ -30,4 +30,6 @@ private:
 Expected<void> init_and_load_initial_kernel_address_space(PhysicalAddress kernel_physical_start,
                                                           VirtualAddress kernel_virtual_start,
                                                           PhysicalAddress max_physical_address);
+
+Expected<di::Arc<AddressSpace>> create_empty_user_address_space();
 }

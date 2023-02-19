@@ -1,5 +1,6 @@
 #include <iris/arch/x86/amd64/page_structure.h>
 #include <iris/arch/x86/amd64/system_instructions.h>
+#include <iris/core/global_state.h>
 #include <iris/core/print.h>
 #include <iris/mm/address_space.h>
 #include <iris/mm/map_physical_address.h>
@@ -64,5 +65,29 @@ Expected<void> AddressSpace::map_physical_page(VirtualAddress location, Physical
         page_structure::Writable(true), page_structure::User(true));
 
     return {};
+}
+
+Expected<di::Arc<AddressSpace>> create_empty_user_address_space() {
+    // NOTE: allocate the address space first, so that the allocated page frame
+    //       will not be leaked on failure.
+    auto new_address_space = TRY(di::try_make_arc<AddressSpace>(0));
+
+    auto new_pml4 = TRY(allocate_page_frame());
+    new_address_space->set_architecture_page_table_base(new_pml4.raw_address());
+
+    auto& kernel_address_space = global_state().kernel_address_space;
+
+    // The new address space should should consist of blank entries apart from those pml4 entries
+    // which are shared with the kernel address space. We can thus simply copy the kernel address's
+    // pml4 to the new address space.
+    auto& destination = TRY(map_physical_address(new_pml4, 4096)).typed<page_structure::PageStructureTable>();
+    auto& source =
+        TRY(map_physical_address(
+                PhysicalAddress(di::align_down(kernel_address_space.architecture_page_table_base(), 4096)), 4096))
+            .typed<page_structure::PageStructureTable>();
+
+    di::copy(source, destination.data());
+
+    return new_address_space;
 }
 }

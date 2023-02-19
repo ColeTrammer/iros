@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/platform/prelude.h>
 #include <di/sync/atomic.h>
 #include <di/util/immovable.h>
 #include <di/util/std_new.h>
@@ -44,14 +45,13 @@ private:
     }
 
     template<typename... Args>
-    constexpr static T* make(Args&&... args)
+    constexpr static auto make(Args&&... args)
     requires(requires { T(util::forward<Args>(args)...); })
     {
-        if consteval {
-            return new T(util::forward<Args>(args)...);
-        } else {
-            return ::new (std::nothrow) T(util::forward<Args>(args)...);
-        }
+        return platform::DefaultFallibleAllocator<T>().allocate(1) % [&](container::Allocation<T> result) {
+            util::construct_at(result.data, util::forward<Args>(args)...);
+            return result.data;
+        };
     }
 
     sync::Atomic<usize> m_ref_count { 1 };
@@ -63,23 +63,21 @@ struct MakeArcFunction {
     constexpr Arc<T> operator()(Args&&... args) const
     requires(requires { IntrusiveRefCount<T>::make(util::forward<Args>(args)...); })
     {
-        auto* pointer = IntrusiveRefCount<T>::make(util::forward<Args>(args)...);
-        DI_ASSERT(pointer);
-        return Arc<T>(pointer, retain_object);
+        auto result = IntrusiveRefCount<T>::make(util::forward<Args>(args)...);
+        DI_ASSERT(result);
+        return Arc<T>(*result, retain_object);
     }
 };
 
 template<typename T>
 struct TryMakeArcFunction {
     template<typename... Args>
-    constexpr Result<Arc<T>> operator()(Args&&... args) const
+    constexpr auto operator()(Args&&... args) const
     requires(requires { IntrusiveRefCount<T>::make(util::forward<Args>(args)...); })
     {
-        auto* pointer = IntrusiveRefCount<T>::make(util::forward<Args>(args)...);
-        if (!pointer) {
-            return Unexpected(BasicError::FailedAllocation);
-        }
-        return Arc<T>(pointer, retain_object);
+        return IntrusiveRefCount<T>::make(util::forward<Args>(args)...) % [](auto* pointer) {
+            return Arc<T>(pointer, retain_object);
+        };
     }
 };
 

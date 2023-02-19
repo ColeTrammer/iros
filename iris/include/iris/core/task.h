@@ -46,7 +46,7 @@ public:
         : m_task_state(entry.raw_address(), stack.raw_address(), userspace), m_address_space(di::move(address_space)) {}
 
     [[noreturn]] void context_switch_to() {
-        // m_address_space->load();
+        m_address_space->load();
         m_task_state.context_switch_to();
     }
 
