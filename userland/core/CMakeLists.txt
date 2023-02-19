@@ -10,7 +10,7 @@ add_executable(ls
 
 target_link_libraries(ls
   PRIVATE
-    dius
+    Dius::dius
 )
 
 install(TARGETS ls

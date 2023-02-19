@@ -10,6 +10,7 @@
 #include <iris/core/print.h>
 #include <iris/core/scheduler.h>
 #include <iris/core/task.h>
+#include <iris/fs/initrd.h>
 #include <iris/mm/address_space.h>
 #include <iris/mm/map_physical_address.h>
 #include <iris/mm/page_frame_allocator.h>
@@ -160,7 +161,7 @@ void iris_main() {
     // NOTE: the limine boot loader places the module in the HHDM, and marks the region and kernel+modules,
     //       so we can safely access its provided virtual address after unloading the boot loader. This relies
     //       on limine placing its HHDM at the same location we do, which is unsafe but works for now.
-    auto initrd = di::Span { reinterpret_cast<di::Byte const*>(initrd_module.address), initrd_module.size };
+    global_state.initrd = di::Span { static_cast<di::Byte const*>(initrd_module.address), initrd_module.size };
 
     ASSERT(mm::init_and_load_initial_kernel_address_space(
         mm::PhysicalAddress(kernel_address_request.response->physical_base),
@@ -192,6 +193,41 @@ void iris_main() {
     auto task3 = iris::Task(task_address, task_stack3.raw_address() + 0x2000, false);
 
     scheduler.schedule_task(task3);
+
+    auto test_program_data = *iris::lookup_in_initrd("/test_userspace"_pv);
+
+    auto* elf_header = test_program_data.typed_pointer_unchecked<elf64::ElfHeader>(0);
+    iris::println("entry={:x}"_sv, elf_header->entry);
+    ASSERT_EQ(sizeof(elf64::ProgramHeader), elf_header->program_entry_size);
+
+    auto program_headers = test_program_data.typed_span_unchecked<elf64::ProgramHeader>(
+        elf_header->program_table_off, elf_header->program_entry_count);
+    for (auto& program_header : program_headers) {
+        iris::println("type={}"_sv, program_header.type);
+        iris::println("addr={:x}"_sv, program_header.virtual_addr);
+        iris::println("file={:x}"_sv, program_header.file_size);
+        iris::println("memory={:x}"_sv, program_header.memory_size);
+
+        // PT_LOAD
+        if (program_header.type != 1) {
+            continue;
+        }
+
+        auto aligned_size = di::align_up(program_header.memory_size, 4096);
+        (void) kernel_address_space.allocate_region_at(iris::mm::VirtualAddress(program_header.virtual_addr),
+                                                       aligned_size);
+
+        iris::println("copy..."_sv);
+        auto data = di::Span { reinterpret_cast<di::Byte*>(program_header.virtual_addr), aligned_size };
+        di::copy(*test_program_data.subspan(program_header.offset, program_header.memory_size), data.data());
+        iris::println("done"_sv);
+    }
+
+    auto task_stack4 = *kernel_address_space.allocate_region(0x2000);
+    auto task4 = iris::Task(elf_header->entry, task_stack4.raw_address(), true);
+
+    (void) task4;
+    scheduler.schedule_task(task4);
 
     iris::println("preparing to context switch"_sv);
 

@@ -30,7 +30,7 @@ find_package(Di REQUIRED)
 
 target_link_libraries(iris_headers
   INTERFACE
-    di
+    Di::di
 )
 
 install(
@@ -44,7 +44,7 @@ install(
 install(
     EXPORT IrisHeadersConfig
     FILE IrisHeadersConfig.cmake
-    NAMESPACE IrisHeaders::
+    NAMESPACE Iris::
     DESTINATION lib/cmake/IrisHeaders
 )
 install(
@@ -57,6 +57,7 @@ add_executable(iris
     boot/init.cpp
     core/global_state.cpp
     core/scheduler.cpp
+    fs/initrd.cpp
     mm/address_space.cpp
     mm/page_frame_allocator.cpp
     mm/heap.cpp

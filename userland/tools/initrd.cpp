@@ -1,6 +1,5 @@
 #include <dius/prelude.h>
-
-#include "initrd.h"
+#include <iris/uapi/initrd.h>
 
 namespace iris::initrd {
 struct Args {
@@ -85,7 +84,7 @@ struct FSNode {
             } else {
                 entry.next_entry = 0;
             }
-            entry.type = type;
+            entry.type = child.type;
             entry.name_length = child.path.filename()->size();
 
             TRY(output.write_exactly(this->block_offset * block_size + child.directory_entry_offset,

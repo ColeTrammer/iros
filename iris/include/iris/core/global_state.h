@@ -13,6 +13,7 @@ struct GlobalState {
     mm::PhysicalAddress max_physical_address { 0 };
     mm::VirtualAddress virtual_to_physical_offset { 0 };
     mm::VirtualAddress heap_start { 0 };
+    di::Span<di::Byte const> initrd;
 
     // Mutable global state. Should be protected with di::Syncrhonized in the future.
     mutable mm::AddressSpace kernel_address_space { 0 };

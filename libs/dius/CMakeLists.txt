@@ -56,7 +56,7 @@ install(
 add_library(dius_test_main STATIC
     test/test_main.cpp
 )
-add_library(DiusTestMain::dius_test_main ALIAS dius_test_main)
+add_library(Dius::dius_test_main ALIAS dius_test_main)
 target_link_libraries(dius_test_main
   PRIVATE
     dius
@@ -73,6 +73,6 @@ install(
 install(
     EXPORT DiusTestMainConfig
     FILE DiusTestMainConfig.cmake
-    NAMESPACE DiusTestMain::
+    NAMESPACE Dius::
     DESTINATION lib/cmake/DiusTestMain
 )
