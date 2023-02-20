@@ -48,7 +48,7 @@ Expected<di::Box<Task>> create_kernel_task(void (*entry)()) {
     auto entry_address = mm::VirtualAddress(di::to_uintptr(entry));
 
     auto& address_space = global_state().kernel_address_space;
-    auto stack = TRY(address_space.allocate_region(0x2000));
+    auto stack = TRY(address_space.allocate_region(0x2000, mm::RegionFlags::Readable | mm::RegionFlags::Writable));
 
     return di::try_box<Task>(entry_address, stack + 0x2000, false, address_space.arc_from_this());
 }
@@ -66,6 +66,7 @@ Expected<di::Box<Task>> create_user_task(di::PathView path) {
 
     auto program_headers = raw_data.typed_span_unchecked<elf64::ProgramHeader>(elf_header->program_table_off,
                                                                                elf_header->program_entry_count);
+    // FIXME: handle different program header types and memory protection.
     for (auto& program_header : program_headers) {
         // PT_LOAD
         if (program_header.type != 1) {
@@ -73,14 +74,17 @@ Expected<di::Box<Task>> create_user_task(di::PathView path) {
         }
 
         auto aligned_size = di::align_up(program_header.memory_size, 4096);
-        (void) new_address_space->allocate_region_at(iris::mm::VirtualAddress(program_header.virtual_addr),
-                                                     aligned_size);
+        (void) new_address_space->allocate_region_at(mm::VirtualAddress(program_header.virtual_addr), aligned_size,
+                                                     mm::RegionFlags::User | mm::RegionFlags::Readable |
+                                                         mm::RegionFlags::Executable | mm::RegionFlags::Writable);
 
         auto data = di::Span { reinterpret_cast<di::Byte*>(program_header.virtual_addr), aligned_size };
         di::copy(*raw_data.subspan(program_header.offset, program_header.memory_size), data.data());
     }
 
-    auto kernel_stack = TRY(global_state().kernel_address_space.allocate_region(0x2000));
-    return di::try_box<Task>(mm::VirtualAddress(elf_header->entry), kernel_stack, true, di::move(new_address_space));
+    auto user_stack = TRY(new_address_space->allocate_region(
+        0x10000, mm::RegionFlags::Writable | mm::RegionFlags::User | mm::RegionFlags::Readable));
+    return di::try_box<Task>(mm::VirtualAddress(elf_header->entry), user_stack + 0x10000, true,
+                             di::move(new_address_space));
 }
 }

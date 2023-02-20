@@ -17,7 +17,16 @@ void AddressSpace::load() {
     load_cr3(m_architecture_page_table_base);
 }
 
-Expected<void> AddressSpace::map_physical_page(VirtualAddress location, PhysicalAddress physical_address) {
+Expected<void> AddressSpace::map_physical_page(VirtualAddress location, PhysicalAddress physical_address,
+                                               RegionFlags flags) {
+    // NOTE: The writable and not executable flags only apply at page granularity.
+    //       Without any better knowledge, we have to assume some parts of the higher-level
+    //       page will have mixed mappings, so try to set the page structure flags to be as
+    //       permissive as possible.
+    auto const writable = !!(flags & RegionFlags::Writable);
+    auto const not_executable = !(flags & RegionFlags::Executable);
+    auto const user = !!(flags & RegionFlags::User);
+
     auto pml4_or_error = map_physical_address(PhysicalAddress(architecture_page_table_base()), 0x1000);
     if (!pml4_or_error) {
         return di::Unexpected(pml4_or_error.error());
@@ -30,7 +39,7 @@ Expected<void> AddressSpace::map_physical_page(VirtualAddress location, Physical
     if (!pml4[pml4_offset].get<page_structure::Present>()) {
         pml4[pml4_offset] = page_structure::StructureEntry(
             page_structure::PhysicalAddress(TRY(allocate_page_frame()).raw_address() >> 12),
-            page_structure::Present(true), page_structure::Writable(true), page_structure::User(true));
+            page_structure::Present(true), page_structure::Writable(true), page_structure::User(user));
     }
 
     auto pdp_offset = decomposed.get<page_structure::PdpOffset>();
@@ -40,7 +49,7 @@ Expected<void> AddressSpace::map_physical_page(VirtualAddress location, Physical
     if (!pdp[pdp_offset].get<page_structure::Present>()) {
         pdp[pdp_offset] = page_structure::StructureEntry(
             page_structure::PhysicalAddress(TRY(allocate_page_frame()).raw_address() >> 12),
-            page_structure::Present(true), page_structure::Writable(true), page_structure::User(true));
+            page_structure::Present(true), page_structure::Writable(true), page_structure::User(user));
     }
 
     auto pd_offset = decomposed.get<page_structure::PdOffset>();
@@ -50,7 +59,7 @@ Expected<void> AddressSpace::map_physical_page(VirtualAddress location, Physical
     if (!pd[pd_offset].get<page_structure::Present>()) {
         pd[pd_offset] = page_structure::StructureEntry(
             page_structure::PhysicalAddress(TRY(allocate_page_frame()).raw_address() >> 12),
-            page_structure::Present(true), page_structure::Writable(true), page_structure::User(true));
+            page_structure::Present(true), page_structure::Writable(true), page_structure::User(user));
     }
 
     auto pt_offset = decomposed.get<page_structure::PtOffset>();
@@ -62,7 +71,7 @@ Expected<void> AddressSpace::map_physical_page(VirtualAddress location, Physical
     }
     pt[pt_offset] = page_structure::StructureEntry(
         page_structure::PhysicalAddress(physical_address.raw_address() >> 12), page_structure::Present(true),
-        page_structure::Writable(true), page_structure::User(true));
+        page_structure::Writable(writable), page_structure::User(user), page_structure::NotExecutable(not_executable));
 
     return {};
 }
@@ -70,7 +79,7 @@ Expected<void> AddressSpace::map_physical_page(VirtualAddress location, Physical
 Expected<di::Arc<AddressSpace>> create_empty_user_address_space() {
     // NOTE: allocate the address space first, so that the allocated page frame
     //       will not be leaked on failure.
-    auto new_address_space = TRY(di::try_make_arc<AddressSpace>(0));
+    auto new_address_space = TRY(di::try_make_arc<AddressSpace>(0, false));
 
     auto new_pml4 = TRY(allocate_page_frame());
     new_address_space->set_architecture_page_table_base(new_pml4.raw_address());

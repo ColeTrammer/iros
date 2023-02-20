@@ -36,7 +36,9 @@ void* operator new(std::size_t size, std::align_val_t alignment, std::nothrow_t 
             auto& kernel_address_space = global_state.kernel_address_space;
             auto physical_page = iris::mm::allocate_page_frame().value();
 
-            if (!kernel_address_space.map_physical_page(virtual_address, physical_page)) {
+            if (!kernel_address_space.map_physical_page(virtual_address, physical_page,
+                                                        iris::mm::RegionFlags::Readable |
+                                                            iris::mm::RegionFlags::Writable)) {
                 iris::println(u8"Failed to map physical page in ::new()"_sv);
                 return nullptr;
             }
