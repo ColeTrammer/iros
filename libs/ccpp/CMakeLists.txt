@@ -2,6 +2,14 @@ cmake_minimum_required(VERSION 3.25.2)
 
 project(Ccpp CXX)
 
+add_library(crt0 STATIC abi/crt0.cpp)
+set_target_properties(crt0
+  PROPERTIES
+    PREFIX ""
+    SUFFIX ".o"
+)
+install(TARGETS crt0 DESTINATION lib RENAME crt0)
+
 add_library(ccpp
     string/memcpy.cpp
     string/memmove.cpp

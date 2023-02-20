@@ -4,6 +4,6 @@
 
 __CCPP_BEGIN_DECLARATIONS
 
-typedef __SIZE_TYPE__ size_t;
+typedef __INTPTR_TYPE__ intptr_t;
 
 __CCPP_END_DECLARATIONS
