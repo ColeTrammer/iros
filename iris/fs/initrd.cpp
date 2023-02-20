@@ -6,7 +6,7 @@
 namespace iris {
 Expected<di::Span<di::Byte const>> lookup_in_initrd(di::PathView path) {
     if (!path.is_absolute()) {
-        return di::Unexpected(Error::OutOfMemory);
+        return di::Unexpected(Error::OperationNotSupported);
     }
 
     println("Looking up: {}"_sv, path);
@@ -15,7 +15,7 @@ Expected<di::Span<di::Byte const>> lookup_in_initrd(di::PathView path) {
     auto& super_block = *initrd.typed_pointer_unchecked<initrd::SuperBlock>(0);
     if (super_block.signature != initrd::signature) {
         println("Initrd has invalid signature: {}"_sv, super_block.signature);
-        return di::Unexpected(Error::OutOfMemory);
+        return di::Unexpected(Error::InvalidArgument);
     }
 
     class DirentIterator
@@ -56,7 +56,7 @@ Expected<di::Span<di::Byte const>> lookup_in_initrd(di::PathView path) {
 
         if (current->type != initrd::Type::Directory) {
             println("Failed lookup because not a directory."_sv);
-            return di::Unexpected(Error::OutOfMemory);
+            return di::Unexpected(Error::NotADirectory);
         }
 
         auto data = data_from_dirent(*current);
@@ -70,7 +70,7 @@ Expected<di::Span<di::Byte const>> lookup_in_initrd(di::PathView path) {
         auto result = di::find(it, sent, first, &initrd::DirectoryEntry::name);
         if (result == sent) {
             println("Failed to find {} in directory."_sv, first);
-            return di::Unexpected(Error::OutOfMemory);
+            return di::Unexpected(Error::NoSuchFileOrDirectory);
         }
 
         current = &*result;
@@ -79,7 +79,7 @@ Expected<di::Span<di::Byte const>> lookup_in_initrd(di::PathView path) {
 
     if (current->type != initrd::Type::Regular) {
         println("Failed lookup because not a regular file."_sv);
-        return di::Unexpected(Error::OutOfMemory);
+        return di::Unexpected(Error::OperationNotSupported);
     }
     return data_from_dirent(*current);
 }

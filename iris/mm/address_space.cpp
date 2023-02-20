@@ -11,7 +11,7 @@ Expected<VirtualAddress> AddressSpace::allocate_region(usize page_aligned_length
 
     if (m_kernel == !!(flags & RegionFlags::User)) {
         println("WARNING: attempt to allocate a region with mismatched userspace flag."_sv);
-        return di::Unexpected(Error::OutOfMemory);
+        return di::Unexpected(Error::InvalidArgument);
     }
 
     auto heap_start = global_state().heap_start;
@@ -32,7 +32,7 @@ Expected<void> AddressSpace::allocate_region_at(VirtualAddress location, usize p
 
     if (m_kernel == !!(flags & RegionFlags::User)) {
         println("WARNING: attempt to allocate a region with mismatched userspace flag."_sv);
-        return di::Unexpected(Error::OutOfMemory);
+        return di::Unexpected(Error::InvalidArgument);
     }
 
     for (auto virtual_address : (*new_region).each_page()) {

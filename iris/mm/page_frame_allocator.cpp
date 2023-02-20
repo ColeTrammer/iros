@@ -22,7 +22,7 @@ Expected<PhysicalAddress> allocate_page_frame() {
             return PhysicalAddress(i * 4096);
         }
     }
-    return di::Unexpected(Error::OutOfMemory);
+    return di::Unexpected(Error::NotEnoughMemory);
 }
 
 void deallocate_page_frame(PhysicalAddress address) {

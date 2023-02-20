@@ -57,7 +57,7 @@ public:
             auto* data = ::operator new(
                 sizeof(T) * count, std::align_val_t { di::container::max(alignof(T), alignof(void*)) }, std::nothrow);
             if (!data) {
-                return di::Unexpected(iris::Error::OutOfMemory);
+                return di::Unexpected(iris::Error::NotEnoughMemory);
             }
             return di::container::Allocation<T> { reinterpret_cast<T*>(data), count };
         }
