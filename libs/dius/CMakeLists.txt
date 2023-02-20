@@ -5,6 +5,7 @@ project(Dius CXX)
 add_library(dius
     test/test_manager.cpp
     di_assert_impl.cpp
+    error.cpp
     memory_region.cpp
     sync_file.cpp
 )

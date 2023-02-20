@@ -133,14 +133,7 @@ protected:
         return b.domain() == *this && down_cast(a).value() == down_cast(b).value();
     }
 
-    virtual di::ErasedString do_message(di::StatusCode<void> const& code) const override {
-        using namespace di::string_literals;
-
-        auto value = down_cast(code).value();
-        auto string = ::strerror(di::to_underlying(value));
-        auto length = ::strlen(string);
-        return di::ErasedString { di::Span { reinterpret_cast<c8 const*>(string), length } };
-    }
+    virtual di::ErasedString do_message(di::StatusCode<void> const& code) const override;
 
 private:
     template<typename Domain>
