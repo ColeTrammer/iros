@@ -9,14 +9,16 @@ PREFIX="$PROJECT_ROOT"/cross
 SYSROOT="$PROJECT_ROOT"/build/x86_64/sysroot
 NPROC=$(nproc)
 
-git clone "https://gcc.gnu.org/git/gcc.git" --depth=1 --branch "releases/gcc-$VERSION" src
+# git clone "https://gcc.gnu.org/git/gcc.git" --depth=1 --branch "releases/gcc-$VERSION" src
 
-cd src
-git am $PATCH_DIR/*.patch
-cd ..
+# cd src
+# git am $PATCH_DIR/*.patch
+# cd ..
 
 mkdir -p build
 cd build
+
+cp -r "$PROJECT_ROOT"/libs/ccpp/include/* "$SYSROOT"/usr/include
 
 ../src/configure \
     --disable-nls \
@@ -28,3 +30,5 @@ cd build
 
 make all-gcc -j"$NPROC"
 make install-gcc -j"$NPROC"
+make all-target-libgcc -j"$NPROC"
+make install-target-libgcc -j"$NPROC"

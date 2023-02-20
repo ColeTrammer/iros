@@ -15,7 +15,7 @@ cd src
 git am $PATCH_DIR/*.patch
 cd ..
 
-mkdir -p .build
+mkdir -p build
 cd build
 
 ../src/configure \
