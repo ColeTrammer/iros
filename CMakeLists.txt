@@ -7,6 +7,7 @@ option(IROS_BuildUserspace "Build userspace libaries and programs." ON)
 option(IROS_BuildTests "Build test programs." ON)
 option(IROS_BuildTools "Build tools required native tools." ON)
 option(IROS_BuildCcpp "Build the c++ libc." ON)
+option(IROS_UseDiusRuntime "Use dius provided runtime instead of system libc" OFF)
 
 set(IROS_DiagnosticFlags ""
     CACHE STRING "Extra compilation flags for diagnostics purposes."
@@ -74,6 +75,23 @@ macro(add_executable)
             ${IROS_SanitizerFlags}
             ${IROS_ExtraFlags}
         )
+        if (IROS_UseDiusRuntime)
+            target_link_libraries(
+                ${ARGV0}
+              PRIVATE
+                dius_runtime
+            )
+            target_compile_options(
+                ${ARGV0}
+              PRIVATE
+                "-static"
+            )
+            target_link_options(
+                ${ARGV0}
+              PRIVATE
+                "-static"
+            )
+        endif()
     endif()
 endmacro()
 

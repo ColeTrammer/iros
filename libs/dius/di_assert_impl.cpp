@@ -1,6 +1,6 @@
 #include <di/prelude.h>
 
-#ifdef __linux__
+#ifdef DIUS_USE_GLIBC
 #include <cxxabi.h>
 #include <execinfo.h>
 #include <stdio.h>
@@ -15,7 +15,7 @@ void assert_write(char const* s, size_t n) {
 }
 
 void assert_terminate() {
-#ifdef __linux__
+#ifdef DIUS_USE_GLIBC
     void* storage[32];
     auto size = ::backtrace(storage, di::size(storage));
 

@@ -63,13 +63,59 @@ install(
     FILES_MATCHING PATTERN "*.h"
 )
 
+if (IROS_UseDiusRuntime)
+    target_compile_definitions(dius
+      PUBLIC
+        DIUS_USE_RUNTIME
+    )
+
+    add_library(dius_runtime STATIC
+        runtime/compilerabi.cpp
+        runtime/cxxabi.cpp
+        runtime/cxxheap.cpp
+        runtime/entry.cpp
+        runtime/gccints.cpp
+        runtime/stack_smash_protector.cpp
+    )
+    add_library(Dius::dius_runtime ALIAS dius_runtime)
+    target_link_libraries(dius_runtime
+      PUBLIC
+        dius
+    )
+    target_compile_options(dius_runtime
+      PUBLIC
+        "-nostdlib"
+        "-static"
+    )
+    target_link_options(dius_runtime
+      PUBLIC
+        "-nostdlib"
+        "-static"
+    )
+
+    install(
+        TARGETS dius_runtime
+        EXPORT DiusRuntimeConfig
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        RUNTIME DESTINATION bin
+        INCLUDES DESTINATION include
+    )
+    install(
+        EXPORT DiusRuntimeConfig
+        FILE DiusRuntimeConfig.cmake
+        NAMESPACE Dius::
+        DESTINATION lib/cmake/DiusRuntime
+    )
+endif()
+
 if(LINUX)
     add_library(dius_test_main STATIC
         test/test_main.cpp
     )
     add_library(Dius::dius_test_main ALIAS dius_test_main)
     target_link_libraries(dius_test_main
-    PRIVATE
+      PRIVATE
         dius
     )
 

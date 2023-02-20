@@ -1,7 +1,9 @@
 #include <dius/test/prelude.h>
 
+#ifndef DIUS_USE_RUNTIME
 #include <setjmp.h>
 #include <signal.h>
+#endif
 
 namespace dius::test {
 TestManager& TestManager::the() {
@@ -13,11 +15,13 @@ void TestManager::register_test_case(TestCase test_case) {
     m_test_cases.push_back(di::move(test_case));
 }
 
+#ifndef DIUS_USE_RUNTIME
 static jmp_buf s_jmpbuf;
 
 static void signal_handler(int) {
     longjmp(s_jmpbuf, 1);
 }
+#endif
 
 di::Result<void> TestManager::run_tests(Args& args) {
     auto [list_simple, suite_name, case_name] = args;
@@ -51,19 +55,23 @@ di::Result<void> TestManager::run_tests(Args& args) {
         return {};
     }
 
+#ifndef DIUS_USE_RUNTIME
     signal(SIGSEGV, signal_handler);
     signal(SIGFPE, signal_handler);
     signal(SIGABRT, signal_handler);
+#endif
 
     for (auto& test_case : m_test_cases) {
         auto start_fail_count = m_fail_count;
 
+#ifndef DIUS_USE_RUNTIME
         if (setjmp(s_jmpbuf) == 1) {
             dius::eprintln("\033[31;1mFAIL\033[0m: \033[1m{}\033[0m: {}"_sv, test_case.suite_name(),
                            test_case.case_name());
             m_fail_count++;
             continue;
         }
+#endif
 
         test_case.execute();
 

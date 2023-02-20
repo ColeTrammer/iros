@@ -21,6 +21,9 @@ enum class Number : int {
     getdents64 = __NR_getdents64,
     fstatat64 = __NR_newfstatat,
     ftruncate = __NR_ftruncate,
+    arch_prctl = __NR_arch_prctl,
+    brk = __NR_brk,
+    exit_group = __NR_exit_group
 };
 
 using SystemCallArg = unsigned long;

@@ -47,7 +47,30 @@
         "IROS_BuildTests": "OFF",
         "IROS_BuildTools": "OFF",
         "IROS_BuildCcpp": "ON",
+        "IROS_UseDiusRuntime": "ON",
         "CMAKE_CXX_COMPILER_WORKS": "ON"
+      },
+      "inherits": ["release_base"]
+    },
+    {
+      "name": "dius_runtime_release",
+      "displayName": "Dius Runtime Release Config",
+      "description": "Release build with dius runtime enabled",
+      "binaryDir": "${sourceDir}/build/native/release-dius-runtime",
+      "installDir": "${sourceDir}/build/native/release-dius-runtime-install",
+      "cacheVariables": {
+        "IROS_UseDiusRuntime": "ON"
+      },
+      "inherits": ["release_base"]
+    },
+    {
+      "name": "dius_runtime_debug",
+      "displayName": "Dius Runtime Debug Config",
+      "description": "Debug build with dius runtime enabled",
+      "binaryDir": "${sourceDir}/build/native/debug-dius-runtime",
+      "installDir": "${sourceDir}/build/native/debug-dius-runtime-install",
+      "cacheVariables": {
+        "IROS_UseDiusRuntime": "ON"
       },
       "inherits": ["release_base"]
     },
