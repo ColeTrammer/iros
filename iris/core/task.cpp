@@ -57,7 +57,6 @@ Expected<di::Box<Task>> create_user_task(di::PathView path) {
     auto raw_data = TRY(lookup_in_initrd(path));
 
     auto* elf_header = raw_data.typed_pointer_unchecked<elf64::ElfHeader>(0);
-    println("entry={:x}"_sv, elf_header->entry);
     ASSERT_EQ(sizeof(elf64::ProgramHeader), elf_header->program_entry_size);
 
     auto new_address_space = TRY(mm::create_empty_user_address_space());
@@ -68,11 +67,6 @@ Expected<di::Box<Task>> create_user_task(di::PathView path) {
     auto program_headers = raw_data.typed_span_unchecked<elf64::ProgramHeader>(elf_header->program_table_off,
                                                                                elf_header->program_entry_count);
     for (auto& program_header : program_headers) {
-        println("type={}"_sv, program_header.type);
-        println("addr={:x}"_sv, program_header.virtual_addr);
-        println("file={:x}"_sv, program_header.file_size);
-        println("memory={:x}"_sv, program_header.memory_size);
-
         // PT_LOAD
         if (program_header.type != 1) {
             continue;

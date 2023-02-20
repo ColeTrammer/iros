@@ -59,7 +59,6 @@ void Scheduler::run_next() {
 
     auto& next = *m_run_queue.pop();
     m_current_task = di::addressof(next);
-    println("next={}"_sv, m_current_task);
     next.context_switch_to();
 }
 

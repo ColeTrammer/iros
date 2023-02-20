@@ -15,8 +15,6 @@ void* operator new(std::size_t size, std::nothrow_t const&) noexcept {
 }
 
 void* operator new(std::size_t size, std::align_val_t alignment, std::nothrow_t const&) noexcept {
-    iris::println(u8"Trying to allocate size={} alignment={}"_sv, size, di::to_underlying(alignment));
-
     auto& global_state = iris::global_state();
     auto old_heap_end = global_state.heap_end;
 
@@ -25,8 +23,6 @@ void* operator new(std::size_t size, std::align_val_t alignment, std::nothrow_t 
         global_state.heap_end =
             iris::mm::VirtualAddress(global_state.heap_end.raw_address() & (~(di::to_underlying(alignment) - 1)));
     }
-
-    iris::println(u8"Trying to allocate size={} alignment={}"_sv, size, di::to_underlying(alignment));
 
     auto result = global_state.heap_end;
     global_state.heap_end = global_state.heap_end + size;
@@ -39,13 +35,11 @@ void* operator new(std::size_t size, std::align_val_t alignment, std::nothrow_t 
 
             auto& kernel_address_space = global_state.kernel_address_space;
             auto physical_page = iris::mm::allocate_page_frame().value();
-            iris::println(u8"Mapping physical page {} to {}"_sv, physical_page.raw_address(),
-                          virtual_address.raw_address());
+
             if (!kernel_address_space.map_physical_page(virtual_address, physical_page)) {
                 iris::println(u8"Failed to map physical page in ::new()"_sv);
                 return nullptr;
             }
-            iris::println(u8"Done"_sv);
         }
     }
 

@@ -13,8 +13,6 @@ Expected<VirtualAddress> AddressSpace::allocate_region(usize page_aligned_length
     auto last_virtual_address = m_regions.back().transform(&Region::end).value_or(heap_start);
     auto new_virtual_address = last_virtual_address + 8192 * 0x1000;
 
-    iris::println("sz={}"_sv, m_regions.size());
-
     // TODO: provide the flags as a parameter.
     auto [new_region, did_insert] = m_regions.emplace(
         new_virtual_address, page_aligned_length, RegionFlags::Readable | RegionFlags::Writable | RegionFlags::User);

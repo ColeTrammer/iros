@@ -1,4 +1,4 @@
-static char const message[] = "\nHello, World\n\n";
+static char const message[] = "Hello, World\n";
 
 extern "C" [[gnu::naked]] [[noreturn]] void _start() {
     for (unsigned int i = 0; i < 2; i++) {

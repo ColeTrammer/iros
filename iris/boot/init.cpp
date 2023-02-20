@@ -30,6 +30,7 @@ static int counter = 0;
 
 static void do_task() {
     for (int i = 0; i < 3; i++) {
+        asm volatile("cli");
         iris::println("counter: {}"_sv, ++counter);
         asm volatile("sti\nhlt");
     }
@@ -58,7 +59,7 @@ static volatile limine_module_request module_request = {
 
 namespace iris {
 void iris_main() {
-    iris::println(u8"Hello, World - again"_sv);
+    iris::println("Starting architecture independent initialization..."_sv);
 
     auto& global_state = global_state_in_boot();
     global_state.heap_start = iris::mm::VirtualAddress(di::align_up(iris::mm::kernel_end.raw_address(), 4096));
@@ -72,37 +73,6 @@ void iris_main() {
                                                 }));
 
     for (auto* memory_map_entry : memory_map) {
-        switch (memory_map_entry->type) {
-            case LIMINE_MEMMAP_USABLE:
-                iris::println(u8"usable"_sv);
-                break;
-            case LIMINE_MEMMAP_RESERVED:
-                iris::println(u8"reserved"_sv);
-                break;
-            case LIMINE_MEMMAP_ACPI_RECLAIMABLE:
-                iris::println(u8"ACPI reclaimable"_sv);
-                break;
-            case LIMINE_MEMMAP_ACPI_NVS:
-                iris::println(u8"ACPI NVS"_sv);
-                break;
-            case LIMINE_MEMMAP_BAD_MEMORY:
-                iris::println(u8"bad memory"_sv);
-                break;
-            case LIMINE_MEMMAP_BOOTLOADER_RECLAIMABLE:
-                iris::println(u8"boot loader reclaimable"_sv);
-                break;
-            case LIMINE_MEMMAP_KERNEL_AND_MODULES:
-                iris::println(u8"kernel and modules"_sv);
-                break;
-            case LIMINE_MEMMAP_FRAMEBUFFER:
-                iris::println(u8"frame buffer"_sv);
-                break;
-            default:
-                di::unreachable();
-        }
-
-        iris::println("base={:#018x} size={:#x}"_sv, memory_map_entry->base, memory_map_entry->length);
-
         if (memory_map_entry->type != LIMINE_MEMMAP_USABLE) {
             iris::mm::reserve_page_frames(iris::mm::PhysicalAddress(di::align_down(memory_map_entry->base, 4096)),
                                           di::divide_round_up(memory_map_entry->length, 4096));
@@ -128,14 +98,6 @@ void iris_main() {
         mm::PhysicalAddress(kernel_address_request.response->physical_base),
         mm::VirtualAddress(kernel_address_request.response->virtual_base), global_state.max_physical_address));
 
-    iris::println(u8"Hello, World - again again"_sv);
-
-    auto* x = new (std::nothrow) int { 42 };
-    ASSERT(x != nullptr);
-    delete x;
-
-    iris::println(u8"Hello, World - again again again"_sv);
-
     auto task1 = *iris::create_kernel_task(do_task);
     auto task2 = *iris::create_kernel_task(do_task);
     auto task3 = *iris::create_kernel_task(do_task);
@@ -148,7 +110,7 @@ void iris_main() {
     auto task4 = *iris::create_user_task("/test_userspace"_pv);
     scheduler.schedule_task(*task4);
 
-    iris::println("preparing to context switch"_sv);
+    iris::println("Starting the kernel scheduler..."_sv);
 
     scheduler.start();
 

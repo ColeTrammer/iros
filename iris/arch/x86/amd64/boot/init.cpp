@@ -27,7 +27,6 @@ namespace iris::arch {
 }
 
 extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, int error_code) {
-    iris::println("got IRQ {}, error_code={}"_sv, irq, error_code);
 
     if (irq == 32) {
         iris::x86::amd64::send_eoi(0);
@@ -43,6 +42,8 @@ extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, 
 
         iris::global_state().scheduler.save_state_and_run_next(task_state);
     }
+
+    iris::println("ERROR: got unexpected IRQ {}, error_code={}"_sv, irq, error_code);
     done();
 }
 
@@ -187,7 +188,7 @@ static auto tss = iris::x86::amd64::TSS {};
 extern "C" void bsp_cpu_init() {
     iris::arch::cxx_init();
 
-    iris::println(u8"Hello, World"_sv);
+    iris::println("Beginning x86_64 kernel boot..."_sv);
 
     {
         using namespace iris::x86::amd64::idt;
@@ -282,7 +283,6 @@ extern "C" void bsp_cpu_init() {
                      : "memory", "edx");
     }
 
-    iris::println("Waiting..."_sv);
     iris::x86::amd64::init_pic();
 
     iris_main();

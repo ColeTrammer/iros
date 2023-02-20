@@ -22,7 +22,7 @@ Expected<PhysicalAddressMapping> map_physical_address(PhysicalAddress address, u
     // FIXME: validate that the physical address mapping is reasonable (only up to 4 GiB if only 4 GiB of memory are
     // available).
     if (di::exchange(yes, false)) {
-        iris::println("ba={:x}"_sv, hhdm_request.response->offset);
+        iris::println("HHDM Base Address: {:#x}"_sv, hhdm_request.response->offset);
         base = hhdm_request.response->offset;
     }
     auto virtual_address = reinterpret_cast<di::Byte*>(base + address.raw_address());

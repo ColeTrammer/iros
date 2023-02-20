@@ -58,7 +58,7 @@ Expected<void> AddressSpace::map_physical_page(VirtualAddress location, Physical
         TRY(map_physical_address(PhysicalAddress(pd[pd_offset].get<page_structure::PhysicalAddress>() << 12), 0x1000))
             .typed<page_structure::FinalTable>();
     if (pt[pt_offset].get<page_structure::Present>()) {
-        println(u8"Already allocated."_sv);
+        println("WARNING: virtual address {} is already marked as present."_sv, location.void_pointer());
     }
     pt[pt_offset] = page_structure::StructureEntry(
         page_structure::PhysicalAddress(physical_address.raw_address() >> 12), page_structure::Present(true),

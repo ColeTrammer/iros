@@ -22,7 +22,7 @@ SECTIONS
     } :text
 
     /* Move to the next memory page for .rodata */
-    . += CONSTANT(MAXPAGESIZE);
+    . = ALIGN(4K);
     PROVIDE(__iris_text_segment_end = .);
 
     PROVIDE(__iris_rodata_segment_start = .);
@@ -42,7 +42,7 @@ SECTIONS
     } :rodata
 
     /* Move to the next memory page for .data */
-    . += CONSTANT(MAXPAGESIZE);
+    . = ALIGN(4K);
     PROVIDE(__iris_rodata_segment_end = .);
 
     PROVIDE(__iris_data_segment_start = .);
@@ -56,7 +56,7 @@ SECTIONS
     } :data
 
     /* Move to the next memory page for alignment */
-    . += CONSTANT(MAXPAGESIZE);
+    . = ALIGN(4K);
     PROVIDE(__iris_data_segment_end = .);
     PROVIDE(__iris_kernel_end = .);
 
