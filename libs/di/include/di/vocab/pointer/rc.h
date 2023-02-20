@@ -42,14 +42,20 @@ private:
         }
     }
 
-    template<typename... Args>
-    constexpr static auto make(Args&&... args)
+    template<typename... Args,
+             typename E = meta::ExpectedError<decltype(platform::DefaultFallibleAllocator<T>().allocate(1))>,
+             typename R = Expected<T*, E>>
+    constexpr static R make(Args&&... args)
     requires(requires { T(util::forward<Args>(args)...); })
     {
-        return platform::DefaultFallibleAllocator<T>().allocate(1) % [&](container::Allocation<T> result) {
-            util::construct_at(result.data, util::forward<Args>(args)...);
-            return result.data;
-        };
+        if consteval {
+            return new T(util::forward<Args>(args)...);
+        } else {
+            return platform::DefaultFallibleAllocator<T>().allocate(1) % [&](container::Allocation<T> result) {
+                new (result.data) T(util::forward<Args>(args)...);
+                return result.data;
+            };
+        }
     }
 
     usize m_ref_count { 1 };
@@ -59,9 +65,9 @@ template<typename T>
 struct MakeRcFunction {
     template<typename... Args>
     constexpr Rc<T> operator()(Args&&... args) const
-    requires(requires { IntrusiveRefCount<T>::make(util::forward<Args>(args)...); })
+    requires(requires { IntrusiveThreadUnsafeRefCount<T>::make(util::forward<Args>(args)...); })
     {
-        auto result = IntrusiveRefCount<T>::make(util::forward<Args>(args)...);
+        auto result = IntrusiveThreadUnsafeRefCount<T>::make(util::forward<Args>(args)...);
         DI_ASSERT(result);
         return Rc<T>(*result, retain_object);
     }
@@ -71,9 +77,9 @@ template<typename T>
 struct TryMakeRcFunction {
     template<typename... Args>
     constexpr auto operator()(Args&&... args) const
-    requires(requires { IntrusiveRefCount<T>::make(util::forward<Args>(args)...); })
+    requires(requires { IntrusiveThreadUnsafeRefCount<T>::make(util::forward<Args>(args)...); })
     {
-        return IntrusiveRefCount<T>::make(util::forward<Args>(args)...) % [](auto* pointer) {
+        return IntrusiveThreadUnsafeRefCount<T>::make(util::forward<Args>(args)...) % [](auto* pointer) {
             return Rc<T>(pointer, retain_object);
         };
     }

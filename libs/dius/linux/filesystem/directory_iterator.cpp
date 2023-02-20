@@ -3,8 +3,6 @@
 #include <linux/fcntl.h>
 #include <linux/unistd.h>
 
-#include <dirent.h>
-
 namespace dius::linux {
 struct [[gnu::packed]] Dirent {
     u64 inode;

@@ -4,6 +4,7 @@
 
 #include <linux/fcntl.h>
 #include <linux/stat.h>
+#include <linux/time.h>
 
 namespace dius::filesystem {
 namespace linux {

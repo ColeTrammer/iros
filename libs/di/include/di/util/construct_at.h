@@ -18,8 +18,9 @@ namespace di::util {
 namespace detail {
     struct ConstructAtFunction {
         template<typename T, typename... Args>
-        requires(requires(void* pointer, Args&&... args) { ::new (pointer) T(util::forward<Args>(args)...); })
-        constexpr T* operator()(T* location, Args&&... args) const {
+        constexpr T* operator()(T* location, Args&&... args) const
+        requires(requires { std::construct_at(location, util::forward<Args>(args)...); })
+        {
             return std::construct_at(location, util::forward<Args>(args)...);
         }
     };

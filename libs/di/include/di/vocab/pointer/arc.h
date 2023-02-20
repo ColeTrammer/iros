@@ -44,14 +44,20 @@ private:
         }
     }
 
-    template<typename... Args>
-    constexpr static auto make(Args&&... args)
+    template<typename... Args,
+             typename E = meta::ExpectedError<decltype(platform::DefaultFallibleAllocator<T>().allocate(1))>,
+             typename R = Expected<T*, E>>
+    constexpr static R make(Args&&... args)
     requires(requires { T(util::forward<Args>(args)...); })
     {
-        return platform::DefaultFallibleAllocator<T>().allocate(1) % [&](container::Allocation<T> result) {
-            util::construct_at(result.data, util::forward<Args>(args)...);
-            return result.data;
-        };
+        if consteval {
+            return new T(util::forward<Args>(args)...);
+        } else {
+            return platform::DefaultFallibleAllocator<T>().allocate(1) % [&](container::Allocation<T> result) {
+                new (result.data) T(util::forward<Args>(args)...);
+                return result.data;
+            };
+        }
     }
 
     sync::Atomic<usize> m_ref_count { 1 };

@@ -136,10 +136,10 @@ static void null_terminated() {
     auto s = di::TransparentString {};
 
     s.push_back('a');
-    ASSERT_EQ(::strlen(s.c_str()), 1u);
+    ASSERT_EQ(di::distance(di::ZString { s.c_str() }), 1);
 
     s.push_back('b');
-    ASSERT_EQ(::strlen(s.c_str()), 2u);
+    ASSERT_EQ(di::distance(di::ZString { s.c_str() }), 2);
 }
 
 TESTC(container_string, basic)

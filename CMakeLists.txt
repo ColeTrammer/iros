@@ -21,7 +21,7 @@ set(IROS_ExtraFlags ""
     CACHE STRING "Extra compilation flags for any purpose."
 )
 
-separate_arguments(IROS_DiagnosticsFlags)
+separate_arguments(IROS_DiagnosticFlags)
 separate_arguments(IROS_WarningFlags)
 separate_arguments(IROS_SanitizerFlags)
 separate_arguments(IROS_ExtraFlags)
