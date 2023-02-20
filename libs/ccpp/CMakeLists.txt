@@ -12,6 +12,11 @@ add_library(ccpp
 )
 add_library(Ccpp::ccpp ALIAS ccpp)
 
+set_target_properties(ccpp
+  PROPERTIES
+    OUTPUT_NAME "c"
+)
+
 target_include_directories(ccpp
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

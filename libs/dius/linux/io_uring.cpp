@@ -58,7 +58,7 @@ di::Result<void> IoUringHandle::submit_and_wait() {
 
 di::Result<IoUringHandle> IoUringHandle::create() {
     SetupParams params;
-    ::memset(di::addressof(params), 0, sizeof(params));
+    di::fill_n(reinterpret_cast<di::Byte*>(&params), sizeof(params), 0_b);
 
     auto result = IoUringHandle {};
 

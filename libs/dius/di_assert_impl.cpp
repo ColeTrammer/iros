@@ -1,6 +1,6 @@
 #include <di/prelude.h>
-#include <dius/prelude.h>
 
+#ifdef __linux__
 #include <cxxabi.h>
 #include <execinfo.h>
 #include <stdio.h>
@@ -43,13 +43,16 @@ void assert_terminate() {
     }
 
     ::free(symbols);
-#elif defined(__iros__)
-    void* storage[32];
-    int size = ::backtrace(storage, di::size(storage));
-
-    ::dump_backtrace(storage, size);
 #endif
 
     ::abort();
 }
 }
+#else
+namespace di::assert::detail {
+void assert_write(char const*, size_t) {}
+void assert_terminate() {
+    di::unreachable();
+}
+}
+#endif

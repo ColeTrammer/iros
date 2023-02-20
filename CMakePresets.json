@@ -46,7 +46,7 @@
         "IROS_BuildUserspace": "OFF",
         "IROS_BuildTests": "OFF",
         "IROS_BuildTools": "OFF",
-        "IROS_BuildCcpp": "OFF",
+        "IROS_BuildCcpp": "ON",
         "CMAKE_CXX_COMPILER_WORKS": "ON"
       },
       "inherits": ["release_base"]

@@ -3,11 +3,7 @@ cmake_minimum_required(VERSION 3.25.2)
 project(Dius CXX)
 
 add_library(dius
-    test/test_manager.cpp
     di_assert_impl.cpp
-    error.cpp
-    memory_region.cpp
-    sync_file.cpp
 )
 add_library(Dius::dius ALIAS dius)
 
@@ -31,7 +27,20 @@ if(LINUX)
         linux/filesystem/directory_iterator.cpp
         linux/filesystem/query.cpp
         linux/io_uring.cpp
+        test/test_manager.cpp
+        error.cpp
+        memory_region.cpp
+        sync_file.cpp
     )
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Iros")
+    if(CMAKE_CROSSCOMPILING)
+        find_package(Iris REQUIRED)    
+
+        target_link_libraries(dius
+          PUBLIC
+            Iris::iris_headers
+        )
+    endif()
 endif()
 
 install(
@@ -54,26 +63,28 @@ install(
     FILES_MATCHING PATTERN "*.h"
 )
 
-add_library(dius_test_main STATIC
-    test/test_main.cpp
-)
-add_library(Dius::dius_test_main ALIAS dius_test_main)
-target_link_libraries(dius_test_main
-  PRIVATE
-    dius
-)
+if(LINUX)
+    add_library(dius_test_main STATIC
+        test/test_main.cpp
+    )
+    add_library(Dius::dius_test_main ALIAS dius_test_main)
+    target_link_libraries(dius_test_main
+    PRIVATE
+        dius
+    )
 
-install(
-    TARGETS dius_test_main
-    EXPORT DiusTestMainConfig
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin
-    INCLUDES DESTINATION include
-)
-install(
-    EXPORT DiusTestMainConfig
-    FILE DiusTestMainConfig.cmake
-    NAMESPACE Dius::
-    DESTINATION lib/cmake/DiusTestMain
-)
+    install(
+        TARGETS dius_test_main
+        EXPORT DiusTestMainConfig
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        RUNTIME DESTINATION bin
+        INCLUDES DESTINATION include
+    )
+    install(
+        EXPORT DiusTestMainConfig
+        FILE DiusTestMainConfig.cmake
+        NAMESPACE Dius::
+        DESTINATION lib/cmake/DiusTestMain
+    )
+endif()

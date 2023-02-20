@@ -1,8 +1,9 @@
 #pragma once
 
 #include <di/prelude.h>
-#include <errno.h>
-#include <string.h>
+#include <dius/config.h>
+
+#include DIUS_PLATFORM_PATH(error.h)
 
 namespace dius {
 class PosixDomain;
@@ -10,88 +11,6 @@ class PosixDomain;
 using PosixCode = di::StatusCode<PosixDomain>;
 
 inline namespace posix_error {
-    enum class PosixError : long {
-        Success = 0,
-        AddressFamilyNotSupported = EAFNOSUPPORT,
-        AddressInUse = EADDRINUSE,
-        AddressNotAvailable = EADDRNOTAVAIL,
-        AlreadyConnected = EISCONN,
-        ArgumentListTooLong = E2BIG,
-        ArgumentOutOfDomain = EDOM,
-        BadAddress = EFAULT,
-        BadFileDescriptor = EBADF,
-        BadMessage = EBADMSG,
-        BrokenPipe = EPIPE,
-        ConnectionAborted = ECONNABORTED,
-        ConnectionAlreadyInProgress = EALREADY,
-        ConnectionRefused = ECONNREFUSED,
-        ConnectionReset = ECONNRESET,
-        CrossDeviceLink = EXDEV,
-        DestinationAddressRequired = EDESTADDRREQ,
-        DeviceOrResourceBusy = EBUSY,
-        DirectoryNotEmpty = ENOTEMPTY,
-        ExecutableFormatError = ENOEXEC,
-        FileExists = EEXIST,
-        FileTooLarge = EFBIG,
-        FilenameTooLong = ENAMETOOLONG,
-        FunctionNotSupported = ENOSYS,
-        HostUnreachable = EHOSTUNREACH,
-        IdentifierRemoved = EIDRM,
-        IllegalByteSequence = EILSEQ,
-        InappropriateIoControlOperation = ENOTTY,
-        Interrupted = EINTR,
-        InvalidArgument = EINVAL,
-        InvalidSeek = ESPIPE,
-        IoError = EIO,
-        IsADirectory = EISDIR,
-        MessageSize = EMSGSIZE,
-        NetworkDown = ENETDOWN,
-        NetworkReset = ENETRESET,
-        NetworkUnreachable = ENETUNREACH,
-        NoBufferSpace = ENOBUFS,
-        NoChildProcess = ECHILD,
-        NoLink = ENOLINK,
-        NoLockAvailable = ENOLCK,
-        NoMessageAvailable = ENODATA,
-        NoMessage = ENOMSG,
-        NoProtocolOption = ENOPROTOOPT,
-        NoSpaceOnDevice = ENOSPC,
-        NoStreamResources = ENOSR,
-        NoSuchDeviceOrAddress = ENXIO,
-        NoSuchDevice = ENODEV,
-        NoSuchFileOrDirectory = ENOENT,
-        NoSuchProcess = ESRCH,
-        NotADirectory = ENOTDIR,
-        NotASocket = ENOTSOCK,
-        NotAStream = ENOSTR,
-        NotConnected = ENOTCONN,
-        NotEnoughMemory = ENOMEM,
-        NotSupported = ENOTSUP,
-        OperationCanceled = ECANCELED,
-        OperationInProgress = EINPROGRESS,
-        OperationNotPermitted = EPERM,
-        OperationNotSupported = EOPNOTSUPP,
-        OperationWouldBlock = EWOULDBLOCK,
-        OwnerDead = EOWNERDEAD,
-        PermissionDenied = EACCES,
-        ProtocolError = EPROTO,
-        ProtocolNotSupported = EPROTONOSUPPORT,
-        ReadOnlyFileSystem = EROFS,
-        ResourceDeadlockWouldOccur = EDEADLK,
-        ResourceUnavailableTryAgain = EAGAIN,
-        ResultOutOfRange = ERANGE,
-        StateNotRecoverable = ENOTRECOVERABLE,
-        StreamTimeout = ETIME,
-        TextFileBusy = ETXTBSY,
-        TimedOut = ETIMEDOUT,
-        TooManyFilesOpenInSystem = ENFILE,
-        TooManyFilesOpen = EMFILE,
-        TooManyLinks = EMLINK,
-        TooManySymbolicLinkLevels = ELOOP,
-        ValueTooLarge = EOVERFLOW,
-        WrongProtocolType = EPROTOTYPE,
-    };
-
     template<typename = void>
     constexpr auto tag_invoke(di::Tag<di::into_status_code>, PosixError error) {
         return PosixCode(di::in_place, error);

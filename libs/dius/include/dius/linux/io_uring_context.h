@@ -460,7 +460,7 @@ template<di::concepts::Invocable<io_uring::SQE*> Fun>
 static void enqueue_io_operation(IoUringContext* context, OperationStateBase* op, Fun&& function) {
     auto sqe = context->m_handle.get_next_sqe();
     ASSERT(sqe);
-    ::memset(sqe.data(), 0, sizeof(*sqe));
+    di::fill_n(reinterpret_cast<di::Byte*>(&sqe), sizeof(sqe), 0_b);
     di::invoke(di::move(function), sqe.data());
     sqe->user_data = reinterpret_cast<uintptr_t>(op);
 }
