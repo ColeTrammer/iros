@@ -1,20 +1,15 @@
 #pragma once
 
 #include <di/prelude.h>
+#include <iris/core/config.h>
 #include <iris/core/scheduler.h>
 #include <iris/mm/address_space.h>
 
+// clang-format off
+#include IRIS_ARCH_INCLUDE(core/global_state.h)
+// clang-format on
+
 namespace iris {
-namespace arch {
-    // NOTE: this is x86_64 specific.
-    enum class CPUFeatures {
-        Smep = 1 << 0,
-        Smap = 1 << 1,
-    };
-
-    DI_DEFINE_ENUM_BITWISE_OPERATIONS(CPUFeatures)
-}
-
 struct GlobalState {
     constexpr GlobalState() {}
     constexpr ~GlobalState() {}
