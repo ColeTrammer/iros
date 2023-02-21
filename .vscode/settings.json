@@ -3,13 +3,22 @@
         "**/.git": true,
         "build/**": true,
         "legacy/**": true,
+        "cross/**": true,
         "/usr/include/**": true,
     },
     "files.exclude": {
         "**/.git": true,
         "build/**": true,
         "legacy/**": true,
+        "cross/**": true,
         "/usr/include/**": true
     },
     "testExplorer.useNativeTesting": true,
+    "cmake.exportCompileCommandsFile": true,
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "C_Cpp.autoAddFileAssociations": false,
+    "files.insertFinalNewline": true,
+    "editor.rulers": [
+        120
+    ]
 }

@@ -62,7 +62,7 @@ void Scheduler::run_next() {
     next.context_switch_to();
 }
 
-void Scheduler::save_state_and_run_next(arch::TaskState* task_state) {
+extern "C" void Scheduler::save_state_and_run_next(arch::TaskState* task_state) {
     asm volatile("cli");
     m_run_queue.push(*m_current_task);
     m_current_task->set_task_state(*task_state);

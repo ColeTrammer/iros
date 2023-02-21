@@ -13,6 +13,7 @@
       "cacheVariables": {
         "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
         "CMAKE_INSTALL_MESSAGE": "NEVER",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "IROS_DiagnosticFlags": "-fdiagnostics-color=always",
         "IROS_WarningFlags": "-Wall -Wextra -Wpedantic"
       }
@@ -47,7 +48,7 @@
         "IROS_BuildTests": "OFF",
         "IROS_BuildTools": "OFF",
         "IROS_BuildCcpp": "ON",
-        "IROS_UseDiusRuntime": "ON",
+        "IROS_UseDiusRuntime": "OFF",
         "CMAKE_CXX_COMPILER_WORKS": "ON"
       },
       "inherits": ["release_base"]

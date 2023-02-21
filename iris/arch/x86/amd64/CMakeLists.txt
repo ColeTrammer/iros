@@ -1,3 +1,8 @@
+target_compile_definitions(iris
+  PRIVATE
+    IRIS_ARCH=x86/amd64
+    IRIS_ARCH_AMD64
+)
 target_compile_options(iris
   PRIVATE
     -mno-red-zone
