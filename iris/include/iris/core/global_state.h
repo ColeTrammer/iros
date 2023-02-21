@@ -5,6 +5,16 @@
 #include <iris/mm/address_space.h>
 
 namespace iris {
+namespace arch {
+    // NOTE: this is x86_64 specific.
+    enum class CPUFeatures {
+        Smep = 1 << 0,
+        Smap = 1 << 1,
+    };
+
+    DI_DEFINE_ENUM_BITWISE_OPERATIONS(CPUFeatures)
+}
+
 struct GlobalState {
     constexpr GlobalState() {}
     constexpr ~GlobalState() {}
@@ -14,6 +24,7 @@ struct GlobalState {
     mm::VirtualAddress virtual_to_physical_offset { 0 };
     mm::VirtualAddress heap_start { 0 };
     di::Span<di::Byte const> initrd;
+    arch::CPUFeatures cpu_features;
 
     // Mutable global state. Should be protected with di::Syncrhonized in the future.
     mutable mm::AddressSpace kernel_address_space { 0, true };

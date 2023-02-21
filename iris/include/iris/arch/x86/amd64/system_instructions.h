@@ -32,4 +32,14 @@ static inline void load_cr3(u64 cr3) {
                  : "m"(cr3)
                  : "rdx", "memory");
 }
+
+static inline u64 read_cr4() {
+    u64 cr4;
+    asm volatile("mov %%cr4, %0" : "=r"(cr4));
+    return cr4;
+}
+
+static inline void load_cr4(u64 cr4) {
+    asm volatile("mov %0, %%cr4" : : "r"(cr4));
+}
 }

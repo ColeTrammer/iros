@@ -2,6 +2,7 @@
 #include <iris/core/global_state.h>
 #include <iris/core/print.h>
 #include <iris/core/task.h>
+#include <iris/core/userspace_access.h>
 #include <iris/fs/initrd.h>
 
 namespace elf64 {
@@ -79,7 +80,10 @@ Expected<di::Box<Task>> create_user_task(di::PathView path) {
                                                          mm::RegionFlags::Executable | mm::RegionFlags::Writable);
 
         auto data = di::Span { reinterpret_cast<di::Byte*>(program_header.virtual_addr), aligned_size };
-        di::copy(*raw_data.subspan(program_header.offset, program_header.memory_size), data.data());
+
+        with_userspace_access([&] {
+            di::copy(*raw_data.subspan(program_header.offset, program_header.memory_size), data.data());
+        });
     }
 
     auto user_stack = TRY(new_address_space->allocate_region(
