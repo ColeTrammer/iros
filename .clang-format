@@ -23,7 +23,6 @@ BreakBeforeBraces: Custom
 BraceWrapping:
   AfterFunction: false
   SplitEmptyFunction: false
-DerivePointerAlignment: true
 IndentCaseLabels: true
 AlignConsecutiveMacros: true
 AlignEscapedNewlines: true

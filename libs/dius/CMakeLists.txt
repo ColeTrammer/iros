@@ -86,11 +86,26 @@ if (IROS_UseDiusRuntime)
       PUBLIC
         "-nostdlib"
         "-static"
+      PRIVATE
+        "-fno-stack-protector"
+        "-ffreestanding"
     )
     target_link_options(dius_runtime
       PUBLIC
         "-nostdlib"
         "-static"
+      PRIVATE
+        "-fno-stack-protector"
+        "-ffreestanding"
+    )
+
+    target_compile_options(dius
+      PRIVATE
+        "-fno-stack-protector"
+    )
+    target_link_options(dius
+      PRIVATE
+        "-fno-stack-protector"
     )
 
     install(

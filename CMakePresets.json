@@ -72,7 +72,7 @@
       "cacheVariables": {
         "IROS_UseDiusRuntime": "ON"
       },
-      "inherits": ["release_base"]
+      "inherits": ["debug_base"]
     },
     {
       "name": "release",

@@ -19,11 +19,13 @@ void* operator new(std::size_t size, std::align_val_t align, std::nothrow_t cons
         heap_end = *dius::system::system_call<uptr>(dius::system::Number::brk, nullptr);
     }
 
-    heap_end = di::align_up(heap_end, di::to_underlying(align));
-    (void) dius::system::system_call<uptr>(dius::system::Number::brk, heap_end + size);
+    auto new_heap_end = di::align_up(heap_end, di::to_underlying(align)) + size;
+    if (dius::system::system_call<uptr>(dius::system::Number::brk, new_heap_end) != new_heap_end) {
+        return nullptr;
+    }
 
-    void* result = reinterpret_cast<void*>(heap_end);
-    heap_end += size;
+    void* result = reinterpret_cast<void*>(new_heap_end - size);
+    heap_end = new_heap_end;
     return result;
 }
 
