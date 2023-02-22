@@ -13,7 +13,7 @@
 
 #define DIUS_PLATFORM linux
 #define DIUS_PLATFORM_LINUX
-#elifdef __iros__
+#elif defined(__iros__)
 #define DIUS_PLATFORM iros
 #define DIUS_PLATFORM_IROS
 #else

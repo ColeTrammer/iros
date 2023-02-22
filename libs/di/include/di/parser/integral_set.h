@@ -121,15 +121,15 @@ namespace di {
 inline namespace literals {
     inline namespace integral_set_literals {
 
-#define __DI_DEFINE_INTEGRAL_OP(input_kind, output_kind, name) \
+#define DI_DEFINE_INTEGRAL_OP(input_kind, output_kind, name) \
     constexpr auto operator"" name(input_kind value) { return parser::MatchOne<output_kind> { (output_kind) (value) }; }
 
-        __DI_DEFINE_INTEGRAL_OP(char, char, _mc)
-        __DI_DEFINE_INTEGRAL_OP(char, c32, _m)
-        __DI_DEFINE_INTEGRAL_OP(c32, c32, _m)
-        __DI_DEFINE_INTEGRAL_OP(unsigned long long, unsigned long long, _mu)
+        DI_DEFINE_INTEGRAL_OP(char, char, _mc)
+        DI_DEFINE_INTEGRAL_OP(char, c32, _m)
+        DI_DEFINE_INTEGRAL_OP(c32, c32, _m)
+        DI_DEFINE_INTEGRAL_OP(unsigned long long, unsigned long long, _mu)
 
-#undef __DI_DEFINE_INTEGRAL_OP
+#undef DI_DEFINE_INTEGRAL_OP
     }
 }
 }
