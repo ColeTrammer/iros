@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/prelude.h>
 
+#ifdef __linux__
 void* operator new(std::size_t size) {
     return ::operator new(size, std::align_val_t { alignof(void*) });
 }
@@ -34,3 +35,4 @@ void operator delete(void*) noexcept {}
 void operator delete(void*, std::size_t) noexcept {}
 void operator delete(void*, std::align_val_t) noexcept {}
 void operator delete(void*, std::size_t, std::align_val_t) noexcept {}
+#endif

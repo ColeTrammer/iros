@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/prelude.h>
 
+#ifdef __linux__
 #include <asm/prctl.h>
 
 extern "C" {
@@ -45,3 +46,4 @@ extern "C" void dius_entry(int argc, char** argv, char** envp) {
 
     _exit(__extension__ main(argc, argv, envp));
 }
+#endif

@@ -20,6 +20,7 @@ public:
         m_task_state.context_switch_to();
     }
 
+    arch::TaskState const& task_state() const { return m_task_state; }
     void set_task_state(arch::TaskState const& state) { m_task_state = state; }
 
 private:

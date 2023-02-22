@@ -22,7 +22,8 @@
       "name": "release_base",
       "hidden": true,
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+        "CMAKE_BUILD_TYPE": "Release",
+        "IROS_ExtraFlags": "-O3"
       },
       "inherits": ["base"]
     },
@@ -48,7 +49,7 @@
         "IROS_BuildTests": "OFF",
         "IROS_BuildTools": "OFF",
         "IROS_BuildCcpp": "ON",
-        "IROS_UseDiusRuntime": "OFF",
+        "IROS_UseDiusRuntime": "ON",
         "CMAKE_CXX_COMPILER_WORKS": "ON"
       },
       "inherits": ["release_base"]

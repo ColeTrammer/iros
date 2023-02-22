@@ -8,6 +8,7 @@
 #include DIUS_PLATFORM_PATH(system_call.h)
 
 namespace dius {
+#ifdef __linux__
 enum class Protection : int {
     None = PROT_NONE,
     Executable = PROT_EXEC,
@@ -30,6 +31,7 @@ enum class MapFlags : int {
 };
 
 DI_DEFINE_ENUM_BITWISE_OPERATIONS(MapFlags)
+#endif
 
 class SyncFile {
 public:
@@ -74,7 +76,9 @@ public:
 
     di::Result<void> resize_file(u64 new_size) const;
 
+#ifdef __linux__
     di::Result<MemoryRegion> map(u64 offset, size_t size, Protection protection, MapFlags flags) const;
+#endif
 
     di::Result<void> flush() const { return {}; }
 

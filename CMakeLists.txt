@@ -75,7 +75,7 @@ macro(add_executable)
             ${IROS_SanitizerFlags}
             ${IROS_ExtraFlags}
         )
-        if (IROS_UseDiusRuntime)
+        if (IROS_UseDiusRuntime AND NOT "${ARGV0}" STREQUAL iris)
             target_link_libraries(
                 ${ARGV0}
               PRIVATE

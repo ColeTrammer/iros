@@ -2,8 +2,11 @@
 
 #include <di/prelude.h>
 #include <dius/config.h>
-#include <dius/linux/io_uring_context.h>
 #include <dius/sync_file.h>
+
+#ifdef DIUS_PLATFORM_LINUX
+#include <dius/linux/io_uring_context.h>
+#endif
 
 namespace dius {
 namespace execution = di::execution;

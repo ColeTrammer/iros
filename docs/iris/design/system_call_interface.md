@@ -62,3 +62,41 @@ reading data which never blocks, but that would be non-general and most likely m
 One idea is to use some sort of time out mechanism, which will try to cancel the IO request after a set amount of time.
 If the timeout is 0, the operation must complete immediately. However, depending on how this is implemented, it may
 require spinning up a background worker only to immediately cancel it.
+
+## Platform Specific ABI
+
+### x86_64
+
+For synchronous system calls, the calling convention will be identical to Linux's. In particular, the arguments will be
+passed in the following registers. Note that we cannot use the regular SYS-V calling convention because the `rcx` and
+`r11` registers is clobbered when using the `syscall` instruction.
+
+| ABI Component      | CPU Register | Clobbered                                                   |
+| ------------------ | ------------ | ----------------------------------------------------------- |
+| System Call Number | `rax`        | Yes                                                         |
+| Argument 1         | `rdi`        |                                                             |
+| Argument 2         | `rsi`        |                                                             |
+| Argument 3         | `rdx`        | Yes                                                         |
+| Argument 4         | `r10`        |                                                             |
+| Argument 5         | `r8`         |                                                             |
+| Argument 6         | `r9`         |                                                             |
+| Saved `rip`        | `rcx`        | Yes (when using `syscall` instruction)                      |
+| Saved `rflags`     | `r11`        | Yes (when using `syscall` instruction)                      |
+| Flags Register     | `rflags`     | Yes (kernel may mutate userspace `rflags` before returning) |
+| Success Return     | `rax`        |                                                             |
+| Error Return       | `rdx`        |                                                             |
+
+Note that this does differ from the linux system call abi in that the return value is sent through 2 registers. On
+Linux, error conditions are represented using negative return values of `rax`. Instead, the Iris kernel sets `rdx` to 0
+on success, and `rdx` will be non-zero when an error occurs. This extension makes checking for error conditions simpler
+for all system calls, and ensures the return value can use the full range of 64 bit values. It is imagined that this
+distinction can also enable APIs to report partial success, for instance, in scenarios where a disk read is only able to
+complete parts of the request.
+
+An alternative ABI for indicating an error would be to have to kernel directly set one of the bits in `flags`, and have
+the caller branch on that. This has the benefit of not clobbering the `rdx` register but is far more challenging to use
+with inline assembly.
+
+Additionally, the Iris kernel will support the `syscall` instruction in the future, but currently implements system
+calls using the 128th interrupt. Support for this should be removed once `syscall` is added, because Iros does not need
+to worry about backwards compatibility.

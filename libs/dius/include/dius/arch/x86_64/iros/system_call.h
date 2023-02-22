@@ -1,15 +1,16 @@
 #pragma once
 
-#define DIUS_SYSTEM_CALL_INSTRUCTION "syscall"
+#define DIUS_SYSTEM_CALL_INSTRUCTION "int $0x80"
 
 #define DIUS_SYSTEM_CALL_ASM_RESULT "=a"
+#define DIUS_SYSTEM_CALL_ASM_ERROR  "=d"
 #define DIUS_SYSTEM_CALL_ASM_NUMBER "0"
 
 #define DIUS_SYSTEM_CALL_ASM_ARG1 "rdi"
 #define DIUS_SYSTEM_CALL_ASM_ARG2 "rsi"
 #define DIUS_SYSTEM_CALL_ASM_ARG3 "rdx"
-#define DIUS_SYSTEM_CALL_ASM_ARG4 "r8"
-#define DIUS_SYSTEM_CALL_ASM_ARG5 "r9"
-#define DIUS_SYSTEM_CALL_ASM_ARG6 "r10"
+#define DIUS_SYSTEM_CALL_ASM_ARG4 "r10"
+#define DIUS_SYSTEM_CALL_ASM_ARG5 "r8"
+#define DIUS_SYSTEM_CALL_ASM_ARG6 "r9"
 
-#define DIUS_SYSTEM_CALL_CLOBBER "memory", "rcx", "r11", "cc"
+#define DIUS_SYSTEM_CALL_CLOBBER "memory", "cc"

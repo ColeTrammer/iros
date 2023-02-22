@@ -1,5 +1,5 @@
 namespace iris {
-enum class Error : long {
+enum class Error : unsigned long {
     Success = 0,
     AddressFamilyNotSupported = 1,
     AddressInUse = 2,
