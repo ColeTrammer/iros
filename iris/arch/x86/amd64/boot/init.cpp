@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <iris/arch/x86/amd64/hw/pic.h>
 #include <iris/arch/x86/amd64/idt.h>
+#include <iris/arch/x86/amd64/io_instructions.h>
 #include <iris/arch/x86/amd64/segment_descriptor.h>
 #include <iris/arch/x86/amd64/system_instructions.h>
 #include <iris/arch/x86/amd64/system_segment_descriptor.h>
@@ -16,6 +17,7 @@
 #include <iris/mm/map_physical_address.h>
 #include <iris/mm/page_frame_allocator.h>
 #include <iris/mm/sections.h>
+#include <iris/uapi/syscall.h>
 
 namespace iris::arch {
 [[noreturn]] static void done() {
@@ -36,13 +38,21 @@ extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, 
 
     if (irq == 0x80) {
         // System call.
-        auto string_base = task_state->rdi;
-        auto string_length = task_state->rsi;
-        auto string = di::TransparentStringView { reinterpret_cast<char const*>(string_base), string_length };
+        if (task_state->rax == di::to_underlying(SystemCall::debug_print)) {
+            auto string_base = task_state->rdi;
+            auto string_length = task_state->rsi;
+            auto string = di::TransparentStringView { reinterpret_cast<char const*>(string_base), string_length };
 
-        iris::with_userspace_access([&] {
-            iris::print("{}"_sv, string);
-        });
+            iris::with_userspace_access([&] {
+                iris::print("{}"_sv, string);
+            });
+        } else if (task_state->rax == di::to_underlying(SystemCall::shutdown)) {
+            iris::println("Shutdowning down..."_sv);
+
+            // NOTE: this is specific to QEMU, as per OSDEV:
+            //       https://wiki.osdev.org/Shutdown
+            x86::amd64::io_out(0x604_u16, 0x2000_u32);
+        }
 
         iris::global_state().scheduler.save_state_and_run_next(task_state);
     }
