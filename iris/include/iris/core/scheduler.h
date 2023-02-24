@@ -18,5 +18,6 @@ private:
 
     Task* m_current_task { nullptr };
     di::Queue<Task, di::IntrusiveList<Task>> m_run_queue;
+    di::Box<Task> m_idle_task;
 };
 }
