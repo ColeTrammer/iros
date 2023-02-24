@@ -62,10 +62,17 @@ void Scheduler::run_next() {
     next.context_switch_to();
 }
 
-extern "C" void Scheduler::save_state_and_run_next(arch::TaskState* task_state) {
+void Scheduler::save_state_and_run_next(arch::TaskState* task_state) {
     asm volatile("cli");
     m_run_queue.push(*m_current_task);
     m_current_task->set_task_state(*task_state);
+    run_next();
+}
+
+void Scheduler::exit_current_task() {
+    asm volatile("cli");
+    // NOTE: by not pushing the current task into the run queue, it will
+    //       not get scheduled again.
     run_next();
 }
 }

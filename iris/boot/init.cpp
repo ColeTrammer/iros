@@ -17,15 +17,6 @@
 #include <iris/mm/sections.h>
 #include <limine.h>
 
-[[noreturn]] static void done() {
-    for (;;) {
-        asm volatile("mov $52, %eax\n"
-                     "cli\n"
-                     "hlt\n");
-    }
-    di::unreachable();
-}
-
 static int counter = 0;
 
 static void do_task() {
@@ -34,7 +25,7 @@ static void do_task() {
         iris::println("counter: {}"_sv, ++counter);
         asm volatile("sti\nhlt");
     }
-    done();
+    iris::global_state().scheduler.exit_current_task();
 }
 
 extern "C" {
@@ -113,7 +104,5 @@ void iris_main() {
     iris::println("Starting the kernel scheduler..."_sv);
 
     scheduler.start();
-
-    done();
 }
 }

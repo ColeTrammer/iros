@@ -38,20 +38,32 @@ extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, 
 
     if (irq == 0x80) {
         // System call.
-        if (task_state->rax == di::to_underlying(SystemCall::debug_print)) {
-            auto string_base = task_state->rdi;
-            auto string_length = task_state->rsi;
-            auto string = di::TransparentStringView { reinterpret_cast<char const*>(string_base), string_length };
+        auto number = SystemCall(task_state->rax);
+        switch (number) {
+            case SystemCall::debug_print: {
+                auto string_base = task_state->rdi;
+                auto string_length = task_state->rsi;
+                auto string = di::TransparentStringView { reinterpret_cast<char const*>(string_base), string_length };
 
-            iris::with_userspace_access([&] {
-                iris::print("{}"_sv, string);
-            });
-        } else if (task_state->rax == di::to_underlying(SystemCall::shutdown)) {
-            iris::println("Shutdowning down..."_sv);
+                iris::with_userspace_access([&] {
+                    iris::print("{}"_sv, string);
+                });
+                break;
+            }
+            case SystemCall::shutdown: {
+                iris::println("Shutdowning down..."_sv);
 
-            // NOTE: this is specific to QEMU, as per OSDEV:
-            //       https://wiki.osdev.org/Shutdown
-            x86::amd64::io_out(0x604_u16, 0x2000_u32);
+                // NOTE: this is specific to QEMU, as per OSDEV:
+                //       https://wiki.osdev.org/Shutdown
+                x86::amd64::io_out(0x604_u16, 0x2000_u32);
+                break;
+            }
+            case SystemCall::exit_task: {
+                iris::println("Exiting task..."_sv);
+
+                iris::global_state().scheduler.exit_current_task();
+                break;
+            }
         }
 
         iris::global_state().scheduler.save_state_and_run_next(task_state);
