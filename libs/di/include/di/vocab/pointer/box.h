@@ -16,7 +16,7 @@ public:
     Box() = default;
 
     constexpr Box(nullptr_t) {}
-    constexpr Box(T* pointer) : m_pointer(pointer) {}
+    constexpr explicit Box(T* pointer) : m_pointer(pointer) {}
 
     Box(Box const&) = delete;
     constexpr Box(Box&& other) : m_pointer(other.release()) {}
