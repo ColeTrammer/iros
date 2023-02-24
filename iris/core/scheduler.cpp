@@ -6,7 +6,20 @@ void Scheduler::schedule_task(Task& task) {
     m_run_queue.push(task);
 }
 
+static void do_idle() {
+    // x86_64 specific. Enables IRQs and then halt.
+
+    for (;;) {
+        asm volatile("sti\n"
+                     "hlt\n"
+                     "cli\n");
+    }
+}
+
 void Scheduler::start() {
+    // Initialize the idle task.
+    m_idle_task = *create_kernel_task(do_idle);
+
     run_next();
 }
 
@@ -55,16 +68,20 @@ void Scheduler::start() {
 }
 
 void Scheduler::run_next() {
-    ASSERT(!m_run_queue.empty());
-
-    auto& next = *m_run_queue.pop();
+    // If there is nothing to run, execute the idle task.
+    auto& next = m_run_queue.pop().value_or(*m_idle_task);
     m_current_task = di::addressof(next);
     next.context_switch_to();
 }
 
 void Scheduler::save_state_and_run_next(arch::TaskState* task_state) {
     asm volatile("cli");
-    m_run_queue.push(*m_current_task);
+
+    // Ensure that we never put the idle task into the run queue.
+    if (m_current_task != m_idle_task.get()) {
+        m_run_queue.push(*m_current_task);
+    }
+
     m_current_task->set_task_state(*task_state);
     run_next();
 }
