@@ -8,10 +8,10 @@ static auto page_frame_bitmap = di::BitSet<physical_page_count> {};
 
 void reserve_page_frames(PhysicalAddress base_address, usize page_count) {
     for (auto address = base_address; address < base_address + 4096 * page_count; address += 4096) {
-        if (address.raw_address() / 4096 >= physical_page_count) {
+        if (address.raw_value() / 4096 >= physical_page_count) {
             break;
         }
-        page_frame_bitmap[address.raw_address() / 4096] = true;
+        page_frame_bitmap[address.raw_value() / 4096] = true;
     }
 }
 
@@ -26,7 +26,7 @@ Expected<PhysicalAddress> allocate_page_frame() {
 }
 
 void deallocate_page_frame(PhysicalAddress address) {
-    ASSERT(address.raw_address() % 4096 == 0);
-    page_frame_bitmap[address.raw_address() / 4096] = false;
+    ASSERT(address.raw_value() % 4096 == 0);
+    page_frame_bitmap[address.raw_value() / 4096] = false;
 }
 }
