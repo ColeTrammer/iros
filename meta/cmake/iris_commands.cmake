@@ -26,9 +26,10 @@ add_custom_target(
     COMMAND mkdir -p "${CMAKE_CURRENT_BINARY_DIR}/initrd"
     COMMAND cd "${CMAKE_CURRENT_BINARY_DIR}/initrd"
     COMMAND cp "${CMAKE_CURRENT_BINARY_DIR}/iris/test_userspace" .
+    COMMAND cp "${CMAKE_CURRENT_BINARY_DIR}/iris/test_create_task" .
     COMMAND rm -f "${CMAKE_CURRENT_BINARY_DIR}/initrd/initrd.bin"
     COMMAND ${INITRD_COMMAND}
-    DEPENDS ${INITRD_TARGET} test_userspace
+    DEPENDS ${INITRD_TARGET} test_userspace test_create_task
 )
 
 add_custom_target(

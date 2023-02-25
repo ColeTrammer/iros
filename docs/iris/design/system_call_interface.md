@@ -42,6 +42,16 @@ It is typical to support passing 6 arguments to system calls, so the kernel syst
 fit exactly 6 arguments. This will ensure that from an API perspective, system calls using the queue will be
 the same as calling the explicitly synchronous version.
 
+### Note on Null-Terminated Strings
+
+The POSIX C API passes paths as null-terminated C strings. This prevents applications which support view types, like C++
+and Rust, from easily using these APIs. In fact, the view types usually have to be copied simply to add a zero to the
+end of the buffer. Null-terminated strings are also far more annoying to deal with in the kernel.
+
+As a consequence, the Iris kernel will not support null-terminated strings. Instead, system call arguments will be
+passe as a pointer + size pair. When emulating POSIX APIs, the system call wrapper must call `strlen` before entering
+the kernel.
+
 ### Emulating Readyness APIs
 
 With this approach, modelling readiness can be done by making an asynchronous query, which effectively completes
@@ -62,6 +72,45 @@ reading data which never blocks, but that would be non-general and most likely m
 One idea is to use some sort of time out mechanism, which will try to cancel the IO request after a set amount of time.
 If the timeout is 0, the operation must complete immediately. However, depending on how this is implemented, it may
 require spinning up a background worker only to immediately cancel it.
+
+## Task Creation
+
+Traditionally, unix systems use a combination of `fork` and `exec` to implement task creation. This approach is not
+maximally efficent, because `fork` requires creating a COW mapping of the process's address space. What's worse is that in
+most cases, this the created process's address space is immediately thrown away by a call to `exec`. As such, the Iris
+kernel will not implement task creation using this API.
+
+Instead, the Iris kernel will support a rich set of system calls for task creation. For instance, to create a new
+process from some binary, a userspace program would be expected to submit the following multiple system calls:
+
+1. create_task (which will create a new kernel task, with no attributes set)
+1. load_executable (which will initialize the tasks address space)
+1. share_files (which will give the new task access to stdin, stdout, and stderr)
+1. start_task (which will schedule the task now that it has been fully initialized)
+
+One point to note is that because the underlying system call API will allow for queueing multiple system calls at once,
+this will not require performing more than one context switch to create the new task. Additionally, a system call like
+share_files can be generally useful outside of task creation, and maybe can be used with running tasks as well. More
+generally, a system call in POSIX like `setpgid` will be implemented in the Iris kernel as `set_task_pgid`, and take the
+task whose process group id should be set as the first argument. In this way, the `set_task_pgid` can be used both to
+set another tasks process group id, as well as its own. This ensures that this task creation mechanism won't require
+duplicating a large number of system calls.
+
+### Emulating POSIX
+
+It's clear that the above mechanism can support `posix_spawn`, given that each system call involved could map directly
+to an "action" in terms of `posix_spawn`.
+
+More interestingly is how `fork` can be emulated using this mechanism. All that is needed is for the kernel to provide
+a dedicated system call, such as `create_cow_mapping`, which will give the newly created task a copy of another address
+space. In combination with some additional system calls for directly modifying a task's state, such as
+`set_instruction_pointer` and `set_cpu_register`, the exact API of fork() can be emulated. Of course, anything shared
+accross `fork` would require some system call which duplicates the resource to the newly created task, but for most
+attributes this will be necessary anyway, without even considering supporting `fork`.
+
+A `fork` emulating with slightly different semantics can likely be used to implement `vfork` as well, although POSIX
+applications which use `vfork` should probably be written to use `posix_spawn` instead whenever possible, which will
+ensure that their process creation strategy will be optimized for the target platform.
 
 ## Platform Specific ABI
 

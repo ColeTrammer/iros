@@ -8,7 +8,7 @@
 namespace di::vocab {
 struct RcTag {};
 
-template<detail::IntrusivePtrValid<RcTag> T>
+template<typename T>
 using Rc = IntrusivePtr<T, RcTag>;
 
 template<typename T>

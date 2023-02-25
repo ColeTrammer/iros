@@ -1,4 +1,5 @@
 #include <iris/core/print.h>
+#include <iris/mm/map_physical_address.h>
 #include <iris/mm/page_frame_allocator.h>
 
 namespace iris::mm {
@@ -19,6 +20,10 @@ Expected<PhysicalAddress> allocate_page_frame() {
     for (usize i = 0; i < physical_page_count; i++) {
         if (!page_frame_bitmap[i]) {
             page_frame_bitmap[i] = true;
+
+            auto& array =
+                TRY(map_physical_address(PhysicalAddress(i * 4096), 4096)).typed<di::Array<mm::PhysicalAddress, 512>>();
+            array.fill(mm::PhysicalAddress(0));
             return PhysicalAddress(i * 4096);
         }
     }

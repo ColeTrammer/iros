@@ -2,6 +2,7 @@
 #include <iris/core/global_state.h>
 #include <iris/core/print.h>
 #include <iris/core/task.h>
+#include <iris/core/task_namespace.h>
 #include <iris/core/userspace_access.h>
 #include <iris/fs/initrd.h>
 
@@ -45,25 +46,52 @@ struct ProgramHeader {
 }
 
 namespace iris {
-Expected<di::Arc<Task>> create_kernel_task(void (*entry)()) {
+Task::Task(mm::VirtualAddress entry, mm::VirtualAddress stack, bool userspace, di::Arc<mm::AddressSpace> address_space,
+           di::Arc<TaskNamespace> task_namespace, TaskId id)
+    : m_task_state(entry.raw_value(), stack.raw_value(), userspace)
+    , m_address_space(di::move(address_space))
+    , m_task_namespace(di::move(task_namespace))
+    , m_id(id) {}
+
+Task::~Task() {
+    m_task_namespace->unregister_task(*this);
+}
+
+Expected<di::Arc<Task>> create_kernel_task(TaskNamespace& task_namespace, void (*entry)()) {
     auto entry_address = mm::VirtualAddress(di::to_uintptr(entry));
 
     auto& address_space = global_state().kernel_address_space;
     auto stack = TRY(address_space.allocate_region(0x2000, mm::RegionFlags::Readable | mm::RegionFlags::Writable));
 
-    return di::try_make_arc<Task>(entry_address, stack + 0x2000, false, address_space.arc_from_this());
+    auto task_id = TRY(task_namespace.allocate_task_id());
+    auto result = TRY(di::try_make_arc<Task>(entry_address, stack + 0x2000, false, address_space.arc_from_this(),
+                                             task_namespace.arc_from_this(), task_id));
+    TRY(task_namespace.register_task(*result));
+    return result;
 }
 
-Expected<di::Arc<Task>> create_user_task(di::PathView path) {
+Expected<di::Arc<Task>> create_user_task(TaskNamespace& task_namespace) {
+    auto new_address_space = TRY(mm::create_empty_user_address_space());
+
+    auto user_stack = TRY(new_address_space->allocate_region(
+        0x10000, mm::RegionFlags::Writable | mm::RegionFlags::User | mm::RegionFlags::Readable));
+    auto task_id = TRY(task_namespace.allocate_task_id());
+    auto result = TRY(di::try_make_arc<Task>(mm::VirtualAddress(0), user_stack + 0x10000, true,
+                                             di::move(new_address_space), task_namespace.arc_from_this(), task_id));
+    TRY(task_namespace.register_task(*result));
+    return result;
+}
+
+Expected<void> load_executable(Task& task, di::PathView path) {
     auto raw_data = TRY(lookup_in_initrd(path));
 
     auto* elf_header = raw_data.typed_pointer_unchecked<elf64::ElfHeader>(0);
     ASSERT_EQ(sizeof(elf64::ProgramHeader), elf_header->program_entry_size);
 
-    auto new_address_space = TRY(mm::create_empty_user_address_space());
-
-    // FIXME: we need to also disable preemption while accessing this address space.
-    new_address_space->load();
+    asm volatile("cli");
+    auto& current_address_space = global_state().scheduler.current_address_space();
+    auto& address_space = task.address_space();
+    address_space.load();
 
     auto program_headers = raw_data.typed_span_unchecked<elf64::ProgramHeader>(elf_header->program_table_off,
                                                                                elf_header->program_entry_count);
@@ -75,9 +103,9 @@ Expected<di::Arc<Task>> create_user_task(di::PathView path) {
         }
 
         auto aligned_size = di::align_up(program_header.memory_size, 4096);
-        (void) new_address_space->allocate_region_at(mm::VirtualAddress(program_header.virtual_addr), aligned_size,
-                                                     mm::RegionFlags::User | mm::RegionFlags::Readable |
-                                                         mm::RegionFlags::Executable | mm::RegionFlags::Writable);
+        (void) address_space.allocate_region_at(mm::VirtualAddress(program_header.virtual_addr), aligned_size,
+                                                mm::RegionFlags::User | mm::RegionFlags::Readable |
+                                                    mm::RegionFlags::Executable | mm::RegionFlags::Writable);
 
         auto data = di::Span { reinterpret_cast<di::Byte*>(program_header.virtual_addr), aligned_size };
 
@@ -85,10 +113,9 @@ Expected<di::Arc<Task>> create_user_task(di::PathView path) {
             di::copy(*raw_data.subspan(program_header.offset, program_header.memory_size), data.data());
         });
     }
+    current_address_space.load();
 
-    auto user_stack = TRY(new_address_space->allocate_region(
-        0x10000, mm::RegionFlags::Writable | mm::RegionFlags::User | mm::RegionFlags::Readable));
-    return di::try_make_arc<Task>(mm::VirtualAddress(elf_header->entry), user_stack + 0x10000, true,
-                                  di::move(new_address_space));
+    task.set_instruction_pointer(mm::VirtualAddress(elf_header->entry));
+    return {};
 }
 }

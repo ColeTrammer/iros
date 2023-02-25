@@ -10,7 +10,7 @@
 namespace di::vocab {
 struct ArcTag {};
 
-template<detail::IntrusivePtrValid<ArcTag> T>
+template<typename T>
 using Arc = IntrusivePtr<T, ArcTag>;
 
 template<typename T>

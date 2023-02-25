@@ -58,6 +58,7 @@ if(IROS_BuildIris)
   add_executable(iris
       boot/init.cpp
       core/global_state.cpp
+      core/task_namespace.cpp
       core/task.cpp
       core/scheduler.cpp
       fs/initrd.cpp
@@ -134,6 +135,35 @@ if(IROS_BuildIris)
       -static
   )
   install(TARGETS test_userspace
+      RUNTIME DESTINATION boot
+  )
+
+  add_executable(test_create_task 
+      test_create_task.cpp
+  )
+  target_compile_definitions(test_create_task
+    PRIVATE
+      "DI_NO_ASSERT_ALLOCATION"
+  )
+  target_compile_options(test_create_task
+    PRIVATE
+      -ffreestanding
+      -nostdlib
+      -nostartfiles
+      -fno-pic
+      -fno-pie
+      -static
+  )
+  target_link_options(test_create_task
+    PRIVATE
+      -ffreestanding
+      -nostdlib
+      -nostartfiles
+      -fno-pic
+      -fno-pie
+      -static
+  )
+  install(TARGETS test_create_task
       RUNTIME DESTINATION boot
   )
 endif()

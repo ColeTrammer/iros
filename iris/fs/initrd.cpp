@@ -9,8 +9,6 @@ Expected<di::Span<di::Byte const>> lookup_in_initrd(di::PathView path) {
         return di::Unexpected(Error::OperationNotSupported);
     }
 
-    println("Looking up: {}"_sv, path);
-
     auto initrd = global_state().initrd;
     auto& super_block = *initrd.typed_pointer_unchecked<initrd::SuperBlock>(0);
     if (super_block.signature != initrd::signature) {
@@ -62,10 +60,6 @@ Expected<di::Span<di::Byte const>> lookup_in_initrd(di::PathView path) {
         auto data = data_from_dirent(*current);
         auto it = DirentIterator(data.data());
         auto sent = di::default_sentinel;
-
-        di::for_each(it, sent, [&](auto& entry) {
-            println("Found {}"_sv, entry.name());
-        });
 
         auto result = di::find(it, sent, first, &initrd::DirectoryEntry::name);
         if (result == sent) {

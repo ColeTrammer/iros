@@ -22,7 +22,6 @@ struct AdoptObject {
 constexpr inline auto adopt_object = AdoptObject {};
 
 template<typename T, typename Tag>
-requires(detail::IntrusivePtrValid<T, Tag>)
 class IntrusivePtr {
 public:
     constexpr IntrusivePtr() : m_pointer(nullptr) {}
@@ -31,8 +30,13 @@ public:
     constexpr IntrusivePtr(IntrusivePtr const& other) { reset(other.get(), adopt_object); }
     constexpr IntrusivePtr(IntrusivePtr&& other) : m_pointer(other.release()) {}
 
-    constexpr IntrusivePtr(T* pointer, RetainObject) : m_pointer(pointer) {}
-    constexpr IntrusivePtr(T* pointer, AdoptObject) { reset(pointer, adopt_object); }
+    constexpr IntrusivePtr(T* pointer, RetainObject) : m_pointer(pointer) {
+        static_assert(detail::IntrusivePtrValid<T, Tag>, "Invalid intrusive pointer Tag type.");
+    }
+    constexpr IntrusivePtr(T* pointer, AdoptObject) {
+        static_assert(detail::IntrusivePtrValid<T, Tag>, "Invalid intrusive pointer Tag type.");
+        reset(pointer, adopt_object);
+    }
 
     constexpr ~IntrusivePtr() { reset(); }
 
