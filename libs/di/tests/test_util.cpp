@@ -49,5 +49,32 @@ constexpr void uuid() {
     ASSERT(!y.null());
 }
 
+constexpr void strong_int() {
+    struct XTag {
+        using Type = i32;
+        struct Mixin {
+            using Self = di::StrongInt<XTag>;
+
+            constexpr i32 foo() const { return static_cast<Self const&>(*this).raw_value() + 1; }
+        };
+    };
+
+    using X = di::StrongInt<XTag>;
+
+    auto x = X(0);
+    ASSERT_EQ(x, X(0));
+
+    ++x;
+    ASSERT_EQ(x, X(1));
+
+    ASSERT_EQ(x.foo(), 2);
+
+    auto xs = di::to_string(x);
+    ASSERT_EQ(xs, "1"_sv);
+
+    static_assert(sizeof(X) == sizeof(i32));
+}
+
 TESTC(util, scope_exit)
 TESTC(util, uuid)
+TESTC(util, strong_int)
