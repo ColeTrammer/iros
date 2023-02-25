@@ -91,15 +91,19 @@ void iris_main() {
 
     auto& scheduler = global_state.scheduler;
     {
-        auto task1 = *iris::create_kernel_task(do_task);
-        auto task2 = *iris::create_kernel_task(do_task);
-        auto task3 = *iris::create_kernel_task(do_task);
+        auto task1 = *iris::create_kernel_task(global_state.task_namespace, do_task);
+        auto task2 = *iris::create_kernel_task(global_state.task_namespace, do_task);
+        auto task3 = *iris::create_kernel_task(global_state.task_namespace, do_task);
 
         scheduler.schedule_task(*task1);
         scheduler.schedule_task(*task2);
         scheduler.schedule_task(*task3);
 
-        auto task4 = *iris::create_user_task("/test_userspace"_pv);
+        auto task4 = *iris::create_user_task(global_state.task_namespace);
+
+        auto init_path = "/test_create_task"_pv;
+        iris::println("Loading initial userspace task: {}"_sv, init_path);
+        iris::load_executable(*task4, init_path);
         scheduler.schedule_task(*task4);
     }
 

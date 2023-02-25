@@ -49,7 +49,6 @@ AddressSpace::~AddressSpace() {
         deallocate_page_frame(physical_address);
     });
 
-    println("Freeing physical pages: structure={} resident={}"_sv, structure_pages(), resident_pages());
     free_all_user_pages(di::bit_cast<page_structure::StructureEntry>(architecture_page_table_base()));
 }
 
@@ -67,15 +66,11 @@ Expected<void> AddressSpace::map_physical_page(VirtualAddress location, Physical
     auto const not_executable = !(flags & RegionFlags::Executable);
     auto const user = !!(flags & RegionFlags::User);
 
-    auto pml4_or_error = map_physical_address(PhysicalAddress(architecture_page_table_base()), 0x1000);
-    if (!pml4_or_error) {
-        return di::Unexpected(pml4_or_error.error());
-    }
-
     auto decomposed = decompose_virtual_address(location);
     auto pml4_offset = decomposed.get<page_structure::Pml4Offset>();
-    auto& pml4 = TRY(map_physical_address(PhysicalAddress(architecture_page_table_base()), 0x1000))
-                     .typed<page_structure::PageStructureTable>();
+    auto& pml4 =
+        TRY(map_physical_address(PhysicalAddress(di::align_down(architecture_page_table_base(), 4096)), 0x1000))
+            .typed<page_structure::PageStructureTable>();
     if (!pml4[pml4_offset].get<page_structure::Present>()) {
         pml4[pml4_offset] = page_structure::StructureEntry(
             page_structure::PhysicalAddress(TRY(allocate_page_frame()).raw_value() >> 12),

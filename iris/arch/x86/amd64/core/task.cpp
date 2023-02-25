@@ -45,3 +45,9 @@ TaskState::TaskState(u64 entry, u64 stack, bool userspace) : rip(entry), rsp(sta
                  "iretq\n");
 }
 }
+
+namespace iris {
+void Task::set_instruction_pointer(mm::VirtualAddress address) {
+    m_task_state.rip = address.raw_value();
+}
+}

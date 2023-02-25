@@ -1,3 +1,4 @@
+#include <iris/core/global_state.h>
 #include <iris/core/print.h>
 #include <iris/core/scheduler.h>
 
@@ -18,7 +19,7 @@ static void do_idle() {
 
 void Scheduler::start() {
     // Initialize the idle task.
-    m_idle_task = *create_kernel_task(do_idle);
+    m_idle_task = *create_kernel_task(global_state().task_namespace, do_idle);
 
     run_next();
 }
@@ -100,5 +101,12 @@ void Scheduler::exit_current_task() {
     // NOTE: by not pushing the current task into the run queue, it will
     //       not get scheduled again.
     run_next();
+}
+
+mm::AddressSpace& Scheduler::current_address_space() {
+    if (!m_current_task) {
+        return global_state().kernel_address_space;
+    }
+    return current_task().address_space();
 }
 }

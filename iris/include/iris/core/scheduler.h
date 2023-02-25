@@ -13,6 +13,9 @@ public:
     [[noreturn]] void save_state_and_run_next(arch::TaskState* state);
     [[noreturn]] void exit_current_task();
 
+    Task& current_task() const { return *m_current_task; }
+    mm::AddressSpace& current_address_space();
+
 private:
     [[noreturn]] void run_next();
 

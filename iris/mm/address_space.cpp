@@ -1,6 +1,7 @@
 #include <iris/core/global_state.h>
 #include <iris/core/print.h>
 #include <iris/mm/address_space.h>
+#include <iris/mm/map_physical_address.h>
 #include <iris/mm/page_frame_allocator.h>
 #include <iris/mm/sections.h>
 
@@ -15,7 +16,8 @@ Expected<VirtualAddress> AddressSpace::allocate_region(usize page_aligned_length
     }
 
     auto heap_start = global_state().heap_start;
-    auto last_virtual_address = m_regions.back().transform(&Region::end).value_or(heap_start);
+    auto default_address = m_kernel ? heap_start : mm::VirtualAddress(0x10000000000);
+    auto last_virtual_address = m_regions.back().transform(&Region::end).value_or(default_address);
     auto new_virtual_address = last_virtual_address + 8192 * 0x1000;
 
     auto [new_region, did_insert] = m_regions.emplace(new_virtual_address, page_aligned_length, flags);

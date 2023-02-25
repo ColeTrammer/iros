@@ -3,6 +3,7 @@
 #include <di/prelude.h>
 #include <iris/core/config.h>
 #include <iris/core/scheduler.h>
+#include <iris/core/task_namespace.h>
 #include <iris/mm/address_space.h>
 
 // clang-format off
@@ -24,6 +25,7 @@ struct GlobalState {
     // Mutable global state. Should be protected with di::Syncrhonized in the future.
     mutable mm::AddressSpace kernel_address_space { 0, true };
     mutable mm::VirtualAddress heap_end { 0 };
+    mutable TaskNamespace task_namespace;
 
     // Mutable global state which should really be per-processor, once SMP is supported.
     mutable Scheduler scheduler;

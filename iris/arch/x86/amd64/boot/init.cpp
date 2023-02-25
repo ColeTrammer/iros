@@ -64,6 +64,64 @@ extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, 
                 iris::global_state().scheduler.exit_current_task();
                 break;
             }
+            case SystemCall::create_task: {
+                auto result = iris::create_user_task(iris::global_state().scheduler.current_task().task_namespace());
+                if (!result) {
+                    task_state->rdx = di::bit_cast<u64>(result.error());
+                } else {
+                    task_state->rdx = 0;
+                    task_state->rax = (*result)->id().raw_value();
+                }
+                break;
+            }
+            case SystemCall::load_executable: {
+                auto task_id = iris::TaskId(task_state->rdi);
+                auto string_base = task_state->rsi;
+                auto string_length = task_state->rdx;
+                auto string = di::TransparentStringView { reinterpret_cast<char const*>(string_base), string_length };
+
+                iris::with_userspace_access([&] {
+                    auto path = di::PathView { string };
+                    iris::println("Loading executable for {}: {}..."_sv, task_id, path);
+
+                    auto& task_namespace = iris::global_state().scheduler.current_task().task_namespace();
+                    auto result = task_namespace.find_task(task_id);
+                    if (!result) {
+                        task_state->rdx = di::bit_cast<u64>(result.error());
+                        return;
+                    }
+
+                    auto result2 = iris::load_executable(*result, path);
+                    if (!result2) {
+                        task_state->rdx = di::bit_cast<u64>(result2.error());
+                    } else {
+                        task_state->rdx = 0;
+                        task_state->rax = 0;
+                    }
+                });
+                break;
+            }
+            case SystemCall::start_task: {
+                auto task_id = iris::TaskId(task_state->rdi);
+
+                auto& task_namespace = iris::global_state().scheduler.current_task().task_namespace();
+                auto result = task_namespace.find_task(task_id);
+                if (!result) {
+                    task_state->rdx = di::bit_cast<u64>(result.error());
+                } else {
+                    task_state->rdx = 0;
+                    task_state->rax = 0;
+                }
+
+                global_state().scheduler.schedule_task(*result);
+                break;
+            }
+            default:
+                iris::println("Encounted unexpected system call: {}"_sv, di::to_underlying(number));
+
+                task_state->rax = 0;
+                task_state->rdx = 0;
+                break;
         }
 
         iris::global_state().scheduler.save_state_and_run_next(task_state);
