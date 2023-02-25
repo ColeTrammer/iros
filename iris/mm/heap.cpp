@@ -18,19 +18,19 @@ void* operator new(std::size_t size, std::align_val_t alignment, std::nothrow_t 
     auto& global_state = iris::global_state();
     auto old_heap_end = global_state.heap_end;
 
-    if (global_state.heap_end.raw_address() % di::to_underlying(alignment) != 0) {
+    if (global_state.heap_end.raw_value() % di::to_underlying(alignment) != 0) {
         global_state.heap_end = global_state.heap_end + di::to_underlying(alignment);
         global_state.heap_end =
-            iris::mm::VirtualAddress(global_state.heap_end.raw_address() & (~(di::to_underlying(alignment) - 1)));
+            iris::mm::VirtualAddress(global_state.heap_end.raw_value() & (~(di::to_underlying(alignment) - 1)));
     }
 
     auto result = global_state.heap_end;
     global_state.heap_end = global_state.heap_end + size;
 
     if (old_heap_end == global_state.heap_start ||
-        (old_heap_end.raw_address() - 1) >> 12 != (global_state.heap_end.raw_address() - 1) >> 12) {
-        auto virtual_start = iris::mm::VirtualAddress(old_heap_end.raw_address() / 4096 * 4096);
-        auto virtual_end = iris::mm::VirtualAddress((global_state.heap_end.raw_address() + 4095) / 4096 * 4096);
+        (old_heap_end.raw_value() - 1) >> 12 != (global_state.heap_end.raw_value() - 1) >> 12) {
+        auto virtual_start = iris::mm::VirtualAddress(old_heap_end.raw_value() / 4096 * 4096);
+        auto virtual_end = iris::mm::VirtualAddress((global_state.heap_end.raw_value() + 4095) / 4096 * 4096);
         for (auto virtual_address = virtual_start; virtual_address < virtual_end; virtual_address += 4096) {
 
             auto& kernel_address_space = global_state.kernel_address_space;

@@ -15,7 +15,7 @@ class Task
 public:
     explicit Task(mm::VirtualAddress entry, mm::VirtualAddress stack, bool userspace,
                   di::Arc<mm::AddressSpace> address_space)
-        : m_task_state(entry.raw_address(), stack.raw_address(), userspace), m_address_space(di::move(address_space)) {
+        : m_task_state(entry.raw_value(), stack.raw_value(), userspace), m_address_space(di::move(address_space)) {
         // Explicitly leak one reference to the task, which will be dropped when exit_task() is called.
         (void) arc_from_this().release();
     }

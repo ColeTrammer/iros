@@ -53,7 +53,7 @@ void iris_main() {
     iris::println("Starting architecture independent initialization..."_sv);
 
     auto& global_state = global_state_in_boot();
-    global_state.heap_start = iris::mm::VirtualAddress(di::align_up(iris::mm::kernel_end.raw_address(), 4096));
+    global_state.heap_start = iris::mm::VirtualAddress(di::align_up(iris::mm::kernel_end.raw_value(), 4096));
     global_state.heap_end = global_state.heap_start;
 
     auto memory_map = di::Span { memmap_request.response->entries, memmap_request.response->entry_count };
@@ -77,7 +77,7 @@ void iris_main() {
 
     iris::println("Kernel virtual base: {:#018x}"_sv, kernel_address_request.response->virtual_base);
     iris::println("Kernel physical base: {:#018x}"_sv, kernel_address_request.response->physical_base);
-    iris::println("Max physical memory: {:#018x}"_sv, global_state.max_physical_address.raw_address());
+    iris::println("Max physical memory: {}"_sv, global_state.max_physical_address);
     iris::println("Module base address: {}"_sv, initrd_module.address);
 
     // NOTE: the limine boot loader places the module in the HHDM, and marks the region and kernel+modules,

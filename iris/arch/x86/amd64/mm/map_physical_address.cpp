@@ -25,7 +25,7 @@ Expected<PhysicalAddressMapping> map_physical_address(PhysicalAddress address, u
         iris::println("HHDM Base Address: {:#x}"_sv, hhdm_request.response->offset);
         base = hhdm_request.response->offset;
     }
-    auto virtual_address = reinterpret_cast<di::Byte*>(base + address.raw_address());
+    auto virtual_address = reinterpret_cast<di::Byte*>(base + address.raw_value());
     return PhysicalAddressMapping({ virtual_address, byte_size });
 }
 }
