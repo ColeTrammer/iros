@@ -89,17 +89,19 @@ void iris_main() {
         mm::PhysicalAddress(kernel_address_request.response->physical_base),
         mm::VirtualAddress(kernel_address_request.response->virtual_base), global_state.max_physical_address));
 
-    auto task1 = *iris::create_kernel_task(do_task);
-    auto task2 = *iris::create_kernel_task(do_task);
-    auto task3 = *iris::create_kernel_task(do_task);
-
     auto& scheduler = global_state.scheduler;
-    scheduler.schedule_task(*task1);
-    scheduler.schedule_task(*task2);
-    scheduler.schedule_task(*task3);
+    {
+        auto task1 = *iris::create_kernel_task(do_task);
+        auto task2 = *iris::create_kernel_task(do_task);
+        auto task3 = *iris::create_kernel_task(do_task);
 
-    auto task4 = *iris::create_user_task("/test_userspace"_pv);
-    scheduler.schedule_task(*task4);
+        scheduler.schedule_task(*task1);
+        scheduler.schedule_task(*task2);
+        scheduler.schedule_task(*task3);
+
+        auto task4 = *iris::create_user_task("/test_userspace"_pv);
+        scheduler.schedule_task(*task4);
+    }
 
     iris::println("Starting the kernel scheduler..."_sv);
 

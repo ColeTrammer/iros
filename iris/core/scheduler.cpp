@@ -87,6 +87,15 @@ void Scheduler::save_state_and_run_next(arch::TaskState* task_state) {
 }
 
 void Scheduler::exit_current_task() {
+    {
+        // Construct a temporary Arc to the task. By using retain_object, the reference
+        // count is not incremented. Thus, when task_reference goes out of scope, the task's
+        // reference count will decrement, likely freeing its memory. This reference count was
+        // reserved in the Task's constructor, to only be decremented once exit_task() is
+        // explicitly called.
+        auto task_reference = di::Arc<Task>(m_current_task, di::retain_object);
+    }
+
     asm volatile("cli");
     // NOTE: by not pushing the current task into the run queue, it will
     //       not get scheduled again.

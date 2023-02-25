@@ -9,11 +9,16 @@
 // clang-format on
 
 namespace iris {
-class Task : public di::IntrusiveListElement<> {
+class Task
+    : public di::IntrusiveListElement<>
+    , public di::IntrusiveRefCount<Task> {
 public:
     explicit Task(mm::VirtualAddress entry, mm::VirtualAddress stack, bool userspace,
                   di::Arc<mm::AddressSpace> address_space)
-        : m_task_state(entry.raw_address(), stack.raw_address(), userspace), m_address_space(di::move(address_space)) {}
+        : m_task_state(entry.raw_address(), stack.raw_address(), userspace), m_address_space(di::move(address_space)) {
+        // Explicitly leak one reference to the task, which will be dropped when exit_task() is called.
+        (void) arc_from_this().release();
+    }
 
     [[noreturn]] void context_switch_to() {
         m_address_space->load();
@@ -28,6 +33,6 @@ private:
     di::Arc<mm::AddressSpace> m_address_space;
 };
 
-Expected<di::Box<Task>> create_kernel_task(void (*entry)());
-Expected<di::Box<Task>> create_user_task(di::PathView path);
+Expected<di::Arc<Task>> create_kernel_task(void (*entry)());
+Expected<di::Arc<Task>> create_user_task(di::PathView path);
 }

@@ -11,8 +11,8 @@
 
 namespace iris {
 struct GlobalState {
-    constexpr GlobalState() {}
-    constexpr ~GlobalState() {}
+    GlobalState() {}
+    ~GlobalState() {}
 
     // Read-only after after kernel initialization. Ideally would be marked const.
     mm::PhysicalAddress max_physical_address { 0 };
