@@ -31,7 +31,7 @@ public:
     }
 
     template<concepts::BitTag Tag, typename R = meta::BitValue<Tag>>
-    constexpr R get() {
+    constexpr R get() const {
         return Tag::bits_into_value(m_bitset);
     }
 
