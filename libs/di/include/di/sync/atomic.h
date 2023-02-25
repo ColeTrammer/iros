@@ -166,6 +166,6 @@ public:
 #undef DI_VOLATILE
 
 private:
-    T m_value {};
+    T m_value;
 };
 }
