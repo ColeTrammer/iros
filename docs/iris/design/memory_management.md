@@ -2,9 +2,9 @@
 
 In general, memory allocation consists of 3 components:
 
-* Physical Page Frame Allocator
-* Virtual Memory Allocator (Page Granularity)
-* Heap Management (Byte Granularity)
+- Physical Page Frame Allocator
+- Virtual Memory Allocator (Page Granularity)
+- Heap Management (Byte Granularity)
 
 ## Physical Page Frame Allocator
 
@@ -131,3 +131,28 @@ a simple free-list per object-size approach will be extremely efficent.
 Memory management goes beyond simply allocated memory, and pertains to the
 handling of page faults, COW mappings, shared memory mappings, and disk caching.
 
+## Physical Memory Tracking
+
+All aspects of memory management operate on page granularity. For most memory management tasks, the kernel needs to be
+able to store information about each physical page in the system. Each page requires a reference count, which counts
+how many uses the page has. This comes into play because processes can share memory, either through an explicit API or
+implicitly through COW mappings. Another task which requires per-page information is the file system page cache, which
+needs to maintain a LRU cache of pages, so that the system can free up memory when needed. Additionally, when freeing an
+address space, there needs to be some way to release all the physical memory it used.
+
+Given that a page level tracking is required, it is important to consider how and where these page structures are
+allocated. One natural approach is to lazily allocate a page structure whenever one is needed. When a page's reference
+count reaches zero, this structure will not be returned to the allocator, but instead be kept in a free list. This issue
+with this approach is that it requires storing the physical address of the page in the page structure, and also requires
+allocating in certain cases.
+
+A more space efficent approach is to store all physical page structures in continuous memory. Then, a page structure's
+corresponding physical address can be calculated directly from its virtual address. In addition, we can easily go from a
+physical address directly to a page structure, which may be useful.
+
+### Page Structure Boostrap
+
+One problem with the latter approach is that all pages need to be allocated upfront. Given the total number of physical
+pages on the system, the kernel will be able to calculate how many pages it needs to reserve. After reserving the
+physical pages, the kernel must also reserve virtual address space to store each page structure. Additionally, physical
+backing memory most likely will be needed as well.

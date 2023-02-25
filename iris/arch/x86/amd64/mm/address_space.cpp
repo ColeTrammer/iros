@@ -13,6 +13,46 @@ page_structure::VirtualAddressStructure decompose_virtual_address(VirtualAddress
     return di::bit_cast<page_structure::VirtualAddressStructure>(virtual_address.raw_address());
 }
 
+AddressSpace::~AddressSpace() {
+    auto& kernel_address_space = global_state().kernel_address_space;
+    ASSERT(this != &kernel_address_space);
+
+    // Load the kernel address space, to ensure we don't run in the current
+    // address space as it is being destroyed.
+    asm volatile("cli");
+    kernel_address_space.load();
+
+    auto from_physical_address = [](PhysicalAddress physical_address) {
+        // NOTE: as long as this page table is not corrupted, mapping the physical page will always succeed.
+        //       It is therefore OK to assert there are no issues creating the mapping.
+        auto result = map_physical_address(physical_address, 4096);
+        ASSERT(result);
+        return &result->typed<page_structure::PageStructureTable const>();
+    };
+
+    auto free_all_user_pages = di::ycombinator([&](auto&& self, page_structure::StructureEntry physical_page_structure,
+                                                   int depth = 0) -> void {
+        // Perform a post-order traversal over every physical page allocated in this layer. At depth 4, the physical
+        // pages no longer refer to other pages, and so we stop the recursion explicitly. The iteration only
+        // considers present pages which are not owned by the kernel.
+        auto physical_address = PhysicalAddress(physical_page_structure.get<page_structure::PhysicalAddress>() << 12);
+        if (depth < 4) {
+            auto* structure = from_physical_address(physical_address);
+            for (auto& entry : *structure) {
+                if (!entry.get<page_structure::Present>() || !entry.get<page_structure::User>()) {
+                    continue;
+                }
+                self(entry, depth + 1);
+            }
+        }
+
+        deallocate_page_frame(physical_address);
+    });
+
+    println("Freeing physical pages: structure={} resident={}"_sv, structure_pages(), resident_pages());
+    free_all_user_pages(di::bit_cast<page_structure::StructureEntry>(architecture_page_table_base()));
+}
+
 void AddressSpace::load() {
     load_cr3(m_architecture_page_table_base);
 }
@@ -40,6 +80,7 @@ Expected<void> AddressSpace::map_physical_page(VirtualAddress location, Physical
         pml4[pml4_offset] = page_structure::StructureEntry(
             page_structure::PhysicalAddress(TRY(allocate_page_frame()).raw_address() >> 12),
             page_structure::Present(true), page_structure::Writable(true), page_structure::User(user));
+        ++m_structure_pages;
     }
 
     auto pdp_offset = decomposed.get<page_structure::PdpOffset>();
@@ -50,6 +91,7 @@ Expected<void> AddressSpace::map_physical_page(VirtualAddress location, Physical
         pdp[pdp_offset] = page_structure::StructureEntry(
             page_structure::PhysicalAddress(TRY(allocate_page_frame()).raw_address() >> 12),
             page_structure::Present(true), page_structure::Writable(true), page_structure::User(user));
+        ++m_structure_pages;
     }
 
     auto pd_offset = decomposed.get<page_structure::PdOffset>();
@@ -60,6 +102,7 @@ Expected<void> AddressSpace::map_physical_page(VirtualAddress location, Physical
         pd[pd_offset] = page_structure::StructureEntry(
             page_structure::PhysicalAddress(TRY(allocate_page_frame()).raw_address() >> 12),
             page_structure::Present(true), page_structure::Writable(true), page_structure::User(user));
+        ++m_structure_pages;
     }
 
     auto pt_offset = decomposed.get<page_structure::PtOffset>();
@@ -72,6 +115,7 @@ Expected<void> AddressSpace::map_physical_page(VirtualAddress location, Physical
     pt[pt_offset] = page_structure::StructureEntry(
         page_structure::PhysicalAddress(physical_address.raw_address() >> 12), page_structure::Present(true),
         page_structure::Writable(writable), page_structure::User(user), page_structure::NotExecutable(not_executable));
+    ++m_resident_pages;
 
     return {};
 }

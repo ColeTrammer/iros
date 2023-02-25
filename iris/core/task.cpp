@@ -45,16 +45,16 @@ struct ProgramHeader {
 }
 
 namespace iris {
-Expected<di::Box<Task>> create_kernel_task(void (*entry)()) {
+Expected<di::Arc<Task>> create_kernel_task(void (*entry)()) {
     auto entry_address = mm::VirtualAddress(di::to_uintptr(entry));
 
     auto& address_space = global_state().kernel_address_space;
     auto stack = TRY(address_space.allocate_region(0x2000, mm::RegionFlags::Readable | mm::RegionFlags::Writable));
 
-    return di::try_box<Task>(entry_address, stack + 0x2000, false, address_space.arc_from_this());
+    return di::try_make_arc<Task>(entry_address, stack + 0x2000, false, address_space.arc_from_this());
 }
 
-Expected<di::Box<Task>> create_user_task(di::PathView path) {
+Expected<di::Arc<Task>> create_user_task(di::PathView path) {
     auto raw_data = TRY(lookup_in_initrd(path));
 
     auto* elf_header = raw_data.typed_pointer_unchecked<elf64::ElfHeader>(0);
@@ -88,7 +88,7 @@ Expected<di::Box<Task>> create_user_task(di::PathView path) {
 
     auto user_stack = TRY(new_address_space->allocate_region(
         0x10000, mm::RegionFlags::Writable | mm::RegionFlags::User | mm::RegionFlags::Readable));
-    return di::try_box<Task>(mm::VirtualAddress(elf_header->entry), user_stack + 0x10000, true,
-                             di::move(new_address_space));
+    return di::try_make_arc<Task>(mm::VirtualAddress(elf_header->entry), user_stack + 0x10000, true,
+                                  di::move(new_address_space));
 }
 }
