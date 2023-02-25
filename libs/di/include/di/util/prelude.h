@@ -28,6 +28,7 @@
 #include <di/util/reference_wrapper.h>
 #include <di/util/scope_exit.h>
 #include <di/util/source_location.h>
+#include <di/util/strong_int.h>
 #include <di/util/swap.h>
 #include <di/util/to_owned.h>
 #include <di/util/to_uintptr.h>
@@ -57,6 +58,7 @@ using util::Immovable;
 using util::MovableBox;
 using util::RebindableBox;
 using util::ScopeExit;
+using util::StrongInt;
 using util::UUID;
 
 using util::SourceLocation;
