@@ -8,7 +8,7 @@
 #include DIUS_PLATFORM_PATH(system_call.h)
 
 namespace dius {
-#ifdef __linux__
+#ifdef DIUS_PLATFORM_LINUX
 enum class Protection : int {
     None = PROT_NONE,
     Executable = PROT_EXEC,
@@ -76,7 +76,7 @@ public:
 
     di::Result<void> resize_file(u64 new_size) const;
 
-#ifdef __linux__
+#ifdef DIUS_PLATFORM_LINUX
     di::Result<MemoryRegion> map(u64 offset, size_t size, Protection protection, MapFlags flags) const;
 #endif
 

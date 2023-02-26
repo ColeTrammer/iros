@@ -4,6 +4,8 @@ project(Dius CXX)
 
 add_library(dius
     di_assert_impl.cpp
+    error.cpp
+    sync_file.cpp
 )
 add_library(Dius::dius ALIAS dius)
 
@@ -27,11 +29,10 @@ if(LINUX)
         linux/filesystem/directory_iterator.cpp
         linux/filesystem/query.cpp
         linux/io_uring.cpp
+        linux/sync_file.cpp
         test/test_manager.cpp
-        error.cpp
         memory_region.cpp
-        sync_file.cpp
-    )
+)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Iros")
     if(CMAKE_CROSSCOMPILING)
         find_package(Iris REQUIRED)    
@@ -41,6 +42,18 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Iros")
             Iris::iris_headers
         )
     endif()
+
+    target_sources(dius
+      PRIVATE
+        iros/sync_file.cpp
+    )
+
+    target_compile_options(dius
+      PRIVATE
+        "-mno-sse"
+        "-mno-sse2"
+        "-mno-mmx"
+    )
 endif()
 
 install(
