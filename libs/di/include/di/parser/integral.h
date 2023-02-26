@@ -43,6 +43,13 @@ inline namespace literals {
             }
             return Byte(value);
         }
+
+        consteval Byte operator""_b(char value) {
+            if (!math::representable_as<u8>(value)) {
+                util::compile_time_fail<>();
+            }
+            return Byte(value);
+        }
     }
 }
 }
