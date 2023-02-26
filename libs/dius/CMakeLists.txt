@@ -86,6 +86,9 @@ if (IROS_UseDiusRuntime)
       PUBLIC
         "-nostdlib"
         "-static"
+        "-mno-sse"
+        "-mno-sse2"
+        "-mno-mmx"
       PRIVATE
         "-fno-stack-protector"
         "-ffreestanding"
