@@ -53,7 +53,7 @@ AddressSpace::~AddressSpace() {
 }
 
 void AddressSpace::load() {
-    load_cr3(m_architecture_page_table_base);
+    load_cr3(m_architecture_page_table_base.raw_value());
 }
 
 Expected<void> AddressSpace::map_physical_page(VirtualAddress location, PhysicalAddress physical_address,
@@ -69,8 +69,7 @@ Expected<void> AddressSpace::map_physical_page(VirtualAddress location, Physical
     auto decomposed = decompose_virtual_address(location);
     auto pml4_offset = decomposed.get<page_structure::Pml4Offset>();
     auto& pml4 =
-        TRY(map_physical_address(PhysicalAddress(di::align_down(architecture_page_table_base(), 4096)), 0x1000))
-            .typed<page_structure::PageStructureTable>();
+        TRY(map_physical_address(architecture_page_table_base(), 0x1000)).typed<page_structure::PageStructureTable>();
     if (!pml4[pml4_offset].get<page_structure::Present>()) {
         pml4[pml4_offset] = page_structure::StructureEntry(
             page_structure::PhysicalAddress(TRY(allocate_page_frame()).raw_value() >> 12),
@@ -118,10 +117,10 @@ Expected<void> AddressSpace::map_physical_page(VirtualAddress location, Physical
 Expected<di::Arc<AddressSpace>> create_empty_user_address_space() {
     // NOTE: allocate the address space first, so that the allocated page frame
     //       will not be leaked on failure.
-    auto new_address_space = TRY(di::try_make_arc<AddressSpace>(0, false));
+    auto new_address_space = TRY(di::try_make_arc<AddressSpace>());
 
     auto new_pml4 = TRY(allocate_page_frame());
-    new_address_space->set_architecture_page_table_base(new_pml4.raw_value());
+    new_address_space->set_architecture_page_table_base(new_pml4);
 
     auto& kernel_address_space = global_state().kernel_address_space;
 
@@ -129,10 +128,8 @@ Expected<di::Arc<AddressSpace>> create_empty_user_address_space() {
     // which are shared with the kernel address space. We can thus simply copy the kernel address's
     // pml4 to the new address space.
     auto& destination = TRY(map_physical_address(new_pml4, 4096)).typed<page_structure::PageStructureTable>();
-    auto& source =
-        TRY(map_physical_address(
-                PhysicalAddress(di::align_down(kernel_address_space.architecture_page_table_base(), 4096)), 4096))
-            .typed<page_structure::PageStructureTable>();
+    auto& source = TRY(map_physical_address(kernel_address_space.architecture_page_table_base(), 4096))
+                       .typed<page_structure::PageStructureTable>();
 
     di::copy(source, destination.data());
 

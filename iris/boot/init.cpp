@@ -103,7 +103,7 @@ void iris_main() {
 
         auto init_path = "/test_create_task"_pv;
         iris::println("Loading initial userspace task: {}"_sv, init_path);
-        iris::load_executable(*task4, init_path);
+        *iris::load_executable(*task4, init_path);
         scheduler.schedule_task(*task4);
     }
 

@@ -9,16 +9,14 @@
 namespace iris::mm {
 class AddressSpace : public di::IntrusiveRefCount<AddressSpace> {
 public:
-    constexpr explicit AddressSpace(u64 architecture_page_table_base, bool kernel)
-        : m_architecture_page_table_base(architecture_page_table_base), m_kernel(kernel) {
-        // Count the architecture page table base as a page structure page.
-        m_structure_pages = 1;
-    }
+    AddressSpace() = default;
 
     ~AddressSpace();
 
-    u64 architecture_page_table_base() const { return m_architecture_page_table_base; }
-    void set_architecture_page_table_base(u64 value) { m_architecture_page_table_base = value; }
+    PhysicalAddress architecture_page_table_base() const { return m_architecture_page_table_base; }
+    void set_architecture_page_table_base(PhysicalAddress value) { m_architecture_page_table_base = value; }
+
+    void set_kernel() { m_kernel = true; }
 
     void load();
 
@@ -31,7 +29,7 @@ public:
     u64 structure_pages() const { return m_structure_pages; }
 
 private:
-    u64 m_architecture_page_table_base { 0 };
+    PhysicalAddress m_architecture_page_table_base { 0 };
     u64 m_resident_pages { 0 };
     u64 m_structure_pages { 0 };
     di::TreeSet<Region> m_regions;
