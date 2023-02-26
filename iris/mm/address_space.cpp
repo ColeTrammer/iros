@@ -47,7 +47,8 @@ Expected<void> init_and_load_initial_kernel_address_space(PhysicalAddress kernel
                                                           VirtualAddress kernel_virtual_start,
                                                           PhysicalAddress max_physical_address) {
     auto& new_address_space = global_state_in_boot().kernel_address_space;
-    new_address_space.set_architecture_page_table_base(TRY(allocate_page_frame()).raw_value());
+    new_address_space.set_architecture_page_table_base(TRY(allocate_page_frame()));
+    new_address_space.set_kernel();
 
     for (auto physical_address = PhysicalAddress(0);
          physical_address < di::min(max_physical_address, PhysicalAddress(0x10000000ul)); physical_address += 0x1000) {

@@ -23,7 +23,7 @@ struct GlobalState {
     arch::CPUFeatures cpu_features;
 
     // Mutable global state. Should be protected with di::Syncrhonized in the future.
-    mutable mm::AddressSpace kernel_address_space { 0, true };
+    mutable mm::AddressSpace kernel_address_space;
     mutable mm::VirtualAddress heap_end { 0 };
     mutable TaskNamespace task_namespace;
 
