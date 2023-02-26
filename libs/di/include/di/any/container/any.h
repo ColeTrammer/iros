@@ -226,6 +226,21 @@ public:
         return !m_vtable.empty();
     }
 
+    constexpr bool empty() const
+    requires(!is_reference)
+    {
+        return !*this;
+    }
+
+    void reset()
+    requires(!is_reference)
+    {
+        if (!is_trivially_destructible) {
+            Storage::destroy(m_vtable, this);
+        }
+        m_vtable.reset();
+    }
+
 private:
     VTable m_vtable {};
 };
