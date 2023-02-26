@@ -1,5 +1,5 @@
 #include <di/prelude.h>
-#include <dius/system/prelude.h>
+#include <dius/prelude.h>
 
 #ifdef __linux__
 #include <asm/prctl.h>
