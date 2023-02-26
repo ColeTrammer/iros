@@ -6,6 +6,7 @@ namespace iris {
 using Encoding = di::container::string::Utf8Encoding;
 
 void log_output_character(c32);
+void log_output_byte(di::Byte);
 
 namespace detail {
     struct DebugFormatContext {

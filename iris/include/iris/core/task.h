@@ -2,6 +2,7 @@
 
 #include <di/prelude.h>
 #include <iris/core/config.h>
+#include <iris/fs/file.h>
 #include <iris/mm/address_space.h>
 
 // clang-format off
@@ -20,7 +21,8 @@ class Task
     , public di::IntrusiveRefCount<Task> {
 public:
     explicit Task(mm::VirtualAddress entry, mm::VirtualAddress stack, bool userspace,
-                  di::Arc<mm::AddressSpace> address_space, di::Arc<TaskNamespace> task_namespace, TaskId task_id);
+                  di::Arc<mm::AddressSpace> address_space, di::Arc<TaskNamespace> task_namespace, TaskId task_id,
+                  di::Arc<FileTable> file_table);
 
     ~Task();
 
@@ -35,6 +37,7 @@ public:
     TaskId id() const { return m_id; }
     mm::AddressSpace& address_space() { return *m_address_space; }
     TaskNamespace& task_namespace() const { return *m_task_namespace; }
+    FileTable& file_table() const { return *m_file_table; }
 
     void set_instruction_pointer(mm::VirtualAddress address);
 
@@ -42,10 +45,11 @@ private:
     arch::TaskState m_task_state;
     di::Arc<mm::AddressSpace> m_address_space;
     di::Arc<TaskNamespace> m_task_namespace;
+    di::Arc<FileTable> m_file_table;
     TaskId m_id;
 };
 
 Expected<di::Arc<Task>> create_kernel_task(TaskNamespace&, void (*entry)());
-Expected<di::Arc<Task>> create_user_task(TaskNamespace&);
+Expected<di::Arc<Task>> create_user_task(TaskNamespace&, di::Arc<FileTable> file_table);
 Expected<void> load_executable(Task&, di::PathView path);
 }
