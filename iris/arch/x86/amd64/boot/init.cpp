@@ -116,6 +116,21 @@ extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, 
                 global_state().scheduler.schedule_task(*result);
                 break;
             }
+            case SystemCall::allocate_memory: {
+                auto amount = task_state->rdi;
+
+                auto& address_space = iris::global_state().scheduler.current_address_space();
+                auto result = address_space.allocate_region(amount, mm::RegionFlags::User | mm::RegionFlags::Writable |
+                                                                        mm::RegionFlags::Readable);
+                if (!result) {
+                    task_state->rdx = di::bit_cast<u64>(result.error());
+                } else {
+                    println("Allocated {} to {}"_sv, amount, *result);
+                    task_state->rdx = 0;
+                    task_state->rax = result->raw_value();
+                }
+                break;
+            }
             default:
                 iris::println("Encounted unexpected system call: {}"_sv, di::to_underlying(number));
 

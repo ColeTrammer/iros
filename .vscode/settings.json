@@ -20,5 +20,6 @@
     "files.insertFinalNewline": true,
     "editor.rulers": [
         120
-    ]
+    ],
+    "cmake.configureOnOpen": false
 }

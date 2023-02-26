@@ -8,5 +8,6 @@ enum class SystemCall {
     create_task = 3,
     load_executable = 4,
     start_task = 5,
+    allocate_memory = 6,
 };
 }
