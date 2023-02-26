@@ -13,6 +13,7 @@
 #include <iris/core/scheduler.h>
 #include <iris/core/task.h>
 #include <iris/core/userspace_access.h>
+#include <iris/fs/file.h>
 #include <iris/mm/address_space.h>
 #include <iris/mm/map_physical_address.h>
 #include <iris/mm/page_frame_allocator.h>
@@ -65,7 +66,9 @@ extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, 
                 break;
             }
             case SystemCall::create_task: {
-                auto result = iris::create_user_task(iris::global_state().scheduler.current_task().task_namespace());
+                auto& current_task = iris::global_state().scheduler.current_task();
+                auto result =
+                    iris::create_user_task(current_task.task_namespace(), current_task.file_table().arc_from_this());
                 if (!result) {
                     task_state->rdx = di::bit_cast<u64>(result.error());
                 } else {
@@ -125,9 +128,31 @@ extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, 
                 if (!result) {
                     task_state->rdx = di::bit_cast<u64>(result.error());
                 } else {
-                    println("Allocated {} to {}"_sv, amount, *result);
                     task_state->rdx = 0;
                     task_state->rax = result->raw_value();
+                }
+                break;
+            }
+            case SystemCall::write: {
+                i32 file_handle = task_state->rdi;
+                auto buffer = reinterpret_cast<di::Byte const*>(task_state->rsi);
+                auto amount = task_state->rdx;
+
+                auto& current_task = iris::global_state().scheduler.current_task();
+                auto result = current_task.file_table().lookup_file_handle(file_handle);
+                if (!result) {
+                    task_state->rdx = di::bit_cast<u64>(result.error());
+                    break;
+                }
+
+                auto result2 = iris::with_userspace_access([&] {
+                    return iris::write_file(*result, { buffer, amount });
+                });
+                if (!result2) {
+                    task_state->rdx = di::bit_cast<u64>(result2.error());
+                } else {
+                    task_state->rdx = 0;
+                    task_state->rax = *result2;
                 }
                 break;
             }
@@ -138,8 +163,7 @@ extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, 
                 task_state->rdx = 0;
                 break;
         }
-
-        iris::global_state().scheduler.save_state_and_run_next(task_state);
+        return;
     }
 
     iris::println("ERROR: got unexpected IRQ {}, error_code={}"_sv, irq, error_code);

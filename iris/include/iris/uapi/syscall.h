@@ -9,5 +9,9 @@ enum class SystemCall {
     load_executable = 4,
     start_task = 5,
     allocate_memory = 6,
+    open = 7,
+    read = 8,
+    write = 9,
+    close = 10,
 };
 }

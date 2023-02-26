@@ -10,6 +10,10 @@ void log_output_character(c32 value) {
         outb(0xE9, byte);
     }
 }
+
+void log_output_byte(di::Byte byte) {
+    outb(0xE9, di::to_integer<u8>(byte));
+}
 }
 
 namespace di::assert::detail {

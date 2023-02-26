@@ -49,6 +49,16 @@ static volatile limine_module_request module_request = {
 }
 
 namespace iris {
+struct DebugFile {
+private:
+    friend Expected<usize> tag_invoke(di::Tag<write_file>, DebugFile&, di::Span<di::Byte const> data) {
+        for (auto byte : data) {
+            log_output_byte(byte);
+        }
+        return data.size();
+    }
+};
+
 void iris_main() {
     iris::println("Starting architecture independent initialization..."_sv);
 
@@ -99,7 +109,12 @@ void iris_main() {
         scheduler.schedule_task(*task2);
         scheduler.schedule_task(*task3);
 
-        auto task4 = *iris::create_user_task(global_state.task_namespace);
+        auto file_table = *di::try_make_arc<iris::FileTable>();
+        *file_table->allocate_file_handle() = DebugFile {};
+        *file_table->allocate_file_handle() = DebugFile {};
+        *file_table->allocate_file_handle() = DebugFile {};
+
+        auto task4 = *iris::create_user_task(global_state.task_namespace, di::move(file_table));
 
         auto init_path = "/test_create_task"_pv;
         iris::println("Loading initial userspace task: {}"_sv, init_path);

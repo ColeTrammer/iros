@@ -47,10 +47,11 @@ struct ProgramHeader {
 
 namespace iris {
 Task::Task(mm::VirtualAddress entry, mm::VirtualAddress stack, bool userspace, di::Arc<mm::AddressSpace> address_space,
-           di::Arc<TaskNamespace> task_namespace, TaskId id)
+           di::Arc<TaskNamespace> task_namespace, TaskId id, di::Arc<FileTable> file_table)
     : m_task_state(entry.raw_value(), stack.raw_value(), userspace)
     , m_address_space(di::move(address_space))
     , m_task_namespace(di::move(task_namespace))
+    , m_file_table(di::move(file_table))
     , m_id(id) {}
 
 Task::~Task() {
@@ -65,19 +66,20 @@ Expected<di::Arc<Task>> create_kernel_task(TaskNamespace& task_namespace, void (
 
     auto task_id = TRY(task_namespace.allocate_task_id());
     auto result = TRY(di::try_make_arc<Task>(entry_address, stack + 0x2000, false, address_space.arc_from_this(),
-                                             task_namespace.arc_from_this(), task_id));
+                                             task_namespace.arc_from_this(), task_id, nullptr));
     TRY(task_namespace.register_task(*result));
     return result;
 }
 
-Expected<di::Arc<Task>> create_user_task(TaskNamespace& task_namespace) {
+Expected<di::Arc<Task>> create_user_task(TaskNamespace& task_namespace, di::Arc<FileTable> file_table) {
     auto new_address_space = TRY(mm::create_empty_user_address_space());
 
     auto user_stack = TRY(new_address_space->allocate_region(
         0x10000, mm::RegionFlags::Writable | mm::RegionFlags::User | mm::RegionFlags::Readable));
     auto task_id = TRY(task_namespace.allocate_task_id());
-    auto result = TRY(di::try_make_arc<Task>(mm::VirtualAddress(0), user_stack + 0x10000, true,
-                                             di::move(new_address_space), task_namespace.arc_from_this(), task_id));
+    auto result =
+        TRY(di::try_make_arc<Task>(mm::VirtualAddress(0), user_stack + 0x10000, true, di::move(new_address_space),
+                                   task_namespace.arc_from_this(), task_id, di::move(file_table)));
     TRY(task_namespace.register_task(*result));
     return result;
 }
