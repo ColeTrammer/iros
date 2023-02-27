@@ -50,7 +50,7 @@ public:
         auto* old_pointer = m_pointer;
         m_pointer = pointer;
         if (old_pointer) {
-            delete old_pointer;
+            platform::DefaultFallibleAllocator<T>().deallocate(old_pointer, 1);
         }
     }
 

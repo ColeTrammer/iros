@@ -181,9 +181,45 @@ static void hybrid() {
     ASSERT_EQ(yf(q), 1);
 }
 
+static void shared() {
+    using Any = di::any::AnyShared<Interface>;
+
+    auto x = Any::create(4);
+
+    ASSERT_EQ(xf(x, 12), 16);
+    ASSERT_EQ(yf(x), 6);
+
+    auto y = Any::create(di::in_place_type<A>);
+
+    ASSERT_EQ(xf(y, 12), 16);
+    ASSERT_EQ(yf(y), 1);
+
+    auto z = di::move(y);
+    ASSERT(!y);
+
+    ASSERT_EQ(xf(z, 12), 16);
+    ASSERT_EQ(yf(z), 1);
+
+    z = di::move(x);
+    ASSERT(!x);
+
+    ASSERT_EQ(xf(z, 12), 16);
+    ASSERT_EQ(yf(z), 6);
+
+    z = Any::create(3);
+
+    ASSERT_EQ(xf(z, 12), 15);
+    ASSERT_EQ(yf(z), 5);
+
+    auto p = z;
+    ASSERT_EQ(xf(p, 12), 15);
+    ASSERT_EQ(yf(p), 5);
+}
+
 TESTC(any, meta)
 TESTC(any, vtable)
 TEST(any, ref)
 TEST(any, inline_)
 TEST(any, unique)
 TEST(any, hybrid)
+TEST(any, shared)
