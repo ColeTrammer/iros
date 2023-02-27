@@ -157,11 +157,24 @@ extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, 
                 }
                 break;
             }
+            case SystemCall::close: {
+                i32 file_handle = task_state->rdi;
+
+                auto& current_task = iris::global_state().scheduler.current_task();
+                auto result = current_task.file_table().deallocate_file_handle(file_handle);
+                if (!result) {
+                    task_state->rdx = di::bit_cast<u64>(result.error());
+                } else {
+                    task_state->rdx = 0;
+                    task_state->rax = 0;
+                }
+                break;
+            }
             default:
                 iris::println("Encounted unexpected system call: {}"_sv, di::to_underlying(number));
 
                 task_state->rax = 0;
-                task_state->rdx = 0;
+                task_state->rdx = di::bit_cast<u64>(Error::NotSupported);
                 break;
         }
         return;
