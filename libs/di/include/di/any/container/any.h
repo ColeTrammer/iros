@@ -5,6 +5,7 @@
 #include <di/any/storage/prelude.h>
 #include <di/any/types/prelude.h>
 #include <di/any/vtable/prelude.h>
+#include <di/function/monad/monad_try.h>
 #include <di/util/addressof.h>
 #include <di/util/forward.h>
 #include <di/util/initializer_list.h>
@@ -59,6 +60,7 @@ private:
     constexpr static bool is_trivially_moveable = is_trivially_copyable;
 
     constexpr static bool is_moveable = !is_trivially_moveable && storage_category != StorageCategory::Immovable;
+    constexpr static bool is_copyable = storage_category == StorageCategory::Copyable;
 
     template<typename T>
     using RemoveConstructQualifiers = meta::Conditional<is_reference, T, meta::RemoveCVRef<T>>;
@@ -107,12 +109,13 @@ public:
     template<typename U, concepts::Impl<Interface> VU = RemoveConstructQualifiers<U>>
     requires(!concepts::RemoveCVRefSameAs<U, Any> && !concepts::InstanceOf<meta::RemoveCVRef<U>, InPlaceType> &&
              concepts::AnyStorable<VU, Storage> && concepts::ConstructibleFrom<VU, U>)
-    constexpr static Result<Any> try_create(U&& value) {
+    constexpr static auto try_create(U&& value) {
         if constexpr (!concepts::AnyStorableInfallibly<VU, Storage>) {
             auto result = Any {};
-            DI_TRY(Storage::init(util::addressof(result), in_place_type<VU>, util::forward<U>(value)));
-            result.m_vtable = VTable::template create_for<Storage, VU>();
-            return result;
+            return Storage::init(util::addressof(result), in_place_type<VU>, util::forward<U>(value)) % [&] {
+                result.m_vtable = VTable::template create_for<Storage, VU>();
+                return result;
+            };
         } else {
             return Any(in_place_type<VU>, util::forward<U>(value));
         }
@@ -120,12 +123,13 @@ public:
 
     template<typename T, typename... Args, concepts::Impl<Interface> VT = RemoveConstructQualifiers<T>>
     requires(concepts::AnyStorable<VT, Storage> && concepts::ConstructibleFrom<VT, Args...>)
-    constexpr static Result<Any> try_create(InPlaceType<T>, Args&&... args) {
+    constexpr static auto try_create(InPlaceType<T>, Args&&... args) {
         if constexpr (!concepts::AnyStorableInfallibly<VT, Storage>) {
             auto result = Any {};
-            DI_TRY(Storage::init(util::addressof(result), in_place_type<VT>, util::forward<Args>(args)...));
-            result.m_vtable = VTable::template create_for<Storage, VT>();
-            return result;
+            return Storage::init(util::addressof(result), in_place_type<VT>, util::forward<Args>(args)...) % [&] {
+                result.m_vtable = VTable::template create_for<Storage, VT>();
+                return result;
+            };
         } else {
             return Any(in_place_type<VT>, util::forward<Args>(args)...);
         }
@@ -136,9 +140,10 @@ public:
     constexpr static Result<Any> try_create(InPlaceType<T>, util::InitializerList<U> list, Args&&... args) {
         if constexpr (!concepts::AnyStorableInfallibly<VT, Storage>) {
             auto result = Any {};
-            DI_TRY(Storage::init(util::addressof(result), in_place_type<VT>, list, util::forward<Args>(args)...));
-            result.m_vtable = VTable::template create_for<Storage, VT>();
-            return result;
+            return Storage::init(util::addressof(result), in_place_type<VT>, list, util::forward<Args>(args)...) % [&] {
+                result.m_vtable = VTable::template create_for<Storage, VT>();
+                return result;
+            };
         } else {
             return Any(in_place_type<VT>, list, util::forward<Args>(args)...);
         }
@@ -151,6 +156,12 @@ public:
     Any(Any const&)
     requires(is_trivially_copyable)
     = default;
+
+    Any(Any const& other)
+    requires(is_copyable)
+        : Storage(), m_vtable(other.m_vtable) {
+        Storage::copy_construct(other.m_vtable, this, util::addressof(other));
+    }
 
     Any(Any&&)
     requires(is_trivially_moveable)
@@ -200,6 +211,13 @@ public:
     Any& operator=(Any&&)
     requires(is_trivially_moveable)
     = default;
+
+    Any& operator=(Any const& other)
+    requires(is_copyable)
+    {
+        Storage::copy_assign(m_vtable, this, other.m_vtable, util::addressof(other));
+        return *this;
+    }
 
     Any& operator=(Any&& other)
     requires(is_moveable)

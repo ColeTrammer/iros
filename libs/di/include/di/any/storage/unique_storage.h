@@ -43,11 +43,11 @@ public:
 
     template<typename T, typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...>)
-    constexpr static Result<void> init(UniqueStorage* self, InPlaceType<T>, Args&&... args) {
-        if (!(self->m_pointer = new (std::nothrow) T(util::forward<Args>(args)...))) {
-            return Unexpected(BasicError::FailedAllocation);
-        }
-        return {};
+    constexpr static auto init(UniqueStorage* self, InPlaceType<T>, Args&&... args) {
+        return platform::DefaultFallibleAllocator<T>().allocate(1) % [&](container::Allocation<T> result) {
+            util::construct_at(result.data, util::forward<Args>(args)...);
+            self->m_pointer = result.data;
+        };
     }
 
     constexpr UniqueStorage() {}
@@ -99,7 +99,7 @@ namespace detail {
     template<typename UniqueStorage>
     template<typename T>
     void UniqueStorageManage<UniqueStorage>::operator()(T& a) const {
-        delete util::addressof(a);
+        platform::DefaultFallibleAllocator<T>().deallocate(util::addressof(a), 1);
     }
 }
 }
