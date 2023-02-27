@@ -141,10 +141,6 @@ if(IROS_BuildIris)
   add_executable(test_create_task 
       test_create_task.cpp
   )
-  target_compile_definitions(test_create_task
-    PRIVATE
-      "DI_NO_ASSERT_ALLOCATION"
-  )
   target_compile_options(test_create_task
     PRIVATE
       -ffreestanding
@@ -165,5 +161,30 @@ if(IROS_BuildIris)
   )
   install(TARGETS test_create_task
       RUNTIME DESTINATION boot
+  )
+
+  add_executable(test_read 
+    test_read.cpp
+  )
+  target_compile_options(test_read
+    PRIVATE
+    -ffreestanding
+    -nostdlib
+    -nostartfiles
+    -fno-pic
+    -fno-pie
+    -static
+  )
+  target_link_options(test_read
+    PRIVATE
+    -ffreestanding
+    -nostdlib
+    -nostartfiles
+    -fno-pic
+    -fno-pie
+    -static
+  )
+  install(TARGETS test_read
+    RUNTIME DESTINATION boot
   )
 endif()

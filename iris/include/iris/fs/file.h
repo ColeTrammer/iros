@@ -12,6 +12,13 @@ namespace detail {
             return di::Unexpected(Error::NotSupported);
         }
     };
+
+    struct ReadFileDefaultFunction {
+        template<typename T>
+        constexpr Expected<usize> operator()(T&, di::Span<di::Byte>) const {
+            return di::Unexpected(Error::NotSupported);
+        }
+    };
 }
 
 struct WriteFileFunction
@@ -20,19 +27,22 @@ struct WriteFileFunction
 
 constexpr inline auto write_file = WriteFileFunction {};
 
-using FileInterface = di::meta::List<WriteFileFunction>;
+struct ReadFileFunction
+    : di::Dispatcher<ReadFileFunction, Expected<usize>(di::This&, di::Span<di::Byte>),
+                     detail::ReadFileDefaultFunction> {};
+
+constexpr inline auto read_file = ReadFileFunction {};
+
+using FileInterface = di::meta::List<WriteFileFunction, ReadFileFunction>;
 using File = di::AnyShared<FileInterface>;
 
 class FileTable {
 public:
-    Expected<File&> allocate_file_handle() {
+    Expected<di::Tuple<File&, i32>> allocate_file_handle() {
         for (auto [i, file] : di::enumerate(m_files)) {
             if (file.empty()) {
-                // Set file to a dummy value so that it cannot be allocated
-                // again. The caller is expected to assign a proper value for
-                // this file descriptor.
                 m_file_allocated[i] = true;
-                return file;
+                return di::make_tuple(di::ref(file), static_cast<i32>(i));
             }
         }
         return di::Unexpected(Error::TooManyFilesOpen);
