@@ -77,4 +77,25 @@ Expected<di::Span<di::Byte const>> lookup_in_initrd(di::PathView path) {
     }
     return data_from_dirent(*current);
 }
+
+class InitrdFile {
+public:
+    constexpr explicit InitrdFile(di::Span<di::Byte const> data) : m_data(data) {}
+
+private:
+    friend Expected<usize> tag_invoke(di::Tag<read_file>, InitrdFile& file, di::Span<di::Byte> buffer) {
+        auto to_read = di::min(buffer.size(), file.m_data.size() - file.m_offset);
+        di::copy(*file.m_data.subspan(file.m_offset, to_read), buffer.data());
+        file.m_offset += to_read;
+        return to_read;
+    }
+
+    di::Span<di::Byte const> m_data;
+    u64 m_offset { 0 };
+};
+
+Expected<File> open_in_initrd(di::PathView path) {
+    auto data = TRY(lookup_in_initrd(path));
+    return File::try_create(InitrdFile { data });
+}
 }

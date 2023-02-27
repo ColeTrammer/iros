@@ -14,6 +14,7 @@
 #include <iris/core/task.h>
 #include <iris/core/userspace_access.h>
 #include <iris/fs/file.h>
+#include <iris/fs/initrd.h>
 #include <iris/mm/address_space.h>
 #include <iris/mm/map_physical_address.h>
 #include <iris/mm/page_frame_allocator.h>
@@ -67,9 +68,7 @@ extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, 
             }
             case SystemCall::create_task: {
                 auto& current_task = iris::global_state().scheduler.current_task();
-                iris::println("Creating task..."_sv);
                 auto result = iris::create_user_task(current_task.task_namespace(), current_task.file_table());
-                iris::println("Done"_sv);
                 if (!result) {
                     task_state->rdx = di::bit_cast<u64>(result.error());
                 } else {
@@ -134,6 +133,33 @@ extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, 
                 }
                 break;
             }
+            case SystemCall::open: {
+                auto string_base = task_state->rdi;
+                auto string_length = task_state->rsi;
+                auto string = di::TransparentStringView { reinterpret_cast<char const*>(string_base), string_length };
+
+                auto& current_task = iris::global_state().scheduler.current_task();
+
+                iris::with_userspace_access([&] {
+                    auto path = di::PathView { string };
+
+                    auto result = current_task.file_table().allocate_file_handle();
+                    if (!result) {
+                        task_state->rdx = di::bit_cast<u64>(result.error());
+                        return;
+                    }
+
+                    auto result2 = iris::open_in_initrd(path);
+                    if (!result) {
+                        task_state->rdx = di::bit_cast<u64>(result.error());
+                    } else {
+                        di::get<0>(*result) = *di::move(result2);
+                        task_state->rdx = 0;
+                        task_state->rax = di::get<1>(*result);
+                    }
+                });
+                break;
+            }
             case SystemCall::write: {
                 i32 file_handle = task_state->rdi;
                 auto buffer = reinterpret_cast<di::Byte const*>(task_state->rsi);
@@ -148,6 +174,29 @@ extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, 
 
                 auto result2 = iris::with_userspace_access([&] {
                     return iris::write_file(*result, { buffer, amount });
+                });
+                if (!result2) {
+                    task_state->rdx = di::bit_cast<u64>(result2.error());
+                } else {
+                    task_state->rdx = 0;
+                    task_state->rax = *result2;
+                }
+                break;
+            }
+            case SystemCall::read: {
+                i32 file_handle = task_state->rdi;
+                auto buffer = reinterpret_cast<di::Byte*>(task_state->rsi);
+                auto amount = task_state->rdx;
+
+                auto& current_task = iris::global_state().scheduler.current_task();
+                auto result = current_task.file_table().lookup_file_handle(file_handle);
+                if (!result) {
+                    task_state->rdx = di::bit_cast<u64>(result.error());
+                    break;
+                }
+
+                auto result2 = iris::with_userspace_access([&] {
+                    return iris::read_file(*result, { buffer, amount });
                 });
                 if (!result2) {
                     task_state->rdx = di::bit_cast<u64>(result2.error());

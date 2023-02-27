@@ -111,9 +111,9 @@ void iris_main() {
 
         auto file_table = iris::FileTable {};
         auto debug_file = *iris::File::try_create(DebugFile {});
-        *file_table.allocate_file_handle() = debug_file;
-        *file_table.allocate_file_handle() = debug_file;
-        *file_table.allocate_file_handle() = debug_file;
+        di::get<0>(*file_table.allocate_file_handle()) = debug_file;
+        di::get<0>(*file_table.allocate_file_handle()) = debug_file;
+        di::get<0>(*file_table.allocate_file_handle()) = debug_file;
 
         auto task4 = *iris::create_user_task(global_state.task_namespace, di::move(file_table));
 
