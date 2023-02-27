@@ -67,8 +67,9 @@ extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, 
             }
             case SystemCall::create_task: {
                 auto& current_task = iris::global_state().scheduler.current_task();
-                auto result =
-                    iris::create_user_task(current_task.task_namespace(), current_task.file_table().arc_from_this());
+                iris::println("Creating task..."_sv);
+                auto result = iris::create_user_task(current_task.task_namespace(), current_task.file_table());
+                iris::println("Done"_sv);
                 if (!result) {
                     task_state->rdx = di::bit_cast<u64>(result.error());
                 } else {

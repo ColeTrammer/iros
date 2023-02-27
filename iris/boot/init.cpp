@@ -109,10 +109,11 @@ void iris_main() {
         scheduler.schedule_task(*task2);
         scheduler.schedule_task(*task3);
 
-        auto file_table = *di::try_make_arc<iris::FileTable>();
-        *file_table->allocate_file_handle() = DebugFile {};
-        *file_table->allocate_file_handle() = DebugFile {};
-        *file_table->allocate_file_handle() = DebugFile {};
+        auto file_table = iris::FileTable {};
+        auto debug_file = *iris::File::try_create(DebugFile {});
+        *file_table.allocate_file_handle() = debug_file;
+        *file_table.allocate_file_handle() = debug_file;
+        *file_table.allocate_file_handle() = debug_file;
 
         auto task4 = *iris::create_user_task(global_state.task_namespace, di::move(file_table));
 
