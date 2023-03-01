@@ -6,6 +6,7 @@ add_library(dius
     di_assert_impl.cpp
     error.cpp
     sync_file.cpp
+    test/test_manager.cpp
 )
 add_library(Dius::dius ALIAS dius)
 
@@ -30,7 +31,6 @@ if(LINUX)
         linux/filesystem/query.cpp
         linux/io_uring.cpp
         linux/sync_file.cpp
-        test/test_manager.cpp
         memory_region.cpp
 )
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Iros")
@@ -140,28 +140,26 @@ if (IROS_UseDiusRuntime)
     )
 endif()
 
-if(LINUX)
-    add_library(dius_test_main STATIC
-        test/test_main.cpp
-    )
-    add_library(Dius::dius_test_main ALIAS dius_test_main)
-    target_link_libraries(dius_test_main
-      PRIVATE
-        dius
-    )
+add_library(dius_test_main STATIC
+    test/test_main.cpp
+)
+add_library(Dius::dius_test_main ALIAS dius_test_main)
+target_link_libraries(dius_test_main
+  PRIVATE
+    dius
+)
 
-    install(
-        TARGETS dius_test_main
-        EXPORT DiusTestMainConfig
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        RUNTIME DESTINATION bin
-        INCLUDES DESTINATION include
-    )
-    install(
-        EXPORT DiusTestMainConfig
-        FILE DiusTestMainConfig.cmake
-        NAMESPACE Dius::
-        DESTINATION lib/cmake/DiusTestMain
-    )
-endif()
+install(
+    TARGETS dius_test_main
+    EXPORT DiusTestMainConfig
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+    INCLUDES DESTINATION include
+)
+install(
+    EXPORT DiusTestMainConfig
+    FILE DiusTestMainConfig.cmake
+    NAMESPACE Dius::
+    DESTINATION lib/cmake/DiusTestMain
+)
