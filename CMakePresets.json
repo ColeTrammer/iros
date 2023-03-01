@@ -46,7 +46,7 @@
       "cacheVariables": {
         "IROS_BuildIris": "ON",
         "IROS_BuildUserspace": "OFF",
-        "IROS_BuildTests": "OFF",
+        "IROS_BuildTests": "ON",
         "IROS_BuildTools": "OFF",
         "IROS_BuildCcpp": "ON",
         "IROS_UseDiusRuntime": "ON",
