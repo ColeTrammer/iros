@@ -14,6 +14,7 @@ public:
     [[noreturn]] void exit_current_task();
 
     Task& current_task() const { return *m_current_task; }
+    Task* current_task_null_if_during_boot() const { return m_current_task; }
     mm::AddressSpace& current_address_space();
 
 private:
