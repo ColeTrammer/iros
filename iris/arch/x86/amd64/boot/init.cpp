@@ -9,6 +9,7 @@
 #include <iris/boot/cxx_init.h>
 #include <iris/boot/init.h>
 #include <iris/core/global_state.h>
+#include <iris/core/interrupt_disabler.h>
 #include <iris/core/print.h>
 #include <iris/core/scheduler.h>
 #include <iris/core/task.h>
@@ -32,9 +33,16 @@ namespace iris::arch {
 }
 
 extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, int error_code) {
-
     if (irq == 32) {
         iris::x86::amd64::send_eoi(0);
+
+        // If preemption is disabled, do not reshcedule the currently running task but let it know
+        // that it should yield whenever it finally re-enables preemption.
+        auto& current_task = iris::global_state().scheduler.current_task();
+        if (current_task.preemption_disabled()) {
+            current_task.set_should_be_preempted();
+            return;
+        }
         iris::global_state().scheduler.save_state_and_run_next(task_state);
     }
 
