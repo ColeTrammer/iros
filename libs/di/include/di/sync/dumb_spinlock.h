@@ -27,7 +27,7 @@ public:
     void unlock() { m_state.store(false, MemoryOrder::Release); }
 
 private:
-    Atomic<bool> m_state;
+    Atomic<bool> m_state { false };
 };
 
 static_assert(concepts::Lock<DumbSpinlock>);

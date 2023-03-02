@@ -37,6 +37,8 @@ public:
         return function::invoke(util::forward<Fun>(function), m_value);
     }
 
+    Value& get_assuming_no_concurrent_accesses() { return m_value; }
+
 private:
     Value m_value {};
     Lock m_lock {};
