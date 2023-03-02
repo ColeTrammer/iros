@@ -1,3 +1,4 @@
+#include <iris/core/interrupt_disabler.h>
 #include <iris/core/task.h>
 
 namespace iris::arch {
@@ -5,9 +6,11 @@ TaskState::TaskState(u64 entry, u64 stack, bool userspace) : rip(entry), rsp(sta
     if (userspace) {
         ss = 8 * 8 + 3;
         cs = 7 * 8 + 3;
+        rflags = interrupt_enable_flag | 2;
     } else {
         ss = 0 * 8 + 0;
         cs = 5 * 8 + 0;
+        rflags = interrupt_enable_flag | 2;
     }
 }
 

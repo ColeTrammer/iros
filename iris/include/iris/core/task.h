@@ -41,10 +41,17 @@ public:
 
     void set_instruction_pointer(mm::VirtualAddress address);
 
+    bool preemption_disabled() const { return m_preemption_disabled_count.load(di::MemoryOrder::Relaxed) > 0; }
+    void disable_preemption() { m_preemption_disabled_count.fetch_add(1, di::MemoryOrder::Relaxed); }
+    void enable_preemption();
+    void set_should_be_preempted() { m_should_be_preempted.store(true, di::MemoryOrder::Relaxed); }
+
 private:
     arch::TaskState m_task_state;
     di::Arc<mm::AddressSpace> m_address_space;
     di::Arc<TaskNamespace> m_task_namespace;
+    di::Atomic<i32> m_preemption_disabled_count;
+    di::Atomic<bool> m_should_be_preempted { false };
     FileTable m_file_table;
     TaskId m_id;
 };

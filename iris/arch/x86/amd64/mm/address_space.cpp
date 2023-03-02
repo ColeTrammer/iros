@@ -1,6 +1,7 @@
 #include <iris/arch/x86/amd64/page_structure.h>
 #include <iris/arch/x86/amd64/system_instructions.h>
 #include <iris/core/global_state.h>
+#include <iris/core/preemption.h>
 #include <iris/core/print.h>
 #include <iris/mm/address_space.h>
 #include <iris/mm/map_physical_address.h>
@@ -19,37 +20,39 @@ AddressSpace::~AddressSpace() {
 
     // Load the kernel address space, to ensure we don't run in the current
     // address space as it is being destroyed.
-    asm volatile("cli");
-    kernel_address_space.load();
+    with_preemption_disabled(global_state().scheduler.current_task(), [&] {
+        kernel_address_space.load();
 
-    auto from_physical_address = [](PhysicalAddress physical_address) {
-        // NOTE: as long as this page table is not corrupted, mapping the physical page will always succeed.
-        //       It is therefore OK to assert there are no issues creating the mapping.
-        auto result = map_physical_address(physical_address, 4096);
-        ASSERT(result);
-        return &result->typed<page_structure::PageStructureTable const>();
-    };
+        auto from_physical_address = [](PhysicalAddress physical_address) {
+            // NOTE: as long as this page table is not corrupted, mapping the physical page will always succeed.
+            //       It is therefore OK to assert there are no issues creating the mapping.
+            auto result = map_physical_address(physical_address, 4096);
+            ASSERT(result);
+            return &result->typed<page_structure::PageStructureTable const>();
+        };
 
-    auto free_all_user_pages = di::ycombinator([&](auto&& self, page_structure::StructureEntry physical_page_structure,
-                                                   int depth = 0) -> void {
-        // Perform a post-order traversal over every physical page allocated in this layer. At depth 4, the physical
-        // pages no longer refer to other pages, and so we stop the recursion explicitly. The iteration only
-        // considers present pages which are not owned by the kernel.
-        auto physical_address = PhysicalAddress(physical_page_structure.get<page_structure::PhysicalAddress>() << 12);
-        if (depth < 4) {
-            auto* structure = from_physical_address(physical_address);
-            for (auto& entry : *structure) {
-                if (!entry.get<page_structure::Present>() || !entry.get<page_structure::User>()) {
-                    continue;
+        auto free_all_user_pages = di::ycombinator(
+            [&](auto&& self, page_structure::StructureEntry physical_page_structure, int depth = 0) -> void {
+                // Perform a post-order traversal over every physical page allocated in this layer. At depth 4, the
+                // physical pages no longer refer to other pages, and so we stop the recursion explicitly. The
+                // iteration only considers present pages which are not owned by the kernel.
+                auto physical_address =
+                    PhysicalAddress(physical_page_structure.get<page_structure::PhysicalAddress>() << 12);
+                if (depth < 4) {
+                    auto* structure = from_physical_address(physical_address);
+                    for (auto& entry : *structure) {
+                        if (!entry.get<page_structure::Present>() || !entry.get<page_structure::User>()) {
+                            continue;
+                        }
+                        self(entry, depth + 1);
+                    }
                 }
-                self(entry, depth + 1);
-            }
-        }
 
-        deallocate_page_frame(physical_address);
+                deallocate_page_frame(physical_address);
+            });
+
+        free_all_user_pages(di::bit_cast<page_structure::StructureEntry>(architecture_page_table_base()));
     });
-
-    free_all_user_pages(di::bit_cast<page_structure::StructureEntry>(architecture_page_table_base()));
 }
 
 void AddressSpace::load() {

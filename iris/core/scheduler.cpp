@@ -1,4 +1,5 @@
 #include <iris/core/global_state.h>
+#include <iris/core/interrupt_disabler.h>
 #include <iris/core/print.h>
 #include <iris/core/scheduler.h>
 
@@ -76,7 +77,7 @@ void Scheduler::run_next() {
 }
 
 void Scheduler::save_state_and_run_next(arch::TaskState* task_state) {
-    asm volatile("cli");
+    raw_disable_interrupts();
 
     // Ensure that we never put the idle task into the run queue.
     if (m_current_task != m_idle_task.get()) {
@@ -97,9 +98,9 @@ void Scheduler::exit_current_task() {
         auto task_reference = di::Arc<Task>(m_current_task, di::retain_object);
     }
 
-    asm volatile("cli");
     // NOTE: by not pushing the current task into the run queue, it will
     //       not get scheduled again.
+    raw_disable_interrupts();
     run_next();
 }
 

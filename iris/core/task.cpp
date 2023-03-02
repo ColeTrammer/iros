@@ -1,5 +1,6 @@
 #include <iris/core/error.h>
 #include <iris/core/global_state.h>
+#include <iris/core/interrupt_disabler.h>
 #include <iris/core/print.h>
 #include <iris/core/task.h>
 #include <iris/core/task_namespace.h>
@@ -90,34 +91,53 @@ Expected<void> load_executable(Task& task, di::PathView path) {
     auto* elf_header = raw_data.typed_pointer_unchecked<elf64::ElfHeader>(0);
     ASSERT_EQ(sizeof(elf64::ProgramHeader), elf_header->program_entry_size);
 
-    asm volatile("cli");
-    auto& current_address_space = global_state().scheduler.current_address_space();
-    auto& address_space = task.address_space();
-    address_space.load();
+    // FIXME: consider disabling preemption instead.
+    with_interrupts_disabled([&] {
+        auto& current_address_space = global_state().scheduler.current_address_space();
+        auto& address_space = task.address_space();
+        address_space.load();
 
-    auto program_headers = raw_data.typed_span_unchecked<elf64::ProgramHeader>(elf_header->program_table_off,
-                                                                               elf_header->program_entry_count);
-    // FIXME: handle different program header types and memory protection.
-    for (auto& program_header : program_headers) {
-        // PT_LOAD
-        if (program_header.type != 1) {
-            continue;
+        auto program_headers = raw_data.typed_span_unchecked<elf64::ProgramHeader>(elf_header->program_table_off,
+                                                                                   elf_header->program_entry_count);
+        // FIXME: handle different program header types and memory protection.
+        for (auto& program_header : program_headers) {
+            // PT_LOAD
+            if (program_header.type != 1) {
+                continue;
+            }
+
+            auto aligned_size = di::align_up(program_header.memory_size, 4096);
+            (void) address_space.allocate_region_at(mm::VirtualAddress(program_header.virtual_addr), aligned_size,
+                                                    mm::RegionFlags::User | mm::RegionFlags::Readable |
+                                                        mm::RegionFlags::Executable | mm::RegionFlags::Writable);
+
+            auto data = di::Span { reinterpret_cast<di::Byte*>(program_header.virtual_addr), aligned_size };
+
+            with_userspace_access([&] {
+                di::copy(*raw_data.subspan(program_header.offset, program_header.memory_size), data.data());
+            });
         }
-
-        auto aligned_size = di::align_up(program_header.memory_size, 4096);
-        (void) address_space.allocate_region_at(mm::VirtualAddress(program_header.virtual_addr), aligned_size,
-                                                mm::RegionFlags::User | mm::RegionFlags::Readable |
-                                                    mm::RegionFlags::Executable | mm::RegionFlags::Writable);
-
-        auto data = di::Span { reinterpret_cast<di::Byte*>(program_header.virtual_addr), aligned_size };
-
-        with_userspace_access([&] {
-            di::copy(*raw_data.subspan(program_header.offset, program_header.memory_size), data.data());
-        });
-    }
-    current_address_space.load();
+        current_address_space.load();
+    });
 
     task.set_instruction_pointer(mm::VirtualAddress(elf_header->entry));
     return {};
+}
+
+void Task::enable_preemption() {
+    auto count = m_preemption_disabled_count.load(di::MemoryOrder::Relaxed);
+    ASSERT_GT(count, 0);
+
+    bool should_yield = m_should_be_preempted.load(di::MemoryOrder::Relaxed) && count == 1;
+    if (should_yield) {
+        raw_disable_interrupts();
+        m_should_be_preempted.store(false, di::MemoryOrder::Relaxed);
+    }
+
+    m_preemption_disabled_count.store(count - 1, di::MemoryOrder::Relaxed);
+
+    if (should_yield) {
+        global_state().scheduler.yield();
+    }
 }
 }
