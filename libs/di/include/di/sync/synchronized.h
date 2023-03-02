@@ -11,6 +11,18 @@
 
 namespace di::sync {
 template<typename Value, concepts::Lock Lock = DefaultLock>
+class LockedReference {
+public:
+    constexpr explicit LockedReference(Value* value, Lock& lock) : m_guard(lock), m_value(value) {}
+
+    constexpr Value* operator->() const { return m_value; }
+
+private:
+    ScopedLock<Lock> m_guard;
+    Value* m_value;
+};
+
+template<typename Value, concepts::Lock Lock = DefaultLock>
 class Synchronized {
 public:
     Synchronized()
@@ -37,7 +49,9 @@ public:
         return function::invoke(util::forward<Fun>(function), m_value);
     }
 
-    Value& get_assuming_no_concurrent_accesses() { return m_value; }
+    constexpr auto lock() { return LockedReference(util::addressof(m_value), m_lock); }
+
+    constexpr Value& get_assuming_no_concurrent_accesses() { return m_value; }
 
 private:
     Value m_value {};
