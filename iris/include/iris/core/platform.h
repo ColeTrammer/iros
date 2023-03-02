@@ -5,6 +5,7 @@
 #include <di/types/integers.h>
 #include <di/util/std_new.h>
 #include <iris/core/error.h>
+#include <iris/core/spinlock.h>
 
 namespace di::sync {
 class DumbSpinlock;
@@ -15,7 +16,7 @@ using ThreadId = types::i32;
 
 extern ThreadId get_current_thread_id();
 
-using DefaultLock = sync::DumbSpinlock;
+using DefaultLock = iris::Spinlock;
 
 // FIXME: make the default allocator fallible as well
 //        once di::TreeSet<> supports fallible allocation.
