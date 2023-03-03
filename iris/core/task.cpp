@@ -56,32 +56,33 @@ Task::Task(mm::VirtualAddress entry, mm::VirtualAddress stack, bool userspace, d
     , m_id(id) {}
 
 Task::~Task() {
-    m_task_namespace->unregister_task(*this);
+    m_task_namespace->lock()->unregister_task(*this);
 }
 
 Expected<di::Arc<Task>> create_kernel_task(TaskNamespace& task_namespace, void (*entry)()) {
     auto entry_address = mm::VirtualAddress(di::to_uintptr(entry));
 
     auto& address_space = global_state().kernel_address_space;
-    auto stack = TRY(address_space.allocate_region(0x2000, mm::RegionFlags::Readable | mm::RegionFlags::Writable));
+    auto stack =
+        TRY(address_space.lock()->allocate_region(0x2000, mm::RegionFlags::Readable | mm::RegionFlags::Writable));
 
-    auto task_id = TRY(task_namespace.allocate_task_id());
+    auto task_id = TRY(task_namespace.lock()->allocate_task_id());
     auto result = TRY(di::try_make_arc<Task>(entry_address, stack + 0x2000, false, address_space.arc_from_this(),
                                              task_namespace.arc_from_this(), task_id, FileTable {}));
-    TRY(task_namespace.register_task(*result));
+    TRY(task_namespace.lock()->register_task(*result));
     return result;
 }
 
 Expected<di::Arc<Task>> create_user_task(TaskNamespace& task_namespace, FileTable file_table) {
     auto new_address_space = TRY(mm::create_empty_user_address_space());
 
-    auto user_stack = TRY(new_address_space->allocate_region(
+    auto user_stack = TRY(new_address_space->get_assuming_no_concurrent_accesses().allocate_region(
         0x10000, mm::RegionFlags::Writable | mm::RegionFlags::User | mm::RegionFlags::Readable));
-    auto task_id = TRY(task_namespace.allocate_task_id());
+    auto task_id = TRY(task_namespace.lock()->allocate_task_id());
     auto result =
         TRY(di::try_make_arc<Task>(mm::VirtualAddress(0), user_stack + 0x10000, true, di::move(new_address_space),
                                    task_namespace.arc_from_this(), task_id, di::move(file_table)));
-    TRY(task_namespace.register_task(*result));
+    TRY(task_namespace.lock()->register_task(*result));
     return result;
 }
 
@@ -92,10 +93,10 @@ Expected<void> load_executable(Task& task, di::PathView path) {
     ASSERT_EQ(sizeof(elf64::ProgramHeader), elf_header->program_entry_size);
 
     // FIXME: consider disabling preemption instead.
+    auto address_space = task.address_space().lock();
     with_interrupts_disabled([&] {
         auto& current_address_space = global_state().scheduler.current_address_space();
-        auto& address_space = task.address_space();
-        address_space.load();
+        address_space->base().load();
 
         auto program_headers = raw_data.typed_span_unchecked<elf64::ProgramHeader>(elf_header->program_table_off,
                                                                                    elf_header->program_entry_count);
@@ -107,9 +108,9 @@ Expected<void> load_executable(Task& task, di::PathView path) {
             }
 
             auto aligned_size = di::align_up(program_header.memory_size, 4096);
-            (void) address_space.allocate_region_at(mm::VirtualAddress(program_header.virtual_addr), aligned_size,
-                                                    mm::RegionFlags::User | mm::RegionFlags::Readable |
-                                                        mm::RegionFlags::Executable | mm::RegionFlags::Writable);
+            (void) address_space->allocate_region_at(mm::VirtualAddress(program_header.virtual_addr), aligned_size,
+                                                     mm::RegionFlags::User | mm::RegionFlags::Readable |
+                                                         mm::RegionFlags::Executable | mm::RegionFlags::Writable);
 
             auto data = di::Span { reinterpret_cast<di::Byte*>(program_header.virtual_addr), aligned_size };
 

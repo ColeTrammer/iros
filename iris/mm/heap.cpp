@@ -16,35 +16,36 @@ void* operator new(std::size_t size, std::nothrow_t const&) noexcept {
 
 void* operator new(std::size_t size, std::align_val_t alignment, std::nothrow_t const&) noexcept {
     auto& global_state = iris::global_state();
-    auto old_heap_end = global_state.heap_end;
+    return global_state.kernel_address_space.with_lock([&](auto& address_space) -> void* {
+        auto old_heap_end = address_space.heap_end();
 
-    auto alignment_difference = global_state.heap_end.raw_value() % di::to_underlying(alignment);
-    if (alignment_difference != 0) {
-        global_state.heap_end = global_state.heap_end + di::to_underlying(alignment) - alignment_difference;
-    }
+        auto alignment_difference = old_heap_end.raw_value() % di::to_underlying(alignment);
+        if (alignment_difference != 0) {
+            address_space.set_heap_end(old_heap_end + di::to_underlying(alignment) - alignment_difference);
+        }
 
-    auto result = global_state.heap_end;
-    global_state.heap_end = global_state.heap_end + size;
+        auto result = address_space.heap_end();
+        address_space.set_heap_end(result + size);
 
-    if (old_heap_end == global_state.heap_start ||
-        di::align_down(old_heap_end.raw_value(), 4096) != di::align_down(global_state.heap_end.raw_value(), 4096)) {
-        auto virtual_start = iris::mm::VirtualAddress(di::align_up(old_heap_end.raw_value(), 4096));
-        auto virtual_end = iris::mm::VirtualAddress(di::align_up(global_state.heap_end.raw_value(), 4096));
-        for (auto virtual_address = virtual_start; virtual_address < virtual_end; virtual_address += 4096) {
+        if (old_heap_end == global_state.heap_start || di::align_down(old_heap_end.raw_value(), 4096) !=
+                                                           di::align_down(address_space.heap_end().raw_value(), 4096)) {
+            auto virtual_start = iris::mm::VirtualAddress(di::align_up(old_heap_end.raw_value(), 4096));
+            auto virtual_end = iris::mm::VirtualAddress(di::align_up(address_space.heap_end().raw_value(), 4096));
+            for (auto virtual_address = virtual_start; virtual_address < virtual_end; virtual_address += 4096) {
 
-            auto& kernel_address_space = global_state.kernel_address_space;
-            auto physical_page = iris::mm::allocate_page_frame().value();
+                auto physical_page = iris::mm::allocate_page_frame().value();
 
-            if (!kernel_address_space.map_physical_page(virtual_address, physical_page,
-                                                        iris::mm::RegionFlags::Readable |
-                                                            iris::mm::RegionFlags::Writable)) {
-                iris::println(u8"Failed to map physical page in ::new()"_sv);
-                return nullptr;
+                if (!address_space.map_physical_page(virtual_address, physical_page,
+                                                     iris::mm::RegionFlags::Readable |
+                                                         iris::mm::RegionFlags::Writable)) {
+                    iris::println(u8"Failed to map physical page in ::new()"_sv);
+                    return nullptr;
+                }
             }
         }
-    }
 
-    return result.void_pointer();
+        return result.void_pointer();
+    });
 }
 
 // Deallocating delete.

@@ -2,12 +2,36 @@
 
 #include <di/prelude.h>
 #include <iris/core/error.h>
+#include <iris/core/recursive_spinlock.h>
 #include <iris/mm/physical_address.h>
 #include <iris/mm/region.h>
 #include <iris/mm/virtual_address.h>
 
 namespace iris::mm {
-class AddressSpace : public di::IntrusiveRefCount<AddressSpace> {
+class AddressSpace;
+
+class LockedAddressSpace {
+public:
+    Expected<void> map_physical_page(VirtualAddress location, PhysicalAddress physical_address, RegionFlags flags);
+
+    Expected<VirtualAddress> allocate_region(usize page_aligned_length, RegionFlags flags);
+    Expected<void> allocate_region_at(VirtualAddress location, usize page_aligned_length, RegionFlags flags);
+
+    VirtualAddress heap_end() const { return m_heap_end; }
+    void set_heap_end(VirtualAddress address) { m_heap_end = address; }
+
+    AddressSpace& base();
+
+private:
+    di::TreeSet<Region> m_regions;
+    VirtualAddress m_heap_end { 0 };
+};
+
+class AddressSpace
+    : public di::Synchronized<LockedAddressSpace, RecursiveSpinlock>
+    , public di::IntrusiveRefCount<AddressSpace> {
+    friend class LockedAddressSpace;
+
 public:
     AddressSpace() = default;
 
@@ -20,19 +44,13 @@ public:
 
     void load();
 
-    Expected<void> map_physical_page(VirtualAddress location, PhysicalAddress physical_address, RegionFlags flags);
-
-    Expected<VirtualAddress> allocate_region(usize page_aligned_length, RegionFlags flags);
-    Expected<void> allocate_region_at(VirtualAddress location, usize page_aligned_length, RegionFlags flags);
-
-    u64 resident_pages() const { return m_resident_pages; }
-    u64 structure_pages() const { return m_structure_pages; }
+    u64 resident_pages() const { return m_resident_pages.load(di::MemoryOrder::Relaxed); }
+    u64 structure_pages() const { return m_structure_pages.load(di::MemoryOrder::Relaxed); }
 
 private:
     PhysicalAddress m_architecture_page_table_base { 0 };
-    u64 m_resident_pages { 0 };
-    u64 m_structure_pages { 0 };
-    di::TreeSet<Region> m_regions;
+    di::Atomic<u64> m_resident_pages { 0 };
+    di::Atomic<u64> m_structure_pages { 0 };
     bool m_kernel { false };
 };
 
