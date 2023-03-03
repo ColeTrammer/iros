@@ -22,9 +22,10 @@ struct GlobalState {
     di::Span<di::Byte const> initrd;
     arch::CPUFeatures cpu_features;
 
-    // Mutable global state. Should be protected with di::Syncrhonized in the future.
+    // Mutable global state. These fields have internal synchronization, and so are
+    // safe to access concurrently. Typically, calling code must call .lock() or use
+    // .with_lock() to mutate or even read these fields.
     mutable mm::AddressSpace kernel_address_space;
-    mutable mm::VirtualAddress heap_end { 0 };
     mutable TaskNamespace task_namespace;
 
     // Mutable global state which should really be per-processor, once SMP is supported.

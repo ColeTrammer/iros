@@ -6,7 +6,7 @@
 #include <iris/core/task.h>
 
 namespace iris {
-class TaskNamespace : public di::IntrusiveRefCount<TaskNamespace> {
+class LockedTaskNamespace {
 public:
     Expected<TaskId> allocate_task_id();
 
@@ -19,4 +19,8 @@ private:
     TaskId m_next_id { 0 };
     di::TreeMap<TaskId, di::Arc<Task>> m_task_id_map;
 };
+
+class TaskNamespace
+    : public di::IntrusiveRefCount<TaskNamespace>
+    , public di::Synchronized<LockedTaskNamespace> {};
 }

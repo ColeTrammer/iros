@@ -96,7 +96,7 @@ extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, 
                     iris::println("Loading executable for {}: {}..."_sv, task_id, path);
 
                     auto& task_namespace = iris::global_state().scheduler.current_task().task_namespace();
-                    auto result = task_namespace.find_task(task_id);
+                    auto result = task_namespace.lock()->find_task(task_id);
                     if (!result) {
                         task_state->rdx = di::bit_cast<u64>(result.error());
                         return;
@@ -116,7 +116,7 @@ extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, 
                 auto task_id = iris::TaskId(task_state->rdi);
 
                 auto& task_namespace = iris::global_state().scheduler.current_task().task_namespace();
-                auto result = task_namespace.find_task(task_id);
+                auto result = task_namespace.lock()->find_task(task_id);
                 if (!result) {
                     task_state->rdx = di::bit_cast<u64>(result.error());
                 } else {
@@ -131,8 +131,8 @@ extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, 
                 auto amount = task_state->rdi;
 
                 auto& address_space = iris::global_state().scheduler.current_address_space();
-                auto result = address_space.allocate_region(amount, mm::RegionFlags::User | mm::RegionFlags::Writable |
-                                                                        mm::RegionFlags::Readable);
+                auto result = address_space.lock()->allocate_region(
+                    amount, mm::RegionFlags::User | mm::RegionFlags::Writable | mm::RegionFlags::Readable);
                 if (!result) {
                     task_state->rdx = di::bit_cast<u64>(result.error());
                 } else {

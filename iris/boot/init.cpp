@@ -7,6 +7,7 @@
 #include <iris/boot/cxx_init.h>
 #include <iris/boot/init.h>
 #include <iris/core/global_state.h>
+#include <iris/core/interruptible_spinlock.h>
 #include <iris/core/print.h>
 #include <iris/core/scheduler.h>
 #include <iris/core/task.h>
@@ -51,12 +52,15 @@ static volatile limine_module_request module_request = {
 namespace iris {
 struct DebugFile {
 private:
-    friend Expected<usize> tag_invoke(di::Tag<write_file>, DebugFile&, di::Span<di::Byte const> data) {
+    friend Expected<usize> tag_invoke(di::Tag<write_file>, DebugFile& self, di::Span<di::Byte const> data) {
+        auto guard = di::ScopedLock(self.m_lock);
         for (auto byte : data) {
             log_output_byte(byte);
         }
         return data.size();
     }
+
+    InterruptibleSpinlock m_lock;
 };
 
 void iris_main() {
@@ -64,7 +68,7 @@ void iris_main() {
 
     auto& global_state = global_state_in_boot();
     global_state.heap_start = iris::mm::VirtualAddress(di::align_up(iris::mm::kernel_end.raw_value(), 4096));
-    global_state.heap_end = global_state.heap_start;
+    global_state.kernel_address_space.get_assuming_no_concurrent_accesses().set_heap_end(global_state.heap_start);
 
     auto memory_map = di::Span { memmap_request.response->entries, memmap_request.response->entry_count };
 
@@ -110,7 +114,7 @@ void iris_main() {
         scheduler.schedule_task(*task3);
 
         auto file_table = iris::FileTable {};
-        auto debug_file = *iris::File::try_create(DebugFile {});
+        auto debug_file = *iris::File::try_create(di::in_place_type<DebugFile>);
         di::get<0>(*file_table.allocate_file_handle()) = debug_file;
         di::get<0>(*file_table.allocate_file_handle()) = debug_file;
         di::get<0>(*file_table.allocate_file_handle()) = debug_file;
