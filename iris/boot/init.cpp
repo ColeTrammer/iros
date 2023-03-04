@@ -47,6 +47,12 @@ static volatile limine_module_request module_request = {
     .revision = 0,
     .response = nullptr,
 };
+
+static volatile limine_kernel_file_request kernel_file_request = {
+    .id = LIMINE_KERNEL_FILE_REQUEST,
+    .revision = 0,
+    .response = nullptr,
+};
 }
 
 namespace iris {
@@ -63,8 +69,30 @@ private:
     InterruptibleSpinlock m_lock;
 };
 
+static auto kernel_command_line =
+    di::container::string::StringImpl<di::container::string::TransparentEncoding,
+                                      di::StaticVector<char, di::meta::SizeConstant<4096>>> {};
+
 void iris_main() {
     iris::println("Starting architecture independent initialization..."_sv);
+
+    if (!kernel_file_request.response) {
+        println("No limine kernel file response, panicking..."_sv);
+        return;
+    }
+
+    auto bootloader_command_line = di::ZString(kernel_file_request.response->kernel_file->cmdline);
+    auto command_line_size = di::distance(bootloader_command_line);
+    if (command_line_size > 4096) {
+        println("Kernel command line is too large, panicking..."_sv);
+        return;
+    }
+
+    for (auto c : bootloader_command_line) {
+        (void) kernel_command_line.push_back(c);
+    }
+
+    println("Kernel command line: {:?}"_sv, kernel_command_line);
 
     auto& global_state = global_state_in_boot();
     global_state.heap_start = iris::mm::VirtualAddress(di::align_up(iris::mm::kernel_end.raw_value(), 4096));
@@ -121,7 +149,7 @@ void iris_main() {
 
         auto task4 = *iris::create_user_task(global_state.task_namespace, di::move(file_table));
 
-        auto init_path = "/test_create_task"_pv;
+        auto init_path = kernel_command_line.empty() ? "/test_create_task"_pv : di::PathView(kernel_command_line);
         iris::println("Loading initial userspace task: {}"_sv, init_path);
         *iris::load_executable(*task4, init_path);
         scheduler.schedule_task(*task4);
