@@ -163,3 +163,10 @@ install(
     NAMESPACE Dius::
     DESTINATION lib/cmake/DiusTestMain
 )
+
+if (IROS_UseDiusRuntime)
+  target_link_libraries(dius_test_main
+    PUBLIC
+      dius_runtime
+  )
+endif()
