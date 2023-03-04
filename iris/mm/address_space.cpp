@@ -20,6 +20,11 @@ Expected<VirtualAddress> LockedAddressSpace::allocate_region(usize page_aligned_
         return di::Unexpected(Error::InvalidArgument);
     }
 
+    if (page_aligned_length >= 4_u64 * 1024 * 1024 * 1024) {
+        println("WARNING: attempt to allocate extremely large region of size {:x}."_sv, page_aligned_length);
+        return di::Unexpected(Error::NotEnoughMemory);
+    }
+
     auto heap_start = global_state().heap_start;
     auto default_address = base().m_kernel ? heap_start : mm::VirtualAddress(0x10000000000);
     auto last_virtual_address = m_regions.back().transform(&Region::end).value_or(default_address);

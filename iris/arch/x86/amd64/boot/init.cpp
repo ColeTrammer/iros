@@ -237,7 +237,7 @@ extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, 
         return;
     }
 
-    iris::println("ERROR: got unexpected IRQ {}, error_code={}"_sv, irq, error_code);
+    iris::println("ERROR: got unexpected IRQ {}, error_code={}, ip={:#x}"_sv, irq, error_code, task_state->rip);
     done();
 }
 

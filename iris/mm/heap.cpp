@@ -27,8 +27,8 @@ void* operator new(std::size_t size, std::align_val_t alignment, std::nothrow_t 
         auto result = address_space.heap_end();
         address_space.set_heap_end(result + size);
 
-        if (old_heap_end == global_state.heap_start || di::align_down(old_heap_end.raw_value(), 4096) !=
-                                                           di::align_down(address_space.heap_end().raw_value(), 4096)) {
+        if (old_heap_end == global_state.heap_start ||
+            di::align_up(old_heap_end.raw_value(), 4096) != di::align_up(address_space.heap_end().raw_value(), 4096)) {
             auto virtual_start = iris::mm::VirtualAddress(di::align_up(old_heap_end.raw_value(), 4096));
             auto virtual_end = iris::mm::VirtualAddress(di::align_up(address_space.heap_end().raw_value(), 4096));
             for (auto virtual_address = virtual_start; virtual_address < virtual_end; virtual_address += 4096) {
