@@ -16,6 +16,7 @@
 #include <iris/core/userspace_access.h>
 #include <iris/fs/file.h>
 #include <iris/fs/initrd.h>
+#include <iris/hw/power.h>
 #include <iris/mm/address_space.h>
 #include <iris/mm/map_physical_address.h>
 #include <iris/mm/page_frame_allocator.h>
@@ -62,10 +63,8 @@ extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, 
             }
             case SystemCall::shutdown: {
                 iris::println("Shutdowning down..."_sv);
-
-                // NOTE: this is specific to QEMU, as per OSDEV:
-                //       https://wiki.osdev.org/Shutdown
-                x86::amd64::io_out(0x604_u16, 0x2000_u32);
+                auto success = task_state->rdi == 0;
+                iris::hard_shutdown(success ? ShutdownStatus::Intended : ShutdownStatus::Error);
                 break;
             }
             case SystemCall::exit_task: {
