@@ -1,4 +1,0 @@
-#ifndef _KERNEL_NET_UNIX_SOCKET_H
-#define _KERNEL_NET_UNIX_SOCKET_H 1
-
-#endif /* _KERNEL_NET_UNIX_SOCKET_H */

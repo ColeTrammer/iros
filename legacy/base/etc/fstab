@@ -1,7 +1,0 @@
-# Fstab entries have the following format:
-# <device> <mount-point> <type> <options>
-none    /dev         devfs
-none    /proc        procfs
-none    /tmp         tmpfs
-none    /initrd      initrd
-none    /dev/shm     tmpfs
