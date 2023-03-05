@@ -50,7 +50,8 @@
         "IROS_BuildTools": "OFF",
         "IROS_BuildCcpp": "ON",
         "IROS_UseDiusRuntime": "ON",
-        "CMAKE_CXX_COMPILER_WORKS": "ON"
+        "CMAKE_CXX_COMPILER_WORKS": "ON",
+        "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh"
       },
       "inherits": ["release_base"]
     },
@@ -230,13 +231,17 @@
       },
       "execution": {
         "noTestsAction": "error",
-        "stopOnFailure": false
+        "stopOnFailure": false,
+        "timeout": 30
       }
     },
     {
       "name": "iros_x86_64",
       "displayName": "Iros x86_64",
       "configurePreset": "iros_x86_64",
+      "execution": {
+        "jobs": 1
+      },
       "inherits": ["base"]
     },
     {

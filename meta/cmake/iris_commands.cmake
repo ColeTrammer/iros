@@ -49,8 +49,8 @@ add_custom_target(
 add_custom_target(
     run
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-    COMMAND IRIS_ARCH=${CMAKE_HOST_SYSTEM_PROCESSOR}
-            IRIS_IMAGE=${CMAKE_CURRENT_BINARY_DIR}/iris/iris.img
+    COMMAND IROS_ARCH=${CMAKE_HOST_SYSTEM_PROCESSOR}
+            IROS_IMAGE=${CMAKE_CURRENT_BINARY_DIR}/iris/iris.img
             "${CMAKE_CURRENT_SOURCE_DIR}/meta/run-iris.sh"
     USES_TERMINAL
 )
@@ -58,8 +58,8 @@ add_custom_target(
 add_custom_target(
     ibr
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-    COMMAND IRIS_ARCH=${CMAKE_HOST_SYSTEM_PROCESSOR}
-            IRIS_IMAGE=${CMAKE_CURRENT_BINARY_DIR}/iris/iris.img
+    COMMAND IROS_ARCH=${CMAKE_HOST_SYSTEM_PROCESSOR}
+            IROS_IMAGE=${CMAKE_CURRENT_BINARY_DIR}/iris/iris.img
             "${CMAKE_CURRENT_SOURCE_DIR}/meta/run-iris.sh"
     DEPENDS image generate-initrd
     USES_TERMINAL
