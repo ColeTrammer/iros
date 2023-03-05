@@ -1,4 +1,5 @@
 #include <iris/core/print.h>
+#include <iris/hw/power.h>
 
 namespace iris {
 static inline void outb(u16 port, u8 value) {
@@ -24,9 +25,6 @@ void assert_write(char const* data, size_t size) {
 }
 
 void assert_terminate() {
-    for (;;) {
-        asm volatile("cli\n"
-                     "hlt\n");
-    }
+    iris::hard_shutdown(iris::ShutdownStatus::Error);
 }
 }
