@@ -133,7 +133,7 @@
     {
       "name": "ubsan",
       "displayName": "Undefined Behavior Sanitizer",
-      "description": "Build with undefed behavior sanitizer enabled",
+      "description": "Build with undefined behavior sanitizer enabled",
       "binaryDir": "${sourceDir}/build/native/ubsan",
       "installDir": "${sourceDir}/bulid/native/ubsan-install",
       "cacheVariables": {
@@ -141,6 +141,157 @@
         "IROS_SanitizerFlags": "-fsanitize=undefined -DDI_SANITIZER"
       },
       "inherits": ["debug_base"]
+    },
+    {
+      "name": "ubasan",
+      "displayName": "Undefined Behavior and Address Sanitizer",
+      "description": "Build with defined behavior and address sanitizer enabled",
+      "binaryDir": "${sourceDir}/build/native/ubasan",
+      "installDir": "${sourceDir}/bulid/native/ubasan-install",
+      "cacheVariables": {
+        "IROS_BuildCcpp": "OFF",
+        "IROS_SanitizerFlags": "-fsanitize=address,undefined -DDI_SANITIZER"
+      },
+      "inherits": ["debug_base"]
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "base",
+      "hidden": true
+    },
+    {
+      "name": "iros_x86_64",
+      "displayName": "Iros x86_64",
+      "configurePreset": "iros_x86_64",
+      "inherits": ["base"]
+    },
+    {
+      "name": "dius_runtime_release",
+      "displayName": "Dius Runtime Release",
+      "configurePreset": "dius_runtime_release",
+      "inherits": ["base"]
+    },
+    {
+      "name": "dius_runtime_debug",
+      "displayName": "Dius Runtime Debug Build",
+      "configurePreset": "dius_runtime_debug",
+      "inherits": ["base"]
+    },
+    {
+      "name": "release",
+      "displayName": "Release Build",
+      "configurePreset": "release",
+      "inherits": ["base"]
+    },
+    {
+      "name": "tools",
+      "displayName": "Tools Build",
+      "configurePreset": "tools",
+      "inherits": ["base"]
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug Build",
+      "configurePreset": "debug",
+      "inherits": ["base"]
+    },
+    {
+      "name": "asan",
+      "displayName": "Address Sanitizer",
+      "configurePreset": "asan",
+      "inherits": ["base"]
+    },
+    {
+      "name": "tsan",
+      "displayName": "Thread Sanitizer",
+      "configurePreset": "tsan",
+      "inherits": ["base"]
+    },
+    {
+      "name": "ubsan",
+      "displayName": "Undefined Behavior Sanitizer",
+      "configurePreset": "ubsan",
+      "inherits": ["base"]
+    },
+    {
+      "name": "ubasan",
+      "displayName": "Undefined Behavior + Address Sanitizer",
+      "configurePreset": "ubasan",
+      "inherits": ["base"]
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": false
+      }
+    },
+    {
+      "name": "iros_x86_64",
+      "displayName": "Iros x86_64",
+      "configurePreset": "iros_x86_64",
+      "inherits": ["base"]
+    },
+    {
+      "name": "dius_runtime_release",
+      "displayName": "Dius Runtime Release Test",
+      "configurePreset": "dius_runtime_release",
+      "inherits": ["base"]
+    },
+    {
+      "name": "dius_runtime_debug",
+      "displayName": "Dius Runtime Debug Test",
+      "configurePreset": "dius_runtime_debug",
+      "inherits": ["base"]
+    },
+    {
+      "name": "release",
+      "displayName": "Release Test",
+      "configurePreset": "release",
+      "inherits": ["base"]
+    },
+    {
+      "name": "tools",
+      "displayName": "Tools Test",
+      "configurePreset": "tools",
+      "inherits": ["base"]
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug Test",
+      "configurePreset": "debug",
+      "inherits": ["base"]
+    },
+    {
+      "name": "asan",
+      "displayName": "Address Sanitizer",
+      "configurePreset": "asan",
+      "inherits": ["base"]
+    },
+    {
+      "name": "tsan",
+      "displayName": "Thread Sanitizer",
+      "configurePreset": "tsan",
+      "inherits": ["base"]
+    },
+    {
+      "name": "ubsan",
+      "displayName": "Undefined Behavior Sanitizer",
+      "configurePreset": "ubsan",
+      "inherits": ["base"]
+    },
+    {
+      "name": "ubasan",
+      "displayName": "Undefined Behavior + Address Sanitizer",
+      "configurePreset": "ubasan",
+      "inherits": ["base"]
     }
   ]
 }
