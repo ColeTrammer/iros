@@ -13,8 +13,8 @@ die() {
 # Acquire exclusive lock, because we need to create a kernel image and initrd to run the program.
 # If concurrent execution is allowed, we would need to make arbitrary numbers of images, which is undesirable as images
 # are 64 MiB each.
-exec 99>$LOCKFILE || die "Could not open exclusive lock."
-flock -w "$LOCK_TIMEOUT_SECONDS" 99 || die "Could not acquire exclusive lock."
+exec 9>$LOCKFILE || die "Could not open exclusive lock."
+flock -w "$LOCK_TIMEOUT_SECONDS" 9 || die "Could not acquire exclusive lock."
 trap "rm -f $LOCKFILE" EXIT
 
 PARENT_DIR=$(realpath $(dirname -- "$0"))

@@ -1,0 +1,4 @@
+build/
+cross/
+legacy/
+meta/docker
