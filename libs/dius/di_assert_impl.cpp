@@ -1,6 +1,7 @@
 #include <di/prelude.h>
+#include <dius/prelude.h>
 
-#ifdef DIUS_USE_GLIBC
+#ifndef DIUS_USE_RUNTIME
 #include <cxxabi.h>
 #include <execinfo.h>
 #include <stdio.h>
@@ -15,7 +16,6 @@ void assert_write(char const* s, size_t n) {
 }
 
 void assert_terminate() {
-#ifdef DIUS_USE_GLIBC
     void* storage[32];
     auto size = ::backtrace(storage, di::size(storage));
 
@@ -43,16 +43,18 @@ void assert_terminate() {
     }
 
     ::free(symbols);
-#endif
-
     ::abort();
 }
 }
 #else
 namespace di::assert::detail {
-void assert_write(char const*, size_t) {}
+void assert_write(char const* s, size_t n) {
+    auto string_view = TransparentStringView(s, n);
+    (void) dius::print("{}"_sv, string_view);
+}
+extern "C" void _exit(i32);
 void assert_terminate() {
-    di::unreachable();
+    _exit(42);
 }
 }
 #endif
