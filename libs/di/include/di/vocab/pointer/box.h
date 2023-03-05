@@ -88,22 +88,16 @@ private:
 
 template<typename T, typename... Args>
 requires(!concepts::LanguageArray<T> && concepts::ConstructibleFrom<T, Args...>)
-constexpr auto make_box(Args&&... args) {
-    if consteval {
-        return Box<T>(new T(util::forward<Args>(args)...));
-    } else {
-        auto* pointer = new (std::nothrow) T(util::forward<Args>(args)...);
-        DI_ASSERT(pointer);
-        return Box<T>(pointer);
-    }
-}
-
-template<typename T, typename... Args>
-requires(!concepts::LanguageArray<T> && concepts::ConstructibleFrom<T, Args...>)
 constexpr auto try_box(Args&&... args) {
     return platform::DefaultFallibleAllocator<T>().allocate(1) % [&](container::Allocation<T> result) {
         util::construct_at(result.data, util::forward<Args>(args)...);
         return Box<T>(result.data);
     };
+}
+
+template<typename T, typename... Args>
+requires(!concepts::LanguageArray<T> && concepts::ConstructibleFrom<T, Args...>)
+constexpr auto make_box(Args&&... args) {
+    return *try_box<T>(util::forward<Args>(args)...);
 }
 }
