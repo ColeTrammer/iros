@@ -14,12 +14,12 @@ then
     exit 1
 fi
 
-echo "$IROS_LIMINE_DIR"
-
 DEFAULT_DISK_SIZE=64m
 DISK_SIZE="${IROS_DISK_SIZE:-$DEFAULT_DISK_SIZE}"
 
-IMAGE="$IROS_BUILD_DIR/iris/iris.img"
+IMAGE="${IROS_IMAGE:-$IROS_BUILD_DIR/iris/iris.img}"
+LIMINE_CFG="${IROS_LIMINE_CFG:-$IROS_ROOT/iris/boot/limine.cfg}"
+INITRD="${IROS_INITRD:-$IROS_BUILD_DIR/initrd/initrd.bin}"
 
 qemu-img create "$IMAGE" "$DISK_SIZE"
 
@@ -57,7 +57,7 @@ mkdir -p "$IROS_BUILD_DIR/mnt"
 mount "$LOOP_DEV"p1 "$IROS_BUILD_DIR/mnt"
 
 sudo mkdir -p "$IROS_BUILD_DIR"/mnt/EFI/BOOT
-sudo cp "$IROS_BUILD_DIR"/iris/iris "$IROS_BUILD_DIR"/initrd/initrd.bin "$IROS_ROOT/iris/boot/limine.cfg" "$IROS_LIMINE_DIR"/limine.sys "$IROS_BUILD_DIR"/mnt
+sudo cp "$IROS_BUILD_DIR"/iris/iris "$INITRD" "$LIMINE_CFG" "$IROS_LIMINE_DIR"/limine.sys "$IROS_BUILD_DIR"/mnt
 sudo cp "$IROS_LIMINE_DIR"/BOOTX64.EFI "$IROS_BUILD_DIR"/mnt/EFI/BOOT
 
 chmod 777 "$IMAGE"

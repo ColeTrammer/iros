@@ -1,8 +1,8 @@
 #!/bin/sh
 
-if [ ! "$IRIS_ARCH" ] || [ ! "$IRIS_IMAGE" ];
+if [ ! "$IROS_ARCH" ] || [ ! "$IROS_IMAGE" ];
 then
-    echo "IRIS_ARCH, and IRIS_IMAGE all must be set."
+    echo "IROS_ARCH, and IROS_IMAGE all must be set."
     exit 1
 fi
 
@@ -17,11 +17,12 @@ if ! [ "$IROS_DISABLE_KVM" ] && [ -e /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/
     ENABLE_KVM="-enable-kvm"
 fi
 
-qemu-system-"$IRIS_ARCH" \
+qemu-system-"$IROS_ARCH" \
     $ENABLE_KVM \
-    -drive file="$IRIS_IMAGE",format=raw,index=0,media=disk \
+    -drive file="$IROS_IMAGE",format=raw,index=0,media=disk \
     -cpu max \
     -debugcon stdio \
     -no-reboot \
     -d guest_errors \
-    -display none
+    -display none \
+    -device isa-debug-exit,iobase=0xf4,iosize=0x04
