@@ -1,0 +1,12 @@
+{
+    "recommendations": [
+        "ms-vscode.cpptools",
+        "eamodio.gitlens",
+        "twxs.cmake",
+        "fredericbonnet.cmake-test-adapter",
+        "hediet.vscode-drawio",
+        "stkb.rewrap",
+        "ms-vscode.cmake-tools",
+        "ms-azuretools.vscode-docker"
+    ]
+}

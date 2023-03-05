@@ -1,0 +1,51 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.231.6/containers/docker-existing-docker-compose
+// If you want to run as a non-root user in the container, see .devcontainer/docker-compose.yml.
+{
+    "name": "Iros",
+    "dockerComposeFile": [
+        "docker-compose.yml"
+    ],
+    "service": "iros",
+    "workspaceFolder": "/build/iros",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools",
+                "eamodio.gitlens",
+                "twxs.cmake",
+                "fredericbonnet.cmake-test-adapter",
+                "hediet.vscode-drawio",
+                "stkb.rewrap",
+                "ms-vscode.cmake-tools",
+                "ms-azuretools.vscode-docker"
+            ],
+            "settings": {
+                "search.exclude": {
+                    "**/.git": true,
+                    "build/**": true,
+                    "legacy/**": true,
+                    "cross/**": true,
+                    "/usr/include/**": true
+                },
+                "files.exclude": {
+                    "**/.git": true,
+                    "build/**": true,
+                    "legacy/**": true,
+                    "cross/**": true,
+                    "/usr/include/**": true
+                },
+                "testExplorer.useNativeTesting": true,
+                "cmake.exportCompileCommandsFile": true,
+                "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+                "C_Cpp.autoAddFileAssociations": false,
+                "files.insertFinalNewline": true,
+                "editor.rulers": [
+                    120
+                ],
+                "cmake.configureOnOpen": false
+            }
+        }
+    },
+    "remoteUser": "iris"
+}
