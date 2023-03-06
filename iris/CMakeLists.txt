@@ -187,4 +187,8 @@ if(IROS_BuildIris)
   install(TARGETS test_read
     RUNTIME DESTINATION boot
   )
+
+  if (IROS_BuildTests)
+    add_subdirectory(tests/integration)
+  endif()
 endif()
