@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build_and_test:
+  linux_build_and_test:
     runs-on: ubuntu-latest
     strategy:
       matrix:

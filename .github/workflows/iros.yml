@@ -1,0 +1,85 @@
+name: Iros CI
+
+on:
+  push:
+    branches: [iris]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  toolchain:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.output.outputs.image_to_use }}
+    steps:
+      - name: Set enviornment if pull request
+        run: |
+          echo "BASE_SHA=${{ github.event.pull_request.base.sha }}" >> $GITHUB_ENV
+          echo "IMAGE_TAG=pr-${{ github.event.number }}" >> $GITHUB_ENV
+        if: github.event_name == 'pull_request'
+      - name: Set enviornment if push to main branch
+        run: |
+          echo "BASE_SHA=${{ github.event.before }}" >> $GITHUB_ENV
+          echo "IMAGE_TAG=iris" >> $GITHUB_ENV
+        if: github.event_name == 'push' && github.ref == 'iris'
+      - name: Set up docker buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Login to GitHub container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout source code
+        uses: actions/checkout@v3
+      - name: Determine if any changes have been made toolchain files
+        id: file_changes
+        uses: tj-actions/changed-files@v35
+        with:
+          base_sha: ${{ env.BASE_SHA }}
+          files: |
+            meta/docker/**
+            meta/toolchain/**
+      - name: Build toolchain image if needed
+        uses: docker/build-push-action@v4.0.0
+        with:
+          context: .
+          file: meta/docker/Dockerfile
+          push: true
+          tags: ghcr.io/coletrammer/iros_toolchain:${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+        if: steps.file_changes.outputs.any_changed
+      - name: Set image to use
+        id: output
+        run: |
+          if [ ${{ steps.file_changes.outputs.any_changed }} = 'true' ]; then
+            echo "image_to_use=ghcr.io/coletrammer/iros_toolchain:${{ env.IMAGE_TAG }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "image_to_use=ghcr.io/coletrammer/iros_toolchain:iris" >> "$GITHUB_OUTPUT"
+          fi
+  iros_build_and_test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        preset: [iros_x86_64]
+    needs: toolchain
+    container:
+      image: ${{ needs.toolchain.outputs.image }}
+      options: --privileged
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+      - name: Get and cache ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ github.job }}-${{ matrix.preset }}
+      - name: Build and test
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: ${{ matrix.preset }}
+          buildPreset: ${{ matrix.preset }}
+          testPreset: ${{ matrix.preset }}
