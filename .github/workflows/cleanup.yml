@@ -6,6 +6,7 @@ on:
 
 jobs:
   cleanup:
+    runs-on: ubuntu-latest
     steps:
       - name: Prune tags for closed PRs
         uses: vlaurin/action-ghcr-prune@v0.5.0
