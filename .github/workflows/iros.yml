@@ -52,7 +52,7 @@ jobs:
           tags: ghcr.io/coletrammer/iros_toolchain:${{ env.IMAGE_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-        if: steps.file_changes.outputs.any_changed
+        if: steps.file_changes.outputs.any_changed == 'true'
       - name: Set image to use
         id: output
         run: |

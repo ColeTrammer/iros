@@ -28,7 +28,7 @@ services:
       # - /var/run/docker.sock:/var/run/docker.sock 
 
       # Change 1000 to your uid (run `id`), and uncomment the next line to enable wayland support
-      - /run/user/1000/wayland-1:/tmp/wayland-1
+      # - /run/user/1000/wayland-1:/tmp/wayland-1
 
     environment:
       - DISPLAY
