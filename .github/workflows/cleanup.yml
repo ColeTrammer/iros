@@ -12,7 +12,7 @@ jobs:
         uses: vlaurin/action-ghcr-prune@v0.5.0
         with:
           user: ${{ github.actor }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PRIVATE_ADMIN_GITHUB_TOKEN }}
           container: iros_toolchain
           prune-tags-regexes: |
             ^pr-${{ github.event.number }}$
@@ -20,7 +20,7 @@ jobs:
         uses: vlaurin/action-ghcr-prune@v0.5.0
         with:
           user: ${{ github.actor }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PRIVATE_ADMIN_GITHUB_TOKEN }}
           container: iros_toolchain
           keep-last: 3
           prune-untagged: true
