@@ -29,6 +29,11 @@ static void do_task() {
     iris::global_state().scheduler.exit_current_task();
 }
 
+static void do_unit_tests() {
+    iris::test::TestManager::the().run_tests();
+    iris::global_state().scheduler.exit_current_task();
+}
+
 extern "C" {
 static volatile limine_memmap_request memmap_request = {
     .id = LIMINE_MEMMAP_REQUEST,
@@ -141,18 +146,26 @@ void iris_main() {
         scheduler.schedule_task(*task2);
         scheduler.schedule_task(*task3);
 
-        auto file_table = iris::FileTable {};
-        auto debug_file = *iris::File::try_create(di::in_place_type<DebugFile>);
-        di::get<0>(*file_table.allocate_file_handle()) = debug_file;
-        di::get<0>(*file_table.allocate_file_handle()) = debug_file;
-        di::get<0>(*file_table.allocate_file_handle()) = debug_file;
-
-        auto task4 = *iris::create_user_task(global_state.task_namespace, di::move(file_table));
-
         auto init_path = kernel_command_line.empty() ? "/test_create_task"_pv : di::PathView(kernel_command_line);
-        iris::println("Loading initial userspace task: {}"_sv, init_path);
-        *iris::load_executable(*task4, init_path);
-        scheduler.schedule_task(*task4);
+        if (init_path.data() == "-run=kernel_unit_test"_tsv) {
+            iris::println("Preparing to run kernel unit tests."_sv);
+
+            auto test_runner = *iris::create_kernel_task(global_state.task_namespace, do_unit_tests);
+            scheduler.schedule_task(*test_runner);
+        } else {
+            iris::println("Loading initial userspace task: {}"_sv, init_path);
+
+            auto file_table = iris::FileTable {};
+            auto debug_file = *iris::File::try_create(di::in_place_type<DebugFile>);
+            di::get<0>(*file_table.allocate_file_handle()) = debug_file;
+            di::get<0>(*file_table.allocate_file_handle()) = debug_file;
+            di::get<0>(*file_table.allocate_file_handle()) = debug_file;
+
+            auto task4 = *iris::create_user_task(global_state.task_namespace, di::move(file_table));
+
+            *iris::load_executable(*task4, init_path);
+            scheduler.schedule_task(*task4);
+        }
     }
 
     iris::println("Starting the kernel scheduler..."_sv);
