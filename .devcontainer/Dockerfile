@@ -1,4 +1,4 @@
-FROM iros_toolchain:latest
+FROM iros_toolchain:iris
 
 ARG USERNAME=iris
 ARG USER_UID=1000

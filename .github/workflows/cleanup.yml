@@ -1,0 +1,25 @@
+name: Cleanup
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  cleanup:
+    steps:
+      - name: Prune tags for closed PRs
+        uses: vlaurin/action-ghcr-prune@v0.5.0
+        with:
+          user: ${{ github.actor }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          container: iros_toolchain
+          prune-tags-regexes: |
+            ^pr-${{ github.event.number }}$
+      - name: Prune images from main branch
+        uses: vlaurin/action-ghcr-prune@v0.5.0
+        with:
+          user: ${{ github.actor }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          container: iros_toolchain
+          keep-last: 3
+          prune-untagged: true
