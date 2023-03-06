@@ -19,6 +19,7 @@ void log_output_byte(di::Byte byte) {
 
 namespace di::assert::detail {
 void assert_write(char const* data, size_t size) {
+    iris::raw_disable_interrupts();
     for (size_t i = 0; i != size; i++) {
         iris::log_output_character(data[i]);
     }

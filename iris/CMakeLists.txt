@@ -61,6 +61,7 @@ if(IROS_BuildIris)
       core/task_namespace.cpp
       core/task.cpp
       core/scheduler.cpp
+      core/unit_test.cpp
       fs/initrd.cpp
       mm/address_space.cpp
       mm/page_frame_allocator.cpp
@@ -190,5 +191,6 @@ if(IROS_BuildIris)
 
   if (IROS_BuildTests)
     add_subdirectory(tests/integration)
+    include(tests/unit/CMakeLists.txt)
   endif()
 endif()

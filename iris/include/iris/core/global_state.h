@@ -4,6 +4,7 @@
 #include <iris/core/config.h>
 #include <iris/core/scheduler.h>
 #include <iris/core/task_namespace.h>
+#include <iris/core/unit_test.h>
 #include <iris/mm/address_space.h>
 
 // clang-format off
@@ -21,6 +22,7 @@ struct GlobalState {
     mm::VirtualAddress heap_start { 0 };
     di::Span<di::Byte const> initrd;
     arch::CPUFeatures cpu_features;
+    test::TestManager unit_test_manager;
 
     // Mutable global state. These fields have internal synchronization, and so are
     // safe to access concurrently. Typically, calling code must call .lock() or use

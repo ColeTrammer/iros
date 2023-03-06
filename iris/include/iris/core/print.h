@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/prelude.h>
+#include <iris/core/interrupt_disabler.h>
 
 namespace iris {
 using Encoding = di::container::string::Utf8Encoding;
@@ -15,6 +16,9 @@ namespace detail {
         void output(c32 value) { log_output_character(value); }
 
         auto encoding() const { return Encoding {}; }
+
+    private:
+        InterruptDisabler m_interrupt_disabler;
     };
 }
 

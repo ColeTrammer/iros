@@ -39,6 +39,11 @@ SECTIONS
         PROVIDE(__iris_fini_array_start = .);
         *(.fini_array)
         PROVIDE(__iris_fini_array_end = .);
+
+        . = ALIGN(., 8);
+        PROVIDE(__iris_unit_test_init_array_start = .);
+        *(.unit_test_init_array)
+        PROVIDE(__iris_unit_test_init_array_end = .);
     } :rodata
 
     /* Move to the next memory page for .data */

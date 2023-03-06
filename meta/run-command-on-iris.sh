@@ -30,13 +30,19 @@ export IROS_INITRD="$IROS_BUILD_DIR"/initrd-run/initrd.bin
 
 mkdir -p "$IROS_BUILD_DIR"/initrd-run
 rm -f "$IROS_INITRD"
-cp "$1" "$IROS_BUILD_DIR"/initrd-run
+
+if [ "$1" = "-run=kernel_unit_test" ]; then
+    EXECUTABLE_NAME="$1"
+else
+    cp "$1" "$IROS_BUILD_DIR"/initrd-run
+    EXECUTABLE_NAME="/$(basename $1)"
+fi
+
 (
     cd "$IROS_BUILD_DIR"/initrd-run
     "$IROS_ROOT"/build/native/tools-install/bin/initrd
 )
 
-EXECUTABLE_NAME="$(basename $1)"
 
 export IROS_LIMINE_CFG="$IROS_BUILD_DIR/initrd-run/limine.cfg"
 cat >"$IROS_LIMINE_CFG" << __EOF__
@@ -46,7 +52,7 @@ TIMEOUT=0
     PROTOCOL=limine
 
     KERNEL_PATH=boot:///iris
-    KERNEL_CMDLINE=/$EXECUTABLE_NAME
+    KERNEL_CMDLINE=$EXECUTABLE_NAME
 
     MODULE_PATH=boot:///initrd.bin
 __EOF__
