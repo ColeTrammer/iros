@@ -34,8 +34,27 @@ cleanup() {
     sync || true
     umount "$IROS_BUILD_DIR/mnt" || true
     losetup -d "$LOOP_DEV" || true
+
+    if [ "$REMOTE_CONTAINERS" = true ] && [ "$HACK_CREATED_LOOP0" = true ]; then
+        # HACK to prevent build from failing in new kernels. Delete loop0 so that
+        # is will be re-used in future runs of this script. This is needed to workaround
+        # strange docker/linux issues.
+        rm -f /dev/loop0*
+    fi
 }
 trap cleanup EXIT
+
+if [ "$REMOTE_CONTAINERS" = 'true' ]; then
+    # HACK to prevent build from failing in new kernels. For some reason, the loopback device
+    # wont show up. On a system with existing loopback devices, like Ubuntu with snap's, this
+    # shouldn't be needed. But for some reason, on arch linux with new kernels, losetup fails.
+    # This could be because the dev container has an older version of losetup than required, but
+    # I haven't investigated this yet.
+    if ! [ -e "/dev/loop0" ]; then
+        mknod /dev/loop0 b 7 0;
+        export HACK_CREATED_LOOP0=true;
+    fi
+fi
 
 LOOP_DEV=$(losetup --partscan -f "$IMAGE" --show)
 
