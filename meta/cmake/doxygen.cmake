@@ -27,6 +27,7 @@ include(ExternalProject)
     set(DOXYGEN_COLLABORATION_GRAPH NO)
     set(DOXYGEN_INCLUDE_GRAPH NO)
     set(DOXYGEN_INCLUDED_BY_GRAPH NO)
+    set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
     set(DOXYGEN_EXCLUDE_PATTERNS "*/tests/*")
     set(DOXYGEN_PREDEFINED
         __CCPP_BEGIN_DECLARATIONS=
@@ -50,7 +51,14 @@ include(ExternalProject)
         ${CMAKE_CURRENT_SOURCE_DIR}/libs
         ${CMAKE_CURRENT_SOURCE_DIR}/iris
         ${CMAKE_CURRENT_SOURCE_DIR}/userland
+        ${CMAKE_CURRENT_SOURCE_DIR}/docs
+        ${CMAKE_CURRENT_SOURCE_DIR}/README.md
+    )
+
+    add_custom_target(docs_diagram_install
+        COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/docs/diagram" "${CMAKE_BINARY_DIR}/html/docs/diagram"
     )
 
     add_dependencies(docs doxygen_awesome_css)
+    add_dependencies(docs docs_diagram_install)
 endif()
