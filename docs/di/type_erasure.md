@@ -6,7 +6,7 @@ Down with virtual methods.
 
 In normal C++, you would use a virtual interface to enable runtime polymorphism.
 
-```c++
+~~~cpp
 class IDrawable {
 public:
     virtual IDrawable() = 0;
@@ -27,7 +27,7 @@ public:
         std::println("Draw circle.");
     }
 };
-```
+~~~
 
 Now, to use this construction, you can pass a IDrawable by reference to a function. To actually store these things in a memory safe way, either std::unique_ptr or std::shared_ptr must be used. These types cannot be treated as values, so we must use indirection. Furthremore, the objects always have to be heap allocated.
 
@@ -35,7 +35,7 @@ Now, to use this construction, you can pass a IDrawable by reference to a functi
 
 Using type erasure, the interface class poses an abstract set of requirements, and can be constructed from any type which meets them. The type internally is memory safe, by either storing the object internally (small object optimization), or on the heap using a smart pointer. Instead of using 2 indirections, the virtual table can be inline or otherwise stored using a "fat" pointer (rust dyn&).
 
-```c++
+~~~~~~~~cpp
 class Circle {};
 class Sqaure {};
 
@@ -75,7 +75,7 @@ void use_drawables() {
 
     std::for_each(drawables, draw);
 }
-```
+~~~~~~~~
 
 Notice, drawables can be used directly as objects, and thus don't have to managed using smart pointers. Additionally, operations need not be defined inside the classes they operate on, which means Circle and Square can be pure data classes, and offer no functionality themselves. This allows seamlessly adding new operations without breaking code.
 
@@ -83,13 +83,13 @@ Default operations can be expressed directly in the definition of the operation.
 
 The tag_invoke mechanism allows type erasure without macros and without defining operations twice. However, you don't get member functions, since C++ does not have reflection and meta classes. However, not using member functions allows extending a class without modifying it, and still provides a uniform and readable way to call methods.
 
-```c++
+~~~cpp
 // OOP
 object->draw();
 
 // Type erasure
 draw(object);
-```
+~~~
 
 Calling a free function is 2 characters shorter assuming we are already in the correct namespace, although otherwise it will be more characters to type.
 
@@ -97,7 +97,7 @@ Calling a free function is 2 characters shorter assuming we are already in the c
 
 When using OOP, the dispatch is always dynamic, and so relies on de-virtualization to optimize scenarios where the concrete object type is known. With type erasure, a concrete type and a polymorphic type can be used identically, and static dispatch can be used by making your function generic with a template.
 
-```c++
+~~~cpp
 // OOP: always use dynamic dispatch.
 void draw3(IDrawable& a) {
     a.draw();
@@ -111,7 +111,7 @@ void draw3(di::Impl<IDrawable> auto& a) {
     draw(a);
     draw(a);
 }
-```
+~~~
 
 `di::Impl` is a concept which is only satisfied for types which meet the requirements laid out in the provided interface. The name is derived from rust, where traits can be required using the impl keyword.
 
@@ -119,7 +119,7 @@ void draw3(di::Impl<IDrawable> auto& a) {
 
 The main annoyance with this model is the creation of tag_invoke calling function objects. This can actually be automated using some meta programming on top of tag_invoke().
 
-```c++
+~~~cpp
 // OOP
 class IDrawable {
 public:
@@ -148,7 +148,7 @@ using IDrawable = di::meta::List<
 
 using Drawable = di::AnyValue<IDrawable>;
 using DrawableRef = di::AnyRef<IDrawable>;
-```
+~~~
 
 The idea is that the dispatch objects will implement the common CPO pattern, which is to attempt to call functions one after another. For DebugPrint, the final function object to call is di::into_void, which means that the default implenentation will just ignore arguments. This DSL for describing an interface can work without macros, and is in fact far more expressive than virtual methods, since the actual method call can use static dispatch (and so can use if constexpr).
 
@@ -158,23 +158,23 @@ Most type erased interfaces will be designed for type erasure, which means they 
 
 For these cases, there needs to be a way to explicitly list the signature when defining the interface requirements.
 
-```c++
+~~~cpp
 using Interface = di::meta::List<
     Method1, Method2,
     di::Method<FunctionObject, void(di::This&)>,
     di::Method<OtherFunction, i32(di::This const&, i32)>
 >;
-```
+~~~
 
 If we really wanted, it could be possible to overload operator-> on some sort of type. The interface definition would then be a list of value types:
 
-```c++
+~~~cpp
 using Interface = di::meta::ValueList<
     method1, method2,
     di::member<FunctionObject(di::This&)> -> di::InPlaceType<void>,
     di::member<OtherFunction(di::This const&, i32)> -> di::InPlaceType<i32>
 >;
-```
+~~~
 
 This is more verbose an exotic, so probably won't be way to go.
 
@@ -186,7 +186,7 @@ The current implementation of container::begin() is as follows:
 
 struct BeginFunction;
 
-```c++
+~~~cpp
 namespace detail {
     template<typename T>
     concept ArrayBegin = concepts::LanguageArray<meta::RemoveReference<T>>;
@@ -215,11 +215,11 @@ struct BeginFunction {
         }
     }
 };
-```
+~~~
 
 This can equivalently be written as:
 
-```c++
+~~~cpp
 namespace detail {
 struct BeginArray {
     template<typename T>
@@ -246,7 +246,7 @@ struct BeginFunction : TemplateDipatcher<BeginFunction, meta::List<
     BeginMemer(meta::_a)
 >> {};
 }
-```
+~~~
 
 This makes use of a placeholder syntax to implicitly define template parameters of the function. This API is not yet fully fleshed out.
 
@@ -276,7 +276,7 @@ In certain cases, one function is "hot" while the other erased functions are cal
 
 To store entries in the vtable, we need compile time meta programming facilities. Vtable entries will be represented in the following structure.
 
-```c++
+~~~cpp
 namespace types {
 // Usage: Method<MyFunction, void(di::This&)>
 template<typename T, concepts::LanguageFunction S>
@@ -299,7 +299,7 @@ using MethodTag = Method::Tag;
 template<concepts::Method Method>
 using MethodSignature = Method::Signature;
 }
-```
+~~~
 
 Then, vtables will have an associated list of signature objects, which correspond to the vtable entries.
 The library will support merging vtables together, to enable erasing multiple traits into one object, and
@@ -348,19 +348,19 @@ Consider a concept which current exists in di, which conceptifies any object whi
 
 The C++ 20 concept definition for this trait is as follows:
 
-```c++
+~~~cpp
 template<typename T>
 concept Writer = requires(T& writer, vocab::Span<Byte const> data) {
                      { writer.write_some(data) } -> SameAs<Result<size_t>>;
                      { writer.flush() } -> SameAs<Result<void>>;
                  };
-```
+~~~
 
 However, this trait definition requires any generic algorithm to be templated, and does not allow switching a Writer implementation at runtime.
 
 A type erased API definition looks like this:
 
-```c++
+~~~cpp
 struct WriteSome : Dispatcher<WriteSome, Result<usize>(This&, Span<Byte const>)> {};
 struct Flush : Dispatcher<Flush, Result<void>(This&)> {};
 
@@ -368,11 +368,11 @@ constexpr inline auto write_some = WriteSome {};
 constexpr inline auto flush = Flush {};
 
 using Writer = meta::List<WriteSome, Flush>;
-```
+~~~
 
 Now imagine a BufferWriter class, which wraps any Writer and buffers repeated calls to write_some. This is done as follows:
 
-```c++
+~~~cpp
 // OLD: template<Writer W>
 template<Impl<Writer> W>
 class BufferWriter {
@@ -399,7 +399,7 @@ private:
     W m_writer;
     Array<Byte, 4096> m_buffer;
 };
-```
+~~~
 
 By defining the writer concept as a type erasable interface, buffered writer can easily accept polymorphic types without difficulty. This increased flexibility makes composition more powerful. Buffered writer is itself a Writer, so it too can be erased into some polymorphic wrapper.
 
