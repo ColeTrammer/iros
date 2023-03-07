@@ -1,4 +1,4 @@
-# Iros
+# Iros Project Documentation
 
 [![Linux CI](https://github.com/ColeTrammer/iros/actions/workflows/linux.yml/badge.svg)](https://github.com/ColeTrammer/iros/actions/workflows/linux.yml)
 [![Iros CI](https://github.com/ColeTrammer/iros/actions/workflows/iros.yml/badge.svg)](https://github.com/ColeTrammer/iros/actions/workflows/iros.yml)
@@ -7,17 +7,6 @@
 
 Iros is an actively developed hobby Operating System focused on asynchronicity, minimalism, and performance.
 
-## Build Instructions
-
-[See here](https://coletrammer.github.io/iros/md_docs_build.html).
-
-## Project Documentation
-
-[See here](https://coletrammer.github.io/iros).
-
-## Kernel Overview
-
-[See here](https://coletrammer.github.io/iros/md_docs_iris_design_overview.html).
-## Legacy Code for this repo
-
-[See here](https://github.com/ColeTrammer/iros/tree/legacy).
+- @subpage md_docs_build - Project build instructions
+- @subpage md_docs_di_table_of_contents - Di library documentation
+- @subpage md_docs_iris_table_of_contents - Iris kernel documentation

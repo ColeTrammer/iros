@@ -40,6 +40,7 @@ add_custom_target(
     COMMAND sudo IROS_ROOT="${CMAKE_CURRENT_SOURCE_DIR}"
             IROS_BUILD_DIR="${CMAKE_CURRENT_BINARY_DIR}"
             IROS_LIMINE_DIR="${LIMINE_DIR}"
+            REMOTE_CONTAINERS="$ENV{REMOTE_CONTAINERS}"
             "${CMAKE_CURRENT_SOURCE_DIR}/meta/make-iris-limine-image.sh"
     BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/iris/iris.img"
     DEPENDS iris

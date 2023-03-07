@@ -1,4 +1,4 @@
-# Iris Kernel Synchronization Primitives
+# Synchronization Primitives
 
 ## Purpose
 

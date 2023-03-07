@@ -19,17 +19,26 @@ features which `clangd` may not support.
 In addition, the project requires at least GCC 12.1.0 and the newest version of CMake to compile. The CMake version can
 probably be relaxed, but GCC 11 will fail to compile the system. Testing the kernel additionally requires various system
 commands, including `parted`, `mkfs.fat`, and `qemu`. A full list of packages needed under Ubuntu can be found in the
-[dockerfile](/meta/docker/Dockerfile). This dockerfile also provides steps which install the latest version of CMake on
-Ubuntu. For other Linux distros, you will have to look up the corresponding package names for your distro. At the very
-least, this list of dependencies is actively tested in CI, and so will always be up to date.
+[dockerfile](https://github.com/ColeTrammer/iros/tree/iris/meta/docker/Dockerfile). This dockerfile also provides steps
+which install the latest version of CMake on Ubuntu. For other Linux distros, you will have to look up the corresponding
+package names for your distro. At the very least, this list of dependencies is actively tested in CI, and so will always
+be up to date.
 
-```sh
-# Build the toolchain (this will probably take a while)
+To build the project documentation, you must have the latest version of Doxygen installed, and Graphviz is needed to
+generate the various diagrams. If Doxygen is not installed, the `docs` target will not exist in the generated build
+system.
+
+Build the toolchain.
+
+~~~sh
 ./meta/toolchain/build.sh
+~~~
 
-# Add $PROJECT_ROOT/cross/bin to your path.
+Add `cross/bin` to your path. This is only needed when configuring the build for the first time.
+
+~~~sh
 export PATH="$(realpath .)/cross/bin:$PATH"
-```
+~~~
 
 At this point, the entire system should be buildable with cmake.
 
@@ -39,30 +48,36 @@ Note that these commands apply using a dev container or locally, once things are
 
 #### Configure
 
-```
+~~~sh
 cmake --preset iros_x86_64
-```
+~~~
 
 #### Build
 
-```
+~~~sh
 cmake --build --preset iros_x86_64
-```
+~~~
 
 #### Run Tests
 
-```
+~~~sh
 ctest --preset iros_x86_64
-```
+~~~
 
 #### Run the kernel directly
 
-```
+~~~sh
 cmake --build --preset iros_x86_64 --target ibr
+~~~
 
-# Or alternatively in the build/x86_64 directory.
-ninja ibr
-```
+#### Build Documentation
+
+This outputs the viewable documentation to `build/x86_64/html`. This can be viewed using the VS Code Live Preview or by
+pointing a web browser at this directory.
+
+~~~sh
+cmake --build --preset iros_x86_64 --target docs
+~~~
 
 ### Linux Presets
 

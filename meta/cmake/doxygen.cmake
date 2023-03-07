@@ -18,7 +18,6 @@ include(ExternalProject)
 
     set(DOXYGEN_GENERATE_HTML YES)
     set(DOXYGEN_GENERATE_XML NO)
-    set(DOXYGEN_CREATE_SUBDIRS YES)
     set(DOXYGEN_DOT_IMAGE_FORMAT svg)
     set(DOXYGEN_DOT_TRANSPARENT YES)
     set(DOXYGEN_USE_MATHJAX YES)
@@ -27,14 +26,15 @@ include(ExternalProject)
     set(DOXYGEN_COLLABORATION_GRAPH NO)
     set(DOXYGEN_INCLUDE_GRAPH NO)
     set(DOXYGEN_INCLUDED_BY_GRAPH NO)
-    set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
+    set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "${CMAKE_CURRENT_SOURCE_DIR}/docs/mainpage.md")
+    set(DOXYGEN_LAYOUT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/docs/DoxygenLayout.xml")
     set(DOXYGEN_EXCLUDE_PATTERNS "*/tests/*")
     set(DOXYGEN_PREDEFINED
         __CCPP_BEGIN_DECLARATIONS=
         __CCPP_END_DECLARATIONS=
         __CCPP_RESTRICT=restrict
     )
-    set(DOXYGEN_HTML_HEADER docs/header.html)
+    set(DOXYGEN_HTML_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/docs/header.html")
     set(DOXYGEN_HTML_EXTRA_STYLESHEET 
         "${DOXYGEN_AWESOME_DIR}/doxygen-awesome.css"
     )
@@ -52,7 +52,6 @@ include(ExternalProject)
         ${CMAKE_CURRENT_SOURCE_DIR}/iris
         ${CMAKE_CURRENT_SOURCE_DIR}/userland
         ${CMAKE_CURRENT_SOURCE_DIR}/docs
-        ${CMAKE_CURRENT_SOURCE_DIR}/README.md
     )
 
     add_custom_target(docs_diagram_install

@@ -146,7 +146,7 @@ using IDrawable = di::meta::List<
     Draw, GetArea, DebugPrint
 >;
 
-using Drawable = di::AnyValue<IDrawable>;
+using Drawable = di::Any<IDrawable>;
 using DrawableRef = di::AnyRef<IDrawable>;
 ~~~
 
@@ -335,12 +335,12 @@ The following table describes the type aliases provided by the library.
 
 | Name                                            | Alias                                                                            | Storage Category                 | Requirements on T                                           | Description                                                                                                                                                                  |
 | ----------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Any<I>`                                        | `Any<I, HybridStorage<2 * sizeof(void*), alignof(void*)>, MaybeInlineVTable<3>>` | Moveable                         | None                                                        | Owning polymorphic object with value semantics. This is the default storage and vtable policy used, and is good for storing any type of value.                               |
-| `AnyRef<I>`                                     | `Any<I, RefStorage>`                                                             | Trivial                          | Must be reference or function pointer                       | Non-owning reference to polymorphic object. Unsafe to store, so only use when passing a parameter.                                                                           |
-| `AnyInline<I, size, align>`                     | `Any<I, InlineStorage<size, align>>`                                             | Moveable                         | `sizeof(T) <= size` and `alignof(T) <= align` and Moveable  | Non-allocated owned storage. Use when the object sizes are guaranteed to be small or allocating is unacceptable, but note that objects which are too large cannot be stored. |
-| `AnyUnique<I>`                                  | `Any<I, UniqueStorage>`                                                          | Trivially Relocatable            | None                                                        | Always-allocated owned storage. Use when the object sizes are large or the move constructor needs to be called a lot.                                                        |
-| `AnyHybrid<I, size_threshold, align_threshold>` | `Any<I, HybridStorage<size_threshold, align_threshold>>`                         | Moveable                         | None (but T must be small and moveable to be stored inline) | Sometimes allocated owned storage. Use when the object size is unknown and can be small, which prevents allocating when storing some objects.                                |
-| `AnyShared<I>`                                  | `Any<I, SharedStorage>`                                                          | Trivially Relocatable + Copyable | None                                                        | Always-allocated shared storage. Use when shared ownership is required.                                                                                                      |
+| `di::Any<I>`                                        | `Any<I, HybridStorage<2 * sizeof(void*), alignof(void*)>, MaybeInlineVTable<3>>` | Moveable                         | None                                                        | Owning polymorphic object with value semantics. This is the default storage and vtable policy used, and is good for storing any type of value.                               |
+| `di::AnyRef<I>`                                     | `Any<I, RefStorage>`                                                             | Trivial                          | Must be reference or function pointer                       | Non-owning reference to polymorphic object. Unsafe to store, so only use when passing a parameter.                                                                           |
+| `di::AnyInline<I, size, align>`                     | `Any<I, InlineStorage<size, align>>`                                             | Moveable                         | `sizeof(T) <= size` and `alignof(T) <= align` and Moveable  | Non-allocated owned storage. Use when the object sizes are guaranteed to be small or allocating is unacceptable, but note that objects which are too large cannot be stored. |
+| `di::AnyUnique<I>`                                  | `Any<I, UniqueStorage>`                                                          | Trivially Relocatable            | None                                                        | Always-allocated owned storage. Use when the object sizes are large or the move constructor needs to be called a lot.                                                        |
+| `di::AnyHybrid<I, size_threshold, align_threshold>` | `Any<I, HybridStorage<size_threshold, align_threshold>>`                         | Moveable                         | None (but T must be small and moveable to be stored inline) | Sometimes allocated owned storage. Use when the object size is unknown and can be small, which prevents allocating when storing some objects.                                |
+| `di::AnyShared<I>`                                  | `Any<I, SharedStorage>`                                                          | Trivially Relocatable + Copyable | None                                                        | Always-allocated shared storage. Use when shared ownership is required.                                                                                                      |
 
 ## A Practical Example
 
@@ -378,13 +378,13 @@ template<Impl<Writer> W>
 class BufferWriter {
 public:
     // OLD
-    // constexpr Result<usize> write_some(Span<Byte const> data) {
-    //    // memcpy to buffer.
-    // }
-    // constexpr Result<void> flush() {
-        // DI_TRY(m_writer.write_some(/* ... */));
-        // return m_writer.flush();
-    // }
+    constexpr Result<usize> write_some(Span<Byte const> data) {
+       // memcpy to buffer.
+    }
+    constexpr Result<void> flush() {
+        DI_TRY(m_writer.write_some(/* ... */));
+        return m_writer.flush();
+    }
 
 private:
     constexpr friend Result<usize> tag_invoke(WriteSome, BufferWriter& self, Span<Byte const>> data) {
