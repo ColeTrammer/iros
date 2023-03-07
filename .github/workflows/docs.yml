@@ -1,0 +1,37 @@
+name: Deploy and Generate Documentation
+
+on:
+  push:
+    branches: [iris, meta-setup-docs]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          sudo apt-get -y update && sudo apt-get -y install doxygen graphviz
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 100 --slave /usr/bin/g++ g++ /usr/bin/g++-12 --slave /usr/bin/gcov gcov /usr/bin/gcov-12
+          sudo update-alternatives --set gcc /usr/bin/gcc-12
+      - name: Checkout source code
+        uses: actions/checkout@v3
+      - name: Get latest CMake and Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: latest
+          ninjaVersion: latest
+      - name: Build and test
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: release
+          buildPreset: release_docs
+      - name: Deploy docs
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: build/native/release/html
+          commit-message: 'docs: deploy documentation site'
+          single-commit: true
+          branch: gh-pages

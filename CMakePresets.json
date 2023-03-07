@@ -198,6 +198,13 @@
       "inherits": ["base"]
     },
     {
+      "name": "release_docs",
+      "displayName": "Build Documentation Only",
+      "configurePreset": "release",
+      "targets": ["docs"],
+      "inherits": ["base"]
+    },
+    {
       "name": "tools",
       "displayName": "Tools Build",
       "configurePreset": "tools",
