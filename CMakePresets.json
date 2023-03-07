@@ -154,6 +154,18 @@
         "IROS_SanitizerFlags": "-fsanitize=address,undefined -DDI_SANITIZER"
       },
       "inherits": ["debug_base"]
+    },
+    {
+      "name": "coverage",
+      "displayName": "Code Coverage",
+      "description": "Build with code coverage instrumentation",
+      "binaryDir": "${sourceDir}/build/native/coverage",
+      "installDir": "${sourceDir}/build/native/coverage-install",
+      "cacheVariables": {
+        "IROS_BuildCcpp": "OFF",
+        "IROS_ExtraFlags": "-Og -fprofile-arcs -ftest-coverage"
+      },
+      "inherits": ["debug_base"]
     }
   ],
   "buildPresets": [
@@ -219,6 +231,12 @@
       "name": "ubasan",
       "displayName": "Undefined Behavior + Address Sanitizer",
       "configurePreset": "ubasan",
+      "inherits": ["base"]
+    },
+    {
+      "name": "coverage",
+      "displayName": "Code Coverage",
+      "configurePreset": "coverage",
       "inherits": ["base"]
     }
   ],
@@ -296,6 +314,12 @@
       "name": "ubasan",
       "displayName": "Undefined Behavior + Address Sanitizer",
       "configurePreset": "ubasan",
+      "inherits": ["base"]
+    },
+    {
+      "name": "coverage",
+      "displayName": "Code Coverage",
+      "configurePreset": "coverage",
       "inherits": ["base"]
     }
   ]
