@@ -37,6 +37,15 @@ RUN apt-get update -y \
     && apt-get update -y \
     && apt-get install -y cmake \
     && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -y \
+    && apt-get install -y wget \
+    && wget https://www.doxygen.nl/files/doxygen-1.9.6.linux.bin.tar.gz \
+    && tar -xzf doxygen-1.9.6.linux.bin.tar.gz \
+    && cp doxygen-1.9.6/bin/* --target /usr/local/bin \
+    && rm -f doxygen-1.9.6.linux.bin.tar.gz \
+    && rm -rf doxygen-1.9.6 \
+    && apt-get purge -y --auto-remove wget \
+    && rm -rf /var/lib/apt/lists/*
 RUN apt-get update -y && apt-get install -y \
     build-essential \
     ccache \
@@ -44,6 +53,7 @@ RUN apt-get update -y && apt-get install -y \
     g++-12 \
     gcc-12 \
     git \
+    graphviz \
     ninja-build \
     parted \
     qemu-system-x86 \
@@ -51,7 +61,7 @@ RUN apt-get update -y && apt-get install -y \
     sudo \
     udev \
     && rm -rf /var/lib/apt/lists/* \
-    && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 900 --slave /usr/bin/g++ g++ /usr/bin/g++-12
+    && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 900 --slave /usr/bin/g++ g++ /usr/bin/g++-12  --slave /usr/bin/gcov gcov /usr/bin/gcov-12
 COPY --from=toolchain_build /usr/local /usr/local
 WORKDIR /build/iros
 LABEL org.opencontainers.image.source="https://github.com/ColeTrammer/iros"
