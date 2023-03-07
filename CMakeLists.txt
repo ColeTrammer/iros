@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25.2)
 
-project(iros CXX)
+project(Iros CXX)
 
 option(IROS_BuildIris "Build the iris kernel." OFF)
 option(IROS_BuildUserspace "Build userspace libaries and programs." ON)
@@ -121,3 +121,5 @@ add_subdirectory(iris)
 if(IROS_BuildIris)
     include(meta/cmake/iris_commands.cmake)
 endif()
+
+include(meta/cmake/doxygen.cmake)
