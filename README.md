@@ -2,7 +2,7 @@
 
 [![Linux CI](https://github.com/ColeTrammer/iros/actions/workflows/linux.yml/badge.svg)](https://github.com/ColeTrammer/iros/actions/workflows/linux.yml)
 [![Iros CI](https://github.com/ColeTrammer/iros/actions/workflows/iros.yml/badge.svg)](https://github.com/ColeTrammer/iros/actions/workflows/iros.yml)
-[![Codecov](https://codecov.io/github/ColeTrammer/iros/branch/iris/graph/badge.svg?token=XOF3ERG8YK)](https://codecov.io/github/ColeTrammer/iros)
+[![Codecov](https://codecov.io/gh/ColeTrammer/iros/branch/iris/graph/badge.svg?token=XOF3ERG8YK)](https://codecov.io/gh/ColeTrammer/iros)
 
 ## Build Instructions
 
