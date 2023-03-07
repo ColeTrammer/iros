@@ -58,6 +58,8 @@ fi
 
 LOOP_DEV=$(losetup --partscan -f "$IMAGE" --show)
 
+partprobe
+
 # HACK to make partitions show up in a docker container
 # https://github.com/moby/moby/issues/27886#issuecomment-417074845
 # drop the first line, as this is our LOOP_DEV itself, but we only want the child partitions
