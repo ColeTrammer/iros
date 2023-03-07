@@ -28,6 +28,7 @@ include(ExternalProject)
     set(DOXYGEN_INCLUDED_BY_GRAPH NO)
     set(DOXYGEN_USE_MDFILE_AS_MAINPAGE "${CMAKE_CURRENT_SOURCE_DIR}/docs/mainpage.md")
     set(DOXYGEN_LAYOUT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/docs/DoxygenLayout.xml")
+    set(DOXYGEN_IMAGE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/docs/diagram")
     set(DOXYGEN_EXCLUDE_PATTERNS "*/tests/*")
     set(DOXYGEN_PREDEFINED
         __CCPP_BEGIN_DECLARATIONS=
@@ -54,10 +55,5 @@ include(ExternalProject)
         ${CMAKE_CURRENT_SOURCE_DIR}/docs
     )
 
-    add_custom_target(docs_diagram_install
-        COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/docs/diagram" "${CMAKE_BINARY_DIR}/html/docs/diagram"
-    )
-
     add_dependencies(docs doxygen_awesome_css)
-    add_dependencies(docs docs_diagram_install)
 endif()
