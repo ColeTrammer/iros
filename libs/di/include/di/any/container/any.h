@@ -230,7 +230,7 @@ public:
     requires(!concepts::RemoveCVRefSameAs<U, Any> && !concepts::InstanceOf<meta::RemoveCVRef<U>, InPlaceType> &&
              concepts::AnyStorableInfallibly<VU, Storage> && concepts::ConstructibleFrom<VU, U>)
     Any& operator=(U&& value) {
-        if (!is_trivially_destructible) {
+        if constexpr (!is_trivially_destructible) {
             Storage::destroy(m_vtable, this);
         }
         m_vtable = VTable::template create_for<Storage, VU>();

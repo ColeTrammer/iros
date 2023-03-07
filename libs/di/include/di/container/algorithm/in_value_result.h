@@ -3,7 +3,7 @@
 #include <di/concepts/convertible_to.h>
 #include <di/util/move.h>
 
-namespace di {
+namespace di::container {
 template<typename In, typename Val>
 struct InValueResult {
     template<typename I, typename V>
