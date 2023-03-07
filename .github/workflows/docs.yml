@@ -2,7 +2,7 @@ name: Deploy and Generate Documentation
 
 on:
   push:
-    branches: [iris, meta-setup-docs]
+    branches: [iris]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
