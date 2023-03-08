@@ -8,7 +8,7 @@
 #include <iris/mm/address_space.h>
 
 // clang-format off
-#include IRIS_ARCH_INCLUDE(core/global_state.h)
+#include IRIS_ARCH_INCLUDE(hw/processor_info.h)
 // clang-format on
 
 namespace iris {
@@ -21,7 +21,7 @@ struct GlobalState {
     mm::VirtualAddress virtual_to_physical_offset { 0 };
     mm::VirtualAddress heap_start { 0 };
     di::Span<di::Byte const> initrd;
-    arch::CPUFeatures cpu_features;
+    ProcessorInfo processor_info;
     test::TestManager unit_test_manager;
 
     // Mutable global state. These fields have internal synchronization, and so are

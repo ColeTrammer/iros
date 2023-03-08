@@ -378,33 +378,6 @@ static auto idt = di::Array<iris::x86::amd64::idt::Entry, 256> {};
 static auto gdt = di::Array<iris::x86::amd64::sd::SegmentDescriptor, 11> {};
 static auto tss = iris::x86::amd64::TSS {};
 
-namespace cpuid {
-    enum class Function : u32 { VendorId = 0, GetFeatureFlags = 7 };
-
-    enum class FeatureFlagsEbx : u32 {
-        Smap = (1 << 20),
-        Smep = (1 << 7),
-    };
-
-    DI_DEFINE_ENUM_BITWISE_OPERATIONS(FeatureFlagsEbx)
-
-    struct Result {
-        u32 eax;
-        u32 ebx;
-        u32 ecx;
-        u32 edx;
-    };
-
-    inline Result query(Function function, u32 sublevel = 0) {
-        u32 eax = di::to_underlying(function);
-        u32 ebx = 0;
-        u32 ecx = sublevel;
-        u32 edx = 0;
-        asm volatile("cpuid" : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx) : "a"(eax), "b"(ebx), "c"(ecx), "d"(edx));
-        return Result { eax, ebx, ecx, edx };
-    }
-}
-
 extern "C" void bsp_cpu_init() {
     iris::arch::cxx_init();
 
@@ -412,44 +385,16 @@ extern "C" void bsp_cpu_init() {
 
     iris::println("Beginning x86_64 kernel boot..."_sv);
 
-    auto result = cpuid::query(cpuid::Function::VendorId);
-    iris::println("CPU Maximum Supported CPUID Function: {}"_sv, result.eax);
+    global_state.processor_info = detect_processor_info();
 
-    auto cpu_vendor_string = di::container::string::StringImpl<di::container::string::TransparentEncoding,
-                                                               di::StaticVector<char, decltype(12_zic)>> {};
-    (void) cpu_vendor_string.push_back((result.ebx >> 0) & 0xFF);
-    (void) cpu_vendor_string.push_back((result.ebx >> 8) & 0xFF);
-    (void) cpu_vendor_string.push_back((result.ebx >> 16) & 0xFF);
-    (void) cpu_vendor_string.push_back((result.ebx >> 24) & 0xFF);
-    (void) cpu_vendor_string.push_back((result.edx >> 0) & 0xFF);
-    (void) cpu_vendor_string.push_back((result.edx >> 8) & 0xFF);
-    (void) cpu_vendor_string.push_back((result.edx >> 16) & 0xFF);
-    (void) cpu_vendor_string.push_back((result.edx >> 24) & 0xFF);
-    (void) cpu_vendor_string.push_back((result.ecx >> 0) & 0xFF);
-    (void) cpu_vendor_string.push_back((result.ecx >> 8) & 0xFF);
-    (void) cpu_vendor_string.push_back((result.ecx >> 16) & 0xFF);
-    (void) cpu_vendor_string.push_back((result.ecx >> 24) & 0xFF);
-
-    iris::println("CPU Vendor ID: {}"_sv, cpu_vendor_string);
-
-    auto feature_flags_result = cpuid::query(cpuid::Function::GetFeatureFlags);
-
-    bool supports_smep = !!(cpuid::FeatureFlagsEbx(feature_flags_result.ebx) & cpuid::FeatureFlagsEbx::Smep);
-    bool supports_smap = !!(cpuid::FeatureFlagsEbx(feature_flags_result.ebx) & cpuid::FeatureFlagsEbx::Smap);
-
-    iris::println("CPU feature flags: eax={} ebx={:#b} ecx={:#b} edx={:#b}"_sv, feature_flags_result.eax,
-                  feature_flags_result.ebx, feature_flags_result.ecx, feature_flags_result.edx);
-
-    if (supports_smep) {
+    if (!!(global_state.processor_info.features & ProcessorFeatures::Smep)) {
         iris::println("Enabling SMEP..."_sv);
         x86::amd64::load_cr4(x86::amd64::read_cr4() | (1 << 20));
-        global_state.cpu_features |= CPUFeatures::Smep;
     }
 
-    if (supports_smap) {
+    if (!!(global_state.processor_info.features & ProcessorFeatures::Smap)) {
         iris::println("Enabling SMAP..."_sv);
         x86::amd64::load_cr4(x86::amd64::read_cr4() | (1 << 21));
-        global_state.cpu_features |= CPUFeatures::Smap;
     }
 
     {

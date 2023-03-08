@@ -6,7 +6,7 @@ namespace iris {
 class UserspaceAccessEnabler {
 public:
     UserspaceAccessEnabler() {
-        m_has_smap = !!(global_state().cpu_features & arch::CPUFeatures::Smap);
+        m_has_smap = !!(global_state().processor_info.features & ProcessorFeatures::Smap);
         if (m_has_smap) {
             asm volatile("stac" ::: "cc");
         }
