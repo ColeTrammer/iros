@@ -1,8 +1,8 @@
 #include <dius/test/prelude.h>
 
 #ifndef DIUS_USE_RUNTIME
-#include <setjmp.h>
 #include <signal.h>
+#include <stdlib.h>
 #endif
 
 namespace dius::test {
@@ -15,13 +15,56 @@ void TestManager::register_test_case(TestCase test_case) {
     m_test_cases.push_back(di::move(test_case));
 }
 
-#ifndef DIUS_USE_RUNTIME
-static jmp_buf s_jmpbuf;
-
-static void signal_handler(int) {
-    longjmp(s_jmpbuf, 1);
+void TestManager::execute_remaining_tests() {
+    while (m_current_test_index < m_test_cases.size()) {
+        run_current_test();
+        m_current_test_index++;
+    }
+    final_report();
 }
+
+void TestManager::run_current_test() {
+    auto& test_case = m_test_cases[m_current_test_index];
+    test_case.execute();
+    print_success_message();
+}
+
+void TestManager::handle_assertion_failure() {
+    print_failure_message();
+    ++m_current_test_index;
+    final_report();
+}
+
+void TestManager::print_failure_message() {
+    auto& test_case = m_test_cases[m_current_test_index];
+    dius::eprintln("\033[31;1mFAIL\033[0m: \033[1m{}\033[0m: {}"_sv, test_case.suite_name(), test_case.case_name());
+    ++m_fail_count;
+}
+
+void TestManager::print_success_message() {
+    auto& test_case = m_test_cases[m_current_test_index];
+    dius::eprintln("\033[1;32mPASS\033[0m: \033[1m{}\033[0m: {}"_sv, test_case.suite_name(), test_case.case_name());
+    ++m_success_count;
+}
+
+void TestManager::final_report() {
+    auto tests_skipped = m_test_cases.size() - m_current_test_index;
+    auto skipped_string = di::String {};
+    if (tests_skipped) {
+        skipped_string =
+            *di::present(" (\033[1m{}\033[0m Failed \033[1m{}\033[0m Skipped)"_sv, m_fail_count, tests_skipped);
+    }
+
+    dius::println("\n\033[1m{}\033[0m / \033[1m{}\033[0m Tests Passed{}: {}"_sv, m_success_count, m_test_cases.size(),
+                  skipped_string,
+                  m_fail_count ? "\033[31;1mTests Failed\033[0m"_sv : "\033[32;1mTests Passed\033[0m"_sv);
+
+    int result = m_fail_count > 0;
+#ifdef DIUS_PLATFORM_IROS
+    (void) system::system_call<int>(system::Number::shutdown, result);
 #endif
+    system::exit_process(result);
+}
 
 di::Result<void> TestManager::run_tests(Args& args) {
     auto [list_simple, suite_name, case_name] = args;
@@ -56,38 +99,18 @@ di::Result<void> TestManager::run_tests(Args& args) {
     }
 
 #ifndef DIUS_USE_RUNTIME
-    signal(SIGSEGV, signal_handler);
-    signal(SIGFPE, signal_handler);
-    signal(SIGABRT, signal_handler);
+    auto handler = [](int) {
+        auto& manager = TestManager::the();
+        manager.handle_assertion_failure();
+    };
+
+    signal(SIGSEGV, handler);
+    signal(SIGFPE, handler);
+    signal(SIGABRT, handler);
 #endif
 
-    for (auto& test_case : m_test_cases) {
-        auto start_fail_count = m_fail_count;
+    execute_remaining_tests();
 
-#ifndef DIUS_USE_RUNTIME
-        if (setjmp(s_jmpbuf) == 1) {
-            dius::eprintln("\033[31;1mFAIL\033[0m: \033[1m{}\033[0m: {}"_sv, test_case.suite_name(),
-                           test_case.case_name());
-            m_fail_count++;
-            continue;
-        }
-#endif
-
-        test_case.execute();
-
-        if (m_fail_count == start_fail_count) {
-            dius::eprintln("\033[1;32mPASS\033[0m: \033[1m{}\033[0m: {}"_sv, test_case.suite_name(),
-                           test_case.case_name());
-        }
-    }
-
-    dius::println("\n\033[1m{}\033[0m / \033[1m{}\033[0m Tests Passed: {}"_sv, m_test_cases.size() - m_fail_count,
-                  m_test_cases.size(),
-                  m_fail_count ? "\033[31;1mTests Failed\033[0m"_sv : "\033[32;1mTests Passed\033[0m"_sv);
-
-    if (m_fail_count) {
-        return di::Unexpected(dius::PosixError::InvalidArgument);
-    }
     return {};
 }
 }

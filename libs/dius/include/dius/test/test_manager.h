@@ -25,10 +25,22 @@ public:
 
     di::Result<void> run_tests(Args& args);
 
+    bool is_test_application() const { return !m_test_cases.empty(); }
+    void handle_assertion_failure();
+
 private:
     TestManager() {}
 
+    void print_failure_message();
+    void print_success_message();
+
+    void run_current_test();
+    void execute_remaining_tests();
+    void final_report();
+
     di::Vector<TestCase> m_test_cases;
-    int m_fail_count { 0 };
+    usize m_current_test_index { 0 };
+    usize m_fail_count { 0 };
+    usize m_success_count { 0 };
 };
 }

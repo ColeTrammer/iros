@@ -1,5 +1,4 @@
-#include <di/prelude.h>
-#include <dius/prelude.h>
+#include <dius/test/prelude.h>
 
 #ifndef DIUS_USE_RUNTIME
 #include <cxxabi.h>
@@ -8,14 +7,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#endif
 
 namespace di::assert::detail {
 void assert_write(char const* s, size_t n) {
-    ssize_t r = ::write(2, s, n);
-    (void) r;
+    auto string_view = TransparentStringView(s, n);
+    (void) dius::print("{}"_sv, string_view);
 }
 
 void assert_terminate() {
+#ifndef DIUS_USE_RUNTIME
     void* storage[32];
     auto size = ::backtrace(storage, di::size(storage));
 
@@ -43,18 +44,13 @@ void assert_terminate() {
     }
 
     ::free(symbols);
-    ::abort();
-}
-}
-#else
-namespace di::assert::detail {
-void assert_write(char const* s, size_t n) {
-    auto string_view = TransparentStringView(s, n);
-    (void) dius::print("{}"_sv, string_view);
-}
-extern "C" void _exit(i32);
-void assert_terminate() {
-    _exit(42);
-}
-}
 #endif
+
+    auto& test_manager = dius::test::TestManager::the();
+    if (test_manager.is_test_application()) {
+        test_manager.handle_assertion_failure();
+    }
+
+    dius::system::exit_process(42);
+}
+}

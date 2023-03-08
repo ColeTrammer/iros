@@ -29,6 +29,7 @@ if(LINUX)
       PRIVATE
         linux/filesystem/directory_iterator.cpp
         linux/filesystem/query.cpp
+        linux/system/process.cpp
         linux/io_uring.cpp
         linux/sync_file.cpp
         memory_region.cpp
@@ -46,6 +47,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Iros")
     target_sources(dius
       PRIVATE
         iros/sync_file.cpp
+        iros/system/process.cpp
     )
 endif()
 

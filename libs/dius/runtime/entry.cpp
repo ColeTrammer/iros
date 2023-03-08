@@ -29,15 +29,6 @@ extern "C" [[noreturn]] [[gnu::naked]] void _start() {
 #endif
 }
 
-extern "C" [[noreturn]] void _exit(int code) {
-#ifdef DIUS_PLATFORM_LINUX
-    (void) dius::system::system_call<i32>(dius::system::Number::exit_group, code);
-#elif defined(DIUS_PLATFORM_IROS)
-    (void) dius::system::system_call<i32>(dius::system::Number::exit_task, code);
-#endif
-    di::unreachable();
-}
-
 #ifdef DIUS_PLATFORM_LINUX
 static char buffer[4096];
 #endif
@@ -57,5 +48,5 @@ extern "C" void dius_entry(int argc, char** argv, char** envp) {
         (*__init_array_start[i])(argc, argv, envp);
     }
 
-    _exit(__extension__ main(argc, argv, envp));
+    dius::system::exit_process(__extension__ main(argc, argv, envp));
 }
