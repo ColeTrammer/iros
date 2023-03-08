@@ -3,6 +3,7 @@
 #include <di/prelude.h>
 #include <iris/core/config.h>
 #include <iris/core/scheduler.h>
+#include <iris/core/task.h>
 #include <iris/core/task_namespace.h>
 #include <iris/core/unit_test.h>
 #include <iris/mm/address_space.h>
@@ -16,22 +17,32 @@ struct GlobalState {
     GlobalState() {}
     ~GlobalState() {}
 
-    // Read-only after after kernel initialization. Ideally would be marked const.
+    /// @name Readonly fields
+    /// Read-only after after kernel initialization. Ideally would be marked const.
+    /// @{
     mm::PhysicalAddress max_physical_address { 0 };
     mm::VirtualAddress virtual_to_physical_offset { 0 };
     mm::VirtualAddress heap_start { 0 };
     di::Span<di::Byte const> initrd;
     ProcessorInfo processor_info;
     test::TestManager unit_test_manager;
+    arch::FpuState initial_fpu_state;
+    /// @}
 
-    // Mutable global state. These fields have internal synchronization, and so are
-    // safe to access concurrently. Typically, calling code must call .lock() or use
-    // .with_lock() to mutate or even read these fields.
+    /// @name Mutable fields
+    /// Mutable global state. These fields have internal synchronization, and so are
+    /// safe to access concurrently. Typically, calling code must call `.lock()` or use
+    /// `.with_lock()` to mutate or even read these fields.
+    /// @{
     mutable mm::AddressSpace kernel_address_space;
     mutable TaskNamespace task_namespace;
+    /// @}
 
-    // Mutable global state which should really be per-processor, once SMP is supported.
+    /// @name Per-processor fields
+    /// Mutable global state which should really be per-processor, once SMP is supported.
+    /// @{
     mutable Scheduler scheduler;
+    /// @}
 };
 
 /// This function returns a mutable reference to the global state. This is only

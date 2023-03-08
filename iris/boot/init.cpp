@@ -146,6 +146,8 @@ void iris_main() {
         scheduler.schedule_task(*task2);
         scheduler.schedule_task(*task3);
 
+        *global_state.initial_fpu_state.setup_initial_fpu_state();
+
         auto init_path = kernel_command_line.empty() ? "/test_create_task"_pv : di::PathView(kernel_command_line);
         if (init_path.data() == "-run=kernel_unit_test"_tsv) {
             iris::println("Preparing to run kernel unit tests."_sv);

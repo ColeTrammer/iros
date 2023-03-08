@@ -7,15 +7,33 @@ enum class ProcessorFeatures {
     None,
     Smep = (1 << 0),
     Smap = (1 << 1),
+    Sse = (1 << 2),
+    Sse2 = (1 << 3),
+    Fxsr = (1 << 4),
+    Mmx = (1 << 5),
+    Sse3 = (1 << 6),
+    Ssse3 = (1 << 7),
+    Sse4_1 = (1 << 8),
+    Sse4_2 = (1 << 9),
+    Xsave = (1 << 10),
+    Avx = (1 << 11),
+    Avx2 = (1 << 12),
+    Avx512 = (1 << 13),
 };
 
 DI_DEFINE_ENUM_BITWISE_OPERATIONS(ProcessorFeatures)
 
 struct ProcessorInfo {
     ProcessorFeatures features { ProcessorFeatures::None };
+    u32 fpu_max_state_size { 0 };
+    u64 fpu_valid_xcr0 { 0 };
     di::container::string::StringImpl<di::container::string::TransparentEncoding,
                                       di::StaticVector<char, decltype(12_zic)>>
         vendor_string;
+
+    void print_to_console();
+
+    bool has_xsave() const { return (fpu_valid_xcr0 & 0b11) == 0b11 && !!(features & ProcessorFeatures::Xsave); }
 };
 
 ProcessorInfo detect_processor_info();

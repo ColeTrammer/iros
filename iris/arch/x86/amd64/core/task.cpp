@@ -1,4 +1,7 @@
+#include <iris/arch/x86/amd64/system_instructions.h>
+#include <iris/core/global_state.h>
 #include <iris/core/interrupt_disabler.h>
+#include <iris/core/print.h>
 #include <iris/core/task.h>
 
 namespace iris::arch {
@@ -46,6 +49,91 @@ TaskState::TaskState(u64 entry, u64 stack, bool userspace) : rip(entry), rsp(sta
                  "movq 72(%rdi), %rdi\n"
 
                  "iretq\n");
+}
+
+FpuState::~FpuState() {
+    if (fpu_state) {
+        ::operator delete(fpu_state, global_state().processor_info.fpu_max_state_size, std::align_val_t { 64 });
+    }
+}
+
+Expected<void> FpuState::setup_fpu_state() {
+    fpu_state = TRY(allocate_fpu_state());
+
+    auto* clean_fpu_state = global_state().initial_fpu_state.fpu_state;
+    auto fpu_size = global_state().processor_info.fpu_max_state_size;
+    di::copy_n(clean_fpu_state, fpu_size, fpu_state);
+
+    return {};
+}
+
+Expected<void> FpuState::setup_initial_fpu_state() {
+    // Clear cr0.EM and set cr0.MP.
+    auto cr0 = x86::amd64::read_cr0();
+    cr0 &= ~(1 << 2);
+    cr0 |= (1 << 1);
+    x86::amd64::load_cr0(cr0);
+
+    // Enable legacy SSE, which is guaranteed to be supported on x86_64.
+    // This sets cr4.OSFXSR and cr4.OSXMMEXCPT.
+    auto cr4 = x86::amd64::read_cr4();
+    cr4 |= (1 << 9) | (1 << 10);
+    x86::amd64::load_cr4(cr4);
+
+    fpu_state = TRY(allocate_fpu_state());
+
+    // Create clean copy of FPU state.
+    x86::amd64::fninit();
+
+    // See if the processor supports CPU extensions.
+    if (global_state().processor_info.has_xsave()) {
+        println("Enabling support for extended SSE instructions..."_sv);
+
+        // Set cr4.OSXSAVE.
+        cr4 |= (1 << 18);
+        x86::amd64::load_cr4(cr4);
+
+        // Set xcr0 register as the processor desired.
+        x86::amd64::xsetbv(0, global_state().processor_info.fpu_valid_xcr0);
+    }
+
+    save();
+
+    return {};
+}
+
+Expected<di::Byte*> FpuState::allocate_fpu_state() {
+    auto fpu_size = global_state().processor_info.fpu_max_state_size;
+
+    // NOTE: 64 byte alignment is required when using SSE extensions.
+    auto result = ::operator new(fpu_size, std::align_val_t { 64 }, std::nothrow);
+    if (!result) {
+        return di::Unexpected(Error::NotEnoughMemory);
+    }
+    return static_cast<di::Byte*>(result);
+}
+
+void FpuState::load() {
+    if (fpu_state) {
+        if (global_state().processor_info.has_xsave()) {
+            // NOTE: modern processors may have optimized versions of these instructions for use in the kernel.
+            x86::amd64::xrstor(fpu_state);
+        } else {
+            x86::amd64::fxrstor(fpu_state);
+        }
+    }
+}
+
+void FpuState::save() {
+    if (fpu_state) {
+        if (global_state().processor_info.has_xsave()) {
+            // NOTE: modern processors may have optimized versions of these instructions for use in the kernel. Such as:
+            //       xsaveopt.
+            x86::amd64::xsave(fpu_state);
+        } else {
+            x86::amd64::fxsave(fpu_state);
+        }
+    }
 }
 }
 

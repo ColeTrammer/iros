@@ -28,11 +28,15 @@ public:
 
     [[noreturn]] void context_switch_to() {
         m_address_space->load();
+        m_fpu_state.load();
         m_task_state.context_switch_to();
     }
 
     arch::TaskState const& task_state() const { return m_task_state; }
     void set_task_state(arch::TaskState const& state) { m_task_state = state; }
+
+    arch::FpuState& fpu_state() { return m_fpu_state; }
+    arch::FpuState const& fpu_state() const { return m_fpu_state; }
 
     TaskId id() const { return m_id; }
     mm::AddressSpace& address_space() { return *m_address_space; }
@@ -48,6 +52,7 @@ public:
 
 private:
     arch::TaskState m_task_state;
+    arch::FpuState m_fpu_state;
     di::Arc<mm::AddressSpace> m_address_space;
     di::Arc<TaskNamespace> m_task_namespace;
     di::Atomic<i32> m_preemption_disabled_count;

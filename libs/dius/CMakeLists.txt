@@ -47,13 +47,6 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Iros")
       PRIVATE
         iros/sync_file.cpp
     )
-
-    target_compile_options(dius
-      PRIVATE
-        "-mno-sse"
-        "-mno-sse2"
-        "-mno-mmx"
-    )
 endif()
 
 install(
@@ -99,9 +92,6 @@ if (IROS_UseDiusRuntime)
       PUBLIC
         "-nostdlib"
         "-static"
-        "-mno-sse"
-        "-mno-sse2"
-        "-mno-mmx"
       PRIVATE
         "-fno-stack-protector"
         "-ffreestanding"

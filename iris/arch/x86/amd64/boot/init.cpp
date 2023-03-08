@@ -386,6 +386,7 @@ extern "C" void bsp_cpu_init() {
     iris::println("Beginning x86_64 kernel boot..."_sv);
 
     global_state.processor_info = detect_processor_info();
+    global_state.processor_info.print_to_console();
 
     if (!!(global_state.processor_info.features & ProcessorFeatures::Smep)) {
         iris::println("Enabling SMEP..."_sv);

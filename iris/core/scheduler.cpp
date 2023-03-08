@@ -85,6 +85,10 @@ void Scheduler::save_state_and_run_next(arch::TaskState* task_state) {
     }
 
     m_current_task->set_task_state(*task_state);
+
+    // If this task has FPU state, save it.
+    m_current_task->fpu_state().save();
+
     run_next();
 }
 

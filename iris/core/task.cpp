@@ -82,6 +82,8 @@ Expected<di::Arc<Task>> create_user_task(TaskNamespace& task_namespace, FileTabl
     auto result =
         TRY(di::try_make_arc<Task>(mm::VirtualAddress(0), user_stack + 0x10000, true, di::move(new_address_space),
                                    task_namespace.arc_from_this(), task_id, di::move(file_table)));
+    TRY(result->fpu_state().setup_fpu_state());
+
     TRY(task_namespace.lock()->register_task(*result));
     return result;
 }
