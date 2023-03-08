@@ -2,3 +2,7 @@ build/
 cross/
 legacy/
 meta/docker
+.git/
+.vscode/
+.devcontainer/
+.github/

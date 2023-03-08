@@ -49,6 +49,7 @@ jobs:
           context: .
           file: meta/docker/Dockerfile
           push: true
+          provenance: false
           tags: ghcr.io/coletrammer/iros_toolchain:${{ env.IMAGE_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

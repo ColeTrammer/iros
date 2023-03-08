@@ -40,7 +40,7 @@ make install-gcc -j"$NPROC"
 (
     # Build and install Iros libccpp
     cd "$PROJECT_ROOT"
-    cmake --preset iros_x86_64
+    cmake --preset iros_x86_64 -DIROS_NeverBuildDocs=ON
     cmake --build --preset iros_x86_64 --target ccpp
     cmake --build --preset iros_x86_64 --target libs/ccpp/install
 )

@@ -7,7 +7,8 @@ option(IROS_BuildUserspace "Build userspace libaries and programs." ON)
 option(IROS_BuildTests "Build test programs." ON)
 option(IROS_BuildTools "Build tools required native tools." ON)
 option(IROS_BuildCcpp "Build the c++ libc." ON)
-option(IROS_UseDiusRuntime "Use dius provided runtime instead of system libc" OFF)
+option(IROS_UseDiusRuntime "Use dius provided runtime instead of system libc." OFF)
+option(IROS_NeverBuildDocs "Never enable documentation build target." OFF)
 
 set(IROS_DiagnosticFlags ""
     CACHE STRING "Extra compilation flags for diagnostics purposes."
@@ -122,4 +123,6 @@ if(IROS_BuildIris)
     include(meta/cmake/iris_commands.cmake)
 endif()
 
-include(meta/cmake/doxygen.cmake)
+if (NOT IROS_NeverBuildDocs)
+    include(meta/cmake/doxygen.cmake)
+endif()
