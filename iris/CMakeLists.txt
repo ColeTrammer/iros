@@ -57,6 +57,7 @@ if(IROS_BuildIris)
 
   add_executable(iris
       boot/init.cpp
+      core/cxx.cpp
       core/global_state.cpp
       core/task_namespace.cpp
       core/task.cpp
