@@ -56,15 +56,27 @@ if [ "$REMOTE_CONTAINERS" = 'true' ]; then
     fi
 fi
 
+if [ "$GITHUB_RUN_ID" ]; then
+    echo "Attempting HACK, running on GitHub actions."
+    for file in /dev/loop*; do
+        if ! [ "$file" = "/dev/loop-control" ]; then
+        echo "Trying to unlink: $file"
+            losetup -d "$file" || true
+            rm -f "file"
+        fi
+    done
+    sleep 1
+else
+    echo "Not using HACK, not running on GitHub actions."
+fi
+
 LOOP_DEV=$(losetup --partscan -f "$IMAGE" --show)
 
 if [ "$GITHUB_RUN_ID" ]; then
-    echo "Attempting delay HACK, running on GitHub actions."
     sleep 1
+    echo "HACK: running partprobe."
     partprobe
     sleep 1
-else
-    echo "Not using delay HACK, not running on GitHub actions."
 fi
 
 # HACK to make partitions show up in a docker container

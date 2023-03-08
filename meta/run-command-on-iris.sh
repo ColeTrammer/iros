@@ -57,7 +57,20 @@ TIMEOUT=0
     MODULE_PATH=boot:///initrd.bin
 __EOF__
 
-sudo -E "$PARENT_DIR"/make-iris-limine-image.sh
+# Desperately try up to 5 times to make the image.
+FAILED='true'
+for i in `seq 5`; do
+    if [ "$FAILED" = 'true'  ]; then
+        if sudo -E "$PARENT_DIR"/make-iris-limine-image.sh; then
+            FAILED='false'
+        fi
+    fi
+done
+
+if [ "$FAILED" = 'true' ]; then
+    echo "Failed to create disk image."
+    exit 1
+fi
 
 set +e
 
