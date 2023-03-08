@@ -4,7 +4,7 @@ find_package(Doxygen
 )
 
 if (DOXYGEN_FOUND)
-include(ExternalProject)
+    include(ExternalProject)
     ExternalProject_Add(doxygen_awesome_css
         GIT_REPOSITORY https://github.com/jothepro/doxygen-awesome-css.git
         GIT_SHALLOW TRUE
@@ -13,6 +13,7 @@ include(ExternalProject)
         BUILD_COMMAND ""
         UPDATE_COMMAND ""
         INSTALL_COMMAND ""
+        EXCLUDE_FROM_ALL 1
     )
     set(DOXYGEN_AWESOME_DIR "${CMAKE_CURRENT_BINARY_DIR}/doxygen_awesome_css-prefix/src/doxygen_awesome_css")
 
@@ -35,6 +36,7 @@ include(ExternalProject)
         __CCPP_END_DECLARATIONS=
         __CCPP_RESTRICT=restrict
     )
+    set(DOXYGEN_HTML_COLORSTYLE "LIGHT")
     set(DOXYGEN_HTML_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/docs/header.html")
     set(DOXYGEN_HTML_EXTRA_STYLESHEET 
         "${DOXYGEN_AWESOME_DIR}/doxygen-awesome.css"
