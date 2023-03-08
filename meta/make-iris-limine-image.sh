@@ -58,7 +58,14 @@ fi
 
 LOOP_DEV=$(losetup --partscan -f "$IMAGE" --show)
 
-partprobe
+if [ "$GITHUB_RUN_ID" ]; then
+    echo "Attempting delay HACK, running on GitHub actions."
+    sleep 1
+    partprobe
+    sleep 1
+else
+    echo "Not using delay HACK, not running on GitHub actions."
+fi
 
 # HACK to make partitions show up in a docker container
 # https://github.com/moby/moby/issues/27886#issuecomment-417074845
