@@ -2,7 +2,7 @@
 #include <dius/test/prelude.h>
 
 constexpr void forward_list() {
-    struct Node : di::IntrusiveForwardListElement<> {
+    struct Node : di::IntrusiveForwardListNode<> {
         constexpr explicit Node(int v) : value(v) {}
 
         int value;
@@ -26,7 +26,7 @@ constexpr void forward_list() {
 
     ASSERT_EQ(r, e);
 
-    static_assert(di::concepts::InputContainer<decltype(list)>);
+    static_assert(di::concepts::ForwardContainer<decltype(list)>);
 
     ASSERT_EQ(list.pop_front().transform(&Node::value), 4);
     ASSERT_EQ(list.pop_front().transform(&Node::value), 6);

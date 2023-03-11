@@ -1,50 +1,49 @@
 #pragma once
 
+#include <di/container/intrusive/forward_list_forward_declaration.h>
+#include <di/container/intrusive/forward_list_node.h>
 #include <di/container/iterator/prelude.h>
 #include <di/util/addressof.h>
 #include <di/util/exchange.h>
 #include <di/util/immovable.h>
+#include <di/util/movable_box.h>
 #include <di/vocab/optional/prelude.h>
 
 namespace di::container {
-struct DefaultIntrusiveForwardListTag {};
+template<typename Self>
+struct IntrusiveForwardListTag : IntrusiveTagBase<IntrusiveForwardListNode<Self>> {};
 
-template<typename T, typename Tag = DefaultIntrusiveForwardListTag>
-class IntrusiveForwardList;
+struct DefaultIntrusiveForwardListTag : IntrusiveForwardListTag<DefaultIntrusiveForwardListTag> {};
 
-template<typename Tag = DefaultIntrusiveForwardListTag>
-struct IntrusiveForwardListElement : util::Immovable {
-    constexpr IntrusiveForwardListElement() : next(nullptr) {}
-
-    template<concepts::DerivedFrom<IntrusiveForwardListElement> T>
-    constexpr T& down_cast() {
-        return static_cast<T&>(*this);
-    }
-
-private:
-    template<typename, typename>
-    friend class IntrusiveForwardList;
-
-    constexpr IntrusiveForwardListElement(IntrusiveForwardListElement* node) : next(node) {}
-
-    IntrusiveForwardListElement* next;
-};
-
-template<typename T, typename Tag>
+template<typename T, typename Tag, typename Self>
 class IntrusiveForwardList {
 private:
-    using Node = IntrusiveForwardListElement<Tag>;
+    using Node = IntrusiveForwardListNode<Tag>;
+    using ConcreteNode = decltype(Tag::node_type(in_place_type<T>));
+
+    constexpr static bool is_sized = Tag::is_sized(in_place_type<T>);
+    constexpr static bool store_tail = Tag::always_store_tail(in_place_type<T>);
+
+    constexpr decltype(auto) down_cast_self() {
+        if constexpr (concepts::SameAs<Void, Self>) {
+            return *this;
+        } else {
+            return static_cast<Self&>(*this);
+        }
+    }
 
     struct Iterator : IteratorBase<Iterator, ForwardIteratorTag, T, ssize_t> {
     private:
         friend class IntrusiveForwardList;
 
-        constexpr explicit Iterator(Node* node) : m_node(node) {}
-
     public:
         Iterator() = default;
 
-        constexpr decltype(auto) operator*() const { return m_node->template down_cast<T>(); }
+        constexpr explicit Iterator(Node* node) : m_node(node) {}
+        constexpr explicit Iterator(Node& node) : m_node(util::addressof(node)) {}
+
+        constexpr T& operator*() const { return Tag::down_cast(in_place_type<T>, static_cast<ConcreteNode&>(*m_node)); }
+        constexpr T* operator->() const { return util::addressof(**this); }
 
         constexpr void advance_one() { m_node = m_node->next; }
 
@@ -63,33 +62,57 @@ public:
 
     IntrusiveForwardList(IntrusiveForwardList const&) = delete;
 
-    constexpr IntrusiveForwardList(IntrusiveForwardList&& other) { *this = util::move(other); }
+    constexpr IntrusiveForwardList(IntrusiveForwardList&& other) : IntrusiveForwardList() { *this = util::move(other); }
 
     IntrusiveForwardList& operator=(IntrusiveForwardList const&) = delete;
 
     constexpr IntrusiveForwardList& operator=(IntrusiveForwardList&& other) {
-        m_head.next = util::exchange(other.m_head.next, nullptr);
-        m_tail = other.m_tail;
-        if (empty()) {
-            reset_tail();
+        m_head.value().next = util::exchange(other.m_head.value().next, nullptr);
+
+        if constexpr (is_sized) {
+            m_size.value = util::exchange(other.m_size.value, 0);
         }
-        other.reset_tail();
+
+        if constexpr (store_tail) {
+            if (!empty()) {
+                m_tail.value = other.m_tail.value;
+            }
+            other.reset_tail();
+        }
         return *this;
     }
 
     ~IntrusiveForwardList() = default;
 
     constexpr bool empty() const { return !head(); }
+    constexpr usize size() const
+    requires(is_sized)
+    {
+        return m_size.value;
+    }
+    constexpr usize max_size() const { return math::NumericLimits<usize>::max; }
 
-    constexpr Iterator before_begin() { return Iterator(util::addressof(m_head)); }
-    constexpr ConstIterator before_begin() const { return cbefore_begin(); }
-    constexpr ConstIterator cbefore_begin() const { return Iterator(const_cast<Node*>(util::addressof(m_head))); }
+    constexpr Iterator before_begin() { return Iterator(util::addressof(m_head.value())); }
+    constexpr ConstIterator before_begin() const {
+        return Iterator(const_cast<Node*>(util::addressof(m_head.value())));
+    }
 
     constexpr Iterator begin() { return Iterator(head()); }
     constexpr Iterator end() { return Iterator(); }
 
     constexpr ConstIterator begin() const { return Iterator(head()); }
     constexpr ConstIterator end() const { return Iterator(); }
+
+    constexpr Iterator before_end()
+    requires(store_tail)
+    {
+        return Iterator(m_tail.value);
+    }
+    constexpr ConstIterator before_end() const
+    requires(store_tail)
+    {
+        return Iterator(m_tail.value);
+    }
 
     constexpr auto front() {
         return lift_bool(!empty()) % [&] {
@@ -98,97 +121,115 @@ public:
     }
     constexpr auto front() const {
         return lift_bool(!empty()) % [&] {
-            return util::ref(*begin());
+            return util::cref(*begin());
         };
     }
 
-    constexpr void push_back(T& value) {
-        auto* node = static_cast<Node*>(util::addressof(value));
-        *m_tail = node;
-        m_tail = util::addressof(node->next);
-        node->next = nullptr;
+    constexpr auto back()
+    requires(store_tail)
+    {
+        return lift_bool(!empty()) % [&] {
+            return util::ref(*before_end());
+        };
+    }
+    constexpr auto back() const
+    requires(store_tail)
+    {
+        return lift_bool(!empty()) % [&] {
+            return util::cref(*before_end());
+        };
     }
 
-    constexpr void push_front(T& value) {
-        auto* node = static_cast<Node*>(util::addressof(value));
-        node->next = head();
-        set_head(node);
+    constexpr void push_front(Node& node) { insert_after(before_begin(), node); }
+    constexpr void push_back(Node& node)
+    requires(store_tail)
+    {
+        insert_after(before_end(), node);
     }
 
     constexpr Optional<T&> pop_front() {
         return lift_bool(!empty()) % [&] {
-            auto* front = head();
-            set_head(util::exchange(front->next, nullptr));
-            if (util::addressof(front->next) == m_tail) {
+            auto it = begin();
+            erase_after(before_begin());
+            if (empty()) {
                 reset_tail();
             }
-            return util::ref(front->template down_cast<T>());
+            return util::ref(*it);
         };
     }
 
-    constexpr void prepend_container(IntrusiveForwardList&& other) {
-        if (!other.empty()) {
-            **other.m_tail = this->head();
-            this->set_head(other.head());
+    constexpr void clear() { erase_after(before_begin(), end()); }
 
-            other.clear();
-        }
-    }
-
-    constexpr void append_container(IntrusiveForwardList&& other) {
-        if (!other.empty()) {
-            auto* node = other.head();
-            *m_tail = node;
-            m_tail = util::addressof(node->next);
-            other.clear();
-        }
-    }
-
-    constexpr void clear() {
-        set_head(nullptr);
-        reset_tail();
-    }
-
-    constexpr Iterator insert_after(ConstIterator position, T& value) {
-        auto* node = static_cast<Node*>(util::addressof(value));
+    constexpr Iterator insert_after(ConstIterator position, Node& node_ref) {
+        auto* node = util::addressof(node_ref);
         auto* prev = position.base().node();
-        if (!prev || util::addressof(prev->next) == m_tail) {
-            push_back(value);
-        } else {
-            node->next = prev->next;
-            prev->next = node;
+
+        DI_ASSERT(prev);
+        if constexpr (store_tail) {
+            if (prev == m_tail.value) {
+                m_tail.value = node;
+            }
         }
+
+        node->next = prev->next;
+        prev->next = node;
+
+        if constexpr (is_sized) {
+            ++m_size.value;
+        }
+
+        Tag::did_insert(down_cast_self(), static_cast<ConcreteNode&>(node_ref));
 
         return Iterator(node);
     }
 
     constexpr Iterator erase_after(ConstIterator position) {
-        if (!position.node()) {
+        if (!position.base().node()) {
             return end();
         }
-        return erase_after(position, container::next(position));
+        auto next = container::next(position);
+        if (!next.base().node()) {
+            return end();
+        }
+        return erase_after(position, container::next(next));
     }
     constexpr Iterator erase_after(ConstIterator first, ConstIterator last) {
         if (first == last) {
-            return last;
+            return last.base();
         }
 
         auto* prev = first.base().node();
         auto* end = last.base().node();
-        if (!end) {
-            m_tail = util::addressof(prev->next);
+        if constexpr (store_tail) {
+            if (!end) {
+                m_tail.value = prev;
+            }
         }
         prev->next = end;
+
+        for (auto it = ++first; it != last;) {
+            auto save = it++;
+            Tag::did_remove(down_cast_self(), static_cast<ConcreteNode&>(*save.base().node()));
+
+            if constexpr (is_sized) {
+                --m_size.value;
+            }
+        }
         return last.base();
     }
 
 private:
-    constexpr Node* head() const { return m_head.next; }
-    constexpr void set_head(Node* head) { m_head.next = head; }
+    constexpr Node* head() const { return m_head.value().next; }
+    constexpr void set_head(Node* head) { m_head.value().next = head; }
 
-    constexpr void reset_tail() { m_tail = util::addressof(m_head.next); }
+    constexpr void reset_tail() {
+        if constexpr (store_tail) {
+            m_tail.value = util::addressof(m_head.value());
+        }
+    }
 
-    Node m_head;
-    Node** m_tail;
+    util::MovableBox<Node> m_head;
+    [[no_unique_address]] util::StoreIf<Node*, store_tail> m_tail { nullptr };
+    [[no_unique_address]] util::StoreIf<usize, is_sized> m_size { 0 };
 };
 }

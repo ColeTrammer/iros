@@ -26,15 +26,16 @@ introduce some customization points for intrusive containers.
 
 ## Intrusive Container Customizations
 
-The intrusive container implementation has 5 customization points.
+The intrusive container implementation has 6 customization points.
 
-| Operation                                                 | Description                                                         |
-| --------------------------------------------------------- | ------------------------------------------------------------------- |
-| Tag::node_type(di::InPlaceType<T>) -> Tag::Node           | Get the correct node type for a given T.                            |
-| Tag::down_cast(di::InPlaceType<T>, Tag::Node& node) -> T& | Cast from a node type to the underlying T value.                    |
-| Tag::is_sized(di::InPlaceType<T>) -> bool                 | Determines whether the container offers an O(1) size function.      |
-| Tag::did_insert(IntrusiveContainer&, Tag::Node& node)     | Hook which intrusive container calls just after inserting the node. |
-| Tag::did_remove(IntrusiveContainer&, Tag::Node& node)     | Hook which intrusive container calls just after removing the node.  |
+| Operation                                                 | Description                                                          |
+| --------------------------------------------------------- | -------------------------------------------------------------------- |
+| Tag::node_type(di::InPlaceType<T>) -> Tag::Node           | Get the correct node type for a given T.                             |
+| Tag::down_cast(di::InPlaceType<T>, Tag::Node& node) -> T& | Cast from a node type to the underlying T value.                     |
+| Tag::is_sized(di::InPlaceType<T>) -> bool                 | Determines whether the container offers an O(1) size function.       |
+| Tag::always_store_tail(di::InPlaceType<T>) -> bool        | Determines whether a ForwardList offers O(1) back() and push_back(). |
+| Tag::did_insert(IntrusiveContainer&, Tag::Node& node)     | Hook which intrusive container calls just after inserting the node.  |
+| Tag::did_remove(IntrusiveContainer&, Tag::Node& node)     | Hook which intrusive container calls just after removing the node.   |
 
 Notice, there are 2 hooks which are called when inserting and removing elements, respectively. This is used so that
 reference-counted objects can take a reference on insertion and drop a reference on removal. The `did_remove` hook will
@@ -50,8 +51,12 @@ container's requirements. This means that the `Node` type must either be the con
 type must publically inherit from it. Internally, intrusive containers will downcast their internal pointers to the
 `Node` type before calling these customizations.
 
-Lastly, the `Tag` also can customize whether or not the intrusive container stores a size. By standard C++, the owning
+The `Tag` also can customize whether or not the intrusive container stores a size. By standard C++, the owning
 list type should store the list's size. However, there is no need to store the size unless it is specifically needed.
+
+In addition, the `Tag` can custommize whether or a `ForwardList` will store a pointer to the tail. This allows providing
+a `.back()` and `.push_back()` functions, which makes the container usable with the `di::Queue` adapter. This is enabled
+by default for normal intrusive containers, but by standard C++, the owning variant will not provide this functionality.
 
 ## Using the IntrusiveList class
 

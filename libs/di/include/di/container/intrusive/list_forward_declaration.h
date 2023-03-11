@@ -1,8 +1,8 @@
 #pragma once
 
-namespace di::container {
-struct IntrusiveCallbackBase;
+#include <di/types/prelude.h>
 
+namespace di::container {
 struct DefaultIntrusiveListTag;
 
 template<typename Tag = DefaultIntrusiveListTag>

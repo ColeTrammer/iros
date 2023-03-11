@@ -5,7 +5,7 @@
 
 namespace di {
 using container::IntrusiveForwardList;
-using container::IntrusiveForwardListElement;
+using container::IntrusiveForwardListNode;
 using container::IntrusiveList;
 using container::IntrusiveListNode;
 using container::IntrusiveListTag;

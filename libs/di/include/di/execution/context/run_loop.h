@@ -13,7 +13,7 @@ namespace di::execution {
 template<concepts::Lock Lock = DefaultLock>
 class RunLoop {
 private:
-    struct OperationStateBase : IntrusiveForwardListElement<> {
+    struct OperationStateBase : IntrusiveForwardListNode<> {
     public:
         OperationStateBase(RunLoop* parent_) : parent(parent_) {}
 

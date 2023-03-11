@@ -16,7 +16,7 @@ using IoContext = linux::IoUringContext;
 #else
 class IoContext {
 private:
-    struct OperationStateBase : di::IntrusiveForwardListElement<> {
+    struct OperationStateBase : di::IntrusiveForwardListNode<> {
     public:
         OperationStateBase(IoContext* parent_) : parent(parent_) {}
 

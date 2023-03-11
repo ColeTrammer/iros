@@ -12,6 +12,11 @@ struct IntrusiveTagBase {
     }
 
     template<typename T>
+    constexpr static bool always_store_tail(InPlaceType<T>) {
+        return true;
+    }
+
+    template<typename T>
     constexpr static NodeType node_type(InPlaceType<T>);
 
     template<typename T>

@@ -17,7 +17,7 @@ void enqueue_operation(IoUringContext*, OperationStateBase*);
 
 IoUringScheduler get_scheduler(IoUringContext*);
 
-struct OperationStateBase : di::IntrusiveForwardListElement<> {
+struct OperationStateBase : di::IntrusiveForwardListNode<> {
 public:
     virtual void execute() = 0;
     virtual void did_complete(io_uring::CQE const*) {}
