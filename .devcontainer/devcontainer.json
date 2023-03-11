@@ -18,7 +18,9 @@
                 "hediet.vscode-drawio",
                 "stkb.rewrap",
                 "ms-vscode.cmake-tools",
-                "ms-azuretools.vscode-docker"
+                "ms-azuretools.vscode-docker",
+                "esbenp.prettier-vscode",
+                "ms-vscode.live-server"
             ],
             "settings": {
                 "search.exclude": {
