@@ -17,7 +17,7 @@ using TaskId = di::StrongInt<TaskIdTag>;
 class TaskNamespace;
 
 class Task
-    : public di::IntrusiveListElement<>
+    : public di::IntrusiveListNode<>
     , public di::IntrusiveRefCount<Task> {
 public:
     explicit Task(mm::VirtualAddress entry, mm::VirtualAddress stack, bool userspace,

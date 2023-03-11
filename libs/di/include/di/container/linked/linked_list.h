@@ -4,9 +4,8 @@
 #include <di/container/algorithm/equal.h>
 #include <di/container/allocator/allocator.h>
 #include <di/container/concepts/prelude.h>
+#include <di/container/intrusive/prelude.h>
 #include <di/container/iterator/prelude.h>
-#include <di/container/linked/linked_list_iterator.h>
-#include <di/container/linked/linked_list_node.h>
 #include <di/container/meta/prelude.h>
 #include <di/math/numeric_limits.h>
 #include <di/platform/prelude.h>
@@ -15,13 +14,47 @@
 #include <di/vocab/optional/prelude.h>
 
 namespace di::container {
-template<typename T,
-         concepts::AllocatorOf<ConcreteLinkedListNode<T>> Alloc = DefaultAllocator<ConcreteLinkedListNode<T>>>
-class LinkedList {
+namespace detail {
+    template<typename T>
+    struct LinkedListTag;
+
+    template<typename T>
+    struct LinkedListNode : IntrusiveListNode<LinkedListTag<T>> {
+    public:
+        template<typename... Args>
+        requires(concepts::ConstructibleFrom<T, Args...>)
+        constexpr LinkedListNode(InPlace, Args&&... args) : m_value(util::forward<Args>(args)...) {}
+
+        constexpr T& value() { return m_value; }
+
+    private:
+        T m_value;
+    };
+
+    template<typename T>
+    struct LinkedListTag : IntrusiveTagBase<LinkedListNode<T>> {
+        using Node = LinkedListNode<T>;
+
+        constexpr static bool is_sized(InPlaceType<T>) { return true; }
+        constexpr static T& down_cast(InPlaceType<T>, Node& node) { return node.value(); }
+
+        constexpr static void did_remove(auto& list, auto& node) {
+            util::destroy_at(util::addressof(node));
+            list.allocator().deallocate(util::addressof(node), 1);
+        }
+    };
+}
+
+template<typename T, typename Alloc = DefaultAllocator<detail::LinkedListNode<T>>>
+class LinkedList : public IntrusiveList<T, detail::LinkedListTag<T>, LinkedList<T, Alloc>> {
+    static_assert(concepts::AllocatorOf<Alloc, detail::LinkedListNode<T>>,
+                  "Alloc template parameter must be a LinkedListNode allocator.");
+
 private:
-    using Node = ConcreteLinkedListNode<T>;
-    using Iterator = LinkedListIterator<T>;
-    using ConstIterator = meta::ConstIterator<Iterator>;
+    using Node = detail::LinkedListNode<T>;
+    using List = IntrusiveList<T, detail::LinkedListTag<T>, LinkedList<T, Alloc>>;
+    using Iterator = meta::ContainerIterator<List>;
+    using ConstIterator = meta::ContainerConstIterator<List>;
 
     template<concepts::InputContainer Con, typename... Args>
     requires(concepts::ContainerCompatible<Con, T>)
@@ -35,61 +68,12 @@ private:
     }
 
 public:
-    constexpr LinkedList() : m_head(&m_head, &m_head) {}
+    constexpr LinkedList() = default;
 
-    constexpr LinkedList(LinkedList&& other) : LinkedList() { *this = util::move(other); }
+    constexpr LinkedList(LinkedList&&) = default;
+    constexpr LinkedList& operator=(LinkedList&&) = default;
 
-    constexpr LinkedList& operator=(LinkedList&& other) {
-        if (this != &other) {
-            clear();
-            if (!other.empty()) {
-                m_head = util::exchange(other.m_head, { &other.m_head, &other.m_head });
-                m_size = util::exchange(other.m_size, 0);
-
-                m_head.next->prev = &m_head;
-                m_head.prev->next = &m_head;
-            }
-        }
-        return *this;
-    }
-
-    constexpr ~LinkedList() { clear(); }
-
-    constexpr auto front() {
-        return lift_bool(!empty()) % [&] {
-            return util::ref(*begin());
-        };
-    }
-
-    constexpr auto front() const {
-        return lift_bool(!empty()) % [&] {
-            return util::ref(*begin());
-        };
-    }
-
-    constexpr auto back() {
-        return lift_bool(!empty()) % [&] {
-            return util::ref(*--end());
-        };
-    }
-
-    constexpr auto back() const {
-        return lift_bool(!empty()) % [&] {
-            return util::ref(*--end());
-        };
-    }
-
-    constexpr Iterator begin() { return Iterator(m_head.next); }
-    constexpr Iterator end() { return Iterator(&m_head); }
-
-    constexpr ConstIterator begin() const { return Iterator(m_head.next); }
-    constexpr ConstIterator end() const { return Iterator(const_cast<LinkedListNode*>(&m_head)); }
-
-    constexpr bool empty() const { return size() == 0u; }
-    constexpr size_t size() const { return m_size; }
-    constexpr size_t max_size() const { return math::NumericLimits<size_t>::max; }
-
-    constexpr void clear() { erase(begin(), end()); }
+    constexpr ~LinkedList() = default;
 
     constexpr Iterator insert(ConstIterator position, T const& value)
     requires(concepts::CopyConstructible<T>)
@@ -101,17 +85,8 @@ public:
     template<typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...>)
     constexpr decltype(auto) emplace(ConstIterator position, Args&&... args) {
-        return as_fallible(create_node(util::forward<Args>(args)...)) % [&](auto* node) {
-            auto* next = position.base().node();
-            auto* prev = next->prev;
-
-            node->next = next;
-            node->prev = prev;
-
-            prev->next = node;
-            next->prev = node;
-            ++m_size;
-            return Iterator(node);
+        return as_fallible(create_node(util::forward<Args>(args)...)) % [&](Node& node) {
+            return List::insert(position, node);
         } | try_infallible;
     }
 
@@ -127,23 +102,6 @@ public:
         } | try_infallible;
     }
 
-    constexpr Iterator erase(ConstIterator position) { return erase(position, container::next(position, 1)); }
-    constexpr Iterator erase(ConstIterator start, ConstIterator last) {
-        auto* start_node = start.base().node();
-        auto* end_node = last.base().node();
-
-        auto* prev_node = start_node->prev;
-        prev_node->next = end_node;
-        end_node->prev = prev_node;
-
-        while (start != last) {
-            auto save = start++;
-            destroy_node(save.base().concrete_node());
-            --m_size;
-        }
-        return last.base();
-    }
-
     constexpr decltype(auto) push_back(T const& value)
     requires(concepts::CopyConstructible<T>)
     {
@@ -155,23 +113,23 @@ public:
     template<typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...>)
     constexpr decltype(auto) emplace_back(Args&&... args) {
-        return as_fallible(emplace(end(), util::forward<Args>(args)...)) % [](auto it) {
+        return as_fallible(emplace(this->end(), util::forward<Args>(args)...)) % [](auto it) {
             return util::ref(*it);
         } | try_infallible;
     }
 
     template<concepts::ContainerCompatible<T> Con>
     constexpr auto append_container(Con&& container) {
-        return insert_container(end(), util::forward<Con>(container));
+        return insert_container(this->end(), util::forward<Con>(container));
     }
 
     constexpr Optional<T> pop_back() {
-        if (empty()) {
+        if (this->empty()) {
             return nullopt;
         }
-        auto last = --end();
+        auto last = --this->end();
         auto value = util::move(*last);
-        erase(last);
+        this->erase(last);
         return value;
     }
 
@@ -186,106 +144,38 @@ public:
     template<typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...>)
     constexpr decltype(auto) emplace_front(Args&&... args) {
-        return as_fallible(emplace(begin(), util::forward<Args>(args)...)) % [](auto it) {
+        return as_fallible(emplace(this->begin(), util::forward<Args>(args)...)) % [](auto it) {
             return util::ref(*it);
         } | try_infallible;
     }
 
     template<concepts::ContainerCompatible<T> Con>
     constexpr auto prepend_container(Con&& container) {
-        return insert_container(begin(), util::forward<Con>(container));
+        return insert_container(this->begin(), util::forward<Con>(container));
     }
 
     constexpr Optional<T> pop_front() {
-        if (empty()) {
+        if (this->empty()) {
             return nullopt;
         }
-        auto first = begin();
+        auto first = this->begin();
         auto value = util::move(*first);
-        erase(first);
+        this->erase(first);
         return value;
     }
 
-    constexpr void splice(ConstIterator position, LinkedList& other) { splice(position, util::move(other)); }
-    constexpr void splice(ConstIterator position, LinkedList&& other) {
-        splice(position, other, other.begin(), other.end());
-    }
-
-    constexpr void splice(ConstIterator position, LinkedList& other, ConstIterator it) {
-        splice(position, util::move(other), it);
-    }
-    constexpr void splice(ConstIterator position, LinkedList&& other, ConstIterator it) {
-        splice(position, other, it, container::next(it, 1));
-    }
-
-    constexpr void splice(ConstIterator position, LinkedList& other, ConstIterator first, ConstIterator last) {
-        splice(position, util::move(other), first, last);
-    }
-    constexpr void splice(ConstIterator position, LinkedList&& other, ConstIterator first, ConstIterator last) {
-        auto* first_node = first.base().node();
-        auto* last_node = last.base().node();
-        if (first_node == last_node) {
-            return;
-        }
-
-        // Unlink from other.
-        auto* inclusive_last_node = last_node->prev;
-        {
-            auto* prev_node = first_node->prev;
-            prev_node->next = last_node;
-            last_node->prev = prev_node;
-        }
-
-        // Relink with this.
-        {
-            auto* position_node = position.base().node();
-            auto* prev_node = position_node->prev;
-
-            prev_node->next = first_node;
-            first_node->prev = prev_node;
-
-            position_node->prev = inclusive_last_node;
-            inclusive_last_node->next = position_node;
-        }
-
-        // Adjust size.
-        if (this != &other) {
-            auto size = 1 + container::distance(first, ConstIterator(Iterator(inclusive_last_node)));
-            this->m_size += size;
-            other.m_size -= size;
-        }
-    }
+    constexpr Alloc allocator() const { return Alloc(); }
 
 private:
-    constexpr friend bool operator==(LinkedList const& a, LinkedList const& b)
-    requires(concepts::EqualityComparable<T>)
-    {
-        return container::equal(a, b);
-    }
-
-    constexpr friend auto operator<=>(LinkedList const& a, LinkedList const& b)
-    requires(concepts::ThreeWayComparable<T>)
-    {
-        return container::compare(a, b);
-    }
-
     template<typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...>)
-    constexpr Node* create_node(Args&&... args) {
+    constexpr Node& create_node(Args&&... args) {
         auto [pointer, allocated_nodes] = Alloc().allocate(1);
         (void) allocated_nodes;
 
         util::construct_at(pointer, in_place, util::forward<Args>(args)...);
-        return pointer;
+        return *pointer;
     }
-
-    constexpr void destroy_node(Node& node) {
-        util::destroy_at(&node);
-        Alloc().deallocate(&node, 1);
-    }
-
-    LinkedListNode m_head;
-    size_t m_size { 0 };
 };
 
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>>

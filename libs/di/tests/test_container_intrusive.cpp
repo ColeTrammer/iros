@@ -35,7 +35,7 @@ constexpr void forward_list() {
 }
 
 constexpr void list() {
-    struct Node : di::IntrusiveListElement<> {
+    struct Node : di::IntrusiveListNode<> {
         constexpr explicit Node(int v) : value(v) {}
 
         int value;

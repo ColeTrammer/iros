@@ -46,10 +46,10 @@ public:
     requires(concepts::ConstructibleFrom<T, Args...>)
     constexpr explicit MovableBox(types::InPlace, Args&&... args) : m_value(util::forward<Args>(args)...) {}
 
-    T& value() & { return m_value; }
-    T const& value() const& { return m_value; }
-    T&& value() && { return util::move(m_value); }
-    T const&& value() const&& { return util::move(m_value); }
+    constexpr T& value() & { return m_value; }
+    constexpr T const& value() const& { return m_value; }
+    constexpr T&& value() && { return util::move(m_value); }
+    constexpr T const&& value() const&& { return util::move(m_value); }
 
 private:
     T m_value {};
