@@ -30,15 +30,15 @@ system.
 
 Build the toolchain.
 
-~~~sh
+```sh
 ./meta/toolchain/build.sh
-~~~
+```
 
 Add `cross/bin` to your path. This is only needed when configuring the build for the first time.
 
-~~~sh
+```sh
 export PATH="$(realpath .)/cross/bin:$PATH"
-~~~
+```
 
 At this point, the entire system should be buildable with cmake.
 
@@ -48,36 +48,36 @@ Note that these commands apply using a dev container or locally, once things are
 
 #### Configure
 
-~~~sh
+```sh
 cmake --preset iros_x86_64
-~~~
+```
 
 #### Build
 
-~~~sh
+```sh
 cmake --build --preset iros_x86_64
-~~~
+```
 
 #### Run Tests
 
-~~~sh
+```sh
 ctest --preset iros_x86_64
-~~~
+```
 
 #### Run the kernel directly
 
-~~~sh
+```sh
 cmake --build --preset iros_x86_64 --target ibr
-~~~
+```
 
 #### Build Documentation
 
 This outputs the viewable documentation to `build/x86_64/html`. This can be viewed using the VS Code Live Preview or by
 pointing a web browser at this directory.
 
-~~~sh
+```sh
 cmake --build --preset iros_x86_64 --target docs
-~~~
+```
 
 ### Linux Presets
 

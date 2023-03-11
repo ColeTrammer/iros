@@ -2,9 +2,9 @@
 
 In general, memory allocation consists of 3 components:
 
-- Physical Page Frame Allocator
-- Virtual Memory Allocator (Page Granularity)
-- Heap Management (Byte Granularity)
+-   Physical Page Frame Allocator
+-   Virtual Memory Allocator (Page Granularity)
+-   Heap Management (Byte Granularity)
 
 ## Physical Page Frame Allocator
 
@@ -73,7 +73,7 @@ which are most suitable for access on the currently executing processor.
 The Virtual Memory Allocator is responsible for managing individual process's address spaces. Virtual Memory can be
 viewed a series of page aligned ranges, each of which corresponds to a differnent "backing" memory object.
 
-~~~
+```
 +-----------------+
 |  Program Stack  |         32 KiB @ 0xFFFFFFF80000000
 +-----------------+
@@ -85,7 +85,7 @@ viewed a series of page aligned ranges, each of which corresponds to a differnen
 +-----------------+
 |  Program Code   |          2 MiB @ 0x000000000400000
 +-----------------+
-~~~
+```
 
 The "program stack" and "program heap" are backed by anonymous memory objects, which are not attached to the file
 system. However, the "program code" is loaded directly from disk, and in cases that require minimal relocation, can be

@@ -5,8 +5,8 @@
 [![Deploy and Generate Documentation](https://github.com/ColeTrammer/iros/actions/workflows/docs.yml/badge.svg)](https://github.com/ColeTrammer/iros/actions/workflows/docs.yml)
 [![Codecov](https://codecov.io/gh/ColeTrammer/iros/branch/iris/graph/badge.svg?token=XOF3ERG8YK)](https://codecov.io/gh/ColeTrammer/iros)
 
-Iros is an actively developed hobby Operating System focused on asynchronicity, minimalism, and performance.
+Operating System focused on asynchronicity, minimalism, and performance.
 
-- @subpage md_docs_build - Project build instructions
-- @subpage md_docs_di_table_of_contents - Di library documentation
-- @subpage md_docs_iris_table_of_contents - Iris kernel documentation
+-   @subpage md_docs_build - Project build instructions
+-   @subpage md_docs_di_table_of_contents - Di library documentation
+-   @subpage md_docs_iris_table_of_contents - Iris kernel documentation
