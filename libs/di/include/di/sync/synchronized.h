@@ -53,6 +53,8 @@ public:
 
     constexpr Value& get_assuming_no_concurrent_accesses() { return m_value; }
 
+    Lock& get_lock() { return m_lock; }
+
 private:
     Value m_value {};
     Lock m_lock {};
