@@ -36,6 +36,12 @@ if (DOXYGEN_FOUND)
         __CCPP_END_DECLARATIONS=
         __CCPP_RESTRICT=restrict
     )
+    set(DOXYGEN_STRIP_FROM_INC_PATH
+        "${CMAKE_CURRENT_SOURCE_DIR}/iris/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/libs/ccpp/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/libs/di/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/libs/dius/include"
+    )
     set(DOXYGEN_HTML_COLORSTYLE "LIGHT")
     set(DOXYGEN_HTML_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/docs/header.html")
     set(DOXYGEN_HTML_EXTRA_STYLESHEET 
