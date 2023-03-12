@@ -48,15 +48,22 @@ struct ProgramHeader {
 
 namespace iris {
 Task::Task(mm::VirtualAddress entry, mm::VirtualAddress stack, bool userspace, di::Arc<mm::AddressSpace> address_space,
-           di::Arc<TaskNamespace> task_namespace, TaskId id, FileTable file_table)
+           di::Arc<TaskNamespace> task_namespace, TaskId id, FileTable file_table, di::Arc<TaskStatus> task_status)
     : m_task_state(entry.raw_value(), stack.raw_value(), userspace)
     , m_address_space(di::move(address_space))
     , m_task_namespace(di::move(task_namespace))
+    , m_task_status(di::move(task_status))
     , m_file_table(di::move(file_table))
     , m_id(id) {}
 
 Task::~Task() {
     m_task_namespace->lock()->unregister_task(*this);
+
+    if (m_kernel_stack.raw_value() != 0) {
+        // FIXME: this is fundamentally broken because the task may be getting destroyed while executing on its kernel
+        //        stack.
+        global_state().kernel_address_space.lock()->destroy_region(m_kernel_stack, 0x2000);
+    }
 }
 
 Expected<di::Arc<Task>> create_kernel_task(TaskNamespace& task_namespace, void (*entry)()) {
@@ -65,9 +72,11 @@ Expected<di::Arc<Task>> create_kernel_task(TaskNamespace& task_namespace, void (
     auto& address_space = global_state().kernel_address_space;
     auto stack = TRY(address_space.allocate_region(0x2000, mm::RegionFlags::Readable | mm::RegionFlags::Writable));
 
+    auto task_status = TRY(di::try_make_arc<TaskStatus>());
     auto task_id = TRY(task_namespace.lock()->allocate_task_id());
-    auto result = TRY(di::try_make_arc<Task>(entry_address, stack + 0x2000, false, address_space.arc_from_this(),
-                                             task_namespace.arc_from_this(), task_id, FileTable {}));
+    auto result =
+        TRY(di::try_make_arc<Task>(entry_address, stack + 0x2000, false, address_space.arc_from_this(),
+                                   task_namespace.arc_from_this(), task_id, FileTable {}, di::move(task_status)));
     TRY(task_namespace.lock()->register_task(*result));
     return result;
 }
@@ -77,11 +86,16 @@ Expected<di::Arc<Task>> create_user_task(TaskNamespace& task_namespace, FileTabl
 
     auto user_stack = TRY(new_address_space->allocate_region(
         0x10000, mm::RegionFlags::Writable | mm::RegionFlags::User | mm::RegionFlags::Readable));
+    auto task_status = TRY(di::try_make_arc<TaskStatus>());
     auto task_id = TRY(task_namespace.lock()->allocate_task_id());
-    auto result =
-        TRY(di::try_make_arc<Task>(mm::VirtualAddress(0), user_stack + 0x10000, true, di::move(new_address_space),
-                                   task_namespace.arc_from_this(), task_id, di::move(file_table)));
+    auto result = TRY(di::try_make_arc<Task>(mm::VirtualAddress(0), user_stack + 0x10000, true,
+                                             di::move(new_address_space), task_namespace.arc_from_this(), task_id,
+                                             di::move(file_table), di::move(task_status)));
     TRY(result->fpu_state().setup_fpu_state());
+
+    auto kernel_stack = TRY(global_state().kernel_address_space.allocate_region(0x2000, mm::RegionFlags::Writable |
+                                                                                            mm::RegionFlags::Readable));
+    result->set_kernel_stack(kernel_stack);
 
     TRY(task_namespace.lock()->register_task(*result));
     return result;

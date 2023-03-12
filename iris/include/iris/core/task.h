@@ -2,6 +2,7 @@
 
 #include <di/prelude.h>
 #include <iris/core/config.h>
+#include <iris/core/task_status.h>
 #include <iris/fs/file.h>
 #include <iris/mm/address_space.h>
 
@@ -22,13 +23,16 @@ class Task
 public:
     explicit Task(mm::VirtualAddress entry, mm::VirtualAddress stack, bool userspace,
                   di::Arc<mm::AddressSpace> address_space, di::Arc<TaskNamespace> task_namespace, TaskId task_id,
-                  FileTable file_table);
+                  FileTable file_table, di::Arc<TaskStatus> task_status);
 
     ~Task();
 
     [[noreturn]] void context_switch_to() {
         m_address_space->load();
         m_fpu_state.load();
+        if (m_kernel_stack.raw_value() != 0) {
+            arch::load_kernel_stack(m_kernel_stack + 0x2000);
+        }
         m_task_state.context_switch_to();
     }
 
@@ -50,6 +54,15 @@ public:
     void enable_preemption();
     void set_should_be_preempted() { m_should_be_preempted.store(true, di::MemoryOrder::Relaxed); }
 
+    di::Arc<TaskStatus> task_status() const { return m_task_status; }
+
+    bool waiting() const { return m_waiting.load(di::MemoryOrder::Relaxed); }
+    void set_waiting() { return m_waiting.store(true, di::MemoryOrder::Relaxed); }
+    void set_runnable() { return m_waiting.store(false, di::MemoryOrder::Relaxed); }
+
+    mm::VirtualAddress kernel_stack() const { return m_kernel_stack; }
+    void set_kernel_stack(mm::VirtualAddress kernel_stack) { m_kernel_stack = kernel_stack; }
+
 private:
     arch::TaskState m_task_state;
     arch::FpuState m_fpu_state;
@@ -57,6 +70,9 @@ private:
     di::Arc<TaskNamespace> m_task_namespace;
     di::Atomic<i32> m_preemption_disabled_count;
     di::Atomic<bool> m_should_be_preempted { false };
+    di::Arc<TaskStatus> m_task_status;
+    di::Atomic<bool> m_waiting { false };
+    mm::VirtualAddress m_kernel_stack { 0 };
     FileTable m_file_table;
     TaskId m_id;
 };

@@ -226,6 +226,30 @@ extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, 
                 }
                 break;
             }
+            case SystemCall::start_task_and_block: {
+                auto task_id = iris::TaskId(task_state->rdi);
+
+                auto& task_namespace = iris::global_state().scheduler.current_task().task_namespace();
+                auto result = task_namespace.lock()->find_task(task_id);
+                if (!result) {
+                    task_state->rdx = di::bit_cast<u64>(result.error());
+                } else {
+                    task_state->rdx = 0;
+                    task_state->rax = 0;
+                }
+
+                global_state().scheduler.schedule_task(*result);
+
+                auto task_status = result->task_status();
+                auto result2 = task_status->wait_until_exited();
+                if (!result2) {
+                    task_state->rdx = di::bit_cast<u64>(result2.error());
+                } else {
+                    task_state->rdx = 0;
+                    task_state->rax = 0;
+                }
+                break;
+            }
             default:
                 iris::println("Encounted unexpected system call: {}"_sv, di::to_underlying(number));
 
@@ -377,6 +401,10 @@ static char temp_stack[4 * 4096] alignas(4096);
 static auto idt = di::Array<iris::x86::amd64::idt::Entry, 256> {};
 static auto gdt = di::Array<iris::x86::amd64::sd::SegmentDescriptor, 11> {};
 static auto tss = iris::x86::amd64::TSS {};
+
+void load_kernel_stack(mm::VirtualAddress base) {
+    tss.rsp[0] = base.raw_value();
+}
 
 extern "C" void bsp_cpu_init() {
     iris::arch::cxx_init();

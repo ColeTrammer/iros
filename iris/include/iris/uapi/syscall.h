@@ -13,5 +13,6 @@ enum class SystemCall {
     read = 8,
     write = 9,
     close = 10,
+    start_task_and_block = 11,
 };
 }

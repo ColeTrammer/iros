@@ -17,6 +17,14 @@ public:
     Task* current_task_null_if_during_boot() const { return m_current_task; }
     mm::AddressSpace& current_address_space();
 
+    /// @brief Block the currently running task on this scheduler.
+    ///
+    /// @param before_yielding Callback which is executed after updating the current task's state.
+    ///
+    /// @return Returns an error if the current task was interrupted by userspace, and otherwise returns success
+    ///         once the task is unblocked.
+    Expected<void> block_current_task(di::FunctionRef<void()> before_yielding);
+
 private:
     [[noreturn]] void run_next();
 

@@ -60,9 +60,11 @@ if(IROS_BuildIris)
       core/cxx.cpp
       core/global_state.cpp
       core/task_namespace.cpp
+      core/task_status.cpp
       core/task.cpp
       core/scheduler.cpp
       core/unit_test.cpp
+      core/wait_queue.cpp
       fs/initrd.cpp
       mm/address_space.cpp
       mm/page_frame_allocator.cpp

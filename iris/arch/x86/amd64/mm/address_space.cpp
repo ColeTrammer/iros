@@ -55,6 +55,14 @@ AddressSpace::~AddressSpace() {
     });
 }
 
+void LockedAddressSpace::destroy_region(VirtualAddress base, usize length) {
+    m_regions.erase(*m_regions.find(base));
+
+    // FIXME: actually deallocate the used physical memory and virtual regions.
+    (void) base;
+    (void) length;
+}
+
 void AddressSpace::load() {
     load_cr3(m_architecture_page_table_base.raw_value());
 }

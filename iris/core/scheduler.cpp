@@ -5,6 +5,7 @@
 
 namespace iris {
 void Scheduler::schedule_task(Task& task) {
+    task.set_runnable();
     m_run_queue.push(task);
 }
 
@@ -79,8 +80,8 @@ void Scheduler::run_next() {
 void Scheduler::save_state_and_run_next(arch::TaskState* task_state) {
     raw_disable_interrupts();
 
-    // Ensure that we never put the idle task into the run queue.
-    if (m_current_task != m_idle_task.get()) {
+    // Ensure that we never put the idle task into the run queue, or waiting tasks.
+    if (m_current_task != m_idle_task.get() && !m_current_task->waiting()) {
         m_run_queue.push(*m_current_task);
     }
 
@@ -93,6 +94,9 @@ void Scheduler::save_state_and_run_next(arch::TaskState* task_state) {
 }
 
 void Scheduler::exit_current_task() {
+    // Store the task status so it remains valid after deleting the current task reference.
+    auto task_status = m_current_task->task_status();
+
     {
         // Construct a temporary Arc to the task. By using retain_object, the reference
         // count is not incremented. Thus, when task_reference goes out of scope, the task's
@@ -102,9 +106,13 @@ void Scheduler::exit_current_task() {
         auto task_reference = di::Arc<Task>(m_current_task, di::retain_object);
     }
 
+    raw_disable_interrupts();
+
+    // Notify waiters that the task has exited.
+    task_status->set_exited();
+
     // NOTE: by not pushing the current task into the run queue, it will
     //       not get scheduled again.
-    raw_disable_interrupts();
     run_next();
 }
 
@@ -113,5 +121,17 @@ mm::AddressSpace& Scheduler::current_address_space() {
         return global_state().kernel_address_space;
     }
     return current_task().address_space();
+}
+
+Expected<void> Scheduler::block_current_task(di::FunctionRef<void()> before_yielding) {
+    auto disabler = InterruptDisabler {};
+
+    m_current_task->set_waiting();
+
+    before_yielding();
+
+    // NOTE: in the future, yield may return an error if the task is interrupted from userspace.
+    yield();
+    return {};
 }
 }

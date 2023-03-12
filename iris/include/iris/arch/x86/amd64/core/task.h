@@ -65,4 +65,6 @@ struct FpuState {
 private:
     Expected<di::Byte*> allocate_fpu_state();
 };
+
+void load_kernel_stack(mm::VirtualAddress base);
 }
