@@ -130,8 +130,8 @@ extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, 
                 auto amount = task_state->rdi;
 
                 auto& address_space = iris::global_state().scheduler.current_address_space();
-                auto result = address_space.lock()->allocate_region(
-                    amount, mm::RegionFlags::User | mm::RegionFlags::Writable | mm::RegionFlags::Readable);
+                auto result = address_space.allocate_region(amount, mm::RegionFlags::User | mm::RegionFlags::Writable |
+                                                                        mm::RegionFlags::Readable);
                 if (!result) {
                     task_state->rdx = di::bit_cast<u64>(result.error());
                 } else {

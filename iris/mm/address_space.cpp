@@ -7,13 +7,15 @@
 
 namespace iris::mm {
 AddressSpace& LockedAddressSpace::base() {
-    return static_cast<AddressSpace&>(
-        reinterpret_cast<di::Synchronized<LockedAddressSpace, RecursiveSpinlock>&>(*this));
+    return static_cast<AddressSpace&>(reinterpret_cast<di::Synchronized<LockedAddressSpace, Spinlock>&>(*this));
 }
 
-Expected<VirtualAddress> LockedAddressSpace::allocate_region(usize page_aligned_length, RegionFlags flags) {
+Expected<VirtualAddress> LockedAddressSpace::allocate_region(di::Box<Region> region) {
     // Basic hack algorithm: allocate the new region at a large fixed offset from the old region.
     // Additionally, immediately fill in the newly created pages.
+
+    auto flags = region->flags();
+    auto page_aligned_length = region->length();
 
     if (base().m_kernel == !!(flags & RegionFlags::User)) {
         println("WARNING: attempt to allocate a region with mismatched userspace flag."_sv);
@@ -30,28 +32,40 @@ Expected<VirtualAddress> LockedAddressSpace::allocate_region(usize page_aligned_
     auto last_virtual_address = m_regions.back().transform(&Region::end).value_or(default_address);
     auto new_virtual_address = last_virtual_address + 8192 * 0x1000;
 
-    auto [new_region, did_insert] = m_regions.emplace(new_virtual_address, page_aligned_length, flags);
+    region->set_base(new_virtual_address);
+    auto [new_region, did_insert] = m_regions.insert(*region.release());
 
-    for (auto virtual_address : (*new_region).each_page()) {
+    for (auto virtual_address : new_region->each_page()) {
         TRY(map_physical_page(virtual_address, TRY(allocate_page_frame()), flags));
     }
 
-    return (*new_region).base();
+    return new_region->base();
 }
 
-Expected<void> LockedAddressSpace::allocate_region_at(VirtualAddress location, usize page_aligned_length,
-                                                      RegionFlags flags) {
-    auto [new_region, did_insert] = m_regions.emplace(location, page_aligned_length, flags);
+Expected<void> LockedAddressSpace::allocate_region_at(di::Box<Region> region) {
+    auto flags = region->flags();
+
+    auto [new_region, did_insert] = m_regions.insert(*region.release());
 
     if (base().m_kernel == !!(flags & RegionFlags::User)) {
         println("WARNING: attempt to allocate a region with mismatched userspace flag."_sv);
         return di::Unexpected(Error::InvalidArgument);
     }
 
-    for (auto virtual_address : (*new_region).each_page()) {
+    for (auto virtual_address : new_region->each_page()) {
         TRY(map_physical_page(virtual_address, TRY(allocate_page_frame()), flags));
     }
     return {};
+}
+
+Expected<VirtualAddress> AddressSpace::allocate_region(usize page_aligned_length, RegionFlags flags) {
+    auto region = TRY(di::try_box<Region>(VirtualAddress(0), page_aligned_length, flags));
+    return lock()->allocate_region(di::move(region));
+}
+
+Expected<void> AddressSpace::allocate_region_at(VirtualAddress location, usize page_aligned_length, RegionFlags flags) {
+    auto region = TRY(di::try_box<Region>(location, page_aligned_length, flags));
+    return lock()->allocate_region_at(di::move(region));
 }
 
 Expected<void> init_and_load_initial_kernel_address_space(PhysicalAddress kernel_physical_start,

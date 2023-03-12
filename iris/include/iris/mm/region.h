@@ -13,7 +13,16 @@ enum class RegionFlags {
 
 DI_DEFINE_ENUM_BITWISE_OPERATIONS(RegionFlags)
 
-class Region {
+class Region;
+
+struct AddressSpaceRegionListTag : di::container::IntrusiveTagBase<Region> {
+    constexpr static void did_remove(auto&, auto& node) {
+        di::destroy_at(di::addressof(node));
+        di::platform::DefaultFallibleAllocator<Region>().deallocate(di::addressof(node), 1);
+    }
+};
+
+class Region : public di::IntrusiveTreeSetNode<AddressSpaceRegionListTag> {
 public:
     constexpr explicit Region(VirtualAddress base, usize length, RegionFlags flags)
         : m_base(base), m_length(length), m_flags(flags) {
@@ -27,6 +36,8 @@ public:
     constexpr usize pages() const { return length() / 0x1000; }
 
     constexpr auto each_page() const { return di::iota(base(), end()) | di::stride(0x1000z); }
+
+    constexpr void set_base(VirtualAddress base) { m_base = base; }
 
     constexpr RegionFlags flags() const { return m_flags; }
 

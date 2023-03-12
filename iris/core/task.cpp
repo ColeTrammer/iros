@@ -63,8 +63,7 @@ Expected<di::Arc<Task>> create_kernel_task(TaskNamespace& task_namespace, void (
     auto entry_address = mm::VirtualAddress(di::to_uintptr(entry));
 
     auto& address_space = global_state().kernel_address_space;
-    auto stack =
-        TRY(address_space.lock()->allocate_region(0x2000, mm::RegionFlags::Readable | mm::RegionFlags::Writable));
+    auto stack = TRY(address_space.allocate_region(0x2000, mm::RegionFlags::Readable | mm::RegionFlags::Writable));
 
     auto task_id = TRY(task_namespace.lock()->allocate_task_id());
     auto result = TRY(di::try_make_arc<Task>(entry_address, stack + 0x2000, false, address_space.arc_from_this(),
@@ -76,7 +75,7 @@ Expected<di::Arc<Task>> create_kernel_task(TaskNamespace& task_namespace, void (
 Expected<di::Arc<Task>> create_user_task(TaskNamespace& task_namespace, FileTable file_table) {
     auto new_address_space = TRY(mm::create_empty_user_address_space());
 
-    auto user_stack = TRY(new_address_space->get_assuming_no_concurrent_accesses().allocate_region(
+    auto user_stack = TRY(new_address_space->allocate_region(
         0x10000, mm::RegionFlags::Writable | mm::RegionFlags::User | mm::RegionFlags::Readable));
     auto task_id = TRY(task_namespace.lock()->allocate_task_id());
     auto result =
@@ -110,9 +109,10 @@ Expected<void> load_executable(Task& task, di::PathView path) {
             }
 
             auto aligned_size = di::align_up(program_header.memory_size, 4096);
-            (void) address_space->allocate_region_at(mm::VirtualAddress(program_header.virtual_addr), aligned_size,
-                                                     mm::RegionFlags::User | mm::RegionFlags::Readable |
-                                                         mm::RegionFlags::Executable | mm::RegionFlags::Writable);
+            auto region = di::try_box<mm::Region>(mm::VirtualAddress(program_header.virtual_addr), aligned_size,
+                                                  mm::RegionFlags::User | mm::RegionFlags::Readable |
+                                                      mm::RegionFlags::Executable | mm::RegionFlags::Writable);
+            (void) address_space->allocate_region_at(*di::move(region));
 
             auto data = di::Span { reinterpret_cast<di::Byte*>(program_header.virtual_addr), aligned_size };
 
