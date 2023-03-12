@@ -82,7 +82,7 @@ public:
         return *this;
     }
 
-    ~IntrusiveForwardList() = default;
+    constexpr ~IntrusiveForwardList() { clear(); }
 
     constexpr bool empty() const { return !head(); }
     constexpr usize size() const

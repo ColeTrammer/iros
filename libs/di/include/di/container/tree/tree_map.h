@@ -3,6 +3,7 @@
 #include <di/container/allocator/prelude.h>
 #include <di/container/associative/map_interface.h>
 #include <di/container/concepts/prelude.h>
+#include <di/container/tree/owning_rb_tree.h>
 #include <di/container/tree/rb_tree.h>
 #include <di/container/view/transform.h>
 #include <di/function/compare.h>
@@ -58,25 +59,34 @@ namespace detail {
             return function::invoke(comp, a, b);
         }
     };
+
+    template<typename Key, typename Value>
+    struct TreeMapTag : OwningRBTreeTag<TreeMapTag<Key, Value>, Tuple<Key, Value>> {};
 }
 
 template<typename Key, typename Value, concepts::StrictWeakOrder<Key> Comp = function::Compare,
-         concepts::AllocatorOf<RBTreeNode<Tuple<Key, Value>>> Alloc = DefaultAllocator<RBTreeNode<Tuple<Key, Value>>>>
+         concepts::AllocatorOf<OwningRBTreeNode<Tuple<Key, Value>, detail::TreeMapTag<Key, Value>>> Alloc =
+             DefaultAllocator<OwningRBTreeNode<Tuple<Key, Value>, detail::TreeMapTag<Key, Value>>>>
 class TreeMap
-    : public RBTree<Tuple<Key, Value>, detail::TreeMapCompAdapter<Comp, Key>, Alloc,
-                    MapInterface<TreeMap<Key, Value, Comp, Alloc>, Tuple<Key, Value>, RBTreeIterator<Tuple<Key, Value>>,
-                                 meta::ConstIterator<RBTreeIterator<Tuple<Key, Value>>>,
-                                 detail::RBTreeValidForLookup<Tuple<Key, Value>,
-                                                              detail::TreeMapCompAdapter<Comp, Key>>::template Type,
-                                 false>,
-                    false> {
+    : public OwningRBTree<
+          Tuple<Key, Value>, detail::TreeMapCompAdapter<Comp, Key>, detail::TreeMapTag<Key, Value>, Alloc,
+          MapInterface<
+              TreeMap<Key, Value, Comp, Alloc>, Tuple<Key, Value>,
+              RBTreeIterator<Tuple<Key, Value>, detail::TreeMapTag<Key, Value>>,
+              meta::ConstIterator<RBTreeIterator<Tuple<Key, Value>, detail::TreeMapTag<Key, Value>>>,
+              detail::RBTreeValidForLookup<Tuple<Key, Value>, detail::TreeMapCompAdapter<Comp, Key>>::template Type,
+              false>,
+          false> {
 private:
-    using Base =
-        RBTree<Tuple<Key, Value>, detail::TreeMapCompAdapter<Comp, Key>, Alloc,
-               MapInterface<TreeMap<Key, Value, Comp, Alloc>, Tuple<Key, Value>, RBTreeIterator<Tuple<Key, Value>>,
-                            meta::ConstIterator<RBTreeIterator<Tuple<Key, Value>>>,
-                            detail::RBTreeValidForLookup<Key, Comp>::template Type, false>,
-               false>;
+    using Base = OwningRBTree<
+        Tuple<Key, Value>, detail::TreeMapCompAdapter<Comp, Key>, detail::TreeMapTag<Key, Value>, Alloc,
+        MapInterface<
+            TreeMap<Key, Value, Comp, Alloc>, Tuple<Key, Value>,
+            RBTreeIterator<Tuple<Key, Value>, detail::TreeMapTag<Key, Value>>,
+            meta::ConstIterator<RBTreeIterator<Tuple<Key, Value>, detail::TreeMapTag<Key, Value>>>,
+            detail::RBTreeValidForLookup<Tuple<Key, Value>, detail::TreeMapCompAdapter<Comp, Key>>::template Type,
+            false>,
+        false>;
 
 public:
     TreeMap() = default;

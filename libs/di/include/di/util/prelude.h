@@ -70,6 +70,7 @@ using util::black_box;
 using util::clamp;
 using util::compile_time_fail;
 using util::declval;
+using util::destroy_at;
 using util::exchange;
 using util::forward;
 using util::generate_uuid;

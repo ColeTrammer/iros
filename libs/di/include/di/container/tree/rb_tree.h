@@ -24,16 +24,28 @@ namespace detail {
     };
 }
 
-// The book Introduction to Algorithms, Third Edition (by Thomas H. Cormen, et al.)
-// was heavily referenced in this class's implementation of a Red-Black tree.
-// See https://mitpress.mit.edu/9780262046305/introduction-to-algorithms/.
-template<typename Value, concepts::StrictWeakOrder<Value> Comp, concepts::AllocatorOf<RBTreeNode<Value>> Alloc,
-         typename Interface, bool is_multi>
+/// @brief General implementation of the Red-Black self-balancing binary tree.
+///
+/// The book Introduction to Algorithms, Third Edition (by Thomas H. Cormen, et al.)
+/// was heavily referenced in this class's implementation of a Red-Black tree.
+/// See [here](https://mitpress.mit.edu/9780262046305/introduction-to-algorithms/).
+template<typename Value, concepts::StrictWeakOrder<Value> Comp, typename Tag, typename Interface, bool is_multi,
+         typename Self = Void>
 class RBTree : public Interface {
 private:
-    using Node = RBTreeNode<Value>;
-    using Iterator = RBTreeIterator<Value>;
+    using Node = RBTreeNode<Tag>;
+    using Iterator = RBTreeIterator<Value, Tag>;
     using ConstIterator = meta::ConstIterator<Iterator>;
+
+    using ConcreteNode = decltype(Tag::node_type(in_place_type<Value>));
+
+    constexpr decltype(auto) down_cast_self() {
+        if constexpr (concepts::SameAs<Void, Self>) {
+            return *this;
+        } else {
+            return static_cast<Self&>(*this);
+        }
+    }
 
 public:
     RBTree() = default;
@@ -61,7 +73,8 @@ public:
 
     constexpr ~RBTree() { this->clear(); }
 
-    constexpr size_t size() const { return m_size; }
+    constexpr usize size() const { return m_size; }
+    constexpr bool empty() const { return !m_root; }
 
     constexpr Iterator begin() { return unconst_iterator(util::as_const(*this).begin()); }
     constexpr ConstIterator begin() const { return Iterator(m_minimum, !m_root); }
@@ -70,38 +83,32 @@ public:
 
     constexpr Iterator unconst_iterator(ConstIterator it) { return it.base(); }
 
-    template<typename U, concepts::Invocable F>
-    requires(concepts::StrictWeakOrder<Comp&, Value, U> && concepts::MaybeFallible<meta::InvokeResult<F>, Value>)
-    constexpr auto insert_with_factory(U&& needle, F&& factory) {
-        auto position = insert_position(needle);
+    constexpr auto insert_node(Node& node) {
+        auto position = this->insert_position(node_value(node));
         if constexpr (!is_multi) {
-            if (position.parent && compare(position.parent->value, needle) == 0) {
+            if (position.parent && this->compare(node_value(*position.parent), node_value(node)) == 0) {
                 return Tuple(Iterator(position.parent, false), false);
             }
         }
 
-        auto* node = create_node(function::invoke(util::forward<F>(factory)));
-        insert_node(position, *node);
+        this->insert_node(position, node);
         if constexpr (!is_multi) {
-            return Tuple(Iterator(node, false), true);
+            return Tuple(Iterator(util::addressof(node), false), true);
         } else {
-            return Iterator(node, false);
+            return Iterator(util::addressof(node), false);
         }
     }
 
-    template<typename U, concepts::Invocable F>
-    requires(concepts::StrictWeakOrder<Comp&, Value, U> && concepts::MaybeFallible<meta::InvokeResult<F>, Value>)
-    constexpr auto insert_with_factory(ConstIterator, U&& needle, F&& factory) {
-        auto position = insert_position(needle);
+    constexpr auto insert_node(ConstIterator, Node& node) {
+        auto position = this->insert_position(node_value(node));
         if constexpr (!is_multi) {
-            if (position.parent && compare(position.parent->value, needle) == 0) {
+            if (position.parent && this->compare(node_value(*position.parent), node_value(node)) == 0) {
                 return Iterator(position.parent, false);
             }
         }
 
-        auto* node = create_node(function::invoke(util::forward<F>(factory)));
-        insert_node(position, *node);
-        return Iterator(node, false);
+        this->insert_node(position, node);
+        return Iterator(util::addressof(node), false);
     }
 
     constexpr Iterator erase_impl(ConstIterator position) {
@@ -110,7 +117,9 @@ public:
         auto result = container::next(position).base();
         auto& node = position.base().node();
         erase_node(node);
-        destroy_node(node);
+
+        Tag::did_remove(down_cast_self(), static_cast<ConcreteNode&>(node));
+
         return result;
     }
 
@@ -125,7 +134,7 @@ public:
     constexpr ConstIterator lower_bound_impl(U&& needle) const {
         Node* result = nullptr;
         for (auto* node = m_root; node;) {
-            if (compare(node->value, needle) < 0) {
+            if (compare(node_value(*node), needle) < 0) {
                 node = node->right;
             } else {
                 result = node;
@@ -140,7 +149,7 @@ public:
     constexpr ConstIterator upper_bound_impl(U&& needle) const {
         Node* result = nullptr;
         for (auto* node = m_root; node;) {
-            if (compare(node->value, needle) <= 0) {
+            if (compare(node_value(*node), needle) <= 0) {
                 node = node->right;
             } else {
                 result = node;
@@ -154,7 +163,7 @@ public:
     requires(concepts::StrictWeakOrder<Comp&, Value, U>)
     constexpr ConstIterator find_impl(U&& needle) const {
         for (auto* node = m_root; node;) {
-            auto result = compare(needle, node->value);
+            auto result = compare(needle, node_value(*node));
             if (result == 0) {
                 return Iterator(node, false);
             } else if (result < 0) {
@@ -179,16 +188,23 @@ public:
 
             auto position = insert_position(*save);
             if constexpr (is_multi) {
-                insert_node(position, save.node());
+                do_insert_node(position, save.node());
             } else if (position.parent && compare(position.parent->value, *save) == 0) {
                 erase_impl(save);
             } else {
-                insert_node(position, save.node());
+                do_insert_node(position, save.node());
             }
         }
     }
 
-private:
+protected:
+    constexpr Value& node_value(Node& node) const {
+        return Tag::down_cast(in_place_type<Value>, static_cast<ConcreteNode&>(node));
+    }
+    constexpr Value const& node_value(Node const& node) const {
+        return const_cast<RBTree&>(*this).node_value(const_cast<Node&>(node));
+    }
+
     // Compute the color of a node, defaulting to Black.
     constexpr Node::Color node_color(Node* node) const {
         if (!node) {
@@ -256,12 +272,12 @@ private:
             // Early return to the caller if we're inserting a duplicate, making
             // sure to provide the caller a node that is equal to needle.
             if constexpr (!is_multi) {
-                if (compare(needle, x->value) == 0) {
+                if (compare(needle, node_value(*x)) == 0) {
                     return InsertPosition { x, false };
                 }
             }
 
-            if (compare(needle, x->value) < 0) {
+            if (compare(needle, node_value(*x)) < 0) {
                 x = x->left;
             } else {
                 x = x->right;
@@ -271,13 +287,19 @@ private:
         if (!y) {
             return InsertPosition {};
         }
-        if (compare(needle, y->value) < 0) {
+        if (compare(needle, node_value(*y)) < 0) {
             return InsertPosition { y, true };
         }
         return InsertPosition { y, false };
     }
 
     constexpr void insert_node(InsertPosition position, Node& to_insert) {
+        do_insert_node(position, to_insert);
+
+        Tag::did_insert(down_cast_self(), static_cast<ConcreteNode&>(to_insert));
+    }
+
+    constexpr void do_insert_node(InsertPosition position, Node& to_insert) {
         // Step 1: check if inserting the first node.
         if (position.parent == nullptr) {
             m_root = m_minimum = m_maximum = &to_insert;
@@ -475,22 +497,7 @@ private:
         x->color = Node::Color::Black;
     }
 
-    template<typename... Args>
-    requires(concepts::ConstructibleFrom<Value, Args...>)
-    constexpr Node* create_node(Args&&... args) {
-        auto [pointer, allocated_nodes] = Alloc().allocate(1);
-        (void) allocated_nodes;
-
-        util::construct_at(pointer, in_place, util::forward<Args>(args)...);
-        return pointer;
-    }
-
-    constexpr void destroy_node(Node& node) {
-        util::destroy_at(&node);
-        Alloc().deallocate(&node, 1);
-    }
-
-    constexpr auto compare(Node const& a, Node const& b) const { return compare(a.value, b.value); }
+    constexpr auto compare(Node const& a, Node const& b) const { return compare(node_value(a), node_value(b)); }
 
     template<typename T, typename U>
     requires(concepts::StrictWeakOrder<Comp&, T, U>)
@@ -501,7 +508,7 @@ private:
     Node* m_root { nullptr };
     Node* m_minimum { nullptr };
     Node* m_maximum { nullptr };
-    size_t m_size { 0 };
+    usize m_size { 0 };
     [[no_unique_address]] Comp m_comparator;
 };
 }

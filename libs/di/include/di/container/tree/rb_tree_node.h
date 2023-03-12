@@ -5,14 +5,12 @@
 #include <di/util/forward.h>
 
 namespace di::container {
-template<typename Value>
+template<typename Tag>
 struct RBTreeNode {
 public:
     enum class Color { Red = 0, Black = 1 };
 
-    template<typename... Args>
-    requires(concepts::ConstructibleFrom<Value, Args...>)
-    constexpr explicit RBTreeNode(InPlace, Args&&... args) : value(util::forward<Args>(args)...) {}
+    RBTreeNode() = default;
 
     constexpr bool is_left_child() const { return parent && parent->left == this; }
     constexpr bool is_right_child() const { return parent && parent->right == this; }
@@ -65,6 +63,5 @@ public:
     RBTreeNode* parent { nullptr };
     RBTreeNode* left { nullptr };
     RBTreeNode* right { nullptr };
-    [[no_unique_address]] Value value;
 };
 }

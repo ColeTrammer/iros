@@ -6,20 +6,23 @@
 #include <di/container/tree/rb_tree_node.h>
 
 namespace di::container {
-template<typename Value>
-class RBTreeIterator : public IteratorBase<RBTreeIterator<Value>, BidirectionalIteratorTag, Value, ssize_t> {
+template<typename Value, typename Tag>
+class RBTreeIterator : public IteratorBase<RBTreeIterator<Value, Tag>, BidirectionalIteratorTag, Value, ssize_t> {
 private:
-    using Node = RBTreeNode<Value>;
+    using Node = RBTreeNode<Tag>;
+    using ConcreteNode = decltype(Tag::node_type(in_place_type<Value>));
 
 public:
     RBTreeIterator() = default;
 
-    constexpr explicit RBTreeIterator(Node* current, bool at_end) : m_current(current), m_at_end(at_end) {}
+    constexpr RBTreeIterator(Node* node, bool at_end = false) : m_current(node), m_at_end(at_end) {}
+    constexpr RBTreeIterator(Node& node) : m_current(util::addressof(node)) {}
 
     constexpr Value& operator*() const {
         DI_ASSERT(!m_at_end);
-        return m_current->value;
+        return Tag::down_cast(in_place_type<Value>, static_cast<ConcreteNode&>(*m_current));
     }
+    constexpr Value* operator->() const { return util::addressof(**this); }
     constexpr Node& node() const { return *m_current; }
 
     constexpr void advance_one() {

@@ -11,20 +11,28 @@
 #include <di/vocab/optional/prelude.h>
 
 namespace di::container {
+namespace detail {
+    template<typename Value>
+    struct TreeSetTag : OwningRBTreeTag<TreeSetTag<Value>, Value> {};
+}
+
 template<typename Value, concepts::StrictWeakOrder<Value> Comp = function::Compare,
-         concepts::AllocatorOf<RBTreeNode<Value>> Alloc = DefaultAllocator<RBTreeNode<Value>>>
+         concepts::AllocatorOf<OwningRBTreeNode<Value, detail::TreeSetTag<Value>>> Alloc =
+             DefaultAllocator<OwningRBTreeNode<Value, detail::TreeSetTag<Value>>>>
 class TreeSet
-    : public RBTree<Value, Comp, Alloc,
-                    SetInterface<TreeSet<Value, Comp, Alloc>, Value, RBTreeIterator<Value>,
-                                 meta::ConstIterator<RBTreeIterator<Value>>,
-                                 detail::RBTreeValidForLookup<Value, Comp>::template Type, false>,
-                    false> {
+    : public OwningRBTree<
+          Value, Comp, detail::TreeSetTag<Value>, Alloc,
+          SetInterface<TreeSet<Value, Comp, Alloc>, Value, RBTreeIterator<Value, detail::TreeSetTag<Value>>,
+                       meta::ConstIterator<RBTreeIterator<Value, detail::TreeSetTag<Value>>>,
+                       detail::RBTreeValidForLookup<Value, Comp>::template Type, false>,
+          false> {
 private:
-    using Base = RBTree<Value, Comp, Alloc,
-                        SetInterface<TreeSet<Value, Comp, Alloc>, Value, RBTreeIterator<Value>,
-                                     meta::ConstIterator<RBTreeIterator<Value>>,
-                                     detail::RBTreeValidForLookup<Value, Comp>::template Type, false>,
-                        false>;
+    using Base =
+        OwningRBTree<Value, Comp, detail::TreeSetTag<Value>, Alloc,
+                     SetInterface<TreeSet<Value, Comp, Alloc>, Value, RBTreeIterator<Value, detail::TreeSetTag<Value>>,
+                                  meta::ConstIterator<RBTreeIterator<Value, detail::TreeSetTag<Value>>>,
+                                  detail::RBTreeValidForLookup<Value, Comp>::template Type, false>,
+                     false>;
 
 public:
     using Base::Base;
