@@ -38,6 +38,8 @@ struct GlobalState {
     mutable TaskNamespace task_namespace;
     mutable di::Queue<di::Byte> input_data_queue;
     mutable WaitQueue input_wait_queue;
+    mutable di::Queue<TaskFinalizationRequest> task_finalization_data_queue;
+    mutable WaitQueue task_finalization_wait_queue;
     /// @}
 
     /// @name Per-processor fields

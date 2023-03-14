@@ -55,12 +55,52 @@ AddressSpace::~AddressSpace() {
     });
 }
 
-void LockedAddressSpace::destroy_region(VirtualAddress base, usize length) {
-    m_regions.erase(*m_regions.find(base));
+Expected<void> LockedAddressSpace::destroy_region(VirtualAddress base, usize length) {
+    m_regions.erase(base);
 
-    // FIXME: actually deallocate the used physical memory and virtual regions.
-    (void) base;
-    (void) length;
+    // FIXME: consider deleting now empty page structure pages.
+    for (auto page = base; page < base + length; page += 4096) {
+        auto decomposed = decompose_virtual_address(page);
+        auto pml4_offset = decomposed.get<page_structure::Pml4Offset>();
+        auto& pml4 = TRY(map_physical_address(this->base().architecture_page_table_base(), 0x1000))
+                         .typed<page_structure::PageStructureTable>();
+        if (!pml4[pml4_offset].get<page_structure::Present>()) {
+            println("WARNING: trying to unmap non-present page (PML4)"_sv);
+            continue;
+        }
+
+        auto pdp_offset = decomposed.get<page_structure::PdpOffset>();
+        auto& pdp = TRY(map_physical_address(
+                            PhysicalAddress(pml4[pml4_offset].get<page_structure::PhysicalAddress>() << 12), 0x1000))
+                        .typed<page_structure::PageStructureTable>();
+        if (!pdp[pdp_offset].get<page_structure::Present>()) {
+            println("WARNING: trying to unmap non-present page (PDP)"_sv);
+            continue;
+        }
+
+        auto pd_offset = decomposed.get<page_structure::PdOffset>();
+        auto& pd = TRY(map_physical_address(
+                           PhysicalAddress(pdp[pdp_offset].get<page_structure::PhysicalAddress>() << 12), 0x1000))
+                       .typed<page_structure::PageStructureTable>();
+        if (!pd[pd_offset].get<page_structure::Present>()) {
+            println("WARNING: trying to unmap non-present page (PD)"_sv);
+            continue;
+        }
+
+        auto pt_offset = decomposed.get<page_structure::PtOffset>();
+        auto& pt = TRY(map_physical_address(PhysicalAddress(pd[pd_offset].get<page_structure::PhysicalAddress>() << 12),
+                                            0x1000))
+                       .typed<page_structure::FinalTable>();
+        if (!pt[pt_offset].get<page_structure::Present>()) {
+            println("WARNING: trying to unmap non-present page (PT)"_sv);
+            continue;
+        }
+
+        auto physical_address = PhysicalAddress(pt[pt_offset].get<page_structure::PhysicalAddress>() << 12);
+        deallocate_page_frame(physical_address);
+        pt[pt_offset] = page_structure::StructureEntry(page_structure::Present(false));
+    }
+    return {};
 }
 
 void AddressSpace::load() {

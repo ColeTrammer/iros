@@ -51,7 +51,7 @@ public:
     constexpr di::strong_ordering compare_with_address(VirtualAddress b) const {
         if (contains(b)) {
             return di::strong_ordering::equal;
-        } else if (b <= base()) {
+        } else if (base() < b) {
             return di::strong_ordering::less;
         } else {
             return di::strong_ordering::greater;

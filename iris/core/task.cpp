@@ -54,16 +54,15 @@ Task::Task(mm::VirtualAddress entry, mm::VirtualAddress stack, bool userspace, d
     , m_task_namespace(di::move(task_namespace))
     , m_task_status(di::move(task_status))
     , m_file_table(di::move(file_table))
-    , m_id(id) {}
+    , m_id(id) {
+    // Leak 1 reference count.
+    (void) arc_from_this().release();
+}
 
 Task::~Task() {
-    m_task_namespace->lock()->unregister_task(*this);
-
-    if (m_kernel_stack.raw_value() != 0) {
-        // FIXME: this is fundamentally broken because the task may be getting destroyed while executing on its kernel
-        //        stack.
-        global_state().kernel_address_space.lock()->destroy_region(m_kernel_stack, 0x2000);
-    }
+    global_state().task_finalization_wait_queue.notify_one([&] {
+        global_state().task_finalization_data_queue.push({ di::move(m_address_space), m_kernel_stack });
+    });
 }
 
 Expected<di::Arc<Task>> create_kernel_task(TaskNamespace& task_namespace, void (*entry)()) {
@@ -77,6 +76,7 @@ Expected<di::Arc<Task>> create_kernel_task(TaskNamespace& task_namespace, void (
     auto result =
         TRY(di::try_make_arc<Task>(entry_address, stack + 0x2000, false, address_space.arc_from_this(),
                                    task_namespace.arc_from_this(), task_id, FileTable {}, di::move(task_status)));
+    result->set_kernel_stack(stack);
     TRY(task_namespace.lock()->register_task(*result));
     return result;
 }

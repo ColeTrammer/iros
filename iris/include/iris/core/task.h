@@ -17,6 +17,11 @@ using TaskId = di::StrongInt<TaskIdTag>;
 
 class TaskNamespace;
 
+struct TaskFinalizationRequest {
+    di::Arc<mm::AddressSpace> address_space;
+    mm::VirtualAddress kernel_stack;
+};
+
 class Task
     : public di::IntrusiveListNode<>
     , public di::IntrusiveRefCount<Task> {

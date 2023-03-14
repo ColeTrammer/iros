@@ -19,17 +19,6 @@
 #include <iris/mm/sections.h>
 #include <limine.h>
 
-static int counter = 0;
-
-static void do_task() {
-    for (int i = 0; i < 3; i++) {
-        asm volatile("cli");
-        iris::println("counter: {}"_sv, ++counter);
-        asm volatile("sti\nhlt");
-    }
-    iris::global_state().scheduler.exit_current_task();
-}
-
 static void do_unit_tests() {
     iris::test::TestManager::the().run_tests();
     iris::global_state().scheduler.exit_current_task();
@@ -126,13 +115,18 @@ void iris_main() {
 
     auto& scheduler = global_state.scheduler;
     {
-        auto task1 = *iris::create_kernel_task(global_state.task_namespace, do_task);
-        auto task2 = *iris::create_kernel_task(global_state.task_namespace, do_task);
-        auto task3 = *iris::create_kernel_task(global_state.task_namespace, do_task);
+        auto task_finalizer = *iris::create_kernel_task(global_state.task_namespace, [] {
+            for (;;) {
+                auto record = di::Optional<TaskFinalizationRequest> {};
+                *iris::global_state().task_finalization_wait_queue.wait([&] {
+                    record = iris::global_state().task_finalization_data_queue.pop();
+                    return record.has_value();
+                });
 
-        scheduler.schedule_task(*task1);
-        scheduler.schedule_task(*task2);
-        scheduler.schedule_task(*task3);
+                (void) iris::global_state().kernel_address_space.lock()->destroy_region(record->kernel_stack, 0x2000);
+            }
+        });
+        scheduler.schedule_task(*task_finalizer);
 
         *global_state.initial_fpu_state.setup_initial_fpu_state();
 

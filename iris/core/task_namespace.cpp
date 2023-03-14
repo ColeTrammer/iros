@@ -1,3 +1,4 @@
+#include <iris/core/print.h>
 #include <iris/core/task_namespace.h>
 
 namespace iris {

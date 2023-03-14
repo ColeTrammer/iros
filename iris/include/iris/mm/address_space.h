@@ -17,7 +17,7 @@ public:
     Expected<VirtualAddress> allocate_region(di::Box<Region> region);
     Expected<void> allocate_region_at(di::Box<Region> region);
 
-    void destroy_region(VirtualAddress start, usize length);
+    Expected<void> destroy_region(VirtualAddress start, usize length);
 
     VirtualAddress heap_end() const { return m_heap_end; }
     void set_heap_end(VirtualAddress address) { m_heap_end = address; }

@@ -94,6 +94,9 @@ void Scheduler::save_state_and_run_next(arch::TaskState* task_state) {
 }
 
 void Scheduler::exit_current_task() {
+    // Unregister the task from its task namespace.
+    m_current_task->task_namespace().lock()->unregister_task(*m_current_task);
+
     // Store the task status so it remains valid after deleting the current task reference.
     auto task_status = m_current_task->task_status();
 
