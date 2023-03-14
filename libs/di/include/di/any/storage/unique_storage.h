@@ -99,7 +99,9 @@ namespace detail {
     template<typename UniqueStorage>
     template<typename T>
     void UniqueStorageManage<UniqueStorage>::operator()(T& a) const {
-        platform::DefaultFallibleAllocator<T>().deallocate(util::addressof(a), 1);
+        auto* pointer = util::addressof(a);
+        util::destroy_at(pointer);
+        platform::DefaultFallibleAllocator<T>().deallocate(pointer, 1);
     }
 }
 }

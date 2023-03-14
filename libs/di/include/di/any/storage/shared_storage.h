@@ -160,8 +160,9 @@ namespace detail {
     template<typename SharedStorage>
     template<typename T>
     void SharedStorageManage<SharedStorage>::operator()(T& object) const {
-        platform::DefaultFallibleAllocator<detail::ObjectWithRefCount<T>>().deallocate(
-            detail::ObjectWithRefCount<T>::from_object_pointer(util::addressof(object)), 1);
+        auto* pointer = detail::ObjectWithRefCount<T>::from_object_pointer(util::addressof(object));
+        util::destroy_at(pointer);
+        platform::DefaultFallibleAllocator<detail::ObjectWithRefCount<T>>().deallocate(pointer, 1);
     }
 }
 }

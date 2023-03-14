@@ -6,7 +6,10 @@ constexpr inline auto xf = X {};
 
 struct A {};
 struct B {
-    di::Array<di::Byte, 24> padding;
+    B() : nothing(di::make_box<i32>(42)) {}
+
+    di::Array<di::Byte, 16> padding {};
+    di::Box<i32> nothing;
 };
 
 i32 tag_invoke(X, i32 const& x, i32 y) {

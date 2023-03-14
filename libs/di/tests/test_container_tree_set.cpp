@@ -16,6 +16,14 @@ constexpr void basic() {
     ASSERT_EQ(di::sum(x), 15);
 
     ASSERT(di::is_sorted(x));
+
+    auto y = di::TreeSet<int> {};
+    y.insert(1);
+    y.insert(2);
+    y.insert(3);
+    y.insert(4);
+
+    ASSERT(y.contains(4));
 }
 
 constexpr void accessors() {

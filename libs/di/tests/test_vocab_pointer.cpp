@@ -34,6 +34,9 @@ constexpr void box() {
 
     auto z = *di::try_box<int>(13);
     ASSERT_EQ(*z, 13);
+
+    auto w = di::make_box<di::Box<int>>(di::move(z));
+    ASSERT_EQ(**w, 13);
 }
 
 constexpr void rc() {

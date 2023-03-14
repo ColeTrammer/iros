@@ -40,6 +40,7 @@ private:
     friend void tag_invoke(types::Tag<intrusive_ptr_decrement>, InPlaceType<ArcTag>, T* pointer) {
         auto* base = static_cast<IntrusiveRefCount*>(pointer);
         if (base->m_ref_count.fetch_sub(1, sync::MemoryOrder::AcquireRelease) == 1) {
+            util::destroy_at(pointer);
             platform::DefaultFallibleAllocator<T>().deallocate(pointer, 1);
         }
     }
