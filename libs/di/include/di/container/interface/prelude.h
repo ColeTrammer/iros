@@ -16,6 +16,7 @@
 
 namespace di {
 using container::begin;
+using container::cdata;
 using container::data;
 using container::empty;
 using container::end;

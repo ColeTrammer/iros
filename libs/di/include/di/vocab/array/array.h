@@ -13,6 +13,7 @@
 #include <di/util/get_in_place.h>
 #include <di/util/move.h>
 #include <di/util/swap.h>
+#include <di/util/unreachable.h>
 #include <di/vocab/optional/prelude.h>
 #include <di/vocab/span/prelude.h>
 #include <di/vocab/tuple/enable_generate_structed_bindings.h>
@@ -230,6 +231,15 @@ struct Array<T, 0> {
 
     constexpr T* end() { return data(); }
     constexpr T const* end() const { return data(); }
+
+    constexpr T& operator[](types::size_t) {
+        DI_ASSERT(false);
+        util::unreachable();
+    }
+    constexpr T const& operator[](types::size_t) const {
+        DI_ASSERT(false);
+        util::unreachable();
+    }
 
     constexpr bool empty() const { return false; }
     constexpr auto size() const { return 0zu; }
