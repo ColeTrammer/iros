@@ -108,6 +108,7 @@ endif()
 
 if(IROS_BuildUserspace)
     add_subdirectory(userland/core)
+    add_subdirectory(userland/shell)
 endif()
 
 if(IROS_BuildTools)
