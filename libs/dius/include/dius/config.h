@@ -20,6 +20,10 @@
 #error "Unsupported dius platform"
 #endif
 
+#ifdef DIUS_USE_RUNTIME
+#undef __GLIBC__
+#endif
+
 #define DIUS_ARCH_PATH(path)          <dius/arch/DIUS_ARCH/path>
 #define DIUS_PLATFORM_PATH(path)      <dius/DIUS_PLATFORM/path>
 #define DIUS_ARCH_PLATFORM_PATH(path) <dius/arch/DIUS_ARCH/DIUS_PLATFORM/path>

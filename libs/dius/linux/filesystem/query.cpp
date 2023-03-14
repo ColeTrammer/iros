@@ -1,7 +1,5 @@
 #include <dius/prelude.h>
 
-#undef __GLIBC__
-
 #include <linux/fcntl.h>
 #include <linux/stat.h>
 #include <linux/time.h>

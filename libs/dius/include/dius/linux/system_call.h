@@ -29,7 +29,10 @@ enum class Number : int {
     ftruncate = __NR_ftruncate,
     arch_prctl = __NR_arch_prctl,
     brk = __NR_brk,
-    exit_group = __NR_exit_group
+    exit_group = __NR_exit_group,
+    clone3 = __NR_clone3,
+    execve = __NR_execve,
+    wait4 = __NR_wait4
 };
 
 using SystemCallArg = unsigned long;
