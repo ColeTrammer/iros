@@ -77,5 +77,6 @@ void init_pic() {
     io_out(0x40, u8(divisor >> 8));
 
     enable_irq_line(0);
+    enable_irq_line(4);
 }
 }

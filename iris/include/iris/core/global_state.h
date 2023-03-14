@@ -36,6 +36,8 @@ struct GlobalState {
     /// @{
     mutable mm::AddressSpace kernel_address_space;
     mutable TaskNamespace task_namespace;
+    mutable di::Queue<di::Byte> input_data_queue;
+    mutable WaitQueue input_wait_queue;
     /// @}
 
     /// @name Per-processor fields

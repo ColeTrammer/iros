@@ -14,6 +14,8 @@
 #include <iris/core/scheduler.h>
 #include <iris/core/task.h>
 #include <iris/core/userspace_access.h>
+#include <iris/core/wait_queue.h>
+#include <iris/fs/debug_file.h>
 #include <iris/fs/file.h>
 #include <iris/fs/initrd.h>
 #include <iris/hw/power.h>
@@ -23,13 +25,30 @@
 #include <iris/mm/sections.h>
 #include <iris/uapi/syscall.h>
 
+namespace iris {
+Expected<usize> tag_invoke(di::Tag<read_file>, DebugFile&, di::Span<di::Byte> buffer) {
+    if (buffer.empty()) {
+        return 0;
+    }
+
+    auto byte = di::Byte(0);
+    TRY(global_state().input_wait_queue.wait([&] {
+        auto has_data = global_state().input_data_queue.pop();
+        if (has_data) {
+            byte = *has_data;
+            return true;
+        }
+        return false;
+    }));
+
+    buffer[0] = byte;
+    return 1;
+}
+}
+
 namespace iris::arch {
 [[noreturn]] static void done() {
-    for (;;) {
-        asm volatile("mov $52, %eax\n"
-                     "cli\n"
-                     "hlt\n");
-    }
+    hard_shutdown(ShutdownStatus::Error);
     di::unreachable();
 }
 
@@ -45,6 +64,25 @@ extern "C" void generic_irq_handler(int irq, iris::arch::TaskState* task_state, 
             return;
         }
         iris::global_state().scheduler.save_state_and_run_next(task_state);
+    }
+
+    if (irq == 36) {
+        while ((x86::amd64::io_in<u8>(0x3F8 + 5) & 1) == 0)
+            ;
+
+        auto byte = x86::amd64::io_in<di::Byte>(0x3F8);
+        if (byte == '\r'_b) {
+            byte = '\n'_b;
+        }
+
+        log_output_byte(byte);
+
+        global_state().input_wait_queue.notify_one([&] {
+            global_state().input_data_queue.push(byte);
+        });
+
+        iris::x86::amd64::send_eoi(4);
+        return;
     }
 
     if (irq == 0x80) {
@@ -408,6 +446,30 @@ void load_kernel_stack(mm::VirtualAddress base) {
 
 extern "C" void bsp_cpu_init() {
     iris::arch::cxx_init();
+
+    // This code snippet initializes serial the ISA serial port. This is a hack to get debug output and easy user
+    // interactivity. This is directly from https://wiki.osdev.org/Serial_Ports#Initialization.
+    x86::amd64::io_out(0x3F8 + 1, 0x00_b); // Disable all interrupts
+    x86::amd64::io_out(0x3F8 + 3, 0x80_b); // Enable DLAB (set baud rate divisor)
+    x86::amd64::io_out(0x3F8 + 0, 0x03_b); // Set divisor to 3 (lo byte) 38400 baud
+    x86::amd64::io_out(0x3F8 + 1, 0x00_b); //                  (hi byte)
+    x86::amd64::io_out(0x3F8 + 3, 0x03_b); // 8 bits, no parity, one stop bit
+    x86::amd64::io_out(0x3F8 + 2, 0xC7_b); // Enable FIFO, clear them, with 14-byte threshold
+    x86::amd64::io_out(0x3F8 + 4, 0x0B_b); // IRQs enabled, RTS/DSR set
+    x86::amd64::io_out(0x3F8 + 4, 0x1E_b); // Set in loopback mode, test the serial chip
+    x86::amd64::io_out(0x3F8 + 0, 0xAE_b); // Test serial chip (send byte 0xAE and check if serial returns same byte)
+
+    // Check if serial is faulty (i.e: not same byte as sent)
+    if (x86::amd64::io_in<di::Byte>(0x3F8 + 0) != 0xAE_b) {
+        iris::println("Failed to detect serial port."_sv);
+    } else {
+        // If serial is not faulty set it in normal operation mode
+        // (not-loopback with IRQs enabled and OUT#1 and OUT#2 bits enabled)
+        x86::amd64::io_out(0x3F8 + 4, 0x0F_b);
+        // Enable rx IRQs
+        x86::amd64::io_out(0x3F8 + 1, 0x01_b);
+        iris::println("Enabled serial port."_sv);
+    }
 
     auto& global_state = global_state_in_boot();
 

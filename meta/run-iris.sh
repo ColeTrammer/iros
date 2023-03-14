@@ -21,7 +21,7 @@ qemu-system-"$IROS_ARCH" \
     $ENABLE_KVM \
     -drive file="$IROS_IMAGE",format=raw,index=0,media=disk \
     -cpu max \
-    -debugcon stdio \
+    -serial stdio \
     -no-reboot \
     -d guest_errors \
     -display none \

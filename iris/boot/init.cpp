@@ -11,6 +11,7 @@
 #include <iris/core/print.h>
 #include <iris/core/scheduler.h>
 #include <iris/core/task.h>
+#include <iris/fs/debug_file.h>
 #include <iris/fs/initrd.h>
 #include <iris/mm/address_space.h>
 #include <iris/mm/map_physical_address.h>
@@ -61,19 +62,6 @@ static volatile limine_kernel_file_request kernel_file_request = {
 }
 
 namespace iris {
-struct DebugFile {
-private:
-    friend Expected<usize> tag_invoke(di::Tag<write_file>, DebugFile& self, di::Span<di::Byte const> data) {
-        auto guard = di::ScopedLock(self.m_lock);
-        for (auto byte : data) {
-            log_output_byte(byte);
-        }
-        return data.size();
-    }
-
-    InterruptibleSpinlock m_lock;
-};
-
 static auto kernel_command_line =
     di::container::string::StringImpl<di::container::string::TransparentEncoding,
                                       di::StaticVector<char, di::meta::SizeConstant<4096>>> {};
@@ -148,7 +136,7 @@ void iris_main() {
 
         *global_state.initial_fpu_state.setup_initial_fpu_state();
 
-        auto init_path = kernel_command_line.empty() ? "/test_create_task"_pv : di::PathView(kernel_command_line);
+        auto init_path = kernel_command_line.empty() ? "/sh"_pv : di::PathView(kernel_command_line);
         if (init_path.data() == "-run=kernel_unit_test"_tsv) {
             iris::println("Preparing to run kernel unit tests."_sv);
 

@@ -1,333 +1,333 @@
 {
-  "version": 4,
-  "cmakeMinimumRequired": {
-    "major": 3,
-    "minor": 25,
-    "patch": 2
-  },
-  "configurePresets": [
-    {
-      "name": "base",
-      "hidden": true,
-      "generator": "Ninja",
-      "cacheVariables": {
-        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
-        "CMAKE_INSTALL_MESSAGE": "NEVER",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "IROS_DiagnosticFlags": "-fdiagnostics-color=always",
-        "IROS_WarningFlags": "-Wall -Wextra -Wpedantic"
-      }
+    "version": 4,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 25,
+        "patch": 2
     },
-    {
-      "name": "release_base",
-      "hidden": true,
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "IROS_ExtraFlags": "-O3"
-      },
-      "inherits": ["base"]
-    },
-    {
-      "name": "debug_base",
-      "hidden": true,
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "IROS_ExtraFlags": "-ffold-simple-inlines"
-      },
-      "inherits": ["base"]
-    },
-    {
-      "name": "iros_x86_64",
-      "displayName": "Iros x64_64",
-      "description": "Compile Iros for x86_64",
-      "binaryDir": "${sourceDir}/build/x86_64",
-      "installDir": "${sourceDir}/build/x86_64/sysroot/usr",
-      "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_x86_64.txt",
-      "cacheVariables": {
-        "IROS_BuildIris": "ON",
-        "IROS_BuildUserspace": "OFF",
-        "IROS_BuildTests": "ON",
-        "IROS_BuildTools": "OFF",
-        "IROS_BuildCcpp": "ON",
-        "IROS_UseDiusRuntime": "ON",
-        "CMAKE_CXX_COMPILER_WORKS": "ON",
-        "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh"
-      },
-      "inherits": ["release_base"]
-    },
-    {
-      "name": "dius_runtime_release",
-      "displayName": "Dius Runtime Release Config",
-      "description": "Release build with dius runtime enabled",
-      "binaryDir": "${sourceDir}/build/native/release-dius-runtime",
-      "installDir": "${sourceDir}/build/native/release-dius-runtime-install",
-      "cacheVariables": {
-        "IROS_UseDiusRuntime": "ON"
-      },
-      "inherits": ["release_base"]
-    },
-    {
-      "name": "dius_runtime_debug",
-      "displayName": "Dius Runtime Debug Config",
-      "description": "Debug build with dius runtime enabled",
-      "binaryDir": "${sourceDir}/build/native/debug-dius-runtime",
-      "installDir": "${sourceDir}/build/native/debug-dius-runtime-install",
-      "cacheVariables": {
-        "IROS_UseDiusRuntime": "ON"
-      },
-      "inherits": ["debug_base"]
-    },
-    {
-      "name": "release",
-      "displayName": "Release Config",
-      "description": "Default native release build",
-      "binaryDir": "${sourceDir}/build/native/release",
-      "installDir": "${sourceDir}/build/native/release-install",
-      "inherits": ["release_base"]
-    },
-    {
-      "name": "tools",
-      "displayName": "Tools Config",
-      "description": "Build only native tools required to cross compile",
-      "binaryDir": "${sourceDir}/build/native/tools",
-      "installDir": "${sourceDir}/build/native/tools-install",
-      "cacheVariables": {
-        "IROS_BuildTests": "OFF",
-        "IROS_BuildUserspace": "OFF",
-        "IROS_BuildTools": "ON",
-        "IROS_BuildCcpp": "OFF"
-      },
-      "inherits": ["release_base"]
-    },
-    {
-      "name": "debug",
-      "displayName": "Debug Config",
-      "description": "Native debug build",
-      "binaryDir": "${sourceDir}/build/native/debug",
-      "installDir": "${sourceDir}/bulid/native/debug-install",
-      "inherits": ["debug_base"]
-    },
-    {
-      "name": "asan",
-      "displayName": "Address Sanitizer",
-      "description": "Build with address sanitizer enabled",
-      "binaryDir": "${sourceDir}/build/native/asan",
-      "installDir": "${sourceDir}/bulid/native/asan-install",
-      "cacheVariables": {
-        "IROS_BuildCcpp": "OFF",
-        "IROS_SanitizerFlags": "-fsanitize=address -DDI_SANITIZER"
-      },
-      "inherits": ["debug_base"]
-    },
-    {
-      "name": "tsan",
-      "displayName": "Thread Sanitizer",
-      "description": "Build with thread sanitizer enabled",
-      "binaryDir": "${sourceDir}/build/native/tsan",
-      "installDir": "${sourceDir}/bulid/native/tsan-install",
-      "cacheVariables": {
-        "IROS_BuildCcpp": "OFF",
-        "IROS_SanitizerFlags": "-fsanitize=thread -DDI_SANITIZER"
-      },
-      "inherits": ["debug_base"]
-    },
-    {
-      "name": "ubsan",
-      "displayName": "Undefined Behavior Sanitizer",
-      "description": "Build with undefined behavior sanitizer enabled",
-      "binaryDir": "${sourceDir}/build/native/ubsan",
-      "installDir": "${sourceDir}/bulid/native/ubsan-install",
-      "cacheVariables": {
-        "IROS_BuildCcpp": "OFF",
-        "IROS_SanitizerFlags": "-fsanitize=undefined -DDI_SANITIZER"
-      },
-      "inherits": ["debug_base"]
-    },
-    {
-      "name": "ubasan",
-      "displayName": "Undefined Behavior and Address Sanitizer",
-      "description": "Build with defined behavior and address sanitizer enabled",
-      "binaryDir": "${sourceDir}/build/native/ubasan",
-      "installDir": "${sourceDir}/bulid/native/ubasan-install",
-      "cacheVariables": {
-        "IROS_BuildCcpp": "OFF",
-        "IROS_SanitizerFlags": "-fsanitize=address,undefined -DDI_SANITIZER"
-      },
-      "inherits": ["debug_base"]
-    },
-    {
-      "name": "coverage",
-      "displayName": "Code Coverage",
-      "description": "Build with code coverage instrumentation",
-      "binaryDir": "${sourceDir}/build/native/coverage",
-      "installDir": "${sourceDir}/build/native/coverage-install",
-      "cacheVariables": {
-        "IROS_BuildCcpp": "OFF",
-        "IROS_ExtraFlags": "-Og -fprofile-arcs -ftest-coverage"
-      },
-      "inherits": ["debug_base"]
-    }
-  ],
-  "buildPresets": [
-    {
-      "name": "base",
-      "hidden": true
-    },
-    {
-      "name": "iros_x86_64",
-      "displayName": "Iros x86_64",
-      "configurePreset": "iros_x86_64",
-      "inherits": ["base"]
-    },
-    {
-      "name": "dius_runtime_release",
-      "displayName": "Dius Runtime Release",
-      "configurePreset": "dius_runtime_release",
-      "inherits": ["base"]
-    },
-    {
-      "name": "dius_runtime_debug",
-      "displayName": "Dius Runtime Debug Build",
-      "configurePreset": "dius_runtime_debug",
-      "inherits": ["base"]
-    },
-    {
-      "name": "release",
-      "displayName": "Release Build",
-      "configurePreset": "release",
-      "inherits": ["base"]
-    },
-    {
-      "name": "release_docs",
-      "displayName": "Build Documentation Only",
-      "configurePreset": "release",
-      "targets": ["docs"],
-      "inherits": ["base"]
-    },
-    {
-      "name": "tools",
-      "displayName": "Tools Build",
-      "configurePreset": "tools",
-      "inherits": ["base"]
-    },
-    {
-      "name": "debug",
-      "displayName": "Debug Build",
-      "configurePreset": "debug",
-      "inherits": ["base"]
-    },
-    {
-      "name": "asan",
-      "displayName": "Address Sanitizer",
-      "configurePreset": "asan",
-      "inherits": ["base"]
-    },
-    {
-      "name": "tsan",
-      "displayName": "Thread Sanitizer",
-      "configurePreset": "tsan",
-      "inherits": ["base"]
-    },
-    {
-      "name": "ubsan",
-      "displayName": "Undefined Behavior Sanitizer",
-      "configurePreset": "ubsan",
-      "inherits": ["base"]
-    },
-    {
-      "name": "ubasan",
-      "displayName": "Undefined Behavior + Address Sanitizer",
-      "configurePreset": "ubasan",
-      "inherits": ["base"]
-    },
-    {
-      "name": "coverage",
-      "displayName": "Code Coverage",
-      "configurePreset": "coverage",
-      "inherits": ["base"]
-    }
-  ],
-  "testPresets": [
-    {
-      "name": "base",
-      "hidden": true,
-      "output": {
-        "outputOnFailure": true
-      },
-      "execution": {
-        "noTestsAction": "error",
-        "stopOnFailure": false,
-        "timeout": 30
-      }
-    },
-    {
-      "name": "iros_x86_64",
-      "displayName": "Iros x86_64",
-      "configurePreset": "iros_x86_64",
-      "execution": {
-        "jobs": 1
-      },
-      "inherits": ["base"]
-    },
-    {
-      "name": "dius_runtime_release",
-      "displayName": "Dius Runtime Release Test",
-      "configurePreset": "dius_runtime_release",
-      "inherits": ["base"]
-    },
-    {
-      "name": "dius_runtime_debug",
-      "displayName": "Dius Runtime Debug Test",
-      "configurePreset": "dius_runtime_debug",
-      "inherits": ["base"]
-    },
-    {
-      "name": "release",
-      "displayName": "Release Test",
-      "configurePreset": "release",
-      "inherits": ["base"]
-    },
-    {
-      "name": "tools",
-      "displayName": "Tools Test",
-      "configurePreset": "tools",
-      "inherits": ["base"]
-    },
-    {
-      "name": "debug",
-      "displayName": "Debug Test",
-      "configurePreset": "debug",
-      "inherits": ["base"]
-    },
-    {
-      "name": "asan",
-      "displayName": "Address Sanitizer",
-      "configurePreset": "asan",
-      "inherits": ["base"]
-    },
-    {
-      "name": "tsan",
-      "displayName": "Thread Sanitizer",
-      "configurePreset": "tsan",
-      "inherits": ["base"]
-    },
-    {
-      "name": "ubsan",
-      "displayName": "Undefined Behavior Sanitizer",
-      "configurePreset": "ubsan",
-      "inherits": ["base"]
-    },
-    {
-      "name": "ubasan",
-      "displayName": "Undefined Behavior + Address Sanitizer",
-      "configurePreset": "ubasan",
-      "inherits": ["base"]
-    },
-    {
-      "name": "coverage",
-      "displayName": "Code Coverage",
-      "configurePreset": "coverage",
-      "inherits": ["base"]
-    }
-  ]
+    "configurePresets": [
+        {
+            "name": "base",
+            "hidden": true,
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
+                "CMAKE_INSTALL_MESSAGE": "NEVER",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "IROS_DiagnosticFlags": "-fdiagnostics-color=always",
+                "IROS_WarningFlags": "-Wall -Wextra -Wpedantic"
+            }
+        },
+        {
+            "name": "release_base",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "IROS_ExtraFlags": "-O3"
+            },
+            "inherits": ["base"]
+        },
+        {
+            "name": "debug_base",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "IROS_ExtraFlags": "-ffold-simple-inlines"
+            },
+            "inherits": ["base"]
+        },
+        {
+            "name": "iros_x86_64",
+            "displayName": "Iros x64_64",
+            "description": "Compile Iros for x86_64",
+            "binaryDir": "${sourceDir}/build/x86_64",
+            "installDir": "${sourceDir}/build/x86_64/sysroot/usr",
+            "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_x86_64.txt",
+            "cacheVariables": {
+                "IROS_BuildIris": "ON",
+                "IROS_BuildUserspace": "ON",
+                "IROS_BuildTests": "ON",
+                "IROS_BuildTools": "OFF",
+                "IROS_BuildCcpp": "ON",
+                "IROS_UseDiusRuntime": "ON",
+                "CMAKE_CXX_COMPILER_WORKS": "ON",
+                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh"
+            },
+            "inherits": ["release_base"]
+        },
+        {
+            "name": "dius_runtime_release",
+            "displayName": "Dius Runtime Release Config",
+            "description": "Release build with dius runtime enabled",
+            "binaryDir": "${sourceDir}/build/native/release-dius-runtime",
+            "installDir": "${sourceDir}/build/native/release-dius-runtime-install",
+            "cacheVariables": {
+                "IROS_UseDiusRuntime": "ON"
+            },
+            "inherits": ["release_base"]
+        },
+        {
+            "name": "dius_runtime_debug",
+            "displayName": "Dius Runtime Debug Config",
+            "description": "Debug build with dius runtime enabled",
+            "binaryDir": "${sourceDir}/build/native/debug-dius-runtime",
+            "installDir": "${sourceDir}/build/native/debug-dius-runtime-install",
+            "cacheVariables": {
+                "IROS_UseDiusRuntime": "ON"
+            },
+            "inherits": ["debug_base"]
+        },
+        {
+            "name": "release",
+            "displayName": "Release Config",
+            "description": "Default native release build",
+            "binaryDir": "${sourceDir}/build/native/release",
+            "installDir": "${sourceDir}/build/native/release-install",
+            "inherits": ["release_base"]
+        },
+        {
+            "name": "tools",
+            "displayName": "Tools Config",
+            "description": "Build only native tools required to cross compile",
+            "binaryDir": "${sourceDir}/build/native/tools",
+            "installDir": "${sourceDir}/build/native/tools-install",
+            "cacheVariables": {
+                "IROS_BuildTests": "OFF",
+                "IROS_BuildUserspace": "OFF",
+                "IROS_BuildTools": "ON",
+                "IROS_BuildCcpp": "OFF"
+            },
+            "inherits": ["release_base"]
+        },
+        {
+            "name": "debug",
+            "displayName": "Debug Config",
+            "description": "Native debug build",
+            "binaryDir": "${sourceDir}/build/native/debug",
+            "installDir": "${sourceDir}/bulid/native/debug-install",
+            "inherits": ["debug_base"]
+        },
+        {
+            "name": "asan",
+            "displayName": "Address Sanitizer",
+            "description": "Build with address sanitizer enabled",
+            "binaryDir": "${sourceDir}/build/native/asan",
+            "installDir": "${sourceDir}/bulid/native/asan-install",
+            "cacheVariables": {
+                "IROS_BuildCcpp": "OFF",
+                "IROS_SanitizerFlags": "-fsanitize=address -DDI_SANITIZER"
+            },
+            "inherits": ["debug_base"]
+        },
+        {
+            "name": "tsan",
+            "displayName": "Thread Sanitizer",
+            "description": "Build with thread sanitizer enabled",
+            "binaryDir": "${sourceDir}/build/native/tsan",
+            "installDir": "${sourceDir}/bulid/native/tsan-install",
+            "cacheVariables": {
+                "IROS_BuildCcpp": "OFF",
+                "IROS_SanitizerFlags": "-fsanitize=thread -DDI_SANITIZER"
+            },
+            "inherits": ["debug_base"]
+        },
+        {
+            "name": "ubsan",
+            "displayName": "Undefined Behavior Sanitizer",
+            "description": "Build with undefined behavior sanitizer enabled",
+            "binaryDir": "${sourceDir}/build/native/ubsan",
+            "installDir": "${sourceDir}/bulid/native/ubsan-install",
+            "cacheVariables": {
+                "IROS_BuildCcpp": "OFF",
+                "IROS_SanitizerFlags": "-fsanitize=undefined -DDI_SANITIZER"
+            },
+            "inherits": ["debug_base"]
+        },
+        {
+            "name": "ubasan",
+            "displayName": "Undefined Behavior and Address Sanitizer",
+            "description": "Build with defined behavior and address sanitizer enabled",
+            "binaryDir": "${sourceDir}/build/native/ubasan",
+            "installDir": "${sourceDir}/bulid/native/ubasan-install",
+            "cacheVariables": {
+                "IROS_BuildCcpp": "OFF",
+                "IROS_SanitizerFlags": "-fsanitize=address,undefined -DDI_SANITIZER"
+            },
+            "inherits": ["debug_base"]
+        },
+        {
+            "name": "coverage",
+            "displayName": "Code Coverage",
+            "description": "Build with code coverage instrumentation",
+            "binaryDir": "${sourceDir}/build/native/coverage",
+            "installDir": "${sourceDir}/build/native/coverage-install",
+            "cacheVariables": {
+                "IROS_BuildCcpp": "OFF",
+                "IROS_ExtraFlags": "-Og -fprofile-arcs -ftest-coverage"
+            },
+            "inherits": ["debug_base"]
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "base",
+            "hidden": true
+        },
+        {
+            "name": "iros_x86_64",
+            "displayName": "Iros x86_64",
+            "configurePreset": "iros_x86_64",
+            "inherits": ["base"]
+        },
+        {
+            "name": "dius_runtime_release",
+            "displayName": "Dius Runtime Release",
+            "configurePreset": "dius_runtime_release",
+            "inherits": ["base"]
+        },
+        {
+            "name": "dius_runtime_debug",
+            "displayName": "Dius Runtime Debug Build",
+            "configurePreset": "dius_runtime_debug",
+            "inherits": ["base"]
+        },
+        {
+            "name": "release",
+            "displayName": "Release Build",
+            "configurePreset": "release",
+            "inherits": ["base"]
+        },
+        {
+            "name": "release_docs",
+            "displayName": "Build Documentation Only",
+            "configurePreset": "release",
+            "targets": ["docs"],
+            "inherits": ["base"]
+        },
+        {
+            "name": "tools",
+            "displayName": "Tools Build",
+            "configurePreset": "tools",
+            "inherits": ["base"]
+        },
+        {
+            "name": "debug",
+            "displayName": "Debug Build",
+            "configurePreset": "debug",
+            "inherits": ["base"]
+        },
+        {
+            "name": "asan",
+            "displayName": "Address Sanitizer",
+            "configurePreset": "asan",
+            "inherits": ["base"]
+        },
+        {
+            "name": "tsan",
+            "displayName": "Thread Sanitizer",
+            "configurePreset": "tsan",
+            "inherits": ["base"]
+        },
+        {
+            "name": "ubsan",
+            "displayName": "Undefined Behavior Sanitizer",
+            "configurePreset": "ubsan",
+            "inherits": ["base"]
+        },
+        {
+            "name": "ubasan",
+            "displayName": "Undefined Behavior + Address Sanitizer",
+            "configurePreset": "ubasan",
+            "inherits": ["base"]
+        },
+        {
+            "name": "coverage",
+            "displayName": "Code Coverage",
+            "configurePreset": "coverage",
+            "inherits": ["base"]
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "base",
+            "hidden": true,
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error",
+                "stopOnFailure": false,
+                "timeout": 30
+            }
+        },
+        {
+            "name": "iros_x86_64",
+            "displayName": "Iros x86_64",
+            "configurePreset": "iros_x86_64",
+            "execution": {
+                "jobs": 1
+            },
+            "inherits": ["base"]
+        },
+        {
+            "name": "dius_runtime_release",
+            "displayName": "Dius Runtime Release Test",
+            "configurePreset": "dius_runtime_release",
+            "inherits": ["base"]
+        },
+        {
+            "name": "dius_runtime_debug",
+            "displayName": "Dius Runtime Debug Test",
+            "configurePreset": "dius_runtime_debug",
+            "inherits": ["base"]
+        },
+        {
+            "name": "release",
+            "displayName": "Release Test",
+            "configurePreset": "release",
+            "inherits": ["base"]
+        },
+        {
+            "name": "tools",
+            "displayName": "Tools Test",
+            "configurePreset": "tools",
+            "inherits": ["base"]
+        },
+        {
+            "name": "debug",
+            "displayName": "Debug Test",
+            "configurePreset": "debug",
+            "inherits": ["base"]
+        },
+        {
+            "name": "asan",
+            "displayName": "Address Sanitizer",
+            "configurePreset": "asan",
+            "inherits": ["base"]
+        },
+        {
+            "name": "tsan",
+            "displayName": "Thread Sanitizer",
+            "configurePreset": "tsan",
+            "inherits": ["base"]
+        },
+        {
+            "name": "ubsan",
+            "displayName": "Undefined Behavior Sanitizer",
+            "configurePreset": "ubsan",
+            "inherits": ["base"]
+        },
+        {
+            "name": "ubasan",
+            "displayName": "Undefined Behavior + Address Sanitizer",
+            "configurePreset": "ubasan",
+            "inherits": ["base"]
+        },
+        {
+            "name": "coverage",
+            "displayName": "Code Coverage",
+            "configurePreset": "coverage",
+            "inherits": ["base"]
+        }
+    ]
 }

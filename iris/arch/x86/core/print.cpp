@@ -1,19 +1,19 @@
+#include <iris/arch/x86/amd64/io_instructions.h>
 #include <iris/core/print.h>
 #include <iris/hw/power.h>
 
 namespace iris {
-static inline void outb(u16 port, u8 value) {
-    asm volatile("outb %0, %1" : : "a"(value), "Nd"(port));
-}
-
 void log_output_character(c32 value) {
     for (auto byte : di::encoding::convert_to_code_units(di::container::string::Utf8Encoding {}, value)) {
-        outb(0xE9, byte);
+        log_output_byte(di::Byte(byte));
     }
 }
 
 void log_output_byte(di::Byte byte) {
-    outb(0xE9, di::to_integer<u8>(byte));
+    while ((x86::amd64::io_in<di::Byte>(0x3F8 + 5) & 0x20_b) == 0_b)
+        ;
+
+    x86::amd64::io_out(0x3F8, byte);
 }
 }
 

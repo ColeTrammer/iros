@@ -3,7 +3,7 @@
 #include <di/prelude.h>
 
 namespace iris::x86::amd64 {
-static inline void io_out(u16 port, di::concepts::OneOf<u8, u16, u32> auto const value) {
+static inline void io_out(u16 port, di::concepts::OneOf<u8, u16, u32, di::Byte> auto const value) {
     if constexpr (sizeof(value) == 1) {
         asm volatile("outb %0, %1" : : "a"(value), "Nd"(port));
     } else if constexpr (sizeof(value) == 2) {
@@ -13,7 +13,7 @@ static inline void io_out(u16 port, di::concepts::OneOf<u8, u16, u32> auto const
     }
 }
 
-template<di::concepts::OneOf<u8, u16, u32> Out>
+template<di::concepts::OneOf<u8, u16, u32, di::Byte> Out>
 static inline Out io_in(u16 port) {
     Out value;
     if constexpr (sizeof(Out) == 1) {

@@ -10,7 +10,8 @@ struct Args {
     }
 };
 
-di::Result<void> main(Args& args) {
+di::Result<void> main([[maybe_unused]] Args& args) {
+#ifdef __linux__
     auto path = di::create<di::Path>(args.path);
     auto iterator = TRY(di::create<dius::fs::RecursiveDirectoryIterator>(di::move(path)));
     for (auto directory : iterator) {
@@ -18,6 +19,7 @@ di::Result<void> main(Args& args) {
         dius::println("{}: {},{}"_sv, entry.path(), TRY(entry.is_regular_file()),
                       dius::fs::is_regular_file(TRY(entry.status())));
     }
+#endif
     return {};
 }
 }
