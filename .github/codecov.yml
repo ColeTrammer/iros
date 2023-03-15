@@ -1,0 +1,10 @@
+coverage:
+    ignore:
+        - "**/tests"
+    status:
+        project:
+            default:
+                informational: true
+        patch:
+            default:
+                informational: true
