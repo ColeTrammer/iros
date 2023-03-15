@@ -23,7 +23,6 @@
 #include <di/util/maybe_clone.h>
 #include <di/util/movable_box.h>
 #include <di/util/move.h>
-#include <di/util/preprocessor.h>
 #include <di/util/rebindable_box.h>
 #include <di/util/reference_wrapper.h>
 #include <di/util/scope_exit.h>
