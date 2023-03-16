@@ -1,5 +1,6 @@
 #include <di/prelude.h>
 #include <iris/arch/x86/amd64/hw/pic.h>
+#include <iris/arch/x86/amd64/hw/serial.h>
 #include <iris/arch/x86/amd64/idt.h>
 #include <iris/arch/x86/amd64/io_instructions.h>
 #include <iris/arch/x86/amd64/segment_descriptor.h>
@@ -164,29 +165,7 @@ void load_kernel_stack(mm::VirtualAddress base) {
 extern "C" void bsp_cpu_init() {
     iris::arch::cxx_init();
 
-    // This code snippet initializes serial the ISA serial port. This is a hack to get debug output and easy user
-    // interactivity. This is directly from https://wiki.osdev.org/Serial_Ports#Initialization.
-    x86::amd64::io_out(0x3F8 + 1, 0x00_b); // Disable all interrupts
-    x86::amd64::io_out(0x3F8 + 3, 0x80_b); // Enable DLAB (set baud rate divisor)
-    x86::amd64::io_out(0x3F8 + 0, 0x03_b); // Set divisor to 3 (lo byte) 38400 baud
-    x86::amd64::io_out(0x3F8 + 1, 0x00_b); //                  (hi byte)
-    x86::amd64::io_out(0x3F8 + 3, 0x03_b); // 8 bits, no parity, one stop bit
-    x86::amd64::io_out(0x3F8 + 2, 0xC7_b); // Enable FIFO, clear them, with 14-byte threshold
-    x86::amd64::io_out(0x3F8 + 4, 0x0B_b); // IRQs enabled, RTS/DSR set
-    x86::amd64::io_out(0x3F8 + 4, 0x1E_b); // Set in loopback mode, test the serial chip
-    x86::amd64::io_out(0x3F8 + 0, 0xAE_b); // Test serial chip (send byte 0xAE and check if serial returns same byte)
-
-    // Check if serial is faulty (i.e: not same byte as sent)
-    if (x86::amd64::io_in<di::Byte>(0x3F8 + 0) != 0xAE_b) {
-        iris::println("Failed to detect serial port."_sv);
-    } else {
-        // If serial is not faulty set it in normal operation mode
-        // (not-loopback with IRQs enabled and OUT#1 and OUT#2 bits enabled)
-        x86::amd64::io_out(0x3F8 + 4, 0x0F_b);
-        // Enable rx IRQs
-        x86::amd64::io_out(0x3F8 + 1, 0x01_b);
-        iris::println("Enabled serial port."_sv);
-    }
+    iris::x86::amd64::init_serial_early_boot();
 
     auto& global_state = global_state_in_boot();
 

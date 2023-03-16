@@ -1,9 +1,5 @@
 #include <di/prelude.h>
-#include <iris/arch/x86/amd64/idt.h>
-#include <iris/arch/x86/amd64/segment_descriptor.h>
-#include <iris/arch/x86/amd64/system_instructions.h>
-#include <iris/arch/x86/amd64/system_segment_descriptor.h>
-#include <iris/arch/x86/amd64/tss.h>
+#include <iris/arch/x86/amd64/hw/serial.h>
 #include <iris/boot/cxx_init.h>
 #include <iris/boot/init.h>
 #include <iris/core/global_state.h>
@@ -151,6 +147,9 @@ void iris_main() {
             scheduler.schedule_task(*task4);
         }
     }
+
+    // Initialize serial console.
+    x86::amd64::init_serial();
 
     iris::println("Starting the kernel scheduler..."_sv);
 

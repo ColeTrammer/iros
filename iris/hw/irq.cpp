@@ -45,25 +45,6 @@ extern "C" void generic_irq_handler(GlobalIrqNumber irq, iris::arch::TaskState& 
         }
     }
 
-    if (irq == GlobalIrqNumber(36)) {
-        while ((x86::amd64::io_in<u8>(0x3F8 + 5) & 1) == 0)
-            ;
-
-        auto byte = x86::amd64::io_in<di::Byte>(0x3F8);
-        if (byte == '\r'_b) {
-            byte = '\n'_b;
-        }
-
-        log_output_byte(byte);
-
-        global_state().input_wait_queue.notify_one([&] {
-            global_state().input_data_queue.push(byte);
-        });
-
-        send_eoi(global_state().irq_controller.get_assuming_no_concurrent_accesses(), GlobalIrqNumber(36));
-        return;
-    }
-
     iris::println("ERROR: got unexpected IRQ {}, error_code={}, ip={:#x}"_sv, irq, error_code, task_state.rip);
     ASSERT(false);
 }

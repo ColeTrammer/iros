@@ -33,6 +33,7 @@ target_sources(iris
     arch/x86/amd64/hw/pic.cpp
     arch/x86/amd64/hw/power.cpp
     arch/x86/amd64/hw/processor_info.cpp
+    arch/x86/amd64/hw/serial.cpp
     arch/x86/amd64/mm/address_space.cpp
     arch/x86/amd64/mm/map_physical_address.cpp
     arch/x86/core/print.cpp
