@@ -27,4 +27,6 @@ struct BaseHigh : BitField<64, 32> {};
 
 using SystemSegmentDescriptor =
     BitStruct<16, LimitLow, BaseLow, BaseMidLow, Type, DPL, Present, LimitHigh, BaseMidHigh, Granular, BaseHigh>;
+
+void init_tss();
 }

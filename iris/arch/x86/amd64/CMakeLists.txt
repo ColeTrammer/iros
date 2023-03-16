@@ -30,6 +30,7 @@ target_sources(iris
     arch/x86/amd64/boot/cxx_init.cpp
     arch/x86/amd64/boot/init.cpp
     arch/x86/amd64/core/task.cpp
+    arch/x86/amd64/hw/idt.cpp
     arch/x86/amd64/hw/pic.cpp
     arch/x86/amd64/hw/power.cpp
     arch/x86/amd64/hw/processor_info.cpp
