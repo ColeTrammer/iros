@@ -66,6 +66,8 @@ if(IROS_BuildIris)
       core/unit_test.cpp
       core/wait_queue.cpp
       fs/initrd.cpp
+      hw/irq_controller.cpp
+      hw/irq.cpp
       mm/address_space.cpp
       mm/page_frame_allocator.cpp
       mm/heap.cpp

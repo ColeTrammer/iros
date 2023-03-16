@@ -9,6 +9,22 @@ namespace iris::arch {
 struct TaskState {
     explicit TaskState(u64 entry, u64 stack, bool userspace);
 
+    u64 syscall_arg1() const { return rdi; }
+    u64 syscall_arg2() const { return rsi; }
+    u64 syscall_arg3() const { return rdx; }
+    u64 syscall_arg4() const { return r10; }
+    u64 syscall_arg5() const { return r8; }
+    u64 syscall_arg6() const { return r9; }
+
+    void set_syscall_return(Expected<uptr> value) {
+        if (value) {
+            rdx = 0;
+            rax = *value;
+        } else {
+            rdx = di::to_underlying(value.error());
+        }
+    }
+
     /// Function to perform a context switch.
     [[noreturn]] void context_switch_to();
 

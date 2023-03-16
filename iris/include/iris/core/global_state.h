@@ -6,6 +6,7 @@
 #include <iris/core/task.h>
 #include <iris/core/task_namespace.h>
 #include <iris/core/unit_test.h>
+#include <iris/hw/irq.h>
 #include <iris/mm/address_space.h>
 
 // clang-format off
@@ -40,6 +41,8 @@ struct GlobalState {
     mutable WaitQueue input_wait_queue;
     mutable di::Queue<TaskFinalizationRequest> task_finalization_data_queue;
     mutable WaitQueue task_finalization_wait_queue;
+    mutable di::Synchronized<di::Array<di::LinkedList<IrqHandler>, 256>> irq_handlers;
+    mutable di::Synchronized<IrqController> irq_controller;
     /// @}
 
     /// @name Per-processor fields
