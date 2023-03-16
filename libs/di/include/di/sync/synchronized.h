@@ -15,6 +15,7 @@ class LockedReference {
 public:
     constexpr explicit LockedReference(Value* value, Lock& lock) : m_guard(lock), m_value(value) {}
 
+    constexpr Value& operator*() const { return *m_value; }
     constexpr Value* operator->() const { return m_value; }
 
 private:
