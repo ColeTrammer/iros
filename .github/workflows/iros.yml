@@ -4,6 +4,7 @@ on:
     push:
         branches: [iris]
     pull_request:
+        types: [opened, reopened, synchronize, ready_for_review]
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
@@ -11,6 +12,7 @@ concurrency:
 
 jobs:
     toolchain:
+        if: github.event_name != 'pull_request' || !github.event.pull_request.draft
         runs-on: ubuntu-latest
         outputs:
             image: ${{ steps.output.outputs.image_to_use }}
@@ -63,6 +65,7 @@ jobs:
                     echo "image_to_use=ghcr.io/coletrammer/iros_toolchain:iris" >> "$GITHUB_OUTPUT"
                   fi
     iros_build_and_test:
+        if: github.event_name != 'pull_request' || !github.event.pull_request.draft
         runs-on: ubuntu-latest
         strategy:
             matrix:

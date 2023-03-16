@@ -4,6 +4,7 @@ on:
     push:
         branches: [iris]
     pull_request:
+        types: [opened, reopened, synchronize, ready_for_review]
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
@@ -11,6 +12,7 @@ concurrency:
 
 jobs:
     build_and_deploy:
+        if: github.event_name != 'pull_request' || !github.event.pull_request.draft
         runs-on: ubuntu-latest
         steps:
             - name: Install graphviz and correct GCC
