@@ -20,11 +20,11 @@ void LockedTaskNamespace::unregister_task(Task& task) {
     // FIXME: unallocate the task id.
 }
 
-Expected<Task&> LockedTaskNamespace::find_task(TaskId id) const {
+Expected<di::Arc<Task>> LockedTaskNamespace::find_task(TaskId id) const {
     auto result = m_task_id_map.at(id);
     if (!result) {
         return di::Unexpected(Error::NoSuchProcess);
     }
-    return **result;
+    return *result;
 }
 }

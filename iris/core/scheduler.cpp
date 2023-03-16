@@ -2,6 +2,7 @@
 #include <iris/core/interrupt_disabler.h>
 #include <iris/core/print.h>
 #include <iris/core/scheduler.h>
+#include <iris/hw/irq.h>
 
 namespace iris {
 void Scheduler::schedule_task(Task& task) {
@@ -22,6 +23,24 @@ static void do_idle() {
 void Scheduler::start() {
     // Initialize the idle task.
     m_idle_task = *create_kernel_task(global_state().task_namespace, do_idle);
+
+    // Setup timer interrupt.
+    *register_irq_handler(GlobalIrqNumber(32), [&](IrqContext& context) -> IrqStatus {
+        send_eoi(*context.controller->lock(), GlobalIrqNumber(32));
+
+        // If preemption is disabled, do not reshcedule the currently running task but let it know
+        // that it should yield whenever it finally re-enables preemption.
+        auto& current_task = this->current_task();
+        if (current_task.preemption_disabled()) {
+            current_task.set_should_be_preempted();
+            return IrqStatus::Handled;
+        }
+
+        // Manually unlock the IRQ list before jumping away.
+        global_state().irq_handlers.get_lock().unlock();
+        save_state_and_run_next(&context.task_state);
+        return IrqStatus::Handled;
+    });
 
     run_next();
 }

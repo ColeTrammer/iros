@@ -71,6 +71,7 @@ if(IROS_BuildIris)
       mm/address_space.cpp
       mm/page_frame_allocator.cpp
       mm/heap.cpp
+      uapi/syscall.cpp
   )
 
   if(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "x86_64")

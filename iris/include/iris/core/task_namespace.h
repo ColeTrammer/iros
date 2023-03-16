@@ -13,7 +13,7 @@ public:
     Expected<void> register_task(Task&);
     void unregister_task(Task&);
 
-    Expected<Task&> find_task(TaskId id) const;
+    Expected<di::Arc<Task>> find_task(TaskId id) const;
 
 private:
     TaskId m_next_id { 0 };

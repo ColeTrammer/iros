@@ -3,11 +3,14 @@
 #include <di/prelude.h>
 
 #include <iris/core/error.h>
+#include <iris/uapi/syscall.h>
 
 namespace iris::arch {
 // This is x86_64 specific.
 struct TaskState {
     explicit TaskState(u64 entry, u64 stack, bool userspace);
+
+    SystemCall syscall_number() const { return SystemCall(rax); }
 
     u64 syscall_arg1() const { return rdi; }
     u64 syscall_arg2() const { return rsi; }

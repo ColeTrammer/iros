@@ -28,5 +28,5 @@ constexpr inline auto disable_irq_line = detail::DisableIrqLine {};
 using IrqControllerInterface = di::meta::List<detail::SendEoiFunction, detail::EnableIrqLine, detail::DisableIrqLine>;
 using IrqController = di::AnyInline<IrqControllerInterface>;
 
-di::Optional<IrqController&> irq_controller_for_interrupt_number(GlobalIrqNumber number);
+di::Optional<di::Synchronized<IrqController>&> irq_controller_for_interrupt_number(GlobalIrqNumber number);
 }

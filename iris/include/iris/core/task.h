@@ -85,4 +85,6 @@ private:
 Expected<di::Arc<Task>> create_kernel_task(TaskNamespace&, void (*entry)());
 Expected<di::Arc<Task>> create_user_task(TaskNamespace&, FileTable file_table);
 Expected<void> load_executable(Task&, di::PathView path);
+
+Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state);
 }
