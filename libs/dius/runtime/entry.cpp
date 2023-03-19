@@ -38,10 +38,6 @@ struct ThreadControlBlock {
 extern "C" [[noreturn]] void dius_entry(int argc, char** argv, char** envp) {
     auto* elf_header = di::addressof(__ehdr_start);
 
-    static_assert(di::exec::ElfFormat::Native == di::exec::ElfFormat::LittleEndian64);
-    static_assert(di::exec::elf_format_endian(di::exec::ElfFormat::LittleEndian64) == di::Endian::Little);
-    static_assert(di::exec::elf_format_64bit(di::exec::ElfFormat::LittleEndian64));
-
     // FIXME: also consider the program header size.
     auto program_header_offset = elf_header->program_table_off;
     auto program_header_count = elf_header->program_entry_count;
@@ -81,6 +77,8 @@ extern "C" [[noreturn]] void dius_entry(int argc, char** argv, char** envp) {
 
 #ifdef DIUS_PLATFORM_LINUX
     (void) dius::system::system_call<i32>(dius::system::Number::arch_prctl, ARCH_SET_FS, thread_control_block);
+#elif defined(DIUS_PLATFORM_IROS)
+    (void) dius::system::system_call<i32>(dius::system::Number::set_userspace_thread_pointer, thread_control_block);
 #endif
 
     iptr preinit_size = __preinit_array_end - __preinit_array_start;

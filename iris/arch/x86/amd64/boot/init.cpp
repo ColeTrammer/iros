@@ -3,6 +3,7 @@
 #include <iris/arch/x86/amd64/hw/serial.h>
 #include <iris/arch/x86/amd64/idt.h>
 #include <iris/arch/x86/amd64/io_instructions.h>
+#include <iris/arch/x86/amd64/msr.h>
 #include <iris/arch/x86/amd64/segment_descriptor.h>
 #include <iris/arch/x86/amd64/system_instructions.h>
 #include <iris/arch/x86/amd64/system_segment_descriptor.h>
@@ -55,6 +56,10 @@ static auto tss = iris::x86::amd64::TSS {};
 
 void load_kernel_stack(mm::VirtualAddress base) {
     tss.rsp[0] = base.raw_value();
+}
+
+void load_userspace_thread_pointer(uptr userspace_thread_pointer) {
+    x86::amd64::write_msr(x86::amd64::ModelSpecificRegister::FsBase, userspace_thread_pointer);
 }
 
 extern "C" void bsp_cpu_init() {

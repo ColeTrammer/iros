@@ -38,6 +38,7 @@ public:
         if (m_kernel_stack.raw_value() != 0) {
             arch::load_kernel_stack(m_kernel_stack + 0x2000);
         }
+        arch::load_userspace_thread_pointer(m_userspace_thread_pointer);
         m_task_state.context_switch_to();
     }
 
@@ -68,6 +69,11 @@ public:
     mm::VirtualAddress kernel_stack() const { return m_kernel_stack; }
     void set_kernel_stack(mm::VirtualAddress kernel_stack) { m_kernel_stack = kernel_stack; }
 
+    uptr userspace_thread_pointer() const { return m_userspace_thread_pointer; }
+    void set_userspace_thread_pointer(uptr userspace_thread_pointer) {
+        m_userspace_thread_pointer = userspace_thread_pointer;
+    }
+
 private:
     arch::TaskState m_task_state;
     arch::FpuState m_fpu_state;
@@ -78,6 +84,7 @@ private:
     di::Arc<TaskStatus> m_task_status;
     di::Atomic<bool> m_waiting { false };
     mm::VirtualAddress m_kernel_stack { 0 };
+    uptr m_userspace_thread_pointer { 0 };
     FileTable m_file_table;
     TaskId m_id;
 };

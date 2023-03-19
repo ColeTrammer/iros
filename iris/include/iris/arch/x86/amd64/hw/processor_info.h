@@ -19,6 +19,7 @@ enum class ProcessorFeatures {
     Avx = (1 << 11),
     Avx2 = (1 << 12),
     Avx512 = (1 << 13),
+    FsGsBase = (1 << 14),
 };
 
 DI_DEFINE_ENUM_BITWISE_OPERATIONS(ProcessorFeatures)

@@ -129,6 +129,13 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
             TRY(task_status->wait_until_exited());
             return 0;
         }
+        case SystemCall::set_userspace_thread_pointer: {
+            auto value = task_state.syscall_arg1();
+            current_task.set_userspace_thread_pointer(value);
+
+            arch::load_userspace_thread_pointer(value);
+            return 0;
+        }
         default:
             iris::println("Encounted unexpected system call: {}"_sv, di::to_underlying(number));
             break;

@@ -83,17 +83,20 @@ Expected<void> load_executable(Task& task, di::PathView path) {
         // FIXME: handle different program header types and memory protection.
         for (auto& program_header : program_headers) {
             // PT_LOAD
-            if (program_header.type != ProgramHeaderType::Load && program_header.type != ProgramHeaderType::Tls) {
+            if (program_header.type != ProgramHeaderType::Load) {
                 continue;
             }
 
-            auto aligned_size = di::align_up(program_header.memory_size.value(), 4096);
-            auto region = di::try_box<mm::Region>(mm::VirtualAddress(program_header.virtual_addr), aligned_size,
+            auto end = program_header.virtual_addr.value() + program_header.memory_size;
+            auto aligned_end = di::align_up(end, 4096);
+            auto aligned_start = di::align_down(program_header.virtual_addr.value(), 4096);
+            auto region = di::try_box<mm::Region>(mm::VirtualAddress(aligned_start), aligned_end - aligned_start,
                                                   mm::RegionFlags::User | mm::RegionFlags::Readable |
                                                       mm::RegionFlags::Executable | mm::RegionFlags::Writable);
             (void) address_space->allocate_region_at(*di::move(region));
 
-            auto data = di::Span { reinterpret_cast<di::Byte*>(program_header.virtual_addr.value()), aligned_size };
+            auto data = di::Span { reinterpret_cast<di::Byte*>(program_header.virtual_addr.value()),
+                                   program_header.memory_size };
 
             with_userspace_access([&] {
                 di::copy(*raw_data.subspan(program_header.offset, program_header.memory_size), data.data());

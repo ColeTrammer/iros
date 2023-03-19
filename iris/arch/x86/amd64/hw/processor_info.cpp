@@ -39,6 +39,7 @@ namespace cpuid {
         Avx512Foundations = (1 << 16),
         Smep = (1 << 7),
         Avx2 = (1 << 5),
+        FsGsBase = (1 << 0),
     };
 
     DI_DEFINE_ENUM_BITWISE_OPERATIONS(FeatureFlagsEbx)
@@ -95,6 +96,7 @@ ProcessorInfo detect_processor_info() {
 
     auto feature_flags_result = cpuid::query(cpuid::Function::GetFeatureFlags);
 
+    auto supports_fs_gs_base = !!(cpuid::FeatureFlagsEbx(feature_flags_result.ebx) & cpuid::FeatureFlagsEbx::FsGsBase);
     auto supports_smep = !!(cpuid::FeatureFlagsEbx(feature_flags_result.ebx) & cpuid::FeatureFlagsEbx::Smep);
     auto supports_smap = !!(cpuid::FeatureFlagsEbx(feature_flags_result.ebx) & cpuid::FeatureFlagsEbx::Smap);
     auto supports_avx2 = !!(cpuid::FeatureFlagsEbx(feature_flags_result.ebx) & cpuid::FeatureFlagsEbx::Avx2);
@@ -133,6 +135,9 @@ ProcessorInfo detect_processor_info() {
     }
     if (supports_avx512) {
         features |= ProcessorFeatures::Avx512;
+    }
+    if (supports_fs_gs_base) {
+        features |= ProcessorFeatures::FsGsBase;
     }
     if (supports_avx) {
         features |= ProcessorFeatures::Avx;
@@ -212,6 +217,9 @@ void ProcessorInfo::print_to_console() {
     }
     if (!!(features & ProcessorFeatures::Avx512)) {
         println("Detected feature: {}"_sv, "avx512"_sv);
+    }
+    if (!!(features & ProcessorFeatures::FsGsBase)) {
+        println("Detected feature: {}"_sv, "fsgsbase"_sv);
     }
 }
 }

@@ -86,4 +86,5 @@ private:
 };
 
 void load_kernel_stack(mm::VirtualAddress base);
+void load_userspace_thread_pointer(uptr userspace_thread_pointer);
 }

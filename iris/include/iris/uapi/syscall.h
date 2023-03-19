@@ -14,5 +14,6 @@ enum class SystemCall {
     write = 9,
     close = 10,
     start_task_and_block = 11,
+    set_userspace_thread_pointer = 12,
 };
 }
