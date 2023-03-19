@@ -10,6 +10,7 @@
 #include <di/util/clamp.h>
 #include <di/util/clone.h>
 #include <di/util/compile_time_fail.h>
+#include <di/util/compiler_barrier.h>
 #include <di/util/coroutine.h>
 #include <di/util/create.h>
 #include <di/util/declval.h>
@@ -68,6 +69,7 @@ using util::as_const_pointer;
 using util::black_box;
 using util::clamp;
 using util::compile_time_fail;
+using util::compiler_barrier;
 using util::declval;
 using util::destroy_at;
 using util::exchange;

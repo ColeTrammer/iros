@@ -7,6 +7,7 @@
 #include <di/cli/prelude.h>
 #include <di/concepts/prelude.h>
 #include <di/container/prelude.h>
+#include <di/exec/prelude.h>
 #include <di/execution/prelude.h>
 #include <di/format/prelude.h>
 #include <di/function/prelude.h>

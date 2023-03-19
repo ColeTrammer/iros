@@ -7,7 +7,7 @@
 namespace di::bit {
 namespace detail {
     struct HostToLittleEndianFunction {
-        template<concepts::Integral T>
+        template<concepts::IntegralOrEnum T>
         constexpr T operator()(T value) const {
             if constexpr (Endian::Native == Endian::Little) {
                 return value;
@@ -21,7 +21,7 @@ namespace detail {
 constexpr inline auto host_to_little_endian = detail::HostToLittleEndianFunction {};
 constexpr inline auto little_endian_to_host = detail::HostToLittleEndianFunction {};
 
-template<concepts::Integral T>
+template<concepts::IntegralOrEnum T>
 class [[gnu::packed]] LittleEndian {
 public:
     LittleEndian() = default;
@@ -34,6 +34,8 @@ public:
     }
 
     constexpr operator T() const { return little_endian_to_host(m_value); }
+
+    constexpr T value() const { return *this; }
 
 private:
     template<concepts::Encoding Enc>
