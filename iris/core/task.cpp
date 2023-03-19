@@ -7,45 +7,6 @@
 #include <iris/core/userspace_access.h>
 #include <iris/fs/initrd.h>
 
-namespace elf64 {
-using Addr = u64;
-using Off = i64;
-using Half = u16;
-using Word = u32;
-using Sword = i32;
-using Xword = u64;
-using Sxword = i64;
-using Byte = di::Byte;
-
-struct ElfHeader {
-    Byte ident[16];
-    Half type;
-    Half machine;
-    Word version;
-    Addr entry;
-    Off program_table_off;
-    Off section_table_off;
-    Word flags;
-    Half elf_header_size;
-    Half program_entry_size;
-    Half program_entry_count;
-    Half section_entry_size;
-    Half section_entry_count;
-    Half string_table_section_index;
-};
-
-struct ProgramHeader {
-    Word type;
-    Word flags;
-    Off offset;
-    Addr virtual_addr;
-    Addr physical_addr;
-    Xword file_size;
-    Xword memory_size;
-    Xword align;
-};
-}
-
 namespace iris {
 Task::Task(mm::VirtualAddress entry, mm::VirtualAddress stack, bool userspace, di::Arc<mm::AddressSpace> address_space,
            di::Arc<TaskNamespace> task_namespace, TaskId id, FileTable file_table, di::Arc<TaskStatus> task_status)
@@ -104,8 +65,12 @@ Expected<di::Arc<Task>> create_user_task(TaskNamespace& task_namespace, FileTabl
 Expected<void> load_executable(Task& task, di::PathView path) {
     auto raw_data = TRY(lookup_in_initrd(path));
 
-    auto* elf_header = raw_data.typed_pointer_unchecked<elf64::ElfHeader>(0);
-    ASSERT_EQ(sizeof(elf64::ProgramHeader), elf_header->program_entry_size);
+    using ElfHeader = di::exec::ElfHeader<>;
+    using ProgramHeader = di::exec::ElfProgramHeader<>;
+    using ProgramHeaderType = di::exec::ElfProgramHeaderType;
+
+    auto* elf_header = raw_data.typed_pointer_unchecked<ElfHeader>(0);
+    ASSERT_EQ(sizeof(ProgramHeader), elf_header->program_entry_size);
 
     // FIXME: consider disabling preemption instead.
     auto address_space = task.address_space().lock();
@@ -113,22 +78,22 @@ Expected<void> load_executable(Task& task, di::PathView path) {
         auto& current_address_space = global_state().scheduler.current_address_space();
         address_space->base().load();
 
-        auto program_headers = raw_data.typed_span_unchecked<elf64::ProgramHeader>(elf_header->program_table_off,
-                                                                                   elf_header->program_entry_count);
+        auto program_headers = raw_data.typed_span_unchecked<ProgramHeader>(elf_header->program_table_off,
+                                                                            elf_header->program_entry_count);
         // FIXME: handle different program header types and memory protection.
         for (auto& program_header : program_headers) {
             // PT_LOAD
-            if (program_header.type != 1) {
+            if (program_header.type != ProgramHeaderType::Load && program_header.type != ProgramHeaderType::Tls) {
                 continue;
             }
 
-            auto aligned_size = di::align_up(program_header.memory_size, 4096);
+            auto aligned_size = di::align_up(program_header.memory_size.value(), 4096);
             auto region = di::try_box<mm::Region>(mm::VirtualAddress(program_header.virtual_addr), aligned_size,
                                                   mm::RegionFlags::User | mm::RegionFlags::Readable |
                                                       mm::RegionFlags::Executable | mm::RegionFlags::Writable);
             (void) address_space->allocate_region_at(*di::move(region));
 
-            auto data = di::Span { reinterpret_cast<di::Byte*>(program_header.virtual_addr), aligned_size };
+            auto data = di::Span { reinterpret_cast<di::Byte*>(program_header.virtual_addr.value()), aligned_size };
 
             with_userspace_access([&] {
                 di::copy(*raw_data.subspan(program_header.offset, program_header.memory_size), data.data());
