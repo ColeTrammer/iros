@@ -4,8 +4,8 @@
 void* operator new(std::size_t size) {
     return ::operator new(size, std::align_val_t { alignof(void*) });
 }
-void* operator new(std::size_t size, std::align_val_t) {
-    auto* result = ::operator new(size, std::align_val_t { alignof(void*) }, std::nothrow);
+void* operator new(std::size_t size, std::align_val_t alignment) {
+    auto* result = ::operator new(size, alignment, std::nothrow);
     ASSERT(result);
     return result;
 }
