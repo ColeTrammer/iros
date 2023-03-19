@@ -59,7 +59,11 @@ void load_kernel_stack(mm::VirtualAddress base) {
 }
 
 void load_userspace_thread_pointer(uptr userspace_thread_pointer) {
-    x86::amd64::write_msr(x86::amd64::ModelSpecificRegister::FsBase, userspace_thread_pointer);
+    if (global_state().processor_info.has_fs_gs_base()) {
+        x86::amd64::write_fs_base(userspace_thread_pointer);
+    } else {
+        x86::amd64::write_msr(x86::amd64::ModelSpecificRegister::FsBase, userspace_thread_pointer);
+    }
 }
 
 extern "C" void bsp_cpu_init() {
@@ -82,6 +86,11 @@ extern "C" void bsp_cpu_init() {
     if (!!(global_state.processor_info.features & ProcessorFeatures::Smap)) {
         iris::println("Enabling SMAP..."_sv);
         x86::amd64::load_cr4(x86::amd64::read_cr4() | (1 << 21));
+    }
+
+    if (global_state.processor_info.has_fs_gs_base()) {
+        iris::println("Enabling FS/GS Base..."_sv);
+        x86::amd64::load_cr4(x86::amd64::read_cr4() | (1 << 16));
     }
 
     x86::amd64::idt::init_idt();

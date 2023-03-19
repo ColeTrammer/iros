@@ -35,6 +35,7 @@ struct ProcessorInfo {
     void print_to_console();
 
     bool has_xsave() const { return (fpu_valid_xcr0 & 0b11) == 0b11 && !!(features & ProcessorFeatures::Xsave); }
+    bool has_fs_gs_base() const { return !!(features & ProcessorFeatures::FsGsBase); }
 };
 
 ProcessorInfo detect_processor_info();

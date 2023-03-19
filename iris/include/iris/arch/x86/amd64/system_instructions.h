@@ -85,4 +85,11 @@ static inline void xsetbv(u32 reg, u64 value) {
     auto high = u32(value >> 32);
     asm volatile("xsetbv" : : "a"(low), "c"(reg), "d"(high));
 }
+
+/// @brief Set the fs base register value.
+///
+/// @warning Calling this function requires that CPU support has been detected and enabled.
+static inline void write_fs_base(u64 value) {
+    asm volatile("wrfsbase %0" : : "r"(value));
+}
 }
