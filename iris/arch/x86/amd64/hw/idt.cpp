@@ -69,7 +69,7 @@ template<int irq_number>
                  "push %%r14\n"
                  "push %%r15\n "
 
-                 "mov $4, %%rdi\n"
+                 "mov %0, %%rdi\n"
                  "mov %%rsp, %%rsi\n"
                  "mov %%rax, %%rdx\n"
                  "callq generic_irq_handler\n"
