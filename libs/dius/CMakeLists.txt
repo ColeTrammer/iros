@@ -162,3 +162,7 @@ if (IROS_UseDiusRuntime)
       dius_runtime
   )
 endif()
+
+if (IROS_BuildTests)
+    add_subdirectory(tests)
+endif()

@@ -29,13 +29,58 @@ extern "C" [[noreturn]] [[gnu::naked]] void _start() {
 #endif
 }
 
-#ifdef DIUS_PLATFORM_LINUX
-static char buffer[4096];
-#endif
+extern "C" di::exec::ElfHeader<> __ehdr_start;
 
-extern "C" void dius_entry(int argc, char** argv, char** envp) {
+struct ThreadControlBlock {
+    ThreadControlBlock* self;
+};
+
+extern "C" [[noreturn]] void dius_entry(int argc, char** argv, char** envp) {
+    auto* elf_header = di::addressof(__ehdr_start);
+
+    static_assert(di::exec::ElfFormat::Native == di::exec::ElfFormat::LittleEndian64);
+    static_assert(di::exec::elf_format_endian(di::exec::ElfFormat::LittleEndian64) == di::Endian::Little);
+    static_assert(di::exec::elf_format_64bit(di::exec::ElfFormat::LittleEndian64));
+
+    // FIXME: also consider the program header size.
+    auto program_header_offset = elf_header->program_table_off;
+    auto program_header_count = elf_header->program_entry_count;
+
+    // NOTE: we don't need to validate the executable since the kernel already did, and the worst we can do is crash.
+    auto program_headers = di::Span { reinterpret_cast<di::exec::ElfProgramHeader<> const*>(
+                                          reinterpret_cast<di::Byte const*>(elf_header) + program_header_offset),
+                                      program_header_count };
+
+    auto [tls_address, tls_data_size, tls_size, tls_alignment] = [&] -> di::Tuple<uptr, usize, usize, usize> {
+        auto tls_segment = di::find_if(program_headers, [](auto const& header) {
+            return header.type == di::exec::ElfProgramHeaderType::Tls;
+        });
+
+        if (tls_segment == program_headers.end()) {
+            return di::make_tuple(0, 0, 0, 16);
+        }
+        auto address = tls_segment->virtual_addr;
+        auto data_size = tls_segment->file_size;
+        auto size = tls_segment->memory_size;
+        auto alignment = tls_segment->align;
+        return di::make_tuple(address, data_size, size, alignment);
+    }();
+
+    // Setup TLS.
+    auto alignment = di::max(tls_alignment, alignof(ThreadControlBlock));
+    auto size = di::align_up(tls_size, alignment) + sizeof(ThreadControlBlock);
+    auto* storage = reinterpret_cast<di::Byte*>(::operator new(size, std::align_val_t { alignment }, std::nothrow));
+    ASSERT(storage);
+
+    auto* thread_control_block = reinterpret_cast<ThreadControlBlock*>(storage + di::align_up(tls_size, alignment));
+    auto* tls = reinterpret_cast<di::Byte*>(thread_control_block) - tls_size;
+
+    thread_control_block->self = thread_control_block;
+    di::copy_n(reinterpret_cast<di::Byte const*>(tls_address), tls_data_size, tls);
+    di::fill_n(tls + tls_data_size, tls_size - tls_data_size, 0_b);
+
 #ifdef DIUS_PLATFORM_LINUX
-    (void) dius::system::system_call<i32>(dius::system::Number::arch_prctl, ARCH_SET_FS, buffer + 4096, 0, 0, 0, 0);
+    (void) dius::system::system_call<i32>(dius::system::Number::arch_prctl, ARCH_SET_FS, thread_control_block);
 #endif
 
     iptr preinit_size = __preinit_array_end - __preinit_array_start;
