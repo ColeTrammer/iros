@@ -98,8 +98,10 @@ Expected<void> load_executable(Task& task, di::PathView path) {
             auto data = di::Span { reinterpret_cast<di::Byte*>(program_header.virtual_addr.value()),
                                    program_header.memory_size };
 
+            auto zero_fill = program_header.memory_size - program_header.file_size;
             with_userspace_access([&] {
-                di::copy(*raw_data.subspan(program_header.offset, program_header.memory_size), data.data());
+                di::copy(*raw_data.subspan(program_header.offset, program_header.file_size), data.data());
+                di::fill_n(data.data() + program_header.file_size, zero_fill, 0_b);
             });
         }
         current_address_space.load();
