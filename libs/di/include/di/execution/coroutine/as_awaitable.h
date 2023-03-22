@@ -34,7 +34,7 @@ namespace as_awaitable_ns {
 
         template<concepts::ForwardingReceiverQuery Tag, typename... Args>
         constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
-            -> decltype(tag(self.continuation.promise(), util::forward<Args>(args)...)) {
+            -> meta::InvokeResult<Tag, Promise const&, Args...> {
             return tag(self.continuation.promise(), util::forward<Args>(args)...);
         }
     };
@@ -75,7 +75,7 @@ namespace as_awaitable_ns {
             } else if constexpr (concepts::Awaitable<T>) {
                 return util::forward<T>(value);
             } else if constexpr (concepts::AwaitableSender<T, Promise>) {
-                return SenderAwaitable { util::forward<T>(value), promise };
+                return SenderAwaitable<T, Promise> { util::forward<T>(value), promise };
             } else {
                 return util::forward<T>(value);
             }

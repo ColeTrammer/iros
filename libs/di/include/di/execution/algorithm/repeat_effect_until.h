@@ -27,10 +27,10 @@ namespace repeat_effect_until_ns {
         public:
             explicit Type(OperationState<Send, Rec, Pred>* data) : m_op_state(data) {}
 
-        private:
             Rec const& base() const& { return m_op_state->m_receiver; }
             Rec&& base() && { return util::move(m_op_state->m_receiver); }
 
+        private:
             void set_value() && { m_op_state->repeat_effect(); }
 
             OperationState<Send, Rec, Pred>* m_op_state;
@@ -99,7 +99,7 @@ namespace repeat_effect_until_ns {
 
             template<concepts::ForwardingSenderQuery Tag, typename... Args>
             constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
-                -> decltype(tag(self.sender, util::forward<Args>(args)...)) {
+                -> meta::InvokeResult<Tag, Send const&, Args...> {
                 return tag(self.sender, util::forward<Args>(args)...);
             }
         };

@@ -38,12 +38,11 @@ namespace receiver_interface_ns {
             template<typename S>
             using GetDerivedBase = decltype(util::declval<S>().base());
 
-            template<typename S>
             using BaseTypeImpl =
                 meta::Conditional<has_base, meta::BindBack<meta::Quote<meta::Like>, Base>, meta::Quote<GetDerivedBase>>;
 
             template<typename S>
-            using BaseType = meta::Invoke<BaseTypeImpl<S>, S&&>;
+            using BaseType = meta::Invoke<BaseTypeImpl, S&&>;
 
             // The base receiver is either stored in the adaptor itself, or in the
             // derived class. The type of this function must be explicitly provided,

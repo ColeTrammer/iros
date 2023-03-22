@@ -68,10 +68,10 @@ namespace schedule_from_ns {
     public:
         explicit Type(Data<Rec, Sched, Completions>* data) : m_data(data) {}
 
-    private:
         Rec const& base() const& { return m_data->out_r; }
         Rec&& base() && { return util::move(m_data->out_r); }
 
+    private:
         void set_value() && {
             visit(
                 [&]<typename T>(T&& value) {
@@ -100,26 +100,31 @@ namespace schedule_from_ns {
         public:
             explicit Type(Data<Rec, Sched, Completions>* data) : m_data(data) {}
 
-        private:
             Rec const& base() const& { return m_data->out_r; }
             Rec&& base() && { return util::move(m_data->out_r); }
 
-            Data<Rec, Sched, Completions>* m_data;
-
+        private:
             template<typename... Args>
-            requires(requires { m_data->phase2(SetValue {}, util::declval<Args>()...); })
+            requires(requires {
+                         util::declval<Data<Rec, Sched, Completions>&>().phase2(SetValue {}, util::declval<Args>()...);
+                     })
             void set_value(Args&&... args) && {
                 return m_data->phase2(SetValue {}, util::forward<Args>(args)...);
             }
 
             template<typename Error>
-            requires(requires { m_data->phase2(SetError {}, util::declval<Error>()); })
+            requires(requires {
+                         util::declval<Data<Rec, Sched, Completions>&>().phase2(SetError {}, util::declval<Error>());
+                     })
             void set_error(Error&& error) && {
                 return m_data->phase2(SetError {}, util::forward<Error>(error));
             }
 
-            void set_stopped() &&
-                requires(requires { m_data->phase2(SetStopped {}); }) { return m_data->phase2(SetStopped {}); }
+            void set_stopped() && requires(requires {
+                                               util::declval<Data<Rec, Sched, Completions>&>().phase2(SetStopped {});
+                                           }) { return m_data->phase2(SetStopped {}); }
+
+                Data<Rec, Sched, Completions>* m_data;
         };
     };
 
@@ -186,7 +191,7 @@ namespace schedule_from_ns {
             requires(!concepts::OneOf<Tag, GetCompletionScheduler<SetValue>, GetCompletionScheduler<SetError>,
                                       GetCompletionScheduler<SetStopped>>)
             constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
-                -> decltype(tag(self.sender, util::forward<Args>(args)...)) {
+                -> meta::InvokeResult<Tag, Send const&, Args...> {
                 return tag(self.sender, util::forward<Args>(args)...);
             }
         };

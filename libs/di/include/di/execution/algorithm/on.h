@@ -28,9 +28,9 @@ namespace on_ns {
             constexpr friend auto tag_invoke(types::Tag<get_scheduler>, Type const& self) { return self.scheduler; }
 
             template<concepts::ForwardingEnvQuery Tag>
-            constexpr friend decltype(auto) tag_invoke(types::Tag<get_env> tag, Type const& self)
-            requires(!concepts::SameAs<Tag, types::Tag<get_scheduler>> && requires { tag(self.base); })
-            {
+            requires(!concepts::SameAs<Tag, types::Tag<get_scheduler>>)
+            constexpr friend auto tag_invoke(types::Tag<get_env> tag, Type const& self)
+                -> meta::InvokeResult<Tag, Base const&> {
                 return tag(self.base);
             }
         };
@@ -49,10 +49,10 @@ namespace on_ns {
         public:
             explicit Type(OperationState<Send, Rec, Sched>* operation_state) : m_operation_state(operation_state) {}
 
-        private:
             Rec const& base() const& { return m_operation_state->receiver; }
             Rec&& base() && { return util::move(m_operation_state->receiver); }
 
+        private:
             Env<meta::EnvOf<Rec>, Sched> get_env() const {
                 return { execution::get_env(base()), m_operation_state->scheduler };
             }
@@ -74,10 +74,10 @@ namespace on_ns {
         public:
             explicit Type(OperationState<Send, Rec, Sched>* operation_state) : m_operation_state(operation_state) {}
 
-        private:
             Rec const& base() const& { return m_operation_state->receiver; }
             Rec&& base() && { return util::move(m_operation_state->receiver); }
 
+        private:
             void set_value() && { m_operation_state->phase2(); }
 
             OperationState<Send, Rec, Sched>* m_operation_state;
@@ -144,7 +144,7 @@ namespace on_ns {
 
             template<concepts::ForwardingSenderQuery Tag, typename... Args>
             constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
-                -> decltype(tag(self.sender, util::forward<Args>(args)...)) {
+                -> meta::InvokeResult<Tag, Send const&, Args...> {
                 return tag(self.sender, util::forward<Args>(args)...);
             }
         };

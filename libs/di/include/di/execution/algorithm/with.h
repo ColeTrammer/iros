@@ -94,10 +94,10 @@ namespace with_ns {
     public:
         explicit Type(Data<Rec, Fun, Value, Completions>* data) : m_data(data) {}
 
-    private:
         Rec const& base() const& { return m_data->out_r; }
         Rec&& base() && { return util::move(m_data->out_r); }
 
+    private:
         void set_value() && {
             visit(
                 [&]<typename T>(T&& value) {
@@ -125,10 +125,10 @@ namespace with_ns {
     public:
         explicit Type(Data<Rec, Fun, Value, Completions>* data) : m_data(data) {}
 
-    private:
         Rec const& base() const& { return m_data->out_r; }
         Rec&& base() && { return util::move(m_data->out_r); }
 
+    private:
         Data<Rec, Fun, Value, Completions>* m_data;
 
         template<typename... Args>
@@ -153,10 +153,10 @@ namespace with_ns {
         public:
             explicit Type(Data<Rec, Fun, Value, Completions>* data) : m_data(data) {}
 
-        private:
             Rec const& base() const& { return m_data->out_r; }
             Rec&& base() && { return util::move(m_data->out_r); }
 
+        private:
             Data<Rec, Fun, Value, Completions>* m_data;
 
             template<typename... Args>
@@ -232,7 +232,7 @@ namespace with_ns {
 
             template<concepts::ForwardingSenderQuery Tag, typename... Args>
             constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
-                -> decltype(tag(self.sender, util::forward<Args>(args)...)) {
+                -> meta::InvokeResult<Tag, Send const&, Args...> {
                 return tag(self.sender, util::forward<Args>(args)...);
             }
         };

@@ -118,7 +118,7 @@ namespace then_ns {
 
             template<concepts::ForwardingSenderQuery Tag, typename... Args>
             constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
-                -> decltype(tag(self.sender, util::forward<Args>(args)...)) {
+                -> meta::InvokeResult<Tag, Send const&, Args...> {
                 return tag(self.sender, util::forward<Args>(args)...);
             }
         };

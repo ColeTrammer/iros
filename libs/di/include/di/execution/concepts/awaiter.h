@@ -12,13 +12,13 @@ namespace detail {
     template<typename Promise, typename Awaiter>
     decltype(auto) do_await_suspend(Awaiter& awaiter) {
         if constexpr (!concepts::SameAs<Promise, void>) {
-            return awaiter.await_suspend(CoroutineHandle<Promise> {});
+            return awaiter.await_suspend(std::coroutine_handle<Promise> {});
         }
     }
 
     // The result of await_suspend() can either be void, a bool, or a coroutine handle.
     template<typename T>
-    concept ValidAwaitSuspendResult = concepts::OneOf<T, void, bool> || concepts::InstanceOf<T, CoroutineHandle>;
+    concept ValidAwaitSuspendResult = concepts::OneOf<T, void, bool> || concepts::InstanceOf<T, std::coroutine_handle>;
 }
 
 // An awaiter object requires 3 methods: await_ready(), await_suspend(), and await_resume().

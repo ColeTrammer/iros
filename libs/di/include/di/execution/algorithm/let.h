@@ -71,22 +71,23 @@ namespace let_ns {
         private:
             template<concepts::SameAs<CPO> Tag, typename... Args>
             friend void tag_invoke(Tag, Type&& self, Args&&... args)
-            requires(requires { self.data->phase2(util::forward<Args>(args)...); })
+            requires(requires {
+                         util::declval<Data<CPO, Rec, Fun, Completions>&>().phase2(util::forward<Args>(args)...);
+                     })
             {
                 self.data->phase2(util::forward<Args>(args)...);
             }
 
             template<concepts::OneOf<SetValue, SetError, SetStopped> Tag, typename... Args>
             friend void tag_invoke(Tag tag, Type&& self, Args&&... args)
-            requires(!concepts::SameAs<Tag, CPO> &&
-                     requires { tag(util::move(self.data->out_r), util::forward<Args>(args)...); })
+            requires(!concepts::SameAs<Tag, CPO> && concepts::Invocable<Tag, Rec, Args...>)
             {
                 return tag(util::move(self.data->out_r), util::forward<Args>(args)...);
             }
 
             template<concepts::ForwardingReceiverQuery Tag, typename... Args>
             constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
-                -> decltype(tag(self.data->out_r, util::forward<Args>(args)...)) {
+                -> meta::InvokeResult<Tag, Rec const&, Args...> {
                 return tag(self.data->out_r, util::forward<Args>(args)...);
             }
         };
@@ -167,7 +168,7 @@ namespace let_ns {
 
             template<concepts::ForwardingSenderQuery Tag, typename... Args>
             constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
-                -> decltype(tag(self.sender, util::forward<Args>(args)...)) {
+                -> meta::InvokeResult<Tag, Send const&, Args...> {
                 return tag(self.sender, util::forward<Args>(args)...);
             }
         };
