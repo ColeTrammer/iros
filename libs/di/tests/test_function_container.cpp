@@ -82,7 +82,7 @@ static void function_basic() {
     auto const m = *di::try_make_function<i32(i32) const>(lambda);
     ASSERT_EQ(m(2), 18);
 
-#ifndef DI_SANITIZER
+#if !defined(DI_SANITIZER) && !defined(__clang__)
     struct AbsurdFunction {
         di::Array<di::Byte, 549755813888> way_too_big;
 

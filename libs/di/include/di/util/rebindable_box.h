@@ -93,8 +93,8 @@ public:
     constexpr RebindableBox(types::InPlace, Args&&... args) : m_storage(util::forward<Args>(args)...) {}
 
     template<typename U, typename... Args>
-    requires(concepts::ConstructibleFrom<Storage, util::InitializerList<U>, Args...>)
-    constexpr RebindableBox(types::InPlace, util::InitializerList<U> list, Args&&... args)
+    requires(concepts::ConstructibleFrom<Storage, std::initializer_list<U>, Args...>)
+    constexpr RebindableBox(types::InPlace, std::initializer_list<U> list, Args&&... args)
         : m_storage(list, util::forward<Args>(args)...) {}
 
     constexpr ~RebindableBox() = default;
@@ -152,8 +152,8 @@ public:
     }
 
     template<typename U, typename... Args>
-    requires(concepts::ConstructibleFrom<T, util::InitializerList<U>, Args...>)
-    constexpr T& emplace(util::InitializerList<U> list, Args&&... args) {
+    requires(concepts::ConstructibleFrom<T, std::initializer_list<U>, Args...>)
+    constexpr T& emplace(std::initializer_list<U> list, Args&&... args) {
         util::destroy_at(util::addressof(m_storage));
         util::construct_at(util::addressof(m_storage), list, util::forward<Args>(args)...);
         return value();

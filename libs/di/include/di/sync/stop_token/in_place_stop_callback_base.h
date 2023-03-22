@@ -5,7 +5,7 @@
 #include <di/sync/stop_token/forward_declaration.h>
 
 namespace di::sync::detail {
-struct InPlaceStopCallbackBase : container::IntrusiveListNode<> {
+class InPlaceStopCallbackBase : public container::IntrusiveListNode<> {
 private:
     friend class ::di::sync::InPlaceStopSource;
 

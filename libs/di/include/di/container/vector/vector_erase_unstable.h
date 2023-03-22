@@ -12,7 +12,7 @@ template<concepts::detail::MutableVector Vec, typename Iter = meta::detail::Vect
          typename CIter = meta::detail::VectorConstIterator<Vec>>
 constexpr Iter erase_unstable(Vec& vector, CIter citerator) {
     auto last = vector::end(vector) - 1;
-    auto iterator = vector::iterator(vector, iterator);
+    auto iterator = vector::iterator(vector, citerator);
     util::swap(*iterator, *last);
     util::destroy_at(last);
     return iterator;

@@ -101,8 +101,8 @@ public:
         : m_has_error(false), m_value(types::in_place, util::forward<Args>(args)...) {}
 
     template<typename U, typename... Args>
-    requires(concepts::ConstructibleFrom<T, util::InitializerList<U>, Args...>)
-    constexpr explicit Expected(types::InPlace, util::InitializerList<U> list, Args&&... args)
+    requires(concepts::ConstructibleFrom<T, std::initializer_list<U>, Args...>)
+    constexpr explicit Expected(types::InPlace, std::initializer_list<U> list, Args&&... args)
         : m_has_error(false), m_value(types::in_place, list, util::forward<Args>(args)...) {}
 
     template<typename... Args>
@@ -111,8 +111,8 @@ public:
         : m_has_error(true), m_error(types::in_place, util::forward<Args>(args)...) {}
 
     template<typename U, typename... Args>
-    requires(concepts::ConstructibleFrom<E, util::InitializerList<U>, Args...>)
-    constexpr explicit Expected(types::Unexpect, util::InitializerList<U> list, Args&&... args)
+    requires(concepts::ConstructibleFrom<E, std::initializer_list<U>, Args...>)
+    constexpr explicit Expected(types::Unexpect, std::initializer_list<U> list, Args&&... args)
         : m_has_error(true), m_error(types::in_place, list, util::forward<Args>(args)...) {}
 
     constexpr ~Expected() = default;
@@ -229,8 +229,8 @@ public:
     }
 
     template<typename U, typename... Args>
-    requires(concepts::ConstructibleFrom<T, util::InitializerList<U>, Args...>)
-    constexpr T& emplace(util::InitializerList<U> list, Args&&... args) {
+    requires(concepts::ConstructibleFrom<T, std::initializer_list<U>, Args...>)
+    constexpr T& emplace(std::initializer_list<U> list, Args&&... args) {
         return internal_emplace(list, util::forward<Args>(args)...);
     }
 
@@ -386,7 +386,7 @@ private:
     }
 
     template<typename U, typename... Args>
-    constexpr T& internal_emplace(util::InitializerList<U> list, Args&&... args) {
+    constexpr T& internal_emplace(std::initializer_list<U> list, Args&&... args) {
         if (this->has_value()) {
             m_value.emplace(list, util::forward<Args>(args)...);
         } else {

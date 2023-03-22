@@ -12,31 +12,50 @@
 #include <di/util/source_location.h>
 
 namespace di::assert::detail {
-template<auto source_text>
-constexpr void do_assert(bool b, util::SourceLocation loc);
+[[noreturn]] inline void do_assert_fail(char const* message, util::SourceLocation loc);
 
-template<auto source_text, typename F, typename T, typename U>
-constexpr void do_binary_assert(F op, T&& a, U&& b, util::SourceLocation loc);
+template<typename T, typename U>
+[[noreturn]] inline void do_binary_assert_fail(char const* message, T&& a, U&& b, util::SourceLocation loc);
+
+constexpr void do_assert(bool b, char const* message, util::SourceLocation loc) {
+    if (!b) {
+        if consteval {
+            di::util::compile_time_fail<>();
+        } else {
+            do_assert_fail(message, loc);
+        }
+    }
 }
 
-#define DI_ASSERT(...)                                                                               \
-    di::assert::detail::do_assert<di::container::FixedString { "" #__VA_ARGS__ }>(bool(__VA_ARGS__), \
-                                                                                  di::util::SourceLocation::current())
-#define DI_ASSERT_EQ(a, b)                                                                \
-    di::assert::detail::do_binary_assert<di::container::FixedString { "" #a " == " #b }>( \
-        di::function::equal, (a), (b), di::util::SourceLocation::current())
-#define DI_ASSERT_NOT_EQ(a, b)                                                            \
-    di::assert::detail::do_binary_assert<di::container::FixedString { "" #a " != " #b }>( \
-        di::function::not_equal, (a), (b), di::util::SourceLocation::current())
-#define DI_ASSERT_LT(a, b)                                                               \
-    di::assert::detail::do_binary_assert<di::container::FixedString { "" #a " < " #b }>( \
-        di::function::less, (a), (b), di::util::SourceLocation::current())
-#define DI_ASSERT_LT_EQ(a, b)                                                             \
-    di::assert::detail::do_binary_assert<di::container::FixedString { "" #a " <= " #b }>( \
-        di::function::equal_or_less, (a), (b), di::util::SourceLocation::current())
-#define DI_ASSERT_GT(a, b)                                                               \
-    di::assert::detail::do_binary_assert<di::container::FixedString { "" #a " > " #b }>( \
-        di::function::greater, (a), (b), di::util::SourceLocation::current())
-#define DI_ASSERT_GT_EQ(a, b)                                                             \
-    di::assert::detail::do_binary_assert<di::container::FixedString { "" #a " >= " #b }>( \
-        di::function::equal_or_greater, (a), (b), di::util::SourceLocation::current())
+template<typename F, typename T, typename U>
+constexpr void do_binary_assert(F op, char const* message, T&& a, U&& b, util::SourceLocation loc) {
+    if (!op(a, b)) {
+        if consteval {
+            di::util::compile_time_fail<>();
+        } else {
+            do_binary_assert_fail(message, util::forward<T>(a), util::forward<U>(b), loc);
+        }
+    }
+}
+}
+
+#define DI_ASSERT(...) \
+    di::assert::detail::do_assert(bool(__VA_ARGS__), "" #__VA_ARGS__, di::util::SourceLocation::current())
+#define DI_ASSERT_EQ(a, b)                                                               \
+    di::assert::detail::do_binary_assert(di::function::equal, "" #a " == " #b, (a), (b), \
+                                         di::util::SourceLocation::current())
+#define DI_ASSERT_NOT_EQ(a, b)                                                               \
+    di::assert::detail::do_binary_assert(di::function::not_equal, "" #a " != " #b, (a), (b), \
+                                         di::util::SourceLocation::current())
+#define DI_ASSERT_LT(a, b)                                                             \
+    di::assert::detail::do_binary_assert(di::function::less, "" #a " < " #b, (a), (b), \
+                                         di::util::SourceLocation::current())
+#define DI_ASSERT_LT_EQ(a, b)                                                                    \
+    di::assert::detail::do_binary_assert(di::function::equal_or_less, "" #a " <= " #b, (a), (b), \
+                                         di::util::SourceLocation::current())
+#define DI_ASSERT_GT(a, b)                                                                \
+    di::assert::detail::do_binary_assert(di::function::greater, "" #a " > " #b, (a), (b), \
+                                         di::util::SourceLocation::current())
+#define DI_ASSERT_GT_EQ(a, b)                                                                       \
+    di::assert::detail::do_binary_assert(di::function::equal_or_greater, "" #a " >= " #b, (a), (b), \
+                                         di::util::SourceLocation::current())

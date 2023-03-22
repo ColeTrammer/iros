@@ -17,12 +17,13 @@ namespace detail {
     template<size_t... indices, typename R, typename Vis, typename... Vars>
     requires(requires {
                  {
-                     function::invoke(util::declval<Vis>(), util::get<indices>(util::declval<Vars>())...)
+                     function::invoke_r<R>(util::declval<Vis>(), util::get<indices>(util::declval<Vars>())...)
                      } -> concepts::ImplicitlyConvertibleTo<R>;
              })
     struct VisitHelper<meta::List<meta::SizeConstant<indices>...>, R, Vis, Vars...> {
         constexpr static R call(Vis&& visitor, Vars&&... variants) {
-            return function::invoke(util::forward<Vis>(visitor), util::get<indices>(util::forward<Vars>(variants))...);
+            return function::invoke_r<R>(util::forward<Vis>(visitor),
+                                         util::get<indices>(util::forward<Vars>(variants))...);
         }
     };
 }
@@ -36,14 +37,14 @@ requires(requires {
              (Indices {});
          })
 constexpr R visit(Vis&& visitor, Vars&&... variants) {
-    constexpr auto table = []<concepts::TypeList... Idx>(meta::List<Idx...>) {
+    auto table = []<concepts::TypeList... Idx>(meta::List<Idx...>) {
         return Array { (&detail::VisitHelper<Idx, R, Vis, Vars...>::call)... };
     }
     (Indices {});
 
     auto span = MDSpan { table.data(), Extents<size_t, meta::VariantSize<Vars>...> {} };
 
-    auto f = span[variant_index(variants)...];
+    auto f = span(vocab::variant_index(variants)...);
     return f(util::forward<Vis>(visitor), util::forward<Vars>(variants)...);
 }
 

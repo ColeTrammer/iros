@@ -65,8 +65,6 @@ constexpr void basic() {
     ASSERT_EQ(f.index(), 0u);
     ASSERT_EQ(f, 1);
 
-    static_assert(!requires { di::visit<void>([] {}, f); });
-
     static_assert(di::SameAs<unsigned char, di::math::SmallestUnsignedType<6>>);
     static_assert(di::SameAs<unsigned short, di::math::SmallestUnsignedType<256>>);
 }

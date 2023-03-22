@@ -142,10 +142,12 @@ private:
             return a.distance_from(b.m_iterators);
         }
 
-        constexpr friend bool operator==(Iterator const& a, DefaultSentinel) {
+        constexpr friend bool operator==(Iterator const& a, DefaultSentinel) { return a.at_end(); }
+
+        constexpr bool at_end() const {
             return function::unpack<meta::MakeIndexSequence<1 + sizeof...(Rest)>>([&]<size_t... indices>(
                 meta::IndexSequence<indices...>) {
-                return ((util::get<indices>(a.m_iterators) == container::end(util::get<indices>(m_parent->m_bases))) ||
+                return ((util::get<indices>(m_iterators) == container::end(util::get<indices>(m_parent->m_bases))) ||
                         ...);
             });
         }
@@ -154,11 +156,15 @@ private:
         requires(
             detail::CartesianSentinelIsSized<meta::MaybeConst<is_const, First>, meta::MaybeConst<is_const, Rest>...>)
         {
+            return a.distance_to_end();
+        }
+
+        constexpr auto distance_to_end() const {
             auto end_tuple = function::unpack<meta::MakeIndexSequence<1 + sizeof...(Rest)>>([&]<size_t... indices>(
                 meta::IndexSequence<indices...>) {
                 return make_tuple(container::end(util::get<indices>(m_parent->m_bases))...);
             });
-            return a.distance_to(end_tuple);
+            return distance_to(end_tuple);
         }
 
         constexpr friend auto operator-(DefaultSentinel, Iterator const& b)

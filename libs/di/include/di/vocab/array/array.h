@@ -7,6 +7,8 @@
 #include <di/concepts/three_way_comparable.h>
 #include <di/container/algorithm/compare.h>
 #include <di/container/algorithm/equal.h>
+#include <di/container/algorithm/fill.h>
+#include <di/container/algorithm/swap_ranges.h>
 #include <di/container/interface/reconstruct.h>
 #include <di/types/size_t.h>
 #include <di/util/forward_like.h>
@@ -86,9 +88,7 @@ public:
     constexpr void fill(T const& value)
     requires(concepts::Copyable<T>)
     {
-        for (auto& lvalue : *this) {
-            lvalue = value;
-        }
+        container::fill(*this, value);
     }
 
     constexpr auto span() { return Span { *this }; }
@@ -182,9 +182,7 @@ private:
     constexpr friend void tag_invoke(types::Tag<util::swap>, Array& a, Array& b)
     requires(concepts::Swappable<T>)
     {
-        for (types::size_t i = 0; i < extent; i++) {
-            util::swap(a[i], b[i]);
-        }
+        container::swap_ranges(a, b);
     }
 
     constexpr friend bool tag_invoke(types::Tag<vocab::enable_generate_structed_bindings>, types::InPlaceType<Array>) {
@@ -253,19 +251,19 @@ struct Array<T, 0> {
     constexpr auto span() const { return Span { *this }; }
 
 private:
-    constexpr friend bool operator==(Array const& a, Array const& b)
+    constexpr friend bool operator==(Array const&, Array const&)
     requires(concepts::EqualityComparable<T>)
     {
         return true;
     }
 
-    constexpr friend auto operator<=>(Array const& a, Array const& b)
+    constexpr friend auto operator<=>(Array const&, Array const&)
     requires(concepts::ThreeWayComparable<T>)
     {
         return strong_ordering::equal;
     }
 
-    constexpr friend void tag_invoke(types::Tag<util::swap>, Array& a, Array& b)
+    constexpr friend void tag_invoke(types::Tag<util::swap>, Array&, Array&)
     requires(concepts::Swappable<T>)
     {}
 

@@ -21,7 +21,7 @@ namespace detail {
 
         template<concepts::Copyable T, typename Proj = function::Identity,
                  concepts::IndirectStrictWeakOrder<meta::Projected<T const*, Proj>> Comp = function::Compare>
-        constexpr MinMaxResult<T> operator()(util::InitializerList<T> list, Comp comp = {}, Proj proj = {}) const {
+        constexpr MinMaxResult<T> operator()(std::initializer_list<T> list, Comp comp = {}, Proj proj = {}) const {
             auto result = container::minmax_element(list, util::ref(comp), util::ref(proj));
             return { *result.min, *result.max };
         }

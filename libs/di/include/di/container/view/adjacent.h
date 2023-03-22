@@ -12,7 +12,7 @@ namespace detail {
         template<concepts::ViewableContainer Con>
         constexpr concepts::View auto operator()(Con&& container) const {
             if constexpr (N == 0) {
-                return empty<Tuple<>>();
+                return empty<Tuple<>>;
             } else {
                 return AdjacentView<meta::AsView<Con>, N>(util::forward<Con>(container));
             }

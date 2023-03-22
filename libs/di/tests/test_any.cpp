@@ -57,12 +57,12 @@ constexpr void vtable() {
 
     using VTable = di::any::InlineVTable::Invoke<Interface>;
 
-    constexpr di::concepts::VTableFor<Interface> auto vtable = VTable::create_for<Storage, i32&>();
+    /* di::concepts::VTableFor<Interface> */ auto vtable = VTable::create_for<Storage, i32&>();
     (void) vtable;
 
     using VTable2 = di::any::OutOfLineVTable::Invoke<Interface>;
 
-    constexpr di::concepts::VTableFor<Interface> auto vtable2 = VTable2::create_for<Storage, i32&>();
+    /* di::concepts::VTableFor<Interface> */ auto vtable2 = VTable2::create_for<Storage, i32&>();
     (void) vtable2;
 }
 

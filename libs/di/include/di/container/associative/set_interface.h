@@ -97,7 +97,7 @@ public:
     template<typename... Args>
     requires(concepts::ConstructibleFrom<Value, Args...>)
     constexpr auto emplace_hint(ConstIterator hint, Args&&... args) {
-        return insert(Value(util::forward<Args>(args)...));
+        return insert(util::move(hint), Value(util::forward<Args>(args)...));
     }
 
     template<concepts::ContainerCompatible<Value> Con>
@@ -282,7 +282,7 @@ public:
             return { it, container::next(it, 1, end()) };
         } else {
             auto [start, last] = self().equal_range_impl(needle);
-            return { unconst_iterator(util::move(start)), unconst_iterator(util::move(end)) };
+            return { unconst_iterator(util::move(start)), unconst_iterator(util::move(last)) };
         }
     }
     template<typename U>

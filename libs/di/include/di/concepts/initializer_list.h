@@ -11,7 +11,7 @@ namespace detail {
     struct InitializerListHelper : meta::FalseType {};
 
     template<typename T>
-    struct InitializerListHelper<util::InitializerList<T>> : meta::TrueType {};
+    struct InitializerListHelper<std::initializer_list<T>> : meta::TrueType {};
 }
 
 template<typename T>

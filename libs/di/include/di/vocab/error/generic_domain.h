@@ -15,11 +15,6 @@ inline namespace generic_error {
         Invalid,
         Cancelled,
     };
-
-    template<typename = void>
-    constexpr auto tag_invoke(types::Tag<into_status_code>, BasicError error) {
-        return GenericCode(in_place, error);
-    }
 }
 
 class GenericDomain final : public StatusCodeDomain {
@@ -84,6 +79,12 @@ private:
         return static_cast<GenericCode const&>(code);
     }
 };
+
+inline namespace generic_error {
+    constexpr auto tag_invoke(types::Tag<into_status_code>, BasicError error) {
+        return GenericCode(in_place, error);
+    }
+}
 
 #ifdef DI_SANITIZER
 // When compiling with UBSAN, using the address of a constexpr inline variable fails.

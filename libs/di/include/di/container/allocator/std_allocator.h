@@ -56,7 +56,7 @@ struct allocator {
 };
 
 template<class T, class U>
-constexpr bool operator==(allocator<T> const& a, allocator<U> const& b) noexcept {
+constexpr bool operator==(allocator<T> const&, allocator<U> const&) noexcept {
     return true;
 }
 }

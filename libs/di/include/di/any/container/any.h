@@ -42,7 +42,7 @@ class Any
     : private detail::MethodImpl<Any<UserInterface, Storage, VTablePolicy>, Storage,
                                  meta::MergeInterfaces<UserInterface, typename Storage::Interface>>
     , public Storage {
-    template<typename, typename>
+    template<typename, typename, typename>
     friend struct detail::MethodImpl;
 
 private:
@@ -94,8 +94,8 @@ public:
     }
 
     template<typename T, typename U, typename... Args, concepts::Impl<Interface> VT = RemoveConstructQualifiers<T>>
-    requires(concepts::AnyStorable<VT, Storage> && concepts::ConstructibleFrom<VT, util::InitializerList<U>&, Args...>)
-    constexpr static Any create(InPlaceType<T>, util::InitializerList<U> list, Args&&... args) {
+    requires(concepts::AnyStorable<VT, Storage> && concepts::ConstructibleFrom<VT, std::initializer_list<U>&, Args...>)
+    constexpr static Any create(InPlaceType<T>, std::initializer_list<U> list, Args&&... args) {
         if constexpr (!concepts::AnyStorableInfallibly<VT, Storage>) {
             auto result = Any {};
             DI_ASSERT(Storage::init(util::addressof(result), in_place_type<VT>, list, util::forward<Args>(args)...));
@@ -136,8 +136,8 @@ public:
     }
 
     template<typename T, typename U, typename... Args, concepts::Impl<Interface> VT = RemoveConstructQualifiers<T>>
-    requires(concepts::AnyStorable<VT, Storage> && concepts::ConstructibleFrom<VT, util::InitializerList<U>&, Args...>)
-    constexpr static Result<Any> try_create(InPlaceType<T>, util::InitializerList<U> list, Args&&... args) {
+    requires(concepts::AnyStorable<VT, Storage> && concepts::ConstructibleFrom<VT, std::initializer_list<U>&, Args...>)
+    constexpr static Result<Any> try_create(InPlaceType<T>, std::initializer_list<U> list, Args&&... args) {
         if constexpr (!concepts::AnyStorableInfallibly<VT, Storage>) {
             auto result = Any {};
             return Storage::init(util::addressof(result), in_place_type<VT>, list, util::forward<Args>(args)...) % [&] {
@@ -188,8 +188,8 @@ public:
 
     template<typename T, typename U, typename... Args, concepts::Impl<Interface> VT = RemoveConstructQualifiers<T>>
     requires(concepts::AnyStorableInfallibly<VT, Storage> &&
-             concepts::ConstructibleFrom<VT, util::InitializerList<U>&, Args...>)
-    constexpr Any(InPlaceType<T>, util::InitializerList<U> list, Args&&... args)
+             concepts::ConstructibleFrom<VT, std::initializer_list<U>&, Args...>)
+    constexpr Any(InPlaceType<T>, std::initializer_list<U> list, Args&&... args)
         : m_vtable(VTable::template create_for<Storage, VT>()) {
         Storage::init(this, in_place_type<VT>, list, util::forward<Args>(args)...);
     }

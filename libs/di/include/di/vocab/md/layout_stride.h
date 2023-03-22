@@ -102,7 +102,7 @@ public:
     constexpr static bool is_always_strided() { return true; }
 
     constexpr static bool is_unique() { return true; }
-    constexpr static bool is_exhaustive() { return required_span_size() == extents().fwd_prod_of_extents(rank); }
+    constexpr bool is_exhaustive() const { return required_span_size() == extents().fwd_prod_of_extents(rank); }
     constexpr static bool is_strided() { return true; }
 
     constexpr SizeType stride(RankType i) const { return m_strides[i]; }

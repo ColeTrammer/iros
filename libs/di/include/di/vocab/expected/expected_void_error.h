@@ -72,8 +72,8 @@ public:
     constexpr explicit Expected(types::InPlace, Args&&... args) : m_value(util::forward<Args>(args)...) {}
 
     template<typename U, typename... Args>
-    requires(concepts::ConstructibleFrom<T, util::InitializerList<U>, Args...>)
-    constexpr explicit Expected(types::InPlace, util::InitializerList<U> list, Args&&... args)
+    requires(concepts::ConstructibleFrom<T, std::initializer_list<U>, Args...>)
+    constexpr explicit Expected(types::InPlace, std::initializer_list<U> list, Args&&... args)
         : m_value(list, util::forward<Args>(args)...) {}
 
     constexpr ~Expected() = default;
@@ -136,8 +136,8 @@ public:
     }
 
     template<typename U, typename... Args>
-    requires(concepts::ConstructibleFrom<T, util::InitializerList<U>, Args...>)
-    constexpr T& emplace(util::InitializerList<U> list, Args&&... args) {
+    requires(concepts::ConstructibleFrom<T, std::initializer_list<U>, Args...>)
+    constexpr T& emplace(std::initializer_list<U> list, Args&&... args) {
         return m_value.emplace(list, util::forward<Args>(args)...);
     }
 

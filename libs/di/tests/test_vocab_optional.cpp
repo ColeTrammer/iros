@@ -149,6 +149,7 @@ constexpr void monad() {
                   .transform([](auto&&) -> int {
                       return 2;
                   });
+    (void) qq;
 
     int zz = 4;
     int zzz = 8;
@@ -247,6 +248,8 @@ constexpr void container() {
     ASSERT_EQ(y, 2);
 
     auto z = di::make_optional(di::ref(*x));
+    (void) z;
+
     for (auto& y : x) {
         ASSERT_EQ(y, 2);
         y = 3;

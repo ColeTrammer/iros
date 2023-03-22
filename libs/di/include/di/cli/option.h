@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/container/prelude.h>
+#include <di/container/string/prelude.h>
 #include <di/function/prelude.h>
 #include <di/meta/member_pointer_class.h>
 #include <di/meta/member_pointer_value.h>

@@ -10,5 +10,5 @@ namespace details {
 }
 
 template<typename T, template<auto...> typename Template>
-concept InstanceOfV = details::instance_of_helper<T, Template>;
+concept InstanceOfV = details::instance_of_v_helper<T, Template>;
 }

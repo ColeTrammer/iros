@@ -93,8 +93,8 @@ private:
 
     template<typename Sent>
     requires(!concepts::SameAs<Sent, Iter> && concepts::SizedSentinelFor<Sent, Iter>)
-    constexpr friend SSizeType operator-(Self const& a, Sent const& b) {
-        return a.base() - b;
+    constexpr SSizeType operator-(Sent const& b) {
+        return this->base() - b;
     }
 
     template<typename Sent>

@@ -28,8 +28,8 @@ public:
         : m_error(types::in_place, util::forward<Args>(args)...) {}
 
     template<typename T, typename... Args>
-    requires(concepts::ConstructibleFrom<E, util::InitializerList<T>, Args...>)
-    constexpr explicit Unexpected(types::InPlace, util::InitializerList<T> list, Args&&... args)
+    requires(concepts::ConstructibleFrom<E, std::initializer_list<T>, Args...>)
+    constexpr explicit Unexpected(types::InPlace, std::initializer_list<T> list, Args&&... args)
         : m_error(types::in_place, list, util::forward<Args>(args)...) {}
 
     constexpr E& error() & { return m_error.value(); }

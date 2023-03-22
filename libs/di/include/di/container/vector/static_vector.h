@@ -25,7 +25,11 @@ public:
     using Value = T;
     using ConstValue = T const;
 
-    StaticVector() = default;
+    constexpr StaticVector() {
+        for (auto& x : m_data) {
+            x = T();
+        }
+    }
 
     StaticVector(StaticVector const&) = default;
     StaticVector(StaticVector&&) = default;

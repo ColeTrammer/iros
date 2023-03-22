@@ -14,6 +14,47 @@ void* operator new(std::size_t size, std::nothrow_t const&) noexcept {
     return ::operator new(size, std::align_val_t { alignof(void*) }, std::nothrow);
 }
 
+void operator delete(void* pointer, std::nothrow_t const&) noexcept {
+    return ::operator delete(pointer);
+}
+void operator delete(void* pointer, std::align_val_t alignment, std::nothrow_t const&) noexcept {
+    return ::operator delete(pointer, alignment);
+}
+
+// Array allocating new.
+[[nodiscard]] void* operator new[](std::size_t size) {
+    return ::operator new(size);
+}
+[[nodiscard]] void* operator new[](std::size_t size, std::align_val_t alignment) {
+    return ::operator new(size, alignment);
+}
+[[nodiscard]] void* operator new[](std::size_t size, std::nothrow_t const&) noexcept {
+    return ::operator new(size, std::nothrow);
+}
+[[nodiscard]] void* operator new[](std::size_t size, std::align_val_t alignment, std::nothrow_t const&) noexcept {
+    return ::operator new(size, alignment, std::nothrow);
+}
+
+// Array deallocating delete.
+void operator delete[](void* pointer) noexcept {
+    return ::operator delete(pointer);
+}
+void operator delete[](void* pointer, std::size_t size) noexcept {
+    return ::operator delete(pointer, size);
+}
+void operator delete[](void* pointer, std::align_val_t alignment) noexcept {
+    return ::operator delete(pointer, alignment);
+}
+void operator delete[](void* pointer, std::size_t size, std::align_val_t alignment) noexcept {
+    return ::operator delete(pointer, size, alignment);
+}
+void operator delete[](void* pointer, std::nothrow_t const&) noexcept {
+    return ::operator delete(pointer, std::nothrow);
+}
+void operator delete[](void* pointer, std::align_val_t alignment, std::nothrow_t const&) noexcept {
+    return ::operator delete(pointer, alignment, std::nothrow);
+}
+
 #ifdef DIUS_PLATFORM_LINUX
 static uptr heap_end;
 #endif

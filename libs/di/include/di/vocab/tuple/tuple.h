@@ -142,11 +142,11 @@ private:
     }
 
     template<types::size_t index>
-    constexpr friend InPlaceType<typename meta::TypeList<Types...>::TypeAtIndex<index>>
+    constexpr friend InPlaceType<typename meta::TypeList<Types...>::template TypeAtIndex<index>>
         tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Tuple>, types::InPlaceIndex<index>);
 
     template<types::size_t index>
-    constexpr friend InPlaceType<typename meta::TypeList<Types...>::TypeAtIndex<index> const>
+    constexpr friend InPlaceType<typename meta::TypeList<Types...>::template TypeAtIndex<index> const>
         tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Tuple const>, types::InPlaceIndex<index>);
 
     template<types::size_t index, concepts::DecaySameAs<Tuple> Self>

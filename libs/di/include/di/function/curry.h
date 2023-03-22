@@ -21,54 +21,15 @@ constexpr auto curry(F&& function, meta::SizeConstant<max_arity> = {}) {
     return detail::CurryFunction<meta::Decay<F>, max_arity>(types::in_place, util::forward<F>(function));
 }
 
-template<typename Self, size_t max_arity>
-class Curry : public pipeline::EnablePipeline {
-public:
-    template<size_t arity>
-    constexpr static size_t new_arity = max_arity == math::NumericLimits<size_t>::max ? max_arity : arity;
-
-    template<typename... Args>
-    requires(/* !concepts::Invocable<Self&, Args...> && */ concepts::ConstructibleFrom<Self, Self&> &&
-             concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Args>, Args>...> &&
-             sizeof...(Args) < max_arity)
-    constexpr auto operator()(Args&&... args) & {
-        return curry(bind_front(static_cast<Self&>(*this), util::forward<Args>(args)...),
-                     meta::size_constant<new_arity<max_arity - sizeof...(Args)>>);
-    }
-
-    template<typename... Args>
-    requires(/* !concepts::Invocable<Self const&, Args...> && */ concepts::ConstructibleFrom<Self, Self const&> &&
-             concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Args>, Args>...> &&
-             sizeof...(Args) < max_arity)
-    constexpr auto operator()(Args&&... args) const& {
-        return curry(bind_front(static_cast<Self const&>(*this), util::forward<Args>(args)...),
-                     meta::size_constant<new_arity<max_arity - sizeof...(Args)>>);
-    }
-
-    template<typename... Args>
-    requires(/* !concepts::Invocable<Self &&, Args...> && */ concepts::ConstructibleFrom<Self, Self &&> &&
-             concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Args>, Args>...> &&
-             sizeof...(Args) < max_arity)
-    constexpr auto operator()(Args&&... args) && {
-        return curry(bind_front(static_cast<Self&&>(*this), util::forward<Args>(args)...),
-                     meta::size_constant<new_arity<max_arity - sizeof...(Args)>>);
-    }
-
-    template<typename... Args>
-    requires(/* !concepts::Invocable<Self const &&, Args...> && */ concepts::ConstructibleFrom<Self, Self const &&> &&
-             concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Args>, Args>...> &&
-             sizeof...(Args) < max_arity)
-    constexpr auto operator()(Args&&... args) const&& {
-        return curry(bind_front(static_cast<Self const&&>(*this), util::forward<Args>(args)...),
-                     meta::size_constant<new_arity<max_arity - sizeof...(Args)>>);
-    }
-};
-
 namespace detail {
     template<typename F, size_t max_arity>
-    class CurryFunction : public Curry<CurryFunction<F, max_arity>, max_arity> {
+    class CurryFunction : public function::pipeline::EnablePipeline {
+    private:
+        template<size_t arity>
+        constexpr static size_t new_arity = max_arity == math::NumericLimits<size_t>::max ? max_arity : arity;
+
     public:
-        using Curry<CurryFunction<F, max_arity>, max_arity>::operator();
+        CurryFunction() = default;
 
         template<typename Fn>
         constexpr CurryFunction(types::InPlace, Fn&& function) : m_function(util::forward<Fn>(function)) {}
@@ -101,6 +62,42 @@ namespace detail {
         requires(concepts::Invocable<F const &&, Args...>)
         constexpr decltype(auto) operator()(Args&&... args) const&& {
             return function::invoke(util::move(m_function), util::forward<Args>(args)...);
+        }
+
+        template<typename... Args>
+        requires(!concepts::Invocable<F&, Args...> && concepts::ConstructibleFrom<F, F&> &&
+                 concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Args>, Args>...> &&
+                 sizeof...(Args) < max_arity)
+        constexpr auto operator()(Args&&... args) & {
+            return curry(bind_front(static_cast<F&>(m_function), util::forward<Args>(args)...),
+                         meta::size_constant<new_arity<max_arity - sizeof...(Args)>>);
+        }
+
+        template<typename... Args>
+        requires(!concepts::Invocable<F const&, Args...> && concepts::ConstructibleFrom<F, F const&> &&
+                 concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Args>, Args>...> &&
+                 sizeof...(Args) < max_arity)
+        constexpr auto operator()(Args&&... args) const& {
+            return curry(bind_front(static_cast<F const&>(m_function), util::forward<Args>(args)...),
+                         meta::size_constant<new_arity<max_arity - sizeof...(Args)>>);
+        }
+
+        template<typename... Args>
+        requires(!concepts::Invocable<F &&, Args...> && concepts::ConstructibleFrom<F, F &&> &&
+                 concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Args>, Args>...> &&
+                 sizeof...(Args) < max_arity)
+        constexpr auto operator()(Args&&... args) && {
+            return curry(bind_front(static_cast<F&&>(m_function), util::forward<Args>(args)...),
+                         meta::size_constant<new_arity<max_arity - sizeof...(Args)>>);
+        }
+
+        template<typename... Args>
+        requires(!concepts::Invocable<F const &&, Args...> && concepts::ConstructibleFrom<F, F const &&> &&
+                 concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Args>, Args>...> &&
+                 sizeof...(Args) < max_arity)
+        constexpr auto operator()(Args&&... args) const&& {
+            return curry(bind_front(static_cast<F const&&>(m_function), util::forward<Args>(args)...),
+                         meta::size_constant<new_arity<max_arity - sizeof...(Args)>>);
         }
 
     private:

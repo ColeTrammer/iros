@@ -185,7 +185,7 @@ public:
             return { it, container::next(it, 1, end()) };
         } else {
             auto [start, last] = self().equal_range_impl(needle);
-            return { unconst_iterator(util::move(start)), unconst_iterator(util::move(end)) };
+            return { unconst_iterator(util::move(start)), unconst_iterator(util::move(last)) };
         }
     }
     template<typename U>

@@ -50,7 +50,7 @@ using util::cref;
 using util::ref;
 using util::ReferenceWrapper;
 
-using util::InitializerList;
+using std::initializer_list;
 
 using util::Badge;
 using util::DeferConstruct;

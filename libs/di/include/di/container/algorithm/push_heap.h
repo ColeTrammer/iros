@@ -24,7 +24,7 @@ namespace detail {
 
     private:
         constexpr static auto impl(auto first, auto comp, auto proj, auto size) {
-            auto parent_index = [size](auto index) {
+            auto parent_index = [](auto index) {
                 return (index + 1) / 2 - 1;
             };
 

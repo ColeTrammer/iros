@@ -42,7 +42,7 @@ public:
 
 private:
     template<typename G>
-    constexpr friend bool operator==(Expected const& a, Expected<void, G> const& b) {
+    constexpr friend bool operator==(Expected const&, Expected<void, G> const& b) {
         return b.has_value();
     }
 

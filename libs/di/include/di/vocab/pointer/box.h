@@ -82,7 +82,9 @@ private:
     }
 
     constexpr friend bool operator==(Box const& a, nullptr_t) { return a.get() == static_cast<T*>(nullptr); }
-    constexpr friend auto operator<=>(Box const& a, nullptr_t) { return a.get() <=> static_cast<T*>(nullptr); }
+    constexpr friend auto operator<=>(Box const& a, nullptr_t) {
+        return a == nullptr ? di::strong_ordering::equal : di::strong_ordering::greater;
+    }
 
     T* m_pointer { nullptr };
 };

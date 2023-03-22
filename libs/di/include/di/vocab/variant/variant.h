@@ -49,9 +49,16 @@ private:
     constexpr static bool copyable = concepts::Conjunction<concepts::CopyConstructible<Types>...>;
     constexpr static bool movable = concepts::Conjunction<concepts::MoveConstructible<Types>...>;
 
+    template<typename U, typename T>
+    struct SelectorImpl {
+        T operator()(T) const
+        requires(detail::VariantValidOverload<T, U>);
+    };
+
     template<typename U>
-    constexpr static auto selector =
-        function::overload(([](Types y) -> Types requires(detail::VariantValidOverload<Types, U>) { return y; })...);
+    struct Selector : SelectorImpl<U, Types>... {
+        using SelectorImpl<U, Types>::operator()...;
+    };
 
 public:
     // conditionally trivial special member functions.
@@ -101,10 +108,10 @@ public:
 
     template<typename U>
     requires(!concepts::RemoveCVRefSameAs<U, Variant> && !concepts::InstanceOf<U, InPlaceType> &&
-             !concepts::InstanceOfV<U, InPlaceIndex> && requires { selector<U>(util::declval<U>()); } &&
-             concepts::ConstructibleFrom<decltype(selector<U>(util::declval<U>())), U>)
+             !concepts::InstanceOfV<U, InPlaceIndex> && concepts::Invocable<Selector<U>, U> &&
+             concepts::ConstructibleFrom<meta::InvokeResult<Selector<U>, U>, U>)
     constexpr Variant(U&& value)
-        : Variant(in_place_type<decltype(selector<U>(util::declval<U>()))>, util::forward<U>(value)) {}
+        : Variant(in_place_type<meta::InvokeResult<Selector<U>, U>>, util::forward<U>(value)) {}
 
     template<size_t index, typename... Args, typename T = meta::At<List, index>>
     requires(concepts::ConstructibleFrom<T, Args...>)
@@ -113,8 +120,8 @@ public:
     }
 
     template<size_t index, typename U, typename... Args, typename T = meta::At<List, index>>
-    requires(concepts::ConstructibleFrom<T, util::InitializerList<U>, Args...>)
-    constexpr explicit Variant(InPlaceIndex<index>, util::InitializerList<U> list, Args&&... args) {
+    requires(concepts::ConstructibleFrom<T, std::initializer_list<U>, Args...>)
+    constexpr explicit Variant(InPlaceIndex<index>, std::initializer_list<U> list, Args&&... args) {
         do_emplace(in_place_index<index>, list, util::forward<Args>(args)...);
     }
 
@@ -125,8 +132,8 @@ public:
     }
 
     template<typename T, typename U, typename... Args, auto index = meta::Lookup<T, List>>
-    requires(meta::UniqueType<T, List> && concepts::ConstructibleFrom<T, util::InitializerList<U>, Args...>)
-    constexpr explicit Variant(InPlaceType<T>, util::InitializerList<U> list, Args&&... args) {
+    requires(meta::UniqueType<T, List> && concepts::ConstructibleFrom<T, std::initializer_list<U>, Args...>)
+    constexpr explicit Variant(InPlaceType<T>, std::initializer_list<U> list, Args&&... args) {
         do_emplace(in_place_index<index>, list, util::forward<Args>(args)...);
     }
 
@@ -174,10 +181,10 @@ public:
 
     template<typename U>
     requires(!concepts::RemoveCVRefSameAs<U, Variant> && !concepts::InstanceOf<U, InPlaceType> &&
-             !concepts::InstanceOfV<U, InPlaceIndex> && requires { selector<U>(util::declval<U>()); } &&
-             concepts::ConstructibleFrom<decltype(selector<U>(util::declval<U>())), U>)
+             !concepts::InstanceOfV<U, InPlaceIndex> && concepts::Invocable<Selector<U>, U> &&
+             concepts::ConstructibleFrom<meta::InvokeResult<Selector<U>, U>, U>)
     constexpr Variant& operator=(U&& value) {
-        this->template emplace<decltype(selector<U>(util::declval<U>()))>(util::forward<U>(value));
+        this->template emplace<meta::InvokeResult<Selector<U>, U>>(util::forward<U>(value));
         return *this;
     }
 
@@ -191,8 +198,8 @@ public:
     }
 
     template<size_t index, typename U, typename... Args, typename T = meta::At<List, index>>
-    requires(concepts::ConstructibleFrom<T, util::InitializerList<U>, Args...>)
-    constexpr T& emplace(util::InitializerList<U> list, Args&&... args) {
+    requires(concepts::ConstructibleFrom<T, std::initializer_list<U>, Args...>)
+    constexpr T& emplace(std::initializer_list<U> list, Args&&... args) {
         destroy();
         return do_emplace(in_place_index<index>, list, util::forward<Args>(args)...);
     }
@@ -205,8 +212,8 @@ public:
     }
 
     template<typename T, typename U, typename... Args, auto index = meta::Lookup<T, List>>
-    requires(meta::UniqueType<T, List> && concepts::ConstructibleFrom<T, util::InitializerList<U>, Args...>)
-    constexpr T& emplace(util::InitializerList<U> list, Args&&... args) {
+    requires(meta::UniqueType<T, List> && concepts::ConstructibleFrom<T, std::initializer_list<U>, Args...>)
+    constexpr T& emplace(std::initializer_list<U> list, Args&&... args) {
         destroy();
         return do_emplace(in_place_index<index>, list, util::forward<Args>(args)...);
     }
@@ -284,7 +291,7 @@ private:
     }
 
     template<size_t index, typename U, typename... Args>
-    constexpr decltype(auto) do_emplace(InPlaceIndex<index>, util::InitializerList<U> list, Args&&... args) {
+    constexpr decltype(auto) do_emplace(InPlaceIndex<index>, std::initializer_list<U> list, Args&&... args) {
         m_index = index;
         return m_impl.emplace_impl(in_place_index<index>, list, util::forward<Args>(args)...);
     }

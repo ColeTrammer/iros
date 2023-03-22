@@ -13,6 +13,8 @@ public:
 
     constexpr Arg operator[](size_t index) const { return m_args[index]; }
 
+    constexpr void set_args(Span<Arg> args) { m_args = args; }
+
 private:
     Span<Arg> m_args;
 };

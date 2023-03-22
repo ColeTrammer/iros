@@ -26,7 +26,7 @@ namespace detail {
             if constexpr (CustomZip<Cons...>) {
                 return function::tag_invoke(*this, util::forward<Cons>(containers)...);
             } else if constexpr (EmptyZip<Cons...>) {
-                return empty<Tuple<>>();
+                return empty<Tuple<>>;
             } else {
                 return ZipView<meta::AsView<Cons>...>(util::forward<Cons>(containers)...);
             }

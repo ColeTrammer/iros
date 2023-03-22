@@ -14,8 +14,24 @@
                 "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
                 "CMAKE_INSTALL_MESSAGE": "NEVER",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-                "IROS_DiagnosticFlags": "-fdiagnostics-color=always",
                 "IROS_WarningFlags": "-Wall -Wextra -Wpedantic"
+            }
+        },
+        {
+            "name": "gcc_base",
+            "hidden": true,
+            "cacheVariables": {
+                "IROS_DiagnosticFlags": "-fdiagnostics-color=always",
+                "IROS_ExtraFlags": "-ffold-simple-inlines"
+            }
+        },
+        {
+            "name": "clang_base",
+            "hidden": true,
+            "cacheVariables": {
+                "IROS_DiagnosticFlags": "-fcolor-diagnostics -fconstexpr-steps=10000000",
+                "IROS_WarningFlags": "-Wall -Wextra -Wpedantic -Wno-pre-c++2b-compat",
+                "CMAKE_CXX_COMPILER": "clang++-16"
             }
         },
         {
@@ -31,8 +47,7 @@
             "name": "debug_base",
             "hidden": true,
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug",
-                "IROS_ExtraFlags": "-ffold-simple-inlines"
+                "CMAKE_BUILD_TYPE": "Debug"
             },
             "inherits": ["base"]
         },
@@ -53,7 +68,7 @@
                 "CMAKE_CXX_COMPILER_WORKS": "ON",
                 "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh"
             },
-            "inherits": ["release_base"]
+            "inherits": ["release_base", "gcc_base"]
         },
         {
             "name": "dius_runtime_release",
@@ -64,7 +79,7 @@
             "cacheVariables": {
                 "IROS_UseDiusRuntime": "ON"
             },
-            "inherits": ["release_base"]
+            "inherits": ["release_base", "gcc_base"]
         },
         {
             "name": "dius_runtime_debug",
@@ -83,7 +98,7 @@
             "description": "Default native release build",
             "binaryDir": "${sourceDir}/build/native/release",
             "installDir": "${sourceDir}/build/native/release-install",
-            "inherits": ["release_base"]
+            "inherits": ["release_base", "gcc_base"]
         },
         {
             "name": "tools",
@@ -97,7 +112,7 @@
                 "IROS_BuildTools": "ON",
                 "IROS_BuildCcpp": "OFF"
             },
-            "inherits": ["release_base"]
+            "inherits": ["release_base", "gcc_base"]
         },
         {
             "name": "debug",
@@ -105,7 +120,7 @@
             "description": "Native debug build",
             "binaryDir": "${sourceDir}/build/native/debug",
             "installDir": "${sourceDir}/bulid/native/debug-install",
-            "inherits": ["debug_base"]
+            "inherits": ["debug_base", "gcc_base"]
         },
         {
             "name": "asan",
@@ -117,7 +132,7 @@
                 "IROS_BuildCcpp": "OFF",
                 "IROS_SanitizerFlags": "-fsanitize=address -DDI_SANITIZER"
             },
-            "inherits": ["debug_base"]
+            "inherits": ["debug_base", "gcc_base"]
         },
         {
             "name": "tsan",
@@ -129,7 +144,7 @@
                 "IROS_BuildCcpp": "OFF",
                 "IROS_SanitizerFlags": "-fsanitize=thread -DDI_SANITIZER"
             },
-            "inherits": ["debug_base"]
+            "inherits": ["debug_base", "gcc_base"]
         },
         {
             "name": "ubsan",
@@ -141,7 +156,7 @@
                 "IROS_BuildCcpp": "OFF",
                 "IROS_SanitizerFlags": "-fsanitize=undefined -DDI_SANITIZER"
             },
-            "inherits": ["debug_base"]
+            "inherits": ["debug_base", "gcc_base"]
         },
         {
             "name": "ubasan",
@@ -153,7 +168,7 @@
                 "IROS_BuildCcpp": "OFF",
                 "IROS_SanitizerFlags": "-fsanitize=address,undefined -DDI_SANITIZER"
             },
-            "inherits": ["debug_base"]
+            "inherits": ["debug_base", "gcc_base"]
         },
         {
             "name": "coverage",
@@ -165,7 +180,23 @@
                 "IROS_BuildCcpp": "OFF",
                 "IROS_ExtraFlags": "-Og -fprofile-arcs -ftest-coverage"
             },
-            "inherits": ["debug_base"]
+            "inherits": ["debug_base", "gcc_base"]
+        },
+        {
+            "name": "clang_debug",
+            "displayName": "Clang Debug Config",
+            "description": "Clang native debug build",
+            "binaryDir": "${sourceDir}/build/native/clang-debug",
+            "installDir": "${sourceDir}/bulid/native/clang-debug-install",
+            "inherits": ["debug_base", "clang_base"]
+        },
+        {
+            "name": "clang_release",
+            "displayName": "Clang Release Config",
+            "description": "Clang native release build",
+            "binaryDir": "${sourceDir}/build/native/clang-release",
+            "installDir": "${sourceDir}/bulid/native/clang-release-install",
+            "inherits": ["release_base", "clang_base"]
         }
     ],
     "buildPresets": [
@@ -244,6 +275,18 @@
             "name": "coverage",
             "displayName": "Code Coverage",
             "configurePreset": "coverage",
+            "inherits": ["base"]
+        },
+        {
+            "name": "clang_debug",
+            "displayName": "Clang Debug Build",
+            "configurePreset": "clang_debug",
+            "inherits": ["base"]
+        },
+        {
+            "name": "clang_release",
+            "displayName": "Clang Release Build",
+            "configurePreset": "clang_release",
             "inherits": ["base"]
         }
     ],
@@ -327,6 +370,18 @@
             "name": "coverage",
             "displayName": "Code Coverage",
             "configurePreset": "coverage",
+            "inherits": ["base"]
+        },
+        {
+            "name": "clang_debug",
+            "displayName": "Clang Debug Build",
+            "configurePreset": "clang_debug",
+            "inherits": ["base"]
+        },
+        {
+            "name": "clang_release",
+            "displayName": "Clang Release Build",
+            "configurePreset": "clang_release",
             "inherits": ["base"]
         }
     ]

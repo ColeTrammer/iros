@@ -9,16 +9,7 @@ namespace dius {
 class PosixDomain;
 
 using PosixCode = di::StatusCode<PosixDomain>;
-}
 
-namespace di::vocab::detail {
-template<typename = void>
-constexpr auto tag_invoke(di::Tag<di::into_status_code>, dius::PosixError error) {
-    return dius::PosixCode(di::in_place, error);
-}
-}
-
-namespace dius {
 class PosixDomain final : public di::StatusCodeDomain {
 private:
     using Base = StatusCodeDomain;
@@ -70,5 +61,12 @@ constexpr inline auto posix_domain = PosixDomain {};
 
 constexpr inline PosixDomain const& PosixDomain::get() {
     return posix_domain;
+}
+}
+
+namespace di::vocab::detail {
+template<typename = void>
+constexpr auto tag_invoke(di::Tag<di::into_status_code>, dius::PosixError error) {
+    return dius::PosixCode(di::in_place, error);
 }
 }

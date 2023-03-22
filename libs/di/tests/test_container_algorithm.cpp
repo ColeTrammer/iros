@@ -39,7 +39,7 @@ constexpr void minmax() {
 constexpr void compare() {
     auto a = di::range(6);
     auto b = di::Array { 0, 1, 2, 3, 4, 5 };
-    auto c = di::InitializerList { 0, 1, 2 };
+    auto c = std::initializer_list<int> { 0, 1, 2 };
     auto d = di::range(12);
     auto e = di::range(6, 12);
 

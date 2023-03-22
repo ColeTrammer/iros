@@ -43,9 +43,9 @@ public:
 
     template<typename... OtherSizeTypes>
     requires(concepts::Conjunction<concepts::ConvertibleTo<OtherSizeTypes, SizeType>...> &&
-             (sizeof...(OtherSizeTypes) == rank() || (sizeof...(OtherSizeTypes) == rank_dynamic()) &&
-                                                         concepts::ConstructibleFrom<MappingType, ExtentsType> &&
-                                                         concepts::DefaultConstructible<AccessorType>) )
+             (sizeof...(OtherSizeTypes) == rank() || ((sizeof...(OtherSizeTypes) == rank_dynamic()) &&
+                                                      (concepts::ConstructibleFrom<MappingType, ExtentsType> &&
+                                                       concepts::DefaultConstructible<AccessorType>) )))
     constexpr explicit MDSpan(DataHandle data_handle, OtherSizeTypes... exts)
         : m_data_handle(util::move(data_handle)), m_mapping(ExtentsType(static_cast<SizeType>(util::move(exts))...)) {}
 
@@ -107,12 +107,35 @@ public:
         return (*this)[indices.span()];
     }
 
+    template<typename... OtherSizeTypes>
+    requires(sizeof...(OtherSizeTypes) == rank() &&
+             concepts::Conjunction<concepts::ConvertibleTo<OtherSizeTypes, SizeType>...>)
+    constexpr Reference operator()(OtherSizeTypes... indices) const {
+        auto index = m_mapping(ExtentsType::index_cast(util::move(indices))...);
+        DI_ASSERT_LT(index, m_mapping.required_span_size());
+        return m_accessor.access(m_data_handle, index);
+    }
+
+    template<typename OtherSizeType>
+    requires(concepts::ConvertibleTo<OtherSizeType const&, SizeType>)
+    constexpr Reference operator()(Span<OtherSizeType, rank()> indices) const {
+        return function::unpack<meta::MakeIndexSequence<rank()>>([&]<size_t... i>(meta::IndexSequence<i...>) {
+            return (*this)[util::as_const(indices[i])...];
+        });
+    }
+
+    template<typename OtherSizeType>
+    requires(concepts::ConvertibleTo<OtherSizeType const&, SizeType>)
+    constexpr Reference operator()(Array<OtherSizeType, rank()> const& indices) const {
+        return (*this)[indices.span()];
+    }
+
     constexpr auto each() const {
         return function::unpack<meta::MakeIndexSequence<rank()>>([&]<usize... rank_indices>(
             meta::IndexSequence<rank_indices...>) {
             return container::view::cartesian_product(container::view::range(extent(rank_indices))...) |
                    container::view::transform(function::uncurry([&](auto... indices) -> Reference {
-                       return (*this)[indices...];
+                       return (*this)(indices...);
                    }));
         });
     }

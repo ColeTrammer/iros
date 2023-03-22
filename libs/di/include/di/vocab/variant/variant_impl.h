@@ -55,19 +55,8 @@ public:
     template<size_t index, typename... Args>
     requires(index != 0)
     constexpr decltype(auto) emplace_impl(InPlaceIndex<index>, Args&&... args) {
+        util::construct_at(util::addressof(m_rest));
         return m_rest.emplace_impl(in_place_index<index - 1>, util::forward<Args>(args)...);
-    }
-
-    template<typename U>
-    constexpr T& rebind_impl(InPlaceIndex<0>, U&& value) {
-        m_value = util::forward<U>(value);
-        return m_value.value();
-    }
-
-    template<size_t index, typename U>
-    requires(index != 0)
-    constexpr decltype(auto) rebind_impl(InPlaceIndex<index>, U&& value) {
-        return m_rest.rebind_impl(in_place_index<index - 1>, util::forward<U>(value));
     }
 
 private:

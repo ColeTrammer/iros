@@ -30,8 +30,8 @@ public:
         : Base(in_place, util::addressof(Domain::get()), util::forward<Args>(args)...) {}
 
     template<typename U, typename... Args>
-    requires(concepts::ConstructibleFrom<Value, util::InitializerList<U>, Args...>)
-    constexpr explicit StatusCode(InPlace, util::InitializerList<U> list, Args&&... args)
+    requires(concepts::ConstructibleFrom<Value, std::initializer_list<U>, Args...>)
+    constexpr explicit StatusCode(InPlace, std::initializer_list<U> list, Args&&... args)
         : Base(in_place, util::addressof(Domain::get()), list, util::forward<Args>(args)...) {}
 
     constexpr explicit StatusCode(Value const& value)

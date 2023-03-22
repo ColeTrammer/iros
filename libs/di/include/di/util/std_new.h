@@ -36,47 +36,22 @@ void operator delete(void* pointer) noexcept;
 void operator delete(void* pointer, std::size_t size) noexcept;
 void operator delete(void* pointer, std::align_val_t alignment) noexcept;
 void operator delete(void* pointer, std::size_t size, std::align_val_t alignment) noexcept;
-inline void operator delete(void* pointer, std::nothrow_t const&) noexcept {
-    return ::operator delete(pointer);
-}
-inline void operator delete(void* pointer, std::align_val_t alignment, std::nothrow_t const&) noexcept {
-    return ::operator delete(pointer, alignment);
-}
+void operator delete(void* pointer, std::nothrow_t const&) noexcept;
+void operator delete(void* pointer, std::align_val_t alignment, std::nothrow_t const&) noexcept;
 
 // Array allocating new.
-[[nodiscard]] inline void* operator new[](std::size_t size) {
-    return ::operator new(size);
-}
-[[nodiscard]] inline void* operator new[](std::size_t size, std::align_val_t alignment) {
-    return ::operator new(size, alignment);
-}
-[[nodiscard]] inline void* operator new[](std::size_t size, std::nothrow_t const&) noexcept {
-    return ::operator new(size, std::nothrow);
-}
-[[nodiscard]] inline void* operator new[](std::size_t size, std::align_val_t alignment,
-                                          std::nothrow_t const&) noexcept {
-    return ::operator new(size, alignment, std::nothrow);
-}
+[[nodiscard]] void* operator new[](std::size_t size);
+[[nodiscard]] void* operator new[](std::size_t size, std::align_val_t alignment);
+[[nodiscard]] void* operator new[](std::size_t size, std::nothrow_t const&) noexcept;
+[[nodiscard]] void* operator new[](std::size_t size, std::align_val_t alignment, std::nothrow_t const&) noexcept;
 
 // Array deallocating delete.
-inline void operator delete[](void* pointer) noexcept {
-    return ::operator delete(pointer);
-}
-inline void operator delete[](void* pointer, std::size_t size) noexcept {
-    return ::operator delete(pointer, size);
-}
-inline void operator delete[](void* pointer, std::align_val_t alignment) noexcept {
-    return ::operator delete(pointer, alignment);
-}
-inline void operator delete[](void* pointer, std::size_t size, std::align_val_t alignment) noexcept {
-    return ::operator delete(pointer, size, alignment);
-}
-inline void operator delete[](void* pointer, std::nothrow_t const&) noexcept {
-    return ::operator delete(pointer, std::nothrow);
-}
-inline void operator delete[](void* pointer, std::align_val_t alignment, std::nothrow_t const&) noexcept {
-    return ::operator delete(pointer, alignment, std::nothrow);
-}
+void operator delete[](void* pointer) noexcept;
+void operator delete[](void* pointer, std::size_t size) noexcept;
+void operator delete[](void* pointer, std::align_val_t alignment) noexcept;
+void operator delete[](void* pointer, std::size_t size, std::align_val_t alignment) noexcept;
+void operator delete[](void* pointer, std::nothrow_t const&) noexcept;
+void operator delete[](void* pointer, std::align_val_t alignment, std::nothrow_t const&) noexcept;
 
 // Placement new.
 [[nodiscard]] inline void* operator new(std::size_t, void* p) noexcept {

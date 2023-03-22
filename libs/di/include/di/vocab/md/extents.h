@@ -13,6 +13,43 @@ requires(
     concepts::Conjunction<(extents == dynamic_extent || extents <= math::to_unsigned(math::NumericLimits<T>::max))...>)
 class Extents {
 public:
+    constexpr static size_t static_extent(size_t index) {
+        auto result = Array { extents... };
+        return result.data()[index];
+    }
+
+private:
+    constexpr static size_t dynamic_index(size_t index) {
+        auto result = Array<size_t, rank() + 1> {};
+        size_t count = 0;
+        for (auto i : container::view::range(1zu, rank() + 1)) {
+            if (static_extent(i - 1) == dynamic_extent) {
+                ++count;
+            }
+            result.data()[i] = count;
+        }
+
+        return result.data()[index];
+    }
+
+    constexpr static size_t dynamic_index_inv(size_t index) {
+        constexpr auto result = [] {
+            auto answer = Array<size_t, rank_dynamic()> {};
+            for (auto i : container::view::range(rank())) {
+                for (auto r : container::view::range(rank())) {
+                    if (dynamic_index(r + 1) == i + 1) {
+                        answer.data()[i] = r;
+                        break;
+                    }
+                }
+            }
+            return answer;
+        }();
+
+        return result.data()[index];
+    }
+
+public:
     using SizeType = T;
     using RankType = size_t;
 
@@ -71,11 +108,6 @@ public:
     constexpr explicit(N != rank_dynamic()) Extents(Array<OtherSizeType, N> const& extents_array)
         : Extents(extents_array.span()) {}
 
-    constexpr static size_t static_extent(size_t index) {
-        auto result = Array { extents... };
-        return result[index];
-    }
-
     constexpr size_t extent(size_t index) const {
         auto extent = static_extent(index);
         if (extent != dynamic_extent) {
@@ -124,39 +156,6 @@ private:
             }
         }
         return true;
-    }
-
-    constexpr static size_t dynamic_index(size_t index) {
-        constexpr auto result = [] {
-            auto answer = Array<size_t, rank() + 1> {};
-            size_t count = 0;
-            for (auto i : container::view::range(1zu, rank() + 1)) {
-                if (static_extent(i - 1) == dynamic_extent) {
-                    ++count;
-                }
-                answer[i] = count;
-            }
-            return answer;
-        }();
-
-        return result[index];
-    }
-
-    constexpr static size_t dynamic_index_inv(size_t index) {
-        constexpr auto result = [] {
-            auto answer = Array<size_t, rank_dynamic()> {};
-            for (auto i : container::view::range(rank())) {
-                for (auto r : container::view::range(rank())) {
-                    if (dynamic_index(r + 1) == i + 1) {
-                        answer[i] = r;
-                        break;
-                    }
-                }
-            }
-            return answer;
-        }();
-
-        return result[index];
     }
 
     [[no_unique_address]] Array<SizeType, rank_dynamic()> m_dynamic_extents {};

@@ -18,8 +18,8 @@ public:
     requires(concepts::DefaultInitializable<Iter>)
     = default;
 
-    constexpr CommonIterator(Iter it) : m_state(util::move(it)) {}
-    constexpr CommonIterator(Sent sent) : m_state(util::move(sent)) {}
+    constexpr CommonIterator(Iter it) : m_state(in_place_index<0>, util::move(it)) {}
+    constexpr CommonIterator(Sent sent) : m_state(in_place_index<1>, util::move(sent)) {}
 
     template<typename It, typename St>
     requires(concepts::ConvertibleTo<It const&, Iter> && concepts::ConvertibleTo<St const&, Sent>)
@@ -35,7 +35,7 @@ public:
     constexpr decltype(auto) operator*() const { return *util::get<0>(m_state); }
 
     constexpr auto operator->() const
-    requires(concepts::IndirectlyReadable<Iter const> && (requires(Iter const& it) { it.operator->(); }) ||
+    requires((concepts::IndirectlyReadable<Iter const> && (requires(Iter const& it) { it.operator->(); })) ||
              concepts::Reference<meta::IteratorReference<Iter>> ||
              concepts::ConstructibleFrom<meta::IteratorValue<Iter>, meta::IteratorReference<Iter>>)
     {
@@ -63,6 +63,7 @@ public:
 
 private:
     template<concepts::InputIterator It, concepts::SentinelFor<It> St>
+    requires(!concepts::SameAs<It, St> && concepts::Copyable<It>)
     friend class CommonIterator;
 
     template<typename It, concepts::SentinelFor<It> St>

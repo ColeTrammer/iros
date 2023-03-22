@@ -22,7 +22,7 @@ namespace detail {
             return (parser::match_one(~('{'_m || '}'_m)) >> parser::match_one('<'_m || '^'_m || '>'_m)) %
                    [](concepts::TupleLike auto result) {
                        auto [fill, align_char] = result;
-                       auto align = [&] {
+                       auto align = [](c32 align_char) {
                            switch (align_char) {
                                case U'<':
                                    return Align::Left;
@@ -33,7 +33,7 @@ namespace detail {
                                default:
                                    util::unreachable();
                            }
-                       }();
+                       }(align_char);
 
                        return FillAndAlign { fill, align };
                    };

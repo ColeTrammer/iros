@@ -38,8 +38,12 @@ private:
     constexpr friend void tag_invoke(types::Tag<intrusive_ptr_decrement>, InPlaceType<RcTag>, T* pointer) {
         auto* base = static_cast<IntrusiveThreadUnsafeRefCount*>(pointer);
         if (base->m_ref_count-- == 1) {
-            util::destroy_at(pointer);
-            platform::DefaultFallibleAllocator<T>().deallocate(pointer, 1);
+            if consteval {
+                delete pointer;
+            } else {
+                util::destroy_at(pointer);
+                platform::DefaultFallibleAllocator<T>().deallocate(pointer, 1);
+            }
         }
     }
 

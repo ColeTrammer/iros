@@ -39,6 +39,8 @@ namespace detail {
                     auto result = util::get<index>(m_parsers).parse(context);
                     if (!result) {
                         return self(in_place_index<index + 1>);
+                    } else if constexpr (should_be_void) {
+                        return Result();
                     } else if constexpr (concepts::LanguageVoid<Value>) {
                         return Result(in_place, in_place_index<index>);
                     } else {

@@ -109,7 +109,7 @@ constexpr inline size_t Size = T::size;
 
 template<concepts::TypeList T, size_t index>
 requires(index < Size<T>)
-using At = typename T::At<index>;
+using At = typename T::template At<index>;
 
 template<typename T, concepts::TypeList List>
 constexpr static inline auto Lookup = List::template Lookup<T>;

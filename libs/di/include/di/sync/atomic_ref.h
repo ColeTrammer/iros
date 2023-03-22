@@ -52,7 +52,7 @@ public:
 
     bool compare_exchange_weak(T& expected, T desired, MemoryOrder order = MemoryOrder::SequentialConsistency) {
         if (order == MemoryOrder::AcquireRelease || order == MemoryOrder::Release) {
-            return compare_exchange_weak(exchange, desired, MemoryOrder::Release, MemoryOrder::Acquire);
+            return compare_exchange_weak(expected, desired, MemoryOrder::Release, MemoryOrder::Acquire);
         } else {
             return compare_exchange_weak(expected, desired, order, order);
         }

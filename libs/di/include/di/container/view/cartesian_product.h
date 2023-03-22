@@ -26,7 +26,7 @@ namespace detail {
             if constexpr (CustomCartesianProduct<Cons...>) {
                 return function::tag_invoke(*this, util::forward<Cons>(containers)...);
             } else if constexpr (EmptyCartesianProduct<Cons...>) {
-                return empty<Tuple<>>();
+                return empty<Tuple<>>;
             } else {
                 return CartesianProductView { util::forward<Cons>(containers)... };
             }

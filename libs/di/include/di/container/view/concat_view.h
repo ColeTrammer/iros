@@ -214,7 +214,7 @@ private:
         constexpr bool at_end() const {
             constexpr auto last_index = sizeof...(Views) - 1;
             return m_base.index() == last_index &&
-                   util::get<last_index>(m_base) == container::end(util::get<last_index>(m_parent.m_views));
+                   util::get<last_index>(m_base) == container::end(util::get<last_index>(m_parent->m_views));
         }
 
         constexpr friend bool operator==(Iterator const& a, DefaultSentinel) { return a.at_end(); }

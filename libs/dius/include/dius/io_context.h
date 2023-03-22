@@ -4,14 +4,14 @@
 #include <dius/config.h>
 #include <dius/sync_file.h>
 
-#ifdef DIUS_PLATFORM_LINUX
+#if defined(DIUS_PLATFORM_LINUX) && defined(__GCC__)
 #include <dius/linux/io_uring_context.h>
 #endif
 
 namespace dius {
 namespace execution = di::execution;
 
-#ifdef DIUS_PLATFORM_LINUX
+#if defined(DIUS_PLATFORM_LINUX) && defined(__GCC__)
 using IoContext = linux::IoUringContext;
 #else
 class IoContext {

@@ -51,14 +51,10 @@ private:
     constexpr static R make(Args&&... args)
     requires(requires { T(util::forward<Args>(args)...); })
     {
-        if consteval {
-            return new T(util::forward<Args>(args)...);
-        } else {
-            return platform::DefaultFallibleAllocator<T>().allocate(1) % [&](container::Allocation<T> result) {
-                new (result.data) T(util::forward<Args>(args)...);
-                return result.data;
-            };
-        }
+        return platform::DefaultFallibleAllocator<T>().allocate(1) % [&](container::Allocation<T> result) {
+            new (result.data) T(util::forward<Args>(args)...);
+            return result.data;
+        };
     }
 
     sync::Atomic<usize> m_ref_count { 1 };

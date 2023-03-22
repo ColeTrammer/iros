@@ -158,7 +158,7 @@ namespace receiver_interface_ns {
                 }
             }
 
-            template<concepts::SameAs<SetError> Tag, typename S = Self, typename Arg>
+            template<concepts::SameAs<SetError> Tag, typename Arg, typename S = Self>
             friend void tag_invoke(Tag, Self&& self, Arg&& arg)
             requires(
                 requires { Type::do_set_error(util::move(self), util::forward<Arg>(arg)); } ||

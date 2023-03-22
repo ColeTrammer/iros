@@ -72,27 +72,27 @@ constexpr void mdspan() {
     auto storage = di::Array { 1, 2, 3, 4, 5, 6, 7, 8 };
     auto span = di::MDSpan { storage.data(), di::Extents<size_t, 2, 2, 2> {} };
 
-    ASSERT_EQ((span[0, 0, 0]), 1);
-    ASSERT_EQ((span[0, 0, 1]), 2);
-    ASSERT_EQ((span[0, 1, 0]), 3);
-    ASSERT_EQ((span[0, 1, 1]), 4);
-    ASSERT_EQ((span[1, 0, 0]), 5);
-    ASSERT_EQ((span[1, 0, 1]), 6);
-    ASSERT_EQ((span[1, 1, 0]), 7);
-    ASSERT_EQ((span[1, 1, 1]), 8);
+    ASSERT_EQ((span(0, 0, 0)), 1);
+    ASSERT_EQ((span(0, 0, 1)), 2);
+    ASSERT_EQ((span(0, 1, 0)), 3);
+    ASSERT_EQ((span(0, 1, 1)), 4);
+    ASSERT_EQ((span(1, 0, 0)), 5);
+    ASSERT_EQ((span(1, 0, 1)), 6);
+    ASSERT_EQ((span(1, 1, 0)), 7);
+    ASSERT_EQ((span(1, 1, 1)), 8);
     ASSERT_EQ(span.size(), 8u);
     ASSERT(!span.empty());
 
     auto lspan = di::MDSpan { storage.data(), di::LayoutLeft::Mapping(di::Extents<size_t, 2, 2, 2> {}) };
 
-    ASSERT_EQ((lspan[0, 0, 0]), 1);
-    ASSERT_EQ((lspan[0, 0, 1]), 5);
-    ASSERT_EQ((lspan[0, 1, 0]), 3);
-    ASSERT_EQ((lspan[0, 1, 1]), 7);
-    ASSERT_EQ((lspan[1, 0, 0]), 2);
-    ASSERT_EQ((lspan[1, 0, 1]), 6);
-    ASSERT_EQ((lspan[1, 1, 0]), 4);
-    ASSERT_EQ((lspan[1, 1, 1]), 8);
+    ASSERT_EQ((lspan(0, 0, 0)), 1);
+    ASSERT_EQ((lspan(0, 0, 1)), 5);
+    ASSERT_EQ((lspan(0, 1, 0)), 3);
+    ASSERT_EQ((lspan(0, 1, 1)), 7);
+    ASSERT_EQ((lspan(1, 0, 0)), 2);
+    ASSERT_EQ((lspan(1, 0, 1)), 6);
+    ASSERT_EQ((lspan(1, 1, 0)), 4);
+    ASSERT_EQ((lspan(1, 1, 1)), 8);
     ASSERT_EQ(lspan.size(), 8u);
     ASSERT(!lspan.empty());
 

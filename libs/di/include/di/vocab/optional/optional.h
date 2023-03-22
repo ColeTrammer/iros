@@ -100,8 +100,8 @@ public:
     }
 
     template<typename U, typename... Args>
-    requires(concepts::ConstructibleFrom<T, util::InitializerList<U>, Args...>)
-    constexpr Optional(types::InPlace, util::InitializerList<U> list, Args&&... args) {
+    requires(concepts::ConstructibleFrom<T, std::initializer_list<U>, Args...>)
+    constexpr Optional(types::InPlace, std::initializer_list<U> list, Args&&... args) {
         emplace(list, util::forward<Args>(args)...);
     }
 

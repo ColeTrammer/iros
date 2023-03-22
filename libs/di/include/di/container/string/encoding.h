@@ -116,7 +116,7 @@ namespace detail {
     struct IteratorDataFunction {
         template<typename T, typename U = meta::EncodingCodeUnit<T>, typename Iter = meta::EncodingIterator<T>>
         requires(concepts::ExplicitlyConvertibleTo<Iter, U const*>)
-        constexpr U* operator()(T const& encoding, Span<U>, Iter iterator) const {
+        constexpr U* operator()(T const&, Span<U>, Iter iterator) const {
             // NOTE: this is safe since we have a "mutable" storage to the underlying code units.
             return const_cast<U*>(static_cast<U const*>(iterator));
         }

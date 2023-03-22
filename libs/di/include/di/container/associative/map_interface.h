@@ -223,7 +223,7 @@ public:
 
     template<typename K, typename U>
     requires(!is_multi && valid<K> && concepts::CreatableFrom<Key, K> && concepts::CreatableFrom<Val, U>)
-    constexpr auto insert_or_assign(ConstIterator hint, K&& needle, U&& value) {
+    constexpr auto insert_or_assign(ConstIterator, K&& needle, U&& value) {
         bool did_insert = false;
         return as_fallible(self().insert_with_factory(
                    needle,
@@ -505,7 +505,7 @@ public:
             return { it, container::next(it, 1, end()) };
         } else {
             auto [start, last] = self().equal_range_impl(needle);
-            return { unconst_iterator(util::move(start)), unconst_iterator(util::move(end)) };
+            return { unconst_iterator(util::move(start)), unconst_iterator(util::move(last)) };
         }
     }
     template<typename U>
