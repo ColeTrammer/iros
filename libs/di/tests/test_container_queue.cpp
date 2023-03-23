@@ -69,4 +69,4 @@ constexpr void queue() {
 TESTC(container_queue, priority_queue_basic)
 TESTC(container_queue, priority_queue_to)
 TESTC(container_queue, stack)
-TEST(container_queue, queue)
+TESTC_CLANG(container_queue, queue)

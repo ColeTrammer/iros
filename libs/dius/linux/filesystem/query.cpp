@@ -108,7 +108,8 @@ namespace detail {
 
         if (S_ISDIR(info.mode)) {
             return di::Unexpected(PosixError::IsADirectory);
-        } else if (!S_ISREG(info.mode)) {
+        }
+        if (!S_ISREG(info.mode)) {
             return di::Unexpected(PosixError::OperationNotSupported);
         }
         return info.size;

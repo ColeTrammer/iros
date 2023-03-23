@@ -61,5 +61,5 @@ constexpr void splice() {
     ASSERT_EQ(a, ex3);
 }
 
-TEST(container_linked_list, basic)
-TEST(container_linked_list, splice)
+TESTC_CLANG(container_linked_list, basic)
+TESTC_CLANG(container_linked_list, splice)
