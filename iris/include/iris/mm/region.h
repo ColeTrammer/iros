@@ -16,10 +16,7 @@ DI_DEFINE_ENUM_BITWISE_OPERATIONS(RegionFlags)
 class Region;
 
 struct AddressSpaceRegionListTag : di::container::IntrusiveTagBase<Region> {
-    constexpr static void did_remove(auto&, auto& node) {
-        di::destroy_at(di::addressof(node));
-        di::platform::DefaultFallibleAllocator<Region>().deallocate(di::addressof(node), 1);
-    }
+    constexpr static void did_remove(auto&, auto& node);
 };
 
 class Region : public di::IntrusiveTreeSetNode<AddressSpaceRegionListTag> {
@@ -51,11 +48,11 @@ public:
     constexpr di::strong_ordering compare_with_address(VirtualAddress b) const {
         if (contains(b)) {
             return di::strong_ordering::equal;
-        } else if (base() < b) {
-            return di::strong_ordering::less;
-        } else {
-            return di::strong_ordering::greater;
         }
+        if (base() < b) {
+            return di::strong_ordering::less;
+        }
+        return di::strong_ordering::greater;
     }
 
 private:
@@ -78,4 +75,9 @@ private:
     usize m_length { 0 };
     RegionFlags m_flags {};
 };
+
+constexpr void AddressSpaceRegionListTag::did_remove(auto&, auto& node) {
+    di::destroy_at(di::addressof(node));
+    di::platform::DefaultFallibleAllocator<Region>().deallocate(di::addressof(node), 1);
+}
 }

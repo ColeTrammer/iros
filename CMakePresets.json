@@ -30,7 +30,7 @@
             "hidden": true,
             "cacheVariables": {
                 "IROS_DiagnosticFlags": "-fcolor-diagnostics -fconstexpr-steps=10000000",
-                "IROS_WarningFlags": "-Wall -Wextra -Wpedantic -Wno-pre-c++2b-compat",
+                "IROS_WarningFlags": "-Wall -Wextra -Wpedantic",
                 "CMAKE_CXX_COMPILER": "clang++-16"
             }
         },
@@ -65,6 +65,7 @@
                 "IROS_BuildTools": "OFF",
                 "IROS_BuildCcpp": "ON",
                 "IROS_UseDiusRuntime": "ON",
+                "IROS_ExtraFlags": "-D__iros__=1",
                 "CMAKE_CXX_COMPILER_WORKS": "ON",
                 "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh"
             },
