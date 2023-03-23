@@ -1,26 +1,64 @@
 #pragma once
 
 #include <di/prelude.h>
+#include <dius/error.h>
 #include <dius/linux/io_uring.h>
-#include <dius/prelude.h>
 
 namespace dius::linux {
 struct IoUringContext;
 struct IoUringContextImpl;
 struct OperationStateBase;
 struct IoUringScheduler;
+struct ScheduleSender;
+struct OpenSender;
 
 template<di::concepts::Invocable<io_uring::SQE*> Fun>
 static void enqueue_io_operation(IoUringContext*, OperationStateBase* op, Fun&& function);
 
-void enqueue_operation(IoUringContext*, OperationStateBase*);
+inline void enqueue_operation(IoUringContext*, OperationStateBase*);
 
-IoUringScheduler get_scheduler(IoUringContext*);
+inline IoUringScheduler get_scheduler(IoUringContext*);
 
 struct OperationStateBase : di::IntrusiveForwardListNode<> {
 public:
     virtual void execute() = 0;
     virtual void did_complete(io_uring::CQE const*) {}
+};
+
+struct IoUringContext {
+public:
+    static di::Result<IoUringContext> create();
+
+    IoUringContext(IoUringContext&&) = default;
+
+    ~IoUringContext();
+
+    IoUringScheduler get_scheduler();
+
+    void run();
+    void finish() { m_done = true; }
+
+private:
+    IoUringContext(io_uring::IoUringHandle handle) : m_handle(di::move(handle)) {};
+
+public:
+    io_uring::IoUringHandle m_handle;
+    di::Queue<OperationStateBase, di::IntrusiveForwardList<OperationStateBase>> m_queue;
+    bool m_done { false };
+};
+
+struct IoUringScheduler {
+public:
+    IoUringContext* parent { nullptr };
+
+private:
+    friend ScheduleSender tag_invoke(di::Tag<di::execution::schedule>, IoUringScheduler const& self);
+    friend OpenSender tag_invoke(di::Tag<di::execution::async_open>, IoUringScheduler const& self, di::Path path,
+                                 OpenMode mode, u16 create_mode);
+    friend OpenSender tag_invoke(di::Tag<di::execution::async_open>, IoUringScheduler const& self, di::Path path,
+                                 OpenMode mode);
+
+    constexpr friend bool operator==(IoUringScheduler const&, IoUringScheduler const&) = default;
 };
 
 struct ReadSomeSender {
@@ -45,7 +83,7 @@ private:
                 , m_offset(offset)
                 , m_receiver(di::move(receiver)) {}
 
-            virtual void execute() override {
+            void execute() override {
                 if (di::execution::get_stop_token(m_receiver).stop_requested()) {
                     di::execution::set_stopped(di::move(m_receiver));
                 } else {
@@ -60,7 +98,7 @@ private:
                 }
             }
 
-            virtual void did_complete(io_uring::CQE const* cqe) override {
+            void did_complete(io_uring::CQE const* cqe) override {
                 if (cqe->res < 0) {
                     di::execution::set_error(di::move(m_receiver), di::Error(PosixError(-cqe->res)));
                 } else {
@@ -118,7 +156,7 @@ private:
                 , m_offset(offset)
                 , m_receiver(di::move(receiver)) {}
 
-            virtual void execute() override {
+            void execute() override {
                 if (di::execution::get_stop_token(m_receiver).stop_requested()) {
                     di::execution::set_stopped(di::move(m_receiver));
                 } else {
@@ -133,7 +171,7 @@ private:
                 }
             }
 
-            virtual void did_complete(io_uring::CQE const* cqe) override {
+            void did_complete(io_uring::CQE const* cqe) override {
                 if (cqe->res < 0) {
                     di::execution::set_error(di::move(m_receiver), di::Error(PosixError(-cqe->res)));
                 } else {
@@ -183,7 +221,7 @@ private:
             explicit Type(IoUringContext* parent, int file_descriptor, Rec receiver)
                 : m_parent(parent), m_file_descriptor(file_descriptor), m_receiver(di::move(receiver)) {}
 
-            virtual void execute() override {
+            void execute() override {
                 if (di::execution::get_stop_token(m_receiver).stop_requested()) {
                     di::execution::set_stopped(di::move(m_receiver));
                 } else {
@@ -195,7 +233,7 @@ private:
                 }
             }
 
-            virtual void did_complete(io_uring::CQE const* cqe) override {
+            void did_complete(io_uring::CQE const* cqe) override {
                 if (cqe->res < 0) {
                     di::execution::set_error(di::move(m_receiver), di::Error(PosixError(-cqe->res)));
                 } else {
@@ -241,7 +279,7 @@ private:
         public:
             Type(IoUringContext* parent, Rec&& receiver) : m_parent(parent), m_receiver(di::move(receiver)) {}
 
-            virtual void execute() override {
+            void execute() override {
                 if (di::execution::get_stop_token(m_receiver).stop_requested()) {
                     di::execution::set_stopped(di::move(m_receiver));
                 } else {
@@ -271,28 +309,6 @@ private:
     constexpr friend auto tag_invoke(di::execution::GetCompletionScheduler<CPO>, ScheduleSender const& self) {
         return get_scheduler(self.parent);
     }
-};
-
-struct IoUringContext {
-public:
-    static di::Result<IoUringContext> create();
-
-    IoUringContext(IoUringContext&&) = default;
-
-    ~IoUringContext();
-
-    IoUringScheduler get_scheduler();
-
-    void run();
-    void finish() { m_done = true; }
-
-private:
-    IoUringContext(io_uring::IoUringHandle handle) : m_handle(di::move(handle)) {};
-
-public:
-    io_uring::IoUringHandle m_handle;
-    di::Queue<OperationStateBase, di::IntrusiveForwardList<OperationStateBase>> m_queue;
-    bool m_done { false };
 };
 
 class AsyncFile {
@@ -340,7 +356,7 @@ private:
                 , m_create_mode(create_mode)
                 , m_receiver(di::move(receiver)) {}
 
-            virtual void execute() override {
+            void execute() override {
                 if (di::execution::get_stop_token(m_receiver).stop_requested()) {
                     di::execution::set_stopped(di::move(m_receiver));
                 } else {
@@ -372,7 +388,7 @@ private:
                 }
             }
 
-            virtual void did_complete(io_uring::CQE const* cqe) override {
+            void did_complete(io_uring::CQE const* cqe) override {
                 if (cqe->res < 0) {
                     di::execution::set_error(di::move(m_receiver), di::Error(PosixError(-cqe->res)));
                 } else {
@@ -408,29 +424,25 @@ private:
     }
 };
 
-struct IoUringScheduler {
-private:
-public:
-    IoUringContext* parent { nullptr };
+inline ScheduleSender tag_invoke(di::Tag<di::execution::schedule>, IoUringScheduler const& self) {
+    return { self.parent };
+}
 
-private:
-    friend auto tag_invoke(di::Tag<di::execution::schedule>, IoUringScheduler const& self) {
-        return ScheduleSender { self.parent };
-    }
+inline OpenSender tag_invoke(di::Tag<di::execution::async_open>, IoUringScheduler const& self, di::Path path,
+                             OpenMode mode, u16 create_mode) {
+    return { self.parent, di::move(path), mode, create_mode };
+}
 
-    friend auto tag_invoke(di::Tag<di::execution::async_open>, IoUringScheduler const& self, di::Path path,
-                           OpenMode mode, u16 create_mode = 0666) {
-        return OpenSender { self.parent, di::move(path), mode, create_mode };
-    }
-
-    constexpr friend bool operator==(IoUringScheduler const&, IoUringScheduler const&) = default;
-};
+inline OpenSender tag_invoke(di::Tag<di::execution::async_open>, IoUringScheduler const& self, di::Path path,
+                             OpenMode mode) {
+    return { self.parent, di::move(path), mode, 0666 };
+}
 
 inline di::Result<IoUringContext> IoUringContext::create() {
     return IoUringContext(TRY(io_uring::IoUringHandle::create()));
 }
 
-inline IoUringContext::~IoUringContext() {}
+inline IoUringContext::~IoUringContext() = default;
 
 inline void IoUringContext::run() {
     for (;;) {
@@ -457,11 +469,11 @@ inline void IoUringContext::run() {
 }
 
 template<di::concepts::Invocable<io_uring::SQE*> Fun>
-static void enqueue_io_operation(IoUringContext* context, OperationStateBase* op, Fun&& function) {
+inline void enqueue_io_operation(IoUringContext* context, OperationStateBase* op, Fun&& function) {
     auto sqe = context->m_handle.get_next_sqe();
     ASSERT(sqe);
     di::fill_n(reinterpret_cast<di::Byte*>(&sqe), sizeof(sqe), 0_b);
-    di::invoke(di::move(function), sqe.data());
+    di::invoke(di::forward<Fun>(function), sqe.data());
     sqe->user_data = reinterpret_cast<uintptr_t>(op);
 }
 

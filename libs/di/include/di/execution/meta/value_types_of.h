@@ -10,25 +10,30 @@
 
 namespace di::meta {
 namespace detail {
-    template<typename Completions, typename Env, template<typename...> typename Tup>
+    template<typename Completions, template<typename...> typename Tup>
     struct ValueTypesOfHelper;
 
-    template<typename Env, template<typename...> typename Tup>
-    struct ValueTypesOfHelper<types::CompletionSignatures<>, Env, Tup> : TypeConstant<List<>> {};
+    template<template<typename...> typename Tup>
+    struct ValueTypesOfHelper<List<>, Tup> : TypeConstant<List<>> {};
 
-    template<typename T, typename... Rest, typename Env, template<typename...> typename Tup>
-    struct ValueTypesOfHelper<types::CompletionSignatures<T, Rest...>, Env, Tup>
-        : ValueTypesOfHelper<types::CompletionSignatures<Rest...>, Env, Tup> {};
+    template<typename T, typename... Rest, template<typename...> typename Tup>
+    struct ValueTypesOfHelper<List<T, Rest...>, Tup> : ValueTypesOfHelper<List<Rest...>, Tup> {};
 
-    template<typename... Values, typename... Rest, typename Env, template<typename...> typename Tup>
-    struct ValueTypesOfHelper<types::CompletionSignatures<execution::SetValue(Values...), Rest...>, Env, Tup>
-        : TypeConstant<PushFront<typename ValueTypesOfHelper<types::CompletionSignatures<Rest...>, Env, Tup>::Type,
-                                 Tup<Values...>>> {};
+    template<concepts::LanguageFunction T, typename... Rest, template<typename...> typename Tup>
+    requires(concepts::SameAs<meta::LanguageFunctionReturn<T>, execution::SetValue>)
+    struct ValueTypesOfHelper<List<T, Rest...>, Tup>
+        : TypeConstant<
+              PushFront<Type<ValueTypesOfHelper<List<Rest...>, Tup>>, meta::Apply<meta::Quote<Tup>, meta::AsList<T>>>> {
+    };
 }
 
 template<typename Sender, typename Env = types::NoEnv, template<typename...> typename Tup = meta::DecayedTuple,
          template<typename...> typename Var = meta::VariantOrEmpty>
-requires(concepts::Sender<Sender, Env>)
+requires(concepts::Sender<Sender, Env> &&
+         requires {
+             typename AsTemplate<
+                 Var, Type<detail::ValueTypesOfHelper<meta::AsList<meta::CompletionSignaturesOf<Sender, Env>>, Tup>>>;
+         })
 using ValueTypesOf =
-    AsTemplate<Var, typename detail::ValueTypesOfHelper<meta::CompletionSignaturesOf<Sender, Env>, Env, Tup>::Type>;
+    AsTemplate<Var, Type<detail::ValueTypesOfHelper<meta::AsList<meta::CompletionSignaturesOf<Sender, Env>>, Tup>>>;
 }

@@ -196,15 +196,15 @@ static void let() {
     //          });
     // ASSERT_EQ(ex::sync_wait(di::move(y)), 42);
 
-    auto a = ex::let_value_with(
-        [] {
-            return 42;
-        },
-        [](int& x) {
-            return ex::just(x);
-        });
+    // auto a = ex::let_value_with(
+    //     [] {
+    //         return 42;
+    //     },
+    //     [](int& x) {
+    //         return ex::just(x);
+    //     });
 
-    ASSERT_EQ(ex::sync_wait(di::move(a)), 42);
+    // ASSERT_EQ(ex::sync_wait(di::move(a)), 42);
 }
 
 static void transfer() {

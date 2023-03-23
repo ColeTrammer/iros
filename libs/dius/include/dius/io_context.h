@@ -4,16 +4,16 @@
 #include <dius/config.h>
 #include <dius/sync_file.h>
 
-#if defined(DIUS_PLATFORM_LINUX) && defined(__GCC__)
+#ifdef DIUS_PLATFORM_LINUX
 #include <dius/linux/io_uring_context.h>
 #endif
 
 namespace dius {
-namespace execution = di::execution;
-
-#if defined(DIUS_PLATFORM_LINUX) && defined(__GCC__)
+#ifdef DIUS_PLATFORM_LINUX
 using IoContext = linux::IoUringContext;
 #else
+namespace execution = di::execution;
+
 class IoContext {
 private:
     struct OperationStateBase : di::IntrusiveForwardListNode<> {

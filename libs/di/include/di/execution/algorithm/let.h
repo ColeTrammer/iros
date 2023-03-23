@@ -72,8 +72,8 @@ namespace let_ns {
             template<concepts::SameAs<CPO> Tag, typename... Args>
             friend void tag_invoke(Tag, Type&& self, Args&&... args)
             requires(requires {
-                         util::declval<Data<CPO, Rec, Fun, Completions>&>().phase2(util::forward<Args>(args)...);
-                     })
+                util::declval<Data<CPO, Rec, Fun, Completions>&>().phase2(util::forward<Args>(args)...);
+            })
             {
                 self.data->phase2(util::forward<Args>(args)...);
             }
