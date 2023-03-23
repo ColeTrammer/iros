@@ -4,6 +4,7 @@
         "build/**": true,
         "legacy/**": true,
         "cross/**": true,
+        ".cache/**": true,
         "/usr/include/**": true,
     },
     "files.exclude": {
@@ -11,12 +12,16 @@
         "build/**": true,
         "legacy/**": true,
         "cross/**": true,
+        ".cache/**": true,
         "/usr/include/**": true
     },
     "testExplorer.useNativeTesting": true,
     "cmake.exportCompileCommandsFile": true,
+    "cmake.copyCompileCommands": "${workspaceRoot}/build/compile_commands.json",
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "C_Cpp.autoAddFileAssociations": false,
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "clangd.path": "/usr/bin/clangd-16",
     "files.insertFinalNewline": true,
     "editor.rulers": [
         120

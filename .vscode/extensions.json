@@ -9,6 +9,7 @@
         "ms-vscode.cmake-tools",
         "ms-azuretools.vscode-docker",
         "esbenp.prettier-vscode",
-        "ms-vscode.live-server"
+        "ms-vscode.live-server",
+        "llvm-vs-code-extensions.vscode-clangd"
     ]
 }
