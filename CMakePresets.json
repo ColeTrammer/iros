@@ -198,6 +198,17 @@
             "binaryDir": "${sourceDir}/build/native/clang-release",
             "installDir": "${sourceDir}/bulid/native/clang-release-install",
             "inherits": ["release_base", "clang_base"]
+        },
+        {
+            "name": "clang_dius_runtime_release",
+            "displayName": "Clang Dius Runtime Release Config",
+            "description": "Clang release build with dius runtime enabled",
+            "binaryDir": "${sourceDir}/build/native/clang-release-dius-runtime",
+            "installDir": "${sourceDir}/build/native/clang-release-dius-runtime-install",
+            "cacheVariables": {
+                "IROS_UseDiusRuntime": "ON"
+            },
+            "inherits": ["release_base", "clang_base"]
         }
     ],
     "buildPresets": [
@@ -288,6 +299,12 @@
             "name": "clang_release",
             "displayName": "Clang Release Build",
             "configurePreset": "clang_release",
+            "inherits": ["base"]
+        },
+        {
+            "name": "clang_dius_runtime_release",
+            "displayName": "Clang Dius Runtime Release",
+            "configurePreset": "clang_dius_runtime_release",
             "inherits": ["base"]
         }
     ],
@@ -383,6 +400,12 @@
             "name": "clang_release",
             "displayName": "Clang Release Build",
             "configurePreset": "clang_release",
+            "inherits": ["base"]
+        },
+        {
+            "name": "clang_dius_runtime_release",
+            "displayName": "Clang Dius Runtime Release",
+            "configurePreset": "clang_dius_runtime_release",
             "inherits": ["base"]
         }
     ]
