@@ -14,7 +14,7 @@ Expected<void> register_irq_handler(GlobalIrqNumber irq, IrqHandler handler) {
     auto& irq_handlers = global_state().irq_handlers;
     return irq_handlers.with_lock([&](auto& irq_handlers) -> Expected<void> {
         // FIXME: propogate allocation failures.
-        irq_handlers[irq.raw_value()].push_back(di::move(handler));
+        TRY(irq_handlers[irq.raw_value()].push_back(di::move(handler)));
 
         if (auto irq_controller = irq_controller_for_interrupt_number(irq)) {
             irq_controller->with_lock([&](auto& controller) {

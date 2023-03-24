@@ -22,7 +22,7 @@ Task::Task(mm::VirtualAddress entry, mm::VirtualAddress stack, bool userspace, d
 
 Task::~Task() {
     global_state().task_finalization_wait_queue.notify_one([&] {
-        global_state().task_finalization_data_queue.push({ di::move(m_address_space), m_kernel_stack });
+        ASSERT(global_state().task_finalization_data_queue.push({ di::move(m_address_space), m_kernel_stack }));
     });
 }
 

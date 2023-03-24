@@ -8,7 +8,7 @@ TestManager& TestManager::the() {
 }
 
 void TestManager::register_test_case(TestCase test_case) {
-    m_test_cases.push_back(di::move(test_case));
+    ASSERT(m_test_cases.push_back(di::move(test_case)));
 }
 
 extern "C" {

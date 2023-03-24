@@ -10,7 +10,7 @@ Expected<TaskId> LockedTaskNamespace::allocate_task_id() {
 
 Expected<void> LockedTaskNamespace::register_task(Task& task) {
     // FIXME: propogate allocation failure when di::TreeMap supports it.
-    m_task_id_map.try_emplace(task.id(), task.arc_from_this());
+    TRY(m_task_id_map.try_emplace(task.id(), task.arc_from_this()));
     return {};
 }
 

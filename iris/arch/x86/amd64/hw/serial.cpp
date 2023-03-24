@@ -44,7 +44,7 @@ void init_serial() {
         log_output_byte(byte);
 
         global_state().input_wait_queue.notify_one([&] {
-            global_state().input_data_queue.push(byte);
+            (void) global_state().input_data_queue.push(byte);
         });
 
         send_eoi(*global_state().irq_controller.lock(), GlobalIrqNumber(36));
