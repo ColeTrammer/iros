@@ -1,49 +1,49 @@
 name: Deploy and Generate Documentation
 
 on:
-    push:
-        branches: [iris]
-    pull_request:
-        types: [opened, reopened, synchronize, ready_for_review]
+  push:
+    branches: [iris]
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
 
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
-    cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
-    build_and_deploy:
-        if: github.event_name != 'pull_request' || !github.event.pull_request.draft
-        runs-on: ubuntu-latest
-        steps:
-            - name: Install graphviz and correct GCC
-              run: |
-                  sudo apt-get -y update && sudo apt-get -y install graphviz
-                  sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 100 --slave /usr/bin/g++ g++ /usr/bin/g++-12 --slave /usr/bin/gcov gcov /usr/bin/gcov-12
-                  sudo update-alternatives --set gcc /usr/bin/gcc-12
-            - name: Install latest doxygen
-              run: |
-                  wget https://www.doxygen.nl/files/doxygen-1.9.6.linux.bin.tar.gz
-                  tar -xzf doxygen-1.9.6.linux.bin.tar.gz
-                  cp doxygen-1.9.6/bin/* --target /usr/local/bin
-                  rm -f doxygen-1.9.6.linux.bin.tar.gz
-                  rm -rf doxygen-1.9.6
-            - name: Checkout source code
-              uses: actions/checkout@v3
-            - name: Get latest CMake and Ninja
-              uses: lukka/get-cmake@latest
-              with:
-                  cmakeVersion: latest
-                  ninjaVersion: latest
-            - name: Build and test
-              uses: lukka/run-cmake@v10
-              with:
-                  configurePreset: release
-                  buildPreset: release_docs
-            - name: Deploy docs
-              uses: JamesIves/github-pages-deploy-action@v4
-              with:
-                  folder: build/native/release/html
-                  commit-message: "docs: deploy documentation site"
-                  single-commit: true
-                  branch: gh-pages
-              if: github.event_name == 'push'
+  build_and_deploy:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install graphviz and correct GCC
+        run: |
+          sudo apt-get -y update && sudo apt-get -y install graphviz
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 100 --slave /usr/bin/g++ g++ /usr/bin/g++-12 --slave /usr/bin/gcov gcov /usr/bin/gcov-12
+          sudo update-alternatives --set gcc /usr/bin/gcc-12
+      - name: Install latest doxygen
+        run: |
+          wget https://www.doxygen.nl/files/doxygen-1.9.6.linux.bin.tar.gz
+          tar -xzf doxygen-1.9.6.linux.bin.tar.gz
+          cp doxygen-1.9.6/bin/* --target /usr/local/bin
+          rm -f doxygen-1.9.6.linux.bin.tar.gz
+          rm -rf doxygen-1.9.6
+      - name: Checkout source code
+        uses: actions/checkout@v3
+      - name: Get latest CMake and Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: latest
+          ninjaVersion: latest
+      - name: Build and test
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: release
+          buildPreset: release_docs
+      - name: Deploy docs
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: build/native/release/html
+          commit-message: "docs: deploy documentation site"
+          single-commit: true
+          branch: gh-pages
+        if: github.event_name == 'push'

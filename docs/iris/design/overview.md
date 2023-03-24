@@ -61,26 +61,26 @@ hopefully running in ring 3.
 
 ## Pros of a Micro-Kernel
 
--   Increased fault tolerance (if the NIC driver crashes, the system can keep running)
--   Increased security (it is much harder to exploit components not directly in the kernel)
--   Increased modularity (different components can be developed in isolation)
+- Increased fault tolerance (if the NIC driver crashes, the system can keep running)
+- Increased security (it is much harder to exploit components not directly in the kernel)
+- Increased modularity (different components can be developed in isolation)
 
 ## Cons of a Micro-Kernel
 
--   Increased complexity (now, multiple different processes must orchestrate themselves together)
--   Relies on Inter-Process Communication (not the much simpler interface, function calls)
--   Reduced performance (more context switches, non-blocking APIs, IRQ dispatch, ...)
--   Requires complex work-arounds (like bootstrapping a file system so that programs can be loaded)
+- Increased complexity (now, multiple different processes must orchestrate themselves together)
+- Relies on Inter-Process Communication (not the much simpler interface, function calls)
+- Reduced performance (more context switches, non-blocking APIs, IRQ dispatch, ...)
+- Requires complex work-arounds (like bootstrapping a file system so that programs can be loaded)
 
 ## Pros of a Monolithic Kernel
 
--   Components communicate directly using function calls
--   Increased performance (component communication has no overhead)
+- Components communicate directly using function calls
+- Increased performance (component communication has no overhead)
 
 ## Cons of a Monolithic Kernel
 
--   Large attack surface
--   Failures in less significant components can cause the entire kernel to panic
+- Large attack surface
+- Failures in less significant components can cause the entire kernel to panic
 
 ## General Analysis
 

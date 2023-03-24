@@ -2,9 +2,9 @@
 
 In general, memory allocation consists of 3 components:
 
--   Physical Page Frame Allocator
--   Virtual Memory Allocator (Page Granularity)
--   Heap Management (Byte Granularity)
+- Physical Page Frame Allocator
+- Virtual Memory Allocator (Page Granularity)
+- Heap Management (Byte Granularity)
 
 ## Physical Page Frame Allocator
 

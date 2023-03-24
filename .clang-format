@@ -5,12 +5,12 @@ IndentWidth: 4
 Language: Cpp
 ColumnLimit: 120
 IncludeCategories:
-    - Regex: "<*>"
-      Priority: 1
-    - Regex: '"*.h"'
-      Priority: 4
-    - Regex: "*"
-      Priority: 5
+  - Regex: "<*>"
+    Priority: 1
+  - Regex: '"*.h"'
+    Priority: 4
+  - Regex: "*"
+    Priority: 5
 SpaceAfterTemplateKeyword: false
 SpaceAfterCStyleCast: true
 AlignTrailingComments: true
@@ -19,8 +19,8 @@ ConstructorInitializerAllOnOneLineOrOnePerLine: true
 IndentPPDirectives: None
 BreakBeforeBraces: Custom
 BraceWrapping:
-    AfterFunction: false
-    SplitEmptyFunction: false
+  AfterFunction: false
+  SplitEmptyFunction: false
 IndentCaseLabels: true
 AlignConsecutiveMacros: true
 AlignEscapedNewlines: true

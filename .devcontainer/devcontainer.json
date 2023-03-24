@@ -56,8 +56,18 @@
                     120
                 ],
                 "cmake.configureOnOpen": false,
-                "prettier.tabWidth": 4,
-                "prettier.printWidth": 120
+                "prettier.tabWidth": 2,
+                "prettier.printWidth": 120,
+                "prettier.documentSelectors": [
+                    "*.md",
+                    ".clang-format",
+                    ".clang-tidy",
+                    ".clangd",
+                    "*.yml"
+                ],
+                "[json]": {
+                    "editor.defaultFormatter": "vscode.json-language-features"
+                }
             }
         }
     },

@@ -12,4 +12,4 @@ Describe the planned feature.
 
 # Progress
 
--   [ ] Add tests
+- [ ] Add tests

@@ -41,7 +41,9 @@
                 "CMAKE_BUILD_TYPE": "Release",
                 "IROS_ExtraFlags": "-O3"
             },
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "debug_base",
@@ -49,7 +51,9 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug"
             },
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "iros_x86_64",
@@ -69,7 +73,10 @@
                 "CMAKE_CXX_COMPILER_WORKS": "ON",
                 "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64"
             },
-            "inherits": ["release_base", "gcc_base"]
+            "inherits": [
+                "release_base",
+                "gcc_base"
+            ]
         },
         {
             "name": "clang_iros_x86_64",
@@ -89,7 +96,10 @@
                 "CMAKE_CXX_COMPILER_WORKS": "ON",
                 "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;clang_x86_64"
             },
-            "inherits": ["release_base", "clang_base"]
+            "inherits": [
+                "release_base",
+                "clang_base"
+            ]
         },
         {
             "name": "dius_runtime_release",
@@ -100,7 +110,10 @@
             "cacheVariables": {
                 "IROS_UseDiusRuntime": "ON"
             },
-            "inherits": ["release_base", "gcc_base"]
+            "inherits": [
+                "release_base",
+                "gcc_base"
+            ]
         },
         {
             "name": "dius_runtime_debug",
@@ -111,7 +124,10 @@
             "cacheVariables": {
                 "IROS_UseDiusRuntime": "ON"
             },
-            "inherits": ["debug_base", "gcc_base"]
+            "inherits": [
+                "debug_base",
+                "gcc_base"
+            ]
         },
         {
             "name": "release",
@@ -119,7 +135,10 @@
             "description": "Default native release build",
             "binaryDir": "${sourceDir}/build/native/release",
             "installDir": "${sourceDir}/build/native/release-install",
-            "inherits": ["release_base", "gcc_base"]
+            "inherits": [
+                "release_base",
+                "gcc_base"
+            ]
         },
         {
             "name": "tools",
@@ -133,7 +152,10 @@
                 "IROS_BuildTools": "ON",
                 "IROS_BuildCcpp": "OFF"
             },
-            "inherits": ["release_base", "gcc_base"]
+            "inherits": [
+                "release_base",
+                "gcc_base"
+            ]
         },
         {
             "name": "debug",
@@ -141,7 +163,10 @@
             "description": "Native debug build",
             "binaryDir": "${sourceDir}/build/native/debug",
             "installDir": "${sourceDir}/bulid/native/debug-install",
-            "inherits": ["debug_base", "gcc_base"]
+            "inherits": [
+                "debug_base",
+                "gcc_base"
+            ]
         },
         {
             "name": "tsan",
@@ -153,7 +178,10 @@
                 "IROS_BuildCcpp": "OFF",
                 "IROS_SanitizerFlags": "-fsanitize=thread -DDI_SANITIZER"
             },
-            "inherits": ["debug_base", "gcc_base"]
+            "inherits": [
+                "debug_base",
+                "gcc_base"
+            ]
         },
         {
             "name": "msan",
@@ -165,7 +193,10 @@
                 "IROS_BuildCcpp": "OFF",
                 "IROS_SanitizerFlags": "-fsanitize=memory -DDI_SANITIZER"
             },
-            "inherits": ["debug_base", "clang_base"]
+            "inherits": [
+                "debug_base",
+                "clang_base"
+            ]
         },
         {
             "name": "ubasan",
@@ -177,7 +208,10 @@
                 "IROS_BuildCcpp": "OFF",
                 "IROS_SanitizerFlags": "-fsanitize=address,undefined -DDI_SANITIZER"
             },
-            "inherits": ["debug_base", "gcc_base"]
+            "inherits": [
+                "debug_base",
+                "gcc_base"
+            ]
         },
         {
             "name": "coverage",
@@ -189,7 +223,10 @@
                 "IROS_BuildCcpp": "OFF",
                 "IROS_ExtraFlags": "-Og -fprofile-arcs -ftest-coverage"
             },
-            "inherits": ["debug_base", "gcc_base"]
+            "inherits": [
+                "debug_base",
+                "gcc_base"
+            ]
         },
         {
             "name": "clang_dius_runtime_release",
@@ -200,7 +237,10 @@
             "cacheVariables": {
                 "IROS_UseDiusRuntime": "ON"
             },
-            "inherits": ["release_base", "clang_base"]
+            "inherits": [
+                "release_base",
+                "clang_base"
+            ]
         },
         {
             "name": "clang_dius_runtime_debug",
@@ -211,7 +251,10 @@
             "cacheVariables": {
                 "IROS_UseDiusRuntime": "ON"
             },
-            "inherits": ["debug_base", "clang_base"]
+            "inherits": [
+                "debug_base",
+                "clang_base"
+            ]
         },
         {
             "name": "clang_release",
@@ -219,7 +262,10 @@
             "description": "Clang native release build",
             "binaryDir": "${sourceDir}/build/native/clang-release",
             "installDir": "${sourceDir}/bulid/native/clang-release-install",
-            "inherits": ["release_base", "clang_base"]
+            "inherits": [
+                "release_base",
+                "clang_base"
+            ]
         },
         {
             "name": "clang_debug",
@@ -227,7 +273,10 @@
             "description": "Clang native debug build",
             "binaryDir": "${sourceDir}/build/native/clang-debug",
             "installDir": "${sourceDir}/bulid/native/clang-debug-install",
-            "inherits": ["debug_base", "clang_base"]
+            "inherits": [
+                "debug_base",
+                "clang_base"
+            ]
         }
     ],
     "buildPresets": [
@@ -239,98 +288,132 @@
             "name": "iros_x86_64",
             "displayName": "Iros x86_64",
             "configurePreset": "iros_x86_64",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "clang_iros_x86_64",
             "displayName": "Clang Iros x86_64",
             "configurePreset": "clang_iros_x86_64",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "dius_runtime_release",
             "displayName": "Dius Runtime Release",
             "configurePreset": "dius_runtime_release",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "dius_runtime_debug",
             "displayName": "Dius Runtime Debug Build",
             "configurePreset": "dius_runtime_debug",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "release",
             "displayName": "Release Build",
             "configurePreset": "release",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "release_docs",
             "displayName": "Build Documentation Only",
             "configurePreset": "release",
-            "targets": ["docs"],
-            "inherits": ["base"]
+            "targets": [
+                "docs"
+            ],
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "tools",
             "displayName": "Tools Build",
             "configurePreset": "tools",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "debug",
             "displayName": "Debug Build",
             "configurePreset": "debug",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "tsan",
             "displayName": "Thread Sanitizer",
             "configurePreset": "tsan",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "msan",
             "displayName": "Memory Sanitizer",
             "configurePreset": "msan",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "ubasan",
             "displayName": "Undefined Behavior + Address Sanitizer",
             "configurePreset": "ubasan",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "coverage",
             "displayName": "Code Coverage",
             "configurePreset": "coverage",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "clang_dius_runtime_release",
             "displayName": "Clang Dius Runtime Release",
             "configurePreset": "clang_dius_runtime_release",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "clang_dius_runtime_debug",
             "displayName": "Clang Dius Runtime Debug",
             "configurePreset": "clang_dius_runtime_debug",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "clang_release",
             "displayName": "Clang Release Build",
             "configurePreset": "clang_release",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "clang_debug",
             "displayName": "Clang Debug Build",
             "configurePreset": "clang_debug",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         }
     ],
     "testPresets": [
@@ -353,91 +436,121 @@
             "execution": {
                 "jobs": 1
             },
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "clang_iros_x86_64",
             "displayName": "Clang Iros x86_64",
             "configurePreset": "clang_iros_x86_64",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "dius_runtime_release",
             "displayName": "Dius Runtime Release Test",
             "configurePreset": "dius_runtime_release",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "dius_runtime_debug",
             "displayName": "Dius Runtime Debug Test",
             "configurePreset": "dius_runtime_debug",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "release",
             "displayName": "Release Test",
             "configurePreset": "release",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "tools",
             "displayName": "Tools Test",
             "configurePreset": "tools",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "debug",
             "displayName": "Debug Test",
             "configurePreset": "debug",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "tsan",
             "displayName": "Thread Sanitizer",
             "configurePreset": "tsan",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "msan",
             "displayName": "Memory Sanitizer",
             "configurePreset": "msan",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "ubasan",
             "displayName": "Undefined Behavior + Address Sanitizer",
             "configurePreset": "ubasan",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "coverage",
             "displayName": "Code Coverage",
             "configurePreset": "coverage",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "clang_dius_runtime_release",
             "displayName": "Clang Dius Runtime Release",
             "configurePreset": "clang_dius_runtime_release",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "clang_dius_runtime_debug",
             "displayName": "Clang Dius Runtime Debug",
             "configurePreset": "clang_dius_runtime_debug",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "clang_release",
             "displayName": "Clang Release Build",
             "configurePreset": "clang_release",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         },
         {
             "name": "clang_debug",
             "displayName": "Clang Debug Build",
             "configurePreset": "clang_debug",
-            "inherits": ["base"]
+            "inherits": [
+                "base"
+            ]
         }
     ]
 }
