@@ -44,6 +44,11 @@ private:
     using Iterator = RBTreeIterator<Value, Tag>;
     using ConstIterator = meta::ConstIterator<Iterator>;
 
+    using AllocResult = decltype(Alloc().allocate(0));
+
+    template<typename T>
+    using Result = meta::LikeExpected<AllocResult, T>;
+
 public:
     using Base::Base;
 
@@ -55,17 +60,18 @@ public:
         auto position = this->insert_position(needle);
         if constexpr (!is_multi) {
             if (position.parent && this->compare(this->node_value(*position.parent), needle) == 0) {
-                return Tuple(Iterator(position.parent, false), false);
+                return Result<Tuple<Iterator, bool>>(Tuple(Iterator(position.parent, false), false));
             }
         }
 
-        auto* node = this->create_node(function::invoke(util::forward<F>(factory)));
-        this->insert_node(position, *node);
-        if constexpr (!is_multi) {
-            return Tuple(Iterator(node, false), true);
-        } else {
-            return Iterator(node, false);
-        }
+        return as_fallible(this->create_node(function::invoke(util::forward<F>(factory)))) % [&](auto* node) {
+            this->insert_node(position, *node);
+            if constexpr (!is_multi) {
+                return Tuple(Iterator(node, false), true);
+            } else {
+                return Iterator(node, false);
+            }
+        } | try_infallible;
     }
 
     template<typename U, concepts::Invocable F>
@@ -74,24 +80,27 @@ public:
         auto position = this->insert_position(needle);
         if constexpr (!is_multi) {
             if (position.parent && this->compare(this->node_value(*position.parent), needle) == 0) {
-                return Iterator(position.parent, false);
+                return Result<Tuple<Iterator, bool>>(Tuple(Iterator(position.parent, false), false));
             }
         }
 
-        auto* node = this->create_node(function::invoke(util::forward<F>(factory)));
-        this->insert_node(position, *node);
-        return Iterator(node, false);
+        return as_fallible(this->create_node(function::invoke(util::forward<F>(factory)))) % [&](auto* node) {
+            this->insert_node(position, *node);
+            return Iterator(node, false);
+        } | try_infallible;
     }
 
 private:
     template<typename... Args>
     requires(concepts::ConstructibleFrom<Value, Args...>)
-    constexpr Node* create_node(Args&&... args) {
-        auto [pointer, allocated_nodes] = Alloc().allocate(1);
-        (void) allocated_nodes;
+    constexpr auto create_node(Args&&... args) {
+        return as_fallible(Alloc().allocate(1)) % [&](Allocation<OwningRBTreeNode<Value, Tag>> allocation) {
+            auto [pointer, allocated_nodes] = allocation;
+            (void) allocated_nodes;
 
-        util::construct_at(pointer, in_place, util::forward<Args>(args)...);
-        return pointer;
+            util::construct_at(pointer, in_place, util::forward<Args>(args)...);
+            return static_cast<Node*>(pointer);
+        } | try_infallible;
     }
 };
 }

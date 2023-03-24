@@ -11,6 +11,7 @@
 #include <di/platform/prelude.h>
 #include <di/util/exchange.h>
 #include <di/util/reference_wrapper.h>
+#include <di/vocab/expected/prelude.h>
 #include <di/vocab/optional/prelude.h>
 
 namespace di::container {
@@ -113,7 +114,7 @@ public:
     template<typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...>)
     constexpr decltype(auto) emplace_back(Args&&... args) {
-        return as_fallible(emplace(this->end(), util::forward<Args>(args)...)) % [](auto it) {
+        return as_fallible(emplace(this->end(), util::forward<Args>(args)...)) % [](Iterator it) {
             return util::ref(*it);
         } | try_infallible;
     }
@@ -169,12 +170,14 @@ public:
 private:
     template<typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...>)
-    constexpr Node& create_node(Args&&... args) {
-        auto [pointer, allocated_nodes] = Alloc().allocate(1);
-        (void) allocated_nodes;
+    constexpr decltype(auto) create_node(Args&&... args) {
+        return as_fallible(Alloc().allocate(1)) % [&](Allocation<Node> allocation) {
+            auto [pointer, allocated_nodes] = allocation;
+            (void) allocated_nodes;
 
-        util::construct_at(pointer, in_place, util::forward<Args>(args)...);
-        return *pointer;
+            util::construct_at(pointer, in_place, util::forward<Args>(args)...);
+            return util::ref(*pointer);
+        } | try_infallible;
     }
 };
 
