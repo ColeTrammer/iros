@@ -22,7 +22,7 @@ export IROS_ROOT=$(realpath "$PARENT_DIR"/..)
 
 export IROS_ARCH=x86_64
 
-export IROS_BUILD_DIR="$IROS_ROOT"/build/"$IROS_ARCH"
+export IROS_BUILD_DIR="$IROS_ROOT"/build/"$(basename $1)"
 export IROS_LIMINE_DIR="$IROS_BUILD_DIR"/iris/limine-prefix/src/limine
 
 export IROS_IMAGE="$IROS_BUILD_DIR"/iris-run.img
@@ -31,11 +31,11 @@ export IROS_INITRD="$IROS_BUILD_DIR"/initrd-run/initrd.bin
 mkdir -p "$IROS_BUILD_DIR"/initrd-run
 rm -f "$IROS_INITRD"
 
-if [ "$1" = "-run=kernel_unit_test" ]; then
-    EXECUTABLE_NAME="$1"
+if [ "$2" = "-run=kernel_unit_test" ]; then
+    EXECUTABLE_NAME="$2"
 else
-    cp "$1" "$IROS_BUILD_DIR"/initrd-run
-    EXECUTABLE_NAME="/$(basename $1)"
+    cp "$2" "$IROS_BUILD_DIR"/initrd-run
+    EXECUTABLE_NAME="/$(basename $2)"
 fi
 
 (

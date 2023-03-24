@@ -67,7 +67,7 @@
                 "IROS_UseDiusRuntime": "ON",
                 "IROS_ExtraFlags": "-D__iros__=1",
                 "CMAKE_CXX_COMPILER_WORKS": "ON",
-                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh"
+                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64"
             },
             "inherits": ["release_base", "gcc_base"]
         },
@@ -87,7 +87,7 @@
                 "IROS_UseDiusRuntime": "ON",
                 "IROS_ExtraFlags": "-D__iros__=1 -U__linux__",
                 "CMAKE_CXX_COMPILER_WORKS": "ON",
-                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh"
+                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;clang_x86_64"
             },
             "inherits": ["release_base", "clang_base"]
         },
@@ -177,7 +177,7 @@
                 "IROS_BuildCcpp": "OFF",
                 "IROS_SanitizerFlags": "-fsanitize=address,undefined -DDI_SANITIZER"
             },
-            "inherits": ["debug_base", "clang_base"]
+            "inherits": ["debug_base", "gcc_base"]
         },
         {
             "name": "coverage",

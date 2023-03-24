@@ -1,6 +1,8 @@
 #include <di/prelude.h>
 
+#ifdef __GCC__
 #pragma GCC diagnostic ignored "-Wbuiltin-declaration-mismatch"
+#endif
 
 extern "C" {
 int __dso_handle;

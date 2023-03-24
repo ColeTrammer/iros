@@ -155,9 +155,16 @@ public:
         constexpr friend bool operator==(Iterator const& a, container::DefaultSentinel) { return a.m_at_end; }
 
         constexpr void set_error(Error error) {
+#ifdef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wredundant-consteval-if"
+#endif
             if consteval {
                 util::compile_time_fail<FixedString { "Invalid format string." }>();
             }
+#ifdef __clang__
+#pragma GCC diagnostic pop
+#endif
             m_position = m_data.end();
             set_value(util::move(error));
         }

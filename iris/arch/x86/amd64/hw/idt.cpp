@@ -111,14 +111,12 @@ constexpr auto get_irq_handler() {
 void init_idt() {
     di::function::unpack<di::meta::MakeIntegerSequence<int, 256>>(
         []<int... indices>(di::meta::IntegerSequence<int, indices...>) {
-            auto do_entry = []<int n>(di::Nontype<n>) {
-                auto handler_address = di::to_uintptr(get_irq_handler<n>());
-                idt[n] = Entry(Present(true), Type(Type::InterruptGate), SegmentSelector(5 * 8),
+            auto addresses = di::Array { di::to_uintptr(get_irq_handler<indices>())... };
+            for (auto [n, handler_address] : di::enumerate(addresses)) {
+                idt[n] = Entry(Present { true }, Type(Type::InterruptGate), SegmentSelector { 5 * 8 },
                                TargetLow(handler_address & 0xFFFF), TargetMid((handler_address >> 16) & 0xFFFF),
-                               TargetHigh(handler_address >> 32), DPL(3));
-            };
-
-            (do_entry(di::nontype<indices>), ...);
+                               TargetHigh(handler_address >> 32), DPL { 3 });
+            }
         });
 
     auto idtr = iris::x86::amd64::IDTR { sizeof(idt) - 1, di::to_uintptr(idt.data()) };

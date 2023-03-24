@@ -19,7 +19,7 @@ source code.
 
 In addition, the project requires at least GCC 12.1.0 or clang 16 and the CMake 3.25.2 to compile. The CMake version can
 probably be relaxed, but GCC 11 will fail to compile the system. Likewise, clang-15 will not compile the system.
-Currently, only the Linux build works with clang, so compiling the Iros kernel must be done with GCC. Testing the kernel
+Currently, the clang support is experimental, since there is not a custom toolchain target for llvm. Testing the kernel
 additionally requires various system commands, including `parted`, `mkfs.fat`, and `qemu`. A full list of packages
 needed under Ubuntu can be found in the
 [dockerfile](https://github.com/ColeTrammer/iros/tree/iris/meta/docker/Dockerfile). This dockerfile also provides steps
@@ -47,7 +47,8 @@ At this point, the entire system should be buildable with cmake.
 
 ### Build Commands
 
-Note that these commands apply using a dev container or locally, once things are setup.
+Note that these commands apply using a dev container or locally, once things are setup. To use clang instead, use the
+`clang_iros_x86_64` preset instead.
 
 #### Configure
 

@@ -16,7 +16,14 @@ struct Projected {
     using Value = meta::RemoveCVRef<Reference>;
     using SSizeType = meta::IteratorSSizeType<It>;
 
+#ifdef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wundefined-internal"
+#endif
     Reference operator*() const;
+#ifdef __clang__
+#pragma GCC diagnostic pop
+#endif
 
     constexpr friend InPlaceType<Value> tag_invoke(types::Tag<container::iterator_value>, InPlaceType<Projected>) {
         return in_place_type<Value>;

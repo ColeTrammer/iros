@@ -73,20 +73,21 @@ public:
     = default;
 
     template<typename U>
-    requires(concepts::ConstructibleFrom<Storage, U const&> && detail::RebindableBoxCanConvertConstructor<T, U>)
+    requires(!concepts::RemoveCVRefSameAs<T, U> && concepts::ConstructibleFrom<Storage, U const&> &&
+             detail::RebindableBoxCanConvertConstructor<T, U>)
     constexpr explicit(!concepts::ConvertibleTo<U const&, Storage>) RebindableBox(RebindableBox<U> const& other)
         : m_storage(other.value()) {}
 
     template<typename U>
-    requires(concepts::ConstructibleFrom<Storage, U> && detail::RebindableBoxCanConvertConstructor<T, U>)
+    requires(!concepts::RemoveCVRefSameAs<T, U> && concepts::ConstructibleFrom<Storage, U> &&
+             detail::RebindableBoxCanConvertConstructor<T, U>)
     constexpr explicit(!concepts::ConvertibleTo<U, Storage>) RebindableBox(RebindableBox<U>&& other)
         : m_storage(util::move(other).value()) {}
 
-    template<typename U = T>
-    requires(concepts::ConstructibleFrom<Storage, U> && !concepts::RemoveCVRefSameAs<RebindableBox, U> &&
-             !concepts::RemoveCVRefSameAs<types::InPlace, U>)
-    constexpr explicit(!concepts::ConvertibleTo<U, Storage>) RebindableBox(U&& value)
-        : m_storage(util::forward<U>(value)) {}
+    template<typename U>
+    requires(!concepts::RemoveCVRefSameAs<U, RebindableBox> && concepts::ConstructibleFrom<Storage, U> &&
+             !concepts::RemoveCVRefSameAs<RebindableBox, U> && !concepts::RemoveCVRefSameAs<types::InPlace, U>)
+    constexpr explicit RebindableBox(U&& value) : m_storage(util::forward<U>(value)) {}
 
     template<typename... Args>
     requires(concepts::ConstructibleFrom<Storage, Args...>)

@@ -79,7 +79,7 @@ void iris_main() {
     auto memory_map = di::Span { memmap_request.response->entries, memmap_request.response->entry_count };
 
     ASSERT(!memory_map.empty());
-    global_state.max_physical_address = di::max(memory_map | di::transform([](auto* entry) {
+    global_state.max_physical_address = di::max(memory_map | di::transform([&](auto* entry) {
                                                     return mm::PhysicalAddress(entry->base) + entry->length;
                                                 }));
 
