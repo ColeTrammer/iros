@@ -1,6 +1,6 @@
 #include <dius/prelude.h>
 
-int main() {
+extern "C" int main() {
     auto* x = new int;
     *x = 42;
 

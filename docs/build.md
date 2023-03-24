@@ -13,16 +13,19 @@ enables building and running tests through the VS Code CMake extension.
 
 In order to use something other than VS Code, it is probably easiest to just build the toolchain locally. Once finished,
 the project can be built like a normal CMake project, and intellisense can be provided using `compile_commands.json` and
-any c++ language server. Unfortunately, `clangd` may not be happy with the project, as it uses bleeding-edge c++
-features which `clangd` may not support.
+any c++ language server. Currently, your best bet is to use `clangd`, as the project uses bleeding-edge c++ features
+which only `clang` and `gcc` support. The Microsoft C++ engine is not recommended, as it cannot compile the project's
+source code.
 
-In addition, the project requires at least GCC 12.1.0 and the newest version of CMake to compile. The CMake version can
-probably be relaxed, but GCC 11 will fail to compile the system. Testing the kernel additionally requires various system
-commands, including `parted`, `mkfs.fat`, and `qemu`. A full list of packages needed under Ubuntu can be found in the
+In addition, the project requires at least GCC 12.1.0 or clang 16 and the CMake 3.25.2 to compile. The CMake version can
+probably be relaxed, but GCC 11 will fail to compile the system. Likewise, clang-15 will not compile the system.
+Currently, only the Linux build works with clang, so compiling the Iros kernel must be done with GCC. Testing the kernel
+additionally requires various system commands, including `parted`, `mkfs.fat`, and `qemu`. A full list of packages
+needed under Ubuntu can be found in the
 [dockerfile](https://github.com/ColeTrammer/iros/tree/iris/meta/docker/Dockerfile). This dockerfile also provides steps
-which install the latest version of CMake on Ubuntu. For other Linux distros, you will have to look up the corresponding
-package names for your distro. At the very least, this list of dependencies is actively tested in CI, and so will always
-be up to date.
+which install the latest version of CMake and clang on Ubuntu. For other Linux distros, you will have to look up the
+corresponding package names for your distro. At the very least, this list of dependencies is actively tested in CI, and
+so will always be up to date.
 
 To build the project documentation, you must have the latest version of Doxygen installed, and Graphviz is needed to
 generate the various diagrams. If Doxygen is not installed, the `docs` target will not exist in the generated build
@@ -86,5 +89,5 @@ presets should be displayed by the IDE, or can discovered in the `CMakePresets.j
 debugging purposes, especially because we can use sanitizers directly. For instance, the `ubasan` preset compiles the
 userspace code with both `ubsan` and `asan` enabled. This configuration is actively tested in CI.
 
-These can be built and used without any special setup, using normal CMake commands, although recent versions of GCC and
-CMake are needed.
+These can be built and used without any special setup, using normal CMake commands, although recent versions of GCC or
+clang and CMake are needed.

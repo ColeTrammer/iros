@@ -159,52 +159,51 @@ static void let() {
     auto w = ex::just(42) | ex::let_value(ex::just);
     ASSERT_EQ(ex::sync_wait(di::move(w)), 42);
 
-    // auto scheduler = di::InlineScheduler {};
+    auto scheduler = di::InlineScheduler {};
 
-    // auto v =
-    //     ex::schedule(scheduler) | ex::let_value(ex::get_scheduler) | ex::let_value([](di::Scheduler auto& scheduler)
-    //     {
-    //         return ex::schedule(scheduler) | ex::then([] {
-    //                    return 43;
-    //                });
-    //     });
-    // ASSERT_EQ(ex::sync_wait(di::move(v)), 43);
+    auto v =
+        ex::schedule(scheduler) | ex::let_value(ex::get_scheduler) | ex::let_value([](di::Scheduler auto& scheduler) {
+            return ex::schedule(scheduler) | ex::then([] {
+                       return 43;
+                   });
+        });
+    ASSERT_EQ(ex::sync_wait(di::move(v)), 43);
 
-    // auto z = ex::just() | ex::then([] {
-    //              return di::Result<long>(44);
-    //          }) |
-    //          ex::let_value([](long) {
-    //              return ex::just(44);
-    //          });
+    auto z = ex::just() | ex::then([] {
+                 return di::Result<long>(44);
+             }) |
+             ex::let_value([](long) {
+                 return ex::just(44);
+             });
 
-    // ASSERT_EQ(ex::sync_wait(di::move(z)), 44);
+    ASSERT_EQ(ex::sync_wait(di::move(z)), 44);
 
-    // auto y = ex::schedule(scheduler) | ex::let_value([] {
-    //              return ex::just_error(di::BasicError::Invalid);
-    //          }) |
-    //          ex::let_error([](auto) {
-    //              return ex::just(42);
-    //          }) |
-    //          ex::let_value([](auto) {
-    //              return ex::just_error(di::BasicError::Invalid);
-    //          }) |
-    //          ex::let_error([](auto) {
-    //              return ex::just_stopped();
-    //          }) |
-    //          ex::let_stopped([] {
-    //              return ex::just(42);
-    //          });
-    // ASSERT_EQ(ex::sync_wait(di::move(y)), 42);
+    auto y = ex::schedule(scheduler) | ex::let_value([] {
+                 return ex::just_error(di::BasicError::Invalid);
+             }) |
+             ex::let_error([](auto) {
+                 return ex::just(42);
+             }) |
+             ex::let_value([](auto) {
+                 return ex::just_error(di::BasicError::Invalid);
+             }) |
+             ex::let_error([](auto) {
+                 return ex::just_stopped();
+             }) |
+             ex::let_stopped([] {
+                 return ex::just(42);
+             });
+    ASSERT_EQ(ex::sync_wait(di::move(y)), 42);
 
-    // auto a = ex::let_value_with(
-    //     [] {
-    //         return 42;
-    //     },
-    //     [](int& x) {
-    //         return ex::just(x);
-    //     });
+    auto a = ex::let_value_with(
+        [] {
+            return 42;
+        },
+        [](int& x) {
+            return ex::just(x);
+        });
 
-    // ASSERT_EQ(ex::sync_wait(di::move(a)), 42);
+    ASSERT_EQ(ex::sync_wait(di::move(a)), 42);
 }
 
 static void transfer() {
@@ -223,11 +222,11 @@ static void as() {
     auto w = ex::just_stopped() | ex::stopped_as_optional;
     ASSERT_EQ(ex::sync_wait(di::move(w)), di::make_tuple(di::nullopt));
 
-    // auto v = ex::just_stopped() | ex::stopped_as_error(42) | ex::let_error([](int x) {
-    //              DI_ASSERT_EQ(x, 42);
-    //              return ex::just(x);
-    //          });
-    // ASSERT_EQ(ex::sync_wait(di::move(v)), di::make_tuple(42));
+    auto v = ex::just_stopped() | ex::stopped_as_error(42) | ex::let_error([](int x) {
+                 DI_ASSERT_EQ(x, 42);
+                 return ex::just(x);
+             });
+    ASSERT_EQ(ex::sync_wait(di::move(v)), di::make_tuple(42));
 }
 
 struct AsyncI32 {

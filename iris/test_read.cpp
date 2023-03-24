@@ -1,6 +1,6 @@
 #include <dius/prelude.h>
 
-int main() {
+extern "C" int main() {
     auto buffer = di::Array<di::Byte, 4096> {};
 
     auto file = *dius::open_sync("/data.txt"_pv, dius::OpenMode::Readonly);

@@ -49,7 +49,7 @@ Expected<usize> tag_invoke(di::Tag<read_file>, DebugFile&, di::Span<di::Byte> bu
 }
 
 namespace iris::arch {
-static char temp_stack[4 * 4096] alignas(4096);
+alignas(4096) static char temp_stack[4 * 4096];
 
 static auto gdt = di::Array<iris::x86::amd64::sd::SegmentDescriptor, 11> {};
 static auto tss = iris::x86::amd64::TSS {};
