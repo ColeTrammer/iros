@@ -6,7 +6,7 @@ option(IROS_BuildIris "Build the iris kernel." OFF)
 option(IROS_BuildUserspace "Build userspace libaries and programs." ON)
 option(IROS_BuildTests "Build test programs." ON)
 option(IROS_BuildTools "Build tools required native tools." ON)
-option(IROS_BuildCcpp "Build the c++ libc." ON)
+option(IROS_BuildCcpp "Build the c++ libc." OFF)
 option(IROS_UseDiusRuntime "Use dius provided runtime instead of system libc." OFF)
 option(IROS_NeverBuildDocs "Never enable documentation build target." OFF)
 

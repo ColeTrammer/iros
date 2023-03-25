@@ -1,9 +1,15 @@
 #pragma once
 
 #include <asm/unistd.h>
-#include <linux/fcntl.h>
 #include <linux/io_uring.h>
+
+#ifdef DIUS_USE_RUNTIME
+#include <linux/fcntl.h>
 #include <linux/mman.h>
+#else
+#include <fcntl.h>
+#include <sys/mman.h>
+#endif
 
 #include <di/prelude.h>
 #include <dius/config.h>

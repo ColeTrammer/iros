@@ -1,7 +1,12 @@
 #include <dius/prelude.h>
 
+#ifdef DIUS_USE_RUNTIME
 #include <linux/fcntl.h>
 #include <linux/unistd.h>
+#else
+#include <fcntl.h>
+#include <unistd.h>
+#endif
 
 namespace dius::linux {
 struct [[gnu::packed]] Dirent {

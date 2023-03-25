@@ -1,8 +1,14 @@
 #include <dius/prelude.h>
 
+#ifdef DIUS_USE_RUNTIME
 #include <linux/fcntl.h>
 #include <linux/stat.h>
 #include <linux/time.h>
+#else
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <time.h>
+#endif
 
 namespace dius::filesystem {
 namespace linux {

@@ -1,8 +1,13 @@
 #include <dius/prelude.h>
-
 #include <linux/sched.h>
+
+#ifdef DIUS_USE_RUNTIME
 #include <linux/signal.h>
 #include <linux/wait.h>
+#else
+#include <signal.h>
+#include <sys/wait.h>
+#endif
 
 #ifndef DIUS_USE_RUNTIME
 extern "C" [[noreturn]] void exit(int);
