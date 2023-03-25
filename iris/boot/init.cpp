@@ -37,6 +37,8 @@ static volatile limine_module_request module_request = {
     .id = LIMINE_MODULE_REQUEST,
     .revision = 0,
     .response = nullptr,
+    .internal_module_count = 0,
+    .internal_modules = nullptr,
 };
 
 static volatile limine_kernel_file_request kernel_file_request = {

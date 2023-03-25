@@ -8,3 +8,4 @@
 #include <dius/memory_region.h>
 #include <dius/print.h>
 #include <dius/system/prelude.h>
+#include <dius/thread.h>

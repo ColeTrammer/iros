@@ -24,6 +24,13 @@ target_link_libraries(dius
 )
 target_compile_definitions(dius PUBLIC DI_CUSTOM_ASSERT_HANDLER DI_CUSTOM_PLATFORM=<dius/platform.h>)
 
+if(UNIX AND NOT IROS_UseDiusRuntime)
+    target_sources(dius
+      PRIVATE
+        posix/thread.cpp
+    )
+endif()
+
 if(LINUX)
     target_sources(dius
       PRIVATE
