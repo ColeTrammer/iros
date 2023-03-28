@@ -2,6 +2,8 @@
 
 #include <di/container/allocator/allocator.h>
 #include <di/container/allocator/forward_declaration.h>
+#include <di/vocab/error/prelude.h>
+#include <dius/error.h>
 
 #ifndef DIUS_USE_RUNTIME
 #include <pthread.h>
@@ -33,4 +35,11 @@ using DefaultAllocator = container::Allocator<T>;
 
 template<typename T>
 using DefaultFallibleAllocator = container::FallibleAllocator<T>;
+
+template<typename T>
+using DefaultFallibleNewResult = vocab::Result<T>;
+
+constexpr dius::PosixCode default_fallible_allocation_error() {
+    return dius::PosixError::NotEnoughMemory;
+}
 }

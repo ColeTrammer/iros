@@ -7,6 +7,7 @@
 #include <di/concepts/reference.h>
 #include <di/container/algorithm/max.h>
 #include <di/meta/list/prelude.h>
+#include <di/platform/prelude.h>
 #include <di/sync/atomic.h>
 #include <di/types/prelude.h>
 #include <di/util/addressof.h>

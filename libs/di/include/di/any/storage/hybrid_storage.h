@@ -7,6 +7,7 @@
 #include <di/concepts/object.h>
 #include <di/concepts/reference.h>
 #include <di/meta/list/prelude.h>
+#include <di/platform/prelude.h>
 #include <di/types/prelude.h>
 #include <di/util/addressof.h>
 #include <di/util/construct_at.h>

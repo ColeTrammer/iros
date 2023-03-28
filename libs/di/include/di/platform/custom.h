@@ -5,6 +5,7 @@
 #else
 #include <di/container/allocator/forward_declaration.h>
 #include <di/vocab/error/generic_domain.h>
+#include <di/vocab/error/result.h>
 #include <di/vocab/expected/expected_forward_declaration.h>
 
 #include <mutex>
@@ -24,5 +25,12 @@ using DefaultAllocator = container::Allocator<T>;
 
 template<typename T>
 using DefaultFallibleAllocator = container::FallibleAllocator<T>;
+
+template<typename T>
+using DefaultFallibleNewResult = vocab::Result<T>;
+
+constexpr vocab::GenericCode default_fallible_allocation_error() {
+    return vocab::BasicError::FailedAllocation;
+}
 }
 #endif

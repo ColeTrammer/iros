@@ -49,7 +49,7 @@ public:
         if (!this->empty()) {
             return this->domain().do_message(*this);
         }
-        return container::ErasedString(u8"[invalid status code]"_sv);
+        return container::ErasedString(u8"[invalid status code]");
     }
 
 private:

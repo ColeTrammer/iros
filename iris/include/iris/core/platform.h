@@ -5,6 +5,7 @@
 #include <di/container/allocator/forward_declaration.h>
 #include <di/types/integers.h>
 #include <di/util/std_new.h>
+#include <di/vocab/error/prelude.h>
 #include <iris/core/error.h>
 #include <iris/core/spinlock.h>
 
@@ -46,4 +47,11 @@ public:
 
 template<typename T>
 using DefaultAllocator = DefaultFallibleAllocator<T>;
+
+template<typename T>
+using DefaultFallibleNewResult = vocab::Expected<T, iris::Error>;
+
+constexpr iris::Error default_fallible_allocation_error() {
+    return iris::Error::NotEnoughMemory;
+}
 }

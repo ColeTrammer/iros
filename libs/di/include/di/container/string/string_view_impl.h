@@ -79,6 +79,12 @@ public:
     constexpr void replace_end(Iterator new_end) { *this = { this->begin(), new_end, m_encoding }; }
 
 private:
+    template<concepts::SameAs<types::Tag<into_erased_string>> T, concepts::SameAs<StringViewImpl> S>
+    requires(concepts::SameAs<Enc, Utf8Encoding>)
+    constexpr friend ErasedString tag_invoke(T, S self) {
+        return ErasedString({ self.data(), self.size_code_units() + 1 });
+    }
+
     CodeUnit const* m_data { nullptr };
     size_t m_size { 0 };
     [[no_unique_address]] Enc m_encoding;

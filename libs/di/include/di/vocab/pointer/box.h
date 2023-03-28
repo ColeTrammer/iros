@@ -10,33 +10,71 @@
 
 namespace di::vocab {
 template<typename T>
-requires(!concepts::LanguageArray<T>)
-class Box {
-public:
-    Box() = default;
-
-    constexpr Box(nullptr_t) {}
-    constexpr explicit Box(T* pointer) : m_pointer(pointer) {}
-
-    Box(Box const&) = delete;
-    constexpr Box(Box&& other) : m_pointer(other.release()) {}
+struct DefaultDelete {
+    DefaultDelete() = default;
 
     template<typename U>
-    requires(concepts::ImplicitlyConvertibleTo<U*, T*>)
-    constexpr Box(Box<U>&& other) : m_pointer(other.release()) {}
+    requires(concepts::ConvertibleTo<U*, T*>)
+    constexpr DefaultDelete(DefaultDelete<U> const&) {}
+
+    constexpr void operator()(T* pointer) const { delete pointer; }
+};
+
+template<typename T, typename Deleter = DefaultDelete<T>>
+class Box {
+public:
+    Box()
+    requires(concepts::DefaultConstructible<Deleter> && !concepts::Pointer<Deleter>)
+    = default;
+
+    constexpr Box(nullptr_t)
+    requires(concepts::DefaultConstructible<Deleter> && !concepts::Pointer<Deleter>)
+    {}
+
+    constexpr explicit Box(T* pointer)
+    requires(concepts::DefaultConstructible<Deleter> && !concepts::Pointer<Deleter>)
+        : m_pointer(pointer) {}
+
+    Box(Box const&) = delete;
+    constexpr Box(Box&& other)
+    requires(concepts::MoveConstructible<Deleter>)
+        : m_pointer(other.release()), m_deleter(util::forward<Deleter>(other.get_deleter())) {}
+
+    constexpr Box(T* pointer, Deleter const& deleter)
+    requires(concepts::CopyConstructible<Deleter>)
+        : m_pointer(pointer), m_deleter(deleter) {}
+
+    template<concepts::MoveConstructible D = Deleter>
+    requires(!concepts::LValueReference<Deleter>)
+    constexpr Box(T* pointer, D&& deleter) : m_pointer(pointer, util::forward<D>(deleter)) {}
+
+    template<typename D = Deleter>
+    requires(concepts::LValueReference<Deleter>)
+    Box(T*, meta::RemoveReference<D>&&) = delete;
+
+    template<typename U, typename E>
+    requires(concepts::ImplicitlyConvertibleTo<U*, T*> && !concepts::LanguageArray<U> &&
+             ((concepts::Reference<Deleter> && concepts::SameAs<E, Deleter>) ||
+              (!concepts::Reference<Deleter> && concepts::ImplicitlyConvertibleTo<E, Deleter>) ))
+    constexpr Box(Box<U, E>&& other) : m_pointer(other.release()), m_deleter(util::forward<E>(other.get_deleter())) {}
 
     constexpr ~Box() { reset(); }
 
     Box& operator=(Box const&) = delete;
-    constexpr Box& operator=(Box&& other) {
+    constexpr Box& operator=(Box&& other)
+    requires(concepts::MoveAssignable<Deleter>)
+    {
         reset(other.release());
+        m_deleter = util::forward<Deleter>(other.get_deleter());
         return *this;
     }
 
-    template<typename U>
-    requires(concepts::ImplicitlyConvertibleTo<U*, T*>)
-    constexpr Box& operator=(Box<U>&& other) {
+    template<typename U, typename E>
+    requires(concepts::ImplicitlyConvertibleTo<U*, T*> && !concepts::LanguageArray<U> &&
+             concepts::AssignableFrom<Deleter&, E &&>)
+    constexpr Box& operator=(Box<U, E>&& other) {
         reset(other.release());
+        m_deleter = util::forward<Deleter>(other.get_deleter());
         return *this;
     }
 
@@ -50,12 +88,14 @@ public:
         auto* old_pointer = m_pointer;
         m_pointer = pointer;
         if (old_pointer) {
-            util::destroy_at(old_pointer);
-            platform::DefaultFallibleAllocator<T>().deallocate(old_pointer, 1);
+            function::invoke(m_deleter, old_pointer);
         }
     }
 
     constexpr T* get() const { return m_pointer; }
+
+    constexpr Deleter& get_deleter() { return m_deleter; }
+    constexpr Deleter const& get_deleter() const { return m_deleter; }
 
     constexpr explicit operator bool() const { return !!m_pointer; }
 
@@ -87,15 +127,20 @@ private:
     }
 
     T* m_pointer { nullptr };
+    [[no_unique_address]] Deleter m_deleter {};
 };
 
 template<typename T, typename... Args>
 requires(!concepts::LanguageArray<T> && concepts::ConstructibleFrom<T, Args...>)
-constexpr auto try_box(Args&&... args) {
-    return platform::DefaultFallibleAllocator<T>().allocate(1) % [&](container::Allocation<T> result) {
-        util::construct_at(result.data, util::forward<Args>(args)...);
-        return Box<T>(result.data);
-    };
+constexpr DefaultFallibleNewResult<Box<T>> try_box(Args&&... args) {
+    if consteval {
+        return Box<T>(new T(util::forward<Args>(args)...));
+    }
+    auto* result = new (std::nothrow) T(util::forward<Args>(args)...);
+    if (!result) {
+        return vocab::Unexpected(platform::default_fallible_allocation_error());
+    }
+    return Box<T>(result);
 }
 
 template<typename T, typename... Args>

@@ -2,7 +2,6 @@
 
 #include <di/assert/prelude.h>
 #include <di/container/string/erased_string.h>
-#include <di/container/string/string_view.h>
 #include <di/vocab/error/status_code_domain.h>
 
 namespace di::vocab {
@@ -20,11 +19,10 @@ public:
     [[nodiscard]] constexpr bool empty() const { return m_domain == nullptr; }
 
     constexpr auto message() const {
-        using namespace di::string_literals;
         if (!empty()) {
             return domain().do_message(*this);
         }
-        return container::ErasedString(u8"[invalid status code]"_sv);
+        return container::ErasedString(u8"[invalid status code]");
     }
 
     constexpr bool success() const { return !empty() && !domain().do_failure(*this); }

@@ -1,6 +1,7 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/container/algorithm/max.h>
+#include <di/vocab/error/prelude.h>
 #include <dius/config.h>
 
 #include DIUS_PLATFORM_PATH(error.h)
@@ -28,11 +29,11 @@ public:
 
     constexpr static inline PosixDomain const& get();
 
-    virtual di::ErasedString name() const override { return u8"Posix Domain"_sv; }
+    virtual di::container::ErasedString name() const override { return di::container::ErasedString(u8"Posix Domain"); }
 
     virtual PayloadInfo payload_info() const override {
         return { sizeof(Value), sizeof(Value) + sizeof(StatusCodeDomain const*),
-                 di::max(alignof(Value), alignof(StatusCodeDomain const*)) };
+                 di::container::max(alignof(Value), alignof(StatusCodeDomain const*)) };
     }
 
 protected:
@@ -45,7 +46,7 @@ protected:
         return b.domain() == *this && down_cast(a).value() == down_cast(b).value();
     }
 
-    virtual di::ErasedString do_message(di::StatusCode<void> const& code) const override;
+    virtual di::container::ErasedString do_message(di::StatusCode<void> const& code) const override;
 
 private:
     template<typename Domain>
@@ -66,7 +67,7 @@ constexpr inline PosixDomain const& PosixDomain::get() {
 
 namespace di::vocab::detail {
 template<typename = void>
-constexpr auto tag_invoke(di::Tag<di::into_status_code>, dius::PosixError error) {
+constexpr auto tag_invoke(di::types::Tag<di::into_status_code>, dius::PosixError error) {
     return dius::PosixCode(di::in_place, error);
 }
 }

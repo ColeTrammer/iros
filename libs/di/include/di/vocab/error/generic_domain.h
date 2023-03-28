@@ -1,7 +1,6 @@
 #pragma once
 
 #include <di/container/algorithm/max.h>
-#include <di/container/string/string_view.h>
 #include <di/types/prelude.h>
 #include <di/vocab/error/status_code.h>
 #include <di/vocab/error/status_code_domain.h>
@@ -35,7 +34,7 @@ public:
 
     constexpr static inline GenericDomain const& get();
 
-    virtual container::ErasedString name() const override { return u8"Generic Domain"_sv; }
+    virtual container::ErasedString name() const override { return container::ErasedString(u8"Generic Domain"); }
 
     virtual PayloadInfo payload_info() const override {
         return { sizeof(Value), sizeof(Value) + sizeof(StatusCodeDomain const*),
@@ -53,20 +52,18 @@ protected:
     }
 
     constexpr virtual container::ErasedString do_message(StatusCode<void> const& code) const override {
-        using namespace di::string_literals;
-
         auto value = down_cast(code).value();
         switch (value) {
             case BasicError::Success:
-                return "Success"_sv;
+                return container::ErasedString(u8"Success");
             case BasicError::FailedAllocation:
-                return "Allocation Failed"_sv;
+                return container::ErasedString(u8"Allocation Failed");
             case BasicError::OutOfRange:
-                return "Out of Range"_sv;
+                return container::ErasedString(u8"Out of Range");
             case BasicError::Invalid:
-                return "Invalid"_sv;
+                return container::ErasedString(u8"Invalid");
             default:
-                return "Unknown"_sv;
+                return container::ErasedString(u8"Unknown");
         }
     }
 
