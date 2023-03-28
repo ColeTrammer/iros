@@ -2,7 +2,7 @@
 #include <linux/futex.h>
 
 namespace dius {
-di::Result<di::Box<PlatformThread>> PlatformThread::create(runtime::TlsInfo info) {
+di::Result<di::Box<PlatformThread, PlatformThreadDeleter>> PlatformThread::create(runtime::TlsInfo info) {
     auto [tls_data, tls_size, tls_alignment] = info;
 
     auto alignment = di::max(tls_alignment, alignof(PlatformThread));
@@ -17,8 +17,19 @@ di::Result<di::Box<PlatformThread>> PlatformThread::create(runtime::TlsInfo info
     di::copy(tls_data, tls.data());
     di::fill(*tls.last(tls_size - tls_data.size()), 0_b);
 
-    // FIXME: this is incorrect, because the TCB needs a custom deleter.
-    return di::Box(thread_control_block);
+    return di::Box<PlatformThread, PlatformThreadDeleter>(thread_control_block);
+}
+
+void PlatformThreadDeleter::operator()(PlatformThread* thread) const {
+    di::destroy_at(thread);
+
+    auto [tls_data, tls_size, tls_alignment] = runtime::get_tls_info();
+
+    auto alignment = di::max(tls_alignment, alignof(PlatformThread));
+    auto size = di::align_up(tls_size, alignment) + sizeof(PlatformThread);
+
+    auto* storage = reinterpret_cast<byte*>(thread) - di::align_up(tls_size, alignment);
+    ::operator delete(storage, size, std::align_val_t(alignment));
 }
 
 di::Result<Thread> Thread::do_start(di::Function<void()> entry) {

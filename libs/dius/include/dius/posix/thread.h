@@ -11,4 +11,6 @@ struct PlatformThread : public di::Immovable {
     pthread_t native_handle {};
     di::Function<void()> entry;
 };
+
+using PlatformThreadDeleter = di::DefaultDelete<PlatformThread>;
 }

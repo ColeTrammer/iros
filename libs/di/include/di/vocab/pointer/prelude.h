@@ -9,6 +9,7 @@ namespace di {
 using vocab::AdoptObject;
 using vocab::Arc;
 using vocab::Box;
+using vocab::DefaultDelete;
 using vocab::IntrusivePtr;
 using vocab::IntrusiveRefCount;
 using vocab::IntrusiveThreadUnsafeRefCount;

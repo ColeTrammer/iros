@@ -9,6 +9,7 @@
 #else
 namespace dius {
 struct PlatformThread;
+struct PlatformThreadDeleter;
 
 struct SelfPointer {
     explicit SelfPointer() : self(static_cast<PlatformThread*>(static_cast<void*>(this))) {}
@@ -17,7 +18,7 @@ struct SelfPointer {
 };
 
 struct PlatformThread : SelfPointer {
-    static di::Result<di::Box<PlatformThread>> create(runtime::TlsInfo);
+    static di::Result<di::Box<PlatformThread, PlatformThreadDeleter>> create(runtime::TlsInfo);
 
     PlatformThread() = default;
 
@@ -31,6 +32,10 @@ struct PlatformThread : SelfPointer {
     int thread_id { 0 };
     di::Function<void()> entry;
     MemoryRegion stack;
+};
+
+struct PlatformThreadDeleter {
+    void operator()(PlatformThread*) const;
 };
 
 di::Result<void> spawn_thread(PlatformThread&);

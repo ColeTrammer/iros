@@ -16,7 +16,8 @@ class Thread {
 private:
     static di::Result<Thread> do_start(di::Function<void()>);
 
-    explicit Thread(di::Box<PlatformThread> platform_thread) : m_platform_thread(di::move(platform_thread)) {}
+    explicit Thread(di::Box<PlatformThread, PlatformThreadDeleter> platform_thread)
+        : m_platform_thread(di::move(platform_thread)) {}
 
 public:
     using Id = di::ThreadId;
@@ -56,7 +57,7 @@ public:
             return di::Unexpected(PosixError::InvalidArgument);
         }
         auto guard = di::ScopeExit([&] {
-            (void) m_platform_thread.release();
+            (void) m_platform_thread.reset();
         });
         return m_platform_thread->join();
     }
@@ -66,6 +67,6 @@ private:
         di::swap(a.m_platform_thread, b.m_platform_thread);
     }
 
-    di::Box<PlatformThread> m_platform_thread {};
+    di::Box<PlatformThread, PlatformThreadDeleter> m_platform_thread {};
 };
 }
