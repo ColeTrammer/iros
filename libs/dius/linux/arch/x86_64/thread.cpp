@@ -34,10 +34,10 @@ di::Result<void> spawn_thread(PlatformThread& platform_thread) {
 
     auto args = ::clone_args {
         .flags = CLONE_FILES | CLONE_FS | CLONE_SIGHAND | CLONE_SYSVSEM | CLONE_THREAD | CLONE_VM |
-                 CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID | CLONE_SETTLS,
+                 CLONE_CHILD_CLEARTID | CLONE_PARENT_SETTID | CLONE_SETTLS,
         .pidfd = 0,
         .child_tid = di::to_uintptr(&platform_thread.thread_id),
-        .parent_tid = 0,
+        .parent_tid = di::to_uintptr(&platform_thread.thread_id),
         .exit_signal = 0,
         .stack = di::to_uintptr(platform_thread.stack.data()),
         .stack_size = platform_thread.stack.size() - sizeof(StackHead),

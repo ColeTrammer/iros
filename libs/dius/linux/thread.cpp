@@ -55,13 +55,9 @@ static di::Result<void> futex_wait(int* futex, int expect) {
 }
 
 di::Result<void> PlatformThread::join() {
-    for (;;) {
-        // FIXME: why and how does futex work?
-        auto value = di::AtomicRef(thread_id).load(di::MemoryOrder::Relaxed);
+    while (auto value = di::AtomicRef(thread_id).load(di::MemoryOrder::Acquire)) {
         (void) futex_wait(&thread_id, value);
-        if (value == 0) {
-            return {};
-        }
     }
+    return {};
 }
 }
