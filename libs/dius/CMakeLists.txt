@@ -113,6 +113,13 @@ if (IROS_UseDiusRuntime)
         )
     endif()
 
+    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+        target_sources(dius
+          PRIVATE
+            arch/x86_64/thread.cpp
+        )
+    endif()
+
     target_compile_options(dius
       PUBLIC
         "-nostdlib"

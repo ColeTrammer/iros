@@ -23,9 +23,7 @@ inline ThreadId get_current_thread_id() {
 #else
 using ThreadId = i32;
 
-inline ThreadId get_current_thread_id() {
-    return 0;
-}
+ThreadId get_current_thread_id();
 #endif
 
 using DefaultLock = sync::DumbSpinlock;

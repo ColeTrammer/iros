@@ -19,6 +19,7 @@ struct SelfPointer {
 
 struct PlatformThread : SelfPointer {
     static di::Result<di::Box<PlatformThread, PlatformThreadDeleter>> create(runtime::TlsInfo);
+    static PlatformThread& current();
 
     PlatformThread() = default;
 
