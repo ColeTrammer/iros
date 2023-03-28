@@ -53,8 +53,8 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Iros")
 
     target_sources(dius
       PRIVATE
-        iros/sync_file.cpp
         iros/system/process.cpp
+        iros/sync_file.cpp
     )
 endif()
 
@@ -93,6 +93,19 @@ if (IROS_UseDiusRuntime)
         runtime/gccints.cpp
         runtime/stack_smash_protector.cpp
     )
+
+    if(LINUX)
+        target_sources(dius
+          PRIVATE
+            linux/thread.cpp
+        )
+    elseif(CMAKE_SYSTEM_NAME STREQUAL "Iros")
+        target_sources(dius
+          PRIVATE
+            iros/thread.cpp
+        )
+    endif()
+
     target_compile_options(dius
       PUBLIC
         "-nostdlib"

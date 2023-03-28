@@ -5,6 +5,7 @@
 #include <asm/prctl.h>
 #endif
 
+namespace dius::runtime {
 extern "C" {
 extern void (*__preinit_array_start[])(int, char**, char**);
 extern void (*__preinit_array_end[])(int, char**, char**);
@@ -31,9 +32,11 @@ extern "C" [[noreturn]] [[gnu::naked]] void _start() {
 
 extern "C" di::exec::ElfHeader<> __ehdr_start;
 
-struct ThreadControlBlock {
-    ThreadControlBlock* self;
-};
+static dius::runtime::TlsInfo s_tls_info;
+
+dius::runtime::TlsInfo get_tls_info() {
+    return s_tls_info;
+}
 
 extern "C" [[noreturn]] void dius_entry(int argc, char** argv, char** envp) {
     auto* elf_header = di::addressof(__ehdr_start);
@@ -47,38 +50,30 @@ extern "C" [[noreturn]] void dius_entry(int argc, char** argv, char** envp) {
                                           reinterpret_cast<di::Byte const*>(elf_header) + program_header_offset),
                                       program_header_count };
 
-    auto [tls_address, tls_data_size, tls_size, tls_alignment] = [&] -> di::Tuple<uptr, usize, usize, usize> {
+    s_tls_info = [&] -> dius::runtime::TlsInfo {
         auto tls_segment = di::find_if(program_headers, [](auto const& header) {
             return header.type == di::exec::ElfProgramHeaderType::Tls;
         });
 
         if (tls_segment == program_headers.end()) {
-            return di::make_tuple(0, 0, 0, 16);
+            return { di::Span<byte const> {}, 0, 16 };
         }
         auto address = tls_segment->virtual_addr;
         auto data_size = tls_segment->file_size;
         auto size = tls_segment->memory_size;
         auto alignment = tls_segment->align;
-        return di::make_tuple(address, data_size, size, alignment);
+        return { di::Span { reinterpret_cast<byte const*>(address.value()), data_size }, size, alignment };
     }();
 
     // Setup TLS.
-    auto alignment = di::max(tls_alignment, alignof(ThreadControlBlock));
-    auto size = di::align_up(tls_size, alignment) + sizeof(ThreadControlBlock);
-    auto* storage = reinterpret_cast<di::Byte*>(::operator new(size, std::align_val_t { alignment }, std::nothrow));
-    ASSERT(storage);
-
-    auto* thread_control_block = reinterpret_cast<ThreadControlBlock*>(storage + di::align_up(tls_size, alignment));
-    auto* tls = reinterpret_cast<di::Byte*>(thread_control_block) - tls_size;
-
-    thread_control_block->self = thread_control_block;
-    di::copy_n(reinterpret_cast<di::Byte const*>(tls_address), tls_data_size, tls);
-    di::fill_n(tls + tls_data_size, tls_size - tls_data_size, 0_b);
+    auto thread_control_block = dius::PlatformThread::create(s_tls_info);
+    ASSERT(thread_control_block);
 
 #ifdef DIUS_PLATFORM_LINUX
-    (void) dius::system::system_call<i32>(dius::system::Number::arch_prctl, ARCH_SET_FS, thread_control_block);
+    (void) dius::system::system_call<i32>(dius::system::Number::arch_prctl, ARCH_SET_FS, thread_control_block->get());
 #elif defined(DIUS_PLATFORM_IROS)
-    (void) dius::system::system_call<i32>(dius::system::Number::set_userspace_thread_pointer, thread_control_block);
+    (void) dius::system::system_call<i32>(dius::system::Number::set_userspace_thread_pointer,
+                                          thread_control_block->get());
 #endif
 
     iptr preinit_size = __preinit_array_end - __preinit_array_start;
@@ -92,4 +87,5 @@ extern "C" [[noreturn]] void dius_entry(int argc, char** argv, char** envp) {
     }
 
     dius::system::exit_process(__extension__ main(argc, argv, envp));
+}
 }

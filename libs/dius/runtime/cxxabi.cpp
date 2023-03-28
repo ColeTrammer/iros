@@ -2,6 +2,11 @@
 #include <dius/prelude.h>
 
 namespace __cxxabiv1 {
+extern "C" [[noreturn]] void __cxa_pure_virtual() {
+    ASSERT(false);
+    di::unreachable();
+}
+
 extern "C" int __cxa_atexit(void (*)(void*), void*, void*) {
     return 0;
 }

@@ -1,10 +1,30 @@
 #pragma once
 
 #include <dius/error.h>
+#include <dius/runtime/tls.h>
 
 namespace dius {
-struct PlatformThread {
-    int id() const { return 0; }
+struct PlatformThread;
+
+struct SelfPointer {
+    explicit SelfPointer() : self(static_cast<PlatformThread*>(static_cast<void*>(this))) {}
+
+    PlatformThread* self { nullptr };
+};
+
+struct PlatformThread : SelfPointer {
+    static di::Result<di::Box<PlatformThread>> create(runtime::TlsInfo);
+
+    PlatformThread() = default;
+
+    int id() const { return thread_id; }
     di::Result<void> join();
+
+    di::Span<byte> thread_local_storage(usize tls_size) {
+        return { reinterpret_cast<byte*>(this) - tls_size, tls_size };
+    }
+
+    int thread_id { 0 };
+    int join_futex { 0 };
 };
 }
