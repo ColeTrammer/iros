@@ -40,6 +40,7 @@
 
 using namespace di::literals;
 
+using di::types::byte;
 using di::types::c16;
 using di::types::c32;
 using di::types::c8;

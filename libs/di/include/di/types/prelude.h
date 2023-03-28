@@ -22,6 +22,7 @@
 
 namespace di {
 using types::Byte;
+using types::byte;
 using types::to_integer;
 
 using types::in_place;

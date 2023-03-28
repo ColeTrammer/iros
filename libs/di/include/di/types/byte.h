@@ -61,5 +61,6 @@ constexpr std::byte& operator^=(std::byte& a, std::byte b) noexcept {
 
 namespace di::types {
 using Byte = std::byte;
+using byte = std::byte;
 using std::to_integer;
 }
