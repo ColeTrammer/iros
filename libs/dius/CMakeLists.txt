@@ -84,7 +84,8 @@ if (IROS_UseDiusRuntime)
         DIUS_USE_RUNTIME
     )
 
-    add_library(dius_runtime STATIC
+    target_sources(dius
+      PRIVATE
         runtime/compilerabi.cpp
         runtime/cxxabi.cpp
         runtime/cxxheap.cpp
@@ -92,50 +93,21 @@ if (IROS_UseDiusRuntime)
         runtime/gccints.cpp
         runtime/stack_smash_protector.cpp
     )
-    add_library(Dius::dius_runtime ALIAS dius_runtime)
-    target_link_libraries(dius_runtime
-      PUBLIC
-        dius
-    )
-    target_compile_options(dius_runtime
-      PUBLIC
-        "-nostdlib"
-        "-static"
-      PRIVATE
-        "-fno-stack-protector"
-        "-ffreestanding"
-    )
-    target_link_options(dius_runtime
-      PUBLIC
-        "-nostdlib"
-        "-static"
-      PRIVATE
-        "-fno-stack-protector"
-        "-ffreestanding"
-    )
-
     target_compile_options(dius
+      PUBLIC
+        "-nostdlib"
+        "-static"
       PRIVATE
         "-fno-stack-protector"
+        "-ffreestanding"
     )
     target_link_options(dius
+      PUBLIC
+        "-nostdlib"
+        "-static"
       PRIVATE
         "-fno-stack-protector"
-    )
-
-    install(
-        TARGETS dius_runtime
-        EXPORT DiusRuntimeConfig
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        RUNTIME DESTINATION bin
-        INCLUDES DESTINATION include
-    )
-    install(
-        EXPORT DiusRuntimeConfig
-        FILE DiusRuntimeConfig.cmake
-        NAMESPACE Dius::
-        DESTINATION lib/cmake/DiusRuntime
+        "-ffreestanding"
     )
 endif()
 
@@ -162,13 +134,6 @@ install(
     NAMESPACE Dius::
     DESTINATION lib/cmake/DiusTestMain
 )
-
-if (IROS_UseDiusRuntime)
-  target_link_libraries(dius_test_main
-    PUBLIC
-      dius_runtime
-  )
-endif()
 
 if (IROS_BuildTests)
     add_subdirectory(tests)

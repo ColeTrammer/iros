@@ -80,7 +80,7 @@ macro(add_executable)
             target_link_libraries(
                 ${ARGV0}
               PRIVATE
-                dius_runtime
+                dius
             )
             target_compile_options(
                 ${ARGV0}
