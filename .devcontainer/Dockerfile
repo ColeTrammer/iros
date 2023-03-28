@@ -5,7 +5,7 @@ ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
 RUN sudo apt-get -y update \
-    && sudo apt-get -y install lsb-release wget software-properties-common gnupg \
+    && sudo apt-get -y install lsb-release wget software-properties-common gdb gnupg \
     && wget https://apt.llvm.org/llvm.sh \
     && chmod +x llvm.sh \
     && sudo ./llvm.sh 16 \
