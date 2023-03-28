@@ -7,15 +7,18 @@ struct [[gnu::aligned(16)]] StackHead {
     void* closure;
 };
 
+constexpr auto clone_number = di::to_underlying(system::Number::clone3);
+
 [[gnu::naked]] static long do_spawn_thread(::clone_args*, usize) {
     // Do the system call, and then move the new stack pointer into the 1st argument passed to the entry. The general
     // idea is that we put the new thread entry point onto its new stack, so that when execute the `ret` instruction,
     // the processor will go there. But for the calling thread, the function will return normally.
+
     asm volatile("syscall\n"
                  "mov %%rsp, %%rdi\n"
                  "ret\n"
                  :
-                 : "a"(di::to_underlying(system::Number::clone3))
+                 : "a"(clone_number)
                  : DIUS_SYSTEM_CALL_CLOBBER);
 }
 
