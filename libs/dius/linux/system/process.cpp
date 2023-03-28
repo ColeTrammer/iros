@@ -58,6 +58,15 @@ di::Result<void> Process::swawn_and_wait() && {
     return {};
 }
 
+void exit_thread() {
+#ifdef DIUS_USE_RUNTIME
+    (void) dius::system::system_call<i32>(dius::system::Number::exit, 0);
+    di::unreachable();
+#else
+    pthread_exit(nullptr);
+#endif
+}
+
 void exit_process(int code) {
 #ifdef DIUS_USE_RUNTIME
     (void) dius::system::system_call<i32>(dius::system::Number::exit_group, code);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <dius/error.h>
+#include <dius/memory_region.h>
 #include <dius/runtime/tls.h>
 
 #ifndef DIUS_USE_RUNTIME
@@ -28,7 +29,10 @@ struct PlatformThread : SelfPointer {
     }
 
     int thread_id { 0 };
-    int join_futex { 0 };
+    di::Function<void()> entry;
+    MemoryRegion stack;
 };
+
+di::Result<void> spawn_thread(PlatformThread&);
 }
 #endif

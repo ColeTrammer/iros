@@ -1,8 +1,9 @@
 #include <dius/thread.h>
 
 namespace dius {
-di::Result<Thread> Thread::do_start(di::Function<void()> start) {
+di::Result<Thread> Thread::do_start(di::Function<void()> entry) {
     auto platform = TRY(di::try_box<PlatformThread>());
+    platform->entry = di::move(entry);
 
     auto result = pthread_create(
         &platform->native_handle, nullptr,
@@ -11,7 +12,7 @@ di::Result<Thread> Thread::do_start(di::Function<void()> start) {
             (*as_function)();
             return nullptr;
         },
-        reinterpret_cast<void*>(&start));
+        reinterpret_cast<void*>(&platform->entry));
     if (result != 0) {
         return di::Unexpected(PosixError(-result));
     }

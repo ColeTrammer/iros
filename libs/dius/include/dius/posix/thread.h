@@ -9,5 +9,6 @@ struct PlatformThread : public di::Immovable {
     di::Result<void> join();
 
     pthread_t native_handle {};
+    di::Function<void()> entry;
 };
 }

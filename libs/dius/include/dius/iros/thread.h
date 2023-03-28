@@ -26,5 +26,6 @@ struct PlatformThread : SelfPointer {
 
     int thread_id { 0 };
     int join_futex { 0 };
+    di::Function<void()> entry;
 };
 }

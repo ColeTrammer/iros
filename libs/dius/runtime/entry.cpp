@@ -32,7 +32,7 @@ extern "C" [[noreturn]] [[gnu::naked]] void _start() {
 
 extern "C" di::exec::ElfHeader<> __ehdr_start;
 
-static dius::runtime::TlsInfo s_tls_info;
+static constinit dius::runtime::TlsInfo s_tls_info {};
 
 dius::runtime::TlsInfo get_tls_info() {
     return s_tls_info;
@@ -66,7 +66,7 @@ extern "C" [[noreturn]] void dius_entry(int argc, char** argv, char** envp) {
     }();
 
     // Setup TLS.
-    auto thread_control_block = dius::PlatformThread::create(s_tls_info);
+    auto thread_control_block = dius::PlatformThread::create(get_tls_info());
     ASSERT(thread_control_block);
 
 #ifdef DIUS_PLATFORM_LINUX

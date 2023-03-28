@@ -38,7 +38,9 @@ enum class Number : int {
     exit_group = __NR_exit_group,
     clone3 = __NR_clone3,
     execve = __NR_execve,
-    wait4 = __NR_wait4
+    wait4 = __NR_wait4,
+    exit = __NR_exit,
+    futex = __NR_futex,
 };
 
 using SystemCallArg = unsigned long;

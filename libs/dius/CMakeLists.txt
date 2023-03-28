@@ -99,6 +99,13 @@ if (IROS_UseDiusRuntime)
           PRIVATE
             linux/thread.cpp
         )
+
+        if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+            target_sources(dius
+              PRIVATE
+                linux/arch/x86_64/thread.cpp
+            )
+        endif()
     elseif(CMAKE_SYSTEM_NAME STREQUAL "Iros")
         target_sources(dius
           PRIVATE

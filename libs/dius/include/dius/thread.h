@@ -56,7 +56,7 @@ public:
             return di::Unexpected(PosixError::InvalidArgument);
         }
         auto guard = di::ScopeExit([&] {
-            m_platform_thread.reset();
+            (void) m_platform_thread.release();
         });
         return m_platform_thread->join();
     }

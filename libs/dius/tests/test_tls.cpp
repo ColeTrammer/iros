@@ -8,20 +8,20 @@ static void tls() {
     di::compiler_barrier();
     ASSERT_EQ(x, 44);
 
-#ifndef DIUS_USE_RUNTIME
-    auto did_execute = false;
+#ifndef __iros__
+    auto did_execute = di::Atomic { false };
     auto y = *dius::Thread::create(
         [&](int y) {
             ASSERT_EQ(x, 42);
             x = y;
             di::compiler_barrier();
             ASSERT_EQ(x, y);
-            did_execute = true;
+            did_execute.store(true, di::MemoryOrder::Relaxed);
         },
         56);
 
     ASSERT(y.join());
-    ASSERT(did_execute);
+    ASSERT(did_execute.load(di::MemoryOrder::Relaxed));
 
     di::compiler_barrier();
     ASSERT_EQ(x, 44);
