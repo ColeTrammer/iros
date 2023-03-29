@@ -1,0 +1,5 @@
+CompileFlags:
+  Add: [-I/build/iros/libs/ccpp/include]
+Diagnostics:
+  ClangTidy:
+    Remove: [modernize-*]
