@@ -57,3 +57,27 @@
 #else
 #define __CCPP_RESTRICT
 #endif
+
+#ifdef __x86_64__
+#define __CCPP_ARCH x86_64
+#define __CCPP_ARCH_X86_64
+#else
+#error "Unsupported ccpp architecture"
+#endif
+
+#ifdef __iros__
+#define __CCPP_PLATFORM      iros
+#define __CCPP_PLATFORM      iros
+#define __CCPP_PLATFORM_IROS 1
+#elif defined(__linux__)
+#undef __GLIBC__
+#undef linux
+#define __CCPP_PLATFORM       linux
+#define __CCPP_PLATFORM_LINUX 1
+#else
+#error "Unsupported ccpp platform"
+#endif
+
+#define __CCPP_ARCH_PATH(path)          <ccpp/bits/arch/__CCPP_ARCH/path>
+#define __CCPP_PLATFORM_PATH(path)      <ccpp/bits/__CCPP_PLATFORM/path>
+#define __CCPP_ARCH_PLATFORM_PATH(path) <ccpp/bits/arch/__CCPP_ARCH/__CCPP_PLATFORM/path>

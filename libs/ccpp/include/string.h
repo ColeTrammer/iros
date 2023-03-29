@@ -5,20 +5,25 @@
 
 __CCPP_BEGIN_DECLARATIONS
 
-int memcmp(void const* lhs, void const* rhs, size_t count);
-void* memcpy(void* __CCPP_RESTRICT dest, void const* __CCPP_RESTRICT str, size_t count);
-void* memmove(void* dest, void const* str, size_t count);
-void* memset(void* dest, int ch, size_t count);
+int memcmp(void const* __lhs, void const* __rhs, size_t __count);
+void* memcpy(void* __CCPP_RESTRICT __dest, void const* __CCPP_RESTRICT __str, size_t __count);
+void* memmove(void* __dest, void const* __str, size_t __count);
+void* memset(void* __dest, int __ch, size_t __count);
 
-int strcmp(char const* lhs, char const* rhs);
-char* strcpy(char* __CCPP_RESTRICT dest, char const* __CCPP_RESTRICT src);
-char* strncpy(char* __CCPP_RESTRICT dest, char const* __CCPP_RESTRICT src, size_t count);
-char* strcat(char* __CCPP_RESTRICT dest, char const* __CCPP_RESTRICT src);
-char* strncat(char* __CCPP_RESTRICT dest, char const* __CCPP_RESTRICT src, size_t count);
-char* strchr(char const* haystack, int needle);
-char* strrchr(char const* haystack, int needle);
-char* strstr(char const* haystack, char const* needle);
+int strcmp(char const* __lhs, char const* __rhs);
+int strncmp(char const* __lhs, char const* __rhs, size_t __count);
+char* strcpy(char* __CCPP_RESTRICT __dest, char const* __CCPP_RESTRICT __src);
+char* strncpy(char* __CCPP_RESTRICT __dest, char const* __CCPP_RESTRICT __src, size_t __count);
+char* strcat(char* __CCPP_RESTRICT __dest, char const* __CCPP_RESTRICT __src);
+char* strncat(char* __CCPP_RESTRICT __dest, char const* __CCPP_RESTRICT __src, size_t __count);
+char* strchr(char const* __haystack, int __needle);
+char* strrchr(char const* __haystack, int __needle);
+char* strstr(char const* __haystack, char const* __needle);
+size_t strlen(char const* __str);
 
-size_t strlen(char const* string);
+#if defined(__CCPP_POSIX_EXTENSIONS) || defined(__CCPP_C23)
+char* strdup(char const* __src);
+char* strndup(char const* __src, size_t __count);
+#endif
 
 __CCPP_END_DECLARATIONS

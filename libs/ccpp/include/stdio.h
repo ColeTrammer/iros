@@ -23,70 +23,71 @@ typedef struct FILE* FILE;
 
 typedef __UINT64_TYPE__ fpos_t;
 
-FILE* fopen(char const* __CCPP_RESTRICT path, char const* __CCPP_RESTRICT mode);
-FILE* freopen(char const* __CCPP_RESTRICT path, char const* __CCPP_RESTRICT mode, FILE* __CCPP_RESTRICT file);
-int fclose(FILE* file);
-int fflush(FILE* file);
-void setbuf(FILE* __CCPP_RESTRICT file, char* __CCPP_RESTRICT buffer);
-int setvbuf(FILE* __CCPP_RESTRICT file, char* __CCPP_RESTRICT buffer, int mode, size_t size);
+FILE* fopen(char const* __CCPP_RESTRICT __path, char const* __CCPP_RESTRICT __mode);
+FILE* freopen(char const* __CCPP_RESTRICT __path, char const* __CCPP_RESTRICT __mode, FILE* __CCPP_RESTRICT __file);
+int fclose(FILE* __file);
+int fflush(FILE* __file);
+void setbuf(FILE* __CCPP_RESTRICT __file, char* __CCPP_RESTRICT __buffer);
+int setvbuf(FILE* __CCPP_RESTRICT __file, char* __CCPP_RESTRICT __buffer, int __mode, size_t __size);
 
-size_t fread(void* __CCPP_RESTRICT buffer, size_t size, size_t count, FILE* __CCPP_RESTRICT file);
-size_t fwrite(void const* __CCPP_RESTRICT buffer, size_t size, size_t count, FILE* __CCPP_RESTRICT file);
+size_t fread(void* __CCPP_RESTRICT __buffer, size_t __size, size_t __count, FILE* __CCPP_RESTRICT __file);
+size_t fwrite(void const* __CCPP_RESTRICT __buffer, size_t __size, size_t __count, FILE* __CCPP_RESTRICT __file);
 
-int fgetc(FILE* file);
-int getc(FILE* file);
-int fgets(char* __CCPP_RESTRICT str, int count, FILE* __CCPP_RESTRICT file);
-int fputc(int ch, FILE* file);
-int putc(int ch, FILE* file);
-int fputs(char const* __CCPP_RESTRICT str, FILE* __CCPP_RESTRICT file);
+int fgetc(FILE* __file);
+int getc(FILE* __file);
+int fgets(char* __CCPP_RESTRICT __str, int __count, FILE* __CCPP_RESTRICT __file);
+int fputc(int __ch, FILE* __file);
+int putc(int __ch, FILE* __file);
+int fputs(char const* __CCPP_RESTRICT __str, FILE* __CCPP_RESTRICT __file);
 int getchar(void);
 #ifndef __CCPP_C11
-char* gets(char* str);
+char* gets(char* __str);
 #endif
-int putchar(int ch);
-int puts(char const* str);
-int ungetc(int ch, FILE* file);
+int putchar(int __ch);
+int puts(char const* __str);
+int ungetc(int __ch, FILE* __file);
 
-int scanf(char const* __CCPP_RESTRICT format, ...);
-int fcanf(FILE* __CCPP_RESTRICT file, char const* __CCPP_RESTRICT format, ...);
-int sscanf(const char* __CCPP_RESTRICT buffer, char const* __CCPP_RESTRICT format, ...);
+int scanf(char const* __CCPP_RESTRICT __format, ...);
+int fcanf(FILE* __CCPP_RESTRICT __file, char const* __CCPP_RESTRICT __format, ...);
+int sscanf(const char* __CCPP_RESTRICT __buffer, char const* __CCPP_RESTRICT __format, ...);
 
 #ifdef __CCPP_C99
-int vscanf(char const* __CCPP_RESTRICT format, va_list args);
-int vfcanf(FILE* __CCPP_RESTRICT file, char const* __CCPP_RESTRICT format, va_list args);
-int vsscanf(const char* __CCPP_RESTRICT buffer, char const* __CCPP_RESTRICT format, va_list args);
+int vscanf(char const* __CCPP_RESTRICT __format, va_list __args);
+int vfcanf(FILE* __CCPP_RESTRICT __file, char const* __CCPP_RESTRICT __format, va_list __args);
+int vsscanf(const char* __CCPP_RESTRICT __buffer, char const* __CCPP_RESTRICT __format, va_list __args);
 #endif
 
-int printf(char const* __CCPP_RESTRICT format, ...);
-int fprintf(FILE* __CCPP_RESTRICT file, char const* __CCPP_RESTRICT format, ...);
-int sprintf(const char* __CCPP_RESTRICT buffer, char const* __CCPP_RESTRICT format, ...);
+int printf(char const* __CCPP_RESTRICT __format, ...);
+int fprintf(FILE* __CCPP_RESTRICT __file, char const* __CCPP_RESTRICT __format, ...);
+int sprintf(const char* __CCPP_RESTRICT __buffer, char const* __CCPP_RESTRICT __format, ...);
 #ifdef __CCPP_C99
-int snprintf(const char* __CCPP_RESTRICT buffer, size_t size, char const* __CCPP_RESTRICT format, ...);
+int snprintf(const char* __CCPP_RESTRICT __buffer, size_t __size, char const* __CCPP_RESTRICT __format, ...);
 #endif
 
-int vprintf(char const* __CCPP_RESTRICT format, va_list args);
-int vfprintf(FILE* __CCPP_RESTRICT file, char const* __CCPP_RESTRICT format, va_list args);
-int vsprintf(const char* __CCPP_RESTRICT buffer, char const* __CCPP_RESTRICT format, va_list args);
+int vprintf(char const* __CCPP_RESTRICT __format, va_list __args);
+int vfprintf(FILE* __CCPP_RESTRICT __file, char const* __CCPP_RESTRICT __format, va_list __args);
+int vsprintf(const char* __CCPP_RESTRICT __buffer, char const* __CCPP_RESTRICT __format, va_list __args);
 #ifdef __CCPP_C99
-int vsnprintf(const char* __CCPP_RESTRICT buffer, size_t size, char const* __CCPP_RESTRICT format, va_list args);
+int vsnprintf(const char* __CCPP_RESTRICT __buffer, size_t __size, char const* __CCPP_RESTRICT __format,
+              va_list __args);
 #endif
 
-long ftell(FILE* file);
-int fgetpos(FILE* __CCPP_RESTRICT file, fpos_t* __CCPP_RESTRICT pos);
-int fseek(FILE* file, long offset, int origin);
-int fsetpos(FILE* file, fpos_t const* pos);
-void rewind(FILE* file);
+long ftell(FILE* __file);
+int fgetpos(FILE* __CCPP_RESTRICT __file, fpos_t* __CCPP_RESTRICT pos);
+int fseek(FILE* __file, long __offset, int __origin);
+int fsetpos(FILE* __file, fpos_t const* pos);
+void rewind(FILE* __file);
 
-void clearerr(FILE* file);
-int feof(FILE* file);
-int ferror(FILE* file);
-void perror(char const* string);
+void clearerr(FILE* __file);
+int feof(FILE* __file);
+int ferror(FILE* __file);
+void perror(char const* __str);
 
-int remove(char const* path);
-int rename(char const* old_path, char const* new_path);
+int remove(char const* __path);
+int rename(char const* __old_path, char const* __new_path);
 
 FILE* tmpfile(void);
-char* tmpnam(char* path);
+char* tmpnam(char* __path);
 
 extern FILE* stdin;
 extern FILE* stdout;
