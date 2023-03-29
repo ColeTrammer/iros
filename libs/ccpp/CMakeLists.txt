@@ -11,6 +11,11 @@ set_target_properties(crt0
 install(TARGETS crt0 DESTINATION lib RENAME crt0)
 
 add_library(ccpp
+    stdlib/aligned_alloc.cpp
+    stdlib/calloc.cpp
+    stdlib/realloc.cpp
+    stdlib/malloc.cpp
+    stdlib/free.cpp
     string/memcpy.cpp
     string/memmove.cpp
     string/memset.cpp
