@@ -9,19 +9,23 @@
     return strstr(s, t);
 }
 
-[[gnu::noinline]] static size_t do_strlen(char const* s) {
+[[gnu::noinline]] static usize do_strlen(char const* s) {
     return strlen(s);
 }
 
-[[gnu::noinline]] static void* do_memcpy(di::Byte* dest, di::Byte const* src, size_t n) {
+[[gnu::noinline]] static int do_memcmp(byte* dest, byte const* src, usize n) {
+    return memcmp(dest, src, di::black_box(n));
+}
+
+[[gnu::noinline]] static void* do_memcpy(byte* dest, byte const* src, usize n) {
     return memcpy(dest, src, di::black_box(n));
 }
 
-[[gnu::noinline]] static void* do_memmove(di::Byte* dest, di::Byte const* src, size_t n) {
+[[gnu::noinline]] static void* do_memmove(byte* dest, byte const* src, usize n) {
     return memmove(dest, src, di::black_box(n));
 }
 
-[[gnu::noinline]] static void* do_memset(di::Byte* dest, di::Byte x, size_t n) {
+[[gnu::noinline]] static void* do_memset(byte* dest, byte x, usize n) {
     return memset(dest, di::to_integer<int>(x), di::black_box(n));
 }
 
@@ -92,34 +96,44 @@ static void strlen_() {
 }
 
 static void memcpy_() {
-    auto src = di::black_box(di::Array { di::Byte(4), di::Byte(5), di::Byte(6), di::Byte(7) });
-    auto dst = di::black_box(di::Array { di::Byte(8), di::Byte(9), di::Byte(10), di::Byte(11) });
+    auto src = di::black_box(di::Array { 4_b, 5_b, 6_b, 7_b });
+    auto dst = di::black_box(di::Array { 8_b, 9_b, 10_b, 11_b });
 
     ASSERT_EQ(dst.data() + 1, do_memcpy(dst.data() + 1, src.data(), 2));
 
-    auto e1 = di::Array { di::Byte(8), di::Byte(4), di::Byte(5), di::Byte(11) };
+    auto e1 = di::Array { 8_b, 4_b, 5_b, 11_b };
     ASSERT_EQ(dst, e1);
 }
 
 static void memmove_() {
-    auto bytes = di::black_box(di::Array { di::Byte(4), di::Byte(5), di::Byte(6), di::Byte(7), di::Byte(8) });
+    auto bytes = di::black_box(di::Array { 4_b, 5_b, 6_b, 7_b, 8_b });
     ASSERT_EQ(bytes.data(), do_memmove(bytes.data(), bytes.data() + 1, 2));
 
-    auto e1 = di::Array { di::Byte(5), di::Byte(6), di::Byte(6), di::Byte(7), di::Byte(8) };
+    auto e1 = di::Array { 5_b, 6_b, 6_b, 7_b, 8_b };
     ASSERT_EQ(bytes, e1);
 
     ASSERT_EQ(bytes.data() + 3, do_memmove(bytes.data() + 3, bytes.data() + 2, 2));
 
-    auto e2 = di::Array { di::Byte(5), di::Byte(6), di::Byte(6), di::Byte(6), di::Byte(7) };
+    auto e2 = di::Array { 5_b, 6_b, 6_b, 6_b, 7_b };
     ASSERT_EQ(bytes, e2);
 }
 
 static void memset_() {
-    auto bytes = di::black_box(di::Array { di::Byte(4), di::Byte(5), di::Byte(6), di::Byte(7) });
-    ASSERT_EQ(bytes.data(), do_memset(bytes.data(), di::Byte(9), 3));
+    auto bytes = di::black_box(di::Array { 4_b, 5_b, 6_b, 7_b });
+    ASSERT_EQ(bytes.data(), do_memset(bytes.data(), 9_b, 3));
 
-    auto ex1 = di::Array { di::Byte(9), di::Byte(9), di::Byte(9), di::Byte(7) };
+    auto ex1 = di::Array { 9_b, 9_b, 9_b, 7_b };
     ASSERT_EQ(bytes, ex1);
+}
+
+static void memcmp_() {
+    auto a = di::black_box(di::Array { 4_b, 5_b, 6_b, 7_b });
+    auto b = di::black_box(di::Array { 4_b, 5_b, 6_b, 7_b });
+    auto c = di::black_box(di::Array { 4_b, 5_b, 6_b, 8_b });
+
+    ASSERT_EQ(do_memcmp(a.data(), b.data(), a.size()), 0);
+    ASSERT_LT(do_memcmp(a.data(), c.data(), a.size()), 0);
+    ASSERT_GT(do_memcmp(c.data(), a.data(), a.size()), 0);
 }
 
 TEST(string_h, strchr_)
@@ -128,3 +142,4 @@ TEST(string_h, strlen_)
 TEST(string_h, memcpy_)
 TEST(string_h, memmove_)
 TEST(string_h, memset_)
+TEST(string_h, memcmp_)
