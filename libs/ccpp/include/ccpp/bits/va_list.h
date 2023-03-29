@@ -1,10 +1,9 @@
 #pragma once
 
 #include <ccpp/bits/config.h>
-#include <ccpp/bits/intptr_t.h>
 
 __CCPP_BEGIN_DECLARATIONS
 
-int getopt(int argc, char* const argv[], const char* envp);
+typedef __builtin_va_list va_list;
 
 __CCPP_END_DECLARATIONS
