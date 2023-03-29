@@ -1,5 +1,6 @@
 CompileFlags:
-  Add: [-I/build/iros/libs/ccpp/include]
+  Add: [-std=gnu++2b, -fconstexpr-steps=10000000, -Wno-unknown-warning-option, -I/build/iros/libs/ccpp/include]
+4  Remove: [-ffold-simple-inlines]
 Diagnostics:
   ClangTidy:
     Remove: [modernize-*]

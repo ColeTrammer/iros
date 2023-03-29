@@ -108,7 +108,8 @@
             "binaryDir": "${sourceDir}/build/native/release-dius-runtime",
             "installDir": "${sourceDir}/build/native/release-dius-runtime-install",
             "cacheVariables": {
-                "IROS_UseDiusRuntime": "ON"
+                "IROS_UseDiusRuntime": "ON",
+                "IROS_BuildCcpp": "ON"
             },
             "inherits": [
                 "release_base",
@@ -122,7 +123,8 @@
             "binaryDir": "${sourceDir}/build/native/debug-dius-runtime",
             "installDir": "${sourceDir}/build/native/debug-dius-runtime-install",
             "cacheVariables": {
-                "IROS_UseDiusRuntime": "ON"
+                "IROS_UseDiusRuntime": "ON",
+                "IROS_BuildCcpp": "ON"
             },
             "inherits": [
                 "debug_base",
@@ -235,7 +237,8 @@
             "binaryDir": "${sourceDir}/build/native/clang-release-dius-runtime",
             "installDir": "${sourceDir}/build/native/clang-release-dius-runtime-install",
             "cacheVariables": {
-                "IROS_UseDiusRuntime": "ON"
+                "IROS_UseDiusRuntime": "ON",
+                "IROS_BuildCcpp": "ON"
             },
             "inherits": [
                 "release_base",
@@ -249,7 +252,8 @@
             "binaryDir": "${sourceDir}/build/native/clang-debug-dius-runtime",
             "installDir": "${sourceDir}/build/native/clang-debug-dius-runtime-install",
             "cacheVariables": {
-                "IROS_UseDiusRuntime": "ON"
+                "IROS_UseDiusRuntime": "ON",
+                "IROS_BuildCcpp": "ON"
             },
             "inherits": [
                 "debug_base",
