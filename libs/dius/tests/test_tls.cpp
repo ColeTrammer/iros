@@ -8,7 +8,6 @@ static void tls() {
     di::compiler_barrier();
     ASSERT_EQ(x, 44);
 
-#ifndef __iros__
     auto did_execute = di::Atomic { false };
     auto y = *dius::Thread::create(
         [&](int y) {
@@ -25,7 +24,6 @@ static void tls() {
 
     di::compiler_barrier();
     ASSERT_EQ(x, 44);
-#endif
 }
 
 TEST(dius, tls)

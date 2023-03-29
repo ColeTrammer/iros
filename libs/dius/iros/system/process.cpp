@@ -11,7 +11,13 @@ di::Result<void> Process::swawn_and_wait() && {
     return {};
 }
 
+void exit_thread() {
+    (void) system_call<i32>(Number::exit_task);
+    di::unreachable();
+}
+
 void exit_process(int code) {
+    // FIXME: exit the entire process instead of just the current task.
     (void) system_call<i32>(Number::exit_task, code);
     di::unreachable();
 }
