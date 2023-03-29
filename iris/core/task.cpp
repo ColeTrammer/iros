@@ -8,9 +8,9 @@
 #include <iris/fs/initrd.h>
 
 namespace iris {
-Task::Task(mm::VirtualAddress entry, mm::VirtualAddress stack, bool userspace, di::Arc<mm::AddressSpace> address_space,
-           di::Arc<TaskNamespace> task_namespace, TaskId id, FileTable file_table, di::Arc<TaskStatus> task_status)
-    : m_task_state(entry.raw_value(), stack.raw_value(), userspace)
+Task::Task(bool userspace, di::Arc<mm::AddressSpace> address_space, di::Arc<TaskNamespace> task_namespace, TaskId id,
+           FileTable file_table, di::Arc<TaskStatus> task_status)
+    : m_task_state(userspace)
     , m_address_space(di::move(address_space))
     , m_task_namespace(di::move(task_namespace))
     , m_task_status(di::move(task_status))
@@ -34,23 +34,20 @@ Expected<di::Arc<Task>> create_kernel_task(TaskNamespace& task_namespace, void (
 
     auto task_status = TRY(di::try_make_arc<TaskStatus>());
     auto task_id = TRY(task_namespace.lock()->allocate_task_id());
-    auto result =
-        TRY(di::try_make_arc<Task>(entry_address, stack + 0x2000, false, address_space.arc_from_this(),
-                                   task_namespace.arc_from_this(), task_id, FileTable {}, di::move(task_status)));
+    auto result = TRY(di::try_make_arc<Task>(false, address_space.arc_from_this(), task_namespace.arc_from_this(),
+                                             task_id, FileTable {}, di::move(task_status)));
+    result->set_instruction_pointer(entry_address);
+    result->set_stack_pointer(stack + 0x2000);
     result->set_kernel_stack(stack);
     TRY(task_namespace.lock()->register_task(*result));
     return result;
 }
 
-Expected<di::Arc<Task>> create_user_task(TaskNamespace& task_namespace, FileTable file_table) {
-    auto new_address_space = TRY(mm::create_empty_user_address_space());
-
-    auto user_stack = TRY(new_address_space->allocate_region(
-        0x10000, mm::RegionFlags::Writable | mm::RegionFlags::User | mm::RegionFlags::Readable));
+Expected<di::Arc<Task>> create_user_task(TaskNamespace& task_namespace, FileTable file_table,
+                                         di::Arc<mm::AddressSpace> address_space) {
     auto task_status = TRY(di::try_make_arc<TaskStatus>());
     auto task_id = TRY(task_namespace.lock()->allocate_task_id());
-    auto result = TRY(di::try_make_arc<Task>(mm::VirtualAddress(0), user_stack + 0x10000, true,
-                                             di::move(new_address_space), task_namespace.arc_from_this(), task_id,
+    auto result = TRY(di::try_make_arc<Task>(true, di::move(address_space), task_namespace.arc_from_this(), task_id,
                                              di::move(file_table), di::move(task_status)));
     TRY(result->fpu_state().setup_fpu_state());
 
@@ -64,6 +61,11 @@ Expected<di::Arc<Task>> create_user_task(TaskNamespace& task_namespace, FileTabl
 
 Expected<void> load_executable(Task& task, di::PathView path) {
     auto raw_data = TRY(lookup_in_initrd(path));
+
+    task.set_address_space(TRY(mm::create_empty_user_address_space()));
+    auto user_stack = TRY(task.address_space().allocate_region(
+        0x10000, mm::RegionFlags::Writable | mm::RegionFlags::User | mm::RegionFlags::Readable));
+    task.set_stack_pointer(user_stack + 0x10000);
 
     using ElfHeader = di::exec::ElfHeader<>;
     using ProgramHeader = di::exec::ElfProgramHeader<>;

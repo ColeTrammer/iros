@@ -143,7 +143,7 @@ void iris_main() {
             di::get<0>(*file_table.allocate_file_handle()) = debug_file;
             di::get<0>(*file_table.allocate_file_handle()) = debug_file;
 
-            auto task4 = *iris::create_user_task(global_state.task_namespace, di::move(file_table));
+            auto task4 = *iris::create_user_task(global_state.task_namespace, di::move(file_table), nullptr);
 
             *iris::load_executable(*task4, init_path);
             scheduler.schedule_task(*task4);

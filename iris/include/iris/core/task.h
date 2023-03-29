@@ -26,9 +26,8 @@ class Task
     : public di::IntrusiveListNode<>
     , public di::IntrusiveRefCount<Task> {
 public:
-    explicit Task(mm::VirtualAddress entry, mm::VirtualAddress stack, bool userspace,
-                  di::Arc<mm::AddressSpace> address_space, di::Arc<TaskNamespace> task_namespace, TaskId task_id,
-                  FileTable file_table, di::Arc<TaskStatus> task_status);
+    explicit Task(bool userspace, di::Arc<mm::AddressSpace> address_space, di::Arc<TaskNamespace> task_namespace,
+                  TaskId task_id, FileTable file_table, di::Arc<TaskStatus> task_status);
 
     ~Task();
 
@@ -49,11 +48,18 @@ public:
     arch::FpuState const& fpu_state() const { return m_fpu_state; }
 
     TaskId id() const { return m_id; }
+
     mm::AddressSpace& address_space() { return *m_address_space; }
+    void set_address_space(di::Arc<mm::AddressSpace> address_space) { m_address_space = di::move(address_space); }
+
     TaskNamespace& task_namespace() const { return *m_task_namespace; }
     FileTable& file_table() { return m_file_table; }
 
-    void set_instruction_pointer(mm::VirtualAddress address);
+    void set_instruction_pointer(mm::VirtualAddress address) {
+        m_task_state.set_instruction_pointer(address.raw_value());
+    }
+    void set_stack_pointer(mm::VirtualAddress address) { m_task_state.set_stack_pointer(address.raw_value()); }
+    void set_argument1(uptr value) { m_task_state.set_argument1(value); }
 
     bool preemption_disabled() const { return m_preemption_disabled_count.load(di::MemoryOrder::Relaxed) > 0; }
     void disable_preemption() { m_preemption_disabled_count.fetch_add(1, di::MemoryOrder::Relaxed); }
@@ -90,7 +96,7 @@ private:
 };
 
 Expected<di::Arc<Task>> create_kernel_task(TaskNamespace&, void (*entry)());
-Expected<di::Arc<Task>> create_user_task(TaskNamespace&, FileTable file_table);
+Expected<di::Arc<Task>> create_user_task(TaskNamespace&, FileTable, di::Arc<mm::AddressSpace>);
 Expected<void> load_executable(Task&, di::PathView path);
 
 Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state);

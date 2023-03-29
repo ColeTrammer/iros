@@ -72,7 +72,7 @@ extern "C" [[noreturn]] void dius_entry(int argc, char** argv, char** envp) {
 #ifdef DIUS_PLATFORM_LINUX
     (void) dius::system::system_call<i32>(dius::system::Number::arch_prctl, ARCH_SET_FS, thread_control_block->get());
 #elif defined(DIUS_PLATFORM_IROS)
-    (void) dius::system::system_call<i32>(dius::system::Number::set_userspace_thread_pointer,
+    (void) dius::system::system_call<i32>(dius::system::Number::set_userspace_thread_pointer, 0,
                                           thread_control_block->get());
 #endif
 

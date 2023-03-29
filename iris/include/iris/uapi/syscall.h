@@ -15,5 +15,8 @@ enum class SystemCall {
     close = 10,
     start_task_and_block = 11,
     set_userspace_thread_pointer = 12,
+    set_userspace_stack_pointer = 13,
+    set_userspace_instruction_pointer = 14,
+    set_userspace_argument1 = 15,
 };
 }

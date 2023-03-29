@@ -5,7 +5,7 @@
 #include <iris/core/task.h>
 
 namespace iris::arch {
-TaskState::TaskState(u64 entry, u64 stack, bool userspace) : rip(entry), rsp(stack) {
+TaskState::TaskState(bool userspace) {
     if (userspace) {
         ss = 8 * 8 + 3;
         cs = 7 * 8 + 3;
@@ -134,11 +134,5 @@ void FpuState::save() {
             x86::amd64::fxsave(fpu_state);
         }
     }
-}
-}
-
-namespace iris {
-void Task::set_instruction_pointer(mm::VirtualAddress address) {
-    m_task_state.rip = address.raw_value();
 }
 }

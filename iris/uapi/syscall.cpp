@@ -32,8 +32,8 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
             break;
         }
         case SystemCall::create_task: {
-            auto& current_task = iris::global_state().scheduler.current_task();
-            auto task = TRY(iris::create_user_task(current_task.task_namespace(), current_task.file_table()));
+            auto task = TRY(iris::create_user_task(current_task.task_namespace(), current_task.file_table(),
+                                                   current_task.address_space().arc_from_this()));
             return task->id().raw_value();
         }
         case SystemCall::load_executable: {
@@ -130,10 +130,45 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
             return 0;
         }
         case SystemCall::set_userspace_thread_pointer: {
-            auto value = task_state.syscall_arg1();
-            current_task.set_userspace_thread_pointer(value);
+            auto task_id = iris::TaskId(task_state.syscall_arg1());
+            auto value = task_state.syscall_arg2();
+
+            auto& task_namespace = current_task.task_namespace();
+            auto task = task_id == iris::TaskId(0) ? current_task.arc_from_this()
+                                                   : TRY(task_namespace.lock()->find_task(task_id));
+            task->set_userspace_thread_pointer(value);
 
             arch::load_userspace_thread_pointer(value);
+            return 0;
+        }
+        case SystemCall::set_userspace_stack_pointer: {
+            auto task_id = iris::TaskId(task_state.syscall_arg1());
+            auto value = task_state.syscall_arg2();
+
+            auto& task_namespace = current_task.task_namespace();
+            auto task = task_id == iris::TaskId(0) ? current_task.arc_from_this()
+                                                   : TRY(task_namespace.lock()->find_task(task_id));
+            task->set_stack_pointer(mm::VirtualAddress(value));
+            return 0;
+        }
+        case SystemCall::set_userspace_instruction_pointer: {
+            auto task_id = iris::TaskId(task_state.syscall_arg1());
+            auto value = task_state.syscall_arg2();
+
+            auto& task_namespace = current_task.task_namespace();
+            auto task = task_id == iris::TaskId(0) ? current_task.arc_from_this()
+                                                   : TRY(task_namespace.lock()->find_task(task_id));
+            task->set_instruction_pointer(mm::VirtualAddress(value));
+            return 0;
+        }
+        case SystemCall::set_userspace_argument1: {
+            auto task_id = iris::TaskId(task_state.syscall_arg1());
+            auto value = task_state.syscall_arg2();
+
+            auto& task_namespace = current_task.task_namespace();
+            auto task = task_id == iris::TaskId(0) ? current_task.arc_from_this()
+                                                   : TRY(task_namespace.lock()->find_task(task_id));
+            task->set_argument1(value);
             return 0;
         }
         default:

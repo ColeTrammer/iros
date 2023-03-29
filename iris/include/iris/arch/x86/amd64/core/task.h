@@ -8,7 +8,7 @@
 namespace iris::arch {
 // This is x86_64 specific.
 struct TaskState {
-    explicit TaskState(u64 entry, u64 stack, bool userspace);
+    explicit TaskState(bool userspace);
 
     SystemCall syscall_number() const { return SystemCall(rax); }
 
@@ -27,6 +27,10 @@ struct TaskState {
             rdx = di::to_underlying(value.error());
         }
     }
+
+    void set_instruction_pointer(uptr value) { rip = value; }
+    void set_stack_pointer(uptr value) { rsp = value; }
+    void set_argument1(uptr value) { rdi = value; }
 
     /// Function to perform a context switch.
     [[noreturn]] void context_switch_to();
