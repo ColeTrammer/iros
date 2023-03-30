@@ -89,7 +89,7 @@ void DirectoryIterator::advance() {
     // NOTE: the FileType enum is setup to match the Linux system call ABI.
     auto type = FileType(dirent->type);
     auto path = di::clone(m_path);
-    auto name = di::ZString(dirent->name());
+    auto name = di::ZCString(dirent->name());
     path.append(di::TransparentStringView { name.data(), di::to_unsigned(di::distance(name)) });
     m_current.emplace(DirectoryEntry(di::move(path), type));
 

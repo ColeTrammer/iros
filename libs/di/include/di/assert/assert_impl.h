@@ -29,7 +29,7 @@ inline void assert_write(char const* data, size_t size) {
 #endif
 
 inline StringView cstring_to_utf8_view(char const* s) {
-    auto length = di::math::to_unsigned(di::container::distance(ZString { s }));
+    auto length = di::math::to_unsigned(di::container::distance(ZCString { s }));
 
     // NOTE: this is safe since the caller passes in pointers to the program's
     //       source text. Since the text itself is UTF-8, this is safe.

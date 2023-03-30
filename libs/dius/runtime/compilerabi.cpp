@@ -9,7 +9,7 @@ int __dso_handle;
 }
 
 extern "C" size_t strlen(char const* string) {
-    return di::to_unsigned(di::distance(di::ZString(string)));
+    return di::to_unsigned(di::distance(di::ZCString(string)));
 }
 
 extern "C" unsigned char* memcpy(unsigned char* __restrict dest, unsigned char const* __restrict src, size_t count) {

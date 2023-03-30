@@ -47,7 +47,7 @@ di::Result<Thread> Thread::do_start(di::Function<void()> entry) {
     platform_thread->thread_id = id;
 
     TRY(system::system_call<int>(system::Number::set_userspace_thread_pointer, id, platform_thread.get()));
-    TRY(system::system_call<int>(system::Number::set_userspace_stack_pointer, id, stack.data() + stack.size()));
+    TRY(system::system_call<int>(system::Number::set_userspace_stack_pointer, id, stack.data() + stack.size() - 8));
     TRY(system::system_call<int>(
         system::Number::set_userspace_instruction_pointer, id, +[](void* closure) {
             auto* platform_thread = static_cast<PlatformThread*>(closure);

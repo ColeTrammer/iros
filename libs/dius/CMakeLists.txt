@@ -79,6 +79,15 @@ install(
 )
 
 if (IROS_UseDiusRuntime)
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/crt0.o" "INPUT(libdius.a)")
+
+    install(
+      FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/crt0.o"
+      DESTINATION
+        lib
+    )
+
     target_compile_definitions(dius
       PUBLIC
         DIUS_USE_RUNTIME

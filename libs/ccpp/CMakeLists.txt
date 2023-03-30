@@ -2,25 +2,25 @@ cmake_minimum_required(VERSION 3.25.2)
 
 project(Ccpp CXX)
 
-add_library(crt0 STATIC abi/crt0.cpp)
-set_target_properties(crt0
-  PROPERTIES
-    PREFIX ""
-    SUFFIX ".o"
-)
-install(TARGETS crt0 DESTINATION lib RENAME crt0)
-
 add_library(ccpp
     stdlib/aligned_alloc.cpp
     stdlib/calloc.cpp
     stdlib/realloc.cpp
     stdlib/malloc.cpp
     stdlib/free.cpp
+    string/memcmp.cpp
     string/memcpy.cpp
     string/memmove.cpp
     string/memset.cpp
+    string/strcat.cpp
     string/strchr.cpp
+    string/strcmp.cpp
+    string/strcpy.cpp
     string/strlen.cpp
+    string/strncat.cpp
+    string/strncmp.cpp
+    string/strncpy.cpp
+    string/strrchr.cpp
     string/strstr.cpp
 )
 add_library(Ccpp::ccpp ALIAS ccpp)
@@ -39,7 +39,7 @@ target_include_directories(ccpp
 find_package(Dius REQUIRED)
 
 target_link_libraries(ccpp
-  PRIVATE
+  PUBLIC
     Dius::dius
 )
 
@@ -67,6 +67,28 @@ install(
     DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
     DESTINATION "include"
     FILES_MATCHING PATTERN "*.h"
+)
+
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/libpthread.a" "INPUT(libc.a)")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/libdl.a" "INPUT(libc.a)")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/librt.a" "INPUT(librt.a)")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/libm.a" "INPUT(libc.a)")
+
+install(
+  FILES "${CMAKE_CURRENT_BINARY_DIR}/libpthread.a"
+  DESTINATION lib
+)
+install(
+  FILES "${CMAKE_CURRENT_BINARY_DIR}/libdl.a"
+  DESTINATION lib
+)
+install(
+  FILES "${CMAKE_CURRENT_BINARY_DIR}/librt.a"
+  DESTINATION lib
+)
+install(
+  FILES "${CMAKE_CURRENT_BINARY_DIR}/libm.a"
+  DESTINATION lib
 )
 
 if (IROS_BuildTests)

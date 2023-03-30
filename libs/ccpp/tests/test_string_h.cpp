@@ -5,8 +5,36 @@
     return strchr(s, ch);
 }
 
+[[gnu::noinline]] static char const* do_strrchr(char const* s, int ch) {
+    return strrchr(s, ch);
+}
+
 [[gnu::noinline]] static char const* do_strstr(char const* s, char const* t) {
     return strstr(s, t);
+}
+
+[[gnu::noinline]] static int do_strcmp(char const* s, char const* t) {
+    return strcmp(s, t);
+}
+
+[[gnu::noinline]] static int do_strncmp(char const* s, char const* t, size_t count) {
+    return strncmp(s, t, count);
+}
+
+[[gnu::noinline]] static char* do_strcat(char* s, char const* t) {
+    return strcat(s, t);
+}
+
+[[gnu::noinline]] static char* do_strncat(char* s, char const* t, size_t count) {
+    return strncat(s, t, count);
+}
+
+[[gnu::noinline]] static char* do_strcpy(char* s, char const* t) {
+    return strcpy(s, t);
+}
+
+[[gnu::noinline]] static char* do_strncpy(char* s, char const* t, size_t count) {
+    return strncpy(s, t, count);
 }
 
 [[gnu::noinline]] static usize do_strlen(char const* s) {
@@ -29,62 +57,174 @@
     return memset(dest, di::to_integer<int>(x), di::black_box(n));
 }
 
-static void strchr_() {
-    auto s = di::black_box((char const*) "Hello");
+static void strcat_() {
+    char buffer[16] = {};
+    auto const* a = di::black_box((char const*) "Hello");
+    auto const* b = di::black_box((char const*) ", World");
 
-    auto r1 = do_strchr(s, 'l');
-    auto e1 = s + 2;
+    ASSERT_EQ(buffer, do_strcat(do_strcpy(buffer, a), b));
+    ASSERT_EQ(do_strcmp(buffer, "Hello, World"), 0);
+}
+
+static void strncat_() {
+    char buffer[10] = {};
+    auto const* a = di::black_box((char const*) "Hello");
+    auto const* b = di::black_box((char const*) ", World");
+
+    ASSERT_EQ(buffer, do_strncat(do_strcpy(buffer, a), b, sizeof(buffer) - 1));
+    ASSERT_EQ(do_strcmp(buffer, "Hello, Wo"), 0);
+}
+
+static void strcmp_() {
+    auto const* a = di::black_box((char const*) "Hello");
+    auto const* b = di::black_box((char const*) "Hello");
+    auto const* c = di::black_box((char const*) "HelloQ");
+    auto const* d = di::black_box((char const*) "Hell");
+    auto const* e = di::black_box((char const*) "Hellp");
+
+    ASSERT_EQ(do_strcmp(a, b), 0);
+    ASSERT_LT(do_strcmp(a, c), 0);
+    ASSERT_GT(do_strcmp(a, d), 0);
+    ASSERT_LT(do_strcmp(a, e), 0);
+}
+
+static void strncmp_() {
+    auto const* a = di::black_box((char const*) "Hello");
+    auto const* b = di::black_box((char const*) "Hello");
+    auto const* c = di::black_box((char const*) "HelloQ");
+    auto const* d = di::black_box((char const*) "Hell");
+    auto const* e = di::black_box((char const*) "Hellp");
+
+    ASSERT_EQ(do_strncmp(a, b, 5), 0);
+    ASSERT_EQ(do_strncmp(a, b, 10), 0);
+    ASSERT_EQ(do_strncmp(a, c, 5), 0);
+    ASSERT_LT(do_strncmp(a, c, 6), 0);
+    ASSERT_GT(do_strncmp(a, d, 5), 0);
+    ASSERT_GT(do_strncmp(a, d, 10), 0);
+    ASSERT_EQ(do_strncmp(a, d, 4), 0);
+    ASSERT_LT(do_strncmp(a, e, 5), 0);
+    ASSERT_LT(do_strncmp(a, e, 10), 0);
+}
+
+static void strcpy_() {
+    char buffer[16] = {};
+    di::fill(buffer, -1);
+    auto const* s = di::black_box((char const*) "Hello");
+    auto const* t = di::black_box((char const*) "");
+
+    ASSERT_EQ(buffer, do_strcpy(buffer, s));
+    ASSERT_EQ(do_strcmp(buffer, s), 0);
+
+    ASSERT_EQ(buffer, do_strcpy(buffer, t));
+    ASSERT_EQ(do_strcmp(buffer, t), 0);
+}
+
+static void strncpy_() {
+    char buffer[8] = {};
+    auto const* s = di::black_box((char const*) "Hello");
+    auto const* t = di::black_box((char const*) "");
+    auto const* q = di::black_box((char const*) "Hello, World");
+
+    di::fill(buffer, -1);
+    ASSERT_EQ(buffer, do_strncpy(buffer, s, 8));
+
+    char expected1[] = { 'H', 'e', 'l', 'l', 'o', '\0', '\0', '\0' };
+    ASSERT(di::container::equal(buffer, expected1));
+
+    di::fill(buffer, -1);
+    ASSERT_EQ(buffer, do_strncpy(buffer, t, 8));
+
+    char expected2[] = { '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0' };
+    ASSERT(di::container::equal(buffer, expected2));
+
+    di::fill(buffer, -1);
+    ASSERT_EQ(buffer, do_strncpy(buffer, q, 7));
+
+    char expected3[] = { 'H', 'e', 'l', 'l', 'o', ',', ' ', -1 };
+    ASSERT(di::container::equal(buffer, expected3));
+}
+
+static void strchr_() {
+    auto const* s = di::black_box((char const*) "Hello");
+
+    auto const* r1 = do_strchr(s, 'l');
+    auto const* e1 = s + 2;
     ASSERT_EQ(r1, e1);
 
-    auto r2 = do_strchr(s, '\0');
-    auto e2 = s + 5;
+    auto const* r2 = do_strchr(s, '\0');
+    auto const* e2 = s + 5;
     ASSERT_EQ(r2, e2);
 
-    auto r3 = do_strchr(s, 'p');
+    auto const* r3 = do_strchr(s, 'p');
     auto e3 = nullptr;
     ASSERT_EQ(r3, e3);
 
-    auto t = di::black_box((char const*) "");
-    auto r4 = do_strchr(t, 'a');
+    auto const* t = di::black_box((char const*) "");
+    auto const* r4 = do_strchr(t, 'a');
     auto e4 = nullptr;
     ASSERT_EQ(r4, e4);
 
-    auto r5 = do_strchr(t, '\0');
-    auto e5 = t;
+    auto const* r5 = do_strchr(t, '\0');
+    auto const* e5 = t;
+    ASSERT_EQ(r5, e5);
+}
+
+static void strrchr_() {
+    auto const* s = di::black_box((char const*) "Hello");
+
+    auto const* r1 = do_strrchr(s, 'l');
+    auto const* e1 = s + 3;
+    ASSERT_EQ(r1, e1);
+
+    auto const* r2 = do_strrchr(s, '\0');
+    auto const* e2 = s + 5;
+    ASSERT_EQ(r2, e2);
+
+    auto const* r3 = do_strrchr(s, 'p');
+    auto e3 = nullptr;
+    ASSERT_EQ(r3, e3);
+
+    auto const* t = di::black_box((char const*) "");
+    auto const* r4 = do_strrchr(t, 'a');
+    auto e4 = nullptr;
+    ASSERT_EQ(r4, e4);
+
+    auto const* r5 = do_strrchr(t, '\0');
+    auto const* e5 = t;
     ASSERT_EQ(r5, e5);
 }
 
 static void strstr_() {
-    auto s = di::black_box((char const*) "Hello");
-    auto t = di::black_box((char const*) "ell");
-    auto v = di::black_box((char const*) "lll");
-    auto u = di::black_box((char const*) "Helloo");
-    auto e = di::black_box((char const*) "");
+    auto const* s = di::black_box((char const*) "Hello");
+    auto const* t = di::black_box((char const*) "ell");
+    auto const* v = di::black_box((char const*) "lll");
+    auto const* u = di::black_box((char const*) "Helloo");
+    auto const* e = di::black_box((char const*) "");
 
-    auto r1 = do_strstr(s, t);
-    auto e1 = s + 1;
+    auto const* r1 = do_strstr(s, t);
+    auto const* e1 = s + 1;
     ASSERT_EQ(r1, e1);
 
-    auto r2 = do_strstr(s, v);
+    auto const* r2 = do_strstr(s, v);
     auto e2 = nullptr;
     ASSERT_EQ(r2, e2);
 
-    auto r3 = do_strstr(s, u);
+    auto const* r3 = do_strstr(s, u);
     auto e3 = nullptr;
     ASSERT_EQ(r3, e3);
 
-    auto r4 = do_strstr(s, e);
-    auto e4 = s;
+    auto const* r4 = do_strstr(s, e);
+    auto const* e4 = s;
     ASSERT_EQ(r4, e4);
 
-    auto r5 = do_strstr(e, e);
-    auto e5 = e;
+    auto const* r5 = do_strstr(e, e);
+    auto const* e5 = e;
     ASSERT_EQ(r5, e5);
 }
 
 static void strlen_() {
-    auto s = di::black_box((char const*) "Hello");
-    auto e = di::black_box((char const*) "");
+    auto const* s = di::black_box((char const*) "Hello");
+    auto const* e = di::black_box((char const*) "");
 
     auto r1 = do_strlen(s);
     auto e1 = 5u;
@@ -136,7 +276,14 @@ static void memcmp_() {
     ASSERT_GT(do_memcmp(c.data(), a.data(), a.size()), 0);
 }
 
+TEST(string_h, strcat_)
+TEST(string_h, strncat_)
+TEST(string_h, strcmp_)
+TEST(string_h, strncmp_)
+TEST(string_h, strcpy_)
+TEST(string_h, strncpy_)
 TEST(string_h, strchr_)
+TEST(string_h, strrchr_)
 TEST(string_h, strstr_)
 TEST(string_h, strlen_)
 TEST(string_h, memcpy_)
