@@ -21,7 +21,8 @@
                 "ms-azuretools.vscode-docker",
                 "esbenp.prettier-vscode",
                 "ms-vscode.live-server",
-                "llvm-vs-code-extensions.vscode-clangd"
+                "llvm-vs-code-extensions.vscode-clangd",
+                "vadimcn.vscode-lldb"
             ],
             "settings": {
                 "search.exclude": {

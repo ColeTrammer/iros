@@ -8,7 +8,7 @@ RUN sudo apt-get -y update \
     && sudo apt-get -y install lsb-release wget software-properties-common gdb gnupg strace \
     && wget https://apt.llvm.org/llvm.sh \
     && chmod +x llvm.sh \
-    && sudo ./llvm.sh 16 \
+    && sudo ./llvm.sh 16 all \
     && rm llvm.sh
 RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID $USERNAME -d /home/$USERNAME -m -k /dev/skel -s /bin/bash \
