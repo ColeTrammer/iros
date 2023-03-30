@@ -9,6 +9,6 @@ namespace di::concepts {
 template<typename Iter>
 concept ForwardIterator = InputIterator<Iter> && DerivedFrom<meta::IteratorCategory<Iter>, types::ForwardIteratorTag> &&
                           SentinelFor<Iter, Iter> && Regular<Iter> && requires(Iter iter) {
-                                                                          { iter++ } -> SameAs<Iter>;
-                                                                      };
+                              { iter++ } -> SameAs<Iter>;
+                          };
 }

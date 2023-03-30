@@ -7,12 +7,11 @@
 namespace di::concepts {
 namespace detail {
     template<typename Sender, typename Env>
-    concept SenderBase =
-        requires(Sender&& sender, Env&& env) {
-            {
-                execution::get_completion_signatures(util::forward<Sender>(sender), util::forward<Env>(env))
-                } -> ValidCompletionSignatures<Env>;
-        };
+    concept SenderBase = requires(Sender&& sender, Env&& env) {
+        {
+            execution::get_completion_signatures(util::forward<Sender>(sender), util::forward<Env>(env))
+        } -> ValidCompletionSignatures<Env>;
+    };
 }
 
 template<typename Send, typename Env = types::NoEnv>

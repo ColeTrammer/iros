@@ -15,8 +15,8 @@ namespace detail {
 
     template<typename T>
     concept MemberClonable = requires(T const& value) {
-                                 { value.clone() } -> concepts::MaybeFallible<T>;
-                             };
+        { value.clone() } -> concepts::MaybeFallible<T>;
+    };
 
     struct CloneFunction {
         template<typename T>

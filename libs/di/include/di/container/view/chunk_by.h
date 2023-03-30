@@ -14,8 +14,8 @@ namespace detail {
 
     template<typename Con, typename Pred>
     concept ViewChunkBy = requires(Con&& container, Pred&& predicate) {
-                              ChunkByView { util::forward<Con>(container), util::forward<Pred>(predicate) };
-                          };
+        ChunkByView { util::forward<Con>(container), util::forward<Pred>(predicate) };
+    };
 
     struct ChunkByFunction {
         template<concepts::ViewableContainer Con, typename Pred>

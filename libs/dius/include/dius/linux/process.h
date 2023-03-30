@@ -2,7 +2,6 @@
 
 #include <linux/types.h>
 
-namespace dius
-{
+namespace dius {
 using ProcessId = __kernel_pid_t;
 }

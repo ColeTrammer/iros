@@ -14,8 +14,8 @@ namespace detail {
 
     template<typename Con, typename Pred>
     concept ViewDropWhile = requires(Con&& container, Pred&& predicate) {
-                                DropWhileView { util::forward<Con>(container), util::forward<Pred>(predicate) };
-                            };
+        DropWhileView { util::forward<Con>(container), util::forward<Pred>(predicate) };
+    };
 
     struct DropWhileFunction {
         template<concepts::ViewableContainer Con, typename Pred>

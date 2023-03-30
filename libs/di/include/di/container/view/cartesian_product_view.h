@@ -17,8 +17,8 @@ namespace detail {
                               (concepts::RandomAccessContainer<Rest> && concepts::SizedContainer<Rest>) ...>;
 
     template<typename Con>
-    concept CartesianProductCommonArg = concepts::CommonContainer<Con> ||
-                                        (concepts::SizedContainer<Con> && concepts::RandomAccessContainer<Con>);
+    concept CartesianProductCommonArg =
+        concepts::CommonContainer<Con> || (concepts::SizedContainer<Con> && concepts::RandomAccessContainer<Con>);
 
     template<typename First, typename... Rest>
     concept CartesianProductIsBidirectional =
@@ -146,7 +146,7 @@ private:
 
         constexpr bool at_end() const {
             return function::unpack<meta::MakeIndexSequence<1 + sizeof...(Rest)>>([&]<size_t... indices>(
-                meta::IndexSequence<indices...>) {
+                                                                                      meta::IndexSequence<indices...>) {
                 return ((util::get<indices>(m_iterators) == container::end(util::get<indices>(m_parent->m_bases))) ||
                         ...);
             });
@@ -160,10 +160,10 @@ private:
         }
 
         constexpr auto distance_to_end() const {
-            auto end_tuple = function::unpack<meta::MakeIndexSequence<1 + sizeof...(Rest)>>([&]<size_t... indices>(
-                meta::IndexSequence<indices...>) {
-                return make_tuple(container::end(util::get<indices>(m_parent->m_bases))...);
-            });
+            auto end_tuple = function::unpack<meta::MakeIndexSequence<1 + sizeof...(Rest)>>(
+                [&]<size_t... indices>(meta::IndexSequence<indices...>) {
+                    return make_tuple(container::end(util::get<indices>(m_parent->m_bases))...);
+                });
             return distance_to(end_tuple);
         }
 
@@ -183,11 +183,11 @@ private:
                  concepts::IndirectlySwappable<meta::ContainerIterator<meta::MaybeConst<is_const, First>>>,
                  concepts::IndirectlySwappable<meta::ContainerIterator<meta::MaybeConst<is_const, Rest>>>...>)
         {
-            return function::unpack<meta::MakeIndexSequence<1 + sizeof...(Rest)>>([&]<size_t... indices>(
-                meta::IndexSequence<indices...>) {
-                return (void) (iterator_swap(util::get<indices>(a.m_iterators), util::get<indices>(b.m_iterators)),
-                               ...);
-            });
+            return function::unpack<meta::MakeIndexSequence<1 + sizeof...(Rest)>>(
+                [&]<size_t... indices>(meta::IndexSequence<indices...>) {
+                    return (void) (iterator_swap(util::get<indices>(a.m_iterators), util::get<indices>(b.m_iterators)),
+                                   ...);
+                });
         }
 
         template<size_t N = sizeof...(Rest)>

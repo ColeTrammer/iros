@@ -27,9 +27,9 @@ namespace detail {
 
     template<typename Ref, typename RRef, typename It>
     concept ConcatIndirectlyReadableImpl = requires(It const it) {
-                                               static_cast<Ref>(*it);
-                                               static_cast<RRef>(container::iterator_move(it));
-                                           };
+        static_cast<Ref>(*it);
+        static_cast<RRef>(container::iterator_move(it));
+    };
 
     template<typename... Cons>
     concept ConcatIndirectlyReadable =
@@ -41,10 +41,10 @@ namespace detail {
 
     template<typename... Cons>
     concept Concatable = requires {
-                             typename ConcatReference<Cons...>;
-                             typename ConcatValue<Cons...>;
-                             typename ConcatRValue<Cons...>;
-                         } && ConcatIndirectlyReadable<Cons...>;
+        typename ConcatReference<Cons...>;
+        typename ConcatValue<Cons...>;
+        typename ConcatRValue<Cons...>;
+    } && ConcatIndirectlyReadable<Cons...>;
 
     template<typename... Cons>
     concept ConcatRandomAccess =

@@ -19,7 +19,6 @@ namespace detail {
 }
 
 template<typename F, typename T, typename Iter>
-concept IndirectlyBinaryRightFoldable =
-    IndirectlyBinaryLeftFoldable<detail::FlippedHelper<F>, T, Iter>;
+concept IndirectlyBinaryRightFoldable = IndirectlyBinaryLeftFoldable<detail::FlippedHelper<F>, T, Iter>;
 ;
 }

@@ -106,23 +106,23 @@ namespace schedule_from_ns {
         private:
             template<typename... Args>
             requires(requires {
-                         util::declval<Data<Rec, Sched, Completions>&>().phase2(SetValue {}, util::declval<Args>()...);
-                     })
+                util::declval<Data<Rec, Sched, Completions>&>().phase2(SetValue {}, util::declval<Args>()...);
+            })
             void set_value(Args&&... args) && {
                 return m_data->phase2(SetValue {}, util::forward<Args>(args)...);
             }
 
             template<typename Error>
             requires(requires {
-                         util::declval<Data<Rec, Sched, Completions>&>().phase2(SetError {}, util::declval<Error>());
-                     })
+                util::declval<Data<Rec, Sched, Completions>&>().phase2(SetError {}, util::declval<Error>());
+            })
             void set_error(Error&& error) && {
                 return m_data->phase2(SetError {}, util::forward<Error>(error));
             }
 
             void set_stopped() && requires(requires {
-                                               util::declval<Data<Rec, Sched, Completions>&>().phase2(SetStopped {});
-                                           }) { return m_data->phase2(SetStopped {}); }
+                util::declval<Data<Rec, Sched, Completions>&>().phase2(SetStopped {});
+            }) { return m_data->phase2(SetStopped {}); }
 
                 Data<Rec, Sched, Completions>* m_data;
         };

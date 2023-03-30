@@ -15,8 +15,8 @@ namespace di::concepts {
 // See https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2674r1.pdf. In the future, this should call to a
 // compiler built-in.
 template<typename T>
-concept ImplicitLifetime = (Scalar<T> || LanguageArray<T> || Aggregate<T> ||
-                            (TriviallyDestructible<T> &&
-                             (TriviallyDefaultConstructible<T> || TriviallyCopyConstructible<T> ||
-                              TriviallyMoveConstructible<T>) ));
+concept ImplicitLifetime =
+    (Scalar<T> || LanguageArray<T> || Aggregate<T> ||
+     (TriviallyDestructible<T> &&
+      (TriviallyDefaultConstructible<T> || TriviallyCopyConstructible<T> || TriviallyMoveConstructible<T>) ));
 }

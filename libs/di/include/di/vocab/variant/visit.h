@@ -16,10 +16,10 @@ namespace detail {
 
     template<size_t... indices, typename R, typename Vis, typename... Vars>
     requires(requires {
-                 {
-                     function::invoke_r<R>(util::declval<Vis>(), util::get<indices>(util::declval<Vars>())...)
-                     } -> concepts::ImplicitlyConvertibleTo<R>;
-             })
+        {
+            function::invoke_r<R>(util::declval<Vis>(), util::get<indices>(util::declval<Vars>())...)
+        } -> concepts::ImplicitlyConvertibleTo<R>;
+    })
     struct VisitHelper<meta::List<meta::SizeConstant<indices>...>, R, Vis, Vars...> {
         constexpr static R call(Vis&& visitor, Vars&&... variants) {
             return function::invoke_r<R>(util::forward<Vis>(visitor),
@@ -31,16 +31,14 @@ namespace detail {
 template<typename R, typename Vis, concepts::VariantLike... Vars,
          typename Indices = meta::CartesianProduct<meta::AsList<meta::MakeIndexSequence<meta::VariantSize<Vars>>>...>>
 requires(requires {
-             []<concepts::TypeList... Idx>(meta::List<Idx...>) {
-                 return Array { (&detail::VisitHelper<Idx, R, Vis, Vars...>::call)... };
-             }
-             (Indices {});
-         })
+    []<concepts::TypeList... Idx>(meta::List<Idx...>) {
+        return Array { (&detail::VisitHelper<Idx, R, Vis, Vars...>::call)... };
+    }(Indices {});
+})
 constexpr R visit(Vis&& visitor, Vars&&... variants) {
     auto table = []<concepts::TypeList... Idx>(meta::List<Idx...>) {
         return Array { (&detail::VisitHelper<Idx, R, Vis, Vars...>::call)... };
-    }
-    (Indices {});
+    }(Indices {});
 
     auto span = MDSpan { table.data(), Extents<size_t, meta::VariantSize<Vars>...> {} };
 

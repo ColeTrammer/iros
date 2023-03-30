@@ -22,8 +22,8 @@ namespace detail {
 
     template<typename T>
     concept IteratorEmpty = requires(T&& container) {
-                                static_cast<bool>(container::begin(container) == container::end(container));
-                            } && concepts::ForwardIterator<meta::ContainerIterator<T>>;
+        static_cast<bool>(container::begin(container) == container::end(container));
+    } && concepts::ForwardIterator<meta::ContainerIterator<T>>;
 }
 
 struct EmptyFunction {

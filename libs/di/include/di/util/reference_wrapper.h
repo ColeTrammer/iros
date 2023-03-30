@@ -86,8 +86,8 @@ constexpr ReferenceWrapper<T const> cref(ReferenceWrapper<T> value) {
 
 // Prevent construction of reference wrapper's from temporaries.
 template<typename T>
-constexpr void ref(const T&& value) = delete;
+constexpr void ref(T const&& value) = delete;
 
 template<typename T>
-constexpr void cref(const T&& value) = delete;
+constexpr void cref(T const&& value) = delete;
 }

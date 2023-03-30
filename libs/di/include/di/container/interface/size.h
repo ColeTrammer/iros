@@ -26,12 +26,11 @@ namespace detail {
     concept CustomSize = concepts::TagInvocableTo<SizeFunction, meta::IteratorSizeType<meta::ContainerIterator<T>>, T>;
 
     template<typename T>
-    concept MemberSize =
-        requires(T&& container) {
-            {
-                util::forward<T>(container).size()
-                } -> concepts::ImplicitlyConvertibleTo<meta::IteratorSizeType<meta::ContainerIterator<T>>>;
-        };
+    concept MemberSize = requires(T&& container) {
+        {
+            util::forward<T>(container).size()
+        } -> concepts::ImplicitlyConvertibleTo<meta::IteratorSizeType<meta::ContainerIterator<T>>>;
+    };
 
     template<typename T>
     concept IteratorSize = concepts::ForwardIterator<meta::ContainerIterator<T>> &&

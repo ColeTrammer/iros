@@ -14,11 +14,11 @@
 namespace di::vocab {
 template<typename Storage, typename T>
 concept OptionalStorage = requires(Storage& storage, T&& value) {
-                              { is_nullopt(util::as_const(storage)) } -> concepts::SameAs<bool>;
-                              { set_nullopt(storage) };
-                              { get_value(storage) };
-                              { get_value(util::as_const(storage)) };
-                              { get_value(util::move(storage)) };
-                              { get_value(util::move(util::as_const(storage))) };
-                          } && concepts::ConstructibleFrom<Storage, NullOpt>;
+    { is_nullopt(util::as_const(storage)) } -> concepts::SameAs<bool>;
+    { set_nullopt(storage) };
+    { get_value(storage) };
+    { get_value(util::as_const(storage)) };
+    { get_value(util::move(storage)) };
+    { get_value(util::move(util::as_const(storage))) };
+} && concepts::ConstructibleFrom<Storage, NullOpt>;
 }

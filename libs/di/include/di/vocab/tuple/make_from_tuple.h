@@ -11,12 +11,12 @@ namespace detail {
         template<concepts::TupleLike Tup>
         constexpr T operator()(Tup&& tuple) const
         requires(requires {
-                     apply(
-                         []<typename... Args>(Args&&... args) {
-                             return T(util::forward<Args>(args)...);
-                         },
-                         util::forward<Tup>(tuple));
-                 })
+            apply(
+                []<typename... Args>(Args&&... args) {
+                    return T(util::forward<Args>(args)...);
+                },
+                util::forward<Tup>(tuple));
+        })
         {
             return apply(
                 []<typename... Args>(Args&&... args) {

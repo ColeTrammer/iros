@@ -115,8 +115,7 @@ template<typename T, concepts::TypeList List>
 constexpr static inline auto Lookup = List::template Lookup<T>;
 
 template<typename T, typename List>
-concept UniqueType = concepts::TypeList<List> && List::template
-UniqueType<T>;
+concept UniqueType = concepts::TypeList<List> && List::template UniqueType<T>;
 
 template<typename List, typename T>
 concept Contains = concepts::TypeList<List> && (Lookup<T, List> < Size<List>);

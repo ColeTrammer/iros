@@ -8,11 +8,10 @@
 namespace di::concepts {
 namespace detail {
     template<typename From, typename To>
-    concept StatusCodeErasableIntoHelper = (!LanguageVoid<From> && !LanguageVoid<To> &&
-                                            TriviallyRelocatable<meta::StatusCodeDomainValue<From>> &&
-                                            TriviallyRelocatable<meta::StatusCodeDomainValue<To>> &&
-                                            sizeof(vocab::detail::StatusCodeStorage<From>) <=
-                                                sizeof(vocab::detail::StatusCodeStorage<To>));
+    concept StatusCodeErasableIntoHelper =
+        (!LanguageVoid<From> && !LanguageVoid<To> && TriviallyRelocatable<meta::StatusCodeDomainValue<From>> &&
+         TriviallyRelocatable<meta::StatusCodeDomainValue<To>> &&
+         sizeof(vocab::detail::StatusCodeStorage<From>) <= sizeof(vocab::detail::StatusCodeStorage<To>));
 }
 
 template<typename From, typename To>

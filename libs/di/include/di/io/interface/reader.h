@@ -9,8 +9,8 @@ namespace detail {
         template<typename T>
         constexpr Result<usize> operator()(T& reader, Span<Byte> data) const
         requires(requires {
-                     { reader.read_some(data) } -> concepts::ImplicitlyConvertibleTo<Result<usize>>;
-                 })
+            { reader.read_some(data) } -> concepts::ImplicitlyConvertibleTo<Result<usize>>;
+        })
         {
             return reader.read_some(data);
         }

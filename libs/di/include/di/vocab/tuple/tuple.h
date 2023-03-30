@@ -92,7 +92,7 @@ public:
 
     template<concepts::TupleLike Tup>
     requires(!concepts::DecaySameAs<Tup, Tuple> &&
-             requires(Base & self, Tup&& other) { Base::static_assign(self, util::forward<Tup>(other)); })
+             requires(Base& self, Tup&& other) { Base::static_assign(self, util::forward<Tup>(other)); })
     constexpr Tuple& operator=(Tup&& other) {
         Base::static_assign(util::forward_as_base<Tuple&, Base>(*this), util::forward<Tup>(other));
         return *this;
@@ -111,8 +111,10 @@ private:
     requires(sizeof...(Types) == sizeof...(Other) &&
              requires { requires concepts::Conjunction<concepts::EqualityComparableWith<Types, Other>...>; })
     constexpr friend bool operator==(Tuple const& a, Tuple<Other...> const& b) {
-        return function::unpack<meta::MakeIndexSequence<sizeof...(Types)>>([&]<size_t... indices>(
-            meta::IndexSequence<indices...>) { return ((util::get<indices>(a) == util::get<indices>(b)) && ...); });
+        return function::unpack<meta::MakeIndexSequence<sizeof...(Types)>>(
+            [&]<size_t... indices>(meta::IndexSequence<indices...>) {
+                return ((util::get<indices>(a) == util::get<indices>(b)) && ...);
+            });
     }
 
     template<typename... Other>
@@ -151,9 +153,8 @@ private:
 
     template<types::size_t index, concepts::DecaySameAs<Tuple> Self>
     requires(index < sizeof...(Types))
-    constexpr friend meta::Like<Self, meta::TupleElement<Self, index>>&& tag_invoke(types::Tag<util::get_in_place>,
-                                                                                    types::InPlaceIndex<index>,
-                                                                                    Self&& self) {
+    constexpr friend meta::Like<Self, meta::TupleElement<Self, index>>&&
+    tag_invoke(types::Tag<util::get_in_place>, types::InPlaceIndex<index>, Self&& self) {
         using Impl = detail::TupleImplBase<index, meta::IndexSequenceFor<Types...>, Types...>::Type;
         return static_cast<meta::Like<Self, meta::TupleElement<Self, index>>&&>(
             Impl::static_get(util::forward_as_base<Self, Impl>(self)));

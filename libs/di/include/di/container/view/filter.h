@@ -14,8 +14,8 @@ namespace detail {
 
     template<typename Con, typename Pred>
     concept ViewFilter = requires(Con&& container, Pred&& predicate) {
-                             FilterView { util::forward<Con>(container), util::forward<Pred>(predicate) };
-                         };
+        FilterView { util::forward<Con>(container), util::forward<Pred>(predicate) };
+    };
 
     struct FilterFunction {
         template<concepts::ViewableContainer Con, typename Pred>

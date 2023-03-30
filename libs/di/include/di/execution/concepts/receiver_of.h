@@ -8,17 +8,15 @@ namespace di::concepts {
 namespace detail {
     template<typename Signature, typename T>
     concept ValidCompletionFor = requires(Signature* signature) {
-                                     []<typename Ret, typename... Args>(Ret(*)(Args...))
-                                     requires concepts::TagInvocable<Ret, meta::RemoveCVRef<T>, Args...>
-                                     {}
-                                     (signature);
-                                 };
+        []<typename Ret, typename... Args>(Ret(*)(Args...))
+        requires concepts::TagInvocable<Ret, meta::RemoveCVRef<T>, Args...>
+        {}
+        (signature);
+    };
 }
 
 template<class T, class Completions>
-concept ReceiverOf =
-    Receiver<T> &&
-    requires(Completions* completions) {
-        []<detail::ValidCompletionFor<T>... Signatures>(types::CompletionSignatures<Signatures...>*) {}(completions);
-    };
+concept ReceiverOf = Receiver<T> && requires(Completions* completions) {
+    []<detail::ValidCompletionFor<T>... Signatures>(types::CompletionSignatures<Signatures...>*) {}(completions);
+};
 }

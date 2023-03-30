@@ -19,7 +19,7 @@ namespace tag_invoke_detail {
 }
 
 inline namespace tag_invoke_ns {
-    inline constexpr tag_invoke_detail::TagInvokeFn tag_invoke {};
+    constexpr inline tag_invoke_detail::TagInvokeFn tag_invoke {};
 }
 }
 

@@ -16,8 +16,8 @@ namespace detail {
 
     template<typename Con, typename Pattern>
     concept ViewJoinWith = requires(Con&& container, Pattern&& pattern) {
-                               JoinWithView { util::forward<Con>(container), util::forward<Pattern>(pattern) };
-                           };
+        JoinWithView { util::forward<Con>(container), util::forward<Pattern>(pattern) };
+    };
 
     struct JoinWithFunction {
         template<concepts::ViewableContainer Con, typename Pattern>

@@ -3,11 +3,11 @@
 namespace di::concepts::detail {
 template<typename T>
 concept ConstantVector = requires(T& lvalue, T const& clvalue) {
-                             typename T::Value;
-                             typename T::ConstValue;
-                             lvalue.span();
-                             clvalue.span();
-                         };
+    typename T::Value;
+    typename T::ConstValue;
+    lvalue.span();
+    clvalue.span();
+};
 }
 
 namespace di::meta::detail {

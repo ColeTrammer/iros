@@ -50,7 +50,6 @@ TreeMultiMap<meta::TupleElement<T, 0>, meta::TupleElement<T, 1>> tag_invoke(type
 template<concepts::InputContainer Con, concepts::TupleLike T = meta::ContainerValue<Con>,
          concepts::StrictWeakOrder<T> Comp>
 requires(meta::TupleSize<T> == 2)
-TreeMultiMap<meta::TupleElement<T, 0>, meta::TupleElement<T, 1>, Comp> tag_invoke(types::Tag<util::deduce_create>,
-                                                                                  InPlaceTemplate<TreeMultiMap>, Con&&,
-                                                                                  Comp);
+TreeMultiMap<meta::TupleElement<T, 0>, meta::TupleElement<T, 1>, Comp>
+tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<TreeMultiMap>, Con&&, Comp);
 }

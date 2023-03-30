@@ -19,6 +19,6 @@ concept AwaitableSender = SingleSender<Send, meta::EnvOf<Promise>> &&
                               { promise.unhandled_stopped() } -> concepts::ConvertibleTo<CoroutineHandle<>>;
                               {
                                   promise.unhandled_error(util::move(error))
-                                  } -> concepts::ConvertibleTo<CoroutineHandle<>>;
+                              } -> concepts::ConvertibleTo<CoroutineHandle<>>;
                           };
 }

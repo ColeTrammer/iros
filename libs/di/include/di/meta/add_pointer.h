@@ -10,8 +10,8 @@ namespace detail {
     struct AddPointerHelper : TypeConstant<T> {};
 
     template<typename T>
-    requires(requires { typename TypeIdentity<RemoveReference<T> *>; })
-    struct AddPointerHelper<T> : TypeConstant<RemoveReference<T> *> {};
+    requires(requires { typename TypeIdentity<RemoveReference<T>*>; })
+    struct AddPointerHelper<T> : TypeConstant<RemoveReference<T>*> {};
 }
 
 // This is a helper template which will convert reference types into their

@@ -18,14 +18,14 @@ namespace detail {
 
     template<typename M>
     concept LayoutMappingAlike = requires {
-                                     requires concepts::Extents<typename M::ExtentsType>;
-                                     { M::is_always_strided() } -> concepts::SameAs<bool>;
-                                     { M::is_always_exhaustive() } -> concepts::SameAs<bool>;
-                                     { M::is_always_unique() } -> concepts::SameAs<bool>;
-                                     meta::BoolConstant<M::is_always_strided()>::value;
-                                     meta::BoolConstant<M::is_always_exhaustive()>::value;
-                                     meta::BoolConstant<M::is_always_unique()>::value;
-                                 };
+        requires concepts::Extents<typename M::ExtentsType>;
+        { M::is_always_strided() } -> concepts::SameAs<bool>;
+        { M::is_always_exhaustive() } -> concepts::SameAs<bool>;
+        { M::is_always_unique() } -> concepts::SameAs<bool>;
+        meta::BoolConstant<M::is_always_strided()>::value;
+        meta::BoolConstant<M::is_always_exhaustive()>::value;
+        meta::BoolConstant<M::is_always_unique()>::value;
+    };
 }
 
 template<typename Extents>
@@ -93,8 +93,10 @@ public:
     requires(sizeof...(Indices) == ExtentsType::rank() &&
              concepts::Conjunction<concepts::ConvertibleTo<Indices, SizeType>...>)
     constexpr SizeType operator()(Indices... indices) const {
-        return function::unpack<meta::MakeIndexSequence<sizeof...(Indices)>>([&]<size_t... i>(
-            meta::IndexSequence<i...>) { return ((static_cast<SizeType>(indices) * stride(i)) + ... + 0); });
+        return function::unpack<meta::MakeIndexSequence<sizeof...(Indices)>>(
+            [&]<size_t... i>(meta::IndexSequence<i...>) {
+                return ((static_cast<SizeType>(indices) * stride(i)) + ... + 0);
+            });
     }
 
     constexpr static bool is_always_unique() { return true; }

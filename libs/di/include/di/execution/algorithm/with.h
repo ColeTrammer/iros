@@ -248,7 +248,7 @@ namespace with_ns {
                      {
                          function::invoke(util::declval<meta::Decay<Fun>&>(),
                                           util::declval<meta::SingleSenderValueType<Send>&>())
-                         } -> concepts::Sender;
+                     } -> concepts::Sender;
                  })
         concepts::Sender auto operator()(Send&& sender, Fun&& function) const {
             if constexpr (requires {

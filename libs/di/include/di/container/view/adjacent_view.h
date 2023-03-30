@@ -141,11 +141,11 @@ private:
         constexpr friend void tag_invoke(types::Tag<iterator_swap>, Iterator const& a, Iterator const& b)
         requires(concepts::IndirectlySwappable<Iter<is_const>>)
         {
-            return function::unpack<meta::MakeIndexSequence<N>>([&]<size_t... indices>(
-                meta::IndexSequence<indices...>) {
-                return (void) (iterator_swap(util::get<indices>(a.m_iterators), util::get<indices>(b.m_iterators)),
-                               ...);
-            });
+            return function::unpack<meta::MakeIndexSequence<N>>(
+                [&]<size_t... indices>(meta::IndexSequence<indices...>) {
+                    return (void) (iterator_swap(util::get<indices>(a.m_iterators), util::get<indices>(b.m_iterators)),
+                                   ...);
+                });
         }
 
         Array<Iter<is_const>, N> m_iterators;

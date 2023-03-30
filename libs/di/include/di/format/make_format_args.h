@@ -12,7 +12,6 @@ constexpr auto make_format_args(Types&&... values) {
         return FormatArgsStorage<sizeof...(Types), Arg>(Arg {
             in_place_type<meta::Conditional<meta::Contains<meta::VariantTypes<Arg>, Types>, Types, ErasedArg<Context>>>,
             util::get<indices>(values) }...);
-    }
-    (meta::IndexSequenceFor<Types...> {}, tie(values...));
+    }(meta::IndexSequenceFor<Types...> {}, tie(values...));
 }
 }

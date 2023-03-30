@@ -16,8 +16,9 @@ namespace detail {
     struct IteratorSwapFunction;
 
     template<typename T, typename U>
-    concept CustomIteratorSwap = (concepts::Class<meta::RemoveCVRef<T>> || concepts::Enum<meta::RemoveCVRef<T>>) &&
-                                 concepts::TagInvocable<IteratorSwapFunction, T, U>;
+    concept CustomIteratorSwap =
+        (concepts::Class<meta::RemoveCVRef<T>> ||
+         concepts::Enum<meta::RemoveCVRef<T>>) &&concepts::TagInvocable<IteratorSwapFunction, T, U>;
 
     template<typename T, typename U>
     concept DerefIteratorSwap = concepts::Iterator<T> && concepts::Iterator<U> &&

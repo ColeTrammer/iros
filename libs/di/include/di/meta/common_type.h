@@ -23,10 +23,9 @@ namespace detail {
     concept ValueCommonType = requires { false ? util::declval<T>() : util::declval<U>(); };
 
     template<typename T, typename U>
-    concept ReferenceCommonType =
-        requires {
-            false ? util::declval<meta::RemoveReference<T> const&>() : util::declval<meta::RemoveReference<U> const&>();
-        };
+    concept ReferenceCommonType = requires {
+        false ? util::declval<meta::RemoveReference<T> const&>() : util::declval<meta::RemoveReference<U> const&>();
+    };
 
     template<typename... Types>
     struct CommonTypeHelper {};

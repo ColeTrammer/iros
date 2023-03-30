@@ -34,3 +34,15 @@ AlwaysBreakTemplateDeclarations: Yes
 SpaceInEmptyBlock: false
 RequiresClausePosition: OwnLine
 IndentRequiresClause: false
+QualifierAlignment: Custom
+QualifierOrder: ["constexpr", "static", "inline", "friend", "type", "const", "volatile"]
+WhitespaceSensitiveMacros:
+  [
+    "IRIS_ARCH_INCLUDE",
+    "DIUS_ARCH_PATH",
+    "DIUS_PLATFORM_PATH",
+    "DIUS_ARCH_PLATFORM_PATH",
+    "__CCPP_ARCH_PATH",
+    "__CCPP_PLATFORM_PATH",
+    "__CCPP_ARCH_PLATFORM_PATH",
+  ]

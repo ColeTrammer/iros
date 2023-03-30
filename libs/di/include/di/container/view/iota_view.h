@@ -34,15 +34,15 @@ namespace di::container {
 namespace detail {
     template<typename T>
     concept IotaIncrementable = requires(T i) {
-                                    { ++i } -> concepts::SameAs<T&>;
-                                    { i++ } -> concepts::SameAs<T>;
-                                };
+        { ++i } -> concepts::SameAs<T&>;
+        { i++ } -> concepts::SameAs<T>;
+    };
 
     template<typename T>
     concept IotaDecrementable = IotaIncrementable<T> && requires(T i) {
-                                                            { --i } -> concepts::SameAs<T&>;
-                                                            { i-- } -> concepts::SameAs<T>;
-                                                        };
+        { --i } -> concepts::SameAs<T&>;
+        { i-- } -> concepts::SameAs<T>;
+    };
 
     template<typename T>
     concept IotaAdvancable = IotaDecrementable<T> && concepts::TotallyOrdered<T> &&
@@ -59,7 +59,7 @@ namespace detail {
 
 template<concepts::Copyable T, concepts::Semiregular Bound = UnreachableSentinel>
 requires(concepts::detail::WeaklyEqualityComparableWith<T, Bound> &&
-         requires(T & value) {
+         requires(T& value) {
              typename meta::IteratorSSizeType<T>;
              ++value;
          })

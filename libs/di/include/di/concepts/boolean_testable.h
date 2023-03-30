@@ -11,8 +11,6 @@ namespace detail {
 
 template<typename T>
 concept BooleanTestable = detail::BooleanTestableImpl<T> && requires(T&& value) {
-                                                                {
-                                                                    !util::forward<T>(value)
-                                                                    } -> detail::BooleanTestableImpl;
-                                                            };
+    { !util::forward<T>(value) } -> detail::BooleanTestableImpl;
+};
 }

@@ -16,7 +16,7 @@ namespace detail {
 
     template<typename T>
     concept SlideCachesLast =
-        (!SlideCachesNothing<T>) && concepts::BidirectionalContainer<T> && concepts::CommonContainer<T>;
+        (!SlideCachesNothing<T>) &&concepts::BidirectionalContainer<T> && concepts::CommonContainer<T>;
 
     template<typename T>
     concept SlideCachesFirst = (!SlideCachesNothing<T>);

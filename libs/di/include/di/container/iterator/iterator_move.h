@@ -14,13 +14,13 @@ namespace detail {
     struct IteratorMoveFunction;
 
     template<typename T>
-    concept CustomIterMove = (concepts::Class<meta::RemoveCVRef<T>> || concepts::Enum<meta::RemoveCVRef<T>>) &&
-                             concepts::TagInvocable<IteratorMoveFunction, T>;
+    concept CustomIterMove = (concepts::Class<meta::RemoveCVRef<T>> ||
+                              concepts::Enum<meta::RemoveCVRef<T>>) &&concepts::TagInvocable<IteratorMoveFunction, T>;
 
     template<typename T>
     concept RegularIterMove = requires(T&& value) {
-                                  { *util::forward<T>(value) } -> concepts::LValueReference;
-                              };
+        { *util::forward<T>(value) } -> concepts::LValueReference;
+    };
 
     template<typename T>
     concept DerefIterMove = requires(T&& value) { *util::forward<T>(value); };

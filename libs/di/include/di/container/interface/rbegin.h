@@ -20,17 +20,16 @@ namespace detail {
 
     template<typename T>
     concept MemberRBegin = requires(T&& container) {
-                               { util::forward<T>(container).rbegin() } -> concepts::Iterator;
-                           };
+        { util::forward<T>(container).rbegin() } -> concepts::Iterator;
+    };
 
     template<typename T>
-    concept ReverseIteratorRBegin =
-        requires(T&& container) {
-            { container::begin(util::forward<T>(container)) } -> concepts::BidirectionalIterator;
-            {
-                container::end(util::forward<T>(container))
-                } -> concepts::SameAs<decltype(container::begin(util::forward<T>(container)))>;
-        };
+    concept ReverseIteratorRBegin = requires(T&& container) {
+        { container::begin(util::forward<T>(container)) } -> concepts::BidirectionalIterator;
+        {
+            container::end(util::forward<T>(container))
+        } -> concepts::SameAs<decltype(container::begin(util::forward<T>(container)))>;
+    };
 }
 
 struct RBeginFunction {

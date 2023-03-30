@@ -12,8 +12,8 @@ namespace detail {
 
     template<typename Con, typename SSizeType>
     concept ViewChunk = requires(Con&& container, SSizeType&& predicate) {
-                            ChunkView { util::forward<Con>(container), util::forward<SSizeType>(predicate) };
-                        };
+        ChunkView { util::forward<Con>(container), util::forward<SSizeType>(predicate) };
+    };
 
     struct ChunkFunction {
         template<concepts::ViewableContainer Con, typename SSizeType>

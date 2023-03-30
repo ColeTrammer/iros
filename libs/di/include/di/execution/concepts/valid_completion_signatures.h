@@ -8,7 +8,7 @@
 
 namespace di::concepts {
 template<typename Signatures, typename Env>
-concept ValidCompletionSignatures = InstanceOf<Signatures, types::CompletionSignatures> ||
-                                    (SameAs<Signatures, types::DependentCompletionSignatures<types::NoEnv>> &&
-                                     SameAs<Env, types::NoEnv>);
+concept ValidCompletionSignatures =
+    InstanceOf<Signatures, types::CompletionSignatures> ||
+    (SameAs<Signatures, types::DependentCompletionSignatures<types::NoEnv>> && SameAs<Env, types::NoEnv>);
 }

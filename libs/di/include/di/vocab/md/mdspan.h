@@ -131,13 +131,13 @@ public:
     }
 
     constexpr auto each() const {
-        return function::unpack<meta::MakeIndexSequence<rank()>>([&]<usize... rank_indices>(
-            meta::IndexSequence<rank_indices...>) {
-            return container::view::cartesian_product(container::view::range(extent(rank_indices))...) |
-                   container::view::transform(function::uncurry([&](auto... indices) -> Reference {
-                       return (*this)(indices...);
-                   }));
-        });
+        return function::unpack<meta::MakeIndexSequence<rank()>>(
+            [&]<usize... rank_indices>(meta::IndexSequence<rank_indices...>) {
+                return container::view::cartesian_product(container::view::range(extent(rank_indices))...) |
+                       container::view::transform(function::uncurry([&](auto... indices) -> Reference {
+                           return (*this)(indices...);
+                       }));
+            });
     }
 
     constexpr size_t size() const { return extents().fwd_prod_of_extents(rank()); }

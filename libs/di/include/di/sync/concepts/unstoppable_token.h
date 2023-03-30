@@ -5,6 +5,6 @@
 namespace di::concepts {
 template<typename T>
 concept UnstoppableToken = StoppableToken<T> && requires {
-                                                    { T::stop_possible() } -> BooleanTestable;
-                                                } && (!T::stop_possible());
+    { T::stop_possible() } -> BooleanTestable;
+} && (!T::stop_possible());
 }

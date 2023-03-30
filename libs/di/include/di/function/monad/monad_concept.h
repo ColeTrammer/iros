@@ -45,18 +45,16 @@ namespace detail {
 
 template<typename T>
 concept MonadInstance = requires(T&& value) {
-                            // fmap (Haskell >>)
-                            {
-                                function::monad::fmap(util::forward<T>(value),
-                                                      detail::MonadFmapId<meta::RemoveCVRef<T>> {})
-                                } -> SameAs<meta::RemoveCVRef<T>>;
+    // fmap (Haskell >>)
+    {
+        function::monad::fmap(util::forward<T>(value), detail::MonadFmapId<meta::RemoveCVRef<T>> {})
+    } -> SameAs<meta::RemoveCVRef<T>>;
 
-                            // bind (Haskell >>=)
-                            {
-                                function::monad::bind(util::forward<T>(value),
-                                                      detail::MonadBindId<meta::RemoveCVRef<T>> {})
-                                } -> SameAs<meta::RemoveCVRef<T>>;
-                        } && function::monad::enable_monad(types::in_place_type<meta::RemoveCVRef<T>>);
+    // bind (Haskell >>=)
+    {
+        function::monad::bind(util::forward<T>(value), detail::MonadBindId<meta::RemoveCVRef<T>> {})
+    } -> SameAs<meta::RemoveCVRef<T>>;
+} && function::monad::enable_monad(types::in_place_type<meta::RemoveCVRef<T>>);
 
 template<template<typename...> typename T>
 concept Monad = MonadInstance<decltype(T { types::Void {} })>;

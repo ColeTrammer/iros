@@ -49,8 +49,10 @@ public:
     requires(sizeof...(Indices) == ExtentsType::rank() &&
              concepts::Conjunction<concepts::ConvertibleTo<Indices, SizeType>...>)
     constexpr SizeType operator()(Indices... indices) const {
-        return function::unpack<meta::MakeIndexSequence<sizeof...(Indices)>>([&]<size_t... i>(
-            meta::IndexSequence<i...>) { return ((static_cast<SizeType>(indices) * stride(i)) + ... + 0); });
+        return function::unpack<meta::MakeIndexSequence<sizeof...(Indices)>>(
+            [&]<size_t... i>(meta::IndexSequence<i...>) {
+                return ((static_cast<SizeType>(indices) * stride(i)) + ... + 0);
+            });
     }
 
     constexpr static bool is_always_unique() { return true; }

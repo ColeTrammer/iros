@@ -16,8 +16,8 @@ namespace detail {
 
     template<typename Con, typename Pattern>
     concept ViewSplit = requires(Con&& container, Pattern&& pattern) {
-                            SplitView { util::forward<Con>(container), util::forward<Pattern>(pattern) };
-                        };
+        SplitView { util::forward<Con>(container), util::forward<Pattern>(pattern) };
+    };
 
     struct SplitFunction {
         template<concepts::ViewableContainer Con, typename Pattern>

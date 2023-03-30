@@ -16,8 +16,8 @@ namespace di::concepts {
 template<typename T>
 concept BitTag =
     requires { typename meta::BitValue<T>; } && requires(meta::BitValue<T> value, BitSet<0> bitset, T const tag) {
-                                                    T::value_into_bits(bitset, value);
-                                                    { T::bits_into_value(bitset) } -> SameAs<meta::BitValue<T>>;
-                                                    { tag.get() } -> SameAs<meta::BitValue<T>>;
-                                                } && ConstructibleFrom<T, meta::BitValue<T>>;
+        T::value_into_bits(bitset, value);
+        { T::bits_into_value(bitset) } -> SameAs<meta::BitValue<T>>;
+        { tag.get() } -> SameAs<meta::BitValue<T>>;
+    } && ConstructibleFrom<T, meta::BitValue<T>>;
 }

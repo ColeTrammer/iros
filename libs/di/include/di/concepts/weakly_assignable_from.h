@@ -7,6 +7,6 @@
 namespace di::concepts {
 template<typename T, typename U>
 concept WeaklyAssignableFrom = requires(T lhs, U&& value) {
-                                   { lhs = util::forward<U>(value) } -> SameAs<T>;
-                               };
+    { lhs = util::forward<U>(value) } -> SameAs<T>;
+};
 }

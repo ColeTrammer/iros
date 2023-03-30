@@ -9,8 +9,8 @@ namespace detail {
         template<typename T>
         constexpr Result<usize> operator()(T& writer, Span<Byte const> data) const
         requires(requires {
-                     { writer.write_some(data) } -> concepts::ImplicitlyConvertibleTo<Result<usize>>;
-                 })
+            { writer.write_some(data) } -> concepts::ImplicitlyConvertibleTo<Result<usize>>;
+        })
         {
             return writer.write_some(data);
         }
@@ -20,8 +20,8 @@ namespace detail {
         template<typename T>
         constexpr Result<void> operator()(T& writer) const
         requires(requires {
-                     { writer.flush() } -> concepts::ImplicitlyConvertibleTo<Result<void>>;
-                 })
+            { writer.flush() } -> concepts::ImplicitlyConvertibleTo<Result<void>>;
+        })
         {
             return writer.flush();
         }

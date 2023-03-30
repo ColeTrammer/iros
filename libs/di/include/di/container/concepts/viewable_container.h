@@ -14,8 +14,8 @@ namespace di::concepts {
 // Non-views can be viewable, if they are either an lvalue, or they are movable (into the view), with
 // the exception of std::initializer_list, which does not own its underlying values.
 template<typename T>
-concept ViewableContainer = Container<T> &&
-                            ((View<meta::RemoveCVRef<T>> && ConstructibleFrom<meta::RemoveCVRef<T>, T>) ||
-                             (!View<meta::RemoveCVRef<T>> &&
-                              (LValueReference<T> || (Movable<meta::RemoveReference<T>> && !InitializerList<T>) )));
+concept ViewableContainer =
+    Container<T> && ((View<meta::RemoveCVRef<T>> && ConstructibleFrom<meta::RemoveCVRef<T>, T>) ||
+                     (!View<meta::RemoveCVRef<T>> &&
+                      (LValueReference<T> || (Movable<meta::RemoveReference<T>> && !InitializerList<T>) )));
 }

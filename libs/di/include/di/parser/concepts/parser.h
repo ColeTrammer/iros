@@ -7,8 +7,8 @@
 
 namespace di::concepts {
 template<typename T, typename Context>
-concept Parser = ParserContext<Context> && DerivedFrom<T, parser::ParserBase<T>> &&
-                 requires(T& parser, Context& context) {
-                     { parser.parse(context) } -> ExpectedError<typename Context::Error>;
-                 };
+concept Parser =
+    ParserContext<Context> && DerivedFrom<T, parser::ParserBase<T>> && requires(T& parser, Context& context) {
+        { parser.parse(context) } -> ExpectedError<typename Context::Error>;
+    };
 }

@@ -9,8 +9,8 @@ namespace di::container::view {
 namespace detail {
     template<typename Con, typename F>
     concept RegularTransform = requires(Con&& container, F&& function) {
-                                   TransformView { util::forward<Con>(container), util::forward<F>(function) };
-                               };
+        TransformView { util::forward<Con>(container), util::forward<F>(function) };
+    };
 
     struct TransformFunction {
         template<typename Con, typename F>

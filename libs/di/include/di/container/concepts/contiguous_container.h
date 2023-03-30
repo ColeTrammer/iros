@@ -9,8 +9,8 @@
 
 namespace di::concepts {
 template<typename T>
-concept ContiguousContainer = RandomAccessContainer<T> && ContiguousIterator<meta::ContainerIterator<T>> &&
-                              requires(T& value) {
-                                  { container::data(value) } -> SameAs<meta::AddPointer<meta::ContainerReference<T>>>;
-                              };
+concept ContiguousContainer =
+    RandomAccessContainer<T> && ContiguousIterator<meta::ContainerIterator<T>> && requires(T& value) {
+        { container::data(value) } -> SameAs<meta::AddPointer<meta::ContainerReference<T>>>;
+    };
 }

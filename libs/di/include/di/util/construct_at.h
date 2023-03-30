@@ -9,7 +9,7 @@
 namespace std {
 template<typename T, typename... Args>
 constexpr T* construct_at(T* location, Args&&... args) {
-    return ::new (const_cast<void*>(static_cast<const volatile void*>(location))) T(di::util::forward<Args>(args)...);
+    return ::new (const_cast<void*>(static_cast<void const volatile*>(location))) T(di::util::forward<Args>(args)...);
 }
 }
 #endif

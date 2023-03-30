@@ -12,8 +12,7 @@ namespace detail {
     concept CustomCartesianProduct = concepts::TagInvocable<CartesianProductFunction, Cons...>;
 
     template<typename... Cons>
-    concept EmptyCartesianProduct = sizeof
-    ...(Cons) == 0;
+    concept EmptyCartesianProduct = sizeof...(Cons) == 0;
 
     template<typename... Cons>
     concept ViewCartesianProduct =

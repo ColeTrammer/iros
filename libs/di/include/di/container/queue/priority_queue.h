@@ -17,18 +17,12 @@ namespace detail {
     concept PriorityQueueCompatible =
         concepts::RandomAccessContainer<Con> && concepts::Permutable<meta::ContainerIterator<Con>> &&
         concepts::SameAs<Value, meta::ContainerValue<Con>> && requires(Con& container, Value&& value) {
-                                                                  {
-                                                                      container.front()
-                                                                      } -> concepts::SameAs<Optional<Value&>>;
-                                                                  {
-                                                                      util::as_const(container).front()
-                                                                      } -> concepts::SameAs<Optional<Value const&>>;
-                                                                  container.emplace_back(util::move(value));
-                                                                  {
-                                                                      container.pop_back()
-                                                                      } -> concepts::SameAs<Optional<Value>>;
-                                                                  { container.size() } -> concepts::UnsignedInteger;
-                                                              };
+            { container.front() } -> concepts::SameAs<Optional<Value&>>;
+            { util::as_const(container).front() } -> concepts::SameAs<Optional<Value const&>>;
+            container.emplace_back(util::move(value));
+            { container.pop_back() } -> concepts::SameAs<Optional<Value>>;
+            { container.size() } -> concepts::UnsignedInteger;
+        };
 }
 
 template<typename Value, detail::PriorityQueueCompatible<Value> Con = container::Vector<Value>,

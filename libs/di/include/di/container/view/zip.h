@@ -12,8 +12,7 @@ namespace detail {
     concept CustomZip = concepts::TagInvocable<ZipFunction, Cons...>;
 
     template<typename... Cons>
-    concept EmptyZip = sizeof
-    ...(Cons) == 0;
+    concept EmptyZip = sizeof...(Cons) == 0;
 
     template<typename... Cons>
     concept ViewZip =

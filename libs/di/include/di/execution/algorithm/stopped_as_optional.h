@@ -18,15 +18,15 @@ namespace stopped_as_optional_ns {
         {
             return execution::let_value(
                 get_env(), [sender = util::forward<Send>(sender)]<typename E>(E const&) requires(concepts::SingleSender<Send, E>) {
-                                                                                            using Opt = Optional<meta::Decay<meta::SingleSenderValueType<Send, E>>>;
-                                                                                            return execution::let_stopped(
-                                                                                                execution::then(util::move(sender), []<typename T>(T&& value) {
-                                                                                                    return Opt(util::forward<T>(value));
-                                                                                                }),
-                                                                                                [] {
-                                                                                                    return execution::just(Opt());
-                                                                                                });
-                                                                                        });
+                    using Opt = Optional<meta::Decay<meta::SingleSenderValueType<Send, E>>>;
+                    return execution::let_stopped(
+                        execution::then(util::move(sender), []<typename T>(T&& value) {
+                            return Opt(util::forward<T>(value));
+                        }),
+                        [] {
+                            return execution::just(Opt());
+                        });
+                });
         }
     };
 }

@@ -111,7 +111,7 @@ namespace let_ns {
                                                  Receiver<CPO, Rec, Fun, Completions> { util::addressof(m_data) })) {}
 
         private:
-            void friend tag_invoke(types::Tag<start>, Type& self) { execution::start(self.m_op_state2); }
+            friend void tag_invoke(types::Tag<start>, Type& self) { execution::start(self.m_op_state2); }
 
             [[no_unique_address]] Data<CPO, Rec, Fun, Completions> m_data;
             meta::ConnectResult<Send, Receiver<CPO, Rec, Fun, Completions>> m_op_state2;

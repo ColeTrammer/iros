@@ -60,7 +60,7 @@ struct ReconstructFunction {
              requires {
                  {
                      (*this)(in_place_type<Con>, util::forward<It>(iterator), util::forward<Sent>(sentinel))
-                     } -> concepts::View;
+                 } -> concepts::View;
              })
     {
         if constexpr (detail::CustomReconstruct<InPlaceType<Con>, Con, It, Sent>) {

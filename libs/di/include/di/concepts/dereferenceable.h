@@ -5,6 +5,6 @@
 namespace di::concepts {
 template<typename T>
 concept Dereferenceable = requires(T& it) {
-                              { *it } -> CanReference;
-                          };
+    { *it } -> CanReference;
+};
 }

@@ -6,8 +6,8 @@
 namespace di::concepts {
 template<typename T>
 concept Lock = requires(T& lock) {
-                   { lock.lock() } -> LanguageVoid;
-                   { lock.try_lock() } -> SameAs<bool>;
-                   { lock.unlock() } -> LanguageVoid;
-               };
+    { lock.lock() } -> LanguageVoid;
+    { lock.try_lock() } -> SameAs<bool>;
+    { lock.unlock() } -> LanguageVoid;
+};
 }

@@ -12,8 +12,7 @@ namespace detail {
     concept CustomConcat = (sizeof...(Cons) > 1) && concepts::TagInvocable<ConcatFunction, Cons...>;
 
     template<typename... Cons>
-    concept AllConcat = sizeof
-    ...(Cons) == 1;
+    concept AllConcat = sizeof...(Cons) == 1;
 
     template<typename... Cons>
     concept ViewConcat = requires(Cons&&... containers) { ConcatView { util::forward<Cons>(containers)... }; };

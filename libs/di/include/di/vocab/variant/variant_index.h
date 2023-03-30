@@ -8,8 +8,8 @@ namespace di::vocab {
 namespace detail {
     template<typename T>
     concept MemberVariantIndex = requires(T const& variant) {
-                                     { variant.index() } -> concepts::SameAs<size_t>;
-                                 };
+        { variant.index() } -> concepts::SameAs<size_t>;
+    };
 
     struct VariantIndexFunction {
         template<typename T>

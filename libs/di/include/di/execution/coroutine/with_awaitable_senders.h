@@ -12,7 +12,7 @@ public:
     void set_continuation(CoroutineHandle<OtherPromise> handle) {
         m_continuation = handle;
 
-        if constexpr (requires(OtherPromise & other) {
+        if constexpr (requires(OtherPromise& other) {
                           { other.unhandled_stopped() } -> concepts::ConvertibleTo<CoroutineHandle<>>;
                       }) {
             m_stopped_handler = [](void* address) -> CoroutineHandle<> {
@@ -22,7 +22,7 @@ public:
             m_stopped_handler = default_unhandled_stopped;
         }
 
-        if constexpr (requires(OtherPromise & other, Error error) {
+        if constexpr (requires(OtherPromise& other, Error error) {
                           { other.unhandled_error(util::move(error)) } -> concepts::ConvertibleTo<CoroutineHandle<>>;
                       }) {
             m_error_handler = [](void* address, Error error) -> CoroutineHandle<> {

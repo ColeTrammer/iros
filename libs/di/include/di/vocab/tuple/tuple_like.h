@@ -22,11 +22,11 @@ namespace detail {
 
     template<typename T, types::size_t index>
     concept HasTupleGet = requires(T tuple) {
-                              util::get<index>(tuple);
-                              util::get<index>(util::as_const(tuple));
-                              util::get<index>(util::move(tuple));
-                              util::get<index>(util::move(util::as_const(tuple)));
-                          };
+        util::get<index>(tuple);
+        util::get<index>(util::as_const(tuple));
+        util::get<index>(util::move(tuple));
+        util::get<index>(util::move(util::as_const(tuple)));
+    };
 
     template<typename T, types::size_t... indices>
     struct TupleLikeHelper<T, meta::IndexSequence<indices...>> {
@@ -36,7 +36,7 @@ namespace detail {
 }
 
 template<typename T>
-concept TupleLike = concepts::Tuple<T> ||
-                    (requires { vocab::tuple_size(types::in_place_type<meta::RemoveCVRef<T>>); } &&
-                     detail::TupleLikeHelper<T, meta::MakeIndexSequence<meta::TupleSize<T>>>::value);
+concept TupleLike = concepts::Tuple<T> || (requires {
+                        vocab::tuple_size(types::in_place_type<meta::RemoveCVRef<T>>);
+                    } && detail::TupleLikeHelper<T, meta::MakeIndexSequence<meta::TupleSize<T>>>::value);
 }

@@ -12,8 +12,8 @@ namespace detail {
 
     template<typename Con, typename SSizeType>
     concept ViewStride = requires(Con&& container, SSizeType&& predicate) {
-                             StrideView { util::forward<Con>(container), util::forward<SSizeType>(predicate) };
-                         };
+        StrideView { util::forward<Con>(container), util::forward<SSizeType>(predicate) };
+    };
 
     struct StrideFunction {
         template<concepts::ViewableContainer Con, typename SSizeType>

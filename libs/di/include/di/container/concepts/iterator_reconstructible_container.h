@@ -7,6 +7,7 @@
 
 namespace di::concepts {
 template<typename It, typename Sent = It>
-concept IteratorReconstructibleContainer = requires(
-    It iterator, Sent sentinel) { container::reconstruct(util::forward<It>(iterator), util::forward<Sent>(sentinel)); };
+concept IteratorReconstructibleContainer = requires(It iterator, Sent sentinel) {
+    container::reconstruct(util::forward<It>(iterator), util::forward<Sent>(sentinel));
+};
 }

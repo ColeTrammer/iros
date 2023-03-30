@@ -9,9 +9,7 @@
 #include <iris/hw/irq.h>
 #include <iris/mm/address_space.h>
 
-// clang-format off
 #include IRIS_ARCH_INCLUDE(hw/processor_info.h)
-// clang-format on
 
 namespace iris {
 struct GlobalState {

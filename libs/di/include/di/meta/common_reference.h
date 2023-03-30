@@ -64,11 +64,11 @@ namespace detail {
 
     template<concepts::LValueReference T, concepts::LValueReference U>
     requires(requires {
-                 false ? util::declval<typename UnionCV<meta::RemoveReference<T>, meta::RemoveReference<U>,
-                                                        meta::RemoveReference<T>>::Type&>()
-                       : util::declval<typename UnionCV<meta::RemoveReference<T>, meta::RemoveReference<U>,
-                                                        meta::RemoveReference<U>>::Type&>();
-             })
+        false ? util::declval<typename UnionCV<meta::RemoveReference<T>, meta::RemoveReference<U>,
+                                               meta::RemoveReference<T>>::Type&>()
+              : util::declval<typename UnionCV<meta::RemoveReference<T>, meta::RemoveReference<U>,
+                                               meta::RemoveReference<U>>::Type&>();
+    })
     struct SimpleCommonReference<T, U>
         : TypeConstant<decltype(false
                                     ? util::declval<typename UnionCV<meta::RemoveReference<T>, meta::RemoveReference<U>,
@@ -83,9 +83,10 @@ namespace detail {
     struct SimpleCommonReference<T, U> : TypeConstant<typename SimpleCommonReference<T&, U&>::Type> {};
 
     template<concepts::LValueReference T, concepts::RValueReference U>
-    requires(requires { typename SimpleCommonReference<T, meta::RemoveReference<U> const&>::Type; } &&
-             concepts::ImplicitlyConvertibleTo<
-                 U &&, typename SimpleCommonReference<T, meta::RemoveReference<U> const&>::Type>)
+    requires(requires {
+        typename SimpleCommonReference<T, meta::RemoveReference<U> const&>::Type;
+    } && concepts::ImplicitlyConvertibleTo<U &&,
+                                           typename SimpleCommonReference<T, meta::RemoveReference<U> const&>::Type>)
     struct SimpleCommonReference<T, U>
         : TypeConstant<typename SimpleCommonReference<T, meta::RemoveReference<U> const&>::Type> {};
 
@@ -97,9 +98,9 @@ namespace detail {
 
     template<typename T, typename U>
     concept HasCustomCommonReference = requires {
-                                           typename CustomCommonReference<T, U, ProjectQualifiers<T>::template Type,
-                                                                          ProjectQualifiers<U>::template Type>::Type;
-                                       };
+        typename CustomCommonReference<T, U, ProjectQualifiers<T>::template Type,
+                                       ProjectQualifiers<U>::template Type>::Type;
+    };
 
     template<typename T, typename U>
     concept HasValueCommonReference = requires { false ? __get_value<T>() : __get_value<U>(); };

@@ -5,8 +5,8 @@
 namespace di::concepts {
 template<typename T>
 concept DefaultInitializable = DefaultConstructible<T> && requires {
-                                                              T();
-                                                              T {};
-                                                              (void) ::new T;
-                                                          };
+    T();
+    T {};
+    (void) ::new T;
+};
 }

@@ -5,6 +5,5 @@
 
 namespace di::concepts {
 template<typename T>
-concept UnsignedInteger = Integer<T> && !
-SignedInteger<T>;
+concept UnsignedInteger = Integer<T> && !SignedInteger<T>;
 }

@@ -49,33 +49,33 @@ int ungetc(int __ch, FILE* __file);
 
 int scanf(char const* __CCPP_RESTRICT __format, ...);
 int fcanf(FILE* __CCPP_RESTRICT __file, char const* __CCPP_RESTRICT __format, ...);
-int sscanf(const char* __CCPP_RESTRICT __buffer, char const* __CCPP_RESTRICT __format, ...);
+int sscanf(char const* __CCPP_RESTRICT __buffer, char const* __CCPP_RESTRICT __format, ...);
 
 #ifdef __CCPP_C99
 int vscanf(char const* __CCPP_RESTRICT __format, va_list __args);
 int vfcanf(FILE* __CCPP_RESTRICT __file, char const* __CCPP_RESTRICT __format, va_list __args);
-int vsscanf(const char* __CCPP_RESTRICT __buffer, char const* __CCPP_RESTRICT __format, va_list __args);
+int vsscanf(char const* __CCPP_RESTRICT __buffer, char const* __CCPP_RESTRICT __format, va_list __args);
 #endif
 
 int printf(char const* __CCPP_RESTRICT __format, ...);
 int fprintf(FILE* __CCPP_RESTRICT __file, char const* __CCPP_RESTRICT __format, ...);
-int sprintf(const char* __CCPP_RESTRICT __buffer, char const* __CCPP_RESTRICT __format, ...);
+int sprintf(char const* __CCPP_RESTRICT __buffer, char const* __CCPP_RESTRICT __format, ...);
 #ifdef __CCPP_C99
-int snprintf(const char* __CCPP_RESTRICT __buffer, size_t __size, char const* __CCPP_RESTRICT __format, ...);
+int snprintf(char const* __CCPP_RESTRICT __buffer, size_t __size, char const* __CCPP_RESTRICT __format, ...);
 #endif
 
 int vprintf(char const* __CCPP_RESTRICT __format, va_list __args);
 int vfprintf(FILE* __CCPP_RESTRICT __file, char const* __CCPP_RESTRICT __format, va_list __args);
-int vsprintf(const char* __CCPP_RESTRICT __buffer, char const* __CCPP_RESTRICT __format, va_list __args);
+int vsprintf(char const* __CCPP_RESTRICT __buffer, char const* __CCPP_RESTRICT __format, va_list __args);
 #ifdef __CCPP_C99
-int vsnprintf(const char* __CCPP_RESTRICT __buffer, size_t __size, char const* __CCPP_RESTRICT __format,
+int vsnprintf(char const* __CCPP_RESTRICT __buffer, size_t __size, char const* __CCPP_RESTRICT __format,
               va_list __args);
 #endif
 
 long ftell(FILE* __file);
-int fgetpos(FILE* __CCPP_RESTRICT __file, fpos_t* __CCPP_RESTRICT pos);
+int fgetpos(FILE* __CCPP_RESTRICT __file, fpos_t* __CCPP_RESTRICT __pos);
 int fseek(FILE* __file, long __offset, int __origin);
-int fsetpos(FILE* __file, fpos_t const* pos);
+int fsetpos(FILE* __file, fpos_t const* __pos);
 void rewind(FILE* __file);
 
 void clearerr(FILE* __file);

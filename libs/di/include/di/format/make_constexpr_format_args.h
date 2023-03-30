@@ -13,7 +13,6 @@ constexpr auto make_constexpr_format_args(Types&&... values) {
     using Arg = ConstexprFormatArg<Types&...>;
     return [&]<size_t... indices>(meta::IndexSequence<indices...>, [[maybe_unused]] Tuple<Types&...> values) {
         return FormatArgsStorage<sizeof...(Types), Arg>(Arg { in_place_index<indices>, util::get<indices>(values) }...);
-    }
-    (meta::IndexSequenceFor<Types...> {}, tie(values...));
+    }(meta::IndexSequenceFor<Types...> {}, tie(values...));
 }
 }

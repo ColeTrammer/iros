@@ -7,10 +7,10 @@
 namespace di::meta {
 template<typename Sender, typename Env = types::NoEnv>
 requires(requires {
-             {
-                 execution::get_completion_signatures(util::declval<Sender>(), util::declval<Env>())
-                 } -> concepts::NotSameAs<execution::detail::NoCompletionSignatures>;
-         })
-using CompletionSignaturesOf = decltype(execution::get_completion_signatures(util::declval<Sender>(),
-                                                                             util::declval<Env>()));
+            {
+                execution::get_completion_signatures(util::declval<Sender>(), util::declval<Env>())
+            } -> concepts::NotSameAs<execution::detail::NoCompletionSignatures>;
+        })
+using CompletionSignaturesOf =
+    decltype(execution::get_completion_signatures(util::declval<Sender>(), util::declval<Env>()));
 }

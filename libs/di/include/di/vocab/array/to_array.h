@@ -15,8 +15,7 @@ requires(concepts::CopyConstructible<T> && !concepts::LanguageArray<T>)
 constexpr auto to_array(T (&array)[size]) {
     return [&]<types::size_t... indices>(meta::IndexSequence<indices...>) {
         return Array<meta::RemoveCV<T>, size> { { array[indices]... } };
-    }
-    (meta::MakeIndexSequence<size> {});
+    }(meta::MakeIndexSequence<size> {});
 }
 
 template<typename T, types::size_t size>
@@ -24,7 +23,6 @@ requires(concepts::MoveConstructible<T> && !concepts::LanguageArray<T>)
 constexpr Array<meta::RemoveCV<T>, size> to_array(T (&&array)[size]) {
     return [&]<types::size_t... indices>(meta::IndexSequence<indices...>) {
         return Array<meta::RemoveCV<T>, size> { { util::move(array[indices])... } };
-    }
-    (meta::MakeIndexSequence<size> {});
+    }(meta::MakeIndexSequence<size> {});
 }
 }

@@ -7,6 +7,6 @@
 namespace di::concepts {
 template<typename T, typename U>
 concept AssignableFrom = LValueReference<T> && requires(T lvalue, U&& value) {
-                                                   { lvalue = util::forward<U>(value) } -> SameAs<T>;
-                                               };
+    { lvalue = util::forward<U>(value) } -> SameAs<T>;
+};
 }

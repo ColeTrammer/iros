@@ -8,8 +8,8 @@
 namespace di::concepts {
 template<typename Alloc, typename T>
 concept AllocatorOf = requires(Alloc& allocator, T* data, size_t count) {
-                          typename Alloc::Value;
-                          { allocator.allocate(count) } -> MaybeFallible<container::Allocation<T>>;
-                          { allocator.deallocate(data, count) } -> LanguageVoid;
-                      };
+    typename Alloc::Value;
+    { allocator.allocate(count) } -> MaybeFallible<container::Allocation<T>>;
+    { allocator.deallocate(data, count) } -> LanguageVoid;
+};
 }

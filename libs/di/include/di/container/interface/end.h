@@ -26,8 +26,8 @@ namespace detail {
 
     template<typename T>
     concept MemberEnd = requires(T&& container) {
-                            { util::forward<T>(container).end() } -> concepts::SentinelFor<meta::ContainerIterator<T>>;
-                        };
+        { util::forward<T>(container).end() } -> concepts::SentinelFor<meta::ContainerIterator<T>>;
+    };
 }
 
 struct EndFunction {

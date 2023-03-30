@@ -102,8 +102,7 @@ private:
                 } else {
                     return *m_parent->m_inner.value;
                 }
-            }
-            ();
+            }();
 
             if (++m_inner == container::end(inner_container)) {
                 ++m_outer;

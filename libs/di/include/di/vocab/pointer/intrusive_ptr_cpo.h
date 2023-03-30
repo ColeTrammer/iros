@@ -28,8 +28,8 @@ constexpr inline auto intrusive_ptr_decrement = detail::IntrusivePtrDecrement {}
 namespace detail {
     template<typename T, typename Tag>
     concept IntrusivePtrValid = requires(T* pointer) {
-                                    intrusive_ptr_increment(in_place_type<Tag>, pointer);
-                                    intrusive_ptr_decrement(in_place_type<Tag>, pointer);
-                                };
+        intrusive_ptr_increment(in_place_type<Tag>, pointer);
+        intrusive_ptr_decrement(in_place_type<Tag>, pointer);
+    };
 }
 }

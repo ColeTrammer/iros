@@ -111,14 +111,14 @@ public:
 private:
     template<typename U>
     constexpr friend bool operator==(Box const& a, Box<U> const& b) {
-        return const_cast<void*>(static_cast<const volatile void*>(a.get())) ==
-               const_cast<void*>(static_cast<const volatile void*>(b.get()));
+        return const_cast<void*>(static_cast<void const volatile*>(a.get())) ==
+               const_cast<void*>(static_cast<void const volatile*>(b.get()));
     }
 
     template<typename U>
     constexpr friend auto operator<=>(Box const& a, Box<U> const& b) {
-        return const_cast<void*>(static_cast<const volatile void*>(a.get())) <=>
-               const_cast<void*>(static_cast<const volatile void*>(b.get()));
+        return const_cast<void*>(static_cast<void const volatile*>(a.get())) <=>
+               const_cast<void*>(static_cast<void const volatile*>(b.get()));
     }
 
     constexpr friend bool operator==(Box const& a, nullptr_t) { return a.get() == static_cast<T*>(nullptr); }

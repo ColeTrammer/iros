@@ -19,10 +19,9 @@ namespace detail {
         concepts::TagInvocable<ConnectFunction, Sender, Receiver>;
 
     template<typename Sender, typename Receiver>
-    concept AwaitableConnect =
-        requires(Sender&& sender, Receiver&& receiver) {
-            connect_awaitable_ns::connect_awaitable(util::forward<Sender>(sender), util::forward<Receiver>(receiver));
-        };
+    concept AwaitableConnect = requires(Sender&& sender, Receiver&& receiver) {
+        connect_awaitable_ns::connect_awaitable(util::forward<Sender>(sender), util::forward<Receiver>(receiver));
+    };
 
     struct ConnectFunction {
         template<typename Sender, typename Receiver>

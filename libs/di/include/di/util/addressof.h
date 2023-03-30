@@ -12,7 +12,7 @@ constexpr T* addressof(T& value) {
 
 // Disallow getting the address of a temporary.
 template<class T>
-void addressof(const T&&) = delete;
+void addressof(T const&&) = delete;
 }
 #endif
 

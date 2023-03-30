@@ -34,6 +34,6 @@ namespace detail {
 // above detail::get_awaiter() function returns a valid Awaiter object.
 template<typename T, typename Promise = void>
 concept Awaitable = requires(T&& value, Promise* promise) {
-                        { detail::get_awaiter(util::forward<T>(value), promise) } -> Awaiter<Promise>;
-                    };
+    { detail::get_awaiter(util::forward<T>(value), promise) } -> Awaiter<Promise>;
+};
 }

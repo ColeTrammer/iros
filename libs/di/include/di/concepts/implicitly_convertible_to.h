@@ -16,9 +16,9 @@ namespace di::concepts {
 // Secondly, it is checked that a value of type 'From' can be passed to a function expecting
 // a value of type 'To'.
 template<typename From, typename To>
-concept ImplicitlyConvertibleTo = (LanguageVoid<From> && LanguageVoid<To>) ||
-                                  requires(void (*function_accepting_to)(To), From&& from) {
-                                      static_cast<To (*)()>(nullptr);
-                                      { function_accepting_to(util::forward<From>(from)) };
-                                  };
+concept ImplicitlyConvertibleTo =
+    (LanguageVoid<From> && LanguageVoid<To>) || requires(void (*function_accepting_to)(To), From&& from) {
+        static_cast<To (*)()>(nullptr);
+        { function_accepting_to(util::forward<From>(from)) };
+    };
 }

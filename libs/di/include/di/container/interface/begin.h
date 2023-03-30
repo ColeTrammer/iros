@@ -21,8 +21,8 @@ namespace detail {
 
     template<typename T>
     concept MemberBegin = requires(T&& container) {
-                              { util::forward<T>(container).begin() } -> concepts::Iterator;
-                          };
+        { util::forward<T>(container).begin() } -> concepts::Iterator;
+    };
 }
 
 struct BeginFunction {

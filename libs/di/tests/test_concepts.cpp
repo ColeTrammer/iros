@@ -38,7 +38,7 @@ static_assert(di::concepts::Disjunction<true>);
 static_assert(!di::concepts::Disjunction<>);
 
 static_assert(di::concepts::Integral<i32>);
-static_assert(di::concepts::Integral<unsigned long long volatile const>);
+static_assert(di::concepts::Integral<unsigned long long const volatile>);
 
 static_assert(di::concepts::FloatingPoint<float>);
-static_assert(di::concepts::FloatingPoint<long double volatile const>);
+static_assert(di::concepts::FloatingPoint<long double const volatile>);

@@ -20,28 +20,28 @@ namespace detail {
     struct RemoveFunctionQualifiersHelper<R(Args...) const volatile> : TypeConstant<R(Args...)> {};
 
     template<typename R, typename... Args>
-    struct RemoveFunctionQualifiersHelper<R(Args...) &> : TypeConstant<R(Args...)> {};
+    struct RemoveFunctionQualifiersHelper<R(Args...)&> : TypeConstant<R(Args...)> {};
 
     template<typename R, typename... Args>
-    struct RemoveFunctionQualifiersHelper<R(Args...) const &> : TypeConstant<R(Args...)> {};
+    struct RemoveFunctionQualifiersHelper<R(Args...) const&> : TypeConstant<R(Args...)> {};
 
     template<typename R, typename... Args>
-    struct RemoveFunctionQualifiersHelper<R(Args...) volatile &> : TypeConstant<R(Args...)> {};
+    struct RemoveFunctionQualifiersHelper<R(Args...) volatile&> : TypeConstant<R(Args...)> {};
 
     template<typename R, typename... Args>
-    struct RemoveFunctionQualifiersHelper<R(Args...) const volatile &> : TypeConstant<R(Args...)> {};
+    struct RemoveFunctionQualifiersHelper<R(Args...) const volatile&> : TypeConstant<R(Args...)> {};
 
     template<typename R, typename... Args>
     struct RemoveFunctionQualifiersHelper<R(Args...) &&> : TypeConstant<R(Args...)> {};
 
     template<typename R, typename... Args>
-    struct RemoveFunctionQualifiersHelper<R(Args...) const &&> : TypeConstant<R(Args...)> {};
+    struct RemoveFunctionQualifiersHelper<R(Args...) const&&> : TypeConstant<R(Args...)> {};
 
     template<typename R, typename... Args>
-    struct RemoveFunctionQualifiersHelper<R(Args...) volatile &&> : TypeConstant<R(Args...)> {};
+    struct RemoveFunctionQualifiersHelper<R(Args...) volatile&&> : TypeConstant<R(Args...)> {};
 
     template<typename R, typename... Args>
-    struct RemoveFunctionQualifiersHelper<R(Args...) const volatile &&> : TypeConstant<R(Args...)> {};
+    struct RemoveFunctionQualifiersHelper<R(Args...) const volatile&&> : TypeConstant<R(Args...)> {};
 
     template<typename R, typename... Args>
     struct RemoveFunctionQualifiersHelper<R(Args...) noexcept> : TypeConstant<R(Args...)> {};

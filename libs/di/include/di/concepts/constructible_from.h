@@ -5,5 +5,5 @@
 
 namespace di::concepts {
 template<typename T, typename... Args>
-concept ConstructibleFrom = (!LanguageVoid<T>) && requires(Args&&... args) { T(util::forward<Args>(args)...); };
+concept ConstructibleFrom = (!LanguageVoid<T>) &&requires(Args&&... args) { T(util::forward<Args>(args)...); };
 }

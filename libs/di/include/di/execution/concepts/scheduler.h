@@ -22,6 +22,6 @@ concept Scheduler = CopyConstructible<meta::RemoveCVRef<T>> && EqualityComparabl
                         { execution::schedule(util::forward<T>(scheduler)) } -> Sender;
                         {
                             function::tag_invoke(tag, execution::schedule(util::forward<T>(scheduler)))
-                            } -> SameAs<meta::RemoveCVRef<T>>;
+                        } -> SameAs<meta::RemoveCVRef<T>>;
                     };
 }

@@ -6,7 +6,7 @@
 namespace di::concepts {
 template<typename T>
 concept Container = requires(T& value) {
-                        container::begin(value);
-                        container::end(value);
-                    };
+    container::begin(value);
+    container::end(value);
+};
 }

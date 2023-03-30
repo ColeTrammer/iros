@@ -5,6 +5,5 @@
 
 namespace di::concepts {
 template<typename T>
-concept UnsignedIntegral = Integral<T> && !
-SignedIntegral<T>;
+concept UnsignedIntegral = Integral<T> && !SignedIntegral<T>;
 }

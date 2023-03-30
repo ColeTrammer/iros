@@ -22,11 +22,11 @@ namespace detail {
 
     template<typename T, size_t index>
     concept HasVariantGet = requires(T variant) {
-                                util::get<index>(variant);
-                                util::get<index>(util::as_const(variant));
-                                util::get<index>(util::move(variant));
-                                util::get<index>(util::move(util::as_const(variant)));
-                            };
+        util::get<index>(variant);
+        util::get<index>(util::as_const(variant));
+        util::get<index>(util::move(variant));
+        util::get<index>(util::move(util::as_const(variant)));
+    };
 
     template<typename T, size_t... indices>
     struct VariantLikeHelper<T, meta::IndexSequence<indices...>> {
@@ -37,9 +37,9 @@ namespace detail {
 
 template<typename T>
 concept VariantLike = requires {
-                          typename meta::VariantTypes<T>;
-                          vocab::variant_size(types::in_place_type<meta::RemoveCVRef<T>>);
-                      } && requires(T const& variant) {
-                               { vocab::variant_index(variant) } -> SameAs<size_t>;
-                           } && detail::VariantLikeHelper<T, meta::MakeIndexSequence<meta::VariantSize<T>>>::value;
+    typename meta::VariantTypes<T>;
+    vocab::variant_size(types::in_place_type<meta::RemoveCVRef<T>>);
+} && requires(T const& variant) {
+    { vocab::variant_index(variant) } -> SameAs<size_t>;
+} && detail::VariantLikeHelper<T, meta::MakeIndexSequence<meta::VariantSize<T>>>::value;
 }

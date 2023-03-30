@@ -48,8 +48,8 @@ namespace detail {
         requires(concepts::IndirectlyWritable<
                  Out, meta::IndirectResult<F&, meta::Projected<meta::ContainerIterator<Con1>, Proj1>,
                                            meta::Projected<meta::ContainerIterator<Con2>, Proj2>>>)
-        constexpr InInOutResult<meta::BorrowedIterator<Con1>, meta::BorrowedIterator<Con2>, Out> transform(
-            Con1&& r1, Con2&& r2, Out output, F op, Proj1 proj1 = {}, Proj2 proj2 = {}) {
+        constexpr InInOutResult<meta::BorrowedIterator<Con1>, meta::BorrowedIterator<Con2>, Out>
+        transform(Con1&& r1, Con2&& r2, Out output, F op, Proj1 proj1 = {}, Proj2 proj2 = {}) {
             return (*this)(container::begin(r1), container::end(r1), container::begin(r2), container::end(r2),
                            util::move(output), util::ref(op), util::ref(proj1), util::ref(proj2));
         }

@@ -93,14 +93,14 @@ public:
     template<typename OtherSizeType, size_t N>
     requires(concepts::ConvertibleTo<OtherSizeType const&, SizeType> && (N == rank_dynamic() || N == rank()))
     constexpr explicit(N != rank_dynamic()) Extents(Span<OtherSizeType, N> extents_array) {
-        function::unpack<meta::MakeIndexSequence<rank_dynamic()>>([&]<size_t... indices>(
-            meta::IndexSequence<indices...>) {
-            if constexpr (N == rank_dynamic()) {
-                m_dynamic_extents = { util::as_const(extents_array[indices])... };
-            } else {
-                m_dynamic_extents = { util::as_const(extents_array[dynamic_index_inv(indices)])... };
-            }
-        });
+        function::unpack<meta::MakeIndexSequence<rank_dynamic()>>(
+            [&]<size_t... indices>(meta::IndexSequence<indices...>) {
+                if constexpr (N == rank_dynamic()) {
+                    m_dynamic_extents = { util::as_const(extents_array[indices])... };
+                } else {
+                    m_dynamic_extents = { util::as_const(extents_array[dynamic_index_inv(indices)])... };
+                }
+            });
     }
 
     template<typename OtherSizeType, size_t N>

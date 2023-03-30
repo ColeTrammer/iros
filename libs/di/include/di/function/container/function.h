@@ -225,8 +225,8 @@ namespace function_ns {
     };
 
     template<typename F>
-    concept StoredInline = sizeof(F) <= sizeof(ErasedStorage) && alignof(F) <=
-    alignof(ErasedStorage) && concepts::MoveConstructible<F>;
+    concept StoredInline =
+        sizeof(F) <= sizeof(ErasedStorage) && alignof(F) <= alignof(ErasedStorage) && concepts::MoveConstructible<F>;
 
     struct ErasedObject {
     private:

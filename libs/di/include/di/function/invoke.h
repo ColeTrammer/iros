@@ -70,8 +70,8 @@ using InvokeResult = decltype(function::detail::invoke_impl(util::declval<Ts>().
 
 namespace di::concepts {
 template<typename F, typename R, typename... Args>
-concept InvocableTo = Invocable<F, Args...> &&
-                      (LanguageVoid<R> || ImplicitlyConvertibleTo<meta::InvokeResult<F, Args...>, R>);
+concept InvocableTo =
+    Invocable<F, Args...> && (LanguageVoid<R> || ImplicitlyConvertibleTo<meta::InvokeResult<F, Args...>, R>);
 
 template<typename R, typename... Ts>
 concept InvocableR = Invocable<Ts...> && (LanguageVoid<R> || ImplicitlyConvertibleTo<meta::InvokeResult<Ts...>, R>);

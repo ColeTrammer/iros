@@ -8,9 +8,9 @@
 namespace di::concepts {
 template<typename T>
 concept WeaklyIncrementable = Movable<T> && requires(T iter) {
-                                                typename meta::IteratorSSizeType<T>;
-                                                requires SignedInteger<meta::IteratorSSizeType<T>>;
-                                                { ++iter } -> SameAs<T&>;
-                                                iter++;
-                                            };
+    typename meta::IteratorSSizeType<T>;
+    requires SignedInteger<meta::IteratorSSizeType<T>>;
+    { ++iter } -> SameAs<T&>;
+    iter++;
+};
 }

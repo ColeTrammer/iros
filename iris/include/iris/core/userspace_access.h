@@ -2,9 +2,7 @@
 
 #include <iris/core/config.h>
 
-// clang-format off
 #include IRIS_ARCH_INCLUDE(core/userspace_access.h)
-// clang-format on
 
 namespace iris {
 

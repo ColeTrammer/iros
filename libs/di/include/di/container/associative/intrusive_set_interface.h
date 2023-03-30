@@ -220,15 +220,15 @@ public:
 
     constexpr Iterator lower_bound(Value const& needle)
     requires(requires {
-                 { self().lower_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
-             })
+        { self().lower_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
+    })
     {
         return unconst_iterator(self().lower_bound_impl(needle));
     }
     constexpr ConstIterator lower_bound(Value const& needle) const
     requires(requires {
-                 { self().lower_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
-             })
+        { self().lower_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
+    })
     {
         return self().lower_bound_impl(needle);
     }
@@ -237,8 +237,8 @@ public:
     requires(valid<U>)
     constexpr Iterator lower_bound(U&& needle)
     requires(requires {
-                 { self().lower_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
-             })
+        { self().lower_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
+    })
     {
         return unconst_iterator(self().lower_bound_impl(needle));
     }
@@ -246,23 +246,23 @@ public:
     requires(valid<U>)
     constexpr ConstIterator lower_bound(U&& needle) const
     requires(requires {
-                 { self().lower_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
-             })
+        { self().lower_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
+    })
     {
         return self().lower_bound_impl(needle);
     }
 
     constexpr Iterator upper_bound(Value const& needle)
     requires(requires {
-                 { self().upper_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
-             })
+        { self().upper_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
+    })
     {
         return unconst_iterator(self().upper_bound_impl(needle));
     }
     constexpr ConstIterator upper_bound(Value const& needle) const
     requires(requires {
-                 { self().upper_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
-             })
+        { self().upper_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
+    })
     {
         return self().upper_bound_impl(needle);
     }
@@ -271,8 +271,8 @@ public:
     requires(valid<U>)
     constexpr Iterator upper_bound(U&& needle)
     requires(requires {
-                 { self().upper_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
-             })
+        { self().upper_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
+    })
     {
         return unconst_iterator(self().upper_bound_impl(needle));
     }
@@ -280,8 +280,8 @@ public:
     requires(valid<U>)
     constexpr ConstIterator upper_bound(U&& needle) const
     requires(requires {
-                 { self().upper_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
-             })
+        { self().upper_bound_impl(needle) } -> concepts::SameAs<ConstIterator>;
+    })
     {
         return self().upper_bound_impl(needle);
     }

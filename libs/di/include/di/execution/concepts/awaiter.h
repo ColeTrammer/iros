@@ -26,8 +26,8 @@ namespace detail {
 // types, it cannot be checked when the promise type is unknown.
 template<typename T, typename Promise = void>
 concept Awaiter = requires(T& awaiter) {
-                      { awaiter.await_ready() } -> BooleanTestable;
-                      { detail::do_await_suspend<Promise>(awaiter) } -> detail::ValidAwaitSuspendResult;
-                      awaiter.await_resume();
-                  };
+    { awaiter.await_ready() } -> BooleanTestable;
+    { detail::do_await_suspend<Promise>(awaiter) } -> detail::ValidAwaitSuspendResult;
+    awaiter.await_resume();
+};
 }

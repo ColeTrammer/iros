@@ -20,18 +20,17 @@ namespace detail {
 
     template<typename T>
     concept MemberData = requires(T&& container) {
-                             {
-                                 util::forward<T>(container).data()
-                                 } -> concepts::ImplicitlyConvertibleTo<meta::AddPointer<meta::ContainerReference<T>>>;
-                         };
+        {
+            util::forward<T>(container).data()
+        } -> concepts::ImplicitlyConvertibleTo<meta::AddPointer<meta::ContainerReference<T>>>;
+    };
 
     template<typename T>
-    concept BeginData = concepts::ContiguousIterator<meta::ContainerIterator<T>> &&
-                        requires(T&& container) {
-                            {
-                                util::to_address(container::begin(util::forward<T>(container)))
-                                } -> concepts::ImplicitlyConvertibleTo<meta::AddPointer<meta::ContainerReference<T>>>;
-                        };
+    concept BeginData = concepts::ContiguousIterator<meta::ContainerIterator<T>> && requires(T&& container) {
+        {
+            util::to_address(container::begin(util::forward<T>(container)))
+        } -> concepts::ImplicitlyConvertibleTo<meta::AddPointer<meta::ContainerReference<T>>>;
+    };
 }
 
 struct DataFunction {

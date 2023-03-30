@@ -118,7 +118,7 @@ constexpr void basic() {
 
 constexpr void assignment() {
     int a = 2, b = 3, c = 4;
-    const auto x = di::tie(a, b, c);
+    auto const x = di::tie(a, b, c);
 
     int d = 5, e = 6, f = 7;
     x = di::tie(d, e, f);

@@ -14,8 +14,8 @@ namespace detail {
 
     template<typename Con, typename Pred>
     concept ViewTakeWhile = requires(Con&& container, Pred&& predicate) {
-                                TakeWhileView { util::forward<Con>(container), util::forward<Pred>(predicate) };
-                            };
+        TakeWhileView { util::forward<Con>(container), util::forward<Pred>(predicate) };
+    };
 
     struct TakeWhileFunction {
         template<concepts::ViewableContainer Con, typename Pred>

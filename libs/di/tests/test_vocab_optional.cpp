@@ -78,10 +78,10 @@ constexpr void references() {
 
 struct Z {
     constexpr Z() = delete;
-    constexpr Z(const Z&) = delete;
+    constexpr Z(Z const&) = delete;
     constexpr Z(Z&&) = delete;
 
-    constexpr Z& operator&(const Z&) = delete;
+    constexpr Z& operator&(Z const&) = delete;
     constexpr Z& operator&(Z&&) = delete;
 };
 

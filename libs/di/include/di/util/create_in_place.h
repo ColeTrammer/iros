@@ -17,8 +17,8 @@ namespace detail {
 
     template<typename T, typename... Args>
     concept StaticCreatable = requires(Args&&... args) {
-                                  { T::create(util::forward<Args>(args)...) } -> concepts::MaybeFallible<T>;
-                              };
+        { T::create(util::forward<Args>(args)...) } -> concepts::MaybeFallible<T>;
+    };
 
     struct CreateInPlaceFunction {
         template<typename T, typename... Args>
