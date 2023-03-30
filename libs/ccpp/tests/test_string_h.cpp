@@ -71,7 +71,7 @@ static void strncat_() {
     auto const* a = di::black_box((char const*) "Hello");
     auto const* b = di::black_box((char const*) ", World");
 
-    ASSERT_EQ(buffer, do_strncat(do_strcpy(buffer, a), b, sizeof(buffer) - 1));
+    ASSERT_EQ(buffer, do_strncat(do_strcpy(buffer, a), b, sizeof(buffer) - do_strlen(a) - 1));
     ASSERT_EQ(do_strcmp(buffer, "Hello, Wo"), 0);
 }
 

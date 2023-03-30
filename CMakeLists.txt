@@ -117,6 +117,8 @@ endif()
 
 if(IROS_BuildCcpp)
     add_subdirectory(libs/ccpp)
+elseif(IROS_BuildTests)
+    add_subdirectory(libs/ccpp/tests)
 endif()
 
 add_subdirectory(iris)

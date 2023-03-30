@@ -7,7 +7,7 @@
 
 static void atoi_() {
     ASSERT_EQ(do_atoi("   -12345HI"), -12345);
-    ASSERT_EQ(do_atoi("   +321HI12345"), 12345);
+    ASSERT_EQ(do_atoi("   +12345HI"), 12345);
     ASSERT_EQ(do_atoi("0"), 0);
     ASSERT_EQ(do_atoi("0042"), 42);
     ASSERT_EQ(do_atoi("0x2A"), 0);
