@@ -4,6 +4,7 @@ project(Ccpp CXX)
 
 add_library(ccpp
     stdlib/aligned_alloc.cpp
+    stdlib/atoi.cpp
     stdlib/calloc.cpp
     stdlib/realloc.cpp
     stdlib/malloc.cpp

@@ -9,7 +9,7 @@ namespace detail {
     struct RunParserPartialFunction {
         template<concepts::IntoParserContext U, typename Context = meta::AsParserContext<U>,
                  concepts::Parser<Context> Parser>
-        constexpr auto operator()(Parser const& parser, U&& input) const {
+        constexpr auto operator()(Parser parser, U&& input) const {
             auto context = into_parser_context(util::forward<U>(input));
             return util::forward<Parser>(parser).parse(context);
         }

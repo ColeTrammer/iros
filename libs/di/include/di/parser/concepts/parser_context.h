@@ -4,6 +4,7 @@
 #include <di/concepts/same_as.h>
 #include <di/container/concepts/container_of.h>
 #include <di/container/concepts/forward_container.h>
+#include <di/container/string/encoding.h>
 #include <di/types/size_t.h>
 
 namespace di::concepts {

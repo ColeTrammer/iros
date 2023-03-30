@@ -1,5 +1,6 @@
 add_executable(test_ccpp
     test_stdlib_h_alloc.cpp
+    test_stdlib_h_string.cpp
     test_string_h.cpp
 )
 
