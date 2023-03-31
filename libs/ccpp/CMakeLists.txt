@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.25.2)
 project(Ccpp CXX)
 
 add_library(ccpp
+    errno/errno.cpp
     stdlib/aligned_alloc.cpp
     stdlib/atoi.cpp
     stdlib/calloc.cpp
