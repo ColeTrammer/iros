@@ -44,7 +44,7 @@ add_custom_target(
             REMOTE_CONTAINERS="$ENV{REMOTE_CONTAINERS}"
             "${CMAKE_CURRENT_SOURCE_DIR}/meta/make-iris-limine-image.sh"
     BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/iris/iris.img"
-    DEPENDS iris
+    DEPENDS generate-initrd iris
     USES_TERMINAL
 )
 
@@ -58,11 +58,17 @@ add_custom_target(
 )
 
 add_custom_target(
+    ib
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+    DEPENDS generate-initrd image
+)
+
+add_custom_target(
     ibr
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     COMMAND IROS_ARCH=${CMAKE_HOST_SYSTEM_PROCESSOR}
             IROS_IMAGE=${CMAKE_CURRENT_BINARY_DIR}/iris/iris.img
             "${CMAKE_CURRENT_SOURCE_DIR}/meta/run-iris.sh"
-    DEPENDS image generate-initrd
+    DEPENDS generate-initrd image
     USES_TERMINAL
 )

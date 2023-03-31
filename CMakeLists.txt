@@ -22,11 +22,15 @@ set(IROS_SanitizerFlags ""
 set(IROS_ExtraFlags ""
     CACHE STRING "Extra compilation flags for any purpose."
 )
+set(IROS_IrisFlags ""
+    CACHE STRING "Extra compilation flags only used by Iris."
+)
 
 separate_arguments(IROS_DiagnosticFlags)
 separate_arguments(IROS_WarningFlags)
 separate_arguments(IROS_SanitizerFlags)
 separate_arguments(IROS_ExtraFlags)
+separate_arguments(IROS_IrisFlags)
 
 set(as_subproject Di Dius Iris)
 
@@ -68,6 +72,12 @@ macro(add_executable)
             ${IROS_SanitizerFlags}
             ${IROS_ExtraFlags}
         )
+        if("${ARGV0}" STREQUAL iris)
+            target_compile_options(${ARGV0}
+              PRIVATE
+                ${IROS_IrisFlags}
+            )
+        endif()
         target_link_options(
             ${ARGV0}
           PRIVATE

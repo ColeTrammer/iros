@@ -79,6 +79,30 @@
             ]
         },
         {
+            "name": "debug_iros_x86_64",
+            "displayName": "Debug Iros x64_64",
+            "description": "Compile Debug Iros for x86_64",
+            "binaryDir": "${sourceDir}/build/debug_x86_64",
+            "installDir": "${sourceDir}/build/debug_x86_64/sysroot/usr",
+            "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_x86_64.txt",
+            "cacheVariables": {
+                "IROS_BuildIris": "ON",
+                "IROS_BuildUserspace": "ON",
+                "IROS_BuildTests": "ON",
+                "IROS_BuildTools": "OFF",
+                "IROS_BuildCcpp": "ON",
+                "IROS_UseDiusRuntime": "ON",
+                "IROS_ExtraFlags": "-D__iros__=1",
+                "IROS_IrisFlags": "-Og -g",
+                "CMAKE_CXX_COMPILER_WORKS": "ON",
+                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;debug_x86_64"
+            },
+            "inherits": [
+                "release_base",
+                "gcc_base"
+            ]
+        },
+        {
             "name": "clang_iros_x86_64",
             "displayName": "Clang Iros x64_64",
             "description": "Compile Iros for x86_64",
@@ -297,6 +321,14 @@
             ]
         },
         {
+            "name": "debug_iros_x86_64",
+            "displayName": "Debug Iros x86_64",
+            "configurePreset": "debug_iros_x86_64",
+            "inherits": [
+                "base"
+            ]
+        },
+        {
             "name": "clang_iros_x86_64",
             "displayName": "Clang Iros x86_64",
             "configurePreset": "clang_iros_x86_64",
@@ -437,6 +469,17 @@
             "name": "iros_x86_64",
             "displayName": "Iros x86_64",
             "configurePreset": "iros_x86_64",
+            "execution": {
+                "jobs": 1
+            },
+            "inherits": [
+                "base"
+            ]
+        },
+        {
+            "name": "debug_iros_x86_64",
+            "displayName": "Debug Iros x86_64",
+            "configurePreset": "debug_iros_x86_64",
             "execution": {
                 "jobs": 1
             },

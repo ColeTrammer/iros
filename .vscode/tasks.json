@@ -1,0 +1,53 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run and Build Iris",
+            "type": "shell",
+            "command": "cmake --build --preset ${command:cmake.activeBuildPresetName} --target ibr",
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Build Iris",
+            "type": "shell",
+            "command": "cmake --build --preset ${command:cmake.activeBuildPresetName} --target ib",
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Run Iris",
+            "type": "shell",
+            "command": "cmake --build --preset ${command:cmake.activeBuildPresetName} --target run",
+            "problemMatcher": []
+        },
+        {
+            "label": "Debug and Build Iris",
+            "type": "shell",
+            "isBackground": true,
+            "command": "cmake --build --preset ${command:cmake.activeBuildPresetName} --target run",
+            "options": {
+                "env": {
+                    "IROS_DEBUG": "1",
+                    "IROS_DISABLE_KVM": "1"
+                }
+            },
+            "problemMatcher": [
+                {
+                    "pattern": [
+                        {
+                            "regexp": ".",
+                            "file": 1,
+                            "location": 2,
+                            "message": 3
+                        }
+                    ],
+                    "background": {
+                        "activeOnStart": true,
+                        "beginsPattern": ".",
+                        "endsPattern": "."
+                    }
+                }
+            ],
+            "dependsOn": "Build Iris"
+        }
+    ]
+}

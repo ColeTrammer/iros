@@ -16,6 +16,18 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "MIMode": "gdb"
+        },
+        {
+            "name": "GDB Qemu Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${command:cmake.buildDirectory}/iris/iris",
+            "stopAtEntry": false,
+            "MIMode": "gdb",
+            "miDebuggerServerAddress": "localhost:1234",
+            "externalConsole": false,
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Debug and Build Iris"
         }
     ]
 }

@@ -17,8 +17,13 @@ if ! [ "$IROS_DISABLE_KVM" ] && [ -e /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/
     ENABLE_KVM="-enable-kvm"
 fi
 
+if [ "$IROS_DEBUG" ]; then
+    DEBUG="-s -S"
+fi
+
 qemu-system-"$IROS_ARCH" \
     $ENABLE_KVM \
+    $DEBUG \
     -drive file="$IROS_IMAGE",format=raw,index=0,media=disk \
     -cpu max \
     -serial stdio \
