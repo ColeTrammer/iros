@@ -90,17 +90,16 @@ int vsscanf(char const* __CCPP_RESTRICT __buffer, char const* __CCPP_RESTRICT __
 
 int printf(char const* __CCPP_RESTRICT __format, ...);
 int fprintf(FILE* __CCPP_RESTRICT __file, char const* __CCPP_RESTRICT __format, ...);
-int sprintf(char const* __CCPP_RESTRICT __buffer, char const* __CCPP_RESTRICT __format, ...);
+int sprintf(char* __CCPP_RESTRICT __buffer, char const* __CCPP_RESTRICT __format, ...);
 #ifdef __CCPP_C99
-int snprintf(char const* __CCPP_RESTRICT __buffer, size_t __size, char const* __CCPP_RESTRICT __format, ...);
+int snprintf(char* __CCPP_RESTRICT __buffer, size_t __size, char const* __CCPP_RESTRICT __format, ...);
 #endif
 
 int vprintf(char const* __CCPP_RESTRICT __format, va_list __args);
 int vfprintf(FILE* __CCPP_RESTRICT __file, char const* __CCPP_RESTRICT __format, va_list __args);
-int vsprintf(char const* __CCPP_RESTRICT __buffer, char const* __CCPP_RESTRICT __format, va_list __args);
+int vsprintf(char* __CCPP_RESTRICT __buffer, char const* __CCPP_RESTRICT __format, va_list __args);
 #ifdef __CCPP_C99
-int vsnprintf(char const* __CCPP_RESTRICT __buffer, size_t __size, char const* __CCPP_RESTRICT __format,
-              va_list __args);
+int vsnprintf(char* __CCPP_RESTRICT __buffer, size_t __size, char const* __CCPP_RESTRICT __format, va_list __args);
 #endif
 
 long ftell(FILE* __file);

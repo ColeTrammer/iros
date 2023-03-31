@@ -8,6 +8,7 @@ extern "C" long ftell(FILE* file) {
         if (result == -1) {
             return -1L;
         }
+        // FIXME: if the stream is in read mode and there is pending data, subtract that amount from result.
         if (!di::math::representable_as<long>(result)) {
             errno = ERANGE;
             return -1L;

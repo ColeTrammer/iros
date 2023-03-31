@@ -3,6 +3,21 @@ cmake_minimum_required(VERSION 3.25.2)
 project(Ccpp CXX)
 
 add_library(ccpp
+    ctype/isalnum.cpp
+    ctype/isalpha.cpp
+    ctype/isascii.cpp
+    ctype/isblank.cpp
+    ctype/iscntrl.cpp
+    ctype/isdigit.cpp
+    ctype/isgraph.cpp
+    ctype/islower.cpp
+    ctype/isprint.cpp
+    ctype/ispunct.cpp
+    ctype/isspace.cpp
+    ctype/isupper.cpp
+    ctype/isxdigit.cpp
+    ctype/tolower.cpp
+    ctype/toupper.cpp
     errno/errno.cpp
     stdio/fclose.cpp
     stdio/fopen.cpp
@@ -11,9 +26,9 @@ add_library(ccpp
     stdlib/aligned_alloc.cpp
     stdlib/atoi.cpp
     stdlib/calloc.cpp
-    stdlib/realloc.cpp
-    stdlib/malloc.cpp
     stdlib/free.cpp
+    stdlib/malloc.cpp
+    stdlib/realloc.cpp
     string/memcmp.cpp
     string/memcpy.cpp
     string/memmove.cpp
