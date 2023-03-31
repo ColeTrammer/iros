@@ -5,22 +5,13 @@ project(Di CXX)
 add_library(di INTERFACE)
 add_library(Di::di ALIAS di)
 
-target_include_directories(di
-  INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+target_include_directories(
+    di INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
 )
 
-target_compile_features(di
-  INTERFACE
-    cxx_std_23
-)
+target_compile_features(di INTERFACE cxx_std_23)
 
-target_compile_options(di
-  INTERFACE
-    -fno-exceptions
-    -fno-rtti
-)
+target_compile_options(di INTERFACE -fno-exceptions -fno-rtti)
 
 install(
     TARGETS di
@@ -28,7 +19,8 @@ install(
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
     RUNTIME DESTINATION bin
-    INCLUDES DESTINATION include
+    INCLUDES
+    DESTINATION include
 )
 install(
     EXPORT DiConfig
@@ -39,9 +31,10 @@ install(
 install(
     DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
     DESTINATION "include"
-    FILES_MATCHING PATTERN "*.h"
+    FILES_MATCHING
+    PATTERN "*.h"
 )
 
-if (IROS_BuildTests)
+if(IROS_BuildTests)
     add_subdirectory(tests)
 endif()

@@ -22,7 +22,9 @@
                 "esbenp.prettier-vscode",
                 "ms-vscode.live-server",
                 "llvm-vs-code-extensions.vscode-clangd",
-                "vadimcn.vscode-lldb"
+                "vadimcn.vscode-lldb",
+                "cheshirekow.cmake-format",
+                "GitHub.vscode-pull-request-github"
             ],
             "settings": {
                 "search.exclude": {

@@ -1,9 +1,10 @@
-add_executable(test_di
+add_executable(
+    test_di
     test_any.cpp
     test_bit_bitset.cpp
     test_bit_bitstruct.cpp
-    test_cli.cpp
     test_chrono_duration.cpp
+    test_cli.cpp
     test_concepts.cpp
     test_container_algorithm.cpp
     test_container_concepts.cpp
@@ -22,13 +23,13 @@ add_executable(test_di
     test_function_container.cpp
     test_function_generator.cpp
     test_function_invoke.cpp
-    test_math_rational.cpp
     test_math_integer.cpp
+    test_math_rational.cpp
     test_meta.cpp
     test_parser.cpp
     test_sync_in_place_stop_source.cpp
-    test_util_swap.cpp
     test_util.cpp
+    test_util_swap.cpp
     test_vocab_array.cpp
     test_vocab_error.cpp
     test_vocab_expected.cpp
@@ -42,13 +43,6 @@ add_executable(test_di
 
 find_package(Dius REQUIRED)
 
-target_link_libraries(test_di
-  PRIVATE
-    Di::di
-    Dius::dius
-    Dius::dius_test_main
-)
+target_link_libraries(test_di PRIVATE Di::di Dius::dius Dius::dius_test_main)
 
-add_test(NAME test_di
-    COMMAND test_di
-)
+add_test(NAME test_di COMMAND test_di)

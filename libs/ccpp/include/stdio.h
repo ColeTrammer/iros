@@ -79,12 +79,12 @@ int fputs_unlocked(char const* __CCPP_RESTRICT __str, FILE* __CCPP_RESTRICT __fi
 #endif
 
 int scanf(char const* __CCPP_RESTRICT __format, ...);
-int fcanf(FILE* __CCPP_RESTRICT __file, char const* __CCPP_RESTRICT __format, ...);
+int fscanf(FILE* __CCPP_RESTRICT __file, char const* __CCPP_RESTRICT __format, ...);
 int sscanf(char const* __CCPP_RESTRICT __buffer, char const* __CCPP_RESTRICT __format, ...);
 
 #ifdef __CCPP_C99
 int vscanf(char const* __CCPP_RESTRICT __format, va_list __args);
-int vfcanf(FILE* __CCPP_RESTRICT __file, char const* __CCPP_RESTRICT __format, va_list __args);
+int vfscanf(FILE* __CCPP_RESTRICT __file, char const* __CCPP_RESTRICT __format, va_list __args);
 int vsscanf(char const* __CCPP_RESTRICT __buffer, char const* __CCPP_RESTRICT __format, va_list __args);
 #endif
 

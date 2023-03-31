@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.25.2)
 
 project(Ccpp CXX)
 
-add_library(ccpp
+add_library(
+    ccpp
     ctype/isalnum.cpp
     ctype/isalpha.cpp
     ctype/isascii.cpp
@@ -47,29 +48,17 @@ add_library(ccpp
 )
 add_library(Ccpp::ccpp ALIAS ccpp)
 
-set_target_properties(ccpp
-  PROPERTIES
-    OUTPUT_NAME "c"
-)
+set_target_properties(ccpp PROPERTIES OUTPUT_NAME "c")
 
-target_include_directories(ccpp
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+target_include_directories(
+    ccpp PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
 )
 
 find_package(Dius REQUIRED)
 
-target_link_libraries(ccpp
-  PUBLIC
-    Dius::dius
-)
+target_link_libraries(ccpp PUBLIC Dius::dius)
 
-target_compile_options(ccpp
-  PRIVATE
-    -ffreestanding
-    -nostdinc++
-)
+target_compile_options(ccpp PRIVATE -ffreestanding -nostdinc++)
 
 install(
     TARGETS ccpp
@@ -77,7 +66,8 @@ install(
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
     RUNTIME DESTINATION bin
-    INCLUDES DESTINATION include
+    INCLUDES
+    DESTINATION include
 )
 install(
     EXPORT CcppConfig
@@ -88,7 +78,8 @@ install(
 install(
     DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
     DESTINATION "include"
-    FILES_MATCHING PATTERN "*.h"
+    FILES_MATCHING
+    PATTERN "*.h"
 )
 
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/libpthread.a" "INPUT(libc.a)")
@@ -96,23 +87,11 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/libdl.a" "INPUT(libc.a)")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/librt.a" "INPUT(librt.a)")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/libm.a" "INPUT(libc.a)")
 
-install(
-  FILES "${CMAKE_CURRENT_BINARY_DIR}/libpthread.a"
-  DESTINATION lib
-)
-install(
-  FILES "${CMAKE_CURRENT_BINARY_DIR}/libdl.a"
-  DESTINATION lib
-)
-install(
-  FILES "${CMAKE_CURRENT_BINARY_DIR}/librt.a"
-  DESTINATION lib
-)
-install(
-  FILES "${CMAKE_CURRENT_BINARY_DIR}/libm.a"
-  DESTINATION lib
-)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libpthread.a" DESTINATION lib)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libdl.a" DESTINATION lib)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/librt.a" DESTINATION lib)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libm.a" DESTINATION lib)
 
-if (IROS_BuildTests)
+if(IROS_BuildTests)
     add_subdirectory(tests)
 endif()

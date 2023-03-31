@@ -5,10 +5,11 @@ ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
 RUN sudo apt-get -y update \
-    && sudo apt-get -y install lsb-release wget software-properties-common gdb gnupg strace \
+    && sudo apt-get -y install lsb-release wget software-properties-common gdb gnupg pip strace \
     && wget https://apt.llvm.org/llvm.sh \
     && chmod +x llvm.sh \
     && sudo ./llvm.sh 16 all \
+    && pip install cmake-format \
     && rm llvm.sh
 RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID $USERNAME -d /home/$USERNAME -m -k /dev/skel -s /bin/bash \
@@ -18,6 +19,8 @@ RUN groupadd --gid $USER_GID $USERNAME \
 RUN SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
     && mkdir /commandhistory \
     && touch /commandhistory/.bash_history \
-    && chown -R $USERNAME /commandhistory \
-    && echo "$SNIPPET" >> "/home/$USERNAME/.bashrc"
+    && chown -R $USERNAME:$USERNAME /commandhistory \
+    && echo "$SNIPPET" >> "/home/$USERNAME/.bashrc" \
+    && echo "export PATH=\"\$HOME/.local/bin:\$PATH\"" >> "/home/$USERNAME/.bashrc" \
+    && chown $USERNAME:$USERNAME "/home/$USERNAME/.bashrc"
 USER iris

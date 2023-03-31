@@ -4,15 +4,8 @@ project(Core CXX)
 
 find_package(Dius REQUIRED)
 
-add_executable(ls
-    ls.cpp
-)
+add_executable(ls ls.cpp)
 
-target_link_libraries(ls
-  PRIVATE
-    Dius::dius
-)
+target_link_libraries(ls PRIVATE Dius::dius)
 
-install(TARGETS ls
-    RUNTIME DESTINATION bin
-)
+install(TARGETS ls RUNTIME DESTINATION bin)

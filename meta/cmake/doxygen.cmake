@@ -1,11 +1,9 @@
-find_package(Doxygen
-  OPTIONAL_COMPONENTS
-    dot
-)
+find_package(Doxygen OPTIONAL_COMPONENTS dot)
 
-if (DOXYGEN_FOUND)
+if(DOXYGEN_FOUND)
     include(ExternalProject)
-    ExternalProject_Add(doxygen_awesome_css
+    ExternalProject_Add(
+        doxygen_awesome_css
         GIT_REPOSITORY https://github.com/jothepro/doxygen-awesome-css.git
         GIT_SHALLOW TRUE
         GIT_TAG main
@@ -31,22 +29,14 @@ if (DOXYGEN_FOUND)
     set(DOXYGEN_LAYOUT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/docs/DoxygenLayout.xml")
     set(DOXYGEN_IMAGE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/docs/diagram")
     set(DOXYGEN_EXCLUDE_PATTERNS "*/tests/*")
-    set(DOXYGEN_PREDEFINED
-        __CCPP_BEGIN_DECLARATIONS=
-        __CCPP_END_DECLARATIONS=
-        __CCPP_RESTRICT=restrict
-    )
+    set(DOXYGEN_PREDEFINED __CCPP_BEGIN_DECLARATIONS= __CCPP_END_DECLARATIONS= __CCPP_RESTRICT=restrict)
     set(DOXYGEN_STRIP_FROM_INC_PATH
-        "${CMAKE_CURRENT_SOURCE_DIR}/iris/include"
-        "${CMAKE_CURRENT_SOURCE_DIR}/libs/ccpp/include"
-        "${CMAKE_CURRENT_SOURCE_DIR}/libs/di/include"
-        "${CMAKE_CURRENT_SOURCE_DIR}/libs/dius/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/iris/include" "${CMAKE_CURRENT_SOURCE_DIR}/libs/ccpp/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/libs/di/include" "${CMAKE_CURRENT_SOURCE_DIR}/libs/dius/include"
     )
     set(DOXYGEN_HTML_COLORSTYLE "LIGHT")
     set(DOXYGEN_HTML_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/docs/header.html")
-    set(DOXYGEN_HTML_EXTRA_STYLESHEET 
-        "${DOXYGEN_AWESOME_DIR}/doxygen-awesome.css"
-    )
+    set(DOXYGEN_HTML_EXTRA_STYLESHEET "${DOXYGEN_AWESOME_DIR}/doxygen-awesome.css")
     set(DOXYGEN_HTML_EXTRA_FILES
         "${DOXYGEN_AWESOME_DIR}/doxygen-awesome-darkmode-toggle.js"
         "${DOXYGEN_AWESOME_DIR}/doxygen-awesome-fragment-copy-button.js"
@@ -56,10 +46,7 @@ if (DOXYGEN_FOUND)
     )
 
     doxygen_add_docs(
-        docs
-        ${CMAKE_CURRENT_SOURCE_DIR}/libs
-        ${CMAKE_CURRENT_SOURCE_DIR}/iris
-        ${CMAKE_CURRENT_SOURCE_DIR}/userland
+        docs ${CMAKE_CURRENT_SOURCE_DIR}/libs ${CMAKE_CURRENT_SOURCE_DIR}/iris ${CMAKE_CURRENT_SOURCE_DIR}/userland
         ${CMAKE_CURRENT_SOURCE_DIR}/docs
     )
 
