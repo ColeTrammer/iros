@@ -3,3 +3,5 @@
 f53720ec9f884c63d5c0d0fc558bb73ab98f0c6b
 # Autoformatted code with clang-format-16
 e8912370f57b397e43ada5678023664500579fa7
+# Autoformatted all cmake files with cmake-format
+850a63208f337edaa4b2ae93ac8d8f8921e147eb
