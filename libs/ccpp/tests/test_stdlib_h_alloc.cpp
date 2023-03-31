@@ -1,6 +1,5 @@
+#include <ccpp/bits/all.h>
 #include <dius/test/prelude.h>
-#include <stdlib.h>
-#include <string.h>
 
 static void malloc_free() {
     auto* a = di::black_box(malloc(42));

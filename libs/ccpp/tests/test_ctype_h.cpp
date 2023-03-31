@@ -1,6 +1,5 @@
-#include <ctype.h>
+#include <ccpp/bits/all.h>
 #include <dius/test/prelude.h>
-#include <stdio.h>
 
 [[gnu::noinline]] static bool do_ctype(int (*f)(int), int ch) {
     return bool(di::black_box(f)(di::black_box(ch)));

@@ -1,5 +1,5 @@
+#include <ccpp/bits/all.h>
 #include <dius/test/prelude.h>
-#include <string.h>
 
 [[gnu::noinline]] static char const* do_strchr(char const* s, int ch) {
     return strchr(s, ch);

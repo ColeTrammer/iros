@@ -1,5 +1,5 @@
+#include <ccpp/bits/all.h>
 #include <dius/test/prelude.h>
-#include <stdlib.h>
 
 [[gnu::noinline]] static int do_atoi(char const* s) {
     return atoi(s);

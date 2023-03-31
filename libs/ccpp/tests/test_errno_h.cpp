@@ -1,5 +1,5 @@
+#include <ccpp/bits/all.h>
 #include <dius/test/prelude.h>
-#include <errno.h>
 
 static void errno_() {
 #if !defined(E2BIG) || !defined(errno) || !defined(EXDEV)
