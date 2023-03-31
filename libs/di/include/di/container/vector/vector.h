@@ -17,7 +17,7 @@
 
 namespace di::container {
 template<typename T, concepts::AllocatorOf<T> Alloc>
-class Vector : public MutableVectorInterface<Vector<T>, T> {
+class Vector : public MutableVectorInterface<Vector<T, Alloc>, T> {
 public:
     using Value = T;
     using ConstValue = T const;

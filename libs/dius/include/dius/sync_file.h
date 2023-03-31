@@ -62,32 +62,40 @@ public:
         return m_fd;
     }
 
-    di::Result<void> close();
+    di::Expected<void, PosixCode> close();
 
-    di::Result<size_t> read_some(u64 offset, di::Span<di::Byte>) const;
-    di::Result<size_t> read_some(di::Span<di::Byte>) const;
-    di::Result<size_t> write_some(u64 offset, di::Span<di::Byte const>) const;
-    di::Result<size_t> write_some(di::Span<di::Byte const>) const;
+    di::Expected<size_t, PosixCode> read_some(u64 offset, di::Span<di::Byte>) const;
+    di::Expected<size_t, PosixCode> read_some(di::Span<di::Byte>) const;
+    di::Expected<size_t, PosixCode> write_some(u64 offset, di::Span<di::Byte const>) const;
+    di::Expected<size_t, PosixCode> write_some(di::Span<di::Byte const>) const;
 
-    di::Result<void> read_exactly(u64 offset, di::Span<di::Byte>) const;
-    di::Result<void> read_exactly(di::Span<di::Byte>) const;
-    di::Result<void> write_exactly(u64 offset, di::Span<di::Byte const>) const;
-    di::Result<void> write_exactly(di::Span<di::Byte const>) const;
+    di::Expected<void, PosixCode> read_exactly(u64 offset, di::Span<di::Byte>) const;
+    di::Expected<void, PosixCode> read_exactly(di::Span<di::Byte>) const;
+    di::Expected<void, PosixCode> write_exactly(u64 offset, di::Span<di::Byte const>) const;
+    di::Expected<void, PosixCode> write_exactly(di::Span<di::Byte const>) const;
 
-    di::Result<void> resize_file(u64 new_size) const;
+    di::Expected<void, PosixCode> resize_file(u64 new_size) const;
 
 #ifdef DIUS_PLATFORM_LINUX
-    di::Result<MemoryRegion> map(u64 offset, size_t size, Protection protection, MapFlags flags) const;
+    di::Expected<MemoryRegion, PosixCode> map(u64 offset, size_t size, Protection protection, MapFlags flags) const;
 #endif
 
-    di::Result<void> flush() const { return {}; }
+    di::Expected<void, PosixCode> flush() const { return {}; }
 
 private:
     Owned m_owned { Owned::No };
     int m_fd { -1 };
 };
 
-enum class OpenMode { Readonly, WriteNew, WriteClobber, ReadWrite, AppendOnly };
+enum class OpenMode {
+    Readonly,
+    WriteNew,
+    WriteClobber,
+    ReadWrite,
+    AppendOnly,
+    ReadWriteClobber,
+    AppendReadWrite,
+};
 
 di::Expected<SyncFile, PosixCode> open_sync(di::PathView path, OpenMode open_mode, u16 create_mode = 0666);
 di::Result<di::String> read_to_string(di::PathView path);

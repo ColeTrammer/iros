@@ -4,11 +4,9 @@
 #include <ccpp/bits/size_t.h>
 #include <ccpp/bits/va_list.h>
 
-__CCPP_BEGIN_DECLARATIONS
+#include __CCPP_PLATFORM_PATH(seek_constants.h)
 
-#define SEEK_SET 0
-#define SEEK_CUR 1
-#define SEEK_END 2
+__CCPP_BEGIN_DECLARATIONS
 
 #define _IOFBF 1
 #define _IOLBF 2
@@ -16,10 +14,15 @@ __CCPP_BEGIN_DECLARATIONS
 
 #define BUFSIZ 16384
 
+#define FILENAME_MAX 4096
+#define FOPEN_MAX    1024
+#define TMP_MAX      100000
+#define L_tmpnam     32
+
 #define EOF (-1)
 
-struct FILE;
-typedef struct FILE* FILE;
+struct __file_implementation;
+typedef struct __file_implementation FILE;
 
 typedef __UINT64_TYPE__ fpos_t;
 
@@ -46,6 +49,34 @@ char* gets(char* __str);
 int putchar(int __ch);
 int puts(char const* __str);
 int ungetc(int __ch, FILE* __file);
+
+void clearerr(FILE* __file);
+int feof(FILE* __file);
+int ferror(FILE* __file);
+
+#ifdef __CCPP_POSIX_EXTENSIONS
+int getc_unlocked(FILE* __file);
+int getchar_unlocked(void);
+int putc_unlocked(int __ch, FILE* __file);
+int putchar_unlocked(int __ch);
+#endif
+
+#ifdef __CCPP_COMPAT
+void clearerr_unlocked(FILE* __file);
+int feof_unlocked(FILE* __file);
+int ferror_unlocked(FILE* __file);
+int fflush_unlocked(FILE* __file);
+
+int fputc_unlocked(int __ch, FILE* __file);
+int fgetc_unlocked(FILE* __file);
+
+size_t fread_unlocked(void* __CCPP_RESTRICT __buffer, size_t __size, size_t __count, FILE* __CCPP_RESTRICT __file);
+size_t fwrit_unlocked(void const* __CCPP_RESTRICT __buffer, size_t __size, size_t __count,
+                      FILE* __CCPP_RESTRICT __file);
+
+int fgets_unlocked(char* __CCPP_RESTRICT __str, int __count, FILE* __CCPP_RESTRICT __file);
+int fputs_unlocked(char const* __CCPP_RESTRICT __str, FILE* __CCPP_RESTRICT __file);
+#endif
 
 int scanf(char const* __CCPP_RESTRICT __format, ...);
 int fcanf(FILE* __CCPP_RESTRICT __file, char const* __CCPP_RESTRICT __format, ...);

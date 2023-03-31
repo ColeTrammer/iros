@@ -1,7 +1,7 @@
 #include <dius/prelude.h>
 
 namespace dius {
-di::Result<void> SyncFile::read_exactly(u64 offset, di::Span<di::Byte> data) const {
+di::Expected<void, PosixCode> SyncFile::read_exactly(u64 offset, di::Span<byte> data) const {
     while (!data.empty()) {
         auto nread = TRY(read_some(offset, data));
         if (nread == 0) {
@@ -13,7 +13,7 @@ di::Result<void> SyncFile::read_exactly(u64 offset, di::Span<di::Byte> data) con
     return {};
 }
 
-di::Result<void> SyncFile::read_exactly(di::Span<di::Byte> data) const {
+di::Expected<void, PosixCode> SyncFile::read_exactly(di::Span<byte> data) const {
     while (!data.empty()) {
         auto nread = TRY(read_some(data));
         if (nread == 0) {
@@ -24,7 +24,7 @@ di::Result<void> SyncFile::read_exactly(di::Span<di::Byte> data) const {
     return {};
 }
 
-di::Result<void> SyncFile::write_exactly(u64 offset, di::Span<di::Byte const> data) const {
+di::Expected<void, PosixCode> SyncFile::write_exactly(u64 offset, di::Span<byte const> data) const {
     while (!data.empty()) {
         auto nwritten = TRY(write_some(offset, data));
         if (nwritten == 0) {
@@ -36,7 +36,7 @@ di::Result<void> SyncFile::write_exactly(u64 offset, di::Span<di::Byte const> da
     return {};
 }
 
-di::Result<void> SyncFile::write_exactly(di::Span<di::Byte const> data) const {
+di::Expected<void, PosixCode> SyncFile::write_exactly(di::Span<byte const> data) const {
     while (!data.empty()) {
         auto nwritten = TRY(write_some(data));
         if (nwritten == 0) {

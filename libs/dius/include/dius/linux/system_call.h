@@ -41,6 +41,7 @@ enum class Number : int {
     wait4 = __NR_wait4,
     exit = __NR_exit,
     futex = __NR_futex,
+    lseek = __NR_lseek,
 };
 
 using SystemCallArg = unsigned long;

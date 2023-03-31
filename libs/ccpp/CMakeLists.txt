@@ -4,6 +4,10 @@ project(Ccpp CXX)
 
 add_library(ccpp
     errno/errno.cpp
+    stdio/fclose.cpp
+    stdio/fopen.cpp
+    stdio/fseek.cpp
+    stdio/ftell.cpp
     stdlib/aligned_alloc.cpp
     stdlib/atoi.cpp
     stdlib/calloc.cpp
@@ -24,6 +28,7 @@ add_library(ccpp
     string/strncpy.cpp
     string/strrchr.cpp
     string/strstr.cpp
+    unistd/lseek.cpp
 )
 add_library(Ccpp::ccpp ALIAS ccpp)
 
