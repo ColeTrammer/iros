@@ -1,9 +1,5 @@
 #pragma once
 
-#include <ccpp/bits/config.h>
-
-__CCPP_BEGIN_DECLARATIONS
-
 // NOTE: this must be kept in sync with <iris/uapi/error.h>.
 #define EAFNOSUPPORT    1
 #define EADDRINUSE      2
@@ -63,25 +59,23 @@ __CCPP_BEGIN_DECLARATIONS
 #define ECANCELED       56
 #define EINPROGRESS     57
 #define EPERM           58
-#define EOPNOTSUPP      59
-#define EWOULDBLOCK     60
-#define EOWNERDEAD      61
-#define EACCES          62
-#define EPROTO          63
-#define EPROTONOSUPPORT 64
-#define EROFS           65
-#define EDEADLK         66
+#define EOPNOTSUPP      ENOTSUP
+#define EWOULDBLOCK     59
+#define EOWNERDEAD      60
+#define EACCES          61
+#define EPROTO          62
+#define EPROTONOSUPPORT 63
+#define EROFS           64
+#define EDEADLK         65
 #define EAGAIN          EWOULDBLOCK
-#define ERANGE          67
-#define ENOTRECOVERABLE 68
-#define ETIME           69
-#define ETXTBSY         70
-#define ETIMEDOUT       71
-#define ENFILE          72
-#define EMFILE          73
-#define EMLINK          74
-#define ELOOP           75
-#define EOVERFLOW       76
-#define EPROTOTYPE      77
-
-__CCPP_END_DECLARATIONS
+#define ERANGE          66
+#define ENOTRECOVERABLE 67
+#define ETIME           68
+#define ETXTBSY         69
+#define ETIMEDOUT       70
+#define ENFILE          71
+#define EMFILE          72
+#define EMLINK          73
+#define ELOOP           74
+#define EOVERFLOW       75
+#define EPROTOTYPE      76

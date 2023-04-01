@@ -1,10 +1,9 @@
 #pragma once
 
 #include <ccpp/bits/config.h>
-#include <ccpp/bits/signal.h>
 
 __CCPP_BEGIN_DECLARATIONS
 
-void (*signal(int __sig, void (*__handler)(int)))(int);
+typedef __UINT32_TYPE__ mode_t;
 
 __CCPP_END_DECLARATIONS

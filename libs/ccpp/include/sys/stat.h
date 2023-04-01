@@ -1,12 +1,8 @@
 #pragma once
 
-#include <ccpp/bits/config.h>
+#include <ccpp/bits/stat.h>
 
 __CCPP_BEGIN_DECLARATIONS
-
-struct stat {
-    int __padding[16];
-};
 
 int stat(char const* __CCPP_RESTRICT __path, struct stat* __CCPP_RESTRICT __info);
 

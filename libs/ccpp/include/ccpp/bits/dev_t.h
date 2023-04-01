@@ -4,6 +4,6 @@
 
 __CCPP_BEGIN_DECLARATIONS
 
-typedef long useconds_t;
+typedef __UINT64_TYPE__ dev_t;
 
 __CCPP_END_DECLARATIONS

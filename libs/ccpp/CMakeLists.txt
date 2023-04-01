@@ -75,6 +75,7 @@ add_library(
     string/strncpy.cpp
     string/strrchr.cpp
     string/strstr.cpp
+    sys/stat/stat.cpp
     unistd/lseek.cpp
 )
 add_library(Ccpp::ccpp ALIAS ccpp)
