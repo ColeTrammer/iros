@@ -101,4 +101,9 @@ di::Expected<SyncFile, PosixCode> open_sync(di::PathView path, OpenMode open_mod
     auto fd = TRY(sys_open(path, open_mode_flags, create_mode));
     return SyncFile { SyncFile::Owned::Yes, fd };
 }
+
+di::Expected<SyncFile, PosixCode> open_tempory_file() {
+    auto fd = TRY(sys_open("/tmp"_pv, O_TMPFILE | O_RDWR, 0666));
+    return SyncFile { SyncFile::Owned::Yes, fd };
+}
 }

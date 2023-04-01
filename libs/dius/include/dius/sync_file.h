@@ -92,17 +92,10 @@ private:
     int m_fd { -1 };
 };
 
-enum class OpenMode {
-    Readonly,
-    WriteNew,
-    WriteClobber,
-    ReadWrite,
-    AppendOnly,
-    ReadWriteClobber,
-    AppendReadWrite,
-};
+enum class OpenMode { Readonly, WriteNew, WriteClobber, ReadWrite, AppendOnly, ReadWriteClobber, AppendReadWrite };
 
 di::Expected<SyncFile, PosixCode> open_sync(di::PathView path, OpenMode open_mode, u16 create_mode = 0666);
+di::Expected<SyncFile, PosixCode> open_tempory_file();
 di::Result<di::String> read_to_string(di::PathView path);
 
 inline auto stdin = SyncFile { SyncFile::Owned::No, 0 };

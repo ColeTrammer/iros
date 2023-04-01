@@ -10,6 +10,6 @@ extern int optind;
 extern int opterr;
 extern int optopt;
 
-int getopt(int __argc, char* const __argv[], char const* __envp);
+int getopt(int __argc, char* const __argv[], char const* __optstring);
 
 __CCPP_END_DECLARATIONS

@@ -20,6 +20,9 @@ add_library(
     ctype/tolower.cpp
     ctype/toupper.cpp
     errno/errno.cpp
+    getopt/getopt.cpp
+    getopt/getopt_long.cpp
+    getopt/getopt_long_only.cpp
     getopt/optvars.cpp
     stdio/fclose.cpp
     stdio/fflush.cpp
@@ -29,12 +32,14 @@ add_library(
     stdio/fgets.cpp
     stdio/fgets_unlocked.cpp
     stdio/fopen.cpp
+    stdio/fprintf.cpp
     stdio/fputc.cpp
     stdio/fputc_unlocked.cpp
     stdio/fputs.cpp
     stdio/fputs_unlocked.cpp
     stdio/fread.cpp
     stdio/fread_unlocked.cpp
+    stdio/fscanf.cpp
     stdio/fseek.cpp
     stdio/ftell.cpp
     stdio/fwrite.cpp
@@ -44,6 +49,7 @@ add_library(
     stdio/getchar.cpp
     stdio/getchar_unlocked.cpp
     stdio/gets.cpp
+    stdio/printf.cpp
     stdio/putc.cpp
     stdio/putc.cpp
     stdio/putc_unlocked.cpp
@@ -51,14 +57,27 @@ add_library(
     stdio/putchar_unlocked.cpp
     stdio/puts.cpp
     stdio/puts.cpp
+    stdio/scanf.cpp
+    stdio/snprintf.cpp
+    stdio/sprintf.cpp
+    stdio/sscanf.cpp
     stdio/stderr.cpp
     stdio/stdin.cpp
     stdio/stdout.cpp
+    stdio/tmpfile.cpp
+    stdio/vfprintf.cpp
+    stdio/vfscanf.cpp
+    stdio/vprintf.cpp
+    stdio/vscanf.cpp
+    stdio/vsnprintf.cpp
+    stdio/vsprintf.cpp
+    stdio/vsscanf.cpp
     stdlib/aligned_alloc.cpp
     stdlib/atoi.cpp
     stdlib/calloc.cpp
     stdlib/exit.cpp
     stdlib/free.cpp
+    stdlib/getenv.cpp
     stdlib/malloc.cpp
     stdlib/realloc.cpp
     string/memcmp.cpp

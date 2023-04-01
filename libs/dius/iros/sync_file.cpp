@@ -47,4 +47,8 @@ di::Expected<SyncFile, PosixCode> open_sync(di::PathView path, OpenMode, u16) {
     auto fd = TRY(sys_open(path));
     return SyncFile { SyncFile::Owned::Yes, fd };
 }
+
+di::Expected<SyncFile, PosixCode> open_tempory_file() {
+    return di::Unexpected(PosixError::OperationNotSupported);
+}
 }
