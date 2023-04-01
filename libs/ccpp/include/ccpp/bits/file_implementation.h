@@ -72,7 +72,21 @@ DI_DEFINE_ENUM_BITWISE_OPERATIONS(Status)
 struct File {
     explicit File() = default;
 
-    inline ~File() {
+    constexpr explicit File(dius::SyncFile file_, byte* buffer_, usize buffer_capacity_, usize buffer_offset_,
+                            usize buffer_size_, BufferMode buffer_mode_, BufferOwnership buffer_ownership_,
+                            ReadWriteMode read_write_mode_, Status status_, Permissions permissions_)
+        : file(di::move(file_))
+        , buffer(buffer_)
+        , buffer_capacity(buffer_capacity_)
+        , buffer_offset(buffer_offset_)
+        , buffer_size(buffer_size_)
+        , buffer_mode(buffer_mode_)
+        , buffer_ownership(buffer_ownership_)
+        , read_write_mode(read_write_mode_)
+        , status(status_)
+        , permissions(permissions_) {}
+
+    constexpr ~File() {
         if (buffer_ownership == BufferOwnership::Owned && buffer != nullptr) {
             MallocAllocator<byte>().deallocate(buffer, buffer_capacity);
         }
@@ -135,6 +149,17 @@ struct File {
         di::util::move(__result).__try_did_succeed();            \
     }).__try_move_out()
 
+#define STDIO_TRY_OR_MARK_ERROR(file, ...)                       \
+    __extension__({                                              \
+        auto __result = (__VA_ARGS__);                           \
+        if (!__result) {                                         \
+            errno = di::to_underlying(__result.error().value()); \
+            (file).mark_as_error();                              \
+            return EOF;                                          \
+        }                                                        \
+        di::util::move(__result).__try_did_succeed();            \
+    }).__try_move_out()
+
 #define STDIO_TRY_OR_NULL(...)                                   \
     __extension__({                                              \
         auto __result = (__VA_ARGS__);                           \
@@ -152,6 +177,10 @@ struct __file_implementation {
     ///
     /// @warning This can only be called by the 'unlocked' stdio variants.
     ccpp::File& get_unlocked() { return locked.get_assuming_no_concurrent_accesses(); }
+
+    template<typename... Args>
+    // requires(di::concepts::ConstructibleFrom<ccpp::File, Args...>)
+    constexpr explicit __file_implementation(Args&&... args) : locked(di::in_place, di::forward<Args>(args)...) {}
 
     di::Synchronized<ccpp::File> locked;
 };

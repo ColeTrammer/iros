@@ -50,6 +50,9 @@ add_library(
     stdio/putchar_unlocked.cpp
     stdio/puts.cpp
     stdio/puts.cpp
+    stdio/stderr.cpp
+    stdio/stdin.cpp
+    stdio/stdout.cpp
     stdlib/aligned_alloc.cpp
     stdlib/atoi.cpp
     stdlib/calloc.cpp

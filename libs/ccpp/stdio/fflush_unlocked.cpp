@@ -21,15 +21,12 @@ extern "C" int fflush_unlocked(FILE* file) {
             return 0;
         }
         inner.buffer_size = 0;
+        inner.buffer_offset = 0;
     } else {
         // Flush any pending data by writing to disk.
-        auto result = inner.file.write_exactly({ inner.buffer, inner.buffer_size });
-        inner.buffer_size = 0;
-        if (!result) {
-            inner.mark_as_error();
-            errno = int(result.error().value());
-            return EOF;
-        }
+        inner.buffer_offset = 0;
+        auto buffer_size = di::exchange(inner.buffer_size, 0);
+        STDIO_TRY_OR_MARK_ERROR(inner, inner.file.write_exactly({ inner.buffer, buffer_size }));
     }
 
     return 0;

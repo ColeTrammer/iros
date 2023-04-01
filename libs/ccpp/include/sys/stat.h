@@ -4,7 +4,9 @@
 
 __CCPP_BEGIN_DECLARATIONS
 
-struct stat {};
+struct stat {
+    int __padding[16];
+};
 
 int stat(char const* __CCPP_RESTRICT __path, struct stat* __CCPP_RESTRICT __info);
 

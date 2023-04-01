@@ -1,6 +1,5 @@
 #include <ccpp/bits/file_implementation.h>
 
-namespace ccpp {
 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/fclose.html
 extern "C" int fclose(FILE* file) {
     // No need to lock here, as it is undefined behavior to try to use a FILE after it has been closed.
@@ -18,5 +17,4 @@ extern "C" int fclose(FILE* file) {
     delete file;
 
     return error ? EOF : 0;
-}
 }
