@@ -21,9 +21,35 @@ add_library(
     ctype/toupper.cpp
     errno/errno.cpp
     stdio/fclose.cpp
+    stdio/fflush.cpp
+    stdio/fflush_unlocked.cpp
+    stdio/fgetc.cpp
+    stdio/fgetc_unlocked.cpp
+    stdio/fgets.cpp
+    stdio/fgets_unlocked.cpp
     stdio/fopen.cpp
+    stdio/fputc.cpp
+    stdio/fputc_unlocked.cpp
+    stdio/fputs.cpp
+    stdio/fputs_unlocked.cpp
+    stdio/fread.cpp
+    stdio/fread_unlocked.cpp
     stdio/fseek.cpp
     stdio/ftell.cpp
+    stdio/fwrite.cpp
+    stdio/fwrite_unlocked.cpp
+    stdio/getc.cpp
+    stdio/getc_unlocked.cpp
+    stdio/getchar.cpp
+    stdio/getchar_unlocked.cpp
+    stdio/gets.cpp
+    stdio/putc.cpp
+    stdio/putc.cpp
+    stdio/putc_unlocked.cpp
+    stdio/putchar.cpp
+    stdio/putchar_unlocked.cpp
+    stdio/puts.cpp
+    stdio/puts.cpp
     stdlib/aligned_alloc.cpp
     stdlib/atoi.cpp
     stdlib/calloc.cpp
@@ -47,8 +73,6 @@ add_library(
     unistd/lseek.cpp
 )
 add_library(Ccpp::ccpp ALIAS ccpp)
-
-set_target_properties(ccpp PROPERTIES OUTPUT_NAME "c")
 
 target_include_directories(
     ccpp PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
@@ -86,11 +110,13 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/libpthread.a" "INPUT(libc.a)")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/libdl.a" "INPUT(libc.a)")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/librt.a" "INPUT(librt.a)")
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/libm.a" "INPUT(libc.a)")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/libc.a" "INPUT(libccpp.a libdius.a)")
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libpthread.a" DESTINATION lib)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libdl.a" DESTINATION lib)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/librt.a" DESTINATION lib)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libm.a" DESTINATION lib)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libc.a" DESTINATION lib)
 
 if(IROS_BuildTests)
     add_subdirectory(tests)

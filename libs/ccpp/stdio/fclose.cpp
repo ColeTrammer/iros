@@ -1,16 +1,22 @@
 #include <ccpp/bits/file_implementation.h>
 
 namespace ccpp {
+// https://pubs.opengroup.org/onlinepubs/9699919799/functions/fclose.html
 extern "C" int fclose(FILE* file) {
-    if (fflush(file)) {
-        return EOF;
+    // No need to lock here, as it is undefined behavior to try to use a FILE after it has been closed.
+    bool error = false;
+    if (fflush_unlocked(file)) {
+        error = true;
     }
 
-    // No need to lock here, as it is undefined behavior to try to use a FILE after it has been closed.
-    STDIO_TRY(file->get_unlocked().file.close());
+    auto result = file->get_unlocked().file.close();
+    if (!result) {
+        errno = int(result.error().value());
+        error = true;
+    }
 
-    auto to_drop = FileHandle(file);
+    delete file;
 
-    return 0;
+    return error ? EOF : 0;
 }
 }

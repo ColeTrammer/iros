@@ -5,7 +5,7 @@
 #endif
 
 extern "C" {
-int __dso_handle;
+[[gnu::weak]] int __dso_handle;
 }
 
 extern "C" size_t strlen(char const* string) {

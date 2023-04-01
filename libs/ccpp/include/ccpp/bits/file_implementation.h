@@ -55,6 +55,20 @@ enum class BufferOwnership {
     UserProvided,
 };
 
+enum class ReadWriteMode {
+    None = 0,
+    Read = 1,
+    Write = 2,
+};
+
+enum class Status {
+    None = 0,
+    Eof = 1,
+    Error = 2,
+};
+
+DI_DEFINE_ENUM_BITWISE_OPERATIONS(Status)
+
 struct File {
     explicit File() = default;
 
@@ -64,13 +78,50 @@ struct File {
         }
     }
 
+    inline bool readable() const { return read_write_mode == ReadWriteMode::Read; }
+    inline bool writable() const { return read_write_mode == ReadWriteMode::Write; }
+
+    inline di::Expected<void, dius::PosixCode> mark_as_readable() {
+        if (!(permissions & Permissions::Readable)) {
+            return di::Unexpected(dius::PosixError::BadFileDescriptor);
+        }
+        if (read_write_mode == ReadWriteMode::Write) {
+            return di::Unexpected(dius::PosixError::BadFileDescriptor);
+        }
+        read_write_mode = ReadWriteMode::Read;
+        return {};
+    }
+
+    inline di::Expected<void, dius::PosixCode> mark_as_writable() {
+        if (!(permissions & Permissions::Writable)) {
+            return di::Unexpected(dius::PosixError::BadFileDescriptor);
+        }
+        if (read_write_mode == ReadWriteMode::Read) {
+            return di::Unexpected(dius::PosixError::BadFileDescriptor);
+        }
+        read_write_mode = ReadWriteMode::Write;
+        return {};
+    }
+
+    inline void mark_as_eof() {
+        status = Status::Eof;
+        read_write_mode = ReadWriteMode::None;
+    }
+
+    inline void mark_as_error() { status = Status::Error; }
+
+    inline bool at_eof() const { return !!(status & Status::Eof); }
+    inline bool has_error() const { return !!(status & Status::Error); }
+
     dius::SyncFile file;
     byte* buffer { nullptr };
     usize buffer_capacity { 0 };
     usize buffer_offset { 0 };
     usize buffer_size { 0 };
-    BufferOwnership buffer_ownership { BufferOwnership::Owned };
     BufferMode buffer_mode { BufferMode::FullBuffered };
+    BufferOwnership buffer_ownership { BufferOwnership::Owned };
+    ReadWriteMode read_write_mode { ReadWriteMode::None };
+    Status status { Status::None };
     Permissions permissions { Permissions::None };
 };
 

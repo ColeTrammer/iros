@@ -38,7 +38,7 @@ size_t fwrite(void const* __CCPP_RESTRICT __buffer, size_t __size, size_t __coun
 
 int fgetc(FILE* __file);
 int getc(FILE* __file);
-int fgets(char* __CCPP_RESTRICT __str, int __count, FILE* __CCPP_RESTRICT __file);
+char* fgets(char* __CCPP_RESTRICT __str, int __count, FILE* __CCPP_RESTRICT __file);
 int fputc(int __ch, FILE* __file);
 int putc(int __ch, FILE* __file);
 int fputs(char const* __CCPP_RESTRICT __str, FILE* __CCPP_RESTRICT __file);
@@ -49,10 +49,6 @@ char* gets(char* __str);
 int putchar(int __ch);
 int puts(char const* __str);
 int ungetc(int __ch, FILE* __file);
-
-void clearerr(FILE* __file);
-int feof(FILE* __file);
-int ferror(FILE* __file);
 
 #ifdef __CCPP_POSIX_EXTENSIONS
 int getc_unlocked(FILE* __file);
@@ -71,10 +67,10 @@ int fputc_unlocked(int __ch, FILE* __file);
 int fgetc_unlocked(FILE* __file);
 
 size_t fread_unlocked(void* __CCPP_RESTRICT __buffer, size_t __size, size_t __count, FILE* __CCPP_RESTRICT __file);
-size_t fwrit_unlocked(void const* __CCPP_RESTRICT __buffer, size_t __size, size_t __count,
-                      FILE* __CCPP_RESTRICT __file);
+size_t fwrite_unlocked(void const* __CCPP_RESTRICT __buffer, size_t __size, size_t __count,
+                       FILE* __CCPP_RESTRICT __file);
 
-int fgets_unlocked(char* __CCPP_RESTRICT __str, int __count, FILE* __CCPP_RESTRICT __file);
+char* fgets_unlocked(char* __CCPP_RESTRICT __str, int __count, FILE* __CCPP_RESTRICT __file);
 int fputs_unlocked(char const* __CCPP_RESTRICT __str, FILE* __CCPP_RESTRICT __file);
 #endif
 

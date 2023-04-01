@@ -54,6 +54,8 @@
 
 #if !defined(__cplusplus) && defined(__CCPP_C99)
 #define __CCPP_RESTRICT restrict
+#elif defined(__GNUC__) || defined(__clang__)
+#define __CCPP_RESTRICT __restrict
 #else
 #define __CCPP_RESTRICT
 #endif

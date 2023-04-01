@@ -2,7 +2,8 @@
 #include <string.h>
 
 namespace ccpp {
-extern "C" FILE* fopen(char const* path, char const* mode) {
+// https://pubs.opengroup.org/onlinepubs/9699919799/functions/fopen.html
+extern "C" FILE* fopen(char const* __restrict path, char const* __restrict mode) {
     auto mode_sv = di::TransparentStringView(mode, mode + strlen(mode));
     auto open_mode = dius::OpenMode::Readonly;
     auto permissions = Permissions::None;
