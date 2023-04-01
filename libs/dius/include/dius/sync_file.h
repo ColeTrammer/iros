@@ -44,7 +44,12 @@ public:
     constexpr SyncFile(SyncFile&& other)
         : m_owned(di::exchange(other.m_owned, Owned::No)), m_fd(di::exchange(other.m_fd, -1)) {}
 
-    ~SyncFile() { (void) this->close(); }
+    constexpr ~SyncFile() {
+        if (m_owned == Owned::No) {
+            return;
+        }
+        (void) this->close();
+    }
 
     SyncFile& operator=(SyncFile&& other) {
         (void) this->close();

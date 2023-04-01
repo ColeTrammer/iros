@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ccpp/bits/config.h>
+#include <ccpp/bits/getopt_short.h>
 
 __CCPP_BEGIN_DECLARATIONS
 

@@ -20,6 +20,7 @@ add_library(
     ctype/tolower.cpp
     ctype/toupper.cpp
     errno/errno.cpp
+    getopt/optvars.cpp
     stdio/fclose.cpp
     stdio/fflush.cpp
     stdio/fflush_unlocked.cpp
@@ -56,6 +57,7 @@ add_library(
     stdlib/aligned_alloc.cpp
     stdlib/atoi.cpp
     stdlib/calloc.cpp
+    stdlib/exit.cpp
     stdlib/free.cpp
     stdlib/malloc.cpp
     stdlib/realloc.cpp
