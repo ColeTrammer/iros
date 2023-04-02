@@ -34,17 +34,27 @@ static void calloc_() {
 }
 
 static void aligned_alloc_() {
-    auto* a = di::black_box(aligned_alloc(16, 8));
+    // NOTE: asan claims the size passed to aligned_alloc() must be a multiple of the alignment. As per cpp reference,
+    //       there is a C proposal to ignore this restriction. Glilbc appears to accept this undersized allocations, as
+    //       does ccpp's implementation.
+    //       https://en.cppreference.com/w/c/memory/aligned_alloc
+#if !defined(DI_SANITIZER)
+    constexpr auto size = 8zu;
+#else
+    constexpr auto size = 64zu;
+#endif
+
+    auto* a = di::black_box(aligned_alloc(16, size));
     ASSERT(a);
     ASSERT_EQ(di::to_uintptr(a) % 16, 0);
     free(a);
 
-    auto* b = di::black_box(aligned_alloc(32, 8));
+    auto* b = di::black_box(aligned_alloc(32, size));
     ASSERT(b);
     ASSERT_EQ(di::to_uintptr(b) % 32, 0);
     free(b);
 
-    auto* c = di::black_box(aligned_alloc(64, 8));
+    auto* c = di::black_box(aligned_alloc(64, size));
     ASSERT(c);
     ASSERT_EQ(di::to_uintptr(c) % 64, 0);
     free(c);
@@ -65,7 +75,11 @@ static void realloc_() {
 
     auto* d = di::black_box(realloc(c, 8));
     ASSERT(d);
+
+    // The shrinked pointer is only guaranteed to be the same in the ccpp implementation.
+#ifdef DIUS_USE_RUNTIME
     ASSERT_EQ(d, c);
+#endif
 
     free(d);
 }
