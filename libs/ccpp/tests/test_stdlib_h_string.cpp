@@ -1,4 +1,9 @@
+#ifdef DIUS_USE_RUNTIME
 #include <ccpp/bits/all.h>
+#else
+#include <stdlib.h>
+#endif
+
 #include <dius/test/prelude.h>
 
 [[gnu::noinline]] static int do_atoi(char const* s) {

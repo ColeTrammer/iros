@@ -1,4 +1,9 @@
+#ifdef DIUS_USE_RUNTIME
 #include <ccpp/bits/all.h>
+#else
+#include <string.h>
+#endif
+
 #include <dius/test/prelude.h>
 
 [[gnu::noinline]] static char const* do_strchr(char const* s, int ch) {
