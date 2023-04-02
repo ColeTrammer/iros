@@ -54,6 +54,9 @@
                     "--query-driver=/usr/local/bin/*,/usr/bin/*,${workspaceFolder}/cross/bin/*",
                     "--header-insertion=never"
                 ],
+                "livePreview.autoRefreshPreview": "Never",
+                "livePreview.defaultPreviewPath": "build/x86_64/html",
+                "githubIssues.issueBranchTitle": "i${issueNumber}-${sanitizedIssueTitle}",
                 "files.insertFinalNewline": true,
                 "editor.rulers": [
                     120
