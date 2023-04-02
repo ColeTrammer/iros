@@ -15,14 +15,14 @@ follows.
 +----------------+
 | null           |
 | ...            |
-| envp[0]        | %rsp + 8 * (argc + 2)
+| envp[0]        | <- rsp + 8 * (argc + 2)
 +----------------+
-| null           | %rsp + 8 * (argc + 1)
+| null           | <- rsp + 8 * (argc + 1)
 | argv[argc - 1] |
 | ...            |
-| argv[0]        | %rsp + 8
+| argv[0]        | <- rsp + 8
 +----------------+
-| argc           | %rsp
+| argc           | <- rsp
 +----------------+
 ```
 

@@ -43,3 +43,57 @@ any interrupts or system calls which occur while the task is executing. Note thi
 so it is not part of the process virtual memory map.
 
 Lastly, a task has some shared process state which includes the process virtual memory map.
+
+## Program Initialization ABI
+
+Userspace applications expect to receive their program arguments and enviornment variables from the kernel. This
+information is passed on the initial task's stack. Each string will be represented by a pointer-length pair as follows:
+
+```
++----------------------+
+| data: char*          |
+| length: usize        |
++----------------------+
+```
+
+Although the length is provided, the data strings themselves are still null-terminated for compatibility with C.
+However, the data-length pair layout enables C++ applications to receive the arguments as string views.
+
+The stack will contain many pairs of these string records, layed out in contiguously decreasing memory. The program
+receives the following arguments passed as a function would normally expect according to the platform's abi (so on
+x86_64, the arguments will be passed in `rdi`, `rsi`, etc.).
+
+| Argument | x86_64 Register | Description                                                               |
+| -------- | --------------- | ------------------------------------------------------------------------- |
+| argv     | `rdi`           | A pointer to the argument strings, represented as pointer-length pairs    |
+| argc     | `rsi`           | The number of argument strings                                            |
+| envp     | `rdx`           | A pointer to the environment strings, represented as pointer-length pairs |
+| envc     | `rcx`           | The number of enironment strings                                          |
+
+This convention enables the userspace entry to point to parse the arguments and environment directly as a
+`di::Span<di::StringView>`, without the need to copy the strings or deal with null-termination.
+
+Additionally, the kernel ensures the entry point can be written directly in C++, without requiring any assembly. To do
+this, the stack will be 16-byte aligned, and as described above, the program arguments will be passed using the normal
+calling convention.
+
+In total, the stack on entry will be laid out as follows:
+
+```
++-------------------------------------+
+| padding to ensure 16-byte alignment |
++-------------------------------------+
+| ...                                 |
+| null-terminated env strings         |
+| ...                                 |
+| null-terminated arg strings         |
++-------------------------------------+ <- envp + 2 * envc
+| ...                                 |
+| enviornemt data-length pairs        |
++-------------------------------------+ <- envp / argv + 2 * argc
+| ...                                 |
+| argument data-length pairs          |
++-------------------------------------+ <- argv
+| padding to ensure 16-byte alignment |
++-------------------------------------+ <- stack pointer on entry
+```
