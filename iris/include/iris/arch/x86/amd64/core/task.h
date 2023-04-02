@@ -31,6 +31,9 @@ struct TaskState {
     void set_instruction_pointer(uptr value) { rip = value; }
     void set_stack_pointer(uptr value) { rsp = value; }
     void set_argument1(uptr value) { rdi = value; }
+    void set_argument2(uptr value) { rsi = value; }
+    void set_argument3(uptr value) { rdx = value; }
+    void set_argument4(uptr value) { rcx = value; }
 
     /// Function to perform a context switch.
     [[noreturn]] void context_switch_to();

@@ -19,5 +19,6 @@ enum class SystemCall {
     set_userspace_instruction_pointer = 14,
     set_userspace_argument1 = 15,
     lseek = 16,
+    set_task_arguments = 17,
 };
 }

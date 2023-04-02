@@ -2,6 +2,7 @@
 
 #include <di/prelude.h>
 #include <iris/core/config.h>
+#include <iris/core/task_arguments.h>
 #include <iris/core/task_status.h>
 #include <iris/fs/file.h>
 #include <iris/mm/address_space.h>
@@ -42,6 +43,9 @@ public:
     arch::TaskState const& task_state() const { return m_task_state; }
     void set_task_state(arch::TaskState const& state) { m_task_state = state; }
 
+    di::Arc<TaskArguments> task_arguments() const { return m_task_arguments; }
+    void set_task_arguments(di::Arc<TaskArguments> task_arguments) { m_task_arguments = di::move(task_arguments); }
+
     arch::FpuState& fpu_state() { return m_fpu_state; }
     arch::FpuState const& fpu_state() const { return m_fpu_state; }
 
@@ -58,6 +62,9 @@ public:
     }
     void set_stack_pointer(mm::VirtualAddress address) { m_task_state.set_stack_pointer(address.raw_value()); }
     void set_argument1(uptr value) { m_task_state.set_argument1(value); }
+    void set_argument2(uptr value) { m_task_state.set_argument2(value); }
+    void set_argument3(uptr value) { m_task_state.set_argument3(value); }
+    void set_argument4(uptr value) { m_task_state.set_argument4(value); }
 
     bool preemption_disabled() const { return m_preemption_disabled_count.load(di::MemoryOrder::Relaxed) > 0; }
     void disable_preemption() { m_preemption_disabled_count.fetch_add(1, di::MemoryOrder::Relaxed); }
@@ -86,6 +93,7 @@ private:
     di::Atomic<i32> m_preemption_disabled_count;
     di::Atomic<bool> m_should_be_preempted { false };
     di::Arc<TaskStatus> m_task_status;
+    di::Arc<TaskArguments> m_task_arguments;
     di::Atomic<bool> m_waiting { false };
     mm::VirtualAddress m_kernel_stack { 0 };
     uptr m_userspace_thread_pointer { 0 };

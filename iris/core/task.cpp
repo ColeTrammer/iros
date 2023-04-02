@@ -62,10 +62,12 @@ Expected<di::Arc<Task>> create_user_task(TaskNamespace& task_namespace, FileTabl
 Expected<void> load_executable(Task& task, di::PathView path) {
     auto raw_data = TRY(lookup_in_initrd(path));
 
+    // Setup program stack.
+    constexpr auto stack_size = 0x10000_usize;
+
     task.set_address_space(TRY(mm::create_empty_user_address_space()));
     auto user_stack = TRY(task.address_space().allocate_region(
-        0x10000, mm::RegionFlags::Writable | mm::RegionFlags::User | mm::RegionFlags::Readable));
-    task.set_stack_pointer(user_stack + 0x10000);
+        stack_size, mm::RegionFlags::Writable | mm::RegionFlags::User | mm::RegionFlags::Readable));
 
     using ElfHeader = di::exec::ElfHeader<>;
     using ProgramHeader = di::exec::ElfProgramHeader<>;
@@ -76,7 +78,7 @@ Expected<void> load_executable(Task& task, di::PathView path) {
 
     // FIXME: consider disabling preemption instead.
     auto address_space = task.address_space().lock();
-    with_interrupts_disabled([&] {
+    TRY(with_interrupts_disabled([&] -> Expected<void> {
         auto& current_address_space = global_state().scheduler.current_address_space();
         address_space->base().load();
 
@@ -106,8 +108,65 @@ Expected<void> load_executable(Task& task, di::PathView path) {
                 di::fill_n(data.data() + program_header.file_size, zero_fill, 0_b);
             });
         }
+
+        // Write task arguments into the user stack.
+        auto task_arguments = task.task_arguments();
+        if (!task_arguments) {
+            // Pass no arguments and enviornment.
+            task.set_argument1(0);
+            task.set_argument2(0);
+            task.set_argument3(0);
+            task.set_argument4(0);
+
+            // Ensure the stack is 16-byte aligned.
+            task.set_stack_pointer(user_stack + stack_size - 16 + sizeof(uptr));
+        } else {
+            // Determine the amount of stack memory needed, and error if there is not at least 4096 bytes left.
+            auto string_bytes_needed = di::concat(task_arguments->arguments(), task_arguments->enviornment()) |
+                                       di::transform([&](di::TransparentString const& value) {
+                                           // Remember to include the null terminator.
+                                           return value.size_bytes() + 1;
+                                       }) |
+                                       di::sum;
+            string_bytes_needed = di::align_up(string_bytes_needed, 16);
+
+            auto argc = task_arguments->arguments().size();
+            auto envc = task_arguments->enviornment().size();
+
+            auto string_record_bytes_needed = (argc + envc) * sizeof(di::Span<char const>);
+            auto bytes_needed = string_bytes_needed + string_record_bytes_needed + 16;
+            if (bytes_needed > stack_size - 0x1000) {
+                return di::Unexpected(Error::ArgumentListTooLong);
+            }
+
+            auto string_data_base = user_stack + stack_size - long(string_bytes_needed);
+            auto string_record_base = string_data_base - long(string_record_bytes_needed);
+
+            with_userspace_access([&] {
+                // Write the strings and string records into the user stack.
+                auto* string_data = string_data_base.typed_pointer<char>();
+                auto* string_record_data = string_record_base.typed_pointer<di::Span<char const>>();
+                for (auto const& string : di::concat(task_arguments->arguments(), task_arguments->enviornment())) {
+                    // Write the string record.
+                    *string_record_data++ = { string_data, string.size() };
+
+                    // Write the string data, including the null terminator.
+                    string_data = di::copy(di::Span { string.data(), string.size() + 1 }, string_data).out;
+                }
+            });
+
+            // Set the task arguments.
+            task.set_argument1(string_record_base.raw_value());
+            task.set_argument2(argc);
+            task.set_argument3(string_record_base.raw_value() + argc * sizeof(di::Span<char const>));
+            task.set_argument4(envc);
+
+            // Ensure the stack is 16-byte aligned.
+            task.set_stack_pointer(string_record_base - 16 + sizeof(uptr));
+        }
         current_address_space.load();
-    });
+        return {};
+    }));
 
     task.set_instruction_pointer(mm::VirtualAddress(elf_header->entry));
     return {};

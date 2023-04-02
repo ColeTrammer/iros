@@ -183,6 +183,38 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
 
             return iris::seek_file(handle, offset, whence);
         }
+        case SystemCall::set_task_arguments: {
+            auto task_id = iris::TaskId(task_state.syscall_arg1());
+            auto const* argument_array = reinterpret_cast<di::Span<char const> const*>(task_state.syscall_arg2());
+            auto argument_count = task_state.syscall_arg3();
+            auto const* enviornment_array = reinterpret_cast<di::Span<char const> const*>(task_state.syscall_arg4());
+            auto enviornment_count = task_state.syscall_arg5();
+
+            auto& task_namespace = current_task.task_namespace();
+            auto task = task_id == iris::TaskId(0) ? current_task.arc_from_this()
+                                                   : TRY(task_namespace.lock()->find_task(task_id));
+
+            return iris::with_userspace_access([&] -> Expected<u64> {
+                auto arguments = di::Vector<di::TransparentString> {};
+                for (auto i : di::range(argument_count)) {
+                    auto string = argument_array[i];
+                    auto owned_string = TRY(di::TransparentStringView { string.data(), string.size() }.to_owned());
+                    TRY(arguments.push_back(di::move(owned_string)));
+                }
+
+                auto enviornment = di::Vector<di::TransparentString> {};
+                for (auto i : di::range(enviornment_count)) {
+                    auto string = enviornment_array[i];
+                    auto owned_string = TRY(di::TransparentStringView { string.data(), string.size() }.to_owned());
+                    TRY(enviornment.push_back(di::move(owned_string)));
+                }
+
+                auto task_arguments = TRY(di::try_make_arc<TaskArguments>(di::move(arguments), di::move(enviornment)));
+                task->set_task_arguments(di::move(task_arguments));
+
+                return 0;
+            });
+        }
         default:
             iris::println("Encounted unexpected system call: {}"_sv, di::to_underlying(number));
             break;

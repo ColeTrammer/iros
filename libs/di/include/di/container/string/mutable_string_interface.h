@@ -6,6 +6,7 @@
 #include <di/container/string/string_clear.h>
 #include <di/container/string/string_push_back.h>
 #include <di/container/vector/vector_clear.h>
+#include <di/container/view/concat.h>
 #include <di/util/create_in_place.h>
 
 namespace di::container::string {
@@ -30,11 +31,18 @@ private:
     constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<Self>, Con&& container,
                                      encoding::AssumeValid, Args&&... args) {
         auto result = Self(util::forward<Args>(args)...);
-        vector::append_container(result, util::forward<Con>(container));
-        if (encoding::NullTerminated<Enc>) {
-            vector::emplace_back(result);
-        }
-        return result;
+        auto view = [&] {
+            if constexpr (encoding::NullTerminated<Enc>) {
+                return view::concat(util::forward<Con>(container), view::single(CodeUnit(0)));
+            } else {
+                return view::all(util::forward<Con>(container));
+            }
+        }();
+        return invoke_as_fallible([&] {
+                   return vector::append_container(result, util::move(view));
+               }) % [&](auto&&...) {
+            return util::move(result);
+        } | try_infallible;
     }
 
     template<concepts::InputContainer Con, typename... Args>
@@ -42,8 +50,11 @@ private:
     constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<Self>, Con&& container,
                                      Args&&... args) {
         auto result = Self(util::forward<Args>(args)...);
-        string::append(result, util::forward<Con>(container));
-        return result;
+        return invoke_as_fallible([&] {
+                   return string::append(result, util::forward<Con>(container));
+               }) % [&] {
+            return util::move(result);
+        } | try_infallible;
     }
 
 public:
