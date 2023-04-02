@@ -35,6 +35,7 @@ SpaceInEmptyBlock: false
 RequiresClausePosition: OwnLine
 IndentRequiresClause: false
 QualifierAlignment: Custom
+InsertBraces: true
 QualifierOrder: ["constexpr", "static", "inline", "friend", "type", "const", "volatile"]
 WhitespaceSensitiveMacros:
   [
