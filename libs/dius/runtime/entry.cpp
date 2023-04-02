@@ -38,7 +38,14 @@ dius::runtime::TlsInfo get_tls_info() {
     return s_tls_info;
 }
 
+static constinit char* argv_hack[] = { "this", nullptr };
+
 extern "C" [[noreturn]] void dius_entry(int argc, char** argv, char** envp) {
+    if (!argv) {
+        argc = 1;
+        argv = argv_hack;
+    }
+
     auto* elf_header = di::addressof(__ehdr_start);
 
     // FIXME: also consider the program header size.

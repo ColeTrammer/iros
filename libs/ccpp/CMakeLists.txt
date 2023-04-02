@@ -21,6 +21,7 @@ add_library(
     ctype/toupper.cpp
     errno/errno.cpp
     getopt/getopt.cpp
+    getopt/getopt_implementation.cpp
     getopt/getopt_long.cpp
     getopt/getopt_long_only.cpp
     getopt/optvars.cpp
@@ -50,6 +51,7 @@ add_library(
     stdio/getchar_unlocked.cpp
     stdio/gets.cpp
     stdio/printf.cpp
+    stdio/printf_implementation.cpp
     stdio/putc.cpp
     stdio/putc.cpp
     stdio/putc_unlocked.cpp
@@ -58,6 +60,7 @@ add_library(
     stdio/puts.cpp
     stdio/puts.cpp
     stdio/scanf.cpp
+    stdio/scanf_implementation.cpp
     stdio/snprintf.cpp
     stdio/sprintf.cpp
     stdio/sscanf.cpp
