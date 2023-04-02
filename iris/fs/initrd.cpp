@@ -90,6 +90,21 @@ private:
         return to_read;
     }
 
+    friend Expected<i64> tag_invoke(di::Tag<seek_file>, InitrdFile& file, i64 offset, int whence) {
+        switch (whence) {
+            case 0:
+                file.m_offset = offset;
+                return file.m_offset;
+            case 1:
+                file.m_offset += offset;
+                return file.m_offset;
+            case 2:
+                file.m_offset = file.m_data.size() + offset;
+                return file.m_offset;
+        }
+        return di::Unexpected(Error::InvalidArgument);
+    }
+
     di::Span<di::Byte const> m_data;
     u64 m_offset { 0 };
 };

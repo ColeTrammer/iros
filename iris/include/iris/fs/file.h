@@ -19,6 +19,10 @@ namespace detail {
             return di::Unexpected(Error::NotSupported);
         }
     };
+
+    struct SeekFileDefaultFunction {
+        constexpr Expected<i64> operator()(auto&, i64, int) const { return di::Unexpected(Error::NotSupported); }
+    };
 }
 
 struct WriteFileFunction
@@ -33,7 +37,12 @@ struct ReadFileFunction
 
 constexpr inline auto read_file = ReadFileFunction {};
 
-using FileInterface = di::meta::List<WriteFileFunction, ReadFileFunction>;
+struct SeekFileFunction
+    : di::Dispatcher<SeekFileFunction, Expected<i64>(di::This&, i64, int), detail::SeekFileDefaultFunction> {};
+
+constexpr inline auto seek_file = SeekFileFunction {};
+
+using FileInterface = di::meta::List<WriteFileFunction, ReadFileFunction, SeekFileFunction>;
 using File = di::AnyShared<FileInterface>;
 
 class FileTable {

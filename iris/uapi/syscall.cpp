@@ -79,6 +79,8 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
             return iris::with_userspace_access([&] -> Expected<u64> {
                 auto path = di::PathView { string };
 
+                println("Opening {}"_sv, path);
+
                 auto [file_storage, fd] = TRY(current_task.file_table().allocate_file_handle());
 
                 auto file = TRY(iris::open_in_initrd(path));
@@ -170,6 +172,16 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
                                                    : TRY(task_namespace.lock()->find_task(task_id));
             task->set_argument1(value);
             return 0;
+        }
+        case SystemCall::lseek: {
+            auto file_handle = int(task_state.syscall_arg1());
+            auto offset = i64(task_state.syscall_arg2());
+            auto whence = int(task_state.syscall_arg3());
+
+            auto& current_task = iris::global_state().scheduler.current_task();
+            auto& handle = TRY(current_task.file_table().lookup_file_handle(file_handle));
+
+            return iris::seek_file(handle, offset, whence);
         }
         default:
             iris::println("Encounted unexpected system call: {}"_sv, di::to_underlying(number));
