@@ -1,6 +1,6 @@
 #include <iris/core/print.h>
 #include <iris/mm/map_physical_address.h>
-#include <limine.h>
+#include <iris/third_party/limine.h>
 
 extern "C" {
 // HHDM refers to "higher-half direct map", which provides

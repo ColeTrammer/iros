@@ -13,7 +13,7 @@
 #include <iris/mm/map_physical_address.h>
 #include <iris/mm/page_frame_allocator.h>
 #include <iris/mm/sections.h>
-#include <limine.h>
+#include <iris/third_party/limine.h>
 
 static void do_unit_tests() {
     iris::test::TestManager::the().run_tests();
