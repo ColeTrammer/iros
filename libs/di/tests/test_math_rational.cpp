@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace math_rational {
 constexpr void basic() {
     auto a = di::Rational { 3, 6 };
     ASSERT_EQ(a.numerator(), 1);
@@ -43,3 +44,4 @@ constexpr void ratio() {
 
 TESTC(math_rational, basic)
 TESTC(math_rational, ratio)
+}

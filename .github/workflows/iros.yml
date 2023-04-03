@@ -85,5 +85,6 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           configurePreset: ${{ matrix.preset }}
+          configurePresetAdditionalArgs: "['-DCMAKE_UNITY_BUILD=ON']"
           buildPreset: ${{ matrix.preset }}
           testPreset: ${{ matrix.preset }}

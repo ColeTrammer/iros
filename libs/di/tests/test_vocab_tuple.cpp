@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace vocab_tuple {
 class X : public di::meta::AddMemberGet<X> {
 public:
 private:
@@ -192,3 +193,4 @@ TESTC(vocab_tuple, tuple_transform)
 TESTC(vocab_tuple, tuple_for_each)
 TESTC(vocab_tuple, tuple_equal)
 TESTC(vocab_tuple, tuple_cat)
+}

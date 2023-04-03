@@ -2,6 +2,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace container_string {
 constexpr void basic() {
     auto x = u8"QWER"_sv;
     (void) x;
@@ -149,3 +150,4 @@ TESTC(container_string, erased)
 TESTC(container_string, utf8)
 TESTC(container_string, readonly_api)
 TESTC(container_string, null_terminated)
+}

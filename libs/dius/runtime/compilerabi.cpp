@@ -4,8 +4,8 @@
 #pragma GCC diagnostic ignored "-Wbuiltin-declaration-mismatch"
 #endif
 
-extern "C" {
-[[gnu::weak]] int __dso_handle;
+extern "C++" {
+[[gnu::weak]] void* __dso_handle;
 }
 
 extern "C" [[gnu::weak]] size_t strlen(char const* string) {

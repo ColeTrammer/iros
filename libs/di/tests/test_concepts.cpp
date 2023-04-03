@@ -10,6 +10,7 @@
 #include <di/concepts/reference.h>
 #include <di/prelude.h>
 
+namespace concepts {
 static_assert(di::concepts::Reference<i32&&>);
 static_assert(di::concepts::Const<i32 const>);
 
@@ -42,3 +43,4 @@ static_assert(di::concepts::Integral<unsigned long long const volatile>);
 
 static_assert(di::concepts::FloatingPoint<float>);
 static_assert(di::concepts::FloatingPoint<long double const volatile>);
+}

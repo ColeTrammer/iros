@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace vocab_expected {
 constexpr void void_value() {
     auto x = di::Expected<void, int> {};
     ASSERT(x.has_value());
@@ -173,3 +174,4 @@ TESTC(vocab_expected, basic)
 TESTC(vocab_expected, move_only)
 TESTC(vocab_expected, fallible)
 TESTC(vocab_expected, reference)
+}

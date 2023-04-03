@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace cli {
 struct Args {
     bool enable { false };
     di::PathView input { "test.txt"_pv };
@@ -59,3 +60,4 @@ constexpr void basic() {
 }
 
 TESTC(cli, basic);
+}

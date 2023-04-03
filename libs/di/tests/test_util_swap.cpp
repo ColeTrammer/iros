@@ -2,6 +2,7 @@
 #include <di/util/rebindable_box.h>
 #include <dius/test/prelude.h>
 
+namespace util_swap {
 constexpr void basic() {
     static_assert(di::concepts::Swappable<int>);
     static_assert(!di::concepts::SwappableWith<int, long>);
@@ -83,3 +84,4 @@ TESTC(util_swap, basic)
 TESTC(util_swap, custom)
 TESTC(util_swap, non_assignable)
 TESTC(util_swap, move_only)
+}

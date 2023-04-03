@@ -1,7 +1,9 @@
-#include <ccpp/bits/config.h>
 #include <di/prelude.h>
+#include <string.h>
 
-extern "C" unsigned char* memcpy(unsigned char* __restrict dest, unsigned char const* __restrict src, size_t count) {
-    di::copy(src, src + count, dest);
+extern "C" void* memcpy(void* __restrict dest, void const* __restrict src, size_t count) {
+    auto* dest_typed = (unsigned char*) dest;
+    auto* src_typed = (unsigned char const*) src;
+    di::copy(src_typed, src_typed + count, dest_typed);
     return dest;
 }

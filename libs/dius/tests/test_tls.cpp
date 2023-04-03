@@ -1,8 +1,9 @@
 #include <dius/test/prelude.h>
 
+namespace tls {
 constinit thread_local int x = 42;
 
-static void tls() {
+static void basic() {
     ASSERT_EQ(x, 42);
     x = 44;
     di::compiler_barrier();
@@ -26,4 +27,5 @@ static void tls() {
     ASSERT_EQ(x, 44);
 }
 
-TEST(dius, tls)
+TEST(tls, basic)
+}

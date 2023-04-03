@@ -28,7 +28,7 @@ int getopt_implementation(int argc, char* const argv[], char const* optstring, c
         fprintf(stderr, "Getopt %c is not supported.\n", optstring[0]);
     }
 
-    bool short_only = longopts != nullptr;
+    bool short_only = longopts == nullptr;
     bool strict_mode = false;
     if (optstring[0] == ':') {
         strict_mode = true;

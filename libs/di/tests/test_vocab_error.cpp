@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace vocab_error {
 constexpr void basic() {
     di::GenericCode e = di::BasicError::OutOfRange;
     ASSERT(!e.success());
@@ -21,3 +22,4 @@ void erased() {
 
 TESTC(vocab_error, basic)
 TEST(vocab_error, erased)
+}

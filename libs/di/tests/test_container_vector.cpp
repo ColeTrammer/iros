@@ -2,6 +2,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace container_vector {
 constexpr void basic() {
     auto v = di::Vector<int> {};
     ASSERT(v.empty());
@@ -198,3 +199,4 @@ TESTC(container_vector, to)
 TESTC(container_vector, clone)
 TESTC(container_vector, compare)
 TESTC(container_vector, static_)
+}

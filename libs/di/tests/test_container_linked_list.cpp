@@ -2,6 +2,7 @@
 #include <dius/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace container_linked_list {
 constexpr void basic() {
     auto x = di::LinkedList<int> {};
 
@@ -63,3 +64,4 @@ constexpr void splice() {
 
 TESTC_CLANG(container_linked_list, basic)
 TESTC_CLANG(container_linked_list, splice)
+}

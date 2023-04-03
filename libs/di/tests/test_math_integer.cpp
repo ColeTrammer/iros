@@ -1,5 +1,6 @@
 #include <dius/test/prelude.h>
 
+namespace math_integer {
 template<di::concepts::SignedIntegral T>
 constexpr void do_midpoint_signed_test() {
     T a = di::NumericLimits<T>::min;
@@ -91,3 +92,4 @@ constexpr void abs_diff() {
 
 TESTC(math_integer, midpoint)
 TESTC(math_integer, abs_diff)
+}

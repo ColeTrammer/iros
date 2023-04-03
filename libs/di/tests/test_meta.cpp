@@ -7,6 +7,7 @@
 #include <di/meta/make_index_sequence.h>
 #include <di/prelude.h>
 
+namespace meta {
 static_assert(di::SameAs<di::meta::Decay<int const&&>, int>);
 static_assert(di::SameAs<di::meta::Decay<bool[42]>, bool*>);
 
@@ -59,3 +60,4 @@ static_assert(di::SameAs<di::meta::TupleElements<di::Tuple<int, long>>, di::meta
 static_assert(di::SameAs<di::Tuple<long>, di::meta::Type<di::meta::CustomCommonType<di::Tuple<int>, di::Tuple<long>>>>);
 static_assert(di::SameAs<int const&, di::meta::CommonReference<int const&, int&&>>);
 static_assert(di::SameAs<di::Tuple<int const&>, di::meta::CommonReference<di::Tuple<int const&>, di::Tuple<int&&>>>);
+}

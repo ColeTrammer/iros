@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace vocab_span {
 constexpr void basic() {
     auto x = di::to_array({ 1, 2, 3, 4, 5 });
     auto y = di::Span { x };
@@ -44,3 +45,4 @@ constexpr void tuple() {
 
 TESTC(vocab_span, basic)
 TESTC(vocab_span, tuple)
+}

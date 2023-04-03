@@ -1,5 +1,6 @@
 #include <dius/test/prelude.h>
 
+namespace function_container {
 static i32 do_calc(i32 x) noexcept {
     return x + 2;
 }
@@ -95,3 +96,4 @@ static void function_basic() {
 
 TEST(function_container, function_ref_basic)
 TEST(function_container, function_basic)
+}

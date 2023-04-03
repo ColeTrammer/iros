@@ -6,6 +6,7 @@
 
 #include <dius/test/prelude.h>
 
+namespace string_h {
 [[gnu::noinline]] static char const* do_strchr(char const* s, int ch) {
     return strchr(s, ch);
 }
@@ -295,3 +296,4 @@ TEST(string_h, memcpy_)
 TEST(string_h, memmove_)
 TEST(string_h, memset_)
 TEST(string_h, memcmp_)
+}

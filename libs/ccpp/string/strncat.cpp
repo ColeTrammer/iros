@@ -1,4 +1,5 @@
 #include <di/prelude.h>
+#include <string.h>
 
 extern "C" char* strncat(char* __restrict dest, char const* __restrict src, size_t count) {
     auto dest_zstring = di::ZString(dest);

@@ -1,5 +1,6 @@
 #include <di/prelude.h>
 
+namespace container_concepts {
 static_assert(di::concepts::InputIterator<int*>);
 static_assert(di::concepts::ForwardIterator<int*>);
 static_assert(di::concepts::BidirectionalIterator<int*>);
@@ -116,3 +117,4 @@ static_assert(di::concepts::BorrowedContainer<decltype(x)&>);
 static_assert(di::concepts::BorrowedContainer<S&>);
 static_assert(di::concepts::BorrowedContainer<F&>);
 static_assert(di::concepts::BorrowedContainer<G&>);
+}

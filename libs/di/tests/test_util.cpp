@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace util {
 constexpr void scope_exit() {
     int value = 5;
     {
@@ -78,3 +79,4 @@ constexpr void strong_int() {
 TESTC(util, scope_exit)
 TESTC(util, uuid)
 TESTC(util, strong_int)
+}

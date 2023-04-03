@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace vocab_pointer {
 struct X {
     constexpr explicit X(int x_) : x(x_) {}
 
@@ -79,3 +80,4 @@ static void arc() {
 TESTC(vocab_pointer, box)
 TESTC(vocab_pointer, rc)
 TEST(vocab_pointer, arc)
+}

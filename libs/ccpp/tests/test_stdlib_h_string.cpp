@@ -6,6 +6,7 @@
 
 #include <dius/test/prelude.h>
 
+namespace stdlib_h {
 [[gnu::noinline]] static int do_atoi(char const* s) {
     return atoi(s);
 }
@@ -22,3 +23,4 @@ static void atoi_() {
 }
 
 TEST(stdlib_h, atoi_)
+}

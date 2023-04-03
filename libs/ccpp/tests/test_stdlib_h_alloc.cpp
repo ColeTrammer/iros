@@ -6,6 +6,7 @@
 
 #include <dius/test/prelude.h>
 
+namespace stdlib_h {
 static void malloc_free() {
     auto* a = di::black_box(malloc(42));
     ASSERT(a);
@@ -88,3 +89,4 @@ TEST(stdlib_h, malloc_free)
 TEST(stdlib_h, calloc_)
 TEST(stdlib_h, aligned_alloc_)
 TEST(stdlib_h, realloc_)
+}

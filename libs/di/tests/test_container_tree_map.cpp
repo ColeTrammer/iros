@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace container_tree_map {
 constexpr void basic() {
     auto x = di::zip(di::range(4), di::range(4)) | di::to<di::TreeMap>();
 
@@ -25,3 +26,4 @@ constexpr void basic() {
 }
 
 TESTC(container_tree_map, basic)
+}

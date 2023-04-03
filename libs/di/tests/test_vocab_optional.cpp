@@ -3,6 +3,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace vocab_optional {
 static_assert(sizeof(di::Optional<int&>) == sizeof(int*));
 
 constexpr void basic() {
@@ -286,3 +287,4 @@ TESTC(vocab_optional, swap)
 TESTC(vocab_optional, compare)
 TESTC(vocab_optional, container)
 TESTC(vocab_optional, void_optional)
+}

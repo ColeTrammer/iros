@@ -2,6 +2,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace vocab_variant {
 constexpr void basic() {
     auto v = di::Variant<int, short, long>(di::in_place_index<1>, 1);
     auto w = di::Variant<int, short, long>();
@@ -70,3 +71,4 @@ constexpr void basic() {
 }
 
 TESTC(vocab_variant, basic)
+}

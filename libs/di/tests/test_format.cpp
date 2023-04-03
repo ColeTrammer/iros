@@ -1,8 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
-#include <dius/prelude.h>
-
+namespace format {
 constexpr void basic() {
     auto s = di::present(u8"a{}"_sv, 42);
     ASSERT_EQ(s, u8"a42"_sv);
@@ -52,3 +51,4 @@ constexpr void basic() {
 }
 
 TESTC(format, basic)
+}

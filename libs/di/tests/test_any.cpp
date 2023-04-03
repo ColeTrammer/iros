@@ -1,5 +1,6 @@
 #include <dius/test/prelude.h>
 
+namespace any {
 struct X : di::Dispatcher<X, i32(di::This const&, i32)> {};
 
 constexpr inline auto xf = X {};
@@ -24,9 +25,11 @@ i32 tag_invoke(X, B const&, i32 y) {
     return y + 5;
 }
 
-struct Y : di::Dispatcher<Y, i32(di::This&), decltype([](auto&) {
-                              return 1;
-                          })> {};
+constexpr inline auto return_1 = [](auto&) {
+    return 1;
+};
+
+struct Y : di::Dispatcher<Y, i32(di::This&), decltype(return_1)> {};
 
 constexpr inline auto yf = Y {};
 
@@ -226,3 +229,4 @@ TEST(any, inline_)
 TEST(any, unique)
 TEST(any, hybrid)
 TEST(any, shared)
+}

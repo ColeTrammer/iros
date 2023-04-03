@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace container_tree_set {
 constexpr void basic() {
     di::TreeSet<int> x;
     x.clear();
@@ -125,3 +126,4 @@ TESTC(container_tree_set, accessors)
 TESTC(container_tree_set, erase)
 TESTC(container_tree_set, property)
 TESTC(container_tree_set, property2)
+}

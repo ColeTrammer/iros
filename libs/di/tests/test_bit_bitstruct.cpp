@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace bit_bitstruct {
 struct Granular : di::BitFlag<32 + 23> {};
 
 enum class IdtType : u8 { X, Y, Z };
@@ -18,3 +19,4 @@ constexpr void basic() {
 }
 
 TESTC(bit_bitstruct, basic)
+}

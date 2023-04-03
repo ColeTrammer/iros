@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace container_view {
 constexpr void basic() {
     int arr[] = { 1, 2, 3, 4, 5 };
     auto x = di::View { di::begin(arr), di::end(arr) };
@@ -621,3 +622,4 @@ TESTC(container_view, chunk_by)
 TESTC(container_view, cartesian_product)
 TESTC(container_view, common)
 TESTC(container_view, concat)
+}

@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace chrono_duration {
 constexpr void basic() {
     auto x = 100_ms;
     x += 50_ms;
@@ -16,3 +17,4 @@ constexpr void basic() {
 }
 
 TESTC(chrono_duration, basic)
+}

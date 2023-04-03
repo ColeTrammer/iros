@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace vocab_array {
 constexpr void to_array() {
     {
         int array[] = { 1, 2, 3, 4, 5 };
@@ -58,3 +59,4 @@ TESTC(vocab_array, to_array)
 TESTC(vocab_array, span)
 TESTC(vocab_array, tuple)
 TESTC(vocab_array, compare)
+}

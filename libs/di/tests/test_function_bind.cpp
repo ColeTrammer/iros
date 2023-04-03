@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace function_bind {
 struct M {
     int x;
 
@@ -100,3 +101,4 @@ TESTC(util_bind, compose)
 TESTC(util_bind, pipeline)
 TESTC(util_bind, curry)
 TESTC(util_bind, curry_back)
+}

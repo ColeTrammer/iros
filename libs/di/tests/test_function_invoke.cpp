@@ -3,6 +3,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace function_invoke {
 struct X {
     int y;
     constexpr int z(int p) const { return y + p; }
@@ -88,3 +89,4 @@ TESTC(util_invoke, function)
 TESTC(util_invoke, member_object)
 TESTC(util_invoke, member_function)
 TESTC(util_invoke, invoke_r_void)
+}

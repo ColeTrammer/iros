@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace function_generator {
 di::Generator<int> f() {
     co_yield 1;
     co_yield 2;
@@ -19,3 +20,4 @@ void basic() {
 }
 
 TEST(function_generator, basic)
+}

@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace container_algorithm {
 constexpr void minmax() {
     ASSERT_EQ(di::min(1, 2), 1);
     ASSERT_EQ(di::min({ 5, 4, 3, 2, 1 }), 1);
@@ -520,3 +521,4 @@ TESTC(container_algorithm, partition)
 TESTC(container_algorithm, permutation)
 TESTC(container_algorithm, binary_search)
 TESTC(container_algorithm, set)
+}

@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace container_path {
 constexpr void iteration() {
     auto do_test = [](auto&& path_view, auto&& expected_components) {
         auto r1 = path_view | di::to<di::Vector>();
@@ -173,3 +174,4 @@ TESTC(container_path, filename_ends_with)
 TESTC(container_path, path_basic)
 TESTC(container_path, path_addition)
 TESTC(container_path, strip_prefix)
+}

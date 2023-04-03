@@ -1,18 +1,21 @@
-extern "C" unsigned char const* strrchr(unsigned char const* str, int ch) {
-    auto needle = (char) ch;
+#include <string.h>
 
-    unsigned char const* result = nullptr;
-    if (*str == needle) {
-        result = str;
+extern "C" char* strrchr(char const* str, int ch) {
+    auto needle = (char) ch;
+    auto* str_typed = (unsigned char*) str;
+
+    unsigned char* result = nullptr;
+    if (*str_typed == needle) {
+        result = str_typed;
     }
-    if (*str == '\0') {
-        return result;
+    if (*str_typed == '\0') {
+        return (char*) result;
     }
 
     do {
-        if (*++str == needle) {
-            result = str;
+        if (*++str_typed == needle) {
+            result = str_typed;
         }
-    } while (*str != '\0');
-    return result;
+    } while (*str_typed != '\0');
+    return (char*) result;
 }

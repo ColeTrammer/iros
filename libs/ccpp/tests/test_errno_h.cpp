@@ -6,6 +6,7 @@
 
 #include <dius/test/prelude.h>
 
+namespace errno_h {
 static void errno_() {
 #if !defined(E2BIG) || !defined(errno) || !defined(EXDEV)
 #error "errno and constants are not macros"
@@ -25,3 +26,4 @@ static void errno_() {
 }
 
 TEST(errno_h, errno_)
+}

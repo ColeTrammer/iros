@@ -7,6 +7,7 @@
 
 #include <dius/test/prelude.h>
 
+namespace ctype_h {
 [[gnu::noinline]] static bool do_ctype(int (*f)(int), int ch) {
     return bool(di::black_box(f)(di::black_box(ch)));
 }
@@ -305,3 +306,4 @@ TEST(ctype_h, isprint_)
 TEST(ctype_h, ispunct_)
 TEST(ctype_h, tolower_)
 TEST(ctype_h, toupper_)
+}

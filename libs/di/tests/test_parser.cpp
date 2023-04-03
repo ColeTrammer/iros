@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace parser {
 constexpr void set() {
     auto pred = U'A'_m - U'Z'_m;
 
@@ -66,3 +67,4 @@ TESTC(parser, code_point)
 TESTC(parser, integer)
 TESTC(parser, integral_constant)
 TESTC(parser, alternation)
+}

@@ -126,6 +126,30 @@
             ]
         },
         {
+            "name": "iros_x86_64_unity",
+            "displayName": "Iros x64_64 Unity",
+            "description": "Compile Iros Unity Build for x86_64",
+            "binaryDir": "${sourceDir}/build/x86_64_unity",
+            "installDir": "${sourceDir}/build/x86_64_unity/sysroot/usr",
+            "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_x86_64.txt",
+            "cacheVariables": {
+                "IROS_BuildIris": "ON",
+                "IROS_BuildUserspace": "ON",
+                "IROS_BuildTests": "ON",
+                "IROS_BuildTools": "OFF",
+                "IROS_BuildCcpp": "ON",
+                "IROS_UseDiusRuntime": "ON",
+                "IROS_ExtraFlags": "-D__iros__=1",
+                "CMAKE_CXX_COMPILER_WORKS": "ON",
+                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64",
+                "CMAKE_UNITY_BUILD": "ON"
+            },
+            "inherits": [
+                "release_base",
+                "gcc_base"
+            ]
+        },
+        {
             "name": "dius_runtime_release",
             "displayName": "Dius Runtime Release Config",
             "description": "Release build with dius runtime enabled",
@@ -305,6 +329,22 @@
                 "debug_base",
                 "clang_base"
             ]
+        },
+        {
+            "name": "release_unity",
+            "displayName": "Release Unity Config",
+            "description": "Release build with unity mode enabled",
+            "binaryDir": "${sourceDir}/build/native/release-unity",
+            "installDir": "${sourceDir}/bulid/native/release-unity-install",
+            "cacheVariables": {
+                "IROS_UseDiusRuntime": "ON",
+                "IROS_BuildCcpp": "ON",
+                "CMAKE_UNITY_BUILD": "ON"
+            },
+            "inherits": [
+                "release_base",
+                "gcc_base"
+            ]
         }
     ],
     "buildPresets": [
@@ -332,6 +372,14 @@
             "name": "clang_iros_x86_64",
             "displayName": "Clang Iros x86_64",
             "configurePreset": "clang_iros_x86_64",
+            "inherits": [
+                "base"
+            ]
+        },
+        {
+            "name": "iros_x86_64_unity",
+            "displayName": "Iros x86_64 Unity",
+            "configurePreset": "iros_x86_64_unity",
             "inherits": [
                 "base"
             ]
@@ -450,6 +498,14 @@
             "inherits": [
                 "base"
             ]
+        },
+        {
+            "name": "release_unity",
+            "displayName": "Release Unity Build",
+            "configurePreset": "release_unity",
+            "inherits": [
+                "base"
+            ]
         }
     ],
     "testPresets": [
@@ -491,6 +547,14 @@
             "name": "clang_iros_x86_64",
             "displayName": "Clang Iros x86_64",
             "configurePreset": "clang_iros_x86_64",
+            "inherits": [
+                "base"
+            ]
+        },
+        {
+            "name": "iros_x86_64_unity",
+            "displayName": "Iros x86_64 Unity",
+            "configurePreset": "iros_x86_64_unity",
             "inherits": [
                 "base"
             ]
@@ -595,6 +659,14 @@
             "name": "clang_debug",
             "displayName": "Clang Debug Build",
             "configurePreset": "clang_debug",
+            "inherits": [
+                "base"
+            ]
+        },
+        {
+            "name": "release_unity",
+            "displayName": "Release Unity Build",
+            "configurePreset": "release_unity",
             "inherits": [
                 "base"
             ]

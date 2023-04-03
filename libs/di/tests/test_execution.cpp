@@ -2,6 +2,7 @@
 #include <dius/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace execution {
 static void meta() {
     auto sender = di::execution::just(5);
     auto sender2 = di::execution::just(5, 10);
@@ -262,3 +263,4 @@ TEST(execution, let)
 TEST(execution, transfer)
 TEST(execution, as)
 TEST(execution, with)
+}

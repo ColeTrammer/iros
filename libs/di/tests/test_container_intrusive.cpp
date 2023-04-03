@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace container_intrusive {
 constexpr void forward_list() {
     struct Node : di::IntrusiveForwardListNode<> {
         constexpr explicit Node(int v) : value(v) {}
@@ -73,3 +74,4 @@ constexpr void list() {
 
 TESTC(container_intrusive, forward_list)
 TESTC(container_intrusive, list)
+}

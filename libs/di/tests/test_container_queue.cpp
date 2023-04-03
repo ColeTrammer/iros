@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace container_queue {
 constexpr void priority_queue_basic() {
     auto x = di::PriorityQueue<i32> {};
     x.push(3);
@@ -70,3 +71,4 @@ TESTC(container_queue, priority_queue_basic)
 TESTC(container_queue, priority_queue_to)
 TESTC(container_queue, stack)
 TESTC_CLANG(container_queue, queue)
+}

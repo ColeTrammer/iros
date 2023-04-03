@@ -1,6 +1,7 @@
 #include <di/prelude.h>
 #include <dius/test/prelude.h>
 
+namespace sync_in_place_stop_source {
 static void basic() {
     static_assert(di::concepts::StoppableToken<di::InPlaceStopToken>);
     static_assert(di::concepts::StoppableTokenFor<di::InPlaceStopToken, di::Identity>);
@@ -50,3 +51,4 @@ static void basic() {
 }
 
 TEST(sync_in_place_stop_source, basic)
+}
