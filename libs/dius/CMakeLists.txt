@@ -15,13 +15,13 @@ target_link_libraries(dius PUBLIC Di::di)
 target_compile_definitions(dius PUBLIC DI_CUSTOM_ASSERT_HANDLER DI_CUSTOM_PLATFORM=<dius/platform.h>)
 
 if(UNIX AND NOT IROS_UseDiusRuntime)
-    target_sources(dius PRIVATE posix/thread.cpp)
+    target_sources(dius PRIVATE posix/thread.cpp posix/system/process.cpp)
 endif()
 
 if(LINUX)
     target_sources(
-        dius PRIVATE linux/filesystem/directory_iterator.cpp linux/filesystem/query.cpp linux/system/process.cpp
-                     linux/io_uring.cpp linux/sync_file.cpp memory_region.cpp
+        dius PRIVATE linux/filesystem/directory_iterator.cpp linux/filesystem/query.cpp linux/io_uring.cpp
+                     linux/sync_file.cpp memory_region.cpp
     )
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Iros")
     if(CMAKE_CROSSCOMPILING)
@@ -68,7 +68,7 @@ if(IROS_UseDiusRuntime)
     )
 
     if(LINUX)
-        target_sources(dius PRIVATE linux/thread.cpp)
+        target_sources(dius PRIVATE linux/thread.cpp linux/system/process.cpp)
 
         if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
             target_sources(dius PRIVATE linux/arch/x86_64/thread.cpp)

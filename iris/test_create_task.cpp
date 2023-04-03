@@ -10,12 +10,12 @@ extern "C" int main() {
         dius::println("Spawning task {}."_sv, i);
 
         auto args = di::single("/test_userspace"_tsv) | di::transform(di::to_owned) | di::to<di::Vector>();
-        (void) dius::system::Process(di::move(args)).swawn_and_wait();
+        (void) dius::system::Process(di::move(args)).spawn_and_wait();
     }
 
     {
         auto args = di::single("/test_read"_tsv) | di::transform(di::to_owned) | di::to<di::Vector>();
-        (void) dius::system::Process(di::move(args)).swawn_and_wait();
+        (void) dius::system::Process(di::move(args)).spawn_and_wait();
     }
 
     dius::println("Finished."_sv);

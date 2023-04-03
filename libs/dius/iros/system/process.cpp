@@ -1,7 +1,7 @@
 #include <dius/prelude.h>
 
 namespace dius::system {
-di::Result<void> Process::swawn_and_wait() && {
+di::Result<ProcessResult> Process::spawn_and_wait() && {
     auto arguments_as_view = m_arguments | di::transform([](di::TransparentString const& arg) {
                                  return arg.view();
                              }) |
@@ -11,9 +11,9 @@ di::Result<void> Process::swawn_and_wait() && {
     TRY(system_call<i32>(Number::set_task_arguments, tid, arguments_as_view.data(), arguments_as_view.size(), nullptr,
                          0));
     TRY(system_call<i32>(Number::load_executable, tid, m_arguments[0].data(), m_arguments[0].size()));
-    TRY(system_call<i32>(Number::start_task_and_block, tid));
+    auto exit_code = TRY(system_call<i32>(Number::start_task_and_block, tid));
 
-    return {};
+    return ProcessResult { exit_code, false };
 }
 
 void exit_thread() {

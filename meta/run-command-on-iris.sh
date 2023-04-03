@@ -34,7 +34,7 @@ rm -f "$IROS_INITRD"
 if [ "$2" = "-run=kernel_unit_test" ]; then
     EXECUTABLE_NAME="$2"
 else
-    cp "$2" "$IROS_BUILD_DIR"/initrd-run
+    cp "$2"* "$IROS_BUILD_DIR"/initrd-run
     EXECUTABLE_NAME="/$(basename $2)"
 fi
 

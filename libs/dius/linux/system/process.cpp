@@ -1,17 +1,7 @@
 #include <dius/prelude.h>
 #include <linux/sched.h>
-
-#ifdef DIUS_USE_RUNTIME
 #include <linux/signal.h>
 #include <linux/wait.h>
-#else
-#include <signal.h>
-#include <sys/wait.h>
-#endif
-
-#ifndef DIUS_USE_RUNTIME
-extern "C" [[noreturn]] void exit(int);
-#endif
 
 namespace dius::system {
 static auto s_envp = static_cast<char**>(nullptr);
@@ -20,7 +10,7 @@ static auto s_envp = static_cast<char**>(nullptr);
     s_envp = envp;
 }
 
-di::Result<void> Process::swawn_and_wait() && {
+di::Result<ProcessResult> Process::spawn_and_wait() && {
     // NOTE: TransparentString objects are guaranteed to be null-terminated on Linux.
     auto null_terminated_args =
         di::concat(m_arguments | di::transform(di::cdata), di::single(nullptr)) | di::to<di::Vector>();
@@ -55,24 +45,24 @@ di::Result<void> Process::swawn_and_wait() && {
     int status;
     TRY(system_call<ProcessId>(Number::wait4, -1, &status, 0, nullptr));
 
-    return {};
+    // NOTE: Linux's wait.h header does not define WIFEXITED, WEXITSTATUS, WIFSIGNALED, and WTERMSIG, so it is done
+    //       manually here. In the future, it would be nice to take these definitions from libccpp's headers.
+    auto const signal = (status & 0x7F);
+    if (signal == 0) {
+        // Exited.
+        return ProcessResult { (status & 0xFF00) >> 8, false };
+    }
+    // Signaled.
+    return ProcessResult { (status & 0x7F), true };
 }
 
 void exit_thread() {
-#ifdef DIUS_USE_RUNTIME
     (void) dius::system::system_call<i32>(dius::system::Number::exit, 0);
     di::unreachable();
-#else
-    pthread_exit(nullptr);
-#endif
 }
 
 void exit_process(int code) {
-#ifdef DIUS_USE_RUNTIME
     (void) dius::system::system_call<i32>(dius::system::Number::exit_group, code);
     di::unreachable();
-#else
-    exit(code);
-#endif
 }
 }

@@ -17,7 +17,7 @@ di::Result<void> main(Args&) {
 
         auto owned_args = command | di::split(' ') | di::transform(di::to_owned) | di::to<di::Vector>();
 
-        TRY(dius::system::Process { di::move(owned_args) }.swawn_and_wait());
+        TRY(dius::system::Process { di::move(owned_args) }.spawn_and_wait());
 
         command.clear();
     }
