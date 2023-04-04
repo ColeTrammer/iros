@@ -1,3 +1,5 @@
+#pragma once
+
 namespace iris {
 enum class Error : unsigned long {
     Success = 0,

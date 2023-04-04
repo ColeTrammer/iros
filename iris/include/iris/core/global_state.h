@@ -2,6 +2,7 @@
 
 #include <di/prelude.h>
 #include <iris/core/config.h>
+#include <iris/core/error.h>
 #include <iris/core/scheduler.h>
 #include <iris/core/task.h>
 #include <iris/core/task_namespace.h>
