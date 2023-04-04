@@ -1,11 +1,6 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.231.6/containers/docker-existing-docker-compose
-// If you want to run as a non-root user in the container, see .devcontainer/docker-compose.yml.
 {
     "name": "Iros",
-    "dockerComposeFile": [
-        "docker-compose.yml"
-    ],
+    "dockerComposeFile": ["docker-compose.yml"],
     "service": "iros",
     "workspaceFolder": "/build/iros",
     "customizations": {
@@ -24,57 +19,9 @@
                 "llvm-vs-code-extensions.vscode-clangd",
                 "vadimcn.vscode-lldb",
                 "cheshirekow.cmake-format",
-                "GitHub.vscode-pull-request-github"
-            ],
-            "settings": {
-                "search.exclude": {
-                    "**/.git": true,
-                    "build/**": true,
-                    "legacy/**": true,
-                    "cross/**": true,
-                    ".cache/**": true,
-                    "/usr/include/**": true,
-                },
-                "files.exclude": {
-                    "**/.git": true,
-                    "build/**": true,
-                    "legacy/**": true,
-                    "cross/**": true,
-                    ".cache/**": true,
-                    "/usr/include/**": true
-                },
-                "testExplorer.useNativeTesting": true,
-                "cmake.exportCompileCommandsFile": true,
-                "cmake.copyCompileCommands": "${workspaceRoot}/build/compile_commands.json",
-                "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-                "C_Cpp.autoAddFileAssociations": false,
-                "C_Cpp.intelliSenseEngine": "disabled",
-                "clangd.path": "/usr/bin/clangd-16",
-                "clangd.arguments": [
-                    "--query-driver=/usr/local/bin/*,/usr/bin/*,${workspaceFolder}/cross/bin/*",
-                    "--header-insertion=never"
-                ],
-                "livePreview.autoRefreshPreview": "Never",
-                "livePreview.defaultPreviewPath": "build/x86_64/html",
-                "githubIssues.issueBranchTitle": "i${issueNumber}-${sanitizedIssueTitle}",
-                "files.insertFinalNewline": true,
-                "editor.rulers": [
-                    120
-                ],
-                "cmake.configureOnOpen": false,
-                "prettier.tabWidth": 2,
-                "prettier.printWidth": 120,
-                "prettier.documentSelectors": [
-                    "*.md",
-                    ".clang-format",
-                    ".clang-tidy",
-                    ".clangd",
-                    "*.yml"
-                ],
-                "[json]": {
-                    "editor.defaultFormatter": "vscode.json-language-features"
-                }
-            }
+                "GitHub.vscode-pull-request-github",
+                "ms-vscode.hexeditor"
+            ]
         }
     },
     "remoteUser": "iris"

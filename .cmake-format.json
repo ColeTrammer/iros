@@ -1,15 +1,10 @@
 {
     "_help_parse": "Options affecting listfile parsing",
     "parse": {
-        "_help_additional_commands": [
-            "Specify structure for custom cmake functions"
-        ],
+        "_help_additional_commands": ["Specify structure for custom cmake functions"],
         "additional_commands": {
             "foo": {
-                "flags": [
-                    "BAR",
-                    "BAZ"
-                ],
+                "flags": ["BAR", "BAZ"],
                 "kwargs": {
                     "HEADERS": "*",
                     "SOURCES": "*",
@@ -17,32 +12,20 @@
                 }
             }
         },
-        "_help_override_spec": [
-            "Override configurations per-command where available"
-        ],
+        "_help_override_spec": ["Override configurations per-command where available"],
         "override_spec": {},
-        "_help_vartags": [
-            "Specify variable tags."
-        ],
+        "_help_vartags": ["Specify variable tags."],
         "vartags": [],
-        "_help_proptags": [
-            "Specify property tags."
-        ],
+        "_help_proptags": ["Specify property tags."],
         "proptags": []
     },
     "_help_format": "Options affecting formatting.",
     "format": {
-        "_help_disable": [
-            "Disable formatting entirely, making cmake-format a no-op"
-        ],
+        "_help_disable": ["Disable formatting entirely, making cmake-format a no-op"],
         "disable": false,
-        "_help_line_width": [
-            "How wide to allow formatted cmake files"
-        ],
+        "_help_line_width": ["How wide to allow formatted cmake files"],
         "line_width": 120,
-        "_help_tab_size": [
-            "How many spaces to tab for indent"
-        ],
+        "_help_tab_size": ["How many spaces to tab for indent"],
         "tab_size": 4,
         "_help_use_tabchars": [
             "If true, lines are indented using tab characters (utf-8",
@@ -82,10 +65,7 @@
             "with a space"
         ],
         "separate_ctrl_name_with_space": false,
-        "_help_separate_fn_name_with_space": [
-            "If true, separate function names from parentheses with a",
-            "space"
-        ],
+        "_help_separate_fn_name_with_space": ["If true, separate function names from parentheses with a", "space"],
         "separate_fn_name_with_space": false,
         "_help_dangle_parens": [
             "If a statement is wrapped to more than one line, than dangle",
@@ -117,21 +97,13 @@
             "this many lines, then reject the layout."
         ],
         "max_lines_hwrap": 2,
-        "_help_line_ending": [
-            "What style line endings to use in the output."
-        ],
+        "_help_line_ending": ["What style line endings to use in the output."],
         "line_ending": "unix",
-        "_help_command_case": [
-            "Format command names consistently as 'lower' or 'upper' case"
-        ],
+        "_help_command_case": ["Format command names consistently as 'lower' or 'upper' case"],
         "command_case": "canonical",
-        "_help_keyword_case": [
-            "Format keywords consistently as 'lower' or 'upper' case"
-        ],
+        "_help_keyword_case": ["Format keywords consistently as 'lower' or 'upper' case"],
         "keyword_case": "unchanged",
-        "_help_always_wrap": [
-            "A list of command names which should always be wrapped"
-        ],
+        "_help_always_wrap": ["A list of command names which should always be wrapped"],
         "always_wrap": [],
         "_help_enable_sort": [
             "If true, the argument lists which are known to be sortable",
@@ -159,14 +131,9 @@
     },
     "_help_markup": "Options affecting comment reflow and formatting.",
     "markup": {
-        "_help_bullet_char": [
-            "What character to use for bulleted lists"
-        ],
+        "_help_bullet_char": ["What character to use for bulleted lists"],
         "bullet_char": "*",
-        "_help_enum_char": [
-            "What character to use as punctuation after numerals in an",
-            "enumerated list"
-        ],
+        "_help_enum_char": ["What character to use as punctuation after numerals in an", "enumerated list"],
         "enum_char": ".",
         "_help_first_comment_is_literal": [
             "If comment markup is enabled, don't reflow the first comment",
@@ -209,24 +176,16 @@
             "length to fill the column"
         ],
         "canonicalize_hashrulers": true,
-        "_help_enable_markup": [
-            "enable comment markup parsing and reflow"
-        ],
+        "_help_enable_markup": ["enable comment markup parsing and reflow"],
         "enable_markup": true
     },
     "_help_lint": "Options affecting the linter",
     "lint": {
-        "_help_disabled_codes": [
-            "a list of lint codes to disable"
-        ],
+        "_help_disabled_codes": ["a list of lint codes to disable"],
         "disabled_codes": [],
-        "_help_function_pattern": [
-            "regular expression pattern describing valid function names"
-        ],
+        "_help_function_pattern": ["regular expression pattern describing valid function names"],
         "function_pattern": "[0-9a-z_]+",
-        "_help_macro_pattern": [
-            "regular expression pattern describing valid macro names"
-        ],
+        "_help_macro_pattern": ["regular expression pattern describing valid macro names"],
         "macro_pattern": "[0-9A-Z_]+",
         "_help_global_var_pattern": [
             "regular expression pattern describing valid names for",
@@ -268,13 +227,9 @@
             "within a loop in before considering the loop a parser."
         ],
         "max_conditionals_custom_parser": 2,
-        "_help_min_statement_spacing": [
-            "Require at least this many newlines between statements"
-        ],
+        "_help_min_statement_spacing": ["Require at least this many newlines between statements"],
         "min_statement_spacing": 1,
-        "_help_max_statement_spacing": [
-            "Require no more than this many newlines between statements"
-        ],
+        "_help_max_statement_spacing": ["Require no more than this many newlines between statements"],
         "max_statement_spacing": 2,
         "max_returns": 6,
         "max_branches": 12,
@@ -284,14 +239,9 @@
     },
     "_help_encode": "Options affecting file encoding",
     "encode": {
-        "_help_emit_byteorder_mark": [
-            "If true, emit the unicode byte-order mark (BOM) at the start",
-            "of the file"
-        ],
+        "_help_emit_byteorder_mark": ["If true, emit the unicode byte-order mark (BOM) at the start", "of the file"],
         "emit_byteorder_mark": false,
-        "_help_input_encoding": [
-            "Specify the encoding of the input file. Defaults to utf-8"
-        ],
+        "_help_input_encoding": ["Specify the encoding of the input file. Defaults to utf-8"],
         "input_encoding": "utf-8",
         "_help_output_encoding": [
             "Specify the encoding of the output file. Defaults to utf-8.",

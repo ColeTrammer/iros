@@ -5,7 +5,7 @@
         "legacy/**": true,
         "cross/**": true,
         ".cache/**": true,
-        "/usr/include/**": true,
+        "/usr/include/**": true
     },
     "files.exclude": {
         "**/.git": true,
@@ -14,6 +14,13 @@
         "cross/**": true,
         ".cache/**": true,
         "/usr/include/**": true
+    },
+    "files.associations": {
+        "*.json": "json",
+        ".prettierrc": "json",
+        ".clang-format": "yaml",
+        ".clang-tidy": "yaml",
+        ".clangd": "yaml"
     },
     "testExplorer.useNativeTesting": true,
     "cmake.exportCompileCommandsFile": true,
@@ -29,21 +36,14 @@
     "livePreview.autoRefreshPreview": "Never",
     "livePreview.defaultPreviewPath": "build/x86_64/html",
     "githubIssues.issueBranchTitle": "i${issueNumber}-${sanitizedIssueTitle}",
+    "editor.tabSize": 4,
     "files.insertFinalNewline": true,
-    "editor.rulers": [
-        120
-    ],
+    "editor.rulers": [120],
     "cmake.configureOnOpen": false,
-    "prettier.tabWidth": 2,
-    "prettier.printWidth": 120,
-    "prettier.documentSelectors": [
-        "*.md",
-        ".clang-format",
-        ".clang-tidy",
-        ".clangd",
-        "*.yml"
-    ],
     "[json]": {
-        "editor.defaultFormatter": "vscode.json-language-features"
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[dockercompose]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
     }
 }

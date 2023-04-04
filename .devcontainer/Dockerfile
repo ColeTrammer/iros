@@ -11,6 +11,8 @@ RUN sudo apt-get -y update \
     && sudo ./llvm.sh 16 all \
     && pip install cmake-format \
     && rm llvm.sh
+RUN sudo apt install -y npm \
+    && sudo npm install -g prettier
 RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID $USERNAME -d /home/$USERNAME -m -k /dev/skel -s /bin/bash \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \

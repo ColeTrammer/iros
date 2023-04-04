@@ -13,6 +13,7 @@
         "llvm-vs-code-extensions.vscode-clangd",
         "vadimcn.vscode-lldb",
         "cheshirekow.cmake-format",
-        "GitHub.vscode-pull-request-github"
+        "GitHub.vscode-pull-request-github",
+        "ms-vscode.hexeditor"
     ]
 }
