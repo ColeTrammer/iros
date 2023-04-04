@@ -5,209 +5,229 @@
 #include <string.h>
 
 namespace ccpp {
-static char* nextchar = nullptr;
-static int first_non_opt = -1;
+static char* next_short_char = nullptr;
 
-static bool is_short_opt(char const* str, bool short_only) {
-    if (short_only) {
-        return str[0] == '-' && strcmp(str, "-") != 0 && strcmp(str, "--") != 0;
-    }
-    return str[0] == '-' && str[1] != '\0' && str[1] != '-';
-}
-
-static bool is_long_opt(char const* str, bool short_only) {
-    if (short_only) {
-        return false;
-    }
-    return str[0] == '-' && str[1] == '-' && str[2] != '\0';
-}
-
-int getopt_implementation(int argc, char* const argv[], char const* optstring, const struct option* longopts,
-                          int* longindex, bool long_only) {
-    if (optstring[0] == '+' || optstring[0] == '-') {
-        fprintf(stderr, "Getopt %c is not supported.\n", optstring[0]);
+static di::Optional<int> handle_short_options(int argc, di::Span<char*> argv, di::TransparentStringView opts,
+                                              bool strict_mode, bool print_errors) {
+    // There are short options if next_short_char is set.
+    if (!next_short_char) {
+        return di::nullopt;
     }
 
-    bool short_only = longopts == nullptr;
-    bool strict_mode = false;
-    if (optstring[0] == ':') {
-        strict_mode = true;
+    // Reset if there are no short options left.
+    if (*next_short_char == '\0') {
+        next_short_char = nullptr;
+        optind++;
+        return di::nullopt;
     }
 
-    bool show_errors = (opterr != 0) && !strict_mode;
-    bool optional = false;
-    bool requires_value = false;
-
-    // Optind was reset, so reset this useless auxillary variable ???
-    if (optind < first_non_opt) {
-        first_non_opt = -1;
+    // Look up the short name in opts.
+    auto short_name = *next_short_char++;
+    auto [match, after_match] = opts.find(short_name);
+    if (match == opts.end()) {
+        if (print_errors) {
+            (void) fprintf(stderr, "%s: unknown argument '-%c'\n", argv[0], short_name);
+        }
+        optopt = short_name;
+        return '?';
     }
 
-    while (optind < argc) {
-        // "--" indicates every argument the follows it is positional, so just return -1.
-        if (strcmp(argv[optind], "--") == 0) {
-            optind++;
-            return -1;
+    // If a value is required, either use the rest of the current argument or the next argument.
+    if (*after_match == ':') {
+        auto* value = next_short_char;
+        if (*value == '\0') {
+            if (optind + 1 >= argc) {
+                if (print_errors) {
+                    (void) fprintf(stderr, "%s: argument '-%c' must be passed a value\n", argv[0], short_name);
+                }
+                optopt = short_name;
+                optind++;
+                next_short_char = nullptr;
+                return strict_mode ? ':' : '?';
+            }
+            value = argv[++optind];
         }
 
-        if (!long_only && is_short_opt(argv[optind], short_only)) {
-            nextchar = nextchar ? nextchar : (argv[optind] + 1);
-            char first = *nextchar;
-            char* opt_specifier = strchr(optstring, first);
+        optarg = value;
+        optind++;
+        next_short_char = nullptr;
+        return short_name;
+    }
 
-            // Argument specifier does not exist
-            if (opt_specifier == nullptr) {
-                if (show_errors) {
-                    fprintf(stderr, "Unknown option: `%c'\n", first);
-                }
+    // No value, just return.
+    optarg = nullptr;
+    return short_name;
+}
 
-                optopt = first;
-                goto setup_next_call;
-            }
-
-            optional = opt_specifier[1] == ':' && opt_specifier[2] == ':';
-            requires_value = !optional && opt_specifier[1] == ':';
-
-            if (optional || requires_value) {
-                char* value = nextchar + 1;
-                if (value[0] == '\0') {
-                    if (optional) {
-                        optarg = nullptr;
-                        goto consume_arg_and_return;
-                    }
-
-                    /* Look at next argv if not optional */
-                    value = argv[++optind];
-                    if (value == nullptr) {
-                        if (show_errors) {
-                            fprintf(stderr, "Option `%c' requires an argument, but none was specified\n", first);
-                        }
-
-                        optopt = first;
-
-                        nextchar = nullptr;
-                        return strict_mode ? ':' : '?';
-                    }
-                }
-
-                optarg = value;
-
-            consume_arg_and_return:
-                optind++;
-                nextchar = nullptr;
-                return first;
-            }
-
-        setup_next_call:
-            nextchar++;
-            if (*nextchar == '\0') {
-                optind++;
-                nextchar = nullptr;
-            }
-
-            return opt_specifier ? first : '?';
+static di::Optional<int> handle_long_options(int argc, di::Span<char*> argv, di::TransparentStringView arg,
+                                             di::Span<option const> longopts, int* longindex, bool strict_mode,
+                                             bool print_errors, bool long_only) {
+    // A candidate long argument either starts with "--" or "-" if long_only is true.
+    auto long_arg = [&] -> di::Optional<di::TransparentStringView> {
+        if (arg.starts_with("--"_tsv)) {
+            return arg | di::drop(2);
         }
+        if (long_only) {
+            return arg | di::drop(1);
+        }
+        return di::nullopt;
+    }();
 
-        if (is_long_opt(argv[optind], short_only)) {
-            char* name = argv[optind] + 2;
+    if (!long_arg) {
+        return di::nullopt;
+    }
 
-            char* value = strchr(name, '=');
-            if (value) {
-                value++;
-            }
+    // Find the long name, which strips the argument value if it exists.
+    auto [long_name, long_value] = [&] -> di::Tuple<di::TransparentStringView, char const*> {
+        auto [equal, after_equal] = long_arg->find('=');
+        if (equal != long_arg->end()) {
+            long_arg->replace_end(equal);
+            return di::make_tuple(*long_arg, after_equal);
+        }
+        return di::make_tuple(*long_arg, nullptr);
+    }();
 
-            size_t name_len = value ? (size_t) (value - name - 1) : strlen(name);
+    // Match the long option.
+    auto const* match = di::find_if(longopts, [&](option const& opt) {
+        return di::container::equal(long_name, di::ZCString(opt.name));
+    });
+    if (match == longopts.end()) {
+        // If long only is true, and the current argument only started with '-', we have to try short options.
+        if (long_only && !arg.starts_with("--"_tsv)) {
+            return di::nullopt;
+        }
+        if (print_errors) {
+            (void) fprintf(stderr, "%s: unknown argument '%s'\n", argv[0], arg.data());
+        }
+        optind++;
+        return '?';
+    }
 
-            const struct option* opt = nullptr;
-            const struct option null_opt = { 0, 0, 0, 0 };
-            if (longopts) {
-                for (const struct option* iter = longopts; memcmp(iter, &null_opt, sizeof(*iter)) != 0; iter++) {
-                    if (strncmp(name, iter->name, name_len) == 0) {
-                        opt = iter;
-                        break;
-                    }
+    switch (match->has_arg) {
+        case no_argument: {
+            if (long_value) {
+                if (print_errors) {
+                    (void) fprintf(stderr, "%s: argument '%s' cannot accept a value\n", argv[0], arg.data());
                 }
-            }
-
-            if (longindex) {
-                *longindex = opt - longopts;
-            }
-
-            if (!opt) {
-                if (show_errors) {
-                    fprintf(stderr, "Unknown option: `%s'\n", argv[optind]);
-                }
-
                 optind++;
-                return '?';
+                return strict_mode ? ':' : '?';
             }
-
-            if (opt->has_arg == no_argument && value) {
-                if (show_errors) {
-                    fprintf(stderr, "Option `%s' should not have a value\n", argv[optind]);
-                }
-
-                optind++;
-                return '?';
+            optarg = nullptr;
+            break;
+        }
+        case optional_argument:
+            if (long_value) {
+                optarg = const_cast<char*>(long_value);
+            } else {
+                optarg = nullptr;
             }
-
-            if (opt->has_arg == required_argument && !value) {
-                value = argv[++optind];
-                if (!value) {
-                    if (show_errors) {
-                        fprintf(stderr, "Option `%s' requires an argument, but none was specified\n", name);
+            break;
+        case required_argument:
+            if (!long_value) {
+                if (optind + 1 >= argc) {
+                    if (print_errors) {
+                        (void) fprintf(stderr, "%s: argument '%s' must be passed a value\n", argv[0], arg.data());
                     }
-
+                    optind++;
                     return strict_mode ? ':' : '?';
                 }
+                optarg = argv[++optind];
+            } else {
+                optarg = const_cast<char*>(long_value);
             }
-
-            int val = opt->val;
-            if (opt->flag) {
-                *opt->flag = val;
-                val = 0;
-            }
-            optarg = value;
-            optind++;
-            return val;
-        }
-
-        if (first_non_opt != -1) {
-            optarg = argv[++optind];
-            return -1;
-        }
-
-        // First check if there is no non options left or else we could shift things forever
-        bool all_not_options = true;
-        for (int i = optind; i < argc; i++) {
-            if ((!long_only && is_short_opt(argv[i], short_only)) || is_long_opt(argv[i], short_only)) {
-                all_not_options = false;
-                break;
-            }
-        }
-
-        if (all_not_options) {
-            optarg = argv[optind];
-            first_non_opt = optind;
-            return -1;
-        }
-
-        int next_arg = -1;
-        for (int i = optind + 1; i < argc; i++) {
-            if ((!long_only && is_short_opt(argv[i], short_only)) || (is_long_opt(argv[i], short_only))) {
-                next_arg = i;
-                break;
-            }
-        }
-
-        ASSERT(next_arg != -1);
-        char* temp = ((char**) argv)[next_arg];
-        for (int i = next_arg; i > optind; i--) {
-            ((char**) argv)[i] = ((char**) argv)[i - 1];
-        }
-        ((char**) argv)[optind] = temp;
+            break;
+        default:
+            di::unreachable();
     }
 
-    return -1;
+    // Return the found argument.
+    optind++;
+    if (longindex) {
+        *longindex = int(match - longopts.begin());
+    }
+    if (match->flag) {
+        *match->flag = match->val;
+        return 0;
+    }
+    return match->val;
+}
+
+// This function implements both POSIX getopt and the GNU extension getopt_long.
+// https://pubs.opengroup.org/onlinepubs/009696799/functions/getopt.html
+// https://www.gnu.org/software/libc/manual/html_node/Getopt-Long-Options.html
+int getopt_implementation(int argc, char* const argv_in[], char const* optstring, const struct option* longopts_in,
+                          int* longindex, bool long_only) {
+    // NOTE: this const cast is required because the getopt interface is not const correct (at least not the GNU
+    // extension).
+    auto argv = di::Span { (char**) argv_in, (char**) argv_in + argc };
+    auto longopts = di::Span { longopts_in, 0 };
+    if (longopts_in) {
+        auto const* longopts_end = longopts_in;
+        while (longopts_end->name != nullptr) {
+            longopts_end++;
+        }
+        longopts = di::Span { longopts_in, longopts_end };
+    }
+    auto opts = di::TransparentStringView(optstring, strlen(optstring));
+    auto strict_mode = false;
+    if (opts.starts_with(':')) {
+        opts = opts | di::drop(1);
+        strict_mode = true;
+    }
+    auto print_errors = (opterr != 0) && !strict_mode;
+
+    // Optind was reset, so reset the internal state.
+    if (optind < 1) {
+        optind = 1;
+        next_short_char = nullptr;
+    }
+
+    // Handle any short options if present.
+    if (auto result = handle_short_options(argc, argv, opts, strict_mode, print_errors); result.has_value()) {
+        return result.value();
+    }
+
+    // Skip any positional arguments.
+    auto original_optind = optind;
+    auto skipped_count = 0;
+    for (; optind < argc; optind++) {
+        // If arg doesn't start with '-', or is exactly '-', then it is a positional argument.
+        if (argv[optind][0] == '-' && argv[optind][1] != '\0') {
+            break;
+        }
+        skipped_count++;
+    }
+
+    // Setup a roll-back to move any skipped arguments after any argument subsequently parsed.
+    auto guard = di::ScopeExit([&] {
+        if (skipped_count > 0) {
+            auto args = di::Span { argv.begin() + original_optind, argv.begin() + optind };
+            di::rotate(args, args.begin() + skipped_count);
+            optind -= skipped_count;
+        }
+    });
+
+    // If there are no more arguments, then return.
+    if (optind >= argc) {
+        return -1;
+    }
+
+    auto arg = di::TransparentStringView(argv[optind], strlen(argv[optind]));
+
+    // "--" indicates every argument that follows it is positional, so return.
+    if (arg == "--"_tsv) {
+        optind++;
+        return -1;
+    }
+
+    // Handle any long options if present.
+    if (auto result = handle_long_options(argc, argv, arg, longopts, longindex, strict_mode, print_errors, long_only);
+        result.has_value()) {
+        return result.value();
+    }
+
+    // At this point, arg must be a short option.
+    next_short_char = const_cast<char*>(arg.data()) + 1;
+    return *handle_short_options(argc, argv, opts, strict_mode, print_errors);
 }
 }
