@@ -20,7 +20,8 @@
         ".prettierrc": "json",
         ".clang-format": "yaml",
         ".clang-tidy": "yaml",
-        ".clangd": "yaml"
+        ".clangd": "yaml",
+        "CMakeToolchain*.txt": "cmake"
     },
     "testExplorer.useNativeTesting": true,
     "cmake.exportCompileCommandsFile": true,
