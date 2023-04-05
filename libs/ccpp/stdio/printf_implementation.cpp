@@ -160,7 +160,7 @@ printf_implementation(di::FunctionRef<di::Expected<void, dius::PosixCode>(di::Tr
             }
             written += width;
         } else if (*format == 's') {
-            char const* str;
+            char const* str = nullptr;
             if (*format == 's') {
                 str = va_arg(args, char const*);
             }
