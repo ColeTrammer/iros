@@ -9,6 +9,7 @@
 #include <iris/core/task.h>
 #include <iris/fs/debug_file.h>
 #include <iris/fs/initrd.h>
+#include <iris/hw/acpi/acpi.h>
 #include <iris/mm/address_space.h>
 #include <iris/mm/map_physical_address.h>
 #include <iris/mm/page_frame_allocator.h>
@@ -56,16 +57,18 @@ static auto kernel_command_line =
 void iris_main() {
     iris::println("Starting architecture independent initialization..."_sv);
 
+    iris::acpi::init_acpi();
+
     if (!kernel_file_request.response) {
         println("No limine kernel file response, panicking..."_sv);
-        return;
+        ASSERT(false);
     }
 
     auto bootloader_command_line = di::ZString(kernel_file_request.response->kernel_file->cmdline);
     auto command_line_size = di::distance(bootloader_command_line);
     if (command_line_size > 4096) {
         println("Kernel command line is too large, panicking..."_sv);
-        return;
+        ASSERT(false);
     }
 
     for (auto c : bootloader_command_line) {
