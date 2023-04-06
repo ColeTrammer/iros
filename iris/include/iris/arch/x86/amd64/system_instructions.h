@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/prelude.h>
+#include <iris/mm/virtual_address.h>
 
 namespace iris::x86::amd64 {
 struct [[gnu::packed]] IDTR {
@@ -49,37 +50,53 @@ static inline void load_cr4(u64 cr4) {
     asm volatile("mov %0, %%cr4" : : "r"(cr4));
 }
 
+/// @brief Invalidate the TLB for the provided virtual address.
+///
+/// @warning In most cases, this function should not be used directly, as it does not invalidate the TLB for all CPUs.
+static inline void invlpg(mm::VirtualAddress address) {
+    asm volatile("invlpg (%0)" : : "r"(address.raw_value()) : "memory");
+}
+
+/// @brief Initalize the floating point state.
 static inline void fninit() {
     asm volatile("fninit");
 }
 
-/// Save legacy floating point state. This requires the provided state is 16 byte-aligned.
+/// @brief Save legacy floating point state.
+///
+/// @warning This requires the provided state is 16 byte-aligned.
 static inline void fxsave(di::Byte* state) {
     ASSERT(reinterpret_cast<uptr>(state) % 16 == 0);
     asm volatile("fxsave64 %0" : : "m"(*state));
 }
 
-/// Load legacy floating point state. This requires the provided state is 16 byte-aligned.
+/// @brief Load legacy floating point state.
+///
+/// @warning This requires the provided state is 16 byte-aligned.
 static inline void fxrstor(di::Byte* state) {
     ASSERT(reinterpret_cast<uptr>(state) % 16 == 0);
     asm volatile("fxrstor64 %0" : : "m"(*state));
 }
 
-/// Load extended floating point state. This requires that the CPU support has been detecetd, and that the provided
-/// state is 64 byte-aligned.
+/// @brief Load extended floating point state.
+///
+/// @warning This requires that the CPU support has been detecetd, and that the provided state is 64 byte-aligned.
 static inline void xsave(di::Byte* state) {
     ASSERT(reinterpret_cast<uptr>(state) % 64 == 0);
     asm volatile("xsave %0" ::"m"(*state));
 }
 
-/// Save extended floating point state. This requires that the CPU support has been detecetd, and that the provided
-/// state is 64 byte-aligned.
+/// @brief Save extended floating point state.
+///
+/// @warning This requires that the CPU support has been detecetd, and that the provided state is 64 byte-aligned.
 static inline void xrstor(di::Byte* state) {
     ASSERT(reinterpret_cast<uptr>(state) % 64 == 0);
     asm volatile("xrstor %0" : : "m"(*state));
 }
 
-/// Set extended control register. This requires CPU support has been detected.
+/// @brief Set extended control register.
+///
+/// @warning This requires CPU support has been detected.
 static inline void xsetbv(u32 reg, u64 value) {
     auto low = u32(value);
     auto high = u32(value >> 32);

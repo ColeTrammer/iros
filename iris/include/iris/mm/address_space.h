@@ -22,6 +22,9 @@ public:
     VirtualAddress heap_end() const { return m_heap_end; }
     void set_heap_end(VirtualAddress address) { m_heap_end = address; }
 
+    void invalidate_tlb(VirtualAddress base) { invalidate_tlb(base, 1); }
+    void invalidate_tlb(VirtualAddress base, usize byte_length);
+
     AddressSpace& base();
 
 private:

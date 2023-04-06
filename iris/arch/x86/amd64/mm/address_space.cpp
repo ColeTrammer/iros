@@ -100,6 +100,8 @@ Expected<void> LockedAddressSpace::destroy_region(VirtualAddress base, usize len
         deallocate_page_frame(physical_address);
         pt[pt_offset] = page_structure::StructureEntry(page_structure::Present(false));
     }
+
+    invalidate_tlb(base, length);
     return {};
 }
 
@@ -162,7 +164,19 @@ Expected<void> LockedAddressSpace::map_physical_page(VirtualAddress location, Ph
         page_structure::Writable(writable), page_structure::User(user), page_structure::NotExecutable(not_executable));
     base().m_resident_pages.fetch_add(1, di::MemoryOrder::Relaxed);
 
+    invalidate_tlb(location);
+
     return {};
+}
+
+void LockedAddressSpace::invalidate_tlb(VirtualAddress base, usize byte_length) {
+    // FIXME: implement TLB shootdown when SMP is supported.
+    // FIXME: considering reloading the entire address space when there is a large number of pages.
+
+    auto num_pages = di::divide_round_up(base.raw_value() % 4096 + byte_length, 4096);
+    for (auto address : di::iota(base) | di::take(num_pages)) {
+        x86::amd64::invlpg(address);
+    }
 }
 
 Expected<di::Arc<AddressSpace>> create_empty_user_address_space() {
