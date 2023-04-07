@@ -27,6 +27,7 @@
 #include <di/util/rebindable_box.h>
 #include <di/util/reference_wrapper.h>
 #include <di/util/scope_exit.h>
+#include <di/util/self_pointer.h>
 #include <di/util/source_location.h>
 #include <di/util/strong_int.h>
 #include <di/util/swap.h>
@@ -58,6 +59,7 @@ using util::Immovable;
 using util::MovableBox;
 using util::RebindableBox;
 using util::ScopeExit;
+using util::SelfPointer;
 using util::StrongInt;
 using util::UUID;
 

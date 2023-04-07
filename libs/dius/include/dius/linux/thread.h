@@ -11,13 +11,7 @@ namespace dius {
 struct PlatformThread;
 struct PlatformThreadDeleter;
 
-struct SelfPointer {
-    explicit SelfPointer() : self(static_cast<PlatformThread*>(static_cast<void*>(this))) {}
-
-    PlatformThread* self { nullptr };
-};
-
-struct PlatformThread : SelfPointer {
+struct PlatformThread : di::SelfPointer<PlatformThread> {
     static di::Result<di::Box<PlatformThread, PlatformThreadDeleter>> create(runtime::TlsInfo);
     static PlatformThread& current();
 
