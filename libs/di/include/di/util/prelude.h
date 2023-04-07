@@ -18,6 +18,7 @@
 #include <di/util/exchange.h>
 #include <di/util/forward.h>
 #include <di/util/get.h>
+#include <di/util/guarded_reference.h>
 #include <di/util/immovable.h>
 #include <di/util/initializer_list.h>
 #include <di/util/is_constant_evaluated.h>
@@ -55,6 +56,7 @@ using std::initializer_list;
 
 using util::Badge;
 using util::DeferConstruct;
+using util::GuardedReference;
 using util::Immovable;
 using util::MovableBox;
 using util::RebindableBox;

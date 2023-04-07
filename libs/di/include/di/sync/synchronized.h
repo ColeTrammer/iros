@@ -8,20 +8,11 @@
 #include <di/platform/prelude.h>
 #include <di/sync/concepts/lock.h>
 #include <di/sync/scoped_lock.h>
+#include <di/util/guarded_reference.h>
 
 namespace di::sync {
 template<typename Value, concepts::Lock Lock = DefaultLock>
-class LockedReference {
-public:
-    constexpr explicit LockedReference(Value* value, Lock& lock) : m_guard(lock), m_value(value) {}
-
-    constexpr Value& operator*() const { return *m_value; }
-    constexpr Value* operator->() const { return m_value; }
-
-private:
-    ScopedLock<Lock> m_guard;
-    Value* m_value;
-};
+using LockedReference = util::GuardedReference<Value, ScopedLock<Lock>>;
 
 template<typename Value, concepts::Lock Lock = DefaultLock>
 class Synchronized {
@@ -50,7 +41,7 @@ public:
         return function::invoke(util::forward<Fun>(function), m_value);
     }
 
-    constexpr auto lock() { return LockedReference(util::addressof(m_value), m_lock); }
+    constexpr auto lock() { return LockedReference<Value, Lock>(m_value, m_lock); }
 
     constexpr Value& get_assuming_no_concurrent_accesses() { return m_value; }
 
