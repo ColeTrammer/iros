@@ -32,7 +32,6 @@ void* operator new(std::size_t size, std::align_val_t alignment, std::nothrow_t 
             auto virtual_start = iris::mm::VirtualAddress(di::align_up(old_heap_end.raw_value(), 4096));
             auto virtual_end = iris::mm::VirtualAddress(di::align_up(address_space.heap_end().raw_value(), 4096));
             for (auto virtual_address = virtual_start; virtual_address < virtual_end; virtual_address += 4096) {
-
                 auto physical_page = iris::mm::allocate_page_frame().value();
 
                 if (!address_space.map_physical_page(virtual_address, physical_page,

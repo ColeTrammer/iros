@@ -50,7 +50,6 @@ Expected<usize> tag_invoke(di::Tag<read_file>, DebugFile&, di::Span<di::Byte> bu
 
 namespace iris {
 void setup_current_processor_access() {
-
     x86::amd64::swapgs();
 }
 

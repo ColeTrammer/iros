@@ -62,7 +62,6 @@ inline StringView cstring_to_utf8_view(char const* s) {
 
 template<typename T, typename U>
 [[noreturn]] inline void do_binary_assert_fail(char const* source_text_c, T&& a, U&& b, util::SourceLocation loc) {
-
     auto new_line = '\n';
     char text[] = "\033[31;1mASSERT\033[0m: ";
     assert_write(text, sizeof(text) - 1);

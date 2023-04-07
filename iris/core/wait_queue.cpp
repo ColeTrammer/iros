@@ -23,7 +23,6 @@ void WaitQueue::notify_all(di::FunctionRef<void()> action) {
 }
 
 Expected<void> WaitQueue::wait(di::FunctionRef<bool()> predicate) {
-
     auto& lock = m_queue.get_lock();
     for (;;) {
         // Acquire the queue's lock.

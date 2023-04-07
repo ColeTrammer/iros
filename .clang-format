@@ -11,6 +11,7 @@ IncludeCategories:
     Priority: 4
   - Regex: "*"
     Priority: 5
+KeepEmptyLinesAtTheStartOfBlocks: false
 SpaceAfterTemplateKeyword: false
 SpaceAfterCStyleCast: true
 AlignTrailingComments: true
