@@ -22,7 +22,7 @@ public:
     }
 
     bool try_lock() {
-        auto task = global_state().scheduler.current_task_null_if_during_boot();
+        auto* task = current_scheduler().current_task_null_if_during_boot();
         if (task) {
             task->disable_preemption();
         }

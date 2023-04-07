@@ -26,11 +26,21 @@ Expected<void> register_irq_handler(GlobalIrqNumber irq, IrqHandler handler) {
 }
 
 extern "C" void generic_irq_handler(GlobalIrqNumber irq, iris::arch::TaskState& task_state, int error_code) {
+    if (!task_state.in_kernel()) {
+        setup_current_processor_access();
+    }
+    auto& current_task = current_scheduler().current_task();
+    auto guard = di::ScopeExit([&] {
+        if (!task_state.in_kernel()) {
+            arch::load_userspace_thread_pointer(current_task.userspace_thread_pointer(), task_state);
+        }
+    });
+
     auto context = IrqContext { task_state, error_code, irq_controller_for_interrupt_number(irq) };
 
     // Syscall IRQ vector.
     if (irq == GlobalIrqNumber(0x80)) {
-        auto result = do_syscall(global_state().scheduler.current_task(), task_state);
+        auto result = do_syscall(current_task, task_state);
         task_state.set_syscall_return(result);
         return;
     }

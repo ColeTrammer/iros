@@ -3,6 +3,7 @@
 #include <di/prelude.h>
 #include <iris/core/config.h>
 #include <iris/core/error.h>
+#include <iris/core/processor.h>
 #include <iris/core/scheduler.h>
 #include <iris/core/task.h>
 #include <iris/core/task_namespace.h>
@@ -27,6 +28,7 @@ struct GlobalState {
     ProcessorInfo processor_info;
     test::TestManager unit_test_manager;
     arch::FpuState initial_fpu_state;
+    Processor boot_processor;
     /// @}
 
     /// @name Mutable fields
@@ -42,12 +44,6 @@ struct GlobalState {
     mutable WaitQueue task_finalization_wait_queue;
     mutable di::Synchronized<di::Array<di::LinkedList<IrqHandler>, 256>> irq_handlers;
     mutable di::Synchronized<IrqController> irq_controller;
-    /// @}
-
-    /// @name Per-processor fields
-    /// Mutable global state which should really be per-processor, once SMP is supported.
-    /// @{
-    mutable Scheduler scheduler;
     /// @}
 };
 

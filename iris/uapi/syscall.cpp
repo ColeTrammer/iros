@@ -28,7 +28,7 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
         case SystemCall::exit_task: {
             iris::println("Exiting task..."_sv);
 
-            iris::global_state().scheduler.exit_current_task();
+            current_scheduler().exit_current_task();
             break;
         }
         case SystemCall::create_task: {
@@ -46,7 +46,7 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
                 auto path = di::PathView { string };
                 iris::println("Loading executable for {}: {}..."_sv, task_id, path);
 
-                auto& task_namespace = iris::global_state().scheduler.current_task().task_namespace();
+                auto& task_namespace = current_task.task_namespace();
                 auto task = TRY(task_namespace.lock()->find_task(task_id));
 
                 TRY(iris::load_executable(*task, path));
@@ -58,7 +58,7 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
 
             auto& task_namespace = current_task.task_namespace();
             auto task = TRY(task_namespace.lock()->find_task(task_id));
-            global_state().scheduler.schedule_task(*task);
+            current_scheduler().schedule_task(*task);
             return 0;
         }
         case SystemCall::allocate_memory: {
@@ -73,8 +73,6 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
             auto string_base = task_state.syscall_arg1();
             auto string_length = task_state.syscall_arg2();
             auto string = di::TransparentStringView { reinterpret_cast<char const*>(string_base), string_length };
-
-            auto& current_task = iris::global_state().scheduler.current_task();
 
             return iris::with_userspace_access([&] -> Expected<u64> {
                 auto path = di::PathView { string };
@@ -94,7 +92,6 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
             auto buffer = reinterpret_cast<di::Byte const*>(task_state.syscall_arg2());
             auto amount = task_state.syscall_arg3();
 
-            auto& current_task = iris::global_state().scheduler.current_task();
             auto& handle = TRY(current_task.file_table().lookup_file_handle(file_handle));
 
             return iris::with_userspace_access([&] {
@@ -106,7 +103,6 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
             auto buffer = reinterpret_cast<di::Byte*>(task_state.syscall_arg2());
             auto amount = task_state.syscall_arg3();
 
-            auto& current_task = iris::global_state().scheduler.current_task();
             auto& handle = TRY(current_task.file_table().lookup_file_handle(file_handle));
 
             return iris::with_userspace_access([&] {
@@ -125,7 +121,7 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
             auto& task_namespace = current_task.task_namespace();
             auto task = TRY(task_namespace.lock()->find_task(task_id));
 
-            global_state().scheduler.schedule_task(*task);
+            current_scheduler().schedule_task(*task);
 
             auto task_status = task->task_status();
             TRY(task_status->wait_until_exited());
@@ -138,9 +134,9 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
             auto& task_namespace = current_task.task_namespace();
             auto task = task_id == iris::TaskId(0) ? current_task.arc_from_this()
                                                    : TRY(task_namespace.lock()->find_task(task_id));
-            task->set_userspace_thread_pointer(value);
 
-            arch::load_userspace_thread_pointer(value);
+            // NOTE: the userspace thread pointer gets loaded automatically when context switching back to userspace.
+            task->set_userspace_thread_pointer(value);
             return 0;
         }
         case SystemCall::set_userspace_stack_pointer: {
@@ -178,7 +174,6 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
             auto offset = i64(task_state.syscall_arg2());
             auto whence = int(task_state.syscall_arg3());
 
-            auto& current_task = iris::global_state().scheduler.current_task();
             auto& handle = TRY(current_task.file_table().lookup_file_handle(file_handle));
 
             return iris::seek_file(handle, offset, whence);

@@ -48,6 +48,21 @@ Expected<usize> tag_invoke(di::Tag<read_file>, DebugFile&, di::Span<di::Byte> bu
 }
 }
 
+namespace iris {
+void setup_current_processor_access() {
+
+    x86::amd64::swapgs();
+}
+
+void set_current_processor(Processor& processor) {
+    if (global_state().processor_info.has_fs_gs_base()) {
+        x86::amd64::write_gs_base(reinterpret_cast<uptr>(&processor));
+    } else {
+        x86::amd64::write_msr(x86::amd64::ModelSpecificRegister::GsBase, reinterpret_cast<uptr>(&processor));
+    }
+}
+}
+
 namespace iris::arch {
 alignas(4096) static char temp_stack[4 * 4096];
 
@@ -58,11 +73,17 @@ void load_kernel_stack(mm::VirtualAddress base) {
     tss.rsp[0] = base.raw_value();
 }
 
-void load_userspace_thread_pointer(uptr userspace_thread_pointer) {
-    if (global_state().processor_info.has_fs_gs_base()) {
-        x86::amd64::write_fs_base(userspace_thread_pointer);
-    } else {
-        x86::amd64::write_msr(x86::amd64::ModelSpecificRegister::FsBase, userspace_thread_pointer);
+void load_userspace_thread_pointer(uptr userspace_thread_pointer, arch::TaskState& task_state) {
+    if (!task_state.in_kernel()) {
+        x86::amd64::swapgs();
+
+        if (global_state().processor_info.has_fs_gs_base()) {
+            x86::amd64::write_fs_base(userspace_thread_pointer);
+            x86::amd64::write_gs_base(userspace_thread_pointer);
+        } else {
+            x86::amd64::write_msr(x86::amd64::ModelSpecificRegister::FsBase, userspace_thread_pointer);
+            x86::amd64::write_msr(x86::amd64::ModelSpecificRegister::GsBase, userspace_thread_pointer);
+        }
     }
 }
 
@@ -170,6 +191,8 @@ extern "C" void bsp_cpu_init() {
                      : "i"(0)
                      : "memory", "edx");
     }
+
+    set_current_processor(global_state.boot_processor);
 
     iris::x86::amd64::init_pic();
 

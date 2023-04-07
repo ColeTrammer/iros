@@ -12,6 +12,8 @@ struct TaskState {
 
     SystemCall syscall_number() const { return SystemCall(rax); }
 
+    bool in_kernel() const { return (cs & 0x3) == 0; }
+
     u64 syscall_arg1() const { return rdi; }
     u64 syscall_arg2() const { return rsi; }
     u64 syscall_arg3() const { return rdx; }
@@ -93,5 +95,5 @@ private:
 };
 
 void load_kernel_stack(mm::VirtualAddress base);
-void load_userspace_thread_pointer(uptr userspace_thread_pointer);
+void load_userspace_thread_pointer(uptr userspace_thread_pointer, TaskState& task_state);
 }

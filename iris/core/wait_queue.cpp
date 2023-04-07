@@ -23,7 +23,7 @@ void WaitQueue::notify_all(di::FunctionRef<void()> action) {
 }
 
 Expected<void> WaitQueue::wait(di::FunctionRef<bool()> predicate) {
-    auto& scheduler = global_state().scheduler;
+    auto& scheduler = current_scheduler();
     auto& current_task = scheduler.current_task();
 
     auto& lock = m_queue.get_lock();

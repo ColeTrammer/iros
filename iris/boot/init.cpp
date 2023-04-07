@@ -18,7 +18,7 @@
 
 static void do_unit_tests() {
     iris::test::TestManager::the().run_tests();
-    iris::global_state().scheduler.exit_current_task();
+    iris::current_scheduler().exit_current_task();
 }
 
 extern "C" {
@@ -114,7 +114,7 @@ void iris_main() {
         mm::PhysicalAddress(kernel_address_request.response->physical_base),
         mm::VirtualAddress(kernel_address_request.response->virtual_base), global_state.max_physical_address));
 
-    auto& scheduler = global_state.scheduler;
+    auto& scheduler = global_state.boot_processor.scheduler();
     {
         auto task_finalizer = *iris::create_kernel_task(global_state.task_namespace, [] {
             for (;;) {

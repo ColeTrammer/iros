@@ -36,7 +36,12 @@ public:
         if (m_kernel_stack.raw_value() != 0) {
             arch::load_kernel_stack(m_kernel_stack + 0x2000);
         }
-        arch::load_userspace_thread_pointer(m_userspace_thread_pointer);
+
+        // NOTE: Disable interrupts at this point because setting the userspace thread pointer may make accessing the
+        // current processor impossible. If we receive an interrupt after that point, we will crash. NMI's have to take
+        // special care to handle this scenario.
+        auto guard = InterruptDisabler {};
+        arch::load_userspace_thread_pointer(userspace_thread_pointer(), m_task_state);
         m_task_state.context_switch_to();
     }
 

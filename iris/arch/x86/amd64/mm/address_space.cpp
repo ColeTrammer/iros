@@ -20,7 +20,7 @@ AddressSpace::~AddressSpace() {
 
     // Load the kernel address space, to ensure we don't run in the current
     // address space as it is being destroyed.
-    with_preemption_disabled(global_state().scheduler.current_task(), [&] {
+    with_preemption_disabled(current_scheduler().current_task(), [&] {
         kernel_address_space.load();
 
         auto from_physical_address = [](PhysicalAddress physical_address) {

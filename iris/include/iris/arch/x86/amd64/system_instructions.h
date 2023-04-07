@@ -109,4 +109,19 @@ static inline void xsetbv(u32 reg, u64 value) {
 static inline void write_fs_base(u64 value) {
     asm volatile("wrfsbase %0" : : "r"(value));
 }
+
+/// @brief Set the gs base register value.
+///
+/// @warning Calling this function requires that CPU support has been detected and enabled.
+static inline void write_gs_base(u64 value) {
+    asm volatile("wrgsbase %0" : : "r"(value));
+}
+
+/// @brief Swap gs base register value.
+///
+/// @warning This function is called to load the current processor on entry from the `syscall` instruction or an
+/// interrupt. Incorrect usage will cause the kernel to crash after reading garbage values.
+static inline void swapgs() {
+    asm volatile("swapgs" ::: "memory");
+}
 }
