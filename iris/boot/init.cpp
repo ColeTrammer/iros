@@ -18,7 +18,7 @@
 
 static void do_unit_tests() {
     iris::test::TestManager::the().run_tests();
-    iris::current_scheduler().exit_current_task();
+    iris::current_scheduler()->exit_current_task();
 }
 
 extern "C" {

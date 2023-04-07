@@ -22,7 +22,10 @@ public:
     }
 
     bool try_lock() {
-        auto* task = current_scheduler().current_task_null_if_during_boot();
+        auto* task = with_interrupts_disabled([] {
+            // SAFETY: This is safe since interrupts are disabled.
+            return current_processor_unsafe().scheduler().current_task_null_if_during_boot();
+        });
         if (task) {
             task->disable_preemption();
         }

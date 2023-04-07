@@ -2,6 +2,7 @@
 
 #include <di/prelude.h>
 
+#include <iris/core/preemption.h>
 #include <iris/core/scheduler.h>
 
 #include IRIS_ARCH_INCLUDE(core/processor.h)
@@ -26,7 +27,17 @@ void setup_current_processor_access();
 /// @warning This function can only be called once, during each processor's initialization.
 void set_current_processor(Processor& processor);
 
-inline Scheduler& current_scheduler() {
-    return current_processor().scheduler();
+inline auto current_processor() {
+    auto guard = PreemptionDisabler {};
+    // SAFETY: This is safe since preemption is disabled.
+    auto& processor = current_processor_unsafe();
+    return di::GuardedReference<Processor, PreemptionDisabler> { processor, di::move(guard) };
+}
+
+inline auto current_scheduler() {
+    auto guard = PreemptionDisabler {};
+    // SAFETY: This is safe since preemption is disabled.
+    auto& processor = current_processor_unsafe();
+    return di::GuardedReference<Scheduler, PreemptionDisabler> { processor.scheduler(), di::move(guard) };
 }
 }

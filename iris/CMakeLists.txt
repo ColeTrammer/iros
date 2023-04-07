@@ -60,6 +60,7 @@ if(IROS_BuildIris)
         boot/init.cpp
         core/cxx.cpp
         core/global_state.cpp
+        core/preemption.cpp
         core/scheduler.cpp
         core/task.cpp
         core/task_namespace.cpp

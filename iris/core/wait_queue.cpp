@@ -23,13 +23,15 @@ void WaitQueue::notify_all(di::FunctionRef<void()> action) {
 }
 
 Expected<void> WaitQueue::wait(di::FunctionRef<bool()> predicate) {
-    auto& scheduler = current_scheduler();
-    auto& current_task = scheduler.current_task();
 
     auto& lock = m_queue.get_lock();
     for (;;) {
         // Acquire the queue's lock.
         lock.lock();
+
+        // SAFETY: This is safe, because acquiring the lock disables interrupts.
+        auto& scheduler = current_processor_unsafe().scheduler();
+        auto& current_task = scheduler.current_task();
 
         // If the predicate is now satisified, stop looping.
         if (predicate()) {

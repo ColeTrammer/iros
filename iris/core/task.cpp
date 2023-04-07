@@ -79,7 +79,7 @@ Expected<void> load_executable(Task& task, di::PathView path) {
     // FIXME: consider disabling preemption instead.
     auto address_space = task.address_space().lock();
     TRY(with_interrupts_disabled([&] -> Expected<void> {
-        auto& current_address_space = current_scheduler().current_address_space();
+        auto& current_address_space = current_scheduler()->current_address_space();
         address_space->base().load();
 
         auto program_headers = raw_data.typed_span_unchecked<ProgramHeader>(elf_header->program_table_off,
@@ -185,7 +185,8 @@ void Task::enable_preemption() {
     m_preemption_disabled_count.store(count - 1, di::MemoryOrder::Relaxed);
 
     if (should_yield) {
-        current_scheduler().yield();
+        // SAFETY: this is safe because interrupts are disabled.
+        current_processor_unsafe().scheduler().yield();
     }
 }
 }

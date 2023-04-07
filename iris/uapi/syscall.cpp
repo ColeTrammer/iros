@@ -28,7 +28,7 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
         case SystemCall::exit_task: {
             iris::println("Exiting task..."_sv);
 
-            current_scheduler().exit_current_task();
+            current_scheduler()->exit_current_task();
             break;
         }
         case SystemCall::create_task: {
@@ -58,7 +58,9 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
 
             auto& task_namespace = current_task.task_namespace();
             auto task = TRY(task_namespace.lock()->find_task(task_id));
-            current_scheduler().schedule_task(*task);
+
+            // FIXME: select a scheduler when SMP is fully supported.
+            current_scheduler()->schedule_task(*task);
             return 0;
         }
         case SystemCall::allocate_memory: {
@@ -121,7 +123,8 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
             auto& task_namespace = current_task.task_namespace();
             auto task = TRY(task_namespace.lock()->find_task(task_id));
 
-            current_scheduler().schedule_task(*task);
+            // FIXME: select a scheduler when SMP is fully supported.
+            current_scheduler()->schedule_task(*task);
 
             auto task_status = task->task_status();
             TRY(task_status->wait_until_exited());

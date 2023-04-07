@@ -29,7 +29,9 @@ extern "C" void generic_irq_handler(GlobalIrqNumber irq, iris::arch::TaskState& 
     if (!task_state.in_kernel()) {
         setup_current_processor_access();
     }
-    auto& current_task = current_scheduler().current_task();
+
+    // SAFETY: this is safe since interrupts are disabled.
+    auto& current_task = current_processor_unsafe().scheduler().current_task();
     auto guard = di::ScopeExit([&] {
         if (!task_state.in_kernel()) {
             arch::load_userspace_thread_pointer(current_task.userspace_thread_pointer(), task_state);

@@ -5,17 +5,19 @@
 namespace iris {
 class PreemptionDisabler {
 public:
-    PreemptionDisabler(Task& task) : m_task(&task) { m_task->disable_preemption(); }
+    PreemptionDisabler();
 
-    ~PreemptionDisabler() { m_task->enable_preemption(); }
+    PreemptionDisabler(PreemptionDisabler&& other) : m_task(di::exchange(other.m_task, nullptr)) {}
+
+    ~PreemptionDisabler();
 
 private:
     Task* m_task { nullptr };
 };
 
 template<di::concepts::Invocable F>
-decltype(auto) with_preemption_disabled(Task& task, F&& function) {
-    auto guard = PreemptionDisabler { task };
+decltype(auto) with_preemption_disabled(F&& function) {
+    auto guard = PreemptionDisabler {};
     return di::invoke(di::forward<F>(function));
 }
 }
