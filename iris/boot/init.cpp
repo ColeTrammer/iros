@@ -57,8 +57,6 @@ static auto kernel_command_line =
 void iris_main() {
     iris::println("Starting architecture independent initialization..."_sv);
 
-    iris::acpi::init_acpi();
-
     if (!kernel_file_request.response) {
         println("No limine kernel file response, panicking..."_sv);
         ASSERT(false);
@@ -114,6 +112,11 @@ void iris_main() {
         mm::PhysicalAddress(kernel_address_request.response->physical_base),
         mm::VirtualAddress(kernel_address_request.response->virtual_base), global_state.max_physical_address));
 
+    // Perform architecture specific initialization which requires allocation now that the address space is set up.
+    iris::println("Starting final architecture specific initialization..."_sv);
+    arch::init_final();
+
+    iris::println("Preparing for userspace..."_sv);
     auto& scheduler = global_state.boot_processor.scheduler();
     {
         auto task_finalizer = *iris::create_kernel_task(global_state.task_namespace, [] {
@@ -153,11 +156,7 @@ void iris_main() {
         }
     }
 
-    // Initialize serial console.
-    x86::amd64::init_serial();
-
     iris::println("Starting the kernel scheduler..."_sv);
-
     scheduler.start();
 }
 }

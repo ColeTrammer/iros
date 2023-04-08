@@ -1,4 +1,5 @@
 #include <di/prelude.h>
+#include <iris/arch/x86/amd64/hw/local_apic.h>
 #include <iris/arch/x86/amd64/hw/pic.h>
 #include <iris/arch/x86/amd64/hw/serial.h>
 #include <iris/arch/x86/amd64/idt.h>
@@ -20,6 +21,7 @@
 #include <iris/fs/debug_file.h>
 #include <iris/fs/file.h>
 #include <iris/fs/initrd.h>
+#include <iris/hw/acpi/acpi.h>
 #include <iris/hw/power.h>
 #include <iris/mm/address_space.h>
 #include <iris/mm/map_physical_address.h>
@@ -193,9 +195,16 @@ extern "C" void bsp_cpu_init() {
 
     set_current_processor(global_state.boot_processor);
 
+    iris_main();
+}
+
+void init_final() {
+    acpi::init_acpi();
+
+    iris::x86::amd64::init_local_apic();
     iris::x86::amd64::init_pic();
 
-    iris_main();
+    iris::x86::amd64::init_serial();
 }
 
 extern "C" [[gnu::naked]] void iris_entry() {

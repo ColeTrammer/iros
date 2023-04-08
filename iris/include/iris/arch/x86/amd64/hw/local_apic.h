@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/prelude.h>
+#include <iris/mm/physical_address.h>
 
 namespace iris::x86::amd64 {
 /// @brief Local APIC Register Offsets
@@ -118,7 +119,7 @@ enum class ApicTimerDivideConfiguration : u32 {
 
 class LocalApic {
 public:
-    explicit LocalApic(uptr base) : m_base(reinterpret_cast<u32 volatile*>(base)) {}
+    explicit LocalApic(mm::PhysicalAddress base);
 
     u32 direct_read(ApicOffset offset) const { return m_base[di::to_underlying(offset) / sizeof(u32)]; }
     void direct_write(ApicOffset offset, u32 value) { m_base[di::to_underlying(offset) / sizeof(u32)] = value; }
@@ -140,6 +141,8 @@ public:
     void write_extended_control(ApicExtendedControlRegister value) {
         direct_write(ApicOffset::ExtendedControl, di::bit_cast<u32>(value));
     }
+
+    void write_spurious_interrupt_vector(u8 value) { direct_write(ApicOffset::SpuriousInterruptVector, value); }
 
     ApicLvtEntry lvt_entry(ApicOffset offset) const { return di::bit_cast<ApicLvtEntry>(direct_read(offset)); }
     void write_lvt_entry(ApicOffset offset, ApicLvtEntry value) { direct_write(offset, di::bit_cast<u32>(value)); }
