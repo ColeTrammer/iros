@@ -20,6 +20,8 @@ enum class ProcessorFeatures {
     Avx2 = (1 << 12),
     Avx512 = (1 << 13),
     FsGsBase = (1 << 14),
+    Apic = (1 << 15),
+    X2Apic = (1 << 16),
 };
 
 DI_DEFINE_ENUM_BITWISE_OPERATIONS(ProcessorFeatures)
@@ -36,6 +38,8 @@ struct ProcessorInfo {
 
     bool has_xsave() const { return (fpu_valid_xcr0 & 0b11) == 0b11 && !!(features & ProcessorFeatures::Xsave); }
     bool has_fs_gs_base() const { return !!(features & ProcessorFeatures::FsGsBase); }
+
+    bool has_apic() const { return !!(features & ProcessorFeatures::Apic); }
 };
 
 ProcessorInfo detect_processor_info();

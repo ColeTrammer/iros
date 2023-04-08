@@ -15,6 +15,7 @@ namespace cpuid {
     enum class FamilyFlagsEcx {
         Avx = (1 << 28),
         Xsave = (1 << 26),
+        X2Apic = (1 << 21),
         Sse4_2 = (1 << 20),
         Sse4_1 = (1 << 19),
         Ssse3 = (1 << 9),
@@ -29,6 +30,7 @@ namespace cpuid {
         Sse = (1 << 25),
         Fxsr = (1 << 24),
         Mmx = (1 << 23),
+        Apic = (1 << 9),
     };
 
     DI_DEFINE_ENUM_BITWISE_OPERATIONS(FamilyFlagsEdx)
@@ -84,6 +86,7 @@ ProcessorInfo detect_processor_info() {
 
     auto supports_avx = !!(cpuid::FamilyFlagsEcx(family_and_flags_result.ecx) & cpuid::FamilyFlagsEcx::Avx);
     auto supports_xsave = !!(cpuid::FamilyFlagsEcx(family_and_flags_result.ecx) & cpuid::FamilyFlagsEcx::Xsave);
+    auto supports_x2apic = !!(cpuid::FamilyFlagsEcx(family_and_flags_result.ecx) & cpuid::FamilyFlagsEcx::X2Apic);
     auto supports_sse4_2 = !!(cpuid::FamilyFlagsEcx(family_and_flags_result.ecx) & cpuid::FamilyFlagsEcx::Sse4_2);
     auto supports_sse4_1 = !!(cpuid::FamilyFlagsEcx(family_and_flags_result.ecx) & cpuid::FamilyFlagsEcx::Sse4_1);
     auto supports_ssse3 = !!(cpuid::FamilyFlagsEcx(family_and_flags_result.ecx) & cpuid::FamilyFlagsEcx::Ssse3);
@@ -93,6 +96,7 @@ ProcessorInfo detect_processor_info() {
     auto supports_sse = !!(cpuid::FamilyFlagsEdx(family_and_flags_result.edx) & cpuid::FamilyFlagsEdx::Sse);
     auto supports_fxsr = !!(cpuid::FamilyFlagsEdx(family_and_flags_result.edx) & cpuid::FamilyFlagsEdx::Fxsr);
     auto supports_mmx = !!(cpuid::FamilyFlagsEdx(family_and_flags_result.edx) & cpuid::FamilyFlagsEdx::Mmx);
+    auto supports_apic = !!(cpuid::FamilyFlagsEdx(family_and_flags_result.edx) & cpuid::FamilyFlagsEdx::Apic);
 
     auto feature_flags_result = cpuid::query(cpuid::Function::GetFeatureFlags);
 
@@ -145,6 +149,9 @@ ProcessorInfo detect_processor_info() {
     if (supports_xsave) {
         features |= ProcessorFeatures::Xsave;
     }
+    if (supports_x2apic) {
+        features |= ProcessorFeatures::X2Apic;
+    }
     if (supports_sse4_2) {
         features |= ProcessorFeatures::Sse4_2;
     }
@@ -169,6 +176,9 @@ ProcessorInfo detect_processor_info() {
     }
     if (supports_mmx) {
         features |= ProcessorFeatures::Mmx;
+    }
+    if (supports_apic) {
+        features |= ProcessorFeatures::Apic;
     }
 
     return { features, fpu_max_size, valid_xcr0, processor_vendor_string };
@@ -220,6 +230,12 @@ void ProcessorInfo::print_to_console() {
     }
     if (!!(features & ProcessorFeatures::FsGsBase)) {
         println("Detected feature: {}"_sv, "fsgsbase"_sv);
+    }
+    if (!!(features & ProcessorFeatures::X2Apic)) {
+        println("Detected feature: {}"_sv, "x2apic"_sv);
+    }
+    if (!!(features & ProcessorFeatures::Apic)) {
+        println("Detected feature: {}"_sv, "apic"_sv);
     }
 }
 }
