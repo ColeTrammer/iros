@@ -2,8 +2,6 @@
     "recommendations": [
         "ms-vscode.cpptools",
         "eamodio.gitlens",
-        "twxs.cmake",
-        "fredericbonnet.cmake-test-adapter",
         "hediet.vscode-drawio",
         "stkb.rewrap",
         "ms-vscode.cmake-tools",
@@ -14,6 +12,8 @@
         "vadimcn.vscode-lldb",
         "cheshirekow.cmake-format",
         "GitHub.vscode-pull-request-github",
-        "ms-vscode.hexeditor"
+        "ms-vscode.hexeditor",
+        "josetr.cmake-language-support-vscode",
+        "github.vscode-github-actions"
     ]
 }

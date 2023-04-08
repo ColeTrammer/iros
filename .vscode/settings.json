@@ -23,9 +23,10 @@
         ".clangd": "yaml",
         "CMakeToolchain*.txt": "cmake"
     },
-    "testExplorer.useNativeTesting": true,
     "cmake.exportCompileCommandsFile": true,
     "cmake.copyCompileCommands": "${workspaceRoot}/build/compile_commands.json",
+    "cmake.configureOnOpen": false,
+    "cmake.languageSupport.enableFileAPI": true,
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "C_Cpp.autoAddFileAssociations": false,
     "C_Cpp.intelliSenseEngine": "disabled",
@@ -40,7 +41,6 @@
     "editor.tabSize": 4,
     "files.insertFinalNewline": true,
     "editor.rulers": [120],
-    "cmake.configureOnOpen": false,
     "[json]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
