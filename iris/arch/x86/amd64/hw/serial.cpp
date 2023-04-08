@@ -32,9 +32,10 @@ void init_serial_early_boot() {
 }
 
 void init_serial() {
-    *register_irq_handler(GlobalIrqNumber(36), [](IrqContext&) {
-        while ((x86::amd64::io_in<u8>(0x3F8 + 5) & 1) == 0)
+    *register_external_irq_handler(IrqLine(4), [](IrqContext&) {
+        while ((x86::amd64::io_in<u8>(0x3F8 + 5) & 1) == 0) {
             ;
+        }
 
         auto byte = x86::amd64::io_in<di::Byte>(0x3F8);
         if (byte == '\r'_b) {
@@ -47,7 +48,7 @@ void init_serial() {
             (void) global_state().input_data_queue.push(byte);
         });
 
-        send_eoi(*global_state().irq_controller.lock(), GlobalIrqNumber(36));
+        send_eoi(*global_state().irq_controller.lock(), IrqLine(4));
         return IrqStatus::Handled;
     });
 }

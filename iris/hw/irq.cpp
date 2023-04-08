@@ -10,17 +10,25 @@ Expected<GlobalIrqNumber> irq_number_for_legacy_isa_interrupt_number(IrqLine irq
     return GlobalIrqNumber(irq_line.raw_value() + 32);
 }
 
-Expected<void> register_irq_handler(GlobalIrqNumber irq, IrqHandler handler) {
+Expected<void> register_external_irq_handler(IrqLine line, IrqHandler handler) {
+    auto irq = TRY(irq_number_for_legacy_isa_interrupt_number(line));
+
     auto& irq_handlers = global_state().irq_handlers;
     return irq_handlers.with_lock([&](auto& irq_handlers) -> Expected<void> {
-        // FIXME: propogate allocation failures.
         TRY(irq_handlers[irq.raw_value()].push_back(di::move(handler)));
 
-        if (auto irq_controller = irq_controller_for_interrupt_number(irq)) {
-            irq_controller->with_lock([&](auto& controller) {
-                enable_irq_line(controller, irq);
-            });
-        }
+        auto& irq_controller = TRY(irq_controller_for_interrupt_number(irq));
+        irq_controller.with_lock([&](auto& controller) {
+            enable_irq_line(controller, line);
+        });
+        return {};
+    });
+}
+
+Expected<void> register_exception_handler(GlobalIrqNumber irq, IrqHandler handler) {
+    auto& irq_handlers = global_state().irq_handlers;
+    return irq_handlers.with_lock([&](auto& irq_handlers) -> Expected<void> {
+        TRY(irq_handlers[irq.raw_value()].push_back(di::move(handler)));
         return {};
     });
 }
@@ -38,7 +46,7 @@ extern "C" void generic_irq_handler(GlobalIrqNumber irq, iris::arch::TaskState& 
         }
     });
 
-    auto context = IrqContext { task_state, error_code, irq_controller_for_interrupt_number(irq) };
+    auto context = IrqContext { task_state, error_code, irq_controller_for_interrupt_number(irq).optional_value() };
 
     // Syscall IRQ vector.
     if (irq == GlobalIrqNumber(0x80)) {

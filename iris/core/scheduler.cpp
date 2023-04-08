@@ -25,8 +25,8 @@ void Scheduler::start() {
     m_idle_task = *create_kernel_task(global_state().task_namespace, do_idle);
 
     // Setup timer interrupt.
-    *register_irq_handler(GlobalIrqNumber(32), [&](IrqContext& context) -> IrqStatus {
-        send_eoi(*context.controller->lock(), GlobalIrqNumber(32));
+    *register_external_irq_handler(IrqLine(0), [&](IrqContext& context) -> IrqStatus {
+        send_eoi(*context.controller->lock(), IrqLine(0));
 
         // If preemption is disabled, do not reshcedule the currently running task but let it know
         // that it should yield whenever it finally re-enables preemption.

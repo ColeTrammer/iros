@@ -14,8 +14,6 @@ constexpr static u16 data_offset = 1;
 
 constexpr static u8 command_eoi = 0x20;
 
-constexpr static u8 irq_offset = 32;
-
 class Pic {
 public:
     void remap(u8 primary_offset, u8 secondary_offset) {
@@ -45,35 +43,29 @@ public:
     }
 
 private:
-    friend void tag_invoke(di::Tag<send_eoi>, Pic&, GlobalIrqNumber number) {
-        auto irq_line = (number - irq_offset).raw_value();
-
-        if (irq_line >= 8) {
+    friend void tag_invoke(di::Tag<send_eoi>, Pic&, IrqLine irq_line) {
+        if (irq_line.raw_value() >= 8) {
             io_out(secondary_io_base + command_offset, command_eoi);
         }
         io_out(primary_io_base + command_offset, command_eoi);
     }
 
-    friend void tag_invoke(di::Tag<disable_irq_line>, Pic&, GlobalIrqNumber number) {
-        auto irq_line = (number - irq_offset).raw_value();
-
-        if (irq_line < 8) {
-            u8 value = io_in<u8>(primary_io_base + data_offset) | 1 << irq_line;
+    friend void tag_invoke(di::Tag<disable_irq_line>, Pic&, IrqLine irq_line) {
+        if (irq_line.raw_value() < 8) {
+            u8 value = io_in<u8>(primary_io_base + data_offset) | 1 << irq_line.raw_value();
             io_out(primary_io_base + data_offset, value);
         } else {
-            u8 value = io_in<u8>(secondary_io_base + data_offset) | 1 << (irq_line - 8);
+            u8 value = io_in<u8>(secondary_io_base + data_offset) | 1 << (irq_line.raw_value() - 8);
             io_out(secondary_io_base + data_offset, value);
         }
     }
 
-    friend void tag_invoke(di::Tag<enable_irq_line>, Pic&, GlobalIrqNumber number) {
-        auto irq_line = (number - irq_offset).raw_value();
-
-        if (irq_line < 8) {
-            u8 value = io_in<u8>(primary_io_base + data_offset) & ~(1 << irq_line);
+    friend void tag_invoke(di::Tag<enable_irq_line>, Pic&, IrqLine irq_line) {
+        if (irq_line.raw_value() < 8) {
+            u8 value = io_in<u8>(primary_io_base + data_offset) & ~(1 << irq_line.raw_value());
             io_out(primary_io_base + data_offset, value);
         } else {
-            u8 value = io_in<u8>(secondary_io_base + data_offset) & ~(1 << (irq_line - 8));
+            u8 value = io_in<u8>(secondary_io_base + data_offset) & ~(1 << (irq_line.raw_value() - 8));
             io_out(secondary_io_base + data_offset, value);
         }
     }
@@ -82,19 +74,15 @@ private:
 void init_pic() {
     auto pic = Pic {};
 
-    pic.remap(irq_offset, irq_offset + 8);
+    pic.remap(32, 32 + 8);
 
-    di::for_each(di::iota(GlobalIrqNumber(irq_offset), GlobalIrqNumber(irq_offset) + 16),
-                 di::bind_front(disable_irq_line, di::ref(pic)));
+    di::for_each(di::iota(IrqLine(0), IrqLine(16)), di::bind_front(disable_irq_line, di::ref(pic)));
 
     // Setup the PIT to fire every 1 ms.
     auto divisor = 1193182 / 1000;
     io_out(0x43, (u8) 0b00110110);
     io_out(0x40, u8(divisor & 0xFF));
     io_out(0x40, u8(divisor >> 8));
-
-    enable_irq_line(pic, GlobalIrqNumber(irq_offset + 0));
-    enable_irq_line(pic, GlobalIrqNumber(irq_offset + 4));
 
     global_state().irq_controller.get_assuming_no_concurrent_accesses() = di::move(pic);
 }
