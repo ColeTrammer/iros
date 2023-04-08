@@ -8,6 +8,7 @@
 #include <iris/core/task.h>
 #include <iris/core/task_namespace.h>
 #include <iris/core/unit_test.h>
+#include <iris/hw/acpi/acpi.h>
 #include <iris/hw/irq.h>
 #include <iris/mm/address_space.h>
 
@@ -28,6 +29,7 @@ struct GlobalState {
     ProcessorInfo processor_info;
     test::TestManager unit_test_manager;
     arch::FpuState initial_fpu_state;
+    di::Optional<acpi::AcpiInformation> acpi_info;
     Processor boot_processor;
     /// @}
 

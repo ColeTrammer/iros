@@ -1,3 +1,6 @@
+#include <iris/arch/x86/amd64/hw/io_apic.h>
+#include <iris/arch/x86/amd64/hw/local_apic.h>
+#include <iris/core/global_state.h>
 #include <iris/core/print.h>
 #include <iris/hw/acpi/acpi.h>
 #include <iris/hw/acpi/system_tables.h>
@@ -86,6 +89,7 @@ void init_acpi() {
         ASSERT(false);
     }
 
+    auto acpi_info = AcpiInformation {};
     for (auto interrupt_controller_structures = madt->interrupt_controller_structures();
          interrupt_controller_structures != interrupt_controller_structures.end(); ++interrupt_controller_structures) {
         auto const& interrupt_controller_structure = *interrupt_controller_structures;
@@ -99,6 +103,8 @@ void init_acpi() {
                 auto const& local_apic =
                     static_cast<ProcessorLocalApicStructure const&>(interrupt_controller_structure);
                 println("Found local APIC: {}/{}"_sv, local_apic.processor_id, local_apic.apic_id);
+
+                acpi_info.local_apic = local_apic;
                 break;
             }
             case InterruptControllerStructureType::IoApic: {
@@ -109,6 +115,8 @@ void init_acpi() {
 
                 auto const& io_apic = static_cast<IoApicStructure const&>(interrupt_controller_structure);
                 println("Found I/O APIC: {} => IRQ {}"_sv, io_apic.io_apic_id, io_apic.global_system_interrupt_base);
+
+                *acpi_info.io_apics.push_back(io_apic);
                 break;
             }
             case InterruptControllerStructureType::InterruptSourceOverride: {
@@ -122,6 +130,8 @@ void init_acpi() {
                 println("Found interrupt source override: Bus {}:{} => IRQ {} ({:#b})"_sv,
                         interrupt_source_override.bus, interrupt_source_override.source,
                         interrupt_source_override.global_system_interrupt, interrupt_source_override.flags.value);
+
+                *acpi_info.interrupt_source_overrides.push_back(interrupt_source_override);
                 break;
             }
             case InterruptControllerStructureType::LocalApicNmi: {
@@ -133,6 +143,8 @@ void init_acpi() {
                 auto const& local_apic_nmi = static_cast<LocalApicNmiStructure const&>(interrupt_controller_structure);
                 println("Found local APIC NMI: {} @ {} ({:#b})"_sv, local_apic_nmi.apic_processor_uid,
                         local_apic_nmi.local_apic_lint, local_apic_nmi.flags.value);
+
+                acpi_info.local_apic_nmi = local_apic_nmi;
                 break;
             }
             default: {
@@ -147,5 +159,7 @@ void init_acpi() {
             }
         }
     }
+
+    global_state_in_boot().acpi_info = di::move(acpi_info);
 }
 }

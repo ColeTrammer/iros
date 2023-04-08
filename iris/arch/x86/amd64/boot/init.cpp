@@ -1,4 +1,5 @@
 #include <di/prelude.h>
+#include <iris/arch/x86/amd64/hw/io_apic.h>
 #include <iris/arch/x86/amd64/hw/local_apic.h>
 #include <iris/arch/x86/amd64/hw/pic.h>
 #include <iris/arch/x86/amd64/hw/serial.h>
@@ -202,6 +203,7 @@ void init_final() {
     acpi::init_acpi();
 
     iris::x86::amd64::init_local_apic();
+    iris::x86::amd64::init_io_apic();
     iris::x86::amd64::init_pic();
 
     iris::x86::amd64::init_serial();
