@@ -18,15 +18,17 @@ if ! [ "$IROS_DISABLE_KVM" ] && [ -e /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/
 fi
 
 if [ "$IROS_DEBUG" ]; then
-    DEBUG="-s -S"
+    DEBUG="-s -S -monitor stdio"
+else
+    SERIAL="-serial stdio"
 fi
 
 qemu-system-"$IROS_ARCH" \
     $ENABLE_KVM \
     $DEBUG \
+    $SERIAL \
     -drive file="$IROS_IMAGE",format=raw,index=0,media=disk \
     -cpu max \
-    -serial stdio \
     -no-reboot \
     -d guest_errors \
     -display none \
