@@ -47,20 +47,7 @@ extern "C" void bsp_cpu_init() {
     global_state.processor_info = detect_processor_info();
     global_state.processor_info.print_to_console();
 
-    if (!!(global_state.processor_info.features & ProcessorFeatures::Smep)) {
-        iris::println("Enabling SMEP..."_sv);
-        x86::amd64::load_cr4(x86::amd64::read_cr4() | (1 << 20));
-    }
-
-    if (!!(global_state.processor_info.features & ProcessorFeatures::Smap)) {
-        iris::println("Enabling SMAP..."_sv);
-        x86::amd64::load_cr4(x86::amd64::read_cr4() | (1 << 21));
-    }
-
-    if (global_state.processor_info.has_fs_gs_base()) {
-        iris::println("Enabling FS/GS Base..."_sv);
-        x86::amd64::load_cr4(x86::amd64::read_cr4() | (1 << 16));
-    }
+    global_state.boot_processor.arch_processor().enable_cpu_features();
 
     set_current_processor(global_state.boot_processor);
 

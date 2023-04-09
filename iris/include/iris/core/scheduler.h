@@ -8,6 +8,7 @@ public:
     void schedule_task(Task&);
 
     [[noreturn]] void start();
+    [[noreturn]] void start_on_ap();
     void yield();
 
     [[noreturn]] void save_state_and_run_next(arch::TaskState* state);

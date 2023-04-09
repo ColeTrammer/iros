@@ -18,6 +18,7 @@ target_sources(
     PRIVATE arch/x86/amd64/boot/cxx_init.cpp
             arch/x86/amd64/boot/init.cpp
             arch/x86/amd64/core/print.cpp
+            arch/x86/amd64/core/processor.cpp
             arch/x86/amd64/core/task.cpp
             arch/x86/amd64/hw/gdt.cpp
             arch/x86/amd64/hw/idt.cpp

@@ -1,7 +1,10 @@
+#include <iris/arch/x86/amd64/gdt.h>
 #include <iris/arch/x86/amd64/hw/local_apic.h>
+#include <iris/arch/x86/amd64/idt.h>
 #include <iris/arch/x86/amd64/io_instructions.h>
 #include <iris/arch/x86/amd64/msr.h>
 #include <iris/arch/x86/amd64/system_instructions.h>
+#include <iris/arch/x86/amd64/tss.h>
 #include <iris/core/global_state.h>
 #include <iris/core/print.h>
 #include <iris/mm/map_physical_address.h>
@@ -11,7 +14,7 @@ LocalApic::LocalApic(mm::PhysicalAddress base) {
     m_base = &mm::map_physical_address(base, 0x1000)->typed<u32 volatile>();
 }
 
-void init_local_apic() {
+void init_local_apic(bool print_info) {
     auto& global_state = global_state_in_boot();
     if (!global_state.arch_readonly_state.use_apic) {
         println("APIC support is disabled, so skipping local APIC initialization..."_sv);
@@ -34,18 +37,20 @@ void init_local_apic() {
     auto local_apic = LocalApic(apic_base);
 
     auto apic_id = local_apic.id();
-    println("Local APIC ID: {}"_sv, apic_id);
-
     auto apic_version = local_apic.version();
-    println("Local APIC version: {}"_sv, apic_version.get<ApicVersion>());
-    println("Local APIC max LVT entry: {}"_sv, apic_version.get<ApicMaxLvtEntry>());
-    println("Local APIC EOI extended register present: {}"_sv, apic_version.get<ApicExtendedRegisterPresent>());
+    if (print_info) {
+        println("Local APIC ID: {}"_sv, apic_id);
+        println("Local APIC version: {}"_sv, apic_version.get<ApicVersion>());
+        println("Local APIC max LVT entry: {}"_sv, apic_version.get<ApicMaxLvtEntry>());
+        println("Local APIC EOI extended register present: {}"_sv, apic_version.get<ApicExtendedRegisterPresent>());
+    }
 
     // Enable the local APIC by setting up the spurious interrupt vector register.
     // This also maps any spurious interrupts to IRQ 255.
     local_apic.write_spurious_interrupt_vector(0x1FF);
 
-    global_state.boot_processor.arch_processor().set_local_apic(local_apic);
+    // SAFETY: This is safe because this is called during processor boot.
+    current_processor_unsafe().arch_processor().set_local_apic(local_apic);
 }
 
 struct ApBootInfo {
@@ -144,11 +149,32 @@ extern "C" void iris_ap_entry(ApBootInfo* info_in) {
     // Copy the boot info onto the new stack, since the info_in pointer refers to identity-mapped low memory.
     auto info = *info_in;
 
-    println("AP {} booted!"_sv, info.processor->id());
+    info.processor->mark_as_booted();
 
-    for (;;) {
-        ;
+    println("AP {} booted."_sv, info.processor->id());
+
+    info.processor->arch_processor().enable_cpu_features(false);
+    set_current_processor(*info.processor);
+
+    idt::load_idt();
+    init_tss();
+    init_gdt();
+
+    set_current_processor(*info.processor);
+
+    info.processor->arch_processor().setup_fpu_support_for_processor(false);
+
+    init_local_apic(false);
+
+    println("AP {} initialized."_sv, info.processor->id());
+    info.processor->mark_as_initialized();
+
+    while (!global_state().all_aps_booted.load(di::MemoryOrder::Acquire)) {
+        di::cpu_relax();
     }
+
+    println("AP {} starting scheduler."_sv, info.processor->id());
+    info.processor->scheduler().start_on_ap();
 }
 
 static void boot_ap(acpi::ProcessorLocalApicStructure const& acpi_local_apic_structure) {
@@ -158,7 +184,6 @@ static void boot_ap(acpi::ProcessorLocalApicStructure const& acpi_local_apic_str
 
     auto stack = *global_state.kernel_address_space.allocate_region(ap_stack_size, mm::RegionFlags::Readable |
                                                                                        mm::RegionFlags::Writable);
-    println("AP stack: {:#x}"_sv, stack.raw_value());
 
     auto& processor = *global_state.alernate_processors.emplace_back(acpi_local_apic_structure.apic_id);
     processor.arch_processor().set_fallback_kernel_stack((stack + ap_stack_size).raw_value());
@@ -206,12 +231,28 @@ static void boot_ap(acpi::ProcessorLocalApicStructure const& acpi_local_apic_str
     println("Sending SIPI IPI to AP {}..."_sv, acpi_local_apic_structure.apic_id);
     local_apic.write_interrupt_command_register(icr);
 
-    io_wait_us(200);
+    for (u32 i = 0; i < 200; i++) {
+        if (processor.is_booted()) {
+            break;
+        }
+        io_wait();
+    }
 
-    println("Sending SIPI IPI to AP {}..."_sv, acpi_local_apic_structure.apic_id);
-    local_apic.write_interrupt_command_register(icr);
+    if (!processor.is_booted()) {
+        println("Sending SIPI IPI to AP {}..."_sv, acpi_local_apic_structure.apic_id);
+        local_apic.write_interrupt_command_register(icr);
+    }
 
-    io_wait_us(1000000);
+    for (u32 i = 0; i < 1000000; i++) {
+        if (processor.is_initialized()) {
+            break;
+        }
+        io_wait();
+    }
+
+    if (!processor.is_initialized()) {
+        println("AP {} failed to boot!"_sv, acpi_local_apic_structure.apic_id);
+    }
 
     *global_state.kernel_address_space.lock()->remove_low_identity_mapping(mm::VirtualAddress(0x8000), 0x1000);
 }
@@ -229,5 +270,7 @@ void init_alternative_processors() {
         }
         boot_ap(local_apic);
     }
+
+    global_state.all_aps_booted.store(true, di::MemoryOrder::Release);
 }
 }

@@ -198,6 +198,6 @@ private:
     u32 volatile* m_base { nullptr };
 };
 
-void init_local_apic();
+void init_local_apic(bool print_info = true);
 void init_alternative_processors();
 }

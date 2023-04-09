@@ -17,10 +17,18 @@ public:
     u16 id() const { return m_id; }
     Scheduler& scheduler() { return m_scheduler; }
 
+    void mark_as_initialized() { m_is_initialized.store(true, di::MemoryOrder::Release); }
+    bool is_initialized() const { return m_is_initialized.load(di::MemoryOrder::Acquire); }
+
+    void mark_as_booted() { m_is_booted.store(true, di::MemoryOrder::Release); }
+    bool is_booted() const { return m_is_booted.load(di::MemoryOrder::Acquire); }
+
     arch::ArchProcessor& arch_processor() { return m_arch_processor; }
 
 private:
     Scheduler m_scheduler;
+    di::Atomic<bool> m_is_initialized { false };
+    di::Atomic<bool> m_is_booted { false };
     u16 m_id {};
     arch::ArchProcessor m_arch_processor;
 };

@@ -120,6 +120,12 @@ void init_idt() {
             }
         });
 
+    load_idt();
+}
+
+void load_idt() {
+    auto const& idt = global_state().arch_readonly_state.idt;
+
     auto idtr = iris::x86::amd64::IDTR { sizeof(idt) - 1, di::to_uintptr(idt.data()) };
     iris::x86::amd64::load_idt(idtr);
 }

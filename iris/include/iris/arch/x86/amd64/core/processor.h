@@ -23,6 +23,16 @@ namespace arch {
         void set_fallback_kernel_stack(uptr stack) { m_fallback_kernel_stack = stack; }
         uptr fallback_kernel_stack() const { return m_fallback_kernel_stack; }
 
+        /// @brief Setup the processor to allow floating-point / SIMD operations.
+        ///
+        /// @note This must be called once at boot for each logical processor.
+        void setup_fpu_support_for_processor(bool print_info = true);
+
+        /// @brief Enable CPU features for the current processor.
+        ///
+        /// @note This must be called once at boot for each logical processor.
+        void enable_cpu_features(bool print_info = true);
+
     private:
         di::Optional<x86::amd64::LocalApic> m_local_apic;
         di::Array<iris::x86::amd64::sd::SegmentDescriptor, 11> m_gdt {};

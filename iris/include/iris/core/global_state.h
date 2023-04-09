@@ -50,6 +50,8 @@ struct GlobalState {
     mutable di::Synchronized<di::Array<di::LinkedList<IrqHandler>, 256>> irq_handlers;
     mutable di::LinkedList<di::Synchronized<IrqController>> irq_controllers;
     mutable arch::MutableGlobalState arch_mutable_state;
+    mutable di::Atomic<bool> all_aps_booted { false };
+    mutable Spinlock debug_output_lock;
     /// @}
 };
 

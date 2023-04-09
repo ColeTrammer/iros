@@ -29,4 +29,5 @@ struct TargetHigh : BitField<64, 32> {};
 using Entry = BitStruct<16, TargetLow, SegmentSelector, IST, Type, DPL, Present, TargetMid, TargetHigh>;
 
 void init_idt();
+void load_idt();
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/prelude.h>
+#include <iris/core/global_state.h>
 #include <iris/core/interrupt_disabler.h>
 
 namespace iris {
@@ -13,12 +14,14 @@ namespace detail {
     struct DebugFormatContext {
         using Encoding = iris::Encoding;
 
+        explicit DebugFormatContext() : m_lock_guard(global_state().debug_output_lock) {}
+
         void output(c32 value) { log_output_character(value); }
 
         auto encoding() const { return Encoding {}; }
 
     private:
-        InterruptDisabler m_interrupt_disabler;
+        di::ScopedLock<Spinlock> m_lock_guard;
     };
 }
 

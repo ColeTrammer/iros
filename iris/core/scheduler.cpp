@@ -45,6 +45,13 @@ void Scheduler::start() {
     run_next();
 }
 
+void Scheduler::start_on_ap() {
+    // Initialize the idle task.
+    m_idle_task = *create_kernel_task(global_state().task_namespace, do_idle);
+
+    run_next();
+}
+
 [[gnu::naked]] void Scheduler::yield() {
     // To yield a task, we must first save its current state, so that
     // it can be resumed later. Instead of setting %rip based on the
