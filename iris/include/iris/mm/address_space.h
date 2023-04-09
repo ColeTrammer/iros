@@ -19,6 +19,9 @@ public:
 
     Expected<void> destroy_region(VirtualAddress start, usize length);
 
+    Expected<void> create_low_identity_mapping(VirtualAddress base, usize page_aligned_length);
+    Expected<void> remove_low_identity_mapping(VirtualAddress base, usize page_aligned_length);
+
     VirtualAddress heap_end() const { return m_heap_end; }
     void set_heap_end(VirtualAddress address) { m_heap_end = address; }
 

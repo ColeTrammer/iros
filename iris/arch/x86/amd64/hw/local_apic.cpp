@@ -179,9 +179,7 @@ static void boot_ap(acpi::ProcessorLocalApicStructure const& acpi_local_apic_str
 
     ASSERT_LT_EQ(boot_area_size, 0x1000);
 
-    *global_state.kernel_address_space.lock()->map_physical_page(
-        mm::VirtualAddress(0x8000), mm::PhysicalAddress(0x8000),
-        mm::RegionFlags::Readable | mm::RegionFlags::Writable | mm::RegionFlags::Executable);
+    *global_state.kernel_address_space.lock()->create_low_identity_mapping(mm::VirtualAddress(0x8000), 0x1000);
 
     // Setup the boot area.
     auto* boot_area = reinterpret_cast<byte*>(0x8000);
@@ -214,6 +212,8 @@ static void boot_ap(acpi::ProcessorLocalApicStructure const& acpi_local_apic_str
     local_apic.write_interrupt_command_register(icr);
 
     io_wait_us(1000000);
+
+    *global_state.kernel_address_space.lock()->remove_low_identity_mapping(mm::VirtualAddress(0x8000), 0x1000);
 }
 
 void init_alternative_processors() {

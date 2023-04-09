@@ -58,7 +58,6 @@ AddressSpace::~AddressSpace() {
 Expected<void> LockedAddressSpace::destroy_region(VirtualAddress base, usize length) {
     m_regions.erase(base);
 
-    // FIXME: consider deleting now empty page structure pages.
     for (auto page = base; page < base + length; page += 4096) {
         auto decomposed = decompose_virtual_address(page);
         auto pml4_offset = decomposed.get<page_structure::Pml4Offset>();
@@ -99,6 +98,35 @@ Expected<void> LockedAddressSpace::destroy_region(VirtualAddress base, usize len
         auto physical_address = PhysicalAddress(pt[pt_offset].get<page_structure::PhysicalAddress>() << 12);
         deallocate_page_frame(physical_address);
         pt[pt_offset] = page_structure::StructureEntry(page_structure::Present(false));
+        this->base().m_resident_pages.fetch_sub(1, di::MemoryOrder::Relaxed);
+
+        // Make sure to cleanup the page structure tables if they are present.
+        // FIXME: this algorithm is needlessly inefficient. In the future, we should maintain a count of pages allocated
+        // in each page structure table, and only free the page structure table if the count reaches 0.
+        if (di::none_of(pt, [&](page_structure::StructureEntry entry) {
+                return entry.get<page_structure::Present>();
+            })) {
+            deallocate_page_frame(PhysicalAddress(pd[pd_offset].get<page_structure::PhysicalAddress>() << 12));
+            pd[pd_offset] = page_structure::StructureEntry(page_structure::Present(false));
+            this->base().m_structure_pages.fetch_sub(1, di::MemoryOrder::Relaxed);
+
+            if (di::none_of(pd, [&](page_structure::StructureEntry entry) {
+                    return entry.get<page_structure::Present>();
+                })) {
+                deallocate_page_frame(PhysicalAddress(pdp[pdp_offset].get<page_structure::PhysicalAddress>() << 12));
+                pdp[pdp_offset] = page_structure::StructureEntry(page_structure::Present(false));
+                this->base().m_structure_pages.fetch_sub(1, di::MemoryOrder::Relaxed);
+
+                if (di::none_of(pdp, [&](page_structure::StructureEntry entry) {
+                        return entry.get<page_structure::Present>();
+                    })) {
+                    deallocate_page_frame(
+                        PhysicalAddress(pml4[pml4_offset].get<page_structure::PhysicalAddress>() << 12));
+                    pml4[pml4_offset] = page_structure::StructureEntry(page_structure::Present(false));
+                    this->base().m_structure_pages.fetch_sub(1, di::MemoryOrder::Relaxed);
+                }
+            }
+        }
     }
 
     invalidate_tlb(base, length);
@@ -167,6 +195,19 @@ Expected<void> LockedAddressSpace::map_physical_page(VirtualAddress location, Ph
     invalidate_tlb(location);
 
     return {};
+}
+
+Expected<void> LockedAddressSpace::create_low_identity_mapping(VirtualAddress base, usize page_aligned_length) {
+    for (auto address : di::iota(base, base + isize(page_aligned_length)) | di::stride(4096)) {
+        auto physical_address = PhysicalAddress(address.raw_value());
+        auto flags = RegionFlags::Readable | RegionFlags::Writable | RegionFlags::Executable;
+        TRY(map_physical_page(address, physical_address, flags));
+    }
+    return {};
+}
+
+Expected<void> LockedAddressSpace::remove_low_identity_mapping(VirtualAddress base, usize page_aligned_length) {
+    return destroy_region(base, page_aligned_length);
 }
 
 void LockedAddressSpace::invalidate_tlb(VirtualAddress base, usize byte_length) {
