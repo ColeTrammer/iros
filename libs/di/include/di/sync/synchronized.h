@@ -44,6 +44,7 @@ public:
     constexpr auto lock() { return LockedReference<Value, Lock>(m_value, m_lock); }
 
     constexpr Value& get_assuming_no_concurrent_accesses() { return m_value; }
+    constexpr Value const& get_const_assuming_no_concurrent_mutations() const { return m_value; }
 
     Lock& get_lock() { return m_lock; }
 
