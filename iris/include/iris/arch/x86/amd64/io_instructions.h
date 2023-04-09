@@ -34,4 +34,13 @@ static inline void io_wait() {
     //       https://wiki.osdev.org/Inline_Assembly/Examples#IO_WAIT
     io_out(0x80, (u8) 0);
 }
+
+/// This function is the same as `io_wait()` but it waits for a specified amount of microseconds. Or at least it tries
+/// to. This function is a complete hack, since it is not accurate at all. In the future, code should be re-written to
+/// use an accurate timer.
+static inline void io_wait_us(u32 us) {
+    for (u32 i = 0; i < us; i++) {
+        io_wait();
+    }
+}
 }

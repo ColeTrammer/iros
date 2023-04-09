@@ -86,6 +86,8 @@ void init_final() {
     iris::x86::amd64::init_io_apic();
     iris::x86::amd64::init_pic();
 
+    iris::x86::amd64::init_alternative_processors();
+
     iris::x86::amd64::init_serial();
 
     // Setup the PIT to fire every 5 ms.

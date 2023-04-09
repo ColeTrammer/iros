@@ -117,6 +117,25 @@ enum class ApicTimerDivideConfiguration : u32 {
     DivideBy1 = 0b1011,
 };
 
+struct ApicInterruptCommandVector : di::BitField<0, 8> {};
+struct ApicInterruptCommandDeliveryMode : di::BitEnum<ApicMessageType, 8, 3> {};
+struct ApicInterruptCommandDestinationMode : di::BitFlag<11> {};
+struct ApicInterruptCommandDeliveryStatus : di::BitFlag<12> {};
+struct ApicInterruptCommandLevel : di::BitFlag<14> {};
+struct ApicInterruptCommandTriggerMode : di::BitFlag<15> {};
+struct ApicInterruptCommandRemoteReadStatus : di::BitField<16, 2> {};
+struct ApicInterruptCommandDestinationShorthand : di::BitField<18, 2> {};
+struct ApicInterruptCommandDestination : di::BitField<56, 8> {};
+
+/// @brief Local APIC Interrupt Command Register
+///
+/// See AMD64 Programmer's Manual; Volume 2; Section 16.5 Figure 16-18.
+using ApicInterruptCommandRegister =
+    di::BitStruct<8, ApicInterruptCommandVector, ApicInterruptCommandDeliveryMode, ApicInterruptCommandDestinationMode,
+                  ApicInterruptCommandDeliveryStatus, ApicInterruptCommandLevel, ApicInterruptCommandTriggerMode,
+                  ApicInterruptCommandRemoteReadStatus, ApicInterruptCommandDestinationShorthand,
+                  ApicInterruptCommandDestination>;
+
 class LocalApic {
 public:
     explicit LocalApic(mm::PhysicalAddress base);
@@ -160,6 +179,19 @@ public:
         direct_write(ApicOffset::TimerDivideConfiguration, di::to_underlying(value));
     }
 
+    ApicInterruptCommandRegister interrupt_command_register() const {
+        auto high = direct_read(ApicOffset::InterruptCommandHigh);
+        auto low = direct_read(ApicOffset::InterruptCommandLow);
+        return di::bit_cast<ApicInterruptCommandRegister>((u64(high) << 32) | low);
+    }
+    void write_interrupt_command_register(ApicInterruptCommandRegister value) {
+        auto raw_value = di::bit_cast<u64>(value);
+        auto low = static_cast<u32>(raw_value);
+        auto high = static_cast<u32>(raw_value >> 32);
+        direct_write(ApicOffset::InterruptCommandHigh, high);
+        direct_write(ApicOffset::InterruptCommandLow, low);
+    }
+
     void send_eoi() { direct_write(ApicOffset::EndOfInterrupt, 0); }
 
 private:
@@ -167,4 +199,5 @@ private:
 };
 
 void init_local_apic();
+void init_alternative_processors();
 }

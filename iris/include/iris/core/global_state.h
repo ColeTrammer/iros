@@ -32,6 +32,7 @@ struct GlobalState {
     arch::FpuState initial_fpu_state;
     di::Optional<acpi::AcpiInformation> acpi_info;
     Processor boot_processor;
+    di::LinkedList<Processor> alernate_processors;
     arch::ReadonlyGlobalState arch_readonly_state;
     /// @}
 

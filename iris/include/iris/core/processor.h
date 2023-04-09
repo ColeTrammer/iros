@@ -10,12 +10,18 @@
 namespace iris {
 class Processor : public di::SelfPointer<Processor> {
 public:
+    Processor() = default;
+
+    explicit Processor(u16 id) : m_id(id) {}
+
+    u16 id() const { return m_id; }
     Scheduler& scheduler() { return m_scheduler; }
 
     arch::ArchProcessor& arch_processor() { return m_arch_processor; }
 
 private:
     Scheduler m_scheduler;
+    u16 m_id {};
     arch::ArchProcessor m_arch_processor;
 };
 
