@@ -69,6 +69,10 @@ private:
             io_out(secondary_io_base + data_offset, value);
         }
     }
+
+    friend IrqLineRange tag_invoke(di::Tag<responsible_irq_line_range>, Pic&) {
+        return IrqLineRange(IrqLine(0), IrqLine(16));
+    }
 };
 
 void init_pic() {
@@ -84,6 +88,6 @@ void init_pic() {
     io_out(0x40, u8(divisor & 0xFF));
     io_out(0x40, u8(divisor >> 8));
 
-    global_state().irq_controller.get_assuming_no_concurrent_accesses() = di::move(pic);
+    *global_state_in_boot().irq_controllers.emplace_back(di::move(pic));
 }
 }

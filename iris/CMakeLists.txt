@@ -70,7 +70,6 @@ if(IROS_BuildIris)
         fs/initrd.cpp
         hw/acpi/acpi.cpp
         hw/irq.cpp
-        hw/irq_controller.cpp
         mm/address_space.cpp
         mm/heap.cpp
         mm/page_frame_allocator.cpp

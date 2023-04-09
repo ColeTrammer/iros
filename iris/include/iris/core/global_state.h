@@ -45,7 +45,7 @@ struct GlobalState {
     mutable di::Queue<TaskFinalizationRequest> task_finalization_data_queue;
     mutable WaitQueue task_finalization_wait_queue;
     mutable di::Synchronized<di::Array<di::LinkedList<IrqHandler>, 256>> irq_handlers;
-    mutable di::Synchronized<IrqController> irq_controller;
+    mutable di::LinkedList<di::Synchronized<IrqController>> irq_controllers;
     /// @}
 };
 
