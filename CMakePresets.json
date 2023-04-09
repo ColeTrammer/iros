@@ -175,7 +175,8 @@
                 "IROS_BuildTests": "OFF",
                 "IROS_BuildUserspace": "OFF",
                 "IROS_BuildTools": "ON",
-                "IROS_BuildCcpp": "OFF"
+                "IROS_BuildCcpp": "OFF",
+                "CMAKE_UNITY_BUILD": "ON"
             },
             "inherits": ["release_base", "gcc_base"]
         },
