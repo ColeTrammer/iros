@@ -106,7 +106,7 @@ void init_acpi() {
                     static_cast<ProcessorLocalApicStructure const&>(interrupt_controller_structure);
                 println("Found local APIC: {}/{}"_sv, local_apic.processor_id, local_apic.apic_id);
 
-                acpi_info.local_apic = local_apic;
+                *acpi_info.local_apic.push_back(local_apic);
                 break;
             }
             case InterruptControllerStructureType::IoApic: {

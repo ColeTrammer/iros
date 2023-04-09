@@ -1,9 +1,8 @@
 #include <iris/arch/x86/amd64/idt.h>
 #include <iris/arch/x86/amd64/system_instructions.h>
+#include <iris/core/global_state.h>
 
 namespace iris::x86::amd64::idt {
-static auto idt = di::Array<iris::x86::amd64::idt::Entry, 256> {};
-
 template<int irq_number>
 [[gnu::naked]] [[noreturn]] static void handle_irq_without_error_code() {
     asm volatile("push %%rax\n"
@@ -109,8 +108,10 @@ constexpr auto get_irq_handler() {
 }
 
 void init_idt() {
+    auto& idt = global_state_in_boot().arch_readonly_state.idt;
+
     di::function::unpack<di::meta::MakeIntegerSequence<int, 256>>(
-        []<int... indices>(di::meta::IntegerSequence<int, indices...>) {
+        [&]<int... indices>(di::meta::IntegerSequence<int, indices...>) {
             auto addresses = di::Array { di::to_uintptr(get_irq_handler<indices>())... };
             for (auto [n, handler_address] : di::enumerate(addresses)) {
                 idt[n] = Entry(Present { true }, Type(Type::InterruptGate), SegmentSelector { 5 * 8 },

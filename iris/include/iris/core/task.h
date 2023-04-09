@@ -31,17 +31,18 @@ public:
     ~Task();
 
     [[noreturn]] void context_switch_to() {
+        // NOTE: Disable interrupts at this point because setting the userspace thread pointer may make accessing the
+        // current processor impossible. If we receive an interrupt after that point, we will crash. NMI's have to take
+        // special care to handle this scenario. Additionally, we want to avoid any possible race conditions while
+        // context switching, as these functions may need to access the current processor.
+        auto guard = InterruptDisabler {};
         m_address_space->load();
         m_fpu_state.load();
         if (m_kernel_stack.raw_value() != 0) {
             arch::load_kernel_stack(m_kernel_stack + 0x2000);
         }
-
-        // NOTE: Disable interrupts at this point because setting the userspace thread pointer may make accessing the
-        // current processor impossible. If we receive an interrupt after that point, we will crash. NMI's have to take
-        // special care to handle this scenario.
-        auto guard = InterruptDisabler {};
         arch::load_userspace_thread_pointer(userspace_thread_pointer(), m_task_state);
+
         m_task_state.context_switch_to();
     }
 

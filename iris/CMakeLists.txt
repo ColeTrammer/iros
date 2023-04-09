@@ -67,6 +67,7 @@ if(IROS_BuildIris)
         core/task_status.cpp
         core/unit_test.cpp
         core/wait_queue.cpp
+        fs/debug_file.cpp
         fs/initrd.cpp
         hw/acpi/acpi.cpp
         hw/irq.cpp

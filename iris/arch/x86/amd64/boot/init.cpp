@@ -1,4 +1,5 @@
 #include <di/prelude.h>
+#include <iris/arch/x86/amd64/gdt.h>
 #include <iris/arch/x86/amd64/hw/io_apic.h>
 #include <iris/arch/x86/amd64/hw/local_apic.h>
 #include <iris/arch/x86/amd64/hw/pic.h>
@@ -30,64 +31,8 @@
 #include <iris/mm/sections.h>
 #include <iris/uapi/syscall.h>
 
-namespace iris {
-Expected<usize> tag_invoke(di::Tag<read_file>, DebugFile&, di::Span<di::Byte> buffer) {
-    if (buffer.empty()) {
-        return 0;
-    }
-
-    auto byte = di::Byte(0);
-    TRY(global_state().input_wait_queue.wait([&] {
-        auto has_data = global_state().input_data_queue.pop();
-        if (has_data) {
-            byte = *has_data;
-            return true;
-        }
-        return false;
-    }));
-
-    buffer[0] = byte;
-    return 1;
-}
-}
-
-namespace iris {
-void setup_current_processor_access() {
-    x86::amd64::swapgs();
-}
-
-void set_current_processor(Processor& processor) {
-    if (global_state().processor_info.has_fs_gs_base()) {
-        x86::amd64::write_gs_base(reinterpret_cast<uptr>(&processor));
-    } else {
-        x86::amd64::write_msr(x86::amd64::ModelSpecificRegister::GsBase, reinterpret_cast<uptr>(&processor));
-    }
-}
-}
-
 namespace iris::arch {
-alignas(4096) static char temp_stack[4 * 4096];
-
-static auto gdt = di::Array<iris::x86::amd64::sd::SegmentDescriptor, 11> {};
-static auto tss = iris::x86::amd64::TSS {};
-
-void load_kernel_stack(mm::VirtualAddress base) {
-    tss.rsp[0] = base.raw_value();
-}
-
-void load_userspace_thread_pointer(uptr userspace_thread_pointer, arch::TaskState& task_state) {
-    if (!task_state.in_kernel()) {
-        x86::amd64::swapgs();
-
-        if (global_state().processor_info.has_fs_gs_base()) {
-            x86::amd64::write_fs_base(userspace_thread_pointer);
-            x86::amd64::write_gs_base(userspace_thread_pointer);
-        } else {
-            x86::amd64::write_msr(x86::amd64::ModelSpecificRegister::FsBase, userspace_thread_pointer);
-            x86::amd64::write_msr(x86::amd64::ModelSpecificRegister::GsBase, userspace_thread_pointer);
-        }
-    }
-}
+alignas(4096) static di::Array<byte, 16384> bsp_stack;
 
 extern "C" void bsp_cpu_init() {
     iris::arch::cxx_init();
@@ -95,6 +40,7 @@ extern "C" void bsp_cpu_init() {
     iris::x86::amd64::init_serial_early_boot();
 
     auto& global_state = global_state_in_boot();
+    global_state.boot_processor.arch_processor().set_fallback_kernel_stack(di::to_uintptr(bsp_stack.data()));
 
     iris::println("Beginning x86_64 kernel boot..."_sv);
 
@@ -116,83 +62,12 @@ extern "C" void bsp_cpu_init() {
         x86::amd64::load_cr4(x86::amd64::read_cr4() | (1 << 16));
     }
 
+    set_current_processor(global_state.boot_processor);
+
     x86::amd64::idt::init_idt();
 
-    {
-        using namespace iris::x86::amd64::ssd;
-
-        // Setup TSS.
-        tss.io_map_base = sizeof(tss);
-        tss.rsp[0] = di::to_uintptr(temp_stack);
-        tss.rsp[1] = di::to_uintptr(temp_stack);
-        tss.rsp[2] = di::to_uintptr(temp_stack);
-        tss.ist[0] = di::to_uintptr(temp_stack);
-
-        // TSS Descriptor Setup.
-        auto tss_descriptor = reinterpret_cast<SystemSegmentDescriptor*>(&gdt[9]);
-        auto tss_address = di::to_uintptr(&tss);
-        *tss_descriptor = SystemSegmentDescriptor(
-            LimitLow(sizeof(tss)), BaseLow(tss_address & 0xFFFF), BaseMidLow((tss_address >> 16) & 0xFF),
-            Type(Type::TSS), Present(true), BaseMidHigh((tss_address >> 24) & 0xFF), BaseHigh((tss_address >> 32)));
-    }
-
-    {
-        using namespace iris::x86::amd64::sd;
-
-        // The layout of the GDT matches the limine boot protocol, although this is not strictly necessary.
-        // The 16 bit and 32 bit segments are included to ease future attempts to boot APs.
-        // This is the null segment descriptor.
-        gdt[0] = SegmentDescriptor();
-
-        // 16 bit Code Descriptor.
-        gdt[1] = SegmentDescriptor(LimitLow(0xFFFF), Readable(true), Code(true), DataOrCodeSegment(true), Present(true),
-                                   LimitHigh(0xF), Granular(true));
-
-        // 16 bit Data Descriptor.
-        gdt[2] = SegmentDescriptor(LimitLow(0xFFFF), Writable(true), DataOrCodeSegment(true), Present(true),
-                                   LimitHigh(0xF), Granular(true));
-
-        // 32 bit Code Descriptor.
-        gdt[3] = SegmentDescriptor(LimitLow(0xFFFF), Readable(true), Code(true), DataOrCodeSegment(true), Present(true),
-                                   LimitHigh(0xF), Not16Bit(true), Granular(true));
-
-        // 32 bit Data Descriptor.
-        gdt[4] = SegmentDescriptor(LimitLow(0xFFFF), Writable(true), DataOrCodeSegment(true), Present(true),
-                                   LimitHigh(0xF), Not16Bit(true), Granular(true));
-
-        // 64 bit Code Descriptor.
-        gdt[5] = SegmentDescriptor(LimitLow(0xFFFF), Readable(true), Code(true), DataOrCodeSegment(true), Present(true),
-                                   LimitHigh(0xF), LongMode(true), Granular(true));
-
-        // 64 bit Data Descriptor.
-        gdt[6] = SegmentDescriptor(LimitLow(0xFFFF), Writable(true), DataOrCodeSegment(true), Present(true),
-                                   LimitHigh(0xF), Not16Bit(true), Granular(true));
-
-        // 64 bit User Code Descriptor.
-        gdt[7] = SegmentDescriptor(LimitLow(0xFFFF), Readable(true), Code(true), DataOrCodeSegment(true), DPL(3),
-                                   Present(true), LimitHigh(0xF), LongMode(true), Granular(true));
-
-        // 64 bit User Data Descriptor.
-        gdt[8] = SegmentDescriptor(LimitLow(0xFFFF), Writable(true), DataOrCodeSegment(true), DPL(3), Present(true),
-                                   LimitHigh(0xF), Not16Bit(true), Granular(true));
-
-        auto gdtr = iris::x86::amd64::GDTR { sizeof(gdt) - 1, di::to_uintptr(gdt.data()) };
-        iris::x86::amd64::load_gdt(gdtr);
-
-        // Load TSS.
-        iris::x86::amd64::load_tr(9 * 8);
-
-        // Load the data segments with NULL segment selector.
-        asm volatile("mov %0, %%dx\n"
-                     "mov %%dx, %%ds\n"
-                     "mov %%dx, %%es\n"
-                     "mov %%dx, %%fs\n"
-                     "mov %%dx, %%ss\n"
-                     "mov %%dx, %%gs\n"
-                     :
-                     : "i"(0)
-                     : "memory", "edx");
-    }
+    x86::amd64::init_tss();
+    x86::amd64::init_gdt();
 
     set_current_processor(global_state.boot_processor);
 
@@ -213,8 +88,8 @@ void init_final() {
 
     iris::x86::amd64::init_serial();
 
-    // Setup the PIT to fire every 1 ms.
-    auto divisor = 1193182 / 1000;
+    // Setup the PIT to fire every 5 ms.
+    auto divisor = 5 * 1193182 / 1000;
     x86::amd64::io_out(0x43, 0b00110110_u8);
     x86::amd64::io_out(0x40, u8(divisor & 0xFF));
     x86::amd64::io_out(0x40, u8(divisor >> 8));
@@ -225,7 +100,7 @@ extern "C" [[gnu::naked]] void iris_entry() {
                  "push $0\n"
                  "call bsp_cpu_init\n"
                  :
-                 : "r"(temp_stack + sizeof(temp_stack))
+                 : "r"(bsp_stack.data() + bsp_stack.size())
                  : "memory");
 }
 }

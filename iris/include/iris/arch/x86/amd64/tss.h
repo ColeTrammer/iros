@@ -16,4 +16,6 @@ struct [[gnu::packed]] TSS {
     u16 reserved4;
     u16 io_map_base;
 };
+
+void init_tss();
 }
