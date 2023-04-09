@@ -26,7 +26,10 @@ namespace detail {
         constexpr static auto storage(E& self) -> S& { return self; }
         constexpr static auto storage(E const& self) -> S const& { return self; }
 
-        constexpr friend R tag_invoke(Tag, meta::Like<Self, E> self, BArgs... bargs) {
+        template<concepts::RemoveCVRefSameAs<E> X>
+        requires(concepts::Reference<X> && concepts::ConvertibleTo<X &&, meta::Like<Self, E>>)
+        constexpr friend R tag_invoke(Tag, X&& self_in, BArgs... bargs) {
+            auto&& self = static_cast<meta::Like<Self, E>>(self_in);
             auto const& vtable = MethodImpl::vtable(self);
             auto* storage = util::voidify(util::addressof(MethodImpl::storage(self)));
 
