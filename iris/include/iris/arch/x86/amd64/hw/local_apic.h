@@ -142,7 +142,7 @@ public:
         direct_write(ApicOffset::ExtendedControl, di::bit_cast<u32>(value));
     }
 
-    void write_spurious_interrupt_vector(u8 value) { direct_write(ApicOffset::SpuriousInterruptVector, value); }
+    void write_spurious_interrupt_vector(u32 value) { direct_write(ApicOffset::SpuriousInterruptVector, value); }
 
     ApicLvtEntry lvt_entry(ApicOffset offset) const { return di::bit_cast<ApicLvtEntry>(direct_read(offset)); }
     void write_lvt_entry(ApicOffset offset, ApicLvtEntry value) { direct_write(offset, di::bit_cast<u32>(value)); }
@@ -159,6 +159,8 @@ public:
     void write_timer_divide_configuration(ApicTimerDivideConfiguration value) {
         direct_write(ApicOffset::TimerDivideConfiguration, di::to_underlying(value));
     }
+
+    void send_eoi() { direct_write(ApicOffset::EndOfInterrupt, 0); }
 
 private:
     u32 volatile* m_base { nullptr };

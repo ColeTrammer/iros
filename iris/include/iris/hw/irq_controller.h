@@ -24,7 +24,7 @@ namespace detail {
     struct SendEoiFunction : di::Dispatcher<SendEoiFunction, void(di::This&, IrqLine)> {};
     struct EnableIrqLine : di::Dispatcher<EnableIrqLine, void(di::This&, IrqLine)> {};
     struct DisableIrqLine : di::Dispatcher<DisableIrqLine, void(di::This&, IrqLine)> {};
-    struct ResponsibleIrqLineRange : di::Dispatcher<ResponsibleIrqLineRange, IrqLineRange(di::This&)> {};
+    struct ResponsibleIrqLineRange : di::Dispatcher<ResponsibleIrqLineRange, IrqLineRange(di::This const&)> {};
 }
 
 constexpr inline auto send_eoi = detail::SendEoiFunction {};

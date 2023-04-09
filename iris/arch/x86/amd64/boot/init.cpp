@@ -202,11 +202,22 @@ extern "C" void bsp_cpu_init() {
 void init_final() {
     acpi::init_acpi();
 
+    auto& global_state = global_state_in_boot();
+    if (global_state.acpi_info) {
+        global_state.arch_readonly_state.use_apic = true;
+    }
+
     iris::x86::amd64::init_local_apic();
     iris::x86::amd64::init_io_apic();
     iris::x86::amd64::init_pic();
 
     iris::x86::amd64::init_serial();
+
+    // Setup the PIT to fire every 1 ms.
+    auto divisor = 1193182 / 1000;
+    x86::amd64::io_out(0x43, 0b00110110_u8);
+    x86::amd64::io_out(0x40, u8(divisor & 0xFF));
+    x86::amd64::io_out(0x40, u8(divisor >> 8));
 }
 
 extern "C" [[gnu::naked]] void iris_entry() {

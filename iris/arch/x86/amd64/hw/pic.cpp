@@ -1,5 +1,6 @@
 #include <iris/arch/x86/amd64/io_instructions.h>
 #include <iris/core/global_state.h>
+#include <iris/core/print.h>
 #include <iris/hw/irq.h>
 
 namespace iris::x86::amd64 {
@@ -70,24 +71,36 @@ private:
         }
     }
 
-    friend IrqLineRange tag_invoke(di::Tag<responsible_irq_line_range>, Pic&) {
+    friend IrqLineRange tag_invoke(di::Tag<responsible_irq_line_range>, Pic const&) {
         return IrqLineRange(IrqLine(0), IrqLine(16));
     }
 };
 
 void init_pic() {
+    auto& global_state = global_state_in_boot();
+    if (global_state.acpi_info && global_state.acpi_info->madt &&
+        !(di::to_underlying(global_state.acpi_info->madt->flags) &
+          di::to_underlying(acpi::MADT::Flags::PcAtCompatible))) {
+        println("ACPI suggests this machine is not PC-AT compatible, so skipping disabling the PIC."_sv);
+        return;
+    }
+
+    println("Resetting PIC..."_sv);
+
     auto pic = Pic {};
-
     pic.remap(32, 32 + 8);
-
     di::for_each(di::iota(IrqLine(0), IrqLine(16)), di::bind_front(disable_irq_line, di::ref(pic)));
 
-    // Setup the PIT to fire every 1 ms.
-    auto divisor = 1193182 / 1000;
-    io_out(0x43, (u8) 0b00110110);
-    io_out(0x40, u8(divisor & 0xFF));
-    io_out(0x40, u8(divisor >> 8));
+    if (global_state.arch_readonly_state.use_apic) {
+        println("APIC is enabled, disabling PIC..."_sv);
 
+        // Disable the PIC by writing a 1 to the IMCR.
+        io_out(primary_io_base + 2, 0x70_u8);
+        io_out(primary_io_base + 3, u8(io_in<u8>(0x23) | 0x01_u8));
+        return;
+    }
+
+    println("APIC is disabled, so using PIC..."_sv);
     *global_state_in_boot().irq_controllers.emplace_back(di::move(pic));
 }
 }

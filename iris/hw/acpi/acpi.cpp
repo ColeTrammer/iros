@@ -90,6 +90,8 @@ void init_acpi() {
     }
 
     auto acpi_info = AcpiInformation {};
+    acpi_info.madt = madt;
+
     for (auto interrupt_controller_structures = madt->interrupt_controller_structures();
          interrupt_controller_structures != interrupt_controller_structures.end(); ++interrupt_controller_structures) {
         auto const& interrupt_controller_structure = *interrupt_controller_structures;

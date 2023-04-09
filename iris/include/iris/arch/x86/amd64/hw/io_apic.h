@@ -2,6 +2,8 @@
 
 #include <di/prelude.h>
 #include <iris/arch/x86/amd64/hw/local_apic.h>
+#include <iris/hw/acpi/acpi.h>
+#include <iris/hw/irq_controller.h>
 #include <iris/mm/physical_address.h>
 
 /// @file
@@ -90,10 +92,17 @@ public:
     }
 
 private:
+    friend void tag_invoke(di::Tag<send_eoi>, IoApic&, IrqLine irq_line);
+    friend void tag_invoke(di::Tag<disable_irq_line>, IoApic&, IrqLine irq_line);
+    friend void tag_invoke(di::Tag<enable_irq_line>, IoApic&, IrqLine irq_line);
+    friend IrqLineRange tag_invoke(di::Tag<responsible_irq_line_range>, IoApic const&);
+
     IoApicOffset offset_for_redirection_entry(u8 number) {
         ASSERT_LT_EQ(number, m_max_redirection_entry);
         return IoApicOffset(di::to_underlying(IoApicOffset::RedirectionTable) + 2 * number);
     }
+
+    di::Tuple<u8, di::Optional<acpi::InterruptSourceOverrideStructure>> resolve_irq_line(IrqLine irq_line);
 
     u32 volatile* m_access { nullptr };
     u8 m_global_offset { 0 };

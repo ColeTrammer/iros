@@ -13,11 +13,12 @@
 #include <iris/mm/address_space.h>
 
 #include IRIS_ARCH_INCLUDE(hw/processor_info.h)
+#include IRIS_ARCH_INCLUDE(core/global_state.h)
 
 namespace iris {
 struct GlobalState {
-    GlobalState() {}
-    ~GlobalState() {}
+    GlobalState() = default;
+    ~GlobalState() = default;
 
     /// @name Readonly fields
     /// Read-only after after kernel initialization. Ideally would be marked const.
@@ -31,6 +32,7 @@ struct GlobalState {
     arch::FpuState initial_fpu_state;
     di::Optional<acpi::AcpiInformation> acpi_info;
     Processor boot_processor;
+    arch::ReadonlyGlobalState arch_readonly_state;
     /// @}
 
     /// @name Mutable fields
@@ -46,6 +48,7 @@ struct GlobalState {
     mutable WaitQueue task_finalization_wait_queue;
     mutable di::Synchronized<di::Array<di::LinkedList<IrqHandler>, 256>> irq_handlers;
     mutable di::LinkedList<di::Synchronized<IrqController>> irq_controllers;
+    mutable arch::MutableGlobalState arch_mutable_state;
     /// @}
 };
 

@@ -21,6 +21,7 @@ target_sources(
             arch/x86/amd64/hw/local_apic.cpp
             arch/x86/amd64/hw/io_apic.cpp
             arch/x86/amd64/hw/irq_controller.cpp
+            arch/x86/amd64/hw/irq.cpp
             arch/x86/amd64/hw/idt.cpp
             arch/x86/amd64/hw/pic.cpp
             arch/x86/amd64/hw/power.cpp

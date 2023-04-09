@@ -12,8 +12,11 @@ class Processor : public di::SelfPointer<Processor> {
 public:
     Scheduler& scheduler() { return m_scheduler; }
 
+    arch::ArchProcessor& arch_processor() { return m_arch_processor; }
+
 private:
     Scheduler m_scheduler;
+    arch::ArchProcessor m_arch_processor;
 };
 
 /// @brief Setups access to the current processor.

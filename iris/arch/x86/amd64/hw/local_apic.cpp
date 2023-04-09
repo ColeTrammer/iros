@@ -10,16 +10,23 @@ LocalApic::LocalApic(mm::PhysicalAddress base) {
 }
 
 void init_local_apic() {
-    if (!global_state().processor_info.has_apic()) {
-        println("Local APIC not supported, panicking..."_sv);
-        ASSERT(false);
+    auto& global_state = global_state_in_boot();
+    if (!global_state.arch_readonly_state.use_apic) {
+        println("APIC support is disabled, so skipping local APIC initialization..."_sv);
+        global_state.arch_readonly_state.use_apic = false;
+        return;
     }
 
-    auto apic_msr = read_msr(ModelSpecificRegister::LocalApicBase);
-    if (!(apic_msr & 0x800)) {
-        println("Local APIC not enabled, panicking..."_sv);
-        ASSERT(false);
+    if (!global_state.processor_info.has_apic()) {
+        println("ACPI not detected, so skipping local APIC initialization..."_sv);
+        global_state.arch_readonly_state.use_apic = false;
+        return;
     }
+
+    // Ensure the local APIC is enabled.
+    auto apic_msr = read_msr(ModelSpecificRegister::LocalApicBase);
+    apic_msr |= 0x800;
+    write_msr(ModelSpecificRegister::LocalApicBase, apic_msr);
 
     auto apic_base = mm::PhysicalAddress(apic_msr & 0xFFFFF000);
     auto local_apic = LocalApic(apic_base);
@@ -34,8 +41,8 @@ void init_local_apic() {
 
     // Enable the local APIC by setting up the spurious interrupt vector register.
     // This also maps any spurious interrupts to IRQ 255.
+    local_apic.write_spurious_interrupt_vector(0x1FF);
 
-    // FIXME: actually enable the local APIC. This is currently disabled because the IO APIC is not yet implemented.
-    // local_apic.write_spurious_interrupt_vector(255);
+    global_state.boot_processor.arch_processor().set_local_apic(local_apic);
 }
 }

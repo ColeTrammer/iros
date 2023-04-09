@@ -6,10 +6,6 @@
 #include <iris/uapi/syscall.h>
 
 namespace iris {
-Expected<GlobalIrqNumber> irq_number_for_legacy_isa_interrupt_number(IrqLine irq_line) {
-    return GlobalIrqNumber(irq_line.raw_value() + 32);
-}
-
 Expected<void> register_external_irq_handler(IrqLine line, IrqHandler handler) {
     auto irq = TRY(irq_number_for_legacy_isa_interrupt_number(line));
 
