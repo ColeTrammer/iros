@@ -53,5 +53,11 @@
     },
     "[markdown]": {
         "editor.tabSize": 2
+    },
+    "[cmake]": {
+        "editor.defaultFormatter": "cheshirekow.cmake-format"
+    },
+    "[cmake-cache]": {
+        "editor.defaultFormatter": "cheshirekow.cmake-format"
     }
 }
