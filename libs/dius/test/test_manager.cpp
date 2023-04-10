@@ -37,29 +37,33 @@ void TestManager::handle_assertion_failure() {
 
 void TestManager::print_failure_message() {
     auto& test_case = m_test_cases[m_current_test_index];
-    dius::eprintln("\033[31;1mFAIL\033[0m: \033[1m{}\033[0m: {}"_sv, test_case.suite_name(), test_case.case_name());
+    dius::eprintln("{}: {}: {}"_sv, di::Styled("FAIL"_sv, di::FormatEffect::Bold | di::FormatColor::Red),
+                   di::Styled(test_case.suite_name(), di::FormatEffect::Bold), test_case.case_name());
     ++m_fail_count;
 }
 
 void TestManager::print_success_message() {
     auto& test_case = m_test_cases[m_current_test_index];
-    dius::eprintln("\033[1;32mPASS\033[0m: \033[1m{}\033[0m: {}"_sv, test_case.suite_name(), test_case.case_name());
+
+    dius::eprintln("{}: {}: {}"_sv, di::Styled("PASS"_sv, di::FormatEffect::Bold | di::FormatColor::Green),
+                   di::Styled(test_case.suite_name(), di::FormatEffect::Bold), test_case.case_name());
     ++m_success_count;
 }
 
 void TestManager::final_report() {
     auto tests_skipped = m_test_cases.size() - m_current_test_index;
-    auto skipped_string = di::String {};
+
+    dius::print("\n{} / {} Test Passed"_sv, di::Styled(m_success_count, di::FormatEffect::Bold),
+                di::Styled(m_test_cases.size(), di::FormatEffect::Bold));
     if (tests_skipped) {
-        skipped_string =
-            *di::present(" (\033[1m{}\033[0m Failed \033[1m{}\033[0m Skipped)"_sv, m_fail_count, tests_skipped);
+        dius::print(" ({} Failed {} Skipped)"_sv, di::Styled(m_fail_count, di::FormatEffect::Bold),
+                    di::Styled(tests_skipped, di::FormatEffect::Bold));
     }
+    dius::println(": {}"_sv, m_fail_count
+                                 ? di::Styled("Tests Failed"_sv, di::FormatEffect::Bold | di::FormatColor::Red)
+                                 : di::Styled("Tests Passed"_sv, di::FormatEffect::Bold | di::FormatColor::Green));
 
-    dius::println("\n\033[1m{}\033[0m / \033[1m{}\033[0m Tests Passed{}: {}"_sv, m_success_count, m_test_cases.size(),
-                  skipped_string,
-                  m_fail_count ? "\033[31;1mTests Failed\033[0m"_sv : "\033[32;1mTests Passed\033[0m"_sv);
-
-    int result = m_fail_count > 0;
+    auto result = int(m_fail_count > 0);
 #ifdef DIUS_PLATFORM_IROS
     (void) system::system_call<int>(system::Number::shutdown, result);
 #endif

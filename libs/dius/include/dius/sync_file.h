@@ -87,6 +87,8 @@ public:
 
     di::Expected<void, PosixCode> flush() const { return {}; }
 
+    bool interactive_device() const { return true; }
+
 private:
     Owned m_owned { Owned::No };
     int m_fd { -1 };

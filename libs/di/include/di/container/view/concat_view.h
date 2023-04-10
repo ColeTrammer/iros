@@ -7,10 +7,12 @@
 #include <di/container/meta/prelude.h>
 #include <di/container/types/prelude.h>
 #include <di/container/view/drop.h>
+#include <di/container/view/take.h>
 #include <di/container/view/view_interface.h>
 #include <di/function/minus.h>
 #include <di/meta/maybe_const.h>
 #include <di/vocab/tuple/prelude.h>
+#include <di/vocab/variant/prelude.h>
 
 // Implementation of views::concat as described in p2542r2:
 // https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2542r2.html.

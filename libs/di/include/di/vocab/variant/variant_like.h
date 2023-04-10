@@ -7,6 +7,7 @@
 #include <di/util/as_const.h>
 #include <di/util/forward.h>
 #include <di/util/get.h>
+#include <di/util/move.h>
 #include <di/vocab/variant/variant_alternative.h>
 #include <di/vocab/variant/variant_index.h>
 #include <di/vocab/variant/variant_size.h>
