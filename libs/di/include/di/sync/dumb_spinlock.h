@@ -4,6 +4,12 @@
 #include <di/sync/concepts/lock.h>
 
 namespace di::sync {
+inline void cpu_relax() {
+#ifdef __x86_64__
+    asm volatile("pause" ::: "memory");
+#endif
+}
+
 class DumbSpinlock {
 public:
     DumbSpinlock() = default;
@@ -17,9 +23,7 @@ public:
                 return;
             }
             while (m_state.load(MemoryOrder::Relaxed)) {
-#ifdef __x86_64__
-                asm volatile("pause" ::: "memory");
-#endif
+                cpu_relax();
             }
         }
     }

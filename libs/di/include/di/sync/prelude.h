@@ -18,4 +18,6 @@ using sync::DumbSpinlock;
 using sync::MemoryOrder;
 using sync::ScopedLock;
 using sync::Synchronized;
+
+using sync::cpu_relax;
 }
