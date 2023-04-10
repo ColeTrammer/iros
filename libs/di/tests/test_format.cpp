@@ -48,6 +48,7 @@ constexpr void basic() {
 
     ASSERT_EQ(di::present("{:?}"_sv, "abc"_sv), "\"abc\""_sv);
     ASSERT_EQ(di::present("{:?}"_sv, U'x'), "'x'"_sv);
+    ASSERT_EQ(di::present("{}"_sv, 42_b), "42"_sv);
 }
 
 TESTC(format, basic)
