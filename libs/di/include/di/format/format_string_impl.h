@@ -5,6 +5,7 @@
 #include <di/format/concepts/formattable.h>
 #include <di/format/format_parse_context.h>
 #include <di/meta/type_identity.h>
+#include <di/util/source_location.h>
 
 namespace di::format {
 namespace detail {
@@ -42,8 +43,31 @@ namespace detail {
     private:
         StringView m_view;
     };
+
+    template<concepts::Encoding Enc, concepts::Formattable... Args>
+    class FormatStringWithLocationImpl {
+    private:
+        using StringView = container::string::StringViewImpl<Enc>;
+
+    public:
+        consteval FormatStringWithLocationImpl(StringView view,
+                                               util::SourceLocation location = util::SourceLocation::current())
+            : m_base(view), m_location(location) {}
+
+        constexpr operator StringView() const { return m_base; }
+
+        constexpr auto encoding() const { return m_base.encoding(); }
+        constexpr auto location() const { return m_location; }
+
+    private:
+        FormatStringImpl<Enc, Args...> m_base;
+        util::SourceLocation m_location;
+    };
 }
 
 template<concepts::Encoding Enc, concepts::Formattable... Args>
 using FormatStringImpl = detail::FormatStringImpl<Enc, meta::TypeIdentity<Args>...>;
+
+template<concepts::Encoding Enc, concepts::Formattable... Args>
+using FormatStringWithLocationImpl = detail::FormatStringWithLocationImpl<Enc, meta::TypeIdentity<Args>...>;
 }
