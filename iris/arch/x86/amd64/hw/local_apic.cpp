@@ -151,10 +151,10 @@ extern "C" void iris_ap_entry(ApBootInfo* info_in) {
 
     info.processor->mark_as_booted();
 
-    println("AP {} booted."_sv, info.processor->id());
-
     info.processor->arch_processor().enable_cpu_features(false);
     set_current_processor(*info.processor);
+
+    println("AP {} booted."_sv, info.processor->id());
 
     idt::load_idt();
     init_tss();

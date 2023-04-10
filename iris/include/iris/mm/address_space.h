@@ -49,6 +49,7 @@ public:
     void set_architecture_page_table_base(PhysicalAddress value) { m_architecture_page_table_base = value; }
 
     void set_kernel() { m_kernel = true; }
+    bool is_kernel() const { return m_kernel; }
 
     void load();
 

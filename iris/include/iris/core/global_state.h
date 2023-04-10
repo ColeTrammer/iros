@@ -34,6 +34,7 @@ struct GlobalState {
     Processor boot_processor;
     di::LinkedList<Processor> alernate_processors;
     arch::ReadonlyGlobalState arch_readonly_state;
+    bool current_processor_available { false };
     /// @}
 
     /// @name Mutable fields

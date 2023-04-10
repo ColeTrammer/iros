@@ -50,6 +50,7 @@ extern "C" void bsp_cpu_init() {
     global_state.boot_processor.arch_processor().enable_cpu_features();
 
     set_current_processor(global_state.boot_processor);
+    global_state.current_processor_available = true;
 
     x86::amd64::idt::init_idt();
 
