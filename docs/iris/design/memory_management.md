@@ -135,3 +135,29 @@ One problem with the latter approach is that all pages need to be allocated upfr
 pages on the system, the kernel will be able to calculate how many pages it needs to reserve. After reserving the
 physical pages, the kernel must also reserve virtual address space to store each page structure. Additionally, physical
 backing memory most likely will be needed as well.
+
+## TLB Management
+
+The Translation Lookaside Buffer (TLB) is a cache of virtual to physical address mappings. The processor uses this cache
+to speed up page address translation. Unfortunately, the TLB is extremely problematic when supporting multiple
+concurrent processors. In order to preserve coherence, individual TLB entries may to be removed from all processor's
+caches. On x86_64, this procedure is managed in software.
+
+### TLB Shootdown
+
+In order to force other processor to invalidate their TLB entries, the kernel must send an IPI (Inter-Processor
+Interrupt) to said processors. If not careful, this can easily lead to deadlock. For example, if 2 processors are
+modifying different address spaces, they may need to invalidate each other's TLB entries. If each processor has
+interrupts disabled, they will never receive the other's IPI, leading to deadlock.
+
+As a direct consequence, it is unsafe to modify the page tables of an address space while interrupts are disabled. This
+implies on page faults and system calls, interrupts must be enabled before executing. Additionally, allocations cannot
+be made in IRQ context, as this may lead to deadlock. Although these concerns may seem like a significant limitation,
+this is ultimately acceptable. On Linux, allocations can occur in IRQ context, but only using GFP_ATOMIC, which is
+liable to fail. If needed, the Iris kernel can provide a similar API, although IRQ handlers should really be
+preallocating any memory they need. Page faults and system calls are already expected to be preemtible, so this is not a
+concern.
+
+The actual IPI mechanism also cannot allocate memory, so IPI messages must be stored in a preallocated object pool. Each
+processor will have a fixed-sized ring buffer which stores pointers to pending IPI messages. This way, when broadcasting
+an IPI, only a single message is needed. The object pool and each processor's queue are protected by separate spinlocks.
