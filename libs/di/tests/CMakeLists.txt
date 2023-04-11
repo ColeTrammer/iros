@@ -12,6 +12,7 @@ add_executable(
     test_container_linked_list.cpp
     test_container_path.cpp
     test_container_queue.cpp
+    test_container_ring.cpp
     test_container_string.cpp
     test_container_tree_map.cpp
     test_container_tree_set.cpp

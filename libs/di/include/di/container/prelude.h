@@ -11,6 +11,7 @@
 #include <di/container/meta/prelude.h>
 #include <di/container/path/prelude.h>
 #include <di/container/queue/prelude.h>
+#include <di/container/ring/prelude.h>
 #include <di/container/string/prelude.h>
 #include <di/container/tree/prelude.h>
 #include <di/container/types/prelude.h>

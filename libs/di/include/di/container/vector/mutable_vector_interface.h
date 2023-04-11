@@ -39,8 +39,11 @@ private:
     constexpr friend auto tag_invoke(types::Tag<util::create_in_place>, InPlaceType<Self>, Con&& container,
                                      Args&&... args) {
         auto result = Self(util::forward<Args>(args)...);
-        vector::append_container(result, util::forward<Con>(container));
-        return result;
+        return invoke_as_fallible([&] {
+                   return vector::append_container(result, util::forward<Con>(container));
+               }) % [&] {
+            return util::move(result);
+        } | try_infallible;
     }
 
 public:

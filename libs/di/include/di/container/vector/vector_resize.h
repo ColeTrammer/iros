@@ -35,18 +35,22 @@ constexpr R resize(Vec& vector, size_t count) {
     });
 }
 
-template<concepts::detail::MutableVector Vec, typename T = meta::detail::VectorValue<Vec>>
+template<concepts::detail::MutableVector Vec, typename T = meta::detail::VectorValue<Vec>,
+         typename R = meta::detail::VectorAllocResult<Vec>>
 requires(concepts::CopyConstructible<T>)
-constexpr void resize(Vec& vector, size_t count, T const& value) {
+constexpr R resize(Vec& vector, size_t count, T const& value) {
     auto size = vector::size(vector);
     if (count < size) {
         auto end = vector::end(vector);
         container::destroy(end - count, end);
         vector.assume_size(count);
-    } else if (count > size) {
-        for (size_t i = 0; i < count - size; i++) {
-            vector::emplace_back(vector, value);
-        }
+        return util::create<R>();
     }
+    if (count > size) {
+        return container::sequence(range(count - size), [&](auto) {
+            return as_fallible(vector::emplace_back(vector, value));
+        });
+    }
+    return util::create<R>();
 }
 }

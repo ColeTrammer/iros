@@ -1,7 +1,9 @@
 #pragma once
 
 #include <di/concepts/copyable.h>
+#include <di/concepts/derived_from.h>
 #include <di/concepts/same_as.h>
+#include <di/container/iterator/iterator_category.h>
 #include <di/container/iterator/iterator_ssize_type.h>
 #include <di/container/iterator/iterator_value.h>
 #include <di/container/types/prelude.h>
