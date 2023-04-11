@@ -26,7 +26,7 @@ struct GlobalState {
     mm::PhysicalAddress max_physical_address { 0 };
     mm::VirtualAddress virtual_to_physical_offset { 0 };
     mm::VirtualAddress heap_start { 0 };
-    di::Span<di::Byte const> initrd;
+    di::Span<byte const> initrd;
     ProcessorInfo processor_info;
     test::TestManager unit_test_manager;
     arch::FpuState initial_fpu_state;
@@ -44,9 +44,10 @@ struct GlobalState {
     /// @{
     mutable mm::AddressSpace kernel_address_space;
     mutable TaskNamespace task_namespace;
-    mutable di::Queue<di::Byte> input_data_queue;
+    mutable di::Queue<byte, di::StaticRing<byte, di::meta::SizeConstant<128>>> input_data_queue;
     mutable WaitQueue input_wait_queue;
-    mutable di::Queue<TaskFinalizationRequest> task_finalization_data_queue;
+    mutable di::Queue<TaskFinalizationRequest, di::StaticRing<TaskFinalizationRequest, di::meta::SizeConstant<128>>>
+        task_finalization_data_queue;
     mutable WaitQueue task_finalization_wait_queue;
     mutable di::Synchronized<di::Array<di::LinkedList<IrqHandler>, 256>> irq_handlers;
     mutable di::LinkedList<di::Synchronized<IrqController>> irq_controllers;

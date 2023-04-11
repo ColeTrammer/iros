@@ -2,7 +2,7 @@
 
 #include <di/prelude.h>
 #include <iris/core/error.h>
-#include <iris/core/spinlock.h>
+#include <iris/core/interruptible_spinlock.h>
 #include <iris/mm/physical_address.h>
 #include <iris/mm/region.h>
 #include <iris/mm/virtual_address.h>
@@ -36,7 +36,7 @@ private:
 };
 
 class AddressSpace
-    : public di::Synchronized<LockedAddressSpace, Spinlock>
+    : public di::Synchronized<LockedAddressSpace, InterruptibleSpinlock>
     , public di::IntrusiveRefCount<AddressSpace> {
     friend class LockedAddressSpace;
 

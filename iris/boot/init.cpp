@@ -127,6 +127,7 @@ void iris_main() {
                     return record.has_value();
                 });
 
+                println("Finalizing task"_sv);
                 (void) iris::global_state().kernel_address_space.lock()->destroy_region(record->kernel_stack, 0x2000);
             }
         });

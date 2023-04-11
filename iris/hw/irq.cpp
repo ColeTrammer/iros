@@ -42,19 +42,24 @@ extern "C" void generic_irq_handler(GlobalIrqNumber irq, iris::arch::TaskState& 
         }
     });
 
+    // println("XXX: IRQ {} triggered, error_code={}, ip={:#x}"_sv, irq, error_code, task_state.rip);
+
     auto context = IrqContext { task_state, error_code, irq_controller_for_interrupt_number(irq).optional_value() };
 
     // Syscall IRQ vector.
     if (irq == GlobalIrqNumber(0x80)) {
+        raw_enable_interrupts();
         auto result = do_syscall(current_task, task_state);
         task_state.set_syscall_return(result);
         return;
     }
 
+    // println("IRQ {} triggered, error_code={}, ip={:#x}"_sv, irq, error_code, task_state.rip);
     {
         auto handlers = global_state().irq_handlers.lock();
         for (auto& handler : (*handlers)[irq.raw_value()]) {
             if (handler(context) == IrqStatus::Handled) {
+                // println("IRQ {} handled by handler"_sv, irq);
                 return;
             }
         }

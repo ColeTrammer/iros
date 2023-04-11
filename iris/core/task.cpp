@@ -21,6 +21,7 @@ Task::Task(bool userspace, di::Arc<mm::AddressSpace> address_space, di::Arc<Task
 }
 
 Task::~Task() {
+    ASSERT(!interrupts_disabled());
     global_state().task_finalization_wait_queue.notify_one([&] {
         ASSERT(global_state().task_finalization_data_queue.push({ di::move(m_address_space), m_kernel_stack }));
     });
@@ -76,10 +77,25 @@ Expected<void> load_executable(Task& task, di::PathView path) {
     auto* elf_header = raw_data.typed_pointer_unchecked<ElfHeader>(0);
     ASSERT_EQ(sizeof(ProgramHeader), elf_header->program_entry_size);
 
-    // FIXME: consider disabling preemption instead.
     auto address_space = task.address_space().lock();
-    TRY(with_interrupts_disabled([&] -> Expected<void> {
-        auto& current_address_space = current_scheduler()->current_address_space();
+    TRY(with_preemption_disabled([&] -> Expected<void> {
+        // SAFETY: Preemption is disabled.
+        auto& current_scheduler = current_processor_unsafe().scheduler();
+        auto* current_task = current_scheduler.current_task_null_if_during_boot();
+        auto current_address_space = current_task ? current_task->address_space().arc_from_this()
+                                                  : global_state_in_boot().kernel_address_space.arc_from_this();
+
+        if (current_task) {
+            current_task->set_address_space(task.address_space().arc_from_this());
+        }
+
+        auto guard = di::ScopeExit([&] {
+            if (current_task) {
+                current_task->set_address_space(current_address_space);
+            }
+            current_address_space->load();
+        });
+
         address_space->base().load();
 
         auto program_headers = raw_data.typed_span_unchecked<ProgramHeader>(elf_header->program_table_off,
@@ -164,7 +180,7 @@ Expected<void> load_executable(Task& task, di::PathView path) {
             // Ensure the stack is 16-byte aligned.
             task.set_stack_pointer(string_record_base - 16 + sizeof(uptr));
         }
-        current_address_space.load();
+
         return {};
     }));
 

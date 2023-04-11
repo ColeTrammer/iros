@@ -23,12 +23,16 @@ public:
     void mark_as_booted() { m_is_booted.store(true, di::MemoryOrder::Release); }
     bool is_booted() const { return m_is_booted.load(di::MemoryOrder::Acquire); }
 
+    void mark_as_online() { m_is_online.store(true, di::MemoryOrder::Relaxed); }
+    bool is_online() const { return m_is_online.load(di::MemoryOrder::Relaxed); }
+
     arch::ArchProcessor& arch_processor() { return m_arch_processor; }
 
 private:
     Scheduler m_scheduler;
     di::Atomic<bool> m_is_initialized { false };
     di::Atomic<bool> m_is_booted { false };
+    di::Atomic<bool> m_is_online { false };
     u16 m_id {};
     arch::ArchProcessor m_arch_processor;
 };

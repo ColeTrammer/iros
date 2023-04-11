@@ -15,6 +15,16 @@ static inline void raw_disable_interrupts() {
     asm volatile("cli");
 }
 
+static inline bool interrupts_disabled() {
+    di::u64 rflags;
+    asm volatile("pushfq\n"
+                 "pop %0\n"
+                 : "=r"(rflags)
+                 :
+                 : "cc");
+    return (rflags & arch::interrupt_enable_flag) == 0u;
+}
+
 static inline bool raw_disable_interrupts_and_save_previous_state() {
     di::u64 rflags;
     asm volatile("pushfq\n"

@@ -60,6 +60,7 @@ if(IROS_BuildIris)
         boot/init.cpp
         core/cxx.cpp
         core/global_state.cpp
+        core/interruptible_spinlock.cpp
         core/preemption.cpp
         core/print.cpp
         core/scheduler.cpp

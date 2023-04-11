@@ -1,8 +1,8 @@
 #pragma once
 
-#include <iris/core/task.h>
-
 namespace iris {
+class Task;
+
 class PreemptionDisabler {
 public:
     PreemptionDisabler();

@@ -15,8 +15,10 @@ void* operator new(std::size_t size, std::nothrow_t const&) noexcept {
 }
 
 void* operator new(std::size_t size, std::align_val_t alignment, std::nothrow_t const&) noexcept {
-    auto& global_state = iris::global_state();
+    auto const& global_state = iris::global_state();
     return global_state.kernel_address_space.with_lock([&](auto& address_space) -> void* {
+        ASSERT(!iris::interrupts_disabled() || !iris::current_processor_unsafe().is_online());
+
         auto old_heap_end = address_space.heap_end();
 
         auto alignment_difference = old_heap_end.raw_value() % di::to_underlying(alignment);
@@ -51,8 +53,12 @@ void* operator new(std::size_t size, std::align_val_t alignment, std::nothrow_t 
 void operator delete(void*) noexcept {
     di::unreachable();
 }
-void operator delete(void*, std::size_t) noexcept {}
+void operator delete(void*, std::size_t) noexcept {
+    ASSERT(!iris::interrupts_disabled() || !iris::current_processor()->is_online());
+}
 void operator delete(void*, std::align_val_t) noexcept {
     di::unreachable();
 }
-void operator delete(void*, std::size_t, std::align_val_t) noexcept {}
+void operator delete(void*, std::size_t, std::align_val_t) noexcept {
+    ASSERT(!iris::interrupts_disabled() || !iris::current_processor()->is_online());
+}

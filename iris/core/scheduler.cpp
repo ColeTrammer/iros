@@ -42,6 +42,8 @@ void Scheduler::start() {
         return IrqStatus::Handled;
     });
 
+    // SAFETY: This is safe since interrupts are disabled.
+    current_processor_unsafe().mark_as_online();
     run_next();
 }
 
@@ -49,6 +51,8 @@ void Scheduler::start_on_ap() {
     // Initialize the idle task.
     m_idle_task = *create_kernel_task(global_state().task_namespace, do_idle);
 
+    // SAFETY: This is safe since interrupts are disabled.
+    current_processor_unsafe().mark_as_online();
     run_next();
 }
 

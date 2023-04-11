@@ -7,7 +7,8 @@
 
 namespace iris::mm {
 AddressSpace& LockedAddressSpace::base() {
-    return static_cast<AddressSpace&>(reinterpret_cast<di::Synchronized<LockedAddressSpace, Spinlock>&>(*this));
+    return static_cast<AddressSpace&>(
+        reinterpret_cast<di::Synchronized<LockedAddressSpace, InterruptibleSpinlock>&>(*this));
 }
 
 Expected<VirtualAddress> LockedAddressSpace::allocate_region(di::Box<Region> region) {

@@ -22,5 +22,5 @@ private:
 
 class TaskNamespace
     : public di::IntrusiveRefCount<TaskNamespace>
-    , public di::Synchronized<LockedTaskNamespace> {};
+    , public di::Synchronized<LockedTaskNamespace, InterruptibleSpinlock> {};
 }

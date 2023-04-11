@@ -19,6 +19,7 @@ void assert_write(char const* data, size_t size) {
 }
 
 void assert_terminate() {
+    iris::println("Assertion failed, shutting down..."_sv);
     iris::hard_shutdown(iris::ShutdownStatus::Error);
 }
 }
