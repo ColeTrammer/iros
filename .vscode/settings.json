@@ -41,6 +41,7 @@
     "editor.tabSize": 4,
     "files.insertFinalNewline": true,
     "editor.rulers": [120],
+    "rewrap.autoWrap.enabled": true,
     "[json]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
