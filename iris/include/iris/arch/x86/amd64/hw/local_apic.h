@@ -117,6 +117,16 @@ enum class ApicTimerDivideConfiguration : u32 {
     DivideBy1 = 0b1011,
 };
 
+/// @brief Local APIC Destination Shorthands
+///
+/// See AMD64 Programmer's Manual; Volume 2; Section 16.5.
+enum class ApicDestinationShorthand {
+    None = 0b00,
+    Self = 0b01,
+    AllIncludingSelf = 0b10,
+    AllExcludingSelf = 0b11,
+};
+
 struct ApicInterruptCommandVector : di::BitField<0, 8> {};
 struct ApicInterruptCommandDeliveryMode : di::BitEnum<ApicMessageType, 8, 3> {};
 struct ApicInterruptCommandDestinationMode : di::BitFlag<11> {};
@@ -124,7 +134,7 @@ struct ApicInterruptCommandDeliveryStatus : di::BitFlag<12> {};
 struct ApicInterruptCommandLevel : di::BitFlag<14> {};
 struct ApicInterruptCommandTriggerMode : di::BitFlag<15> {};
 struct ApicInterruptCommandRemoteReadStatus : di::BitField<16, 2> {};
-struct ApicInterruptCommandDestinationShorthand : di::BitField<18, 2> {};
+struct ApicInterruptCommandDestinationShorthand : di::BitEnum<ApicDestinationShorthand, 18, 2> {};
 struct ApicInterruptCommandDestination : di::BitField<56, 8> {};
 
 /// @brief Local APIC Interrupt Command Register

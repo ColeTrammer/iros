@@ -3,6 +3,7 @@
 #include <di/prelude.h>
 #include <iris/core/config.h>
 #include <iris/core/error.h>
+#include <iris/core/object_pool.h>
 #include <iris/core/processor.h>
 #include <iris/core/scheduler.h>
 #include <iris/core/task.h>
@@ -33,6 +34,7 @@ struct GlobalState {
     di::Optional<acpi::AcpiInformation> acpi_info;
     Processor boot_processor;
     di::LinkedList<Processor> alernate_processors;
+    di::TreeMap<u32, Processor*> processor_map;
     arch::ReadonlyGlobalState arch_readonly_state;
     bool current_processor_available { false };
     /// @}
@@ -54,6 +56,7 @@ struct GlobalState {
     mutable arch::MutableGlobalState arch_mutable_state;
     mutable di::Atomic<bool> all_aps_booted { false };
     mutable Spinlock debug_output_lock;
+    mutable di::Synchronized<ObjectPool<IpiMessage>> ipi_message_pool;
     /// @}
 };
 

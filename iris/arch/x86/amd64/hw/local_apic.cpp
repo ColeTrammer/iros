@@ -9,7 +9,101 @@
 #include <iris/core/print.h>
 #include <iris/mm/map_physical_address.h>
 
+namespace iris {
+void Processor::handle_pending_ipi_messages() {
+    // This takes the lock, and then empties the queue into a local variable.
+    auto messages = m_ipi_message_queue.with_lock([](auto& queue) {
+        return di::move(queue);
+    });
+
+    // NOTE: the caller is responsible for freeing the messages.
+    for (auto* message : messages) {
+        message->times_processed.fetch_add(1, di::MemoryOrder::Release);
+    }
+}
+
+void Processor::send_ipi(u32 target_processor_id, di::FunctionRef<void(IpiMessage&)> factory) {
+    ASSERT(di::math::representable_as<u8>(target_processor_id));
+    auto processor_id = static_cast<u8>(target_processor_id);
+
+    // Find the target processor.
+    auto const& global_state = iris::global_state();
+    auto* target_processor = *global_state.processor_map.at(processor_id);
+
+    // Get IPI message from global object pool.
+    auto& message = *global_state.ipi_message_pool.lock()->allocate();
+
+    message.times_processed.store(0, di::MemoryOrder::Relaxed);
+    factory(message);
+
+    // Add the message to the target's queue.
+    *target_processor->m_ipi_message_queue.lock()->push(&message);
+
+    // Send the IPI.
+    auto& local_apic = arch_processor().local_apic();
+    while (local_apic.interrupt_command_register().get<x86::amd64::ApicInterruptCommandDeliveryStatus>()) {
+        x86::amd64::io_wait_us(20);
+    }
+    local_apic.write_interrupt_command_register(x86::amd64::ApicInterruptCommandRegister(
+        x86::amd64::ApicInterruptCommandVector(63), x86::amd64::ApicInterruptCommandDestination(target_processor_id)));
+
+    // Wait for the message to be processed.
+    while (!message.times_processed.load(di::MemoryOrder::Acquire)) {
+        di::cpu_relax();
+    }
+
+    // Return the message to the pool.
+    global_state.ipi_message_pool.lock()->deallocate(message);
+}
+
+void Processor::broadcast_ipi(di::FunctionRef<void(IpiMessage&)> factory) {
+    // Get IPI message from global object pool.
+    auto& message = *iris::global_state().ipi_message_pool.lock()->allocate();
+
+    message.times_processed.store(0, di::MemoryOrder::Relaxed);
+    factory(message);
+
+    // Add the message each processor's queue.
+    auto count = 0_u32;
+    for (auto [_, processor] : iris::global_state().processor_map) {
+        if (processor == this) {
+            continue;
+        }
+        *processor->m_ipi_message_queue.lock()->push(&message);
+        count++;
+    }
+
+    // Send the IPI.
+    auto& local_apic = arch_processor().local_apic();
+    while (local_apic.interrupt_command_register().get<x86::amd64::ApicInterruptCommandDeliveryStatus>()) {
+        x86::amd64::io_wait_us(20);
+    }
+    local_apic.write_interrupt_command_register(x86::amd64::ApicInterruptCommandRegister(
+        x86::amd64::ApicInterruptCommandVector(63),
+        x86::amd64::ApicInterruptCommandDestinationShorthand(x86::amd64::ApicDestinationShorthand::AllExcludingSelf)));
+
+    // Wait for the message to be processed by all processors.
+    while (message.times_processed.load(di::MemoryOrder::Acquire) != count) {
+        di::cpu_relax();
+    }
+
+    // Return the message to the pool.
+    iris::global_state().ipi_message_pool.lock()->deallocate(message);
+}
+}
+
 namespace iris::x86::amd64 {
+static IrqStatus handle_ipi_irq(IrqContext&) {
+    // Acknowledge the interrupt before processing messages. This way, if we get more messages while processing, we'll
+    // get another interrupt.
+    // SAFETY: interrupts are disabled.
+    auto& processor = current_processor_unsafe();
+    processor.arch_processor().local_apic().send_eoi();
+
+    processor.handle_pending_ipi_messages();
+    return IrqStatus::Handled;
+}
+
 LocalApic::LocalApic(mm::PhysicalAddress base) {
     m_base = &mm::map_physical_address(base, 0x1000)->typed<u32 volatile>();
 }
@@ -43,6 +137,10 @@ void init_local_apic(bool print_info) {
         println("Local APIC version: {}"_sv, apic_version.get<ApicVersion>());
         println("Local APIC max LVT entry: {}"_sv, apic_version.get<ApicMaxLvtEntry>());
         println("Local APIC EOI extended register present: {}"_sv, apic_version.get<ApicExtendedRegisterPresent>());
+
+        // FIXME: The print_info parameter doubles as a "is_bsp" flag.
+        // Register the IPI IRQ handler.
+        *register_exception_handler(GlobalIrqNumber(63), handle_ipi_irq);
     }
 
     // Enable the local APIC by setting up the spurious interrupt vector register.
@@ -254,6 +352,8 @@ static void boot_ap(acpi::ProcessorLocalApicStructure const& acpi_local_apic_str
         println("AP {} failed to boot!"_sv, acpi_local_apic_structure.apic_id);
     }
 
+    *global_state.processor_map.try_emplace(processor.id(), &processor);
+
     *global_state.kernel_address_space.lock()->remove_low_identity_mapping(mm::VirtualAddress(0x8000), 0x1000);
 }
 
@@ -263,6 +363,11 @@ void init_alternative_processors() {
         println("APIC support is disabled, so skipping booting APs..."_sv);
         return;
     }
+
+    *global_state.processor_map.try_emplace(global_state.boot_processor.id(), &global_state.boot_processor);
+
+    auto message_pool = *ObjectPool<IpiMessage>::create(256);
+    global_state.ipi_message_pool.get_assuming_no_concurrent_accesses() = di::move(message_pool);
 
     for (auto const& local_apic : global_state.acpi_info->local_apic) {
         if (local_apic.apic_id == global_state.boot_processor.arch_processor().local_apic().id()) {

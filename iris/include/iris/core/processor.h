@@ -2,12 +2,19 @@
 
 #include <di/prelude.h>
 
+#include <iris/core/object_pool.h>
 #include <iris/core/preemption.h>
 #include <iris/core/scheduler.h>
 
 #include IRIS_ARCH_INCLUDE(core/processor.h)
 
 namespace iris {
+struct IpiMessage : di::IntrusiveListNode<> {
+    di::Atomic<u32> times_processed { 0 };
+    void* tlb_flush_base { nullptr };
+    usize tlb_flush_size { 0 };
+};
+
 class Processor : public di::SelfPointer<Processor> {
 public:
     Processor() = default;
@@ -28,11 +35,18 @@ public:
 
     arch::ArchProcessor& arch_processor() { return m_arch_processor; }
 
+    void send_ipi(u32 target_processor_id, di::FunctionRef<void(IpiMessage&)> factory);
+    void broadcast_ipi(di::FunctionRef<void(IpiMessage&)> factory);
+
+    void handle_pending_ipi_messages();
+
 private:
     Scheduler m_scheduler;
     di::Atomic<bool> m_is_initialized { false };
     di::Atomic<bool> m_is_booted { false };
     di::Atomic<bool> m_is_online { false };
+    di::Synchronized<di::Queue<IpiMessage*, di::StaticRing<IpiMessage*, di::meta::SizeConstant<32>>>>
+        m_ipi_message_queue {};
     u16 m_id {};
     arch::ArchProcessor m_arch_processor;
 };
