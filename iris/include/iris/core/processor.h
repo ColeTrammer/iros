@@ -11,7 +11,7 @@
 namespace iris {
 struct IpiMessage : di::IntrusiveListNode<> {
     di::Atomic<u32> times_processed { 0 };
-    void* tlb_flush_base { nullptr };
+    mm::VirtualAddress tlb_flush_base {};
     usize tlb_flush_size { 0 };
 };
 
@@ -39,6 +39,9 @@ public:
     void broadcast_ipi(di::FunctionRef<void(IpiMessage&)> factory);
 
     void handle_pending_ipi_messages();
+
+    void flush_tlb_local(mm::VirtualAddress base, usize byte_length);
+    void flush_tlb_local();
 
 private:
     Scheduler m_scheduler;

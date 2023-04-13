@@ -26,6 +26,8 @@ public:
     ///         once the task is unblocked.
     Expected<void> block_current_task(di::FunctionRef<void()> before_yielding);
 
+    void setup_idle_task();
+
 private:
     [[noreturn]] void run_next();
 

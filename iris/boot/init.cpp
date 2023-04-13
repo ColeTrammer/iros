@@ -116,48 +116,67 @@ void iris_main() {
     iris::println("Starting final architecture specific initialization..."_sv);
     arch::init_final();
 
-    iris::println("Preparing for userspace..."_sv);
-    auto& scheduler = global_state.boot_processor.scheduler();
-    {
-        auto task_finalizer = *iris::create_kernel_task(global_state.task_namespace, [] {
-            for (;;) {
-                auto record = di::Optional<TaskFinalizationRequest> {};
-                *iris::global_state().task_finalization_wait_queue.wait([&] {
-                    record = iris::global_state().task_finalization_data_queue.pop();
-                    return record.has_value();
+    auto init_task = *iris::create_kernel_task(global_state.task_namespace, [] {
+        println("Running kernel init task..."_sv);
+        arch::init_task();
+
+        auto& global_state = global_state_in_boot();
+        auto& scheduler = global_state.boot_processor.scheduler();
+        {
+            ASSERT(!interrupts_disabled());
+            auto task_finalizer = *iris::create_kernel_task(global_state.task_namespace, [] {
+                for (;;) {
+                    auto record = di::Optional<TaskFinalizationRequest> {};
+                    *iris::global_state().task_finalization_wait_queue.wait([&] {
+                        record = iris::global_state().task_finalization_data_queue.pop();
+                        return record.has_value();
+                    });
+
+                    (void) iris::global_state().kernel_address_space.lock()->destroy_region(record->kernel_stack,
+                                                                                            0x2000);
+                }
+            });
+            iris::with_interrupts_disabled([&] {
+                scheduler.schedule_task(*task_finalizer);
+            });
+
+            *global_state.initial_fpu_state.setup_initial_fpu_state();
+
+            auto init_path = kernel_command_line.empty() ? "/sh"_pv : di::PathView(kernel_command_line);
+            if (init_path.data() == "-run=kernel_unit_test"_tsv) {
+                iris::println("Preparing to run kernel unit tests."_sv);
+
+                auto test_runner = *iris::create_kernel_task(global_state.task_namespace, do_unit_tests);
+                iris::with_interrupts_disabled([&] {
+                    scheduler.schedule_task(*test_runner);
                 });
+            } else {
+                iris::println("Loading initial userspace task: {}"_sv, init_path);
 
-                println("Finalizing task"_sv);
-                (void) iris::global_state().kernel_address_space.lock()->destroy_region(record->kernel_stack, 0x2000);
+                auto file_table = iris::FileTable {};
+                auto debug_file = *iris::File::try_create(di::in_place_type<DebugFile>);
+                di::get<0>(*file_table.allocate_file_handle()) = debug_file;
+                di::get<0>(*file_table.allocate_file_handle()) = debug_file;
+                di::get<0>(*file_table.allocate_file_handle()) = debug_file;
+
+                auto task4 = *iris::create_user_task(global_state.task_namespace, di::move(file_table), nullptr);
+
+                *iris::load_executable(*task4, init_path);
+
+                iris::with_interrupts_disabled([&] {
+                    scheduler.schedule_task(*task4);
+                });
             }
-        });
-        scheduler.schedule_task(*task_finalizer);
-
-        *global_state.initial_fpu_state.setup_initial_fpu_state();
-
-        auto init_path = kernel_command_line.empty() ? "/sh"_pv : di::PathView(kernel_command_line);
-        if (init_path.data() == "-run=kernel_unit_test"_tsv) {
-            iris::println("Preparing to run kernel unit tests."_sv);
-
-            auto test_runner = *iris::create_kernel_task(global_state.task_namespace, do_unit_tests);
-            scheduler.schedule_task(*test_runner);
-        } else {
-            iris::println("Loading initial userspace task: {}"_sv, init_path);
-
-            auto file_table = iris::FileTable {};
-            auto debug_file = *iris::File::try_create(di::in_place_type<DebugFile>);
-            di::get<0>(*file_table.allocate_file_handle()) = debug_file;
-            di::get<0>(*file_table.allocate_file_handle()) = debug_file;
-            di::get<0>(*file_table.allocate_file_handle()) = debug_file;
-
-            auto task4 = *iris::create_user_task(global_state.task_namespace, di::move(file_table), nullptr);
-
-            *iris::load_executable(*task4, init_path);
-            scheduler.schedule_task(*task4);
         }
-    }
+
+        println("Finished kernel init task..."_sv);
+        scheduler.exit_current_task();
+    });
 
     iris::println("Starting the kernel scheduler..."_sv);
+
+    auto& scheduler = global_state.boot_processor.scheduler();
+    scheduler.schedule_task(*init_task);
     scheduler.start();
 }
 }

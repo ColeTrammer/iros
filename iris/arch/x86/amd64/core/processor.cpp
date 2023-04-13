@@ -59,3 +59,16 @@ void ArchProcessor::enable_cpu_features(bool print_info) {
     }
 }
 }
+
+namespace iris {
+void Processor::flush_tlb_local() {
+    x86::amd64::load_cr3(x86::amd64::read_cr3());
+}
+
+void Processor::flush_tlb_local(mm::VirtualAddress base, usize byte_length) {
+    auto num_pages = di::divide_round_up(base.raw_value() % 4096 + byte_length, 4096);
+    for (auto address : di::iota(base) | di::take(num_pages)) {
+        x86::amd64::invlpg(address);
+    }
+}
+}

@@ -129,7 +129,7 @@ Expected<void> LockedAddressSpace::destroy_region(VirtualAddress base, usize len
         }
     }
 
-    invalidate_tlb(base, length);
+    flush_tlb_global(base, length);
     return {};
 }
 
@@ -192,7 +192,7 @@ Expected<void> LockedAddressSpace::map_physical_page(VirtualAddress location, Ph
         page_structure::Writable(writable), page_structure::User(user), page_structure::NotExecutable(not_executable));
     base().m_resident_pages.fetch_add(1, di::MemoryOrder::Relaxed);
 
-    invalidate_tlb(location);
+    flush_tlb_global(location);
 
     return {};
 }
@@ -210,13 +210,17 @@ Expected<void> LockedAddressSpace::remove_low_identity_mapping(VirtualAddress ba
     return destroy_region(base, page_aligned_length);
 }
 
-void LockedAddressSpace::invalidate_tlb(VirtualAddress base, usize byte_length) {
-    // FIXME: implement TLB shootdown when SMP is supported.
-    // FIXME: considering reloading the entire address space when there is a large number of pages.
+void LockedAddressSpace::flush_tlb_global(VirtualAddress base, usize byte_length) {
+    // SAFETY: We are protected by the address space lock.
+    auto& current_processor = current_processor_unsafe();
 
-    auto num_pages = di::divide_round_up(base.raw_value() % 4096 + byte_length, 4096);
-    for (auto address : di::iota(base) | di::take(num_pages)) {
-        x86::amd64::invlpg(address);
+    current_processor.flush_tlb_local(base, byte_length);
+
+    if (global_state().all_aps_booted.load(di::MemoryOrder::Relaxed)) {
+        current_processor.broadcast_ipi([&](IpiMessage& message) {
+            message.tlb_flush_base = base;
+            message.tlb_flush_size = byte_length;
+        });
     }
 }
 

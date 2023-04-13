@@ -74,15 +74,17 @@ void init_final() {
     iris::x86::amd64::init_io_apic();
     iris::x86::amd64::init_pic();
 
-    iris::x86::amd64::init_alternative_processors();
-
-    iris::x86::amd64::init_serial();
-
     // Setup the PIT to fire every 5 ms.
     auto divisor = 5 * 1193182 / 1000;
     x86::amd64::io_out(0x43, 0b00110110_u8);
     x86::amd64::io_out(0x40, u8(divisor & 0xFF));
     x86::amd64::io_out(0x40, u8(divisor >> 8));
+}
+
+void init_task() {
+    iris::x86::amd64::init_alternative_processors();
+
+    iris::x86::amd64::init_serial();
 }
 
 extern "C" [[gnu::naked]] void iris_entry() {

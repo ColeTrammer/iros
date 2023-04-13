@@ -11,7 +11,9 @@ Expected<void> register_external_irq_handler(IrqLine line, IrqHandler handler) {
 
     auto& irq_handlers = global_state().irq_handlers;
     return irq_handlers.with_lock([&](auto& irq_handlers) -> Expected<void> {
-        TRY(irq_handlers[irq.raw_value()].push_back(di::move(handler)));
+        TRY(irq_handlers[irq.raw_value()].emplace_back(di::move(handler)) & [](auto&&) {
+            return Error::NotEnoughMemory;
+        });
 
         auto& irq_controller = TRY(irq_controller_for_interrupt_number(irq));
         irq_controller.with_lock([&](auto& controller) {
@@ -24,7 +26,9 @@ Expected<void> register_external_irq_handler(IrqLine line, IrqHandler handler) {
 Expected<void> register_exception_handler(GlobalIrqNumber irq, IrqHandler handler) {
     auto& irq_handlers = global_state().irq_handlers;
     return irq_handlers.with_lock([&](auto& irq_handlers) -> Expected<void> {
-        TRY(irq_handlers[irq.raw_value()].push_back(di::move(handler)));
+        TRY(irq_handlers[irq.raw_value()].emplace_back(di::move(handler)) & [](auto&&) {
+            return Error::NotEnoughMemory;
+        });
         return {};
     });
 }
@@ -42,8 +46,6 @@ extern "C" void generic_irq_handler(GlobalIrqNumber irq, iris::arch::TaskState& 
         }
     });
 
-    // println("XXX: IRQ {} triggered, error_code={}, ip={:#x}"_sv, irq, error_code, task_state.rip);
-
     auto context = IrqContext { task_state, error_code, irq_controller_for_interrupt_number(irq).optional_value() };
 
     // Syscall IRQ vector.
@@ -54,12 +56,10 @@ extern "C" void generic_irq_handler(GlobalIrqNumber irq, iris::arch::TaskState& 
         return;
     }
 
-    // println("IRQ {} triggered, error_code={}, ip={:#x}"_sv, irq, error_code, task_state.rip);
     {
         auto handlers = global_state().irq_handlers.lock();
         for (auto& handler : (*handlers)[irq.raw_value()]) {
             if (handler(context) == IrqStatus::Handled) {
-                // println("IRQ {} handled by handler"_sv, irq);
                 return;
             }
         }

@@ -21,8 +21,7 @@ static void do_idle() {
 }
 
 void Scheduler::start() {
-    // Initialize the idle task.
-    m_idle_task = *create_kernel_task(global_state().task_namespace, do_idle);
+    setup_idle_task();
 
     // Setup timer interrupt.
     *register_external_irq_handler(IrqLine(0), [&](IrqContext& context) -> IrqStatus {
@@ -47,33 +46,31 @@ void Scheduler::start() {
     run_next();
 }
 
-void Scheduler::start_on_ap() {
-    // Initialize the idle task.
+void Scheduler::setup_idle_task() {
     m_idle_task = *create_kernel_task(global_state().task_namespace, do_idle);
+}
 
+void Scheduler::start_on_ap() {
     // SAFETY: This is safe since interrupts are disabled.
     current_processor_unsafe().mark_as_online();
     run_next();
 }
 
 [[gnu::naked]] void Scheduler::yield() {
-    // To yield a task, we must first save its current state, so that
-    // it can be resumed later. Instead of setting %rip based on the
-    // current instruction pointer, set %rip to a later address which
-    // is then the point at which the current task is resumed. Once the
-    // task state is saved, simply call Scheduler::save_state_and_run_next()
-    // which performs the context switch to the next task. In the current
-    // implementation, the task state is pushed onto the stack, which is then
-    // passed to a c++ function. It would be more efficent to save the relevant
-    // registers directly into the current task pointer, but this would be even
-    // more complicated. Additionally, only registers which are not preserved by
-    // the SYS-V ABI need to be saved.
+    // To yield a task, we must first save its current state, so that it can be resumed later. Instead of setting %rip
+    // based on the current instruction pointer, set %rip to a later address which is then the point at which the
+    // current task is resumed. Once the task state is saved, simply call Scheduler::save_state_and_run_next() which
+    // performs the context switch to the next task. In the current implementation, the task state is pushed onto the
+    // stack, which is then passed to a c++ function. It would be more efficent to save the relevant registers directly
+    // into the current task pointer, but this would be even more complicated. Additionally, only registers which are
+    // not preserved by the SYS-V ABI need to be saved. Also, when the task is resumed, interrupts will be enabled.
     asm volatile("movabsq $_continue, %rax\n"
                  "movq %rsp, %rdx\n"
 
                  "pushq $0x00\n"
                  "pushq %rdx\n"
                  "pushfq\n"
+                 "orq $(1 << 9), (%rsp)\n"
                  "pushq $0x28\n"
                  "pushq %rax\n"
 

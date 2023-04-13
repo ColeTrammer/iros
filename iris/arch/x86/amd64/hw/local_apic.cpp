@@ -13,11 +13,17 @@ namespace iris {
 void Processor::handle_pending_ipi_messages() {
     // This takes the lock, and then empties the queue into a local variable.
     auto messages = m_ipi_message_queue.with_lock([](auto& queue) {
-        return di::move(queue);
+        auto result = di::move(queue);
+        queue.clear();
+        return result;
     });
 
     // NOTE: the caller is responsible for freeing the messages.
     for (auto* message : messages) {
+        if (message->tlb_flush_size > 0) {
+            flush_tlb_local(message->tlb_flush_base, message->tlb_flush_size);
+        }
+
         message->times_processed.fetch_add(1, di::MemoryOrder::Release);
     }
 }
@@ -34,6 +40,8 @@ void Processor::send_ipi(u32 target_processor_id, di::FunctionRef<void(IpiMessag
     auto& message = *global_state.ipi_message_pool.lock()->allocate();
 
     message.times_processed.store(0, di::MemoryOrder::Relaxed);
+    message.tlb_flush_base = mm::VirtualAddress(0);
+    message.tlb_flush_size = 0;
     factory(message);
 
     // Add the message to the target's queue.
@@ -271,6 +279,9 @@ extern "C" void iris_ap_entry(ApBootInfo* info_in) {
         di::cpu_relax();
     }
 
+    // Fully flush the tlb, since we weren't getting IPIs before this point.
+    info.processor->flush_tlb_local();
+
     println("AP {} starting scheduler."_sv, info.processor->id());
     info.processor->scheduler().start_on_ap();
 }
@@ -285,6 +296,7 @@ static void boot_ap(acpi::ProcessorLocalApicStructure const& acpi_local_apic_str
 
     auto& processor = *global_state.alernate_processors.emplace_back(acpi_local_apic_structure.apic_id);
     processor.arch_processor().set_fallback_kernel_stack((stack + ap_stack_size).raw_value());
+    processor.scheduler().setup_idle_task();
 
     auto boot_info = ApBootInfo {
         .cr3 = global_state.kernel_address_space.architecture_page_table_base().raw_value(),
@@ -369,13 +381,18 @@ void init_alternative_processors() {
     auto message_pool = *ObjectPool<IpiMessage>::create(256);
     global_state.ipi_message_pool.get_assuming_no_concurrent_accesses() = di::move(message_pool);
 
+    auto count = 0_u32;
     for (auto const& local_apic : global_state.acpi_info->local_apic) {
         if (local_apic.apic_id == global_state.boot_processor.arch_processor().local_apic().id()) {
             continue;
         }
         boot_ap(local_apic);
+        count++;
     }
 
-    global_state.all_aps_booted.store(true, di::MemoryOrder::Release);
+    println("Booted {} APs."_sv, count);
+    if (count > 0) {
+        global_state.all_aps_booted.store(true, di::MemoryOrder::Release);
+    }
 }
 }

@@ -51,7 +51,7 @@ struct GlobalState {
     mutable di::Queue<TaskFinalizationRequest, di::StaticRing<TaskFinalizationRequest, di::meta::SizeConstant<128>>>
         task_finalization_data_queue;
     mutable WaitQueue task_finalization_wait_queue;
-    mutable di::Synchronized<di::Array<di::LinkedList<IrqHandler>, 256>> irq_handlers;
+    mutable di::Synchronized<di::Array<di::StaticVector<IrqHandler, di::meta::SizeConstant<8>>, 256>> irq_handlers;
     mutable di::LinkedList<di::Synchronized<IrqController>> irq_controllers;
     mutable arch::MutableGlobalState arch_mutable_state;
     mutable di::Atomic<bool> all_aps_booted { false };
