@@ -4,9 +4,9 @@
 #include <di/concepts/array.h>
 #include <di/concepts/const.h>
 #include <di/concepts/convertible_to.h>
-#include <di/concepts/convertible_to_non_slicing.h>
 #include <di/concepts/equality_comparable.h>
 #include <di/concepts/language_array.h>
+#include <di/concepts/qualification_convertible_to.h>
 #include <di/concepts/span.h>
 #include <di/concepts/three_way_comparable.h>
 #include <di/container/algorithm/compare.h>
@@ -54,13 +54,13 @@ public:
     = default;
 
     template<concepts::ContiguousIterator Iter>
-    requires(concepts::ConvertibleToNonSlicing<meta::RemoveReference<meta::IteratorReference<Iter>>, T>)
+    requires(concepts::QualificationConvertibleTo<meta::RemoveReference<meta::IteratorReference<Iter>>, T>)
     constexpr explicit Span(Iter first, types::size_t count) : m_data(util::to_address(first)) {
         DI_ASSERT(count == extent);
     }
 
     template<concepts::ContiguousIterator Iter, concepts::SizedSentinelFor<Iter> Sent>
-    requires(concepts::ConvertibleToNonSlicing<meta::RemoveReference<meta::IteratorReference<Iter>>, T> &&
+    requires(concepts::QualificationConvertibleTo<meta::RemoveReference<meta::IteratorReference<Iter>>, T> &&
              !concepts::ConvertibleTo<Sent, types::size_t>)
     constexpr explicit Span(Iter it, Sent sent) : m_data(util::to_address(it)) {
         DI_ASSERT(sent - it == extent);
@@ -70,23 +70,23 @@ public:
     requires(size == extent)
     constexpr Span(T (&array)[size]) : m_data(array) {}
 
-    template<concepts::ConvertibleToNonSlicing<T> U, types::size_t size>
+    template<concepts::QualificationConvertibleTo<T> U, types::size_t size>
     requires(size == extent)
     constexpr Span(vocab::Array<U, size>& array) : m_data(array.data()) {}
 
     template<typename U, types::size_t size>
-    requires(size == extent && concepts::ConvertibleToNonSlicing<U const, T>)
+    requires(size == extent && concepts::QualificationConvertibleTo<U const, T>)
     constexpr Span(vocab::Array<U, size> const& array) : m_data(array.data()) {}
 
     template<concepts::ContiguousContainer Con>
     requires(concepts::SizedContainer<Con> && (concepts::BorrowedContainer<Con> || concepts::Const<T>) &&
              !concepts::Span<Con> && !concepts::Array<Con> && !concepts::LanguageArray<meta::RemoveCVRef<Con>> &&
-             concepts::ConvertibleToNonSlicing<meta::RemoveReference<meta::ContainerReference<Con>>, T>)
+             concepts::QualificationConvertibleTo<meta::RemoveReference<meta::ContainerReference<Con>>, T>)
     constexpr explicit Span(Con&& container) : m_data(container::data(container)) {
         DI_ASSERT(container::size(container) == extent);
     }
 
-    template<concepts::ConvertibleToNonSlicing<T> U, types::size_t other_extent>
+    template<concepts::QualificationConvertibleTo<T> U, types::size_t other_extent>
     requires((other_extent == dynamic_extent || extent == other_extent))
     constexpr explicit(other_extent == dynamic_extent) Span(Span<U, other_extent> const& other) : m_data(other.data()) {
         DI_ASSERT(other.size() == extent);
@@ -206,7 +206,7 @@ private:
     }
 
     template<concepts::ContiguousIterator It, concepts::SizedSentinelFor<It> Sent>
-    requires(concepts::ConvertibleToNonSlicing<It, T*>)
+    requires(concepts::QualificationConvertibleTo<It, T*>)
     constexpr friend Span<T> tag_invoke(types::Tag<container::reconstruct>, InPlaceType<Span>, It first, Sent last) {
         return Span<T>(util::move(first), util::move(last));
     }

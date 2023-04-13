@@ -6,6 +6,7 @@
 #include <di/concepts/convertible_to_non_slicing.h>
 #include <di/concepts/implicit_lifetime.h>
 #include <di/concepts/language_array.h>
+#include <di/concepts/qualification_convertible_to.h>
 #include <di/concepts/span.h>
 #include <di/container/concepts/borrowed_container.h>
 #include <di/container/concepts/contiguous_container.h>
@@ -39,31 +40,31 @@ public:
     constexpr Span() = default;
 
     template<concepts::ContiguousIterator Iter>
-    requires(concepts::ConvertibleToNonSlicing<meta::RemoveReference<meta::IteratorReference<Iter>>, T>)
+    requires(concepts::QualificationConvertibleTo<meta::RemoveReference<meta::IteratorReference<Iter>>, T>)
     constexpr Span(Iter iterator, types::size_t size) : m_data(util::to_address(iterator)), m_size(size) {}
 
     template<concepts::ContiguousIterator Iter, concepts::SizedSentinelFor<Iter> Sent>
-    requires(concepts::ConvertibleToNonSlicing<meta::RemoveReference<meta::IteratorReference<Iter>>, T> &&
+    requires(concepts::QualificationConvertibleTo<meta::RemoveReference<meta::IteratorReference<Iter>>, T> &&
              !concepts::ConvertibleTo<Sent, types::size_t>)
     constexpr Span(Iter iterator, Sent sentinel) : m_data(util::to_address(iterator)), m_size(sentinel - iterator) {}
 
     template<types::size_t size>
     constexpr Span(T (&array)[size]) : m_data(array), m_size(size) {}
 
-    template<concepts::ConvertibleToNonSlicing<T> U, types::size_t size>
+    template<concepts::QualificationConvertibleTo<T> U, types::size_t size>
     constexpr Span(vocab::Array<U, size>& array) : m_data(array.data()), m_size(size) {}
 
     template<typename U, types::size_t size>
-    requires(concepts::ConvertibleToNonSlicing<U const, T>)
+    requires(concepts::QualificationConvertibleTo<U const, T>)
     constexpr Span(vocab::Array<U, size> const& array) : m_data(array.data()), m_size(size) {}
 
     template<concepts::ContiguousContainer Con>
     requires(concepts::SizedContainer<Con> && (concepts::BorrowedContainer<Con> || concepts::Const<T>) &&
              !concepts::Span<Con> && !concepts::Array<Con> && !concepts::LanguageArray<meta::RemoveCVRef<Con>> &&
-             concepts::ConvertibleToNonSlicing<meta::RemoveReference<meta::ContainerReference<Con>>, T>)
+             concepts::QualificationConvertibleTo<meta::RemoveReference<meta::ContainerReference<Con>>, T>)
     constexpr explicit Span(Con&& container) : m_data(container::data(container)), m_size(container::size(container)) {}
 
-    template<concepts::ConvertibleToNonSlicing<T> U, types::size_t other_extent>
+    template<concepts::QualificationConvertibleTo<T> U, types::size_t other_extent>
     constexpr Span(Span<U, other_extent> const& other) : m_data(other.data()), m_size(other.size()) {}
 
     constexpr Span(Span const&) = default;
