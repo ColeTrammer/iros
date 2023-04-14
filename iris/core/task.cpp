@@ -194,15 +194,16 @@ void Task::enable_preemption() {
 
     bool should_yield = m_should_be_preempted.load(di::MemoryOrder::Relaxed) && count == 1;
     if (should_yield) {
-        raw_disable_interrupts();
+        auto guard = InterruptDisabler {};
+
         m_should_be_preempted.store(false, di::MemoryOrder::Relaxed);
-    }
 
-    m_preemption_disabled_count.store(count - 1, di::MemoryOrder::Relaxed);
+        m_preemption_disabled_count.store(count - 1, di::MemoryOrder::Relaxed);
 
-    if (should_yield) {
         // SAFETY: this is safe because interrupts are disabled.
         current_processor_unsafe().scheduler().yield();
+    } else {
+        m_preemption_disabled_count.store(count - 1, di::MemoryOrder::Relaxed);
     }
 }
 }
