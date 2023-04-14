@@ -64,6 +64,7 @@ if(IROS_BuildIris)
         core/preemption.cpp
         core/print.cpp
         core/scheduler.cpp
+        core/spinlock.cpp
         core/task.cpp
         core/task_namespace.cpp
         core/task_status.cpp

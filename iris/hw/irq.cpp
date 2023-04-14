@@ -34,14 +34,16 @@ Expected<void> register_exception_handler(GlobalIrqNumber irq, IrqHandler handle
 }
 
 extern "C" void generic_irq_handler(GlobalIrqNumber irq, iris::arch::TaskState& task_state, int error_code) {
-    if (!task_state.in_kernel()) {
+    ASSERT(interrupts_disabled());
+    auto const in_kernel = task_state.in_kernel();
+    if (!in_kernel) {
         setup_current_processor_access();
     }
 
     // SAFETY: this is safe since interrupts are disabled.
     auto& current_task = current_processor_unsafe().scheduler().current_task();
     auto guard = di::ScopeExit([&] {
-        if (!task_state.in_kernel()) {
+        if (!in_kernel) {
             arch::load_userspace_thread_pointer(current_task.userspace_thread_pointer(), task_state);
         }
     });
@@ -53,6 +55,7 @@ extern "C" void generic_irq_handler(GlobalIrqNumber irq, iris::arch::TaskState& 
         raw_enable_interrupts();
         auto result = do_syscall(current_task, task_state);
         task_state.set_syscall_return(result);
+        raw_disable_interrupts();
         return;
     }
 

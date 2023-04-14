@@ -19,6 +19,7 @@ void set_current_processor(Processor& processor) {
 
 namespace iris::arch {
 void load_userspace_thread_pointer(uptr userspace_thread_pointer, arch::TaskState& task_state) {
+    ASSERT(interrupts_disabled());
     if (!task_state.in_kernel()) {
         x86::amd64::swapgs();
 
