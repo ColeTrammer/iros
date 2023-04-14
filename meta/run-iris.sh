@@ -34,7 +34,7 @@ if [ ! "$IROS_NO_SMP" ]; then
     # stops firing PIT interrupts if we try to broadcast them to all CPUs. Real systems don't use the PIT for SMP, so it
     # is unclear whether or not this is a bug in QEMU. Regardless, the solution is to use the Local APIC timer instead.
     # For now, we just disable SMP if KVM is disabled.
-    if [ ! "$ENABlE_KVM" ]; then
+    if [ ! "$ENABLE_KVM" ]; then
         SMP=""
     fi
 fi
