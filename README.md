@@ -8,6 +8,31 @@
 
 Operating System focused on asynchronicity, minimalism, and performance.
 
+## Features
+
+- Supprt x86_64 architecture
+- Kernel Initramfs
+- Kernel Level Tasks
+- Userspace Processes and Threads
+- Userspace FPU/SIMD (tested on AVX2)
+- Preemptive Multitasking
+- Preemptible Kernel
+- Symmetric Multi-Processing (SMP)
+- Serial Console Input/Output
+- Extremely Minimal POSIX libc
+- Extremely Minimal Shell
+- Boot using [Limine](https://github.com/limine-bootloader/limine)
+- Targets only [QEMU](https://www.qemu.org/) for now
+- Compilation using GCC 12 or Clang 16
+
+## Screenshots
+
+### Serial Console Shell
+
+![Figlet Demo](/docs/assets/figlet-demo.png)
+
+This is Iros running the [Figlet](https://github.com/cmatsuoka/figlet) program, which generates ASCII art from text.
+
 ## Build Instructions
 
 [See here](https://coletrammer.github.io/iros/md_docs_build.html).

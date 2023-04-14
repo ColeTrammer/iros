@@ -29,4 +29,4 @@ entries are variable sized, but are always 8 byte aligned and never cross a bloc
 
 ## Design Diagram
 
-![](/docs/diagram/initrd.drawio.svg)
+![](/docs/assets/initrd.drawio.svg)
