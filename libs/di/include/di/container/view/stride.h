@@ -11,18 +11,18 @@ namespace detail {
     concept CustomStride = concepts::TagInvocable<StrideFunction, Con, SSizeType>;
 
     template<typename Con, typename SSizeType>
-    concept ViewStride = requires(Con&& container, SSizeType&& predicate) {
-        StrideView { util::forward<Con>(container), util::forward<SSizeType>(predicate) };
+    concept ViewStride = requires(Con&& container, SSizeType&& stride) {
+        StrideView { util::forward<Con>(container), util::forward<SSizeType>(stride) };
     };
 
     struct StrideFunction {
-        template<concepts::ViewableContainer Con, typename SSizeType>
+        template<concepts::ViewableContainer Con, typename SSizeType = meta::ContainerSSizeType<Con>>
         requires(CustomStride<Con, SSizeType> || ViewStride<Con, SSizeType>)
-        constexpr concepts::View auto operator()(Con&& container, SSizeType&& predicate) const {
+        constexpr concepts::View auto operator()(Con&& container, meta::TypeIdentity<SSizeType> stride) const {
             if constexpr (CustomStride<Con, SSizeType>) {
-                return function::tag_invoke(*this, util::forward<Con>(container), util::forward<SSizeType>(predicate));
+                return function::tag_invoke(*this, util::forward<Con>(container), util::forward<SSizeType>(stride));
             } else {
-                return StrideView { util::forward<Con>(container), util::forward<SSizeType>(predicate) };
+                return StrideView { util::forward<Con>(container), util::forward<SSizeType>(stride) };
             }
         }
     };
