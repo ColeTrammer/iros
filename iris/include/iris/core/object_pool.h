@@ -5,6 +5,25 @@
 #include <iris/core/error.h>
 
 namespace iris {
+namespace detail {
+    struct InternalObjectTag : di::IntrusiveForwardListTag<InternalObjectTag> {
+        template<typename U>
+        constexpr static bool is_sized(di::InPlaceType<U>) {
+            return true;
+        }
+    };
+
+    struct InternalObjectFreed : di::IntrusiveForwardListNode<InternalObjectTag> {};
+
+    template<typename T>
+    union InternalObject {
+        InternalObject() {}
+
+        T object;
+        InternalObjectFreed freed;
+    };
+}
+
 /// @brief A fixed-capacity object pool.
 ///
 /// @tparam T The type of the objects to be stored in the pool. T must be derived from `di::IntrusiveListNode<>` and be
@@ -12,9 +31,8 @@ namespace iris {
 /// @tparam Alloc The allocator to be used to allocate the pool's storage.
 ///
 /// @warning This class is not thread-safe. Use di::Synchronized<> to make it thread-safe.
-template<di::concepts::DerivedFrom<di::IntrusiveListNode<>> T,
-         di::concepts::AllocatorOf<T> Alloc = di::DefaultAllocator<T>>
-requires(di::concepts::DefaultConstructible<T>)
+template<typename T,
+         di::concepts::AllocatorOf<detail::InternalObject<T>> Alloc = di::DefaultAllocator<detail::InternalObject<T>>>
 class ObjectPool {
 public:
     static Expected<ObjectPool> create(usize requested_capacity) {
@@ -24,13 +42,13 @@ public:
         pool.m_storage = storage;
         pool.m_capacity = effective_capacity;
 
-        di::container::uninitialized_default_construct(pool.m_storage, pool.m_storage + pool.m_capacity);
+        di::uninitialized_default_construct(pool.m_storage, pool.m_storage + pool.m_capacity);
 
-        di::for_each(pool.m_storage, pool.m_storage + pool.m_capacity, [&](T& object) {
-            pool.m_free_list.push_back(object);
+        di::for_each(pool.m_storage, pool.m_storage + pool.m_capacity, [&](detail::InternalObject<T>& object) {
+            di::construct_at(&object.freed);
+            pool.m_free_list.push_front(object.freed);
         });
 
-        pool.m_free_list_size = pool.m_capacity;
         return pool;
     }
 
@@ -39,9 +57,8 @@ public:
     ObjectPool(ObjectPool&& other)
         : m_free_list(di::move(other.m_free_list))
         , m_storage(di::exchange(other.m_storage, nullptr))
-        , m_capacity(di::exchange(other.m_capacity, 0))
-        , m_free_list_size(di::exchange(other.m_free_list_size, 0)) {
-        ASSERT_EQ(m_capacity, m_free_list_size);
+        , m_capacity(di::exchange(other.m_capacity, 0)) {
+        ASSERT_EQ(m_capacity, m_free_list.size());
     }
 
     ~ObjectPool() { clear(); }
@@ -52,17 +69,15 @@ public:
         m_free_list = di::move(other.m_free_list);
         m_storage = di::exchange(other.m_storage, nullptr);
         m_capacity = di::exchange(other.m_capacity, 0);
-        m_free_list_size = di::exchange(other.m_free_list_size, 0);
 
         return *this;
     }
 
     void clear() {
-        ASSERT_EQ(m_free_list_size, m_capacity);
+        ASSERT_EQ(m_free_list.size(), m_capacity);
 
         if (m_capacity) {
-            di::destroy(m_storage, m_storage + m_capacity);
-
+            // NOTE: all objects must have been freed, so there is no need to call destructors.
             Alloc().deallocate(m_storage, m_capacity);
         }
     }
@@ -71,19 +86,27 @@ public:
         if (m_free_list.empty()) {
             return di::Unexpected(Error::NotEnoughMemory);
         }
-        m_free_list_size--;
-        return *m_free_list.pop_back();
+        auto* freed_pointer = &*m_free_list.pop_front();
+
+        // NOTE: the freed object should have the same memory location as the internal object, so this *should* be safe.
+        auto* internal_object = reinterpret_cast<detail::InternalObject<T>*>(freed_pointer);
+        di::destroy_at(&internal_object->freed);
+        di::construct_at(&internal_object->object);
+        return internal_object->object;
     }
 
     void deallocate(T& object) {
-        m_free_list.push_back(object);
-        m_free_list_size++;
+        // NOTE: the object should have the same memory location as the internal object, so this *should* be safe.
+        auto* internal_object = reinterpret_cast<detail::InternalObject<T>*>(&object);
+        di::destroy_at(&internal_object->object);
+
+        di::construct_at(&internal_object->freed);
+        m_free_list.push_front(internal_object->freed);
     }
 
 private:
-    di::IntrusiveList<T> m_free_list;
-    T* m_storage { nullptr };
+    di::IntrusiveForwardList<detail::InternalObjectFreed, detail::InternalObjectTag> m_free_list;
+    detail::InternalObject<T>* m_storage { nullptr };
     usize m_capacity { 0 };
-    usize m_free_list_size { 0 };
 };
 }

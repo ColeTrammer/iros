@@ -9,7 +9,7 @@
 #include IRIS_ARCH_INCLUDE(core/processor.h)
 
 namespace iris {
-struct IpiMessage : di::IntrusiveListNode<> {
+struct IpiMessage {
     di::Atomic<u32> times_processed { 0 };
     mm::VirtualAddress tlb_flush_base {};
     usize tlb_flush_size { 0 };
