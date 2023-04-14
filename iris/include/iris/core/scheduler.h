@@ -35,4 +35,11 @@ private:
     di::Queue<Task, di::IntrusiveList<Task>> m_run_queue;
     di::Arc<Task> m_idle_task;
 };
+
+/// @brief Schedule a task on any scheduler.
+///
+/// @param task The task to schedule.
+///
+/// @note This function internally decides which processor the task should run on.
+void schedule_task(Task&);
 }

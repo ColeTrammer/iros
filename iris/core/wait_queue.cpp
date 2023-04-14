@@ -40,8 +40,7 @@ Expected<void> WaitQueue::wait(di::FunctionRef<bool()> predicate) {
 
         // Setup a wait queue entry which will unblock this task.
         auto entry = WaitQueueEntry { [&] {
-            // FIXME: dynamically choose a scheduler on SMP systems.
-            scheduler.schedule_task(current_task);
+            schedule_task(current_task);
         } };
         m_queue.get_assuming_no_concurrent_accesses().push(entry);
 

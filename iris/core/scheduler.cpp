@@ -160,4 +160,12 @@ Expected<void> Scheduler::block_current_task(di::FunctionRef<void()> before_yiel
     yield();
     return {};
 }
+
+void schedule_task(Task& task) {
+    with_interrupts_disabled([&] {
+        // SAFETY: interrupts are disabled.
+        auto& current_processor = current_processor_unsafe();
+        current_processor.scheduler().schedule_task(task);
+    });
+}
 }

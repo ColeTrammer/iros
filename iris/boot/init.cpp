@@ -136,9 +136,7 @@ void iris_main() {
                                                                                             0x2000);
                 }
             });
-            iris::with_interrupts_disabled([&] {
-                scheduler.schedule_task(*task_finalizer);
-            });
+            schedule_task(*task_finalizer);
 
             *global_state.initial_fpu_state.setup_initial_fpu_state();
 
@@ -147,9 +145,7 @@ void iris_main() {
                 iris::println("Preparing to run kernel unit tests."_sv);
 
                 auto test_runner = *iris::create_kernel_task(global_state.task_namespace, do_unit_tests);
-                iris::with_interrupts_disabled([&] {
-                    scheduler.schedule_task(*test_runner);
-                });
+                schedule_task(*test_runner);
             } else {
                 iris::println("Loading initial userspace task: {}"_sv, init_path);
 
@@ -163,9 +159,7 @@ void iris_main() {
 
                 *iris::load_executable(*task4, init_path);
 
-                iris::with_interrupts_disabled([&] {
-                    scheduler.schedule_task(*task4);
-                });
+                schedule_task(*task4);
             }
         }
 
