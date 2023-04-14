@@ -90,7 +90,7 @@ void tag_invoke(di::Tag<enable_irq_line>, IoApic& self, IrqLine irq_line) {
     redirection_entry.set<IoApicRedirectionTableEntryTriggerMode>(trigger_mode);
 
     // HACK: Broadcast the timer interrupt to all processors.
-    if (irq_line.raw_value() == 0) {
+    if (irq_line.raw_value() == 0 && global_state().acpi_info->local_apic.size() > 1) {
         redirection_entry.set<IoApicRedirectionTableEntryDestination>(0xFF);
         redirection_entry.set<IoApicRedirectionTableEntryDestinationMode>(IoApicDestinationMode::Logical);
     } else {
