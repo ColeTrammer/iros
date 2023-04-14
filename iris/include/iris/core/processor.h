@@ -13,6 +13,7 @@ struct IpiMessage : di::IntrusiveListNode<> {
     di::Atomic<u32> times_processed { 0 };
     mm::VirtualAddress tlb_flush_base {};
     usize tlb_flush_size { 0 };
+    Task* task_to_schedule { nullptr };
 };
 
 class Processor : public di::SelfPointer<Processor> {

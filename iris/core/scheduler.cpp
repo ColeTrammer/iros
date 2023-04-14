@@ -24,12 +24,15 @@ void Scheduler::start() {
     setup_idle_task();
 
     // Setup timer interrupt.
-    *register_external_irq_handler(IrqLine(0), [&](IrqContext& context) -> IrqStatus {
+    *register_external_irq_handler(IrqLine(0), [](IrqContext& context) -> IrqStatus {
         send_eoi(*context.controller->lock(), IrqLine(0));
+
+        // SAFETY: This is safe since interrupts are disabled.
+        auto& scheduler = current_processor_unsafe().scheduler();
 
         // If preemption is disabled, do not reshcedule the currently running task but let it know
         // that it should yield whenever it finally re-enables preemption.
-        auto& current_task = this->current_task();
+        auto& current_task = scheduler.current_task();
         if (current_task.preemption_disabled()) {
             current_task.set_should_be_preempted();
             return IrqStatus::Handled;
@@ -37,7 +40,7 @@ void Scheduler::start() {
 
         // Manually unlock the IRQ list before jumping away.
         global_state().irq_handlers.get_lock().unlock();
-        save_state_and_run_next(&context.task_state);
+        scheduler.save_state_and_run_next(&context.task_state);
         return IrqStatus::Handled;
     });
 
@@ -162,10 +165,31 @@ Expected<void> Scheduler::block_current_task(di::FunctionRef<void()> before_yiel
 }
 
 void schedule_task(Task& task) {
-    with_interrupts_disabled([&] {
-        // SAFETY: interrupts are disabled.
-        auto& current_processor = current_processor_unsafe();
-        current_processor.scheduler().schedule_task(task);
+    auto local_schedule = [&] {
+        with_interrupts_disabled([&] {
+            // SAFETY: interrupts are disabled.
+            auto& current_processor = current_processor_unsafe();
+            current_processor.scheduler().schedule_task(task);
+        });
+    };
+
+    auto const& global_state = iris::global_state();
+    if (!global_state.all_aps_booted.load(di::MemoryOrder::Relaxed)) {
+        local_schedule();
+        return;
+    }
+
+    auto current_processor = iris::current_processor();
+    auto next_processor_id = global_state.next_processor_to_schedule_on.fetch_add(1, di::MemoryOrder::Relaxed);
+    next_processor_id %= global_state.alernate_processors.size() + 1;
+
+    if (current_processor->id() == next_processor_id) {
+        local_schedule();
+        return;
+    }
+
+    current_processor->send_ipi(next_processor_id, [&](IpiMessage& message) {
+        message.task_to_schedule = &task;
     });
 }
 }

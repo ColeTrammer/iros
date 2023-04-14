@@ -57,6 +57,7 @@ struct GlobalState {
     mutable di::Atomic<bool> all_aps_booted { false };
     mutable Spinlock debug_output_lock;
     mutable di::Synchronized<ObjectPool<IpiMessage>> ipi_message_pool;
+    mutable di::Atomic<u32> next_processor_to_schedule_on { 0 };
     /// @}
 };
 

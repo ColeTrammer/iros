@@ -89,9 +89,14 @@ void tag_invoke(di::Tag<enable_irq_line>, IoApic& self, IrqLine irq_line) {
     redirection_entry.set<IoApicRedirectionTableEntryPolarity>(polarity);
     redirection_entry.set<IoApicRedirectionTableEntryTriggerMode>(trigger_mode);
 
-    // For now, send to the BSP.
-    redirection_entry.set<IoApicRedirectionTableEntryDestination>(0);
-    redirection_entry.set<IoApicRedirectionTableEntryDestinationMode>(IoApicDestinationMode::Physical);
+    // HACK: Broadcast the timer interrupt to all processors.
+    if (irq_line.raw_value() == 0) {
+        redirection_entry.set<IoApicRedirectionTableEntryDestination>(0xFF);
+        redirection_entry.set<IoApicRedirectionTableEntryDestinationMode>(IoApicDestinationMode::Logical);
+    } else {
+        redirection_entry.set<IoApicRedirectionTableEntryDestination>(0);
+        redirection_entry.set<IoApicRedirectionTableEntryDestinationMode>(IoApicDestinationMode::Physical);
+    }
 
     // Enable the interrupt.
     redirection_entry.set<IoApicRedirectionTableEntryMask>(false);

@@ -18,13 +18,19 @@ void Processor::handle_pending_ipi_messages() {
         return result;
     });
 
-    // NOTE: the caller is responsible for freeing the messages.
     for (auto* message : messages) {
         if (message->tlb_flush_size > 0) {
+            // NOTE: the caller is responsible for freeing the message.
             flush_tlb_local(message->tlb_flush_base, message->tlb_flush_size);
+            message->times_processed.fetch_add(1, di::MemoryOrder::Release);
         }
 
-        message->times_processed.fetch_add(1, di::MemoryOrder::Release);
+        if (message->task_to_schedule != nullptr) {
+            // NOTE: we are responsible for freeing the message.
+            scheduler().schedule_task(*message->task_to_schedule);
+
+            global_state().ipi_message_pool.lock()->deallocate(*message);
+        }
     }
 }
 
@@ -42,6 +48,7 @@ void Processor::send_ipi(u32 target_processor_id, di::FunctionRef<void(IpiMessag
     message.times_processed.store(0, di::MemoryOrder::Relaxed);
     message.tlb_flush_base = mm::VirtualAddress(0);
     message.tlb_flush_size = 0;
+    message.task_to_schedule = nullptr;
     factory(message);
 
     // Add the message to the target's queue.
@@ -54,14 +61,6 @@ void Processor::send_ipi(u32 target_processor_id, di::FunctionRef<void(IpiMessag
     }
     local_apic.write_interrupt_command_register(x86::amd64::ApicInterruptCommandRegister(
         x86::amd64::ApicInterruptCommandVector(63), x86::amd64::ApicInterruptCommandDestination(target_processor_id)));
-
-    // Wait for the message to be processed.
-    while (!message.times_processed.load(di::MemoryOrder::Acquire)) {
-        di::cpu_relax();
-    }
-
-    // Return the message to the pool.
-    global_state.ipi_message_pool.lock()->deallocate(message);
 }
 
 void Processor::broadcast_ipi(di::FunctionRef<void(IpiMessage&)> factory) {
