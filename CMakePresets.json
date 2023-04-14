@@ -421,7 +421,7 @@
             "execution": {
                 "noTestsAction": "error",
                 "stopOnFailure": false,
-                "timeout": 60
+                "timeout": 30
             }
         },
         {
