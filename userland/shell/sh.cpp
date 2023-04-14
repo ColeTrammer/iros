@@ -8,6 +8,11 @@ struct Args {
 di::Result<void> main(Args&) {
     auto buffer = di::Array<di::Byte, 1> {};
 
+    dius::println("//////////////////////////////////"_sv);
+    dius::println("//  Welcome to the Iros shell!  //"_sv);
+    dius::println("//////////////////////////////////"_sv);
+    dius::print("$ "_sv);
+
     auto command = di::TransparentString {};
     while (auto result = dius::stdin.read_exactly(buffer.span())) {
         if (auto ch = buffer[0]; ch != '\n'_b) {
@@ -20,6 +25,8 @@ di::Result<void> main(Args&) {
         TRY(dius::system::Process { di::move(owned_args) }.spawn_and_wait());
 
         command.clear();
+
+        dius::print("$ "_sv);
     }
     return {};
 }
