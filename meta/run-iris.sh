@@ -18,15 +18,24 @@ if ! [ "$IROS_DISABLE_KVM" ] && [ -e /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/
 fi
 
 if [ "$IROS_DEBUG" ]; then
-    DEBUG="-s -S -monitor stdio"
+    DEBUG="-s -S -monitor stdio -no-reboot -no-stutdown -d cpu_reset"
 else
     SERIAL="-serial stdio"
+fi
+
+if [ ! "$IROS_NO_SMP" ]; then
+    if [ `nproc` -gt 4 ]; then
+        SMP='-smp 4'
+    else
+        SMP="-smp `nproc`"
+    fi
 fi
 
 qemu-system-"$IROS_ARCH" \
     $ENABLE_KVM \
     $DEBUG \
     $SERIAL \
+    $SMP \
     -drive file="$IROS_IMAGE",format=raw,index=0,media=disk \
     -cpu max \
     -no-reboot \
