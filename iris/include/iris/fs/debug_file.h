@@ -7,15 +7,9 @@
 namespace iris {
 struct DebugFile {
 private:
-    friend Expected<usize> tag_invoke(di::Tag<read_file>, DebugFile&, di::Span<di::Byte> data);
+    friend Expected<usize> tag_invoke(di::Tag<read_file>, DebugFile&, WritableUserspaceBuffer data);
 
-    friend Expected<usize> tag_invoke(di::Tag<write_file>, DebugFile& self, di::Span<di::Byte const> data) {
-        auto guard = di::ScopedLock(self.m_lock);
-        for (auto byte : data) {
-            log_output_byte(byte);
-        }
-        return data.size();
-    }
+    friend Expected<usize> tag_invoke(di::Tag<write_file>, DebugFile& self, ReadonlyUserspaceBuffer data);
 
     InterruptibleSpinlock m_lock;
 };

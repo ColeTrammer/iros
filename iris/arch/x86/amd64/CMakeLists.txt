@@ -20,6 +20,7 @@ target_sources(
             arch/x86/amd64/core/print.cpp
             arch/x86/amd64/core/processor.cpp
             arch/x86/amd64/core/task.cpp
+            arch/x86/amd64/core/userspace_access.cpp
             arch/x86/amd64/hw/gdt.cpp
             arch/x86/amd64/hw/idt.cpp
             arch/x86/amd64/hw/io_apic.cpp

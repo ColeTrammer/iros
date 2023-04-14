@@ -3,19 +3,20 @@
 #include <di/prelude.h>
 
 #include <iris/core/error.h>
+#include <iris/core/userspace_buffer.h>
 
 namespace iris {
 namespace detail {
     struct WriteFileDefaultFunction {
         template<typename T>
-        constexpr Expected<usize> operator()(T&, di::Span<di::Byte const>) const {
+        Expected<usize> operator()(T&, ReadonlyUserspaceBuffer) const {
             return di::Unexpected(Error::NotSupported);
         }
     };
 
     struct ReadFileDefaultFunction {
         template<typename T>
-        constexpr Expected<usize> operator()(T&, di::Span<di::Byte>) const {
+        Expected<usize> operator()(T&, WritableUserspaceBuffer) const {
             return di::Unexpected(Error::NotSupported);
         }
     };
@@ -26,13 +27,13 @@ namespace detail {
 }
 
 struct WriteFileFunction
-    : di::Dispatcher<WriteFileFunction, Expected<usize>(di::This&, di::Span<di::Byte const>),
+    : di::Dispatcher<WriteFileFunction, Expected<usize>(di::This&, ReadonlyUserspaceBuffer),
                      detail::WriteFileDefaultFunction> {};
 
 constexpr inline auto write_file = WriteFileFunction {};
 
 struct ReadFileFunction
-    : di::Dispatcher<ReadFileFunction, Expected<usize>(di::This&, di::Span<di::Byte>),
+    : di::Dispatcher<ReadFileFunction, Expected<usize>(di::This&, WritableUserspaceBuffer),
                      detail::ReadFileDefaultFunction> {};
 
 constexpr inline auto read_file = ReadFileFunction {};

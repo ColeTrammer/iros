@@ -1,6 +1,7 @@
 #include <iris/core/print.h>
 #include <iris/core/task.h>
 #include <iris/core/userspace_access.h>
+#include <iris/core/userspace_ptr.h>
 #include <iris/fs/initrd.h>
 #include <iris/hw/power.h>
 #include <iris/uapi/syscall.h>
@@ -10,13 +11,12 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
     auto number = task_state.syscall_number();
     switch (number) {
         case SystemCall::debug_print: {
-            auto string_base = task_state.syscall_arg1();
+            auto const* string_base = reinterpret_cast<byte const*>(task_state.syscall_arg1());
             auto string_length = task_state.syscall_arg2();
-            auto string = di::TransparentStringView { reinterpret_cast<char const*>(string_base), string_length };
+            auto string_buffer = ReadonlyUserspaceBuffer { string_base, string_length };
+            auto string = TRY(string_buffer.copy_to_string());
 
-            iris::with_userspace_access([&] {
-                iris::print("{}"_sv, string);
-            });
+            iris::print("{}"_sv, string);
             return 0;
         }
         case SystemCall::shutdown: {
@@ -38,20 +38,18 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
         }
         case SystemCall::load_executable: {
             auto task_id = iris::TaskId(task_state.syscall_arg1());
-            auto string_base = task_state.syscall_arg2();
+            auto const* string_base = reinterpret_cast<byte const*>(task_state.syscall_arg2());
             auto string_length = task_state.syscall_arg3();
-            auto string = di::TransparentStringView { reinterpret_cast<char const*>(string_base), string_length };
+            auto string_buffer = ReadonlyUserspaceBuffer { string_base, string_length };
+            auto path = TRY(string_buffer.copy_to_path());
 
-            return iris::with_userspace_access([&] -> Expected<u64> {
-                auto path = di::PathView { string };
-                iris::println("Loading executable for {}: {}..."_sv, task_id, path);
+            iris::println("Loading executable for {}: {}..."_sv, task_id, path);
 
-                auto& task_namespace = current_task.task_namespace();
-                auto task = TRY(task_namespace.lock()->find_task(task_id));
+            auto& task_namespace = current_task.task_namespace();
+            auto task = TRY(task_namespace.lock()->find_task(task_id));
 
-                TRY(iris::load_executable(*task, path));
-                return 0;
-            });
+            TRY(iris::load_executable(*task, path));
+            return 0;
         }
         case SystemCall::start_task: {
             auto task_id = iris::TaskId(task_state.syscall_arg1());
@@ -71,44 +69,37 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
                 .transform(&mm::VirtualAddress::raw_value);
         }
         case SystemCall::open: {
-            auto string_base = task_state.syscall_arg1();
+            auto const* string_base = reinterpret_cast<byte const*>(task_state.syscall_arg1());
             auto string_length = task_state.syscall_arg2();
-            auto string = di::TransparentStringView { reinterpret_cast<char const*>(string_base), string_length };
+            auto string_buffer = ReadonlyUserspaceBuffer { string_base, string_length };
+            auto path = TRY(string_buffer.copy_to_path());
 
-            return iris::with_userspace_access([&] -> Expected<u64> {
-                auto path = di::PathView { string };
+            println("Opening {}"_sv, path);
 
-                println("Opening {}"_sv, path);
+            auto [file_storage, fd] = TRY(current_task.file_table().allocate_file_handle());
 
-                auto [file_storage, fd] = TRY(current_task.file_table().allocate_file_handle());
+            auto file = TRY(iris::open_in_initrd(path));
+            file_storage = di::move(file);
 
-                auto file = TRY(iris::open_in_initrd(path));
-                file_storage = di::move(file);
-
-                return fd;
-            });
+            return fd;
         }
         case SystemCall::write: {
-            i32 file_handle = task_state.syscall_arg1();
-            auto buffer = reinterpret_cast<di::Byte const*>(task_state.syscall_arg2());
+            auto file_handle = i32(task_state.syscall_arg1());
+            auto const* buffer = reinterpret_cast<di::Byte const*>(task_state.syscall_arg2());
             auto amount = task_state.syscall_arg3();
 
             auto& handle = TRY(current_task.file_table().lookup_file_handle(file_handle));
 
-            return iris::with_userspace_access([&] {
-                return iris::write_file(handle, { buffer, amount });
-            });
+            return iris::write_file(handle, ReadonlyUserspaceBuffer { buffer, amount });
         }
         case SystemCall::read: {
-            i32 file_handle = task_state.syscall_arg1();
-            auto buffer = reinterpret_cast<di::Byte*>(task_state.syscall_arg2());
+            auto file_handle = i32(task_state.syscall_arg1());
+            auto* buffer = reinterpret_cast<di::Byte*>(task_state.syscall_arg2());
             auto amount = task_state.syscall_arg3();
 
             auto& handle = TRY(current_task.file_table().lookup_file_handle(file_handle));
 
-            return iris::with_userspace_access([&] {
-                return iris::read_file(handle, { buffer, amount });
-            });
+            return iris::read_file(handle, WritableUserspaceBuffer { buffer, amount });
         }
         case SystemCall::close: {
             i32 file_handle = task_state.syscall_arg1();
@@ -181,35 +172,35 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
         }
         case SystemCall::set_task_arguments: {
             auto task_id = iris::TaskId(task_state.syscall_arg1());
-            auto const* argument_array = reinterpret_cast<di::Span<char const> const*>(task_state.syscall_arg2());
+            auto argument_array =
+                UserspacePtr(reinterpret_cast<ReadonlyUserspaceBuffer const*>(task_state.syscall_arg2()));
             auto argument_count = task_state.syscall_arg3();
-            auto const* enviornment_array = reinterpret_cast<di::Span<char const> const*>(task_state.syscall_arg4());
+            auto enviornment_array =
+                UserspacePtr(reinterpret_cast<ReadonlyUserspaceBuffer const*>(task_state.syscall_arg4()));
             auto enviornment_count = task_state.syscall_arg5();
 
             auto& task_namespace = current_task.task_namespace();
             auto task = task_id == iris::TaskId(0) ? current_task.arc_from_this()
                                                    : TRY(task_namespace.lock()->find_task(task_id));
 
-            return iris::with_userspace_access([&] -> Expected<u64> {
-                auto arguments = di::Vector<di::TransparentString> {};
-                for (auto i : di::range(argument_count)) {
-                    auto string = argument_array[i];
-                    auto owned_string = TRY(di::TransparentStringView { string.data(), string.size() }.to_owned());
-                    TRY(arguments.push_back(di::move(owned_string)));
-                }
+            auto arguments = di::Vector<di::TransparentString> {};
+            for (auto i : di::range(argument_count)) {
+                auto string = TRY(UserspacePtr(argument_array.raw_userspace_pointer() + i).read());
+                auto owned_string = TRY(string.copy_to_string());
+                TRY(arguments.push_back(di::move(owned_string)));
+            }
 
-                auto enviornment = di::Vector<di::TransparentString> {};
-                for (auto i : di::range(enviornment_count)) {
-                    auto string = enviornment_array[i];
-                    auto owned_string = TRY(di::TransparentStringView { string.data(), string.size() }.to_owned());
-                    TRY(enviornment.push_back(di::move(owned_string)));
-                }
+            auto enviornment = di::Vector<di::TransparentString> {};
+            for (auto i : di::range(enviornment_count)) {
+                auto string = TRY(UserspacePtr(enviornment_array.raw_userspace_pointer() + i).read());
+                auto owned_string = TRY(string.copy_to_string());
+                TRY(enviornment.push_back(di::move(owned_string)));
+            }
 
-                auto task_arguments = TRY(di::try_make_arc<TaskArguments>(di::move(arguments), di::move(enviornment)));
-                task->set_task_arguments(di::move(task_arguments));
+            auto task_arguments = TRY(di::try_make_arc<TaskArguments>(di::move(arguments), di::move(enviornment)));
+            task->set_task_arguments(di::move(task_arguments));
 
-                return 0;
-            });
+            return 0;
         }
         default:
             iris::println("Encounted unexpected system call: {}"_sv, di::to_underlying(number));

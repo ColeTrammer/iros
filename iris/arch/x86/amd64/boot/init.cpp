@@ -18,7 +18,6 @@
 #include <iris/core/print.h>
 #include <iris/core/scheduler.h>
 #include <iris/core/task.h>
-#include <iris/core/userspace_access.h>
 #include <iris/core/wait_queue.h>
 #include <iris/fs/debug_file.h>
 #include <iris/fs/file.h>
