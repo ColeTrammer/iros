@@ -68,6 +68,9 @@ void Processor::broadcast_ipi(di::FunctionRef<void(IpiMessage&)> factory) {
     auto& message = *iris::global_state().ipi_message_pool.lock()->allocate();
 
     message.times_processed.store(0, di::MemoryOrder::Relaxed);
+    message.tlb_flush_base = mm::VirtualAddress(0);
+    message.tlb_flush_size = 0;
+    message.task_to_schedule = nullptr;
     factory(message);
 
     // Add the message each processor's queue.

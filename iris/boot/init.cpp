@@ -121,7 +121,6 @@ void iris_main() {
         arch::init_task();
 
         auto& global_state = global_state_in_boot();
-        auto& scheduler = global_state.boot_processor.scheduler();
         {
             ASSERT(!interrupts_disabled());
             auto task_finalizer = *iris::create_kernel_task(global_state.task_namespace, [] {
@@ -164,7 +163,7 @@ void iris_main() {
         }
 
         println("Finished kernel init task..."_sv);
-        scheduler.exit_current_task();
+        iris::current_scheduler()->exit_current_task();
     });
 
     iris::println("Starting the kernel scheduler..."_sv);
