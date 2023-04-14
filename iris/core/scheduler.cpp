@@ -61,13 +61,13 @@ void Scheduler::start_on_ap() {
 
 [[gnu::naked]] void Scheduler::yield() {
     // To yield a task, we must first save its current state, so that it can be resumed later. Instead of setting %rip
-    // based on the current instruction pointer, set %rip to a later address which is then the point at which the
-    // current task is resumed. Once the task state is saved, simply call Scheduler::save_state_and_run_next() which
-    // performs the context switch to the next task. In the current implementation, the task state is pushed onto the
-    // stack, which is then passed to a c++ function. It would be more efficent to save the relevant registers directly
-    // into the current task pointer, but this would be even more complicated. Additionally, only registers which are
-    // not preserved by the SYS-V ABI need to be saved. Also, when the task is resumed, interrupts will be enabled.
-    asm volatile("movabsq $_continue, %rax\n"
+    // based on the current instruction pointer, set %rip to the function return address, so that the task will resume
+    // where it left off. Once the task state is saved, simply call Scheduler::save_state_and_run_next() which performs
+    // the context switch to the next task. In the current implementation, the task state is pushed onto the stack,
+    // which is then passed to a c++ function. It would be more efficent to save the relevant registers directly into
+    // the current task pointer, but this would be even more complicated. Additionally, only registers which are not
+    // preserved by the SYS-V ABI need to be saved. Also, when the task is resumed, interrupts will be enabled.
+    asm volatile("popq %rax\n"
                  "movq %rsp, %rdx\n"
 
                  "pushq $0x00\n"
@@ -93,10 +93,8 @@ void Scheduler::start_on_ap() {
                  "push %r15\n"
 
                  "mov %rsp, %rsi\n"
-                 "jmp _ZN4iris9Scheduler23save_state_and_run_nextEPNS_4arch9TaskStateE\n"
-
-                 "_continue:\n"
-                 "ret\n");
+                 "subq $8, %rsp\n"
+                 "jmp _ZN4iris9Scheduler23save_state_and_run_nextEPNS_4arch9TaskStateE\n");
 }
 
 void Scheduler::run_next() {
