@@ -67,11 +67,13 @@ static Expected<void> validate_canonical_address(uptr address) {
 }
 
 Expected<void> validate_user_region(mm::VirtualAddress userspace_address, usize count, usize size) {
-    // FIXME: check for overflow here.
-    auto size_bytes = size * count;
+    auto size_bytes = di::Checked(size) * count;
+    if (!size_bytes.valid()) {
+        return di::Unexpected(Error::BadAddress);
+    }
 
     auto begin = userspace_address.raw_value();
-    auto end = userspace_address.raw_value() + size_bytes;
+    auto end = userspace_address.raw_value() + *size_bytes.value();
 
     // This prevents the region from wrapping around.
     if (end < begin) {
