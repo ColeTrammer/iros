@@ -9,14 +9,14 @@ namespace iris {
 namespace detail {
     struct WriteFileDefaultFunction {
         template<typename T>
-        Expected<usize> operator()(T&, ReadonlyUserspaceBuffer) const {
+        Expected<usize> operator()(T&, UserspaceBuffer<byte const>) const {
             return di::Unexpected(Error::NotSupported);
         }
     };
 
     struct ReadFileDefaultFunction {
         template<typename T>
-        Expected<usize> operator()(T&, WritableUserspaceBuffer) const {
+        Expected<usize> operator()(T&, UserspaceBuffer<byte>) const {
             return di::Unexpected(Error::NotSupported);
         }
     };
@@ -27,13 +27,13 @@ namespace detail {
 }
 
 struct WriteFileFunction
-    : di::Dispatcher<WriteFileFunction, Expected<usize>(di::This&, ReadonlyUserspaceBuffer),
+    : di::Dispatcher<WriteFileFunction, Expected<usize>(di::This&, UserspaceBuffer<byte const>),
                      detail::WriteFileDefaultFunction> {};
 
 constexpr inline auto write_file = WriteFileFunction {};
 
 struct ReadFileFunction
-    : di::Dispatcher<ReadFileFunction, Expected<usize>(di::This&, WritableUserspaceBuffer),
+    : di::Dispatcher<ReadFileFunction, Expected<usize>(di::This&, UserspaceBuffer<byte>),
                      detail::ReadFileDefaultFunction> {};
 
 constexpr inline auto read_file = ReadFileFunction {};

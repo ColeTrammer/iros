@@ -13,7 +13,7 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
         case SystemCall::debug_print: {
             auto const* string_base = reinterpret_cast<byte const*>(task_state.syscall_arg1());
             auto string_length = task_state.syscall_arg2();
-            auto string_buffer = ReadonlyUserspaceBuffer { string_base, string_length };
+            auto string_buffer = UserspaceBuffer<byte const> { string_base, string_length };
             auto string = TRY(string_buffer.copy_to_string());
 
             iris::print("{}"_sv, string);
@@ -40,7 +40,7 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
             auto task_id = iris::TaskId(task_state.syscall_arg1());
             auto const* string_base = reinterpret_cast<byte const*>(task_state.syscall_arg2());
             auto string_length = task_state.syscall_arg3();
-            auto string_buffer = ReadonlyUserspaceBuffer { string_base, string_length };
+            auto string_buffer = UserspaceBuffer<byte const> { string_base, string_length };
             auto path = TRY(string_buffer.copy_to_path());
 
             iris::println("Loading executable for {}: {}..."_sv, task_id, path);
@@ -71,7 +71,7 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
         case SystemCall::open: {
             auto const* string_base = reinterpret_cast<byte const*>(task_state.syscall_arg1());
             auto string_length = task_state.syscall_arg2();
-            auto string_buffer = ReadonlyUserspaceBuffer { string_base, string_length };
+            auto string_buffer = UserspaceBuffer<byte const> { string_base, string_length };
             auto path = TRY(string_buffer.copy_to_path());
 
             println("Opening {}"_sv, path);
@@ -90,7 +90,7 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
 
             auto& handle = TRY(current_task.file_table().lookup_file_handle(file_handle));
 
-            return iris::write_file(handle, ReadonlyUserspaceBuffer { buffer, amount });
+            return iris::write_file(handle, UserspaceBuffer<byte const> { buffer, amount });
         }
         case SystemCall::read: {
             auto file_handle = i32(task_state.syscall_arg1());
@@ -99,7 +99,7 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
 
             auto& handle = TRY(current_task.file_table().lookup_file_handle(file_handle));
 
-            return iris::read_file(handle, WritableUserspaceBuffer { buffer, amount });
+            return iris::read_file(handle, UserspaceBuffer<byte> { buffer, amount });
         }
         case SystemCall::close: {
             i32 file_handle = task_state.syscall_arg1();
@@ -172,30 +172,37 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
         }
         case SystemCall::set_task_arguments: {
             auto task_id = iris::TaskId(task_state.syscall_arg1());
-            auto argument_array =
-                UserspacePtr(reinterpret_cast<ReadonlyUserspaceBuffer const*>(task_state.syscall_arg2()));
+            auto argument_array = reinterpret_cast<UserspaceBuffer<byte const> const*>(task_state.syscall_arg2());
             auto argument_count = task_state.syscall_arg3();
-            auto enviornment_array =
-                UserspacePtr(reinterpret_cast<ReadonlyUserspaceBuffer const*>(task_state.syscall_arg4()));
+            auto enviornment_array = reinterpret_cast<UserspaceBuffer<byte const> const*>(task_state.syscall_arg4());
             auto enviornment_count = task_state.syscall_arg5();
+
+            auto userspace_arguments = UserspaceBuffer { argument_array, argument_count };
+            auto userspace_enviornment = UserspaceBuffer { enviornment_array, enviornment_count };
 
             auto& task_namespace = current_task.task_namespace();
             auto task = task_id == iris::TaskId(0) ? current_task.arc_from_this()
                                                    : TRY(task_namespace.lock()->find_task(task_id));
 
             auto arguments = di::Vector<di::TransparentString> {};
-            for (auto i : di::range(argument_count)) {
-                auto string = TRY(UserspacePtr(argument_array.raw_userspace_pointer() + i).read());
-                auto owned_string = TRY(string.copy_to_string());
-                TRY(arguments.push_back(di::move(owned_string)));
-            }
+            TRY(userspace_arguments.copy_in_chunks<16>(
+                [&](di::Span<UserspaceBuffer<byte const>> chunk) -> Expected<void> {
+                    for (auto string : chunk) {
+                        auto owned_string = TRY(string.copy_to_string());
+                        TRY(arguments.push_back(di::move(owned_string)));
+                    }
+                    return {};
+                }));
 
             auto enviornment = di::Vector<di::TransparentString> {};
-            for (auto i : di::range(enviornment_count)) {
-                auto string = TRY(UserspacePtr(enviornment_array.raw_userspace_pointer() + i).read());
-                auto owned_string = TRY(string.copy_to_string());
-                TRY(enviornment.push_back(di::move(owned_string)));
-            }
+            TRY(userspace_enviornment.copy_in_chunks<16>(
+                [&](di::Span<UserspaceBuffer<byte const>> chunk) -> Expected<void> {
+                    for (auto string : chunk) {
+                        auto owned_string = TRY(string.copy_to_string());
+                        TRY(enviornment.push_back(di::move(owned_string)));
+                    }
+                    return {};
+                }));
 
             auto task_arguments = TRY(di::try_make_arc<TaskArguments>(di::move(arguments), di::move(enviornment)));
             task->set_task_arguments(di::move(task_arguments));

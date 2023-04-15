@@ -21,18 +21,18 @@ private:
 public:
     explicit UserspacePtr(T* pointer) : m_pointer(pointer) {}
 
-    Expected<Value> read() {
+    Expected<Value> read() const {
         Uninit value;
         TRY(copy_from_user({ reinterpret_cast<byte const*>(m_pointer), sizeof(Value) },
                            reinterpret_cast<byte*>(&value.value)));
         return di::move(value.value);
     }
 
-    Expected<void> write(Value const& value) {
+    Expected<void> write(Value const& value) const {
         return copy_to_user({ reinterpret_cast<byte const*>(&value), sizeof(Value) }, m_pointer);
     }
 
-    T* raw_userspace_pointer() { return m_pointer; }
+    T* raw_userspace_pointer() const { return m_pointer; }
 
 private:
     T* m_pointer { nullptr };

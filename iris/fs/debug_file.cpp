@@ -3,7 +3,7 @@
 #include <iris/fs/debug_file.h>
 
 namespace iris {
-Expected<usize> tag_invoke(di::Tag<read_file>, DebugFile&, WritableUserspaceBuffer buffer) {
+Expected<usize> tag_invoke(di::Tag<read_file>, DebugFile&, UserspaceBuffer<byte> buffer) {
     if (buffer.empty()) {
         return 0;
     }
@@ -21,7 +21,7 @@ Expected<usize> tag_invoke(di::Tag<read_file>, DebugFile&, WritableUserspaceBuff
     return buffer.write({ &byte, 1 });
 }
 
-Expected<usize> tag_invoke(di::Tag<write_file>, DebugFile& self, ReadonlyUserspaceBuffer data) {
+Expected<usize> tag_invoke(di::Tag<write_file>, DebugFile& self, UserspaceBuffer<byte const> data) {
     auto guard = di::ScopedLock(self.m_lock);
     TRY(data.copy_in_chunks<64>([&](di::Span<byte> chunk) -> Expected<void> {
         for (auto byte : chunk) {

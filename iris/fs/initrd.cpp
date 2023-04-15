@@ -83,7 +83,7 @@ public:
     constexpr explicit InitrdFile(di::Span<di::Byte const> data) : m_data(data) {}
 
 private:
-    friend Expected<usize> tag_invoke(di::Tag<read_file>, InitrdFile& file, WritableUserspaceBuffer buffer) {
+    friend Expected<usize> tag_invoke(di::Tag<read_file>, InitrdFile& file, UserspaceBuffer<byte> buffer) {
         auto to_read = di::min(buffer.size(), file.m_data.size() - file.m_offset);
         TRY(buffer.write(*file.m_data.subspan(file.m_offset, to_read)));
         file.m_offset += to_read;
