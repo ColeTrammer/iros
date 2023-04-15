@@ -12,7 +12,7 @@ template<concepts::UnsignedInteger T>
 struct NumericLimits<T> {
     constexpr static T max = static_cast<T>(-1);
     constexpr static T min = 0;
-    constexpr static int bits = sizeof(T);
+    constexpr static int bits = sizeof(T) * 8;
     constexpr static int digits = bits;
 };
 

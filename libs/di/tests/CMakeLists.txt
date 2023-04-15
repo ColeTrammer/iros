@@ -24,6 +24,7 @@ add_executable(
     test_function_container.cpp
     test_function_generator.cpp
     test_function_invoke.cpp
+    test_math_checked.cpp
     test_math_integer.cpp
     test_math_rational.cpp
     test_meta.cpp
