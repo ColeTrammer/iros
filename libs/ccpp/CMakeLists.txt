@@ -103,7 +103,7 @@ add_library(
 add_library(Ccpp::ccpp ALIAS ccpp)
 
 target_include_directories(
-    ccpp PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
+    ccpp SYSTEM PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
 )
 
 find_package(Dius REQUIRED)

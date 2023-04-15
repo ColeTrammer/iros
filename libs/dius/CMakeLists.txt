@@ -6,7 +6,7 @@ add_library(dius di_assert_impl.cpp error.cpp sync_file.cpp test/test_manager.cp
 add_library(Dius::dius ALIAS dius)
 
 target_include_directories(
-    dius PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
+    dius SYSTEM PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
 )
 
 find_package(Di REQUIRED)

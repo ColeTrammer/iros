@@ -6,7 +6,7 @@ add_library(di INTERFACE)
 add_library(Di::di ALIAS di)
 
 target_include_directories(
-    di INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
+    di SYSTEM INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>
 )
 
 target_compile_features(di INTERFACE cxx_std_23)
