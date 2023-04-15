@@ -36,6 +36,12 @@ static inline void load_cr0(u64 cr0) {
     asm volatile("mov %0, %%cr0" : : "r"(cr0));
 }
 
+static inline u64 read_cr2() {
+    u64 cr2;
+    asm volatile("mov %%cr2, %0" : "=r"(cr2));
+    return cr2;
+}
+
 static inline u64 read_cr3() {
     u64 cr3;
     asm volatile("mov %%cr3, %0" : "=r"(cr3));

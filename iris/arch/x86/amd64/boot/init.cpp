@@ -58,6 +58,22 @@ extern "C" void bsp_cpu_init() {
 
     set_current_processor(global_state.boot_processor);
 
+    // Setup the page fault handler.
+    *register_exception_handler(GlobalIrqNumber(14), [](IrqContext& context) -> IrqStatus {
+        auto instruction_pointer = mm::VirtualAddress(context.task_state.rip);
+        auto address = mm::VirtualAddress(x86::amd64::read_cr2());
+
+        if (instruction_pointer == kernel_userspace_copy_instruction) {
+            context.task_state.set_instruction_pointer(kernel_userspace_copy_return.raw_value());
+            context.task_state.rax = di::to_underlying(Error::BadAddress);
+            return IrqStatus::Handled;
+        }
+
+        println("ERROR: Unexpected page fault: ip={}, address={}"_sv, instruction_pointer, address);
+        ASSERT(false);
+        return IrqStatus::Handled;
+    });
+
     iris_main();
 }
 
