@@ -13,8 +13,15 @@ private:
     constexpr static bool is_const = di::concepts::Const<T>;
     constexpr static bool is_byte = di::concepts::SameAs<Storage, byte>;
 
-public:
     explicit UserspaceBuffer(T* pointer, usize length) : m_buffer(pointer, length) {}
+
+public:
+    static Expected<UserspaceBuffer<T>> create(T* pointer, usize length) {
+        if (!validate_user_region(mm::VirtualAddress(di::to_uintptr(pointer)), length, sizeof(T))) {
+            return di::Unexpected(Error::BadAddress);
+        }
+        return UserspaceBuffer<T> { pointer, length };
+    }
 
     Expected<usize> write(di::Span<T const> data) const
     requires(!is_const)
@@ -69,4 +76,7 @@ public:
 private:
     di::Span<T> m_buffer;
 };
+
+template<typename T>
+UserspaceBuffer<T> tag_invoke(di::Tag<di::util::deduce_create>, di::InPlaceTemplate<UserspaceBuffer>, T*, usize);
 }

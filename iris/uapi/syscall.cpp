@@ -13,7 +13,7 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
         case SystemCall::debug_print: {
             auto const* string_base = reinterpret_cast<byte const*>(task_state.syscall_arg1());
             auto string_length = task_state.syscall_arg2();
-            auto string_buffer = UserspaceBuffer<byte const> { string_base, string_length };
+            auto string_buffer = TRY(di::create<UserspaceBuffer>(string_base, string_length));
             auto string = TRY(string_buffer.copy_to_string());
 
             iris::print("{}"_sv, string);
@@ -40,7 +40,7 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
             auto task_id = iris::TaskId(task_state.syscall_arg1());
             auto const* string_base = reinterpret_cast<byte const*>(task_state.syscall_arg2());
             auto string_length = task_state.syscall_arg3();
-            auto string_buffer = UserspaceBuffer<byte const> { string_base, string_length };
+            auto string_buffer = TRY(di::create<UserspaceBuffer>(string_base, string_length));
             auto path = TRY(string_buffer.copy_to_path());
 
             iris::println("Loading executable for {}: {}..."_sv, task_id, path);
@@ -71,7 +71,7 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
         case SystemCall::open: {
             auto const* string_base = reinterpret_cast<byte const*>(task_state.syscall_arg1());
             auto string_length = task_state.syscall_arg2();
-            auto string_buffer = UserspaceBuffer<byte const> { string_base, string_length };
+            auto string_buffer = TRY(di::create<UserspaceBuffer>(string_base, string_length));
             auto path = TRY(string_buffer.copy_to_path());
 
             println("Opening {}"_sv, path);
@@ -90,7 +90,7 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
 
             auto& handle = TRY(current_task.file_table().lookup_file_handle(file_handle));
 
-            return iris::write_file(handle, UserspaceBuffer<byte const> { buffer, amount });
+            return iris::write_file(handle, TRY(di::create<UserspaceBuffer>(buffer, amount)));
         }
         case SystemCall::read: {
             auto file_handle = i32(task_state.syscall_arg1());
@@ -99,7 +99,7 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
 
             auto& handle = TRY(current_task.file_table().lookup_file_handle(file_handle));
 
-            return iris::read_file(handle, UserspaceBuffer<byte> { buffer, amount });
+            return iris::read_file(handle, TRY(di::create<UserspaceBuffer>(buffer, amount)));
         }
         case SystemCall::close: {
             i32 file_handle = task_state.syscall_arg1();
@@ -172,13 +172,15 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
         }
         case SystemCall::set_task_arguments: {
             auto task_id = iris::TaskId(task_state.syscall_arg1());
-            auto argument_array = reinterpret_cast<UserspaceBuffer<byte const> const*>(task_state.syscall_arg2());
+            auto const* argument_array =
+                reinterpret_cast<UserspaceBuffer<byte const> const*>(task_state.syscall_arg2());
             auto argument_count = task_state.syscall_arg3();
-            auto enviornment_array = reinterpret_cast<UserspaceBuffer<byte const> const*>(task_state.syscall_arg4());
+            auto const* enviornment_array =
+                reinterpret_cast<UserspaceBuffer<byte const> const*>(task_state.syscall_arg4());
             auto enviornment_count = task_state.syscall_arg5();
 
-            auto userspace_arguments = UserspaceBuffer { argument_array, argument_count };
-            auto userspace_enviornment = UserspaceBuffer { enviornment_array, enviornment_count };
+            auto userspace_arguments = TRY(di::create<UserspaceBuffer>(argument_array, argument_count));
+            auto userspace_enviornment = TRY(di::create<UserspaceBuffer>(enviornment_array, enviornment_count));
 
             auto& task_namespace = current_task.task_namespace();
             auto task = task_id == iris::TaskId(0) ? current_task.arc_from_this()

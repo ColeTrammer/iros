@@ -18,8 +18,15 @@ private:
         Value value;
     };
 
-public:
     explicit UserspacePtr(T* pointer) : m_pointer(pointer) {}
+
+public:
+    static Expected<UserspacePtr<T>> create(T* pointer) {
+        if (!validate_user_region(mm::VirtualAddress(di::to_uintptr(pointer)), 1, sizeof(T))) {
+            return di::Unexpected(Error::BadAddress);
+        }
+        return UserspacePtr<T>(pointer);
+    }
 
     Expected<Value> read() const {
         Uninit value;
@@ -37,4 +44,7 @@ public:
 private:
     T* m_pointer { nullptr };
 };
+
+template<typename T>
+UserspacePtr<T> tag_invoke(di::Tag<di::util::deduce_create>, di::InPlaceTemplate<UserspacePtr>, T*);
 }
