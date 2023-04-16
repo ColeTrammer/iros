@@ -117,7 +117,7 @@ public:
             auto result = Any {};
             return Storage::init(util::addressof(result), in_place_type<VU>, util::forward<U>(value)) % [&] {
                 result.m_vtable = VTable::template create_for<Storage, VU>();
-                return result;
+                return util::move(result);
             };
         } else {
             return Any(in_place_type<VU>, util::forward<U>(value));
@@ -131,7 +131,7 @@ public:
             auto result = Any {};
             return Storage::init(util::addressof(result), in_place_type<VT>, util::forward<Args>(args)...) % [&] {
                 result.m_vtable = VTable::template create_for<Storage, VT>();
-                return result;
+                return util::move(result);
             };
         } else {
             return Any(in_place_type<VT>, util::forward<Args>(args)...);
@@ -145,7 +145,7 @@ public:
             auto result = Any {};
             return Storage::init(util::addressof(result), in_place_type<VT>, list, util::forward<Args>(args)...) % [&] {
                 result.m_vtable = VTable::template create_for<Storage, VT>();
-                return result;
+                return util::move(result);
             };
         } else {
             return Any(in_place_type<VT>, list, util::forward<Args>(args)...);
