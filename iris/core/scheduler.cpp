@@ -22,6 +22,7 @@ static void do_idle() {
 }
 
 void Scheduler::start() {
+    setup_idle_task();
     start_on_ap();
 }
 
@@ -30,11 +31,9 @@ void Scheduler::setup_idle_task() {
 }
 
 void Scheduler::start_on_ap() {
-    setup_idle_task();
-
     // Setup timer interrupt.
     auto& scheduler_timer = iris::scheduler_timer();
-    *timer_set_interval(*scheduler_timer.lock(), 5000000_ns, [](IrqContext& context) {
+    *timer_set_interval(*scheduler_timer.lock(), 5_ms, [](IrqContext& context) {
         // SAFETY: This is safe since interrupts are disabled.
         auto& scheduler = current_processor_unsafe().scheduler();
 

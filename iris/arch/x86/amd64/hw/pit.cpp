@@ -2,6 +2,7 @@
 #include <iris/arch/x86/amd64/io_instructions.h>
 #include <iris/core/global_state.h>
 #include <iris/core/interrupt_disabler.h>
+#include <iris/core/print.h>
 #include <iris/hw/irq.h>
 #include <iris/hw/irq_controller.h>
 #include <iris/hw/timer.h>
@@ -31,12 +32,12 @@ private:
     }
 
     friend TimerResolution tag_invoke(di::Tag<timer_resolution>, PitTimer const&) {
-        return di::Nanoseconds(1000000000 / pit_frequency);
+        return TimerResolution(1_s) / pit_frequency;
     }
 
-    friend Expected<void> tag_invoke(di::Tag<timer_set_single_shot>, PitTimer& self, di::Nanoseconds duration,
+    friend Expected<void> tag_invoke(di::Tag<timer_set_single_shot>, PitTimer& self, TimerResolution duration,
                                      di::Function<void(IrqContext&)> callback) {
-        auto divisor = duration.count() * pit_frequency / 1000000000;
+        auto divisor = duration.count() * pit_frequency / TimerResolution(1_s).count();
 
         return with_interrupts_disabled([&] -> Expected<void> {
             TRY(self.register_irq());
@@ -49,9 +50,9 @@ private:
         });
     }
 
-    friend Expected<void> tag_invoke(di::Tag<timer_set_interval>, PitTimer& self, di::Nanoseconds duration,
+    friend Expected<void> tag_invoke(di::Tag<timer_set_interval>, PitTimer& self, TimerResolution duration,
                                      di::Function<void(IrqContext&)> callback) {
-        auto divisor = duration.count() * pit_frequency / 1000000000;
+        auto divisor = duration.count() * pit_frequency / TimerResolution(1_s).count();
 
         return with_interrupts_disabled([&] -> Expected<void> {
             TRY(self.register_irq());

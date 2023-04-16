@@ -26,7 +26,7 @@ enum class ApicOffset : u16 {
     LvtTimer = 0x0320,
     InterruptCommandLow = 0x0300,
     InterruptCommandHigh = 0x0310,
-    TimerLvtEntry,
+    TimerLvtEntry = 0x320,
     ThermalLvtEntry = 0x0330,
     PerformanceLvtEntry = 0x0340,
     Lint0Entry = 0x0350,

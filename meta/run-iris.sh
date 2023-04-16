@@ -16,7 +16,6 @@ ENABLE_KVM=""
 if ! [ "$IROS_DISABLE_KVM" ] && [ -e /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
     ENABLE_KVM="-enable-kvm"
 fi
-ENABLE_KVM=""
 
 if [ "$IROS_DEBUG" ]; then
     DEBUG="-s -S -monitor stdio -no-reboot -no-stutdown -d cpu_reset"
@@ -29,14 +28,6 @@ if [ ! "$IROS_NO_SMP" ]; then
         SMP='-smp 4'
     else
         SMP="-smp `nproc`"
-    fi
-
-    # HACK: SMP doesn't work with KVM disabled. This is because the kernel uses the PIT to schedule tasks, but QEMU
-    # stops firing PIT interrupts if we try to broadcast them to all CPUs. Real systems don't use the PIT for SMP, so it
-    # is unclear whether or not this is a bug in QEMU. Regardless, the solution is to use the Local APIC timer instead.
-    # For now, we just disable SMP if KVM is disabled.
-    if [ ! "$ENABLE_KVM" ]; then
-        SMP=""
     fi
 fi
 

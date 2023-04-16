@@ -1,3 +1,5 @@
+#include <iris/arch/x86/amd64/core/interrupt_disabler.h>
+#include <iris/arch/x86/amd64/core/processor.h>
 #include <iris/arch/x86/amd64/gdt.h>
 #include <iris/arch/x86/amd64/hw/local_apic.h>
 #include <iris/arch/x86/amd64/idt.h>
@@ -7,6 +9,8 @@
 #include <iris/arch/x86/amd64/tss.h>
 #include <iris/core/global_state.h>
 #include <iris/core/print.h>
+#include <iris/hw/irq.h>
+#include <iris/hw/timer.h>
 #include <iris/mm/map_physical_address.h>
 
 namespace iris {
@@ -110,6 +114,114 @@ LocalApic::LocalApic(mm::PhysicalAddress base) {
     m_base = &mm::map_physical_address(base, 0x1000)->typed<u32 volatile>();
 }
 
+class LocalApicTimer {
+private:
+    friend di::StringView tag_invoke(di::Tag<timer_name>, LocalApicTimer const&) { return "APIC"_sv; }
+
+    friend TimerCapabilities tag_invoke(di::Tag<timer_capabilities>, LocalApicTimer const&) {
+        return TimerCapabilities::Periodic | TimerCapabilities::NeedsCalibration | TimerCapabilities::PerCpu;
+    }
+
+    friend TimerResolution tag_invoke(di::Tag<timer_resolution>, LocalApicTimer const& self) {
+        return self.m_resolution;
+    }
+
+    friend Expected<void> tag_invoke(di::Tag<timer_set_interval>, LocalApicTimer& self, TimerResolution duration,
+                                     di::Function<void(IrqContext&)> callback) {
+        ASSERT(interrupts_disabled());
+
+        // SAFETY: interrupts are disabled.
+        auto& processor = current_processor_unsafe();
+        auto& local_apic = processor.arch_processor().local_apic();
+
+        processor.arch_processor().set_local_apic_callback(di::move(callback));
+
+        // Calculate the number of ticks to count down from.
+        auto ticks = duration / self.m_resolution;
+
+        println("Setting APIC timer interval to {} ticks ({} ps)"_sv, ticks, duration.count());
+
+        // Set the APIC timer to count down from the calculated number of ticks.
+        local_apic.write_timer_divide_configuration(ApicTimerDivideConfiguration::DivideBy2);
+        local_apic.write_lvt_entry(ApicOffset::TimerLvtEntry,
+                                   ApicLvtEntry(ApicLvtEntryVector(62), ApicLvtEntryTimerMode(true)));
+        local_apic.write_timer_initial_count(ticks);
+
+        return {};
+    }
+
+    friend Expected<void> tag_invoke(di::Tag<timer_calibrate>, LocalApicTimer& self) {
+        ASSERT(interrupts_disabled());
+
+        // SAFETY: interrupts are disabled.
+        auto& processor = current_processor_unsafe();
+        auto& local_apic = processor.arch_processor().local_apic();
+        auto& calibration_timer = iris::calibration_timer();
+
+        // To calibrate the timer, we can use a reference timer with known accuracy. Then set it to send an interrupt
+        // after 50 ms, and measure how many ticks elapsed on the APIC timer. Typically, the reference timer will be the
+        // HPET, although for now the PIT is used.
+
+        // Set the APIC timer to count down from 0xFFFFFFFF.
+        local_apic.write_timer_divide_configuration(ApicTimerDivideConfiguration::DivideBy2);
+        local_apic.write_lvt_entry(ApicOffset::TimerLvtEntry, ApicLvtEntry(ApicLvtEntryVector(62)));
+        local_apic.write_timer_initial_count(0xFFFFFFFF);
+
+        // Now set the reference timer to fire in 50 ms.
+        auto new_ticks = 0xFFFFFFFF_u32;
+        *timer_set_single_shot(*calibration_timer.lock(), 50_ms, [&](IrqContext&) {
+            new_ticks = local_apic.timer_current_count();
+
+            // Disable the APIC timer.
+            local_apic.write_lvt_entry(ApicOffset::TimerLvtEntry,
+                                       ApicLvtEntry(ApicLvtEntryVector(62), ApicLvtEntryMask(true)));
+            local_apic.write_timer_current_count(0);
+        });
+
+        // Now wait for the calibration timer to fire.
+        // FIXME: what if the timer never fires? It would be nice to have a timeout, but how can we do that if the only
+        // timer available is broken...
+        asm volatile("sti\n"
+                     "hlt\n"
+                     "cli\n" ::
+                         : "memory");
+
+        // Calculate the resolution.
+        // NOTE: picoseconds are used because modern CPUs have a frequency larger than 1 GHz. They thus have
+        // sub-nanosecond resolution.
+        auto ticks = 0xFFFFFFFF_u32 - new_ticks;
+        self.m_resolution = di::Picoseconds(50_ms) / ticks;
+
+        println("APIC timer resolution: {} ps. {} ticks elapsed. Waited for {} ps."_sv, self.m_resolution.count(),
+                ticks, di::Picoseconds(50_ms).count());
+
+        return {};
+    }
+
+    di::Picoseconds m_resolution;
+};
+
+static_assert(di::Impl<LocalApicTimer, TimerInterface>);
+
+static void init_local_apic_timer() {
+    auto& global_state = global_state_in_boot();
+    if (!global_state.arch_readonly_state.use_apic) {
+        return;
+    }
+
+    *register_exception_handler(GlobalIrqNumber(62), [](IrqContext& context) -> IrqStatus {
+        // SAFETY: interrupts are disabled.
+        auto& processor = current_processor_unsafe();
+
+        processor.arch_processor().local_apic().send_eoi();
+        processor.arch_processor().local_apic_callback(context);
+
+        return IrqStatus::Handled;
+    });
+
+    *global_state.timers.emplace_back(LocalApicTimer {});
+}
+
 void init_local_apic(bool print_info) {
     auto& global_state = global_state_in_boot();
     if (!global_state.arch_readonly_state.use_apic) {
@@ -143,6 +255,9 @@ void init_local_apic(bool print_info) {
         // FIXME: The print_info parameter doubles as a "is_bsp" flag.
         // Register the IPI IRQ handler.
         *register_exception_handler(GlobalIrqNumber(63), handle_ipi_irq);
+
+        // Setup the local APIC timer.
+        init_local_apic_timer();
     }
 
     // Enable the local APIC by setting up the spurious interrupt vector register.

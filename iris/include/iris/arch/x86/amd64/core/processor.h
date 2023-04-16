@@ -3,6 +3,7 @@
 #include <iris/arch/x86/amd64/hw/local_apic.h>
 #include <iris/arch/x86/amd64/segment_descriptor.h>
 #include <iris/arch/x86/amd64/tss.h>
+#include <iris/hw/irq.h>
 
 namespace iris {
 class Processor;
@@ -33,11 +34,17 @@ namespace arch {
         /// @note This must be called once at boot for each logical processor.
         void enable_cpu_features(bool print_info = true);
 
+        void set_local_apic_callback(di::Function<void(IrqContext&)> callback) {
+            m_local_apic_callback = di::move(callback);
+        }
+        void local_apic_callback(IrqContext& context) { m_local_apic_callback(context); }
+
     private:
         di::Optional<x86::amd64::LocalApic> m_local_apic;
         di::Array<iris::x86::amd64::sd::SegmentDescriptor, 11> m_gdt {};
         iris::x86::amd64::TSS m_tss {};
         uptr m_fallback_kernel_stack {};
+        di::Function<void(IrqContext&)> m_local_apic_callback;
     };
 }
 
