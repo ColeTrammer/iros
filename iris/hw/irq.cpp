@@ -6,11 +6,11 @@
 #include <iris/uapi/syscall.h>
 
 namespace iris {
-Expected<void> register_external_irq_handler(IrqLine line, IrqHandler handler) {
+Expected<usize> register_external_irq_handler(IrqLine line, IrqHandler handler) {
     auto irq = TRY(irq_number_for_legacy_isa_interrupt_number(line));
 
     auto& irq_handlers = global_state().irq_handlers;
-    return irq_handlers.with_lock([&](auto& irq_handlers) -> Expected<void> {
+    return irq_handlers.with_lock([&](auto& irq_handlers) -> Expected<usize> {
         TRY(irq_handlers[irq.raw_value()].emplace_back(di::move(handler)) & [](auto&&) {
             return Error::NotEnoughMemory;
         });
@@ -19,7 +19,7 @@ Expected<void> register_external_irq_handler(IrqLine line, IrqHandler handler) {
         irq_controller.with_lock([&](auto& controller) {
             enable_irq_line(controller, line);
         });
-        return {};
+        return irq_handlers.size() - 1;
     });
 }
 
@@ -30,6 +30,24 @@ Expected<void> register_exception_handler(GlobalIrqNumber irq, IrqHandler handle
             return Error::NotEnoughMemory;
         });
         return {};
+    });
+}
+
+void unregister_external_irq_handler(IrqLine line, usize handler_id) {
+    auto irq = *irq_number_for_legacy_isa_interrupt_number(line);
+
+    auto& irq_handlers = global_state().irq_handlers;
+    irq_handlers.with_lock([&](auto& irq_handlers) {
+        auto& handlers = irq_handlers[irq.raw_value()];
+        ASSERT(handler_id < handlers.size());
+        handlers.erase(handlers.iterator(handler_id));
+
+        if (handlers.empty()) {
+            auto& irq_controller = *irq_controller_for_interrupt_number(irq);
+            irq_controller.with_lock([&](auto& controller) {
+                disable_irq_line(controller, line);
+            });
+        }
     });
 }
 

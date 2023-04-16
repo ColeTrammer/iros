@@ -3,6 +3,7 @@
 #include <iris/arch/x86/amd64/hw/io_apic.h>
 #include <iris/arch/x86/amd64/hw/local_apic.h>
 #include <iris/arch/x86/amd64/hw/pic.h>
+#include <iris/arch/x86/amd64/hw/pit.h>
 #include <iris/arch/x86/amd64/hw/serial.h>
 #include <iris/arch/x86/amd64/idt.h>
 #include <iris/arch/x86/amd64/io_instructions.h>
@@ -24,6 +25,7 @@
 #include <iris/fs/initrd.h>
 #include <iris/hw/acpi/acpi.h>
 #include <iris/hw/power.h>
+#include <iris/hw/timer.h>
 #include <iris/mm/address_space.h>
 #include <iris/mm/map_physical_address.h>
 #include <iris/mm/page_frame_allocator.h>
@@ -89,11 +91,9 @@ void init_final() {
     iris::x86::amd64::init_io_apic();
     iris::x86::amd64::init_pic();
 
-    // Setup the PIT to fire every 5 ms.
-    auto divisor = 5 * 1193182 / 1000;
-    x86::amd64::io_out(0x43, 0b00110110_u8);
-    x86::amd64::io_out(0x40, u8(divisor & 0xFF));
-    x86::amd64::io_out(0x40, u8(divisor >> 8));
+    iris::x86::amd64::init_pit();
+
+    iris::init_timer_assignments();
 }
 
 void init_task() {

@@ -3,6 +3,7 @@
 #include <iris/core/print.h>
 #include <iris/core/scheduler.h>
 #include <iris/hw/irq.h>
+#include <iris/hw/timer.h>
 
 namespace iris {
 void Scheduler::schedule_task(Task& task) {
@@ -21,12 +22,19 @@ static void do_idle() {
 }
 
 void Scheduler::start() {
+    start_on_ap();
+}
+
+void Scheduler::setup_idle_task() {
+    m_idle_task = *create_kernel_task(global_state().task_namespace, do_idle);
+}
+
+void Scheduler::start_on_ap() {
     setup_idle_task();
 
     // Setup timer interrupt.
-    *register_external_irq_handler(IrqLine(0), [](IrqContext& context) -> IrqStatus {
-        send_eoi(*context.controller->lock(), IrqLine(0));
-
+    auto& scheduler_timer = iris::scheduler_timer();
+    *timer_set_interval(*scheduler_timer.lock(), 5000000_ns, [](IrqContext& context) {
         // SAFETY: This is safe since interrupts are disabled.
         auto& scheduler = current_processor_unsafe().scheduler();
 
@@ -35,25 +43,14 @@ void Scheduler::start() {
         auto& current_task = scheduler.current_task();
         if (current_task.preemption_disabled()) {
             current_task.set_should_be_preempted();
-            return IrqStatus::Handled;
+            return;
         }
 
         // Manually unlock the IRQ list before jumping away.
         global_state().irq_handlers.get_lock().unlock();
         scheduler.save_state_and_run_next(&context.task_state);
-        return IrqStatus::Handled;
     });
 
-    // SAFETY: This is safe since interrupts are disabled.
-    current_processor_unsafe().mark_as_online();
-    run_next();
-}
-
-void Scheduler::setup_idle_task() {
-    m_idle_task = *create_kernel_task(global_state().task_namespace, do_idle);
-}
-
-void Scheduler::start_on_ap() {
     // SAFETY: This is safe since interrupts are disabled.
     current_processor_unsafe().mark_as_online();
     run_next();

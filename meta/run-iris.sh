@@ -16,6 +16,7 @@ ENABLE_KVM=""
 if ! [ "$IROS_DISABLE_KVM" ] && [ -e /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
     ENABLE_KVM="-enable-kvm"
 fi
+ENABLE_KVM=""
 
 if [ "$IROS_DEBUG" ]; then
     DEBUG="-s -S -monitor stdio -no-reboot -no-stutdown -d cpu_reset"

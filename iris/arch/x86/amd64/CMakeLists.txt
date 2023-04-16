@@ -28,6 +28,7 @@ target_sources(
             arch/x86/amd64/hw/irq.cpp
             arch/x86/amd64/hw/local_apic.cpp
             arch/x86/amd64/hw/pic.cpp
+            arch/x86/amd64/hw/pit.cpp
             arch/x86/amd64/hw/power.cpp
             arch/x86/amd64/hw/processor_info.cpp
             arch/x86/amd64/hw/serial.cpp

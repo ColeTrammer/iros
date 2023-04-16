@@ -11,6 +11,7 @@
 #include <iris/core/unit_test.h>
 #include <iris/hw/acpi/acpi.h>
 #include <iris/hw/irq.h>
+#include <iris/hw/timer.h>
 #include <iris/mm/address_space.h>
 
 #include IRIS_ARCH_INCLUDE(hw/processor_info.h)
@@ -36,6 +37,10 @@ struct GlobalState {
     di::LinkedList<Processor> alernate_processors;
     di::TreeMap<u32, Processor*> processor_map;
     arch::ReadonlyGlobalState arch_readonly_state;
+    mutable di::LinkedList<di::Synchronized<IrqController>> irq_controllers;
+    mutable di::LinkedList<di::Synchronized<Timer>> timers;
+    mutable di::Synchronized<Timer>* scheduler_timer { nullptr };
+    mutable di::Synchronized<Timer>* calibration_timer { nullptr };
     bool current_processor_available { false };
     /// @}
 
@@ -52,7 +57,6 @@ struct GlobalState {
         task_finalization_data_queue;
     mutable WaitQueue task_finalization_wait_queue;
     mutable di::Synchronized<di::Array<di::StaticVector<IrqHandler, di::meta::SizeConstant<8>>, 256>> irq_handlers;
-    mutable di::LinkedList<di::Synchronized<IrqController>> irq_controllers;
     mutable arch::MutableGlobalState arch_mutable_state;
     mutable di::Atomic<bool> all_aps_booted { false };
     mutable Spinlock debug_output_lock;
