@@ -31,7 +31,10 @@
     "C_Cpp.autoAddFileAssociations": false,
     "C_Cpp.intelliSenseEngine": "disabled",
     "clangd.path": "/usr/bin/clangd-16",
-    "clangd.arguments": ["--query-driver=/usr/local/bin/*,/usr/bin/*,${workspaceFolder}/cross/bin/*"],
+    "clangd.arguments": [
+        "--query-driver=/usr/local/bin/*,/usr/bin/*,${workspaceFolder}/cross/bin/*",
+        "--header-insertion=never"
+    ],
     "livePreview.autoRefreshPreview": "Never",
     "livePreview.defaultPreviewPath": "build/x86_64/html",
     "githubIssues.issueBranchTitle": "i${issueNumber}-${sanitizedIssueTitle}",
