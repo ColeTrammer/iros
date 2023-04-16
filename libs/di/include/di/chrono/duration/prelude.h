@@ -13,6 +13,7 @@ using chrono::Milliseconds;
 using chrono::Minutes;
 using chrono::Months;
 using chrono::Nanoseconds;
+using chrono::Picoseconds;
 using chrono::Seconds;
 using chrono::Years;
 

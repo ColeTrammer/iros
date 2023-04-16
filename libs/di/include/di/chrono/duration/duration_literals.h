@@ -3,6 +3,7 @@
 #include <di/chrono/duration/duration.h>
 
 namespace di::chrono {
+using Picoseconds = Duration<i64, math::Pico>;
 using Nanoseconds = Duration<i64, math::Nano>;
 using Microseconds = Duration<i64, math::Micro>;
 using Milliseconds = Duration<i64, math::Milli>;
@@ -40,6 +41,10 @@ inline namespace literals {
 
         constexpr auto operator""_ns(unsigned long long value) {
             return chrono::Nanoseconds { value };
+        }
+
+        constexpr auto operator""_ps(unsigned long long value) {
+            return chrono::Picoseconds { value };
         }
     }
 }
