@@ -9,9 +9,8 @@
 #include <iostream>
 
 namespace di::assert::detail {
-[[noreturn]] inline void assert_fail(char const* source_text, char const* lhs_message = nullptr,
-                                     char const* rhs_message = nullptr,
-                                     util::SourceLocation loc = util::SourceLocation::current()) {
+[[noreturn]] inline void assert_fail(char const* source_text, char const* lhs_message, char const* rhs_message,
+                                     util::SourceLocation loc) {
     std::cerr << "\033[31;1mASSERT\033[0m: " << source_text;
     std::cerr << ": " << loc.function_name() << ": " << loc.file_name() << ":" << loc.line() << ":" << loc.column()
               << std::endl;
@@ -27,7 +26,6 @@ namespace di::assert::detail {
 #include <di/util/source_location.h>
 
 namespace di::assert::detail {
-void assert_fail(char const* source_text, char const* lhs_message = nullptr, char const* rhs_message = nullptr,
-                 util::SourceLocation loc = util::SourceLocation::current());
+void assert_fail(char const* source_text, char const* lhs_message, char const* rhs_message, util::SourceLocation loc);
 }
 #endif

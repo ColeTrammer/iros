@@ -70,7 +70,7 @@ private:
                [](concepts::CopyConstructible auto formatter) {
                    return [=](concepts::FormatContext auto& context, UUID uuid) {
 #pragma GCC diagnostic push
-#ifdef __GCC__
+#ifdef __GNUC__
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
 #endif
                        auto buffer = di::Array<char, 36> {};

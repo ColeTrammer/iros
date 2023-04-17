@@ -1,6 +1,6 @@
 #include <di/prelude.h>
 
-#ifdef __GCC__
+#ifdef __GNUC__
 #pragma GCC diagnostic ignored "-Wbuiltin-declaration-mismatch"
 #endif
 
