@@ -1,3 +1,6 @@
+#include <di/container/algorithm/prelude.h>
+#include <di/math/prelude.h>
+#include <di/util/prelude.h>
 #include <stdlib.h>
 
 #include "malloc_block.h"

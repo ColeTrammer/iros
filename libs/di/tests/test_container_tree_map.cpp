@@ -1,4 +1,5 @@
-#include <di/prelude.h>
+#include <di/container/tree/prelude.h>
+#include <di/container/view/prelude.h>
 #include <dius/test/prelude.h>
 
 namespace container_tree_map {

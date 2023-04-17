@@ -1,5 +1,4 @@
 #include <di/math/intcmp/prelude.h>
-#include <di/prelude.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>

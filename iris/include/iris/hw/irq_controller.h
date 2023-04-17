@@ -1,6 +1,8 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/any/prelude.h>
+#include <di/sync/prelude.h>
+#include <di/util/prelude.h>
 
 namespace iris {
 struct GlobalIrqNumberTag {

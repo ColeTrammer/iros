@@ -2,7 +2,9 @@
 
 #include <di/container/algorithm/uninitialized_relocate.h>
 #include <di/container/vector/mutable_vector.h>
+#include <di/container/vector/vector_begin.h>
 #include <di/container/vector/vector_data.h>
+#include <di/container/vector/vector_end.h>
 #include <di/container/vector/vector_size.h>
 #include <di/types/prelude.h>
 #include <di/util/create.h>

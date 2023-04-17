@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/types/prelude.h>
 
 namespace iris::x86::amd64 {
 // The format of the 64 bit Interrupt Descriptor Table is described

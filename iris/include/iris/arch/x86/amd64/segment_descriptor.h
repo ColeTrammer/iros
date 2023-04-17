@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/bit/prelude.h>
 
 namespace iris::x86::amd64::sd {
 using namespace di::bit;

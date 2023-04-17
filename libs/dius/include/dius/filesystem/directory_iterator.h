@@ -1,6 +1,8 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/container/path/prelude.h>
+#include <di/util/prelude.h>
+#include <di/vocab/error/prelude.h>
 #include <dius/error.h>
 #include <dius/filesystem/directory_entry.h>
 #include <dius/filesystem/directory_options.h>

@@ -1,5 +1,6 @@
 #include <ccpp/bits/file_implementation.h>
 #include <ccpp/bits/printf_implementation.h>
+#include <di/container/algorithm/prelude.h>
 #include <stdarg.h>
 #include <stdio.h>
 

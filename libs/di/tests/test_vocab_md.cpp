@@ -1,4 +1,5 @@
-#include <di/prelude.h>
+#include <di/concepts/prelude.h>
+#include <di/vocab/md/prelude.h>
 #include <dius/test/prelude.h>
 
 namespace vocab_md {

@@ -1,3 +1,4 @@
+#include <di/sync/prelude.h>
 #include <iris/core/unit_test.h>
 #include <iris/mm/address_space.h>
 

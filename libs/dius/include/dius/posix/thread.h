@@ -1,6 +1,8 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/function/container/prelude.h>
+#include <di/util/prelude.h>
+#include <di/vocab/error/prelude.h>
 #include <pthread.h>
 
 namespace dius {

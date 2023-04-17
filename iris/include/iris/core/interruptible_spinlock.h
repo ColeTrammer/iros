@@ -1,6 +1,7 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/sync/atomic.h>
+#include <di/util/immovable.h>
 #include <iris/core/preemption.h>
 
 namespace iris {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/container/intrusive/intrusive_tag_base.h>
 #include <di/container/tree/rb_tree.h>
 
 namespace di::container {

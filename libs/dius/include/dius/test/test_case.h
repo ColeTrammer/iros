@@ -1,6 +1,7 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/container/string/prelude.h>
+#include <di/util/prelude.h>
 
 namespace dius::test {
 using TestCaseFunction = void (*)();

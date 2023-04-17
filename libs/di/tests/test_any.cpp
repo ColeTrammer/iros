@@ -1,3 +1,7 @@
+#include <di/any/prelude.h>
+#include <di/concepts/prelude.h>
+#include <di/vocab/array/prelude.h>
+#include <di/vocab/pointer/prelude.h>
 #include <dius/test/prelude.h>
 
 namespace any {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/assert/prelude.h>
 #include <iris/mm/virtual_address.h>
 
 namespace iris::mm {

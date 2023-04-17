@@ -1,5 +1,6 @@
+#include <di/concepts/prelude.h>
 #include <di/function/index_dispatch.h>
-#include <di/prelude.h>
+#include <di/vocab/variant/prelude.h>
 #include <dius/test/prelude.h>
 
 namespace vocab_variant {

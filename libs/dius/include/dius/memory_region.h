@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/util/prelude.h>
 
 namespace dius {
 class MemoryRegion {

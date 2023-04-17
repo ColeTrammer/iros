@@ -1,5 +1,8 @@
 #pragma once
 
+#include <di/container/queue/prelude.h>
+#include <di/function/container/prelude.h>
+#include <di/sync/prelude.h>
 #include <iris/core/task.h>
 
 namespace iris {

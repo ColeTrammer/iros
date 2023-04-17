@@ -1,4 +1,4 @@
-#include <di/prelude.h>
+#include <di/bit/bitstruct/prelude.h>
 #include <dius/test/prelude.h>
 
 namespace bit_bitstruct {

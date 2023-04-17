@@ -1,6 +1,8 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/container/string/prelude.h>
+#include <di/container/vector/prelude.h>
+#include <di/util/prelude.h>
 
 namespace iris::test {
 using TestCaseFunction = void (*)();

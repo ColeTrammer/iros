@@ -1,6 +1,9 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/container/string/prelude.h>
+#include <di/util/prelude.h>
+#include <di/vocab/array/prelude.h>
+#include <di/vocab/span/prelude.h>
 
 namespace iris::acpi {
 bool validate_acpi_checksum(di::Span<byte const> data);

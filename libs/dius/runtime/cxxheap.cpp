@@ -1,4 +1,4 @@
-#include <di/prelude.h>
+#include <di/math/prelude.h>
 #include <dius/system/prelude.h>
 
 void* operator new(std::size_t size) {

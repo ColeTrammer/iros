@@ -1,5 +1,4 @@
-#include <di/prelude.h>
-#include <di/util/rebindable_box.h>
+#include <di/util/prelude.h>
 #include <dius/test/prelude.h>
 
 namespace util_swap {

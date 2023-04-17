@@ -1,6 +1,7 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/assert/prelude.h>
+#include <di/types/prelude.h>
 #include <iris/mm/virtual_address.h>
 
 namespace iris::x86::amd64 {
@@ -77,7 +78,7 @@ static inline void fninit() {
 /// @brief Save legacy floating point state.
 ///
 /// @warning This requires the provided state is 16 byte-aligned.
-static inline void fxsave(di::Byte* state) {
+static inline void fxsave(byte* state) {
     ASSERT(reinterpret_cast<uptr>(state) % 16 == 0);
     asm volatile("fxsave64 %0" : : "m"(*state));
 }
@@ -85,7 +86,7 @@ static inline void fxsave(di::Byte* state) {
 /// @brief Load legacy floating point state.
 ///
 /// @warning This requires the provided state is 16 byte-aligned.
-static inline void fxrstor(di::Byte* state) {
+static inline void fxrstor(byte* state) {
     ASSERT(reinterpret_cast<uptr>(state) % 16 == 0);
     asm volatile("fxrstor64 %0" : : "m"(*state));
 }
@@ -93,7 +94,7 @@ static inline void fxrstor(di::Byte* state) {
 /// @brief Load extended floating point state.
 ///
 /// @warning This requires that the CPU support has been detecetd, and that the provided state is 64 byte-aligned.
-static inline void xsave(di::Byte* state) {
+static inline void xsave(byte* state) {
     ASSERT(reinterpret_cast<uptr>(state) % 64 == 0);
     asm volatile("xsave %0" ::"m"(*state));
 }
@@ -101,7 +102,7 @@ static inline void xsave(di::Byte* state) {
 /// @brief Save extended floating point state.
 ///
 /// @warning This requires that the CPU support has been detecetd, and that the provided state is 64 byte-aligned.
-static inline void xrstor(di::Byte* state) {
+static inline void xrstor(byte* state) {
     ASSERT(reinterpret_cast<uptr>(state) % 64 == 0);
     asm volatile("xrstor %0" : : "m"(*state));
 }

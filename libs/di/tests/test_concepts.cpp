@@ -2,13 +2,12 @@
 #include <di/concepts/const.h>
 #include <di/concepts/disjunction.h>
 #include <di/concepts/floating_point.h>
-#include <di/concepts/integral.h>
 #include <di/concepts/language_array.h>
 #include <di/concepts/member_function_pointer.h>
 #include <di/concepts/member_object_pointer.h>
-#include <di/concepts/one_of.h>
+#include <di/concepts/prelude.h>
 #include <di/concepts/reference.h>
-#include <di/prelude.h>
+#include <di/types/prelude.h>
 
 namespace concepts {
 static_assert(di::concepts::Reference<i32&&>);

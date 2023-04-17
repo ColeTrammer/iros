@@ -1,3 +1,4 @@
+#include <di/function/prelude.h>
 #include <dius/memory_region.h>
 #include <dius/system/system_call.h>
 

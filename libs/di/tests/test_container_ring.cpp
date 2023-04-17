@@ -1,4 +1,4 @@
-#include <di/prelude.h>
+#include <di/container/ring/prelude.h>
 #include <dius/test/prelude.h>
 
 namespace container_ring {

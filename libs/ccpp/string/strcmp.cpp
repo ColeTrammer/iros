@@ -1,4 +1,5 @@
-#include <di/prelude.h>
+#include <di/container/algorithm/prelude.h>
+#include <di/container/string/prelude.h>
 #include <string.h>
 
 extern "C" int strcmp(char const* lhs, char const* rhs) {

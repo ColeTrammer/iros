@@ -1,6 +1,8 @@
 #pragma once
 
 #include <di/concepts/can_reference.h>
+#include <di/container/iterator/iterator_extension.h>
+#include <di/container/iterator/sentinel_extension.h>
 #include <di/container/view/adjacent_view.h>
 #include <di/util/rebindable_box.h>
 

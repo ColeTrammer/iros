@@ -1,6 +1,7 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/container/intrusive/prelude.h>
+#include <di/vocab/pointer/prelude.h>
 #include <iris/core/error.h>
 #include <iris/core/interruptible_spinlock.h>
 #include <iris/mm/physical_address.h>

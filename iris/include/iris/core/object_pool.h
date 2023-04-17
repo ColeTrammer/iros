@@ -1,7 +1,10 @@
 #pragma once
 
-#include <di/prelude.h>
-
+#include <di/assert/prelude.h>
+#include <di/container/algorithm/prelude.h>
+#include <di/container/intrusive/prelude.h>
+#include <di/platform/prelude.h>
+#include <di/util/prelude.h>
 #include <iris/core/error.h>
 
 namespace iris {

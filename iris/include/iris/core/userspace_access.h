@@ -1,8 +1,11 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/function/prelude.h>
+#include <di/util/prelude.h>
+#include <di/vocab/span/prelude.h>
 #include <iris/core/config.h>
 #include <iris/core/error.h>
+#include <iris/mm/virtual_address.h>
 
 #include IRIS_ARCH_INCLUDE(core/userspace_access.h)
 

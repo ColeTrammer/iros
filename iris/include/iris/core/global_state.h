@@ -1,6 +1,10 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/container/linked/prelude.h>
+#include <di/container/queue/prelude.h>
+#include <di/container/ring/prelude.h>
+#include <di/container/tree/prelude.h>
+#include <di/sync/prelude.h>
 #include <iris/core/config.h>
 #include <iris/core/error.h>
 #include <iris/core/object_pool.h>

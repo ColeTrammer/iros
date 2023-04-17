@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/concepts/integral.h>
+#include <di/function/pipeline.h>
 #include <di/meta/make_unsigned.h>
 
 namespace di::math {

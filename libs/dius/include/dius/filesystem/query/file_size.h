@@ -1,6 +1,7 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/container/path/prelude.h>
+#include <di/vocab/error/prelude.h>
 
 namespace dius::filesystem {
 namespace detail {

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <di/prelude.h>
-
+#include <di/sync/prelude.h>
 #include <iris/core/object_pool.h>
 #include <iris/core/preemption.h>
 #include <iris/core/scheduler.h>
+#include <iris/mm/virtual_address.h>
 
 #include IRIS_ARCH_INCLUDE(core/processor.h)
 

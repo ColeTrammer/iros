@@ -1,4 +1,3 @@
-#include <di/prelude.h>
 #include <iris/arch/x86/amd64/gdt.h>
 #include <iris/arch/x86/amd64/hw/io_apic.h>
 #include <iris/arch/x86/amd64/hw/local_apic.h>

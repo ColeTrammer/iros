@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/vocab/span/prelude.h>
 
 namespace dius::runtime {
 struct TlsInfo {

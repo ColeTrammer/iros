@@ -1,9 +1,10 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/concepts/prelude.h>
+#include <di/types/prelude.h>
 
 namespace iris::x86::amd64 {
-static inline void io_out(u16 port, di::concepts::OneOf<u8, u16, u32, di::Byte> auto const value) {
+static inline void io_out(u16 port, di::concepts::OneOf<u8, u16, u32, byte> auto const value) {
     if constexpr (sizeof(value) == 1) {
         asm volatile("outb %0, %1" : : "a"(value), "Nd"(port));
     } else if constexpr (sizeof(value) == 2) {
@@ -13,7 +14,7 @@ static inline void io_out(u16 port, di::concepts::OneOf<u8, u16, u32, di::Byte> 
     }
 }
 
-template<di::concepts::OneOf<u8, u16, u32, di::Byte> Out>
+template<di::concepts::OneOf<u8, u16, u32, byte> Out>
 static inline Out io_in(u16 port) {
     Out value;
     if constexpr (sizeof(Out) == 1) {

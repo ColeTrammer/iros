@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/concepts/conjunction.h>
 #include <di/concepts/integer.h>
 #include <di/math/to_unsigned.h>
 #include <di/types/size_t.h>

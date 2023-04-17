@@ -1,4 +1,5 @@
-#include <di/prelude.h>
+#include <di/container/algorithm/prelude.h>
+#include <di/container/string/prelude.h>
 #include <string.h>
 
 extern "C" char* strstr(char const* haystack_str, char const* needle_str) {

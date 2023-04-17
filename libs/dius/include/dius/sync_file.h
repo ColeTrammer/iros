@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/util/prelude.h>
 #include <dius/config.h>
 #include <dius/error.h>
 #include <dius/memory_region.h>

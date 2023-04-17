@@ -1,4 +1,5 @@
-#include <di/prelude.h>
+#include <di/container/algorithm/prelude.h>
+#include <di/util/prelude.h>
 #include <string.h>
 
 extern "C" void* memmove(void* dest, void const* src, size_t count) {

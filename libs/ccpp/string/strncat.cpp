@@ -1,4 +1,6 @@
-#include <di/prelude.h>
+#include <di/container/algorithm/prelude.h>
+#include <di/container/string/prelude.h>
+#include <di/container/view/prelude.h>
 #include <string.h>
 
 extern "C" char* strncat(char* __restrict dest, char const* __restrict src, size_t count) {

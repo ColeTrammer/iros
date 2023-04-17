@@ -69,8 +69,8 @@ private:
         return format::formatter<container::TransparentStringView, Enc>(parse_context, debug) %
                [](concepts::CopyConstructible auto formatter) {
                    return [=](concepts::FormatContext auto& context, UUID uuid) {
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
-#ifdef __GNUC__
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
 #endif
                        auto buffer = di::Array<char, 36> {};
@@ -126,7 +126,9 @@ private:
                        output_byte(util::to_underlying(uuid.m_node[3]));
                        output_byte(util::to_underlying(uuid.m_node[4]));
                        output_byte(util::to_underlying(uuid.m_node[5]));
+#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic pop
+#endif
 
                        return formatter(context, container::TransparentStringView(buffer.begin(), buffer.end()));
                    };

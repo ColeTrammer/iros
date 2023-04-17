@@ -1,6 +1,9 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/container/string/prelude.h>
+#include <di/container/vector/prelude.h>
+#include <di/types/prelude.h>
+#include <di/util/bitwise_enum.h>
 
 namespace iris {
 enum class ProcessorFeatures {
@@ -31,7 +34,7 @@ struct ProcessorInfo {
     u32 fpu_max_state_size { 0 };
     u64 fpu_valid_xcr0 { 0 };
     di::container::string::StringImpl<di::container::string::TransparentEncoding,
-                                      di::StaticVector<char, decltype(12_zic)>>
+                                      di::StaticVector<char, di::meta::SizeConstant<12>>>
         vendor_string;
 
     void print_to_console();

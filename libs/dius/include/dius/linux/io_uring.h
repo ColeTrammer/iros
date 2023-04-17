@@ -1,6 +1,7 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/sync/prelude.h>
+#include <di/vocab/error/prelude.h>
 #include <dius/memory_region.h>
 #include <dius/sync_file.h>
 

@@ -1,5 +1,9 @@
 #pragma once
 
+#include <di/function/container/prelude.h>
+#include <di/sync/prelude.h>
+#include <di/util/prelude.h>
+#include <di/vocab/pointer/prelude.h>
 #include <dius/error.h>
 #include <dius/runtime/tls.h>
 

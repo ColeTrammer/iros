@@ -1,4 +1,4 @@
-#include <di/prelude.h>
+#include <di/types/prelude.h>
 #include <iris/boot/cxx_init.h>
 
 extern "C" {

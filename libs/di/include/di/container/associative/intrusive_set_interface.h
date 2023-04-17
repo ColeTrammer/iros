@@ -6,6 +6,7 @@
 #include <di/container/meta/prelude.h>
 #include <di/container/types/prelude.h>
 #include <di/math/to_unsigned.h>
+#include <di/vocab/expected/prelude.h>
 #include <di/vocab/optional/prelude.h>
 
 namespace di::container {

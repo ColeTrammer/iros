@@ -1,4 +1,4 @@
-#include <di/prelude.h>
+#include <di/container/algorithm/prelude.h>
 #include <string.h>
 
 extern "C" int memcmp(void const* lhs, void const* rhs, size_t count) {

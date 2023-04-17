@@ -1,6 +1,7 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/bit/prelude.h>
+#include <di/vocab/array/prelude.h>
 
 namespace iris::x86::amd64::page_structure {
 using namespace di::bit;

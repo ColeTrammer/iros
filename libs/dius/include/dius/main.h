@@ -1,6 +1,8 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/cli/prelude.h>
+#include <di/container/string/prelude.h>
+#include <di/container/vector/prelude.h>
 #include <dius/print.h>
 
 #define DIUS_MAIN(Type, NS)                                              \

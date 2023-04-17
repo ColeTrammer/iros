@@ -1,6 +1,9 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/container/string/prelude.h>
+#include <di/container/vector/prelude.h>
+#include <di/util/prelude.h>
+#include <di/vocab/pointer/prelude.h>
 
 namespace iris {
 class TaskArguments : public di::IntrusiveRefCount<TaskArguments> {

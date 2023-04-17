@@ -1,6 +1,9 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/container/intrusive/prelude.h>
+#include <di/sync/prelude.h>
+#include <di/util/prelude.h>
+#include <di/vocab/pointer/prelude.h>
 #include <iris/core/config.h>
 #include <iris/core/task_arguments.h>
 #include <iris/core/task_status.h>

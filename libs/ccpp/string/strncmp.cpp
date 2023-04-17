@@ -1,4 +1,6 @@
-#include <di/prelude.h>
+#include <di/container/algorithm/prelude.h>
+#include <di/container/string/prelude.h>
+#include <di/container/view/prelude.h>
 #include <string.h>
 
 extern "C" int strncmp(char const* lhs, char const* rhs, size_t count) {

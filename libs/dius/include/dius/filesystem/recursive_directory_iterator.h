@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/container/queue/prelude.h>
 #include <dius/filesystem/directory_iterator.h>
 
 namespace dius::filesystem {

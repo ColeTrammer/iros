@@ -1,3 +1,4 @@
+#include <di/io/prelude.h>
 #include <dius/sync_file.h>
 
 namespace dius {

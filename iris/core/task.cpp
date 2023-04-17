@@ -1,3 +1,5 @@
+#include <di/exec/elf/prelude.h>
+#include <di/math/prelude.h>
 #include <iris/core/error.h>
 #include <iris/core/global_state.h>
 #include <iris/core/interrupt_disabler.h>

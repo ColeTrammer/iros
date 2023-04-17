@@ -1,5 +1,7 @@
 #include <ccpp/bits/getopt_implementation.h>
-#include <di/prelude.h>
+#include <di/container/algorithm/prelude.h>
+#include <di/container/string/prelude.h>
+#include <di/util/prelude.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <string.h>

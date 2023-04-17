@@ -1,5 +1,4 @@
 #include <di/container/vector/prelude.h>
-#include <di/prelude.h>
 #include <dius/test/prelude.h>
 
 namespace container_vector {

@@ -1,6 +1,7 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/container/intrusive/prelude.h>
+#include <di/util/prelude.h>
 #include <dius/config.h>
 #include <dius/sync_file.h>
 

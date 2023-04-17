@@ -1,4 +1,5 @@
-#include <di/prelude.h>
+#include <di/math/prelude.h>
+#include <di/parser/prelude.h>
 #include <dius/test/prelude.h>
 
 namespace parser {

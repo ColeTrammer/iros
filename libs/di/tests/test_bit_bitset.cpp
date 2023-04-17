@@ -1,4 +1,5 @@
-#include <di/prelude.h>
+#include <di/bit/bitset/prelude.h>
+#include <di/util/prelude.h>
 #include <dius/test/prelude.h>
 
 namespace bit_bitset {

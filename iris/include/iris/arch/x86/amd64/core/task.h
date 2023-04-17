@@ -1,7 +1,8 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/types/prelude.h>
 
+#include <di/util/prelude.h>
 #include <iris/core/error.h>
 #include <iris/uapi/syscall.h>
 
@@ -88,10 +89,10 @@ struct FpuState {
 
     /// This is the task's FPU state. It is null for kernel-space tasks. Since it is dynamically sized, it must be
     /// managed manually.
-    di::Byte* fpu_state { nullptr };
+    byte* fpu_state { nullptr };
 
 private:
-    Expected<di::Byte*> allocate_fpu_state();
+    Expected<byte*> allocate_fpu_state();
 };
 
 void load_kernel_stack(mm::VirtualAddress base);

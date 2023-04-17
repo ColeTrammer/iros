@@ -1,4 +1,6 @@
-#include <di/prelude.h>
+#include <di/container/path/prelude.h>
+#include <di/container/view/prelude.h>
+#include <di/vocab/array/prelude.h>
 #include <dius/test/prelude.h>
 
 namespace container_path {

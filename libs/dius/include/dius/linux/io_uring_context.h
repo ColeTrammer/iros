@@ -1,6 +1,10 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/container/intrusive/prelude.h>
+#include <di/container/queue/prelude.h>
+#include <di/execution/prelude.h>
+#include <di/function/prelude.h>
+#include <di/util/prelude.h>
 #include <dius/error.h>
 #include <dius/linux/io_uring.h>
 

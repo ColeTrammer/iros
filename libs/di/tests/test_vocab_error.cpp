@@ -1,4 +1,4 @@
-#include <di/prelude.h>
+#include <di/vocab/error/prelude.h>
 #include <dius/test/prelude.h>
 
 namespace vocab_error {

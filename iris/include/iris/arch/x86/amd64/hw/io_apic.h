@@ -1,6 +1,8 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/assert/prelude.h>
+#include <di/bit/prelude.h>
+#include <di/function/prelude.h>
 #include <iris/arch/x86/amd64/hw/local_apic.h>
 #include <iris/hw/acpi/acpi.h>
 #include <iris/hw/irq_controller.h>

@@ -1,3 +1,4 @@
+#include <di/math/prelude.h>
 #include <dius/test/prelude.h>
 
 namespace math_integer {

@@ -1,3 +1,6 @@
+#include <di/container/algorithm/prelude.h>
+#include <di/math/prelude.h>
+#include <di/sync/prelude.h>
 #include <dius/system/process.h>
 #include <dius/system/system_call.h>
 #include <dius/thread.h>

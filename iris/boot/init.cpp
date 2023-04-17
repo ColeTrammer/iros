@@ -1,4 +1,4 @@
-#include <di/prelude.h>
+#include <di/math/prelude.h>
 #include <iris/arch/x86/amd64/hw/serial.h>
 #include <iris/boot/cxx_init.h>
 #include <iris/boot/init.h>

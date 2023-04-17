@@ -1,4 +1,6 @@
-#include <di/prelude.h>
+#include <di/container/string/prelude.h>
+#include <di/container/view/prelude.h>
+#include <di/parser/prelude.h>
 #include <stdlib.h>
 
 namespace di::parser {

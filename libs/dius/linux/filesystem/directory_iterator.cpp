@@ -1,3 +1,5 @@
+#include <di/assert/prelude.h>
+#include <di/math/prelude.h>
 #include <dius/filesystem/prelude.h>
 #include <dius/system/system_call.h>
 

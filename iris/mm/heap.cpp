@@ -1,4 +1,4 @@
-#include <di/prelude.h>
+#include <di/math/prelude.h>
 #include <iris/core/global_state.h>
 #include <iris/core/print.h>
 #include <iris/mm/address_space.h>

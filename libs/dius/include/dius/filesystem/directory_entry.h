@@ -1,6 +1,9 @@
 #pragma once
 
-#include <di/prelude.h>
+#include <di/container/path/prelude.h>
+#include <di/function/prelude.h>
+#include <di/util/prelude.h>
+#include <di/vocab/error/prelude.h>
 #include <dius/filesystem/file_status.h>
 #include <dius/filesystem/file_type.h>
 #include <dius/filesystem/query/prelude.h>

@@ -1,4 +1,5 @@
-#include <di/prelude.h>
+#include <di/container/algorithm/prelude.h>
+#include <di/container/string/prelude.h>
 #include <string.h>
 
 extern "C" char* strcpy(char* __restrict dest, char const* __restrict src) {

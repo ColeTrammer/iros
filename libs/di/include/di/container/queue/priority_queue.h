@@ -2,6 +2,7 @@
 
 #include <di/container/action/sequence.h>
 #include <di/container/action/to.h>
+#include <di/container/algorithm/make_heap.h>
 #include <di/container/algorithm/pop_heap.h>
 #include <di/container/algorithm/push_heap.h>
 #include <di/container/concepts/prelude.h>

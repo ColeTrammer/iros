@@ -12,6 +12,7 @@
 #include <di/execution/query/get_completion_scheduler.h>
 #include <di/execution/receiver/receiver_adaptor.h>
 #include <di/function/curry_back.h>
+#include <di/function/invoke.h>
 #include <di/meta/unwrap_expected.h>
 
 namespace di::execution {
@@ -29,7 +30,7 @@ namespace then_ns {
         private:
             template<typename... Args>
             requires(concepts::Invocable<Fun, Args...> &&
-                     concepts::LanguageVoid<meta::UnwrapExpected<InvokeResult<Fun, Args...>>> &&
+                     concepts::LanguageVoid<meta::UnwrapExpected<meta::InvokeResult<Fun, Args...>>> &&
                      concepts::ReceiverOf<Rec, types::CompletionSignatures<SetValue()>>)
             void set_value(Args&&... args) && {
                 if constexpr (concepts::Expected<meta::InvokeResult<Fun, Args...>>) {
@@ -46,9 +47,10 @@ namespace then_ns {
             }
 
             template<typename... Args>
-            requires(concepts::Invocable<Fun, Args...> &&
-                     concepts::ReceiverOf<
-                         Rec, types::CompletionSignatures<SetValue(meta::UnwrapExpected<InvokeResult<Fun, Args...>>)>>)
+            requires(
+                concepts::Invocable<Fun, Args...> &&
+                concepts::ReceiverOf<
+                    Rec, types::CompletionSignatures<SetValue(meta::UnwrapExpected<meta::InvokeResult<Fun, Args...>>)>>)
             void set_value(Args&&... args) && {
                 if constexpr (concepts::Expected<meta::InvokeResult<Fun, Args...>>) {
                     auto result = function::invoke(util::move(m_function), util::forward<Args>(args)...);

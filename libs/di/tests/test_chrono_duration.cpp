@@ -1,4 +1,4 @@
-#include <di/prelude.h>
+#include <di/chrono/duration/prelude.h>
 #include <dius/test/prelude.h>
 
 namespace chrono_duration {

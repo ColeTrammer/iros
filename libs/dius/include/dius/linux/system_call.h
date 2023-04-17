@@ -11,7 +11,7 @@
 #include <sys/mman.h>
 #endif
 
-#include <di/prelude.h>
+#include <di/util/prelude.h>
 #include <dius/config.h>
 #include <dius/error.h>
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/cli/prelude.h>
 #include <dius/test/test_case.h>
 
 namespace dius::test {

@@ -1,4 +1,5 @@
-#include <di/prelude.h>
+#include <di/concepts/prelude.h>
+#include <di/function/prelude.h>
 #include <dius/test/prelude.h>
 
 namespace function_bind {

@@ -1,10 +1,9 @@
 #pragma once
 
-#include <iris/uapi/syscall.h>
-
-#include <di/prelude.h>
+#include <di/util/prelude.h>
 #include <dius/config.h>
 #include <dius/error.h>
+#include <iris/uapi/syscall.h>
 
 #include DIUS_ARCH_PLATFORM_PATH(system_call.h)
 

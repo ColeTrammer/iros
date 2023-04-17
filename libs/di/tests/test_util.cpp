@@ -1,4 +1,4 @@
-#include <di/prelude.h>
+#include <di/util/prelude.h>
 #include <dius/test/prelude.h>
 
 namespace util {

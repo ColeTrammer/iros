@@ -1,5 +1,7 @@
 #pragma once
 
+#include <di/container/algorithm/compare.h>
+#include <di/container/algorithm/equal.h>
 #include <di/container/intrusive/list_node.h>
 #include <di/container/iterator/prelude.h>
 #include <di/util/addressof.h>
