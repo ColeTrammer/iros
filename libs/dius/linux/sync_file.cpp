@@ -1,4 +1,5 @@
-#include <dius/prelude.h>
+#include <dius/sync_file.h>
+#include <dius/system/system_call.h>
 
 namespace dius {
 di::Expected<usize, PosixCode> sys_read(int fd, di::Span<byte> data) {

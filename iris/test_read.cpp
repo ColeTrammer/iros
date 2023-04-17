@@ -1,4 +1,4 @@
-#include <dius/prelude.h>
+#include <dius/sync_file.h>
 
 extern "C" int main() {
     auto buffer = di::Array<di::Byte, 4096> {};

@@ -1,3 +1,4 @@
+#include <dius/system/process.h>
 #include <dius/test/prelude.h>
 
 namespace process {

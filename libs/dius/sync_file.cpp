@@ -1,4 +1,4 @@
-#include <dius/prelude.h>
+#include <dius/sync_file.h>
 
 namespace dius {
 di::Expected<void, PosixCode> SyncFile::read_exactly(u64 offset, di::Span<byte> data) const {

@@ -1,3 +1,4 @@
+#include <dius/system/system_call.h>
 #include <dius/test/prelude.h>
 
 static void allocate_memory() {

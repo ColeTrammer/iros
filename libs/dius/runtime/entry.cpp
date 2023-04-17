@@ -1,5 +1,7 @@
 #include <di/prelude.h>
-#include <dius/prelude.h>
+#include <dius/system/process.h>
+#include <dius/system/system_call.h>
+#include <dius/thread.h>
 
 #ifdef __linux__
 #include <asm/prctl.h>

@@ -1,4 +1,4 @@
-#include <dius/prelude.h>
+#include <dius/print.h>
 
 extern "C" int main() {
     for (unsigned int i = 0; i < 2; i++) {

@@ -1,4 +1,5 @@
-#include <dius/prelude.h>
+#include <di/container/string/prelude.h>
+#include <dius/error.h>
 
 namespace dius {
 di::ErasedString PosixDomain::do_message(di::StatusCode<void> const& code) const {

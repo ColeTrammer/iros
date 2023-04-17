@@ -1,4 +1,6 @@
-#include <dius/prelude.h>
+#include <dius/system/process.h>
+#include <dius/system/system_call.h>
+#include <dius/thread.h>
 #include <linux/futex.h>
 
 namespace dius {

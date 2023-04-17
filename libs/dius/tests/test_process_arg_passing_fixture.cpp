@@ -1,4 +1,8 @@
-#include <dius/prelude.h>
+#include <di/assert/prelude.h>
+#include <di/container/string/prelude.h>
+#include <di/container/vector/prelude.h>
+#include <di/container/view/prelude.h>
+#include <di/math/prelude.h>
 
 int main(int argc, char** argv) {
     auto args = di::Vector<di::TransparentString> {};

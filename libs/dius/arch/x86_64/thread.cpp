@@ -1,4 +1,4 @@
-#include <dius/prelude.h>
+#include <dius/thread.h>
 
 namespace di::platform {
 ThreadId get_current_thread_id() {

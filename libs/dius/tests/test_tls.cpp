@@ -1,4 +1,5 @@
 #include <dius/test/prelude.h>
+#include <dius/thread.h>
 
 namespace tls {
 constinit thread_local int x = 42;

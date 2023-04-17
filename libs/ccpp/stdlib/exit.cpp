@@ -1,4 +1,4 @@
-#include <dius/prelude.h>
+#include <dius/system/process.h>
 #include <stdlib.h>
 
 extern "C" void exit(int exit_code) {

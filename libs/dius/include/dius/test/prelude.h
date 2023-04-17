@@ -1,6 +1,6 @@
 #pragma once
 
-#include <dius/prelude.h>
+#include <di/assert/prelude.h>
 #include <dius/test/macro.h>
 
 #define TEST        DIUS_TEST

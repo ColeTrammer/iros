@@ -1,4 +1,5 @@
-#include <dius/prelude.h>
+#include <dius/filesystem/prelude.h>
+#include <dius/main.h>
 
 namespace ls {
 struct Args {

@@ -1,4 +1,5 @@
-#include <dius/prelude.h>
+#include <dius/system/process.h>
+#include <dius/system/system_call.h>
 
 namespace dius::system {
 di::Result<ProcessResult> Process::spawn_and_wait() && {

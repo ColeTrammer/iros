@@ -1,3 +1,4 @@
+#include <dius/main.h>
 #include <dius/test/prelude.h>
 
 namespace dius::test {

@@ -1,4 +1,6 @@
 #include <ccpp/bits/printf_implementation.h>
+#include <di/container/algorithm/prelude.h>
+#include <di/math/prelude.h>
 #include <errno.h>
 #include <stdint.h>
 #include <string.h>

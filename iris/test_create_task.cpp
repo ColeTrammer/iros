@@ -1,4 +1,5 @@
-#include <dius/prelude.h>
+#include <dius/print.h>
+#include <dius/system/prelude.h>
 
 extern "C" int main() {
     auto* x = new int;

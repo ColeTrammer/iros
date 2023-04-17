@@ -1,5 +1,5 @@
 #include <dius/linux/io_uring.h>
-#include <dius/prelude.h>
+#include <dius/system/system_call.h>
 
 namespace dius::linux::io_uring {
 di::Result<int> sys_enter(unsigned int fd, unsigned int to_submit, unsigned int min_complete, unsigned int flags,
