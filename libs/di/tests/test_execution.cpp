@@ -224,7 +224,7 @@ static void as() {
     ASSERT_EQ(ex::sync_wait(di::move(w)), di::make_tuple(di::nullopt));
 
     auto v = ex::just_stopped() | ex::stopped_as_error(42) | ex::let_error([](int x) {
-                 DI_ASSERT_EQ(x, 42);
+                 ASSERT_EQ(x, 42);
                  return ex::just(x);
              });
     ASSERT_EQ(ex::sync_wait(di::move(v)), di::make_tuple(42));

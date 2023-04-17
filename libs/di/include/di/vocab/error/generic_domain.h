@@ -47,7 +47,7 @@ protected:
     }
 
     constexpr virtual bool do_equivalent(StatusCode<void> const& a, StatusCode<void> const& b) const override {
-        DI_ASSERT_EQ(a.domain(), *this);
+        DI_ASSERT(a.domain() == *this);
         return b.domain() == *this && down_cast(a).value() == down_cast(b).value();
     }
 
@@ -72,7 +72,7 @@ private:
     friend class StatusCode;
 
     constexpr GenericCode const& down_cast(StatusCode<void> const& code) const {
-        DI_ASSERT_EQ(code.domain(), *this);
+        DI_ASSERT(code.domain() == *this);
         return static_cast<GenericCode const&>(code);
     }
 };

@@ -23,8 +23,8 @@ class Region : public di::IntrusiveTreeSetNode<AddressSpaceRegionListTag> {
 public:
     constexpr explicit Region(VirtualAddress base, usize length, RegionFlags flags)
         : m_base(base), m_length(length), m_flags(flags) {
-        DI_ASSERT_GT(length, 0u);
-        DI_ASSERT_EQ(length % 0x1000, 0u);
+        ASSERT_GT(length, 0u);
+        ASSERT_EQ(length % 0x1000, 0u);
     }
 
     constexpr VirtualAddress base() const { return m_base; }

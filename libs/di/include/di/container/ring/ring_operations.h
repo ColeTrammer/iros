@@ -82,13 +82,13 @@ constexpr auto iterator(Ring&, RingIterator<Value const> iterator) {
 template<concepts::detail::ConstantRing Ring>
 requires(!concepts::Const<Ring>)
 constexpr auto iterator(Ring& ring, usize index) {
-    DI_ASSERT_LT_EQ(index, ring::size(ring));
+    DI_ASSERT(index <= ring::size(ring));
     return ring::begin(ring) + index;
 }
 
 template<concepts::detail::ConstantRing Ring>
 constexpr auto iterator(Ring const& ring, usize index) {
-    DI_ASSERT_LT_EQ(index, ring::size(ring));
+    DI_ASSERT(index <= ring::size(ring));
     return ring::begin(ring) + index;
 }
 

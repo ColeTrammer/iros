@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/assert/prelude.h>
+#include <di/assert/assert_bool.h>
 #include <di/concepts/convertible_to.h>
 #include <di/concepts/copyable.h>
 #include <di/concepts/decay_same_as.h>

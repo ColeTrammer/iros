@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/assert/prelude.h>
+#include <di/assert/assert_bool.h>
 #include <di/concepts/language_array.h>
 #include <di/platform/prelude.h>
 #include <di/types/prelude.h>

@@ -89,7 +89,7 @@ public:
              concepts::Conjunction<concepts::ConvertibleTo<OtherSizeTypes, SizeType>...>)
     constexpr Reference operator[](OtherSizeTypes... indices) const {
         auto index = m_mapping(ExtentsType::index_cast(util::move(indices))...);
-        DI_ASSERT_LT(index, m_mapping.required_span_size());
+        DI_ASSERT(index < m_mapping.required_span_size());
         return m_accessor.access(m_data_handle, index);
     }
 
@@ -112,7 +112,7 @@ public:
              concepts::Conjunction<concepts::ConvertibleTo<OtherSizeTypes, SizeType>...>)
     constexpr Reference operator()(OtherSizeTypes... indices) const {
         auto index = m_mapping(ExtentsType::index_cast(util::move(indices))...);
-        DI_ASSERT_LT(index, m_mapping.required_span_size());
+        DI_ASSERT(index < m_mapping.required_span_size());
         return m_accessor.access(m_data_handle, index);
     }
 

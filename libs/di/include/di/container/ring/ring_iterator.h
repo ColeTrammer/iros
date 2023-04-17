@@ -79,7 +79,7 @@ public:
         }
         if (n > 0) {
             auto max_distance = distance_to_tail();
-            DI_ASSERT_LT_EQ(n, max_distance);
+            DI_ASSERT(n <= max_distance);
 
             if (n == max_distance) {
                 m_current = m_tail;
@@ -96,7 +96,7 @@ public:
             return;
         }
 
-        DI_ASSERT_LT_EQ(-n, m_end - m_begin);
+        DI_ASSERT(-n <= m_end - m_begin);
         m_at_end = false;
         auto distance_to_begin = m_current - m_begin;
         if (-n <= distance_to_begin) {
@@ -108,18 +108,18 @@ public:
 
 private:
     constexpr friend bool operator==(RingIterator const& a, RingIterator const& b) {
-        DI_ASSERT_EQ(a.m_head, b.m_head);
-        DI_ASSERT_EQ(a.m_tail, b.m_tail);
-        DI_ASSERT_EQ(a.m_begin, b.m_begin);
-        DI_ASSERT_EQ(a.m_end, b.m_end);
+        DI_ASSERT(a.m_head == b.m_head);
+        DI_ASSERT(a.m_tail == b.m_tail);
+        DI_ASSERT(a.m_begin == b.m_begin);
+        DI_ASSERT(a.m_end == b.m_end);
         return a.m_at_end == b.m_at_end && a.m_current == b.m_current;
     }
 
     constexpr friend auto operator<=>(RingIterator const& a, RingIterator const& b) {
-        DI_ASSERT_EQ(a.m_head, b.m_head);
-        DI_ASSERT_EQ(a.m_tail, b.m_tail);
-        DI_ASSERT_EQ(a.m_begin, b.m_begin);
-        DI_ASSERT_EQ(a.m_end, b.m_end);
+        DI_ASSERT(a.m_head == b.m_head);
+        DI_ASSERT(a.m_tail == b.m_tail);
+        DI_ASSERT(a.m_begin == b.m_begin);
+        DI_ASSERT(a.m_end == b.m_end);
 
         // First compare the end state.
         if (a.m_at_end || b.m_at_end) {
@@ -146,10 +146,10 @@ private:
     }
 
     constexpr friend isize operator-(RingIterator const& a, RingIterator const& b) {
-        DI_ASSERT_EQ(a.m_head, b.m_head);
-        DI_ASSERT_EQ(a.m_tail, b.m_tail);
-        DI_ASSERT_EQ(a.m_begin, b.m_begin);
-        DI_ASSERT_EQ(a.m_end, b.m_end);
+        DI_ASSERT(a.m_head == b.m_head);
+        DI_ASSERT(a.m_tail == b.m_tail);
+        DI_ASSERT(a.m_begin == b.m_begin);
+        DI_ASSERT(a.m_end == b.m_end);
 
         return b.distance_to_tail() - a.distance_to_tail();
     }

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/assert/prelude.h>
 #include <di/concepts/always_false.h>
 #include <di/concepts/integral_or_enum.h>
 #include <di/concepts/unique_object_representation.h>

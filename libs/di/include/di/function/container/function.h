@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/assert/prelude.h>
+#include <di/assert/assert_bool.h>
 #include <di/concepts/object.h>
 #include <di/function/invoke.h>
 #include <di/function/monad/monad_try.h>

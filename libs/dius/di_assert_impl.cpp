@@ -10,12 +10,28 @@
 #endif
 
 namespace di::assert::detail {
-void assert_write(char const* s, size_t n) {
-    auto string_view = TransparentStringView(s, n);
-    (void) dius::print("{}"_sv, string_view);
+static di::TransparentStringView zstring_to_string_view(char const* s) {
+    return di::TransparentStringView(s, di::to_unsigned(di::distance(di::ZCString(s))));
 }
 
-void assert_terminate() {
+void assert_fail(char const* source_text, char const* lhs_message, char const* rhs_message, util::SourceLocation loc) {
+    auto source_text_view = zstring_to_string_view(source_text);
+
+    dius::println("{}: {}"_sv, di::Styled("ASSERT"_sv, di::FormatColor::Red | di::FormatEffect::Bold),
+                  source_text_view);
+
+    dius::println("{}: {}(): {}:{}:{}"_sv, di::Styled("AT"_sv, di::FormatEffect::Bold),
+                  zstring_to_string_view(loc.function_name()), zstring_to_string_view(loc.file_name()), loc.line(),
+                  loc.column());
+    if (lhs_message) {
+        auto lhs_message_view = zstring_to_string_view(lhs_message);
+        dius::println("{}: {}"_sv, di::Styled("LHS"_sv, di::FormatEffect::Bold), lhs_message_view);
+    }
+    if (rhs_message) {
+        auto rhs_message_view = zstring_to_string_view(rhs_message);
+        dius::println("{}: {}"_sv, di::Styled("RHS"_sv, di::FormatEffect::Bold), rhs_message_view);
+    }
+
 #ifndef DIUS_USE_RUNTIME
     void* storage[32];
     auto size = ::backtrace(storage, di::size(storage));

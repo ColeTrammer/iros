@@ -70,7 +70,7 @@ public:
             if (static_extent(i) == dynamic_extent) {
                 m_dynamic_extents[dynamic_index(i)] = other.extent(i);
             } else {
-                DI_ASSERT_EQ(this->extent(i), other.extent(i));
+                DI_ASSERT(this->extent(i) == other.extent(i));
             }
         }
     }

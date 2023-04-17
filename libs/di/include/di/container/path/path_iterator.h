@@ -30,7 +30,7 @@ public:
 
     constexpr void advance_one() {
         do {
-            DI_ASSERT_NOT_EQ(m_current.begin(), m_bounds.end());
+            DI_ASSERT(m_current.begin() != m_bounds.end());
             auto new_start = find_if_not(m_current.end(), m_bounds.end(), function::equal(CodePoint('/')));
 
             // No more components, now produce end iterator.
@@ -49,7 +49,7 @@ public:
 
     constexpr void back_one() {
         do {
-            DI_ASSERT_NOT_EQ(m_current.begin(), m_bounds.begin());
+            DI_ASSERT(m_current.begin() != m_bounds.begin());
             auto new_end = container::prev(m_current.begin());
             while (new_end != m_bounds.begin() && *new_end == CodePoint('/')) {
                 --new_end;

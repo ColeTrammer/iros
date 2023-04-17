@@ -13,7 +13,7 @@ namespace detail {
     struct ShiftRightFunction {
         template<concepts::Permutable It, concepts::SentinelFor<It> Sent>
         constexpr View<It> operator()(It first, Sent last, meta::IteratorSSizeType<It> n) const {
-            DI_ASSERT_GT_EQ(n, 0);
+            DI_ASSERT(n >= 0);
 
             if (n == 0) {
                 return { first, container::next(first, last) };

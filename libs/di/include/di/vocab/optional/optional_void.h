@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/assert/prelude.h>
+#include <di/assert/assert_bool.h>
 #include <di/concepts/language_void.h>
 #include <di/concepts/optional.h>
 #include <di/function/invoke.h>

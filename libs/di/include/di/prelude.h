@@ -21,8 +21,3 @@
 #include <di/types/prelude.h>
 #include <di/util/prelude.h>
 #include <di/vocab/prelude.h>
-
-// NOTE: this is included after all other headers because it uses
-//       di::format::to_string(), which depends on many types which
-//       want to use assertions, like Optional and String.
-#include <di/assert/assert_impl.h>

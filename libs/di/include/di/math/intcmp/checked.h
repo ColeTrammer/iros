@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/concepts/integer.h>
+#include <di/math/numeric_limits.h>
 #include <di/meta/make_unsigned.h>
 #include <di/vocab/optional/lift_bool.h>
 #include <di/vocab/optional/prelude.h>

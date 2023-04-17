@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/assert/prelude.h>
+#include <di/assert/assert_bool.h>
 #include <di/concepts/array.h>
 #include <di/concepts/const.h>
 #include <di/concepts/convertible_to.h>

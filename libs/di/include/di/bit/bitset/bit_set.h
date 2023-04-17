@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/assert/prelude.h>
+#include <di/assert/assert_bool.h>
 #include <di/bit/bitset/bit_proxy_reference.h>
 #include <di/math/divide_round_up.h>
 #include <di/types/prelude.h>
@@ -16,13 +16,13 @@ public:
     BitSet& operator=(BitSet const&) = default;
 
     constexpr auto operator[](size_t index) {
-        DI_ASSERT_LT(index, extent);
+        DI_ASSERT(index < extent);
         auto byte_index = index / 8u;
         auto bit_index = index % 8u;
         return detail::BitProxyReference(m_storage.data() + byte_index, bit_index);
     }
     constexpr bool operator[](size_t index) const {
-        DI_ASSERT_LT(index, extent);
+        DI_ASSERT(index < extent);
         auto byte_index = index / 8u;
         auto bit_index = index % 8u;
         return detail::BitProxyReference(const_cast<u8*>(m_storage.data()) + byte_index, bit_index);

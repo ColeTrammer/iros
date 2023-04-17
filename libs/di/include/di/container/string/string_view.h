@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/assert/prelude.h>
+#include <di/assert/assert_bool.h>
 #include <di/container/string/fixed_string.h>
 #include <di/container/string/string_view_impl.h>
 #include <di/container/string/transparent_encoding.h>

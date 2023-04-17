@@ -168,7 +168,7 @@ public:
 
     constexpr explicit SlideView(View base, SSizeType<false> window_size)
         : m_base(util::move(base)), m_window_size(window_size) {
-        DI_ASSERT_GT(window_size, 0);
+        DI_ASSERT(window_size > 0);
     }
 
     constexpr View base() const&

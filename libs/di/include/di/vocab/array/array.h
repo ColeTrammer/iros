@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/assert/prelude.h>
+#include <di/assert/assert_bool.h>
 #include <di/concepts/copyable.h>
 #include <di/concepts/decay_same_as.h>
 #include <di/concepts/equality_comparable.h>
@@ -42,11 +42,11 @@ public:
     }
 
     constexpr T& operator[](types::size_t index) {
-        DI_ASSERT_LT(index, extent);
+        DI_ASSERT(index < extent);
         return begin()[index];
     }
     constexpr T const& operator[](types::size_t index) const {
-        DI_ASSERT_LT(index, extent);
+        DI_ASSERT(index < extent);
         return begin()[index];
     }
 

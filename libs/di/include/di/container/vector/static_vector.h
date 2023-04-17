@@ -44,7 +44,7 @@ public:
     constexpr size_t max_size() const { return inline_capacity; }
 
     constexpr Expected<void, NoCapacityError> reserve_from_nothing(size_t n) {
-        DI_ASSERT_EQ(this->size(), 0u);
+        DI_ASSERT(this->size() == 0u);
         if (n > inline_capacity) {
             return Unexpected(NoCapacityError {});
         }

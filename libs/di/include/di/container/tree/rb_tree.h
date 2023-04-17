@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/assert/prelude.h>
+#include <di/assert/assert_bool.h>
 #include <di/container/allocator/prelude.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/iterator/distance.h>

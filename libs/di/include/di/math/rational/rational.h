@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/assert/assert_bool.h>
 #include <di/concepts/constructible_from.h>
 #include <di/concepts/convertible_to.h>
 #include <di/math/lcm.h>
@@ -11,7 +12,7 @@ public:
     constexpr Rational() : m_numerator(1), m_denominator(1) {}
 
     constexpr explicit Rational(T numerator, T denominator = 1) : m_numerator(numerator), m_denominator(denominator) {
-        // DI_ASSERT_NOT_EQ(m_denominator, T(0));
+        DI_ASSERT(m_denominator != T(0));
 
         normalize();
     }

@@ -160,7 +160,7 @@ private:
 
 public:
     constexpr explicit StrideView(View base, SSizeType<false> stride) : m_base(util::move(base)), m_stride(stride) {
-        DI_ASSERT_GT(stride, 0);
+        DI_ASSERT(stride > 0);
     }
 
     constexpr View base() const&

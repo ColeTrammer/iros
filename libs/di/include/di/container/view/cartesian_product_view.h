@@ -111,7 +111,7 @@ private:
             }
 
             if (*this == m_parent->end()) {
-                DI_ASSERT_LT(n, 0);
+                DI_ASSERT(n < 0);
                 *this = m_parent->begin();
                 advance_n(m_parent->size() + n);
             } else {

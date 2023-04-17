@@ -144,7 +144,7 @@ public:
     = default;
 
     constexpr explicit ChunkView(View base, SSizeType chunk_size) : m_base(util::move(base)), m_chunk_size(chunk_size) {
-        DI_ASSERT_GT(chunk_size, 0);
+        DI_ASSERT(chunk_size > 0);
     }
 
     constexpr View base() const&
@@ -301,7 +301,7 @@ public:
 
     constexpr explicit ChunkView(View base, SSizeType<false> chunk_size)
         : m_base(util::move(base)), m_chunk_size(chunk_size) {
-        DI_ASSERT_GT(chunk_size, 0);
+        DI_ASSERT(chunk_size > 0);
     }
 
     constexpr View base() const&

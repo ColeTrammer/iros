@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/assert/prelude.h>
+#include <di/assert/assert_bool.h>
 #include <di/container/string/string_view_impl.h>
 #include <di/format/concepts/formattable.h>
 #include <di/format/format_parse_context.h>

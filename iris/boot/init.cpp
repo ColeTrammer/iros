@@ -95,7 +95,7 @@ void iris_main() {
 
     iris::mm::reserve_page_frames(iris::mm::PhysicalAddress(0), 16 * 16 * 2);
 
-    DI_ASSERT_GT(module_request.response->module_count, 0u);
+    ASSERT_GT(module_request.response->module_count, 0u);
     auto initrd_module = *module_request.response->modules[0];
 
     iris::println("Kernel virtual base: {:#018x}"_sv, kernel_address_request.response->virtual_base);

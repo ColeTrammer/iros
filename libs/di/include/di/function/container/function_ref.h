@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/assert/prelude.h>
+#include <di/assert/assert_bool.h>
 #include <di/concepts/object.h>
 #include <di/function/invoke.h>
 #include <di/meta/list/prelude.h>
@@ -140,7 +140,7 @@ namespace function_ref_ns {
             : m_storage(function), m_impl([](ErasedStorage storage, Args&&... args) noexcept(is_noexcept) -> R {
                 return function::invoke_r<R>(down_cast<F>(storage), util::forward<Args>(args)...);
             }) {
-            DI_ASSERT_NOT_EQ(function, nullptr);
+            DI_ASSERT(function != nullptr);
         }
 
         template<typename F, typename T = meta::RemoveReference<F>>
@@ -188,7 +188,7 @@ namespace function_ref_ns {
             if constexpr (concepts::Pointer<F> || concepts::MemberPointer<F>) {
                 static_assert(f != nullptr, "FunctionRef Nontype<> constructors cannot be passed a nullptr.");
             }
-            DI_ASSERT_NOT_EQ(object, nullptr);
+            DI_ASSERT(object != nullptr);
         }
 
         template<typename T>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/assert/prelude.h>
+#include <di/assert/assert_bool.h>
 #include <di/container/string/erased_string.h>
 #include <di/vocab/error/status_code_domain.h>
 

@@ -49,13 +49,13 @@ public:
     constexpr SSizeType count() const { return m_count; }
 
     constexpr decltype(auto) operator*() {
-        DI_ASSERT_GT(count(), 0);
+        DI_ASSERT(count() > 0);
         return *m_iterator;
     }
     constexpr decltype(auto) operator*() const
     requires(concepts::Dereferenceable<Iter const>)
     {
-        DI_ASSERT_GT(count(), 0);
+        DI_ASSERT(count() > 0);
         return *m_iterator;
     }
 
@@ -106,15 +106,15 @@ private:
     constexpr friend decltype(auto) tag_invoke(types::Tag<iterator_move>, CountedIterator const& self)
     requires(concepts::InputIterator<Iter>)
     {
-        DI_ASSERT_GT(self.count(), 0);
+        DI_ASSERT(self.count() > 0);
         return iterator_move(self.base());
     }
 
     template<concepts::IndirectlySwappable<Iter> It>
     constexpr friend void tag_invoke(types::Tag<iterator_swap>, CountedIterator const& a,
                                      CountedIterator<It> const& b) {
-        DI_ASSERT_GT(a.count(), 0);
-        DI_ASSERT_GT(b.count(), 0);
+        DI_ASSERT(a.count() > 0);
+        DI_ASSERT(b.count() > 0);
         iterator_swap(a.base(), b.base());
     }
 

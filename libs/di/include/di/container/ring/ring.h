@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/assert/prelude.h>
+#include <di/assert/assert_bool.h>
 #include <di/container/allocator/allocator.h>
 #include <di/container/allocator/allocator_of.h>
 #include <di/container/concepts/prelude.h>
@@ -54,7 +54,7 @@ public:
     constexpr usize max_size() const { return static_cast<usize>(-1); }
 
     constexpr auto reserve_from_nothing(usize n) {
-        DI_ASSERT_EQ(capacity(), 0u);
+        DI_ASSERT(capacity() == 0u);
         return as_fallible(Alloc().allocate(n)) % [&](Allocation<T> result) {
             auto [data, new_capacity] = result;
             m_data = data;

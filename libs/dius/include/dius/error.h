@@ -42,7 +42,7 @@ protected:
     }
 
     constexpr virtual bool do_equivalent(di::StatusCode<void> const& a, di::StatusCode<void> const& b) const override {
-        DI_ASSERT_EQ(a.domain(), *this);
+        DI_ASSERT(a.domain() == *this);
         return b.domain() == *this && down_cast(a).value() == down_cast(b).value();
     }
 
@@ -53,7 +53,7 @@ private:
     friend class StatusCode;
 
     constexpr PosixCode const& down_cast(di::StatusCode<void> const& code) const {
-        DI_ASSERT_EQ(code.domain(), *this);
+        DI_ASSERT(code.domain() == *this);
         return static_cast<PosixCode const&>(code);
     }
 };

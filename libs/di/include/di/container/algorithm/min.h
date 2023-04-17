@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/assert/prelude.h>
 #include <di/concepts/copyable.h>
 #include <di/container/algorithm/min_element.h>
 #include <di/container/concepts/indirect_strict_weak_order.h>

@@ -67,7 +67,7 @@ public:
             return detail::empty_null_terminated_array<CodeUnit>;
         } else {
             DI_ASSERT(self().size() < self().capacity());
-            DI_ASSERT_EQ(string::data(self())[self().size()], CodeUnit(0));
+            DI_ASSERT(string::data(self())[self().size()] == CodeUnit(0));
             return string::data(self());
         }
     }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/assert/prelude.h>
+#include <di/assert/assert_bool.h>
 #include <di/concepts/language_void.h>
 #include <di/function/invoke.h>
 #include <di/meta/make_index_sequence.h>
@@ -22,7 +22,7 @@ constexpr R index_dispatch(size_t index, F&& function, Args&&... args) {
         })... };
     }(meta::MakeIndexSequence<max_index> {});
 
-    DI_ASSERT_LT(index, max_index);
+    DI_ASSERT(index < max_index);
     return function_table[index](util::forward<F>(function), util::forward<Args>(args)...);
 }
 }
