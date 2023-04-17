@@ -3,8 +3,14 @@
 #include <di/vocab/tuple/tuple.h>
 
 namespace di::vocab {
-template<typename... Types>
-constexpr auto tie(Types&... references) {
-    return Tuple<Types&...>(references...);
+namespace detail {
+    struct TieFunction {
+        template<typename... Types>
+        constexpr auto operator()(Types&... references) const {
+            return Tuple<Types&...>(references...);
+        }
+    };
 }
+
+constexpr inline auto tie = detail::TieFunction {};
 }

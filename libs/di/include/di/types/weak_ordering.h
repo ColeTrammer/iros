@@ -3,7 +3,7 @@
 #include <di/types/compare_outcome.h>
 #include <di/types/partial_ordering.h>
 
-#ifdef DI_USE_STD
+#ifndef DI_NO_USE_STD
 #include <compare>
 #else
 namespace std {

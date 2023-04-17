@@ -3,7 +3,7 @@
 #include <di/concepts/language_void.h>
 #include <di/types/prelude.h>
 
-#ifdef DI_USE_STD
+#ifndef DI_NO_USE_STD
 #include <coroutine>
 #else
 namespace std {

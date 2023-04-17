@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/types/size_t.h>
-#ifdef DI_USE_STD
+#ifndef DI_NO_USE_STD
 #include <new>
 #else
 namespace std {

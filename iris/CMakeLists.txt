@@ -110,7 +110,8 @@ if(IROS_BuildIris)
     target_link_libraries(iris PRIVATE di iris_headers)
     target_include_directories(iris SYSTEM PRIVATE "${LIMINE_DIR}")
     target_compile_definitions(
-        iris PRIVATE "DI_CUSTOM_ASSERT_HANDLER" "DI_NO_ASSERT_ALLOCATION" "DI_CUSTOM_PLATFORM=<iris/core/platform.h>"
+        iris PRIVATE "DI_CUSTOM_ASSERT_HANDLER" "DI_NO_ASSERT_ALLOCATION" "DI_NO_USE_STD"
+                     "DI_CUSTOM_PLATFORM=<iris/core/platform.h>"
     )
     add_dependencies(iris limine)
 

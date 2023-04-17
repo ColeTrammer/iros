@@ -3,7 +3,7 @@
 #include <di/types/ptrdiff_t.h>
 #include <di/types/size_t.h>
 
-#ifdef DI_USE_STD
+#ifndef DI_NO_USE_STD
 #include <memory>
 #else
 #include <di/util/std_new.h>

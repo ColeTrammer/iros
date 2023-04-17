@@ -2,7 +2,7 @@
 
 #include <di/concepts/integral.h>
 
-#ifdef DI_USE_STD
+#ifndef DI_NO_USE_STD
 #include <cstddef>
 #else
 namespace std {

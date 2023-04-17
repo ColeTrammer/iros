@@ -60,7 +60,7 @@ if(IROS_UseDiusRuntime)
 
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/crt0.o" DESTINATION lib)
 
-    target_compile_definitions(dius PUBLIC DIUS_USE_RUNTIME)
+    target_compile_definitions(dius PUBLIC DIUS_USE_RUNTIME DI_NO_USE_STD)
 
     target_sources(
         dius PRIVATE runtime/compilerabi.cpp runtime/cxxabi.cpp runtime/cxxheap.cpp runtime/entry.cpp

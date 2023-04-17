@@ -29,7 +29,7 @@
             "name": "clang_base",
             "hidden": true,
             "cacheVariables": {
-                "IROS_DiagnosticFlags": "-fcolor-diagnostics -fconstexpr-steps=10000000",
+                "IROS_DiagnosticFlags": "-fcolor-diagnostics -fconstexpr-steps=10000000 -fsized-deallocation",
                 "IROS_WarningFlags": "-Wall -Wextra -Wpedantic",
                 "CMAKE_CXX_COMPILER": "clang++-16"
             }

@@ -4,6 +4,7 @@
 #include <di/container/allocator/allocator.h>
 #include <di/container/allocator/std_allocator.h>
 #include <di/types/prelude.h>
+#include <di/util/std_new.h>
 #include <di/vocab/error/generic_domain.h>
 #include <di/vocab/expected/prelude.h>
 
