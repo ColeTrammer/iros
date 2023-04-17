@@ -41,3 +41,15 @@ using parser::run_parser;
 using parser::run_parser_partial;
 using parser::run_parser_unchecked;
 }
+
+#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_INTEGRAL_CONSTANT_LITERALS)
+using namespace di::literals::integral_constant_literals;
+#endif
+
+#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_INTEGRAL_SET_LITERALS)
+using namespace di::literals::integral_set_literals;
+#endif
+
+#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_INTEGRAL_LITERALS)
+using namespace di::literals::integral_literals;
+#endif

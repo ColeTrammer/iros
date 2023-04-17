@@ -79,3 +79,34 @@ using types::c16;
 using types::c32;
 using types::c8;
 }
+
+#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_TYPES)
+using di::byte;
+using di::c16;
+using di::c32;
+using di::c8;
+using di::i16;
+using di::i32;
+using di::i64;
+using di::i8;
+using di::imax;
+using di::intptr_t;
+using di::iptr;
+using di::isize;
+using di::ptrdiff_t;
+using di::size_t;
+using di::ssize_t;
+using di::u16;
+using di::u32;
+using di::u64;
+using di::u8;
+using di::uintptr_t;
+using di::umax;
+using di::uptr;
+using di::usize;
+
+#ifdef DI_HAVE_128_BIT_INTEGERS
+using di::i128;
+using di::u128;
+#endif
+#endif

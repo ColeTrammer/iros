@@ -10,3 +10,7 @@
         }                                                     \
         di::util::move(__result).__try_did_succeed();         \
     }).__try_move_out()
+
+#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_TRY)
+#define TRY DI_TRY
+#endif

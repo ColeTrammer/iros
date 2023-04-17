@@ -14,6 +14,7 @@
 #include <di/util/coroutine.h>
 #include <di/util/create.h>
 #include <di/util/declval.h>
+#include <di/util/default_construct_at.h>
 #include <di/util/defer_construct.h>
 #include <di/util/exchange.h>
 #include <di/util/forward.h>
@@ -89,3 +90,7 @@ using util::to_underlying;
 using util::unreachable;
 using util::voidify;
 }
+
+#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_UUID_LITERALS)
+using namespace di::literals::uuid_literals;
+#endif

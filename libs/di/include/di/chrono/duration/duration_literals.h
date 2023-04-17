@@ -18,7 +18,7 @@ using Years = Duration<i32, math::Ratio<31556952>>;
 
 namespace di {
 inline namespace literals {
-    inline namespace chrono_literals {
+    inline namespace chrono_duration_literals {
         constexpr auto operator""_h(unsigned long long value) {
             return chrono::Hours { value };
         }

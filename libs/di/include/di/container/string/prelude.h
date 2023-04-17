@@ -25,3 +25,7 @@ using container::ZString;
 using container::ZUString;
 using container::ZWString;
 }
+
+#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_STRING_LITERALS)
+using namespace di::literals::string_literals;
+#endif

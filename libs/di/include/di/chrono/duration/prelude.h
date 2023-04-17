@@ -19,3 +19,7 @@ using chrono::Years;
 
 using chrono::duration_cast;
 }
+
+#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_CHRONO_LITERALS)
+using namespace di::literals::chrono_duration_literals;
+#endif

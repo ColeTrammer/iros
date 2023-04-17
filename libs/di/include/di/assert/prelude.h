@@ -59,3 +59,13 @@ constexpr void do_binary_assert(F op, char const* message, T&& a, U&& b, util::S
 #define DI_ASSERT_GT_EQ(a, b)                                                                       \
     di::assert::detail::do_binary_assert(di::function::equal_or_greater, "" #a " >= " #b, (a), (b), \
                                          di::util::SourceLocation::current())
+
+#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_ASSERT)
+#define ASSERT        DI_ASSERT
+#define ASSERT_EQ     DI_ASSERT_EQ
+#define ASSERT_NOT_EQ DI_ASSERT_NOT_EQ
+#define ASSERT_LT     DI_ASSERT_LT
+#define ASSERT_LT_EQ  DI_ASSERT_LT_EQ
+#define ASSERT_GT     DI_ASSERT_GT
+#define ASSERT_GT_EQ  DI_ASSERT_GT_EQ
+#endif
