@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/concepts/decays_to.h>
+#include <di/container/concepts/forward_container.h>
 #include <di/container/path/constant_path_interface.h>
 #include <di/container/path/path_view_impl.h>
 #include <di/container/string/string_impl.h>
@@ -46,12 +47,15 @@ public:
     }
 
     template<concepts::ContainerCompatible<meta::EncodingCodePoint<Enc>> Con>
-    requires(concepts::SameAs<meta::Encoding<Con>, Enc>)
+    requires(concepts::SameAs<meta::Encoding<Con>, Enc> && concepts::ForwardContainer<Con>)
     constexpr decltype(auto) append(Con&& container) {
         using CodePoint = meta::EncodingCodePoint<Enc>;
 
-        if (this->is_absolute()) {
-            m_data.clear();
+        if (!container::empty(container)) {
+            auto first_code_point = *container::begin(container);
+            if (first_code_point == CodePoint('/')) {
+                m_data.clear();
+            }
         }
 
         if (!m_data.empty() && !m_data.ends_with(CodePoint('/'))) {

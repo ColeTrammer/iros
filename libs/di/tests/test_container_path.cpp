@@ -147,9 +147,9 @@ constexpr void path_addition() {
     auto b = "opt/"_tsv | di::to<di::Path>();
     auto c = "opt"_tsv | di::to<di::Path>();
 
-    ASSERT_EQ(a.append("hello/world"_pv), "hello/world"_pv);
-    ASSERT_EQ(b.append("hello/world"_pv), "opt/hello/world"_pv);
-    ASSERT_EQ(b.data(), "opt/hello/world"_tsv);
+    ASSERT_EQ(a.append("hello/world"_pv), "/opt/hello/world"_pv);
+    ASSERT_EQ(b.append("/hello/world"_pv), "/hello/world"_pv);
+    ASSERT_EQ(b.data(), "/hello/world"_tsv);
     ASSERT_EQ(c.append("hello/world"_pv), "opt/hello/world"_pv);
     ASSERT_EQ(c.data(), "opt/hello/world"_tsv);
 }
