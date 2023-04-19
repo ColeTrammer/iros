@@ -46,6 +46,10 @@ di::Expected<usize, PosixCode> SyncFile::write_some(u64 offset, di::Span<byte co
     return sys_write(m_fd, offset, data);
 }
 
+di::Expected<void, PosixCode> SyncFile::resize_file(u64) const {
+    return di::Unexpected(PosixError::OperationNotSupported);
+}
+
 di::Expected<SyncFile, PosixCode> open_sync(di::PathView path, OpenMode, u16) {
     auto fd = TRY(sys_open(path));
     return SyncFile { SyncFile::Owned::Yes, fd };

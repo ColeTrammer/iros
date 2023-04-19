@@ -30,7 +30,10 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Iros")
         target_link_libraries(dius PUBLIC Iris::iris_headers)
     endif()
 
-    target_sources(dius PRIVATE iros/system/process.cpp iros/filesystem/query.cpp iros/sync_file.cpp)
+    target_sources(
+        dius PRIVATE iros/system/process.cpp iros/filesystem/directory_iterator.cpp iros/filesystem/query.cpp
+                     iros/sync_file.cpp
+    )
 endif()
 
 install(
