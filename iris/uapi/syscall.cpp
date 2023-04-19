@@ -225,6 +225,15 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
             TRY(metadata_ptr.write(metadata));
             return 0;
         }
+        case SystemCall::read_directory: {
+            auto file_handle = i32(task_state.syscall_arg1());
+            auto* buffer = reinterpret_cast<di::Byte*>(task_state.syscall_arg2());
+            auto amount = task_state.syscall_arg3();
+
+            auto& handle = TRY(current_task.file_table().lookup_file_handle(file_handle));
+
+            return iris::read_directory(handle, TRY(di::create<UserspaceBuffer>(buffer, amount)));
+        }
         default:
             iris::println("Encounted unexpected system call: {}"_sv, di::to_underlying(number));
             break;

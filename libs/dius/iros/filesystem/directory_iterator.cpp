@@ -1,6 +1,7 @@
 #include <di/assert/prelude.h>
 #include <di/math/prelude.h>
 #include <dius/filesystem/prelude.h>
+#include <dius/print.h>
 #include <dius/system/system_call.h>
 #include <iris/uapi/directory.h>
 

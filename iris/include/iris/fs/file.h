@@ -21,6 +21,13 @@ namespace detail {
         }
     };
 
+    struct ReadDirectoryDefaultFunction {
+        template<typename T>
+        Expected<usize> operator()(T&, UserspaceBuffer<byte>) const {
+            return di::Unexpected(Error::NotSupported);
+        }
+    };
+
     struct SeekFileDefaultFunction {
         constexpr Expected<i64> operator()(auto&, i64, int) const { return di::Unexpected(Error::NotSupported); }
     };
@@ -38,12 +45,18 @@ struct ReadFileFunction
 
 constexpr inline auto read_file = ReadFileFunction {};
 
+struct ReadDirectoryFunction
+    : di::Dispatcher<ReadDirectoryFunction, Expected<usize>(di::This&, UserspaceBuffer<byte>),
+                     detail::ReadDirectoryDefaultFunction> {};
+
+constexpr inline auto read_directory = ReadDirectoryFunction {};
+
 struct SeekFileFunction
     : di::Dispatcher<SeekFileFunction, Expected<i64>(di::This&, i64, int), detail::SeekFileDefaultFunction> {};
 
 constexpr inline auto seek_file = SeekFileFunction {};
 
-using FileInterface = di::meta::List<WriteFileFunction, ReadFileFunction, SeekFileFunction>;
+using FileInterface = di::meta::List<WriteFileFunction, ReadFileFunction, ReadDirectoryFunction, SeekFileFunction>;
 using File = di::AnyShared<FileInterface>;
 
 class FileTable {
