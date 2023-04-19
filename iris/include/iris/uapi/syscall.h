@@ -20,5 +20,6 @@ enum class SystemCall {
     set_userspace_argument1 = 15,
     lseek = 16,
     set_task_arguments = 17,
+    path_metadata = 18,
 };
 }

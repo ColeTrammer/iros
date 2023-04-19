@@ -4,6 +4,7 @@
 #include <iris/core/userspace_ptr.h>
 #include <iris/fs/initrd.h>
 #include <iris/hw/power.h>
+#include <iris/uapi/metadata.h>
 #include <iris/uapi/syscall.h>
 
 namespace iris {
@@ -209,6 +210,19 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
             auto task_arguments = TRY(di::try_make_arc<TaskArguments>(di::move(arguments), di::move(enviornment)));
             task->set_task_arguments(di::move(task_arguments));
 
+            return 0;
+        }
+        case SystemCall::path_metadata: {
+            auto const* string_base = reinterpret_cast<byte const*>(task_state.syscall_arg1());
+            auto string_length = task_state.syscall_arg2();
+            auto string_buffer = TRY(di::create<UserspaceBuffer>(string_base, string_length));
+            auto path = TRY(string_buffer.copy_to_path());
+
+            auto metadata_ptr =
+                TRY(di::create<UserspacePtr<Metadata>>(reinterpret_cast<Metadata*>(task_state.syscall_arg3())));
+
+            auto metadata = TRY(iris::path_metadata_in_initrd(path));
+            TRY(metadata_ptr.write(metadata));
             return 0;
         }
         default:

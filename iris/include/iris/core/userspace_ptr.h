@@ -38,7 +38,8 @@ public:
     }
 
     Expected<void> write(Value const& value) const {
-        return copy_to_user({ reinterpret_cast<byte const*>(&value), sizeof(Value) }, m_pointer);
+        return copy_to_user({ reinterpret_cast<byte const*>(&value), sizeof(Value) },
+                            reinterpret_cast<byte*>(m_pointer));
     }
 
     T* raw_userspace_pointer() const { return m_pointer; }

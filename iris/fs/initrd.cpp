@@ -2,9 +2,10 @@
 #include <iris/core/print.h>
 #include <iris/fs/initrd.h>
 #include <iris/uapi/initrd.h>
+#include <iris/uapi/metadata.h>
 
 namespace iris {
-Expected<di::Span<di::Byte const>> lookup_in_initrd(di::PathView path) {
+Expected<di::Tuple<di::Span<di::Byte const>, initrd::Type>> lookup_in_initrd(di::PathView path) {
     if (!path.is_absolute()) {
         return di::Unexpected(Error::OperationNotSupported);
     }
@@ -71,11 +72,7 @@ Expected<di::Span<di::Byte const>> lookup_in_initrd(di::PathView path) {
         path = *path.strip_prefix(first);
     }
 
-    if (current->type != initrd::Type::Regular) {
-        println("Failed lookup because not a regular file."_sv);
-        return di::Unexpected(Error::OperationNotSupported);
-    }
-    return data_from_dirent(*current);
+    return di::make_tuple(data_from_dirent(*current), current->type);
 }
 
 class InitrdFile {
@@ -110,7 +107,12 @@ private:
 };
 
 Expected<File> open_in_initrd(di::PathView path) {
-    auto data = TRY(lookup_in_initrd(path));
+    auto [data, type] = TRY(lookup_in_initrd(path));
     return File::try_create(InitrdFile { data });
+}
+
+Expected<Metadata> path_metadata_in_initrd(di::PathView path) {
+    auto [data, type] = TRY(lookup_in_initrd(path));
+    return Metadata { .type = MetadataType(di::to_underlying(type)), .size = data.size() };
 }
 }

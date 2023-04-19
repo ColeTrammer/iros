@@ -9,9 +9,10 @@ constexpr inline auto signature = "b2bf882c-c789-4728-b4a0-b3b944078e29"_uuid;
 constexpr inline auto block_size = 4096_usize;
 constexpr inline auto directory_entry_align = 8_usize;
 
+// NOTE: keep this in sync with the iris::MetadataType enum.
 enum class Type : u8 {
-    Regular = 0,
-    Directory = 1,
+    Regular = 1,
+    Directory = 2,
 };
 
 struct DirectoryEntry {

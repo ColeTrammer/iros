@@ -63,7 +63,11 @@ Expected<di::Arc<Task>> create_user_task(TaskNamespace& task_namespace, FileTabl
 }
 
 Expected<void> load_executable(Task& task, di::PathView path) {
-    auto raw_data = TRY(lookup_in_initrd(path));
+    auto [raw_data, type] = TRY(lookup_in_initrd(path));
+    if (type != initrd::Type::Regular) {
+        println("Failed to load exutable: {} is not a regular file."_sv, path);
+        return di::Unexpected(Error::InvalidArgument);
+    }
 
     // Setup program stack.
     constexpr auto stack_size = 0x10000_usize;
