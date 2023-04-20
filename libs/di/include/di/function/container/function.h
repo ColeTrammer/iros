@@ -495,36 +495,42 @@ namespace function_ns {
         R operator()(Args... args) noexcept(is_noexcept)
         requires(!is_const && !is_lvalue && !is_rvalue)
         {
+            DI_ASSERT(m_impl);
             return m_impl(util::addressof(m_object), util::forward<Args>(args)...);
         }
 
         R operator()(Args... args) const noexcept(is_noexcept)
         requires(is_const && !is_lvalue && !is_rvalue)
         {
+            DI_ASSERT(m_impl);
             return m_impl(util::addressof(m_object), util::forward<Args>(args)...);
         }
 
         R operator()(Args... args) & noexcept(is_noexcept)
         requires(!is_const && is_lvalue)
         {
+            DI_ASSERT(m_impl);
             return m_impl(util::addressof(m_object), util::forward<Args>(args)...);
         }
 
         R operator()(Args... args) const& noexcept(is_noexcept)
         requires(is_const && is_lvalue)
         {
+            DI_ASSERT(m_impl);
             return m_impl(util::addressof(m_object), util::forward<Args>(args)...);
         }
 
         R operator()(Args... args) && noexcept(is_noexcept)
         requires(!is_const && is_rvalue)
         {
+            DI_ASSERT(m_impl);
             return m_impl(util::addressof(m_object), util::forward<Args>(args)...);
         }
 
         R operator()(Args... args) const&& noexcept(is_noexcept)
         requires(is_const && is_rvalue)
         {
+            DI_ASSERT(m_impl);
             return m_impl(util::addressof(m_object), util::forward<Args>(args)...);
         }
 

@@ -1,4 +1,5 @@
 #include <di/math/prelude.h>
+#include <dius/print.h>
 #include <dius/system/prelude.h>
 
 void* operator new(std::size_t size) {
@@ -65,14 +66,17 @@ void* operator new(std::size_t size, std::align_val_t align, std::nothrow_t cons
         heap_end = *dius::system::system_call<uptr>(dius::system::Number::brk, nullptr);
     }
 
-    auto new_heap_end = di::align_up(heap_end, di::to_underlying(align)) + size;
+    auto object_start = di::align_up(heap_end, di::to_underlying(align));
+    ASSERT(object_start % di::to_underlying(align) == 0);
+
+    auto new_heap_end = object_start + size;
     if (dius::system::system_call<uptr>(dius::system::Number::brk, new_heap_end) != new_heap_end) {
+        dius::println("Failed to allocate memory of size {} with align {}"_sv, size, di::to_underlying(align));
         return nullptr;
     }
 
-    void* result = reinterpret_cast<void*>(new_heap_end - size);
     heap_end = new_heap_end;
-    return result;
+    return reinterpret_cast<void*>(object_start);
 #else
     ASSERT_LT_EQ(di::to_underlying(align), 4096);
 
