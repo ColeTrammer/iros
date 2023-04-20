@@ -121,7 +121,7 @@ public:
     constexpr T& operator[](types::size_t index) const
     requires(extent > 0)
     {
-        // DI_ASSSERT( index < extent )
+        DI_ASSERT(index < extent);
         return data()[index];
     }
 
@@ -182,12 +182,12 @@ public:
         }
     }
 
-    template<typename = void>
-    requires(concepts::CopyConstructible<T>)
-    constexpr Array<T, extent> to_owned() const {
+    template<typename U = meta::RemoveCV<T>>
+    requires(concepts::CopyConstructible<U>)
+    constexpr Array<U, extent> to_owned() const {
         return apply(
             [](auto const&... args) {
-                return Array<T, extent> { args... };
+                return Array<U, extent> { args... };
             },
             *this);
     }
