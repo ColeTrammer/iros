@@ -42,7 +42,7 @@ private:
 public:
     constexpr bool empty() const { return size() == 0; }
 
-    constexpr void clear() { erase(begin(), end()); }
+    constexpr void clear() { erase(this->begin(), this->end()); }
 
     constexpr auto insert(Value const& value)
     requires(concepts::Clonable<Value>)

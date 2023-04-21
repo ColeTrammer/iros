@@ -11,7 +11,7 @@ using IntrusiveTreeSetNode = RBTreeNode<Tag>;
 template<typename Self>
 struct IntrusiveTreeSetTag : IntrusiveTagBase<IntrusiveTreeSetNode<Self>> {};
 
-struct DefaultIntrusiveTreeSetTag : IntrusiveTreeSetTag<DefaultIntrusiveListTag> {};
+struct DefaultIntrusiveTreeSetTag : IntrusiveTreeSetTag<DefaultIntrusiveTreeSetTag> {};
 
 template<typename T, typename Tag = DefaultIntrusiveTreeSetTag, concepts::StrictWeakOrder<T> Comp = function::Compare>
 class IntrusiveTreeSet

@@ -47,10 +47,10 @@ private:
 
         constexpr void advance_one() { m_node = m_node->next; }
 
+        constexpr Node* node() const { return m_node; }
+
     private:
         constexpr friend bool operator==(Iterator const& a, Iterator const& b) { return a.m_node == b.m_node; }
-
-        constexpr Node* node() const { return m_node; }
 
         Node* m_node { nullptr };
     };

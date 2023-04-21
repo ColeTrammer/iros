@@ -1,7 +1,6 @@
 #pragma once
 
 #include <di/concepts/conjunction.h>
-#include <di/concepts/equality_comparable_with.h>
 #include <di/concepts/integral_or_enum.h>
 #include <di/concepts/same_as.h>
 #include <di/container/hash/default_hasher.h>
@@ -43,8 +42,7 @@ constexpr inline auto hash_same = detail::HashSameFunction {};
 
 namespace di::concepts {
 template<typename T, typename U>
-concept HashSame = Hashable<T> && Hashable<U> && EqualityComparableWith<T, U> &&
-                   container::hash_same(in_place_type<T>, in_place_type<U>);
+concept HashSame = Hashable<T> && Hashable<U> && container::hash_same(in_place_type<T>, in_place_type<U>);
 }
 
 namespace di::container::detail {

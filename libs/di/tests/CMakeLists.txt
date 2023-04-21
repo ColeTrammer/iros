@@ -11,6 +11,7 @@ add_executable(
     test_container_hash.cpp
     test_container_intrusive.cpp
     test_container_linked_list.cpp
+    test_container_node_hash_set.cpp
     test_container_path.cpp
     test_container_queue.cpp
     test_container_ring.cpp
