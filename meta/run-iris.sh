@@ -18,7 +18,7 @@ if ! [ "$IROS_DISABLE_KVM" ] && [ -e /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/
 fi
 
 if [ "$IROS_DEBUG" ]; then
-    DEBUG="-s -S -monitor stdio -no-reboot -no-stutdown -d cpu_reset"
+    DEBUG="-s -S -monitor stdio -no-reboot -no-shutdown -d cpu_reset"
 else
     SERIAL="-serial stdio"
 fi
