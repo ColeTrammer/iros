@@ -6,6 +6,8 @@
 #include <iris/mm/address_space.h>
 #include <iris/mm/map_physical_address.h>
 #include <iris/mm/page_frame_allocator.h>
+#include <iris/mm/physical_address.h>
+#include <iris/mm/virtual_address.h>
 
 namespace iris::mm {
 using namespace x86::amd64;
@@ -89,7 +91,7 @@ Expected<void> LockedAddressSpace::destroy_region(VirtualAddress base, usize len
         auto pt_offset = decomposed.get<page_structure::PtOffset>();
         auto& pt = TRY(map_physical_address(PhysicalAddress(pd[pd_offset].get<page_structure::PhysicalAddress>() << 12),
                                             0x1000))
-                       .typed<page_structure::FinalTable>();
+                       .typed<page_structure::PageStructureTable>();
         if (!pt[pt_offset].get<page_structure::Present>()) {
             println("WARNING: trying to unmap non-present page (PT)"_sv);
             continue;
@@ -183,7 +185,7 @@ Expected<void> LockedAddressSpace::map_physical_page(VirtualAddress location, Ph
     auto pt_offset = decomposed.get<page_structure::PtOffset>();
     auto& pt =
         TRY(map_physical_address(PhysicalAddress(pd[pd_offset].get<page_structure::PhysicalAddress>() << 12), 0x1000))
-            .typed<page_structure::FinalTable>();
+            .typed<page_structure::PageStructureTable>();
     if (pt[pt_offset].get<page_structure::Present>()) {
         println("WARNING: virtual address {} is already marked as present."_sv, location);
     }
@@ -208,6 +210,65 @@ Expected<void> LockedAddressSpace::create_low_identity_mapping(VirtualAddress ba
 
 Expected<void> LockedAddressSpace::remove_low_identity_mapping(VirtualAddress base, usize page_aligned_length) {
     return destroy_region(base, page_aligned_length);
+}
+
+Expected<void> LockedAddressSpace::setup_physical_memory_map(PhysicalAddress max_phys_address,
+                                                             VirtualAddress virtual_address) {
+    auto decomposed = decompose_virtual_address(virtual_address);
+    auto pml4_offset = decomposed.get<page_structure::Pml4Offset>();
+    ASSERT_EQ(decomposed.get<page_structure::PdpOffset>(), 0);
+    ASSERT_EQ(decomposed.get<page_structure::PdOffset>(), 0);
+    ASSERT_EQ(decomposed.get<page_structure::PtOffset>(), 0);
+
+    auto& pml4 = TRY(map_physical_address(base().architecture_page_table_base(), 0x1000))
+                     .typed<page_structure::PageStructureTable>();
+    if (!pml4[pml4_offset].get<page_structure::Present>()) {
+        pml4[pml4_offset] = page_structure::StructureEntry(
+            page_structure::PhysicalAddress(TRY(allocate_page_frame()).raw_value() >> 12),
+            page_structure::Present(true), page_structure::Writable(true));
+        base().m_structure_pages.fetch_add(1, di::MemoryOrder::Relaxed);
+    }
+
+    auto& global_state = iris::global_state();
+    auto phys_address = PhysicalAddress(0);
+    while (phys_address < max_phys_address) {
+        auto decomposed_phys_address = mm::decompose_virtual_address(VirtualAddress(phys_address.raw_value()));
+
+        auto& pdp = TRY(map_physical_address(
+                            PhysicalAddress(pml4[pml4_offset].get<page_structure::PhysicalAddress>() << 12), 0x1000))
+                        .typed<page_structure::PageStructureTable>();
+        auto pdp_offset = decomposed_phys_address.get<page_structure::PdpOffset>();
+
+        if (global_state.processor_info.has_gib_pages()) {
+            ASSERT(!pdp[pdp_offset].get<page_structure::Present>());
+            pdp[pdp_offset] = page_structure::StructureEntry(
+                page_structure::PhysicalAddress(phys_address.raw_value() >> 12), page_structure::Present(true),
+                page_structure::Writable(true), page_structure::HugePage(true));
+            base().m_structure_pages.fetch_add(1, di::MemoryOrder::Relaxed);
+            phys_address += 1 * 1024 * 1024 * 1024;
+            continue;
+        }
+
+        if (!pdp[pdp_offset].get<page_structure::Present>()) {
+            pdp[pdp_offset] = page_structure::StructureEntry(
+                page_structure::PhysicalAddress(TRY(allocate_page_frame()).raw_value() >> 12),
+                page_structure::Present(true), page_structure::Writable(true));
+            base().m_structure_pages.fetch_add(1, di::MemoryOrder::Relaxed);
+        }
+
+        auto& pd = TRY(map_physical_address(
+                           PhysicalAddress(pdp[pdp_offset].get<page_structure::PhysicalAddress>() << 12), 0x1000))
+                       .typed<page_structure::PageStructureTable>();
+        auto pd_offset = decomposed_phys_address.get<page_structure::PdOffset>();
+        ASSERT(!pd[pd_offset].get<page_structure::Present>());
+        pd[pd_offset] = page_structure::StructureEntry(page_structure::PhysicalAddress(phys_address.raw_value() >> 12),
+                                                       page_structure::Present(true), page_structure::Writable(true),
+                                                       page_structure::HugePage(true));
+        base().m_structure_pages.fetch_add(1, di::MemoryOrder::Relaxed);
+        phys_address += 2 * 1024 * 1024;
+    }
+
+    return {};
 }
 
 void LockedAddressSpace::flush_tlb_global(VirtualAddress base, usize byte_length) {

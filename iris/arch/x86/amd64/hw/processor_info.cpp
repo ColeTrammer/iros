@@ -9,6 +9,7 @@ namespace cpuid {
         FamilyAndFlags = 0x1,
         GetFeatureFlags = 0x7,
         GetExtendedState = 0xD,
+        GetExtendedFeatureFlags = 0x8000'0001,
     };
 
     /// Corresponds to leaf ecx for [EAX=0000_00001h](https://sandpile.org/x86/cpuid.htm#level_0000_0001h).
@@ -45,6 +46,13 @@ namespace cpuid {
     };
 
     DI_DEFINE_ENUM_BITWISE_OPERATIONS(FeatureFlagsEbx)
+
+    /// Corresponds to leaf edx for [EAX=8000_00001h](https://sandpile.org/x86/cpuid.htm#level_8000_0001h).
+    enum class ExtendedFeatureFlagsEdx {
+        GibPages = (1 << 26),
+    };
+
+    DI_DEFINE_ENUM_BITWISE_OPERATIONS(ExtendedFeatureFlagsEdx)
 
     struct Result {
         u32 eax;
@@ -106,6 +114,10 @@ ProcessorInfo detect_processor_info() {
     auto supports_avx2 = !!(cpuid::FeatureFlagsEbx(feature_flags_result.ebx) & cpuid::FeatureFlagsEbx::Avx2);
     auto supports_avx512 =
         !!(cpuid::FeatureFlagsEbx(feature_flags_result.ebx) & cpuid::FeatureFlagsEbx::Avx512Foundations);
+
+    auto extended_feature_flags_result = cpuid::query(cpuid::Function::GetExtendedFeatureFlags);
+    auto supports_gib_pages = !!(cpuid::ExtendedFeatureFlagsEdx(extended_feature_flags_result.edx) &
+                                 cpuid::ExtendedFeatureFlagsEdx::GibPages);
 
     auto valid_xcr0 = 0_u64;
     auto fpu_max_size = 512_u32;
@@ -181,6 +193,10 @@ ProcessorInfo detect_processor_info() {
         features |= ProcessorFeatures::Apic;
     }
 
+    if (supports_gib_pages) {
+        features |= ProcessorFeatures::GibPages;
+    }
+
     return { features, fpu_max_size, valid_xcr0, processor_vendor_string };
 }
 
@@ -236,6 +252,9 @@ void ProcessorInfo::print_to_console() {
     }
     if (!!(features & ProcessorFeatures::Apic)) {
         println("Detected feature: {}"_sv, "apic"_sv);
+    }
+    if (!!(features & ProcessorFeatures::GibPages)) {
+        println("Detected feature: {}"_sv, "gibpages"_sv);
     }
 }
 }

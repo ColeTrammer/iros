@@ -76,12 +76,8 @@ Expected<void> init_and_load_initial_kernel_address_space(PhysicalAddress kernel
     new_address_space.set_architecture_page_table_base(TRY(allocate_page_frame()));
     new_address_space.set_kernel();
 
-    for (auto physical_address = PhysicalAddress(0);
-         physical_address < di::min(max_physical_address, PhysicalAddress(0x100000000ul)); physical_address += 0x1000) {
-        TRY(new_address_space.get_assuming_no_concurrent_accesses().map_physical_page(
-            VirtualAddress(0xFFFF800000000000 + physical_address.raw_value()), physical_address,
-            mm::RegionFlags::Readable | mm::RegionFlags::Writable));
-    }
+    TRY(new_address_space.get_assuming_no_concurrent_accesses().setup_physical_memory_map(
+        max_physical_address, VirtualAddress(0xFFFF800000000000)));
 
     for (auto virtual_address = text_segment_start; virtual_address < text_segment_end; virtual_address += 4096) {
         TRY(new_address_space.get_assuming_no_concurrent_accesses().map_physical_page(

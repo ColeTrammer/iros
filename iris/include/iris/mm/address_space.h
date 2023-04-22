@@ -26,6 +26,8 @@ public:
     VirtualAddress heap_end() const { return m_heap_end; }
     void set_heap_end(VirtualAddress address) { m_heap_end = address; }
 
+    Expected<void> setup_physical_memory_map(PhysicalAddress max_physical_address, VirtualAddress virtual_start);
+
     void flush_tlb_global(VirtualAddress base) { flush_tlb_global(base, 1); }
     void flush_tlb_global(VirtualAddress base, usize byte_length);
 

@@ -25,6 +25,7 @@ enum class ProcessorFeatures {
     FsGsBase = (1 << 14),
     Apic = (1 << 15),
     X2Apic = (1 << 16),
+    GibPages = (1 << 17),
 };
 
 DI_DEFINE_ENUM_BITWISE_OPERATIONS(ProcessorFeatures)
@@ -43,6 +44,7 @@ struct ProcessorInfo {
     bool has_fs_gs_base() const { return !!(features & ProcessorFeatures::FsGsBase); }
 
     bool has_apic() const { return !!(features & ProcessorFeatures::Apic); }
+    bool has_gib_pages() const { return !!(features & ProcessorFeatures::GibPages); }
 };
 
 ProcessorInfo detect_processor_info();
