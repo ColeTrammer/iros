@@ -142,7 +142,7 @@ public:
 
     constexpr Iterator erase(Iterator first, Iterator last) {
         while (first != last) {
-            self().erase_impl(first++);
+            first = self().erase_impl(first);
         }
         return last;
     }
@@ -159,7 +159,7 @@ public:
             auto [first, last] = this->equal_range(needle);
             size_t result = 0;
             for (; first != last; ++result) {
-                self().erase_impl(++first);
+                first = self().erase_impl(first);
             }
             return result;
         }
@@ -179,7 +179,7 @@ public:
             auto [first, last] = this->equal_range(needle);
             size_t result = 0;
             for (; first != last; ++result) {
-                self().erase_impl(++first);
+                first = self().erase_impl(first);
             }
             return result;
         }

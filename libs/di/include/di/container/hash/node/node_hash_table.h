@@ -1,10 +1,10 @@
 #pragma once
 
-#include <di/vocab/expected/prelude.h>
-
 #include <di/assert/assert_bool.h>
 #include <di/concepts/predicate.h>
+#include <di/concepts/remove_cvref_same_as.h>
 #include <di/container/algorithm/find_if.h>
+#include <di/container/algorithm/uninitialized_default_construct.h>
 #include <di/container/hash/hash.h>
 #include <di/container/hash/hash_same.h>
 #include <di/container/hash/hasher.h>
@@ -16,6 +16,7 @@
 #include <di/util/declval.h>
 #include <di/util/get.h>
 #include <di/vocab/expected/prelude.h>
+#include <di/vocab/tuple/tuple_element.h>
 
 namespace di::container {
 namespace detail {
@@ -27,6 +28,26 @@ namespace detail {
                 concepts::Predicate<Eq&, Value const&, U const&> && concepts::HashSame<Value, U>;
         };
     };
+
+    template<typename Key, typename Value, typename Eq>
+    struct NodeHashTableMapValidForLookup {
+        template<typename U>
+        struct Type {
+            constexpr static inline bool value =
+                (concepts::Predicate<Eq&, Key const&, U const&> && concepts::HashSame<Key, U>) ||
+                (concepts::RemoveCVRefSameAs<U, Tuple<Key, Value>>);
+        };
+    };
+
+    template<typename Value, bool is_map>
+    struct NodeHashTableKey {
+        using Type = Value;
+    };
+
+    template<typename Value>
+    struct NodeHashTableKey<Value, true> {
+        using Type = meta::TupleElement<Value, 0>;
+    };
 }
 
 /// @brief Node based (closed addressing) hash table.
@@ -34,14 +55,20 @@ namespace detail {
 /// This is fairly straightforward implementation of a hash table. It uses a vector of buckets, where each bucket is a
 /// singlely-linked list of nodes.
 template<typename Value, typename Eq, concepts::Hasher Hasher, typename Buckets, typename Tag, typename Interface,
-         bool is_multi, typename Self = Void>
+         bool is_multi, bool is_map, typename Self = Void>
 class NodeHashTable : public Interface {
 private:
+    template<typename, typename, concepts::Hasher, typename, typename, typename, bool, bool, typename>
+    friend class NodeHashTable;
+
+protected:
     using Node = HashNode<Tag>;
     using Iterator = HashNodeIterator<Value, Tag>;
     using ConstIterator = meta::ConstIterator<Iterator>;
 
     using ConcreteNode = decltype(Tag::node_type(in_place_type<Value>));
+
+    using Key = meta::Type<detail::NodeHashTableKey<Value, is_map>>;
 
     constexpr decltype(auto) down_cast_self() {
         if constexpr (concepts::SameAs<Void, Self>) {
@@ -79,6 +106,7 @@ public:
 
     constexpr usize size() const { return m_size; }
     constexpr bool empty() const { return m_size == 0; }
+    constexpr usize bucket_count() const { return vector::size(m_buckets); }
 
     constexpr Iterator begin() { return unconst_iterator(util::as_const(*this).begin()); }
     constexpr ConstIterator begin() const {
@@ -112,17 +140,26 @@ public:
     }
 
     constexpr Iterator erase_impl(ConstIterator it) {
-        auto const bucket_index = it.base().bucket_index();
+        auto bucket_index = it.base().bucket_index();
         auto& bucket = m_buckets[bucket_index];
+        auto& node = static_cast<ConcreteNode&>(it.base().node());
         auto const next = bucket.erase_after(it.base().before_current());
         --m_size;
 
-        Tag::did_remove(down_cast_self(), static_cast<ConcreteNode&>(it.base().node()));
-        return Iterator { m_buckets.span(), bucket_index, next };
+        Tag::did_remove(down_cast_self(), node);
+        if (next == bucket.end()) {
+            for (++bucket_index; bucket_index < bucket_count(); ++bucket_index) {
+                if (!vector::lookup(m_buckets, bucket_index).empty()) {
+                    return Iterator(m_buckets.span(), bucket_index);
+                }
+            }
+            return end();
+        }
+        return Iterator { m_buckets.span(), bucket_index, it.base().before_current() };
     }
 
     template<typename U>
-    requires(concepts::Predicate<Eq&, Value const&, U const&> && concepts::HashSame<Value, U>)
+    requires(concepts::Predicate<Eq&, Key const&, U const&> && concepts::HashSame<Key, U>)
     constexpr View<ConstIterator> equal_range_impl(U&& needle) const {
         if (empty()) {
             return { end(), end() };
@@ -159,29 +196,68 @@ public:
         return { first, last };
     }
 
+    template<typename U>
+    requires(concepts::Predicate<Eq&, Key const&, U const&> && concepts::HashSame<Key, U>)
+    constexpr ConstIterator find_impl(U&& needle) const {
+        if (empty()) {
+            return end();
+        }
+
+        auto const hash = this->hash(needle);
+        auto const bucket_index = hash % m_buckets.size();
+        auto const& bucket = m_buckets[bucket_index];
+        auto before_it = bucket.before_begin();
+        while (container::next(before_it) != bucket.end()) {
+            auto&& current = *container::next(before_it);
+            if (this->equal(this->node_value(current), needle)) {
+                return Iterator(m_buckets.span(), bucket_index, before_it.base());
+            }
+            ++before_it;
+        }
+        return end();
+    }
+
     constexpr auto reserve(usize new_capacity)
         -> decltype(util::declval<Buckets&>().reserve_from_nothing(new_capacity)) {
         if (vector::empty(m_buckets)) {
-            return m_buckets.reserve_from_nothing(new_capacity);
+            if constexpr (concepts::LanguageVoid<decltype(util::declval<Buckets&>().reserve_from_nothing(
+                              new_capacity))>) {
+                m_buckets.reserve_from_nothing(new_capacity);
+            } else {
+                DI_TRY(m_buckets.reserve_from_nothing(new_capacity));
+            }
+            m_buckets.assume_size(new_capacity);
+            container::uninitialized_default_construct(m_buckets.span());
+            if constexpr (concepts::LanguageVoid<decltype(util::declval<Buckets&>().reserve_from_nothing(
+                              new_capacity))>) {
+                return;
+            } else {
+                return {};
+            }
         }
 
         if (new_capacity <= m_buckets.size()) {
             return;
         }
 
-        auto new_map = NodeHashTable {};
+        auto new_buckets = Buckets {};
         if constexpr (concepts::LanguageVoid<decltype(util::declval<Buckets&>().reserve_from_nothing(new_capacity))>) {
-            new_map.m_buckets.reserve_from_nothing(new_capacity);
+            new_buckets.reserve_from_nothing(new_capacity);
         } else {
-            DI_TRY(new_map.m_buckets.reserve_from_nothing(new_capacity));
+            DI_TRY(new_buckets.reserve_from_nothing(new_capacity));
         }
+        new_buckets.assume_size(new_capacity);
+        m_size = 0;
+        container::uninitialized_default_construct(new_buckets.span());
 
-        auto it = this->begin();
-        auto const end = this->end();
-        for (; it != end;) {
-            auto& node = it.node();
-            ++it;
-            new_map.insert_node_without_rehashing(node);
+        auto old_buckets = util::move(m_buckets);
+        m_buckets = util::move(new_buckets);
+        for (auto& bucket : old_buckets) {
+            while (!bucket.empty()) {
+                auto& node = static_cast<Node&>(*bucket.begin().node());
+                bucket.pop_front();
+                insert_node_without_rehashing(node, false);
+            }
         }
         if constexpr (concepts::LanguageVoid<decltype(util::declval<Buckets&>().reserve_from_nothing(new_capacity))>) {
             return;
@@ -204,23 +280,22 @@ protected:
         return const_cast<NodeHashTable&>(*this).node_value(const_cast<Node&>(node));
     }
 
-private:
     constexpr void merge_impl_without_rehashing(NodeHashTable&& other) {
         auto it = other.begin();
         auto const end = other.end();
         for (; it != end;) {
             auto& node = it.node();
             ++it;
-            this->insert_node_without_rehashing(node);
+            this->insert_node_without_rehashing(node, false);
         }
     }
 
-    constexpr auto insert_node_without_rehashing(Node& node) {
+    constexpr auto insert_node_without_rehashing(Node& node, bool call_insertion_hook = true) {
         DI_ASSERT(!vector::empty(m_buckets));
 
         auto const hash = this->hash(node_value(node));
-        auto const bucket_index = hash % m_buckets.size();
-        auto& bucket = m_buckets[bucket_index];
+        auto const bucket_index = hash % vector::size(m_buckets);
+        auto& bucket = vector::lookup(m_buckets, bucket_index);
 
         auto before_it = bucket.before_begin();
         while (container::next(before_it) != bucket.end()) {
@@ -235,18 +310,24 @@ private:
             ++m_size;
             if (it != bucket.end()) {
                 bucket.insert_after(it, node);
-                Tag::did_insert(down_cast_self(), static_cast<ConcreteNode&>(node));
+                if (call_insertion_hook) {
+                    Tag::did_insert(down_cast_self(), static_cast<ConcreteNode&>(node));
+                }
                 return Iterator { m_buckets.span(), bucket_index, it };
             } else {
                 bucket.push_front(node);
-                Tag::did_insert(down_cast_self(), static_cast<ConcreteNode&>(node));
+                if (call_insertion_hook) {
+                    Tag::did_insert(down_cast_self(), static_cast<ConcreteNode&>(node));
+                }
                 return Iterator { m_buckets.span(), bucket_index, bucket.before_begin() };
             }
         } else {
             if (it == bucket.end()) {
                 ++m_size;
                 bucket.push_front(node);
-                Tag::did_insert(down_cast_self(), static_cast<ConcreteNode&>(node));
+                if (call_insertion_hook) {
+                    Tag::did_insert(down_cast_self(), static_cast<ConcreteNode&>(node));
+                }
                 return vocab::Tuple(Iterator { m_buckets.span(), bucket_index, bucket.before_begin() }, true);
             } else {
                 return vocab::Tuple(Iterator { m_buckets.span(), bucket_index, before_it }, false);
@@ -255,14 +336,49 @@ private:
     }
 
     template<typename U>
-    u64 hash(U const& value) const {
+    constexpr u64 hash(U const& value) const {
         auto hasher = m_hasher;
         return container::hash(hasher, value);
+    }
+
+    constexpr u64 hash(Value const& value) const {
+        auto hasher = m_hasher;
+        if constexpr (is_map) {
+            return container::hash(hasher, util::get<0>(value));
+        } else {
+            return container::hash(hasher, value);
+        }
     }
 
     template<typename T, typename U>
     constexpr bool equal(T const& a, U const& b) const {
         return m_eq(a, b);
+    }
+
+    template<typename T>
+    constexpr bool equal(T const& a, Value const& b) const {
+        if constexpr (is_map) {
+            return m_eq(a, util::get<0>(b));
+        } else {
+            return m_eq(a, b);
+        }
+    }
+
+    template<typename T>
+    constexpr bool equal(Value const& a, T const& b) const {
+        if constexpr (is_map) {
+            return m_eq(util::get<0>(a), b);
+        } else {
+            return m_eq(a, b);
+        }
+    }
+
+    constexpr bool equal(Value const& a, Value const& b) const {
+        if constexpr (is_map) {
+            return m_eq(util::get<0>(a), util::get<0>(b));
+        } else {
+            return m_eq(a, b);
+        }
     }
 
     Buckets m_buckets {};

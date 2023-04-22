@@ -16,7 +16,7 @@ namespace detail {
             //       usable in constexpr context, so we cannot
             //       call it here.
             if consteval {
-                std::construct_at(location);
+                return std::construct_at(location);
             } else {
                 return ::new (util::voidify(location)) T;
             }

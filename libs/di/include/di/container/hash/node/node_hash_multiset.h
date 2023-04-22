@@ -19,7 +19,7 @@
 
 namespace di::container {
 template<typename Value, typename Eq = function::Equal, concepts::Hasher Hasher = DefaultHasher,
-         concepts::detail::MutableVector Buckets = container::Vector<
+         typename Buckets = container::Vector<
              IntrusiveForwardList<HashNode<detail::NodeHashSetTag<Value>>, detail::NodeHashSetTag<Value>>>,
          concepts::AllocatorOf<OwningHashNode<Value, detail::NodeHashSetTag<Value>>> Alloc =
              DefaultAllocator<OwningHashNode<Value, detail::NodeHashSetTag<Value>>>>
@@ -30,7 +30,7 @@ class NodeHashMultiSet
                        HashNodeIterator<Value, detail::NodeHashSetTag<Value>>,
                        meta::ConstIterator<HashNodeIterator<Value, detail::NodeHashSetTag<Value>>>,
                        detail::NodeHashTableValidForLookup<Value, Eq>::template Type, true>,
-          true> {
+          true, false> {
 private:
     using Base =
         OwningNodeHashTable<Value, Eq, Hasher, Buckets, detail::NodeHashSetTag<Value>, Alloc,
@@ -38,7 +38,7 @@ private:
                                          HashNodeIterator<Value, detail::NodeHashSetTag<Value>>,
                                          meta::ConstIterator<HashNodeIterator<Value, detail::NodeHashSetTag<Value>>>,
                                          detail::NodeHashTableValidForLookup<Value, Eq>::template Type, true>,
-                            true>;
+                            true, false>;
 
 public:
     using Base::Base;

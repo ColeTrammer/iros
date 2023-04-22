@@ -14,7 +14,7 @@ template<typename Tag>
 using IntrusiveHashSetNode = HashNode<Tag>;
 
 template<typename Self>
-struct IntrusiveHashSetTag : IntrusiveForwardListTag<IntrusiveHashSetNode<Self>> {};
+struct IntrusiveHashSetTag : IntrusiveForwardListTag<Self> {};
 
 struct DefaultIntrusiveHashSetTag : IntrusiveHashSetTag<DefaultIntrusiveHashSetTag> {};
 
@@ -27,7 +27,7 @@ class IntrusiveHashSet
           IntrusiveSetInterface<IntrusiveHashSet<T, Tag, Eq, Hasher>, T, IntrusiveHashSetNode<Tag>,
                                 HashNodeIterator<T, Tag>, meta::ConstIterator<HashNodeIterator<T, Tag>>,
                                 detail::NodeHashTableValidForLookup<T, Eq>::template Type, false>,
-          false> {};
+          false, false> {};
 
 template<typename T, typename Tag = DefaultIntrusiveHashSetTag,
          concepts::Predicate<T const&, T const&> Eq = function::Equal, concepts::Hasher Hasher = DefaultHasher,
@@ -38,5 +38,5 @@ class IntrusiveHashMultiSet
           IntrusiveSetInterface<IntrusiveHashSet<T, Tag, Eq, Hasher>, T, IntrusiveHashSetNode<Tag>,
                                 HashNodeIterator<T, Tag>, meta::ConstIterator<HashNodeIterator<T, Tag>>,
                                 detail::NodeHashTableValidForLookup<T, Eq>::template Type, true>,
-          true> {};
+          true, false> {};
 }

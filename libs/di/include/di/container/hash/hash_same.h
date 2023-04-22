@@ -9,6 +9,7 @@
 #include <di/function/unpack.h>
 #include <di/meta/index_sequence.h>
 #include <di/meta/make_index_sequence.h>
+#include <di/meta/remove_cvref.h>
 #include <di/types/prelude.h>
 #include <di/vocab/tuple/tuple_element.h>
 #include <di/vocab/tuple/tuple_like.h>
@@ -42,7 +43,8 @@ constexpr inline auto hash_same = detail::HashSameFunction {};
 
 namespace di::concepts {
 template<typename T, typename U>
-concept HashSame = Hashable<T> && Hashable<U> && container::hash_same(in_place_type<T>, in_place_type<U>);
+concept HashSame = Hashable<T> && Hashable<U> &&
+                   container::hash_same(in_place_type<meta::RemoveCVRef<T>>, in_place_type<meta::RemoveCVRef<U>>);
 }
 
 namespace di::container::detail {
