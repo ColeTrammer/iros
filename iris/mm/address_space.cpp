@@ -93,23 +93,17 @@ Expected<void> init_and_load_initial_kernel_address_space(PhysicalAddress kernel
     TRY(new_address_space.get_assuming_no_concurrent_accesses().setup_physical_memory_map(
         PhysicalAddress(0), max_physical_address, VirtualAddress(4096_u64 * 512_u64 * 512_u64 * 512_u64)));
 
-    for (auto virtual_address = text_segment_start; virtual_address < text_segment_end; virtual_address += 4096) {
-        TRY(new_address_space.get_assuming_no_concurrent_accesses().map_physical_page(
-            virtual_address, PhysicalAddress(kernel_physical_start + (virtual_address - kernel_virtual_start)),
-            mm::RegionFlags::Readable | mm::RegionFlags::Executable));
-    }
+    TRY(new_address_space.get_assuming_no_concurrent_accesses().setup_kernel_region(
+        PhysicalAddress(kernel_physical_start + (text_segment_start - kernel_virtual_start)), text_segment_start,
+        text_segment_end, RegionFlags::Readable | RegionFlags::Executable));
 
-    for (auto virtual_address = rodata_segment_start; virtual_address < rodata_segment_end; virtual_address += 4096) {
-        TRY(new_address_space.get_assuming_no_concurrent_accesses().map_physical_page(
-            virtual_address, PhysicalAddress(kernel_physical_start + (virtual_address - kernel_virtual_start)),
-            mm::RegionFlags::Readable));
-    }
+    TRY(new_address_space.get_assuming_no_concurrent_accesses().setup_kernel_region(
+        PhysicalAddress(kernel_physical_start + (rodata_segment_start - kernel_virtual_start)), rodata_segment_start,
+        rodata_segment_end, RegionFlags::Readable));
 
-    for (auto virtual_address = data_segment_start; virtual_address < data_segment_end; virtual_address += 4096) {
-        TRY(new_address_space.get_assuming_no_concurrent_accesses().map_physical_page(
-            virtual_address, PhysicalAddress(kernel_physical_start + (virtual_address - kernel_virtual_start)),
-            mm::RegionFlags::Readable | mm::RegionFlags::Writable));
-    }
+    TRY(new_address_space.get_assuming_no_concurrent_accesses().setup_kernel_region(
+        PhysicalAddress(kernel_physical_start + (data_segment_start - kernel_virtual_start)), data_segment_start,
+        data_segment_end, RegionFlags::Readable | RegionFlags::Writable));
 
     println("Loading new kernel address space..."_sv);
     new_address_space.load();

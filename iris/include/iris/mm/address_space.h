@@ -1,10 +1,12 @@
 #pragma once
 
 #include <di/container/intrusive/prelude.h>
+#include <di/sync/prelude.h>
 #include <di/vocab/pointer/prelude.h>
 #include <iris/core/error.h>
 #include <iris/core/interruptible_spinlock.h>
 #include <iris/mm/physical_address.h>
+#include <iris/mm/physical_page.h>
 #include <iris/mm/region.h>
 #include <iris/mm/virtual_address.h>
 
@@ -27,6 +29,8 @@ public:
     void set_heap_end(VirtualAddress address) { m_heap_end = address; }
 
     Expected<void> setup_physical_memory_map(PhysicalAddress start, PhysicalAddress end, VirtualAddress virtual_start);
+    Expected<void> setup_kernel_region(PhysicalAddress kernel_physical_start, VirtualAddress kernel_virtual_start,
+                                       VirtualAddress kernel_virtual_end, RegionFlags flags);
 
     void flush_tlb_global(VirtualAddress base) { flush_tlb_global(base, 1); }
     void flush_tlb_global(VirtualAddress base, usize byte_length);

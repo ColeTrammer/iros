@@ -271,6 +271,17 @@ Expected<void> LockedAddressSpace::setup_physical_memory_map(PhysicalAddress sta
     return {};
 }
 
+Expected<void> LockedAddressSpace::setup_kernel_region(PhysicalAddress kernel_physical_start,
+                                                       VirtualAddress kernel_virtual_start,
+                                                       VirtualAddress kernel_virtual_end, RegionFlags flags) {
+    for (auto offset = 0_u64; kernel_virtual_start + offset < kernel_virtual_end; offset += 4096) {
+        auto physical_address = kernel_physical_start + offset;
+        auto virtual_address = kernel_virtual_start + offset;
+        TRY(map_physical_page(virtual_address, physical_address, flags));
+    }
+    return {};
+}
+
 void LockedAddressSpace::flush_tlb_global(VirtualAddress base, usize byte_length) {
     // SAFETY: We are protected by the address space lock.
     auto& current_processor = current_processor_unsafe();
