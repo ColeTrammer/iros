@@ -1,8 +1,11 @@
+#include <di/math/prelude.h>
 #include <iris/core/global_state.h>
 #include <iris/core/print.h>
 #include <iris/mm/address_space.h>
 #include <iris/mm/map_physical_address.h>
 #include <iris/mm/page_frame_allocator.h>
+#include <iris/mm/physical_address.h>
+#include <iris/mm/physical_page.h>
 #include <iris/mm/sections.h>
 
 namespace iris::mm {
@@ -77,7 +80,18 @@ Expected<void> init_and_load_initial_kernel_address_space(PhysicalAddress kernel
     new_address_space.set_kernel();
 
     TRY(new_address_space.get_assuming_no_concurrent_accesses().setup_physical_memory_map(
-        max_physical_address, VirtualAddress(0xFFFF800000000000)));
+        PhysicalAddress(0), max_physical_address, VirtualAddress(0xFFFF800000000000)));
+
+    auto pages_needed_for_physical_pages =
+        di::divide_round_up(max_physical_address.raw_value() / sizeof(PhysicalPage), 4096);
+    auto allocated_phys_base = TRY(allocate_physically_contiguous_page_frames(pages_needed_for_physical_pages));
+    println("Allocated {} physical pages at {} for physical page structures."_sv, pages_needed_for_physical_pages,
+            allocated_phys_base);
+
+    println("Mapping physical pages at {}."_sv,
+            VirtualAddress(0xFFFF800000000000_u64 + 4096_u64 * 512_u64 * 512_u64 * 512_u64));
+    TRY(new_address_space.get_assuming_no_concurrent_accesses().setup_physical_memory_map(
+        PhysicalAddress(0), max_physical_address, VirtualAddress(4096_u64 * 512_u64 * 512_u64 * 512_u64)));
 
     for (auto virtual_address = text_segment_start; virtual_address < text_segment_end; virtual_address += 4096) {
         TRY(new_address_space.get_assuming_no_concurrent_accesses().map_physical_page(

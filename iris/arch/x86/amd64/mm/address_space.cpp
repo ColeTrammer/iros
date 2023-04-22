@@ -212,7 +212,7 @@ Expected<void> LockedAddressSpace::remove_low_identity_mapping(VirtualAddress ba
     return destroy_region(base, page_aligned_length);
 }
 
-Expected<void> LockedAddressSpace::setup_physical_memory_map(PhysicalAddress max_phys_address,
+Expected<void> LockedAddressSpace::setup_physical_memory_map(PhysicalAddress start, PhysicalAddress end,
                                                              VirtualAddress virtual_address) {
     auto decomposed = decompose_virtual_address(virtual_address);
     auto pml4_offset = decomposed.get<page_structure::Pml4Offset>();
@@ -230,8 +230,8 @@ Expected<void> LockedAddressSpace::setup_physical_memory_map(PhysicalAddress max
     }
 
     auto& global_state = iris::global_state();
-    auto phys_address = PhysicalAddress(0);
-    while (phys_address < max_phys_address) {
+    auto phys_address = start;
+    while (phys_address < end) {
         auto decomposed_phys_address = mm::decompose_virtual_address(VirtualAddress(phys_address.raw_value()));
 
         auto& pdp = TRY(map_physical_address(
