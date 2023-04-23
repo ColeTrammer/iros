@@ -5,7 +5,9 @@
 #include <di/container/tree/rb_tree.h>
 
 namespace di::container {
-template<typename Tag>
+struct DefaultIntrusiveTreeSetTag;
+
+template<typename Tag = DefaultIntrusiveTreeSetTag>
 using IntrusiveTreeSetNode = RBTreeNode<Tag>;
 
 template<typename Self>
