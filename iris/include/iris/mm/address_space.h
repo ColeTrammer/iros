@@ -15,6 +15,8 @@ class AddressSpace;
 
 class LockedAddressSpace {
 public:
+    Expected<void> map_physical_page_early(VirtualAddress location, PhysicalAddress physical_address,
+                                           RegionFlags flags);
     Expected<void> map_physical_page(VirtualAddress location, PhysicalAddress physical_address, RegionFlags flags);
 
     Expected<VirtualAddress> allocate_region(di::Box<Region> region);
@@ -31,6 +33,8 @@ public:
     Expected<void> setup_physical_memory_map(PhysicalAddress start, PhysicalAddress end, VirtualAddress virtual_start);
     Expected<void> setup_kernel_region(PhysicalAddress kernel_physical_start, VirtualAddress kernel_virtual_start,
                                        VirtualAddress kernel_virtual_end, RegionFlags flags);
+
+    Expected<void> bootstrap_kernel_page_tracking();
 
     void flush_tlb_global(VirtualAddress base) { flush_tlb_global(base, 1); }
     void flush_tlb_global(VirtualAddress base, usize byte_length);
@@ -68,6 +72,7 @@ public:
 
 private:
     PhysicalAddress m_architecture_page_table_base { 0 };
+    PageStructurePhysicalPage* m_page_structure_root { nullptr };
     di::Atomic<u64> m_resident_pages { 0 };
     di::Atomic<u64> m_structure_pages { 0 };
     bool m_kernel { false };

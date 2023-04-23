@@ -75,23 +75,29 @@ Expected<void> AddressSpace::allocate_region_at(VirtualAddress location, usize p
 Expected<void> init_and_load_initial_kernel_address_space(PhysicalAddress kernel_physical_start,
                                                           VirtualAddress kernel_virtual_start,
                                                           PhysicalAddress max_physical_address) {
-    auto& new_address_space = global_state_in_boot().kernel_address_space;
+    auto& global_state = global_state_in_boot();
+    auto const total_pages = di::divide_round_up(max_physical_address.raw_value(), 4096);
+    auto pages_needed_for_physical_pages = di::divide_round_up(total_pages * sizeof(PhysicalPage), 4096);
+    auto allocated_phys_base = global_state.allocated_physical_page_base =
+        TRY(allocate_physically_contiguous_page_frames(pages_needed_for_physical_pages));
+    println("Preparing to manage {} total pages."_sv, total_pages);
+    println("Allocated {} physical pages at {} for physical page structures."_sv, pages_needed_for_physical_pages,
+            allocated_phys_base);
+
+    auto& new_address_space = global_state.kernel_address_space;
     new_address_space.set_architecture_page_table_base(TRY(allocate_page_frame()));
     new_address_space.set_kernel();
 
     TRY(new_address_space.get_assuming_no_concurrent_accesses().setup_physical_memory_map(
         PhysicalAddress(0), max_physical_address, VirtualAddress(0xFFFF800000000000)));
 
-    auto pages_needed_for_physical_pages =
-        di::divide_round_up(max_physical_address.raw_value() / sizeof(PhysicalPage), 4096);
-    auto allocated_phys_base = TRY(allocate_physically_contiguous_page_frames(pages_needed_for_physical_pages));
-    println("Allocated {} physical pages at {} for physical page structures."_sv, pages_needed_for_physical_pages,
-            allocated_phys_base);
-
     println("Mapping physical pages at {}."_sv,
             VirtualAddress(0xFFFF800000000000_u64 + 4096_u64 * 512_u64 * 512_u64 * 512_u64));
-    TRY(new_address_space.get_assuming_no_concurrent_accesses().setup_physical_memory_map(
-        PhysicalAddress(0), max_physical_address, VirtualAddress(4096_u64 * 512_u64 * 512_u64 * 512_u64)));
+    TRY(new_address_space.get_assuming_no_concurrent_accesses().setup_kernel_region(
+        allocated_phys_base, VirtualAddress(0xFFFF800000000000_u64 + 4096_u64 * 512_u64 * 512_u64 * 512_u64),
+        VirtualAddress(0xFFFF800000000000_u64 + 4096_u64 * 512_u64 * 512_u64 * 512_u64) +
+            pages_needed_for_physical_pages * 4096,
+        RegionFlags::Readable | RegionFlags::Writable));
 
     TRY(new_address_space.get_assuming_no_concurrent_accesses().setup_kernel_region(
         PhysicalAddress(kernel_physical_start + (text_segment_start - kernel_virtual_start)), text_segment_start,
@@ -107,6 +113,8 @@ Expected<void> init_and_load_initial_kernel_address_space(PhysicalAddress kernel
 
     println("Loading new kernel address space..."_sv);
     new_address_space.load();
+
+    TRY(new_address_space.get_assuming_no_concurrent_accesses().bootstrap_kernel_page_tracking());
     return {};
 }
 }

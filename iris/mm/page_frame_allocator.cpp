@@ -18,6 +18,17 @@ void reserve_page_frames(PhysicalAddress base_address, usize page_count) {
             if (address.raw_value() / 4096 >= physical_page_count) {
                 break;
             }
+            bitmap[address.raw_value() / 4096] = false;
+        }
+    });
+}
+
+void unreserve_page_frames(PhysicalAddress base_address, usize page_count) {
+    return page_frame_bitmap.with_lock([&](auto& bitmap) {
+        for (auto address = base_address; address < base_address + 4096 * page_count; address += 4096) {
+            if (address.raw_value() / 4096 >= physical_page_count) {
+                break;
+            }
             bitmap[address.raw_value() / 4096] = true;
         }
     });
@@ -26,8 +37,8 @@ void reserve_page_frames(PhysicalAddress base_address, usize page_count) {
 Expected<PhysicalAddress> allocate_page_frame() {
     return page_frame_bitmap.with_lock([&](auto& bitmap) -> Expected<PhysicalAddress> {
         for (usize i = 0; i < physical_page_count; i++) {
-            if (!bitmap[i]) {
-                bitmap[i] = true;
+            if (bitmap[i]) {
+                bitmap[i] = false;
 
                 auto& array = TRY(map_physical_address(PhysicalAddress(i * 4096), 4096))
                                   .typed<di::Array<mm::PhysicalAddress, 512>>();
@@ -42,16 +53,21 @@ Expected<PhysicalAddress> allocate_page_frame() {
 Expected<PhysicalAddress> allocate_physically_contiguous_page_frames(usize page_count) {
     return page_frame_bitmap.with_lock([&](auto& bitmap) -> Expected<PhysicalAddress> {
         for (usize i = 0; i <= physical_page_count - page_count; i++) {
-            if (!bitmap[i]) {
+            if (bitmap[i]) {
+                auto valid = true;
                 for (auto j : di::range(page_count)) {
-                    if (bitmap[i + j]) {
+                    if (!bitmap[i + j]) {
                         // Skip to the next page, ensuring this algorithm is linear.
-                        i += j + 1;
+                        i += j;
+                        valid = false;
                         break;
                     }
                 }
+                if (!valid) {
+                    continue;
+                }
                 for (auto k : di::range(page_count)) {
-                    bitmap[i + k] = true;
+                    bitmap[i + k] = false;
                 }
                 return PhysicalAddress(i * 4096);
             }
@@ -63,7 +79,7 @@ Expected<PhysicalAddress> allocate_physically_contiguous_page_frames(usize page_
 void deallocate_page_frame(PhysicalAddress address) {
     ASSERT(address.raw_value() % 4096 == 0);
     return page_frame_bitmap.with_lock([&](auto& bitmap) {
-        bitmap[address.raw_value() / 4096] = false;
+        bitmap[address.raw_value() / 4096] = true;
     });
 }
 }

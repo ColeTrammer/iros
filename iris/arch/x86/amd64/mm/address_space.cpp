@@ -1,5 +1,9 @@
+#include <di/container/view/prelude.h>
+#include <di/math/prelude.h>
+#include <di/util/prelude.h>
 #include <iris/arch/x86/amd64/page_structure.h>
 #include <iris/arch/x86/amd64/system_instructions.h>
+#include <iris/core/error.h>
 #include <iris/core/global_state.h>
 #include <iris/core/preemption.h>
 #include <iris/core/print.h>
@@ -7,6 +11,8 @@
 #include <iris/mm/map_physical_address.h>
 #include <iris/mm/page_frame_allocator.h>
 #include <iris/mm/physical_address.h>
+#include <iris/mm/physical_page.h>
+#include <iris/mm/sections.h>
 #include <iris/mm/virtual_address.h>
 
 namespace iris::mm {
@@ -137,6 +143,63 @@ Expected<void> LockedAddressSpace::destroy_region(VirtualAddress base, usize len
 
 void AddressSpace::load() {
     load_cr3(m_architecture_page_table_base.raw_value());
+}
+
+Expected<void> LockedAddressSpace::map_physical_page_early(VirtualAddress location, PhysicalAddress physical_address,
+                                                           RegionFlags flags) {
+    // NOTE: In the future, this function will not use the HHDM, which is only provided by Limine. To support other
+    // bootloaders, we will need to use a different method to map pages early.
+    auto const writable = !!(flags & RegionFlags::Writable);
+    auto const not_executable = !(flags & RegionFlags::Executable);
+
+    auto decomposed = decompose_virtual_address(location);
+    auto pml4_offset = decomposed.get<page_structure::Pml4Offset>();
+    auto& pml4 = TRY(map_physical_address(base().architecture_page_table_base(), 0x1000))
+                     .typed<page_structure::PageStructureTable>();
+    if (!pml4[pml4_offset].get<page_structure::Present>()) {
+        pml4[pml4_offset] = page_structure::StructureEntry(
+            page_structure::PhysicalAddress(TRY(allocate_page_frame()).raw_value() >> 12),
+            page_structure::Present(true), page_structure::Writable(true));
+        base().m_structure_pages.fetch_add(1, di::MemoryOrder::Relaxed);
+    }
+
+    auto pdp_offset = decomposed.get<page_structure::PdpOffset>();
+    auto& pdp = TRY(map_physical_address(
+                        PhysicalAddress(pml4[pml4_offset].get<page_structure::PhysicalAddress>() << 12), 0x1000))
+                    .typed<page_structure::PageStructureTable>();
+    if (!pdp[pdp_offset].get<page_structure::Present>()) {
+        pdp[pdp_offset] = page_structure::StructureEntry(
+            page_structure::PhysicalAddress(TRY(allocate_page_frame()).raw_value() >> 12),
+            page_structure::Present(true), page_structure::Writable(true));
+        base().m_structure_pages.fetch_add(1, di::MemoryOrder::Relaxed);
+    }
+
+    auto pd_offset = decomposed.get<page_structure::PdOffset>();
+    auto& pd =
+        TRY(map_physical_address(PhysicalAddress(pdp[pdp_offset].get<page_structure::PhysicalAddress>() << 12), 0x1000))
+            .typed<page_structure::PageStructureTable>();
+    if (!pd[pd_offset].get<page_structure::Present>()) {
+        pd[pd_offset] = page_structure::StructureEntry(
+            page_structure::PhysicalAddress(TRY(allocate_page_frame()).raw_value() >> 12),
+            page_structure::Present(true), page_structure::Writable(true));
+        base().m_structure_pages.fetch_add(1, di::MemoryOrder::Relaxed);
+    }
+
+    auto pt_offset = decomposed.get<page_structure::PtOffset>();
+    auto& pt =
+        TRY(map_physical_address(PhysicalAddress(pd[pd_offset].get<page_structure::PhysicalAddress>() << 12), 0x1000))
+            .typed<page_structure::PageStructureTable>();
+    if (pt[pt_offset].get<page_structure::Present>()) {
+        println("WARNING: virtual address {} is already marked as present."_sv, location);
+    }
+    pt[pt_offset] = page_structure::StructureEntry(page_structure::PhysicalAddress(physical_address.raw_value() >> 12),
+                                                   page_structure::Present(true), page_structure::Writable(writable),
+                                                   page_structure::NotExecutable(not_executable));
+    base().m_resident_pages.fetch_add(1, di::MemoryOrder::Relaxed);
+
+    flush_tlb_global(location);
+
+    return {};
 }
 
 Expected<void> LockedAddressSpace::map_physical_page(VirtualAddress location, PhysicalAddress physical_address,
@@ -277,8 +340,162 @@ Expected<void> LockedAddressSpace::setup_kernel_region(PhysicalAddress kernel_ph
     for (auto offset = 0_u64; kernel_virtual_start + offset < kernel_virtual_end; offset += 4096) {
         auto physical_address = kernel_physical_start + offset;
         auto virtual_address = kernel_virtual_start + offset;
-        TRY(map_physical_page(virtual_address, physical_address, flags));
+        TRY(map_physical_page_early(virtual_address, physical_address, flags));
     }
+    return {};
+}
+
+Expected<void> LockedAddressSpace::bootstrap_kernel_page_tracking() {
+    auto init_as_page_structure_parent = [](PhysicalAddress address) -> PageStructurePhysicalPage& {
+        auto& page = physical_page(address);
+        di::construct_at(&page.as_page_structure_page, PageStructurePhysicalPage::Parent {});
+        return page.as_page_structure_page;
+    };
+
+    auto init_as_page_structure_leaf = [](PhysicalAddress address) -> PageStructurePhysicalPage& {
+        auto& page = physical_page(address);
+        di::construct_at(&page.as_page_structure_page, PageStructurePhysicalPage::Leaf {});
+        return page.as_page_structure_page;
+    };
+
+    auto& global_state = global_state_in_boot();
+    auto const max_physical_address = global_state.max_physical_address;
+    auto const total_pages = di::divide_round_up(max_physical_address.raw_value(), 4096);
+    auto const pages_needed_for_physical_pages = di::divide_round_up(total_pages * sizeof(PhysicalPage), 4096);
+
+    auto& root = init_as_page_structure_parent(base().architecture_page_table_base());
+    auto& pml4 = TRY(map_physical_address(base().architecture_page_table_base(), 0x1000))
+                     .typed<page_structure::PageStructureTable>();
+
+    // The initial kernel mappings have 5 regions.
+    // 1. The physical memory direct map
+    // 2. The physical page structures
+    // 3. The kernel code
+    // 4. The kernel read-only data
+    // 5. The kernel read-write data
+
+    auto handle_physical_id_map = [&](VirtualAddress start, VirtualAddress end) -> Expected<void> {
+        auto decomposed_start = decompose_virtual_address(start);
+        auto pml4_offset = decomposed_start.get<page_structure::Pml4Offset>();
+
+        auto pdp_page = pml4[pml4_offset].get<page_structure::PhysicalAddress>() << 12;
+        auto const pdp_entry_count = di::divide_round_up(end - start, 1024 * 1024 * 1024);
+        TRY(map_physical_address(PhysicalAddress(pdp_page), 0x1000)).typed<page_structure::PageStructureTable>();
+        if (global_state.processor_info.has_gib_pages()) {
+            auto& pdp_structure = init_as_page_structure_leaf(PhysicalAddress(pdp_page));
+            root.children.push_back(pdp_structure);
+
+            pdp_structure.mapped_page_count = pdp_entry_count;
+            return {};
+        }
+
+        auto& pdp =
+            TRY(map_physical_address(PhysicalAddress(pdp_page), 0x1000)).typed<page_structure::PageStructureTable>();
+        auto& pdp_structure = init_as_page_structure_parent(PhysicalAddress(pdp_page));
+        root.children.push_back(pdp_structure);
+
+        for (auto pdp_offset : di::range(pdp_entry_count)) {
+            auto pd_page = pdp[pdp_offset].get<page_structure::PhysicalAddress>() << 12;
+
+            auto& pd_structure = init_as_page_structure_leaf(PhysicalAddress(pd_page));
+            pdp_structure.children.push_back(pd_structure);
+            pd_structure.parent = &pd_structure;
+
+            if (pdp_offset == pdp_entry_count - 1) {
+                auto const last_pdp_entry_page_count =
+                    di::divide_round_up((end - start) % (1024 * 1024 * 1024), 2 * 1024 * 1024);
+                pd_structure.mapped_page_count = last_pdp_entry_page_count;
+            } else {
+                pd_structure.mapped_page_count = 512;
+            }
+        }
+        return {};
+    };
+
+    auto handle_kernel_region = [&](VirtualAddress start, VirtualAddress end) -> Expected<void> {
+        auto start_decomposed = decompose_virtual_address(start);
+        auto end_decomposed = decompose_virtual_address(end);
+
+        auto start_position = start_decomposed.get<page_structure::Pml4Offset>() * 512_u64 * 512_u64 * 512_u64 +
+                              start_decomposed.get<page_structure::PdpOffset>() * 512_u64 * 512_u64 +
+                              start_decomposed.get<page_structure::PdOffset>() * 512_u64 +
+                              start_decomposed.get<page_structure::PtOffset>();
+        auto end_position = end_decomposed.get<page_structure::Pml4Offset>() * 512_u64 * 512_u64 * 512_u64 +
+                            end_decomposed.get<page_structure::PdpOffset>() * 512_u64 * 512_u64 +
+                            end_decomposed.get<page_structure::PdOffset>() * 512_u64 +
+                            end_decomposed.get<page_structure::PtOffset>();
+
+        auto indices =
+            di::cartesian_product(di::range(512_u64), di::range(512_u64), di::range(512_u64), di::range(512_u64)) |
+            di::drop(start_position) | di::take(end_position - start_position);
+        for (auto [pml4_offset, pdp_offset, pd_offset, pt_offset] : indices) {
+            auto pml4_entry = pml4[pml4_offset];
+            ASSERT(pml4_entry.get<page_structure::Present>());
+            auto pdp_page = PhysicalAddress(pml4_entry.get<page_structure::PhysicalAddress>() << 12);
+            auto& pdp_structure = [&] -> PageStructurePhysicalPage& {
+                auto it = di::find_if(root.children, [&](auto&& child) {
+                    return physical_address(child) == pdp_page;
+                });
+                if (it != root.children.end()) {
+                    return *it;
+                }
+                auto& result = init_as_page_structure_parent(pdp_page);
+                result.parent = &root;
+                root.children.push_back(result);
+                return result;
+            }();
+
+            auto& pdp = TRY(map_physical_address(pdp_page, 0x1000)).typed<page_structure::PageStructureTable>();
+            auto pdp_entry = pdp[pdp_offset];
+            ASSERT(pdp_entry.get<page_structure::Present>());
+            auto pd_page = PhysicalAddress(pdp_entry.get<page_structure::PhysicalAddress>() << 12);
+            auto& pd_structure = [&] -> PageStructurePhysicalPage& {
+                auto it = di::find_if(pdp_structure.children, [&](auto&& child) {
+                    return physical_address(child) == pd_page;
+                });
+                if (it != pdp_structure.children.end()) {
+                    return *it;
+                }
+                auto& result = init_as_page_structure_parent(pd_page);
+                result.parent = &pdp_structure;
+                pdp_structure.children.push_back(result);
+                return result;
+            }();
+
+            auto& pd = TRY(map_physical_address(pd_page, 0x1000)).typed<page_structure::PageStructureTable>();
+            auto pd_entry = pd[pd_offset];
+            ASSERT(pd_entry.get<page_structure::Present>());
+            auto pt_page = PhysicalAddress(pd_entry.get<page_structure::PhysicalAddress>() << 12);
+            auto& pt_structure = [&] -> PageStructurePhysicalPage& {
+                auto it = di::find_if(pd_structure.children, [&](auto&& child) {
+                    return physical_address(child) == pt_page;
+                });
+                if (it != pd_structure.children.end()) {
+                    return *it;
+                }
+                auto& result = init_as_page_structure_leaf(pt_page);
+                result.parent = &pd_structure;
+                pd_structure.children.push_back(result);
+                return result;
+            }();
+
+            pt_structure.mapped_page_count++;
+        }
+
+        return {};
+    };
+
+    TRY(handle_physical_id_map(VirtualAddress(0xFFFF800000000000),
+                               VirtualAddress(0xFFFF800000000000) + max_physical_address.raw_value()));
+
+    TRY(handle_kernel_region(VirtualAddress(0xFFFF800000000000 + 4096_u64 * 512_u64 * 512_u64 * 512_u64),
+                             VirtualAddress(0xFFFF800000000000 + 4096_u64 * 512_u64 * 512_u64 * 512_u64) +
+                                 pages_needed_for_physical_pages * 4096));
+
+    TRY(handle_kernel_region(text_segment_start, text_segment_end));
+    TRY(handle_kernel_region(rodata_segment_start, rodata_segment_end));
+    TRY(handle_kernel_region(data_segment_start, data_segment_end));
+
     return {};
 }
 

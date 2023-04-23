@@ -13,7 +13,17 @@
 namespace iris::mm {
 /// @brief A physical page of memory used for the page tables themselves.
 struct PageStructurePhysicalPage : di::IntrusiveListNode<> {
-    di::IntrusiveList<PageStructurePhysicalPage> children;
+    struct Parent {};
+    struct Leaf {};
+
+    constexpr explicit PageStructurePhysicalPage(Parent) : children() {}
+    constexpr explicit PageStructurePhysicalPage(Leaf) : mapped_page_count(0) {}
+
+    PageStructurePhysicalPage* parent { nullptr };
+    union {
+        di::IntrusiveList<PageStructurePhysicalPage> children;
+        u64 mapped_page_count { 0 };
+    };
 };
 
 /// @brief A physical page of memory tracked by a backing object.
@@ -51,13 +61,15 @@ constexpr inline auto physical_page_base =
 
 namespace detail {
     struct PhysicalAddressFunction {
-        inline PhysicalAddress operator()(PhysicalPage const& page) { return void_pointer_to_physical_address(&page); }
-
-        inline PhysicalAddress operator()(BackedPhysicalPage const& page) {
+        inline PhysicalAddress operator()(PhysicalPage const& page) const {
             return void_pointer_to_physical_address(&page);
         }
 
-        inline PhysicalAddress operator()(PageStructurePhysicalPage const& page) {
+        inline PhysicalAddress operator()(BackedPhysicalPage const& page) const {
+            return void_pointer_to_physical_address(&page);
+        }
+
+        inline PhysicalAddress operator()(PageStructurePhysicalPage const& page) const {
             return void_pointer_to_physical_address(&page);
         }
 
@@ -73,8 +85,8 @@ constexpr inline auto physical_address = detail::PhysicalAddressFunction {};
 
 inline PhysicalPage& physical_page(PhysicalAddress address) {
     ASSERT(address.raw_value() % 4096 == 0);
-    return *reinterpret_cast<PhysicalPage*>(
-        (physical_page_base.raw_value() + address.raw_value() / (4096 * sizeof(PhysicalPage))));
+    auto const page_number = address.raw_value() / 4096;
+    return *(reinterpret_cast<PhysicalPage*>(physical_page_base.raw_value()) + page_number);
 }
 
 inline PageStructurePhysicalPage& page_structure_page(PhysicalAddress address) {

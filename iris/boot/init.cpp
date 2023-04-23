@@ -92,6 +92,9 @@ void iris_main() {
         if (memory_map_entry->type != LIMINE_MEMMAP_USABLE) {
             iris::mm::reserve_page_frames(iris::mm::PhysicalAddress(di::align_down(memory_map_entry->base, 4096)),
                                           di::divide_round_up(memory_map_entry->length, 4096));
+        } else {
+            iris::mm::unreserve_page_frames(iris::mm::PhysicalAddress(di::align_down(memory_map_entry->base, 4096)),
+                                            di::divide_round_up(memory_map_entry->length, 4096));
         }
     }
 

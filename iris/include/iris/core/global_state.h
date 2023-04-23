@@ -17,6 +17,7 @@
 #include <iris/hw/irq.h>
 #include <iris/hw/timer.h>
 #include <iris/mm/address_space.h>
+#include <iris/mm/physical_address.h>
 
 #include IRIS_ARCH_INCLUDE(hw/processor_info.h)
 #include IRIS_ARCH_INCLUDE(core/global_state.h)
@@ -29,6 +30,7 @@ struct GlobalState {
     /// @name Readonly fields
     /// Read-only after after kernel initialization. Ideally would be marked const.
     /// @{
+    mm::PhysicalAddress allocated_physical_page_base { 0 };
     mm::PhysicalAddress max_physical_address { 0 };
     mm::VirtualAddress virtual_to_physical_offset { 0 };
     mm::VirtualAddress heap_start { 0 };
