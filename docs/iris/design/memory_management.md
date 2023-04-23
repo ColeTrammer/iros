@@ -133,8 +133,52 @@ physical address directly to a page structure, which may be useful.
 
 One problem with the latter approach is that all pages need to be allocated upfront. Given the total number of physical
 pages on the system, the kernel will be able to calculate how many pages it needs to reserve. After reserving the
-physical pages, the kernel must also reserve virtual address space to store each page structure. Additionally, physical
-backing memory most likely will be needed as well.
+physical pages, the kernel must also reserve virtual address space to store each page structure.
+
+## Solving the Boostrapping Problem
+
+The core issue is that the kernel primitives needed to manage memory require that a proper kernel address space is
+setup. However, to modify the page tables, the kernel uses the continuous array of physical page structures as well as
+the physical identity map.
+
+The solution is to use a 2 stage bootstrapping process. In the first stage, the kernel cannot access the physical page
+structures, and must use temporary page mappings to modify the page tables. Note that for now, the kernel relies on
+Limine's HHDM feature to avoid having to setup temporary page mappings, although this dependency must be broken to
+support other boot protocols. Once the address space is properly configured, the Iris kernel retroactively initializes
+the page structures to reflect the currently mapped address space. From then on, the kernel can use the regular page
+mapping routines.
+
+### Allocating the Physical Page Structures
+
+The first physical memory allocated by the kernel is the physical page structures. The kernel allocates them in a
+physically contiguous region of memory. Since this is the first allocation, there cannot be any fragmentation, and so
+this allocation should succeed. The hope behind this approach is that the kernel will be able to use huge pages to
+create the mappings, which decreases the memory overhead. However, this also requires the physical pages be properly
+aligned, so this is not currently done.
+
+These physical pages are mapped into virtual memory at a fixed location, which is one PML4 entry (on x86_64), after the
+physical identity map. This results in a kernel address space which looks like this (on x86_64):
+
+```
++--------------------------+
+| Physical Identity Map    |  0xFFFF800000000000 [of size equal to the physical memory available]
++--------------------------+
+| Physical Structure Pages |  0xFFFF808000000000 [of size proportional to the physical memory available]
++--------------------------+
+|           ...            |
++--------------------------+
+| Kernel Code + Data       |  0xFFFFFFFF80000000 [of size determined by the kernel executable]
++--------------------------+
+| Kernel Heap              |  0xFFFFFFFF80xxxxxx [of variable size, immediately following the kernel executable]
++--------------------------+
+| Kernel Dynamic Regions   |  0xFFFFFFFF8xxxxxxx [dynamically allocated regions by the kernel]
+| ...                      |
++--------------------------+
+```
+
+Currently, there is an extremely large gap between the physical structure pages and the kernel code. This is because the
+Limine puts the identity map at the half-way point of the address space. This layout can be changed when dropping the
+direct dependency on the Limine HHDM, which will give userspace much more available memory.
 
 ## TLB Management
 
