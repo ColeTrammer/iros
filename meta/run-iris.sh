@@ -31,11 +31,21 @@ if [ ! "$IROS_NO_SMP" ]; then
     fi
 fi
 
+if [ "$IRIS_MEMORY" ]; then
+    MEMORY="-m $IRIS_MEMORY"
+else
+    # NOTE: the default memory size for Qemu is 128M, but we need more to successfully execute the test suite. This is
+    # almost entirely because both the kernel and userspace use naive memory allocation strategies (they don't ever free
+    # or reuse memory). When this gets fixed, we can reduce this to 128M.
+    MEMORY="-m 256M"
+fi
+
 qemu-system-"$IROS_ARCH" \
     $ENABLE_KVM \
     $DEBUG \
     $SERIAL \
     $SMP \
+    $MEMORY \
     -drive file="$IROS_IMAGE",format=raw,index=0,media=disk \
     -cpu max \
     -no-reboot \

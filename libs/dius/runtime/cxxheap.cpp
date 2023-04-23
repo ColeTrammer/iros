@@ -82,6 +82,7 @@ void* operator new(std::size_t size, std::align_val_t align, std::nothrow_t cons
 
     auto result = dius::system::system_call<uptr>(dius::system::Number::allocate_memory, di::align_up(size, 4096));
     if (!result) {
+        dius::println("Failed to allocate memory of size {} with align {}"_sv, size, di::to_underlying(align));
         return nullptr;
     }
     return reinterpret_cast<void*>(*result);
