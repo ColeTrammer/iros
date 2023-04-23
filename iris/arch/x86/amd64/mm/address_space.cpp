@@ -18,7 +18,19 @@
 namespace iris::mm {
 using namespace x86::amd64;
 
-page_structure::VirtualAddressStructure decompose_virtual_address(VirtualAddress virtual_address) {
+static PageStructurePhysicalPage& init_as_page_structure_parent(PhysicalAddress address) {
+    auto& page = physical_page(address);
+    di::construct_at(&page.as_page_structure_page, PageStructurePhysicalPage::Parent {});
+    return page.as_page_structure_page;
+}
+
+static PageStructurePhysicalPage& init_as_page_structure_leaf(PhysicalAddress address) {
+    auto& page = physical_page(address);
+    di::construct_at(&page.as_page_structure_page, PageStructurePhysicalPage::Leaf {});
+    return page.as_page_structure_page;
+};
+
+static page_structure::VirtualAddressStructure decompose_virtual_address(VirtualAddress virtual_address) {
     return di::bit_cast<page_structure::VirtualAddressStructure>(virtual_address.raw_value());
 }
 
@@ -76,27 +88,27 @@ Expected<void> LockedAddressSpace::destroy_region(VirtualAddress base, usize len
             continue;
         }
 
+        auto pdp_page = PhysicalAddress(pml4[pml4_offset].get<page_structure::PhysicalAddress>() << 12);
         auto pdp_offset = decomposed.get<page_structure::PdpOffset>();
-        auto& pdp = TRY(map_physical_address(
-                            PhysicalAddress(pml4[pml4_offset].get<page_structure::PhysicalAddress>() << 12), 0x1000))
-                        .typed<page_structure::PageStructureTable>();
+        auto& pdp =
+            TRY(map_physical_address(PhysicalAddress(pdp_page), 0x1000)).typed<page_structure::PageStructureTable>();
         if (!pdp[pdp_offset].get<page_structure::Present>()) {
             println("WARNING: trying to unmap non-present page (PDP)"_sv);
             continue;
         }
 
+        auto pd_page = PhysicalAddress(pdp[pdp_offset].get<page_structure::PhysicalAddress>() << 12);
         auto pd_offset = decomposed.get<page_structure::PdOffset>();
-        auto& pd = TRY(map_physical_address(
-                           PhysicalAddress(pdp[pdp_offset].get<page_structure::PhysicalAddress>() << 12), 0x1000))
+        auto& pd = TRY(map_physical_address(PhysicalAddress(pd_page.raw_value()), 0x1000))
                        .typed<page_structure::PageStructureTable>();
         if (!pd[pd_offset].get<page_structure::Present>()) {
             println("WARNING: trying to unmap non-present page (PD)"_sv);
             continue;
         }
 
+        auto pt_page = PhysicalAddress(pd[pd_offset].get<page_structure::PhysicalAddress>() << 12);
         auto pt_offset = decomposed.get<page_structure::PtOffset>();
-        auto& pt = TRY(map_physical_address(PhysicalAddress(pd[pd_offset].get<page_structure::PhysicalAddress>() << 12),
-                                            0x1000))
+        auto& pt = TRY(map_physical_address(PhysicalAddress(pt_page.raw_value()), 0x1000))
                        .typed<page_structure::PageStructureTable>();
         if (!pt[pt_offset].get<page_structure::Present>()) {
             println("WARNING: trying to unmap non-present page (PT)"_sv);
@@ -108,30 +120,28 @@ Expected<void> LockedAddressSpace::destroy_region(VirtualAddress base, usize len
         pt[pt_offset] = page_structure::StructureEntry(page_structure::Present(false));
         this->base().m_resident_pages.fetch_sub(1, di::MemoryOrder::Relaxed);
 
-        // Make sure to cleanup the page structure tables if they are present.
-        // FIXME: this algorithm is needlessly inefficient. In the future, we should maintain a count of pages allocated
-        // in each page structure table, and only free the page structure table if the count reaches 0.
-        if (di::none_of(pt, [&](page_structure::StructureEntry entry) {
-                return entry.get<page_structure::Present>();
-            })) {
-            deallocate_page_frame(PhysicalAddress(pd[pd_offset].get<page_structure::PhysicalAddress>() << 12));
+        // Make sure to cleanup the page structure tables if they are now empty.
+        auto& pt_structure = page_structure_page(pt_page);
+        if (--pt_structure.mapped_page_count == 0) {
+            auto& pd_structure = page_structure_page(pd_page);
+
             pd[pd_offset] = page_structure::StructureEntry(page_structure::Present(false));
-            this->base().m_structure_pages.fetch_sub(1, di::MemoryOrder::Relaxed);
+            pd_structure.children.erase(pt_structure);
+            deallocate_page_frame(pt_page);
 
-            if (di::none_of(pd, [&](page_structure::StructureEntry entry) {
-                    return entry.get<page_structure::Present>();
-                })) {
-                deallocate_page_frame(PhysicalAddress(pdp[pdp_offset].get<page_structure::PhysicalAddress>() << 12));
+            if (pd_structure.children.empty()) {
+                auto& pdp_structure = page_structure_page(pdp_page);
+
                 pdp[pdp_offset] = page_structure::StructureEntry(page_structure::Present(false));
-                this->base().m_structure_pages.fetch_sub(1, di::MemoryOrder::Relaxed);
+                pdp_structure.children.erase(pd_structure);
+                deallocate_page_frame(pd_page);
 
-                if (di::none_of(pdp, [&](page_structure::StructureEntry entry) {
-                        return entry.get<page_structure::Present>();
-                    })) {
-                    deallocate_page_frame(
-                        PhysicalAddress(pml4[pml4_offset].get<page_structure::PhysicalAddress>() << 12));
+                if (pdp_structure.children.empty()) {
+                    auto& pml4_structure = page_structure_page(this->base().architecture_page_table_base());
+
                     pml4[pml4_offset] = page_structure::StructureEntry(page_structure::Present(false));
-                    this->base().m_structure_pages.fetch_sub(1, di::MemoryOrder::Relaxed);
+                    pml4_structure.children.erase(pdp_structure);
+                    deallocate_page_frame(pdp_page);
                 }
             }
         }
@@ -216,39 +226,58 @@ Expected<void> LockedAddressSpace::map_physical_page(VirtualAddress location, Ph
     auto pml4_offset = decomposed.get<page_structure::Pml4Offset>();
     auto& pml4 = TRY(map_physical_address(base().architecture_page_table_base(), 0x1000))
                      .typed<page_structure::PageStructureTable>();
+    auto& pml4_structure = page_structure_page(base().architecture_page_table_base());
     if (!pml4[pml4_offset].get<page_structure::Present>()) {
         pml4[pml4_offset] = page_structure::StructureEntry(
             page_structure::PhysicalAddress(TRY(allocate_page_frame()).raw_value() >> 12),
             page_structure::Present(true), page_structure::Writable(true), page_structure::User(user));
         base().m_structure_pages.fetch_add(1, di::MemoryOrder::Relaxed);
+
+        auto pdp_page = PhysicalAddress(pml4[pml4_offset].get<page_structure::PhysicalAddress>() << 12);
+        auto& pdp_structure = init_as_page_structure_parent(pdp_page);
+        pml4_structure.children.push_back(pdp_structure);
     }
 
+    auto pdp_page = PhysicalAddress(pml4[pml4_offset].get<page_structure::PhysicalAddress>() << 12);
+    auto& pdp_structure = page_structure_page(pdp_page);
+
     auto pdp_offset = decomposed.get<page_structure::PdpOffset>();
-    auto& pdp = TRY(map_physical_address(
-                        PhysicalAddress(pml4[pml4_offset].get<page_structure::PhysicalAddress>() << 12), 0x1000))
+    auto& pdp = TRY(map_physical_address(PhysicalAddress(pdp_page.raw_value()), 0x1000))
                     .typed<page_structure::PageStructureTable>();
     if (!pdp[pdp_offset].get<page_structure::Present>()) {
         pdp[pdp_offset] = page_structure::StructureEntry(
             page_structure::PhysicalAddress(TRY(allocate_page_frame()).raw_value() >> 12),
             page_structure::Present(true), page_structure::Writable(true), page_structure::User(user));
         base().m_structure_pages.fetch_add(1, di::MemoryOrder::Relaxed);
+
+        auto pd_page = PhysicalAddress(pdp[pdp_offset].get<page_structure::PhysicalAddress>() << 12);
+        auto& pd_structure = init_as_page_structure_parent(pd_page);
+        pdp_structure.children.push_back(pd_structure);
     }
 
+    auto pd_page = PhysicalAddress(pdp[pdp_offset].get<page_structure::PhysicalAddress>() << 12);
+    auto& pd_structure = page_structure_page(pd_page);
+
     auto pd_offset = decomposed.get<page_structure::PdOffset>();
-    auto& pd =
-        TRY(map_physical_address(PhysicalAddress(pdp[pdp_offset].get<page_structure::PhysicalAddress>() << 12), 0x1000))
-            .typed<page_structure::PageStructureTable>();
+    auto& pd = TRY(map_physical_address(PhysicalAddress(pd_page.raw_value()), 0x1000))
+                   .typed<page_structure::PageStructureTable>();
     if (!pd[pd_offset].get<page_structure::Present>()) {
         pd[pd_offset] = page_structure::StructureEntry(
             page_structure::PhysicalAddress(TRY(allocate_page_frame()).raw_value() >> 12),
             page_structure::Present(true), page_structure::Writable(true), page_structure::User(user));
         base().m_structure_pages.fetch_add(1, di::MemoryOrder::Relaxed);
+
+        auto pt_page = PhysicalAddress(pd[pd_offset].get<page_structure::PhysicalAddress>() << 12);
+        auto& pt_structure = init_as_page_structure_leaf(pt_page);
+        pd_structure.children.push_back(pt_structure);
     }
 
+    auto pt_page = PhysicalAddress(pd[pd_offset].get<page_structure::PhysicalAddress>() << 12);
+    auto& pt_structure = page_structure_page(pt_page);
+
     auto pt_offset = decomposed.get<page_structure::PtOffset>();
-    auto& pt =
-        TRY(map_physical_address(PhysicalAddress(pd[pd_offset].get<page_structure::PhysicalAddress>() << 12), 0x1000))
-            .typed<page_structure::PageStructureTable>();
+    auto& pt = TRY(map_physical_address(PhysicalAddress(pt_page.raw_value()), 0x1000))
+                   .typed<page_structure::PageStructureTable>();
     if (pt[pt_offset].get<page_structure::Present>()) {
         println("WARNING: virtual address {} is already marked as present."_sv, location);
     }
@@ -256,6 +285,7 @@ Expected<void> LockedAddressSpace::map_physical_page(VirtualAddress location, Ph
         page_structure::PhysicalAddress(physical_address.raw_value() >> 12), page_structure::Present(true),
         page_structure::Writable(writable), page_structure::User(user), page_structure::NotExecutable(not_executable));
     base().m_resident_pages.fetch_add(1, di::MemoryOrder::Relaxed);
+    pt_structure.mapped_page_count++;
 
     flush_tlb_global(location);
 
@@ -346,18 +376,6 @@ Expected<void> LockedAddressSpace::setup_kernel_region(PhysicalAddress kernel_ph
 }
 
 Expected<void> LockedAddressSpace::bootstrap_kernel_page_tracking() {
-    auto init_as_page_structure_parent = [](PhysicalAddress address) -> PageStructurePhysicalPage& {
-        auto& page = physical_page(address);
-        di::construct_at(&page.as_page_structure_page, PageStructurePhysicalPage::Parent {});
-        return page.as_page_structure_page;
-    };
-
-    auto init_as_page_structure_leaf = [](PhysicalAddress address) -> PageStructurePhysicalPage& {
-        auto& page = physical_page(address);
-        di::construct_at(&page.as_page_structure_page, PageStructurePhysicalPage::Leaf {});
-        return page.as_page_structure_page;
-    };
-
     auto& global_state = global_state_in_boot();
     auto const max_physical_address = global_state.max_physical_address;
     auto const total_pages = di::divide_round_up(max_physical_address.raw_value(), 4096);
@@ -399,7 +417,6 @@ Expected<void> LockedAddressSpace::bootstrap_kernel_page_tracking() {
 
             auto& pd_structure = init_as_page_structure_leaf(PhysicalAddress(pd_page));
             pdp_structure.children.push_back(pd_structure);
-            pd_structure.parent = &pd_structure;
 
             if (pdp_offset == pdp_entry_count - 1) {
                 auto const last_pdp_entry_page_count =
@@ -440,7 +457,6 @@ Expected<void> LockedAddressSpace::bootstrap_kernel_page_tracking() {
                     return *it;
                 }
                 auto& result = init_as_page_structure_parent(pdp_page);
-                result.parent = &root;
                 root.children.push_back(result);
                 return result;
             }();
@@ -457,7 +473,6 @@ Expected<void> LockedAddressSpace::bootstrap_kernel_page_tracking() {
                     return *it;
                 }
                 auto& result = init_as_page_structure_parent(pd_page);
-                result.parent = &pdp_structure;
                 pdp_structure.children.push_back(result);
                 return result;
             }();
@@ -474,7 +489,6 @@ Expected<void> LockedAddressSpace::bootstrap_kernel_page_tracking() {
                     return *it;
                 }
                 auto& result = init_as_page_structure_leaf(pt_page);
-                result.parent = &pd_structure;
                 pd_structure.children.push_back(result);
                 return result;
             }();
@@ -520,6 +534,7 @@ Expected<di::Arc<AddressSpace>> create_empty_user_address_space() {
 
     auto new_pml4 = TRY(allocate_page_frame());
     new_address_space->set_architecture_page_table_base(new_pml4);
+    init_as_page_structure_parent(new_pml4);
 
     auto& kernel_address_space = global_state().kernel_address_space;
 

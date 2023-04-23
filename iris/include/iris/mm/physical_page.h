@@ -19,7 +19,6 @@ struct PageStructurePhysicalPage : di::IntrusiveListNode<> {
     constexpr explicit PageStructurePhysicalPage(Parent) : children() {}
     constexpr explicit PageStructurePhysicalPage(Leaf) : mapped_page_count(0) {}
 
-    PageStructurePhysicalPage* parent { nullptr };
     union {
         di::IntrusiveList<PageStructurePhysicalPage> children;
         u64 mapped_page_count { 0 };

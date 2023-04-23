@@ -72,7 +72,6 @@ public:
 
 private:
     PhysicalAddress m_architecture_page_table_base { 0 };
-    PageStructurePhysicalPage* m_page_structure_root { nullptr };
     di::Atomic<u64> m_resident_pages { 0 };
     di::Atomic<u64> m_structure_pages { 0 };
     bool m_kernel { false };
