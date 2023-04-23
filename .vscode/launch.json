@@ -18,6 +18,14 @@
             "MIMode": "gdb"
         },
         {
+            "name": "LLDB Qemu Launch",
+            "type": "lldb",
+            "request": "custom",
+            "preLaunchTask": "Debug and Build Iris",
+            "targetCreateCommands": ["target create ${command:cmake.buildDirectory}/iris/iris"],
+            "processCreateCommands": ["gdb-remote localhost:1234", "b iris_entry", "c"]
+        },
+        {
             "name": "GDB Qemu Launch",
             "type": "cppdbg",
             "request": "launch",
@@ -27,7 +35,14 @@
             "miDebuggerServerAddress": "localhost:1234",
             "externalConsole": false,
             "cwd": "${workspaceFolder}",
-            "preLaunchTask": "Debug and Build Iris"
+            "preLaunchTask": "Debug and Build Iris",
+            "postRemoteConnectCommands": [
+                {
+                    "text": "b iris_entry",
+                    "description": "Set breakpoint to kernel entry point",
+                    "ignoreFailures": false
+                }
+            ]
         }
     ]
 }
