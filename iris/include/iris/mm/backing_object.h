@@ -12,7 +12,7 @@ public:
     void add_page(mm::PhysicalAddress address, u64 page_offset);
 
 private:
-    di::IntrusiveTreeSet<BackedPhysicalPage> m_pages;
+    di::IntrusiveTreeSet<BackedPhysicalPage, BackedPhysicalPageTreeTag> m_pages;
 };
 
 class BackingObject

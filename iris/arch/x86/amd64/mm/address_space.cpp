@@ -1,6 +1,7 @@
 #include <di/container/view/prelude.h>
 #include <di/math/prelude.h>
 #include <di/util/prelude.h>
+#include <di/vocab/expected/prelude.h>
 #include <iris/arch/x86/amd64/page_structure.h>
 #include <iris/arch/x86/amd64/system_instructions.h>
 #include <iris/core/error.h>
@@ -43,40 +44,27 @@ AddressSpace::~AddressSpace() {
     with_preemption_disabled([&] {
         kernel_address_space.load();
 
-        auto from_physical_address = [](PhysicalAddress physical_address) {
-            // NOTE: as long as this page table is not corrupted, mapping the physical page will always succeed.
-            //       It is therefore OK to assert there are no issues creating the mapping.
-            auto result = map_physical_address(physical_address, 4096);
-            ASSERT(result);
-            return &result->typed<page_structure::PageStructureTable const>();
-        };
+        // Unmap all regions in this address space.
+        auto& locked = get_assuming_no_concurrent_accesses();
+        auto end = locked.m_regions.end();
+        for (auto it = locked.m_regions.begin(); it != end;) {
+            auto& region = *it++;
+            *locked.destroy_region(region.base(), region.length());
+        }
 
-        auto free_all_user_pages = di::ycombinator(
-            [&](auto&& self, page_structure::StructureEntry physical_page_structure, int depth = 0) -> void {
-                // Perform a post-order traversal over every physical page allocated in this layer. At depth 4, the
-                // physical pages no longer refer to other pages, and so we stop the recursion explicitly. The
-                // iteration only considers present pages which are not owned by the kernel.
-                auto physical_address =
-                    PhysicalAddress(physical_page_structure.get<page_structure::PhysicalAddress>() << 12);
-                if (depth < 4) {
-                    auto* structure = from_physical_address(physical_address);
-                    for (auto& entry : *structure) {
-                        if (!entry.get<page_structure::Present>() || !entry.get<page_structure::User>()) {
-                            continue;
-                        }
-                        self(entry, depth + 1);
-                    }
-                }
-
-                deallocate_page_frame(physical_address);
-            });
-
-        free_all_user_pages(di::bit_cast<page_structure::StructureEntry>(architecture_page_table_base()));
+        // Unmap the page table.
+        deallocate_page_frame(architecture_page_table_base());
     });
 }
 
 Expected<void> LockedAddressSpace::destroy_region(VirtualAddress base, usize length) {
-    m_regions.erase(base);
+    auto it = this->m_regions.find(base);
+    if (it == this->m_regions.end()) {
+        println("WARNING: trying to unmap non-existent region"_sv);
+        return di::Unexpected(Error::InvalidArgument);
+    }
+    auto object = it->backing_object().arc_from_this();
+    m_regions.erase(it);
 
     for (auto page = base; page < base + length; page += 4096zu) {
         auto decomposed = decompose_virtual_address(page);
@@ -116,7 +104,7 @@ Expected<void> LockedAddressSpace::destroy_region(VirtualAddress base, usize len
         }
 
         auto physical_address = PhysicalAddress(pt[pt_offset].get<page_structure::PhysicalAddress>() << 12);
-        deallocate_page_frame(physical_address);
+        drop_page(physical_address);
         pt[pt_offset] = page_structure::StructureEntry(page_structure::Present(false));
         this->base().m_resident_pages.fetch_sub(1, di::MemoryOrder::Relaxed);
 
@@ -287,6 +275,8 @@ Expected<void> LockedAddressSpace::map_physical_page(VirtualAddress location, Ph
     base().m_resident_pages.fetch_add(1, di::MemoryOrder::Relaxed);
     pt_structure.mapped_page_count++;
 
+    bump_page(physical_address);
+
     flush_tlb_global(location);
 
     return {};
@@ -302,7 +292,75 @@ Expected<void> LockedAddressSpace::create_low_identity_mapping(VirtualAddress ba
 }
 
 Expected<void> LockedAddressSpace::remove_low_identity_mapping(VirtualAddress base, usize page_aligned_length) {
-    return destroy_region(base, page_aligned_length);
+    for (auto page = base; page < base + page_aligned_length; page += 4096zu) {
+        auto decomposed = decompose_virtual_address(page);
+        auto pml4_offset = decomposed.get<page_structure::Pml4Offset>();
+        auto& pml4 = TRY(map_physical_address(this->base().architecture_page_table_base(), 0x1000))
+                         .typed<page_structure::PageStructureTable>();
+        if (!pml4[pml4_offset].get<page_structure::Present>()) {
+            println("WARNING: trying to unmap non-present page (PML4)"_sv);
+            continue;
+        }
+
+        auto pdp_page = PhysicalAddress(pml4[pml4_offset].get<page_structure::PhysicalAddress>() << 12);
+        auto pdp_offset = decomposed.get<page_structure::PdpOffset>();
+        auto& pdp =
+            TRY(map_physical_address(PhysicalAddress(pdp_page), 0x1000)).typed<page_structure::PageStructureTable>();
+        if (!pdp[pdp_offset].get<page_structure::Present>()) {
+            println("WARNING: trying to unmap non-present page (PDP)"_sv);
+            continue;
+        }
+
+        auto pd_page = PhysicalAddress(pdp[pdp_offset].get<page_structure::PhysicalAddress>() << 12);
+        auto pd_offset = decomposed.get<page_structure::PdOffset>();
+        auto& pd = TRY(map_physical_address(PhysicalAddress(pd_page.raw_value()), 0x1000))
+                       .typed<page_structure::PageStructureTable>();
+        if (!pd[pd_offset].get<page_structure::Present>()) {
+            println("WARNING: trying to unmap non-present page (PD)"_sv);
+            continue;
+        }
+
+        auto pt_page = PhysicalAddress(pd[pd_offset].get<page_structure::PhysicalAddress>() << 12);
+        auto pt_offset = decomposed.get<page_structure::PtOffset>();
+        auto& pt = TRY(map_physical_address(PhysicalAddress(pt_page.raw_value()), 0x1000))
+                       .typed<page_structure::PageStructureTable>();
+        if (!pt[pt_offset].get<page_structure::Present>()) {
+            println("WARNING: trying to unmap non-present page (PT)"_sv);
+            continue;
+        }
+
+        pt[pt_offset] = page_structure::StructureEntry(page_structure::Present(false));
+        this->base().m_resident_pages.fetch_sub(1, di::MemoryOrder::Relaxed);
+
+        // Make sure to cleanup the page structure tables if they are now empty.
+        auto& pt_structure = page_structure_page(pt_page);
+        if (--pt_structure.mapped_page_count == 0) {
+            auto& pd_structure = page_structure_page(pd_page);
+
+            pd[pd_offset] = page_structure::StructureEntry(page_structure::Present(false));
+            pd_structure.children.erase(pt_structure);
+            deallocate_page_frame(pt_page);
+
+            if (pd_structure.children.empty()) {
+                auto& pdp_structure = page_structure_page(pdp_page);
+
+                pdp[pdp_offset] = page_structure::StructureEntry(page_structure::Present(false));
+                pdp_structure.children.erase(pd_structure);
+                deallocate_page_frame(pd_page);
+
+                if (pdp_structure.children.empty()) {
+                    auto& pml4_structure = page_structure_page(this->base().architecture_page_table_base());
+
+                    pml4[pml4_offset] = page_structure::StructureEntry(page_structure::Present(false));
+                    pml4_structure.children.erase(pdp_structure);
+                    deallocate_page_frame(pdp_page);
+                }
+            }
+        }
+    }
+
+    flush_tlb_global(base, page_aligned_length);
+    return {};
 }
 
 Expected<void> LockedAddressSpace::setup_physical_memory_map(PhysicalAddress start, PhysicalAddress end,
@@ -518,6 +576,7 @@ Expected<void> LockedAddressSpace::bootstrap_kernel_page_tracking() {
             auto& pt = TRY(map_physical_address(pt_page, 0x1000)).typed<page_structure::PageStructureTable>();
             auto backing_page = PhysicalAddress(pt[pt_offset].get<page_structure::PhysicalAddress>() << 12);
             backing_object.get_assuming_no_concurrent_accesses().add_page(backing_page, page_index);
+            bump_page(backing_page);
         }
 
         return {};

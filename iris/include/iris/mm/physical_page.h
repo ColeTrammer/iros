@@ -3,10 +3,13 @@
 #include <di/assert/prelude.h>
 #include <di/concepts/implicit_lifetime.h>
 #include <di/container/intrusive/prelude.h>
+#include <di/function/prelude.h>
+#include <di/sync/memory_order.h>
 #include <di/types/integers.h>
 #include <di/types/prelude.h>
 #include <di/util/prelude.h>
 #include <di/vocab/pointer/prelude.h>
+#include <iris/mm/page_frame_allocator.h>
 #include <iris/mm/physical_address.h>
 #include <iris/mm/virtual_address.h>
 
@@ -25,12 +28,25 @@ struct PageStructurePhysicalPage : di::IntrusiveListNode<> {
     };
 };
 
+struct BackedPhysicalPage;
+
+struct BackedPhysicalPagePtrTag {
+private:
+    friend void tag_invoke(di::Tag<di::vocab::intrusive_ptr_increment>, di::InPlaceType<BackedPhysicalPagePtrTag>,
+                           BackedPhysicalPage* ptr);
+    friend void tag_invoke(di::Tag<di::vocab::intrusive_ptr_decrement>, di::InPlaceType<BackedPhysicalPagePtrTag>,
+                           BackedPhysicalPage* ptr);
+};
+
+struct BackedPhysicalPageTreeTag : di::container::IntrusiveTagBase<BackedPhysicalPage> {
+    static void did_remove(auto&, auto& node);
+};
+
 /// @brief A physical page of memory tracked by a backing object.
-struct BackedPhysicalPage
-    : di::IntrusiveRefCount<BackedPhysicalPage>
-    , di::IntrusiveTreeSetNode<> {
+struct BackedPhysicalPage : di::IntrusiveTreeSetNode<BackedPhysicalPageTreeTag> {
     constexpr explicit BackedPhysicalPage(u64 page_number) : page_number(page_number) {}
 
+    di::sync::Atomic<usize> reference_count { 1 };
     u64 page_number;
 
 private:
@@ -96,5 +112,43 @@ inline PageStructurePhysicalPage& page_structure_page(PhysicalAddress address) {
 
 inline BackedPhysicalPage& backed_page(PhysicalAddress address) {
     return physical_page(address).as_backed_page;
+}
+
+namespace detail {
+    struct BumpPage {
+        inline void operator()(BackedPhysicalPage& page) const {
+            page.reference_count.fetch_add(1, di::sync::MemoryOrder::AcquireRelease);
+        }
+
+        inline void operator()(PhysicalAddress address) const {
+            auto& page = backed_page(address);
+            page.reference_count.fetch_add(1, di::sync::MemoryOrder::AcquireRelease);
+        }
+    };
+}
+
+constexpr inline auto bump_page = detail::BumpPage {};
+
+namespace detail {
+    struct DropPageFunction {
+        inline void operator()(BackedPhysicalPage& page) const {
+            if (page.reference_count.fetch_sub(1, di::sync::MemoryOrder::AcquireRelease) == 1) {
+                deallocate_page_frame(physical_address(page));
+            }
+        }
+
+        inline void operator()(PhysicalAddress address) const {
+            auto& page = backed_page(address);
+            if (page.reference_count.fetch_sub(1, di::sync::MemoryOrder::AcquireRelease) == 1) {
+                deallocate_page_frame(physical_address(page));
+            }
+        }
+    };
+}
+
+constexpr inline auto drop_page = iris::mm::detail::DropPageFunction {};
+
+void BackedPhysicalPageTreeTag::did_remove(auto&, auto& node) {
+    drop_page(node);
 }
 }

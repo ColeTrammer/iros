@@ -40,6 +40,8 @@ public:
     AddressSpace& base();
 
 private:
+    friend class AddressSpace;
+
     di::IntrusiveTreeSet<Region, AddressSpaceRegionListTag> m_regions;
 };
 

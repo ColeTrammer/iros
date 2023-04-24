@@ -6,6 +6,10 @@
 #include <iris/mm/page_frame_allocator.h>
 #include <iris/mm/sections.h>
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic ignored "-Wsized-deallocation"
+#endif
+
 // These functions are explicitly not to be used in the iris kernel.
 // Nothrow new and sized deallocations are required throughout the kernel.
 // void* operator new(std::size_t size);
@@ -42,15 +46,15 @@ void* operator new(std::size_t size, std::align_val_t alignment, std::nothrow_t 
                     return nullptr;
                 }
 
+                auto const page_number = (virtual_address - global_state.heap_start) / 4096;
+                heap_region.backing_object().lock()->add_page(*physical_page, page_number);
+
                 if (!address_space.map_physical_page(virtual_address, *physical_page,
                                                      iris::mm::RegionFlags::Readable |
                                                          iris::mm::RegionFlags::Writable)) {
                     iris::println(u8"Failed to map physical page in ::new()"_sv);
                     return nullptr;
                 }
-
-                auto const page_number = (virtual_address - global_state.heap_start) / 4096;
-                heap_region.backing_object().lock()->add_page(*physical_page, page_number);
             }
             heap_region.set_end(virtual_end);
         }
