@@ -80,7 +80,7 @@ void tag_invoke(di::Tag<enable_irq_line>, IoApic& self, IrqLine irq_line) {
 
     // Set the interrupt vector.
     redirection_entry.set<IoApicRedirectionTableEntryVector>(
-        (global_state().arch_readonly_state.external_irq_offset + i8(irq_line.raw_value())).raw_value());
+        (global_state().arch_readonly_state.external_irq_offset + irq_line.raw_value()).raw_value());
 
     // Set the delivery mode to fixed.
     redirection_entry.set<IoApicRedirectionTableEntryDeliveryMode>(ApicMessageType::Fixed);

@@ -42,7 +42,7 @@ public:
         m_address_space->load();
         m_fpu_state.load();
         if (m_kernel_stack.raw_value() != 0) {
-            arch::load_kernel_stack(m_kernel_stack + 0x2000);
+            arch::load_kernel_stack(m_kernel_stack + 0x2000zu);
         }
         arch::load_userspace_thread_pointer(userspace_thread_pointer(), m_task_state);
 

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <di/assert/prelude.h>
+#include <di/container/intrusive/prelude.h>
+#include <iris/mm/backing_object.h>
 #include <iris/mm/virtual_address.h>
 
 namespace iris::mm {
@@ -22,6 +24,8 @@ struct AddressSpaceRegionListTag : di::container::IntrusiveTagBase<Region> {
 
 class Region : public di::IntrusiveTreeSetNode<AddressSpaceRegionListTag> {
 public:
+    Region() = default;
+
     constexpr explicit Region(VirtualAddress base, usize length, RegionFlags flags)
         : m_base(base), m_length(length), m_flags(flags) {
         ASSERT_GT(length, 0u);
@@ -36,8 +40,15 @@ public:
     constexpr auto each_page() const { return di::iota(base(), end()) | di::stride(0x1000z); }
 
     constexpr void set_base(VirtualAddress base) { m_base = base; }
+    constexpr void set_length(usize length) { m_length = length; }
+    constexpr void set_flags(RegionFlags flags) { m_flags = flags; }
+    constexpr void set_backing_object(di::Arc<BackingObject> backing_object) {
+        m_backing_object = di::move(backing_object);
+    }
+    constexpr void set_end(VirtualAddress end) { m_length = end - m_base; }
 
     constexpr RegionFlags flags() const { return m_flags; }
+    constexpr BackingObject& backing_object() const { return *m_backing_object; }
 
     constexpr bool readable() const { return !!(m_flags & RegionFlags::Readable); }
     constexpr bool writable() const { return !!(m_flags & RegionFlags::Writable); }
@@ -74,6 +85,7 @@ private:
 
     VirtualAddress m_base;
     usize m_length { 0 };
+    di::Arc<BackingObject> m_backing_object;
     RegionFlags m_flags {};
 };
 

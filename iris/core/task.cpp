@@ -40,7 +40,7 @@ Expected<di::Arc<Task>> create_kernel_task(TaskNamespace& task_namespace, void (
     auto result = TRY(di::try_make_arc<Task>(false, address_space.arc_from_this(), task_namespace.arc_from_this(),
                                              task_id, FileTable {}, di::move(task_status)));
     result->set_instruction_pointer(entry_address);
-    result->set_stack_pointer(stack + 0x2000);
+    result->set_stack_pointer(stack + 0x2000zu);
     result->set_kernel_stack(stack);
     TRY(task_namespace.lock()->register_task(*result));
     return result;
@@ -141,7 +141,7 @@ Expected<void> load_executable(Task& task, di::PathView path) {
             task.set_argument4(0);
 
             // Ensure the stack is 16-byte aligned.
-            task.set_stack_pointer(user_stack + stack_size - 16 + sizeof(uptr));
+            task.set_stack_pointer(user_stack + stack_size - 16zu + sizeof(uptr));
         } else {
             // Determine the amount of stack memory needed, and error if there is not at least 4096 bytes left.
             auto string_bytes_needed = di::concat(task_arguments->arguments(), task_arguments->enviornment()) |
@@ -184,7 +184,7 @@ Expected<void> load_executable(Task& task, di::PathView path) {
             task.set_argument4(envc);
 
             // Ensure the stack is 16-byte aligned.
-            task.set_stack_pointer(string_record_base - 16 + sizeof(uptr));
+            task.set_stack_pointer(string_record_base - 16zu + sizeof(uptr));
         }
 
         return {};

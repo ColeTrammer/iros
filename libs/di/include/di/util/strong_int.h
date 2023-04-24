@@ -52,11 +52,24 @@ public:
 
     constexpr Type raw_value() const { return m_value; }
 
-    constexpr StrongInt& operator+=(SSizeType x) {
+    constexpr StrongInt& operator+=(Type x) {
         m_value += x;
         return *this;
     }
-    constexpr StrongInt& operator-=(SSizeType x) {
+    constexpr StrongInt& operator+=(SSizeType x)
+    requires(!concepts::SameAs<SSizeType, Type>)
+    {
+        m_value += x;
+        return *this;
+    }
+
+    constexpr StrongInt& operator-=(Type x) {
+        m_value -= x;
+        return *this;
+    }
+    constexpr StrongInt& operator-=(SSizeType x)
+    requires(!concepts::SameAs<SSizeType, Type>)
+    {
         m_value -= x;
         return *this;
     }
@@ -82,10 +95,32 @@ public:
     }
 
 private:
-    constexpr friend StrongInt operator+(StrongInt a, SSizeType b) { return StrongInt(a.raw_value() + b); }
-    constexpr friend StrongInt operator+(SSizeType a, StrongInt b) { return StrongInt(a + b.raw_value()); }
-    constexpr friend StrongInt operator-(StrongInt a, SSizeType b) { return StrongInt(a.raw_value() - b); }
-    constexpr friend StrongInt operator-(SSizeType a, StrongInt b) { return StrongInt(a - b.raw_value()); }
+    constexpr friend StrongInt operator+(StrongInt a, Type b) { return StrongInt(a.raw_value() + b); }
+    constexpr friend StrongInt operator+(StrongInt a, SSizeType b)
+    requires(!concepts::SameAs<SSizeType, Type>)
+    {
+        return StrongInt(a.raw_value() + b);
+    }
+    constexpr friend StrongInt operator+(Type a, StrongInt b) { return StrongInt(a + b.raw_value()); }
+    constexpr friend StrongInt operator+(SSizeType a, StrongInt b)
+    requires(!concepts::SameAs<SSizeType, Type>)
+    {
+        return StrongInt(a + b.raw_value());
+    }
+
+    constexpr friend StrongInt operator-(StrongInt a, Type b) { return StrongInt(a.raw_value() - b); }
+    constexpr friend StrongInt operator-(StrongInt a, SSizeType b)
+    requires(!concepts::SameAs<SSizeType, Type>)
+    {
+        return StrongInt(a.raw_value() - b);
+    }
+    constexpr friend StrongInt operator-(Type a, StrongInt b) { return StrongInt(a - b.raw_value()); }
+    constexpr friend StrongInt operator-(SSizeType a, StrongInt b)
+    requires(!concepts::SameAs<SSizeType, Type>)
+    {
+        return StrongInt(a - b.raw_value());
+    }
+
     constexpr friend SSizeType operator-(StrongInt a, StrongInt b) { return a.raw_value() - b.raw_value(); }
 
     constexpr friend bool operator==(StrongInt a, StrongInt b) { return a.raw_value() == b.raw_value(); }

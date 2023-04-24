@@ -21,7 +21,7 @@ struct PageStructurePhysicalPage : di::IntrusiveListNode<> {
 
     union {
         di::IntrusiveList<PageStructurePhysicalPage> children;
-        u64 mapped_page_count { 0 };
+        u64 mapped_page_count;
     };
 };
 
@@ -29,6 +29,8 @@ struct PageStructurePhysicalPage : di::IntrusiveListNode<> {
 struct BackedPhysicalPage
     : di::IntrusiveRefCount<BackedPhysicalPage>
     , di::IntrusiveTreeSetNode<> {
+    constexpr explicit BackedPhysicalPage(u64 page_number) : page_number(page_number) {}
+
     u64 page_number;
 
 private:

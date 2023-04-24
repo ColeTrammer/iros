@@ -17,6 +17,7 @@
 #include <iris/hw/irq.h>
 #include <iris/hw/timer.h>
 #include <iris/mm/address_space.h>
+#include <iris/mm/backing_object.h>
 #include <iris/mm/physical_address.h>
 
 #include IRIS_ARCH_INCLUDE(hw/processor_info.h)
@@ -56,6 +57,9 @@ struct GlobalState {
     /// `.with_lock()` to mutate or even read these fields.
     /// @{
     mutable mm::AddressSpace kernel_address_space;
+    mutable mm::VirtualAddress heap_end { 0 };
+    mutable di::Array<mm::Region, 6> inital_kernel_regions;
+    mutable di::Array<mm::BackingObject, 5> inital_kernel_backing_objects;
     mutable TaskNamespace task_namespace;
     mutable di::Queue<byte, di::StaticRing<byte, di::meta::SizeConstant<128>>> input_data_queue;
     mutable WaitQueue input_wait_queue;

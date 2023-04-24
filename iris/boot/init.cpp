@@ -77,7 +77,7 @@ void iris_main() {
 
     auto& global_state = global_state_in_boot();
     global_state.heap_start = iris::mm::VirtualAddress(di::align_up(iris::mm::kernel_end.raw_value(), 4096));
-    global_state.kernel_address_space.get_assuming_no_concurrent_accesses().set_heap_end(global_state.heap_start);
+    global_state.heap_end = global_state.heap_start;
 
     auto memory_map = di::Span { memmap_request.response->entries, memmap_request.response->entry_count };
 

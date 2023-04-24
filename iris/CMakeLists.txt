@@ -76,6 +76,7 @@ if(IROS_BuildIris)
         hw/irq.cpp
         hw/timer.cpp
         mm/address_space.cpp
+        mm/backing_object.cpp
         mm/heap.cpp
         mm/page_frame_allocator.cpp
         uapi/syscall.cpp
