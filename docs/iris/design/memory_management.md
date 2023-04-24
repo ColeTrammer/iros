@@ -180,6 +180,73 @@ Currently, there is an extremely large gap between the physical structure pages 
 Limine puts the identity map at the half-way point of the address space. This layout can be changed when dropping the
 direct dependency on the Limine HHDM, which will give userspace much more available memory.
 
+## Memory Region Backing Objects
+
+A naive scheme for memory management assumes a 1:1 relationship between pages and address spaces. However, this is not
+extensible, since it makes supporting necessary features, such as shared memory, copy-on-write memory, memory mapped, a
+shared zero-page, and lazy-page allocation, impossible.
+
+For this reason, the Iris kernel assigns each virtual region a single "backing" object, which is the single true owner
+of a set of related physical pages.
+
+### Implementing Shared Memory
+
+Using this scheme, implementing shared memory is trivial. Two separate regions will simply point to the same reference
+counted backing object. The reference counting mechanism ensures that the backing object will always be kept alive.
+
+### Implementing Memory-Mapped Files
+
+Memory mapped files likewise will simply use a backing object. Furthermore, this backing object will be the single
+source of truth within the file system, so these objects will serve as the page cache. Even when performing normal reads
+into the kernel, the memory will first be fetched into the inode's backing object, so that the values will be
+automatically cached for future use. Private mappings can be created by creating a COW backing object based on the
+shared backing object.
+
+### Implementing COW Memory and the Shared Zero-Page
+
+COW memory relies additionally on the physical page structure mechanism. Each page present in an address space has an
+associated reference-count, and will not be released until this reference goes to zero. However, pages are still "owned"
+by exactly one backing object. So, when creating a COW region, a new backing object is created that owns 0 pages. When
+creating this mapping, the page tables are modified to prevent writing to that memory region, but the old backing
+object's physical pages are used to setup the mapping. When a COW fault occurs, the reference-count can be inspected,
+and if it is a 1, the object can simply take ownership of it. Otherwise, a new page is needed. The shared-zero page
+simply won't be owned by an object, and so will never be freed.
+
+There are actually 2 possible modes when creating a COW mapping. This reflects the difference between fork() and
+MAP_PRIVATE. With fork(), the mapping must be isolated from the parent, so the parent's backing object must also give up
+ownership of the physical pages. As a consequence, this type of mapping also requires inspecting the parent's page
+tables, to copy over any previous COW mappings (for instance, from a prior fork() call). With MAP_PRIVATE, the parent's
+backing object can keep ownership of the physical pages, and only the child region needs to be mapped copy-on-write.
+This means that MAP_PRIVATE regions can be modified by anyone with a MAP_SHARED region to the same file, before the
+child process has a chance to modify it. This seems horribly confusing, but is the sematnics of most unix systems,
+including Linux.
+
+### Implementing Backing Objects
+
+Backing objects will primarily be represented using an intrusive RB tree of physical pages, keyed by relative page
+number. This means the MM objects can be tracked without allocation, achieve O(log N) lookup, and trivially support
+sparse storage. This means a MM object backing a 2 TiB disk drive uses effectively 0 extra space. Constant time lookup
+is possible if a dynamic vector is used, but this requires allocations and is far too wasteful for backing files.
+
+#### Potential Limitations
+
+The only issue with the intrusive approach is that physical pages must be owned by only a single MM object. This doesn't
+prevent implementing COW semantics, but it does prevent sharing a cache between the disk driver and file system driver,
+when there is a 1:1 mapping between file system block and disk block. Consider the ext2 file system, which normally
+breaks the partition into 4 KiB blocks. Each of these blocks is a single page, and corresponds exactly to a page cache
+entry a block device will have. It would be nice to share these cache entries, but it is not possible to do so under
+this scheme.
+
+However, this isn't really a problem. Any "normal" file system will ensure that multiple files won't map to the same
+blocks, and since all IO will go through the file system driver, there is really no need for the disk cache to do
+anything.
+
+But things a probably different when considering modern filesystems with direct support for COW semantics. For example,
+on btrfs, files can clone extents, which means that files can share the same underlying data. Under this model, the
+naive view proposed breaks down. On the other hand, things can be saved by considering extents to be the underlying
+backing objects, and adding some higher-order backing object which combines multiples extents into a single backing
+object. This can be investigated further sometime if the need truely arises.
+
 ## TLB Management
 
 The Translation Lookaside Buffer (TLB) is a cache of virtual to physical address mappings. The processor uses this cache
