@@ -64,9 +64,11 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
         case SystemCall::allocate_memory: {
             auto amount = task_state.syscall_arg1();
 
+            auto new_object = TRY(di::try_make_arc<mm::BackingObject>());
             auto& address_space = current_task.address_space();
             return address_space
-                .allocate_region(amount, mm::RegionFlags::User | mm::RegionFlags::Writable | mm::RegionFlags::Readable)
+                .allocate_region(di::move(new_object), amount,
+                                 mm::RegionFlags::User | mm::RegionFlags::Writable | mm::RegionFlags::Readable)
                 .transform(&mm::VirtualAddress::raw_value);
         }
         case SystemCall::open: {

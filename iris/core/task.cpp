@@ -1,5 +1,6 @@
 #include <di/exec/elf/prelude.h>
 #include <di/math/prelude.h>
+#include <di/vocab/pointer/prelude.h>
 #include <iris/core/error.h>
 #include <iris/core/global_state.h>
 #include <iris/core/interrupt_disabler.h>
@@ -33,7 +34,9 @@ Expected<di::Arc<Task>> create_kernel_task(TaskNamespace& task_namespace, void (
     auto entry_address = mm::VirtualAddress(di::to_uintptr(entry));
 
     auto& address_space = global_state().kernel_address_space;
-    auto stack = TRY(address_space.allocate_region(0x2000, mm::RegionFlags::Readable | mm::RegionFlags::Writable));
+    auto stack_object = TRY(di::try_make_arc<mm::BackingObject>());
+    auto stack = TRY(address_space.allocate_region(di::move(stack_object), 0x2000,
+                                                   mm::RegionFlags::Readable | mm::RegionFlags::Writable));
 
     auto task_status = TRY(di::try_make_arc<TaskStatus>());
     auto task_id = TRY(task_namespace.lock()->allocate_task_id());
@@ -54,8 +57,9 @@ Expected<di::Arc<Task>> create_user_task(TaskNamespace& task_namespace, FileTabl
                                              di::move(file_table), di::move(task_status)));
     TRY(result->fpu_state().setup_fpu_state());
 
-    auto kernel_stack = TRY(global_state().kernel_address_space.allocate_region(0x2000, mm::RegionFlags::Writable |
-                                                                                            mm::RegionFlags::Readable));
+    auto kernel_stack_object = TRY(di::try_make_arc<mm::BackingObject>());
+    auto kernel_stack = TRY(global_state().kernel_address_space.allocate_region(
+        di::move(kernel_stack_object), 0x2000, mm::RegionFlags::Writable | mm::RegionFlags::Readable));
     result->set_kernel_stack(kernel_stack);
 
     TRY(task_namespace.lock()->register_task(*result));
@@ -73,8 +77,10 @@ Expected<void> load_executable(Task& task, di::PathView path) {
     constexpr auto stack_size = 0x10000_usize;
 
     task.set_address_space(TRY(mm::create_empty_user_address_space()));
-    auto user_stack = TRY(task.address_space().allocate_region(
-        stack_size, mm::RegionFlags::Writable | mm::RegionFlags::User | mm::RegionFlags::Readable));
+    auto user_stack_object = TRY(di::try_make_arc<mm::BackingObject>());
+    auto user_stack = TRY(task.address_space().allocate_region(di::move(user_stack_object), stack_size,
+                                                               mm::RegionFlags::Writable | mm::RegionFlags::User |
+                                                                   mm::RegionFlags::Readable));
 
     using ElfHeader = di::exec::ElfHeader<>;
     using ProgramHeader = di::exec::ElfProgramHeader<>;
@@ -116,10 +122,11 @@ Expected<void> load_executable(Task& task, di::PathView path) {
             auto end = program_header.virtual_addr.value() + program_header.memory_size;
             auto aligned_end = di::align_up(end, 4096);
             auto aligned_start = di::align_down(program_header.virtual_addr.value(), 4096);
+            auto region_object = TRY(di::try_make_arc<mm::BackingObject>());
             auto region = di::try_box<mm::Region>(mm::VirtualAddress(aligned_start), aligned_end - aligned_start,
                                                   mm::RegionFlags::User | mm::RegionFlags::Readable |
                                                       mm::RegionFlags::Executable | mm::RegionFlags::Writable);
-            (void) address_space->allocate_region_at(*di::move(region));
+            (void) address_space->allocate_region_at(di::move(region_object), *di::move(region));
 
             auto data = di::Span { reinterpret_cast<di::Byte*>(program_header.virtual_addr.value()),
                                    program_header.memory_size };

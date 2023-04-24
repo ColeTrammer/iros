@@ -1,3 +1,4 @@
+#include <di/vocab/pointer/prelude.h>
 #include <iris/arch/x86/amd64/core/interrupt_disabler.h>
 #include <iris/arch/x86/amd64/core/processor.h>
 #include <iris/arch/x86/amd64/gdt.h>
@@ -11,6 +12,7 @@
 #include <iris/core/print.h>
 #include <iris/hw/irq.h>
 #include <iris/hw/timer.h>
+#include <iris/mm/backing_object.h>
 #include <iris/mm/map_physical_address.h>
 
 namespace iris {
@@ -400,8 +402,9 @@ static void boot_ap(acpi::ProcessorLocalApicStructure const& acpi_local_apic_str
 
     constexpr auto ap_stack_size = 0x2000_usize;
 
-    auto stack = *global_state.kernel_address_space.allocate_region(ap_stack_size, mm::RegionFlags::Readable |
-                                                                                       mm::RegionFlags::Writable);
+    auto stack_object = *di::try_make_arc<mm::BackingObject>();
+    auto stack = *global_state.kernel_address_space.allocate_region(
+        di::move(stack_object), ap_stack_size, mm::RegionFlags::Readable | mm::RegionFlags::Writable);
 
     auto& processor = *global_state.alernate_processors.emplace_back(acpi_local_apic_structure.apic_id);
     processor.arch_processor().set_fallback_kernel_stack((stack + ap_stack_size).raw_value());

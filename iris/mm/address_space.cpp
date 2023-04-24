@@ -2,6 +2,7 @@
 #include <iris/core/global_state.h>
 #include <iris/core/print.h>
 #include <iris/mm/address_space.h>
+#include <iris/mm/backing_object.h>
 #include <iris/mm/map_physical_address.h>
 #include <iris/mm/page_frame_allocator.h>
 #include <iris/mm/physical_address.h>
@@ -14,7 +15,8 @@ AddressSpace& LockedAddressSpace::base() {
         reinterpret_cast<di::Synchronized<LockedAddressSpace, InterruptibleSpinlock>&>(*this));
 }
 
-Expected<VirtualAddress> LockedAddressSpace::allocate_region(di::Box<Region> region) {
+Expected<VirtualAddress> LockedAddressSpace::allocate_region(di::Arc<BackingObject> backing_object,
+                                                             di::Box<Region> region) {
     // Basic hack algorithm: allocate the new region at a large fixed offset from the old region.
     // Additionally, immediately fill in the newly created pages.
 
@@ -38,38 +40,59 @@ Expected<VirtualAddress> LockedAddressSpace::allocate_region(di::Box<Region> reg
 
     region->set_base(new_virtual_address);
     auto [new_region, did_insert] = m_regions.insert(*region.release());
+    if (!did_insert) {
+        println("WARNING: attempt to allocate a region at an already-allocated address."_sv);
+        return di::Unexpected(Error::InvalidArgument);
+    }
 
-    for (auto virtual_address : new_region->each_page()) {
-        TRY(map_physical_page(virtual_address, TRY(allocate_page_frame()), flags));
+    {
+        auto guard = backing_object->lock();
+        new_region->set_backing_object(di::move(backing_object));
+        for (auto [page_number, virtual_address] : di::enumerate(new_region->each_page())) {
+            auto page_frame = TRY(allocate_page_frame());
+            guard->add_page(page_frame, page_number);
+            TRY(map_physical_page(virtual_address, page_frame, flags));
+        }
     }
 
     return new_region->base();
 }
 
-Expected<void> LockedAddressSpace::allocate_region_at(di::Box<Region> region) {
+Expected<void> LockedAddressSpace::allocate_region_at(di::Arc<BackingObject> backing_object, di::Box<Region> region) {
     auto flags = region->flags();
-
-    auto [new_region, did_insert] = m_regions.insert(*region.release());
-
     if (base().m_kernel == !!(flags & RegionFlags::User)) {
         println("WARNING: attempt to allocate a region with mismatched userspace flag."_sv);
         return di::Unexpected(Error::InvalidArgument);
     }
 
-    for (auto virtual_address : new_region->each_page()) {
-        TRY(map_physical_page(virtual_address, TRY(allocate_page_frame()), flags));
+    auto [new_region, did_insert] = m_regions.insert(*region.release());
+    if (!did_insert) {
+        println("WARNING: attempt to allocate a region at an already-allocated address."_sv);
+        return di::Unexpected(Error::InvalidArgument);
+    }
+
+    {
+        auto guard = backing_object->lock();
+        new_region->set_backing_object(di::move(backing_object));
+        for (auto [page_number, virtual_address] : di::enumerate(new_region->each_page())) {
+            auto page_frame = TRY(allocate_page_frame());
+            guard->add_page(page_frame, page_number);
+            TRY(map_physical_page(virtual_address, page_frame, flags));
+        }
     }
     return {};
 }
 
-Expected<VirtualAddress> AddressSpace::allocate_region(usize page_aligned_length, RegionFlags flags) {
+Expected<VirtualAddress> AddressSpace::allocate_region(di::Arc<BackingObject> backing_object, usize page_aligned_length,
+                                                       RegionFlags flags) {
     auto region = TRY(di::try_box<Region>(VirtualAddress(0), page_aligned_length, flags));
-    return lock()->allocate_region(di::move(region));
+    return lock()->allocate_region(di::move(backing_object), di::move(region));
 }
 
-Expected<void> AddressSpace::allocate_region_at(VirtualAddress location, usize page_aligned_length, RegionFlags flags) {
+Expected<void> AddressSpace::allocate_region_at(di::Arc<BackingObject> backing_object, VirtualAddress location,
+                                                usize page_aligned_length, RegionFlags flags) {
     auto region = TRY(di::try_box<Region>(location, page_aligned_length, flags));
-    return lock()->allocate_region_at(di::move(region));
+    return lock()->allocate_region_at(di::move(backing_object), di::move(region));
 }
 
 Expected<void> init_and_load_initial_kernel_address_space(PhysicalAddress kernel_physical_start,

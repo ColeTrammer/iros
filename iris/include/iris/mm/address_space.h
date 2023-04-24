@@ -5,6 +5,7 @@
 #include <di/vocab/pointer/prelude.h>
 #include <iris/core/error.h>
 #include <iris/core/interruptible_spinlock.h>
+#include <iris/mm/backing_object.h>
 #include <iris/mm/physical_address.h>
 #include <iris/mm/physical_page.h>
 #include <iris/mm/region.h>
@@ -19,8 +20,8 @@ public:
                                            RegionFlags flags);
     Expected<void> map_physical_page(VirtualAddress location, PhysicalAddress physical_address, RegionFlags flags);
 
-    Expected<VirtualAddress> allocate_region(di::Box<Region> region);
-    Expected<void> allocate_region_at(di::Box<Region> region);
+    Expected<VirtualAddress> allocate_region(di::Arc<BackingObject> backing_object, di::Box<Region> region);
+    Expected<void> allocate_region_at(di::Arc<BackingObject> backing_object, di::Box<Region> region);
 
     Expected<void> destroy_region(VirtualAddress start, usize length);
 
@@ -63,8 +64,10 @@ public:
     u64 resident_pages() const { return m_resident_pages.load(di::MemoryOrder::Relaxed); }
     u64 structure_pages() const { return m_structure_pages.load(di::MemoryOrder::Relaxed); }
 
-    Expected<VirtualAddress> allocate_region(usize page_aligned_length, RegionFlags flags);
-    Expected<void> allocate_region_at(VirtualAddress location, usize page_aligned_length, RegionFlags flags);
+    Expected<VirtualAddress> allocate_region(di::Arc<BackingObject> backing_object, usize page_aligned_length,
+                                             RegionFlags flags);
+    Expected<void> allocate_region_at(di::Arc<BackingObject> backing_object, VirtualAddress location,
+                                      usize page_aligned_length, RegionFlags flags);
 
 private:
     PhysicalAddress m_architecture_page_table_base { 0 };
