@@ -33,6 +33,7 @@ add_executable(
     test_math_rational.cpp
     test_meta.cpp
     test_parser.cpp
+    test_reflect.cpp
     test_sync_in_place_stop_source.cpp
     test_util.cpp
     test_util_swap.cpp
