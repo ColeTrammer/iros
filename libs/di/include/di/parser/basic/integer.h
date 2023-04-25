@@ -132,7 +132,7 @@ namespace detail {
 
     template<concepts::Integer T, IntegerMode mode = IntegerMode::Improved>
     struct IntegerFunction {
-        constexpr auto operator()(int radix = 10) const {
+        constexpr auto operator()(int radix = 0) const {
             using namespace di::literals;
 
             DI_ASSERT(radix == 0 || radix >= 2 && radix <= 36);

@@ -81,7 +81,7 @@ namespace detail {
 
     private:
         constexpr friend auto tag_invoke(types::Tag<create_parser_in_place>, InPlaceType<Width>) {
-            return parser::integer<size_t>() % [](size_t value) {
+            return parser::integer<size_t>(10) % [](size_t value) {
                 return Width { value };
             };
         }
@@ -92,7 +92,7 @@ namespace detail {
 
     private:
         constexpr friend auto tag_invoke(types::Tag<create_parser_in_place>, InPlaceType<Precision>) {
-            return (~parser::match_one('.'_m) >> parser::integer<size_t>()) % [](size_t value) {
+            return (~parser::match_one('.'_m) >> parser::integer<size_t>(10)) % [](size_t value) {
                 return Precision { value };
             };
         }

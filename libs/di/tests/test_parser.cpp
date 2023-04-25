@@ -43,6 +43,11 @@ constexpr void integer() {
     ASSERT(!di::parse<i32>(u8"-2147483649"_sv));
     ASSERT(!di::parse<i32>(u8"1111111111111111111111"_sv));
 
+    // Detect radix.
+    ASSERT_EQ(di::parse<i32>(u8"0b1111111111111111111111"_sv), 0b1111111111111111111111);
+    ASSERT_EQ(di::parse<i32>(u8"0o777"_sv), 0777);
+    ASSERT_EQ(di::parse<i32>(u8"0x7ff"_sv), 0x7ff);
+
     ASSERT_EQ(di::parse<u32>(u8"4294967295"_sv), di::NumericLimits<u32>::max);
     ASSERT(!di::parse<u32>(u8"4294967296"_sv));
 

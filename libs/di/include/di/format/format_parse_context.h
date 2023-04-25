@@ -2,6 +2,7 @@
 
 #include <di/container/string/encoding.h>
 #include <di/container/string/string_view_impl.h>
+#include <di/parser/basic/integer.h>
 #include <di/parser/prelude.h>
 #include <di/util/compile_time_fail.h>
 #include <di/vocab/error/prelude.h>
@@ -96,7 +97,7 @@ public:
                 auto digit_parser = parser::match_zero_or_more('0'_m - '9'_m);
                 auto digit_result = *digit_parser.parse(inside_view_context);
                 if (!digit_result.empty()) {
-                    auto index = parser::parse<size_t>(digit_result);
+                    auto index = parser::run_parser(parser::integer<size_t>(10), digit_result);
                     if (!index) {
                         return set_error(util::move(index).error());
                     }
