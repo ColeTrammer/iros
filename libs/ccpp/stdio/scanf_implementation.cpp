@@ -392,8 +392,7 @@ scanf_implementation(di::FunctionRef<di::Expected<di::Optional<char>, dius::Posi
 
                 /* Read in the largest value and cast it down later since we don't care about overflows in this function
                  */
-                long long value = atoi(buffer);
-                // strtoll(buffer, NULL, determine_base(*specifier.specifier));
+                long long value = strtoll(buffer, NULL, determine_base(*specifier.specifier));
 
                 /* Don't save it if there is was a `*` */
                 if (specifier.star) {
@@ -496,7 +495,7 @@ scanf_implementation(di::FunctionRef<di::Expected<di::Optional<char>, dius::Posi
 
                 /* Read in the largest value and cast it down later since we don't care about overflows in this function
                  */
-                unsigned long long value = atoi(buffer);
+                unsigned long long value = strtoull(buffer, NULL, base);
 
                 /* Don't save it if there is was a `*` */
                 if (specifier.star) {
