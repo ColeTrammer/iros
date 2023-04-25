@@ -152,23 +152,23 @@ private:
 
             auto [a, b, c, d, e] = results;
             u32 m_time_low = parser::run_parser_unchecked(
-                parser::integer<u32, 16>(),
+                parser::integer<u32>(16),
                 container::string::StringViewImpl<Enc> { encoding::unicode_code_point_unwrap(encoding, a.begin()),
                                                          encoding::unicode_code_point_unwrap(encoding, a.end()) });
             u16 m_time_mid = parser::run_parser_unchecked(
-                parser::integer<u16, 16>(),
+                parser::integer<u16>(16),
                 container::string::StringViewImpl<Enc> { encoding::unicode_code_point_unwrap(encoding, b.begin()),
                                                          encoding::unicode_code_point_unwrap(encoding, b.end()) });
             u16 time_hi = parser::run_parser_unchecked(
-                parser::integer<u16, 16>(),
+                parser::integer<u16>(16),
                 container::string::StringViewImpl<Enc> { encoding::unicode_code_point_unwrap(encoding, c.begin()),
                                                          encoding::unicode_code_point_unwrap(encoding, c.end()) });
             u16 clock_seq = parser::run_parser_unchecked(
-                parser::integer<u16, 16>(),
+                parser::integer<u16>(16),
                 container::string::StringViewImpl<Enc> { encoding::unicode_code_point_unwrap(encoding, d.begin()),
                                                          encoding::unicode_code_point_unwrap(encoding, d.end()) });
             u64 m_node = parser::run_parser_unchecked(
-                parser::integer<u64, 16>(),
+                parser::integer<u64>(16),
                 container::string::StringViewImpl<Enc> { encoding::unicode_code_point_unwrap(encoding, e.begin()),
                                                          encoding::unicode_code_point_unwrap(encoding, e.end()) });
 

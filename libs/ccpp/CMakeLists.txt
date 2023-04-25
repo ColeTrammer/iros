@@ -77,12 +77,18 @@ add_library(
     stdio/vsscanf.cpp
     stdlib/aligned_alloc.cpp
     stdlib/atoi.cpp
+    stdlib/atol.cpp
+    stdlib/atoll.cpp
     stdlib/calloc.cpp
     stdlib/exit.cpp
     stdlib/free.cpp
     stdlib/getenv.cpp
     stdlib/malloc.cpp
     stdlib/realloc.cpp
+    stdlib/strtol.cpp
+    stdlib/strtoll.cpp
+    stdlib/strtoul.cpp
+    stdlib/strtoull.cpp
     string/memcmp.cpp
     string/memcpy.cpp
     string/memmove.cpp
