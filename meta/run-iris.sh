@@ -15,17 +15,21 @@ fi
 ENABLE_KVM=""
 if ! [ "$IROS_DISABLE_KVM" ] && [ -e /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
     ENABLE_KVM="-enable-kvm"
+    echo "Running with KVM enabled..."
+else
+    echo "Running with KVM disabled..."
 fi
 
+LOG="-d guest_errors,cpu_reset"
 if [ "$IROS_DEBUG" ]; then
-    DEBUG="-s -S -monitor stdio -no-reboot -no-shutdown -d cpu_reset"
-else
-    SERIAL="-serial stdio"
+    DEBUG="-s -S -no-reboot -no-shutdown"
+    LOG="$LOG,mmu"
 fi
+SERIAL="-serial mon:stdio"
 
 if [ ! "$IROS_NO_SMP" ]; then
-    if [ `nproc` -gt 4 ]; then
-        SMP='-smp 4'
+    if [ `nproc` -gt 1 ]; then
+        SMP='-smp 1'
     else
         SMP="-smp `nproc`"
     fi
@@ -46,9 +50,9 @@ qemu-system-"$IROS_ARCH" \
     $SERIAL \
     $SMP \
     $MEMORY \
+    $LOG \
     -drive file="$IROS_IMAGE",format=raw,index=0,media=disk \
     -cpu max \
     -no-reboot \
-    -d guest_errors \
     -display none \
     -device isa-debug-exit,iobase=0xf4,iosize=0x04
