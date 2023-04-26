@@ -17,6 +17,7 @@
     },
     "files.associations": {
         "*.json": "json",
+        "*.code-snippets": "json",
         ".prettierrc": "json",
         ".clang-format": "yaml",
         ".clang-tidy": "yaml",

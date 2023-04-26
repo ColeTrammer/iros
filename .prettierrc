@@ -3,7 +3,7 @@
     "printWidth": 120,
     "overrides": [
         {
-            "files": ["*.json", ".prettierrc"],
+            "files": ["*.json", "*.code-snippets", ".prettierrc"],
             "options": {
                 "tabWidth": 4
             }

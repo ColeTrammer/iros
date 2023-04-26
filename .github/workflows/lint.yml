@@ -12,7 +12,7 @@ concurrency:
 
 env:
   CLANG_FORMAT_MATCH: '\.(cpp|h)$'
-  PRETTIER_MATCH: '(\.prettierrc|\.clangd|\.clang-tidy|\.clang-format|\.(json|md|yml))$'
+  PRETTIER_MATCH: '(\.prettierrc|\.clangd|\.clang-tidy|\.clang-format|\.(json|code-snippets|md|yml))$'
   CMAKE_FORMAT_MATCH: '(CMakeLists.txt|CMakeToolchain.*.txt|\.cmake)$'
 
 jobs:

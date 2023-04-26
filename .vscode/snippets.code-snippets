@@ -1,0 +1,39 @@
+{
+    "C++ header": {
+        "scope": "cpp",
+        "prefix": "cppheader",
+        "body": ["#pragma once", "", "$2", "", "namespace ${1:ns} {", "$0", "}"]
+    },
+    "C header": {
+        "scope": "cpp,c",
+        "prefix": "ccppheader",
+        "body": [
+            "#pragma once",
+            "",
+            "#include <ccpp/bits/config.h>",
+            "$1",
+            "",
+            "__CCPP_BEGIN_DECLARATIONS",
+            "",
+            "$0",
+            "",
+            "__CCPP_END_DECLARATIONS"
+        ]
+    },
+    "Niebloid": {
+        "scope": "cpp",
+        "prefix": "niebloid",
+        "body": [
+            "namespace detail {",
+            "struct ${1/(.*)/${1:/pascalcase}/}Function {",
+            "\ttemplate <${2:typename T}>",
+            "\t${3:constexpr auto} operator()(${4: T&& value}) const {",
+            "\t\t$0",
+            "\t}",
+            "};",
+            "}",
+            "",
+            "constexpr inline auto $1 = detail::${1/(.*)/${1:/pascalcase}/}Function{};"
+        ]
+    }
+}
