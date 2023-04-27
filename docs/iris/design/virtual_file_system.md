@@ -71,6 +71,13 @@ offset whatsoever), should be used if this is really necessary.
 To model "real" file systems, the kernel needs virtual objects which provide a generic way to descripe the underlying
 file system constructs.
 
+### File System Composition (Mount)
+
+In a normal unix system, there is a single file system namespace, but there any many different file systems accessible.
+This is representing using a mount, which is conceptually a mapping from a path to a file system instance. Mounts can
+overlay on top of real directories, and they take precedence over the underlying file system. Additionally, some systems
+support mount flags and bind mounts, which can be used to mark a subtree of the file system as read-only.
+
 ### File System Instance (Super Block)
 
 Any operational file system needs to store some form of state in order to access its root directory, and will likely
@@ -107,6 +114,35 @@ the prescense of external modifications. For instance, imagine a user shell sess
 `a/b/c`. If another user were to delte directory `c`, the user's shell's current working directory remains unchanged.
 Tree-node's ensure the virtual inode is not deleted until the last reference is dropped. But since the file is deleted
 from disk, the user will encounter errors when attempting to `ls` in their shell, since deleted files cannot be opened.
+
+## Path Resolution
+
+Path resolution takes a path as input and produces a tree-node as output. This operation serves as the basis for all
+filesytem APIs. It also is complex, having to handle mounts, symbolic links, and concurrent modifications to the
+underlying file system.
+
+### Algorithm
+
+The algorithm for path resolution is relatively simple, and can be summarized as follows:
+
+1. Start from a base tree-node (either the root, current working directory, or a provided tree-node (e.g. openat())).
+2. Iterate over each path component, and:
+    1. If the component is `.` or empty, continue.
+    2. If the component is `..`, follow the tree-node's parent pointer.
+    3. Otherwise, lock the current tree-node and perform a lookup of the component in the associated inode.
+    4. If this is a symbolic link, recurse.
+
+This algorithm also needs to handle mounts, which is done in step 2.3 by considering the mount when performing the
+lookup.
+
+### Optimization
+
+The algorithm above is correct, but it is not very fast. The main problem is that it requires a lock to be taken for
+every path component, and performing the actual lookup may require disk access. The obvious answer is to use some sort
+of caching.
+
+The tree-node cache can effectively be stored in a hash table with the key being a path component and the parent
+tree-node.
 
 ## Page Cache
 
