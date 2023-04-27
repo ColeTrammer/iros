@@ -40,10 +40,9 @@ make install-gcc -j"$NPROC"
 (
     # Build and install Iros libccpp
     cd "$PROJECT_ROOT"
-    cmake --preset iros_x86_64 -DIROS_NeverBuildDocs=ON
-    cmake --build --preset iros_x86_64 --target ccpp
-    cmake --build --preset iros_x86_64 --target libs/ccpp/install
-    cmake --build --preset iros_x86_64 --target libs/dius/install
+    cmake --preset iros_x86_64_unity -DIROS_NeverBuildDocs=ON -DIROS_BuildTests=OFF
+    cmake --build --preset iros_x86_64_unity --target libs/ccpp/install
+    cmake --build --preset iros_x86_64_unity --target libs/dius/install
 )
 
 make all-target-libgcc -j"$NPROC"
