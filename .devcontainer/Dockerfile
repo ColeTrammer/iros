@@ -26,6 +26,10 @@ RUN sudo apt-get -y install pip \
 RUN sudo apt-get -y install npm \
     && sudo npm install -g prettier
 
+# Update core packages
+RUN sudo apt-get -y update \
+    && sudo apt-get -y upgrade
+
 # Setup non-root user
 RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID $USERNAME -d /home/$USERNAME -m -k /dev/skel -s /bin/bash \
