@@ -1,14 +1,14 @@
-From b124a415a6feb243c0c43791003f1ffc9640f49c Mon Sep 17 00:00:00 2001
+From 6b086801b1b0cd3837a473d1feabf997e2e7472f Mon Sep 17 00:00:00 2001
 From: ColeTrammer <cole.trammer@gmail.com>
 Date: Sun, 19 Feb 2023 01:25:43 -0800
-Subject: [PATCH 2/2] Pretend Iros supports shared libraries in libtool.m4
+Subject: [PATCH 2/3] Pretend Iros supports shared libraries in libtool.m4
 
 ---
  libtool.m4 | 15 +++++++++++++++
  1 file changed, 15 insertions(+)
 
 diff --git a/libtool.m4 b/libtool.m4
-index 17f8e5f3074..028d11d655a 100644
+index b92e284d9f9..3bd049edfc0 100644
 --- a/libtool.m4
 +++ b/libtool.m4
 @@ -2435,6 +2435,17 @@ irix5* | irix6* | nonstopux*)
@@ -29,7 +29,7 @@ index 17f8e5f3074..028d11d655a 100644
  # No shared lib support for Linux oldld, aout, or coff.
  linux*oldld* | linux*aout* | linux*coff*)
    dynamic_linker=no
-@@ -3085,6 +3096,10 @@ irix5* | irix6* | nonstopux*)
+@@ -3104,6 +3115,10 @@ irix5* | irix6* | nonstopux*)
    lt_cv_deplibs_check_method=pass_all
    ;;
  
@@ -41,5 +41,5 @@ index 17f8e5f3074..028d11d655a 100644
  linux* | k*bsd*-gnu | kopensolaris*-gnu | uclinuxfdpiceabi)
    lt_cv_deplibs_check_method=pass_all
 -- 
-2.39.2
+2.34.1
 

@@ -2,7 +2,7 @@
 
 set -e
 
-VERSION=12.2.0
+VERSION=13.1.0
 PATCH_DIR=$(realpath $(dirname -- "$0"))
 PROJECT_ROOT=$(realpath "$PATCH_DIR"/../../..)
 PREFIX="${IROS_PREFIX:-$PROJECT_ROOT/cross}"
@@ -43,6 +43,7 @@ make install-gcc -j"$NPROC"
     cmake --preset iros_x86_64 -DIROS_NeverBuildDocs=ON
     cmake --build --preset iros_x86_64 --target ccpp
     cmake --build --preset iros_x86_64 --target libs/ccpp/install
+    cmake --build --preset iros_x86_64 --target libs/dius/install
 )
 
 make all-target-libgcc -j"$NPROC"

@@ -1,18 +1,18 @@
-From cb6831c3f932f2f5cd19e696c3742314f4254e36 Mon Sep 17 00:00:00 2001
+From 9a710f86b586f87df8bd86f20846f923b5cc49c6 Mon Sep 17 00:00:00 2001
 From: ColeTrammer <cole.trammer@gmail.com>
 Date: Sun, 19 Feb 2023 01:21:22 -0800
-Subject: [PATCH 1/2] Add support for Iros to the gcc compiler proper and
+Subject: [PATCH 1/3] Add support for Iros to the gcc compiler proper and
  libgcc
 
 ---
  config.sub                  |  2 +-
  fixincludes/mkfixinc.sh     |  1 +
- gcc/config.gcc              | 17 +++++++++++++++++
+ gcc/config.gcc              | 19 ++++++++++++++++++-
  gcc/config/iros.h           | 33 +++++++++++++++++++++++++++++++++
  gcc/configure.ac            |  3 +++
  libgcc/config.host          | 10 ++++++++++
  libgcc/unwind-dw2-fde-dip.c |  6 ++++++
- 7 files changed, 71 insertions(+), 1 deletion(-)
+ 7 files changed, 72 insertions(+), 2 deletions(-)
  create mode 100644 gcc/config/iros.h
 
 diff --git a/config.sub b/config.sub
@@ -41,10 +41,19 @@ index df90720b716..7911274f791 100755
      *-musl* )
  	#  IF there is no include fixing,
 diff --git a/gcc/config.gcc b/gcc/config.gcc
-index c5064dd3766..50756c50d71 100644
+index 6fd1594480a..73fcdcc703d 100644
 --- a/gcc/config.gcc
 +++ b/gcc/config.gcc
-@@ -827,6 +827,13 @@ case ${target} in
+@@ -181,7 +181,7 @@
+ #			the --with-sysroot configure option or the
+ #			--sysroot command line option is used this
+ #			will be relative to the sysroot.
+-# target_type_format_char 
++# target_type_format_char
+ # 			The default character to be used for formatting
+ #			the attribute in a
+ #			.type symbol_name, ${t_t_f_c}<property>
+@@ -843,6 +843,13 @@ case ${target} in
  *-*-fuchsia*)
    native_system_header_dir=/include
    ;;
@@ -58,17 +67,17 @@ index c5064dd3766..50756c50d71 100644
  *-*-linux* | frv-*-*linux* | *-*-kfreebsd*-gnu | *-*-gnu* | *-*-kopensolaris*-gnu | *-*-uclinuxfdpiceabi)
    extra_options="$extra_options gnu-user.opt"
    gas=yes
-@@ -1947,6 +1954,16 @@ x86_64-*-openbsd*)
+@@ -1913,6 +1920,16 @@ x86_64-*-openbsd*)
  	gas=yes
  	gnu_ld=yes
  	;;
 +i[34567]86-*-iros*)
-+    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h iros.h"
++    tm_file="${tm_file} i386/unix.h i386/att.h elfos.h glibc-stdint.h i386/i386elf.h iros.h"
 +	tmake_file="${tmake_file} t-slibgcc"
 +	extra_options="${extra_options} gnu-user.opt"
 +    ;;
 +x86_64-*-iros*)
-+    tm_file="${tm_file} i386/unix.h i386/att.h dbxelf.h elfos.h glibc-stdint.h i386/i386elf.h i386/x86-64.h iros.h"
++    tm_file="${tm_file} i386/unix.h i386/att.h elfos.h glibc-stdint.h i386/i386elf.h i386/x86-64.h iros.h"
 +	tmake_file="${tmake_file} t-slibgcc"
 +	extra_options="${extra_options} gnu-user.opt"
 +    ;;
@@ -115,10 +124,10 @@ index 00000000000..5df344f41cd
 +        builtin_assert("system=posix"); \
 +    } while (0);
 diff --git a/gcc/configure.ac b/gcc/configure.ac
-index 23bee7010a3..766fd8cf70c 100644
+index 09082e8ccae..e6925e0ac80 100644
 --- a/gcc/configure.ac
 +++ b/gcc/configure.ac
-@@ -7069,6 +7069,9 @@ case "$target" in
+@@ -6939,6 +6939,9 @@ case "$target" in
    *-linux-musl*)
      gcc_cv_target_dl_iterate_phdr=yes
      ;;
@@ -129,10 +138,10 @@ index 23bee7010a3..766fd8cf70c 100644
  GCC_TARGET_TEMPLATE([TARGET_DL_ITERATE_PHDR])
  if test x$gcc_cv_target_dl_iterate_phdr = xyes; then
 diff --git a/libgcc/config.host b/libgcc/config.host
-index 8c56fcae5d2..2244c549cf5 100644
+index b9975de9023..7152df613b0 100644
 --- a/libgcc/config.host
 +++ b/libgcc/config.host
-@@ -751,6 +751,16 @@ i[34567]86-*-openbsd*)
+@@ -723,6 +723,16 @@ i[34567]86-*-openbsd*)
  	;;
  x86_64-*-openbsd*)
  	;;
@@ -150,7 +159,7 @@ index 8c56fcae5d2..2244c549cf5 100644
  	extra_parts="$extra_parts crtprec32.o crtprec64.o crtprec80.o crtfastmath.o"
  	tmake_file="${tmake_file} i386/t-crtpc t-crtfm i386/t-crtstuff t-dfprules"
 diff --git a/libgcc/unwind-dw2-fde-dip.c b/libgcc/unwind-dw2-fde-dip.c
-index 7f9be5e6b02..fbe46f5f382 100644
+index 6223f5f18a2..b8aa08eb470 100644
 --- a/libgcc/unwind-dw2-fde-dip.c
 +++ b/libgcc/unwind-dw2-fde-dip.c
 @@ -83,6 +83,12 @@
@@ -167,5 +176,5 @@ index 7f9be5e6b02..fbe46f5f382 100644
  
  #include <link.h>
 -- 
-2.39.2
+2.34.1
 
