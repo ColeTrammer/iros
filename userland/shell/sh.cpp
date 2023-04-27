@@ -24,7 +24,10 @@ di::Result<void> main(Args&) {
 
         auto owned_args = command | di::split(' ') | di::transform(di::to_owned) | di::to<di::Vector>();
 
-        TRY(dius::system::Process { di::move(owned_args) }.spawn_and_wait());
+        auto spawn_result = dius::system::Process { di::move(owned_args) }.spawn_and_wait();
+        if (!spawn_result) {
+            dius::println("Failed to spawn process: {}"_sv, spawn_result.error().message());
+        }
 
         command.clear();
 
