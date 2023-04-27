@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/any/types/prelude.h>
+#include <di/concepts/decays_to.h>
 #include <di/function/invoke.h>
 #include <di/function/tag_invoke.h>
 #include <di/util/forward_like.h>
