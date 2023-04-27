@@ -42,7 +42,7 @@ jobs:
       - name: Deploy docs
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: build/native/release/html
+          folder: build/host/gcc/release/html
           commit-message: "docs: deploy documentation site"
           single-commit: true
           branch: gh-pages
