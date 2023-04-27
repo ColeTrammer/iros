@@ -9,10 +9,12 @@
 namespace iris::initrd {
 struct Args {
     di::PathView path { "."_pv };
+    di::PathView output { "initrd.bin"_pv };
 
     constexpr static auto get_cli_parser() {
         return di::cli_parser<Args>("initrd"_sv, "Create iris init ramdisk"_sv)
-            .flag<&Args::path>('p', "path"_tsv, "Directory path to create from"_sv);
+            .flag<&Args::path>('p', "path"_tsv, "Directory path to create from"_sv)
+            .flag<&Args::output>('o', "output"_tsv, "Output file path"_sv);
     }
 };
 
@@ -182,7 +184,7 @@ di::Result<void> main(Args& args) {
     dius::println("root directory entry size: {}"_sv, root.size);
     dius::println("total blocks: {}"_sv, total_blocks);
 
-    auto output = TRY(dius::open_sync("initrd.bin"_tsv, dius::OpenMode::WriteClobber));
+    auto output = TRY(dius::open_sync(args.output, dius::OpenMode::WriteClobber));
     TRY(output.resize_file(total_blocks * block_size));
     TRY(write_super_block(root, output, total_blocks));
     return root.write_to_disk(output);
