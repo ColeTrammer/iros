@@ -17,7 +17,7 @@ any c++ language server. Currently, your best bet is to use `clangd`, as the pro
 which only `clang` and `gcc` support. The Microsoft C++ engine is not recommended, as it cannot compile the project's
 source code.
 
-In addition, the project requires at least GCC 12.1.0 or clang 16 and the CMake 3.25.2 to compile. The CMake version can
+In addition, the project requires at least GCC 12.1.0 or clang 16 and CMake 3.25.2 to compile. The CMake version can
 probably be relaxed, but GCC 11 will fail to compile the system. Likewise, clang-15 will not compile the system.
 Currently, the clang support is experimental, since there is not a custom toolchain target for llvm. Testing the kernel
 additionally requires various system commands, including `parted`, `mkfs.fat`, and `qemu`. A full list of packages
@@ -76,8 +76,8 @@ cmake --build --preset iros_x86_64 --target ibr
 
 #### Build Documentation
 
-This outputs the viewable documentation to `build/x86_64/html`. This can be viewed using the VS Code Live Preview or by
-pointing a web browser at this directory.
+This outputs the viewable documentation to `build/x86_64/gcc/release/html`. This can be viewed using the VS Code Live
+Preview or by pointing a web browser at this directory.
 
 ```sh
 cmake --build --preset iros_x86_64 --target docs
@@ -92,3 +92,27 @@ userspace code with both `ubsan` and `asan` enabled. This configuration is activ
 
 These can be built and used without any special setup, using normal CMake commands, although recent versions of GCC or
 clang and CMake are needed.
+
+## Build Directories
+
+The CMake presets assign separate build directories for each target. Each is located in a subdirectory of `build`. The
+build directories are named after the target and the preset used to build it. For instance, the `iros_x86_64` preset
+corresponds to a build directory of `build/x86_64/gcc/release`. The host tools required to build the kernel are located
+in `build/host/tools`. All x86_64 builds share the same install directory, which is used as the system root for the disk
+image. This is located in `build/x86_64/sysroot`.
+
+## Running the Kernel
+
+The kernel can be run using QEMU. Currently, the kernel does not support graphical output, and so it must be run in a
+terminal. The kernel uses the serial console to do input and output. Since there is also need for the QEMU debug
+console, this mode uses QEMU's chardev multiplexer. This means that exiting the kernel must be done using the special
+QEMU command: `Ctrl-A X`. This will exit the QEMU debug console, and then the kernel will exit. To get to the QEMU debug
+console, use `Ctrl-A C`. Then the kernel can be inspected using normal QEMU commands.
+
+### Debugging the Kernel
+
+The kernel can be debugged using GDB or LLDB. This requires passing `IROS_DEBUG=1` to the run script, which is done
+automatically when using the VSCode launch configurations. These start QEMU in debug mode and then attach to the QEMU
+socket. This requires using the `debug_iros_x86_64` preset, or else symbols and breakpoint information will not be
+available. Additionally, debugging is mostly useful for boot issues, as there is no way to debug userspace programs and
+once the kernel scheduler is running, the debugger interferes with the timer interrupts.

@@ -47,7 +47,7 @@ jobs:
           testPreset: ${{ matrix.preset }}
       - name: Collect code coverage information
         run: |
-          gcovr -j ${{env.nproc}} --delete --root . --print-summary --xml-pretty --xml coverage.xml build/native/coverage
+          gcovr -j ${{env.nproc}} --delete --root . --print-summary --xml-pretty --xml coverage.xml build/host/gcc/coverage
         if: matrix.preset == 'coverage'
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3

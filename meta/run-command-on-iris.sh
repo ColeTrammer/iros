@@ -22,8 +22,16 @@ export IROS_ROOT=$(realpath "$PARENT_DIR"/..)
 
 export IROS_ARCH=x86_64
 
-export IROS_BUILD_DIR="$IROS_ROOT"/build/"$(basename $1)"
-export IROS_LIMINE_DIR="$IROS_BUILD_DIR"/iris/limine-prefix/src/limine
+echo "Building for $IROS_ARCH..."
+echo "IROS_ROOT=$IROS_ROOT"
+echo "IROS_ARCH=$IROS_ARCH"
+echo "IROS_BUILD_DIR=$IROS_BUILD_DIR"
+echo "IROS_IMAGE=$IROS_IMAGE"
+echo "IROS_INITRD=$IROS_INITRD"
+echo "1=$1"
+
+export IROS_BUILD_DIR="$IROS_ROOT/build/$1"
+export IROS_LIMINE_DIR="$IROS_ROOT"/build/host/tools/limine/src
 
 export IROS_IMAGE="$IROS_BUILD_DIR"/iris-run.img
 export IROS_INITRD="$IROS_BUILD_DIR"/initrd-run/initrd.bin
@@ -40,7 +48,7 @@ fi
 
 (
     cd "$IROS_BUILD_DIR"/initrd-run
-    "$IROS_ROOT"/build/native/tools-install/bin/initrd
+    "$IROS_ROOT"/build/host/tools/install/bin/initrd
 )
 
 

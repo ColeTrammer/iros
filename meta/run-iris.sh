@@ -28,8 +28,8 @@ fi
 SERIAL="-serial mon:stdio"
 
 if [ ! "$IROS_NO_SMP" ]; then
-    if [ `nproc` -gt 1 ]; then
-        SMP='-smp 1'
+    if [ `nproc` -gt 4 ]; then
+        SMP='-smp 4'
     else
         SMP="-smp `nproc`"
     fi

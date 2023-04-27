@@ -34,7 +34,7 @@
     "clangd.path": "/usr/bin/clangd-16",
     "clangd.arguments": ["--query-driver=/usr/local/bin/*,/usr/bin/*,${workspaceFolder}/cross/bin/*"],
     "livePreview.autoRefreshPreview": "Never",
-    "livePreview.defaultPreviewPath": "build/x86_64/html",
+    "livePreview.defaultPreviewPath": "build/x86_64/gcc/release/html",
     "githubIssues.issueBranchTitle": "i${issueNumber}-${sanitizedIssueTitle}",
     "editor.tabSize": 4,
     "files.insertFinalNewline": true,

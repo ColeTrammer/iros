@@ -55,7 +55,7 @@
             "name": "iros_x86_64",
             "displayName": "Iros x64_64",
             "description": "Compile Iros for x86_64",
-            "binaryDir": "${sourceDir}/build/x86_64",
+            "binaryDir": "${sourceDir}/build/x86_64/gcc/release",
             "installDir": "${sourceDir}/build/x86_64/sysroot/usr",
             "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_x86_64.txt",
             "cacheVariables": {
@@ -66,7 +66,7 @@
                 "IROS_UseDiusRuntime": "ON",
                 "IROS_ExtraFlags": "-D__iros__=1",
                 "CMAKE_CXX_COMPILER_WORKS": "ON",
-                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64"
+                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/gcc/release"
             },
             "inherits": ["release_base", "gcc_base"]
         },
@@ -74,8 +74,8 @@
             "name": "debug_iros_x86_64",
             "displayName": "Debug Iros x64_64",
             "description": "Compile Debug Iros for x86_64",
-            "binaryDir": "${sourceDir}/build/debug_x86_64",
-            "installDir": "${sourceDir}/build/debug_x86_64/sysroot/usr",
+            "binaryDir": "${sourceDir}/build/x86_64/gcc/debug",
+            "installDir": "${sourceDir}/build/x86_64/sysroot/usr",
             "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_x86_64.txt",
             "cacheVariables": {
                 "IROS_BuildIris": "ON",
@@ -86,7 +86,7 @@
                 "IROS_ExtraFlags": "-D__iros__=1",
                 "IROS_IrisFlags": "-Og -g",
                 "CMAKE_CXX_COMPILER_WORKS": "ON",
-                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;debug_x86_64"
+                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/gcc/debug"
             },
             "inherits": ["release_base", "gcc_base"]
         },
@@ -94,8 +94,8 @@
             "name": "clang_iros_x86_64",
             "displayName": "Clang Iros x64_64",
             "description": "Compile Iros for x86_64",
-            "binaryDir": "${sourceDir}/build/clang_x86_64",
-            "installDir": "${sourceDir}/build/clang_x86_64/sysroot/usr",
+            "binaryDir": "${sourceDir}/build/x86_64/clang/release",
+            "installDir": "${sourceDir}/build/x86_64/sysroot/usr",
             "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Clang_x86_64.txt",
             "cacheVariables": {
                 "IROS_BuildIris": "ON",
@@ -105,7 +105,7 @@
                 "IROS_UseDiusRuntime": "ON",
                 "IROS_ExtraFlags": "-D__iros__=1 -U__linux__",
                 "CMAKE_CXX_COMPILER_WORKS": "ON",
-                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;clang_x86_64"
+                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/clang/release"
             },
             "inherits": ["release_base", "clang_base"]
         },
@@ -113,8 +113,8 @@
             "name": "iros_x86_64_unity",
             "displayName": "Iros x64_64 Unity",
             "description": "Compile Iros Unity Build for x86_64",
-            "binaryDir": "${sourceDir}/build/x86_64_unity",
-            "installDir": "${sourceDir}/build/x86_64_unity/sysroot/usr",
+            "binaryDir": "${sourceDir}/build/x86_64/gcc/release/unity",
+            "installDir": "${sourceDir}/build/x86_64/sysroot/usr",
             "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_x86_64.txt",
             "cacheVariables": {
                 "IROS_BuildIris": "ON",
@@ -125,7 +125,7 @@
                 "IROS_UseDiusRuntime": "ON",
                 "IROS_ExtraFlags": "-D__iros__=1",
                 "CMAKE_CXX_COMPILER_WORKS": "ON",
-                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64",
+                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/gcc/release/unity",
                 "CMAKE_UNITY_BUILD": "ON"
             },
             "inherits": ["release_base", "gcc_base"]
@@ -134,8 +134,8 @@
             "name": "dius_runtime_release",
             "displayName": "Dius Runtime Release Config",
             "description": "Release build with dius runtime enabled",
-            "binaryDir": "${sourceDir}/build/native/release-dius-runtime",
-            "installDir": "${sourceDir}/build/native/release-dius-runtime-install",
+            "binaryDir": "${sourceDir}/build/host/gcc/release/dius-runtime",
+            "installDir": "${sourceDir}/build/host/gcc/release/dius-runtime/install",
             "cacheVariables": {
                 "IROS_UseDiusRuntime": "ON",
                 "IROS_BuildCcpp": "ON"
@@ -146,8 +146,8 @@
             "name": "dius_runtime_debug",
             "displayName": "Dius Runtime Debug Config",
             "description": "Debug build with dius runtime enabled",
-            "binaryDir": "${sourceDir}/build/native/debug-dius-runtime",
-            "installDir": "${sourceDir}/build/native/debug-dius-runtime-install",
+            "binaryDir": "${sourceDir}/build/host/gcc/debug/dius-runtime",
+            "installDir": "${sourceDir}/build/host/gcc/debug/dius-runtime/install",
             "cacheVariables": {
                 "IROS_UseDiusRuntime": "ON",
                 "IROS_BuildCcpp": "ON"
@@ -157,17 +157,17 @@
         {
             "name": "release",
             "displayName": "Release Config",
-            "description": "Default native release build",
-            "binaryDir": "${sourceDir}/build/native/release",
-            "installDir": "${sourceDir}/build/native/release-install",
+            "description": "Default host release build",
+            "binaryDir": "${sourceDir}/build/host/gcc/release",
+            "installDir": "${sourceDir}/build/host/gcc/release/install",
             "inherits": ["release_base", "gcc_base"]
         },
         {
             "name": "tools",
             "displayName": "Tools Config",
-            "description": "Build only native tools required to cross compile",
-            "binaryDir": "${sourceDir}/build/native/tools",
-            "installDir": "${sourceDir}/build/native/tools-install",
+            "description": "Build only host tools required to cross compile",
+            "binaryDir": "${sourceDir}/build/host/tools",
+            "installDir": "${sourceDir}/build/host/tools/install",
             "cacheVariables": {
                 "IROS_BuildTests": "OFF",
                 "IROS_BuildUserspace": "OFF",
@@ -180,17 +180,17 @@
         {
             "name": "debug",
             "displayName": "Debug Config",
-            "description": "Native debug build",
-            "binaryDir": "${sourceDir}/build/native/debug",
-            "installDir": "${sourceDir}/bulid/native/debug-install",
+            "description": "host debug build",
+            "binaryDir": "${sourceDir}/build/host/gcc/debug",
+            "installDir": "${sourceDir}/build/host/gcc/debug/install",
             "inherits": ["debug_base", "gcc_base"]
         },
         {
             "name": "tsan",
             "displayName": "Thread Sanitizer",
             "description": "Build with thread sanitizer enabled",
-            "binaryDir": "${sourceDir}/build/native/tsan",
-            "installDir": "${sourceDir}/bulid/native/tsan-install",
+            "binaryDir": "${sourceDir}/build/host/gcc/tsan",
+            "installDir": "${sourceDir}/bulid/host/gcc/tsan/install",
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
                 "IROS_SanitizerFlags": "-fsanitize=thread -DDI_SANITIZER"
@@ -201,8 +201,8 @@
             "name": "msan",
             "displayName": "Memory Sanitizer",
             "description": "Build with memory sanitizer enabled",
-            "binaryDir": "${sourceDir}/build/native/msan",
-            "installDir": "${sourceDir}/bulid/native/msan-install",
+            "binaryDir": "${sourceDir}/build/host/clang/msan",
+            "installDir": "${sourceDir}/bulid/host/clang/msan/install",
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
                 "IROS_SanitizerFlags": "-fsanitize=memory -DDI_SANITIZER"
@@ -213,8 +213,8 @@
             "name": "ubasan",
             "displayName": "Undefined Behavior and Address Sanitizer",
             "description": "Build with defined behavior and address sanitizer enabled",
-            "binaryDir": "${sourceDir}/build/native/ubasan",
-            "installDir": "${sourceDir}/bulid/native/ubasan-install",
+            "binaryDir": "${sourceDir}/build/host/gcc/ubasan",
+            "installDir": "${sourceDir}/bulid/host/gcc/ubasan/install",
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
                 "IROS_SanitizerFlags": "-fsanitize=address,undefined -DDI_SANITIZER"
@@ -225,11 +225,11 @@
             "name": "coverage",
             "displayName": "Code Coverage",
             "description": "Build with code coverage instrumentation",
-            "binaryDir": "${sourceDir}/build/native/coverage",
-            "installDir": "${sourceDir}/build/native/coverage-install",
+            "binaryDir": "${sourceDir}/build/host/gcc/coverage",
+            "installDir": "${sourceDir}/build/host/gcc/coverage/install",
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
-                "IROS_ExtraFlags": "-Og -fprofile-arcs -ftest-coverage"
+                "IROS_ExtraFlags": "-Og --coverage"
             },
             "inherits": ["debug_base", "gcc_base"]
         },
@@ -237,8 +237,8 @@
             "name": "clang_dius_runtime_release",
             "displayName": "Clang Dius Runtime Release Config",
             "description": "Clang release build with dius runtime enabled",
-            "binaryDir": "${sourceDir}/build/native/clang-release-dius-runtime",
-            "installDir": "${sourceDir}/build/native/clang-release-dius-runtime-install",
+            "binaryDir": "${sourceDir}/build/host/clang/release/dius-runtime",
+            "installDir": "${sourceDir}/build/host/clang/release/dius-runtime/install",
             "cacheVariables": {
                 "IROS_UseDiusRuntime": "ON",
                 "IROS_BuildCcpp": "ON"
@@ -249,8 +249,8 @@
             "name": "clang_dius_runtime_debug",
             "displayName": "Clang Dius Runtime Debug Config",
             "description": "Clang debug build with dius runtime enabled",
-            "binaryDir": "${sourceDir}/build/native/clang-debug-dius-runtime",
-            "installDir": "${sourceDir}/build/native/clang-debug-dius-runtime-install",
+            "binaryDir": "${sourceDir}/build/host/clang/debug/dius-runtime",
+            "installDir": "${sourceDir}/build/host/clang/debug/dius-runtime/install",
             "cacheVariables": {
                 "IROS_UseDiusRuntime": "ON",
                 "IROS_BuildCcpp": "ON"
@@ -260,25 +260,25 @@
         {
             "name": "clang_release",
             "displayName": "Clang Release Config",
-            "description": "Clang native release build",
-            "binaryDir": "${sourceDir}/build/native/clang-release",
-            "installDir": "${sourceDir}/bulid/native/clang-release-install",
+            "description": "Clang host release build",
+            "binaryDir": "${sourceDir}/build/host/clang/release",
+            "installDir": "${sourceDir}/bulid/host/clang/release/install",
             "inherits": ["release_base", "clang_base"]
         },
         {
             "name": "clang_debug",
             "displayName": "Clang Debug Config",
-            "description": "Clang native debug build",
-            "binaryDir": "${sourceDir}/build/native/clang-debug",
-            "installDir": "${sourceDir}/bulid/native/clang-debug-install",
+            "description": "Clang host debug build",
+            "binaryDir": "${sourceDir}/build/host/clang/debug",
+            "installDir": "${sourceDir}/bulid/host/clang/debug/install",
             "inherits": ["debug_base", "clang_base"]
         },
         {
             "name": "release_unity",
             "displayName": "Release Unity Config",
             "description": "Release build with unity mode enabled",
-            "binaryDir": "${sourceDir}/build/native/release-unity",
-            "installDir": "${sourceDir}/bulid/native/release-unity-install",
+            "binaryDir": "${sourceDir}/build/host/gcc/release/unity",
+            "installDir": "${sourceDir}/bulid/host/gcc/release/unity/install",
             "cacheVariables": {
                 "IROS_UseDiusRuntime": "ON",
                 "IROS_BuildCcpp": "ON",
