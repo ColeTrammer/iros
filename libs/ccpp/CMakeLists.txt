@@ -75,6 +75,7 @@ add_library(
     stdio/vsnprintf.cpp
     stdio/vsprintf.cpp
     stdio/vsscanf.cpp
+    stdlib/abort.cpp
     stdlib/aligned_alloc.cpp
     stdlib/atoi.cpp
     stdlib/atol.cpp
