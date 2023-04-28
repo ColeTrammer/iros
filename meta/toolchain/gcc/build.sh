@@ -47,3 +47,6 @@ make install-gcc -j"$NPROC"
 
 make all-target-libgcc -j"$NPROC"
 make install-target-libgcc -j"$NPROC"
+
+make all-target-libstdc++-v3 -j"$NPROC"
+make install-target-libstdc++-v3 -j"$NPROC"
