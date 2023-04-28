@@ -20,6 +20,8 @@
 #define __CCPP_POSIX_EXTENSIONS 1
 #endif
 
+#define __CCPP_C23_DEPRECATED
+
 #ifdef __cplusplus
 #if (__cplusplus >= 201703L)
 #define __CCPP_C11

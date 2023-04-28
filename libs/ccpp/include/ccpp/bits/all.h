@@ -1,11 +1,14 @@
 #pragma once
 
 #include <alloca.h>
+#include <assert.h>
 #include <ctype.h>
 #include <elf.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <locale.h>
+#include <math.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdarg.h>

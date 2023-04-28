@@ -27,6 +27,35 @@ int at_quick_exit(void (*__handler)(void));
 __CCPP_NORETURN void _Exit(int __exit_code);
 #endif
 
+typedef struct {
+    int quot;
+    int rem;
+} div_t;
+
+typedef struct {
+    long quot;
+    long rem;
+} ldiv_t;
+
+#ifdef __CCPP_C99
+typedef struct {
+    long long quot;
+    long long rem;
+} lldiv_t;
+#endif
+
+div_t div(int __x, int __y);
+ldiv_t ldiv(long __x, long __y);
+#ifdef __CCPP_C99
+lldiv_t lldiv(long long __x, long long __y);
+#endif
+
+int abs(int __value);
+long labs(long __value);
+#ifdef __CCPP_C99
+long long llabs(long long __value);
+#endif
+
 void* malloc(size_t __size);
 void* calloc(size_t __count, size_t __size);
 void* realloc(void* __pointer, size_t __new_size);
@@ -54,5 +83,23 @@ unsigned long strtoul(char const* __CCPP_RESTRICT __string, char** __CCPP_RESTRI
 #ifdef __CCPP_C99
 unsigned long long strtoull(char const* __CCPP_RESTRICT __string, char** __CCPP_RESTRICT __end, int __radix);
 #endif
+
+double atof(char const* __string);
+
+#ifdef __CCPP_C99
+float strtof(char const* __CCPP_RESTRICT __string, char** __CCPP_RESTRICT __end);
+#endif
+double strtod(char const* __CCPP_RESTRICT __string, char** __CCPP_RESTRICT __end);
+#ifdef __CCPP_C99
+long double strtold(char const* __CCPP_RESTRICT __string, char** __CCPP_RESTRICT __end);
+#endif
+
+#define RAND_MAX 32767
+int rand(void);
+void srand(unsigned __seed);
+
+void qsort(void* __ptr, size_t __count, size_t __size, int (*__comp)(void const*, void const*));
+void* bsearch(void const* __key, void const* __ptr, size_t __count, size_t __size,
+              int (*__comp)(void const*, void const*));
 
 __CCPP_END_DECLARATIONS

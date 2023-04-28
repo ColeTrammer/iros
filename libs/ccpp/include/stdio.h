@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ccpp/bits/config.h>
+#include <ccpp/bits/null.h>
 #include <ccpp/bits/size_t.h>
 #include <ccpp/bits/va_list.h>
 
@@ -27,11 +28,19 @@ typedef struct __file_implementation FILE;
 typedef __UINT64_TYPE__ fpos_t;
 
 FILE* fopen(char const* __CCPP_RESTRICT __path, char const* __CCPP_RESTRICT __mode);
+#ifdef __CCPP_POSIX_EXTENSIONS
+FILE* fdopen(int __fd, char const* __mode);
+#endif
 FILE* freopen(char const* __CCPP_RESTRICT __path, char const* __CCPP_RESTRICT __mode, FILE* __CCPP_RESTRICT __file);
 int fclose(FILE* __file);
 int fflush(FILE* __file);
 void setbuf(FILE* __CCPP_RESTRICT __file, char* __CCPP_RESTRICT __buffer);
 int setvbuf(FILE* __CCPP_RESTRICT __file, char* __CCPP_RESTRICT __buffer, int __mode, size_t __size);
+
+#ifdef __CCPP_POSIX_EXTENSIONS
+int fileno(FILE* __file);
+int fileno_unlocked(FILE* __file);
+#endif
 
 size_t fread(void* __CCPP_RESTRICT __buffer, size_t __size, size_t __count, FILE* __CCPP_RESTRICT __file);
 size_t fwrite(void const* __CCPP_RESTRICT __buffer, size_t __size, size_t __count, FILE* __CCPP_RESTRICT __file);
