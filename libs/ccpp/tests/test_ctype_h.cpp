@@ -1,11 +1,6 @@
-#ifdef DIUS_USE_RUNTIME
-#include <ccpp/bits/all.h>
-#else
 #include <ctype.h>
-#include <stdio.h>
-#endif
-
 #include <dius/test/prelude.h>
+#include <stdio.h>
 
 namespace ctype_h {
 [[gnu::noinline]] static bool do_ctype(int (*f)(int), int ch) {

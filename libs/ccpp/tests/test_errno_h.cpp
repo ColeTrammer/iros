@@ -1,11 +1,6 @@
-#ifdef DIUS_USE_RUNTIME
-#include <ccpp/bits/all.h>
-#else
-#include <errno.h>
-#endif
-
 #include <dius/test/prelude.h>
 #include <dius/thread.h>
+#include <errno.h>
 
 namespace errno_h {
 static void errno_() {

@@ -1,10 +1,5 @@
-#ifdef DIUS_USE_RUNTIME
-#include <ccpp/bits/all.h>
-#else
-#include <stdlib.h>
-#endif
-
 #include <dius/test/prelude.h>
+#include <stdlib.h>
 
 namespace stdlib_h {
 static void malloc_free() {

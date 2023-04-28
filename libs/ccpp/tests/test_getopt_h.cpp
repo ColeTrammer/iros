@@ -1,11 +1,6 @@
-#ifdef DIUS_USE_RUNTIME
-#include <ccpp/bits/all.h>
-#else
+#include <dius/test/prelude.h>
 #include <getopt.h>
 #include <string.h>
-#endif
-
-#include <dius/test/prelude.h>
 
 namespace getopt_h {
 static int saw_bar = 0;

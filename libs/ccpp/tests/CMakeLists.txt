@@ -14,6 +14,7 @@ find_package(Dius REQUIRED)
 target_link_libraries(test_ccpp PRIVATE Dius::dius Dius::dius_test_main)
 
 if(IROS_UseDiusRuntime)
+    target_sources(test_ccpp PRIVATE test_bits_all_h.cpp)
     target_link_libraries(test_ccpp PRIVATE Ccpp::ccpp)
 endif()
 
