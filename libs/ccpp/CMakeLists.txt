@@ -25,13 +25,17 @@ add_library(
     getopt/getopt_long.cpp
     getopt/getopt_long_only.cpp
     getopt/optvars.cpp
+    locale/setlocale.cpp
     stdio/fclose.cpp
+    stdio/fdopen.cpp
     stdio/fflush.cpp
     stdio/fflush_unlocked.cpp
     stdio/fgetc.cpp
     stdio/fgetc_unlocked.cpp
     stdio/fgets.cpp
     stdio/fgets_unlocked.cpp
+    stdio/fileno.cpp
+    stdio/fileno_unlocked.cpp
     stdio/fopen.cpp
     stdio/fprintf.cpp
     stdio/fputc.cpp
@@ -61,6 +65,7 @@ add_library(
     stdio/puts.cpp
     stdio/scanf.cpp
     stdio/scanf_implementation.cpp
+    stdio/setvbuf.cpp
     stdio/snprintf.cpp
     stdio/sprintf.cpp
     stdio/sscanf.cpp
@@ -68,6 +73,7 @@ add_library(
     stdio/stdin.cpp
     stdio/stdout.cpp
     stdio/tmpfile.cpp
+    stdio/ungetc.cpp
     stdio/vfprintf.cpp
     stdio/vfscanf.cpp
     stdio/vprintf.cpp
@@ -86,10 +92,12 @@ add_library(
     stdlib/getenv.cpp
     stdlib/malloc.cpp
     stdlib/realloc.cpp
+    stdlib/strtod.cpp
     stdlib/strtol.cpp
     stdlib/strtoll.cpp
     stdlib/strtoul.cpp
     stdlib/strtoull.cpp
+    string/memchr.cpp
     string/memcmp.cpp
     string/memcpy.cpp
     string/memmove.cpp
@@ -97,15 +105,21 @@ add_library(
     string/strcat.cpp
     string/strchr.cpp
     string/strcmp.cpp
+    string/strcoll.cpp
     string/strcpy.cpp
+    string/strerror.cpp
     string/strlen.cpp
     string/strncat.cpp
     string/strncmp.cpp
     string/strncpy.cpp
     string/strrchr.cpp
     string/strstr.cpp
+    string/strxfrm.cpp
     sys/stat/stat.cpp
+    time/strftime.cpp
     unistd/lseek.cpp
+    unistd/read.cpp
+    unistd/write.cpp
 )
 add_library(Ccpp::ccpp ALIAS ccpp)
 

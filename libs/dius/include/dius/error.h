@@ -50,7 +50,7 @@ protected:
 
 private:
     template<typename Domain>
-    friend class StatusCode;
+    friend class di::vocab::StatusCode;
 
     constexpr PosixCode const& down_cast(di::StatusCode<void> const& code) const {
         DI_ASSERT(code.domain() == *this);

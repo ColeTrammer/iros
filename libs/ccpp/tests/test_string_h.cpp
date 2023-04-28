@@ -47,6 +47,22 @@ namespace string_h {
     return strlen(s);
 }
 
+[[gnu::noinline]] static int do_strcoll(char const* s, char const* t) {
+    return strcoll(s, t);
+}
+
+[[gnu::noinline]] static char* do_strerror(int errnum) {
+    return strerror(errnum);
+}
+
+[[gnu::noinline]] static usize do_strxfrm(char* s, char const* t, size_t count) {
+    return strxfrm(s, t, count);
+}
+
+[[gnu::noinline]] static void const* do_memchr(byte const* s, int ch, usize n) {
+    return memchr(s, ch, di::black_box(n));
+}
+
 [[gnu::noinline]] static int do_memcmp(byte* dest, byte const* src, usize n) {
     return memcmp(dest, src, di::black_box(n));
 }
@@ -282,6 +298,61 @@ static void memcmp_() {
     ASSERT_GT(do_memcmp(c.data(), a.data(), a.size()), 0);
 }
 
+static void memchr_() {
+    auto bytes = di::black_box(di::Array { 4_b, 5_b, 6_b, 7_b });
+    auto e = di::black_box(di::Array { 4_b, 5_b, 6_b, 7_b });
+
+    auto* r1 = do_memchr(bytes.data(), 5, bytes.size());
+    ASSERT_EQ(r1, bytes.data() + 1);
+
+    auto* r2 = do_memchr(bytes.data(), 8, bytes.size());
+    auto e2 = nullptr;
+    ASSERT_EQ(r2, e2);
+
+    auto* r3 = do_memchr(e.data(), 8, e.size());
+    auto e3 = nullptr;
+    ASSERT_EQ(r3, e3);
+}
+
+static void strcoll_() {
+    auto const* a = di::black_box((char const*) "Hello");
+    auto const* b = di::black_box((char const*) "Hello");
+    auto const* c = di::black_box((char const*) "HelloQ");
+    auto const* d = di::black_box((char const*) "Hell");
+    auto const* e = di::black_box((char const*) "Hellp");
+
+    ASSERT_EQ(do_strcoll(a, b), 0);
+    ASSERT_LT(do_strcoll(a, c), 0);
+    ASSERT_GT(do_strcoll(a, d), 0);
+    ASSERT_LT(do_strcoll(a, e), 0);
+}
+
+static void strxfrm_() {
+    auto const* a = di::black_box((char const*) "Hello");
+    auto buffer = di::Array<char, 6> {};
+
+    auto r1 = do_strxfrm(buffer.data(), a, buffer.size());
+    auto e1 = 5u;
+    ASSERT_EQ(r1, e1);
+
+    auto e2 = di::Array<char, 6> { 'H', 'e', 'l', 'l', 'o', '\0' };
+    ASSERT_EQ(buffer, e2);
+
+    buffer.fill(1);
+    auto r3 = do_strxfrm(buffer.data(), a, 3);
+    auto e3 = 5u;
+    ASSERT_EQ(r3, e3);
+
+    auto e4 = di::Array<char, 6> { 'H', 'e', 'l', '\x01', '\x01', '\x01' };
+    ASSERT_EQ(buffer, e4);
+}
+
+static void strerror_() {
+    auto e = di::black_box(ENOENT);
+    auto* r = do_strerror(e);
+    ASSERT_NOT_EQ(r, nullptr);
+}
+
 TEST(string_h, strcat_)
 TEST(string_h, strncat_)
 TEST(string_h, strcmp_)
@@ -296,4 +367,8 @@ TEST(string_h, memcpy_)
 TEST(string_h, memmove_)
 TEST(string_h, memset_)
 TEST(string_h, memcmp_)
+TEST(string_h, memchr_)
+TEST(string_h, strcoll_)
+TEST(string_h, strxfrm_)
+TEST(string_h, strerror_)
 }
