@@ -24,8 +24,10 @@ using InodeInterface = di::meta::List<InodeReadFunction, InodeLookupFunction>;
 
 using InodeImpl = di::Any<InodeInterface>;
 
-class Inode {
+class Inode : public di::IntrusiveRefCount<Inode> {
 public:
+    explicit Inode(InodeImpl impl) : m_impl(di::move(impl)) {}
+
 private:
     InodeImpl m_impl;
     mm::BackingObject m_backing_object;

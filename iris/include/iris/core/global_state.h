@@ -13,6 +13,10 @@
 #include <iris/core/task.h>
 #include <iris/core/task_namespace.h>
 #include <iris/core/unit_test.h>
+#include <iris/fs/inode.h>
+#include <iris/fs/mount.h>
+#include <iris/fs/super_block.h>
+#include <iris/fs/tnode.h>
 #include <iris/hw/acpi/acpi.h>
 #include <iris/hw/irq.h>
 #include <iris/hw/timer.h>
@@ -44,6 +48,8 @@ struct GlobalState {
     di::LinkedList<Processor> alernate_processors;
     di::TreeMap<u32, Processor*> processor_map;
     arch::ReadonlyGlobalState arch_readonly_state;
+    SuperBlock initrd_super_block;
+    di::Arc<TNode> initrd_root;
     mutable di::LinkedList<di::Synchronized<IrqController>> irq_controllers;
     mutable di::LinkedList<di::Synchronized<Timer>> timers;
     mutable di::Synchronized<Timer>* scheduler_timer { nullptr };

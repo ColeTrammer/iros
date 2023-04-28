@@ -7,6 +7,8 @@
 #include <iris/uapi/metadata.h>
 
 namespace iris {
+Expected<void> init_initrd();
+
 Expected<di::Tuple<di::Span<di::Byte const>, initrd::Type>> lookup_in_initrd(di::PathView path);
 
 Expected<File> open_in_initrd(di::PathView path);

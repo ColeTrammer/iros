@@ -121,6 +121,9 @@ void iris_main() {
     iris::println("Starting final architecture specific initialization..."_sv);
     arch::init_final();
 
+    // Setup initrd.
+    ASSERT(iris::init_initrd());
+
     auto init_task = *iris::create_kernel_task(global_state.task_namespace, [] {
         println("Running kernel init task..."_sv);
         arch::init_task();

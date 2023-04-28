@@ -1,7 +1,11 @@
+#include <di/any/concepts/prelude.h>
+#include <di/container/tree/prelude.h>
 #include <di/math/prelude.h>
 #include <iris/core/global_state.h>
 #include <iris/core/print.h>
 #include <iris/fs/initrd.h>
+#include <iris/fs/inode.h>
+#include <iris/mm/backing_object.h>
 #include <iris/uapi/directory.h>
 #include <iris/uapi/initrd.h>
 #include <iris/uapi/metadata.h>
@@ -33,6 +37,78 @@ private:
     byte const* m_data;
     bool m_at_end { false };
 };
+
+struct InitrdInodeImpl {
+    // NOTE: this data is directly mapped from physical memory.
+    di::Span<byte const> data;
+
+    // FIXME: this really should use a kernel-level inode cache.
+    di::TreeMap<di::TransparentString, di::Arc<Inode>> inodes;
+
+    friend Expected<void> tag_invoke(di::Tag<inode_read>, InitrdInodeImpl& self, mm::BackingObject& object,
+                                     u64 page_number) {
+        auto virtual_address = di::to_uintptr(self.data.data() + page_number * 4096);
+        virtual_address -= global_state().virtual_to_physical_offset.raw_value();
+        auto physical_address = mm::PhysicalAddress(virtual_address);
+
+        object.lock()->add_page(physical_address, page_number);
+        return {};
+    }
+
+    friend Expected<di::Arc<TNode>> tag_invoke(di::Tag<inode_lookup>, InitrdInodeImpl& self, di::Arc<TNode> parent,
+                                               di::TransparentStringView name) {
+        auto result = self.inodes.find(name);
+        if (result == self.inodes.end()) {
+            return di::Unexpected(Error::NoSuchFileOrDirectory);
+        }
+
+        return di::try_make_arc<TNode>(di::move(parent), di::get<1>(*result),
+                                       TRY(name | di::to<di::TransparentString>()));
+    }
+};
+
+static_assert(di::Impl<InitrdInodeImpl, InodeInterface>);
+
+Expected<void> init_initrd() {
+    auto& global_state = global_state_in_boot();
+    auto initrd = global_state.initrd;
+    auto const& super_block = *initrd.typed_pointer_unchecked<initrd::SuperBlock>(0);
+    if (super_block.signature != initrd::signature) {
+        println("Initrd has invalid signature: {}"_sv, super_block.signature);
+        return di::Unexpected(Error::InvalidArgument);
+    }
+
+    auto data_from_dirent = [&](initrd::DirectoryEntry const& entry) {
+        return *initrd.subspan(initrd::block_size * entry.block_offset, entry.byte_size);
+    };
+
+    auto const& root_dirent = super_block.root_directory;
+    auto root_data = data_from_dirent(root_dirent);
+
+    auto visit = [&](auto&& visit, initrd::DirectoryEntry const& dirent,
+                     di::Span<byte const> data) -> Expected<di::Arc<Inode>> {
+        if (dirent.type != initrd::Type::Directory) {
+            return di::try_make_arc<Inode>(InodeImpl::create(InitrdInodeImpl { data, {} }));
+        }
+
+        auto inode_impl = InitrdInodeImpl { data, {} };
+        for (auto it = DirentIterator(data.data()); it != di::default_sentinel; ++it) {
+            auto const& entry = *it;
+            auto name = TRY(entry.name() | di::to<di::TransparentString>());
+            auto child_data = data_from_dirent(entry);
+
+            println("Adding initrd child /{}"_sv, name);
+            auto child_inode = TRY(visit(visit, entry, child_data));
+            TRY(inode_impl.inodes.try_emplace(di::move(name), di::move(child_inode)));
+        }
+        return di::try_make_arc<Inode>(InodeImpl::create(di::move(inode_impl)));
+    };
+
+    println("Construct initrd root..."_sv);
+    auto root_inode = TRY(visit(visit, root_dirent, root_data));
+    global_state.initrd_root = TRY(di::try_make_arc<TNode>(nullptr, di::move(root_inode), di::TransparentString {}));
+    return {};
+}
 
 Expected<di::Tuple<di::Span<byte const>, initrd::Type>> lookup_in_initrd(di::PathView path) {
     if (!path.is_absolute()) {
