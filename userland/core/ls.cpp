@@ -13,7 +13,10 @@ struct Args {
 
 di::Result<void> main([[maybe_unused]] Args& args) {
     auto path = di::create<di::Path>(args.path);
-    auto iterator = TRY(di::create<dius::fs::RecursiveDirectoryIterator>(di::move(path)));
+    auto iterator =
+        TRY(di::create<dius::fs::RecursiveDirectoryIterator>(di::move(path)) | di::if_error([](auto&& error) {
+                dius::println("ls: {}"_sv, error.message());
+            }));
     for (auto directory : iterator) {
         auto const& entry = TRY(directory);
         dius::println("{}: {},{}"_sv, entry.path(), TRY(entry.is_regular_file()),
