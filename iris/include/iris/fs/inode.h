@@ -18,6 +18,12 @@ struct InodeReadFunction
 
 constexpr inline auto inode_read = InodeReadFunction {};
 
+struct InodeReadDirectoryFunction
+    : di::Dispatcher<InodeReadDirectoryFunction,
+                     Expected<usize>(di::This&, mm::BackingObject&, u64& offset, UserspaceBuffer<byte> buffer)> {};
+
+constexpr inline auto inode_read_directory = InodeReadDirectoryFunction {};
+
 struct InodeLookupFunction
     : di::Dispatcher<InodeLookupFunction,
                      Expected<di::Arc<TNode>>(di::This&, di::Arc<TNode>, di::TransparentStringView)> {};
@@ -33,8 +39,8 @@ struct InodeHACKRawDataFunction
 
 constexpr inline auto inode_hack_raw_data = InodeHACKRawDataFunction {};
 
-using InodeInterface =
-    di::meta::List<InodeReadFunction, InodeLookupFunction, InodeMetadataFunction, InodeHACKRawDataFunction>;
+using InodeInterface = di::meta::List<InodeReadFunction, InodeReadDirectoryFunction, InodeLookupFunction,
+                                      InodeMetadataFunction, InodeHACKRawDataFunction>;
 
 using InodeImpl = di::Any<InodeInterface>;
 
@@ -63,6 +69,8 @@ public:
 private:
     friend Expected<mm::PhysicalAddress> tag_invoke(di::Tag<inode_read>, Inode& self, mm::BackingObject& backing_object,
                                                     u64 page_number);
+    friend Expected<usize> tag_invoke(di::Tag<inode_read_directory>, Inode& self, mm::BackingObject& backing_object,
+                                      u64& offset, UserspaceBuffer<byte> buffer);
     friend Expected<di::Arc<TNode>> tag_invoke(di::Tag<inode_lookup>, Inode& self, di::Arc<TNode> parent,
                                                di::TransparentStringView name);
     friend Expected<Metadata> tag_invoke(di::Tag<inode_metadata>, Inode& self);

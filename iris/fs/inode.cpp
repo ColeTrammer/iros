@@ -14,6 +14,11 @@ Expected<mm::PhysicalAddress> tag_invoke(di::Tag<inode_read>, Inode& self, mm::B
     return inode_read(self.m_impl, backing_object, page_number);
 }
 
+Expected<usize> tag_invoke(di::Tag<inode_read_directory>, Inode& self, mm::BackingObject& backing_object, u64& offset,
+                           UserspaceBuffer<byte> buffer) {
+    return inode_read_directory(self.m_impl, backing_object, offset, buffer);
+}
+
 Expected<di::Arc<TNode>> tag_invoke(di::Tag<inode_lookup>, Inode& self, di::Arc<TNode> parent,
                                     di::TransparentStringView name) {
     return inode_lookup(self.m_impl, di::move(parent), name);
@@ -63,8 +68,9 @@ Expected<usize> tag_invoke(di::Tag<read_file>, InodeFile& self, UserspaceBuffer<
     return nread;
 }
 
-Expected<usize> tag_invoke(di::Tag<read_directory>, InodeFile&, UserspaceBuffer<byte>) {
-    return di::Unexpected(Error::OperationNotSupported);
+Expected<usize> tag_invoke(di::Tag<read_directory>, InodeFile& self, UserspaceBuffer<byte> buffer) {
+    auto& inode = *self.m_tnode->inode();
+    return inode_read_directory(inode, inode.backing_object(), self.m_offset, buffer);
 }
 
 Expected<usize> tag_invoke(di::Tag<write_file>, InodeFile&, UserspaceBuffer<byte const>) {

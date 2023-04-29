@@ -12,6 +12,10 @@ Expected<di::Arc<TNode>> lookup_path(di::Arc<TNode> root, di::Arc<TNode> relativ
             continue;
         }
 
+        if (component == "."_tsv) {
+            continue;
+        }
+
         if (component == ".."_tsv) {
             // If the current node is the root, continue without fetching the parent (which is null).
             if (!parent->parent()) {

@@ -57,6 +57,39 @@ struct InitrdInodeImpl {
         return physical_address;
     }
 
+    friend Expected<usize> tag_invoke(di::Tag<inode_read_directory>, InitrdInodeImpl& self, mm::BackingObject&,
+                                      u64& offset, UserspaceBuffer<byte> buffer) {
+        auto it = DirentIterator(self.data.data() + offset, offset == self.data.size());
+        if (it == di::default_sentinel) {
+            return 0;
+        }
+
+        auto const& entry = *it;
+
+        auto storage = di::Array<byte, sizeof(DirectoryRecord) + 256> {};
+        auto effective_size = sizeof(DirectoryRecord) + di::align_up(entry.name_length, 8);
+        auto* dirent = reinterpret_cast<DirectoryRecord*>(storage.data());
+        dirent->inode = 0;
+        dirent->offset = offset;
+        dirent->type = MetadataType(di::to_underlying(entry.type));
+        dirent->name_length = entry.name_length;
+        dirent->size = effective_size;
+
+        auto* name_buffer = const_cast<char*>(dirent->name().data());
+        di::copy(entry.name(), name_buffer);
+
+        TRY(buffer.write(di::Span { storage.data(), effective_size }));
+
+        it++;
+        if (it == di::default_sentinel) {
+            offset = self.data.size();
+        } else {
+            offset = it.data() - self.data.data();
+        }
+
+        return effective_size;
+    }
+
     friend Expected<di::Arc<TNode>> tag_invoke(di::Tag<inode_lookup>, InitrdInodeImpl& self, di::Arc<TNode> parent,
                                                di::TransparentStringView name) {
         auto result = self.inodes.find(name);
