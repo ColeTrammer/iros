@@ -11,6 +11,10 @@ public:
     explicit TNode(di::Arc<TNode> parent, di::Arc<Inode> inode, di::TransparentString name)
         : m_parent(di::move(parent)), m_inode(di::move(inode)), m_name(di::move(name)) {}
 
+    di::Arc<TNode> parent() const { return m_parent; }
+    di::Arc<Inode> inode() const { return m_inode; }
+    di::TransparentStringView name() const { return m_name; }
+
 private:
     di::Arc<TNode> m_parent;
     di::Arc<Inode> m_inode;

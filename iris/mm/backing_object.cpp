@@ -10,4 +10,8 @@ void LockedBackingObject::add_page(PhysicalAddress address, u64 page_offset) {
     di::construct_at(&page.as_backed_page, page_offset);
     m_pages.insert(page.as_backed_page);
 }
+
+di::Optional<mm::PhysicalAddress> LockedBackingObject::lookup_page(u64 page_offset) const {
+    return m_pages.at(page_offset).transform(physical_address);
+}
 }

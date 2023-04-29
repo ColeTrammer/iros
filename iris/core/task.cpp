@@ -8,7 +8,10 @@
 #include <iris/core/task.h>
 #include <iris/core/task_namespace.h>
 #include <iris/core/userspace_access.h>
+#include <iris/fs/file.h>
 #include <iris/fs/initrd.h>
+#include <iris/fs/path.h>
+#include <iris/uapi/metadata.h>
 
 namespace iris {
 Task::Task(bool userspace, di::Arc<mm::AddressSpace> address_space, di::Arc<TaskNamespace> task_namespace, TaskId id,
@@ -33,7 +36,8 @@ Task::~Task() {
 Expected<di::Arc<Task>> create_kernel_task(TaskNamespace& task_namespace, void (*entry)()) {
     auto entry_address = mm::VirtualAddress(di::to_uintptr(entry));
 
-    auto& address_space = global_state().kernel_address_space;
+    auto const& global_state = iris::global_state();
+    auto& address_space = global_state.kernel_address_space;
     auto stack_object = TRY(di::try_make_arc<mm::BackingObject>());
     auto stack = TRY(address_space.allocate_region(di::move(stack_object), 0x2000,
                                                    mm::RegionFlags::Readable | mm::RegionFlags::Writable));
@@ -45,17 +49,26 @@ Expected<di::Arc<Task>> create_kernel_task(TaskNamespace& task_namespace, void (
     result->set_instruction_pointer(entry_address);
     result->set_stack_pointer(stack + 0x2000zu);
     result->set_kernel_stack(stack);
+
+    ASSERT(global_state.initrd_root);
+    result->set_root_tnode(global_state.initrd_root);
+    result->set_cwd_tnode(global_state.initrd_root);
+
     TRY(task_namespace.lock()->register_task(*result));
     return result;
 }
 
-Expected<di::Arc<Task>> create_user_task(TaskNamespace& task_namespace, FileTable file_table,
+Expected<di::Arc<Task>> create_user_task(TaskNamespace& task_namespace, di::Arc<TNode> root_tnode,
+                                         di::Arc<TNode> cwd_tnode, FileTable file_table,
                                          di::Arc<mm::AddressSpace> address_space) {
     auto task_status = TRY(di::try_make_arc<TaskStatus>());
     auto task_id = TRY(task_namespace.lock()->allocate_task_id());
     auto result = TRY(di::try_make_arc<Task>(true, di::move(address_space), task_namespace.arc_from_this(), task_id,
                                              di::move(file_table), di::move(task_status)));
     TRY(result->fpu_state().setup_fpu_state());
+
+    result->set_root_tnode(di::move(root_tnode));
+    result->set_cwd_tnode(di::move(cwd_tnode));
 
     auto kernel_stack_object = TRY(di::try_make_arc<mm::BackingObject>());
     auto kernel_stack = TRY(global_state().kernel_address_space.allocate_region(
@@ -67,8 +80,9 @@ Expected<di::Arc<Task>> create_user_task(TaskNamespace& task_namespace, FileTabl
 }
 
 Expected<void> load_executable(Task& task, di::PathView path) {
-    auto [raw_data, type] = TRY(lookup_in_initrd(path));
-    if (type != initrd::Type::Regular) {
+    auto file = TRY(open_path(task.root_tnode(), task.cwd_tnode(), path));
+    auto file_metadata = TRY(iris::file_metadata(file));
+    if (file_metadata.type != MetadataType::Regular) {
         println("Failed to load exutable: {} is not a regular file."_sv, path);
         return di::Unexpected(Error::InvalidArgument);
     }
@@ -86,6 +100,7 @@ Expected<void> load_executable(Task& task, di::PathView path) {
     using ProgramHeader = di::exec::ElfProgramHeader<>;
     using ProgramHeaderType = di::exec::ElfProgramHeaderType;
 
+    auto raw_data = TRY(file_hack_raw_data(file));
     auto* elf_header = raw_data.typed_pointer_unchecked<ElfHeader>(0);
     ASSERT_EQ(sizeof(ProgramHeader), elf_header->program_entry_size);
 

@@ -10,6 +10,7 @@ namespace iris::mm {
 class LockedBackingObject {
 public:
     void add_page(mm::PhysicalAddress address, u64 page_offset);
+    di::Optional<mm::PhysicalAddress> lookup_page(u64 page_offset) const;
 
 private:
     di::IntrusiveTreeSet<BackedPhysicalPage, BackedPhysicalPageTreeTag> m_pages;

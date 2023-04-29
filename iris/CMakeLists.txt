@@ -76,6 +76,8 @@ if(IROS_BuildIris)
         core/wait_queue.cpp
         fs/debug_file.cpp
         fs/initrd.cpp
+        fs/inode.cpp
+        fs/path.cpp
         hw/acpi/acpi.cpp
         hw/irq.cpp
         hw/timer.cpp

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/assert/prelude.h>
 #include <di/concepts/prelude.h>
 #include <di/container/algorithm/prelude.h>
 #include <di/meta/prelude.h>
@@ -74,6 +75,11 @@ public:
     usize size() const { return m_buffer.size(); }
     usize size_bytes() const { return m_buffer.size_bytes(); }
     [[nodiscard]] bool empty() const { return m_buffer.empty(); }
+
+    void advance(usize offset) {
+        ASSERT_LT(offset, size_bytes());
+        m_buffer = *m_buffer.subspan(offset);
+    }
 
 private:
     di::Span<T> m_buffer;

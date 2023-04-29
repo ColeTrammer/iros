@@ -8,6 +8,7 @@
 #include <iris/core/task_arguments.h>
 #include <iris/core/task_status.h>
 #include <iris/fs/file.h>
+#include <iris/fs/tnode.h>
 #include <iris/mm/address_space.h>
 
 #include IRIS_ARCH_INCLUDE(core/task.h)
@@ -94,11 +95,19 @@ public:
         m_userspace_thread_pointer = userspace_thread_pointer;
     }
 
+    di::Arc<TNode> root_tnode() const { return m_root_tnode; }
+    void set_root_tnode(di::Arc<TNode> root_tnode) { m_root_tnode = di::move(root_tnode); }
+
+    di::Arc<TNode> cwd_tnode() const { return m_cwd_tnode; }
+    void set_cwd_tnode(di::Arc<TNode> cwd_tnode) { m_cwd_tnode = di::move(cwd_tnode); }
+
 private:
     arch::TaskState m_task_state;
     arch::FpuState m_fpu_state;
     di::Arc<mm::AddressSpace> m_address_space;
     di::Arc<TaskNamespace> m_task_namespace;
+    di::Arc<TNode> m_root_tnode;
+    di::Arc<TNode> m_cwd_tnode;
     di::Atomic<i32> m_preemption_disabled_count;
     di::Atomic<bool> m_should_be_preempted { false };
     di::Arc<TaskStatus> m_task_status;
@@ -111,7 +120,8 @@ private:
 };
 
 Expected<di::Arc<Task>> create_kernel_task(TaskNamespace&, void (*entry)());
-Expected<di::Arc<Task>> create_user_task(TaskNamespace&, FileTable, di::Arc<mm::AddressSpace>);
+Expected<di::Arc<Task>> create_user_task(TaskNamespace&, di::Arc<TNode> root_tnode, di::Arc<TNode> cwd_tnode, FileTable,
+                                         di::Arc<mm::AddressSpace>);
 Expected<void> load_executable(Task&, di::PathView path);
 
 Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state);

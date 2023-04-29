@@ -3,6 +3,7 @@
 #include <iris/core/userspace_access.h>
 #include <iris/core/userspace_ptr.h>
 #include <iris/fs/initrd.h>
+#include <iris/fs/path.h>
 #include <iris/hw/power.h>
 #include <iris/uapi/metadata.h>
 #include <iris/uapi/syscall.h>
@@ -33,7 +34,8 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
             break;
         }
         case SystemCall::create_task: {
-            auto task = TRY(iris::create_user_task(current_task.task_namespace(), current_task.file_table(),
+            auto task = TRY(iris::create_user_task(current_task.task_namespace(), current_task.root_tnode(),
+                                                   current_task.cwd_tnode(), current_task.file_table(),
                                                    current_task.address_space().arc_from_this()));
             return task->id().raw_value();
         }
@@ -81,7 +83,7 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
 
             auto [file_storage, fd] = TRY(current_task.file_table().allocate_file_handle());
 
-            auto file = TRY(iris::open_in_initrd(path));
+            auto file = TRY(iris::open_path(current_task.root_tnode(), current_task.cwd_tnode(), path));
             file_storage = di::move(file);
 
             return fd;
@@ -223,7 +225,8 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
             auto metadata_ptr =
                 TRY(di::create<UserspacePtr<Metadata>>(reinterpret_cast<Metadata*>(task_state.syscall_arg3())));
 
-            auto metadata = TRY(iris::path_metadata_in_initrd(path));
+            auto file = TRY(iris::open_path(current_task.root_tnode(), current_task.cwd_tnode(), path));
+            auto metadata = TRY(iris::file_metadata(file));
             TRY(metadata_ptr.write(metadata));
             return 0;
         }

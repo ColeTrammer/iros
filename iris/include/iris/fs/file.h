@@ -4,6 +4,7 @@
 #include <di/bit/bitset/prelude.h>
 #include <iris/core/error.h>
 #include <iris/core/userspace_buffer.h>
+#include <iris/uapi/metadata.h>
 
 namespace iris {
 namespace detail {
@@ -31,6 +32,14 @@ namespace detail {
     struct SeekFileDefaultFunction {
         constexpr Expected<i64> operator()(auto&, i64, int) const { return di::Unexpected(Error::NotSupported); }
     };
+
+    struct FileMetadataDefaultFunction {
+        constexpr Expected<Metadata> operator()(auto&) const { return di::Unexpected(Error::NotSupported); }
+    };
+
+    struct FileHACKRawDataFunction {
+        constexpr Expected<di::Span<byte const>> operator()(auto&) const { return di::Unexpected(Error::NotSupported); }
+    };
 }
 
 struct WriteFileFunction
@@ -51,12 +60,24 @@ struct ReadDirectoryFunction
 
 constexpr inline auto read_directory = ReadDirectoryFunction {};
 
+struct FileMetadataFunction
+    : di::Dispatcher<FileMetadataFunction, Expected<Metadata>(di::This&), detail::FileMetadataDefaultFunction> {};
+
+constexpr inline auto file_metadata = FileMetadataFunction {};
+
 struct SeekFileFunction
     : di::Dispatcher<SeekFileFunction, Expected<i64>(di::This&, i64, int), detail::SeekFileDefaultFunction> {};
 
 constexpr inline auto seek_file = SeekFileFunction {};
 
-using FileInterface = di::meta::List<WriteFileFunction, ReadFileFunction, ReadDirectoryFunction, SeekFileFunction>;
+struct FileHACKRawDataFunction
+    : di::Dispatcher<FileHACKRawDataFunction, Expected<di::Span<byte const>>(di::This&),
+                     detail::FileHACKRawDataFunction> {};
+
+constexpr inline auto file_hack_raw_data = FileHACKRawDataFunction {};
+
+using FileInterface = di::meta::List<WriteFileFunction, ReadFileFunction, ReadDirectoryFunction, FileMetadataFunction,
+                                     SeekFileFunction, FileHACKRawDataFunction>;
 using File = di::AnyShared<FileInterface>;
 
 class FileTable {
