@@ -23,7 +23,7 @@ fi
 LOG="-d guest_errors,cpu_reset"
 if [ "$IROS_DEBUG" ]; then
     DEBUG="-s -S -no-reboot -no-shutdown"
-    LOG="$LOG,mmu"
+    LOG="$LOG"
 fi
 SERIAL="-serial mon:stdio"
 
