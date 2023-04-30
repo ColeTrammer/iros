@@ -9,6 +9,7 @@
 #include <iris/core/task.h>
 #include <iris/fs/debug_file.h>
 #include <iris/fs/initrd.h>
+#include <iris/fs/tmpfs.h>
 #include <iris/hw/acpi/acpi.h>
 #include <iris/mm/address_space.h>
 #include <iris/mm/map_physical_address.h>
@@ -123,6 +124,9 @@ void iris_main() {
 
     // Setup initrd.
     ASSERT(iris::init_initrd());
+
+    // Setup temp file system.
+    ASSERT(iris::init_tmpfs());
 
     auto init_task = *iris::create_kernel_task(global_state.task_namespace, [] {
         println("Running kernel init task..."_sv);

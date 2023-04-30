@@ -78,6 +78,8 @@ if(IROS_BuildIris)
         fs/initrd.cpp
         fs/inode.cpp
         fs/path.cpp
+        fs/super_block.cpp
+        fs/tmpfs.cpp
         hw/acpi/acpi.cpp
         hw/irq.cpp
         hw/timer.cpp

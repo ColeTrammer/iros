@@ -2,9 +2,11 @@
 
 #include <di/any/dispatch/prelude.h>
 #include <di/any/prelude.h>
+#include <di/container/tree/prelude.h>
 #include <di/types/integers.h>
 #include <iris/core/error.h>
 #include <iris/fs/file.h>
+#include <iris/fs/mount.h>
 #include <iris/mm/backing_object.h>
 #include <iris/mm/physical_address.h>
 #include <iris/uapi/metadata.h>
@@ -78,6 +80,12 @@ public:
 
     mm::BackingObject& backing_object() { return m_backing_object; }
 
+    di::Span<di::Box<Mount> const> mounts() const { return m_mounts.span(); }
+    Expected<void> add_mount(di::Box<Mount> mount) {
+        TRY(m_mounts.push_back(di::move(mount)));
+        return {};
+    }
+
 private:
     friend Expected<mm::PhysicalAddress> tag_invoke(di::Tag<inode_read>, Inode& self, mm::BackingObject& backing_object,
                                                     u64 page_number);
@@ -92,6 +100,7 @@ private:
     friend Expected<di::Span<byte const>> tag_invoke(di::Tag<inode_hack_raw_data>, Inode& self);
 
     InodeImpl m_impl;
+    di::Vector<di::Box<Mount>> m_mounts;
     mm::BackingObject m_backing_object;
 };
 }

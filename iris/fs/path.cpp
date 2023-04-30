@@ -30,6 +30,18 @@ Expected<di::Arc<TNode>> lookup_path(di::Arc<TNode> root, di::Arc<TNode> relativ
         }
 
         auto inode = parent->inode();
+
+        // See if there is existing mount.
+        auto mounts = inode->mounts();
+        auto const* mount = di::find_if(mounts, [&](auto const& mount) {
+            return mount->name() == component;
+        });
+        if (mount != mounts.end()) {
+            auto root_inode = (*mount)->super_block().root_inode();
+            parent = TRY(di::try_make_arc<TNode>(di::move(parent), di::move(root_inode), TRY(component.to_owned())));
+            continue;
+        }
+
         auto result = inode_lookup(*inode, parent, component);
         if (result == di::Unexpected(Error::NoSuchFileOrDirectory) && !!(flags & PathLookupFlags::Create)) {
             // Now try to create the file, but only if this is the last component in the path.

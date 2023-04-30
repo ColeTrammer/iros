@@ -48,7 +48,6 @@ struct GlobalState {
     di::LinkedList<Processor> alernate_processors;
     di::TreeMap<u32, Processor*> processor_map;
     arch::ReadonlyGlobalState arch_readonly_state;
-    SuperBlock initrd_super_block;
     di::Arc<TNode> initrd_root;
     mutable di::LinkedList<di::Synchronized<IrqController>> irq_controllers;
     mutable di::LinkedList<di::Synchronized<Timer>> timers;
