@@ -2,11 +2,15 @@
 #include <iris/fs/inode.h>
 #include <iris/fs/path.h>
 #include <iris/fs/tnode.h>
+#include <iris/uapi/metadata.h>
 
 namespace iris {
-Expected<di::Arc<TNode>> lookup_path(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path) {
+Expected<di::Arc<TNode>> lookup_path(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path,
+                                     PathLookupFlags flags) {
     auto parent = path.is_absolute() ? di::move(root) : di::move(relative_to);
-    for (auto component : path) {
+    for (auto it = path.begin(); it != path.end(); ++it) {
+        auto component = *it;
+
         // This can occur exactly once, when the path is absolute.
         if (component == "/"_tsv) {
             continue;
@@ -26,13 +30,24 @@ Expected<di::Arc<TNode>> lookup_path(di::Arc<TNode> root, di::Arc<TNode> relativ
         }
 
         auto inode = parent->inode();
-        parent = TRY(inode_lookup(*inode, parent, component));
+        auto result = inode_lookup(*inode, parent, component);
+        if (result == di::Unexpected(Error::NoSuchFileOrDirectory) && !!(flags & PathLookupFlags::Create)) {
+            // Now try to create the file, but only if this is the last component in the path.
+            if (di::next(it) != path.end()) {
+                return di::Unexpected(Error::NoSuchFileOrDirectory);
+            }
+
+            return TRY(inode_create_node(*inode, parent, component, MetadataType::Regular));
+        }
+
+        parent = TRY(di::move(result));
     }
     return parent;
 }
 
-Expected<File> open_path(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path, OpenMode) {
-    auto node = TRY(lookup_path(di::move(root), di::move(relative_to), path));
+Expected<File> open_path(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path, OpenMode mode) {
+    auto flags = !!(mode & OpenMode::Create) ? PathLookupFlags::Create : PathLookupFlags::None;
+    auto node = TRY(lookup_path(di::move(root), di::move(relative_to), path, flags));
     return File::create(InodeFile(di::move(node)));
 }
 }
