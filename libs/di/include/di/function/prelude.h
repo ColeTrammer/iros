@@ -3,12 +3,14 @@
 #include <di/function/bind_back.h>
 #include <di/function/bind_front.h>
 #include <di/function/bit_and.h>
+#include <di/function/chain.h>
 #include <di/function/compare.h>
 #include <di/function/compare_backwards.h>
 #include <di/function/compose.h>
 #include <di/function/container/prelude.h>
 #include <di/function/curry.h>
 #include <di/function/curry_back.h>
+#include <di/function/dereference.h>
 #include <di/function/equal.h>
 #include <di/function/equal_or_greater.h>
 #include <di/function/equal_or_less.h>
@@ -36,6 +38,7 @@
 namespace di {
 using function::bind_back;
 using function::bind_front;
+using function::chain;
 using function::compose;
 using function::curry;
 using function::curry_back;
@@ -60,6 +63,7 @@ using meta::InvokeResult;
 
 using function::BitAnd;
 using function::Compare;
+using function::Dereference;
 using function::Equal;
 using function::EqualOrGreater;
 using function::EqualOrLess;
@@ -74,6 +78,7 @@ using function::Plus;
 using function::bit_and;
 using function::compare;
 using function::compare_backwards;
+using function::dereference;
 using function::equal;
 using function::equal_or_greater;
 using function::equal_or_less;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/function/invoke.h>
+#include <di/function/pipeline.h>
 #include <di/util/addressof.h>
 #include <di/vocab/optional/get_value.h>
 #include <di/vocab/optional/is_nullopt.h>
@@ -63,31 +64,40 @@ private:
 template<typename T>
 ReferenceWrapper(T&) -> ReferenceWrapper<T>;
 
-template<typename T>
-constexpr ReferenceWrapper<T> ref(T& value) {
-    return ReferenceWrapper<T>(value);
+namespace detail {
+    struct RefFunction : function::pipeline::EnablePipeline {
+        template<typename T>
+        constexpr ReferenceWrapper<T> operator()(T& value) const {
+            return ReferenceWrapper<T>(value);
+        }
+
+        template<typename T>
+        constexpr ReferenceWrapper<T> operator()(ReferenceWrapper<T> value) const {
+            return ReferenceWrapper<T>(value.get());
+        }
+
+        // Prevent construction of reference wrapper's from temporaries.
+        template<typename T>
+        constexpr void operator()(T const&& value) const = delete;
+    };
+
+    struct CRefFunction : function::pipeline::EnablePipeline {
+        template<typename T>
+        constexpr ReferenceWrapper<T const> operator()(T const& value) const {
+            return ReferenceWrapper<T const>(value);
+        }
+
+        template<typename T>
+        constexpr ReferenceWrapper<T const> operator()(ReferenceWrapper<T> value) const {
+            return ReferenceWrapper<T const>(value.get());
+        }
+
+        // Prevent construction of reference wrapper's from temporaries.
+        template<typename T>
+        constexpr void operator()(T const&& value) const = delete;
+    };
 }
 
-template<typename T>
-constexpr ReferenceWrapper<T const> cref(T const& value) {
-    return ReferenceWrapper<T const>(value);
-}
-
-// Prevent reference wrapper's from wrapping reference wrappers.
-template<typename T>
-constexpr ReferenceWrapper<T> ref(ReferenceWrapper<T> value) {
-    return ReferenceWrapper<T>(value.get());
-}
-
-template<typename T>
-constexpr ReferenceWrapper<T const> cref(ReferenceWrapper<T> value) {
-    return ReferenceWrapper<T const>(value.get());
-}
-
-// Prevent construction of reference wrapper's from temporaries.
-template<typename T>
-constexpr void ref(T const&& value) = delete;
-
-template<typename T>
-constexpr void cref(T const&& value) = delete;
+constexpr inline auto ref = detail::RefFunction {};
+constexpr inline auto cref = detail::CRefFunction {};
 }
