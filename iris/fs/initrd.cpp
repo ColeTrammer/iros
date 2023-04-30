@@ -111,6 +111,10 @@ struct InitrdInodeImpl {
         return di::Unexpected(Error::ReadOnlyFileSystem);
     }
 
+    friend Expected<void> tag_invoke(di::Tag<inode_truncate>, InitrdInodeImpl&, u64) {
+        return di::Unexpected(Error::ReadOnlyFileSystem);
+    }
+
     friend Expected<di::Span<byte const>> tag_invoke(di::Tag<inode_hack_raw_data>, InitrdInodeImpl& self) {
         return self.data;
     }

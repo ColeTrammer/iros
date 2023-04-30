@@ -37,6 +37,10 @@ namespace detail {
         constexpr Expected<Metadata> operator()(auto&) const { return di::Unexpected(Error::NotSupported); }
     };
 
+    struct FileTruncateDefaultFunction {
+        constexpr Expected<usize> operator()(auto&, u64) const { return di::Unexpected(Error::NotSupported); }
+    };
+
     struct FileHACKRawDataFunction {
         constexpr Expected<di::Span<byte const>> operator()(auto&) const { return di::Unexpected(Error::NotSupported); }
     };
@@ -70,6 +74,11 @@ struct SeekFileFunction
 
 constexpr inline auto seek_file = SeekFileFunction {};
 
+struct FileTruncateFunction
+    : di::Dispatcher<FileTruncateFunction, Expected<usize>(di::This&, u64), detail::FileTruncateDefaultFunction> {};
+
+constexpr inline auto file_truncate = FileTruncateFunction {};
+
 struct FileHACKRawDataFunction
     : di::Dispatcher<FileHACKRawDataFunction, Expected<di::Span<byte const>>(di::This&),
                      detail::FileHACKRawDataFunction> {};
@@ -77,7 +86,7 @@ struct FileHACKRawDataFunction
 constexpr inline auto file_hack_raw_data = FileHACKRawDataFunction {};
 
 using FileInterface = di::meta::List<WriteFileFunction, ReadFileFunction, ReadDirectoryFunction, FileMetadataFunction,
-                                     SeekFileFunction, FileHACKRawDataFunction>;
+                                     SeekFileFunction, FileTruncateFunction, FileHACKRawDataFunction>;
 using File = di::AnyShared<FileInterface>;
 
 class FileTable {

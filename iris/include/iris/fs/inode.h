@@ -40,13 +40,18 @@ struct InodeCreateNodeFunction
 
 constexpr inline auto inode_create_node = InodeCreateNodeFunction {};
 
+struct InodeTruncateFunction : di::Dispatcher<InodeTruncateFunction, Expected<void>(di::This&, u64)> {};
+
+constexpr inline auto inode_truncate = InodeTruncateFunction {};
+
 struct InodeHACKRawDataFunction
     : di::Dispatcher<InodeHACKRawDataFunction, Expected<di::Span<byte const>>(di::This&)> {};
 
 constexpr inline auto inode_hack_raw_data = InodeHACKRawDataFunction {};
 
-using InodeInterface = di::meta::List<InodeReadFunction, InodeReadDirectoryFunction, InodeLookupFunction,
-                                      InodeMetadataFunction, InodeCreateNodeFunction, InodeHACKRawDataFunction>;
+using InodeInterface =
+    di::meta::List<InodeReadFunction, InodeReadDirectoryFunction, InodeLookupFunction, InodeMetadataFunction,
+                   InodeCreateNodeFunction, InodeTruncateFunction, InodeHACKRawDataFunction>;
 
 using InodeImpl = di::Any<InodeInterface>;
 
@@ -59,6 +64,7 @@ public:
     friend Expected<usize> tag_invoke(di::Tag<write_file>, InodeFile& self, UserspaceBuffer<byte const> buffer);
     friend Expected<Metadata> tag_invoke(di::Tag<file_metadata>, InodeFile& self);
     friend Expected<u64> tag_invoke(di::Tag<seek_file>, InodeFile& self, i64 offset, int whence);
+    friend Expected<void> tag_invoke(di::Tag<file_truncate>, InodeFile& self, u64 size);
     friend Expected<di::Span<byte const>> tag_invoke(di::Tag<file_hack_raw_data>, InodeFile& self);
 
 private:
@@ -82,6 +88,7 @@ private:
     friend Expected<Metadata> tag_invoke(di::Tag<inode_metadata>, Inode& self);
     friend Expected<di::Arc<TNode>> tag_invoke(di::Tag<inode_create_node>, Inode& self, di::Arc<TNode> parent,
                                                di::TransparentStringView name, MetadataType type);
+    friend Expected<void> tag_invoke(di::Tag<inode_truncate>, Inode& self, u64 size);
     friend Expected<di::Span<byte const>> tag_invoke(di::Tag<inode_hack_raw_data>, Inode& self);
 
     InodeImpl m_impl;

@@ -2,6 +2,7 @@
 #include <di/math/prelude.h>
 #include <dius/sync_file.h>
 #include <dius/system/system_call.h>
+#include <iris/uapi/open.h>
 
 namespace dius {
 di::Expected<usize, PosixCode> sys_read(int fd, u64 offset, di::Span<byte> data) {
@@ -16,8 +17,12 @@ di::Expected<void, PosixCode> sys_close(int fd) {
     return system::system_call<int>(system::Number::close, fd) % di::into_void;
 }
 
-di::Expected<int, PosixCode> sys_open(di::PathView path) {
-    return system::system_call<int>(system::Number::open, path.data().data(), path.data().size());
+di::Expected<void, PosixCode> sys_truncate(int fd, u64 size) {
+    return system::system_call<int>(system::Number::truncate, fd, size) % di::into_void;
+}
+
+di::Expected<int, PosixCode> sys_open(di::PathView path, iris::OpenMode mode) {
+    return system::system_call<int>(system::Number::open, path.data().data(), path.data().size(), mode);
 }
 
 di::Expected<void, PosixCode> SyncFile::close() {
@@ -46,12 +51,26 @@ di::Expected<usize, PosixCode> SyncFile::write_some(u64 offset, di::Span<byte co
     return sys_write(m_fd, offset, data);
 }
 
-di::Expected<void, PosixCode> SyncFile::resize_file(u64) const {
-    return di::Unexpected(PosixError::OperationNotSupported);
+di::Expected<void, PosixCode> SyncFile::resize_file(u64 size) const {
+    return sys_truncate(m_fd, size);
 }
 
-di::Expected<SyncFile, PosixCode> open_sync(di::PathView path, OpenMode, u16) {
-    auto fd = TRY(sys_open(path));
+di::Expected<SyncFile, PosixCode> open_sync(di::PathView path, OpenMode mode, u16) {
+    auto iris_mode = [&] {
+        switch (mode) {
+            case OpenMode::WriteNew:
+            case OpenMode::WriteClobber:
+            case OpenMode::ReadWriteClobber:
+            case OpenMode::AppendReadWrite:
+            case OpenMode::AppendOnly:
+                return iris::OpenMode::Create;
+            default:
+                return iris::OpenMode::None;
+        }
+        return iris::OpenMode::Create;
+    }();
+
+    auto fd = TRY(sys_open(path, iris_mode));
     return SyncFile { SyncFile::Owned::Yes, fd };
 }
 

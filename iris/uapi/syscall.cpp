@@ -244,6 +244,13 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
 
             return iris::read_directory(handle, TRY(di::create<UserspaceBuffer>(buffer, amount)));
         }
+        case SystemCall::truncate: {
+            auto file_handle = i32(task_state.syscall_arg1());
+            auto length = u64(task_state.syscall_arg2());
+
+            auto& handle = TRY(current_task.file_table().lookup_file_handle(file_handle));
+            return file_truncate(handle, length);
+        }
         default:
             iris::println("Encounted unexpected system call: {}"_sv, di::to_underlying(number));
             break;

@@ -33,6 +33,10 @@ Expected<di::Arc<TNode>> tag_invoke(di::Tag<inode_create_node>, Inode& self, di:
     return inode_create_node(self.m_impl, di::move(parent), name, type);
 }
 
+Expected<void> tag_invoke(di::Tag<inode_truncate>, Inode& self, u64 size) {
+    return inode_truncate(self.m_impl, size);
+}
+
 Expected<di::Span<byte const>> tag_invoke(di::Tag<inode_hack_raw_data>, Inode& self) {
     return inode_hack_raw_data(self.m_impl);
 }
@@ -103,6 +107,11 @@ Expected<u64> tag_invoke(di::Tag<seek_file>, InodeFile& self, i64 offset, int wh
         }
     }
     return di::Unexpected(Error::InvalidArgument);
+}
+
+Expected<void> tag_invoke(di::Tag<file_truncate>, InodeFile& self, u64 size) {
+    auto& inode = *self.m_tnode->inode();
+    return inode_truncate(inode, size);
 }
 
 Expected<di::Span<byte const>> tag_invoke(di::Tag<file_hack_raw_data>, InodeFile& self) {

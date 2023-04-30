@@ -22,5 +22,6 @@ enum class SystemCall {
     set_task_arguments = 17,
     path_metadata = 18,
     read_directory = 19,
+    truncate = 20,
 };
 }
