@@ -145,7 +145,7 @@ Expected<void> init_initrd() {
         }
 
         auto inode_impl = InitrdInodeImpl { data, dirent.type, {} };
-        for (auto it = DirentIterator(data.data()); it != di::default_sentinel; ++it) {
+        for (auto it = DirentIterator(data.data(), data.empty()); it != di::default_sentinel; ++it) {
             auto const& entry = *it;
             auto name = TRY(entry.name() | di::to<di::TransparentString>());
             auto child_data = data_from_dirent(entry);

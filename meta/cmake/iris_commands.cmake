@@ -32,6 +32,7 @@ add_custom_target(
     COMMAND cp "${CMAKE_BINARY_DIR}/userland/tools/initrd" .
     COMMAND cp "${CMAKE_BINARY_DIR}/userland/core/ls" .
     COMMAND cp "${CMAKE_SOURCE_DIR}/iris/data.txt" .
+    COMMAND mkdir -p "tmp"
     COMMAND rm -f "${CMAKE_BINARY_DIR}/initrd/initrd.bin"
     COMMAND ${INITRD_COMMAND}
     DEPENDS ${INITRD_TARGET}

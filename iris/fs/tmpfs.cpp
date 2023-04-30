@@ -6,6 +6,7 @@
 #include <iris/core/error.h>
 #include <iris/core/global_state.h>
 #include <iris/fs/inode.h>
+#include <iris/fs/path.h>
 #include <iris/fs/tmpfs.h>
 #include <iris/fs/tnode.h>
 #include <iris/mm/backing_object.h>
@@ -108,10 +109,11 @@ Expected<void> init_tmpfs() {
 
     auto root_inode = TRY(di::try_make_arc<Inode>(
         InodeImpl::create(TmpfsInodeImpl(Metadata { .type = MetadataType::Directory, .size = 0 }, {}))));
-    auto name = TRY("tmp"_tsv.to_owned());
     auto super_block = TRY(di::try_box<SuperBlock>(root_inode));
-    auto mount = TRY(di::try_box<Mount>(di::move(name), di::move(super_block)));
+    auto mount = TRY(di::try_box<Mount>(di::move(super_block)));
 
-    return initrd_root->inode()->add_mount(di::move(mount));
+    auto tmp_tnode = TRY(lookup_path(initrd_root, initrd_root, "/tmp"_pv));
+    tmp_tnode->inode()->set_mount(di::move(mount));
+    return {};
 }
 }

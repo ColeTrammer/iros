@@ -43,6 +43,7 @@ if [ "$2" = "-run=kernel_unit_test" ]; then
     EXECUTABLE_NAME="$2"
 else
     cp "$2"* "$IROS_BUILD_DIR"/initrd-run
+    mkdir -p "$IROS_BUILD_DIR"/initrd-run/tmp
     EXECUTABLE_NAME="/$(basename $2)"
 fi
 
