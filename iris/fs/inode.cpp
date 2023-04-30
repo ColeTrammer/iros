@@ -28,6 +28,11 @@ Expected<Metadata> tag_invoke(di::Tag<inode_metadata>, Inode& self) {
     return inode_metadata(self.m_impl);
 }
 
+Expected<di::Arc<TNode>> tag_invoke(di::Tag<inode_create_node>, Inode& self, di::Arc<TNode> parent,
+                                    di::TransparentStringView name, MetadataType type) {
+    return inode_create_node(self.m_impl, di::move(parent), name, type);
+}
+
 Expected<di::Span<byte const>> tag_invoke(di::Tag<inode_hack_raw_data>, Inode& self) {
     return inode_hack_raw_data(self.m_impl);
 }

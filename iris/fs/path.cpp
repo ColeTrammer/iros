@@ -31,7 +31,7 @@ Expected<di::Arc<TNode>> lookup_path(di::Arc<TNode> root, di::Arc<TNode> relativ
     return parent;
 }
 
-Expected<File> open_path(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path) {
+Expected<File> open_path(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path, OpenMode) {
     auto node = TRY(lookup_path(di::move(root), di::move(relative_to), path));
     return File::create(InodeFile(di::move(node)));
 }

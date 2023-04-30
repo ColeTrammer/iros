@@ -1,6 +1,7 @@
 #include <di/any/concepts/prelude.h>
 #include <di/container/tree/prelude.h>
 #include <di/math/prelude.h>
+#include <di/vocab/expected/prelude.h>
 #include <iris/core/global_state.h>
 #include <iris/core/print.h>
 #include <iris/fs/initrd.h>
@@ -103,6 +104,11 @@ struct InitrdInodeImpl {
 
     friend Expected<Metadata> tag_invoke(di::Tag<inode_metadata>, InitrdInodeImpl& self) {
         return Metadata { .type = MetadataType(di::to_underlying(self.type)), .size = self.data.size() };
+    }
+
+    friend Expected<di::Arc<TNode>> tag_invoke(di::Tag<inode_create_node>, InitrdInodeImpl&, di::Arc<TNode> const&,
+                                               di::TransparentStringView, MetadataType) {
+        return di::Unexpected(Error::ReadOnlyFileSystem);
     }
 
     friend Expected<di::Span<byte const>> tag_invoke(di::Tag<inode_hack_raw_data>, InitrdInodeImpl& self) {

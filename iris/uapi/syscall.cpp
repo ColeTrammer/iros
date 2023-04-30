@@ -76,6 +76,11 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
         case SystemCall::open: {
             auto const* string_base = reinterpret_cast<byte const*>(task_state.syscall_arg1());
             auto string_length = task_state.syscall_arg2();
+            auto mode = OpenMode(task_state.syscall_arg3());
+            if (!!(mode & ~(OpenMode::Mask))) {
+                return di::Unexpected(Error::InvalidArgument);
+            }
+
             auto string_buffer = TRY(di::create<UserspaceBuffer>(string_base, string_length));
             auto path = TRY(string_buffer.copy_to_path());
 
@@ -83,7 +88,7 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
 
             auto [file_storage, fd] = TRY(current_task.file_table().allocate_file_handle());
 
-            auto file = TRY(iris::open_path(current_task.root_tnode(), current_task.cwd_tnode(), path));
+            auto file = TRY(iris::open_path(current_task.root_tnode(), current_task.cwd_tnode(), path, mode));
             file_storage = di::move(file);
 
             return fd;
@@ -225,7 +230,7 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
             auto metadata_ptr =
                 TRY(di::create<UserspacePtr<Metadata>>(reinterpret_cast<Metadata*>(task_state.syscall_arg3())));
 
-            auto file = TRY(iris::open_path(current_task.root_tnode(), current_task.cwd_tnode(), path));
+            auto file = TRY(iris::open_path(current_task.root_tnode(), current_task.cwd_tnode(), path, OpenMode::None));
             auto metadata = TRY(iris::file_metadata(file));
             TRY(metadata_ptr.write(metadata));
             return 0;

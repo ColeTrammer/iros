@@ -34,13 +34,19 @@ struct InodeMetadataFunction : di::Dispatcher<InodeMetadataFunction, Expected<Me
 
 constexpr inline auto inode_metadata = InodeMetadataFunction {};
 
+struct InodeCreateNodeFunction
+    : di::Dispatcher<InodeCreateNodeFunction,
+                     Expected<di::Arc<TNode>>(di::This&, di::Arc<TNode>, di::TransparentStringView, MetadataType)> {};
+
+constexpr inline auto inode_create_node = InodeCreateNodeFunction {};
+
 struct InodeHACKRawDataFunction
     : di::Dispatcher<InodeHACKRawDataFunction, Expected<di::Span<byte const>>(di::This&)> {};
 
 constexpr inline auto inode_hack_raw_data = InodeHACKRawDataFunction {};
 
 using InodeInterface = di::meta::List<InodeReadFunction, InodeReadDirectoryFunction, InodeLookupFunction,
-                                      InodeMetadataFunction, InodeHACKRawDataFunction>;
+                                      InodeMetadataFunction, InodeCreateNodeFunction, InodeHACKRawDataFunction>;
 
 using InodeImpl = di::Any<InodeInterface>;
 
@@ -74,6 +80,8 @@ private:
     friend Expected<di::Arc<TNode>> tag_invoke(di::Tag<inode_lookup>, Inode& self, di::Arc<TNode> parent,
                                                di::TransparentStringView name);
     friend Expected<Metadata> tag_invoke(di::Tag<inode_metadata>, Inode& self);
+    friend Expected<di::Arc<TNode>> tag_invoke(di::Tag<inode_create_node>, Inode& self, di::Arc<TNode> parent,
+                                               di::TransparentStringView name, MetadataType type);
     friend Expected<di::Span<byte const>> tag_invoke(di::Tag<inode_hack_raw_data>, Inode& self);
 
     InodeImpl m_impl;

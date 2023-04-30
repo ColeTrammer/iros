@@ -80,7 +80,7 @@ Expected<di::Arc<Task>> create_user_task(TaskNamespace& task_namespace, di::Arc<
 }
 
 Expected<void> load_executable(Task& task, di::PathView path) {
-    auto file = TRY(open_path(task.root_tnode(), task.cwd_tnode(), path));
+    auto file = TRY(open_path(task.root_tnode(), task.cwd_tnode(), path, OpenMode::None));
     auto file_metadata = TRY(iris::file_metadata(file));
     if (file_metadata.type != MetadataType::Regular) {
         println("Failed to load exutable: {} is not a regular file."_sv, path);
