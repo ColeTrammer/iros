@@ -31,6 +31,17 @@ public:
     constexpr PathView view() const& { return PathView(data()); }
     constexpr operator PathView() const& { return view(); }
 
+    constexpr auto front() const {
+        return lift_bool(!empty()) % [&] {
+            return *begin();
+        };
+    }
+    constexpr auto back() const {
+        return lift_bool(!empty()) % [&] {
+            return *--end();
+        };
+    }
+
     constexpr auto begin() const { return PathIterator(data(), { data().begin(), m_first_component_end }); }
     constexpr auto end() const { return PathIterator(data(), { data().end(), data().end() }); }
 
