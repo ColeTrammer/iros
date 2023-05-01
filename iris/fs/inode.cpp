@@ -82,8 +82,44 @@ Expected<usize> tag_invoke(di::Tag<read_directory>, InodeFile& self, UserspaceBu
     return inode_read_directory(inode, inode.backing_object(), self.m_offset, buffer);
 }
 
-Expected<usize> tag_invoke(di::Tag<write_file>, InodeFile&, UserspaceBuffer<byte const>) {
-    return di::Unexpected(Error::OperationNotSupported);
+Expected<usize> tag_invoke(di::Tag<write_file>, InodeFile& self, UserspaceBuffer<byte const> buffer) {
+    auto& inode = *self.m_tnode->inode();
+    auto metadata = TRY(inode_metadata(inode));
+    auto size = metadata.size;
+
+    auto page_begin = di::align_down(self.m_offset, 4096);
+    auto page_end = di::align_up(self.m_offset + buffer.size(), 4096);
+
+    auto& backing_object = inode.backing_object();
+    auto nwritten = 0_u64;
+    for (auto offset : di::range(page_begin, page_end) | di::stride(4096)) {
+        // FIXME: this implementation is suboptimal in the case where we are writing an entire page, since it
+        // unconditionaly reads the page from disk. This can be skipped, but requires a more complex VFS interface.
+        // Also, the code assumes that we can read past the end of the inode. Although we make sure to update the size
+        // at the end of this function, this is probably sketchy for real file systems.
+        auto physical_address = backing_object.lock()->lookup_page(offset / 4096);
+        if (!physical_address) {
+            physical_address = TRY(inode_read(inode, backing_object, offset / 4096));
+        }
+        ASSERT(physical_address);
+
+        auto page_offset = offset % 4096;
+        auto to_write = di::min(4096 - page_offset, buffer.size() - nwritten);
+
+        auto page = TRY(mm::map_physical_address(*physical_address, 4096));
+        auto page_data = di::Span { &page.typed<byte>() + page_offset, to_write };
+
+        TRY(buffer.copy_to(*page_data.subspan(page_offset, to_write)));
+        buffer.advance(to_write);
+
+        nwritten += to_write;
+        self.m_offset += to_write;
+    }
+
+    if (self.m_offset > size) {
+        TRY(inode_truncate(inode, self.m_offset));
+    }
+    return nwritten;
 }
 
 Expected<Metadata> tag_invoke(di::Tag<file_metadata>, InodeFile& self) {
