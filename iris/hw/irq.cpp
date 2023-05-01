@@ -1,3 +1,4 @@
+#include <di/util/prelude.h>
 #include <iris/core/global_state.h>
 #include <iris/core/print.h>
 #include <iris/hw/irq.h>
@@ -52,6 +53,12 @@ void unregister_external_irq_handler(IrqLine line, usize handler_id) {
 }
 
 extern "C" void generic_irq_handler(GlobalIrqNumber irq, iris::arch::TaskState& task_state, int error_code) {
+    // Immediately hard shutdown on double fault. We can't log here since the processor is most likely in a bad state.
+    if (irq == GlobalIrqNumber(8)) {
+        hard_shutdown(ShutdownStatus::DoubleFault);
+        di::unreachable();
+    }
+
     ASSERT(interrupts_disabled());
     auto const in_kernel = task_state.in_kernel();
     if (!in_kernel) {

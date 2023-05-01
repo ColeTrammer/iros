@@ -6,7 +6,8 @@
 namespace iris {
 void hard_shutdown(ShutdownStatus status) {
     // NOTE: this is a fake isa-debug-exit device installed in the runner script.
-    auto qemu_exit_code = status == ShutdownStatus::Intended ? 0x10_u32 : 0x11_u32;
+    auto qemu_exit_code =
+        status == ShutdownStatus::Intended ? 0x10_u32 : (status == ShutdownStatus::DoubleFault ? 0x15_u32 : 0x11_u32);
     x86::amd64::io_out(0xf4_u16, qemu_exit_code);
 
     // NOTE: this is specific to QEMU, as per OSDEV:
