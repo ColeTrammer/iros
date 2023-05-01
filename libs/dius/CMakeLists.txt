@@ -20,8 +20,8 @@ endif()
 
 if(LINUX)
     target_sources(
-        dius PRIVATE linux/filesystem/directory_iterator.cpp linux/filesystem/query.cpp linux/io_uring.cpp
-                     linux/sync_file.cpp memory_region.cpp
+        dius PRIVATE linux/filesystem/directory_iterator.cpp linux/filesystem/operations.cpp linux/filesystem/query.cpp
+                     linux/io_uring.cpp linux/sync_file.cpp memory_region.cpp
     )
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Iros")
     if(CMAKE_CROSSCOMPILING)
@@ -31,8 +31,8 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Iros")
     endif()
 
     target_sources(
-        dius PRIVATE iros/system/process.cpp iros/filesystem/directory_iterator.cpp iros/filesystem/query.cpp
-                     iros/sync_file.cpp
+        dius PRIVATE iros/system/process.cpp iros/filesystem/directory_iterator.cpp iros/filesystem/operations.cpp
+                     iros/filesystem/query.cpp iros/sync_file.cpp
     )
 endif()
 
