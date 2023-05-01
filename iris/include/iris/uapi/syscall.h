@@ -23,5 +23,6 @@ enum class SystemCall {
     path_metadata = 18,
     read_directory = 19,
     truncate = 20,
+    create_node = 21,
 };
 }

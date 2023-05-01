@@ -251,6 +251,19 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
             auto& handle = TRY(current_task.file_table().lookup_file_handle(file_handle));
             return file_truncate(handle, length);
         }
+        case SystemCall::create_node: {
+            auto const* string_base = reinterpret_cast<byte const*>(task_state.syscall_arg1());
+            auto string_length = task_state.syscall_arg2();
+            auto type = static_cast<MetadataType>(task_state.syscall_arg3());
+            if (type != MetadataType::Regular && type != MetadataType::Directory) {
+                return di::Unexpected(Error::InvalidArgument);
+            }
+
+            auto string_buffer = TRY(di::create<UserspaceBuffer>(string_base, string_length));
+            auto path = TRY(string_buffer.copy_to_path());
+            return create_node(current_task.root_tnode(), current_task.cwd_tnode(), path, type) %
+                   di::function::value(0);
+        }
         default:
             iris::println("Encounted unexpected system call: {}"_sv, di::to_underlying(number));
             break;

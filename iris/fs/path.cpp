@@ -55,6 +55,23 @@ Expected<di::Arc<TNode>> lookup_path(di::Arc<TNode> root, di::Arc<TNode> relativ
     return parent;
 }
 
+Expected<void> create_node(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path, MetadataType type) {
+    auto parent_path = path.parent_path();
+    if (!parent_path) {
+        return di::Unexpected(Error::InvalidArgument);
+    }
+
+    auto parent = TRY(lookup_path(di::move(root), di::move(relative_to), *parent_path));
+    auto component = *path.back();
+
+    auto result = inode_lookup(*parent->inode(), parent, component);
+    if (result) {
+        return di::Unexpected(Error::FileExists);
+    }
+
+    return inode_create_node(*parent->inode(), parent, component, type) % di::into_void;
+}
+
 Expected<File> open_path(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path, OpenMode mode) {
     auto flags = !!(mode & OpenMode::Create) ? PathLookupFlags::Create : PathLookupFlags::None;
     auto node = TRY(lookup_path(di::move(root), di::move(relative_to), path, flags));
