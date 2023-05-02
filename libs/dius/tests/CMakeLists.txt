@@ -1,4 +1,4 @@
-add_executable(test_dius test_process.cpp test_tls.cpp)
+add_executable(test_dius test_filesystem.cpp test_process.cpp test_tls.cpp)
 
 find_package(Dius REQUIRED)
 
