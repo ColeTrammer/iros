@@ -77,7 +77,7 @@ public:
     [[nodiscard]] bool empty() const { return m_buffer.empty(); }
 
     void advance(usize offset) {
-        ASSERT_LT(offset, size_bytes());
+        ASSERT_LT_EQ(offset, size_bytes());
         m_buffer = *m_buffer.subspan(offset);
     }
 
