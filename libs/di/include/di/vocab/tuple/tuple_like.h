@@ -35,8 +35,11 @@ namespace detail {
     };
 }
 
+// NOTE: The TupleSize must be less than 256 in this definition because clang has a maximum limit of 256 when expanding
+// fold expressions. This can happen in reasonable scenarios because a fixed-size array is a tuple-like type.
 template<typename T>
-concept TupleLike = concepts::Tuple<T> || (requires {
-                        vocab::tuple_size(types::in_place_type<meta::RemoveCVRef<T>>);
-                    } && detail::TupleLikeHelper<T, meta::MakeIndexSequence<meta::TupleSize<T>>>::value);
+concept TupleLike =
+    concepts::Tuple<T> || (requires {
+        vocab::tuple_size(types::in_place_type<meta::RemoveCVRef<T>>);
+    } && (meta::TupleSize<T> < 256) && detail::TupleLikeHelper<T, meta::MakeIndexSequence<meta::TupleSize<T>>>::value);
 }

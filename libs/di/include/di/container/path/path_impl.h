@@ -6,6 +6,7 @@
 #include <di/container/path/path_view_impl.h>
 #include <di/container/string/string_impl.h>
 #include <di/container/view/concat.h>
+#include <di/vocab/expected/as_fallible.h>
 #include <di/vocab/optional/prelude.h>
 
 namespace di::container {
@@ -46,6 +47,12 @@ public:
         return m_data.c_str();
     }
 
+    constexpr auto clone() const {
+        return as_fallible(util::clone(m_data)) % [](Str&& string) {
+            return PathImpl(util::move(string));
+        } | try_infallible;
+    }
+
     template<concepts::ContainerCompatible<meta::EncodingCodePoint<Enc>> Con>
     requires(concepts::SameAs<meta::Encoding<Con>, Enc> && concepts::ForwardContainer<Con>)
     constexpr decltype(auto) append(Con&& container) {
@@ -82,6 +89,14 @@ public:
     constexpr decltype(auto) append(PathImpl const& other) { return append(other.data()); }
 
     template<concepts::ContainerCompatible<meta::EncodingCodePoint<Enc>> Con>
+    requires(concepts::SameAs<meta::Encoding<Con>, Enc> && concepts::ForwardContainer<Con>)
+    constexpr decltype(auto) operator/=(Con&& container) {
+        return append(util::forward<Con>(container));
+    }
+    constexpr decltype(auto) operator/=(PathViewImpl<Enc> view) { return append(view.data()); }
+    constexpr decltype(auto) operator/=(PathImpl const& other) { return append(other.data()); }
+
+    template<concepts::ContainerCompatible<meta::EncodingCodePoint<Enc>> Con>
     requires(concepts::SameAs<meta::Encoding<Con>, Enc>)
     constexpr decltype(auto) concat(Con&& container) {
         return m_data.append(util::forward<Con>(container)) % [&](auto&&) {
@@ -91,9 +106,31 @@ public:
     constexpr decltype(auto) concat(PathViewImpl<Enc> view) { return concat(view.data()); }
     constexpr decltype(auto) concat(PathImpl const& other) { return concat(other.data()); }
 
+    template<concepts::ContainerCompatible<meta::EncodingCodePoint<Enc>> Con>
+    requires(concepts::SameAs<meta::Encoding<Con>, Enc>)
+    constexpr decltype(auto) operator+=(Con&& container) {
+        return concat(util::forward<Con>(container));
+    }
+    constexpr decltype(auto) operator+=(PathViewImpl<Enc> view) { return concat(view.data()); }
+    constexpr decltype(auto) operator+=(PathImpl const& other) { return concat(other.data()); }
+
     constexpr void clear() { m_data.clear(); }
 
 private:
+    template<concepts::ContainerCompatible<meta::EncodingCodePoint<Enc>> Con>
+    requires(concepts::SameAs<meta::Encoding<Con>, Enc>)
+    constexpr friend auto operator/(PathImpl&& lhs, Con&& rhs) {
+        return as_fallible(lhs.append(util::forward<Con>(rhs))) % [&](auto&&) {
+            return util::move(lhs);
+        } | try_infallible;
+    }
+    friend auto operator/(PathImpl&& lhs, PathViewImpl<Enc> rhs) {
+        return as_fallible(lhs.append(rhs.data())) % [&](auto&&) {
+            return util::move(lhs);
+        } | try_infallible;
+    }
+    friend auto operator/(PathImpl&& lhs, PathImpl const& rhs) { return lhs / rhs.data(); }
+
     Str m_data;
 };
 }

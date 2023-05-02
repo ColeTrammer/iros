@@ -10,7 +10,7 @@
 
 namespace di::util {
 template<concepts::InvocableTo<void> F>
-class ScopeExit {
+class [[nodiscard]] ScopeExit {
 public:
     template<typename G>
     requires(!concepts::RemoveCVRefSameAs<G, ScopeExit> && concepts::ConstructibleFrom<F, G>)
