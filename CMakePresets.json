@@ -190,7 +190,7 @@
             "displayName": "Thread Sanitizer",
             "description": "Build with thread sanitizer enabled",
             "binaryDir": "${sourceDir}/build/host/gcc/tsan",
-            "installDir": "${sourceDir}/bulid/host/gcc/tsan/install",
+            "installDir": "${sourceDir}/build/host/gcc/tsan/install",
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
                 "IROS_SanitizerFlags": "-fsanitize=thread -DDI_SANITIZER"
@@ -202,7 +202,7 @@
             "displayName": "Memory Sanitizer",
             "description": "Build with memory sanitizer enabled",
             "binaryDir": "${sourceDir}/build/host/clang/msan",
-            "installDir": "${sourceDir}/bulid/host/clang/msan/install",
+            "installDir": "${sourceDir}/build/host/clang/msan/install",
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
                 "IROS_SanitizerFlags": "-fsanitize=memory -DDI_SANITIZER"
@@ -214,7 +214,7 @@
             "displayName": "Undefined Behavior and Address Sanitizer",
             "description": "Build with defined behavior and address sanitizer enabled",
             "binaryDir": "${sourceDir}/build/host/gcc/ubasan",
-            "installDir": "${sourceDir}/bulid/host/gcc/ubasan/install",
+            "installDir": "${sourceDir}/build/host/gcc/ubasan/install",
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
                 "IROS_SanitizerFlags": "-fsanitize=address,undefined -DDI_SANITIZER"
@@ -262,7 +262,7 @@
             "displayName": "Clang Release Config",
             "description": "Clang host release build",
             "binaryDir": "${sourceDir}/build/host/clang/release",
-            "installDir": "${sourceDir}/bulid/host/clang/release/install",
+            "installDir": "${sourceDir}/build/host/clang/release/install",
             "inherits": ["release_base", "clang_base"]
         },
         {
@@ -270,7 +270,7 @@
             "displayName": "Clang Debug Config",
             "description": "Clang host debug build",
             "binaryDir": "${sourceDir}/build/host/clang/debug",
-            "installDir": "${sourceDir}/bulid/host/clang/debug/install",
+            "installDir": "${sourceDir}/build/host/clang/debug/install",
             "inherits": ["debug_base", "clang_base"]
         },
         {
@@ -278,7 +278,7 @@
             "displayName": "Release Unity Config",
             "description": "Release build with unity mode enabled",
             "binaryDir": "${sourceDir}/build/host/gcc/release/unity",
-            "installDir": "${sourceDir}/bulid/host/gcc/release/unity/install",
+            "installDir": "${sourceDir}/build/host/gcc/release/unity/install",
             "cacheVariables": {
                 "IROS_UseDiusRuntime": "ON",
                 "IROS_BuildCcpp": "ON",
