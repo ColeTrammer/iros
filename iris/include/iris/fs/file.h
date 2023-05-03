@@ -38,7 +38,7 @@ namespace detail {
     };
 
     struct FileTruncateDefaultFunction {
-        constexpr Expected<usize> operator()(auto&, u64) const { return di::Unexpected(Error::NotSupported); }
+        constexpr Expected<void> operator()(auto&, u64) const { return di::Unexpected(Error::NotSupported); }
     };
 
     struct FileHACKRawDataFunction {
@@ -75,7 +75,7 @@ struct SeekFileFunction
 constexpr inline auto seek_file = SeekFileFunction {};
 
 struct FileTruncateFunction
-    : di::Dispatcher<FileTruncateFunction, Expected<usize>(di::This&, u64), detail::FileTruncateDefaultFunction> {};
+    : di::Dispatcher<FileTruncateFunction, Expected<void>(di::This&, u64), detail::FileTruncateDefaultFunction> {};
 
 constexpr inline auto file_truncate = FileTruncateFunction {};
 
