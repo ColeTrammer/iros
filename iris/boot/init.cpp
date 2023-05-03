@@ -169,6 +169,13 @@ void iris_main() {
                 auto task4 = *iris::create_user_task(global_state.task_namespace, global_state.initrd_root,
                                                      global_state.initrd_root, di::move(file_table), nullptr);
 
+                auto arguments = di::Vector<di::TransparentString> {};
+                *arguments.push_back(*init_path.data().to_owned());
+
+                auto task_arguments =
+                    *di::try_make_arc<TaskArguments>(di::move(arguments), di::Vector<di::TransparentString> {});
+                task4->set_task_arguments(di::move(task_arguments));
+
                 *iris::load_executable(*task4, init_path);
 
                 schedule_task(*task4);
