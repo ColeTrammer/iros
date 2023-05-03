@@ -26,7 +26,7 @@
     },
     "cmake.exportCompileCommandsFile": true,
     "cmake.copyCompileCommands": "${workspaceRoot}/build/compile_commands.json",
-    "cmake.configureOnOpen": false,
+    "cmake.configureOnOpen": true,
     "cmake.languageSupport.enableFileAPI": true,
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "C_Cpp.autoAddFileAssociations": false,
