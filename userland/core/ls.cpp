@@ -7,7 +7,7 @@ struct Args {
 
     constexpr static auto get_cli_parser() {
         return di::cli_parser<Args>("ls"_sv, "List directory contents"_sv)
-            .flag<&Args::path>('p', "path"_tsv, "Directory path to list from"_sv);
+            .argument<&Args::path>("PATH"_sv, "Directory path to list from"_sv, false);
     }
 };
 
