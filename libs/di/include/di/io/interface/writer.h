@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/any/prelude.h>
+#include <di/meta/like_expected.h>
 #include <di/vocab/span/prelude.h>
 
 namespace di::io {
@@ -36,4 +37,10 @@ constexpr inline auto write_some = WriteSome {};
 constexpr inline auto flush = Flush {};
 
 using Writer = meta::List<WriteSome, Flush>;
+}
+
+namespace di::meta {
+template<typename T, concepts::Impl<io::Writer> Writer>
+using WriterResult =
+    meta::LikeExpected<decltype(io::write_some(util::declval<Writer&>(), util::declval<Span<Byte const>>())), T>;
 }
