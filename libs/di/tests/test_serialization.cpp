@@ -13,9 +13,7 @@ constexpr void json_basic() {
         auto serializer = di::JsonSerializer(di::move(writer));
 
         *serializer.serialize_object([&](auto& object) {
-            return object.serialize_key("key"_sv, [&](auto& serializer) {
-                return serializer.serialize_string("value"_sv);
-            });
+            return object.serialize_string("key"_sv, "value"_sv);
         });
 
         auto result = di::move(serializer).writer().output();
@@ -27,12 +25,8 @@ constexpr void json_basic() {
         auto serializer = di::JsonSerializer(di::move(writer));
 
         *serializer.serialize_object([&](auto& object) -> di::meta::WriterResult<void, decltype(writer)> {
-            TRY(object.serialize_key("key"_sv, [&](auto& serializer) {
-                return serializer.serialize_number(42);
-            }));
-            TRY(object.serialize_key("key2"_sv, [&](auto& serializer) {
-                return serializer.serialize_string("value"_sv);
-            }));
+            TRY(object.serialize_number("key"_sv, 42));
+            TRY(object.serialize_string("key2"_sv, "value"_sv));
             return {};
         });
 
@@ -55,5 +49,56 @@ constexpr void json_basic() {
     }
 }
 
+constexpr void json_pretty() {
+    {
+        auto writer = di::StringWriter {};
+        auto serializer = di::JsonSerializer(di::move(writer), di::JsonSerializerConfig().pretty());
+
+        *serializer.serialize_object([&](auto& object) -> di::meta::WriterResult<void, decltype(writer)> {
+            TRY(object.serialize_number("key"_sv, 42));
+            TRY(object.serialize_string("key2"_sv, "value"_sv));
+            return {};
+        });
+
+        auto result = di::move(serializer).writer().output();
+        ASSERT_EQ(result, R"({
+    "key": 42,
+    "key2": "value"
+})"_sv);
+    }
+
+    {
+        auto writer = di::StringWriter {};
+        auto serializer = di::JsonSerializer(di::move(writer), di::JsonSerializerConfig().pretty().indent_width(2));
+
+        *serializer.serialize_object([&](auto& object) -> di::meta::WriterResult<void, decltype(writer)> {
+            TRY(object.serialize_number("key"_sv, 42));
+            TRY(object.serialize_string("key2"_sv, "value"_sv));
+            TRY(object.serialize_array("key3"_sv,
+                                       [&](auto& serializer) -> di::meta::WriterResult<void, decltype(writer)> {
+                                           TRY(serializer.serialize_number(42));
+                                           TRY(serializer.serialize_string("value"_sv));
+                                           return {};
+                                       }));
+            TRY(object.serialize_object("key4"_sv, [&](auto&) -> di::meta::WriterResult<void, decltype(writer)> {
+                return {};
+            }));
+            return {};
+        });
+
+        auto result = di::move(serializer).writer().output();
+        ASSERT_EQ(result, R"({
+  "key": 42,
+  "key2": "value",
+  "key3": [
+    42,
+    "value"
+  ],
+  "key4": {}
+})"_sv);
+    }
+}
+
 TESTC(serialization, json_basic)
+TESTC(serialization, json_pretty)
 }

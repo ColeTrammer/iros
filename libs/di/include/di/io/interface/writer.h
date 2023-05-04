@@ -2,6 +2,7 @@
 
 #include <di/any/prelude.h>
 #include <di/meta/like_expected.h>
+#include <di/util/reference_wrapper.h>
 #include <di/vocab/span/prelude.h>
 
 namespace di::io {
@@ -15,6 +16,15 @@ namespace detail {
         {
             return writer.write_some(data);
         }
+
+        template<typename T>
+        constexpr Result<usize> operator()(util::ReferenceWrapper<T> writer, Span<Byte const> data) const
+        requires(requires {
+            { (*this)(writer.get(), data) };
+        })
+        {
+            return (*this)(writer.get(), data);
+        }
     };
 
     struct FlushMember {
@@ -25,6 +35,15 @@ namespace detail {
         })
         {
             return writer.flush();
+        }
+
+        template<typename T>
+        constexpr Result<void> operator()(util::ReferenceWrapper<T> writer) const
+        requires(requires {
+            { (*this)(writer.get()) };
+        })
+        {
+            return (*this)(writer.get());
         }
     };
 
