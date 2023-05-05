@@ -7,8 +7,12 @@
 
 namespace di {
 using concepts::Reflectable;
+using concepts::ReflectableToAtom;
+using concepts::ReflectableToFields;
 using meta::Reflect;
 
+using reflection::Atom;
+using reflection::atom;
 using reflection::Field;
 using reflection::field;
 using reflection::reflect;

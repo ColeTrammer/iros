@@ -31,7 +31,7 @@ public:
     }
 };
 
-constexpr void hash_fields(di::Hasher auto& hasher, di::Reflectable auto const& object) {
+constexpr void hash_fields(di::Hasher auto& hasher, di::ReflectableToFields auto const& object) {
     di::tuple_for_each(
         [&](auto field) {
             di::hash_write(hasher, field.get(object));

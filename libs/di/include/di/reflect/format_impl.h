@@ -7,7 +7,7 @@
 #include <di/types/in_place_type.h>
 
 namespace di::format {
-template<concepts::Reflectable T, concepts::Encoding Enc>
+template<concepts::ReflectableToFields T, concepts::Encoding Enc>
 constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<T>, FormatParseContext<Enc>&) {
     auto do_output = [=](concepts::FormatContext auto& context, T const& value) -> Result<void> {
         context.output('{');

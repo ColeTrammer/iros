@@ -20,6 +20,17 @@ struct Field {
     constexpr static decltype(auto) get(T&& object) {
         return function::invoke(pointer, util::forward<T>(object));
     }
+
+    constexpr static bool is_field() { return true; }
+    constexpr static bool is_atom() { return false; }
+    constexpr static bool is_integer() { return false; }
+    constexpr static bool is_bool() { return false; }
+    constexpr static bool is_string() { return false; }
+    constexpr static bool is_list() { return false; }
+    constexpr static bool is_map() { return false; }
+
+    bool operator==(Field const&) const = default;
+    auto operator<=>(Field const&) const = default;
 };
 
 template<container::FixedString field_name, auto field_pointer>

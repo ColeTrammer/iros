@@ -5,7 +5,7 @@
 
 namespace di::container::detail {
 constexpr void tag_invoke(types::Tag<container::hash_write>, concepts::Hasher auto& hasher,
-                          concepts::Reflectable auto const& object) {
+                          concepts::ReflectableToFields auto const& object) {
     vocab::tuple_for_each(
         [&](auto field) {
             container::hash_write(hasher, field.get(object));

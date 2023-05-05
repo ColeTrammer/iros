@@ -1,6 +1,7 @@
 #include <di/io/interface/writer.h>
 #include <di/io/prelude.h>
 #include <di/io/string_writer.h>
+#include <di/reflect/prelude.h>
 #include <di/serialization/json_serializer.h>
 #include <dius/test/prelude.h>
 
@@ -99,6 +100,60 @@ constexpr void json_pretty() {
     }
 }
 
+struct MyType {
+    int x;
+    int y;
+    int z;
+    bool w;
+    di::StringView a;
+
+    constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyType>) {
+        return di::make_tuple(di::field<"x", &MyType::x>, di::field<"y", &MyType::y>, di::field<"z", &MyType::z>,
+                              di::field<"w", &MyType::w>, di::field<"a", &MyType::a>);
+    }
+};
+
+struct MySuperType {
+    MyType my_type;
+    di::Array<int, 3> array;
+    di::Array<di::Tuple<di::StringView, int>, 3> map;
+
+    constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MySuperType>) {
+        return di::make_tuple(di::field<"my_type", &MySuperType::my_type>, di::field<"array", &MySuperType::array>,
+                              di::field<"map", &MySuperType::map>);
+    }
+};
+
+constexpr void json_reflect() {
+    {
+        auto writer = di::StringWriter {};
+        auto serializer = di::JsonSerializer(di::move(writer));
+
+        auto const x = MyType { 1, 2, 3, true, "hello"_sv };
+        *serializer.serialize(x);
+
+        auto result = di::move(serializer).writer().output();
+        ASSERT_EQ(result, R"({"x":1,"y":2,"z":3,"w":true,"a":"hello"})"_sv);
+    }
+
+    {
+        auto writer = di::StringWriter {};
+        auto serializer = di::JsonSerializer(di::move(writer));
+
+        auto const x = MySuperType { MyType { 1, 2, 3, true, "hello"_sv },
+                                     { 1, 2, 3 },
+                                     { di::Tuple { "a"_sv, 1 }, di::Tuple { "b"_sv, 2 }, di::Tuple { "c"_sv, 3 } } };
+
+        *serializer.serialize(x);
+
+        auto result = di::move(serializer).writer().output();
+        ASSERT_EQ(
+            result,
+            R"({"my_type":{"x":1,"y":2,"z":3,"w":true,"a":"hello"},"array":[1,2,3],"map":{"a":1,"b":2,"c":3}})"_sv);
+    }
+}
+
 TESTC(serialization, json_basic)
 TESTC(serialization, json_pretty)
+TESTC(serialization, json_reflect)
 }

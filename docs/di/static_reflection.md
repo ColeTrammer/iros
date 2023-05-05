@@ -111,18 +111,26 @@ struct Field {
 };
 ```
 
+### Atoms
+
+The `di::reflection::Atom` class is used to represent a primitive type which is not divisible into fields. For instance,
+integers, strings, and booleans are atoms. This enables reflection of these types, and will allow classes which are
+semantically equivalent to be treated as equivalent. For instance, an `int` and a `di::StrongInt<int, MyTag>` can both
+reflect as an integer, and can be treated as equivalent.
+
 ## Accessing Reflection Information
 
 The `di::reflect` function can be used to access the reflection information for a type. Since this is a function, it
 will return the reflection information as a `di::Tuple`. For example, calling `di::reflect(mytype_instance)` will return
 the custom `di::Tuple` object the type defines. If a type is needed, `di::meta::Reflect<MyType>` can be used
-instead.
+instead. Since `di::reflect()` can also return an `di::reflection::Atom` object, it is necessary to constrain functions
+on `di::ReflectableToFields` to in certain cases.
 
 This can be used to implement various utilities. For instance, the following function can be used to print every member
 of a type:
 
 ```cpp
-static void print_fields(di::Reflectable auto const& object) {
+static void print_fields(di::ReflectableToFields auto const& object) {
     di::tuple_for_each([&](auto field) {
         dius::println("{}: {}", field.name, field.get(object));
     }, di::reflect(object));
@@ -132,7 +140,7 @@ static void print_fields(di::Reflectable auto const& object) {
 Another example is hashing a type:
 
 ```cpp
-static void hash_fields(di::Hasher auto& hasher, di::Reflectable auto const& object) {
+static void hash_fields(di::Hasher auto& hasher, di::ReflectableToFields auto const& object) {
     di::tuple_for_each([&](auto field) {
         di::hash_write(hasher, field.get(object));
     }, di::reflect(object));
