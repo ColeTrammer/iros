@@ -10,6 +10,7 @@
 #include <di/vocab/tuple/tuple.h>
 #include <di/vocab/tuple/tuple_cat.h>
 #include <di/vocab/tuple/tuple_for_each.h>
+#include <di/vocab/tuple/tuple_sequence.h>
 #include <di/vocab/tuple/tuple_transform.h>
 
 namespace di {
@@ -22,5 +23,6 @@ using vocab::tie;
 using vocab::Tuple;
 using vocab::tuple_cat;
 using vocab::tuple_for_each;
+using vocab::tuple_sequence;
 using vocab::tuple_transform;
 }

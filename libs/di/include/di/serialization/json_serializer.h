@@ -21,6 +21,7 @@
 #include <di/vocab/error/result.h>
 #include <di/vocab/tuple/tuple_element.h>
 #include <di/vocab/tuple/tuple_for_each.h>
+#include <di/vocab/tuple/tuple_sequence.h>
 
 namespace di::serialization {
 class JsonSerializerConfig {
@@ -171,13 +172,12 @@ public:
     template<concepts::ReflectableToFields T>
     constexpr meta::WriterResult<void, Writer> serialize(T&& value) {
         return serialize_object([&](auto& serializer) -> meta::WriterResult<void, Writer> {
-            vocab::tuple_for_each(
+            return vocab::tuple_sequence<meta::WriterResult<void, Writer>>(
                 [&](auto field) {
                     constexpr auto name = container::fixed_string_to_utf8_string_view<field.name>();
-                    (void) serializer.serialize(name, field.get(value));
+                    return serializer.serialize(name, field.get(value));
                 },
                 reflection::reflect(value));
-            return {};
         });
     }
 
