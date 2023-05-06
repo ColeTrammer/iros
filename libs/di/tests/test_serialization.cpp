@@ -113,14 +113,22 @@ struct MyType {
     }
 };
 
+enum class MyEnum { Foo, Bar, Baz };
+
+constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyEnum>) {
+    using enum MyEnum;
+    return di::make_enumerators(di::enumerator<"Foo", Foo>, di::enumerator<"Bar", Bar>, di::enumerator<"Baz", Baz>);
+}
+
 struct MySuperType {
     MyType my_type;
     di::Array<int, 3> array;
     di::Array<di::Tuple<di::StringView, int>, 3> map;
+    MyEnum my_enum;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MySuperType>) {
         return di::make_fields(di::field<"my_type", &MySuperType::my_type>, di::field<"array", &MySuperType::array>,
-                               di::field<"map", &MySuperType::map>);
+                               di::field<"map", &MySuperType::map>, di::field<"my_enum", &MySuperType::my_enum>);
     }
 };
 
@@ -134,12 +142,30 @@ constexpr void json_reflect() {
     {
         auto const x = MySuperType { MyType { 1, 2, 3, true, "hello"_sv },
                                      { 1, 2, 3 },
-                                     { di::Tuple { "a"_sv, 1 }, di::Tuple { "b"_sv, 2 }, di::Tuple { "c"_sv, 3 } } };
+                                     { di::Tuple { "a"_sv, 1 }, di::Tuple { "b"_sv, 2 }, di::Tuple { "c"_sv, 3 } },
+                                     MyEnum::Bar };
 
-        auto result = di::serialize_json_string(x);
-        ASSERT_EQ(
-            result,
-            R"({"my_type":{"x":1,"y":2,"z":3,"w":true,"a":"hello"},"array":[1,2,3],"map":{"a":1,"b":2,"c":3}})"_sv);
+        auto result = di::serialize_json_string(x, di::JsonSerializerConfig().pretty().indent_width(4));
+        ASSERT_EQ(result, R"({
+    "my_type": {
+        "x": 1,
+        "y": 2,
+        "z": 3,
+        "w": true,
+        "a": "hello"
+    },
+    "array": [
+        1,
+        2,
+        3
+    ],
+    "map": {
+        "a": 1,
+        "b": 2,
+        "c": 3
+    },
+    "my_enum": "Bar"
+})"_sv);
     }
 }
 

@@ -15,6 +15,8 @@
 #include <di/io/prelude.h>
 #include <di/io/string_writer.h>
 #include <di/io/write_exactly.h>
+#include <di/reflect/enum_to_string.h>
+#include <di/reflect/enumerator.h>
 #include <di/reflect/field.h>
 #include <di/reflect/reflect.h>
 #include <di/serialization/serialize.h>
@@ -194,6 +196,11 @@ public:
         });
     }
 
+    template<typename T, concepts::InstanceOf<reflection::Enumerators> M>
+    constexpr meta::WriterResult<void, Writer> serialize(T value, M) {
+        return serialize_string(reflection::enum_to_string(value));
+    }
+
     template<concepts::ReflectableToAtom T, concepts::InstanceOf<reflection::Atom> M>
     requires(M::is_bool() || M::is_string() || M::is_integer())
     constexpr meta::WriterResult<void, Writer> serialize(T&& value, M) {
@@ -347,9 +354,10 @@ constexpr inline auto json_format = JsonFormat {};
 
 namespace detail {
     struct SerializeJsonStringFunction {
-        template<concepts::Serializable<JsonSerializer<io::StringWriter<>>> T>
-        constexpr auto operator()(T&& value) const {
-            return serialization::serialize_string(json_format, value);
+        template<concepts::Serializable<JsonSerializer<io::StringWriter<>>> T, typename... Args>
+        requires(concepts::ConstructibleFrom<JsonSerializer<io::StringWriter<>>, io::StringWriter<>, Args...>)
+        constexpr auto operator()(T&& value, Args&&... args) const {
+            return serialization::serialize_string(json_format, value, util::forward<Args>(args)...);
         }
     };
 }

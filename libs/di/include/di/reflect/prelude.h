@@ -5,6 +5,7 @@
 #include <di/reflect/field.h>
 #include <di/reflect/format_impl.h>
 #include <di/reflect/hash_impl.h>
+#include <di/reflect/parse_impl.h>
 #include <di/reflect/reflect.h>
 
 namespace di {

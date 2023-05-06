@@ -93,6 +93,15 @@ constexpr void enum_() {
     ASSERT_EQ(di::enum_to_string(MyEnum::Bar), "Bar"_sv);
     ASSERT_EQ(di::enum_to_string(MyEnum::Baz), "Baz"_sv);
     ASSERT_EQ(di::enum_to_string(MyEnum(-1)), "[<Invalid Enum Value>]"_sv);
+
+    ASSERT_EQ(di::to_string(MyEnum::Foo), "Foo"_sv);
+    ASSERT_EQ(di::to_string(MyEnum::Bar), "Bar"_sv);
+    ASSERT_EQ(di::to_string(MyEnum::Baz), "Baz"_sv);
+
+    ASSERT_EQ(di::parse<MyEnum>("Foo"_sv), MyEnum::Foo);
+    ASSERT_EQ(di::parse<MyEnum>("Bar"_sv), MyEnum::Bar);
+    ASSERT_EQ(di::parse<MyEnum>("Baz"_sv), MyEnum::Baz);
+    ASSERT(!di::parse<MyEnum>("Blah"_sv));
 }
 
 TESTC(reflect, basic)

@@ -7,7 +7,7 @@ to provide a simple interface.
 
 ## Usage
 
-Consider a normal type `MyType` which has static reflection added. This can be serialized and deserialized as follows:
+Consider a normal type `MyType` which has static reflection added. This can be serialized as follows:
 
 ```cpp
 #include <di/reflect/prelude.h>
@@ -47,8 +47,8 @@ auto serializer = di::JsonSerializer(di::move(file), di::JsonSerializerConfig().
 TRY(di::serialize(serializer, x));
 ```
 
-Additionally, users can provide custom serialization behavior by overriding the `di::serialize_metadata` function. For
-instance:
+Using the JSON serializer, enumerations can also be serialized to strings using static reflection. Additionally, users
+can provide custom serialization behavior by overriding the `di::serialize_metadata` function. For instance:
 
 ```cpp
 #include <di/reflect/prelude.h>

@@ -3,6 +3,7 @@
 #include <di/format/formatter.h>
 #include <di/format/make_constexpr_format_args.h>
 #include <di/format/vpresent_encoded_context.h>
+#include <di/reflect/enum_to_string.h>
 #include <di/reflect/reflect.h>
 #include <di/types/in_place_type.h>
 
@@ -36,5 +37,16 @@ constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<T>, Format
         return {};
     };
     return Result<decltype(do_output)>(util::move(do_output));
+}
+
+template<concepts::ReflectableToEnumerators T, concepts::Encoding Enc>
+constexpr auto tag_invoke(types::Tag<formatter_in_place>, InPlaceType<T>, FormatParseContext<Enc>& parse_context,
+                          bool debug) {
+    return format::formatter<container::StringView, Enc>(parse_context, debug) %
+           [](concepts::CopyConstructible auto formatter) {
+               return [=](concepts::FormatContext auto& context, T value) {
+                   return formatter(context, reflection::enum_to_string(value));
+               };
+           };
 }
 }

@@ -206,6 +206,16 @@ constexpr auto enum_to_string(di::ReflectableToEnumerators auto value) {
 Since the reflection information is stored in a tuple, it can be easily accessed without template metaprogramming. This
 should make it easier to implement various utilities.
 
+## Uses in library
+
+Providing static reflection information for a type enables several implementations in the library automatically. The
+current list is as follows:
+
+1. `di::format()` and `di::to_string()` will use the reflection information to print the contents of a type or enum.
+2. `di::hash()` will use the reflection information to hash the contents of a type.
+3. `di::serialize()` will use the reflection information to serialize the contents of a type or enum.
+4. `di::parse()` will use the reflection information to parse an enum from a string.
+
 ## Limitations
 
 The current implementation has a few limitations. The main one is that it does not support inheritance. In some cases,
