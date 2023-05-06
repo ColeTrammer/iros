@@ -23,6 +23,8 @@ struct Atom {
 
     constexpr static bool is_fields() { return false; }
     constexpr static bool is_field() { return false; }
+    constexpr static bool is_enumerator() { return false; }
+    constexpr static bool is_enumerators() { return false; }
     constexpr static bool is_atom() { return true; }
     constexpr static bool is_integer() { return concepts::Integer<T>; }
     constexpr static bool is_bool() { return concepts::SameAs<T, bool>; }

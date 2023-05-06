@@ -26,6 +26,8 @@ struct Field {
 
     constexpr static bool is_fields() { return false; }
     constexpr static bool is_field() { return true; }
+    constexpr static bool is_enumerator() { return false; }
+    constexpr static bool is_enumerators() { return false; }
     constexpr static bool is_atom() { return false; }
     constexpr static bool is_integer() { return false; }
     constexpr static bool is_bool() { return false; }
@@ -54,6 +56,8 @@ template<concepts::Field... Fs>
 struct Fields : vocab::Tuple<Fs...> {
     constexpr static bool is_fields() { return true; }
     constexpr static bool is_field() { return false; }
+    constexpr static bool is_enumerator() { return false; }
+    constexpr static bool is_enumerators() { return false; }
     constexpr static bool is_atom() { return false; }
     constexpr static bool is_integer() { return false; }
     constexpr static bool is_bool() { return false; }

@@ -5,13 +5,15 @@
 #include <di/meta/list/as_list.h>
 #include <di/meta/remove_cvref.h>
 #include <di/reflect/atom.h>
+#include <di/reflect/enumerator.h>
 #include <di/reflect/field.h>
 #include <di/types/prelude.h>
 #include <di/vocab/tuple/tuple_like.h>
 
 namespace di::concepts {
 template<typename T>
-concept ReflectionValue = concepts::InstanceOf<T, reflection::Fields> || concepts::InstanceOf<T, reflection::Atom>;
+concept ReflectionValue = concepts::InstanceOf<T, reflection::Fields> ||
+                          concepts::InstanceOf<T, reflection::Enumerators> || concepts::InstanceOf<T, reflection::Atom>;
 }
 
 namespace di::reflection {
@@ -59,6 +61,11 @@ concept ReflectableToAtom = requires {
 template<typename T>
 concept ReflectableToFields = requires {
     { reflection::reflect(util::declval<T>()) } -> InstanceOf<reflection::Fields>;
+};
+
+template<typename T>
+concept ReflectableToEnumerators = requires {
+    { reflection::reflect(util::declval<T>()) } -> InstanceOf<reflection::Enumerators>;
 };
 }
 

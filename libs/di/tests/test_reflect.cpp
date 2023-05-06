@@ -81,7 +81,22 @@ constexpr void format() {
     ASSERT_EQ(s, "{ x: 1, y: 2, z: 3 }"_sv);
 }
 
+enum class MyEnum { Foo, Bar, Baz };
+
+constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyEnum>) {
+    using enum MyEnum;
+    return di::make_enumerators(di::enumerator<"Foo", Foo>, di::enumerator<"Bar", Bar>, di::enumerator<"Baz", Baz>);
+}
+
+constexpr void enum_() {
+    ASSERT_EQ(di::enum_to_string(MyEnum::Foo), "Foo"_sv);
+    ASSERT_EQ(di::enum_to_string(MyEnum::Bar), "Bar"_sv);
+    ASSERT_EQ(di::enum_to_string(MyEnum::Baz), "Baz"_sv);
+    ASSERT_EQ(di::enum_to_string(MyEnum(-1)), "[<Invalid Enum Value>]"_sv);
+}
+
 TESTC(reflect, basic)
 TESTC(reflect, private_fields)
 TESTC(reflect, format)
+TESTC(reflect, enum_)
 }

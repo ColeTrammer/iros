@@ -37,6 +37,21 @@ struct MyType {
         );
     }
 };
+
+enum class MyEnum {
+    A,
+    B,
+    C
+};
+
+constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyEnum>) {
+    using enum MyEnum;
+    return di::make_enumerators(
+        di::enumerator<"A", A>,
+        di::enumerator<"B", B>,
+        di::enumerator<"C", C>
+    );
+}
 ```
 
 If using a macro based approach to reflection, this would be equivalent to the following:
@@ -49,6 +64,8 @@ struct MyType {
 
     DI_RELECT(MyType, x, y, z);
 };
+
+DI_DECLARE_ENUM(MyEnum, A, B, C);
 ```
 
 This is definitely shorter, but it is also less flexible. For instance, it is not possible to use a different name for
@@ -81,6 +98,21 @@ public:
         );
     }
 };
+
+enum class MyEnum {
+    A,
+    B,
+    C
+};
+
+constexpr auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyEnum>) {
+    using enum MyEnum;
+    return di::make_enumerators(
+        di::enumerator<"MYENUM_A", A>,
+        di::enumerator<"MYENUM_B", B>,
+        di::enumerator<"MYENUM_C", C>
+    );
+}
 ```
 
 ## Internal Representation
@@ -90,6 +122,11 @@ corresponds to a field. Each field is a `di::reflection::Field` object, which co
 member. The `Fields` object inherits from `di::Tuple`, and is thus easily convertible to a type-list. This lets compile
 time code use the existing type-list meta-programming tools. And at no additional cost, the `Fields` object can be used
 like a tuple.
+
+Enumerations are also supported. For this case, the reflect type is an `di::reflection::Enumerators` object. This is
+similar to the `di::reflection::Fields` object, but instead of containing a list of fields, it contains a list of
+enumerators. Each enumerator is a `di::reflection::Enumerator` object, which contains a name and a value. These can also
+be interacted with normally as a tuple.
 
 These types have their information fully encoded in the type system, which means they effectively store no data. The
 field class simply looks as follows:
@@ -122,10 +159,11 @@ reflect as an integer, and can be treated as equivalent.
 ## Accessing Reflection Information
 
 The `di::reflect` function can be used to access the reflection information for a type. Since this is a function, it
-will return the reflection information as a `di::Tuple`. For example, calling `di::reflect(mytype_instance)` will return
-the custom `di::Tuple` object the type defines. If a type is needed, `di::meta::Reflect<MyType>` can be used instead.
-Since `di::reflect()` can also return an `di::reflection::Atom` object, it is necessary to constrain functions on
-`di::ReflectableToFields` to in certain cases.
+will return the reflection information as a value which models `di::ReflectionValue`. For example, calling
+`di::reflect(mytype_instance)` will return the custom `di::Fields` object the type defines. If a type is needed,
+`di::meta::Reflect<MyType>` can be used instead. Since `di::reflect()` can also return an `di::reflection::Atom` or
+`di::reflection::Enumerators` object, it is necessary to constrain functions on `di::ReflectableToFields` to in certain
+cases.
 
 This can be used to implement various utilities. For instance, the following function can be used to print every member
 of a type:
@@ -148,6 +186,23 @@ static void hash_fields(di::Hasher auto& hasher, di::ReflectableToFields auto co
 }
 ```
 
+For enums, we can get the name of an enumerator:
+
+```cpp
+// NOTE: this is already defined by the library as `di::enum_to_string()`.
+constexpr auto enum_to_string(di::ReflectableToEnumerators auto value) {
+    auto result = "Invalid"_sv;
+    di::tuple_for_each([&](auto enumerator) {
+        if (enumerator.value == value) {
+            // NOTE: the strings in this library are compile-time values (with fixed length), so we need to convert them
+            // to a normal string view.
+            result = di::container::fixed_string_to_utf8_string_view<enumerator.name>();
+        }
+    }, di::reflect(value));
+    return result;
+}
+```
+
 Since the reflection information is stored in a tuple, it can be easily accessed without template metaprogramming. This
 should make it easier to implement various utilities.
 
@@ -157,8 +212,5 @@ The current implementation has a few limitations. The main one is that it does n
 is useful for a type to inherit the reflection information of a base type. For instance, a message type might inherit
 the reflection information of a base message type. Currently, this would require manually copying the reflection
 information from the base type to the derived type. This is not ideal, but it is not too bad.
-
-Another feature which would be nice is support enumerations. This could easily be added, but it is not currently
-implemented.
 
 The library also does not support reflecting member functions, but this can be added if a need arises.
