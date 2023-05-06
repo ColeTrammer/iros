@@ -12,8 +12,11 @@
 #include <di/function/invoke.h>
 #include <di/io/interface/writer.h>
 #include <di/io/prelude.h>
+#include <di/io/string_writer.h>
 #include <di/io/write_exactly.h>
 #include <di/reflect/reflect.h>
+#include <di/serialization/serialize.h>
+#include <di/serialization/serialize_string.h>
 #include <di/util/declval.h>
 #include <di/util/exchange.h>
 #include <di/util/reference_wrapper.h>
@@ -24,6 +27,8 @@
 #include <di/vocab/tuple/tuple_sequence.h>
 
 namespace di::serialization {
+struct JsonFormat;
+
 class JsonSerializerConfig {
 public:
     JsonSerializerConfig() = default;
@@ -61,6 +66,18 @@ private:
     public:
         constexpr explicit ObjectSerializerProxy(JsonSerializer& serializer) : m_serializer(serializer) {}
 
+        constexpr meta::WriterResult<void, Writer> serialize_bool(container::StringView key, bool value) {
+            DI_TRY(m_serializer.get().serialize_key(key));
+            auto guard = util::ScopeValueChange(m_serializer.get().m_state, State::Value);
+            return m_serializer.get().serialize_bool(value);
+        }
+
+        constexpr meta::WriterResult<void, Writer> serialize_null(container::StringView key) {
+            DI_TRY(m_serializer.get().serialize_key(key));
+            auto guard = util::ScopeValueChange(m_serializer.get().m_state, State::Value);
+            return m_serializer.get().serialize_null();
+        }
+
         constexpr meta::WriterResult<void, Writer> serialize_string(container::StringView key,
                                                                     container::StringView view) {
             DI_TRY(m_serializer.get().serialize_key(key));
@@ -89,12 +106,11 @@ private:
             return m_serializer.get().serialize_object(util::forward<F>(function));
         }
 
-        template<typename T>
-        requires(requires { util::declval<JsonSerializer&>().serialize(util::declval<T>()); })
+        template<concepts::Serializable<JsonSerializer> T>
         constexpr meta::WriterResult<void, Writer> serialize(container::StringView key, T&& value) {
             DI_TRY(m_serializer.get().serialize_key(key));
             auto guard = util::ScopeValueChange(m_serializer.get().m_state, State::Value);
-            return m_serializer.get().serialize(value);
+            return serialization::serialize(m_serializer.get(), value);
         }
 
     private:
@@ -102,30 +118,25 @@ private:
     };
 
 public:
+    using SerializationFormat = JsonFormat;
+
     template<typename T>
     requires(concepts::ConstructibleFrom<Writer, T>)
     constexpr explicit JsonSerializer(T&& writer, JsonSerializerConfig config = {})
         : m_writer(util::forward<T>(writer)), m_config(config) {}
+
+    constexpr meta::WriterResult<void, Writer> serialize_null() {
+        DI_TRY(serialize_comma());
+
+        DI_TRY(io::write_exactly(m_writer, "null"_sv));
+        return {};
+    }
 
     constexpr meta::WriterResult<void, Writer> serialize_bool(bool value) {
         if (value) {
             return serialize_true();
         }
         return serialize_false();
-    }
-
-    constexpr meta::WriterResult<void, Writer> serialize_true() {
-        DI_TRY(serialize_comma());
-
-        DI_TRY(io::write_exactly(m_writer, "true"_sv));
-        return {};
-    }
-
-    constexpr meta::WriterResult<void, Writer> serialize_false() {
-        DI_TRY(serialize_comma());
-
-        DI_TRY(io::write_exactly(m_writer, "false"_sv));
-        return {};
     }
 
     constexpr meta::WriterResult<void, Writer> serialize_string(container::StringView view) {
@@ -169,59 +180,71 @@ public:
         return serialize_object_end();
     }
 
-    template<concepts::ReflectableToFields T>
-    constexpr meta::WriterResult<void, Writer> serialize(T&& value) {
+    template<typename T, concepts::TupleLike M>
+    constexpr meta::WriterResult<void, Writer> serialize(T&& value, M) {
         return serialize_object([&](auto& serializer) -> meta::WriterResult<void, Writer> {
             return vocab::tuple_sequence<meta::WriterResult<void, Writer>>(
                 [&](auto field) {
                     constexpr auto name = container::fixed_string_to_utf8_string_view<field.name>();
                     return serializer.serialize(name, field.get(value));
                 },
-                reflection::reflect(value));
+                M {});
         });
     }
 
-    template<concepts::ReflectableToAtom T, auto atom = reflection::reflect(in_place_type<meta::RemoveCVRef<T>>)>
-    requires(atom.is_bool() || atom.is_string() || atom.is_integer())
-    constexpr meta::WriterResult<void, Writer> serialize(T&& value) {
-        if constexpr (atom.is_bool()) {
-            return serialize_bool(atom.get(value));
-        } else if constexpr (atom.is_string()) {
-            return serialize_string(atom.get(value));
-        } else if constexpr (atom.is_integer()) {
-            return serialize_number(atom.get(value));
+    template<concepts::ReflectableToAtom T, concepts::InstanceOf<reflection::Atom> M>
+    requires(M::is_bool() || M::is_string() || M::is_integer())
+    constexpr meta::WriterResult<void, Writer> serialize(T&& value, M) {
+        if constexpr (M::is_bool()) {
+            return serialize_bool(M::get(value));
+        } else if constexpr (M::is_string()) {
+            return serialize_string(M::get(value));
+        } else if constexpr (M::is_integer()) {
+            return serialize_number(M::get(value));
         }
     }
 
-    template<concepts::ReflectableToAtom T, auto atom = reflection::reflect(in_place_type<meta::RemoveCVRef<T>>)>
-    requires(atom.is_list() &&
-             requires { util::declval<JsonSerializer&>().serialize(util::declval<meta::ContainerReference<T>>()); })
-    constexpr meta::WriterResult<void, Writer> serialize(T&& value) {
+    template<concepts::ReflectableToAtom T, concepts::InstanceOf<reflection::Atom> M>
+    requires(M::is_list() && concepts::Serializable<meta::ContainerReference<T>, JsonSerializer>)
+    constexpr meta::WriterResult<void, Writer> serialize(T&& value, M) {
         return serialize_array([&](auto& serializer) -> meta::WriterResult<void, Writer> {
-            return container::sequence(atom.get(value), [&](auto&& element) {
-                return serializer.serialize(element);
+            return container::sequence(M::get(value), [&](auto&& element) {
+                return serialization::serialize(serializer, element);
             });
         });
     }
 
-    template<concepts::ReflectableToAtom T, auto atom = reflection::reflect(in_place_type<meta::RemoveCVRef<T>>)>
-    requires(atom.is_map() && concepts::detail::ConstantString<meta::TupleElement<meta::ContainerValue<T>, 0>> &&
-             requires {
-                 util::declval<JsonSerializer&>().serialize(
-                     util::declval<meta::TupleValue<decltype(util::declval<meta::ContainerReference<T>>()), 1>>());
-             })
-    constexpr meta::WriterResult<void, Writer> serialize(T&& value) {
+    template<concepts::ReflectableToAtom T, concepts::InstanceOf<reflection::Atom> M>
+    requires(M::is_map() && concepts::detail::ConstantString<meta::TupleElement<meta::ContainerValue<T>, 0>> &&
+             concepts::Serializable<meta::TupleValue<decltype(util::declval<meta::ContainerReference<T>>()), 1>,
+                                    JsonSerializer>)
+    constexpr meta::WriterResult<void, Writer> serialize(T&& value, M) {
         return serialize_object([&](auto& serializer) -> meta::WriterResult<void, Writer> {
-            return container::sequence(atom.get(value), [&](concepts::TupleLike auto&& element) {
+            return container::sequence(M::get(value), [&](concepts::TupleLike auto&& element) {
                 return serializer.serialize(util::get<0>(element), util::get<1>(element));
             });
         });
     }
 
+    constexpr Writer& writer() & { return m_writer; }
     constexpr Writer const& writer() const& { return m_writer; }
-    constexpr Writer&& writer() && { return util::move(m_writer); }
+    constexpr Writer&& writer() && { return util::move(*this).m_writer; }
 
 private:
+    constexpr meta::WriterResult<void, Writer> serialize_true() {
+        DI_TRY(serialize_comma());
+
+        DI_TRY(io::write_exactly(m_writer, "true"_sv));
+        return {};
+    }
+
+    constexpr meta::WriterResult<void, Writer> serialize_false() {
+        DI_TRY(serialize_comma());
+
+        DI_TRY(io::write_exactly(m_writer, "false"_sv));
+        return {};
+    }
+
     constexpr meta::WriterResult<void, Writer> serialize_comma() {
         if (m_state == State::Value) {
             return {};
@@ -309,9 +332,47 @@ JsonSerializer(T&&) -> JsonSerializer<T>;
 
 template<typename T>
 JsonSerializer(T&&, JsonSerializerConfig) -> JsonSerializer<T>;
+
+struct JsonFormat {
+    template<concepts::Impl<io::Writer> Writer, typename... Args>
+    requires(concepts::ConstructibleFrom<JsonSerializer<meta::RemoveCVRef<Writer>>, Writer, Args...>)
+    constexpr static auto serializer(Writer&& writer, Args&&... args) {
+        return JsonSerializer<meta::RemoveCVRef<Writer>>(util::forward<Writer>(writer), util::forward<Args>(args)...);
+    }
+};
+
+constexpr inline auto json_format = JsonFormat {};
+
+namespace detail {
+    struct SerializeJsonStringFunction {
+        template<concepts::Serializable<JsonSerializer<io::StringWriter<>>> T>
+        constexpr auto operator()(T&& value) const {
+            return serialization::serialize_string(json_format, value);
+        }
+    };
+}
+
+constexpr inline auto serialize_json_string = detail::SerializeJsonStringFunction {};
+
+namespace detail {
+    struct SerializeJsonFunction {
+        template<concepts::Impl<io::Writer> Writer, concepts::Serializable<JsonSerializer<Writer>> T, typename... Args>
+        requires(concepts::ConstructibleFrom<JsonSerializer<meta::RemoveCVRef<Writer>>, Writer, Args...>)
+        constexpr auto operator()(Writer&& writer, T&& value, Args&&... args) const {
+            return serialize(json_format, util::forward<Writer>(writer), value, util::forward<Args>(args)...);
+        }
+    };
+}
+
+constexpr inline auto serialize_json = detail::SerializeJsonFunction {};
 }
 
 namespace di {
+using serialization::JsonFormat;
 using serialization::JsonSerializer;
 using serialization::JsonSerializerConfig;
+
+using serialization::json_format;
+using serialization::serialize_json;
+using serialization::serialize_json_string;
 }

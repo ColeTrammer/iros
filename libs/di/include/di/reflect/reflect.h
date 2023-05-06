@@ -7,24 +7,28 @@
 #include <di/types/prelude.h>
 #include <di/vocab/tuple/tuple_like.h>
 
+namespace di::concepts {
+template<typename T>
+concept ReflectionValue = concepts::TupleLike<T> || concepts::InstanceOf<T, reflection::Atom>;
+}
+
 namespace di::reflection {
 namespace detail {
     struct ReflectFunction {
-        template<typename T>
-        requires(concepts::TagInvocable<ReflectFunction, InPlaceType<T>>)
+        template<typename T, typename U = meta::RemoveCVRef<T>>
+        requires(concepts::TagInvocable<ReflectFunction, InPlaceType<U>>)
         constexpr decltype(auto) operator()(InPlaceType<T>) const {
-            using R = meta::TagInvokeResult<ReflectFunction, InPlaceType<T>>;
-            static_assert(concepts::TupleLike<R> || concepts::InstanceOf<T, Atom>,
-                          "Reflect function must return a tuple of fields or an atom");
-            return function::tag_invoke(*this, in_place_type<T>);
+            using R = meta::TagInvokeResult<ReflectFunction, InPlaceType<U>>;
+            static_assert(concepts::ReflectionValue<R>, "Reflect function must return a tuple of fields or an atom");
+            return function::tag_invoke(*this, in_place_type<U>);
         }
 
-        template<typename T>
-        requires(!concepts::TagInvocable<ReflectFunction, InPlaceType<T>> &&
-                 (concepts::SameAs<T, bool> || concepts::Integer<T> || concepts::detail::ConstantString<T> ||
-                  concepts::Container<T>) )
+        template<typename T, typename U = meta::RemoveCVRef<T>>
+        requires(!concepts::TagInvocable<ReflectFunction, InPlaceType<U>> &&
+                 (concepts::SameAs<U, bool> || concepts::Integer<U> || concepts::detail::ConstantString<U> ||
+                  concepts::Container<U>) )
         constexpr decltype(auto) operator()(InPlaceType<T>) const {
-            return Atom<T> {};
+            return Atom<U> {};
         }
 
         template<typename T, typename U = meta::RemoveCVRef<T>>

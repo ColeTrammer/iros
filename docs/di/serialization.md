@@ -28,18 +28,23 @@ struct MyType {
 ```
 
 ```cpp
+#include <di/serialization/json_serializer.h>
+
 auto x = MyType { 1, 2, 3 };
 
 // Serialize to JSON string:
 auto string = TRY(di::serialize_json_string(x));
 // or...
-auto string = TRY(di::serialize(x, di::json_format));
+auto string = TRY(di::serialize_string(di::json_format, x));
 
-// Serialize to JSON file:
+// Serialize to JSON file (with pretty printing):
 auto file = TRY(dius::open_sync("file.json", dius::OpenMode::WriteOnly | dius::OpenMode::Create));
-TRY(di::serialize_json(x, file));
-// or...
-TRY(di::serialize(x, file, di::json_format));
+TRY(di::serialize_json(file, x, di::JsonSerializerConfig().pretty()));
+// or ...
+TRY(di::serialize(di::json_format, file, x, di::JsonSerializerConfig().pretty()));
+// or ...
+auto serializer = di::JsonSerializer(di::move(file), di::JsonSerializerConfig().pretty());
+TRY(di::serialize(serializer, x));
 ```
 
 Additionally, users can provide custom serialization behavior by overriding the `di::serialize_metadata` function. For
@@ -70,20 +75,63 @@ for all formats at once. When resolving how to serialize a type, the following o
 2. If the type has a blanket `di::serialize_metadata` overload, use that.
 3. If the type has a `di::reflect` overload, use that.
 
+This metadata search is handled by the `di::serialize` function, which evaluates the metadata and then calls the
+provided serializer. This dispatching mechanism ensures that serializers will have consistent behavior across all
+implementations.
+
+Additionally, `di::serialize()` is a tag-invoke CPO, so the entire serialization mechanism can be customized on a
+per-type basis if needed.
+
+For example,
+
+```cpp
+struct UUID {
+    // Returns fixed-size string representation of the UUID.
+    auto to_string() const;
+
+    // Custom serialization. For JSON, we would want a string, but for binary formats we would want a fixed-size array.
+    friend auto tag_invoke(di::Tag<di::serialize>, di::JsonFormat, auto& serializer, UUID const& value) {
+        return serializer.serialize_string(value.to_string());
+    }
+
+    di::Array<byte, 16> bytes;
+};
+```
+
 ## Custom Serialization Formats
 
 The library is designed to be extensible to support multiple serialization formats in the future. A serialization format
 is modelled by the `di::SerializationFormat` concept, which is defined as follows:
 
 ```cpp
-template <typename T>
-concept SerializationFormat = requires(DummyWriter& writer, DummyObject& object) {
-    T::serialize(writer, serialization_metadata(object), object);
+template<typename T, typename Writer = di::AnyRef<io::Writer>, typename... Args>
+concept SerializationFormat = requires(T format, Writer&& writer, Args&&... args) {
+    serialization::serializer(format, di::forward<Writer>(writer), di::forward<Args>(args)...);
 };
 ```
 
-As shown, a serialization format must provide a static `serialize` function which takes a writer, a metadata object, and
-the actual object to serialize. The metadata object is a tuple of `di::Field` objects.
+As shown, a serialization format must provide an implementation of the `serializer` function which takes a writer, and
+returns a bound serializer. This can be done by providing a static function `serializer`. This should be valid for any
+type of writer, but since c++ concepts cannot universality, a type-erased Writer is checked. The serializer must be a
+type which models the `di::Serializer` concept, which is defined as follows:
 
-Additionally, each serialization format must define serialize overloads for primitive types, which do not have any
-metadata. These include strings, integers, containers, and any other types which need to be serialized.
+```cpp
+template <typename T>
+concept Serializer = requires(T& serializer, DummyType value, DummyMetadata metadata) {
+    typename SerializationFormat;
+    { serializer.serialize(value, metadata) } -> ConvertibleTo<di::Result<void>>;
+    { serializer.writer() } -> di::Impl<Writer>;
+    di::as_const(serializer).writer();
+    di::move(serializer).writer();
+};
+```
+
+The metadata object passed to the serialization is either a list of fields or a atom, depending on the type being
+serialized. Different serializers may be able to serialize different values, so the second constraint on `Serializer` is
+not enforced. Instead, the important concept is one that considers both the serializer and the type being serialized:
+
+```cpp
+template<typename T, typename S>
+concept Serializable =
+    di::Serializer<S> && requires(S&& serializer, T&& value) { di::serialize(serializer, value); };
+```

@@ -126,27 +126,17 @@ struct MySuperType {
 
 constexpr void json_reflect() {
     {
-        auto writer = di::StringWriter {};
-        auto serializer = di::JsonSerializer(di::move(writer));
-
         auto const x = MyType { 1, 2, 3, true, "hello"_sv };
-        *serializer.serialize(x);
-
-        auto result = di::move(serializer).writer().output();
+        auto result = di::serialize_json_string(x);
         ASSERT_EQ(result, R"({"x":1,"y":2,"z":3,"w":true,"a":"hello"})"_sv);
     }
 
     {
-        auto writer = di::StringWriter {};
-        auto serializer = di::JsonSerializer(di::move(writer));
-
         auto const x = MySuperType { MyType { 1, 2, 3, true, "hello"_sv },
                                      { 1, 2, 3 },
                                      { di::Tuple { "a"_sv, 1 }, di::Tuple { "b"_sv, 2 }, di::Tuple { "c"_sv, 3 } } };
 
-        *serializer.serialize(x);
-
-        auto result = di::move(serializer).writer().output();
+        auto result = di::serialize_json_string(x);
         ASSERT_EQ(
             result,
             R"({"my_type":{"x":1,"y":2,"z":3,"w":true,"a":"hello"},"array":[1,2,3],"map":{"a":1,"b":2,"c":3}})"_sv);
