@@ -7,6 +7,7 @@
 #include <di/concepts/copy_assignable.h>
 #include <di/concepts/copy_constructible.h>
 #include <di/concepts/decay_same_as.h>
+#include <di/concepts/derived_from.h>
 #include <di/concepts/equality_comparable_with.h>
 #include <di/concepts/move_assignable.h>
 #include <di/concepts/move_constructible.h>
@@ -139,20 +140,25 @@ private:
         }
     }
 
-    constexpr friend types::size_t tag_invoke(types::Tag<tuple_size>, types::InPlaceType<Tuple>) {
+    template<concepts::DerivedFrom<Tuple> Self = Tuple>
+    constexpr friend types::size_t tag_invoke(types::Tag<tuple_size>, types::InPlaceType<Self>) {
         return sizeof...(Types);
     }
 
-    template<types::size_t index>
+    template<types::size_t index, concepts::DerivedFrom<Tuple> Self = Tuple>
     constexpr friend InPlaceType<typename meta::TypeList<Types...>::template TypeAtIndex<index>>
-        tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Tuple>, types::InPlaceIndex<index>);
+    tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Self>, types::InPlaceIndex<index>) {
+        return {};
+    }
 
-    template<types::size_t index>
+    template<types::size_t index, concepts::DerivedFrom<Tuple> Self = Tuple>
     constexpr friend InPlaceType<typename meta::TypeList<Types...>::template TypeAtIndex<index> const>
-        tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Tuple const>, types::InPlaceIndex<index>);
+    tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Self const>, types::InPlaceIndex<index>) {
+        return {};
+    }
 
-    template<types::size_t index, concepts::DecaySameAs<Tuple> Self>
-    requires(index < sizeof...(Types))
+    template<types::size_t index, typename Self>
+    requires(index < sizeof...(Types) && concepts::DerivedFrom<meta::Decay<Self>, Tuple>)
     constexpr friend meta::Like<Self, meta::TupleElement<Self, index>>&&
     tag_invoke(types::Tag<util::get_in_place>, types::InPlaceIndex<index>, Self&& self) {
         using Impl = detail::TupleImplBase<index, meta::IndexSequenceFor<Types...>, Types...>::Type;

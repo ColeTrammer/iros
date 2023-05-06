@@ -30,7 +30,7 @@ struct MyType {
     int z;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyType>) {
-        return di::make_tuple(
+        return di::make_fields(
             di::field<"x", &MyType::x>,
             di::field<"y", &MyType::y>,
             di::field<"z", &MyType::z>
@@ -74,7 +74,7 @@ public:
     constexpr int z() const { return m_z; }
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyClass>) {
-        return di::make_tuple(
+        return di::make_fields(
             di::field<"x", &MyClass::m_x>,
             di::field<"y", &MyClass::m_y>,
             di::field<"z", &MyClass::m_z>
@@ -85,10 +85,11 @@ public:
 
 ## Internal Representation
 
-The internal representation of a reflected type is just `di::meta::List` object. Each type member in the list
+The internal representation of a reflected type is an `di::reflection::Fields` object. Each type member in the list
 corresponds to a field. Each field is a `di::reflection::Field` object, which contains a name and a pointer to the
-member. Using a pure type-list approach means that compile time code can use the existing type-list meta-programming
-tools. And at no additional cost, this type-list can be converted into a tuple, which can be used like normal.
+member. The `Fields` object inherits from `di::Tuple`, and is thus easily convertible to a type-list. This lets compile
+time code use the existing type-list meta-programming tools. And at no additional cost, the `Fields` object can be used
+like a tuple.
 
 These types have their information fully encoded in the type system, which means they effectively store no data. The
 field class simply looks as follows:
@@ -122,9 +123,9 @@ reflect as an integer, and can be treated as equivalent.
 
 The `di::reflect` function can be used to access the reflection information for a type. Since this is a function, it
 will return the reflection information as a `di::Tuple`. For example, calling `di::reflect(mytype_instance)` will return
-the custom `di::Tuple` object the type defines. If a type is needed, `di::meta::Reflect<MyType>` can be used
-instead. Since `di::reflect()` can also return an `di::reflection::Atom` object, it is necessary to constrain functions
-on `di::ReflectableToFields` to in certain cases.
+the custom `di::Tuple` object the type defines. If a type is needed, `di::meta::Reflect<MyType>` can be used instead.
+Since `di::reflect()` can also return an `di::reflection::Atom` object, it is necessary to constrain functions on
+`di::ReflectableToFields` to in certain cases.
 
 This can be used to implement various utilities. For instance, the following function can be used to print every member
 of a type:

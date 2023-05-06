@@ -1,15 +1,17 @@
 #pragma once
 
+#include <di/concepts/instance_of.h>
 #include <di/function/tag_invoke.h>
 #include <di/meta/list/as_list.h>
 #include <di/meta/remove_cvref.h>
 #include <di/reflect/atom.h>
+#include <di/reflect/field.h>
 #include <di/types/prelude.h>
 #include <di/vocab/tuple/tuple_like.h>
 
 namespace di::concepts {
 template<typename T>
-concept ReflectionValue = concepts::TupleLike<T> || concepts::InstanceOf<T, reflection::Atom>;
+concept ReflectionValue = concepts::InstanceOf<T, reflection::Fields> || concepts::InstanceOf<T, reflection::Atom>;
 }
 
 namespace di::reflection {
@@ -19,7 +21,7 @@ namespace detail {
         requires(concepts::TagInvocable<ReflectFunction, InPlaceType<U>>)
         constexpr decltype(auto) operator()(InPlaceType<T>) const {
             using R = meta::TagInvokeResult<ReflectFunction, InPlaceType<U>>;
-            static_assert(concepts::ReflectionValue<R>, "Reflect function must return a tuple of fields or an atom");
+            static_assert(concepts::ReflectionValue<R>, "Reflect function must return fields or an atom");
             return function::tag_invoke(*this, in_place_type<U>);
         }
 
@@ -56,11 +58,11 @@ concept ReflectableToAtom = requires {
 
 template<typename T>
 concept ReflectableToFields = requires {
-    { reflection::reflect(util::declval<T>()) } -> TupleLike;
+    { reflection::reflect(util::declval<T>()) } -> InstanceOf<reflection::Fields>;
 };
 }
 
 namespace di::meta {
-template<concepts::Reflectable T, typename R = decltype(reflection::reflect(in_place_type<T>))>
-using Reflect = meta::Conditional<concepts::ReflectableToFields<T>, meta::AsList<R>, R>;
+template<concepts::Reflectable T>
+using Reflect = decltype(reflection::reflect(in_place_type<T>));
 }

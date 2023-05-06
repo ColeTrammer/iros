@@ -108,8 +108,8 @@ struct MyType {
     di::StringView a;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyType>) {
-        return di::make_tuple(di::field<"x", &MyType::x>, di::field<"y", &MyType::y>, di::field<"z", &MyType::z>,
-                              di::field<"w", &MyType::w>, di::field<"a", &MyType::a>);
+        return di::make_fields(di::field<"x", &MyType::x>, di::field<"y", &MyType::y>, di::field<"z", &MyType::z>,
+                               di::field<"w", &MyType::w>, di::field<"a", &MyType::a>);
     }
 };
 
@@ -119,8 +119,8 @@ struct MySuperType {
     di::Array<di::Tuple<di::StringView, int>, 3> map;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MySuperType>) {
-        return di::make_tuple(di::field<"my_type", &MySuperType::my_type>, di::field<"array", &MySuperType::array>,
-                              di::field<"map", &MySuperType::map>);
+        return di::make_fields(di::field<"my_type", &MySuperType::my_type>, di::field<"array", &MySuperType::array>,
+                               di::field<"map", &MySuperType::map>);
     }
 };
 

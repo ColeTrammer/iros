@@ -2,6 +2,7 @@
 
 #include <di/concepts/always_false.h>
 #include <di/concepts/constructible_from.h>
+#include <di/concepts/instance_of.h>
 #include <di/concepts/integral.h>
 #include <di/container/action/sequence.h>
 #include <di/container/string/fixed_string_to_utf8_string_view.h>
@@ -14,6 +15,7 @@
 #include <di/io/prelude.h>
 #include <di/io/string_writer.h>
 #include <di/io/write_exactly.h>
+#include <di/reflect/field.h>
 #include <di/reflect/reflect.h>
 #include <di/serialization/serialize.h>
 #include <di/serialization/serialize_string.h>
@@ -180,7 +182,7 @@ public:
         return serialize_object_end();
     }
 
-    template<typename T, concepts::TupleLike M>
+    template<typename T, concepts::InstanceOf<reflection::Fields> M>
     constexpr meta::WriterResult<void, Writer> serialize(T&& value, M) {
         return serialize_object([&](auto& serializer) -> meta::WriterResult<void, Writer> {
             return vocab::tuple_sequence<meta::WriterResult<void, Writer>>(

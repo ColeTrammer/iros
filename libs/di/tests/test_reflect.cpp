@@ -9,7 +9,7 @@ struct MyType {
     int z;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyType>) {
-        return di::make_tuple(di::field<"x", &MyType::x>, di::field<"y", &MyType::y>, di::field<"z", &MyType::z>);
+        return di::make_fields(di::field<"x", &MyType::x>, di::field<"y", &MyType::y>, di::field<"z", &MyType::z>);
     }
 };
 
@@ -26,8 +26,8 @@ public:
     constexpr int z() const { return m_z; }
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MyClass>) {
-        return di::make_tuple(di::field<"x", &MyClass::m_x>, di::field<"y", &MyClass::m_y>,
-                              di::field<"z", &MyClass::m_z>);
+        return di::make_fields(di::field<"x", &MyClass::m_x>, di::field<"y", &MyClass::m_y>,
+                               di::field<"z", &MyClass::m_z>);
     }
 };
 

@@ -21,6 +21,7 @@ struct Atom {
         }
     }
 
+    constexpr static bool is_fields() { return false; }
     constexpr static bool is_field() { return false; }
     constexpr static bool is_atom() { return true; }
     constexpr static bool is_integer() { return concepts::Integer<T>; }
