@@ -62,7 +62,7 @@ private:
 
     using Node = HashNode<Tag>;
     using Iterator = HashNodeIterator<Value, Tag>;
-    using ConstIterator = meta::ConstIterator<Iterator>;
+    using ConstIterator = container::ConstIteratorImpl<Iterator>;
 
     using AllocResult = decltype(Alloc().allocate(0));
 

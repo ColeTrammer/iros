@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/concepts/default_constructible.h>
+#include <di/concepts/derived_from.h>
 #include <di/concepts/instance_of.h>
 #include <di/concepts/instance_of_v.h>
 #include <di/concepts/trivially_copy_assignable.h>
@@ -88,7 +89,7 @@ public:
     requires(copyable && !trivially_copy_constructible)
     {
         function::index_dispatch<void, meta::Size<List>>(
-            this->index(),
+            other.index(),
             []<size_t index>(InPlaceIndex<index>, Variant& self, Variant const& other) {
                 self.do_emplace(in_place_index<index>, util::get<index>(other));
             },
@@ -99,11 +100,11 @@ public:
     requires(movable && !trivially_move_constructible)
     {
         function::index_dispatch<void, meta::Size<List>>(
-            this->index(),
+            other.index(),
             []<size_t index>(InPlaceIndex<index>, Variant& self, Variant&& other) {
                 self.do_emplace(in_place_index<index>, util::get<index>(util::move(other)));
             },
-            *this, util::move(other()));
+            *this, util::move(other));
     }
 
     template<typename U>
@@ -245,31 +246,43 @@ private:
             });
     }
 
-    template<size_t index>
-    friend meta::At<List, index> tag_invoke(types::Tag<variant_alternative>, InPlaceType<Variant>, InPlaceIndex<index>);
+    template<size_t index, concepts::DerivedFrom<Variant> Self = Variant>
+    constexpr friend meta::At<List, index> tag_invoke(types::Tag<variant_alternative>, InPlaceType<Self>,
+                                                      InPlaceIndex<index>) {
+        return {};
+    }
 
-    template<size_t index>
-    friend meta::At<List, index> const tag_invoke(types::Tag<variant_alternative>, InPlaceType<Variant const>,
-                                                  InPlaceIndex<index>);
+    template<size_t index, concepts::DerivedFrom<Variant> Self = Variant>
+    constexpr friend meta::At<List, index> const tag_invoke(types::Tag<variant_alternative>, InPlaceType<Self const>,
+                                                            InPlaceIndex<index>) {
+        return {};
+    }
 
-    constexpr friend size_t tag_invoke(types::Tag<variant_size>, InPlaceType<Variant>) { return meta::Size<List>; }
+    template<concepts::DerivedFrom<Variant> Self = Variant>
+    constexpr friend size_t tag_invoke(types::Tag<variant_size>, InPlaceType<Self>) {
+        return meta::Size<List>;
+    }
 
-    template<concepts::RemoveCVRefSameAs<Variant> Self, size_t index>
+    template<size_t index, typename Self = Variant>
+    requires(concepts::DerivedFrom<meta::RemoveCVRef<Self>, Variant>)
     constexpr friend meta::Like<Self, meta::At<List, index>>&& tag_invoke(types::Tag<util::get_in_place>,
                                                                           InPlaceIndex<index>, Self&& self) {
         DI_ASSERT(index == self.m_index);
         return Impl::static_get(in_place_index<index>, util::forward<Self>(self).m_impl);
     }
 
-    template<concepts::RemoveCVRefSameAs<Variant> Self, typename T>
-    requires(meta::UniqueType<T, List>)
+    template<typename T, typename Self = Variant>
+    requires(concepts::DerivedFrom<meta::RemoveCVRef<Self>, Variant> && meta::UniqueType<T, List>)
     constexpr friend meta::Like<Self, T>&& tag_invoke(types::Tag<util::get_in_place>, InPlaceType<T>, Self&& self) {
         constexpr auto index = meta::Lookup<T, List>;
         DI_ASSERT(index == self.m_index);
         return Impl::static_get(in_place_index<index>, util::forward<Self>(self).m_impl);
     }
 
-    constexpr friend List tag_invoke(types::Tag<variant_types>, InPlaceType<Variant>) { return List {}; }
+    template<concepts::DerivedFrom<Variant> Self = Variant>
+    constexpr friend List tag_invoke(types::Tag<variant_types>, InPlaceType<Self>) {
+        return List {};
+    }
 
     constexpr void destroy()
     requires(trivially_destructible)

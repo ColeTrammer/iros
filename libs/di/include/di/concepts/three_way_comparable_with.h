@@ -8,6 +8,7 @@
 namespace di::concepts {
 template<typename T, typename U, typename Category = types::partial_ordering>
 concept ThreeWayComparableWith =
-    ThreeWayComparable<T> && ThreeWayComparable<U> && detail::WeaklyEqualityComparableWith<T, U> &&
-    detail::PartiallyOrderedWith<T, U> && detail::WeaklyThreeWayComparableWith<T, U, Category>;
+    (detail::ComparesAs<meta::Type<detail::DefinitelyThreeWayComparableWith<T, T>>, Category>) ||
+    (ThreeWayComparable<T> && ThreeWayComparable<U> && detail::WeaklyEqualityComparableWith<T, U> &&
+     detail::PartiallyOrderedWith<T, U> && detail::WeaklyThreeWayComparableWith<T, U, Category>);
 }

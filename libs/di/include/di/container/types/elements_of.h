@@ -1,5 +1,7 @@
 #pragma once
 
+#include <di/container/concepts/container.h>
+
 namespace di::types {
 template<concepts::Container Con>
 struct ElementsOf {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/container/hash/node/hash_node.h>
+#include <di/container/intrusive/forward_list.h>
 #include <di/container/intrusive/forward_list_node.h>
 #include <di/container/iterator/iterator_base.h>
 #include <di/container/iterator/next.h>

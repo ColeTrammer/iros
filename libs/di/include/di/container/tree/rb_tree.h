@@ -1,6 +1,8 @@
 #pragma once
 
 #include <di/assert/assert_bool.h>
+#include <di/concepts/equality_comparable.h>
+#include <di/concepts/three_way_comparable.h>
 #include <di/container/allocator/prelude.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/iterator/distance.h>
@@ -9,6 +11,7 @@
 #include <di/container/tree/rb_tree_iterator.h>
 #include <di/container/tree/rb_tree_node.h>
 #include <di/function/compare.h>
+#include <di/meta/conditional.h>
 #include <di/util/create.h>
 #include <di/util/exchange.h>
 #include <di/vocab/optional/prelude.h>
@@ -29,15 +32,15 @@ namespace detail {
 /// The book Introduction to Algorithms, Third Edition (by Thomas H. Cormen, et al.)
 /// was heavily referenced in this class's implementation of a Red-Black tree.
 /// See [here](https://mitpress.mit.edu/9780262046305/introduction-to-algorithms/).
-template<typename Value, concepts::StrictWeakOrder<Value> Comp, typename Tag, typename Interface, bool is_multi,
-         typename Self = Void>
+template<typename Value, typename Comp, typename Tag, typename Interface, bool is_multi, typename Self = Void>
 class RBTree : public Interface {
 private:
     using Node = RBTreeNode<Tag>;
     using Iterator = RBTreeIterator<Value, Tag>;
-    using ConstIterator = meta::ConstIterator<Iterator>;
+    using ConstIterator = container::ConstIteratorImpl<Iterator>;
 
     using ConcreteNode = decltype(Tag::node_type(in_place_type<Value>));
+    using ConcreteSelf = meta::Conditional<concepts::SameAs<Void, Self>, RBTree, Self>;
 
     constexpr decltype(auto) down_cast_self() {
         if constexpr (concepts::SameAs<Void, Self>) {
@@ -125,8 +128,8 @@ public:
 
     template<typename U>
     requires(concepts::StrictWeakOrder<Comp&, Value, U>)
-    constexpr View<ConstIterator> equal_range_impl(U&& needle) const {
-        return { lower_bound_impl(needle), upper_bound_impl(needle) };
+    constexpr auto equal_range_impl(U&& needle) const {
+        return View<ConstIterator> { lower_bound_impl(needle), upper_bound_impl(needle) };
     }
 
     template<typename U>
@@ -503,6 +506,17 @@ protected:
     requires(concepts::StrictWeakOrder<Comp&, T, U>)
     constexpr auto compare(T const& a, U&& b) const {
         return function::invoke(m_comparator, a, b);
+    }
+
+    constexpr friend bool operator==(ConcreteSelf const& a, ConcreteSelf const& b)
+    requires(concepts::EqualityComparable<Value>)
+    {
+        return container::equal(a, b);
+    }
+    constexpr friend auto operator<=>(ConcreteSelf const& a, ConcreteSelf const& b)
+    requires(concepts::ThreeWayComparable<Value>)
+    {
+        return container::compare(a, b);
     }
 
     Node* m_root { nullptr };

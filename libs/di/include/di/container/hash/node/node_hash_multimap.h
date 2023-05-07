@@ -24,18 +24,20 @@ template<typename Key, typename Value, typename Eq = function::Equal, concepts::
 class NodeHashMultiMap
     : public OwningNodeHashTable<
           Tuple<Key, Value>, Eq, Hasher, Buckets, detail::NodeHashMapTag<Key, Value>, Alloc,
-          MapInterface<NodeHashMultiMap<Key, Value, Eq, Hasher, Buckets, Alloc>, Tuple<Key, Value>,
-                       HashNodeIterator<Tuple<Key, Value>, detail::NodeHashMapTag<Key, Value>>,
-                       meta::ConstIterator<HashNodeIterator<Tuple<Key, Value>, detail::NodeHashMapTag<Key, Value>>>,
-                       detail::NodeHashTableMapValidForLookup<Key, Value, Eq>::template Type, true>,
+          MapInterface<
+              NodeHashMultiMap<Key, Value, Eq, Hasher, Buckets, Alloc>, Tuple<Key, Value>, Key, Value,
+              HashNodeIterator<Tuple<Key, Value>, detail::NodeHashMapTag<Key, Value>>,
+              container::ConstIteratorImpl<HashNodeIterator<Tuple<Key, Value>, detail::NodeHashMapTag<Key, Value>>>,
+              detail::NodeHashTableMapValidForLookup<Key, Value, Eq>::template Type, true>,
           true, true> {
 private:
     using Base = OwningNodeHashTable<
         Tuple<Key, Value>, Eq, Hasher, Buckets, detail::NodeHashMapTag<Key, Value>, Alloc,
-        MapInterface<NodeHashMultiMap<Key, Value, Eq, Hasher, Buckets, Alloc>, Tuple<Key, Value>,
-                     HashNodeIterator<Tuple<Key, Value>, detail::NodeHashMapTag<Key, Value>>,
-                     meta::ConstIterator<HashNodeIterator<Tuple<Key, Value>, detail::NodeHashMapTag<Key, Value>>>,
-                     detail::NodeHashTableMapValidForLookup<Key, Value, Eq>::template Type, true>,
+        MapInterface<
+            NodeHashMultiMap<Key, Value, Eq, Hasher, Buckets, Alloc>, Tuple<Key, Value>, Key, Value,
+            HashNodeIterator<Tuple<Key, Value>, detail::NodeHashMapTag<Key, Value>>,
+            container::ConstIteratorImpl<HashNodeIterator<Tuple<Key, Value>, detail::NodeHashMapTag<Key, Value>>>,
+            detail::NodeHashTableMapValidForLookup<Key, Value, Eq>::template Type, true>,
         true, true>;
 
 public:

@@ -28,19 +28,21 @@ template<typename Key, typename Value, typename Eq = function::Equal, concepts::
 class NodeHashMap
     : public OwningNodeHashTable<
           Tuple<Key, Value>, Eq, Hasher, Buckets, detail::NodeHashMapTag<Key, Value>, Alloc,
-          MapInterface<NodeHashMap<Key, Value, Eq, Hasher, Buckets, Alloc>, Tuple<Key, Value>,
-                       HashNodeIterator<Tuple<Key, Value>, detail::NodeHashMapTag<Key, Value>>,
-                       meta::ConstIterator<HashNodeIterator<Tuple<Key, Value>, detail::NodeHashMapTag<Key, Value>>>,
-                       detail::NodeHashTableMapValidForLookup<Key, Value, Eq>::template Type, false>,
+          MapInterface<
+              NodeHashMap<Key, Value, Eq, Hasher, Buckets, Alloc>, Tuple<Key, Value>, Key, Value,
+              HashNodeIterator<Tuple<Key, Value>, detail::NodeHashMapTag<Key, Value>>,
+              container::ConstIteratorImpl<HashNodeIterator<Tuple<Key, Value>, detail::NodeHashMapTag<Key, Value>>>,
+              detail::NodeHashTableMapValidForLookup<Key, Value, Eq>::template Type, false>,
           false, true> {
 private:
-    using Base = OwningNodeHashTable<
-        Tuple<Key, Value>, Eq, Hasher, Buckets, detail::NodeHashMapTag<Key, Value>, Alloc,
-        MapInterface<NodeHashMap<Key, Value, Eq, Hasher, Buckets, Alloc>, Tuple<Key, Value>,
-                     HashNodeIterator<Tuple<Key, Value>, detail::NodeHashMapTag<Key, Value>>,
-                     meta::ConstIterator<HashNodeIterator<Tuple<Key, Value>, detail::NodeHashMapTag<Key, Value>>>,
-                     detail::NodeHashTableMapValidForLookup<Key, Value, Eq>::template Type, false>,
-        false, true>;
+    using Base =
+        OwningNodeHashTable<Tuple<Key, Value>, Eq, Hasher, Buckets, detail::NodeHashMapTag<Key, Value>, Alloc,
+                            MapInterface<NodeHashMap<Key, Value, Eq, Hasher, Buckets, Alloc>, Tuple<Key, Value>, Key,
+                                         Value, HashNodeIterator<Tuple<Key, Value>, detail::NodeHashMapTag<Key, Value>>,
+                                         container::ConstIteratorImpl<
+                                             HashNodeIterator<Tuple<Key, Value>, detail::NodeHashMapTag<Key, Value>>>,
+                                         detail::NodeHashTableMapValidForLookup<Key, Value, Eq>::template Type, false>,
+                            false, true>;
 
 public:
     NodeHashMap() = default;

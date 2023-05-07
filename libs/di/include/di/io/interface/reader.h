@@ -14,6 +14,15 @@ namespace detail {
         {
             return reader.read_some(data);
         }
+
+        template<typename T>
+        constexpr Result<usize> operator()(util::ReferenceWrapper<T> reader, Span<Byte> data) const
+        requires(requires {
+            { (*this)(reader.get(), data) };
+        })
+        {
+            return (*this)(reader.get(), data);
+        }
     };
 }
 

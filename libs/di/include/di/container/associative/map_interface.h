@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/concepts/equality_comparable.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/interface/prelude.h>
 #include <di/container/iterator/prelude.h>
@@ -8,16 +9,14 @@
 #include <di/math/to_unsigned.h>
 #include <di/util/clone.h>
 #include <di/vocab/expected/prelude.h>
+#include <di/vocab/expected/try_infallible.h>
 #include <di/vocab/optional/prelude.h>
 
 namespace di::container {
-template<typename Self, typename Value, typename Iterator, typename ConstIterator,
+template<typename Self, typename Value, typename Key, typename Val, typename Iterator, typename ConstIterator,
          template<typename> typename ValidForLookup, bool is_multi>
 class MapInterface {
 private:
-    using Key = meta::TupleElement<Value, 0>;
-    using Val = meta::TupleElement<Value, 1>;
-
     template<typename T>
     constexpr static bool valid = ValidForLookup<T>::value;
 
@@ -169,7 +168,7 @@ public:
                        return as_fallible(util::create<Key>(needle)) % [&](Key&& key) {
                            return as_fallible(util::create<Val>(util::forward<U>(value))) % [&](Val&& value) {
                                return Value(util::move(key), util::move(value));
-                           };
+                           } | try_infallible;
                        } | try_infallible;
                    })) |
                if_success([&](auto&& result) {
@@ -500,40 +499,40 @@ public:
         }
     }
 
-    constexpr View<Iterator> equal_range(Key const& needle) {
+    constexpr auto equal_range(Key const& needle) {
         if constexpr (!is_multi) {
             auto it = this->find(needle);
-            return { it, container::next(it, 1, end()) };
+            return View<Iterator> { it, container::next(it, 1, end()) };
         } else {
             auto [start, last] = self().equal_range_impl(needle);
-            return { unconst_iterator(util::move(start)), unconst_iterator(util::move(last)) };
+            return View<Iterator> { unconst_iterator(util::move(start)), unconst_iterator(util::move(last)) };
         }
     }
     template<typename U>
     requires(valid<U>)
-    constexpr View<Iterator> equal_range(U&& needle) {
+    constexpr auto equal_range(U&& needle) {
         if constexpr (!is_multi) {
             auto it = this->find(needle);
-            return { it, container::next(it, 1, end()) };
+            return View<ConstIterator> { it, container::next(it, 1, end()) };
         } else {
             return self().equal_range_impl(needle);
         }
     }
 
-    constexpr View<ConstIterator> equal_range(Key const& needle) const {
+    constexpr auto equal_range(Key const& needle) const {
         if constexpr (!is_multi) {
             auto it = this->find(needle);
-            return { it, container::next(it, 1, end()) };
+            return View<ConstIterator> { it, container::next(it, 1, end()) };
         } else {
             return self().equal_range_impl(needle);
         }
     }
     template<typename U>
     requires(valid<U>)
-    constexpr View<ConstIterator> equal_range(U&& needle) const {
+    constexpr auto equal_range(U&& needle) const {
         if constexpr (!is_multi) {
             auto it = this->find(needle);
-            return { it, container::next(it, 1, end()) };
+            return View<ConstIterator> { it, container::next(it, 1, end()) };
         } else {
             return self().equal_range_impl(needle);
         }

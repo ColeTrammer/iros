@@ -3,6 +3,7 @@
 #include <di/io/string_writer.h>
 #include <di/reflect/prelude.h>
 #include <di/serialization/json_serializer.h>
+#include <di/serialization/json_value.h>
 #include <dius/test/prelude.h>
 
 namespace serialization {

@@ -23,14 +23,14 @@ class TreeSet
     : public OwningRBTree<
           Value, Comp, detail::TreeSetTag<Value>, Alloc,
           SetInterface<TreeSet<Value, Comp, Alloc>, Value, RBTreeIterator<Value, detail::TreeSetTag<Value>>,
-                       meta::ConstIterator<RBTreeIterator<Value, detail::TreeSetTag<Value>>>,
+                       container::ConstIteratorImpl<RBTreeIterator<Value, detail::TreeSetTag<Value>>>,
                        detail::RBTreeValidForLookup<Value, Comp>::template Type, false>,
           false> {
 private:
     using Base =
         OwningRBTree<Value, Comp, detail::TreeSetTag<Value>, Alloc,
                      SetInterface<TreeSet<Value, Comp, Alloc>, Value, RBTreeIterator<Value, detail::TreeSetTag<Value>>,
-                                  meta::ConstIterator<RBTreeIterator<Value, detail::TreeSetTag<Value>>>,
+                                  container::ConstIteratorImpl<RBTreeIterator<Value, detail::TreeSetTag<Value>>>,
                                   detail::RBTreeValidForLookup<Value, Comp>::template Type, false>,
                      false>;
 

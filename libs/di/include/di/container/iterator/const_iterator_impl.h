@@ -14,7 +14,7 @@
 #include <di/util/to_address.h>
 
 namespace di::container {
-template<concepts::InputIterator Iter>
+template<typename Iter>
 class ConstIteratorImpl
     : public IteratorBase<ConstIteratorImpl<Iter>, meta::IteratorCategory<Iter>, meta::IteratorValue<Iter>,
                           meta::IteratorSSizeType<Iter>> {

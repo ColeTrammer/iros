@@ -32,17 +32,17 @@ class NodeHashSet
           Value, Eq, Hasher, Buckets, detail::NodeHashSetTag<Value>, Alloc,
           SetInterface<NodeHashSet<Value, Eq, Hasher, Buckets, Alloc>, Value,
                        HashNodeIterator<Value, detail::NodeHashSetTag<Value>>,
-                       meta::ConstIterator<HashNodeIterator<Value, detail::NodeHashSetTag<Value>>>,
+                       container::ConstIteratorImpl<HashNodeIterator<Value, detail::NodeHashSetTag<Value>>>,
                        detail::NodeHashTableValidForLookup<Value, Eq>::template Type, false>,
           false, false> {
 private:
-    using Base =
-        OwningNodeHashTable<Value, Eq, Hasher, Buckets, detail::NodeHashSetTag<Value>, Alloc,
-                            SetInterface<NodeHashSet<Value, Eq, Hasher, Buckets, Alloc>, Value,
-                                         HashNodeIterator<Value, detail::NodeHashSetTag<Value>>,
-                                         meta::ConstIterator<HashNodeIterator<Value, detail::NodeHashSetTag<Value>>>,
-                                         detail::NodeHashTableValidForLookup<Value, Eq>::template Type, false>,
-                            false, false>;
+    using Base = OwningNodeHashTable<
+        Value, Eq, Hasher, Buckets, detail::NodeHashSetTag<Value>, Alloc,
+        SetInterface<NodeHashSet<Value, Eq, Hasher, Buckets, Alloc>, Value,
+                     HashNodeIterator<Value, detail::NodeHashSetTag<Value>>,
+                     container::ConstIteratorImpl<HashNodeIterator<Value, detail::NodeHashSetTag<Value>>>,
+                     detail::NodeHashTableValidForLookup<Value, Eq>::template Type, false>,
+        false, false>;
 
 public:
     using Base::Base;

@@ -19,9 +19,9 @@ class TreeMultiMap
     : public OwningRBTree<
           Tuple<Key, Value>, detail::TreeMapCompAdapter<Comp, Key>, detail::TreeMapTag<Key, Value>, Alloc,
           MapInterface<
-              TreeMultiMap<Key, Value, Comp, Alloc>, Tuple<Key, Value>,
+              TreeMultiMap<Key, Value, Comp, Alloc>, Tuple<Key, Value>, Key, Value,
               RBTreeIterator<Tuple<Key, Value>, detail::TreeMapTag<Key, Value>>,
-              meta::ConstIterator<RBTreeIterator<Tuple<Key, Value>, detail::TreeMapTag<Key, Value>>>,
+              container::ConstIteratorImpl<RBTreeIterator<Tuple<Key, Value>, detail::TreeMapTag<Key, Value>>>,
               detail::RBTreeValidForLookup<Tuple<Key, Value>, detail::TreeMapCompAdapter<Comp, Key>>::template Type,
               true>,
           true> {
@@ -29,9 +29,9 @@ private:
     using Base = OwningRBTree<
         Tuple<Key, Value>, detail::TreeMapCompAdapter<Comp, Key>, detail::TreeMapTag<Key, Value>, Alloc,
         MapInterface<
-            TreeMultiMap<Key, Value, Comp, Alloc>, Tuple<Key, Value>,
+            TreeMultiMap<Key, Value, Comp, Alloc>, Tuple<Key, Value>, Key, Value,
             RBTreeIterator<Tuple<Key, Value>, detail::TreeMapTag<Key, Value>>,
-            meta::ConstIterator<RBTreeIterator<Tuple<Key, Value>, detail::TreeMapTag<Key, Value>>>,
+            container::ConstIteratorImpl<RBTreeIterator<Tuple<Key, Value>, detail::TreeMapTag<Key, Value>>>,
             detail::RBTreeValidForLookup<Tuple<Key, Value>, detail::TreeMapCompAdapter<Comp, Key>>::template Type,
             true>,
         true>;

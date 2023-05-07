@@ -2,6 +2,7 @@
 
 #include <di/container/intrusive/forward_list_forward_declaration.h>
 #include <di/container/intrusive/forward_list_node.h>
+#include <di/container/iterator/const_iterator_impl.h>
 #include <di/container/iterator/prelude.h>
 #include <di/util/addressof.h>
 #include <di/util/exchange.h>
@@ -55,7 +56,7 @@ private:
         Node* m_node { nullptr };
     };
 
-    using ConstIterator = meta::ConstIterator<Iterator>;
+    using ConstIterator = container::ConstIteratorImpl<Iterator>;
 
 public:
     constexpr IntrusiveForwardList() { reset_tail(); }
@@ -97,10 +98,10 @@ public:
         return Iterator(const_cast<Node*>(util::addressof(m_head.value())));
     }
 
-    constexpr Iterator begin() { return Iterator(head()); }
+    constexpr auto begin() { return Iterator(head()); }
     constexpr Iterator end() { return Iterator(); }
 
-    constexpr ConstIterator begin() const { return Iterator(head()); }
+    constexpr auto begin() const { return Iterator(head()); }
     constexpr ConstIterator end() const { return Iterator(); }
 
     constexpr Iterator before_end()

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/function/as_bool.h>
 #include <di/function/bind_back.h>
 #include <di/function/bind_front.h>
 #include <di/function/bit_and.h>
@@ -61,6 +62,7 @@ using function::invoke;
 using function::invoke_r;
 using meta::InvokeResult;
 
+using function::AsBool;
 using function::BitAnd;
 using function::Compare;
 using function::Dereference;
@@ -75,6 +77,7 @@ using function::Multiplies;
 using function::NotEqual;
 using function::Plus;
 
+using function::as_bool;
 using function::bit_and;
 using function::compare;
 using function::compare_backwards;

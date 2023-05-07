@@ -13,6 +13,7 @@
 #include <di/container/vector/mutable_vector.h>
 #include <di/function/monad/monad_try.h>
 #include <di/function/not_fn.h>
+#include <di/meta/list/as_list.h>
 #include <di/util/declval.h>
 #include <di/util/get.h>
 #include <di/vocab/expected/prelude.h>
@@ -46,7 +47,7 @@ namespace detail {
 
     template<typename Value>
     struct NodeHashTableKey<Value, true> {
-        using Type = meta::TupleElement<Value, 0>;
+        using Type = meta::Front<meta::AsList<Value>>;
     };
 }
 
@@ -64,7 +65,7 @@ private:
 protected:
     using Node = HashNode<Tag>;
     using Iterator = HashNodeIterator<Value, Tag>;
-    using ConstIterator = meta::ConstIterator<Iterator>;
+    using ConstIterator = container::ConstIteratorImpl<Iterator>;
 
     using ConcreteNode = decltype(Tag::node_type(in_place_type<Value>));
 
@@ -160,9 +161,9 @@ public:
 
     template<typename U>
     requires(concepts::Predicate<Eq&, Key const&, U const&> && concepts::HashSame<Key, U>)
-    constexpr View<ConstIterator> equal_range_impl(U&& needle) const {
+    constexpr auto equal_range_impl(U&& needle) const {
         if (empty()) {
-            return { end(), end() };
+            return View<ConstIterator> { end(), end() };
         }
 
         auto const hash = this->hash(needle);
@@ -179,7 +180,7 @@ public:
 
         auto it = container::next(before_it);
         if (it == bucket.end()) {
-            return { end(), end() };
+            return View<ConstIterator> { end(), end() };
         }
 
         auto const first = ConstIterator { m_buckets.span(), bucket_index, before_it };
@@ -193,7 +194,7 @@ public:
                 ++last;
             }
         }
-        return { first, last };
+        return View<ConstIterator> { first, last };
     }
 
     template<typename U>

@@ -33,8 +33,8 @@ struct OwningRBTreeTag : IntrusiveTagBase<OwningRBTreeNode<T, Self>> {
     }
 };
 
-template<typename Value, concepts::StrictWeakOrder<Value> Comp, typename Tag,
-         concepts::AllocatorOf<OwningRBTreeNode<Value, Tag>> Alloc, typename Interface, bool is_multi>
+template<typename Value, typename Comp, typename Tag, concepts::AllocatorOf<OwningRBTreeNode<Value, Tag>> Alloc,
+         typename Interface, bool is_multi>
 class OwningRBTree
     : public RBTree<Value, Comp, Tag, Interface, is_multi, OwningRBTree<Value, Comp, Tag, Alloc, Interface, is_multi>> {
 private:
@@ -43,7 +43,7 @@ private:
 
     using Node = RBTreeNode<Tag>;
     using Iterator = RBTreeIterator<Value, Tag>;
-    using ConstIterator = meta::ConstIterator<Iterator>;
+    using ConstIterator = container::ConstIteratorImpl<Iterator>;
 
     using AllocResult = decltype(Alloc().allocate(0));
 
