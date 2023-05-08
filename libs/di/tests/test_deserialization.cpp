@@ -45,7 +45,14 @@ constexpr void json_value() {
     x.clear();
     ASSERT(x.is_object());
     ASSERT(x.empty());
+
+    x["hello"_sv] = 42;
+    x["world"_sv] = 43;
+    ASSERT_EQ(di::to_string(x), R"({
+    "hello": 42,
+    "world": 43
+})"_sv);
 }
 
-TESTC_CLANG(serialization, json_value)
+TESTC(serialization, json_value)
 }

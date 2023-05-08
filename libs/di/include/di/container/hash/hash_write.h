@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/concepts/integral_or_enum.h>
+#include <di/concepts/tuple.h>
 #include <di/container/concepts/forward_container.h>
 #include <di/container/hash/default_hasher.h>
 #include <di/container/hash/hasher.h>
@@ -8,12 +9,16 @@
 #include <di/function/bind_front.h>
 #include <di/function/tag_invoke.h>
 #include <di/meta/bool_constant.h>
+#include <di/meta/index_sequence.h>
+#include <di/meta/make_index_sequence.h>
+#include <di/types/prelude.h>
 #include <di/util/bit_cast.h>
 #include <di/util/declval.h>
 #include <di/util/reference_wrapper.h>
 #include <di/vocab/array/array.h>
 #include <di/vocab/tuple/tuple_for_each.h>
 #include <di/vocab/tuple/tuple_like.h>
+#include <di/vocab/tuple/tuple_value.h>
 
 namespace di::container {
 namespace detail {
@@ -61,9 +66,23 @@ constexpr void tag_invoke(types::Tag<hash_write>, concepts::Hasher auto& hasher,
     }
 }
 
-template<concepts::TupleLike T>
-requires(!HashableContainer<T>)
-constexpr auto tag_invoke(types::Tag<hash_write>, concepts::Hasher auto& hasher, T const& value) {
+namespace detail {
+    template<typename Idx>
+    struct HashableTuple {};
+
+    template<usize... indices>
+    struct HashableTuple<meta::IndexSequence<indices...>> {
+        template<concepts::Tuple T>
+        constexpr bool operator()(InPlaceType<T>) const {
+            return (concepts::Hashable<meta::TupleValue<T const&, indices>> && ...);
+        }
+    };
+}
+
+template<concepts::TupleLike T, concepts::Hasher H>
+requires(!HashableContainer<T> &&
+         detail::HashableTuple<meta::MakeIndexSequence<meta::TupleSize<T>>>()(in_place_type<T>))
+constexpr auto tag_invoke(types::Tag<hash_write>, H& hasher, T const& value) {
     return vocab::tuple_for_each(
         [&](concepts::Hashable auto const& x) {
             hash_write(hasher, x);

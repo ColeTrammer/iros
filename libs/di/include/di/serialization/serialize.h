@@ -52,6 +52,9 @@ template<typename T, typename Writer = any::AnyRef<io::Writer>, typename... Args
 requires(concepts::SerializationFormat<T, Writer, Args...>)
 using Serializer =
     decltype(serialization::serializer(util::declval<T>(), util::declval<Writer>(), util::declval<Args>()...));
+
+template<typename S>
+using SerializeResult = meta::WriterResult<void, decltype(util::declval<S>().writer())>;
 }
 
 namespace di::serialization {
@@ -86,7 +89,7 @@ namespace detail {
     struct SerializeFunction {
         template<concepts::Serializer S, typename T, typename F = meta::SerializationFormat<S>>
         requires(concepts::TagInvocable<SerializeFunction, F, S&, T&>)
-        constexpr auto operator()(S&& serializer, T&& value) const {
+        constexpr meta::SerializeResult<S> operator()(S&& serializer, T&& value) const {
             return function::tag_invoke(*this, F(), serializer, value);
         }
 
@@ -95,7 +98,7 @@ namespace detail {
         requires(!concepts::TagInvocable<SerializeFunction, S&, T&> &&
                  (concepts::TagInvocable<SerializeFunction, S&, T&, M> ||
                   requires(S& serializer, T& value) { serializer.serialize(value, M()); }))
-        constexpr auto operator()(S&& serializer, T&& value) const {
+        constexpr meta::SerializeResult<S> operator()(S&& serializer, T&& value) const {
             if constexpr (concepts::TagInvocable<SerializeFunction, S&, T&, M>) {
                 return function::tag_invoke(*this, serializer, value, M());
             } else {
@@ -105,7 +108,7 @@ namespace detail {
 
         template<typename Format, concepts::Impl<io::Writer> Writer, typename T, typename... Args>
         requires(concepts::SerializationFormat<Format, Writer, Args...>)
-        constexpr void operator()(Format format, Writer&& writer, T&& value, Args&&... args) const
+        constexpr auto operator()(Format format, Writer&& writer, T&& value, Args&&... args) const
         requires(requires {
             (*this)(serialization::serializer(format, util::forward<Writer>(writer), util::forward<Args>(args)...),
                     value);
@@ -118,17 +121,26 @@ namespace detail {
 }
 
 constexpr inline auto serialize = detail::SerializeFunction {};
+
+namespace detail {
+    struct SerializableFunction {
+        template<concepts::Serializer S, typename T, typename U = meta::RemoveCVRef<T>>
+        constexpr bool operator()(InPlaceType<S>, InPlaceType<T>) const {
+            if constexpr (concepts::TagInvocable<SerializableFunction, meta::SerializationFormat<S>, InPlaceType<U>>) {
+                return function::tag_invoke(*this, meta::SerializationFormat<S>(), in_place_type<U>);
+            } else {
+                return requires { serialize(util::declval<S>(), util::declval<T>()); };
+            }
+        }
+    };
+}
+
+constexpr inline auto serializable = detail::SerializableFunction {};
 }
 
 namespace di::concepts {
 template<typename T, typename S>
-concept Serializable =
-    concepts::Serializer<S> && requires(S&& serializer, T&& value) { serialization::serialize(serializer, value); };
-}
-
-namespace di::meta {
-template<typename S, concepts::Serializable<S> T>
-using SerializeResult = decltype(serialization::serialize(util::declval<S>(), util::declval<T>()));
+concept Serializable = concepts::Serializer<S> && serialization::serializable(in_place_type<S>, in_place_type<T>);
 }
 
 namespace di {

@@ -216,7 +216,7 @@ public:
     template<concepts::ReflectableToAtom T, concepts::InstanceOf<reflection::Atom> M>
     requires(M::is_list() && concepts::Serializable<meta::ContainerReference<T>, JsonSerializer>)
     constexpr meta::WriterResult<void, Writer> serialize(T&& value, M) {
-        return serialize_array([&](auto& serializer) -> meta::WriterResult<void, Writer> {
+        return serialize_array([&](auto& serializer) {
             return container::sequence(M::get(value), [&](auto&& element) {
                 return serialization::serialize(serializer, element);
             });
@@ -228,7 +228,7 @@ public:
              concepts::Serializable<meta::TupleValue<decltype(util::declval<meta::ContainerReference<T>>()), 1>,
                                     JsonSerializer>)
     constexpr meta::WriterResult<void, Writer> serialize(T&& value, M) {
-        return serialize_object([&](auto& serializer) -> meta::WriterResult<void, Writer> {
+        return serialize_object([&](auto& serializer) {
             return container::sequence(M::get(value), [&](concepts::TupleLike auto&& element) {
                 return serializer.serialize(util::get<0>(element), util::get<1>(element));
             });
@@ -353,7 +353,7 @@ struct JsonFormat {
 constexpr inline auto json_format = JsonFormat {};
 
 namespace detail {
-    struct SerializeJsonStringFunction {
+    struct ToJsonStringFunction {
         template<concepts::Serializable<JsonSerializer<io::StringWriter<>>> T, typename... Args>
         requires(concepts::ConstructibleFrom<JsonSerializer<io::StringWriter<>>, io::StringWriter<>, Args...>)
         constexpr auto operator()(T&& value, Args&&... args) const {
@@ -362,7 +362,7 @@ namespace detail {
     };
 }
 
-constexpr inline auto serialize_json_string = detail::SerializeJsonStringFunction {};
+constexpr inline auto to_json_string = detail::ToJsonStringFunction {};
 
 namespace detail {
     struct SerializeJsonFunction {
@@ -384,5 +384,5 @@ using serialization::JsonSerializerConfig;
 
 using serialization::json_format;
 using serialization::serialize_json;
-using serialization::serialize_json_string;
+using serialization::to_json_string;
 }

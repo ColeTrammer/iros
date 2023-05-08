@@ -136,7 +136,7 @@ struct MySuperType {
 constexpr void json_reflect() {
     {
         auto const x = MyType { 1, 2, 3, true, "hello"_sv };
-        auto result = di::serialize_json_string(x);
+        auto result = di::to_json_string(x);
         ASSERT_EQ(result, R"({"x":1,"y":2,"z":3,"w":true,"a":"hello"})"_sv);
     }
 
@@ -146,7 +146,7 @@ constexpr void json_reflect() {
                                      { di::Tuple { "a"_sv, 1 }, di::Tuple { "b"_sv, 2 }, di::Tuple { "c"_sv, 3 } },
                                      MyEnum::Bar };
 
-        auto result = di::serialize_json_string(x, di::JsonSerializerConfig().pretty().indent_width(4));
+        auto result = di::to_json_string(x, di::JsonSerializerConfig().pretty().indent_width(4));
         ASSERT_EQ(result, R"({
     "my_type": {
         "x": 1,
@@ -170,7 +170,21 @@ constexpr void json_reflect() {
     }
 }
 
+constexpr void json_value() {
+    auto r1 = di::to_json_string(di::json::null);
+    ASSERT_EQ(r1, "null"_sv);
+
+    auto r2 = di::to_json_string(di::json::Bool(true));
+    ASSERT_EQ(r2, "true"_sv);
+
+    auto x3 = di::json::Value();
+    x3["key"_sv] = true;
+    auto r3 = di::to_json_string(x3);
+    ASSERT_EQ(r3, R"({"key":true})"_sv);
+}
+
 TESTC(serialization, json_basic)
 TESTC(serialization, json_pretty)
 TESTC(serialization, json_reflect)
+TESTC(serialization, json_value)
 }

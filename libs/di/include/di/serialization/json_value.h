@@ -10,7 +10,11 @@
 #include <di/container/string/string_view.h>
 #include <di/container/tree/tree_map.h>
 #include <di/container/vector/vector.h>
+#include <di/format/formatter.h>
 #include <di/function/tag_invoke.h>
+#include <di/io/interface/writer.h>
+#include <di/serialization/json_serializer.h>
+#include <di/serialization/serialize.h>
 #include <di/types/prelude.h>
 #include <di/util/create.h>
 #include <di/util/create_in_place.h>
@@ -24,7 +28,30 @@
 namespace di::serialization::json {
 class Value;
 
-using Null = Void;
+struct Null {
+    explicit Null() = default;
+
+    template<concepts::Encoding Enc>
+    constexpr friend auto tag_invoke(types::Tag<format::formatter_in_place>, InPlaceType<Null>,
+                                     format::FormatParseContext<Enc>& parse_context, bool debug) {
+        return format::formatter<container::StringView>(parse_context, debug) %
+               [](concepts::CopyConstructible auto formatter) {
+                   return [=](concepts::FormatContext auto& context, Null) {
+                       return formatter(context, "null"_sv);
+                   };
+               };
+    }
+
+    constexpr friend auto tag_invoke(types::Tag<serialization::serialize>, JsonFormat, auto& serializer, Null) {
+        return serializer.serialize_null();
+    }
+
+    bool operator==(Null const&) const = default;
+    auto operator<=>(Null const&) const = default;
+};
+
+constexpr inline auto null = Null {};
+
 using Bool = bool;
 
 // NOTE: this should support floating point in the future.
@@ -338,6 +365,34 @@ public:
     }
 
 private:
+    template<typename S>
+    constexpr friend meta::SerializeResult<S> tag_invoke(types::Tag<serialize>, JsonFormat, S& serializer,
+                                                         Value const& value) {
+        return vocab::visit(
+            [&](auto const& x) {
+                return serialize(serializer, x);
+            },
+            value);
+    }
+
+    constexpr friend bool tag_invoke(types::Tag<serializable>, JsonFormat, InPlaceType<Value>) { return true; }
+
+    template<concepts::Encoding Enc, concepts::SameAs<InPlaceType<Value>> X = InPlaceType<Value>,
+             concepts::SameAs<bool> B = bool,
+             concepts::SameAs<types::Tag<format::formatter_in_place>> Tag = types::Tag<format::formatter_in_place>>
+    constexpr friend auto tag_invoke(Tag, X, format::FormatParseContext<Enc>& parse_context, B debug) {
+        return format::formatter<container::StringView>(parse_context, debug) %
+               [](concepts::CopyConstructible auto formatter) {
+                   return [=](concepts::FormatContext auto& context, Value const& value) {
+                       auto string = serialization::to_json_string(value, JsonSerializerConfig().pretty());
+                       if (!string) {
+                           return formatter(context, "[<JSON serializer error>]"_sv);
+                       }
+                       return formatter(context, string->view());
+                   };
+               };
+    }
+
     constexpr friend bool operator==(Value const& a, container::StringView view) { return a.as_string() == view; }
     constexpr friend auto operator<=>(Value const& a, container::StringView view) {
         constexpr auto string_index = usize(3);
