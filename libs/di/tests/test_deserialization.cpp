@@ -54,5 +54,16 @@ constexpr void json_value() {
 })"_sv);
 }
 
-TESTC(serialization, json_value)
+constexpr void json_literal() {
+    auto object = R"( {
+    "hello" : 32 , "world" : [ "x" , null ]
+} )"_json;
+
+    ASSERT_EQ(object["hello"_sv], 32);
+    ASSERT_EQ(object["world"_sv][0], "x"_sv);
+    ASSERT_EQ(object["world"_sv][1], di::json::null);
+}
+
+TESTC(deserialization, json_value)
+TESTC_CLANG(deserialization, json_literal)
 }
