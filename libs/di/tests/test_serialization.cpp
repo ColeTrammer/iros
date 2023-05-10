@@ -125,10 +125,12 @@ struct MySuperType {
     di::Array<int, 3> array;
     di::Array<di::Tuple<di::StringView, int>, 3> map;
     MyEnum my_enum;
+    di::Optional<int> optional;
 
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<MySuperType>) {
         return di::make_fields(di::field<"my_type", &MySuperType::my_type>, di::field<"array", &MySuperType::array>,
-                               di::field<"map", &MySuperType::map>, di::field<"my_enum", &MySuperType::my_enum>);
+                               di::field<"map", &MySuperType::map>, di::field<"my_enum", &MySuperType::my_enum>,
+                               di::field<"optional", &MySuperType::optional>);
     }
 };
 
@@ -138,12 +140,12 @@ constexpr void json_reflect() {
         auto result = di::to_json_string(x);
         ASSERT_EQ(result, R"({"x":1,"y":2,"z":3,"w":true,"a":"hello"})"_sv);
     }
-
     {
         auto const x = MySuperType { MyType { 1, 2, 3, true, "hello"_sv },
                                      { 1, 2, 3 },
                                      { di::Tuple { "a"_sv, 1 }, di::Tuple { "b"_sv, 2 }, di::Tuple { "c"_sv, 3 } },
-                                     MyEnum::Bar };
+                                     MyEnum::Bar,
+                                     di::nullopt };
 
         auto result = di::to_json_string(x, di::JsonSerializerConfig().pretty().indent_width(4));
         ASSERT_EQ(result, R"({
@@ -165,6 +167,36 @@ constexpr void json_reflect() {
         "c": 3
     },
     "my_enum": "Bar"
+})"_sv);
+    }
+    {
+        auto const x = MySuperType { MyType { 1, 2, 3, true, "hello"_sv },
+                                     { 1, 2, 3 },
+                                     { di::Tuple { "a"_sv, 1 }, di::Tuple { "b"_sv, 2 }, di::Tuple { "c"_sv, 3 } },
+                                     MyEnum::Bar,
+                                     5 };
+
+        auto result = di::to_json_string(x, di::JsonSerializerConfig().pretty().indent_width(4));
+        ASSERT_EQ(result, R"({
+    "my_type": {
+        "x": 1,
+        "y": 2,
+        "z": 3,
+        "w": true,
+        "a": "hello"
+    },
+    "array": [
+        1,
+        2,
+        3
+    ],
+    "map": {
+        "a": 1,
+        "b": 2,
+        "c": 3
+    },
+    "my_enum": "Bar",
+    "optional": 5
 })"_sv);
     }
 }

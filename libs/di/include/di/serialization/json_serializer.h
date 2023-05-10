@@ -188,9 +188,18 @@ public:
     constexpr meta::WriterResult<void, Writer> serialize(T&& value, M) {
         return serialize_object([&](auto& serializer) -> meta::WriterResult<void, Writer> {
             return vocab::tuple_sequence<meta::WriterResult<void, Writer>>(
-                [&](auto field) {
+                [&](auto field) -> meta::WriterResult<void, Writer> {
                     constexpr auto name = container::fixed_string_to_utf8_string_view<field.name>();
-                    return serializer.serialize(name, field.get(value));
+
+                    using Type = meta::Type<decltype(field)>;
+                    if constexpr (concepts::Optional<Type>) {
+                        if (!field.get(value).has_value()) {
+                            return {};
+                        }
+                        return serializer.serialize(name, *field.get(value));
+                    } else {
+                        return serializer.serialize(name, field.get(value));
+                    }
                 },
                 M {});
         });
