@@ -108,15 +108,13 @@ namespace detail {
         }
 
         template<typename Format, concepts::Impl<io::Writer> Writer, typename T, typename... Args>
-        requires(concepts::SerializationFormat<Format, Writer, Args...>)
+        requires(concepts::SerializationFormat<Format, util::ReferenceWrapper<meta::RemoveReference<Writer>>, Args...>)
         constexpr auto operator()(Format format, Writer&& writer, T&& value, Args&&... args) const
         requires(requires {
-            (*this)(serialization::serializer(format, util::forward<Writer>(writer), util::forward<Args>(args)...),
-                    value);
+            (*this)(serialization::serializer(format, util::ref(writer), util::forward<Args>(args)...), value);
         })
         {
-            return (*this)(
-                serialization::serializer(format, util::forward<Writer>(writer), util::forward<Args>(args)...), value);
+            return (*this)(serialization::serializer(format, util::ref(writer), util::forward<Args>(args)...), value);
         }
     };
 }

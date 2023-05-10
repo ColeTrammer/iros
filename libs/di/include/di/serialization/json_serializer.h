@@ -385,9 +385,10 @@ constexpr inline auto to_json_string = detail::ToJsonStringFunction {};
 namespace detail {
     struct SerializeJsonFunction {
         template<concepts::Impl<io::Writer> Writer, concepts::Serializable<JsonSerializer<Writer>> T, typename... Args>
-        requires(concepts::ConstructibleFrom<JsonSerializer<meta::RemoveCVRef<Writer>>, Writer, Args...>)
+        requires(concepts::ConstructibleFrom<JsonSerializer<util::ReferenceWrapper<meta::RemoveReference<Writer>>>,
+                                             util::ReferenceWrapper<meta::RemoveReference<Writer>>, Args...>)
         constexpr auto operator()(Writer&& writer, T&& value, Args&&... args) const {
-            return serialize(json_format, util::forward<Writer>(writer), value, util::forward<Args>(args)...);
+            return serialize(json_format, util::ref(writer), value, util::forward<Args>(args)...);
         }
     };
 }
