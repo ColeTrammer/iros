@@ -24,6 +24,10 @@ constexpr void basic() {
     auto y = di::TreeMap<di::String, di::String> {};
     y.try_emplace("hello"_sv, "world"_sv);
     ASSERT_EQ(y.at("hello"_sv), "world"_sv);
+
+    auto z = di::Array { di::Tuple { 1, 1 }, di::Tuple { 2, 2 } } | di::to<di::TreeMap>();
+    ASSERT_EQ(z.at(1), 1);
+    ASSERT_EQ(z.at(2), 2);
 }
 
 TESTC(container_tree_map, basic)

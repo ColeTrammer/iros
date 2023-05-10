@@ -35,6 +35,6 @@ using Reader = meta::List<ReadSome>;
 
 namespace di::meta {
 template<typename T, concepts::Impl<io::Reader> Reader>
-using ReadResult =
+using ReaderResult =
     meta::LikeExpected<decltype(io::read_some(util::declval<Reader&>(), util::declval<Span<Byte>>())), T>;
 }

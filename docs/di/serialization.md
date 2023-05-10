@@ -33,7 +33,7 @@ struct MyType {
 auto x = MyType { 1, 2, 3 };
 
 // Serialize to JSON string:
-auto string = TRY(di::serialize_json_string(x));
+auto string = TRY(di::to_json_string(x));
 // or...
 auto string = TRY(di::serialize_string(di::json_format, x));
 
@@ -45,6 +45,26 @@ TRY(di::serialize(di::json_format, file, x, di::JsonSerializerConfig().pretty())
 // or ...
 auto serializer = di::JsonSerializer(di::move(file), di::JsonSerializerConfig().pretty());
 TRY(di::serialize(serializer, x));
+```
+
+The library also supports deserialization using a mostly symmetric interface. For example:
+
+```cpp
+#include <di/serialization/json_deserializer.h>
+
+// Deserialize from JSON string:
+auto x = TRY(di::from_json_string<MyType>("{ x: 1, y: 2, z: 3 }"_sv));
+// or...
+auto x = TRY(di::deserialize_string<MyType>(di::json_format, "{ x: 1, y: 2, z: 3 }"_sv));
+
+// Deserialize from JSON file:
+auto file = TRY(dius::open_sync("file.json", dius::OpenMode::ReadOnly));
+auto x = TRY(di::deserialize_json<MyType>(file));
+// or...
+auto x = TRY(di::deserialize<MyType>(di::json_format, file));
+// or...
+auto deserializer = di::JsonDeserializer(di::move(file));
+auto x = TRY(di::deserialize(deserializer));
 ```
 
 Using the JSON serializer, enumerations can also be serialized to strings using static reflection. Additionally, users
@@ -98,6 +118,11 @@ struct UUID {
 };
 ```
 
+The deserialization mechanism has equivalent customization points, like `di::deserialize_metadata` and
+`di::deserialize`. However, they take `di::InPlaceType<T>` as arguments instead of the actual value to be serialized.
+Additionally, `di::deserialization_metadata` will fallback to `di::serialize_metadata` if no deserialization metadata
+is provided.
+
 ## Custom Serialization Formats
 
 The library is designed to be extensible to support multiple serialization formats in the future. A serialization format
@@ -135,3 +160,20 @@ template<typename T, typename S>
 concept Serializable =
     di::Serializer<S> && requires(S&& serializer, T&& value) { di::serialize(serializer, value); };
 ```
+
+## Custom Deserialization Formats
+
+The deserialization mechanism is similar to the serialization mechanism, but with a few key differences. First, the
+`di::Deserializer` concept replaces the `writer()` function with a `reader()` function. Second, the `di::Deserializer`
+concept is not constrained by the `SerializationFormat` concept. Instead, it is constrained by the
+`DeserializationFormat` concept, which is defined as follows:
+
+```cpp
+template<typename T, typename Reader = di::AnyRef<io::Reader>, typename... Args>
+concept DeserializationFormat = requires(T format, Reader&& reader, Args&&... args) {
+    serialization::deserializer(format, di::forward<Reader>(reader), di::forward<Args>(args)...);
+};
+```
+
+To be a useful `di::Deserializer`, the type must overload the `deserialize()` function to accept an `InPlaceType<T>` to
+be deserialized. Optionally, it can also accept a metadata object for the type being deserialized.

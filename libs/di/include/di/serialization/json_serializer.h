@@ -201,7 +201,7 @@ public:
         return serialize_string(reflection::enum_to_string(value));
     }
 
-    template<concepts::ReflectableToAtom T, concepts::InstanceOf<reflection::Atom> M>
+    template<typename T, concepts::InstanceOf<reflection::Atom> M>
     requires(M::is_bool() || M::is_string() || M::is_integer())
     constexpr meta::WriterResult<void, Writer> serialize(T&& value, M) {
         if constexpr (M::is_bool()) {
@@ -213,7 +213,7 @@ public:
         }
     }
 
-    template<concepts::ReflectableToAtom T, concepts::InstanceOf<reflection::Atom> M>
+    template<typename T, concepts::InstanceOf<reflection::Atom> M>
     requires(M::is_list() && concepts::Serializable<meta::ContainerReference<T>, JsonSerializer>)
     constexpr meta::WriterResult<void, Writer> serialize(T&& value, M) {
         return serialize_array([&](auto& serializer) {
@@ -223,7 +223,7 @@ public:
         });
     }
 
-    template<concepts::ReflectableToAtom T, concepts::InstanceOf<reflection::Atom> M>
+    template<typename T, concepts::InstanceOf<reflection::Atom> M>
     requires(M::is_map() && concepts::detail::ConstantString<meta::TupleElement<meta::ContainerValue<T>, 0>> &&
              concepts::Serializable<meta::TupleValue<decltype(util::declval<meta::ContainerReference<T>>()), 1>,
                                     JsonSerializer>)
@@ -342,11 +342,20 @@ JsonSerializer(T&&) -> JsonSerializer<T>;
 template<typename T>
 JsonSerializer(T&&, JsonSerializerConfig) -> JsonSerializer<T>;
 
+template<concepts::Impl<io::Reader> Reader>
+class JsonDeserializer;
+
 struct JsonFormat {
     template<concepts::Impl<io::Writer> Writer, typename... Args>
     requires(concepts::ConstructibleFrom<JsonSerializer<meta::RemoveCVRef<Writer>>, Writer, Args...>)
     constexpr static auto serializer(Writer&& writer, Args&&... args) {
         return JsonSerializer<meta::RemoveCVRef<Writer>>(util::forward<Writer>(writer), util::forward<Args>(args)...);
+    }
+
+    template<concepts::Impl<io::Reader> Reader, typename... Args>
+    requires(concepts::ConstructibleFrom<JsonDeserializer<meta::RemoveCVRef<Reader>>, Reader, Args...>)
+    constexpr static auto deserializer(Reader&& reader, Args&&... args) {
+        return JsonDeserializer<meta::RemoveCVRef<Reader>>(util::forward<Reader>(reader), util::forward<Args>(args)...);
     }
 };
 

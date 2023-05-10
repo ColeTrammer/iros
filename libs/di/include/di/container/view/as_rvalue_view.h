@@ -31,7 +31,7 @@ public:
 
     constexpr View base() && { return util::move(m_view); }
 
-    constexpr auto begin() const
+    constexpr auto begin()
     requires(!concepts::SimpleView<View>)
     {
         return MoveIterator(container::begin(m_view));
@@ -43,7 +43,7 @@ public:
         return MoveIterator(container::begin(m_view));
     }
 
-    constexpr auto end() const
+    constexpr auto end()
     requires(!concepts::SimpleView<View>)
     {
         if constexpr (concepts::CommonContainer<View>) {

@@ -29,7 +29,8 @@ namespace detail {
                  requires { Format::serializer(util::declval<Writer>(), util::declval<Args>()...); })
         constexpr concepts::Serializer auto operator()(Format, Writer&& writer, Args&&... args) const {
             if constexpr (concepts::TagInvocable<SerializerFunction, Format, Writer, Args...>) {
-                return function::tag_invoke(*this, Format {}, writer, util::forward<Args>(args)...);
+                return function::tag_invoke(*this, Format {}, util::forward<Writer>(writer),
+                                            util::forward<Args>(args)...);
             } else {
                 return Format::serializer(util::forward<Writer>(writer), util::forward<Args>(args)...);
             }
@@ -140,7 +141,8 @@ constexpr inline auto serializable = detail::SerializableFunction {};
 
 namespace di::concepts {
 template<typename T, typename S>
-concept Serializable = concepts::Serializer<S> && serialization::serializable(in_place_type<S>, in_place_type<T>);
+concept Serializable =
+    concepts::Serializer<S> && requires { serialization::serializable(in_place_type<S>, in_place_type<T>); };
 }
 
 namespace di {
