@@ -10,6 +10,10 @@ option(IROS_BuildCcpp "Build the c++ libc." OFF)
 option(IROS_UseDiusRuntime "Use dius provided runtime instead of system libc." OFF)
 option(IROS_NeverBuildDocs "Never enable documentation build target." OFF)
 
+set(IROS_NonUnityBuildPreset
+    ""
+    CACHE STRING "Preset for non unity build."
+)
 set(IROS_DiagnosticFlags
     ""
     CACHE STRING "Extra compilation flags for diagnostics purposes."
@@ -114,4 +118,12 @@ endif()
 
 if(NOT IROS_NeverBuildDocs)
     include(meta/cmake/doxygen.cmake)
+endif()
+
+if(IROS_NonUnityBuildPreset)
+    # Generate compile_commands.json using a non-unity build to greatly improve IDE tooling.
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} --preset "${IROS_NonUnityBuildPreset}" WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    )
+    file(COPY "${CMAKE_BINARY_DIR}/non_unity/compile_commands.json" DESTINATION "${CMAKE_BINARY_DIR}")
 endif()

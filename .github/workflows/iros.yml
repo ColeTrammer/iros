@@ -69,7 +69,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        preset: [iros_x86_64]
+        preset: [gcc_iros_x86_64_release_default]
     needs: toolchain
     container:
       image: ${{ needs.toolchain.outputs.image }}
@@ -85,6 +85,6 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           configurePreset: ${{ matrix.preset }}
-          configurePresetAdditionalArgs: "['-DCMAKE_UNITY_BUILD=ON']"
+          configurePresetAdditionalArgs: "['-DCMAKE_COMPILE_WARNING_AS_ERROR=ON']"
           buildPreset: ${{ matrix.preset }}
           testPreset: ${{ matrix.preset }}

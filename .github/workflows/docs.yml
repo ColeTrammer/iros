@@ -37,12 +37,12 @@ jobs:
       - name: Build and test
         uses: lukka/run-cmake@v10
         with:
-          configurePreset: release
-          buildPreset: release_docs
+          configurePreset: gcc_release_default
+          buildPreset: gcc_release_default_docs
       - name: Deploy docs
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: build/host/gcc/release/html
+          folder: build/host/gcc/release/default/html
           commit-message: "docs: deploy documentation site"
           single-commit: true
           branch: gh-pages

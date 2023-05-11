@@ -49,7 +49,7 @@ fi
 
 (
     cd "$IROS_BUILD_DIR"/initrd-run
-    "$IROS_ROOT"/build/host/tools/install/bin/initrd
+    "$IROS_ROOT"/build/host/gcc/release/tools/install/bin/initrd
 )
 
 

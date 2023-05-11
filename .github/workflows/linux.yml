@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        preset: [ubasan, dius_runtime_release, coverage, clang_dius_runtime_release]
+        preset: [gcc_debug_ubasan, gcc_release_dius_runtime, gcc_debug_coverage, clang_release_dius_runtime]
     steps:
       - run: |
           sudo apt-get -y update && sudo apt-get -y install gcc-12 g++-12 gcovr
@@ -26,7 +26,7 @@ jobs:
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh 16
-        if: matrix.preset == 'clang_dius_runtime_release'
+        if: matrix.preset == 'clang_release_dius_runtime'
       - name: Checkout source code
         uses: actions/checkout@v3
       - name: Get latest CMake and Ninja
@@ -42,17 +42,17 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           configurePreset: ${{ matrix.preset }}
-          configurePresetAdditionalArgs: "['-DCMAKE_UNITY_BUILD=ON']"
+          configurePresetAdditionalArgs: "['-DCMAKE_COMPILE_WARNING_AS_ERROR=ON']"
           buildPreset: ${{ matrix.preset }}
           testPreset: ${{ matrix.preset }}
       - name: Collect code coverage information
         run: |
-          gcovr -j ${{env.nproc}} --delete --root . --print-summary --xml-pretty --xml coverage.xml build/host/gcc/coverage
-        if: matrix.preset == 'coverage'
+          gcovr -j ${{env.nproc}} --delete --root . --print-summary --xml-pretty --xml coverage.xml build/host/gcc/debug/coverage
+        if: matrix.preset == 'gcc_debug_coverage'
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
           flags: ${{ runner.os }}
           name: ${{ runner.os }}-coverage
           files: ./coverage.xml
-        if: matrix.preset == 'coverage'
+        if: matrix.preset == 'gcc_debug_coverage'

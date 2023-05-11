@@ -4,17 +4,17 @@ if(CMAKE_CROSSCOMPILING)
     ExternalProject_Add(
         native
         SOURCE_DIR "${CMAKE_SOURCE_DIR}"
-        TMP_DIR "${CMAKE_SOURCE_DIR}/build/host/tools/tmp"
-        STAMP_DIR "${CMAKE_SOURCE_DIR}/build/host/tools/stamp"
-        BINARY_DIR "${CMAKE_SOURCE_DIR}/build/host/tools"
-        INSTALL_DIR "${CMAKE_SOURCE_DIR}/build/host/tools/install"
-        CMAKE_ARGS "--preset=tools"
+        TMP_DIR "${CMAKE_SOURCE_DIR}/build/host/gcc/release/tools/tmp"
+        STAMP_DIR "${CMAKE_SOURCE_DIR}/build/host/gcc/release/tools/stamp"
+        BINARY_DIR "${CMAKE_SOURCE_DIR}/build/host/gcc/release/tools"
+        INSTALL_DIR "${CMAKE_SOURCE_DIR}/build/host/gcc/release/tools/install"
+        CMAKE_ARGS "--preset=gcc_release_tools"
         CMAKE_CACHE_ARGS "-DCMAKE_INSTALL_PREFIX:STRING=<INSTALL_DIR>"
         BUILD_ALWAYS YES
         STEP_TARGETS install
     )
 
-    set(INITRD_COMMAND "${CMAKE_SOURCE_DIR}/build/host/tools/install/bin/initrd")
+    set(INITRD_COMMAND "${CMAKE_SOURCE_DIR}/build/host/gcc/release/tools/install/bin/initrd")
     set(INITRD_TARGET native-install)
 else()
     set(INITRD_COMMAND initrd)

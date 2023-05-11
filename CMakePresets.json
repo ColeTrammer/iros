@@ -13,7 +13,6 @@
             "cacheVariables": {
                 "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
                 "CMAKE_INSTALL_MESSAGE": "NEVER",
-                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "IROS_WarningFlags": "-Wall -Wextra -Wpedantic"
             }
         },
@@ -21,25 +20,23 @@
             "name": "gcc_base",
             "hidden": true,
             "cacheVariables": {
-                "IROS_DiagnosticFlags": "-fdiagnostics-color=always",
-                "IROS_ExtraFlags": "-ffold-simple-inlines"
+                "IROS_DiagnosticFlags": "-fdiagnostics-color=always -ffold-simple-inlines"
             }
         },
         {
             "name": "clang_base",
             "hidden": true,
             "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "clang++-16",
                 "IROS_DiagnosticFlags": "-fcolor-diagnostics -fconstexpr-steps=10000000 -fsized-deallocation",
-                "IROS_WarningFlags": "-Wall -Wextra -Wpedantic",
-                "CMAKE_CXX_COMPILER": "clang++-16"
+                "IROS_WarningFlags": "-Wall -Wextra -Wpedantic"
             }
         },
         {
             "name": "release_base",
             "hidden": true,
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release",
-                "IROS_ExtraFlags": "-O3"
+                "CMAKE_BUILD_TYPE": "Release"
             },
             "inherits": ["base"]
         },
@@ -52,488 +49,2896 @@
             "inherits": ["base"]
         },
         {
-            "name": "iros_x86_64",
-            "displayName": "Iros x64_64",
-            "description": "Compile Iros for x86_64",
-            "binaryDir": "${sourceDir}/build/x86_64/gcc/release",
-            "installDir": "${sourceDir}/build/x86_64/sysroot/usr",
-            "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_x86_64.txt",
+            "name": "iros_base",
+            "hidden": true,
             "cacheVariables": {
-                "IROS_BuildIris": "ON",
-                "IROS_BuildUserspace": "ON",
-                "IROS_BuildTests": "ON",
-                "IROS_BuildCcpp": "ON",
-                "IROS_UseDiusRuntime": "ON",
-                "IROS_ExtraFlags": "-D__iros__=1",
                 "CMAKE_CXX_COMPILER_WORKS": "ON",
-                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/gcc/release"
-            },
-            "inherits": ["release_base", "gcc_base"]
+                "IROS_BuildCcpp": "ON",
+                "IROS_BuildIris": "ON",
+                "IROS_BuildTests": "ON",
+                "IROS_BuildUserspace": "ON",
+                "IROS_ExtraFlags": "-D__iros__=1 -U__linux__",
+                "IROS_UseDiusRuntime": "ON"
+            }
         },
         {
-            "name": "debug_iros_x86_64",
-            "displayName": "Debug Iros x64_64",
-            "description": "Compile Debug Iros for x86_64",
-            "binaryDir": "${sourceDir}/build/x86_64/gcc/debug",
-            "installDir": "${sourceDir}/build/x86_64/sysroot/usr",
-            "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_x86_64.txt",
+            "name": "iris_debug_base",
+            "hidden": true,
             "cacheVariables": {
-                "IROS_BuildIris": "ON",
-                "IROS_BuildUserspace": "ON",
-                "IROS_BuildTests": "ON",
-                "IROS_BuildCcpp": "ON",
-                "IROS_UseDiusRuntime": "ON",
-                "IROS_ExtraFlags": "-D__iros__=1",
-                "IROS_IrisFlags": "-Og -g",
-                "CMAKE_CXX_COMPILER_WORKS": "ON",
-                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/gcc/debug"
-            },
-            "inherits": ["release_base", "gcc_base"]
+                "IROS_IrisFlags": "-Og -g"
+            }
         },
         {
-            "name": "clang_iros_x86_64",
-            "displayName": "Clang Iros x64_64",
-            "description": "Compile Iros for x86_64",
-            "binaryDir": "${sourceDir}/build/x86_64/clang/release",
-            "installDir": "${sourceDir}/build/x86_64/sysroot/usr",
+            "name": "iros_x86_64_base",
+            "hidden": true,
+            "inherits": ["iros_base"]
+        },
+        {
+            "name": "dius_runtime_base",
+            "hidden": true,
+            "cacheVariables": {
+                "IROS_BuildCcpp": "ON",
+                "IROS_UseDiusRuntime": "ON"
+            }
+        },
+        {
+            "name": "tsan_base",
+            "hidden": true,
+            "cacheVariables": {
+                "IROS_BuildCcpp": "OFF",
+                "IROS_SanitizeFlags": "-fsanitize=thread -DDI_SANITIZER"
+            }
+        },
+        {
+            "name": "asan_base",
+            "hidden": true,
+            "cacheVariables": {
+                "IROS_BuildCcpp": "OFF",
+                "IROS_SanitizeFlags": "-fsanitize=address -DDI_SANITIZER"
+            }
+        },
+        {
+            "name": "ubsan_base",
+            "hidden": true,
+            "cacheVariables": {
+                "IROS_BuildCcpp": "OFF",
+                "IROS_SanitizeFlags": "-fsanitize=undefined -DDI_SANITIZER"
+            }
+        },
+        {
+            "name": "msan_base",
+            "hidden": true,
+            "cacheVariables": {
+                "IROS_BuildCcpp": "OFF",
+                "IROS_SanitizeFlags": "-fsanitize=memory -DDI_SANITIZER"
+            }
+        },
+        {
+            "name": "ubasan_base",
+            "hidden": true,
+            "cacheVariables": {
+                "IROS_BuildCcpp": "OFF",
+                "IROS_SanitizeFlags": "-fsanitize=address,undefined -DDI_SANITIZER"
+            }
+        },
+        {
+            "name": "coverage_base",
+            "hidden": true,
+            "cacheVariables": {
+                "IROS_BuildCcpp": "OFF",
+                "IROS_ExtraFlags": "--coverage"
+            }
+        },
+        {
+            "name": "tools_base",
+            "hidden": true,
+            "cacheVariables": {
+                "IROS_BuildCcpp": "OFF",
+                "IROS_BuildTests": "OFF",
+                "IROS_BuildTools": "ON",
+                "IROS_BuildUserspace": "OFF"
+            }
+        },
+        {
+            "name": "gcc_iros_x86_64_release_default",
+            "displayName": "GCC Iros x86_64 Release Default",
+            "description": "Iros x86_64 release default build using gcc",
+            "binaryDir": "${sourceDir}/build/x86_64/gcc/release/default",
+            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Gcc_x86_64.txt",
+            "cacheVariables": {
+                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/gcc/release/default",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON"
+            },
+            "inherits": ["gcc_base", "release_base", "iros_x86_64_base"]
+        },
+        {
+            "name": "gcc_iros_x86_64_release_iris_debug",
+            "displayName": "GCC Iros x86_64 Release Iris Debug",
+            "description": "Iros x86_64 release iris_debug build using gcc",
+            "binaryDir": "${sourceDir}/build/x86_64/gcc/release/iris_debug",
+            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Gcc_x86_64.txt",
+            "cacheVariables": {
+                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/gcc/release/iris_debug",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON"
+            },
+            "inherits": ["gcc_base", "release_base", "iros_x86_64_base", "iris_debug_base"]
+        },
+        {
+            "name": "gcc_iros_x86_64_debug_default",
+            "displayName": "GCC Iros x86_64 Debug Default",
+            "description": "Iros x86_64 debug default build using gcc",
+            "binaryDir": "${sourceDir}/build/x86_64/gcc/debug/default",
+            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Gcc_x86_64.txt",
+            "cacheVariables": {
+                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/gcc/debug/default",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON"
+            },
+            "inherits": ["gcc_base", "debug_base", "iros_x86_64_base"]
+        },
+        {
+            "name": "clang_iros_x86_64_release_default",
+            "displayName": "Clang Iros x86_64 Release Default",
+            "description": "Iros x86_64 release default build using clang",
+            "binaryDir": "${sourceDir}/build/x86_64/clang/release/default",
+            "installDir": "${sourceDir}/build/x86_64/sysroot",
             "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Clang_x86_64.txt",
             "cacheVariables": {
-                "IROS_BuildIris": "ON",
-                "IROS_BuildUserspace": "ON",
-                "IROS_BuildTests": "ON",
-                "IROS_BuildCcpp": "ON",
-                "IROS_UseDiusRuntime": "ON",
-                "IROS_ExtraFlags": "-D__iros__=1 -U__linux__",
-                "CMAKE_CXX_COMPILER_WORKS": "ON",
-                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/clang/release"
-            },
-            "inherits": ["release_base", "clang_base"]
-        },
-        {
-            "name": "iros_x86_64_unity",
-            "displayName": "Iros x64_64 Unity",
-            "description": "Compile Iros Unity Build for x86_64",
-            "binaryDir": "${sourceDir}/build/x86_64/gcc/release/unity",
-            "installDir": "${sourceDir}/build/x86_64/sysroot/usr",
-            "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_x86_64.txt",
-            "cacheVariables": {
-                "IROS_BuildIris": "ON",
-                "IROS_BuildUserspace": "ON",
-                "IROS_BuildTests": "ON",
-                "IROS_BuildTools": "OFF",
-                "IROS_BuildCcpp": "ON",
-                "IROS_UseDiusRuntime": "ON",
-                "IROS_ExtraFlags": "-D__iros__=1",
-                "CMAKE_CXX_COMPILER_WORKS": "ON",
-                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/gcc/release/unity",
+                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/clang/release/default",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
                 "CMAKE_UNITY_BUILD": "ON"
             },
-            "inherits": ["release_base", "gcc_base"]
+            "inherits": ["clang_base", "release_base", "iros_x86_64_base"]
         },
         {
-            "name": "dius_runtime_release",
-            "displayName": "Dius Runtime Release Config",
-            "description": "Release build with dius runtime enabled",
-            "binaryDir": "${sourceDir}/build/host/gcc/release/dius-runtime",
-            "installDir": "${sourceDir}/build/host/gcc/release/dius-runtime/install",
+            "name": "clang_iros_x86_64_release_iris_debug",
+            "displayName": "Clang Iros x86_64 Release Iris Debug",
+            "description": "Iros x86_64 release iris_debug build using clang",
+            "binaryDir": "${sourceDir}/build/x86_64/clang/release/iris_debug",
+            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Clang_x86_64.txt",
             "cacheVariables": {
-                "IROS_UseDiusRuntime": "ON",
-                "IROS_BuildCcpp": "ON"
-            },
-            "inherits": ["release_base", "gcc_base"]
-        },
-        {
-            "name": "dius_runtime_debug",
-            "displayName": "Dius Runtime Debug Config",
-            "description": "Debug build with dius runtime enabled",
-            "binaryDir": "${sourceDir}/build/host/gcc/debug/dius-runtime",
-            "installDir": "${sourceDir}/build/host/gcc/debug/dius-runtime/install",
-            "cacheVariables": {
-                "IROS_UseDiusRuntime": "ON",
-                "IROS_BuildCcpp": "ON"
-            },
-            "inherits": ["debug_base", "gcc_base"]
-        },
-        {
-            "name": "release",
-            "displayName": "Release Config",
-            "description": "Default host release build",
-            "binaryDir": "${sourceDir}/build/host/gcc/release",
-            "installDir": "${sourceDir}/build/host/gcc/release/install",
-            "inherits": ["release_base", "gcc_base"]
-        },
-        {
-            "name": "tools",
-            "displayName": "Tools Config",
-            "description": "Build only host tools required to cross compile",
-            "binaryDir": "${sourceDir}/build/host/tools",
-            "installDir": "${sourceDir}/build/host/tools/install",
-            "cacheVariables": {
-                "IROS_BuildTests": "OFF",
-                "IROS_BuildUserspace": "OFF",
-                "IROS_BuildTools": "ON",
-                "IROS_BuildCcpp": "OFF",
+                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/clang/release/iris_debug",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
                 "CMAKE_UNITY_BUILD": "ON"
             },
-            "inherits": ["release_base", "gcc_base"]
+            "inherits": ["clang_base", "release_base", "iros_x86_64_base", "iris_debug_base"]
         },
         {
-            "name": "debug",
-            "displayName": "Debug Config",
-            "description": "host debug build",
-            "binaryDir": "${sourceDir}/build/host/gcc/debug",
-            "installDir": "${sourceDir}/build/host/gcc/debug/install",
-            "inherits": ["debug_base", "gcc_base"]
-        },
-        {
-            "name": "tsan",
-            "displayName": "Thread Sanitizer",
-            "description": "Build with thread sanitizer enabled",
-            "binaryDir": "${sourceDir}/build/host/gcc/tsan",
-            "installDir": "${sourceDir}/build/host/gcc/tsan/install",
+            "name": "clang_iros_x86_64_debug_default",
+            "displayName": "Clang Iros x86_64 Debug Default",
+            "description": "Iros x86_64 debug default build using clang",
+            "binaryDir": "${sourceDir}/build/x86_64/clang/debug/default",
+            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Clang_x86_64.txt",
             "cacheVariables": {
-                "IROS_BuildCcpp": "OFF",
-                "IROS_SanitizerFlags": "-fsanitize=thread -DDI_SANITIZER"
-            },
-            "inherits": ["debug_base", "gcc_base"]
-        },
-        {
-            "name": "msan",
-            "displayName": "Memory Sanitizer",
-            "description": "Build with memory sanitizer enabled",
-            "binaryDir": "${sourceDir}/build/host/clang/msan",
-            "installDir": "${sourceDir}/build/host/clang/msan/install",
-            "cacheVariables": {
-                "IROS_BuildCcpp": "OFF",
-                "IROS_SanitizerFlags": "-fsanitize=memory -DDI_SANITIZER"
-            },
-            "inherits": ["debug_base", "clang_base"]
-        },
-        {
-            "name": "ubasan",
-            "displayName": "Undefined Behavior and Address Sanitizer",
-            "description": "Build with defined behavior and address sanitizer enabled",
-            "binaryDir": "${sourceDir}/build/host/gcc/ubasan",
-            "installDir": "${sourceDir}/build/host/gcc/ubasan/install",
-            "cacheVariables": {
-                "IROS_BuildCcpp": "OFF",
-                "IROS_SanitizerFlags": "-fsanitize=address,undefined -DDI_SANITIZER"
-            },
-            "inherits": ["debug_base", "gcc_base"]
-        },
-        {
-            "name": "coverage",
-            "displayName": "Code Coverage",
-            "description": "Build with code coverage instrumentation",
-            "binaryDir": "${sourceDir}/build/host/gcc/coverage",
-            "installDir": "${sourceDir}/build/host/gcc/coverage/install",
-            "cacheVariables": {
-                "IROS_BuildCcpp": "OFF",
-                "IROS_ExtraFlags": "-Og --coverage"
-            },
-            "inherits": ["debug_base", "gcc_base"]
-        },
-        {
-            "name": "clang_dius_runtime_release",
-            "displayName": "Clang Dius Runtime Release Config",
-            "description": "Clang release build with dius runtime enabled",
-            "binaryDir": "${sourceDir}/build/host/clang/release/dius-runtime",
-            "installDir": "${sourceDir}/build/host/clang/release/dius-runtime/install",
-            "cacheVariables": {
-                "IROS_UseDiusRuntime": "ON",
-                "IROS_BuildCcpp": "ON"
-            },
-            "inherits": ["release_base", "clang_base"]
-        },
-        {
-            "name": "clang_dius_runtime_debug",
-            "displayName": "Clang Dius Runtime Debug Config",
-            "description": "Clang debug build with dius runtime enabled",
-            "binaryDir": "${sourceDir}/build/host/clang/debug/dius-runtime",
-            "installDir": "${sourceDir}/build/host/clang/debug/dius-runtime/install",
-            "cacheVariables": {
-                "IROS_UseDiusRuntime": "ON",
-                "IROS_BuildCcpp": "ON"
-            },
-            "inherits": ["debug_base", "clang_base"]
-        },
-        {
-            "name": "clang_release",
-            "displayName": "Clang Release Config",
-            "description": "Clang host release build",
-            "binaryDir": "${sourceDir}/build/host/clang/release",
-            "installDir": "${sourceDir}/build/host/clang/release/install",
-            "inherits": ["release_base", "clang_base"]
-        },
-        {
-            "name": "clang_debug",
-            "displayName": "Clang Debug Config",
-            "description": "Clang host debug build",
-            "binaryDir": "${sourceDir}/build/host/clang/debug",
-            "installDir": "${sourceDir}/build/host/clang/debug/install",
-            "inherits": ["debug_base", "clang_base"]
-        },
-        {
-            "name": "release_unity",
-            "displayName": "Release Unity Config",
-            "description": "Release build with unity mode enabled",
-            "binaryDir": "${sourceDir}/build/host/gcc/release/unity",
-            "installDir": "${sourceDir}/build/host/gcc/release/unity/install",
-            "cacheVariables": {
-                "IROS_UseDiusRuntime": "ON",
-                "IROS_BuildCcpp": "ON",
+                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/clang/debug/default",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
                 "CMAKE_UNITY_BUILD": "ON"
             },
-            "inherits": ["release_base", "gcc_base"]
+            "inherits": ["clang_base", "debug_base", "iros_x86_64_base"]
+        },
+        {
+            "name": "clang_release_dius_runtime",
+            "displayName": "Clang Release Dius Runtime",
+            "description": "release dius_runtime build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/release/dius_runtime",
+            "installDir": "${sourceDir}/build/host/clang/release/dius_runtime/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "clang_release_dius_runtime_non_unity"
+            },
+            "inherits": ["clang_base", "release_base", "dius_runtime_base"]
+        },
+        {
+            "name": "clang_release_ubasan",
+            "displayName": "Clang Release Address and Undefined Behavior Sanitizer",
+            "description": "release ubasan build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/release/ubasan",
+            "installDir": "${sourceDir}/build/host/clang/release/ubasan/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "clang_release_ubasan_non_unity"
+            },
+            "inherits": ["clang_base", "release_base", "ubasan_base"]
+        },
+        {
+            "name": "clang_release_default",
+            "displayName": "Clang Release Default",
+            "description": "release default build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/release/default",
+            "installDir": "${sourceDir}/build/host/clang/release/default/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "clang_release_default_non_unity"
+            },
+            "inherits": ["clang_base", "release_base"]
+        },
+        {
+            "name": "clang_release_coverage",
+            "displayName": "Clang Release Coverage",
+            "description": "release coverage build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/release/coverage",
+            "installDir": "${sourceDir}/build/host/clang/release/coverage/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "clang_release_coverage_non_unity"
+            },
+            "inherits": ["clang_base", "release_base", "coverage_base"]
+        },
+        {
+            "name": "clang_release_tools",
+            "displayName": "Clang Release Tools",
+            "description": "release tools build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/release/tools",
+            "installDir": "${sourceDir}/build/host/clang/release/tools/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "clang_release_tools_non_unity"
+            },
+            "inherits": ["clang_base", "release_base", "tools_base"]
+        },
+        {
+            "name": "clang_release_asan",
+            "displayName": "Clang Release Address Sanitizer",
+            "description": "release asan build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/release/asan",
+            "installDir": "${sourceDir}/build/host/clang/release/asan/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "clang_release_asan_non_unity"
+            },
+            "inherits": ["clang_base", "release_base", "asan_base"]
+        },
+        {
+            "name": "clang_release_ubsan",
+            "displayName": "Clang Release Undefined Behavior Sanitizer",
+            "description": "release ubsan build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/release/ubsan",
+            "installDir": "${sourceDir}/build/host/clang/release/ubsan/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "clang_release_ubsan_non_unity"
+            },
+            "inherits": ["clang_base", "release_base", "ubsan_base"]
+        },
+        {
+            "name": "clang_release_tsan",
+            "displayName": "Clang Release Thread Sanitizer",
+            "description": "release tsan build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/release/tsan",
+            "installDir": "${sourceDir}/build/host/clang/release/tsan/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "clang_release_tsan_non_unity"
+            },
+            "inherits": ["clang_base", "release_base", "tsan_base"]
+        },
+        {
+            "name": "clang_release_msan",
+            "displayName": "Clang Release Memory Sanitizer",
+            "description": "release msan build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/release/msan",
+            "installDir": "${sourceDir}/build/host/clang/release/msan/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "clang_release_msan_non_unity"
+            },
+            "inherits": ["clang_base", "release_base", "msan_base"]
+        },
+        {
+            "name": "clang_debug_dius_runtime",
+            "displayName": "Clang Debug Dius Runtime",
+            "description": "debug dius_runtime build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/debug/dius_runtime",
+            "installDir": "${sourceDir}/build/host/clang/debug/dius_runtime/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "clang_debug_dius_runtime_non_unity"
+            },
+            "inherits": ["clang_base", "debug_base", "dius_runtime_base"]
+        },
+        {
+            "name": "clang_debug_ubasan",
+            "displayName": "Clang Debug Address and Undefined Behavior Sanitizer",
+            "description": "debug ubasan build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/debug/ubasan",
+            "installDir": "${sourceDir}/build/host/clang/debug/ubasan/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "clang_debug_ubasan_non_unity"
+            },
+            "inherits": ["clang_base", "debug_base", "ubasan_base"]
+        },
+        {
+            "name": "clang_debug_default",
+            "displayName": "Clang Debug Default",
+            "description": "debug default build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/debug/default",
+            "installDir": "${sourceDir}/build/host/clang/debug/default/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "clang_debug_default_non_unity"
+            },
+            "inherits": ["clang_base", "debug_base"]
+        },
+        {
+            "name": "clang_debug_coverage",
+            "displayName": "Clang Debug Coverage",
+            "description": "debug coverage build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/debug/coverage",
+            "installDir": "${sourceDir}/build/host/clang/debug/coverage/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "clang_debug_coverage_non_unity"
+            },
+            "inherits": ["clang_base", "debug_base", "coverage_base"]
+        },
+        {
+            "name": "clang_debug_tools",
+            "displayName": "Clang Debug Tools",
+            "description": "debug tools build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/debug/tools",
+            "installDir": "${sourceDir}/build/host/clang/debug/tools/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "clang_debug_tools_non_unity"
+            },
+            "inherits": ["clang_base", "debug_base", "tools_base"]
+        },
+        {
+            "name": "clang_debug_asan",
+            "displayName": "Clang Debug Address Sanitizer",
+            "description": "debug asan build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/debug/asan",
+            "installDir": "${sourceDir}/build/host/clang/debug/asan/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "clang_debug_asan_non_unity"
+            },
+            "inherits": ["clang_base", "debug_base", "asan_base"]
+        },
+        {
+            "name": "clang_debug_ubsan",
+            "displayName": "Clang Debug Undefined Behavior Sanitizer",
+            "description": "debug ubsan build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/debug/ubsan",
+            "installDir": "${sourceDir}/build/host/clang/debug/ubsan/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "clang_debug_ubsan_non_unity"
+            },
+            "inherits": ["clang_base", "debug_base", "ubsan_base"]
+        },
+        {
+            "name": "clang_debug_tsan",
+            "displayName": "Clang Debug Thread Sanitizer",
+            "description": "debug tsan build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/debug/tsan",
+            "installDir": "${sourceDir}/build/host/clang/debug/tsan/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "clang_debug_tsan_non_unity"
+            },
+            "inherits": ["clang_base", "debug_base", "tsan_base"]
+        },
+        {
+            "name": "clang_debug_msan",
+            "displayName": "Clang Debug Memory Sanitizer",
+            "description": "debug msan build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/debug/msan",
+            "installDir": "${sourceDir}/build/host/clang/debug/msan/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "clang_debug_msan_non_unity"
+            },
+            "inherits": ["clang_base", "debug_base", "msan_base"]
+        },
+        {
+            "name": "gcc_release_dius_runtime",
+            "displayName": "GCC Release Dius Runtime",
+            "description": "release dius_runtime build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/release/dius_runtime",
+            "installDir": "${sourceDir}/build/host/gcc/release/dius_runtime/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "gcc_release_dius_runtime_non_unity"
+            },
+            "inherits": ["gcc_base", "release_base", "dius_runtime_base"]
+        },
+        {
+            "name": "gcc_release_ubasan",
+            "displayName": "GCC Release Address and Undefined Behavior Sanitizer",
+            "description": "release ubasan build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/release/ubasan",
+            "installDir": "${sourceDir}/build/host/gcc/release/ubasan/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "gcc_release_ubasan_non_unity"
+            },
+            "inherits": ["gcc_base", "release_base", "ubasan_base"]
+        },
+        {
+            "name": "gcc_release_default",
+            "displayName": "GCC Release Default",
+            "description": "release default build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/release/default",
+            "installDir": "${sourceDir}/build/host/gcc/release/default/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "gcc_release_default_non_unity"
+            },
+            "inherits": ["gcc_base", "release_base"]
+        },
+        {
+            "name": "gcc_release_coverage",
+            "displayName": "GCC Release Coverage",
+            "description": "release coverage build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/release/coverage",
+            "installDir": "${sourceDir}/build/host/gcc/release/coverage/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "gcc_release_coverage_non_unity"
+            },
+            "inherits": ["gcc_base", "release_base", "coverage_base"]
+        },
+        {
+            "name": "gcc_release_tools",
+            "displayName": "GCC Release Tools",
+            "description": "release tools build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/release/tools",
+            "installDir": "${sourceDir}/build/host/gcc/release/tools/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "gcc_release_tools_non_unity"
+            },
+            "inherits": ["gcc_base", "release_base", "tools_base"]
+        },
+        {
+            "name": "gcc_release_asan",
+            "displayName": "GCC Release Address Sanitizer",
+            "description": "release asan build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/release/asan",
+            "installDir": "${sourceDir}/build/host/gcc/release/asan/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "gcc_release_asan_non_unity"
+            },
+            "inherits": ["gcc_base", "release_base", "asan_base"]
+        },
+        {
+            "name": "gcc_release_ubsan",
+            "displayName": "GCC Release Undefined Behavior Sanitizer",
+            "description": "release ubsan build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/release/ubsan",
+            "installDir": "${sourceDir}/build/host/gcc/release/ubsan/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "gcc_release_ubsan_non_unity"
+            },
+            "inherits": ["gcc_base", "release_base", "ubsan_base"]
+        },
+        {
+            "name": "gcc_release_tsan",
+            "displayName": "GCC Release Thread Sanitizer",
+            "description": "release tsan build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/release/tsan",
+            "installDir": "${sourceDir}/build/host/gcc/release/tsan/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "gcc_release_tsan_non_unity"
+            },
+            "inherits": ["gcc_base", "release_base", "tsan_base"]
+        },
+        {
+            "name": "gcc_debug_dius_runtime",
+            "displayName": "GCC Debug Dius Runtime",
+            "description": "debug dius_runtime build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/debug/dius_runtime",
+            "installDir": "${sourceDir}/build/host/gcc/debug/dius_runtime/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "gcc_debug_dius_runtime_non_unity"
+            },
+            "inherits": ["gcc_base", "debug_base", "dius_runtime_base"]
+        },
+        {
+            "name": "gcc_debug_ubasan",
+            "displayName": "GCC Debug Address and Undefined Behavior Sanitizer",
+            "description": "debug ubasan build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/debug/ubasan",
+            "installDir": "${sourceDir}/build/host/gcc/debug/ubasan/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "gcc_debug_ubasan_non_unity"
+            },
+            "inherits": ["gcc_base", "debug_base", "ubasan_base"]
+        },
+        {
+            "name": "gcc_debug_default",
+            "displayName": "GCC Debug Default",
+            "description": "debug default build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/debug/default",
+            "installDir": "${sourceDir}/build/host/gcc/debug/default/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "gcc_debug_default_non_unity"
+            },
+            "inherits": ["gcc_base", "debug_base"]
+        },
+        {
+            "name": "gcc_debug_coverage",
+            "displayName": "GCC Debug Coverage",
+            "description": "debug coverage build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/debug/coverage",
+            "installDir": "${sourceDir}/build/host/gcc/debug/coverage/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "gcc_debug_coverage_non_unity"
+            },
+            "inherits": ["gcc_base", "debug_base", "coverage_base"]
+        },
+        {
+            "name": "gcc_debug_tools",
+            "displayName": "GCC Debug Tools",
+            "description": "debug tools build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/debug/tools",
+            "installDir": "${sourceDir}/build/host/gcc/debug/tools/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "gcc_debug_tools_non_unity"
+            },
+            "inherits": ["gcc_base", "debug_base", "tools_base"]
+        },
+        {
+            "name": "gcc_debug_asan",
+            "displayName": "GCC Debug Address Sanitizer",
+            "description": "debug asan build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/debug/asan",
+            "installDir": "${sourceDir}/build/host/gcc/debug/asan/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "gcc_debug_asan_non_unity"
+            },
+            "inherits": ["gcc_base", "debug_base", "asan_base"]
+        },
+        {
+            "name": "gcc_debug_ubsan",
+            "displayName": "GCC Debug Undefined Behavior Sanitizer",
+            "description": "debug ubsan build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/debug/ubsan",
+            "installDir": "${sourceDir}/build/host/gcc/debug/ubsan/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "gcc_debug_ubsan_non_unity"
+            },
+            "inherits": ["gcc_base", "debug_base", "ubsan_base"]
+        },
+        {
+            "name": "gcc_debug_tsan",
+            "displayName": "GCC Debug Thread Sanitizer",
+            "description": "debug tsan build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/debug/tsan",
+            "installDir": "${sourceDir}/build/host/gcc/debug/tsan/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "gcc_debug_tsan_non_unity"
+            },
+            "inherits": ["gcc_base", "debug_base", "tsan_base"]
+        },
+        {
+            "name": "gcc_iros_x86_64_release_default_non_unity",
+            "displayName": "GCC Iros x86_64 Release Default (Non Unity)",
+            "description": "Iros x86_64 release default build using gcc",
+            "binaryDir": "${sourceDir}/build/x86_64/gcc/release/default/non_unity",
+            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Gcc_x86_64.txt",
+            "cacheVariables": {
+                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/gcc/release/default/non_unity",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["gcc_base", "release_base", "iros_x86_64_base"]
+        },
+        {
+            "name": "gcc_iros_x86_64_release_iris_debug_non_unity",
+            "displayName": "GCC Iros x86_64 Release Iris Debug (Non Unity)",
+            "description": "Iros x86_64 release iris_debug build using gcc",
+            "binaryDir": "${sourceDir}/build/x86_64/gcc/release/iris_debug/non_unity",
+            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Gcc_x86_64.txt",
+            "cacheVariables": {
+                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/gcc/release/iris_debug/non_unity",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["gcc_base", "release_base", "iros_x86_64_base", "iris_debug_base"]
+        },
+        {
+            "name": "gcc_iros_x86_64_debug_default_non_unity",
+            "displayName": "GCC Iros x86_64 Debug Default (Non Unity)",
+            "description": "Iros x86_64 debug default build using gcc",
+            "binaryDir": "${sourceDir}/build/x86_64/gcc/debug/default/non_unity",
+            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Gcc_x86_64.txt",
+            "cacheVariables": {
+                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/gcc/debug/default/non_unity",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["gcc_base", "debug_base", "iros_x86_64_base"]
+        },
+        {
+            "name": "clang_iros_x86_64_release_default_non_unity",
+            "displayName": "Clang Iros x86_64 Release Default (Non Unity)",
+            "description": "Iros x86_64 release default build using clang",
+            "binaryDir": "${sourceDir}/build/x86_64/clang/release/default/non_unity",
+            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Clang_x86_64.txt",
+            "cacheVariables": {
+                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/clang/release/default/non_unity",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["clang_base", "release_base", "iros_x86_64_base"]
+        },
+        {
+            "name": "clang_iros_x86_64_release_iris_debug_non_unity",
+            "displayName": "Clang Iros x86_64 Release Iris Debug (Non Unity)",
+            "description": "Iros x86_64 release iris_debug build using clang",
+            "binaryDir": "${sourceDir}/build/x86_64/clang/release/iris_debug/non_unity",
+            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Clang_x86_64.txt",
+            "cacheVariables": {
+                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/clang/release/iris_debug/non_unity",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["clang_base", "release_base", "iros_x86_64_base", "iris_debug_base"]
+        },
+        {
+            "name": "clang_iros_x86_64_debug_default_non_unity",
+            "displayName": "Clang Iros x86_64 Debug Default (Non Unity)",
+            "description": "Iros x86_64 debug default build using clang",
+            "binaryDir": "${sourceDir}/build/x86_64/clang/debug/default/non_unity",
+            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Clang_x86_64.txt",
+            "cacheVariables": {
+                "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/clang/debug/default/non_unity",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["clang_base", "debug_base", "iros_x86_64_base"]
+        },
+        {
+            "name": "clang_release_dius_runtime_non_unity",
+            "displayName": "Clang Release Dius Runtime (Non Unity)",
+            "description": "release dius_runtime build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/release/dius_runtime/non_unity",
+            "installDir": "${sourceDir}/build/host/clang/release/dius_runtime/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["clang_base", "release_base", "dius_runtime_base"]
+        },
+        {
+            "name": "clang_release_ubasan_non_unity",
+            "displayName": "Clang Release Address and Undefined Behavior Sanitizer (Non Unity)",
+            "description": "release ubasan build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/release/ubasan/non_unity",
+            "installDir": "${sourceDir}/build/host/clang/release/ubasan/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["clang_base", "release_base", "ubasan_base"]
+        },
+        {
+            "name": "clang_release_default_non_unity",
+            "displayName": "Clang Release Default (Non Unity)",
+            "description": "release default build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/release/default/non_unity",
+            "installDir": "${sourceDir}/build/host/clang/release/default/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["clang_base", "release_base"]
+        },
+        {
+            "name": "clang_release_coverage_non_unity",
+            "displayName": "Clang Release Coverage (Non Unity)",
+            "description": "release coverage build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/release/coverage/non_unity",
+            "installDir": "${sourceDir}/build/host/clang/release/coverage/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["clang_base", "release_base", "coverage_base"]
+        },
+        {
+            "name": "clang_release_tools_non_unity",
+            "displayName": "Clang Release Tools (Non Unity)",
+            "description": "release tools build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/release/tools/non_unity",
+            "installDir": "${sourceDir}/build/host/clang/release/tools/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["clang_base", "release_base", "tools_base"]
+        },
+        {
+            "name": "clang_release_asan_non_unity",
+            "displayName": "Clang Release Address Sanitizer (Non Unity)",
+            "description": "release asan build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/release/asan/non_unity",
+            "installDir": "${sourceDir}/build/host/clang/release/asan/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["clang_base", "release_base", "asan_base"]
+        },
+        {
+            "name": "clang_release_ubsan_non_unity",
+            "displayName": "Clang Release Undefined Behavior Sanitizer (Non Unity)",
+            "description": "release ubsan build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/release/ubsan/non_unity",
+            "installDir": "${sourceDir}/build/host/clang/release/ubsan/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["clang_base", "release_base", "ubsan_base"]
+        },
+        {
+            "name": "clang_release_tsan_non_unity",
+            "displayName": "Clang Release Thread Sanitizer (Non Unity)",
+            "description": "release tsan build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/release/tsan/non_unity",
+            "installDir": "${sourceDir}/build/host/clang/release/tsan/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["clang_base", "release_base", "tsan_base"]
+        },
+        {
+            "name": "clang_release_msan_non_unity",
+            "displayName": "Clang Release Memory Sanitizer (Non Unity)",
+            "description": "release msan build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/release/msan/non_unity",
+            "installDir": "${sourceDir}/build/host/clang/release/msan/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["clang_base", "release_base", "msan_base"]
+        },
+        {
+            "name": "clang_debug_dius_runtime_non_unity",
+            "displayName": "Clang Debug Dius Runtime (Non Unity)",
+            "description": "debug dius_runtime build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/debug/dius_runtime/non_unity",
+            "installDir": "${sourceDir}/build/host/clang/debug/dius_runtime/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["clang_base", "debug_base", "dius_runtime_base"]
+        },
+        {
+            "name": "clang_debug_ubasan_non_unity",
+            "displayName": "Clang Debug Address and Undefined Behavior Sanitizer (Non Unity)",
+            "description": "debug ubasan build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/debug/ubasan/non_unity",
+            "installDir": "${sourceDir}/build/host/clang/debug/ubasan/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["clang_base", "debug_base", "ubasan_base"]
+        },
+        {
+            "name": "clang_debug_default_non_unity",
+            "displayName": "Clang Debug Default (Non Unity)",
+            "description": "debug default build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/debug/default/non_unity",
+            "installDir": "${sourceDir}/build/host/clang/debug/default/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["clang_base", "debug_base"]
+        },
+        {
+            "name": "clang_debug_coverage_non_unity",
+            "displayName": "Clang Debug Coverage (Non Unity)",
+            "description": "debug coverage build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/debug/coverage/non_unity",
+            "installDir": "${sourceDir}/build/host/clang/debug/coverage/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["clang_base", "debug_base", "coverage_base"]
+        },
+        {
+            "name": "clang_debug_tools_non_unity",
+            "displayName": "Clang Debug Tools (Non Unity)",
+            "description": "debug tools build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/debug/tools/non_unity",
+            "installDir": "${sourceDir}/build/host/clang/debug/tools/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["clang_base", "debug_base", "tools_base"]
+        },
+        {
+            "name": "clang_debug_asan_non_unity",
+            "displayName": "Clang Debug Address Sanitizer (Non Unity)",
+            "description": "debug asan build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/debug/asan/non_unity",
+            "installDir": "${sourceDir}/build/host/clang/debug/asan/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["clang_base", "debug_base", "asan_base"]
+        },
+        {
+            "name": "clang_debug_ubsan_non_unity",
+            "displayName": "Clang Debug Undefined Behavior Sanitizer (Non Unity)",
+            "description": "debug ubsan build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/debug/ubsan/non_unity",
+            "installDir": "${sourceDir}/build/host/clang/debug/ubsan/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["clang_base", "debug_base", "ubsan_base"]
+        },
+        {
+            "name": "clang_debug_tsan_non_unity",
+            "displayName": "Clang Debug Thread Sanitizer (Non Unity)",
+            "description": "debug tsan build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/debug/tsan/non_unity",
+            "installDir": "${sourceDir}/build/host/clang/debug/tsan/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["clang_base", "debug_base", "tsan_base"]
+        },
+        {
+            "name": "clang_debug_msan_non_unity",
+            "displayName": "Clang Debug Memory Sanitizer (Non Unity)",
+            "description": "debug msan build using clang",
+            "binaryDir": "${sourceDir}/build/host/clang/debug/msan/non_unity",
+            "installDir": "${sourceDir}/build/host/clang/debug/msan/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["clang_base", "debug_base", "msan_base"]
+        },
+        {
+            "name": "gcc_release_dius_runtime_non_unity",
+            "displayName": "GCC Release Dius Runtime (Non Unity)",
+            "description": "release dius_runtime build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/release/dius_runtime/non_unity",
+            "installDir": "${sourceDir}/build/host/gcc/release/dius_runtime/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["gcc_base", "release_base", "dius_runtime_base"]
+        },
+        {
+            "name": "gcc_release_ubasan_non_unity",
+            "displayName": "GCC Release Address and Undefined Behavior Sanitizer (Non Unity)",
+            "description": "release ubasan build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/release/ubasan/non_unity",
+            "installDir": "${sourceDir}/build/host/gcc/release/ubasan/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["gcc_base", "release_base", "ubasan_base"]
+        },
+        {
+            "name": "gcc_release_default_non_unity",
+            "displayName": "GCC Release Default (Non Unity)",
+            "description": "release default build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/release/default/non_unity",
+            "installDir": "${sourceDir}/build/host/gcc/release/default/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["gcc_base", "release_base"]
+        },
+        {
+            "name": "gcc_release_coverage_non_unity",
+            "displayName": "GCC Release Coverage (Non Unity)",
+            "description": "release coverage build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/release/coverage/non_unity",
+            "installDir": "${sourceDir}/build/host/gcc/release/coverage/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["gcc_base", "release_base", "coverage_base"]
+        },
+        {
+            "name": "gcc_release_tools_non_unity",
+            "displayName": "GCC Release Tools (Non Unity)",
+            "description": "release tools build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/release/tools/non_unity",
+            "installDir": "${sourceDir}/build/host/gcc/release/tools/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["gcc_base", "release_base", "tools_base"]
+        },
+        {
+            "name": "gcc_release_asan_non_unity",
+            "displayName": "GCC Release Address Sanitizer (Non Unity)",
+            "description": "release asan build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/release/asan/non_unity",
+            "installDir": "${sourceDir}/build/host/gcc/release/asan/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["gcc_base", "release_base", "asan_base"]
+        },
+        {
+            "name": "gcc_release_ubsan_non_unity",
+            "displayName": "GCC Release Undefined Behavior Sanitizer (Non Unity)",
+            "description": "release ubsan build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/release/ubsan/non_unity",
+            "installDir": "${sourceDir}/build/host/gcc/release/ubsan/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["gcc_base", "release_base", "ubsan_base"]
+        },
+        {
+            "name": "gcc_release_tsan_non_unity",
+            "displayName": "GCC Release Thread Sanitizer (Non Unity)",
+            "description": "release tsan build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/release/tsan/non_unity",
+            "installDir": "${sourceDir}/build/host/gcc/release/tsan/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["gcc_base", "release_base", "tsan_base"]
+        },
+        {
+            "name": "gcc_debug_dius_runtime_non_unity",
+            "displayName": "GCC Debug Dius Runtime (Non Unity)",
+            "description": "debug dius_runtime build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/debug/dius_runtime/non_unity",
+            "installDir": "${sourceDir}/build/host/gcc/debug/dius_runtime/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["gcc_base", "debug_base", "dius_runtime_base"]
+        },
+        {
+            "name": "gcc_debug_ubasan_non_unity",
+            "displayName": "GCC Debug Address and Undefined Behavior Sanitizer (Non Unity)",
+            "description": "debug ubasan build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/debug/ubasan/non_unity",
+            "installDir": "${sourceDir}/build/host/gcc/debug/ubasan/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["gcc_base", "debug_base", "ubasan_base"]
+        },
+        {
+            "name": "gcc_debug_default_non_unity",
+            "displayName": "GCC Debug Default (Non Unity)",
+            "description": "debug default build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/debug/default/non_unity",
+            "installDir": "${sourceDir}/build/host/gcc/debug/default/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["gcc_base", "debug_base"]
+        },
+        {
+            "name": "gcc_debug_coverage_non_unity",
+            "displayName": "GCC Debug Coverage (Non Unity)",
+            "description": "debug coverage build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/debug/coverage/non_unity",
+            "installDir": "${sourceDir}/build/host/gcc/debug/coverage/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["gcc_base", "debug_base", "coverage_base"]
+        },
+        {
+            "name": "gcc_debug_tools_non_unity",
+            "displayName": "GCC Debug Tools (Non Unity)",
+            "description": "debug tools build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/debug/tools/non_unity",
+            "installDir": "${sourceDir}/build/host/gcc/debug/tools/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["gcc_base", "debug_base", "tools_base"]
+        },
+        {
+            "name": "gcc_debug_asan_non_unity",
+            "displayName": "GCC Debug Address Sanitizer (Non Unity)",
+            "description": "debug asan build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/debug/asan/non_unity",
+            "installDir": "${sourceDir}/build/host/gcc/debug/asan/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["gcc_base", "debug_base", "asan_base"]
+        },
+        {
+            "name": "gcc_debug_ubsan_non_unity",
+            "displayName": "GCC Debug Undefined Behavior Sanitizer (Non Unity)",
+            "description": "debug ubsan build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/debug/ubsan/non_unity",
+            "installDir": "${sourceDir}/build/host/gcc/debug/ubsan/non_unity/install",
+            "toolchainFile": "",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["gcc_base", "debug_base", "ubsan_base"]
+        },
+        {
+            "name": "gcc_debug_tsan_non_unity",
+            "displayName": "GCC Debug Thread Sanitizer (Non Unity)",
+            "description": "debug tsan build using gcc",
+            "binaryDir": "${sourceDir}/build/host/gcc/debug/tsan/non_unity",
+            "installDir": "${sourceDir}/build/host/gcc/debug/tsan/non_unity/install",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_UNITY_BUILD": "OFF"
+            },
+            "inherits": ["gcc_base", "debug_base", "tsan_base"]
         }
     ],
     "buildPresets": [
         {
-            "name": "base",
+            "name": "build_base",
             "hidden": true
         },
         {
-            "name": "iros_x86_64",
-            "displayName": "Iros x86_64",
-            "configurePreset": "iros_x86_64",
-            "inherits": ["base"]
+            "name": "docs_base",
+            "hidden": true,
+            "targets": ["docs"]
         },
         {
-            "name": "debug_iros_x86_64",
-            "displayName": "Debug Iros x86_64",
-            "configurePreset": "debug_iros_x86_64",
-            "inherits": ["base"]
+            "name": "gcc_iros_x86_64_release_default",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_iros_x86_64_release_default",
+            "inherits": ["build_base"]
         },
         {
-            "name": "clang_iros_x86_64",
-            "displayName": "Clang Iros x86_64",
-            "configurePreset": "clang_iros_x86_64",
-            "inherits": ["base"]
+            "name": "gcc_iros_x86_64_release_default_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_iros_x86_64_release_default",
+            "inherits": ["build_base", "docs_base"]
         },
         {
-            "name": "iros_x86_64_unity",
-            "displayName": "Iros x86_64 Unity",
-            "configurePreset": "iros_x86_64_unity",
-            "inherits": ["base"]
+            "name": "gcc_iros_x86_64_release_default_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_iros_x86_64_release_default_non_unity",
+            "inherits": ["build_base"]
         },
         {
-            "name": "dius_runtime_release",
-            "displayName": "Dius Runtime Release",
-            "configurePreset": "dius_runtime_release",
-            "inherits": ["base"]
+            "name": "gcc_iros_x86_64_release_default_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_iros_x86_64_release_default_non_unity",
+            "inherits": ["build_base", "docs_base"]
         },
         {
-            "name": "dius_runtime_debug",
-            "displayName": "Dius Runtime Debug Build",
-            "configurePreset": "dius_runtime_debug",
-            "inherits": ["base"]
+            "name": "gcc_iros_x86_64_release_iris_debug",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_iros_x86_64_release_iris_debug",
+            "inherits": ["build_base"]
         },
         {
-            "name": "release",
-            "displayName": "Release Build",
-            "configurePreset": "release",
-            "inherits": ["base"]
+            "name": "gcc_iros_x86_64_release_iris_debug_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_iros_x86_64_release_iris_debug",
+            "inherits": ["build_base", "docs_base"]
         },
         {
-            "name": "release_docs",
-            "displayName": "Build Documentation Only",
-            "configurePreset": "release",
-            "targets": ["docs"],
-            "inherits": ["base"]
+            "name": "gcc_iros_x86_64_release_iris_debug_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_iros_x86_64_release_iris_debug_non_unity",
+            "inherits": ["build_base"]
         },
         {
-            "name": "tools",
-            "displayName": "Tools Build",
-            "configurePreset": "tools",
-            "inherits": ["base"]
+            "name": "gcc_iros_x86_64_release_iris_debug_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_iros_x86_64_release_iris_debug_non_unity",
+            "inherits": ["build_base", "docs_base"]
         },
         {
-            "name": "debug",
-            "displayName": "Debug Build",
-            "configurePreset": "debug",
-            "inherits": ["base"]
+            "name": "gcc_iros_x86_64_debug_default",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_iros_x86_64_debug_default",
+            "inherits": ["build_base"]
         },
         {
-            "name": "tsan",
-            "displayName": "Thread Sanitizer",
-            "configurePreset": "tsan",
-            "inherits": ["base"]
+            "name": "gcc_iros_x86_64_debug_default_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_iros_x86_64_debug_default",
+            "inherits": ["build_base", "docs_base"]
         },
         {
-            "name": "msan",
-            "displayName": "Memory Sanitizer",
-            "configurePreset": "msan",
-            "inherits": ["base"]
+            "name": "gcc_iros_x86_64_debug_default_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_iros_x86_64_debug_default_non_unity",
+            "inherits": ["build_base"]
         },
         {
-            "name": "ubasan",
-            "displayName": "Undefined Behavior + Address Sanitizer",
-            "configurePreset": "ubasan",
-            "inherits": ["base"]
+            "name": "gcc_iros_x86_64_debug_default_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_iros_x86_64_debug_default_non_unity",
+            "inherits": ["build_base", "docs_base"]
         },
         {
-            "name": "coverage",
-            "displayName": "Code Coverage",
-            "configurePreset": "coverage",
-            "inherits": ["base"]
+            "name": "clang_iros_x86_64_release_default",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_iros_x86_64_release_default",
+            "inherits": ["build_base"]
         },
         {
-            "name": "clang_dius_runtime_release",
-            "displayName": "Clang Dius Runtime Release",
-            "configurePreset": "clang_dius_runtime_release",
-            "inherits": ["base"]
+            "name": "clang_iros_x86_64_release_default_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_iros_x86_64_release_default",
+            "inherits": ["build_base", "docs_base"]
         },
         {
-            "name": "clang_dius_runtime_debug",
-            "displayName": "Clang Dius Runtime Debug",
-            "configurePreset": "clang_dius_runtime_debug",
-            "inherits": ["base"]
+            "name": "clang_iros_x86_64_release_default_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_iros_x86_64_release_default_non_unity",
+            "inherits": ["build_base"]
         },
         {
-            "name": "clang_release",
-            "displayName": "Clang Release Build",
-            "configurePreset": "clang_release",
-            "inherits": ["base"]
+            "name": "clang_iros_x86_64_release_default_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_iros_x86_64_release_default_non_unity",
+            "inherits": ["build_base", "docs_base"]
         },
         {
-            "name": "clang_debug",
-            "displayName": "Clang Debug Build",
-            "configurePreset": "clang_debug",
-            "inherits": ["base"]
+            "name": "clang_iros_x86_64_release_iris_debug",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_iros_x86_64_release_iris_debug",
+            "inherits": ["build_base"]
         },
         {
-            "name": "release_unity",
-            "displayName": "Release Unity Build",
-            "configurePreset": "release_unity",
-            "inherits": ["base"]
+            "name": "clang_iros_x86_64_release_iris_debug_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_iros_x86_64_release_iris_debug",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_iros_x86_64_release_iris_debug_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_iros_x86_64_release_iris_debug_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_iros_x86_64_release_iris_debug_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_iros_x86_64_release_iris_debug_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_iros_x86_64_debug_default",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_iros_x86_64_debug_default",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_iros_x86_64_debug_default_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_iros_x86_64_debug_default",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_iros_x86_64_debug_default_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_iros_x86_64_debug_default_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_iros_x86_64_debug_default_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_iros_x86_64_debug_default_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_release_dius_runtime",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_release_dius_runtime",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_release_dius_runtime_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_release_dius_runtime",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_release_dius_runtime_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_release_dius_runtime_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_release_dius_runtime_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_release_dius_runtime_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_release_ubasan",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_release_ubasan",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_release_ubasan_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_release_ubasan",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_release_ubasan_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_release_ubasan_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_release_ubasan_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_release_ubasan_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_release_default",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_release_default",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_release_default_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_release_default",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_release_default_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_release_default_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_release_default_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_release_default_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_release_coverage",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_release_coverage",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_release_coverage_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_release_coverage",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_release_coverage_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_release_coverage_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_release_coverage_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_release_coverage_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_release_tools",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_release_tools",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_release_tools_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_release_tools",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_release_tools_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_release_tools_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_release_tools_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_release_tools_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_release_asan",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_release_asan",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_release_asan_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_release_asan",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_release_asan_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_release_asan_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_release_asan_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_release_asan_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_release_ubsan",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_release_ubsan",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_release_ubsan_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_release_ubsan",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_release_ubsan_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_release_ubsan_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_release_ubsan_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_release_ubsan_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_release_tsan",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_release_tsan",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_release_tsan_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_release_tsan",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_release_tsan_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_release_tsan_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_release_tsan_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_release_tsan_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_release_msan",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_release_msan",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_release_msan_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_release_msan",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_release_msan_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_release_msan_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_release_msan_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_release_msan_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_debug_dius_runtime",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_debug_dius_runtime",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_debug_dius_runtime_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_debug_dius_runtime",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_debug_dius_runtime_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_debug_dius_runtime_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_debug_dius_runtime_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_debug_dius_runtime_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_debug_ubasan",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_debug_ubasan",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_debug_ubasan_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_debug_ubasan",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_debug_ubasan_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_debug_ubasan_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_debug_ubasan_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_debug_ubasan_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_debug_default",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_debug_default",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_debug_default_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_debug_default",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_debug_default_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_debug_default_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_debug_default_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_debug_default_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_debug_coverage",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_debug_coverage",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_debug_coverage_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_debug_coverage",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_debug_coverage_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_debug_coverage_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_debug_coverage_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_debug_coverage_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_debug_tools",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_debug_tools",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_debug_tools_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_debug_tools",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_debug_tools_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_debug_tools_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_debug_tools_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_debug_tools_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_debug_asan",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_debug_asan",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_debug_asan_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_debug_asan",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_debug_asan_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_debug_asan_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_debug_asan_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_debug_asan_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_debug_ubsan",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_debug_ubsan",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_debug_ubsan_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_debug_ubsan",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_debug_ubsan_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_debug_ubsan_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_debug_ubsan_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_debug_ubsan_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_debug_tsan",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_debug_tsan",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_debug_tsan_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_debug_tsan",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_debug_tsan_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_debug_tsan_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_debug_tsan_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_debug_tsan_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_debug_msan",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_debug_msan",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_debug_msan_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_debug_msan",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "clang_debug_msan_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "clang_debug_msan_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "clang_debug_msan_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "clang_debug_msan_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_release_dius_runtime",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_release_dius_runtime",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_release_dius_runtime_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_release_dius_runtime",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_release_dius_runtime_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_release_dius_runtime_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_release_dius_runtime_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_release_dius_runtime_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_release_ubasan",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_release_ubasan",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_release_ubasan_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_release_ubasan",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_release_ubasan_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_release_ubasan_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_release_ubasan_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_release_ubasan_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_release_default",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_release_default",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_release_default_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_release_default",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_release_default_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_release_default_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_release_default_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_release_default_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_release_coverage",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_release_coverage",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_release_coverage_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_release_coverage",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_release_coverage_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_release_coverage_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_release_coverage_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_release_coverage_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_release_tools",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_release_tools",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_release_tools_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_release_tools",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_release_tools_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_release_tools_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_release_tools_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_release_tools_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_release_asan",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_release_asan",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_release_asan_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_release_asan",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_release_asan_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_release_asan_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_release_asan_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_release_asan_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_release_ubsan",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_release_ubsan",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_release_ubsan_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_release_ubsan",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_release_ubsan_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_release_ubsan_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_release_ubsan_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_release_ubsan_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_release_tsan",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_release_tsan",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_release_tsan_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_release_tsan",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_release_tsan_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_release_tsan_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_release_tsan_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_release_tsan_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_debug_dius_runtime",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_debug_dius_runtime",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_debug_dius_runtime_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_debug_dius_runtime",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_debug_dius_runtime_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_debug_dius_runtime_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_debug_dius_runtime_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_debug_dius_runtime_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_debug_ubasan",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_debug_ubasan",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_debug_ubasan_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_debug_ubasan",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_debug_ubasan_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_debug_ubasan_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_debug_ubasan_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_debug_ubasan_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_debug_default",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_debug_default",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_debug_default_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_debug_default",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_debug_default_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_debug_default_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_debug_default_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_debug_default_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_debug_coverage",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_debug_coverage",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_debug_coverage_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_debug_coverage",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_debug_coverage_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_debug_coverage_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_debug_coverage_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_debug_coverage_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_debug_tools",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_debug_tools",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_debug_tools_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_debug_tools",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_debug_tools_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_debug_tools_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_debug_tools_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_debug_tools_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_debug_asan",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_debug_asan",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_debug_asan_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_debug_asan",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_debug_asan_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_debug_asan_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_debug_asan_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_debug_asan_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_debug_ubsan",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_debug_ubsan",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_debug_ubsan_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_debug_ubsan",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_debug_ubsan_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_debug_ubsan_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_debug_ubsan_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_debug_ubsan_non_unity",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_debug_tsan",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_debug_tsan",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_debug_tsan_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_debug_tsan",
+            "inherits": ["build_base", "docs_base"]
+        },
+        {
+            "name": "gcc_debug_tsan_non_unity",
+            "displayName": "Build All",
+            "description": "Build all targets",
+            "configurePreset": "gcc_debug_tsan_non_unity",
+            "inherits": ["build_base"]
+        },
+        {
+            "name": "gcc_debug_tsan_non_unity_docs",
+            "displayName": "Build Docs",
+            "description": "Build documentation",
+            "configurePreset": "gcc_debug_tsan_non_unity",
+            "inherits": ["build_base", "docs_base"]
         }
     ],
     "testPresets": [
         {
-            "name": "base",
+            "name": "test_base",
             "hidden": true,
             "output": {
                 "outputOnFailure": true
             },
             "execution": {
-                "noTestsAction": "error",
+                "timeout": 30,
                 "stopOnFailure": false,
-                "timeout": 30
+                "noTestsAction": "error"
             }
         },
         {
-            "name": "iros_x86_64",
-            "displayName": "Iros x86_64",
-            "configurePreset": "iros_x86_64",
+            "name": "iros_base",
+            "hidden": true,
             "execution": {
+                "repeat": {
+                    "count": 2,
+                    "mode": "until-pass"
+                },
                 "jobs": 1
-            },
-            "inherits": ["base"]
+            }
         },
         {
-            "name": "debug_iros_x86_64",
-            "displayName": "Debug Iros x86_64",
-            "configurePreset": "debug_iros_x86_64",
-            "execution": {
-                "jobs": 1
-            },
-            "inherits": ["base"]
+            "name": "gcc_iros_x86_64_release_default",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_iros_x86_64_release_default",
+            "inherits": ["test_base", "iros_base"]
         },
         {
-            "name": "clang_iros_x86_64",
-            "displayName": "Clang Iros x86_64",
-            "configurePreset": "clang_iros_x86_64",
-            "inherits": ["base"]
+            "name": "gcc_iros_x86_64_release_default_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_iros_x86_64_release_default_non_unity",
+            "inherits": ["test_base", "iros_base"]
         },
         {
-            "name": "iros_x86_64_unity",
-            "displayName": "Iros x86_64 Unity",
-            "configurePreset": "iros_x86_64_unity",
-            "inherits": ["base"]
+            "name": "gcc_iros_x86_64_release_iris_debug",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_iros_x86_64_release_iris_debug",
+            "inherits": ["test_base", "iros_base"]
         },
         {
-            "name": "dius_runtime_release",
-            "displayName": "Dius Runtime Release Test",
-            "configurePreset": "dius_runtime_release",
-            "inherits": ["base"]
+            "name": "gcc_iros_x86_64_release_iris_debug_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_iros_x86_64_release_iris_debug_non_unity",
+            "inherits": ["test_base", "iros_base"]
         },
         {
-            "name": "dius_runtime_debug",
-            "displayName": "Dius Runtime Debug Test",
-            "configurePreset": "dius_runtime_debug",
-            "inherits": ["base"]
+            "name": "gcc_iros_x86_64_debug_default",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_iros_x86_64_debug_default",
+            "inherits": ["test_base", "iros_base"]
         },
         {
-            "name": "release",
-            "displayName": "Release Test",
-            "configurePreset": "release",
-            "inherits": ["base"]
+            "name": "gcc_iros_x86_64_debug_default_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_iros_x86_64_debug_default_non_unity",
+            "inherits": ["test_base", "iros_base"]
         },
         {
-            "name": "tools",
-            "displayName": "Tools Test",
-            "configurePreset": "tools",
-            "inherits": ["base"]
+            "name": "clang_iros_x86_64_release_default",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_iros_x86_64_release_default",
+            "inherits": ["test_base", "iros_base"]
         },
         {
-            "name": "debug",
-            "displayName": "Debug Test",
-            "configurePreset": "debug",
-            "inherits": ["base"]
+            "name": "clang_iros_x86_64_release_default_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_iros_x86_64_release_default_non_unity",
+            "inherits": ["test_base", "iros_base"]
         },
         {
-            "name": "tsan",
-            "displayName": "Thread Sanitizer",
-            "configurePreset": "tsan",
-            "inherits": ["base"]
+            "name": "clang_iros_x86_64_release_iris_debug",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_iros_x86_64_release_iris_debug",
+            "inherits": ["test_base", "iros_base"]
         },
         {
-            "name": "msan",
-            "displayName": "Memory Sanitizer",
-            "configurePreset": "msan",
-            "inherits": ["base"]
+            "name": "clang_iros_x86_64_release_iris_debug_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_iros_x86_64_release_iris_debug_non_unity",
+            "inherits": ["test_base", "iros_base"]
         },
         {
-            "name": "ubasan",
-            "displayName": "Undefined Behavior + Address Sanitizer",
-            "configurePreset": "ubasan",
-            "inherits": ["base"]
+            "name": "clang_iros_x86_64_debug_default",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_iros_x86_64_debug_default",
+            "inherits": ["test_base", "iros_base"]
         },
         {
-            "name": "coverage",
-            "displayName": "Code Coverage",
-            "configurePreset": "coverage",
-            "inherits": ["base"]
+            "name": "clang_iros_x86_64_debug_default_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_iros_x86_64_debug_default_non_unity",
+            "inherits": ["test_base", "iros_base"]
         },
         {
-            "name": "clang_dius_runtime_release",
-            "displayName": "Clang Dius Runtime Release",
-            "configurePreset": "clang_dius_runtime_release",
-            "inherits": ["base"]
+            "name": "clang_release_dius_runtime",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_release_dius_runtime",
+            "inherits": ["test_base"]
         },
         {
-            "name": "clang_dius_runtime_debug",
-            "displayName": "Clang Dius Runtime Debug",
-            "configurePreset": "clang_dius_runtime_debug",
-            "inherits": ["base"]
+            "name": "clang_release_dius_runtime_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_release_dius_runtime_non_unity",
+            "inherits": ["test_base"]
         },
         {
-            "name": "clang_release",
-            "displayName": "Clang Release Build",
-            "configurePreset": "clang_release",
-            "inherits": ["base"]
+            "name": "clang_release_ubasan",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_release_ubasan",
+            "inherits": ["test_base"]
         },
         {
-            "name": "clang_debug",
-            "displayName": "Clang Debug Build",
-            "configurePreset": "clang_debug",
-            "inherits": ["base"]
+            "name": "clang_release_ubasan_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_release_ubasan_non_unity",
+            "inherits": ["test_base"]
         },
         {
-            "name": "release_unity",
-            "displayName": "Release Unity Build",
-            "configurePreset": "release_unity",
-            "inherits": ["base"]
+            "name": "clang_release_default",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_release_default",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_release_default_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_release_default_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_release_coverage",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_release_coverage",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_release_coverage_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_release_coverage_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_release_tools",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_release_tools",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_release_tools_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_release_tools_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_release_asan",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_release_asan",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_release_asan_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_release_asan_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_release_ubsan",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_release_ubsan",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_release_ubsan_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_release_ubsan_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_release_tsan",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_release_tsan",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_release_tsan_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_release_tsan_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_release_msan",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_release_msan",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_release_msan_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_release_msan_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_debug_dius_runtime",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_debug_dius_runtime",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_debug_dius_runtime_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_debug_dius_runtime_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_debug_ubasan",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_debug_ubasan",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_debug_ubasan_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_debug_ubasan_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_debug_default",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_debug_default",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_debug_default_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_debug_default_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_debug_coverage",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_debug_coverage",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_debug_coverage_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_debug_coverage_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_debug_tools",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_debug_tools",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_debug_tools_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_debug_tools_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_debug_asan",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_debug_asan",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_debug_asan_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_debug_asan_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_debug_ubsan",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_debug_ubsan",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_debug_ubsan_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_debug_ubsan_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_debug_tsan",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_debug_tsan",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_debug_tsan_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_debug_tsan_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_debug_msan",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_debug_msan",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "clang_debug_msan_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "clang_debug_msan_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_release_dius_runtime",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_release_dius_runtime",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_release_dius_runtime_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_release_dius_runtime_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_release_ubasan",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_release_ubasan",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_release_ubasan_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_release_ubasan_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_release_default",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_release_default",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_release_default_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_release_default_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_release_coverage",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_release_coverage",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_release_coverage_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_release_coverage_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_release_tools",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_release_tools",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_release_tools_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_release_tools_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_release_asan",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_release_asan",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_release_asan_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_release_asan_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_release_ubsan",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_release_ubsan",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_release_ubsan_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_release_ubsan_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_release_tsan",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_release_tsan",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_release_tsan_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_release_tsan_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_debug_dius_runtime",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_debug_dius_runtime",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_debug_dius_runtime_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_debug_dius_runtime_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_debug_ubasan",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_debug_ubasan",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_debug_ubasan_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_debug_ubasan_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_debug_default",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_debug_default",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_debug_default_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_debug_default_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_debug_coverage",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_debug_coverage",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_debug_coverage_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_debug_coverage_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_debug_tools",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_debug_tools",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_debug_tools_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_debug_tools_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_debug_asan",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_debug_asan",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_debug_asan_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_debug_asan_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_debug_ubsan",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_debug_ubsan",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_debug_ubsan_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_debug_ubsan_non_unity",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_debug_tsan",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_debug_tsan",
+            "inherits": ["test_base"]
+        },
+        {
+            "name": "gcc_debug_tsan_non_unity",
+            "displayName": "Test All",
+            "description": "Test all targets",
+            "configurePreset": "gcc_debug_tsan_non_unity",
+            "inherits": ["test_base"]
         }
     ]
 }

@@ -48,47 +48,47 @@ At this point, the entire system should be buildable with cmake.
 ### Build Commands
 
 Note that these commands apply using a dev container or locally, once things are setup. To use clang instead, use the
-`clang_iros_x86_64` preset instead.
+`clang_iros_x86_64_release_default` preset instead.
 
 #### Configure
 
 ```sh
-cmake --preset iros_x86_64
+cmake --preset gcc_iros_x86_64_release_default
 ```
 
 #### Build
 
 ```sh
-cmake --build --preset iros_x86_64
+cmake --build --preset gcc_iros_x86_64_release_default
 ```
 
 #### Run Tests
 
 ```sh
-ctest --preset iros_x86_64
+ctest --preset gcc_iros_x86_64_release_default
 ```
 
 #### Run the kernel directly
 
 ```sh
-cmake --build --preset iros_x86_64 --target ibr
+cmake --build --preset gcc_iros_x86_64_release_default --target ibr
 ```
 
 #### Build Documentation
 
-This outputs the viewable documentation to `build/x86_64/gcc/release/html`. This can be viewed using the VS Code Live
-Preview or by pointing a web browser at this directory.
+This outputs the viewable documentation to `build/x86_64/gcc/release/default/html`. This can be viewed using the VS Code
+Live Preview or by pointing a web browser at this directory.
 
 ```sh
-cmake --build --preset iros_x86_64 --target docs
+cmake --build --preset gcc_iros_x86_64_release_default --target docs
 ```
 
 ### Linux Presets
 
 Additionally, presets are defined for compiling the userland libraries and their unit tests on a Linux system. A list of
 presets should be displayed by the IDE, or can discovered in the `CMakePresets.json` file. These can be useful for
-debugging purposes, especially because we can use sanitizers directly. For instance, the `ubasan` preset compiles the
-userspace code with both `ubsan` and `asan` enabled. This configuration is actively tested in CI.
+debugging purposes, especially because we can use sanitizers directly. For instance, the `gcc_debug_ubasan` preset
+compiles the userspace code with both `ubsan` and `asan` enabled. This configuration is actively tested in CI.
 
 These can be built and used without any special setup, using normal CMake commands, although recent versions of GCC or
 clang and CMake are needed.
@@ -96,10 +96,10 @@ clang and CMake are needed.
 ## Build Directories
 
 The CMake presets assign separate build directories for each target. Each is located in a subdirectory of `build`. The
-build directories are named after the target and the preset used to build it. For instance, the `iros_x86_64` preset
-corresponds to a build directory of `build/x86_64/gcc/release`. The host tools required to build the kernel are located
-in `build/host/tools`. All x86_64 builds share the same install directory, which is used as the system root for the disk
-image. This is located in `build/x86_64/sysroot`.
+build directories are named after the target and the preset used to build it. For instance, the
+`gcc_iros_x86_64_release_default` preset corresponds to a build directory of `build/x86_64/gcc/release/default`. The
+host tools required to build the kernel are located in `build/host/gcc/release/tools`. All x86_64 builds share the same
+install directory, which is used as the system root for the disk image. This is located in `build/x86_64/sysroot`.
 
 ## Running the Kernel
 

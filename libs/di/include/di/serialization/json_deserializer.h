@@ -79,7 +79,12 @@ public:
             DI_TRY(vocab::tuple_sequence<Result<void>>(
                 [&](auto field) -> Result<void> {
                     if (key == container::fixed_string_to_utf8_string_view<field.name>()) {
-                        field.get(result) = DI_TRY(serialization::deserialize<meta::Type<decltype(field)>>(*this));
+                        using Value = meta::Type<decltype(field)>;
+                        if constexpr (concepts::Optional<Value>) {
+                            field.get(result) = DI_TRY(serialization::deserialize<meta::OptionalValue<Value>>(*this));
+                        } else {
+                            field.get(result) = DI_TRY(serialization::deserialize<Value>(*this));
+                        }
                         found = true;
                     }
                     return {};
