@@ -25,11 +25,11 @@
 #include <di/vocab/tuple/tuple_sequence.h>
 
 namespace di::serialization {
-/// A deserializer for the JSON format.
+/// @brief A deserializer for the JSON format.
 ///
 /// @tparam Reader The type of the reader to read from.
 ///
-/// This implements the JSON grammar as specified in [https://www.rfc-editor.org/rfc/rfc8259](RFC 8259).
+/// This implements the JSON grammar as specified in [RFC 8259](https://www.rfc-editor.org/rfc/rfc8259).
 template<concepts::Impl<io::Reader> Reader>
 class JsonDeserializer {
 private:
