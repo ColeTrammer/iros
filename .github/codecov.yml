@@ -1,6 +1,7 @@
 coverage:
   ignore:
     - "**/tests"
+    - "userland/**"
   status:
     project:
       default:
