@@ -2,8 +2,8 @@
 
 #include <di/concepts/movable_value.h>
 #include <di/execution/concepts/prelude.h>
+#include <di/execution/interface/get_env.h>
 #include <di/execution/meta/prelude.h>
-#include <di/execution/query/get_env.h>
 #include <di/execution/receiver/prelude.h>
 #include <di/execution/types/prelude.h>
 #include <di/util/defer_construct.h>

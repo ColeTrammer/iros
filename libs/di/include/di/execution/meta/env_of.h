@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/execution/query/get_env.h>
+#include <di/execution/interface/get_env.h>
 #include <di/util/declval.h>
 
 namespace di::meta {

@@ -6,8 +6,8 @@
 #include <di/execution/concepts/sender.h>
 #include <di/execution/concepts/sender_of.h>
 #include <di/execution/interface/connect.h>
+#include <di/execution/interface/get_env.h>
 #include <di/execution/query/get_delegatee_scheduler.h>
-#include <di/execution/query/get_env.h>
 #include <di/execution/query/get_scheduler.h>
 #include <di/execution/query/get_stop_token.h>
 #include <di/function/invoke.h>

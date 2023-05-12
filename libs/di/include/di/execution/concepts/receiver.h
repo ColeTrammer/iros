@@ -2,7 +2,7 @@
 
 #include <di/concepts/constructible_from.h>
 #include <di/concepts/move_constructible.h>
-#include <di/execution/query/get_env.h>
+#include <di/execution/interface/get_env.h>
 #include <di/meta/remove_cvref.h>
 
 namespace di::concepts {

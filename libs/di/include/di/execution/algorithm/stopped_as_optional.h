@@ -4,8 +4,8 @@
 #include <di/execution/algorithm/let.h>
 #include <di/execution/algorithm/then.h>
 #include <di/execution/concepts/prelude.h>
+#include <di/execution/interface/get_env.h>
 #include <di/execution/meta/prelude.h>
-#include <di/execution/query/get_env.h>
 #include <di/execution/receiver/prelude.h>
 #include <di/execution/types/prelude.h>
 

@@ -2,10 +2,10 @@
 
 #include <di/execution/concepts/awaitable_sender.h>
 #include <di/execution/concepts/forwarding_query.h>
+#include <di/execution/interface/get_env.h>
 #include <di/execution/meta/connect_result.h>
 #include <di/execution/meta/env_of.h>
 #include <di/execution/meta/single_sender_value_type.h>
-#include <di/execution/query/get_env.h>
 
 namespace di::execution {
 namespace as_awaitable_ns {
