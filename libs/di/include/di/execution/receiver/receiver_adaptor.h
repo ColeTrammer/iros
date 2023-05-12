@@ -207,8 +207,7 @@ namespace receiver_interface_ns {
 
             template<concepts::ForwardingQuery Tag, typename... Args>
             friend decltype(auto) tag_invoke(Tag tag, Self const& self, Args&&... args)
-            requires(!concepts::SameAs<Tag, types::Tag<execution::get_env>> &&
-                     requires { tag(Type::get_base(self), util::forward<Args>(args)...); })
+            requires(requires { tag(Type::get_base(self), util::forward<Args>(args)...); })
             {
                 return tag(Type::get_base(self), util::forward<Args>(args)...);
             }

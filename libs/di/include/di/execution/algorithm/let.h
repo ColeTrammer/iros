@@ -3,6 +3,7 @@
 #include <di/concepts/movable_value.h>
 #include <di/execution/concepts/prelude.h>
 #include <di/execution/meta/prelude.h>
+#include <di/execution/query/get_env.h>
 #include <di/execution/receiver/prelude.h>
 #include <di/execution/types/prelude.h>
 #include <di/util/defer_construct.h>
@@ -83,6 +84,10 @@ namespace let_ns {
             requires(!concepts::SameAs<Tag, CPO> && concepts::Invocable<Tag, Rec, Args...>)
             {
                 return tag(util::move(self.data->out_r), util::forward<Args>(args)...);
+            }
+
+            constexpr friend auto tag_invoke(types::Tag<get_env>, Type const& self) {
+                return get_env(self.data->out_r);
             }
 
             template<concepts::ForwardingQuery Tag, typename... Args>

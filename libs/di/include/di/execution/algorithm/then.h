@@ -6,6 +6,7 @@
 #include <di/execution/concepts/operation_state.h>
 #include <di/execution/concepts/receiver_of.h>
 #include <di/execution/concepts/sender.h>
+#include <di/execution/concepts/sender_to.h>
 #include <di/execution/meta/connect_result.h>
 #include <di/execution/meta/make_completion_signatures.h>
 #include <di/execution/query/get_completion_scheduler.h>

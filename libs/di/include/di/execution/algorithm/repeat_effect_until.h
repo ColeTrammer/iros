@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/concepts/movable_value.h>
 #include <di/execution/algorithm/schedule_from.h>
 #include <di/execution/concepts/prelude.h>
 #include <di/execution/meta/prelude.h>

@@ -5,6 +5,7 @@
 #include <di/execution/meta/connect_result.h>
 #include <di/execution/meta/env_of.h>
 #include <di/execution/meta/single_sender_value_type.h>
+#include <di/execution/query/get_env.h>
 
 namespace di::execution {
 namespace as_awaitable_ns {
@@ -32,10 +33,8 @@ namespace as_awaitable_ns {
             static_cast<CoroutineHandle<>>(self.continuation.promise().unhandled_stopped()).resume();
         }
 
-        template<concepts::ForwardingQuery Tag, typename... Args>
-        constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
-            -> meta::InvokeResult<Tag, Promise const&, Args...> {
-            return tag(self.continuation.promise(), util::forward<Args>(args)...);
+        constexpr friend auto tag_invoke(types::Tag<get_env> tag, Type const& self) {
+            return tag(self.continuation.promise());
         }
     };
 

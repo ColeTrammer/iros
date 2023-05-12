@@ -8,7 +8,7 @@
 
 namespace di::execution {
 namespace detail {
-    struct GetEnvFunction : ForwardingQuery {
+    struct GetEnvFunction {
         template<typename T>
         requires(concepts::TagInvocable<GetEnvFunction, T const&>)
         constexpr auto operator()(T const& value) const {
