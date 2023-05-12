@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/execution/concepts/awaiter.h>
+#include <di/execution/concepts/is_awaiter.h>
 #include <di/util/forward.h>
 #include <di/util/voidify.h>
 
@@ -33,7 +33,7 @@ namespace detail {
 // An expression is awaitable given a promise type if it can be co_await'ed. This requires that the
 // above detail::get_awaiter() function returns a valid Awaiter object.
 template<typename T, typename Promise = void>
-concept Awaitable = requires(T&& value, Promise* promise) {
-    { detail::get_awaiter(util::forward<T>(value), promise) } -> Awaiter<Promise>;
+concept IsAwaitable = requires(T (&f)() noexcept, Promise* promise) {
+    { detail::get_awaiter(f(), promise) } -> IsAwaiter<Promise>;
 };
 }

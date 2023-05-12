@@ -1,12 +1,15 @@
 #pragma once
 
-#include <di/execution/concepts/awaitable.h>
+#include <di/execution/concepts/is_awaitable.h>
 #include <di/execution/concepts/operation_state.h>
 #include <di/execution/concepts/receiver.h>
+#include <di/execution/concepts/receiver_of.h>
+#include <di/execution/coroutine/with_await_transform.h>
 #include <di/execution/meta/await_result.h>
 #include <di/function/invoke.h>
 #include <di/util/immovable.h>
 #include <di/util/unreachable.h>
+#include <di/vocab/error/error.h>
 
 namespace di::execution {
 namespace as_awaitable_ns {
@@ -18,7 +21,7 @@ namespace connect_awaitable_ns {
     struct OperationStateT {
         struct Type : util::Immovable {
         private:
-            struct Promise {
+            struct Promise : WithAwaitTransform<Promise> {
                 Receiver& receiver;
 
                 explicit Promise(auto&, Receiver& receiver_) : receiver(receiver_) {}
@@ -38,7 +41,7 @@ namespace connect_awaitable_ns {
                     return Awaiter { util::forward<Fn>(function) };
                 }
 
-                CoroutineHandle<> unhandled_error(Error error) {
+                CoroutineHandle<> unhandled_error(vocab::Error error) {
                     set_error(util::move(receiver), util::move(error));
                     return noop_coroutine();
                 }
@@ -48,25 +51,15 @@ namespace connect_awaitable_ns {
                     return noop_coroutine();
                 }
 
-                template<typename Awaitable>
-                decltype(auto) await_transform(Awaitable&& awaitable) {
-                    return util::forward<Awaitable>(awaitable);
-                }
-
-                template<typename Awaitable, typename Tag = as_awaitable_ns::Function>
-                decltype(auto) await_transform(Awaitable&& awaitable)
-                requires(concepts::TagInvocable<Tag, Awaitable, Promise&>)
-                {
-                    return function::tag_invoke(Tag {}, util::forward<Awaitable>(awaitable), *this);
-                }
-
                 SuspendAlways initial_suspend() noexcept { return {}; }
                 SuspendAlways final_suspend() noexcept { util::unreachable(); }
                 void return_void() noexcept { util::unreachable(); }
                 void unhandled_exception() noexcept { util::unreachable(); }
 
             private:
-                friend auto tag_invoke(types::Tag<get_env>, Promise const& self) { return get_env(self.receiver); }
+                friend decltype(auto) tag_invoke(types::Tag<get_env>, Promise const& self) {
+                    return get_env(self.receiver);
+                }
             };
 
         public:
@@ -95,15 +88,15 @@ namespace connect_awaitable_ns {
 
     template<typename Awaitable, typename Receiver, typename Result = meta::AwaitResult<Awaitable, Promise<Receiver>>>
     struct CompletionSignatures
-        : meta::TypeConstant<types::CompletionSignatures<SetValue(Result), SetError(Error), SetStopped()>> {};
+        : meta::TypeConstant<types::CompletionSignatures<SetValue(Result), SetError(vocab::Error), SetStopped()>> {};
 
     template<typename Awaitable, typename Receiver, typename Result>
     requires(concepts::LanguageVoid<Result>)
     struct CompletionSignatures<Awaitable, Receiver, Result>
-        : meta::TypeConstant<types::CompletionSignatures<SetValue(), SetError(Error), SetStopped()>> {};
+        : meta::TypeConstant<types::CompletionSignatures<SetValue(), SetError(vocab::Error), SetStopped()>> {};
 
     struct Funciton {
-        template<concepts::Receiver Receiver, concepts::Awaitable<Promise<Receiver>> Awaitable>
+        template<concepts::Receiver Receiver, concepts::IsAwaitable<Promise<Receiver>> Awaitable>
         requires(concepts::ReceiverOf<Receiver, meta::Type<CompletionSignatures<Awaitable, Receiver>>>)
         auto operator()(Awaitable&& awaitable, Receiver receiver) const {
             return impl(util::forward<Awaitable>(awaitable), util::move(receiver));

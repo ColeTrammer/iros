@@ -1,7 +1,8 @@
 #pragma once
 
 #include <di/concepts/instance_of.h>
-#include <di/execution/concepts/awaitable.h>
+#include <di/execution/concepts/is_awaitable.h>
+#include <di/execution/coroutine/env_promise.h>
 #include <di/execution/meta/await_result.h>
 #include <di/execution/types/completion_signuatures.h>
 #include <di/execution/types/dependent_completion_signatures.h>
@@ -35,12 +36,12 @@ namespace detail {
                         concepts::SameAs<Result, types::DependentCompletionSignatures<Env>>,
                     "A sender's CompletionSignatures typedef must be an instance of di::CompletionSignatures.");
                 return Result {};
-            } else if constexpr (concepts::Awaitable<Sender>) {
-                if constexpr (concepts::LanguageVoid<meta::AwaitResult<Sender>>) {
+            } else if constexpr (concepts::IsAwaitable<Sender, EnvPromise<Env>>) {
+                if constexpr (concepts::LanguageVoid<meta::AwaitResult<Sender, EnvPromise<Env>>>) {
                     return types::CompletionSignatures<SetValue(), SetError(Error), SetStopped()> {};
                 } else {
-                    return types::CompletionSignatures<SetValue(meta::AwaitResult<Sender>), SetError(Error),
-                                                       SetStopped()> {};
+                    return types::CompletionSignatures<SetValue(meta::AwaitResult<Sender, EnvPromise<Env>>),
+                                                       SetError(Error), SetStopped()> {};
                 }
             } else {
                 return NoCompletionSignatures {};

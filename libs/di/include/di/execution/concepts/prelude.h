@@ -2,12 +2,12 @@
 
 #include <di/execution/concepts/async_creatable_from.h>
 #include <di/execution/concepts/async_destroyable.h>
-#include <di/execution/concepts/awaitable.h>
 #include <di/execution/concepts/awaitable_sender.h>
-#include <di/execution/concepts/awaiter.h>
 #include <di/execution/concepts/completion_signature.h>
 #include <di/execution/concepts/execution_context.h>
 #include <di/execution/concepts/forwarding_query.h>
+#include <di/execution/concepts/is_awaitable.h>
+#include <di/execution/concepts/is_awaiter.h>
 #include <di/execution/concepts/receiver.h>
 #include <di/execution/concepts/receiver_of.h>
 #include <di/execution/concepts/scheduler.h>

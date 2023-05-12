@@ -39,39 +39,55 @@ namespace as_awaitable_ns {
     };
 
     template<typename Send, typename Promise>
-    class SenderAwaitable {
-    private:
-        using Receiver = meta::Type<AwaitableReceiver<Send, Promise>>;
-        using Value = meta::SingleSenderValueType<Send, meta::EnvOf<Promise>>;
-        using Result = meta::Conditional<concepts::LanguageVoid<Value>, Void, Value>;
+    struct SenderAwaitableT {
+        struct Type {
+        private:
+            using Receiver = meta::Type<AwaitableReceiver<Send, Promise>>;
+            using Value = meta::SingleSenderValueType<Send, meta::EnvOf<Promise>>;
+            using Result = meta::Conditional<concepts::LanguageVoid<Value>, Void, Value>;
 
-    public:
-        explicit SenderAwaitable(Send&& sender, Promise& promise)
-            : m_state(
-                  connect(util::forward<Send>(sender),
-                          Receiver { util::addressof(m_result), CoroutineHandle<Promise>::from_promise(promise) })) {}
+        public:
+            explicit Type(Send&& sender, Promise& promise)
+                : m_state(connect(
+                      util::forward<Send>(sender),
+                      Receiver { util::addressof(m_result), CoroutineHandle<Promise>::from_promise(promise) })) {}
 
-        bool await_ready() const noexcept { return false; }
-        void await_suspend(CoroutineHandle<>) noexcept { start(m_state); }
-        Value await_resume() {
-            if constexpr (!concepts::LanguageVoid<Value>) {
-                return util::move(m_result).value();
+            bool await_ready() const noexcept { return false; }
+            void await_suspend(CoroutineHandle<>) noexcept { start(m_state); }
+            Value await_resume() {
+                if constexpr (!concepts::LanguageVoid<Value>) {
+                    return util::move(m_result).value();
+                }
             }
-        }
 
-    private:
-        Optional<Result> m_result {};
-        meta::ConnectResult<Send, Receiver> m_state;
+        private:
+            Optional<Result> m_result {};
+            meta::ConnectResult<Send, Receiver> m_state;
+        };
+    };
+
+    template<typename Send, typename Promise>
+    using SenderAwaitable = meta::Type<SenderAwaitableT<Send, Promise>>;
+
+    struct DummyPromise {
+        DummyPromise get_return_object() noexcept;
+        SuspendAlways initial_suspend() noexcept;
+        SuspendAlways final_suspend() noexcept;
+        void unhandled_exception() noexcept;
+        void return_void() noexcept;
+
+        std::coroutine_handle<> unhandled_stopped() noexcept;
+        std::coroutine_handle<> unhandled_error(vocab::Error) noexcept;
     };
 
     struct Function {
         template<typename T, typename Promise>
         constexpr decltype(auto) operator()(T&& value, Promise& promise) const {
             if constexpr (concepts::TagInvocable<Function, T, Promise&>) {
-                static_assert(concepts::Awaitable<meta::TagInvokeResult<Function, T, Promise&>>,
+                static_assert(concepts::IsAwaitable<meta::TagInvokeResult<Function, T, Promise&>>,
                               "Customizations of di::as_awaitable() must return an Awaitable.");
                 return function::tag_invoke(*this, util::forward<T>(value), promise);
-            } else if constexpr (concepts::Awaitable<T>) {
+            } else if constexpr (concepts::IsAwaitable<T, DummyPromise>) {
                 return util::forward<T>(value);
             } else if constexpr (concepts::AwaitableSender<T, Promise>) {
                 return SenderAwaitable<T, Promise> { util::forward<T>(value), promise };
@@ -82,5 +98,5 @@ namespace as_awaitable_ns {
     };
 }
 
-constexpr inline auto as_awaitable = as_awaitable_ns::Function {};
+constexpr inline as_awaitable_ns::Function as_awaitable = {};
 }

@@ -35,7 +35,7 @@ static void meta() {
         di::SameAs<S, decltype(di::execution::get_completion_scheduler<di::SetValue>(di::declval<SS const&>()))>);
     static_assert(di::Scheduler<S>);
 
-    static_assert(di::concepts::Awaitable<di::Lazy<i32>>);
+    static_assert(di::concepts::IsAwaitable<di::Lazy<i32>>);
     static_assert(di::SameAs<di::CompletionSignatures<di::SetValue(i32), di::SetError(di::Error), di::SetStopped()>,
                              decltype(di::execution::get_completion_signatures(di::declval<di::Lazy<i32>>()))>);
 

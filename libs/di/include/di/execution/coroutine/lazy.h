@@ -115,9 +115,6 @@ namespace lazy_ns {
 
         struct Promise : PromiseBase {
             Lazy get_return_object() noexcept { return Lazy { CoroutineHandle<Promise>::from_promise(*this) }; }
-
-        private:
-            constexpr friend auto tag_invoke(types::Tag<get_env>, Promise const&) { return EmptyEnv {}; }
         };
 
         using Handle = CoroutineHandle<Promise>;
