@@ -1,12 +1,13 @@
 #pragma once
 
 #include <di/execution/concepts/scheduler.h>
+#include <di/execution/query/forwarding_query.h>
 #include <di/function/tag_invoke.h>
 #include <di/util/as_const.h>
 
 namespace di::execution {
 namespace detail {
-    struct GetDelegateeSchedulerFunction {
+    struct GetDelegateeSchedulerFunction : ForwardingQuery {
         template<typename T>
         requires(concepts::TagInvocable<GetDelegateeSchedulerFunction, T const&>)
         constexpr concepts::Scheduler auto operator()(T&& value) const {

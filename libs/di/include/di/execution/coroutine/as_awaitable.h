@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/execution/concepts/awaitable_sender.h>
-#include <di/execution/concepts/forwarding_receiver_query.h>
+#include <di/execution/concepts/forwarding_query.h>
 #include <di/execution/meta/connect_result.h>
 #include <di/execution/meta/env_of.h>
 #include <di/execution/meta/single_sender_value_type.h>
@@ -32,7 +32,7 @@ namespace as_awaitable_ns {
             static_cast<CoroutineHandle<>>(self.continuation.promise().unhandled_stopped()).resume();
         }
 
-        template<concepts::ForwardingReceiverQuery Tag, typename... Args>
+        template<concepts::ForwardingQuery Tag, typename... Args>
         constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
             -> meta::InvokeResult<Tag, Promise const&, Args...> {
             return tag(self.continuation.promise(), util::forward<Args>(args)...);

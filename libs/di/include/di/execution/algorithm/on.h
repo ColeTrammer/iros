@@ -27,7 +27,7 @@ namespace on_ns {
         private:
             constexpr friend auto tag_invoke(types::Tag<get_scheduler>, Type const& self) { return self.scheduler; }
 
-            template<concepts::ForwardingEnvQuery Tag>
+            template<concepts::ForwardingQuery Tag>
             requires(!concepts::SameAs<Tag, types::Tag<get_scheduler>>)
             constexpr friend auto tag_invoke(types::Tag<get_env> tag, Type const& self)
                 -> meta::InvokeResult<Tag, Base const&> {
@@ -142,7 +142,7 @@ namespace on_ns {
                 meta::MakeCompletionSignatures<meta::ScheduleResult<Sched>, E, CompletionSignatures<>,
                                                meta::Id<CompletionSignatures<>>::template Invoke>>;
 
-            template<concepts::ForwardingSenderQuery Tag, typename... Args>
+            template<concepts::ForwardingQuery Tag, typename... Args>
             constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
                 -> meta::InvokeResult<Tag, Send const&, Args...> {
                 return tag(self.sender, util::forward<Args>(args)...);

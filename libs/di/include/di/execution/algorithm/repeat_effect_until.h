@@ -97,7 +97,7 @@ namespace repeat_effect_until_ns {
             friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env)
                 -> meta::MakeCompletionSignatures<Send const&, Env>;
 
-            template<concepts::ForwardingSenderQuery Tag, typename... Args>
+            template<concepts::ForwardingQuery Tag, typename... Args>
             constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
                 -> meta::InvokeResult<Tag, Send const&, Args...> {
                 return tag(self.sender, util::forward<Args>(args)...);

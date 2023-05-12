@@ -187,7 +187,7 @@ namespace schedule_from_ns {
                 return self.scheduler;
             }
 
-            template<concepts::ForwardingSenderQuery Tag, typename... Args>
+            template<concepts::ForwardingQuery Tag, typename... Args>
             requires(!concepts::OneOf<Tag, GetCompletionScheduler<SetValue>, GetCompletionScheduler<SetError>,
                                       GetCompletionScheduler<SetStopped>>)
             constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)

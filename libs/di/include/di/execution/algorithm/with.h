@@ -230,7 +230,7 @@ namespace with_ns {
                                                                util::move(self).sender };
             }
 
-            template<concepts::ForwardingSenderQuery Tag, typename... Args>
+            template<concepts::ForwardingQuery Tag, typename... Args>
             constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
                 -> meta::InvokeResult<Tag, Send const&, Args...> {
                 return tag(self.sender, util::forward<Args>(args)...);

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/concepts/class_type.h>
-#include <di/execution/concepts/forwarding_receiver_query.h>
+#include <di/execution/concepts/forwarding_query.h>
 #include <di/execution/concepts/receiver.h>
 #include <di/execution/receiver/set_error.h>
 #include <di/execution/receiver/set_stopped.h>
@@ -205,7 +205,7 @@ namespace receiver_interface_ns {
                 }
             }
 
-            template<concepts::ForwardingReceiverQuery Tag, typename... Args>
+            template<concepts::ForwardingQuery Tag, typename... Args>
             friend decltype(auto) tag_invoke(Tag tag, Self const& self, Args&&... args)
             requires(!concepts::SameAs<Tag, types::Tag<execution::get_env>> &&
                      requires { tag(Type::get_base(self), util::forward<Args>(args)...); })

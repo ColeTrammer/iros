@@ -85,7 +85,7 @@ namespace let_ns {
                 return tag(util::move(self.data->out_r), util::forward<Args>(args)...);
             }
 
-            template<concepts::ForwardingReceiverQuery Tag, typename... Args>
+            template<concepts::ForwardingQuery Tag, typename... Args>
             constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
                 -> meta::InvokeResult<Tag, Rec const&, Args...> {
                 return tag(self.data->out_r, util::forward<Args>(args)...);
@@ -166,7 +166,7 @@ namespace let_ns {
                                                              util::forward<Self>(self).sender };
             }
 
-            template<concepts::ForwardingSenderQuery Tag, typename... Args>
+            template<concepts::ForwardingQuery Tag, typename... Args>
             constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
                 -> meta::InvokeResult<Tag, Send const&, Args...> {
                 return tag(self.sender, util::forward<Args>(args)...);

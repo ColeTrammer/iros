@@ -2,8 +2,7 @@
 
 #include <di/concepts/decays_to.h>
 #include <di/concepts/movable_value.h>
-#include <di/execution/concepts/forwarding_receiver_query.h>
-#include <di/execution/concepts/forwarding_sender_query.h>
+#include <di/execution/concepts/forwarding_query.h>
 #include <di/execution/concepts/operation_state.h>
 #include <di/execution/concepts/receiver_of.h>
 #include <di/execution/concepts/sender.h>
@@ -118,7 +117,7 @@ namespace then_ns {
                 -> meta::MakeCompletionSignatures<meta::Like<Self, Send>, Env, types::CompletionSignatures<>,
                                                   SetValueCompletions>;
 
-            template<concepts::ForwardingSenderQuery Tag, typename... Args>
+            template<concepts::ForwardingQuery Tag, typename... Args>
             constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
                 -> meta::InvokeResult<Tag, Send const&, Args...> {
                 return tag(self.sender, util::forward<Args>(args)...);

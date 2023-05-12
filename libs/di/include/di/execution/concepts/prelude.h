@@ -7,10 +7,7 @@
 #include <di/execution/concepts/awaiter.h>
 #include <di/execution/concepts/completion_signature.h>
 #include <di/execution/concepts/execution_context.h>
-#include <di/execution/concepts/forwarding_env_query.h>
-#include <di/execution/concepts/forwarding_receiver_query.h>
-#include <di/execution/concepts/forwarding_scheduler_query.h>
-#include <di/execution/concepts/forwarding_sender_query.h>
+#include <di/execution/concepts/forwarding_query.h>
 #include <di/execution/concepts/receiver.h>
 #include <di/execution/concepts/receiver_of.h>
 #include <di/execution/concepts/scheduler.h>
