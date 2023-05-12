@@ -67,6 +67,8 @@ namespace let_ns {
     template<typename CPO, typename Rec, typename Fun, typename Completions>
     struct ReceiverT {
         struct Type {
+            using is_receiver = void;
+
             Data<CPO, Rec, Fun, Completions>* data { nullptr };
 
         private:

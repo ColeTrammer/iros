@@ -11,6 +11,8 @@ namespace di::execution {
 namespace as_awaitable_ns {
     template<typename Send, typename Promise>
     struct AwaitableReceiver<Send, Promise>::Type {
+        using is_receiver = void;
+
         using Value = meta::SingleSenderValueType<Send, meta::EnvOf<Promise>>;
         using Result = meta::Conditional<concepts::LanguageVoid<Value>, Void, Value>;
 

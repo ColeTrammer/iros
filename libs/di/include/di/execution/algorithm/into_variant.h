@@ -17,7 +17,7 @@ namespace into_variant_ns {
 
     template<typename Value, typename Rec>
     struct ReceiverT {
-        struct Type : private ReceiverAdaptor<Type, Rec> {
+        struct Type : ReceiverAdaptor<Type, Rec> {
             using Base = ReceiverAdaptor<Type, Rec>;
             friend Base;
 

@@ -88,7 +88,7 @@ namespace with_ns {
     using Data = meta::Type<DataT<Rec, Fun, Value, Completions>>;
 
     template<typename Rec, typename Fun, typename Value, typename Completions>
-    struct DestroyReceiverT<Rec, Fun, Value, Completions>::Type : private ReceiverAdaptor<Type> {
+    struct DestroyReceiverT<Rec, Fun, Value, Completions>::Type : ReceiverAdaptor<Type> {
         using Base = ReceiverAdaptor<Type>;
         friend Base;
 
@@ -119,7 +119,7 @@ namespace with_ns {
     };
 
     template<typename Rec, typename Fun, typename Value, typename Completions>
-    struct ReceiverT<Rec, Fun, Value, Completions>::Type : private ReceiverAdaptor<Type> {
+    struct ReceiverT<Rec, Fun, Value, Completions>::Type : ReceiverAdaptor<Type> {
         using Base = ReceiverAdaptor<Type>;
         friend Base;
 
@@ -147,7 +147,7 @@ namespace with_ns {
 
     template<typename Rec, typename Fun, typename Value, typename Completions>
     struct CreateReceiverT {
-        struct Type : private ReceiverAdaptor<Type> {
+        struct Type : ReceiverAdaptor<Type> {
             using Base = ReceiverAdaptor<Type>;
             friend Base;
 

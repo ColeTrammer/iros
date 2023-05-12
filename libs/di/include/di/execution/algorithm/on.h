@@ -41,7 +41,7 @@ namespace on_ns {
 
     template<typename Send, typename Rec, typename Sched>
     struct ReceiverWithEnvT {
-        struct Type : private ReceiverAdaptor<Type> {
+        struct Type : ReceiverAdaptor<Type> {
         private:
             using Base = ReceiverAdaptor<Type>;
             friend Base;
@@ -66,7 +66,7 @@ namespace on_ns {
 
     template<typename Send, typename Rec, typename Sched>
     struct ReceiverT {
-        struct Type : private ReceiverAdaptor<Type> {
+        struct Type : ReceiverAdaptor<Type> {
         private:
             using Base = ReceiverAdaptor<Type>;
             friend Base;

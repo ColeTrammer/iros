@@ -61,7 +61,7 @@ namespace schedule_from_ns {
     using Data = meta::Type<DataT<Rec, Sched, Completions>>;
 
     template<typename Rec, typename Sched, typename Completions>
-    struct ScheduleReceiverT<Rec, Sched, Completions>::Type : private ReceiverAdaptor<Type> {
+    struct ScheduleReceiverT<Rec, Sched, Completions>::Type : ReceiverAdaptor<Type> {
         using Base = ReceiverAdaptor<Type>;
         friend Base;
 
@@ -93,7 +93,7 @@ namespace schedule_from_ns {
 
     template<typename Rec, typename Sched, typename Completions>
     struct ReceiverT {
-        struct Type : private ReceiverAdaptor<Type> {
+        struct Type : ReceiverAdaptor<Type> {
             using Base = ReceiverAdaptor<Type>;
             friend Base;
 

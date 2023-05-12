@@ -3,6 +3,9 @@
 #include <di/container/intrusive/prelude.h>
 #include <di/container/queue/prelude.h>
 #include <di/execution/concepts/receiver.h>
+#include <di/execution/concepts/receiver_of.h>
+#include <di/execution/interface/connect.h>
+#include <di/execution/interface/start.h>
 #include <di/execution/query/get_completion_scheduler.h>
 #include <di/platform/prelude.h>
 #include <di/sync/dumb_spinlock.h>
@@ -119,9 +122,8 @@ private:
 
             if (is_stopped) {
                 return nullptr;
-            } else if (operation) {
-                return operation;
             }
+            return operation;
         }
     }
 

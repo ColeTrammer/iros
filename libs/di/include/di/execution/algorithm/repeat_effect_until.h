@@ -21,7 +21,7 @@ namespace repeat_effect_until_ns {
 
     template<typename Send, typename Rec, typename Pred>
     struct ReceiverT {
-        struct Type : private ReceiverAdaptor<Type> {
+        struct Type : ReceiverAdaptor<Type> {
             using Base = ReceiverAdaptor<Type>;
             friend Base;
 

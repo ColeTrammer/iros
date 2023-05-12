@@ -33,6 +33,8 @@ namespace sync_wait_ns {
     struct ReceiverT {
         struct Type {
         public:
+            using is_receiver = void;
+
             explicit Type(Result* result, Context* context)
                 : m_result(result), m_context(context), m_env(context->get_scheduler()) {}
 

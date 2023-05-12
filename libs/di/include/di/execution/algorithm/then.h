@@ -19,7 +19,7 @@ namespace di::execution {
 namespace then_ns {
     template<concepts::Receiver Rec, typename Fun>
     struct ReceiverT {
-        struct Type : private ReceiverAdaptor<Type, Rec> {
+        struct Type : ReceiverAdaptor<Type, Rec> {
         private:
             using Base = ReceiverAdaptor<Type, Rec>;
             friend Base;

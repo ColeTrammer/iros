@@ -13,7 +13,9 @@
 namespace di::execution {
 namespace receiver_interface_ns {
     namespace fake_receiver {
-        struct FakeReceiver {};
+        struct FakeReceiver {
+            using is_receiver = void;
+        };
         void tag_invoke(SetValue, FakeReceiver&&);
         void tag_invoke(SetError, FakeReceiver&&, Error);
         void tag_invoke(SetStopped, FakeReceiver&&);
@@ -79,6 +81,8 @@ namespace receiver_interface_ns {
             }
 
         public:
+            using is_receiver = void;
+
             Type() = default;
 
             template<typename T>
