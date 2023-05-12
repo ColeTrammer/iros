@@ -82,6 +82,8 @@ namespace repeat_effect_until_ns {
     template<typename Send, typename Pred>
     struct SenderT {
         struct Type {
+            using is_sender = void;
+
             [[no_unique_address]] Send sender;
             [[no_unique_address]] Pred predicate;
 

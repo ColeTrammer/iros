@@ -62,6 +62,8 @@ public:
     private:
         struct ReadSomeSender {
         public:
+            using is_sender = void;
+
             using CompletionSignatures = di::CompletionSignatures<di::SetValue(size_t), di::SetError(di::Error)>;
 
             IoContext* parent;
@@ -110,6 +112,8 @@ public:
 
         struct WriteSomeSender {
         public:
+            using is_sender = void;
+
             using CompletionSignatures = di::CompletionSignatures<di::SetValue(size_t), di::SetError(di::Error)>;
 
             IoContext* parent;
@@ -180,6 +184,8 @@ private:
     struct Scheduler {
     private:
         struct Sender {
+            using is_sender = void;
+
             using CompletionSignatures = di::CompletionSignatures<di::SetValue(), di::SetStopped()>;
 
             IoContext* parent;
@@ -198,6 +204,8 @@ private:
 
         struct OpenSender {
         public:
+            using is_sender = void;
+
             using CompletionSignatures = di::CompletionSignatures<di::SetValue(AsyncFile), di::SetError(di::Error)>;
 
             IoContext* parent;

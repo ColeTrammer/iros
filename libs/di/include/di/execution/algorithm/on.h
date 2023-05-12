@@ -124,6 +124,8 @@ namespace on_ns {
     template<typename Send, typename Sched>
     struct SenderT {
         struct Type {
+            using is_sender = void;
+
             [[no_unique_address]] Sched scheduler;
             [[no_unique_address]] Send sender;
 

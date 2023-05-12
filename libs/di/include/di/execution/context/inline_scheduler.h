@@ -23,6 +23,8 @@ private:
     using OperationState = meta::Type<OperationStateT<Rec>>;
 
     struct Sender {
+        using is_sender = void;
+
         using CompletionSignatures = types::CompletionSignatures<SetValue()>;
 
     private:

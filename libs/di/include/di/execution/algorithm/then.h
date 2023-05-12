@@ -89,6 +89,8 @@ namespace then_ns {
     struct SenderT {
         struct Type {
         public:
+            using is_sender = void;
+
             [[no_unique_address]] Send sender;
             [[no_unique_address]] Fun function;
 

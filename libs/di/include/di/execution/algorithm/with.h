@@ -208,6 +208,8 @@ namespace with_ns {
             using Sender3 = meta::AsyncDestroyResult<Value>;
 
         public:
+            using is_sender = void;
+
             [[no_unique_address]] Send sender;
             [[no_unique_address]] Fun function;
 

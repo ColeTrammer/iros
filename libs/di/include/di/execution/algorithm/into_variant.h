@@ -41,6 +41,8 @@ namespace into_variant_ns {
     template<typename Send>
     struct SenderT {
         struct Type {
+            using is_sender = void;
+
             [[no_unique_address]] Send sender;
 
         private:

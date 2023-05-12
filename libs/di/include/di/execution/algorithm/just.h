@@ -33,6 +33,8 @@ namespace just_ns {
     struct SenderT {
         struct Type {
         public:
+            using is_sender = void;
+
             using CompletionSignatures = types::CompletionSignatures<CPO(Types...)>;
 
             [[no_unique_address]] Tuple<Types...> values;

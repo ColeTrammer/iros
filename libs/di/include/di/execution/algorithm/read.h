@@ -17,6 +17,8 @@ namespace read_ns {
     template<typename Tag>
     struct SenderT {
         struct Type {
+            using is_sender = void;
+
             template<typename Receiver>
             struct OperationStateT {
                 struct Type {

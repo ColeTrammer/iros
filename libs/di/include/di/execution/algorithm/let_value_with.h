@@ -36,6 +36,8 @@ namespace let_value_with_ns {
                 using Send = meta::InvokeResult<Fun, State&>;
 
             public:
+                using is_sender = void;
+
                 [[no_unique_address]] Factory factory;
                 [[no_unique_address]] Fun function;
 

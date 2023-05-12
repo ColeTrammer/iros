@@ -1,5 +1,7 @@
 #pragma once
 
+#include <di/assert/prelude.h>
+#include <di/container/algorithm/prelude.h>
 #include <di/container/intrusive/prelude.h>
 #include <di/container/queue/prelude.h>
 #include <di/execution/prelude.h>
@@ -67,6 +69,8 @@ private:
 
 struct ReadSomeSender {
 public:
+    using is_sender = void;
+
     using CompletionSignatures =
         di::CompletionSignatures<di::SetValue(size_t), di::SetError(di::Error), di::SetStopped()>;
 
@@ -140,6 +144,8 @@ private:
 
 struct WriteSomeSender {
 public:
+    using is_sender = void;
+
     using CompletionSignatures =
         di::CompletionSignatures<di::SetValue(size_t), di::SetError(di::Error), di::SetStopped()>;
 
@@ -213,6 +219,8 @@ private:
 
 struct CloseSender {
 public:
+    using is_sender = void;
+
     using CompletionSignatures = di::CompletionSignatures<di::SetValue(), di::SetError(di::Error), di::SetStopped()>;
 
     IoUringContext* parent { nullptr };
@@ -272,6 +280,8 @@ private:
 
 struct ScheduleSender {
 public:
+    using is_sender = void;
+
     using CompletionSignatures = di::CompletionSignatures<di::SetValue(), di::SetStopped()>;
 
     IoUringContext* parent { nullptr };
@@ -341,6 +351,8 @@ private:
 
 struct OpenSender {
 public:
+    using is_sender = void;
+
     using CompletionSignatures =
         di::CompletionSignatures<di::SetValue(AsyncFile), di::SetError(di::Error), di::SetStopped()>;
 

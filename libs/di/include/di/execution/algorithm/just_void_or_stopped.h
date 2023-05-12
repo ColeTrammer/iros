@@ -32,6 +32,8 @@ namespace just_void_or_stopped_ns {
     struct SenderT {
         struct Type {
         public:
+            using is_sender = void;
+
             using CompletionSignatures = types::CompletionSignatures<SetValue(), SetStopped()>;
 
             bool should_stop;

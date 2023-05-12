@@ -133,6 +133,8 @@ namespace let_ns {
     struct SenderT {
         struct Type {
         public:
+            using is_sender = void;
+
             [[no_unique_address]] Send sender;
             [[no_unique_address]] Fun function;
 
@@ -174,8 +176,9 @@ namespace let_ns {
             }
 
             template<concepts::ForwardingQuery Tag, typename... Args>
-            constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
-                -> meta::InvokeResult<Tag, Send const&, Args...> {
+            constexpr friend decltype(auto) tag_invoke(Tag tag, Type const& self, Args&&... args)
+            requires(requires { tag(self.sender, util::forward<Args>(args)...); })
+            {
                 return tag(self.sender, util::forward<Args>(args)...);
             }
         };

@@ -54,6 +54,8 @@ private:
     struct Scheduler {
     private:
         struct Sender {
+            using is_sender = void;
+
             using CompletionSignatures = types::CompletionSignatures<SetValue(), SetStopped()>;
 
             RunLoop* parent;

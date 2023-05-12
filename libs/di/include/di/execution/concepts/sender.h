@@ -2,6 +2,7 @@
 
 #include <di/concepts/move_constructible.h>
 #include <di/execution/concepts/valid_completion_signatures.h>
+#include <di/execution/interface/enable_sender.h>
 #include <di/execution/query/get_completion_signatures.h>
 
 namespace di::concepts {
@@ -15,6 +16,6 @@ namespace detail {
 }
 
 template<typename Send, typename Env = types::NoEnv>
-concept Sender = detail::SenderBase<Send, Env> && detail::SenderBase<Send, types::NoEnv> &&
-                 concepts::MoveConstructible<meta::RemoveCVRef<Send>>;
+concept Sender = execution::enable_sender<meta::RemoveCVRef<Send>> && detail::SenderBase<Send, Env> &&
+                 detail::SenderBase<Send, types::NoEnv> && concepts::MoveConstructible<meta::RemoveCVRef<Send>>;
 }
