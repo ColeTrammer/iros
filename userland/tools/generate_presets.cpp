@@ -370,6 +370,9 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
         cache_variables.insert_or_assign(
             "CMAKE_CROSSCOMPILING_EMULATOR"_sv,
             *di::present("${{sourceDir}}/meta/run-command-on-iris.sh;{}"_sv, build_directory_suffix));
+        if (unity) {
+            cache_variables.insert_or_assign("IROS_NonUnityBuildPreset"_sv, *di::present("{}_non_unity"_sv, name));
+        }
 
         auto preset = CMakeConfigurePreset {};
         preset.name = di::move(name);

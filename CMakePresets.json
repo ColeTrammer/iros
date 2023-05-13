@@ -149,7 +149,8 @@
             "cacheVariables": {
                 "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/gcc/release/default",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
-                "CMAKE_UNITY_BUILD": "ON"
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "gcc_iros_x86_64_release_default_non_unity"
             },
             "inherits": ["gcc_base", "release_base", "iros_x86_64_base"]
         },
@@ -163,7 +164,8 @@
             "cacheVariables": {
                 "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/gcc/release/iris_debug",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
-                "CMAKE_UNITY_BUILD": "ON"
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "gcc_iros_x86_64_release_iris_debug_non_unity"
             },
             "inherits": ["gcc_base", "release_base", "iros_x86_64_base", "iris_debug_base"]
         },
@@ -177,7 +179,8 @@
             "cacheVariables": {
                 "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/gcc/debug/default",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
-                "CMAKE_UNITY_BUILD": "ON"
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "gcc_iros_x86_64_debug_default_non_unity"
             },
             "inherits": ["gcc_base", "debug_base", "iros_x86_64_base"]
         },
@@ -191,7 +194,8 @@
             "cacheVariables": {
                 "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/clang/release/default",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
-                "CMAKE_UNITY_BUILD": "ON"
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "clang_iros_x86_64_release_default_non_unity"
             },
             "inherits": ["clang_base", "release_base", "iros_x86_64_base"]
         },
@@ -205,7 +209,8 @@
             "cacheVariables": {
                 "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/clang/release/iris_debug",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
-                "CMAKE_UNITY_BUILD": "ON"
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "clang_iros_x86_64_release_iris_debug_non_unity"
             },
             "inherits": ["clang_base", "release_base", "iros_x86_64_base", "iris_debug_base"]
         },
@@ -219,7 +224,8 @@
             "cacheVariables": {
                 "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/clang/debug/default",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "OFF",
-                "CMAKE_UNITY_BUILD": "ON"
+                "CMAKE_UNITY_BUILD": "ON",
+                "IROS_NonUnityBuildPreset": "clang_iros_x86_64_debug_default_non_unity"
             },
             "inherits": ["clang_base", "debug_base", "iros_x86_64_base"]
         },
