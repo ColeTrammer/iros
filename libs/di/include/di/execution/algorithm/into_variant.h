@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/execution/concepts/prelude.h>
+#include <di/execution/concepts/sender_in.h>
 #include <di/execution/meta/prelude.h>
 #include <di/execution/receiver/prelude.h>
 #include <di/execution/types/prelude.h>
@@ -9,7 +10,7 @@
 namespace di::execution {
 namespace into_variant_ns {
     template<typename Send, typename Env>
-    requires(concepts::Sender<Send, Env>)
+    requires(concepts::SenderIn<Send, Env>)
     using IntoVariantType = meta::ValueTypesOf<Send, Env>;
 
     template<typename Send, typename Env>

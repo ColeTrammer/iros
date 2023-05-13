@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/execution/algorithm/into_variant.h>
+#include <di/execution/concepts/sender_in.h>
 #include <di/execution/context/run_loop.h>
 #include <di/execution/query/get_delegatee_scheduler.h>
 #include <di/execution/query/get_scheduler.h>
@@ -68,10 +69,10 @@ namespace sync_wait_ns {
     template<typename Result, concepts::ExecutionContext Context>
     using Receiver = meta::Type<ReceiverT<Result, Context>>;
 
-    template<concepts::ExecutionContext Context, concepts::Sender<Env<Context>> Send>
+    template<concepts::ExecutionContext Context, concepts::SenderIn<Env<Context>> Send>
     using ResultType = Result<meta::ValueTypesOf<Send, Env<Context>, meta::DecayedTuple, meta::TypeIdentity>>;
 
-    template<concepts::ExecutionContext Context, concepts::Sender<Env<Context>> Send>
+    template<concepts::ExecutionContext Context, concepts::SenderIn<Env<Context>> Send>
     using WithVariantResultType = Result<into_variant_ns::IntoVariantType<Send, Env<Context>>>;
 
     template<typename T>
@@ -80,7 +81,7 @@ namespace sync_wait_ns {
     };
 
     struct OnFunction {
-        template<concepts::ExecutionContext Context, concepts::Sender<Env<Context>> Send>
+        template<concepts::ExecutionContext Context, concepts::SenderIn<Env<Context>> Send>
         concepts::SameAs<ResultType<Context, Send>> auto operator()(Context& context, Send&& sender) const {
             if constexpr (requires {
                               function::tag_invoke(*this, context, get_completion_scheduler<SetValue>(sender),
@@ -106,7 +107,7 @@ namespace sync_wait_ns {
     };
 
     struct WithVariantOnFunction {
-        template<concepts::ExecutionContext Context, concepts::Sender<Env<Context>> Send>
+        template<concepts::ExecutionContext Context, concepts::SenderIn<Env<Context>> Send>
         concepts::SameAs<WithVariantResultType<Context, Send>> auto operator()(Context& context, Send&& sender) const {
             if constexpr (requires {
                               function::tag_invoke(*this, context, get_completion_scheduler<SetValue>(sender),
@@ -123,7 +124,7 @@ namespace sync_wait_ns {
     };
 
     struct Function : function::pipeline::EnablePipeline {
-        template<concepts::Sender<Env<RunLoop<>>> Send>
+        template<concepts::SenderIn<Env<RunLoop<>>> Send>
         concepts::SameAs<ResultType<RunLoop<>, Send>> auto operator()(Send&& sender) const {
             if constexpr (requires {
                               function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender),
@@ -141,7 +142,7 @@ namespace sync_wait_ns {
     };
 
     struct WithVariantFunction : function::pipeline::EnablePipeline {
-        template<concepts::Sender<Env<RunLoop<>>> Send>
+        template<concepts::SenderIn<Env<RunLoop<>>> Send>
         concepts::SameAs<WithVariantResultType<RunLoop<>, Send>> auto operator()(Send&& sender) const {
             if constexpr (requires {
                               function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender),

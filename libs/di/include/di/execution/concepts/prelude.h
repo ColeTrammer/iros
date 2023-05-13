@@ -12,6 +12,7 @@
 #include <di/execution/concepts/receiver_of.h>
 #include <di/execution/concepts/scheduler.h>
 #include <di/execution/concepts/sender.h>
+#include <di/execution/concepts/sender_in.h>
 #include <di/execution/concepts/sender_of.h>
 #include <di/execution/concepts/sender_to.h>
 #include <di/execution/concepts/single_sender.h>
@@ -22,6 +23,7 @@ using concepts::Receiver;
 using concepts::ReceiverOf;
 using concepts::Scheduler;
 using concepts::Sender;
+using concepts::SenderIn;
 using concepts::SenderOf;
 using concepts::SenderTo;
 }

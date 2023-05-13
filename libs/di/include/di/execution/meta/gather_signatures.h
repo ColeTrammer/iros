@@ -3,7 +3,7 @@
 #include <di/concepts/always_true.h>
 #include <di/concepts/same_as.h>
 #include <di/execution/concepts/completion_signature.h>
-#include <di/execution/concepts/sender.h>
+#include <di/execution/concepts/sender_in.h>
 #include <di/execution/meta/completion_signatures_of.h>
 #include <di/meta/language_function_return.h>
 #include <di/meta/list/as_list.h>
@@ -43,7 +43,7 @@ namespace detail {
 
 template<typename Tag, typename S, typename E, template<typename...> typename Tuple,
          template<typename...> typename Variant>
-requires(concepts::Sender<S, E>)
+requires(concepts::SenderIn<S, E>)
 using GatherSignatures = meta::Type<detail::MetaApply<
     Variant, meta::Type<detail::GatherSignaturesHelper<Tag, meta::AsList<meta::CompletionSignaturesOf<S, E>>, Tuple>>>>;
 }

@@ -1,10 +1,11 @@
 #pragma once
 
-#include <di/execution/concepts/sender.h>
+#include <di/execution/concepts/sender_in.h>
 #include <di/execution/concepts/valid_completion_signatures.h>
 #include <di/execution/meta/error_types_of.h>
 #include <di/execution/meta/sends_stopped.h>
 #include <di/execution/meta/value_types_of.h>
+#include <di/execution/types/empty_env.h>
 
 namespace di::meta {
 namespace detail {
@@ -15,7 +16,7 @@ namespace detail {
     using DefaultSetError = types::CompletionSignatures<execution::SetError(Error)>;
 
     template<typename A, typename B, typename C, typename D>
-    struct MakeCompletionSignaturesHelper : TypeConstant<types::DependentCompletionSignatures<types::NoEnv>> {};
+    struct MakeCompletionSignaturesHelper;
 
     template<
         concepts::InstanceOf<types::CompletionSignatures> As, concepts::InstanceOf<types::CompletionSignatures>... Bs,
@@ -26,12 +27,12 @@ namespace detail {
                                                                   meta::AsList<Cs>..., meta::AsList<Ds>>>>> {};
 }
 
-template<typename Send, typename Env = types::NoEnv,
-         concepts::ValidCompletionSignatures<Env> ExtraSigs = types::CompletionSignatures<>,
+template<typename Send, typename Env = types::EmptyEnv,
+         concepts::ValidCompletionSignatures ExtraSigs = types::CompletionSignatures<>,
          template<typename...> typename SetValue = detail::DefaultSetValue,
          template<typename> typename SetError = detail::DefaultSetError,
-         concepts::ValidCompletionSignatures<Env> SetStopped = types::CompletionSignatures<execution::SetStopped()>>
-requires(concepts::Sender<Send, Env>)
+         concepts::ValidCompletionSignatures SetStopped = types::CompletionSignatures<execution::SetStopped()>>
+requires(concepts::SenderIn<Send, Env>)
 using MakeCompletionSignatures = Type<detail::MakeCompletionSignaturesHelper<
     ExtraSigs, meta::ValueTypesOf<Send, Env, SetValue, meta::List>,
     meta::Transform<meta::ErrorTypesOf<Send, Env, meta::List>, meta::Quote<SetError>>,

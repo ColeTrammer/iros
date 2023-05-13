@@ -1,10 +1,13 @@
 #pragma once
 
+#include <di/concepts/decays_to.h>
 #include <di/concepts/movable_value.h>
 #include <di/execution/algorithm/schedule_from.h>
 #include <di/execution/concepts/prelude.h>
+#include <di/execution/concepts/receiver.h>
 #include <di/execution/meta/prelude.h>
-#include <di/execution/receiver/prelude.h>
+#include <di/execution/receiver/receiver_adaptor.h>
+#include <di/execution/receiver/set_value.h>
 #include <di/execution/types/prelude.h>
 #include <di/function/curry_back.h>
 #include <di/util/defer_construct.h>
@@ -112,9 +115,9 @@ namespace repeat_effect_until_ns {
     using Sender = meta::Type<SenderT<Send, Pred>>;
 
     struct Function {
-        template<concepts::SenderOf<NoEnv> Send, concepts::MovableValue Pred>
+        template<concepts::SenderOf<SetValue()> Send, concepts::MovableValue Pred>
         requires(concepts::CopyConstructible<Send> && concepts::Predicate<meta::Decay<Pred>&>)
-        constexpr concepts::SenderOf<NoEnv> auto operator()(Send&& sender, Pred&& predicate) const {
+        constexpr concepts::SenderOf<SetValue()> auto operator()(Send&& sender, Pred&& predicate) const {
             if constexpr (concepts::TagInvocable<Function, Send, Pred>) {
                 return function::tag_invoke(*this, util::forward<Send>(sender), util::forward<Pred>(predicate));
             } else {

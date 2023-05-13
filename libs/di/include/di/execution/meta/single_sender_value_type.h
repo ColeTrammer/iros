@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/execution/concepts/sender_in.h>
 #include <di/execution/meta/value_types_of.h>
 
 namespace di::meta {
@@ -13,8 +14,8 @@ namespace detail {
                                             meta::Id<SingleSenderValueTypeHelperBadValue>>>>;
 }
 
-template<typename Send, typename Env = types::NoEnv>
-requires(concepts::Sender<Send, Env> &&
+template<typename Send, typename Env>
+requires(concepts::SenderIn<Send, Env> &&
          !concepts::SameAs<
              detail::SingleSenderValueTypeHelperBadValue,
              ValueTypesOf<Send, Env, detail::SingleSenderValueTypeHelper, detail::SingleSenderValueTypeHelper>>)

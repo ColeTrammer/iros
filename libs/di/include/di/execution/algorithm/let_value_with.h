@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/concepts/decays_to.h>
 #include <di/concepts/movable_value.h>
 #include <di/execution/concepts/prelude.h>
 #include <di/execution/meta/prelude.h>
@@ -50,12 +51,7 @@ namespace let_value_with_ns {
 
                 template<concepts::DecaysTo<Type> Self, typename Env>
                 friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env)
-                    -> types::DependentCompletionSignatures<Env>;
-
-                template<concepts::DecaysTo<Type> Self, typename Env>
-                friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env)
-                    -> meta::CompletionSignaturesOf<Send, Env>
-                requires(true);
+                    -> meta::CompletionSignaturesOf<Send, Env>;
             };
         };
 

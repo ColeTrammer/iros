@@ -6,13 +6,14 @@
 #include <di/execution/algorithm/repeat_effect.h>
 #include <di/execution/algorithm/then.h>
 #include <di/execution/io/async_write_some.h>
+#include <di/execution/receiver/set_value.h>
 
 namespace di::execution {
 namespace async_write_exactly_ns {
     struct Function {
         template<typename File>
-        concepts::SenderOf<NoEnv> auto operator()(File&& handle, Span<Byte const> buffer,
-                                                  Optional<u64> offset = {}) const
+        concepts::SenderOf<SetValue()> auto operator()(File&& handle, Span<Byte const> buffer,
+                                                       Optional<u64> offset = {}) const
         requires(requires { async_write_some(util::forward<File>(handle), buffer, offset); })
         {
             if constexpr (concepts::TagInvocable<Function, File, Span<Byte const>, Optional<u64>>) {

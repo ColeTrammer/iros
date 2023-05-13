@@ -4,6 +4,7 @@
 #include <di/execution/concepts/prelude.h>
 #include <di/execution/meta/prelude.h>
 #include <di/execution/receiver/prelude.h>
+#include <di/execution/types/empty_env.h>
 #include <di/execution/types/prelude.h>
 #include <di/util/defer_construct.h>
 
@@ -203,7 +204,7 @@ namespace with_ns {
     struct SenderT {
         struct Type {
         private:
-            using Value = meta::SingleSenderValueType<Send>;
+            using Value = meta::SingleSenderValueType<Send, types::EmptyEnv>;
             using Sender2 = meta::InvokeResult<Fun&, Value&>;
             using Sender3 = meta::AsyncDestroyResult<Value>;
 
@@ -245,12 +246,12 @@ namespace with_ns {
     using Sender = meta::Type<SenderT<Send, Fun>>;
 
     struct Function {
-        template<concepts::SingleSender Send, concepts::MovableValue Fun>
-        requires(concepts::AsyncDestroyable<meta::SingleSenderValueType<Send>> &&
+        template<concepts::SingleSender<types::EmptyEnv> Send, concepts::MovableValue Fun>
+        requires(concepts::AsyncDestroyable<meta::SingleSenderValueType<Send, types::EmptyEnv>> &&
                  requires {
                      {
                          function::invoke(util::declval<meta::Decay<Fun>&>(),
-                                          util::declval<meta::SingleSenderValueType<Send>&>())
+                                          util::declval<meta::SingleSenderValueType<Send, types::EmptyEnv>&>())
                      } -> concepts::Sender;
                  })
         concepts::Sender auto operator()(Send&& sender, Fun&& function) const {

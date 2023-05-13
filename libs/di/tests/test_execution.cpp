@@ -2,6 +2,7 @@
 #include <di/execution/meta/sends_stopped.h>
 #include <di/execution/prelude.h>
 #include <di/execution/receiver/prelude.h>
+#include <di/execution/types/empty_env.h>
 #include <dius/test/prelude.h>
 
 namespace execution {
@@ -22,7 +23,7 @@ static void meta() {
     static_assert(di::SameAs<di::meta::Unique<di::meta::List<int, short, int, int>>, di::meta::List<int, short>>);
 
     using A = di::meta::MakeCompletionSignatures<
-        decltype(sender), di::types::NoEnv,
+        decltype(sender), di::types::EmptyEnv,
         di::CompletionSignatures<di::SetValue(i64), di::SetStopped(), di::SetValue(i64)>>;
     static_assert(
         di::SameAs<A, di::types::CompletionSignatures<di::SetValue(i64), di::SetStopped(), di::SetValue(int)>>);
@@ -38,8 +39,9 @@ static void meta() {
     static_assert(di::Scheduler<S>);
 
     static_assert(di::concepts::IsAwaitable<di::Lazy<i32>>);
-    static_assert(di::SameAs<di::CompletionSignatures<di::SetValue(i32), di::SetError(di::Error), di::SetStopped()>,
-                             decltype(di::execution::get_completion_signatures(di::declval<di::Lazy<i32>>()))>);
+    static_assert(
+        di::SameAs<di::CompletionSignatures<di::SetValue(i32), di::SetError(di::Error), di::SetStopped()>,
+                   decltype(di::execution::get_completion_signatures(di::declval<di::Lazy<i32>>(), di::EmptyEnv {}))>);
 
     using R = di::execution::sync_wait_ns::Receiver<
         di::execution::sync_wait_ns::ResultType<di::execution::RunLoop<>, di::Lazy<i32>>, di::execution::RunLoop<>>;
@@ -59,11 +61,11 @@ static void meta() {
                                  di::CompletionSignatures<di::SetValue(), di::SetError(di::Error), di::SetStopped()>>);
 
     static_assert(
-        di::SameAs<void,
-                   di::meta::ValueTypesOf<di::Lazy<>, di::types::NoEnv, di::meta::detail::SingleSenderValueTypeHelper,
-                                          di::meta::detail::SingleSenderValueTypeHelper>>);
-    static_assert(di::concepts::SingleSender<di::Lazy<i32>>);
-    static_assert(di::concepts::SingleSender<di::Lazy<>>);
+        di::SameAs<
+            void, di::meta::ValueTypesOf<di::Lazy<>, di::types::EmptyEnv, di::meta::detail::SingleSenderValueTypeHelper,
+                                         di::meta::detail::SingleSenderValueTypeHelper>>);
+    static_assert(di::concepts::SingleSender<di::Lazy<i32>, di::EmptyEnv>);
+    static_assert(di::concepts::SingleSender<di::Lazy<>, di::EmptyEnv>);
 }
 
 static void sync_wait() {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/concepts/decays_to.h>
 #include <di/concepts/movable_value.h>
 #include <di/execution/concepts/prelude.h>
 #include <di/execution/interface/get_env.h>
@@ -157,12 +158,7 @@ namespace let_ns {
 
             template<concepts::DecaysTo<Type> Self, typename Env>
             friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env)
-                -> DependentCompletionSignatures<Env>;
-
-            template<concepts::DecaysTo<Type> Self, typename Env>
-            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env)
-                -> CompletionSignatures<Self, Env>
-            requires(true);
+                -> CompletionSignatures<Self, Env>;
 
             template<concepts::DecaysTo<Type> Self, typename Rec>
             requires(
