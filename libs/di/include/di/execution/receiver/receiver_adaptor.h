@@ -1,7 +1,6 @@
 #pragma once
 
 #include <di/concepts/class_type.h>
-#include <di/execution/concepts/forwarding_query.h>
 #include <di/execution/concepts/receiver.h>
 #include <di/execution/receiver/set_error.h>
 #include <di/execution/receiver/set_stopped.h>
@@ -207,13 +206,6 @@ namespace receiver_interface_ns {
                 } else {
                     return execution::get_env(Type::get_base(self));
                 }
-            }
-
-            template<concepts::ForwardingQuery Tag, typename... Args>
-            friend decltype(auto) tag_invoke(Tag tag, Self const& self, Args&&... args)
-            requires(requires { tag(Type::get_base(self), util::forward<Args>(args)...); })
-            {
-                return tag(Type::get_base(self), util::forward<Args>(args)...);
             }
 
             [[no_unique_address]] util::StoreIf<Base, has_base> m_base;

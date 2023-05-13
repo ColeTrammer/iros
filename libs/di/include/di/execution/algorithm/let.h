@@ -92,12 +92,6 @@ namespace let_ns {
             constexpr friend auto tag_invoke(types::Tag<get_env>, Type const& self) {
                 return get_env(self.data->out_r);
             }
-
-            template<concepts::ForwardingQuery Tag, typename... Args>
-            constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
-                -> meta::InvokeResult<Tag, Rec const&, Args...> {
-                return tag(self.data->out_r, util::forward<Args>(args)...);
-            }
         };
     };
 
