@@ -32,10 +32,12 @@ static void meta() {
 
     using S = decltype(di::declval<di::RunLoop<>>().get_scheduler());
     using SS = decltype(di::execution::schedule(di::declval<S const&>()));
+    using SE = decltype(di::execution::get_env(di::declval<SS const&>()));
+    static_assert(!di::SameAs<SE, di::EmptyEnv>);
     static_assert(di::Sender<SS>);
-    static_assert(di::TagInvocable<di::Tag<di::execution::get_completion_scheduler<di::SetValue>>, SS const&>);
+    static_assert(di::TagInvocable<di::Tag<di::execution::get_completion_scheduler<di::SetValue>>, SE const&>);
     static_assert(
-        di::SameAs<S, decltype(di::execution::get_completion_scheduler<di::SetValue>(di::declval<SS const&>()))>);
+        di::SameAs<S, decltype(di::execution::get_completion_scheduler<di::SetValue>(di::declval<SE const&>()))>);
     static_assert(di::Scheduler<S>);
 
     static_assert(di::concepts::IsAwaitable<di::Lazy<i32>>);

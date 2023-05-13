@@ -2,6 +2,7 @@
 
 #include <di/execution/algorithm/just.h>
 #include <di/execution/algorithm/let.h>
+#include <di/execution/algorithm/read.h>
 #include <di/execution/algorithm/then.h>
 #include <di/execution/concepts/prelude.h>
 #include <di/execution/interface/get_env.h>

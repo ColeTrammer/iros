@@ -319,9 +319,17 @@ private:
         return OperationState<Rec> { self.parent, di::move(receiver) };
     }
 
-    template<typename CPO>
-    constexpr friend auto tag_invoke(di::execution::GetCompletionScheduler<CPO>, ScheduleSender const& self) {
-        return get_scheduler(self.parent);
+    struct Env {
+        IoUringContext* parent { nullptr };
+
+        template<typename CPO>
+        constexpr friend auto tag_invoke(di::execution::GetCompletionScheduler<CPO>, Env const& self) {
+            return get_scheduler(self.parent);
+        }
+    };
+
+    constexpr friend auto tag_invoke(di::Tag<di::execution::get_env>, ScheduleSender const& self) {
+        return Env { self.parent };
     }
 };
 

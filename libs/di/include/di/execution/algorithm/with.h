@@ -234,10 +234,8 @@ namespace with_ns {
                                                                util::move(self).sender };
             }
 
-            template<concepts::ForwardingQuery Tag, typename... Args>
-            constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
-                -> meta::InvokeResult<Tag, Send const&, Args...> {
-                return tag(self.sender, util::forward<Args>(args)...);
+            constexpr friend decltype(auto) tag_invoke(types::Tag<get_env>, Type const& self) {
+                return get_env(self.sender);
             }
         };
     };
@@ -256,10 +254,10 @@ namespace with_ns {
                  })
         concepts::Sender auto operator()(Send&& sender, Fun&& function) const {
             if constexpr (requires {
-                              function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender),
+                              function::tag_invoke(*this, get_completion_scheduler<SetValue>(get_env(sender)),
                                                    util::forward<Send>(sender), util::forward<Fun>(function));
                           }) {
-                return function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender),
+                return function::tag_invoke(*this, get_completion_scheduler<SetValue>(get_env(sender)),
                                             util::forward<Send>(sender), util::forward<Fun>(function));
             } else if constexpr (requires {
                                      function::tag_invoke(*this, util::forward<Send>(sender),

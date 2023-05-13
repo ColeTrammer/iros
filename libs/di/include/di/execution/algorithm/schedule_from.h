@@ -1,9 +1,12 @@
 #pragma once
 
 #include <di/execution/concepts/prelude.h>
+#include <di/execution/interface/get_env.h>
+#include <di/execution/meta/env_of.h>
 #include <di/execution/meta/prelude.h>
 #include <di/execution/receiver/prelude.h>
 #include <di/execution/types/prelude.h>
+#include <di/function/tag_invoke.h>
 #include <di/util/defer_construct.h>
 
 namespace di::execution {
@@ -184,17 +187,28 @@ namespace schedule_from_ns {
                                                           util::forward<Self>(self).sender };
             }
 
-            template<concepts::OneOf<GetCompletionScheduler<SetValue>, GetCompletionScheduler<SetStopped>> Tag>
-            friend auto tag_invoke(Tag, Type const& self) {
-                return self.scheduler;
-            }
+            using SenderEnv = meta::EnvOf<Send>;
 
-            template<concepts::ForwardingQuery Tag, typename... Args>
-            requires(!concepts::OneOf<Tag, GetCompletionScheduler<SetValue>, GetCompletionScheduler<SetError>,
-                                      GetCompletionScheduler<SetStopped>>)
-            constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
-                -> meta::InvokeResult<Tag, Send const&, Args...> {
-                return tag(self.sender, util::forward<Args>(args)...);
+            struct Env {
+                Sched scheduler;
+                SenderEnv sender_env;
+
+                template<concepts::OneOf<GetCompletionScheduler<SetValue>, GetCompletionScheduler<SetStopped>> Tag>
+                friend auto tag_invoke(Tag, Env const& self) {
+                    return self.scheduler;
+                }
+
+                template<concepts::ForwardingQuery Tag, typename... Args>
+                requires(!concepts::OneOf<Tag, GetCompletionScheduler<SetValue>, GetCompletionScheduler<SetError>,
+                                          GetCompletionScheduler<SetStopped>>)
+                constexpr friend auto tag_invoke(Tag tag, Env const& self, Args&&... args)
+                    -> meta::InvokeResult<Tag, SenderEnv const&, Args...> {
+                    return tag(self.sender_env, util::forward<Args>(args)...);
+                }
+            };
+
+            friend auto tag_invoke(types::Tag<get_env>, Type const& self) {
+                return Env { self.scheduler, get_env(self.sender) };
             }
         };
     };

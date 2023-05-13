@@ -84,10 +84,10 @@ namespace sync_wait_ns {
         template<concepts::ExecutionContext Context, concepts::SenderIn<Env<Context>> Send>
         concepts::SameAs<ResultType<Context, Send>> auto operator()(Context& context, Send&& sender) const {
             if constexpr (requires {
-                              function::tag_invoke(*this, context, get_completion_scheduler<SetValue>(sender),
+                              function::tag_invoke(*this, context, get_completion_scheduler<SetValue>(get_env(sender)),
                                                    util::forward<Send>(sender));
                           }) {
-                return function::tag_invoke(*this, context, get_completion_scheduler<SetValue>(sender),
+                return function::tag_invoke(*this, context, get_completion_scheduler<SetValue>(get_env(sender)),
                                             util::forward<Send>(sender));
             } else if constexpr (requires { function::tag_invoke(*this, context, util::forward<Send>(sender)); }) {
                 return function::tag_invoke(*this, context, util::forward<Send>(sender));
@@ -110,10 +110,10 @@ namespace sync_wait_ns {
         template<concepts::ExecutionContext Context, concepts::SenderIn<Env<Context>> Send>
         concepts::SameAs<WithVariantResultType<Context, Send>> auto operator()(Context& context, Send&& sender) const {
             if constexpr (requires {
-                              function::tag_invoke(*this, context, get_completion_scheduler<SetValue>(sender),
+                              function::tag_invoke(*this, context, get_completion_scheduler<SetValue>(get_env(sender)),
                                                    util::forward<Send>(sender));
                           }) {
-                return function::tag_invoke(*this, context, get_completion_scheduler<SetValue>(sender),
+                return function::tag_invoke(*this, context, get_completion_scheduler<SetValue>(get_env(sender)),
                                             util::forward<Send>(sender));
             } else if constexpr (requires { function::tag_invoke(*this, context, util::forward<Send>(sender)); }) {
                 return function::tag_invoke(*this, context, util::forward<Send>(sender));
@@ -127,10 +127,10 @@ namespace sync_wait_ns {
         template<concepts::SenderIn<Env<RunLoop<>>> Send>
         concepts::SameAs<ResultType<RunLoop<>, Send>> auto operator()(Send&& sender) const {
             if constexpr (requires {
-                              function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender),
+                              function::tag_invoke(*this, get_completion_scheduler<SetValue>(get_env(sender)),
                                                    util::forward<Send>(sender));
                           }) {
-                return function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender),
+                return function::tag_invoke(*this, get_completion_scheduler<SetValue>(get_env(sender)),
                                             util::forward<Send>(sender));
             } else if constexpr (requires { function::tag_invoke(*this, util::forward<Send>(sender)); }) {
                 return function::tag_invoke(*this, util::forward<Send>(sender));
@@ -145,10 +145,10 @@ namespace sync_wait_ns {
         template<concepts::SenderIn<Env<RunLoop<>>> Send>
         concepts::SameAs<WithVariantResultType<RunLoop<>, Send>> auto operator()(Send&& sender) const {
             if constexpr (requires {
-                              function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender),
+                              function::tag_invoke(*this, get_completion_scheduler<SetValue>(get_env(sender)),
                                                    util::forward<Send>(sender));
                           }) {
-                return function::tag_invoke(*this, get_completion_scheduler<SetValue>(sender),
+                return function::tag_invoke(*this, get_completion_scheduler<SetValue>(get_env(sender)),
                                             util::forward<Send>(sender));
             } else if constexpr (requires { function::tag_invoke(*this, util::forward<Send>(sender)); }) {
                 return function::tag_invoke(*this, util::forward<Send>(sender));

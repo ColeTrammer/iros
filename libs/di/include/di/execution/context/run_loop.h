@@ -5,8 +5,10 @@
 #include <di/execution/concepts/receiver.h>
 #include <di/execution/concepts/receiver_of.h>
 #include <di/execution/interface/connect.h>
+#include <di/execution/interface/get_env.h>
 #include <di/execution/interface/start.h>
 #include <di/execution/query/get_completion_scheduler.h>
+#include <di/function/tag_invoke.h>
 #include <di/platform/prelude.h>
 #include <di/sync/dumb_spinlock.h>
 #include <di/sync/synchronized.h>
@@ -66,10 +68,16 @@ private:
                 return OperationState<Receiver> { self.parent, util::move(receiver) };
             }
 
-            template<typename CPO>
-            constexpr friend auto tag_invoke(GetCompletionScheduler<CPO>, Sender const& self) {
-                return Scheduler { self.parent };
-            }
+            struct Env {
+                RunLoop* parent;
+
+                template<typename CPO>
+                constexpr friend auto tag_invoke(GetCompletionScheduler<CPO>, Env const& self) {
+                    return Scheduler { self.parent };
+                }
+            };
+
+            constexpr friend auto tag_invoke(types::Tag<get_env>, Sender const& self) { return Env { self.parent }; }
         };
 
     public:

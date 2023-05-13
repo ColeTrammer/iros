@@ -4,8 +4,10 @@
 #include <di/execution/concepts/receiver.h>
 #include <di/execution/concepts/scheduler.h>
 #include <di/execution/interface/connect.h>
+#include <di/execution/interface/get_env.h>
 #include <di/execution/query/get_completion_scheduler.h>
 #include <di/execution/types/prelude.h>
+#include <di/function/tag_invoke.h>
 
 namespace di::execution {
 struct InlineScheduler {
@@ -38,10 +40,14 @@ private:
             return self.do_connect(util::move(receiver));
         }
 
-        template<typename CPO>
-        friend auto tag_invoke(GetCompletionScheduler<CPO>, Sender) {
-            return InlineScheduler {};
-        }
+        struct Env {
+            template<typename CPO>
+            friend auto tag_invoke(GetCompletionScheduler<CPO>, Env) {
+                return InlineScheduler {};
+            }
+        };
+
+        friend auto tag_invoke(types::Tag<get_env>, Sender) { return Env {}; }
     };
 
 public:

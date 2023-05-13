@@ -61,10 +61,8 @@ namespace into_variant_ns {
                                           Receiver<Value, Rec> { util::move(receiver) });
             }
 
-            template<concepts::ForwardingQuery Tag, typename... Args>
-            constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
-                -> meta::InvokeResult<Tag, Send const&, Args...> {
-                return tag(self.sender, util::forward<Args>(args)...);
+            constexpr friend decltype(auto) tag_invoke(types::Tag<get_env>, Type const& self) {
+                return get_env(self.sender);
             }
         };
     };

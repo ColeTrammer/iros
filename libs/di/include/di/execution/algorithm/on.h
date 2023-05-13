@@ -1,11 +1,13 @@
 #pragma once
 
 #include <di/execution/concepts/prelude.h>
+#include <di/execution/interface/get_env.h>
 #include <di/execution/interface/prelude.h>
 #include <di/execution/meta/prelude.h>
 #include <di/execution/query/prelude.h>
 #include <di/execution/receiver/prelude.h>
 #include <di/execution/types/prelude.h>
+#include <di/function/tag_invoke.h>
 #include <di/util/defer_construct.h>
 
 namespace di::execution {
@@ -144,10 +146,8 @@ namespace on_ns {
                 meta::MakeCompletionSignatures<meta::ScheduleResult<Sched>, E, CompletionSignatures<>,
                                                meta::Id<CompletionSignatures<>>::template Invoke>>;
 
-            template<concepts::ForwardingQuery Tag, typename... Args>
-            constexpr friend auto tag_invoke(Tag tag, Type const& self, Args&&... args)
-                -> meta::InvokeResult<Tag, Send const&, Args...> {
-                return tag(self.sender, util::forward<Args>(args)...);
+            constexpr friend decltype(auto) tag_invoke(types::Tag<get_env>, Type const& self) {
+                return get_env(self.sender);
             }
         };
     };
