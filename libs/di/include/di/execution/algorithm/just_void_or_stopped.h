@@ -9,7 +9,7 @@
 namespace di::execution {
 namespace just_void_or_stopped_ns {
     template<typename Rec>
-    class OperationStateT {
+    struct OperationStateT {
         struct Type {
         public:
             bool should_stop;

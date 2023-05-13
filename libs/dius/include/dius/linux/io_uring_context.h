@@ -7,6 +7,7 @@
 #include <di/execution/prelude.h>
 #include <di/function/prelude.h>
 #include <di/util/prelude.h>
+#include <di/vocab/optional/prelude.h>
 #include <dius/error.h>
 #include <dius/linux/io_uring.h>
 
@@ -496,7 +497,7 @@ template<di::concepts::Invocable<io_uring::SQE*> Fun>
 inline void enqueue_io_operation(IoUringContext* context, OperationStateBase* op, Fun&& function) {
     auto sqe = context->m_handle.get_next_sqe();
     ASSERT(sqe);
-    di::fill_n(reinterpret_cast<di::Byte*>(&sqe), sizeof(sqe), 0_b);
+    di::fill_n(reinterpret_cast<di::Byte*>(sqe.data()), sizeof(sqe), 0_b);
     di::invoke(di::forward<Fun>(function), sqe.data());
     sqe->user_data = reinterpret_cast<uintptr_t>(op);
 }

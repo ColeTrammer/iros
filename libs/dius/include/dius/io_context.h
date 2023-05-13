@@ -1,6 +1,9 @@
 #pragma once
 
 #include <di/container/intrusive/prelude.h>
+#include <di/execution/prelude.h>
+#include <di/function/prelude.h>
+#include <di/sync/prelude.h>
 #include <di/util/prelude.h>
 #include <dius/config.h>
 #include <dius/sync_file.h>
@@ -87,7 +90,7 @@ public:
                         auto result = self.offset ? sync_file.read_some(self.offset.value(), self.buffer)
                                                   : sync_file.read_some(self.buffer);
                         if (!result.has_value()) {
-                            execution::set_error(di::move(self.receiver), di::move(result).error());
+                            execution::set_error(di::move(self.receiver), di::Error(di::move(result).error()));
                         } else {
                             execution::set_value(di::move(self.receiver), di::move(result).value());
                         }
@@ -137,7 +140,7 @@ public:
                         auto result = self.offset ? sync_file.write_some(self.offset.value(), self.buffer)
                                                   : sync_file.write_some(self.buffer);
                         if (!result) {
-                            execution::set_error(di::move(self.receiver), di::move(result).error());
+                            execution::set_error(di::move(self.receiver), di::Error(di::move(result).error()));
                         } else {
                             execution::set_value(di::move(self.receiver), di::move(result).value());
                         }
@@ -235,7 +238,7 @@ private:
                     friend void tag_invoke(di::Tag<execution::start>, Type& self) {
                         auto result = open_sync(self.path, self.mode, self.create_mode);
                         if (!result) {
-                            execution::set_error(di::move(self.receiver), di::move(result).error());
+                            execution::set_error(di::move(self.receiver), di::Error(di::move(result).error()));
                         } else {
                             execution::set_value(di::move(self.receiver),
                                                  AsyncFile { self.parent, result->leak_file_descriptor() });
