@@ -25,19 +25,21 @@ add_custom_target(
     generate-initrd
     COMMAND mkdir -p "${CMAKE_BINARY_DIR}/initrd"
     COMMAND cd "${CMAKE_BINARY_DIR}/initrd"
-    COMMAND cp "${CMAKE_BINARY_DIR}/iris/test_userspace" .
-    COMMAND cp "${CMAKE_BINARY_DIR}/iris/test_create_task" .
-    COMMAND cp "${CMAKE_BINARY_DIR}/iris/test_read" .
-    COMMAND cp "${CMAKE_BINARY_DIR}/userland/shell/sh" .
-    COMMAND cp "${CMAKE_BINARY_DIR}/userland/tools/initrd" .
-    COMMAND cp "${CMAKE_BINARY_DIR}/userland/core/ls" .
-    COMMAND cp "${CMAKE_SOURCE_DIR}/iris/data.txt" .
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_BINARY_DIR}/iris/test_userspace" .
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_BINARY_DIR}/iris/test_create_task" .
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_BINARY_DIR}/iris/test_read" .
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_BINARY_DIR}/userland/shell/sh" .
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_BINARY_DIR}/userland/tools/initrd" .
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_BINARY_DIR}/userland/core/ls" .
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_BINARY_DIR}/userland/core/cp" .
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/iris/data.txt" .
     COMMAND mkdir -p "tmp"
     COMMAND rm -f "${CMAKE_BINARY_DIR}/initrd/initrd.bin"
     COMMAND ${INITRD_COMMAND}
     DEPENDS ${INITRD_TARGET}
             initrd
             ls
+            cp
             sh
             test_userspace
             test_create_task
