@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/execution/concepts/sender_of.h>
+#include <di/execution/receiver/set_value.h>
 #include <di/function/tag_invoke.h>
 #include <di/types/prelude.h>
 
@@ -8,7 +9,7 @@ namespace di::execution {
 namespace async_create_ns {
     struct InPlaceFunction {
         template<typename T, typename... Args>
-        concepts::SenderOf<types::NoEnv, T> auto operator()(InPlaceType<T>, Args&&... args) const
+        concepts::SenderOf<SetValue(T)> auto operator()(InPlaceType<T>, Args&&... args) const
         requires(requires { function::tag_invoke(*this, in_place_type<T>, util::forward<Args>(args)...); })
         {
             return function::tag_invoke(*this, in_place_type<T>, util::forward<Args>(args)...);

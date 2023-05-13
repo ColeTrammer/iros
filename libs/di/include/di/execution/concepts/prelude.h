@@ -14,7 +14,6 @@
 #include <di/execution/concepts/sender.h>
 #include <di/execution/concepts/sender_of.h>
 #include <di/execution/concepts/sender_to.h>
-#include <di/execution/concepts/sends_stop.h>
 #include <di/execution/concepts/single_sender.h>
 #include <di/execution/concepts/valid_completion_signatures.h>
 
@@ -25,5 +24,4 @@ using concepts::Scheduler;
 using concepts::Sender;
 using concepts::SenderOf;
 using concepts::SenderTo;
-using concepts::SendsStopped;
 }

@@ -1,5 +1,7 @@
 #include <di/concepts/prelude.h>
+#include <di/execution/meta/sends_stopped.h>
 #include <di/execution/prelude.h>
+#include <di/execution/receiver/prelude.h>
 #include <dius/test/prelude.h>
 
 namespace execution {
@@ -10,12 +12,12 @@ static void meta() {
     auto sender4 = di::execution::just_stopped();
 
     static_assert(di::SameAs<di::meta::ValueTypesOf<decltype(sender)>, di::Variant<di::Tuple<int>>>);
-    static_assert(di::concepts::SenderOf<decltype(sender), di::NoEnv, int>);
+    static_assert(di::concepts::SenderOf<decltype(sender), di::SetValue(int)>);
     static_assert(di::SameAs<di::meta::ValueTypesOf<decltype(sender2)>, di::Variant<di::Tuple<int, int>>>);
     static_assert(di::SameAs<di::meta::ValueTypesOf<decltype(sender3)>, di::meta::detail::EmptyVariant>);
     static_assert(di::SameAs<di::meta::ErrorTypesOf<decltype(sender3)>, di::Variant<int>>);
-    static_assert(!di::SendsStopped<decltype(sender3)>);
-    static_assert(di::SendsStopped<decltype(sender4)>);
+    static_assert(!di::meta::sends_stopped<decltype(sender3)>);
+    static_assert(di::meta::sends_stopped<decltype(sender4)>);
 
     static_assert(di::SameAs<di::meta::Unique<di::meta::List<int, short, int, int>>, di::meta::List<int, short>>);
 

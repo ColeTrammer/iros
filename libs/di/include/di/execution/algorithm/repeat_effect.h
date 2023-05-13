@@ -1,12 +1,13 @@
 #pragma once
 
 #include <di/execution/algorithm/repeat_effect_until.h>
+#include <di/execution/receiver/set_value.h>
 
 namespace di::execution {
 namespace repeat_effect_ns {
     struct Function : function::pipeline::EnablePipeline {
-        template<concepts::SenderOf<NoEnv> Send>
-        concepts::SenderOf<NoEnv> auto operator()(Send&& sender) const {
+        template<concepts::SenderOf<SetValue()> Send>
+        concepts::SenderOf<SetValue()> auto operator()(Send&& sender) const {
             if constexpr (concepts::TagInvocable<Function, Send>) {
                 return function::tag_invoke(*this, util::forward<Send>(sender));
             } else {

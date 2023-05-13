@@ -1,9 +1,9 @@
 #pragma once
 
 #include <di/execution/concepts/sender.h>
-#include <di/execution/concepts/sends_stop.h>
 #include <di/execution/concepts/valid_completion_signatures.h>
 #include <di/execution/meta/error_types_of.h>
+#include <di/execution/meta/sends_stopped.h>
 #include <di/execution/meta/value_types_of.h>
 
 namespace di::meta {
@@ -35,5 +35,5 @@ requires(concepts::Sender<Send, Env>)
 using MakeCompletionSignatures = Type<detail::MakeCompletionSignaturesHelper<
     ExtraSigs, meta::ValueTypesOf<Send, Env, SetValue, meta::List>,
     meta::Transform<meta::ErrorTypesOf<Send, Env, meta::List>, meta::Quote<SetError>>,
-    meta::Conditional<concepts::SendsStopped<Send, Env>, SetStopped, types::CompletionSignatures<>>>>;
+    meta::Conditional<meta::sends_stopped<Send, Env>, SetStopped, types::CompletionSignatures<>>>>;
 }
