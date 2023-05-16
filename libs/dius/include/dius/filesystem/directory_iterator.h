@@ -11,14 +11,14 @@
 namespace dius::filesystem {
 class DirectoryIterator
     : public di::container::IteratorBase<DirectoryIterator, di::InputIteratorTag,
-                                         di::Expected<DirectoryEntry, PosixCode>, i64>
+                                         di::Expected<DirectoryEntry, di::GenericCode>, i64>
     , public di::meta::EnableBorrowedContainer<DirectoryIterator>
     , public di::meta::EnableView<DirectoryIterator> {
     friend class RecursiveDirectoryIterator;
 
 public:
-    static di::Expected<DirectoryIterator, PosixCode> create(di::Path path,
-                                                             DirectoryOptions options = DirectoryOptions::None);
+    static di::Expected<DirectoryIterator, di::GenericCode> create(di::Path path,
+                                                                   DirectoryOptions options = DirectoryOptions::None);
 
     DirectoryIterator() = default;
 
@@ -28,7 +28,7 @@ public:
     DirectoryIterator& operator=(DirectoryIterator const&) = delete;
     DirectoryIterator& operator=(DirectoryIterator&&) = default;
 
-    di::Expected<DirectoryEntry const&, PosixCode> operator*() const {
+    di::Expected<DirectoryEntry const&, di::GenericCode> operator*() const {
         return m_current.transform([](auto const& value) {
             return di::cref(value);
         });
@@ -55,7 +55,7 @@ private:
     di::Path m_path;
     di::Vector<di::Byte> m_buffer;
     SyncFile m_directory_handle;
-    di::Expected<DirectoryEntry, PosixCode> m_current { di::unexpect, PosixError::Success };
+    di::Expected<DirectoryEntry, di::GenericCode> m_current { di::unexpect, PosixError::Success };
     usize m_current_offset { 0 };
     bool m_at_end { true };
 };

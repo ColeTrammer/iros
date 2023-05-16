@@ -16,13 +16,13 @@ di::Result<ProcessResult> Process::spawn_and_wait() && {
     auto result = posix_spawnp(&pid, null_terminated_args[0], nullptr, nullptr,
                                const_cast<char**>(null_terminated_args.data()), environ);
     if (result != 0) {
-        return di::Unexpected(dius::PosixError(result));
+        return di::Unexpected(di::BasicError(result));
     }
 
     auto status = 0;
     auto wait_result = waitpid(pid, &status, 0);
     if (wait_result == -1) {
-        return di::Unexpected(dius::PosixError(errno));
+        return di::Unexpected(di::BasicError(errno));
     }
     if (WIFEXITED(status)) {
         return ProcessResult { WEXITSTATUS(status), false };

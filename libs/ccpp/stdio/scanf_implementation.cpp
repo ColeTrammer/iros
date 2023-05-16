@@ -87,8 +87,8 @@ static bool is_valid_char_for_set(char c, char const* set, int set_end, bool inv
     return invert;
 }
 
-di::Expected<int, dius::PosixCode>
-scanf_implementation(di::FunctionRef<di::Expected<di::Optional<char>, dius::PosixCode>()> read_next, char const* format,
+di::Expected<int, di::GenericCode>
+scanf_implementation(di::FunctionRef<di::Expected<di::Optional<char>, di::GenericCode>()> read_next, char const* format,
                      va_list args) {
     void* state = nullptr;
     auto get_character = [&](void*) -> int {

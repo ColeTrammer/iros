@@ -8,12 +8,12 @@ namespace ccpp {
 extern "C" int vfprintf(FILE* __restrict file, char const* __restrict format, va_list args) {
     auto guard = di::ScopedLock(file->locked.get_lock());
     return STDIO_TRY(printf_implementation(
-        [&](di::TransparentStringView bytes) -> di::Expected<void, dius::PosixCode> {
+        [&](di::TransparentStringView bytes) -> di::Expected<void, di::GenericCode> {
             // Make sure to write the entire buffer.
             while (!bytes.empty()) {
                 auto result = fwrite_unlocked(bytes.data(), 1, bytes.size(), file);
                 if (result == 0) {
-                    return di::Unexpected(dius::PosixError(errno));
+                    return di::Unexpected(di::BasicError(errno));
                 }
                 bytes = bytes | di::drop(result);
             }

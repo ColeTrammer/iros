@@ -15,7 +15,7 @@ struct MallocAllocator {
 public:
     using Value = T;
 
-    di::Expected<di::container::Allocation<T>, dius::PosixCode> allocate(usize count) const {
+    di::Expected<di::container::Allocation<T>, di::GenericCode> allocate(usize count) const {
         auto* data = [&] {
             if constexpr (alignof(T) > 16) {
                 return aligned_alloc(alignof(T), count * sizeof(T));
@@ -24,7 +24,7 @@ public:
         }();
 
         if (!data) {
-            return di::Unexpected(dius::PosixError::NotEnoughMemory);
+            return di::Unexpected(di::BasicError::NotEnoughMemory);
         }
         return di::container::Allocation<T> { static_cast<T*>(data), count };
     }
@@ -97,23 +97,23 @@ struct File {
     inline bool readable() const { return read_write_mode == ReadWriteMode::Read; }
     inline bool writable() const { return read_write_mode == ReadWriteMode::Write; }
 
-    inline di::Expected<void, dius::PosixCode> mark_as_readable() {
+    inline di::Expected<void, di::GenericCode> mark_as_readable() {
         if (!(permissions & Permissions::Readable)) {
-            return di::Unexpected(dius::PosixError::BadFileDescriptor);
+            return di::Unexpected(di::BasicError::BadFileDescriptor);
         }
         if (read_write_mode == ReadWriteMode::Write) {
-            return di::Unexpected(dius::PosixError::BadFileDescriptor);
+            return di::Unexpected(di::BasicError::BadFileDescriptor);
         }
         read_write_mode = ReadWriteMode::Read;
         return {};
     }
 
-    inline di::Expected<void, dius::PosixCode> mark_as_writable() {
+    inline di::Expected<void, di::GenericCode> mark_as_writable() {
         if (!(permissions & Permissions::Writable)) {
-            return di::Unexpected(dius::PosixError::BadFileDescriptor);
+            return di::Unexpected(di::BasicError::BadFileDescriptor);
         }
         if (read_write_mode == ReadWriteMode::Read) {
-            return di::Unexpected(dius::PosixError::BadFileDescriptor);
+            return di::Unexpected(di::BasicError::BadFileDescriptor);
         }
         read_write_mode = ReadWriteMode::Write;
         return {};

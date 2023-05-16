@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.25.2)
 
 project(Dius CXX)
 
-add_library(dius di_assert_impl.cpp error.cpp sync_file.cpp test/test_manager.cpp)
+add_library(dius di_assert_impl.cpp sync_file.cpp test/test_manager.cpp)
 add_library(Dius::dius ALIAS dius)
 
 target_include_directories(

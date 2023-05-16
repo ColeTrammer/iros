@@ -14,7 +14,7 @@ extern "C" int vsnprintf(char* __restrict buffer, size_t size, char const* __res
     }
 
     return STDIO_TRY(printf_implementation(
-        [&](di::TransparentStringView bytes) -> di::Expected<void, dius::PosixCode> {
+        [&](di::TransparentStringView bytes) -> di::Expected<void, di::GenericCode> {
             if (size <= 1) {
                 return {};
             }

@@ -67,25 +67,26 @@ public:
         return m_fd;
     }
 
-    di::Expected<void, PosixCode> close();
+    di::Expected<void, di::GenericCode> close();
 
-    di::Expected<size_t, PosixCode> read_some(u64 offset, di::Span<di::Byte>) const;
-    di::Expected<size_t, PosixCode> read_some(di::Span<di::Byte>) const;
-    di::Expected<size_t, PosixCode> write_some(u64 offset, di::Span<di::Byte const>) const;
-    di::Expected<size_t, PosixCode> write_some(di::Span<di::Byte const>) const;
+    di::Expected<size_t, di::GenericCode> read_some(u64 offset, di::Span<di::Byte>) const;
+    di::Expected<size_t, di::GenericCode> read_some(di::Span<di::Byte>) const;
+    di::Expected<size_t, di::GenericCode> write_some(u64 offset, di::Span<di::Byte const>) const;
+    di::Expected<size_t, di::GenericCode> write_some(di::Span<di::Byte const>) const;
 
-    di::Expected<void, PosixCode> read_exactly(u64 offset, di::Span<di::Byte>) const;
-    di::Expected<void, PosixCode> read_exactly(di::Span<di::Byte>) const;
-    di::Expected<void, PosixCode> write_exactly(u64 offset, di::Span<di::Byte const>) const;
-    di::Expected<void, PosixCode> write_exactly(di::Span<di::Byte const>) const;
+    di::Expected<void, di::GenericCode> read_exactly(u64 offset, di::Span<di::Byte>) const;
+    di::Expected<void, di::GenericCode> read_exactly(di::Span<di::Byte>) const;
+    di::Expected<void, di::GenericCode> write_exactly(u64 offset, di::Span<di::Byte const>) const;
+    di::Expected<void, di::GenericCode> write_exactly(di::Span<di::Byte const>) const;
 
-    di::Expected<void, PosixCode> resize_file(u64 new_size) const;
+    di::Expected<void, di::GenericCode> resize_file(u64 new_size) const;
 
 #ifdef DIUS_PLATFORM_LINUX
-    di::Expected<MemoryRegion, PosixCode> map(u64 offset, size_t size, Protection protection, MapFlags flags) const;
+    di::Expected<MemoryRegion, di::GenericCode> map(u64 offset, size_t size, Protection protection,
+                                                    MapFlags flags) const;
 #endif
 
-    di::Expected<void, PosixCode> flush() const { return {}; }
+    di::Expected<void, di::GenericCode> flush() const { return {}; }
 
     bool interactive_device() const { return true; }
 
@@ -96,8 +97,8 @@ private:
 
 enum class OpenMode { Readonly, WriteNew, WriteClobber, ReadWrite, AppendOnly, ReadWriteClobber, AppendReadWrite };
 
-di::Expected<SyncFile, PosixCode> open_sync(di::PathView path, OpenMode open_mode, u16 create_mode = 0666);
-di::Expected<SyncFile, PosixCode> open_tempory_file();
+di::Expected<SyncFile, di::GenericCode> open_sync(di::PathView path, OpenMode open_mode, u16 create_mode = 0666);
+di::Expected<SyncFile, di::GenericCode> open_tempory_file();
 di::Result<di::String> read_to_string(di::PathView path);
 
 inline auto stdin = SyncFile { SyncFile::Owned::No, 0 };

@@ -1,11 +1,14 @@
 #pragma once
 
+namespace di::platform {
+class GenericDomain;
+}
+
 namespace di::vocab {
 class StatusCodeDomain;
-class GenericDomain;
 
 template<typename Domain>
 class StatusCode;
 
-using GenericCode = StatusCode<GenericDomain>;
+using GenericCode = StatusCode<platform::GenericDomain>;
 }

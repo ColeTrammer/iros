@@ -21,14 +21,14 @@ struct [[gnu::packed]] Dirent {
     char const* name() const { return reinterpret_cast<char const*>(this + 1); }
 };
 
-static di::Expected<usize, PosixCode> sys_getdents64(int fd, void* buffer, usize nbytes) {
+static di::Expected<usize, di::GenericCode> sys_getdents64(int fd, void* buffer, usize nbytes) {
     return system::system_call<usize>(system::Number::getdents64, fd, buffer, nbytes);
 }
 }
 
 namespace dius::filesystem {
 
-di::Expected<DirectoryIterator, PosixCode> DirectoryIterator::create(di::Path path, DirectoryOptions options) {
+di::Expected<DirectoryIterator, di::GenericCode> DirectoryIterator::create(di::Path path, DirectoryOptions options) {
     // FIXME: handle the directory options.
     (void) options;
     auto file_handle = TRY(open_sync(path, OpenMode::Readonly));

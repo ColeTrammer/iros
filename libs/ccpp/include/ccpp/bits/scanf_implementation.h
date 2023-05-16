@@ -5,7 +5,7 @@
 #include <stdarg.h>
 
 namespace ccpp {
-di::Expected<int, dius::PosixCode>
-scanf_implementation(di::FunctionRef<di::Expected<di::Optional<char>, dius::PosixCode>()> read_next, char const* format,
+di::Expected<int, di::GenericCode>
+scanf_implementation(di::FunctionRef<di::Expected<di::Optional<char>, di::GenericCode>()> read_next, char const* format,
                      va_list args);
 }

@@ -6,7 +6,7 @@
 namespace dius::filesystem {
 class RecursiveDirectoryIterator
     : public di::container::IteratorBase<RecursiveDirectoryIterator, di::InputIteratorTag,
-                                         di::Expected<DirectoryEntry, PosixCode>, i64>
+                                         di::Expected<DirectoryEntry, di::GenericCode>, i64>
     , public di::meta::EnableBorrowedContainer<RecursiveDirectoryIterator>
     , public di::meta::EnableView<RecursiveDirectoryIterator> {
 public:
@@ -29,7 +29,7 @@ public:
     RecursiveDirectoryIterator& operator=(RecursiveDirectoryIterator const&) = delete;
     RecursiveDirectoryIterator& operator=(RecursiveDirectoryIterator&&) = default;
 
-    di::Expected<DirectoryEntry const&, PosixCode> operator*() const { return **m_stack.top(); }
+    di::Expected<DirectoryEntry const&, di::GenericCode> operator*() const { return **m_stack.top(); }
 
     RecursiveDirectoryIterator begin() { return di::move(*this); }
     RecursiveDirectoryIterator end() const { return {}; }

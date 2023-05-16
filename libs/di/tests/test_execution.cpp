@@ -112,7 +112,7 @@ static void coroutine() {
         co_await ex::just_stopped();
         co_return 56;
     };
-    ASSERT_EQ(di::sync_wait(stopped()), di::Unexpected(di::BasicError::Cancelled));
+    ASSERT_EQ(di::sync_wait(stopped()), di::Unexpected(di::BasicError::OperationCanceled));
 }
 
 static void then() {

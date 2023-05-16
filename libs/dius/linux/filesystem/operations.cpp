@@ -13,7 +13,7 @@
 
 namespace dius::filesystem {
 namespace linux {
-    static di::Expected<int, PosixCode> mknod(di::PathView path, FileType type, Perms perms) {
+    static di::Expected<int, di::GenericCode> mknod(di::PathView path, FileType type, Perms perms) {
         auto raw_data = path.data();
         char null_terminated_string[4097];
         ASSERT_LT(raw_data.size(), sizeof(null_terminated_string) - 1);
@@ -25,7 +25,7 @@ namespace linux {
                                         static_cast<u32>(perms) | static_cast<u32>(type), 0);
     }
 
-    static di::Expected<int, PosixCode> mkdir(di::PathView path, Perms perms) {
+    static di::Expected<int, di::GenericCode> mkdir(di::PathView path, Perms perms) {
         auto raw_data = path.data();
         char null_terminated_string[4097];
         ASSERT_LT(raw_data.size(), sizeof(null_terminated_string) - 1);

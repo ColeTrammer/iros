@@ -7,7 +7,7 @@ namespace ccpp {
 // https://pubs.opengroup.org/onlinepubs/9699919799/functions/vsscanf.html
 extern "C" int vsscanf(char const* __restrict buffer, char const* __restrict format, va_list args) {
     return STDIO_TRY(scanf_implementation(
-        [&]() -> di::Expected<di::Optional<char>, dius::PosixCode> {
+        [&]() -> di::Expected<di::Optional<char>, di::GenericCode> {
             if (*buffer == '\0') {
                 return di::nullopt;
             }

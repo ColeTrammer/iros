@@ -8,11 +8,11 @@ namespace ccpp {
 extern "C" int vfscanf(FILE* __restrict file, char const* __restrict format, va_list args) {
     auto guard = di::ScopedLock(file->locked.get_lock());
     return STDIO_TRY(scanf_implementation(
-        [&]() -> di::Expected<di::Optional<char>, dius::PosixCode> {
+        [&]() -> di::Expected<di::Optional<char>, di::GenericCode> {
             auto ch = fgetc_unlocked(file);
             if (ch == EOF) {
                 if (file->get_unlocked().has_error()) {
-                    return di::Unexpected(dius::PosixError(errno));
+                    return di::Unexpected(di::BasicError(errno));
                 }
                 return di::nullopt;
             }

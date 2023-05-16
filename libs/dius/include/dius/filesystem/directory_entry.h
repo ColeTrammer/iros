@@ -110,13 +110,13 @@ private:
     explicit DirectoryEntry(di::Path&& path, FileType cached_type)
         : m_path(di::move(path)), m_cached_type(cached_type) {}
 
-    di::Expected<bool, PosixCode> is_non_symlink_directory() const {
+    di::Expected<bool, di::GenericCode> is_non_symlink_directory() const {
         if (m_cached_type != FileType::Unknown) {
             return m_cached_type == FileType::Directory;
         }
         // FIXME: this cast seems extremely dubious, and most likely
         //        is not performing the intended behavior.
-        return di::Expected<bool, PosixCode>(is_directory());
+        return di::Expected<bool, di::GenericCode>(is_directory());
     }
 
     constexpr bool has_cached_type() const {

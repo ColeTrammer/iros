@@ -54,7 +54,7 @@ namespace sync_wait_ns {
                 self.m_context->finish();
             }
             friend void tag_invoke(SetStopped, Type&& self) {
-                *self.m_result = Unexpected(BasicError::Cancelled);
+                *self.m_result = Unexpected(BasicError::OperationCanceled);
                 self.m_context->finish();
             }
 

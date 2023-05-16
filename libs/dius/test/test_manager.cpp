@@ -94,7 +94,7 @@ di::Result<void> TestManager::run_tests(Args& args) {
 
     if (m_test_cases.empty() && (suite_name || case_name)) {
         dius::eprintln("No test cases match filter: [suite={}] [case={}]"_sv, suite_name, case_name);
-        return di::Unexpected(dius::PosixError::InvalidArgument);
+        return di::Unexpected(di::BasicError::InvalidArgument);
     }
 
     if (list_simple) {

@@ -6,13 +6,13 @@
 #include <iris/uapi/directory.h>
 
 namespace dius::iros {
-static di::Expected<usize, PosixCode> sys_read_directory(int fd, void* buffer, usize nbytes) {
+static di::Expected<usize, di::GenericCode> sys_read_directory(int fd, void* buffer, usize nbytes) {
     return system::system_call<usize>(system::Number::read_directory, fd, buffer, nbytes);
 }
 }
 
 namespace dius::filesystem {
-di::Expected<DirectoryIterator, PosixCode> DirectoryIterator::create(di::Path path, DirectoryOptions options) {
+di::Expected<DirectoryIterator, di::GenericCode> DirectoryIterator::create(di::Path path, DirectoryOptions options) {
     // FIXME: handle the directory options.
     (void) options;
 

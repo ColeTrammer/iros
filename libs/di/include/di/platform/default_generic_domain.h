@@ -5,7 +5,7 @@
 #include <di/vocab/error/status_code.h>
 #include <di/vocab/error/status_code_domain.h>
 
-namespace di::vocab {
+namespace di::platform {
 inline namespace generic_error {
     enum class BasicError : long {
         Success = 0,
@@ -16,7 +16,7 @@ inline namespace generic_error {
     };
 }
 
-class GenericDomain final : public StatusCodeDomain {
+class GenericDomain final : public vocab::StatusCodeDomain {
 private:
     using Base = StatusCodeDomain;
 
@@ -42,26 +42,27 @@ public:
     }
 
 protected:
-    constexpr virtual bool do_failure(StatusCode<void> const& code) const override {
+    constexpr virtual bool do_failure(vocab::StatusCode<void> const& code) const override {
         return down_cast(code).value() != BasicError::Success;
     }
 
-    constexpr virtual bool do_equivalent(StatusCode<void> const& a, StatusCode<void> const& b) const override {
+    constexpr virtual bool do_equivalent(vocab::StatusCode<void> const& a,
+                                         vocab::StatusCode<void> const& b) const override {
         DI_ASSERT(a.domain() == *this);
         return b.domain() == *this && down_cast(a).value() == down_cast(b).value();
     }
 
-    constexpr virtual container::ErasedString do_message(StatusCode<void> const& code) const override {
+    constexpr virtual container::ErasedString do_message(vocab::StatusCode<void> const& code) const override {
         auto value = down_cast(code).value();
         switch (value) {
             case BasicError::Success:
                 return container::ErasedString(u8"Success");
             case BasicError::NotEnoughMemory:
-                return container::ErasedString(u8"Not Enough Memory");
+                return container::ErasedString(u8"Not enough memory");
             case BasicError::ResultOutOfRange:
-                return container::ErasedString(u8"Result Out of Range");
+                return container::ErasedString(u8"Result out of range");
             case BasicError::InvalidArgument:
-                return container::ErasedString(u8"Invalid Argument");
+                return container::ErasedString(u8"Invalid argument");
             default:
                 return container::ErasedString(u8"Unknown");
         }
@@ -71,15 +72,15 @@ private:
     template<typename Domain>
     friend class StatusCode;
 
-    constexpr GenericCode const& down_cast(StatusCode<void> const& code) const {
+    constexpr vocab::GenericCode const& down_cast(vocab::StatusCode<void> const& code) const {
         DI_ASSERT(code.domain() == *this);
-        return static_cast<GenericCode const&>(code);
+        return static_cast<vocab::GenericCode const&>(code);
     }
 };
 
 inline namespace generic_error {
-    constexpr auto tag_invoke(types::Tag<into_status_code>, BasicError error) {
-        return GenericCode(in_place, error);
+    constexpr auto tag_invoke(types::Tag<vocab::into_status_code>, BasicError error) {
+        return vocab::GenericCode(in_place, error);
     }
 }
 

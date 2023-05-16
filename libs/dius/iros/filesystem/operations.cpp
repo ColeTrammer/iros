@@ -3,7 +3,7 @@
 
 namespace dius::filesystem {
 namespace iros {
-    static di::Expected<int, PosixCode> create_node(di::PathView path, FileType type, Perms) {
+    static di::Expected<int, di::GenericCode> create_node(di::PathView path, FileType type, Perms) {
         return system::system_call<int>(system::Number::create_node, path.data().data(), path.data().size(),
                                         static_cast<u32>(type));
     }

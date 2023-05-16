@@ -3,9 +3,9 @@
 #include <di/container/allocator/allocation.h>
 #include <di/container/allocator/allocator.h>
 #include <di/container/allocator/std_allocator.h>
+#include <di/platform/prelude.h>
 #include <di/types/prelude.h>
 #include <di/util/std_new.h>
-#include <di/vocab/error/generic_domain.h>
 #include <di/vocab/expected/prelude.h>
 
 namespace di::container {
@@ -21,7 +21,7 @@ public:
             auto* data = ::operator new(
                 sizeof(T) * count, std::align_val_t { di::container::max(alignof(T), alignof(void*)) }, std::nothrow);
             if (!data) {
-                return vocab::Unexpected(vocab::BasicError::NotEnoughMemory);
+                return vocab::Unexpected(BasicError::NotEnoughMemory);
             }
             return Allocation<T> { static_cast<T*>(data), count };
         }

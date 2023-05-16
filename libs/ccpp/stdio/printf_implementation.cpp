@@ -18,8 +18,8 @@ static int parseInt(char const* num, size_t length) {
     return n;
 }
 
-di::Expected<int, dius::PosixCode>
-printf_implementation(di::FunctionRef<di::Expected<void, dius::PosixCode>(di::TransparentStringView)> write_exactly,
+di::Expected<int, di::GenericCode>
+printf_implementation(di::FunctionRef<di::Expected<void, di::GenericCode>(di::TransparentStringView)> write_exactly,
                       char const* format, va_list args) {
     int written = 0;
 

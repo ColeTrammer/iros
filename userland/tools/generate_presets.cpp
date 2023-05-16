@@ -253,7 +253,7 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "hidden": true,
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
-                "IROS_SanitizeFlags": "-fsanitize=thread -DDI_SANITIZER"
+                "IROS_SanitizerFlags": "-fsanitize=thread -DDI_SANITIZER"
             }
         },
         {
@@ -261,7 +261,7 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "hidden": true,
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
-                "IROS_SanitizeFlags": "-fsanitize=address -DDI_SANITIZER"
+                "IROS_SanitizerFlags": "-fsanitize=address -DDI_SANITIZER"
             }
         },
         {
@@ -269,7 +269,7 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "hidden": true,
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
-                "IROS_SanitizeFlags": "-fsanitize=undefined -DDI_SANITIZER"
+                "IROS_SanitizerFlags": "-fsanitize=undefined -DDI_SANITIZER"
             }
         },
         {
@@ -277,7 +277,7 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "hidden": true,
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
-                "IROS_SanitizeFlags": "-fsanitize=memory -DDI_SANITIZER"
+                "IROS_SanitizerFlags": "-fsanitize=memory -DDI_SANITIZER"
             }
         },
         {
@@ -285,7 +285,7 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             "hidden": true,
             "cacheVariables": {
                 "IROS_BuildCcpp": "OFF",
-                "IROS_SanitizeFlags": "-fsanitize=address,undefined -DDI_SANITIZER"
+                "IROS_SanitizerFlags": "-fsanitize=address,undefined -DDI_SANITIZER"
             }
         },
         {
