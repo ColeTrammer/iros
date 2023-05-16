@@ -9,9 +9,9 @@ namespace di::vocab {
 inline namespace generic_error {
     enum class BasicError : long {
         Success = 0,
-        FailedAllocation,
-        OutOfRange,
-        Invalid,
+        NotEnoughMemory,
+        ResultOutOfRange,
+        InvalidArgument,
         Cancelled,
     };
 }
@@ -56,12 +56,12 @@ protected:
         switch (value) {
             case BasicError::Success:
                 return container::ErasedString(u8"Success");
-            case BasicError::FailedAllocation:
-                return container::ErasedString(u8"Allocation Failed");
-            case BasicError::OutOfRange:
-                return container::ErasedString(u8"Out of Range");
-            case BasicError::Invalid:
-                return container::ErasedString(u8"Invalid");
+            case BasicError::NotEnoughMemory:
+                return container::ErasedString(u8"Not Enough Memory");
+            case BasicError::ResultOutOfRange:
+                return container::ErasedString(u8"Result Out of Range");
+            case BasicError::InvalidArgument:
+                return container::ErasedString(u8"Invalid Argument");
             default:
                 return container::ErasedString(u8"Unknown");
         }

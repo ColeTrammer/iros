@@ -25,7 +25,7 @@ public:
 
     constexpr auto encoding() const { return m_encoding; }
     constexpr auto advance(Iter it) { m_iterator = it; }
-    constexpr auto make_error() { return Error { BasicError::Invalid }; }
+    constexpr auto make_error() { return Error { BasicError::InvalidArgument }; }
 
 private:
     template<typename Iter, typename Sent>

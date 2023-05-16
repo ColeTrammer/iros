@@ -25,7 +25,7 @@ namespace async_read_exactly_ns {
                                return execution::async_read_some(handle, buffer, offset) |
                                       execution::then([&buffer, &offset, &should_stop](size_t nread) -> Result<void> {
                                           if (nread == 0) {
-                                              return Unexpected(BasicError::OutOfRange);
+                                              return Unexpected(BasicError::ResultOutOfRange);
                                           }
                                           buffer = *buffer.subspan(nread);
                                           if (offset) {

@@ -21,7 +21,7 @@ public:
             auto* data = ::operator new(
                 sizeof(T) * count, std::align_val_t { di::container::max(alignof(T), alignof(void*)) }, std::nothrow);
             if (!data) {
-                return vocab::Unexpected(vocab::BasicError::FailedAllocation);
+                return vocab::Unexpected(vocab::BasicError::NotEnoughMemory);
             }
             return Allocation<T> { static_cast<T*>(data), count };
         }

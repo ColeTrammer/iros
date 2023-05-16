@@ -46,7 +46,7 @@ namespace detail {
             using namespace di::string_literals;
 
             if (args.empty()) {
-                return Unexpected(BasicError::Invalid);
+                return Unexpected(BasicError::InvalidArgument);
             }
             args = *args.subspan(1);
 
@@ -81,7 +81,7 @@ namespace detail {
                     for (usize char_index = 1; char_index < arg.size(); char_index++) {
                         auto index = lookup_short_name(arg[char_index]);
                         if (!index) {
-                            return Unexpected(BasicError::Invalid);
+                            return Unexpected(BasicError::InvalidArgument);
                         }
 
                         // Parse boolean flag.
@@ -99,7 +99,7 @@ namespace detail {
 
                         // Fail if the is no subsequent arguments left.
                         if (i + 1 >= args.size()) {
-                            return Unexpected(BasicError::Invalid);
+                            return Unexpected(BasicError::InvalidArgument);
                         }
 
                         // Use the next argument as the value.
@@ -122,12 +122,12 @@ namespace detail {
 
                 auto index = lookup_long_name(name);
                 if (!index) {
-                    return Unexpected(BasicError::Invalid);
+                    return Unexpected(BasicError::InvalidArgument);
                 }
 
                 if (option_boolean(*index)) {
                     if (equal) {
-                        return Unexpected(BasicError::Invalid);
+                        return Unexpected(BasicError::InvalidArgument);
                     }
                     DI_TRY(option_parse(*index, seen_arguments, &result, {}));
                     send_arg_to_back(arg_index);
@@ -136,7 +136,7 @@ namespace detail {
 
                 auto value = ""_tsv;
                 if (!equal && i + 1 >= args.size()) {
-                    return Unexpected(BasicError::Invalid);
+                    return Unexpected(BasicError::InvalidArgument);
                 } else if (!equal) {
                     value = args[arg_index + 1];
                     send_arg_to_back(arg_index);
@@ -153,14 +153,14 @@ namespace detail {
             // Validate all required arguments were processed.
             for (usize i = 0; i < sizeof...(Options); i++) {
                 if (!seen_arguments[i] && option_required(i)) {
-                    return Unexpected(BasicError::Invalid);
+                    return Unexpected(BasicError::InvalidArgument);
                 }
             }
 
             // All the positional arguments are now at the front of the array.
             auto positional_arguments = *args.subspan(0, args.size() - count_option_processed);
             if (positional_arguments.size() < minimum_required_argument_count()) {
-                return Unexpected(BasicError::Invalid);
+                return Unexpected(BasicError::InvalidArgument);
             }
 
             auto argument_index = usize(0);

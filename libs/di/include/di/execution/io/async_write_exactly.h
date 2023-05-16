@@ -25,7 +25,7 @@ namespace async_write_exactly_ns {
                            return execution::async_write_some(handle, buffer, offset) |
                                   execution::then([&buffer, &offset, &should_stop](size_t nwritten) -> Result<void> {
                                       if (nwritten == 0) {
-                                          return Unexpected(BasicError::OutOfRange);
+                                          return Unexpected(BasicError::ResultOutOfRange);
                                       }
                                       buffer = *buffer.subspan(nwritten);
                                       if (offset) {

@@ -62,7 +62,7 @@ public:
             DI_TRY(skip_whitespace());
             auto code_point = DI_TRY(peek_next_code_point());
             if (!code_point) {
-                return vocab::Unexpected(vocab::BasicError::Invalid);
+                return vocab::Unexpected(vocab::BasicError::InvalidArgument);
             }
             if (*code_point == U'}') {
                 break;
@@ -91,7 +91,7 @@ public:
                 },
                 fields));
             if (!found) {
-                return vocab::Unexpected(vocab::BasicError::Invalid);
+                return vocab::Unexpected(vocab::BasicError::InvalidArgument);
             }
         }
 
@@ -118,7 +118,7 @@ public:
             enumerators);
 
         if (!found) {
-            return vocab::Unexpected(vocab::BasicError::Invalid);
+            return vocab::Unexpected(vocab::BasicError::InvalidArgument);
         }
         return result;
     }
@@ -153,7 +153,7 @@ public:
             DI_TRY(skip_whitespace());
             auto code_point = DI_TRY(peek_next_code_point());
             if (!code_point) {
-                return vocab::Unexpected(vocab::BasicError::Invalid);
+                return vocab::Unexpected(vocab::BasicError::InvalidArgument);
             }
             if (*code_point == U']') {
                 break;
@@ -182,7 +182,7 @@ public:
             DI_TRY(skip_whitespace());
             auto code_point = DI_TRY(peek_next_code_point());
             if (!code_point) {
-                return vocab::Unexpected(vocab::BasicError::Invalid);
+                return vocab::Unexpected(vocab::BasicError::InvalidArgument);
             }
             if (*code_point == U'}') {
                 break;
@@ -221,7 +221,7 @@ private:
     constexpr Result<void> expect(c32 expected) {
         auto code_point = DI_TRY(next_code_point());
         if (!code_point || *code_point != expected) {
-            return vocab::Unexpected(vocab::BasicError::Invalid);
+            return vocab::Unexpected(vocab::BasicError::InvalidArgument);
         }
         return {};
     }
@@ -268,7 +268,7 @@ private:
     constexpr Result<c32> require_next_code_point() {
         auto code_point = DI_TRY(next_code_point());
         if (!code_point) {
-            return vocab::Unexpected(vocab::BasicError::Invalid);
+            return vocab::Unexpected(vocab::BasicError::InvalidArgument);
         }
         return *code_point;
     }
@@ -288,7 +288,7 @@ private:
 
         auto code_point = DI_TRY(peek_next_code_point());
         if (!code_point) {
-            return vocab::Unexpected(vocab::BasicError::Invalid);
+            return vocab::Unexpected(vocab::BasicError::InvalidArgument);
         }
 
         switch (*code_point) {
@@ -317,7 +317,7 @@ private:
             case U'[':
                 return deserialize_array();
             default:
-                return vocab::Unexpected(vocab::BasicError::Invalid);
+                return vocab::Unexpected(vocab::BasicError::InvalidArgument);
         }
     }
 
@@ -348,7 +348,7 @@ private:
                 DI_TRY(expect(U'e'));
                 return false;
             default:
-                return vocab::Unexpected(vocab::BasicError::Invalid);
+                return vocab::Unexpected(vocab::BasicError::InvalidArgument);
         }
     }
 
@@ -379,7 +379,7 @@ private:
         for (;;) {
             auto code_point = DI_TRY(next_code_point());
             if (!code_point || *code_point < 0x20) {
-                return vocab::Unexpected(vocab::BasicError::Invalid);
+                return vocab::Unexpected(vocab::BasicError::InvalidArgument);
             }
             if (*code_point == U'"') {
                 break;
@@ -400,7 +400,7 @@ private:
             string.push_back(first_code_point);
             first_code_point = DI_TRY(require_next_code_point());
             if (first_code_point < U'0' || first_code_point > U'9') {
-                return vocab::Unexpected(vocab::BasicError::Invalid);
+                return vocab::Unexpected(vocab::BasicError::InvalidArgument);
             }
         }
         if (first_code_point == U'0') {
@@ -426,7 +426,7 @@ private:
         // FIXME: handle decimal point and exponent for floating point numbers.
         auto result = parser::parse<T>(string);
         if (!result) {
-            return vocab::Unexpected(vocab::BasicError::Invalid);
+            return vocab::Unexpected(vocab::BasicError::InvalidArgument);
         }
         return *result;
     }
@@ -440,7 +440,7 @@ private:
             DI_TRY(skip_whitespace());
             auto code_point = DI_TRY(peek_next_code_point());
             if (!code_point) {
-                return vocab::Unexpected(vocab::BasicError::Invalid);
+                return vocab::Unexpected(vocab::BasicError::InvalidArgument);
             }
             if (*code_point == U']') {
                 break;
@@ -464,7 +464,7 @@ private:
             DI_TRY(skip_whitespace());
             auto code_point = DI_TRY(peek_next_code_point());
             if (!code_point) {
-                return vocab::Unexpected(vocab::BasicError::Invalid);
+                return vocab::Unexpected(vocab::BasicError::InvalidArgument);
             }
             if (*code_point == U'}') {
                 break;

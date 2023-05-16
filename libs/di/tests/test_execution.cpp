@@ -103,10 +103,10 @@ static void coroutine() {
     ASSERT_EQ(di::sync_wait(task()), 42);
 
     constexpr static auto error = [] -> di::Lazy<i32> {
-        co_await ex::just_error(di::BasicError::Invalid);
+        co_await ex::just_error(di::BasicError::InvalidArgument);
         co_return 56;
     };
-    ASSERT_EQ(di::sync_wait(error()), di::Unexpected(di::BasicError::Invalid));
+    ASSERT_EQ(di::sync_wait(error()), di::Unexpected(di::BasicError::InvalidArgument));
 
     constexpr static auto stopped = [] -> di::Lazy<i32> {
         co_await ex::just_stopped();
@@ -186,13 +186,13 @@ static void let() {
     ASSERT_EQ(ex::sync_wait(di::move(z)), 44);
 
     auto y = ex::schedule(scheduler) | ex::let_value([] {
-                 return ex::just_error(di::BasicError::Invalid);
+                 return ex::just_error(di::BasicError::InvalidArgument);
              }) |
              ex::let_error([](auto) {
                  return ex::just(42);
              }) |
              ex::let_value([](auto) {
-                 return ex::just_error(di::BasicError::Invalid);
+                 return ex::just_error(di::BasicError::InvalidArgument);
              }) |
              ex::let_error([](auto) {
                  return ex::just_stopped();

@@ -142,7 +142,7 @@ di::Result<FSNode&> find_parent(FSNode& root, di::PathView path) {
     }
 
     dius::eprintln("Could not find path {} in directory tree."_sv, path);
-    return di::Unexpected(di::BasicError::Invalid);
+    return di::Unexpected(di::BasicError::InvalidArgument);
 }
 
 di::Result<void> main(Args& args) {
@@ -156,7 +156,7 @@ di::Result<void> main(Args& args) {
         auto is_invalid = TRY(entry.is_symlink()) || TRY(entry.is_other());
         if (is_invalid) {
             dius::eprintln("Cannot create initrd consisting of irregular file: {}"_sv, entry);
-            return di::Unexpected(di::BasicError::Invalid);
+            return di::Unexpected(di::BasicError::InvalidArgument);
         }
 
         auto is_directory = TRY(entry.is_directory());

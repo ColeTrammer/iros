@@ -313,7 +313,7 @@ namespace function_ns {
         Result<void> init_out_of_line_fallible(Args&&... args) {
             auto* pointer = new (std::nothrow) T(util::forward<Args>(args)...);
             if (!pointer) {
-                return Unexpected(BasicError::FailedAllocation);
+                return Unexpected(BasicError::NotEnoughMemory);
             }
             m_thunk = &concrete_thunk<T>;
             m_storage.pointer = pointer;

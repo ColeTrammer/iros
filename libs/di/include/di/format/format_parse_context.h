@@ -62,7 +62,7 @@ public:
 
                 // Unclosed '{'.
                 if (m_position == m_data.end()) {
-                    return set_error(BasicError::Invalid);
+                    return set_error(BasicError::InvalidArgument);
                 }
 
                 // Escaped '{'.
@@ -83,7 +83,7 @@ public:
                 }
 
                 if (left_brace_count > 0) {
-                    return set_error(BasicError::Invalid);
+                    return set_error(BasicError::InvalidArgument);
                 }
 
                 auto inside_view = m_data.substr(container::next(start), container::prev(m_position));
@@ -118,7 +118,7 @@ public:
 
                 // At this point, the inside view must either be empty or begin with a ':'.
                 if (!inside_view.empty() && !inside_view.starts_with(CodePoint(':'))) {
-                    return set_error(BasicError::Invalid);
+                    return set_error(BasicError::InvalidArgument);
                 }
 
                 // Skip over colon.
@@ -137,7 +137,7 @@ public:
 
                 // Unclosed '}'.
                 if (m_position == m_data.end() || *m_position != CodePoint('}')) {
-                    return set_error(BasicError::Invalid);
+                    return set_error(BasicError::InvalidArgument);
                 }
 
                 set_value(m_data.substr(start, m_position));
@@ -191,25 +191,25 @@ public:
 
     constexpr Result<size_t> next_arg_index() {
         if (m_indexing_mode == IndexingMode::Manual) {
-            return Unexpected(BasicError::Invalid);
+            return Unexpected(BasicError::InvalidArgument);
         }
         m_indexing_mode = IndexingMode::Automatic;
 
         auto index = m_next_arg_index++;
         if (index >= m_arg_count) {
-            return Unexpected(BasicError::Invalid);
+            return Unexpected(BasicError::InvalidArgument);
         }
         return index;
     }
 
     constexpr Result<void> check_arg_index(size_t index) {
         if (m_indexing_mode == IndexingMode::Automatic) {
-            return Unexpected(BasicError::Invalid);
+            return Unexpected(BasicError::InvalidArgument);
         }
         m_indexing_mode = IndexingMode::Manual;
 
         if (index >= m_arg_count) {
-            return Unexpected(BasicError::Invalid);
+            return Unexpected(BasicError::InvalidArgument);
         }
         return {};
     }

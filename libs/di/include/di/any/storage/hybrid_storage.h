@@ -56,7 +56,7 @@ public:
     constexpr static auto init(HybridStorage* self, InPlaceType<T>, Args&&... args) {
         if constexpr (creation_is_fallible(in_place_type<T>)) {
             if (!(self->m_pointer = new (std::nothrow) T(util::forward<Args>(args)...))) {
-                return Result<void>(Unexpected(BasicError::FailedAllocation));
+                return Result<void>(Unexpected(BasicError::NotEnoughMemory));
             }
             return Result<void>();
         } else {
