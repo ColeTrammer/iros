@@ -52,6 +52,11 @@ protected:
         return b.domain() == *this && down_cast(a).value() == down_cast(b).value();
     }
 
+    constexpr virtual vocab::GenericCode do_convert_to_generic(vocab::StatusCode<void> const& a) const override {
+        DI_ASSERT(a.domain() == *this);
+        return vocab::GenericCode(di::in_place, down_cast(a).value());
+    }
+
     constexpr virtual container::ErasedString do_message(vocab::StatusCode<void> const& code) const override {
         auto value = down_cast(code).value();
         switch (value) {
@@ -100,5 +105,14 @@ constexpr inline auto generic_domain = GenericDomain {};
 
 constexpr inline GenericDomain const& GenericDomain::get() {
     return generic_domain;
+}
+}
+
+namespace di::vocab {
+constexpr GenericCode StatusCode<void>::generic_code() const {
+    if (!this->empty()) {
+        return this->domain().do_convert_to_generic(*this);
+    }
+    return GenericCode(di::in_place, platform::BasicError::InvalidArgument);
 }
 }

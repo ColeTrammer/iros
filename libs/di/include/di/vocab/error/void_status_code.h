@@ -41,6 +41,8 @@ public:
         return this->strictly_equivalent(other) || other.strictly_equivalent(*this);
     }
 
+    constexpr GenericCode generic_code() const;
+
 protected:
     constexpr explicit StatusCode(StatusCodeDomain const* domain) : m_domain(domain) {}
 

@@ -1,6 +1,6 @@
 #include <di/assert/prelude.h>
 #include <di/container/algorithm/prelude.h>
-#include <dius/error.h>
+#include <di/vocab/error/prelude.h>
 #include <dius/filesystem/prelude.h>
 #include <dius/linux/error.h>
 #include <dius/linux/system_call.h>

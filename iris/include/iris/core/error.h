@@ -47,6 +47,11 @@ protected:
         return b.domain() == *this && down_cast(a).value() == down_cast(b).value();
     }
 
+    constexpr virtual vocab::GenericCode do_convert_to_generic(vocab::StatusCode<void> const& a) const override {
+        DI_ASSERT(a.domain() == *this);
+        return vocab::GenericCode(di::in_place, down_cast(a).value());
+    }
+
     constexpr virtual di::container::ErasedString do_message(vocab::StatusCode<void> const& code) const override {
         auto value = down_cast(code).value();
         if (value == BasicError::Success) {
@@ -307,7 +312,6 @@ constexpr inline GenericDomain const& GenericDomain::get() {
 }
 
 namespace di::vocab::detail {
-template<typename = void>
 constexpr auto tag_invoke(di::types::Tag<di::vocab::into_status_code>, di::platform::BasicError error) {
     return di::platform::GenericCode(di::in_place, error);
 }
@@ -316,4 +320,13 @@ constexpr auto tag_invoke(di::types::Tag<di::vocab::into_status_code>, di::platf
 namespace iris {
 template<typename T>
 using Expected = di::vocab::Expected<T, Error>;
+}
+
+namespace di::vocab {
+constexpr GenericCode StatusCode<void>::generic_code() const {
+    if (!this->empty()) {
+        return this->domain().do_convert_to_generic(*this);
+    }
+    return GenericCode(di::in_place, platform::BasicError::InvalidArgument);
+}
 }

@@ -39,6 +39,7 @@ protected:
     constexpr virtual bool do_failure(StatusCode<void> const&) const = 0;
     constexpr virtual bool do_equivalent(StatusCode<void> const&, StatusCode<void> const&) const = 0;
     constexpr virtual container::ErasedString do_message(StatusCode<void> const&) const = 0;
+    constexpr virtual GenericCode do_convert_to_generic(StatusCode<void> const&) const = 0;
     constexpr virtual void do_erased_destroy(StatusCode<void>&, size_t) const {
         // This is a no-op for trivially copyable types, but must be
         // customized for trivially relocable types (UniquePtr) to
