@@ -85,13 +85,13 @@ Expected<void> LockedAddressSpace::allocate_region_at(di::Arc<BackingObject> bac
 
 Expected<VirtualAddress> AddressSpace::allocate_region(di::Arc<BackingObject> backing_object, usize page_aligned_length,
                                                        RegionFlags flags) {
-    auto region = TRY(di::try_box<Region>(VirtualAddress(0), page_aligned_length, flags));
+    auto region = TRY(di::make_box<Region>(VirtualAddress(0), page_aligned_length, flags));
     return lock()->allocate_region(di::move(backing_object), di::move(region));
 }
 
 Expected<void> AddressSpace::allocate_region_at(di::Arc<BackingObject> backing_object, VirtualAddress location,
                                                 usize page_aligned_length, RegionFlags flags) {
-    auto region = TRY(di::try_box<Region>(location, page_aligned_length, flags));
+    auto region = TRY(di::make_box<Region>(location, page_aligned_length, flags));
     return lock()->allocate_region_at(di::move(backing_object), di::move(region));
 }
 

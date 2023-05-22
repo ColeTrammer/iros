@@ -8,5 +8,4 @@ using function::Function;
 using function::FunctionRef;
 
 using function::make_function;
-using function::try_make_function;
 }

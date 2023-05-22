@@ -617,7 +617,7 @@ void LockedAddressSpace::flush_tlb_global(VirtualAddress base, usize byte_length
 Expected<di::Arc<AddressSpace>> create_empty_user_address_space() {
     // NOTE: allocate the address space first, so that the allocated page frame
     //       will not be leaked on failure.
-    auto new_address_space = TRY(di::try_make_arc<AddressSpace>());
+    auto new_address_space = TRY(di::make_arc<AddressSpace>());
 
     auto new_pml4 = TRY(allocate_page_frame());
     new_address_space->set_architecture_page_table_base(new_pml4);

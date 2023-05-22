@@ -90,7 +90,6 @@ private:
 };
 
 constexpr void AddressSpaceRegionListTag::did_remove(auto&, auto& node) {
-    di::destroy_at(di::addressof(node));
-    di::platform::DefaultFallibleAllocator<Region>().deallocate(di::addressof(node), 1);
+    auto to_drop = di::Box<Region>(di::addressof(node));
 }
 }

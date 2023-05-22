@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/container/allocator/prelude.h>
+#include <di/container/allocator/deallocate_many.h>
 #include <di/sync/prelude.h>
 #include <di/vocab/expected/prelude.h>
 #include <dius/error.h>
@@ -10,26 +10,23 @@
 #include <stdlib.h>
 
 namespace ccpp {
-template<typename T>
 struct MallocAllocator {
 public:
-    using Value = T;
-
-    di::Expected<di::container::Allocation<T>, di::GenericCode> allocate(usize count) const {
+    static di::Expected<di::container::AllocationResult<>, di::GenericCode> allocate(usize size, usize align) {
         auto* data = [&] {
-            if constexpr (alignof(T) > 16) {
-                return aligned_alloc(alignof(T), count * sizeof(T));
+            if (align > 16) {
+                return aligned_alloc(align, size);
             }
-            return malloc(count * sizeof(T));
+            return malloc(size);
         }();
 
         if (!data) {
             return di::Unexpected(di::BasicError::NotEnoughMemory);
         }
-        return di::container::Allocation<T> { static_cast<T*>(data), count };
+        return di::container::AllocationResult<> { data, size };
     }
 
-    void deallocate(T* pointer, usize) { free(pointer); }
+    static void deallocate(void* pointer, usize, usize) { free(pointer); }
 };
 
 struct FileDeleter {
@@ -90,7 +87,8 @@ struct File {
 
     constexpr ~File() {
         if (buffer_ownership == BufferOwnership::Owned && buffer != nullptr) {
-            MallocAllocator<byte>().deallocate(buffer, buffer_capacity);
+            auto allocator = MallocAllocator();
+            di::deallocate_many<byte>(allocator, buffer, buffer_capacity);
         }
     }
 

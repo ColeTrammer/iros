@@ -2,11 +2,15 @@
 
 #include <di/assert/assert_bool.h>
 #include <di/concepts/language_array.h>
+#include <di/container/allocator/allocator.h>
+#include <di/container/allocator/fallible_allocator.h>
+#include <di/container/allocator/infallible_allocator.h>
 #include <di/platform/prelude.h>
 #include <di/types/prelude.h>
 #include <di/util/exchange.h>
 #include <di/util/std_new.h>
 #include <di/vocab/error/result.h>
+#include <di/vocab/expected/unexpected.h>
 
 namespace di::vocab {
 template<typename T>
@@ -130,22 +134,28 @@ private:
     [[no_unique_address]] Deleter m_deleter {};
 };
 
-template<typename T, typename... Args>
-requires(!concepts::LanguageArray<T> && concepts::ConstructibleFrom<T, Args...>)
-constexpr DefaultFallibleNewResult<Box<T>> try_box(Args&&... args) {
-    if consteval {
-        return Box<T>(new T(util::forward<Args>(args)...));
-    }
-    auto* result = new (std::nothrow) T(util::forward<Args>(args)...);
-    if (!result) {
-        return vocab::Unexpected(platform::default_fallible_allocation_error());
-    }
-    return Box<T>(result);
+namespace detail {
+    template<typename T>
+    struct MakeBoxFunction {
+        template<typename... Args>
+        requires(!concepts::LanguageArray<T> && concepts::ConstructibleFrom<T, Args...>)
+        constexpr meta::AllocatorResult<platform::DefaultAllocator, Box<T>> operator()(Args&&... args) const {
+            if constexpr (concepts::FallibleAllocator<platform::DefaultAllocator>) {
+                auto* result = ::new (std::nothrow) T(util::forward<Args>(args)...);
+                if (!result) {
+                    return vocab::Unexpected(BasicError::NotEnoughMemory);
+                }
+                return Box<T>(result);
+            } else {
+                auto* result = ::new T(util::forward<Args>(args)...);
+                DI_ASSERT(result);
+                return Box<T>(result);
+            }
+        }
+    };
 }
 
-template<typename T, typename... Args>
-requires(!concepts::LanguageArray<T> && concepts::ConstructibleFrom<T, Args...>)
-constexpr auto make_box(Args&&... args) {
-    return *try_box<T>(util::forward<Args>(args)...);
-}
+template<typename T>
+constexpr inline auto make_box = detail::MakeBoxFunction<T> {};
+
 }

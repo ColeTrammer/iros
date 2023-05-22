@@ -27,7 +27,7 @@ struct TaskState {
             rdx = 0;
             rax = *value;
         } else {
-            rdx = di::to_underlying(value.error());
+            rdx = di::to_underlying(value.error().value());
         }
     }
 

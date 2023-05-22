@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/container/algorithm/max.h>
+#include <di/vocab/error/prelude.h>
 #include <di/vocab/error/status_code.h>
 #include <iris/uapi/error.h>
 
@@ -319,7 +320,7 @@ constexpr auto tag_invoke(di::types::Tag<di::vocab::into_status_code>, di::platf
 
 namespace iris {
 template<typename T>
-using Expected = di::vocab::Expected<T, Error>;
+using Expected = di::vocab::Expected<T, di::platform::GenericCode>;
 }
 
 namespace di::vocab {

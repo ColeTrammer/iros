@@ -38,14 +38,14 @@ Expected<di::Arc<Task>> create_kernel_task(TaskNamespace& task_namespace, void (
 
     auto const& global_state = iris::global_state();
     auto& address_space = global_state.kernel_address_space;
-    auto stack_object = TRY(di::try_make_arc<mm::BackingObject>());
+    auto stack_object = TRY(di::make_arc<mm::BackingObject>());
     auto stack = TRY(address_space.allocate_region(di::move(stack_object), 0x2000,
                                                    mm::RegionFlags::Readable | mm::RegionFlags::Writable));
 
-    auto task_status = TRY(di::try_make_arc<TaskStatus>());
+    auto task_status = TRY(di::make_arc<TaskStatus>());
     auto task_id = TRY(task_namespace.lock()->allocate_task_id());
-    auto result = TRY(di::try_make_arc<Task>(false, address_space.arc_from_this(), task_namespace.arc_from_this(),
-                                             task_id, FileTable {}, di::move(task_status)));
+    auto result = TRY(di::make_arc<Task>(false, address_space.arc_from_this(), task_namespace.arc_from_this(), task_id,
+                                         FileTable {}, di::move(task_status)));
     result->set_instruction_pointer(entry_address);
     result->set_stack_pointer(stack + 0x2000zu);
     result->set_kernel_stack(stack);
@@ -61,16 +61,16 @@ Expected<di::Arc<Task>> create_kernel_task(TaskNamespace& task_namespace, void (
 Expected<di::Arc<Task>> create_user_task(TaskNamespace& task_namespace, di::Arc<TNode> root_tnode,
                                          di::Arc<TNode> cwd_tnode, FileTable file_table,
                                          di::Arc<mm::AddressSpace> address_space) {
-    auto task_status = TRY(di::try_make_arc<TaskStatus>());
+    auto task_status = TRY(di::make_arc<TaskStatus>());
     auto task_id = TRY(task_namespace.lock()->allocate_task_id());
-    auto result = TRY(di::try_make_arc<Task>(true, di::move(address_space), task_namespace.arc_from_this(), task_id,
-                                             di::move(file_table), di::move(task_status)));
+    auto result = TRY(di::make_arc<Task>(true, di::move(address_space), task_namespace.arc_from_this(), task_id,
+                                         di::move(file_table), di::move(task_status)));
     TRY(result->fpu_state().setup_fpu_state());
 
     result->set_root_tnode(di::move(root_tnode));
     result->set_cwd_tnode(di::move(cwd_tnode));
 
-    auto kernel_stack_object = TRY(di::try_make_arc<mm::BackingObject>());
+    auto kernel_stack_object = TRY(di::make_arc<mm::BackingObject>());
     auto kernel_stack = TRY(global_state().kernel_address_space.allocate_region(
         di::move(kernel_stack_object), 0x2000, mm::RegionFlags::Writable | mm::RegionFlags::Readable));
     result->set_kernel_stack(kernel_stack);
@@ -91,7 +91,7 @@ Expected<void> load_executable(Task& task, di::PathView path) {
     constexpr auto stack_size = 0x10000_usize;
 
     task.set_address_space(TRY(mm::create_empty_user_address_space()));
-    auto user_stack_object = TRY(di::try_make_arc<mm::BackingObject>());
+    auto user_stack_object = TRY(di::make_arc<mm::BackingObject>());
     auto user_stack = TRY(task.address_space().allocate_region(di::move(user_stack_object), stack_size,
                                                                mm::RegionFlags::Writable | mm::RegionFlags::User |
                                                                    mm::RegionFlags::Readable));
@@ -137,10 +137,10 @@ Expected<void> load_executable(Task& task, di::PathView path) {
             auto end = program_header.virtual_addr.value() + program_header.memory_size;
             auto aligned_end = di::align_up(end, 4096);
             auto aligned_start = di::align_down(program_header.virtual_addr.value(), 4096);
-            auto region_object = TRY(di::try_make_arc<mm::BackingObject>());
-            auto region = di::try_box<mm::Region>(mm::VirtualAddress(aligned_start), aligned_end - aligned_start,
-                                                  mm::RegionFlags::User | mm::RegionFlags::Readable |
-                                                      mm::RegionFlags::Executable | mm::RegionFlags::Writable);
+            auto region_object = TRY(di::make_arc<mm::BackingObject>());
+            auto region = di::make_box<mm::Region>(mm::VirtualAddress(aligned_start), aligned_end - aligned_start,
+                                                   mm::RegionFlags::User | mm::RegionFlags::Readable |
+                                                       mm::RegionFlags::Executable | mm::RegionFlags::Writable);
             (void) address_space->allocate_region_at(di::move(region_object), *di::move(region));
 
             auto data = di::Span { reinterpret_cast<di::Byte*>(program_header.virtual_addr.value()),

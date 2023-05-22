@@ -81,19 +81,6 @@ static void function_basic() {
     static_assert(!di::concepts::ConstructibleFrom<di::Function<i32(i32) const>, decltype(lambda)>);
     auto const n = di::make_function<i32(i32) const>(lambda);
     ASSERT_EQ(n(1), 17);
-
-#if !defined(DI_SANITIZER) && !defined(__clang__)
-    auto const m = *di::try_make_function<i32(i32) const>(lambda);
-    ASSERT_EQ(m(2), 18);
-
-    struct AbsurdFunction {
-        di::Array<di::Byte, 549755813888> way_too_big;
-
-        i32 operator()(i32 x) const { return x - 1; }
-    };
-
-    ASSERT(!di::try_make_function<i32(i32) const>(di::in_place_type<AbsurdFunction>));
-#endif
 }
 
 TEST(function_container, function_ref_basic)

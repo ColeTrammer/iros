@@ -1,5 +1,9 @@
 #pragma once
 
+#include <di/container/allocator/allocate_one.h>
+#include <di/container/allocator/allocation_result.h>
+#include <di/container/allocator/allocator.h>
+#include <di/container/allocator/deallocate_one.h>
 #include <di/container/intrusive/intrusive_tag_base.h>
 #include <di/container/tree/rb_tree.h>
 
@@ -29,12 +33,11 @@ struct OwningRBTreeTag : IntrusiveTagBase<OwningRBTreeNode<T, Self>> {
 
     constexpr static void did_remove(auto& self, auto& node) {
         util::destroy_at(util::addressof(node));
-        self.allocator().deallocate(util::addressof(node), 1);
+        di::deallocate_one<Node>(self.allocator(), util::addressof(node));
     }
 };
 
-template<typename Value, typename Comp, typename Tag, concepts::AllocatorOf<OwningRBTreeNode<Value, Tag>> Alloc,
-         typename Interface, bool is_multi>
+template<typename Value, typename Comp, typename Tag, concepts::Allocator Alloc, typename Interface, bool is_multi>
 class OwningRBTree
     : public RBTree<Value, Comp, Tag, Interface, is_multi, OwningRBTree<Value, Comp, Tag, Alloc, Interface, is_multi>> {
 private:
@@ -45,7 +48,7 @@ private:
     using Iterator = RBTreeIterator<Value, Tag>;
     using ConstIterator = container::ConstIteratorImpl<Iterator>;
 
-    using AllocResult = decltype(Alloc().allocate(0));
+    using AllocResult = meta::AllocatorResult<Alloc>;
 
     template<typename T>
     using Result = meta::LikeExpected<AllocResult, T>;
@@ -53,7 +56,7 @@ private:
 public:
     using Base::Base;
 
-    constexpr Alloc allocator() const { return Alloc(); }
+    constexpr Alloc& allocator() { return m_allocator; }
 
     template<typename U, concepts::Invocable F>
     requires(concepts::StrictWeakOrder<Comp&, Value, U> && concepts::MaybeFallible<meta::InvokeResult<F>, Value>)
@@ -95,13 +98,14 @@ private:
     template<typename... Args>
     requires(concepts::ConstructibleFrom<Value, Args...>)
     constexpr auto create_node(Args&&... args) {
-        return as_fallible(Alloc().allocate(1)) % [&](Allocation<OwningRBTreeNode<Value, Tag>> allocation) {
-            auto [pointer, allocated_nodes] = allocation;
-            (void) allocated_nodes;
-
-            util::construct_at(pointer, in_place, util::forward<Args>(args)...);
-            return static_cast<Node*>(pointer);
-        } | try_infallible;
+        return as_fallible(di::allocate_one<OwningRBTreeNode<Value, Tag>>(m_allocator)) %
+                   [&](OwningRBTreeNode<Value, Tag>* pointer) {
+                       util::construct_at(pointer, in_place, util::forward<Args>(args)...);
+                       return static_cast<Node*>(pointer);
+                   } |
+               try_infallible;
     }
+
+    [[no_unique_address]] Alloc m_allocator {};
 };
 }

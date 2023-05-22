@@ -75,6 +75,6 @@ static_assert(di::Impl<PitTimer, TimerInterface>);
 void init_pit() {
     // FIXME: In the future, we should determine whether the HPET is available, and if so, disable the PIT.
 
-    *global_state_in_boot().timers.emplace_back(*Timer::try_create(di::in_place_type<PitTimer>));
+    *global_state_in_boot().timers.emplace_back(*Timer::create(di::in_place_type<PitTimer>));
 }
 }

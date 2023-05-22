@@ -5,6 +5,11 @@
 #include <di/concepts/convertible_to.h>
 #include <di/concepts/object.h>
 #include <di/concepts/reference.h>
+#include <di/container/allocator/allocate_one.h>
+#include <di/container/allocator/allocator.h>
+#include <di/container/allocator/deallocate_one.h>
+#include <di/container/allocator/fallible_allocator.h>
+#include <di/container/allocator/infallible_allocator.h>
 #include <di/meta/list/prelude.h>
 #include <di/platform/prelude.h>
 #include <di/types/prelude.h>
@@ -14,44 +19,45 @@
 #include <di/util/exchange.h>
 #include <di/util/move.h>
 #include <di/util/swap.h>
-#include <di/vocab/error/prelude.h>
+#include <di/vocab/expected/as_fallible.h>
 
 namespace di::any {
 namespace detail {
-    template<typename UniqueStorage>
+    template<typename UniqueStorage, concepts::Allocator Alloc>
     struct UniqueStorageManage {
-        using Type = Method<UniqueStorageManage, void(This&)>;
+        using Type = Method<UniqueStorageManage, void(This&, Alloc&)>;
 
         template<typename T>
-        void operator()(T&) const;
+        void operator()(T&, Alloc&) const;
     };
 
-    template<typename UniqueStorage>
-    constexpr inline auto unique_storage_manage = UniqueStorageManage<UniqueStorage> {};
+    template<typename UniqueStorage, concepts::Allocator Alloc>
+    constexpr inline auto unique_storage_manage = UniqueStorageManage<UniqueStorage, Alloc> {};
 }
 
+template<concepts::Allocator Alloc = platform::DefaultAllocator>
 struct UniqueStorage {
 public:
-    using Manage = meta::Type<detail::UniqueStorageManage<UniqueStorage>>;
+    using Manage = meta::Type<detail::UniqueStorageManage<UniqueStorage, Alloc>>;
     using Interface = meta::List<Manage>;
 
     constexpr static StorageCategory storage_category() { return StorageCategory::TriviallyRelocatable; }
 
     template<typename T>
     constexpr static bool creation_is_fallible(InPlaceType<T>) {
-        return true;
+        return concepts::FallibleAllocator<Alloc>;
     }
 
     template<typename T, typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...>)
     constexpr static auto init(UniqueStorage* self, InPlaceType<T>, Args&&... args) {
-        return platform::DefaultFallibleAllocator<T>().allocate(1) % [&](container::Allocation<T> result) {
-            util::construct_at(result.data, util::forward<Args>(args)...);
-            self->m_pointer = result.data;
+        return vocab::as_fallible(di::allocate_one<T>(self->m_allocator)) % [&](T* pointer) {
+            util::construct_at(pointer, util::forward<Args>(args)...);
+            self->m_pointer = pointer;
         };
     }
 
-    constexpr UniqueStorage() {}
+    UniqueStorage() = default;
 
     UniqueStorage(UniqueStorage const&) = default;
     UniqueStorage& operator=(UniqueStorage const&) = default;
@@ -75,7 +81,7 @@ public:
     constexpr static void destroy(concepts::VTableFor<Interface> auto& vtable, UniqueStorage* self) {
         if (self->m_pointer) {
             auto const fp = vtable[Manage {}];
-            fp(self);
+            fp(self, self->m_allocator);
             self->m_pointer = nullptr;
         }
     }
@@ -94,15 +100,16 @@ private:
     constexpr explicit UniqueStorage(void* pointer) : m_pointer(pointer) {}
 
     void* m_pointer { nullptr };
+    [[no_unique_address]] Alloc m_allocator {};
 };
 
 namespace detail {
-    template<typename UniqueStorage>
+    template<typename UniqueStorage, concepts::Allocator Alloc>
     template<typename T>
-    void UniqueStorageManage<UniqueStorage>::operator()(T& a) const {
+    void UniqueStorageManage<UniqueStorage, Alloc>::operator()(T& a, Alloc& allocator) const {
         auto* pointer = util::addressof(a);
         util::destroy_at(pointer);
-        platform::DefaultFallibleAllocator<T>().deallocate(pointer, 1);
+        di::deallocate_one<T>(allocator, pointer);
     }
 }
 }

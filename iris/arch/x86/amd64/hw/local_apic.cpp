@@ -402,7 +402,7 @@ static void boot_ap(acpi::ProcessorLocalApicStructure const& acpi_local_apic_str
 
     constexpr auto ap_stack_size = 0x2000_usize;
 
-    auto stack_object = *di::try_make_arc<mm::BackingObject>();
+    auto stack_object = *di::make_arc<mm::BackingObject>();
     auto stack = *global_state.kernel_address_space.allocate_region(
         di::move(stack_object), ap_stack_size, mm::RegionFlags::Readable | mm::RegionFlags::Writable);
 

@@ -2,6 +2,9 @@
 
 #include <di/assert/prelude.h>
 #include <di/container/algorithm/prelude.h>
+#include <di/container/allocator/allocate_many.h>
+#include <di/container/allocator/allocator.h>
+#include <di/container/allocator/deallocate_many.h>
 #include <di/container/intrusive/prelude.h>
 #include <di/platform/prelude.h>
 #include <di/util/prelude.h>
@@ -34,14 +37,14 @@ namespace detail {
 /// @tparam Alloc The allocator to be used to allocate the pool's storage.
 ///
 /// @warning This class is not thread-safe. Use di::Synchronized<> to make it thread-safe.
-template<typename T,
-         di::concepts::AllocatorOf<detail::InternalObject<T>> Alloc = di::DefaultAllocator<detail::InternalObject<T>>>
+template<typename T, di::concepts::FallibleAllocator Alloc = di::DefaultAllocator>
 class ObjectPool {
 public:
     static Expected<ObjectPool> create(usize requested_capacity) {
         auto pool = ObjectPool {};
 
-        auto [storage, effective_capacity] = TRY(Alloc().allocate(requested_capacity));
+        auto [storage, effective_capacity] =
+            TRY(di::allocate_many<detail::InternalObject<T>>(pool.m_allocator, requested_capacity));
         pool.m_storage = storage;
         pool.m_capacity = effective_capacity;
 
@@ -60,7 +63,8 @@ public:
     ObjectPool(ObjectPool&& other)
         : m_free_list(di::move(other.m_free_list))
         , m_storage(di::exchange(other.m_storage, nullptr))
-        , m_capacity(di::exchange(other.m_capacity, 0)) {
+        , m_capacity(di::exchange(other.m_capacity, 0))
+        , m_allocator(di::move(other.m_allocator)) {
         ASSERT_EQ(m_capacity, m_free_list.size());
     }
 
@@ -72,6 +76,7 @@ public:
         m_free_list = di::move(other.m_free_list);
         m_storage = di::exchange(other.m_storage, nullptr);
         m_capacity = di::exchange(other.m_capacity, 0);
+        m_allocator = di::move(other.m_allocator);
 
         return *this;
     }
@@ -81,7 +86,7 @@ public:
 
         if (m_capacity) {
             // NOTE: all objects must have been freed, so there is no need to call destructors.
-            Alloc().deallocate(m_storage, m_capacity);
+            di::deallocate_many<detail::InternalObject<T>>(m_allocator, m_storage, m_capacity);
         }
     }
 
@@ -111,5 +116,6 @@ private:
     di::IntrusiveForwardList<detail::InternalObjectFreed, detail::InternalObjectTag> m_free_list;
     detail::InternalObject<T>* m_storage { nullptr };
     usize m_capacity { 0 };
+    [[no_unique_address]] Alloc m_allocator {};
 };
 }

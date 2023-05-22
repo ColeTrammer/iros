@@ -21,7 +21,4 @@ using vocab::make_arc;
 using vocab::make_box;
 using vocab::make_rc;
 using vocab::retain_object;
-using vocab::try_box;
-using vocab::try_make_arc;
-using vocab::try_make_rc;
 }

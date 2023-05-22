@@ -1,6 +1,8 @@
 #pragma once
 
-#include <di/container/allocator/prelude.h>
+#include <di/container/allocator/allocator.h>
+#include <di/container/allocator/fallible_allocator.h>
+#include <di/container/allocator/infallible_allocator.h>
 #include <di/container/associative/set_interface.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/tree/rb_tree.h>
@@ -17,8 +19,7 @@ namespace detail {
 }
 
 template<typename Value, concepts::StrictWeakOrder<Value> Comp = function::Compare,
-         concepts::AllocatorOf<OwningRBTreeNode<Value, detail::TreeSetTag<Value>>> Alloc =
-             DefaultAllocator<OwningRBTreeNode<Value, detail::TreeSetTag<Value>>>>
+         concepts::Allocator Alloc = DefaultAllocator>
 class TreeSet
     : public OwningRBTree<
           Value, Comp, detail::TreeSetTag<Value>, Alloc,

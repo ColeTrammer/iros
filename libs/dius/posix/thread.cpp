@@ -2,7 +2,7 @@
 
 namespace dius {
 di::Result<Thread> Thread::do_start(di::Function<void()> entry) {
-    auto platform = TRY(di::try_box<PlatformThread>());
+    auto platform = di::make_box<PlatformThread>();
     platform->entry = di::move(entry);
 
     auto result = pthread_create(

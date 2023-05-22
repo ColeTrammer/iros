@@ -28,8 +28,7 @@ constexpr void box() {
     ASSERT_NOT_EQ(x, y);
     ASSERT_NOT_EQ(x, nullptr);
 
-    auto z = *di::try_box<int>(13);
-    ASSERT_EQ(*z, 13);
+    auto z = di::make_box<int>(13);
 
     auto w = di::make_box<di::Box<int>>(di::move(z));
     ASSERT_EQ(**w, 13);

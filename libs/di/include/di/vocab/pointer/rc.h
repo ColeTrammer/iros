@@ -1,8 +1,15 @@
 #pragma once
 
+#include <di/assert/assert_bool.h>
+#include <di/container/allocator/allocator.h>
+#include <di/container/allocator/fallible_allocator.h>
+#include <di/container/allocator/infallible_allocator.h>
 #include <di/util/immovable.h>
 #include <di/util/std_new.h>
 #include <di/vocab/error/prelude.h>
+#include <di/vocab/expected/as_fallible.h>
+#include <di/vocab/expected/try_infallible.h>
+#include <di/vocab/expected/unexpected.h>
 #include <di/vocab/pointer/intrusive_ptr.h>
 
 namespace di::vocab {
@@ -16,9 +23,6 @@ struct IntrusiveThreadUnsafeRefCount : util::Immovable {
 private:
     template<typename>
     friend struct MakeRcFunction;
-
-    template<typename>
-    friend struct TryMakeRcFunction;
 
 public:
     template<typename = void>
@@ -38,29 +42,26 @@ private:
     constexpr friend void tag_invoke(types::Tag<intrusive_ptr_decrement>, InPlaceType<RcTag>, T* pointer) {
         auto* base = static_cast<IntrusiveThreadUnsafeRefCount*>(pointer);
         if (base->m_ref_count-- == 1) {
-            if consteval {
-                delete pointer;
-            } else {
-                util::destroy_at(pointer);
-                platform::DefaultFallibleAllocator<T>().deallocate(pointer, 1);
-            }
+            delete pointer;
         }
     }
 
-    template<typename... Args,
-             typename E = meta::ExpectedError<decltype(platform::DefaultFallibleAllocator<T>().allocate(1))>,
-             typename R = Expected<T*, E>>
+    template<typename... Args, typename R = meta::AllocatorResult<platform::DefaultAllocator, T*>>
     constexpr static R make(Args&&... args)
-    requires(requires { T(util::forward<Args>(args)...); })
+    requires(requires { new (std::nothrow) T(util::forward<Args>(args)...); })
     {
         if consteval {
             return new T(util::forward<Args>(args)...);
-        } else {
-            return platform::DefaultFallibleAllocator<T>().allocate(1) % [&](container::Allocation<T> result) {
-                new (result.data) T(util::forward<Args>(args)...);
-                return result.data;
-            };
         }
+        auto* result = new (std::nothrow) T(util::forward<Args>(args)...);
+        if constexpr (concepts::FallibleAllocator<platform::DefaultAllocator>) {
+            if (!result) {
+                return vocab::Unexpected(platform::BasicError::NotEnoughMemory);
+            }
+        } else {
+            DI_ASSERT(result);
+        }
+        return result;
     }
 
     usize m_ref_count { 1 };
@@ -69,30 +70,17 @@ private:
 template<typename T>
 struct MakeRcFunction {
     template<typename... Args>
-    constexpr Rc<T> operator()(Args&&... args) const
-    requires(requires { IntrusiveThreadUnsafeRefCount<T>::make(util::forward<Args>(args)...); })
-    {
-        auto result = IntrusiveThreadUnsafeRefCount<T>::make(util::forward<Args>(args)...);
-        DI_ASSERT(result);
-        return Rc<T>(*result, retain_object);
-    }
-};
-
-template<typename T>
-struct TryMakeRcFunction {
-    template<typename... Args>
     constexpr auto operator()(Args&&... args) const
     requires(requires { IntrusiveThreadUnsafeRefCount<T>::make(util::forward<Args>(args)...); })
     {
-        return IntrusiveThreadUnsafeRefCount<T>::make(util::forward<Args>(args)...) % [](auto* pointer) {
-            return Rc<T>(pointer, retain_object);
-        };
+        return vocab::as_fallible(IntrusiveThreadUnsafeRefCount<T>::make(util::forward<Args>(args)...)) %
+                   [](T* pointer) {
+                       return Rc<T>(pointer, retain_object);
+                   } |
+               vocab::try_infallible;
     }
 };
 
 template<detail::IntrusivePtrValid<RcTag> T>
 constexpr inline auto make_rc = MakeRcFunction<T> {};
-
-template<detail::IntrusivePtrValid<RcTag> T>
-constexpr inline auto try_make_rc = TryMakeRcFunction<T> {};
 }

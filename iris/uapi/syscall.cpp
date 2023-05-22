@@ -66,7 +66,7 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
         case SystemCall::allocate_memory: {
             auto amount = task_state.syscall_arg1();
 
-            auto new_object = TRY(di::try_make_arc<mm::BackingObject>());
+            auto new_object = TRY(di::make_arc<mm::BackingObject>());
             auto& address_space = current_task.address_space();
             return address_space
                 .allocate_region(di::move(new_object), amount,
@@ -216,7 +216,7 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
                     return {};
                 }));
 
-            auto task_arguments = TRY(di::try_make_arc<TaskArguments>(di::move(arguments), di::move(enviornment)));
+            auto task_arguments = TRY(di::make_arc<TaskArguments>(di::move(arguments), di::move(enviornment)));
             task->set_task_arguments(di::move(task_arguments));
 
             return 0;

@@ -1,6 +1,8 @@
 #pragma once
 
-#include <di/container/allocator/prelude.h>
+#include <di/container/allocator/allocator.h>
+#include <di/container/allocator/fallible_allocator.h>
+#include <di/container/allocator/infallible_allocator.h>
 #include <di/container/associative/map_interface.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/tree/rb_tree.h>
@@ -13,8 +15,7 @@
 
 namespace di::container {
 template<typename Key, typename Value, concepts::StrictWeakOrder<Key> Comp = function::Compare,
-         concepts::AllocatorOf<OwningRBTreeNode<Tuple<Key, Value>, detail::TreeMapTag<Key, Value>>> Alloc =
-             DefaultAllocator<OwningRBTreeNode<Tuple<Key, Value>, detail::TreeMapTag<Key, Value>>>>
+         concepts::Allocator Alloc = DefaultAllocator>
 class TreeMultiMap
     : public OwningRBTree<
           Tuple<Key, Value>, detail::TreeMapCompAdapter<Comp, Key>, detail::TreeMapTag<Key, Value>, Alloc,

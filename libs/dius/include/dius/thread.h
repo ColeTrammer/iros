@@ -29,7 +29,7 @@ public:
     requires(di::concepts::InvocableTo<F, void, Args...>)
     static di::Result<Thread> create(F&& function, Args&&... args) {
         auto copied_function = di::bind_front(di::forward<F>(function), di::forward<Args>(args)...);
-        auto erased_function = TRY(di::try_make_function<void()>(di::move(copied_function)));
+        auto erased_function = di::make_function<void()>(di::move(copied_function));
         return do_start(di::move(erased_function));
     }
 

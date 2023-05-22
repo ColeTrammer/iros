@@ -1,8 +1,11 @@
 #pragma once
 
 #include <di/assert/assert_bool.h>
+#include <di/container/allocator/allocate_many.h>
 #include <di/container/allocator/allocator.h>
-#include <di/container/allocator/allocator_of.h>
+#include <di/container/allocator/deallocate_many.h>
+#include <di/container/allocator/fallible_allocator.h>
+#include <di/container/allocator/infallible_allocator.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/meta/prelude.h>
 #include <di/container/ring/mutable_ring_interface.h>
@@ -15,7 +18,7 @@
 #include <di/vocab/span/prelude.h>
 
 namespace di::container {
-template<typename T, concepts::AllocatorOf<T> Alloc = platform::DefaultAllocator<T>>
+template<typename T, concepts::Allocator Alloc = platform::DefaultAllocator>
 class Ring : public MutableRingInterface<Ring<T, Alloc>, T> {
 public:
     using Value = T;
@@ -28,12 +31,13 @@ public:
         , m_size(util::exchange(other.m_size, 0))
         , m_capacity(util::exchange(other.m_capacity, 0))
         , m_head(util::exchange(other.m_head, 0))
-        , m_tail(util::exchange(other.m_tail, 0)) {}
+        , m_tail(util::exchange(other.m_tail, 0))
+        , m_allocator(util::move(other.m_allocator)) {}
 
     constexpr ~Ring() {
         this->clear();
         if (m_data) {
-            Alloc().deallocate(m_data, m_capacity);
+            di::deallocate_many<T>(m_allocator, m_data, m_capacity);
         }
     }
 
@@ -44,6 +48,7 @@ public:
         this->m_capacity = util::exchange(other.m_capacity, 0);
         this->m_head = util::exchange(other.m_head, 0);
         this->m_tail = util::exchange(other.m_tail, 0);
+        this->m_allocator = util::move(other.m_allocator);
         return *this;
     }
 
@@ -55,7 +60,8 @@ public:
 
     constexpr auto reserve_from_nothing(usize n) {
         DI_ASSERT(capacity() == 0u);
-        return as_fallible(Alloc().allocate(n)) % [&](Allocation<T> result) {
+
+        return as_fallible(di::allocate_many<T>(m_allocator, n)) % [&](AllocationResult<T> result) {
             auto [data, new_capacity] = result;
             m_data = data;
             m_capacity = new_capacity;
@@ -75,6 +81,7 @@ private:
     usize m_capacity { 0 };
     usize m_head { 0 };
     usize m_tail { 0 };
+    [[no_unique_address]] Alloc m_allocator {};
 };
 
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>>

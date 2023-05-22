@@ -1,4 +1,6 @@
 #include <ccpp/bits/file_implementation.h>
+#include <di/container/allocator/allocate_many.h>
+#include <di/container/allocator/deallocate_many.h>
 #include <dius/sync_file.h>
 #include <string.h>
 
@@ -27,9 +29,10 @@ extern "C" FILE* fdopen(int fd, char const* mode) {
 
     auto file = dius::SyncFile(dius::SyncFile::Owned::No, fd);
 
-    auto* buffer = STDIO_TRY_OR_NULL(MallocAllocator<byte>().allocate(BUFSIZ)).data;
+    auto allocator = MallocAllocator {};
+    auto* buffer = STDIO_TRY_OR_NULL(di::allocate_many<byte>(allocator, BUFSIZ)).data;
     auto guard = di::ScopeExit([&] {
-        MallocAllocator<byte>().deallocate(buffer, BUFSIZ);
+        di::deallocate_many<byte>(allocator, buffer, BUFSIZ);
     });
 
     auto handle = FileHandle(new (std::nothrow) FILE());

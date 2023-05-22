@@ -98,8 +98,7 @@ struct InitrdInodeImpl {
             return di::Unexpected(Error::NoSuchFileOrDirectory);
         }
 
-        return di::try_make_arc<TNode>(di::move(parent), di::get<1>(*result),
-                                       TRY(name | di::to<di::TransparentString>()));
+        return di::make_arc<TNode>(di::move(parent), di::get<1>(*result), TRY(name | di::to<di::TransparentString>()));
     }
 
     friend Expected<Metadata> tag_invoke(di::Tag<inode_metadata>, InitrdInodeImpl& self) {
@@ -141,7 +140,7 @@ Expected<void> init_initrd() {
     auto visit = [&](auto&& visit, initrd::DirectoryEntry const& dirent,
                      di::Span<byte const> data) -> Expected<di::Arc<Inode>> {
         if (dirent.type != initrd::Type::Directory) {
-            return di::try_make_arc<Inode>(InodeImpl::create(InitrdInodeImpl { data, dirent.type, {} }));
+            return di::make_arc<Inode>(TRY(InodeImpl::create(InitrdInodeImpl { data, dirent.type, {} })));
         }
 
         auto inode_impl = InitrdInodeImpl { data, dirent.type, {} };
@@ -154,12 +153,12 @@ Expected<void> init_initrd() {
             auto child_inode = TRY(visit(visit, entry, child_data));
             TRY(inode_impl.inodes.try_emplace(di::move(name), di::move(child_inode)));
         }
-        return di::try_make_arc<Inode>(InodeImpl::create(di::move(inode_impl)));
+        return di::make_arc<Inode>(TRY(InodeImpl::create(di::move(inode_impl))));
     };
 
     println("Construct initrd root..."_sv);
     auto root_inode = TRY(visit(visit, root_dirent, root_data));
-    global_state.initrd_root = TRY(di::try_make_arc<TNode>(nullptr, di::move(root_inode), di::TransparentString {}));
+    global_state.initrd_root = TRY(di::make_arc<TNode>(nullptr, di::move(root_inode), di::TransparentString {}));
     return {};
 }
 }

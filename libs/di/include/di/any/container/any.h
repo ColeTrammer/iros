@@ -72,47 +72,7 @@ public:
     template<typename U, concepts::Impl<Interface> VU = RemoveConstructQualifiers<U>>
     requires(!concepts::RemoveCVRefSameAs<U, Any> && !concepts::InstanceOf<meta::RemoveCVRef<U>, InPlaceType> &&
              concepts::AnyStorable<VU, Storage> && concepts::ConstructibleFrom<VU, U>)
-    constexpr static Any create(U&& value) {
-        if constexpr (!concepts::AnyStorableInfallibly<VU, Storage>) {
-            auto result = Any {};
-            DI_ASSERT(Storage::init(util::addressof(result), in_place_type<VU>, util::forward<U>(value)));
-            result.m_vtable = VTable::template create_for<Storage, VU>();
-            return result;
-        } else {
-            return Any(in_place_type<VU>, util::forward<U>(value));
-        }
-    }
-
-    template<typename T, typename... Args, concepts::Impl<Interface> VT = RemoveConstructQualifiers<T>>
-    requires(concepts::AnyStorable<VT, Storage> && concepts::ConstructibleFrom<VT, Args...>)
-    constexpr static Any create(InPlaceType<T>, Args&&... args) {
-        if constexpr (!concepts::AnyStorableInfallibly<VT, Storage>) {
-            auto result = Any {};
-            DI_ASSERT(Storage::init(util::addressof(result), in_place_type<VT>, util::forward<Args>(args)...));
-            result.m_vtable = VTable::template create_for<Storage, VT>();
-            return result;
-        } else {
-            return Any(in_place_type<VT>, util::forward<Args>(args)...);
-        }
-    }
-
-    template<typename T, typename U, typename... Args, concepts::Impl<Interface> VT = RemoveConstructQualifiers<T>>
-    requires(concepts::AnyStorable<VT, Storage> && concepts::ConstructibleFrom<VT, std::initializer_list<U>&, Args...>)
-    constexpr static Any create(InPlaceType<T>, std::initializer_list<U> list, Args&&... args) {
-        if constexpr (!concepts::AnyStorableInfallibly<VT, Storage>) {
-            auto result = Any {};
-            DI_ASSERT(Storage::init(util::addressof(result), in_place_type<VT>, list, util::forward<Args>(args)...));
-            result.m_vtable = VTable::template create_for<Storage, VT>();
-            return result;
-        } else {
-            return Any(in_place_type<VT>, list, util::forward<Args>(args)...);
-        }
-    }
-
-    template<typename U, concepts::Impl<Interface> VU = RemoveConstructQualifiers<U>>
-    requires(!concepts::RemoveCVRefSameAs<U, Any> && !concepts::InstanceOf<meta::RemoveCVRef<U>, InPlaceType> &&
-             concepts::AnyStorable<VU, Storage> && concepts::ConstructibleFrom<VU, U>)
-    constexpr static auto try_create(U&& value) {
+    constexpr static auto create(U&& value) {
         if constexpr (!concepts::AnyStorableInfallibly<VU, Storage>) {
             auto result = Any {};
             return Storage::init(util::addressof(result), in_place_type<VU>, util::forward<U>(value)) % [&] {
@@ -126,7 +86,7 @@ public:
 
     template<typename T, typename... Args, concepts::Impl<Interface> VT = RemoveConstructQualifiers<T>>
     requires(concepts::AnyStorable<VT, Storage> && concepts::ConstructibleFrom<VT, Args...>)
-    constexpr static auto try_create(InPlaceType<T>, Args&&... args) {
+    constexpr static auto create(InPlaceType<T>, Args&&... args) {
         if constexpr (!concepts::AnyStorableInfallibly<VT, Storage>) {
             auto result = Any {};
             return Storage::init(util::addressof(result), in_place_type<VT>, util::forward<Args>(args)...) % [&] {
@@ -140,7 +100,7 @@ public:
 
     template<typename T, typename U, typename... Args, concepts::Impl<Interface> VT = RemoveConstructQualifiers<T>>
     requires(concepts::AnyStorable<VT, Storage> && concepts::ConstructibleFrom<VT, std::initializer_list<U>&, Args...>)
-    constexpr static Result<Any> try_create(InPlaceType<T>, std::initializer_list<U> list, Args&&... args) {
+    constexpr static auto create(InPlaceType<T>, std::initializer_list<U> list, Args&&... args) {
         if constexpr (!concepts::AnyStorableInfallibly<VT, Storage>) {
             auto result = Any {};
             return Storage::init(util::addressof(result), in_place_type<VT>, list, util::forward<Args>(args)...) % [&] {

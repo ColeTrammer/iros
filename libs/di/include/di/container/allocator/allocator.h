@@ -1,22 +1,34 @@
 #pragma once
 
-#include <di/assert/assert_bool.h>
-#include <di/container/allocator/allocation.h>
-#include <di/container/allocator/std_allocator.h>
-#include <di/types/prelude.h>
+#include <di/container/allocator/allocate.h>
+#include <di/container/allocator/deallocate.h>
+#include <di/meta/like_expected.h>
 
-namespace di::container {
+namespace di::concepts {
 template<typename T>
-class Allocator {
-public:
-    using Value = T;
-
-    constexpr Allocation<T> allocate(size_t count) const {
-        auto* data = std::allocator<T>().allocate(count);
-        DI_ASSERT(data);
-        return { data, count };
-    }
-
-    constexpr void deallocate(T* data, size_t count) const { std::allocator<T>().deallocate(data, count); }
+concept Allocator = requires(T& allocator, void* data, usize size, usize alignment) {
+    { di::allocate(allocator, size, alignment) } -> MaybeFallible<AllocationResult<>>;
+    di::deallocate(allocator, data, size, alignment);
 };
+
+template<typename T>
+concept InfallibleAllocator = Allocator<T> && requires(T& allocator, void* data, usize size, usize alignment) {
+    { di::allocate(allocator, size, alignment) } -> SameAs<AllocationResult<>>;
+};
+
+template<typename T>
+concept FallibleAllocator = Allocator<T> && !InfallibleAllocator<T>;
+}
+
+namespace di::meta {
+template<concepts::Allocator Alloc, typename T = void>
+using AllocatorResult = meta::LikeExpected<decltype(di::allocate(util::declval<Alloc&>(), 0, 0)), T>;
+}
+
+namespace di {
+using concepts::Allocator;
+using concepts::FallibleAllocator;
+using concepts::InfallibleAllocator;
+
+using meta::AllocatorResult;
 }

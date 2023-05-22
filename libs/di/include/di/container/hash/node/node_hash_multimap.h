@@ -1,6 +1,8 @@
 #pragma once
 
-#include <di/container/allocator/prelude.h>
+#include <di/container/allocator/allocator.h>
+#include <di/container/allocator/fallible_allocator.h>
+#include <di/container/allocator/infallible_allocator.h>
 #include <di/container/associative/map_interface.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/hash/default_hasher.h>
@@ -19,8 +21,7 @@ namespace di::container {
 template<typename Key, typename Value, typename Eq = function::Equal, concepts::Hasher Hasher = DefaultHasher,
          typename Buckets = container::Vector<
              IntrusiveForwardList<HashNode<detail::NodeHashMapTag<Key, Value>>, detail::NodeHashMapTag<Key, Value>>>,
-         concepts::AllocatorOf<OwningHashNode<Tuple<Key, Value>, detail::NodeHashMapTag<Key, Value>>> Alloc =
-             DefaultAllocator<OwningHashNode<Tuple<Key, Value>, detail::NodeHashMapTag<Key, Value>>>>
+         concepts::Allocator Alloc = platform::DefaultAllocator>
 class NodeHashMultiMap
     : public OwningNodeHashTable<
           Tuple<Key, Value>, Eq, Hasher, Buckets, detail::NodeHashMapTag<Key, Value>, Alloc,

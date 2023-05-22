@@ -33,9 +33,10 @@ extern "C" FILE* fopen(char const* __restrict path, char const* __restrict mode)
     auto path_sv = di::TransparentStringView(path, path + strlen(path));
     auto file = STDIO_TRY_OR_NULL(dius::open_sync(path_sv, open_mode));
 
-    auto* buffer = STDIO_TRY_OR_NULL(MallocAllocator<byte>().allocate(BUFSIZ)).data;
+    auto allocator = MallocAllocator {};
+    auto* buffer = STDIO_TRY_OR_NULL(di::allocate_many<byte>(allocator, BUFSIZ)).data;
     auto guard = di::ScopeExit([&] {
-        MallocAllocator<byte>().deallocate(buffer, BUFSIZ);
+        di::deallocate_many<byte>(allocator, buffer, BUFSIZ);
     });
 
     auto handle = FileHandle(new (std::nothrow) FILE());

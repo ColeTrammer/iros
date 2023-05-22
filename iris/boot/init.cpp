@@ -161,7 +161,7 @@ void iris_main() {
                 iris::println("Loading initial userspace task: {}"_sv, init_path);
 
                 auto file_table = iris::FileTable {};
-                auto debug_file = *iris::File::try_create(di::in_place_type<DebugFile>);
+                auto debug_file = *iris::File::create(di::in_place_type<DebugFile>);
                 di::get<0>(*file_table.allocate_file_handle()) = debug_file;
                 di::get<0>(*file_table.allocate_file_handle()) = debug_file;
                 di::get<0>(*file_table.allocate_file_handle()) = debug_file;
@@ -173,7 +173,7 @@ void iris_main() {
                 *arguments.push_back(*init_path.data().to_owned());
 
                 auto task_arguments =
-                    *di::try_make_arc<TaskArguments>(di::move(arguments), di::Vector<di::TransparentString> {});
+                    *di::make_arc<TaskArguments>(di::move(arguments), di::Vector<di::TransparentString> {});
                 task4->set_task_arguments(di::move(task_arguments));
 
                 *iris::load_executable(*task4, init_path);

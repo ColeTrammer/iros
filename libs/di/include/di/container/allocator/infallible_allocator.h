@@ -3,20 +3,15 @@
 #include <di/assert/assert_bool.h>
 #include <di/container/algorithm/max.h>
 #include <di/container/allocator/allocation_result.h>
-#include <di/platform/prelude.h>
+#include <di/container/allocator/allocator.h>
 #include <di/util/std_new.h>
-#include <di/vocab/error/status_code_forward_declaration.h>
-#include <di/vocab/expected/expected_forward_declaration.h>
-#include <di/vocab/expected/unexpected.h>
 
 namespace di::container {
-struct FallibleAllocator {
-    static vocab::Expected<AllocationResult<>, vocab::GenericCode> allocate(usize size, usize alignment) noexcept {
+struct InfallibleAllocator {
+    static AllocationResult<> allocate(usize size, usize alignment) noexcept {
         auto* result =
             ::operator new(size, std::align_val_t { container::max(alignment, alignof(void*)) }, std::nothrow);
-        if (!result) {
-            return vocab::Unexpected(platform::BasicError::NotEnoughMemory);
-        }
+        DI_ASSERT(result);
         return AllocationResult<> { result, size };
     }
 
@@ -24,8 +19,10 @@ struct FallibleAllocator {
         ::operator delete(data, size, std::align_val_t { container::max(alignment, alignof(void*)) });
     }
 };
+
+static_assert(di::concepts::Allocator<InfallibleAllocator>, "InfallibleAllocator is must model di::Allocator");
 }
 
 namespace di {
-using container::FallibleAllocator;
+using container::InfallibleAllocator;
 }

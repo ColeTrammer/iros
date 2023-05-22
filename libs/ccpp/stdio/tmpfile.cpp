@@ -8,9 +8,10 @@ extern "C" FILE* tmpfile(void) {
 
     auto permissions = Permissions::Readable | Permissions::Writable;
 
-    auto* buffer = STDIO_TRY_OR_NULL(MallocAllocator<byte>().allocate(BUFSIZ)).data;
+    auto allocator = MallocAllocator {};
+    auto* buffer = STDIO_TRY_OR_NULL(di::allocate_many<byte>(allocator, BUFSIZ)).data;
     auto guard = di::ScopeExit([&] {
-        MallocAllocator<byte>().deallocate(buffer, BUFSIZ);
+        di::deallocate_many<byte>(allocator, buffer, BUFSIZ);
     });
 
     auto handle = FileHandle(new (std::nothrow) FILE());

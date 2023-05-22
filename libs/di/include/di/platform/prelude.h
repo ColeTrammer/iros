@@ -4,9 +4,8 @@
 
 namespace di {
 using platform::BasicError;
-using platform::default_fallible_allocation_error;
 using platform::DefaultAllocator;
-using platform::DefaultFallibleNewResult;
+using platform::DefaultFallibleAllocator;
 using platform::DefaultLock;
 using platform::GenericDomain;
 

@@ -2,11 +2,15 @@
 
 #include <di/assert/assert_bool.h>
 #include <di/concepts/object.h>
+#include <di/container/allocator/allocate_one.h>
+#include <di/container/allocator/allocator.h>
+#include <di/container/allocator/deallocate_one.h>
 #include <di/function/invoke.h>
 #include <di/function/monad/monad_try.h>
 #include <di/meta/list/prelude.h>
 #include <di/meta/maybe_const.h>
 #include <di/meta/remove_function_qualifiers.h>
+#include <di/platform/prelude.h>
 #include <di/types/prelude.h>
 #include <di/util/addressof.h>
 #include <di/util/construct_at.h>
@@ -16,6 +20,8 @@
 #include <di/util/std_new.h>
 #include <di/vocab/array/prelude.h>
 #include <di/vocab/error/prelude.h>
+#include <di/vocab/expected/as_fallible.h>
+#include <di/vocab/expected/try_infallible.h>
 
 namespace di::function {
 namespace function_ns {
@@ -228,12 +234,13 @@ namespace function_ns {
     concept StoredInline =
         sizeof(F) <= sizeof(ErasedStorage) && alignof(F) <= alignof(ErasedStorage) && concepts::MoveConstructible<F>;
 
+    template<concepts::Allocator Alloc>
     struct ErasedObject {
     private:
-        using ThunkFunction = void (*)(ErasedStorage*, ErasedStorage*);
+        using ThunkFunction = void (*)(ErasedStorage*, ErasedStorage*, Alloc&);
 
         template<typename T>
-        static void concrete_thunk(ErasedStorage* a, ErasedStorage* b) {
+        static void concrete_thunk(ErasedStorage* a, ErasedStorage* b, Alloc& allocator) {
             if constexpr (StoredInline<T>) {
                 if (b) {
                     // Move from b into a.
@@ -250,7 +257,9 @@ namespace function_ns {
                     a->pointer = util::exchange(b->pointer, nullptr);
                 } else {
                     // Just destroy a.
-                    delete static_cast<T*>(a->pointer);
+                    auto* a_value = static_cast<T*>(a->pointer);
+                    util::destroy_at(a_value);
+                    di::deallocate_one<T>(allocator, a_value);
                 }
             }
         }
@@ -261,7 +270,7 @@ namespace function_ns {
         ErasedObject(ErasedObject const&) = delete;
         ErasedObject(ErasedObject&& other) {
             if ((m_thunk = util::exchange(other.m_thunk, nullptr))) {
-                m_thunk(util::addressof(m_storage), util::addressof(other.m_storage));
+                m_thunk(util::addressof(m_storage), util::addressof(other.m_storage), m_allocator);
             }
         }
 
@@ -271,7 +280,7 @@ namespace function_ns {
         ErasedObject& operator=(ErasedObject&& other) {
             reset();
             if ((m_thunk = util::exchange(other.m_thunk, nullptr))) {
-                m_thunk(util::addressof(m_storage), util::addressof(other.m_storage));
+                m_thunk(util::addressof(m_storage), util::addressof(other.m_storage), m_allocator);
             }
             return *this;
         }
@@ -279,7 +288,7 @@ namespace function_ns {
         bool empty() const { return m_thunk != nullptr; }
         void reset() {
             if (auto* old_thunk = util::exchange(m_thunk, nullptr)) {
-                old_thunk(util::addressof(m_storage), nullptr);
+                old_thunk(util::addressof(m_storage), nullptr, m_allocator);
             }
         }
 
@@ -310,47 +319,34 @@ namespace function_ns {
 
         template<typename T, typename... Args>
         requires(!StoredInline<T>)
-        Result<void> init_out_of_line_fallible(Args&&... args) {
-            auto* pointer = new (std::nothrow) T(util::forward<Args>(args)...);
-            if (!pointer) {
-                return Unexpected(BasicError::NotEnoughMemory);
-            }
-            m_thunk = &concrete_thunk<T>;
-            m_storage.pointer = pointer;
-            return {};
-        }
-
-        template<typename T, typename... Args>
-        requires(!StoredInline<T>)
-        void init_out_of_line_infallible(Args&&... args) {
-            auto* pointer = new (std::nothrow) T(util::forward<Args>(args)...);
-            DI_ASSERT(pointer);
-            m_thunk = &concrete_thunk<T>;
-            m_storage.pointer = pointer;
+        auto init_out_of_line(Args&&... args) {
+            return vocab::as_fallible(di::allocate_one<T>(m_allocator)) % [&](T* storage) {
+                m_thunk = &concrete_thunk<T>;
+                m_storage.pointer = storage;
+                util::construct_at(storage, util::forward<Args>(args)...);
+            } | vocab::try_infallible;
         }
 
     private:
         ThunkFunction m_thunk { nullptr };
         ErasedStorage m_storage;
+        [[no_unique_address]] Alloc m_allocator {};
     };
 
-    template<typename T>
+    template<typename T, concepts::Allocator = platform::DefaultAllocator>
     struct MakeFunction;
 
-    template<typename T>
-    struct TryMakeFunction;
-
-    template<typename Sig, typename = meta::Type<SignatureInfo<Sig>>>
+    template<typename Sig, concepts::Allocator Alloc = platform::DefaultAllocator,
+             typename = meta::Type<SignatureInfo<Sig>>>
     class Function;
 
-    template<typename Sig, typename R, typename... Args>
-    class Function<Sig, R(Args...)> {
+    template<typename Sig, concepts::Allocator Alloc, typename R, typename... Args>
+    class Function<Sig, Alloc, R(Args...)> {
     private:
-        template<typename>
+        template<typename, concepts::Allocator>
         friend struct MakeFunction;
 
-        template<typename>
-        friend struct TryMakeFunction;
+        using ErasedObject = function_ns::ErasedObject<Alloc>;
 
         using Info = SignatureInfo<Sig>;
 
@@ -429,21 +425,21 @@ namespace function_ns {
                     return;
                 }
             }
-            m_object.init_inline<VT>(util::forward<F>(object));
+            m_object.template init_inline<VT>(util::forward<F>(object));
             m_impl = &concrete_impl<VT>;
         }
 
         template<auto f, typename T, typename VT = meta::Decay<T>>
         requires(concepts::ConstructibleFrom<VT, T> && is_callable_as_if_from<f, VT> && StoredInline<VT>)
         Function(Nontype<f>, T&& object) {
-            m_object.init_inline<VT>(util::forward<T>(object));
+            m_object.template init_inline<VT>(util::forward<T>(object));
             m_impl = &concrete_impl_for_bound_nontype<f, VT>;
         }
 
         template<typename T, typename... Ts, typename VT = meta::Decay<T>>
         requires(concepts::ConstructibleFrom<T, Ts...> && is_callable_from<VT> && StoredInline<VT>)
         explicit Function(InPlaceType<T>, Ts&&... args) {
-            m_object.init_inline<VT>(util::forward<Ts>(args)...);
+            m_object.template init_inline<VT>(util::forward<Ts>(args)...);
             m_impl = &concrete_impl<VT>;
         }
 
@@ -451,14 +447,14 @@ namespace function_ns {
         requires(concepts::ConstructibleFrom<T, std::initializer_list<U>&, Ts...> && is_callable_from<VT> &&
                  StoredInline<VT>)
         explicit Function(InPlaceType<T>, std::initializer_list<U> list, Ts&&... args) {
-            m_object.init_inline<VT>(list, util::forward<Ts>(args)...);
+            m_object.template init_inline<VT>(list, util::forward<Ts>(args)...);
             m_impl = &concrete_impl<VT>;
         }
 
         template<auto f, typename T, typename... Ts, typename VT = meta::Decay<T>>
         requires(concepts::ConstructibleFrom<T, Ts...> && is_callable_from<VT> && StoredInline<VT>)
         explicit Function(Nontype<f>, InPlaceType<T>, Ts&&... args) {
-            m_object.init_inline<VT>(util::forward<Ts>(args)...);
+            m_object.template init_inline<VT>(util::forward<Ts>(args)...);
             m_impl = &concrete_impl_for_bound_nontype<f, VT>;
         }
 
@@ -466,7 +462,7 @@ namespace function_ns {
         requires(concepts::ConstructibleFrom<T, std::initializer_list<U>&, Ts...> && is_callable_from<VT> &&
                  StoredInline<VT>)
         explicit Function(Nontype<f>, InPlaceType<T>, std::initializer_list<U> list, Ts&&... args) {
-            m_object.init_inline<VT>(list, util::forward<Ts>(args)...);
+            m_object.template init_inline<VT>(list, util::forward<Ts>(args)...);
             m_impl = &concrete_impl_for_bound_nontype<f, VT>;
         }
 
@@ -543,7 +539,7 @@ namespace function_ns {
         ErasedFunctionPointer m_impl { nullptr };
     };
 
-    template<typename Signature>
+    template<typename Signature, concepts::Allocator Alloc>
     struct MakeFunction {
     private:
         using Function = function_ns::Function<Signature>;
@@ -552,7 +548,7 @@ namespace function_ns {
         template<typename F, typename VT = meta::Decay<F>>
         requires(!concepts::SameAs<meta::RemoveCVRef<F>, Function> &&
                  !concepts::InstanceOf<meta::RemoveCVRef<F>, InPlaceType> && Function::template is_callable_from<VT>)
-        Function operator()(F&& object) const {
+        meta::AllocatorResult<Alloc, Function> operator()(F&& object) const {
             Function result;
             if constexpr (concepts::MemberPointer<VT> ||
                           concepts::InstanceOf<meta::RemoveCVRef<F>, function_ns::Function>) {
@@ -562,8 +558,10 @@ namespace function_ns {
             }
             if constexpr (StoredInline<VT>) {
                 result.m_object.template init_inline<VT>(util::forward<F>(object));
+            } else if constexpr (concepts::FallibleAllocator<Alloc>) {
+                DI_TRY(result.m_object.template init_out_of_line<VT>(util::forward<F>(object)));
             } else {
-                result.m_object.template init_out_of_line_infallible<VT>(util::forward<F>(object));
+                result.m_object.template init_out_of_line<VT>(util::forward<F>(object));
             }
             result.m_impl = &Function::template concrete_impl<VT>;
             return result;
@@ -571,106 +569,14 @@ namespace function_ns {
 
         template<auto f, typename T, typename VT = meta::Decay<T>>
         requires(concepts::ConstructibleFrom<VT, T> && Function::template is_callable_as_if_from<f, VT>)
-        Function operator()(Nontype<f>, T&& object) const {
+        meta::AllocatorResult<Alloc, Function> operator()(Nontype<f>, T&& object) const {
             Function result;
             if constexpr (StoredInline<VT>) {
                 result.m_object.template init_inline<VT>(util::forward<T>(object));
-            } else {
-                result.m_object.template init_out_of_line_infallible<VT>(util::forward<T>(object));
-            }
-            result.m_impl = &Function::template concrete_impl_for_bound_nontype<f, VT>;
-            return result;
-        }
-
-        template<typename T, typename... Ts, typename VT = meta::Decay<T>>
-        requires(concepts::ConstructibleFrom<T, Ts...> && Function::template is_callable_from<VT>)
-        Function operator()(InPlaceType<T>, Ts&&... args) const {
-            Function result;
-            if constexpr (StoredInline<VT>) {
-                result.m_object.template init_inline<VT>(util::forward<Ts>(args)...);
-            } else {
-                result.m_object.template init_out_of_line_infallible<VT>(util::forward<Ts>(args)...);
-            }
-            result.m_impl = &Function::template concrete_impl<VT>;
-            return result;
-        }
-
-        template<typename T, typename U, typename... Ts, typename VT = meta::Decay<T>>
-        requires(concepts::ConstructibleFrom<T, std::initializer_list<U>&, Ts...> &&
-                 Function::template is_callable_from<VT>)
-        Function operator()(InPlaceType<T>, std::initializer_list<U> list, Ts&&... args) const {
-            Function result;
-            if constexpr (StoredInline<VT>) {
-                result.m_object.template init_inline<VT>(list, util::forward<Ts>(args)...);
-            } else {
-                result.m_object.template init_out_of_line_infallible<VT>(list, util::forward<Ts>(args)...);
-            }
-            result.m_impl = &Function::template concrete_impl<VT>;
-            return result;
-        }
-
-        template<auto f, typename T, typename... Ts, typename VT = meta::Decay<T>>
-        requires(concepts::ConstructibleFrom<T, Ts...> && Function::template is_callable_from<VT>)
-        Function operator()(Nontype<f>, InPlaceType<T>, Ts&&... args) const {
-            Function result;
-            if constexpr (StoredInline<VT>) {
-                result.m_object.template init_inline<VT>(util::forward<Ts>(args)...);
-            } else {
-                result.m_object.template init_out_of_line_infallible<VT>(util::forward<Ts>(args)...);
-            }
-            result.m_impl = &Function::template concrete_impl_for_bound_nontype<f, VT>;
-            return result;
-        }
-
-        template<auto f, typename T, typename U, typename... Ts, typename VT = meta::Decay<T>>
-        requires(concepts::ConstructibleFrom<T, std::initializer_list<U>&, Ts...> &&
-                 Function::template is_callable_from<VT> && StoredInline<VT>)
-        Function operator()(Nontype<f>, InPlaceType<T>, std::initializer_list<U> list, Ts&&... args) const {
-            Function result;
-            if constexpr (StoredInline<VT>) {
-                result.m_object.template init_inline<VT>(list, util::forward<Ts>(args)...);
-            } else {
-                result.m_object.template init_out_of_line_infallible<VT>(list, util::forward<Ts>(args)...);
-            }
-            result.m_impl = &Function::template concrete_impl_for_bound_nontype<f, VT>;
-            return result;
-        }
-    };
-
-    template<typename Signature>
-    struct TryMakeFunction {
-    private:
-        using Function = function_ns::Function<Signature>;
-
-    public:
-        template<typename F, typename VT = meta::Decay<F>>
-        requires(!concepts::SameAs<meta::RemoveCVRef<F>, Function> &&
-                 !concepts::InstanceOf<meta::RemoveCVRef<F>, InPlaceType> && Function::template is_callable_from<VT>)
-        Result<Function> operator()(F&& object) const {
-            Function result;
-            if constexpr (concepts::MemberPointer<VT> ||
-                          concepts::InstanceOf<meta::RemoveCVRef<F>, function_ns::Function>) {
-                if (object == nullptr) {
-                    return result;
-                }
-            }
-            if constexpr (StoredInline<VT>) {
-                result.m_object.template init_inline<VT>(util::forward<F>(object));
-            } else {
-                DI_TRY(result.m_object.template init_out_of_line_fallible<VT>(util::forward<F>(object)));
-            }
-            result.m_impl = &Function::template concrete_impl<VT>;
-            return result;
-        }
-
-        template<auto f, typename T, typename VT = meta::Decay<T>>
-        requires(concepts::ConstructibleFrom<VT, T> && Function::template is_callable_as_if_from<f, VT>)
-        Result<Function> operator()(Nontype<f>, T&& object) const {
-            Function result;
-            if constexpr (StoredInline<VT>) {
-                result.m_object.template init_inline<VT>(util::forward<T>(object));
-            } else {
+            } else if constexpr (concepts::FallibleAllocator<Alloc>) {
                 DI_TRY(result.m_object.template init_out_of_line_fallible<VT>(util::forward<T>(object)));
+            } else {
+                result.m_object.template init_out_of_line<VT>(util::forward<T>(object));
             }
             result.m_impl = &Function::template concrete_impl_for_bound_nontype<f, VT>;
             return result;
@@ -678,12 +584,14 @@ namespace function_ns {
 
         template<typename T, typename... Ts, typename VT = meta::Decay<T>>
         requires(concepts::ConstructibleFrom<T, Ts...> && Function::template is_callable_from<VT>)
-        Result<Function> operator()(InPlaceType<T>, Ts&&... args) const {
+        meta::AllocatorResult<Alloc, Function> operator()(InPlaceType<T>, Ts&&... args) const {
             Function result;
             if constexpr (StoredInline<VT>) {
                 result.m_object.template init_inline<VT>(util::forward<Ts>(args)...);
-            } else {
+            } else if constexpr (concepts::FallibleAllocator<Alloc>) {
                 DI_TRY(result.m_object.template init_out_of_line_fallible<VT>(util::forward<Ts>(args)...));
+            } else {
+                result.m_object.template init_out_of_line<VT>(util::forward<Ts>(args)...);
             }
             result.m_impl = &Function::template concrete_impl<VT>;
             return result;
@@ -692,12 +600,15 @@ namespace function_ns {
         template<typename T, typename U, typename... Ts, typename VT = meta::Decay<T>>
         requires(concepts::ConstructibleFrom<T, std::initializer_list<U>&, Ts...> &&
                  Function::template is_callable_from<VT>)
-        Result<Function> operator()(InPlaceType<T>, std::initializer_list<U> list, Ts&&... args) const {
+        meta::AllocatorResult<Alloc, Function> operator()(InPlaceType<T>, std::initializer_list<U> list,
+                                                          Ts&&... args) const {
             Function result;
             if constexpr (StoredInline<VT>) {
                 result.m_object.template init_inline<VT>(list, util::forward<Ts>(args)...);
-            } else {
+            } else if constexpr (concepts::FallibleAllocator<Alloc>) {
                 DI_TRY(result.m_object.template init_out_of_line_fallible<VT>(list, util::forward<Ts>(args)...));
+            } else {
+                result.m_object.template init_out_of_line<VT>(list, util::forward<Ts>(args)...);
             }
             result.m_impl = &Function::template concrete_impl<VT>;
             return result;
@@ -705,12 +616,14 @@ namespace function_ns {
 
         template<auto f, typename T, typename... Ts, typename VT = meta::Decay<T>>
         requires(concepts::ConstructibleFrom<T, Ts...> && Function::template is_callable_from<VT>)
-        Result<Function> operator()(Nontype<f>, InPlaceType<T>, Ts&&... args) const {
+        meta::AllocatorResult<Alloc, Function> operator()(Nontype<f>, InPlaceType<T>, Ts&&... args) const {
             Function result;
             if constexpr (StoredInline<VT>) {
                 result.m_object.template init_inline<VT>(util::forward<Ts>(args)...);
-            } else {
+            } else if constexpr (concepts::FallibleAllocator<Alloc>) {
                 DI_TRY(result.m_object.template init_out_of_line_fallible<VT>(util::forward<Ts>(args)...));
+            } else {
+                result.m_object.template init_out_of_line<VT>(util::forward<Ts>(args)...);
             }
             result.m_impl = &Function::template concrete_impl_for_bound_nontype<f, VT>;
             return result;
@@ -719,12 +632,15 @@ namespace function_ns {
         template<auto f, typename T, typename U, typename... Ts, typename VT = meta::Decay<T>>
         requires(concepts::ConstructibleFrom<T, std::initializer_list<U>&, Ts...> &&
                  Function::template is_callable_from<VT> && StoredInline<VT>)
-        Result<Function> operator()(Nontype<f>, InPlaceType<T>, std::initializer_list<U> list, Ts&&... args) const {
+        meta::AllocatorResult<Alloc, Function> operator()(Nontype<f>, InPlaceType<T>, std::initializer_list<U> list,
+                                                          Ts&&... args) const {
             Function result;
             if constexpr (StoredInline<VT>) {
                 result.m_object.template init_inline<VT>(list, util::forward<Ts>(args)...);
-            } else {
+            } else if constexpr (concepts::FallibleAllocator<Alloc>) {
                 DI_TRY(result.m_object.template init_out_of_line_fallible<VT>(list, util::forward<Ts>(args)...));
+            } else {
+                result.m_object.template init_out_of_line<VT>(list, util::forward<Ts>(args)...);
             }
             result.m_impl = &Function::template concrete_impl_for_bound_nontype<f, VT>;
             return result;
@@ -734,9 +650,6 @@ namespace function_ns {
 
 using function_ns::Function;
 
-template<concepts::LanguageFunction T>
-constexpr inline auto make_function = function_ns::MakeFunction<T> {};
-
-template<concepts::LanguageFunction T>
-constexpr inline auto try_make_function = function_ns::TryMakeFunction<T> {};
+template<concepts::LanguageFunction T, concepts::Allocator Alloc = platform::DefaultAllocator>
+constexpr inline auto make_function = function_ns::MakeFunction<T, Alloc> {};
 }

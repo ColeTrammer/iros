@@ -74,7 +74,7 @@ struct TmpfsInodeImpl {
         if (it == self.inodes.end()) {
             return di::Unexpected(Error::NoSuchFileOrDirectory);
         }
-        return di::try_make_arc<TNode>(di::move(parent), di::get<1>(*it), TRY(name.to_owned()));
+        return di::make_arc<TNode>(di::move(parent), di::get<1>(*it), TRY(name.to_owned()));
     }
 
     friend Expected<Metadata> tag_invoke(di::Tag<inode_metadata>, TmpfsInodeImpl& self) { return self.metadata; }
@@ -83,9 +83,9 @@ struct TmpfsInodeImpl {
                                                di::Arc<TNode> const& parent, di::TransparentStringView name,
                                                MetadataType type) {
         auto& child = TRY(self.inodes.emplace_back(
-            TRY(name.to_owned()),
-            TRY(di::try_make_arc<Inode>(InodeImpl::create(TmpfsInodeImpl(Metadata { .type = type, .size = 0 }, {}))))));
-        return di::try_make_arc<TNode>(parent, di::get<1>(child), TRY(name.to_owned()));
+            TRY(name.to_owned()), TRY(di::make_arc<Inode>(TRY(
+                                      InodeImpl::create(TmpfsInodeImpl(Metadata { .type = type, .size = 0 }, {})))))));
+        return di::make_arc<TNode>(parent, di::get<1>(child), TRY(name.to_owned()));
     }
 
     friend Expected<void> tag_invoke(di::Tag<inode_truncate>, TmpfsInodeImpl& self, u64 size) {
@@ -107,10 +107,10 @@ Expected<void> init_tmpfs() {
     auto& global_state = global_state_in_boot();
     auto& initrd_root = global_state.initrd_root;
 
-    auto root_inode = TRY(di::try_make_arc<Inode>(
-        InodeImpl::create(TmpfsInodeImpl(Metadata { .type = MetadataType::Directory, .size = 0 }, {}))));
-    auto super_block = TRY(di::try_box<SuperBlock>(root_inode));
-    auto mount = TRY(di::try_box<Mount>(di::move(super_block)));
+    auto root_inode = TRY(di::make_arc<Inode>(
+        TRY(InodeImpl::create(TmpfsInodeImpl(Metadata { .type = MetadataType::Directory, .size = 0 }, {})))));
+    auto super_block = TRY(di::make_box<SuperBlock>(root_inode));
+    auto mount = TRY(di::make_box<Mount>(di::move(super_block)));
 
     auto tmp_tnode = TRY(lookup_path(initrd_root, initrd_root, "/tmp"_pv));
     tmp_tnode->inode()->set_mount(di::move(mount));

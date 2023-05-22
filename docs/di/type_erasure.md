@@ -29,11 +29,16 @@ public:
 };
 ```
 
-Now, to use this construction, you can pass a IDrawable by reference to a function. To actually store these things in a memory safe way, either std::unique_ptr or std::shared_ptr must be used. These types cannot be treated as values, so we must use indirection. Furthremore, the objects always have to be heap allocated.
+Now, to use this construction, you can pass a IDrawable by reference to a function. To actually store these things in a
+memory safe way, either std::unique_ptr or std::shared_ptr must be used. These types cannot be treated as values, so we
+must use indirection. Furthremore, the objects always have to be heap allocated.
 
 ## Type Erasure
 
-Using type erasure, the interface class poses an abstract set of requirements, and can be constructed from any type which meets them. The type internally is memory safe, by either storing the object internally (small object optimization), or on the heap using a smart pointer. Instead of using 2 indirections, the virtual table can be inline or otherwise stored using a "fat" pointer (rust dyn&).
+Using type erasure, the interface class poses an abstract set of requirements, and can be constructed from any type
+which meets them. The type internally is memory safe, by either storing the object internally (small object
+optimization), or on the heap using a smart pointer. Instead of using 2 indirections, the virtual table can be inline or
+otherwise stored using a "fat" pointer (rust dyn&).
 
 ```cpp
 class Circle {};
@@ -77,11 +82,16 @@ void use_drawables() {
 }
 ```
 
-Notice, drawables can be used directly as objects, and thus don't have to managed using smart pointers. Additionally, operations need not be defined inside the classes they operate on, which means Circle and Square can be pure data classes, and offer no functionality themselves. This allows seamlessly adding new operations without breaking code.
+Notice, drawables can be used directly as objects, and thus don't have to managed using smart pointers. Additionally,
+operations need not be defined inside the classes they operate on, which means Circle and Square can be pure data
+classes, and offer no functionality themselves. This allows seamlessly adding new operations without breaking code.
 
-Default operations can be expressed directly in the definition of the operation. By providing such a default operation, the Draw function object will be invocable for any object, and thus every object can be erased into a drawable.
+Default operations can be expressed directly in the definition of the operation. By providing such a default operation,
+the Draw function object will be invocable for any object, and thus every object can be erased into a drawable.
 
-The tag_invoke mechanism allows type erasure without macros and without defining operations twice. However, you don't get member functions, since C++ does not have reflection and meta classes. However, not using member functions allows extending a class without modifying it, and still provides a uniform and readable way to call methods.
+The tag_invoke mechanism allows type erasure without macros and without defining operations twice. However, you don't
+get member functions, since C++ does not have reflection and meta classes. However, not using member functions allows
+extending a class without modifying it, and still provides a uniform and readable way to call methods.
 
 ```cpp
 // OOP
@@ -91,11 +101,14 @@ object->draw();
 draw(object);
 ```
 
-Calling a free function is 2 characters shorter assuming we are already in the correct namespace, although otherwise it will be more characters to type.
+Calling a free function is 2 characters shorter assuming we are already in the correct namespace, although otherwise it
+will be more characters to type.
 
 ### Universality with Concepts
 
-When using OOP, the dispatch is always dynamic, and so relies on de-virtualization to optimize scenarios where the concrete object type is known. With type erasure, a concrete type and a polymorphic type can be used identically, and static dispatch can be used by making your function generic with a template.
+When using OOP, the dispatch is always dynamic, and so relies on de-virtualization to optimize scenarios where the
+concrete object type is known. With type erasure, a concrete type and a polymorphic type can be used identically, and
+static dispatch can be used by making your function generic with a template.
 
 ```cpp
 // OOP: always use dynamic dispatch.
@@ -113,11 +126,13 @@ void draw3(di::Impl<IDrawable> auto& a) {
 }
 ```
 
-`di::Impl` is a concept which is only satisfied for types which meet the requirements laid out in the provided interface. The name is derived from rust, where traits can be required using the impl keyword.
+`di::Impl` is a concept which is only satisfied for types which meet the requirements laid out in the provided
+interface. The name is derived from rust, where traits can be required using the impl keyword.
 
 ## Ergonomic Concerns
 
-The main annoyance with this model is the creation of tag_invoke calling function objects. This can actually be automated using some meta programming on top of tag_invoke().
+The main annoyance with this model is the creation of tag_invoke calling function objects. This can actually be
+automated using some meta programming on top of tag_invoke().
 
 ```cpp
 // OOP
@@ -150,11 +165,19 @@ using Drawable = di::Any<IDrawable>;
 using DrawableRef = di::AnyRef<IDrawable>;
 ```
 
-The idea is that the dispatch objects will implement the common CPO pattern, which is to attempt to call functions one after another. For DebugPrint, the final function object to call is di::into_void, which means that the default implenentation will just ignore arguments. This DSL for describing an interface can work without macros, and is in fact far more expressive than virtual methods, since the actual method call can use static dispatch (and so can use if constexpr).
+The idea is that the dispatch objects will implement the common CPO pattern, which is to attempt to call functions one
+after another. For DebugPrint, the final function object to call is di::into_void, which means that the default
+implenentation will just ignore arguments. This DSL for describing an interface can work without macros, and is in fact
+far more expressive than virtual methods, since the actual method call can use static dispatch (and so can use if
+constexpr).
 
 ### Templated Dispatch
 
-Most type erased interfaces will be designed for type erasure, which means they will not have templated arguments. But, in other cases, the interface in question will be templated. This is the case for things like sender/receivers, function objects, di::format, etc. In these cases, an explicit signature must be provided. For di::format, a specific type erased format context will be used, or for di::Function, the type erasure can only work on callables that except the provided signature.
+Most type erased interfaces will be designed for type erasure, which means they will not have templated arguments. But,
+in other cases, the interface in question will be templated. This is the case for things like sender/receivers, function
+objects, di::format, etc. In these cases, an explicit signature must be provided. For di::format, a specific type erased
+format context will be used, or for di::Function, the type erasure can only work on callables that except the provided
+signature.
 
 For these cases, there needs to be a way to explicitly list the signature when defining the interface requirements.
 
@@ -166,7 +189,8 @@ using Interface = di::meta::List<
 >;
 ```
 
-If we really wanted, it could be possible to overload operator-> on some sort of type. The interface definition would then be a list of value types:
+If we really wanted, it could be possible to overload operator-> on some sort of type. The interface definition would
+then be a list of value types:
 
 ```cpp
 using Interface = di::meta::ValueList<
@@ -248,33 +272,50 @@ struct BeginFunction : TemplateDipatcher<BeginFunction, meta::List<
 }
 ```
 
-This makes use of a placeholder syntax to implicitly define template parameters of the function. This API is not yet fully fleshed out.
+This makes use of a placeholder syntax to implicitly define template parameters of the function. This API is not yet
+fully fleshed out.
 
 ## Multiple types of erased objects
 
-So far, only a value oriented type erased object has been considered. But we can additionally have a type erased reference type, with non-owning semantics, which can be thought of as equivalent to passing a dyn& in rust. This type
+So far, only a value oriented type erased object has been considered. But we can additionally have a type erased
+reference type, with non-owning semantics, which can be thought of as equivalent to passing a dyn& in rust. This type
 would be 100% allocation free.
 
-Additionally, one could imagine creating a type erased wrapper
-which internally has shared pointer semantics, such that it owns its data and has shallow copy semantics.
+Additionally, one could imagine creating a type erased wrapper which internally has shared pointer semantics, such that
+it owns its data and has shallow copy semantics.
 
 ## Implementation
 
 ### Object Management
 
-For the value oriented erased object, there are many considerations to be made, mainly around which operations are to be supported. If a type erased wrapper supports copying, all implementations must support copying as well. The same can be said for di CPOs, like di::clone. Making the erased object trivially relocatable greatly improves performance, because indirect calls can be ellided during move construction, but this requires all implementing types to be trivially relocatable themselves. This is mainly a problem because this information is not derived in the compiler (at least for GCC), so such a property is opt-in.
+For the value oriented erased object, there are many considerations to be made, mainly around which operations are to be
+supported. If a type erased wrapper supports copying, all implementations must support copying as well. The same can be
+said for di CPOs, like di::clone. Making the erased object trivially relocatable greatly improves performance, because
+indirect calls can be ellided during move construction, but this requires all implementing types to be trivially
+relocatable themselves. This is mainly a problem because this information is not derived in the compiler (at least for
+GCC), so such a property is opt-in.
 
-No indirection on moving is needed if the internal object is always heap allocated, but doing so could be wasteful. Having inline storage is very important when erasing small objects (imagine di::Function), but effectively useless if every object is large (imagine iris::IrqController). As such, the internal storage policy needs to be heavily customizable.
+No indirection on moving is needed if the internal object is always heap allocated, but doing so could be wasteful.
+Having inline storage is very important when erasing small objects (imagine di::Function), but effectively useless if
+every object is large (imagine iris::IrqController). As such, the internal storage policy needs to be heavily
+customizable.
 
 ### Virtual Table Storage
 
-Manually creating a vtable enables the programmer to micro-optimize the vtable layout as much as they please. A sensible default is to store the vtable as a "fat" pointer (separate pointer to array of function pointers), but if there is only 1 operation, it is obviously better to just store that function pointer directly. Since we will always need at least 1 operation, because the destructor must always be callable, we can expand the default inlining level to 2 or 3 operations.
+Manually creating a vtable enables the programmer to micro-optimize the vtable layout as much as they please. A sensible
+default is to store the vtable as a "fat" pointer (separate pointer to array of function pointers), but if there is only
+1 operation, it is obviously better to just store that function pointer directly. Since we will always need at least 1
+operation, because the destructor must always be callable, we can expand the default inlining level to 2 or 3
+operations.
 
-In certain cases, one function is "hot" while the other erased functions are called much less frequently. In these scenarios, a hybrid approach should offer the best performance. This is again an area which requires extreme customizability.
+In certain cases, one function is "hot" while the other erased functions are called much less frequently. In these
+scenarios, a hybrid approach should offer the best performance. This is again an area which requires extreme
+customizability.
 
 ### Meta Object Representation
 
-To store entries in the vtable, we need compile time meta programming facilities. Vtable entries will be represented in the following structure.
+To store entries in the vtable, we need compile time meta programming facilities. Vtable entries will be represented in
+the following structure.
 
 ```cpp
 namespace types {
@@ -301,12 +342,13 @@ using MethodSignature = Method::Signature;
 }
 ```
 
-Then, vtables will have an associated list of signature objects, which correspond to the vtable entries.
-The library will support merging vtables together, to enable erasing multiple traits into one object, and
-as an implementation detail, because owning structures will internally merge the user requested operations
-with the vtable for moving, destroying, copying, swapping, etc.
+Then, vtables will have an associated list of signature objects, which correspond to the vtable entries. The library
+will support merging vtables together, to enable erasing multiple traits into one object, and as an implementation
+detail, because owning structures will internally merge the user requested operations with the vtable for moving,
+destroying, copying, swapping, etc.
 
-A list of methods will be represented directly use a `meta::List<>`. Thus, merging interfaces together is simply a matter of calling `meta::Concat<>` and `meta::Unique<>` on all the methods present in a list.
+A list of methods will be represented directly use a `meta::List<>`. Thus, merging interfaces together is simply a
+matter of calling `meta::Concat<>` and `meta::Unique<>` on all the methods present in a list.
 
 ### Object Categories
 
@@ -323,40 +365,50 @@ To enable certain optimizations when storing type erased objects, it is necessar
 | Infallibly cloneable  | Clone returns `T`, not `Result<T>`            | Clone function can never return an error                                                         |
 | Cloneable             | Cloneable                                     | None                                                                                             |
 
-Trivially relocatable objects provide a significant improvement over having a type erased move constructor. Nearly all types in C++ are trivially relocatable, with the exception of linked lists (or any self-referential data structure). The downside is that trivial relocatability is not tracked by the compiler, and so every type must manually opt-in.
+Trivially relocatable objects provide a significant improvement over having a type erased move constructor. Nearly all
+types in C++ are trivially relocatable, with the exception of linked lists (or any self-referential data structure). The
+downside is that trivial relocatability is not tracked by the compiler, and so every type must manually opt-in.
 
-The default object category will be move only, since this provides allow erasing nearly any object, while providing normal value semantics. This also prevents expensive copy operations from ever being called.
+The default object category will be move only, since this provides allow erasing nearly any object, while providing
+normal value semantics. This also prevents expensive copy operations from ever being called.
 
-If objects need to be copied, users can make the object category cloneable, in which case a vtable entry will handle cloning, or if shared pointer semantics are required, users can use `AnyShared`, which internally stores a ref-counted type-erased object.
+If objects need to be copied, users can make the object category cloneable, in which case a vtable entry will handle
+cloning, or if shared pointer semantics are required, users can use `AnyShared`, which internally stores a ref-counted
+type-erased object.
 
 ### Any Type Summary
 
-The following table describes the type aliases provided by the library.
+The following table describes the type aliases provided by the library. Notice that types which allocate memory take an
+additional allocator template parameter, which defaults to `di::DefaultAllocator`.
 
-| Name                                                | Alias                                                                            | Storage Category                 | Requirements on T                                           | Description                                                                                                                                                                  |
-| --------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `di::Any<I>`                                        | `Any<I, HybridStorage<2 * sizeof(void*), alignof(void*)>, MaybeInlineVTable<3>>` | Moveable                         | None                                                        | Owning polymorphic object with value semantics. This is the default storage and vtable policy used, and is good for storing any type of value.                               |
-| `di::AnyRef<I>`                                     | `Any<I, RefStorage>`                                                             | Trivial                          | Must be reference or function pointer                       | Non-owning reference to polymorphic object. Unsafe to store, so only use when passing a parameter.                                                                           |
-| `di::AnyInline<I, size, align>`                     | `Any<I, InlineStorage<size, align>>`                                             | Moveable                         | `sizeof(T) <= size` and `alignof(T) <= align` and Moveable  | Non-allocated owned storage. Use when the object sizes are guaranteed to be small or allocating is unacceptable, but note that objects which are too large cannot be stored. |
-| `di::AnyUnique<I>`                                  | `Any<I, UniqueStorage>`                                                          | Trivially Relocatable            | None                                                        | Always-allocated owned storage. Use when the object sizes are large or the move constructor needs to be called a lot.                                                        |
-| `di::AnyHybrid<I, size_threshold, align_threshold>` | `Any<I, HybridStorage<size_threshold, align_threshold>>`                         | Moveable                         | None (but T must be small and moveable to be stored inline) | Sometimes allocated owned storage. Use when the object size is unknown and can be small, which prevents allocating when storing some objects.                                |
-| `di::AnyShared<I>`                                  | `Any<I, SharedStorage>`                                                          | Trivially Relocatable + Copyable | None                                                        | Always-allocated shared storage. Use when shared ownership is required.                                                                                                      |
+| Name                                                             | Alias                                                                            | Storage Category                 | Requirements on T                                           | Description                                                                                                                                                                  |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------- | -------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `di::Any<I>`                                                     | `Any<I, HybridStorage<2 * sizeof(void*), alignof(void*)>, MaybeInlineVTable<3>>` | Moveable                         | None                                                        | Owning polymorphic object with value semantics. This is the default storage and vtable policy used, and is good for storing any type of value.                               |
+| `di::AnyRef<I>`                                                  | `Any<I, RefStorage>`                                                             | Trivial                          | Must be reference or function pointer                       | Non-owning reference to polymorphic object. Unsafe to store, so only use when passing a parameter.                                                                           |
+| `di::AnyInline<I, size, align>`                                  | `Any<I, InlineStorage<size, align>>`                                             | Moveable                         | `sizeof(T) <= size` and `alignof(T) <= align` and Moveable  | Non-allocated owned storage. Use when the object sizes are guaranteed to be small or allocating is unacceptable, but note that objects which are too large cannot be stored. |
+| `di::AnyUnique<I, Alloc = ...>`                                  | `Any<I, UniqueStorage<Alloc>>`                                                   | Trivially Relocatable            | None                                                        | Always-allocated owned storage. Use when the object sizes are large or the move constructor needs to be called a lot.                                                        |
+| `di::AnyHybrid<I, size_threshold, align_threshold, Alloc = ...>` | `Any<I, HybridStorage<size_threshold, align_threshold, Alloc>>`                  | Moveable                         | None (but T must be small and moveable to be stored inline) | Sometimes allocated owned storage. Use when the object size is unknown and can be small, which prevents allocating when storing some objects.                                |
+| `di::AnyShared<I, Alloc = ...>`                                  | `Any<I, SharedStorage<Alloc>>`                                                   | Trivially Relocatable + Copyable | None                                                        | Always-allocated shared storage. Use when shared ownership is required.                                                                                                      |
 
 ## A Practical Example
 
-Consider a concept which current exists in di, which conceptifies any object which can have bytes written to. This interface enables writing utility functions which work on anything which is byte writable, and in particular, is used by di::format to allow printing to stdout and stderr. But, a Writer can also be implemented using memory mapped IO, or even a temporary in memory buffer which has no disk backing.
+Consider a concept which current exists in di, which conceptifies any object which can have bytes written to. This
+interface enables writing utility functions which work on anything which is byte writable, and in particular, is used by
+di::format to allow printing to stdout and stderr. But, a Writer can also be implemented using memory mapped IO, or even
+a temporary in memory buffer which has no disk backing.
 
 The C++ 20 concept definition for this trait is as follows:
 
 ```cpp
 template<typename T>
 concept Writer = requires(T& writer, vocab::Span<Byte const> data) {
-                     { writer.write_some(data) } -> SameAs<Result<size_t>>;
+                     { writer.write_some(data) } -> SameAs<Result<usize>>;
                      { writer.flush() } -> SameAs<Result<void>>;
                  };
 ```
 
-However, this trait definition requires any generic algorithm to be templated, and does not allow switching a Writer implementation at runtime.
+However, this trait definition requires any generic algorithm to be templated, and does not allow switching a Writer
+implementation at runtime.
 
 A type erased API definition looks like this:
 
@@ -370,7 +422,8 @@ constexpr inline auto flush = Flush {};
 using Writer = meta::List<WriteSome, Flush>;
 ```
 
-Now imagine a BufferWriter class, which wraps any Writer and buffers repeated calls to write_some. This is done as follows:
+Now imagine a BufferWriter class, which wraps any Writer and buffers repeated calls to write_some. This is done as
+follows:
 
 ```cpp
 // OLD: template<Writer W>
@@ -401,8 +454,17 @@ private:
 };
 ```
 
-By defining the writer concept as a type erasable interface, buffered writer can easily accept polymorphic types without difficulty. This increased flexibility makes composition more powerful. Buffered writer is itself a Writer, so it too can be erased into some polymorphic wrapper.
+By defining the writer concept as a type erasable interface, buffered writer can easily accept polymorphic types without
+difficulty. This increased flexibility makes composition more powerful. Buffered writer is itself a Writer, so it too
+can be erased into some polymorphic wrapper.
 
-Interestingly, the member cased CPO mechanism is an instance of duck-typing, where it will accept anything which matches the interface, even if the semantics are wrong. Where as the Any trait based solution requires specific opt-in to a particular method, so a type can never be a Writer by accident.
+Interestingly, the member cased CPO mechanism is an instance of duck-typing, where it will accept anything which matches
+the interface, even if the semantics are wrong. Where as the Any trait based solution requires specific opt-in to a
+particular method, so a type can never be a Writer by accident.
 
-As an additional bonus, extending the trait mechanism to include a default method implementation of `write_exactly()` is trivial. But since this method has a default implementation, it cannot easily be extended to member function based Writer. In practice, we would have to define `write_exactly` as a free function, and then users would have to know whether the method they wish to call is a free function or a member function. An alternative is to use CRTP, where every concrete writer class must inherit from `WriterInterface<Self>`. This does in fact work, but results in more code than the trait solution, while also not easily allowing polymorphic value types.
+As an additional bonus, extending the trait mechanism to include a default method implementation of `write_exactly()` is
+trivial. But since this method has a default implementation, it cannot easily be extended to member function based
+Writer. In practice, we would have to define `write_exactly` as a free function, and then users would have to know
+whether the method they wish to call is a free function or a member function. An alternative is to use CRTP, where every
+concrete writer class must inherit from `WriterInterface<Self>`. This does in fact work, but results in more code than
+the trait solution, while also not easily allowing polymorphic value types.

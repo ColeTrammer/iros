@@ -48,7 +48,7 @@ Expected<di::Arc<TNode>> lookup_path(di::Arc<TNode> root, di::Arc<TNode> relativ
         inode = parent->inode();
         if (auto mount = inode->mount(); mount) {
             auto parent_inode = mount->super_block().root_inode();
-            parent = TRY(di::try_make_arc<TNode>(di::move(parent), di::move(parent_inode), TRY(component.to_owned())));
+            parent = TRY(di::make_arc<TNode>(di::move(parent), di::move(parent_inode), TRY(component.to_owned())));
             continue;
         }
     }

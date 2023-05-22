@@ -21,17 +21,7 @@ inline ThreadId get_current_thread_id() {
 
 using DefaultLock = std::mutex;
 
-template<typename T>
-using DefaultAllocator = container::Allocator<T>;
-
-template<typename T>
-using DefaultFallibleAllocator = container::FallibleAllocator<T>;
-
-template<typename T>
-using DefaultFallibleNewResult = vocab::Result<T>;
-
-constexpr vocab::GenericCode default_fallible_allocation_error() {
-    return vocab::BasicError::FailedAllocation;
-}
+using DefaultAllocator = container::InfallibleAllocator;
+using DefaultFallibleAllocator = container::FallibleAllocator;
 }
 #endif

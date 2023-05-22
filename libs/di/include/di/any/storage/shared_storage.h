@@ -6,6 +6,11 @@
 #include <di/concepts/object.h>
 #include <di/concepts/reference.h>
 #include <di/container/algorithm/max.h>
+#include <di/container/allocator/allocate_one.h>
+#include <di/container/allocator/allocator.h>
+#include <di/container/allocator/deallocate_one.h>
+#include <di/container/allocator/fallible_allocator.h>
+#include <di/container/allocator/infallible_allocator.h>
 #include <di/meta/list/prelude.h>
 #include <di/platform/prelude.h>
 #include <di/sync/atomic.h>
@@ -17,20 +22,21 @@
 #include <di/util/immovable.h>
 #include <di/util/move.h>
 #include <di/util/swap.h>
-#include <di/vocab/error/prelude.h>
+#include <di/vocab/expected/as_fallible.h>
+#include <di/vocab/expected/try_infallible.h>
 
 namespace di::any {
 namespace detail {
-    template<typename SharedStorage>
+    template<typename SharedStorage, concepts::Allocator Alloc>
     struct SharedStorageManage {
-        using Type = Method<SharedStorageManage, void(This&)>;
+        using Type = Method<SharedStorageManage, void(This&, Alloc&)>;
 
         template<typename T>
-        void operator()(T&) const;
+        void operator()(T&, Alloc&) const;
     };
 
-    template<typename SharedStorage>
-    constexpr inline auto shared_storage_manage = SharedStorageManage<SharedStorage> {};
+    template<typename SharedStorage, concepts::Allocator Alloc>
+    constexpr inline auto shared_storage_manage = SharedStorageManage<SharedStorage, Alloc> {};
 
     template<typename T>
     struct ObjectWithRefCount : util::Immovable {
@@ -43,46 +49,47 @@ namespace detail {
         // we must pad this object if the underlying T is over-aligned.
         constexpr static usize alignment = container::max(alignof(T), alignof(sync::Atomic<usize>));
         constexpr static usize padding_size =
-            alignment <= alignof(sync::Atomic<usize>) ? 0 : sizeof(alignment - sizeof(sync::Atomic<usize>));
+            alignment <= alignof(sync::Atomic<usize>) ? 0 : alignment - sizeof(sync::Atomic<usize>);
 
         static ObjectWithRefCount* from_object_pointer(T* object) {
-            auto* byte_pointer = reinterpret_cast<Byte*>(object);
+            auto* byte_pointer = reinterpret_cast<byte*>(object);
             byte_pointer -= padding_size + sizeof(sync::Atomic<usize>);
             return reinterpret_cast<ObjectWithRefCount*>(byte_pointer);
         }
 
         T* to_object_pointer() { return util::addressof(object); }
 
-        [[no_unique_address]] Array<Byte, padding_size> padding;
+        [[no_unique_address]] Array<byte, padding_size> padding;
         sync::Atomic<usize> ref_count;
         T object;
     };
 }
 
+template<concepts::Allocator Alloc = platform::DefaultAllocator>
 struct SharedStorage {
 private:
-    template<typename>
+    template<typename, concepts::Allocator>
     friend struct detail::SharedStorageManage;
 
 public:
-    using Manage = meta::Type<detail::SharedStorageManage<SharedStorage>>;
+    using Manage = meta::Type<detail::SharedStorageManage<SharedStorage, Alloc>>;
     using Interface = meta::List<Manage>;
 
     constexpr static StorageCategory storage_category() { return StorageCategory::Copyable; }
 
     template<typename T>
     constexpr static bool creation_is_fallible(InPlaceType<T>) {
-        return true;
+        return concepts::FallibleAllocator<Alloc>;
     }
 
     template<typename T, typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...> && alignof(T) <= alignof(usize))
     constexpr static auto init(SharedStorage* self, InPlaceType<T>, Args&&... args) {
         using Store = detail::ObjectWithRefCount<T>;
-        return platform::DefaultFallibleAllocator<Store>().allocate(1) % [&](container::Allocation<Store> result) {
-            util::construct_at(result.data, util::forward<Args>(args)...);
-            self->m_pointer = result.data->to_object_pointer();
-        };
+        return vocab::as_fallible(di::allocate_one<Store>(self->m_allocator)) % [&](Store* pointer) {
+            util::construct_at(pointer, util::forward<Args>(args)...);
+            self->m_pointer = pointer->to_object_pointer();
+        } | vocab::try_infallible;
     }
 
     constexpr SharedStorage() {}
@@ -125,7 +132,7 @@ public:
         if (self->m_pointer) {
             if (self->fetch_sub_ref_count() == 1) {
                 auto const fp = vtable[Manage {}];
-                fp(self);
+                fp(self, self->m_allocator);
             }
             self->m_pointer = nullptr;
         }
@@ -155,15 +162,16 @@ private:
     }
 
     void* m_pointer { nullptr };
+    [[no_unique_address]] Alloc m_allocator {};
 };
 
 namespace detail {
-    template<typename SharedStorage>
+    template<typename SharedStorage, concepts::Allocator Alloc>
     template<typename T>
-    void SharedStorageManage<SharedStorage>::operator()(T& object) const {
+    void SharedStorageManage<SharedStorage, Alloc>::operator()(T& object, Alloc& allocator) const {
         auto* pointer = detail::ObjectWithRefCount<T>::from_object_pointer(util::addressof(object));
         util::destroy_at(pointer);
-        platform::DefaultFallibleAllocator<detail::ObjectWithRefCount<T>>().deallocate(pointer, 1);
+        di::deallocate_one<detail::ObjectWithRefCount<T>>(allocator, pointer);
     }
 }
 }

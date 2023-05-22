@@ -2,7 +2,11 @@
 
 #include <di/container/algorithm/compare.h>
 #include <di/container/algorithm/equal.h>
+#include <di/container/allocator/allocate_one.h>
 #include <di/container/allocator/allocator.h>
+#include <di/container/allocator/deallocate_one.h>
+#include <di/container/allocator/fallible_allocator.h>
+#include <di/container/allocator/infallible_allocator.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/intrusive/prelude.h>
 #include <di/container/iterator/prelude.h>
@@ -41,16 +45,13 @@ namespace detail {
 
         constexpr static void did_remove(auto& list, auto& node) {
             util::destroy_at(util::addressof(node));
-            list.allocator().deallocate(util::addressof(node), 1);
+            di::deallocate_one<Node>(list.allocator(), util::addressof(node));
         }
     };
 }
 
-template<typename T, typename Alloc = DefaultAllocator<detail::LinkedListNode<T>>>
+template<typename T, concepts::Allocator Alloc = DefaultAllocator>
 class LinkedList : public IntrusiveList<T, detail::LinkedListTag<T>, LinkedList<T, Alloc>> {
-    static_assert(concepts::AllocatorOf<Alloc, detail::LinkedListNode<T>>,
-                  "Alloc template parameter must be a LinkedListNode allocator.");
-
 private:
     using Node = detail::LinkedListNode<T>;
     using List = IntrusiveList<T, detail::LinkedListTag<T>, LinkedList<T, Alloc>>;
@@ -69,12 +70,12 @@ private:
     }
 
 public:
-    constexpr LinkedList() = default;
+    LinkedList() = default;
 
-    constexpr LinkedList(LinkedList&&) = default;
-    constexpr LinkedList& operator=(LinkedList&&) = default;
+    LinkedList(LinkedList&&) = default;
+    LinkedList& operator=(LinkedList&&) = default;
 
-    constexpr ~LinkedList() = default;
+    ~LinkedList() = default;
 
     constexpr Iterator insert(ConstIterator position, T const& value)
     requires(concepts::CopyConstructible<T>)
@@ -165,20 +166,19 @@ public:
         return value;
     }
 
-    constexpr Alloc allocator() const { return Alloc(); }
+    constexpr Alloc& allocator() { return m_allocator; }
 
 private:
     template<typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...>)
     constexpr decltype(auto) create_node(Args&&... args) {
-        return as_fallible(Alloc().allocate(1)) % [&](Allocation<Node> allocation) {
-            auto [pointer, allocated_nodes] = allocation;
-            (void) allocated_nodes;
-
+        return as_fallible(di::allocate_one<Node>(m_allocator)) % [&](Node* pointer) {
             util::construct_at(pointer, in_place, util::forward<Args>(args)...);
-            return util::ref(*pointer);
+            return util::ref(*static_cast<Node*>(pointer));
         } | try_infallible;
     }
+
+    [[no_unique_address]] Alloc m_allocator {};
 };
 
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>>

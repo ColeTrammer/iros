@@ -2,7 +2,10 @@
 
 #include <di/concepts/expected.h>
 #include <di/concepts/predicate.h>
-#include <di/container/allocator/allocator_of.h>
+#include <di/container/allocator/allocate_one.h>
+#include <di/container/allocator/allocation_result.h>
+#include <di/container/allocator/allocator.h>
+#include <di/container/allocator/deallocate_one.h>
 #include <di/container/hash/hash_same.h>
 #include <di/container/hash/hasher.h>
 #include <di/container/hash/node/hash_node.h>
@@ -41,9 +44,9 @@ struct OwningHashNodeTag : IntrusiveTagBase<OwningHashNode<T, Self>> {
     constexpr static T& down_cast(InPlaceType<T>, Node& node) { return node.value(); }
 
     constexpr static void did_remove(auto& self, auto& node) {
-        if constexpr (requires { self.allocator().deallocate(util::addressof(node), 1); }) {
+        if constexpr (requires { di::deallocate_one<Node>(self.allocator(), util::addressof(node)); }) {
             util::destroy_at(util::addressof(node));
-            self.allocator().deallocate(util::addressof(node), 1);
+            di::deallocate_one<Node>(self.allocator(), util::addressof(node));
         }
     }
 
@@ -51,7 +54,7 @@ struct OwningHashNodeTag : IntrusiveTagBase<OwningHashNode<T, Self>> {
 };
 
 template<typename Value, typename Eq, concepts::Hasher Hasher, typename Buckets, typename Tag,
-         concepts::AllocatorOf<OwningHashNode<Value, Tag>> Alloc, typename Interface, bool is_multi, bool is_map>
+         concepts::Allocator Alloc, typename Interface, bool is_multi, bool is_map>
 class OwningNodeHashTable
     : public NodeHashTable<Value, Eq, Hasher, Buckets, Tag, Interface, is_multi, is_map,
                            OwningNodeHashTable<Value, Eq, Hasher, Buckets, Tag, Alloc, Interface, is_multi, is_map>> {
@@ -64,7 +67,7 @@ private:
     using Iterator = HashNodeIterator<Value, Tag>;
     using ConstIterator = container::ConstIteratorImpl<Iterator>;
 
-    using AllocResult = decltype(Alloc().allocate(0));
+    using AllocResult = meta::AllocatorResult<Alloc>;
 
     template<typename T>
     using Result = meta::LikeExpected<AllocResult, T>;
@@ -75,7 +78,7 @@ private:
 public:
     using Base::Base;
 
-    constexpr Alloc allocator() const { return Alloc(); }
+    constexpr Alloc& allocator() { return m_allocator; }
 
     template<typename U, concepts::Invocable F>
     constexpr InsertResult insert_with_factory(U&& needle, F&& factory) {
@@ -132,20 +135,18 @@ public:
                     bucket->insert_after(it, *node);
                     Tag::did_insert(this->down_cast_self(), static_cast<Base::ConcreteNode&>(*node));
                     return Iterator { this->m_buckets.span(), bucket_index, it };
-                } else {
-                    bucket->push_front(*node);
-                    Tag::did_insert(this->down_cast_self(), static_cast<Base::ConcreteNode&>(*node));
-                    return Iterator { this->m_buckets.span(), bucket_index, bucket->before_begin() };
                 }
+                bucket->push_front(*node);
+                Tag::did_insert(this->down_cast_self(), static_cast<Base::ConcreteNode&>(*node));
+                return Iterator { this->m_buckets.span(), bucket_index, bucket->before_begin() };
             } else {
                 if (it == bucket->end()) {
                     bucket->push_front(*node);
                     Tag::did_insert(this->down_cast_self(), static_cast<Base::ConcreteNode&>(*node));
                     return vocab::Tuple(Iterator { this->m_buckets.span(), bucket_index, bucket->before_begin() },
                                         true);
-                } else {
-                    return vocab::Tuple(Iterator { this->m_buckets.span(), bucket_index, before_it }, false);
                 }
+                return vocab::Tuple(Iterator { this->m_buckets.span(), bucket_index, before_it }, false);
             }
         } | try_infallible;
     }
@@ -167,13 +168,14 @@ private:
     template<typename... Args>
     requires(concepts::ConstructibleFrom<Value, Args...>)
     constexpr auto create_node(Args&&... args) {
-        return as_fallible(Alloc().allocate(1)) % [&](Allocation<OwningHashNode<Value, Tag>> allocation) {
-            auto [pointer, allocated_nodes] = allocation;
-            (void) allocated_nodes;
-
-            util::construct_at(pointer, in_place, util::forward<Args>(args)...);
-            return static_cast<Node*>(pointer);
-        } | try_infallible;
+        return as_fallible(di::allocate_one<OwningHashNode<Value, Tag>>(m_allocator)) %
+                   [&](OwningHashNode<Value, Tag>* pointer) {
+                       util::construct_at(pointer, in_place, util::forward<Args>(args)...);
+                       return static_cast<Node*>(pointer);
+                   } |
+               try_infallible;
     }
+
+    [[no_unique_address]] Alloc m_allocator {};
 };
 }
