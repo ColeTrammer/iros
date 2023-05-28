@@ -10,6 +10,7 @@
 #include <di/container/allocator/deallocate_one.h>
 #include <di/container/allocator/fallible_allocator.h>
 #include <di/container/allocator/infallible_allocator.h>
+#include <di/meta/like_expected.h>
 #include <di/meta/list/prelude.h>
 #include <di/platform/prelude.h>
 #include <di/types/prelude.h>
@@ -20,6 +21,7 @@
 #include <di/util/move.h>
 #include <di/util/swap.h>
 #include <di/vocab/expected/as_fallible.h>
+#include <di/vocab/expected/unexpected.h>
 
 namespace di::any {
 namespace detail {
@@ -46,6 +48,25 @@ public:
     template<typename T>
     constexpr static bool creation_is_fallible(InPlaceType<T>) {
         return concepts::FallibleAllocator<Alloc>;
+    }
+
+    template<typename>
+    using CreationResult = meta::AllocatorResult<Alloc>;
+
+    template<typename Any, typename T, typename... Args>
+    requires(concepts::ConstructibleFrom<T, Args...> && creation_is_fallible(in_place_type<T>))
+    constexpr static void create(InPlaceType<Any>, meta::LikeExpected<CreationResult<T>, Any>& self, InPlaceType<T>,
+                                 Args&&... args) {
+        auto result = di::allocate_one<T>(self->m_allocator);
+        if (!result) {
+            self = vocab::Unexpected(util::move(result).error());
+            return;
+        }
+
+        auto* pointer = *result;
+        util::construct_at(pointer, util::forward<Args>(args)...);
+
+        self->m_pointer = pointer;
     }
 
     template<typename T, typename... Args>

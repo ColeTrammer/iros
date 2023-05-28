@@ -208,9 +208,9 @@ The dispatcher API can also be used to make defining more complicated CPOs a lot
 
 The current implementation of container::begin() is as follows:
 
+```cpp
 struct BeginFunction;
 
-```cpp
 namespace detail {
     template<typename T>
     concept ArrayBegin = concepts::LanguageArray<meta::RemoveReference<T>>;

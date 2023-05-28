@@ -93,7 +93,7 @@ class FileTable {
 public:
     Expected<di::Tuple<File&, i32>> allocate_file_handle() {
         for (auto [i, file] : di::enumerate(m_files)) {
-            if (file.empty()) {
+            if (!file.has_value()) {
                 m_file_allocated[i] = true;
                 return di::make_tuple(di::ref(file), static_cast<i32>(i));
             }
@@ -105,7 +105,7 @@ public:
         if (file_handle < 0 || di::equal_or_greater(file_handle, m_files.size())) {
             return di::Unexpected(Error::BadFileDescriptor);
         }
-        if (!m_file_allocated[file_handle] || m_files[file_handle].empty()) {
+        if (!m_file_allocated[file_handle] || !m_files[file_handle].has_value()) {
             return di::Unexpected(Error::BadFileDescriptor);
         }
         return m_files[file_handle];
@@ -115,7 +115,7 @@ public:
         if (file_handle < 0 || di::equal_or_greater(file_handle, m_files.size())) {
             return di::Unexpected(Error::BadFileDescriptor);
         }
-        if (!m_file_allocated[file_handle] || m_files[file_handle].empty()) {
+        if (!m_file_allocated[file_handle] || !m_files[file_handle].has_value()) {
             return di::Unexpected(Error::BadFileDescriptor);
         }
         m_files[file_handle].reset();

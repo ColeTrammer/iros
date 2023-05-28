@@ -9,6 +9,8 @@
 #include <di/container/allocator/allocate_one.h>
 #include <di/container/allocator/allocator.h>
 #include <di/container/allocator/deallocate_one.h>
+#include <di/meta/conditional.h>
+#include <di/meta/like_expected.h>
 #include <di/meta/list/prelude.h>
 #include <di/platform/prelude.h>
 #include <di/types/prelude.h>
@@ -56,10 +58,30 @@ public:
         return !creation_is_inline(in_place_type<T>) && concepts::FallibleAllocator<Alloc>;
     }
 
-    constexpr HybridStorage() {}
+    template<typename T>
+    using CreationResult =
+        meta::Conditional<creation_is_fallible(in_place_type<T>), meta::AllocatorResult<Alloc>, void>;
+
+    HybridStorage() {}
 
     HybridStorage(HybridStorage const&) = delete;
     HybridStorage& operator=(HybridStorage const&) = delete;
+
+    template<typename Any, typename T, typename... Args>
+    requires(concepts::ConstructibleFrom<T, Args...> && creation_is_fallible(in_place_type<T>))
+    constexpr static void create(InPlaceType<Any>, meta::LikeExpected<CreationResult<T>, Any>& self, InPlaceType<T>,
+                                 Args&&... args) {
+        auto result = di::allocate_one<T>(self->m_allocator);
+        if (!result) {
+            self = vocab::Unexpected(util::move(result).error());
+            return;
+        }
+
+        auto* pointer = *result;
+        util::construct_at(pointer, util::forward<Args>(args)...);
+
+        self->m_pointer = pointer;
+    }
 
     template<typename T, typename... Args>
     requires(concepts::ConstructibleFrom<T, Args...>)

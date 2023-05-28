@@ -108,13 +108,13 @@ static void inline_() {
     ASSERT_EQ(yf(y), 1);
 
     auto z = di::move(y);
-    ASSERT(!y);
+    ASSERT(!y.has_value());
 
     ASSERT_EQ(xf(z, 12), 16);
     ASSERT_EQ(yf(z), 1);
 
     z = di::move(x);
-    ASSERT(!x);
+    ASSERT(!x.has_value());
 
     ASSERT_EQ(xf(z, 12), 16);
     ASSERT_EQ(yf(z), 6);
@@ -138,13 +138,13 @@ static void unique() {
     ASSERT_EQ(yf(y), 1);
 
     auto z = di::move(y);
-    ASSERT(!y);
+    ASSERT(!y.has_value());
 
     ASSERT_EQ(xf(z, 12), 16);
     ASSERT_EQ(yf(z), 1);
 
     z = di::move(x);
-    ASSERT(!x);
+    ASSERT(!x.has_value());
 
     ASSERT_EQ(xf(z, 12), 16);
     ASSERT_EQ(yf(z), 6);
@@ -169,13 +169,13 @@ static void hybrid() {
     ASSERT_EQ(yf(y), 1);
 
     auto z = di::move(y);
-    ASSERT(!y);
+    ASSERT(!y.has_value());
 
     ASSERT_EQ(xf(z, 12), 16);
     ASSERT_EQ(yf(z), 1);
 
     z = di::move(x);
-    ASSERT(!x);
+    ASSERT(!x.has_value());
 
     ASSERT_EQ(xf(z, 12), 16);
     ASSERT_EQ(yf(z), 6);
@@ -205,13 +205,13 @@ static void shared() {
     ASSERT_EQ(yf(y), 1);
 
     auto z = di::move(y);
-    ASSERT(!y);
+    ASSERT(!y.has_value());
 
     ASSERT_EQ(xf(z, 12), 16);
     ASSERT_EQ(yf(z), 1);
 
     z = di::move(x);
-    ASSERT(!x);
+    ASSERT(!x.has_value());
 
     ASSERT_EQ(xf(z, 12), 16);
     ASSERT_EQ(yf(z), 6);

@@ -15,10 +15,14 @@ concept AnyStorage = DefaultConstructible<T> && requires {
     { T::storage_category() } -> SameAs<any::StorageCategory>;
     typename types::Nontype<T::storage_category()>;
 
-    // This must be evaluatable for any types, not just Void.
+    // This must be evaluatable for all types, not just Void.
     { T::creation_is_fallible(in_place_type<Void>) } -> SameAs<bool>;
 
     // Must be a constant expression.
     typename meta::BoolConstant<T::creation_is_fallible(in_place_type<Void>)>;
+
+    // This must be evaluatable for all types, not just Void. The return type is the result of creating the storage for
+    // a given type.
+    typename T::template CreationResult<Void>;
 };
 }

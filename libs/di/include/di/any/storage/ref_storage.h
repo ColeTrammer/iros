@@ -21,6 +21,9 @@ public:
         return false;
     }
 
+    template<typename>
+    using CreationResult = void;
+
     constexpr RefStorage() : m_pointer(nullptr) {}
 
     RefStorage(RefStorage const&) = default;

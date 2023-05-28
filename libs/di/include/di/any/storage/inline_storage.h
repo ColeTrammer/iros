@@ -40,6 +40,9 @@ public:
         return false;
     }
 
+    template<typename>
+    using CreationResult = void;
+
     constexpr InlineStorage() {}
 
     InlineStorage(InlineStorage const&) = delete;
