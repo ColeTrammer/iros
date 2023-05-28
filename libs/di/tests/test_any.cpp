@@ -238,7 +238,7 @@ i32 tag_invoke(X, Z const& z, i32 y) {
     return y + z.x;
 }
 
-i32 tag_invoke(Y, Z& z) {
+i32 tag_invoke(Y, di::meta::Type<Y>, Z& z) {
     return 4 + z.x;
 }
 

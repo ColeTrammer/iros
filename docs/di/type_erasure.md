@@ -200,7 +200,7 @@ using Interface = di::meta::ValueList<
 >;
 ```
 
-This is more verbose an exotic, so probably won't be way to go.
+This is more verbose and exotic, so probably won't be way to go.
 
 ### Expressivity for complex CPOs
 
@@ -275,14 +275,41 @@ struct BeginFunction : TemplateDipatcher<BeginFunction, meta::List<
 This makes use of a placeholder syntax to implicitly define template parameters of the function. This API is not yet
 fully fleshed out.
 
+### Method Resolution
+
+The core machinery behind method lookup is the `di::Method` type. Instead of working on c++ functions, this works on
+callable function objects and injects its own implementation using tag_invoke. This allows type-erasing simple
+interfaces with no additional boilerplate.
+
+However, this is not enough for more complicated interfaces. For example, consider the `di::clone()` function. This
+function has a signature of `T clone(T const&)`, which is not a valid CPO signature. This is because the return type
+varies with the input type. This is a problem for type erasure, because the return type must be known at compile time.
+
+Conceptually, what we want to have happen is for the library to replace the return type `T` with the relevant `di::Any`
+object which is being cloned. However, this means we cannot just call `di::clone` directly, because the return type may
+not be implicitly convertible to `di::Any`.
+
+To support this case, the type-erased function dispatch supports a second signature which is used for method lookup.
+This signature takes the method as the second argument, which allows implementations to know what the type-erased return
+type should be.
+
+```cpp
+using M = di::Method<di::Tag<di::clone>, di::This(di::This const&)>;
+
+// When trying to resolve a call to M, first this signature is checked. Notice that the provided Method tag contains the
+// concrete return type, which enables the custom implementation to make the necessary conversions.
+tag_invoke(di::Tag<di::clone>, di::meta::MakeConcreteSignature<M, di::Any<...>> {}, di::This const&);
+
+// Then the normal signature is checked, which will try to implicitly convert the return type to the correct di::Any.
+di::clone(di::This const&);
+```
+
 ## Multiple types of erased objects
 
-So far, only a value oriented type erased object has been considered. But we can additionally have a type erased
-reference type, with non-owning semantics, which can be thought of as equivalent to passing a dyn& in rust. This type
-would be 100% allocation free.
-
-Additionally, one could imagine creating a type erased wrapper which internally has shared pointer semantics, such that
-it owns its data and has shallow copy semantics.
+The generic `di::Any` container supports both value and reference semantics, which can be thought of as equivalent to
+passing a dyn& in rust. This type is 100% allocation free. This is controlled by the storage policy proivded to the
+template, which allows `di::Any` to model shared ownership, unique (boxed) ownership, references, only inline storage,
+hybrid storage, etc.
 
 ## Implementation
 
