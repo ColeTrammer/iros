@@ -1,5 +1,7 @@
 #include <di/any/prelude.h>
+#include <di/any/storage/prelude.h>
 #include <di/concepts/prelude.h>
+#include <di/util/prelude.h>
 #include <di/vocab/array/prelude.h>
 #include <di/vocab/pointer/prelude.h>
 #include <dius/test/prelude.h>
@@ -226,6 +228,39 @@ static void shared() {
     ASSERT_EQ(yf(p), 5);
 }
 
+struct Z : di::Immovable {
+    explicit Z(i32 x_) : x(x_) {}
+
+    int x;
+};
+
+i32 tag_invoke(X, Z const& z, i32 y) {
+    return y + z.x;
+}
+
+i32 tag_invoke(Y, Z& z) {
+    return 4 + z.x;
+}
+
+static void immovable() {
+    using Any = di::any::AnyHybrid<Interface, di::StorageCategory::Immovable>;
+
+    auto x = Any(di::in_place_type<Z>, 3);
+
+    ASSERT_EQ(xf(x, 12), 15);
+    ASSERT_EQ(yf(x), 7);
+
+    x.emplace(di::in_place_type<Z>, 4);
+
+    ASSERT_EQ(xf(x, 12), 16);
+    ASSERT_EQ(yf(x), 8);
+
+    x.emplace(4);
+
+    ASSERT_EQ(xf(x, 12), 16);
+    ASSERT_EQ(yf(x), 6);
+}
+
 TESTC(any, meta)
 TESTC(any, vtable)
 TEST(any, ref)
@@ -233,4 +268,5 @@ TEST(any, inline_)
 TEST(any, unique)
 TEST(any, hybrid)
 TEST(any, shared)
+TEST(any, immovable)
 }

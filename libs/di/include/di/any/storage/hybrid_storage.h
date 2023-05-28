@@ -2,6 +2,7 @@
 
 #include <di/any/concepts/vtable_for.h>
 #include <di/any/storage/storage_category.h>
+#include <di/assert/assert_bool.h>
 #include <di/concepts/convertible_to.h>
 #include <di/concepts/move_constructible.h>
 #include <di/concepts/object.h>
@@ -36,9 +37,12 @@ namespace detail {
     constexpr inline auto hybrid_storage_manage = HybridStorageManage<HybridStorage, Alloc> {};
 }
 
-template<size_t inline_size = 2 * sizeof(void*), size_t inline_align = alignof(void*),
-         concepts::Allocator Alloc = platform::DefaultAllocator>
+template<StorageCategory category = StorageCategory::MoveOnly, size_t inline_size = 2 * sizeof(void*),
+         size_t inline_align = alignof(void*), concepts::Allocator Alloc = platform::DefaultAllocator>
 struct HybridStorage {
+    static_assert(category == StorageCategory::MoveOnly || category == StorageCategory::Immovable,
+                  "HybridStorage only supports MoveOnly and Immovable objects");
+
 public:
     using Manage = meta::Type<detail::HybridStorageManage<HybridStorage, Alloc>>;
     using Interface = meta::List<Manage>;
@@ -46,7 +50,7 @@ public:
     template<typename, concepts::Allocator>
     friend struct detail::HybridStorageManage;
 
-    constexpr static StorageCategory storage_category() { return StorageCategory::MoveOnly; }
+    constexpr static StorageCategory storage_category() { return category; }
 
     template<typename T>
     constexpr static bool creation_is_inline(InPlaceType<T>) {
@@ -99,7 +103,9 @@ public:
     ~HybridStorage() = default;
 
     constexpr static void move_construct(concepts::VTableFor<Interface> auto& vtable, HybridStorage* dest,
-                                         HybridStorage* source) {
+                                         HybridStorage* source)
+    requires(category == StorageCategory::MoveOnly)
+    {
         if (!vtable.empty()) {
             auto const fp = vtable[Manage {}];
             fp(dest, dest, source, dest->m_allocator);
@@ -110,7 +116,9 @@ public:
 
     template<concepts::VTableFor<Interface> VTable>
     constexpr static void move_assign(VTable& dest_vtable, HybridStorage* dest, VTable& source_vtable,
-                                      HybridStorage* source) {
+                                      HybridStorage* source)
+    requires(category == StorageCategory::MoveOnly)
+    {
         destroy(dest_vtable, dest);
         dest_vtable = source_vtable;
         move_construct(source_vtable, dest, source);
@@ -161,8 +169,12 @@ namespace detail {
                                                                Alloc& allocator) const {
         if constexpr (!HybridStorage::creation_is_inline(in_place_type<T>)) {
             if (b) {
-                // Move from b into a.
-                as->m_pointer = util::exchange(b->m_pointer, nullptr);
+                if constexpr (HybridStorage::storage_category() == StorageCategory::MoveOnly) {
+                    // Move from b into a.
+                    as->m_pointer = util::exchange(b->m_pointer, nullptr);
+                } else {
+                    DI_ASSERT(!b);
+                }
             } else {
                 // Just destroy a.
                 auto* pointer = util::exchange(as->m_pointer, nullptr);
@@ -172,10 +184,14 @@ namespace detail {
             }
         } else {
             if (b) {
-                // Move from b into a.
-                auto* b_value = b->template down_cast<T>();
-                util::construct_at(util::addressof(a), util::move(*b_value));
-                util::destroy_at(b_value);
+                if constexpr (HybridStorage::storage_category() == StorageCategory::MoveOnly) {
+                    // Move from b into a.
+                    auto* b_value = b->template down_cast<T>();
+                    util::construct_at(util::addressof(a), util::move(*b_value));
+                    util::destroy_at(b_value);
+                } else {
+                    DI_ASSERT(!b);
+                }
             } else {
                 // Just destroy a.
                 util::destroy_at(util::addressof(a));
