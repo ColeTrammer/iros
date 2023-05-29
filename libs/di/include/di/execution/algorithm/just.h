@@ -47,7 +47,7 @@ namespace just_ns {
             }
 
             template<concepts::ReceiverOf<CompletionSignatures> Rec>
-            requires(concepts::Conjunction<concepts::CopyConstructible<Types>...>)
+            requires(concepts::Conjunction<concepts::MoveConstructible<Types>...>)
             constexpr friend auto tag_invoke(types::Tag<execution::connect>, Type&& sender, Rec receiver) {
                 return OperationState<CPO, Rec, Types...> { util::move(sender.values), util::move(receiver) };
             }

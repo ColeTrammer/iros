@@ -54,7 +54,8 @@ public:
 
     template<typename T>
     constexpr static bool creation_is_inline(InPlaceType<T>) {
-        return sizeof(T) <= inline_size && alignof(T) <= inline_align && concepts::MoveConstructible<T>;
+        return sizeof(T) <= inline_size && alignof(T) <= inline_align &&
+               (concepts::MoveConstructible<T> || category == StorageCategory::Immovable);
     }
 
     template<typename T>

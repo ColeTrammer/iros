@@ -20,8 +20,8 @@ Senders can complete in one of three ways:
 This result is communicated to a receiver, which is like a callback that is invoked when the sender completes.
 
 A third concept is used to actually start an asynchronous computation, called an operation state. This is the result of
-connecting a sender to a receiver, and is used to start the computation.
-Before the operation state is started, no work is done.
+connecting a sender to a receiver, and is used to start the computation. Before the operation state is started, no work
+is done.
 
 ## Type Erased Sender
 
@@ -66,33 +66,63 @@ type-erased.
 
 The main problem with this approach is that it will require heap-allocations for sufficently large senders, receivers,
 and operation states. What's more, allocations can fail, and the library does not allow throwing exceptions. This
-creates a problem, because the `di::connect` CPO is required to return a valid operation state, and this will require a
+creates a problem, because the `di::connect` CPO is required to return a valid operation state, and this may require a
 heap allocation.
 
 #### Case 1: Creating the Type-Erased Receiver Fails
 
 There is really no choice but to simply refuse to compile code if the type-erased receiver conversion is fallible. The
 only potential alternative would be to immediately invoke the receiver with an error, but this could cause asyncrhonous
-computations to start before the operation state is started, which breaks the entire model.
+computations to start before the operation state is started, which breaks the entire model. Luckily, receivers can
+always be implemented as storing a single pointer (to an operation state or stack variable), so this is not a problem.
 
 #### Case 2: Creating the Type-Erased Sender Fails
 
-The good news is that this is not really a problem. The `di::connect` CPO will be called with the type-erased sender
-already existing, so there is no way for this to fail. However, creating the sender in the first place could fail. This
-implies that functions returning a type-erased sender would have to return a `di::Result<di::AnySender<...>>`, which is
-not ideal, especially since this model already encompasses errors. It would be a lot better to simply return a
+This too is not really a problem. The `di::connect` CPO will be called with the type-erased sender already existing, so
+there is no way for this to fail. However, creating the sender in the first place could fail. This implies that
+functions returning a type-erased sender would have to return a `di::Result<di::AnySender<...>>`, which is not ideal,
+especially since this model already encompasses errors. It would be a lot better to simply return a
 `di::AnySender<...>`, and have the error be communicated through the operation state. This is possible, but it requires
 making `di::Expected<Sender, E>` a valid sender, with completion signatures equivalent to `Sender` with the addition of
 `di::SetError(E)`. This is not ideal, because it would also mean that this type would need some variant `connect`
 function would return a variant operation state, which either holds the operation state of the sender, or the error.
 
+A simpler approach is to add an implicit conversion between any valid `Sender` and `di::AnySender<...>`, which first
+tries to create the type-erased sender, and if that fails, returns it instead returns `di::execution::just_error(E)`.
+Since this error sender is simple, it can be created without heap allocation, and so the conversion function will always
+return a valid sender.
+
 #### Case 3: Creating the Type-Erased Operation State Fails
 
 This is the most difficult case to deal with. The problem is that the `di::connect` CPO is required to return a valid
-operation state, and this will require a heap allocation. The only way to "fix" this is to make a dummy operation state,
-which when started, immediately invokes the receiver with an error. This is not ideal, because it means that the normal
-type-erasure mechanism cannot be used, since custom logic needs to be put into the `di::connect` function. Practially,
-the library can be modified to make `di::Expected<OperationState, E>` a valid operation state, with the type-erasure
-code will have to just deal with this. An additional problem which arises is that objects which model `OperationState`
-are not movable, so even just creating an `Expected` object will prove difficult. The probable way to solve this is too
-simply always heap allocate the `OperationState`, which is unfortunate.
+operation state, and may require a heap allocation. The only way to "fix" this is to make a dummy operation state, which
+when started, immediately invokes the receiver with an error.
+
+The good news is that this can be solved because the `di::connect` CPO is returning a type-erased operation state. Like
+in the sender case, this can be done by adding a conversion function between `OperationState` and
+`di::AnyOperationState<...>`. This function will first try to create the type-erased operation state, and if that fails,
+it will return a dummy operation state which completes with an error once started.
+
+One thing to worry about is that `OperationState` objects are not movable, so the library must take care to ensure that
+copy-ellision is used. Additionally, the `di::AnyReceiver<...>` type will be move-only, so it cannot be stored in both
+the original operation state and the dummy operation state. This is solvable using the fact that the creation of the
+type-erased operation state only fails when allocating memory fails. This means that when trying to type-erase the
+normal operation state, the library can first try to allocate memory for the type-erased receiver, and if that fails,
+the actual `di::connect` function will never be called between the sender and receiver. Instead, the dummy operation
+will be returned. This dummy operation state will be equivalent to the result of connecting
+`di::execution::just_error(E)` to the type-erased receiver.
+
+The current implementation requires type-erased operation states to be movable to be stored in the inline storage, which
+is very unfortunate. This is because c++ does not guarantee copy-elision of named return values. As a consequence, the
+current implementation, which uses the `emplace()` method of `di::Any` to perform this two-pass construction, requires
+the type to be movable. This is really bad, since it greatly increases the number of heap allocations required. The good
+news is that this decision is transparent to users of the library, since heap allocation failures are already handled
+transparently by resulting in an error.
+
+This limitation can be resolved by either waiting for the standard to guarantee NRVO, or by using a work-around
+two-phase construction mechanism that only relies on RVO. This would work by having a static method of `di::Any` which
+creates some sort of token object, which proves the required memory is allocated and so construction can be infallible.
+Another approach that could be considered is creating dummy move operations which assert that they are never called. If
+the compiler is going to perform NRVO anyway, then these dummy move operations will never be called (maybe...), and
+since operation states are internal to the library, this might even be safe. This is the simplest approach although it
+is probably the worst idea in terms of safety.

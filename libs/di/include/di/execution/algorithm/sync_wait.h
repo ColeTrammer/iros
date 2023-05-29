@@ -36,8 +36,7 @@ namespace sync_wait_ns {
         public:
             using is_receiver = void;
 
-            explicit Type(Result* result, Context* context)
-                : m_result(result), m_context(context), m_env(context->get_scheduler()) {}
+            explicit Type(Result* result, Context* context) : m_result(result), m_context(context) {}
 
         private:
             template<typename... Values>
@@ -58,11 +57,12 @@ namespace sync_wait_ns {
                 self.m_context->finish();
             }
 
-            constexpr friend auto tag_invoke(types::Tag<get_env>, Type const& self) { return self.m_env; }
+            constexpr friend auto tag_invoke(types::Tag<get_env>, Type const& self) {
+                return Env<Context>(self.m_context->get_scheduler());
+            }
 
             Result* m_result;
             Context* m_context;
-            Env<Context> m_env;
         };
     };
 

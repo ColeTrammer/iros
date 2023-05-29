@@ -1,6 +1,7 @@
 #include <di/any/prelude.h>
 #include <di/any/storage/prelude.h>
 #include <di/concepts/prelude.h>
+#include <di/types/integers.h>
 #include <di/util/prelude.h>
 #include <di/vocab/array/prelude.h>
 #include <di/vocab/pointer/prelude.h>
@@ -261,6 +262,22 @@ static void immovable() {
     ASSERT_EQ(yf(x), 6);
 }
 
+struct ZF : di::Dispatcher<ZF, void(di::This&&, i32)> {};
+
+void tag_invoke(ZF, A&&, i32 x) {
+    ASSERT_EQ(x, 12);
+}
+
+constexpr inline auto zf = ZF {};
+
+static void rvalue() {
+    using Any = di::Any<di::meta::List<ZF>>;
+
+    auto x = Any(di::in_place_type<A>);
+
+    zf(di::move(x), 12);
+}
+
 TESTC(any, meta)
 TESTC(any, vtable)
 TEST(any, ref)
@@ -269,4 +286,5 @@ TEST(any, unique)
 TEST(any, hybrid)
 TEST(any, shared)
 TEST(any, immovable)
+TEST(any, rvalue)
 }

@@ -1,8 +1,25 @@
+#include <di/any/storage/hybrid_storage.h>
+#include <di/any/storage/prelude.h>
+#include <di/any/storage/unique_storage.h>
+#include <di/any/vtable/maybe_inline_vtable.h>
 #include <di/concepts/prelude.h>
+#include <di/container/allocator/allocation_result.h>
+#include <di/execution/any/any_operation_state.h>
+#include <di/execution/any/any_sender.h>
+#include <di/execution/concepts/prelude.h>
+#include <di/execution/concepts/receiver.h>
+#include <di/execution/concepts/receiver_of.h>
+#include <di/execution/meta/completion_signatures_of.h>
 #include <di/execution/meta/sends_stopped.h>
 #include <di/execution/prelude.h>
 #include <di/execution/receiver/prelude.h>
+#include <di/execution/receiver/set_value.h>
 #include <di/execution/types/empty_env.h>
+#include <di/execution/types/prelude.h>
+#include <di/platform/prelude.h>
+#include <di/types/integers.h>
+#include <di/vocab/error/prelude.h>
+#include <di/vocab/expected/prelude.h>
 #include <dius/test/prelude.h>
 
 namespace execution {
@@ -259,6 +276,72 @@ static void with() {
     ASSERT_EQ(ex::sync_wait(di::move(w)), di::make_tuple(42));
 }
 
+struct FailAllocator {
+    friend di::Result<di::AllocationResult<>> tag_invoke(di::Tag<di::allocate>, FailAllocator, usize, usize) {
+        return di::Unexpected(di::BasicError::NotEnoughMemory);
+    }
+
+    friend void tag_invoke(di::Tag<di::deallocate>, FailAllocator, void*, usize, usize) {}
+};
+
+static void any_sender() {
+    namespace ex = di::execution;
+
+    using Sigs = di::CompletionSignatures<di::SetValue(int)>;
+    using Sender = di::AnySender<Sigs>;
+    using Receiver = Sender::Receiver;
+    using OperationState = Sender::OperationState;
+
+    static_assert(di::concepts::Receiver<Receiver>);
+    static_assert(di::concepts::OperationState<OperationState>);
+    static_assert(di::concepts::MoveConstructible<OperationState>);
+
+    static_assert(di::concepts::ReceiverOf<Receiver, Sigs>);
+
+    auto x = Sender(ex::just(42));
+
+    ASSERT_EQ(ex::sync_wait(di::move(x)), 42);
+
+    auto y = Sender(ex::just(42)) | ex::let_value([](int x) {
+                 return ex::just(x);
+             });
+
+    ASSERT_EQ(ex::sync_wait(di::move(y)), 42);
+
+    using Sender2 = di::AnySender<
+        Sigs, void, di::any::HybridStorage<>, di::any::MaybeInlineVTable<3>,
+        di::AnyOperationState<void, di::any::HybridStorage<di::StorageCategory::MoveOnly, 8 * sizeof(void*),
+                                                           alignof(void*), FailAllocator>>>;
+
+    auto z = ex::just(42) | ex::let_value([](int x) {
+                 return ex::just(x);
+             });
+    auto yy = Sender2(di::move(z));
+
+    ASSERT_EQ(ex::sync_wait(di::move(yy)), di::Unexpected(di::BasicError::NotEnoughMemory));
+
+    using Sender3 = di::AnySender<
+        Sigs, void,
+        di::any::HybridStorage<di::StorageCategory::MoveOnly, 2 * sizeof(void*), alignof(void*), FailAllocator>>;
+
+    auto dummy = 0;
+    auto zz = ex::just(42) | ex::let_value([=](int x) {
+                  return ex::just(x + dummy);
+              }) |
+              ex::let_value([=](int x) {
+                  return ex::just(x + dummy);
+              }) |
+              ex::let_value([=](int x) {
+                  return ex::just(x + dummy);
+              }) |
+              ex::let_value([=](int x) {
+                  return ex::just(x + dummy);
+              });
+    auto yyy = Sender3(di::move(zz));
+
+    ASSERT_EQ(ex::sync_wait(di::move(yyy)), di::Unexpected(di::BasicError::NotEnoughMemory));
+}
+
 TEST(execution, meta)
 TEST(execution, sync_wait)
 TEST(execution, lazy)
@@ -269,4 +352,5 @@ TEST(execution, let)
 TEST(execution, transfer)
 TEST(execution, as)
 TEST(execution, with)
+TEST(execution, any_sender)
 }

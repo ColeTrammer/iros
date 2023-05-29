@@ -5,8 +5,10 @@
 #include <di/any/storage/prelude.h>
 #include <di/any/types/prelude.h>
 #include <di/any/vtable/prelude.h>
+#include <di/concepts/derived_from.h>
 #include <di/function/monad/monad_try.h>
 #include <di/meta/like_expected.h>
+#include <di/meta/remove_cvref.h>
 #include <di/util/addressof.h>
 #include <di/util/forward.h>
 #include <di/util/initializer_list.h>
@@ -27,8 +29,8 @@ namespace detail {
         constexpr static auto storage(E& self) -> S& { return self; }
         constexpr static auto storage(E const& self) -> S const& { return self; }
 
-        template<concepts::RemoveCVRefSameAs<E> X>
-        requires(concepts::Reference<X> && concepts::ConvertibleTo<X &&, meta::Like<Self, E>>)
+        template<typename X>
+        requires(concepts::DerivedFrom<meta::RemoveCVRef<X>, E>)
         constexpr friend R tag_invoke(Tag, X&& self_in, BArgs... bargs) {
             auto&& self = static_cast<meta::Like<Self, E>>(self_in);
             auto const& vtable = MethodImpl::vtable(self);
@@ -49,10 +51,12 @@ class Any
     template<typename, typename, typename>
     friend struct detail::MethodImpl;
 
-private:
+public:
+    using AnyStorage = Storage;
     using Interface = meta::MergeInterfaces<UserInterface, typename Storage::Interface>;
     using VTable = meta::Invoke<VTablePolicy, Interface>;
 
+private:
     static_assert(concepts::VTableFor<VTable, Interface>,
                   "VTablePolicy policy returned an invalid VTable for the provided interface.");
 
@@ -147,8 +151,9 @@ public:
     }
 
     template<typename U, concepts::Impl<Interface> VU = RemoveConstructQualifiers<U>>
-    requires(!concepts::RemoveCVRefSameAs<U, Any> && !concepts::InstanceOf<meta::RemoveCVRef<U>, InPlaceType> &&
-             concepts::AnyStorableInfallibly<VU, Storage> && concepts::ConstructibleFrom<VU, U>)
+    requires(!concepts::DerivedFrom<meta::RemoveCVRef<U>, Any> &&
+             !concepts::InstanceOf<meta::RemoveCVRef<U>, InPlaceType> && concepts::AnyStorableInfallibly<VU, Storage> &&
+             concepts::ConstructibleFrom<VU, U>)
     constexpr Any(U&& value) {
         this->emplace(in_place_type<VU>, util::forward<U>(value));
     }
@@ -199,8 +204,9 @@ public:
     }
 
     template<typename U, concepts::Impl<Interface> VU = RemoveConstructQualifiers<U>>
-    requires(!concepts::RemoveCVRefSameAs<U, Any> && !concepts::InstanceOf<meta::RemoveCVRef<U>, InPlaceType> &&
-             concepts::AnyStorableInfallibly<VU, Storage> && concepts::ConstructibleFrom<VU, U>)
+    requires(!concepts::DerivedFrom<meta::RemoveCVRef<U>, Any> &&
+             !concepts::InstanceOf<meta::RemoveCVRef<U>, InPlaceType> && concepts::AnyStorableInfallibly<VU, Storage> &&
+             concepts::ConstructibleFrom<VU, U>)
     Any& operator=(U&& value) {
         if constexpr (!is_trivially_destructible) {
             Storage::destroy(m_vtable, this);
