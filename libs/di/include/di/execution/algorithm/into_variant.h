@@ -2,10 +2,12 @@
 
 #include <di/execution/concepts/prelude.h>
 #include <di/execution/concepts/sender_in.h>
+#include <di/execution/meta/decayed_tuple.h>
 #include <di/execution/meta/prelude.h>
 #include <di/execution/receiver/prelude.h>
 #include <di/execution/types/prelude.h>
 #include <di/function/pipeline.h>
+#include <di/types/prelude.h>
 
 namespace di::execution {
 namespace into_variant_ns {
@@ -14,7 +16,7 @@ namespace into_variant_ns {
     using IntoVariantType = meta::ValueTypesOf<Send, Env>;
 
     template<typename Send, typename Env>
-    struct IntoVariantSetValue : meta::Id<SetValue(IntoVariantType<Send, Env>)> {};
+    struct IntoVariantSetValue : meta::Id<CompletionSignatures<SetValue(IntoVariantType<Send, Env>)>> {};
 
     template<typename Value, typename Rec>
     struct ReceiverT {
@@ -27,11 +29,10 @@ namespace into_variant_ns {
 
         private:
             template<typename... Args>
-            requires(concepts::ConstructibleFrom<meta::DecayedTuple<Args...>, Args...>)
+            requires(concepts::ConstructibleFrom<Value, InPlaceType<meta::DecayedTuple<Args...>>, Args...>)
             void set_value(Args&&... args) && {
-                using Tup = meta::DecayedTuple<Args...>;
-
-                execution::set_value(util::move(*this), Value { in_place_type<Tup>, util::forward<Args>(args)... });
+                execution::set_value(util::move(*this).base(), Value { in_place_type<meta::DecayedTuple<Args...>>,
+                                                                       util::forward<Args>(args)... });
             }
         };
     };

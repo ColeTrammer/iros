@@ -4,6 +4,8 @@
 #include <di/any/vtable/maybe_inline_vtable.h>
 #include <di/concepts/prelude.h>
 #include <di/container/allocator/allocation_result.h>
+#include <di/execution/algorithm/into_variant.h>
+#include <di/execution/algorithm/sync_wait.h>
 #include <di/execution/any/any_operation_state.h>
 #include <di/execution/any/any_sender.h>
 #include <di/execution/concepts/prelude.h>
@@ -94,6 +96,11 @@ static void sync_wait() {
 
     ASSERT(ex::sync_wait(ex::get_scheduler()));
     ASSERT(ex::sync_wait(ex::get_stop_token()));
+
+    ASSERT_EQ(ex::sync_wait(ex::just_error(di::BasicError::InvalidArgument)),
+              di::Unexpected(di::BasicError::InvalidArgument));
+
+    ASSERT_EQ(ex::sync_wait(ex::just_stopped()), di::Unexpected(di::BasicError::OperationCanceled));
 }
 
 static void lazy() {
@@ -174,7 +181,7 @@ static void inline_scheduler() {
     auto v = ex::on(scheduler, ex::just() | ex::let_value([] {
                                    return ex::get_scheduler();
                                }));
-    ASSERT_EQ(*ex::sync_wait(di::move(v)), di::make_tuple(scheduler));
+    ASSERT_EQ(*ex::sync_wait(di::move(v)), scheduler);
 }
 
 static void let() {
@@ -244,13 +251,13 @@ static void as() {
     namespace ex = di::execution;
 
     auto w = ex::just_stopped() | ex::stopped_as_optional;
-    ASSERT_EQ(ex::sync_wait(di::move(w)), di::make_tuple(di::nullopt));
+    ASSERT_EQ(ex::sync_wait(di::move(w)), di::nullopt);
 
     auto v = ex::just_stopped() | ex::stopped_as_error(42) | ex::let_error([](int x) {
                  ASSERT_EQ(x, 42);
                  return ex::just(x);
              });
-    ASSERT_EQ(ex::sync_wait(di::move(v)), di::make_tuple(42));
+    ASSERT_EQ(ex::sync_wait(di::move(v)), 42);
 }
 
 struct AsyncI32 {
@@ -273,7 +280,7 @@ static void with() {
                  return ex::just(value.value);
              });
 
-    ASSERT_EQ(ex::sync_wait(di::move(w)), di::make_tuple(42));
+    ASSERT_EQ(ex::sync_wait(di::move(w)), 42);
 }
 
 struct FailAllocator {
@@ -340,6 +347,15 @@ static void any_sender() {
     auto yyy = Sender3(di::move(zz));
 
     ASSERT_EQ(ex::sync_wait(di::move(yyy)), di::Unexpected(di::BasicError::NotEnoughMemory));
+
+    using Sender4 = di::AnySender<di::CompletionSignatures<di::SetValue(), di::SetValue(int), di::SetStopped()>>;
+
+    ASSERT_EQ(ex::sync_wait_with_variant(Sender4(ex::just(52))), di::make_tuple(52));
+    ASSERT_EQ(ex::sync_wait_with_variant(Sender4(ex::just())), di::make_tuple());
+    ASSERT_EQ(ex::sync_wait_with_variant(Sender4(ex::just_stopped())),
+              di::Unexpected(di::BasicError::OperationCanceled));
+    ASSERT_EQ(ex::sync_wait_with_variant(Sender4(ex::just_error(di::BasicError::InvalidArgument))),
+              di::Unexpected(di::BasicError::InvalidArgument));
 }
 
 TEST(execution, meta)

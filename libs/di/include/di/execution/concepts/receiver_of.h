@@ -13,10 +13,15 @@ namespace detail {
         {}
         (signature);
     };
+
+    template<typename T, typename L>
+    constexpr inline bool ReceiverOfHelper = false;
+
+    template<typename T, typename... Types>
+    constexpr inline bool ReceiverOfHelper<T, types::CompletionSignatures<Types...>> =
+        (ValidCompletionFor<Types, T> && ...);
 }
 
 template<class T, class Completions>
-concept ReceiverOf = Receiver<T> && requires(Completions* completions) {
-    []<detail::ValidCompletionFor<T>... Signatures>(types::CompletionSignatures<Signatures...>*) {}(completions);
-};
+concept ReceiverOf = Receiver<T> && detail::ReceiverOfHelper<T, Completions>;
 }
