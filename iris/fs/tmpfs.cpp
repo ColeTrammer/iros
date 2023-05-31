@@ -1,5 +1,6 @@
 #include <di/container/string/prelude.h>
 #include <di/container/tree/prelude.h>
+#include <di/execution/macro/try_or_send_error.h>
 #include <di/math/prelude.h>
 #include <di/vocab/expected/prelude.h>
 #include <di/vocab/pointer/prelude.h>
@@ -20,13 +21,13 @@ struct TmpfsInodeImpl {
     Metadata metadata;
     di::Vector<di::Tuple<di::TransparentString, di::Arc<Inode>>> inodes;
 
-    friend Expected<mm::PhysicalAddress> tag_invoke(di::Tag<inode_read>, TmpfsInodeImpl&,
-                                                    mm::BackingObject& backing_object, u64 page_number) {
+    friend di::AnySenderOf<mm::PhysicalAddress> tag_invoke(di::Tag<inode_read>, TmpfsInodeImpl&,
+                                                           mm::BackingObject& backing_object, u64 page_number) {
         // NOTE: if we're getting here, it means that the page is not present in the backing object. Since this is the
         // tmpfs, just allocate a new (zero-filled) page and add it to the backing object.
-        auto page = TRY(mm::allocate_page_frame());
+        auto page = TRY_OR_SEND_ERROR(mm::allocate_page_frame());
         backing_object.lock()->add_page(page, page_number);
-        return page;
+        return di::execution::just(page);
     }
 
     friend Expected<usize> tag_invoke(di::Tag<inode_read_directory>, TmpfsInodeImpl& self, mm::BackingObject&,

@@ -15,8 +15,8 @@ namespace iris {
 struct TNode;
 
 struct InodeReadFunction
-    : di::Dispatcher<InodeReadFunction, Expected<mm::PhysicalAddress>(di::This&, mm::BackingObject&, u64 page_number)> {
-};
+    : di::Dispatcher<InodeReadFunction,
+                     di::AnySenderOf<mm::PhysicalAddress>(di::This&, mm::BackingObject&, u64 page_number)> {};
 
 constexpr inline auto inode_read = InodeReadFunction {};
 
@@ -61,7 +61,7 @@ class InodeFile {
 public:
     explicit InodeFile(di::Arc<TNode> tnode);
 
-    friend Expected<usize> tag_invoke(di::Tag<read_file>, InodeFile& self, UserspaceBuffer<byte> buffer);
+    friend di::AnySenderOf<usize> tag_invoke(di::Tag<read_file>, InodeFile& self, UserspaceBuffer<byte> buffer);
     friend Expected<usize> tag_invoke(di::Tag<read_directory>, InodeFile& self, UserspaceBuffer<byte> buffer);
     friend Expected<usize> tag_invoke(di::Tag<write_file>, InodeFile& self, UserspaceBuffer<byte const> buffer);
     friend Expected<Metadata> tag_invoke(di::Tag<file_metadata>, InodeFile& self);
@@ -84,8 +84,8 @@ public:
     void set_mount(di::Box<Mount> mount) { m_mount = di::move(mount); }
 
 private:
-    friend Expected<mm::PhysicalAddress> tag_invoke(di::Tag<inode_read>, Inode& self, mm::BackingObject& backing_object,
-                                                    u64 page_number);
+    friend di::AnySenderOf<mm::PhysicalAddress> tag_invoke(di::Tag<inode_read>, Inode& self,
+                                                           mm::BackingObject& backing_object, u64 page_number);
     friend Expected<usize> tag_invoke(di::Tag<inode_read_directory>, Inode& self, mm::BackingObject& backing_object,
                                       u64& offset, UserspaceBuffer<byte> buffer);
     friend Expected<di::Arc<TNode>> tag_invoke(di::Tag<inode_lookup>, Inode& self, di::Arc<TNode> parent,

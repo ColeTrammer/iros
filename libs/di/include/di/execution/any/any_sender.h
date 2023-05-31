@@ -22,6 +22,7 @@
 #include <di/execution/interface/connect.h>
 #include <di/execution/meta/connect_result.h>
 #include <di/execution/receiver/set_error.h>
+#include <di/execution/receiver/set_value.h>
 #include <di/execution/types/completion_signuatures.h>
 #include <di/function/tag_invoke.h>
 #include <di/meta/language_function_return.h>
@@ -125,8 +126,12 @@ namespace detail {
         return operation_state;
     }
 }
+
+template<typename T>
+using AnySenderOf = AnySender<types::CompletionSignatures<SetValue(T)>>;
 }
 
 namespace di {
 using execution::AnySender;
+using execution::AnySenderOf;
 }

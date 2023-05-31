@@ -48,14 +48,14 @@ struct InitrdInodeImpl {
     // FIXME: this really should use a kernel-level inode cache.
     di::TreeMap<di::TransparentString, di::Arc<Inode>> inodes;
 
-    friend Expected<mm::PhysicalAddress> tag_invoke(di::Tag<inode_read>, InitrdInodeImpl& self,
-                                                    mm::BackingObject& object, u64 page_number) {
+    friend di::AnySenderOf<mm::PhysicalAddress> tag_invoke(di::Tag<inode_read>, InitrdInodeImpl& self,
+                                                           mm::BackingObject& object, u64 page_number) {
         auto virtual_address = di::to_uintptr(self.data.data() + page_number * 4096);
         virtual_address -= global_state().virtual_to_physical_offset.raw_value();
         auto physical_address = mm::PhysicalAddress(virtual_address);
 
         object.lock()->add_page(physical_address, page_number);
-        return physical_address;
+        return di::execution::just(physical_address);
     }
 
     friend Expected<usize> tag_invoke(di::Tag<inode_read_directory>, InitrdInodeImpl& self, mm::BackingObject&,

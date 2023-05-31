@@ -1,16 +1,20 @@
 #include <di/container/algorithm/prelude.h>
+#include <di/execution/algorithm/sync_wait.h>
+#include <di/execution/any/any_sender.h>
+#include <di/execution/macro/try_or_send_error.h>
 #include <di/math/prelude.h>
 #include <di/vocab/expected/prelude.h>
 #include <iris/fs/inode.h>
 #include <iris/fs/tnode.h>
 #include <iris/mm/map_physical_address.h>
+#include <iris/mm/physical_address.h>
 #include <iris/uapi/metadata.h>
 
 namespace iris {
 InodeFile::InodeFile(di::Arc<TNode> tnode) : m_tnode(di::move(tnode)) {}
 
-Expected<mm::PhysicalAddress> tag_invoke(di::Tag<inode_read>, Inode& self, mm::BackingObject& backing_object,
-                                         u64 page_number) {
+di::AnySenderOf<mm::PhysicalAddress> tag_invoke(di::Tag<inode_read>, Inode& self, mm::BackingObject& backing_object,
+                                                u64 page_number) {
     return inode_read(self.m_impl, backing_object, page_number);
 }
 
@@ -41,12 +45,12 @@ Expected<di::Span<byte const>> tag_invoke(di::Tag<inode_hack_raw_data>, Inode& s
     return inode_hack_raw_data(self.m_impl);
 }
 
-Expected<usize> tag_invoke(di::Tag<read_file>, InodeFile& self, UserspaceBuffer<byte> buffer) {
+di::AnySenderOf<usize> tag_invoke(di::Tag<read_file>, InodeFile& self, UserspaceBuffer<byte> buffer) {
     auto& inode = *self.m_tnode->inode();
-    auto metadata = TRY(inode_metadata(inode));
+    auto metadata = TRY_OR_SEND_ERROR(inode_metadata(inode));
     auto size = metadata.size;
     if (self.m_offset >= size) {
-        return 0;
+        return di::execution::just(0);
     }
 
     auto to_read = di::min(size - self.m_offset, buffer.size());
@@ -58,23 +62,24 @@ Expected<usize> tag_invoke(di::Tag<read_file>, InodeFile& self, UserspaceBuffer<
     for (auto offset : di::range(page_begin, page_end) | di::stride(4096)) {
         auto physical_address = backing_object.lock()->lookup_page(offset / 4096);
         if (!physical_address) {
-            physical_address = TRY(inode_read(inode, backing_object, offset / 4096));
+            physical_address =
+                TRY_OR_SEND_ERROR(di::execution::sync_wait(inode_read(inode, backing_object, offset / 4096)));
         }
         ASSERT(physical_address);
 
         auto page_offset = offset % 4096;
         auto to_read = di::min(4096 - page_offset, buffer.size() - nread);
 
-        auto page = TRY(mm::map_physical_address(*physical_address, 4096));
+        auto page = TRY_OR_SEND_ERROR(mm::map_physical_address(*physical_address, 4096));
         auto page_data = di::Span { &page.typed<byte const>() + page_offset, to_read };
 
-        TRY(buffer.write(*page_data.subspan(page_offset, to_read)));
+        TRY_OR_SEND_ERROR(buffer.write(*page_data.subspan(page_offset, to_read)));
         buffer.advance(to_read);
 
         nread += to_read;
         self.m_offset += to_read;
     }
-    return nread;
+    return di::execution::just(nread);
 }
 
 Expected<usize> tag_invoke(di::Tag<read_directory>, InodeFile& self, UserspaceBuffer<byte> buffer) {
@@ -99,7 +104,8 @@ Expected<usize> tag_invoke(di::Tag<write_file>, InodeFile& self, UserspaceBuffer
         // at the end of this function, this is probably sketchy for real file systems.
         auto physical_address = backing_object.lock()->lookup_page(offset / 4096);
         if (!physical_address) {
-            physical_address = TRY(inode_read(inode, backing_object, offset / 4096));
+            physical_address =
+                TRY_UNERASE_ERROR(di::execution::sync_wait(inode_read(inode, backing_object, offset / 4096)));
         }
         ASSERT(physical_address);
 

@@ -2,6 +2,10 @@
 
 #include <di/any/prelude.h>
 #include <di/bit/bitset/prelude.h>
+#include <di/execution/any/any_sender.h>
+#include <di/execution/receiver/prelude.h>
+#include <di/execution/types/prelude.h>
+#include <di/types/prelude.h>
 #include <iris/core/error.h>
 #include <iris/core/userspace_buffer.h>
 #include <iris/uapi/metadata.h>
@@ -53,7 +57,7 @@ struct WriteFileFunction
 constexpr inline auto write_file = WriteFileFunction {};
 
 struct ReadFileFunction
-    : di::Dispatcher<ReadFileFunction, Expected<usize>(di::This&, UserspaceBuffer<byte>),
+    : di::Dispatcher<ReadFileFunction, di::AnySenderOf<usize>(di::This&, UserspaceBuffer<byte>),
                      detail::ReadFileDefaultFunction> {};
 
 constexpr inline auto read_file = ReadFileFunction {};
