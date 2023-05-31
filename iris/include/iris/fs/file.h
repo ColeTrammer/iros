@@ -2,6 +2,7 @@
 
 #include <di/any/prelude.h>
 #include <di/bit/bitset/prelude.h>
+#include <di/execution/algorithm/just.h>
 #include <di/execution/any/any_sender.h>
 #include <di/execution/receiver/prelude.h>
 #include <di/execution/types/prelude.h>
@@ -14,15 +15,15 @@ namespace iris {
 namespace detail {
     struct WriteFileDefaultFunction {
         template<typename T>
-        Expected<usize> operator()(T&, UserspaceBuffer<byte const>) const {
-            return di::Unexpected(Error::NotSupported);
+        di::AnySenderOf<usize> operator()(T&, UserspaceBuffer<byte const>) const {
+            return di::execution::just_error(Error::NotSupported);
         }
     };
 
     struct ReadFileDefaultFunction {
         template<typename T>
-        Expected<usize> operator()(T&, UserspaceBuffer<byte>) const {
-            return di::Unexpected(Error::NotSupported);
+        di::AnySenderOf<usize> operator()(T&, UserspaceBuffer<byte>) const {
+            return di::execution::just_error(Error::NotSupported);
         }
     };
 
@@ -51,7 +52,7 @@ namespace detail {
 }
 
 struct WriteFileFunction
-    : di::Dispatcher<WriteFileFunction, Expected<usize>(di::This&, UserspaceBuffer<byte const>),
+    : di::Dispatcher<WriteFileFunction, di::AnySenderOf<usize>(di::This&, UserspaceBuffer<byte const>),
                      detail::WriteFileDefaultFunction> {};
 
 constexpr inline auto write_file = WriteFileFunction {};

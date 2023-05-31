@@ -8,7 +8,7 @@
 
 namespace di::concepts {
 template<typename T>
-concept Receiver = execution::enable_receiver<meta::RemoveCVRef<T>> && MoveConstructible<meta::RemoveCVRef<T>> &&
-                   concepts::ConstructibleFrom<meta::RemoveCVRef<T>, T> &&
-                   requires(meta::RemoveCVRef<T> const& receiver) { execution::get_env(receiver); };
+concept Receiver = execution::enable_receiver<meta::RemoveCVRef<T>> && requires(meta::RemoveCVRef<T> const& receiver) {
+    { execution::get_env(receiver) } -> Queryable;
+} && MoveConstructible<meta::RemoveCVRef<T>> && concepts::ConstructibleFrom<meta::RemoveCVRef<T>, T>;
 }

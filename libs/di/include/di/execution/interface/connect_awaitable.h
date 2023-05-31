@@ -1,15 +1,23 @@
 #pragma once
 
+#include <di/assert/assert_bool.h>
 #include <di/execution/concepts/is_awaitable.h>
 #include <di/execution/concepts/operation_state.h>
 #include <di/execution/concepts/receiver.h>
 #include <di/execution/concepts/receiver_of.h>
 #include <di/execution/coroutine/with_await_transform.h>
 #include <di/execution/meta/await_result.h>
+#include <di/execution/receiver/set_error.h>
 #include <di/function/invoke.h>
+#include <di/platform/prelude.h>
+#include <di/util/addressof.h>
+#include <di/util/exchange.h>
 #include <di/util/immovable.h>
+#include <di/util/move.h>
+#include <di/util/std_new.h>
 #include <di/util/unreachable.h>
 #include <di/vocab/error/error.h>
+#include <di/vocab/optional/optional_forward_declaration.h>
 
 namespace di::execution {
 namespace as_awaitable_ns {
@@ -19,6 +27,8 @@ namespace as_awaitable_ns {
 namespace connect_awaitable_ns {
     template<typename Receiver>
     struct OperationStateT {
+        struct AllocFailed {};
+
         struct Type : util::Immovable {
         private:
             struct Promise : WithAwaitTransform<Promise> {
@@ -27,6 +37,12 @@ namespace connect_awaitable_ns {
                 explicit Promise(auto&, Receiver& receiver_) : receiver(receiver_) {}
 
                 auto get_return_object() { return Type { CoroutineHandle<Promise>::from_promise(*this) }; }
+
+                void* operator new(usize size) noexcept { return ::operator new(size, std::nothrow); }
+
+                void operator delete(void* ptr, usize size) noexcept { ::operator delete(ptr, size); }
+
+                static auto get_return_object_on_allocation_failure() { return Type { AllocFailed {} }; }
 
                 template<typename Fn>
                 auto yield_value(Fn&& function) noexcept {
@@ -65,18 +81,33 @@ namespace connect_awaitable_ns {
         public:
             using promise_type = Promise;
 
+            Type(Type&& other) : m_coroutine(util::exchange(other.m_coroutine, {})) {}
+
             ~Type() {
                 if (m_coroutine) {
                     m_coroutine.destroy();
                 }
             }
 
+            void set_receiver(Receiver&& receiver) { m_receiver = util::move(receiver); }
+
+            bool allocation_failed() const { return !m_coroutine; }
+
         private:
             explicit Type(CoroutineHandle<> coroutine) : m_coroutine(coroutine) {}
+            explicit Type(AllocFailed) {}
 
-            friend void tag_invoke(types::Tag<start>, Type& self) { self.m_coroutine.resume(); }
+            friend void tag_invoke(types::Tag<start>, Type& self) {
+                if (!self.m_coroutine) {
+                    DI_ASSERT(self.m_receiver);
+                    execution::set_error(util::move(*self.m_receiver), vocab::Error(BasicError::NotEnoughMemory));
+                } else {
+                    self.m_coroutine.resume();
+                }
+            }
 
             CoroutineHandle<> m_coroutine;
+            vocab::Optional<Receiver> m_receiver;
         };
     };
 
@@ -99,7 +130,11 @@ namespace connect_awaitable_ns {
         template<concepts::Receiver Receiver, concepts::IsAwaitable<Promise<Receiver>> Awaitable>
         requires(concepts::ReceiverOf<Receiver, meta::Type<CompletionSignatures<Awaitable, Receiver>>>)
         auto operator()(Awaitable&& awaitable, Receiver receiver) const {
-            return impl(util::forward<Awaitable>(awaitable), util::move(receiver));
+            auto result = impl(util::forward<Awaitable>(awaitable), util::move(receiver));
+            if (result.allocation_failed()) {
+                result.set_receiver(util::move(receiver));
+            }
+            return result;
         }
 
     private:

@@ -1,10 +1,18 @@
 #pragma once
 
+#include <di/assert/assert_bool.h>
+#include <di/concepts/same_as.h>
+#include <di/concepts/unexpected.h>
+#include <di/execution/algorithm/just.h>
+#include <di/execution/algorithm/just_or_error.h>
+#include <di/execution/coroutine/with_await_transform.h>
 #include <di/execution/coroutine/with_awaitable_senders.h>
 #include <di/execution/types/prelude.h>
+#include <di/platform/prelude.h>
 #include <di/util/coroutine.h>
 #include <di/util/exchange.h>
 #include <di/util/unreachable.h>
+#include <di/vocab/error/error.h>
 #include <di/vocab/error/prelude.h>
 #include <di/vocab/variant/prelude.h>
 
@@ -13,10 +21,15 @@ namespace lazy_ns {
     template<typename T = void>
     class Lazy;
 
+    struct AllocFailed {};
+
     template<typename Self, typename T>
     class PromiseBase : public WithAwaitableSenders<Self> {
     public:
         PromiseBase() = default;
+
+        void* operator new(usize size) noexcept { return ::operator new(size, std::nothrow); }
+        void operator delete(void* ptr, usize size) noexcept { ::operator delete(ptr, size); }
 
         SuspendAlways initial_suspend() noexcept { return {}; }
         auto final_suspend() noexcept { return FinalAwaiter {}; }
@@ -44,15 +57,22 @@ namespace lazy_ns {
         struct Awaiter {
             CoroutineHandle<PromiseBase> coroutine;
 
-            bool await_ready() noexcept { return !coroutine; }
+            bool await_ready() noexcept { return false; }
 
             template<typename OtherPromise>
-            CoroutineHandle<PromiseBase> await_suspend(CoroutineHandle<OtherPromise> continuation) noexcept {
+            CoroutineHandle<> await_suspend(CoroutineHandle<OtherPromise> continuation) noexcept {
+                // If we don't have a coroutine, it is because allocating it failed. Since the continuation is already
+                // suspended, we can just report the error and return a noop coroutine.
+                if (!coroutine) {
+                    continuation.promise().unhandled_error(vocab::Error(BasicError::NotEnoughMemory));
+                    return noop_coroutine();
+                }
                 coroutine.promise().set_continuation(continuation);
                 return coroutine;
             }
 
             T await_resume() {
+                DI_ASSERT(coroutine);
                 auto& promise = static_cast<PromiseBase&>(coroutine.promise());
                 DI_ASSERT(promise.m_data);
                 return *util::move(promise.m_data);
@@ -92,15 +112,21 @@ namespace lazy_ns {
         struct Awaiter {
             CoroutineHandle<PromiseBase> coroutine;
 
-            bool await_ready() noexcept { return !coroutine; }
+            bool await_ready() noexcept { return false; }
 
             template<typename OtherPromise>
-            CoroutineHandle<PromiseBase> await_suspend(CoroutineHandle<OtherPromise> continuation) noexcept {
+            CoroutineHandle<> await_suspend(CoroutineHandle<OtherPromise> continuation) noexcept {
+                // If we don't have a coroutine, it is because allocating it failed. Since the continuation is already
+                // suspended, we can just report the error and return a noop coroutine.
+                if (!coroutine) {
+                    continuation.promise().unhandled_error(vocab::Error(BasicError::NotEnoughMemory));
+                    return noop_coroutine();
+                }
                 coroutine.promise().set_continuation(continuation);
                 return coroutine;
             }
 
-            void await_resume() {}
+            void await_resume() noexcept { DI_ASSERT(coroutine); }
         };
 
         CoroutineHandle<> m_continuation;
@@ -115,6 +141,7 @@ namespace lazy_ns {
 
         struct Promise : PromiseBase {
             Lazy get_return_object() noexcept { return Lazy { CoroutineHandle<Promise>::from_promise(*this) }; }
+            static Lazy get_return_object_on_allocation_failure() noexcept { return Lazy { AllocFailed {} }; }
         };
 
         using Handle = CoroutineHandle<Promise>;
@@ -133,16 +160,32 @@ namespace lazy_ns {
         }
 
         Awaiter operator co_await() {
+            if (!m_handle) {
+                return Awaiter { nullptr };
+            }
             auto& promise = static_cast<PromiseBase&>(m_handle.promise());
             return Awaiter { ParentHandle::from_promise(promise) };
         }
 
     private:
         explicit Lazy(Handle handle) : m_handle(handle) {}
+        explicit Lazy(AllocFailed) {}
 
         Handle m_handle;
     };
 }
 
 using lazy_ns::Lazy;
+}
+
+namespace di::vocab {
+template<concepts::Expected T, typename Promise>
+constexpr decltype(auto) tag_invoke(types::Tag<execution::as_awaitable>, T&& value, Promise& promise) {
+    return execution::as_awaitable(execution::just_or_error(util::forward<T>(value)), promise);
+}
+
+template<concepts::Unexpected T, typename Promise>
+constexpr decltype(auto) tag_invoke(types::Tag<execution::as_awaitable>, T&& value, Promise& promise) {
+    return execution::as_awaitable(execution::just_error(util::forward<T>(value).error()), promise);
+}
 }

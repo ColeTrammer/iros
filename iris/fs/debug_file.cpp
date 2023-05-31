@@ -22,14 +22,14 @@ di::AnySenderOf<usize> tag_invoke(di::Tag<read_file>, DebugFile&, UserspaceBuffe
     return di::execution::just(TRY_OR_SEND_ERROR(buffer.write({ &byte, 1 })));
 }
 
-Expected<usize> tag_invoke(di::Tag<write_file>, DebugFile& self, UserspaceBuffer<byte const> data) {
+di::AnySenderOf<usize> tag_invoke(di::Tag<write_file>, DebugFile& self, UserspaceBuffer<byte const> data) {
     auto guard = di::ScopedLock(self.m_lock);
-    TRY(data.copy_in_chunks<64>([&](di::Span<byte> chunk) -> Expected<void> {
+    TRY_OR_SEND_ERROR(data.copy_in_chunks<64>([&](di::Span<byte> chunk) -> Expected<void> {
         for (auto byte : chunk) {
             log_output_byte(byte);
         }
         return {};
     }));
-    return data.size();
+    return di::execution::just(data.size());
 }
 }

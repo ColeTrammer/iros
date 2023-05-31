@@ -101,7 +101,8 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
 
             auto& handle = TRY(current_task.file_table().lookup_file_handle(file_handle));
 
-            return iris::write_file(handle, TRY(di::create<UserspaceBuffer>(buffer, amount)));
+            return TRY_UNERASE_ERROR(
+                di::execution::sync_wait(iris::write_file(handle, TRY(di::create<UserspaceBuffer>(buffer, amount)))));
         }
         case SystemCall::read: {
             auto file_handle = i32(task_state.syscall_arg1());

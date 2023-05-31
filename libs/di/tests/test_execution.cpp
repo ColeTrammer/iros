@@ -5,6 +5,9 @@
 #include <di/concepts/prelude.h>
 #include <di/container/allocator/allocation_result.h>
 #include <di/execution/algorithm/into_variant.h>
+#include <di/execution/algorithm/just_or_error.h>
+#include <di/execution/algorithm/just_void_or_stopped.h>
+#include <di/execution/algorithm/prelude.h>
 #include <di/execution/algorithm/sync_wait.h>
 #include <di/execution/any/any_operation_state.h>
 #include <di/execution/any/any_sender.h>
@@ -115,6 +118,22 @@ static void lazy() {
 
     ASSERT(di::sync_wait(t2()));
     ASSERT_EQ(di::sync_wait(task()), 42);
+}
+
+static void just() {
+    ASSERT_EQ(di::sync_wait(di::execution::just(42)), 42);
+    ASSERT_EQ(di::sync_wait(di::execution::just_error(di::BasicError::InvalidArgument)),
+              di::Unexpected(di::BasicError::InvalidArgument));
+    ASSERT_EQ(di::sync_wait(di::execution::just_stopped()), di::Unexpected(di::BasicError::OperationCanceled));
+
+    ASSERT_EQ(di::sync_wait(di::execution::just_void_or_stopped(true)),
+              di::Unexpected(di::BasicError::OperationCanceled));
+    ASSERT(di::sync_wait(di::execution::just_void_or_stopped(false)));
+
+    ASSERT_EQ(di::sync_wait(di::execution::just_or_error(di::Result<int>(42))), 42);
+    ASSERT_EQ(
+        di::sync_wait(di::execution::just_or_error(di::Result<int>(di::unexpect, di::BasicError::InvalidArgument))),
+        di::Unexpected(di::BasicError::InvalidArgument));
 }
 
 static void coroutine() {
@@ -356,10 +375,35 @@ static void any_sender() {
               di::Unexpected(di::BasicError::OperationCanceled));
     ASSERT_EQ(ex::sync_wait_with_variant(Sender4(ex::just_error(di::BasicError::InvalidArgument))),
               di::Unexpected(di::BasicError::InvalidArgument));
+
+    using Sender5 = di::AnySenderOf<int>;
+
+    auto task = [] -> Sender5 {
+        auto x = co_await ex::just(42);
+        co_return x;
+    };
+    ASSERT_EQ(di::sync_wait(Sender5(task())), 42);
+
+    auto task2 = [] -> Sender5 {
+        auto x = co_await di::Result<int>(42);
+        co_return x;
+    };
+    ASSERT_EQ(di::sync_wait(Sender5(task2())), 42);
+
+    auto task3 = [] -> Sender5 {
+        auto x = co_await di::Result<int>(di::Unexpected(di::BasicError::InvalidArgument));
+        co_return x;
+    };
+    ASSERT_EQ(di::sync_wait(Sender5(task3())), di::Unexpected(di::BasicError::InvalidArgument));
+
+    ASSERT_EQ(di::sync_wait(di::Result<int>(42)), 42);
+    ASSERT_EQ(di::sync_wait(di::Unexpected(di::BasicError::InvalidArgument)),
+              di::Unexpected(di::BasicError::InvalidArgument));
 }
 
 TEST(execution, meta)
 TEST(execution, sync_wait)
+TEST(execution, just)
 TEST(execution, lazy)
 TEST(execution, coroutine)
 TEST(execution, then)

@@ -8,6 +8,7 @@
 #include <di/concepts/language_void.h>
 #include <di/concepts/move_constructible.h>
 #include <di/concepts/remove_cvref_same_as.h>
+#include <di/concepts/same_as.h>
 #include <di/concepts/trivially_copy_constructible.h>
 #include <di/concepts/trivially_destructible.h>
 #include <di/concepts/trivially_move_constructible.h>
@@ -31,6 +32,11 @@
 #include <di/vocab/optional/prelude.h>
 
 namespace di::vocab {
+namespace detail {
+    template<typename Expected, typename From, typename To>
+    concept ConvertibleToWorkaround = !concepts::SameAs<Expected, From> && concepts::ConvertibleTo<From, To>;
+}
+
 template<typename T, typename E>
 requires(!concepts::LanguageVoid<T> && !concepts::LanguageVoid<E>)
 class [[nodiscard]] Expected<T, E> : public function::monad::MonadInterface<Expected<T, E>> {
@@ -64,16 +70,16 @@ public:
     }
 
     template<typename U, typename G>
-    requires(concepts::ConstructibleFrom<T, U const&> && concepts::ConstructibleFrom<E, G const&> &&
-             concepts::detail::ExpectedCanConvertConstructor<T, E, U, G>)
+    requires((!concepts::SameAs<U, T> || !concepts::SameAs<G, E>) && concepts::ConstructibleFrom<T, U const&> &&
+             concepts::ConstructibleFrom<E, G const&> && concepts::detail::ExpectedCanConvertConstructor<T, E, U, G>)
     constexpr explicit(!concepts::ConvertibleTo<U const&, T> || !concepts::ConvertibleTo<G const&, E>)
         Expected(Expected<U, G> const& other) {
         internal_construct_from_expected(other);
     }
 
     template<typename U, typename G>
-    requires(concepts::ConstructibleFrom<T, U> && concepts::ConstructibleFrom<E, G> &&
-             concepts::detail::ExpectedCanConvertConstructor<T, E, U, G>)
+    requires((!concepts::SameAs<U, T> || !concepts::SameAs<G, E>) && concepts::ConstructibleFrom<T, U> &&
+             concepts::ConstructibleFrom<E, G> && concepts::detail::ExpectedCanConvertConstructor<T, E, U, G>)
     constexpr explicit(!concepts::ConvertibleTo<U, T> || !concepts::ConvertibleTo<G, E>)
         Expected(Expected<U, G>&& other) {
         internal_construct_from_expected(util::move(other));
@@ -82,8 +88,8 @@ public:
     template<typename U = T>
     requires(!concepts::RemoveCVRefSameAs<U, types::InPlace> && !concepts::RemoveCVRefSameAs<U, Expected> &&
              !concepts::Unexpected<U> && concepts::ConstructibleFrom<T, U>)
-    constexpr explicit(!concepts::ConvertibleTo<U, T>) Expected(U&& value)
-        : m_has_error(false), m_value(util::forward<U>(value)) {}
+    constexpr explicit(!detail::ConvertibleToWorkaround<Expected, U, T>) Expected(U&& value)
+        : m_value(util::forward<U>(value)) {}
 
     template<typename G>
     requires(concepts::ConstructibleFrom<E, G const&>)

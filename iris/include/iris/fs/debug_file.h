@@ -10,7 +10,7 @@ struct DebugFile {
 private:
     friend di::AnySenderOf<usize> tag_invoke(di::Tag<read_file>, DebugFile&, UserspaceBuffer<byte> data);
 
-    friend Expected<usize> tag_invoke(di::Tag<write_file>, DebugFile& self, UserspaceBuffer<byte const> data);
+    friend di::AnySenderOf<usize> tag_invoke(di::Tag<write_file>, DebugFile& self, UserspaceBuffer<byte const> data);
 
     InterruptibleSpinlock m_lock;
 };

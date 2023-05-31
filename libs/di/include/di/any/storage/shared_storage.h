@@ -41,6 +41,9 @@ namespace detail {
     template<typename T>
     struct ObjectWithRefCount : util::Immovable {
     public:
+        ObjectWithRefCount(ObjectWithRefCount const&) = delete;
+        ObjectWithRefCount(ObjectWithRefCount&&) = delete;
+
         template<typename... Args>
         constexpr ObjectWithRefCount(Args&&... args) : ref_count(1), object(util::forward<Args>(args)...) {}
 

@@ -9,6 +9,7 @@
 #include <di/any/types/this.h>
 #include <di/concepts/constructible_from.h>
 #include <di/concepts/convertible_to.h>
+#include <di/concepts/derived_from.h>
 #include <di/concepts/remove_cvref_same_as.h>
 #include <di/execution/algorithm/just.h>
 #include <di/execution/any/any_env.h>
@@ -19,9 +20,11 @@
 #include <di/execution/concepts/sender.h>
 #include <di/execution/concepts/sender_to.h>
 #include <di/execution/concepts/valid_completion_signatures.h>
+#include <di/execution/coroutine/lazy.h>
 #include <di/execution/interface/connect.h>
 #include <di/execution/meta/connect_result.h>
 #include <di/execution/receiver/set_error.h>
+#include <di/execution/receiver/set_stopped.h>
 #include <di/execution/receiver/set_value.h>
 #include <di/execution/types/completion_signuatures.h>
 #include <di/function/tag_invoke.h>
@@ -42,10 +45,6 @@ namespace di::execution {
 namespace detail {
     template<typename Rec, typename Op, typename Env>
     using AnySenderInterface = meta::List<types::Method<detail::ConnectFunction, Op(types::This&&, Rec)>>;
-
-    template<concepts::ValidCompletionSignatures Sigs>
-    using AnySigs =
-        meta::AsTemplate<types::CompletionSignatures, meta::PushFront<meta::AsList<Sigs>, SetError(vocab::Error)>>;
 }
 
 template<concepts::ValidCompletionSignatures Sigs, typename Env = void,
@@ -67,7 +66,7 @@ public:
     AnySender& operator=(AnySender&&) = default;
 
     template<typename S, typename T = meta::RemoveCVRef<S>>
-    requires(!concepts::SameAs<AnySender, T> && concepts::SenderTo<T, Rec> && concepts::ConstructibleFrom<T, S>)
+    requires(!concepts::DerivedFrom<T, AnySender> && concepts::SenderTo<T, Rec> && concepts::ConstructibleFrom<T, S>)
     AnySender(S&& sender) {
         if constexpr (concepts::AnyStorableInfallibly<T, typename Base::AnyStorage>) {
             this->emplace(util::forward<S>(sender));
@@ -84,6 +83,18 @@ public:
             }
         }
     }
+};
+
+template<typename T>
+class AnySenderOf : public AnySender<types::CompletionSignatures<SetValue(T)>> {
+private:
+    using Base = AnySender<types::CompletionSignatures<SetValue(T)>>;
+
+public:
+    using Base::Base;
+    using Base::operator=;
+
+    using promise_type = execution::Lazy<T>::promise_type;
 };
 
 namespace detail {
@@ -126,9 +137,6 @@ namespace detail {
         return operation_state;
     }
 }
-
-template<typename T>
-using AnySenderOf = AnySender<types::CompletionSignatures<SetValue(T)>>;
 }
 
 namespace di {

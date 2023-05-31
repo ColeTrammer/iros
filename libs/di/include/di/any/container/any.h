@@ -86,7 +86,7 @@ public:
             if (result) {
                 result->m_vtable = VTable::template create_for<Storage, VU>();
             }
-            return result;
+            return R(util::move(result));
         } else {
             return Any(in_place_type<VU>, util::forward<U>(value));
         }

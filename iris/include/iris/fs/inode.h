@@ -63,7 +63,7 @@ public:
 
     friend di::AnySenderOf<usize> tag_invoke(di::Tag<read_file>, InodeFile& self, UserspaceBuffer<byte> buffer);
     friend Expected<usize> tag_invoke(di::Tag<read_directory>, InodeFile& self, UserspaceBuffer<byte> buffer);
-    friend Expected<usize> tag_invoke(di::Tag<write_file>, InodeFile& self, UserspaceBuffer<byte const> buffer);
+    friend di::AnySenderOf<usize> tag_invoke(di::Tag<write_file>, InodeFile& self, UserspaceBuffer<byte const> buffer);
     friend Expected<Metadata> tag_invoke(di::Tag<file_metadata>, InodeFile& self);
     friend Expected<u64> tag_invoke(di::Tag<seek_file>, InodeFile& self, i64 offset, int whence);
     friend Expected<void> tag_invoke(di::Tag<file_truncate>, InodeFile& self, u64 size);
