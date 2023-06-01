@@ -8,6 +8,7 @@
 #include <di/concepts/language_void.h>
 #include <di/concepts/lvalue_reference.h>
 #include <di/concepts/one_of.h>
+#include <di/concepts/same_as.h>
 #include <di/concepts/scalar.h>
 #include <di/concepts/three_way_comparable_with.h>
 #include <di/concepts/trivially_copy_assignable.h>
@@ -35,6 +36,12 @@
 #include <di/vocab/optional/storage_for.h>
 
 namespace di::vocab {
+namespace detail {
+    template<typename Opt, typename From, typename To>
+    concept OptionalConvertibleToWorkaround =
+        !concepts::SameAs<Opt, meta::RemoveCVRef<From>> && concepts::ConvertibleTo<From, To>;
+}
+
 template<typename T>
 requires(!concepts::LanguageVoid<T>)
 class Optional<T>
@@ -78,7 +85,8 @@ public:
     }
 
     template<typename U>
-    requires(concepts::ConstructibleFrom<T, U const&> && !ConstructibleFromCRefOptional<T, Optional<U>>)
+    requires(!concepts::SameAs<T, U> && concepts::ConstructibleFrom<T, U const&> &&
+             !ConstructibleFromCRefOptional<T, Optional<U>>)
     constexpr explicit(!concepts::ImplicitlyConvertibleTo<U const&, T>) Optional(Optional<U> const& other) {
         if (other.has_value()) {
             emplace(other.value());
@@ -86,8 +94,9 @@ public:
     }
 
     template<typename U>
-    requires(concepts::ConstructibleFrom<T, U &&> && !ConstructibleFromCRefOptional<T, Optional<U>>)
-    constexpr explicit(!concepts::ImplicitlyConvertibleTo<U&&, T>) Optional(Optional<U>&& other) {
+    requires(!concepts::SameAs<T, U> && concepts::ConstructibleFrom<T, U &&> &&
+             !ConstructibleFromCRefOptional<T, Optional<U>>)
+    constexpr explicit(!detail::OptionalConvertibleToWorkaround<Optional, U&&, T>) Optional(Optional<U>&& other) {
         if (other.has_value()) {
             emplace(util::move(other).value());
         }
@@ -106,8 +115,8 @@ public:
     }
 
     template<typename U = T>
-    requires(concepts::ConstructibleFrom<T, U &&> && !concepts::OneOf<meta::Decay<U>, Optional, types::InPlace>)
-    constexpr explicit(!concepts::ImplicitlyConvertibleTo<U&&, T>) Optional(U&& value) {
+    requires(!concepts::OneOf<meta::Decay<U>, Optional, types::InPlace> && concepts::ConstructibleFrom<T, U &&>)
+    constexpr explicit(!detail::OptionalConvertibleToWorkaround<Optional, U&&, T>) Optional(U&& value) {
         emplace(util::forward<U>(value));
     }
 

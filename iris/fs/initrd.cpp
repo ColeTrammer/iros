@@ -1,5 +1,8 @@
 #include <di/any/concepts/prelude.h>
 #include <di/container/tree/prelude.h>
+#include <di/execution/algorithm/just.h>
+#include <di/execution/algorithm/just_or_error.h>
+#include <di/execution/macro/try_or_send_error.h>
 #include <di/math/prelude.h>
 #include <di/vocab/expected/prelude.h>
 #include <iris/core/global_state.h>
@@ -58,11 +61,11 @@ struct InitrdInodeImpl {
         return di::execution::just(physical_address);
     }
 
-    friend Expected<usize> tag_invoke(di::Tag<inode_read_directory>, InitrdInodeImpl& self, mm::BackingObject&,
-                                      u64& offset, UserspaceBuffer<byte> buffer) {
+    friend di::AnySenderOf<usize> tag_invoke(di::Tag<inode_read_directory>, InitrdInodeImpl& self, mm::BackingObject&,
+                                             u64& offset, UserspaceBuffer<byte> buffer) {
         auto it = DirentIterator(self.data.data() + offset, offset == self.data.size());
         if (it == di::default_sentinel) {
-            return 0;
+            return di::execution::just(0);
         }
 
         auto const& entry = *it;
@@ -79,7 +82,7 @@ struct InitrdInodeImpl {
         auto* name_buffer = const_cast<char*>(dirent->name().data());
         di::copy(entry.name(), name_buffer);
 
-        TRY(buffer.write(di::Span { storage.data(), effective_size }));
+        TRY_OR_SEND_ERROR(buffer.write(di::Span { storage.data(), effective_size }));
 
         it++;
         if (it == di::default_sentinel) {
@@ -88,34 +91,36 @@ struct InitrdInodeImpl {
             offset = it.data() - self.data.data();
         }
 
-        return effective_size;
+        return di::execution::just(effective_size);
     }
 
-    friend Expected<di::Arc<TNode>> tag_invoke(di::Tag<inode_lookup>, InitrdInodeImpl& self, di::Arc<TNode> parent,
-                                               di::TransparentStringView name) {
+    friend di::AnySenderOf<di::Arc<TNode>> tag_invoke(di::Tag<inode_lookup>, InitrdInodeImpl& self,
+                                                      di::Arc<TNode> parent, di::TransparentStringView name) {
         auto result = self.inodes.find(name);
         if (result == self.inodes.end()) {
-            return di::Unexpected(Error::NoSuchFileOrDirectory);
+            return di::execution::just_error(Error::NoSuchFileOrDirectory);
         }
 
-        return di::make_arc<TNode>(di::move(parent), di::get<1>(*result), TRY(name | di::to<di::TransparentString>()));
+        return di::execution::just_or_error(di::make_arc<TNode>(
+            di::move(parent), di::get<1>(*result), TRY_OR_SEND_ERROR(name | di::to<di::TransparentString>())));
     }
 
-    friend Expected<Metadata> tag_invoke(di::Tag<inode_metadata>, InitrdInodeImpl& self) {
-        return Metadata { .type = MetadataType(di::to_underlying(self.type)), .size = self.data.size() };
+    friend di::AnySenderOf<Metadata> tag_invoke(di::Tag<inode_metadata>, InitrdInodeImpl& self) {
+        return di::execution::just(
+            Metadata { .type = MetadataType(di::to_underlying(self.type)), .size = self.data.size() });
     }
 
-    friend Expected<di::Arc<TNode>> tag_invoke(di::Tag<inode_create_node>, InitrdInodeImpl&, di::Arc<TNode> const&,
-                                               di::TransparentStringView, MetadataType) {
-        return di::Unexpected(Error::ReadOnlyFileSystem);
+    friend di::AnySenderOf<di::Arc<TNode>> tag_invoke(di::Tag<inode_create_node>, InitrdInodeImpl&,
+                                                      di::Arc<TNode> const&, di::TransparentStringView, MetadataType) {
+        return di::execution::just_error(Error::ReadOnlyFileSystem);
     }
 
-    friend Expected<void> tag_invoke(di::Tag<inode_truncate>, InitrdInodeImpl&, u64) {
-        return di::Unexpected(Error::ReadOnlyFileSystem);
+    friend di::AnySenderOf<void> tag_invoke(di::Tag<inode_truncate>, InitrdInodeImpl&, u64) {
+        return di::execution::just_error(Error::ReadOnlyFileSystem);
     }
 
-    friend Expected<di::Span<byte const>> tag_invoke(di::Tag<inode_hack_raw_data>, InitrdInodeImpl& self) {
-        return self.data;
+    friend di::AnySenderOf<di::Span<byte const>> tag_invoke(di::Tag<inode_hack_raw_data>, InitrdInodeImpl& self) {
+        return di::execution::just(self.data);
     }
 };
 

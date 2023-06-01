@@ -57,8 +57,8 @@ public:
     constexpr Tuple(Args&&... args) : Base(construct_tuple_impl_valuewise, util::forward<Args>(args)...) {}
 
     template<typename Tup>
-    requires(concepts::ConstructibleFrom<Base, ConstructTupleImplFromTuplelike, Tup> &&
-             !concepts::DecaySameAs<Tuple, Tup>)
+    requires(!concepts::DecaySameAs<Tuple, Tup> &&
+             concepts::ConstructibleFrom<Base, ConstructTupleImplFromTuplelike, Tup>)
     constexpr Tuple(Tup&& value) : Base(construct_tuple_impl_from_tuplelike, util::forward<Tup>(value)) {}
 
     constexpr ~Tuple() = default;

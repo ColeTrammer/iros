@@ -20,6 +20,7 @@
 #include <di/meta/list/push_front.h>
 #include <di/meta/list/quote.h>
 #include <di/meta/list/transform.h>
+#include <di/meta/list/type.h>
 #include <di/meta/list/unique.h>
 #include <di/meta/remove_cvref.h>
 #include <di/vocab/error/error.h>
@@ -41,24 +42,32 @@ namespace detail {
         InterfaceWithEnv<meta::Transform<meta::Unique<meta::AsList<AnySigs<Sigs>>>, meta::Quote<MethodForSig>>, Env>;
 }
 
+template<typename Sigs, typename Env, typename Storage, typename VTablePolicy>
+struct AnyReceiverT {
+    class Type : public Any<detail::AnyReceiverMethods<Sigs, Env>, Storage, VTablePolicy> {
+    private:
+        using Base = Any<detail::AnyReceiverMethods<Sigs, Env>, Storage, VTablePolicy>;
+
+    public:
+        using is_receiver = void;
+
+        Type(Type const&) = delete;
+        Type& operator=(Type const&) = delete;
+
+        Type(Type&&) = default;
+        Type& operator=(Type&&) = default;
+
+        template<typename R, typename T = meta::RemoveCVRef<R>>
+        requires(!concepts::DerivedFrom<T, Type> && concepts::ReceiverOf<T, detail::AnySigs<Sigs>> &&
+                 concepts::ConstructibleFrom<T, R> && concepts::AnyStorableInfallibly<T, typename Base::AnyStorage>)
+        Type(R&& receiver) : Base(util::forward<R>(receiver)) {}
+    };
+};
+
 template<concepts::ValidCompletionSignatures Sigs, typename Env = void,
          concepts::AnyStorage Storage = any::InlineStorage<2 * sizeof(void*), alignof(void*)>,
          typename VTablePolicy = any::MaybeInlineVTable<3>>
-class AnyReceiver : public Any<detail::AnyReceiverMethods<Sigs, Env>, Storage, VTablePolicy> {
-private:
-    using Base = Any<detail::AnyReceiverMethods<Sigs, Env>, Storage, VTablePolicy>;
-
-public:
-    using is_receiver = void;
-
-    AnyReceiver(AnyReceiver&&) = default;
-    AnyReceiver& operator=(AnyReceiver&&) = default;
-
-    template<typename R, typename T = meta::RemoveCVRef<R>>
-    requires(!concepts::DerivedFrom<T, AnyReceiver> && concepts::ReceiverOf<T, detail::AnySigs<Sigs>> &&
-             concepts::ConstructibleFrom<T, R> && concepts::AnyStorableInfallibly<T, typename Base::AnyStorage>)
-    AnyReceiver(R&& receiver) : Base(util::forward<R>(receiver)) {}
-};
+using AnyReceiver = meta::Type<AnyReceiverT<Sigs, Env, Storage, VTablePolicy>>;
 }
 
 namespace di {

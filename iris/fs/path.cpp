@@ -1,3 +1,6 @@
+#include <di/execution/algorithm/into_result.h>
+#include <di/execution/any/any_sender.h>
+#include <di/util/prelude.h>
 #include <iris/core/global_state.h>
 #include <iris/core/print.h>
 #include <iris/fs/inode.h>
@@ -6,8 +9,8 @@
 #include <iris/uapi/metadata.h>
 
 namespace iris {
-Expected<di::Arc<TNode>> lookup_path(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path,
-                                     PathLookupFlags flags) {
+di::AnySenderOf<di::Arc<TNode>> lookup_path(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path,
+                                            PathLookupFlags flags) {
     auto parent = path.is_absolute() ? di::move(root) : di::move(relative_to);
     for (auto it = path.begin(); it != path.end(); ++it) {
         auto component = *it;
@@ -32,49 +35,54 @@ Expected<di::Arc<TNode>> lookup_path(di::Arc<TNode> root, di::Arc<TNode> relativ
 
         auto inode = parent->inode();
 
-        auto result = inode_lookup(*inode, parent, component);
+        auto result = co_await di::execution::into_result(inode_lookup(*inode, parent, component));
         if (result == di::Unexpected(Error::NoSuchFileOrDirectory) && !!(flags & PathLookupFlags::Create)) {
             // Now try to create the file, but only if this is the last component in the path.
             if (di::next(it) != path.end()) {
-                return di::Unexpected(Error::NoSuchFileOrDirectory);
+                co_await di::execution::just_error(Error::NoSuchFileOrDirectory);
+                di::unreachable();
             }
 
-            return TRY(inode_create_node(*inode, parent, component, MetadataType::Regular));
+            co_return co_await inode_create_node(*inode, parent, component, MetadataType::Regular);
         }
 
-        parent = TRY(di::move(result));
+        parent = co_await di::move(result);
 
         // See if there is an existing mount.
         inode = parent->inode();
         if (auto mount = inode->mount(); mount) {
             auto parent_inode = mount->super_block().root_inode();
-            parent = TRY(di::make_arc<TNode>(di::move(parent), di::move(parent_inode), TRY(component.to_owned())));
+            parent =
+                co_await di::make_arc<TNode>(di::move(parent), di::move(parent_inode), co_await component.to_owned());
             continue;
         }
     }
-    return parent;
+    co_return parent;
 }
 
-Expected<void> create_node(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path, MetadataType type) {
+di::AnySenderOf<void> create_node(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path,
+                                  MetadataType type) {
     auto parent_path = path.parent_path();
     if (!parent_path) {
-        return di::Unexpected(Error::InvalidArgument);
+        co_await di::execution::just_error(Error::InvalidArgument);
+        di::unreachable();
     }
 
-    auto parent = TRY(lookup_path(di::move(root), di::move(relative_to), *parent_path));
+    auto parent = co_await lookup_path(di::move(root), di::move(relative_to), *parent_path);
     auto component = *path.back();
 
-    auto result = inode_lookup(*parent->inode(), parent, component);
-    if (result) {
-        return di::Unexpected(Error::FileExists);
+    auto result = co_await di::execution::into_result(inode_lookup(*parent->inode(), parent, component));
+    if (result.has_value()) {
+        co_await di::execution::just_error(Error::FileExists);
+        di::unreachable();
     }
 
-    return inode_create_node(*parent->inode(), parent, component, type) % di::into_void;
+    co_await inode_create_node(*parent->inode(), parent, component, type);
 }
 
-Expected<File> open_path(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path, OpenMode mode) {
+di::AnySenderOf<File> open_path(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path, OpenMode mode) {
     auto flags = !!(mode & OpenMode::Create) ? PathLookupFlags::Create : PathLookupFlags::None;
-    auto node = TRY(lookup_path(di::move(root), di::move(relative_to), path, flags));
-    return File::create(InodeFile(di::move(node)));
+    auto node = co_await lookup_path(di::move(root), di::move(relative_to), path, flags);
+    co_return co_await File::create(InodeFile(di::move(node)));
 }
 }

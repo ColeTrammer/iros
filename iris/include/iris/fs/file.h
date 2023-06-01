@@ -29,25 +29,29 @@ namespace detail {
 
     struct ReadDirectoryDefaultFunction {
         template<typename T>
-        Expected<usize> operator()(T&, UserspaceBuffer<byte>) const {
-            return di::Unexpected(Error::NotSupported);
+        di::AnySenderOf<usize> operator()(T&, UserspaceBuffer<byte>) const {
+            return di::execution::just_error(Error::NotSupported);
         }
     };
 
     struct SeekFileDefaultFunction {
-        constexpr Expected<i64> operator()(auto&, i64, int) const { return di::Unexpected(Error::NotSupported); }
+        di::AnySenderOf<i64> operator()(auto&, i64, int) const {
+            return di::execution::just_error(Error::NotSupported);
+        }
     };
 
     struct FileMetadataDefaultFunction {
-        constexpr Expected<Metadata> operator()(auto&) const { return di::Unexpected(Error::NotSupported); }
+        di::AnySenderOf<Metadata> operator()(auto&) const { return di::execution::just_error(Error::NotSupported); }
     };
 
     struct FileTruncateDefaultFunction {
-        constexpr Expected<void> operator()(auto&, u64) const { return di::Unexpected(Error::NotSupported); }
+        di::AnySenderOf<> operator()(auto&, u64) const { return di::execution::just_error(Error::NotSupported); }
     };
 
     struct FileHACKRawDataFunction {
-        constexpr Expected<di::Span<byte const>> operator()(auto&) const { return di::Unexpected(Error::NotSupported); }
+        di::AnySenderOf<di::Span<byte const>> operator()(auto&) const {
+            return di::execution::just_error(Error::NotSupported);
+        }
     };
 }
 
@@ -64,28 +68,29 @@ struct ReadFileFunction
 constexpr inline auto read_file = ReadFileFunction {};
 
 struct ReadDirectoryFunction
-    : di::Dispatcher<ReadDirectoryFunction, Expected<usize>(di::This&, UserspaceBuffer<byte>),
+    : di::Dispatcher<ReadDirectoryFunction, di::AnySenderOf<usize>(di::This&, UserspaceBuffer<byte>),
                      detail::ReadDirectoryDefaultFunction> {};
 
 constexpr inline auto read_directory = ReadDirectoryFunction {};
 
 struct FileMetadataFunction
-    : di::Dispatcher<FileMetadataFunction, Expected<Metadata>(di::This&), detail::FileMetadataDefaultFunction> {};
+    : di::Dispatcher<FileMetadataFunction, di::AnySenderOf<Metadata>(di::This&), detail::FileMetadataDefaultFunction> {
+};
 
 constexpr inline auto file_metadata = FileMetadataFunction {};
 
 struct SeekFileFunction
-    : di::Dispatcher<SeekFileFunction, Expected<i64>(di::This&, i64, int), detail::SeekFileDefaultFunction> {};
+    : di::Dispatcher<SeekFileFunction, di::AnySenderOf<i64>(di::This&, i64, int), detail::SeekFileDefaultFunction> {};
 
 constexpr inline auto seek_file = SeekFileFunction {};
 
 struct FileTruncateFunction
-    : di::Dispatcher<FileTruncateFunction, Expected<void>(di::This&, u64), detail::FileTruncateDefaultFunction> {};
+    : di::Dispatcher<FileTruncateFunction, di::AnySenderOf<>(di::This&, u64), detail::FileTruncateDefaultFunction> {};
 
 constexpr inline auto file_truncate = FileTruncateFunction {};
 
 struct FileHACKRawDataFunction
-    : di::Dispatcher<FileHACKRawDataFunction, Expected<di::Span<byte const>>(di::This&),
+    : di::Dispatcher<FileHACKRawDataFunction, di::AnySenderOf<di::Span<byte const>>(di::This&),
                      detail::FileHACKRawDataFunction> {};
 
 constexpr inline auto file_hack_raw_data = FileHACKRawDataFunction {};

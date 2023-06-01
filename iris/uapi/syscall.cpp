@@ -89,7 +89,8 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
 
             auto [file_storage, fd] = TRY(current_task.file_table().allocate_file_handle());
 
-            auto file = TRY(iris::open_path(current_task.root_tnode(), current_task.cwd_tnode(), path, mode));
+            auto file = TRY_UNERASE_ERROR(di::execution::sync_wait(
+                iris::open_path(current_task.root_tnode(), current_task.cwd_tnode(), path, mode)));
             file_storage = di::move(file);
 
             return fd;
@@ -181,7 +182,7 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
 
             auto& handle = TRY(current_task.file_table().lookup_file_handle(file_handle));
 
-            return iris::seek_file(handle, offset, whence);
+            return TRY_UNERASE_ERROR(di::execution::sync_wait(iris::seek_file(handle, offset, whence)));
         }
         case SystemCall::set_task_arguments: {
             auto task_id = iris::TaskId(task_state.syscall_arg1());
@@ -233,8 +234,9 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
             auto metadata_ptr =
                 TRY(di::create<UserspacePtr<Metadata>>(reinterpret_cast<Metadata*>(task_state.syscall_arg3())));
 
-            auto file = TRY(iris::open_path(current_task.root_tnode(), current_task.cwd_tnode(), path, OpenMode::None));
-            auto metadata = TRY(iris::file_metadata(file));
+            auto file = TRY_UNERASE_ERROR(di::execution::sync_wait(
+                iris::open_path(current_task.root_tnode(), current_task.cwd_tnode(), path, OpenMode::None)));
+            auto metadata = TRY_UNERASE_ERROR(di::execution::sync_wait(iris::file_metadata(file)));
             TRY(metadata_ptr.write(metadata));
             return 0;
         }
@@ -245,14 +247,15 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
 
             auto& handle = TRY(current_task.file_table().lookup_file_handle(file_handle));
 
-            return iris::read_directory(handle, TRY(di::create<UserspaceBuffer>(buffer, amount)));
+            return TRY_UNERASE_ERROR(di::execution::sync_wait(
+                iris::read_directory(handle, TRY(di::create<UserspaceBuffer>(buffer, amount)))));
         }
         case SystemCall::truncate: {
             auto file_handle = i32(task_state.syscall_arg1());
             auto length = u64(task_state.syscall_arg2());
 
             auto& handle = TRY(current_task.file_table().lookup_file_handle(file_handle));
-            return file_truncate(handle, length) % di::function::value(0);
+            return TRY_UNERASE_ERROR(di::execution::sync_wait(file_truncate(handle, length)) % di::function::value(0));
         }
         case SystemCall::create_node: {
             auto const* string_base = reinterpret_cast<byte const*>(task_state.syscall_arg1());
@@ -264,8 +267,9 @@ Expected<u64> do_syscall(Task& current_task, arch::TaskState& task_state) {
 
             auto string_buffer = TRY(di::create<UserspaceBuffer>(string_base, string_length));
             auto path = TRY(string_buffer.copy_to_path());
-            return create_node(current_task.root_tnode(), current_task.cwd_tnode(), path, type) %
-                   di::function::value(0);
+            return TRY_UNERASE_ERROR(
+                di::execution::sync_wait(create_node(current_task.root_tnode(), current_task.cwd_tnode(), path, type)) %
+                di::function::value(0));
         }
         default:
             iris::println("Encounted unexpected system call: {}"_sv, di::to_underlying(number));

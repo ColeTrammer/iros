@@ -1,5 +1,7 @@
 #include <di/container/string/prelude.h>
 #include <di/container/tree/prelude.h>
+#include <di/execution/algorithm/just_or_error.h>
+#include <di/execution/algorithm/sync_wait.h>
 #include <di/execution/macro/try_or_send_error.h>
 #include <di/math/prelude.h>
 #include <di/vocab/expected/prelude.h>
@@ -30,16 +32,16 @@ struct TmpfsInodeImpl {
         return di::execution::just(page);
     }
 
-    friend Expected<usize> tag_invoke(di::Tag<inode_read_directory>, TmpfsInodeImpl& self, mm::BackingObject&,
-                                      u64& offset, UserspaceBuffer<byte> buffer) {
+    friend di::AnySenderOf<usize> tag_invoke(di::Tag<inode_read_directory>, TmpfsInodeImpl& self, mm::BackingObject&,
+                                             u64& offset, UserspaceBuffer<byte> buffer) {
         auto const* it = self.inodes.iterator(offset);
         if (it == self.inodes.end()) {
-            return 0;
+            co_return 0;
         }
 
         auto const& entry = *it;
 
-        auto child_metadata = TRY(inode_metadata(*di::get<1>(entry)));
+        auto child_metadata = co_await inode_metadata(*di::get<1>(entry));
         auto const& name = di::get<0>(entry);
         auto name_length = name.size();
 
@@ -55,7 +57,7 @@ struct TmpfsInodeImpl {
         auto* name_buffer = const_cast<char*>(dirent->name().data());
         di::copy(name, name_buffer);
 
-        TRY(buffer.write(di::Span { storage.data(), effective_size }));
+        co_await buffer.write(di::Span { storage.data(), effective_size });
 
         it++;
         if (it == self.inodes.end()) {
@@ -64,41 +66,46 @@ struct TmpfsInodeImpl {
             offset = it - self.inodes.begin();
         }
 
-        return effective_size;
+        co_return effective_size;
     }
 
-    friend Expected<di::Arc<TNode>> tag_invoke(di::Tag<inode_lookup>, TmpfsInodeImpl& self, di::Arc<TNode> parent,
-                                               di::TransparentStringView name) {
+    friend di::AnySenderOf<di::Arc<TNode>> tag_invoke(di::Tag<inode_lookup>, TmpfsInodeImpl& self,
+                                                      di::Arc<TNode> parent, di::TransparentStringView name) {
         auto const* it = di::find_if(self.inodes, [&](auto const& entry) {
             return di::get<0>(entry) == name;
         });
         if (it == self.inodes.end()) {
-            return di::Unexpected(Error::NoSuchFileOrDirectory);
+            return di::execution::just_error(Error::NoSuchFileOrDirectory);
         }
-        return di::make_arc<TNode>(di::move(parent), di::get<1>(*it), TRY(name.to_owned()));
+        return di::execution::just_or_error(
+            di::make_arc<TNode>(di::move(parent), di::get<1>(*it), TRY_OR_SEND_ERROR(name.to_owned())));
     }
 
-    friend Expected<Metadata> tag_invoke(di::Tag<inode_metadata>, TmpfsInodeImpl& self) { return self.metadata; }
-
-    friend Expected<di::Arc<TNode>> tag_invoke(di::Tag<inode_create_node>, TmpfsInodeImpl& self,
-                                               di::Arc<TNode> const& parent, di::TransparentStringView name,
-                                               MetadataType type) {
-        auto& child = TRY(self.inodes.emplace_back(
-            TRY(name.to_owned()), TRY(di::make_arc<Inode>(TRY(
-                                      InodeImpl::create(TmpfsInodeImpl(Metadata { .type = type, .size = 0 }, {})))))));
-        return di::make_arc<TNode>(parent, di::get<1>(child), TRY(name.to_owned()));
+    friend di::AnySenderOf<Metadata> tag_invoke(di::Tag<inode_metadata>, TmpfsInodeImpl& self) {
+        return di::execution::just(self.metadata);
     }
 
-    friend Expected<void> tag_invoke(di::Tag<inode_truncate>, TmpfsInodeImpl& self, u64 size) {
+    friend di::AnySenderOf<di::Arc<TNode>> tag_invoke(di::Tag<inode_create_node>, TmpfsInodeImpl& self,
+                                                      di::Arc<TNode> const& parent, di::TransparentStringView name,
+                                                      MetadataType type) {
+        auto& child = TRY_OR_SEND_ERROR(self.inodes.emplace_back(
+            TRY_OR_SEND_ERROR(name.to_owned()),
+            TRY_OR_SEND_ERROR(di::make_arc<Inode>(
+                TRY_OR_SEND_ERROR(InodeImpl::create(TmpfsInodeImpl(Metadata { .type = type, .size = 0 }, {})))))));
+        return di::execution::just_or_error(
+            di::make_arc<TNode>(parent, di::get<1>(child), TRY_OR_SEND_ERROR(name.to_owned())));
+    }
+
+    friend di::AnySenderOf<> tag_invoke(di::Tag<inode_truncate>, TmpfsInodeImpl& self, u64 size) {
         if (self.metadata.type != MetadataType::Regular) {
-            return di::Unexpected(Error::OperationNotSupported);
+            return di::execution::just_error(Error::OperationNotSupported);
         }
         self.metadata.size = size;
-        return {};
+        return di::execution::just();
     }
 
-    friend Expected<di::Span<byte const>> tag_invoke(di::Tag<inode_hack_raw_data>, TmpfsInodeImpl&) {
-        return di::Unexpected(Error::OperationNotSupported);
+    friend di::AnySenderOf<di::Span<byte const>> tag_invoke(di::Tag<inode_hack_raw_data>, TmpfsInodeImpl&) {
+        return di::execution::just_error(Error::OperationNotSupported);
     }
 };
 
@@ -113,7 +120,7 @@ Expected<void> init_tmpfs() {
     auto super_block = TRY(di::make_box<SuperBlock>(root_inode));
     auto mount = TRY(di::make_box<Mount>(di::move(super_block)));
 
-    auto tmp_tnode = TRY(lookup_path(initrd_root, initrd_root, "/tmp"_pv));
+    auto tmp_tnode = TRY_UNERASE_ERROR(di::execution::sync_wait(lookup_path(initrd_root, initrd_root, "/tmp"_pv)));
     tmp_tnode->inode()->set_mount(di::move(mount));
     return {};
 }

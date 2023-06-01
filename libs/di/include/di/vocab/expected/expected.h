@@ -17,6 +17,7 @@
 #include <di/meta/expected_error.h>
 #include <di/meta/expected_rank.h>
 #include <di/meta/like.h>
+#include <di/meta/remove_cvref.h>
 #include <di/meta/unwrap_ref_decay.h>
 #include <di/util/addressof.h>
 #include <di/util/construct_at.h>
@@ -34,7 +35,8 @@
 namespace di::vocab {
 namespace detail {
     template<typename Expected, typename From, typename To>
-    concept ConvertibleToWorkaround = !concepts::SameAs<Expected, From> && concepts::ConvertibleTo<From, To>;
+    concept ConvertibleToWorkaround =
+        !concepts::SameAs<Expected, meta::RemoveCVRef<From>> && concepts::ConvertibleTo<From, To>;
 }
 
 template<typename T, typename E>

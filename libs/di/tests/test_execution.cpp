@@ -4,6 +4,7 @@
 #include <di/any/vtable/maybe_inline_vtable.h>
 #include <di/concepts/prelude.h>
 #include <di/container/allocator/allocation_result.h>
+#include <di/execution/algorithm/into_result.h>
 #include <di/execution/algorithm/into_variant.h>
 #include <di/execution/algorithm/just_or_error.h>
 #include <di/execution/algorithm/just_void_or_stopped.h>
@@ -401,6 +402,30 @@ static void any_sender() {
               di::Unexpected(di::BasicError::InvalidArgument));
 }
 
+static void into_result() {
+    namespace ex = di::execution;
+
+    using Sender = di::AnySenderOf<int>;
+
+    enum class Result { Ok, Err, Stopped };
+
+    auto process = [](Sender sender) {
+        return di::move(sender) | ex::into_result | ex::then([](di::Result<int> result) {
+                   if (result) {
+                       return Result::Ok;
+                   }
+                   if (result.error() == di::BasicError::OperationCanceled) {
+                       return Result::Stopped;
+                   }
+                   return Result::Err;
+               });
+    };
+
+    ASSERT_EQ(ex::sync_wait(process(ex::just(42))), Result::Ok);
+    ASSERT_EQ(ex::sync_wait(process(ex::just_error(di::BasicError::InvalidArgument))), Result::Err);
+    ASSERT_EQ(ex::sync_wait(process(ex::just_stopped())), Result::Stopped);
+}
+
 TEST(execution, meta)
 TEST(execution, sync_wait)
 TEST(execution, just)
@@ -413,4 +438,5 @@ TEST(execution, transfer)
 TEST(execution, as)
 TEST(execution, with)
 TEST(execution, any_sender)
+TEST(execution, into_result)
 }

@@ -1,4 +1,5 @@
 #include <di/exec/elf/prelude.h>
+#include <di/execution/algorithm/prelude.h>
 #include <di/math/prelude.h>
 #include <di/vocab/pointer/prelude.h>
 #include <iris/core/error.h>
@@ -80,8 +81,9 @@ Expected<di::Arc<Task>> create_user_task(TaskNamespace& task_namespace, di::Arc<
 }
 
 Expected<void> load_executable(Task& task, di::PathView path) {
-    auto file = TRY(open_path(task.root_tnode(), task.cwd_tnode(), path, OpenMode::None));
-    auto file_metadata = TRY(iris::file_metadata(file));
+    auto file = TRY_UNERASE_ERROR(
+        di::execution::sync_wait(open_path(task.root_tnode(), task.cwd_tnode(), path, OpenMode::None)));
+    auto file_metadata = TRY_UNERASE_ERROR(di::execution::sync_wait(iris::file_metadata(file)));
     if (file_metadata.type != MetadataType::Regular) {
         println("Failed to load exutable: {} is not a regular file."_sv, path);
         return di::Unexpected(Error::InvalidArgument);
@@ -100,7 +102,7 @@ Expected<void> load_executable(Task& task, di::PathView path) {
     using ProgramHeader = di::exec::ElfProgramHeader<>;
     using ProgramHeaderType = di::exec::ElfProgramHeaderType;
 
-    auto raw_data = TRY(file_hack_raw_data(file));
+    auto raw_data = TRY_UNERASE_ERROR(di::execution::sync_wait(file_hack_raw_data(file)));
     auto* elf_header = raw_data.typed_pointer_unchecked<ElfHeader>(0);
     ASSERT_EQ(sizeof(ProgramHeader), elf_header->program_entry_size);
 

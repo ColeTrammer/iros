@@ -4,6 +4,8 @@
 #include <di/concepts/copy_constructible.h>
 #include <di/concepts/default_constructible.h>
 #include <di/concepts/move_constructible.h>
+#include <di/concepts/remove_cvref_same_as.h>
+#include <di/concepts/same_as.h>
 #include <di/function/invoke.h>
 #include <di/platform/prelude.h>
 #include <di/sync/concepts/lock.h>
@@ -21,13 +23,10 @@ public:
     requires(concepts::DefaultConstructible<Value>)
     = default;
 
-    constexpr explicit Synchronized(Value const& value)
-    requires(concepts::CopyConstructible<Value>)
-        : m_value(value) {}
-
-    constexpr explicit Synchronized(Value&& value)
-    requires(concepts::MoveConstructible<Value>)
-        : m_value(util::move(value)) {}
+    template<typename U>
+    requires(!concepts::SameAs<U, InPlace> && !concepts::RemoveCVRefSameAs<U, Synchronized> &&
+             concepts::ConstructibleFrom<Value, U>)
+    constexpr explicit Synchronized(U&& value) : m_value(util::forward<U>(value)) {}
 
     template<typename... Args>
     requires(concepts::ConstructibleFrom<Value, Args...>)

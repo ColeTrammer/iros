@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/execution/algorithm/into_result.h>
 #include <di/execution/algorithm/into_variant.h>
 #include <di/execution/concepts/sender_in.h>
 #include <di/execution/context/run_loop.h>
@@ -72,40 +73,11 @@ namespace sync_wait_ns {
     template<typename Result, concepts::ExecutionContext Context>
     using Receiver = meta::Type<ReceiverT<Result, Context>>;
 
-    template<typename... Types>
-    struct ResultTypeImplHelper : meta::TypeConstant<meta::DecayedTuple<Types...>> {};
-
-    template<>
-    struct ResultTypeImplHelper<> : meta::TypeConstant<void> {};
-
-    template<typename T>
-    struct ResultTypeImplHelper<T> : meta::TypeConstant<T> {};
-
-    struct ResultTypeImpl {
-        template<typename... Types>
-        using Invoke = meta::Type<ResultTypeImplHelper<Types...>>;
-    };
-
-    template<typename... Types>
-    struct ResultTypeConcatImplHelper {};
-
-    template<>
-    struct ResultTypeConcatImplHelper<> : meta::TypeConstant<void> {};
-
-    template<typename T>
-    struct ResultTypeConcatImplHelper<T> : meta::TypeConstant<T> {};
-
-    struct ResultTypeConcatImpl {
-        template<typename... Types>
-        using Invoke = meta::Type<ResultTypeConcatImplHelper<Types...>>;
-    };
+    template<concepts::ExecutionContext Context, concepts::SenderIn<Env<Context>> Send>
+    using ResultType = into_result_ns::ResultType<Env<Context>, Send>;
 
     template<concepts::ExecutionContext Context, concepts::SenderIn<Env<Context>> Send>
-    using ResultType = Result<
-        meta::ValueTypesOf<Send, Env<Context>, ResultTypeImpl::template Invoke, ResultTypeConcatImpl::template Invoke>>;
-
-    template<concepts::ExecutionContext Context, concepts::SenderIn<Env<Context>> Send>
-    using WithVariantResultType = Result<into_variant_ns::IntoVariantType<Send, Env<Context>>>;
+    using WithVariantResultType = into_result_ns::WithVariantResultType<Env<Context>, Send>;
 
     template<typename T>
     struct Uninit {

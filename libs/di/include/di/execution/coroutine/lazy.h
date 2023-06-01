@@ -1,10 +1,12 @@
 #pragma once
 
 #include <di/assert/assert_bool.h>
+#include <di/concepts/convertible_to.h>
 #include <di/concepts/same_as.h>
 #include <di/concepts/unexpected.h>
 #include <di/execution/algorithm/just.h>
 #include <di/execution/algorithm/just_or_error.h>
+#include <di/execution/coroutine/as_awaitable.h>
 #include <di/execution/coroutine/with_await_transform.h>
 #include <di/execution/coroutine/with_awaitable_senders.h>
 #include <di/execution/types/prelude.h>
@@ -34,7 +36,10 @@ namespace lazy_ns {
         SuspendAlways initial_suspend() noexcept { return {}; }
         auto final_suspend() noexcept { return FinalAwaiter {}; }
 
-        void return_value(T&& value) { m_data.emplace(util::forward<T>(value)); }
+        template<concepts::ConvertibleTo<T> U>
+        void return_value(U&& value) {
+            m_data.emplace(util::forward<U>(value));
+        }
 
         void unhandled_exception() { util::unreachable(); }
 
@@ -86,6 +91,9 @@ namespace lazy_ns {
     class PromiseBase<Self, void> : public WithAwaitableSenders<Self> {
     public:
         PromiseBase() = default;
+
+        void* operator new(usize size) noexcept { return ::operator new(size, std::nothrow); }
+        void operator delete(void* ptr, usize size) noexcept { ::operator delete(ptr, size); }
 
         SuspendAlways initial_suspend() noexcept { return {}; }
         auto final_suspend() noexcept { return FinalAwaiter {}; }
