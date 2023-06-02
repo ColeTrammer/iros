@@ -4,6 +4,7 @@
 #include <di/function/invoke.h>
 #include <di/meta/list/prelude.h>
 #include <di/meta/make_index_sequence.h>
+#include <di/platform/compiler.h>
 #include <di/vocab/array/array.h>
 #include <di/vocab/md/prelude.h>
 #include <di/vocab/variant/variant_like.h>
@@ -42,7 +43,15 @@ constexpr R visit(Vis&& visitor, Vars&&... variants) {
 
     auto span = MDSpan { table.data(), Extents<size_t, meta::VariantSize<Vars>...> {} };
 
+#ifdef DI_GCC
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
     auto f = span(vocab::variant_index(variants)...);
+#ifdef DI_GCC
+#pragma GCC diagnostic pop
+#endif
+
     return f(util::forward<Vis>(visitor), util::forward<Vars>(variants)...);
 }
 

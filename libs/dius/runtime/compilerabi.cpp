@@ -1,9 +1,10 @@
 #include <di/container/algorithm/prelude.h>
 #include <di/container/string/prelude.h>
 #include <di/math/prelude.h>
+#include <di/platform/compiler.h>
 #include <di/util/prelude.h>
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if DI_GCC
 #pragma GCC diagnostic ignored "-Wbuiltin-declaration-mismatch"
 #endif
 

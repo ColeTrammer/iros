@@ -10,6 +10,7 @@
 #include <di/io/interface/reader.h>
 #include <di/io/prelude.h>
 #include <di/io/string_reader.h>
+#include <di/platform/compiler.h>
 #include <di/platform/prelude.h>
 #include <di/serialization/deserialize.h>
 #include <di/serialization/deserialize_string.h>
@@ -531,7 +532,7 @@ inline namespace literals {
             template<container::FixedString string>
             consteval bool valid_json_literal() {
                 // NOTE: GCC does not think that the following is a constant expression, but clang does.
-#ifdef __clang__
+#ifdef DI_CLANG
                 auto string_view = container::fixed_string_to_utf8_string_view<string>();
                 return serialization::from_json_string<>(string_view).has_value();
 #endif

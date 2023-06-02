@@ -6,6 +6,7 @@
 #include <di/container/iterator/iterator_value.h>
 #include <di/container/meta/indirect_result.h>
 #include <di/meta/remove_cvref.h>
+#include <di/platform/compiler.h>
 #include <di/types/prelude.h>
 #include <di/util/declval.h>
 
@@ -16,12 +17,12 @@ struct Projected {
     using Value = meta::RemoveCVRef<Reference>;
     using SSizeType = meta::IteratorSSizeType<It>;
 
-#ifdef __clang__
+#ifdef DI_CLANG
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wundefined-internal"
 #endif
     Reference operator*() const;
-#ifdef __clang__
+#ifdef DI_CLANG
 #pragma GCC diagnostic pop
 #endif
 

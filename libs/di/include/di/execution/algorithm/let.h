@@ -116,7 +116,7 @@ namespace let_ns {
             friend void tag_invoke(types::Tag<start>, Type& self) { execution::start(self.m_op_state2); }
 
             [[no_unique_address]] Data<CPO, Rec, Fun, Completions> m_data;
-            meta::ConnectResult<Send, Receiver<CPO, Rec, Fun, Completions>> m_op_state2;
+            DI_IMMOVABLE_NO_UNIQUE_ADDRESS meta::ConnectResult<Send, Receiver<CPO, Rec, Fun, Completions>> m_op_state2;
         };
     };
 

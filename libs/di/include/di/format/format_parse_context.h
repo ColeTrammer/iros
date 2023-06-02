@@ -4,6 +4,7 @@
 #include <di/container/string/string_view_impl.h>
 #include <di/parser/basic/integer.h>
 #include <di/parser/prelude.h>
+#include <di/platform/compiler.h>
 #include <di/util/compile_time_fail.h>
 #include <di/vocab/error/prelude.h>
 #include <di/vocab/variant/prelude.h>
@@ -156,14 +157,14 @@ public:
         constexpr friend bool operator==(Iterator const& a, container::DefaultSentinel) { return a.m_at_end; }
 
         constexpr void set_error(Error error) {
-#ifdef __clang__
+#ifdef DI_CLANG
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wredundant-consteval-if"
 #endif
             if consteval {
                 util::compile_time_fail<FixedString { "Invalid format string." }>();
             }
-#ifdef __clang__
+#ifdef DI_CLANG
 #pragma GCC diagnostic pop
 #endif
             m_position = m_data.end();

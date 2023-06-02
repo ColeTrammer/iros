@@ -6,6 +6,7 @@
 #include <di/meta/index_sequence.h>
 #include <di/meta/like.h>
 #include <di/meta/type_constant.h>
+#include <di/platform/compiler.h>
 #include <di/types/in_place_index.h>
 #include <di/util/declval.h>
 #include <di/util/forward_as_base.h>
@@ -97,7 +98,7 @@ protected:
     }
 
 private:
-    [[no_unique_address]] T m_value {};
+    DI_IMMOVABLE_NO_UNIQUE_ADDRESS T m_value {};
 };
 
 template<>

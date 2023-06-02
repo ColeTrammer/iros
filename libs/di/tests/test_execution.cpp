@@ -6,10 +6,13 @@
 #include <di/container/allocator/allocation_result.h>
 #include <di/execution/algorithm/into_result.h>
 #include <di/execution/algorithm/into_variant.h>
+#include <di/execution/algorithm/just.h>
 #include <di/execution/algorithm/just_or_error.h>
 #include <di/execution/algorithm/just_void_or_stopped.h>
 #include <di/execution/algorithm/prelude.h>
 #include <di/execution/algorithm/sync_wait.h>
+#include <di/execution/algorithm/then.h>
+#include <di/execution/algorithm/when_all.h>
 #include <di/execution/any/any_operation_state.h>
 #include <di/execution/any/any_sender.h>
 #include <di/execution/concepts/prelude.h>
@@ -18,6 +21,7 @@
 #include <di/execution/meta/completion_signatures_of.h>
 #include <di/execution/meta/sends_stopped.h>
 #include <di/execution/prelude.h>
+#include <di/execution/query/get_stop_token.h>
 #include <di/execution/receiver/prelude.h>
 #include <di/execution/receiver/set_value.h>
 #include <di/execution/types/empty_env.h>
@@ -426,6 +430,50 @@ static void into_result() {
     ASSERT_EQ(ex::sync_wait(process(ex::just_stopped())), Result::Stopped);
 }
 
+static void when_all() {
+    namespace ex = di::execution;
+
+    using S1 = decltype(ex::when_all(ex::just(42), ex::just(43, 44L), ex::just()));
+    static_assert(di::SameAs<di::CompletionSignatures<di::SetValue(int&&, int&&, long&&), di::SetStopped()>,
+                             di::meta::CompletionSignaturesOf<S1>>);
+
+    using S2 = decltype(ex::when_all(ex::just(42), ex::just(43, 44L), ex::just(),
+                                     ex::just_error(di::Error(di::BasicError::InvalidArgument))));
+    static_assert(di::SameAs<di::CompletionSignatures<di::SetError(di::Error&&), di::SetStopped()>,
+                             di::meta::CompletionSignaturesOf<S2>>);
+
+    using S3 =
+        decltype(ex::when_all(ex::just(42), ex::just(43, 44L), ex::just(), ex::just_or_error(di::Result<int>(45))));
+    static_assert(di::SameAs<di::CompletionSignatures<di::SetValue(int&&, int&&, long&&, int&&),
+                                                      di::SetError(di::Error&&), di::SetStopped()>,
+                             di::meta::CompletionSignaturesOf<S3>>);
+
+    auto s1 = ex::when_all(ex::just(42), ex::just(43, 44L), ex::just());
+    ASSERT_EQ(ex::sync_wait(s1), di::make_tuple(42, 43, 44L));
+
+    auto s2 = ex::when_all(ex::just(42), ex::just(43, 44L), ex::just(),
+                           ex::just_error(di::Error(di::BasicError::InvalidArgument)));
+    ASSERT_EQ(ex::sync_wait(di::move(s2)), di::Unexpected(di::BasicError::InvalidArgument));
+
+    auto s3 = ex::when_all(ex::just(42), ex::just(43, 44L), ex::just(), ex::just_or_error(di::Result<int>(45)));
+    ASSERT_EQ(ex::sync_wait(di::move(s3)), di::make_tuple(42, 43, 44L, 45));
+
+    auto executed = false;
+    auto read_stop_token = ex::get_stop_token() | ex::then([&](di::concepts::StoppableToken auto stop_token) {
+                               DI_ASSERT(stop_token.stop_requested());
+                               executed = true;
+                           });
+    auto s4 = ex::when_all(ex::just_stopped(), read_stop_token);
+    ASSERT_EQ(ex::sync_wait(di::move(s4)), di::Unexpected(di::BasicError::OperationCanceled));
+    ASSERT(executed);
+
+    executed = false;
+    auto s5 = ex::when_all(ex::just_or_error(di::Result<int>(di::Unexpected(di::BasicError::InvalidArgument))),
+                           read_stop_token);
+    ASSERT_EQ(ex::sync_wait(di::move(s5)), di::Unexpected(di::BasicError::InvalidArgument));
+    ASSERT(executed);
+}
+
 TEST(execution, meta)
 TEST(execution, sync_wait)
 TEST(execution, just)
@@ -439,4 +487,5 @@ TEST(execution, as)
 TEST(execution, with)
 TEST(execution, any_sender)
 TEST(execution, into_result)
+TEST(execution, when_all)
 }

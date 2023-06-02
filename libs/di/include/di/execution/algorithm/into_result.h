@@ -16,6 +16,7 @@
 #include <di/execution/receiver/set_value.h>
 #include <di/execution/types/completion_signuatures.h>
 #include <di/function/tag_invoke.h>
+#include <di/meta/decay.h>
 #include <di/meta/like.h>
 #include <di/platform/prelude.h>
 #include <di/types/prelude.h>
@@ -33,7 +34,7 @@ namespace into_result_ns {
     struct ResultTypeImplHelper<> : meta::TypeConstant<void> {};
 
     template<typename T>
-    struct ResultTypeImplHelper<T> : meta::TypeConstant<T> {};
+    struct ResultTypeImplHelper<T> : meta::TypeConstant<meta::Decay<T>> {};
 
     struct ResultTypeImpl {
         template<typename... Types>
@@ -47,7 +48,7 @@ namespace into_result_ns {
     struct ResultTypeConcatImplHelper<> : meta::TypeConstant<void> {};
 
     template<typename T>
-    struct ResultTypeConcatImplHelper<T> : meta::TypeConstant<T> {};
+    struct ResultTypeConcatImplHelper<T> : meta::TypeConstant<meta::Decay<T>> {};
 
     struct ResultTypeConcatImpl {
         template<typename... Types>

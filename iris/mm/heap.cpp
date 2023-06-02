@@ -1,4 +1,5 @@
 #include <di/math/prelude.h>
+#include <di/platform/compiler.h>
 #include <di/util/prelude.h>
 #include <iris/core/global_state.h>
 #include <iris/core/print.h>
@@ -6,7 +7,7 @@
 #include <iris/mm/page_frame_allocator.h>
 #include <iris/mm/sections.h>
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if DI_GCC
 #pragma GCC diagnostic ignored "-Wsized-deallocation"
 #endif
 

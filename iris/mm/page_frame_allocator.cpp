@@ -1,8 +1,9 @@
+#include <di/platform/compiler.h>
 #include <iris/core/print.h>
 #include <iris/mm/map_physical_address.h>
 #include <iris/mm/page_frame_allocator.h>
 
-#if defined(__GNUC__) && !defined(__clang__)
+#if DI_GCC
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
 #endif
 

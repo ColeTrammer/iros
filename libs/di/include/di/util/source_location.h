@@ -1,6 +1,8 @@
 #pragma once
 
-#ifndef __clang__
+#include <di/platform/compiler.h>
+
+#ifndef DI_CLANG
 #define __builtin_COLUMN() 0
 #endif
 
@@ -34,6 +36,6 @@ private:
 };
 }
 
-#ifndef __clang__
+#ifndef DI_CLANG
 #undef __builtin_COLUMN
 #endif

@@ -95,8 +95,8 @@ namespace on_ns {
         [[no_unique_address]] Sched scheduler;
         [[no_unique_address]] Send sender;
         [[no_unique_address]] Rec receiver;
-        [[no_unique_address]] Variant<meta::ConnectResult<meta::ScheduleResult<Sched>, Receiver<Send, Rec, Sched>>,
-                                      meta::ConnectResult<Send, ReceiverWithEnv<Send, Rec, Sched>>>
+        Variant<meta::ConnectResult<meta::ScheduleResult<Sched>, Receiver<Send, Rec, Sched>>,
+                meta::ConnectResult<Send, ReceiverWithEnv<Send, Rec, Sched>>>
             operation_state;
 
         template<typename S>

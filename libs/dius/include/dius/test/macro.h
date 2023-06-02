@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/platform/compiler.h>
 #include <dius/test/test_manager.h>
 
 #define DIUS_TEST(suite_name, case_name)                                                                  \
@@ -26,7 +27,7 @@
         case_name();                                                                                      \
     }
 
-#ifdef __clang__
+#ifdef DI_CLANG
 #define DIUS_TESTC_CLANG DIUS_TESTC
 #define DIUS_TESTC_GCC   DIUS_TEST
 #else

@@ -3,6 +3,7 @@
 #include <di/bit/endian/prelude.h>
 #include <di/format/prelude.h>
 #include <di/parser/prelude.h>
+#include <di/platform/compiler.h>
 #include <di/random/prelude.h>
 #include <di/types/prelude.h>
 #include <di/util/bit_cast.h>
@@ -69,7 +70,7 @@ private:
         return format::formatter<container::TransparentStringView, Enc>(parse_context, debug) %
                [](concepts::CopyConstructible auto formatter) {
                    return [=](concepts::FormatContext auto& context, UUID uuid) {
-#if defined(__GNUC__) && !defined(__clang__)
+#if DI_GCC
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
 #endif
@@ -126,7 +127,7 @@ private:
                        output_byte(util::to_underlying(uuid.m_node[3]));
                        output_byte(util::to_underlying(uuid.m_node[4]));
                        output_byte(util::to_underlying(uuid.m_node[5]));
-#if defined(__GNUC__) && !defined(__clang__)
+#if DI_GCC
 #pragma GCC diagnostic pop
 #endif
 

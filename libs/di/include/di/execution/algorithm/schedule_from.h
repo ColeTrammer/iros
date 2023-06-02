@@ -152,8 +152,8 @@ namespace schedule_from_ns {
         private:
             friend void tag_invoke(types::Tag<execution::start>, Type& self) { execution::start(self.m_op_state2); }
 
-            Data<Rec, Sched, Completions> m_data;
-            OpState2 m_op_state2;
+            [[no_unique_address]] Data<Rec, Sched, Completions> m_data;
+            DI_IMMOVABLE_NO_UNIQUE_ADDRESS OpState2 m_op_state2;
         };
     };
 
