@@ -7,6 +7,7 @@
 #include <di/execution/concepts/sender_of.h>
 #include <di/execution/interface/connect.h>
 #include <di/execution/interface/get_env.h>
+#include <di/execution/query/get_allocator.h>
 #include <di/execution/query/get_delegatee_scheduler.h>
 #include <di/execution/query/get_scheduler.h>
 #include <di/execution/query/get_stop_token.h>
@@ -71,6 +72,10 @@ namespace detail {
 
     constexpr auto GetStopTokenFunction::operator()() const {
         return read(get_stop_token);
+    }
+
+    constexpr auto GetAllocatorFunction::operator()() const {
+        return read(get_allocator);
     }
 
     constexpr auto GetEnvFunction::operator()() const {
