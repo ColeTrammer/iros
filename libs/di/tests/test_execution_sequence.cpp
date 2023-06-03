@@ -4,6 +4,7 @@
 #include <di/execution/context/run_loop.h>
 #include <di/execution/receiver/prelude.h>
 #include <di/execution/sequence/empty_sequence.h>
+#include <di/execution/sequence/ignore_all.h>
 #include <di/execution/sequence/sequence_sender.h>
 #include <di/execution/types/prelude.h>
 #include <di/util/prelude.h>
@@ -20,7 +21,31 @@ static void meta() {
     static_assert(di::concepts::SequenceSenderIn<decltype(empty)>);
     static_assert(di::concepts::SequenceSenderIn<decltype(empty)&>);
     static_assert(di::concepts::SequenceSenderIn<decltype(empty)&&>);
+
+    using Receiver =
+        ex::ignore_all_ns::Receiver<decltype(empty), ex::sync_wait_ns::Receiver<di::Result<void>, ex::RunLoop<>>>;
+
+    static_assert(di::concepts::SubscriberOf<Receiver, di::CompletionSignatures<di::SetValue()>>);
+}
+
+static void ignore_all() {
+    auto empty = ex::empty_sequence();
+
+    ASSERT(ex::sync_wait(ex::ignore_all(empty)));
+    ASSERT(ex::sync_wait(ex::ignore_all(ex::just())));
+    ASSERT(ex::sync_wait(ex::ignore_all(ex::just(42))));
+    ASSERT(ex::sync_wait(ex::ignore_all(ex::just(42, 43))));
+
+    auto was_called = false;
+    ASSERT(ex::sync_wait(ex::ignore_all(ex::just() | ex::then([&] {
+                                            was_called = true;
+                                        }))));
+    ASSERT(was_called);
+
+    ASSERT_EQ(ex::sync_wait(ex::ignore_all(ex::just_error(di::Error(di::BasicError::InvalidArgument)))),
+              di::Unexpected(di::BasicError::InvalidArgument));
 }
 
 TEST(execution_sequence, meta)
+TEST(execution_sequence, ignore_all)
 }
