@@ -293,11 +293,10 @@ namespace when_all_ns {
             using Data = when_all_ns::Data<Rec, Sends...>;
             using OpStates = vocab::Tuple<meta::ConnectResult<Sends, Receiver<indices, Sends, Data>>...>;
 
-            template<typename... S>
-            explicit Type(Rec out_r, S&&... senders)
+            explicit Type(Rec out_r, Sends&&... senders)
                 : m_data(util::move(out_r))
                 , m_op_states(util::DeferConstruct([&] -> meta::ConnectResult<Sends, Receiver<indices, Sends, Data>> {
-                    return execution::connect(util::forward<S>(senders),
+                    return execution::connect(util::forward<Sends>(senders),
                                               Receiver<indices, Sends, Data> { util::addressof(m_data) });
                 })...) {}
 
@@ -356,8 +355,9 @@ namespace when_all_ns {
                 return vocab::apply(
                     [&](auto&&... senders) {
                         return OperationState<Rec, meta::MakeIndexSequence<sizeof...(Senders)>,
-                                              meta::List<Senders...>> { util::move(out_r),
-                                                                        util::forward<decltype(senders)>(senders)... };
+                                              meta::List<meta::Like<Self, Senders>...>> {
+                            util::move(out_r), util::forward<decltype(senders)>(senders)...
+                        };
                     },
                     util::forward<Self>(self).m_senders);
             }
