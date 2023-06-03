@@ -6,6 +6,7 @@
 #include <di/execution/sequence/empty_sequence.h>
 #include <di/execution/sequence/ignore_all.h>
 #include <di/execution/sequence/sequence_sender.h>
+#include <di/execution/sequence/transform_each.h>
 #include <di/execution/types/prelude.h>
 #include <di/util/prelude.h>
 #include <di/vocab/error/prelude.h>
@@ -46,6 +47,25 @@ static void ignore_all() {
               di::Unexpected(di::BasicError::InvalidArgument));
 }
 
+static void transform_each() {
+    int counter = 0;
+
+    ASSERT(ex::empty_sequence() | ex::transform_each([&](auto&& sender) {
+               ++counter;
+               return sender;
+           }) |
+           ex::ignore_all | ex::sync_wait);
+    ASSERT_EQ(counter, 0);
+
+    ASSERT(ex::just() | ex::transform_each([&](auto&& sender) {
+               ++counter;
+               return sender;
+           }) |
+           ex::ignore_all | ex::sync_wait);
+    ASSERT_EQ(counter, 1);
+}
+
 TEST(execution_sequence, meta)
 TEST(execution_sequence, ignore_all)
+TEST(execution_sequence, transform_each)
 }
