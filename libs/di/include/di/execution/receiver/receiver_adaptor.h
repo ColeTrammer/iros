@@ -5,7 +5,9 @@
 #include <di/execution/receiver/set_error.h>
 #include <di/execution/receiver/set_stopped.h>
 #include <di/execution/receiver/set_value.h>
+#include <di/execution/sequence/sequence_sender.h>
 #include <di/execution/types/prelude.h>
+#include <di/function/tag_invoke.h>
 #include <di/util/store_if.h>
 #include <di/vocab/error/prelude.h>
 
@@ -18,7 +20,6 @@ namespace receiver_interface_ns {
         void tag_invoke(SetValue, FakeReceiver&&);
         void tag_invoke(SetError, FakeReceiver&&, Error);
         void tag_invoke(SetStopped, FakeReceiver&&);
-        EmptyEnv tag_invoke(types::Tag<get_env>, FakeReceiver const&);
     }
 
     template<typename T, typename U>
@@ -104,6 +105,7 @@ namespace receiver_interface_ns {
             constexpr static int set_value = 1;
             constexpr static int set_error = 1;
             constexpr static int set_stopped = 1;
+            constexpr static int set_next = 1;
             constexpr static int get_env = 1;
 
             template<typename S>
@@ -117,6 +119,10 @@ namespace receiver_interface_ns {
             template<typename S>
             constexpr static bool missing_set_stopped() {
                 return requires { requires bool(int(S::set_stopped)); };
+            }
+            template<typename S>
+            constexpr static bool missing_set_next() {
+                return requires { requires bool(int(S::set_next)); };
             }
             template<typename S>
             constexpr static bool missing_get_env() {
@@ -137,6 +143,10 @@ namespace receiver_interface_ns {
             static auto do_set_stopped(S&& self, Args&&... args)
                 -> decltype(util::forward<S>(self).set_stopped(util::forward<Args>(args)...)) {
                 return util::forward<S>(self).set_stopped(util::forward<Args>(args)...);
+            }
+            template<typename S, typename... Args>
+            static auto do_set_next(S& self, Args&&... args) -> decltype(self.set_next(util::forward<Args>(args)...)) {
+                return self.set_next(util::forward<Args>(args)...);
             }
             template<typename S, typename... Args>
             static auto do_get_env(S&& self, Args&&... args)
@@ -189,6 +199,22 @@ namespace receiver_interface_ns {
                     Type::do_set_stopped(util::move(self));
                 } else {
                     execution::set_stopped(Type::get_base(util::move(self)));
+                }
+            }
+
+            template<concepts::SameAs<types::Tag<execution::set_next>> Tag, typename N, typename S = Self>
+            friend decltype(auto) tag_invoke(Tag, Self& self, N&& next)
+            requires(
+                requires { Type::do_set_next(self, util::forward<N>(next)); } ||
+                requires {
+                    requires missing_set_next<S>();
+                    execution::set_next(Type::get_base(self), util::forward<N>(next));
+                })
+            {
+                if constexpr (requires { Type::do_set_next(self, util::forward<N>(next)); }) {
+                    return Type::do_set_next(self, util::forward<N>(next));
+                } else {
+                    return execution::set_next(Type::get_base(self), util::forward<N>(next));
                 }
             }
 

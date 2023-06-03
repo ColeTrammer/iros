@@ -3,8 +3,8 @@
 ## Purpose
 
 The execution module is designed to allow asynchronous computation in an efficent and composable way. This library uses
-the design proposed in [P2300](https://github.com/brycelelbach/wg21_p2300_execution/tree/main), except no execeptions
-are used.
+the design proposed in [P2300](https://github.com/brycelelbach/wg21_p2300_execution/tree/main), except that no
+execeptions are used.
 
 ## Conceptual Overview
 
@@ -19,9 +19,125 @@ Senders can complete in one of three ways:
 
 This result is communicated to a receiver, which is like a callback that is invoked when the sender completes.
 
-A third concept is used to actually start an asynchronous computation, called an operation state. This is the result of
-connecting a sender to a receiver, and is used to start the computation. Before the operation state is started, no work
-is done.
+The third concept is a scheduler, which is used to control the execution of a sender. This is used to explicitly model
+where a sender is executed. For instance, a sender can be executed on a thread pool, or even on a GPU. The scheduler is
+accessible using the `di::execution::schedule()` customization point object (CPO), which produces a sender which
+completes on the scheduler. Any work chained to this sender will also be executed on the scheduler.
+
+### Life Time Model
+
+The sender/receiver model obeys structured concurrency, which enables asynchronous operations to be composed safely
+without any form of garbage collection (or using shared pointers). In fact, a scheduler for Linux's io_uring is capable
+of scheduling tasks, while performing async io, all without any memory allocations (or even system calls).
+
+They key behind this model is that senders are not started until they are connected to a receiver, and the resulting
+operation state is explicitly started. The operation state itself is an immovable type which cannot be destroyed until
+the sender completes (either with a value, error, or stopped). This means that the operation state can be allocated on
+stack, in cases where the caller waits for the sender to complete. Additionally, the sender itself uses the operation
+state to store everything needed to complete the computation, which means the sender is free to be destroyed once it is
+connected to a receiver. The receiver itself will be stored in the operation state, and will be destroyed when the
+computation completes.
+
+The operation state being immovable is like the `Pin<T>` type from rust, and is especially useful because it means that
+the operation states can be stored in a linked-list of stack allocated variables. This enables the sender/receiver model
+to schedule work without allocating any memory.
+
+## Async Sequences
+
+An extension to the sender model is the async sequence. This is a sender which itself completes when the entire sequence
+finishes. Each individual element of the sequence is communicated to the receiver using the `di::execution::set_next()`
+CPO, which is passed an lvalue receiver and a sender which sends the next element of the sequence. This mechanism is
+modelled after a draft c++ [standard proposal](https://github.com/kirkshoop/sequence-next).
+
+A key aspect of this model is that the outer sender can only complete once all of the inner senders have completed. This
+ensures structured concurrency, and allows the outer sender to perform cleanup operations once all of the inner senders
+have completed. Cancellation can prevent new inner senders from being started, but any pending inner senders still must
+complete before the outer sender can complete.
+
+### Who calls set_next()?
+
+The `di::execution::set_next()` CPO is called by the sequence sender whenever it determines that there is another
+element in the sequence. For instance, if a sequence sender represents a server listening to sockets, it can call
+set_next() whenever it makes a request to accept a new socket (i.e. with io_uring). Then this sender completes when the
+connection is actually established. Some sequences do not need to compute the next element asynchronously, and can
+provide `di::execution::just(values...)` as the next sender.
+
+Additionally, multiple next senders can be in-flight simultaneously. This is useful for sequences which can compute on
+multiple threads. Since this is controlled by the sequence itself, sequences can also guarantee that only one next
+sender is in-flight at a time, which might allow optimizations.
+
+The return value of `di::execution::set_next()` is an new sender, which must connected and started. Normally, this is
+done by the producer itself directly after calling `set_next()`, which connects the return value to its own receiver.
+This acts as a hook to fire off more work when that sender finishes. The associated operation state is also normally
+started immediately. In the case where there is only a single sender in-flight at a time, the operation state can be
+stored directly, but if there were a dynamic number of senders in-flight, the operation states may need to be heap
+allocated.
+
+### set_next() Allows the Receiver to Communicate Back to the Sequence
+
+The `di::execution::set_next()` CPO not only informs the receiver of the next element in the sequence, but also returns
+a sender which the sequence must handle. This sender either completes with a void value, which indicates that the item
+was accepted, or it completes with `di::execution::SetStopped()`, which indicates that the sequence should stop sending
+new elements.
+
+Since this outcome is itself modelled by a sender, it is an asynchronous computation. This allows the receiver to
+communicate back-pressure to the sequence. For instance, if the sequence is a server which is listening to sockets, the
+consumer can simply not complete the sender returned by `set_next()` until it is ready to accept a new socket. Sequences
+which enforce a maximum number of in-flight next senders can use this mechanism to ensure that the sequence does not
+start too many next senders.
+
+### Async Sequence Life Time Model
+
+Like in the case of regular senders, the operation state of an async sequence is immovable, and must not be destroyed
+before the sequence completes. However, each individual next sender has its own lifetime and associated operation state.
+The key point is that all of the next senders must complete before the sequence can complete, and the sequence must
+ensure that the operation states of the next senders are not destroyed before they complete.
+
+In practice, this means that before the final completion can be reported, the sequence must wait for all of the next
+senders to complete, and then it can destroy the operation states of the next senders. Because next senders can complete
+in parallel (and on different threads), there is a requirement that the completion of all of the next senders strongly
+happens before the the sequence can complete. This can be accomplished by having an atomic counter which decrements when
+a next sender completes, and it is sufficent to use acquire/release memory ordering for this counter.
+
+The upside of this model is that the sequence can be allocated on the stack, and there is never any chance of dangling
+pointers, since the operation state's have guaranteed lifetimes. The downside is that the sequence must wait for all of
+the next senders to complete before it can complete, which means that cancelling the sequence actually requires some
+work. This can also be considered desireable since it ensures that cleanup operations are performed when needed, and not
+in a distant point in the future when a shared pointer's ref count reaches zero.
+
+### How do completion signatures work with sequences?
+
+Since all sequences complete with a call to `di::execution::set_value()`, this completion signature is implied. Instead,
+the reported value completion signatures are the completion signatures of the next sender. The error and stopped
+signatures can be propogated as the overall result of the sequence, and are also valid completions for the next sender
+(but the return value from set_next() must transform these errors into a value or stopped completion).
+
+### Comparison with libunifex Models
+
+[libunifex](https://github.com/facebookexperimental/libunifex) provides two models for sending multiple values: many
+sender and async stream.
+
+The many sender model allows senders to complete multiple times, which is useful for parallelism. However, the
+individual items are not really modelled by an asyncronous process, and there is no way to perform cleanup.
+
+The async stream model is similar to the async sequence model, but it does not allow multiple next senders to be in
+flight at the same time. This means that the sequence must be able to compute the next element in series, which makes
+parallelism difficult (but it can be done using queueing). For cleanup, there is an explicit CPO which algorithms need
+to call, which is not ideal.
+
+Additionally, the async stream is poll-based instead of push-based. This means that someone needs to call `next()` on
+stream to get a new element, which is constrasts with regaular senders which push elements to the receiver.
+
+### Drawbacks of the Async Sequence Model
+
+The main tradeoff of the async sequence model is that since multiple next senders can be in-flight at the same time,
+there needs to be synchronization in some algorithms. This is also true for the many sender model, in algorithms like
+`di::execution::when_all()`. But this may be more common in the async sequence model. On the other hand, as long as the
+synchronization can be done with simple atomics, it should not be a problem.
+
+A serious issue is that if the sequence produces values in line, there will be eventually be stack overflow issues. This
+can be worked-around by using a queue or scheduler to delay the next sender, but this is not ideal. There are ongoing
+efforts to add tail senders to P2300, which would solve this issue but bring more complexity.
 
 ## Type Erased Sender
 
@@ -126,3 +242,12 @@ Another approach that could be considered is creating dummy move operations whic
 the compiler is going to perform NRVO anyway, then these dummy move operations will never be called (maybe...), and
 since operation states are internal to the library, this might even be safe. This is the simplest approach although it
 is probably the worst idea in terms of safety.
+
+## References
+
+- [P2300 - std::execution](https://wg21.link/p2300)
+- [P2300 Reference Implementation](https://github.com/NVIDIA/stdexec)
+- [Sequence Senders](https://github.com/kirkshoop/sequence-next)
+- [libunifex](https://github.com/facebookexperimental/libunifex/)
+- [NJS's Blog on Structured
+  Concurrency](https://vorpus.org/blog/notes-on-structured-concurrency-or-go-statement-considered-harmful/)

@@ -23,6 +23,7 @@ add_executable(
     test_container_view.cpp
     test_deserialization.cpp
     test_execution.cpp
+    test_execution_sequence.cpp
     test_format.cpp
     test_function_bind.cpp
     test_function_container.cpp

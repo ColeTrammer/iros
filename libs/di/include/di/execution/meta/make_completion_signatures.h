@@ -30,7 +30,7 @@ namespace detail {
 template<typename Send, typename Env = types::EmptyEnv,
          concepts::ValidCompletionSignatures ExtraSigs = types::CompletionSignatures<>,
          template<typename...> typename SetValue = detail::DefaultSetValue,
-         template<typename> typename SetError = detail::DefaultSetError,
+         template<typename...> typename SetError = detail::DefaultSetError,
          concepts::ValidCompletionSignatures SetStopped = types::CompletionSignatures<execution::SetStopped()>>
 requires(concepts::SenderIn<Send, Env>)
 using MakeCompletionSignatures = Type<detail::MakeCompletionSignaturesHelper<
