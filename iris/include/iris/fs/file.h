@@ -16,42 +16,38 @@ namespace detail {
     struct WriteFileDefaultFunction {
         template<typename T>
         di::AnySenderOf<usize> operator()(T&, UserspaceBuffer<byte const>) const {
-            return di::execution::just_error(Error::NotSupported);
+            return di::Unexpected(Error::NotSupported);
         }
     };
 
     struct ReadFileDefaultFunction {
         template<typename T>
         di::AnySenderOf<usize> operator()(T&, UserspaceBuffer<byte>) const {
-            return di::execution::just_error(Error::NotSupported);
+            return di::Unexpected(Error::NotSupported);
         }
     };
 
     struct ReadDirectoryDefaultFunction {
         template<typename T>
         di::AnySenderOf<usize> operator()(T&, UserspaceBuffer<byte>) const {
-            return di::execution::just_error(Error::NotSupported);
+            return di::Unexpected(Error::NotSupported);
         }
     };
 
     struct SeekFileDefaultFunction {
-        di::AnySenderOf<i64> operator()(auto&, i64, int) const {
-            return di::execution::just_error(Error::NotSupported);
-        }
+        di::AnySenderOf<i64> operator()(auto&, i64, int) const { return di::Unexpected(Error::NotSupported); }
     };
 
     struct FileMetadataDefaultFunction {
-        di::AnySenderOf<Metadata> operator()(auto&) const { return di::execution::just_error(Error::NotSupported); }
+        di::AnySenderOf<Metadata> operator()(auto&) const { return di::Unexpected(Error::NotSupported); }
     };
 
     struct FileTruncateDefaultFunction {
-        di::AnySenderOf<> operator()(auto&, u64) const { return di::execution::just_error(Error::NotSupported); }
+        di::AnySenderOf<> operator()(auto&, u64) const { return di::Unexpected(Error::NotSupported); }
     };
 
     struct FileHACKRawDataFunction {
-        di::AnySenderOf<di::Span<byte const>> operator()(auto&) const {
-            return di::execution::just_error(Error::NotSupported);
-        }
+        di::AnySenderOf<di::Span<byte const>> operator()(auto&) const { return di::Unexpected(Error::NotSupported); }
     };
 }
 

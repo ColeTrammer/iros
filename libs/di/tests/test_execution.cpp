@@ -411,6 +411,10 @@ static void any_sender() {
     };
     ASSERT_EQ(di::sync_wait(Sender5(task3())), di::Unexpected(di::BasicError::InvalidArgument));
 
+    ASSERT_EQ(di::sync_wait(Sender5(di::Unexpected(di::BasicError::InvalidArgument))),
+              di::Unexpected(di::BasicError::InvalidArgument));
+    ASSERT_EQ(di::sync_wait(Sender5(di::stopped)), di::Unexpected(di::BasicError::OperationCanceled));
+
     ASSERT_EQ(di::sync_wait(di::Result<int>(42)), 42);
     ASSERT_EQ(di::sync_wait(di::Unexpected(di::BasicError::InvalidArgument)),
               di::Unexpected(di::BasicError::InvalidArgument));

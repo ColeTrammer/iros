@@ -1,7 +1,6 @@
 #include <di/container/algorithm/prelude.h>
 #include <di/execution/algorithm/sync_wait.h>
 #include <di/execution/any/any_sender.h>
-#include <di/execution/macro/try_or_send_error.h>
 #include <di/math/prelude.h>
 #include <di/util/prelude.h>
 #include <di/vocab/expected/prelude.h>

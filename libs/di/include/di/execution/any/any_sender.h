@@ -13,6 +13,7 @@
 #include <di/concepts/language_void.h>
 #include <di/concepts/remove_cvref_same_as.h>
 #include <di/execution/algorithm/just.h>
+#include <di/execution/algorithm/just_or_error.h>
 #include <di/execution/any/any_env.h>
 #include <di/execution/any/any_operation_state.h>
 #include <di/execution/any/any_receiver.h>
@@ -44,6 +45,8 @@
 #include <di/util/defer_construct.h>
 #include <di/util/move.h>
 #include <di/vocab/error/error.h>
+#include <di/vocab/expected/expected_forward_declaration.h>
+#include <di/vocab/expected/unexpected.h>
 
 namespace di::execution {
 namespace detail {
@@ -72,6 +75,10 @@ struct AnySenderT {
 
         Type(Type&&) = default;
         Type& operator=(Type&&) = default;
+
+        template<typename E>
+        requires(concepts::ConstructibleFrom<vocab::Error, E>)
+        Type(vocab::Unexpected<E>&& error) : Type(just_error(vocab::Error(util::move(error).error()))) {}
 
         template<typename S, typename T = meta::RemoveCVRef<S>>
         requires(!concepts::DerivedFrom<T, Type> && concepts::SenderTo<T, Rec> && concepts::ConstructibleFrom<T, S>)
@@ -113,6 +120,18 @@ struct AnySenderOfT {
         using Base::operator=;
 
         using promise_type = execution::Lazy<T>::promise_type;
+
+        Type()
+        requires(concepts::LanguageVoid<T>)
+            : Base(execution::just()) {}
+
+        template<typename U>
+        requires(!concepts::RemoveCVRefSameAs<Type, U> && !concepts::Sender<U> && concepts::ConstructibleFrom<T, U>)
+        Type(U&& value) : Base(execution::just(T(util::forward<U>(value)))) {}
+
+        template<typename U, typename E>
+        requires(concepts::ConstructibleFrom<T, U> && concepts::ConstructibleFrom<vocab::Error, E>)
+        Type(vocab::Expected<U, E>&& value) : Base(execution::just_or_error(util::move(value))) {}
     };
 };
 
