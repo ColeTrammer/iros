@@ -1,7 +1,9 @@
 #pragma once
 
 #include <di/assert/assert_bool.h>
+#include <di/concepts/constructible_from.h>
 #include <di/concepts/convertible_to.h>
+#include <di/concepts/language_void.h>
 #include <di/concepts/same_as.h>
 #include <di/concepts/unexpected.h>
 #include <di/execution/algorithm/just.h>
@@ -10,12 +12,17 @@
 #include <di/execution/coroutine/with_await_transform.h>
 #include <di/execution/coroutine/with_awaitable_senders.h>
 #include <di/execution/types/prelude.h>
+#include <di/meta/conditional.h>
 #include <di/platform/prelude.h>
+#include <di/types/void.h>
 #include <di/util/coroutine.h>
 #include <di/util/exchange.h>
 #include <di/util/unreachable.h>
 #include <di/vocab/error/error.h>
 #include <di/vocab/error/prelude.h>
+#include <di/vocab/error/result.h>
+#include <di/vocab/expected/unexpect.h>
+#include <di/vocab/expected/unexpected.h>
 #include <di/vocab/variant/prelude.h>
 
 namespace di::execution {
@@ -41,6 +48,20 @@ namespace lazy_ns {
             m_data.emplace(util::forward<U>(value));
         }
 
+        void return_value(types::Void)
+        requires(concepts::LanguageVoid<T>)
+        {
+            m_data.emplace();
+        }
+
+        template<typename E>
+        requires(concepts::ConstructibleFrom<vocab::Error, E>)
+        void return_value(vocab::Unexpected<E>&& error) {
+            m_data = util::move(error);
+        }
+
+        void return_value(Stopped) { m_data = vocab::Unexpected(BasicError::OperationCanceled); }
+
         void unhandled_exception() { util::unreachable(); }
 
     private:
@@ -53,6 +74,15 @@ namespace lazy_ns {
             template<typename Promise>
             CoroutineHandle<> await_suspend(CoroutineHandle<Promise> coroutine) noexcept {
                 PromiseBase& current = coroutine.promise();
+
+                auto was_error = !current.m_data.has_value();
+                if (was_error) {
+                    if (current.m_data == vocab::Unexpected(BasicError::OperationCanceled)) {
+                        return current.unhandled_stopped();
+                    }
+                    return current.unhandled_error(util::move(current.m_data).error());
+                }
+
                 return current.continuation() ? current.continuation() : noop_coroutine();
             }
 
@@ -67,11 +97,12 @@ namespace lazy_ns {
             template<typename OtherPromise>
             CoroutineHandle<> await_suspend(CoroutineHandle<OtherPromise> continuation) noexcept {
                 // If we don't have a coroutine, it is because allocating it failed. Since the continuation is already
-                // suspended, we can just report the error and return a noop coroutine.
+                // suspended, we can just report the error.
                 if (!coroutine) {
-                    continuation.promise().unhandled_error(vocab::Error(BasicError::NotEnoughMemory));
-                    return noop_coroutine();
+                    return continuation.promise().unhandled_error(vocab::Error(BasicError::NotEnoughMemory));
                 }
+
+                // Otherwise, we can just resume the coroutine after setting the continuation.
                 coroutine.promise().set_continuation(continuation);
                 return coroutine;
             }
@@ -84,60 +115,7 @@ namespace lazy_ns {
             }
         };
 
-        Optional<T> m_data;
-    };
-
-    template<typename Self>
-    class PromiseBase<Self, void> : public WithAwaitableSenders<Self> {
-    public:
-        PromiseBase() = default;
-
-        void* operator new(usize size) noexcept { return ::operator new(size, std::nothrow); }
-        void operator delete(void* ptr, usize size) noexcept { ::operator delete(ptr, size); }
-
-        SuspendAlways initial_suspend() noexcept { return {}; }
-        auto final_suspend() noexcept { return FinalAwaiter {}; }
-
-        void return_void() noexcept {}
-        void unhandled_exception() { util::unreachable(); }
-
-    private:
-        template<typename>
-        friend class Lazy;
-
-        struct FinalAwaiter {
-            bool await_ready() noexcept { return false; }
-
-            template<typename Promise>
-            CoroutineHandle<> await_suspend(CoroutineHandle<Promise> coroutine) noexcept {
-                PromiseBase& current = coroutine.promise();
-                return current.continuation() ? current.continuation() : noop_coroutine();
-            }
-
-            void await_resume() noexcept {}
-        };
-
-        struct Awaiter {
-            CoroutineHandle<PromiseBase> coroutine;
-
-            bool await_ready() noexcept { return false; }
-
-            template<typename OtherPromise>
-            CoroutineHandle<> await_suspend(CoroutineHandle<OtherPromise> continuation) noexcept {
-                // If we don't have a coroutine, it is because allocating it failed. Since the continuation is already
-                // suspended, we can just report the error and return a noop coroutine.
-                if (!coroutine) {
-                    continuation.promise().unhandled_error(vocab::Error(BasicError::NotEnoughMemory));
-                    return noop_coroutine();
-                }
-                coroutine.promise().set_continuation(continuation);
-                return coroutine;
-            }
-
-            void await_resume() noexcept { DI_ASSERT(coroutine); }
-        };
-
-        CoroutineHandle<> m_continuation;
+        vocab::Result<T> m_data { vocab::Unexpected(BasicError::OperationCanceled) };
     };
 
     template<typename T>

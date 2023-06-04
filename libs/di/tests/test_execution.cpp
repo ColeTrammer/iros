@@ -113,7 +113,7 @@ static void sync_wait() {
 
 static void lazy() {
     constexpr static auto t2 = [] -> di::Lazy<> {
-        co_return;
+        co_return {};
     };
 
     constexpr static auto task = [] -> di::Lazy<i32> {
@@ -156,11 +156,21 @@ static void coroutine() {
     };
     ASSERT_EQ(di::sync_wait(error()), di::Unexpected(di::BasicError::InvalidArgument));
 
+    constexpr static auto error_direct = [] -> di::Lazy<i32> {
+        co_return di::Unexpected(di::BasicError::InvalidArgument);
+    };
+    ASSERT_EQ(di::sync_wait(error_direct()), di::Unexpected(di::BasicError::InvalidArgument));
+
     constexpr static auto stopped = [] -> di::Lazy<i32> {
         co_await ex::just_stopped();
         co_return 56;
     };
     ASSERT_EQ(di::sync_wait(stopped()), di::Unexpected(di::BasicError::OperationCanceled));
+
+    constexpr static auto stopped_direct = [] -> di::Lazy<i32> {
+        co_return di::stopped;
+    };
+    ASSERT_EQ(di::sync_wait(stopped_direct()), di::Unexpected(di::BasicError::OperationCanceled));
 }
 
 static void then() {

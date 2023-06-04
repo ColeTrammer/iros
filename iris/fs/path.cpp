@@ -39,8 +39,7 @@ di::AnySenderOf<di::Arc<TNode>> lookup_path(di::Arc<TNode> root, di::Arc<TNode> 
         if (result == di::Unexpected(Error::NoSuchFileOrDirectory) && !!(flags & PathLookupFlags::Create)) {
             // Now try to create the file, but only if this is the last component in the path.
             if (di::next(it) != path.end()) {
-                co_await di::execution::just_error(Error::NoSuchFileOrDirectory);
-                di::unreachable();
+                co_return di::Unexpected(Error::NoSuchFileOrDirectory);
             }
 
             co_return co_await inode_create_node(*inode, parent, component, MetadataType::Regular);
@@ -64,8 +63,7 @@ di::AnySenderOf<void> create_node(di::Arc<TNode> root, di::Arc<TNode> relative_t
                                   MetadataType type) {
     auto parent_path = path.parent_path();
     if (!parent_path) {
-        co_await di::execution::just_error(Error::InvalidArgument);
-        di::unreachable();
+        co_return di::Unexpected(Error::InvalidArgument);
     }
 
     auto parent = co_await lookup_path(di::move(root), di::move(relative_to), *parent_path);
@@ -73,11 +71,11 @@ di::AnySenderOf<void> create_node(di::Arc<TNode> root, di::Arc<TNode> relative_t
 
     auto result = co_await di::execution::into_result(inode_lookup(*parent->inode(), parent, component));
     if (result.has_value()) {
-        co_await di::execution::just_error(Error::FileExists);
-        di::unreachable();
+        co_return di::Unexpected(Error::FileExists);
     }
 
     co_await inode_create_node(*parent->inode(), parent, component, type);
+    co_return {};
 }
 
 di::AnySenderOf<File> open_path(di::Arc<TNode> root, di::Arc<TNode> relative_to, di::PathView path, OpenMode mode) {

@@ -147,8 +147,7 @@ di::AnySenderOf<u64> tag_invoke(di::Tag<seek_file>, InodeFile& self, i64 offset,
             co_return self.m_offset;
         }
     }
-    co_await di::execution::just_error(Error::InvalidArgument);
-    di::unreachable();
+    co_return di::Unexpected(Error::InvalidArgument);
 }
 
 di::AnySenderOf<void> tag_invoke(di::Tag<file_truncate>, InodeFile& self, u64 size) {
