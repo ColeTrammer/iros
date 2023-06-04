@@ -4,6 +4,7 @@
 #include <di/execution/concepts/prelude.h>
 #include <di/execution/interface/start.h>
 #include <di/execution/types/prelude.h>
+#include <di/meta/decay.h>
 #include <di/vocab/tuple/prelude.h>
 
 namespace di::execution {
@@ -29,27 +30,34 @@ namespace just_ns {
     template<concepts::OneOf<SetValue, SetStopped, SetError> CPO, concepts::Receiver Rec, typename... Types>
     using OperationState = meta::Type<OperationStateT<CPO, Rec, Types...>>;
 
+    struct ConstructTag {};
+
+    constexpr inline auto construct_tag = ConstructTag {};
+
     template<typename CPO, typename... Types>
     struct SenderT {
         struct Type {
         public:
             using is_sender = void;
 
-            using CompletionSignatures = types::CompletionSignatures<CPO(Types...)>;
+            using CompletionSignatures = types::CompletionSignatures<CPO(meta::Decay<Types>...)>;
 
-            [[no_unique_address]] Tuple<Types...> values;
+            constexpr explicit Type(ConstructTag, Types&&... values_) : values(util::forward<Types>(values_)...) {}
+
+            [[no_unique_address]] Tuple<meta::Decay<Types>...> values;
 
         private:
             template<concepts::ReceiverOf<CompletionSignatures> Rec>
-            requires(concepts::Conjunction<concepts::CopyConstructible<Types>...>)
+            requires(concepts::Conjunction<concepts::CopyConstructible<meta::Decay<Types>>...>)
             constexpr friend auto tag_invoke(types::Tag<execution::connect>, Type const& sender, Rec receiver) {
-                return OperationState<CPO, Rec, Types...> { sender.values, util::move(receiver) };
+                return OperationState<CPO, Rec, meta::Decay<Types>...> { sender.values, util::move(receiver) };
             }
 
             template<concepts::ReceiverOf<CompletionSignatures> Rec>
-            requires(concepts::Conjunction<concepts::MoveConstructible<Types>...>)
+            requires(concepts::Conjunction<concepts::MoveConstructible<meta::Decay<Types>>...>)
             constexpr friend auto tag_invoke(types::Tag<execution::connect>, Type&& sender, Rec receiver) {
-                return OperationState<CPO, Rec, Types...> { util::move(sender.values), util::move(receiver) };
+                return OperationState<CPO, Rec, meta::Decay<Types>...> { util::move(sender.values),
+                                                                         util::move(receiver) };
             }
         };
     };
@@ -60,23 +68,31 @@ namespace just_ns {
     struct Function {
         template<concepts::MovableValue... Values>
         constexpr concepts::Sender auto operator()(Values&&... values) const {
-            return Sender<SetValue, meta::Decay<Values>...> { { util::forward<Values>(values)... } };
+            return Sender<SetValue, Values...> { construct_tag, util::forward<Values>(values)... };
         }
     };
 
     struct ErrorFunction {
         template<concepts::MovableValue Error>
         constexpr concepts::Sender auto operator()(Error&& error) const {
-            return Sender<SetError, meta::Decay<Error>> { { util::forward<Error>(error) } };
+            return Sender<SetError, Error> { construct_tag, util::forward<Error>(error) };
         }
     };
 
     struct StoppedFunction {
-        constexpr concepts::Sender auto operator()() const { return Sender<SetStopped> { {} }; }
+        constexpr concepts::Sender auto operator()() const { return Sender<SetStopped> { construct_tag }; }
     };
 }
 
 constexpr inline auto just = just_ns::Function {};
 constexpr inline auto just_error = just_ns::ErrorFunction {};
 constexpr inline auto just_stopped = just_ns::StoppedFunction {};
+
+using Stopped = decltype(just_stopped());
+constexpr inline auto stopped = just_stopped();
+}
+
+namespace di {
+using execution::Stopped;
+using execution::stopped;
 }
