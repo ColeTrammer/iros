@@ -1,3 +1,4 @@
+#include <di/container/view/prelude.h>
 #include <di/execution/algorithm/just.h>
 #include <di/execution/algorithm/sync_wait.h>
 #include <di/execution/algorithm/then.h>
@@ -8,7 +9,9 @@
 #include <di/execution/sequence/empty_sequence.h>
 #include <di/execution/sequence/from_container.h>
 #include <di/execution/sequence/ignore_all.h>
+#include <di/execution/sequence/let_each.h>
 #include <di/execution/sequence/sequence_sender.h>
+#include <di/execution/sequence/then_each.h>
 #include <di/execution/sequence/transform_each.h>
 #include <di/execution/types/prelude.h>
 #include <di/util/prelude.h>
@@ -116,8 +119,54 @@ static void from_container() {
     ASSERT_EQ(counter, 5);
 }
 
+static void then() {
+    auto sum = 0;
+    auto sender = ex::from_container(ex::valid_lifetime, di::range(1, 5)) | ex::then_each([&](int x) {
+                      sum += x;
+                  }) |
+                  ex::ignore_all;
+    ASSERT(ex::sync_wait(sender));
+    ASSERT_EQ(sum, 10);
+}
+
+static void let() {
+    auto sum = 0;
+    auto s1 = ex::from_container(ex::valid_lifetime, di::range(1, 5)) | ex::let_value_each([&](int& x) {
+                  sum += x;
+                  return ex::just();
+              }) |
+              ex::ignore_all;
+    ASSERT(ex::sync_wait(s1));
+    ASSERT_EQ(sum, 10);
+
+    sum = 0;
+    auto s2 = ex::just_error(di::Error(di::BasicError::InvalidArgument)) | ex::let_error_each([&](di::Error& e) {
+                  ASSERT_EQ(e, di::Error(di::BasicError::InvalidArgument));
+                  return ex::just(5);
+              }) |
+              ex::then_each([&](int x) {
+                  sum += x;
+              }) |
+              ex::ignore_all;
+    ASSERT(ex::sync_wait(di::move(s2)));
+    ASSERT_EQ(sum, 5);
+
+    sum = 0;
+    auto s3 = ex::just_stopped() | ex::let_stopped_each([&] {
+                  return ex::just(5);
+              }) |
+              ex::then_each([&](int x) {
+                  sum += x;
+              }) |
+              ex::ignore_all;
+    ASSERT(ex::sync_wait(di::move(s3)));
+    ASSERT_EQ(sum, 5);
+}
+
 TEST(execution_sequence, meta)
 TEST(execution_sequence, ignore_all)
 TEST(execution_sequence, transform_each)
 TEST(execution_sequence, from_container)
+TEST(execution_sequence, then)
+TEST(execution_sequence, let)
 }

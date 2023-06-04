@@ -7,6 +7,8 @@
 #include <di/execution/meta/prelude.h>
 #include <di/execution/receiver/prelude.h>
 #include <di/execution/types/prelude.h>
+#include <di/meta/decay.h>
+#include <di/meta/remove_cvref.h>
 #include <di/util/defer_construct.h>
 
 namespace di::execution {
@@ -106,10 +108,9 @@ namespace let_ns {
             using Completions = meta::CompletionSignaturesOf<Send, meta::EnvOf<Rec>>;
 
         public:
-            template<typename S>
-            explicit Type(Fun f, Rec out_r, S&& sender)
+            explicit Type(Fun f, Rec out_r, Send&& sender)
                 : m_data(util::move(f), util::move(out_r))
-                , m_op_state2(execution::connect(util::forward<S>(sender),
+                , m_op_state2(execution::connect(util::forward<Send>(sender),
                                                  Receiver<CPO, Rec, Fun, Completions> { util::addressof(m_data) })) {}
 
         private:
@@ -151,18 +152,19 @@ namespace let_ns {
                 meta::Unique<meta::Concat<BaseCompletionSignatures<Self, Env>, InvokeCompletionSignatures<Self, Env>>>>;
 
             template<concepts::DecaysTo<Type> Self, typename Env>
-            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env)
+            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env&&)
                 -> CompletionSignatures<Self, Env>;
 
             template<concepts::DecaysTo<Type> Self, typename Rec>
             requires(
-                concepts::DecayConstructible<meta::Like<Self, Send>> &&
+                concepts::DecayConstructible<meta::Like<Self, Fun>> &&
                 concepts::SenderTo<
                     meta::Like<Self, Send>,
                     Receiver<CPO, Rec, Fun, meta::CompletionSignaturesOf<meta::Like<Self, Send>, meta::EnvOf<Rec>>>>)
             friend auto tag_invoke(types::Tag<connect>, Self&& self, Rec receiver) {
-                return OperationState<CPO, Send, Rec, Fun> { util::forward<Self>(self).function, util::move(receiver),
-                                                             util::forward<Self>(self).sender };
+                return OperationState<CPO, meta::Like<Self, Send>, Rec, Fun> { util::forward<Self>(self).function,
+                                                                               util::move(receiver),
+                                                                               util::forward<Self>(self).sender };
             }
 
             constexpr friend decltype(auto) tag_invoke(types::Tag<get_env>, Type const& self) {
@@ -172,7 +174,7 @@ namespace let_ns {
     };
 
     template<concepts::OneOf<SetValue, SetError, SetStopped> CPO, concepts::Sender Send, concepts::MovableValue Fun>
-    using Sender = meta::Type<SenderT<CPO, Send, Fun>>;
+    using Sender = meta::Type<SenderT<CPO, meta::RemoveCVRef<Send>, meta::Decay<Fun>>>;
 
     template<concepts::OneOf<SetValue, SetError, SetStopped> CPO>
     struct Function {
