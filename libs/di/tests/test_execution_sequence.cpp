@@ -6,6 +6,7 @@
 #include <di/execution/any/any_sender.h>
 #include <di/execution/context/run_loop.h>
 #include <di/execution/receiver/prelude.h>
+#include <di/execution/sequence/async_generator.h>
 #include <di/execution/sequence/empty_sequence.h>
 #include <di/execution/sequence/from_container.h>
 #include <di/execution/sequence/ignore_all.h>
@@ -16,6 +17,7 @@
 #include <di/execution/types/prelude.h>
 #include <di/util/prelude.h>
 #include <di/vocab/error/prelude.h>
+#include <di/vocab/expected/prelude.h>
 #include <dius/test/prelude.h>
 
 namespace execution_sequence {
@@ -33,6 +35,8 @@ static void meta() {
         ex::ignore_all_ns::Receiver<decltype(empty), ex::sync_wait_ns::Receiver<di::Result<void>, ex::RunLoop<>>>;
 
     static_assert(di::concepts::SubscriberOf<Receiver, di::CompletionSignatures<di::SetValue()>>);
+
+    static_assert(di::concepts::AwaitableAsyncRange<di::AsyncGenerator<int>>);
 }
 
 static void ignore_all() {
@@ -163,10 +167,44 @@ static void let() {
     ASSERT_EQ(sum, 5);
 }
 
+static void async_generator() {
+    auto h = [](int x) -> di::Lazy<int> {
+        co_return x;
+    };
+
+    enum class Outcome { Value, Error, Stopped };
+
+    auto g = [&](Outcome outcome) -> di::AsyncGenerator<int> {
+        co_yield co_await h(1);
+        co_yield co_await h(2);
+        co_yield co_await h(3);
+        if (outcome == Outcome::Error) {
+            co_return di::Unexpected(di::BasicError::InvalidArgument);
+        } else if (outcome == Outcome::Stopped) {
+            co_return di::stopped;
+        }
+        co_return {};
+    };
+
+    auto f = [&](Outcome outcome) -> di::Lazy<int> {
+        auto sequence = co_await g(outcome);
+        auto sum = 0;
+        while (auto next = co_await ex::next(sequence)) {
+            sum += *next;
+        }
+        co_return sum;
+    };
+
+    ASSERT_EQ(ex::sync_wait(f(Outcome::Value)), 6);
+    ASSERT_EQ(ex::sync_wait(f(Outcome::Error)), di::Unexpected(di::BasicError::InvalidArgument));
+    ASSERT_EQ(ex::sync_wait(f(Outcome::Stopped)), di::Unexpected(di::BasicError::OperationCanceled));
+}
+
 TEST(execution_sequence, meta)
 TEST(execution_sequence, ignore_all)
 TEST(execution_sequence, transform_each)
 TEST(execution_sequence, from_container)
 TEST(execution_sequence, then)
 TEST(execution_sequence, let)
+TEST(execution_sequence, async_generator)
 }

@@ -175,3 +175,7 @@ constexpr decltype(auto) tag_invoke(types::Tag<execution::as_awaitable>, T&& val
     return execution::as_awaitable(execution::just_error(util::forward<T>(value).error()), promise);
 }
 }
+
+namespace di {
+using execution::Lazy;
+}

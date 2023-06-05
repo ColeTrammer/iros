@@ -18,6 +18,7 @@
 #include <di/execution/meta/stop_token_of.h>
 #include <di/execution/receiver/set_stopped.h>
 #include <di/execution/receiver/set_value.h>
+#include <di/execution/sequence/async_range.h>
 #include <di/execution/types/completion_signuatures.h>
 #include <di/execution/types/empty_env.h>
 #include <di/function/invoke.h>
@@ -87,14 +88,16 @@ using NextSenderOf = decltype(execution::set_next(util::declval<meta::RemoveCVRe
 namespace di::execution {
 struct SequenceTag {};
 
-namespace detail {
-    template<typename S>
-    concept IsSequenceSender =
-        requires { typename S::is_sender; } && concepts::SameAs<SequenceTag, typename S::is_sender>;
-}
+template<typename S>
+constexpr inline bool enable_sequence_sender = false;
 
 template<typename S>
-constexpr inline bool enable_sequence_sender = detail::IsSequenceSender<S>;
+requires(requires { typename S::is_sender; } && concepts::SameAs<SequenceTag, typename S::is_sender>)
+constexpr inline bool enable_sequence_sender<S> = true;
+
+template<typename S>
+requires(concepts::AwaitableAsyncRange<S>)
+constexpr inline bool enable_sequence_sender<S> = true;
 }
 
 namespace di::concepts {
