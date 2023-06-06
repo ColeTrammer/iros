@@ -166,6 +166,15 @@ private:
         return static_cast<meta::Like<Self, meta::TupleElement<Self, index>>&&>(
             Impl::static_get(util::forward_as_base<Self, Impl>(self)));
     }
+
+    template<typename T, typename Self = Tuple>
+    requires(concepts::DerivedFrom<meta::RemoveCVRef<Self>, Tuple> && meta::UniqueType<T, meta::List<Types...>>)
+    constexpr friend meta::Like<Self, T>&& tag_invoke(types::Tag<util::get_in_place>, InPlaceType<T>, Self&& self) {
+        constexpr auto index = meta::Lookup<T, meta::List<Types...>>;
+        using Impl = detail::TupleImplBase<index, meta::IndexSequenceFor<Types...>, Types...>::Type;
+        return static_cast<meta::Like<Self, meta::TupleElement<Self, index>>&&>(
+            Impl::static_get(util::forward_as_base<Self, Impl>(self)));
+    }
 };
 
 template<typename... Types>

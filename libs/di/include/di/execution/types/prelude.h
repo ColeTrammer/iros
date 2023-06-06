@@ -5,5 +5,4 @@
 
 namespace di {
 using types::CompletionSignatures;
-using types::EmptyEnv;
 }

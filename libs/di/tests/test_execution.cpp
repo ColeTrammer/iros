@@ -4,6 +4,7 @@
 #include <di/any/vtable/maybe_inline_vtable.h>
 #include <di/concepts/prelude.h>
 #include <di/container/allocator/allocation_result.h>
+#include <di/container/allocator/allocator.h>
 #include <di/execution/algorithm/into_result.h>
 #include <di/execution/algorithm/into_variant.h>
 #include <di/execution/algorithm/just.h>
@@ -21,7 +22,9 @@
 #include <di/execution/meta/completion_signatures_of.h>
 #include <di/execution/meta/sends_stopped.h>
 #include <di/execution/prelude.h>
+#include <di/execution/query/get_allocator.h>
 #include <di/execution/query/get_stop_token.h>
+#include <di/execution/query/make_env.h>
 #include <di/execution/receiver/prelude.h>
 #include <di/execution/receiver/set_value.h>
 #include <di/execution/types/empty_env.h>
@@ -95,6 +98,11 @@ static void meta() {
                                          di::meta::detail::SingleSenderValueTypeHelper>>);
     static_assert(di::concepts::SingleSender<di::Lazy<i32>, di::EmptyEnv>);
     static_assert(di::concepts::SingleSender<di::Lazy<>, di::EmptyEnv>);
+
+    namespace ex = di::execution;
+
+    constexpr auto env = ex::make_env(di::empty_env, ex::with(ex::get_allocator, di::FallibleAllocator {}));
+    static_assert(di::SameAs<di::FallibleAllocator, di::meta::AllocatorOf<decltype(env)>>);
 }
 
 static void sync_wait() {

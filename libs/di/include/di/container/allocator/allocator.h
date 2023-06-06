@@ -27,8 +27,6 @@ using AllocatorResult = meta::LikeExpected<decltype(di::allocate(util::declval<A
 
 namespace di {
 using concepts::Allocator;
-using concepts::FallibleAllocator;
-using concepts::InfallibleAllocator;
 
 using meta::AllocatorResult;
 }
