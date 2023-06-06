@@ -3,6 +3,7 @@
 #include <di/meta/add_rvalue_reference.h>
 #include <di/meta/common_reference.h>
 #include <di/meta/common_type.h>
+#include <di/meta/constexpr.h>
 #include <di/meta/decay.h>
 #include <di/meta/index_sequence.h>
 #include <di/meta/like.h>
@@ -65,3 +66,26 @@ static_assert(di::SameAs<di::Tuple<long>, di::meta::Type<di::meta::CustomCommonT
 static_assert(di::SameAs<int const&, di::meta::CommonReference<int const&, int&&>>);
 static_assert(di::SameAs<di::Tuple<int const&>, di::meta::CommonReference<di::Tuple<int const&>, di::Tuple<int&&>>>);
 }
+
+// Test constexpr wrapper
+static_assert(di::c_<32> == 32);
+static_assert((di::c_<32> + di::c_<52>) == 84);
+static_assert((di::c_<50> - di::c_<20>) == 30);
+static_assert((di::c_<2> * di::c_<3>) == 6);
+static_assert((di::c_<6> / di::c_<2>) == 3);
+static_assert((di::c_<6> % di::c_<4>) == 2);
+static_assert((di::c_<2> << di::c_<3>) == 16);
+static_assert((di::c_<16> >> di::c_<3>) == 2);
+static_assert((di::c_<2> & di::c_<3>) == 2);
+static_assert((di::c_<2> | di::c_<3>) == 3);
+static_assert((di::c_<2> ^ di::c_<3>) == 1);
+static_assert((~di::c_<2>) == -3);
+static_assert((di::c_<2> == di::c_<2>) );
+static_assert((di::c_<2> != di::c_<3>) );
+static_assert((di::c_<2> < di::c_<3>) );
+static_assert((di::c_<2> <= di::c_<3>) );
+static_assert((di::c_<3> > di::c_<2>) );
+static_assert((di::c_<3> >= di::c_<2>) );
+static_assert((di::c_<true> && di::c_<true>) );
+static_assert((di::c_<true> || di::c_<false>) );
+static_assert((!di::c_<false>) );
