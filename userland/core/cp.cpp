@@ -34,8 +34,8 @@ di::Result<void> main(Args const& args) {
     auto open_source = ex::async_open(scheduler, di::move(source), dius::OpenMode::Readonly);
     auto open_destination = ex::async_open(scheduler, di::move(destination), dius::OpenMode::WriteClobber);
 
-    auto task = ex::with(di::move(open_source), [&](auto& source) {
-        return ex::with(di::move(open_destination), [&](auto& destination) {
+    auto task = ex::use_resource(di::move(open_source), [&](auto& source) {
+        return ex::use_resource(di::move(open_destination), [&](auto& destination) {
             return ex::async_read_some(source, di::Span { buffer.data(), buffer.capacity() }) |
                    ex::let_value([&](size_t& nread) {
                        return ex::just_void_or_stopped(nread == 0) | ex::let_value([&] {

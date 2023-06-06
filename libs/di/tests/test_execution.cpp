@@ -310,7 +310,7 @@ private:
 static void with() {
     namespace ex = di::execution;
 
-    auto w = ex::async_create<AsyncI32>(42) | ex::with([](AsyncI32& value) {
+    auto w = ex::async_create<AsyncI32>(42) | ex::use_resource([](AsyncI32& value) {
                  return ex::just(value.value);
              });
 

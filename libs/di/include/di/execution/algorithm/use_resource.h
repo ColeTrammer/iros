@@ -9,7 +9,7 @@
 #include <di/util/defer_construct.h>
 
 namespace di::execution {
-namespace with_ns {
+namespace use_resource_ns {
     template<typename Rec, typename Fun, typename Value, typename Completions>
     struct DestroyReceiverT {
         struct Type;
@@ -271,10 +271,10 @@ namespace with_ns {
     };
 }
 
-/// With takes a sender which creates an async destroyable object, and calls the provided function
+/// use_resource takes a sender which creates an async destroyable object, and calls the provided function
 /// with the result. The function returns a sender which is then executed (if the creation sender
 /// was successful). Then, the result of the second sender is decay-copied into the operation state.
 /// Then, the async destroy sender is run to destroy the created resource. When this completes, the
 /// results of the second sender are forwarded to the out receiver.
-constexpr inline auto with = function::curry_back(with_ns::Function {}, meta::c_<2zu>);
+constexpr inline auto use_resource = function::curry_back(use_resource_ns::Function {}, meta::c_<2zu>);
 }
