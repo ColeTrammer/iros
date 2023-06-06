@@ -7,6 +7,7 @@
 #include <di/container/allocator/deallocate_one.h>
 #include <di/function/invoke.h>
 #include <di/function/monad/monad_try.h>
+#include <di/meta/constexpr.h>
 #include <di/meta/list/prelude.h>
 #include <di/meta/maybe_const.h>
 #include <di/meta/remove_function_qualifiers.h>
@@ -388,13 +389,13 @@ namespace function_ns {
         }
 
         template<auto f>
-        static R concrete_impl_for_nontype(meta::MaybeConst<is_const, ErasedObject>*,
-                                           Args&&... args) noexcept(is_noexcept) {
+        static R concrete_impl_for_constexpr(meta::MaybeConst<is_const, ErasedObject>*,
+                                             Args&&... args) noexcept(is_noexcept) {
             return function::invoke_r<R>(f, util::forward<Args>(args)...);
         }
 
         template<auto f, typename T>
-        static R concrete_impl_for_bound_nontype(meta::MaybeConst<is_const, ErasedObject>* object, Args&&... args) {
+        static R concrete_impl_for_bound_constexpr(meta::MaybeConst<is_const, ErasedObject>* object, Args&&... args) {
             using CV = CVQualified<T>;
             using Inv = InvQualifed<T>;
             return function::invoke_r<R>(f, util::forward<Inv>(*object->template down_cast<CV>()),
@@ -411,8 +412,8 @@ namespace function_ns {
 
         template<auto f>
         requires(is_invocable<decltype(f)>)
-        Function(Nontype<f>) {
-            m_impl = &concrete_impl_for_nontype<f>;
+        Function(Constexpr<f>) {
+            m_impl = &concrete_impl_for_constexpr<f>;
         }
 
         template<typename F, typename VT = meta::Decay<F>>
@@ -431,9 +432,9 @@ namespace function_ns {
 
         template<auto f, typename T, typename VT = meta::Decay<T>>
         requires(concepts::ConstructibleFrom<VT, T> && is_callable_as_if_from<f, VT> && StoredInline<VT>)
-        Function(Nontype<f>, T&& object) {
+        Function(Constexpr<f>, T&& object) {
             m_object.template init_inline<VT>(util::forward<T>(object));
-            m_impl = &concrete_impl_for_bound_nontype<f, VT>;
+            m_impl = &concrete_impl_for_bound_constexpr<f, VT>;
         }
 
         template<typename T, typename... Ts, typename VT = meta::Decay<T>>
@@ -453,17 +454,17 @@ namespace function_ns {
 
         template<auto f, typename T, typename... Ts, typename VT = meta::Decay<T>>
         requires(concepts::ConstructibleFrom<T, Ts...> && is_callable_from<VT> && StoredInline<VT>)
-        explicit Function(Nontype<f>, InPlaceType<T>, Ts&&... args) {
+        explicit Function(Constexpr<f>, InPlaceType<T>, Ts&&... args) {
             m_object.template init_inline<VT>(util::forward<Ts>(args)...);
-            m_impl = &concrete_impl_for_bound_nontype<f, VT>;
+            m_impl = &concrete_impl_for_bound_constexpr<f, VT>;
         }
 
         template<auto f, typename T, typename U, typename... Ts, typename VT = meta::Decay<T>>
         requires(concepts::ConstructibleFrom<T, std::initializer_list<U>&, Ts...> && is_callable_from<VT> &&
                  StoredInline<VT>)
-        explicit Function(Nontype<f>, InPlaceType<T>, std::initializer_list<U> list, Ts&&... args) {
+        explicit Function(Constexpr<f>, InPlaceType<T>, std::initializer_list<U> list, Ts&&... args) {
             m_object.template init_inline<VT>(list, util::forward<Ts>(args)...);
-            m_impl = &concrete_impl_for_bound_nontype<f, VT>;
+            m_impl = &concrete_impl_for_bound_constexpr<f, VT>;
         }
 
         ~Function() = default;
@@ -569,7 +570,7 @@ namespace function_ns {
 
         template<auto f, typename T, typename VT = meta::Decay<T>>
         requires(concepts::ConstructibleFrom<VT, T> && Function::template is_callable_as_if_from<f, VT>)
-        meta::AllocatorResult<Alloc, Function> operator()(Nontype<f>, T&& object) const {
+        meta::AllocatorResult<Alloc, Function> operator()(Constexpr<f>, T&& object) const {
             Function result;
             if constexpr (StoredInline<VT>) {
                 result.m_object.template init_inline<VT>(util::forward<T>(object));
@@ -578,7 +579,7 @@ namespace function_ns {
             } else {
                 result.m_object.template init_out_of_line<VT>(util::forward<T>(object));
             }
-            result.m_impl = &Function::template concrete_impl_for_bound_nontype<f, VT>;
+            result.m_impl = &Function::template concrete_impl_for_bound_constexpr<f, VT>;
             return result;
         }
 
@@ -616,7 +617,7 @@ namespace function_ns {
 
         template<auto f, typename T, typename... Ts, typename VT = meta::Decay<T>>
         requires(concepts::ConstructibleFrom<T, Ts...> && Function::template is_callable_from<VT>)
-        meta::AllocatorResult<Alloc, Function> operator()(Nontype<f>, InPlaceType<T>, Ts&&... args) const {
+        meta::AllocatorResult<Alloc, Function> operator()(Constexpr<f>, InPlaceType<T>, Ts&&... args) const {
             Function result;
             if constexpr (StoredInline<VT>) {
                 result.m_object.template init_inline<VT>(util::forward<Ts>(args)...);
@@ -625,14 +626,14 @@ namespace function_ns {
             } else {
                 result.m_object.template init_out_of_line<VT>(util::forward<Ts>(args)...);
             }
-            result.m_impl = &Function::template concrete_impl_for_bound_nontype<f, VT>;
+            result.m_impl = &Function::template concrete_impl_for_bound_constexpr<f, VT>;
             return result;
         }
 
         template<auto f, typename T, typename U, typename... Ts, typename VT = meta::Decay<T>>
         requires(concepts::ConstructibleFrom<T, std::initializer_list<U>&, Ts...> &&
                  Function::template is_callable_from<VT> && StoredInline<VT>)
-        meta::AllocatorResult<Alloc, Function> operator()(Nontype<f>, InPlaceType<T>, std::initializer_list<U> list,
+        meta::AllocatorResult<Alloc, Function> operator()(Constexpr<f>, InPlaceType<T>, std::initializer_list<U> list,
                                                           Ts&&... args) const {
             Function result;
             if constexpr (StoredInline<VT>) {
@@ -642,7 +643,7 @@ namespace function_ns {
             } else {
                 result.m_object.template init_out_of_line<VT>(list, util::forward<Ts>(args)...);
             }
-            result.m_impl = &Function::template concrete_impl_for_bound_nontype<f, VT>;
+            result.m_impl = &Function::template concrete_impl_for_bound_constexpr<f, VT>;
             return result;
         }
     };

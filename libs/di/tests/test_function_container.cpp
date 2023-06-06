@@ -21,7 +21,7 @@ static void function_ref_basic() {
     auto const g = di::FunctionRef<i32(i32) const> { callable };
     ASSERT_EQ(g(5), 9);
 
-    auto const h = di::FunctionRef { di::nontype<do_calc2> };
+    auto const h = di::FunctionRef { di::c_<do_calc2> };
     ASSERT_EQ(h(5), 8);
 
     struct X {
@@ -31,10 +31,10 @@ static void function_ref_basic() {
     };
 
     auto const x = X { 5 };
-    auto const k = di::FunctionRef { di::nontype<&X::h>, x };
+    auto const k = di::FunctionRef { di::c_<&X::h>, x };
     ASSERT_EQ(k(9), 14);
 
-    auto const j = di::FunctionRef { di::nontype<&X::h>, di::addressof(x) };
+    auto const j = di::FunctionRef { di::c_<&X::h>, di::addressof(x) };
     ASSERT_EQ(j(11), 16);
 
     static_assert(di::SameAs<decltype(f), di::FunctionRef<i32(i32) noexcept> const>);
@@ -58,7 +58,7 @@ static void function_basic() {
     f = nullptr;
     ASSERT(!f);
 
-    auto const g = di::Function<i32(i32) const> { di::nontype<do_calc2> };
+    auto const g = di::Function<i32(i32) const> { di::c_<do_calc2> };
     ASSERT(g);
     ASSERT_EQ(g(1), 4);
 
@@ -69,10 +69,10 @@ static void function_basic() {
     };
 
     auto const x = X { 5 };
-    auto const k = di::Function<i32(i32) const> { di::nontype<&X::h>, x };
+    auto const k = di::Function<i32(i32) const> { di::c_<&X::h>, x };
     ASSERT_EQ(k(9), 14);
 
-    auto const j = di::Function<i32(i32) const> { di::nontype<&X::h>, di::addressof(x) };
+    auto const j = di::Function<i32(i32) const> { di::c_<&X::h>, di::addressof(x) };
     ASSERT_EQ(j(11), 16);
 
     auto const lambda = [x = 2, y = 4, z = 6, n = 1, p = 3](i32 m) {

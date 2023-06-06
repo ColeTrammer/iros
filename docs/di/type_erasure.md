@@ -150,7 +150,7 @@ struct Draw : di::Dispatcher<Draw, void(di::This&)> {};
 struct GetArea : di::Dispatcher<GetArea, i32(di::This const&)> {};
 struct DebugPrint : di::Dispatcher<DebugPrint,
     void(di::This const&),
-    di::Nontype<di::into_void>
+    di::Constexpr<di::into_void>
 > {};
 
 constexpr inline auto draw = Draw {};

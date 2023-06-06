@@ -2,12 +2,13 @@
 
 #include <di/function/invoke.h>
 #include <di/math/numeric_limits.h>
+#include <di/meta/constexpr.h>
 #include <di/types/prelude.h>
 
 namespace di::math {
 namespace detail {
     template<umax size>
-    constexpr auto smallest_unsigned_type_helper(Nontype<size>) {
+    constexpr auto smallest_unsigned_type_helper(Constexpr<size>) {
         if constexpr (size <= NumericLimits<u8>::max) {
             return (u8) 0;
         } else if constexpr (size <= NumericLimits<u16>::max) {
@@ -23,5 +24,5 @@ namespace detail {
 }
 
 template<umax size>
-using SmallestUnsignedType = decltype(detail::smallest_unsigned_type_helper(nontype<size>));
+using SmallestUnsignedType = decltype(detail::smallest_unsigned_type_helper(c_<size>));
 }

@@ -2,9 +2,12 @@
 
 #include <di/assert/assert_bool.h>
 #include <di/concepts/object.h>
+#include <di/concepts/remove_cvref_same_as.h>
 #include <di/function/invoke.h>
+#include <di/meta/constexpr.h>
 #include <di/meta/list/prelude.h>
 #include <di/meta/remove_function_qualifiers.h>
+#include <di/meta/remove_pointer.h>
 #include <di/types/prelude.h>
 #include <di/util/addressof.h>
 
@@ -146,6 +149,7 @@ namespace function_ref_ns {
         template<typename F, typename T = meta::RemoveReference<F>>
         requires(!concepts::RemoveCVRefSameAs<F, FunctionRef> && !concepts::MemberPointer<T> &&
                  is_invocable<Qualified<F>>)
+        // NOLINTNEXTLINE(bugprone-forwarding-reference-overload)
         constexpr FunctionRef(F&& function)
             : m_storage(util::addressof(function))
             , m_impl([](ErasedStorage storage, Args&&... args) noexcept(is_noexcept) -> R {
@@ -156,18 +160,18 @@ namespace function_ref_ns {
 
         template<auto f, typename F = decltype(f)>
         requires(is_invocable<F>)
-        constexpr FunctionRef(Nontype<f>)
+        constexpr FunctionRef(Constexpr<f>)
             : m_impl([](ErasedStorage, Args&&... args) noexcept(is_noexcept) -> R {
                 return function::invoke_r<R>(f, util::forward<Args>(args)...);
             }) {
             if constexpr (concepts::Pointer<F> || concepts::MemberPointer<F>) {
-                static_assert(f != nullptr, "FunctionRef Nontype<> constructors cannot be passed a nullptr.");
+                static_assert(f != nullptr, "FunctionRef Constexpr<> constructors cannot be passed a nullptr.");
             }
         }
 
         template<auto f, typename U, typename F = decltype(f), typename T = meta::RemoveReference<U>>
         requires(!concepts::RValueReference<U &&> && is_invocable<F, Qualified<T>>)
-        constexpr FunctionRef(Nontype<f>, U&& object)
+        constexpr FunctionRef(Constexpr<f>, U&& object)
             : m_storage(util::addressof(object))
             , m_impl([](ErasedStorage storage, Args&&... args) noexcept(is_noexcept) -> R {
                 // Ensure we are invoking the object with the correct const and lvalue qualifications.
@@ -175,18 +179,18 @@ namespace function_ref_ns {
                 return function::invoke_r<R>(f, object_reference, util::forward<Args>(args)...);
             }) {
             if constexpr (concepts::Pointer<F> || concepts::MemberPointer<F>) {
-                static_assert(f != nullptr, "FunctionRef Nontype<> constructors cannot be passed a nullptr.");
+                static_assert(f != nullptr, "FunctionRef Constexpr<> constructors cannot be passed a nullptr.");
             }
         }
 
         template<auto f, typename T, typename F = decltype(f)>
         requires(is_invocable<F, CVQualified<T>*>)
-        constexpr FunctionRef(Nontype<f>, CVQualified<T>* object)
+        constexpr FunctionRef(Constexpr<f>, CVQualified<T>* object)
             : m_storage(object), m_impl([](ErasedStorage storage, Args&&... args) noexcept(is_noexcept) -> R {
                 return function::invoke_r<R>(f, down_cast<CVQualified<T>>(storage), util::forward<Args>(args)...);
             }) {
             if constexpr (concepts::Pointer<F> || concepts::MemberPointer<F>) {
-                static_assert(f != nullptr, "FunctionRef Nontype<> constructors cannot be passed a nullptr.");
+                static_assert(f != nullptr, "FunctionRef Constexpr<> constructors cannot be passed a nullptr.");
             }
             DI_ASSERT(object != nullptr);
         }
@@ -209,10 +213,10 @@ namespace function_ref_ns {
 
     template<auto f, typename F = meta::RemovePointer<decltype(f)>>
     requires(concepts::LanguageFunction<F>)
-    FunctionRef(Nontype<f>) -> FunctionRef<F>;
+    FunctionRef(Constexpr<f>) -> FunctionRef<F>;
 
     template<auto f, typename T, typename F = decltype(f)>
-    FunctionRef(Nontype<f>, T&&) -> FunctionRef<SignatureAfterBindFront<F, T>>;
+    FunctionRef(Constexpr<f>, T&&) -> FunctionRef<SignatureAfterBindFront<F, T>>;
 }
 
 using function_ref_ns::FunctionRef;

@@ -4,6 +4,7 @@
 #include <di/concepts/default_constructible.h>
 #include <di/concepts/same_as.h>
 #include <di/meta/bool_constant.h>
+#include <di/meta/constexpr.h>
 #include <di/types/prelude.h>
 
 namespace di::concepts {
@@ -13,7 +14,7 @@ concept AnyStorage = DefaultConstructible<T> && requires {
 
     // Must be a constant expression.
     { T::storage_category() } -> SameAs<any::StorageCategory>;
-    typename types::Nontype<T::storage_category()>;
+    typename meta::Constexpr<T::storage_category()>;
 
     // This must be evaluatable for all types, not just Void.
     { T::creation_is_fallible(in_place_type<Void>) } -> SameAs<bool>;
