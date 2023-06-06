@@ -1,15 +1,15 @@
 #pragma once
 
 #include <di/function/tag_invoke.h>
-#include <di/types/in_place_index.h>
+#include <di/meta/constexpr.h>
 #include <di/types/in_place_type.h>
 #include <di/types/size_t.h>
 
 namespace di::util {
 struct GetInPlaceFunction {
     template<typename T, types::size_t index>
-    constexpr meta::TagInvokeResult<GetInPlaceFunction, types::InPlaceIndex<index>, T>
-    operator()(types::InPlaceIndex<index> place_holder, T&& tuple) const {
+    constexpr meta::TagInvokeResult<GetInPlaceFunction, Constexpr<index>, T> operator()(Constexpr<index> place_holder,
+                                                                                        T&& tuple) const {
         return function::tag_invoke(*this, place_holder, util::forward<T>(tuple));
     }
 

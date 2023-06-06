@@ -4,6 +4,7 @@
 #include <di/container/string/string_view_impl.h>
 #include <di/format/concepts/formattable.h>
 #include <di/format/format_parse_context.h>
+#include <di/meta/constexpr.h>
 #include <di/meta/type_identity.h>
 #include <di/util/source_location.h>
 
@@ -26,7 +27,7 @@ namespace detail {
 
                 if constexpr (sizeof...(Args) > 0) {
                     auto arg_index = util::get<1>(*part).index;
-                    function::index_dispatch<void, sizeof...(Args)>(arg_index, [&]<size_t index>(InPlaceIndex<index>) {
+                    function::index_dispatch<void, sizeof...(Args)>(arg_index, [&]<size_t index>(Constexpr<index>) {
                         auto formatter = format::formatter<meta::At<meta::List<Args...>, index>>(parse_context);
                         if (!formatter) {
                             util::compile_time_fail<FixedString { "Invalid format string argument format." }>();

@@ -1,4 +1,5 @@
 #include <di/concepts/prelude.h>
+#include <di/meta/constexpr.h>
 #include <di/vocab/tuple/prelude.h>
 #include <dius/test/prelude.h>
 
@@ -9,10 +10,10 @@ private:
     constexpr friend size_t tag_invoke(di::Tag<di::vocab::tuple_size>, di::InPlaceType<X>) { return 1zu; }
 
     constexpr friend di::InPlaceType<int> tag_invoke(di::Tag<di::vocab::tuple_element>, di::InPlaceType<X>,
-                                                     di::InPlaceIndex<0>);
+                                                     di::Constexpr<0zu>);
 
     template<di::concepts::DecaySameAs<X> Self>
-    constexpr friend di::meta::Like<Self, int> tag_invoke(di::Tag<di::util::get_in_place>, di::InPlaceIndex<0>,
+    constexpr friend di::meta::Like<Self, int> tag_invoke(di::Tag<di::util::get_in_place>, di::Constexpr<0zu>,
                                                           Self&& self) {
         return di::util::forward_like<Self>(self.x);
     }

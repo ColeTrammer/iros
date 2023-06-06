@@ -12,7 +12,9 @@
 #include <di/function/index_dispatch.h>
 #include <di/math/smallest_unsigned_type.h>
 #include <di/meta/add_member_get.h>
+#include <di/meta/constexpr.h>
 #include <di/meta/list/prelude.h>
+#include <di/meta/remove_cvref.h>
 #include <di/util/forward.h>
 #include <di/util/get.h>
 #include <di/util/initializer_list.h>
@@ -82,7 +84,7 @@ public:
     constexpr Variant()
     requires(concepts::DefaultConstructible<meta::Front<List>>)
     {
-        do_emplace(in_place_index<0>);
+        do_emplace(c_<0zu>);
     }
 
     constexpr Variant(Variant const& other)
@@ -90,8 +92,8 @@ public:
     {
         function::index_dispatch<void, meta::Size<List>>(
             other.index(),
-            []<size_t index>(InPlaceIndex<index>, Variant& self, Variant const& other) {
-                self.do_emplace(in_place_index<index>, util::get<index>(other));
+            []<size_t index>(Constexpr<index>, Variant& self, Variant const& other) {
+                self.do_emplace(c_<index>, util::get<index>(other));
             },
             *this, other);
     }
@@ -101,41 +103,41 @@ public:
     {
         function::index_dispatch<void, meta::Size<List>>(
             other.index(),
-            []<size_t index>(InPlaceIndex<index>, Variant& self, Variant&& other) {
-                self.do_emplace(in_place_index<index>, util::get<index>(util::move(other)));
+            []<size_t index>(Constexpr<index>, Variant& self, Variant&& other) {
+                self.do_emplace(c_<index>, util::get<index>(util::move(other)));
             },
             *this, util::move(other));
     }
 
     template<typename U>
-    requires(!concepts::RemoveCVRefSameAs<U, Variant> && !concepts::InstanceOf<U, InPlaceType> &&
-             !concepts::InstanceOfV<U, InPlaceIndex> && concepts::Invocable<Selector<U>, U> &&
+    requires(!concepts::RemoveCVRefSameAs<U, Variant> && !concepts::InstanceOf<meta::RemoveCVRef<U>, InPlaceType> &&
+             !concepts::Constexpr<meta::RemoveCVRef<U>> && concepts::Invocable<Selector<U>, U> &&
              concepts::ConstructibleFrom<meta::InvokeResult<Selector<U>, U>, U>)
     constexpr Variant(U&& value)
         : Variant(in_place_type<meta::InvokeResult<Selector<U>, U>>, util::forward<U>(value)) {}
 
     template<size_t index, typename... Args, typename T = meta::At<List, index>>
     requires(concepts::ConstructibleFrom<T, Args...>)
-    constexpr explicit Variant(InPlaceIndex<index>, Args&&... args) {
-        do_emplace(in_place_index<index>, util::forward<Args>(args)...);
+    constexpr explicit Variant(Constexpr<index>, Args&&... args) {
+        do_emplace(c_<index>, util::forward<Args>(args)...);
     }
 
     template<size_t index, typename U, typename... Args, typename T = meta::At<List, index>>
     requires(concepts::ConstructibleFrom<T, std::initializer_list<U>, Args...>)
-    constexpr explicit Variant(InPlaceIndex<index>, std::initializer_list<U> list, Args&&... args) {
-        do_emplace(in_place_index<index>, list, util::forward<Args>(args)...);
+    constexpr explicit Variant(Constexpr<index>, std::initializer_list<U> list, Args&&... args) {
+        do_emplace(c_<index>, list, util::forward<Args>(args)...);
     }
 
     template<typename T, typename... Args, auto index = meta::Lookup<T, List>>
     requires(meta::UniqueType<T, List> && concepts::ConstructibleFrom<T, Args...>)
     constexpr explicit Variant(InPlaceType<T>, Args&&... args) {
-        do_emplace(in_place_index<index>, util::forward<Args>(args)...);
+        do_emplace(c_<index>, util::forward<Args>(args)...);
     }
 
     template<typename T, typename U, typename... Args, auto index = meta::Lookup<T, List>>
     requires(meta::UniqueType<T, List> && concepts::ConstructibleFrom<T, std::initializer_list<U>, Args...>)
     constexpr explicit Variant(InPlaceType<T>, std::initializer_list<U> list, Args&&... args) {
-        do_emplace(in_place_index<index>, list, util::forward<Args>(args)...);
+        do_emplace(c_<index>, list, util::forward<Args>(args)...);
     }
 
     template<typename... Other>
@@ -143,8 +145,8 @@ public:
              requires { requires concepts::Conjunction<concepts::ConstructibleFrom<Types, Other const&>...>; })
     constexpr explicit(!concepts::Conjunction<concepts::ConvertibleTo<Other const&, Types>...>)
         Variant(Variant<Other...> const& other) {
-        function::index_dispatch<void, sizeof...(Types)>(other.index(), [&]<size_t index>(InPlaceIndex<index>) {
-            do_emplace(in_place_index<index>, util::get<index>(other));
+        function::index_dispatch<void, sizeof...(Types)>(other.index(), [&]<size_t index>(Constexpr<index>) {
+            do_emplace(c_<index>, util::get<index>(other));
         });
     }
 
@@ -153,8 +155,8 @@ public:
              requires { requires concepts::Conjunction<concepts::ConstructibleFrom<Types, Other>...>; })
     constexpr explicit(!concepts::Conjunction<concepts::ConvertibleTo<Other, Types>...>)
         Variant(Variant<Other...>&& other) {
-        function::index_dispatch<void, sizeof...(Types)>(other.index(), [&]<size_t index>(InPlaceIndex<index>) {
-            do_emplace(in_place_index<index>, util::get<index>(util::move(other)));
+        function::index_dispatch<void, sizeof...(Types)>(other.index(), [&]<size_t index>(Constexpr<index>) {
+            do_emplace(c_<index>, util::get<index>(util::move(other)));
         });
     }
 
@@ -164,8 +166,8 @@ public:
     requires(!trivially_copy_assignable && copyable)
     {
         destroy();
-        function::index_dispatch<void, sizeof...(Types)>(other.index(), [&]<size_t index>(InPlaceIndex<index>) {
-            do_emplace(in_place_index<index>, util::get<index>(other));
+        function::index_dispatch<void, sizeof...(Types)>(other.index(), [&]<size_t index>(Constexpr<index>) {
+            do_emplace(c_<index>, util::get<index>(other));
         });
         return *this;
     }
@@ -174,15 +176,15 @@ public:
     requires(!trivially_move_assignable && movable)
     {
         destroy();
-        function::index_dispatch<void, sizeof...(Types)>(other.index(), [&]<size_t index>(InPlaceIndex<index>) {
-            do_emplace(in_place_index<index>, util::get<index>(util::move(other)));
+        function::index_dispatch<void, sizeof...(Types)>(other.index(), [&]<size_t index>(Constexpr<index>) {
+            do_emplace(c_<index>, util::get<index>(util::move(other)));
         });
         return *this;
     }
 
     template<typename U>
-    requires(!concepts::RemoveCVRefSameAs<U, Variant> && !concepts::InstanceOf<U, InPlaceType> &&
-             !concepts::InstanceOfV<U, InPlaceIndex> && concepts::Invocable<Selector<U>, U> &&
+    requires(!concepts::RemoveCVRefSameAs<U, Variant> && !concepts::InstanceOf<meta::RemoveCVRef<U>, InPlaceType> &&
+             !concepts::Constexpr<meta::RemoveCVRef<U>> && concepts::Invocable<Selector<U>, U> &&
              concepts::ConstructibleFrom<meta::InvokeResult<Selector<U>, U>, U>)
     constexpr Variant& operator=(U&& value) {
         this->template emplace<meta::InvokeResult<Selector<U>, U>>(util::forward<U>(value));
@@ -195,28 +197,28 @@ public:
     requires(concepts::ConstructibleFrom<T, Args...>)
     constexpr T& emplace(Args&&... args) {
         destroy();
-        return do_emplace(in_place_index<index>, util::forward<Args>(args)...);
+        return do_emplace(c_<index>, util::forward<Args>(args)...);
     }
 
     template<size_t index, typename U, typename... Args, typename T = meta::At<List, index>>
     requires(concepts::ConstructibleFrom<T, std::initializer_list<U>, Args...>)
     constexpr T& emplace(std::initializer_list<U> list, Args&&... args) {
         destroy();
-        return do_emplace(in_place_index<index>, list, util::forward<Args>(args)...);
+        return do_emplace(c_<index>, list, util::forward<Args>(args)...);
     }
 
     template<typename T, typename... Args, auto index = meta::Lookup<T, List>>
     requires(meta::UniqueType<T, List> && concepts::ConstructibleFrom<T, Args...>)
     constexpr T& emplace(Args&&... args) {
         destroy();
-        return do_emplace(in_place_index<index>, util::forward<Args>(args)...);
+        return do_emplace(c_<index>, util::forward<Args>(args)...);
     }
 
     template<typename T, typename U, typename... Args, auto index = meta::Lookup<T, List>>
     requires(meta::UniqueType<T, List> && concepts::ConstructibleFrom<T, std::initializer_list<U>, Args...>)
     constexpr T& emplace(std::initializer_list<U> list, Args&&... args) {
         destroy();
-        return do_emplace(in_place_index<index>, list, util::forward<Args>(args)...);
+        return do_emplace(c_<index>, list, util::forward<Args>(args)...);
     }
 
 private:
@@ -227,7 +229,7 @@ private:
         if (a.index() != b.index()) {
             return false;
         }
-        return function::index_dispatch<bool, sizeof...(Types)>(a.index(), [&]<size_t index>(InPlaceIndex<index>) {
+        return function::index_dispatch<bool, sizeof...(Types)>(a.index(), [&]<size_t index>(Constexpr<index>) {
             return util::get<index>(a) == util::get<index>(b);
         });
     }
@@ -241,20 +243,20 @@ private:
             return Result(result);
         }
         return function::index_dispatch<Result, sizeof...(Types)>(
-            a.index(), [&]<size_t index>(InPlaceIndex<index>) -> Result {
+            a.index(), [&]<size_t index>(Constexpr<index>) -> Result {
                 return util::get<index>(a) <=> util::get<index>(b);
             });
     }
 
     template<size_t index, concepts::DerivedFrom<Variant> Self = Variant>
     constexpr friend meta::At<List, index> tag_invoke(types::Tag<variant_alternative>, InPlaceType<Self>,
-                                                      InPlaceIndex<index>) {
+                                                      Constexpr<index>) {
         return {};
     }
 
     template<size_t index, concepts::DerivedFrom<Variant> Self = Variant>
     constexpr friend meta::At<List, index> const tag_invoke(types::Tag<variant_alternative>, InPlaceType<Self const>,
-                                                            InPlaceIndex<index>) {
+                                                            Constexpr<index>) {
         return {};
     }
 
@@ -266,9 +268,9 @@ private:
     template<size_t index, typename Self = Variant>
     requires(concepts::DerivedFrom<meta::RemoveCVRef<Self>, Variant>)
     constexpr friend meta::Like<Self, meta::At<List, index>>&& tag_invoke(types::Tag<util::get_in_place>,
-                                                                          InPlaceIndex<index>, Self&& self) {
+                                                                          Constexpr<index>, Self&& self) {
         DI_ASSERT(index == self.m_index);
-        return Impl::static_get(in_place_index<index>, util::forward<Self>(self).m_impl);
+        return Impl::static_get(c_<index>, util::forward<Self>(self).m_impl);
     }
 
     template<typename T, typename Self = Variant>
@@ -276,7 +278,7 @@ private:
     constexpr friend meta::Like<Self, T>&& tag_invoke(types::Tag<util::get_in_place>, InPlaceType<T>, Self&& self) {
         constexpr auto index = meta::Lookup<T, List>;
         DI_ASSERT(index == self.m_index);
-        return Impl::static_get(in_place_index<index>, util::forward<Self>(self).m_impl);
+        return Impl::static_get(c_<index>, util::forward<Self>(self).m_impl);
     }
 
     template<concepts::DerivedFrom<Variant> Self = Variant>
@@ -291,22 +293,22 @@ private:
     constexpr void destroy() {
         function::index_dispatch<void, meta::Size<List>>(
             this->index(),
-            []<size_t index>(InPlaceIndex<index>, Impl& impl) {
-                impl.destroy_impl(in_place_index<index>);
+            []<size_t index>(Constexpr<index>, Impl& impl) {
+                impl.destroy_impl(c_<index>);
             },
             m_impl);
     }
 
     template<size_t index, typename... Args>
-    constexpr decltype(auto) do_emplace(InPlaceIndex<index>, Args&&... args) {
+    constexpr decltype(auto) do_emplace(Constexpr<index>, Args&&... args) {
         m_index = index;
-        return m_impl.emplace_impl(in_place_index<index>, util::forward<Args>(args)...);
+        return m_impl.emplace_impl(c_<index>, util::forward<Args>(args)...);
     }
 
     template<size_t index, typename U, typename... Args>
-    constexpr decltype(auto) do_emplace(InPlaceIndex<index>, std::initializer_list<U> list, Args&&... args) {
+    constexpr decltype(auto) do_emplace(Constexpr<index>, std::initializer_list<U> list, Args&&... args) {
         m_index = index;
-        return m_impl.emplace_impl(in_place_index<index>, list, util::forward<Args>(args)...);
+        return m_impl.emplace_impl(c_<index>, list, util::forward<Args>(args)...);
     }
 
     Impl m_impl;

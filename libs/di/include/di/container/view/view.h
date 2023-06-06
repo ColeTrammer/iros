@@ -20,6 +20,7 @@
 #include <di/container/meta/iterator_ssize_type.h>
 #include <di/container/view/view_interface.h>
 #include <di/meta/add_member_get.h>
+#include <di/meta/constexpr.h>
 #include <di/meta/like.h>
 #include <di/util/forward_like.h>
 #include <di/util/move.h>
@@ -126,26 +127,24 @@ public:
 
 private:
     constexpr friend InPlaceType<Iter> tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View>,
-                                                  types::InPlaceIndex<0>) {}
+                                                  Constexpr<0zu>) {}
     constexpr friend InPlaceType<Sent> tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<View>,
-                                                  types::InPlaceIndex<1>) {}
+                                                  Constexpr<1zu>) {}
 
     constexpr friend InPlaceType<Iter const> tag_invoke(types::Tag<vocab::tuple_element>,
-                                                        types::InPlaceType<View const>, types::InPlaceIndex<0>) {}
+                                                        types::InPlaceType<View const>, Constexpr<0zu>) {}
     constexpr friend InPlaceType<Sent const> tag_invoke(types::Tag<vocab::tuple_element>,
-                                                        types::InPlaceType<View const>, types::InPlaceIndex<1>) {}
+                                                        types::InPlaceType<View const>, Constexpr<1zu>) {}
 
     constexpr friend types::size_t tag_invoke(types::Tag<vocab::tuple_size>, types::InPlaceType<View>) { return 2; }
 
     template<concepts::DecaySameAs<View> Self>
-    constexpr friend meta::Like<Self, Iter> tag_invoke(types::Tag<util::get_in_place>, types::InPlaceIndex<0>,
-                                                       Self&& self) {
+    constexpr friend meta::Like<Self, Iter> tag_invoke(types::Tag<util::get_in_place>, Constexpr<0zu>, Self&& self) {
         return util::forward_like<Self>(self.m_iterator);
     }
 
     template<concepts::DecaySameAs<View> Self>
-    constexpr friend meta::Like<Self, Sent> tag_invoke(types::Tag<util::get_in_place>, types::InPlaceIndex<1>,
-                                                       Self&& self) {
+    constexpr friend meta::Like<Self, Sent> tag_invoke(types::Tag<util::get_in_place>, Constexpr<1zu>, Self&& self) {
         return util::forward_like<Self>(self.m_sentinel);
     }
 

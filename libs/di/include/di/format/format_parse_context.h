@@ -171,10 +171,10 @@ public:
             set_value(util::move(error));
         }
 
-        constexpr void set_value(View view) { m_parent->m_current_value.emplace(in_place_index<0>, view); }
+        constexpr void set_value(View view) { m_parent->m_current_value.emplace(c_<0zu>, view); }
         constexpr void set_value(Argument argument) {
             m_parent->m_current_format_string = argument.format_string;
-            m_parent->m_current_value.emplace(in_place_index<1>, argument);
+            m_parent->m_current_value.emplace(c_<1zu>, argument);
         }
         constexpr void set_value(Error error) { m_parent->m_current_value = Unexpected(util::move(error)); }
 

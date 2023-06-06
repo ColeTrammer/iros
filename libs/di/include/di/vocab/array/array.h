@@ -10,6 +10,7 @@
 #include <di/container/algorithm/fill.h>
 #include <di/container/algorithm/swap_ranges.h>
 #include <di/container/interface/reconstruct.h>
+#include <di/meta/constexpr.h>
 #include <di/types/size_t.h>
 #include <di/util/forward_like.h>
 #include <di/util/get_in_place.h>
@@ -201,17 +202,16 @@ private:
     template<types::size_t index>
     requires(index < extent)
     constexpr friend InPlaceType<T> tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<Array>,
-                                               types::InPlaceIndex<index>);
+                                               Constexpr<index>);
 
     template<types::size_t index>
     requires(index < extent)
     constexpr friend InPlaceType<T const> tag_invoke(types::Tag<vocab::tuple_element>, types::InPlaceType<Array const>,
-                                                     types::InPlaceIndex<index>);
+                                                     Constexpr<index>);
 
     template<concepts::DecaySameAs<Array> Self, types::size_t index>
     requires(index < extent)
-    constexpr friend decltype(auto) tag_invoke(types::Tag<util::get_in_place>, types::InPlaceIndex<index>,
-                                               Self&& self) {
+    constexpr friend decltype(auto) tag_invoke(types::Tag<util::get_in_place>, Constexpr<index>, Self&& self) {
         return util::forward_like<Self>(self.data()[index]);
     }
 };

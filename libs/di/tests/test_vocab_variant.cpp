@@ -5,7 +5,7 @@
 
 namespace vocab_variant {
 constexpr void basic() {
-    auto v = di::Variant<int, short, long>(di::in_place_index<1>, 1);
+    auto v = di::Variant<int, short, long>(di::c_<1zu>, 1);
     auto w = di::Variant<int, short, long>();
 
     auto s = di::get<1>(v);

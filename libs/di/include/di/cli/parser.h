@@ -6,6 +6,7 @@
 #include <di/container/algorithm/rotate.h>
 #include <di/container/string/string_view.h>
 #include <di/function/prelude.h>
+#include <di/meta/constexpr.h>
 
 namespace di::cli {
 namespace detail {
@@ -175,13 +176,13 @@ namespace detail {
 
     private:
         constexpr bool option_required(usize index) const {
-            return function::index_dispatch<bool, sizeof...(Options)>(index, [&]<usize i>(InPlaceIndex<i>) {
+            return function::index_dispatch<bool, sizeof...(Options)>(index, [&]<usize i>(Constexpr<i>) {
                 return util::get<i>(m_options).required();
             });
         }
 
         constexpr bool option_boolean(usize index) const {
-            return function::index_dispatch<bool, sizeof...(Options)>(index, [&]<usize i>(InPlaceIndex<i>) {
+            return function::index_dispatch<bool, sizeof...(Options)>(index, [&]<usize i>(Constexpr<i>) {
                 return util::get<i>(m_options).boolean();
             });
         }
@@ -189,7 +190,7 @@ namespace detail {
         constexpr Result<void> option_parse(usize index, Span<bool> seen_arguments, Base* output,
                                             Optional<TransparentStringView> input) const {
             return function::index_dispatch<Result<void>, sizeof...(Options)>(index,
-                                                                              [&]<usize i>(InPlaceIndex<i>) {
+                                                                              [&]<usize i>(Constexpr<i>) {
                                                                                   return util::get<i>(m_options).parse(
                                                                                       output, input);
                                                                               }) |
@@ -199,13 +200,13 @@ namespace detail {
         }
 
         constexpr bool argument_variadic(usize index) const {
-            return function::index_dispatch<bool, sizeof...(Arguments)>(index, [&]<usize i>(InPlaceIndex<i>) {
+            return function::index_dispatch<bool, sizeof...(Arguments)>(index, [&]<usize i>(Constexpr<i>) {
                 return util::get<i>(m_arguments).variadic();
             });
         }
 
         constexpr Result<void> argument_parse(usize index, Base* output, Span<TransparentStringView> input) const {
-            return function::index_dispatch<Result<void>, sizeof...(Arguments)>(index, [&]<usize i>(InPlaceIndex<i>) {
+            return function::index_dispatch<Result<void>, sizeof...(Arguments)>(index, [&]<usize i>(Constexpr<i>) {
                 return util::get<i>(m_arguments).parse(output, input);
             });
         }

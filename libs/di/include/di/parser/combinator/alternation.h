@@ -2,6 +2,7 @@
 
 #include <di/function/overload.h>
 #include <di/function/ycombinator.h>
+#include <di/meta/constexpr.h>
 #include <di/parser/concepts/parser.h>
 #include <di/parser/concepts/parser_context.h>
 #include <di/vocab/prelude.h>
@@ -30,7 +31,7 @@ namespace detail {
                                                             Void, meta::ParserValue<Context, Parsers>>...>>,
                 Context>;
 
-            auto process_index = function::ycombinator([&]<size_t index>(auto& self, InPlaceIndex<index>) -> Result {
+            auto process_index = function::ycombinator([&]<size_t index>(auto& self, Constexpr<index>) -> Result {
                 if constexpr (index >= sizeof...(Parsers)) {
                     return Result(Unexpected(context.make_error()));
                 } else {
@@ -38,18 +39,18 @@ namespace detail {
                         decltype(util::get<index>(util::declval<Tuple<Parsers...> const&>()).parse(context))>;
                     auto result = util::get<index>(m_parsers).parse(context);
                     if (!result) {
-                        return self(in_place_index<index + 1>);
+                        return self(c_<index + 1>);
                     } else if constexpr (should_be_void) {
                         return Result();
                     } else if constexpr (concepts::LanguageVoid<Value>) {
-                        return Result(in_place, in_place_index<index>);
+                        return Result(in_place, c_<index>);
                     } else {
-                        return Result(in_place, in_place_index<index>, util::move(result).value());
+                        return Result(in_place, c_<index>, util::move(result).value());
                     }
                 }
             });
 
-            return process_index(in_place_index<0>);
+            return process_index(c_<0zu>);
         }
 
         Tuple<Parsers...> m_parsers;

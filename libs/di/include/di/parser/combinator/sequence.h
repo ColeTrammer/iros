@@ -2,6 +2,7 @@
 
 #include <di/function/overload.h>
 #include <di/function/ycombinator.h>
+#include <di/meta/constexpr.h>
 #include <di/parser/concepts/parser.h>
 #include <di/parser/concepts/parser_context.h>
 #include <di/vocab/prelude.h>
@@ -33,27 +34,26 @@ namespace detail {
                                                                                util::forward<Types>(values)...);
                 });
 
-            auto process_index = function::ycombinator(
-                [&]<size_t index, typename... Types>(auto& self, InPlaceIndex<index>, Types&&... values) {
-                    if constexpr (index >= sizeof...(Parsers)) {
-                        return make_result(util::forward<Types>(values)...);
+            auto process_index = function::ycombinator([&]<size_t index, typename... Types>(
+                                                           auto& self, Constexpr<index>, Types&&... values) {
+                if constexpr (index >= sizeof...(Parsers)) {
+                    return make_result(util::forward<Types>(values)...);
+                } else {
+                    using Value = meta::ExpectedValue<
+                        decltype(util::get<index>(util::declval<Tuple<Parsers...> const&>()).parse(context))>;
+                    if constexpr (concepts::LanguageVoid<Value>) {
+                        return util::get<index>(m_parsers).parse(context).and_then([&] {
+                            return self(c_<index + 1>, util::forward<Types>(values)...);
+                        });
                     } else {
-                        using Value = meta::ExpectedValue<
-                            decltype(util::get<index>(util::declval<Tuple<Parsers...> const&>()).parse(context))>;
-                        if constexpr (concepts::LanguageVoid<Value>) {
-                            return util::get<index>(m_parsers).parse(context).and_then([&] {
-                                return self(in_place_index<index + 1>, util::forward<Types>(values)...);
-                            });
-                        } else {
-                            return util::get<index>(m_parsers).parse(context).and_then([&](Value&& value) {
-                                return self(in_place_index<index + 1>, util::forward<Types>(values)...,
-                                            util::forward<Value>(value));
-                            });
-                        }
+                        return util::get<index>(m_parsers).parse(context).and_then([&](Value&& value) {
+                            return self(c_<index + 1>, util::forward<Types>(values)..., util::forward<Value>(value));
+                        });
                     }
-                });
+                }
+            });
 
-            return process_index(in_place_index<0>);
+            return process_index(c_<0zu>);
         }
 
         Tuple<Parsers...> m_parsers;

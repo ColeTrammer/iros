@@ -24,6 +24,7 @@
 #include <di/container/meta/enable_view.h>
 #include <di/container/meta/iterator_reference.h>
 #include <di/meta/add_member_get.h>
+#include <di/meta/constexpr.h>
 #include <di/meta/remove_cvref.h>
 #include <di/meta/remove_reference.h>
 #include <di/types/size_t.h>
@@ -213,19 +214,18 @@ private:
 
     template<types::size_t index>
     requires(index < extent)
-    constexpr friend InPlaceType<T> tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Span>,
-                                               types::InPlaceIndex<index>);
+    constexpr friend InPlaceType<T> tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Span>, Constexpr<index>);
 
     template<types::size_t index>
     requires(index < extent)
     constexpr friend InPlaceType<T> tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Span const>,
-                                               types::InPlaceIndex<index>);
+                                               Constexpr<index>);
 
     constexpr friend types::size_t tag_invoke(types::Tag<tuple_size>, types::InPlaceType<Span>) { return extent; }
 
     template<types::size_t index>
     requires(index < extent)
-    constexpr friend T& tag_invoke(types::Tag<util::get_in_place>, types::InPlaceIndex<index>, Span self) {
+    constexpr friend T& tag_invoke(types::Tag<util::get_in_place>, Constexpr<index>, Span self) {
         return self[index];
     }
 

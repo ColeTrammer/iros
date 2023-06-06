@@ -246,13 +246,31 @@ struct Constexpr {
     }
 };
 
-/// @brief A value of type `Constexpr<val>`
+/// @brief A value of type `Constexpr<val>`.
 ///
-/// @tparam val The value of the `Constexpr`
+/// @tparam val The value of the `Constexpr`.
 ///
 /// @see Constexpr
 template<auto val>
 constexpr inline auto c_ = Constexpr<val> {};
+}
+
+namespace di::concepts {
+namespace detail {
+    template<typename T>
+    constexpr inline bool constexpr_helper = false;
+
+    template<auto val, typename T>
+    constexpr inline bool constexpr_helper<meta::Constexpr<val, T>> = true;
+}
+
+/// @brief Checks if `T` is a `Constexpr` instance.
+///
+/// @tparam T The type to check.
+///
+/// @see Constexpr
+template<typename T>
+concept Constexpr = detail::constexpr_helper<T>;
 }
 
 namespace di {

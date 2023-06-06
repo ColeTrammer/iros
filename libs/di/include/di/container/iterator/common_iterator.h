@@ -18,8 +18,8 @@ public:
     requires(concepts::DefaultInitializable<Iter>)
     = default;
 
-    constexpr CommonIterator(Iter it) : m_state(in_place_index<0>, util::move(it)) {}
-    constexpr CommonIterator(Sent sent) : m_state(in_place_index<1>, util::move(sent)) {}
+    constexpr CommonIterator(Iter it) : m_state(c_<0zu>, util::move(it)) {}
+    constexpr CommonIterator(Sent sent) : m_state(c_<1zu>, util::move(sent)) {}
 
     template<typename It, typename St>
     requires(concepts::ConvertibleTo<It const&, Iter> && concepts::ConvertibleTo<St const&, Sent>)

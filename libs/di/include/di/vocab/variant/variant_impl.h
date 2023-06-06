@@ -2,6 +2,7 @@
 
 #include <di/concepts/disjunction.h>
 #include <di/concepts/remove_cvref_same_as.h>
+#include <di/meta/constexpr.h>
 #include <di/meta/like.h>
 #include <di/types/prelude.h>
 #include <di/util/forward.h>
@@ -29,34 +30,34 @@ public:
     {}
 
     template<concepts::RemoveCVRefSameAs<VariantImpl> Self>
-    constexpr static meta::Like<Self, T>&& static_get(InPlaceIndex<0>, Self&& self) {
+    constexpr static meta::Like<Self, T>&& static_get(Constexpr<0zu>, Self&& self) {
         return util::forward<Self>(self).m_value.value();
     }
 
     template<concepts::RemoveCVRefSameAs<VariantImpl> Self, size_t index>
     requires(index != 0)
-    constexpr static decltype(auto) static_get(InPlaceIndex<index>, Self&& self) {
-        return VariantImpl<Rest...>::static_get(in_place_index<index - 1>, util::forward<Self>(self).m_rest);
+    constexpr static decltype(auto) static_get(Constexpr<index>, Self&& self) {
+        return VariantImpl<Rest...>::static_get(c_<index - 1>, util::forward<Self>(self).m_rest);
     }
 
-    constexpr void destroy_impl(InPlaceIndex<0>) { util::destroy_at(util::addressof(m_value)); }
+    constexpr void destroy_impl(Constexpr<0zu>) { util::destroy_at(util::addressof(m_value)); }
 
     template<size_t index>
-    constexpr void destroy_impl(InPlaceIndex<index>) {
-        return m_rest.destroy_impl(in_place_index<index - 1>);
+    constexpr void destroy_impl(Constexpr<index>) {
+        return m_rest.destroy_impl(c_<index - 1>);
     }
 
     template<typename... Args>
-    constexpr T& emplace_impl(InPlaceIndex<0>, Args&&... args) {
+    constexpr T& emplace_impl(Constexpr<0zu>, Args&&... args) {
         util::construct_at(util::addressof(m_value), in_place, util::forward<Args>(args)...);
         return m_value.value();
     }
 
     template<size_t index, typename... Args>
     requires(index != 0)
-    constexpr decltype(auto) emplace_impl(InPlaceIndex<index>, Args&&... args) {
+    constexpr decltype(auto) emplace_impl(Constexpr<index>, Args&&... args) {
         util::construct_at(util::addressof(m_rest));
-        return m_rest.emplace_impl(in_place_index<index - 1>, util::forward<Args>(args)...);
+        return m_rest.emplace_impl(c_<index - 1>, util::forward<Args>(args)...);
     }
 
 private:
@@ -83,14 +84,14 @@ public:
     {}
 
     template<concepts::RemoveCVRefSameAs<VariantImpl> Self>
-    constexpr static meta::Like<Self, T>&& static_get(InPlaceIndex<0>, Self&& self) {
+    constexpr static meta::Like<Self, T>&& static_get(Constexpr<0zu>, Self&& self) {
         return util::forward<Self>(self).m_value.value();
     }
 
-    constexpr void destroy_impl(InPlaceIndex<0>) { util::destroy_at(util::addressof(m_value)); }
+    constexpr void destroy_impl(Constexpr<0zu>) { util::destroy_at(util::addressof(m_value)); }
 
     template<typename... Args>
-    constexpr T& emplace_impl(InPlaceIndex<0>, Args&&... args) {
+    constexpr T& emplace_impl(Constexpr<0zu>, Args&&... args) {
         util::construct_at(util::addressof(m_value), in_place, util::forward<Args>(args)...);
         return m_value.value();
     }

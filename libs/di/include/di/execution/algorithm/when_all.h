@@ -32,6 +32,7 @@
 #include <di/function/tag_invoke.h>
 #include <di/math/smallest_unsigned_type.h>
 #include <di/meta/conditional.h>
+#include <di/meta/constexpr.h>
 #include <di/meta/decay.h>
 #include <di/meta/index_sequence.h>
 #include <di/meta/like.h>
@@ -148,7 +149,7 @@ namespace when_all_ns {
             explicit Type(Rec out_r_) : out_r(util::move(out_r_)) {}
 
             template<usize index, typename... Types>
-            void report_value(InPlaceIndex<index>, Types&&... values) {
+            void report_value(Constexpr<index>, Types&&... values) {
                 if constexpr (never_sends_value<Env, Sends...>) {
                     ((void) values, ...);
                 } else {
@@ -264,7 +265,7 @@ namespace when_all_ns {
 
             template<typename... Types>
             friend void tag_invoke(types::Tag<execution::set_value>, Type&& self, Types&&... values) {
-                self.data->report_value(in_place_index<index>, util::forward<Types>(values)...);
+                self.data->report_value(c_<index>, util::forward<Types>(values)...);
             }
 
             template<typename E>

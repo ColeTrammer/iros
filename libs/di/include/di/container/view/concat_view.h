@@ -10,6 +10,7 @@
 #include <di/container/view/take.h>
 #include <di/container/view/view_interface.h>
 #include <di/function/minus.h>
+#include <di/meta/constexpr.h>
 #include <di/meta/maybe_const.h>
 #include <di/vocab/tuple/prelude.h>
 #include <di/vocab/variant/prelude.h>
@@ -177,7 +178,7 @@ private:
         }
 
         constexpr void advance_one() {
-            function::index_dispatch<void, sizeof...(Views)>(m_base.index(), [&]<size_t i>(InPlaceIndex<i>) {
+            function::index_dispatch<void, sizeof...(Views)>(m_base.index(), [&]<size_t i>(Constexpr<i>) {
                 ++util::get<i>(m_base);
                 this->template satisfy<i>();
             });
@@ -186,7 +187,7 @@ private:
         constexpr void back_one()
         requires(detail::ConcatBidirectional<meta::MaybeConst<is_const, Views>...>)
         {
-            function::index_dispatch<void, sizeof...(Views)>(m_base.index(), [&]<size_t i>(InPlaceIndex<i>) {
+            function::index_dispatch<void, sizeof...(Views)>(m_base.index(), [&]<size_t i>(Constexpr<i>) {
                 this->template prev<i>();
             });
         }
@@ -194,7 +195,7 @@ private:
         constexpr void advance_n(SSizeType n)
         requires(detail::ConcatRandomAccess<meta::MaybeConst<is_const, Views>...>)
         {
-            function::index_dispatch<void, sizeof...(Views)>(m_base.index(), [&]<size_t i>(InPlaceIndex<i>) {
+            function::index_dispatch<void, sizeof...(Views)>(m_base.index(), [&]<size_t i>(Constexpr<i>) {
                 if (n > 0) {
                     this->template advance_fwd<i>(
                         util::get<i>(m_base) - container::begin(util::get<i>(m_parent->m_views)), n);
@@ -241,12 +242,12 @@ private:
 
                 auto b_to_a = container::sum(sizes | view::drop(bi + 1) | view::take(ai - bi - 1));
                 auto b_to_its_end =
-                    function::index_dispatch<SSizeType, sizeof...(Views)>(bi, [&]<size_t index>(InPlaceIndex<index>) {
+                    function::index_dispatch<SSizeType, sizeof...(Views)>(bi, [&]<size_t index>(Constexpr<index>) {
                         return sizes[index] -
                                (util::get<index>(b.m_base) - container::begin(util::get<index>(m_parent->m_views)));
                     });
                 auto a_to_its_start =
-                    function::index_dispatch<SSizeType, sizeof...(Views)>(ai, [&]<size_t index>(InPlaceIndex<index>) {
+                    function::index_dispatch<SSizeType, sizeof...(Views)>(ai, [&]<size_t index>(Constexpr<index>) {
                         return util::get<index>(this->m_base) - container::begin(util::get<index>(m_parent->m_views));
                     });
 
@@ -254,10 +255,9 @@ private:
             } else if (ai < bi) {
                 return b.distance_from(*this);
             } else {
-                return function::index_dispatch<SSizeType, sizeof...(Views)>(
-                    ai, [&]<size_t index>(InPlaceIndex<index>) {
-                        return util::get<index>(this->m_base) - util::get<index>(b.m_base);
-                    });
+                return function::index_dispatch<SSizeType, sizeof...(Views)>(ai, [&]<size_t index>(Constexpr<index>) {
+                    return util::get<index>(this->m_base) - util::get<index>(b.m_base);
+                });
             }
         }
 
@@ -271,7 +271,7 @@ private:
             auto index = m_base.index();
             auto rest_to_end = container::sum(sizes | view::drop(index + 1));
             auto current_to_its_end =
-                function::index_dispatch<SSizeType, sizeof...(Views)>(index, [&]<size_t index>(InPlaceIndex<index>) {
+                function::index_dispatch<SSizeType, sizeof...(Views)>(index, [&]<size_t index>(Constexpr<index>) {
                     return sizes[index] -
                            (util::get<index>(m_base) - container::begin(util::get<index>(m_parent->m_views)));
                 });
@@ -322,7 +322,7 @@ public:
     constexpr auto begin()
     requires(!concepts::Conjunction<concepts::SimpleView<Views>...>)
     {
-        auto it = Iterator<false>(this, in_place_index<0>, container::begin(util::get<0>(m_views)));
+        auto it = Iterator<false>(this, c_<0zu>, container::begin(util::get<0>(m_views)));
         it.template satisfy<0>();
         return it;
     }
@@ -330,7 +330,7 @@ public:
     constexpr auto begin() const
     requires(concepts::Conjunction<concepts::Container<Views const>...> && detail::Concatable<Views const...>)
     {
-        auto it = Iterator<true>(this, in_place_index<0>, container::begin(util::get<0>(m_views)));
+        auto it = Iterator<true>(this, c_<0zu>, container::begin(util::get<0>(m_views)));
         it.template satisfy<0>();
         return it;
     }
@@ -340,7 +340,7 @@ public:
     {
         if constexpr (concepts::CommonContainer<meta::Back<meta::List<Views...>>>) {
             constexpr auto N = sizeof...(Views);
-            return Iterator<false>(this, in_place_index<N - 1>, container::end(util::get<N - 1>(m_views)));
+            return Iterator<false>(this, c_<N - 1>, container::end(util::get<N - 1>(m_views)));
         } else {
             return default_sentinel;
         }
@@ -351,7 +351,7 @@ public:
     {
         if constexpr (concepts::CommonContainer<meta::Back<meta::List<Views const...>>>) {
             constexpr auto N = sizeof...(Views);
-            return Iterator<true>(this, in_place_index<N - 1>, container::end(util::get<N - 1>(m_views)));
+            return Iterator<true>(this, c_<N - 1>, container::end(util::get<N - 1>(m_views)));
         } else {
             return default_sentinel;
         }
