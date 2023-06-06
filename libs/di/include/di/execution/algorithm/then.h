@@ -10,6 +10,7 @@
 #include <di/execution/meta/connect_result.h>
 #include <di/execution/meta/make_completion_signatures.h>
 #include <di/execution/query/get_completion_scheduler.h>
+#include <di/execution/query/make_env.h>
 #include <di/execution/receiver/receiver_adaptor.h>
 #include <di/function/curry_back.h>
 #include <di/function/invoke.h>
@@ -116,12 +117,12 @@ namespace then_ns {
             }
 
             template<concepts::DecaysTo<Type> Self, typename Env>
-            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env)
-                -> meta::MakeCompletionSignatures<meta::Like<Self, Send>, Env, types::CompletionSignatures<>,
+            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env&&)
+                -> meta::MakeCompletionSignatures<meta::Like<Self, Send>, MakeEnv<Env>, types::CompletionSignatures<>,
                                                   SetValueCompletions>;
 
-            constexpr friend decltype(auto) tag_invoke(types::Tag<get_env>, Type const& self) {
-                return get_env(self.sender);
+            constexpr friend auto tag_invoke(types::Tag<get_env>, Type const& self) {
+                return make_env(get_env(self.sender));
             }
         };
     };

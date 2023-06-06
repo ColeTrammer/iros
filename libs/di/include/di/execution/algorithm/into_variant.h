@@ -49,12 +49,13 @@ namespace into_variant_ns {
 
         private:
             template<concepts::DecaysTo<Type> Self, typename Env>
-            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env)
-                -> meta::MakeCompletionSignatures<meta::Like<Self, Send>, Env, CompletionSignatures<>,
-                                                  IntoVariantSetValue<meta::Like<Self, Send>, Env>::template Invoke>;
+            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env&&)
+                -> meta::MakeCompletionSignatures<
+                    meta::Like<Self, Send>, MakeEnv<Env>, CompletionSignatures<>,
+                    IntoVariantSetValue<meta::Like<Self, Send>, MakeEnv<Env>>::template Invoke>;
 
             template<concepts::DecaysTo<Type> Self, concepts::Receiver Rec,
-                     typename Value = IntoVariantType<meta::Like<Self, Send>, meta::EnvOf<Rec>>>
+                     typename Value = IntoVariantType<meta::Like<Self, Send>, MakeEnv<meta::EnvOf<Rec>>>>
             requires(concepts::DecayConstructible<meta::Like<Self, Send>> &&
                      concepts::SenderTo<meta::Like<Self, Send>, Receiver<Value, Rec>>)
             friend auto tag_invoke(types::Tag<connect>, Self&& self, Rec receiver) {
@@ -62,8 +63,8 @@ namespace into_variant_ns {
                                           Receiver<Value, Rec> { util::move(receiver) });
             }
 
-            constexpr friend decltype(auto) tag_invoke(types::Tag<get_env>, Type const& self) {
-                return get_env(self.sender);
+            constexpr friend auto tag_invoke(types::Tag<get_env>, Type const& self) {
+                return make_env(get_env(self.sender));
             }
         };
     };

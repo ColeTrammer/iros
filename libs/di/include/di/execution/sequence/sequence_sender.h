@@ -16,6 +16,7 @@
 #include <di/execution/meta/env_of.h>
 #include <di/execution/meta/make_completion_signatures.h>
 #include <di/execution/meta/stop_token_of.h>
+#include <di/execution/query/make_env.h>
 #include <di/execution/receiver/set_stopped.h>
 #include <di/execution/receiver/set_value.h>
 #include <di/execution/sequence/async_range.h>
@@ -167,7 +168,7 @@ struct ReceiverT {
             }
         }
 
-        friend decltype(auto) tag_invoke(types::Tag<get_env>, Type const& self) { return get_env(self.receiver); }
+        friend auto tag_invoke(types::Tag<get_env>, Type const& self) { return make_env(get_env(self.receiver)); }
     };
 };
 

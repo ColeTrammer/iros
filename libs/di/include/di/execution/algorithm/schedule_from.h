@@ -171,17 +171,18 @@ namespace schedule_from_ns {
 
         private:
             template<concepts::DecaysTo<Type> Self, typename Env>
-            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env)
+            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env&&)
                 -> meta::MakeCompletionSignatures<
-                    meta::Like<Self, Send>, Env,
-                    meta::MakeCompletionSignatures<meta::ScheduleResult<Sched>, Env, CompletionSignatures<>,
+                    meta::Like<Self, Send>, MakeEnv<Env>,
+                    meta::MakeCompletionSignatures<meta::ScheduleResult<Sched>, MakeEnv<Env>, CompletionSignatures<>,
                                                    meta::Id<CompletionSignatures<>>::template Invoke>>;
 
             template<concepts::DecaysTo<Type> Self, typename Rec>
             requires(concepts::DecayConstructible<meta::Like<Self, Send>> &&
                      concepts::SenderTo<
                          meta::Like<Self, Send>,
-                         Receiver<Rec, Sched, meta::CompletionSignaturesOf<meta::Like<Self, Send>, meta::EnvOf<Rec>>>>)
+                         Receiver<Rec, Sched,
+                                  meta::CompletionSignaturesOf<meta::Like<Self, Send>, MakeEnv<meta::EnvOf<Rec>>>>>)
             friend auto tag_invoke(types::Tag<connect>, Self&& self, Rec receiver) {
                 return OperationState<Send, Rec, Sched> { util::forward<Self>(self).scheduler, util::move(receiver),
                                                           util::forward<Self>(self).sender };

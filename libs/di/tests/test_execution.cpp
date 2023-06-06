@@ -221,9 +221,7 @@ static void inline_scheduler() {
     ASSERT_EQ(ex::sync_wait(di::move(work)), 42);
     ASSERT_EQ(ex::sync_wait(di::move(w2)), 42);
 
-    auto v = ex::on(scheduler, ex::just() | ex::let_value([] {
-                                   return ex::get_scheduler();
-                               }));
+    auto v = ex::on(scheduler, ex::get_scheduler());
     ASSERT_EQ(*ex::sync_wait(di::move(v)), scheduler);
 }
 

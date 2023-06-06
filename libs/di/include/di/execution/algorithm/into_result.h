@@ -12,6 +12,7 @@
 #include <di/execution/meta/env_of.h>
 #include <di/execution/meta/value_types_of.h>
 #include <di/execution/query/get_completion_signatures.h>
+#include <di/execution/query/make_env.h>
 #include <di/execution/receiver/receiver_adaptor.h>
 #include <di/execution/receiver/set_value.h>
 #include <di/execution/types/completion_signuatures.h>
@@ -106,11 +107,11 @@ namespace into_result_ns {
 
         private:
             template<concepts::DecaysTo<Type> Self, typename Env>
-            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env)
-                -> types::CompletionSignatures<SetValue(ResultType<Env, meta::Like<Self, Send>>)>;
+            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env&&)
+                -> types::CompletionSignatures<SetValue(ResultType<MakeEnv<Env>, meta::Like<Self, Send>>)>;
 
             template<concepts::DecaysTo<Type> Self, concepts::Receiver Rec,
-                     typename Value = ResultType<meta::EnvOf<Rec>, meta::Like<Self, Send>>>
+                     typename Value = ResultType<MakeEnv<meta::EnvOf<Rec>>, meta::Like<Self, Send>>>
             requires(concepts::DecayConstructible<meta::Like<Self, Send>> &&
                      concepts::SenderTo<meta::Like<Self, Send>, Receiver<Value, Rec>>)
             friend auto tag_invoke(types::Tag<connect>, Self&& self, Rec receiver) {
@@ -118,8 +119,8 @@ namespace into_result_ns {
                                           Receiver<Value, Rec> { util::move(receiver) });
             }
 
-            constexpr friend decltype(auto) tag_invoke(types::Tag<get_env>, Type const& self) {
-                return get_env(self.sender);
+            constexpr friend auto tag_invoke(types::Tag<get_env>, Type const& self) {
+                return make_env(get_env(self.sender));
             }
         };
     };

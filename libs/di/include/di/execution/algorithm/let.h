@@ -2,11 +2,17 @@
 
 #include <di/concepts/decays_to.h>
 #include <di/concepts/movable_value.h>
+#include <di/concepts/same_as.h>
 #include <di/execution/concepts/prelude.h>
+#include <di/execution/concepts/receiver.h>
+#include <di/execution/interface/connect.h>
 #include <di/execution/interface/get_env.h>
+#include <di/execution/meta/env_of.h>
 #include <di/execution/meta/prelude.h>
+#include <di/execution/query/make_env.h>
 #include <di/execution/receiver/prelude.h>
 #include <di/execution/types/prelude.h>
+#include <di/function/tag_invoke.h>
 #include <di/meta/decay.h>
 #include <di/meta/remove_cvref.h>
 #include <di/util/defer_construct.h>
@@ -92,7 +98,7 @@ namespace let_ns {
             }
 
             constexpr friend auto tag_invoke(types::Tag<get_env>, Type const& self) {
-                return get_env(self.data->out_r);
+                return make_env(get_env(self.data->out_r));
             }
         };
     };
@@ -105,7 +111,7 @@ namespace let_ns {
     struct OperationStateT {
         struct Type {
         private:
-            using Completions = meta::CompletionSignaturesOf<Send, meta::EnvOf<Rec>>;
+            using Completions = meta::CompletionSignaturesOf<Send, MakeEnv<meta::EnvOf<Rec>>>;
 
         public:
             explicit Type(Fun f, Rec out_r, Send&& sender)
@@ -153,22 +159,23 @@ namespace let_ns {
 
             template<concepts::DecaysTo<Type> Self, typename Env>
             friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env&&)
-                -> CompletionSignatures<Self, Env>;
+                -> CompletionSignatures<Self, MakeEnv<Env>>;
 
-            template<concepts::DecaysTo<Type> Self, typename Rec>
-            requires(
-                concepts::DecayConstructible<meta::Like<Self, Fun>> &&
-                concepts::SenderTo<
-                    meta::Like<Self, Send>,
-                    Receiver<CPO, Rec, Fun, meta::CompletionSignaturesOf<meta::Like<Self, Send>, meta::EnvOf<Rec>>>>)
-            friend auto tag_invoke(types::Tag<connect>, Self&& self, Rec receiver) {
+            template<concepts::DecaysTo<Type> Self, concepts::Receiver Rec,
+                     concepts::SameAs<types::Tag<connect>> Tag = types::Tag<connect>>
+            requires(concepts::DecayConstructible<meta::Like<Self, Fun>> &&
+                     concepts::SenderTo<
+                         meta::Like<Self, Send>,
+                         Receiver<CPO, Rec, Fun,
+                                  meta::CompletionSignaturesOf<meta::Like<Self, Send>, MakeEnv<meta::EnvOf<Rec>>>>>)
+            friend auto tag_invoke(Tag, Self&& self, Rec receiver) {
                 return OperationState<CPO, meta::Like<Self, Send>, Rec, Fun> { util::forward<Self>(self).function,
                                                                                util::move(receiver),
                                                                                util::forward<Self>(self).sender };
             }
 
-            constexpr friend decltype(auto) tag_invoke(types::Tag<get_env>, Type const& self) {
-                return get_env(self.sender);
+            constexpr friend auto tag_invoke(types::Tag<get_env>, Type const& self) {
+                return make_env(get_env(self.sender));
             }
         };
     };

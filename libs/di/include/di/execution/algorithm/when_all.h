@@ -24,6 +24,7 @@
 #include <di/execution/meta/value_types_of.h>
 #include <di/execution/query/get_completion_signatures.h>
 #include <di/execution/query/get_stop_token.h>
+#include <di/execution/query/make_env.h>
 #include <di/execution/receiver/set_error.h>
 #include <di/execution/receiver/set_stopped.h>
 #include <di/execution/receiver/set_value.h>
@@ -56,10 +57,12 @@
 #include <di/meta/type_identity.h>
 #include <di/sync/atomic.h>
 #include <di/sync/memory_order.h>
+#include <di/sync/stop_token/in_place_stop_token.h>
 #include <di/sync/stop_token/prelude.h>
 #include <di/types/integers.h>
 #include <di/types/prelude.h>
 #include <di/util/addressof.h>
+#include <di/util/declval.h>
 #include <di/util/defer_construct.h>
 #include <di/util/get.h>
 #include <di/util/immovable.h>
@@ -231,29 +234,8 @@ namespace when_all_ns {
     template<concepts::Receiver Rec, concepts::Sender... Sends>
     using Data = meta::Type<DataT<Rec, Sends...>>;
 
-    template<typename Data>
-    struct EnvT {
-        struct Type {
-            using Env = typename Data::Env;
-
-            Data* data;
-            Env env;
-
-            friend auto tag_invoke(types::Tag<execution::get_stop_token>, Type const& self) {
-                return self.data->stop_source.get_stop_token();
-            }
-
-            template<concepts::ForwardingQuery Tag>
-            requires(!concepts::SameAs<types::Tag<execution::get_stop_token>, Tag> &&
-                     concepts::Invocable<Tag, Env const&>)
-            friend decltype(auto) tag_invoke(Tag, Type const& self) {
-                return Tag {}(self.env);
-            }
-        };
-    };
-
-    template<typename Data>
-    using Env = meta::Type<EnvT<Data>>;
+    template<typename E>
+    using Env = MakeEnv<E, With<types::Tag<get_stop_token>, sync::InPlaceStopToken>>;
 
     template<usize index, typename Send, typename Data>
     struct ReceiverT {
@@ -275,7 +257,8 @@ namespace when_all_ns {
             friend void tag_invoke(types::Tag<execution::set_stopped>, Type&& self) { self.data->report_stop(); }
 
             friend auto tag_invoke(types::Tag<execution::get_env>, Type const& self) {
-                return Env<Data> { self.data, execution::get_env(self.data->out_r) };
+                return make_env(get_env(self.data->out_r),
+                                with(get_stop_token, self.data->stop_source.get_stop_token()));
             }
         };
     };
@@ -334,20 +317,20 @@ namespace when_all_ns {
             explicit Type(InPlace, Ts&&... ts) : m_senders(util::forward<Ts>(ts)...) {}
 
         private:
-            template<concepts::RemoveCVRefSameAs<Type> Self, typename Env>
-            requires(ValidSenders<Env, meta::Like<Self, Senders>...> &&
-                     (!never_sends_value<Env, meta::Like<Self, Senders>...>) )
-            friend auto tag_invoke(types::Tag<execution::get_completion_signatures>, Self&&, Env&&)
+            template<concepts::RemoveCVRefSameAs<Type> Self, typename E>
+            requires(ValidSenders<Env<E>, meta::Like<Self, Senders>...> &&
+                     (!never_sends_value<Env<E>, meta::Like<Self, Senders>...>) )
+            friend auto tag_invoke(types::Tag<execution::get_completion_signatures>, Self&&, E&&)
                 -> meta::AsTemplate<types::CompletionSignatures,
-                                    meta::PushFront<NonValueCompletions<Env, meta::Like<Self, Senders>...>,
-                                                    ValueCompletion<Env, meta::Like<Self, Senders>...>>>;
+                                    meta::PushFront<NonValueCompletions<Env<E>, meta::Like<Self, Senders>...>,
+                                                    ValueCompletion<Env<E>, meta::Like<Self, Senders>...>>>;
 
-            template<concepts::RemoveCVRefSameAs<Type> Self, typename Env>
-            requires(ValidSenders<Env, meta::Like<Self, Senders>...> &&
-                     (never_sends_value<Env, meta::Like<Self, Senders>...>) )
-            friend auto tag_invoke(types::Tag<execution::get_completion_signatures>, Self&&, Env&&)
+            template<concepts::RemoveCVRefSameAs<Type> Self, typename E>
+            requires(ValidSenders<Env<E>, meta::Like<Self, Senders>...> &&
+                     (never_sends_value<Env<E>, meta::Like<Self, Senders>...>) )
+            friend auto tag_invoke(types::Tag<execution::get_completion_signatures>, Self&&, E&&)
                 -> meta::AsTemplate<types::CompletionSignatures,
-                                    NonValueCompletions<Env, meta::Like<Self, Senders>...>>;
+                                    NonValueCompletions<Env<E>, meta::Like<Self, Senders>...>>;
 
             template<concepts::RemoveCVRefSameAs<Type> Self, concepts::Receiver Rec>
             requires(concepts::ReceiverOf<Rec, meta::CompletionSignaturesOf<meta::Like<Self, Type>, meta::EnvOf<Rec>>>)

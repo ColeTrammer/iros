@@ -2,6 +2,7 @@
 
 #include <di/concepts/class_type.h>
 #include <di/execution/concepts/receiver.h>
+#include <di/execution/query/make_env.h>
 #include <di/execution/receiver/set_error.h>
 #include <di/execution/receiver/set_stopped.h>
 #include <di/execution/receiver/set_value.h>
@@ -230,7 +231,7 @@ namespace receiver_interface_ns {
                 if constexpr (requires { Type::do_get_env(util::move(self)); }) {
                     return Type::do_get_env(util::move(self));
                 } else {
-                    return execution::get_env(Type::get_base(self));
+                    return make_env(execution::get_env(Type::get_base(self)));
                 }
             }
 

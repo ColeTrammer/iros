@@ -29,7 +29,7 @@ namespace detail {
         constexpr concepts::OperationState auto operator()(Sender&& sender, Receiver&& receiver) const {
             if constexpr (CustomConnect<Sender, Receiver>) {
                 return function::tag_invoke(*this, util::forward<Sender>(sender), util::forward<Receiver>(receiver));
-            } else {
+            } else if constexpr (AwaitableConnect<Sender, Receiver>) {
                 return connect_awaitable_ns::connect_awaitable(util::forward<Sender>(sender),
                                                                util::forward<Receiver>(receiver));
             }

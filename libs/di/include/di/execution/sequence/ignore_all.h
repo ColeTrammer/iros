@@ -14,6 +14,7 @@
 #include <di/execution/meta/make_completion_signatures.h>
 #include <di/execution/meta/sends_stopped.h>
 #include <di/execution/query/get_completion_signatures.h>
+#include <di/execution/query/make_env.h>
 #include <di/execution/receiver/receiver_adaptor.h>
 #include <di/execution/receiver/set_error.h>
 #include <di/execution/receiver/set_stopped.h>
@@ -202,8 +203,8 @@ namespace ignore_all_ns {
             friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env&&)
                 -> NextSignatures<meta::Like<Self, Next>, Env>;
 
-            constexpr friend decltype(auto) tag_invoke(types::Tag<get_env>, Type const& self) {
-                return get_env(self.next);
+            constexpr friend auto tag_invoke(types::Tag<get_env>, Type const& self) {
+                return make_env(get_env(self.next));
             }
         };
     };
@@ -276,7 +277,7 @@ namespace ignore_all_ns {
             [[no_unique_address]] Seq sequence;
 
             template<concepts::RemoveCVRefSameAs<Type> Self, typename Rec>
-            requires(concepts::ReceiverOf<Rec, Completions<meta::Like<Self, Seq>, meta::EnvOf<Rec>>>)
+            requires(concepts::ReceiverOf<Rec, Completions<meta::Like<Self, Seq>, MakeEnv<meta::EnvOf<Rec>>>>)
             friend auto tag_invoke(types::Tag<connect>, Self&& self, Rec receiver) {
                 return OperationState<meta::Like<Self, Seq>, Rec>(util::forward<Self>(self).sequence,
                                                                   util::move(receiver));
@@ -284,10 +285,10 @@ namespace ignore_all_ns {
 
             template<concepts::RemoveCVRefSameAs<Type> Self, typename Env>
             friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env&&)
-                -> Completions<meta::Like<Self, Seq>, Env>;
+                -> Completions<meta::Like<Self, Seq>, MakeEnv<Env>>;
 
-            constexpr friend decltype(auto) tag_invoke(types::Tag<get_env>, Type const& self) {
-                return get_env(self.sequence);
+            constexpr friend auto tag_invoke(types::Tag<get_env>, Type const& self) {
+                return make_env(get_env(self.sequence));
             }
         };
     };

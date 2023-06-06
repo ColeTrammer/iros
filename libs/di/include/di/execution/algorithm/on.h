@@ -3,11 +3,15 @@
 #include <di/execution/concepts/prelude.h>
 #include <di/execution/interface/get_env.h>
 #include <di/execution/interface/prelude.h>
+#include <di/execution/meta/env_of.h>
 #include <di/execution/meta/prelude.h>
+#include <di/execution/query/get_scheduler.h>
+#include <di/execution/query/make_env.h>
 #include <di/execution/query/prelude.h>
 #include <di/execution/receiver/prelude.h>
 #include <di/execution/types/prelude.h>
 #include <di/function/tag_invoke.h>
+#include <di/util/declval.h>
 #include <di/util/defer_construct.h>
 
 namespace di::execution {
@@ -20,26 +24,8 @@ namespace on_ns {
     template<concepts::Sender Send, concepts::Receiver Rec, concepts::Scheduler Sched>
     using OperationState = meta::Type<OperationStateT<Send, Rec, Sched>>;
 
-    template<typename Base, typename Sched>
-    struct EnvT {
-        struct Type {
-            [[no_unique_address]] Base base;
-            [[no_unique_address]] Sched scheduler;
-
-        private:
-            constexpr friend auto tag_invoke(types::Tag<get_scheduler>, Type const& self) { return self.scheduler; }
-
-            template<concepts::ForwardingQuery Tag>
-            requires(!concepts::SameAs<Tag, types::Tag<get_scheduler>>)
-            constexpr friend auto tag_invoke(types::Tag<get_env> tag, Type const& self)
-                -> meta::InvokeResult<Tag, Base const&> {
-                return tag(self.base);
-            }
-        };
-    };
-
     template<typename Base, concepts::Scheduler Sched>
-    using Env = meta::Type<EnvT<Base, Sched>>;
+    using Env = MakeEnv<Base, With<types::Tag<get_scheduler>, Sched>>;
 
     template<typename Send, typename Rec, typename Sched>
     struct ReceiverWithEnvT {
@@ -55,8 +41,8 @@ namespace on_ns {
             Rec&& base() && { return util::move(m_operation_state->receiver); }
 
         private:
-            Env<meta::EnvOf<Rec>, Sched> get_env() const {
-                return { execution::get_env(base()), m_operation_state->scheduler };
+            Env<meta::EnvOf<Rec>, Sched> get_env() const& {
+                return make_env(execution::get_env(base()), with(get_scheduler, m_operation_state->scheduler));
             }
 
             OperationState<Send, Rec, Sched>* m_operation_state;
@@ -103,7 +89,7 @@ namespace on_ns {
         requires(concepts::ConstructibleFrom<Send, S>)
         explicit Type(Sched scheduler_, S&& sender_, Rec receiver_)
             : scheduler(util::move(scheduler_))
-            , sender(util::move(sender_))
+            , sender(util::forward<S>(sender_))
             , receiver(util::move(receiver_))
             , operation_state(c_<0zu>, util::DeferConstruct([&] {
                                   return execution::connect(execution::schedule(scheduler),
@@ -141,13 +127,14 @@ namespace on_ns {
             }
 
             template<concepts::DecaysTo<Type> Self, typename E>
-            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, E) -> meta::MakeCompletionSignatures<
-                meta::Like<Self, Send>, Env<E, Sched>,
-                meta::MakeCompletionSignatures<meta::ScheduleResult<Sched>, E, CompletionSignatures<>,
-                                               meta::Id<CompletionSignatures<>>::template Invoke>>;
+            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, E&&)
+                -> meta::MakeCompletionSignatures<
+                    meta::Like<Self, Send>, Env<E, Sched>,
+                    meta::MakeCompletionSignatures<meta::ScheduleResult<Sched>, MakeEnv<E>, CompletionSignatures<>,
+                                                   meta::Id<CompletionSignatures<>>::template Invoke>>;
 
-            constexpr friend decltype(auto) tag_invoke(types::Tag<get_env>, Type const& self) {
-                return get_env(self.sender);
+            constexpr friend auto tag_invoke(types::Tag<get_env>, Type const& self) {
+                return make_env(get_env(self.sender));
             }
         };
     };

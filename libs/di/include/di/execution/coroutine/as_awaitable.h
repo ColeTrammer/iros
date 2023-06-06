@@ -35,7 +35,7 @@ namespace as_awaitable_ns {
             static_cast<CoroutineHandle<>>(self.continuation.promise().unhandled_stopped()).resume();
         }
 
-        constexpr friend auto tag_invoke(types::Tag<get_env> tag, Type const& self) {
+        constexpr friend decltype(auto) tag_invoke(types::Tag<get_env> tag, Type const& self) {
             return tag(self.continuation.promise());
         }
     };

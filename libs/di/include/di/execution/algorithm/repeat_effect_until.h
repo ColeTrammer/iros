@@ -100,11 +100,11 @@ namespace repeat_effect_until_ns {
             }
 
             template<concepts::DecaysTo<Type> Self, typename Env>
-            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env)
-                -> meta::MakeCompletionSignatures<Send const&, Env>;
+            friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env&&)
+                -> meta::MakeCompletionSignatures<Send const&, MakeEnv<Env>>;
 
-            constexpr friend decltype(auto) tag_invoke(types::Tag<get_env>, Type const& self) {
-                return get_env(self.sender);
+            constexpr friend auto tag_invoke(types::Tag<get_env>, Type const& self) {
+                return make_env(get_env(self.sender));
             }
         };
     };

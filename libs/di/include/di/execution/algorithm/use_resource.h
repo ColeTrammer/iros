@@ -3,6 +3,7 @@
 #include <di/concepts/movable_value.h>
 #include <di/execution/concepts/prelude.h>
 #include <di/execution/meta/prelude.h>
+#include <di/execution/query/make_env.h>
 #include <di/execution/receiver/prelude.h>
 #include <di/execution/types/empty_env.h>
 #include <di/execution/types/prelude.h>
@@ -216,26 +217,28 @@ namespace use_resource_ns {
 
         private:
             template<typename Env>
-            friend auto tag_invoke(types::Tag<get_completion_signatures>, Type&&, Env)
+            friend auto tag_invoke(types::Tag<get_completion_signatures>, Type&&, Env&&)
                 -> meta::MakeCompletionSignatures<
-                    Send, Env,
+                    Send, MakeEnv<Env>,
                     meta::MakeCompletionSignatures<
-                        Sender2, Env,
-                        meta::MakeCompletionSignatures<Sender3, Env, CompletionSignatures<>,
+                        Sender2, MakeEnv<Env>,
+                        meta::MakeCompletionSignatures<Sender3, MakeEnv<Env>, CompletionSignatures<>,
                                                        meta::Id<CompletionSignatures<>>::template Invoke>>,
                     meta::Id<CompletionSignatures<>>::template Invoke>;
 
             template<typename Rec>
-            requires(concepts::DecayConstructible<Send> &&
-                     concepts::SenderTo<Send, CreateReceiver<Rec, Fun, Value,
-                                                             meta::CompletionSignaturesOf<Sender2, meta::EnvOf<Rec>>>>)
+            requires(
+                concepts::DecayConstructible<Send> &&
+                concepts::SenderTo<
+                    Send,
+                    CreateReceiver<Rec, Fun, Value, meta::CompletionSignaturesOf<Sender2, MakeEnv<meta::EnvOf<Rec>>>>>)
             friend auto tag_invoke(types::Tag<connect>, Type&& self, Rec receiver) {
                 return OperationState<Send, Rec, Fun, Value> { util::move(self).function, util::move(receiver),
                                                                util::move(self).sender };
             }
 
-            constexpr friend decltype(auto) tag_invoke(types::Tag<get_env>, Type const& self) {
-                return get_env(self.sender);
+            constexpr friend auto tag_invoke(types::Tag<get_env>, Type const& self) {
+                return make_env(get_env(self.sender));
             }
         };
     };

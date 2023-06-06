@@ -9,6 +9,7 @@
 #include <di/execution/meta/completion_signatures_of.h>
 #include <di/execution/meta/env_of.h>
 #include <di/execution/query/get_completion_signatures.h>
+#include <di/execution/query/make_env.h>
 #include <di/execution/receiver/receiver_adaptor.h>
 #include <di/execution/sequence/sequence_sender.h>
 #include <di/function/curry_back.h>
@@ -100,7 +101,7 @@ namespace transform_each_ns {
 
             template<concepts::RemoveCVRefSameAs<Type> Self, typename Rec>
             requires(concepts::DecayConstructible<meta::Like<Self, Fun>> &&
-                     concepts::SubscriberOf<Rec, Signatures<meta::Like<Self, Seq>, Fun, meta::EnvOf<Rec>>>)
+                     concepts::SubscriberOf<Rec, Signatures<meta::Like<Self, Seq>, Fun, MakeEnv<meta::EnvOf<Rec>>>>)
             friend auto tag_invoke(types::Tag<subscribe>, Self&& self, Rec receiver) {
                 return OperationState<meta::Like<Self, Seq>, meta::Like<Self, Fun>, Rec>(
                     util::forward<Self>(self).sequence, util::forward<Self>(self).transformer, util::move(receiver));
@@ -109,9 +110,9 @@ namespace transform_each_ns {
             template<concepts::RemoveCVRefSameAs<Type> Self, typename Env>
             requires(concepts::DecayConstructible<meta::Like<Self, Fun>>)
             friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env&&)
-                -> Signatures<meta::Like<Self, Seq>, Fun, Env>;
+                -> Signatures<meta::Like<Self, Seq>, Fun, MakeEnv<Env>>;
 
-            friend decltype(auto) tag_invoke(types::Tag<get_env>, Type const& self) { return get_env(self.sequence); }
+            friend auto tag_invoke(types::Tag<get_env>, Type const& self) { return make_env(get_env(self.sequence)); }
         };
     };
 
