@@ -91,7 +91,10 @@ namespace make_env_ns {
 /// This function is used as a parameter to `execution::make_env` function to specify an override for a query. The query
 /// values are required to be copy constructible, and they are copied out when the environment is queried.
 ///
+/// See the execution::with_env() function for an example.
+///
 /// @see make_env
+/// @see with_env
 constexpr inline auto with = make_env_ns::WithFunction {};
 
 /// @brief Create an environment with overrides for queries.
@@ -104,6 +107,13 @@ constexpr inline auto with = make_env_ns::WithFunction {};
 /// This function creates an environment with the specified overrides. The overrides are specified as a list of objects
 /// returned from the `execution::with` function. The overrides are required to be unique.
 ///
+/// This function is also useful when creating an environment with no overrides, as it will only forward queries which
+/// have opted-in to be forwarded. This is useful when writng sender algorithms, which don't need to customize the
+/// environment but cannot pass the environment through directly to respect the forwarding-ness of the query.
+///
+/// See the execution::with_env() function for an example.
+///
 /// @see with
+/// @see with_env
 constexpr inline auto make_env = make_env_ns::Function {};
 }

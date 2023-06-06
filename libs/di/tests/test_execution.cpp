@@ -14,6 +14,7 @@
 #include <di/execution/algorithm/sync_wait.h>
 #include <di/execution/algorithm/then.h>
 #include <di/execution/algorithm/when_all.h>
+#include <di/execution/algorithm/with_env.h>
 #include <di/execution/any/any_operation_state.h>
 #include <di/execution/any/any_sender.h>
 #include <di/execution/concepts/prelude.h>
@@ -496,6 +497,20 @@ static void when_all() {
     ASSERT(executed);
 }
 
+static void with_env() {
+    namespace ex = di::execution;
+
+    auto stop_source = di::InPlaceStopSource {};
+    auto env = ex::make_env(di::empty_env, ex::with(ex::get_stop_token, stop_source.get_stop_token()));
+    auto send = ex::read(ex::get_stop_token) | ex::let_value([](auto stop_token) {
+                    return ex::just_void_or_stopped(stop_token.stop_requested());
+                });
+    ASSERT(ex::sync_wait(send | ex::with_env(env)));
+
+    stop_source.request_stop();
+    ASSERT_EQ(ex::sync_wait(send | ex::with_env(env)), di::Unexpected(di::BasicError::OperationCanceled));
+}
+
 TEST(execution, meta)
 TEST(execution, sync_wait)
 TEST(execution, just)
@@ -510,4 +525,5 @@ TEST(execution, with)
 TEST(execution, any_sender)
 TEST(execution, into_result)
 TEST(execution, when_all)
+TEST(execution, with_env)
 }
