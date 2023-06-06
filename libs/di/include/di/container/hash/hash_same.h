@@ -7,7 +7,6 @@
 #include <di/container/hash/hash_write.h>
 #include <di/function/tag_invoke.h>
 #include <di/function/unpack.h>
-#include <di/meta/index_sequence.h>
 #include <di/meta/make_index_sequence.h>
 #include <di/meta/remove_cvref.h>
 #include <di/types/prelude.h>
@@ -57,7 +56,7 @@ template<concepts::TupleLike T, concepts::TupleLike U>
 requires((meta::TupleSize<T> == meta::TupleSize<U>) && !HashableContainer<T> && !HashableContainer<U>)
 constexpr bool tag_invoke(types::Tag<hash_same>, InPlaceType<T>, InPlaceType<U>) {
     return function::unpack<meta::MakeIndexSequence<meta::TupleSize<T>>>(
-        [&]<usize... indices>(meta::IndexSequence<indices...>) {
+        [&]<usize... indices>(meta::ListV<indices...>) {
             return concepts::Conjunction<
                 concepts::HashSame<meta::TupleElement<T, indices>, meta::TupleElement<U, indices>>...>;
         });

@@ -1,16 +1,16 @@
 #pragma once
 
 #include <di/meta/constexpr.h>
-#include <di/meta/integer_sequence.h>
 #include <di/meta/list/list.h>
+#include <di/meta/list/list_v.h>
 
 namespace di::meta {
 namespace detail {
     template<typename T>
     struct AsListHelper {};
 
-    template<typename T, T... values>
-    struct AsListHelper<IntegerSequence<T, values...>> : TypeConstant<List<Constexpr<values>...>> {};
+    template<auto... values>
+    struct AsListHelper<ListV<values...>> : TypeConstant<List<Constexpr<values>...>> {};
 
     template<template<typename...> typename Template, typename... Types>
     struct AsListHelper<Template<Types...>> : TypeConstant<List<Types...>> {};

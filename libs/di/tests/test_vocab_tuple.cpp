@@ -86,8 +86,8 @@ constexpr void basic() {
     auto f = x.get<0>();
     ASSERT_EQ(f, 0);
 
-    static_assert(di::concepts::detail::CanStructuredBindHelper<di::Tuple<int, int, int>,
-                                                                di::meta::IndexSequence<0, 1, 2>>::value);
+    static_assert(
+        di::concepts::detail::CanStructuredBindHelper<di::Tuple<int, int, int>, di::meta::ListV<0zu, 1zu, 2zu>>::value);
     static_assert(di::concepts::detail::CanStructuredBind<di::Tuple<int, int, int>>);
 
     auto [a, b, c] = x;

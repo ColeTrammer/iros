@@ -114,7 +114,7 @@ private:
              requires { requires concepts::Conjunction<concepts::EqualityComparableWith<Types, Other>...>; })
     constexpr friend bool operator==(Tuple const& a, Tuple<Other...> const& b) {
         return function::unpack<meta::MakeIndexSequence<sizeof...(Types)>>(
-            [&]<size_t... indices>(meta::IndexSequence<indices...>) {
+            [&]<size_t... indices>(meta::ListV<indices...>) {
                 return ((util::get<indices>(a) == util::get<indices>(b)) && ...);
             });
     }

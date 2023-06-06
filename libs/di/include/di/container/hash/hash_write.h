@@ -9,7 +9,6 @@
 #include <di/function/bind_front.h>
 #include <di/function/tag_invoke.h>
 #include <di/meta/constexpr.h>
-#include <di/meta/index_sequence.h>
 #include <di/meta/make_index_sequence.h>
 #include <di/types/prelude.h>
 #include <di/util/bit_cast.h>
@@ -71,7 +70,7 @@ namespace detail {
     struct HashableTuple {};
 
     template<usize... indices>
-    struct HashableTuple<meta::IndexSequence<indices...>> {
+    struct HashableTuple<meta::ListV<indices...>> {
         template<concepts::Tuple T>
         constexpr bool operator()(InPlaceType<T>) const {
             return (concepts::Hashable<meta::TupleValue<T const&, indices>> && ...);

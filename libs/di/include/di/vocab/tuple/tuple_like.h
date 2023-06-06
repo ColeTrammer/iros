@@ -2,7 +2,6 @@
 
 #include <di/concepts/conjunction.h>
 #include <di/concepts/tuple.h>
-#include <di/meta/index_sequence.h>
 #include <di/meta/make_index_sequence.h>
 #include <di/meta/remove_cvref.h>
 #include <di/util/as_const.h>
@@ -29,7 +28,7 @@ namespace detail {
     };
 
     template<typename T, types::size_t... indices>
-    struct TupleLikeHelper<T, meta::IndexSequence<indices...>> {
+    struct TupleLikeHelper<T, meta::ListV<indices...>> {
         constexpr static bool value =
             Conjunction<HasTupleElement<T, indices>...> && Conjunction<HasTupleGet<T, indices>...>;
     };

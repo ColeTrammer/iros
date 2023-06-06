@@ -8,7 +8,7 @@
 namespace di::function {
 template<size_t count, typename F>
 constexpr void template_for(F&& function) {
-    (void) []<size_t... indices>(meta::IndexSequence<indices...>, F & function) {
+    (void) []<size_t... indices>(meta::ListV<indices...>, F & function) {
         (void) (function::invoke(function, c_<indices>), ...);
     }
     (meta::MakeIndexSequence<count> {}, function);

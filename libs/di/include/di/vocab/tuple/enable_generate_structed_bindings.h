@@ -4,7 +4,6 @@
 #include <di/concepts/conjunction.h>
 #include <di/concepts/same_as.h>
 #include <di/function/tag_invoke.h>
-#include <di/meta/index_sequence.h>
 #include <di/meta/make_index_sequence.h>
 #include <di/meta/remove_cv.h>
 #include <di/meta/remove_reference.h>
@@ -35,7 +34,7 @@ template<typename T, types::size_t index>
 concept HasMemberGet = requires(T value) { util::forward<T>(value).template get<index>(); };
 
 template<typename T, types::size_t... indices>
-struct CanStructuredBindHelper<T, meta::IndexSequence<indices...>> {
+struct CanStructuredBindHelper<T, meta::ListV<indices...>> {
     constexpr static bool value = Conjunction<HasMemberGet<T, indices>...>;
 };
 

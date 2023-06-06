@@ -13,7 +13,7 @@ namespace detail {
     struct TupleTransformValid;
 
     template<size_t... indices, typename F, typename Tup>
-    struct TupleTransformValid<F, Tup, meta::IndexSequence<indices...>> {
+    struct TupleTransformValid<F, Tup, meta::ListV<indices...>> {
         constexpr static bool value = concepts::Conjunction<concepts::Invocable<F&, meta::TupleValue<Tup, indices>>...>;
     };
 }

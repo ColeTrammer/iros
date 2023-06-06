@@ -5,7 +5,6 @@
 #include <di/meta/common_type.h>
 #include <di/meta/constexpr.h>
 #include <di/meta/decay.h>
-#include <di/meta/index_sequence.h>
 #include <di/meta/like.h>
 #include <di/meta/list/prelude.h>
 #include <di/meta/make_index_sequence.h>
@@ -32,13 +31,13 @@ static_assert(di::SameAs<di::meta::Like<int&&, i32>, i32&&>);
 static_assert(di::SameAs<di::meta::Like<int&, i32>, i32&>);
 static_assert(di::SameAs<di::meta::Like<int, i32>, i32>);
 
-static_assert(di::SameAs<di::meta::MakeIndexSequence<6>, di::meta::IndexSequence<0, 1, 2, 3, 4, 5>>);
-static_assert(di::SameAs<di::meta::MakeIndexSequence<5>, di::meta::IndexSequence<0, 1, 2, 3, 4>>);
-static_assert(di::SameAs<di::meta::MakeIndexSequence<4>, di::meta::IndexSequence<0, 1, 2, 3>>);
-static_assert(di::SameAs<di::meta::MakeIndexSequence<3>, di::meta::IndexSequence<0, 1, 2>>);
-static_assert(di::SameAs<di::meta::MakeIndexSequence<2>, di::meta::IndexSequence<0, 1>>);
-static_assert(di::SameAs<di::meta::MakeIndexSequence<1>, di::meta::IndexSequence<0>>);
-static_assert(di::SameAs<di::meta::MakeIndexSequence<0>, di::meta::IndexSequence<>>);
+static_assert(di::SameAs<di::meta::MakeIndexSequence<6>, di::meta::ListV<0zu, 1zu, 2zu, 3zu, 4zu, 5zu>>);
+static_assert(di::SameAs<di::meta::MakeIndexSequence<5>, di::meta::ListV<0zu, 1zu, 2zu, 3zu, 4zu>>);
+static_assert(di::SameAs<di::meta::MakeIndexSequence<4>, di::meta::ListV<0zu, 1zu, 2zu, 3zu>>);
+static_assert(di::SameAs<di::meta::MakeIndexSequence<3>, di::meta::ListV<0zu, 1zu, 2zu>>);
+static_assert(di::SameAs<di::meta::MakeIndexSequence<2>, di::meta::ListV<0zu, 1zu>>);
+static_assert(di::SameAs<di::meta::MakeIndexSequence<1>, di::meta::ListV<0zu>>);
+static_assert(di::SameAs<di::meta::MakeIndexSequence<0>, di::meta::ListV<>>);
 
 static_assert(
     di::SameAs<unsigned long long,

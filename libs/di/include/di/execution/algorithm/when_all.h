@@ -34,7 +34,6 @@
 #include <di/meta/conditional.h>
 #include <di/meta/constexpr.h>
 #include <di/meta/decay.h>
-#include <di/meta/index_sequence.h>
 #include <di/meta/like.h>
 #include <di/meta/list/as_language_function.h>
 #include <di/meta/list/as_template.h>
@@ -288,7 +287,7 @@ namespace when_all_ns {
     struct OperationStateT;
 
     template<typename Rec, usize... indices, typename... Sends>
-    struct OperationStateT<Rec, meta::IndexSequence<indices...>, meta::List<Sends...>> {
+    struct OperationStateT<Rec, meta::ListV<indices...>, meta::List<Sends...>> {
         struct Type : util::Immovable {
         public:
             using Data = when_all_ns::Data<Rec, Sends...>;

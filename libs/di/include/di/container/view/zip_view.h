@@ -152,7 +152,7 @@ private:
                 return a.m_iterators == b.m_iterators;
             } else {
                 return function::unpack<meta::MakeIndexSequence<sizeof...(Views)>>(
-                    [&]<size_t... indices>(meta::IndexSequence<indices...>) {
+                    [&]<size_t... indices>(meta::ListV<indices...>) {
                         return ((util::get<indices>(a.m_iterators) <= util::get<indices>(b.m_iterators)) || ...);
                     });
             }
@@ -172,7 +172,7 @@ private:
                                             meta::ContainerIterator<meta::MaybeConst<is_const, Views>>>...>)
         {
             return function::unpack<meta::MakeIndexSequence<sizeof...(Views)>>(
-                [&]<size_t... indices>(meta::IndexSequence<indices...>) {
+                [&]<size_t... indices>(meta::ListV<indices...>) {
                     return container::min({ static_cast<SSizeType<is_const>>(util::get<indices>(a.m_iterators) -
                                                                              util::get<indices>(b.m_iterators))... });
                 });
@@ -188,7 +188,7 @@ private:
                                                meta::ContainerIterator<meta::MaybeConst<is_const, Views>>>...>)
         {
             return function::unpack<meta::MakeIndexSequence<sizeof...(Views)>>(
-                [&]<size_t... indices>(meta::IndexSequence<indices...>) {
+                [&]<size_t... indices>(meta::ListV<indices...>) {
                     return (void) (iterator_swap(util::get<indices>(a.m_iterators), util::get<indices>(b.m_iterators)),
                                    ...);
                 });
@@ -221,7 +221,7 @@ private:
                                             meta::ContainerIterator<meta::MaybeConst<other_is_const, Views>>>...>)
         constexpr auto difference(Iterator<other_is_const> const& a) const {
             return function::unpack<meta::MakeIndexSequence<sizeof...(Views)>>(
-                [&]<size_t... indices>(meta::IndexSequence<indices...>) {
+                [&]<size_t... indices>(meta::ListV<indices...>) {
                     return container::min({ static_cast<SSizeType<is_const>>(util::get<indices>(this->m_sentinels) -
                                                                              util::get<indices>(a.m_iterators))... });
                 });
@@ -234,7 +234,7 @@ private:
                                        meta::ContainerIterator<meta::MaybeConst<other_is_const, Views>>>...>)
         constexpr friend bool operator==(Iterator<other_is_const> const& a, Sentinel const& b) {
             return function::unpack<meta::MakeIndexSequence<sizeof...(Views)>>(
-                [&]<size_t... indices>(meta::IndexSequence<indices...>) {
+                [&]<size_t... indices>(meta::ListV<indices...>) {
                     return ((util::get<indices>(a.m_iterators) == util::get<indices>(b.m_sentinels)) || ...);
                 });
         }

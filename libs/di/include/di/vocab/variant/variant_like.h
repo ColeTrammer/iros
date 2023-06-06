@@ -1,7 +1,6 @@
 #pragma once
 
 #include <di/concepts/conjunction.h>
-#include <di/meta/index_sequence.h>
 #include <di/meta/make_index_sequence.h>
 #include <di/meta/remove_cvref.h>
 #include <di/util/as_const.h>
@@ -30,7 +29,7 @@ namespace detail {
     };
 
     template<typename T, size_t... indices>
-    struct VariantLikeHelper<T, meta::IndexSequence<indices...>> {
+    struct VariantLikeHelper<T, meta::ListV<indices...>> {
         constexpr static bool value =
             Conjunction<HasVariantAlernative<T, indices>...> && Conjunction<HasVariantGet<T, indices>...>;
     };

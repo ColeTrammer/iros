@@ -2,7 +2,7 @@
 
 #include <di/concepts/conjunction.h>
 #include <di/function/invoke.h>
-#include <di/meta/integer_sequence.h>
+#include <di/meta/list/list_v.h>
 #include <di/types/prelude.h>
 
 namespace di::function {
@@ -10,12 +10,12 @@ namespace detail {
     template<typename Ind>
     struct UnpackFunction {};
 
-    template<typename T, T... values>
-    struct UnpackFunction<meta::IntegerSequence<T, values...>> {
+    template<auto... values>
+    struct UnpackFunction<meta::ListV<values...>> {
         template<typename F>
-        requires(concepts::Invocable<F&, meta::IntegerSequence<T, values...>>)
+        requires(concepts::Invocable<F&, meta::ListV<values...>>)
         constexpr decltype(auto) operator()(F&& function) const {
-            return function::invoke(function, meta::IntegerSequence<T, values...> {});
+            return function::invoke(function, meta::ListV<values...> {});
         }
     };
 

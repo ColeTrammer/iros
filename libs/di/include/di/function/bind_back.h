@@ -5,7 +5,6 @@
 #include <di/function/invoke.h>
 #include <di/function/pipeable.h>
 #include <di/meta/decay.h>
-#include <di/meta/index_sequence.h>
 #include <di/meta/index_sequence_for.h>
 #include <di/types/in_place.h>
 #include <di/types/size_t.h>
@@ -20,7 +19,7 @@ namespace detail {
     class BindBackFunction;
 
     template<types::size_t... indices, typename F, typename... BoundArgs>
-    class BindBackFunction<meta::IndexSequence<indices...>, F, BoundArgs...> : public pipeline::EnablePipeline {
+    class BindBackFunction<meta::ListV<indices...>, F, BoundArgs...> : public pipeline::EnablePipeline {
     public:
         template<typename Fun, typename... Args>
         constexpr BindBackFunction(types::InPlace, Fun&& function, Args&&... bound_arguments)

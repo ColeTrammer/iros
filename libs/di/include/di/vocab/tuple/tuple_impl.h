@@ -4,7 +4,6 @@
 #include <di/concepts/decay_same_as.h>
 #include <di/concepts/default_constructible.h>
 #include <di/meta/constexpr.h>
-#include <di/meta/index_sequence.h>
 #include <di/meta/like.h>
 #include <di/meta/type_constant.h>
 #include <di/platform/compiler.h>
@@ -31,23 +30,22 @@ namespace detail {
     struct TupleImplBase;
 
     template<types::size_t... indices, typename... Types>
-    struct TupleImplBase<0, meta::IndexSequence<indices...>, Types...> {
-        using Type = TupleImpl<meta::IndexSequence<indices...>, Types...>;
+    struct TupleImplBase<0, meta::ListV<indices...>, Types...> {
+        using Type = TupleImpl<meta::ListV<indices...>, Types...>;
     };
 
     template<types::size_t index_head, types::size_t... indices, types::size_t index_to_find, typename T,
              typename... Rest>
     requires(index_to_find != 0)
-    struct TupleImplBase<index_to_find, meta::IndexSequence<index_head, indices...>, T, Rest...>
-        : TupleImplBase<index_to_find - 1, meta::IndexSequence<indices...>, Rest...> {};
+    struct TupleImplBase<index_to_find, meta::ListV<index_head, indices...>, T, Rest...>
+        : TupleImplBase<index_to_find - 1, meta::ListV<indices...>, Rest...> {};
 
 }
 
 template<types::size_t index, types::size_t... indices, typename T, typename... Rest>
-class TupleImpl<meta::IndexSequence<index, indices...>, T, Rest...>
-    : public TupleImpl<meta::IndexSequence<indices...>, Rest...> {
+class TupleImpl<meta::ListV<index, indices...>, T, Rest...> : public TupleImpl<meta::ListV<indices...>, Rest...> {
 private:
-    using Base = TupleImpl<meta::IndexSequence<indices...>, Rest...>;
+    using Base = TupleImpl<meta::ListV<indices...>, Rest...>;
 
 public:
     constexpr TupleImpl()
@@ -102,7 +100,7 @@ private:
 };
 
 template<>
-class TupleImpl<meta::IndexSequence<>> {
+class TupleImpl<meta::ListV<>> {
 public:
     constexpr TupleImpl() = default;
     constexpr TupleImpl(TupleImpl const&) = default;

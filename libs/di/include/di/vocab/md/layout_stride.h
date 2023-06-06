@@ -6,7 +6,6 @@
 #include <di/container/view/range.h>
 #include <di/function/unpack.h>
 #include <di/meta/constexpr.h>
-#include <di/meta/index_sequence.h>
 #include <di/meta/make_index_sequence.h>
 #include <di/vocab/array/prelude.h>
 #include <di/vocab/md/concepts/extents.h>
@@ -94,10 +93,9 @@ public:
     requires(sizeof...(Indices) == ExtentsType::rank() &&
              concepts::Conjunction<concepts::ConvertibleTo<Indices, SizeType>...>)
     constexpr SizeType operator()(Indices... indices) const {
-        return function::unpack<meta::MakeIndexSequence<sizeof...(Indices)>>(
-            [&]<size_t... i>(meta::IndexSequence<i...>) {
-                return ((static_cast<SizeType>(indices) * stride(i)) + ... + 0);
-            });
+        return function::unpack<meta::MakeIndexSequence<sizeof...(Indices)>>([&]<size_t... i>(meta::ListV<i...>) {
+            return ((static_cast<SizeType>(indices) * stride(i)) + ... + 0);
+        });
     }
 
     constexpr static bool is_always_unique() { return true; }

@@ -96,7 +96,7 @@ public:
     template<typename OtherSizeType>
     requires(concepts::ConvertibleTo<OtherSizeType const&, SizeType>)
     constexpr Reference operator[](Span<OtherSizeType, rank()> indices) const {
-        return function::unpack<meta::MakeIndexSequence<rank()>>([&]<size_t... i>(meta::IndexSequence<i...>) {
+        return function::unpack<meta::MakeIndexSequence<rank()>>([&]<size_t... i>(meta::ListV<i...>) {
             return (*this)[util::as_const(indices[i])...];
         });
     }
@@ -119,7 +119,7 @@ public:
     template<typename OtherSizeType>
     requires(concepts::ConvertibleTo<OtherSizeType const&, SizeType>)
     constexpr Reference operator()(Span<OtherSizeType, rank()> indices) const {
-        return function::unpack<meta::MakeIndexSequence<rank()>>([&]<size_t... i>(meta::IndexSequence<i...>) {
+        return function::unpack<meta::MakeIndexSequence<rank()>>([&]<size_t... i>(meta::ListV<i...>) {
             return (*this)[util::as_const(indices[i])...];
         });
     }
@@ -132,7 +132,7 @@ public:
 
     constexpr auto each() const {
         return function::unpack<meta::MakeIndexSequence<rank()>>(
-            [&]<usize... rank_indices>(meta::IndexSequence<rank_indices...>) {
+            [&]<usize... rank_indices>(meta::ListV<rank_indices...>) {
                 return container::view::cartesian_product(container::view::range(extent(rank_indices))...) |
                        container::view::transform(function::uncurry([&](auto... indices) -> Reference {
                            return (*this)(indices...);

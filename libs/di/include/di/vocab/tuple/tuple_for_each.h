@@ -13,7 +13,7 @@ namespace detail {
     struct TupleForEachValid;
 
     template<size_t... indices, typename F, typename Tup>
-    struct TupleForEachValid<F, Tup, meta::IndexSequence<indices...>> {
+    struct TupleForEachValid<F, Tup, meta::ListV<indices...>> {
         constexpr static bool value = concepts::Conjunction<concepts::Invocable<F&, meta::TupleValue<Tup, indices>>...>;
     };
 }

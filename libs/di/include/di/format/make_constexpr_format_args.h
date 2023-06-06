@@ -11,7 +11,7 @@ constexpr auto make_constexpr_format_args(Types&&... values) {
     // the format args will be valid for the duration of a formatting
     // operation.
     using Arg = ConstexprFormatArg<Types&...>;
-    return [&]<size_t... indices>(meta::IndexSequence<indices...>, [[maybe_unused]] Tuple<Types&...> values) {
+    return [&]<size_t... indices>(meta::ListV<indices...>, [[maybe_unused]] Tuple<Types&...> values) {
         return FormatArgsStorage<sizeof...(Types), Arg>(Arg { c_<indices>, util::get<indices>(values) }...);
     }(meta::IndexSequenceFor<Types...> {}, tie(values...));
 }

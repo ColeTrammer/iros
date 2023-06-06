@@ -3,7 +3,6 @@
 #include <di/container/string/fixed_string.h>
 #include <di/container/string/string_view_impl.h>
 #include <di/container/string/utf8_encoding.h>
-#include <di/meta/index_sequence.h>
 #include <di/meta/make_index_sequence.h>
 
 namespace di::container {
@@ -15,7 +14,7 @@ namespace detail {
     struct FixedStringToUtf8StringViewFunction {
         consteval auto operator()() const {
             return function::unpack<meta::MakeIndexSequence<literal.size()>>(
-                []<usize... indices>(meta::IndexSequence<indices...>) {
+                []<usize... indices>(meta::ListV<indices...>) {
                     if constexpr (literal.size() == 0) {
                         return string::StringViewImpl<string::Utf8Encoding> {};
                     } else {
