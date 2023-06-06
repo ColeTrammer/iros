@@ -3,7 +3,6 @@
 #include <di/concepts/same_as.h>
 #include <di/meta/list/concepts/type_list.h>
 #include <di/meta/list/list.h>
-#include <di/meta/size_constant.h>
 
 namespace di::meta {
 namespace detail {
@@ -11,11 +10,11 @@ namespace detail {
     struct CountHelper;
 
     template<typename T>
-    struct CountHelper<T, List<>> : meta::SizeConstant<0> {};
+    struct CountHelper<T, List<>> : meta::Constexpr<0zu> {};
 
     template<typename T, typename U, typename... Rest>
     struct CountHelper<T, List<U, Rest...>> {
-        constexpr static size_t value = +concepts::SameAs<T, U> + CountHelper<T, List<Rest...>>::value;
+        constexpr static auto value = (concepts::SameAs<T, U> ? 1 : 0) + CountHelper<T, List<Rest...>>::value;
     };
 }
 

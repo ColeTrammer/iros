@@ -1,24 +1,22 @@
 #pragma once
 
-#include <di/meta/false_type.h>
 #include <di/meta/remove_cvref.h>
-#include <di/meta/true_type.h>
-#include <di/types/size_t.h>
+#include <di/types/prelude.h>
 
 namespace di::vocab {
-template<typename T, types::size_t size>
+template<typename T, usize size>
 struct Array;
 }
 
 namespace di::concepts {
 namespace detail {
     template<typename T>
-    struct ArrayHelper : meta::FalseType {};
+    constexpr inline bool array_helper = false;
 
-    template<typename T, types::size_t size>
-    struct ArrayHelper<vocab::Array<T, size>> : meta::TrueType {};
+    template<typename T, usize size>
+    constexpr inline bool array_helper<vocab::Array<T, size>> = true;
 }
 
 template<typename T>
-concept Array = detail::ArrayHelper<meta::RemoveCVRef<T>>::value;
+concept Array = detail::array_helper<meta::RemoveCVRef<T>>;
 }

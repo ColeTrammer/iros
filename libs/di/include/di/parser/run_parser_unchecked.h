@@ -13,6 +13,5 @@ namespace detail {
     };
 }
 
-constexpr inline auto run_parser_unchecked =
-    function::curry(detail::RunParserUncheckedFunction {}, meta::size_constant<2>);
+constexpr inline auto run_parser_unchecked = function::curry(detail::RunParserUncheckedFunction {}, meta::c_<2zu>);
 }

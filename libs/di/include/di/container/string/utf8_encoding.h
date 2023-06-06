@@ -152,7 +152,7 @@ private:
     }
 
     constexpr friend auto tag_invoke(types::Tag<encoding::convert_to_code_units>, Utf8Encoding const&, c32 code_point) {
-        auto result = container::StaticVector<c8, meta::SizeConstant<4>> {};
+        auto result = container::StaticVector<c8, meta::Constexpr<4zu>> {};
         auto code_point_value = static_cast<u32>(code_point);
         if (code_point_value <= 0x7F) {
             (void) result.resize(1);

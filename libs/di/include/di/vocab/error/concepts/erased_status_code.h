@@ -1,20 +1,18 @@
 #pragma once
 
-#include <di/meta/decay.h>
-#include <di/meta/false_type.h>
-#include <di/meta/true_type.h>
+#include <di/meta/remove_cvref.h>
 #include <di/vocab/error/erased.h>
 #include <di/vocab/error/status_code_forward_declaration.h>
 
 namespace di::concepts {
 namespace detail {
     template<typename T>
-    struct ErasedStatusCodeHelper : meta::FalseType {};
+    constexpr inline bool erased_status_code_helper = false;
 
     template<typename T>
-    struct ErasedStatusCodeHelper<vocab::StatusCode<vocab::Erased<T>>> : meta::TrueType {};
+    constexpr inline bool erased_status_code_helper<vocab::StatusCode<vocab::Erased<T>>> = true;
 }
 
 template<typename T>
-concept ErasedStatusCode = detail::ErasedStatusCodeHelper<meta::Decay<T>>::value;
+concept ErasedStatusCode = detail::erased_status_code_helper<meta::Decay<T>>;
 }

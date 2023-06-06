@@ -6,13 +6,13 @@
 namespace di::concepts {
 namespace detail {
     template<typename T, typename I>
-    struct ImplHelper : meta::FalseType {};
+    constexpr inline bool impl_helper = false;
 
     template<typename T, typename... Methods>
-    struct ImplHelper<T, meta::List<Methods...>>
-        : meta::BoolConstant<Conjunction<MethodCallableWith<meta::Type<Methods>, T>...>> {};
+    constexpr inline bool impl_helper<T, meta::List<Methods...>> = (MethodCallableWith<meta::Type<Methods>, T> && ...);
+
 }
 
 template<typename T, typename Interface>
-concept Impl = detail::ImplHelper<T, Interface>::value;
+concept Impl = detail::impl_helper<T, Interface>;
 }

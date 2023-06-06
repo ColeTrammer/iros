@@ -1,17 +1,14 @@
 #pragma once
 
-#include <di/meta/false_type.h>
-#include <di/meta/true_type.h>
-
 namespace di::concepts {
 namespace detail {
     template<typename T>
-    struct UnboundedLanguageArrayHelper : meta::FalseType {};
+    constexpr inline bool unbounded_language_array_helper = false;
 
     template<typename T>
-    struct UnboundedLanguageArrayHelper<T[]> : meta::TrueType {};
+    constexpr inline bool unbounded_language_array_helper<T[]> = true;
 }
 
 template<typename T>
-concept UnboundedLanguageArray = detail::UnboundedLanguageArrayHelper<T>::value;
+concept UnboundedLanguageArray = detail::unbounded_language_array_helper<T>;
 }

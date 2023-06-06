@@ -24,6 +24,5 @@ namespace detail {
 }
 
 template<size_t N>
-constexpr inline auto adjacent_transform =
-    function::curry_back(detail::AdjacentTransformFunction<N> {}, meta::size_constant<2>);
+constexpr inline auto adjacent_transform = function::curry_back(detail::AdjacentTransformFunction<N> {}, meta::c_<2zu>);
 }

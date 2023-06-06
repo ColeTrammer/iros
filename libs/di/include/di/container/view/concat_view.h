@@ -55,8 +55,8 @@ namespace detail {
 
     struct ConstantTimeReversible {
         template<typename Con>
-        using Invoke = meta::BoolConstant<(concepts::BidirectionalContainer<Con> && concepts::CommonContainer<Con>) ||
-                                          (concepts::SizedContainer<Con> && concepts::RandomAccessContainer<Con>)>;
+        using Invoke = Constexpr<(concepts::BidirectionalContainer<Con> && concepts::CommonContainer<Con>) ||
+                                 (concepts::SizedContainer<Con> && concepts::RandomAccessContainer<Con>)>;
     };
 
     template<typename... Cons>

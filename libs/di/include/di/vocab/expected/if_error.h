@@ -27,5 +27,5 @@ namespace detail {
     };
 }
 
-constexpr inline auto if_error = function::curry_back(detail::IfErrorFunction {}, meta::size_constant<2>);
+constexpr inline auto if_error = function::curry_back(detail::IfErrorFunction {}, meta::c_<2zu>);
 }

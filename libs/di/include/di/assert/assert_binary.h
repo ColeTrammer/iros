@@ -22,7 +22,7 @@ void binary_assert_fail(char const* message, T&& a, U&& b, util::SourceLocation 
     // Allocate a 256 byte buffer on the stack to stringify a and b. We'd don't want to allocate here because this
     // assertion could indicate heap corruption, or even be triggered before the heap is initialized.
     using Enc = container::string::Utf8Encoding;
-    using TargetContext = format::BoundedFormatContext<Enc, meta::SizeConstant<256>>;
+    using TargetContext = format::BoundedFormatContext<Enc, meta::Constexpr<256zu>>;
 
     auto a_context = TargetContext {};
     auto const* a_data_pointer = static_cast<char const*>(nullptr);

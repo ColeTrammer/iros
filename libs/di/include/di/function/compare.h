@@ -17,5 +17,5 @@ struct Compare {
     }
 };
 
-constexpr inline auto compare = function::curry_back(Compare {}, meta::size_constant<2>);
+constexpr inline auto compare = function::curry_back(Compare {}, meta::c_<2zu>);
 }

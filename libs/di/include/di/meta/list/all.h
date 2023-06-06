@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/concepts/conjunction.h>
-#include <di/meta/bool_constant.h>
+#include <di/meta/constexpr.h>
 #include <di/meta/list/invoke.h>
 #include <di/meta/list/list.h>
 
@@ -11,7 +11,7 @@ namespace detail {
     struct AllHelper {};
 
     template<typename Pred, typename... Types>
-    struct AllHelper<Pred, List<Types...>> : BoolConstant<concepts::Conjunction<meta::Invoke<Pred, Types> {}...>> {};
+    struct AllHelper<Pred, List<Types...>> : Constexpr<concepts::Conjunction<meta::Invoke<Pred, Types> {}...>> {};
 }
 
 template<concepts::TypeList List, concepts::MetaInvocable Pred>

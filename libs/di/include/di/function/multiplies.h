@@ -12,5 +12,5 @@ struct Multiplies {
     }
 };
 
-constexpr inline auto multiplies = function::curry_back(Multiplies {}, meta::size_constant<2>);
+constexpr inline auto multiplies = function::curry_back(Multiplies {}, meta::c_<2zu>);
 }

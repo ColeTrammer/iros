@@ -2,6 +2,7 @@
 
 #include <di/function/index_dispatch.h>
 #include <di/function/invoke.h>
+#include <di/meta/constexpr.h>
 #include <di/meta/list/prelude.h>
 #include <di/meta/make_index_sequence.h>
 #include <di/platform/compiler.h>
@@ -21,7 +22,7 @@ namespace detail {
             function::invoke_r<R>(util::declval<Vis>(), util::get<indices>(util::declval<Vars>())...)
         } -> concepts::ImplicitlyConvertibleTo<R>;
     })
-    struct VisitHelper<meta::List<meta::SizeConstant<indices>...>, R, Vis, Vars...> {
+    struct VisitHelper<meta::List<Constexpr<indices>...>, R, Vis, Vars...> {
         constexpr static R call(Vis&& visitor, Vars&&... variants) {
             return function::invoke_r<R>(util::forward<Vis>(visitor),
                                          util::get<indices>(util::forward<Vars>(variants))...);

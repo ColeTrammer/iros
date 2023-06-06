@@ -1,4 +1,5 @@
 #include <di/math/prelude.h>
+#include <di/meta/constexpr.h>
 #include <iris/arch/x86/amd64/hw/serial.h>
 #include <iris/boot/cxx_init.h>
 #include <iris/boot/init.h>
@@ -51,9 +52,8 @@ static volatile limine_kernel_file_request kernel_file_request = {
 }
 
 namespace iris {
-static auto kernel_command_line =
-    di::container::string::StringImpl<di::container::string::TransparentEncoding,
-                                      di::StaticVector<char, di::meta::SizeConstant<4096>>> {};
+static auto kernel_command_line = di::container::string::StringImpl<di::container::string::TransparentEncoding,
+                                                                    di::StaticVector<char, di::Constexpr<4096zu>>> {};
 
 void iris_main() {
     iris::println("Starting architecture independent initialization..."_sv);

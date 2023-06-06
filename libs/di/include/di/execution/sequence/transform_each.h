@@ -17,7 +17,6 @@
 #include <di/meta/decay.h>
 #include <di/meta/list/type.h>
 #include <di/meta/remove_cvref.h>
-#include <di/meta/size_constant.h>
 #include <di/platform/compiler.h>
 #include <di/util/addressof.h>
 #include <di/util/immovable.h>
@@ -146,5 +145,5 @@ namespace transform_each_ns {
 /// sequence's senders.
 ///
 /// @warning If the underlying sequence invokes set_next() in parallel, the transformer function must be thread-safe.
-constexpr inline auto transform_each = function::curry_back(transform_each_ns::Function {}, meta::size_constant<2>);
+constexpr inline auto transform_each = function::curry_back(transform_each_ns::Function {}, meta::c_<2zu>);
 }

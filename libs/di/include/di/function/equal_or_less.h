@@ -20,5 +20,5 @@ struct EqualOrLess {
     }
 };
 
-constexpr inline auto equal_or_less = curry_back(EqualOrLess {}, meta::size_constant<2>);
+constexpr inline auto equal_or_less = curry_back(EqualOrLess {}, meta::c_<2zu>);
 }

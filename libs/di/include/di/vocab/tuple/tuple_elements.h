@@ -1,5 +1,7 @@
+#include <di/meta/constexpr.h>
 #include <di/meta/list/prelude.h>
 #include <di/meta/make_index_sequence.h>
+#include <di/types/prelude.h>
 #include <di/vocab/tuple/tuple_element.h>
 #include <di/vocab/tuple/tuple_like.h>
 
@@ -8,8 +10,8 @@ namespace detail {
     template<typename...>
     struct GetElementHelper;
 
-    template<typename Tup, size_t index>
-    struct GetElementHelper<Tup, SizeConstant<index>> : TypeConstant<TupleElement<Tup, index>> {};
+    template<typename Tup, usize index>
+    struct GetElementHelper<Tup, Constexpr<index>> : TypeConstant<TupleElement<Tup, index>> {};
 
     template<concepts::TupleLike Tup>
     struct GetElement {

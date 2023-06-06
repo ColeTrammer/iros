@@ -1,17 +1,14 @@
 #pragma once
 
-#include <di/meta/false_type.h>
-#include <di/meta/true_type.h>
-
 namespace di::concepts {
 namespace detail {
     template<typename T>
-    struct RValueReferenceHelper : meta::FalseType {};
+    constexpr inline bool rvalue_reference_helper = false;
 
     template<typename T>
-    struct RValueReferenceHelper<T&&> : meta::TrueType {};
+    constexpr inline bool rvalue_reference_helper<T&&> = true;
 }
 
 template<typename T>
-concept RValueReference = detail::RValueReferenceHelper<T>::value;
+concept RValueReference = detail::rvalue_reference_helper<T>;
 }

@@ -5,6 +5,7 @@
 #include <di/concepts/disjunction.h>
 #include <di/function/invoke.h>
 #include <di/function/tag_invoke.h>
+#include <di/meta/constexpr.h>
 #include <di/meta/list/prelude.h>
 #include <di/util/forward_like.h>
 
@@ -17,10 +18,13 @@ namespace detail {
     struct DispatcherImpl<Tag, R(Self, Args...), Tags...> {
         using Type = Method<Tag, R(Self, Args...)>;
 
+        template<typename T, typename F>
+        constexpr static bool is_invocable = concepts::InvocableTo<F const&, R, meta::Like<Self, T>, Args...>;
+
         template<typename T>
         struct Invocable {
             template<typename F>
-            using Invoke = meta::BoolConstant<concepts::InvocableTo<F const&, R, meta::Like<Self, T>, Args...>>;
+            using Invoke = Constexpr<is_invocable<T, F>>;
         };
 
         template<typename T>

@@ -10,8 +10,6 @@
 #include <di/concepts/remove_cvref_same_as.h>
 #include <di/concepts/trivially_copy_assignable.h>
 #include <di/concepts/trivially_move_assignable.h>
-#include <di/meta/false_type.h>
-#include <di/meta/true_type.h>
 #include <di/meta/unwrap_ref_decay.h>
 #include <di/meta/wrap_reference.h>
 #include <di/types/in_place.h>

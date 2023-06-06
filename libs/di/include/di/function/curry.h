@@ -5,6 +5,7 @@
 #include <di/function/bind_front.h>
 #include <di/function/pipeable.h>
 #include <di/math/numeric_limits.h>
+#include <di/meta/constexpr.h>
 #include <di/meta/decay.h>
 #include <di/util/forward.h>
 #include <di/util/move.h>
@@ -17,7 +18,7 @@ namespace detail {
 
 template<typename F, size_t max_arity = math::NumericLimits<size_t>::max>
 requires(concepts::ConstructibleFrom<meta::Decay<F>, F>)
-constexpr auto curry(F&& function, meta::SizeConstant<max_arity> = {}) {
+constexpr auto curry(F&& function, Constexpr<max_arity> = {}) {
     return detail::CurryFunction<meta::Decay<F>, max_arity>(types::in_place, util::forward<F>(function));
 }
 
@@ -70,7 +71,7 @@ namespace detail {
                  sizeof...(Args) < max_arity)
         constexpr auto operator()(Args&&... args) & {
             return curry(bind_front(static_cast<F&>(m_function), util::forward<Args>(args)...),
-                         meta::size_constant<new_arity<max_arity - sizeof...(Args)>>);
+                         c_<new_arity<max_arity - sizeof...(Args)>>);
         }
 
         template<typename... Args>
@@ -79,7 +80,7 @@ namespace detail {
                  sizeof...(Args) < max_arity)
         constexpr auto operator()(Args&&... args) const& {
             return curry(bind_front(static_cast<F const&>(m_function), util::forward<Args>(args)...),
-                         meta::size_constant<new_arity<max_arity - sizeof...(Args)>>);
+                         c_<new_arity<max_arity - sizeof...(Args)>>);
         }
 
         template<typename... Args>
@@ -88,7 +89,7 @@ namespace detail {
                  sizeof...(Args) < max_arity)
         constexpr auto operator()(Args&&... args) && {
             return curry(bind_front(static_cast<F&&>(m_function), util::forward<Args>(args)...),
-                         meta::size_constant<new_arity<max_arity - sizeof...(Args)>>);
+                         c_<new_arity<max_arity - sizeof...(Args)>>);
         }
 
         template<typename... Args>
@@ -97,7 +98,7 @@ namespace detail {
                  sizeof...(Args) < max_arity)
         constexpr auto operator()(Args&&... args) const&& {
             return curry(bind_front(static_cast<F const&&>(m_function), util::forward<Args>(args)...),
-                         meta::size_constant<new_arity<max_arity - sizeof...(Args)>>);
+                         c_<new_arity<max_arity - sizeof...(Args)>>);
         }
 
     private:

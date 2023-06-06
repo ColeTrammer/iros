@@ -8,7 +8,7 @@
 #include <di/container/meta/container_reference.h>
 #include <di/function/bind_front.h>
 #include <di/function/tag_invoke.h>
-#include <di/meta/bool_constant.h>
+#include <di/meta/constexpr.h>
 #include <di/meta/index_sequence.h>
 #include <di/meta/make_index_sequence.h>
 #include <di/types/prelude.h>
@@ -53,7 +53,7 @@ concept Hashable = requires(container::DefaultHasher& hasher, T const& value) {
 
 namespace di::meta {
 template<typename T>
-struct Hashable : BoolConstant<concepts::Hashable<T>> {};
+struct Hashable : Constexpr<concepts::Hashable<T>> {};
 }
 
 namespace di::container::detail {

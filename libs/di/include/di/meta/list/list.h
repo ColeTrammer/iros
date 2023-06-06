@@ -1,31 +1,31 @@
 #pragma once
 
 #include <di/concepts/same_as.h>
+#include <di/meta/constexpr.h>
 #include <di/meta/list/concepts/type_list.h>
 #include <di/meta/list/list_forward_declation.h>
-#include <di/meta/size_constant.h>
 #include <di/meta/type_constant.h>
-#include <di/types/size_t.h>
+#include <di/types/prelude.h>
 
 namespace di::meta {
 namespace detail {
-    template<types::size_t index, typename... Types>
+    template<usize index, typename... Types>
     struct AtHelper {};
 
     template<typename T, typename... Rest>
     struct AtHelper<0, T, Rest...> : TypeConstant<T> {};
 
-    template<types::size_t index, typename T, typename... Rest>
+    template<usize index, typename T, typename... Rest>
     struct AtHelper<index, T, Rest...> : AtHelper<index - 1, Rest...> {};
 }
 
 namespace detail {
     template<typename Needle, typename... Types>
-    struct LookupHelper : SizeConstant<0> {};
+    struct LookupHelper : Constexpr<0zu> {};
 
     template<typename Needle, typename T, typename... Rest>
     struct LookupHelper<Needle, T, Rest...>
-        : SizeConstant<concepts::SameAs<T, Needle> ? 0 : 1 + LookupHelper<Needle, Rest...>::value> {};
+        : Constexpr<concepts::SameAs<T, Needle> ? 0zu : 1 + LookupHelper<Needle, Rest...>::value> {};
 }
 
 namespace detail {

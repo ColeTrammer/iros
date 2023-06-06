@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/meta/constexpr.h>
 #include <di/meta/integer_sequence.h>
 #include <di/meta/list/list.h>
 
@@ -9,7 +10,7 @@ namespace detail {
     struct AsListHelper {};
 
     template<typename T, T... values>
-    struct AsListHelper<IntegerSequence<T, values...>> : TypeConstant<List<IntegralConstant<T, values>...>> {};
+    struct AsListHelper<IntegerSequence<T, values...>> : TypeConstant<List<Constexpr<values>...>> {};
 
     template<template<typename...> typename Template, typename... Types>
     struct AsListHelper<Template<Types...>> : TypeConstant<List<Types...>> {};

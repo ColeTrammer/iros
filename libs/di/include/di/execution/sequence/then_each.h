@@ -33,5 +33,5 @@ namespace then_each_ns {
 /// @see then
 /// @see transform_each
 /// @see view::transform
-constexpr inline auto then_each = function::curry_back(then_each_ns::Function {}, meta::size_constant<2>);
+constexpr inline auto then_each = function::curry_back(then_each_ns::Function {}, meta::c_<2zu>);
 }

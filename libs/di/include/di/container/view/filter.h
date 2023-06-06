@@ -30,5 +30,5 @@ namespace detail {
     };
 }
 
-constexpr inline auto filter = function::curry_back(detail::FilterFunction {}, meta::size_constant<2>);
+constexpr inline auto filter = function::curry_back(detail::FilterFunction {}, meta::c_<2zu>);
 }

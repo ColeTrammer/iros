@@ -157,7 +157,7 @@ public:
         DI_TRY(serialize_comma());
 
         using Enc = container::string::Utf8Encoding;
-        using TargetContext = format::BoundedFormatContext<Enc, meta::SizeConstant<256>>;
+        using TargetContext = format::BoundedFormatContext<Enc, meta::Constexpr<256zu>>;
         auto context = TargetContext {};
         DI_TRY(di::format::vpresent_encoded_context<Enc>(
             di::container::string::StringViewImpl<Enc>(encoding::assume_valid, u8"{}", 2),

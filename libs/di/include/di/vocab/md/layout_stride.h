@@ -5,6 +5,7 @@
 #include <di/container/algorithm/copy.h>
 #include <di/container/view/range.h>
 #include <di/function/unpack.h>
+#include <di/meta/constexpr.h>
 #include <di/meta/index_sequence.h>
 #include <di/meta/make_index_sequence.h>
 #include <di/vocab/array/prelude.h>
@@ -22,9 +23,9 @@ namespace detail {
         { M::is_always_strided() } -> concepts::SameAs<bool>;
         { M::is_always_exhaustive() } -> concepts::SameAs<bool>;
         { M::is_always_unique() } -> concepts::SameAs<bool>;
-        meta::BoolConstant<M::is_always_strided()>::value;
-        meta::BoolConstant<M::is_always_exhaustive()>::value;
-        meta::BoolConstant<M::is_always_unique()>::value;
+        Constexpr<M::is_always_strided()>::value;
+        Constexpr<M::is_always_exhaustive()>::value;
+        Constexpr<M::is_always_unique()>::value;
     };
 }
 

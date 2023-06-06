@@ -1,18 +1,16 @@
 #pragma once
 
-#include <di/meta/false_type.h>
 #include <di/meta/remove_cv.h>
-#include <di/meta/true_type.h>
 
 namespace di::concepts {
 namespace detail {
     template<typename T>
-    struct PointerHelper : meta::FalseType {};
+    constexpr inline bool pointer_helper = false;
 
     template<typename T>
-    struct PointerHelper<T*> : meta::TrueType {};
+    constexpr inline bool pointer_helper<T*> = true;
 }
 
 template<typename T>
-concept Pointer = detail::PointerHelper<meta::RemoveCV<T>>::value;
+concept Pointer = detail::pointer_helper<meta::RemoveCV<T>>;
 }

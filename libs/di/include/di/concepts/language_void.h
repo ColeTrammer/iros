@@ -1,18 +1,16 @@
 #pragma once
 
-#include <di/meta/false_type.h>
 #include <di/meta/remove_cv.h>
-#include <di/meta/true_type.h>
 
 namespace di::concepts {
 namespace detail {
     template<typename T>
-    struct LanguageVoidHelper : meta::FalseType {};
+    constexpr inline bool language_void_helper = false;
 
     template<>
-    struct LanguageVoidHelper<void> : meta::TrueType {};
+    constexpr inline bool language_void_helper<void> = true;
 }
 
 template<typename T>
-concept LanguageVoid = detail::LanguageVoidHelper<meta::RemoveCV<T>>::value;
+concept LanguageVoid = detail::language_void_helper<meta::RemoveCV<T>>;
 }

@@ -175,25 +175,25 @@ Tuple(Types...) -> Tuple<Types...>;
 namespace di {
 namespace detail {
     template<typename...>
-    struct HasCommonTypeHelper : meta::BoolConstant<false> {};
+    constexpr inline bool has_common_type_helper = false;
 
     template<typename T, concepts::CommonWith<T> U>
-    struct HasCommonTypeHelper<T, U> : meta::BoolConstant<true> {};
+    constexpr inline bool has_common_type_helper<T, U> = true;
 
     struct HasCommonType {
         template<typename... Types>
-        using Invoke = meta::BoolConstant<HasCommonTypeHelper<Types...>::value>;
+        using Invoke = Constexpr<has_common_type_helper<Types...>>;
     };
 
     template<typename...>
-    struct HasCommonReferenceHelper : meta::BoolConstant<false> {};
+    constexpr inline bool has_common_reference_helper = false;
 
     template<typename T, concepts::CommonWith<T> U>
-    struct HasCommonReferenceHelper<T, U> : meta::BoolConstant<true> {};
+    constexpr inline bool has_common_reference_helper<T, U> = true;
 
     struct HasCommonReference {
         template<typename... Types>
-        using Invoke = meta::BoolConstant<HasCommonReferenceHelper<Types...>::value>;
+        using Invoke = Constexpr<has_common_reference_helper<Types...>>;
     };
 }
 

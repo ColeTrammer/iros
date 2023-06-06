@@ -1,17 +1,14 @@
 #pragma once
 
-#include <di/meta/false_type.h>
-#include <di/meta/true_type.h>
-
 namespace di::concepts {
 namespace detail {
     template<typename T, typename U>
-    struct SameAsHelper : meta::FalseType {};
+    constexpr inline auto same_as_helper = false;
 
     template<typename T>
-    struct SameAsHelper<T, T> : meta::TrueType {};
+    constexpr inline auto same_as_helper<T, T> = true;
 }
 
 template<typename T, typename U>
-concept SameAs = detail::SameAsHelper<T, U>::value;
+concept SameAs = detail::same_as_helper<T, U>;
 }

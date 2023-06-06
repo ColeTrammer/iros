@@ -2,6 +2,7 @@
 
 #include <di/container/string/prelude.h>
 #include <di/container/vector/prelude.h>
+#include <di/meta/constexpr.h>
 #include <di/types/prelude.h>
 #include <di/util/bitwise_enum.h>
 
@@ -35,7 +36,7 @@ struct ProcessorInfo {
     u32 fpu_max_state_size { 0 };
     u64 fpu_valid_xcr0 { 0 };
     di::container::string::StringImpl<di::container::string::TransparentEncoding,
-                                      di::StaticVector<char, di::meta::SizeConstant<12>>>
+                                      di::StaticVector<char, di::Constexpr<12zu>>>
         vendor_string;
 
     void print_to_console();

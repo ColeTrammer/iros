@@ -1,34 +1,27 @@
 #pragma once
 
+#include <di/concepts/instance_of.h>
 #include <di/container/concepts/view.h>
 #include <di/container/view/reverse_view.h>
 #include <di/container/view/view.h>
 #include <di/function/pipeline.h>
-#include <di/meta/false_type.h>
 #include <di/meta/remove_cv.h>
-#include <di/meta/true_type.h>
 #include <di/util/declval.h>
 #include <di/util/forward.h>
 
 namespace di::container::view {
 namespace detail {
     template<typename T>
-    struct IsReverseViewHelper : meta::FalseType {};
-
-    template<concepts::View T>
-    struct IsReverseViewHelper<ReverseView<T>> : meta::TrueType {};
+    concept IsReverseView = concepts::InstanceOf<meta::RemoveCV<T>, ReverseView>;
 
     template<typename T>
-    concept IsReverseView = IsReverseViewHelper<meta::RemoveCV<T>>::value;
-
-    template<typename T>
-    struct IsReverseRawViewHelper : meta::FalseType {};
+    constexpr inline bool is_reverse_raw_view_helper = false;
 
     template<typename I, bool sized>
-    struct IsReverseRawViewHelper<View<ReverseIterator<I>, ReverseIterator<I>, sized>> : meta::TrueType {};
+    constexpr inline bool is_reverse_raw_view_helper<View<ReverseIterator<I>, ReverseIterator<I>, sized>> = true;
 
     template<typename T>
-    concept IsReverseRawView = IsReverseRawViewHelper<meta::RemoveCV<T>>::value;
+    concept IsReverseRawView = is_reverse_raw_view_helper<meta::RemoveCV<T>>;
 
     template<typename T>
     concept CanReverseView = requires(T&& container) { ReverseView { util::forward<T>(container) }; };

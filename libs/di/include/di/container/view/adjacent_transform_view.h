@@ -4,16 +4,17 @@
 #include <di/container/iterator/iterator_extension.h>
 #include <di/container/iterator/sentinel_extension.h>
 #include <di/container/view/adjacent_view.h>
+#include <di/meta/constexpr.h>
 #include <di/util/rebindable_box.h>
 
 namespace di::container {
 namespace detail {
     template<typename F, typename P>
-    struct CanInvokeRepeatHelper : meta::FalseType {};
+    struct CanInvokeRepeatHelper : meta::Constexpr<false> {};
 
     template<typename F, typename... Rs>
     requires(concepts::Invocable<F, Rs...>)
-    struct CanInvokeRepeatHelper<F, meta::List<Rs...>> : meta::TrueType {
+    struct CanInvokeRepeatHelper<F, meta::List<Rs...>> : Constexpr<true> {
         using Type = meta::InvokeResult<F, Rs...>;
     };
 

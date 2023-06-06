@@ -20,5 +20,5 @@ struct Less {
     }
 };
 
-constexpr inline auto less = curry_back(Less {}, meta::size_constant<2>);
+constexpr inline auto less = curry_back(Less {}, meta::c_<2zu>);
 }

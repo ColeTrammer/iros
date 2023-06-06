@@ -1,17 +1,14 @@
 #pragma once
 
-#include <di/meta/false_type.h>
-#include <di/meta/true_type.h>
-
 namespace di::concepts {
 namespace detail {
     template<typename T>
-    struct ConstHelper : meta::FalseType {};
+    constexpr inline bool const_helper = false;
 
     template<typename T>
-    struct ConstHelper<T const> : meta::TrueType {};
+    constexpr inline bool const_helper<T const> = true;
 }
 
 template<typename T>
-concept Const = detail::ConstHelper<T>::value;
+concept Const = detail::const_helper<T>;
 }

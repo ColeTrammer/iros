@@ -32,5 +32,5 @@ namespace detail {
     };
 }
 
-constexpr inline auto split = function::curry_back(detail::SplitFunction {}, meta::size_constant<2>);
+constexpr inline auto split = function::curry_back(detail::SplitFunction {}, meta::c_<2zu>);
 }

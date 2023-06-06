@@ -30,5 +30,5 @@ namespace detail {
     };
 }
 
-constexpr inline auto if_success = function::curry_back(detail::IfSuccessFunction {}, meta::size_constant<2>);
+constexpr inline auto if_success = function::curry_back(detail::IfSuccessFunction {}, meta::c_<2zu>);
 }

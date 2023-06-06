@@ -20,5 +20,5 @@ struct NotEqual {
     }
 };
 
-constexpr inline auto not_equal = curry_back(NotEqual {}, meta::size_constant<2>);
+constexpr inline auto not_equal = curry_back(NotEqual {}, meta::c_<2zu>);
 }

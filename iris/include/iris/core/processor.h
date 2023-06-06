@@ -49,8 +49,7 @@ private:
     di::Atomic<bool> m_is_initialized { false };
     di::Atomic<bool> m_is_booted { false };
     di::Atomic<bool> m_is_online { false };
-    di::Synchronized<di::Queue<IpiMessage*, di::StaticRing<IpiMessage*, di::meta::SizeConstant<32>>>>
-        m_ipi_message_queue {};
+    di::Synchronized<di::Queue<IpiMessage*, di::StaticRing<IpiMessage*, di::Constexpr<32zu>>>> m_ipi_message_queue {};
     u16 m_id {};
     arch::ArchProcessor m_arch_processor;
 };

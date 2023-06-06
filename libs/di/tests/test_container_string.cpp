@@ -31,7 +31,7 @@ constexpr void push_back() {
     ASSERT_EQ(x, u8"abcdef"_sv);
 
     auto y = di::container::string::StringImpl<di::container::string::Utf8Encoding,
-                                               di::StaticVector<c8, di::meta::SizeConstant<64>>> {};
+                                               di::StaticVector<c8, di::Constexpr<64zu>>> {};
     (void) y.push_back(U'a');
 
     ASSERT_EQ(y, "a"_sv);

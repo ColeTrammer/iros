@@ -32,5 +32,5 @@ namespace detail {
     };
 }
 
-constexpr inline auto abs_diff = function::curry_back(detail::AbsDiffFunction {}, meta::size_constant<2>);
+constexpr inline auto abs_diff = function::curry_back(detail::AbsDiffFunction {}, meta::c_<2zu>);
 }

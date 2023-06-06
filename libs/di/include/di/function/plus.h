@@ -12,5 +12,5 @@ struct Plus {
     }
 };
 
-constexpr inline auto plus = function::curry_back(Plus {}, meta::size_constant<2>);
+constexpr inline auto plus = function::curry_back(Plus {}, meta::c_<2zu>);
 }

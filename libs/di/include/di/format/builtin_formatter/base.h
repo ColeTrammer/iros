@@ -379,7 +379,7 @@ namespace detail {
         // The maximum number of digits a number can have is 64 (u64::max() printed in binary).
         // Add 3 extra characters to account for a prefix, like -0x.
         auto buffer = container::string::StringImpl<
-            Enc, container::StaticVector<meta::EncodingCodeUnit<Enc>, meta::SizeConstant<67>>> {};
+            Enc, container::StaticVector<meta::EncodingCodeUnit<Enc>, meta::Constexpr<67zu>>> {};
 
         using UnsignedType = meta::MakeUnsigned<T>;
         auto as_unsigned = math::abs_unsigned(value);

@@ -179,12 +179,12 @@ constexpr void compare() {
 }
 
 constexpr void static_() {
-    auto a = di::StaticRing<int, di::meta::SizeConstant<2>> {};
+    auto a = di::StaticRing<int, di::Constexpr<2zu>> {};
     (void) a.push_back(1);
     (void) a.push_back(2);
     (void) a.push_back(3);
 
-    auto b = di::StaticRing<int, di::meta::SizeConstant<2>> {};
+    auto b = di::StaticRing<int, di::Constexpr<2zu>> {};
     (void) b.push_back(1);
     (void) b.push_back(2);
 
@@ -198,7 +198,7 @@ constexpr void static_() {
     (void) a.emplace(a.begin());
     ASSERT_EQ(a.size(), 2u);
 
-    auto v = di::StaticRing<c8, di::meta::SizeConstant<4>> {};
+    auto v = di::StaticRing<c8, di::Constexpr<4zu>> {};
     (void) v.resize(1);
     v[0] = 9;
 

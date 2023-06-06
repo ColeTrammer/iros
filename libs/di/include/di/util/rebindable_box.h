@@ -5,13 +5,12 @@
 #include <di/concepts/convertible_to.h>
 #include <di/concepts/copy_constructible.h>
 #include <di/concepts/default_constructible.h>
+#include <di/concepts/instance_of.h>
 #include <di/concepts/move_assignable.h>
 #include <di/concepts/move_constructible.h>
 #include <di/concepts/remove_cvref_same_as.h>
 #include <di/concepts/trivially_copy_assignable.h>
 #include <di/concepts/trivially_move_assignable.h>
-#include <di/meta/false_type.h>
-#include <di/meta/true_type.h>
 #include <di/meta/unwrap_ref_decay.h>
 #include <di/meta/wrap_reference.h>
 #include <di/types/in_place.h>
@@ -44,13 +43,7 @@ namespace detail {
          !concepts::ConvertibleTo<RebindableBox<U> const&, T>);
 
     template<typename T>
-    struct IsRebindableBoxHelper : meta::FalseType {};
-
-    template<typename T>
-    struct IsRebindableBoxHelper<RebindableBox<T>> : meta::TrueType {};
-
-    template<typename T>
-    concept IsRebindableBox = IsRebindableBoxHelper<meta::RemoveCVRef<T>>::value;
+    concept IsRebindableBox = concepts::InstanceOf<meta::RemoveCVRef<T>, RebindableBox>;
 }
 
 template<typename T>

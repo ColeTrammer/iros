@@ -150,5 +150,5 @@ namespace then_ns {
     };
 }
 
-constexpr inline auto then = function::curry_back(then_ns::Function {}, meta::size_constant<2>);
+constexpr inline auto then = function::curry_back(then_ns::Function {}, meta::c_<2zu>);
 }

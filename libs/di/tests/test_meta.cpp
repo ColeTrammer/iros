@@ -52,7 +52,7 @@ static_assert(
 
 struct P {
     template<typename T>
-    using Invoke = di::meta::BoolConstant<!di::SameAs<T, i32>>;
+    using Invoke = di::Constexpr<!di::SameAs<T, i32>>;
 };
 
 static_assert(di::SameAs<di::meta::Filter<di::meta::List<i32, i64, i32, i16, i32>, P>, di::meta::List<i64, i16>>);

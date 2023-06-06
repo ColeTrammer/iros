@@ -16,9 +16,9 @@
 #include <di/parser/combinator/transform.h>
 #include <di/parser/concepts/parser.h>
 #include <di/parser/concepts/parser_context.h>
+#include <di/parser/constexpr_intgral.h>
 #include <di/parser/create_parser.h>
 #include <di/parser/integral.h>
-#include <di/parser/integral_constant.h>
 #include <di/parser/integral_set.h>
 #include <di/parser/into_parser_context.h>
 #include <di/parser/meta/parser_context_error.h>
@@ -42,8 +42,8 @@ using parser::run_parser_partial;
 using parser::run_parser_unchecked;
 }
 
-#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_INTEGRAL_CONSTANT_LITERALS)
-using namespace di::literals::integral_constant_literals;
+#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_CONSTEXPR_INTEGRAL_LITERALS)
+using namespace di::literals::constexpr_integral_literals;
 #endif
 
 #if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_INTEGRAL_SET_LITERALS)

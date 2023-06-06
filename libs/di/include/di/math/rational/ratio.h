@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/math/rational/rational.h>
+#include <di/meta/constexpr.h>
 #include <di/types/prelude.h>
 
 namespace di::math {
@@ -15,13 +16,13 @@ struct Ratio;
 
 namespace detail {
     template<typename T>
-    struct IsRatioHelper : meta::BoolConstant<false> {};
+    constexpr inline bool is_ratio = false;
 
     template<ratio_intmax_t x, ratio_intmax_t y>
-    struct IsRatioHelper<Ratio<x, y>> : meta::BoolConstant<true> {};
+    constexpr inline bool is_ratio<Ratio<x, y>> = true;
 
     template<typename T>
-    concept IsRatio = IsRatioHelper<T>::value;
+    concept IsRatio = is_ratio<T>;
 }
 
 template<Rational<ratio_intmax_t> rational>
@@ -50,22 +51,22 @@ template<detail::IsRatio A, detail::IsRatio B>
 using RatioDivide = RatioFromRational<A::rational / B::rational>;
 
 template<detail::IsRatio A, detail::IsRatio B>
-using RatioEqual = meta::BoolConstant<A::rational == B::rational>;
+using RatioEqual = Constexpr<A::rational == B::rational>;
 
 template<detail::IsRatio A, detail::IsRatio B>
-using RatioNotEqual = meta::BoolConstant<A::rational != B::rational>;
+using RatioNotEqual = Constexpr<A::rational != B::rational>;
 
 template<detail::IsRatio A, detail::IsRatio B>
-using RatioLess = meta::BoolConstant<(A::rational < B::rational)>;
+using RatioLess = Constexpr<(A::rational < B::rational)>;
 
 template<detail::IsRatio A, detail::IsRatio B>
-using RatioLessEqual = meta::BoolConstant<(A::rational <= B::rational)>;
+using RatioLessEqual = Constexpr<(A::rational <= B::rational)>;
 
 template<detail::IsRatio A, detail::IsRatio B>
-using RatioGreater = meta::BoolConstant<(A::rational > B::rational)>;
+using RatioGreater = Constexpr<(A::rational > B::rational)>;
 
 template<detail::IsRatio A, detail::IsRatio B>
-using RatioGreaterEqual = meta::BoolConstant<(A::rational >= B::rational)>;
+using RatioGreaterEqual = Constexpr<(A::rational >= B::rational)>;
 
 #ifdef DI_HAVE_128_BIT_INTEGERS
 using Yocto = Ratio<1, ratio_intmax_t(1000000000000000000) * ratio_intmax_t(1000000)>;

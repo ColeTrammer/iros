@@ -20,5 +20,5 @@ struct Equal {
     }
 };
 
-constexpr inline auto equal = curry_back(Equal {}, meta::size_constant<2>);
+constexpr inline auto equal = curry_back(Equal {}, meta::c_<2zu>);
 }

@@ -12,5 +12,5 @@ struct BitAnd {
     }
 };
 
-constexpr inline auto bit_and = function::curry_back(BitAnd {}, meta::size_constant<2>);
+constexpr inline auto bit_and = function::curry_back(BitAnd {}, meta::c_<2zu>);
 }

@@ -30,5 +30,5 @@ namespace detail {
     };
 }
 
-constexpr inline auto chunk_by = function::curry_back(detail::ChunkByFunction {}, meta::size_constant<2>);
+constexpr inline auto chunk_by = function::curry_back(detail::ChunkByFunction {}, meta::c_<2zu>);
 }

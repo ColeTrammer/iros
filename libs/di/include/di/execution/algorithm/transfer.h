@@ -27,5 +27,5 @@ namespace transfer_ns {
     };
 }
 
-constexpr inline auto transfer = function::curry_back(transfer_ns::Function {}, meta::size_constant<2>);
+constexpr inline auto transfer = function::curry_back(transfer_ns::Function {}, meta::c_<2zu>);
 }

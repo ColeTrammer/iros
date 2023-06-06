@@ -12,5 +12,5 @@ struct Minus {
     }
 };
 
-constexpr inline auto minus = function::curry_back(Minus {}, meta::size_constant<2>);
+constexpr inline auto minus = function::curry_back(Minus {}, meta::c_<2zu>);
 }

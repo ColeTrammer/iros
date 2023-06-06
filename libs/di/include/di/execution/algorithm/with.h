@@ -276,5 +276,5 @@ namespace with_ns {
 /// was successful). Then, the result of the second sender is decay-copied into the operation state.
 /// Then, the async destroy sender is run to destroy the created resource. When this completes, the
 /// results of the second sender are forwarded to the out receiver.
-constexpr inline auto with = function::curry_back(with_ns::Function {}, meta::size_constant<2>);
+constexpr inline auto with = function::curry_back(with_ns::Function {}, meta::c_<2zu>);
 }
