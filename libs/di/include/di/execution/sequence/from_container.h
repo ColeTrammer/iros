@@ -20,13 +20,17 @@
 #include <di/execution/meta/stop_token_of.h>
 #include <di/execution/query/get_completion_signatures.h>
 #include <di/execution/query/get_stop_token.h>
+#include <di/execution/query/is_always_lockstep_sequence.h>
+#include <di/execution/query/make_env.h>
 #include <di/execution/receiver/set_stopped.h>
 #include <di/execution/receiver/set_value.h>
 #include <di/execution/sequence/sequence_sender.h>
 #include <di/execution/types/completion_signuatures.h>
+#include <di/execution/types/empty_env.h>
 #include <di/function/pipeable.h>
 #include <di/function/tag_invoke.h>
 #include <di/meta/conditional.h>
+#include <di/meta/constexpr.h>
 #include <di/meta/decay.h>
 #include <di/meta/like.h>
 #include <di/meta/list/type.h>
@@ -189,6 +193,10 @@ namespace from_container_ns {
             template<concepts::RemoveCVRefSameAs<Type> Self, typename Env>
             requires(concepts::DecayConstructible<meta::Like<Self, Con>>)
             friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env&&) -> Signatures<Con, Env>;
+
+            friend auto tag_invoke(Tag<get_env>, Type const&) {
+                return make_env(empty_env, with(is_always_lockstep_sequence, c_<true>));
+            }
         };
     };
 

@@ -105,6 +105,19 @@ the next senders to complete before it can complete, which means that cancelling
 work. This can also be considered desireable since it ensures that cleanup operations are performed when needed, and not
 in a distant point in the future when a shared pointer's ref count reaches zero.
 
+### Lockstep Sequences
+
+Although the model allows for multiple next senders to be in-flight at the same time, in many cases, the underlying
+sequence ensures that only one next sender is in-flight at a time. This property can be used to optimize algorithms by
+removing the need for synchronization. For instance, an algorithm like `execution::fold()`, which can be used to compute
+the sum of a sequence, needs to ensure the fold function is not called concurrently. If the sequence is a lockstep
+sequence, no synchronization is needed. Sequences can opt-in to this optimization by providing overriding the query
+`execution::is_always_lockstep_sequence` to return true in their associated environment.
+
+The library provides the `execution::into_lockstep_sequence()` CPO, which can be used to convert a parallel sequence
+into a lockstep sequence. This is used internally for any algorithm like `execution::fold()` which requires a lockstep
+sequences.
+
 ### How do completion signatures work with sequences?
 
 Since all sequences complete with a call to `di::execution::set_value()`, this completion signature is implied. Instead,

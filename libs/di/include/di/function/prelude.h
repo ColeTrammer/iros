@@ -50,12 +50,6 @@ using function::piped;
 using function::uncurry;
 using function::ycombinator;
 
-using concepts::TagInvocable;
-using concepts::TagInvocableTo;
-using function::tag_invoke;
-using meta::TagInvokeResult;
-using types::Tag;
-
 using concepts::Invocable;
 using concepts::InvocableTo;
 using function::invoke;

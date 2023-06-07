@@ -44,3 +44,11 @@ namespace di::concepts {
 template<typename Tag, typename R, typename... Args>
 concept TagInvocableTo = TagInvocable<Tag, Args...> && ImplicitlyConvertibleTo<R, meta::TagInvokeResult<Tag, Args...>>;
 }
+
+namespace di {
+using concepts::TagInvocable;
+using concepts::TagInvocableTo;
+using function::tag_invoke;
+using meta::TagInvokeResult;
+using types::Tag;
+}

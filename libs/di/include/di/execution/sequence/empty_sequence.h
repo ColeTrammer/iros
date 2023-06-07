@@ -2,9 +2,13 @@
 
 #include <di/execution/concepts/receiver.h>
 #include <di/execution/concepts/receiver_of.h>
+#include <di/execution/interface/get_env.h>
 #include <di/execution/interface/start.h>
+#include <di/execution/query/is_always_lockstep_sequence.h>
+#include <di/execution/query/make_env.h>
 #include <di/execution/receiver/set_value.h>
 #include <di/execution/sequence/sequence_sender.h>
+#include <di/execution/types/empty_env.h>
 #include <di/function/tag_invoke.h>
 #include <di/meta/list/type.h>
 #include <di/meta/remove_cvref.h>
@@ -33,6 +37,10 @@ namespace empty_sequence_ns {
         friend auto tag_invoke(types::Tag<subscribe>, Sender, Rec receiver) {
             return OperationState<Rec> { util::move(receiver) };
         };
+
+        friend auto tag_invoke(Tag<get_env>, Sender) {
+            return make_env(empty_env, with(is_always_lockstep_sequence, c_<true>));
+        }
     };
 
     struct Function {

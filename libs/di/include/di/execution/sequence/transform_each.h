@@ -145,6 +145,7 @@ namespace transform_each_ns {
 /// input sender, as the determination of completion signatures is done without any knowledge of the exact type of the
 /// sequence's senders.
 ///
-/// @warning If the underlying sequence invokes set_next() in parallel, the transformer function must be thread-safe.
+/// @warning If the underlying sequence is not always lock-step, the transformer function must be thread-safe. If using
+/// a non-thread-safe transformer function, first call execution::into_lockstep_sequence() on the sequence.
 constexpr inline auto transform_each = function::curry_back(transform_each_ns::Function {}, meta::c_<2zu>);
 }

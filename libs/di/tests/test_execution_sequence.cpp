@@ -5,6 +5,7 @@
 #include <di/execution/algorithm/when_all.h>
 #include <di/execution/any/any_sender.h>
 #include <di/execution/context/run_loop.h>
+#include <di/execution/query/is_always_lockstep_sequence.h>
 #include <di/execution/receiver/prelude.h>
 #include <di/execution/sequence/async_generator.h>
 #include <di/execution/sequence/empty_sequence.h>
@@ -15,6 +16,7 @@
 #include <di/execution/sequence/then_each.h>
 #include <di/execution/sequence/transform_each.h>
 #include <di/execution/types/prelude.h>
+#include <di/function/prelude.h>
 #include <di/util/prelude.h>
 #include <di/vocab/error/prelude.h>
 #include <di/vocab/expected/prelude.h>
@@ -37,6 +39,13 @@ static void meta() {
     static_assert(di::concepts::SubscriberOf<Receiver, di::CompletionSignatures<di::SetValue()>>);
 
     static_assert(di::concepts::AwaitableAsyncRange<di::AsyncGenerator<int>>);
+
+    auto from_container = ex::from_container(di::Array { 1, 2, 3 });
+
+    static_assert(di::concepts::AlwaysLockstepSequence<decltype(empty)>);
+    static_assert(di::concepts::AlwaysLockstepSequence<decltype(from_container)>);
+    static_assert(di::concepts::AlwaysLockstepSequence<decltype(from_container | ex::transform_each(di::identity))>);
+    static_assert(di::concepts::AlwaysLockstepSequence<decltype(ex::just())>);
 }
 
 static void ignore_all() {

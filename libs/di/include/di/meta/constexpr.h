@@ -2,6 +2,7 @@
 
 #include <di/concepts/derived_from.h>
 #include <di/concepts/member_pointer.h>
+#include <di/concepts/same_as.h>
 #include <di/meta/remove_cvref.h>
 
 namespace di::meta {
@@ -271,6 +272,15 @@ namespace detail {
 /// @see Constexpr
 template<typename T>
 concept Constexpr = detail::constexpr_helper<T>;
+
+/// @brief Checks if `T` is a `Constexpr` instance with value `U`.
+///
+/// @tparam T The type to check.
+/// @tparam U The value to check.
+///
+/// @see Constexpr
+template<typename T, typename U>
+concept ConstexprOf = Constexpr<T> && SameAs<typename T::Value, U>;
 }
 
 namespace di {
