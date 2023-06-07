@@ -3,11 +3,12 @@
 #include <di/concepts/always_false.h>
 #include <di/execution/concepts/sender.h>
 #include <di/execution/query/is_always_lockstep_sequence.h>
+#include <di/function/pipeable.h>
 #include <di/function/tag_invoke.h>
 
 namespace di::execution {
 namespace into_lockstep_sequence_ns {
-    struct Function {
+    struct Function : function::pipeline::EnablePipeline {
         template<concepts::Sender Seq>
         auto operator()(Seq&& sequence) const {
             if constexpr (concepts::AlwaysLockstepSequence<Seq>) {
@@ -44,4 +45,14 @@ namespace into_lockstep_sequence_ns {
 /// @see execution::is_always_lockstep_sequence
 /// @see concepts::AlwaysLockstepSequence
 constexpr inline auto into_lockstep_sequence = into_lockstep_sequence_ns::Function {};
+}
+
+namespace di::meta {
+/// @brief Deduce the type of converting a sequence into a lockstep sequence.
+///
+/// @tparam Seq The sequence to convert.
+///
+/// @see execution::into_lockstep_sequence
+template<concepts::Sender Seq>
+using IntoLockstepSequence = decltype(execution::into_lockstep_sequence(util::declval<Seq>()));
 }

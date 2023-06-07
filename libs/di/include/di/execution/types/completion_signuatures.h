@@ -6,3 +6,7 @@ namespace di::types {
 template<concepts::CompletionSignature... Signatures>
 struct CompletionSignatures {};
 }
+
+namespace di {
+using types::CompletionSignatures;
+}

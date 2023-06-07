@@ -15,6 +15,7 @@
 #include <di/execution/sequence/sequence_sender.h>
 #include <di/execution/sequence/then_each.h>
 #include <di/execution/sequence/transform_each.h>
+#include <di/execution/sequence/zip.h>
 #include <di/execution/types/prelude.h>
 #include <di/function/prelude.h>
 #include <di/util/prelude.h>
@@ -209,6 +210,23 @@ static void async_generator() {
     ASSERT_EQ(ex::sync_wait(f(Outcome::Stopped)), di::Unexpected(di::BasicError::OperationCanceled));
 }
 
+static void zip() {
+    namespace execution = di::execution;
+    auto sequence = execution::zip(execution::from_container(di::Array { 1, 2, 3 }),
+                                   execution::from_container(di::Array { 4, 5, 6 }));
+
+    static_assert(di::concepts::AlwaysLockstepSequence<decltype(sequence)>);
+
+    ASSERT(execution::sync_wait(execution::ignore_all(
+        execution::zip(execution::empty_sequence(), execution::empty_sequence(), execution::empty_sequence()))));
+
+    // auto sum = 0;
+    // ASSERT(execution::sync_wait(execution::ignore_all(sequence | execution::then_each([&](int x, int y) {
+    //                                                       sum += x * y;
+    //                                                   }))));
+    // ASSERT_EQ(sum, 32);
+}
+
 TEST(execution_sequence, meta)
 TEST(execution_sequence, ignore_all)
 TEST(execution_sequence, transform_each)
@@ -216,4 +234,5 @@ TEST(execution_sequence, from_container)
 TEST(execution_sequence, then)
 TEST(execution_sequence, let)
 TEST(execution_sequence, async_generator)
+TEST(execution_sequence, zip)
 }
