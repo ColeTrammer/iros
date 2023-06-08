@@ -112,7 +112,8 @@ static void from_container() {
     ASSERT_EQ(result, di::Unexpected(di::BasicError::OperationCanceled));
     ASSERT_EQ(counter, 2);
 
-    // Check that from_container() listens for stop signals from a stop token.
+    // Check that from_container() listens for stop requests from consumer. The counter still returns 1 since feedback
+    // is given to the sequence only after it completes an item.
     counter = 0;
     di::Sender auto sender =
         ex::when_all(ex::just_stopped(), nums | ex::from_container | ex::transform_each([&](auto&& sender) {
@@ -121,7 +122,7 @@ static void from_container() {
                                          }) | ex::ignore_all);
 
     ASSERT_EQ(ex::sync_wait(sender), di::Unexpected(di::BasicError::OperationCanceled));
-    ASSERT_EQ(counter, 0);
+    ASSERT_EQ(counter, 1);
 
     // Check that views can be used if the user is explicit about it.
     counter = 0;
@@ -212,19 +213,42 @@ static void async_generator() {
 
 static void zip() {
     namespace execution = di::execution;
+
+    // zip() works in normal conditions.
     auto sequence = execution::zip(execution::from_container(di::Array { 1, 2, 3 }),
                                    execution::from_container(di::Array { 4, 5, 6 }));
 
     static_assert(di::concepts::AlwaysLockstepSequence<decltype(sequence)>);
 
-    ASSERT(execution::sync_wait(execution::ignore_all(
-        execution::zip(execution::empty_sequence(), execution::empty_sequence(), execution::empty_sequence()))));
+    auto sum = 0;
+    ASSERT(execution::sync_wait(execution::ignore_all(sequence | execution::then_each([&](int x, int y) {
+                                                          sum += x * y;
+                                                      }))));
+    ASSERT_EQ(sum, 32);
 
-    // auto sum = 0;
-    // ASSERT(execution::sync_wait(execution::ignore_all(sequence | execution::then_each([&](int x, int y) {
-    //                                                       sum += x * y;
-    //                                                   }))));
-    // ASSERT_EQ(sum, 32);
+    // zip() stops iteration when one of the sequences stops.
+    auto empty =
+        execution::zip(execution::from_container(di::Array { 1 }), execution::from_container(di::Array { 1, 2 }),
+                       execution::from_container(di::Array { 4, 5, 6 }));
+
+    sum = 0;
+    ASSERT(execution::sync_wait(execution::ignore_all(empty | execution::then_each([&](int x, int y, int z) {
+                                                          sum += x * y * z;
+                                                      }))));
+    ASSERT_EQ(sum, 4);
+
+    // zip() sends errors multiple times, for each error in a sequence.
+    auto error_sequence = execution::from_container(di::Array { 1, 2, 3 }) | execution::let_value_each([](auto) {
+                              return execution::just_error(di::Error(di::BasicError::InvalidArgument));
+                          });
+    auto zipped_error_sequence = execution::zip(error_sequence, execution::from_container(di::Array { 4, 5, 6 }));
+
+    sum = 0;
+    ASSERT(execution::sync_wait(execution::ignore_all(zipped_error_sequence | execution::let_error_each([&](auto&&) {
+                                                          sum++;
+                                                          return execution::just();
+                                                      }))));
+    ASSERT_EQ(sum, 3);
 }
 
 TEST(execution_sequence, meta)

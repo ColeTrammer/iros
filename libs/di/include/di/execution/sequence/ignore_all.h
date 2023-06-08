@@ -7,6 +7,7 @@
 #include <di/execution/concepts/sender.h>
 #include <di/execution/concepts/sender_to.h>
 #include <di/execution/interface/connect.h>
+#include <di/execution/interface/get_env.h>
 #include <di/execution/interface/start.h>
 #include <di/execution/meta/connect_result.h>
 #include <di/execution/meta/env_of.h>
@@ -14,6 +15,7 @@
 #include <di/execution/meta/make_completion_signatures.h>
 #include <di/execution/meta/sends_stopped.h>
 #include <di/execution/query/get_completion_signatures.h>
+#include <di/execution/query/get_stop_token.h>
 #include <di/execution/query/make_env.h>
 #include <di/execution/receiver/receiver_adaptor.h>
 #include <di/execution/receiver/set_error.h>
@@ -65,8 +67,10 @@ namespace ignore_all_ns {
         struct Type {
             using Env = meta::EnvOf<Rec>;
             using Error = ErrorStorage<Env, Seq>;
+            using StopToken = meta::StopTokenOf<Env>;
 
-            explicit Type(Rec receiver_) : receiver(util::move(receiver_)) {}
+            explicit Type(Rec receiver_)
+                : receiver(util::move(receiver_)), stop_token(get_stop_token(get_env(receiver))) {}
 
             template<typename E>
             void report_error(E&& error) {
@@ -103,6 +107,7 @@ namespace ignore_all_ns {
             }
 
             [[no_unique_address]] Rec receiver;
+            [[no_unique_address]] StopToken stop_token;
             Error error;
             sync::Atomic<bool> failed { false };
         };
@@ -136,7 +141,13 @@ namespace ignore_all_ns {
             NextRec&& base() && { return util::move(m_next_data->next_receiver); }
 
         private:
-            void set_value(auto&&...) && { execution::set_value(util::move(*this).base()); }
+            void set_value(auto&&...) && {
+                if (m_data->stop_token.stop_requested()) {
+                    execution::set_stopped(util::move(*this).base());
+                } else {
+                    execution::set_value(util::move(*this).base());
+                }
+            }
 
             template<typename E>
             void set_error(E&& error) && {

@@ -144,12 +144,6 @@ namespace from_container_ns {
         explicit Type(Con container, Rec receiver) : m_data(util::move(container), util::move(receiver)) {}
 
         void report_value() {
-            if constexpr (!concepts::UnstoppableToken<StopToken>) {
-                if (m_data.stop_token.stop_requested()) {
-                    return set_stopped(util::move(m_data.receiver));
-                }
-            }
-
             if (m_data.iterator == container::end(m_data.container)) {
                 return set_value(util::move(m_data.receiver));
             }
@@ -161,7 +155,7 @@ namespace from_container_ns {
             start(*m_operation);
         }
 
-        void report_stopped() { set_stopped(util::move(m_data.receiver)); }
+        void report_stopped() { set_value(util::move(m_data.receiver)); }
 
     private:
         friend void tag_invoke(types::Tag<start>, Type& self) { self.report_value(); }
@@ -171,10 +165,7 @@ namespace from_container_ns {
     };
 
     template<typename Con, typename Env>
-    using Signatures =
-        meta::Conditional<concepts::UnstoppableToken<meta::StopTokenOf<Env>>,
-                          types::CompletionSignatures<SetValue(meta::ContainerRValue<Con>)>,
-                          types::CompletionSignatures<SetValue(meta::ContainerRValue<Con>), SetStopped()>>;
+    using Signatures = types::CompletionSignatures<SetValue(meta::ContainerRValue<Con>)>;
 
     template<typename Con>
     struct SequenceT {
