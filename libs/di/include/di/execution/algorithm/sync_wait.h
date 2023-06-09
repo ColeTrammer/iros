@@ -1,5 +1,6 @@
 #pragma once
 
+#include <di/concepts/always_false.h>
 #include <di/execution/algorithm/into_result.h>
 #include <di/execution/algorithm/into_variant.h>
 #include <di/execution/concepts/sender_in.h>
@@ -7,6 +8,7 @@
 #include <di/execution/meta/decayed_tuple.h>
 #include <di/execution/query/get_delegatee_scheduler.h>
 #include <di/execution/query/get_scheduler.h>
+#include <di/execution/sequence/sequence_sender.h>
 #include <di/function/curry.h>
 #include <di/function/pipeline.h>
 #include <di/meta/list/type.h>
@@ -95,6 +97,10 @@ namespace sync_wait_ns {
                                             util::forward<Send>(sender));
             } else if constexpr (requires { function::tag_invoke(*this, context, util::forward<Send>(sender)); }) {
                 return function::tag_invoke(*this, context, util::forward<Send>(sender));
+            } else if constexpr (concepts::SequenceSender<Send>) {
+                static_assert(concepts::AlwaysFalse<Send>,
+                              "sync_wait() cannot be called on sequences. Use a sequence consume like ignore_all() or "
+                              "first_value() before sync_wait().");
             } else {
                 auto value = Uninit<ResultType<Context, Send>> {};
 

@@ -9,6 +9,7 @@
 #include <di/execution/receiver/prelude.h>
 #include <di/execution/sequence/async_generator.h>
 #include <di/execution/sequence/empty_sequence.h>
+#include <di/execution/sequence/first_value.h>
 #include <di/execution/sequence/from_container.h>
 #include <di/execution/sequence/ignore_all.h>
 #include <di/execution/sequence/let_each.h>
@@ -18,6 +19,7 @@
 #include <di/execution/sequence/zip.h>
 #include <di/execution/types/prelude.h>
 #include <di/function/prelude.h>
+#include <di/util/move.h>
 #include <di/util/prelude.h>
 #include <di/vocab/error/prelude.h>
 #include <di/vocab/expected/prelude.h>
@@ -254,6 +256,39 @@ static void zip() {
     ASSERT_EQ(sum, 3);
 }
 
+static void first_value() {
+    //! [first_value]
+    namespace execution = di::execution;
+
+    // first_value() returns the first value of a sequence.
+    auto sequence = execution::from_container(execution::valid_lifetime, di::range(1, 5)) | execution::first_value;
+    ASSERT_EQ(execution::sync_wait(sequence), 1);
+
+    // first_value() propogates stops if no items are emitted.
+    auto empty = execution::empty_sequence() | execution::first_value;
+    ASSERT_EQ(execution::sync_wait(empty), di::Unexpected(di::BasicError::OperationCanceled));
+    //! [first_value]
+
+    // first_value() propogates error of first item.
+    auto error = ex::just_error(di::Error(di::BasicError::InvalidArgument)) | ex::first_value;
+    ASSERT_EQ(ex::sync_wait(di::move(error)), di::Unexpected(di::BasicError::InvalidArgument));
+
+    // first_value() ignores errors after first item.
+    auto evenual_error = ex::from_container(ex::valid_lifetime, di::range(1, 5)) |
+                         ex::let_value_each([](int x) -> di::AnySenderOf<int> {
+                             if (x == 3) {
+                                 return ex::just_error(di::Error(di::BasicError::InvalidArgument));
+                             }
+                             return ex::just(x);
+                         }) |
+                         ex::first_value;
+    ASSERT_EQ(ex::sync_wait(evenual_error), 1);
+
+    // first_value() propogates stopped of first item.
+    auto stopped = ex::just_stopped() | ex::first_value;
+    ASSERT_EQ(ex::sync_wait(stopped), di::Unexpected(di::BasicError::OperationCanceled));
+}
+
 TEST(execution_sequence, meta)
 TEST(execution_sequence, ignore_all)
 TEST(execution_sequence, transform_each)
@@ -262,4 +297,5 @@ TEST(execution_sequence, then)
 TEST(execution_sequence, let)
 TEST(execution_sequence, async_generator)
 TEST(execution_sequence, zip)
+TEST(execution_sequence, first_value)
 }
