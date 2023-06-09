@@ -567,20 +567,7 @@ namespace zip_ns {
 ///
 /// This function is used to combine multiple sequences together into a single sequence. For example:
 ///
-/// ```cpp
-/// namespace execution = di::execution;
-///
-/// auto sequence = zip(
-///     from_container(di::Array { 1, 2, 3 }),
-///     from_container(di::Array { 4, 5, 6 })
-/// );
-///
-/// auto sum = 0;
-/// ASSERT(sync_wait(ignore_all(sequence | then_each([&](int x, int y) {
-///     sum += x * y;
-/// }))));
-/// ASSERT_EQ(sum, 32);
-/// ```
+/// @snippet{trimleft} tests/test_execution_sequence.cpp zip
 ///
 /// The sequences passed to this function will first be converted to lockstep sequences using
 /// into_lockstep_sequence(). As a result, the sequence returned by this function will be a lockstep

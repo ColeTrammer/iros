@@ -314,7 +314,7 @@ private:
     }
 };
 
-static void with() {
+static void use_resource() {
     namespace ex = di::execution;
 
     auto w = ex::async_create<AsyncI32>(42) | ex::use_resource([](AsyncI32& value) {
@@ -496,17 +496,23 @@ static void when_all() {
 }
 
 static void with_env() {
-    namespace ex = di::execution;
+    //! [with_env]
+    namespace execution = di::execution;
 
     auto stop_source = di::InPlaceStopSource {};
-    auto env = ex::make_env(di::empty_env, ex::with(ex::get_stop_token, stop_source.get_stop_token()));
-    auto send = ex::read(ex::get_stop_token) | ex::let_value([](auto stop_token) {
-                    return ex::just_void_or_stopped(stop_token.stop_requested());
+    auto env =
+        execution::make_env(di::empty_env, execution::with(execution::get_stop_token, stop_source.get_stop_token()));
+    auto send = execution::read(execution::get_stop_token) | execution::let_value([](auto stop_token) {
+                    return execution::just_void_or_stopped(stop_token.stop_requested());
                 });
-    ASSERT(ex::sync_wait(send | ex::with_env(env)));
 
+    // The sender will run to completion if stop is not .
+    ASSERT(execution::sync_wait(execution::with_env(env, send)));
+
+    // After requesting stop, the sender will return cancelled.
     stop_source.request_stop();
-    ASSERT_EQ(ex::sync_wait(send | ex::with_env(env)), di::Unexpected(di::BasicError::OperationCanceled));
+    ASSERT(!execution::sync_wait(execution::with_env(env, send)));
+    //! [with_env]
 }
 
 TEST(execution, meta)
@@ -519,7 +525,7 @@ TEST(execution, inline_scheduler)
 TEST(execution, let)
 TEST(execution, transfer)
 TEST(execution, as)
-TEST(execution, with)
+TEST(execution, use_resource)
 TEST(execution, any_sender)
 TEST(execution, into_result)
 TEST(execution, when_all)

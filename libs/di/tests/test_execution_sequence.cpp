@@ -212,19 +212,22 @@ static void async_generator() {
 }
 
 static void zip() {
+    //! [zip]
     namespace execution = di::execution;
 
     // zip() works in normal conditions.
     auto sequence = execution::zip(execution::from_container(di::Array { 1, 2, 3 }),
                                    execution::from_container(di::Array { 4, 5, 6 }));
 
-    static_assert(di::concepts::AlwaysLockstepSequence<decltype(sequence)>);
-
     auto sum = 0;
     ASSERT(execution::sync_wait(execution::ignore_all(sequence | execution::then_each([&](int x, int y) {
                                                           sum += x * y;
                                                       }))));
     ASSERT_EQ(sum, 32);
+    //! [zip]
+
+    // zip() returns a sequence that is always lockstep.
+    static_assert(di::concepts::AlwaysLockstepSequence<decltype(sequence)>);
 
     // zip() stops iteration when one of the sequences stops.
     auto empty =

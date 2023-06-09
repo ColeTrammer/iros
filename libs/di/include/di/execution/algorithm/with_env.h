@@ -88,23 +88,7 @@ namespace with_env_ns {
 ///
 /// The following is an example of a sender that uses its injected stop token to know if it should stop itself:
 ///
-/// ```cpp
-/// using namespace di::execution;
-///
-/// auto stop_source = di::InPlaceStopSource {};
-/// auto env = make_env(di::empty_env, with(get_stop_token,
-/// stop_source.get_stop_token()));
-/// auto send = read(get_stop_token) | let_value([](auto stop_token) {
-///     return just_void_or_stopped(stop_token.stop_requested());
-/// });
-///
-/// // The sender will run to completion if stop is not requested.
-/// ASSERT(sync_wait(with_env(env, send)));
-///
-/// // After requesting stop, the sender will return cancelled.
-/// stop_source.request_stop();
-/// ASSERT(!sync_wait(with_env(env, send)));
-/// ```
+/// @snippet{trimleft} tests/test_execution.cpp with_env
 ///
 /// @see with
 /// @see make_env

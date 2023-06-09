@@ -35,7 +35,7 @@ This is Iros running the [Figlet](https://github.com/cmatsuoka/figlet) program, 
 
 ## Build Instructions
 
-[See here](https://coletrammer.github.io/iros/md_docs_build.html).
+[See here](https://coletrammer.github.io/iros/md_docs_2build.html).
 
 ## Project Documentation
 
@@ -43,7 +43,7 @@ This is Iros running the [Figlet](https://github.com/cmatsuoka/figlet) program, 
 
 ## Kernel Overview
 
-[See here](https://coletrammer.github.io/iros/md_docs_iris_design_overview.html).
+[See here](https://coletrammer.github.io/iros/md_docs_2iris_2table__of__contents.html).
 
 ## Legacy Code for this repo
 

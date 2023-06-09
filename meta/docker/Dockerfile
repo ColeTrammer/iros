@@ -37,15 +37,6 @@ RUN apt-get update -y \
     && apt-get update -y \
     && apt-get install -y cmake \
     && rm -rf /var/lib/apt/lists/*
-RUN apt-get update -y \
-    && apt-get install -y wget \
-    && wget https://www.doxygen.nl/files/doxygen-1.9.6.linux.bin.tar.gz \
-    && tar -xzf doxygen-1.9.6.linux.bin.tar.gz \
-    && cp doxygen-1.9.6/bin/* --target /usr/local/bin \
-    && rm -f doxygen-1.9.6.linux.bin.tar.gz \
-    && rm -rf doxygen-1.9.6 \
-    && apt-get purge -y --auto-remove wget \
-    && rm -rf /var/lib/apt/lists/*
 RUN apt-get update -y && apt-get install -y \
     build-essential \
     ccache \

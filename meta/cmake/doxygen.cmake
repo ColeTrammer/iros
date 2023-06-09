@@ -38,6 +38,7 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_STRIP_FROM_INC_PATH "${CMAKE_SOURCE_DIR}/iris/include" "${CMAKE_SOURCE_DIR}/libs/ccpp/include"
                                     "${CMAKE_SOURCE_DIR}/libs/di/include" "${CMAKE_SOURCE_DIR}/libs/dius/include"
     )
+    set(DOXYGEN_EXAMPLE_PATH "${CMAKE_SOURCE_DIR}")
     set(DOXYGEN_HTML_COLORSTYLE "LIGHT")
     set(DOXYGEN_HTML_HEADER "${CMAKE_SOURCE_DIR}/docs/header.html")
     set(DOXYGEN_HTML_EXTRA_STYLESHEET "${DOXYGEN_AWESOME_DIR}/doxygen-awesome.css")

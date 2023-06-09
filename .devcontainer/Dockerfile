@@ -26,6 +26,15 @@ RUN sudo apt-get -y install pip \
 RUN sudo apt-get -y install npm \
     && sudo npm install -g prettier
 
+# Install doxygen
+ARG doxygen_version=1.9.7
+RUN apt-get update -y \
+    && wget https://www.doxygen.nl/files/doxygen-${doxygen_version}.linux.bin.tar.gz \
+    && tar -xzf doxygen-${doxygen_version}.linux.bin.tar.gz \
+    && sudo cp doxygen-${doxygen_version}/bin/* --target /usr/local/bin \
+    && rm -f doxygen-${doxygen_version}.linux.bin.tar.gz \
+    && rm -rf doxygen-${doxygen_version}
+
 # Update core packages
 RUN sudo apt-get -y update \
     && sudo apt-get -y upgrade
