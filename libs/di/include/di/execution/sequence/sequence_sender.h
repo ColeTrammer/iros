@@ -77,7 +77,7 @@ namespace set_next_ns {
 ///
 /// @returns A sender which will adapt the values sent by @p sender to model di::concepts::NextSender.
 ///
-/// See the @subpage md_docs_di_execution document for more information on the async sequence model.
+/// See the @subpage md_docs_2di_2execution document for more information on the async sequence model.
 constexpr inline auto set_next = set_next_ns::Function {};
 }
 
