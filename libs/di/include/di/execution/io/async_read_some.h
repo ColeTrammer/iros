@@ -17,6 +17,12 @@ namespace async_read_some_ns {
                                                             Optional<u64> offset = {}) const {
             return function::tag_invoke(*this, util::forward<File>(handle), buffer, offset);
         }
+
+        template<typename File>
+        requires(concepts::TagInvocable<Function, File&, Span<Byte>, Optional<u64>>)
+        auto operator()(util::ReferenceWrapper<File> handle, Span<Byte> buffer, Optional<u64> offset = {}) const {
+            return function::tag_invoke(*this, handle.get(), buffer, offset);
+        }
     };
 }
 

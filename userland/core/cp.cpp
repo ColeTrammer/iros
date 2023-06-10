@@ -1,4 +1,5 @@
 #include <di/cli/prelude.h>
+#include <di/execution/algorithm/use_resources.h>
 #include <dius/io_context.h>
 #include <dius/main.h>
 #include <dius/print.h>
@@ -34,8 +35,8 @@ di::Result<void> main(Args const& args) {
     auto open_source = ex::async_open(scheduler, di::move(source), dius::OpenMode::Readonly);
     auto open_destination = ex::async_open(scheduler, di::move(destination), dius::OpenMode::WriteClobber);
 
-    auto task = ex::use_resource(di::move(open_source), [&](auto& source) {
-        return ex::use_resource(di::move(open_destination), [&](auto& destination) {
+    auto task = ex::use_resources(
+        [&](auto& source, auto& destination) {
             return ex::async_read_some(source, di::Span { buffer.data(), buffer.capacity() }) |
                    ex::let_value([&](size_t& nread) {
                        return ex::just_void_or_stopped(nread == 0) | ex::let_value([&] {
@@ -45,8 +46,8 @@ di::Result<void> main(Args const& args) {
                    ex::repeat_effect | ex::let_stopped([] {
                        return ex::just();
                    });
-        });
-    });
+        },
+        di::move(open_source), di::move(open_destination));
 
     return di::sync_wait_on(context, di::move(task)) % di::into_void;
 }

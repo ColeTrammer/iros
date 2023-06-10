@@ -7,6 +7,7 @@
 #include <di/function/tag_invoke.h>
 #include <di/types/integers.h>
 #include <di/types/prelude.h>
+#include <di/util/reference_wrapper.h>
 
 namespace di::execution {
 namespace async_write_some_ns {
@@ -16,6 +17,12 @@ namespace async_write_some_ns {
         concepts::SenderOf<SetValue(usize)> auto operator()(File&& handle, Span<Byte const> buffer,
                                                             Optional<u64> offset = {}) const {
             return function::tag_invoke(*this, util::forward<File>(handle), buffer, offset);
+        }
+
+        template<typename File>
+        requires(concepts::TagInvocable<Function, File&, Span<Byte const>, Optional<u64>>)
+        auto operator()(util::ReferenceWrapper<File> handle, Span<Byte const> buffer, Optional<u64> offset = {}) const {
+            return function::tag_invoke(*this, handle.get(), buffer, offset);
         }
     };
 }

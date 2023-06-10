@@ -4,12 +4,23 @@
 #include <di/container/algorithm/prelude.h>
 #include <di/container/intrusive/prelude.h>
 #include <di/container/queue/prelude.h>
+#include <di/execution/interface/connect.h>
+#include <di/execution/interface/run.h>
+#include <di/execution/meta/connect_result.h>
 #include <di/execution/prelude.h>
+#include <di/execution/query/make_env.h>
+#include <di/execution/receiver/prelude.h>
+#include <di/execution/sequence/sequence_sender.h>
+#include <di/execution/types/completion_signuatures.h>
+#include <di/function/make_deferred.h>
 #include <di/function/prelude.h>
+#include <di/platform/compiler.h>
 #include <di/util/prelude.h>
 #include <di/vocab/optional/prelude.h>
+#include <di/vocab/variant/prelude.h>
 #include <dius/error.h>
 #include <dius/linux/io_uring.h>
+#include <dius/sync_file.h>
 
 namespace dius::linux {
 struct IoUringContext;
@@ -60,12 +71,17 @@ public:
 
 private:
     friend ScheduleSender tag_invoke(di::Tag<di::execution::schedule>, IoUringScheduler const& self);
-    friend OpenSender tag_invoke(di::Tag<di::execution::async_open>, IoUringScheduler const& self, di::Path path,
-                                 OpenMode mode, u16 create_mode);
-    friend OpenSender tag_invoke(di::Tag<di::execution::async_open>, IoUringScheduler const& self, di::Path path,
-                                 OpenMode mode);
 
     constexpr friend bool operator==(IoUringScheduler const&, IoUringScheduler const&) = default;
+};
+
+struct Env {
+    IoUringContext* parent { nullptr };
+
+    template<typename CPO>
+    constexpr friend auto tag_invoke(di::execution::GetCompletionScheduler<CPO>, Env const& self) {
+        return get_scheduler(self.parent);
+    }
 };
 
 struct ReadSomeSender {
@@ -137,9 +153,8 @@ private:
                                           di::move(receiver) };
     }
 
-    template<typename CPO>
-    constexpr friend auto tag_invoke(di::execution::GetCompletionScheduler<CPO>, ReadSomeSender const& self) {
-        return get_scheduler(self.parent);
+    constexpr friend auto tag_invoke(di::Tag<di::execution::get_env>, ReadSomeSender const& self) {
+        return Env(self.parent);
     }
 };
 
@@ -212,9 +227,8 @@ private:
                                           di::move(receiver) };
     }
 
-    template<typename CPO>
-    constexpr friend auto tag_invoke(di::execution::GetCompletionScheduler<CPO>, WriteSomeSender const& self) {
-        return get_scheduler(self.parent);
+    constexpr friend auto tag_invoke(di::Tag<di::execution::get_env>, WriteSomeSender const& self) {
+        return Env(self.parent);
     }
 };
 
@@ -273,9 +287,8 @@ private:
         return OperationState<Receiver> { self.parent, self.file_descriptor, di::move(receiver) };
     }
 
-    template<typename CPO>
-    constexpr friend auto tag_invoke(di::execution::GetCompletionScheduler<CPO>, CloseSender const& self) {
-        return get_scheduler(self.parent);
+    constexpr friend auto tag_invoke(di::Tag<di::execution::get_env>, CloseSender const& self) {
+        return Env(self.parent);
     }
 };
 
@@ -320,41 +333,39 @@ private:
         return OperationState<Rec> { self.parent, di::move(receiver) };
     }
 
-    struct Env {
-        IoUringContext* parent { nullptr };
-
-        template<typename CPO>
-        constexpr friend auto tag_invoke(di::execution::GetCompletionScheduler<CPO>, Env const& self) {
-            return get_scheduler(self.parent);
-        }
-    };
-
     constexpr friend auto tag_invoke(di::Tag<di::execution::get_env>, ScheduleSender const& self) {
         return Env { self.parent };
     }
 };
 
-class AsyncFile {
+class AsyncFile : di::Immovable {
 public:
-    explicit AsyncFile(IoUringContext* parent, int fd) : m_parent(parent), m_fd(fd) {}
+    explicit AsyncFile(IoUringContext* parent, di::Path path, OpenMode mode, u16 create_mode)
+        : m_parent(parent), m_path(di::move(path)), m_mode(mode), m_create_mode(create_mode) {}
+
+    IoUringContext* parent() const { return m_parent; }
+    di::Path const& path() const { return m_path; }
+    OpenMode mode() const { return m_mode; }
+    u16 create_mode() const { return m_create_mode; }
+
+    int fd() const { return m_fd; }
+    void set_fd(int fd) { m_fd = fd; }
 
 private:
-    friend auto tag_invoke(di::Tag<di::execution::async_read_some>, AsyncFile self, di::Span<di::Byte> buffer,
+    friend auto tag_invoke(di::Tag<di::execution::async_read_some>, AsyncFile& self, di::Span<di::Byte> buffer,
                            di::Optional<u64> offset) {
         return ReadSomeSender { self.m_parent, self.m_fd, buffer, offset };
     }
 
-    friend auto tag_invoke(di::Tag<di::execution::async_write_some>, AsyncFile self, di::Span<di::Byte const> buffer,
+    friend auto tag_invoke(di::Tag<di::execution::async_write_some>, AsyncFile& self, di::Span<di::Byte const> buffer,
                            di::Optional<u64> offset) {
         return WriteSomeSender { self.m_parent, self.m_fd, buffer, offset };
     }
 
-    friend auto tag_invoke(di::Tag<di::execution::async_destroy_in_place>, di::InPlaceType<AsyncFile>,
-                           AsyncFile& self) {
-        return CloseSender { self.m_parent, self.m_fd };
-    }
-
-    IoUringContext* m_parent { nullptr };
+    IoUringContext* m_parent;
+    di::Path m_path;
+    OpenMode m_mode;
+    u16 m_create_mode;
     int m_fd { -1 };
 };
 
@@ -362,31 +373,25 @@ struct OpenSender {
 public:
     using is_sender = void;
 
-    using CompletionSignatures =
-        di::CompletionSignatures<di::SetValue(AsyncFile), di::SetError(di::Error), di::SetStopped()>;
+    using CompletionSignatures = di::CompletionSignatures<di::SetValue(di::ReferenceWrapper<AsyncFile>),
+                                                          di::SetError(di::Error), di::SetStopped()>;
 
     IoUringContext* parent;
-    di::Path path;
-    OpenMode mode;
-    u16 create_mode;
+    di::ReferenceWrapper<AsyncFile> file;
 
 private:
     template<typename Rec>
     struct OperationStateT {
         struct Type : OperationStateBase {
-            explicit Type(IoUringContext* parent, di::Path path, OpenMode mode, u16 create_mode, Rec receiver)
-                : m_parent(parent)
-                , m_path(di::move(path))
-                , m_mode(mode)
-                , m_create_mode(create_mode)
-                , m_receiver(di::move(receiver)) {}
+            explicit Type(IoUringContext* parent, di::ReferenceWrapper<AsyncFile> file, Rec&& receiver)
+                : m_parent(parent), m_file(file), m_receiver(di::move(receiver)) {}
 
             void execute() override {
                 if (di::execution::get_stop_token(m_receiver).stop_requested()) {
                     di::execution::set_stopped(di::move(m_receiver));
                 } else {
                     auto open_mode_flags = [&] {
-                        switch (m_mode) {
+                        switch (m_file.get().mode()) {
                             case OpenMode::Readonly:
                                 return O_RDONLY;
                             case OpenMode::WriteNew:
@@ -406,8 +411,8 @@ private:
                     enqueue_io_operation(m_parent, this, [&](auto* sqe) {
                         sqe->opcode = IORING_OP_OPENAT;
                         sqe->fd = AT_FDCWD;
-                        sqe->addr = reinterpret_cast<u64>(m_path.c_str());
-                        sqe->len = m_create_mode;
+                        sqe->addr = reinterpret_cast<u64>(m_file.get().path().c_str());
+                        sqe->len = m_file.get().create_mode();
                         sqe->open_flags = open_mode_flags;
                     });
                 }
@@ -417,7 +422,8 @@ private:
                 if (cqe->res < 0) {
                     di::execution::set_error(di::move(m_receiver), di::Error(PosixError(-cqe->res)));
                 } else {
-                    di::execution::set_value(di::move(m_receiver), AsyncFile(m_parent, cqe->res));
+                    m_file.get().set_fd(cqe->res);
+                    di::execution::set_value(di::move(m_receiver), di::ref(m_file));
                 }
             }
 
@@ -427,9 +433,7 @@ private:
             }
 
             IoUringContext* m_parent;
-            di::Path m_path;
-            OpenMode m_mode;
-            u16 m_create_mode;
+            di::ReferenceWrapper<AsyncFile> m_file;
             [[no_unique_address]] Rec m_receiver;
         };
     };
@@ -439,28 +443,115 @@ private:
 
     template<di::ReceiverOf<CompletionSignatures> Receiver>
     friend auto tag_invoke(di::Tag<di::execution::connect>, OpenSender self, Receiver receiver) {
-        return OperationState<Receiver> { self.parent, di::move(self.path), self.mode, self.create_mode,
-                                          di::move(receiver) };
+        return OperationState<Receiver> { self.parent, self.file, di::move(receiver) };
     }
 
-    template<typename CPO>
-    constexpr friend auto tag_invoke(di::execution::GetCompletionScheduler<CPO>, OpenSender const& self) {
-        return get_scheduler(self.parent);
+    constexpr friend auto tag_invoke(di::Tag<di::execution::get_env>, OpenSender const& self) {
+        return Env(self.parent);
     }
 };
+
+struct RunSender {
+public:
+    using is_sender = di::SequenceTag;
+
+    using CompletionSignatures = di::CompletionSignatures<di::SetValue(di::ReferenceWrapper<AsyncFile>),
+                                                          di::SetError(di::Error), di::SetStopped()>;
+
+    IoUringContext* parent;
+    di::ReferenceWrapper<AsyncFile> file;
+
+private:
+    template<typename Rec>
+    struct OperationStateT {
+        struct Type : di::Immovable {
+            struct Rec1 {
+                using is_receiver = void;
+
+                di::Function<void()> complete;
+
+                friend auto tag_invoke(di::Tag<di::execution::set_value>, Rec1&& self) { self.complete(); }
+                friend auto tag_invoke(di::Tag<di::execution::set_stopped>, Rec1&& self) { self.complete(); }
+            };
+
+            struct Rec2 : di::ReceiverAdaptor<Rec2> {
+            private:
+                using Base = di::ReceiverAdaptor<Rec2>;
+                friend Base;
+
+            public:
+                explicit Rec2(Rec* receiver) : m_receiver(receiver) {}
+
+                Rec const& base() const& { return *m_receiver; }
+                Rec&& base() && { return di::move(*m_receiver); }
+
+            private:
+                Rec* m_receiver;
+            };
+
+            explicit Type(IoUringContext* parent, di::ReferenceWrapper<AsyncFile> file, Rec&& receiver)
+                : m_parent(parent), m_file(file), m_receiver(di::move(receiver)) {}
+
+        private:
+            using NextSender = di::meta::NextSenderOf<Rec, OpenSender>;
+            using Op1 = di::meta::ConnectResult<NextSender, Rec1>;
+            using Op2 = di::meta::ConnectResult<CloseSender, Rec2>;
+
+            void finish_phase1() {
+                auto& op = m_op.template emplace<2>(di::DeferConstruct([&] {
+                    return di::execution::connect(CloseSender(m_parent, m_file.get().fd()),
+                                                  Rec2(di::addressof(m_receiver)));
+                }));
+                di::execution::start(op);
+            }
+
+            friend void tag_invoke(di::Tag<di::execution::start>, Type& self) {
+                auto& op = self.m_op.template emplace<1>(di::DeferConstruct([&] {
+                    return di::execution::connect(
+                        di::execution::set_next(self.m_receiver, OpenSender(self.m_parent, self.m_file)), Rec1([&self] {
+                            return self.finish_phase1();
+                        }));
+                }));
+                di::execution::start(op);
+            }
+
+            IoUringContext* m_parent;
+            di::ReferenceWrapper<AsyncFile> m_file;
+            [[no_unique_address]] Rec m_receiver;
+            DI_IMMOVABLE_NO_UNIQUE_ADDRESS di::Variant<di::Void, Op1, Op2> m_op;
+        };
+    };
+
+    template<typename Receiver>
+    using OperationState = di::meta::Type<OperationStateT<Receiver>>;
+
+    template<
+        di::ReceiverOf<di::CompletionSignatures<di::SetValue(), di::SetError(di::Error), di::SetStopped()>> Receiver>
+    friend auto tag_invoke(di::Tag<di::execution::subscribe>, RunSender self, Receiver receiver) {
+        return OperationState<Receiver> { self.parent, self.file, di::move(receiver) };
+    }
+
+    constexpr friend auto tag_invoke(di::Tag<di::execution::get_env>, RunSender const& self) {
+        return di::execution::make_env(Env(self.parent),
+                                       di::execution::with(di::execution::get_sequence_cardinality, di::c_<1zu>));
+    }
+};
+
+inline auto tag_invoke(di::Tag<di::execution::run>, AsyncFile& self) {
+    return RunSender { self.parent(), self };
+}
 
 inline ScheduleSender tag_invoke(di::Tag<di::execution::schedule>, IoUringScheduler const& self) {
     return { self.parent };
 }
 
-inline OpenSender tag_invoke(di::Tag<di::execution::async_open>, IoUringScheduler const& self, di::Path path,
-                             OpenMode mode, u16 create_mode) {
-    return { self.parent, di::move(path), mode, create_mode };
+inline auto tag_invoke(di::Tag<di::execution::async_open>, IoUringScheduler const& self, di::Path path, OpenMode mode,
+                       u16 create_mode) {
+    return di::make_deferred<AsyncFile>(self.parent, di::move(path), mode, create_mode);
 }
 
-inline OpenSender tag_invoke(di::Tag<di::execution::async_open>, IoUringScheduler const& self, di::Path path,
-                             OpenMode mode) {
-    return { self.parent, di::move(path), mode, 0666 };
+inline auto tag_invoke(di::Tag<di::execution::async_open>, IoUringScheduler const& self, di::Path path, OpenMode mode) {
+    return di::make_deferred<AsyncFile>(self.parent, di::move(path), mode, 0666);
 }
 
 inline di::Result<IoUringContext> IoUringContext::create() {
