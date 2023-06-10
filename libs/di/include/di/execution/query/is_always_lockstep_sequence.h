@@ -2,6 +2,7 @@
 
 #include <di/execution/meta/env_of.h>
 #include <di/execution/query/forwarding_query.h>
+#include <di/execution/query/get_sequence_cardinality.h>
 #include <di/execution/sequence/sequence_sender.h>
 #include <di/function/invoke.h>
 #include <di/function/tag_invoke.h>
@@ -42,7 +43,8 @@ namespace is_always_lockstop_sequence_ns {
 /// undefined behavior.
 ///
 /// This property should be queried using the `concepts::AlwaysLockstepSequence` concept, which will return true if the
-/// sequence is a regular sender or a lockstep sequence.
+/// sequence is a regular sender or a lockstep sequence. Additionally, any sequence with a cardinality less than or
+/// equal to 1 will automatically true.
 ///
 /// @note This query must return a `di::Constexpr<bool>` instance, so if this property varies at run-time (like for a
 /// type-erased sequence), it must return false.
@@ -59,6 +61,6 @@ namespace di::concepts {
 /// @see execution::is_always_lockstep_sequence
 template<typename Send>
 concept AlwaysLockstepSequence =
-    !concepts::SequenceSender<Send> ||
+    !concepts::SequenceSender<Send> || (meta::SequenceCardinality<Send> <= 1) ||
     (meta::InvokeResult<Tag<execution::is_always_lockstep_sequence>, meta::EnvOf<Send> const&>::value);
 }

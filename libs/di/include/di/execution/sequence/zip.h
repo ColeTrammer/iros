@@ -514,7 +514,9 @@ namespace zip_ns {
             }
 
             friend auto tag_invoke(Tag<get_env>, Type const&) {
-                return make_env(empty_env, with(is_always_lockstep_sequence, c_<true>));
+                return make_env(
+                    empty_env, with(is_always_lockstep_sequence, c_<true>),
+                    with(get_sequence_cardinality, c_<container::min({ meta::SequenceCardinality<Seqs>... })>));
             }
 
             vocab::Tuple<Seqs...> m_sequences;

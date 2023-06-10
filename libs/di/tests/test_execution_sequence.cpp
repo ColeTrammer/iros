@@ -45,6 +45,7 @@ static void meta() {
 
     auto from_container = ex::from_container(di::Array { 1, 2, 3 });
 
+    static_assert(di::meta::SequenceCardinality<decltype(empty)> == 0);
     static_assert(di::concepts::AlwaysLockstepSequence<decltype(empty)>);
     static_assert(di::concepts::AlwaysLockstepSequence<decltype(from_container)>);
     static_assert(di::concepts::AlwaysLockstepSequence<decltype(from_container | ex::transform_each(di::identity))>);
@@ -232,15 +233,19 @@ static void zip() {
     static_assert(di::concepts::AlwaysLockstepSequence<decltype(sequence)>);
 
     // zip() stops iteration when one of the sequences stops.
-    auto empty =
+    auto single =
         execution::zip(execution::from_container(di::Array { 1 }), execution::from_container(di::Array { 1, 2 }),
                        execution::from_container(di::Array { 4, 5, 6 }));
 
     sum = 0;
-    ASSERT(execution::sync_wait(execution::ignore_all(empty | execution::then_each([&](int x, int y, int z) {
+    ASSERT(execution::sync_wait(execution::ignore_all(single | execution::then_each([&](int x, int y, int z) {
                                                           sum += x * y * z;
                                                       }))));
     ASSERT_EQ(sum, 4);
+
+    // zip() has cardinality that is the minimum of all input sequences.
+    auto empty = execution::zip(execution::empty_sequence(), execution::from_container(di::Array { 1, 2, 3 }));
+    static_assert(di::meta::SequenceCardinality<decltype(empty)> == 0);
 
     // zip() sends errors multiple times, for each error in a sequence.
     auto error_sequence = execution::from_container(di::Array { 1, 2, 3 }) | execution::let_value_each([](auto) {

@@ -39,7 +39,7 @@ namespace empty_sequence_ns {
         };
 
         friend auto tag_invoke(Tag<get_env>, Sender) {
-            return make_env(empty_env, with(is_always_lockstep_sequence, c_<true>));
+            return make_env(empty_env, with(get_sequence_cardinality, c_<0zu>));
         }
     };
 
