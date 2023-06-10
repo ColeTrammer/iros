@@ -1,5 +1,7 @@
 #include <di/concepts/prelude.h>
+#include <di/function/make_deferred.h>
 #include <di/function/prelude.h>
+#include <di/util/prelude.h>
 #include <dius/test/prelude.h>
 
 namespace function_bind {
@@ -96,10 +98,25 @@ constexpr void curry_back() {
     ASSERT_EQ(6, di::curry_back(f)(1)(2)(3));
 }
 
+struct X : di::Immovable {
+    constexpr explicit X(int xx) : x(xx) {}
+
+    int x;
+};
+
+constexpr void make_deferred() {
+    auto f = di::make_deferred<int>(42);
+    ASSERT_EQ(f(), 42);
+
+    auto g = di::make_deferred<X>(42);
+    ASSERT_EQ(g().x, 42);
+}
+
 TESTC(util_bind, front)
 TESTC(util_bind, back)
 TESTC(util_bind, compose)
 TESTC(util_bind, pipeline)
 TESTC(util_bind, curry)
 TESTC(util_bind, curry_back)
+TESTC(util_bind, make_deferred)
 }
