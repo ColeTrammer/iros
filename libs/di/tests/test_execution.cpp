@@ -13,6 +13,7 @@
 #include <di/execution/algorithm/prelude.h>
 #include <di/execution/algorithm/sync_wait.h>
 #include <di/execution/algorithm/then.h>
+#include <di/execution/algorithm/use_resources.h>
 #include <di/execution/algorithm/when_all.h>
 #include <di/execution/algorithm/with_env.h>
 #include <di/execution/any/any_operation_state.h>
@@ -20,6 +21,7 @@
 #include <di/execution/concepts/prelude.h>
 #include <di/execution/concepts/receiver.h>
 #include <di/execution/concepts/receiver_of.h>
+#include <di/execution/interface/run.h>
 #include <di/execution/meta/completion_signatures_of.h>
 #include <di/execution/meta/sends_stopped.h>
 #include <di/execution/prelude.h>
@@ -318,23 +320,21 @@ struct AsyncI32 {
     i32 value;
 
 private:
-    friend auto tag_invoke(di::Tag<di::execution::async_create_in_place>, di::InPlaceType<AsyncI32>, i32 value) {
-        return di::execution::just(AsyncI32 { value });
-    }
-
-    friend auto tag_invoke(di::Tag<di::execution::async_destroy_in_place>, di::InPlaceType<AsyncI32>, AsyncI32&) {
-        return di::execution::just();
-    }
+    friend auto tag_invoke(di::Tag<di::execution::run>, AsyncI32& value) { return di::execution::just(di::ref(value)); }
 };
 
-static void use_resource() {
-    namespace ex = di::execution;
+static void use_resources() {
+    //! [use_resources]
+    namespace execution = di::execution;
 
-    auto w = ex::async_create<AsyncI32>(42) | ex::use_resource([](AsyncI32& value) {
-                 return ex::just(value.value);
-             });
+    auto send = execution::use_resources(
+        [](auto token) {
+            return execution::just(token.get().value);
+        },
+        di::make_deferred<AsyncI32>(42));
 
-    ASSERT_EQ(ex::sync_wait(di::move(w)), 42);
+    ASSERT_EQ(execution::sync_wait(di::move(send)), 42);
+    //! [use_resources]
 }
 
 struct FailAllocator {
@@ -538,7 +538,7 @@ TEST(execution, inline_scheduler)
 TEST(execution, let)
 TEST(execution, transfer)
 TEST(execution, as)
-TEST(execution, use_resource)
+TEST(execution, use_resources)
 TEST(execution, any_sender)
 TEST(execution, into_result)
 TEST(execution, when_all)
