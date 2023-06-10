@@ -14,6 +14,7 @@
 #include <di/execution/query/make_env.h>
 #include <di/execution/receiver/set_stopped.h>
 #include <di/execution/receiver/set_value.h>
+#include <di/execution/sequence/empty_sequence.h>
 #include <di/execution/sequence/into_lockstep_sequence.h>
 #include <di/execution/sequence/into_variant_each.h>
 #include <di/execution/sequence/sequence_sender.h>
@@ -554,6 +555,8 @@ namespace zip_ns {
                 return Function {}(into_variant_each(util::forward<Seqs>(sequences))...);
             }
         }
+
+        auto operator()() const { return empty_sequence(); }
     };
 }
 
