@@ -222,11 +222,11 @@ static void inline_scheduler() {
 
     auto w2 = ex::on(scheduler, ex::just(42));
 
-    ASSERT_EQ(ex::sync_wait(di::move(work)), 42);
+    ASSERT_EQ(ex::sync_wait(work), 42);
     ASSERT_EQ(ex::sync_wait(di::move(w2)), 42);
 
     auto v = ex::on(scheduler, ex::get_scheduler());
-    ASSERT_EQ(*ex::sync_wait(di::move(v)), scheduler);
+    ASSERT_EQ(*ex::sync_wait(v), scheduler);
 }
 
 static void let() {
@@ -243,7 +243,7 @@ static void let() {
                        return 43;
                    });
         });
-    ASSERT_EQ(ex::sync_wait(di::move(v)), 43);
+    ASSERT_EQ(ex::sync_wait(v), 43);
 
     auto z = ex::just() | ex::then([] {
                  return di::Result<long>(44);
@@ -269,7 +269,7 @@ static void let() {
              ex::let_stopped([] {
                  return ex::just(42);
              });
-    ASSERT_EQ(ex::sync_wait(di::move(y)), 42);
+    ASSERT_EQ(ex::sync_wait(y), 42);
 
     //! [let_value_with]
     namespace execution = di::execution;
