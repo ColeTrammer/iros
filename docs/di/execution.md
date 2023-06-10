@@ -152,6 +152,161 @@ A serious issue is that if the sequence produces values in line, there will be e
 can be worked-around by using a queue or scheduler to delay the next sender, but this is not ideal. There are ongoing
 efforts to add tail senders to P2300, which would solve this issue but bring more complexity.
 
+## Async RAII
+
+In normal c++, RAII is used to ensure that resources are cleaned up when they go out of scope. However, this model
+breaks down because of several limitations:
+
+1. Asynchronous operations have 2 scopes: the lexical scope, and the "async" scope of the operation state.
+2. Destructors cannot be asynchronous.
+3. Destructors cannot return errors.
+
+### The Async Call Stack
+
+In the sender receiver model, operations do not start immediately. When a function returns a sender, all of its local
+variables are destroyed, before the actual sender is started. Imagine the following sender function:
+
+```cpp
+auto my_sender() {
+    // By the time this function returns, the thread pool will be destroyed, and the scheduler will be invalid.
+    auto my_thread_pool = di::ThreadPool(4);
+    return di::execution::on(my_thread_pool.get_scheduler(), do_some_work);
+}
+```
+
+Even though sync RAII can cleanup all the threads in the thread pool, its lifetime does not match the lifetime of the
+asynchronous operation. What's really happening is that the functions which create senders only create a "task graph"
+which describes what work to do. We can not acquire the resources needed to do the work until the task graph is being
+executed.
+
+What we want to do instead is create a "node" in the task graph which acquires the resources, and reference that as part
+of the sender. The actual thread pool object is now stored in the operation state, whose lifetime matches the lifetime
+of the asynchronous operation.
+
+### Cleanup can be Asynchronous
+
+The second problem is that destructors cannot be asynchronous. This is a problem because the last thing an asynchronous
+runtime wants to do is block on a synchronous operation. This holds even for the cleanup of resources. For instance, in
+the example of the thread pool, we want to wait for all of the threads to finish before we can destroy the thread pool.
+Technically, we can block in the destructor, but this shuts down all oppurtunities for parallelism. Other operations can
+run while the threads are being joined, if only we could wait asynchronously. Additionally, we can imagine that if our
+RAII objects were threads themselves, it would be much better to wait for all of the threads to finish asynchronously in
+parallel whether than block on each thread one at a time.
+
+### Cleanup can be Fallible
+
+C++ destructors cannot return errors, which is inconvenient for asynchronous operations. For instance, it turns out that
+calling join on a thread can fail spuriously (like the kernel is out of memory). Throwing an exception in a destructor
+is very bad, and this project disables exceptions globally. The best we can do is ASSERT(false) in the destructor and
+require the user to call `join()` manually. This is extremely terrible.
+
+It gets worse when modelling things which are likely to fail, like network connections. When closing a network
+connection, the operation can fail due to various reasons, like pending data not successfully getting flushed, dropping
+packets, or an actively malicous peer. Being able to handle errors in these cases is important.
+
+### Async RAII Working Design
+
+The async RAII model is achieves these goals by modelling a resource as an async sequence which sends a single value
+when the resource is acquired, and completes when the resource is released. The resource is acquired when the sequence's
+first item completes, and the resource starts to be released when the sequence's receiver acknowledges the value. Then
+the sequence completes when the resource is fully released.
+
+This design idea is taken from the [async resource](https://kirkshoop.github.io/async_scope/async-resource.html) c++
+proposal. The following code example shows a correct use of the async resource model:
+
+```cpp
+auto my_sender() {
+    return di::execution::use_resources([](auto thread_pool_token) {
+        return di::execution::on(thread_pool.get_scheduler(), do_some_work);
+    }, di::make_deferred<di::ThreadPool>(4));
+}
+```
+
+The `execution::use_resources()` function takes a function which returns a sender, and multiple deferred async
+resources. In this model, the thread pool's construction is delayed until the sender is started. The sequence does not
+send the thread pool itself, but instead sends a token which is essentially a reference-wrapper to the thread pool. This
+is done so that the values can safely be decay copied, without ever moving the thread pool itself. The thread pool is
+automatically joined after the returned sender completes.
+
+### use_resources() Implementation
+
+The implementation of `execution::use_resources()` is effectively a combination of a few sequence sender algorithms. It
+is essentially as follows:
+
+```cpp
+auto use_resources(auto invocable, auto&&... deferred_resources) {
+    return execution::let_value_with([invocable](auto& resources) {
+        return execution::first_value(
+            execution::zip(execution::run(resources)...)
+                | let_value_each(invocable)
+        );
+    }, deferred_resources...);
+}
+```
+
+The `execution::let_value_with()` algorithm allows us to consume the deferred resources by reference, after constructing
+them in the operation state. The `execution::first_value()` algorithm is essentially a no-op, since the sequences only
+send a single value, but is needed to convert the sequence into a sender. The `execution::zip()` algorithm is used to
+combine the resources into a single sequence, which the invocable can consume.
+
+The main interesting point is the `execution::run()` CPO, which is used to start the resource sequences. The
+`execution::run()` CPO is the API which allows something to be an async resource. It takes an lvalue reference to the
+resource, and returns a sequence sender, as described above.
+
+## make_deferred Implementation
+
+The `di::make_deferred()` function is used to create a deferred object. It is essentially defined as follows:
+
+```cpp
+template<typename T>
+auto make_deferred(auto&& args) {
+    return [args = di::forward<decltype(args)>(args)]() mutable {
+        return T(di::move(args));
+    };
+}
+```
+
+The returned object is a function which can be invoked to construct the object. `T` can be immovable thanks to
+guaranteed RVO. The `args` are moved into the function, so the returned function is copyable only if all `args` are
+copyable.
+
+Since this is the simple model for deferred objects, it is possible to provide arbitrary 0 argument lambdas as input to
+the `execution::use_resources()` function if necessary. `di::make_deferred()` is just a convenience function to make
+this easier.
+
+## Async RAII in Coroutines
+
+Coroutines allow asynchronous code to be written in c++ without the need for complex template metaprogramming and sender
+algorithms. However, this async RAII model does not naturally fit into coroutines, unlike other concepts of the sender
+receiver model. This is because the notion of an async scope does not mirror the lexical scope of a coroutine. For
+instance:
+
+```cpp
+auto f() -> di::Lazy<> {
+    for (int i = 0; i < 10; i++) {
+        // Let's say this somehow worked.
+        auto thread_pool = co_await di::co_use_resource<di::ThreadPool>(4);
+
+        co_await di::execution::on(thread_pool.get_scheduler(), do_some_work);
+
+        // At this point, we would expect the thread pool to be destroyed, but it cannot be. Async RAII in coroutines
+        // would have to destroy the thread pool only when the coroutine itself is destroyed. So in effect, we would
+        // have made 10 thread pools at once.
+    }
+}
+```
+
+The `co_use_resource()` function is a hypothetical coroutine version of `use_resources()`. The problem is that the
+coroutine is a single node in the task graph, so there is no way to apply the async RAII model in a more granular way.
+This is particular problematic if anyone tries to use an async mutex, since the mutex would be locked for the entire
+coroutine. One could easily imagine this leading to deadlock, since the lock is not held for the lexical scope of the
+variable. Additionally, it is unclear if `co_use_resource()` could even be implemented in a way which allows more that
+one resource to be acquired.
+
+The solution is to just call the `use_resources()` function from within the coroutine, and then immediately co_await the
+result. This is not ideal, because it is more verbose, and importantly, is unworkable if we need to call `co_yield` in
+the coroutine. These things can be probably be worked around, but it will be increasingly difficult to do so.
+
 ## Type Erased Sender
 
 The `di::AnySender` class template is a type erased sender, meaning it can hold any sender that satisfies the
@@ -261,6 +416,7 @@ is probably the worst idea in terms of safety.
 - [P2300 - std::execution](https://wg21.link/p2300)
 - [P2300 Reference Implementation](https://github.com/NVIDIA/stdexec)
 - [Sequence Senders](https://github.com/kirkshoop/sequence-next)
+- [Async Resources](https://kirkshoop.github.io/async_scope/async-resource.html)
 - [libunifex](https://github.com/facebookexperimental/libunifex/)
 - [NJS's Blog on Structured
   Concurrency](https://vorpus.org/blog/notes-on-structured-concurrency-or-go-statement-considered-harmful/)
