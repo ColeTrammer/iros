@@ -9,9 +9,12 @@
 #include <di/execution/interface/get_env.h>
 #include <di/execution/meta/completion_signatures_of.h>
 #include <di/execution/query/get_completion_signatures.h>
+#include <di/execution/query/is_debug_env.h>
 #include <di/execution/query/make_env.h>
 #include <di/execution/receiver/receiver_adaptor.h>
+#include <di/execution/types/empty_env.h>
 #include <di/function/curry.h>
+#include <di/function/pipeable.h>
 #include <di/function/tag_invoke.h>
 #include <di/meta/constexpr.h>
 #include <di/meta/decay.h>
@@ -73,6 +76,14 @@ namespace with_env_ns {
             return Sender<Send, Env> { util::forward<Send>(sender), util::forward<Env>(env) };
         }
     };
+
+    struct DebugFunction : function::pipeline::EnablePipeline {
+        template<concepts::Sender Send>
+        auto operator()(Send&& sender) const {
+            using Env = MakeEnv<EmptyEnv, With<Tag<is_debug_env>, Constexpr<true>>>;
+            return Sender<Send, Env> { util::forward<Send>(sender), make_env(empty_env, with(is_debug_env, c_<true>)) };
+        }
+    };
 }
 
 /// @brief Adapts a sender to run with a specified environment.
@@ -94,4 +105,16 @@ namespace with_env_ns {
 /// @see make_env
 /// @see read
 constexpr inline auto with_env = function::curry(with_env_ns::Function {}, c_<2zu>);
+
+/// @brief Adapts a sender to run with a debug environment.
+///
+/// @param sender The sender to adapt.
+///
+/// @returns A sender that runs the specified sender with a debug environment.
+///
+/// This function is equivalent to calling with_env() with a debug environment.
+///
+/// @see with_env
+/// @see is_debug_env
+constexpr inline auto with_debug_env = with_env_ns::DebugFunction {};
 }

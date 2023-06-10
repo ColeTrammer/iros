@@ -16,6 +16,7 @@
 #include <di/execution/meta/env_of.h>
 #include <di/execution/meta/make_completion_signatures.h>
 #include <di/execution/meta/stop_token_of.h>
+#include <di/execution/query/is_debug_env.h>
 #include <di/execution/query/make_env.h>
 #include <di/execution/receiver/set_stopped.h>
 #include <di/execution/receiver/set_value.h>
@@ -206,16 +207,23 @@ namespace subscribe_ns {
     struct Function {
         template<concepts::Receiver Rec, concepts::SenderIn<meta::EnvOf<Rec>> Seq>
         requires(concepts::detail::AdaptableToSequence<Rec, Seq> ||
-                 (concepts::SubscriberFrom<Rec, Seq> && concepts::TagInvocable<Function, Seq, Rec>) )
+                 (concepts::SubscriberFrom<Rec, Seq> && concepts::TagInvocable<Function, Seq, Rec>) ||
+                 (concepts::DebugEnv<meta::EnvOf<Rec>>) )
         auto operator()(Seq&& sequence, Rec&& receiver) const {
             if constexpr (concepts::detail::AdaptableToSequence<Rec, Seq>) {
                 return connect(
                     set_next(receiver, util::forward<Seq>(sequence)),
                     execution::sender_to_sequence_adaptor_ns::Receiver<Rec> { util::forward<Rec>(receiver) });
-            } else {
+            } else if constexpr (concepts::SubscriberFrom<Rec, Seq> && concepts::TagInvocable<Function, Seq, Rec>) {
                 static_assert(
                     concepts::OperationState<meta::TagInvokeResult<Function, Seq, Rec>>,
                     "The return value of di::execution::subscribe() must model di::concepts::OperationState.");
+                return function::tag_invoke(*this, util::forward<Seq>(sequence), util::forward<Rec>(receiver));
+            } else if constexpr (!concepts::SequenceSender<Seq>) {
+                return connect(
+                    set_next(receiver, util::forward<Seq>(sequence)),
+                    execution::sender_to_sequence_adaptor_ns::Receiver<Rec> { util::forward<Rec>(receiver) });
+            } else {
                 return function::tag_invoke(*this, util::forward<Seq>(sequence), util::forward<Rec>(receiver));
             }
         }
