@@ -30,8 +30,10 @@
 #include <di/execution/receiver/set_value.h>
 #include <di/execution/types/empty_env.h>
 #include <di/execution/types/prelude.h>
+#include <di/function/make_deferred.h>
 #include <di/platform/prelude.h>
 #include <di/types/integers.h>
+#include <di/util/prelude.h>
 #include <di/vocab/error/prelude.h>
 #include <di/vocab/expected/prelude.h>
 #include <dius/test/prelude.h>
@@ -267,15 +269,26 @@ static void let() {
              });
     ASSERT_EQ(ex::sync_wait(di::move(y)), 42);
 
-    auto a = ex::let_value_with(
-        [] {
-            return 42;
-        },
-        [](int& x) {
-            return ex::just(x);
-        });
+    //! [let_value_with]
+    namespace execution = di::execution;
 
-    ASSERT_EQ(ex::sync_wait(di::move(a)), 42);
+    struct Y : di::Immovable {
+        explicit Y(int value) : y(value) {}
+
+        int y;
+    };
+
+    auto a = execution::let_value_with(
+        [](int& x, Y& y) {
+            return execution::just(x + y.y);
+        },
+        [] {
+            return 10;
+        },
+        di::make_deferred<Y>(32));
+
+    ASSERT_EQ(execution::sync_wait(di::move(a)), 42);
+    //! [let_value_with]
 }
 
 static void transfer() {

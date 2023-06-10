@@ -1,21 +1,45 @@
 #pragma once
 
+#include <di/concepts/decay_constructible.h>
 #include <di/concepts/decays_to.h>
 #include <di/concepts/movable_value.h>
 #include <di/execution/concepts/prelude.h>
 #include <di/execution/meta/prelude.h>
 #include <di/execution/receiver/prelude.h>
 #include <di/execution/types/prelude.h>
+#include <di/function/invoke.h>
+#include <di/meta/decay.h>
+#include <di/meta/like.h>
+#include <di/util/defer_construct.h>
+#include <di/util/move.h>
+#include <di/vocab/tuple/apply.h>
+#include <di/vocab/tuple/tuple.h>
 
 namespace di::execution {
 namespace let_value_with_ns {
     template<typename State, typename Send, typename Rec>
     struct OperationStateT {
         struct Type {
-            template<typename Factory, typename Fun>
-            explicit Type(Factory& factory, Fun& function, Rec receiver)
-                : m_state(function::invoke(factory))
-                , m_op_state(execution::connect(function::invoke(function, m_state), util::move(receiver))) {}
+            template<typename Fun, typename Factories>
+            explicit Type(Fun&& function, Factories&& factories, Rec receiver)
+                : m_state(util::DeferConstruct([&] {
+                    return vocab::apply(
+                        [&]<typename... Fs>(Fs&&... fs) {
+                            return State(util::DeferConstruct([&] {
+                                return function::invoke(util::forward<Fs>(fs));
+                            })...);
+                        },
+                        util::forward<Factories>(factories));
+                }))
+                , m_op_state(execution::connect(
+                      [&] {
+                          return vocab::apply(
+                              [&](auto&... args) {
+                                  return function::invoke(util::forward<Fun>(function), args...);
+                              },
+                              m_state);
+                      }(),
+                      util::move(receiver))) {}
 
         private:
             friend void tag_invoke(types::Tag<execution::start>, Type& self) { execution::start(self.m_op_state); }
@@ -29,44 +53,69 @@ namespace let_value_with_ns {
     using OperationState = meta::Type<OperationStateT<State, Send, Rec>>;
 
     struct Function {
-        template<typename Factory, typename Fun>
+        template<typename Fun, typename... Factories>
         struct SenderT {
             struct Type {
             private:
-                using State = meta::InvokeResult<Factory>;
-                using Send = meta::InvokeResult<Fun, State&>;
+                using State = vocab::Tuple<meta::Decay<meta::InvokeResult<Factories&&>>...>;
+                using Send = meta::InvokeResult<Fun, meta::Decay<meta::InvokeResult<Factories&&>>&...>;
 
             public:
                 using is_sender = void;
 
-                [[no_unique_address]] Factory factory;
                 [[no_unique_address]] Fun function;
+                [[no_unique_address]] vocab::Tuple<Factories...> factories;
+
+                template<typename F, typename... Fa>
+                explicit Type(F&& f, Fa&&... fa) : function(util::forward<F>(f)), factories(util::forward<Fa>(fa)...) {}
 
             private:
                 template<concepts::DecaysTo<Type> Self, typename Rec>
-                requires(concepts::SenderTo<Send, Rec>)
+                requires(concepts::DecayConstructible<meta::Like<Self, Fun>> &&
+                         (concepts::DecayConstructible<meta::Like<Self, Factories>> && ...) &&
+                         concepts::SenderTo<Send, Rec>)
                 friend auto tag_invoke(types::Tag<connect>, Self&& self, Rec receiver) {
-                    return OperationState<State, Send, Rec> { self.factory, self.function, util::move(receiver) };
+                    auto function = util::forward<Self>(self).function;
+                    auto factories = util::forward<Self>(self).factories;
+                    return OperationState<State, Send, Rec> { util::move(function), util::move(factories),
+                                                              util::move(receiver) };
                 }
 
                 template<concepts::DecaysTo<Type> Self, typename Env>
-                friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env)
+                friend auto tag_invoke(types::Tag<get_completion_signatures>, Self&&, Env&&)
                     -> meta::CompletionSignaturesOf<Send, Env>;
             };
         };
 
-        template<concepts::MovableValue Factory, concepts::MovableValue Fun>
-        using Sender = meta::Type<SenderT<Factory, Fun>>;
+        template<typename Fun, typename... Factories>
+        using Sender = meta::Type<SenderT<Fun, Factories...>>;
 
-        template<concepts::MovableValue Factory, concepts::MovableValue Fun, typename DF = meta::Decay<Factory>,
-                 typename DFun = meta::Decay<Fun>>
-        requires(concepts::Invocable<DF&> && concepts::Invocable<DFun&, meta::InvokeResult<DF>&> &&
-                 concepts::Sender<meta::InvokeResult<DFun&, meta::InvokeResult<DF>&>>)
-        concepts::Sender auto operator()(Factory&& factory, Fun&& function) const {
-            return Sender<DF, DFun> { util::forward<Factory>(factory), util::forward<Fun>(function) };
+        template<concepts::MovableValue... Factories, concepts::MovableValue Fun, typename DFun = meta::Decay<Fun>>
+        requires(concepts::Sender<
+                 meta::InvokeResult<DFun &&, meta::Decay<meta::InvokeResult<meta::Decay<Factories> &&>>&...>>)
+        concepts::Sender auto operator()(Fun&& function, Factories&&... factories) const {
+            return Sender<Fun, Factories...> { util::forward<Fun>(function), util::forward<Factories>(factories)... };
         }
     };
 }
 
+/// @brief Inject values into an operation state.
+///
+/// @param function The function to invoke with the injected values.
+/// @param factories The factories to use to create the injected values.
+///
+/// @returns A sender that injects the values into the operation state and invokes the function.
+///
+/// This function allows the injection of values into an operation state. These are given the the provided function as
+/// lvalues. And the function returns a sender which is allowed access to these values. This is particularly useful for
+/// creating immovable objects, which cannot be stored in a sender because senders must be movable.
+///
+/// The following example creates an injects a regular value, as well as an immovable value into the operation state.
+/// This demonstrates the function::make_deferred helper function, which binds arguments to a constructor, as well as
+/// the fact that normal lambdas can be used as a factory function.
+///
+/// @snippet{trimleft} tests/test_execution.cpp let_value_with
+///
+/// @see function::make_deferred
 constexpr inline auto let_value_with = let_value_with_ns::Function {};
 }
