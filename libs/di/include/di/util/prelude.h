@@ -54,7 +54,6 @@ using util::to_owned;
 using util::cref;
 using util::ref;
 using util::ReferenceWrapper;
-using util::unwrap_reference;
 
 using std::initializer_list;
 

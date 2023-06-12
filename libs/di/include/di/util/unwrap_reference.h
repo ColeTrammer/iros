@@ -19,3 +19,7 @@ namespace detail {
 
 constexpr inline auto unwrap_reference = detail::UnwrapReferenceFunction {};
 }
+
+namespace di {
+using util::unwrap_reference;
+}
