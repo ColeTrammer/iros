@@ -2,6 +2,7 @@
 
 #include <di/concepts/boolean_testable.h>
 #include <di/concepts/maybe_fallible.h>
+#include <di/execution/algorithm/just.h>
 #include <di/execution/concepts/sender.h>
 #include <di/execution/concepts/sender_in.h>
 #include <di/execution/meta/env_of.h>
@@ -71,6 +72,10 @@ namespace nest_ns {
 /// This function does not allocate any memory, and is therefore the most efficient way to nest a sender inside a
 /// scope, but is also the most inconvenient. In most cases, it is more desirable to use execution::spawn() or
 /// execution::spawn_future() instead. However, these functions can be implemented in terms of this function.
+///
+/// The following example demonstrates simple usage of execution::nest():
+///
+/// @snippet{trimleft} tests/test_execution.cpp nest
 ///
 /// @see spawn
 /// @see spawn_future
@@ -145,4 +150,20 @@ namespace spawn_future_ns {
 /// @see nest
 /// @see spawn
 constexpr inline auto spawn_future = spawn_future_ns::Function {};
+
+/// @brief A type which models an async scope.
+///
+/// @tparam T The type to check.
+///
+/// @see request_stop
+/// @see nest
+/// @see spawn
+/// @see spawn_future
+template<typename T>
+concept Scope = requires(T& scope) {
+    request_stop(scope);
+    nest(scope, stopped);
+    spawn(scope, stopped);
+    spawn_future(scope, stopped);
+};
 }

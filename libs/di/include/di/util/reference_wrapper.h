@@ -13,22 +13,19 @@ namespace di::util {
 template<typename T>
 class ReferenceWrapper {
 private:
-    template<typename U>
-    constexpr static T* get_address(U& value) {
-        return &value;
-    }
-
-    // Prevent creating reference wrapper's from rvalue (tempory) references.
-    template<typename U>
-    constexpr static void get_address(U&&) = delete;
+    constexpr static T* get_address(T& value) { return util::addressof(value); }
 
 public:
+    // Prevent creating reference wrapper's from rvalue (tempory) references.
+    constexpr static void get_address(T&&) = delete;
+
     using Value = T;
 
     constexpr explicit ReferenceWrapper(vocab::NullOpt) {}
 
     template<typename U>
-    requires(requires { get_address(util::declval<U>()); } && !concepts::ReferenceWrapper<meta::Decay<U>>)
+    requires(!concepts::ReferenceWrapper<meta::Decay<U>> && requires { get_address(util::declval<U>()); })
+    // NOLINTNEXTLINE(bugprone-forwarding-reference-overload)
     constexpr ReferenceWrapper(U&& value) : m_pointer(get_address(value)) {}
 
     constexpr ReferenceWrapper(ReferenceWrapper const&) = default;

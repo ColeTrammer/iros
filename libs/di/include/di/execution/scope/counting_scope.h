@@ -4,23 +4,28 @@
 #include <di/container/allocator/allocator.h>
 #include <di/container/allocator/fallible_allocator.h>
 #include <di/container/allocator/infallible_allocator.h>
+#include <di/execution/algorithm/just.h>
 #include <di/execution/concepts/receiver_of.h>
 #include <di/execution/concepts/sender_in.h>
 #include <di/execution/interface/connect.h>
 #include <di/execution/interface/get_env.h>
+#include <di/execution/interface/run.h>
 #include <di/execution/interface/start.h>
 #include <di/execution/meta/completion_signatures_of.h>
 #include <di/execution/meta/connect_result.h>
 #include <di/execution/meta/env_of.h>
 #include <di/execution/query/get_allocator.h>
 #include <di/execution/query/get_completion_signatures.h>
+#include <di/execution/query/get_sequence_cardinality.h>
 #include <di/execution/query/get_stop_token.h>
 #include <di/execution/query/make_env.h>
 #include <di/execution/receiver/receiver_adaptor.h>
 #include <di/execution/receiver/set_error.h>
 #include <di/execution/receiver/set_stopped.h>
 #include <di/execution/receiver/set_value.h>
-#include <di/execution/scope/interface.h>
+#include <di/execution/scope/scope.h>
+#include <di/execution/sequence/sequence_sender.h>
+#include <di/execution/types/completion_signuatures.h>
 #include <di/execution/types/empty_env.h>
 #include <di/function/container/function.h>
 #include <di/function/tag_invoke.h>
@@ -35,8 +40,10 @@
 #include <di/types/prelude.h>
 #include <di/util/addressof.h>
 #include <di/util/declval.h>
+#include <di/util/defer_construct.h>
 #include <di/util/immovable.h>
-#include <dius/platform.h>
+#include <di/util/reference_wrapper.h>
+#include <di/vocab/optional/optional.h>
 
 namespace di::execution {
 namespace counting_scope_ns {
@@ -56,6 +63,8 @@ namespace counting_scope_ns {
             void start_one() { count.fetch_add(1, sync::MemoryOrder::Relaxed); }
 
             void complete_one() {
+                // The count variable starts at 1, because the cleanup action must start before we call the did_complete
+                // function.
                 auto old_count = count.fetch_sub(1, sync::MemoryOrder::AcquireRelease);
                 if (old_count == 1) {
                     did_complete();
@@ -67,8 +76,8 @@ namespace counting_scope_ns {
     template<typename Alloc>
     using Data = meta::Type<DataT<Alloc>>;
 
-    template<typename Alloc, typename Env = EmptyEnv>
-    using Env = decltype(util::declval<Data<Alloc> const&>().get_env());
+    template<typename Alloc, typename E = EmptyEnv>
+    using Env = decltype(util::declval<Data<Alloc> const&>().get_env(util::declval<E const&>()));
 
     template<typename Alloc, typename Rec>
     struct NestDataT {
@@ -89,10 +98,10 @@ namespace counting_scope_ns {
             friend Base;
 
         public:
-            explicit Type(NestData<Alloc, Rec> data) : m_data(data) {}
+            explicit Type(NestData<Alloc, Rec>* data) : m_data(data) {}
 
-            Rec const& base() const& { return m_data->receiver; }
-            Rec&& base() && { return util::move(m_data->receiver); }
+            auto base() const& -> Rec const& { return m_data->receiver; }
+            auto base() && -> Rec&& { return util::move(m_data->receiver); }
 
         private:
             template<typename... Vs>
@@ -133,7 +142,7 @@ namespace counting_scope_ns {
 
         private:
             friend void tag_invoke(Tag<start>, Type& self) {
-                self.m_data->start_one();
+                self.m_data.data->start_one();
                 start(self.m_op);
             }
 
@@ -175,24 +184,135 @@ namespace counting_scope_ns {
 
     template<typename Alloc>
     struct CountingScopeT {
-        struct Type : util::Immovable {
-        private:
-            template<concepts::SenderIn<Env<Alloc>> Send>
-            friend auto tag_invoke(Tag<nest>, Type& self, Send&& sender) {
-                return NestSender<Alloc, Send>(util::addressof(self.m_data), util::forward<Send>(sender));
-            }
+        struct Type;
 
-            friend auto tag_invoke(Tag<get_env>, Type const& self) { return self.m_data.get_env(); }
+        static auto get_data(Type&) -> Data<Alloc>*;
+    };
 
-            Data<Alloc> m_data;
+    template<typename Op, typename Data>
+    struct RunReceiverT {
+        struct Type {
+            using is_receiver = void;
+
+            Op* op;
+            Data* data;
+
+            friend void tag_invoke(Tag<set_value>, Type&& self) { self.op->cleanup(); }
+            friend void tag_invoke(Tag<set_stopped>, Type&& self) { self.op->cleanup(); }
+
+            friend auto tag_invoke(Tag<get_env>, Type const& self) { return self.data->get_env(); }
         };
     };
+
+    template<typename Op, typename Data>
+    using RunReceiver = meta::Type<RunReceiverT<Op, Data>>;
+
+    template<typename Alloc, typename Rec>
+    struct RunOperationT {
+        struct Type : util::Immovable {
+        public:
+            using Scope = meta::Type<CountingScopeT<Alloc>>;
+
+            explicit Type(util::ReferenceWrapper<Scope> scope, Rec receiver)
+                : m_scope(scope), m_receiver(util::move(receiver)) {}
+
+            void cleanup() {
+                auto* data = CountingScopeT<Alloc>::get_data(m_scope);
+                data->did_complete = [this] {
+                    execution::set_value(util::move(m_receiver));
+                };
+                data->complete_one();
+            }
+
+        private:
+            using TokenSender = decltype(just(util::declval<util::ReferenceWrapper<Scope>>()));
+            using NextSender = meta::NextSenderOf<Rec, TokenSender>;
+            using NextOp = meta::ConnectResult<NextSender, RunReceiver<Type, Data<Alloc>>>;
+
+            friend void tag_invoke(Tag<start>, Type& self) {
+                auto& op = self.m_op.emplace(util::DeferConstruct([&] {
+                    return connect(set_next(self.m_receiver, just(self.m_scope)),
+                                   RunReceiver<Type, Data<Alloc>>(util::addressof(self),
+                                                                  CountingScopeT<Alloc>::get_data(self.m_scope)));
+                }));
+                start(op);
+            }
+
+            util::ReferenceWrapper<Scope> m_scope;
+            [[no_unique_address]] Rec m_receiver;
+            DI_IMMOVABLE_NO_UNIQUE_ADDRESS vocab::Optional<NextOp> m_op;
+        };
+    };
+
+    template<typename Alloc, typename Rec>
+    using RunOperation = meta::Type<RunOperationT<Alloc, Rec>>;
+
+    template<typename Alloc>
+    struct RunSequenceT {
+        struct Type {
+            using Scope = meta::Type<CountingScopeT<Alloc>>;
+
+            using is_sender = SequenceTag;
+
+            util::ReferenceWrapper<Scope> scope;
+
+            using CompletionSignatures =
+                di::CompletionSignatures<SetValue(util::ReferenceWrapper<Scope>), SetStopped()>;
+
+            template<typename Rec>
+            requires(concepts::SubscriberOf<Rec, CompletionSignatures>)
+            friend auto tag_invoke(Tag<subscribe>, Type&& self, Rec receiver) {
+                return RunOperation<Alloc, Rec>(self.scope, util::move(receiver));
+            }
+
+            friend auto tag_invoke(Tag<get_env>, Type const& self) {
+                return make_env(CountingScopeT<Alloc>::get_data(self.scope)->get_env(),
+                                with(get_sequence_cardinality, c_<1zu>));
+            }
+        };
+    };
+
+    template<typename Alloc>
+    using RunSequence = meta::Type<RunSequenceT<Alloc>>;
+
+    template<typename Alloc>
+    struct CountingScopeT<Alloc>::Type : util::Immovable {
+    public:
+        Data<Alloc>* data() { return util::addressof(m_data); }
+
+    private:
+        template<concepts::SenderIn<Env<Alloc>> Send>
+        friend auto tag_invoke(Tag<nest>, Type& self, Send&& sender) {
+            return NestSender<Alloc, Send>(util::forward<Send>(sender), self.data());
+        }
+
+        friend auto tag_invoke(Tag<run>, Type& self) { return RunSequence<Alloc>(self); }
+
+        friend auto tag_invoke(Tag<get_env>, Type const& self) { return self.m_data.get_env(); }
+
+        Data<Alloc> m_data;
+    };
+
+    template<typename Alloc>
+    auto CountingScopeT<Alloc>::get_data(Type& self) -> Data<Alloc>* {
+        return self.data();
+    }
 }
 
 /// @brief A scope that waits for all spawned senders to complete.
 ///
 /// @tparam Alloc The allocator to use for the scope.
 ///
+/// CountingScope is a scope that waits for all spawned senders to complete, using the async resource mechanism. This
+/// means that it can only be accessed using the execution::use_resources function. The provided token allows spawning
+/// work, and the async "destructor" will wait for all spawned work to complete.
+///
+/// This limited API allows the scope to be implemented efficently, with only an atomic counter. This is possible only
+/// because the resource API guarantees that we will wait for all spawned work exactly once. More advanced use cases may
+/// need to wait multiple times, or store the scope in non-async storage, and would need to use a different scope
+/// implementation.
+///
+/// @see use_resources
 /// @see nest
 /// @see spawn
 /// @see spawn_future

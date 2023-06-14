@@ -40,30 +40,30 @@ namespace just_ns {
         public:
             using is_sender = void;
 
-            using CompletionSignatures = types::CompletionSignatures<CPO(meta::Decay<Types>...)>;
+            using CompletionSignatures = types::CompletionSignatures<CPO(Types...)>;
 
-            constexpr explicit Type(ConstructTag, Types&&... values_) : values(util::forward<Types>(values_)...) {}
+            template<typename... Us>
+            constexpr explicit Type(ConstructTag, Us&&... values_) : values(util::forward<Us>(values_)...) {}
 
-            [[no_unique_address]] Tuple<meta::Decay<Types>...> values;
+            [[no_unique_address]] Tuple<Types...> values;
 
         private:
             template<concepts::ReceiverOf<CompletionSignatures> Rec>
-            requires(concepts::Conjunction<concepts::CopyConstructible<meta::Decay<Types>>...>)
+            requires(concepts::Conjunction<concepts::CopyConstructible<Types>...>)
             constexpr friend auto tag_invoke(types::Tag<execution::connect>, Type const& sender, Rec receiver) {
-                return OperationState<CPO, Rec, meta::Decay<Types>...> { sender.values, util::move(receiver) };
+                return OperationState<CPO, Rec, Types...> { sender.values, util::move(receiver) };
             }
 
             template<concepts::ReceiverOf<CompletionSignatures> Rec>
-            requires(concepts::Conjunction<concepts::MoveConstructible<meta::Decay<Types>>...>)
+            requires(concepts::Conjunction<concepts::MoveConstructible<Types>...>)
             constexpr friend auto tag_invoke(types::Tag<execution::connect>, Type&& sender, Rec receiver) {
-                return OperationState<CPO, Rec, meta::Decay<Types>...> { util::move(sender.values),
-                                                                         util::move(receiver) };
+                return OperationState<CPO, Rec, Types...> { util::move(sender.values), util::move(receiver) };
             }
         };
     };
 
     template<concepts::OneOf<SetValue, SetStopped, SetError> CPO, typename... Types>
-    using Sender = meta::Type<SenderT<CPO, Types...>>;
+    using Sender = meta::Type<SenderT<CPO, meta::Decay<Types>...>>;
 
     struct Function {
         template<concepts::MovableValue... Values>

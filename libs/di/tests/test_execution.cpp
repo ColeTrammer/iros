@@ -30,6 +30,8 @@
 #include <di/execution/query/make_env.h>
 #include <di/execution/receiver/prelude.h>
 #include <di/execution/receiver/set_value.h>
+#include <di/execution/scope/counting_scope.h>
+#include <di/execution/scope/scope.h>
 #include <di/execution/types/empty_env.h>
 #include <di/execution/types/prelude.h>
 #include <di/function/make_deferred.h>
@@ -528,6 +530,28 @@ static void with_env() {
     //! [with_env]
 }
 
+static void counting_scope() {
+    namespace execution = di::execution;
+
+    auto noop_sender = execution::use_resources(
+        [](auto) {
+            return execution::just();
+        },
+        di::make_deferred<di::CountingScope<>>());
+    ASSERT(execution::sync_wait(noop_sender));
+
+    //! [nest]
+    auto nest_sender = execution::use_resources(
+        [](auto scope) {
+            return execution::when_all(execution::nest(scope, execution::just(11)),
+                                       execution::nest(scope, execution::just(22)),
+                                       execution::nest(scope, execution::just(33)));
+        },
+        di::make_deferred<di::CountingScope<>>());
+    ASSERT_EQ(execution::sync_wait(nest_sender), di::make_tuple(11, 22, 33));
+    //! [nest]
+}
+
 TEST(execution, meta)
 TEST(execution, sync_wait)
 TEST(execution, just)
@@ -543,4 +567,5 @@ TEST(execution, any_sender)
 TEST(execution, into_result)
 TEST(execution, when_all)
 TEST(execution, with_env)
+TEST(execution, counting_scope)
 }
