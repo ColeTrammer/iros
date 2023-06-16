@@ -5,12 +5,15 @@
 #include <di/concepts/prelude.h>
 #include <di/container/allocator/allocation_result.h>
 #include <di/container/allocator/allocator.h>
+#include <di/container/allocator/fail_allocator.h>
+#include <di/execution/algorithm/execute.h>
 #include <di/execution/algorithm/into_result.h>
 #include <di/execution/algorithm/into_variant.h>
 #include <di/execution/algorithm/just.h>
 #include <di/execution/algorithm/just_or_error.h>
 #include <di/execution/algorithm/just_void_or_stopped.h>
 #include <di/execution/algorithm/prelude.h>
+#include <di/execution/algorithm/start_detached.h>
 #include <di/execution/algorithm/sync_wait.h>
 #include <di/execution/algorithm/then.h>
 #include <di/execution/algorithm/use_resources.h>
@@ -21,6 +24,7 @@
 #include <di/execution/concepts/prelude.h>
 #include <di/execution/concepts/receiver.h>
 #include <di/execution/concepts/receiver_of.h>
+#include <di/execution/context/inline_scheduler.h>
 #include <di/execution/interface/run.h>
 #include <di/execution/meta/completion_signatures_of.h>
 #include <di/execution/meta/sends_stopped.h>
@@ -339,14 +343,6 @@ static void use_resources() {
     //! [use_resources]
 }
 
-struct FailAllocator {
-    friend di::Result<di::AllocationResult<>> tag_invoke(di::Tag<di::allocate>, FailAllocator, usize, usize) {
-        return di::Unexpected(di::BasicError::NotEnoughMemory);
-    }
-
-    friend void tag_invoke(di::Tag<di::deallocate>, FailAllocator, void*, usize, usize) {}
-};
-
 static void any_sender() {
     namespace ex = di::execution;
 
@@ -374,7 +370,7 @@ static void any_sender() {
     using Sender2 = di::AnySender<
         Sigs, void, di::any::HybridStorage<>, di::any::MaybeInlineVTable<3>,
         di::AnyOperationState<void, di::any::HybridStorage<di::StorageCategory::MoveOnly, 8 * sizeof(void*),
-                                                           alignof(void*), FailAllocator>>>;
+                                                           alignof(void*), di::FailAllocator>>>;
 
     auto z = ex::just(42) | ex::let_value([](int x) {
                  return ex::just(x);
@@ -385,7 +381,7 @@ static void any_sender() {
 
     using Sender3 = di::AnySender<
         Sigs, void,
-        di::any::HybridStorage<di::StorageCategory::MoveOnly, 2 * sizeof(void*), alignof(void*), FailAllocator>>;
+        di::any::HybridStorage<di::StorageCategory::MoveOnly, 2 * sizeof(void*), alignof(void*), di::FailAllocator>>;
 
     auto dummy = 0;
     auto zz = ex::just(42) | ex::let_value([=](int x) {
@@ -552,6 +548,30 @@ static void counting_scope() {
     //! [nest]
 }
 
+static void start_detached() {
+    namespace execution = di::execution;
+
+    auto ran = false;
+    execution::start_detached(execution::just() | execution::then([&] {
+                                  ran = true;
+                              }));
+
+    // NOTE: this is only valid since we know that the passed sender will complete inline.
+    ASSERT(ran);
+
+    ASSERT_EQ(execution::start_detached(execution::just(), di::fail_allocator),
+              di::Unexpected(di::BasicError::NotEnoughMemory));
+
+    ran = false;
+    auto scheduler = execution::InlineScheduler {};
+    execution::execute(scheduler, [&] {
+        ran = true;
+    });
+
+    // NOTE: this is only valid since we know that the scheduler will complete inline.
+    ASSERT(ran);
+}
+
 TEST(execution, meta)
 TEST(execution, sync_wait)
 TEST(execution, just)
@@ -568,4 +588,5 @@ TEST(execution, into_result)
 TEST(execution, when_all)
 TEST(execution, with_env)
 TEST(execution, counting_scope)
+TEST(execution, start_detached)
 }
