@@ -6,6 +6,7 @@
 #include <di/container/allocator/allocation_result.h>
 #include <di/container/allocator/allocator.h>
 #include <di/container/allocator/fail_allocator.h>
+#include <di/execution/algorithm/ensure_started.h>
 #include <di/execution/algorithm/execute.h>
 #include <di/execution/algorithm/into_result.h>
 #include <di/execution/algorithm/into_variant.h>
@@ -13,6 +14,7 @@
 #include <di/execution/algorithm/just_from.h>
 #include <di/execution/algorithm/just_or_error.h>
 #include <di/execution/algorithm/just_void_or_stopped.h>
+#include <di/execution/algorithm/on.h>
 #include <di/execution/algorithm/prelude.h>
 #include <di/execution/algorithm/start_detached.h>
 #include <di/execution/algorithm/sync_wait.h>
@@ -26,11 +28,13 @@
 #include <di/execution/concepts/receiver.h>
 #include <di/execution/concepts/receiver_of.h>
 #include <di/execution/context/inline_scheduler.h>
+#include <di/execution/context/run_loop.h>
 #include <di/execution/interface/run.h>
 #include <di/execution/meta/completion_signatures_of.h>
 #include <di/execution/meta/sends_stopped.h>
 #include <di/execution/prelude.h>
 #include <di/execution/query/get_allocator.h>
+#include <di/execution/query/get_scheduler.h>
 #include <di/execution/query/get_stop_token.h>
 #include <di/execution/query/make_env.h>
 #include <di/execution/receiver/prelude.h>
@@ -563,6 +567,23 @@ static void counting_scope() {
     ASSERT(execution::sync_wait(spawn_sender));
     ASSERT_EQ(count, 10);
     //! [spawn]
+
+    //! [spawn_future]
+    auto spawn_future_sender = execution::use_resources(
+        [&](auto scope) {
+            return execution::get_scheduler() | execution::let_value([scope](auto scheduler) {
+                       return execution::when_all(
+                                  execution::spawn_future(scope, execution::on(scheduler, execution::just(11))),
+                                  execution::spawn_future(scope, execution::on(scheduler, execution::just(22))),
+                                  execution::spawn_future(scope, execution::on(scheduler, execution::just(33)))) |
+                              execution::then([](auto... values) {
+                                  return (values + ...);
+                              });
+                   });
+        },
+        di::make_deferred<di::CountingScope<>>());
+    ASSERT_EQ(execution::sync_wait(spawn_future_sender), 66);
+    //! [spawn_future]
 }
 
 static void start_detached() {
@@ -589,6 +610,22 @@ static void start_detached() {
     ASSERT(ran);
 }
 
+static void ensure_started() {
+    namespace execution = di::execution;
+
+    auto sender = execution::just(42);
+    auto started = execution::ensure_started(sender);
+    ASSERT_EQ(execution::sync_wait(di::move(started)), 42);
+
+    ASSERT_EQ(execution::ensure_started(execution::just(), di::fail_allocator),
+              di::Unexpected(di::BasicError::NotEnoughMemory));
+
+    auto spawn_work = execution::get_scheduler() | execution::let_value([](auto scheduler) {
+                          return execution::ensure_started(execution::on(scheduler, execution::just(42)));
+                      });
+    ASSERT_EQ(execution::sync_wait(spawn_work), 42);
+}
+
 TEST(execution, meta)
 TEST(execution, sync_wait)
 TEST(execution, just)
@@ -606,4 +643,5 @@ TEST(execution, when_all)
 TEST(execution, with_env)
 TEST(execution, counting_scope)
 TEST(execution, start_detached)
+TEST(execution, ensure_started)
 }

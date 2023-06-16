@@ -2,6 +2,7 @@
 
 #include <di/concepts/boolean_testable.h>
 #include <di/concepts/maybe_fallible.h>
+#include <di/execution/algorithm/ensure_started.h>
 #include <di/execution/algorithm/just.h>
 #include <di/execution/algorithm/start_detached.h>
 #include <di/execution/concepts/sender.h>
@@ -132,13 +133,17 @@ constexpr inline auto spawn = spawn_ns::Function {};
 namespace spawn_future_ns {
     struct Function {
         template<typename Scope, concepts::SenderIn<meta::EnvOf<Scope>> Send>
-        requires(concepts::TagInvocable<Function, meta::UnwrapReference<Scope>&, Send>)
         auto operator()(Scope& scope, Send&& sender) const {
-            static_assert(
-                concepts::Sender<
-                    meta::UnwrapExpected<meta::TagInvokeResult<Function, meta::UnwrapReference<Scope>&, Send&&>>>,
-                "nest() customizations must return a maybe fallible Sender.");
-            return tag_invoke(*this, unwrap_reference(scope), util::forward<Send>(sender));
+            if constexpr (concepts::TagInvocable<Function, meta::UnwrapReference<Scope>&, Send>) {
+                static_assert(
+                    concepts::Sender<
+                        meta::UnwrapExpected<meta::TagInvokeResult<Function, meta::UnwrapReference<Scope>&, Send&&>>>,
+                    "nest() customizations must return a maybe fallible Sender.");
+                return tag_invoke(*this, unwrap_reference(scope), util::forward<Send>(sender));
+            } else {
+                auto allocator = get_allocator(get_env(scope));
+                return ensure_started(nest(scope, util::forward<Send>(sender)), util::move(allocator));
+            }
         }
     };
 }
@@ -157,6 +162,9 @@ namespace spawn_future_ns {
 /// This function is useful in cases where the result of the sender is needed. However, it is less efficient than both
 /// execution::nest() and execution::spawn(), since it allocates the operation to be run on the heap, and must resolve
 /// the race condition between the eagerly started sender completing, and the returned future being started.
+///
+/// The following example uses execution::spawn_future() to start 4 tasks in parallel, and sums the results:
+/// @snippet{trimleft} tests/test_execution.cpp spawn_future
 ///
 /// @see nest
 /// @see spawn
