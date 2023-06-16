@@ -3,9 +3,12 @@
 #include <di/concepts/boolean_testable.h>
 #include <di/concepts/maybe_fallible.h>
 #include <di/execution/algorithm/just.h>
+#include <di/execution/algorithm/start_detached.h>
 #include <di/execution/concepts/sender.h>
 #include <di/execution/concepts/sender_in.h>
+#include <di/execution/interface/get_env.h>
 #include <di/execution/meta/env_of.h>
+#include <di/execution/query/get_allocator.h>
 #include <di/execution/sequence/sequence_sender.h>
 #include <di/function/tag_invoke.h>
 #include <di/meta/unwrap_expected.h>
@@ -84,12 +87,17 @@ constexpr inline auto nest = nest_ns::Function {};
 namespace spawn_ns {
     struct Function {
         template<typename Scope, concepts::NextSender<meta::EnvOf<Scope>> Send>
-        requires(concepts::TagInvocable<Function, meta::UnwrapReference<Scope>&, Send>)
         auto operator()(Scope& scope, Send&& sender) const {
-            static_assert(
-                concepts::MaybeFallible<meta::TagInvokeResult<Function, meta::UnwrapReference<Scope>&, Send&&>, void>,
-                "spawn() customizations must return a maybe fallible void.");
-            return tag_invoke(*this, unwrap_reference(scope), util::forward<Send>(sender));
+            if constexpr (concepts::TagInvocable<Function, meta::UnwrapReference<Scope>&, Send&&>) {
+                static_assert(
+                    concepts::MaybeFallible<meta::TagInvokeResult<Function, meta::UnwrapReference<Scope>&, Send&&>,
+                                            void>,
+                    "spawn() customizations must return a maybe fallible void.");
+                return tag_invoke(*this, unwrap_reference(scope), util::forward<Send>(sender));
+            } else {
+                auto allocator = get_allocator(get_env(scope));
+                return start_detached(nest(scope, util::forward<Send>(sender)), util::move(allocator));
+            }
         }
     };
 }
@@ -110,6 +118,9 @@ namespace spawn_ns {
 /// properly. However, for this reason, if the underlying allocator is fallible, this function can return an error.
 ///
 /// In cases where the result of the sender is needed, execution::spawn_future() should be used instead.
+///
+/// The following example uses execution::spawn() to start 10 tasks in parallel, and then waits for them to complete:
+/// @snippet{trimleft} tests/test_execution.cpp spawn
 ///
 /// @note The sender must not send any values or complete with an error (since the result is ignored). The only
 /// completion signatures allowed are di::SetValue() and di::SetStopped().

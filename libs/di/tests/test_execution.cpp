@@ -10,6 +10,7 @@
 #include <di/execution/algorithm/into_result.h>
 #include <di/execution/algorithm/into_variant.h>
 #include <di/execution/algorithm/just.h>
+#include <di/execution/algorithm/just_from.h>
 #include <di/execution/algorithm/just_or_error.h>
 #include <di/execution/algorithm/just_void_or_stopped.h>
 #include <di/execution/algorithm/prelude.h>
@@ -251,7 +252,7 @@ static void let() {
         });
     ASSERT_EQ(ex::sync_wait(v), 43);
 
-    auto z = ex::just() | ex::then([] {
+    auto z = ex::just_from([] {
                  return di::Result<long>(44);
              }) |
              ex::let_value([](long) {
@@ -546,15 +547,31 @@ static void counting_scope() {
         di::make_deferred<di::CountingScope<>>());
     ASSERT_EQ(execution::sync_wait(nest_sender), di::make_tuple(11, 22, 33));
     //! [nest]
+
+    //! [spawn]
+    auto count = 0;
+    auto spawn_sender = execution::use_resources(
+        [&](auto scope) {
+            di::for_each(di::range(10), [&](auto) {
+                execution::spawn(scope, execution::just_from([&count] {
+                                     ++count;
+                                 }));
+            });
+            return execution::just();
+        },
+        di::make_deferred<di::CountingScope<>>());
+    ASSERT(execution::sync_wait(spawn_sender));
+    ASSERT_EQ(count, 10);
+    //! [spawn]
 }
 
 static void start_detached() {
     namespace execution = di::execution;
 
     auto ran = false;
-    execution::start_detached(execution::just() | execution::then([&] {
-                                  ran = true;
-                              }));
+    execution::start_detached(execution::just_from([&] {
+        ran = true;
+    }));
 
     // NOTE: this is only valid since we know that the passed sender will complete inline.
     ASSERT(ran);
