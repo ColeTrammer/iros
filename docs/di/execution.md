@@ -253,7 +253,7 @@ The main interesting point is the `execution::run()` CPO, which is used to start
 `execution::run()` CPO is the API which allows something to be an async resource. It takes an lvalue reference to the
 resource, and returns a sequence sender, as described above.
 
-## make_deferred Implementation
+### make_deferred Implementation
 
 The `di::make_deferred()` function is used to create a deferred object. It is essentially defined as follows:
 
@@ -274,7 +274,7 @@ Since this is the simple model for deferred objects, it is possible to provide a
 the `execution::use_resources()` function if necessary. `di::make_deferred()` is just a convenience function to make
 this easier.
 
-## Async RAII in Coroutines
+### Async RAII in Coroutines
 
 Coroutines allow asynchronous code to be written in c++ without the need for complex template metaprogramming and sender
 algorithms. However, this async RAII model does not naturally fit into coroutines, unlike other concepts of the sender
@@ -306,6 +306,79 @@ one resource to be acquired.
 The solution is to just call the `use_resources()` function from within the coroutine, and then immediately co_await the
 result. This is not ideal, because it is more verbose, and importantly, is unworkable if we need to call `co_yield` in
 the coroutine. These things can be probably be worked around, but it will be increasingly difficult to do so.
+
+## Async Scope
+
+A key aspect of structured concurrency is "scoping" groups of asynchronous operations into a single group. Before the
+"outer" operation completes, all "inner" operations must complete. This additionally allows requesting cancellation of
+the entire group of operations, and manages the memory and lifetime of the operations.
+
+The library provides 3 CPOs for interacting with async scopes:
+
+1. `execution::nest()`
+2. `execution::spawn()`
+3. `execution::spawn_future()`
+
+### Nest
+
+The `execution::nest()` CPO is used to wrap a sender in an async scope. It takes a sender, and returns a new sender
+which signals the completion of the original sender to the async scope. This allows the scope to know when all of its
+operations have completed.
+
+### Spawn
+
+The `execution::spawn()` CPO is used to spawn a task, without waiting for it to complete. It takes a sender, and runs it
+in the provided async scope. The operation's lifetime is fully managed by the async scope, and it automatically deleted
+when the operation completes. And like `execution::nest()`, it signals the completion of the operation to the async
+scope so it can track when all operations have completed.
+
+### Spawn Future
+
+The `execution::spawn_future()` CPO is used to spawn a task, and return a future which has the values which the task
+sends. It takes a sender, and runs it in the provided async scope. The operation's lifetime is fully managed by the
+async scope, and it automatically deleted when the operation completes. And like `execution::nest()`, it signals the
+completion of the operation to the async scope so it can track when all operations have completed. The difference
+between this function and `execution::spawn()` is that this function returns a future which can be used to retrieve the
+values, and thus requires more synchronization and memory overhead.
+
+### Counting Scope
+
+The `di::CountingScope` class template is a concrete implementation of an async scope. It is modelled as an async
+resource, and can be used with the `execution::use_resources()` function. It is a counting scope, meaning it tracks the
+number of operations which have been spawned, and signals completion when all operations have completed. Since it is an
+async resource, this is done automatically when the resource is destroyed.
+
+```cpp
+auto spawn_sender = execution::use_resources(
+    [&](auto scope, auto pool) {
+        // Do 10 things in parallel on the thread pool.
+        for (int i = 0; i < 10; i++) {
+            execution::spawn(scope, execution::on(pool, do_some_work));
+        }
+        return execution::just();
+    },
+    di::make_deferred<di::CountingScope<>>(), di::make_deferred<di::ThreadPool>());
+```
+
+The async resource mechanism ensures that the waiting for the completion of the scope is done automatically, and also
+enables a simple implementation.
+
+### Benefits of Async Scope Abstraction
+
+In the above example, the `CountingScope` is used to track the number of operations which have been spawned. This
+enables spawning a dynamic number of operations, and waiting for them to complete. This is not possible with the
+`execution::when_all()` function, since it is passed senders to wait for in parallel. This means the number of senders
+must be known at compile time.
+
+The async scope mechanism enables spawning tasks with regular loops and control flow, while still enabling the parallel
+execution of the tasks, as well as waiting for them to complete. As such, it is a more natural fit for many use cases.
+
+Some other examples where an async scope is useful:
+
+- Spawning a task for each file in a directory, and waiting for them all to complete.
+- Spawning a task for each request made to the Iris kernel, which scoping all operations to a specific process.
+- Creating an async sequence which sends a values in parallel, and thus needs to spawn a task for each value.
+- Conditionally spawning a task, depending on whether each value in a range is "interesting".
 
 ## Type Erased Sender
 
