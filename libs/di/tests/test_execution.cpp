@@ -20,6 +20,7 @@
 #include <di/execution/algorithm/let_value_with.h>
 #include <di/execution/algorithm/on.h>
 #include <di/execution/algorithm/prelude.h>
+#include <di/execution/algorithm/split.h>
 #include <di/execution/algorithm/start_detached.h>
 #include <di/execution/algorithm/sync_wait.h>
 #include <di/execution/algorithm/then.h>
@@ -672,6 +673,53 @@ static void bulk() {
     ASSERT_EQ(execution::sync_wait(error_sender), di::Unexpected(di::BasicError::InvalidArgument));
 }
 
+static void split() {
+    namespace execution = di::execution;
+
+    struct NoncopyableI32 {
+        explicit NoncopyableI32(i32 x_) : x(x_) {}
+
+        NoncopyableI32(NoncopyableI32 const&) = delete;
+        NoncopyableI32(NoncopyableI32&&) = default;
+
+        NoncopyableI32& operator=(NoncopyableI32 const&) = delete;
+        NoncopyableI32& operator=(NoncopyableI32&&) = default;
+
+        i32 x;
+    };
+
+    auto multi_sender = execution::just(NoncopyableI32(42)) | execution::split;
+
+    auto do_sender = [&] {
+        return multi_sender | execution::then([](NoncopyableI32 const& x) {
+                   return x.x;
+               });
+    };
+
+    ASSERT_EQ(execution::sync_wait(do_sender()), 42);
+    ASSERT_EQ(execution::sync_wait(do_sender()), 42);
+    ASSERT_EQ(execution::sync_wait(do_sender()), 42);
+
+    auto delayed_sender = execution::get_scheduler() | execution::let_value([](auto scheduler) {
+                              auto work =
+                                  execution::on(scheduler, execution::just(NoncopyableI32(42))) | execution::split;
+                              return execution::when_all(work | execution::then([](NoncopyableI32 const& x) {
+                                                             return x.x;
+                                                         }),
+                                                         work | execution::then([](NoncopyableI32 const& x) {
+                                                             return x.x;
+                                                         }),
+                                                         work | execution::then([](NoncopyableI32 const& x) {
+                                                             return x.x;
+                                                         }));
+                          });
+
+    ASSERT_EQ(execution::sync_wait(delayed_sender), di::make_tuple(42, 42, 42));
+
+    ASSERT_EQ(execution::just() | execution::split(di::fail_allocator),
+              di::Unexpected(di::BasicError::NotEnoughMemory));
+}
+
 TEST(execution, meta)
 TEST(execution, sync_wait)
 TEST(execution, just)
@@ -691,4 +739,5 @@ TEST(execution, counting_scope)
 TEST(execution, start_detached)
 TEST(execution, ensure_started)
 TEST(execution, bulk)
+TEST(execution, split)
 }
