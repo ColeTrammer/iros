@@ -136,7 +136,7 @@ namespace schedule_from_ns {
 
     template<typename Send, typename Rec, typename Sched>
     struct OperationStateT {
-        struct Type {
+        struct Type : util::Immovable {
         private:
             using Completions = meta::CompletionSignaturesOf<Send, meta::EnvOf<Rec>>;
 

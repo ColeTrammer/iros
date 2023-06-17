@@ -198,28 +198,33 @@ static void coroutine() {
 }
 
 static void then() {
-    namespace ex = di::execution;
+    //! [then]
+    namespace execution = di::execution;
 
-    di::Sender auto work = ex::just(42) | ex::then([](int x) {
+    di::Sender auto work = execution::just(42) | execution::then([](int x) {
                                return x * 2;
                            });
+    ASSERT_EQ(execution::sync_wait(work), 84);
 
-    using S = decltype(work);
+    auto failure = execution::just() | execution::then([] {
+                       return di::Result<int>(di::Unexpected(di::BasicError::InvalidArgument));
+                   });
+    ASSERT_EQ(execution::sync_wait(failure), di::Unexpected(di::BasicError::InvalidArgument));
+    //! [then]
 
-    using R =
-        ex::then_ns::Receiver<ex::sync_wait_ns::Receiver<di::Result<di::Tuple<int>>, ex::RunLoop<>>, di::Identity>;
+    di::Sender auto w2 = execution::just(42) | execution::then(di::into_void);
+    ASSERT(execution::sync_wait(w2));
 
-    static_assert(di::Receiver<R>);
+    auto map_error =
+        execution::just_error(di::Error(di::BasicError::InvalidArgument)) | execution::upon_error([](auto) {
+            return 42;
+        });
+    ASSERT_EQ(execution::sync_wait(di::move(map_error)), 42);
 
-    static_assert(requires { ex::set_value(di::declval<R>(), 1); });
-    static_assert(di::ReceiverOf<R, di::CompletionSignatures<di::SetStopped()>>);
-    static_assert(di::ReceiverOf<R, di::CompletionSignatures<di::SetValue(i32)>>);
-    static_assert(di::SenderTo<S, R>);
-
-    di::Sender auto w2 = ex::just(42) | ex::then(di::into_void);
-
-    ASSERT_EQ(ex::sync_wait(di::move(work)), 84);
-    ASSERT(ex::sync_wait(di::move(w2)));
+    auto map_stopped = execution::just_stopped() | execution::upon_stopped([]() {
+                           return 42;
+                       });
+    ASSERT_EQ(execution::sync_wait(map_stopped), 42);
 }
 
 static void inline_scheduler() {

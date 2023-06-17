@@ -10,6 +10,7 @@
 #include <di/function/invoke.h>
 #include <di/meta/decay.h>
 #include <di/meta/like.h>
+#include <di/platform/compiler.h>
 #include <di/util/defer_construct.h>
 #include <di/util/move.h>
 #include <di/vocab/tuple/apply.h>
@@ -19,7 +20,7 @@ namespace di::execution {
 namespace let_value_with_ns {
     template<typename State, typename Send, typename Rec>
     struct OperationStateT {
-        struct Type {
+        struct Type : util::Immovable {
             template<typename Fun, typename Factories>
             explicit Type(Fun&& function, Factories&& factories, Rec receiver)
                 : m_state(util::DeferConstruct([&] {
@@ -44,8 +45,8 @@ namespace let_value_with_ns {
         private:
             friend void tag_invoke(types::Tag<execution::start>, Type& self) { execution::start(self.m_op_state); }
 
-            State m_state;
-            meta::ConnectResult<Send, Rec> m_op_state;
+            DI_IMMOVABLE_NO_UNIQUE_ADDRESS State m_state;
+            DI_IMMOVABLE_NO_UNIQUE_ADDRESS meta::ConnectResult<Send, Rec> m_op_state;
         };
     };
 

@@ -22,8 +22,10 @@ namespace di::execution {
 namespace just_or_error_ns {
     template<typename R, typename Rec>
     struct OperationStateT {
-        struct Type {
+        struct Type : util::Immovable {
         public:
+            explicit Type(R&& value_, Rec receiver_) : value(util::move(value_)), receiver(util::move(receiver_)) {}
+
             [[no_unique_address]] R value;
             [[no_unique_address]] Rec receiver;
 

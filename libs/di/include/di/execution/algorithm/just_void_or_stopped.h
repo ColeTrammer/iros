@@ -10,8 +10,11 @@ namespace di::execution {
 namespace just_void_or_stopped_ns {
     template<typename Rec>
     struct OperationStateT {
-        struct Type {
+        struct Type : util::Immovable {
         public:
+            explicit Type(bool should_stop_, Rec receiver_)
+                : should_stop(should_stop_), receiver(util::move(receiver_)) {}
+
             bool should_stop;
             [[no_unique_address]] Rec receiver;
 

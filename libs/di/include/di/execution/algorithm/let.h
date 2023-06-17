@@ -16,6 +16,7 @@
 #include <di/meta/decay.h>
 #include <di/meta/remove_cvref.h>
 #include <di/util/defer_construct.h>
+#include <di/util/immovable.h>
 
 namespace di::execution {
 namespace let_ns {
@@ -109,7 +110,7 @@ namespace let_ns {
 
     template<typename CPO, typename Send, typename Rec, typename Fun>
     struct OperationStateT {
-        struct Type {
+        struct Type : util::Immovable {
         private:
             using Completions = meta::CompletionSignaturesOf<Send, MakeEnv<meta::EnvOf<Rec>>>;
 

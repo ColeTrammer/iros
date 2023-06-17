@@ -45,7 +45,7 @@ namespace repeat_effect_until_ns {
     using Receiver = meta::Type<ReceiverT<Send, Rec, Pred>>;
 
     template<typename Send, typename Rec, typename Pred>
-    struct OperationStateT<Send, Rec, Pred>::Type {
+    struct OperationStateT<Send, Rec, Pred>::Type : util::Immovable {
     private:
         friend Receiver<Send, Rec, Pred>;
 

@@ -76,7 +76,7 @@ namespace on_ns {
     using Receiver = meta::Type<ReceiverT<Send, Rec, Sched>>;
 
     template<typename Send, typename Rec, typename Sched>
-    struct OperationStateT<Send, Rec, Sched>::Type {
+    struct OperationStateT<Send, Rec, Sched>::Type : util::Immovable {
     public:
         [[no_unique_address]] Sched scheduler;
         [[no_unique_address]] Send sender;
