@@ -3,9 +3,12 @@
 #include <di/any/storage/unique_storage.h>
 #include <di/any/vtable/maybe_inline_vtable.h>
 #include <di/concepts/prelude.h>
+#include <di/container/algorithm/prelude.h>
 #include <di/container/allocator/allocation_result.h>
 #include <di/container/allocator/allocator.h>
 #include <di/container/allocator/fail_allocator.h>
+#include <di/container/view/prelude.h>
+#include <di/execution/algorithm/bulk.h>
 #include <di/execution/algorithm/ensure_started.h>
 #include <di/execution/algorithm/execute.h>
 #include <di/execution/algorithm/into_result.h>
@@ -14,11 +17,13 @@
 #include <di/execution/algorithm/just_from.h>
 #include <di/execution/algorithm/just_or_error.h>
 #include <di/execution/algorithm/just_void_or_stopped.h>
+#include <di/execution/algorithm/let_value_with.h>
 #include <di/execution/algorithm/on.h>
 #include <di/execution/algorithm/prelude.h>
 #include <di/execution/algorithm/start_detached.h>
 #include <di/execution/algorithm/sync_wait.h>
 #include <di/execution/algorithm/then.h>
+#include <di/execution/algorithm/transfer_just.h>
 #include <di/execution/algorithm/use_resources.h>
 #include <di/execution/algorithm/when_all.h>
 #include <di/execution/algorithm/with_env.h>
@@ -45,6 +50,7 @@
 #include <di/execution/types/prelude.h>
 #include <di/function/make_deferred.h>
 #include <di/platform/prelude.h>
+#include <di/sync/prelude.h>
 #include <di/types/integers.h>
 #include <di/util/prelude.h>
 #include <di/vocab/error/prelude.h>
@@ -631,6 +637,41 @@ static void ensure_started() {
     ASSERT_EQ(execution::sync_wait(spawn_work), 42);
 }
 
+static void bulk() {
+    //! [bulk]
+    namespace execution = di::execution;
+
+    // NOTE: this could be a thread-pool scheduler instead.
+    auto scheduler = execution::InlineScheduler {};
+
+    constexpr usize count = 1000;
+    constexpr usize tile_count = 10;
+
+    struct CachelinePadded {
+        alignas(128) usize value;
+    };
+
+    auto numbers = di::range(count) | di::to<di::Vector>();
+    auto partials = di::repeat(CachelinePadded(0)) | di::take(tile_count) | di::to<di::Vector>();
+    auto work = execution::transfer_just(scheduler, di::move(numbers), di::move(partials)) |
+                execution::bulk(tile_count,
+                                [](usize i, di::Vector<usize>& numbers, di::Vector<CachelinePadded>& partials) {
+                                    auto start = i * (numbers.size() / tile_count);
+                                    auto end = di::min((i + 1) * (numbers.size() / tile_count), numbers.size());
+                                    partials[i].value = di::sum(numbers | di::drop(start) | di::take(end - start));
+                                }) |
+                execution::then([](di::Vector<usize>, di::Vector<CachelinePadded> partials) {
+                    return di::sum(partials | di::transform(&CachelinePadded::value));
+                });
+    ASSERT_EQ(execution::sync_wait(di::move(work)), count * (count - 1) / 2);
+    //! [bulk]
+
+    auto error_sender = execution::just() | execution::bulk(10, [](auto) -> di::Result<void> {
+                            return di::Unexpected(di::BasicError::InvalidArgument);
+                        });
+    ASSERT_EQ(execution::sync_wait(error_sender), di::Unexpected(di::BasicError::InvalidArgument));
+}
+
 TEST(execution, meta)
 TEST(execution, sync_wait)
 TEST(execution, just)
@@ -649,4 +690,5 @@ TEST(execution, with_env)
 TEST(execution, counting_scope)
 TEST(execution, start_detached)
 TEST(execution, ensure_started)
+TEST(execution, bulk)
 }
