@@ -25,6 +25,7 @@
 #include <di/function/container/prelude.h>
 #include <di/meta/decay.h>
 #include <di/meta/list/as_list.h>
+#include <di/meta/list/push_front.h>
 #include <di/meta/list/type.h>
 #include <di/meta/remove_cvref.h>
 #include <di/platform/compiler.h>
@@ -34,10 +35,12 @@
 #include <di/sync/stop_token/in_place_stop_token.h>
 #include <di/types/in_place.h>
 #include <di/types/integers.h>
+#include <di/types/prelude.h>
 #include <di/util/addressof.h>
 #include <di/util/exchange.h>
 #include <di/util/immovable.h>
 #include <di/vocab/optional/optional_forward_declaration.h>
+#include <di/vocab/tuple/tuple.h>
 #include <dius/platform.h>
 
 namespace di::execution {
@@ -105,9 +108,11 @@ namespace ensure_started_ns {
             using DecayedArgs = meta::Transform<Completions, meta::Quote<meta::AsList>>;
             using Storage = meta::AsTemplate<
                 vocab::Variant,
-                meta::Unique<meta::Transform<
-                    meta::Zip<Tags, DecayedArgs>,
-                    meta::Compose<meta::Uncurry<meta::Quote<meta::DecayedTuple>>, meta::Quote<meta::Join>>>>>;
+                meta::PushFront<
+                    meta::Unique<meta::Transform<
+                        meta::Zip<Tags, DecayedArgs>,
+                        meta::Compose<meta::Uncurry<meta::Quote<meta::DecayedTuple>>, meta::Quote<meta::Join>>>>,
+                    vocab::Tuple<Void>>>;
 
             using Op = meta::ConnectResult<Send, SharedReceiver<Type>>;
 
@@ -175,6 +180,9 @@ namespace ensure_started_ns {
                 self.m_started = true;
 
                 auto completion_callback = [&self] {
+                    // Reset the stop callback.
+                    self.m_stop_callback.reset();
+
                     // Forward the completion to the receiver.
                     auto& state = *self.m_state;
                     vocab::visit(
@@ -265,6 +273,7 @@ namespace ensure_started_ns {
         private:
             template<concepts::ReceiverOf<CompletionSignatures> Rec>
             friend auto tag_invoke(Tag<connect>, Type&& self, Rec receiver) {
+                DI_ASSERT(self.m_state);
                 return OperationState<Send, Rec, meta::EnvOf<Send>, Alloc>(util::exchange(self.m_state, nullptr),
                                                                            util::move(receiver));
             }

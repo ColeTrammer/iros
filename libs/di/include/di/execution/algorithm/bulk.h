@@ -34,6 +34,7 @@
 #include <di/meta/remove_cvref.h>
 #include <di/platform/compiler.h>
 #include <di/util/addressof.h>
+#include <di/util/immovable.h>
 #include <di/util/move.h>
 
 namespace di::execution {
@@ -90,7 +91,7 @@ namespace bulk_ns {
 
     template<typename Send, typename Shape, typename Function, typename Rec>
     struct OperationStateT {
-        struct Type {
+        struct Type : util::Immovable {
         public:
             using Rc = Receiver<Shape, Function, Rec>;
             using Op = meta::ConnectResult<Send, Rc>;
