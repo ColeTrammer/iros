@@ -9,6 +9,7 @@
 Operating System focused on asynchronicity, minimalism, and performance.
 
 - @subpage md_docs_2build - Project build instructions
+- @subpage md_docs_2coding_2style - Project coding style
 - @subpage md_docs_2di_2table\_\_of\_\_contents - Di library documentation
 - @subpage md_docs_2dius_2table\_\_of\_\_contents - Dius library documentation
 - @subpage md_docs_2iris_2table\_\_of\_\_contents - Iris kernel documentation
