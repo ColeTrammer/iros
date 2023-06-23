@@ -2,8 +2,8 @@
 
 #include <di/concepts/integer.h>
 #include <di/format/prelude.h>
-#include <di/meta/list/prelude.h>
-#include <di/meta/type_constant.h>
+#include <di/meta/algorithm.h>
+#include <di/meta/core.h>
 
 namespace di::util {
 namespace detail {

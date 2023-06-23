@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/meta/list/prelude.h>
+#include <di/meta/algorithm.h>
 #include <di/vocab/variant/variant_like.h>
 #include <di/vocab/variant/variant_types.h>
 

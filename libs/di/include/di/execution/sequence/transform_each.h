@@ -15,8 +15,8 @@
 #include <di/function/curry_back.h>
 #include <di/function/invoke.h>
 #include <di/function/tag_invoke.h>
+#include <di/meta/core.h>
 #include <di/meta/decay.h>
-#include <di/meta/list/type.h>
 #include <di/meta/remove_cvref.h>
 #include <di/platform/compiler.h>
 #include <di/util/addressof.h>

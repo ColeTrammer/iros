@@ -2,8 +2,8 @@
 
 #include <di/function/index_dispatch.h>
 #include <di/function/invoke.h>
+#include <di/meta/algorithm.h>
 #include <di/meta/constexpr.h>
-#include <di/meta/list/prelude.h>
 #include <di/meta/make_index_sequence.h>
 #include <di/platform/compiler.h>
 #include <di/vocab/array/array.h>

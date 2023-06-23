@@ -1,8 +1,8 @@
 #pragma once
 
 #include <di/concepts/enum.h>
-#include <di/concepts/same_as.h>
 #include <di/container/string/fixed_string.h>
+#include <di/meta/core.h>
 #include <di/vocab/tuple/tuple.h>
 
 namespace di::reflection {

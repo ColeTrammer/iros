@@ -1,7 +1,6 @@
 #pragma once
 
-#include <di/meta/list/list_v.h>
-#include <di/meta/type_constant.h>
+#include <di/meta/core.h>
 #include <di/types/prelude.h>
 
 namespace di::meta {

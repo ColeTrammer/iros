@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/concepts/language_function.h>
-#include <di/meta/type_constant.h>
+#include <di/meta/core.h>
 
 namespace di::meta {
 namespace detail {

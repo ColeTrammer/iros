@@ -2,7 +2,6 @@
 
 #include <di/concepts/decays_to.h>
 #include <di/concepts/movable_value.h>
-#include <di/concepts/same_as.h>
 #include <di/execution/concepts/prelude.h>
 #include <di/execution/concepts/receiver.h>
 #include <di/execution/interface/connect.h>
@@ -13,7 +12,9 @@
 #include <di/execution/receiver/prelude.h>
 #include <di/execution/types/prelude.h>
 #include <di/function/tag_invoke.h>
+#include <di/meta/core.h>
 #include <di/meta/decay.h>
+#include <di/meta/is_function_to.h>
 #include <di/meta/remove_cvref.h>
 #include <di/util/defer_construct.h>
 #include <di/util/immovable.h>

@@ -3,7 +3,7 @@
 #include <di/any/concepts/method.h>
 #include <di/any/meta/method_signature.h>
 #include <di/any/types/prelude.h>
-#include <di/meta/list/prelude.h>
+#include <di/meta/algorithm.h>
 #include <di/meta/remove_cvref.h>
 
 namespace di::concepts {

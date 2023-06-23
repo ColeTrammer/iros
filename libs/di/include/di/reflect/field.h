@@ -1,9 +1,8 @@
 #pragma once
 
-#include <di/concepts/instance_of.h>
-#include <di/concepts/same_as.h>
 #include <di/container/string/fixed_string.h>
 #include <di/function/invoke.h>
+#include <di/meta/core.h>
 #include <di/meta/member_pointer_class.h>
 #include <di/meta/member_pointer_value.h>
 #include <di/vocab/tuple/tuple.h>

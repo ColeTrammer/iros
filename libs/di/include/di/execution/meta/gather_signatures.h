@@ -1,14 +1,12 @@
 #pragma once
 
 #include <di/concepts/always_true.h>
-#include <di/concepts/same_as.h>
 #include <di/execution/concepts/completion_signature.h>
 #include <di/execution/concepts/sender_in.h>
 #include <di/execution/meta/completion_signatures_of.h>
+#include <di/meta/algorithm.h>
+#include <di/meta/core.h>
 #include <di/meta/language_function_return.h>
-#include <di/meta/list/as_list.h>
-#include <di/meta/list/type.h>
-#include <di/meta/type_constant.h>
 
 namespace di::meta {
 namespace detail {

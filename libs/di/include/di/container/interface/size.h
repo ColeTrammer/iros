@@ -2,7 +2,6 @@
 
 #include <di/concepts/bounded_language_array.h>
 #include <di/concepts/implicitly_convertible_to.h>
-#include <di/concepts/same_as.h>
 #include <di/container/concepts/forward_iterator.h>
 #include <di/container/concepts/sized_sentinel_for.h>
 #include <di/container/interface/begin.h>
@@ -11,6 +10,7 @@
 #include <di/container/meta/container_sentinel.h>
 #include <di/container/meta/iterator_size_type.h>
 #include <di/function/tag_invoke.h>
+#include <di/meta/core.h>
 #include <di/meta/extent.h>
 #include <di/meta/remove_reference.h>
 #include <di/types/size_t.h>

@@ -1,8 +1,8 @@
 #pragma once
 
 #include <di/concepts/convertible_to.h>
-#include <di/concepts/same_as.h>
 #include <di/meta/common_reference.h>
+#include <di/meta/core.h>
 
 namespace di::concepts {
 template<typename T, typename U>

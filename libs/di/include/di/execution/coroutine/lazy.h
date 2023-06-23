@@ -4,7 +4,6 @@
 #include <di/concepts/constructible_from.h>
 #include <di/concepts/convertible_to.h>
 #include <di/concepts/language_void.h>
-#include <di/concepts/same_as.h>
 #include <di/concepts/unexpected.h>
 #include <di/execution/algorithm/just.h>
 #include <di/execution/algorithm/just_or_error.h>
@@ -12,7 +11,7 @@
 #include <di/execution/coroutine/with_await_transform.h>
 #include <di/execution/coroutine/with_awaitable_senders.h>
 #include <di/execution/types/prelude.h>
-#include <di/meta/conditional.h>
+#include <di/meta/core.h>
 #include <di/platform/prelude.h>
 #include <di/types/void.h>
 #include <di/util/coroutine.h>

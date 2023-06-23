@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/meta/type_constant.h>
+#include <di/meta/core.h>
 #include <di/vocab/variant/variant_forward_declaration.h>
 
 namespace di::meta {

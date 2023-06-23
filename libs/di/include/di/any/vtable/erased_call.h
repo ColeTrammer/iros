@@ -8,8 +8,8 @@
 #include <di/concepts/language_void.h>
 #include <di/concepts/remove_cvref_same_as.h>
 #include <di/function/invoke.h>
+#include <di/meta/algorithm.h>
 #include <di/meta/language_function_return.h>
-#include <di/meta/list/prelude.h>
 #include <di/meta/maybe_const.h>
 #include <di/util/forward_like.h>
 

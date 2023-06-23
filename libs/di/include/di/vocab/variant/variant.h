@@ -2,8 +2,6 @@
 
 #include <di/concepts/default_constructible.h>
 #include <di/concepts/derived_from.h>
-#include <di/concepts/instance_of.h>
-#include <di/concepts/instance_of_v.h>
 #include <di/concepts/trivially_copy_assignable.h>
 #include <di/concepts/trivially_copy_constructible.h>
 #include <di/concepts/trivially_destructible.h>
@@ -12,8 +10,9 @@
 #include <di/function/index_dispatch.h>
 #include <di/math/smallest_unsigned_type.h>
 #include <di/meta/add_member_get.h>
+#include <di/meta/algorithm.h>
 #include <di/meta/constexpr.h>
-#include <di/meta/list/prelude.h>
+#include <di/meta/core.h>
 #include <di/meta/remove_cvref.h>
 #include <di/util/forward.h>
 #include <di/util/get.h>

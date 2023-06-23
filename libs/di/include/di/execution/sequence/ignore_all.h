@@ -1,7 +1,6 @@
 #pragma once
 
 #include <di/concepts/remove_cvref_same_as.h>
-#include <di/concepts/same_as.h>
 #include <di/execution/concepts/receiver.h>
 #include <di/execution/concepts/receiver_of.h>
 #include <di/execution/concepts/sender.h>
@@ -25,12 +24,10 @@
 #include <di/execution/types/completion_signuatures.h>
 #include <di/function/pipeable.h>
 #include <di/function/tag_invoke.h>
-#include <di/meta/conditional.h>
+#include <di/meta/algorithm.h>
+#include <di/meta/core.h>
 #include <di/meta/decay.h>
 #include <di/meta/like.h>
-#include <di/meta/list/id.h>
-#include <di/meta/list/list.h>
-#include <di/meta/list/type.h>
 #include <di/meta/remove_cvref.h>
 #include <di/platform/compiler.h>
 #include <di/sync/atomic.h>
@@ -192,8 +189,8 @@ namespace ignore_all_ns {
     template<typename Next, typename Env>
     using NextSignatures =
         meta::MakeCompletionSignatures<Next, Env, types::CompletionSignatures<SetValue()>,
-                                       meta::Id<types::CompletionSignatures<>>::template Invoke,
-                                       meta::Id<types::CompletionSignatures<SetStopped()>>::template Invoke>;
+                                       meta::TypeConstant<types::CompletionSignatures<>>::template Invoke,
+                                       meta::TypeConstant<types::CompletionSignatures<SetStopped()>>::template Invoke>;
 
     template<typename Seq, typename Rec, typename Next>
     struct NextSenderT {
@@ -278,7 +275,8 @@ namespace ignore_all_ns {
     template<typename Seq, typename Env>
     using Completions =
         meta::MakeCompletionSignatures<Seq, Env, types::CompletionSignatures<SetValue()>,
-                                       meta::Id<types::CompletionSignatures<>>::template Invoke, ErrorsWithStopped>;
+                                       meta::TypeConstant<types::CompletionSignatures<>>::template Invoke,
+                                       ErrorsWithStopped>;
 
     template<typename Seq>
     struct SenderT {

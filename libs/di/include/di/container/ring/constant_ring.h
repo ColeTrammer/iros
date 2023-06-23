@@ -2,7 +2,7 @@
 
 #include <di/concepts/const.h>
 #include <di/container/vector/constant_vector.h>
-#include <di/meta/conditional.h>
+#include <di/meta/core.h>
 #include <di/types/prelude.h>
 
 namespace di::concepts::detail {

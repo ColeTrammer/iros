@@ -29,8 +29,8 @@
 #include <di/execution/types/empty_env.h>
 #include <di/function/container/function.h>
 #include <di/function/tag_invoke.h>
+#include <di/meta/core.h>
 #include <di/meta/like.h>
-#include <di/meta/list/type.h>
 #include <di/meta/remove_cvref.h>
 #include <di/platform/compiler.h>
 #include <di/sync/atomic.h>

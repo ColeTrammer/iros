@@ -4,9 +4,9 @@
 #include <di/concepts/language_void.h>
 #include <di/concepts/maybe_fallible.h>
 #include <di/concepts/move_constructible.h>
-#include <di/concepts/same_as.h>
 #include <di/container/concepts/contiguous_container.h>
 #include <di/container/vector/constant_vector.h>
+#include <di/meta/core.h>
 #include <di/types/prelude.h>
 
 namespace di::concepts::detail {

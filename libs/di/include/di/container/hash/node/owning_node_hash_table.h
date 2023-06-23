@@ -12,7 +12,7 @@
 #include <di/container/hash/node/node_hash_table.h>
 #include <di/container/intrusive/intrusive_tag_base.h>
 #include <di/container/vector/mutable_vector.h>
-#include <di/meta/conditional.h>
+#include <di/meta/core.h>
 #include <di/meta/like_expected.h>
 #include <di/vocab/expected/prelude.h>
 

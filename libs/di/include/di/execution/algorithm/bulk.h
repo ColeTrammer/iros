@@ -22,15 +22,10 @@
 #include <di/function/curry_back.h>
 #include <di/function/invoke.h>
 #include <di/function/tag_invoke.h>
+#include <di/meta/algorithm.h>
+#include <di/meta/core.h>
 #include <di/meta/decay.h>
 #include <di/meta/expected_error.h>
-#include <di/meta/list/apply.h>
-#include <di/meta/list/bind_front.h>
-#include <di/meta/list/compose.h>
-#include <di/meta/list/filter.h>
-#include <di/meta/list/not.h>
-#include <di/meta/list/same_as.h>
-#include <di/meta/list/type.h>
 #include <di/meta/remove_cvref.h>
 #include <di/platform/compiler.h>
 #include <di/util/addressof.h>

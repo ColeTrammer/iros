@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/concepts/same_as.h>
 #include <di/container/concepts/sentinel_for.h>
 #include <di/container/meta/iterator_ssize_type.h>
+#include <di/meta/core.h>
 
 namespace di::concepts {
 template<typename Sent, typename Iter>

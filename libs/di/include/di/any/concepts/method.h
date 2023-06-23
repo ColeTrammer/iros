@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/any/types/prelude.h>
-#include <di/concepts/instance_of.h>
+#include <di/meta/core.h>
 
 namespace di::concepts {
 template<typename T>

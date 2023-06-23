@@ -10,8 +10,8 @@
 #include <di/container/allocator/deallocate_one.h>
 #include <di/container/allocator/fallible_allocator.h>
 #include <di/container/allocator/infallible_allocator.h>
+#include <di/meta/algorithm.h>
 #include <di/meta/like_expected.h>
-#include <di/meta/list/prelude.h>
 #include <di/platform/prelude.h>
 #include <di/types/prelude.h>
 #include <di/util/addressof.h>

@@ -3,8 +3,8 @@
 #include <di/concepts/decay_same_as.h>
 #include <di/concepts/default_constructible.h>
 #include <di/meta/constexpr.h>
+#include <di/meta/core.h>
 #include <di/meta/like.h>
-#include <di/meta/type_constant.h>
 #include <di/platform/compiler.h>
 #include <di/util/declval.h>
 #include <di/util/forward_as_base.h>

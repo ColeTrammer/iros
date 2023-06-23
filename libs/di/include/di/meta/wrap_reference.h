@@ -1,8 +1,8 @@
 #pragma once
 
 #include <di/concepts/lvalue_reference.h>
+#include <di/meta/core.h>
 #include <di/meta/remove_reference.h>
-#include <di/meta/type_constant.h>
 #include <di/util/reference_wrapper.h>
 
 namespace di::meta {

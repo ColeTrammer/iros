@@ -6,7 +6,6 @@
 #include <di/concepts/movable_value.h>
 #include <di/concepts/one_of.h>
 #include <di/concepts/remove_cvref_same_as.h>
-#include <di/concepts/same_as.h>
 #include <di/execution/concepts/receiver_of.h>
 #include <di/execution/concepts/sender.h>
 #include <di/execution/interface/connect.h>
@@ -25,24 +24,14 @@
 #include <di/function/curry_back.h>
 #include <di/function/invoke.h>
 #include <di/function/tag_invoke.h>
+#include <di/meta/algorithm.h>
+#include <di/meta/core.h>
 #include <di/meta/decay.h>
 #include <di/meta/expected_error.h>
 #include <di/meta/expected_value.h>
+#include <di/meta/is_function_to.h>
 #include <di/meta/like.h>
-#include <di/meta/list/as_list.h>
-#include <di/meta/list/as_template.h>
-#include <di/meta/list/concat.h>
-#include <di/meta/list/filter.h>
-#include <di/meta/list/is_function_to.h>
-#include <di/meta/list/join.h>
-#include <di/meta/list/not.h>
-#include <di/meta/list/push_back.h>
-#include <di/meta/list/quote.h>
-#include <di/meta/list/transform.h>
-#include <di/meta/list/type.h>
-#include <di/meta/list/unique.h>
 #include <di/meta/remove_cvref.h>
-#include <di/meta/type_constant.h>
 #include <di/platform/compiler.h>
 #include <di/util/addressof.h>
 

@@ -1,8 +1,8 @@
 #pragma once
 
 #include <di/concepts/member_pointer.h>
+#include <di/meta/core.h>
 #include <di/meta/remove_cv.h>
-#include <di/meta/type_constant.h>
 
 namespace di::meta {
 namespace detail {

@@ -2,21 +2,15 @@
 
 #include <di/concepts/copy_constructible.h>
 #include <di/concepts/derived_from.h>
-#include <di/concepts/instance_of.h>
 #include <di/concepts/remove_cvref_same_as.h>
 #include <di/execution/concepts/forwarding_query.h>
 #include <di/execution/interface/get_env.h>
 #include <di/function/invoke.h>
 #include <di/function/tag_invoke.h>
+#include <di/meta/algorithm.h>
+#include <di/meta/core.h>
 #include <di/meta/decay.h>
-#include <di/meta/list/compose.h>
-#include <di/meta/list/concepts/type_list.h>
-#include <di/meta/list/filter.h>
-#include <di/meta/list/list.h>
-#include <di/meta/list/quote.h>
-#include <di/meta/list/same_as.h>
-#include <di/meta/list/type.h>
-#include <di/meta/list/unique.h>
+#include <di/meta/function.h>
 #include <di/util/declval.h>
 #include <di/util/forward.h>
 #include <di/util/get.h>

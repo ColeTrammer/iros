@@ -6,7 +6,7 @@
 #include <di/concepts/partially_ordered_with.h>
 #include <di/concepts/weakly_equality_comparable_with.h>
 #include <di/concepts/weakly_three_way_comparable_with.h>
-#include <di/meta/list/type.h>
+#include <di/meta/core.h>
 
 namespace di::concepts {
 template<typename T, typename Category = types::partial_ordering>

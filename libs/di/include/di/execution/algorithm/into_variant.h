@@ -16,7 +16,7 @@ namespace into_variant_ns {
     using IntoVariantType = meta::ValueTypesOf<Send, Env>;
 
     template<typename Send, typename Env>
-    struct IntoVariantSetValue : meta::Id<CompletionSignatures<SetValue(IntoVariantType<Send, Env>)>> {};
+    struct IntoVariantSetValue : meta::TypeConstant<CompletionSignatures<SetValue(IntoVariantType<Send, Env>)>> {};
 
     template<typename Value, typename Rec>
     struct ReceiverT {

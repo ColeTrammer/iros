@@ -1,11 +1,11 @@
 #pragma once
 
 #include <di/concepts/integral_or_enum.h>
-#include <di/concepts/same_as.h>
 #include <di/container/hash/default_hasher.h>
 #include <di/container/hash/hash_write.h>
 #include <di/function/tag_invoke.h>
 #include <di/function/unpack.h>
+#include <di/meta/core.h>
 #include <di/meta/make_index_sequence.h>
 #include <di/meta/remove_cvref.h>
 #include <di/types/prelude.h>

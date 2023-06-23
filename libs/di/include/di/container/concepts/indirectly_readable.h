@@ -1,11 +1,11 @@
 #pragma once
 
 #include <di/concepts/common_reference_with.h>
-#include <di/concepts/same_as.h>
 #include <di/container/iterator/iterator_move.h>
 #include <di/container/meta/iterator_reference.h>
 #include <di/container/meta/iterator_rvalue.h>
 #include <di/container/meta/iterator_value.h>
+#include <di/meta/core.h>
 #include <di/meta/remove_cvref.h>
 
 namespace di::concepts {

@@ -8,7 +8,6 @@
 #include <di/concepts/language_void.h>
 #include <di/concepts/lvalue_reference.h>
 #include <di/concepts/one_of.h>
-#include <di/concepts/same_as.h>
 #include <di/concepts/scalar.h>
 #include <di/concepts/three_way_comparable_with.h>
 #include <di/concepts/trivially_copy_assignable.h>
@@ -21,6 +20,7 @@
 #include <di/function/invoke.h>
 #include <di/function/monad/monad_interface.h>
 #include <di/meta/compare_three_way_result.h>
+#include <di/meta/core.h>
 #include <di/meta/decay.h>
 #include <di/meta/optional_rank.h>
 #include <di/meta/remove_cvref.h>

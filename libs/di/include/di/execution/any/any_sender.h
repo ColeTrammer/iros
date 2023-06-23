@@ -30,14 +30,9 @@
 #include <di/execution/receiver/set_value.h>
 #include <di/execution/types/completion_signuatures.h>
 #include <di/function/tag_invoke.h>
-#include <di/meta/conditional.h>
+#include <di/meta/algorithm.h>
+#include <di/meta/core.h>
 #include <di/meta/language_function_return.h>
-#include <di/meta/list/as_language_function.h>
-#include <di/meta/list/as_list.h>
-#include <di/meta/list/as_template.h>
-#include <di/meta/list/list.h>
-#include <di/meta/list/push_front.h>
-#include <di/meta/list/type.h>
 #include <di/meta/remove_cvref.h>
 #include <di/meta/type_identity.h>
 #include <di/types/in_place_type.h>

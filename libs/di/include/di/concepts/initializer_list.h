@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/concepts/instance_of.h>
+#include <di/meta/core.h>
 #include <di/meta/remove_cvref.h>
 #include <di/util/initializer_list.h>
 

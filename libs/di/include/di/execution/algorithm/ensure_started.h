@@ -23,10 +23,9 @@
 #include <di/execution/receiver/set_value.h>
 #include <di/execution/types/empty_env.h>
 #include <di/function/container/prelude.h>
+#include <di/meta/algorithm.h>
+#include <di/meta/core.h>
 #include <di/meta/decay.h>
-#include <di/meta/list/as_list.h>
-#include <di/meta/list/push_front.h>
-#include <di/meta/list/type.h>
 #include <di/meta/remove_cvref.h>
 #include <di/platform/compiler.h>
 #include <di/sync/atomic.h>

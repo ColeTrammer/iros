@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/meta/conditional.h>
+#include <di/meta/core.h>
 
 namespace di::meta {
 template<bool is_const, typename T>

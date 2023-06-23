@@ -5,7 +5,7 @@
 #include <di/concepts/convertible_to.h>
 #include <di/concepts/object.h>
 #include <di/concepts/reference.h>
-#include <di/meta/list/prelude.h>
+#include <di/meta/algorithm.h>
 #include <di/types/prelude.h>
 #include <di/util/addressof.h>
 

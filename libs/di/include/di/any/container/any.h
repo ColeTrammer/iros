@@ -7,8 +7,8 @@
 #include <di/any/vtable/prelude.h>
 #include <di/concepts/derived_from.h>
 #include <di/function/monad/monad_try.h>
+#include <di/meta/core.h>
 #include <di/meta/like_expected.h>
-#include <di/meta/list/type.h>
 #include <di/meta/remove_cvref.h>
 #include <di/util/addressof.h>
 #include <di/util/forward.h>

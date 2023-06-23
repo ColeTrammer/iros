@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/function/tag_invoke.h>
-#include <di/meta/list/prelude.h>
+#include <di/meta/algorithm.h>
 #include <di/meta/remove_cvref.h>
 #include <di/meta/remove_reference.h>
 #include <di/types/prelude.h>

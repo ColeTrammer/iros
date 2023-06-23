@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/concepts/same_as.h>
+#include <di/meta/core.h>
 #include <di/parser/basic/match_one_or_more.h>
 #include <di/parser/make_error.h>
 #include <di/parser/prelude.h>

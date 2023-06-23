@@ -1,11 +1,8 @@
 #pragma once
 
-#include <di/concepts/same_as.h>
-#include <di/meta/constexpr.h>
-#include <di/meta/list/concepts/type_list.h>
-#include <di/meta/list/list_forward_declation.h>
-#include <di/meta/type_constant.h>
-#include <di/types/prelude.h>
+#include <di/meta/core.h>
+#include <di/meta/function.h>
+#include <di/types/integers.h>
 
 namespace di::meta {
 namespace detail {
@@ -43,19 +40,19 @@ template<typename Head, typename... Rest>
 struct List<Head, Rest...> {
     using Front = Head;
 
-    using Back = detail::BackHelper<Rest...>::Type;
+    using Back = Type<detail::BackHelper<Rest...>>;
 
-    constexpr static size_t size = sizeof...(Rest) + 1;
+    constexpr static usize size = sizeof...(Rest) + 1;
 
-    template<size_t index>
-    using At = detail::AtHelper<index, Head, Rest...>::Type;
+    template<usize index>
+    using At = Type<detail::AtHelper<index, Head, Rest...>>;
 
     template<typename T>
     constexpr static auto Lookup = detail::LookupHelper<T, Head, Rest...>::value;
 
     template<typename T>
     constexpr static bool UniqueType =
-        (static_cast<size_t>(concepts::SameAs<T, Head>) + ... + static_cast<size_t>(concepts::SameAs<T, Rest>)) == 1zu;
+        (static_cast<usize>(concepts::SameAs<T, Head>) + ... + static_cast<usize>(concepts::SameAs<T, Rest>)) == 1zu;
 };
 
 template<typename T>
@@ -63,9 +60,9 @@ struct List<T> {
     using Front = T;
     using Back = T;
 
-    constexpr static size_t size = 1;
+    constexpr static usize size = 1;
 
-    template<size_t index>
+    template<usize index>
     using At = detail::AtHelper<index, T>::Type;
 
     template<typename U>
@@ -77,25 +74,25 @@ struct List<T> {
 
 template<>
 struct List<> {
-    constexpr static size_t size = 0;
+    constexpr static usize size = 0;
 
     template<typename U>
     constexpr static bool UniqueType = false;
 
-    template<size_t index>
-    requires(index != index)
+    template<usize index>
+    requires(false)
     using At = void;
 
-    template<size_t index>
-    requires(index != index)
+    template<usize index>
+    requires(false)
     using Front = void;
 
-    template<size_t index>
-    requires(index != index)
+    template<usize index>
+    requires(false)
     using Back = void;
 
     template<typename U>
-    constexpr static size_t Lookup = 0;
+    constexpr static usize Lookup = 0;
 };
 
 template<concepts::TypeList T>
@@ -105,9 +102,9 @@ template<concepts::TypeList T>
 using Back = T::Back;
 
 template<concepts::TypeList T>
-constexpr inline size_t Size = T::size;
+constexpr inline usize Size = T::size;
 
-template<concepts::TypeList T, size_t index>
+template<concepts::TypeList T, usize index>
 requires(index < Size<T>)
 using At = typename T::template At<index>;
 
@@ -119,4 +116,23 @@ concept UniqueType = concepts::TypeList<List> && List::template UniqueType<T>;
 
 template<typename List, typename T>
 concept Contains = concepts::TypeList<List> && (Lookup<T, List> < Size<List>);
+
+namespace detail {
+    template<typename T, typename List>
+    struct CountHelper;
+
+    template<typename T>
+    struct CountHelper<T, List<>> : meta::Constexpr<0zu> {};
+
+    template<typename T, typename U, typename... Rest>
+    struct CountHelper<T, List<U, Rest...>> {
+        constexpr static auto value = (concepts::SameAs<T, U> ? 1 : 0) + CountHelper<T, List<Rest...>>::value;
+    };
+}
+
+template<concepts::TypeList List, typename T>
+constexpr static auto Count = detail::CountHelper<T, List>::value;
+
+template<typename List, typename T>
+concept ExactlyOnce = concepts::TypeList<List> && Count<List, T> == 1;
 }

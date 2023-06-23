@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/concepts/same_as.h>
+#include <di/meta/core.h>
 #include <di/meta/remove_cv.h>
 #include <di/types/nullptr_t.h>
 

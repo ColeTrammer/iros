@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/meta/type_constant.h>
+#include <di/meta/core.h>
 #include <di/types/size_t.h>
 
 namespace di::meta {

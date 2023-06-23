@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/concepts/language_void.h>
-#include <di/concepts/same_as.h>
+#include <di/meta/core.h>
 
 namespace di::concepts {
 template<typename T>

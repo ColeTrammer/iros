@@ -3,7 +3,6 @@
 #include <di/concepts/integer.h>
 #include <di/concepts/movable.h>
 #include <di/concepts/object.h>
-#include <di/concepts/same_as.h>
 #include <di/concepts/semiregular.h>
 #include <di/container/iterator/iterator_base.h>
 #include <di/container/iterator/iterator_category.h>
@@ -13,7 +12,7 @@
 #include <di/container/types/random_access_iterator_tag.h>
 #include <di/container/view/view_interface.h>
 #include <di/math/to_unsigned.h>
-#include <di/meta/conditional.h>
+#include <di/meta/core.h>
 #include <di/meta/make_signed.h>
 #include <di/meta/remove_cv.h>
 #include <di/types/ssize_t.h>

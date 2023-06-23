@@ -1,7 +1,6 @@
 #pragma once
 
 #include <di/concepts/class.h>
-#include <di/concepts/same_as.h>
 #include <di/container/concepts/bidirectional_container.h>
 #include <di/container/concepts/common_container.h>
 #include <di/container/concepts/contiguous_iterator.h>
@@ -18,6 +17,7 @@
 #include <di/container/meta/container_reference.h>
 #include <di/container/meta/container_ssize_type.h>
 #include <di/container/meta/enable_view.h>
+#include <di/meta/core.h>
 #include <di/meta/remove_cv.h>
 #include <di/vocab/optional/prelude.h>
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/concepts/language_function.h>
-#include <di/concepts/same_as.h>
+#include <di/meta/core.h>
 #include <di/meta/language_function_return.h>
 
 namespace di::meta {

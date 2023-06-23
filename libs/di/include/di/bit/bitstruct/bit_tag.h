@@ -2,7 +2,7 @@
 
 #include <di/bit/bitset/prelude.h>
 #include <di/concepts/constructible_from.h>
-#include <di/concepts/same_as.h>
+#include <di/meta/core.h>
 #include <di/types/prelude.h>
 #include <di/util/declval.h>
 

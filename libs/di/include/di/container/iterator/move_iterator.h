@@ -4,7 +4,6 @@
 #include <di/concepts/convertible_to.h>
 #include <di/concepts/default_constructible.h>
 #include <di/concepts/equality_comparable_with.h>
-#include <di/concepts/same_as.h>
 #include <di/concepts/three_way_comparable_with.h>
 #include <di/container/concepts/indirectly_swappable.h>
 #include <di/container/concepts/prelude.h>
@@ -13,6 +12,7 @@
 #include <di/container/meta/iterator_rvalue.h>
 #include <di/container/meta/iterator_ssize_type.h>
 #include <di/container/types/prelude.h>
+#include <di/meta/core.h>
 #include <di/util/move.h>
 
 namespace di::container {

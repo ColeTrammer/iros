@@ -9,8 +9,7 @@
 #include <di/execution/sequence/sequence_sender.h>
 #include <di/function/tag_invoke.h>
 #include <di/meta/add_pointer.h>
-#include <di/meta/conditional.h>
-#include <di/meta/list/type.h>
+#include <di/meta/core.h>
 #include <di/meta/remove_cvref.h>
 #include <di/util/coroutine.h>
 #include <di/util/exchange.h>

@@ -2,8 +2,8 @@
 
 #include <di/concepts/boolean_testable.h>
 #include <di/concepts/language_void.h>
-#include <di/concepts/same_as.h>
 #include <di/execution/concepts/await_suspend_result.h>
+#include <di/meta/core.h>
 
 namespace di::concepts {
 namespace detail {

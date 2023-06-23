@@ -3,7 +3,7 @@
 #include <di/concepts/arithmetic.h>
 #include <di/concepts/enum.h>
 #include <di/concepts/pointer.h>
-#include <di/meta/conditional.h>
+#include <di/meta/core.h>
 #include <di/sync/memory_order.h>
 #include <di/types/prelude.h>
 #include <di/util/addressof.h>

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/concepts/instance_of.h>
 #include <di/concepts/one_of.h>
+#include <di/meta/core.h>
 #include <di/util/coroutine.h>
 
 namespace di::concepts {

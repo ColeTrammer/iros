@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/concepts/language_void.h>
-#include <di/meta/type_constant.h>
+#include <di/meta/core.h>
 #include <di/vocab/expected/expected_forward_declaration.h>
 
 namespace di::meta {

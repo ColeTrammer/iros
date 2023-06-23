@@ -2,8 +2,8 @@
 
 #include <di/concepts/enum.h>
 #include <di/concepts/signed_integral.h>
+#include <di/meta/core.h>
 #include <di/meta/remove_cv.h>
-#include <di/meta/type_constant.h>
 #include <di/meta/underlying_type.h>
 #include <di/types/integers.h>
 

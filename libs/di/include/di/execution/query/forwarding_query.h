@@ -1,8 +1,8 @@
 #pragma once
 
 #include <di/concepts/derived_from.h>
-#include <di/concepts/same_as.h>
 #include <di/function/tag_invoke.h>
+#include <di/meta/core.h>
 
 namespace di::execution {
 struct ForwardingQuery {

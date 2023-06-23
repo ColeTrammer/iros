@@ -11,8 +11,7 @@
 #include <di/execution/sequence/sequence_sender.h>
 #include <di/function/curry.h>
 #include <di/function/pipeline.h>
-#include <di/meta/list/type.h>
-#include <di/meta/type_constant.h>
+#include <di/meta/core.h>
 
 namespace di::execution {
 namespace sync_wait_ns {

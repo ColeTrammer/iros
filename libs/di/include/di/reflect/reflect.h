@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/concepts/instance_of.h>
 #include <di/function/tag_invoke.h>
-#include <di/meta/list/as_list.h>
+#include <di/meta/algorithm.h>
+#include <di/meta/core.h>
 #include <di/meta/remove_cvref.h>
 #include <di/reflect/atom.h>
 #include <di/reflect/enumerator.h>

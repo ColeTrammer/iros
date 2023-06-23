@@ -13,7 +13,7 @@
 #include <di/container/vector/mutable_vector.h>
 #include <di/function/monad/monad_try.h>
 #include <di/function/not_fn.h>
-#include <di/meta/list/as_list.h>
+#include <di/meta/algorithm.h>
 #include <di/util/declval.h>
 #include <di/util/get.h>
 #include <di/vocab/expected/prelude.h>

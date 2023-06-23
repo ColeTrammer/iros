@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/concepts/same_as.h>
+#include <di/meta/core.h>
 #include <di/meta/decay.h>
 
 namespace di::concepts {

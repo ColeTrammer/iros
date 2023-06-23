@@ -5,7 +5,7 @@
 #include <di/container/iterator/dangling.h>
 #include <di/container/meta/container_iterator.h>
 #include <di/container/view/view.h>
-#include <di/meta/conditional.h>
+#include <di/meta/core.h>
 
 namespace di::meta {
 template<concepts::Container Con>

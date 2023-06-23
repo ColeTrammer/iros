@@ -17,7 +17,7 @@
 #include <di/execution/types/completion_signuatures.h>
 #include <di/execution/types/empty_env.h>
 #include <di/function/curry_back.h>
-#include <di/meta/list/push_front.h>
+#include <di/meta/algorithm.h>
 #include <di/platform/compiler.h>
 #include <di/sync/atomic.h>
 #include <di/sync/memory_order.h>

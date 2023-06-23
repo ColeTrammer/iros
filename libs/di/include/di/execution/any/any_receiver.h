@@ -14,14 +14,9 @@
 #include <di/execution/concepts/receiver_of.h>
 #include <di/execution/concepts/valid_completion_signatures.h>
 #include <di/execution/receiver/set_error.h>
+#include <di/meta/algorithm.h>
+#include <di/meta/core.h>
 #include <di/meta/language_function_return.h>
-#include <di/meta/list/as_language_function.h>
-#include <di/meta/list/as_list.h>
-#include <di/meta/list/push_front.h>
-#include <di/meta/list/quote.h>
-#include <di/meta/list/transform.h>
-#include <di/meta/list/type.h>
-#include <di/meta/list/unique.h>
 #include <di/meta/remove_cvref.h>
 #include <di/vocab/error/error.h>
 

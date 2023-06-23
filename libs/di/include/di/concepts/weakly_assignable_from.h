@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/concepts/lvalue_reference.h>
-#include <di/concepts/same_as.h>
+#include <di/meta/core.h>
 #include <di/util/forward.h>
 
 namespace di::concepts {

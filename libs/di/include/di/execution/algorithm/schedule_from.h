@@ -175,7 +175,7 @@ namespace schedule_from_ns {
                 -> meta::MakeCompletionSignatures<
                     meta::Like<Self, Send>, MakeEnv<Env>,
                     meta::MakeCompletionSignatures<meta::ScheduleResult<Sched>, MakeEnv<Env>, CompletionSignatures<>,
-                                                   meta::Id<CompletionSignatures<>>::template Invoke>>;
+                                                   meta::TypeConstant<CompletionSignatures<>>::template Invoke>>;
 
             template<concepts::DecaysTo<Type> Self, typename Rec>
             requires(concepts::DecayConstructible<meta::Like<Self, Send>> &&

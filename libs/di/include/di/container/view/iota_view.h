@@ -5,7 +5,6 @@
 #include <di/concepts/default_initializable.h>
 #include <di/concepts/equality_comparable.h>
 #include <di/concepts/integer.h>
-#include <di/concepts/same_as.h>
 #include <di/concepts/semiregular.h>
 #include <di/concepts/signed_integer.h>
 #include <di/concepts/three_way_comparable.h>
@@ -28,6 +27,7 @@
 #include <di/container/types/random_access_iterator_tag.h>
 #include <di/container/view/view_interface.h>
 #include <di/math/to_unsigned.h>
+#include <di/meta/core.h>
 #include <di/meta/type_identity.h>
 
 namespace di::container {

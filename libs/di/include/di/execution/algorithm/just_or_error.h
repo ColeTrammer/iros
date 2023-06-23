@@ -12,9 +12,9 @@
 #include <di/execution/receiver/set_value.h>
 #include <di/execution/types/completion_signuatures.h>
 #include <di/function/tag_invoke.h>
-#include <di/meta/conditional.h>
+#include <di/meta/algorithm.h>
+#include <di/meta/core.h>
 #include <di/meta/expected_value.h>
-#include <di/meta/list/as_language_function.h>
 #include <di/util/move.h>
 #include <di/vocab/error/error.h>
 

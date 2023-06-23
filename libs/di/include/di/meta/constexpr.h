@@ -2,7 +2,7 @@
 
 #include <di/concepts/derived_from.h>
 #include <di/concepts/member_pointer.h>
-#include <di/concepts/same_as.h>
+#include <di/meta/core.h>
 #include <di/meta/remove_cvref.h>
 
 namespace di::meta {

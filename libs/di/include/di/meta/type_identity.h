@@ -1,11 +1,11 @@
 #pragma once
 
-#include <di/meta/type_constant.h>
+#include <di/meta/core.h>
 
 namespace di::meta {
 namespace detail {
     template<typename T>
-    struct TypeIdentityHelper : meta::TypeConstant<T> {};
+    struct TypeIdentityHelper : TypeConstant<T> {};
 }
 
 // This is a helper template to prevent C++ from deducing the type of template argument.

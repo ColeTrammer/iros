@@ -1,8 +1,6 @@
 #pragma once
 
-#include <di/concepts/same_as.h>
-#include <di/meta/conditional.h>
-#include <di/meta/type_constant.h>
+#include <di/meta/core.h>
 #include <di/types/partial_ordering.h>
 #include <di/types/strong_ordering.h>
 #include <di/types/weak_ordering.h>

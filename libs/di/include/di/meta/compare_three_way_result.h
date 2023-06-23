@@ -3,9 +3,8 @@
 #include <di/concepts/language_void.h>
 #include <di/concepts/three_way_comparable.h>
 #include <di/concepts/three_way_comparable_with.h>
-#include <di/meta/list/type.h>
+#include <di/meta/core.h>
 #include <di/meta/remove_reference.h>
-#include <di/meta/type_constant.h>
 #include <di/util/declval.h>
 
 namespace di::meta {

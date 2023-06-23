@@ -10,7 +10,7 @@
 #include <di/container/tree/rb_tree_iterator.h>
 #include <di/container/tree/rb_tree_node.h>
 #include <di/function/compare.h>
-#include <di/meta/conditional.h>
+#include <di/meta/core.h>
 #include <di/util/create.h>
 #include <di/util/exchange.h>
 #include <di/vocab/optional/prelude.h>

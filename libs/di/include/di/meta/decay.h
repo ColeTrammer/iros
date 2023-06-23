@@ -3,7 +3,7 @@
 #include <di/concepts/language_array.h>
 #include <di/concepts/language_function.h>
 #include <di/meta/add_pointer.h>
-#include <di/meta/conditional.h>
+#include <di/meta/core.h>
 #include <di/meta/remove_cvref.h>
 #include <di/meta/remove_extent.h>
 #include <di/meta/remove_reference.h>

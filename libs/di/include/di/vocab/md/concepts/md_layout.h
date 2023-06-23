@@ -2,7 +2,7 @@
 
 #include <di/concepts/copyable.h>
 #include <di/concepts/equality_comparable.h>
-#include <di/concepts/same_as.h>
+#include <di/meta/core.h>
 #include <di/vocab/md/concepts/extents.h>
 
 namespace di::concepts {

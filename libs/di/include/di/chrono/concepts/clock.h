@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/concepts/same_as.h>
 #include <di/meta/bool_constant.h>
 #include <di/meta/constexpr.h>
+#include <di/meta/core.h>
 
 namespace di::concepts {
 template<typename T>

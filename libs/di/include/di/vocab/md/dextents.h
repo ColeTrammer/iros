@@ -1,7 +1,7 @@
 #pragma once
 
+#include <di/meta/algorithm.h>
 #include <di/meta/constexpr.h>
-#include <di/meta/list/prelude.h>
 #include <di/types/prelude.h>
 #include <di/vocab/md/extents_forward_declaration.h>
 

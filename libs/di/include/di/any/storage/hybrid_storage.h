@@ -10,9 +10,9 @@
 #include <di/container/allocator/allocate_one.h>
 #include <di/container/allocator/allocator.h>
 #include <di/container/allocator/deallocate_one.h>
-#include <di/meta/conditional.h>
+#include <di/meta/algorithm.h>
+#include <di/meta/core.h>
 #include <di/meta/like_expected.h>
-#include <di/meta/list/prelude.h>
 #include <di/platform/prelude.h>
 #include <di/types/prelude.h>
 #include <di/util/addressof.h>

@@ -5,12 +5,12 @@
 #include <di/concepts/convertible_to.h>
 #include <di/concepts/copy_constructible.h>
 #include <di/concepts/default_constructible.h>
-#include <di/concepts/instance_of.h>
 #include <di/concepts/move_assignable.h>
 #include <di/concepts/move_constructible.h>
 #include <di/concepts/remove_cvref_same_as.h>
 #include <di/concepts/trivially_copy_assignable.h>
 #include <di/concepts/trivially_move_assignable.h>
+#include <di/meta/core.h>
 #include <di/meta/unwrap_ref_decay.h>
 #include <di/meta/wrap_reference.h>
 #include <di/types/in_place.h>

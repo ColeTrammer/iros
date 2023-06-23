@@ -7,8 +7,8 @@
 #include <di/container/allocator/deallocate_one.h>
 #include <di/function/invoke.h>
 #include <di/function/monad/monad_try.h>
+#include <di/meta/algorithm.h>
 #include <di/meta/constexpr.h>
-#include <di/meta/list/prelude.h>
 #include <di/meta/maybe_const.h>
 #include <di/meta/remove_function_qualifiers.h>
 #include <di/platform/prelude.h>

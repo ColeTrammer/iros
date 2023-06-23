@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/concepts/constructible_from.h>
-#include <di/concepts/same_as.h>
+#include <di/meta/core.h>
 #include <di/meta/decay.h>
 #include <di/util/construct_at.h>
 #include <di/util/destroy_at.h>

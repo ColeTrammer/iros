@@ -1,12 +1,12 @@
 #pragma once
 
 #include <di/concepts/constructible_from.h>
-#include <di/concepts/same_as.h>
 #include <di/container/algorithm/copy.h>
 #include <di/container/string/encoding.h>
 #include <di/container/string/mutable_string.h>
 #include <di/container/string/string.h>
 #include <di/container/string/utf8_encoding.h>
+#include <di/meta/core.h>
 #include <di/meta/like_expected.h>
 #include <di/util/bit_cast.h>
 #include <di/util/declval.h>

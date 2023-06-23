@@ -9,9 +9,9 @@ namespace detail {
 
     template<typename... Types>
     using SingleSenderValueTypeHelper = meta::Type<
-        meta::Conditional<sizeof...(Types) == 0, meta::Id<void>,
+        meta::Conditional<sizeof...(Types) == 0, meta::TypeConstant<void>,
                           meta::Conditional<sizeof...(Types) == 1, meta::Defer<meta::Front, meta::List<Types...>>,
-                                            meta::Id<SingleSenderValueTypeHelperBadValue>>>>;
+                                            meta::TypeConstant<SingleSenderValueTypeHelperBadValue>>>>;
 }
 
 template<typename Send, typename Env>

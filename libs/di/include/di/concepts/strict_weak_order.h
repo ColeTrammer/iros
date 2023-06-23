@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/concepts/same_as.h>
 #include <di/function/invoke.h>
+#include <di/meta/core.h>
 #include <di/types/prelude.h>
 
 namespace di::concepts {

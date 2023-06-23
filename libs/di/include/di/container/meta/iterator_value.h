@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/container/iterator/iterator_value.h>
-#include <di/meta/list/type.h>
+#include <di/meta/core.h>
 #include <di/meta/remove_cvref.h>
 
 namespace di::meta {

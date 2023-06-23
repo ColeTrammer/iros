@@ -4,8 +4,8 @@
 #include <di/concepts/object.h>
 #include <di/concepts/remove_cvref_same_as.h>
 #include <di/function/invoke.h>
+#include <di/meta/algorithm.h>
 #include <di/meta/constexpr.h>
-#include <di/meta/list/prelude.h>
 #include <di/meta/remove_function_qualifiers.h>
 #include <di/meta/remove_pointer.h>
 #include <di/types/prelude.h>

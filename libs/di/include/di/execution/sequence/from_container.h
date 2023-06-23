@@ -29,11 +29,10 @@
 #include <di/execution/types/empty_env.h>
 #include <di/function/pipeable.h>
 #include <di/function/tag_invoke.h>
-#include <di/meta/conditional.h>
 #include <di/meta/constexpr.h>
+#include <di/meta/core.h>
 #include <di/meta/decay.h>
 #include <di/meta/like.h>
-#include <di/meta/list/type.h>
 #include <di/meta/remove_cvref.h>
 #include <di/platform/compiler.h>
 #include <di/sync/concepts/stoppable_token.h>

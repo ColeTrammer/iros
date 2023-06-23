@@ -16,12 +16,12 @@
 #include <di/function/unpack.h>
 #include <di/function/ycombinator.h>
 #include <di/meta/add_member_get.h>
+#include <di/meta/algorithm.h>
 #include <di/meta/common_reference.h>
 #include <di/meta/common_type.h>
 #include <di/meta/compare_three_way_result.h>
 #include <di/meta/constexpr.h>
 #include <di/meta/index_sequence_for.h>
-#include <di/meta/list/prelude.h>
 #include <di/meta/remove_cvref.h>
 #include <di/meta/type_list.h>
 #include <di/util/forward_as_base.h>

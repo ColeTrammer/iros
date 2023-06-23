@@ -2,7 +2,6 @@
 
 #include <di/any/concepts/impl.h>
 #include <di/concepts/constructible_from.h>
-#include <di/concepts/instance_of.h>
 #include <di/container/string/encoding.h>
 #include <di/container/string/fixed_string.h>
 #include <di/container/string/fixed_string_to_utf8_string_view.h>
@@ -10,6 +9,7 @@
 #include <di/io/interface/reader.h>
 #include <di/io/prelude.h>
 #include <di/io/string_reader.h>
+#include <di/meta/core.h>
 #include <di/platform/compiler.h>
 #include <di/platform/prelude.h>
 #include <di/serialization/deserialize.h>

@@ -1,7 +1,7 @@
 #pragma once
 
+#include <di/meta/core.h>
 #include <di/meta/remove_reference.h>
-#include <di/meta/type_constant.h>
 #include <di/meta/type_identity.h>
 
 namespace di::meta {

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/concepts/same_as.h>
 #include <di/container/concepts/input_iterator.h>
 #include <di/container/meta/iterator_const_reference.h>
 #include <di/container/meta/iterator_reference.h>
+#include <di/meta/core.h>
 
 namespace di::concepts {
 template<typename Iter>

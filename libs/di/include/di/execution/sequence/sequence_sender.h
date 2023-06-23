@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/same_as.h>
 #include <di/execution/concepts/operation_state.h>
 #include <di/execution/concepts/prelude.h>
 #include <di/execution/concepts/receiver.h>
@@ -25,12 +24,8 @@
 #include <di/execution/types/empty_env.h>
 #include <di/function/invoke.h>
 #include <di/function/tag_invoke.h>
-#include <di/meta/list/as_list.h>
-#include <di/meta/list/concat.h>
-#include <di/meta/list/id.h>
-#include <di/meta/list/list.h>
-#include <di/meta/list/type.h>
-#include <di/meta/list/unique.h>
+#include <di/meta/algorithm.h>
+#include <di/meta/core.h>
 #include <di/meta/remove_cvref.h>
 #include <di/sync/concepts/stoppable_token.h>
 #include <di/sync/concepts/unstoppable_token.h>
@@ -181,7 +176,7 @@ namespace di::meta {
 template<typename Send, typename Env>
 using SequenceCompletionSignaturesOf =
     meta::MakeCompletionSignatures<Send, Env, types::CompletionSignatures<execution::SetValue()>,
-                                   meta::Id<types::CompletionSignatures<>>::template Invoke>;
+                                   meta::TypeConstant<types::CompletionSignatures<>>::template Invoke>;
 }
 
 namespace di::concepts {

@@ -18,7 +18,7 @@
 #include <di/execution/types/empty_env.h>
 #include <di/function/container/prelude.h>
 #include <di/function/tag_invoke.h>
-#include <di/meta/list/type.h>
+#include <di/meta/core.h>
 #include <di/platform/compiler.h>
 #include <di/util/addressof.h>
 #include <di/util/construct_at.h>

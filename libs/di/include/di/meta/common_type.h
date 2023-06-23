@@ -1,10 +1,9 @@
 #pragma once
 
-#include <di/concepts/same_as.h>
 #include <di/function/tag_invoke.h>
+#include <di/meta/core.h>
 #include <di/meta/decay.h>
 #include <di/meta/remove_reference.h>
-#include <di/meta/type_constant.h>
 #include <di/types/prelude.h>
 #include <di/util/declval.h>
 

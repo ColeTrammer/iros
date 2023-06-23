@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/concepts/default_constructible.h>
-#include <di/concepts/same_as.h>
+#include <di/meta/core.h>
 #include <di/util/as_const.h>
 #include <di/util/forward.h>
 #include <di/util/move.h>

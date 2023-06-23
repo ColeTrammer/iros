@@ -7,7 +7,7 @@
 #include <di/concepts/language_void.h>
 #include <di/execution/interface/get_env.h>
 #include <di/function/tag_invoke.h>
-#include <di/meta/conditional.h>
+#include <di/meta/core.h>
 
 namespace di::execution {
 template<concepts::Interface Interface, typename Env>
