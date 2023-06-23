@@ -2,7 +2,6 @@
 
 #include <di/any/types/prelude.h>
 #include <di/concepts/decays_to.h>
-#include <di/concepts/disjunction.h>
 #include <di/function/invoke.h>
 #include <di/function/tag_invoke.h>
 #include <di/meta/constexpr.h>
@@ -29,7 +28,7 @@ namespace detail {
 
         template<typename T>
         requires(concepts::TagInvocableTo<Tag, R, meta::Like<Self, T>, Args...> ||
-                 concepts::Disjunction<concepts::InvocableTo<Tags const&, R, meta::Like<Self, T>, Args...>...>)
+                 (concepts::InvocableTo<Tags const&, R, meta::Like<Self, T>, Args...> || ...))
         constexpr R operator()(T&& self, Args... args) const {
             if constexpr (concepts::TagInvocableTo<Tag, R, meta::Like<Self, T>, Args...>) {
                 auto const tag = Tag {};

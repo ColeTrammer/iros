@@ -3,7 +3,6 @@
 #include <di/concepts/conjunction.h>
 #include <di/concepts/convertible_to.h>
 #include <di/concepts/default_constructible.h>
-#include <di/concepts/disjunction.h>
 #include <di/container/algorithm/min.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/iterator/iterator_base.h>
@@ -246,7 +245,7 @@ public:
     ZipView() = default;
 
     ZipView()
-    requires(concepts::Disjunction<!concepts::DefaultConstructible<Views>...>)
+    requires(!concepts::DefaultConstructible<Views> || ...)
     = delete;
 
     constexpr explicit ZipView(Views... views) : m_views(util::move(views)...) {}

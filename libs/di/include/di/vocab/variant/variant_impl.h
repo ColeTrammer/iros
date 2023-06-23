@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/disjunction.h>
 #include <di/concepts/remove_cvref_same_as.h>
 #include <di/meta/constexpr.h>
 #include <di/meta/like.h>
@@ -26,7 +25,7 @@ public:
     ~VariantImpl() = default;
 
     constexpr ~VariantImpl()
-    requires(concepts::Disjunction<!concepts::TriviallyDestructible<T>, !concepts::TriviallyDestructible<Rest>...>)
+    requires(!concepts::TriviallyDestructible<T> || (!concepts::TriviallyDestructible<Rest> || ...))
     {}
 
     template<concepts::RemoveCVRefSameAs<VariantImpl> Self>

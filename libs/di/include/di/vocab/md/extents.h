@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/disjunction.h>
 #include <di/container/view/range.h>
 #include <di/math/numeric_limits.h>
 #include <di/math/to_unsigned.h>
@@ -62,7 +61,7 @@ public:
     requires(sizeof...(other_extents) == rank() &&
              concepts::Conjunction<(other_extents == dynamic_extent || extents == dynamic_extent ||
                                     other_extents == extents)...>)
-    constexpr explicit(concepts::Disjunction<((extents != dynamic_extent) && (other_extents == dynamic_extent))...> ||
+    constexpr explicit((((extents != dynamic_extent) && (other_extents == dynamic_extent)) || ...) ||
                        math::to_unsigned(math::NumericLimits<SizeType>::max) <
                            math::to_unsigned(math::NumericLimits<OtherSizeType>::max))
         Extents(Extents<OtherSizeType, other_extents...> const& other) {

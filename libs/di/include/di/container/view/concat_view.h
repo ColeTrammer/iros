@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/disjunction.h>
 #include <di/container/algorithm/sum.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/iterator/prelude.h>
@@ -314,7 +313,7 @@ public:
     ConcatView() = default;
 
     ConcatView()
-    requires(concepts::Disjunction<!concepts::DefaultConstructible<Views>...>)
+    requires(!concepts::DefaultConstructible<Views> || ...)
     = delete;
 
     constexpr explicit ConcatView(Views... views) : m_views(util::move(views)...) {}

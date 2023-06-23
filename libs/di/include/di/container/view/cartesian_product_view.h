@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/disjunction.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/iterator/prelude.h>
 #include <di/container/meta/prelude.h>
@@ -256,7 +255,7 @@ public:
         : m_bases(util::move(first), util::move(bases)...) {}
 
     constexpr auto begin()
-    requires(concepts::Disjunction<!concepts::SimpleView<First>, !concepts::SimpleView<Rest>...>)
+    requires(!concepts::SimpleView<First> || (!concepts::SimpleView<Rest> || ...))
     {
         return Iterator<false>(*this, tuple_transform(container::begin, m_bases));
     }
@@ -268,7 +267,7 @@ public:
     }
 
     constexpr auto end()
-    requires(concepts::Disjunction<!concepts::SimpleView<First>, !concepts::SimpleView<Rest>...> &&
+    requires((!concepts::SimpleView<First> || (!concepts::SimpleView<Rest> || ...)) &&
              detail::CartesianProductIsCommon<First, Rest...>)
     {
         auto it = Iterator<false>(*this, tuple_transform(container::begin, m_bases));
