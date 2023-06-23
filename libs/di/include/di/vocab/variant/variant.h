@@ -39,18 +39,14 @@ private:
     using Impl = detail::VariantImpl<Types...>;
     using List = meta::List<Types...>;
 
-    constexpr static bool trivially_copy_constructible =
-        concepts::Conjunction<concepts::TriviallyCopyConstructible<Types>...>;
-    constexpr static bool trivially_move_constructible =
-        concepts::Conjunction<concepts::TriviallyMoveConstructible<Types>...>;
-    constexpr static bool trivially_copy_assignable =
-        concepts::Conjunction<concepts::TriviallyCopyAssignable<Types>...>;
-    constexpr static bool trivially_move_assignable =
-        concepts::Conjunction<concepts::TriviallyMoveAssignable<Types>...>;
-    constexpr static bool trivially_destructible = concepts::Conjunction<concepts::TriviallyDestructible<Types>...>;
+    constexpr static bool trivially_copy_constructible = (concepts::TriviallyCopyConstructible<Types> && ...);
+    constexpr static bool trivially_move_constructible = (concepts::TriviallyMoveConstructible<Types> && ...);
+    constexpr static bool trivially_copy_assignable = (concepts::TriviallyCopyAssignable<Types> && ...);
+    constexpr static bool trivially_move_assignable = (concepts::TriviallyMoveAssignable<Types> && ...);
+    constexpr static bool trivially_destructible = (concepts::TriviallyDestructible<Types> && ...);
 
-    constexpr static bool copyable = concepts::Conjunction<concepts::CopyConstructible<Types>...>;
-    constexpr static bool movable = concepts::Conjunction<concepts::MoveConstructible<Types>...>;
+    constexpr static bool copyable = (concepts::CopyConstructible<Types> && ...);
+    constexpr static bool movable = (concepts::MoveConstructible<Types> && ...);
 
     template<typename U, typename T>
     struct SelectorImpl {
@@ -142,9 +138,8 @@ public:
 
     template<typename... Other>
     requires(sizeof...(Types) == sizeof...(Other) &&
-             requires { requires concepts::Conjunction<concepts::ConstructibleFrom<Types, Other const&>...>; })
-    constexpr explicit(!concepts::Conjunction<concepts::ConvertibleTo<Other const&, Types>...>)
-        Variant(Variant<Other...> const& other) {
+             requires { requires(concepts::ConstructibleFrom<Types, Other const&> && ...); })
+    constexpr explicit((!concepts::ConvertibleTo<Other const&, Types> || ...)) Variant(Variant<Other...> const& other) {
         function::index_dispatch<void, sizeof...(Types)>(other.index(), [&]<size_t index>(Constexpr<index>) {
             do_emplace(c_<index>, util::get<index>(other));
         });
@@ -152,9 +147,8 @@ public:
 
     template<typename... Other>
     requires(sizeof...(Types) == sizeof...(Other) &&
-             requires { requires concepts::Conjunction<concepts::ConstructibleFrom<Types, Other>...>; })
-    constexpr explicit(!concepts::Conjunction<concepts::ConvertibleTo<Other, Types>...>)
-        Variant(Variant<Other...>&& other) {
+             requires { requires(concepts::ConstructibleFrom<Types, Other> && ...); })
+    constexpr explicit((!concepts::ConvertibleTo<Other, Types> || ...)) Variant(Variant<Other...>&& other) {
         function::index_dispatch<void, sizeof...(Types)>(other.index(), [&]<size_t index>(Constexpr<index>) {
             do_emplace(c_<index>, util::get<index>(util::move(other)));
         });
@@ -224,7 +218,7 @@ public:
 private:
     template<typename... Other>
     requires(sizeof...(Types) == sizeof...(Other) &&
-             requires { requires concepts::Conjunction<concepts::EqualityComparableWith<Types, Other>...>; })
+             requires { requires(concepts::EqualityComparableWith<Types, Other> && ...); })
     constexpr friend bool operator==(Variant const& a, Variant<Other...> const& b) {
         if (a.index() != b.index()) {
             return false;
@@ -236,7 +230,7 @@ private:
 
     template<typename... Other>
     requires(sizeof...(Types) == sizeof...(Other) &&
-             requires { requires concepts::Conjunction<concepts::ThreeWayComparableWith<Types, Other>...>; })
+             requires { requires(concepts::ThreeWayComparableWith<Types, Other> && ...); })
     constexpr friend auto operator<=>(Variant const& a, Variant<Other...> const& b) {
         using Result = meta::CommonComparisonCategory<meta::CompareThreeWayResult<Types, Other>...>;
         if (auto result = a.index() <=> b.index(); result != 0) {

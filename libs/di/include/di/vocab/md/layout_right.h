@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/conjunction.h>
 #include <di/concepts/convertible_to.h>
 #include <di/function/unpack.h>
 #include <di/meta/make_index_sequence.h>
@@ -45,8 +44,7 @@ public:
     constexpr SizeType required_span_size() const { return extents().fwd_prod_of_extents(extents().rank()); }
 
     template<typename... Indices>
-    requires(sizeof...(Indices) == ExtentsType::rank() &&
-             concepts::Conjunction<concepts::ConvertibleTo<Indices, SizeType>...>)
+    requires(sizeof...(Indices) == ExtentsType::rank() && (concepts::ConvertibleTo<Indices, SizeType> && ...))
     constexpr SizeType operator()(Indices... indices) const {
         return function::unpack<meta::MakeIndexSequence<sizeof...(Indices)>>([&]<size_t... i>(meta::ListV<i...>) {
             return ((static_cast<SizeType>(indices) * stride(i)) + ... + 0);

@@ -42,19 +42,19 @@ private:
 
 public:
     constexpr Tuple()
-    requires(concepts::Conjunction<concepts::DefaultConstructible<Types>...>)
+    requires(concepts::DefaultConstructible<Types> && ...)
     {}
 
     constexpr Tuple(Tuple const&) = default;
     constexpr Tuple(Tuple&&) = default;
 
     constexpr Tuple(Types const&... args)
-    requires(sizeof...(Types) > 0 && concepts::Conjunction<concepts::CopyConstructible<Types>...>)
+    requires(sizeof...(Types) > 0 && (concepts::CopyConstructible<Types> && ...))
         : Base(construct_tuple_impl_valuewise, args...) {}
 
     template<typename... Args>
     requires(sizeof...(Types) == sizeof...(Args) && sizeof...(Types) > 0 &&
-             concepts::Conjunction<concepts::ConstructibleFrom<Types, Args>...>)
+             (concepts::ConstructibleFrom<Types, Args> && ...))
     constexpr Tuple(Args&&... args) : Base(construct_tuple_impl_valuewise, util::forward<Args>(args)...) {}
 
     template<typename Tup>
@@ -65,28 +65,28 @@ public:
     constexpr ~Tuple() = default;
 
     constexpr Tuple& operator=(Tuple const& other)
-    requires(concepts::Conjunction<concepts::CopyAssignable<Types>...>)
+    requires(concepts::CopyAssignable<Types> && ...)
     {
         Base::static_assign(util::forward_as_base<Tuple&, Base>(*this), other);
         return *this;
     }
 
     constexpr Tuple const& operator=(Tuple const& other) const
-    requires(concepts::Conjunction<concepts::CopyAssignable<Types const>...>)
+    requires(concepts::CopyAssignable<Types const> && ...)
     {
         Base::static_assign(util::forward_as_base<Tuple const&, Base>(*this), other);
         return *this;
     }
 
     constexpr Tuple& operator=(Tuple&& other)
-    requires(concepts::Conjunction<concepts::MoveAssignable<Types>...>)
+    requires(concepts::MoveAssignable<Types> && ...)
     {
         Base::static_assign(util::forward_as_base<Tuple&, Base>(*this), util::move(other));
         return *this;
     }
 
     constexpr Tuple const& operator=(Tuple&& other) const
-    requires(concepts::Conjunction<concepts::AssignableFrom<Types const&, Types>...>)
+    requires(concepts::AssignableFrom<Types const&, Types> && ...)
     {
         Base::static_assign(util::forward_as_base<Tuple const&, Base>(*this), util::move(other));
         return *this;
@@ -111,7 +111,7 @@ public:
 private:
     template<typename... Other>
     requires(sizeof...(Types) == sizeof...(Other) &&
-             requires { requires concepts::Conjunction<concepts::EqualityComparableWith<Types, Other>...>; })
+             requires { requires(concepts::EqualityComparableWith<Types, Other> && ...); })
     constexpr friend bool operator==(Tuple const& a, Tuple<Other...> const& b) {
         return function::unpack<meta::MakeIndexSequence<sizeof...(Types)>>(
             [&]<size_t... indices>(meta::ListV<indices...>) {
@@ -121,7 +121,7 @@ private:
 
     template<typename... Other>
     requires(sizeof...(Types) == sizeof...(Other) &&
-             requires { requires concepts::Conjunction<concepts::ThreeWayComparableWith<Types, Other>...>; })
+             requires { requires(concepts::ThreeWayComparableWith<Types, Other> && ...); })
     constexpr friend meta::CommonComparisonCategory<meta::CompareThreeWayResult<Types, Other>...>
     operator<=>(Tuple const& a, Tuple<Other...> const& b) {
         if constexpr (sizeof...(Types) == 0) {

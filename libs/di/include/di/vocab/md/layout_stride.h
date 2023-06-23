@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/conjunction.h>
 #include <di/concepts/convertible_to.h>
 #include <di/container/algorithm/copy.h>
 #include <di/container/view/range.h>
@@ -90,8 +89,7 @@ public:
     }
 
     template<typename... Indices>
-    requires(sizeof...(Indices) == ExtentsType::rank() &&
-             concepts::Conjunction<concepts::ConvertibleTo<Indices, SizeType>...>)
+    requires(sizeof...(Indices) == ExtentsType::rank() && (concepts::ConvertibleTo<Indices, SizeType> && ...))
     constexpr SizeType operator()(Indices... indices) const {
         return function::unpack<meta::MakeIndexSequence<sizeof...(Indices)>>([&]<size_t... i>(meta::ListV<i...>) {
             return ((static_cast<SizeType>(indices) * stride(i)) + ... + 0);

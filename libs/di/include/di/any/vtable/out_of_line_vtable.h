@@ -13,7 +13,7 @@ struct OutOfLineVTable {
     class Invoke;
 
     template<typename... Methods>
-    requires(concepts::Conjunction<concepts::Method<meta::Type<Methods>>...>)
+    requires(concepts::Method<meta::Type<Methods>> && ...)
     class Invoke<meta::List<Methods...>> {
     private:
         using Storage = Tuple<meta::MethodErasedSignature<meta::Type<Methods>>*...>;

@@ -38,8 +38,8 @@ namespace detail {
         concepts::CommonReferenceWith<ConcatReference<Cons...>&&, ConcatValue<Cons...>&> &&
         concepts::CommonReferenceWith<ConcatReference<Cons...>&&, ConcatRValue<Cons...>&&> &&
         concepts::CommonReferenceWith<ConcatRValue<Cons...>&&, ConcatValue<Cons...> const&> &&
-        concepts::Conjunction<ConcatIndirectlyReadableImpl<ConcatReference<Cons...>, ConcatRValue<Cons...>,
-                                                           meta::ContainerIterator<Cons>>...>;
+        (ConcatIndirectlyReadableImpl<ConcatReference<Cons...>, ConcatRValue<Cons...>, meta::ContainerIterator<Cons>> &&
+         ...);
 
     template<typename... Cons>
     concept Concatable = requires {
@@ -49,8 +49,7 @@ namespace detail {
     } && ConcatIndirectlyReadable<Cons...>;
 
     template<typename... Cons>
-    concept ConcatRandomAccess =
-        concepts::Conjunction<(concepts::RandomAccessContainer<Cons> && concepts::SizedContainer<Cons>) ...>;
+    concept ConcatRandomAccess = ((concepts::RandomAccessContainer<Cons> && concepts::SizedContainer<Cons>) &&...);
 
     struct ConstantTimeReversible {
         template<typename Con>
@@ -64,7 +63,7 @@ namespace detail {
 }
 
 template<concepts::InputContainer... Views>
-requires(sizeof...(Views) > 0 && concepts::Conjunction<concepts::View<Views>...> && detail::Concatable<Views...>)
+requires(sizeof...(Views) > 0 && (concepts::View<Views> && ...) && detail::Concatable<Views...>)
 class ConcatView : public ViewInterface<ConcatView<Views...>> {
 private:
     template<bool is_const>
@@ -75,9 +74,8 @@ private:
                   detail::ConcatRandomAccess<meta::MaybeConst<is_const, Views>...>, RandomAccessIteratorTag,
                   meta::Conditional<
                       detail::ConcatBidirectional<meta::MaybeConst<is_const, Views>...>, BidirectionalIteratorTag,
-                      meta::Conditional<
-                          concepts::Conjunction<concepts::ForwardContainer<meta::MaybeConst<is_const, Views>>...>,
-                          ForwardIteratorTag, InputIteratorTag>>>,
+                      meta::Conditional<(concepts::ForwardContainer<meta::MaybeConst<is_const, Views>> && ...),
+                                        ForwardIteratorTag, InputIteratorTag>>>,
               detail::ConcatValue<meta::MaybeConst<is_const, Views>...>,
               meta::CommonType<meta::ContainerSSizeType<meta::MaybeConst<is_const, Views>>...>> {
     private:
@@ -164,8 +162,7 @@ private:
 
         constexpr Iterator(Iterator<!is_const> other)
         requires(is_const &&
-                 concepts::Conjunction<
-                     concepts::ConvertibleTo<meta::ContainerIterator<Views>, meta::ContainerIterator<Views const>>...>)
+                 (concepts::ConvertibleTo<meta::ContainerIterator<Views>, meta::ContainerIterator<Views const>> && ...))
             : m_parent(other.m_parent), m_base(util::move(other.m_base)) {}
 
         constexpr decltype(auto) operator*() const {
@@ -207,8 +204,7 @@ private:
 
     private:
         constexpr friend bool operator==(Iterator const& a, Iterator const& b)
-        requires(concepts::Conjunction<
-                 concepts::EqualityComparable<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>>...>)
+        requires(concepts::EqualityComparable<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>> && ...)
         {
             return a.m_base == b.m_base;
         }
@@ -222,8 +218,7 @@ private:
         constexpr friend bool operator==(Iterator const& a, DefaultSentinel) { return a.at_end(); }
 
         constexpr friend auto operator<=>(Iterator const& a, Iterator const& b)
-        requires(concepts::Conjunction<
-                 concepts::ThreeWayComparable<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>>...>)
+        requires(concepts::ThreeWayComparable<meta::ContainerIterator<meta::MaybeConst<is_const, Views>>> && ...)
         {
             return a.m_base <=> b.m_base;
         }
@@ -319,7 +314,7 @@ public:
     constexpr explicit ConcatView(Views... views) : m_views(util::move(views)...) {}
 
     constexpr auto begin()
-    requires(!concepts::Conjunction<concepts::SimpleView<Views>...>)
+    requires(!concepts::SimpleView<Views> || ...)
     {
         auto it = Iterator<false>(this, c_<0zu>, container::begin(util::get<0>(m_views)));
         it.template satisfy<0>();
@@ -327,7 +322,7 @@ public:
     }
 
     constexpr auto begin() const
-    requires(concepts::Conjunction<concepts::Container<Views const>...> && detail::Concatable<Views const...>)
+    requires((concepts::Container<Views const> && detail::Concatable<Views const>) && ...)
     {
         auto it = Iterator<true>(this, c_<0zu>, container::begin(util::get<0>(m_views)));
         it.template satisfy<0>();
@@ -335,7 +330,7 @@ public:
     }
 
     constexpr auto end()
-    requires(!concepts::Conjunction<concepts::SimpleView<Views>...>)
+    requires(!concepts::SimpleView<Views> || ...)
     {
         if constexpr (concepts::CommonContainer<meta::Back<meta::List<Views...>>>) {
             constexpr auto N = sizeof...(Views);
@@ -346,7 +341,7 @@ public:
     }
 
     constexpr auto end() const
-    requires(concepts::Conjunction<concepts::Container<Views const>...>)
+    requires(concepts::Container<Views const> && ...)
     {
         if constexpr (concepts::CommonContainer<meta::Back<meta::List<Views const...>>>) {
             constexpr auto N = sizeof...(Views);
@@ -357,7 +352,7 @@ public:
     }
 
     constexpr auto size()
-    requires(concepts::Conjunction<concepts::SizedContainer<Views>...>)
+    requires(concepts::SizedContainer<Views> && ...)
     {
         return apply(
             [](auto... sizes) {
@@ -368,7 +363,7 @@ public:
     }
 
     constexpr auto size() const
-    requires(concepts::Conjunction<concepts::SizedContainer<Views const>...>)
+    requires(concepts::SizedContainer<Views const> && ...)
     {
         return apply(
             [](auto... sizes) {

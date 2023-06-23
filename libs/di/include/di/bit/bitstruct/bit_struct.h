@@ -15,7 +15,7 @@ public:
     BitStruct() = default;
 
     template<concepts::BitTag... FromTags>
-    requires(concepts::Conjunction<meta::Contains<List, FromTags>...>)
+    requires(meta::Contains<List, FromTags> && ...)
     constexpr explicit BitStruct(FromTags... tags) {
         auto arguments = di::make_tuple(tags...);
         tuple_for_each(

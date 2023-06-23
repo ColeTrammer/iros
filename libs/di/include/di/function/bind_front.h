@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/conjunction.h>
 #include <di/concepts/constructible_from.h>
 #include <di/function/invoke.h>
 #include <di/function/pipeable.h>
@@ -65,7 +64,7 @@ namespace detail {
 
 template<typename F, typename... Args>
 requires(concepts::ConstructibleFrom<meta::Decay<F>, F> &&
-         concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Args>, Args>...>)
+         (concepts::ConstructibleFrom<meta::Decay<Args>, Args> && ...))
 constexpr auto bind_front(F&& f, Args&&... args) {
     return detail::BindFrontFunction<meta::IndexSequenceFor<Args...>, meta::Decay<F>, meta::Decay<Args>...>(
         types::in_place, util::forward<F>(f), util::forward<Args>(args)...);

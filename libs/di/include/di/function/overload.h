@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/conjunction.h>
 #include <di/concepts/constructible_from.h>
 #include <di/function/piped.h>
 #include <di/function/pipeline.h>
@@ -19,7 +18,7 @@ namespace detail {
 
     struct OverloadFunction {
         template<typename... Funs>
-        requires(concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Funs>, Funs>...>)
+        requires(concepts::ConstructibleFrom<meta::Decay<Funs>, Funs> && ...)
         constexpr auto operator()(Funs&&... functions) const {
             return function::piped(OverloadImpl(util::forward<Funs>(functions)...));
         }

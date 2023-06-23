@@ -52,8 +52,7 @@ namespace let_ns {
             [[no_unique_address]] OpStateStorage op_state3 {};
 
             template<typename... Args>
-            requires(concepts::Conjunction<concepts::DecayConstructible<Args>...> &&
-                     concepts::Invocable<Fun, meta::Decay<Args>&...>)
+            requires((concepts::DecayConstructible<Args> && ...) && concepts::Invocable<Fun, meta::Decay<Args>&...>)
             void phase2(Args&&... args) {
                 using Tuple = meta::DecayedTuple<Args...>;
                 auto& decayed_args = this->args.template emplace<Tuple>(util::forward<Args>(args)...);

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/conjunction.h>
 #include <di/concepts/constructible_from.h>
 #include <di/function/invoke.h>
 #include <di/function/pipeable.h>
@@ -63,7 +62,7 @@ constexpr auto chain(F&& f) {
 
 template<typename F, typename G, typename... Fs>
 requires(concepts::ConstructibleFrom<meta::Decay<F>, F> && concepts::ConstructibleFrom<meta::Decay<G>, G> &&
-         concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Fs>, Fs>...>)
+         (concepts::ConstructibleFrom<meta::Decay<Fs>, Fs> && ...))
 constexpr auto chain(F&& f, G&& g, Fs&&... rest) {
     return function::chain(
         detail::ChainFunction<meta::Decay<F>, meta::Decay<G>>(util::forward<F>(f), util::forward<G>(g)),

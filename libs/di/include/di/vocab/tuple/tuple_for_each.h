@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/conjunction.h>
 #include <di/function/invoke.h>
 #include <di/vocab/tuple/apply.h>
 #include <di/vocab/tuple/tuple.h>
@@ -14,7 +13,7 @@ namespace detail {
 
     template<size_t... indices, typename F, typename Tup>
     struct TupleForEachValid<F, Tup, meta::ListV<indices...>> {
-        constexpr static bool value = concepts::Conjunction<concepts::Invocable<F&, meta::TupleValue<Tup, indices>>...>;
+        constexpr static bool value = (concepts::Invocable<F&, meta::TupleValue<Tup, indices>> && ...);
     };
 }
 

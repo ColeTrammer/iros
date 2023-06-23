@@ -8,8 +8,7 @@
 
 namespace di::vocab {
 template<concepts::Integer T, size_t... extents>
-requires(
-    concepts::Conjunction<(extents == dynamic_extent || extents <= math::to_unsigned(math::NumericLimits<T>::max))...>)
+requires((extents == dynamic_extent || extents <= math::to_unsigned(math::NumericLimits<T>::max)) && ...)
 class Extents {
 public:
     constexpr static size_t static_extent(size_t index) {
@@ -59,8 +58,7 @@ public:
 
     template<typename OtherSizeType, size_t... other_extents>
     requires(sizeof...(other_extents) == rank() &&
-             concepts::Conjunction<(other_extents == dynamic_extent || extents == dynamic_extent ||
-                                    other_extents == extents)...>)
+             ((other_extents == dynamic_extent || extents == dynamic_extent || other_extents == extents) && ...))
     constexpr explicit((((extents != dynamic_extent) && (other_extents == dynamic_extent)) || ...) ||
                        math::to_unsigned(math::NumericLimits<SizeType>::max) <
                            math::to_unsigned(math::NumericLimits<OtherSizeType>::max))
@@ -75,7 +73,7 @@ public:
     }
 
     template<typename... OtherSizeType>
-    requires(concepts::Conjunction<concepts::ConvertibleTo<OtherSizeType, SizeType>...> &&
+    requires((concepts::ConvertibleTo<OtherSizeType, SizeType> && ...) &&
              (sizeof...(OtherSizeType) == rank_dynamic() || sizeof...(OtherSizeType) == rank()))
     constexpr explicit Extents(OtherSizeType... values) {
         if constexpr (sizeof...(OtherSizeType) == rank_dynamic()) {
@@ -160,6 +158,6 @@ private:
 };
 
 template<typename... Integrals>
-requires(concepts::Conjunction<concepts::ConvertibleTo<Integrals, size_t>...>)
+requires(concepts::ConvertibleTo<Integrals, size_t> && ...)
 explicit Extents(Integrals...) -> Extents<size_t, (Integrals {}, dynamic_extent)...>;
 }

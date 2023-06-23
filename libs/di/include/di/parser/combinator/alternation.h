@@ -20,10 +20,9 @@ namespace detail {
         constexpr explicit AlternationParser(InPlace, Ps&&... parsers) : m_parsers(util::forward<Ps>(parsers)...) {}
 
         template<concepts::ParserContext Context>
-        requires(concepts::Conjunction<concepts::Parser<Parsers, Context>...>)
+        requires(concepts::Parser<Parsers, Context> && ...)
         constexpr auto parse(Context& context) const {
-            constexpr bool should_be_void =
-                concepts::Conjunction<concepts::LanguageVoid<meta::ParserValue<Context, Parsers>>...>;
+            constexpr bool should_be_void = (concepts::LanguageVoid<meta::ParserValue<Context, Parsers>> && ...);
 
             using Result = meta::ParserContextResult<
                 meta::Conditional<should_be_void, void,

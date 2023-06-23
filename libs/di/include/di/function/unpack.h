@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/conjunction.h>
 #include <di/function/invoke.h>
 #include <di/meta/list/list_v.h>
 #include <di/types/prelude.h>

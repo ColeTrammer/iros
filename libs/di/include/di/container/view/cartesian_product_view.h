@@ -12,8 +12,8 @@ namespace di::container {
 namespace detail {
     template<typename First, typename... Rest>
     concept CartesianProductIsRandomAccess =
-        concepts::Conjunction<concepts::RandomAccessContainer<First>,
-                              (concepts::RandomAccessContainer<Rest> && concepts::SizedContainer<Rest>) ...>;
+        concepts::RandomAccessContainer<First> &&
+        ((concepts::RandomAccessContainer<Rest> && concepts::SizedContainer<Rest>) &&...);
 
     template<typename Con>
     concept CartesianProductCommonArg =
@@ -21,19 +21,19 @@ namespace detail {
 
     template<typename First, typename... Rest>
     concept CartesianProductIsBidirectional =
-        concepts::Conjunction<concepts::BidirectionalContainer<First>,
-                              (concepts::BidirectionalContainer<Rest> && CartesianProductCommonArg<Rest>) ...>;
+        concepts::BidirectionalContainer<First> &&
+        ((concepts::BidirectionalContainer<Rest> && CartesianProductCommonArg<Rest>) &&...);
 
     template<typename First, typename... Rest>
     concept CartesianProductIsCommon = CartesianProductCommonArg<First>;
 
     template<typename... Cons>
-    concept CartesianProductIsSized = concepts::Conjunction<concepts::SizedContainer<Cons>...>;
+    concept CartesianProductIsSized = (concepts::SizedContainer<Cons> && ...);
 
     template<typename First, typename... Cons>
-    concept CartesianSentinelIsSized = concepts::Conjunction<
-        concepts::SizedSentinelFor<meta::ContainerSentinel<First>, meta::ContainerIterator<First>>,
-        concepts::SizedContainer<Cons>...>;
+    concept CartesianSentinelIsSized =
+        concepts::SizedSentinelFor<meta::ContainerSentinel<First>, meta::ContainerIterator<First>> &&
+        (concepts::SizedContainer<Cons> && ...);
 
     template<CartesianProductCommonArg Con>
     constexpr auto cartiesian_common_arg_end(Con&& con) {
@@ -46,7 +46,7 @@ namespace detail {
 }
 
 template<concepts::InputContainer First, concepts::ForwardContainer... Rest>
-requires(concepts::Conjunction<concepts::View<First>, concepts::View<Rest>...>)
+requires(concepts::View<First> && (concepts::View<Rest> && ...))
 class CartesianProductView : public ViewInterface<CartesianProductView<First, Rest...>> {
 private:
     template<bool is_const>
@@ -79,9 +79,8 @@ private:
 
         constexpr Iterator(Iterator<!is_const> other)
         requires(is_const &&
-                 concepts::Conjunction<
-                     concepts::ConvertibleTo<meta::ContainerIterator<First>, meta::ContainerIterator<First const>>,
-                     concepts::ConvertibleTo<meta::ContainerIterator<Rest>, meta::ContainerIterator<Rest const>>...>)
+                 concepts::ConvertibleTo<meta::ContainerIterator<First>, meta::ContainerIterator<First const>> &&
+                 (concepts::ConvertibleTo<meta::ContainerIterator<Rest>, meta::ContainerIterator<Rest const>> && ...))
             : m_parent(other.m_parent), m_iterators(util::move(other)) {}
 
         constexpr auto operator*() const {
@@ -124,19 +123,18 @@ private:
         }
 
         constexpr friend auto operator<=>(Iterator const& a, Iterator const& b)
-        requires(concepts::Conjunction<
-                 concepts::ThreeWayComparable<meta::ContainerIterator<meta::MaybeConst<is_const, First>>>,
-                 concepts::ThreeWayComparable<meta::ContainerIterator<meta::MaybeConst<is_const, Rest>>>...>)
+        requires(concepts::ThreeWayComparable<meta::ContainerIterator<meta::MaybeConst<is_const, First>>> &&
+                 (concepts::ThreeWayComparable<meta::ContainerIterator<meta::MaybeConst<is_const, Rest>>> && ...))
         {
             return a.m_iterators <=> b.m_iterators;
         }
 
         constexpr friend ssize_t operator-(Iterator const& a, Iterator const& b)
-        requires(concepts::Conjunction<
-                 concepts::SizedSentinelFor<meta::ContainerIterator<meta::MaybeConst<is_const, First>>,
-                                            meta::ContainerIterator<meta::MaybeConst<is_const, First>>>,
-                 concepts::SizedSentinelFor<meta::ContainerIterator<meta::MaybeConst<is_const, Rest>>,
-                                            meta::ContainerIterator<meta::MaybeConst<is_const, Rest>>>...>)
+        requires(concepts::SizedSentinelFor<meta::ContainerIterator<meta::MaybeConst<is_const, First>>,
+                                            meta::ContainerIterator<meta::MaybeConst<is_const, First>>> &&
+                 (concepts::SizedSentinelFor<meta::ContainerIterator<meta::MaybeConst<is_const, Rest>>,
+                                             meta::ContainerIterator<meta::MaybeConst<is_const, Rest>>> &&
+                  ...))
         {
             return a.distance_from(b.m_iterators);
         }
@@ -178,9 +176,8 @@ private:
         }
 
         constexpr friend void tag_invoke(types::Tag<iterator_swap>, Iterator const& a, Iterator const& b)
-        requires(concepts::Conjunction<
-                 concepts::IndirectlySwappable<meta::ContainerIterator<meta::MaybeConst<is_const, First>>>,
-                 concepts::IndirectlySwappable<meta::ContainerIterator<meta::MaybeConst<is_const, Rest>>>...>)
+        requires(concepts::IndirectlySwappable<meta::ContainerIterator<meta::MaybeConst<is_const, First>>> &&
+                 (concepts::IndirectlySwappable<meta::ContainerIterator<meta::MaybeConst<is_const, Rest>>> && ...))
         {
             return function::unpack<meta::MakeIndexSequence<1 + sizeof...(Rest)>>(
                 [&]<size_t... indices>(meta::ListV<indices...>) {
@@ -261,7 +258,7 @@ public:
     }
 
     constexpr Iterator<true> begin() const
-    requires(concepts::Conjunction<concepts::Container<First>, concepts::Container<Rest>...>)
+    requires(concepts::Container<First> && (concepts::Container<Rest> && ...))
     {
         return Iterator<true>(*this, tuple_transform(container::begin, m_bases));
     }

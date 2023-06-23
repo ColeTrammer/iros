@@ -49,13 +49,13 @@ namespace just_ns {
 
         private:
             template<concepts::ReceiverOf<CompletionSignatures> Rec>
-            requires(concepts::Conjunction<concepts::CopyConstructible<Types>...>)
+            requires(concepts::CopyConstructible<Types> && ...)
             constexpr friend auto tag_invoke(types::Tag<execution::connect>, Type const& sender, Rec receiver) {
                 return OperationState<CPO, Rec, Types...> { sender.values, util::move(receiver) };
             }
 
             template<concepts::ReceiverOf<CompletionSignatures> Rec>
-            requires(concepts::Conjunction<concepts::MoveConstructible<Types>...>)
+            requires(concepts::MoveConstructible<Types> && ...)
             constexpr friend auto tag_invoke(types::Tag<execution::connect>, Type&& sender, Rec receiver) {
                 return OperationState<CPO, Rec, Types...> { util::move(sender.values), util::move(receiver) };
             }

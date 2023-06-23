@@ -42,7 +42,7 @@ public:
     MDSpan(MDSpan&&) = default;
 
     template<typename... OtherSizeTypes>
-    requires(concepts::Conjunction<concepts::ConvertibleTo<OtherSizeTypes, SizeType>...> &&
+    requires((concepts::ConvertibleTo<OtherSizeTypes, SizeType> && ...) &&
              (sizeof...(OtherSizeTypes) == rank() || ((sizeof...(OtherSizeTypes) == rank_dynamic()) &&
                                                       (concepts::ConstructibleFrom<MappingType, ExtentsType> &&
                                                        concepts::DefaultConstructible<AccessorType>) )))
@@ -85,8 +85,7 @@ public:
     MDSpan& operator=(MDSpan&&) = default;
 
     template<typename... OtherSizeTypes>
-    requires(sizeof...(OtherSizeTypes) == rank() &&
-             concepts::Conjunction<concepts::ConvertibleTo<OtherSizeTypes, SizeType>...>)
+    requires(sizeof...(OtherSizeTypes) == rank() && (concepts::ConvertibleTo<OtherSizeTypes, SizeType> && ...))
     constexpr Reference operator[](OtherSizeTypes... indices) const {
         auto index = m_mapping(ExtentsType::index_cast(util::move(indices))...);
         DI_ASSERT(index < m_mapping.required_span_size());
@@ -108,8 +107,7 @@ public:
     }
 
     template<typename... OtherSizeTypes>
-    requires(sizeof...(OtherSizeTypes) == rank() &&
-             concepts::Conjunction<concepts::ConvertibleTo<OtherSizeTypes, SizeType>...>)
+    requires(sizeof...(OtherSizeTypes) == rank() && (concepts::ConvertibleTo<OtherSizeTypes, SizeType> && ...))
     constexpr Reference operator()(OtherSizeTypes... indices) const {
         auto index = m_mapping(ExtentsType::index_cast(util::move(indices))...);
         DI_ASSERT(index < m_mapping.required_span_size());
@@ -172,7 +170,7 @@ requires(concepts::Pointer<meta::RemoveReference<Pointer>>)
 MDSpan(Pointer&&) -> MDSpan<meta::RemovePointer<meta::RemoveReference<Pointer>>, Extents<size_t>>;
 
 template<typename ElementType, typename... integrals>
-requires(sizeof...(integrals) > 0 && concepts::Conjunction<concepts::ConvertibleTo<integrals, size_t>...>)
+requires(sizeof...(integrals) > 0 && (concepts::ConvertibleTo<integrals, size_t> && ...))
 explicit MDSpan(ElementType*, integrals...) -> MDSpan<ElementType, Dextents<size_t, sizeof...(integrals)>>;
 
 template<typename ElementType, typename OtherSizeType, size_t N>

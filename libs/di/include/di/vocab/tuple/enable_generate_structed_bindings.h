@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include <di/concepts/conjunction.h>
 #include <di/concepts/same_as.h>
 #include <di/function/tag_invoke.h>
 #include <di/meta/make_index_sequence.h>
@@ -35,7 +34,7 @@ concept HasMemberGet = requires(T value) { util::forward<T>(value).template get<
 
 template<typename T, types::size_t... indices>
 struct CanStructuredBindHelper<T, meta::ListV<indices...>> {
-    constexpr static bool value = Conjunction<HasMemberGet<T, indices>...>;
+    constexpr static bool value = (HasMemberGet<T, indices> && ...);
 };
 
 template<typename T>

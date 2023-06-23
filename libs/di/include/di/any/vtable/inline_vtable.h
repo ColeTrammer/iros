@@ -13,7 +13,7 @@ struct InlineVTable {
     class Invoke;
 
     template<typename... Methods>
-    requires(concepts::Conjunction<concepts::Method<meta::Type<Methods>>...>)
+    requires(concepts::Method<meta::Type<Methods>> && ...)
     class Invoke<meta::List<Methods...>> {
         static_assert(sizeof...(Methods) > 0, "Cannot create an InlineVTable with 0 methods.");
 

@@ -12,11 +12,11 @@ namespace detail {
     constexpr static bool is_interface = false;
 
     template<typename... Methods>
-    requires(concepts::Conjunction<concepts::Method<meta::Type<Methods>>...> &&
-             concepts::Conjunction<
-                 meta::ExactlyOnce<meta::Transform<meta::AsList<meta::MethodSignature<meta::Type<Methods>>>,
-                                                   meta::Quote<meta::RemoveCVRef>>,
-                                   This>...>)
+    requires((concepts::Method<meta::Type<Methods>> && ...) &&
+             (meta::ExactlyOnce<meta::Transform<meta::AsList<meta::MethodSignature<meta::Type<Methods>>>,
+                                                meta::Quote<meta::RemoveCVRef>>,
+                                This> &&
+              ...))
     constexpr static bool is_interface<meta::List<Methods...>> = true;
 }
 

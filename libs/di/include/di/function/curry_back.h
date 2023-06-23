@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/conjunction.h>
 #include <di/concepts/constructible_from.h>
 #include <di/function/bind_back.h>
 #include <di/function/pipeable.h>
@@ -67,8 +66,7 @@ namespace detail {
 
         template<typename... Args>
         requires(!concepts::Invocable<F&, Args...> && concepts::ConstructibleFrom<F, F&> &&
-                 concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Args>, Args>...> &&
-                 sizeof...(Args) < max_arity)
+                 (concepts::ConstructibleFrom<meta::Decay<Args>, Args> && ...) && sizeof...(Args) < max_arity)
         constexpr auto operator()(Args&&... args) & {
             return curry_back(bind_back(m_function, util::forward<Args>(args)...),
                               c_<new_arity<max_arity - sizeof...(Args)>>);
@@ -76,8 +74,7 @@ namespace detail {
 
         template<typename... Args>
         requires(!concepts::Invocable<F const&, Args...> && concepts::ConstructibleFrom<F, F const&> &&
-                 concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Args>, Args>...> &&
-                 sizeof...(Args) < max_arity)
+                 (concepts::ConstructibleFrom<meta::Decay<Args>, Args> && ...) && sizeof...(Args) < max_arity)
         constexpr auto operator()(Args&&... args) const& {
             return curry_back(bind_back(m_function, util::forward<Args>(args)...),
                               c_<new_arity<max_arity - sizeof...(Args)>>);
@@ -85,8 +82,7 @@ namespace detail {
 
         template<typename... Args>
         requires(!concepts::Invocable<F &&, Args...> && concepts::ConstructibleFrom<F, F &&> &&
-                 concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Args>, Args>...> &&
-                 sizeof...(Args) < max_arity)
+                 (concepts::ConstructibleFrom<meta::Decay<Args>, Args> && ...) && sizeof...(Args) < max_arity)
         constexpr auto operator()(Args&&... args) && {
             return curry_back(bind_back(util::move(m_function), util::forward<Args>(args)...),
                               c_<new_arity<max_arity - sizeof...(Args)>>);
@@ -94,8 +90,7 @@ namespace detail {
 
         template<typename... Args>
         requires(!concepts::Invocable<F const &&, Args...> && concepts::ConstructibleFrom<F, F const &&> &&
-                 concepts::Conjunction<concepts::ConstructibleFrom<meta::Decay<Args>, Args>...> &&
-                 sizeof...(Args) < max_arity)
+                 (concepts::ConstructibleFrom<meta::Decay<Args>, Args> && ...) && sizeof...(Args) < max_arity)
         constexpr auto operator()(Args&&... args) const&& {
             return curry_back(bind_back(util::move(m_function), util::forward<Args>(args)...),
                               c_<new_arity<max_arity - sizeof...(Args)>>);

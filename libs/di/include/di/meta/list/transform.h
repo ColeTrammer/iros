@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/conjunction.h>
 #include <di/meta/list/concepts/meta_invocable.h>
 #include <di/meta/list/concepts/valid_instantiation.h>
 #include <di/meta/list/invoke.h>
@@ -12,7 +11,7 @@ namespace detail {
     struct TransformHelper {};
 
     template<typename... Types, typename Fun>
-    requires(concepts::MetaInvocable<Fun> && concepts::Conjunction<concepts::ValidInstantiation<Invoke, Fun, Types>...>)
+    requires(concepts::MetaInvocable<Fun> && (concepts::ValidInstantiation<Invoke, Fun, Types> && ...))
     struct TransformHelper<List<Types...>, Fun> : TypeConstant<List<Invoke<Fun, Types>...>> {};
 }
 

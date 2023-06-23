@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/conjunction.h>
 #include <di/concepts/integral_or_enum.h>
 #include <di/concepts/same_as.h>
 #include <di/container/hash/default_hasher.h>
@@ -57,8 +56,7 @@ requires((meta::TupleSize<T> == meta::TupleSize<U>) && !HashableContainer<T> && 
 constexpr bool tag_invoke(types::Tag<hash_same>, InPlaceType<T>, InPlaceType<U>) {
     return function::unpack<meta::MakeIndexSequence<meta::TupleSize<T>>>(
         [&]<usize... indices>(meta::ListV<indices...>) {
-            return concepts::Conjunction<
-                concepts::HashSame<meta::TupleElement<T, indices>, meta::TupleElement<U, indices>>...>;
+            return (concepts::HashSame<meta::TupleElement<T, indices>, meta::TupleElement<U, indices>> && ...);
         });
 }
 }

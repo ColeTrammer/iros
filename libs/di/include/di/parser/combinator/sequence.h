@@ -20,7 +20,7 @@ namespace detail {
         constexpr explicit SequenceParser(InPlace, Ps&&... parsers) : m_parsers(util::forward<Ps>(parsers)...) {}
 
         template<concepts::ParserContext Context>
-        requires(concepts::Conjunction<concepts::Parser<Parsers, Context>...>)
+        requires(concepts::Parser<Parsers, Context> && ...)
         constexpr auto parse(Context& context) const {
             constexpr auto make_result = function::overload(
                 [] {

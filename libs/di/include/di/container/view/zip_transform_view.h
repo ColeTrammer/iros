@@ -6,7 +6,7 @@
 
 namespace di::container {
 template<concepts::MoveConstructible F, concepts::InputContainer... Views>
-requires(concepts::Conjunction<concepts::View<Views>...> && sizeof...(Views) > 0 &&
+requires((concepts::View<Views> && ...) && sizeof...(Views) > 0 &&
          concepts::Invocable<F&, meta::ContainerReference<Views>...> &&
          concepts::CanReference<meta::InvokeResult<F&, meta::ContainerReference<Views>...>>)
 class ZipTransformView : public ViewInterface<ZipTransformView<F, Views...>> {

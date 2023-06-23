@@ -1,4 +1,3 @@
-#include <di/concepts/conjunction.h>
 #include <di/concepts/const.h>
 #include <di/concepts/floating_point.h>
 #include <di/concepts/language_array.h>
@@ -27,10 +26,6 @@ static_assert(!di::concepts::MemberFunctionPointer<decltype(&X::y)>);
 static_assert(di::concepts::MemberFunctionPointer<decltype(&X::z)>);
 static_assert(di::concepts::MemberObjectPointer<decltype(&X::y)>);
 static_assert(!di::concepts::MemberObjectPointer<decltype(&X::z)>);
-
-static_assert(!di::concepts::Conjunction<true, false>);
-static_assert(di::concepts::Conjunction<true>);
-static_assert(di::concepts::Conjunction<>);
 
 static_assert(di::concepts::Integral<i32>);
 static_assert(di::concepts::Integral<unsigned long long const volatile>);
