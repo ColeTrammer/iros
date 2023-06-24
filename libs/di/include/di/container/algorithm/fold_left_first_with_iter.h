@@ -5,7 +5,7 @@
 #include <di/container/meta/prelude.h>
 #include <di/function/identity.h>
 #include <di/function/invoke.h>
-#include <di/meta/decay.h>
+#include <di/meta/util.h>
 #include <di/util/move.h>
 #include <di/util/reference_wrapper.h>
 #include <di/vocab/optional/prelude.h>

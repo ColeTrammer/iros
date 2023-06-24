@@ -1,11 +1,11 @@
 #pragma once
 
-#include <di/concepts/copy_constructible.h>
-#include <di/concepts/predicate.h>
 #include <di/container/concepts/indirectly_readable.h>
 #include <di/container/meta/container_reference.h>
 #include <di/container/meta/container_value.h>
 #include <di/container/meta/iterator_common_reference.h>
+#include <di/meta/operations.h>
+#include <di/meta/relation.h>
 
 namespace di::concepts {
 template<typename F, typename Iter>

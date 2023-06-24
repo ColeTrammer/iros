@@ -4,7 +4,7 @@
 #include <dius/test/prelude.h>
 
 namespace vocab_tuple {
-class X : public di::meta::AddMemberGet<X> {
+class X : public di::util::AddMemberGet<X> {
 public:
 private:
     constexpr friend size_t tag_invoke(di::Tag<di::vocab::tuple_size>, di::InPlaceType<X>) { return 1zu; }

@@ -1,13 +1,5 @@
 #pragma once
 
-#include <di/concepts/array.h>
-#include <di/concepts/const.h>
-#include <di/concepts/convertible_to.h>
-#include <di/concepts/convertible_to_non_slicing.h>
-#include <di/concepts/implicit_lifetime.h>
-#include <di/concepts/language_array.h>
-#include <di/concepts/qualification_convertible_to.h>
-#include <di/concepts/span.h>
 #include <di/container/concepts/borrowed_container.h>
 #include <di/container/concepts/contiguous_container.h>
 #include <di/container/concepts/contiguous_iterator.h>
@@ -20,8 +12,11 @@
 #include <di/container/meta/enable_view.h>
 #include <di/container/meta/iterator_reference.h>
 #include <di/container/vector/constant_vector_interface.h>
-#include <di/meta/remove_cvref.h>
-#include <di/meta/remove_reference.h>
+#include <di/meta/core.h>
+#include <di/meta/language.h>
+#include <di/meta/operations.h>
+#include <di/meta/trivial.h>
+#include <di/meta/vocab.h>
 #include <di/types/size_t.h>
 #include <di/util/to_address.h>
 #include <di/vocab/optional/prelude.h>

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/concepts/object.h>
 #include <di/execution/concepts/queryable.h>
 #include <di/execution/interface/start.h>
+#include <di/meta/language.h>
 
 namespace di::concepts {
 template<typename T>

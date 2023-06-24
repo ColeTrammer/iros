@@ -1,10 +1,10 @@
 #pragma once
 
-#include <di/concepts/trivially_relocatable.h>
 #include <di/container/algorithm/in_out_result.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/iterator/prelude.h>
 #include <di/container/meta/prelude.h>
+#include <di/meta/trivial.h>
 #include <di/util/addressof.h>
 #include <di/util/construct_at.h>
 #include <di/util/destroy_at.h>

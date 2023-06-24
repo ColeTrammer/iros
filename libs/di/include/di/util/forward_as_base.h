@@ -1,11 +1,9 @@
 #pragma once
 
-#include <di/concepts/const.h>
-#include <di/concepts/derived_from.h>
-#include <di/concepts/reference.h>
-#include <di/meta/like.h>
-#include <di/meta/remove_cvref.h>
-#include <di/meta/type_identity.h>
+#include <di/meta/core.h>
+#include <di/meta/language.h>
+#include <di/meta/operations.h>
+#include <di/meta/util.h>
 #include <di/util/forward_like.h>
 
 namespace di::util {

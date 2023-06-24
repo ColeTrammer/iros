@@ -5,7 +5,7 @@
 #include <di/container/view/owning_view.h>
 #include <di/container/view/ref_view.h>
 #include <di/function/pipeline.h>
-#include <di/meta/decay.h>
+#include <di/meta/util.h>
 #include <di/util/declval.h>
 #include <di/util/forward.h>
 

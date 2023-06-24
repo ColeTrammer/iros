@@ -1,29 +1,17 @@
 #pragma once
 
-#include <di/concepts/common_reference_with.h>
-#include <di/concepts/common_with.h>
-#include <di/concepts/const_lvalue_refernece.h>
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/copy_assignable.h>
-#include <di/concepts/copy_constructible.h>
-#include <di/concepts/decay_same_as.h>
-#include <di/concepts/derived_from.h>
-#include <di/concepts/equality_comparable_with.h>
-#include <di/concepts/move_assignable.h>
-#include <di/concepts/move_constructible.h>
-#include <di/concepts/mutable_rvalue_reference.h>
-#include <di/concepts/three_way_comparable_with.h>
 #include <di/function/unpack.h>
 #include <di/function/ycombinator.h>
-#include <di/meta/add_member_get.h>
 #include <di/meta/algorithm.h>
-#include <di/meta/common_reference.h>
-#include <di/meta/common_type.h>
-#include <di/meta/compare_three_way_result.h>
+#include <di/meta/common.h>
+#include <di/meta/compare.h>
 #include <di/meta/constexpr.h>
-#include <di/meta/index_sequence_for.h>
-#include <di/meta/remove_cvref.h>
-#include <di/meta/type_list.h>
+#include <di/meta/core.h>
+#include <di/meta/language.h>
+#include <di/meta/list.h>
+#include <di/meta/operations.h>
+#include <di/meta/util.h>
+#include <di/util/add_member_get.h>
 #include <di/util/forward_as_base.h>
 #include <di/util/get_in_place.h>
 #include <di/util/swap.h>
@@ -36,7 +24,7 @@ namespace di::vocab {
 template<typename... Types>
 class Tuple
     : public TupleImpl<meta::IndexSequenceFor<Types...>, Types...>
-    , public meta::AddMemberGet<Tuple<Types...>> {
+    , public util::AddMemberGet<Tuple<Types...>> {
 private:
     using Base = TupleImpl<meta::IndexSequenceFor<Types...>, Types...>;
 
@@ -146,14 +134,16 @@ private:
         return sizeof...(Types);
     }
 
+    using TypeList = meta::List<Types...>;
+
     template<types::size_t index, concepts::DerivedFrom<Tuple> Self = Tuple>
-    constexpr friend InPlaceType<typename meta::TypeList<Types...>::template TypeAtIndex<index>>
-    tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Self>, Constexpr<index>) {
+    constexpr friend InPlaceType<meta::At<TypeList, index>> tag_invoke(types::Tag<tuple_element>,
+                                                                       types::InPlaceType<Self>, Constexpr<index>) {
         return {};
     }
 
     template<types::size_t index, concepts::DerivedFrom<Tuple> Self = Tuple>
-    constexpr friend InPlaceType<typename meta::TypeList<Types...>::template TypeAtIndex<index> const>
+    constexpr friend InPlaceType<meta::At<TypeList, index> const>
     tag_invoke(types::Tag<tuple_element>, types::InPlaceType<Self const>, Constexpr<index>) {
         return {};
     }

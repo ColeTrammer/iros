@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/concepts/predicate.h>
 #include <di/container/interface/prelude.h>
 #include <di/container/meta/prelude.h>
+#include <di/meta/relation.h>
 #include <di/parser/concepts/parser_context.h>
 #include <di/parser/create_parser.h>
 #include <di/parser/meta/parser_context_result.h>

@@ -4,10 +4,9 @@
 #include <di/any/meta/method_tag.h>
 #include <di/any/types/method.h>
 #include <di/any/types/prelude.h>
-#include <di/concepts/remove_cvref_same_as.h>
 #include <di/function/invoke.h>
 #include <di/function/tag_invoke.h>
-#include <di/meta/like.h>
+#include <di/meta/util.h>
 
 namespace di::concepts {
 namespace detail {

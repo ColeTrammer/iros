@@ -11,7 +11,6 @@
 #include <di/execution/types/empty_env.h>
 #include <di/function/tag_invoke.h>
 #include <di/meta/core.h>
-#include <di/meta/remove_cvref.h>
 #include <di/util/move.h>
 
 namespace di::execution {

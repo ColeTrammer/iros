@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/concepts/derived_from.h>
-#include <di/concepts/expected_error.h>
+#include <di/meta/operations.h>
+#include <di/meta/vocab.h>
 #include <di/parser/concepts/parser_context.h>
 #include <di/parser/parser_base.h>
 

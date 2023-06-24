@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/concepts/object.h>
+#include <di/meta/language.h>
 #include <di/util/addressof.h>
 #include <di/vocab/optional/prelude.h>
 

@@ -1,18 +1,10 @@
 #pragma once
 
-#include <di/concepts/assignable_from.h>
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/convertible_to.h>
-#include <di/concepts/copy_constructible.h>
-#include <di/concepts/default_constructible.h>
-#include <di/concepts/move_assignable.h>
-#include <di/concepts/move_constructible.h>
-#include <di/concepts/remove_cvref_same_as.h>
-#include <di/concepts/trivially_copy_assignable.h>
-#include <di/concepts/trivially_move_assignable.h>
 #include <di/meta/core.h>
-#include <di/meta/unwrap_ref_decay.h>
-#include <di/meta/wrap_reference.h>
+#include <di/meta/operations.h>
+#include <di/meta/trivial.h>
+#include <di/meta/util.h>
+#include <di/meta/vocab.h>
 #include <di/types/in_place.h>
 #include <di/util/addressof.h>
 #include <di/util/construct_at.h>

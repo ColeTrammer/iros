@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/concepts/decay_constructible.h>
 #include <di/function/into_void.h>
+#include <di/meta/util.h>
 #include <di/parser/combinator/transform.h>
 
 namespace di::parser {

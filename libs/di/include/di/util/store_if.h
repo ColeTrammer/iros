@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/concepts/constructible_from.h>
+#include <di/meta/operations.h>
 
 namespace di::util {
 template<typename T, bool should_store>

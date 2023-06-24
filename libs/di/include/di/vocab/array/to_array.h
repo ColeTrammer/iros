@@ -1,10 +1,9 @@
 #pragma once
 
-#include <di/concepts/copy_constructible.h>
-#include <di/concepts/language_array.h>
-#include <di/concepts/move_constructible.h>
-#include <di/meta/make_index_sequence.h>
-#include <di/meta/remove_cv.h>
+#include <di/meta/algorithm.h>
+#include <di/meta/core.h>
+#include <di/meta/language.h>
+#include <di/meta/operations.h>
 #include <di/util/move.h>
 #include <di/vocab/array/array.h>
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/execution/concepts/is_awaitable.h>
-#include <di/meta/add_lvalue_reference.h>
+#include <di/meta/util.h>
 
 namespace di::meta {
 template<typename Awaitable, typename Promise = void>

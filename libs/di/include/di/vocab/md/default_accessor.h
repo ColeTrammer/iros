@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/concepts/convertible_to_non_slicing.h>
+#include <di/meta/operations.h>
 #include <di/types/prelude.h>
 
 namespace di::vocab {

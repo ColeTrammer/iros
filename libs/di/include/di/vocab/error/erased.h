@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/concepts/trivially_relocatable.h>
+#include <di/meta/trivial.h>
 
 namespace di::vocab {
 template<concepts::TriviallyRelocatable T>

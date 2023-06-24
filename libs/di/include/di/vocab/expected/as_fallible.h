@@ -1,10 +1,9 @@
 #pragma once
 
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/expected.h>
 #include <di/function/pipeable.h>
-#include <di/meta/decay.h>
-#include <di/meta/unwrap_ref_rvalue.h>
+#include <di/meta/operations.h>
+#include <di/meta/util.h>
+#include <di/meta/vocab.h>
 #include <di/vocab/expected/expected_void_error.h>
 
 namespace di::vocab {

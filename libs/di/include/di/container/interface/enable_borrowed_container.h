@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/concepts/lvalue_reference.h>
 #include <di/function/tag_invoke.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/core.h>
+#include <di/meta/language.h>
 #include <di/types/in_place_type.h>
 
 namespace di::container {

@@ -2,9 +2,6 @@
 
 #include <di/any/concepts/vtable_for.h>
 #include <di/any/storage/storage_category.h>
-#include <di/concepts/convertible_to.h>
-#include <di/concepts/object.h>
-#include <di/concepts/reference.h>
 #include <di/container/algorithm/max.h>
 #include <di/container/allocator/allocate_one.h>
 #include <di/container/allocator/allocator.h>
@@ -12,6 +9,8 @@
 #include <di/container/allocator/fallible_allocator.h>
 #include <di/container/allocator/infallible_allocator.h>
 #include <di/meta/algorithm.h>
+#include <di/meta/language.h>
+#include <di/meta/operations.h>
 #include <di/platform/prelude.h>
 #include <di/sync/atomic.h>
 #include <di/types/prelude.h>

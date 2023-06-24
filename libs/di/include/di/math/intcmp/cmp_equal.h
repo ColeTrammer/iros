@@ -1,7 +1,6 @@
 #pragma once
 
-#include <di/concepts/integer.h>
-#include <di/meta/make_unsigned.h>
+#include <di/meta/language.h>
 
 namespace di::math {
 namespace detail {

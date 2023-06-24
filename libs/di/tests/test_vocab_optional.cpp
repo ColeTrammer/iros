@@ -1,5 +1,4 @@
-#include <di/concepts/trivial.h>
-#include <di/concepts/trivially_default_constructible.h>
+#include <di/meta/trivial.h>
 #include <di/vocab/optional/prelude.h>
 #include <dius/test/prelude.h>
 

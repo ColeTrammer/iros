@@ -26,7 +26,6 @@
 #include <di/function/tag_invoke.h>
 #include <di/meta/algorithm.h>
 #include <di/meta/core.h>
-#include <di/meta/remove_cvref.h>
 #include <di/sync/concepts/stoppable_token.h>
 #include <di/sync/concepts/unstoppable_token.h>
 #include <di/util/declval.h>

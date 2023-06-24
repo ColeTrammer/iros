@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/always_false.h>
 #include <di/execution/algorithm/into_result.h>
 #include <di/execution/algorithm/into_variant.h>
 #include <di/execution/concepts/sender_in.h>
@@ -12,6 +11,7 @@
 #include <di/function/curry.h>
 #include <di/function/pipeline.h>
 #include <di/meta/core.h>
+#include <di/meta/util.h>
 
 namespace di::execution {
 namespace sync_wait_ns {

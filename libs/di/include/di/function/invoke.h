@@ -1,13 +1,9 @@
 #pragma once
 
-#include <di/concepts/base_of.h>
-#include <di/concepts/implicitly_convertible_to.h>
-#include <di/concepts/member_function_pointer.h>
-#include <di/concepts/member_object_pointer.h>
-#include <di/concepts/member_pointer.h>
-#include <di/concepts/reference_wrapper.h>
-#include <di/meta/decay.h>
-#include <di/meta/member_pointer_class.h>
+#include <di/meta/language.h>
+#include <di/meta/operations.h>
+#include <di/meta/util.h>
+#include <di/meta/vocab.h>
 #include <di/util/declval.h>
 #include <di/util/forward.h>
 

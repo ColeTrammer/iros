@@ -1,14 +1,10 @@
 #pragma once
 
-#include <di/concepts/derived_from.h>
-#include <di/concepts/member_pointer.h>
 #include <di/meta/core.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/language.h>
+#include <di/meta/operations.h>
 
 namespace di::meta {
-template<auto val, typename T = meta::RemoveCVRef<decltype(val)>>
-struct Constexpr;
-
 namespace detail {
     template<typename T>
     concept ConstexprParam = requires { T::value; } && !concepts::MemberPointer<decltype(&T::value)> &&

@@ -1,8 +1,6 @@
 #pragma once
 
 #include <di/assert/assert_bool.h>
-#include <di/concepts/equality_comparable.h>
-#include <di/concepts/three_way_comparable.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/iterator/distance.h>
 #include <di/container/iterator/next.h>
@@ -10,6 +8,7 @@
 #include <di/container/tree/rb_tree_iterator.h>
 #include <di/container/tree/rb_tree_node.h>
 #include <di/function/compare.h>
+#include <di/meta/compare.h>
 #include <di/meta/core.h>
 #include <di/util/create.h>
 #include <di/util/exchange.h>

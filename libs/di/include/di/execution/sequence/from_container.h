@@ -1,8 +1,5 @@
 #pragma once
 
-#include <di/concepts/decay_constructible.h>
-#include <di/concepts/movable_value.h>
-#include <di/concepts/remove_cvref_same_as.h>
 #include <di/container/concepts/input_container.h>
 #include <di/container/concepts/view.h>
 #include <di/container/interface/begin.h>
@@ -31,9 +28,7 @@
 #include <di/function/tag_invoke.h>
 #include <di/meta/constexpr.h>
 #include <di/meta/core.h>
-#include <di/meta/decay.h>
-#include <di/meta/like.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/util.h>
 #include <di/platform/compiler.h>
 #include <di/sync/concepts/stoppable_token.h>
 #include <di/sync/concepts/unstoppable_token.h>

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/concepts/can_reference.h>
 #include <di/container/view/zip_view.h>
+#include <di/meta/operations.h>
 #include <di/util/rebindable_box.h>
 
 namespace di::container {

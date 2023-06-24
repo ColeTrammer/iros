@@ -2,8 +2,7 @@
 
 #include <di/function/tag_invoke.h>
 #include <di/meta/algorithm.h>
-#include <di/meta/remove_cvref.h>
-#include <di/meta/remove_reference.h>
+#include <di/meta/core.h>
 #include <di/types/prelude.h>
 
 namespace di::vocab {

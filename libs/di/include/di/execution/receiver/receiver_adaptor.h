@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/class_type.h>
 #include <di/execution/concepts/receiver.h>
 #include <di/execution/query/make_env.h>
 #include <di/execution/receiver/set_error.h>
@@ -9,6 +8,7 @@
 #include <di/execution/sequence/sequence_sender.h>
 #include <di/execution/types/prelude.h>
 #include <di/function/tag_invoke.h>
+#include <di/meta/util.h>
 #include <di/util/store_if.h>
 #include <di/vocab/error/prelude.h>
 

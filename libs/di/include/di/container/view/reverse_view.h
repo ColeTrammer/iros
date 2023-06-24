@@ -1,7 +1,5 @@
 #pragma once
 
-#include <di/concepts/copy_constructible.h>
-#include <di/concepts/default_initializable.h>
 #include <di/container/concepts/bidirectional_container.h>
 #include <di/container/concepts/borrowed_container.h>
 #include <di/container/concepts/common_container.h>
@@ -15,6 +13,7 @@
 #include <di/container/meta/container_iterator.h>
 #include <di/container/meta/enable_borrowed_container.h>
 #include <di/container/view/view_interface.h>
+#include <di/meta/operations.h>
 #include <di/util/move.h>
 #include <di/util/non_propagating_cache.h>
 #include <di/util/store_if.h>

@@ -1,7 +1,6 @@
 #pragma once
 
-#include <di/concepts/destructible.h>
-#include <di/concepts/move_constructible.h>
+#include <di/meta/operations.h>
 #include <di/util/addressof.h>
 #include <di/util/destroy_at.h>
 #include <di/util/move.h>

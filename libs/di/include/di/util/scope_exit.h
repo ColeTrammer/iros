@@ -1,9 +1,8 @@
 #pragma once
 
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/move_constructible.h>
-#include <di/concepts/remove_cvref_same_as.h>
 #include <di/function/invoke.h>
+#include <di/meta/operations.h>
+#include <di/meta/util.h>
 #include <di/util/exchange.h>
 #include <di/util/forward.h>
 #include <di/util/move.h>

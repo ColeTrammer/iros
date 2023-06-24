@@ -1,10 +1,8 @@
 #pragma once
 
-#include <di/concepts/integer.h>
-#include <di/concepts/signed_integer.h>
 #include <di/function/pipeline.h>
 #include <di/math/numeric_limits.h>
-#include <di/meta/make_unsigned.h>
+#include <di/meta/language.h>
 
 namespace di::math {
 namespace detail {

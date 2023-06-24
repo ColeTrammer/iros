@@ -1,8 +1,7 @@
 #pragma once
 
-#include <di/concepts/class.h>
-#include <di/concepts/enum.h>
 #include <di/container/interface/reconstruct.h>
+#include <di/meta/language.h>
 #include <di/util/forward.h>
 
 namespace di::concepts {

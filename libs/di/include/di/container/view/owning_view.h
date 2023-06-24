@@ -1,8 +1,5 @@
 #pragma once
 
-#include <di/concepts/default_initializable.h>
-#include <di/concepts/initializer_list.h>
-#include <di/concepts/movable.h>
 #include <di/container/concepts/borrowed_container.h>
 #include <di/container/concepts/container.h>
 #include <di/container/concepts/contiguous_container.h>
@@ -12,6 +9,8 @@
 #include <di/container/meta/container_value.h>
 #include <di/container/meta/enable_borrowed_container.h>
 #include <di/container/view/view_interface.h>
+#include <di/meta/language.h>
+#include <di/meta/operations.h>
 #include <di/util/move.h>
 
 namespace di::container {

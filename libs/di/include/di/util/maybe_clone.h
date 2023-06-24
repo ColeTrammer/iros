@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/concepts/move_constructible.h>
+#include <di/meta/operations.h>
 #include <di/util/clone.h>
 #include <di/util/move.h>
 

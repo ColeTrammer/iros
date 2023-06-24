@@ -1,7 +1,5 @@
 #pragma once
 
-#include <di/concepts/equality_comparable.h>
-#include <di/concepts/three_way_comparable.h>
 #include <di/container/algorithm/compare.h>
 #include <di/container/algorithm/equal.h>
 #include <di/container/interface/reconstruct.h>
@@ -20,6 +18,7 @@
 #include <di/container/vector/vector_size.h>
 #include <di/container/vector/vector_size_bytes.h>
 #include <di/container/vector/vector_subspan.h>
+#include <di/meta/compare.h>
 #include <di/types/prelude.h>
 #include <di/vocab/optional/prelude.h>
 #include <di/vocab/span/span_fixed_size.h>

@@ -6,8 +6,8 @@
 #include <di/container/iterator/sentinel_extension.h>
 #include <di/container/meta/prelude.h>
 #include <di/container/view/view_interface.h>
-#include <di/meta/maybe_const.h>
-#include <di/meta/remove_cv.h>
+#include <di/meta/core.h>
+#include <di/meta/util.h>
 #include <di/util/move.h>
 #include <di/vocab/tuple/prelude.h>
 

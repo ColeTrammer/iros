@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/concepts/destructible.h>
+#include <di/meta/operations.h>
 
 namespace di::concepts {
 template<typename T>

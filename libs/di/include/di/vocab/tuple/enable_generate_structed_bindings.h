@@ -2,10 +2,8 @@
 #pragma once
 
 #include <di/function/tag_invoke.h>
+#include <di/meta/algorithm.h>
 #include <di/meta/core.h>
-#include <di/meta/make_index_sequence.h>
-#include <di/meta/remove_cv.h>
-#include <di/meta/remove_reference.h>
 #include <di/types/in_place_type.h>
 #include <di/util/forward.h>
 #include <di/vocab/tuple/std_structed_binding.h>

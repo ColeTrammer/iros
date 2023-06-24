@@ -2,8 +2,7 @@
 
 #include <di/chrono/duration/prelude.h>
 #include <di/chrono/time_point/time_point_common_type.h>
-#include <di/concepts/equality_comparable_with.h>
-#include <di/concepts/three_way_comparable_with.h>
+#include <di/meta/compare.h>
 
 namespace di::chrono {
 template<typename C, concepts::InstanceOf<Duration> Dur>

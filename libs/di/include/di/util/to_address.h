@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/concepts/language_function.h>
+#include <di/meta/language.h>
 
 namespace di::util {
 namespace detail {

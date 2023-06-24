@@ -1,13 +1,13 @@
 #pragma once
 
-#include <di/concepts/language_array.h>
 #include <di/container/concepts/iterator.h>
 #include <di/container/interface/begin.h>
 #include <di/container/interface/end.h>
 #include <di/container/iterator/reverse_iterator.h>
 #include <di/function/tag_invoke.h>
-#include <di/meta/decay.h>
-#include <di/meta/remove_reference.h>
+#include <di/meta/core.h>
+#include <di/meta/language.h>
+#include <di/meta/util.h>
 #include <di/util/forward.h>
 
 namespace di::container {

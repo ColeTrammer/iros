@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/concepts/remove_cvref_same_as.h>
 #include <di/function/pipeline.h>
 #include <di/function/tag_invoke.h>
+#include <di/meta/util.h>
 #include <di/util/create.h>
 
 namespace di::util {

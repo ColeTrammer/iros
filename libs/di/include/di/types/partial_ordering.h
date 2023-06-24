@@ -53,3 +53,7 @@ constexpr inline partial_ordering partial_ordering::unordered(di::types::detail:
 namespace di::types {
 using std::partial_ordering;
 }
+
+namespace di {
+using types::partial_ordering;
+}

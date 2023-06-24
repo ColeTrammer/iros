@@ -1,7 +1,6 @@
 #pragma once
 
-#include <di/concepts/enum.h>
-#include <di/meta/underlying_type.h>
+#include <di/meta/language.h>
 
 namespace di::util {
 namespace detail {

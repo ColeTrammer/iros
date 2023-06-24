@@ -5,7 +5,6 @@
 #include <di/function/monad/monad_enable.h>
 #include <di/function/monad/monad_fmap.h>
 #include <di/meta/core.h>
-#include <di/meta/remove_cvref.h>
 #include <di/types/void.h>
 #include <di/util/forward.h>
 #include <di/util/reference_wrapper.h>

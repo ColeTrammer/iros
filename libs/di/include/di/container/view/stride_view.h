@@ -12,7 +12,7 @@
 #include <di/container/view/view_interface.h>
 #include <di/math/divide_round_up.h>
 #include <di/math/to_unsigned.h>
-#include <di/meta/maybe_const.h>
+#include <di/meta/util.h>
 
 namespace di::container {
 template<concepts::InputContainer View>

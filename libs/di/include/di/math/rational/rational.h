@@ -1,9 +1,8 @@
 #pragma once
 
 #include <di/assert/assert_bool.h>
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/convertible_to.h>
 #include <di/math/lcm.h>
+#include <di/meta/operations.h>
 
 namespace di::math {
 template<concepts::SignedInteger T>

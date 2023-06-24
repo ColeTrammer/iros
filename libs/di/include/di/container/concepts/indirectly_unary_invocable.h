@@ -1,11 +1,11 @@
 #pragma once
 
-#include <di/concepts/copy_constructible.h>
 #include <di/container/concepts/indirectly_readable.h>
 #include <di/container/meta/iterator_common_reference.h>
 #include <di/container/meta/iterator_reference.h>
 #include <di/container/meta/iterator_value.h>
 #include <di/function/invoke.h>
+#include <di/meta/operations.h>
 
 namespace di::concepts {
 template<typename F, typename It>

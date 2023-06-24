@@ -1,11 +1,8 @@
 #pragma once
 
-#include <di/concepts/class.h>
-#include <di/concepts/enum.h>
-#include <di/concepts/lvalue_reference.h>
-#include <di/concepts/rvalue_reference.h>
 #include <di/function/tag_invoke.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/core.h>
+#include <di/meta/language.h>
 #include <di/util/forward.h>
 #include <di/util/move.h>
 

@@ -1,8 +1,5 @@
 #pragma once
 
-#include <di/concepts/copy_constructible.h>
-#include <di/concepts/equality_comparable.h>
-#include <di/concepts/one_of.h>
 #include <di/execution/concepts/queryable.h>
 #include <di/execution/concepts/sender.h>
 #include <di/execution/interface/get_env.h>
@@ -10,7 +7,9 @@
 #include <di/execution/receiver/set_error.h>
 #include <di/execution/receiver/set_stopped.h>
 #include <di/execution/receiver/set_value.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/compare.h>
+#include <di/meta/core.h>
+#include <di/meta/operations.h>
 
 namespace di::execution {
 template<concepts::OneOf<SetValue, SetError, SetStopped> CPO>

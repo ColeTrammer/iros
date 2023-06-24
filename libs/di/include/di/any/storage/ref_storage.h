@@ -2,10 +2,9 @@
 
 #include <di/any/concepts/vtable_for.h>
 #include <di/any/storage/storage_category.h>
-#include <di/concepts/convertible_to.h>
-#include <di/concepts/object.h>
-#include <di/concepts/reference.h>
 #include <di/meta/algorithm.h>
+#include <di/meta/language.h>
+#include <di/meta/operations.h>
 #include <di/types/prelude.h>
 #include <di/util/addressof.h>
 

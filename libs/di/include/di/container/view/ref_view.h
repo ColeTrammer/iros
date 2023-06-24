@@ -1,7 +1,5 @@
 #pragma once
 
-#include <di/concepts/decay_same_as.h>
-#include <di/concepts/object.h>
 #include <di/container/concepts/contiguous_container.h>
 #include <di/container/concepts/has_empty_container.h>
 #include <di/container/concepts/sized_container.h>
@@ -9,6 +7,8 @@
 #include <di/container/interface/reconstruct.h>
 #include <di/container/meta/enable_borrowed_container.h>
 #include <di/container/view/view_interface.h>
+#include <di/meta/language.h>
+#include <di/meta/util.h>
 #include <di/util/declval.h>
 #include <di/util/forward.h>
 #include <di/util/reference_wrapper.h>

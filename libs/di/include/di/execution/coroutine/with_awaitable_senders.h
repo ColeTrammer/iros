@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/concepts/class_type.h>
 #include <di/execution/coroutine/as_awaitable.h>
+#include <di/meta/util.h>
 
 namespace di::execution {
 template<concepts::ClassType Promise>

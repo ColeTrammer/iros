@@ -37,16 +37,11 @@ using types::Void;
 
 using types::intmax_t;
 using types::intptr_t;
-using types::nullptr_t;
 using types::ptrdiff_t;
 using types::size_t;
 using types::ssize_t;
 using types::uintmax_t;
 using types::uintptr_t;
-
-using types::partial_ordering;
-using types::strong_ordering;
-using types::weak_ordering;
 
 #ifdef DI_HAVE_128_BIT_INTEGERS
 using types::i128;

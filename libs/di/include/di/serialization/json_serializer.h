@@ -1,8 +1,5 @@
 #pragma once
 
-#include <di/concepts/always_false.h>
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/integral.h>
 #include <di/container/action/sequence.h>
 #include <di/container/string/fixed_string_to_utf8_string_view.h>
 #include <di/container/string/string_impl.h>
@@ -15,6 +12,9 @@
 #include <di/io/string_writer.h>
 #include <di/io/write_exactly.h>
 #include <di/meta/core.h>
+#include <di/meta/language.h>
+#include <di/meta/operations.h>
+#include <di/meta/util.h>
 #include <di/reflect/enum_to_string.h>
 #include <di/reflect/enumerator.h>
 #include <di/reflect/field.h>

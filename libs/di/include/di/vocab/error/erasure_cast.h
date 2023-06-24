@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/concepts/trivially_relocatable.h>
+#include <di/meta/trivial.h>
 #include <di/util/bit_cast.h>
 #include <di/util/compile_time_fail.h>
 

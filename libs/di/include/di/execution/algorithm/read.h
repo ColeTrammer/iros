@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/decay_constructible.h>
 #include <di/execution/concepts/operation_state.h>
 #include <di/execution/concepts/receiver.h>
 #include <di/execution/concepts/sender.h>
@@ -12,6 +11,7 @@
 #include <di/execution/query/get_scheduler.h>
 #include <di/execution/query/get_stop_token.h>
 #include <di/function/invoke.h>
+#include <di/meta/util.h>
 
 namespace di::execution {
 namespace read_ns {

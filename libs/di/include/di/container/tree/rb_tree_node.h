@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/concepts/constructible_from.h>
+#include <di/meta/operations.h>
 #include <di/types/prelude.h>
 #include <di/util/forward.h>
 

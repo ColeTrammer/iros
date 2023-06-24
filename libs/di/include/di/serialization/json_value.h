@@ -1,9 +1,5 @@
 #pragma once
 
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/definitely_three_way_comparable_with.h>
-#include <di/concepts/equality_comparable.h>
-#include <di/concepts/three_way_comparable.h>
 #include <di/container/algorithm/all_of.h>
 #include <di/container/meta/container_value.h>
 #include <di/container/string/string.h>
@@ -13,6 +9,8 @@
 #include <di/format/formatter.h>
 #include <di/function/tag_invoke.h>
 #include <di/io/interface/writer.h>
+#include <di/meta/compare.h>
+#include <di/meta/operations.h>
 #include <di/serialization/json_serializer.h>
 #include <di/serialization/serialize.h>
 #include <di/types/prelude.h>

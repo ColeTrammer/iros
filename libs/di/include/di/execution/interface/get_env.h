@@ -1,10 +1,10 @@
 #pragma once
 
-#include <di/concepts/not_same_as.h>
 #include <di/execution/concepts/queryable.h>
 #include <di/execution/query/forwarding_query.h>
 #include <di/execution/types/empty_env.h>
 #include <di/function/tag_invoke.h>
+#include <di/meta/util.h>
 
 namespace di::execution {
 namespace detail {

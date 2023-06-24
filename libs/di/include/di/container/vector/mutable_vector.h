@@ -1,12 +1,11 @@
 #pragma once
 
-#include <di/concepts/default_constructible.h>
-#include <di/concepts/language_void.h>
-#include <di/concepts/maybe_fallible.h>
-#include <di/concepts/move_constructible.h>
 #include <di/container/concepts/contiguous_container.h>
 #include <di/container/vector/constant_vector.h>
 #include <di/meta/core.h>
+#include <di/meta/language.h>
+#include <di/meta/operations.h>
+#include <di/meta/vocab.h>
 #include <di/types/prelude.h>
 
 namespace di::concepts::detail {

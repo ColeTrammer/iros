@@ -1,16 +1,14 @@
 #pragma once
 
-#include <di/concepts/copy_constructible.h>
-#include <di/concepts/derived_from.h>
-#include <di/concepts/remove_cvref_same_as.h>
 #include <di/execution/concepts/forwarding_query.h>
 #include <di/execution/interface/get_env.h>
 #include <di/function/invoke.h>
 #include <di/function/tag_invoke.h>
 #include <di/meta/algorithm.h>
 #include <di/meta/core.h>
-#include <di/meta/decay.h>
 #include <di/meta/function.h>
+#include <di/meta/operations.h>
+#include <di/meta/util.h>
 #include <di/util/declval.h>
 #include <di/util/forward.h>
 #include <di/util/get.h>

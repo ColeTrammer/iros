@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/concepts/movable.h>
 #include <di/container/concepts/container.h>
 #include <di/container/interface/enable_view.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/core.h>
+#include <di/meta/operations.h>
 
 namespace di::concepts {
 template<typename T>

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/concepts/predicate.h>
 #include <di/container/interface/prelude.h>
 #include <di/container/meta/prelude.h>
+#include <di/meta/relation.h>
 #include <di/parser/basic/match_zero_or_more.h>
 #include <di/parser/combinator/and_then.h>
 #include <di/parser/concepts/parser_context.h>

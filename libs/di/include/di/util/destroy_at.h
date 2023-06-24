@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/concepts/destructible.h>
-#include <di/concepts/language_array.h>
-#include <di/concepts/trivially_destructible.h>
+#include <di/meta/language.h>
+#include <di/meta/operations.h>
+#include <di/meta/trivial.h>
 #include <di/util/addressof.h>
 
 namespace di::util {

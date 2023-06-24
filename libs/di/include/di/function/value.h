@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/concepts/decay_constructible.h>
 #include <di/function/pipeable.h>
+#include <di/meta/util.h>
 #include <di/types/prelude.h>
 #include <di/util/forward.h>
 #include <di/util/move.h>

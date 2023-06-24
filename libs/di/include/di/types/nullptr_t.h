@@ -11,3 +11,7 @@ using nullptr_t = decltype(nullptr);
 namespace di::types {
 using nullptr_t = std::nullptr_t;
 }
+
+namespace di {
+using types::nullptr_t;
+}

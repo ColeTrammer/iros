@@ -3,8 +3,7 @@
 #include <di/container/string/fixed_string.h>
 #include <di/function/invoke.h>
 #include <di/meta/core.h>
-#include <di/meta/member_pointer_class.h>
-#include <di/meta/member_pointer_value.h>
+#include <di/meta/language.h>
 #include <di/vocab/tuple/tuple.h>
 
 namespace di::reflection {

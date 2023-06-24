@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/copyable.h>
 #include <di/container/algorithm/min_element.h>
 #include <di/container/concepts/indirect_strict_weak_order.h>
 #include <di/container/concepts/prelude.h>
@@ -8,6 +7,7 @@
 #include <di/function/compare.h>
 #include <di/function/identity.h>
 #include <di/function/invoke.h>
+#include <di/meta/operations.h>
 #include <di/util/initializer_list.h>
 #include <di/util/reference_wrapper.h>
 

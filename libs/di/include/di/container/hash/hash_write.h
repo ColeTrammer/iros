@@ -1,15 +1,15 @@
 #pragma once
 
-#include <di/concepts/integral_or_enum.h>
-#include <di/concepts/tuple.h>
 #include <di/container/concepts/forward_container.h>
 #include <di/container/hash/default_hasher.h>
 #include <di/container/hash/hasher.h>
 #include <di/container/meta/container_reference.h>
 #include <di/function/bind_front.h>
 #include <di/function/tag_invoke.h>
+#include <di/meta/algorithm.h>
 #include <di/meta/constexpr.h>
-#include <di/meta/make_index_sequence.h>
+#include <di/meta/language.h>
+#include <di/meta/vocab.h>
 #include <di/types/prelude.h>
 #include <di/util/bit_cast.h>
 #include <di/util/declval.h>

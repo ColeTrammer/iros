@@ -1,16 +1,15 @@
 #pragma once
 
 #include <di/assert/assert_bool.h>
-#include <di/concepts/copyable.h>
-#include <di/concepts/decay_same_as.h>
-#include <di/concepts/equality_comparable.h>
-#include <di/concepts/three_way_comparable.h>
 #include <di/container/algorithm/compare.h>
 #include <di/container/algorithm/equal.h>
 #include <di/container/algorithm/fill.h>
 #include <di/container/algorithm/swap_ranges.h>
 #include <di/container/interface/reconstruct.h>
+#include <di/meta/compare.h>
 #include <di/meta/constexpr.h>
+#include <di/meta/operations.h>
+#include <di/meta/util.h>
 #include <di/types/size_t.h>
 #include <di/util/forward_like.h>
 #include <di/util/get_in_place.h>

@@ -1,13 +1,12 @@
 #pragma once
 
-#include <di/concepts/integral_or_enum.h>
 #include <di/container/hash/default_hasher.h>
 #include <di/container/hash/hash_write.h>
 #include <di/function/tag_invoke.h>
 #include <di/function/unpack.h>
+#include <di/meta/algorithm.h>
 #include <di/meta/core.h>
-#include <di/meta/make_index_sequence.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/language.h>
 #include <di/types/prelude.h>
 #include <di/vocab/tuple/tuple_element.h>
 #include <di/vocab/tuple/tuple_like.h>

@@ -1,9 +1,9 @@
 #pragma once
 
 #include <di/assert/prelude.h>
-#include <di/concepts/implicit_lifetime.h>
 #include <di/container/intrusive/prelude.h>
 #include <di/function/prelude.h>
+#include <di/meta/trivial.h>
 #include <di/sync/memory_order.h>
 #include <di/types/integers.h>
 #include <di/types/prelude.h>

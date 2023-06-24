@@ -1,12 +1,12 @@
 #pragma once
 
-#include <di/concepts/equality_comparable.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/interface/prelude.h>
 #include <di/container/iterator/prelude.h>
 #include <di/container/meta/prelude.h>
 #include <di/container/types/prelude.h>
 #include <di/math/to_unsigned.h>
+#include <di/meta/compare.h>
 #include <di/util/clone.h>
 #include <di/vocab/expected/prelude.h>
 #include <di/vocab/expected/try_infallible.h>

@@ -4,7 +4,7 @@
 #include <di/any/meta/method_signature.h>
 #include <di/any/types/prelude.h>
 #include <di/meta/algorithm.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/core.h>
 
 namespace di::concepts {
 namespace detail {

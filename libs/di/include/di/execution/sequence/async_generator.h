@@ -1,16 +1,13 @@
 #pragma once
 
 #include <di/assert/assert_bool.h>
-#include <di/concepts/language_void.h>
-#include <di/concepts/reference.h>
 #include <di/execution/algorithm/just.h>
 #include <di/execution/coroutine/with_awaitable_senders.h>
 #include <di/execution/sequence/async_range.h>
 #include <di/execution/sequence/sequence_sender.h>
 #include <di/function/tag_invoke.h>
-#include <di/meta/add_pointer.h>
 #include <di/meta/core.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/language.h>
 #include <di/util/coroutine.h>
 #include <di/util/exchange.h>
 #include <di/util/immovable.h>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/container/iterator/iterator_ssize_type.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/core.h>
 
 namespace di::meta {
 template<typename T>

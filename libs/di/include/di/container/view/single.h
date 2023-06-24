@@ -2,7 +2,7 @@
 
 #include <di/container/view/single_view.h>
 #include <di/function/tag_invoke.h>
-#include <di/meta/decay.h>
+#include <di/meta/util.h>
 #include <di/util/forward.h>
 
 namespace di::container::view {

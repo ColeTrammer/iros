@@ -1,6 +1,5 @@
 #include <di/meta/algorithm.h>
 #include <di/meta/constexpr.h>
-#include <di/meta/make_index_sequence.h>
 #include <di/types/prelude.h>
 #include <di/vocab/tuple/tuple_element.h>
 #include <di/vocab/tuple/tuple_like.h>

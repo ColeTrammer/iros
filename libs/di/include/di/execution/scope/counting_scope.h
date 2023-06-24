@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/remove_cvref_same_as.h>
 #include <di/container/allocator/allocator.h>
 #include <di/container/allocator/fallible_allocator.h>
 #include <di/container/allocator/infallible_allocator.h>
@@ -30,8 +29,7 @@
 #include <di/function/container/function.h>
 #include <di/function/tag_invoke.h>
 #include <di/meta/core.h>
-#include <di/meta/like.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/util.h>
 #include <di/platform/compiler.h>
 #include <di/sync/atomic.h>
 #include <di/sync/memory_order.h>

@@ -7,8 +7,8 @@
 #include <di/container/interface/possibly_const_container.h>
 #include <di/container/meta/const_iterator.h>
 #include <di/function/tag_invoke.h>
-#include <di/meta/decay.h>
-#include <di/meta/remove_reference.h>
+#include <di/meta/core.h>
+#include <di/meta/util.h>
 #include <di/util/as_const_pointer.h>
 #include <di/util/forward.h>
 

@@ -1,9 +1,8 @@
 #pragma once
 
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/derived_from.h>
-#include <di/meta/decay.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/core.h>
+#include <di/meta/operations.h>
+#include <di/meta/util.h>
 
 namespace di::function::pipeline {
 struct EnablePipeline {};

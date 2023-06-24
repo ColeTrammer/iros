@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/concepts/decays_to.h>
 #include <di/function/invoke.h>
+#include <di/meta/util.h>
 
 namespace di::util {
 template<concepts::Invocable Fun>

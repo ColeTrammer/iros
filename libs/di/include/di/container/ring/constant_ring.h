@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/concepts/const.h>
 #include <di/container/vector/constant_vector.h>
 #include <di/meta/core.h>
+#include <di/meta/language.h>
 #include <di/types/prelude.h>
 
 namespace di::concepts::detail {

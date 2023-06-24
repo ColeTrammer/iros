@@ -1,9 +1,8 @@
 #pragma once
 
-#include <di/concepts/integer.h>
 #include <di/math/numeric_limits.h>
-#include <di/meta/common_type.h>
-#include <di/meta/make_unsigned.h>
+#include <di/meta/common.h>
+#include <di/meta/language.h>
 #include <di/random/concepts/uniform_random_bit_generator.h>
 
 namespace di::random {

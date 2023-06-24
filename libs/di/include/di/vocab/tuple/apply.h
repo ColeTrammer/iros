@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/function/invoke.h>
-#include <di/meta/make_index_sequence.h>
+#include <di/meta/algorithm.h>
 #include <di/types/size_t.h>
 #include <di/util/forward.h>
 #include <di/util/get.h>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/meta/expected_value.h>
+#include <di/meta/vocab.h>
 #include <di/parser/concepts/parser.h>
 #include <di/parser/concepts/parser_context.h>
 #include <di/util/declval.h>

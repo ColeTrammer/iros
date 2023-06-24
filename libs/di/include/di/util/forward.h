@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/meta/remove_reference.h>
+#include <di/meta/core.h>
 
 #ifndef DI_NO_USE_STD
 #include <utility>

@@ -1,16 +1,5 @@
 #pragma once
 
-#include <di/concepts/convertible_to.h>
-#include <di/concepts/copyable.h>
-#include <di/concepts/default_initializable.h>
-#include <di/concepts/equality_comparable.h>
-#include <di/concepts/integer.h>
-#include <di/concepts/semiregular.h>
-#include <di/concepts/signed_integer.h>
-#include <di/concepts/three_way_comparable.h>
-#include <di/concepts/totally_ordered.h>
-#include <di/concepts/unsigned_integer.h>
-#include <di/concepts/weakly_equality_comparable_with.h>
 #include <di/container/concepts/sized_sentinel_for.h>
 #include <di/container/interface/reconstruct.h>
 #include <di/container/iterator/iterator_base.h>
@@ -27,8 +16,11 @@
 #include <di/container/types/random_access_iterator_tag.h>
 #include <di/container/view/view_interface.h>
 #include <di/math/to_unsigned.h>
+#include <di/meta/compare.h>
 #include <di/meta/core.h>
-#include <di/meta/type_identity.h>
+#include <di/meta/language.h>
+#include <di/meta/operations.h>
+#include <di/meta/util.h>
 
 namespace di::container {
 namespace detail {

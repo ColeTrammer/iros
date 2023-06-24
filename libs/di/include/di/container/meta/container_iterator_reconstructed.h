@@ -3,7 +3,7 @@
 #include <di/container/interface/reconstruct.h>
 #include <di/container/meta/container_iterator.h>
 #include <di/container/meta/container_sentinel.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/core.h>
 #include <di/types/prelude.h>
 #include <di/util/declval.h>
 

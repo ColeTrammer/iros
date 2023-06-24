@@ -1,9 +1,8 @@
 #pragma once
 
-#include <di/concepts/integer.h>
-#include <di/concepts/signed_integer.h>
 #include <di/container/view/iota.h>
 #include <di/container/view/range.h>
+#include <di/meta/language.h>
 
 namespace di::container::view {
 namespace detail {

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/equality_comparable_with.h>
 #include <di/container/iterator/distance.h>
 #include <di/format/bounded_format_context.h>
 #include <di/format/builtin_formatter/prelude.h>
@@ -13,6 +12,7 @@
 #include <di/function/less.h>
 #include <di/function/not_equal.h>
 #include <di/math/to_unsigned.h>
+#include <di/meta/compare.h>
 #include <di/util/compile_time_fail.h>
 #include <di/util/source_location.h>
 

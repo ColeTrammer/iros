@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/concepts/language_void.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/core.h>
+#include <di/meta/language.h>
 #include <di/vocab/error/meta/status_code_domain_value.h>
 #include <di/vocab/error/status_code_storage.h>
 

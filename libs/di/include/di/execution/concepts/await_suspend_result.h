@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/one_of.h>
 #include <di/meta/core.h>
 #include <di/util/coroutine.h>
 

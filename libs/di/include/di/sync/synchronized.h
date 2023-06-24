@@ -1,12 +1,9 @@
 #pragma once
 
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/copy_constructible.h>
-#include <di/concepts/default_constructible.h>
-#include <di/concepts/move_constructible.h>
-#include <di/concepts/remove_cvref_same_as.h>
 #include <di/function/invoke.h>
 #include <di/meta/core.h>
+#include <di/meta/operations.h>
+#include <di/meta/util.h>
 #include <di/platform/prelude.h>
 #include <di/sync/concepts/lock.h>
 #include <di/sync/scoped_lock.h>

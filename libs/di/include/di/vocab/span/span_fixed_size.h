@@ -1,14 +1,6 @@
 #pragma once
 
 #include <di/assert/assert_bool.h>
-#include <di/concepts/array.h>
-#include <di/concepts/const.h>
-#include <di/concepts/convertible_to.h>
-#include <di/concepts/equality_comparable.h>
-#include <di/concepts/language_array.h>
-#include <di/concepts/qualification_convertible_to.h>
-#include <di/concepts/span.h>
-#include <di/concepts/three_way_comparable.h>
 #include <di/container/algorithm/compare.h>
 #include <di/container/algorithm/equal.h>
 #include <di/container/concepts/borrowed_container.h>
@@ -23,11 +15,14 @@
 #include <di/container/meta/enable_borrowed_container.h>
 #include <di/container/meta/enable_view.h>
 #include <di/container/meta/iterator_reference.h>
-#include <di/meta/add_member_get.h>
+#include <di/meta/compare.h>
 #include <di/meta/constexpr.h>
-#include <di/meta/remove_cvref.h>
-#include <di/meta/remove_reference.h>
+#include <di/meta/core.h>
+#include <di/meta/language.h>
+#include <di/meta/operations.h>
+#include <di/meta/vocab.h>
 #include <di/types/size_t.h>
+#include <di/util/add_member_get.h>
 #include <di/util/get_in_place.h>
 #include <di/util/to_address.h>
 #include <di/vocab/optional/prelude.h>
@@ -46,7 +41,7 @@ requires(extent != dynamic_extent)
 class Span<T, extent>
     : public meta::EnableView<Span<T, extent>>
     , public meta::EnableBorrowedContainer<Span<T, extent>>
-    , public meta::AddMemberGet<Span<T, extent>> {
+    , public util::AddMemberGet<Span<T, extent>> {
 public:
     using Element = T;
 

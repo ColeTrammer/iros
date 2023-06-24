@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/movable_value.h>
 #include <di/container/allocator/allocator.h>
 #include <di/execution/algorithm/start_detached.h>
 #include <di/execution/algorithm/then.h>
@@ -9,6 +8,7 @@
 #include <di/execution/sequence/sequence_sender.h>
 #include <di/function/invoke.h>
 #include <di/function/tag_invoke.h>
+#include <di/meta/util.h>
 #include <di/platform/prelude.h>
 
 namespace di::execution {

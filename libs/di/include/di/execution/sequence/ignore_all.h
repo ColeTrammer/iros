@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/remove_cvref_same_as.h>
 #include <di/execution/concepts/receiver.h>
 #include <di/execution/concepts/receiver_of.h>
 #include <di/execution/concepts/sender.h>
@@ -26,9 +25,7 @@
 #include <di/function/tag_invoke.h>
 #include <di/meta/algorithm.h>
 #include <di/meta/core.h>
-#include <di/meta/decay.h>
-#include <di/meta/like.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/util.h>
 #include <di/platform/compiler.h>
 #include <di/sync/atomic.h>
 #include <di/sync/memory_order.h>

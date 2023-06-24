@@ -1,7 +1,7 @@
 #pragma once
 
 #include <di/meta/algorithm.h>
-#include <di/meta/remove_rvalue_reference.h>
+#include <di/meta/language.h>
 #include <di/util/get.h>
 #include <di/vocab/optional/prelude.h>
 #include <di/vocab/variant/variant_like.h>

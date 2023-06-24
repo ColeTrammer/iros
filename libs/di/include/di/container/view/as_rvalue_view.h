@@ -1,13 +1,12 @@
 #pragma once
 
-#include <di/concepts/copy_constructible.h>
-#include <di/concepts/default_initializable.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/concepts/simple_view.h>
 #include <di/container/iterator/move_iterator.h>
 #include <di/container/meta/as_view.h>
 #include <di/container/meta/enable_borrowed_container.h>
 #include <di/container/view/view_interface.h>
+#include <di/meta/operations.h>
 #include <di/util/move.h>
 
 namespace di::container {

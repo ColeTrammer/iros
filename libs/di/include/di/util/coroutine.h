@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/concepts/language_void.h>
+#include <di/meta/language.h>
 #include <di/types/prelude.h>
 
 #ifndef DI_NO_USE_STD

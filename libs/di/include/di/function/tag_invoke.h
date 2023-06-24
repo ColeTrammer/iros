@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/concepts/implicitly_convertible_to.h>
-#include <di/meta/decay.h>
+#include <di/meta/operations.h>
+#include <di/meta/util.h>
 #include <di/util/declval.h>
 #include <di/util/forward.h>
 

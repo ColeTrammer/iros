@@ -1,7 +1,5 @@
 #pragma once
 
-#include <di/concepts/expected.h>
-#include <di/concepts/predicate.h>
 #include <di/container/allocator/allocate_one.h>
 #include <di/container/allocator/allocation_result.h>
 #include <di/container/allocator/allocator.h>
@@ -13,7 +11,8 @@
 #include <di/container/intrusive/intrusive_tag_base.h>
 #include <di/container/vector/mutable_vector.h>
 #include <di/meta/core.h>
-#include <di/meta/like_expected.h>
+#include <di/meta/relation.h>
+#include <di/meta/vocab.h>
 #include <di/vocab/expected/prelude.h>
 
 namespace di::container {

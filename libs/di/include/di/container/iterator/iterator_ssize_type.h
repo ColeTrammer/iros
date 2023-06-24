@@ -1,9 +1,7 @@
 #pragma once
 
-#include <di/concepts/integral.h>
-#include <di/concepts/pointer.h>
 #include <di/function/tag_invoke.h>
-#include <di/meta/make_signed.h>
+#include <di/meta/language.h>
 #include <di/types/in_place_type.h>
 #include <di/types/ssize_t.h>
 #include <di/util/declval.h>

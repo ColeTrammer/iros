@@ -2,7 +2,6 @@
 
 #include <di/assert/prelude.h>
 #include <di/container/algorithm/prelude.h>
-#include <di/meta/prelude.h>
 #include <iris/core/error.h>
 #include <iris/core/userspace_access.h>
 

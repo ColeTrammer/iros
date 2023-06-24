@@ -1,7 +1,5 @@
 #pragma once
 
-#include <di/concepts/one_of.h>
-#include <di/concepts/remove_cvref_same_as.h>
 #include <di/execution/algorithm/into_variant.h>
 #include <di/execution/algorithm/transfer.h>
 #include <di/execution/concepts/forwarding_query.h>
@@ -34,11 +32,7 @@
 #include <di/meta/algorithm.h>
 #include <di/meta/constexpr.h>
 #include <di/meta/core.h>
-#include <di/meta/decay.h>
-#include <di/meta/like.h>
-#include <di/meta/make_index_sequence.h>
-#include <di/meta/remove_cvref.h>
-#include <di/meta/type_identity.h>
+#include <di/meta/util.h>
 #include <di/sync/atomic.h>
 #include <di/sync/memory_order.h>
 #include <di/sync/stop_token/in_place_stop_token.h>

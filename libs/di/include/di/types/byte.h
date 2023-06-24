@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/concepts/integral.h>
+#include <di/meta/language.h>
 
 #ifndef DI_NO_USE_STD
 #include <cstddef>

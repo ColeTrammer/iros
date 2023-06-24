@@ -1,10 +1,9 @@
 #pragma once
 
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/copy_constructible.h>
-#include <di/concepts/integer.h>
-#include <di/concepts/remove_cvref_same_as.h>
 #include <di/container/string/constant_string.h>
+#include <di/meta/language.h>
+#include <di/meta/operations.h>
+#include <di/meta/util.h>
 
 namespace di::reflection {
 template<typename T>

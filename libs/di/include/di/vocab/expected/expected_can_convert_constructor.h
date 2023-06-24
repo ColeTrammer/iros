@@ -1,7 +1,6 @@
 #pragma once
 
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/convertible_to.h>
+#include <di/meta/operations.h>
 #include <di/vocab/expected/expected_forward_declaration.h>
 #include <di/vocab/expected/unexpected.h>
 

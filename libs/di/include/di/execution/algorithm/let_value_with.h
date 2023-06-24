@@ -1,15 +1,11 @@
 #pragma once
 
-#include <di/concepts/decay_constructible.h>
-#include <di/concepts/decays_to.h>
-#include <di/concepts/movable_value.h>
 #include <di/execution/concepts/prelude.h>
 #include <di/execution/meta/prelude.h>
 #include <di/execution/receiver/prelude.h>
 #include <di/execution/types/prelude.h>
 #include <di/function/invoke.h>
-#include <di/meta/decay.h>
-#include <di/meta/like.h>
+#include <di/meta/util.h>
 #include <di/platform/compiler.h>
 #include <di/util/defer_construct.h>
 #include <di/util/move.h>

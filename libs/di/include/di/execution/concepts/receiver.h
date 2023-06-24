@@ -1,10 +1,9 @@
 #pragma once
 
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/move_constructible.h>
 #include <di/execution/interface/get_env.h>
 #include <di/execution/receiver/is_receiver.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/core.h>
+#include <di/meta/operations.h>
 
 namespace di::concepts {
 template<typename T>

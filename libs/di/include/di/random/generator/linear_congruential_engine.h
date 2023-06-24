@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/concepts/unsigned_integer.h>
+#include <di/meta/language.h>
 #include <di/types/prelude.h>
 
 namespace di::random {

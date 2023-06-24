@@ -5,7 +5,7 @@
 #include <di/container/meta/prelude.h>
 #include <di/container/types/prelude.h>
 #include <di/container/view/view_interface.h>
-#include <di/meta/maybe_const.h>
+#include <di/meta/util.h>
 #include <di/vocab/tuple/prelude.h>
 
 namespace di::container {

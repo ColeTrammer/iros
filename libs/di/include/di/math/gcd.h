@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/concepts/integer.h>
 #include <di/math/abs_unsigned.h>
-#include <di/meta/common_type.h>
+#include <di/meta/common.h>
+#include <di/meta/language.h>
 
 namespace di::math {
 namespace detail {

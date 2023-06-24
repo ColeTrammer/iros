@@ -1,19 +1,12 @@
 #pragma once
 
 #include <di/assert/assert_bool.h>
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/convertible_to.h>
-#include <di/concepts/copy_constructible.h>
-#include <di/concepts/equality_comparable_with.h>
-#include <di/concepts/expected.h>
-#include <di/concepts/move_constructible.h>
-#include <di/concepts/remove_cvref_same_as.h>
 #include <di/function/invoke.h>
 #include <di/function/monad/monad_interface.h>
-#include <di/meta/expected_error.h>
-#include <di/meta/expected_value.h>
-#include <di/meta/like.h>
-#include <di/meta/unwrap_ref_decay.h>
+#include <di/meta/compare.h>
+#include <di/meta/operations.h>
+#include <di/meta/util.h>
+#include <di/meta/vocab.h>
 #include <di/util/forward.h>
 #include <di/util/initializer_list.h>
 #include <di/util/move.h>

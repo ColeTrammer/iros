@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/concepts/predicate.h>
+#include <di/meta/relation.h>
 #include <di/parser/basic/code_point_parser.h>
 #include <di/parser/combinator/and_then.h>
 #include <di/parser/concepts/parser.h>

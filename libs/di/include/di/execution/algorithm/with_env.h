@@ -1,7 +1,5 @@
 #pragma once
 
-#include <di/concepts/copy_constructible.h>
-#include <di/concepts/remove_cvref_same_as.h>
 #include <di/execution/concepts/receiver.h>
 #include <di/execution/concepts/sender.h>
 #include <di/execution/concepts/sender_to.h>
@@ -17,9 +15,9 @@
 #include <di/function/pipeable.h>
 #include <di/function/tag_invoke.h>
 #include <di/meta/constexpr.h>
-#include <di/meta/decay.h>
-#include <di/meta/like.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/core.h>
+#include <di/meta/operations.h>
+#include <di/meta/util.h>
 
 namespace di::execution {
 namespace with_env_ns {

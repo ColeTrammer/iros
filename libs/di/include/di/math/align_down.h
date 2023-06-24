@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/concepts/integer.h>
 #include <di/function/curry_back.h>
-#include <di/meta/type_identity.h>
+#include <di/meta/language.h>
+#include <di/meta/util.h>
 
 namespace di::math {
 namespace detail {

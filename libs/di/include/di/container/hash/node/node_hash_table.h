@@ -1,8 +1,6 @@
 #pragma once
 
 #include <di/assert/assert_bool.h>
-#include <di/concepts/predicate.h>
-#include <di/concepts/remove_cvref_same_as.h>
 #include <di/container/algorithm/find_if.h>
 #include <di/container/algorithm/uninitialized_default_construct.h>
 #include <di/container/hash/hash.h>
@@ -14,6 +12,8 @@
 #include <di/function/monad/monad_try.h>
 #include <di/function/not_fn.h>
 #include <di/meta/algorithm.h>
+#include <di/meta/relation.h>
+#include <di/meta/util.h>
 #include <di/util/declval.h>
 #include <di/util/get.h>
 #include <di/vocab/expected/prelude.h>

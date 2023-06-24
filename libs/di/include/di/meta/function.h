@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/meta/constexpr.h>
 #include <di/meta/core.h>
 
 namespace di::concepts {
@@ -35,7 +34,7 @@ concept MetaInvocable = requires { typename meta::Quote<T::template Invoke>; };
 
 namespace di::meta {
 template<concepts::MetaInvocable Fun, typename... Args>
-using Invoke = typename Fun::template Invoke<Args...>;
+using Invoke = Type<Defer<Fun::template Invoke, Args...>>;
 
 namespace detail {
     template<typename F, typename T>

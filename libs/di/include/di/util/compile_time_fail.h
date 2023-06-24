@@ -1,7 +1,6 @@
 #pragma once
 
-#include <di/concepts/always_false.h>
-#include <di/meta/assert_fail.h>
+#include <di/meta/util.h>
 
 namespace di::util {
 template<auto... values>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/concepts/trivial.h>
+#include <di/meta/trivial.h>
 #include <di/vocab/span/prelude.h>
 #include <iris/core/error.h>
 #include <iris/mm/physical_address.h>

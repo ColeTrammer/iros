@@ -1,11 +1,10 @@
 #pragma once
 
 #include <di/chrono/duration/duration_common_type.h>
-#include <di/concepts/common_with.h>
-#include <di/concepts/three_way_comparable.h>
 #include <di/math/numeric_limits.h>
 #include <di/math/rational/prelude.h>
-#include <di/meta/common_type.h>
+#include <di/meta/common.h>
+#include <di/meta/compare.h>
 
 namespace di::chrono {
 template<typename Rep, math::detail::IsRatio Per>

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/concepts/maybe_fallible.h>
 #include <di/container/allocator/allocation_result.h>
 #include <di/function/tag_invoke.h>
+#include <di/meta/vocab.h>
 #include <di/types/prelude.h>
 
 namespace di::container {

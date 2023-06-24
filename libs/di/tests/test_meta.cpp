@@ -1,13 +1,8 @@
 
-#include <di/meta/add_lvalue_reference.h>
-#include <di/meta/add_rvalue_reference.h>
 #include <di/meta/algorithm.h>
-#include <di/meta/common_reference.h>
-#include <di/meta/common_type.h>
+#include <di/meta/common.h>
 #include <di/meta/constexpr.h>
-#include <di/meta/decay.h>
-#include <di/meta/like.h>
-#include <di/meta/make_index_sequence.h>
+#include <di/meta/util.h>
 #include <di/types/prelude.h>
 #include <di/vocab/tuple/prelude.h>
 

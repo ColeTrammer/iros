@@ -2,9 +2,7 @@
 
 #include <di/any/concepts/interface.h>
 #include <di/any/meta/method_erased_signature.h>
-#include <di/concepts/boolean_testable.h>
-#include <di/concepts/copyable.h>
-#include <di/concepts/default_constructible.h>
+#include <di/meta/operations.h>
 #include <di/util/as_const.h>
 
 namespace di::concepts {

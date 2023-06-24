@@ -1,8 +1,5 @@
 #pragma once
 
-#include <di/concepts/decay_constructible.h>
-#include <di/concepts/movable_value.h>
-#include <di/concepts/remove_cvref_same_as.h>
 #include <di/execution/concepts/sender.h>
 #include <di/execution/interface/get_env.h>
 #include <di/execution/interface/start.h>
@@ -16,8 +13,7 @@
 #include <di/function/invoke.h>
 #include <di/function/tag_invoke.h>
 #include <di/meta/core.h>
-#include <di/meta/decay.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/util.h>
 #include <di/platform/compiler.h>
 #include <di/util/addressof.h>
 #include <di/util/immovable.h>

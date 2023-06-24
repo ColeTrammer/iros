@@ -51,3 +51,7 @@ constexpr inline weak_ordering weak_ordering::greater(di::types::detail::Compare
 namespace di::types {
 using std::weak_ordering;
 }
+
+namespace di {
+using types::weak_ordering;
+}

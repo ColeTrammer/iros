@@ -1,9 +1,8 @@
 #pragma once
 
-#include <di/concepts/three_way_comparable_with.h>
 #include <di/function/curry_back.h>
 #include <di/math/intcmp/cmp_three_way.h>
-#include <di/meta/compare_three_way_result.h>
+#include <di/meta/compare.h>
 
 namespace di::function {
 struct CompareBackwards {

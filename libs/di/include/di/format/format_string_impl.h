@@ -5,7 +5,7 @@
 #include <di/format/concepts/formattable.h>
 #include <di/format/format_parse_context.h>
 #include <di/meta/constexpr.h>
-#include <di/meta/type_identity.h>
+#include <di/meta/util.h>
 #include <di/util/source_location.h>
 
 namespace di::format {

@@ -7,8 +7,6 @@
 #include <di/any/types/method.h>
 #include <di/any/types/this.h>
 #include <di/any/vtable/maybe_inline_vtable.h>
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/derived_from.h>
 #include <di/execution/any/any_env.h>
 #include <di/execution/concepts/completion_signature.h>
 #include <di/execution/concepts/receiver_of.h>
@@ -16,8 +14,8 @@
 #include <di/execution/receiver/set_error.h>
 #include <di/meta/algorithm.h>
 #include <di/meta/core.h>
-#include <di/meta/language_function_return.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/language.h>
+#include <di/meta/operations.h>
 #include <di/vocab/error/error.h>
 
 namespace di::execution {

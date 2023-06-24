@@ -1,8 +1,5 @@
 #pragma once
 
-#include <di/concepts/convertible_to.h>
-#include <di/concepts/convertible_to_non_slicing.h>
-#include <di/concepts/decay_same_as.h>
 #include <di/container/concepts/borrowed_container.h>
 #include <di/container/concepts/iterator.h>
 #include <di/container/concepts/sentinel_for.h>
@@ -19,9 +16,10 @@
 #include <di/container/meta/iterator_size_type.h>
 #include <di/container/meta/iterator_ssize_type.h>
 #include <di/container/view/view_interface.h>
-#include <di/meta/add_member_get.h>
 #include <di/meta/constexpr.h>
-#include <di/meta/like.h>
+#include <di/meta/operations.h>
+#include <di/meta/util.h>
+#include <di/util/add_member_get.h>
 #include <di/util/forward_like.h>
 #include <di/util/move.h>
 #include <di/util/store_if.h>
@@ -34,7 +32,7 @@ requires(is_sized || !concepts::SizedSentinelFor<Sent, Iter>)
 class View
     : public ViewInterface<View<Iter, Sent, is_sized>>
     , public meta::EnableBorrowedContainer<View<Iter, Sent, is_sized>>
-    , public meta::AddMemberGet<View<Iter, Sent, is_sized>> {
+    , public util::AddMemberGet<View<Iter, Sent, is_sized>> {
 private:
     constexpr static bool store_size = is_sized && !concepts::SizedSentinelFor<Sent, Iter>;
 

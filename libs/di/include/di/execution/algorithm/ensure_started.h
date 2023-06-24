@@ -1,7 +1,6 @@
 #pragma once
 
 #include <di/assert/assert_bool.h>
-#include <di/concepts/decay_constructible.h>
 #include <di/container/allocator/allocator.h>
 #include <di/container/allocator/fallible_allocator.h>
 #include <di/container/allocator/infallible_allocator.h>
@@ -25,8 +24,7 @@
 #include <di/function/container/prelude.h>
 #include <di/meta/algorithm.h>
 #include <di/meta/core.h>
-#include <di/meta/decay.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/util.h>
 #include <di/platform/compiler.h>
 #include <di/sync/atomic.h>
 #include <di/sync/memory_order.h>

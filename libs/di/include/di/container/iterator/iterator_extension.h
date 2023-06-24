@@ -1,11 +1,10 @@
 #pragma once
 
-#include <di/concepts/equality_comparable.h>
-#include <di/concepts/three_way_comparable.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/iterator/iterator_base.h>
 #include <di/container/iterator/iterator_category.h>
 #include <di/container/meta/prelude.h>
+#include <di/meta/compare.h>
 #include <di/util/move.h>
 
 namespace di::container {

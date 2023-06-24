@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/concepts/convertible_to.h>
 #include <di/function/pipeable.h>
 #include <di/function/pipeline.h>
+#include <di/meta/operations.h>
 #include <di/util/forward.h>
 
 namespace di::function {

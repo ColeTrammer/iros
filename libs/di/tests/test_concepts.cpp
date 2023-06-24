@@ -1,9 +1,5 @@
-#include <di/concepts/const.h>
-#include <di/concepts/floating_point.h>
-#include <di/concepts/language_array.h>
-#include <di/concepts/member_function_pointer.h>
-#include <di/concepts/member_object_pointer.h>
-#include <di/concepts/reference.h>
+#include <di/meta/compare.h>
+#include <di/meta/language.h>
 #include <di/types/prelude.h>
 
 namespace concepts {

@@ -1,8 +1,7 @@
 #pragma once
 
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/implicitly_convertible_to.h>
-#include <di/concepts/optional.h>
+#include <di/meta/operations.h>
+#include <di/meta/vocab.h>
 
 namespace di::vocab {
 template<typename T, typename U>

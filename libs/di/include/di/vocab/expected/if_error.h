@@ -1,11 +1,9 @@
 #pragma once
 
-#include <di/concepts/decay_constructible.h>
-#include <di/concepts/expected.h>
 #include <di/function/curry_back.h>
 #include <di/function/invoke.h>
-#include <di/meta/expected_value.h>
-#include <di/meta/like.h>
+#include <di/meta/util.h>
+#include <di/meta/vocab.h>
 
 namespace di::vocab {
 namespace detail {

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <di/assert/assert_bool.h>
-#include <di/concepts/object.h>
 #include <di/container/allocator/allocate_one.h>
 #include <di/container/allocator/allocator.h>
 #include <di/container/allocator/deallocate_one.h>
@@ -9,8 +8,8 @@
 #include <di/function/monad/monad_try.h>
 #include <di/meta/algorithm.h>
 #include <di/meta/constexpr.h>
-#include <di/meta/maybe_const.h>
-#include <di/meta/remove_function_qualifiers.h>
+#include <di/meta/language.h>
+#include <di/meta/util.h>
 #include <di/platform/prelude.h>
 #include <di/types/prelude.h>
 #include <di/util/addressof.h>

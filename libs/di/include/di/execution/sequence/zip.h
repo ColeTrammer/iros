@@ -22,8 +22,7 @@
 #include <di/function/container/function.h>
 #include <di/function/tag_invoke.h>
 #include <di/meta/core.h>
-#include <di/meta/like.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/util.h>
 #include <di/platform/compiler.h>
 #include <di/sync/memory_order.h>
 #include <di/sync/stop_token/in_place_stop_source.h>

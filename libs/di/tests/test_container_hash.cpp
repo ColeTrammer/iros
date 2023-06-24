@@ -1,6 +1,6 @@
-#include <di/concepts/equality_comparable_with.h>
 #include <di/container/hash/hash_write.h>
 #include <di/container/hash/prelude.h>
+#include <di/meta/compare.h>
 #include <di/vocab/tuple/prelude.h>
 #include <dius/test/prelude.h>
 

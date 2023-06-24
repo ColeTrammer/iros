@@ -5,7 +5,6 @@
 #include <di/container/view/view.h>
 #include <di/function/pipeline.h>
 #include <di/meta/core.h>
-#include <di/meta/remove_cv.h>
 #include <di/util/declval.h>
 #include <di/util/forward.h>
 

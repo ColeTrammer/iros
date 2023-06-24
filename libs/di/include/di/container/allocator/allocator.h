@@ -2,7 +2,7 @@
 
 #include <di/container/allocator/allocate.h>
 #include <di/container/allocator/deallocate.h>
-#include <di/meta/like_expected.h>
+#include <di/meta/vocab.h>
 
 namespace di::concepts {
 template<typename T>

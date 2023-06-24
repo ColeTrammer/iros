@@ -1,6 +1,5 @@
 #pragma once
 
-#include <di/concepts/remove_cvref_same_as.h>
 #include <di/container/concepts/input_container.h>
 #include <di/container/meta/container_reference.h>
 #include <di/container/string/constant_string.h>
@@ -9,6 +8,7 @@
 #include <di/format/formatter.h>
 #include <di/format/make_constexpr_format_args.h>
 #include <di/format/vpresent_encoded_context.h>
+#include <di/meta/util.h>
 
 namespace di::format {
 template<concepts::InputContainer Con, concepts::Encoding Enc>

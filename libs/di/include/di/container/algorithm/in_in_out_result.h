@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/concepts/convertible_to.h>
+#include <di/meta/operations.h>
 #include <di/util/move.h>
 
 namespace di::container {

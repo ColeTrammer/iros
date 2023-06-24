@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/concepts/maybe_fallible.h>
 #include <di/container/string/encoding.h>
 #include <di/container/string/utf8_encoding.h>
+#include <di/meta/vocab.h>
 
 namespace di::concepts {
 template<typename T>

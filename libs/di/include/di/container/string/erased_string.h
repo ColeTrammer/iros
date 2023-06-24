@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/concepts/remove_cvref_same_as.h>
 #include <di/container/string/constant_string_interface.h>
 #include <di/container/string/utf8_encoding.h>
+#include <di/meta/util.h>
 #include <di/vocab/span/prelude.h>
 
 namespace di::container {

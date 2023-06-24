@@ -1,8 +1,7 @@
 #pragma once
 
-#include <di/concepts/integer.h>
-#include <di/concepts/signed_integral.h>
 #include <di/function/tag_invoke.h>
+#include <di/meta/language.h>
 
 namespace di::math {
 namespace detail {

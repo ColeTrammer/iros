@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/maybe_fallible.h>
 #include <di/function/tag_invoke.h>
+#include <di/meta/operations.h>
+#include <di/meta/vocab.h>
 #include <di/types/prelude.h>
 #include <di/util/forward.h>
 

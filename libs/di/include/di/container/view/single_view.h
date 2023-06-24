@@ -1,11 +1,8 @@
 #pragma once
 
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/copy_constructible.h>
-#include <di/concepts/default_initializable.h>
-#include <di/concepts/movable.h>
-#include <di/concepts/object.h>
 #include <di/container/view/view_interface.h>
+#include <di/meta/language.h>
+#include <di/meta/operations.h>
 #include <di/types/in_place.h>
 #include <di/types/size_t.h>
 #include <di/util/addressof.h>

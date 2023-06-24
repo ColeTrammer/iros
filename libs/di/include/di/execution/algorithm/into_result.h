@@ -1,8 +1,5 @@
 #pragma once
 
-#include <di/concepts/decay_constructible.h>
-#include <di/concepts/decays_to.h>
-#include <di/concepts/language_void.h>
 #include <di/execution/algorithm/into_variant.h>
 #include <di/execution/concepts/receiver.h>
 #include <di/execution/concepts/sender_in.h>
@@ -17,8 +14,8 @@
 #include <di/execution/receiver/set_value.h>
 #include <di/execution/types/completion_signuatures.h>
 #include <di/function/tag_invoke.h>
-#include <di/meta/decay.h>
-#include <di/meta/like.h>
+#include <di/meta/language.h>
+#include <di/meta/util.h>
 #include <di/platform/prelude.h>
 #include <di/types/prelude.h>
 #include <di/util/move.h>

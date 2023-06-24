@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/concepts/copy_constructible.h>
+#include <di/meta/operations.h>
 #include <di/util/addressof.h>
 
 namespace di::util {

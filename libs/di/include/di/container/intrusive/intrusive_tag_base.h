@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/concepts/derived_from.h>
+#include <di/meta/operations.h>
 #include <di/types/prelude.h>
 
 namespace di::container {

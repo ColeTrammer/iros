@@ -7,11 +7,6 @@
 #include <di/any/storage/hybrid_storage.h>
 #include <di/any/types/method.h>
 #include <di/any/types/this.h>
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/convertible_to.h>
-#include <di/concepts/derived_from.h>
-#include <di/concepts/language_void.h>
-#include <di/concepts/remove_cvref_same_as.h>
 #include <di/execution/algorithm/just.h>
 #include <di/execution/algorithm/just_or_error.h>
 #include <di/execution/any/any_env.h>
@@ -32,9 +27,9 @@
 #include <di/function/tag_invoke.h>
 #include <di/meta/algorithm.h>
 #include <di/meta/core.h>
-#include <di/meta/language_function_return.h>
-#include <di/meta/remove_cvref.h>
-#include <di/meta/type_identity.h>
+#include <di/meta/language.h>
+#include <di/meta/operations.h>
+#include <di/meta/util.h>
 #include <di/types/in_place_type.h>
 #include <di/util/declval.h>
 #include <di/util/defer_construct.h>

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/concepts/convertible_to.h>
 #include <di/container/string/encoding.h>
+#include <di/meta/operations.h>
 
 namespace di::concepts::detail {
 template<typename T>

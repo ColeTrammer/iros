@@ -1,11 +1,8 @@
 #pragma once
 
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/movable.h>
-#include <di/concepts/move_assignable.h>
-#include <di/concepts/move_constructible.h>
 #include <di/function/tag_invoke.h>
-#include <di/meta/decay.h>
+#include <di/meta/operations.h>
+#include <di/meta/util.h>
 #include <di/util/construct_at.h>
 #include <di/util/destroy_at.h>
 #include <di/util/forward.h>

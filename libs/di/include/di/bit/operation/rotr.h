@@ -1,7 +1,7 @@
 #pragma once
 
-#include <di/concepts/unsigned_integer.h>
 #include <di/math/numeric_limits.h>
+#include <di/meta/language.h>
 
 namespace di::bit {
 namespace detail {

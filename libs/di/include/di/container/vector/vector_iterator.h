@@ -1,10 +1,10 @@
 #pragma once
 
 #include <di/assert/assert_bool.h>
-#include <di/concepts/const.h>
 #include <di/container/vector/constant_vector.h>
 #include <di/container/vector/vector_begin.h>
 #include <di/container/vector/vector_size.h>
+#include <di/meta/language.h>
 
 namespace di::container::vector {
 template<concepts::detail::ConstantVector Vec, typename Iter = meta::detail::VectorIterator<Vec>,

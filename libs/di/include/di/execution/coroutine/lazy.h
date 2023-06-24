@@ -1,10 +1,6 @@
 #pragma once
 
 #include <di/assert/assert_bool.h>
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/convertible_to.h>
-#include <di/concepts/language_void.h>
-#include <di/concepts/unexpected.h>
 #include <di/execution/algorithm/just.h>
 #include <di/execution/algorithm/just_or_error.h>
 #include <di/execution/coroutine/as_awaitable.h>
@@ -12,6 +8,9 @@
 #include <di/execution/coroutine/with_awaitable_senders.h>
 #include <di/execution/types/prelude.h>
 #include <di/meta/core.h>
+#include <di/meta/language.h>
+#include <di/meta/operations.h>
+#include <di/meta/vocab.h>
 #include <di/platform/prelude.h>
 #include <di/types/void.h>
 #include <di/util/coroutine.h>

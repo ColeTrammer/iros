@@ -53,3 +53,7 @@ constexpr inline strong_ordering strong_ordering::greater(di::types::detail::Com
 namespace di::types {
 using std::strong_ordering;
 }
+
+namespace di {
+using types::strong_ordering;
+}

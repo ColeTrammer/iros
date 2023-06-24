@@ -1,8 +1,6 @@
 #pragma once
 
-#include <di/concepts/integer.h>
-#include <di/concepts/unsigned_integer.h>
-#include <di/meta/make_unsigned.h>
+#include <di/meta/language.h>
 
 namespace di::math {
 template<concepts::Integer T>

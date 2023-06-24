@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/concepts/movable_value.h>
 #include <di/execution/algorithm/just.h>
 #include <di/execution/algorithm/transfer.h>
 #include <di/execution/concepts/sender.h>
+#include <di/meta/util.h>
 
 namespace di::execution {
 namespace transfer_just_ns {

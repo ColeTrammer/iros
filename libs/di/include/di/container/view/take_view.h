@@ -6,7 +6,7 @@
 #include <di/container/meta/enable_borrowed_container.h>
 #include <di/container/meta/prelude.h>
 #include <di/container/view/view_interface.h>
-#include <di/meta/maybe_const.h>
+#include <di/meta/util.h>
 #include <di/util/move.h>
 
 namespace di::container {

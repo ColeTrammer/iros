@@ -1,12 +1,12 @@
 #pragma once
 
-#include <di/concepts/dereferenceable.h>
 #include <di/container/concepts/prelude.h>
 #include <di/container/iterator/default_sentinel.h>
 #include <di/container/iterator/iterator_base.h>
 #include <di/container/iterator/iterator_move.h>
 #include <di/container/iterator/iterator_swap.h>
 #include <di/container/meta/prelude.h>
+#include <di/meta/operations.h>
 #include <di/types/prelude.h>
 #include <di/util/move.h>
 #include <di/util/to_address.h>

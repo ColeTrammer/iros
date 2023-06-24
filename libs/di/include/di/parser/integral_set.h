@@ -1,10 +1,10 @@
 #pragma once
 
-#include <di/concepts/integral.h>
-#include <di/concepts/three_way_comparable_with.h>
 #include <di/container/algorithm/any_of.h>
 #include <di/function/unpack.h>
-#include <di/meta/make_index_sequence.h>
+#include <di/meta/algorithm.h>
+#include <di/meta/compare.h>
+#include <di/meta/language.h>
 #include <di/vocab/array/prelude.h>
 
 namespace di::parser {

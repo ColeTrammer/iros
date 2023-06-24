@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/concepts/tuple.h>
-#include <di/meta/make_index_sequence.h>
-#include <di/meta/remove_cvref.h>
+#include <di/meta/algorithm.h>
+#include <di/meta/core.h>
+#include <di/meta/vocab.h>
 #include <di/util/as_const.h>
 #include <di/util/forward.h>
 #include <di/util/get.h>

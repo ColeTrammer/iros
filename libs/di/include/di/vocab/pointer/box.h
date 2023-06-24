@@ -1,10 +1,10 @@
 #pragma once
 
 #include <di/assert/assert_bool.h>
-#include <di/concepts/language_array.h>
 #include <di/container/allocator/allocator.h>
 #include <di/container/allocator/fallible_allocator.h>
 #include <di/container/allocator/infallible_allocator.h>
+#include <di/meta/language.h>
 #include <di/platform/prelude.h>
 #include <di/types/prelude.h>
 #include <di/util/exchange.h>

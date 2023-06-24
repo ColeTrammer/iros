@@ -1,9 +1,7 @@
 #pragma once
 
-#include <di/concepts/boolean_testable.h>
-#include <di/concepts/copy_constructible.h>
-#include <di/concepts/equality_comparable.h>
-#include <di/concepts/move_constructible.h>
+#include <di/meta/compare.h>
+#include <di/meta/operations.h>
 
 namespace di::concepts {
 namespace detail {

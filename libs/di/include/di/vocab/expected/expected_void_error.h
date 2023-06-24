@@ -1,21 +1,11 @@
 #pragma once
 
-#include <di/concepts/assignable_from.h>
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/convertible_to.h>
-#include <di/concepts/copy_assignable.h>
-#include <di/concepts/copy_constructible.h>
-#include <di/concepts/default_constructible.h>
-#include <di/concepts/equality_comparable_with.h>
-#include <di/concepts/expected.h>
-#include <di/concepts/language_void.h>
-#include <di/concepts/move_assignable.h>
-#include <di/concepts/move_constructible.h>
-#include <di/concepts/remove_cvref_same_as.h>
-#include <di/concepts/unexpected.h>
 #include <di/function/monad/monad_interface.h>
-#include <di/meta/expected_rank.h>
-#include <di/meta/unwrap_ref_decay.h>
+#include <di/meta/compare.h>
+#include <di/meta/language.h>
+#include <di/meta/operations.h>
+#include <di/meta/util.h>
+#include <di/meta/vocab.h>
 #include <di/util/addressof.h>
 #include <di/util/forward.h>
 #include <di/util/move.h>

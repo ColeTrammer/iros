@@ -1,9 +1,9 @@
 #pragma once
 
-#include <di/concepts/unsigned_integral.h>
 #include <di/function/invoke.h>
 #include <di/meta/constexpr.h>
 #include <di/meta/core.h>
+#include <di/meta/language.h>
 
 namespace di::concepts {
 template<typename T>

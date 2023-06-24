@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/concepts/class.h>
 #include <di/function/tag_invoke.h>
 #include <di/io/interface/writer.h>
+#include <di/meta/language.h>
 #include <di/reflect/reflect.h>
 #include <di/types/in_place_type.h>
 

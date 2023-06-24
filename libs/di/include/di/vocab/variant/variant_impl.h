@@ -1,8 +1,7 @@
 #pragma once
 
-#include <di/concepts/remove_cvref_same_as.h>
 #include <di/meta/constexpr.h>
-#include <di/meta/like.h>
+#include <di/meta/util.h>
 #include <di/types/prelude.h>
 #include <di/util/forward.h>
 #include <di/util/rebindable_box.h>

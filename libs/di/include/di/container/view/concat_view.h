@@ -10,7 +10,7 @@
 #include <di/container/view/view_interface.h>
 #include <di/function/minus.h>
 #include <di/meta/constexpr.h>
-#include <di/meta/maybe_const.h>
+#include <di/meta/util.h>
 #include <di/vocab/tuple/prelude.h>
 #include <di/vocab/variant/prelude.h>
 

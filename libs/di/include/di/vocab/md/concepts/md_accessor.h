@@ -1,8 +1,8 @@
 #pragma once
 
-#include <di/concepts/common_reference_with.h>
-#include <di/concepts/copyable.h>
+#include <di/meta/common.h>
 #include <di/meta/core.h>
+#include <di/meta/operations.h>
 
 namespace di::concepts {
 template<typename T>

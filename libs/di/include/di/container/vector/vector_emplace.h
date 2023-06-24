@@ -1,16 +1,14 @@
 #pragma once
 
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/copy_constructible.h>
-#include <di/concepts/move_constructible.h>
-#include <di/concepts/remove_cvref_same_as.h>
 #include <di/container/algorithm/uninitialized_relocate.h>
 #include <di/container/algorithm/uninitialized_relocate_backwards.h>
 #include <di/container/vector/mutable_vector.h>
 #include <di/container/vector/vector_data.h>
 #include <di/container/vector/vector_reserve.h>
 #include <di/container/vector/vector_size.h>
-#include <di/meta/like_expected.h>
+#include <di/meta/operations.h>
+#include <di/meta/util.h>
+#include <di/meta/vocab.h>
 #include <di/util/construct_at.h>
 #include <di/util/forward.h>
 #include <di/util/swap.h>

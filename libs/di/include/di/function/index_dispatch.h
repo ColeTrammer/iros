@@ -1,9 +1,9 @@
 #pragma once
 
 #include <di/assert/assert_bool.h>
-#include <di/concepts/language_void.h>
 #include <di/function/invoke.h>
-#include <di/meta/make_index_sequence.h>
+#include <di/meta/algorithm.h>
+#include <di/meta/language.h>
 #include <di/types/prelude.h>
 #include <di/util/forward.h>
 #include <di/vocab/array/prelude.h>

@@ -1,8 +1,7 @@
 #pragma once
 
-#include <di/concepts/constructible_from.h>
-#include <di/concepts/remove_cvref_same_as.h>
-#include <di/meta/unwrap_ref_decay.h>
+#include <di/meta/operations.h>
+#include <di/meta/util.h>
 #include <di/types/in_place.h>
 #include <di/util/forward.h>
 #include <di/util/initializer_list.h>

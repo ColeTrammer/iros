@@ -1,6 +1,6 @@
 #pragma once
 
-#include <di/concepts/decay_constructible.h>
+#include <di/meta/util.h>
 #include <di/parser/concepts/parser.h>
 #include <di/parser/concepts/parser_context.h>
 #include <di/parser/meta/parser_context_result.h>
