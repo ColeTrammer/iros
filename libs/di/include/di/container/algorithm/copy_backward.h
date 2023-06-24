@@ -31,3 +31,7 @@ namespace detail {
 
 constexpr inline auto copy_backward = detail::CopyBackwardFunction {};
 }
+
+namespace di {
+using container::copy_backward;
+}

@@ -51,3 +51,7 @@ namespace detail {
 
 constexpr inline auto set_intersection = detail::SetIntersectionFunction {};
 }
+
+namespace di {
+using container::set_intersection;
+}

@@ -71,3 +71,7 @@ constexpr auto operator<=>(TimePoint<C, D1> const& a, TimePoint<C, D2> const& b)
     return a.time_since_epoch() <=> b.time_since_epoch();
 }
 }
+
+namespace di {
+using chrono::TimePoint;
+}

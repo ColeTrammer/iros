@@ -8,3 +8,8 @@ namespace di::container {
 using String = string::StringImpl<string::Utf8Encoding>;
 using TransparentString = string::StringImpl<string::TransparentEncoding>;
 }
+
+namespace di {
+using container::String;
+using container::TransparentString;
+}

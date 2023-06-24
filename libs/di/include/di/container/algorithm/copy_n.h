@@ -24,3 +24,7 @@ namespace detail {
 
 constexpr inline auto copy_n = detail::CopyNFunction {};
 }
+
+namespace di {
+using container::copy_n;
+}

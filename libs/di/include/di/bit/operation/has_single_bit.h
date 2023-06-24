@@ -14,3 +14,7 @@ namespace detail {
 
 constexpr inline auto has_single_bit = detail::HasSingleBitFunction {};
 }
+
+namespace di {
+using bit::has_single_bit;
+}

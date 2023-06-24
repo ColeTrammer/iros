@@ -61,3 +61,7 @@ struct AdvanceFunction {
 
 constexpr inline auto advance = AdvanceFunction {};
 }
+
+namespace di {
+using container::advance;
+}

@@ -29,3 +29,7 @@ namespace detail {
 
 constexpr inline auto join = detail::JoinFunction {};
 }
+
+namespace di {
+using view::join;
+}

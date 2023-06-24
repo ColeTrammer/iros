@@ -32,3 +32,7 @@ namespace detail {
 
 constexpr inline auto filter = function::curry_back(detail::FilterFunction {}, meta::c_<2zu>);
 }
+
+namespace di {
+using view::filter;
+}

@@ -8,3 +8,7 @@ namespace di::any {
 template<concepts::Interface Interface, concepts::Allocator Alloc = platform::DefaultAllocator>
 using AnyUnique = Any<Interface, UniqueStorage<Alloc>>;
 }
+
+namespace di {
+using any::AnyUnique;
+}

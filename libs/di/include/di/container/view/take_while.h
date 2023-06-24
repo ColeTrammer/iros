@@ -32,3 +32,7 @@ namespace detail {
 
 constexpr inline auto take_while = function::curry_back(detail::TakeWhileFunction {}, meta::c_<2zu>);
 }
+
+namespace di {
+using view::take_while;
+}

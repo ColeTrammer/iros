@@ -5,3 +5,7 @@
 namespace di::types {
 struct RandomAccessIteratorTag : BidirectionalIteratorTag {};
 }
+
+namespace di {
+using types::RandomAccessIteratorTag;
+}

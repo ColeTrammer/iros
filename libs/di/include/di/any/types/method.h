@@ -10,3 +10,7 @@ struct Method {
     using Signature = S;
 };
 }
+
+namespace di {
+using types::Method;
+}

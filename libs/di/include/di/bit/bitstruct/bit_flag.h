@@ -23,3 +23,7 @@ private:
     bool m_value;
 };
 }
+
+namespace di {
+using bit::BitFlag;
+}

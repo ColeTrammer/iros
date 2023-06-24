@@ -54,3 +54,7 @@ requires(meta::TupleSize<T> == 2)
 TreeMultiMap<meta::TupleElement<T, 0>, meta::TupleElement<T, 1>, Comp>
 tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<TreeMultiMap>, Con&&, Comp);
 }
+
+namespace di {
+using container::TreeMultiMap;
+}

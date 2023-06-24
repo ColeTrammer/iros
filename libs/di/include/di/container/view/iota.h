@@ -34,3 +34,7 @@ namespace detail {
 
 constexpr inline auto iota = detail::IotaFunction {};
 }
+
+namespace di {
+using view::iota;
+}

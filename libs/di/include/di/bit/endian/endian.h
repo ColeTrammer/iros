@@ -7,3 +7,7 @@ enum class Endian {
     Native = __BYTE_ORDER__,
 };
 }
+
+namespace di {
+using bit::Endian;
+}

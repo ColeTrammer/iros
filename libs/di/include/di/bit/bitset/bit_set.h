@@ -34,3 +34,7 @@ private:
     Array<u8, math::divide_round_up(extent, 8u)> m_storage;
 };
 }
+
+namespace di {
+using bit::BitSet;
+}

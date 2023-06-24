@@ -28,3 +28,7 @@ namespace detail {
 
 constexpr inline auto is_sorted = detail::IsSortedFunction {};
 }
+
+namespace di {
+using container::is_sorted;
+}

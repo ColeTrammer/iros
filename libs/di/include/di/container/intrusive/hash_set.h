@@ -40,3 +40,10 @@ class IntrusiveHashMultiSet
                                 detail::NodeHashTableValidForLookup<T, Eq>::template Type, true>,
           true, false> {};
 }
+
+namespace di {
+using container::IntrusiveHashMultiSet;
+using container::IntrusiveHashSet;
+using container::IntrusiveHashSetNode;
+using container::IntrusiveHashSetTag;
+}

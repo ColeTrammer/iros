@@ -37,3 +37,7 @@ namespace detail {
 
 constexpr inline auto equal_range = detail::EqualRangeFunction {};
 }
+
+namespace di {
+using container::equal_range;
+}

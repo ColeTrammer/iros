@@ -55,3 +55,7 @@ struct REndFunction {
 
 constexpr inline auto rend = REndFunction {};
 }
+
+namespace di {
+using container::rend;
+}

@@ -46,3 +46,7 @@ namespace detail {
 
 constexpr inline auto max = detail::MaxFunction {};
 }
+
+namespace di {
+using container::max;
+}

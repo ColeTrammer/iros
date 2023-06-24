@@ -42,3 +42,7 @@ namespace detail {
 
 constexpr inline auto push_heap = detail::PushHeapFunction {};
 }
+
+namespace di {
+using container::push_heap;
+}

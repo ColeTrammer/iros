@@ -73,3 +73,7 @@ namespace detail {
 
 constexpr inline auto is_permutation = detail::IsPermutationFunction {};
 }
+
+namespace di {
+using container::is_permutation;
+}

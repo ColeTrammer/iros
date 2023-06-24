@@ -42,3 +42,7 @@ struct BeginFunction {
 
 constexpr inline auto begin = BeginFunction {};
 }
+
+namespace di {
+using container::begin;
+}

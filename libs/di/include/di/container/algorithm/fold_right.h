@@ -32,3 +32,7 @@ namespace detail {
 
 constexpr inline auto fold_right = detail::FoldRightFunction {};
 }
+
+namespace di {
+using container::fold_right;
+}

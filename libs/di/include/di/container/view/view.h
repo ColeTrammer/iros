@@ -175,3 +175,7 @@ View(Cont&&) -> View<meta::ContainerIterator<Cont>, meta::ContainerSentinel<Cont
 template<concepts::BorrowedContainer Cont>
 View(Cont&&, meta::ContainerSizeType<Cont>) -> View<meta::ContainerIterator<Cont>, meta::ContainerSentinel<Cont>, true>;
 }
+
+namespace di {
+using container::View;
+}

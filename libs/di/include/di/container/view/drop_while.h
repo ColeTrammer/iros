@@ -32,3 +32,7 @@ namespace detail {
 
 constexpr inline auto drop_while = function::curry_back(detail::DropWhileFunction {}, meta::c_<2zu>);
 }
+
+namespace di {
+using view::drop_while;
+}

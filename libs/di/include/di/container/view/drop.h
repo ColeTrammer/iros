@@ -35,3 +35,7 @@ namespace detail {
 
 constexpr inline auto drop = function::curry_back(detail::DropFunction {}, meta::c_<2zu>);
 }
+
+namespace di {
+using view::drop;
+}

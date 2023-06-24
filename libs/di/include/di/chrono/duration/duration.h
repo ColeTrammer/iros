@@ -117,3 +117,7 @@ constexpr auto operator<=>(Duration<Rep1, Period1> const& a, Duration<Rep2, Peri
     return D(a).count() <=> D(b).count();
 }
 }
+
+namespace di {
+using chrono::Duration;
+}

@@ -50,3 +50,7 @@ struct DataFunction {
 
 constexpr inline auto data = DataFunction {};
 }
+
+namespace di {
+using container::data;
+}

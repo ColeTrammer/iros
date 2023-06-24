@@ -56,3 +56,7 @@ namespace detail {
 
 constexpr inline auto set_difference = detail::SetDifferenceFunction {};
 }
+
+namespace di {
+using container::set_difference;
+}

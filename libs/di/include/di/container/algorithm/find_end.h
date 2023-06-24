@@ -61,3 +61,7 @@ namespace detail {
 
 constexpr inline auto find_end = detail::FindEndFunction {};
 }
+
+namespace di {
+using container::find_end;
+}

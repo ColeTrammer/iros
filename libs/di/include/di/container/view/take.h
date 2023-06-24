@@ -34,3 +34,7 @@ namespace detail {
 
 constexpr inline auto take = function::curry_back(detail::TakeFunction {}, meta::c_<2zu>);
 }
+
+namespace di {
+using view::take;
+}

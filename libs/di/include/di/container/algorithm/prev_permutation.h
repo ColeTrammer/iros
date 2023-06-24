@@ -30,3 +30,7 @@ namespace detail {
 
 constexpr inline auto prev_permutation = detail::PrevPermutationFunction {};
 }
+
+namespace di {
+using container::prev_permutation;
+}

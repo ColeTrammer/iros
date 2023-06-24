@@ -105,3 +105,7 @@ Stack(Con) -> Stack<T, Con>;
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>>
 Stack<T> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<Stack>, Con&&);
 }
+
+namespace di {
+using container::Stack;
+}

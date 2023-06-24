@@ -6,3 +6,7 @@ private:
     This() = default;
 };
 }
+
+namespace di {
+using types::This;
+}

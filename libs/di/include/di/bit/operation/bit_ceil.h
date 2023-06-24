@@ -25,3 +25,7 @@ namespace detail {
 
 constexpr inline auto bit_ceil = detail::BitCeilFunction {};
 }
+
+namespace di {
+using bit::bit_ceil;
+}

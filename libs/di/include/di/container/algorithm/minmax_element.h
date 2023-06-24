@@ -76,3 +76,7 @@ namespace detail {
 
 constexpr inline auto minmax_element = detail::MinMaxElementFunction {};
 }
+
+namespace di {
+using container::minmax_element;
+}

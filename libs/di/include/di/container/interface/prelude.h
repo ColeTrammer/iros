@@ -13,16 +13,3 @@
 #include <di/container/interface/rend.h>
 #include <di/container/interface/size.h>
 #include <di/container/interface/ssize.h>
-
-namespace di {
-using container::begin;
-using container::cdata;
-using container::data;
-using container::empty;
-using container::end;
-using container::rbegin;
-using container::reconstruct;
-using container::rend;
-using container::size;
-using container::ssize;
-}

@@ -57,3 +57,7 @@ namespace detail {
 
 constexpr inline auto set_symmetric_difference = detail::SetSymmetricDifferenceFunction {};
 }
+
+namespace di {
+using container::set_symmetric_difference;
+}

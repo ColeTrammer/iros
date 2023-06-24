@@ -34,3 +34,7 @@ namespace detail {
 
 constexpr inline auto destroy = detail::DestroyFunction {};
 }
+
+namespace di {
+using container::destroy;
+}

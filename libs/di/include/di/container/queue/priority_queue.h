@@ -145,3 +145,7 @@ template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>, c
 PriorityQueue<T, container::Vector<T>, Comp> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<PriorityQueue>,
                                                         Con&&, Comp);
 }
+
+namespace di {
+using container::PriorityQueue;
+}

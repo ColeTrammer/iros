@@ -12,18 +12,3 @@
 #include <di/bit/operation/popcount.h>
 #include <di/bit/operation/rotl.h>
 #include <di/bit/operation/rotr.h>
-
-namespace di {
-using bit::bit_ceil;
-using bit::bit_floor;
-using bit::bit_width;
-using bit::byteswap;
-using bit::countl_one;
-using bit::countl_zero;
-using bit::countr_one;
-using bit::countr_zero;
-using bit::has_single_bit;
-using bit::popcount;
-using bit::rotl;
-using bit::rotr;
-}

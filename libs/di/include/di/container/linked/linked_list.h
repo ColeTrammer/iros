@@ -184,3 +184,7 @@ private:
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>>
 LinkedList<T> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<LinkedList>, Con&&);
 }
+
+namespace di {
+using container::LinkedList;
+}

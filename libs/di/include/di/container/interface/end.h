@@ -46,3 +46,7 @@ struct EndFunction {
 
 constexpr inline auto end = EndFunction {};
 }
+
+namespace di {
+using container::end;
+}

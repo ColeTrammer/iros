@@ -91,3 +91,7 @@ namespace detail {
 
 constexpr inline auto shift_right = detail::ShiftRightFunction {};
 }
+
+namespace di {
+using container::shift_right;
+}

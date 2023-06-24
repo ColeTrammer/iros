@@ -63,3 +63,7 @@ private:
     SizeType m_tail { 0 };
 };
 }
+
+namespace di {
+using container::StaticRing;
+}

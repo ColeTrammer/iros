@@ -37,3 +37,7 @@ namespace detail {
 
 constexpr inline auto min_element = detail::MinElementFunction {};
 }
+
+namespace di {
+using container::min_element;
+}

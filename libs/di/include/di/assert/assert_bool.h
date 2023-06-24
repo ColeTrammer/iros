@@ -11,3 +11,7 @@
                                               ::di::util::SourceLocation::current()); \
         }                                                                             \
     } while (0)
+
+#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_ASSERT)
+#define ASSERT DI_ASSERT
+#endif

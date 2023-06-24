@@ -46,3 +46,7 @@ namespace detail {
 
 constexpr inline auto min = detail::MinFunction {};
 }
+
+namespace di {
+using container::min;
+}

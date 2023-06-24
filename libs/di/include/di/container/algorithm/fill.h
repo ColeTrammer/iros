@@ -25,3 +25,7 @@ namespace detail {
 
 constexpr inline auto fill = detail::FillFunction {};
 }
+
+namespace di {
+using container::fill;
+}

@@ -34,3 +34,7 @@ namespace detail {
 
 constexpr inline auto fold_right_last = detail::FoldRightLastFunction {};
 }
+
+namespace di {
+using container::fold_right_last;
+}

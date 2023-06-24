@@ -23,3 +23,7 @@ namespace detail {
 
 constexpr inline auto rotr = detail::RotrFunction {};
 }
+
+namespace di {
+using bit::rotr;
+}

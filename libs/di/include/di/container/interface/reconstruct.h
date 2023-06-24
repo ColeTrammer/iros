@@ -73,3 +73,7 @@ struct ReconstructFunction {
 
 constexpr inline auto reconstruct = ReconstructFunction {};
 }
+
+namespace di {
+using container::reconstruct;
+}

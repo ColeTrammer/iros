@@ -33,3 +33,7 @@ struct SSizeFunction {
 
 constexpr inline auto ssize = SSizeFunction {};
 }
+
+namespace di {
+using container::ssize;
+}

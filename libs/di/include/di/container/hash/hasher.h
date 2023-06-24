@@ -10,3 +10,7 @@ concept Hasher = requires(T& hasher, vocab::Span<byte const> data) {
     { hasher.finish() } -> SameAs<u64>;
 };
 }
+
+namespace di {
+using concepts::Hasher;
+}

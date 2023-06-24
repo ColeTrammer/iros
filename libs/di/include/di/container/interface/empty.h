@@ -44,3 +44,7 @@ struct EmptyFunction {
 
 constexpr inline auto empty = EmptyFunction {};
 }
+
+namespace di {
+using container::empty;
+}

@@ -30,3 +30,7 @@ namespace detail {
 
 constexpr inline auto chunk = function::curry_back(detail::ChunkFunction {}, meta::c_<2zu>);
 }
+
+namespace di {
+using view::chunk;
+}

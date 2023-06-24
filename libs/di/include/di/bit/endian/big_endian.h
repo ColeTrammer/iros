@@ -47,3 +47,10 @@ private:
     T m_value { 0 };
 };
 }
+
+namespace di {
+using bit::BigEndian;
+
+using bit::big_endian_to_host;
+using bit::host_to_big_endian;
+}

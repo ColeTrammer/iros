@@ -23,3 +23,7 @@ namespace detail {
 
 constexpr inline auto none_of = detail::NoneOfFunction {};
 }
+
+namespace di {
+using container::none_of;
+}

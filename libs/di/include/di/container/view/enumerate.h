@@ -30,3 +30,7 @@ namespace detail {
 
 constexpr inline auto enumerate = detail::EnumerateFunction {};
 }
+
+namespace di {
+using view::enumerate;
+}

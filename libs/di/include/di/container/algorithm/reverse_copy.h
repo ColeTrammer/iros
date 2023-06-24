@@ -28,3 +28,7 @@ namespace detail {
 
 constexpr inline auto reverse_copy = detail::ReverseCopyFunction {};
 }
+
+namespace di {
+using container::reverse_copy;
+}

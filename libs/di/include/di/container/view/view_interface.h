@@ -156,3 +156,9 @@ private:
     constexpr Self const& self() const { return static_cast<Self const&>(*this); }
 };
 }
+
+namespace di {
+namespace container::view {}
+
+namespace view = container::view;
+}

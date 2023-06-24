@@ -62,3 +62,7 @@ requires(meta::TupleSize<T> == 2)
 NodeHashMultiMap<meta::TupleElement<T, 0>, meta::TupleElement<T, 1>, Eq, Hasher>
 tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<NodeHashMultiMap>, Con&&, Eq, Hasher);
 }
+
+namespace di {
+using container::NodeHashMultiMap;
+}

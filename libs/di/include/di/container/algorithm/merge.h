@@ -47,3 +47,7 @@ namespace detail {
 
 constexpr inline auto merge = detail::MergeFunction {};
 }
+
+namespace di {
+using container::merge;
+}

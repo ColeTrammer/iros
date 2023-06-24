@@ -27,3 +27,7 @@ struct PrevFunction {
 
 constexpr inline auto prev = PrevFunction {};
 }
+
+namespace di {
+using container::prev;
+}

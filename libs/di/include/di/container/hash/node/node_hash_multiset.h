@@ -55,3 +55,7 @@ template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>, t
 NodeHashMultiSet<T, Eq, Hasher> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<NodeHashMultiSet>, Con&&,
                                            Eq, Hasher);
 }
+
+namespace di {
+using container::NodeHashMultiSet;
+}

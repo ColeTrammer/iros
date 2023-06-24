@@ -45,3 +45,7 @@ namespace detail {
 
 constexpr inline auto find_last = detail::FindLastFunction {};
 }
+
+namespace di {
+using container::find_last;
+}

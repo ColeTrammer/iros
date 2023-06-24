@@ -29,3 +29,7 @@ namespace detail {
 
 constexpr inline auto for_each = detail::ForEachFunction {};
 }
+
+namespace di {
+using container::for_each;
+}

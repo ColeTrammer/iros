@@ -46,3 +46,7 @@ namespace detail {
 template<typename Self, concepts::LanguageFunction Sig, typename... Tags>
 using Dispatcher = detail::DispatcherImpl<Self, Sig, Tags...>;
 }
+
+namespace di {
+using any::Dispatcher;
+}

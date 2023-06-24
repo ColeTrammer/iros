@@ -35,3 +35,7 @@ namespace detail {
 
 constexpr inline auto zip = detail::ZipFunction {};
 }
+
+namespace di {
+using view::zip;
+}

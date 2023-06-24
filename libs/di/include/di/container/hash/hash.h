@@ -20,3 +20,7 @@ namespace detail {
 
 constexpr inline auto hash = detail::HashFunction {};
 }
+
+namespace di {
+using container::hash;
+}

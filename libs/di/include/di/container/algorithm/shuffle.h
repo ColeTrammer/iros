@@ -38,3 +38,7 @@ namespace detail {
 
 constexpr inline auto shuffle = detail::ShuffleFunction {};
 }
+
+namespace di {
+using container::shuffle;
+}

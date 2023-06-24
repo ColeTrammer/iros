@@ -20,3 +20,7 @@ private:
     IntrusiveListNode* prev { nullptr };
 };
 }
+
+namespace di {
+using container::IntrusiveListNode;
+}

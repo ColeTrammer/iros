@@ -58,3 +58,7 @@ NodeHashSet<T, Eq> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<N
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>, typename Eq, typename Hasher>
 NodeHashSet<T, Eq, Hasher> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<NodeHashSet>, Con&&, Eq, Hasher);
 }
+
+namespace di {
+using container::NodeHashSet;
+}

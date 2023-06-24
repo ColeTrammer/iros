@@ -27,3 +27,7 @@ namespace detail {
 
 constexpr inline auto transform = function::curry_back(detail::TransformFunction {}, meta::c_<2zu>);
 }
+
+namespace di {
+using view::transform;
+}

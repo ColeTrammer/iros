@@ -31,3 +31,7 @@ namespace detail {
 
 constexpr inline auto make_heap = detail::MakeHeapFunction {};
 }
+
+namespace di {
+using container::make_heap;
+}

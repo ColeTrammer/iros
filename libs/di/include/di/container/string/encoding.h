@@ -237,3 +237,7 @@ struct AssumeValid {};
 
 constexpr inline auto assume_valid = AssumeValid {};
 }
+
+namespace di {
+namespace encoding = container::string::encoding;
+}

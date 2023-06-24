@@ -39,3 +39,7 @@ namespace detail {
 
 constexpr inline auto find_first_of = detail::FindFirstOfFunction {};
 }
+
+namespace di {
+using container::find_first_of;
+}

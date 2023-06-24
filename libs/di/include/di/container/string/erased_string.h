@@ -68,3 +68,7 @@ public:
     }
 };
 }
+
+namespace di {
+using container::ErasedString;
+}

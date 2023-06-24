@@ -52,3 +52,7 @@ namespace detail {
 
 constexpr inline auto search_n = detail::SearchNFunction {};
 }
+
+namespace di {
+using container::search_n;
+}

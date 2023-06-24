@@ -35,3 +35,7 @@ namespace detail {
 
 constexpr inline auto cartesian_product = detail::CartesianProductFunction {};
 }
+
+namespace di {
+using view::cartesian_product;
+}

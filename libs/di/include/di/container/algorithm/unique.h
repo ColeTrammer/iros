@@ -43,3 +43,7 @@ namespace detail {
 
 constexpr inline auto unique = detail::UniqueFunction {};
 }
+
+namespace di {
+using container::unique;
+}

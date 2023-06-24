@@ -26,3 +26,7 @@ namespace detail {
 template<size_t N>
 constexpr inline auto adjacent_transform = function::curry_back(detail::AdjacentTransformFunction<N> {}, meta::c_<2zu>);
 }
+
+namespace di {
+using view::adjacent_transform;
+}

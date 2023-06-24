@@ -32,3 +32,7 @@ private:
     Value m_value;
 };
 }
+
+namespace di {
+using bit::BitField;
+}

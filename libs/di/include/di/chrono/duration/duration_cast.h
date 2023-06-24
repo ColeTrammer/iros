@@ -24,3 +24,7 @@ namespace detail {
 template<concepts::InstanceOf<Duration> To>
 constexpr inline auto duration_cast = detail::DurationCastFunction<To> {};
 }
+
+namespace di {
+using chrono::duration_cast;
+}

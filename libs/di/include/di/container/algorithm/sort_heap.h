@@ -36,3 +36,7 @@ namespace detail {
 
 constexpr inline auto sort_heap = detail::SortHeapFunction {};
 }
+
+namespace di {
+using container::sort_heap;
+}

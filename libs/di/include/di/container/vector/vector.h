@@ -77,3 +77,7 @@ private:
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>>
 Vector<T> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<Vector>, Con&&);
 }
+
+namespace di {
+using container::Vector;
+}

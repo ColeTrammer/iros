@@ -30,3 +30,7 @@ namespace detail {
 
 constexpr inline auto slide = function::curry_back(detail::SlideFunction {}, meta::c_<2zu>);
 }
+
+namespace di {
+using view::slide;
+}

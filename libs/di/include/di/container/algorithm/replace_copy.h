@@ -39,3 +39,7 @@ namespace detail {
 
 constexpr inline auto replace_copy = detail::ReplaceCopyFunction {};
 }
+
+namespace di {
+using container::replace_copy;
+}

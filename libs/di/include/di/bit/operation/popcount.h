@@ -26,3 +26,7 @@ namespace detail {
 
 constexpr inline auto popcount = detail::PopcountFunction {};
 }
+
+namespace di {
+using bit::popcount;
+}

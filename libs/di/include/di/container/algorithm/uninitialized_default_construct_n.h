@@ -27,3 +27,7 @@ namespace detail {
 
 constexpr inline auto uninitialized_default_construct_n = detail::UninitializedDefaultConstructNFunction {};
 }
+
+namespace di {
+using container::uninitialized_default_construct_n;
+}

@@ -31,3 +31,7 @@ namespace detail {
 
 constexpr inline auto uninitialized_copy = detail::UninitializedCopyFunction {};
 }
+
+namespace di {
+using container::uninitialized_copy;
+}

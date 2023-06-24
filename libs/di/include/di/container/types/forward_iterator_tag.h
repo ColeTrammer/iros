@@ -5,3 +5,7 @@
 namespace di::types {
 struct ForwardIteratorTag : InputIteratorTag {};
 }
+
+namespace di {
+using types::ForwardIteratorTag;
+}

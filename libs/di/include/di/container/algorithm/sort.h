@@ -26,3 +26,7 @@ namespace detail {
 
 constexpr inline auto sort = detail::SortFunction {};
 }
+
+namespace di {
+using container::sort;
+}

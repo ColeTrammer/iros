@@ -8,3 +8,7 @@ namespace di::any {
 template<concepts::Interface Interface, concepts::Allocator Alloc = platform::DefaultAllocator>
 using AnyShared = Any<Interface, SharedStorage<Alloc>>;
 }
+
+namespace di {
+using any::AnyShared;
+}

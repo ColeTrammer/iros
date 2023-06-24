@@ -16,3 +16,7 @@ concept Clock = requires {
     { T::now() } -> SameAs<typename T::TimePoint>;
 };
 }
+
+namespace di {
+using concepts::Clock;
+}

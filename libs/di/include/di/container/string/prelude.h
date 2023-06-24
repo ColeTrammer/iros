@@ -8,24 +8,3 @@
 #include <di/container/string/transparent_encoding.h>
 #include <di/container/string/utf8_encoding.h>
 #include <di/container/string/zstring.h>
-
-namespace di {
-namespace encoding = container::string::encoding;
-
-using container::ErasedString;
-using container::FixedString;
-using container::String;
-using container::StringView;
-using container::TransparentString;
-using container::TransparentStringView;
-using container::ZCString;
-using container::ZCUString;
-using container::ZCWString;
-using container::ZString;
-using container::ZUString;
-using container::ZWString;
-}
-
-#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_STRING_LITERALS)
-using namespace di::literals::string_literals;
-#endif

@@ -44,3 +44,7 @@ namespace detail {
 
 constexpr inline auto uninitialized_relocate_backwards = detail::UninitializedRelocateBackwardsFunction {};
 }
+
+namespace di {
+using container::uninitialized_relocate_backwards;
+}

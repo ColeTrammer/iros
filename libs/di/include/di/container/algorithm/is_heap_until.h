@@ -49,3 +49,7 @@ namespace detail {
 
 constexpr inline auto is_heap_until = detail::IsHeapUntilFunction {};
 }
+
+namespace di {
+using container::is_heap_until;
+}

@@ -48,3 +48,7 @@ namespace detail {
 
 constexpr inline auto partition_point = detail::PartitionPointFunction {};
 }
+
+namespace di {
+using container::partition_point;
+}

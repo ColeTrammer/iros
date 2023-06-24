@@ -37,3 +37,7 @@ namespace detail {
 
 constexpr inline auto zip_transform = detail::ZipTransformFunction {};
 }
+
+namespace di {
+using view::zip_transform;
+}

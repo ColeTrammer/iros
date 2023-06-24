@@ -267,3 +267,8 @@ private:
     [[no_unique_address]] util::StoreIf<usize, is_sized> m_size { 0 };
 };
 }
+
+namespace di {
+using container::IntrusiveList;
+using container::IntrusiveListTag;
+}

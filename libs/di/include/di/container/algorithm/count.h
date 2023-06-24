@@ -35,3 +35,7 @@ namespace detail {
 
 constexpr inline auto count = detail::CountFunction {};
 }
+
+namespace di {
+using container::count;
+}

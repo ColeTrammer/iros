@@ -5,3 +5,7 @@
 namespace di::types {
 struct ContiguousIteratorTag : RandomAccessIteratorTag {};
 }
+
+namespace di {
+using types::ContiguousIteratorTag;
+}

@@ -51,3 +51,7 @@ namespace detail {
 
 constexpr inline auto lower_bound = detail::LowerBoundFunction {};
 }
+
+namespace di {
+using container::lower_bound;
+}

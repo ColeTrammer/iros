@@ -24,3 +24,7 @@ namespace detail {
 
 constexpr inline auto product = detail::ProductFunction {};
 }
+
+namespace di {
+using container::product;
+}

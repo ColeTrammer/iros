@@ -80,3 +80,7 @@ namespace detail {
 
 constexpr inline auto pop_heap = detail::PopHeapFunction {};
 }
+
+namespace di {
+using container::pop_heap;
+}

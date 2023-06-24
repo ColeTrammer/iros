@@ -30,3 +30,7 @@ namespace detail {
 
 constexpr inline auto stride = function::curry_back(detail::StrideFunction {}, meta::c_<2zu>);
 }
+
+namespace di {
+using view::stride;
+}

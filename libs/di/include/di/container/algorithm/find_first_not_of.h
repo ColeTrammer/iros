@@ -39,3 +39,7 @@ namespace detail {
 
 constexpr inline auto find_first_not_of = detail::FindFirstNotOfFunction {};
 }
+
+namespace di {
+using container::find_first_not_of;
+}

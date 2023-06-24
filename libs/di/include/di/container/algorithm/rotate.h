@@ -93,3 +93,7 @@ namespace detail {
 
 constexpr inline auto rotate = detail::RotateFunction {};
 }
+
+namespace di {
+using container::rotate;
+}

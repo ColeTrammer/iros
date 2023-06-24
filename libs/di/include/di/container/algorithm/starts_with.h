@@ -29,3 +29,7 @@ namespace detail {
 
 constexpr inline auto starts_with = detail::StartsWithFunction {};
 }
+
+namespace di {
+using container::starts_with;
+}

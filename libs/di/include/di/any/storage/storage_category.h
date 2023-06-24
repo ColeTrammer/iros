@@ -12,3 +12,7 @@ enum class StorageCategory {
     Cloneable,
 };
 }
+
+namespace di {
+using any::StorageCategory;
+}

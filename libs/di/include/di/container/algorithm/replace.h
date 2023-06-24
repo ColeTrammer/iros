@@ -33,3 +33,7 @@ namespace detail {
 
 constexpr inline auto replace = detail::ReplaceFunction {};
 }
+
+namespace di {
+using container::replace;
+}

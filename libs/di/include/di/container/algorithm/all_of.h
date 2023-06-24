@@ -23,3 +23,7 @@ namespace detail {
 
 constexpr inline auto all_of = detail::AllOfFunction {};
 }
+
+namespace di {
+using container::all_of;
+}

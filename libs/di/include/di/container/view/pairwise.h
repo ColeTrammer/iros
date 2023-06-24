@@ -5,3 +5,7 @@
 namespace di::container::view {
 constexpr inline auto pairwise = view::adjacent<2>;
 }
+
+namespace di {
+using view::pairwise;
+}

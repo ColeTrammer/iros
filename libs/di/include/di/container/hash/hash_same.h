@@ -59,3 +59,7 @@ constexpr bool tag_invoke(types::Tag<hash_same>, InPlaceType<T>, InPlaceType<U>)
         });
 }
 }
+
+namespace di {
+using concepts::HashSame;
+}

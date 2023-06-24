@@ -19,3 +19,7 @@ private:
     IntrusiveForwardListNode* next { nullptr };
 };
 }
+
+namespace di {
+using container::IntrusiveForwardListNode;
+}

@@ -14,3 +14,7 @@ namespace detail {
 
 constexpr inline auto bit_width = detail::BitWidthFunction {};
 }
+
+namespace di {
+using bit::bit_width;
+}

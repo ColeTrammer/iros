@@ -39,3 +39,7 @@ namespace detail {
 
 constexpr inline auto is_sorted_until = detail::IsSortedUntilFunction {};
 }
+
+namespace di {
+using container::is_sorted_until;
+}

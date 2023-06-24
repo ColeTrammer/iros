@@ -84,3 +84,7 @@ namespace detail {
 
 constexpr inline auto unique_copy = detail::UniqueCopyFunction {};
 }
+
+namespace di {
+using container::unique_copy;
+}

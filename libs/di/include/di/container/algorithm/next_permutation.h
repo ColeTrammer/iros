@@ -70,3 +70,7 @@ namespace detail {
 
 constexpr inline auto next_permutation = detail::NextPermutationFunction {};
 }
+
+namespace di {
+using container::next_permutation;
+}

@@ -34,3 +34,7 @@ namespace detail {
 
 constexpr inline auto copy_if = detail::CopyIfFunction {};
 }
+
+namespace di {
+using container::copy_if;
+}

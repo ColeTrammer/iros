@@ -33,3 +33,12 @@ inline namespace literals {
     }
 }
 }
+
+namespace di {
+using container::PathView;
+using container::Utf8PathView;
+}
+
+#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_PATH_LITERALS)
+using namespace di::literals::path_view_literals;
+#endif

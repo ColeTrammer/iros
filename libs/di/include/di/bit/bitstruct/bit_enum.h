@@ -26,3 +26,7 @@ private:
     T m_value;
 };
 }
+
+namespace di {
+using bit::BitEnum;
+}

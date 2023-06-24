@@ -40,3 +40,7 @@ namespace detail {
 
 constexpr inline auto ends_with = detail::EndsWithFunction {};
 }
+
+namespace di {
+using container::ends_with;
+}

@@ -31,3 +31,7 @@ namespace detail {
 
 constexpr inline auto as_rvalue = detail::AsRValueFunction {};
 }
+
+namespace di {
+using view::as_rvalue;
+}

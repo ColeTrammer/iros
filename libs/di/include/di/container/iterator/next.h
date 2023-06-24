@@ -33,3 +33,7 @@ struct NextFunction {
 
 constexpr inline auto next = NextFunction {};
 }
+
+namespace di {
+using container::next;
+}

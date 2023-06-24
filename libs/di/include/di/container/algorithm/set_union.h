@@ -55,3 +55,7 @@ namespace detail {
 
 constexpr inline auto set_union = detail::SetUnionFunction {};
 }
+
+namespace di {
+using container::set_union;
+}

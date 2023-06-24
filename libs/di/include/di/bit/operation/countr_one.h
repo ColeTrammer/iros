@@ -14,3 +14,7 @@ namespace detail {
 
 constexpr inline auto countr_one = detail::CountrOneFunction {};
 }
+
+namespace di {
+using bit::countr_one;
+}

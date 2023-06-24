@@ -69,3 +69,7 @@ constexpr auto to(Args&&... args) {
         util::forward<Args>(args)...);
 }
 }
+
+namespace di {
+using container::to;
+}

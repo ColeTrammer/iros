@@ -23,3 +23,7 @@ namespace detail {
 template<size_t N>
 constexpr inline auto adjacent = detail::AdjacentFunction<N> {};
 }
+
+namespace di {
+using view::adjacent;
+}

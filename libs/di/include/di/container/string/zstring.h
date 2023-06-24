@@ -40,3 +40,12 @@ using ZString = ZStringImpl<char>;
 using ZUString = ZStringImpl<unsigned char>;
 using ZWString = ZStringImpl<wchar_t>;
 }
+
+namespace di {
+using container::ZCString;
+using container::ZCUString;
+using container::ZCWString;
+using container::ZString;
+using container::ZUString;
+using container::ZWString;
+}

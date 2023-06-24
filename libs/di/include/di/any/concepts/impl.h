@@ -16,3 +16,7 @@ namespace detail {
 template<typename T, typename Interface>
 concept Impl = detail::impl_helper<T, Interface>;
 }
+
+namespace di {
+using concepts::Impl;
+}

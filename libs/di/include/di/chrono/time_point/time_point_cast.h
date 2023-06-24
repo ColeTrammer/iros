@@ -18,3 +18,7 @@ namespace detail {
 template<concepts::InstanceOf<Duration> To>
 constexpr inline auto time_point_cast = detail::TimePointCastFunction<To> {};
 }
+
+namespace di {
+using chrono::time_point_cast;
+}

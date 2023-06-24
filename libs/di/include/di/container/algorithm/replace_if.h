@@ -31,3 +31,7 @@ namespace detail {
 
 constexpr inline auto replace_if = detail::ReplaceIfFunction {};
 }
+
+namespace di {
+using container::replace_if;
+}

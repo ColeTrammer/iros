@@ -34,3 +34,7 @@ public:
 template<types::size_t size>
 FixedString(char const (&)[size]) -> FixedString<size - 1>;
 }
+
+namespace di {
+using container::FixedString;
+}

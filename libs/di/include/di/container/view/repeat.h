@@ -34,3 +34,7 @@ namespace detail {
 
 constexpr inline auto repeat = detail::RepeatFunction {};
 }
+
+namespace di {
+using view::repeat;
+}

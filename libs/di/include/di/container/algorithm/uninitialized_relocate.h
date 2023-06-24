@@ -40,3 +40,7 @@ namespace detail {
 
 constexpr inline auto uninitialized_relocate = detail::UninitializedRelocateFunction {};
 }
+
+namespace di {
+using container::uninitialized_relocate;
+}

@@ -29,3 +29,7 @@ namespace detail {
 
 constexpr inline auto rotate_copy = detail::RotateCopyFunction {};
 }
+
+namespace di {
+using container::rotate_copy;
+}

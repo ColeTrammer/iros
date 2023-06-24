@@ -36,3 +36,7 @@ namespace detail {
 
 constexpr inline auto partition = detail::PartitionFunction {};
 }
+
+namespace di {
+using container::partition;
+}

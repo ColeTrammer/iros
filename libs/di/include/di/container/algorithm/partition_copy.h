@@ -41,3 +41,7 @@ namespace detail {
 
 constexpr inline auto partition_copy = detail::PartitionCopyFunction {};
 }
+
+namespace di {
+using container::partition_copy;
+}

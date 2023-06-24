@@ -22,3 +22,7 @@ namespace detail {
 
 constexpr inline auto single = detail::SingleFunction {};
 }
+
+namespace di {
+using view::single;
+}

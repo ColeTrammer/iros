@@ -19,3 +19,7 @@ private:
     u64 m_hash { 0 };
 };
 }
+
+namespace di {
+using container::DefaultHasher;
+}

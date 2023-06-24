@@ -56,3 +56,7 @@ private:
     SizeType m_size { 0 };
 };
 }
+
+namespace di {
+using container::StaticVector;
+}

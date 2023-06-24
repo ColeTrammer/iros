@@ -31,3 +31,7 @@ namespace detail {
 
 constexpr inline auto uninitialized_move = detail::UninitializedMoveFunction {};
 }
+
+namespace di {
+using container::uninitialized_move;
+}

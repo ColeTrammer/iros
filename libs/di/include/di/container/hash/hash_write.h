@@ -89,3 +89,9 @@ constexpr auto tag_invoke(types::Tag<hash_write>, H& hasher, T const& value) {
         value);
 }
 }
+
+namespace di {
+using concepts::Hashable;
+
+using container::hash_write;
+}

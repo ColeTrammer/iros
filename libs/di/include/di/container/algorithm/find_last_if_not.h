@@ -36,3 +36,7 @@ namespace detail {
 
 constexpr inline auto find_last_if_not = detail::FindLastIfNotFunction {};
 }
+
+namespace di {
+using container::find_last_if_not;
+}

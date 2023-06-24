@@ -40,3 +40,7 @@ namespace detail {
 
 constexpr inline auto fold_left_with_iter = detail::FoldLeftWithIterFunction {};
 }
+
+namespace di {
+using container::fold_left_with_iter;
+}

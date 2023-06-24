@@ -11,3 +11,7 @@ struct ElementsOf {
 template<typename Con>
 ElementsOf(Con&&) -> ElementsOf<Con&&>;
 }
+
+namespace di {
+using types::ElementsOf;
+}

@@ -23,3 +23,7 @@ namespace detail {
 
 constexpr inline auto is_partitioned = detail::IsPartitionedFunction {};
 }
+
+namespace di {
+using container::is_partitioned;
+}

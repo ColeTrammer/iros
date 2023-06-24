@@ -51,3 +51,7 @@ namespace detail {
 
 constexpr inline auto upper_bound = detail::UpperBoundFunction {};
 }
+
+namespace di {
+using container::upper_bound;
+}

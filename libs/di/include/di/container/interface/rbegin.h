@@ -49,3 +49,7 @@ struct RBeginFunction {
 
 constexpr inline auto rbegin = RBeginFunction {};
 }
+
+namespace di {
+using container::rbegin;
+}

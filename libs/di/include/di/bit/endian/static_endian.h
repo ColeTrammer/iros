@@ -8,3 +8,7 @@ namespace di::bit {
 template<concepts::IntegralOrEnum T, Endian endian>
 using StaticEndian = meta::Conditional<endian == Endian::Little, LittleEndian<T>, BigEndian<T>>;
 }
+
+namespace di {
+using bit::StaticEndian;
+}

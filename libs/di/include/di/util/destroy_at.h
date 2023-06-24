@@ -23,3 +23,7 @@ namespace detail {
 
 constexpr inline auto destroy_at = detail::DestroyAtFunction {};
 }
+
+namespace di {
+using util::destroy_at;
+}

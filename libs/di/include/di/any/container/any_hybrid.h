@@ -11,3 +11,7 @@ template<concepts::Interface Interface, StorageCategory storage_category = Stora
          concepts::Allocator Alloc = platform::DefaultAllocator>
 using AnyHybrid = Any<Interface, HybridStorage<storage_category, inline_size, inline_align, Alloc>>;
 }
+
+namespace di {
+using any::AnyHybrid;
+}

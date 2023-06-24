@@ -138,3 +138,7 @@ Queue(Con) -> Queue<T, Con>;
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>>
 Queue<T> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<Queue>, Con&&);
 }
+
+namespace di {
+using container::Queue;
+}

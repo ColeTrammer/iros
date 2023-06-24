@@ -22,3 +22,7 @@ struct CEndFunction {
 
 constexpr inline auto cend = CEndFunction {};
 }
+
+namespace di {
+using container::cend;
+}

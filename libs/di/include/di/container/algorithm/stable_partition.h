@@ -47,3 +47,7 @@ namespace detail {
 
 constexpr inline auto stable_partition = detail::StablePartitionFunction {};
 }
+
+namespace di {
+using container::stable_partition;
+}

@@ -5,3 +5,7 @@
 namespace di::types {
 struct BidirectionalIteratorTag : ForwardIteratorTag {};
 }
+
+namespace di {
+using types::BidirectionalIteratorTag;
+}

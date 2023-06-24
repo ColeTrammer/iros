@@ -29,3 +29,7 @@ namespace detail {
 
 constexpr inline auto cycle = detail::CycleFunction {};
 }
+
+namespace di {
+using view::cycle;
+}

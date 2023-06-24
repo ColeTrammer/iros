@@ -23,3 +23,7 @@ namespace detail {
 
 constexpr inline auto uninitialized_value_construct_n = detail::UninitializedValueConstructNFunction {};
 }
+
+namespace di {
+using container::uninitialized_value_construct_n;
+}

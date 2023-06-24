@@ -38,3 +38,7 @@ namespace detail {
 
 constexpr inline auto remove_copy = detail::RemoveCopyFunction {};
 }
+
+namespace di {
+using container::remove_copy;
+}

@@ -23,3 +23,7 @@ namespace detail {
 
 constexpr inline auto contains = detail::ContainsFunction {};
 }
+
+namespace di {
+using container::contains;
+}

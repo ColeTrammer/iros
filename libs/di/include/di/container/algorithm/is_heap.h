@@ -29,3 +29,7 @@ namespace detail {
 
 constexpr inline auto is_heap = detail::IsHeapFunction {};
 }
+
+namespace di {
+using container::is_heap;
+}

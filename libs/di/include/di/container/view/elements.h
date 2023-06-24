@@ -20,3 +20,7 @@ namespace detail {
 template<size_t index>
 constexpr inline auto elements = detail::ElementsFunction<index> {};
 }
+
+namespace di {
+using view::elements;
+}

@@ -11,13 +11,3 @@
 #include <di/container/iterator/reverse_iterator.h>
 #include <di/container/iterator/sentinel_base.h>
 #include <di/container/iterator/sentinel_extension.h>
-
-namespace di {
-using container::advance;
-using container::distance;
-using container::next;
-using container::prev;
-
-using container::default_sentinel;
-using container::DefaultSentinel;
-}

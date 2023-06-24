@@ -39,3 +39,7 @@ namespace detail {
 
 constexpr inline auto mismatch = detail::MismatchFunction {};
 }
+
+namespace di {
+using container::mismatch;
+}

@@ -22,3 +22,7 @@ namespace detail {
 
 constexpr inline auto range = detail::RangeFunction {};
 }
+
+namespace di {
+using view::range;
+}

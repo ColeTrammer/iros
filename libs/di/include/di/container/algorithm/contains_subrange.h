@@ -28,3 +28,7 @@ namespace detail {
 
 constexpr inline auto contains_subrange = detail::ContainsSubrangeFunction {};
 }
+
+namespace di {
+using container::contains_subrange;
+}

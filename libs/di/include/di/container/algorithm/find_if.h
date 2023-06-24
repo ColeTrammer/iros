@@ -30,3 +30,7 @@ namespace detail {
 
 constexpr inline auto find_if = detail::FindIfFunction {};
 }
+
+namespace di {
+using container::find_if;
+}

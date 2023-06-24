@@ -43,3 +43,7 @@ namespace detail {
 
 constexpr inline auto distance = detail::DistanceFunction {};
 }
+
+namespace di {
+using container::distance;
+}

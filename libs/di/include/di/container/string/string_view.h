@@ -34,3 +34,12 @@ inline namespace literals {
     }
 }
 }
+
+namespace di {
+using container::StringView;
+using container::TransparentStringView;
+}
+
+#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_STRING_LITERALS)
+using namespace di::literals::string_literals;
+#endif

@@ -87,3 +87,7 @@ private:
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>>
 Ring<T> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<Ring>, Con&&);
 }
+
+namespace di {
+using container::Ring;
+}

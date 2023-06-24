@@ -33,3 +33,7 @@ namespace detail {
 
 constexpr inline auto find = detail::FindFunction {};
 }
+
+namespace di {
+using container::find;
+}

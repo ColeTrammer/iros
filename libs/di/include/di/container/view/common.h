@@ -30,3 +30,7 @@ namespace detail {
 
 constexpr inline auto common = detail::CommonFunction {};
 }
+
+namespace di {
+using view::common;
+}

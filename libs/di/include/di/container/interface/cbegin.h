@@ -22,3 +22,7 @@ struct CBeginFunction {
 
 constexpr inline auto cbegin = CBeginFunction {};
 }
+
+namespace di {
+using container::cbegin;
+}

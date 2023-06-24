@@ -17,3 +17,7 @@ namespace detail {
 
 constexpr inline auto bit_floor = detail::BitFloorFunction {};
 }
+
+namespace di {
+using bit::bit_floor;
+}

@@ -263,3 +263,7 @@ constexpr auto cli_parser(Optional<StringView> app_name = {}, Optional<StringVie
     return detail::Parser<T, meta::List<>, meta::List<>> { app_name, description, {}, {} };
 }
 }
+
+namespace di {
+using cli::cli_parser;
+}

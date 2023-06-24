@@ -25,3 +25,7 @@ namespace detail {
 
 constexpr inline auto sum = detail::SumFunction {};
 }
+
+namespace di {
+using container::sum;
+}

@@ -297,3 +297,7 @@ template<concepts::Interface UserInterface, concepts::AnyStorage Storage = Hybri
          typename VTablePolicy = MaybeInlineVTable<3>>
 using Any = meta::Type<AnyT<UserInterface, Storage, VTablePolicy>>;
 }
+
+namespace di {
+using any::Any;
+}

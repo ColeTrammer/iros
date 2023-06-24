@@ -28,3 +28,7 @@ namespace detail {
 
 constexpr inline auto uninitialized_fill = detail::UninitializedFillFunction {};
 }
+
+namespace di {
+using container::uninitialized_fill;
+}

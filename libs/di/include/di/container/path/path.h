@@ -9,3 +9,8 @@ namespace di::container {
 using Path = PathImpl<TransparentString>;
 using Utf8Path = PathImpl<String>;
 }
+
+namespace di {
+using container::Path;
+using container::Utf8Path;
+}

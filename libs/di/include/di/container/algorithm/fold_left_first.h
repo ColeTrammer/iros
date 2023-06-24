@@ -23,3 +23,7 @@ namespace detail {
 
 constexpr inline auto fold_left_first = function::curry_back(detail::FoldLeftFirstFunction {}, meta::c_<2zu>);
 }
+
+namespace di {
+using container::fold_left_first;
+}

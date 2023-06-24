@@ -40,3 +40,7 @@ TreeMultiSet<T> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<Tree
 template<concepts::InputContainer Con, typename T = meta::ContainerValue<Con>, concepts::StrictWeakOrder<T> Comp>
 TreeMultiSet<T, Comp> tag_invoke(types::Tag<util::deduce_create>, InPlaceTemplate<TreeMultiSet>, Con&&, Comp);
 }
+
+namespace di {
+using container::TreeMultiSet;
+}

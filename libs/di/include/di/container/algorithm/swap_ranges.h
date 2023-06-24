@@ -30,3 +30,7 @@ namespace detail {
 
 constexpr inline auto swap_ranges = detail::SwapRanges {};
 }
+
+namespace di {
+using container::swap_ranges;
+}

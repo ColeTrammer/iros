@@ -49,3 +49,20 @@ inline namespace literals {
     }
 }
 }
+
+namespace di {
+using chrono::Days;
+using chrono::Hours;
+using chrono::Microseconds;
+using chrono::Milliseconds;
+using chrono::Minutes;
+using chrono::Months;
+using chrono::Nanoseconds;
+using chrono::Picoseconds;
+using chrono::Seconds;
+using chrono::Years;
+}
+
+#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_CHRONO_LITERALS)
+using namespace di::literals::chrono_duration_literals;
+#endif

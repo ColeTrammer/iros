@@ -32,3 +32,7 @@ namespace detail {
 
 constexpr inline auto count_if = detail::CountIfFunction {};
 }
+
+namespace di {
+using container::count_if;
+}

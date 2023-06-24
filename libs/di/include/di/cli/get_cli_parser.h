@@ -31,3 +31,7 @@ namespace detail {
 template<typename T>
 constexpr inline auto get_cli_parser = detail::GetCliParserFunction<T> {};
 }
+
+namespace di {
+using cli::get_cli_parser;
+}

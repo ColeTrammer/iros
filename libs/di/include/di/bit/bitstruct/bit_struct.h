@@ -39,3 +39,7 @@ private:
     BitSet<8 * byte_size> m_bitset;
 };
 }
+
+namespace di {
+using bit::BitStruct;
+}

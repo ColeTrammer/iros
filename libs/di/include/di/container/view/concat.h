@@ -34,3 +34,7 @@ namespace detail {
 
 constexpr inline auto concat = detail::ConcatFunction {};
 }
+
+namespace di {
+using view::concat;
+}

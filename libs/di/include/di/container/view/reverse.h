@@ -53,3 +53,7 @@ namespace detail {
 
 constexpr inline auto reverse = detail::ReverseFunction {};
 }
+
+namespace di {
+using view::reverse;
+}

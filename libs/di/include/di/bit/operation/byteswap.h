@@ -37,3 +37,7 @@ namespace detail {
 
 constexpr inline auto byteswap = detail::ByteswapFunction {};
 }
+
+namespace di {
+using bit::byteswap;
+}

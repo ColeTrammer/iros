@@ -31,3 +31,10 @@ class IntrusiveTreeMultiSet
                                           detail::RBTreeValidForLookup<T, Comp>::template Type, true>,
                     true> {};
 }
+
+namespace di {
+using container::IntrusiveTreeMultiSet;
+using container::IntrusiveTreeSet;
+using container::IntrusiveTreeSetNode;
+using container::IntrusiveTreeSetTag;
+}

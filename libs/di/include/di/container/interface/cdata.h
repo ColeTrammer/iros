@@ -23,3 +23,7 @@ struct CDataFunction {
 
 constexpr inline auto cdata = CDataFunction {};
 }
+
+namespace di {
+using container::cdata;
+}

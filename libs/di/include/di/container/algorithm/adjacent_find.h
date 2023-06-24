@@ -35,3 +35,7 @@ namespace detail {
 
 constexpr inline auto adjacent_find = detail::AdjacentFindFunction {};
 }
+
+namespace di {
+using container::adjacent_find;
+}

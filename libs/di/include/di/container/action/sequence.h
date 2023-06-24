@@ -33,3 +33,7 @@ namespace detail {
 
 constexpr inline auto sequence = function::curry_back(detail::SequenceFunction {}, meta::c_<2zu>);
 }
+
+namespace di {
+using container::sequence;
+}

@@ -54,3 +54,7 @@ namespace detail {
 
 constexpr inline auto binary_search = detail::BinarySearchFunction {};
 }
+
+namespace di {
+using container::binary_search;
+}

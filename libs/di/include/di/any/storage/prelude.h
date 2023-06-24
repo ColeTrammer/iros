@@ -6,7 +6,3 @@
 #include <di/any/storage/shared_storage.h>
 #include <di/any/storage/storage_category.h>
 #include <di/any/storage/unique_storage.h>
-
-namespace di {
-using any::StorageCategory;
-}

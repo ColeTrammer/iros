@@ -53,3 +53,7 @@ struct SizeFunction {
 
 constexpr inline auto size = SizeFunction {};
 }
+
+namespace di {
+using container::size;
+}

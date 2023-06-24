@@ -34,3 +34,7 @@ namespace detail {
 
 constexpr inline auto countl_zero = detail::CountlZeroFunction {};
 }
+
+namespace di {
+using bit::countl_zero;
+}
