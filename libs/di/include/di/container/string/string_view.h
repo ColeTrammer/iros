@@ -15,7 +15,7 @@ using TransparentStringView = string::StringViewImpl<string::TransparentEncoding
 
 namespace di {
 inline namespace literals {
-    inline namespace string_literals {
+    inline namespace string_view_literals {
         template<container::FixedString literal>
         consteval auto operator""_sv() {
             return container::fixed_string_to_utf8_string_view<literal>();
@@ -41,5 +41,5 @@ using container::TransparentStringView;
 }
 
 #if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_STRING_LITERALS)
-using namespace di::literals::string_literals;
+using namespace di::literals::string_view_literals;
 #endif

@@ -4,7 +4,7 @@
 #include <di/vocab/expected/prelude.h>
 
 namespace di::vocab {
-template<typename T>
+template<typename T = void>
 using Result = Expected<T, Error>;
 }
 
