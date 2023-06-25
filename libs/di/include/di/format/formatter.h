@@ -30,3 +30,7 @@ requires(requires { formatter_in_place(in_place_type<meta::RemoveCVRef<T>>, pars
     return formatter_in_place(in_place_type<meta::RemoveCVRef<T>>, parse_context, debug);
 }
 }
+
+namespace di {
+using format::formatter_in_place;
+}

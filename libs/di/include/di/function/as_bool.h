@@ -15,3 +15,8 @@ struct AsBool : function::pipeline::EnablePipeline {
 
 constexpr inline auto as_bool = AsBool {};
 }
+
+namespace di {
+using function::as_bool;
+using function::AsBool;
+}

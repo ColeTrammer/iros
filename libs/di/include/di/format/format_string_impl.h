@@ -72,3 +72,7 @@ using FormatStringImpl = detail::FormatStringImpl<Enc, meta::TypeIdentity<Args>.
 template<concepts::Encoding Enc, concepts::Formattable... Args>
 using FormatStringWithLocationImpl = detail::FormatStringWithLocationImpl<Enc, meta::TypeIdentity<Args>...>;
 }
+
+namespace di {
+using format::FormatStringImpl;
+}

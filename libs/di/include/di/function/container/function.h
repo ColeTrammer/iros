@@ -653,3 +653,8 @@ using function_ns::Function;
 template<concepts::LanguageFunction T, concepts::Allocator Alloc = platform::DefaultAllocator>
 constexpr inline auto make_function = function_ns::MakeFunction<T, Alloc> {};
 }
+
+namespace di {
+using function::Function;
+using function::make_function;
+}

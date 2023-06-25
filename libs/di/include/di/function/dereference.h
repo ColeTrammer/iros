@@ -15,3 +15,8 @@ struct Dereference : function::pipeline::EnablePipeline {
 
 constexpr inline auto dereference = Dereference {};
 }
+
+namespace di {
+using function::dereference;
+using function::Dereference;
+}

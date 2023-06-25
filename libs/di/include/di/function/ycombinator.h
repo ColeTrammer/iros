@@ -62,3 +62,7 @@ namespace detail {
 
 constexpr inline auto ycombinator = detail::YCombinatorFunction {};
 }
+
+namespace di {
+using function::ycombinator;
+}

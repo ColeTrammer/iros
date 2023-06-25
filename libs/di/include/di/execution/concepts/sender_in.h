@@ -13,3 +13,7 @@ concept SenderIn = concepts::Sender<S> && requires(S&& sender, E&& env) {
     } -> concepts::ValidCompletionSignatures;
 };
 }
+
+namespace di {
+using concepts::SenderIn;
+}

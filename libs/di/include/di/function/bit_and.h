@@ -14,3 +14,8 @@ struct BitAnd {
 
 constexpr inline auto bit_and = function::curry_back(BitAnd {}, meta::c_<2zu>);
 }
+
+namespace di {
+using function::bit_and;
+using function::BitAnd;
+}

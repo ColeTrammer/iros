@@ -11,3 +11,7 @@ concept Receiver = execution::enable_receiver<meta::RemoveCVRef<T>> && requires(
     { execution::get_env(receiver) } -> Queryable;
 } && MoveConstructible<meta::RemoveCVRef<T>> && concepts::ConstructibleFrom<meta::RemoveCVRef<T>, T>;
 }
+
+namespace di {
+using concepts::Receiver;
+}

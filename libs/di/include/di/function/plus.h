@@ -14,3 +14,8 @@ struct Plus {
 
 constexpr inline auto plus = function::curry_back(Plus {}, meta::c_<2zu>);
 }
+
+namespace di {
+using function::plus;
+using function::Plus;
+}

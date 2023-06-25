@@ -37,3 +37,7 @@ namespace detail {
 
 constexpr inline auto read_all = detail::ReadAll {};
 }
+
+namespace di {
+using io::read_all;
+}

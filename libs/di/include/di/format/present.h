@@ -6,3 +6,7 @@
 namespace di::format {
 constexpr inline auto present = present_encoded<container::string::Utf8Encoding>;
 }
+
+namespace di {
+using format::present;
+}

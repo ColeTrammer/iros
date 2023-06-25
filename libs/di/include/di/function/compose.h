@@ -69,3 +69,7 @@ constexpr auto compose(F&& f, G&& g, Fs&&... rest) {
         util::forward<Fs>(rest)...);
 }
 }
+
+namespace di {
+using function::compose;
+}

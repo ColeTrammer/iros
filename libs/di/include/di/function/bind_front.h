@@ -70,3 +70,7 @@ constexpr auto bind_front(F&& f, Args&&... args) {
         types::in_place, util::forward<F>(f), util::forward<Args>(args)...);
 }
 }
+
+namespace di {
+using function::bind_front;
+}

@@ -25,3 +25,7 @@ namespace detail {
 template<class T, class Completions>
 concept ReceiverOf = Receiver<T> && detail::ReceiverOfHelper<T, Completions>;
 }
+
+namespace di {
+using concepts::ReceiverOf;
+}

@@ -175,3 +175,10 @@ constexpr inline auto sync_wait_on = function::curry(sync_wait_ns::OnFunction {}
 constexpr inline auto sync_wait_with_variant_on =
     function::curry(sync_wait_ns::WithVariantOnFunction {}, meta::c_<2zu>);
 }
+
+namespace di {
+using execution::sync_wait;
+using execution::sync_wait_on;
+using execution::sync_wait_with_variant;
+using execution::sync_wait_with_variant_on;
+}

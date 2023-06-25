@@ -7,21 +7,3 @@
 #include <di/format/present_encoded_context.h>
 #include <di/format/style.h>
 #include <di/format/to_string.h>
-
-namespace di {
-using concepts::FormatContext;
-using concepts::Formattable;
-
-using format::FormatParseContext;
-using format::FormatStringImpl;
-using format::Styled;
-
-using FormatColor = format::Color;
-using FormatBackgroundColor = format::BackgroundColor;
-using FormatEffect = format::Effect;
-
-using format::formatter_in_place;
-using format::present;
-using format::present_encoded_context;
-using format::to_string;
-}

@@ -56,3 +56,7 @@ constexpr auto not_fn(F&& function) {
     return detail::NotFnFunction<meta::Decay<F>>(types::in_place, util::forward<F>(function));
 }
 }
+
+namespace di {
+using function::not_fn;
+}

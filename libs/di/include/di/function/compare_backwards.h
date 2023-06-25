@@ -18,3 +18,8 @@ struct CompareBackwards {
 
 constexpr inline auto compare_backwards = function::curry_back(CompareBackwards {}, meta::c_<2zu>);
 }
+
+namespace di {
+using function::compare_backwards;
+using function::CompareBackwards;
+}

@@ -15,3 +15,8 @@ struct Identity : pipeline::EnablePipeline {
 
 constexpr inline auto identity = Identity {};
 }
+
+namespace di {
+using function::identity;
+using function::Identity;
+}

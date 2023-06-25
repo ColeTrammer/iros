@@ -58,3 +58,7 @@ private:
     friend auto tag_invoke(types::Tag<schedule>, InlineScheduler const&) { return Sender {}; }
 };
 }
+
+namespace di {
+using execution::InlineScheduler;
+}

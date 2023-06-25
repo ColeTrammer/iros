@@ -28,3 +28,7 @@ concept SenderOf =
     meta::matching_sig<Sig, meta::GatherSignatures<typename detail::SenderOfHelper<Sig>::Tag, Send, Env,
                                                    detail::SenderOfHelper<Sig>::template AsSig, meta::TypeIdentity>>;
 }
+
+namespace di {
+using concepts::SenderOf;
+}

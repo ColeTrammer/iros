@@ -18,3 +18,8 @@ struct Compare {
 
 constexpr inline auto compare = function::curry_back(Compare {}, meta::c_<2zu>);
 }
+
+namespace di {
+using function::compare;
+using function::Compare;
+}

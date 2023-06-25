@@ -8,9 +8,3 @@
 #include <di/function/monad/monad_operator.h>
 #include <di/function/monad/monad_try.h>
 #include <di/function/monad/monad_unit.h>
-
-namespace di {
-namespace function::monad {}
-
-namespace monad = function::monad;
-}

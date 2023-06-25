@@ -14,3 +14,8 @@ struct Multiplies {
 
 constexpr inline auto multiplies = function::curry_back(Multiplies {}, meta::c_<2zu>);
 }
+
+namespace di {
+using function::multiplies;
+using function::Multiplies;
+}

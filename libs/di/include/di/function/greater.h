@@ -22,3 +22,8 @@ struct Greater {
 
 constexpr inline auto greater = curry_back(Greater {}, meta::c_<2zu>);
 }
+
+namespace di {
+using function::greater;
+using function::Greater;
+}

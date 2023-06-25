@@ -127,3 +127,7 @@ private:
     CoroutineHandle<PromiseType> m_coroutine {};
 };
 }
+
+namespace di {
+using function::Generator;
+}

@@ -54,3 +54,7 @@ private:
 template<typename String>
 StringReader(String&&) -> StringReader<String>;
 }
+
+namespace di {
+using io::StringReader;
+}

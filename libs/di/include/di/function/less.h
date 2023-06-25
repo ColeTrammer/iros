@@ -22,3 +22,8 @@ struct Less {
 
 constexpr inline auto less = curry_back(Less {}, meta::c_<2zu>);
 }
+
+namespace di {
+using function::less;
+using function::Less;
+}

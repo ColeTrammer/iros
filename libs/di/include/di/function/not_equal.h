@@ -22,3 +22,8 @@ struct NotEqual {
 
 constexpr inline auto not_equal = curry_back(NotEqual {}, meta::c_<2zu>);
 }
+
+namespace di {
+using function::not_equal;
+using function::NotEqual;
+}

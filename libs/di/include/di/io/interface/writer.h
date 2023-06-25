@@ -3,6 +3,7 @@
 #include <di/any/prelude.h>
 #include <di/meta/vocab.h>
 #include <di/util/reference_wrapper.h>
+#include <di/vocab/error/prelude.h>
 #include <di/vocab/span/prelude.h>
 
 namespace di::io {
@@ -62,4 +63,8 @@ namespace di::meta {
 template<typename T, concepts::Impl<io::Writer> Writer>
 using WriterResult =
     meta::LikeExpected<decltype(io::write_some(util::declval<Writer&>(), util::declval<Span<Byte const>>())), T>;
+}
+
+namespace di {
+using io::Writer;
 }

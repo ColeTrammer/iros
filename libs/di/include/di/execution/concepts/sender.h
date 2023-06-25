@@ -12,3 +12,7 @@ concept Sender = execution::enable_sender<meta::RemoveCVRef<Send>> && requires(m
     { execution::get_env(sender) } -> Queryable;
 } && MoveConstructible<meta::RemoveCVRef<Send>> && ConstructibleFrom<meta::RemoveCVRef<Send>, Send>;
 }
+
+namespace di {
+using concepts::Sender;
+}

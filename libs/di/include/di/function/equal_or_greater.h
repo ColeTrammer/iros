@@ -22,3 +22,8 @@ struct EqualOrGreater {
 
 constexpr inline auto equal_or_greater = curry_back(EqualOrGreater {}, meta::c_<2zu>);
 }
+
+namespace di {
+using function::equal_or_greater;
+using function::EqualOrGreater;
+}

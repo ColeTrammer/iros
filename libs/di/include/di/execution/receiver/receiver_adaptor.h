@@ -243,3 +243,7 @@ namespace receiver_interface_ns {
 template<concepts::ClassType Self, concepts::Receiver Base = receiver_interface_ns::fake_receiver::FakeReceiver>
 using ReceiverAdaptor = meta::Type<receiver_interface_ns::ReceiverAdaptor<Self, Base>>;
 }
+
+namespace di {
+using execution::ReceiverAdaptor;
+}

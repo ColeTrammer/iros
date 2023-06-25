@@ -19,3 +19,7 @@ struct ContextPlaceholder {
     Encoding encoding() const;
 };
 }
+
+namespace di {
+using concepts::FormatContext;
+}

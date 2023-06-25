@@ -219,3 +219,7 @@ namespace function_ref_ns {
 
 using function_ref_ns::FunctionRef;
 }
+
+namespace di {
+using function::FunctionRef;
+}

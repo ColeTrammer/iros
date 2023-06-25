@@ -13,3 +13,7 @@ namespace detail {
 
 constexpr inline auto to_string = detail::ToStringFunction {};
 }
+
+namespace di {
+using format::to_string;
+}

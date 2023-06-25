@@ -74,19 +74,39 @@ concept InvocableR = Invocable<Ts...> && (LanguageVoid<R> || ImplicitlyConvertib
 }
 
 namespace di::function {
-template<typename F, typename... Args>
-requires(concepts::Invocable<F, Args...>)
-constexpr meta::InvokeResult<F, Args...> invoke(F&& f, Args&&... args) {
-    return function::detail::invoke_impl(util::forward<F>(f), util::forward<Args>(args)...);
+namespace detail {
+    struct InvokeFunction {
+        template<typename F, typename... Args>
+        requires(concepts::Invocable<F, Args...>)
+        constexpr auto operator()(F&& f, Args&&... args) const -> meta::InvokeResult<F, Args...> {
+            return function::detail::invoke_impl(util::forward<F>(f), util::forward<Args>(args)...);
+        }
+    };
+
+    template<typename R>
+    struct InvokeRFunction {
+        template<typename F, typename... Args>
+        requires(concepts::InvocableTo<F, R, Args...>)
+        constexpr auto operator()(F&& f, Args&&... args) const -> R {
+            if constexpr (concepts::LanguageVoid<R>) {
+                (void) function::detail::invoke_impl(util::forward<F>(f), util::forward<Args>(args)...);
+            } else {
+                return function::detail::invoke_impl(util::forward<F>(f), util::forward<Args>(args)...);
+            }
+        }
+    };
 }
 
-template<typename R, typename F, typename... Args>
-requires(concepts::InvocableTo<F, R, Args...>)
-constexpr R invoke_r(F&& f, Args&&... args) {
-    if constexpr (concepts::LanguageVoid<R>) {
-        (void) function::detail::invoke_impl(util::forward<F>(f), util::forward<Args>(args)...);
-    } else {
-        return function::detail::invoke_impl(util::forward<F>(f), util::forward<Args>(args)...);
-    }
+constexpr inline auto invoke = function::detail::InvokeFunction {};
+
+template<typename R>
+constexpr inline auto invoke_r = function::detail::InvokeRFunction<R> {};
 }
+
+namespace di {
+using concepts::Invocable;
+using concepts::InvocableTo;
+using function::invoke;
+using function::invoke_r;
+using meta::InvokeResult;
 }

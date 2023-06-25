@@ -27,3 +27,7 @@ namespace detail {
 template<concepts::Encoding Enc>
 constexpr inline auto present_encoded_context = detail::PresentEncodedContextFunction<Enc> {};
 }
+
+namespace di {
+using format::present_encoded_context;
+}

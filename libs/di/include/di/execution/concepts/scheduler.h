@@ -27,3 +27,7 @@ concept Scheduler =
         } -> SameAs<meta::RemoveCVRef<T>>;
     };
 }
+
+namespace di {
+using concepts::Scheduler;
+}

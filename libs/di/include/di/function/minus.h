@@ -14,3 +14,8 @@ struct Minus {
 
 constexpr inline auto minus = function::curry_back(Minus {}, meta::c_<2zu>);
 }
+
+namespace di {
+using function::minus;
+using function::Minus;
+}

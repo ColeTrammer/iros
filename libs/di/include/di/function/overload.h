@@ -27,3 +27,7 @@ namespace detail {
 
 constexpr inline auto overload = detail::OverloadFunction {};
 }
+
+namespace di {
+using function::overload;
+}

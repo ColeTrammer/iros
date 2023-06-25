@@ -24,3 +24,7 @@ namespace detail {
 template<concepts::Encoding Enc>
 constexpr inline auto writer_print = detail::WriterPrintFunction<Enc> {};
 }
+
+namespace di {
+using io::writer_print;
+}

@@ -164,3 +164,11 @@ using style::Effect;
 using style::Style;
 using style::Styled;
 }
+
+namespace di {
+using format::Styled;
+
+using FormatColor = format::Color;
+using FormatBackgroundColor = format::BackgroundColor;
+using FormatEffect = format::Effect;
+}

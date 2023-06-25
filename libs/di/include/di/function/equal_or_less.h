@@ -22,3 +22,8 @@ struct EqualOrLess {
 
 constexpr inline auto equal_or_less = curry_back(EqualOrLess {}, meta::c_<2zu>);
 }
+
+namespace di {
+using function::equal_or_less;
+using function::EqualOrLess;
+}

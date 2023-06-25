@@ -14,3 +14,7 @@ concept SenderTo =
         execution::connect(util::forward<Send>(sender), util::forward<Recv>(receiver));
     };
 }
+
+namespace di {
+using concepts::SenderTo;
+}

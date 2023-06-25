@@ -50,3 +50,7 @@ namespace detail {
 
 constexpr inline auto write_exactly = detail::WriteExactlyFunction {};
 }
+
+namespace di {
+using io::write_exactly;
+}

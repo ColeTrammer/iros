@@ -17,3 +17,9 @@ struct EnableMonadFunction {
 
 constexpr inline auto enable_monad = EnableMonadFunction {};
 }
+
+namespace di {
+namespace function::monad {}
+
+namespace monad = function::monad;
+}

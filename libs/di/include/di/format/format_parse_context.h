@@ -224,3 +224,7 @@ private:
     size_t m_arg_count { 0 };
 };
 }
+
+namespace di {
+using format::FormatParseContext;
+}

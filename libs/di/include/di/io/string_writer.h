@@ -29,3 +29,7 @@ private:
     T m_output;
 };
 }
+
+namespace di {
+using io::StringWriter;
+}

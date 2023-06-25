@@ -146,3 +146,7 @@ private:
     sync::Synchronized<State, Lock> m_state;
 };
 }
+
+namespace di {
+using execution::RunLoop;
+}

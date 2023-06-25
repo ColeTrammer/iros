@@ -54,3 +54,7 @@ constexpr auto uncurry(F&& function) {
     return detail::UncurryFunction<meta::Decay<F>>(types::in_place, util::forward<F>(function));
 }
 }
+
+namespace di {
+using function::uncurry;
+}

@@ -69,3 +69,7 @@ constexpr auto chain(F&& f, G&& g, Fs&&... rest) {
         util::forward<Fs>(rest)...);
 }
 }
+
+namespace di {
+using function::chain;
+}

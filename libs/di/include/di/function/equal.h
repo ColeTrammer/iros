@@ -22,3 +22,8 @@ struct Equal {
 
 constexpr inline auto equal = curry_back(Equal {}, meta::c_<2zu>);
 }
+
+namespace di {
+using function::equal;
+using function::Equal;
+}

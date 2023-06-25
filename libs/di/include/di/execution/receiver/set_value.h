@@ -13,3 +13,7 @@ struct SetValue {
 
 constexpr inline auto set_value = SetValue {};
 }
+
+namespace di {
+using execution::SetValue;
+}

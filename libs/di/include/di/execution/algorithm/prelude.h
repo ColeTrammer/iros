@@ -15,10 +15,3 @@
 #include <di/execution/algorithm/then.h>
 #include <di/execution/algorithm/transfer.h>
 #include <di/execution/algorithm/transfer_just.h>
-
-namespace di {
-using execution::sync_wait;
-using execution::sync_wait_on;
-using execution::sync_wait_with_variant;
-using execution::sync_wait_with_variant_on;
-}

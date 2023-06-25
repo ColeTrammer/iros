@@ -11,3 +11,7 @@ concept Formattable = requires(format::ContextPlaceholder& context,
     { (*format::formatter<T>(parse_context))(context, util::forward<T>(value)) } -> SameAs<Result<void>>;
 };
 }
+
+namespace di {
+using concepts::Formattable;
+}

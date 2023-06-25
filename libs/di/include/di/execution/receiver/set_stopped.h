@@ -13,3 +13,7 @@ struct SetStopped {
 
 constexpr inline auto set_stopped = SetStopped {};
 }
+
+namespace di {
+using execution::SetStopped;
+}

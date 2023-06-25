@@ -1,6 +1,7 @@
 #pragma once
 
 #include <di/any/prelude.h>
+#include <di/vocab/error/prelude.h>
 #include <di/vocab/span/prelude.h>
 
 namespace di::io {
@@ -37,4 +38,8 @@ namespace di::meta {
 template<typename T, concepts::Impl<io::Reader> Reader>
 using ReaderResult =
     meta::LikeExpected<decltype(io::read_some(util::declval<Reader&>(), util::declval<Span<Byte>>())), T>;
+}
+
+namespace di {
+using io::Reader;
 }

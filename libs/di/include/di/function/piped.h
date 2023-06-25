@@ -57,3 +57,7 @@ constexpr auto piped(F&& function) {
     return detail::PipedFunction<meta::Decay<F>>(types::in_place, util::forward<F>(function));
 }
 }
+
+namespace di {
+using function::piped;
+}

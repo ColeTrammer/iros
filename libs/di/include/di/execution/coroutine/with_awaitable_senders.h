@@ -60,3 +60,7 @@ private:
     CoroutineHandle<> (*m_error_handler)(void*, Error) { &default_unhandled_error };
 };
 }
+
+namespace di {
+using execution::WithAwaitableSenders;
+}

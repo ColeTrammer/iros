@@ -102,3 +102,7 @@ namespace as_awaitable_ns {
 
 constexpr inline as_awaitable_ns::Function as_awaitable = {};
 }
+
+namespace di {
+using execution::as_awaitable;
+}

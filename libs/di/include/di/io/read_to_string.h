@@ -21,3 +21,7 @@ namespace detail {
 
 constexpr inline auto read_to_string = detail::ReadToString {};
 }
+
+namespace di {
+using io::read_to_string;
+}

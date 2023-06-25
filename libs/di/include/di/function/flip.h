@@ -52,3 +52,7 @@ constexpr auto flip(F&& function) {
     return detail::FlipFunction<meta::Decay<F>>(types::in_place, util::forward<F>(function));
 }
 }
+
+namespace di {
+using function::flip;
+}

@@ -101,3 +101,7 @@ namespace detail {
     };
 }
 }
+
+namespace di {
+using function::curry_back;
+}

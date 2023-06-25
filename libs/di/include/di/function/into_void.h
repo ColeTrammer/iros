@@ -10,3 +10,7 @@ namespace detail {
 
 constexpr inline auto into_void = detail::IntoVoidFunction {};
 }
+
+namespace di {
+using function::into_void;
+}

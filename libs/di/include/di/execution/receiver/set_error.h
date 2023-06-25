@@ -13,3 +13,7 @@ struct SetError {
 
 constexpr inline auto set_error = SetError {};
 }
+
+namespace di {
+using execution::SetError;
+}
