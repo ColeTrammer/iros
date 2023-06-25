@@ -19,3 +19,7 @@ void addressof(T const&&) = delete;
 namespace di::util {
 using std::addressof;
 }
+
+namespace di {
+using util::addressof;
+}

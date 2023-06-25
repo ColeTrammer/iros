@@ -14,3 +14,7 @@ namespace detail {
 
 constexpr inline auto tie = detail::TieFunction {};
 }
+
+namespace di {
+using vocab::tie;
+}

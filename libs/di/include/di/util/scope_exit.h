@@ -38,3 +38,7 @@ private:
 template<typename F>
 ScopeExit(F) -> ScopeExit<F>;
 }
+
+namespace di {
+using util::ScopeExit;
+}

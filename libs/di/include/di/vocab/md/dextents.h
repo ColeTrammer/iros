@@ -18,3 +18,7 @@ namespace detail {
 template<typename SizeType, usize rank>
 using Dextents = detail::DextentsHelper<SizeType, meta::Repeat<Constexpr<dynamic_extent>, rank>>::Type;
 }
+
+namespace di {
+using vocab::Dextents;
+}

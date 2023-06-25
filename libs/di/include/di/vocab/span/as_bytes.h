@@ -15,3 +15,7 @@ namespace detail {
 
 constexpr inline auto as_bytes = detail::AsBytesFunction {};
 }
+
+namespace di {
+using vocab::as_bytes;
+}

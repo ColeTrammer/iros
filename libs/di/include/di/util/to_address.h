@@ -21,3 +21,7 @@ namespace detail {
 
 constexpr inline auto to_address = detail::ToAddressFunction {};
 }
+
+namespace di {
+using util::to_address;
+}

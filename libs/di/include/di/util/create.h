@@ -30,3 +30,7 @@ constexpr auto create(Args&&... args) {
     return create_in_place(in_place_type<meta::DeduceCreate<Template, Args...>>, util::forward<Args>(args)...);
 }
 }
+
+namespace di {
+using util::create;
+}

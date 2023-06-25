@@ -15,3 +15,7 @@ constexpr auto make_optional(Args&&... args) {
     return Optional<T>(types::in_place, util::forward<Args>(args)...);
 }
 }
+
+namespace di {
+using vocab::make_optional;
+}

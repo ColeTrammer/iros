@@ -26,3 +26,7 @@ namespace detail {
 
 constexpr inline auto default_construct_at = detail::DefaultConstructAtFunction {};
 }
+
+namespace di {
+using util::default_construct_at;
+}

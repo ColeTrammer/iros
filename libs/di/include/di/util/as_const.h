@@ -19,3 +19,7 @@ constexpr void as_const(T const&&) = delete;
 namespace di::util {
 using std::as_const;
 }
+
+namespace di {
+using util::as_const;
+}

@@ -20,3 +20,7 @@ namespace detail {
 
 constexpr inline auto relocate = detail::RelocateFunction {};
 }
+
+namespace di {
+using util::relocate;
+}

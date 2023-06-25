@@ -157,5 +157,10 @@ namespace detail {
 
 template<typename T>
 constexpr inline auto make_box = detail::MakeBoxFunction<T> {};
+}
 
+namespace di {
+using vocab::Box;
+using vocab::DefaultDelete;
+using vocab::make_box;
 }

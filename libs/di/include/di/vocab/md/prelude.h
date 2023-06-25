@@ -11,13 +11,3 @@
 #include <di/vocab/md/layout_stride.h>
 #include <di/vocab/md/mdspan.h>
 #include <di/vocab/span/prelude.h>
-
-namespace di {
-using vocab::DefaultAccessor;
-using vocab::Dextents;
-using vocab::Extents;
-using vocab::LayoutLeft;
-using vocab::LayoutRight;
-using vocab::LayoutStride;
-using vocab::MDSpan;
-}

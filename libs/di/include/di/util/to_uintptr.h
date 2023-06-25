@@ -12,3 +12,7 @@ namespace detail {
 
 constexpr inline auto to_uintptr = detail::Function {};
 }
+
+namespace di {
+using util::to_uintptr;
+}

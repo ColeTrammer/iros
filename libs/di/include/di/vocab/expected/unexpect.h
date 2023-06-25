@@ -7,3 +7,7 @@ struct Unexpect {
 
 constexpr inline auto unexpect = Unexpect {};
 }
+
+namespace di {
+using types::unexpect;
+}

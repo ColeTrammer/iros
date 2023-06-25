@@ -81,3 +81,9 @@ struct MakeArcFunction {
 template<detail::IntrusivePtrValid<ArcTag> T>
 constexpr inline auto make_arc = MakeArcFunction<T> {};
 }
+
+namespace di {
+using vocab::Arc;
+using vocab::IntrusiveRefCount;
+using vocab::make_arc;
+}

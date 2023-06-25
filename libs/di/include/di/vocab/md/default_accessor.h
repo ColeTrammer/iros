@@ -22,3 +22,7 @@ public:
     constexpr DataHandle offset(DataHandle p, size_t i) const { return p + i; }
 };
 }
+
+namespace di {
+using vocab::DefaultAccessor;
+}

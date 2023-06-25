@@ -26,3 +26,7 @@ template<typename Result, typename... Args>
 concept ConvertibleToStatusCode =
     requires(Args&&... args) { Result(vocab::into_status_code(util::forward<Args>(args)...)); };
 }
+
+namespace di {
+using vocab::into_status_code;
+}

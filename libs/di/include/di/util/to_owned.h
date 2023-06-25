@@ -37,3 +37,7 @@ private:
     }
 };
 }
+
+namespace di {
+using util::to_owned;
+}

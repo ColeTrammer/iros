@@ -43,3 +43,7 @@ namespace di::concepts {
 template<typename T>
 concept Clonable = requires(T const& value) { util::clone(value); };
 }
+
+namespace di {
+using util::clone;
+}

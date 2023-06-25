@@ -15,3 +15,7 @@ private:
     Badge& operator=(Badge&&) = delete;
 };
 }
+
+namespace di {
+using util::Badge;
+}

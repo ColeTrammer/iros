@@ -14,3 +14,7 @@ namespace detail {
 
 constexpr inline auto to_underlying = detail::ToUnderlyingFunction {};
 }
+
+namespace di {
+using util::to_underlying;
+}

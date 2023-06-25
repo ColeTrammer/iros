@@ -238,3 +238,12 @@ inline namespace literals {
     }
 }
 }
+
+namespace di {
+using util::generate_uuid;
+using util::UUID;
+}
+
+#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_UUID_LITERALS)
+using namespace di::literals::uuid_literals;
+#endif

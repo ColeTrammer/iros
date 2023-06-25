@@ -63,3 +63,7 @@ requires(requires { visit<R>(util::forward<Vis>(visitor), util::forward<Vars>(va
     return visit<R>(util::forward<Vis>(visitor), util::forward<Vars>(variants)...);
 }
 }
+
+namespace di {
+using vocab::visit;
+}

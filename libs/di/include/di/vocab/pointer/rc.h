@@ -84,3 +84,9 @@ struct MakeRcFunction {
 template<detail::IntrusivePtrValid<RcTag> T>
 constexpr inline auto make_rc = MakeRcFunction<T> {};
 }
+
+namespace di {
+using vocab::IntrusiveThreadUnsafeRefCount;
+using vocab::make_rc;
+using vocab::Rc;
+}

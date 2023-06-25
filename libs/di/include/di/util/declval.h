@@ -9,3 +9,7 @@ meta::AddRValueReference<T> declval() {
     static_assert(concepts::AlwaysFalse<T>, "declval() is only usable in non-evaluated contexts.");
 }
 }
+
+namespace di {
+using util::declval;
+}

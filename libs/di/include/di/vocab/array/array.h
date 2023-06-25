@@ -281,3 +281,7 @@ private:
 template<typename T, typename... U>
 Array(T, U...) -> Array<T, 1 + sizeof...(U)>;
 }
+
+namespace di {
+using vocab::Array;
+}

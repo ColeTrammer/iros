@@ -173,3 +173,7 @@ constexpr auto make_rebindable_box(T&& value) {
     return RebindableBox<meta::UnwrapRefDecay<T>> { util::forward<T>(value) };
 }
 }
+
+namespace di {
+using util::RebindableBox;
+}

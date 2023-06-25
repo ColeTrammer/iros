@@ -26,3 +26,7 @@ namespace detail {
 
 constexpr inline auto clamp = detail::ClampFunction {};
 }
+
+namespace di {
+using util::clamp;
+}

@@ -21,3 +21,7 @@ struct StoreIf<T, false> {
     StoreIf& operator=(StoreIf&&) = default;
 };
 }
+
+namespace di {
+using util::StoreIf;
+}

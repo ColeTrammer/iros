@@ -8,3 +8,7 @@ private:
     Immovable(Immovable&&) = delete;
 };
 }
+
+namespace di {
+using util::Immovable;
+}

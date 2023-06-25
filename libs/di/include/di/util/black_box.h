@@ -14,3 +14,7 @@ template<concepts::CopyConstructible T>
     return *result;
 }
 }
+
+namespace di {
+using util::black_box;
+}

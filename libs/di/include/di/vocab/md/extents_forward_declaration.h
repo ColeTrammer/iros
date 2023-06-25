@@ -25,3 +25,10 @@ struct LayoutStride {
     class Mapping;
 };
 }
+
+namespace di {
+using vocab::Extents;
+using vocab::LayoutLeft;
+using vocab::LayoutRight;
+using vocab::LayoutStride;
+}

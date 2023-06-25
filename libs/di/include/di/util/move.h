@@ -16,3 +16,7 @@ constexpr di::meta::RemoveReference<T>&& move(T&& value) noexcept {
 namespace di::util {
 using std::move;
 }
+
+namespace di {
+using util::move;
+}

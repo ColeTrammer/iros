@@ -93,3 +93,11 @@ private:
 #if __GNUC__ >= 12
 #pragma GCC diagnostic pop
 #endif
+
+namespace di {
+using vocab::adopt_object;
+using vocab::AdoptObject;
+using vocab::IntrusivePtr;
+using vocab::retain_object;
+using vocab::RetainObject;
+}

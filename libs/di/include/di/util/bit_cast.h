@@ -14,3 +14,7 @@ constexpr To bit_cast(From const& value) noexcept {
 namespace di::util {
 using std::bit_cast;
 }
+
+namespace di {
+using util::bit_cast;
+}

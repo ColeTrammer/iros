@@ -27,3 +27,7 @@ constexpr auto tuple_transform(F&& function, Tup&& tuple) {
         util::forward<Tup>(tuple));
 }
 }
+
+namespace di {
+using vocab::tuple_transform;
+}

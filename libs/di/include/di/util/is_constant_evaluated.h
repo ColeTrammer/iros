@@ -9,3 +9,7 @@ constexpr bool is_constant_evaluated() noexcept {
     }
 }
 }
+
+namespace di {
+using util::is_constant_evaluated;
+}

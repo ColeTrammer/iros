@@ -12,3 +12,7 @@ namespace detail {
 
 constexpr inline auto voidify = detail::VoidifyFunction {};
 }
+
+namespace di {
+using util::voidify;
+}

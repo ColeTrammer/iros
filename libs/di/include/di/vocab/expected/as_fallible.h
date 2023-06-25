@@ -25,3 +25,7 @@ namespace detail {
 
 constexpr inline auto as_fallible = detail::AsFallibleFunction {};
 }
+
+namespace di {
+using vocab::as_fallible;
+}

@@ -5,3 +5,7 @@ namespace di::util {
     __builtin_unreachable();
 }
 }
+
+namespace di {
+using util::unreachable;
+}

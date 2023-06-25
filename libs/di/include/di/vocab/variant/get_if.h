@@ -27,3 +27,7 @@ constexpr Optional<meta::RemoveRValueReference<Res>> get_if(Var&& variant) {
     return util::get<index>(util::forward<Var>(variant));
 }
 }
+
+namespace di {
+using vocab::get_if;
+}

@@ -30,3 +30,7 @@ namespace detail {
 
 constexpr inline auto if_success = function::curry_back(detail::IfSuccessFunction {}, meta::c_<2zu>);
 }
+
+namespace di {
+using vocab::if_success;
+}

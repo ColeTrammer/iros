@@ -9,3 +9,7 @@ constexpr Tuple<Args&&...> forward_as_tuple(Args&&... args) {
     return Tuple<Args&&...>(util::forward<Args>(args)...);
 }
 }
+
+namespace di {
+using vocab::forward_as_tuple;
+}

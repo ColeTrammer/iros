@@ -21,3 +21,7 @@ namespace detail {
 
 constexpr inline auto maybe_clone = detail::MaybeCloneFunction {};
 }
+
+namespace di {
+using util::maybe_clone;
+}

@@ -20,3 +20,7 @@ private:
     T* m_value;
 };
 }
+
+namespace di {
+using util::GuardedReference;
+}

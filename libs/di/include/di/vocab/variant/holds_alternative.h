@@ -20,3 +20,7 @@ namespace detail {
 template<typename T>
 constexpr inline auto holds_alternative = detail::HoldsAlternativeFunction<T> {};
 }
+
+namespace di {
+using vocab::holds_alternative;
+}

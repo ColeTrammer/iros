@@ -13,16 +13,3 @@
 #include <di/vocab/expected/try_infallible.h>
 #include <di/vocab/expected/unexpect.h>
 #include <di/vocab/expected/unexpected.h>
-
-namespace di {
-using types::unexpect;
-
-using vocab::Expected;
-using vocab::Unexpected;
-
-using vocab::as_fallible;
-using vocab::if_error;
-using vocab::if_success;
-using vocab::invoke_as_fallible;
-using vocab::try_infallible;
-}

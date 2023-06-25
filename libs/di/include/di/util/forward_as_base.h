@@ -28,3 +28,7 @@ forward_as_base(meta::RemoveReference<Derived>&& derived) {
     }
 }
 }
+
+namespace di {
+using util::forward_as_base;
+}

@@ -7,3 +7,7 @@ namespace di::vocab {
 template<typename T>
 using Result = Expected<T, Error>;
 }
+
+namespace di {
+using vocab::Result;
+}

@@ -21,3 +21,7 @@ constexpr T&& forward(di::meta::RemoveReference<T>&& value) noexcept {
 namespace di::util {
 using std::forward;
 }
+
+namespace di {
+using util::forward;
+}

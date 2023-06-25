@@ -37,3 +37,7 @@ namespace detail {
 
 constexpr inline auto create_in_place = detail::CreateInPlaceFunction {};
 }
+
+namespace di {
+using util::create_in_place;
+}

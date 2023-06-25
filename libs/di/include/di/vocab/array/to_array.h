@@ -24,3 +24,7 @@ constexpr Array<meta::RemoveCV<T>, size> to_array(T (&&array)[size]) {
     }(meta::MakeIndexSequence<size> {});
 }
 }
+
+namespace di {
+using vocab::to_array;
+}

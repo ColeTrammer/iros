@@ -98,3 +98,9 @@ namespace detail {
 constexpr inline auto ref = detail::RefFunction {};
 constexpr inline auto cref = detail::CRefFunction {};
 }
+
+namespace di {
+using util::cref;
+using util::ref;
+using util::ReferenceWrapper;
+}

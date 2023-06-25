@@ -10,3 +10,7 @@ constexpr auto make_tuple(Args&&... args) {
     return Tuple<meta::UnwrapRefDecay<Args>...>(util::forward<Args>(args)...);
 }
 }
+
+namespace di {
+using vocab::make_tuple;
+}

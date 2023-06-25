@@ -31,3 +31,7 @@ constexpr auto tuple_cat(Tups&&... tuples) {
     return helper(util::forward<Tups>(tuples)...);
 }
 }
+
+namespace di {
+using vocab::tuple_cat;
+}

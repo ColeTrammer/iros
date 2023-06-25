@@ -11,3 +11,7 @@ constexpr T exchange(T& object, U&& new_value) {
     return temp;
 }
 }
+
+namespace di {
+using util::exchange;
+}

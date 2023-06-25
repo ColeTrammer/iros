@@ -22,3 +22,7 @@ struct GetInPlaceFunction {
 
 constexpr inline auto get_in_place = GetInPlaceFunction {};
 }
+
+namespace di {
+using util::get_in_place;
+}

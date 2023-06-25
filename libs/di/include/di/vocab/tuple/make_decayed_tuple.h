@@ -10,3 +10,7 @@ constexpr auto make_decayed_tuple(Args&&... args) {
     return Tuple<meta::Decay<Args>...>(util::forward<Args>(args)...);
 }
 }
+
+namespace di {
+using vocab::make_decayed_tuple;
+}

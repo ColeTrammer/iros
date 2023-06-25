@@ -147,3 +147,7 @@ private:
     Type m_value { 0 };
 };
 }
+
+namespace di {
+using util::StrongInt;
+}

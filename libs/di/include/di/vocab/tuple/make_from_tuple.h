@@ -30,3 +30,7 @@ namespace detail {
 template<typename T>
 constexpr inline auto make_from_tuple = detail::MakeFromTupleFunction<T> {};
 }
+
+namespace di {
+using vocab::make_from_tuple;
+}

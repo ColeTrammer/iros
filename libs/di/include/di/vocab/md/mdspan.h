@@ -191,3 +191,7 @@ MDSpan(typename AccessorType::DataHandle const&, MappingType const&, AccessorTyp
     -> MDSpan<typename AccessorType::ElementType, typename MappingType::ExtentsType, typename MappingType::LayoutType,
               AccessorType>;
 }
+
+namespace di {
+using vocab::MDSpan;
+}

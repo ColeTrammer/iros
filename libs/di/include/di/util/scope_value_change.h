@@ -32,3 +32,7 @@ private:
 template<typename T>
 ScopeValueChange(T&, T) -> ScopeValueChange<T>;
 }
+
+namespace di {
+using util::ScopeValueChange;
+}

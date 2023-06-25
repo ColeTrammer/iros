@@ -12,3 +12,7 @@ struct NullOpt {
 
 constexpr inline auto nullopt = NullOpt { 0 };
 }
+
+namespace di {
+using vocab::nullopt;
+}

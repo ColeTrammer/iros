@@ -25,3 +25,7 @@ constexpr auto apply(F&& f, Tup&& tuple)
                               util::forward<Tup>(tuple));
 }
 }
+
+namespace di {
+using vocab::apply;
+}

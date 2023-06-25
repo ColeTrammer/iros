@@ -16,3 +16,7 @@ constexpr decltype(auto) get(T&& value) {
     return util::get_in_place(types::in_place_type<Type>, util::forward<T>(value));
 }
 }
+
+namespace di {
+using util::get;
+}

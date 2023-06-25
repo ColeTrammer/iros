@@ -41,3 +41,7 @@ public:
     }
 };
 }
+
+namespace di {
+using util::NonPropagatingCache;
+}

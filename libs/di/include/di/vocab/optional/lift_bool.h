@@ -12,3 +12,7 @@ namespace detail {
 
 constexpr inline auto lift_bool = detail::LiftBoolFunction {};
 }
+
+namespace di {
+using vocab::lift_bool;
+}

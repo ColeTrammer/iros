@@ -30,3 +30,7 @@ namespace detail {
 
 constexpr inline auto try_infallible = detail::TryInfallibleFunction {};
 }
+
+namespace di {
+using vocab::try_infallible;
+}

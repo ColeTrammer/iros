@@ -38,3 +38,9 @@ concept SwappableWith = requires(T&& a, U&& b) {
     di::util::swap(util::forward<U>(b), util::forward<U>(b));
 };
 }
+
+namespace di {
+using concepts::Swappable;
+using concepts::SwappableWith;
+using util::swap;
+}

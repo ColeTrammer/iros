@@ -9,3 +9,7 @@ template<typename T, typename U>
     return static_cast<meta::Like<T, meta::RemoveReference<U>>&&>(value);
 }
 }
+
+namespace di {
+using util::forward_like;
+}

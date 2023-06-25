@@ -36,6 +36,10 @@ private:
 };
 }
 
+namespace di {
+using util::SourceLocation;
+}
+
 #ifndef DI_CLANG
 #undef __builtin_COLUMN
 #endif

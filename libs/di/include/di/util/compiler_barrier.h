@@ -16,3 +16,7 @@ constexpr void compiler_barrier() {
     }
 }
 }
+
+namespace di {
+using util::compiler_barrier;
+}

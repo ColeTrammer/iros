@@ -9,3 +9,7 @@ constexpr Span<T, count> fixed_span(T* value) {
     return Span<T, count>(value, count);
 }
 }
+
+namespace di {
+using vocab::fixed_span;
+}

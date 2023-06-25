@@ -16,3 +16,7 @@ namespace detail {
 
 constexpr inline auto as_writable_bytes = detail::AsWritableBytesFunction {};
 }
+
+namespace di {
+using vocab::as_writable_bytes;
+}

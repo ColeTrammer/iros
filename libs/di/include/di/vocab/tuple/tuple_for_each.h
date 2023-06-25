@@ -27,3 +27,7 @@ constexpr void tuple_for_each(F&& function, Tup&& tuple) {
         util::forward<Tup>(tuple));
 }
 }
+
+namespace di {
+using vocab::tuple_for_each;
+}

@@ -20,3 +20,7 @@ private:
 template<typename T>
 DeferConstruct(T) -> DeferConstruct<T>;
 }
+
+namespace di {
+using util::DeferConstruct;
+}

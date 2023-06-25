@@ -35,3 +35,7 @@ namespace detail {
 template<typename R>
 constexpr inline auto tuple_sequence = detail::TupleSequenceFunction<R> {};
 }
+
+namespace di {
+using vocab::tuple_sequence;
+}
