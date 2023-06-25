@@ -13,3 +13,7 @@ concept UniformRandomBitGenerator = Invocable<T&> && UnsignedIntegral<meta::Invo
     requires meta::Constexpr<(T::min() < T::max())>::value;
 };
 }
+
+namespace di {
+using concepts::UniformRandomBitGenerator;
+}

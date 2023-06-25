@@ -18,3 +18,7 @@ namespace detail {
 template<concepts::Integer T>
 constexpr inline auto representable_as = detail::RepresentableAsFunction<T> {};
 }
+
+namespace di {
+using math::representable_as;
+}

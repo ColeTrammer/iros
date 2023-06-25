@@ -72,3 +72,12 @@ namespace di::meta {
 template<concepts::Reflectable T>
 using Reflect = decltype(reflection::reflect(in_place_type<T>));
 }
+
+namespace di {
+using concepts::Reflectable;
+using concepts::ReflectableToAtom;
+using concepts::ReflectableToFields;
+using concepts::ReflectionValue;
+using meta::Reflect;
+using reflection::reflect;
+}

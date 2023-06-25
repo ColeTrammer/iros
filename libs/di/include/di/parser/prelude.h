@@ -32,8 +32,6 @@
 #include <di/parser/string_view_parser_context.h>
 
 namespace di {
-using parser::create_parser;
-using parser::create_parser_in_place;
 using parser::parse;
 using parser::parse_partial;
 using parser::parse_unchecked;
@@ -41,15 +39,3 @@ using parser::run_parser;
 using parser::run_parser_partial;
 using parser::run_parser_unchecked;
 }
-
-#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_CONSTEXPR_INTEGRAL_LITERALS)
-using namespace di::literals::constexpr_integral_literals;
-#endif
-
-#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_INTEGRAL_SET_LITERALS)
-using namespace di::literals::integral_set_literals;
-#endif
-
-#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_INTEGRAL_LITERALS)
-using namespace di::literals::integral_literals;
-#endif

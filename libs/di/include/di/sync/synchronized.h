@@ -49,3 +49,7 @@ private:
     Lock m_lock {};
 };
 }
+
+namespace di {
+using sync::Synchronized;
+}

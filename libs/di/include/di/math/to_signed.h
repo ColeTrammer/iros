@@ -15,3 +15,7 @@ namespace detail {
 
 constexpr inline auto to_signed = detail::ToSignedFunction {};
 }
+
+namespace di {
+using math::to_signed;
+}

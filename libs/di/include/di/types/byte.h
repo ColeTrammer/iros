@@ -64,3 +64,13 @@ using Byte = std::byte;
 using byte = std::byte;
 using std::to_integer;
 }
+
+namespace di {
+using types::Byte;
+using types::byte;
+using types::to_integer;
+}
+
+#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_TYPES)
+using di::byte;
+#endif

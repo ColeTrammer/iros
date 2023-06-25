@@ -24,3 +24,7 @@ struct NumericLimits<T> {
     constexpr static int digits = bits - 1;
 };
 }
+
+namespace di {
+using math::NumericLimits;
+}

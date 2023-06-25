@@ -15,3 +15,7 @@ namespace detail {
 
 constexpr inline auto to_unsigned = detail::ToUnsignedFunction {};
 }
+
+namespace di {
+using math::to_unsigned;
+}

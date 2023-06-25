@@ -43,3 +43,8 @@ struct Atom {
 template<typename T>
 constexpr inline auto atom = Atom<T> {};
 }
+
+namespace di {
+using reflection::Atom;
+using reflection::atom;
+}

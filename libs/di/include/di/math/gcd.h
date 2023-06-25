@@ -43,3 +43,7 @@ namespace detail {
 
 constexpr inline auto gcd = detail::GcdFunction {};
 }
+
+namespace di {
+using math::gcd;
+}

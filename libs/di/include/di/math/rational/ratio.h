@@ -93,3 +93,19 @@ using Yetta = Ratio<ratio_intmax_t(1000000000000000000) * ratio_intmax_t(1000)>;
 using Yotta = Ratio<ratio_intmax_t(1000000000000000000) * ratio_intmax_t(1000000)>;
 #endif
 }
+
+namespace di {
+using math::Ratio;
+
+using math::RatioAdd;
+using math::RatioDivide;
+using math::RatioMultiply;
+using math::RatioSubtract;
+
+using math::RatioEqual;
+using math::RatioGreater;
+using math::RatioGreaterEqual;
+using math::RatioLess;
+using math::RatioLessEqual;
+using math::RatioNotEqual;
+}

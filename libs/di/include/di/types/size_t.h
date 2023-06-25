@@ -11,3 +11,11 @@ using size_t = decltype(0zu);
 namespace di::types {
 using size_t = std::size_t;
 }
+
+namespace di {
+using types::size_t;
+}
+
+#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_TYPES)
+using di::size_t;
+#endif

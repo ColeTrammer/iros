@@ -111,3 +111,7 @@ private:
 template<typename T, typename U>
 Rational(T, U) -> Rational<meta::CommonType<T, U>>;
 }
+
+namespace di {
+using math::Rational;
+}

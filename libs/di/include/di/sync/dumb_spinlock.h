@@ -33,6 +33,9 @@ public:
 private:
     Atomic<bool> m_state { false };
 };
+}
 
-static_assert(concepts::Lock<DumbSpinlock>);
+namespace di {
+using sync::cpu_relax;
+using sync::DumbSpinlock;
 }

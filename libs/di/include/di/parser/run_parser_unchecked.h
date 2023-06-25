@@ -15,3 +15,7 @@ namespace detail {
 
 constexpr inline auto run_parser_unchecked = function::curry(detail::RunParserUncheckedFunction {}, meta::c_<2zu>);
 }
+
+namespace di {
+using parser::run_parser_unchecked;
+}

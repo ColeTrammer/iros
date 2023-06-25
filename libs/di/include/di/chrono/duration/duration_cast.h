@@ -11,7 +11,7 @@ namespace detail {
         constexpr To operator()(Duration<Rep, Period> const& from) const {
             constexpr auto conversion_factor = math::RatioDivide<Period, typename To::Period>::rational;
 
-            auto count = static_cast<intmax_t>(from.count());
+            auto count = static_cast<imax>(from.count());
             count *= conversion_factor.numerator();
             count /= conversion_factor.denominator();
 

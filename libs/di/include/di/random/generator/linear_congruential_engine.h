@@ -64,3 +64,9 @@ private:
 using MinstdRand0 = LinearCongruentialEngine<u32, 16807, 0, 2147483647>;
 using MinstdRand = LinearCongruentialEngine<u32, 48271, 0, 2147483647>;
 }
+
+namespace di {
+using random::LinearCongruentialEngine;
+using random::MinstdRand;
+using random::MinstdRand0;
+}

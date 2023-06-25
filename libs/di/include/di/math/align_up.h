@@ -16,3 +16,7 @@ namespace detail {
 
 constexpr inline auto align_up = function::curry_back(detail::AlignUpFunction {}, meta::c_<2zu>);
 }
+
+namespace di {
+using math::align_up;
+}

@@ -25,3 +25,7 @@ namespace detail {
 
 constexpr inline auto abs_unsigned = detail::AbsUnsignedFunction {};
 }
+
+namespace di {
+using math::abs_unsigned;
+}

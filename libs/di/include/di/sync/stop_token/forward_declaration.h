@@ -12,3 +12,10 @@ class InPlaceStopCallback;
 
 class NeverStopToken;
 }
+
+namespace di {
+using sync::InPlaceStopCallback;
+using sync::InPlaceStopSource;
+using sync::InPlaceStopToken;
+using sync::NeverStopToken;
+}

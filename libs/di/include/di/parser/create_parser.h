@@ -54,3 +54,8 @@ namespace detail {
 template<typename T>
 constexpr inline auto create_parser = detail::CreateParserFunction<T> {};
 }
+
+namespace di {
+using parser::create_parser;
+using parser::create_parser_in_place;
+}

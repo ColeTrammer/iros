@@ -12,3 +12,7 @@ enum class MemoryOrder : int {
     SequentialConsistency = __ATOMIC_SEQ_CST
 };
 }
+
+namespace di {
+using sync::MemoryOrder;
+}

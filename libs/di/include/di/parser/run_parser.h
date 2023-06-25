@@ -21,3 +21,7 @@ namespace detail {
 
 constexpr inline auto run_parser = detail::RunParserFunction {};
 }
+
+namespace di {
+using parser::run_parser;
+}

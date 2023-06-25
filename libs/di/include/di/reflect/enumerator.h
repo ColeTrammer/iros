@@ -69,3 +69,10 @@ namespace detail {
 
 constexpr inline auto make_enumerators = detail::MakeEnumeratorsFunction {};
 }
+
+namespace di {
+using reflection::Enumerator;
+using reflection::enumerator;
+using reflection::Enumerators;
+using reflection::make_enumerators;
+}

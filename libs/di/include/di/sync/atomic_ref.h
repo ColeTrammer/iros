@@ -103,3 +103,7 @@ private:
     T* m_pointer { nullptr };
 };
 }
+
+namespace di {
+using sync::AtomicRef;
+}

@@ -53,3 +53,7 @@ inline namespace literals {
     }
 }
 }
+
+#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_INTEGRAL_LITERALS)
+using namespace di::literals::integral_literals;
+#endif

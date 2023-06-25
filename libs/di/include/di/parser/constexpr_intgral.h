@@ -22,3 +22,7 @@ inline namespace literals {
     }
 }
 }
+
+#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_CONSTEXPR_INTEGRAL_LITERALS)
+using namespace di::literals::constexpr_integral_literals;
+#endif

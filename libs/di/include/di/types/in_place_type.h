@@ -11,3 +11,8 @@ struct InPlaceType {
 template<typename T>
 constexpr inline auto in_place_type = InPlaceType<T> {};
 }
+
+namespace di {
+using types::in_place_type;
+using types::InPlaceType;
+}

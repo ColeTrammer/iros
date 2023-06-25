@@ -57,3 +57,9 @@ private:
 using u128_fallback = FixedUnsigned<128>;
 using u256 = FixedUnsigned<256>;
 }
+
+namespace di {
+using math::FixedUnsigned;
+using math::u128_fallback;
+using math::u256;
+}

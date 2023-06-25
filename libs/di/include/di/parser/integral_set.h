@@ -134,3 +134,7 @@ inline namespace literals {
     }
 }
 }
+
+#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_INTEGRAL_SET_LITERALS)
+using namespace di::literals::integral_set_literals;
+#endif

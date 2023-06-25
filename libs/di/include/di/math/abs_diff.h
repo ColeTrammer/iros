@@ -30,3 +30,7 @@ namespace detail {
 
 constexpr inline auto abs_diff = function::curry_back(detail::AbsDiffFunction {}, meta::c_<2zu>);
 }
+
+namespace di {
+using math::abs_diff;
+}

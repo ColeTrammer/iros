@@ -18,3 +18,7 @@ namespace detail {
 
 constexpr inline auto run_parser_partial = function::curry(detail::RunParserPartialFunction {}, meta::c_<2zu>);
 }
+
+namespace di {
+using parser::run_parser_partial;
+}

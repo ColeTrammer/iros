@@ -22,3 +22,7 @@ namespace detail {
 template<typename T>
 constexpr inline auto parse = detail::ParseFunction<T> {};
 }
+
+namespace di {
+using parser::parse;
+}

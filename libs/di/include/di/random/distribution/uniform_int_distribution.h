@@ -129,3 +129,7 @@ private:
     Param m_param {};
 };
 }
+
+namespace di {
+using random::UniformIntDistribution;
+}

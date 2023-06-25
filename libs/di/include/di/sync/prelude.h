@@ -10,14 +10,3 @@
 #include <di/sync/scoped_lock.h>
 #include <di/sync/stop_token/prelude.h>
 #include <di/sync/synchronized.h>
-
-namespace di {
-using sync::Atomic;
-using sync::AtomicRef;
-using sync::DumbSpinlock;
-using sync::MemoryOrder;
-using sync::ScopedLock;
-using sync::Synchronized;
-
-using sync::cpu_relax;
-}

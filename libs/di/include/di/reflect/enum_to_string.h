@@ -24,3 +24,7 @@ namespace detail {
 
 constexpr inline auto enum_to_string = detail::EnumToStringFunction {};
 }
+
+namespace di {
+using reflection::enum_to_string;
+}

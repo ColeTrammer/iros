@@ -7,3 +7,8 @@ struct PiecewiseConstruct {
 
 constexpr inline auto piecewise_construct = PiecewiseConstruct {};
 }
+
+namespace di {
+using types::piecewise_construct;
+using types::PiecewiseConstruct;
+}

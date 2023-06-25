@@ -214,3 +214,7 @@ private:
     bool m_invalid { false };
 };
 }
+
+namespace di {
+using math::Checked;
+}

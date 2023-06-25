@@ -75,3 +75,10 @@ namespace detail {
 
 constexpr inline auto make_fields = detail::MakeFieldsFunction {};
 }
+
+namespace di {
+using reflection::Field;
+using reflection::field;
+using reflection::Fields;
+using reflection::make_fields;
+}

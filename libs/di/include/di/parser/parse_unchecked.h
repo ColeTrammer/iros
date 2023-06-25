@@ -24,3 +24,7 @@ namespace detail {
 template<typename T>
 constexpr inline auto parse_unchecked = detail::ParseUncheckedFunction<T> {};
 }
+
+namespace di {
+using parser::parse_unchecked;
+}

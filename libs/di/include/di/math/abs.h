@@ -20,3 +20,7 @@ namespace detail {
 
 constexpr inline auto abs = detail::AbsFunction {};
 }
+
+namespace di {
+using math::abs;
+}

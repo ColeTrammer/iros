@@ -8,3 +8,7 @@ struct Void {
     constexpr friend types::strong_ordering operator<=>(Void, Void) { return types::strong_ordering::equal; }
 };
 }
+
+namespace di {
+using types::Void;
+}

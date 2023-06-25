@@ -33,3 +33,7 @@ namespace detail {
 
 constexpr inline auto lcm = detail::LcmFunction {};
 }
+
+namespace di {
+using math::lcm;
+}

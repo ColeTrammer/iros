@@ -22,3 +22,7 @@ namespace detail {
 template<typename T>
 constexpr inline auto parse_partial = detail::ParsePartialFunction<T> {};
 }
+
+namespace di {
+using parser::parse_partial;
+}

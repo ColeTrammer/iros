@@ -133,3 +133,9 @@ private:
 using i128_fallback = FixedSigned<128>;
 using i256 = FixedSigned<256>;
 }
+
+namespace di {
+using math::FixedSigned;
+using math::i128_fallback;
+using math::i256;
+}

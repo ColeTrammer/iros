@@ -31,3 +31,7 @@ private:
     Tuple<Locks&...> m_locks;
 };
 }
+
+namespace di {
+using sync::ScopedLock;
+}

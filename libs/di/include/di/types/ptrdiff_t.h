@@ -11,3 +11,11 @@ using ptrdiff_t = decltype(0z);
 namespace di::types {
 using ptrdiff_t = std::ptrdiff_t;
 }
+
+namespace di {
+using types::ptrdiff_t;
+}
+
+#if !defined(DI_NO_GLOBALS) && !defined(DI_NO_GLOBAL_TYPES)
+using di::ptrdiff_t;
+#endif
