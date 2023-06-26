@@ -28,6 +28,8 @@ add_library(
     locale/setlocale.cpp
     stdio/fclose.cpp
     stdio/fdopen.cpp
+    stdio/feof.cpp
+    stdio/feof_unlocked.cpp
     stdio/fflush.cpp
     stdio/fflush_unlocked.cpp
     stdio/fgetc.cpp
