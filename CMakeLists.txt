@@ -102,6 +102,7 @@ if(IROS_BuildUserspace)
 endif()
 
 if(IROS_BuildTools)
+    add_subdirectory(userland/package_manager)
     add_subdirectory(userland/tools)
 endif()
 

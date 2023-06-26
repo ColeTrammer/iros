@@ -58,5 +58,11 @@
     },
     "[cmake-cache]": {
         "editor.defaultFormatter": "cheshirekow.cmake-format"
-    }
+    },
+    "json.schemas": [
+        {
+            "fileMatch": ["/ports/*/*.json"],
+            "url": "/userland/package_manager/schema.json"
+        }
+    ]
 }
