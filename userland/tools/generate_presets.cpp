@@ -349,7 +349,7 @@ static di::Tuple<di::Vector<CMakeConfigurePreset>, di::Vector<di::String>> make_
             build_directory_suffix.append("/non_unity"_sv);
         }
         auto build_directory = *di::present("${{sourceDir}}/build/{}"_sv, build_directory_suffix);
-        auto install_directory = *di::present("${{sourceDir}}/build/{}/sysroot"_sv, arch);
+        auto install_directory = *di::present("${{sourceDir}}/build/{}/sysroot/usr"_sv, arch);
         auto toolchain_file = *di::present("${{sourceDir}}/meta/cmake/CMakeToolchain_Iros_{}_{}.txt"_sv,
                                            compiler == "gcc"_sv ? "Gcc"_sv : "Clang"_sv, arch);
 

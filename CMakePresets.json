@@ -144,7 +144,7 @@
             "displayName": "GCC Iros x86_64 Release Default",
             "description": "Iros x86_64 release default build using gcc",
             "binaryDir": "${sourceDir}/build/x86_64/gcc/release/default",
-            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "installDir": "${sourceDir}/build/x86_64/sysroot/usr",
             "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Gcc_x86_64.txt",
             "cacheVariables": {
                 "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/gcc/release/default",
@@ -159,7 +159,7 @@
             "displayName": "GCC Iros x86_64 Release Iris Debug",
             "description": "Iros x86_64 release iris_debug build using gcc",
             "binaryDir": "${sourceDir}/build/x86_64/gcc/release/iris_debug",
-            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "installDir": "${sourceDir}/build/x86_64/sysroot/usr",
             "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Gcc_x86_64.txt",
             "cacheVariables": {
                 "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/gcc/release/iris_debug",
@@ -174,7 +174,7 @@
             "displayName": "GCC Iros x86_64 Debug Default",
             "description": "Iros x86_64 debug default build using gcc",
             "binaryDir": "${sourceDir}/build/x86_64/gcc/debug/default",
-            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "installDir": "${sourceDir}/build/x86_64/sysroot/usr",
             "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Gcc_x86_64.txt",
             "cacheVariables": {
                 "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/gcc/debug/default",
@@ -189,7 +189,7 @@
             "displayName": "Clang Iros x86_64 Release Default",
             "description": "Iros x86_64 release default build using clang",
             "binaryDir": "${sourceDir}/build/x86_64/clang/release/default",
-            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "installDir": "${sourceDir}/build/x86_64/sysroot/usr",
             "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Clang_x86_64.txt",
             "cacheVariables": {
                 "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/clang/release/default",
@@ -204,7 +204,7 @@
             "displayName": "Clang Iros x86_64 Release Iris Debug",
             "description": "Iros x86_64 release iris_debug build using clang",
             "binaryDir": "${sourceDir}/build/x86_64/clang/release/iris_debug",
-            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "installDir": "${sourceDir}/build/x86_64/sysroot/usr",
             "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Clang_x86_64.txt",
             "cacheVariables": {
                 "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/clang/release/iris_debug",
@@ -219,7 +219,7 @@
             "displayName": "Clang Iros x86_64 Debug Default",
             "description": "Iros x86_64 debug default build using clang",
             "binaryDir": "${sourceDir}/build/x86_64/clang/debug/default",
-            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "installDir": "${sourceDir}/build/x86_64/sysroot/usr",
             "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Clang_x86_64.txt",
             "cacheVariables": {
                 "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/clang/debug/default",
@@ -710,7 +710,7 @@
             "displayName": "GCC Iros x86_64 Release Default (Non Unity)",
             "description": "Iros x86_64 release default build using gcc",
             "binaryDir": "${sourceDir}/build/x86_64/gcc/release/default/non_unity",
-            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "installDir": "${sourceDir}/build/x86_64/sysroot/usr",
             "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Gcc_x86_64.txt",
             "cacheVariables": {
                 "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/gcc/release/default/non_unity",
@@ -724,7 +724,7 @@
             "displayName": "GCC Iros x86_64 Release Iris Debug (Non Unity)",
             "description": "Iros x86_64 release iris_debug build using gcc",
             "binaryDir": "${sourceDir}/build/x86_64/gcc/release/iris_debug/non_unity",
-            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "installDir": "${sourceDir}/build/x86_64/sysroot/usr",
             "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Gcc_x86_64.txt",
             "cacheVariables": {
                 "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/gcc/release/iris_debug/non_unity",
@@ -738,7 +738,7 @@
             "displayName": "GCC Iros x86_64 Debug Default (Non Unity)",
             "description": "Iros x86_64 debug default build using gcc",
             "binaryDir": "${sourceDir}/build/x86_64/gcc/debug/default/non_unity",
-            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "installDir": "${sourceDir}/build/x86_64/sysroot/usr",
             "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Gcc_x86_64.txt",
             "cacheVariables": {
                 "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/gcc/debug/default/non_unity",
@@ -752,7 +752,7 @@
             "displayName": "Clang Iros x86_64 Release Default (Non Unity)",
             "description": "Iros x86_64 release default build using clang",
             "binaryDir": "${sourceDir}/build/x86_64/clang/release/default/non_unity",
-            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "installDir": "${sourceDir}/build/x86_64/sysroot/usr",
             "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Clang_x86_64.txt",
             "cacheVariables": {
                 "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/clang/release/default/non_unity",
@@ -766,7 +766,7 @@
             "displayName": "Clang Iros x86_64 Release Iris Debug (Non Unity)",
             "description": "Iros x86_64 release iris_debug build using clang",
             "binaryDir": "${sourceDir}/build/x86_64/clang/release/iris_debug/non_unity",
-            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "installDir": "${sourceDir}/build/x86_64/sysroot/usr",
             "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Clang_x86_64.txt",
             "cacheVariables": {
                 "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/clang/release/iris_debug/non_unity",
@@ -780,7 +780,7 @@
             "displayName": "Clang Iros x86_64 Debug Default (Non Unity)",
             "description": "Iros x86_64 debug default build using clang",
             "binaryDir": "${sourceDir}/build/x86_64/clang/debug/default/non_unity",
-            "installDir": "${sourceDir}/build/x86_64/sysroot",
+            "installDir": "${sourceDir}/build/x86_64/sysroot/usr",
             "toolchainFile": "${sourceDir}/meta/cmake/CMakeToolchain_Iros_Clang_x86_64.txt",
             "cacheVariables": {
                 "CMAKE_CROSSCOMPILING_EMULATOR": "${sourceDir}/meta/run-command-on-iris.sh;x86_64/clang/debug/default/non_unity",
