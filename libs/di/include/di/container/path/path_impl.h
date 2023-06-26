@@ -116,6 +116,8 @@ public:
 
     constexpr void clear() { m_data.clear(); }
 
+    constexpr auto take_underlying_string() && { return util::move(m_data); }
+
 private:
     template<concepts::ContainerCompatible<meta::EncodingCodePoint<Enc>> Con>
     requires(concepts::SameAs<meta::Encoding<Con>, Enc>)
