@@ -1,0 +1,64 @@
+From 5b694eb976107de6c4275f5e59821c8083cfd13c Mon Sep 17 00:00:00 2001
+From: ColeTrammer <cole.trammer@gmail.com>
+Date: Sun, 25 Jun 2023 04:48:15 +0000
+Subject: [PATCH] Port Figlet Makefile
+
+This commit makes the C compiler configurable, instead of being
+hard-coded to 'gcc'.
+Additionally, TLF_FONTS are disabled because our libc does not
+yet support wide characters.
+---
+ Makefile | 19 +++++++++----------
+ 1 file changed, 9 insertions(+), 10 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 5a51d51..a2ee8f3 100644
+--- a/Makefile
++++ b/Makefile
+@@ -19,26 +19,25 @@
+ SHELL = /bin/sh
+
+ # The C compiler and linker to use
+-CC	= gcc
+-CFLAGS	= -g -O2 -Wall
+-LD	= gcc
+-LDFLAGS =
++CFLAGS ?= -g -O2 -Wall
++LD	    ?= $(CC)
+
+ # Feature flags:
+ #   define TLF_FONTS to use TOIlet TLF fonts
+-XCFLAGS	= -DTLF_FONTS
++XCFLAGS	?= # -DTLF_FONTS
+
+ # Where to install files
+-prefix	= /usr/local
++prefix  = $(PREFIX)
++prefix ?= /usr/local
+
+ # Where the executables should be put
+-BINDIR	= $(prefix)/bin
++BINDIR ?= $(prefix)/bin
+
+ # Where the man page should be put
+-MANDIR	= $(prefix)/man
++MANDIR ?= $(prefix)/man
+
+ # Where figlet will search first for fonts (the ".flf" files).
+-DEFAULTFONTDIR = $(prefix)/share/figlet
++DEFAULTFONTDIR ?= $(prefix)/share/figlet
+ # Use this definition if you can't put things in $(prefix)/share/figlet
+ #DEFAULTFONTDIR = fonts
+
+@@ -46,7 +45,7 @@ DEFAULTFONTDIR = $(prefix)/share/figlet
+ #   without suffix.(standard is recommended, but any other can be
+ #   used). This font file should reside in the directory specified
+ #   by DEFAULTFONTDIR.
+-DEFAULTFONTFILE = standard
++DEFAULTFONTFILE ?= standard
+
+ ##
+ ##  END OF CONFIGURATION SECTION
+--
+2.34.1
+
