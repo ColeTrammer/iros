@@ -137,3 +137,7 @@ concept Dereferenceable = requires(T& it) {
     { *it } -> CanReference;
 };
 }
+
+namespace di {
+using concepts::ConstructibleFrom;
+}
