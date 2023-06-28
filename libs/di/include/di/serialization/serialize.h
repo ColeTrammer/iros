@@ -89,14 +89,20 @@ namespace di::serialization {
 namespace detail {
     struct SerializeFunction {
         template<concepts::Serializer S, typename T, typename F = meta::SerializationFormat<S>>
-        requires(concepts::TagInvocable<SerializeFunction, F, S&, T&>)
+        requires(concepts::TagInvocable<SerializeFunction, F, S&, T&> ||
+                 requires(S& serializer, T& value) { serializer.serialize(value); })
         constexpr meta::SerializeResult<S> operator()(S&& serializer, T&& value) const {
-            return function::tag_invoke(*this, F(), serializer, value);
+            if constexpr (concepts::TagInvocable<SerializeFunction, F, S&, T&>) {
+                return function::tag_invoke(*this, F(), serializer, value);
+            } else {
+                return serializer.serialize(value);
+            }
         }
 
-        template<concepts::Serializer S, typename T,
-                 typename M = meta::SerializeMetadata<meta::SerializationFormat<S>, T>>
-        requires(!concepts::TagInvocable<SerializeFunction, S&, T&> &&
+        template<concepts::Serializer S, typename T, typename F = meta::SerializationFormat<S>,
+                 typename M = meta::SerializeMetadata<F, T>>
+        requires(!concepts::TagInvocable<SerializeFunction, F, S&, T&> &&
+                 !requires(S& serializer, T& value) { serializer.serialize(value); } &&
                  (concepts::TagInvocable<SerializeFunction, S&, T&, M> ||
                   requires(S& serializer, T& value) { serializer.serialize(value, M()); }))
         constexpr meta::SerializeResult<S> operator()(S&& serializer, T&& value) const {

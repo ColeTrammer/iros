@@ -1,7 +1,9 @@
 #include <di/io/interface/writer.h>
 #include <di/io/prelude.h>
 #include <di/io/string_writer.h>
+#include <di/io/vector_writer.h>
 #include <di/reflect/prelude.h>
+#include <di/serialization/binary_serializer.h>
 #include <di/serialization/json_value.h>
 #include <dius/test/prelude.h>
 
@@ -214,8 +216,32 @@ constexpr void json_value() {
     ASSERT_EQ(r3, R"({"key":true})"_sv);
 }
 
+constexpr void binary() {
+    auto do_test = [](auto const& value, auto const& expected) {
+        auto writer = di::VectorWriter<>();
+        ASSERT(di::serialize_binary(writer, value));
+        ASSERT(di::container::equal(writer.vector(), expected));
+    };
+
+    do_test(42, di::Array { 42_b, 0_b, 0_b, 0_b });
+    do_test(di::make_tuple(42, 42), di::Array { 42_b, 0_b, 0_b, 0_b, 42_b, 0_b, 0_b, 0_b });
+    do_test("hello"_sv, di::Array { 5_b, 0_b, 0_b, 0_b, 0_b, 0_b, 0_b, 0_b, 'h'_b, 'e'_b, 'l'_b, 'l'_b, 'o'_b });
+
+    auto variant = di::Variant<int, di::StringView>(42);
+    do_test(variant, di::Array { 0_b, 0_b, 0_b, 0_b, 0_b, 0_b, 0_b, 0_b, 42_b, 0_b, 0_b, 0_b });
+
+    variant = "hello"_sv;
+    do_test(variant, di::Array { 1_b, 0_b, 0_b, 0_b, 0_b, 0_b,   0_b,   0_b,   5_b,   0_b,  0_b,
+                                 0_b, 0_b, 0_b, 0_b, 0_b, 'h'_b, 'e'_b, 'l'_b, 'l'_b, 'o'_b });
+
+    auto custom = MyType { 1, 2, 3, true, "hello"_sv };
+    do_test(custom, di::Array { 1_b, 0_b, 0_b, 0_b, 2_b, 0_b, 0_b, 0_b, 3_b,   0_b,   0_b,   0_b,   1_b,
+                                5_b, 0_b, 0_b, 0_b, 0_b, 0_b, 0_b, 0_b, 'h'_b, 'e'_b, 'l'_b, 'l'_b, 'o'_b });
+}
+
 TESTC(serialization, json_basic)
 TESTC(serialization, json_pretty)
 TESTC(serialization, json_reflect)
 TESTC(serialization, json_value)
+TESTC(serialization, binary)
 }

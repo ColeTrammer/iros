@@ -19,6 +19,7 @@
 #include <di/types/in_place_type.h>
 #include <di/types/prelude.h>
 #include <di/util/exchange.h>
+#include <di/util/reference_wrapper.h>
 #include <di/util/to_underlying.h>
 #include <di/vocab/optional/nullopt.h>
 #include <di/vocab/optional/optional_forward_declaration.h>
@@ -512,11 +513,11 @@ namespace detail {
     template<typename T>
     struct DeserializeJsonFunction {
         template<concepts::Impl<io::Reader> Reader, typename... Args>
-        requires(concepts::ConstructibleFrom<JsonDeserializer<meta::RemoveCVRef<Reader>>, Reader, Args...> &&
-                 concepts::Deserializable<T, JsonDeserializer<meta::RemoveCVRef<Reader>>>)
+        requires(concepts::ConstructibleFrom<JsonDeserializer<ReferenceWrapper<meta::RemoveCVRef<Reader>>>, Reader&,
+                                             Args...> &&
+                 concepts::Deserializable<T, JsonDeserializer<ReferenceWrapper<meta::RemoveCVRef<Reader>>>>)
         constexpr auto operator()(Reader&& reader, Args&&... args) const {
-            return serialization::deserialize<T>(json_format, util::forward<Reader>(reader),
-                                                 util::forward<Args>(args)...);
+            return serialization::deserialize<T>(json_format, ref(reader), util::forward<Args>(args)...);
         }
     };
 }

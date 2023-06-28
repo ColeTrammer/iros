@@ -1,4 +1,8 @@
+#include <di/io/vector_reader.h>
+#include <di/io/vector_writer.h>
 #include <di/reflect/prelude.h>
+#include <di/serialization/binary_deserializer.h>
+#include <di/serialization/binary_serializer.h>
 #include <di/serialization/json_deserializer.h>
 #include <di/serialization/json_value.h>
 #include <dius/test/prelude.h>
@@ -167,7 +171,33 @@ constexpr void json_reflect() {
     }
 }
 
+constexpr void binary() {
+    auto do_test = []<di::concepts::EqualityComparable T>(T const& value) {
+        auto writer = di::VectorWriter<>();
+        ASSERT(di::serialize_binary(writer, value));
+        auto reader = di::VectorReader(di::move(writer).vector());
+        auto result = di::deserialize_binary<T>(reader);
+        ASSERT(result);
+        ASSERT_EQ(*result, value);
+    };
+
+    do_test(42);
+    do_test(false);
+    do_test("hello"_s);
+    do_test(di::make_tuple(1, 2, 3));
+
+    auto variant = di::Variant<int, di::String> { 42 };
+    do_test(variant);
+
+    variant = "hello"_s;
+    do_test(variant);
+
+    auto mytype = MyType { 1, 2, 3, true, "hello"_s };
+    do_test(mytype);
+}
+
 TESTC(deserialization, json_value)
 TESTC_CLANG(deserialization, json_literal)
 TESTC_CLANG(deserialization, json_reflect)
+TESTC_CLANG(deserialization, binary)
 }

@@ -165,10 +165,10 @@ namespace detail {
 
         template<typename F, typename R, typename... Args>
         requires(requires {
-            deserialize_in_place(F(), util::declval<R>(), in_place_type<T>(), util::declval<Args>()...);
+            deserialize_in_place(F(), util::declval<R>(), in_place_type<T>, util::declval<Args>()...);
         })
         constexpr auto operator()(F format, R&& reader, Args&&... args) const {
-            return deserialize_in_place(format, util::forward<R>(reader), in_place_type<T>(),
+            return deserialize_in_place(format, util::forward<R>(reader), in_place_type<T>,
                                         util::forward<Args>(args)...);
         }
     };
