@@ -29,6 +29,8 @@ public:
     constexpr auto reserve_from_nothing(size_t n) { return m_vector.reserve_from_nothing(n); }
     constexpr auto assume_size(size_t n) { return m_vector.assume_size(n); }
 
+    constexpr auto take_underlying_vector() && { return di::move(m_vector); }
+
 private:
     constexpr explicit StringImpl(Vec&& storage) : m_vector(util::move(storage)) {}
 
