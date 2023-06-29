@@ -2,9 +2,11 @@
 
 #include <di/function/tag_invoke.h>
 #include <di/io/interface/writer.h>
+#include <di/io/size_writer.h>
 #include <di/meta/language.h>
 #include <di/reflect/reflect.h>
 #include <di/types/in_place_type.h>
+#include <di/util/declval.h>
 
 namespace di::concepts {
 template<typename T>
@@ -128,6 +130,31 @@ namespace detail {
 constexpr inline auto serialize = detail::SerializeFunction {};
 
 namespace detail {
+    struct SerializeSizeFunction {
+        template<typename Format, typename T, typename... Args>
+        constexpr auto operator()(Format format, T&& value, Args&&... args) const
+        requires(concepts::TagInvocable<SerializeSizeFunction, Format, T, Args...> ||
+                 requires {
+                     serialization::serialize(
+                         serialization::serializer(format, di::declval<SizeWriter>(), util::forward<Args>(args)...),
+                         value);
+                 })
+        {
+            if constexpr (concepts::TagInvocable<SerializeSizeFunction, Format, T, Args...>) {
+                return function::tag_invoke(*this, format, value, args...);
+            } else {
+                auto writer = SizeWriter {};
+                auto serializer = serialization::serializer(format, util::ref(writer), util::forward<Args>(args)...);
+                (void) serialization::serialize(serializer, value);
+                return writer.written();
+            }
+        }
+    };
+}
+
+constexpr inline auto serialize_size = detail::SerializeSizeFunction {};
+
+namespace detail {
     struct SerializableFunction {
         template<concepts::Serializer S, typename T, typename U = meta::RemoveCVRef<T>>
         constexpr bool operator()(InPlaceType<S>, InPlaceType<T>) const {
@@ -158,5 +185,6 @@ using meta::SerializeMetadata;
 using meta::SerializeResult;
 
 using serialization::serialize;
+using serialization::serialize_size;
 using serialization::serializer;
 }
