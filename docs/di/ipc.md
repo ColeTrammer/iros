@@ -60,7 +60,7 @@ struct ClientMessage1 {
     constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<ClientMessage1>) {
         return di::make_fields(
             di::field<"x", &ClientMessage1::x>,
-            di::field<"y", &ClientMessage1::y>,
+            di::field<"y", &ClientMessage1::y>
         );
     }
 };
@@ -74,7 +74,7 @@ struct ClientMessage2 {
         constexpr friend auto tag_invoke(di::Tag<di::reflect>, di::InPlaceType<Response>) {
             return di::make_fields(
                 di::field<"x", &Response::x>,
-                di::field<"y", &Response::y>,
+                di::field<"y", &Response::y>
             );
         }
     };

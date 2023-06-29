@@ -26,6 +26,8 @@ public:
     requires(concepts::DefaultConstructible<T>)
     = default;
 
+    VectorWriter(T vector) : m_vector(di::move(vector)) {}
+
     template<typename... Args>
     requires(ConstructibleFrom<T, Args...>)
     constexpr explicit VectorWriter(InPlace, Args&&... args) : m_vector(di::forward<Args>(args)...) {}

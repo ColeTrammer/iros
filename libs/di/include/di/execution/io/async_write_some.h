@@ -5,6 +5,7 @@
 #include <di/execution/receiver/set_value.h>
 #include <di/execution/types/prelude.h>
 #include <di/function/tag_invoke.h>
+#include <di/meta/callable.h>
 #include <di/types/integers.h>
 #include <di/types/prelude.h>
 #include <di/util/reference_wrapper.h>
@@ -28,4 +29,9 @@ namespace async_write_some_ns {
 }
 
 constexpr inline auto async_write_some = async_write_some_ns::Function {};
+}
+
+namespace di::concepts {
+template<typename T>
+concept AsyncWritable = concepts::Callable<execution::async_write_some_ns::Function, T&, vocab::Span<byte const>>;
 }

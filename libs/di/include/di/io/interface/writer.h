@@ -66,5 +66,6 @@ using WriterResult =
 }
 
 namespace di {
+using io::write_some;
 using io::Writer;
 }

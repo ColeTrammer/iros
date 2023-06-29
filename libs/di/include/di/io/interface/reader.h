@@ -41,5 +41,6 @@ using ReaderResult =
 }
 
 namespace di {
+using io::read_some;
 using io::Reader;
 }
