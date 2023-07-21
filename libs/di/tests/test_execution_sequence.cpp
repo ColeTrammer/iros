@@ -1,5 +1,7 @@
 #include <di/container/view/prelude.h>
 #include <di/execution/algorithm/just.h>
+#include <di/execution/algorithm/just_void_or_stopped.h>
+#include <di/execution/algorithm/let.h>
 #include <di/execution/algorithm/sync_wait.h>
 #include <di/execution/algorithm/then.h>
 #include <di/execution/algorithm/when_all.h>
@@ -13,6 +15,7 @@
 #include <di/execution/sequence/from_container.h>
 #include <di/execution/sequence/ignore_all.h>
 #include <di/execution/sequence/let_each.h>
+#include <di/execution/sequence/repeat.h>
 #include <di/execution/sequence/sequence_sender.h>
 #include <di/execution/sequence/then_each.h>
 #include <di/execution/sequence/transform_each.h>
@@ -294,6 +297,23 @@ static void first_value() {
     ASSERT_EQ(ex::sync_wait(stopped), di::Unexpected(di::BasicError::OperationCanceled));
 }
 
+static void repeat() {
+    auto count = 0;
+
+    auto send = ex::just() | ex::let_value([&] {
+                    return ex::just_void_or_stopped(++count == 5);
+                });
+
+    auto sequence = ex::repeat(send);
+
+    ASSERT_EQ(ex::sync_wait(ex::ignore_all(sequence)), di::Unexpected(di::BasicError::OperationCanceled));
+    ASSERT_EQ(count, 5);
+
+    auto infinte = ex::repeat(ex::just());
+    ASSERT_EQ(ex::sync_wait(ex::when_all(ex::just_stopped(), ex::ignore_all(infinte))),
+              di::Unexpected(di::BasicError::OperationCanceled));
+}
+
 TEST(execution_sequence, meta)
 TEST(execution_sequence, ignore_all)
 TEST(execution_sequence, transform_each)
@@ -303,4 +323,5 @@ TEST(execution_sequence, let)
 TEST(execution_sequence, async_generator)
 TEST(execution_sequence, zip)
 TEST(execution_sequence, first_value)
+TEST(execution_sequence, repeat)
 }
