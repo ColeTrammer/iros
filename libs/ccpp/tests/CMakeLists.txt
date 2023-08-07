@@ -3,6 +3,7 @@ add_executable(
     test_ctype_h.cpp
     test_errno_h.cpp
     test_getopt_h.cpp
+    test_setjmp_h.cpp
     test_stdio_h.cpp
     test_stdlib_h_alloc.cpp
     test_stdlib_h_string.cpp

@@ -2,15 +2,13 @@
 
 #include <ccpp/bits/config.h>
 
-__CCPP_BEGIN_DECLARATIONS
+#include __CCPP_ARCH_PATH(jmpbuf.h)
 
-struct __jmp_buf {
-    long __registers[6];
-};
+__CCPP_BEGIN_DECLARATIONS
 
 typedef struct __jmp_buf jmp_buf[1];
 
 int setjmp(jmp_buf __env);
-void longjmp(jmp_buf __env, int __val);
+__CCPP_NORETURN void longjmp(jmp_buf __env, int __val);
 
 __CCPP_END_DECLARATIONS

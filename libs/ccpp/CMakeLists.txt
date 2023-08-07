@@ -135,6 +135,12 @@ target_link_libraries(ccpp PUBLIC Dius::dius)
 
 target_compile_options(ccpp PRIVATE -ffreestanding -nostdinc++)
 
+if(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "x86_64")
+    include(arch/x86_64/CMakeLists.txt)
+else()
+    message(FATAL_ERROR "The Iris kernel does not support the \"" ${CMAKE_HOST_SYSTEM_PROCESSOR} "\" architecture.")
+endif()
+
 install(
     TARGETS ccpp
     EXPORT CcppConfig
