@@ -30,11 +30,27 @@ namespace make_env_ns {
         }
     };
 
+    template<typename Tag>
+    struct Without {
+        using Type = Tag;
+    };
+
+    struct WithoutFunction {
+        template<typename Tag>
+        constexpr auto operator()(Tag) const {
+            return Without<Tag> {};
+        }
+    };
+
+    template<typename T>
+    concept Override = concepts::InstanceOf<T, With> || concepts::InstanceOf<T, Without>;
+
     template<typename Tag, concepts::TypeList List>
     using LookupTag = meta::Front<meta::Filter<List, meta::Compose<meta::SameAs<Tag>, meta::Quote<meta::Type>>>>;
 
     template<typename Tag, typename List>
-    concept HasTag = requires { typename LookupTag<Tag, List>; };
+    concept HasTag =
+        requires { typename LookupTag<Tag, List>; } && !concepts::InstanceOf<LookupTag<Tag, List>, Without>;
 
     template<typename BaseEnv, typename Withs>
     struct EnvT;
@@ -69,7 +85,7 @@ namespace make_env_ns {
     using Env = meta::Type<EnvT<BaseEnv, meta::List<Withs...>>>;
 
     struct Function {
-        template<typename BaseEnv, concepts::InstanceOf<With>... Overrides>
+        template<typename BaseEnv, Override... Overrides>
         constexpr auto operator()(BaseEnv base_env, Overrides... overrides) const {
             static_assert(meta::Size<meta::Unique<meta::List<meta::Type<Overrides>...>>> == sizeof...(Overrides),
                           "di::execution::make_env() must be called with unique overrides.");
@@ -94,6 +110,21 @@ namespace make_env_ns {
 /// @see make_env
 /// @see with_env
 constexpr inline auto with = make_env_ns::WithFunction {};
+
+/// @brief Specify a removal of an environment query override.
+///
+/// @param tag The tag of the query to remove the override for.
+///
+/// @return An override object that can be passed to the `execution::make_env` function
+///
+/// This function is used as a parameter to `execution::make_env` function to specify a removal an existing environment
+/// value. This is useful when forwarding an environment, but removing a value that is not valid in the new environment.
+///
+/// See the execution::with_env() function for an example.
+///
+/// @see make_env
+/// @see with_env
+constexpr inline auto without = make_env_ns::WithoutFunction {};
 
 /// @brief Create an environment with overrides for queries.
 ///
@@ -128,6 +159,19 @@ constexpr inline auto make_env = make_env_ns::Function {};
 /// @see MakeEnv
 template<typename Tag, typename Val>
 using With = make_env_ns::With<Tag, Val>;
+
+/// @brief Represent a removal of an environment query value.
+///
+/// @tparam Tag The tag of the query to remove the override for.
+///
+/// This type is used as a parameter to `execution::MakeEnv` template to specify a removal of an existing environment
+/// value. This is useful to deduce the return type of the `execution::make_env` function.
+///
+/// @see make_env
+/// @see with
+/// @see MakeEnv
+template<typename Tag>
+using Without = make_env_ns::Without<Tag>;
 
 /// @brief Represent an environment with overrides for queries.
 ///

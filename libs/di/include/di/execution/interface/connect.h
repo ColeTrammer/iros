@@ -15,8 +15,8 @@ namespace detail {
 
     template<typename Sender, typename Receiver>
     concept CustomConnect =
-        concepts::Sender<Sender> &&
-        concepts::ReceiverOf<Receiver, meta::CompletionSignaturesOf<Sender, meta::EnvOf<Receiver>>> &&
+        /* concepts::Sender<Sender> &&
+        concepts::ReceiverOf<Receiver, meta::CompletionSignaturesOf<Sender, meta::EnvOf<Receiver>>> && */
         concepts::TagInvocable<ConnectFunction, Sender, Receiver>;
 
     template<typename Sender, typename Receiver>

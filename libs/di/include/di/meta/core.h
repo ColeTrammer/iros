@@ -127,7 +127,7 @@ namespace detail {
 template<typename T>
 concept LanguageVoid = detail::language_void_helper<meta::RemoveCV<T>>;
 
-namespace details {
+namespace detail {
     template<typename T, template<typename...> typename Template>
     constexpr inline bool instance_of_helper = false;
 
@@ -136,9 +136,9 @@ namespace details {
 }
 
 template<typename T, template<typename...> typename Template>
-concept InstanceOf = details::instance_of_helper<T, Template>;
+concept InstanceOf = detail::instance_of_helper<T, Template>;
 
-namespace details {
+namespace detail {
     template<typename T, template<auto...> typename Template>
     constexpr inline bool instance_of_v_helper = false;
 
@@ -147,7 +147,18 @@ namespace details {
 }
 
 template<typename T, template<auto...> typename Template>
-concept InstanceOfV = details::instance_of_v_helper<T, Template>;
+concept InstanceOfV = detail::instance_of_v_helper<T, Template>;
+
+namespace detail {
+    template<typename T, template<template<typename...> typename...> typename Template>
+    constexpr inline bool instance_of_template_helper = false;
+
+    template<template<typename...> typename... Templates, template<template<typename...> typename...> typename Template>
+    constexpr inline bool instance_of_template_helper<Template<Templates...>, Template> = true;
+}
+
+template<typename T, template<template<typename...> typename...> typename Template>
+concept InstanceOfT = detail::instance_of_template_helper<T, Template>;
 
 template<typename T>
 concept TypeList = InstanceOf<T, meta::List>;

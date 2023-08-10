@@ -116,15 +116,15 @@ namespace when_all_ns {
     using ValueStorage = meta::Type<ValueStorageT<Env, Sends...>>;
 
     template<typename... Types>
-    using DecayedVariant = vocab::Variant<meta::Decay<Types>...>;
+    using DecayedVariant = meta::AsTemplate<vocab::Variant, meta::Unique<meta::List<meta::Decay<Types>...>>>;
 
     struct NotError {};
     struct Stopped {};
 
     template<typename Env, typename... Sends>
-    using ErrorStorage = meta::AsTemplate<
-        DecayedVariant,
-        meta::Unique<meta::Concat<meta::List<NotError, Stopped>, meta::ErrorTypesOf<Sends, Env, meta::List>...>>>;
+    using ErrorStorage =
+        meta::AsTemplate<DecayedVariant,
+                         meta::Concat<meta::List<NotError, Stopped>, meta::ErrorTypesOf<Sends, Env, meta::List>...>>;
 
     struct StopCallbackFunction {
         sync::InPlaceStopSource& stop_source;

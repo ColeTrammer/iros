@@ -1,3 +1,4 @@
+#include <di/util/named_arguments.h>
 #include <di/util/prelude.h>
 #include <dius/test/prelude.h>
 
@@ -75,6 +76,35 @@ constexpr void strong_int() {
 
     static_assert(sizeof(X) == sizeof(i32));
 }
+
+//! [named_arguments]
+struct Foo : di::NamedArgument<Foo, i32> {};
+struct Bar : di::NamedArgument<Bar, i32> {};
+template<di::concepts::Integral T>
+struct Baz : di::NamedArgument<di::InPlaceTemplate<Baz>, T> {};
+template<typename T>
+Baz(T&&) -> Baz<T>;
+
+template<typename... Args>
+requires(di::ValidNamedArguments<di::meta::List<Foo, Bar, di::InPlaceTemplate<Baz>>, Args...>)
+constexpr i32 f(Args&&... args) {
+    auto named = di::NamedArguments(di::forward<Args>(args)...);
+
+    auto foo_value = di::get_named_argument_or<Foo>(di::move(named), 1);
+    auto bar_value = di::get_named_argument_or<Bar>(di::move(named), 2);
+    auto baz_value = di::get_named_argument_or<di::InPlaceTemplate<Baz>>(di::move(named), 3);
+
+    return foo_value + bar_value + baz_value;
+}
+
+constexpr static void named_arguments() {
+    ASSERT_EQ(f(), 6);
+    ASSERT_EQ(f(Foo(5)), 10);
+    ASSERT_EQ(f(Bar(5)), 9);
+    ASSERT_EQ(f(Foo(5), Bar(5)), 13);
+    ASSERT_EQ(f(Foo(5), Bar(5), Baz(5)), 15);
+}
+//! [named_arguments]
 
 TESTC(util, scope_exit)
 TESTC(util, uuid)

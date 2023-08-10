@@ -1,4 +1,6 @@
+#include <di/assert/assert_binary.h>
 #include <di/container/view/prelude.h>
+#include <di/container/view/range.h>
 #include <di/execution/algorithm/just.h>
 #include <di/execution/algorithm/just_void_or_stopped.h>
 #include <di/execution/algorithm/let.h>
@@ -7,10 +9,15 @@
 #include <di/execution/algorithm/when_all.h>
 #include <di/execution/any/any_sender.h>
 #include <di/execution/context/run_loop.h>
+#include <di/execution/meta/completion_signatures_of.h>
 #include <di/execution/query/is_always_lockstep_sequence.h>
 #include <di/execution/receiver/prelude.h>
+#include <di/execution/receiver/set_error.h>
+#include <di/execution/receiver/set_stopped.h>
+#include <di/execution/receiver/set_value.h>
 #include <di/execution/sequence/async_generator.h>
 #include <di/execution/sequence/empty_sequence.h>
+#include <di/execution/sequence/filter.h>
 #include <di/execution/sequence/first_value.h>
 #include <di/execution/sequence/from_container.h>
 #include <di/execution/sequence/ignore_all.h>
@@ -20,11 +27,17 @@
 #include <di/execution/sequence/then_each.h>
 #include <di/execution/sequence/transform_each.h>
 #include <di/execution/sequence/zip.h>
+#include <di/execution/types/completion_signuatures.h>
 #include <di/execution/types/prelude.h>
 #include <di/function/prelude.h>
+#include <di/function/tag_invoke.h>
+#include <di/meta/core.h>
+#include <di/platform/custom.h>
 #include <di/util/move.h>
 #include <di/util/prelude.h>
+#include <di/vocab/array/array.h>
 #include <di/vocab/error/prelude.h>
+#include <di/vocab/expected/expected_forward_declaration.h>
 #include <di/vocab/expected/prelude.h>
 #include <dius/test/prelude.h>
 
@@ -314,6 +327,21 @@ static void repeat() {
               di::Unexpected(di::BasicError::OperationCanceled));
 }
 
+static void filter() {
+    auto sum = 0;
+
+    auto sequence = ex::from_container(ex::valid_lifetime, di::range(5)) | ex::filter(+[](int x) {
+                        return ex::just(x % 2 == 0);
+                    }) |
+                    ex::then_each([&](int x) {
+                        sum += x;
+                    }) |
+                    ex::ignore_all;
+
+    ASSERT(ex::sync_wait(sequence));
+    ASSERT_EQ(sum, 6);
+}
+
 TEST(execution_sequence, meta)
 TEST(execution_sequence, ignore_all)
 TEST(execution_sequence, transform_each)
@@ -324,4 +352,5 @@ TEST(execution_sequence, async_generator)
 TEST(execution_sequence, zip)
 TEST(execution_sequence, first_value)
 TEST(execution_sequence, repeat)
+TEST(execution_sequence, filter)
 }

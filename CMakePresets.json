@@ -285,7 +285,7 @@
                 "CMAKE_UNITY_BUILD": "ON",
                 "IROS_NonUnityBuildPreset": "clang_release_default_non_unity"
             },
-            "inherits": ["clang_base", "release_base"]
+            "inherits": ["clang_base", "release_base", "default_base"]
         },
         {
             "name": "clang_release_coverage",
@@ -411,7 +411,7 @@
                 "CMAKE_UNITY_BUILD": "ON",
                 "IROS_NonUnityBuildPreset": "clang_debug_default_non_unity"
             },
-            "inherits": ["clang_base", "debug_base"]
+            "inherits": ["clang_base", "debug_base", "default_base"]
         },
         {
             "name": "clang_debug_coverage",
@@ -537,7 +537,7 @@
                 "CMAKE_UNITY_BUILD": "ON",
                 "IROS_NonUnityBuildPreset": "gcc_release_default_non_unity"
             },
-            "inherits": ["gcc_base", "release_base"]
+            "inherits": ["gcc_base", "release_base", "default_base"]
         },
         {
             "name": "gcc_release_coverage",
@@ -649,7 +649,7 @@
                 "CMAKE_UNITY_BUILD": "ON",
                 "IROS_NonUnityBuildPreset": "gcc_debug_default_non_unity"
             },
-            "inherits": ["gcc_base", "debug_base"]
+            "inherits": ["gcc_base", "debug_base", "default_base"]
         },
         {
             "name": "gcc_debug_coverage",
@@ -842,7 +842,7 @@
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "CMAKE_UNITY_BUILD": "OFF"
             },
-            "inherits": ["clang_base", "release_base"]
+            "inherits": ["clang_base", "release_base", "default_base"]
         },
         {
             "name": "clang_release_coverage_non_unity",
@@ -959,7 +959,7 @@
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "CMAKE_UNITY_BUILD": "OFF"
             },
-            "inherits": ["clang_base", "debug_base"]
+            "inherits": ["clang_base", "debug_base", "default_base"]
         },
         {
             "name": "clang_debug_coverage_non_unity",
@@ -1076,7 +1076,7 @@
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "CMAKE_UNITY_BUILD": "OFF"
             },
-            "inherits": ["gcc_base", "release_base"]
+            "inherits": ["gcc_base", "release_base", "default_base"]
         },
         {
             "name": "gcc_release_coverage_non_unity",
@@ -1180,7 +1180,7 @@
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "CMAKE_UNITY_BUILD": "OFF"
             },
-            "inherits": ["gcc_base", "debug_base"]
+            "inherits": ["gcc_base", "debug_base", "default_base"]
         },
         {
             "name": "gcc_debug_coverage_non_unity",
