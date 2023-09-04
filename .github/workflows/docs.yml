@@ -31,7 +31,7 @@ jobs:
           rm -f doxygen-${{ env.DOXYGEN_VERSION }}.linux.bin.tar.gz
           rm -rf doxygen-${{ env.DOXYGEN_VERSION }}
       - name: Checkout source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Get latest CMake and Ninja
         uses: lukka/get-cmake@latest
         with:

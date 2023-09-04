@@ -36,7 +36,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Checkout source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Determine if any changes have been made toolchain files
         id: file_changes
         uses: tj-actions/changed-files@v37
@@ -76,7 +76,7 @@ jobs:
       options: --privileged
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Get and cache ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:

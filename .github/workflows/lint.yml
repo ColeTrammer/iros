@@ -38,7 +38,7 @@ jobs:
           chmod +x llvm.sh
           sudo ./llvm.sh 16 all
       - name: Checkout source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Determine the list of changed files
         id: file_changes
         uses: tj-actions/changed-files@v37
