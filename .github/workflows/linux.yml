@@ -28,7 +28,7 @@ jobs:
           sudo ./llvm.sh 16
         if: matrix.preset == 'clang_release_dius_runtime'
       - name: Checkout source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Get latest CMake and Ninja
         uses: lukka/get-cmake@latest
         with:
