@@ -41,7 +41,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Determine the list of changed files
         id: file_changes
-        uses: tj-actions/changed-files@v37
+        uses: tj-actions/changed-files@v40
         with:
           base_sha: ${{ env.BASE_SHA }}
       - name: Check clang format
