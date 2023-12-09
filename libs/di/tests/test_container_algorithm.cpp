@@ -1,8 +1,41 @@
+#include <di/assert/assert_binary.h>
 #include <di/container/algorithm/prelude.h>
+#include <di/container/interface/access.h>
+#include <di/container/string/string_view.h>
+#include <di/container/tree/tree_map.h>
+#include <di/container/vector/vector.h>
 #include <di/container/view/prelude.h>
 #include <dius/test/prelude.h>
 
 namespace container_algorithm {
+constexpr void access() {
+    auto v = di::Array { 1, 2, 3, 4, 5 };
+    auto v2 = di::Vector<i32> {};
+
+    ASSERT_EQ(di::front(v), 1);
+    ASSERT_EQ(di::back(v), 5);
+    ASSERT_EQ(di::front_unchecked(v), 1);
+    ASSERT_EQ(di::back_unchecked(v), 5);
+
+    ASSERT_EQ(di::front(v2), di::nullopt);
+    ASSERT_EQ(di::back(v2), di::nullopt);
+
+    ASSERT_EQ(v | di::at(0), 1);
+    ASSERT_EQ(v | di::at(4), 5);
+    ASSERT_EQ(v | di::at(5), di::nullopt);
+    ASSERT_EQ(v | di::at(-1), di::nullopt);
+
+    ASSERT_EQ(v | di::at_unchecked(0), 1);
+    ASSERT_EQ(v | di::at_unchecked(4), 5);
+
+    auto m = di::TreeMap<di::StringView, di::StringView> {};
+    m.insert({ "a"_sv, "b"_sv });
+    m.insert({ "c"_sv, "d"_sv });
+
+    ASSERT_EQ(di::at(m, "a"_sv), "b"_sv);
+    ASSERT_EQ(di::at_unchecked(m, "a"_sv), "b"_sv);
+}
+
 constexpr void minmax() {
     ASSERT_EQ(di::min(1, 2), 1);
     ASSERT_EQ(di::min({ 5, 4, 3, 2, 1 }), 1);
@@ -508,6 +541,7 @@ constexpr void set() {
     ASSERT(!di::container::includes(a, d));
 }
 
+TESTC(container_algorithm, access)
 TESTC(container_algorithm, minmax)
 TESTC(container_algorithm, compare)
 TESTC(container_algorithm, fold)

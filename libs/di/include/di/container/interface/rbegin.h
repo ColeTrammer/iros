@@ -32,7 +32,7 @@ namespace detail {
     };
 }
 
-struct RBeginFunction {
+struct RBeginFunction : function::pipeline::EnablePipeline {
     template<typename T>
     requires(enable_borrowed_container(types::in_place_type<meta::RemoveCV<T>>) &&
              (detail::CustomRBegin<T> || detail::MemberRBegin<T> || detail::ReverseIteratorRBegin<T>) )

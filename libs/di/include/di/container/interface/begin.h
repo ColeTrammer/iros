@@ -2,6 +2,7 @@
 
 #include <di/container/concepts/iterator.h>
 #include <di/container/interface/enable_borrowed_container.h>
+#include <di/function/pipeable.h>
 #include <di/function/tag_invoke.h>
 #include <di/meta/core.h>
 #include <di/meta/language.h>
@@ -25,7 +26,7 @@ namespace detail {
     };
 }
 
-struct BeginFunction {
+struct BeginFunction : function::pipeline::EnablePipeline {
     template<typename T>
     requires(enable_borrowed_container(types::in_place_type<meta::RemoveCV<T>>) &&
              (detail::ArrayBegin<T> || detail::CustomBegin<T> || detail::MemberBegin<T>) )

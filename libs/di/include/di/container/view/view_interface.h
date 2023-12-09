@@ -151,6 +151,22 @@ public:
         return container::begin(self())[n];
     }
 
+    template<concepts::RandomAccessContainer Cont = Self>
+    constexpr auto at(meta::ContainerSSizeType<Cont> n) -> Optional<meta::ContainerReference<Cont>> {
+        if (n < 0 || n >= this->size()) {
+            return vocab::nullopt;
+        }
+        return container::begin(self())[n];
+    }
+
+    template<concepts::RandomAccessContainer Cont = Self const>
+    constexpr auto at(meta::ContainerSSizeType<Cont> n) const -> Optional<meta::ContainerReference<Cont>> {
+        if (n < 0 || n >= this->size()) {
+            return vocab::nullopt;
+        }
+        return container::begin(self())[n];
+    }
+
 private:
     constexpr Self& self() { return static_cast<Self&>(*this); }
     constexpr Self const& self() const { return static_cast<Self const&>(*this); }

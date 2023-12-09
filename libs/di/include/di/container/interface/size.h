@@ -35,7 +35,7 @@ namespace detail {
                            concepts::SizedSentinelFor<meta::ContainerSentinel<T>, meta::ContainerIterator<T>>;
 }
 
-struct SizeFunction {
+struct SizeFunction : function::pipeline::EnablePipeline {
     template<typename T>
     requires(detail::ArraySize<T> || detail::CustomSize<T> || detail::MemberSize<T> || detail::IteratorSize<T>)
     constexpr meta::IteratorSizeType<meta::ContainerIterator<T>> operator()(T&& container) const {

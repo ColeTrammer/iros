@@ -29,7 +29,7 @@ namespace detail {
     };
 }
 
-struct EndFunction {
+struct EndFunction : function::pipeline::EnablePipeline {
     template<typename T>
     requires(enable_borrowed_container(types::in_place_type<meta::RemoveCV<T>>) &&
              (detail::ArrayEnd<T> || detail::CustomEnd<T> || detail::MemberEnd<T>) )

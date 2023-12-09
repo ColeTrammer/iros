@@ -26,7 +26,7 @@ namespace detail {
     } && concepts::ForwardIterator<meta::ContainerIterator<T>>;
 }
 
-struct EmptyFunction {
+struct EmptyFunction : function::pipeline::EnablePipeline {
     template<typename T>
     requires(detail::CustomEmpty<T> || detail::MemberEmpty<T> || detail::SizeEmpty<T> || detail::IteratorEmpty<T>)
     constexpr bool operator()(T&& container) const {

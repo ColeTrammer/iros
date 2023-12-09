@@ -38,7 +38,7 @@ namespace detail {
     };
 }
 
-struct REndFunction {
+struct REndFunction : function::pipeline::EnablePipeline {
     template<typename T>
     requires(enable_borrowed_container(types::in_place_type<meta::RemoveCV<T>>) &&
              (detail::CustomREnd<T> || detail::MemberREnd<T> || detail::ReverseIteratorREnd<T>) )

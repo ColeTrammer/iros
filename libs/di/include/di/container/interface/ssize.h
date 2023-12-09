@@ -19,7 +19,7 @@ namespace detail {
     concept SizeSSize = requires { typename meta::ContainerSizeType<T>; };
 }
 
-struct SSizeFunction {
+struct SSizeFunction : function::pipeline::EnablePipeline {
     template<typename T>
     requires(detail::CustomSSize<T> || detail::SizeSSize<T>)
     constexpr meta::MakeSigned<meta::ContainerSizeType<T>> operator()(T&& container) const {

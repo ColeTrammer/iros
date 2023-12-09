@@ -11,7 +11,7 @@
 #include <di/util/forward.h>
 
 namespace di::container {
-struct CREndFunction {
+struct CREndFunction : function::pipeline::EnablePipeline {
     template<concepts::InputContainer T>
     requires(enable_borrowed_container(types::in_place_type<meta::RemoveCV<T>>))
     constexpr auto operator()(T&& container) const {
